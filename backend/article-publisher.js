@@ -1969,8 +1969,8 @@ router.delete('/mastodon/post/:postId', async (req, res) => {
 // UNIFIED PLATFORMS LISTING
 // ============================================
 
-router.get('/platforms', (req, res) => {
-    const platforms = [
+function getPlatformsStatus() {
+    return [
         { id: 'blogger', name: 'Blogger', region: 'global', authType: 'oauth', contentFormat: 'html',
           configured: !!(BLOGGER_CLIENT_ID && BLOGGER_CLIENT_SECRET) },
         { id: 'hashnode', name: 'Hashnode', region: 'global', authType: 'api_key', contentFormat: 'markdown',
@@ -2000,7 +2000,10 @@ router.get('/platforms', (req, res) => {
         { id: 'mastodon', name: 'Mastodon', region: 'global', authType: 'bearer', contentFormat: 'text',
           configured: !!MASTODON_ACCESS_TOKEN, instance: MASTODON_INSTANCE_URL }
     ];
-    res.json({ success: true, platforms });
+}
+
+router.get('/platforms', (req, res) => {
+    res.json({ success: true, platforms: getPlatformsStatus() });
 });
 
 // ============================================
@@ -2153,4 +2156,4 @@ router.get('/health', async (req, res) => {
     });
 });
 
-module.exports = { router, initPublisherTable, truncateTweet, X_TWEET_WEIGHTED_LIMIT, appendReferralCTA, buildReferralCTA, REFERRAL_CTA_URL };
+module.exports = { router, initPublisherTable, truncateTweet, X_TWEET_WEIGHTED_LIMIT, appendReferralCTA, buildReferralCTA, REFERRAL_CTA_URL, getPlatformsStatus };

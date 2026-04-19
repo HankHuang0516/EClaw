@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title data-i18n="rental_monitor_title">Rental Health Monitor — EClawbot</title>
+    <link rel="icon" type="image/png" href="assets/favicon-32.png">
+    <link rel="stylesheet" href="shared/style.css">
+    <style>
+        .rm-hero { background: linear-gradient(135deg, #064e3b 0%, #0f766e 100%); color: #fff; border-radius: var(--radius); padding: 24px; margin-bottom: 18px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+        .rm-hero h2 { font-size: 20px; font-weight: 800; margin: 0 0 4px 0; }
+        .rm-hero p { opacity: 0.9; font-size: 13px; margin: 0; }
+        .rm-status-row { display: flex; align-items: center; gap: 12px; }
+        .rm-status-badge { padding: 8px 16px; border-radius: 999px; font-weight: 800; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); }
+        .rm-status-badge.green { background: #10b981; border-color: #10b981; color: #ffffff; }
+        .rm-status-badge.yellow { background: #f59e0b; border-color: #f59e0b; color: #1f2937; }
+        .rm-status-badge.red { background: #ef4444; border-color: #ef4444; color: #ffffff; }
+
+        .rm-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .rm-countdown { font-size: 12px; color: rgba(255,255,255,0.85); font-variant-numeric: tabular-nums; }
+        .rm-toggle-btn { padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-weight: 600; font-size: 12px; }
+        .rm-toggle-btn:hover { background: rgba(255,255,255,0.2); }
+
+        .rm-section { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; }
+        .rm-section h3 { font-size: 14px; font-weight: 700; margin: 0 0 14px 0; color: var(--text); }
+
+        .rm-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+        .rm-kpi-card { padding: 14px 12px; border: 1px solid var(--card-border); border-radius: var(--radius-sm); text-align: center; background: var(--input-bg); }
+        .rm-kpi-value { font-size: 22px; font-weight: 800; color: var(--primary); font-variant-numeric: tabular-nums; line-height: 1.1; }
+        .rm-kpi-label { font-size: 11px; color: var(--text-secondary); margin-top: 6px; }
+        .rm-kpi-sub { font-size: 10px; color: var(--text-secondary); margin-top: 2px; opacity: 0.7; }
+        .rm-kpi-card.kpi-warn .rm-kpi-value { color: #f59e0b; }
+        .rm-kpi-card.kpi-bad .rm-kpi-value { color: #ef4444; }
+
+        .rm-issues { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+        .rm-issues li { padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid #f59e0b; background: rgba(245,158,11,0.08); color: var(--text); font-size: 13px; font-family: ui-monospace, monospace; }
+        .rm-issues.empty li { border-color: var(--card-border); background: var(--input-bg); color: var(--text-secondary); font-family: inherit; }
+
+        .rm-pub-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .rm-pub-table th, .rm-pub-table td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--card-border); }
+        .rm-pub-table th { font-weight: 700; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .rm-pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+        .rm-pill.ok { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+        .rm-pill.bad { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+
+        .rm-meta { font-size: 11px; color: var(--text-secondary); margin-top: 8px; font-variant-numeric: tabular-nums; }
+        .rm-error-banner { padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid #ef4444; background: rgba(239,68,68,0.1); color: #ef4444; font-size: 13px; margin-bottom: 14px; }
+
+        @media (max-width: 480px) {
+            .rm-hero { padding: 18px; }
+            .rm-hero h2 { font-size: 17px; }
+            .rm-kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .rm-kpi-value { font-size: 18px; }
+            .rm-pub-table th, .rm-pub-table td { padding: 8px 4px; font-size: 12px; }
+            .rm-pub-table .rm-pub-region { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div id="navContainer"></div>
+
+    <main class="container" style="max-width: 960px; margin: 24px auto; padding: 0 16px;">
+        <div class="rm-hero">
+            <div>
+                <h2 data-i18n="rental_monitor_title">Rental Health Monitor</h2>
+                <p data-i18n="rental_monitor_subtitle">Live status of plaza rental fleet and platform integrations.</p>
+            </div>
+            <div class="rm-controls">
+                <span id="rmStatusBadge" class="rm-status-badge" data-i18n="rental_monitor_status_loading">…</span>
+                <span id="rmCountdown" class="rm-countdown"></span>
+                <button id="rmToggleBtn" class="rm-toggle-btn" data-i18n="rental_monitor_pause_btn">Pause</button>
+            </div>
+        </div>
+
+        <div id="rmErrorBanner" class="rm-error-banner" style="display: none;"></div>
+
+        <div class="rm-section">
+            <h3 data-i18n="rental_monitor_kpi_section_title">Key indicators</h3>
+            <div class="rm-kpi-grid" id="rmKpiGrid">
+                <div class="rm-kpi-card" id="kpiDb"><div class="rm-kpi-value">—</div><div class="rm-kpi-label" data-i18n="rental_monitor_kpi_db">DB latency</div><div class="rm-kpi-sub" data-i18n="rental_monitor_kpi_db_sub">SELECT 1 ping</div></div>
+                <div class="rm-kpi-card" id="kpiUptime"><div class="rm-kpi-value">—</div><div class="rm-kpi-label" data-i18n="rental_monitor_kpi_uptime">Uptime</div><div class="rm-kpi-sub" data-i18n="rental_monitor_kpi_uptime_sub">since last deploy</div></div>
+                <div class="rm-kpi-card" id="kpiFleet"><div class="rm-kpi-value">—</div><div class="rm-kpi-label" data-i18n="rental_monitor_kpi_fleet">Rental fleet</div><div class="rm-kpi-sub" data-i18n="rental_monitor_kpi_fleet_sub">listed / active</div></div>
+                <div class="rm-kpi-card" id="kpiTombstone"><div class="rm-kpi-value">—</div><div class="rm-kpi-label" data-i18n="rental_monitor_kpi_tombstone">Tombstones</div><div class="rm-kpi-sub" data-i18n="rental_monitor_kpi_tombstone_sub">deleted public codes</div></div>
+                <div class="rm-kpi-card" id="kpiTrash"><div class="rm-kpi-value">—</div><div class="rm-kpi-label" data-i18n="rental_monitor_kpi_trash">Entity trash</div><div class="rm-kpi-sub" data-i18n="rental_monitor_kpi_trash_sub">7-day retention</div></div>
+                <div class="rm-kpi-card" id="kpiErrors"><div class="rm-kpi-value">—</div><div class="rm-kpi-label" data-i18n="rental_monitor_kpi_errors">Errors / 24h</div><div class="rm-kpi-sub" data-i18n="rental_monitor_kpi_errors_sub">future add</div></div>
+            </div>
+        </div>
+
+        <div class="rm-section">
+            <h3 data-i18n="rental_monitor_issues_list_title">Active issues</h3>
+            <ul id="rmIssuesList" class="rm-issues empty"><li data-i18n="rental_monitor_issues_none">No issues detected.</li></ul>
+        </div>
+
+        <div class="rm-section">
+            <h3 data-i18n="rental_monitor_publishers">Publisher integrations</h3>
+            <table class="rm-pub-table">
+                <thead>
+                    <tr>
+                        <th data-i18n="rental_monitor_pub_col_name">Platform</th>
+                        <th class="rm-pub-region" data-i18n="rental_monitor_pub_col_region">Region</th>
+                        <th data-i18n="rental_monitor_pub_col_status">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="rmPubBody"></tbody>
+            </table>
+        </div>
+
+        <div class="rm-meta" id="rmMeta"></div>
+    </main>
+
+    <div id="footerContainer"></div>
+    <script src="shared/api.js"></script>
+    <script src="shared/nav.js"></script>
+    <script src="shared/auth.js"></script>
+    <script src="../shared/telemetry.js"></script>
+    <script src="../shared/i18n.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="shared/socket.js"></script>
+    <script src="shared/footer.js"></script>
+    <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
+    <script src="shared/ai-chat.js"></script>
+
+    <script>
+        const REFRESH_INTERVAL_SEC = 30;
+        let countdownSec = REFRESH_INTERVAL_SEC;
+        let paused = false;
+        let timerHandle = null;
+
+        function tt(k, fb) { return (typeof i18n !== 'undefined' ? i18n.t(k) : null) || fb; }
+        function fmtSec(sec) {
+            if (sec == null || isNaN(sec)) return '—';
+            sec = Math.floor(sec);
+            const d = Math.floor(sec / 86400);
+            const h = Math.floor((sec % 86400) / 3600);
+            const m = Math.floor((sec % 3600) / 60);
+            if (d > 0) return `${d}d ${h}h`;
+            if (h > 0) return `${h}h ${m}m`;
+            if (m > 0) return `${m}m`;
+            return `${sec}s`;
+        }
+        function setText(id, txt) {
+            const el = document.getElementById(id);
+            if (el) {
+                const v = el.querySelector('.rm-kpi-value');
+                if (v) v.textContent = txt;
+                else el.textContent = txt;
+            }
+        }
+        function setKpiClass(id, cls) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.remove('kpi-warn', 'kpi-bad');
+            if (cls) el.classList.add(cls);
+        }
+
+        function getAuthQuery() {
+            const u = window.currentUser || {};
+            let deviceId = u.deviceId;
+            let deviceSecret = u.deviceSecret;
+            if (!deviceId || !deviceSecret) {
+                try {
+                    deviceId = deviceId || localStorage.getItem('deviceId');
+                    deviceSecret = deviceSecret || localStorage.getItem('deviceSecret');
+                } catch (_) { /* ignore */ }
+            }
+            if (!deviceId || !deviceSecret) return null;
+            return `deviceId=${encodeURIComponent(deviceId)}&deviceSecret=${encodeURIComponent(deviceSecret)}`;
+        }
+
+        async function fetchHealth() {
+            const auth = getAuthQuery();
+            if (!auth) {
+                showError(tt('rental_monitor_auth_required', 'Sign in required to view monitoring.'));
+                return null;
+            }
+            try {
+                const res = await fetch(`/api/monitoring/rental-health?${auth}`, { credentials: 'include' });
+                const j = await res.json();
+                if (!res.ok || !j.success) throw new Error(j.error || `HTTP ${res.status}`);
+                return j;
+            } catch (e) {
+                showError(`${tt('rental_monitor_fetch_failed', 'Failed to fetch health')}: ${e.message}`);
+                return null;
+            }
+        }
+
+        function showError(msg) {
+            const banner = document.getElementById('rmErrorBanner');
+            if (!banner) return;
+            banner.textContent = msg;
+            banner.style.display = 'block';
+        }
+        function clearError() {
+            const banner = document.getElementById('rmErrorBanner');
+            if (banner) banner.style.display = 'none';
+        }
+
+        function renderHealth(data) {
+            clearError();
+
+            // Status badge
+            const badge = document.getElementById('rmStatusBadge');
+            const status = data.thresholds && data.thresholds.status || 'green';
+            badge.classList.remove('green', 'yellow', 'red');
+            badge.classList.add(status);
+            badge.textContent = tt(`rental_monitor_status_${status}`, status.toUpperCase());
+
+            // KPIs (DOM textContent assignments — safe from XSS)
+            const dbStatus = data.db && data.db.status || 'down';
+            const dbLatency = data.db && data.db.latencyMs;
+            setText('kpiDb', dbStatus === 'up' ? `${dbLatency ?? '—'} ms` : tt('rental_monitor_db_down', 'down'));
+            setKpiClass('kpiDb', dbStatus !== 'up' ? 'kpi-bad' : (dbLatency > 500 ? 'kpi-warn' : null));
+
+            setText('kpiUptime', data.uptime ? fmtSec(data.uptime.seconds) : '—');
+
+            const fleet = data.rentalFleet || {};
+            const listed = fleet.listingsActive ?? 0;
+            const active = fleet.contractsActive ?? 0;
+            setText('kpiFleet', `${listed} / ${active}`);
+
+            const tomb = data.publicCodeTombstone || {};
+            setText('kpiTombstone', String(tomb.size ?? 0));
+            setKpiClass('kpiTombstone', (tomb.size || 0) > 10000 ? 'kpi-warn' : null);
+
+            const trash = (data.db && data.db.entityTrash) || {};
+            setText('kpiTrash', `${trash.totalRows ?? 0} (24h: ${trash.rowsLast24h ?? 0})`);
+
+            const recent = data.recentErrors || {};
+            setText('kpiErrors', recent.last24hCount == null ? 'n/a' : String(recent.last24hCount));
+
+            // Issues list
+            const issuesEl = document.getElementById('rmIssuesList');
+            const issues = (data.thresholds && data.thresholds.issues) || [];
+            issuesEl.innerHTML = '';
+            if (issues.length === 0) {
+                issuesEl.classList.add('empty');
+                const li = document.createElement('li');
+                li.textContent = tt('rental_monitor_issues_none', 'No issues detected.');
+                issuesEl.appendChild(li);
+            } else {
+                issuesEl.classList.remove('empty');
+                for (const issue of issues) {
+                    const li = document.createElement('li');
+                    li.textContent = String(issue);
+                    issuesEl.appendChild(li);
+                }
+            }
+
+            // Publisher table
+            const tbody = document.getElementById('rmPubBody');
+            tbody.innerHTML = '';
+            const pubs = data.publishers || [];
+            for (const p of pubs) {
+                const tr = document.createElement('tr');
+                const tdName = document.createElement('td');
+                tdName.textContent = p.name || p.id;
+                const tdRegion = document.createElement('td');
+                tdRegion.className = 'rm-pub-region';
+                tdRegion.textContent = p.region || '—';
+                const tdStatus = document.createElement('td');
+                const pill = document.createElement('span');
+                pill.className = `rm-pill ${p.connected ? 'ok' : 'bad'}`;
+                pill.textContent = p.connected
+                    ? tt('rental_monitor_pub_connected', 'Connected')
+                    : tt('rental_monitor_pub_disconnected', 'Disconnected');
+                tdStatus.appendChild(pill);
+                tr.appendChild(tdName);
+                tr.appendChild(tdRegion);
+                tr.appendChild(tdStatus);
+                tbody.appendChild(tr);
+            }
+
+            // Meta footer
+            const meta = document.getElementById('rmMeta');
+            const ts = data.uptime && data.uptime.currentTime ? new Date(data.uptime.currentTime).toLocaleString() : '—';
+            const build = data.uptime && data.uptime.build ? ` · build ${data.uptime.build}` : '';
+            meta.textContent = `${tt('rental_monitor_last_update', 'Last updated')}: ${ts}${build}`;
+        }
+
+        async function refresh() {
+            const data = await fetchHealth();
+            if (data) renderHealth(data);
+            countdownSec = REFRESH_INTERVAL_SEC;
+            updateCountdown();
+        }
+
+        function updateCountdown() {
+            const el = document.getElementById('rmCountdown');
+            if (!el) return;
+            if (paused) {
+                el.textContent = tt('rental_monitor_paused', 'Paused');
+            } else {
+                const lbl = tt('rental_monitor_next_refresh', 'Next refresh in');
+                el.textContent = `${lbl} ${countdownSec}s`;
+            }
+        }
+
+        function tick() {
+            if (paused) return;
+            countdownSec -= 1;
+            updateCountdown();
+            if (countdownSec <= 0) {
+                refresh();
+            }
+        }
+
+        function setupToggle() {
+            const btn = document.getElementById('rmToggleBtn');
+            if (!btn) return;
+            btn.addEventListener('click', () => {
+                paused = !paused;
+                btn.textContent = paused
+                    ? tt('rental_monitor_resume_btn', 'Resume')
+                    : tt('rental_monitor_pause_btn', 'Pause');
+                updateCountdown();
+            });
+        }
+
+        async function init() {
+            if (typeof i18n !== 'undefined' && typeof i18n.apply === 'function') {
+                try { i18n.apply(); } catch {}
+            }
+            setupToggle();
+            try {
+                if (typeof checkAuth === 'function') {
+                    const user = await checkAuth();
+                    if (!user) return; // checkAuth redirects to login
+                }
+            } catch (_) { /* ignore — proceed with localStorage fallback */ }
+            await refresh();
+            timerHandle = setInterval(tick, 1000);
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
