@@ -633,7 +633,7 @@ function ensureOneEmptySlot(device) {
 
 // Latest app version - update this with each release
 // Bot will warn users if their app version is older than this
-const LATEST_APP_VERSION = "1.0.75";
+const LATEST_APP_VERSION = "1.0.76";
 const FORCE_UPDATE_BELOW = null; // Set to version string (e.g. "1.0.30") to force-update anything below
 const APP_RELEASE_NOTES = process.env.APP_RELEASE_NOTES || null;
 
@@ -5758,9 +5758,15 @@ app.post('/api/device/add-entity', async (req, res) => {
         return res.status(403).json({ success: false, error: 'Invalid device credentials' });
     }
 
-    // Assign next entity ID
+    // Assign next entity ID (monotonic, never-reuse invariant)
     if (!device.nextEntityId) {
         device.nextEntityId = Math.max(-1, ...Object.keys(device.entities).map(Number)) + 1;
+    }
+    // Defensive: heal only upward if state was corrupted such that the counter
+    // would collide with an existing slot. Never decrease.
+    const maxExistingId = Math.max(-1, ...Object.keys(device.entities).map(Number));
+    if (device.nextEntityId <= maxExistingId) {
+        device.nextEntityId = maxExistingId + 1;
     }
     const newEntityId = device.nextEntityId++;
     device.entities[newEntityId] = createDefaultEntity(newEntityId);
@@ -6140,29 +6146,30 @@ app.delete('/api/device/entity/:entityId/permanent', async (req, res) => {
     // Notify clients
     io.to(deviceId).emit('entityDeleted', { entityId: eId, totalSlots: entityCount(device) });
 
-    // If all entities deleted, auto-create a fresh default entity
+    // If all entities deleted, auto-create a fresh default entity.
+    // Preserve monotonic nextEntityId — never decrease, so the "new IDs never
+    // reuse deleted IDs" invariant survives even when we recreate slot #0.
     let autoCreatedEntityId = null;
-    let compactResult = { compacted: false };
     if (entityCount(device) === 0) {
         const newId = 0;
         device.entities[newId] = createDefaultEntity(newId);
-        device.nextEntityId = 1;
+        device.nextEntityId = Math.max(1, device.nextEntityId || 1);
         autoCreatedEntityId = newId;
-        console.log(`[DynamicEntity] Auto-created default entity #${newId} after last entity deleted: deviceId=${deviceId}`);
+        console.log(`[DynamicEntity] Auto-created default entity #${newId} after last entity deleted: deviceId=${deviceId}, nextEntityId=${device.nextEntityId}`);
         serverLog('info', 'entity_add', `Entity #${newId} auto-created (last entity deleted)`, { deviceId, entityId: newId });
         if (usePostgreSQL) await db.saveDeviceData(deviceId, device);
         io.to(deviceId).emit('entityAdded', { entityId: newId, totalSlots: 1 });
-    } else {
-        // Auto-compact: renumber remaining entities to sequential 0, 1, 2, ...
-        compactResult = await compactEntitySlots(device, deviceId);
     }
+    // No auto-compaction: leaving the remaining slot IDs sparse preserves the
+    // never-reuse invariant (chat_messages.entity_id FK, publicCodeIndex,
+    // analytics, bookmarked URLs). Users who want renumbering can explicitly
+    // POST /api/device/compact-entities.
 
     res.json({
         success: true,
         deletedEntityId: eId,
         remainingEntities: entityCount(device),
         entityIds: Object.keys(device.entities).map(Number),
-        compacted: compactResult.compacted ? compactResult.mapping : undefined,
         autoCreatedEntityId: autoCreatedEntityId != null ? autoCreatedEntityId : undefined
     });
 });
