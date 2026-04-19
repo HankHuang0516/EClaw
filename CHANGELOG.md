@@ -1,3 +1,10 @@
+# [1.1006.0](https://github.com/HankHuang0516/EClaw/compare/v1.1005.0...v1.1006.0) (2026-04-19)
+
+
+### Features
+
+* **invite:** referral stats dashboard on invite.html ([#1871](https://github.com/HankHuang0516/EClaw/issues/1871)) ([4ff753b](https://github.com/HankHuang0516/EClaw/commit/4ff753b5554dd4cfe31b684ffe603ae16abc16aa))
+
 # [1.1005.0](https://github.com/HankHuang0516/EClaw/compare/v1.1004.0...v1.1005.0) (2026-04-19)
 
 
