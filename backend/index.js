@@ -654,7 +654,24 @@ const BOT2BOT_REGEN_INTERVAL_MS = 60 * 1000; // regenerate 1 token every 60 seco
 const recentBroadcasts = {}; // deviceId -> [{fromEntityId, text, timestamp}] for dedup
 
 // Cross-device messaging
-const publicCodeIndex = {}; // code -> { deviceId, entityId }
+//
+// publicCodeIndex maps a 6-char public code → { deviceId, entityId }.
+// We wrap the underlying object in a Proxy whose `deleteProperty` trap
+// records every released code into `deletedPublicCodes` (a tombstone Set).
+// generatePublicCode() then refuses to re-issue any tombstoned code, which
+// prevents stale QR codes / saved cards from being silently routed to a
+// different entity that happened to grab the same 6 chars later (FK risk
+// flagged in the allocator audit, card_0256a6c043d20be35b8388d1).
+const _publicCodeStore = {};
+const deletedPublicCodes = new Set();
+const publicCodeIndex = new Proxy(_publicCodeStore, {
+    deleteProperty(target, prop) {
+        if (typeof prop === 'string' && prop in target) {
+            deletedPublicCodes.add(prop);
+        }
+        return delete target[prop];
+    },
+});
 const crossSpeakCounter = {};
 const crossDeviceOwnerRateLimit = {}; // owner-defined per-sender rate limit timestamps
 const CROSS_SPEAK_MAX_MESSAGES = 4; // stricter limit for cross-device messages
@@ -858,6 +875,7 @@ async function initPersistence() {
     // Build public code index and backfill any missing codes
     buildPublicCodeIndex();
     await backfillPublicCodes();
+    await loadTombstonesFromTrash();
 
     // Load DB-approved skill contributions (supplements git-tracked skill-templates.json)
     if (usePostgreSQL) await loadApprovedContributions();
@@ -3303,18 +3321,47 @@ function generateBotSecret() {
     return crypto.randomBytes(16).toString('hex');
 }
 
-// Helper: Generate 6-char public code for cross-device messaging (cryptographically secure)
+// Helper: Generate 6-char public code for cross-device messaging (cryptographically secure).
+// Rejects codes currently in publicCodeIndex AND codes in the tombstone set
+// (deletedPublicCodes), so a freed code is never re-handed-out — stale QR / saved
+// cards can never silently land on a different entity.
 function generatePublicCode() {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    for (let attempt = 0; attempt < 10; attempt++) {
+    for (let attempt = 0; attempt < 20; attempt++) {
         const bytes = crypto.randomBytes(6);
         let code = '';
         for (let i = 0; i < 6; i++) {
             code += chars.charAt(bytes[i] % chars.length);
         }
-        if (!publicCodeIndex[code]) return code;
+        if (!publicCodeIndex[code] && !deletedPublicCodes.has(code)) return code;
     }
-    throw new Error('Failed to generate unique public code after 10 attempts');
+    throw new Error('Failed to generate unique public code after 20 attempts');
+}
+
+// Bootstrap the tombstone set from entity_trash on startup, so freed codes from
+// previous server lifetimes (within trash retention) remain unreusable.
+async function loadTombstonesFromTrash() {
+    const pool = (typeof db._getPool === 'function') ? db._getPool() : null;
+    if (!pool) return 0;
+    try {
+        const r = await pool.query(
+            `SELECT public_code FROM entity_trash WHERE public_code IS NOT NULL`
+        );
+        let n = 0;
+        for (const row of r.rows) {
+            const code = row.public_code;
+            // Skip codes currently held by a live entity (live wins over trash).
+            if (code && !publicCodeIndex[code]) {
+                deletedPublicCodes.add(code);
+                n++;
+            }
+        }
+        if (n > 0) console.log(`[PublicCode] Tombstones loaded from trash: ${n}`);
+        return n;
+    } catch (err) {
+        console.warn('[PublicCode] Failed to load tombstones from trash:', err.message);
+        return 0;
+    }
 }
 
 // Helper: Build publicCodeIndex from all loaded devices
@@ -6324,6 +6371,8 @@ app.post('/api/device/entity-trash/:trashId/restore', async (req, res) => {
         // Rebuild public code index
         if (entity.publicCode) {
             publicCodeIndex[entity.publicCode] = { deviceId, entityId: slotId };
+            // Clear tombstone — the live entity now owns this code again.
+            deletedPublicCodes.delete(entity.publicCode);
         }
 
         // Remove from trash
@@ -10170,6 +10219,8 @@ app.post('/api/device/restore-entity-public-code', async (req, res) => {
     if (oldCode) delete publicCodeIndex[oldCode];
     entity.publicCode = publicCode;
     publicCodeIndex[publicCode] = { deviceId, entityId: eId };
+    // Explicit user reassignment owns this code now — clear any tombstone.
+    deletedPublicCodes.delete(publicCode);
     try {
         await db.saveDeviceData(deviceId, device);
         serverLog('info', 'entity_add', `PublicCode restored for entity ${eId}: ${oldCode} → ${publicCode}`, {
@@ -16385,3 +16436,6 @@ module.exports.io = io;
 module.exports.devices = devices;
 module.exports.safeEqual = safeEqual;
 module.exports._sanitizePublicHtml = sanitizePublicHtml;
+module.exports._generatePublicCode = generatePublicCode;
+module.exports._publicCodeIndex = publicCodeIndex;
+module.exports._deletedPublicCodes = deletedPublicCodes;
