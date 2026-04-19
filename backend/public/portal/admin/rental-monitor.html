@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <title data-i18n="rental_monitor_title">Rental Health Monitor — EClawbot</title>
-    <link rel="icon" type="image/png" href="assets/favicon-32.png">
-    <link rel="stylesheet" href="shared/style.css">
+    <link rel="icon" type="image/png" href="../assets/favicon-32.png">
+    <link rel="stylesheet" href="../shared/style.css">
     <style>
         .rm-hero { background: linear-gradient(135deg, #064e3b 0%, #0f766e 100%); color: #fff; border-radius: var(--radius); padding: 24px; margin-bottom: 18px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
         .rm-hero h2 { font-size: 20px; font-weight: 800; margin: 0 0 4px 0; }
@@ -43,6 +43,7 @@
         .rm-pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
         .rm-pill.ok { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
         .rm-pill.bad { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+        .rm-pill.muted { background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
 
         .rm-meta { font-size: 11px; color: var(--text-secondary); margin-top: 8px; font-variant-numeric: tabular-nums; }
         .rm-error-banner { padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid #ef4444; background: rgba(239,68,68,0.1); color: #ef4444; font-size: 13px; margin-bottom: 14px; }
@@ -110,16 +111,16 @@
     </main>
 
     <div id="footerContainer"></div>
-    <script src="shared/api.js"></script>
-    <script src="shared/nav.js"></script>
-    <script src="shared/auth.js"></script>
-    <script src="../shared/telemetry.js"></script>
-    <script src="../shared/i18n.js"></script>
+    <script src="../shared/api.js"></script>
+    <script src="../shared/nav.js"></script>
+    <script src="../shared/auth.js"></script>
+    <script src="../../shared/telemetry.js"></script>
+    <script src="../../shared/i18n.js"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <script src="shared/socket.js"></script>
-    <script src="shared/footer.js"></script>
+    <script src="../shared/socket.js"></script>
+    <script src="../shared/footer.js"></script>
     <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
-    <script src="shared/ai-chat.js"></script>
+    <script src="../shared/ai-chat.js"></script>
 
     <script>
         const REFRESH_INTERVAL_SEC = 30;
@@ -260,10 +261,14 @@
                 tdRegion.textContent = p.region || '—';
                 const tdStatus = document.createElement('td');
                 const pill = document.createElement('span');
-                pill.className = `rm-pill ${p.connected ? 'ok' : 'bad'}`;
-                pill.textContent = p.connected
-                    ? tt('rental_monitor_pub_connected', 'Connected')
-                    : tt('rental_monitor_pub_disconnected', 'Disconnected');
+                const state = p.state || (p.connected ? 'connected' : 'disconnected');
+                let pillClass = 'bad';
+                let labelKey = 'rental_monitor_pub_disconnected';
+                let labelFb = 'Disconnected';
+                if (state === 'connected') { pillClass = 'ok'; labelKey = 'rental_monitor_pub_connected'; labelFb = 'Connected'; }
+                else if (state === 'unconfigured') { pillClass = 'muted'; labelKey = 'rental_monitor_pub_unconfigured'; labelFb = 'Not configured'; }
+                pill.className = `rm-pill ${pillClass}`;
+                pill.textContent = tt(labelKey, labelFb);
                 tdStatus.appendChild(pill);
                 tr.appendChild(tdName);
                 tr.appendChild(tdRegion);
@@ -317,6 +322,24 @@
             });
         }
 
+        async function verifyAdminGate() {
+            const auth = getAuthQuery();
+            if (!auth) return false;
+            try {
+                const res = await fetch(`/api/admin/ping?${auth}`, { credentials: 'include' });
+                if (res.status === 200) return true;
+                return false;
+            } catch (_) { return false; }
+        }
+
+        function renderAccessDenied() {
+            const msg = tt('admin_access_denied', 'Access denied — admin only. Redirecting to portal…');
+            document.body.innerHTML = `<main class="container" style="max-width:520px;margin:80px auto;padding:24px;text-align:center;">`
+                + `<h2 style="font-size:18px;margin:0 0 12px 0;">🔒 ${msg}</h2>`
+                + `<p style="font-size:13px;color:var(--text-secondary);margin:0;"><a href="/portal/">/portal/</a></p></main>`;
+            setTimeout(() => { window.location.href = '/portal/'; }, 3000);
+        }
+
         async function init() {
             if (typeof i18n !== 'undefined' && typeof i18n.apply === 'function') {
                 try { i18n.apply(); } catch {}
@@ -328,6 +351,8 @@
                     if (!user) return; // checkAuth redirects to login
                 }
             } catch (_) { /* ignore — proceed with localStorage fallback */ }
+            const isAdmin = await verifyAdminGate();
+            if (!isAdmin) { renderAccessDenied(); return; }
             await refresh();
             timerHandle = setInterval(tick, 1000);
         }

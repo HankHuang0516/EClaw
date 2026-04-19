@@ -163,11 +163,13 @@ let app;
 
 beforeAll(() => {
     process.env.MONITORING_KEY = 'test-monitoring-key-1234';
+    process.env.ADMIN_DEVICE_IDS = 'admin-device-1,admin-device-2';
     app = require('../../index');
 });
 
 afterAll(async () => {
     delete process.env.MONITORING_KEY;
+    delete process.env.ADMIN_DEVICE_IDS;
     const { httpServer } = require('../../index');
     await new Promise(resolve => httpServer.close(resolve));
     jest.resetModules();
@@ -214,10 +216,203 @@ describe('GET /api/monitoring/rental-health auth', () => {
         expect(res.status).toBe(200);
     });
 
-    it('rejects deviceId without any secret with 401', async () => {
+    it('rejects non-admin deviceId with 403', async () => {
+        // Admin gate: deviceId not in ADMIN_DEVICE_IDS → 403 (not 401)
         const res = await request(app)
-            .get('/api/monitoring/rental-health?deviceId=does-not-exist');
+            .get('/api/monitoring/rental-health?deviceId=not-an-admin&deviceSecret=whatever');
+        expect(res.status).toBe(403);
+    });
+
+    it('rejects admin deviceId without any secret with 401', async () => {
+        const res = await request(app)
+            .get('/api/monitoring/rental-health?deviceId=admin-device-1');
         expect(res.status).toBe(401);
+    });
+
+    it('rejects admin deviceId with wrong deviceSecret with 401', async () => {
+        // admin-device-1 is in allowlist but no such device exists in memory
+        const res = await request(app)
+            .get('/api/monitoring/rental-health?deviceId=admin-device-1&deviceSecret=wrong');
+        expect(res.status).toBe(401);
+    });
+});
+
+describe('GET /api/admin/ping', () => {
+    it('rejects missing deviceId with 401', async () => {
+        const res = await request(app).get('/api/admin/ping');
+        expect(res.status).toBe(401);
+    });
+
+    it('rejects non-admin deviceId with 403', async () => {
+        const res = await request(app).get('/api/admin/ping?deviceId=not-an-admin');
+        expect(res.status).toBe(403);
+    });
+
+    it('accepts admin deviceId and echoes it back', async () => {
+        const res = await request(app).get('/api/admin/ping?deviceId=admin-device-1');
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ success: true, admin: true, deviceId: 'admin-device-1' });
+    });
+
+    it('accepts deviceId via x-device-id header', async () => {
+        const res = await request(app).get('/api/admin/ping').set('X-Device-Id', 'admin-device-2');
+        expect(res.status).toBe(200);
+        expect(res.body.deviceId).toBe('admin-device-2');
+    });
+});
+
+describe('classifyPublisher (threshold math)', () => {
+    const { _classifyPublisher: classify } = require('../../index');
+
+    it('configured platform with no error → connected', () => {
+        expect(classify({ id: 'hashnode', configured: true })).toBe('connected');
+    });
+
+    it('configured but lastError → disconnected', () => {
+        expect(classify({ id: 'hashnode', configured: true, error: 'token expired' })).toBe('disconnected');
+    });
+
+    it('configured but expiresAt in past → disconnected', () => {
+        expect(classify({ id: 'hashnode', configured: true, expiresAt: Date.now() - 1000 })).toBe('disconnected');
+    });
+
+    it('configured with future expiresAt → connected', () => {
+        expect(classify({ id: 'hashnode', configured: true, expiresAt: Date.now() + 1000 })).toBe('connected');
+    });
+
+    it('unconfigured platform with no setup trace → unconfigured', () => {
+        expect(classify({ id: 'reddit', configured: false })).toBe('unconfigured');
+    });
+
+    it('wordpress unconfigured but CLIENT_ID+SECRET set → disconnected (pending OAuth)', () => {
+        const prev = [process.env.WORDPRESS_CLIENT_ID, process.env.WORDPRESS_CLIENT_SECRET];
+        process.env.WORDPRESS_CLIENT_ID = 'x';
+        process.env.WORDPRESS_CLIENT_SECRET = 'y';
+        try {
+            expect(classify({ id: 'wordpress', configured: false })).toBe('disconnected');
+        } finally {
+            process.env.WORDPRESS_CLIENT_ID = prev[0] || '';
+            process.env.WORDPRESS_CLIENT_SECRET = prev[1] || '';
+            if (!prev[0]) delete process.env.WORDPRESS_CLIENT_ID;
+            if (!prev[1]) delete process.env.WORDPRESS_CLIENT_SECRET;
+        }
+    });
+
+    it('wordpress unconfigured + no CLIENT_ID → unconfigured', () => {
+        const prev = [process.env.WORDPRESS_CLIENT_ID, process.env.WORDPRESS_CLIENT_SECRET];
+        delete process.env.WORDPRESS_CLIENT_ID;
+        delete process.env.WORDPRESS_CLIENT_SECRET;
+        try {
+            expect(classify({ id: 'wordpress', configured: false })).toBe('unconfigured');
+        } finally {
+            if (prev[0]) process.env.WORDPRESS_CLIENT_ID = prev[0];
+            if (prev[1]) process.env.WORDPRESS_CLIENT_SECRET = prev[1];
+        }
+    });
+});
+
+describe('GET /api/monitoring/rental-health threshold math (status)', () => {
+    // Helper to fetch response with MONITORING_KEY (bypasses admin gate).
+    const fetchHealth = () => request(app).get('/api/monitoring/rental-health?key=test-monitoring-key-1234');
+
+    it('1 disconnected → yellow (was red, intentionally de-escalated)', async () => {
+        // Simulate by forcing WP disconnected via CLIENT_ID env (and no token).
+        const prev = [process.env.WORDPRESS_CLIENT_ID, process.env.WORDPRESS_CLIENT_SECRET];
+        process.env.WORDPRESS_CLIENT_ID = 'x';
+        process.env.WORDPRESS_CLIENT_SECRET = 'y';
+        try {
+            const res = await fetchHealth();
+            expect(res.status).toBe(200);
+            // WP is disconnected; all others unconfigured. DB is up. Status should be yellow.
+            expect(res.body.thresholds.publisherCounts.disconnected).toBeGreaterThanOrEqual(1);
+            expect(res.body.thresholds.status).toBe('yellow');
+        } finally {
+            process.env.WORDPRESS_CLIENT_ID = prev[0] || '';
+            process.env.WORDPRESS_CLIENT_SECRET = prev[1] || '';
+            if (!prev[0]) delete process.env.WORDPRESS_CLIENT_ID;
+            if (!prev[1]) delete process.env.WORDPRESS_CLIENT_SECRET;
+        }
+    });
+
+    it('unconfigured platforms alone → green (not red)', async () => {
+        // No WP env set → WP becomes unconfigured, others unconfigured too.
+        delete process.env.WORDPRESS_CLIENT_ID;
+        delete process.env.WORDPRESS_CLIENT_SECRET;
+        const res = await fetchHealth();
+        expect(res.status).toBe(200);
+        expect(res.body.thresholds.publisherCounts.disconnected).toBe(0);
+        expect(res.body.thresholds.publisherCounts.unconfigured).toBeGreaterThan(0);
+        expect(res.body.thresholds.status).toBe('green');
+    });
+
+    it('publisherCounts and state present on each publisher', async () => {
+        const res = await fetchHealth();
+        expect(res.body.thresholds.publisherCounts).toMatchObject({
+            connected: expect.any(Number),
+            disconnected: expect.any(Number),
+            unconfigured: expect.any(Number),
+        });
+        expect(res.body.publishers[0].state).toMatch(/^(connected|disconnected|unconfigured)$/);
+    });
+
+    it('3+ disconnected → red (hits publisherDisconnectedRed boundary)', async () => {
+        // Force 3 platforms into disconnected state by setting configured=true + error
+        // on 3 of them. Easiest: reach into articlePublisher and mock getPlatformsStatus.
+        const articlePublisher = require('../../article-publisher');
+        const origFn = articlePublisher.getPlatformsStatus;
+        articlePublisher.getPlatformsStatus = () => ([
+            { id: 'blogger', name: 'Blogger', region: 'global', configured: true, error: 'token expired' },
+            { id: 'hashnode', name: 'Hashnode', region: 'global', configured: true, error: 'api quota exceeded' },
+            { id: 'devto', name: 'DEV.to', region: 'global', configured: true, error: 'unauthorized' },
+            { id: 'telegraph', name: 'Telegraph', region: 'global', configured: true },
+        ]);
+        try {
+            const res = await fetchHealth();
+            expect(res.status).toBe(200);
+            expect(res.body.thresholds.publisherCounts.disconnected).toBe(3);
+            expect(res.body.thresholds.status).toBe('red');
+            expect(res.body.thresholds.issues.some(i => i.startsWith('publisher_multi_disconnected:3'))).toBe(true);
+        } finally {
+            articlePublisher.getPlatformsStatus = origFn;
+        }
+    });
+
+    it('2 disconnected → yellow (not red — previous threshold was too aggressive)', async () => {
+        const articlePublisher = require('../../article-publisher');
+        const origFn = articlePublisher.getPlatformsStatus;
+        articlePublisher.getPlatformsStatus = () => ([
+            { id: 'blogger', name: 'Blogger', region: 'global', configured: true, error: 'token expired' },
+            { id: 'hashnode', name: 'Hashnode', region: 'global', configured: true, error: 'api quota exceeded' },
+            { id: 'telegraph', name: 'Telegraph', region: 'global', configured: true },
+            { id: 'reddit', name: 'Reddit', region: 'global', configured: false },
+        ]);
+        try {
+            const res = await fetchHealth();
+            expect(res.body.thresholds.publisherCounts.disconnected).toBe(2);
+            expect(res.body.thresholds.publisherCounts.unconfigured).toBe(1);
+            expect(res.body.thresholds.status).toBe('yellow');
+        } finally {
+            articlePublisher.getPlatformsStatus = origFn;
+        }
+    });
+});
+
+describe('GET /api/monitoring/rental-health admin-gate happy path', () => {
+    it('admin deviceId + valid deviceSecret → 200 (full admin auth path)', async () => {
+        // Inject a device into the in-memory store so admin auth can succeed.
+        const { devices } = require('../../index');
+        devices['admin-device-1'] = {
+            deviceSecret: 'admin-secret-xyz',
+            entities: {},
+        };
+        try {
+            const res = await request(app)
+                .get('/api/monitoring/rental-health?deviceId=admin-device-1&deviceSecret=admin-secret-xyz');
+            expect(res.status).toBe(200);
+            expect(res.body.success).toBe(true);
+        } finally {
+            delete devices['admin-device-1'];
+        }
     });
 });
 

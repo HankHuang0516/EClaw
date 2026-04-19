@@ -31,6 +31,51 @@ const compression = require('compression');
 
 const safeEqual = require('./safe-equal');
 
+// ============================================
+// ADMIN DEVICE GATE
+// Env-based allowlist of admin deviceIds (comma-separated).
+// Used to gate dev/ops endpoints that bypass normal user auth
+// (e.g. /api/admin/ping, /api/monitoring/rental-health when no MONITORING_KEY).
+// Separate from the PG user_accounts.is_admin flag which gates
+// user-account-scoped admin UI.
+// ============================================
+
+/**
+ * Parse ADMIN_DEVICE_IDS env at call time. Lazy so env changes (e.g. in tests
+ * or on Railway redeploy) are picked up without a restart-level cache bust.
+ */
+function getAdminDeviceIds() {
+    return new Set(
+        (process.env.ADMIN_DEVICE_IDS || '')
+            .split(',')
+            .map(s => s.trim())
+            .filter(Boolean)
+    );
+}
+
+/**
+ * Check admin-device gate. Extracts deviceId from query / body / x-device-id header
+ * (mirroring existing auth param conventions) and verifies it's in ADMIN_DEVICE_IDS.
+ * Returns { ok: true, deviceId } on success, or { ok: false, status, error } on failure.
+ * Never throws — caller writes the response.
+ */
+function requireAdmin(req) {
+    const deviceId = (req.query && req.query.deviceId)
+        || (req.body && req.body.deviceId)
+        || req.headers['x-device-id'];
+    if (!deviceId) {
+        return { ok: false, status: 401, error: 'deviceId required for admin-gated endpoint' };
+    }
+    const adminSet = getAdminDeviceIds();
+    if (adminSet.size === 0) {
+        return { ok: false, status: 503, error: 'ADMIN_DEVICE_IDS env not configured on server' };
+    }
+    if (!adminSet.has(deviceId)) {
+        return { ok: false, status: 403, error: 'admin access required' };
+    }
+    return { ok: true, deviceId };
+}
+
 const app = express();
 app.disable('x-powered-by');  // hide server technology from crawlers/attackers
 app.set('trust proxy', 1); // Railway reverse proxy — makes req.ip, req.protocol accurate
@@ -459,6 +504,13 @@ app.get('/c/:code', (req, res) => {
         return res.redirect(`/portal/chat.html?contact=${encodeURIComponent(req.params.code)}`);
     }
     res.sendFile(path.join(__dirname, 'public/portal/share-chat.html'));
+});
+
+// Legacy: rental-monitor moved to /portal/admin/rental-monitor.html in PR B
+// (admin-only gate). Redirect so old bookmarks still land somewhere sensible —
+// non-admins will bounce back to /portal/ from the admin hub's gate check.
+app.get('/portal/rental-monitor.html', (req, res) => {
+    res.redirect(301, '/portal/admin/rental-monitor.html');
 });
 
 app.use('/mission', express.static(path.join(__dirname, 'public'), {
@@ -2588,6 +2640,18 @@ const adminAuth = authModule.authMiddleware;
 const adminCheck = authModule.adminMiddleware;
 
 /**
+ * GET /api/admin/ping
+ * Lightweight admin-device verification used by /portal/admin/ pages at load time
+ * to decide whether to render or show "Access denied". Env-based — not the PG
+ * user_accounts.is_admin flag.
+ */
+app.get('/api/admin/ping', (req, res) => {
+    const gate = requireAdmin(req);
+    if (!gate.ok) return res.status(gate.status).json({ success: false, error: gate.error });
+    res.json({ success: true, admin: true, deviceId: gate.deviceId });
+});
+
+/**
  * GET /api/skill-templates/contributions
  * Admin: view full contribution history (all statuses).
  */
@@ -4011,20 +4075,67 @@ app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: Date.now(), build: SERVER_BUILD_TAG, uptime: process.uptime(), startedAt: SERVER_STARTED_AT.toISOString() });
 });
 
+// ============================================
+// MONITORING THRESHOLDS
+// Single source of truth for rental-health status tuning.
+// Each number has a specific rationale — bump carefully.
+// ============================================
+const MONITORING_THRESHOLDS = {
+    // DB ping latency over this triggers a yellow issue. Prod p95 is ~50-150ms,
+    // so 500ms is ~3-5× worst normal — real signal of pool/network trouble.
+    dbLatencyMaxMs: 500,
+    // Tombstone set size over this logs a warn. Not a hard limit, just a canary
+    // for public-code churn (deletions). 10k keeps memory cost trivial (<1MB).
+    tombstoneMaxSize: 10000,
+    // Publisher disconnected thresholds. Previous tuning (N≥2 → red) was too
+    // aggressive — WordPress OAuth pending alone tripped red. Re-tuned so only
+    // real disconnects (tokens expired / auth broken) count. Unconfigured
+    // platforms (no credentials set at all) are ignored for status color.
+    // 1 disc → yellow (ok, low prio). 2 disc → yellow (was red — too jumpy).
+    // 3+ disc → red (majority of configured publishers down = real fire).
+    publisherDisconnectedYellow: 1,
+    publisherDisconnectedRed: 3,
+};
+
+/**
+ * Classify a publisher into 'connected' | 'disconnected' | 'unconfigured'.
+ * Heuristics:
+ *   - configured=true → connected (unless lastError present → disconnected)
+ *   - configured=false + setup partially attempted (e.g. OAuth client env set
+ *     but no access token) → disconnected (broken auth, needs attention)
+ *   - configured=false + no setup trace → unconfigured (never set up, ignore)
+ */
+function classifyPublisher(p) {
+    if (p.configured) {
+        if (p.error || p.lastError) return 'disconnected';
+        if (p.expiresAt && Number(p.expiresAt) < Date.now()) return 'disconnected';
+        return 'connected';
+    }
+    // WordPress: if CLIENT_ID+SECRET set but no token, OAuth flow is pending
+    // — treat as disconnected (admin needs to finish auth).
+    if (p.id === 'wordpress' && process.env.WORDPRESS_CLIENT_ID && process.env.WORDPRESS_CLIENT_SECRET) {
+        return 'disconnected';
+    }
+    return 'unconfigured';
+}
+
 // GET /api/monitoring/rental-health — aggregated rental fleet + DB + publisher status.
-// Auth: any of (a) MONITORING_KEY env via ?key= / X-Monitoring-Key header,
-// (b) deviceId+deviceSecret query (device-admin), (c) deviceId+entityId+botSecret query
-// (bot-scoped — used by the kanban cron probe).
+// Auth: either (a) MONITORING_KEY env via ?key= / X-Monitoring-Key header (for
+// external cron), OR (b) admin-device gate — deviceId in ADMIN_DEVICE_IDS
+// combined with a valid deviceSecret OR entityId+botSecret.
+// Non-admin bots CANNOT read this endpoint (previous behavior was too open).
 app.get('/api/monitoring/rental-health', async (req, res) => {
     const monitoringKey = process.env.MONITORING_KEY;
     const providedKey = req.query.key || req.headers['x-monitoring-key'];
     const keyOk = monitoringKey && providedKey && safeEqual(monitoringKey, String(providedKey));
     if (!keyOk) {
-        const { deviceId, deviceSecret, botSecret, entityId } = req.query;
-        if (!deviceId || (!deviceSecret && !botSecret)) {
-            return res.status(401).json({ success: false, error: 'monitoring key, deviceId+deviceSecret, or deviceId+entityId+botSecret required' });
+        const gate = requireAdmin(req);
+        if (!gate.ok) return res.status(gate.status).json({ success: false, error: gate.error });
+        const { deviceSecret, botSecret, entityId } = req.query;
+        if (!deviceSecret && !botSecret) {
+            return res.status(401).json({ success: false, error: 'deviceSecret or entityId+botSecret required' });
         }
-        const device = devices[deviceId];
+        const device = devices[gate.deviceId];
         if (!device) {
             return res.status(401).json({ success: false, error: 'invalid credentials' });
         }
@@ -4040,7 +4151,7 @@ app.get('/api/monitoring/rental-health', async (req, res) => {
         }
     }
 
-    const TOMBSTONE_WARN = 10000;
+    const { dbLatencyMaxMs, tombstoneMaxSize, publisherDisconnectedYellow, publisherDisconnectedRed } = MONITORING_THRESHOLDS;
     const issues = [];
     let dbStatus = 'down';
     let dbLatencyMs = null;
@@ -4051,7 +4162,7 @@ app.get('/api/monitoring/rental-health', async (req, res) => {
         await chatPool.query('SELECT 1');
         dbLatencyMs = Date.now() - t0;
         dbStatus = 'up';
-        if (dbLatencyMs > 500) issues.push(`db_latency_high:${dbLatencyMs}ms`);
+        if (dbLatencyMs > dbLatencyMaxMs) issues.push(`db_latency_high:${dbLatencyMs}ms`);
 
         try {
             const aggSql = `SELECT
@@ -4077,28 +4188,40 @@ app.get('/api/monitoring/rental-health', async (req, res) => {
     }
 
     const tombstoneSize = deletedPublicCodes.size;
-    if (tombstoneSize > TOMBSTONE_WARN) issues.push(`tombstone_size_high:${tombstoneSize}`);
+    if (tombstoneSize > tombstoneMaxSize) issues.push(`tombstone_size_high:${tombstoneSize}`);
     const publicCodeIndexSize = Object.keys(_publicCodeStore).length;
 
     let platforms = [];
     try {
-        platforms = articlePublisher.getPlatformsStatus().map(p => ({
-            id: p.id,
-            name: p.name,
-            connected: !!p.configured,
-            lastError: p.error || null,
-            expiresAt: p.expiresAt || null,
-        }));
+        platforms = articlePublisher.getPlatformsStatus().map(p => {
+            const state = classifyPublisher(p);
+            return {
+                id: p.id,
+                name: p.name,
+                region: p.region || null,
+                state,
+                connected: state === 'connected',  // kept for back-compat with existing dashboard
+                lastError: p.error || null,
+                expiresAt: p.expiresAt || null,
+            };
+        });
     } catch (e) {
         issues.push(`publisher_status_failed:${e.message}`);
     }
-    const disconnectedPlatforms = platforms.filter(p => !p.connected);
-    if (disconnectedPlatforms.length === 1) issues.push(`publisher_disconnected:${disconnectedPlatforms[0].id}`);
-    if (disconnectedPlatforms.length > 1) issues.push(`publisher_multi_disconnected:${disconnectedPlatforms.length}`);
+    const disconnectedPlatforms = platforms.filter(p => p.state === 'disconnected');
+    const unconfiguredPlatforms = platforms.filter(p => p.state === 'unconfigured');
+    if (disconnectedPlatforms.length === 1) {
+        issues.push(`publisher_disconnected:${disconnectedPlatforms[0].id}`);
+    } else if (disconnectedPlatforms.length > 1) {
+        issues.push(`publisher_multi_disconnected:${disconnectedPlatforms.length}`);
+    }
 
     let status = 'green';
-    if (dbStatus === 'down' || disconnectedPlatforms.length > 1) status = 'red';
-    else if (issues.length > 0) status = 'yellow';
+    if (dbStatus === 'down' || disconnectedPlatforms.length >= publisherDisconnectedRed) {
+        status = 'red';
+    } else if (issues.length > 0) {
+        status = 'yellow';
+    }
 
     res.json({
         success: true,
@@ -4135,7 +4258,17 @@ app.get('/api/monitoring/rental-health', async (req, res) => {
         thresholds: {
             status,
             issues,
-            limits: { dbLatencyMaxMs: 500, tombstoneMaxSize: TOMBSTONE_WARN },
+            limits: {
+                dbLatencyMaxMs,
+                tombstoneMaxSize,
+                publisherDisconnectedYellow,
+                publisherDisconnectedRed,
+            },
+            publisherCounts: {
+                connected: platforms.length - disconnectedPlatforms.length - unconfiguredPlatforms.length,
+                disconnected: disconnectedPlatforms.length,
+                unconfigured: unconfiguredPlatforms.length,
+            },
         },
     });
 });
@@ -16573,3 +16706,6 @@ module.exports._sanitizePublicHtml = sanitizePublicHtml;
 module.exports._generatePublicCode = generatePublicCode;
 module.exports._publicCodeIndex = publicCodeIndex;
 module.exports._deletedPublicCodes = deletedPublicCodes;
+module.exports._classifyPublisher = classifyPublisher;
+module.exports._MONITORING_THRESHOLDS = MONITORING_THRESHOLDS;
+module.exports._requireAdmin = requireAdmin;
