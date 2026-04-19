@@ -1,3 +1,10 @@
+# [1.1004.0](https://github.com/HankHuang0516/EClaw/compare/v1.1003.10...v1.1004.0) (2026-04-19)
+
+
+### Features
+
+* **dashboard:** add invite friends CTA banner ([#1869](https://github.com/HankHuang0516/EClaw/issues/1869)) ([cdd4f26](https://github.com/HankHuang0516/EClaw/commit/cdd4f2606832415204e9fd7a33d3df7654a7d3d0))
+
 ## [1.1003.10](https://github.com/HankHuang0516/EClaw/compare/v1.1003.9...v1.1003.10) (2026-04-19)
 
 
