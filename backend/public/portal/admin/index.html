@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title data-i18n="admin_hub_title">[admin] EClaw 管理員工具</title>
+    <link rel="icon" type="image/png" href="../assets/favicon-32.png">
+    <link rel="stylesheet" href="../shared/style.css">
+    <style>
+        .ah-hero { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: #fff; border-radius: var(--radius); padding: 24px; margin-bottom: 18px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; }
+        .ah-hero h2 { font-size: 20px; font-weight: 800; margin: 0 0 4px 0; display: flex; align-items: center; gap: 10px; }
+        .ah-hero p { opacity: 0.85; font-size: 13px; margin: 0; }
+        .ah-badge { background: #ef4444; color: #fff; font-size: 11px; padding: 2px 8px; border-radius: var(--radius); font-weight: 700; letter-spacing: 0.5px; }
+
+        .ah-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+        .ah-card { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 16px; text-decoration: none; color: var(--text); display: flex; flex-direction: column; gap: 6px; transition: border-color 0.15s, transform 0.15s; }
+        .ah-card:hover { border-color: var(--primary); transform: translateY(-1px); }
+        .ah-card.disabled { opacity: 0.55; cursor: not-allowed; pointer-events: none; }
+        .ah-card-title { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .ah-card-desc { font-size: 12px; color: var(--text-secondary); }
+        .ah-card-soon { font-size: 10px; color: #f59e0b; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+        .ah-section-title { font-size: 13px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin: 18px 0 10px 0; }
+        .ah-footnote { font-size: 11px; color: var(--text-secondary); margin-top: 24px; text-align: center; opacity: 0.7; }
+    </style>
+</head>
+<body>
+    <div id="navContainer"></div>
+
+    <main class="container" style="max-width: 960px; margin: 24px auto; padding: 0 16px;">
+        <div class="ah-hero">
+            <div>
+                <h2><span class="ah-badge" data-i18n="admin_hub_badge">ADMIN</span> <span data-i18n="admin_hub_title">[admin] EClaw 管理員工具</span></h2>
+                <p data-i18n="admin_hub_subtitle">Dev + ops tooling. Non-admin devices are redirected back to the portal.</p>
+            </div>
+        </div>
+
+        <h3 class="ah-section-title" data-i18n="admin_hub_section_monitoring">Monitoring</h3>
+        <div class="ah-grid">
+            <a class="ah-card" href="/portal/admin/rental-monitor.html">
+                <div class="ah-card-title">🩺 <span data-i18n="admin_hub_card_rental_monitor">Rental Health Monitor</span></div>
+                <div class="ah-card-desc" data-i18n="admin_hub_card_rental_monitor_desc">DB latency, tombstone growth, publisher integration status, fleet counts.</div>
+            </a>
+        </div>
+
+        <h3 class="ah-section-title" data-i18n="admin_hub_section_future">Planned</h3>
+        <div class="ah-grid">
+            <div class="ah-card disabled">
+                <div class="ah-card-title">📊 <span data-i18n="admin_hub_card_sys_metrics">System metrics</span></div>
+                <div class="ah-card-desc" data-i18n="admin_hub_card_sys_metrics_desc">CPU / memory / socket count / request rate.</div>
+                <div class="ah-card-soon" data-i18n="admin_hub_card_soon">Coming soon</div>
+            </div>
+            <div class="ah-card disabled">
+                <div class="ah-card-title">🔍 <span data-i18n="admin_hub_card_log_browser">Error log browser</span></div>
+                <div class="ah-card-desc" data-i18n="admin_hub_card_log_browser_desc">Filter server_logs by category, level, time window.</div>
+                <div class="ah-card-soon" data-i18n="admin_hub_card_soon">Coming soon</div>
+            </div>
+            <div class="ah-card disabled">
+                <div class="ah-card-title">🎛️ <span data-i18n="admin_hub_card_feature_flags">Feature flags</span></div>
+                <div class="ah-card-desc" data-i18n="admin_hub_card_feature_flags_desc">Toggle experimental features per device / globally.</div>
+                <div class="ah-card-soon" data-i18n="admin_hub_card_soon">Coming soon</div>
+            </div>
+            <div class="ah-card disabled">
+                <div class="ah-card-title">👥 <span data-i18n="admin_hub_card_admin_users">Admin users management</span></div>
+                <div class="ah-card-desc" data-i18n="admin_hub_card_admin_users_desc">Inspect + rotate entries in ADMIN_DEVICE_IDS.</div>
+                <div class="ah-card-soon" data-i18n="admin_hub_card_soon">Coming soon</div>
+            </div>
+        </div>
+
+        <div class="ah-footnote" data-i18n="admin_hub_footnote">僅管理員可見 — 非管理員會在首頁載入時看到 403 提示並被引導回 /portal/</div>
+    </main>
+
+    <div id="footerContainer"></div>
+    <script src="../shared/api.js"></script>
+    <script src="../shared/nav.js"></script>
+    <script src="../shared/auth.js"></script>
+    <script src="../../shared/telemetry.js"></script>
+    <script src="../../shared/i18n.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="../shared/socket.js"></script>
+    <script src="../shared/footer.js"></script>
+    <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
+    <script src="../shared/ai-chat.js"></script>
+
+    <script>
+        function tt(k, fb) { return (typeof i18n !== 'undefined' ? i18n.t(k) : null) || fb; }
+
+        function getAuthQuery() {
+            const u = window.currentUser || {};
+            let deviceId = u.deviceId;
+            let deviceSecret = u.deviceSecret;
+            if (!deviceId || !deviceSecret) {
+                try {
+                    deviceId = deviceId || localStorage.getItem('deviceId');
+                    deviceSecret = deviceSecret || localStorage.getItem('deviceSecret');
+                } catch (_) { /* ignore */ }
+            }
+            if (!deviceId) return null;
+            return `deviceId=${encodeURIComponent(deviceId)}`;
+        }
+
+        async function verifyAdminGate() {
+            const auth = getAuthQuery();
+            if (!auth) return false;
+            try {
+                const res = await fetch(`/api/admin/ping?${auth}`, { credentials: 'include' });
+                return res.status === 200;
+            } catch (_) { return false; }
+        }
+
+        function renderAccessDenied() {
+            const msg = tt('admin_access_denied', 'Access denied — admin only. Redirecting to portal…');
+            document.body.innerHTML = `<main class="container" style="max-width:520px;margin:80px auto;padding:24px;text-align:center;">`
+                + `<h2 style="font-size:18px;margin:0 0 12px 0;">🔒 ${msg}</h2>`
+                + `<p style="font-size:13px;color:var(--text-secondary);margin:0;"><a href="/portal/">/portal/</a></p></main>`;
+            setTimeout(() => { window.location.href = '/portal/'; }, 3000);
+        }
+
+        async function init() {
+            if (typeof i18n !== 'undefined' && typeof i18n.apply === 'function') {
+                try { i18n.apply(); } catch {}
+            }
+            try {
+                if (typeof checkAuth === 'function') {
+                    const user = await checkAuth();
+                    if (!user) return; // redirects to login
+                }
+            } catch (_) { /* ignore */ }
+            const isAdmin = await verifyAdminGate();
+            if (!isAdmin) renderAccessDenied();
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
