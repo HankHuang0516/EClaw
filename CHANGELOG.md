@@ -1,3 +1,10 @@
+# [1.1012.0](https://github.com/HankHuang0516/EClaw/compare/v1.1011.0...v1.1012.0) (2026-04-19)
+
+
+### Features
+
+* **admin:** gate rental monitor + retune publisher thresholds ([#1877](https://github.com/HankHuang0516/EClaw/issues/1877)) ([85997d5](https://github.com/HankHuang0516/EClaw/commit/85997d58e9dfa0cb0ae16a268e2c381d54f47ebd))
+
 # [1.1011.0](https://github.com/HankHuang0516/EClaw/compare/v1.1010.0...v1.1011.0) (2026-04-19)
 
 
