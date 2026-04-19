@@ -4012,19 +4012,30 @@ app.get('/api/health', (req, res) => {
 });
 
 // GET /api/monitoring/rental-health — aggregated rental fleet + DB + publisher status.
-// Auth: either MONITORING_KEY env var via ?key= / X-Monitoring-Key header,
-// OR a valid deviceId+deviceSecret pair (same pattern as /api/logs).
+// Auth: any of (a) MONITORING_KEY env via ?key= / X-Monitoring-Key header,
+// (b) deviceId+deviceSecret query (device-admin), (c) deviceId+entityId+botSecret query
+// (bot-scoped — used by the kanban cron probe).
 app.get('/api/monitoring/rental-health', async (req, res) => {
     const monitoringKey = process.env.MONITORING_KEY;
     const providedKey = req.query.key || req.headers['x-monitoring-key'];
     const keyOk = monitoringKey && providedKey && safeEqual(monitoringKey, String(providedKey));
     if (!keyOk) {
-        const { deviceId, deviceSecret } = req.query;
-        if (!deviceId || !deviceSecret) {
-            return res.status(401).json({ success: false, error: 'monitoring key or deviceId+deviceSecret required' });
+        const { deviceId, deviceSecret, botSecret, entityId } = req.query;
+        if (!deviceId || (!deviceSecret && !botSecret)) {
+            return res.status(401).json({ success: false, error: 'monitoring key, deviceId+deviceSecret, or deviceId+entityId+botSecret required' });
         }
         const device = devices[deviceId];
-        if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+        if (!device) {
+            return res.status(401).json({ success: false, error: 'invalid credentials' });
+        }
+        let authed = false;
+        if (deviceSecret && safeEqual(device.deviceSecret, deviceSecret)) authed = true;
+        if (!authed && botSecret) {
+            const slot = parseInt(entityId);
+            const entity = device.entities && device.entities[slot];
+            if (entity && entity.botSecret && safeEqual(entity.botSecret, botSecret)) authed = true;
+        }
+        if (!authed) {
             return res.status(401).json({ success: false, error: 'invalid credentials' });
         }
     }

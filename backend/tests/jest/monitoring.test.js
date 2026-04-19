@@ -213,6 +213,12 @@ describe('GET /api/monitoring/rental-health auth', () => {
             .set('X-Monitoring-Key', 'test-monitoring-key-1234');
         expect(res.status).toBe(200);
     });
+
+    it('rejects deviceId without any secret with 401', async () => {
+        const res = await request(app)
+            .get('/api/monitoring/rental-health?deviceId=does-not-exist');
+        expect(res.status).toBe(401);
+    });
 });
 
 describe('GET /api/monitoring/rental-health happy path', () => {
