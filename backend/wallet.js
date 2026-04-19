@@ -1170,6 +1170,13 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
                     source: 'verify-google',
                     orderId: googleOrderId,
                     verified: !skippedVerification,
+                    // Persisted so the ack-retry sweep (ack-retry-sweep.js)
+                    // can re-invoke `:acknowledge` on this purchase if the
+                    // fire-and-forget ack below silently fails. Google auto-
+                    // refunds after 3 days of missing ack, so we MUST have
+                    // these fields to reconcile.
+                    packageName: GOOGLE_PACKAGE_NAME,
+                    purchaseToken,
                 },
             });
 
@@ -1185,24 +1192,63 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
             });
 
             // Fire-and-forget acknowledge AFTER ledger credit succeeded.
-            // If ack fails, the user keeps their ecoins; a retry cron can
-            // reconcile. Never block the response on this.
+            // If ack fails, the user keeps their ecoins; the ack-retry sweep
+            // (ack-retry-sweep.js, hourly cron) picks up any order whose
+            // ack_state != 'acked' within the Google 72h refund window.
+            // Never block the response on this.
             if (!skippedVerification) {
                 Promise.resolve()
                     .then(() => acknowledgeGooglePurchase(GOOGLE_PACKAGE_NAME, productId, purchaseToken))
                     .then((ackRes) => {
-                        if (!ackRes.ok) {
+                        if (ackRes.ok) {
+                            // Mark acked so the sweep skips this row.
+                            pool.query(
+                                `UPDATE topup_orders
+                                 SET ack_state = 'acked', ack_at = NOW(), ack_attempts = ack_attempts + 1
+                                 WHERE id = $1 AND ack_state <> 'acked'`,
+                                [order.id]
+                            ).catch((uErr) => {
+                                audit('warn', 'wallet', `ack_state update failed order=${order.id}`, {
+                                    userId, action: 'topup_ack', resource: order.id, result: 'state_update_failed',
+                                    metadata: { message: uErr && uErr.message },
+                                });
+                            });
+                        } else {
+                            // Ack failed: bump attempts so the sweep can
+                            // 3-strike it out faster.
+                            pool.query(
+                                `UPDATE topup_orders
+                                 SET ack_attempts = ack_attempts + 1
+                                 WHERE id = $1 AND ack_state = 'pending'`,
+                                [order.id]
+                            ).catch(() => {});
                             audit('warn', 'wallet', `google ack failed user=${userId} order=${order.id} err=${ackRes.error}`, {
                                 userId, action: 'topup_ack', resource: order.id, result: 'ack_failed',
                             });
                         }
                     })
                     .catch((ackErr) => {
+                        pool.query(
+                            `UPDATE topup_orders
+                             SET ack_attempts = ack_attempts + 1
+                             WHERE id = $1 AND ack_state = 'pending'`,
+                            [order.id]
+                        ).catch(() => {});
                         audit('warn', 'wallet', `google ack threw user=${userId} order=${order.id}`, {
                             userId, action: 'topup_ack', resource: order.id, result: 'ack_threw',
                             metadata: { message: ackErr && ackErr.message },
                         });
                     });
+            } else {
+                // Skipped verification (GOOGLE_PLAY_ALLOW_UNVERIFIED fallback).
+                // No ack is possible without a real token/GSA — mark the row
+                // so the sweep doesn't pick it up.
+                pool.query(
+                    `UPDATE topup_orders
+                     SET ack_state = 'acked', ack_at = NOW()
+                     WHERE id = $1 AND ack_state = 'pending'`,
+                    [order.id]
+                ).catch(() => {});
             }
 
             res.json({
