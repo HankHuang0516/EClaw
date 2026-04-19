@@ -130,6 +130,8 @@ ALTER TABLE topup_orders
 
 -- Only google_play rows need ack; partial index keeps it cheap. The sweep
 -- runs hourly and filters by (channel, ack_state, created_at window).
+-- 'failed' is terminal (3 retries exhausted) so exclude it too — matching
+-- the sweep's SELECT predicate keeps this partial index useful.
 CREATE INDEX IF NOT EXISTS idx_topup_ack_pending
     ON topup_orders(channel, ack_state, created_at)
-    WHERE channel = 'google_play' AND ack_state <> 'acked';
+    WHERE channel = 'google_play' AND ack_state <> 'acked' AND ack_state <> 'failed';

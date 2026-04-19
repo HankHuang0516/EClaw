@@ -11,10 +11,10 @@
  *     ack_attempts=0 on insert; on ack success → 'acked'; on ack failure
  *     → bump attempts (see wallet.js verify-google route).
  *   - This sweep runs hourly, retries every google_play row where
- *     ack_state != 'acked' AND created_at within last 72h (Google's auto-
- *     refund window). On success → mark 'acked'. On 3 consecutive failures
- *     → mark 'failed' and emit an audit warn so ops can investigate before
- *     the refund lands.
+ *     ack_state NOT IN ('acked','failed') AND created_at within last 72h
+ *     (Google's auto-refund window). On success → mark 'acked'. On 3
+ *     consecutive failures → mark 'failed' (terminal: no further retries)
+ *     and emit an audit warn so ops can investigate before the refund lands.
  *
  * The sweep is idempotent: :acknowledge on an already-acked purchase is a
  * no-op on Google's side (they return 200 or 'already acknowledged' — both
@@ -76,6 +76,7 @@ async function runAckRetrySweep({
              FROM topup_orders
              WHERE channel = 'google_play'
                AND ack_state <> 'acked'
+               AND ack_state <> 'failed'
                AND status = 'paid'
                AND created_at >= $1
              ORDER BY created_at ASC
