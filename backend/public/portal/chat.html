@@ -3821,13 +3821,19 @@
                         const isImage = (a.mimeType || '').startsWith('image/');
                         const sizeStr = a.size > 0 ? (a.size >= 1048576 ? (a.size / 1048576).toFixed(1) + ' MB' : Math.round(a.size / 1024) + ' KB') : '';
                         const icon = isImage ? '🖼️' : (a.mimeType || '').includes('pdf') ? '📄' : (a.mimeType || '').includes('video') ? '🎬' : '📎';
-                        return `<div class="msg-attachment" onclick="previewAttachment('${escapeHtml(a.fileId)}')">
+                        const fileIdAttr = escapeHtml(a.fileId);
+                        const filenameAttr = escapeHtml(a.filename || 'file');
+                        const editBtn = isTextEditableFilename(a.filename)
+                            ? `<button class="msg-attachment-btn" data-i18n="file_edit_btn" onclick="event.stopPropagation();openFileEditor('${fileIdAttr}','${filenameAttr}')">&#x270F;&#xFE0F; ${i18n.t('file_edit_btn') || '線上編輯'}</button>`
+                            : '';
+                        return `<div class="msg-attachment" onclick="previewAttachment('${fileIdAttr}')">
                             <span class="msg-attachment-icon">${icon}</span>
                             <div class="msg-attachment-info">
-                                <div class="msg-attachment-name">${escapeHtml(a.filename || 'file')}</div>
+                                <div class="msg-attachment-name">${filenameAttr}</div>
                                 ${sizeStr ? `<div class="msg-attachment-size">${sizeStr}</div>` : ''}
                             </div>
-                            <button class="msg-attachment-btn" onclick="event.stopPropagation();downloadAttachment('${escapeHtml(a.fileId)}','${escapeHtml(a.filename)}')">⬇ 下載</button>
+                            ${editBtn}
+                            <button class="msg-attachment-btn" onclick="event.stopPropagation();downloadAttachment('${fileIdAttr}','${filenameAttr}')">⬇ 下載</button>
                         </div>`;
                     }).join('');
                     attachmentsHtml = `<div class="msg-attachments">${cards}</div>`;
@@ -5659,6 +5665,237 @@
             });
         })();
 
+        // ── Online text editor (Monaco) ──
+        // Whitelist mirrors backend/files.js TEXT_EDIT_EXTENSIONS. The server
+        // is the source of truth — this list only hides the button for files
+        // that obviously aren't text. The server still rejects bad PUTs.
+        const TEXT_EDIT_EXTENSIONS = new Set([
+            'txt','md','markdown','json','jsonc','js','mjs','cjs','ts','tsx',
+            'jsx','py','yaml','yml','csv','tsv','html','htm','css','scss',
+            'less','xml','svg','sh','bash','zsh','go','rs','java','cpp','cc',
+            'cxx','hpp','h','c','kt','kts','swift','rb','php','sql','toml',
+            'ini','env','conf','log','gitignore','dockerfile','makefile'
+        ]);
+        const EXT_TO_MONACO_LANG = {
+            md:'markdown', markdown:'markdown', json:'json', jsonc:'json',
+            js:'javascript', mjs:'javascript', cjs:'javascript',
+            ts:'typescript', tsx:'typescript', jsx:'javascript',
+            py:'python', yaml:'yaml', yml:'yaml', csv:'plaintext', tsv:'plaintext',
+            html:'html', htm:'html', css:'css', scss:'scss', less:'less',
+            xml:'xml', svg:'xml', sh:'shell', bash:'shell', zsh:'shell',
+            go:'go', rs:'rust', java:'java', cpp:'cpp', cc:'cpp', cxx:'cpp',
+            hpp:'cpp', h:'cpp', c:'c', kt:'kotlin', kts:'kotlin',
+            swift:'swift', rb:'ruby', php:'php', sql:'sql', toml:'ini',
+            ini:'ini', env:'plaintext', conf:'plaintext', log:'plaintext',
+            gitignore:'plaintext', dockerfile:'dockerfile', makefile:'plaintext',
+            txt:'plaintext'
+        };
+        const FILE_EDIT_MAX_BYTES = 512 * 1024;
+
+        function _fileExt(filename) {
+            if (!filename || typeof filename !== 'string') return '';
+            const base = filename.split(/[/\\]/).pop();
+            if (!base) return '';
+            if (!base.includes('.')) return base.toLowerCase();
+            return base.split('.').pop().toLowerCase();
+        }
+        function isTextEditableFilename(filename) {
+            return TEXT_EDIT_EXTENSIONS.has(_fileExt(filename));
+        }
+        function _monacoLangForExt(ext) {
+            return EXT_TO_MONACO_LANG[ext] || 'plaintext';
+        }
+
+        let _fileMonacoEditor = null;
+        let _fileMonacoLoadPromise = null;
+        let _fileEditorBeforeUnload = null;
+        function _loadFileMonaco() {
+            if (_fileMonacoLoadPromise) return _fileMonacoLoadPromise;
+            const BASE = 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min';
+            _fileMonacoLoadPromise = new Promise((resolve, reject) => {
+                if (window.monaco) { resolve(window.monaco); return; }
+                const fail = (msg) => { _fileMonacoLoadPromise = null; reject(new Error(msg)); };
+                const s = document.createElement('script');
+                s.src = BASE + '/vs/loader.js';
+                s.onload = () => {
+                    window.require.config({ paths: { vs: BASE + '/vs' } });
+                    window.require(
+                        ['vs/editor/editor.main'],
+                        () => resolve(window.monaco),
+                        (err) => fail('Monaco main load failed: ' + (err && err.message ? err.message : err))
+                    );
+                };
+                s.onerror = () => fail('Monaco loader failed');
+                document.head.appendChild(s);
+            });
+            return _fileMonacoLoadPromise;
+        }
+
+        function closeFileEditor() {
+            const overlay = document.getElementById('fileEditorOverlay');
+            if (_fileMonacoEditor) {
+                try { _fileMonacoEditor.dispose(); } catch (e) {}
+                _fileMonacoEditor = null;
+            }
+            if (_fileEditorBeforeUnload) {
+                window.removeEventListener('beforeunload', _fileEditorBeforeUnload);
+                _fileEditorBeforeUnload = null;
+            }
+            if (overlay) overlay.remove();
+        }
+
+        async function openFileEditor(fileId, filename) {
+            if (!currentUser) return;
+            if (!isTextEditableFilename(filename)) {
+                showToast(i18n.t('file_edit_binary_reject') || 'Binary files cannot be edited online', 'error');
+                return;
+            }
+            const overlay = document.createElement('div');
+            overlay.id = 'fileEditorOverlay';
+            overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;';
+            overlay.innerHTML = `
+                <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--card-bg,#1A1A2E);border-bottom:1px solid var(--card-border,#333355);color:var(--text,#fff);">
+                    <span style="font-size:18px;">&#x270F;&#xFE0F;</span>
+                    <span id="fileEditorTitle" style="font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+                    <span id="fileEditorStatus" style="font-size:12px;color:var(--text-muted,#999);min-width:80px;text-align:right;"></span>
+                    <button class="btn btn-outline btn-sm" id="fileEditorDownloadBtn" data-i18n="file_edit_download_btn">&#x2B07; ${i18n.t('file_edit_download_btn') || '下載'}</button>
+                    <button class="btn btn-primary btn-sm" id="fileEditorSaveBtn" data-i18n="file_edit_save_btn">${i18n.t('file_edit_save_btn') || '儲存'}</button>
+                    <button class="btn btn-outline btn-sm" id="fileEditorCloseBtn" data-i18n="file_edit_close_btn">${i18n.t('file_edit_close_btn') || '關閉'}</button>
+                </div>
+                <div id="fileEditorBody" style="flex:1;min-height:0;background:#1e1e1e;color:#d4d4d4;display:flex;align-items:center;justify-content:center;font-size:13px;">
+                    ${i18n.t('file_edit_loading') || '載入中…'}
+                </div>`;
+            document.body.appendChild(overlay);
+            // Filename rendered as text (XSS-safe)
+            document.getElementById('fileEditorTitle').textContent = filename;
+
+            let isDirty = false;
+            let isClosing = false;
+            const titleEl = document.getElementById('fileEditorTitle');
+            const statusEl = document.getElementById('fileEditorStatus');
+            const saveBtn = document.getElementById('fileEditorSaveBtn');
+            const downloadBtn = document.getElementById('fileEditorDownloadBtn');
+            const closeBtn = document.getElementById('fileEditorCloseBtn');
+            const bodyEl = document.getElementById('fileEditorBody');
+
+            const setStatus = (txt) => { if (statusEl) statusEl.textContent = txt; };
+            const markDirty = () => {
+                if (isDirty) return;
+                isDirty = true;
+                titleEl.textContent = '* ' + filename;
+            };
+            const clearDirty = () => {
+                isDirty = false;
+                titleEl.textContent = filename;
+            };
+            _fileEditorBeforeUnload = (e) => {
+                if (!isDirty) return;
+                const msg = i18n.t('file_edit_unsaved_warn') || 'You have unsaved changes';
+                e.preventDefault();
+                e.returnValue = msg;
+                return msg;
+            };
+            window.addEventListener('beforeunload', _fileEditorBeforeUnload);
+
+            const requestClose = () => {
+                if (isClosing) return;
+                if (isDirty && !confirm(i18n.t('file_edit_unsaved_warn') || 'You have unsaved changes — close anyway?')) return;
+                isClosing = true;
+                closeFileEditor();
+            };
+            closeBtn.onclick = requestClose;
+            overlay.addEventListener('keydown', (e) => { if (e.key === 'Escape') requestClose(); });
+            downloadBtn.onclick = () => downloadAttachment(fileId, filename);
+
+            // Fetch content
+            let initialText = '';
+            try {
+                const params = new URLSearchParams({ deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret });
+                const res = await fetch(`/api/files/${encodeURIComponent(fileId)}/content?${params}`);
+                if (!res.ok) {
+                    let errMsg = '';
+                    try {
+                        const j = await res.json();
+                        if (res.status === 413) errMsg = i18n.t('file_edit_too_large') || 'File too large to edit online';
+                        else if (res.status === 415) errMsg = i18n.t('file_edit_binary_reject') || 'Binary file cannot be edited';
+                        else errMsg = j.error || ('HTTP ' + res.status);
+                    } catch { errMsg = 'HTTP ' + res.status; }
+                    showToast(errMsg, 'error');
+                    isClosing = true;
+                    closeFileEditor();
+                    return;
+                }
+                initialText = await res.text();
+            } catch (e) {
+                showToast('Load failed: ' + e.message, 'error');
+                isClosing = true;
+                closeFileEditor();
+                return;
+            }
+
+            let monaco;
+            try {
+                monaco = await _loadFileMonaco();
+            } catch (e) {
+                showToast(i18n.t('file_edit_save_error') || ('Editor load failed: ' + e.message), 'error');
+                isClosing = true;
+                closeFileEditor();
+                return;
+            }
+            if (isClosing) return; // user closed during load
+            bodyEl.innerHTML = '';
+            bodyEl.style.display = 'block';
+            _fileMonacoEditor = monaco.editor.create(bodyEl, {
+                value: initialText,
+                language: _monacoLangForExt(_fileExt(filename)),
+                theme: 'vs-dark',
+                automaticLayout: true,
+                minimap: { enabled: false },
+                fontSize: 13,
+                wordWrap: 'on',
+                scrollBeyondLastLine: false
+            });
+            _fileMonacoEditor.onDidChangeModelContent(() => markDirty());
+
+            saveBtn.onclick = async () => {
+                if (!_fileMonacoEditor || isClosing) return;
+                const content = _fileMonacoEditor.getValue();
+                const byteLen = new TextEncoder().encode(content).length;
+                if (byteLen > FILE_EDIT_MAX_BYTES) {
+                    showToast(i18n.t('file_edit_too_large') || 'File too large to save', 'error');
+                    return;
+                }
+                saveBtn.disabled = true;
+                setStatus(i18n.t('file_edit_loading') || 'Saving…');
+                try {
+                    const params = new URLSearchParams({ deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret });
+                    const res = await fetch(`/api/files/${encodeURIComponent(fileId)}?${params}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+                        body: content
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (isClosing) return; // user closed mid-save — suppress toast/status
+                    if (!res.ok || !data.success) {
+                        const msg = data.error || ('HTTP ' + res.status);
+                        showToast((i18n.t('file_edit_save_error') || 'Save failed') + ': ' + msg, 'error');
+                        setStatus('');
+                        return;
+                    }
+                    clearDirty();
+                    setStatus(i18n.t('file_edit_save_success') || 'Saved');
+                    showToast(i18n.t('file_edit_save_success') || 'Saved', 'success');
+                    setTimeout(() => { if (!isClosing) setStatus(''); }, 2500);
+                } catch (e) {
+                    if (isClosing) return;
+                    showToast((i18n.t('file_edit_save_error') || 'Save failed') + ': ' + e.message, 'error');
+                    setStatus('');
+                } finally {
+                    if (!isClosing) saveBtn.disabled = false;
+                }
+            };
+        }
+
         // ── Cleanup ──
         window.addEventListener('beforeunload', () => {
             if (refreshInterval) clearInterval(refreshInterval);
@@ -5667,6 +5904,7 @@
                 mediaRecorder.stop();
                 mediaRecorder.stream.getTracks().forEach(t => t.stop());
             }
+            closeFileEditor();
         });
     </script>
     </main>

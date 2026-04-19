@@ -43,6 +43,30 @@ const FILE_TTL_DAYS = 15;
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB per file
 const QUOTA_SOFT_BYTES = 500 * 1024 * 1024; // 500MB per device (soft cap)
 const SIGNED_URL_EXPIRES = 3600; // 1 hour
+const MAX_EDIT_SIZE = 512 * 1024; // 512KB cap for online text editing
+
+// File extensions allowed for online text editing (Monaco). Server is the
+// source of truth; the frontend mirrors this list but cannot widen it.
+const TEXT_EDIT_EXTENSIONS = new Set([
+    'txt', 'md', 'markdown', 'json', 'jsonc', 'js', 'mjs', 'cjs', 'ts', 'tsx',
+    'jsx', 'py', 'yaml', 'yml', 'csv', 'tsv', 'html', 'htm', 'css', 'scss',
+    'less', 'xml', 'svg', 'sh', 'bash', 'zsh', 'go', 'rs', 'java', 'cpp', 'cc',
+    'cxx', 'hpp', 'h', 'c', 'kt', 'kts', 'swift', 'rb', 'php', 'sql', 'toml',
+    'ini', 'env', 'conf', 'log', 'gitignore', 'dockerfile', 'makefile'
+]);
+
+function getExtension(filename) {
+    if (!filename || typeof filename !== 'string') return '';
+    const base = filename.split(/[/\\]/).pop();
+    if (!base) return '';
+    // Special handling for files like "Dockerfile" / "Makefile" with no dot.
+    if (!base.includes('.')) return base.toLowerCase();
+    return base.split('.').pop().toLowerCase();
+}
+
+function isTextEditable(filename) {
+    return TEXT_EDIT_EXTENSIONS.has(getExtension(filename));
+}
 
 // Multer — memory storage (stream directly to R2)
 const upload = multer({
@@ -241,6 +265,131 @@ module.exports = function filesModule(devices) {
         } catch (err) {
             console.error('[Files] List error:', err.message);
             return res.status(500).json({ success: false, error: 'List failed: ' + err.message });
+        }
+    });
+
+    // ─── GET /api/files/:fileId/content ──────────────────────────────────────
+    // Streams raw file bytes for the online editor. Refuses non-text files
+    // (extension whitelist, server-side enforced) and files >512KB.
+    router.get('/:fileId/content', async (req, res) => {
+        try {
+            const creds = resolveDevice(req);
+            if (!await authenticateDevice(pool, creds, devices)) {
+                return res.status(401).json({ success: false, error: 'Invalid credentials' });
+            }
+
+            const { fileId } = req.params;
+            const result = await pool.query(
+                'SELECT * FROM r2_files WHERE file_id = $1 AND device_id = $2 AND expires_at > NOW()',
+                [fileId, creds.deviceId]
+            );
+            if (!result.rows.length) {
+                return res.status(404).json({ success: false, error: 'File not found or expired' });
+            }
+
+            const file = result.rows[0];
+            if (!isTextEditable(file.filename)) {
+                return res.status(415).json({ success: false, error: 'binary_file', message: 'File type is not editable as text' });
+            }
+            if (parseInt(file.size) > MAX_EDIT_SIZE) {
+                return res.status(413).json({
+                    success: false,
+                    error: 'too_large',
+                    message: `File is too large to edit online (limit: ${Math.round(MAX_EDIT_SIZE / 1024)}KB)`,
+                    sizeBytes: parseInt(file.size),
+                    limitBytes: MAX_EDIT_SIZE,
+                });
+            }
+
+            const obj = await r2.send(new GetObjectCommand({ Bucket: BUCKET, Key: file.r2_key }));
+            const chunks = [];
+            for await (const chunk of obj.Body) chunks.push(chunk);
+            const buffer = Buffer.concat(chunks);
+
+            res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+            res.setHeader('Cache-Control', 'no-store');
+            res.setHeader('X-Eclaw-Filename', encodeURIComponent(file.filename));
+            return res.send(buffer);
+        } catch (err) {
+            console.error('[Files] Content read error:', err.message);
+            return res.status(500).json({ success: false, error: 'Read failed: ' + err.message });
+        }
+    });
+
+    // ─── PUT /api/files/:fileId ──────────────────────────────────────────────
+    // Overwrites the R2 object with new text content. Preserves fileId,
+    // ownerDeviceId, originalFilename, mime_type, and r2_key. Server-enforced
+    // text-extension whitelist and 512KB cap.
+    const putBodyParser = express.text({ type: 'text/*', limit: MAX_EDIT_SIZE + 4096 });
+    router.put('/:fileId', putBodyParser, async (req, res) => {
+        try {
+            const creds = resolveDevice(req);
+            if (!await authenticateDevice(pool, creds, devices)) {
+                return res.status(401).json({ success: false, error: 'Invalid credentials' });
+            }
+
+            const { fileId } = req.params;
+            const result = await pool.query(
+                'SELECT * FROM r2_files WHERE file_id = $1 AND device_id = $2 AND expires_at > NOW()',
+                [fileId, creds.deviceId]
+            );
+            if (!result.rows.length) {
+                return res.status(404).json({ success: false, error: 'File not found or expired' });
+            }
+
+            const file = result.rows[0];
+            if (!isTextEditable(file.filename)) {
+                return res.status(415).json({ success: false, error: 'binary_file', message: 'File type is not editable as text' });
+            }
+
+            // Accept either text/plain raw body or JSON {content: "..."}
+            let content;
+            const ctype = String(req.headers['content-type'] || '').toLowerCase();
+            if (ctype.startsWith('application/json')) {
+                if (!req.body || typeof req.body.content !== 'string') {
+                    return res.status(400).json({ success: false, error: 'Missing content field' });
+                }
+                content = req.body.content;
+            } else if (ctype.startsWith('text/')) {
+                content = typeof req.body === 'string' ? req.body : '';
+            } else {
+                return res.status(415).json({ success: false, error: 'Unsupported Content-Type; use text/plain or application/json' });
+            }
+
+            const buffer = Buffer.from(content, 'utf8');
+            if (buffer.length > MAX_EDIT_SIZE) {
+                return res.status(413).json({
+                    success: false,
+                    error: 'too_large',
+                    message: `Content exceeds ${Math.round(MAX_EDIT_SIZE / 1024)}KB limit`,
+                    sizeBytes: buffer.length,
+                    limitBytes: MAX_EDIT_SIZE,
+                });
+            }
+
+            await r2.send(new PutObjectCommand({
+                Bucket: BUCKET,
+                Key: file.r2_key,
+                Body: buffer,
+                ContentType: file.mime_type,
+                ContentLength: buffer.length,
+            }));
+
+            const updatedAt = new Date();
+            await pool.query(
+                'UPDATE r2_files SET size = $1 WHERE file_id = $2',
+                [buffer.length, fileId]
+            );
+
+            return res.json({
+                success: true,
+                fileId,
+                size: buffer.length,
+                updatedAt: updatedAt.toISOString(),
+            });
+        } catch (err) {
+            console.error('[Files] PUT error:', err.message);
+            return res.status(500).json({ success: false, error: 'Save failed: ' + err.message });
         }
     });
 
