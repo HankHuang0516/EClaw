@@ -105,3 +105,31 @@ CREATE INDEX IF NOT EXISTS idx_topup_status ON topup_orders(status);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_topup_external_txn
     ON topup_orders(channel, external_txn_id)
     WHERE external_txn_id IS NOT NULL;
+
+-- ============================================
+-- Google Play acknowledge retry (revenue-leak backstop)
+-- ============================================
+-- After /topup/verify-google credits the ledger, it fire-and-forgets the
+-- Google `:acknowledge` call. If that ack silently fails for >3 days Google
+-- auto-refunds the user — but our ledger already has the credit, so we'd
+-- quietly lose money. The sweep in ack-retry-sweep.js uses these columns
+-- to retry failed acks up to 3 times before alerting ops.
+--
+-- ack_state: 'pending' | 'acked' | 'failed'
+--   pending: ack hasn't been confirmed yet (initial state, or in-flight)
+--   acked:   Google returned 2xx/204 for :acknowledge
+--   failed:  3 retries exhausted; ops must investigate
+-- ack_attempts: monotonically-incrementing count of ack calls made.
+-- ack_at: timestamp of the successful ack (NULL if never acked).
+ALTER TABLE topup_orders
+    ADD COLUMN IF NOT EXISTS ack_state VARCHAR(16) NOT NULL DEFAULT 'pending';
+ALTER TABLE topup_orders
+    ADD COLUMN IF NOT EXISTS ack_attempts INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE topup_orders
+    ADD COLUMN IF NOT EXISTS ack_at TIMESTAMP WITH TIME ZONE;
+
+-- Only google_play rows need ack; partial index keeps it cheap. The sweep
+-- runs hourly and filters by (channel, ack_state, created_at window).
+CREATE INDEX IF NOT EXISTS idx_topup_ack_pending
+    ON topup_orders(channel, ack_state, created_at)
+    WHERE channel = 'google_play' AND ack_state <> 'acked';
