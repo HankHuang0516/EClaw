@@ -1,3 +1,10 @@
+# [1.1013.0](https://github.com/HankHuang0516/EClaw/compare/v1.1012.0...v1.1013.0) (2026-04-19)
+
+
+### Features
+
+* **info-hub:** add 3 marketing hooks + 11-subsystem value-prop ([#1878](https://github.com/HankHuang0516/EClaw/issues/1878)) ([88ffaa0](https://github.com/HankHuang0516/EClaw/commit/88ffaa0cf3fa67647f5b3950b9f585c493e84248))
+
 # [1.1012.0](https://github.com/HankHuang0516/EClaw/compare/v1.1011.0...v1.1012.0) (2026-04-19)
 
 
