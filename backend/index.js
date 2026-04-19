@@ -1864,6 +1864,17 @@ if (process.env.NODE_ENV !== 'test') {
             serverLog('error', 'wallet', `[AdminSeed] seed error: ${err.message}`);
         }
     }, 5000); // 5s delay — wallet schema + user_accounts must be ready
+
+    // Google Play acknowledge retry sweep (P2 revenue-leak backstop).
+    // Hourly cron: retries topup_orders with ack_state != 'acked' within the
+    // Google 72h auto-refund window. See backend/ack-retry-sweep.js.
+    const { startAckRetrySweep } = require('./ack-retry-sweep');
+    startAckRetrySweep({
+        pool: authModule.pool,
+        audit: serverLog,
+        acknowledgeGooglePurchase: walletModule.acknowledgeGooglePurchase,
+        packageName: walletModule.GOOGLE_PACKAGE_NAME,
+    });
 }
 
 // ============================================
