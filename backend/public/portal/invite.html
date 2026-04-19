@@ -40,10 +40,38 @@
         .inv-share-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 14px; border: 1px solid var(--card-border); border-radius: var(--radius-sm); background: var(--input-bg); color: var(--text); font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; transition: all 0.15s; }
         .inv-share-btn:hover { border-color: var(--primary); color: var(--primary); }
 
-        .inv-stats { display: flex; gap: 12px; flex-wrap: wrap; }
-        .inv-stat { flex: 1; min-width: 120px; padding: 16px; border: 1px solid var(--card-border); border-radius: var(--radius-sm); text-align: center; }
-        .inv-stat-value { font-size: 24px; font-weight: 800; }
-        .inv-stat-label { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+        .inv-stats-summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .inv-stats-summary::-webkit-details-marker { display: none; }
+        .inv-stats-summary h3 { font-size: 15px; font-weight: 700; margin: 0; }
+        .inv-stats-summary-right { display: flex; align-items: center; gap: 8px; }
+        .inv-refresh-btn { border: 1px solid var(--card-border); background: var(--input-bg); color: var(--text); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+        .inv-refresh-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .inv-refresh-btn.inv-spinning { animation: inv-spin 0.8s linear infinite; pointer-events: none; }
+        @keyframes inv-spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+        .inv-chevron { font-size: 12px; color: var(--text-secondary); transition: transform 0.2s; }
+        details[open] .inv-chevron { transform: rotate(180deg); }
+
+        .inv-stats-body { margin-top: 14px; }
+        .inv-stats-subtitle { font-size: 12px; color: var(--text-secondary); margin-bottom: 14px; }
+
+        .inv-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 16px; }
+        .inv-kpi-card { padding: 14px 10px; border: 1px solid var(--card-border); border-radius: var(--radius-sm); text-align: center; background: var(--input-bg); }
+        .inv-kpi-value { font-size: 22px; font-weight: 800; color: var(--primary); font-variant-numeric: tabular-nums; }
+        .inv-kpi-label { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+
+        .inv-usage-bar-wrap { margin-bottom: 16px; }
+        .inv-usage-bar-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; text-align: right; font-variant-numeric: tabular-nums; }
+        .inv-usage-bar-track { height: 8px; background: var(--input-bg); border-radius: 4px; overflow: hidden; border: 1px solid var(--card-border); }
+        .inv-usage-bar-fill { height: 100%; background: linear-gradient(90deg, #10b981, #6d28d9); transition: width 0.3s ease; width: 0%; }
+
+        .inv-timeline-title { font-size: 13px; font-weight: 700; color: var(--text); margin: 0 0 8px 0; }
+        .inv-timeline-wrap { display: flex; align-items: flex-end; gap: 2px; height: 88px; padding: 4px 0; overflow-x: auto; }
+        .inv-timeline-bar { flex: 1; min-width: 8px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; }
+        .inv-timeline-fill { width: 100%; background: linear-gradient(180deg, #6d28d9, #1e3a8a); border-radius: 2px 2px 0 0; min-height: 2px; transition: height 0.3s ease; }
+        .inv-timeline-date { font-size: 9px; color: var(--text-secondary); margin-top: 4px; white-space: nowrap; }
+        .inv-timeline-empty { width: 100%; text-align: center; color: var(--text-secondary); font-size: 12px; padding: 24px 0; }
+        .inv-stats-loading { color: var(--text-secondary); font-size: 12px; text-align: center; padding: 12px 0; }
+        .inv-stats-error { color: #ef4444; font-size: 12px; text-align: center; padding: 12px 0; }
 
         .inv-rewards { margin-top: 12px; }
         .inv-reward-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--card-border); font-size: 13px; }
@@ -81,14 +109,51 @@
             </div>
         </div>
 
-        <!-- Stats -->
-        <div class="inv-section">
-            <h3 data-i18n="inv_stats">Referral Stats</h3>
-            <div class="inv-stats">
-                <div class="inv-stat"><div class="inv-stat-value" id="invTotal">0</div><div class="inv-stat-label" data-i18n="inv_invited">Friends Invited</div></div>
-                <div class="inv-stat"><div class="inv-stat-value" id="invEarned">0</div><div class="inv-stat-label" data-i18n="inv_earned">e幣 Earned</div></div>
+        <!-- Stats Dashboard -->
+        <details class="inv-section" id="invStatsPanel" open>
+            <summary class="inv-stats-summary">
+                <h3 data-i18n="invite_stats_title">Referral Dashboard</h3>
+                <div class="inv-stats-summary-right">
+                    <button type="button" class="inv-refresh-btn" id="invRefreshBtn" aria-label="Refresh"
+                            data-i18n-title="invite_stats_refresh_btn">↻</button>
+                    <span class="inv-chevron" aria-hidden="true">▾</span>
+                </div>
+            </summary>
+            <div class="inv-stats-body">
+                <p class="inv-stats-subtitle" data-i18n="invite_stats_subtitle">Track your invite performance at a glance.</p>
+
+                <div class="inv-kpi-grid">
+                    <div class="inv-kpi-card">
+                        <div class="inv-kpi-value" id="kpiInvited">—</div>
+                        <div class="inv-kpi-label" data-i18n="invite_stats_kpi_invited">Friends Invited</div>
+                    </div>
+                    <div class="inv-kpi-card">
+                        <div class="inv-kpi-value" id="kpiBonus">—</div>
+                        <div class="inv-kpi-label" data-i18n="invite_stats_kpi_bonus">e-coin Earned</div>
+                    </div>
+                    <div class="inv-kpi-card">
+                        <div class="inv-kpi-value" id="kpiTodayUsed">—</div>
+                        <div class="inv-kpi-label" data-i18n="invite_stats_kpi_today_used">Today Used</div>
+                    </div>
+                    <div class="inv-kpi-card">
+                        <div class="inv-kpi-value" id="kpiConversion">—</div>
+                        <div class="inv-kpi-label" data-i18n="invite_stats_kpi_conversion">Conversion</div>
+                    </div>
+                </div>
+
+                <div class="inv-usage-bar-wrap">
+                    <div class="inv-usage-bar-label" id="usageBarLabel">— / —</div>
+                    <div class="inv-usage-bar-track">
+                        <div class="inv-usage-bar-fill" id="usageBarFill"></div>
+                    </div>
+                </div>
+
+                <h4 class="inv-timeline-title" data-i18n="invite_stats_timeline_title">Daily usage (past 30 days)</h4>
+                <div id="invTimeline" class="inv-timeline-wrap">
+                    <div class="inv-stats-loading" data-i18n="invite_stats_loading">Loading…</div>
+                </div>
             </div>
-        </div>
+        </details>
 
         <!-- Rewards info -->
         <div class="inv-section">
@@ -137,14 +202,92 @@
             } catch { /* not logged in */ }
         }
 
+        // Timeline is a client-side series: the /stats endpoint only returns today's usage,
+        // so we snapshot daily_used per visit into localStorage to build a rolling 30-day view.
+        const INVITE_HISTORY_KEY = 'invite_stats_history_v1';
+        const INVITE_HISTORY_DAYS = 30;
+        const INVITER_REWARD_ECOIN = 500;
+
+        function invDayKey(d) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+
+        function loadInviteHistory() {
+            try {
+                const raw = localStorage.getItem(INVITE_HISTORY_KEY);
+                const parsed = raw ? JSON.parse(raw) : {};
+                return parsed && typeof parsed === 'object' ? parsed : {};
+            } catch { return {}; }
+        }
+
+        function saveInviteHistory(history) {
+            try {
+                const cutoff = Date.now() - INVITE_HISTORY_DAYS * 86400000;
+                const pruned = {};
+                for (const [k, v] of Object.entries(history)) {
+                    const t = new Date(k).getTime();
+                    if (!isNaN(t) && t >= cutoff && typeof v === 'number') pruned[k] = v;
+                }
+                localStorage.setItem(INVITE_HISTORY_KEY, JSON.stringify(pruned));
+            } catch { /* ignore quota or parse errors */ }
+        }
+
+        function renderInviteTimeline(history) {
+            const container = document.getElementById('invTimeline');
+            if (!container) return;
+            const now = new Date();
+            const days = [];
+            for (let i = INVITE_HISTORY_DAYS - 1; i >= 0; i--) {
+                const d = new Date(now.getTime() - i * 86400000);
+                const key = invDayKey(d);
+                days.push({ key, label: `${d.getMonth() + 1}/${d.getDate()}`, used: history[key] || 0 });
+            }
+            const max = Math.max(...days.map(d => d.used), 15);
+            const hasAny = days.some(d => d.used > 0);
+            if (!hasAny) {
+                container.innerHTML = `<div class="inv-timeline-empty">${tt('invite_stats_timeline_empty', 'No usage recorded yet — come back tomorrow!')}</div>`;
+                return;
+            }
+            container.innerHTML = days.map(d => {
+                const h = (d.used / max) * 100;
+                return `<div class="inv-timeline-bar" title="${d.key}: ${d.used}"><div class="inv-timeline-fill" style="height: ${h}%"></div><div class="inv-timeline-date">${d.label}</div></div>`;
+            }).join('');
+        }
+
         async function loadStats() {
+            const refreshBtn = document.getElementById('invRefreshBtn');
+            if (refreshBtn) refreshBtn.classList.add('inv-spinning');
             try {
                 const data = await apiCall('GET', '/api/invite/stats');
-                if (data?.success) {
-                    document.getElementById('invTotal').textContent = data.totalInvited || 0;
-                    document.getElementById('invEarned').textContent = ((parseInt(data.totalEarnedMli, 10) || 0) / 1000).toLocaleString();
-                }
-            } catch { /* ignore */ }
+                if (!data?.success) throw new Error(data?.error || 'load_failed');
+
+                const invited = Number(data.total_invited) || 0;
+                const dailyUsed = Number(data.daily_used) || 0;
+                const dailyLimit = Number(data.daily_limit) || 15;
+                const estEarned = invited * INVITER_REWARD_ECOIN;
+
+                document.getElementById('kpiInvited').textContent = invited.toLocaleString();
+                document.getElementById('kpiBonus').textContent = estEarned.toLocaleString();
+                document.getElementById('kpiTodayUsed').textContent = `${dailyUsed} / ${dailyLimit}`;
+                document.getElementById('kpiConversion').textContent = '—';
+
+                const pct = dailyLimit > 0 ? Math.min(100, (dailyUsed / dailyLimit) * 100) : 0;
+                document.getElementById('usageBarFill').style.width = pct + '%';
+                document.getElementById('usageBarLabel').textContent = `${dailyUsed} / ${dailyLimit}`;
+
+                const history = loadInviteHistory();
+                history[invDayKey(new Date())] = dailyUsed;
+                saveInviteHistory(history);
+                renderInviteTimeline(history);
+            } catch (err) {
+                const timeline = document.getElementById('invTimeline');
+                if (timeline) timeline.innerHTML = `<div class="inv-stats-error">${tt('invite_stats_error', 'Failed to load stats. Try again.')}</div>`;
+            } finally {
+                if (refreshBtn) refreshBtn.classList.remove('inv-spinning');
+            }
         }
 
         function copyCode() {
@@ -176,6 +319,12 @@
             renderNav('settings');
             if (typeof renderFooter === 'function') renderFooter();
             if (typeof i18n !== 'undefined') i18n.apply();
+            const refreshBtn = document.getElementById('invRefreshBtn');
+            if (refreshBtn) refreshBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                loadStats();
+            });
             const user = await checkAuth();
             if (!user) return;
             initPortalSocket();
