@@ -1,3 +1,10 @@
+## [1.1003.8](https://github.com/HankHuang0516/EClaw/compare/v1.1003.7...v1.1003.8) (2026-04-19)
+
+
+### Bug Fixes
+
+* **entity:** preserve never-reuse invariant — remove auto-compact on delete ([#1862](https://github.com/HankHuang0516/EClaw/issues/1862)) ([5a153ed](https://github.com/HankHuang0516/EClaw/commit/5a153edacf5d0968ac0922488bb388c0b592f05a))
+
 ## [1.1003.7](https://github.com/HankHuang0516/EClaw/compare/v1.1003.6...v1.1003.7) (2026-04-19)
 
 
