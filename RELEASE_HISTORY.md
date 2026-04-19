@@ -5,9 +5,10 @@ Track git commits for each release to enable changelog generation via `git diff`
 ---
 
 ## Latest
-v1.0.75 | 793ec1c6 | 2026-04-18 | versionCode 81 | Internal 🚧 | card-holder hotfix — navEmail null guard (embed mode JS crash fix) + 我的名片 empty-state 去 Bot 廣場 CTA + CARDS WebView URL dedup (PR #1850)
+v1.0.76 | PENDING | 2026-04-19 | versionCode 82 | Internal 🚧 | Entity ID never-reuse invariant restored (#1862) + fetch timeout + per-test hard cap on release gate (#1861) + test 22 /api/status auth contract fixed (#1865) + fetch-with-timeout jest CI-jitter threshold (#1864) + Android orgchart bottom-sheet 90% height (#1854) + orgchart same-parent drop guard + reset confirm (#1855) + i18n cardholder_empty de/hi/zh-CN (#1856) + Terminal Bridge + Bridge-Auth combo docs panel (#1858) + mermaid lazy-render (#1853) + XSS sanitizer hardening (#1840/#1859) + iOS NitroModules newArchEnabled (#1852) + cardholder_tab_bot_plaza 9 locales (#1851)
 
 ## Recent
+v1.0.75 | 793ec1c6 | 2026-04-18 | versionCode 81 | Internal 🚧 | card-holder hotfix — navEmail null guard (embed mode JS crash fix) + 我的名片 empty-state 去 Bot 廣場 CTA + CARDS WebView URL dedup (PR #1850)
 v1.0.74 | 1bd4b729 | 2026-04-18 | versionCode 80 | Internal 🚧 | CardHolderActivity ripped out (1758 LOC) → portal/card-holder.html?embed=1 WebView; full parity (Run Interview/Plaza/Start Chat/Share/Edit + BRM list entry); 41 android strings removed; docs updated
 v1.0.73 | 23322191 | 2026-04-18 | versionCode 79 | Internal ✅ | MyCard Run Interview + Edit + 開始對話 + 分享 + Plaza toggle; chat chips (CJK/backtick/card_shortId/Stripe-prefix); photo grid; FCM self-heal; dashboard orgchart lock; i18n 13-locale fill
 v1.0.71 | 55d40068 | 2026-04-17 | versionCode 77 | Internal 🚧 | Enter-newline, backtick Note chip, Note Markdown, chat density, org-chart touch-action
