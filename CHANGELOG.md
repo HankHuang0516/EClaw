@@ -1,3 +1,10 @@
+# [1.1009.0](https://github.com/HankHuang0516/EClaw/compare/v1.1008.0...v1.1009.0) (2026-04-19)
+
+
+### Features
+
+* **editor:** online text editor for chat attachments via Monaco ([#1874](https://github.com/HankHuang0516/EClaw/issues/1874)) ([c0c4e30](https://github.com/HankHuang0516/EClaw/commit/c0c4e30db828fbc08578fec53634a5761a581285))
+
 # [1.1008.0](https://github.com/HankHuang0516/EClaw/compare/v1.1007.0...v1.1008.0) (2026-04-19)
 
 
