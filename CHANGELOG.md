@@ -1,3 +1,10 @@
+# [1.1014.0](https://github.com/HankHuang0516/EClaw/compare/v1.1013.0...v1.1014.0) (2026-04-19)
+
+
+### Features
+
+* **wallet:** verify Google Play purchases via androidpublisher v3 ([#1879](https://github.com/HankHuang0516/EClaw/issues/1879)) ([262c354](https://github.com/HankHuang0516/EClaw/commit/262c35487461bc6e6ae007ececb524d72e34a6b4))
+
 # [1.1013.0](https://github.com/HankHuang0516/EClaw/compare/v1.1012.0...v1.1013.0) (2026-04-19)
 
 
