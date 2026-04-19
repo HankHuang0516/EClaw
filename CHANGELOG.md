@@ -1,3 +1,10 @@
+# [1.1010.0](https://github.com/HankHuang0516/EClaw/compare/v1.1009.0...v1.1010.0) (2026-04-19)
+
+
+### Features
+
+* **monitoring:** rental fleet health endpoint + dashboard ([#1875](https://github.com/HankHuang0516/EClaw/issues/1875)) ([def90f1](https://github.com/HankHuang0516/EClaw/commit/def90f134adc7faa35ac489dd18b97c8ea8c0aa6))
+
 # [1.1009.0](https://github.com/HankHuang0516/EClaw/compare/v1.1008.0...v1.1009.0) (2026-04-19)
 
 
