@@ -801,19 +801,27 @@ async function main() {
     console.log('Phase 6: API Compatibility');
     console.log('-'.repeat(50));
 
-    // Test 22: GET /api/status with valid entity
+    // Test 22: GET /api/status auth contract
+    // Since security audit #451 (commit 94bff5e1, Mar 2026), /api/status requires
+    // deviceSecret or JWT cookie. Verify both the unauthenticated reject and the
+    // authenticated success paths.
     try {
         const { data: entData } = await getEntities(deviceId, deviceSecret);
         const validIds = entData.entityIds || [];
         const validId = validIds[0];
         console.log(`${TAG} Testing status with entityId=${validId}`);
 
-        const statusRes = await fetchJSON(`${API_BASE}/api/status?deviceId=${encodeURIComponent(deviceId)}&entityId=${validId}`);
-        check('22. GET /api/status with valid entity succeeds',
-            statusRes.status === 200,
-            `status=${statusRes.status} entityId=${validId}`);
+        const noAuthRes = await fetchJSON(`${API_BASE}/api/status?deviceId=${encodeURIComponent(deviceId)}&entityId=${validId}`);
+        check('22a. GET /api/status without deviceSecret rejected (403)',
+            noAuthRes.status === 403,
+            `status=${noAuthRes.status} entityId=${validId}`);
+
+        const authRes = await fetchJSON(`${API_BASE}/api/status?deviceId=${encodeURIComponent(deviceId)}&deviceSecret=${encodeURIComponent(deviceSecret)}&entityId=${validId}`);
+        check('22b. GET /api/status with deviceSecret succeeds (200)',
+            authRes.status === 200,
+            `status=${authRes.status} entityId=${validId}`);
     } catch (err) {
-        check('22. GET /api/status with valid entity', false, err.message);
+        check('22. GET /api/status auth contract', false, err.message);
     }
 
     // Test 23: GET /api/status with non-existent entity
