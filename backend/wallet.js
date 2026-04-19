@@ -49,7 +49,7 @@ const PLATFORM_WALLET_USER_ID = '00000000-0000-0000-0000-000000000001';
 const INSURANCE_POOL_USER_ID  = '00000000-0000-0000-0000-000000000002';
 
 /** Google Play package name (must match the Android app's applicationId). */
-const GOOGLE_PACKAGE_NAME = 'com.eclawbot.app';
+const GOOGLE_PACKAGE_NAME = process.env.GOOGLE_PLAY_PACKAGE || 'com.hank.clawlive';
 /** OAuth access-token cache TTL (conservative under Google's 3600s lifetime). */
 const GOOGLE_TOKEN_CACHE_MS = 55 * 60 * 1000;
 /** Google Play API scope — read + acknowledge purchases. */
