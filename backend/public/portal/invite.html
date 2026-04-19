@@ -36,6 +36,10 @@
 
         .inv-share-url { margin-top: 10px; padding: 10px; font-size: 12px; color: var(--text-secondary); background: var(--input-bg); border-radius: var(--radius-sm); word-break: break-all; }
 
+        .inv-share-actions { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
+        .inv-share-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 14px; border: 1px solid var(--card-border); border-radius: var(--radius-sm); background: var(--input-bg); color: var(--text); font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; transition: all 0.15s; }
+        .inv-share-btn:hover { border-color: var(--primary); color: var(--primary); }
+
         .inv-stats { display: flex; gap: 12px; flex-wrap: wrap; }
         .inv-stat { flex: 1; min-width: 120px; padding: 16px; border: 1px solid var(--card-border); border-radius: var(--radius-sm); text-align: center; }
         .inv-stat-value { font-size: 24px; font-weight: 800; }
@@ -68,6 +72,13 @@
                 <button class="inv-copy-btn" onclick="copyCode()" data-i18n="inv_copy">Copy</button>
             </div>
             <div class="inv-share-url" id="invShareUrl"></div>
+            <div class="inv-share-actions">
+                <a class="inv-share-btn" href="/portal/invite-qr-generator.html" id="invQrGenLink">
+                    <span aria-hidden="true">🖼️</span>
+                    <span data-i18n="inv_qr_gen_cta">Generate share image</span>
+                    <span aria-hidden="true">→</span>
+                </a>
+            </div>
         </div>
 
         <!-- Stats -->
@@ -120,6 +131,8 @@
                 if (data?.success) {
                     document.getElementById('invCode').textContent = data.code;
                     document.getElementById('invShareUrl').textContent = data.shareUrl || `https://eclawbot.com/invite/${data.code}`;
+                    const qrLink = document.getElementById('invQrGenLink');
+                    if (qrLink && data.code) qrLink.href = `/portal/invite-qr-generator.html?code=${encodeURIComponent(data.code)}`;
                 }
             } catch { /* not logged in */ }
         }
