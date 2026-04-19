@@ -1,3 +1,10 @@
+## [1.1014.1](https://github.com/HankHuang0516/EClaw/compare/v1.1014.0...v1.1014.1) (2026-04-19)
+
+
+### Bug Fixes
+
+* **wallet:** env-drive Google Play package name (default com.hank.clawlive) ([#1880](https://github.com/HankHuang0516/EClaw/issues/1880)) ([e593cd1](https://github.com/HankHuang0516/EClaw/commit/e593cd104f48ea8af8c4d40105d0e7ebbd79eadf)), closes [#1879](https://github.com/HankHuang0516/EClaw/issues/1879)
+
 # [1.1014.0](https://github.com/HankHuang0516/EClaw/compare/v1.1013.0...v1.1014.0) (2026-04-19)
 
 
