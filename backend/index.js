@@ -872,10 +872,12 @@ async function initPersistence() {
         }
     }
 
-    // Build public code index and backfill any missing codes
+    // Build public code index, then seed tombstones from trash BEFORE backfill
+    // so a freshly generated backfill code can never accidentally collide with
+    // a still-referenced (but trashed) public code.
     buildPublicCodeIndex();
-    await backfillPublicCodes();
     await loadTombstonesFromTrash();
+    await backfillPublicCodes();
 
     // Load DB-approved skill contributions (supplements git-tracked skill-templates.json)
     if (usePostgreSQL) await loadApprovedContributions();
