@@ -49,7 +49,7 @@ function makeOrder(overrides = {}) {
 /**
  * Minimal fake pg pool backed by an in-memory array. Supports just the
  * SQL shapes the sweep issues:
- *   - SELECT ... FROM topup_orders WHERE channel='google_play' AND ack_state <> 'acked' AND status='paid' AND created_at >= $1 ORDER BY created_at ASC LIMIT $2
+ *   - SELECT ... FROM topup_orders WHERE channel='google_play' AND ack_state <> 'acked' AND ack_state <> 'failed' AND status='paid' AND created_at >= $1 ORDER BY created_at ASC LIMIT $2
  *   - UPDATE topup_orders SET ack_state='acked', ack_at=NOW(), ack_attempts=ack_attempts+1 WHERE id=$1 AND ack_state <> 'acked'
  *   - UPDATE topup_orders SET ack_attempts=ack_attempts+1, ack_state = CASE WHEN $2::boolean THEN 'failed' ELSE ack_state END WHERE id=$1 AND ack_state <> 'acked'
  */
@@ -64,6 +64,7 @@ function makePool(orders) {
                 const matched = orders
                     .filter(o => o.channel === 'google_play'
                               && o.ack_state !== 'acked'
+                              && o.ack_state !== 'failed'
                               && o.status === 'paid'
                               && new Date(o.created_at) >= new Date(windowStart))
                     .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
@@ -211,11 +212,8 @@ describe('ack-retry-sweep: runAckRetrySweep', () => {
     test('case 4: no pending rows → no-op (all stats zero, ack never called)', async () => {
         const orders = [
             makeOrder({ id: 'o4a', ack_state: 'acked' }),  // excluded by filter
-            makeOrder({ id: 'o4b', ack_state: 'failed' }), // excluded (wait — failed IS != acked, so this ISN'T excluded)
+            makeOrder({ id: 'o4b', ack_state: 'failed' }), // excluded — 'failed' is terminal
         ];
-        // The sweep does re-pick 'failed' rows (ack_state <> 'acked'). For a
-        // true no-op we need all acked:
-        orders[1].ack_state = 'acked';
 
         const pool = makePool(orders);
         const audit = makeAudit();
@@ -229,6 +227,31 @@ describe('ack-retry-sweep: runAckRetrySweep', () => {
 
         expect(stats).toMatchObject({ scanned: 0, acked: 0, failed: 0, exhausted: 0, skipped: 0 });
         expect(ackMock).not.toHaveBeenCalled();
+    });
+
+    test('case 4b: row already marked ack_state=failed → skipped (terminal, not re-queried)', async () => {
+        // Regression guard: PR #1881 originally selected ack_state <> 'acked',
+        // which re-picked 'failed' rows every hour → wasted Google call +
+        // duplicate exhausted audit warn each tick until the 72h window
+        // closed. 'failed' must be terminal.
+        const orders = [
+            makeOrder({ id: 'already-failed', ack_state: 'failed', ack_attempts: 3 }),
+        ];
+        const pool = makePool(orders);
+        const audit = makeAudit();
+        const ackMock = jest.fn().mockResolvedValue({ ok: true });
+
+        const stats = await runAckRetrySweep({
+            pool, audit,
+            acknowledgeGooglePurchase: ackMock,
+            packageName: DEFAULT_PKG,
+        });
+
+        expect(stats).toMatchObject({ scanned: 0, acked: 0, failed: 0, exhausted: 0, skipped: 0 });
+        expect(ackMock).not.toHaveBeenCalled();
+        // Row is untouched: attempts stay at 3, state stays 'failed'.
+        expect(orders[0].ack_state).toBe('failed');
+        expect(orders[0].ack_attempts).toBe(3);
     });
 
     test('case 5: row older than 72h window → skipped entirely (not scanned)', async () => {
