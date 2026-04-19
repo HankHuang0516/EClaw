@@ -1,3 +1,10 @@
+# [1.1008.0](https://github.com/HankHuang0516/EClaw/compare/v1.1007.0...v1.1008.0) (2026-04-19)
+
+
+### Features
+
+* **editor:** opt-in Monaco for note page HTML editor (?editor=monaco) ([#1873](https://github.com/HankHuang0516/EClaw/issues/1873)) ([984dc7d](https://github.com/HankHuang0516/EClaw/commit/984dc7da2737129bb127aa4c7ff195a18a6633ec))
+
 # [1.1007.0](https://github.com/HankHuang0516/EClaw/compare/v1.1006.0...v1.1007.0) (2026-04-19)
 
 
