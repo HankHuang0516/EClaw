@@ -31,9 +31,16 @@ class OrgChartBottomSheetFragment : BottomSheetDialogFragment() {
         dialog.setOnShowListener {
             val sheet = dialog.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
             sheet?.let {
-                val behavior = BottomSheetBehavior.from(it)
                 val screenHeight = resources.displayMetrics.heightPixels
-                behavior.peekHeight = (screenHeight * 0.9).toInt()
+                val targetHeight = (screenHeight * 0.9).toInt()
+                // BottomSheetDialog ignores match_parent on the sheet root and
+                // measures to children's wrap_content, which collapses the
+                // WebView (layout_weight=1 on a 0dp child) to ~20% of screen.
+                // Force the sheet's height explicitly so STATE_EXPANDED lands
+                // at the intended 90% height.
+                it.layoutParams = it.layoutParams.apply { height = targetHeight }
+                val behavior = BottomSheetBehavior.from(it)
+                behavior.peekHeight = targetHeight
                 behavior.state = BottomSheetBehavior.STATE_EXPANDED
                 behavior.skipCollapsed = true
             }
