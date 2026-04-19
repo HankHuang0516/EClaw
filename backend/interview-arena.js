@@ -154,12 +154,10 @@ let VISION_IMAGES = [
     // ── Easy tier (20%) — basic shape/object recognition ──
     { file: null, description: 'A red heart shape centered on a white background', keywords: ['heart', 'red'] },
     { file: null, description: 'A green checkmark inside a circle', keywords: ['checkmark', 'green', 'circle'] },
-    { file: null, description: 'A blue water droplet shape on gray', keywords: ['water', 'droplet', 'blue'] },
     { file: null, description: 'A yellow sun with eight rays extending outward', keywords: ['sun', 'yellow', 'rays'] },
     { file: null, description: 'A simple house with a red roof and brown door', keywords: ['house', 'roof', 'door'] },
     // ── Medium tier (50%) — counting, labels, multi-object scenes ──
     { file: null, description: 'A bar chart with four bars labeled Q1 through Q4 where Q3 is the tallest', keywords: ['bar', 'chart', 'four', 'Q3'] },
-    { file: null, description: 'A desk with a laptop, two coffee cups, and a stack of three books', keywords: ['laptop', 'two', 'cups', 'three', 'books'] },
     { file: null, description: 'A pie chart divided into four sections: blue 40%, green 30%, red 20%, yellow 10%', keywords: ['pie', 'chart', 'four', 'blue'] },
     { file: null, description: 'A Venn diagram with three overlapping circles labeled A, B, and C', keywords: ['venn', 'three', 'circles'] },
     { file: null, description: 'A road sign reading SPEED LIMIT 65 against a blue sky', keywords: ['sign', 'speed', '65'] },
@@ -175,12 +173,18 @@ let VISION_IMAGES = [
     { file: null, description: 'A chemistry lab bench with three beakers: left contains blue liquid, middle is empty, right has green precipitate at the bottom', keywords: ['three', 'beakers', 'blue', 'empty', 'green'] },
     { file: null, description: 'A handwritten note on lined paper reading Meeting at 3pm Room 204 with the time and room number underlined', keywords: ['meeting', '3pm', '204', 'underlined'] },
     { file: null, description: 'A phone home screen showing 16 app icons in a 4x4 grid and a weather widget displaying 72 degrees', keywords: ['phone', '16', 'apps', 'weather', '72'] },
-    { file: null, description: 'A line chart showing quarterly revenue: Q1 at $10K, Q2 at $15K, Q3 dips to $8K, Q4 recovers to $20K', keywords: ['chart', 'revenue', 'Q3', 'dip', 'Q4'] },
     { file: null, description: 'A world map with five red pins marking cities: New York, London, Tokyo, Sydney, and São Paulo', keywords: ['map', 'five', 'pins', 'Tokyo'] },
     { file: null, description: 'A receipt from a store dated 03/15 showing total $47.83 with three itemized lines and a barcode at bottom', keywords: ['receipt', 'total', '47', 'three', 'barcode'] },
     { file: null, description: 'A weather dashboard panel showing temperature 28°C, humidity 65%, wind speed 12 km/h, and UV index 7 in four separate tiles', keywords: ['temperature', '28', 'humidity', '65', 'UV', '7'] },
     { file: null, description: 'A printed circuit board with fourteen resistors, eight capacitors, and one microcontroller chip labeled ATmega328P', keywords: ['circuit', 'fourteen', 'resistors', 'eight', 'capacitors', 'ATmega'] },
     { file: null, description: 'A hotel room floor plan: bedroom 18m² on the left, bathroom 6m² top right, living area 22m² bottom right, with a corridor connecting all rooms', keywords: ['floor', 'plan', 'bedroom', '18', 'bathroom', '6', 'living', '22'] },
+    // ── New medium additions ──
+    { file: null, description: 'A smartphone settings screen with WiFi toggle ON, Bluetooth toggle OFF, and airplane mode OFF; status bar shows 78% battery and 11:42 AM', keywords: ['wifi', 'bluetooth', 'battery', '78', '11'] },
+    { file: null, description: 'A nutrition facts label showing Serving Size 30g, Calories 120, Total Fat 5g, Sodium 220mg, Total Carbohydrate 18g, and Protein 3g', keywords: ['calories', '120', 'sodium', '220', 'protein', '3'] },
+    { file: null, description: 'A conference room whiteboard with a sprint plan: three blue sticky notes in the To Do column, two yellow notes in In Progress, and five green notes in Done', keywords: ['sprint', 'three', 'blue', 'two', 'five', 'green', 'done'] },
+    // ── New hard additions ──
+    { file: null, description: 'An analog gauge cluster: speedometer at 87 mph in the yellow zone, fuel gauge below quarter mark, engine temperature gauge at three-quarter maximum', keywords: ['speedometer', '87', 'fuel', 'temperature', 'quarter'] },
+    { file: null, description: 'A git log terminal showing four commits: the latest HEAD is tagged v2.1.0, the second commit has a merge conflict marker, the third adds a feature branch, and the fourth is the initial commit', keywords: ['git', 'four', 'v2.1.0', 'merge', 'initial'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -328,8 +332,6 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '16', expected: 'true' },{ input: '18', expected: 'false' },{ input: '1', expected: 'true' }] },
     { title: 'Merge Sorted Arrays', description: 'Write `solve(a, b)` — merge two sorted arrays into one sorted array.',
       testCases: [{ input: '[1,3,5], [2,4,6]', expected: '[1,2,3,4,5,6]' },{ input: '[], [1]', expected: '[1]' }] },
-    { title: 'Spiral Order', description: 'Write `solve(matrix)` — return elements in spiral order.',
-      testCases: [{ input: '[[1,2,3],[4,5,6],[7,8,9]]', expected: '[1,2,3,6,9,8,7,4,5]' }] },
     // ── Added harder problems (DP, BFS/DFS, Sliding Window) ──
     { title: 'Climbing Stairs', description: 'Write `solve(n)` — you can climb 1 or 2 steps at a time. Return the number of distinct ways to reach step n.',
       testCases: [{ input: '2', expected: '2' },{ input: '5', expected: '8' },{ input: '10', expected: '89' }] },
@@ -350,6 +352,13 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '"babad"', expected: '"bab"' },{ input: '"cbbd"', expected: '"bb"' },{ input: '"a"', expected: '"a"' },{ input: '"racecar"', expected: '"racecar"' }] },
     { title: '0-1 Knapsack', description: 'Write `solve(weights, values, capacity)` — given items with weights and values arrays and a knapsack of given capacity, return the maximum total value (each item used at most once).',
       testCases: [{ input: '[1,3,4,5], [1,4,5,7], 7', expected: '9' },{ input: '[2,3,4,5], [3,4,5,6], 5', expected: '7' },{ input: '[1], [10], 0', expected: '0' }] },
+    // ── Additional medium/hard problems ──
+    { title: 'Word Break', description: 'Write `solve(s, wordDict)` — return true if s can be segmented into one or more space-separated words all found in wordDict.',
+      testCases: [{ input: '"leetcode", ["leet","code"]', expected: 'true' },{ input: '"applepenapple", ["apple","pen"]', expected: 'true' },{ input: '"catsandog", ["cats","dog","sand","and","cat"]', expected: 'false' },{ input: '"", ["a"]', expected: 'true' }] },
+    { title: 'Find All Anagrams', description: 'Write `solve(s, p)` — return all starting indices in s where an anagram of p begins. An anagram uses the same characters in any order.',
+      testCases: [{ input: '"cbaebabacd", "abc"', expected: '[0,6]' },{ input: '"abab", "ab"', expected: '[0,1,2]' },{ input: '"aa", "bb"', expected: '[]' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given non-negative integers representing an elevation map with each bar of width 1, compute how much water it can trap after raining.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[1,0,1]', expected: '1' },{ input: '[3,0,2,0,4]', expected: '7' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -363,7 +372,6 @@ let RESPONSE_QUESTIONS = [
     { question: 'What is the capital of France?', expectedKeywords: ['paris'] },
     { question: 'What is 17 × 23?', expectedKeywords: ['391'] },
     { question: 'Name the largest planet in our solar system.', expectedKeywords: ['jupiter'] },
-    { question: 'What is the longest river in the world?', expectedKeywords: ['nile', 'amazon'] },
     { question: 'What is 13 × 17?', expectedKeywords: ['221'] },
     // ── Medium tier (50%) — multi-step math, applied reasoning ──
     { question: 'A pool fills in 3 hours with pipe A alone and 6 hours with pipe B alone. How many hours to fill it with both pipes open together?', expectedKeywords: ['2'] },
@@ -376,7 +384,6 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many prime numbers are there between 1 and 20?', expectedKeywords: ['8'] },
     { question: 'All cats are mammals. All mammals are warm-blooded. Are all cats warm-blooded?', expectedKeywords: ['yes'] },
     { question: 'What is the speed of light in km/s (approximately)?', expectedKeywords: ['300000', '299792'] },
-    { question: 'What year did the Berlin Wall fall?', expectedKeywords: ['1989'] },
     // ── Hard tier (30%) — multi-step reasoning, tricky logic ──
     { question: 'A clock shows 3:15. What is the exact angle in degrees between the hour and minute hands?', expectedKeywords: ['7.5'] },
     { question: 'A farmer has chickens and cows. Together they have 30 heads and 74 legs. How many chickens does the farmer have?', expectedKeywords: ['23'] },
@@ -392,6 +399,12 @@ let RESPONSE_QUESTIONS = [
     { question: 'What is 2 to the power of 10?', expectedKeywords: ['1024'] },
     { question: 'A store sells apples for $0.75 each and oranges for $1.20 each. If someone buys 4 apples and 3 oranges, what is the total cost?', expectedKeywords: ['6.6', '6.60'] },
     { question: 'The sides of a right triangle are in the ratio 3:4:5. If the hypotenuse is 20 cm, what is the perimeter?', expectedKeywords: ['48'] },
+    // ── Additional medium/hard questions ──
+    { question: 'A worker earns $18 per hour and works 40 hours per week. After a 15% raise, what is their new weekly salary in dollars?', expectedKeywords: ['828'] },
+    { question: 'If today is Wednesday, what day of the week will it be 100 days from now?', expectedKeywords: ['friday'] },
+    { question: 'How many distinct ways can you make change for 10 cents using only pennies (1¢), nickels (5¢), and dimes (10¢)?', expectedKeywords: ['4'] },
+    { question: 'A standard 8×8 chess board contains how many squares in total, counting all sizes from 1×1 to 8×8?', expectedKeywords: ['204'] },
+    { question: 'Convert 72 kilometers per hour to meters per second. Round to the nearest whole number.', expectedKeywords: ['20'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -431,7 +444,6 @@ function generateFileMgmtChallenge() {
 
 let TTS_PHRASES = [
     // ── Easy tier (20%) — clear, common phrases ──
-    { text: 'The quick brown fox jumps over the lazy dog', keywords: ['quick', 'brown', 'fox', 'lazy', 'dog'] },
     { text: 'Hello world this is a test message', keywords: ['hello', 'world', 'test', 'message'] },
     { text: 'Please remember to save your work before closing', keywords: ['remember', 'save', 'work', 'closing'] },
     { text: 'The package was delivered to the front door yesterday', keywords: ['package', 'delivered', 'front', 'door', 'yesterday'] },
@@ -462,6 +474,10 @@ let TTS_PHRASES = [
     { text: 'Your one-time verification code is 8 4 3 7 2 and expires in five minutes', keywords: ['verification', 'code', '84372', 'five', 'minutes'] },
     { text: 'The SQL query selects all records from the users table where the account status equals active and the score is greater than 100', keywords: ['SQL', 'query', 'users', 'active', 'score', '100'] },
     { text: 'Bernoulli and Euler each contributed foundational theorems to both fluid dynamics and graph theory', keywords: ['bernoulli', 'euler', 'fluid', 'dynamics', 'graph', 'theory'] },
+    // ── Additional medium/hard phrases ──
+    { text: 'Please update your password within 24 hours to avoid account suspension', keywords: ['password', '24', 'account', 'suspension'] },
+    { text: 'The quarterly dividend per share is one dollar forty-seven yielding an annual return of five point eight percent', keywords: ['quarterly', 'dividend', 'annual', 'percent'] },
+    { text: 'The router assigned IP address 172.16.254.1 with subnet mask 255.255.0.0 as the DHCP lease expires in 3600 seconds', keywords: ['router', '172', '255', 'DHCP', '3600'] },
 ];
 
 // ============================================
@@ -1080,7 +1096,6 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
             }
             examCooldownMap.set(ip, now);
 
-            const examId = 'exam_' + generateToken(12);
             const examToken = generateToken(12);
             const expiresAt = new Date(Date.now() + EXAM_TTL_MS);
 
