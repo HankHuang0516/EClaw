@@ -1,3 +1,10 @@
+## [1.1003.9](https://github.com/HankHuang0516/EClaw/compare/v1.1003.8...v1.1003.9) (2026-04-19)
+
+
+### Bug Fixes
+
+* **orgchart:** confirm peer reparents, persist default snapshot, auto-fit overflow ([#1867](https://github.com/HankHuang0516/EClaw/issues/1867)) ([87061f3](https://github.com/HankHuang0516/EClaw/commit/87061f3db398a8a1565763daea2ff5301dfcf0ee))
+
 ## [1.1003.8](https://github.com/HankHuang0516/EClaw/compare/v1.1003.7...v1.1003.8) (2026-04-19)
 
 
