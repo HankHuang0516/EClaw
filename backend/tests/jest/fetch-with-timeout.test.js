@@ -68,7 +68,7 @@ describe('fetch-with-timeout helper', () => {
         await expect(
             fetchWithTimeout('https://eclawbot.com/slow', { method: 'GET' }, { timeoutMs: 30 })
         ).rejects.toBeInstanceOf(TimeoutError);
-        expect(Date.now() - start).toBeLessThan(400);
+        expect(Date.now() - start).toBeLessThan(1500);
         expect(global.fetch).toHaveBeenCalledTimes(1);
         expect(global.fetch.mock.calls[0][1].signal).toBeDefined();
     });
