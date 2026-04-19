@@ -3043,7 +3043,7 @@
                         target.classList.add('org-drop-target');
                     }
                 }, { passive: true });
-                node.addEventListener('touchend', async (e) => {
+                node.addEventListener('touchend', async () => {
                     if (touchDragId == null) return;
                     node.classList.remove('dragging');
                     const dropTarget = document.querySelector('.org-drop-target');
@@ -3166,10 +3166,12 @@
             if (currentParentKey === targetParentKey) return false;
 
             const t = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t.bind(i18n) : (k, fb) => fb || k;
-            const draggedName = getEntityDisplayName(Number(draggedId));
+            // Fall back to "#<id>" if entity was unbound between render and drop,
+            // otherwise .replace stringifies `undefined` literally.
+            const draggedName = getEntityDisplayName(Number(draggedId)) || ('#' + draggedId);
             const targetName = dropTargetId === 'USER'
                 ? t('org_user_node', 'You (Owner)')
-                : getEntityDisplayName(Number(dropTargetId));
+                : (getEntityDisplayName(Number(dropTargetId)) || ('#' + dropTargetId));
             const message = t('org_reparent_confirm', 'Make {child} a child of {parent}?')
                 .replace('{child}', draggedName)
                 .replace('{parent}', targetName);
@@ -3214,12 +3216,17 @@
         // tree instead of flattening it. Captured on first org-chart load; can be
         // re-captured explicitly via saveOrgChartDefault().
         function orgChartDefaultKey() {
+            // Without a deviceId we can't scope the snapshot — return null so callers
+            // skip rather than write to a shared "orgChart_default_" key that every
+            // user would stomp on.
             const did = (typeof currentUser !== 'undefined' && currentUser && currentUser.deviceId) || '';
-            return 'orgChart_default_' + did;
+            return did ? ('orgChart_default_' + did) : null;
         }
         function loadOrgChartDefault() {
             try {
-                const raw = localStorage.getItem(orgChartDefaultKey());
+                const key = orgChartDefaultKey();
+                if (!key) return null;
+                const raw = localStorage.getItem(key);
                 if (!raw) return null;
                 const parsed = JSON.parse(raw);
                 return (parsed && typeof parsed === 'object' && Array.isArray(parsed.USER)) ? parsed : null;
@@ -3227,7 +3234,9 @@
         }
         function persistOrgChartDefault(hierarchy) {
             try {
-                localStorage.setItem(orgChartDefaultKey(), JSON.stringify(hierarchy));
+                const key = orgChartDefaultKey();
+                if (!key) return;
+                localStorage.setItem(key, JSON.stringify(hierarchy));
             } catch (_) { /* quota / private-mode — snapshot is best-effort */ }
         }
 
