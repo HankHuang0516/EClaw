@@ -705,24 +705,41 @@ describe('wallet: HTTP routes', () => {
     });
 
     test('POST /topup/verify-google credits wallet end-to-end', async () => {
-        const app = buildApp({ user: { userId: ALICE } });
-        const res = await supertest(app).post('/api/wallet/topup/verify-google')
-            .send({ productId: 'ec.topup.starter', purchaseToken: 'gp-real-token-12345' })
-            .expect(200);
-        expect(res.body.success).toBe(true);
-        expect(res.body.order.status).toBe('paid');
-        // 9000 + 450 bonus = 9450 e幣
-        expect(res.body.order.ecoinTotal).toBe(9450);
-        expect(res.body.order.deduped).toBe(false);
+        // The full androidpublisher verification path is covered by
+        // wallet-topup-google.test.js (mocks global.fetch for the Google API).
+        // This legacy case exercises the rollback fallback (explicit
+        // GOOGLE_PLAY_ALLOW_UNVERIFIED=1) so it doesn't require real creds.
+        const prevGsa = process.env.GOOGLE_PLAY_SERVICE_ACCOUNT;
+        const prevAllow = process.env.GOOGLE_PLAY_ALLOW_UNVERIFIED;
+        delete process.env.GOOGLE_PLAY_SERVICE_ACCOUNT;
+        process.env.GOOGLE_PLAY_ALLOW_UNVERIFIED = '1';
+        if (wallet._resetGoogleCache) wallet._resetGoogleCache();
+        try {
+            const app = buildApp({ user: { userId: ALICE } });
+            const res = await supertest(app).post('/api/wallet/topup/verify-google')
+                .send({ productId: 'ec.topup.starter', purchaseToken: 'gp-real-token-12345' })
+                .expect(200);
+            expect(res.body.success).toBe(true);
+            expect(res.body.order.status).toBe('paid');
+            // 9000 + 450 bonus = 9450 e幣
+            expect(res.body.order.ecoinTotal).toBe(9450);
+            expect(res.body.order.deduped).toBe(false);
 
-        // Replaying the same token should dedupe (no double credit).
-        const replay = await supertest(app).post('/api/wallet/topup/verify-google')
-            .send({ productId: 'ec.topup.starter', purchaseToken: 'gp-real-token-12345' })
-            .expect(200);
-        expect(replay.body.order.deduped).toBe(true);
+            // Replaying the same token should dedupe (no double credit).
+            const replay = await supertest(app).post('/api/wallet/topup/verify-google')
+                .send({ productId: 'ec.topup.starter', purchaseToken: 'gp-real-token-12345' })
+                .expect(200);
+            expect(replay.body.order.deduped).toBe(true);
 
-        const bal = await walletApi.getBalance(ALICE);
-        expect(bal.balance_ecoin).toBe(9450);
+            const bal = await walletApi.getBalance(ALICE);
+            expect(bal.balance_ecoin).toBe(9450);
+        } finally {
+            if (prevGsa === undefined) delete process.env.GOOGLE_PLAY_SERVICE_ACCOUNT;
+            else process.env.GOOGLE_PLAY_SERVICE_ACCOUNT = prevGsa;
+            if (prevAllow === undefined) delete process.env.GOOGLE_PLAY_ALLOW_UNVERIFIED;
+            else process.env.GOOGLE_PLAY_ALLOW_UNVERIFIED = prevAllow;
+            if (wallet._resetGoogleCache) wallet._resetGoogleCache();
+        }
     });
 
     // ── Apple IAP verification ──────────────────────────────────────

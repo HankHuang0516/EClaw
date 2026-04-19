@@ -21,6 +21,8 @@ const express = require('express');
 const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
@@ -45,6 +47,17 @@ const INSURANCE_POOL_BPS = 200;
 /** Well-known virtual user UUIDs for platform-owned wallets. */
 const PLATFORM_WALLET_USER_ID = '00000000-0000-0000-0000-000000000001';
 const INSURANCE_POOL_USER_ID  = '00000000-0000-0000-0000-000000000002';
+
+/** Google Play package name (must match the Android app's applicationId). */
+const GOOGLE_PACKAGE_NAME = 'com.eclawbot.app';
+/** OAuth access-token cache TTL (conservative under Google's 3600s lifetime). */
+const GOOGLE_TOKEN_CACHE_MS = 55 * 60 * 1000;
+/** Google Play API scope — read + acknowledge purchases. */
+const GOOGLE_ANDROIDPUBLISHER_SCOPE = 'https://www.googleapis.com/auth/androidpublisher';
+/** OAuth token exchange endpoint. */
+const GOOGLE_OAUTH_TOKEN_URL = 'https://oauth2.googleapis.com/token';
+/** androidpublisher v3 REST API base. */
+const GOOGLE_ANDROIDPUBLISHER_BASE = 'https://androidpublisher.googleapis.com/androidpublisher/v3';
 
 /**
  * All ledger type values. Keep in sync with wallet_schema.sql comment.
@@ -729,6 +742,262 @@ async function getLedger(userId, { limit = 50, offset = 0, type = null } = {}) {
 }
 
 // ============================================
+// Google Play purchase verification (androidpublisher v3)
+// ============================================
+//
+// Security posture: FAIL-CLOSED. If GOOGLE_PLAY_SERVICE_ACCOUNT is missing
+// or unparseable, /topup/verify-google rejects with purchase_not_verified
+// instead of falling back to the legacy trust-token path. Rationale: this
+// route credits real money into wallets; an env-misconfiguration should
+// NOT open the door to forged purchaseTokens. To intentionally disable
+// verification (e.g. during a rollback), set env
+// `GOOGLE_PLAY_ALLOW_UNVERIFIED=1` — the flip is explicit + audited.
+//
+// No GSA field (private_key, private_key_id, full JSON) is ever logged.
+// Only `client_email` and `project_id` may appear in audit records.
+
+/**
+ * Singleton GSA env parser. Returns the parsed service account object
+ * on first call and caches it. Returns null if env is missing OR malformed.
+ * Never throws — caller decides how to handle missing creds.
+ */
+let _gsaCache = undefined;  // undefined = not parsed yet; null = parsed but absent/invalid
+function _getServiceAccount() {
+    if (_gsaCache !== undefined) return _gsaCache;
+    const raw = process.env.GOOGLE_PLAY_SERVICE_ACCOUNT;
+    if (!raw || typeof raw !== 'string') {
+        _gsaCache = null;
+        return _gsaCache;
+    }
+    try {
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object') {
+            _gsaCache = null;
+            return _gsaCache;
+        }
+        // Required fields: client_email + private_key. Do NOT log the key.
+        if (typeof parsed.client_email !== 'string' || typeof parsed.private_key !== 'string') {
+            _gsaCache = null;
+            return _gsaCache;
+        }
+        _gsaCache = parsed;
+        return _gsaCache;
+    } catch (_err) {
+        // JSON parse failed — treat as missing. Don't log the raw value
+        // (may contain the private key even if malformed).
+        _gsaCache = null;
+        return _gsaCache;
+    }
+}
+
+/** Reset the GSA + access-token caches. For tests only. */
+function _resetGoogleCache() {
+    _gsaCache = undefined;
+    _accessTokenCache = { token: null, expiresAt: 0, inflight: null };
+}
+
+/**
+ * Single-flight OAuth access-token cache.
+ * - `expiresAt`: epoch-ms at which the cached token becomes stale.
+ * - `inflight`: if a fetch is already in progress, concurrent callers await
+ *   the same promise instead of re-signing a JWT + hammering the token endpoint.
+ */
+let _accessTokenCache = { token: null, expiresAt: 0, inflight: null };
+
+/** Build and sign a service-account JWT assertion for the token exchange. */
+function _signServiceAccountJwt(sa, now = Math.floor(Date.now() / 1000)) {
+    const header = { alg: 'RS256', typ: 'JWT', kid: sa.private_key_id || undefined };
+    const payload = {
+        iss: sa.client_email,
+        sub: sa.client_email,
+        aud: GOOGLE_OAUTH_TOKEN_URL,
+        scope: GOOGLE_ANDROIDPUBLISHER_SCOPE,
+        iat: now,
+        exp: now + 3600,
+    };
+    return jwt.sign(payload, sa.private_key, { algorithm: 'RS256', header });
+}
+
+/**
+ * Acquire an OAuth access token for the androidpublisher scope.
+ * Returns the cached token if still fresh (within GOOGLE_TOKEN_CACHE_MS).
+ * Throws google_auth_failed on any upstream failure.
+ */
+async function _getGoogleAccessToken({ fetchImpl = fetch, now = Date.now() } = {}) {
+    const sa = _getServiceAccount();
+    if (!sa) {
+        const e = new Error('google_auth_failed');
+        e.reason = 'gsa_missing_or_invalid';
+        throw e;
+    }
+
+    if (_accessTokenCache.token && _accessTokenCache.expiresAt > now) {
+        return _accessTokenCache.token;
+    }
+    if (_accessTokenCache.inflight) {
+        return _accessTokenCache.inflight;
+    }
+
+    _accessTokenCache.inflight = (async () => {
+        try {
+            const assertion = _signServiceAccountJwt(sa);
+            const body = new URLSearchParams({
+                grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+                assertion,
+            });
+            const resp = await fetchImpl(GOOGLE_OAUTH_TOKEN_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: body.toString(),
+            });
+            if (!resp.ok) {
+                const e = new Error('google_auth_failed');
+                e.reason = `token_exchange_http_${resp.status}`;
+                throw e;
+            }
+            const data = await resp.json();
+            if (!data || typeof data.access_token !== 'string') {
+                const e = new Error('google_auth_failed');
+                e.reason = 'token_exchange_malformed';
+                throw e;
+            }
+            _accessTokenCache.token = data.access_token;
+            _accessTokenCache.expiresAt = now + GOOGLE_TOKEN_CACHE_MS;
+            return data.access_token;
+        } finally {
+            _accessTokenCache.inflight = null;
+        }
+    })();
+    return _accessTokenCache.inflight;
+}
+
+/**
+ * Verify a Google Play purchase token via androidpublisher v3.
+ *
+ * Returns on success:
+ *   { valid: true, orderId, purchaseState, consumptionState,
+ *     acknowledgementState, rawResponse }
+ *
+ * Throws with a typed `.code`:
+ *   - google_auth_failed   — JWT sign / token exchange failed (500 to client)
+ *   - google_token_invalid — HTTP 400/404 from Google (402 to client)
+ *   - google_token_canceled — purchaseState=1 (402 to client)
+ *   - google_token_pending  — purchaseState=2 (402 to client)
+ *
+ * `orderId` is Google's authoritative per-transaction ID — prefer this over
+ * the raw purchaseToken when computing external_txn_id.
+ */
+async function verifyGooglePurchase(
+    packageName,
+    productId,
+    purchaseToken,
+    { fetchImpl = fetch } = {}
+) {
+    if (!packageName || typeof packageName !== 'string') throw new Error('package_name_invalid');
+    if (!productId || typeof productId !== 'string') throw new Error('product_id_invalid');
+    if (!purchaseToken || typeof purchaseToken !== 'string') throw new Error('purchase_token_invalid');
+
+    const accessToken = await _getGoogleAccessToken({ fetchImpl });
+    const url = `${GOOGLE_ANDROIDPUBLISHER_BASE}/applications/${encodeURIComponent(packageName)}`
+              + `/purchases/products/${encodeURIComponent(productId)}`
+              + `/tokens/${encodeURIComponent(purchaseToken)}`;
+
+    const resp = await fetchImpl(url, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (resp.status === 401 || resp.status === 403) {
+        // Most commonly: service account lacks Play Console access.
+        const e = new Error('google_auth_failed');
+        e.reason = `api_http_${resp.status}`;
+        throw e;
+    }
+    if (resp.status === 400 || resp.status === 404 || resp.status === 410) {
+        // Token does not identify a known purchase.
+        const e = new Error('google_token_invalid');
+        e.reason = `api_http_${resp.status}`;
+        throw e;
+    }
+    if (!resp.ok) {
+        const e = new Error('google_auth_failed');
+        e.reason = `api_http_${resp.status}`;
+        throw e;
+    }
+
+    let data;
+    try {
+        data = await resp.json();
+    } catch (_err) {
+        const e = new Error('google_auth_failed');
+        e.reason = 'api_malformed_json';
+        throw e;
+    }
+
+    // purchaseState: 0=purchased, 1=canceled, 2=pending
+    if (data.purchaseState === 1) {
+        const e = new Error('google_token_canceled');
+        e.purchaseState = 1;
+        throw e;
+    }
+    if (data.purchaseState === 2) {
+        const e = new Error('google_token_pending');
+        e.purchaseState = 2;
+        throw e;
+    }
+    if (data.purchaseState !== 0) {
+        const e = new Error('google_token_invalid');
+        e.purchaseState = data.purchaseState;
+        throw e;
+    }
+
+    return {
+        valid: true,
+        orderId: data.orderId || null,
+        purchaseState: data.purchaseState,
+        consumptionState: data.consumptionState,
+        acknowledgementState: data.acknowledgementState,
+        rawResponse: data,
+    };
+}
+
+/**
+ * Acknowledge a purchase. Must be called within 3 days of purchase or
+ * Google auto-refunds. Fire-and-forget from the caller's perspective:
+ * the wallet has already been credited, so an ack failure is logged + left
+ * for a retry cron — we never revoke credited ecoins on ack failure.
+ *
+ * Never throws (errors are returned as { ok: false, error }).
+ */
+async function acknowledgeGooglePurchase(
+    packageName,
+    productId,
+    purchaseToken,
+    { fetchImpl = fetch } = {}
+) {
+    try {
+        const accessToken = await _getGoogleAccessToken({ fetchImpl });
+        const url = `${GOOGLE_ANDROIDPUBLISHER_BASE}/applications/${encodeURIComponent(packageName)}`
+                  + `/purchases/products/${encodeURIComponent(productId)}`
+                  + `/tokens/${encodeURIComponent(purchaseToken)}:acknowledge`;
+        const resp = await fetchImpl(url, {
+            method: 'POST',
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+            },
+            body: '{}',
+        });
+        if (!resp.ok && resp.status !== 204) {
+            return { ok: false, error: `ack_http_${resp.status}` };
+        }
+        return { ok: true };
+    } catch (err) {
+        return { ok: false, error: err.message || 'ack_failed' };
+    }
+}
+
+// ============================================
 // Express factory
 // ============================================
 
@@ -791,9 +1060,10 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
     //   — Device auth (Android app): { deviceId, deviceSecret } in body
     //   — JWT auth (portal): cookie/Authorization header
     //
-    // TODO: validate purchaseToken via Google androidpublisher API once
-    // GOOGLE_PLAY_SERVICE_ACCOUNT is provisioned. Until then we trust the
-    // token and rely on UNIQUE(channel, external_txn_id) for dedupe.
+    // Verifies purchaseToken against Google androidpublisher v3 before
+    // crediting the wallet. Fail-closed: if GOOGLE_PLAY_SERVICE_ACCOUNT is
+    // missing/invalid the request is rejected (purchase_not_verified) so
+    // an env misconfiguration can't open the door to forged tokens.
     router.post('/topup/verify-google', async (req, res) => {
         try {
             const { productId, purchaseToken, deviceId, deviceSecret: devSecret } = req.body || {};
@@ -842,14 +1112,65 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
                 return res.status(400).json({ success: false, error: 'unknown_product' });
             }
 
+            // --- Verify with Google androidpublisher ---
+            // Fail-closed by default. `GOOGLE_PLAY_ALLOW_UNVERIFIED=1` is an
+            // explicit, audited escape hatch for emergency rollback.
+            const allowUnverified = process.env.GOOGLE_PLAY_ALLOW_UNVERIFIED === '1';
+            let googleOrderId = null;
+            let skippedVerification = false;
+
+            if (allowUnverified && !_getServiceAccount()) {
+                // Emergency rollback path — audited so Hank sees it.
+                skippedVerification = true;
+                audit('warn', 'wallet', `google verification skipped (GOOGLE_PLAY_ALLOW_UNVERIFIED=1) user=${userId} product=${productId}`, {
+                    userId, action: 'topup_verify', result: 'unverified_fallback',
+                });
+            } else {
+                try {
+                    const verified = await verifyGooglePurchase(
+                        GOOGLE_PACKAGE_NAME, productId, purchaseToken
+                    );
+                    googleOrderId = verified.orderId;
+                } catch (vErr) {
+                    if (vErr.message === 'google_auth_failed') {
+                        // Server-side problem (bad GSA, Google 5xx). Mask the
+                        // internal reason from the client; log for ops.
+                        audit('error', 'wallet', `google_auth_failed user=${userId} reason=${vErr.reason || 'unknown'}`, {
+                            userId, action: 'topup_verify', result: 'google_auth_failed',
+                        });
+                        return res.status(500).json({ success: false, error: 'google_auth_failed' });
+                    }
+                    // google_token_invalid / canceled / pending → 402 + safe error code
+                    const code = vErr.message;  // safe: one of the enumerated strings
+                    audit('warn', 'wallet', `purchase_not_verified user=${userId} product=${productId} code=${code}`, {
+                        userId, action: 'topup_verify', result: code,
+                    });
+                    return res.status(402).json({
+                        success: false,
+                        error: 'purchase_not_verified',
+                        details: { code },
+                    });
+                }
+            }
+
+            // Google orderId (stable per-transaction) is preferred over the
+            // raw purchaseToken as the external_txn_id. Fall back to the token
+            // only when Google omitted orderId (rare) or we skipped verification.
+            const externalTxnId = googleOrderId || purchaseToken;
+
             const order = await createTopupOrder({
                 userId,
                 channel: 'google_play',
                 priceUsd: tier.priceUsd,
                 baseMli: tier.baseMli,
                 bonusMli: tier.bonusMli,
-                externalTxnId: purchaseToken,
-                externalRaw: { productId, source: 'verify-google' },
+                externalTxnId,
+                externalRaw: {
+                    productId,
+                    source: 'verify-google',
+                    orderId: googleOrderId,
+                    verified: !skippedVerification,
+                },
             });
 
             const ledger = await markTopupPaid({
@@ -862,6 +1183,27 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
             audit('info', 'wallet', `topup verified user=${userId} product=${productId} order=${order.id}`, {
                 userId, action: 'topup_verify', resource: order.id, result: 'success',
             });
+
+            // Fire-and-forget acknowledge AFTER ledger credit succeeded.
+            // If ack fails, the user keeps their ecoins; a retry cron can
+            // reconcile. Never block the response on this.
+            if (!skippedVerification) {
+                Promise.resolve()
+                    .then(() => acknowledgeGooglePurchase(GOOGLE_PACKAGE_NAME, productId, purchaseToken))
+                    .then((ackRes) => {
+                        if (!ackRes.ok) {
+                            audit('warn', 'wallet', `google ack failed user=${userId} order=${order.id} err=${ackRes.error}`, {
+                                userId, action: 'topup_ack', resource: order.id, result: 'ack_failed',
+                            });
+                        }
+                    })
+                    .catch((ackErr) => {
+                        audit('warn', 'wallet', `google ack threw user=${userId} order=${order.id}`, {
+                            userId, action: 'topup_ack', resource: order.id, result: 'ack_threw',
+                            metadata: { message: ackErr && ackErr.message },
+                        });
+                    });
+            }
 
             res.json({
                 success: true,
@@ -1083,8 +1425,12 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
         usdToMli,
         ecoinToMli,
         mliToEcoin,
+        // Google Play verification (exposed for tests + callers)
+        verifyGooglePurchase,
+        acknowledgeGooglePurchase,
+        GOOGLE_PACKAGE_NAME,
         // Internals exposed for testing
-        _internals: { applyLedgerEntry, withTransaction, pool },
+        _internals: { applyLedgerEntry, withTransaction, pool, _resetGoogleCache, _getServiceAccount },
     };
 };
 
@@ -1101,3 +1447,7 @@ module.exports.ecoinToMli = ecoinToMli;
 module.exports.mliToEcoin = mliToEcoin;
 module.exports.TOPUP_TIERS = TOPUP_TIERS;
 module.exports.getTopupTier = getTopupTier;
+module.exports.GOOGLE_PACKAGE_NAME = GOOGLE_PACKAGE_NAME;
+module.exports.verifyGooglePurchase = verifyGooglePurchase;
+module.exports.acknowledgeGooglePurchase = acknowledgeGooglePurchase;
+module.exports._resetGoogleCache = _resetGoogleCache;
