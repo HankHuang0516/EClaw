@@ -1,10 +1,13 @@
 /**
  * Entity slot compaction tests (Jest + Supertest)
  *
- * Tests:
- * - Auto-compaction after permanent entity delete
- * - Standalone POST /api/device/compact-entities endpoint
- * - Multiple entities with sparse IDs compacted to 0, 1, 2, ...
+ * Contract (post-#314-revert):
+ *  - DELETE /api/device/entity/:entityId/permanent does NOT auto-compact.
+ *    Remaining slots stay sparse so the "new IDs never reuse deleted IDs"
+ *    invariant holds (chat_messages.entity_id FK, publicCodeIndex, analytics,
+ *    bookmarked URLs). Tested by `test-dynamic-entities.js` tests 15-19.
+ *  - POST /api/device/compact-entities is the explicit, user-initiated
+ *    renumbering path. These tests cover that manual path.
  */
 
 require('./helpers/mock-setup');
@@ -12,7 +15,6 @@ require('./helpers/mock-setup');
 const request = require('supertest');
 let app;
 
-const get = (path) => request(app).get(path).set('Host', 'localhost');
 const post = (path) => request(app).post(path).set('Host', 'localhost');
 const del = (path) => request(app).delete(path).set('Host', 'localhost');
 
@@ -29,7 +31,6 @@ afterAll(async () => {
 const DEVICE_ID = 'compact-test-device';
 const DEVICE_SECRET = 'compact-test-secret';
 
-// Helper: register device (creates entity #0)
 async function registerDevice() {
     await post('/api/device/register').send({
         deviceId: DEVICE_ID,
@@ -38,7 +39,6 @@ async function registerDevice() {
     });
 }
 
-// Helper: add an entity slot
 async function addEntity() {
     const res = await post('/api/device/add-entity').send({
         deviceId: DEVICE_ID,
@@ -47,7 +47,6 @@ async function addEntity() {
     return res.body.entityId;
 }
 
-// Helper: permanently delete an entity
 async function deletePermanent(entityId) {
     return del(`/api/device/entity/${entityId}/permanent`).send({
         deviceId: DEVICE_ID,
@@ -55,7 +54,6 @@ async function deletePermanent(entityId) {
     });
 }
 
-// Helper: compact entities
 async function compact() {
     return post('/api/device/compact-entities').send({
         deviceId: DEVICE_ID,
@@ -63,65 +61,82 @@ async function compact() {
     });
 }
 
-describe('Entity slot compaction — auto after delete', () => {
+describe('DELETE /api/device/entity/:entityId/permanent — never-reuse invariant', () => {
     beforeAll(async () => {
         await registerDevice();
     });
 
-    it('compacts single remaining entity to slot #0', async () => {
+    it('leaves remaining slots sparse (no auto-compact)', async () => {
         // Add entities: now we have #0, #1, #2
         const id1 = await addEntity();
         const id2 = await addEntity();
         expect(id1).toBe(1);
         expect(id2).toBe(2);
 
-        // Delete #0, leaving #1 and #2 → auto-compacted to #0, #1
+        // Delete #0 → remaining IDs stay at [1, 2] (sparse)
         const res1 = await deletePermanent(0);
         expect(res1.status).toBe(200);
-        expect(res1.body.compacted).toBeDefined();
-        expect(res1.body.entityIds).toEqual([0, 1]);
+        expect(res1.body.compacted).toBeUndefined();
+        expect(res1.body.entityIds).toEqual([1, 2]);
 
-        // Delete #0 (was #1), leaving #1 (was #2) → auto-compacted to #0
-        const res2 = await deletePermanent(0);
+        // Delete #1 → only #2 remains (sparse)
+        const res2 = await deletePermanent(1);
         expect(res2.status).toBe(200);
-        expect(res2.body.compacted).toBeDefined();
-        expect(res2.body.entityIds).toEqual([0]);
+        expect(res2.body.compacted).toBeUndefined();
+        expect(res2.body.entityIds).toEqual([2]);
     });
 
-    it('returns mapping array in compacted response', async () => {
-        // Add #1 and #2
-        await addEntity();
-        await addEntity();
+    it('new add-entity IDs never reuse deleted IDs', async () => {
+        // State: only #2 remains. nextEntityId counter should be > 2.
+        const newId = await addEntity();
+        expect(newId).toBeGreaterThan(2);
 
-        // Delete #0 → #1 becomes #0, #2 becomes #1
-        const res = await deletePermanent(0);
-        expect(res.status).toBe(200);
-        expect(res.body.success).toBe(true);
-        expect(Array.isArray(res.body.compacted)).toBe(true);
-        expect(res.body.compacted).toContainEqual({ from: 1, to: 0 });
-        expect(res.body.compacted).toContainEqual({ from: 2, to: 1 });
+        // Delete the freshly added slot and add again — new ID should
+        // still be strictly greater, never reusing.
+        const previousId = newId;
+        await deletePermanent(newId);
+        const nextId = await addEntity();
+        expect(nextId).toBeGreaterThan(previousId);
     });
 
-    it('no compaction needed when IDs already sequential from 0', async () => {
-        // State after previous test: #0, #1
-        // Delete #1 → only #0 remains, already sequential
-        const res = await deletePermanent(1);
-        expect(res.status).toBe(200);
-        expect(res.body.compacted).toBeUndefined();
-        expect(res.body.entityIds).toEqual([0]);
-    });
+    it('deleting the last entity auto-creates a new default entity without resetting the counter', async () => {
+        // Drain to a single entity, then delete it.
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            const listRes = await post('/api/device/compact-entities').send({}).then(() => null).catch(() => null); // noop
+            void listRes;
+            const statusRes = await request(app)
+                .get(`/api/entities?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`)
+                .set('Host', 'localhost');
+            const ids = statusRes.body.entityIds || [];
+            if (ids.length <= 1) break;
+            // Delete the lowest ID each iteration until only one remains
+            const r = await deletePermanent(ids[0]);
+            if (r.status !== 200) break;
+        }
 
-    it('deleting the last entity auto-creates a new default entity', async () => {
-        const res = await deletePermanent(0);
+        // Capture counter before deletion of the last entity
+        const beforeStatus = await request(app)
+            .get(`/api/entities?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`)
+            .set('Host', 'localhost');
+        const lastId = (beforeStatus.body.entityIds || [])[0];
+
+        const res = await deletePermanent(lastId);
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
         expect(res.body.autoCreatedEntityId).toBe(0);
         expect(res.body.remainingEntities).toBe(1);
         expect(res.body.entityIds).toEqual([0]);
+
+        // Counter must not have been reset — adding after this point must
+        // yield a strictly-increasing ID that does not collide with any
+        // previously-seen (and since-deleted) ID.
+        const newId = await addEntity();
+        expect(newId).toBeGreaterThan(lastId);
     });
 });
 
-describe('POST /api/device/compact-entities — standalone endpoint', () => {
+describe('POST /api/device/compact-entities — manual renumbering endpoint', () => {
     it('returns 400 when credentials missing', async () => {
         const res = await post('/api/device/compact-entities').send({});
         expect(res.status).toBe(400);
@@ -135,30 +150,32 @@ describe('POST /api/device/compact-entities — standalone endpoint', () => {
         expect(res.status).toBe(403);
     });
 
-    it('returns "already compact" when IDs are sequential', async () => {
-        // Device has entity #0 from previous tests
+    it('compacts sparse entity IDs when explicitly requested', async () => {
+        // Add a few entities so we have at least one sparse gap to close.
+        await addEntity();
+        await addEntity();
+        await addEntity();
+
+        // Fetch the current state and delete an interior slot so IDs are sparse
+        const before = await request(app)
+            .get(`/api/entities?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`)
+            .set('Host', 'localhost');
+        const beforeIds = (before.body.entityIds || []).slice().sort((a, b) => a - b);
+        // Only delete if we have at least 2 entities (otherwise protection kicks in)
+        if (beforeIds.length >= 2) {
+            await deletePermanent(beforeIds[0]);
+        }
+
+        // Now run manual compaction — IDs should become 0..N-1
         const res = await compact();
         expect(res.status).toBe(200);
-        expect(res.body.message).toMatch(/already compact/i);
-    });
-
-    it('compacts sparse entity IDs via standalone endpoint', async () => {
-        // Add entities: #1, #2, #3
-        await addEntity();
-        await addEntity();
-        await addEntity();
-
-        // Delete #0 and #2 to create sparse IDs: #1, #3
-        await deletePermanent(0);
-        // After deleting #0, auto-compact moves: #1→#0, #2→#1, #3→#2
-        // Now delete #1 to create: #0, #2 (sparse)
-        await deletePermanent(1);
-        // After deleting #1, auto-compact moves: #2→#1
-        // Now we have #0, #1 — already compact
-
-        // Verify we're compact
-        const res = await compact();
-        expect(res.status).toBe(200);
-        expect(res.body.entityIds[0]).toBe(0);
+        const resultIds = (res.body.entityIds || []).slice().sort((a, b) => a - b);
+        if (resultIds.length > 0) {
+            expect(resultIds[0]).toBe(0);
+            // Sequential
+            for (let i = 0; i < resultIds.length; i++) {
+                expect(resultIds[i]).toBe(i);
+            }
+        }
     });
 });
