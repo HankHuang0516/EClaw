@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title data-i18n="invite_qr_title">EClawbot - Generate Invite Share Image</title>
+    <link rel="icon" type="image/png" href="assets/favicon-32.png">
+    <link rel="stylesheet" href="shared/style.css">
+    <style>
+        .qrg-wrap { max-width: 720px; margin: 24px auto; padding: 0 16px; }
+        .qrg-header { text-align: center; margin-bottom: 20px; }
+        .qrg-header h1 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+        .qrg-header p { font-size: 13px; color: var(--text-secondary); }
+
+        .qrg-controls { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; }
+
+        .qrg-field { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .qrg-field label { font-size: 12px; color: var(--text-secondary); min-width: 80px; }
+        .qrg-field input { flex: 1; padding: 10px 12px; background: var(--input-bg); border: 1px solid var(--card-border); border-radius: var(--radius-sm); color: var(--text); font-size: 15px; font-family: monospace; letter-spacing: 2px; text-transform: uppercase; }
+
+        .qrg-sizes { display: flex; gap: 8px; flex-wrap: wrap; }
+        .qrg-size-btn { flex: 1; min-width: 100px; padding: 10px 12px; background: var(--input-bg); border: 1px solid var(--card-border); border-radius: var(--radius-sm); color: var(--text); font-size: 12px; cursor: pointer; transition: all 0.15s; }
+        .qrg-size-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 700; }
+        .qrg-size-btn:hover:not(.active) { border-color: var(--primary); }
+
+        .qrg-preview-wrap { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; overflow: hidden; }
+        .qrg-preview-stage { display: flex; justify-content: center; align-items: center; min-height: 320px; }
+        .qrg-preview { display: block; max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+
+        .qrg-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+        .qrg-btn { flex: 1; min-width: 140px; padding: 14px 18px; border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+        .qrg-btn-primary { background: var(--primary); color: #fff; }
+        .qrg-btn-primary:hover { background: var(--primary-hover); }
+        .qrg-btn-secondary { background: var(--input-bg); color: var(--text); border: 1px solid var(--card-border); }
+        .qrg-btn-secondary:hover { border-color: var(--primary); }
+        .qrg-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .qrg-back { display: inline-block; margin-bottom: 12px; font-size: 13px; color: var(--text-secondary); text-decoration: none; }
+        .qrg-back:hover { color: var(--primary); }
+    </style>
+</head>
+<body>
+    <div id="navContainer"></div>
+
+    <main class="qrg-wrap">
+        <a class="qrg-back" href="/portal/invite.html">← <span data-i18n="inv_my_code">My Invite Code</span></a>
+
+        <div class="qrg-header">
+            <h1 data-i18n="invite_qr_title">Generate Invite Share Image</h1>
+            <p data-i18n="invite_qr_desc">Create a branded image with your invite code and QR, ready to post on social media.</p>
+        </div>
+
+        <div class="qrg-controls">
+            <div class="qrg-field">
+                <label data-i18n="invite_qr_code_label" for="qrgCodeInput">Invite code</label>
+                <input id="qrgCodeInput" type="text" maxlength="12" placeholder="ABCDEF" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="qrg-sizes" role="group" aria-label="Image size">
+                <button type="button" class="qrg-size-btn active" data-size="600" data-i18n="invite_qr_size_mobile">Mobile 600×600</button>
+                <button type="button" class="qrg-size-btn" data-size="1080" data-i18n="invite_qr_size_ig">Instagram 1080×1080</button>
+                <button type="button" class="qrg-size-btn" data-size="1200" data-i18n="invite_qr_size_desktop">Desktop 1200×1200</button>
+            </div>
+        </div>
+
+        <div class="qrg-preview-wrap">
+            <div class="qrg-preview-stage">
+                <canvas id="qrgCanvas" class="qrg-preview" width="600" height="600" aria-label="Share image preview"></canvas>
+            </div>
+        </div>
+
+        <div class="qrg-actions">
+            <button type="button" class="qrg-btn qrg-btn-primary" id="qrgDownloadBtn" data-i18n="invite_qr_btn_download">Download PNG</button>
+            <button type="button" class="qrg-btn qrg-btn-secondary" id="qrgCopyBtn" data-i18n="invite_qr_btn_copy">Copy to clipboard</button>
+        </div>
+    </main>
+
+    <div id="footerContainer"></div>
+    <script src="shared/api.js"></script>
+    <script src="shared/nav.js"></script>
+    <script src="shared/auth.js"></script>
+    <script src="../shared/telemetry.js"></script>
+    <script src="../shared/i18n.js"></script>
+    <script src="shared/footer.js"></script>
+    <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
+    <script src="shared/ai-chat.js"></script>
+
+    <script>
+        (function() {
+            const QR_LIB_URL = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
+            const SHARE_BASE = 'https://eclawbot.com/invite/';
+            let qrLibPromise = null;
+            let cachedQrBitmap = null;
+            let cachedQrForUrl = null;
+            let currentSize = 600;
+            let currentCode = '';
+
+            function tt(k, fb) { return (typeof i18n !== 'undefined' ? i18n.t(k) : null) || fb; }
+            function toast(msg, type) {
+                if (typeof showToast === 'function') showToast(msg, type || 'info');
+            }
+
+            function loadQrLib() {
+                if (qrLibPromise) return qrLibPromise;
+                qrLibPromise = new Promise((resolve, reject) => {
+                    if (typeof QRCode !== 'undefined') return resolve();
+                    const s = document.createElement('script');
+                    s.src = QR_LIB_URL;
+                    s.async = true;
+                    s.onload = () => resolve();
+                    s.onerror = () => reject(new Error('QR library failed to load'));
+                    document.head.appendChild(s);
+                });
+                return qrLibPromise;
+            }
+
+            function sanitizeCode(raw) {
+                return String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12);
+            }
+
+            function roundRect(ctx, x, y, w, h, r) {
+                const rr = Math.min(r, w / 2, h / 2);
+                ctx.beginPath();
+                ctx.moveTo(x + rr, y);
+                ctx.arcTo(x + w, y, x + w, y + h, rr);
+                ctx.arcTo(x + w, y + h, x, y + h, rr);
+                ctx.arcTo(x, y + h, x, y, rr);
+                ctx.arcTo(x, y, x + w, y, rr);
+                ctx.closePath();
+            }
+
+            async function getQrBitmap(url, pxSize) {
+                const key = `${url}|${pxSize}`;
+                if (cachedQrForUrl === key && cachedQrBitmap) return cachedQrBitmap;
+                await loadQrLib();
+                const tmp = document.createElement('canvas');
+                await QRCode.toCanvas(tmp, url, {
+                    width: pxSize,
+                    margin: 1,
+                    color: { dark: '#0D0D1A', light: '#FFFFFF' },
+                    errorCorrectionLevel: 'M'
+                });
+                cachedQrBitmap = tmp;
+                cachedQrForUrl = key;
+                return tmp;
+            }
+
+            async function drawPoster(canvas, size, code) {
+                const ctx = canvas.getContext('2d');
+                canvas.width = size;
+                canvas.height = size;
+                const s = size / 600;
+                const qrPx = Math.round(280 * s);
+                const shareUrl = SHARE_BASE + (code || 'ECLAW');
+
+                let qrBitmap = null;
+                try {
+                    qrBitmap = await getQrBitmap(shareUrl, qrPx);
+                } catch (err) {
+                    // draw "QR unavailable" fallback below
+                }
+
+                const bg = ctx.createLinearGradient(0, 0, size, size);
+                bg.addColorStop(0, '#6C63FF');
+                bg.addColorStop(0.55, '#5046E5');
+                bg.addColorStop(1, '#1E3A8A');
+                ctx.fillStyle = bg;
+                ctx.fillRect(0, 0, size, size);
+
+                const glow = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size * 0.55);
+                glow.addColorStop(0, 'rgba(255,255,255,0.12)');
+                glow.addColorStop(1, 'rgba(255,255,255,0)');
+                ctx.fillStyle = glow;
+                ctx.fillRect(0, 0, size, size);
+
+                ctx.fillStyle = 'rgba(255,255,255,0.18)';
+                const sq = 12 * s;
+                const pad = 28 * s;
+                [[pad, pad], [size - pad - sq, pad], [pad, size - pad - sq], [size - pad - sq, size - pad - sq]].forEach(([x, y]) => {
+                    ctx.fillRect(x, y, sq, sq);
+                    ctx.fillRect(x + sq * 1.6, y, sq * 0.6, sq);
+                    ctx.fillRect(x, y + sq * 1.6, sq, sq * 0.6);
+                });
+
+                ctx.fillStyle = 'rgba(255,255,255,0.95)';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = `800 ${28 * s}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
+                ctx.fillText('EClawbot', size / 2, 78 * s);
+
+                ctx.fillStyle = 'rgba(255,255,255,0.78)';
+                ctx.font = `600 ${14 * s}px -apple-system, "Helvetica Neue", Arial, sans-serif`;
+                const tagline = tt('invite_qr_desc', 'Invite friends. Earn e-coin together.');
+                const trimmed = tagline.length > 42 ? tagline.slice(0, 40) + '…' : tagline;
+                ctx.fillText(trimmed, size / 2, 106 * s);
+
+                const qrX = (size - qrPx) / 2;
+                const qrY = 150 * s;
+                const panelPad = 16 * s;
+                ctx.fillStyle = '#FFFFFF';
+                roundRect(ctx, qrX - panelPad, qrY - panelPad, qrPx + panelPad * 2, qrPx + panelPad * 2, 18 * s);
+                ctx.fill();
+
+                if (qrBitmap) {
+                    ctx.drawImage(qrBitmap, qrX, qrY, qrPx, qrPx);
+                } else {
+                    ctx.fillStyle = '#0D0D1A';
+                    ctx.font = `600 ${14 * s}px -apple-system, Arial, sans-serif`;
+                    ctx.fillText('QR unavailable', size / 2, qrY + qrPx / 2);
+                }
+
+                const labelY = qrY + qrPx + panelPad * 2 + 32 * s;
+                ctx.fillStyle = 'rgba(255,255,255,0.72)';
+                ctx.textAlign = 'center';
+                ctx.font = `600 ${12 * s}px -apple-system, Arial, sans-serif`;
+                ctx.fillText(tt('invite_qr_code_label', 'Invite code').toUpperCase(), size / 2, labelY);
+
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = `800 ${44 * s}px "SF Mono", Menlo, Consolas, monospace`;
+                ctx.fillText(code || '------', size / 2, labelY + 36 * s);
+
+                const pillY = labelY + 78 * s;
+                const rewards = [
+                    { txt: '+500 ' + tt('invite_qr_reward_inviter', 'inviter'), bg: 'rgba(16,185,129,0.25)', border: '#10b981' },
+                    { txt: '+100 ' + tt('invite_qr_reward_invitee', 'friend'), bg: 'rgba(255,210,63,0.25)', border: '#FFD23F' },
+                    { txt: '+500 ' + tt('invite_qr_reward_topup', 'first top-up'), bg: 'rgba(79,195,247,0.25)', border: '#4FC3F7' }
+                ];
+                ctx.font = `700 ${12 * s}px -apple-system, Arial, sans-serif`;
+                const gaps = 10 * s;
+                const pillH = 30 * s;
+                const pillPad = 14 * s;
+                const widths = rewards.map(r => ctx.measureText(r.txt).width + pillPad * 2);
+                const totalW = widths.reduce((a, b) => a + b, 0) + gaps * (rewards.length - 1);
+                let px = (size - totalW) / 2;
+                rewards.forEach((r, i) => {
+                    const w = widths[i];
+                    ctx.fillStyle = r.bg;
+                    roundRect(ctx, px, pillY, w, pillH, pillH / 2);
+                    ctx.fill();
+                    ctx.strokeStyle = r.border;
+                    ctx.lineWidth = 1.5 * s;
+                    ctx.stroke();
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(r.txt, px + w / 2, pillY + pillH / 2 + 1);
+                    px += w + gaps;
+                });
+
+                ctx.fillStyle = 'rgba(255,255,255,0.68)';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'alphabetic';
+                ctx.font = `500 ${13 * s}px -apple-system, Arial, sans-serif`;
+                ctx.fillText(shareUrl.replace(/^https?:\/\//, ''), size / 2, size - 32 * s);
+            }
+
+            async function rerender() {
+                const code = sanitizeCode(document.getElementById('qrgCodeInput').value);
+                currentCode = code;
+                await drawPoster(document.getElementById('qrgCanvas'), currentSize, code);
+            }
+
+            function selectSize(size) {
+                currentSize = size;
+                document.querySelectorAll('.qrg-size-btn').forEach(b => {
+                    b.classList.toggle('active', Number(b.dataset.size) === size);
+                });
+                rerender();
+            }
+
+            function downloadPng() {
+                const canvas = document.getElementById('qrgCanvas');
+                const url = canvas.toDataURL('image/png');
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `eclawbot-invite-${currentCode || 'share'}-${currentSize}.png`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                toast(tt('invite_qr_toast_downloaded', 'Image downloaded'), 'success');
+                if (typeof telemetry !== 'undefined' && telemetry.trackAction) {
+                    telemetry.trackAction('invite_qr_download', { size: currentSize, code: currentCode });
+                }
+            }
+
+            async function copyToClipboard() {
+                const canvas = document.getElementById('qrgCanvas');
+                if (!window.ClipboardItem || !navigator.clipboard || !navigator.clipboard.write) {
+                    toast(tt('invite_qr_toast_copy_unsupported', 'Copy not supported — use Download'), 'warning');
+                    return;
+                }
+                try {
+                    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+                    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+                    toast(tt('invite_qr_toast_copied', 'Copied to clipboard'), 'success');
+                    if (typeof telemetry !== 'undefined' && telemetry.trackAction) {
+                        telemetry.trackAction('invite_qr_copy', { size: currentSize, code: currentCode });
+                    }
+                } catch (err) {
+                    toast(tt('invite_qr_toast_copy_failed', 'Copy failed — use Download'), 'error');
+                }
+            }
+
+            async function autoLoadCode() {
+                try {
+                    const data = await apiCall('GET', '/api/invite/my-code');
+                    if (data && data.success && data.code) {
+                        const input = document.getElementById('qrgCodeInput');
+                        if (input && !input.value) {
+                            input.value = data.code;
+                            currentCode = sanitizeCode(data.code);
+                            rerender();
+                        }
+                    }
+                } catch (_) { /* not logged in — user types manually */ }
+            }
+
+            let rerenderTimer = null;
+            function scheduleRerender() {
+                clearTimeout(rerenderTimer);
+                rerenderTimer = setTimeout(rerender, 200);
+            }
+
+            window.addEventListener('DOMContentLoaded', () => {
+                const isEmbed = new URLSearchParams(window.location.search).get('embed') === '1' || window.self !== window.top;
+                if (isEmbed) document.body.classList.add('embed-mode');
+                if (typeof renderNav === 'function') renderNav('settings');
+                if (typeof renderFooter === 'function') renderFooter();
+                if (typeof i18n !== 'undefined') i18n.apply();
+
+                const input = document.getElementById('qrgCodeInput');
+                const urlCode = new URLSearchParams(window.location.search).get('code');
+                if (urlCode) input.value = sanitizeCode(urlCode);
+
+                document.querySelectorAll('.qrg-size-btn').forEach(b => {
+                    b.addEventListener('click', () => selectSize(Number(b.dataset.size)));
+                });
+                input.addEventListener('input', scheduleRerender);
+                document.getElementById('qrgDownloadBtn').addEventListener('click', downloadPng);
+                document.getElementById('qrgCopyBtn').addEventListener('click', copyToClipboard);
+
+                rerender();
+                if (!urlCode) autoLoadCode();
+            });
+        })();
+    </script>
+</body>
+</html>
