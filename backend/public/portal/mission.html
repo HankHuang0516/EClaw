@@ -1849,6 +1849,7 @@
         }
 
         function closeDialog() {
+            if (typeof _disposePageMonaco === 'function') _disposePageMonaco();
             document.getElementById('dialogContainer').innerHTML = '';
         }
 
@@ -2399,6 +2400,35 @@
         // Track which note pages are public
         let notePagePublic = {}; // noteId -> boolean
 
+        // Monaco Editor opt-in (slice 1: note page HTML editor only, ?editor=monaco)
+        let _pageMonacoEditor = null;
+        let _monacoLoadPromise = null;
+        function _isMonacoOptIn() {
+            try { return new URLSearchParams(window.location.search).get('editor') === 'monaco'; }
+            catch (e) { return false; }
+        }
+        function _loadMonaco() {
+            if (_monacoLoadPromise) return _monacoLoadPromise;
+            const BASE = 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.0/min';
+            _monacoLoadPromise = new Promise((resolve, reject) => {
+                const s = document.createElement('script');
+                s.src = BASE + '/vs/loader.js';
+                s.onload = () => {
+                    window.require.config({ paths: { vs: BASE + '/vs' } });
+                    window.require(['vs/editor/editor.main'], () => resolve(window.monaco));
+                };
+                s.onerror = () => { _monacoLoadPromise = null; reject(new Error('Monaco loader failed')); };
+                document.head.appendChild(s);
+            });
+            return _monacoLoadPromise;
+        }
+        function _disposePageMonaco() {
+            if (_pageMonacoEditor) {
+                try { _pageMonacoEditor.dispose(); } catch (e) {}
+                _pageMonacoEditor = null;
+            }
+        }
+
         function showPageEditorDialog(noteId, noteTitle, currentHtml, isPublic) {
             const c = document.getElementById('dialogContainer');
             const checkedAttr = isPublic ? 'checked' : '';
@@ -2420,7 +2450,7 @@
                     </div>
                     </div>
                     <div class="dialog-actions">
-                        <button class="btn btn-outline" onclick="quoteToChat('筆記','${esc(noteTitle)}',document.getElementById('dlg_page_html').value.replace(/<[^>]*>/g,'').trim().slice(0,80))" title="引用到聊天視窗">📌 引用</button>
+                        <button class="btn btn-outline" onclick="quoteToChat('筆記','${esc(noteTitle)}',(_pageMonacoEditor?_pageMonacoEditor.getValue():document.getElementById('dlg_page_html').value).replace(/<[^>]*>/g,'').trim().slice(0,80))" title="引用到聊天視窗">📌 引用</button>
                         <button class="btn btn-outline" onclick="closeDialog()">${i18n.t('mc_dlg_cancel')}</button>
                         ${notePageIds.has(noteId) ? `<button class="btn btn-outline" style="color:var(--danger)" onclick="deleteNotePage('${noteId}')">${i18n.t('common_delete')}</button>` : ''}
                         <button class="btn btn-primary" id="dlgSavePageBtn">${i18n.t('mc_dlg_save')}</button>
@@ -2429,7 +2459,7 @@
             </div>`;
 
             document.getElementById('dlgSavePageBtn').onclick = async () => {
-                const html = document.getElementById('dlg_page_html').value;
+                const html = _pageMonacoEditor ? _pageMonacoEditor.getValue() : document.getElementById('dlg_page_html').value;
                 const pageIsPublic = document.getElementById('dlg_page_public').checked;
                 try {
                     await apiCall('PUT', '/api/mission/note/page', {
@@ -2448,7 +2478,39 @@
                     showToast(i18n.t('toast_page_save_failed') + ': ' + e.message, 'error');
                 }
             };
-            setTimeout(() => document.getElementById('dlg_page_html')?.focus(), 50);
+
+            if (_isMonacoOptIn()) {
+                const ta = document.getElementById('dlg_page_html');
+                if (ta) {
+                    const host = document.createElement('div');
+                    host.id = 'dlg_page_monaco';
+                    host.style.cssText = 'min-height:300px;height:50vh;border:1px solid var(--border);margin-bottom:6px;';
+                    host.innerHTML = `<div style="padding:12px;color:var(--text-muted);font-size:12px;">${i18n.t('editor_loading') || 'Loading editor…'}</div>`;
+                    ta.style.display = 'none';
+                    ta.parentNode.insertBefore(host, ta);
+                    _loadMonaco().then(monaco => {
+                        if (!document.body.contains(host)) return; // dialog closed before load completed
+                        host.innerHTML = '';
+                        _pageMonacoEditor = monaco.editor.create(host, {
+                            value: ta.value,
+                            language: 'html',
+                            automaticLayout: true,
+                            minimap: { enabled: false },
+                            fontSize: 13,
+                            wordWrap: 'on',
+                            scrollBeyondLastLine: false
+                        });
+                    }).catch(e => {
+                        if (document.body.contains(host)) {
+                            host.remove();
+                            ta.style.display = '';
+                        }
+                        showToast(i18n.t('editor_load_failed') || ('Editor load failed: ' + e.message), 'error');
+                    });
+                }
+            } else {
+                setTimeout(() => document.getElementById('dlg_page_html')?.focus(), 50);
+            }
         }
 
         async function deleteNotePage(noteId) {
