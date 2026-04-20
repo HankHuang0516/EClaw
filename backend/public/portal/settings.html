@@ -985,6 +985,7 @@
     <script src="shared/entity-utils.js"></script>
     <script src="shared/socket.js"></script>
     <script src="shared/footer.js"></script>
+    <script src="shared/product-tour.js"></script>
     <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
     <script src="shared/ai-chat.js"></script>
 
@@ -1993,6 +1994,35 @@
                 e.target.style.display = 'none';
             }
         });
+
+        /* ══════ Onboarding Tour (Track 1) — Step 4: Channel binding ══════ */
+        (function initTourTrack1Step4() {
+            const params = new URLSearchParams(location.search);
+            if (params.get('tour') !== 'track1') return;
+            if (typeof ProductTour === 'undefined') return;
+            if (ProductTour.isDone('track1')) return;
+
+            ProductTour.register('track1', [
+                {
+                    target: '#channelApiCard',
+                    i18nKey: 'onboarding_tour_track1_step4',
+                    fallback: 'Bind a Channel API key here so your rented bot can actually respond.',
+                    stepNumber: 4,
+                    timeout: 10000,
+                    onNext: () => {
+                        window.location.href = '/portal/dashboard.html?tour=track1&step=5';
+                    }
+                }
+            ], { totalSteps: 5 });
+
+            // Auto-scroll channelApiCard into view so spotlight lands visibly
+            const scrollTarget = document.getElementById('channelApiCard');
+            if (scrollTarget && scrollTarget.scrollIntoView) {
+                scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            setTimeout(() => ProductTour.goTo('track1', 0), 500);
+        })();
     </script>
     </main>
 </body>

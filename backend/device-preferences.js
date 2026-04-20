@@ -55,4 +55,20 @@ async function updatePrefs(deviceId, prefs) {
     `, [deviceId, JSON.stringify(filtered), Date.now()]);
 }
 
-module.exports = { DEFAULTS, initTable, getPrefs, updatePrefs };
+async function setOnboarding(deviceId, payload) {
+    if (!pool || !deviceId) return;
+    const safe = {
+        track: typeof payload.track === 'string' ? payload.track.slice(0, 32) : null,
+        dismissed: !!payload.dismissed,
+        completedAt: payload.completedAt || new Date().toISOString()
+    };
+    await pool.query(`
+        INSERT INTO device_preferences (device_id, prefs, updated_at)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (device_id) DO UPDATE
+        SET prefs = device_preferences.prefs || $2::jsonb,
+            updated_at = $3
+    `, [deviceId, JSON.stringify({ onboarding: safe }), Date.now()]);
+}
+
+module.exports = { DEFAULTS, initTable, getPrefs, updatePrefs, setOnboarding };

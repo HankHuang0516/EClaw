@@ -4214,6 +4214,16 @@ const TRANSLATIONS = {
         "onboarding_dont_show_again": "Don't show this again",
         "onboarding_skip_btn": "Just explore for now",
         "onboarding_dismiss_hint": "You can reopen this guide anytime from Settings.",
+
+        // Scope 0 → Track 1: Free/Official Bot Rental tour (product-tour.js)
+        "onboarding_tour_track1_step1": "Pick the category you want here — free and official bots live under the rental filter.",
+        "onboarding_tour_track1_step2": "Tap any bot card to see the full profile and rental terms.",
+        "onboarding_tour_track1_step3": "Press here to start renting. We'll walk you through binding next.",
+        "onboarding_tour_track1_step4": "Generate a Channel API key here so your rented bot can actually respond.",
+        "onboarding_tour_track1_step5": "You're all set — your rented bot will appear here on your dashboard.",
+        "onboarding_tour_next": "Next",
+        "onboarding_tour_finish": "Finish",
+        "onboarding_tour_skip": "Skip",
     },
 
     zh: {
@@ -8200,6 +8210,16 @@ const TRANSLATIONS = {
         "info_guide_credit_swap_cta_invite": "邀請朋友：<a href=\"settings.html\">設定 → 推薦碼</a>（雙方都拿獎勵）",
         "info_guide_credit_swap_cta_history": "查看你的任務記錄：<a href=\"kanban.html\">任務中心</a>",
         "roadmap_banner_user_view": "🎯 想看使用者視角的好處？前往 <a href=\"info.html#guide/passive-income\">使用指南 → 為什麼選擇 EClaw</a>",
+
+        // Scope 0 → Track 1: Free/Official Bot Rental tour (product-tour.js)
+        "onboarding_tour_track1_step1": "這裡勾選你要的類型 — 免費與官方 bot 都在「出租」分類裡。",
+        "onboarding_tour_track1_step2": "點這個看詳情 — 點任一張 bot 卡片查看完整資訊與租借條件。",
+        "onboarding_tour_track1_step3": "按這裡開始租 — 接下來我們會帶你完成綁定。",
+        "onboarding_tour_track1_step4": "綁好就能用 — 在這裡產生 Channel API Key，讓你租的 bot 真正能回話。",
+        "onboarding_tour_track1_step5": "完成啦！你租的 bot 會出現在儀表板上。",
+        "onboarding_tour_next": "下一步",
+        "onboarding_tour_finish": "完成",
+        "onboarding_tour_skip": "跳過",
     },
 
     "zh-CN": {
@@ -8511,6 +8531,16 @@ const TRANSLATIONS = {
         "onboarding_dont_show_again": "別再顯示此指引",
         "onboarding_skip_btn": "先自己逛逛",
         "onboarding_dismiss_hint": "你隨時可以從「設定」頁重新開啟這個指引。",
+
+        // Scope 0 → Track 1: Free/Official Bot Rental tour (product-tour.js)
+        "onboarding_tour_track1_step1": "這裡勾選你要的類型 — 免費與官方 bot 都在「出租」分類裡。",
+        "onboarding_tour_track1_step2": "點這個看詳情 — 點任一張 bot 卡片查看完整資訊與租借條件。",
+        "onboarding_tour_track1_step3": "按這裡開始租 — 接下來我們會帶你完成綁定。",
+        "onboarding_tour_track1_step4": "綁好就能用 — 在這裡產生 Channel API Key，讓你租的 bot 真正能回話。",
+        "onboarding_tour_track1_step5": "完成啦！你租的 bot 會出現在儀表板上。",
+        "onboarding_tour_next": "下一步",
+        "onboarding_tour_finish": "完成",
+        "onboarding_tour_skip": "跳過",
     },
 
     ja: {
