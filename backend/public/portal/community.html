@@ -1237,10 +1237,10 @@
     // Apply i18n translations to static data-i18n elements
     if (typeof i18n !== 'undefined') i18n.apply();
 
-    // Auto-switch to rental tab if URL hash is #rental OR tour=track1 is in URL
+    // Auto-switch to rental tab if URL hash is #rental OR a tour requests it
     const _tourParam = new URLSearchParams(location.search).get('tour');
     const _tourStep = parseInt(new URLSearchParams(location.search).get('step') || '0', 10);
-    if (location.hash === '#rental' || _tourParam === 'track1') {
+    if (location.hash === '#rental' || _tourParam === 'track1' || _tourParam === 'track2') {
         const rentalChip = document.querySelector('.plaza-chip[data-filter="rental"]');
         if (rentalChip) { setFilter('rental', rentalChip); } else { loadBots(); }
     } else {
@@ -1302,6 +1302,39 @@
                 }
             };
         }
+    })();
+
+    /* ══════ Onboarding Tour (Track 2: Paid e-coin Bot Rental) — steps 1-3 ══════ */
+    (function initTourTrack2() {
+        if (_tourParam !== 'track2') return;
+        if (typeof ProductTour === 'undefined') return;
+        if (ProductTour.isDone('track2')) return;
+
+        const WALLET_URL = '/portal/wallet.html?tour=track2&step=4#topup';
+
+        ProductTour.register('track2', [
+            {
+                target: '.plaza-chip[data-filter="rental"]',
+                i18nKey: 'onboarding_tour_track2_step1',
+                fallback: 'Paid and free bots both live here. Track 2 focuses on the paid side.'
+            },
+            {
+                target: () => document.querySelector('#botGrid .bot-card'),
+                i18nKey: 'onboarding_tour_track2_step2',
+                fallback: 'Each card shows the e-coin rate per 1K tokens — that is what you pay as the bot works.',
+                timeout: 12000
+            },
+            {
+                target: () => document.querySelector('#botGrid .bot-card'),
+                i18nKey: 'onboarding_tour_track2_step3',
+                fallback: 'Tap a card to open full terms. We will hop to the wallet next — no charge yet.',
+                timeout: 12000,
+                onNext: () => { window.location.href = WALLET_URL; }
+            }
+        ], { totalSteps: 5 });
+
+        const resumeAt = Math.max(0, Math.min(_tourStep, 2));
+        setTimeout(() => ProductTour.goTo('track2', resumeAt), 400);
     })();
     </script>
 </body>

@@ -100,6 +100,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>
     <script src="shared/footer.js"></script>
+    <script src="shared/product-tour.js"></script>
     <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
     <script src="shared/ai-chat.js"></script>
 
@@ -475,7 +476,45 @@
             if (!user) return;
             initPortalSocket();
             loadTab();
+            initTourTrack2Step5();
         });
+
+        /* ══════ Onboarding Tour (Track 2) — Step 5: Rental management ══════ */
+        function initTourTrack2Step5() {
+            const params = new URLSearchParams(location.search);
+            if (params.get('tour') !== 'track2') return;
+            if (typeof ProductTour === 'undefined') return;
+            if (ProductTour.isDone('track2')) return;
+
+            function callMarkComplete() {
+                try {
+                    fetch('/api/user/onboarding/mark-complete', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ track: 'track2', dismissed: false, completedAt: new Date().toISOString() })
+                    }).catch(() => {});
+                } catch (_) { /* best-effort */ }
+                try { localStorage.setItem('eclaw_onboarding_last_seen', new Date().toISOString()); }
+                catch (_) {}
+            }
+
+            ProductTour.register('track2', [
+                {
+                    target: () => document.querySelector('.mr-tabs') || document.body,
+                    i18nKey: 'onboarding_tour_track2_step5',
+                    fallback: "You're all set — active rentals, leased-out bots, and disputes all live here.",
+                    stepNumber: 5,
+                    timeout: 8000,
+                    onNext: callMarkComplete
+                }
+            ], {
+                totalSteps: 5,
+                onDismiss: callMarkComplete
+            });
+
+            setTimeout(() => ProductTour.goTo('track2', 0), 600);
+        }
     </script>
 </body>
 </html>
