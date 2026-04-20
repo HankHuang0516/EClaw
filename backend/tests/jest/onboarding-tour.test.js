@@ -44,6 +44,10 @@ describe('Scope 0 wizard routes to plaza with tour param', () => {
     test("trackRoutes['2'] points to community.html?tour=track2", () => {
         expect(html).toMatch(/'2':\s*'\/portal\/community\.html\?tour=track2[^']*'/);
     });
+
+    test("trackRoutes['3'] points to settings.html?tour=track3", () => {
+        expect(html).toMatch(/'3':\s*'\/portal\/settings\.html\?tour=track3[^']*'/);
+    });
 });
 
 describe('plaza.html redirects to community.html preserving query', () => {
@@ -119,6 +123,11 @@ describe('i18n keys for tour callouts are defined in en and zh', () => {
         'onboarding_tour_track2_step3',
         'onboarding_tour_track2_step4',
         'onboarding_tour_track2_step5',
+        'onboarding_tour_track3_step1',
+        'onboarding_tour_track3_step2',
+        'onboarding_tour_track3_step3',
+        'onboarding_tour_track3_step4',
+        'onboarding_tour_track3_step5',
         'onboarding_tour_next',
         'onboarding_tour_finish',
         'onboarding_tour_skip'
@@ -198,5 +207,21 @@ describe('Tour calls site integration', () => {
         expect(html).toMatch(/onboarding_tour_track2_step5/);
         expect(html).toMatch(/\/api\/user\/onboarding\/mark-complete/);
         expect(html).toMatch(/track:\s*['"]track2['"]/);
+    });
+
+    test('settings.html registers track3 tour with 4 steps and navigates to dashboard step 5', () => {
+        const html = read('public/portal/settings.html');
+        expect(html).toMatch(/ProductTour\.register\(\s*['"]track3['"]/);
+        expect(html).toMatch(/onboarding_tour_track3_step1/);
+        expect(html).toMatch(/onboarding_tour_track3_step2/);
+        expect(html).toMatch(/onboarding_tour_track3_step3/);
+        expect(html).toMatch(/onboarding_tour_track3_step4/);
+        expect(html).toMatch(/\/portal\/dashboard\.html\?tour=track3&step=5/);
+    });
+
+    test('dashboard.html hosts track3 step 5 and calls mark-complete with track:"track3"', () => {
+        const html = read('public/portal/dashboard.html');
+        expect(html).toMatch(/onboarding_tour_track3_step5/);
+        expect(html).toMatch(/track:\s*['"]track3['"]/);
     });
 });

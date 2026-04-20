@@ -4386,6 +4386,43 @@
 
             setTimeout(() => ProductTour.goTo('track1', 0), 600);
         })();
+
+        /* ══════ Onboarding Tour (Track 3) — Step 5: Channel entity visible ══════ */
+        (function initTourTrack3Step5() {
+            const params = new URLSearchParams(location.search);
+            if (params.get('tour') !== 'track3') return;
+            if (typeof ProductTour === 'undefined') return;
+            if (ProductTour.isDone('track3')) return;
+
+            function callMarkComplete() {
+                try {
+                    fetch('/api/user/onboarding/mark-complete', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ track: 'track3', dismissed: false, completedAt: new Date().toISOString() })
+                    }).catch(() => {});
+                } catch (_) { /* best-effort */ }
+                try { localStorage.setItem('eclaw_onboarding_last_seen', new Date().toISOString()); }
+                catch (_) {}
+            }
+
+            ProductTour.register('track3', [
+                {
+                    target: () => document.getElementById('entityGrid') || document.body,
+                    i18nKey: 'onboarding_tour_track3_step5',
+                    fallback: "You're all set — once OpenClaw registers, the channel entity shows up here with a ⚡Channel badge.",
+                    stepNumber: 5,
+                    timeout: 8000,
+                    onNext: callMarkComplete
+                }
+            ], {
+                totalSteps: 5,
+                onDismiss: callMarkComplete
+            });
+
+            setTimeout(() => ProductTour.goTo('track3', 0), 600);
+        })();
     </script>
     </main>
 </body>

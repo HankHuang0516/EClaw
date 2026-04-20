@@ -2023,6 +2023,52 @@
 
             setTimeout(() => ProductTour.goTo('track1', 0), 500);
         })();
+
+        /* ══════ Onboarding Tour (Track 3) — Steps 1-4: OpenClaw channel binding ══════ */
+        (function initTourTrack3() {
+            const params = new URLSearchParams(location.search);
+            if (params.get('tour') !== 'track3') return;
+            if (typeof ProductTour === 'undefined') return;
+            if (ProductTour.isDone('track3')) return;
+
+            const DASHBOARD_URL = '/portal/dashboard.html?tour=track3&step=5';
+
+            ProductTour.register('track3', [
+                {
+                    target: '#channelApiCard',
+                    i18nKey: 'onboarding_tour_track3_step1',
+                    fallback: 'This is the Channel API hub. OpenClaw is a bot ecosystem you can self-host — binding a channel here lets its bots talk through EClaw.',
+                    timeout: 10000
+                },
+                {
+                    target: () => document.getElementById('btnGenChannel') || document.getElementById('channelApiCard'),
+                    i18nKey: 'onboarding_tour_track3_step2',
+                    fallback: 'Press "+ New Key" to generate a one-time API key + secret pair for your OpenClaw instance.',
+                    timeout: 10000
+                },
+                {
+                    target: '#channelApiCard',
+                    i18nKey: 'onboarding_tour_track3_step3',
+                    fallback: 'Copy the key and secret, then paste them into your local openclaw.config.yaml. The secret is shown only once.',
+                    timeout: 10000
+                },
+                {
+                    target: '#channelApiCard',
+                    i18nKey: 'onboarding_tour_track3_step4',
+                    fallback: 'Restart OpenClaw. The plugin auto-registers its webhook and the first bot message verifies the connection end-to-end.',
+                    timeout: 10000,
+                    onNext: () => { window.location.href = DASHBOARD_URL; }
+                }
+            ], { totalSteps: 5 });
+
+            const scrollTarget = document.getElementById('channelApiCard');
+            if (scrollTarget && scrollTarget.scrollIntoView) {
+                scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            const resumeAt = Math.max(0, Math.min(parseInt(params.get('step') || '1', 10) - 1, 3));
+            setTimeout(() => ProductTour.goTo('track3', resumeAt), 500);
+        })();
     </script>
     </main>
 </body>
