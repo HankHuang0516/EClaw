@@ -4232,6 +4232,13 @@ const TRANSLATIONS = {
         "onboarding_tour_track2_step4": "Top up e-coin here whenever your balance runs low. Currently Android-only via Google Play.",
         "onboarding_tour_track2_step5": "You're all set — active rentals, leased-out bots, and any disputes all live on this page.",
 
+        // Scope 0 → Track 3: OpenClaw channel binding tour (product-tour.js)
+        "onboarding_tour_track3_step1": "This is the Channel API hub. OpenClaw is a bot ecosystem you can self-host — binding a channel lets its bots talk through EClaw.",
+        "onboarding_tour_track3_step2": "Press \"+ New Key\" to generate a one-time API key + secret pair for your OpenClaw instance.",
+        "onboarding_tour_track3_step3": "Copy the key and secret, then paste them into your local openclaw.config.yaml. The secret is shown only once.",
+        "onboarding_tour_track3_step4": "Restart OpenClaw. The plugin auto-registers its webhook and the first bot message verifies the connection end-to-end.",
+        "onboarding_tour_track3_step5": "You're all set — once OpenClaw registers, the channel entity shows up here with a ⚡Channel badge.",
+
         // Scope 0 → Track 5: Hermes channel (coming soon)
         "hermes_coming_soon_title": "Hermes channel — Coming Soon",
         "hermes_coming_soon_badge": "Coming Soon",
@@ -8242,6 +8249,13 @@ const TRANSLATIONS = {
         "onboarding_tour_track2_step3": "點卡片看完整租借條件。我們下一步會帶你到錢包，這個 tour 不會實際扣款。",
         "onboarding_tour_track2_step4": "e幣 不夠時就在這裡儲值（目前只能從 Android App 內 Google Play 購買）。",
         "onboarding_tour_track2_step5": "完成啦！你的租約、出租 bot、爭議都會出現在這一頁。",
+
+        // Scope 0 → Track 3: OpenClaw channel binding tour (product-tour.js)
+        "onboarding_tour_track3_step1": "這裡是 Channel API 管理中心。OpenClaw 是你可以自己架的 bot 生態系 — 綁定 channel 讓 OpenClaw 的 bot 透過 EClaw 收發訊息。",
+        "onboarding_tour_track3_step2": "點「+ New Key」產生一組一次性的 API key + secret，給你本地的 OpenClaw 使用。",
+        "onboarding_tour_track3_step3": "複製 key 與 secret，貼進你本地的 openclaw.config.yaml。Secret 只顯示一次，關掉就再也拿不回來。",
+        "onboarding_tour_track3_step4": "重啟 OpenClaw。Plugin 會自動註冊 webhook，第一則 bot 訊息會驗證連線是否打通。",
+        "onboarding_tour_track3_step5": "完成啦！OpenClaw 註冊成功後，channel entity 會顯示在這裡，標著 ⚡Channel 徽章。",
 
         // Scope 0 → Track 5: Hermes channel (coming soon)
         "hermes_coming_soon_title": "Hermes channel — 即將推出",
