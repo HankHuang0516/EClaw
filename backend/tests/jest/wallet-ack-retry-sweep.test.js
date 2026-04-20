@@ -277,7 +277,13 @@ describe('ack-retry-sweep: runAckRetrySweep', () => {
         expect(orders[1].ack_state).toBe('acked');
     });
 
-    test('case 6: row missing purchaseToken in external_raw → skipped audit, ack never called', async () => {
+    test('case 6: zombie row (missing purchaseToken) → marked failed terminally, ack never called', async () => {
+        // Pre-migration zombie rows have external_raw without the purchaseToken
+        // that acknowledgeGooglePurchase needs. No retry can recover them, so
+        // the sweep must mark them 'failed' on the first encounter — otherwise
+        // the scan filter keeps re-picking them and emits a missing_fields
+        // warn every cron tick for up to 72h (see production incident
+        // 2026-04-20 where 2 orders looped 40+ retries before this fix).
         const orders = [makeOrder({
             id: 'o6',
             external_raw: { productId: 'ec.topup.starter' /* no purchaseToken, no packageName */ },
@@ -294,13 +300,45 @@ describe('ack-retry-sweep: runAckRetrySweep', () => {
 
         expect(stats).toMatchObject({ scanned: 1, skipped: 1, acked: 0 });
         expect(ackMock).not.toHaveBeenCalled();
-        expect(orders[0].ack_state).toBe('pending');
-        expect(orders[0].ack_attempts).toBe(0);
+        expect(orders[0].ack_state).toBe('failed');
+        expect(orders[0].ack_attempts).toBe(1);
 
         const skippedWarn = audit.entries.find(
             e => e.level === 'warn' && e.meta && e.meta.result === 'missing_fields'
         );
         expect(skippedWarn).toBeDefined();
+        expect(skippedWarn.msg).toMatch(/marked failed/);
+    });
+
+    test('case 6b: zombie row on second pass → not re-scanned (filter excludes failed)', async () => {
+        // Regression guard: after case 6 marks the zombie 'failed', the next
+        // sweep pass must NOT see it again (the SELECT already filters out
+        // ack_state = 'failed'). This lets the noise die for good.
+        const orders = [makeOrder({
+            id: 'o6b',
+            external_raw: { productId: 'ec.topup.starter' },
+        })];
+        const pool = makePool(orders);
+        const audit = makeAudit();
+        const ackMock = jest.fn().mockResolvedValue({ ok: true });
+
+        // First pass — marks it failed.
+        await runAckRetrySweep({
+            pool, audit,
+            acknowledgeGooglePurchase: ackMock,
+            packageName: DEFAULT_PKG,
+        });
+        expect(orders[0].ack_state).toBe('failed');
+
+        // Second pass — the filter should skip it entirely.
+        audit.entries.length = 0;
+        const stats2 = await runAckRetrySweep({
+            pool, audit,
+            acknowledgeGooglePurchase: ackMock,
+            packageName: DEFAULT_PKG,
+        });
+        expect(stats2).toMatchObject({ scanned: 0, skipped: 0 });
+        expect(audit.entries.filter(e => e.meta && e.meta.result === 'missing_fields')).toHaveLength(0);
     });
 
     test('case 7: ack throws (not rejects) → treated as failure, attempts bumped', async () => {
