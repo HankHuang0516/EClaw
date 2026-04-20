@@ -770,8 +770,8 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
             }
 
             if (newTitle) note.title = newTitle.trim();
-            if (newContent !== undefined) note.content = newContent.trim();
-            if (newCategory !== undefined) note.category = newCategory.trim();
+            if (newContent !== undefined) note.content = (newContent ?? '').trim();
+            if (newCategory !== undefined) note.category = newCategory ? newCategory.trim() : null;
             note.updatedAt = Date.now();
 
             const updateResult = await client.query(
@@ -1819,7 +1819,10 @@ async function submitPayment() {
     // ============================================
     router.post('/rule/update', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const { deviceId, name, newName, newDescription, newRuleType, newAssignedEntities, newIsEnabled, newCategory } = req.body;
+        const { deviceId, name, newName, newRuleType, newAssignedEntities, newIsEnabled } = req.body;
+        // Accept description/category as aliases for newDescription/newCategory (docs-bot compat)
+        const newDescription = req.body.newDescription !== undefined ? req.body.newDescription : req.body.description;
+        const newCategory = req.body.newCategory !== undefined ? req.body.newCategory : req.body.category;
 
         if (!name) {
             return res.status(400).json({ success: false, error: 'Missing name' });
@@ -1848,7 +1851,7 @@ async function submitPayment() {
             }
 
             if (newName) rule.name = newName.trim();
-            if (newDescription !== undefined) rule.description = newDescription.trim();
+            if (newDescription !== undefined) rule.description = (newDescription ?? '').trim();
             if (newRuleType) rule.ruleType = newRuleType;
             if (newAssignedEntities !== undefined) rule.assignedEntities = newAssignedEntities;
             if (newIsEnabled !== undefined) rule.isEnabled = newIsEnabled;
@@ -2068,7 +2071,10 @@ async function submitPayment() {
     // ============================================
     router.post('/skill/update', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const { deviceId, title, newTitle, newUrl, newAssignedEntities, newCategory } = req.body;
+        const { deviceId, title, newTitle, newAssignedEntities } = req.body;
+        // Accept url/category as aliases for newUrl/newCategory (docs-bot compat)
+        const newUrl = req.body.newUrl !== undefined ? req.body.newUrl : req.body.url;
+        const newCategory = req.body.newCategory !== undefined ? req.body.newCategory : req.body.category;
 
         if (!title) {
             return res.status(400).json({ success: false, error: 'Missing title' });
@@ -2210,7 +2216,10 @@ async function submitPayment() {
     // ============================================
     router.post('/soul/update', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const { deviceId, name, newName, newDescription, newTemplateId, newAssignedEntities, newIsActive, newCategory } = req.body;
+        const { deviceId, name, newName, newTemplateId, newAssignedEntities, newIsActive } = req.body;
+        // Accept description/category as aliases for newDescription/newCategory (docs-bot compat)
+        const newDescription = req.body.newDescription !== undefined ? req.body.newDescription : req.body.description;
+        const newCategory = req.body.newCategory !== undefined ? req.body.newCategory : req.body.category;
 
         if (!name) {
             return res.status(400).json({ success: false, error: 'Missing name' });
@@ -2239,7 +2248,7 @@ async function submitPayment() {
             }
 
             if (newName) soul.name = newName.trim();
-            if (newDescription !== undefined) soul.description = newDescription.trim();
+            if (newDescription !== undefined) soul.description = (newDescription ?? '').trim();
             if (newTemplateId !== undefined) soul.templateId = newTemplateId;
             if (newAssignedEntities !== undefined) soul.assignedEntities = newAssignedEntities;
             if (newIsActive !== undefined) soul.isActive = newIsActive;
