@@ -108,6 +108,24 @@ async function fetchPlazaNewListed() {
     return r.rows[0].c;
 }
 
+async function fetchInviteConversion() {
+    // Conversion = codes that got redeemed at least once / codes issued.
+    // `used_at` flips from NULL → timestamp when the redeemer signs up with the code,
+    // so this mirrors the real viral-loop definition without needing click tracking.
+    const r = await pool.query(
+        `SELECT COUNT(*)::int AS total_codes,
+                COUNT(used_at)::int AS redeemed_codes
+           FROM invite_codes`
+    );
+    const { total_codes, redeemed_codes } = r.rows[0];
+    if (total_codes === 0) return { total_codes: 0, redeemed_codes: 0, pct: null };
+    return {
+        total_codes,
+        redeemed_codes,
+        pct: Math.round((redeemed_codes / total_codes) * 1000) / 10
+    };
+}
+
 module.exports = function(devices) {
     const router = express.Router();
 
@@ -139,10 +157,11 @@ module.exports = function(devices) {
         }
 
         try {
-            const [today_signups, retention_7d, plaza_new_listed_today] = await Promise.all([
+            const [today_signups, retention_7d, plaza_new_listed_today, invite_conversion] = await Promise.all([
                 fetchTodaySignups(),
                 fetchRetention7d(),
-                fetchPlazaNewListed()
+                fetchPlazaNewListed(),
+                fetchInviteConversion()
             ]);
             return res.json({
                 success: true,
@@ -150,6 +169,7 @@ module.exports = function(devices) {
                 today_signups,
                 retention_7d,
                 plaza_new_listed_today,
+                invite_conversion,
                 follow_ups: [
                     'source_channel: schema lacks signup_source column',
                     'visitor_to_signup_conversion: page_views has no FK to user_accounts',
