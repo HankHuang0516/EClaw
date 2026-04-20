@@ -284,31 +284,9 @@ describe('classifyPublisher (threshold math)', () => {
         expect(classify({ id: 'reddit', configured: false })).toBe('unconfigured');
     });
 
-    it('wordpress unconfigured but CLIENT_ID+SECRET set → disconnected (pending OAuth)', () => {
-        const prev = [process.env.WORDPRESS_CLIENT_ID, process.env.WORDPRESS_CLIENT_SECRET];
-        process.env.WORDPRESS_CLIENT_ID = 'x';
-        process.env.WORDPRESS_CLIENT_SECRET = 'y';
-        try {
-            expect(classify({ id: 'wordpress', configured: false })).toBe('disconnected');
-        } finally {
-            process.env.WORDPRESS_CLIENT_ID = prev[0] || '';
-            process.env.WORDPRESS_CLIENT_SECRET = prev[1] || '';
-            if (!prev[0]) delete process.env.WORDPRESS_CLIENT_ID;
-            if (!prev[1]) delete process.env.WORDPRESS_CLIENT_SECRET;
-        }
-    });
-
-    it('wordpress unconfigured + no CLIENT_ID → unconfigured', () => {
-        const prev = [process.env.WORDPRESS_CLIENT_ID, process.env.WORDPRESS_CLIENT_SECRET];
-        delete process.env.WORDPRESS_CLIENT_ID;
-        delete process.env.WORDPRESS_CLIENT_SECRET;
-        try {
-            expect(classify({ id: 'wordpress', configured: false })).toBe('unconfigured');
-        } finally {
-            if (prev[0]) process.env.WORDPRESS_CLIENT_ID = prev[0];
-            if (prev[1]) process.env.WORDPRESS_CLIENT_SECRET = prev[1];
-        }
-    });
+    // WordPress-specific classify branches removed 2026-04-20 along with
+    // the platform itself. Special-case `classifyPublisher` no longer has a
+    // wordpress branch; generic configured/unconfigured rules above cover it.
 });
 
 describe('GET /api/monitoring/rental-health threshold math (status)', () => {
@@ -316,21 +294,21 @@ describe('GET /api/monitoring/rental-health threshold math (status)', () => {
     const fetchHealth = () => request(app).get('/api/monitoring/rental-health?key=test-monitoring-key-1234');
 
     it('1 disconnected → yellow (was red, intentionally de-escalated)', async () => {
-        // Simulate by forcing WP disconnected via CLIENT_ID env (and no token).
-        const prev = [process.env.WORDPRESS_CLIENT_ID, process.env.WORDPRESS_CLIENT_SECRET];
-        process.env.WORDPRESS_CLIENT_ID = 'x';
-        process.env.WORDPRESS_CLIENT_SECRET = 'y';
+        // Mock one disconnected platform via getPlatformsStatus (matches the
+        // pattern used by the 2-/3-disconnected tests below).
+        const articlePublisher = require('../../article-publisher');
+        const origFn = articlePublisher.getPlatformsStatus;
+        articlePublisher.getPlatformsStatus = () => ([
+            { id: 'blogger', name: 'Blogger', region: 'global', configured: true, error: 'token expired' },
+            { id: 'telegraph', name: 'Telegraph', region: 'global', configured: true },
+        ]);
         try {
             const res = await fetchHealth();
             expect(res.status).toBe(200);
-            // WP is disconnected; all others unconfigured. DB is up. Status should be yellow.
-            expect(res.body.thresholds.publisherCounts.disconnected).toBeGreaterThanOrEqual(1);
+            expect(res.body.thresholds.publisherCounts.disconnected).toBe(1);
             expect(res.body.thresholds.status).toBe('yellow');
         } finally {
-            process.env.WORDPRESS_CLIENT_ID = prev[0] || '';
-            process.env.WORDPRESS_CLIENT_SECRET = prev[1] || '';
-            if (!prev[0]) delete process.env.WORDPRESS_CLIENT_ID;
-            if (!prev[1]) delete process.env.WORDPRESS_CLIENT_SECRET;
+            articlePublisher.getPlatformsStatus = origFn;
         }
     });
 
@@ -443,12 +421,13 @@ describe('GET /api/monitoring/rental-health happy path', () => {
         expect(res.body.db.entityTrash.oldestRowAgeSeconds).toBe(3600);
     });
 
-    it('publishers list contains 11 platforms (mastodon retired 2026-04-15)', async () => {
+    it('publishers list contains 10 platforms (mastodon retired 2026-04-15, wordpress retired 2026-04-20)', async () => {
         const res = await request(app)
             .get('/api/monitoring/rental-health?key=test-monitoring-key-1234');
-        expect(res.body.publishers.length).toBe(11);
+        expect(res.body.publishers.length).toBe(10);
         const ids = res.body.publishers.map(p => p.id);
         expect(ids).not.toContain('mastodon');
+        expect(ids).not.toContain('wordpress');
         expect(res.body.publishers[0]).toMatchObject({
             id: expect.any(String),
             name: expect.any(String),

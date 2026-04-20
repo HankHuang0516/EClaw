@@ -431,24 +431,6 @@
                 }),
                 path: '/api/publisher/blogger/publish'
             },
-            wordpress: {
-                fields: [
-                    { key: 'title', type: 'text', label: 'Title', required: true },
-                    { key: 'content', type: 'textarea', label: 'HTML content', required: true, tall: true },
-                    { key: 'tags', type: 'text', label: 'Tags (comma-separated)' },
-                    { key: 'categories', type: 'text', label: 'Categories (comma-separated)' },
-                    { key: 'siteId', type: 'text', label: 'Site ID (required for WordPress.com OAuth2; leave empty if using Application Password)',
-                        hint: 'For OAuth2 mode backend returns 400 without siteId. App-Password mode ignores this field.' }
-                ],
-                toBody: s => ({
-                    title: s.title,
-                    content: s.content,
-                    tags: splitTags(s.tags),
-                    categories: splitTags(s.categories),
-                    siteId: s.siteId || undefined
-                }),
-                path: '/api/publisher/wordpress/publish'
-            },
             tumblr: {
                 fields: [
                     { key: 'blogName', type: 'text', label: 'Blog name (slug, e.g. your-blog)', required: true },

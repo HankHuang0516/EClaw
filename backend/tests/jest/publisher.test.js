@@ -252,23 +252,25 @@ describe('Publisher API auth (X-Publisher-Key)', () => {
 // GET /api/publisher/platforms
 // ════════════════════════════════════════════════════════════════
 describe('GET /api/publisher/platforms', () => {
-    it('returns 200 with all 8 platforms', async () => {
+    it('returns 200 with the post-retirement platform list (10, excl. mastodon + wordpress)', async () => {
         const res = await request(app).get('/api/publisher/platforms');
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
-        expect(res.body.platforms).toHaveLength(11);
+        expect(res.body.platforms).toHaveLength(10);
     });
 
     it('includes all expected platform IDs', async () => {
         const res = await request(app).get('/api/publisher/platforms');
         const ids = res.body.platforms.map(p => p.id);
         expect(ids).toEqual(expect.arrayContaining([
-            'blogger', 'hashnode', 'x', 'devto', 'wordpress', 'telegraph', 'qiita', 'wechat',
+            'blogger', 'hashnode', 'x', 'devto', 'telegraph', 'qiita', 'wechat',
             'tumblr', 'reddit', 'linkedin'
         ]));
-        // mastodon retired 2026-04-20; routes still exist for token recovery
-        // but platform is no longer in the public list.
+        // mastodon retired 2026-04-15; wordpress retired 2026-04-20 (owner's
+        // wp.com site suspended). Routes still exist for token recovery but
+        // platforms are no longer in the public list.
         expect(ids).not.toContain('mastodon');
+        expect(ids).not.toContain('wordpress');
     });
 
     it('each platform has required fields', async () => {

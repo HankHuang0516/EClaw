@@ -34,16 +34,18 @@ const post = (path) => request(publisherApp).post(path);
 const del = (path) => request(publisherApp).delete(path);
 
 // ════════════════════════════════════════════════════════════════
-// GET /api/publisher/platforms — list all 11 platforms (mastodon retired 2026-04-15)
+// GET /api/publisher/platforms — post-retirement list (10 platforms;
+// mastodon retired 2026-04-15, wordpress retired 2026-04-20)
 // ════════════════════════════════════════════════════════════════
 describe('GET /api/publisher/platforms', () => {
     it('returns list of all supported platforms', async () => {
         const res = await get('/api/publisher/platforms');
         expect(res.status).toBe(200);
         expect(Array.isArray(res.body.platforms)).toBe(true);
-        expect(res.body.platforms.length).toBeGreaterThanOrEqual(11);
+        expect(res.body.platforms.length).toBeGreaterThanOrEqual(10);
         const ids = res.body.platforms.map(p => p.id);
         expect(ids).not.toContain('mastodon');
+        expect(ids).not.toContain('wordpress');
     });
 
     it('each platform has required fields', async () => {
