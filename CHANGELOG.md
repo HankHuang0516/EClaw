@@ -1,3 +1,10 @@
+## [1.1026.2](https://github.com/HankHuang0516/EClaw/compare/v1.1026.1...v1.1026.2) (2026-04-20)
+
+
+### Bug Fixes
+
+* **billing:** retry stuck INAPP top-up purchases on app startup ([#1908](https://github.com/HankHuang0516/EClaw/issues/1908)) ([cc4e9f4](https://github.com/HankHuang0516/EClaw/commit/cc4e9f45bf6d7ae8471c539e2c48c7111cf7e42b)), closes [#1905](https://github.com/HankHuang0516/EClaw/issues/1905)
+
 ## [1.1026.1](https://github.com/HankHuang0516/EClaw/compare/v1.1026.0...v1.1026.1) (2026-04-20)
 
 
