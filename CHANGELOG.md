@@ -1,3 +1,10 @@
+# [1.1024.0](https://github.com/HankHuang0516/EClaw/compare/v1.1023.0...v1.1024.0) (2026-04-20)
+
+
+### Features
+
+* **invite:** ship promo-3 referral tier/milestone system ([#1900](https://github.com/HankHuang0516/EClaw/issues/1900)) ([e97968e](https://github.com/HankHuang0516/EClaw/commit/e97968e69e3ee770c0109f18d70fd93a0ee90021))
+
 # [1.1023.0](https://github.com/HankHuang0516/EClaw/compare/v1.1022.0...v1.1023.0) (2026-04-20)
 
 
