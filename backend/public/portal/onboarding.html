@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title data-i18n="onboarding_title">EClawbot - Get Started</title>
+    <meta name="description" content="Get started with EClawbot — choose a path based on what you want to do.">
+    <link rel="icon" type="image/png" href="assets/favicon-32.png">
+    <link rel="stylesheet" href="shared/style.css">
+    <link rel="canonical" href="https://eclawbot.com/portal/onboarding.html">
+    <style>
+        .ob-container {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 32px 20px 80px;
+        }
+
+        .ob-hero {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .ob-hero h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0 0 12px;
+        }
+
+        .ob-hero p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .ob-intent-heading {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin: 0 0 16px;
+            text-align: center;
+        }
+
+        .ob-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+            margin-bottom: 32px;
+        }
+
+        .ob-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 20px;
+            border-radius: var(--radius);
+            border: 1px solid var(--card-border);
+            background: var(--card);
+            cursor: pointer;
+            transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .ob-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent, #7c3aed);
+            box-shadow: 0 6px 18px rgba(124, 58, 237, 0.15);
+        }
+
+        .ob-card[data-disabled="true"] {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .ob-card[data-disabled="true"]:hover {
+            transform: none;
+            border-color: var(--card-border);
+            box-shadow: none;
+        }
+
+        .ob-card-icon {
+            font-size: 28px;
+            line-height: 1;
+        }
+
+        .ob-card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .ob-card-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.45;
+        }
+
+        .ob-card-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 10px;
+            background: var(--input-bg);
+            color: var(--text-secondary);
+            border: 1px solid var(--card-border);
+        }
+
+        .ob-footer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            padding-top: 24px;
+            border-top: 1px solid var(--card-border);
+        }
+
+        .ob-skip-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .ob-skip-row input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: var(--accent, #7c3aed);
+        }
+
+        .ob-skip-btn {
+            padding: 10px 22px;
+            border-radius: var(--radius-sm, 8px);
+            border: 1px solid var(--card-border);
+            background: transparent;
+            color: var(--text-primary, inherit);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        .ob-skip-btn:hover {
+            border-color: var(--text-secondary);
+            background: var(--input-bg);
+        }
+
+        .ob-dismiss-hint {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: center;
+            margin: 0;
+            max-width: 360px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 480px) {
+            .ob-container {
+                padding: 24px 16px 60px;
+            }
+
+            .ob-hero h1 {
+                font-size: 22px;
+            }
+
+            .ob-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <div class="ob-container">
+
+            <div class="ob-hero">
+                <h1 data-i18n="onboarding_hero_title">Welcome to EClawbot</h1>
+                <p data-i18n="onboarding_hero_desc">Choose where you want to start — we'll walk you through it step by step.</p>
+            </div>
+
+            <div class="ob-intent-heading" data-i18n="onboarding_intent_heading">What do you want to do first?</div>
+
+            <div class="ob-grid" id="ob-grid">
+                <a class="ob-card" href="#track-1" data-track="1">
+                    <div class="ob-card-icon">🤖</div>
+                    <div class="ob-card-title" data-i18n="onboarding_track1_title">Rent a free or official bot</div>
+                    <div class="ob-card-desc" data-i18n="onboarding_track1_desc">The easiest way to get started — no payment required.</div>
+                </a>
+
+                <a class="ob-card" href="#track-2" data-track="2">
+                    <div class="ob-card-icon">💰</div>
+                    <div class="ob-card-title" data-i18n="onboarding_track2_title">Rent a paid bot with e-coin</div>
+                    <div class="ob-card-desc" data-i18n="onboarding_track2_desc">Top up e-coin and rent premium bots from the plaza.</div>
+                </a>
+
+                <a class="ob-card" href="#track-3" data-track="3">
+                    <div class="ob-card-icon">🔑</div>
+                    <div class="ob-card-title" data-i18n="onboarding_track3_title">Bind OpenClaw channel</div>
+                    <div class="ob-card-desc" data-i18n="onboarding_track3_desc">Connect your own OpenClaw API key to power a bot.</div>
+                </a>
+
+                <a class="ob-card" href="#track-4" data-track="4">
+                    <div class="ob-card-icon">🧠</div>
+                    <div class="ob-card-title" data-i18n="onboarding_track4_title">Bind Claude channel</div>
+                    <div class="ob-card-desc" data-i18n="onboarding_track4_desc">Use your own Anthropic API key so bots answer via Claude.</div>
+                </a>
+
+                <a class="ob-card" href="#track-5" data-track="5" data-disabled="true">
+                    <div class="ob-card-icon">✨</div>
+                    <div class="ob-card-title" data-i18n="onboarding_track5_title">Bind Hermes channel</div>
+                    <div class="ob-card-desc" data-i18n="onboarding_track5_desc">Join the waitlist and we'll notify you at launch.</div>
+                    <span class="ob-card-badge" data-i18n="onboarding_track5_badge">Coming Soon</span>
+                </a>
+
+                <a class="ob-card" href="#track-6" data-track="6">
+                    <div class="ob-card-icon">📊</div>
+                    <div class="ob-card-title" data-i18n="onboarding_track6_title">Agent evaluation</div>
+                    <div class="ob-card-desc" data-i18n="onboarding_track6_desc">Run benchmarks on your agents and compare results.</div>
+                </a>
+            </div>
+
+            <div class="ob-footer">
+                <label class="ob-skip-row">
+                    <input type="checkbox" id="ob-dont-show">
+                    <span data-i18n="onboarding_dont_show_again">Don't show this again</span>
+                </label>
+                <button type="button" class="ob-skip-btn" id="ob-skip-btn" data-i18n="onboarding_skip_btn">Just explore for now</button>
+                <p class="ob-dismiss-hint" data-i18n="onboarding_dismiss_hint">You can reopen this guide anytime from Settings.</p>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="/shared/i18n.js"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            const DISMISS_KEY = 'eclaw_onboarding_dismissed';
+            const LAST_SEEN_KEY = 'eclaw_onboarding_last_seen';
+
+            const trackRoutes = {
+                '1': null,
+                '2': null,
+                '3': null,
+                '4': null,
+                '5': null,
+                '6': null
+            };
+
+            function markOnboardingComplete(dismissed) {
+                if (dismissed) {
+                    localStorage.setItem(DISMISS_KEY, 'true');
+                }
+                localStorage.setItem(LAST_SEEN_KEY, new Date().toISOString());
+                try {
+                    fetch('/api/user/onboarding/mark-complete', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ dismissed: !!dismissed })
+                    }).catch(() => {});
+                } catch (_) { /* ignore — server persistence is best-effort */ }
+            }
+
+            function navigateHome() {
+                const dest = document.referrer && document.referrer.indexOf(location.origin) === 0 && !document.referrer.includes('/onboarding.html')
+                    ? document.referrer
+                    : '/portal/dashboard.html';
+                location.href = dest;
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const grid = document.getElementById('ob-grid');
+                grid.addEventListener('click', (e) => {
+                    const card = e.target.closest('.ob-card');
+                    if (!card) return;
+                    if (card.getAttribute('data-disabled') === 'true') {
+                        e.preventDefault();
+                        return;
+                    }
+                    const track = card.getAttribute('data-track');
+                    const route = trackRoutes[track];
+                    if (route) {
+                        e.preventDefault();
+                        markOnboardingComplete(false);
+                        location.href = route;
+                    }
+                });
+
+                document.getElementById('ob-skip-btn').addEventListener('click', () => {
+                    const dontShow = document.getElementById('ob-dont-show').checked;
+                    markOnboardingComplete(dontShow);
+                    navigateHome();
+                });
+            });
+        })();
+    </script>
+</body>
+
+</html>
