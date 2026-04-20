@@ -2064,6 +2064,49 @@
             max-height: 300px;
             overflow-y: auto;
         }
+        #entityPreviewModal .entity-comments {
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            max-height: 360px;
+            overflow-y: auto;
+        }
+        #entityPreviewModal .entity-comments-header {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        #entityPreviewModal .entity-comments-empty {
+            font-size: 12px;
+            color: var(--text-secondary);
+            opacity: 0.7;
+            padding: 8px 4px;
+        }
+        #entityPreviewModal .entity-comment {
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 6px;
+            border-left: 2px solid var(--accent, #4a9eff);
+        }
+        #entityPreviewModal .entity-comment.is-system {
+            border-left-color: rgba(255,255,255,0.2);
+            opacity: 0.85;
+        }
+        #entityPreviewModal .entity-comment-meta {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        #entityPreviewModal .entity-comment-text {
+            font-size: 13px;
+            line-height: 1.55;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
     </style>
     <link rel="canonical" href="https://eclawbot.com/portal/chat.html">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -5508,7 +5551,10 @@
         }
 
         async function fetchCardData(auth, cardId) {
-            const resp = await apiCall('GET', `/api/mission/card/${cardId}?${auth}`);
+            const [resp, commentsResp] = await Promise.all([
+                apiCall('GET', `/api/mission/card/${cardId}?${auth}`),
+                apiCall('GET', `/api/mission/card/${cardId}/comments?${auth}&limit=20`).catch(() => null),
+            ]);
             if (!resp || !resp.card) return null;
             const c = resp.card;
             const status = c.status || 'unknown';
@@ -5517,12 +5563,15 @@
             const assigned = (c.assignedBots || []).map(b => `#${b}`).join(', ') || 'None';
             const created = c.createdAt ? new Date(c.createdAt).toLocaleString() : '-';
             const updated = c.updatedAt ? new Date(c.updatedAt).toLocaleString() : '-';
+            const commentsList = (commentsResp && Array.isArray(commentsResp.comments)) ? commentsResp.comments : [];
+            const commentsLabel = i18n.t('chat_card_modal_comments') || 'Comments';
+            const commentsEmpty = i18n.t('chat_card_modal_comments_empty') || 'No comments yet';
 
             let html = `<div class="entity-meta">
                 <div class="entity-meta-item"><div class="entity-meta-label">Status</div><div class="entity-meta-value">${emoji} ${status}</div></div>
                 <div class="entity-meta-item"><div class="entity-meta-label">Priority</div><div class="entity-meta-value">${escapeHtml(priority)}</div></div>
                 <div class="entity-meta-item"><div class="entity-meta-label">Assigned</div><div class="entity-meta-value">${escapeHtml(assigned)}</div></div>
-                <div class="entity-meta-item"><div class="entity-meta-label">Comments</div><div class="entity-meta-value">${c.commentCount || 0}</div></div>
+                <div class="entity-meta-item"><div class="entity-meta-label">${escapeHtml(commentsLabel)}</div><div class="entity-meta-value">${commentsList.length || c.commentCount || 0}</div></div>
                 <div class="entity-meta-item"><div class="entity-meta-label">Created</div><div class="entity-meta-value">${created}</div></div>
                 <div class="entity-meta-item"><div class="entity-meta-label">Updated</div><div class="entity-meta-value">${updated}</div></div>
             </div>`;
@@ -5530,6 +5579,22 @@
             if (c.description) {
                 html += `<div class="entity-description">${escapeHtml(c.description)}</div>`;
             }
+
+            html += `<div class="entity-comments"><div class="entity-comments-header">💬 ${escapeHtml(commentsLabel)}</div>`;
+            if (commentsList.length === 0) {
+                html += `<div class="entity-comments-empty">${escapeHtml(commentsEmpty)}</div>`;
+            } else {
+                const newestFirst = commentsList.slice().reverse();
+                html += newestFirst.map(cm => {
+                    const ts = cm.createdAt ? new Date(cm.createdAt).toLocaleString() : '';
+                    const who = cm.isSystem ? '⚙️' : `#${cm.fromEntityId ?? '?'}`;
+                    return `<div class="entity-comment${cm.isSystem ? ' is-system' : ''}">`
+                         + `<div class="entity-comment-meta">${escapeHtml(who)} · ${escapeHtml(ts)}</div>`
+                         + `<div class="entity-comment-text">${escapeHtml(cm.text || '')}</div>`
+                         + `</div>`;
+                }).join('');
+            }
+            html += `</div>`;
 
             return { title: c.title, id: c.id, html };
         }
