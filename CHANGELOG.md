@@ -1,3 +1,10 @@
+# [1.1026.0](https://github.com/HankHuang0516/EClaw/compare/v1.1025.0...v1.1026.0) (2026-04-20)
+
+
+### Features
+
+* **portal:** rename Mission Control sub-tab to Mind (心智) ([#1904](https://github.com/HankHuang0516/EClaw/issues/1904)) ([862d1e0](https://github.com/HankHuang0516/EClaw/commit/862d1e0286649c25c3b1b62b3716979e8c460e1f))
+
 # [1.1025.0](https://github.com/HankHuang0516/EClaw/compare/v1.1024.1...v1.1025.0) (2026-04-20)
 
 
