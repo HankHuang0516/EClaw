@@ -105,6 +105,7 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
                     querySubscriptionStatus()
                     queryProductDetails()
                     queryTopupProductDetails()
+                    queryStuckTopupPurchases()
                 } else {
                     Timber.tag(TAG).e("Billing setup failed: ${billingResult.debugMessage}")
                 }
@@ -210,6 +211,38 @@ class BillingManager(private val context: Context) : PurchasesUpdatedListener {
                         businessPrice = getSubPrice(subBusinessDetails)
                     )
                     Timber.tag(TAG).d("Subscription details loaded")
+                }
+            }
+        }
+    }
+
+    /**
+     * Retry any INAPP top-up purchases that were never consumed — typically because
+     * a prior verify-google call failed and the fail-safe left the token alive on
+     * Google Play. Without this sweep, the user hits itemAlreadyOwned on next buy
+     * until Google auto-refunds after ~3 days.
+     */
+    private fun queryStuckTopupPurchases() {
+        scope.launch {
+            val params = QueryPurchasesParams.newBuilder()
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build()
+
+            billingClient.queryPurchasesAsync(params) { billingResult, purchases ->
+                if (billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
+                    Timber.tag(TAG).w("Stuck top-up query failed: ${billingResult.debugMessage}")
+                    return@queryPurchasesAsync
+                }
+                val stuck = purchases.filter { purchase ->
+                    purchase.purchaseState == Purchase.PurchaseState.PURCHASED &&
+                        purchase.products.any { it in TOPUP_PRODUCT_IDS }
+                }
+                if (stuck.isEmpty()) return@queryPurchasesAsync
+                Timber.tag(TAG).d("Found ${stuck.size} stuck top-up purchase(s) — retrying verify+consume")
+                stuck.forEach { purchase ->
+                    val productId = purchase.products.firstOrNull { it in TOPUP_PRODUCT_IDS }
+                        ?: return@forEach
+                    consumeAndVerifyTopup(purchase, productId)
                 }
             }
         }
