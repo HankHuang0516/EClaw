@@ -1,3 +1,10 @@
+# [1.1025.0](https://github.com/HankHuang0516/EClaw/compare/v1.1024.1...v1.1025.0) (2026-04-20)
+
+
+### Features
+
+* **publisher:** retire wordpress from public surface ([#1903](https://github.com/HankHuang0516/EClaw/issues/1903)) ([1f94b9e](https://github.com/HankHuang0516/EClaw/commit/1f94b9e041d086f6bb7709852ad3cef95dbdf375))
+
 ## [1.1024.1](https://github.com/HankHuang0516/EClaw/compare/v1.1024.0...v1.1024.1) (2026-04-20)
 
 
