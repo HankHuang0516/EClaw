@@ -335,6 +335,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>
     <script src="shared/footer.js"></script>
+    <script src="shared/product-tour.js"></script>
     <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
     <script src="shared/ai-chat.js"></script>
     <script>
@@ -577,7 +578,49 @@
             renderAll();
             renderBotHint();
             syncVarsToServer(); // sync on page load
+            initTourTrack4();
         });
+
+        /* ══════ Onboarding Tour (Track 4) — Steps 1-4: Claude channel binding ══════ */
+        function initTourTrack4() {
+            const params = new URLSearchParams(location.search);
+            if (params.get('tour') !== 'track4') return;
+            if (typeof ProductTour === 'undefined') return;
+            if (ProductTour.isDone('track4')) return;
+
+            const DASHBOARD_URL = '/portal/dashboard.html?tour=track4&step=5';
+
+            ProductTour.register('track4', [
+                {
+                    target: () => document.getElementById('varsContent') || document.body,
+                    i18nKey: 'onboarding_tour_track4_step1',
+                    fallback: "Claude channel binding lives in device env vars. You'll paste your Anthropic API key here so bots answer via Claude directly.",
+                    timeout: 10000
+                },
+                {
+                    target: '#addVarBtn',
+                    i18nKey: 'onboarding_tour_track4_step2',
+                    fallback: "First grab a key from console.anthropic.com/settings/keys — then press + Add to create a new env var.",
+                    timeout: 10000
+                },
+                {
+                    target: '#addVarBtn',
+                    i18nKey: 'onboarding_tour_track4_step3',
+                    fallback: "Name the var ANTHROPIC_API_KEY (uppercase) and paste your sk-ant-... secret. It will be AES-encrypted server-side.",
+                    timeout: 10000
+                },
+                {
+                    target: '#addVarBtn',
+                    i18nKey: 'onboarding_tour_track4_step4',
+                    fallback: "Optional extras via the same + Add dialog: ANTHROPIC_MODEL (claude-opus-4-7 / -sonnet-4-6 / -haiku-4-5) and ANTHROPIC_MAX_TOKENS to cap usage.",
+                    timeout: 10000,
+                    onNext: () => { window.location.href = DASHBOARD_URL; }
+                }
+            ], { totalSteps: 5 });
+
+            const resumeAt = Math.max(0, Math.min(parseInt(params.get('step') || '1', 10) - 1, 3));
+            setTimeout(() => ProductTour.goTo('track4', resumeAt), 500);
+        }
     </script>
     </main>
 </body>
