@@ -70,6 +70,15 @@ jest.mock('pg', () => {
             state.leaderboard.push({ name: params[1], score: params[3] });
             return { rows: [], rowCount: 1 };
         }
+        // COUNT leaderboard (used by reset-leaderboard)
+        if (/SELECT COUNT.*FROM arena_leaderboard/i.test(norm)) {
+            return { rows: [{ n: state.leaderboard.length }], rowCount: 1 };
+        }
+        // TRUNCATE leaderboard (reset-leaderboard)
+        if (/TRUNCATE TABLE arena_leaderboard/i.test(norm)) {
+            state.leaderboard.length = 0;
+            return { rows: [], rowCount: 0 };
+        }
         // SELECT leaderboard
         if (/FROM arena_leaderboard/i.test(norm)) {
             return { rows: state.leaderboard, rowCount: state.leaderboard.length };
@@ -355,6 +364,82 @@ describe('interview-arena: API endpoints', () => {
         const res = await request(app).get('/api/arena/leaderboard');
         expect(res.status).toBe(200);
         expect(Array.isArray(res.body.leaderboard)).toBe(true);
+    });
+
+    describe('POST /api/arena/admin/reset-leaderboard', () => {
+        test('rejects request without admin token', async () => {
+            const prev = process.env.ADMIN_SECRET;
+            process.env.ADMIN_SECRET = 'test-admin-secret';
+            try {
+                const res = await request(app).post('/api/arena/admin/reset-leaderboard');
+                expect(res.status).toBe(403);
+                expect(res.body.error).toBe('forbidden');
+            } finally {
+                if (prev === undefined) delete process.env.ADMIN_SECRET;
+                else process.env.ADMIN_SECRET = prev;
+            }
+        });
+
+        test('wipes leaderboard and returns deleted count', async () => {
+            const prev = process.env.ADMIN_SECRET;
+            process.env.ADMIN_SECRET = 'test-admin-secret';
+            try {
+                globalThis.__arenaState.leaderboard.push(
+                    { name: 'Alice', score: 120 },
+                    { name: 'Bob',   score: 95  },
+                    { name: 'Carol', score: 80  },
+                );
+                const res = await request(app)
+                    .post('/api/arena/admin/reset-leaderboard')
+                    .set('x-admin-token', 'test-admin-secret');
+                expect(res.status).toBe(200);
+                expect(res.body.success).toBe(true);
+                expect(res.body.deletedCount).toBe(3);
+                expect(res.body.table).toBe('arena_leaderboard');
+                expect(globalThis.__arenaState.leaderboard).toHaveLength(0);
+            } finally {
+                if (prev === undefined) delete process.env.ADMIN_SECRET;
+                else process.env.ADMIN_SECRET = prev;
+            }
+        });
+
+        test('returns zero deletedCount on already-empty leaderboard', async () => {
+            const prev = process.env.ADMIN_SECRET;
+            process.env.ADMIN_SECRET = 'test-admin-secret';
+            try {
+                const res = await request(app)
+                    .post('/api/arena/admin/reset-leaderboard')
+                    .set('x-admin-token', 'test-admin-secret');
+                expect(res.status).toBe(200);
+                expect(res.body.deletedCount).toBe(0);
+            } finally {
+                if (prev === undefined) delete process.env.ADMIN_SECRET;
+                else process.env.ADMIN_SECRET = prev;
+            }
+        });
+
+        test('does not touch exams/sessions/feedback', async () => {
+            const prev = process.env.ADMIN_SECRET;
+            process.env.ADMIN_SECRET = 'test-admin-secret';
+            try {
+                globalThis.__arenaState.exams.push({ id: 'exam-keep', status: 'completed' });
+                globalThis.__arenaState.sessions.push({ id: 'sess-keep', exam_id: 'exam-keep' });
+                globalThis.__arenaState.feedback.push({ exam_id: 'exam-keep' });
+                globalThis.__arenaState.leaderboard.push({ name: 'X', score: 1 });
+
+                const res = await request(app)
+                    .post('/api/arena/admin/reset-leaderboard')
+                    .set('x-admin-token', 'test-admin-secret');
+                expect(res.status).toBe(200);
+                expect(globalThis.__arenaState.leaderboard).toHaveLength(0);
+                expect(globalThis.__arenaState.exams).toHaveLength(1);
+                expect(globalThis.__arenaState.sessions).toHaveLength(1);
+                expect(globalThis.__arenaState.feedback).toHaveLength(1);
+            } finally {
+                if (prev === undefined) delete process.env.ADMIN_SECRET;
+                else process.env.ADMIN_SECRET = prev;
+            }
+        });
     });
 });
 

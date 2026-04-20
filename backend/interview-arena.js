@@ -1739,6 +1739,26 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
             .catch(err => console.error('[Arena] refresh-pool error:', err.message));
     });
 
+    // POST /api/arena/admin/reset-leaderboard — wipe public ranking only.
+    // Destructive + irreversible. Preserves arena_exams / arena_sessions /
+    // arena_feedback / arena_comments so exam history and user feedback
+    // survive. Useful when the scoring rubric changes and old rankings
+    // become incomparable but the raw test data is still worth keeping.
+    router.post('/admin/reset-leaderboard', async (req, res) => {
+        if (!checkAdminAuth(req)) return res.status(403).json({ success: false, error: 'forbidden' });
+        try {
+            const before = await pool.query('SELECT COUNT(*)::int AS n FROM arena_leaderboard');
+            const deletedCount = before.rows[0]?.n ?? 0;
+            await pool.query('TRUNCATE TABLE arena_leaderboard');
+            audit('info', 'arena_admin', `leaderboard reset (${deletedCount} rows removed)`);
+            res.json({ success: true, deletedCount, table: 'arena_leaderboard' });
+        } catch (err) {
+            console.error('[Arena] reset-leaderboard error:', err);
+            audit('error', 'arena_admin', `reset-leaderboard failed: ${err.message}`);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
     // POST /api/arena/admin/self-test — on-demand runtime self-test.
     // The routine bot (or any admin) can call this anytime to verify the
     // full scoring pipeline is healthy: creates a scratch exam, runs every
