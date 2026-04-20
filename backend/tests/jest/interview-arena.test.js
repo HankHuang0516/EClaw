@@ -327,9 +327,12 @@ describe('interview-arena: API endpoints', () => {
     const request = require('supertest');
     const express = require('express');
     const arenaFactory = require('../../interview-arena');
+    // Shape must match production device registry (index.js getOrCreateDevice):
+    // { deviceId, deviceSecret, entities: { [id]: { botSecret, ... } } }
     const fakeDevices = {
         'dev-alpha': {
-            secret: 'device-secret-alpha',
+            deviceId: 'dev-alpha',
+            deviceSecret: 'device-secret-alpha',
             entities: {
                 2: { botSecret: 'bot-secret-commander' },
                 5: { botSecret: 'bot-secret-helper' },
@@ -502,6 +505,36 @@ describe('interview-arena: API endpoints', () => {
                 expect(globalThis.__arenaState.exams).toHaveLength(1);
                 expect(globalThis.__arenaState.sessions).toHaveLength(1);
                 expect(globalThis.__arenaState.feedback).toHaveLength(1);
+            } finally {
+                if (prev === undefined) delete process.env.ADMIN_SECRET;
+                else process.env.ADMIN_SECRET = prev;
+            }
+        });
+
+        test('rejects empty-string deviceSecret (safeEqual falsy guard)', async () => {
+            const prev = process.env.ADMIN_SECRET;
+            process.env.ADMIN_SECRET = 'unused';
+            try {
+                const res = await request(app)
+                    .post('/api/arena/admin/reset-leaderboard')
+                    .send({ deviceId: 'dev-alpha', deviceSecret: '' });
+                expect(res.status).toBe(403);
+                expect(res.body.error).toBe('forbidden');
+            } finally {
+                if (prev === undefined) delete process.env.ADMIN_SECRET;
+                else process.env.ADMIN_SECRET = prev;
+            }
+        });
+
+        test('rejects localhost when ADMIN_SECRET is configured (no implicit bypass)', async () => {
+            const prev = process.env.ADMIN_SECRET;
+            process.env.ADMIN_SECRET = 'test-admin-secret';
+            try {
+                // supertest defaults to 127.0.0.1, but ADMIN_SECRET is set so
+                // the "no secret configured" localhost fallback must NOT fire.
+                const res = await request(app).post('/api/arena/admin/reset-leaderboard');
+                expect(res.status).toBe(403);
+                expect(res.body.error).toBe('forbidden');
             } finally {
                 if (prev === undefined) delete process.env.ADMIN_SECRET;
                 else process.env.ADMIN_SECRET = prev;
