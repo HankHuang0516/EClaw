@@ -238,6 +238,17 @@ async function initWalletDatabase() {
         }
 
         console.log('[Wallet] Database initialized');
+
+        const __gsa = _getServiceAccount();
+        const __pkg = GOOGLE_PACKAGE_NAME;
+        const __pkgFromEnv = !!process.env.GOOGLE_PLAY_PACKAGE;
+        if (__gsa) {
+            console.log(`[Wallet] Google Play IAP ready: package=${__pkg}${__pkgFromEnv ? '' : ' (default — set GOOGLE_PLAY_PACKAGE to silence)'} gsa_client_email=${__gsa.client_email}`);
+        } else {
+            const __raw = process.env.GOOGLE_PLAY_SERVICE_ACCOUNT;
+            const __reason = !__raw ? 'env unset' : (typeof __raw !== 'string' ? 'not a string' : 'malformed JSON or missing client_email/private_key');
+            console.warn(`[Wallet] Google Play IAP DISABLED: GOOGLE_PLAY_SERVICE_ACCOUNT ${__reason}. /topup/verify-google will 402 unless GOOGLE_PLAY_ALLOW_UNVERIFIED=1.`);
+        }
     } catch (error) {
         console.error('[Wallet] Failed to init database:', error);
     }
@@ -1053,6 +1064,42 @@ module.exports = function walletFactory({ authMiddleware, adminMiddleware, serve
             bonusPct: t.baseMli > 0 ? Math.round((t.bonusMli / t.baseMli) * 100) : 0,
         }));
         res.json({ success: true, tiers });
+    });
+
+    // GET /api/wallet/topup/diag?deviceId=&deviceSecret=
+    // Gated diagnostic for Android Top-up Path B debugging. Returns whether
+    // GOOGLE_PLAY_SERVICE_ACCOUNT is loadable and which package is configured,
+    // without leaking the private key. Device auth required (same shape as
+    // /topup/verify-google) so this is not a public probe.
+    router.get('/topup/diag', async (req, res) => {
+        try {
+            const { deviceId, deviceSecret: devSecret } = req.query || {};
+            if (!deviceId || !devSecret || !devices || !safeEqual) {
+                return res.status(401).json({ success: false, error: 'device_auth_required' });
+            }
+            const device = devices[deviceId];
+            if (!device || !safeEqual(device.deviceSecret, devSecret)) {
+                return res.status(401).json({ success: false, error: 'invalid_credentials' });
+            }
+            const raw = process.env.GOOGLE_PLAY_SERVICE_ACCOUNT;
+            const gsa = _getServiceAccount();
+            res.json({
+                success: true,
+                diag: {
+                    googlePlayPackage: GOOGLE_PACKAGE_NAME,
+                    packageFromEnv: !!process.env.GOOGLE_PLAY_PACKAGE,
+                    gsaLoaded: !!gsa,
+                    gsaEnvPresent: !!raw,
+                    gsaRawType: typeof raw,
+                    gsaRawLength: typeof raw === 'string' ? raw.length : 0,
+                    gsaClientEmail: gsa ? gsa.client_email : null,
+                    allowUnverified: process.env.GOOGLE_PLAY_ALLOW_UNVERIFIED === '1',
+                    androidpublisherBase: GOOGLE_ANDROIDPUBLISHER_BASE,
+                }
+            });
+        } catch (err) {
+            res.status(500).json({ success: false, error: 'diag_failed', message: err.message });
+        }
     });
 
     // POST /api/wallet/topup/verify-google
