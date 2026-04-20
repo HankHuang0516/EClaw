@@ -1,3 +1,10 @@
+# [1.1019.0](https://github.com/HankHuang0516/EClaw/compare/v1.1018.2...v1.1019.0) (2026-04-20)
+
+
+### Features
+
+* **arena:** admin endpoint to reset public leaderboard ([#1891](https://github.com/HankHuang0516/EClaw/issues/1891)) ([1b14296](https://github.com/HankHuang0516/EClaw/commit/1b142960c68fc62626a2b9f1ff8ccd9bd6535dab))
+
 ## [1.1018.2](https://github.com/HankHuang0516/EClaw/compare/v1.1018.1...v1.1018.2) (2026-04-20)
 
 
