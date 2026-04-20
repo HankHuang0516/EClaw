@@ -1,3 +1,10 @@
+## [1.1018.1](https://github.com/HankHuang0516/EClaw/compare/v1.1018.0...v1.1018.1) (2026-04-20)
+
+
+### Bug Fixes
+
+* **mission:** accept content/category aliases on /note/update + fix /api/help ([#1888](https://github.com/HankHuang0516/EClaw/issues/1888)) ([e5c7140](https://github.com/HankHuang0516/EClaw/commit/e5c7140ebb77ea8fb9e36e95304b7c6e05b374ec))
+
 # [1.1018.0](https://github.com/HankHuang0516/EClaw/compare/v1.1017.0...v1.1018.0) (2026-04-20)
 
 
