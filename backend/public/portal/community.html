@@ -742,6 +742,7 @@
     <script src="../shared/i18n.js"></script>
     <script src="shared/auth.js"></script>
     <script src="shared/footer.js"></script>
+    <script src="shared/product-tour.js"></script>
     <script>
     /* ══════════════════════════════════════
        Real API Integration
@@ -1236,13 +1237,72 @@
     // Apply i18n translations to static data-i18n elements
     if (typeof i18n !== 'undefined') i18n.apply();
 
-    // Auto-switch to rental tab if URL hash is #rental
-    if (location.hash === '#rental') {
+    // Auto-switch to rental tab if URL hash is #rental OR tour=track1 is in URL
+    const _tourParam = new URLSearchParams(location.search).get('tour');
+    const _tourStep = parseInt(new URLSearchParams(location.search).get('step') || '0', 10);
+    if (location.hash === '#rental' || _tourParam === 'track1') {
         const rentalChip = document.querySelector('.plaza-chip[data-filter="rental"]');
         if (rentalChip) { setFilter('rental', rentalChip); } else { loadBots(); }
     } else {
         loadBots();
     }
+
+    /* ══════ Onboarding Tour (Track 1: Free/Official Bot Rental) ══════ */
+    (function initTourTrack1() {
+        if (_tourParam !== 'track1') return;
+        if (typeof ProductTour === 'undefined') return;
+        if (ProductTour.isDone('track1')) return;
+
+        const SETTINGS_URL = '/portal/settings.html?tour=track1&step=4#channelApiCard';
+
+        ProductTour.register('track1', [
+            {
+                target: '.plaza-chip[data-filter="rental"]',
+                i18nKey: 'onboarding_tour_track1_step1',
+                fallback: 'Pick the category you want — free/official bots live under the rental filter.'
+            },
+            {
+                target: () => document.querySelector('#botGrid .bot-card'),
+                i18nKey: 'onboarding_tour_track1_step2',
+                fallback: 'Click a bot card to see the details.',
+                timeout: 12000
+            },
+            {
+                target: () => document.getElementById('rentalConfirmBtn'),
+                i18nKey: 'onboarding_tour_track1_step3',
+                fallback: 'Press here to start renting.',
+                timeout: 15000,
+                // If user clicks Next without completing the rental, skip to settings anyway —
+                // the rental success hook below handles the happy path.
+                onNext: () => { window.location.href = SETTINGS_URL; }
+            }
+        ], { totalSteps: 5 });
+
+        const resumeAt = Math.max(0, Math.min(_tourStep, 2));
+        setTimeout(() => ProductTour.goTo('track1', resumeAt), 400);
+
+        const _openRentalDetailOriginal = window.openRentalDetail;
+        if (typeof _openRentalDetailOriginal === 'function') {
+            window.openRentalDetail = async function () {
+                const result = await _openRentalDetailOriginal.apply(this, arguments);
+                const state = ProductTour.getState && ProductTour.getState();
+                if (state && state.id === 'track1' && state.stepIdx === 1) {
+                    setTimeout(() => ProductTour.goTo('track1', 2), 300);
+                }
+                return result;
+            };
+        }
+
+        const _doRentalOriginal = window.doRentalFromPlaza;
+        if (typeof _doRentalOriginal === 'function') {
+            window.doRentalFromPlaza = async function () {
+                await _doRentalOriginal.apply(this, arguments);
+                if (!document.getElementById('rentalConfirmBtn')) {
+                    setTimeout(() => { window.location.href = SETTINGS_URL; }, 1800);
+                }
+            };
+        }
+    })();
     </script>
 </body>
 

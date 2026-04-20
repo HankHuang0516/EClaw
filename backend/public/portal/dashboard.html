@@ -1780,6 +1780,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>
     <script src="shared/footer.js"></script>
+    <script src="shared/product-tour.js"></script>
     <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
     <script src="shared/agent-card-editor.js"></script>
     <script src="shared/ai-chat.js"></script>
@@ -4344,6 +4345,47 @@
             if (countdownInterval) clearInterval(countdownInterval);
             if (refreshInterval) clearInterval(refreshInterval);
         });
+
+        /* ══════ Onboarding Tour (Track 1) — Step 5: Completion ══════ */
+        (function initTourTrack1Step5() {
+            const params = new URLSearchParams(location.search);
+            if (params.get('tour') !== 'track1') return;
+            if (typeof ProductTour === 'undefined') return;
+            if (ProductTour.isDone('track1')) return;
+
+            function callMarkComplete() {
+                try {
+                    fetch('/api/user/onboarding/mark-complete', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ track: 'track1', dismissed: false, completedAt: new Date().toISOString() })
+                    }).catch(() => {});
+                } catch (_) { /* best-effort */ }
+                try {
+                    localStorage.setItem('eclaw_onboarding_last_seen', new Date().toISOString());
+                } catch (_) {}
+            }
+
+            ProductTour.register('track1', [
+                {
+                    target: () => document.getElementById('entityGrid') || document.body,
+                    i18nKey: 'onboarding_tour_track1_step5',
+                    fallback: "You're all set — your rented bot will appear here.",
+                    stepNumber: 5,
+                    timeout: 8000,
+                    onNext: function () {
+                        callMarkComplete();
+                    }
+                }
+            ], {
+                totalSteps: 5,
+                onComplete: () => { /* onNext already marked */ },
+                onDismiss: callMarkComplete
+            });
+
+            setTimeout(() => ProductTour.goTo('track1', 0), 600);
+        })();
     </script>
     </main>
 </body>

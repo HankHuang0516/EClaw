@@ -14366,6 +14366,24 @@ app.put('/api/notification-preferences', async (req, res) => {
 });
 
 // ============================================
+// ONBOARDING (Scope 0 wizard completion)
+// ============================================
+app.post('/api/user/onboarding/mark-complete', async (req, res) => {
+    const deviceId = authDevice(req);
+    const body = req.body || {};
+    const payload = {
+        track: typeof body.track === 'string' ? body.track : null,
+        dismissed: !!body.dismissed,
+        completedAt: typeof body.completedAt === 'string' ? body.completedAt : new Date().toISOString()
+    };
+    if (deviceId) {
+        try { await devicePrefs.setOnboarding(deviceId, payload); }
+        catch (err) { console.error('[onboarding] setOnboarding failed:', err.message); }
+    }
+    res.json({ success: true, authenticated: !!deviceId, onboarding: payload });
+});
+
+// ============================================
 // DEVICE PREFERENCES (broadcast settings, etc.)
 // ============================================
 app.get('/api/device-preferences', async (req, res) => {
