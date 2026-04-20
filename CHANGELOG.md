@@ -1,3 +1,10 @@
+# [1.1017.0](https://github.com/HankHuang0516/EClaw/compare/v1.1016.1...v1.1017.0) (2026-04-20)
+
+
+### Features
+
+* **growth:** add invite_conversion aggregate to /daily ([#1886](https://github.com/HankHuang0516/EClaw/issues/1886)) ([3843a5d](https://github.com/HankHuang0516/EClaw/commit/3843a5dd3a1789629842ed71d4453b8c07d0dc85))
+
 ## [1.1016.1](https://github.com/HankHuang0516/EClaw/compare/v1.1016.0...v1.1016.1) (2026-04-20)
 
 
