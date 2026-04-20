@@ -1,3 +1,10 @@
+## [1.1020.2](https://github.com/HankHuang0516/EClaw/compare/v1.1020.1...v1.1020.2) (2026-04-20)
+
+
+### Bug Fixes
+
+* /api/mission/notes + /rules read from mission_dashboard ([#1894](https://github.com/HankHuang0516/EClaw/issues/1894)) ([f1c5d34](https://github.com/HankHuang0516/EClaw/commit/f1c5d34356cd52f8318798ec4d9a38724ae657ea)), closes [#1892](https://github.com/HankHuang0516/EClaw/issues/1892)
+
 ## [1.1020.1](https://github.com/HankHuang0516/EClaw/compare/v1.1020.0...v1.1020.1) (2026-04-20)
 
 
