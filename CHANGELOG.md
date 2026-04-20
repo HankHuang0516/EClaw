@@ -1,3 +1,10 @@
+# [1.1031.0](https://github.com/HankHuang0516/EClaw/compare/v1.1030.0...v1.1031.0) (2026-04-20)
+
+
+### Features
+
+* **onboarding:** Track 2 product tour — paid e-coin bot rental ([#1913](https://github.com/HankHuang0516/EClaw/issues/1913)) ([7802f09](https://github.com/HankHuang0516/EClaw/commit/7802f09b998f5d1b75ea3521bc08a9f92c506ba4)), closes [#1912](https://github.com/HankHuang0516/EClaw/issues/1912)
+
 # [1.1030.0](https://github.com/HankHuang0516/EClaw/compare/v1.1029.0...v1.1030.0) (2026-04-20)
 
 
