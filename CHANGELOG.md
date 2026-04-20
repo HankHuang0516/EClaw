@@ -1,3 +1,10 @@
+## [1.1016.1](https://github.com/HankHuang0516/EClaw/compare/v1.1016.0...v1.1016.1) (2026-04-20)
+
+
+### Bug Fixes
+
+* **db:** retry DB init + startup gate to prevent entity wipe on deploy ([#1885](https://github.com/HankHuang0516/EClaw/issues/1885)) ([6064b34](https://github.com/HankHuang0516/EClaw/commit/6064b344a27b67aca3e901a7b636532a2a116977))
+
 # [1.1016.0](https://github.com/HankHuang0516/EClaw/compare/v1.1015.2...v1.1016.0) (2026-04-20)
 
 
