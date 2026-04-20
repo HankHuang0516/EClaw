@@ -101,11 +101,27 @@ async function runAckRetrySweep({
         const pkg = raw.packageName || packageName;
 
         // Rows created before this feature shipped won't have packageName /
-        // purchaseToken in external_raw. We can't retry those — flag as
-        // skipped so ops knows to ignore them (or backfill manually).
+        // purchaseToken in external_raw. We can't retry those (the token was
+        // never captured so Google can't be re-contacted) — mark 'failed'
+        // terminally in one shot. Otherwise the sweep scans them every cron
+        // tick and emits the same audit warn for up to REFUND_WINDOW_MS,
+        // flooding logs on a zombie row no action can save.
         if (!productId || !purchaseToken || !pkg) {
             stats.skipped += 1;
-            audit('warn', 'wallet', `ack_sweep skipped order=${row.id} — missing ack fields in external_raw`, {
+            try {
+                await pool.query(
+                    `UPDATE topup_orders
+                     SET ack_attempts = ack_attempts + 1,
+                         ack_state = CASE WHEN $2::boolean THEN 'failed' ELSE ack_state END
+                     WHERE id = $1 AND ack_state <> 'acked'`,
+                    [row.id, true]
+                );
+            } catch (err) {
+                audit('error', 'wallet', `ack_sweep zombie-fail update failed order=${row.id}: ${err.message}`, {
+                    action: 'ack_sweep', resource: row.id, result: 'state_update_failed',
+                });
+            }
+            audit('warn', 'wallet', `ack_sweep skipped order=${row.id} — missing ack fields in external_raw (marked failed, terminal)`, {
                 action: 'ack_sweep', resource: row.id, result: 'missing_fields',
                 metadata: {
                     hasProductId: !!productId,
