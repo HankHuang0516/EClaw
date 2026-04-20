@@ -1,3 +1,10 @@
+## [1.1020.3](https://github.com/HankHuang0516/EClaw/compare/v1.1020.2...v1.1020.3) (2026-04-20)
+
+
+### Bug Fixes
+
+* single source of truth for invite_codes schema ([#1896](https://github.com/HankHuang0516/EClaw/issues/1896)) ([3f6e5fd](https://github.com/HankHuang0516/EClaw/commit/3f6e5fdc9d1cfac057e9a5d9a798d36070a7a179))
+
 ## [1.1020.2](https://github.com/HankHuang0516/EClaw/compare/v1.1020.1...v1.1020.2) (2026-04-20)
 
 
