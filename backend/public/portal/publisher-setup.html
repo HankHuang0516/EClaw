@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>EClawbot - Publisher X Setup / X 發布設定</title>
+    <meta name="description" content="Save your X (Twitter) OAuth 1.0a credentials to the EClaw device vault.">
+    <link rel="icon" type="image/png" href="assets/favicon-32.png">
+    <link rel="stylesheet" href="shared/style.css">
+    <link rel="canonical" href="https://eclawbot.com/portal/publisher-setup.html">
+    <style>
+        /* Phase-1 publisher BYO setup — minimal, portal-aesthetic shell.
+           No i18n wiring yet; bilingual strings are hardcoded inline so this
+           page ships in a single PR. A dedicated i18n card will migrate
+           these to proper i18n keys later. */
+        main { padding: 24px 16px; }
+        .container { max-width: 640px; margin: 0 auto; }
+
+        .page-title {
+            font-size: 20px; font-weight: 700; color: var(--text);
+            margin: 0 0 4px;
+        }
+        .page-subtitle {
+            font-size: 13px; color: var(--text-secondary);
+            margin: 0 0 20px; line-height: 1.5;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 13px; font-weight: 600; color: var(--text-secondary);
+            text-transform: uppercase; letter-spacing: 0.5px;
+            margin: 0 0 12px;
+        }
+
+        .field { margin-bottom: 14px; }
+        .field label {
+            display: block; font-size: 13px; font-weight: 500;
+            color: var(--text); margin-bottom: 6px;
+        }
+        .field-hint {
+            font-size: 11px; color: var(--text-muted);
+            margin-top: 4px; line-height: 1.4;
+        }
+
+        .pw-row {
+            display: flex; gap: 6px; align-items: center;
+        }
+        .pw-row input[type="password"],
+        .pw-row input[type="text"] {
+            flex: 1;
+            padding: 10px 12px;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-size: 13px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            outline: none;
+            transition: border-color 0.15s;
+            box-sizing: border-box;
+        }
+        .pw-row input:focus { border-color: var(--primary); }
+        .pw-toggle {
+            background: transparent;
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 9px 10px;
+            font-size: 14px;
+        }
+        .pw-toggle:hover { border-color: var(--primary); color: var(--text); }
+
+        .actions {
+            display: flex; gap: 8px; justify-content: flex-end;
+            margin-top: 16px; flex-wrap: wrap;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: var(--radius-sm);
+            border: 1px solid transparent;
+            font-size: 14px; font-weight: 600;
+            cursor: pointer; font-family: inherit;
+            transition: opacity 0.15s, border-color 0.15s;
+        }
+        .btn:hover { opacity: 0.88; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-outline {
+            background: transparent; color: var(--text);
+            border-color: var(--card-border);
+        }
+
+        .result {
+            margin-top: 12px; padding: 10px 12px;
+            border-radius: var(--radius-sm); font-size: 13px;
+            display: none;
+        }
+        .result.success {
+            background: rgba(76,175,80,0.12);
+            border: 1px solid rgba(76,175,80,0.35);
+            color: var(--success, #4caf50);
+        }
+        .result.error {
+            background: rgba(211,47,47,0.1);
+            border: 1px solid rgba(211,47,47,0.35);
+            color: var(--danger, #f44336);
+        }
+
+        .help {
+            font-size: 12px; color: var(--text-muted);
+            line-height: 1.6; margin-top: 4px;
+        }
+        .help a { color: var(--primary); }
+
+        #loadingState { padding: 40px 0; text-align: center; color: var(--text-secondary); }
+    </style>
+</head>
+
+<body>
+    <main>
+        <div class="container">
+
+            <div id="loadingState">Loading… / 載入中…</div>
+
+            <div id="pageContent" style="display:none;">
+                <h1 class="page-title">X (Twitter) Publisher Setup / X 發布設定</h1>
+                <p class="page-subtitle">
+                    Save your 4 X OAuth 1.0a keys to the device vault. Your bot will use these
+                    credentials when publishing tweets — no one else can read them.<br>
+                    將你的 4 組 X OAuth 1.0a 金鑰儲存至裝置保管庫。機器人發推時會使用這些憑證，其他人無法讀取。
+                </p>
+
+                <div class="card">
+                    <div class="section-title">Credentials / 憑證</div>
+
+                    <div class="field">
+                        <label for="xConsumerKey">Consumer Key / 消費者金鑰</label>
+                        <div class="pw-row">
+                            <input type="password" id="xConsumerKey" autocomplete="off" spellcheck="false">
+                            <button type="button" class="pw-toggle" onclick="togglePw('xConsumerKey', this)">👁</button>
+                        </div>
+                        <div class="field-hint">From X Developer Portal → App → Keys and tokens → API Key.</div>
+                    </div>
+
+                    <div class="field">
+                        <label for="xConsumerSecret">Consumer Secret / 消費者密鑰</label>
+                        <div class="pw-row">
+                            <input type="password" id="xConsumerSecret" autocomplete="off" spellcheck="false">
+                            <button type="button" class="pw-toggle" onclick="togglePw('xConsumerSecret', this)">👁</button>
+                        </div>
+                        <div class="field-hint">Paired with the Consumer Key. AKA "API Key Secret".</div>
+                    </div>
+
+                    <div class="field">
+                        <label for="xAccessToken">Access Token / 存取權杖</label>
+                        <div class="pw-row">
+                            <input type="password" id="xAccessToken" autocomplete="off" spellcheck="false">
+                            <button type="button" class="pw-toggle" onclick="togglePw('xAccessToken', this)">👁</button>
+                        </div>
+                        <div class="field-hint">Generated in X Developer Portal under your App → Keys and tokens → Access Token.</div>
+                    </div>
+
+                    <div class="field">
+                        <label for="xAccessTokenSecret">Access Token Secret / 存取權杖密鑰</label>
+                        <div class="pw-row">
+                            <input type="password" id="xAccessTokenSecret" autocomplete="off" spellcheck="false">
+                            <button type="button" class="pw-toggle" onclick="togglePw('xAccessTokenSecret', this)">👁</button>
+                        </div>
+                        <div class="field-hint">Paired with the Access Token.</div>
+                    </div>
+
+                    <p class="help">
+                        All 4 keys are required (atomic). Values are AES-256-GCM encrypted server-side
+                        with your device's seal key before storage.<br>
+                        4 組金鑰皆為必填（原子性）。伺服器以 AES-256-GCM 加密後儲存，使用你裝置專屬的密封金鑰。
+                    </p>
+
+                    <div class="actions">
+                        <button type="button" class="btn btn-outline" onclick="clearForm()">Clear / 清空</button>
+                        <button type="button" class="btn btn-primary" id="saveBtn" onclick="saveToVault()">
+                            Save to vault / 儲存至保管庫
+                        </button>
+                    </div>
+
+                    <div id="result" class="result"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="shared/auth.js"></script>
+    <script src="shared/api.js"></script>
+    <script>
+        // Phase-1 publisher BYO setup script.
+        // Matches the embed-context bootstrap used by env-vars.html: we rely on
+        // checkAuth() to resolve currentUser (which includes deviceId + deviceSecret),
+        // whether the page is loaded standalone, via ?embed=1 in the mobile WebView,
+        // or via the iOS/Android URL-param auth fallback.
+
+        const X_KEYS = [
+            ['xConsumerKey',       'X_CONSUMER_KEY'],
+            ['xConsumerSecret',    'X_CONSUMER_SECRET'],
+            ['xAccessToken',       'X_ACCESS_TOKEN'],
+            ['xAccessTokenSecret', 'X_ACCESS_TOKEN_SECRET']
+        ];
+
+        function togglePw(id, btn) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.type = el.type === 'password' ? 'text' : 'password';
+            btn.textContent = el.type === 'password' ? '👁' : '🙈';
+        }
+
+        function clearForm() {
+            for (const [id] of X_KEYS) {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            }
+            hideResult();
+        }
+
+        function showResult(msg, kind) {
+            const el = document.getElementById('result');
+            el.textContent = msg;
+            el.className = 'result ' + (kind === 'success' ? 'success' : 'error');
+            el.style.display = 'block';
+        }
+
+        function hideResult() {
+            const el = document.getElementById('result');
+            el.style.display = 'none';
+            el.textContent = '';
+        }
+
+        async function saveToVault() {
+            hideResult();
+            if (!window.currentUser || !window.currentUser.deviceId || !window.currentUser.deviceSecret) {
+                showResult('Not authenticated. / 尚未登入。', 'error');
+                return;
+            }
+
+            // Collect values; all 4 are required (atomic)
+            const vars = {};
+            const missing = [];
+            for (const [id, keyName] of X_KEYS) {
+                const v = (document.getElementById(id).value || '').trim();
+                if (!v) { missing.push(keyName); continue; }
+                vars[keyName] = v;
+            }
+            if (missing.length > 0) {
+                showResult('All 4 keys are required (missing: ' + missing.join(', ') + ') / 4 組金鑰皆為必填', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving… / 儲存中…';
+
+            try {
+                // POST /api/device-vars with source=web performs a merge that preserves
+                // existing keys from other sources (APP) while updating our 4 X keys.
+                const result = await apiCall('POST', '/api/device-vars', {
+                    deviceId: window.currentUser.deviceId,
+                    deviceSecret: window.currentUser.deviceSecret,
+                    vars,
+                    source: 'web'
+                });
+
+                if (result && result.success) {
+                    showResult(
+                        'Saved. Your bot can now publish to X using these credentials. / '
+                        + '已儲存。機器人現在可以使用這些憑證發布至 X。',
+                        'success'
+                    );
+                } else {
+                    showResult(
+                        'Save failed: ' + ((result && result.error) || 'unknown error'),
+                        'error'
+                    );
+                }
+            } catch (e) {
+                showResult('Save failed: ' + (e.message || e) + ' / 儲存失敗', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save to vault / 儲存至保管庫';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const user = await checkAuth();
+                if (!user) return; // checkAuth redirects on failure
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('pageContent').style.display = 'block';
+            } catch (e) {
+                document.getElementById('loadingState').textContent =
+                    'Auth error: ' + (e.message || e);
+            }
+        });
+    </script>
+</body>
+</html>

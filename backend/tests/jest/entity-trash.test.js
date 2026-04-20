@@ -188,6 +188,7 @@ jest.mock('../../article-publisher', () => {
     return {
         router: express.Router(),
         initPublisherTable: jest.fn().mockResolvedValue(undefined),
+        setDeviceVarResolver: jest.fn(),
     };
 });
 

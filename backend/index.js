@@ -14115,6 +14115,10 @@ orgChartModule.initTable(chatPool);
 crossDeviceSettings.initTable(chatPool);
 chatIntegrity.initIntegrityTable(chatPool);
 articlePublisher.initPublisherTable(chatPool);
+// Wire per-device vault resolver for BYO credentials (Phase 1: X/Twitter)
+// Reuses the same helper used by the chat-embedding BYO path (getDeviceVarForEmbedding).
+// Function declaration is hoisted, so it's safe to reference here.
+articlePublisher.setDeviceVarResolver(getDeviceVarForEmbedding);
 
 // Auto-migrate: add delivery tracking + media columns
 chatPool.query(`
