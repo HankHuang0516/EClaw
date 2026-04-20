@@ -2,6 +2,7 @@ const TRANSLATIONS = {
     en: {
         // Mission Control (mission.html)
         "mc_title": "EClawbot Mission Control",
+        "mc_tab_label": "Mind",
         "mc_auth_title": "Mission Control",
         "mc_auth_subtitle": "Enter your device credentials to sync Dashboard",
         "mc_input_device_id": "Device ID",
@@ -4195,6 +4196,7 @@ const TRANSLATIONS = {
 
     zh: {
         "mc_title": "EClawbot Mission Control",
+        "mc_tab_label": "心智",
         "mc_auth_title": "Mission Control",
         "mc_auth_subtitle": "輸入你的裝置憑證來同步 Dashboard",
         "mc_input_device_id": "Device ID",
@@ -8469,6 +8471,7 @@ const TRANSLATIONS = {
 
     ja: {
         "mc_title": "EClawbot ミッションコントロール",
+        "mc_tab_label": "マインド",
         "mc_auth_title": "ミッションコントロール",
         "mc_auth_subtitle": "デバイス認証情報を入力してダッシュボードと同期",
         "mc_input_device_id": "デバイスID",
@@ -12349,6 +12352,7 @@ const TRANSLATIONS = {
 
     ko: {
         "mc_title": "EClawbot 미션 컨트롤",
+        "mc_tab_label": "마인드",
         "mc_auth_title": "미션 컨트롤",
         "mc_auth_subtitle": "대시보드와 동기화하려면 기기 인증 정보를 입력하세요",
         "mc_input_device_id": "Device ID",
@@ -16228,6 +16232,7 @@ const TRANSLATIONS = {
 
     th: {
         "mc_title": "EClawbot ศูนย์ควบคุมภารกิจ",
+        "mc_tab_label": "จิตใจ",
         "mc_auth_title": "ศูนย์ควบคุมภารกิจ",
         "mc_auth_subtitle": "ป้อนข้อมูลอุปกรณ์เพื่อซิงค์แดชบอร์ด",
         "mc_input_device_id": "Device ID",
@@ -20107,6 +20112,7 @@ const TRANSLATIONS = {
 
     vi: {
         "mc_title": "EClawbot Trung tâm Điều khiển",
+        "mc_tab_label": "Tâm trí",
         "mc_auth_title": "Trung tâm Điều khiển",
         "mc_auth_subtitle": "Nhập thông tin thiết bị để đồng bộ Bảng điều khiển",
         "mc_input_device_id": "Device ID",
@@ -23986,6 +23992,7 @@ const TRANSLATIONS = {
 
     id: {
         "mc_title": "EClawbot Pusat Misi",
+        "mc_tab_label": "Pikiran",
         "mc_auth_title": "Pusat Misi",
         "mc_auth_subtitle": "Masukkan kredensial perangkat untuk menyinkronkan Dasbor",
         "mc_input_device_id": "Device ID",
@@ -27863,6 +27870,7 @@ const TRANSLATIONS = {
 
     fr: {
         "mc_title": "EClawbot Centre de Contrôle des Missions",
+        "mc_tab_label": "Esprit",
         "mc_auth_title": "Centre de Contrôle des Missions",
         "mc_auth_subtitle": "Entrez vos identifiants pour synchroniser le Tableau de Bord",
         "mc_input_device_id": "ID de l'Appareil",
@@ -31730,6 +31738,7 @@ const TRANSLATIONS = {
 
     es: {
         "mc_title": "EClawbot Centro de Misiones",
+        "mc_tab_label": "Mente",
         "mc_auth_title": "Centro de Misiones",
         "mc_auth_subtitle": "Ingrese las credenciales del dispositivo para sincronizar el Panel",
         "mc_input_device_id": "ID del Dispositivo",
@@ -35570,6 +35579,7 @@ const TRANSLATIONS = {
 
     de: {
         "mc_title": "Titel",
+        "mc_tab_label": "Verstand",
         "mc_auth_title": "Authentifizierung",
         "mc_auth_subtitle": "Authentifizieren Sie Ihr Gerät",
         "mc_input_device_id": "Geräte-ID eingeben",
@@ -39437,6 +39447,7 @@ const TRANSLATIONS = {
 
     ms: {
         "mc_title": "EClawbot Pusat Misi",
+        "mc_tab_label": "Minda",
         "mc_auth_title": "Pusat Misi",
         "mc_auth_subtitle": "Masukkan bukti kelayakan peranti untuk menyegerakkan Papan Pemuka",
         "mc_input_device_id": "ID Peranti",
@@ -45195,6 +45206,7 @@ const TRANSLATIONS = {
 
     hi: {
         "mc_title": "EClawbot मिशन सेंटर",
+        "mc_tab_label": "मन",
         "mc_auth_title": "मिशन सेंटर",
         "mc_auth_subtitle": "डैशबोर्ड सिंक करने के लिए डिवाइस क्रेडेंशियल दर्ज करें",
         "mc_input_device_id": "डिवाइस आईडी",
@@ -52203,6 +52215,7 @@ const TRANSLATIONS = {
 
     ar: {
         "mc_title": "EClawbot مركز المهام",
+        "mc_tab_label": "العقل",
         "mc_auth_title": "مركز المهام",
         "mc_auth_subtitle": "أدخل بيانات اعتماد الجهاز لمزامنة لوحة التحكم",
         "mc_input_device_id": "معرف الجهاز",
