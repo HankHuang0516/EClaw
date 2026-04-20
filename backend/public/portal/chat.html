@@ -4342,6 +4342,25 @@
             setReplyContext(null, senderLabel, previewText);
         }
 
+        function fileMsgText(index, file, text) {
+            if (index === 0 && text) return text;
+            if (file.type === 'photo') return '[Photo]';
+            if (file.type === 'video') return '[Video]';
+            return `[File] ${file.fileName}`;
+        }
+
+        async function crossSpeakSafe(body) {
+            try {
+                await apiCall('POST', '/api/client/cross-speak', body);
+            } catch (err) {
+                if (err.status === 404) {
+                    showToast(i18n.t('chat_contacts_offline_send'), 'error');
+                } else {
+                    throw err;
+                }
+            }
+        }
+
         // ── Send Message ──
         async function sendMessage() {
             const input = document.getElementById('messageInput');
@@ -4352,13 +4371,11 @@
             // Must have text or pending files
             if (!text && !hasFiles) return;
 
-            // Prepend reply quote if active
             let finalText = text;
-            if (replyContext && text) {
+            if (replyContext) {
                 const excerpt = replyContext.text.length > 80 ? replyContext.text.slice(0, 80) + '…' : replyContext.text;
-                finalText = `↩ ${replyContext.senderName}: "${excerpt}"\n\n${text}`;
-                clearReplyContext();
-            } else if (replyContext) {
+                const quotePrefix = `↩ ${replyContext.senderName}: "${excerpt}"`;
+                finalText = text ? `${quotePrefix}\n\n${text}` : quotePrefix;
                 clearReplyContext();
             }
 
@@ -4407,7 +4424,7 @@
                     if (hasFiles) {
                         for (let i = 0; i < readyFiles.length; i++) {
                             const f = readyFiles[i];
-                            const msgText = (i === 0 && finalText) ? finalText : (f.type === 'photo' ? '[Photo]' : f.type === 'video' ? '[Video]' : `[File] ${f.fileName}`);
+                            const msgText = fileMsgText(i, f, finalText);
                             const fileResp = await apiCall('POST', '/api/client/speak', {
                                 deviceId: currentUser.deviceId,
                                 deviceSecret: currentUser.deviceSecret,
@@ -4447,30 +4464,24 @@
                 }
 
                 // ── Cross-device contacts ──
-                if (targets.contacts.length > 0 && finalText) {
-                    // If user explicitly selected a local entity, use it as sender; otherwise owner mode (-1)
+                if (targets.contacts.length > 0 && (finalText || hasFiles)) {
                     const explicitLocal = targets.local.length > 0
                         ? boundEntities.find(e => e.entityId === targets.local[0])
                         : null;
                     const fromEntityId = explicitLocal ? explicitLocal.entityId : -1;
-                    const crossSpeakPromises = targets.contacts.map(async (code) => {
-                        try {
-                            await apiCall('POST', '/api/client/cross-speak', {
-                                deviceId: currentUser.deviceId,
-                                fromEntityId: fromEntityId,
-                                targetCode: code,
-                                text: finalText,
-                                source: 'web_chat'
-                            });
-                        } catch (err) {
-                            if (err.status === 404) {
-                                showToast(i18n.t('chat_contacts_offline_send'), 'error');
-                            } else {
-                                throw err;
-                            }
+                    if (hasFiles) {
+                        for (let i = 0; i < readyFiles.length; i++) {
+                            const f = readyFiles[i];
+                            const msgText = fileMsgText(i, f, finalText);
+                            await Promise.all(targets.contacts.map(code =>
+                                crossSpeakSafe({ deviceId: currentUser.deviceId, fromEntityId, targetCode: code, text: msgText, source: 'web_chat', mediaType: f.type, mediaUrl: f.mediaUrl })
+                            ));
                         }
-                    });
-                    await Promise.all(crossSpeakPromises);
+                    } else {
+                        await Promise.all(targets.contacts.map(code =>
+                            crossSpeakSafe({ deviceId: currentUser.deviceId, fromEntityId, targetCode: code, text: finalText, source: 'web_chat' })
+                        ));
+                    }
                 }
 
                 // Save selected targets
