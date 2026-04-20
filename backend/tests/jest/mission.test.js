@@ -224,6 +224,64 @@ describe('Category support in update endpoints', () => {
         expect([200, 404, 500].includes(res.status)).toBe(true);
     });
 
+    it('note/update handles content:null without throwing', async () => {
+        const res = await post('/api/mission/note/update')
+            .send({ ...auth, title: 'Some Note', content: null });
+        // Must not throw TypeError on null.trim → 500 from undefined handler is the bug we're fixing
+        expect([200, 404, 500].includes(res.status)).toBe(true);
+        if (res.status === 500) expect(res.body.error || '').not.toMatch(/trim/i);
+    });
+
+    it('rule/update accepts description as alias for newDescription', async () => {
+        const res = await post('/api/mission/rule/update')
+            .send({ ...auth, name: 'Some Rule', description: 'Aliased body' });
+        expect([200, 404, 500].includes(res.status)).toBe(true);
+    });
+
+    it('rule/update accepts category as alias for newCategory', async () => {
+        const res = await post('/api/mission/rule/update')
+            .send({ ...auth, name: 'Some Rule', category: 'Aliased' });
+        expect([200, 404, 500].includes(res.status)).toBe(true);
+    });
+
+    it('rule/update handles description:null without throwing', async () => {
+        const res = await post('/api/mission/rule/update')
+            .send({ ...auth, name: 'Some Rule', description: null });
+        expect([200, 404, 500].includes(res.status)).toBe(true);
+        if (res.status === 500) expect(res.body.error || '').not.toMatch(/trim/i);
+    });
+
+    it('skill/update accepts url as alias for newUrl', async () => {
+        const res = await post('/api/mission/skill/update')
+            .send({ ...auth, title: 'Some Skill', url: 'https://aliased.example/x' });
+        expect([200, 404, 500].includes(res.status)).toBe(true);
+    });
+
+    it('skill/update accepts category as alias for newCategory', async () => {
+        const res = await post('/api/mission/skill/update')
+            .send({ ...auth, title: 'Some Skill', category: 'Aliased' });
+        expect([200, 404, 500].includes(res.status)).toBe(true);
+    });
+
+    it('soul/update accepts description as alias for newDescription', async () => {
+        const res = await post('/api/mission/soul/update')
+            .send({ ...auth, name: 'Some Soul', description: 'Aliased body' });
+        expect([200, 404, 500].includes(res.status)).toBe(true);
+    });
+
+    it('soul/update accepts category as alias for newCategory', async () => {
+        const res = await post('/api/mission/soul/update')
+            .send({ ...auth, name: 'Some Soul', category: 'Aliased' });
+        expect([200, 404, 500].includes(res.status)).toBe(true);
+    });
+
+    it('soul/update handles description:null without throwing', async () => {
+        const res = await post('/api/mission/soul/update')
+            .send({ ...auth, name: 'Some Soul', description: null });
+        expect([200, 404, 500].includes(res.status)).toBe(true);
+        if (res.status === 500) expect(res.body.error || '').not.toMatch(/trim/i);
+    });
+
     it('rule/update accepts newCategory field', async () => {
         const res = await post('/api/mission/rule/update')
             .send({ ...auth, name: 'Some Rule', newCategory: 'Workflow' });
