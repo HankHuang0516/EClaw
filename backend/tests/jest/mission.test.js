@@ -6,18 +6,19 @@
  * notes, rules, skills, souls, notify, and dashboard endpoints remain.
  */
 
+// Exposed so deeper tests can seed SELECT/UPDATE responses per-case.
+// Keep the `mock` prefix — Jest allows only mock* identifiers in jest.mock factories.
+const mockClientQuery = jest.fn().mockResolvedValue({ rows: [] });
+
 jest.mock('pg', () => ({
-    Pool: jest.fn().mockImplementation(() => {
-        const mockQuery = jest.fn().mockResolvedValue({ rows: [], rowCount: 0 });
-        return {
-            query: mockQuery,
-            connect: jest.fn().mockResolvedValue({
-                query: jest.fn().mockResolvedValue({ rows: [] }),
-                release: jest.fn(),
-            }),
-            end: jest.fn().mockResolvedValue(undefined),
-        };
-    }),
+    Pool: jest.fn().mockImplementation(() => ({
+        query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+        connect: jest.fn().mockImplementation(() => Promise.resolve({
+            query: mockClientQuery,
+            release: jest.fn(),
+        })),
+        end: jest.fn().mockResolvedValue(undefined),
+    })),
 }));
 
 const express = require('express');
@@ -298,6 +299,107 @@ describe('Category support in update endpoints', () => {
         const res = await post('/api/mission/soul/update')
             .send({ ...auth, name: 'Some Soul', newCategory: 'Custom' });
         expect([200, 404, 500].includes(res.status)).toBe(true);
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
+// Deep persistence — reach the write branch, assert persisted value
+// (PR #1889 reviewer follow-up: shallow [200,404,500] tests never
+// execute the trim/alias code because mock returns empty rows → 404)
+// ════════════════════════════════════════════════════════════════
+describe('Deep persistence assertions in update endpoints', () => {
+    const auth = { deviceId: 'test-dev', deviceSecret: 'test-secret' };
+    let capturedWrites;
+    let dashboardRow;
+
+    beforeEach(() => {
+        capturedWrites = [];
+        dashboardRow = { notes: [], rules: [], skills: [], souls: [] };
+
+        mockClientQuery.mockImplementation(async (sql, params) => {
+            const s = typeof sql === 'string' ? sql.trim() : '';
+            if (/^(BEGIN|COMMIT|ROLLBACK)/i.test(s)) return { rows: [] };
+            if (/^SELECT/i.test(s)) return { rows: [dashboardRow] };
+            if (/^UPDATE/i.test(s)) {
+                capturedWrites.push({ sql: s, params });
+                return { rows: [{ version: 42 }] };
+            }
+            return { rows: [] };
+        });
+    });
+
+    afterEach(() => {
+        mockClientQuery.mockReset();
+        mockClientQuery.mockResolvedValue({ rows: [] });
+    });
+
+    const writeFor = (column) => capturedWrites.find(w => w.sql.includes(`SET ${column}`));
+    const persisted = (column) => JSON.parse(writeFor(column).params[1]);
+
+    it('note/update — content alias reaches write branch and persists value', async () => {
+        dashboardRow.notes = [{ title: 'N1', content: 'old-body', category: 'orig' }];
+        const res = await post('/api/mission/note/update')
+            .send({ ...auth, title: 'N1', content: 'aliased-body' });
+        expect(res.status).toBe(200);
+        const rows = persisted('notes');
+        expect(rows[0].content).toBe('aliased-body');
+        expect(rows[0].category).toBe('orig');
+    });
+
+    it('note/update — content:null persists as empty string (no TypeError)', async () => {
+        dashboardRow.notes = [{ title: 'N1', content: 'old-body' }];
+        const res = await post('/api/mission/note/update')
+            .send({ ...auth, title: 'N1', content: null });
+        expect(res.status).toBe(200);
+        expect(persisted('notes')[0].content).toBe('');
+    });
+
+    it('note/update — category:null persists as null (not string)', async () => {
+        dashboardRow.notes = [{ title: 'N1', category: 'X' }];
+        const res = await post('/api/mission/note/update')
+            .send({ ...auth, title: 'N1', category: null });
+        expect(res.status).toBe(200);
+        expect(persisted('notes')[0].category).toBeNull();
+    });
+
+    it('rule/update — description alias reaches write branch', async () => {
+        dashboardRow.rules = [{ name: 'R1', description: 'old' }];
+        const res = await post('/api/mission/rule/update')
+            .send({ ...auth, name: 'R1', description: 'aliased-desc' });
+        expect(res.status).toBe(200);
+        expect(persisted('rules')[0].description).toBe('aliased-desc');
+    });
+
+    it('rule/update — description:null persists as empty string', async () => {
+        dashboardRow.rules = [{ name: 'R1', description: 'old' }];
+        const res = await post('/api/mission/rule/update')
+            .send({ ...auth, name: 'R1', description: null });
+        expect(res.status).toBe(200);
+        expect(persisted('rules')[0].description).toBe('');
+    });
+
+    it('skill/update — url alias reaches write branch', async () => {
+        dashboardRow.skills = [{ title: 'S1', url: 'https://old.example' }];
+        const res = await post('/api/mission/skill/update')
+            .send({ ...auth, title: 'S1', url: 'https://new.example' });
+        expect(res.status).toBe(200);
+        expect(persisted('skills')[0].url).toBe('https://new.example');
+    });
+
+    it('soul/update — description alias reaches write branch', async () => {
+        dashboardRow.souls = [{ name: 'SL1', description: 'old' }];
+        const res = await post('/api/mission/soul/update')
+            .send({ ...auth, name: 'SL1', description: 'aliased-desc' });
+        expect(res.status).toBe(200);
+        expect(persisted('souls')[0].description).toBe('aliased-desc');
+    });
+
+    it('soul/update — description:null persists as empty string', async () => {
+        dashboardRow.souls = [{ name: 'SL1', description: 'old' }];
+        const res = await post('/api/mission/soul/update')
+            .send({ ...auth, name: 'SL1', description: null });
+        expect(res.status).toBe(200);
+        expect(persisted('souls')[0].description).toBe('');
     });
 });
 
