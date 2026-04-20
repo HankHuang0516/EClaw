@@ -1,3 +1,10 @@
+# [1.1033.0](https://github.com/HankHuang0516/EClaw/compare/v1.1032.0...v1.1033.0) (2026-04-20)
+
+
+### Features
+
+* **onboarding:** Track 6 product tour — Agent evaluation system (5-step) ([#1915](https://github.com/HankHuang0516/EClaw/issues/1915)) ([6b2d388](https://github.com/HankHuang0516/EClaw/commit/6b2d388b4dda5058d6741799f5ee035ad155ad20))
+
 # [1.1032.0](https://github.com/HankHuang0516/EClaw/compare/v1.1031.0...v1.1032.0) (2026-04-20)
 
 
