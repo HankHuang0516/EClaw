@@ -1,3 +1,10 @@
+# [1.1023.0](https://github.com/HankHuang0516/EClaw/compare/v1.1022.0...v1.1023.0) (2026-04-20)
+
+
+### Features
+
+* **wallet:** Top-up IAP startup diag + /topup/diag endpoint ([#1899](https://github.com/HankHuang0516/EClaw/issues/1899)) ([2d07807](https://github.com/HankHuang0516/EClaw/commit/2d078070683a59e37e4e96ec30f580e2be032ba8))
+
 # [1.1022.0](https://github.com/HankHuang0516/EClaw/compare/v1.1021.0...v1.1022.0) (2026-04-20)
 
 
