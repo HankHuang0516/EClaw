@@ -443,10 +443,12 @@ describe('GET /api/monitoring/rental-health happy path', () => {
         expect(res.body.db.entityTrash.oldestRowAgeSeconds).toBe(3600);
     });
 
-    it('publishers list contains 12 platforms', async () => {
+    it('publishers list contains 11 platforms (mastodon retired 2026-04-15)', async () => {
         const res = await request(app)
             .get('/api/monitoring/rental-health?key=test-monitoring-key-1234');
-        expect(res.body.publishers.length).toBe(12);
+        expect(res.body.publishers.length).toBe(11);
+        const ids = res.body.publishers.map(p => p.id);
+        expect(ids).not.toContain('mastodon');
         expect(res.body.publishers[0]).toMatchObject({
             id: expect.any(String),
             name: expect.any(String),
