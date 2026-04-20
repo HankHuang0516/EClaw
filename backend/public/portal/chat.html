@@ -3785,6 +3785,16 @@
                     }
                 }
 
+                // Kanban card deep-link — rendered for kanban_notify messages that carry
+                // a card ref (backend attaches { kind: 'kanban_ref', id } so chat can
+                // open the card modal directly without the user navigating to the board).
+                let cardRefHtml = '';
+                if (!isSent && msg.source === 'kanban_notify' && msg.card && msg.card.kind === 'kanban_ref' && msg.card.id) {
+                    const refId = escapeHtml(String(msg.card.id));
+                    const label = escapeHtml(i18n.t('chat_kanban_view_card') || '📋 View card');
+                    cardRefHtml = `<div class="chat-card"><button type="button" class="chat-card-btn style-secondary" onclick="openEntityModal('card','${refId}')">${label}</button></div>`;
+                }
+
                 // Rich card (interactive buttons) — rendered inside bot messages only
                 let cardHtml = '';
                 if (!isSent && msg.is_from_bot && msg.card && Array.isArray(msg.card.buttons) && msg.card.buttons.length > 0) {
@@ -3871,7 +3881,7 @@
                 return `${dateSep}${unreadSep}
                     <div class="chat-msg ${msgClass}${isGrouped ? ' grouped' : ''}" style="position:relative">
                         <div class="chat-source">${sourceLabel}</div>
-                        <div class="chat-bubble${isMdRendered ? ' md-rendered' : ''}" data-full-time="${escapeHtml(fullTime)}">${textHtml}${mediaHtml}${inlineImgHtml}${cardHtml}${attachmentsHtml}</div>
+                        <div class="chat-bubble${isMdRendered ? ' md-rendered' : ''}" data-full-time="${escapeHtml(fullTime)}">${textHtml}${mediaHtml}${inlineImgHtml}${cardHtml}${cardRefHtml}${attachmentsHtml}</div>
                         ${replyBtnHtml}
                         ${previewId ? `<div class="link-preview-slot" id="${previewId}" data-url="${escapeHtml(firstUrl)}"></div>` : ''}
                         ${reactionsHtml}

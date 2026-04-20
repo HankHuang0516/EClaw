@@ -194,7 +194,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
     // ── Helper: push notification to entity via channel callback + save to chat ──
     async function notifyEntities(deviceId, entityIds, message, options = {}) {
-        const { description } = options;
+        const { description, cardId } = options;
         if (!pushToChannelCallback && !pushToEntity && !pushToBot) {
             console.warn('[Kanban] No push callback available — notifications will not be delivered');
             return;
@@ -213,15 +213,22 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 }
 
                 // ── 1. Save to chat history (chat.html visibility) ──
+                // If cardId is provided, attach { kind: 'kanban_ref', id } to the `card`
+                // column so chat.html can render a clickable "view card" button that
+                // opens the entity modal without the user navigating to the kanban page.
                 let chatMsgId = null;
                 if (saveChatMessage) {
                     try {
+                        const cardRef = cardId ? { kind: 'kanban_ref', id: cardId } : null;
                         chatMsgId = await saveChatMessage(
                             deviceId, eid, message,
                             SOURCE_TAG,
                             false,  // is_from_user
                             false,  // is_from_bot (platform notification)
-                            null, null
+                            null, null,   // mediaType, mediaUrl
+                            null, null,   // scheduleId, scheduleLabel
+                            null, null,   // backupUrl, mentions
+                            cardRef       // card
                         );
                         console.log(`[Kanban] Saved kanban notify to chat history: msgId=${chatMsgId} entity=${eid}`);
                     } catch (e) {
@@ -463,7 +470,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     title: title.trim(),
                     status: statusLabel(lang, cardStatus)
                 });
-                notifyEntities(deviceId, bots, msg, { description });
+                notifyEntities(deviceId, bots, msg, { description, cardId: card.id });
             }
 
             if (awardEntityXP) {
@@ -1030,7 +1037,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     from: statusLabel(lang, oldStatus),
                     to: statusLabel(lang, newStatus)
                 });
-                notifyEntities(deviceId, bots, msg, { description: card.description });
+                notifyEntities(deviceId, bots, msg, { description: card.description, cardId });
             }
 
             await bumpVersion(deviceId);
@@ -1593,7 +1600,8 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     if (notifyEntityId != null) {
                         const _lang = await getDeviceLanguage(card.device_id);
                         notifyEntities(card.device_id, [notifyEntityId],
-                            `🚫 卡片「${card.title}」已停滯 ${elapsedHrs}h，自動 blocked，需人工介入`);
+                            `🚫 卡片「${card.title}」已停滯 ${elapsedHrs}h，自動 blocked，需人工介入`,
+                            { cardId: card.id });
                     }
                     if (serverLog) serverLog('warn', 'kanban', `[Stale] Card ${card.id} auto-blocked after ${elapsedHrs}h`, { deviceId: card.device_id });
                     continue;
@@ -1612,7 +1620,8 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                             `⬆️ 自動升級：停滯 ${elapsedHrs} 小時，優先級 ${card.priority} → ${newPriority}`);
                         if (notifyEntityId != null) {
                             notifyEntities(card.device_id, [notifyEntityId],
-                                `⬆️ 卡片「${card.title}」停滯 ${elapsedHrs}h，已自動升級至 ${newPriority}`);
+                                `⬆️ 卡片「${card.title}」停滯 ${elapsedHrs}h，已自動升級至 ${newPriority}`,
+                                { cardId: card.id });
                         }
                         if (serverLog) serverLog('info', 'kanban', `[Stale] Card ${card.id} escalated ${card.priority}→${newPriority}`, { deviceId: card.device_id });
                         continue;
@@ -1635,7 +1644,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                         status: statusLabel(lang, card.status),
                         hours: elapsedHrs
                     });
-                    notifyEntities(card.device_id, bots, msg, { description: card.description });
+                    notifyEntities(card.device_id, bots, msg, { description: card.description, cardId: card.id });
                 }
 
                 console.log(`[Kanban] Nudged card ${card.id} (${card.title}) — ${elapsedHrs}h in ${card.status}`);
@@ -1727,7 +1736,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     if (bots.length > 0) {
                         const lang = await getDeviceLanguage(card.device_id);
                         const msg = tKanban(lang, 'scheduleOnce', { title: card.title });
-                        notifyEntities(card.device_id, bots, msg, { description: card.description });
+                        notifyEntities(card.device_id, bots, msg, { description: card.description, cardId: card.id });
                     }
 
                     try { await bumpVersion(card.device_id); } catch (e) { /* ignore */ }
@@ -1806,7 +1815,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                             title: card.title,
                             childTitle
                         });
-                        notifyEntities(card.device_id, bots, msg, { description: card.description });
+                        notifyEntities(card.device_id, bots, msg, { description: card.description, cardId: childCard.id });
                     }
 
                     try { await bumpVersion(card.device_id); } catch (e) { /* ignore */ }
@@ -1845,7 +1854,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                                 to: statusLabel(lang, newStatus)
                             })
                             : tKanban(lang, 'scheduleRecurring', { title: card.title });
-                        notifyEntities(card.device_id, bots, msg, { description: card.description });
+                        notifyEntities(card.device_id, bots, msg, { description: card.description, cardId: card.id });
                     }
 
                     try { await bumpVersion(card.device_id); } catch (e) { /* ignore */ }
@@ -1942,7 +1951,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                         entityId,
                         reply
                     });
-                    notifyEntities(deviceId, [reviewerId], reviewMsg);
+                    notifyEntities(deviceId, [reviewerId], reviewMsg, { cardId: card.id });
                     console.log(`[Kanban] Notified reviewer #${reviewerId} for card ${card.id}`);
                 }
             }
