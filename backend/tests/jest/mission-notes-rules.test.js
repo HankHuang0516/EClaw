@@ -21,6 +21,8 @@ jest.mock('pg', () => {
                     { id: 'r1', name: 'Low',  ruleType: 'WORKFLOW',  priority: 1, createdAt: 100 },
                     { id: 'r2', name: 'High', ruleType: 'WORKFLOW',  priority: 10, createdAt: 200 },
                     { id: 'r3', name: 'Mid',  ruleType: 'STYLE',     priority: 5, createdAt: 150 },
+                    // Legacy shape: snake_case field name for backwards-compat.
+                    { id: 'r4', name: 'Legacy', rule_type: 'STYLE',  priority: 3, createdAt: 50 },
                 ],
             },
         },
@@ -67,6 +69,11 @@ describe('mission API: /notes and /rules read from mission_dashboard JSON column
                 deviceSecret: 'device-secret-alpha',
                 entities: { 2: { botSecret: 'bot-secret-commander' } },
             },
+            'dev-empty': {
+                deviceId: 'dev-empty',
+                deviceSecret: 'device-secret-empty',
+                entities: { 2: { botSecret: 'bot-secret-empty' } },
+            },
         };
         const { router } = missionFactory(devices);
         app = express();
@@ -94,24 +101,33 @@ describe('mission API: /notes and /rules read from mission_dashboard JSON column
         expect(res.body.notes.map(n => n.id)).toEqual(['n1', 'n3']);
     });
 
-    test('GET /notes returns empty array when device has no dashboard row', async () => {
+    test('GET /notes returns empty array when device authed but dashboard row missing', async () => {
+        const res = await request(app)
+            .get('/api/mission/notes')
+            .query({ deviceId: 'dev-empty', botSecret: 'bot-secret-empty', entityId: 2 });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.notes).toEqual([]);
+    });
+
+    test('GET /notes rejects unknown deviceId (auth fails)', async () => {
         const res = await request(app)
             .get('/api/mission/notes')
             .query({ deviceId: 'dev-ghost', botSecret: 'bot-secret-commander', entityId: 2 });
-        // ghost device fails auth first (not in devices map)
         expect(res.status).toBe(401);
     });
 
     test('GET /rules returns all rules sorted by priority desc', async () => {
         const res = await request(app).get('/api/mission/rules').query(creds);
         expect(res.status).toBe(200);
-        expect(res.body.rules.map(r => r.id)).toEqual(['r2', 'r3', 'r1']);
+        expect(res.body.rules.map(r => r.id)).toEqual(['r2', 'r3', 'r4', 'r1']);
     });
 
-    test('GET /rules filters by type', async () => {
+    test('GET /rules filters by type (covers both ruleType and legacy rule_type)', async () => {
         const res = await request(app).get('/api/mission/rules').query({ ...creds, type: 'STYLE' });
         expect(res.status).toBe(200);
-        expect(res.body.rules.map(r => r.id)).toEqual(['r3']);
+        // r3 has ruleType=STYLE, r4 has snake_case rule_type=STYLE — both must match.
+        expect(res.body.rules.map(r => r.id)).toEqual(['r3', 'r4']);
     });
 
     test('regression: /notes does NOT query the legacy mission_notes table', async () => {
