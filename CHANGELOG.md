@@ -1,3 +1,10 @@
+# [1.1037.0](https://github.com/HankHuang0516/EClaw/compare/v1.1036.1...v1.1037.0) (2026-04-20)
+
+
+### Features
+
+* Publisher X BYO credentials (multi-tenant Phase 1) ([#1920](https://github.com/HankHuang0516/EClaw/issues/1920)) ([8822608](https://github.com/HankHuang0516/EClaw/commit/882260833462e47b6b3e5241783ba004594d98df))
+
 ## [1.1036.1](https://github.com/HankHuang0516/EClaw/compare/v1.1036.0...v1.1036.1) (2026-04-20)
 
 
