@@ -226,6 +226,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>
     <script src="shared/footer.js"></script>
+    <script src="shared/product-tour.js"></script>
     <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
     <script src="shared/ai-chat.js"></script>
 
@@ -403,7 +404,33 @@
             initPortalSocket();
 
             await Promise.all([loadBalance(), loadTiers(), loadHistory()]);
+            initTourTrack2Step4();
         });
+
+        /* ══════ Onboarding Tour (Track 2) — Step 4: Top-up ══════ */
+        function initTourTrack2Step4() {
+            const params = new URLSearchParams(location.search);
+            if (params.get('tour') !== 'track2') return;
+            if (typeof ProductTour === 'undefined') return;
+            if (ProductTour.isDone('track2')) return;
+
+            ProductTour.register('track2', [
+                {
+                    target: '#tierGrid',
+                    i18nKey: 'onboarding_tour_track2_step4',
+                    fallback: 'Top up e-coin here whenever your balance runs low. Currently Android-only.',
+                    stepNumber: 4,
+                    timeout: 10000,
+                    onNext: () => {
+                        window.location.href = '/portal/my-rentals.html?tour=track2&step=5';
+                    }
+                }
+            ], { totalSteps: 5 });
+
+            const grid = document.getElementById('tierGrid');
+            if (grid && grid.scrollIntoView) grid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => ProductTour.goTo('track2', 0), 500);
+        }
     </script>
 </body>
 </html>

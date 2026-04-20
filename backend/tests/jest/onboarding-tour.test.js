@@ -40,6 +40,10 @@ describe('Scope 0 wizard routes to plaza with tour param', () => {
     test("trackRoutes['1'] points to plaza.html?tour=track1", () => {
         expect(html).toMatch(/'1':\s*'\/portal\/plaza\.html\?tour=track1'/);
     });
+
+    test("trackRoutes['2'] points to community.html?tour=track2", () => {
+        expect(html).toMatch(/'2':\s*'\/portal\/community\.html\?tour=track2[^']*'/);
+    });
 });
 
 describe('plaza.html redirects to community.html preserving query', () => {
@@ -56,7 +60,7 @@ describe('plaza.html redirects to community.html preserving query', () => {
 });
 
 describe('Product tour script is loaded on tour pages', () => {
-    const pages = ['community.html', 'settings.html', 'dashboard.html'];
+    const pages = ['community.html', 'settings.html', 'dashboard.html', 'wallet.html', 'my-rentals.html'];
     test.each(pages)('%s loads shared/product-tour.js', (page) => {
         const html = read(`public/portal/${page}`);
         expect(html).toMatch(/<script\s+src=["'][^"']*product-tour\.js["']/);
@@ -110,6 +114,11 @@ describe('i18n keys for tour callouts are defined in en and zh', () => {
         'onboarding_tour_track1_step3',
         'onboarding_tour_track1_step4',
         'onboarding_tour_track1_step5',
+        'onboarding_tour_track2_step1',
+        'onboarding_tour_track2_step2',
+        'onboarding_tour_track2_step3',
+        'onboarding_tour_track2_step4',
+        'onboarding_tour_track2_step5',
         'onboarding_tour_next',
         'onboarding_tour_finish',
         'onboarding_tour_skip'
@@ -167,5 +176,27 @@ describe('Tour calls site integration', () => {
         const html = read('public/portal/dashboard.html');
         expect(html).toMatch(/onboarding_tour_track1_step5/);
         expect(html).toMatch(/\/api\/user\/onboarding\/mark-complete/);
+    });
+
+    test('community.html registers track2 tour with 3 steps', () => {
+        const html = read('public/portal/community.html');
+        expect(html).toMatch(/ProductTour\.register\(\s*['"]track2['"]/);
+        expect(html).toMatch(/onboarding_tour_track2_step1/);
+        expect(html).toMatch(/onboarding_tour_track2_step2/);
+        expect(html).toMatch(/onboarding_tour_track2_step3/);
+        expect(html).toMatch(/\/portal\/wallet\.html\?tour=track2&step=4/);
+    });
+
+    test('wallet.html hosts track2 step 4 and navigates to my-rentals step 5', () => {
+        const html = read('public/portal/wallet.html');
+        expect(html).toMatch(/onboarding_tour_track2_step4/);
+        expect(html).toMatch(/\/portal\/my-rentals\.html\?tour=track2&step=5/);
+    });
+
+    test('my-rentals.html hosts track2 step 5 and calls mark-complete with track:"track2"', () => {
+        const html = read('public/portal/my-rentals.html');
+        expect(html).toMatch(/onboarding_tour_track2_step5/);
+        expect(html).toMatch(/\/api\/user\/onboarding\/mark-complete/);
+        expect(html).toMatch(/track:\s*['"]track2['"]/);
     });
 });
