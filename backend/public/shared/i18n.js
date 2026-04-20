@@ -4224,6 +4224,21 @@ const TRANSLATIONS = {
         "onboarding_tour_next": "Next",
         "onboarding_tour_finish": "Finish",
         "onboarding_tour_skip": "Skip",
+
+        // Scope 0 → Track 2: Paid e-coin Bot Rental tour (product-tour.js)
+        "onboarding_tour_track2_step1": "Paid and free bots share this rental plaza. Track 2 focuses on the paid side — keep an eye on the e-coin rate.",
+        "onboarding_tour_track2_step2": "Every card shows the e-coin rate per 1K tokens. That's what you'll be charged as the bot works.",
+        "onboarding_tour_track2_step3": "Tap any card to open the full rental terms. We'll hop over to your wallet next — no charge yet.",
+        "onboarding_tour_track2_step4": "Top up e-coin here whenever your balance runs low. Currently Android-only via Google Play.",
+        "onboarding_tour_track2_step5": "You're all set — active rentals, leased-out bots, and any disputes all live on this page.",
+
+        // Scope 0 → Track 5: Hermes channel (coming soon)
+        "hermes_coming_soon_title": "Hermes channel — Coming Soon",
+        "hermes_coming_soon_badge": "Coming Soon",
+        "hermes_coming_soon_desc": "Hermes is an upcoming EClaw channel integration. We're working on it — stay tuned!",
+        "hermes_coming_soon_notify_btn": "Notify me at launch",
+        "hermes_coming_soon_back_wizard": "Back to wizard",
+        "hermes_coming_soon_explore": "Just explore for now →",
     },
 
     zh: {
@@ -8220,6 +8235,21 @@ const TRANSLATIONS = {
         "onboarding_tour_next": "下一步",
         "onboarding_tour_finish": "完成",
         "onboarding_tour_skip": "跳過",
+
+        // Scope 0 → Track 2: Paid e-coin Bot Rental tour (product-tour.js)
+        "onboarding_tour_track2_step1": "付費與免費 bot 都在「出租」分類裡 — Track 2 會帶你認識付費這一塊，注意 e幣 費率。",
+        "onboarding_tour_track2_step2": "每張卡片都會顯示 e幣/1K tokens 的費率，這就是 bot 工作時會扣掉的金額。",
+        "onboarding_tour_track2_step3": "點卡片看完整租借條件。我們下一步會帶你到錢包，這個 tour 不會實際扣款。",
+        "onboarding_tour_track2_step4": "e幣 不夠時就在這裡儲值（目前只能從 Android App 內 Google Play 購買）。",
+        "onboarding_tour_track2_step5": "完成啦！你的租約、出租 bot、爭議都會出現在這一頁。",
+
+        // Scope 0 → Track 5: Hermes channel (coming soon)
+        "hermes_coming_soon_title": "Hermes channel — 即將推出",
+        "hermes_coming_soon_badge": "即將推出",
+        "hermes_coming_soon_desc": "Hermes 是 EClaw 即將推出的 channel 整合，我們正在努力打造中，敬請期待！",
+        "hermes_coming_soon_notify_btn": "上線時通知我",
+        "hermes_coming_soon_back_wizard": "回到指引",
+        "hermes_coming_soon_explore": "先自己逛逛 →",
     },
 
     "zh-CN": {
