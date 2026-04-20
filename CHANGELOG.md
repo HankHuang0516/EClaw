@@ -1,3 +1,10 @@
+# [1.1016.0](https://github.com/HankHuang0516/EClaw/compare/v1.1015.2...v1.1016.0) (2026-04-20)
+
+
+### Features
+
+* **chat:** clickable view-card button on kanban notifications ([#1884](https://github.com/HankHuang0516/EClaw/issues/1884)) ([a7bf256](https://github.com/HankHuang0516/EClaw/commit/a7bf25619f46f54d7b654793d12ad02e61c2e0ed)), closes [#2](https://github.com/HankHuang0516/EClaw/issues/2)
+
 ## [1.1015.2](https://github.com/HankHuang0516/EClaw/compare/v1.1015.1...v1.1015.2) (2026-04-19)
 
 
