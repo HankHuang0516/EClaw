@@ -3917,7 +3917,7 @@
                     unreadSep = '<div class="chat-unread-sep"><span>' + (i18n.t('chat_unread_sep') || '── New messages ──') + '</span></div>';
                 }
 
-                const replySnippet = (rawText || '').replace(/\n/g, ' ').slice(0, 120);
+                const replySnippet = stripReplyQuotePrefix(rawText || '').replace(/\n/g, ' ').slice(0, 120);
                 const replySenderName = isSent ? (i18n.t('chat_reply_you') || 'You') : isPlatform ? 'Platform' : (getEntityLabel(msg.entity_id) || '');
                 const replyBtnHtml = msg.id ? `<button class="chat-reply-btn" data-msg-id="${escapeHtml(msg.id)}" data-sender="${escapeHtml(replySenderName)}" data-text="${escapeHtml(replySnippet)}" onclick="handleReplyBtn(this);event.stopPropagation()" data-i18n-title="chat_reply_btn" title="Reply">↩</button>` : '';
 
@@ -4322,9 +4322,10 @@
         }
 
         function setReplyContext(msgId, senderName, text) {
-            replyContext = { msgId, senderName, text };
+            const cleanText = stripReplyQuotePrefix(text);
+            replyContext = { msgId, senderName, text: cleanText };
             document.getElementById('replyPreviewSender').textContent = senderName || '';
-            document.getElementById('replyPreviewText').textContent = text || (i18n.t('chat_reply_media') || '(media)');
+            document.getElementById('replyPreviewText').textContent = cleanText || (i18n.t('chat_reply_media') || '(media)');
             document.getElementById('replyPreviewBar').classList.add('show');
             document.getElementById('messageInput').focus();
         }
@@ -4553,6 +4554,15 @@
             const div = document.createElement('div');
             div.textContent = str;
             return div.innerHTML;
+        }
+
+        // Peel off the "↩ <sender>: \"<quoted excerpt>\"\n\n" header that sendMessage
+        // prepends to replies, so downstream previews/snippets show the real body
+        // instead of nesting quote-inside-quote when users reply to a reply.
+        function stripReplyQuotePrefix(text) {
+            if (!text || typeof text !== 'string' || !text.startsWith('↩ ')) return text || '';
+            const sep = text.indexOf('\n\n');
+            return sep === -1 ? text : text.slice(sep + 2);
         }
 
         function extractFileName(text, url) {
