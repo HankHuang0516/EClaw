@@ -1,3 +1,10 @@
+# [1.1018.0](https://github.com/HankHuang0516/EClaw/compare/v1.1017.0...v1.1018.0) (2026-04-20)
+
+
+### Features
+
+* **chat:** show comments in 查看卡片 modal ([#1887](https://github.com/HankHuang0516/EClaw/issues/1887)) ([2e893b8](https://github.com/HankHuang0516/EClaw/commit/2e893b812b3392f510713d4d691ff28d90b38449))
+
 # [1.1017.0](https://github.com/HankHuang0516/EClaw/compare/v1.1016.1...v1.1017.0) (2026-04-20)
 
 
