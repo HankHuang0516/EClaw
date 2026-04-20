@@ -1,3 +1,10 @@
+# [1.1028.0](https://github.com/HankHuang0516/EClaw/compare/v1.1027.0...v1.1028.0) (2026-04-20)
+
+
+### Features
+
+* **prompt:** expose /api/chat/history in [AVAILABLE TOOLS] channel prompt ([#1910](https://github.com/HankHuang0516/EClaw/issues/1910)) ([73a44fd](https://github.com/HankHuang0516/EClaw/commit/73a44fd482b3f9e0563201ffb67d25ca6652da3d))
+
 # [1.1027.0](https://github.com/HankHuang0516/EClaw/compare/v1.1026.2...v1.1027.0) (2026-04-20)
 
 
