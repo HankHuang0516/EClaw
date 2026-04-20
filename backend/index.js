@@ -1142,7 +1142,7 @@ app.get('/api/help', (req, res) => {
         notes: [
             { title: 'Read mission dashboard (notes/rules/skills)', curl: `curl -s "${apiBase}/api/mission/dashboard?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
             { title: 'Add note', curl: `curl -s -X POST "${apiBase}/api/mission/note/add" -H "Content-Type: application/json" -d ${d},"title":"TITLE","content":"CONTENT"}'` },
-            { title: 'Update note', curl: `curl -s -X POST "${apiBase}/api/mission/note/update" -H "Content-Type: application/json" -d ${d},"title":"TITLE","content":"NEW_CONTENT"}'` }
+            { title: 'Update note', curl: `curl -s -X POST "${apiBase}/api/mission/note/update" -H "Content-Type: application/json" -d ${d},"title":"TITLE","newContent":"NEW_CONTENT"}'` }
         ],
         search: [
             { title: 'Web search (DuckDuckGo)', curl: `curl -s "${apiBase}/api/bot/web-search?q=QUERY&deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },

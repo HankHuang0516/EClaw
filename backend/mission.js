@@ -737,7 +737,11 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
     // ============================================
     router.post('/note/update', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const { deviceId, title, newTitle, newContent, newCategory } = req.body;
+        const { deviceId, title } = req.body;
+        // Accept content/category as aliases for newContent/newCategory (#1888)
+        const newTitle = req.body.newTitle;
+        const newContent = req.body.newContent !== undefined ? req.body.newContent : req.body.content;
+        const newCategory = req.body.newCategory !== undefined ? req.body.newCategory : req.body.category;
 
         if (!title) {
             return res.status(400).json({ success: false, error: 'Missing title' });

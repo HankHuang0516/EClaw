@@ -212,6 +212,18 @@ describe('Category support in update endpoints', () => {
         expect([200, 404, 500].includes(res.status)).toBe(true);
     });
 
+    it('note/update accepts content as alias for newContent (docs-bot compat)', async () => {
+        const res = await post('/api/mission/note/update')
+            .send({ ...auth, title: 'Some Note', content: 'Aliased body' });
+        expect([200, 404, 500].includes(res.status)).toBe(true);
+    });
+
+    it('note/update accepts category as alias for newCategory', async () => {
+        const res = await post('/api/mission/note/update')
+            .send({ ...auth, title: 'Some Note', category: 'Aliased' });
+        expect([200, 404, 500].includes(res.status)).toBe(true);
+    });
+
     it('rule/update accepts newCategory field', async () => {
         const res = await post('/api/mission/rule/update')
             .send({ ...auth, name: 'Some Rule', newCategory: 'Workflow' });
