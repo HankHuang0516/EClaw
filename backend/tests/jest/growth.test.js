@@ -59,13 +59,17 @@ beforeEach(() => {
 
 const get = (qs) => request(app).get('/api/growth/daily' + qs);
 
-function setupAdminQueries({ signups = 5, cohort = 10, active = 4, plaza = 2 } = {}) {
-    // is_admin lookup → then 3 metric queries (parallel order: signups, retention, plaza)
+function setupAdminQueries({
+    signups = 5, cohort = 10, active = 4, plaza = 2,
+    total_codes = 0, redeemed_codes = 0,
+} = {}) {
+    // is_admin lookup → 4 metric queries (parallel order: signups, retention, plaza, invite)
     mockQuery
         .mockResolvedValueOnce({ rows: [{ is_admin: true }] })
         .mockResolvedValueOnce({ rows: [{ c: signups }] })
         .mockResolvedValueOnce({ rows: [{ cohort_size: cohort, active_size: active }] })
-        .mockResolvedValueOnce({ rows: [{ c: plaza }] });
+        .mockResolvedValueOnce({ rows: [{ c: plaza }] })
+        .mockResolvedValueOnce({ rows: [{ total_codes, redeemed_codes }] });
 }
 
 describe('Growth /daily auth', () => {
@@ -98,17 +102,31 @@ describe('Growth /daily auth', () => {
 });
 
 describe('Growth /daily aggregation contract', () => {
-    it('returns the 3 metrics + date + follow-ups list', async () => {
-        setupAdminQueries({ signups: 7, cohort: 20, active: 8, plaza: 3 });
+    it('returns the 4 metrics + date + follow-ups list', async () => {
+        setupAdminQueries({ signups: 7, cohort: 20, active: 8, plaza: 3, total_codes: 50, redeemed_codes: 11 });
         const res = await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2');
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
         expect(res.body.today_signups).toBe(7);
         expect(res.body.retention_7d).toEqual({ cohort_size: 20, active_size: 8, pct: 40 });
         expect(res.body.plaza_new_listed_today).toBe(3);
+        expect(res.body.invite_conversion).toEqual({ total_codes: 50, redeemed_codes: 11, pct: 22 });
         expect(res.body.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
         expect(Array.isArray(res.body.follow_ups)).toBe(true);
         expect(res.body.follow_ups.length).toBe(3);
+    });
+
+    it('reports invite_conversion pct as null when no codes issued', async () => {
+        setupAdminQueries({ total_codes: 0, redeemed_codes: 0 });
+        const res = await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2');
+        expect(res.status).toBe(200);
+        expect(res.body.invite_conversion).toEqual({ total_codes: 0, redeemed_codes: 0, pct: null });
+    });
+
+    it('rounds invite_conversion pct to one decimal', async () => {
+        setupAdminQueries({ total_codes: 3, redeemed_codes: 1 });
+        const res = await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2');
+        expect(res.body.invite_conversion.pct).toBe(33.3);
     });
 
     it('never leaks PII fields (id/email/ip/device_id) in response', async () => {

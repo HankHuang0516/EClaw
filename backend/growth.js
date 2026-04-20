@@ -108,6 +108,25 @@ async function fetchPlazaNewListed() {
     return r.rows[0].c;
 }
 
+async function fetchInviteConversion() {
+    // Phase-5 viral-loop conversion: distinct codes with at least one redemption
+    // row in invite_redemptions, divided by total codes issued. Using the
+    // redemptions table (not invite_codes.used_at / use_count) because two
+    // competing invite_codes schemas exist in the repo — redemptions is the
+    // canonical Phase-5 source and is unambiguous.
+    const r = await pool.query(
+        `SELECT (SELECT COUNT(*)::int FROM invite_codes) AS total_codes,
+                (SELECT COUNT(DISTINCT code)::int FROM invite_redemptions) AS redeemed_codes`
+    );
+    const { total_codes, redeemed_codes } = r.rows[0];
+    if (total_codes === 0) return { total_codes: 0, redeemed_codes: 0, pct: null };
+    return {
+        total_codes,
+        redeemed_codes,
+        pct: Math.round((redeemed_codes / total_codes) * 1000) / 10
+    };
+}
+
 module.exports = function(devices) {
     const router = express.Router();
 
@@ -139,10 +158,11 @@ module.exports = function(devices) {
         }
 
         try {
-            const [today_signups, retention_7d, plaza_new_listed_today] = await Promise.all([
+            const [today_signups, retention_7d, plaza_new_listed_today, invite_conversion] = await Promise.all([
                 fetchTodaySignups(),
                 fetchRetention7d(),
-                fetchPlazaNewListed()
+                fetchPlazaNewListed(),
+                fetchInviteConversion()
             ]);
             return res.json({
                 success: true,
@@ -150,6 +170,7 @@ module.exports = function(devices) {
                 today_signups,
                 retention_7d,
                 plaza_new_listed_today,
+                invite_conversion,
                 follow_ups: [
                     'source_channel: schema lacks signup_source column',
                     'visitor_to_signup_conversion: page_views has no FK to user_accounts',
