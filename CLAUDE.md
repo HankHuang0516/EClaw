@@ -1058,6 +1058,25 @@ Set in `backend/.env` (gitignored):
 - Changes must be under `backend/` to trigger Railway deployment
 - Use `backend/.deploy-trigger` file to force a deploy without code changes
 
+### ⚠️ Persistence Startup Safety (2026-04-20 Incident)
+
+**絕對不能破壞以下兩道防線，否則會導致所有 entity 消失：**
+
+1. **`db.initDatabase()` retry 邏輯**（`backend/db.js`）— 最多 5 次 exponential back-off（1s→16s）。Railway 重啟時 PG 可能尚未就緒，沒有 retry 會靜默 fallback 到 file storage，導致 in-memory devices map 從空白開始。
+2. **Startup 503 gate**（`backend/index.js`）— `/api/*` 在 `persistenceReady=true` 之前回傳 503。防止 `getOrCreateDevice()` 在 DB 未載入前建立空白 device 覆蓋真實資料。
+
+**事件鏈（如果防線被移除）：**
+`db.initDatabase()` 失敗 → `usePostgreSQL=false` → file fallback → Railway 無 `devices.json` → 空白啟動 → bot 打 `/register` 觸發 `getOrCreateDevice()` → 建立只有 1 個預設 LOBSTER entity 的空 device → 所有 channel entity 看起來「解綁」
+
+**PostgreSQL 資料不會被覆蓋**（file fallback 的 autosave 寫 `devices.json` 不寫 DB），重新部署即可恢復。
+
+**修改相關程式碼時的檢查清單：**
+- 不可移除 `db.initDatabase()` 的 retry loop
+- 不可移除 `persistenceReady` 503 middleware
+- 不可讓 `getOrCreateDevice()` 在 `persistenceReady=false` 時建立新 device
+- 修改 `db.js` 的 `createTables()` 時，確保新增的 SQL 語句不會讓整個 function throw（用 `IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS`）
+- 任何碰到 `initPersistence()`、`loadData()`、`loadAllDevices()` 的改動都要跑 production deploy 驗證
+
 ### Telemetry Buffer
 - Device telemetry buffer has ~1 MB cap — can fill up and drop new entries
 - `DELETE /api/device-telemetry` requires JSON body (`req.body`), not query params
