@@ -49,6 +49,10 @@ describe('Scope 0 wizard routes to plaza with tour param', () => {
         expect(html).toMatch(/'3':\s*'\/portal\/settings\.html\?tour=track3[^']*'/);
     });
 
+    test("trackRoutes['4'] points to env-vars.html?tour=track4", () => {
+        expect(html).toMatch(/'4':\s*'\/portal\/env-vars\.html\?tour=track4[^']*'/);
+    });
+
     test("trackRoutes['6'] points to /arena/?tour=track6", () => {
         expect(html).toMatch(/'6':\s*'\/arena\/\?tour=track6'/);
     });
@@ -68,7 +72,7 @@ describe('plaza.html redirects to community.html preserving query', () => {
 });
 
 describe('Product tour script is loaded on tour pages', () => {
-    const pages = ['community.html', 'settings.html', 'dashboard.html', 'wallet.html', 'my-rentals.html'];
+    const pages = ['community.html', 'settings.html', 'dashboard.html', 'wallet.html', 'my-rentals.html', 'env-vars.html'];
     test.each(pages)('%s loads shared/product-tour.js', (page) => {
         const html = read(`public/portal/${page}`);
         expect(html).toMatch(/<script\s+src=["'][^"']*product-tour\.js["']/);
@@ -132,6 +136,11 @@ describe('i18n keys for tour callouts are defined in en and zh', () => {
         'onboarding_tour_track3_step3',
         'onboarding_tour_track3_step4',
         'onboarding_tour_track3_step5',
+        'onboarding_tour_track4_step1',
+        'onboarding_tour_track4_step2',
+        'onboarding_tour_track4_step3',
+        'onboarding_tour_track4_step4',
+        'onboarding_tour_track4_step5',
         'onboarding_tour_track6_step1',
         'onboarding_tour_track6_step2',
         'onboarding_tour_track6_step3',
@@ -216,6 +225,22 @@ describe('Tour calls site integration', () => {
         expect(html).toMatch(/onboarding_tour_track2_step5/);
         expect(html).toMatch(/\/api\/user\/onboarding\/mark-complete/);
         expect(html).toMatch(/track:\s*['"]track2['"]/);
+    });
+
+    test('env-vars.html registers track4 tour with 4 steps and navigates to dashboard step 5', () => {
+        const html = read('public/portal/env-vars.html');
+        expect(html).toMatch(/ProductTour\.register\(\s*['"]track4['"]/);
+        expect(html).toMatch(/onboarding_tour_track4_step1/);
+        expect(html).toMatch(/onboarding_tour_track4_step2/);
+        expect(html).toMatch(/onboarding_tour_track4_step3/);
+        expect(html).toMatch(/onboarding_tour_track4_step4/);
+        expect(html).toMatch(/\/portal\/dashboard\.html\?tour=track4&step=5/);
+    });
+
+    test('dashboard.html hosts track4 step 5 and calls mark-complete with track:"track4"', () => {
+        const html = read('public/portal/dashboard.html');
+        expect(html).toMatch(/onboarding_tour_track4_step5/);
+        expect(html).toMatch(/track:\s*['"]track4['"]/);
     });
 
     test('settings.html registers track3 tour with 4 steps and navigates to dashboard step 5', () => {
