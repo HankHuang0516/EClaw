@@ -1396,6 +1396,40 @@
         body.embedded-orgchart #addEntityCard,
         body.embedded-orgchart #borrowCard { display: none !important; }
         body.embedded-orgchart .org-chart-container { display: block !important; }
+
+        .invite-banner {
+            display: none;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 18px;
+            margin-bottom: 18px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 1px solid #fbbf24;
+            color: #78350f;
+            box-shadow: 0 2px 8px rgba(251, 191, 36, 0.18);
+        }
+        .invite-banner-icon { font-size: 28px; line-height: 1; flex-shrink: 0; }
+        .invite-banner-text { flex: 1; min-width: 0; }
+        .invite-banner-title { font-weight: 600; font-size: 15px; margin-bottom: 2px; }
+        .invite-banner-desc { font-size: 13px; opacity: 0.9; }
+        .invite-banner-desc strong { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: rgba(120, 53, 15, 0.12); padding: 1px 6px; border-radius: 4px; margin: 0 4px; }
+        .invite-banner-cta {
+            padding: 8px 16px; border-radius: 999px; background: #78350f; color: #fef3c7;
+            font-weight: 600; font-size: 13px; text-decoration: none; white-space: nowrap;
+            transition: transform 0.15s, background 0.15s;
+        }
+        .invite-banner-cta:hover { background: #451a03; transform: translateY(-1px); }
+        .invite-banner-close {
+            background: transparent; border: none; color: #78350f; font-size: 18px;
+            cursor: pointer; padding: 4px 8px; opacity: 0.6; line-height: 1;
+        }
+        .invite-banner-close:hover { opacity: 1; }
+        body.embedded-orgchart .invite-banner { display: none !important; }
+        @media (max-width: 560px) {
+            .invite-banner { flex-wrap: wrap; }
+            .invite-banner-cta { flex: 1; text-align: center; }
+        }
     </style>
     <link rel="canonical" href="https://eclawbot.com/portal/dashboard.html">
 </head>
@@ -1412,6 +1446,19 @@
                     <span class="spinner" style="width:14px;height:14px;border-width:2px;vertical-align:middle;"></span>
                 </span>
             </div>
+        </div>
+
+        <!-- Invite Onboarding Banner (shown only when use_count=0 and not dismissed in last 7d) -->
+        <div id="inviteBanner" class="invite-banner" role="region" aria-label="Invite friends">
+            <div class="invite-banner-icon">🎁</div>
+            <div class="invite-banner-text">
+                <div class="invite-banner-title" data-i18n="invite_banner_title">Invite friends, earn e-coin together</div>
+                <div class="invite-banner-desc">
+                    <span data-i18n="invite_banner_desc_prefix">Your code</span><strong id="inviteBannerCode">--</strong><span data-i18n="invite_banner_desc_suffix">— both sides earn 500 e-coin per successful invite.</span>
+                </div>
+            </div>
+            <a href="invite.html" class="invite-banner-cta" data-i18n="invite_banner_cta">Invite now</a>
+            <button type="button" class="invite-banner-close" onclick="dismissInviteBanner()" aria-label="Dismiss" title="Hide for 7 days">×</button>
         </div>
 
         <!-- Dashboard Tab Bar -->
@@ -1802,12 +1849,55 @@
 
             if (__embeddedOrg) switchDashTab('orgchart');
 
+            if (!__embeddedOrg) {
+                initInviteOnboarding().catch(err => console.warn('[invite] onboarding failed', err));
+            }
+
             // Auto-refresh every 10 seconds
             refreshInterval = setInterval(async () => {
                 await loadEntities();
                 await loadBorrowStatus();
             }, 10000);
         });
+
+        // --- Invite Onboarding (toast + persistent banner) ---
+        async function initInviteOnboarding() {
+            const TOAST_KEY = 'invite_onboarding_toast_seen';
+            const BANNER_KEY = 'invite_banner_dismissed_at';
+            const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+            const res = await apiCall('GET', '/api/invite/my-code');
+            if (!res || !res.code) return;
+            const code = res.code;
+            const useCount = Number(res.use_count || 0);
+
+            if (useCount === 0 && !localStorage.getItem(TOAST_KEY)) {
+                const template = (typeof i18n !== 'undefined')
+                    ? i18n.t('invite_toast_welcome')
+                    : '🎁 Your invite code {code} is ready — each friend earns both of you 500 e-coin';
+                if (typeof showToast === 'function') {
+                    showToast(template.replace('{code}', code), 'success');
+                }
+                localStorage.setItem(TOAST_KEY, '1');
+            }
+
+            if (useCount === 0) {
+                const dismissedAt = parseInt(localStorage.getItem(BANNER_KEY) || '0', 10);
+                if (!dismissedAt || (Date.now() - dismissedAt) > SEVEN_DAYS_MS) {
+                    const banner = document.getElementById('inviteBanner');
+                    const codeEl = document.getElementById('inviteBannerCode');
+                    if (banner && codeEl) {
+                        codeEl.textContent = code;
+                        banner.style.display = 'flex';
+                    }
+                }
+            }
+        }
+
+        function dismissInviteBanner() {
+            try { localStorage.setItem('invite_banner_dismissed_at', String(Date.now())); } catch (e) {}
+            const banner = document.getElementById('inviteBanner');
+            if (banner) banner.style.display = 'none';
+        }
 
         // --- Socket Event Handlers ---
         function onSocketEntityAdded(data) {
