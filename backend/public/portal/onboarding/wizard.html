@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title data-i18n="wizard_title">EClawbot — Onboarding Wizard</title>
+    <meta name="description" content="A quick questionnaire that routes you to the right starting track.">
+    <link rel="icon" type="image/png" href="/portal/assets/favicon-32.png">
+    <link rel="stylesheet" href="/portal/shared/style.css">
+    <link rel="canonical" href="https://eclawbot.com/portal/onboarding/wizard.html">
+    <style>
+        .wz-container {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 36px 20px 72px;
+        }
+
+        .wz-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .wz-header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin: 0 0 8px;
+        }
+
+        .wz-header p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.55;
+        }
+
+        .wz-progress {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin: 22px 0 28px;
+        }
+
+        .wz-progress-dot {
+            width: 28px;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--card-border);
+            transition: background 0.2s;
+        }
+
+        .wz-progress-dot.active {
+            background: var(--accent, #7c3aed);
+        }
+
+        .wz-progress-dot.done {
+            background: var(--accent, #7c3aed);
+            opacity: 0.55;
+        }
+
+        .wz-step {
+            display: none;
+        }
+
+        .wz-step.active {
+            display: block;
+        }
+
+        .wz-question {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0 0 4px;
+        }
+
+        .wz-hint {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 0 0 18px;
+            line-height: 1.5;
+        }
+
+        .wz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .wz-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: var(--radius);
+            border: 1px solid var(--card-border);
+            background: var(--card);
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s, transform 0.1s;
+            user-select: none;
+        }
+
+        .wz-option:hover {
+            border-color: var(--accent, #7c3aed);
+            background: var(--input-bg);
+        }
+
+        .wz-option.selected {
+            border-color: var(--accent, #7c3aed);
+            box-shadow: 0 0 0 1px var(--accent, #7c3aed) inset;
+            background: rgba(124, 58, 237, 0.06);
+        }
+
+        .wz-option input[type="radio"] {
+            margin-top: 3px;
+            accent-color: var(--accent, #7c3aed);
+            flex-shrink: 0;
+        }
+
+        .wz-option-icon {
+            font-size: 22px;
+            line-height: 1;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .wz-option-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .wz-option-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin: 0 0 2px;
+        }
+
+        .wz-option-desc {
+            font-size: 12.5px;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.45;
+        }
+
+        .wz-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding-top: 12px;
+            border-top: 1px solid var(--card-border);
+        }
+
+        .wz-btn {
+            padding: 10px 22px;
+            border-radius: var(--radius-sm, 8px);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+            font-family: inherit;
+        }
+
+        .wz-btn-primary {
+            background: var(--accent, #7c3aed);
+            color: #fff;
+        }
+
+        .wz-btn-primary:hover {
+            background: #6d28d9;
+        }
+
+        .wz-btn-primary:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            background: var(--accent, #7c3aed);
+        }
+
+        .wz-btn-ghost {
+            background: transparent;
+            color: var(--text-primary, inherit);
+            border-color: var(--card-border);
+        }
+
+        .wz-btn-ghost:hover {
+            border-color: var(--text-secondary);
+            background: var(--input-bg);
+        }
+
+        .wz-skip-row {
+            margin-top: 24px;
+            text-align: center;
+        }
+
+        .wz-skip-link {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-bottom: 1px dashed var(--text-secondary);
+            padding-bottom: 1px;
+            cursor: pointer;
+            background: none;
+            border-left: 0;
+            border-right: 0;
+            border-top: 0;
+            font-family: inherit;
+        }
+
+        .wz-skip-link:hover {
+            color: var(--text-primary, inherit);
+            border-bottom-color: var(--text-primary, inherit);
+        }
+
+        .wz-result-card {
+            background: var(--card);
+            border: 1px solid var(--accent, #7c3aed);
+            border-radius: var(--radius);
+            padding: 22px 20px;
+            margin-bottom: 18px;
+        }
+
+        .wz-result-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0 0 8px;
+        }
+
+        .wz-result-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 0 0 4px;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 480px) {
+            .wz-container {
+                padding: 24px 16px 56px;
+            }
+
+            .wz-header h1 {
+                font-size: 21px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <div class="wz-container">
+
+            <div class="wz-header">
+                <h1 data-i18n="wizard_hero_title">Find your starting point</h1>
+                <p data-i18n="wizard_hero_desc">Three quick questions — we'll drop you into the right walkthrough.</p>
+            </div>
+
+            <div class="wz-progress" id="wz-progress" aria-hidden="true">
+                <div class="wz-progress-dot" data-step="1"></div>
+                <div class="wz-progress-dot" data-step="2"></div>
+                <div class="wz-progress-dot" data-step="3"></div>
+                <div class="wz-progress-dot" data-step="4"></div>
+            </div>
+
+            <!-- Step 1: Intent -->
+            <div class="wz-step" data-step="1">
+                <div class="wz-question" data-i18n="wizard_q1">What do you want to do first?</div>
+                <p class="wz-hint" data-i18n="wizard_q1_hint">Pick the closest fit — we'll narrow down from here.</p>
+                <div class="wz-options" data-group="intent">
+                    <label class="wz-option">
+                        <input type="radio" name="intent" value="try_free">
+                        <span class="wz-option-icon">🤖</span>
+                        <span class="wz-option-body">
+                            <span class="wz-option-title" data-i18n="wizard_q1_opt_free_title">Try for free</span>
+                            <span class="wz-option-desc" data-i18n="wizard_q1_opt_free_desc">Borrow an official bot — no payment, no config.</span>
+                        </span>
+                    </label>
+                    <label class="wz-option">
+                        <input type="radio" name="intent" value="pay_premium">
+                        <span class="wz-option-icon">💰</span>
+                        <span class="wz-option-body">
+                            <span class="wz-option-title" data-i18n="wizard_q1_opt_paid_title">Rent a paid bot</span>
+                            <span class="wz-option-desc" data-i18n="wizard_q1_opt_paid_desc">Top up e-coin and rent premium bots from the plaza.</span>
+                        </span>
+                    </label>
+                    <label class="wz-option">
+                        <input type="radio" name="intent" value="byoc">
+                        <span class="wz-option-icon">🔑</span>
+                        <span class="wz-option-body">
+                            <span class="wz-option-title" data-i18n="wizard_q1_opt_byoc_title">Bring my own API key / channel</span>
+                            <span class="wz-option-desc" data-i18n="wizard_q1_opt_byoc_desc">Wire up OpenClaw, Claude, or Hermes with your own credentials.</span>
+                        </span>
+                    </label>
+                    <label class="wz-option">
+                        <input type="radio" name="intent" value="benchmark">
+                        <span class="wz-option-icon">📊</span>
+                        <span class="wz-option-body">
+                            <span class="wz-option-title" data-i18n="wizard_q1_opt_benchmark_title">Evaluate / compare agents</span>
+                            <span class="wz-option-desc" data-i18n="wizard_q1_opt_benchmark_desc">Run the Arena benchmark and read peer reviews.</span>
+                        </span>
+                    </label>
+                    <label class="wz-option">
+                        <input type="radio" name="intent" value="just_explore">
+                        <span class="wz-option-icon">🧭</span>
+                        <span class="wz-option-body">
+                            <span class="wz-option-title" data-i18n="wizard_q1_opt_explore_title">Just looking around</span>
+                            <span class="wz-option-desc" data-i18n="wizard_q1_opt_explore_desc">Skip the tour and drop straight into the dashboard.</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Step 2: Channel (only shown for byoc) -->
+            <div class="wz-step" data-step="2">
+                <div class="wz-question" data-i18n="wizard_q2">Which channel do you want to bind?</div>
+                <p class="wz-hint" data-i18n="wizard_q2_hint">Each channel plugs a different AI backend into EClaw.</p>
+                <div class="wz-options" data-group="channel">
+                    <label class="wz-option">
+                        <input type="radio" name="channel" value="openclaw">
+                        <span class="wz-option-icon">⚡</span>
+                        <span class="wz-option-body">
+                            <span class="wz-option-title" data-i18n="wizard_q2_opt_openclaw_title">OpenClaw (self-hosted)</span>
+                            <span class="wz-option-desc" data-i18n="wizard_q2_opt_openclaw_desc">Run OpenClaw locally and let its bots talk through EClaw.</span>
+                        </span>
+                    </label>
+                    <label class="wz-option">
+                        <input type="radio" name="channel" value="claude">
+                        <span class="wz-option-icon">🧠</span>
+                        <span class="wz-option-body">
+                            <span class="wz-option-title" data-i18n="wizard_q2_opt_claude_title">Claude (Anthropic API)</span>
+                            <span class="wz-option-desc" data-i18n="wizard_q2_opt_claude_desc">Paste your Anthropic key; bots reply via Claude.</span>
+                        </span>
+                    </label>
+                    <label class="wz-option">
+                        <input type="radio" name="channel" value="hermes">
+                        <span class="wz-option-icon">✨</span>
+                        <span class="wz-option-body">
+                            <span class="wz-option-title" data-i18n="wizard_q2_opt_hermes_title">Hermes (coming soon)</span>
+                            <span class="wz-option-desc" data-i18n="wizard_q2_opt_hermes_desc">Join the waitlist — we'll notify you at launch.</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Step 3: Has key -->
+            <div class="wz-step" data-step="3">
+                <div class="wz-question" data-i18n="wizard_q3">Do you already have an API key or token?</div>
+                <p class="wz-hint" data-i18n="wizard_q3_hint">This just helps us tailor the first step of your walkthrough.</p>
+                <div class="wz-options" data-group="has_key">
+                    <label class="wz-option">
+                        <input type="radio" name="has_key" value="yes">
+                        <span class="wz-option-icon">✅</span>
+                        <span class="wz-option-body">
+                            <span class="wz-option-title" data-i18n="wizard_q3_opt_yes_title">Yes, I have one ready</span>
+                            <span class="wz-option-desc" data-i18n="wizard_q3_opt_yes_desc">Great — the walkthrough will jump to the paste step.</span>
+                        </span>
+                    </label>
+                    <label class="wz-option">
+                        <input type="radio" name="has_key" value="no">
+                        <span class="wz-option-icon">🔧</span>
+                        <span class="wz-option-body">
+                            <span class="wz-option-title" data-i18n="wizard_q3_opt_no_title">No, I need to generate one</span>
+                            <span class="wz-option-desc" data-i18n="wizard_q3_opt_no_desc">We'll show you where to create a key before the paste step.</span>
+                        </span>
+                    </label>
+                    <label class="wz-option">
+                        <input type="radio" name="has_key" value="idk">
+                        <span class="wz-option-icon">❓</span>
+                        <span class="wz-option-body">
+                            <span class="wz-option-title" data-i18n="wizard_q3_opt_idk_title">Not sure what that is</span>
+                            <span class="wz-option-desc" data-i18n="wizard_q3_opt_idk_desc">That's fine — the walkthrough will explain the basics.</span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Step 4: Summary + launch -->
+            <div class="wz-step" data-step="4">
+                <div class="wz-question" data-i18n="wizard_result_title">Here's where we're sending you</div>
+                <p class="wz-hint" data-i18n="wizard_result_hint">Change any answer above if this isn't right.</p>
+                <div class="wz-result-card">
+                    <div class="wz-result-title" id="wz-result-track" data-i18n="wizard_result_fallback">Your personalized walkthrough</div>
+                    <p class="wz-result-desc" id="wz-result-desc"></p>
+                </div>
+            </div>
+
+            <div class="wz-actions">
+                <button type="button" class="wz-btn wz-btn-ghost" id="wz-back" data-i18n="wizard_btn_back">Back</button>
+                <button type="button" class="wz-btn wz-btn-primary" id="wz-next" disabled data-i18n="wizard_btn_next">Next</button>
+            </div>
+
+            <div class="wz-skip-row">
+                <button type="button" class="wz-skip-link" id="wz-skip" data-i18n="wizard_btn_skip">Skip wizard and go to dashboard</button>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="/shared/i18n.js"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            const ANSWERS_KEY = 'eclaw_onboarding_wizard_answers';
+            const DONE_KEY = 'eclaw_onboarding_wizard_done';
+            const LAST_SEEN_KEY = 'eclaw_onboarding_last_seen';
+
+            // Canonical route map. Mirrors trackRoutes in /portal/onboarding.html.
+            const TRACK_ROUTES = {
+                track1: '/portal/plaza.html?tour=track1',
+                track2: '/portal/community.html?tour=track2#rental',
+                track3: '/portal/settings.html?tour=track3#channelApiCard',
+                track4: '/portal/env-vars.html?tour=track4',
+                hermes: '/portal/onboarding/hermes-coming-soon.html',
+                track6: '/arena/?tour=track6',
+                dashboard: '/portal/dashboard.html'
+            };
+
+            // (intent, channel) → track key. Step 3 (has_key) is UX-only — it doesn't
+            // change the landing page, just whether the walkthrough starts from the
+            // generate-key step or the paste step.
+            function resolveTrack(answers) {
+                if (!answers || !answers.intent) return null;
+                switch (answers.intent) {
+                    case 'try_free': return 'track1';
+                    case 'pay_premium': return 'track2';
+                    case 'benchmark': return 'track6';
+                    case 'just_explore': return 'dashboard';
+                    case 'byoc': {
+                        if (answers.channel === 'openclaw') return 'track3';
+                        if (answers.channel === 'claude') return 'track4';
+                        if (answers.channel === 'hermes') return 'hermes';
+                        return null;
+                    }
+                    default: return null;
+                }
+            }
+
+            function loadAnswers() {
+                try {
+                    const raw = localStorage.getItem(ANSWERS_KEY);
+                    if (!raw) return {};
+                    const parsed = JSON.parse(raw);
+                    return (parsed && typeof parsed === 'object') ? parsed : {};
+                } catch (_) { return {}; }
+            }
+
+            function saveAnswers(a) {
+                try { localStorage.setItem(ANSWERS_KEY, JSON.stringify(a || {})); } catch (_) {}
+            }
+
+            function markComplete(track, dismissed) {
+                try { localStorage.setItem(DONE_KEY, '1'); } catch (_) {}
+                try { localStorage.setItem(LAST_SEEN_KEY, new Date().toISOString()); } catch (_) {}
+                try {
+                    fetch('/api/user/onboarding/mark-complete', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            track: 'wizard',
+                            wizardTarget: track || null,
+                            dismissed: !!dismissed,
+                            completedAt: new Date().toISOString()
+                        })
+                    }).catch(() => {});
+                } catch (_) { /* best-effort */ }
+            }
+
+            const answers = loadAnswers();
+            let stepIdx = 1;
+
+            function tr(key, fallback) {
+                try {
+                    if (typeof i18n !== 'undefined' && i18n.t) {
+                        const v = i18n.t(key);
+                        if (v && v !== key) return v;
+                    }
+                } catch (_) {}
+                return fallback;
+            }
+
+            function renderStep() {
+                document.querySelectorAll('.wz-step').forEach(el => el.classList.toggle('active', parseInt(el.dataset.step, 10) === stepIdx));
+                document.querySelectorAll('#wz-progress .wz-progress-dot').forEach(el => {
+                    const d = parseInt(el.dataset.step, 10);
+                    el.classList.toggle('active', d === stepIdx);
+                    el.classList.toggle('done', d < stepIdx);
+                });
+
+                // Restore selected radio on this step
+                document.querySelectorAll(`.wz-step[data-step="${stepIdx}"] .wz-option`).forEach(opt => {
+                    const input = opt.querySelector('input[type="radio"]');
+                    if (!input) return;
+                    const stored = answers[input.name];
+                    const match = stored === input.value;
+                    input.checked = match;
+                    opt.classList.toggle('selected', match);
+                });
+
+                updateButtons();
+                if (stepIdx === 4) renderSummary();
+            }
+
+            function currentSelection() {
+                const step = document.querySelector(`.wz-step[data-step="${stepIdx}"]`);
+                if (!step) return null;
+                const checked = step.querySelector('input[type="radio"]:checked');
+                return checked ? { name: checked.name, value: checked.value } : null;
+            }
+
+            function updateButtons() {
+                const back = document.getElementById('wz-back');
+                const next = document.getElementById('wz-next');
+                back.style.visibility = stepIdx === 1 ? 'hidden' : 'visible';
+
+                if (stepIdx === 4) {
+                    next.disabled = false;
+                    next.textContent = tr('wizard_btn_go', 'Start walkthrough');
+                } else {
+                    next.textContent = tr('wizard_btn_next', 'Next');
+                    const sel = currentSelection();
+                    next.disabled = !sel;
+                }
+            }
+
+            function renderSummary() {
+                const track = resolveTrack(answers);
+                const titleEl = document.getElementById('wz-result-track');
+                const descEl = document.getElementById('wz-result-desc');
+                const map = {
+                    track1: ['wizard_target_track1_title', 'Track 1 — free / official bot rental', 'wizard_target_track1_desc', "We'll open the rental plaza and walk you through picking a free bot."],
+                    track2: ['wizard_target_track2_title', 'Track 2 — paid e-coin bot rental', 'wizard_target_track2_desc', "We'll open the paid plaza, e-coin wallet, and rental overview."],
+                    track3: ['wizard_target_track3_title', 'Track 3 — OpenClaw channel binding', 'wizard_target_track3_desc', "We'll walk you through generating an OpenClaw API key and wiring it in."],
+                    track4: ['wizard_target_track4_title', 'Track 4 — Claude channel binding', 'wizard_target_track4_desc', "We'll open env-vars and walk through pasting your Anthropic key."],
+                    hermes: ['wizard_target_hermes_title', 'Hermes channel — coming soon', 'wizard_target_hermes_desc', 'Hermes is on the way. We\'ll take you to the waitlist page.'],
+                    track6: ['wizard_target_track6_title', 'Track 6 — Agent evaluation arena', 'wizard_target_track6_desc', "We'll open the Arena and walk through the 12-dimension benchmark."],
+                    dashboard: ['wizard_target_dashboard_title', 'Skipping the tour', 'wizard_target_dashboard_desc', "We'll drop you straight on the dashboard — you can revisit the wizard anytime from Settings."]
+                };
+                const entry = track ? map[track] : null;
+                if (entry) {
+                    titleEl.textContent = tr(entry[0], entry[1]);
+                    descEl.textContent = tr(entry[2], entry[3]);
+                } else {
+                    titleEl.textContent = tr('wizard_result_fallback', 'Your personalized walkthrough');
+                    descEl.textContent = tr('wizard_result_fallback_desc', 'Answer the earlier questions so we can route you.');
+                }
+            }
+
+            function nextStep() {
+                if (stepIdx === 1) {
+                    // branch: only byoc shows Q2/Q3; others skip to summary
+                    if (answers.intent === 'byoc') {
+                        stepIdx = 2;
+                    } else {
+                        stepIdx = 4;
+                    }
+                } else if (stepIdx === 2) {
+                    // hermes has no key step — go straight to summary
+                    if (answers.channel === 'hermes') stepIdx = 4;
+                    else stepIdx = 3;
+                } else if (stepIdx === 3) {
+                    stepIdx = 4;
+                } else if (stepIdx === 4) {
+                    finish(false);
+                    return;
+                }
+                renderStep();
+            }
+
+            function backStep() {
+                if (stepIdx === 4) {
+                    if (answers.intent === 'byoc') {
+                        stepIdx = (answers.channel === 'hermes') ? 2 : 3;
+                    } else {
+                        stepIdx = 1;
+                    }
+                } else if (stepIdx === 3) {
+                    stepIdx = 2;
+                } else if (stepIdx === 2) {
+                    stepIdx = 1;
+                }
+                renderStep();
+            }
+
+            function finish(dismissed) {
+                const track = resolveTrack(answers);
+                markComplete(track, dismissed);
+                const target = (track && TRACK_ROUTES[track]) || TRACK_ROUTES.dashboard;
+                location.href = target;
+            }
+
+            // ── wire UI ──
+            document.addEventListener('DOMContentLoaded', () => {
+                // option click → check radio + highlight + save
+                document.querySelectorAll('.wz-option').forEach(opt => {
+                    opt.addEventListener('click', () => {
+                        const input = opt.querySelector('input[type="radio"]');
+                        if (!input) return;
+                        input.checked = true;
+                        // clear sibling selected state
+                        opt.parentNode.querySelectorAll('.wz-option').forEach(sib => sib.classList.remove('selected'));
+                        opt.classList.add('selected');
+                        answers[input.name] = input.value;
+                        // If user changes intent back to non-byoc, wipe stale byoc answers so summary reroutes cleanly.
+                        if (input.name === 'intent' && input.value !== 'byoc') {
+                            delete answers.channel;
+                            delete answers.has_key;
+                        }
+                        saveAnswers(answers);
+                        updateButtons();
+                    });
+                });
+
+                document.getElementById('wz-next').addEventListener('click', nextStep);
+                document.getElementById('wz-back').addEventListener('click', backStep);
+                document.getElementById('wz-skip').addEventListener('click', () => finish(true));
+
+                renderStep();
+            });
+        })();
+    </script>
+</body>
+
+</html>
