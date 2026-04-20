@@ -122,7 +122,7 @@ const MASTODON_INSTANCE_URL = process.env.MASTODON_INSTANCE_URL || 'https://mast
 // ============================================
 const publishRateLimits = {
     qiita: { maxPerDay: 2, label: 'Qiita' },
-    wordpress: { maxPerDay: 4, label: 'WordPress' },  // 2 sites × 2 posts
+    // wordpress removed 2026-04-20 — platform retired
 };
 const publishCounters = new Map(); // key: "platform:YYYY-MM-DD" -> count
 
@@ -1987,12 +1987,10 @@ function getPlatformsStatus() {
           configured: !!(process.env.X_CONSUMER_KEY && process.env.X_ACCESS_TOKEN) },
         { id: 'devto', name: 'DEV.to', region: 'global', authType: 'api_key', contentFormat: 'markdown',
           configured: !!DEVTO_API_KEY },
-        { id: 'wordpress', name: 'WordPress', region: 'global',
-          authType: WP_USE_APP_PASSWORD ? 'basic' : 'bearer',
-          authMode: WP_USE_APP_PASSWORD ? 'app_password' : (wordpressTokens.has('default') ? 'oauth2_db' : 'oauth2'),
-          contentFormat: 'html',
-          configured: WP_USE_APP_PASSWORD || !!getWordpressToken().token,
-          ...wpExpiryWarning(), ...rateLimitInfo('wordpress') },
+        // WordPress retired 2026-04-20 — owner's wp.com site was suspended
+        // (0 sites accessible). Routes + wordpress_tokens table kept so a
+        // future restore is a one-PR change; retire from the public surface
+        // only (platforms list / dashboard / health probes).
         { id: 'telegraph', name: 'Telegraph', region: 'global', authType: 'auto', contentFormat: 'html',
           configured: true },
         { id: 'qiita', name: 'Qiita', region: 'ja', authType: 'bearer', contentFormat: 'markdown',
@@ -2059,48 +2057,7 @@ router.get('/health', async (req, res) => {
             const d = await r.json();
             return { user: d.username };
         }),
-        // WordPress
-        probe('wordpress', 'WordPress', async () => {
-            if (WP_USE_APP_PASSWORD) {
-                const credentials = Buffer.from(`${WORDPRESS_USERNAME}:${WORDPRESS_APP_PASSWORD}`).toString('base64');
-                const r = await fetch(`${WORDPRESS_SITE_URL}/wp-json/wp/v2/users/me`, {
-                    headers: { Authorization: `Basic ${credentials}` }
-                });
-                if (!r.ok) throw Object.assign(new Error(`HTTP ${r.status}`), { status: r.status });
-                return { authMode: 'app_password' };
-            }
-            const wp = getWordpressToken();
-            if (!wp.token) return { skip: true, reason: wp.expired ? 'OAuth token expired' : 'Not configured' };
-            // Test read endpoint
-            const r = await fetch(`${WORDPRESS_API_BASE}/rest/v1.1/me`, {
-                headers: { Authorization: `Bearer ${wp.token}` }
-            });
-            if (!r.ok) throw Object.assign(new Error(`HTTP ${r.status}`), { status: r.status });
-            // Test write endpoint
-            const wr = await fetch(`${WORDPRESS_API_BASE}/rest/v1.1/sites/253401752/posts/new`, {
-                method: 'POST',
-                headers: { Authorization: `Bearer ${wp.token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: '__health_check__', content: 'test', status: 'draft' })
-            });
-            if (!wr.ok) {
-                const wd = await wr.json().catch(() => ({}));
-                const msg = wd.message || wd.error || `HTTP ${wr.status}`;
-                if (msg.includes('disabled')) {
-                    return { authMode: 'oauth2', readOk: true, writeOk: false,
-                        issue: 'WordPress.com has disabled the posts API for this site — free plan limitation. Upgrade to a paid plan or use self-hosted WordPress with Application Password auth.',
-                        fix: 'Set WORDPRESS_SITE_URL + WORDPRESS_USERNAME + WORDPRESS_APP_PASSWORD env vars to use a self-hosted WordPress instead.' };
-                }
-                throw Object.assign(new Error(msg), { status: wr.status });
-            }
-            // If draft was created, delete it
-            const wd = await wr.json();
-            if (wd.ID) {
-                await fetch(`${WORDPRESS_API_BASE}/rest/v1.1/sites/253401752/posts/${wd.ID}/delete`, {
-                    method: 'POST', headers: { Authorization: `Bearer ${wp.token}` }
-                }).catch(() => {});
-            }
-            return { authMode: 'oauth2', readOk: true, writeOk: true };
-        }),
+        // WordPress probe removed 2026-04-20 — platform retired.
         // Qiita
         probe('qiita', 'Qiita', async () => {
             if (!QIITA_ACCESS_TOKEN) return { skip: true, reason: 'QIITA_ACCESS_TOKEN not set' };

@@ -4208,11 +4208,6 @@ function classifyPublisher(p) {
         if (p.expiresAt && Number(p.expiresAt) < Date.now()) return 'disconnected';
         return 'connected';
     }
-    // WordPress: if CLIENT_ID+SECRET set but no token, OAuth flow is pending
-    // — treat as disconnected (admin needs to finish auth).
-    if (p.id === 'wordpress' && process.env.WORDPRESS_CLIENT_ID && process.env.WORDPRESS_CLIENT_SECRET) {
-        return 'disconnected';
-    }
     return 'unconfigured';
 }
 
