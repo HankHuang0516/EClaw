@@ -1,3 +1,10 @@
+# [1.1029.0](https://github.com/HankHuang0516/EClaw/compare/v1.1028.0...v1.1029.0) (2026-04-20)
+
+
+### Features
+
+* **onboarding:** Track 1 product tour — free/official bot rental ([#1911](https://github.com/HankHuang0516/EClaw/issues/1911)) ([68bb175](https://github.com/HankHuang0516/EClaw/commit/68bb175bf7ade619adeef8c4b9f1f5bf84b37a16)), closes [settings.html#channelApiCard](https://github.com/settings.html/issues/channelApiCard)
+
 # [1.1028.0](https://github.com/HankHuang0516/EClaw/compare/v1.1027.0...v1.1028.0) (2026-04-20)
 
 
