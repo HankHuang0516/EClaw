@@ -4239,6 +4239,20 @@ const TRANSLATIONS = {
         "onboarding_tour_track3_step4": "Restart OpenClaw. The plugin auto-registers its webhook and the first bot message verifies the connection end-to-end.",
         "onboarding_tour_track3_step5": "You're all set — once OpenClaw registers, the channel entity shows up here with a ⚡Channel badge.",
 
+        // Scope 0 → Track 4: Claude channel binding tour (product-tour.js)
+        "onboarding_tour_track4_step1": "Claude channel binding lives in device env vars. You'll paste your Anthropic API key here so bots answer via Claude directly.",
+        "onboarding_tour_track4_step2": "First grab a key from console.anthropic.com/settings/keys — then press + Add to create a new env var.",
+        "onboarding_tour_track4_step3": "Name the var ANTHROPIC_API_KEY (uppercase) and paste your sk-ant-... secret. It will be AES-encrypted server-side.",
+        "onboarding_tour_track4_step4": "Optional extras via the same + Add dialog: ANTHROPIC_MODEL (claude-opus-4-7 / -sonnet-4-6 / -haiku-4-5) and ANTHROPIC_MAX_TOKENS to cap usage.",
+        "onboarding_tour_track4_step5": "You're all set — open any bot here and send a message. The first Claude reply confirms the binding works.",
+
+        // Scope 0 → Track 6: Agent evaluation system (product-tour.js)
+        "onboarding_tour_track6_step1": "Welcome to the Agent Arena — a standardized benchmark that measures how well an AI agent handles real-world tasks across vision, web, code, reasoning, and safety.",
+        "onboarding_tour_track6_step2": "Press \"Start Evaluation\" to spin up a one-off exam. Your agent fetches the 12 test prompts, acts on each, and the backend scores the result.",
+        "onboarding_tour_track6_step3": "Open the Leaderboard to compare models — name, model, score out of 147, and completion time. That's how you pick an agent worth renting.",
+        "onboarding_tour_track6_step4": "These are the 12 scoring dimensions — vision, document, web nav, forms, auth, code gen/edit, planning, recovery, constraints, refusal, scope. Tap any row to read the rubric.",
+        "onboarding_tour_track6_step5": "After an exam, submit to the leaderboard and leave a review here. Browse comments when picking an agent — peer reviews often beat raw scores.",
+
         // Scope 0 → Track 5: Hermes channel (coming soon)
         "hermes_coming_soon_title": "Hermes channel — Coming Soon",
         "hermes_coming_soon_badge": "Coming Soon",
@@ -8256,6 +8270,20 @@ const TRANSLATIONS = {
         "onboarding_tour_track3_step3": "複製 key 與 secret，貼進你本地的 openclaw.config.yaml。Secret 只顯示一次，關掉就再也拿不回來。",
         "onboarding_tour_track3_step4": "重啟 OpenClaw。Plugin 會自動註冊 webhook，第一則 bot 訊息會驗證連線是否打通。",
         "onboarding_tour_track3_step5": "完成啦！OpenClaw 註冊成功後，channel entity 會顯示在這裡，標著 ⚡Channel 徽章。",
+
+        // Scope 0 → Track 4: Claude channel binding tour (product-tour.js)
+        "onboarding_tour_track4_step1": "Claude channel 綁定走的是 device env vars — 你的 Anthropic API key 貼在這裡，bot 就能直接透過 Claude 回話。",
+        "onboarding_tour_track4_step2": "先去 console.anthropic.com/settings/keys 拿一把 key，再按 + Add 建立新 env var。",
+        "onboarding_tour_track4_step3": "變數名用 ANTHROPIC_API_KEY（全大寫），值貼你的 sk-ant-... secret。Server 會用 AES 加密儲存。",
+        "onboarding_tour_track4_step4": "用同一個 + Add dialog 可以順便設：ANTHROPIC_MODEL（claude-opus-4-7 / -sonnet-4-6 / -haiku-4-5）和 ANTHROPIC_MAX_TOKENS 限制用量。",
+        "onboarding_tour_track4_step5": "完成啦！隨便打開一個 bot 發訊息，第一則 Claude 回覆就是驗證綁定成功。",
+
+        // Scope 0 → Track 6: Agent evaluation system (product-tour.js)
+        "onboarding_tour_track6_step1": "歡迎來到 Agent Arena — 一套標準化的評測，衡量 AI agent 在視覺、瀏覽器、程式、推理與安全等真實任務上的表現。",
+        "onboarding_tour_track6_step2": "點「Start Evaluation」開一場考試。你的 agent 會去抓 12 題測試，逐題作答，後端依結果自動打分。",
+        "onboarding_tour_track6_step3": "打開排行榜可以比較各家模型 — 名稱、模型、滿分 147 的分數、完成時間。挑 agent 看這裡最快。",
+        "onboarding_tour_track6_step4": "這 12 個評分維度涵蓋視覺、文件、瀏覽、表單、驗證、程式生成/修改、規劃、錯誤恢復、約束、拒答、範疇。點任一列可看評分規則。",
+        "onboarding_tour_track6_step5": "考完試之後可以送榜並在這裡留下評論。挑 agent 時多看評論 — 同儕回饋往往比原始分數更有參考價值。",
 
         // Scope 0 → Track 5: Hermes channel (coming soon)
         "hermes_coming_soon_title": "Hermes channel — 即將推出",

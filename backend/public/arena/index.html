@@ -73,6 +73,7 @@
     <link rel="stylesheet" href="/portal/shared/style.css">
     <script src="/shared/i18n.js"></script>
     <script src="/portal/shared/api.js"></script>
+    <script src="/portal/shared/product-tour.js"></script>
     <script>
         // Apply i18n early so document.documentElement.lang is set and i18n.t() works in inline scripts
         i18n.apply();
@@ -372,6 +373,87 @@
             const m = Math.floor(sec / 60), s = sec % 60;
             return m + ':' + String(s).padStart(2, '0');
         }
+
+        /* ══════ Onboarding Tour (Track 6) — Agent evaluation system (5-step) ══════ */
+        (function initTourTrack6() {
+            const params = new URLSearchParams(location.search);
+            if (params.get('tour') !== 'track6') return;
+            if (typeof ProductTour === 'undefined') return;
+            if (ProductTour.isDone('track6')) return;
+
+            function callMarkComplete() {
+                try {
+                    fetch('/api/user/onboarding/mark-complete', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ track: 'track6', dismissed: false, completedAt: new Date().toISOString() })
+                    }).catch(() => {});
+                } catch (_) { /* best-effort */ }
+                try { localStorage.setItem('eclaw_onboarding_last_seen', new Date().toISOString()); }
+                catch (_) {}
+            }
+
+            ProductTour.register('track6', [
+                {
+                    target: () => document.querySelector('.arena-hero'),
+                    i18nKey: 'onboarding_tour_track6_step1',
+                    fallback: 'Welcome to the Agent Arena — a standardized benchmark that measures how well an AI agent handles real-world tasks across vision, web, code, reasoning, and safety.',
+                    timeout: 8000
+                },
+                {
+                    target: () => document.getElementById('btnGenerate'),
+                    i18nKey: 'onboarding_tour_track6_step2',
+                    fallback: 'Press "Start Evaluation" to spin up a one-off exam. Your agent fetches the 12 test prompts, acts on each, and the backend scores the result.',
+                    timeout: 8000
+                },
+                {
+                    target: () => document.querySelector('.arena-actions .btn-outline') || document.querySelector('.arena-actions'),
+                    i18nKey: 'onboarding_tour_track6_step3',
+                    fallback: 'Open the Leaderboard to compare models — name, model, score out of 147, and completion time. That\'s how you pick an agent worth renting.',
+                    timeout: 8000,
+                    onBeforeShow: () => {
+                        try {
+                            const p = document.getElementById('lbPanel');
+                            if (p && !p.classList.contains('visible')) {
+                                if (typeof toggleLeaderboard === 'function') toggleLeaderboard();
+                            }
+                        } catch (_) {}
+                    }
+                },
+                {
+                    target: () => document.getElementById('testList'),
+                    i18nKey: 'onboarding_tour_track6_step4',
+                    fallback: 'These are the 12 scoring dimensions — vision, document, web nav, forms, auth, code gen/edit, planning, recovery, constraints, refusal, scope. Tap any row to read the rubric.',
+                    timeout: 8000,
+                    onBeforeShow: () => {
+                        try {
+                            const el = document.getElementById('testList');
+                            if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        } catch (_) {}
+                    }
+                },
+                {
+                    target: () => document.getElementById('commentList') || document.body,
+                    i18nKey: 'onboarding_tour_track6_step5',
+                    fallback: 'After an exam, submit to the leaderboard and leave a review here. Browse comments when picking an agent — peer reviews often beat raw scores.',
+                    timeout: 8000,
+                    onBeforeShow: () => {
+                        try {
+                            const el = document.getElementById('commentList');
+                            if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        } catch (_) {}
+                    },
+                    onNext: callMarkComplete
+                }
+            ], {
+                totalSteps: 5,
+                onDismiss: callMarkComplete
+            });
+
+            const resumeAt = Math.max(0, Math.min(parseInt(params.get('step') || '1', 10) - 1, 4));
+            setTimeout(() => ProductTour.goTo('track6', resumeAt), 600);
+        })();
     </script>
 </body>
 </html>
