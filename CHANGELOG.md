@@ -1,3 +1,10 @@
+# [1.1020.0](https://github.com/HankHuang0516/EClaw/compare/v1.1019.0...v1.1020.0) (2026-04-20)
+
+
+### Features
+
+* **publisher+arena:** retire mastodon; device-owner admin auth ([#1892](https://github.com/HankHuang0516/EClaw/issues/1892)) ([77a197e](https://github.com/HankHuang0516/EClaw/commit/77a197e2f058afeb47713db8349198936719749a))
+
 # [1.1019.0](https://github.com/HankHuang0516/EClaw/compare/v1.1018.2...v1.1019.0) (2026-04-20)
 
 
