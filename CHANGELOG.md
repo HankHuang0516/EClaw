@@ -1,3 +1,10 @@
+# [1.1027.0](https://github.com/HankHuang0516/EClaw/compare/v1.1026.2...v1.1027.0) (2026-04-20)
+
+
+### Features
+
+* **onboarding:** Scope 0 wizard skeleton + i18n + dismiss flag ([#1909](https://github.com/HankHuang0516/EClaw/issues/1909)) ([16e497c](https://github.com/HankHuang0516/EClaw/commit/16e497c5735b1742a3b1cf3a96f444e845bde60f))
+
 ## [1.1026.2](https://github.com/HankHuang0516/EClaw/compare/v1.1026.1...v1.1026.2) (2026-04-20)
 
 
