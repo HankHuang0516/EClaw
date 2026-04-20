@@ -87,30 +87,31 @@ describe('notifyEntities → saveChatMessage kanban_ref card arg', () => {
         expect(cardArg).toEqual({ kind: 'kanban_ref', id: 'card_abc' });
     });
 
-    it('does not set a card ref when cardId is not supplied (raw call)', async () => {
-        // Exercise a kanban.js code path that calls notifyEntities without cardId.
-        // Only the stale-nudge escalation path does this for a non-bot
-        // reviewer notify — but that's hard to trigger through the router without
-        // a scheduler. We assert the default behavior by inspecting the create
-        // handler's second argument semantics: when cardId is absent, saveChatMessage
-        // must receive null in slot 12.
-        //
-        // Simulate by calling the exported router's create endpoint with backlog
-        // status, which SKIPS notifyEntities entirely (no chat row saved). This
-        // protects the invariant that the wire format only carries a cardRef when
-        // the push path explicitly threaded one through.
-        mockQuery.mockResolvedValueOnce({
-            rows: [{ ...createdCardRow, status: 'backlog' }],
-        });
-        mockQuery.mockResolvedValueOnce({ rows: [] });
-        mockQuery.mockResolvedValueOnce({ rows: [] });
+    it('forwards the moved card id on status change (todo → in_progress)', async () => {
+        // POST /card/:id/move exercises the statusChanged notify path (L1040).
+        // This is the most-fired path in real use because automated recurring
+        // cards transition via move, and we want the chat deep-link to land on
+        // the card that just changed state.
+        const movedCardRow = {
+            ...createdCardRow,
+            id: 'card_xyz',
+            status: 'todo',
+            assigned_bots: [0],
+        };
+        mockQuery
+            .mockResolvedValueOnce({ rows: [movedCardRow] })   // SELECT current row
+            .mockResolvedValueOnce({ rows: [{ ...movedCardRow, status: 'in_progress' }] }) // UPDATE returning
+            .mockResolvedValue({ rows: [] });                   // addSystemComment + bumpVersion + etc.
 
-        const res = await request(app).post('/api/mission/card').send({
-            ...AUTH, title: 'Backlog', assignedBots: [0], status: 'backlog',
+        const res = await request(app).post('/api/mission/card/card_xyz/move').send({
+            ...AUTH, newStatus: 'in_progress',
         });
 
         expect(res.status).toBe(200);
         await new Promise((r) => setImmediate(r));
-        expect(saveChatSpy).not.toHaveBeenCalled();
+
+        expect(saveChatSpy).toHaveBeenCalled();
+        const cardArg = saveChatSpy.mock.calls[0][12];
+        expect(cardArg).toEqual({ kind: 'kanban_ref', id: 'card_xyz' });
     });
 });
