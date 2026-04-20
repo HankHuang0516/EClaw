@@ -603,17 +603,69 @@ router.delete('/hashnode/post/:postId', async (req, res) => {
 // ============================================
 // X (TWITTER) PUBLISH / REPLY / DELETE
 // Uses OAuth 1.0a (HMAC-SHA1) for Twitter API v2
-// Tokens stored in env: X_CONSUMER_KEY, X_CONSUMER_SECRET, X_ACCESS_TOKEN, X_ACCESS_TOKEN_SECRET
+// Tokens resolved in priority order:
+//   1. device-vars vault (per deviceId, BYO credentials) — multi-tenant
+//   2. process.env.X_CONSUMER_KEY / X_CONSUMER_SECRET / X_ACCESS_TOKEN / X_ACCESS_TOKEN_SECRET — fallback (Hank's single-tenant prod)
+//   3. Structured error { error, setup_url } — no creds found
+// The 4 keys are atomic: partial vault (e.g. 3 of 4) is treated as not-set and falls through to env.
 // ============================================
 
 const X_API_BASE = 'https://api.x.com/2';
+const X_CRED_KEYS = ['X_CONSUMER_KEY', 'X_CONSUMER_SECRET', 'X_ACCESS_TOKEN', 'X_ACCESS_TOKEN_SECRET'];
 
-function getXOAuth() {
+// Injected by index.js at mount time; signature: async (deviceId, varName) => string|null
+// Keeps this module decoupled from the encryption/DB layer (same pattern as embedding-client).
+let _getDeviceVar = null;
+function setDeviceVarResolver(fn) {
+    _getDeviceVar = (typeof fn === 'function') ? fn : null;
+}
+
+/**
+ * Resolve the 4 X OAuth 1.0a keys for a given deviceId.
+ * Returns { creds: {consumer_key, consumer_secret, access_token, access_token_secret}, source: 'vault'|'env'|'missing' }
+ * When source === 'missing', caller should return a 400 with setup_url.
+ */
+async function resolveXCreds(deviceId) {
+    // 1. Try vault (all 4 keys must be present — atomic)
+    if (deviceId && typeof _getDeviceVar === 'function') {
+        try {
+            const vaultVals = await Promise.all(X_CRED_KEYS.map(k => _getDeviceVar(deviceId, k)));
+            const allPresent = vaultVals.every(v => typeof v === 'string' && v.length > 0);
+            if (allPresent) {
+                return {
+                    creds: {
+                        consumer_key: vaultVals[0],
+                        consumer_secret: vaultVals[1],
+                        access_token: vaultVals[2],
+                        access_token_secret: vaultVals[3]
+                    },
+                    source: 'vault'
+                };
+            }
+        } catch (_) { /* fall through to env */ }
+    }
+
+    // 2. Env fallback (backward-compat for Hank's single-tenant prod)
+    const envVals = X_CRED_KEYS.map(k => process.env[k]);
+    if (envVals.every(v => typeof v === 'string' && v.length > 0)) {
+        return {
+            creds: {
+                consumer_key: envVals[0],
+                consumer_secret: envVals[1],
+                access_token: envVals[2],
+                access_token_secret: envVals[3]
+            },
+            source: 'env'
+        };
+    }
+
+    // 3. Nothing configured
+    return { creds: null, source: 'missing' };
+}
+
+function buildXOAuth(consumerKey, consumerSecret) {
     return OAuth({
-        consumer: {
-            key: process.env.X_CONSUMER_KEY,
-            secret: process.env.X_CONSUMER_SECRET
-        },
+        consumer: { key: consumerKey, secret: consumerSecret },
         signature_method: 'HMAC-SHA1',
         hash_function(base_string, key) {
             return crypto.createHmac('sha1', key).update(base_string).digest('base64');
@@ -621,17 +673,38 @@ function getXOAuth() {
     });
 }
 
-function getXToken() {
+// Legacy helpers retained for backward compatibility; no longer used on the
+// resolved-cred path (they only read env). Kept so external callers / tests
+// that import them do not break.
+function _getXOAuth() {
+    return buildXOAuth(process.env.X_CONSUMER_KEY, process.env.X_CONSUMER_SECRET);
+}
+
+function _getXToken() {
     return {
         key: process.env.X_ACCESS_TOKEN,
         secret: process.env.X_ACCESS_TOKEN_SECRET
     };
 }
 
-async function xApiRequest(method, path, body = null) {
+// Structured error body for the "no creds configured" case
+const X_CREDS_MISSING = {
+    error: 'X credentials not set for this device',
+    setup_url: '/portal/publisher-setup.html'
+};
+
+async function xApiRequest(method, path, body = null, creds = null) {
     const url = `${X_API_BASE}${path}`;
-    const oauth = getXOAuth();
-    const token = getXToken();
+    // When creds are provided (new multi-tenant path) use them; otherwise fall
+    // back to env (legacy callers that predate resolver injection).
+    const c = creds || {
+        consumer_key: process.env.X_CONSUMER_KEY,
+        consumer_secret: process.env.X_CONSUMER_SECRET,
+        access_token: process.env.X_ACCESS_TOKEN,
+        access_token_secret: process.env.X_ACCESS_TOKEN_SECRET
+    };
+    const oauth = buildXOAuth(c.consumer_key, c.consumer_secret);
+    const token = { key: c.access_token, secret: c.access_token_secret };
     const authHeader = oauth.toHeader(oauth.authorize({ url, method }, token));
 
     const options = {
@@ -669,9 +742,17 @@ async function xApiRequest(method, path, body = null) {
 router.post('/x/media/upload', upload.single('media'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'media file required (multipart field: media)' });
 
+    // Resolve creds (vault → env → missing). deviceId may be in body or query.
+    const deviceId = req.body?.deviceId || req.query?.deviceId || null;
+    const { creds, source } = await resolveXCreds(deviceId);
+    console.log(`[Publisher] X creds resolved from: ${source}${deviceId ? ` (deviceId=${deviceId})` : ''}`);
+    if (!creds) {
+        return res.status(400).json(X_CREDS_MISSING);
+    }
+
     try {
-        const oauth = getXOAuth();
-        const token = getXToken();
+        const oauth = buildXOAuth(creds.consumer_key, creds.consumer_secret);
+        const token = { key: creds.access_token, secret: creds.access_token_secret };
         const uploadUrl = 'https://upload.twitter.com/1.1/media/upload.json';
 
         // Build multipart form-data with base64-encoded media
@@ -703,8 +784,15 @@ router.post('/x/media/upload', upload.single('media'), async (req, res) => {
 
 // POST /api/publisher/x/tweet — Create a tweet (or reply if reply_to is set)
 router.post('/x/tweet', express.json(), async (req, res) => {
-    const { text, reply_to, media_ids } = req.body;
+    const { text, reply_to, media_ids, deviceId } = req.body;
     if (!text) return res.status(400).json({ error: 'text required' });
+
+    // Resolve creds: vault (per deviceId) → env → structured error
+    const { creds, source } = await resolveXCreds(deviceId);
+    console.log(`[Publisher] X creds resolved from: ${source}${deviceId ? ` (deviceId=${deviceId})` : ''}`);
+    if (!creds) {
+        return res.status(400).json(X_CREDS_MISSING);
+    }
 
     try {
         const { text: finalText, truncated, originalWeighted } = truncateTweet(text);
@@ -718,7 +806,7 @@ router.post('/x/tweet', express.json(), async (req, res) => {
             body.media = { media_ids };
         }
 
-        const data = await xApiRequest('POST', '/tweets', body);
+        const data = await xApiRequest('POST', '/tweets', body, creds);
         console.log(`[Publisher] X tweet created: ${data.data?.id} ${reply_to ? '(reply to ' + reply_to + ')' : ''}`);
         res.json({
             success: true,
@@ -738,8 +826,14 @@ router.post('/x/tweet', express.json(), async (req, res) => {
 // DELETE /api/publisher/x/tweet/:tweetId — Delete a tweet
 router.delete('/x/tweet/:tweetId', async (req, res) => {
     const { tweetId } = req.params;
+    const deviceId = req.body?.deviceId || req.query?.deviceId || null;
+    const { creds, source } = await resolveXCreds(deviceId);
+    console.log(`[Publisher] X creds resolved from: ${source}${deviceId ? ` (deviceId=${deviceId})` : ''}`);
+    if (!creds) {
+        return res.status(400).json(X_CREDS_MISSING);
+    }
     try {
-        await xApiRequest('DELETE', `/tweets/${tweetId}`);
+        await xApiRequest('DELETE', `/tweets/${tweetId}`, null, creds);
         console.log(`[Publisher] X tweet deleted: ${tweetId}`);
         res.json({ success: true, platform: 'x', deleted: tweetId });
     } catch (err) {
@@ -750,8 +844,14 @@ router.delete('/x/tweet/:tweetId', async (req, res) => {
 
 // GET /api/publisher/x/me — Get authenticated user info
 router.get('/x/me', async (req, res) => {
+    const deviceId = req.query?.deviceId || null;
+    const { creds, source } = await resolveXCreds(deviceId);
+    console.log(`[Publisher] X creds resolved from: ${source}${deviceId ? ` (deviceId=${deviceId})` : ''}`);
+    if (!creds) {
+        return res.status(400).json(X_CREDS_MISSING);
+    }
     try {
-        const data = await xApiRequest('GET', '/users/me');
+        const data = await xApiRequest('GET', '/users/me', null, creds);
         res.json({ success: true, user: data.data });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -2113,4 +2213,17 @@ router.get('/health', async (req, res) => {
     });
 });
 
-module.exports = { router, initPublisherTable, truncateTweet, X_TWEET_WEIGHTED_LIMIT, appendReferralCTA, buildReferralCTA, REFERRAL_CTA_URL, getPlatformsStatus };
+module.exports = {
+    router,
+    initPublisherTable,
+    truncateTweet,
+    X_TWEET_WEIGHTED_LIMIT,
+    appendReferralCTA,
+    buildReferralCTA,
+    REFERRAL_CTA_URL,
+    getPlatformsStatus,
+    // Phase 1 multi-tenant exports (X BYO credentials)
+    setDeviceVarResolver,
+    resolveXCreds,
+    X_CREDS_MISSING
+};
