@@ -223,7 +223,7 @@ describe('GET /api/publisher/platforms', () => {
         const res = await request(app).get('/api/publisher/platforms');
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
-        expect(res.body.platforms).toHaveLength(12);
+        expect(res.body.platforms).toHaveLength(11);
     });
 
     it('includes all expected platform IDs', async () => {
@@ -231,8 +231,11 @@ describe('GET /api/publisher/platforms', () => {
         const ids = res.body.platforms.map(p => p.id);
         expect(ids).toEqual(expect.arrayContaining([
             'blogger', 'hashnode', 'x', 'devto', 'wordpress', 'telegraph', 'qiita', 'wechat',
-            'tumblr', 'reddit', 'linkedin', 'mastodon'
+            'tumblr', 'reddit', 'linkedin'
         ]));
+        // mastodon retired 2026-04-20; routes still exist for token recovery
+        // but platform is no longer in the public list.
+        expect(ids).not.toContain('mastodon');
     });
 
     it('each platform has required fields', async () => {

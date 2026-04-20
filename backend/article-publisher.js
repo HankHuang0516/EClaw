@@ -1997,8 +1997,9 @@ function getPlatformsStatus() {
           configured: !!(REDDIT_CLIENT_ID && REDDIT_USERNAME) },
         { id: 'linkedin', name: 'LinkedIn', region: 'global', authType: 'bearer', contentFormat: 'text',
           configured: !!(LINKEDIN_ACCESS_TOKEN && LINKEDIN_PERSON_URN) },
-        { id: 'mastodon', name: 'Mastodon', region: 'global', authType: 'bearer', contentFormat: 'text',
-          configured: !!MASTODON_ACCESS_TOKEN, instance: MASTODON_INSTANCE_URL }
+        // Mastodon permanently retired 2026-04-15. Routes + client code kept
+        // so stored tokens aren't orphaned, but it no longer appears in the
+        // platforms list / dashboard / health probes.
     ];
 }
 
@@ -2119,16 +2120,7 @@ router.get('/health', async (req, res) => {
             if (!TUMBLR_CONSUMER_KEY || !TUMBLR_ACCESS_TOKEN) return { skip: true, reason: 'Tumblr credentials not set' };
             return { configured: true };
         }),
-        // Mastodon
-        probe('mastodon', 'Mastodon', async () => {
-            if (!MASTODON_ACCESS_TOKEN) return { skip: true, reason: 'MASTODON_ACCESS_TOKEN not set' };
-            const r = await fetch(`${MASTODON_INSTANCE_URL}/api/v1/accounts/verify_credentials`, {
-                headers: { Authorization: `Bearer ${MASTODON_ACCESS_TOKEN}` }
-            });
-            if (!r.ok) throw Object.assign(new Error(`HTTP ${r.status}`), { status: r.status });
-            const d = await r.json();
-            return { user: d.username, instance: MASTODON_INSTANCE_URL };
-        }),
+        // Mastodon probe removed 2026-04-20 — platform retired.
         // Telegraph
         probe('telegraph', 'Telegraph', async () => {
             return { configured: true, note: 'Telegraph auto-creates accounts; always available' };

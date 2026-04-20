@@ -1957,7 +1957,7 @@ setTimeout(() => inviteModule.initInviteDatabase(), 3500);
 // ============================================
 // INTERVIEW ARENA — public bot capability testing
 // ============================================
-const arenaModule = require('./interview-arena')({ serverLog, io });
+const arenaModule = require('./interview-arena')({ serverLog, io, devices });
 app.use('/api/arena', arenaModule.router);
 // Serve arena public pages (no-cache to prevent CDN stale versions)
 app.get('/arena', (_req, res) => { res.set('Cache-Control', 'no-cache'); res.sendFile(path.join(__dirname, 'public/arena/index.html')); });

@@ -1050,9 +1050,10 @@ function stripSecretsForBot(testType, config) {
 // Express factory
 // ============================================
 
-module.exports = function arenaFactory({ serverLog, io } = {}) {
+module.exports = function arenaFactory({ serverLog, io, devices } = {}) {
     const router = express.Router();
     const audit = serverLog || (() => {});
+    const deviceRegistry = devices || {};
 
     // Per-IP cooldown: 1 exam per 5 minutes
     const examCooldownMap = new Map(); // ip → last exam timestamp
@@ -1696,15 +1697,43 @@ module.exports = function arenaFactory({ serverLog, io } = {}) {
 
     // ── Admin: question pool management ─────────────────────────────────────
 
+    // Three paths accepted:
+    //   1. ADMIN_SECRET env + matching x-admin-token header / body.adminToken (legacy)
+    //   2. Valid deviceSecret for a registered device (device owner)
+    //   3. Valid botSecret for an entity on a registered device (bot-as-admin)
+    // Path 1 unchanged. Paths 2–3 let ops admin without a separate env —
+    // possession of deviceSecret / botSecret is already proof of ownership.
+    // When multi-tenant launches, gate 2–3 on a specific ADMIN_DEVICE_ID env.
     function checkAdminAuth(req) {
-        const token    = req.headers['x-admin-token'] || req.body?.adminToken;
+        const crypto = require('crypto');
+        const body = req.body || {};
+
+        // Path 1: ADMIN_SECRET token
+        const token    = req.headers['x-admin-token'] || body.adminToken;
         const expected = process.env.ADMIN_SECRET;
-        if (!expected) return req.ip === '127.0.0.1' || req.ip === '::1'; // localhost fallback
-        if (!token) return false;
-        const a = Buffer.from(token);
-        const b = Buffer.from(expected);
-        if (a.length !== b.length) return false;
-        return require('crypto').timingSafeEqual(a, b);
+        if (expected && token) {
+            const a = Buffer.from(String(token));
+            const b = Buffer.from(expected);
+            if (a.length === b.length && crypto.timingSafeEqual(a, b)) return true;
+        }
+
+        // Paths 2 / 3: device credentials
+        const deviceId = body.deviceId || req.headers['x-device-id'];
+        const device   = deviceId && deviceRegistry[deviceId];
+        if (device) {
+            const deviceSecret = body.deviceSecret || req.headers['x-device-secret'];
+            if (deviceSecret && device.secret && deviceSecret === device.secret) return true;
+
+            const botSecret = body.botSecret || req.headers['x-bot-secret'];
+            const entityId  = body.entityId != null ? parseInt(body.entityId) : NaN;
+            const entity    = Number.isFinite(entityId) && (device.entities || {})[entityId];
+            if (entity && botSecret && entity.botSecret === botSecret) return true;
+        }
+
+        // Localhost fallback only when no secret configured at all
+        if (!expected) return req.ip === '127.0.0.1' || req.ip === '::1';
+
+        return false;
     }
 
     // GET /api/arena/admin/pool-status — current pool sizes + last update info

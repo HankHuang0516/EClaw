@@ -358,13 +358,6 @@
                 toBody: s => ({ text: s.text }),
                 path: '/api/publisher/x/tweet'
             },
-            mastodon: {
-                fields: [{ key: 'status', type: 'textarea', label: 'Status',
-                    hint: 'Mastodon character limit is typically 500.',
-                    counter: 'plain500', required: true }],
-                toBody: s => ({ status: s.status }),
-                path: '/api/publisher/mastodon/publish'
-            },
             devto: {
                 fields: [
                     { key: 'title', type: 'text', label: 'Title', required: true },
