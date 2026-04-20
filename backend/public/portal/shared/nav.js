@@ -12,6 +12,7 @@ function renderNav(activePage) {
         { id: 'mission', i18nKey: 'nav_mission', label: 'Mission', href: 'mission.html', icon: '🚀' },
         { id: 'kanban', i18nKey: 'nav_kanban', label: 'Kanban', href: 'kanban.html', icon: '📋' },
         { id: 'card-holder', i18nKey: 'nav_card_holder', label: 'Cards', href: 'card-holder.html', icon: '🗂️' },
+        { id: 'invite', i18nKey: 'nav_invite', label: 'Invite Friends', href: 'invite.html', icon: '🎁' },
         { id: 'community', i18nKey: 'nav_community', label: 'Community', href: 'community.html', icon: '🏪' },
         { id: 'settings', i18nKey: 'nav_settings', label: 'Settings', href: 'settings.html', icon: '⚙️' },
         { id: 'info', i18nKey: 'nav_info', label: 'Info', href: 'info.html', icon: '📖' }
