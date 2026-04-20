@@ -1,3 +1,10 @@
+## [1.1020.1](https://github.com/HankHuang0516/EClaw/compare/v1.1020.0...v1.1020.1) (2026-04-20)
+
+
+### Bug Fixes
+
+* arena admin auth reads device.deviceSecret + timing-safe compare ([#1893](https://github.com/HankHuang0516/EClaw/issues/1893)) ([15ab121](https://github.com/HankHuang0516/EClaw/commit/15ab121583d9b6a407fcf06d17dd109477915b72)), closes [#1892](https://github.com/HankHuang0516/EClaw/issues/1892)
+
 # [1.1020.0](https://github.com/HankHuang0516/EClaw/compare/v1.1019.0...v1.1020.0) (2026-04-20)
 
 
