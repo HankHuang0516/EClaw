@@ -1,3 +1,10 @@
+## [1.1036.1](https://github.com/HankHuang0516/EClaw/compare/v1.1036.0...v1.1036.1) (2026-04-20)
+
+
+### Bug Fixes
+
+* **chat:** strip ↩ quote prefix to prevent nested reply quotes ([#1919](https://github.com/HankHuang0516/EClaw/issues/1919)) ([b858988](https://github.com/HankHuang0516/EClaw/commit/b85898804c7892518b3c269d07f24915d718c8c6))
+
 # [1.1036.0](https://github.com/HankHuang0516/EClaw/compare/v1.1035.0...v1.1036.0) (2026-04-20)
 
 
