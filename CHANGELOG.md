@@ -1,3 +1,10 @@
+# [1.1022.0](https://github.com/HankHuang0516/EClaw/compare/v1.1021.0...v1.1022.0) (2026-04-20)
+
+
+### Features
+
+* **portal:** add invite onboarding toast + persistent dashboard banner ([#1898](https://github.com/HankHuang0516/EClaw/issues/1898)) ([ddddff0](https://github.com/HankHuang0516/EClaw/commit/ddddff00488728f766f19c35edd1252966ff7a56))
+
 # [1.1021.0](https://github.com/HankHuang0516/EClaw/compare/v1.1020.3...v1.1021.0) (2026-04-20)
 
 
