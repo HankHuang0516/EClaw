@@ -10,38 +10,52 @@ let pool = null;
 
 // Initialize database connection
 async function initDatabase() {
-    try {
-        // Railway automatically provides DATABASE_URL environment variable
-        // when you add a PostgreSQL service
-        const connectionString = process.env.DATABASE_URL;
+    const connectionString = process.env.DATABASE_URL;
 
-        if (!connectionString) {
-            console.error('[DB] DATABASE_URL not found. PostgreSQL persistence disabled.');
-            console.error('[DB] To enable: Add PostgreSQL service in Railway dashboard');
-            return false;
-        }
-
-        // Create connection pool
-        pool = new Pool({
-            connectionString: connectionString,
-            ssl: process.env.NODE_ENV === 'production' ? {
-                rejectUnauthorized: false // Railway uses self-signed certificates
-            } : false
-        });
-
-        // Test connection
-        const client = await pool.connect();
-        console.log('[DB] PostgreSQL connection established');
-        client.release();
-
-        // Create tables if they don't exist
-        await createTables();
-
-        return true;
-    } catch (err) {
-        console.error('[DB] Failed to initialize database:', err.message);
+    if (!connectionString) {
+        console.error('[DB] DATABASE_URL not found. PostgreSQL persistence disabled.');
+        console.error('[DB] To enable: Add PostgreSQL service in Railway dashboard');
         return false;
     }
+
+    // Retry up to 5 times with exponential back-off (1s → 2s → 4s → 8s → 16s)
+    // Railway may restart PG and Node concurrently; the DB might not be ready
+    // on the first attempt, causing a silent fallback to file storage that
+    // wipes all in-memory entities (see 2026-04-20 incident).
+    const MAX_RETRIES = 5;
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            // Create / recreate connection pool on each attempt
+            pool = new Pool({
+                connectionString: connectionString,
+                ssl: process.env.NODE_ENV === 'production' ? {
+                    rejectUnauthorized: false // Railway uses self-signed certificates
+                } : false
+            });
+
+            // Test connection
+            const client = await pool.connect();
+            console.log(`[DB] PostgreSQL connection established (attempt ${attempt}/${MAX_RETRIES})`);
+            client.release();
+
+            // Create tables if they don't exist
+            await createTables();
+
+            return true;
+        } catch (err) {
+            console.error(`[DB] Init attempt ${attempt}/${MAX_RETRIES} failed: ${err.message}`);
+            // Clean up the failed pool before retrying
+            if (pool) { try { await pool.end(); } catch (_) {} pool = null; }
+            if (attempt < MAX_RETRIES) {
+                const delay = Math.pow(2, attempt - 1) * 1000;
+                console.log(`[DB] Retrying in ${delay / 1000}s...`);
+                await new Promise(r => setTimeout(r, delay));
+            }
+        }
+    }
+
+    console.error('[DB] All connection attempts exhausted. PostgreSQL persistence disabled.');
+    return false;
 }
 
 // Create database tables

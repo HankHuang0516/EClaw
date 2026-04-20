@@ -558,6 +558,18 @@ app.get('/privacy-policy.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public/privacy-policy.html'));
 });
 
+// Startup gate: reject device-scoped API requests while persistence is loading.
+// Without this, getOrCreateDevice() creates a blank device that shadows the
+// real DB-loaded one, silently wiping all entities (2026-04-20 incident).
+if (process.env.NODE_ENV !== 'test') {
+    app.use('/api', (req, res, next) => {
+        if (persistenceReady) return next();
+        // Allow health/version probes even during startup
+        if (req.path === '/health' || req.path === '/version') return next();
+        res.status(503).json({ success: false, message: 'Server starting up — please retry in a few seconds' });
+    });
+}
+
 // Telemetry auto-capture middleware (pool linked lazily after chatPool init)
 let _telemetryPool = null;
 const telemetryPoolProxy = {
