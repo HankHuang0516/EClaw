@@ -1,3 +1,10 @@
+# [1.1030.0](https://github.com/HankHuang0516/EClaw/compare/v1.1029.0...v1.1030.0) (2026-04-20)
+
+
+### Features
+
+* **onboarding:** Track 5 Hermes channel — Coming Soon placeholder ([#1912](https://github.com/HankHuang0516/EClaw/issues/1912)) ([28a9ab8](https://github.com/HankHuang0516/EClaw/commit/28a9ab89649e299365bcf9f933b973963c91ebf1))
+
 # [1.1029.0](https://github.com/HankHuang0516/EClaw/compare/v1.1028.0...v1.1029.0) (2026-04-20)
 
 
