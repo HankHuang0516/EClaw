@@ -49,12 +49,13 @@ async function run() {
         assert(status === 200, 'GET /platforms returns 200');
         assert(data.success === true, 'Response has success: true');
         assert(Array.isArray(data.platforms), 'platforms is array');
-        assert(data.platforms.length === 12, `12 platforms listed (got ${data.platforms.length})`);
+        assert(data.platforms.length === 11, `11 platforms listed (got ${data.platforms.length})`);
 
         const ids = data.platforms.map(p => p.id);
-        for (const expected of ['blogger', 'hashnode', 'x', 'devto', 'wordpress', 'telegraph', 'qiita', 'wechat', 'tumblr', 'reddit', 'linkedin', 'mastodon']) {
+        for (const expected of ['blogger', 'hashnode', 'x', 'devto', 'wordpress', 'telegraph', 'qiita', 'wechat', 'tumblr', 'reddit', 'linkedin']) {
             assert(ids.includes(expected), `Platform "${expected}" present`);
         }
+        assert(!ids.includes('mastodon'), 'Mastodon retired — no longer in platforms list');
 
         const telegraph = data.platforms.find(p => p.id === 'telegraph');
         assert(telegraph.configured === true, 'Telegraph always configured (auto-account)');

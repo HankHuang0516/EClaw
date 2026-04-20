@@ -327,7 +327,16 @@ describe('interview-arena: API endpoints', () => {
     const request = require('supertest');
     const express = require('express');
     const arenaFactory = require('../../interview-arena');
-    const arenaModule = arenaFactory({ serverLog: () => {}, io: null });
+    const fakeDevices = {
+        'dev-alpha': {
+            secret: 'device-secret-alpha',
+            entities: {
+                2: { botSecret: 'bot-secret-commander' },
+                5: { botSecret: 'bot-secret-helper' },
+            },
+        },
+    };
+    const arenaModule = arenaFactory({ serverLog: () => {}, io: null, devices: fakeDevices });
     const app = express();
     app.use(express.json());
     app.use('/api/arena', arenaModule.router);
@@ -412,6 +421,64 @@ describe('interview-arena: API endpoints', () => {
                     .set('x-admin-token', 'test-admin-secret');
                 expect(res.status).toBe(200);
                 expect(res.body.deletedCount).toBe(0);
+            } finally {
+                if (prev === undefined) delete process.env.ADMIN_SECRET;
+                else process.env.ADMIN_SECRET = prev;
+            }
+        });
+
+        test('accepts deviceId + deviceSecret (device owner auth)', async () => {
+            const prev = process.env.ADMIN_SECRET;
+            delete process.env.ADMIN_SECRET;
+            try {
+                globalThis.__arenaState.leaderboard.push({ name: 'Z', score: 5 });
+                const res = await request(app)
+                    .post('/api/arena/admin/reset-leaderboard')
+                    .send({ deviceId: 'dev-alpha', deviceSecret: 'device-secret-alpha' });
+                expect(res.status).toBe(200);
+                expect(res.body.deletedCount).toBe(1);
+            } finally {
+                if (prev !== undefined) process.env.ADMIN_SECRET = prev;
+            }
+        });
+
+        test('accepts deviceId + botSecret + entityId (bot auth)', async () => {
+            const prev = process.env.ADMIN_SECRET;
+            delete process.env.ADMIN_SECRET;
+            try {
+                globalThis.__arenaState.leaderboard.push({ name: 'Y', score: 3 });
+                const res = await request(app)
+                    .post('/api/arena/admin/reset-leaderboard')
+                    .send({ deviceId: 'dev-alpha', entityId: 2, botSecret: 'bot-secret-commander' });
+                expect(res.status).toBe(200);
+                expect(res.body.deletedCount).toBe(1);
+            } finally {
+                if (prev !== undefined) process.env.ADMIN_SECRET = prev;
+            }
+        });
+
+        test('rejects wrong deviceSecret', async () => {
+            const prev = process.env.ADMIN_SECRET;
+            process.env.ADMIN_SECRET = 'unused';
+            try {
+                const res = await request(app)
+                    .post('/api/arena/admin/reset-leaderboard')
+                    .send({ deviceId: 'dev-alpha', deviceSecret: 'wrong' });
+                expect(res.status).toBe(403);
+            } finally {
+                if (prev === undefined) delete process.env.ADMIN_SECRET;
+                else process.env.ADMIN_SECRET = prev;
+            }
+        });
+
+        test('rejects unknown deviceId', async () => {
+            const prev = process.env.ADMIN_SECRET;
+            process.env.ADMIN_SECRET = 'unused';
+            try {
+                const res = await request(app)
+                    .post('/api/arena/admin/reset-leaderboard')
+                    .send({ deviceId: 'dev-nope', botSecret: 'anything', entityId: 2 });
+                expect(res.status).toBe(403);
             } finally {
                 if (prev === undefined) delete process.env.ADMIN_SECRET;
                 else process.env.ADMIN_SECRET = prev;
