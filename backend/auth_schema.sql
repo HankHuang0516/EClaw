@@ -186,3 +186,8 @@ CREATE TABLE IF NOT EXISTS invite_rewards (
     total_invited INTEGER NOT NULL DEFAULT 0,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Milestone bitmap for tier rewards. Bits set = tier bonus already credited.
+-- bit0=bronze (3 invites), bit1=silver (10), bit2=gold (30), bit3=diamond (100).
+-- Thresholds + bonuses live in index.js INVITE_TIERS.
+ALTER TABLE invite_rewards ADD COLUMN IF NOT EXISTS milestones_claimed INTEGER NOT NULL DEFAULT 0;

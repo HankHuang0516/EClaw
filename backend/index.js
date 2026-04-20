@@ -3972,6 +3972,32 @@ function resolveInviteAuth(req) {
     return { error: 'deviceId and deviceSecret required, or valid session cookie', status: 401 };
 }
 
+// Referral tier milestones. Each tier grants a one-shot bonus the first time
+// a user's total_invited crosses its threshold. Stored as bitmask in
+// invite_rewards.milestones_claimed so re-computation is idempotent.
+const INVITE_TIERS = [
+    { bit: 1 << 0, key: 'bronze',  threshold: 3,   bonusMessages: 500 },
+    { bit: 1 << 1, key: 'silver',  threshold: 10,  bonusMessages: 2000 },
+    { bit: 1 << 2, key: 'gold',    threshold: 30,  bonusMessages: 5000 },
+    { bit: 1 << 3, key: 'diamond', threshold: 100, bonusMessages: 15000 },
+];
+
+function computeInviteTierState(totalInvited, milestonesClaimed) {
+    let tier = 'none';
+    for (const t of INVITE_TIERS) {
+        if (totalInvited >= t.threshold) tier = t.key;
+    }
+    const next = INVITE_TIERS.find(t => totalInvited < t.threshold) || null;
+    const unlocked = INVITE_TIERS.filter(t => (milestonesClaimed & t.bit) !== 0).map(t => t.key);
+    return {
+        tier,
+        unlocked_tiers: unlocked,
+        next_tier: next ? next.key : null,
+        next_threshold: next ? next.threshold : null,
+        invites_to_next: next ? Math.max(0, next.threshold - totalInvited) : 0,
+    };
+}
+
 // GET /api/invite/my-code — get (or auto-generate) the caller's invite code
 // Auth: deviceId+deviceSecret OR JWT cookie
 app.get('/api/invite/my-code', async (req, res) => {
@@ -4051,17 +4077,52 @@ app.post('/api/invite/redeem', async (req, res) => {
         );
 
         // Grant inviter +50 bonus + increment total_invited
-        await pg.query(
+        const inviterRow = await pg.query(
             `INSERT INTO invite_rewards (device_id, bonus_messages, total_invited)
              VALUES ($1, 50, 1)
              ON CONFLICT (device_id)
              DO UPDATE SET bonus_messages = invite_rewards.bonus_messages + 50,
                            total_invited = invite_rewards.total_invited + 1,
-                           updated_at = NOW()`,
+                           updated_at = NOW()
+             RETURNING total_invited, milestones_claimed`,
             [owner_device_id]
         );
 
-        return res.json({ success: true, bonus_granted: 300, message: 'Invite code redeemed! +300 bonus messages added.' });
+        // Credit any newly-reached tier milestones (one-shot via bitmask).
+        // Wrapped in try/catch so a milestone bookkeeping error can never
+        // break the base redeem success path.
+        let milestonesUnlocked = [];
+        try {
+            const { total_invited: ti, milestones_claimed: mc } = inviterRow.rows[0] || { total_invited: 0, milestones_claimed: 0 };
+            let addBonus = 0;
+            let newMask = mc | 0;
+            for (const t of INVITE_TIERS) {
+                if (ti >= t.threshold && (mc & t.bit) === 0) {
+                    addBonus += t.bonusMessages;
+                    newMask |= t.bit;
+                    milestonesUnlocked.push({ tier: t.key, threshold: t.threshold, bonus_messages: t.bonusMessages });
+                }
+            }
+            if (addBonus > 0) {
+                await pg.query(
+                    `UPDATE invite_rewards
+                     SET bonus_messages = bonus_messages + $1,
+                         milestones_claimed = $2,
+                         updated_at = NOW()
+                     WHERE device_id = $3`,
+                    [addBonus, newMask, owner_device_id]
+                );
+            }
+        } catch (e) {
+            console.error('[Invite] milestone credit failed:', e);
+        }
+
+        return res.json({
+            success: true,
+            bonus_granted: 300,
+            message: 'Invite code redeemed! +300 bonus messages added.',
+            inviter_milestones_unlocked: milestonesUnlocked,
+        });
     } catch (e) {
         console.error('[Invite] redeem error:', e);
         return res.status(500).json({ success: false, error: 'Internal error' });
@@ -4079,18 +4140,27 @@ app.get('/api/invite/stats', async (req, res) => {
     try {
         const [codeRow, rewardRow, usageRow] = await Promise.all([
             pg.query('SELECT code FROM invite_codes WHERE owner_device_id = $1', [deviceId]),
-            pg.query('SELECT bonus_messages, total_invited FROM invite_rewards WHERE device_id = $1', [deviceId]),
+            pg.query('SELECT bonus_messages, total_invited, milestones_claimed FROM invite_rewards WHERE device_id = $1', [deviceId]),
             pg.query('SELECT message_count FROM usage_tracking WHERE device_id = $1 AND date = CURRENT_DATE', [deviceId])
         ]);
         const bonus = rewardRow.rows[0]?.bonus_messages ?? 0;
+        const totalInvited = rewardRow.rows[0]?.total_invited ?? 0;
+        const milestonesClaimed = rewardRow.rows[0]?.milestones_claimed ?? 0;
         const dailyUsed = usageRow.rows[0]?.message_count ?? 0;
+        const tierState = computeInviteTierState(totalInvited, milestonesClaimed);
         return res.json({
             success: true,
             code: codeRow.rows[0]?.code ?? null,
             bonus_messages: bonus,
-            total_invited: rewardRow.rows[0]?.total_invited ?? 0,
+            total_invited: totalInvited,
             daily_used: dailyUsed,
-            daily_limit: 15 + bonus
+            daily_limit: 15 + bonus,
+            tier: tierState.tier,
+            unlocked_tiers: tierState.unlocked_tiers,
+            next_tier: tierState.next_tier,
+            next_threshold: tierState.next_threshold,
+            invites_to_next: tierState.invites_to_next,
+            tier_catalog: INVITE_TIERS.map(t => ({ key: t.key, threshold: t.threshold, bonus_messages: t.bonusMessages })),
         });
     } catch (e) {
         console.error('[Invite] stats error:', e);
