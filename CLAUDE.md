@@ -30,6 +30,8 @@ EClaw/
 │   ├── device-telemetry.js   # AI debug buffer per device
 │   ├── device-feedback.js    # Feedback/bug report system
 │   ├── chat-integrity.js     # Chat message integrity validation
+│   ├── chat-embedding.js     # pgvector schema + cosine search + embedMessageAsync
+│   ├── embedding-client.js   # OpenAI / Voyage embedding API wrapper (BYO key via device-vars)
 │   ├── notifications.js      # Push notification management (Web Push + FCM)
 │   ├── device-preferences.js # Device preference storage
 │   ├── entity-cross-device-settings.js  # Cross-device entity settings
@@ -232,6 +234,7 @@ EClaw/
 | `/api/entity/cross-device-settings` | entity-cross-device-settings.js | Cross-device settings |
 | `/api/contacts` | index.js | Card Holder (名片夾) — collect, browse, search, pin, refresh agent cards |
 | `/api/chat/*` | index.js | Chat history, file upload, integrity |
+| `/api/chat/search` | index.js + chat-embedding.js | Semantic (pgvector cosine) + keyword-fallback chat search |
 | `/api/bot/*` | index.js + bot-tools.js | Bot registration, push, files, web tools |
 | `/api/mission/*` | mission.js | Mission dashboard, notes, rules (legacy todo routes removed) |
 | `/api/mission/card*` | kanban.js | Kanban board — cards CRUD, move, comments, notes, files, config |

@@ -23,6 +23,8 @@ const devicePrefs = require('./device-preferences');
 const orgChartModule = require('./org-chart');
 const crossDeviceSettings = require('./entity-cross-device-settings');
 const feedbackEmail = require('./feedback-email');
+const chatEmbedding = require('./chat-embedding');
+const embeddingClient = require('./embedding-client');
 const multer = require('multer');
 const crypto = require('crypto');
 const WebSocket = require('ws');
@@ -14132,6 +14134,11 @@ chatPool.query(`
     ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS attachments JSONB DEFAULT NULL;
 `).catch(() => {});
 
+// Chat semantic embedding (pgvector) — safe to run; soft-fails if pgvector unavailable
+chatEmbedding.initSchema(chatPool).catch((err) => {
+    console.warn('[ChatEmbedding] initSchema crashed unexpectedly:', err.message);
+});
+
 // Auto-migrate: create message_reactions table (message_id must be UUID to match chat_messages.id)
 chatPool.query(`
     DO $$ BEGIN
@@ -14906,6 +14913,19 @@ app.all('/api/bot/schedules/:id', (req, res) => res.status(410).json({ success: 
 // Pre-compiled regex for detecting entity-to-entity source patterns (used in saveChatMessage)
 const A2A_SOURCE_RE = /^entity:\d+:[A-Z]+->/;
 
+// Resolve a BYO embedding API key from device-vars (used by chat-embedding pipeline)
+async function getDeviceVarForEmbedding(deviceId, varName) {
+    if (!deviceId || !varName || !SEAL_KEY_HEX) return null;
+    try {
+        const row = await db.getDeviceVars(deviceId);
+        if (!row || row.is_locked) return null;
+        const vars = decryptVars(row.encrypted_vars, row.iv, row.auth_tag);
+        return vars && vars[varName] ? vars[varName] : null;
+    } catch {
+        return null;
+    }
+}
+
 // Save chat message to database, returns row ID (UUID) or null
 // Deduplication: bot messages with identical text for the same entity within 10s are skipped
 async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null, scheduleId = null, scheduleLabel = null, backupUrl = null, mentions = null, card = null, attachments = null) {
@@ -14935,6 +14955,11 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
             [deviceId, entityId, text, source, isFromUser || false, isFromBot || false, mediaType, mediaUrl, scheduleId, scheduleLabel, backupUrl, mentions ? JSON.stringify(mentions) : null, card ? JSON.stringify(card) : null, attachments ? JSON.stringify(attachments) : null]
         );
         const msgId = result.rows[0]?.id || null;
+
+        // Fire-and-forget: generate semantic embedding for vector search (Phase 2)
+        if (msgId && text) {
+            chatEmbedding.embedMessageAsync(msgId, text, { deviceId, getDeviceVar: getDeviceVarForEmbedding });
+        }
 
         // [A2A_CHAT_SAVE] Debug: log entity-to-entity chat message saves for debugging render issues
         if (msgId && source && A2A_SOURCE_RE.test(source)) {
@@ -15637,6 +15662,87 @@ app.get('/api/chat/history', async (req, res) => {
     } catch (error) {
         console.error('[Chat] History error:', error);
         res.status(500).json({ success: false, error: 'Failed to get chat history' });
+    }
+});
+
+// ============================================
+// /api/chat/search — semantic (pgvector) + keyword fallback
+// Auth: deviceSecret OR botSecret (any entity on this device)
+// Body: { deviceId, deviceSecret? | botSecret?, query, limit?, entityId? }
+// When pgvector + embedding API key are both configured → cosine similarity
+// Otherwise → ILIKE keyword fallback on text column (still useful, just
+//             not semantic). The `mode` field in the response tells you which.
+// ============================================
+app.post('/api/chat/search', async (req, res) => {
+    const body = req.body || {};
+    const { deviceId, deviceSecret, botSecret, query } = body;
+    const limit = Math.min(Math.max(parseInt(body.limit, 10) || 5, 1), 50);
+    const entityId = body.entityId != null ? parseInt(body.entityId, 10) : null;
+
+    if (!deviceId) return res.status(400).json({ success: false, error: 'deviceId required' });
+    if (!query || typeof query !== 'string' || !query.trim()) {
+        return res.status(400).json({ success: false, error: 'query required' });
+    }
+    if (!deviceSecret && !botSecret) {
+        return res.status(400).json({ success: false, error: 'deviceSecret or botSecret required' });
+    }
+
+    const device = devices[deviceId];
+    if (!device) return res.status(401).json({ success: false, error: 'Invalid credentials' });
+
+    let authed = false;
+    let botEntityId = null;
+    if (deviceSecret && safeEqual(device.deviceSecret, deviceSecret)) {
+        authed = true;
+    } else if (botSecret) {
+        const eid = Object.keys(device.entities).map(Number)
+            .find(i => device.entities[i]?.isBound && device.entities[i].botSecret && safeEqual(device.entities[i].botSecret, botSecret));
+        if (eid !== undefined) { authed = true; botEntityId = eid; }
+    }
+    if (!authed) return res.status(401).json({ success: false, error: 'Invalid credentials' });
+
+    // Bot users are constrained to their own entity regardless of `entityId` param.
+    const effectiveEntityId = botEntityId != null ? botEntityId : (Number.isInteger(entityId) ? entityId : null);
+
+    try {
+        let rows = [];
+        let mode = 'keyword';
+
+        if (chatEmbedding.isVectorEnabled()) {
+            const queryVec = await embeddingClient.generateEmbedding(query, {
+                deviceId,
+                getDeviceVar: getDeviceVarForEmbedding
+            });
+            if (queryVec) {
+                rows = await chatEmbedding.searchBySemantic(deviceId, queryVec, { limit, entityId: effectiveEntityId });
+                mode = 'semantic';
+            }
+        }
+
+        if (rows.length === 0) {
+            rows = await chatEmbedding.searchByKeyword(deviceId, query, { limit, entityId: effectiveEntityId });
+            mode = mode === 'semantic' ? 'semantic_empty_keyword_fallback' : 'keyword';
+        }
+
+        res.json({
+            success: true,
+            mode,
+            query,
+            count: rows.length,
+            results: rows.map(r => ({
+                id: r.id,
+                entity_id: r.entity_id,
+                text: r.text,
+                source: r.source,
+                is_from_user: r.is_from_user,
+                is_from_bot: r.is_from_bot,
+                created_at: r.created_at,
+                distance: r.distance != null ? Number(r.distance) : null
+            }))
+        });
+    } catch (err) {
+        console.error('[Chat] Search error:', err);
+        res.status(500).json({ success: false, error: 'search_failed', detail: err.message });
     }
 });
 
