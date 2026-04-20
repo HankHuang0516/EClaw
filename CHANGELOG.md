@@ -1,3 +1,10 @@
+# [1.1032.0](https://github.com/HankHuang0516/EClaw/compare/v1.1031.0...v1.1032.0) (2026-04-20)
+
+
+### Features
+
+* **onboarding:** Track 3 product tour — OpenClaw channel binding ([#1914](https://github.com/HankHuang0516/EClaw/issues/1914)) ([8c42483](https://github.com/HankHuang0516/EClaw/commit/8c424830eb28da468463f26d02a5dff6e69ed082))
+
 # [1.1031.0](https://github.com/HankHuang0516/EClaw/compare/v1.1030.0...v1.1031.0) (2026-04-20)
 
 
