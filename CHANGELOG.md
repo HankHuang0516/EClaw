@@ -1,3 +1,10 @@
+## [1.1026.1](https://github.com/HankHuang0516/EClaw/compare/v1.1026.0...v1.1026.1) (2026-04-20)
+
+
+### Bug Fixes
+
+* **topup:** wire up WebView JS bridge + wallet tier click handler ([#1905](https://github.com/HankHuang0516/EClaw/issues/1905)) ([858bef7](https://github.com/HankHuang0516/EClaw/commit/858bef742bad86b4ea19430853dfd593a1d0a525))
+
 # [1.1026.0](https://github.com/HankHuang0516/EClaw/compare/v1.1025.0...v1.1026.0) (2026-04-20)
 
 
