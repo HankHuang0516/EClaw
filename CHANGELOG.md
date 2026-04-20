@@ -1,3 +1,10 @@
+## [1.1037.1](https://github.com/HankHuang0516/EClaw/compare/v1.1037.0...v1.1037.1) (2026-04-20)
+
+
+### Bug Fixes
+
+* **chat:** reply quote + photo attachment conflict ([#1921](https://github.com/HankHuang0516/EClaw/issues/1921)) ([5d91b84](https://github.com/HankHuang0516/EClaw/commit/5d91b84a6e69d462458ce048d44b9c4e5318aef7))
+
 # [1.1037.0](https://github.com/HankHuang0516/EClaw/compare/v1.1036.1...v1.1037.0) (2026-04-20)
 
 
