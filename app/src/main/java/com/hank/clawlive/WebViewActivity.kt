@@ -6,6 +6,7 @@ import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -17,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
+import com.hank.clawlive.billing.BillingManager
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.remote.TelemetryHelper
 import com.hank.clawlive.ui.BottomNavHelper
@@ -29,6 +31,9 @@ import timber.log.Timber
  *
  * Launch via [WebViewActivity.launch] with a URL and title.
  * Credentials are injected via query params and localStorage.
+ *
+ * Exposes `window.AndroidBridge.launchTopupPurchase(productId)` so wallet.html
+ * can hand a tier tap back to the native Play Billing flow.
  */
 class WebViewActivity : AppCompatActivity() {
 
@@ -36,6 +41,7 @@ class WebViewActivity : AppCompatActivity() {
         const val EXTRA_URL = "extra_url"
         const val EXTRA_TITLE = "extra_title"
         const val EXTRA_NAV_ITEM = "extra_nav_item"
+        private const val BRIDGE_NAME = "AndroidBridge"
 
         fun launch(context: Context, url: String, title: String, navItem: NavItem = NavItem.SETTINGS) {
             context.startActivity(Intent(context, WebViewActivity::class.java).apply {
@@ -47,6 +53,7 @@ class WebViewActivity : AppCompatActivity() {
     }
 
     private val deviceManager: DeviceManager by lazy { DeviceManager.getInstance(this) }
+    private lateinit var billingManager: BillingManager
     private var webView: WebView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,6 +71,14 @@ class WebViewActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.tvWebviewTitle).text = title
         findViewById<ImageView>(R.id.btnWebviewBack).setOnClickListener { onBackPressedCompat() }
 
+        billingManager = BillingManager.getInstance(this)
+        billingManager.onTopupComplete = { productId, success ->
+            // Hand result back to wallet.html if it wired up a listener.
+            val js = "window.onTopupComplete && window.onTopupComplete(" +
+                "\"${productId.replace("\"", "\\\"")}\", $success);"
+            webView?.evaluateJavascript(js, null)
+        }
+
         setupWebView()
     }
 
@@ -72,6 +87,7 @@ class WebViewActivity : AppCompatActivity() {
         val title = intent.getStringExtra(EXTRA_TITLE) ?: "webview"
         TelemetryHelper.trackPageView(this, title.lowercase().replace(" ", "_"))
         RecordingIndicatorHelper.attach(this)
+        billingManager.refreshState()
     }
 
     override fun onPause() {
@@ -95,6 +111,8 @@ class WebViewActivity : AppCompatActivity() {
             settings.loadWithOverviewMode = false
             settings.useWideViewPort = false
             settings.userAgentString = settings.userAgentString + " EClawAndroid"
+
+            addJavascriptInterface(WebViewBridge(), BRIDGE_NAME)
 
             webViewClient = object : WebViewClient() {
                 override fun shouldOverrideUrlLoading(
@@ -172,8 +190,25 @@ class WebViewActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        if (::billingManager.isInitialized) {
+            billingManager.onTopupComplete = null
+        }
         webView?.destroy()
         webView = null
         super.onDestroy()
+    }
+
+    /**
+     * JavaScript bridge exposed as `window.AndroidBridge`. Scope is intentionally
+     * narrow — only methods the portal pages hosted here need for native escape.
+     */
+    private inner class WebViewBridge {
+        @JavascriptInterface
+        fun launchTopupPurchase(productId: String) {
+            Timber.d("[WebView] launchTopupPurchase productId=$productId")
+            runOnUiThread {
+                billingManager.launchTopupPurchaseFlow(this@WebViewActivity, productId)
+            }
+        }
     }
 }

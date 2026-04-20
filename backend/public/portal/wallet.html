@@ -86,7 +86,26 @@
             padding: 14px;
             background: var(--input-bg);
             position: relative;
+            cursor: pointer;
+            transition: border-color 0.15s, transform 0.1s;
         }
+        .tier-card:hover { border-color: var(--accent, #6366f1); }
+        .tier-card:active { transform: scale(0.97); }
+        .tier-card.is-pending { opacity: 0.6; pointer-events: none; }
+        .topup-toast {
+            position: fixed;
+            left: 50%;
+            bottom: 80px;
+            transform: translateX(-50%);
+            background: rgba(20, 20, 30, 0.92);
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 9999;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+        }
+        .topup-toast.is-error { background: #b91c1c; }
         .tier-twd {
             font-size: 18px;
             font-weight: 700;
@@ -275,11 +294,58 @@
                         ${bonusLine}
                     `;
                     card.title = titleHint;
+                    card.dataset.productId = t.productId;
+                    card.addEventListener('click', () => tapTier(card, t.productId));
                     grid.appendChild(card);
                 }
             } catch (err) {
                 console.error('[wallet] tiers load failed', err);
             }
+        }
+
+        let pendingTierCard = null;
+
+        function tapTier(card, productId) {
+            if (pendingTierCard) return;
+            const bridge = window.AndroidBridge;
+            if (!bridge || typeof bridge.launchTopupPurchase !== 'function') {
+                showTopupToast(tt('wallet_topup_via_app', 'Please top up via the Android app'), true);
+                return;
+            }
+            pendingTierCard = card;
+            card.classList.add('is-pending');
+            try {
+                bridge.launchTopupPurchase(productId);
+            } catch (err) {
+                console.error('[wallet] launchTopupPurchase failed', err);
+                card.classList.remove('is-pending');
+                pendingTierCard = null;
+                showTopupToast(tt('wallet_topup_failed', 'Top-up failed. Please try again.'), true);
+            }
+        }
+
+        window.onTopupComplete = function(productId, success) {
+            if (pendingTierCard) {
+                pendingTierCard.classList.remove('is-pending');
+                pendingTierCard = null;
+            }
+            if (success) {
+                showTopupToast(tt('wallet_topup_success', 'Top-up successful!'));
+                loadBalance();
+                loadHistory();
+            } else {
+                showTopupToast(tt('wallet_topup_failed', 'Top-up failed. Please try again.'), true);
+            }
+        };
+
+        function showTopupToast(text, isError) {
+            const existing = document.querySelector('.topup-toast');
+            if (existing) existing.remove();
+            const el = document.createElement('div');
+            el.className = 'topup-toast' + (isError ? ' is-error' : '');
+            el.textContent = text;
+            document.body.appendChild(el);
+            setTimeout(() => { el.remove(); }, 3200);
         }
 
         async function loadHistory() {
