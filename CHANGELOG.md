@@ -1,3 +1,10 @@
+# [1.1034.0](https://github.com/HankHuang0516/EClaw/compare/v1.1033.0...v1.1034.0) (2026-04-20)
+
+
+### Features
+
+* **onboarding:** Track 4 product tour — Claude channel binding ([#1916](https://github.com/HankHuang0516/EClaw/issues/1916)) ([347ecbe](https://github.com/HankHuang0516/EClaw/commit/347ecbefdf1f55e2aee7a5451eae3d4bd0391f10))
+
 # [1.1033.0](https://github.com/HankHuang0516/EClaw/compare/v1.1032.0...v1.1033.0) (2026-04-20)
 
 
