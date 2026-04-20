@@ -5,19 +5,18 @@
 -- ============================================
 -- Invite / Referral Schema (Phase 5)
 -- ============================================
-
-CREATE TABLE IF NOT EXISTS invite_codes (
-    code VARCHAR(8) PRIMARY KEY,
-    owner_user_id UUID NOT NULL,
-    max_uses INTEGER,
-    use_count INTEGER NOT NULL DEFAULT 0,
-    expires_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    CONSTRAINT fk_invite_owner FOREIGN KEY (owner_user_id)
-        REFERENCES user_accounts(id) ON DELETE CASCADE
-);
-
-CREATE INDEX IF NOT EXISTS idx_invite_owner ON invite_codes(owner_user_id);
+--
+-- NOTE: The `invite_codes` table itself is owned by auth_schema.sql
+-- (device-based: owner_device_id / used_by_device_id / used_at).
+-- The Phase-5 migration to user-based codes is deferred — see
+-- backend/invite.js comment block + index.js:~1947 for the current
+-- "router not mounted" state. When the Phase-5 migration ships,
+-- re-introduce the invite_codes CREATE here (or migrate in place)
+-- and coordinate the cutover with auth_schema.sql.
+--
+-- This file only owns `invite_redemptions`, which is Phase-5-only
+-- and is read by growth.js for conversion analytics even while the
+-- Phase-5 router itself stays disabled.
 
 CREATE TABLE IF NOT EXISTS invite_redemptions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
