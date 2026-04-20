@@ -254,15 +254,69 @@ describe('Mission Control Dashboard API', () => {
         it('should return notes for valid credentials', async () => {
             const res = await request(app)
                 .get('/api/mission/notes')
-                .query({ 
+                .query({
                     deviceId: testDeviceId,
                     entityId: testEntityId,
-                    botSecret: testBotSecret 
+                    botSecret: testBotSecret
                 });
-            
+
             expect(res.status).to.equal(200);
             expect(res.body.success).to.equal(true);
             expect(res.body.notes).to.be.an('array');
+        });
+
+        // Regression: the handler used to read from the legacy mission_notes
+        // table (never written to), so notes added via /note/add were
+        // invisible here. This proves /notes now reads from the same source
+        // as /dashboard — mission_dashboard.notes JSON column.
+        it('should return notes added via /note/add (same source as dashboard)', async () => {
+            const title = 'regression-probe-' + Date.now();
+            const addRes = await request(app)
+                .post('/api/mission/note/add')
+                .send({
+                    deviceId: testDeviceId,
+                    entityId: testEntityId,
+                    botSecret: testBotSecret,
+                    title,
+                    content: 'probe',
+                    category: 'general'
+                });
+            expect(addRes.status).to.equal(200);
+
+            const res = await request(app)
+                .get('/api/mission/notes')
+                .query({
+                    deviceId: testDeviceId,
+                    entityId: testEntityId,
+                    botSecret: testBotSecret
+                });
+            expect(res.status).to.equal(200);
+            const titles = (res.body.notes || []).map(n => n.title);
+            expect(titles).to.include(title);
+        });
+
+        it('should filter by category query param', async () => {
+            const catA = 'cat-a-' + Date.now();
+            const catB = 'cat-b-' + Date.now();
+            await request(app).post('/api/mission/note/add').send({
+                deviceId: testDeviceId, entityId: testEntityId, botSecret: testBotSecret,
+                title: 'note-a-' + Date.now(), content: 'x', category: catA
+            });
+            await request(app).post('/api/mission/note/add').send({
+                deviceId: testDeviceId, entityId: testEntityId, botSecret: testBotSecret,
+                title: 'note-b-' + Date.now(), content: 'y', category: catB
+            });
+            const res = await request(app)
+                .get('/api/mission/notes')
+                .query({
+                    deviceId: testDeviceId,
+                    entityId: testEntityId,
+                    botSecret: testBotSecret,
+                    category: catA
+                });
+            expect(res.status).to.equal(200);
+            const cats = (res.body.notes || []).map(n => n.category);
+            expect(cats.every(c => c === catA)).to.equal(true);
         });
     });
     
@@ -274,15 +328,43 @@ describe('Mission Control Dashboard API', () => {
         it('should return rules for valid credentials', async () => {
             const res = await request(app)
                 .get('/api/mission/rules')
-                .query({ 
+                .query({
                     deviceId: testDeviceId,
                     entityId: testEntityId,
-                    botSecret: testBotSecret 
+                    botSecret: testBotSecret
                 });
-            
+
             expect(res.status).to.equal(200);
             expect(res.body.success).to.equal(true);
             expect(res.body.rules).to.be.an('array');
+        });
+
+        // Same regression as /notes — handler used to read from the legacy
+        // mission_rules table that receives no writes.
+        it('should return rules added via /rule/add (same source as dashboard)', async () => {
+            const probeName = 'regression-rule-' + Date.now();
+            const addRes = await request(app)
+                .post('/api/mission/rule/add')
+                .send({
+                    deviceId: testDeviceId,
+                    entityId: testEntityId,
+                    botSecret: testBotSecret,
+                    name: probeName,
+                    description: 'regression probe',
+                    ruleType: 'WORKFLOW'
+                });
+            expect(addRes.status).to.equal(200);
+
+            const res = await request(app)
+                .get('/api/mission/rules')
+                .query({
+                    deviceId: testDeviceId,
+                    entityId: testEntityId,
+                    botSecret: testBotSecret
+                });
+            expect(res.status).to.equal(200);
+            const names = (res.body.rules || []).map(r => r.name);
+            expect(names).to.include(probeName);
         });
     });
 });
