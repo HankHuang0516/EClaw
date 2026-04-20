@@ -1,7 +1,18 @@
 /**
  * Invite / Referral System — Phase 5 Growth Engine
  *
- * Mounted at: /api/invite
+ * Intended mount: /api/invite
+ *
+ * STATUS (2026-04-20): router NOT mounted. The live invite endpoints
+ * under /api/invite/* are the device-auth legacy ones defined in
+ * index.js:~3971 against the auth_schema.sql `invite_codes` table
+ * (owner_device_id / used_by_device_id). This file's user-auth code
+ * targets the Phase-5 shape (owner_user_id / max_uses / expires_at)
+ * and is kept for when the migration actually runs.
+ *
+ * Schema ownership: `invite_codes` → auth_schema.sql (device-based).
+ * `invite_redemptions` → invite_schema.sql (Phase-5 only; read by
+ * growth.js for conversion analytics even while this router is off).
  *
  * - Each user gets one invite code (auto-generated on first request)
  * - Redeemed by new users at signup or via /api/invite/redeem

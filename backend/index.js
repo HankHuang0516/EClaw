@@ -1944,14 +1944,18 @@ setTimeout(() => trustModule.initTrustDatabase(), 3000);
 // ============================================
 // INVITE / REFERRAL SYSTEM (P5)
 // ============================================
-// invite.js (Phase 5 JWT-based) router removed — conflicts with device-auth
-// invite routes below (line ~3662). Schema init kept for table idempotency.
+// Phase-5 invite.js router is NOT mounted — the live /api/invite/*
+// endpoints are the device-auth legacy ones defined below (~line 3971)
+// against auth_schema.sql's invite_codes(owner_device_id, ...) table.
+// invite.js stays loaded so invite_redemptions (used by growth.js
+// conversion analytics) is created. The conflicting Phase-5
+// `invite_codes` CREATE has been removed from invite_schema.sql —
+// single source of truth is now auth_schema.sql.
 const inviteModule = require('./invite')({
     authMiddleware: authModule.authMiddleware,
     walletModule,
     serverLog,
 });
-// NOTE: router NOT mounted — device-auth routes in index.js handle /api/invite/*
 setTimeout(() => inviteModule.initInviteDatabase(), 3500);
 
 // ============================================
