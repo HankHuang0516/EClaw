@@ -1,3 +1,10 @@
+## [1.1018.2](https://github.com/HankHuang0516/EClaw/compare/v1.1018.1...v1.1018.2) (2026-04-20)
+
+
+### Bug Fixes
+
+* **mission:** harden update handlers + mirror aliases across rule/skill/soul ([#1889](https://github.com/HankHuang0516/EClaw/issues/1889)) ([8bdbff6](https://github.com/HankHuang0516/EClaw/commit/8bdbff69a51f8e69e326c0a1b2e0402e27c09a2f)), closes [#1888](https://github.com/HankHuang0516/EClaw/issues/1888)
+
 ## [1.1018.1](https://github.com/HankHuang0516/EClaw/compare/v1.1018.0...v1.1018.1) (2026-04-20)
 
 
