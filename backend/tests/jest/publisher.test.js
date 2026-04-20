@@ -213,6 +213,39 @@ describe('Publisher API auth (X-Publisher-Key)', () => {
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
     });
+
+    it('GET /*/oauth/start is public even when PUBLISHER_API_KEY is set (browser navigation)', async () => {
+        // Regression guard: browsers can't attach X-Publisher-Key when
+        // navigating to an OAuth-start redirect, so these routes must
+        // bypass the key gate (they have their own `state` CSRF token).
+        // Before the bypass, clicking the renew URL from
+        // /wordpress/oauth/status would 401 with "Invalid or missing
+        // X-Publisher-Key header".
+        process.env.PUBLISHER_API_KEY = 'test-secret-key';
+        // WordPress OAuth start — 501 when client creds unset (expected in
+        // test env), but crucially NOT 401.
+        const wp = await request(app).get('/api/publisher/wordpress/oauth/start');
+        expect(wp.status).not.toBe(401);
+        // Blogger OAuth start — same shape.
+        const bl = await request(app).get('/api/publisher/blogger/oauth/start');
+        expect(bl.status).not.toBe(401);
+    });
+
+    it('GET /*/oauth/callback is public (provider bounces the user back to us)', async () => {
+        process.env.PUBLISHER_API_KEY = 'test-secret-key';
+        // No `code` → 400, not 401 (auth middleware must let it through).
+        const res = await request(app).get('/api/publisher/wordpress/oauth/callback');
+        expect(res.status).not.toBe(401);
+    });
+
+    it('still gates non-OAuth GETs under the publisher key', async () => {
+        // Regression guard: the bypass regex is scoped to /*/oauth/(start|callback)
+        // — other publisher GETs (e.g. /wordpress/oauth/status, /blogger/status)
+        // must still require the key when one is set.
+        process.env.PUBLISHER_API_KEY = 'test-secret-key';
+        const res = await request(app).get('/api/publisher/wordpress/oauth/status');
+        expect(res.status).toBe(401);
+    });
 });
 
 // ════════════════════════════════════════════════════════════════

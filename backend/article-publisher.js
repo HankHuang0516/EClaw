@@ -37,6 +37,14 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 
 function requirePublisherAuth(req, res, next) {
     // GET /platforms is always public (read-only discovery)
     if (req.method === 'GET' && req.path === '/platforms') return next();
+    // OAuth start/callback routes are browser-navigated redirects — the
+    // browser cannot attach custom headers when the user hits the URL or
+    // when the provider (Google/WordPress.com) bounces back to /callback.
+    // These routes have their own `state` anti-CSRF token, so they're
+    // designed to be public. Without this bypass, the WordPress renew
+    // flow (surfaced in /wordpress/oauth/status → renewUrl) 401s when the
+    // user clicks it.
+    if (req.method === 'GET' && /^\/[a-z]+\/oauth\/(start|callback)$/.test(req.path)) return next();
     // Read at request time so env changes take effect without restart
     const apiKey = process.env.PUBLISHER_API_KEY;
     // If PUBLISHER_API_KEY not set, skip auth (backward-compatible)
