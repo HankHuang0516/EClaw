@@ -1,3 +1,10 @@
+# [1.1035.0](https://github.com/HankHuang0516/EClaw/compare/v1.1034.0...v1.1035.0) (2026-04-20)
+
+
+### Features
+
+* **onboarding:** Scope 0 wizard router — intent-based 3-question flow ([#1917](https://github.com/HankHuang0516/EClaw/issues/1917)) ([3f7214d](https://github.com/HankHuang0516/EClaw/commit/3f7214d7084a96684d902c8c6a85048213dd4409)), closes [track2#rental](https://github.com/track2/issues/rental) [track3#channelApiCard](https://github.com/track3/issues/channelApiCard)
+
 # [1.1034.0](https://github.com/HankHuang0516/EClaw/compare/v1.1033.0...v1.1034.0) (2026-04-20)
 
 
