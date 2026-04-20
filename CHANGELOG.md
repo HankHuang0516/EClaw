@@ -1,3 +1,11 @@
+## [1.1024.1](https://github.com/HankHuang0516/EClaw/compare/v1.1024.0...v1.1024.1) (2026-04-20)
+
+
+### Bug Fixes
+
+* **publisher:** allow browser navigation on OAuth start/callback routes ([#1902](https://github.com/HankHuang0516/EClaw/issues/1902)) ([7c2c971](https://github.com/HankHuang0516/EClaw/commit/7c2c9716c6a6b65e551a08486c7307e5160a8a75))
+* **wallet:** mark zombie topup_orders 'failed' on first ack_sweep encounter ([#1901](https://github.com/HankHuang0516/EClaw/issues/1901)) ([3156af6](https://github.com/HankHuang0516/EClaw/commit/3156af6dc3f5fb6b99476b0f40e2325c918bcbdf))
+
 # [1.1024.0](https://github.com/HankHuang0516/EClaw/compare/v1.1023.0...v1.1024.0) (2026-04-20)
 
 
