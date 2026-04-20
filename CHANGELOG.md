@@ -1,3 +1,10 @@
+# [1.1036.0](https://github.com/HankHuang0516/EClaw/compare/v1.1035.0...v1.1036.0) (2026-04-20)
+
+
+### Features
+
+* **chat:** semantic vector search via pgvector + OpenAI embeddings ([#1918](https://github.com/HankHuang0516/EClaw/issues/1918)) ([0e922b2](https://github.com/HankHuang0516/EClaw/commit/0e922b2551b0c0d67188a7290fdc9604a15932ab))
+
 # [1.1035.0](https://github.com/HankHuang0516/EClaw/compare/v1.1034.0...v1.1035.0) (2026-04-20)
 
 
