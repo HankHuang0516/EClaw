@@ -655,19 +655,20 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
         if (!authenticate(req, res)) return;
         const { deviceId, category } = req.query;
 
+        // Notes live on mission_dashboard.notes (JSON column) — same source
+        // the dashboard endpoint and note/add/update/delete read and write.
+        // The legacy mission_notes table is never written to.
         try {
-            let query = 'SELECT * FROM mission_notes WHERE device_id = $1';
-            const params = [deviceId];
-
+            const result = await pool.query(
+                'SELECT notes FROM mission_dashboard WHERE device_id = $1',
+                [deviceId]
+            );
+            let notes = result.rows.length > 0 ? (result.rows[0].notes || []) : [];
             if (category) {
-                query += ' AND category = $2';
-                params.push(category);
+                notes = notes.filter(n => (n.category || 'general') === category);
             }
-
-            query += ' ORDER BY updated_at DESC';
-            const result = await pool.query(query, params);
-
-            res.json({ success: true, notes: result.rows });
+            notes.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+            res.json({ success: true, notes });
         } catch (error) {
             console.error('[Mission] Error fetching notes:', error);
             res.status(500).json({ success: false, error: error.message });
@@ -1536,19 +1537,24 @@ async function submitPayment() {
         if (!authenticate(req, res)) return;
         const { deviceId, type } = req.query;
 
+        // Rules live on mission_dashboard.rules (JSON column) — same source
+        // the dashboard endpoint and rule/add/update/delete read and write.
+        // The legacy mission_rules table is never written to.
         try {
-            let query = 'SELECT * FROM mission_rules WHERE device_id = $1';
-            const params = [deviceId];
-
+            const result = await pool.query(
+                'SELECT rules FROM mission_dashboard WHERE device_id = $1',
+                [deviceId]
+            );
+            let rules = result.rows.length > 0 ? (result.rows[0].rules || []) : [];
             if (type) {
-                query += ' AND rule_type = $2';
-                params.push(type);
+                rules = rules.filter(r => (r.ruleType || r.rule_type) === type);
             }
-
-            query += ' ORDER BY priority DESC, created_at DESC';
-            const result = await pool.query(query, params);
-
-            res.json({ success: true, rules: result.rows });
+            rules.sort((a, b) => {
+                const pa = a.priority || 0, pb = b.priority || 0;
+                if (pa !== pb) return pb - pa;
+                return (b.createdAt || 0) - (a.createdAt || 0);
+            });
+            res.json({ success: true, rules });
         } catch (error) {
             console.error('[Mission] Error fetching rules:', error);
             res.status(500).json({ success: false, error: error.message });
