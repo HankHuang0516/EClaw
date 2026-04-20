@@ -81,6 +81,23 @@
         .inv-redeem { margin-top: 12px; display: flex; gap: 8px; }
         .inv-redeem input { flex: 1; padding: 10px; border: 1px solid var(--card-border); border-radius: var(--radius-sm); background: var(--input-bg); color: var(--text); font-size: 14px; text-transform: uppercase; letter-spacing: 2px; }
         .inv-redeem button { padding: 10px 18px; border: none; border-radius: var(--radius-sm); background: var(--primary); color: #fff; font-weight: 700; cursor: pointer; }
+
+        .inv-tier-current { display: flex; align-items: center; justify-content: space-between; padding: 14px; border-radius: var(--radius-sm); background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #78350f; margin-bottom: 14px; }
+        .inv-tier-current-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.8; }
+        .inv-tier-current-name { font-size: 20px; font-weight: 800; margin-top: 2px; }
+        .inv-tier-current-icon { font-size: 32px; }
+        .inv-tier-progress-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+        .inv-tier-progress-track { height: 8px; background: var(--input-bg); border-radius: 4px; overflow: hidden; border: 1px solid var(--card-border); margin-bottom: 14px; }
+        .inv-tier-progress-fill { height: 100%; background: linear-gradient(90deg, #f59e0b, #d97706); width: 0%; transition: width 0.3s ease; }
+        .inv-tier-list { display: grid; gap: 8px; }
+        .inv-tier-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--card-border); border-radius: var(--radius-sm); background: var(--input-bg); font-size: 13px; }
+        .inv-tier-row.unlocked { border-color: #f59e0b; background: linear-gradient(135deg, #fffbeb, #fef3c7); }
+        .inv-tier-row-icon { font-size: 20px; }
+        .inv-tier-row-main { flex: 1; }
+        .inv-tier-row-name { font-weight: 700; }
+        .inv-tier-row-req { font-size: 11px; color: var(--text-secondary); }
+        .inv-tier-row-bonus { font-weight: 700; color: #10b981; font-variant-numeric: tabular-nums; }
+        .inv-tier-row.unlocked .inv-tier-row-bonus { color: #d97706; }
     </style>
 </head>
 <body>
@@ -163,6 +180,21 @@
                 <div class="inv-reward-row"><span class="inv-reward-label" data-i18n="inv_friend_gets">Friend gets</span><span class="inv-reward-value">+100 e幣</span></div>
                 <div class="inv-reward-row"><span class="inv-reward-label" data-i18n="inv_first_topup">Friend's first top-up bonus (you)</span><span class="inv-reward-value">+500 e幣</span></div>
             </div>
+        </div>
+
+        <!-- Tier milestones -->
+        <div class="inv-section" id="invTierPanel" style="display:none;">
+            <h3 data-i18n="inv_tier_title">Tier & Milestones</h3>
+            <div class="inv-tier-current">
+                <div>
+                    <div class="inv-tier-current-label" data-i18n="inv_tier_current">Current Tier</div>
+                    <div class="inv-tier-current-name" id="invTierName">—</div>
+                </div>
+                <div class="inv-tier-current-icon" id="invTierIcon">✨</div>
+            </div>
+            <div class="inv-tier-progress-label" id="invTierProgressLabel"></div>
+            <div class="inv-tier-progress-track"><div class="inv-tier-progress-fill" id="invTierProgressFill"></div></div>
+            <div class="inv-tier-list" id="invTierList"></div>
         </div>
 
         <!-- Redeem a code -->
@@ -257,6 +289,57 @@
             }).join('');
         }
 
+        const TIER_ICONS = { none: '✨', bronze: '🥉', silver: '🥈', gold: '🥇', diamond: '💎' };
+        function renderTier(data) {
+            const panel = document.getElementById('invTierPanel');
+            const catalog = Array.isArray(data.tier_catalog) ? data.tier_catalog : null;
+            if (!panel || !catalog) return;
+            panel.style.display = '';
+            const invited = Number(data.total_invited) || 0;
+            const tier = data.tier || 'none';
+            const unlocked = new Set(data.unlocked_tiers || []);
+            const nextTier = data.next_tier;
+            const nextThreshold = Number(data.next_threshold) || 0;
+            const invitesToNext = Number(data.invites_to_next) || 0;
+
+            const tierName = tier === 'none' ? tt('inv_tier_none', 'Not unlocked yet') : tt(`inv_tier_${tier}`, tier);
+            document.getElementById('invTierName').textContent = tierName;
+            document.getElementById('invTierIcon').textContent = TIER_ICONS[tier] || '✨';
+
+            const progressLabel = document.getElementById('invTierProgressLabel');
+            const progressFill = document.getElementById('invTierProgressFill');
+            if (!nextTier) {
+                progressLabel.textContent = tt('inv_tier_all_done', 'All tiers unlocked 🏆');
+                progressFill.style.width = '100%';
+            } else {
+                const nextName = tt(`inv_tier_${nextTier}`, nextTier);
+                const template = tt('inv_tier_progress', '{n} more invites to reach {tier}');
+                progressLabel.textContent = template.replace('{n}', invitesToNext).replace('{tier}', nextName);
+                const prevThreshold = (() => {
+                    const prev = catalog.slice().reverse().find(t => t.threshold <= invited);
+                    return prev ? prev.threshold : 0;
+                })();
+                const span = Math.max(1, nextThreshold - prevThreshold);
+                const pct = Math.min(100, Math.max(0, ((invited - prevThreshold) / span) * 100));
+                progressFill.style.width = pct + '%';
+            }
+
+            const listEl = document.getElementById('invTierList');
+            listEl.innerHTML = catalog.map(t => {
+                const name = tt(`inv_tier_${t.key}`, t.key);
+                const req = tt('inv_tier_req', '{n} invites').replace('{n}', t.threshold);
+                const unlockedCls = unlocked.has(t.key) ? 'unlocked' : '';
+                return `<div class="inv-tier-row ${unlockedCls}">
+                    <span class="inv-tier-row-icon">${TIER_ICONS[t.key] || '🎖️'}</span>
+                    <div class="inv-tier-row-main">
+                        <div class="inv-tier-row-name">${name}</div>
+                        <div class="inv-tier-row-req">${req}</div>
+                    </div>
+                    <div class="inv-tier-row-bonus">+${t.bonus_messages.toLocaleString()}</div>
+                </div>`;
+            }).join('');
+        }
+
         async function loadStats() {
             const refreshBtn = document.getElementById('invRefreshBtn');
             if (refreshBtn) refreshBtn.classList.add('inv-spinning');
@@ -282,6 +365,8 @@
                 history[invDayKey(new Date())] = dailyUsed;
                 saveInviteHistory(history);
                 renderInviteTimeline(history);
+
+                renderTier(data);
             } catch (err) {
                 const timeline = document.getElementById('invTimeline');
                 if (timeline) timeline.innerHTML = `<div class="inv-stats-error">${tt('invite_stats_error', 'Failed to load stats. Try again.')}</div>`;
