@@ -109,13 +109,14 @@ async function fetchPlazaNewListed() {
 }
 
 async function fetchInviteConversion() {
-    // Conversion = codes that got redeemed at least once / codes issued.
-    // `used_at` flips from NULL → timestamp when the redeemer signs up with the code,
-    // so this mirrors the real viral-loop definition without needing click tracking.
+    // Phase-5 viral-loop conversion: distinct codes with at least one redemption
+    // row in invite_redemptions, divided by total codes issued. Using the
+    // redemptions table (not invite_codes.used_at / use_count) because two
+    // competing invite_codes schemas exist in the repo — redemptions is the
+    // canonical Phase-5 source and is unambiguous.
     const r = await pool.query(
-        `SELECT COUNT(*)::int AS total_codes,
-                COUNT(used_at)::int AS redeemed_codes
-           FROM invite_codes`
+        `SELECT (SELECT COUNT(*)::int FROM invite_codes) AS total_codes,
+                (SELECT COUNT(DISTINCT code)::int FROM invite_redemptions) AS redeemed_codes`
     );
     const { total_codes, redeemed_codes } = r.rows[0];
     if (total_codes === 0) return { total_codes: 0, redeemed_codes: 0, pct: null };
