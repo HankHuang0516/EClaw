@@ -1,3 +1,10 @@
+# [1.1021.0](https://github.com/HankHuang0516/EClaw/compare/v1.1020.3...v1.1021.0) (2026-04-20)
+
+
+### Features
+
+* **portal:** add invite CTA to main nav ([#1897](https://github.com/HankHuang0516/EClaw/issues/1897)) ([142c2c7](https://github.com/HankHuang0516/EClaw/commit/142c2c7f56956bc41b4edaf59a90d4f2c237aa70))
+
 ## [1.1020.3](https://github.com/HankHuang0516/EClaw/compare/v1.1020.2...v1.1020.3) (2026-04-20)
 
 
