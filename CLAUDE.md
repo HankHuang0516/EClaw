@@ -475,26 +475,25 @@ EClaw/
 
 ### ⚠️ i18n Pre-PR Requirement (MANDATORY)
 
-**If your PR touches any of the following, you MUST run the i18n test locally and confirm it passes BEFORE opening the PR:**
+**If your PR touches any of the following, you MUST run BOTH i18n checks locally and confirm they pass BEFORE opening the PR:**
 
 - `backend/public/shared/i18n.js`
 - Any `*.html` file under `backend/public/`
 
 ```bash
-# Run from repo root — must pass with 0 failures before you open the PR
+# 1. Syntax + structure test (Jest)
 cd backend && npm test -- --testPathPattern=i18n-syntax
+
+# 2. Strict key-reference check — hard-fails if any `data-i18n` attr or
+#    `i18n.t('key')` call references a key missing from TRANSLATIONS.en
+node backend/scripts/i18n-check.js
 ```
 
-**Why**: A SyntaxError in `i18n.js` (e.g. orphaned key-value pairs placed outside a language block, or a missing comma) crashes every portal page with `i18n is not defined`. CI catches it, but only after the PR is already merged and damage is done. Run locally first.
+Both are wired into Backend CI and block merges. Run them locally first — a missing key renders as the raw key string in the UI (the exact "i18n not defined"-class bug the gate exists to prevent).
 
-**The test checks**:
-1. `i18n.js` parses without SyntaxError (`vm.Script`)
-2. All required language sections (`en zh ja ko fr es de`) exist and are valid objects
-3. `i18n.t()` returns translations, not raw keys
-4. French arena keys exist in the `fr` section (regression for #1667)
-5. All `<script src="...i18n.js">` paths in HTML files resolve to real files
-6. Pages calling `i18n.t()` actually load `i18n.js`
-7. Inline event handlers using `i18n` have `typeof i18n !== 'undefined'` guards
+**What each check catches**:
+- Jest `i18n-syntax`: SyntaxError in `i18n.js`, missing locale sections, missing `<script src>` refs, inline handlers without `typeof i18n` guards.
+- `scripts/i18n-check.js`: every `data-i18n` / `data-i18n-title` / `data-i18n-placeholder` attr + every `i18n.t('key')` call must resolve to a real key in `TRANSLATIONS.en`. `[html]`-prefixed keys are treated as intentional HTML-fallback (no EN entry needed). Dynamic concatenation `i18n.t('prefix_' + var)` is skipped.
 
 ## CI/CD
 
