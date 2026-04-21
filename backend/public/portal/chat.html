@@ -506,6 +506,37 @@
             100% { box-shadow: 0 0 0 0 transparent; }
         }
 
+        /* Right-click / long-press message context menu */
+        .chat-ctx-menu {
+            position: fixed;
+            z-index: 10000;
+            background: var(--card-bg, #fff);
+            border: 1px solid var(--border, #d9e3ea);
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+            padding: 4px;
+            min-width: 170px;
+            font-size: 14px;
+            user-select: none;
+        }
+        .chat-ctx-menu .ctxm-item {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 9px 12px;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text, #1a1a1a);
+            font: inherit;
+        }
+        .chat-ctx-menu .ctxm-item:hover,
+        .chat-ctx-menu .ctxm-item:focus {
+            background: var(--hover-bg, #f0f4f8);
+            outline: none;
+        }
+
         /* ── Reply preview bar above input ── */
         .reply-preview-bar {
             display: none;
@@ -2689,9 +2720,11 @@
             if (btn) copyCodeBlock(btn);
         });
 
-        // Long-press on a message bubble triggers the quote-reply flow.
-        // Needed for mobile WebView where :hover-revealed reply button is hard to tap.
-        (function installLongPressQuote() {
+        // Long-press (mobile) / right-click (desktop) on a message bubble opens a
+        // context menu with Reply + Find-related. Mobile WebView users can't
+        // easily hover-reveal the corner buttons, so this is the primary
+        // entrypoint into the vector-neighbor lookup on touch devices.
+        (function installMessageCtxMenu() {
             const container = document.getElementById('chatMessages');
             let timer = null;
             let startX = 0;
@@ -2704,10 +2737,8 @@
             container.addEventListener('touchstart', (e) => {
                 const msg = e.target.closest('.chat-msg');
                 if (!msg) return;
-                // Don't intercept taps on interactive children (reply btn, links, images).
-                if (e.target.closest('a, button, .chat-reply-btn, .link-preview-slot, .chat-img, video')) return;
-                const btn = msg.querySelector('.chat-reply-btn');
-                if (!btn) return;
+                if (e.target.closest('a, button, .chat-reply-btn, .chat-related-btn, .link-preview-slot, .chat-img, video')) return;
+                if (!msg.dataset.messageId) return;
                 const touch = e.touches[0];
                 startX = touch.clientX;
                 startY = touch.clientY;
@@ -2715,7 +2746,7 @@
                 timer = setTimeout(() => {
                     timer = null;
                     if (navigator.vibrate) { try { navigator.vibrate(15); } catch (_) {} }
-                    handleReplyBtn(btn);
+                    showChatCtxMenu(msg.dataset.messageId, startX, startY);
                 }, LONG_PRESS_MS);
             }, { passive: true });
 
@@ -2730,6 +2761,15 @@
 
             container.addEventListener('touchend', clear, { passive: true });
             container.addEventListener('touchcancel', clear, { passive: true });
+
+            container.addEventListener('contextmenu', (e) => {
+                const msg = e.target.closest('.chat-msg');
+                if (!msg) return;
+                if (e.target.closest('a, .link-preview-slot, .chat-img, video')) return;
+                if (!msg.dataset.messageId) return;
+                e.preventDefault();
+                showChatCtxMenu(msg.dataset.messageId, e.clientX, e.clientY);
+            });
         })();
 
         // ── Init ──
@@ -4538,6 +4578,73 @@
             void target.offsetWidth;
             target.classList.add('crp-flash');
         }
+
+        // Shared context menu for right-click (desktop) and long-press (mobile) on
+        // a message bubble. Actions proxy to the existing reply / related buttons
+        // so keyboard / a11y flow and data-bindings stay consistent.
+        const CHAT_CTX_MENU_ID = 'chatCtxMenu';
+        function ensureChatCtxMenu() {
+            let menu = document.getElementById(CHAT_CTX_MENU_ID);
+            if (menu) return menu;
+            menu = document.createElement('div');
+            menu.id = CHAT_CTX_MENU_ID;
+            menu.className = 'chat-ctx-menu';
+            menu.style.display = 'none';
+            menu.innerHTML = `
+                <button type="button" class="ctxm-item" data-action="reply"><span data-i18n="chat_reply_btn">Reply</span></button>
+                <button type="button" class="ctxm-item" data-action="related"><span data-i18n="chat_related_btn">Find related</span></button>
+            `;
+            document.body.appendChild(menu);
+            menu.addEventListener('click', (e) => {
+                const item = e.target.closest('.ctxm-item');
+                if (!item) return;
+                const action = item.dataset.action;
+                const msgId = menu.dataset.msgId;
+                hideChatCtxMenu();
+                if (!msgId) return;
+                const msgEl = document.querySelector(`.chat-msg[data-message-id="${CSS.escape(msgId)}"]`);
+                if (!msgEl) return;
+                if (action === 'reply') {
+                    const replyBtn = msgEl.querySelector('.chat-reply-btn');
+                    if (replyBtn) handleReplyBtn(replyBtn);
+                } else if (action === 'related') {
+                    const relBtn = msgEl.querySelector('.chat-related-btn');
+                    if (relBtn) toggleRelatedPanel(relBtn);
+                }
+            });
+            if (window.i18n && typeof i18n.apply === 'function') i18n.apply();
+            return menu;
+        }
+
+        function showChatCtxMenu(msgId, clientX, clientY) {
+            const menu = ensureChatCtxMenu();
+            menu.dataset.msgId = msgId;
+            menu.style.display = 'block';
+            menu.style.left = '0px';
+            menu.style.top = '0px';
+            const rect = menu.getBoundingClientRect();
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const x = Math.max(4, Math.min(clientX, vw - rect.width - 4));
+            const y = Math.max(4, Math.min(clientY, vh - rect.height - 4));
+            menu.style.left = x + 'px';
+            menu.style.top = y + 'px';
+        }
+
+        function hideChatCtxMenu() {
+            const menu = document.getElementById(CHAT_CTX_MENU_ID);
+            if (menu) menu.style.display = 'none';
+        }
+
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById(CHAT_CTX_MENU_ID);
+            if (!menu || menu.style.display === 'none') return;
+            if (!e.target.closest('.chat-ctx-menu')) hideChatCtxMenu();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') hideChatCtxMenu();
+        });
+        window.addEventListener('scroll', hideChatCtxMenu, { passive: true });
 
         // Smart quote: activates the reply bar with source+excerpt, no full-content paste
         function quoteToChat(source, title, excerpt) {
