@@ -1,3 +1,10 @@
+# [1.1042.0](https://github.com/HankHuang0516/EClaw/compare/v1.1041.0...v1.1042.0) (2026-04-21)
+
+
+### Features
+
+* **analytics:** GET /api/analytics/site-pageviews aggregation endpoint ([#1943](https://github.com/HankHuang0516/EClaw/issues/1943)) ([515c517](https://github.com/HankHuang0516/EClaw/commit/515c517cf9e0c5c5e4c6e8377f7d713aabfa6cc0)), closes [#21](https://github.com/HankHuang0516/EClaw/issues/21) [#20](https://github.com/HankHuang0516/EClaw/issues/20) [#1942](https://github.com/HankHuang0516/EClaw/issues/1942) [#22](https://github.com/HankHuang0516/EClaw/issues/22)
+
 # [1.1041.0](https://github.com/HankHuang0516/EClaw/compare/v1.1040.0...v1.1041.0) (2026-04-21)
 
 
