@@ -7,7 +7,7 @@
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
-- **Current version**: 1.1015.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **Current version**: 1.1045.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
 - **Android app version**: 1.0.76 (versionCode 82); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
@@ -18,7 +18,7 @@
 ```
 EClaw/
 ├── backend/                  # Node.js Express server (deployed to Railway)
-│   ├── index.js              # Main server (~14,648 lines) — all API routes
+│   ├── index.js              # Main server (~17,095 lines) — all API routes
 │   ├── db.js                 # PostgreSQL connection pool + schema creation
 │   ├── auth.js               # Auth module (JWT, OAuth, OIDC, RBAC)
 │   ├── mission.js            # Mission Control dashboard system
@@ -56,11 +56,27 @@ EClaw/
 │   ├── pricing-advisor.js    # Bot rental pricing recommendations
 │   ├── fraud-detection.js    # Rental fraud detection
 │   ├── feedback-email.js     # Email notifications for feedback (Resend)
+│   ├── mindmap.js            # Mind map multi-layer thinking graph (schema + CRUD + Cytoscape UI)
+│   ├── entity-id.js          # Stripe-style entity ID factory (card_, note_, skill_, listing_, exam_, contract_)
+│   ├── safe-equal.js         # Timing-safe secret comparison utility
+│   ├── files.js              # Cloudflare R2 file storage (multipart upload, download, deletion)
+│   ├── mention-parser.js     # Chat message @mention parsing and routing (@xxxxxx, @N, @#N, @all)
+│   ├── push-context.js       # Channel callback push context inlining and mentions block builder
+│   ├── growth.js             # Growth metrics API for admin bots (GET /api/growth/daily)
+│   ├── site-pageviews.js     # Anonymous pageview tracking for marketing/public pages
+│   ├── arena-pool-updater.js # Daily auto-refresh of interview arena questions via Claude
+│   ├── arena-pool-validator.js # Validates arena question pool (static + live modes)
+│   ├── rental-proxy.js       # Token metering proxy for rented bots (balance check + charge)
 │   ├── openapi.yaml          # OpenAPI 3.0 specification
 │   ├── auth_schema.sql       # User accounts + auth SQL schema
 │   ├── mission_schema.sql    # Mission dashboard SQL schema
 │   ├── kanban_schema.sql     # Kanban Board SQL schema
 │   ├── oauth_schema.sql      # OAuth server SQL schema
+│   ├── interview_arena_schema.sql # Interview Arena table definitions
+│   ├── invite_schema.sql     # Referral/invite code system tables
+│   ├── rental_schema.sql     # Bot rental marketplace tables
+│   ├── trust_schema.sql      # Reviews, disputes, credit scoring tables
+│   ├── wallet_schema.sql     # E-coin wallet and transaction ledger tables
 │   ├── data/
 │   │   ├── skill-templates.json   # Bot skill templates
 │   │   ├── soul-templates.json    # Bot personality templates
@@ -86,7 +102,18 @@ EClaw/
 │   │   │   ├── kanban.html        # Kanban board (Mission Center v2)
 │   │   │   ├── community.html     # Community template hub
 │   │   │   ├── workspace.html     # Split-view workspace mode
-│   │   │   └── schedule.html      # Legacy schedule (redirects to kanban)
+│   │   │   ├── analytics.html    # Site pageview analytics admin dashboard
+│   │   │   ├── mindmap.html      # Mind map visualization (Cytoscape + canvas)
+│   │   │   ├── publisher.html    # Multi-platform article publisher UI
+│   │   │   ├── publisher-setup.html # Publisher platform configuration wizard
+│   │   │   ├── wallet.html       # E-coin wallet management
+│   │   │   ├── my-rentals.html   # Active rental contracts display
+│   │   │   ├── plaza.html        # Bot rental marketplace / plaza
+│   │   │   ├── onboarding.html   # New user onboarding flow
+│   │   │   ├── invite.html       # Referral/invite code page
+│   │   │   ├── invite-qr-generator.html # QR code generation for invites
+│   │   │   ├── roadmap.html      # Product roadmap display
+│   │   │   └── schedule.html     # Legacy schedule (redirects to kanban)
 │   │   │   ├── shared/            # Portal-specific shared modules
 │   │   │   │   ├── ai-chat.js     # AI chat component
 │   │   │   │   ├── api.js         # API wrapper utilities
@@ -111,8 +138,8 @@ EClaw/
 │   │   │   └── og-image.png       # Open Graph social sharing image
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
-│   ├── tests/                # Regression + integration tests (72 files)
-│   ├── tests/jest/           # Jest unit tests (61 files, CI-run via `npm test`)
+│   ├── tests/                # Regression + integration tests (78 files)
+│   ├── tests/jest/           # Jest unit tests (108 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -175,7 +202,7 @@ EClaw/
 
 ### Backend (Node.js/Express)
 
-- **Single-file server**: `backend/index.js` (~14,648 lines) contains all API routes
+- **Single-file server**: `backend/index.js` (~17,095 lines) contains all API routes
 - **Database**: PostgreSQL (Railway-managed), connection in `backend/db.js`
 - **Real-time**: Socket.IO for live updates to Web Portal and Android app
 - **Auth**: JWT tokens (cookie-based for web, header-based for API), social OAuth (Google, Facebook), OIDC
@@ -266,6 +293,10 @@ EClaw/
 | `/api/gps/recommendations` | gps-recommendations.js | GPS-based entity recommendations (demo) |
 | `/api/device/org-chart` | org-chart.js + index.js | Organization hierarchy chart (GET/PUT hierarchy + behavior options) |
 | `/api/kanban/cards/summary` | index.js | Kanban card summary endpoint |
+| `/api/mindmap/*` | mindmap.js | Mind map CRUD (nodes, edges, anchors, comments) |
+| `/api/analytics/*` | site-pageviews.js | Site pageview analytics aggregation |
+| `/api/growth/*` | growth.js | Growth metrics for admin bots |
+| `/api/chat/message/:id/related` | index.js + chat-embedding.js | Nearest-neighbor message lookup |
 | `/api/health`, `/api/version` | index.js | Health check and version |
 | `/c/:code` | index.js | Shareable chat link (read-only view) |
 | `/`, `/landing`, `/llms.txt` | index.js | Landing page, SEO, AI search discovery |
@@ -294,6 +325,16 @@ EClaw/
 | Landing | `/` (root) | EClawbot brand landing page (public, SEO) |
 | Enterprise | `/enterprise` | Enterprise landing page (public, SEO, JSON-LD) |
 | Privacy Policy | `/privacy-policy.html` | Privacy policy (public, i18n) |
+| Analytics | `/portal/analytics.html` | Site pageview analytics (admin) |
+| Mind Map | `/portal/mindmap.html` | Mind map visualization (Cytoscape) |
+| Publisher | `/portal/publisher.html` | Multi-platform article publisher |
+| Publisher Setup | `/portal/publisher-setup.html` | Publisher platform config wizard |
+| Wallet | `/portal/wallet.html` | E-coin wallet management |
+| My Rentals | `/portal/my-rentals.html` | Active rental contracts |
+| Plaza | `/portal/plaza.html` | Bot rental marketplace |
+| Onboarding | `/portal/onboarding.html` | New user onboarding flow |
+| Invite | `/portal/invite.html` | Referral/invite code page |
+| Roadmap | `/portal/roadmap.html` | Product roadmap display |
 
 ### Android App (Kotlin)
 
@@ -812,11 +853,23 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **PublicCode Allocator Fix**: Tombstone freed publicCodes to prevent stale-QR re-routing
 - **Entity ID Never-Reuse**: Removed auto-compact on delete to preserve entity ID invariant; monotonically increasing IDs never reused
 
+### Recent Features (v1.1016.x – v1.1045.x)
+
+- **Chat Vector Search**: `POST /api/chat/embedding` async embedding; `GET /api/chat/message/:id/related` nearest-neighbor lookup; related-neighbors panel on message bubbles
+- **Mind Map MVP**: Phase 1 — `mindmap.js` schema + CRUD API for multi-layer thinking graph (nodes, edges, anchors, comments); Phase 2 — Cytoscape portal UI with mini-map (`mindmap.html`)
+- **Site Analytics**: `site-pageviews.js` anonymous pageview middleware; `GET /api/analytics/site-pageviews` aggregation endpoint; `analytics.html` admin dashboard
+- **Chat Context Menu**: Right-click + long-press context menu for reply/find-related on message bubbles
+- **Kanban Sort**: Sort dropdown on portal kanban board (by priority, date, status, title)
+- **Publisher X BYO Credentials**: Multi-tenant Phase 1 — users can provide their own X/Twitter API keys
+- **i18n Strict Checker**: `scripts/i18n-check.js` hard-fails if any `data-i18n` or `i18n.t()` references a missing EN key; wired into CI
+- **Chat Reply + Photo Fix**: Reply quote and photo attachment conflict resolved
+- **Marketing Hero Image**: Vector-memory hero image v1 (1200×630 OG) for social sharing
+
 ---
 
 ## Test Coverage Summary
 
-**~425 total API routes** across all modules (374 excluding Article Publisher), **~75% covered** by Jest + integration tests (~1686 test cases across 97 Jest files + 76 integration tests).
+**~440 total API routes** across all modules (390 excluding Article Publisher), **~75% covered** by Jest + integration tests (~1800 test cases across 108 Jest files + 78 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
