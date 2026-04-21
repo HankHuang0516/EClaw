@@ -13,6 +13,7 @@ const gatekeeper = require('./gatekeeper');
 const mentionParser = require('./mention-parser');
 const pushContext = require('./push-context');
 const telemetry = require('./device-telemetry');
+const sitePageviews = require('./site-pageviews');
 const feedbackModule = require('./device-feedback');
 const chatIntegrity = require('./chat-integrity');
 // JWT secret: fail-safe random per process if env var is missing (tokens signed in one process won't verify in another)
@@ -235,6 +236,11 @@ app.use(express.json({
     }
 }));
 app.use(cookieParser());
+
+// Site pageview tracker — anonymous GETs on marketing / public HTML pages.
+// Pool is wired lazily via setPool() once chatPool exists; tracking is
+// fire-and-forget and silently no-ops when the pool isn't ready.
+app.use(sitePageviews.pageviewMiddleware());
 
 // SEO: serve robots.txt, sitemap.xml, llms.txt at root
 app.get('/robots.txt', (req, res) => {
@@ -14107,6 +14113,8 @@ const chatPool = new Pool({
 // Link telemetry middleware to the real pool
 _telemetryPool = chatPool;
 telemetry.initTelemetryTable(chatPool, serverLog);
+sitePageviews.setPool(chatPool);
+sitePageviews.initPageviewsTable(chatPool);
 feedbackModule.initFeedbackTable(chatPool);
 feedbackModule.initFeedbackPhotosTable(chatPool);
 notifModule.initNotificationTables(chatPool);
