@@ -82,3 +82,63 @@ describe('chat-embedding module — related helpers no-op when disabled', () => 
         expect(await chatEmbedding.searchRelatedBySemantic('x', null)).toEqual([]);
     });
 });
+
+// Regression: when pgvector is unavailable in prod, the `embedding` column is
+// never added to chat_messages. findMessage() used to reference that column
+// unconditionally and returned null (silent catch) on every lookup, surfacing
+// as "Failed to load related messages" in the UI for every click.
+describe('chat-embedding findMessage — no-pgvector regression', () => {
+    // Isolated module instance so we control poolRef + vectorEnabled cleanly.
+    let chatEmbedding;
+    beforeEach(() => {
+        jest.isolateModules(() => {
+            chatEmbedding = require('../../chat-embedding');
+        });
+    });
+
+    it('builds SQL without `embedding IS NOT NULL` when vectorEnabled=false', async () => {
+        const captured = [];
+        const pool = {
+            query: (sql, params) => {
+                // Swallow initSchema's CREATE EXTENSION / ALTER calls as failures
+                // to keep vectorEnabled=false, but capture the findMessage call.
+                if (/CREATE EXTENSION|ALTER TABLE|CREATE INDEX/i.test(sql)) {
+                    return Promise.reject(new Error('not available'));
+                }
+                captured.push({ sql, params });
+                return Promise.resolve({
+                    rows: [{ id: 'msg1', entity_id: 1, text: 'hi', has_embedding: false }]
+                });
+            }
+        };
+        await chatEmbedding.initSchema(pool);
+        expect(chatEmbedding.isVectorEnabled()).toBe(false);
+
+        const result = await chatEmbedding.findMessage('dev1', 'msg1');
+        expect(result).toBeTruthy();
+        expect(result.id).toBe('msg1');
+        expect(captured.length).toBe(1);
+        expect(captured[0].sql).not.toMatch(/embedding\s+IS\s+NOT\s+NULL/i);
+        expect(captured[0].sql).toMatch(/FALSE\s+AS\s+has_embedding/i);
+    });
+
+    it('still uses embedding column when vectorEnabled=true', async () => {
+        const captured = [];
+        const pool = {
+            query: (sql, params) => {
+                captured.push({ sql, params });
+                return Promise.resolve({
+                    rows: sql.includes('WHERE id')
+                        ? [{ id: 'msg1', has_embedding: true }]
+                        : []
+                });
+            }
+        };
+        await chatEmbedding.initSchema(pool);
+        expect(chatEmbedding.isVectorEnabled()).toBe(true);
+
+        captured.length = 0;
+        await chatEmbedding.findMessage('dev1', 'msg1');
+        expect(captured[0].sql).toMatch(/\(embedding\s+IS\s+NOT\s+NULL\)\s+AS\s+has_embedding/i);
+    });
+});

@@ -145,17 +145,19 @@ async function countUnembeddedForDevice(deviceId) {
  */
 async function findMessage(deviceId, messageId) {
     if (!poolRef || !deviceId || !messageId) return null;
+    const hasEmbeddingExpr = vectorEnabled ? '(embedding IS NOT NULL)' : 'FALSE';
     try {
         const r = await poolRef.query(
             `SELECT id, entity_id, text, source, is_from_user, is_from_bot, created_at,
-                    (embedding IS NOT NULL) AS has_embedding
+                    ${hasEmbeddingExpr} AS has_embedding
              FROM chat_messages
              WHERE id = $1 AND device_id = $2
              LIMIT 1`,
             [messageId, deviceId]
         );
         return r.rows[0] || null;
-    } catch {
+    } catch (err) {
+        console.warn('[ChatEmbedding] findMessage failed:', err.message);
         return null;
     }
 }
