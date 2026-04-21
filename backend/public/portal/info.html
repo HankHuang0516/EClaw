@@ -3720,6 +3720,17 @@ DELETE /api/channel/register
 
                         <div class="warning" data-i18n="guide_cc_channel_warn_experimental">⚠️ <strong>實驗性功能</strong> — Claude Code Channel 依賴 <code>--dangerously-load-development-channels</code>，此為 Claude Code 的實驗性 API，穩定性不如 OpenClaw Channel。建議生產環境使用 <a href="#channel-plugins/openclaw-channel">OpenClaw Channel</a>。</div>
 
+                        <div class="callout-success">
+                            <span class="callout-title" data-i18n="guide_cc_channel_callout_subscription_title">💰 用訂閱額度，不額外付 API 費用</span>
+                            <div data-i18n="guide_cc_channel_callout_subscription_body">Claude Code Channel 直接使用你的 <strong>claude.ai Max 訂閱額度</strong>（或 Teams / Enterprise），不需要另外付 Anthropic API tokens 費用。</div>
+                            <div style="margin-top:10px;" data-i18n="guide_cc_channel_callout_subscription_compare_title">跟 OpenClaw Channel 比較：</div>
+                            <ul>
+                                <li data-i18n="guide_cc_channel_callout_subscription_compare_openclaw"><strong>OpenClaw Channel</strong> → 需要 Anthropic API key，按 token 計費</li>
+                                <li data-i18n="guide_cc_channel_callout_subscription_compare_claude"><strong>Claude Code Channel</strong> → 使用訂閱額度，一個月固定費用，跑再多 bot 都不額外燒錢</li>
+                            </ul>
+                            <div class="callout-best-for" data-i18n="guide_cc_channel_callout_subscription_best_for">適合：token 快用完、想省成本、或只有訂閱帳號沒 API key 的場景。</div>
+                        </div>
+
                         <h2 data-i18n="guide_cc_channel_h2_what">這是什麼？</h2>
                         <p data-i18n="guide_cc_channel_p_what">Claude Code Channel 是一個橋接服務，透過 <strong>fakechat WebSocket</strong> 協定連接 EClawbot 與 Claude Code。它在本機啟動一個 WebSocket 伺服器，攔截 EClawbot 推送過來的用戶訊息，轉交給 Claude Code 處理，再將 Claude Code 的回覆透過 Channel API 送回 EClawbot。</p>
                         <p data-i18n="guide_cc_channel_p_what2">簡單來說：你可以在 EClawbot App 或 Portal 裡，直接和 Claude Code 對話，就像在用 CLI 一樣。</p>
@@ -4019,6 +4030,10 @@ curl http://localhost:8787/   # fakechat plugin（應回傳 HTML）</div>
             <div class="faq-item" data-category="features">
                 <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_mission">What is Mission Control?<span class="faq-arrow">▼</span></div>
                 <div class="faq-answer" data-i18n="faq_a_mission">Mission Control is EClawbot's built-in task management system. Create tasks (TODO/Mission/Done), assign them to agents, manage notes, configure skills and rules, and define agent personality ("soul"). Agents are automatically notified when their tasks change.</div>
+            </div>
+            <div class="faq-item" data-category="features">
+                <div class="faq-question" onclick="toggleFaq(this)" data-i18n="faq_q_cc_vs_openclaw">Why use Claude Code Channel instead of OpenClaw Channel?<span class="faq-arrow">▼</span></div>
+                <div class="faq-answer" data-i18n="faq_a_cc_vs_openclaw">The main difference is <strong>billing</strong>. OpenClaw Channel uses an Anthropic API key and is charged per token; Claude Code Channel uses your claude.ai subscription allowance with a fixed monthly cost and no per-message billing. If you already have a claude.ai Max/Teams subscription, Claude Code Channel costs you nothing extra in API fees. The tradeoff: Claude Code Channel is currently experimental and slightly less stable than OpenClaw Channel.</div>
             </div>
 
             <div class="faq-section-title" data-faq-section="dev" data-i18n="faq_section_dev">Bot Development</div>
