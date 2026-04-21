@@ -1,3 +1,10 @@
+# [1.1045.0](https://github.com/HankHuang0516/EClaw/compare/v1.1044.0...v1.1045.0) (2026-04-21)
+
+
+### Features
+
+* **mindmap:** phase 2 — Cytoscape portal UI with mini-map ([#1946](https://github.com/HankHuang0516/EClaw/issues/1946)) ([fbe7493](https://github.com/HankHuang0516/EClaw/commit/fbe7493f793a509c834059a5b4ea349acbdf83a6))
+
 # [1.1044.0](https://github.com/HankHuang0516/EClaw/compare/v1.1043.0...v1.1044.0) (2026-04-21)
 
 
