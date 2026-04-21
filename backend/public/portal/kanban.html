@@ -938,7 +938,7 @@
                 case 'priority_asc':
                     return sorted.sort((a, b) => {
                         const pOrder = { 'P0': 0, 'P1': 1, 'P2': 2, 'P3': 3 };
-                        return (pOrder[a.priority] || 999) - (pOrder[b.priority] || 999);
+                        return (pOrder[a.priority] ?? 999) - (pOrder[b.priority] ?? 999);
                     });
                 default:
                     return cards;
