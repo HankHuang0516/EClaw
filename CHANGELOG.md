@@ -1,3 +1,10 @@
+## [1.1048.1](https://github.com/HankHuang0516/EClaw/compare/v1.1048.0...v1.1048.1) (2026-04-21)
+
+
+### Bug Fixes
+
+* **audit:** harden silent try/catch schema-drift bombs ([#1968](https://github.com/HankHuang0516/EClaw/issues/1968)) ([a84c042](https://github.com/HankHuang0516/EClaw/commit/a84c0426d6395041aafec98539f9ad2bd49f3f47))
+
 # [1.1048.0](https://github.com/HankHuang0516/EClaw/compare/v1.1047.1...v1.1048.0) (2026-04-21)
 
 
