@@ -1341,6 +1341,17 @@ try {
     console.error('[Growth] Failed to load module:', err.message);
 }
 
+// Mindmap — multi-layer thinking graph (Card #19, Phase 1: schema + CRUD)
+let mindmapModule;
+try {
+    mindmapModule = require('./mindmap')(devices);
+    app.use('/api/mindmap', mindmapModule.router);
+    console.log('[Mindmap] Module loaded successfully');
+} catch (err) {
+    console.error('[Mindmap] Failed to load module:', err.message);
+    mindmapModule = { initMindmapTables: () => {} };
+}
+
 // ============================================
 // PAGE VIEW TRACKING (fire-and-forget)
 // ============================================
@@ -14115,6 +14126,9 @@ _telemetryPool = chatPool;
 telemetry.initTelemetryTable(chatPool, serverLog);
 sitePageviews.setPool(chatPool);
 sitePageviews.initPageviewsTable(chatPool);
+if (mindmapModule && typeof mindmapModule.initMindmapTables === 'function') {
+    mindmapModule.initMindmapTables(chatPool);
+}
 feedbackModule.initFeedbackTable(chatPool);
 feedbackModule.initFeedbackPhotosTable(chatPool);
 notifModule.initNotificationTables(chatPool);

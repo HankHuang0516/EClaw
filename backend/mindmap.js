@@ -1,0 +1,645 @@
+/**
+ * Mindmap MVP — Phase 1 (Schema + CRUD API)
+ *
+ * Mounted at: /api/mindmap
+ *
+ * Card #19: 心智圖 MVP — 多層次 Zoom + Mini-map + 聚焦模式渲染架構.
+ * Phase 1 ships the data layer only — nodes, edges, anchors, per-node
+ * comments — plus the CRUD / traversal endpoints the UI (Phase 2) and
+ * AI traverse (Phase 4) will sit on top of. No client changes in this PR.
+ *
+ * Dual-auth (deviceSecret OR botSecret+entityId) on every endpoint.
+ * All rows are scoped by `device_id` — never leak between devices.
+ *
+ * Routes:
+ *   POST   /node                        Create node
+ *   GET    /node/:id                    Node detail (+ anchors + comments)
+ *   PATCH  /node/:id                    Update title/summary/position/node_type/is_subgraph_root/parent_node_id
+ *   DELETE /node/:id                    Delete node (cascade edges/anchors/comments via FK)
+ *   GET    /subgraph?root=ID&depth=N    BFS N-hop subgraph rooted at node (nodes + edges)
+ *   GET    /neighbors/:id               1-hop neighbors + connecting edges (for focus mode)
+ *   POST   /edge                        Create edge
+ *   DELETE /edge/:id                    Delete edge
+ *   POST   /node/:id/anchor             Attach an external anchor to a node
+ *   DELETE /anchor/:id                  Detach an anchor
+ *   POST   /node/:id/comment            Leave a comment on a node
+ *   GET    /node/:id/comments           List comments on a node
+ *
+ * Phase 4 (AI traverse) lands in a follow-up PR.
+ */
+
+'use strict';
+
+const express = require('express');
+const safeEqual = require('./safe-equal');
+
+const NODE_TYPES = new Set(['domain', 'topic', 'leaf', 'concept']);
+const EDGE_TYPES = new Set(['relates_to', 'causes', 'extends', 'opposes', 'parent_of']);
+const ANCHOR_TYPES = new Set(['kanban_card', 'chat_message', 'note', 'file', 'url']);
+
+const MAX_TRAVERSE_DEPTH = 4;
+const MAX_TRAVERSE_NODES = 500;
+
+function isUuid(s) {
+    return typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+}
+
+function clampStr(v, max) {
+    if (v === null || v === undefined) return null;
+    const s = String(v);
+    return s.length > max ? s.slice(0, max) : s;
+}
+
+/**
+ * Factory. `devices` is the shared in-memory device map from index.js so we
+ * can reuse the exact same dual-auth pattern (deviceSecret OR botSecret+entityId).
+ */
+function createMindmapModule(devices) {
+    let pool = null;
+
+    const router = express.Router();
+
+    async function initMindmapTables(p) {
+        if (!p) return;
+        pool = p;
+        try {
+            await p.query(`
+                CREATE TABLE IF NOT EXISTS mindmap_nodes (
+                    id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    device_id         VARCHAR(64) NOT NULL,
+                    entity_id         INTEGER,
+                    title             TEXT NOT NULL,
+                    summary           TEXT,
+                    node_type         VARCHAR(16),
+                    parent_node_id    UUID,
+                    is_subgraph_root  BOOLEAN DEFAULT FALSE,
+                    position          JSONB,
+                    created_at        TIMESTAMPTZ DEFAULT NOW(),
+                    updated_at        TIMESTAMPTZ DEFAULT NOW()
+                )
+            `);
+            await p.query(`CREATE INDEX IF NOT EXISTS idx_mindmap_nodes_device ON mindmap_nodes(device_id)`);
+            await p.query(`CREATE INDEX IF NOT EXISTS idx_mindmap_nodes_parent ON mindmap_nodes(parent_node_id)`);
+
+            await p.query(`
+                CREATE TABLE IF NOT EXISTS mindmap_edges (
+                    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    device_id       VARCHAR(64) NOT NULL,
+                    source_node_id  UUID NOT NULL REFERENCES mindmap_nodes(id) ON DELETE CASCADE,
+                    target_node_id  UUID NOT NULL REFERENCES mindmap_nodes(id) ON DELETE CASCADE,
+                    edge_type       VARCHAR(16),
+                    weight          REAL DEFAULT 1.0,
+                    created_at      TIMESTAMPTZ DEFAULT NOW()
+                )
+            `);
+            await p.query(`CREATE INDEX IF NOT EXISTS idx_mindmap_edges_device ON mindmap_edges(device_id)`);
+            await p.query(`CREATE INDEX IF NOT EXISTS idx_mindmap_edges_source ON mindmap_edges(source_node_id)`);
+            await p.query(`CREATE INDEX IF NOT EXISTS idx_mindmap_edges_target ON mindmap_edges(target_node_id)`);
+
+            await p.query(`
+                CREATE TABLE IF NOT EXISTS mindmap_node_anchors (
+                    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    device_id     VARCHAR(64) NOT NULL,
+                    node_id       UUID NOT NULL REFERENCES mindmap_nodes(id) ON DELETE CASCADE,
+                    anchor_type   VARCHAR(16) NOT NULL,
+                    anchor_ref    TEXT NOT NULL,
+                    display_label TEXT,
+                    created_at    TIMESTAMPTZ DEFAULT NOW()
+                )
+            `);
+            await p.query(`CREATE INDEX IF NOT EXISTS idx_mindmap_anchors_node ON mindmap_node_anchors(node_id)`);
+            await p.query(`CREATE INDEX IF NOT EXISTS idx_mindmap_anchors_ref  ON mindmap_node_anchors(anchor_type, anchor_ref)`);
+
+            await p.query(`
+                CREATE TABLE IF NOT EXISTS mindmap_node_comments (
+                    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    device_id  VARCHAR(64) NOT NULL,
+                    node_id    UUID NOT NULL REFERENCES mindmap_nodes(id) ON DELETE CASCADE,
+                    entity_id  INTEGER,
+                    text       TEXT NOT NULL,
+                    created_at TIMESTAMPTZ DEFAULT NOW()
+                )
+            `);
+            await p.query(`CREATE INDEX IF NOT EXISTS idx_mindmap_comments_node ON mindmap_node_comments(node_id, created_at DESC)`);
+
+            console.log('[Mindmap] Schema ready');
+        } catch (err) {
+            console.error('[Mindmap] Schema init error:', err.message);
+        }
+    }
+
+    // ── Dual auth. Returns the authenticated deviceId or null. ──
+    function authenticate(req, res) {
+        const params = { ...req.query, ...req.body };
+        const { deviceId, deviceSecret, botSecret, entityId } = params;
+
+        if (!deviceId) {
+            res.status(400).json({ success: false, error: 'Missing deviceId' });
+            return null;
+        }
+        const device = devices && devices[deviceId];
+        if (!device) {
+            res.status(401).json({ success: false, error: 'Invalid credentials' });
+            return null;
+        }
+
+        if (deviceSecret) {
+            if (safeEqual(device.deviceSecret, deviceSecret)) return deviceId;
+        }
+        if (botSecret && entityId !== undefined) {
+            const entity = (device.entities || {})[entityId];
+            if (entity && safeEqual(entity.botSecret, botSecret)) return deviceId;
+        }
+        if (!deviceSecret && !botSecret) {
+            res.status(400).json({ success: false, error: 'Missing deviceSecret or botSecret' });
+            return null;
+        }
+        res.status(401).json({ success: false, error: 'Invalid credentials' });
+        return null;
+    }
+
+    function getEntityId(req) {
+        const raw = (req.body && req.body.entityId) ?? (req.query && req.query.entityId);
+        if (raw === undefined || raw === null || raw === '') return null;
+        const n = parseInt(raw, 10);
+        return Number.isFinite(n) ? n : null;
+    }
+
+    function requirePool(res) {
+        if (!pool) {
+            res.status(503).json({ success: false, error: 'Database unavailable' });
+            return false;
+        }
+        return true;
+    }
+
+    // ─── POST /node ──────────────────────────────────────────────────────────
+    router.post('/node', async (req, res) => {
+        const deviceId = authenticate(req, res);
+        if (!deviceId) return;
+        if (!requirePool(res)) return;
+
+        const { title, summary, node_type, parent_node_id, is_subgraph_root, position } = req.body || {};
+        if (!title || typeof title !== 'string' || !title.trim()) {
+            return res.status(400).json({ success: false, error: 'Missing title' });
+        }
+        if (node_type && !NODE_TYPES.has(node_type)) {
+            return res.status(400).json({ success: false, error: `Invalid node_type (want one of: ${[...NODE_TYPES].join(', ')})` });
+        }
+        if (parent_node_id && !isUuid(parent_node_id)) {
+            return res.status(400).json({ success: false, error: 'Invalid parent_node_id' });
+        }
+
+        try {
+            if (parent_node_id) {
+                const parent = await pool.query(
+                    'SELECT id FROM mindmap_nodes WHERE id = $1 AND device_id = $2',
+                    [parent_node_id, deviceId]
+                );
+                if (parent.rowCount === 0) {
+                    return res.status(400).json({ success: false, error: 'parent_node_id not found on this device' });
+                }
+            }
+            const entityId = getEntityId(req);
+            const positionJson = position && typeof position === 'object' ? JSON.stringify(position) : null;
+            const result = await pool.query(
+                `INSERT INTO mindmap_nodes
+                    (device_id, entity_id, title, summary, node_type, parent_node_id, is_subgraph_root, position)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)
+                 RETURNING *`,
+                [
+                    deviceId,
+                    entityId,
+                    clampStr(title, 500),
+                    clampStr(summary, 8000),
+                    node_type || null,
+                    parent_node_id || null,
+                    !!is_subgraph_root,
+                    positionJson,
+                ]
+            );
+            res.json({ success: true, node: result.rows[0] });
+        } catch (err) {
+            console.error('[Mindmap] POST /node failed:', err.message);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // ─── GET /node/:id ───────────────────────────────────────────────────────
+    router.get('/node/:id', async (req, res) => {
+        const deviceId = authenticate(req, res);
+        if (!deviceId) return;
+        if (!requirePool(res)) return;
+        const { id } = req.params;
+        if (!isUuid(id)) return res.status(400).json({ success: false, error: 'Invalid node id' });
+
+        try {
+            const [node, anchors, comments] = await Promise.all([
+                pool.query('SELECT * FROM mindmap_nodes WHERE id = $1 AND device_id = $2', [id, deviceId]),
+                pool.query('SELECT * FROM mindmap_node_anchors WHERE node_id = $1 AND device_id = $2 ORDER BY created_at', [id, deviceId]),
+                pool.query('SELECT * FROM mindmap_node_comments WHERE node_id = $1 AND device_id = $2 ORDER BY created_at', [id, deviceId]),
+            ]);
+            if (node.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'Node not found' });
+            }
+            res.json({
+                success: true,
+                node: node.rows[0],
+                anchors: anchors.rows,
+                comments: comments.rows,
+            });
+        } catch (err) {
+            console.error('[Mindmap] GET /node/:id failed:', err.message);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // ─── PATCH /node/:id ─────────────────────────────────────────────────────
+    router.patch('/node/:id', async (req, res) => {
+        const deviceId = authenticate(req, res);
+        if (!deviceId) return;
+        if (!requirePool(res)) return;
+        const { id } = req.params;
+        if (!isUuid(id)) return res.status(400).json({ success: false, error: 'Invalid node id' });
+
+        const allowed = ['title', 'summary', 'node_type', 'parent_node_id', 'is_subgraph_root', 'position'];
+        const patch = {};
+        for (const k of allowed) {
+            if (k in (req.body || {})) patch[k] = req.body[k];
+        }
+        if (Object.keys(patch).length === 0) {
+            return res.status(400).json({ success: false, error: 'No allowed fields in body' });
+        }
+        if (patch.node_type !== undefined && patch.node_type !== null && !NODE_TYPES.has(patch.node_type)) {
+            return res.status(400).json({ success: false, error: 'Invalid node_type' });
+        }
+        if (patch.parent_node_id !== undefined && patch.parent_node_id !== null && !isUuid(patch.parent_node_id)) {
+            return res.status(400).json({ success: false, error: 'Invalid parent_node_id' });
+        }
+        if (patch.parent_node_id === id) {
+            return res.status(400).json({ success: false, error: 'Node cannot be its own parent' });
+        }
+
+        const sets = [];
+        const params = [];
+        let i = 1;
+        for (const [k, v] of Object.entries(patch)) {
+            if (k === 'position') {
+                sets.push(`position = $${i++}::jsonb`);
+                params.push(v && typeof v === 'object' ? JSON.stringify(v) : null);
+            } else if (k === 'title') {
+                if (typeof v !== 'string' || !v.trim()) return res.status(400).json({ success: false, error: 'Invalid title' });
+                sets.push(`title = $${i++}`); params.push(clampStr(v, 500));
+            } else if (k === 'summary') {
+                sets.push(`summary = $${i++}`); params.push(clampStr(v, 8000));
+            } else if (k === 'is_subgraph_root') {
+                sets.push(`is_subgraph_root = $${i++}`); params.push(!!v);
+            } else {
+                sets.push(`${k} = $${i++}`); params.push(v);
+            }
+        }
+        sets.push(`updated_at = NOW()`);
+        params.push(id, deviceId);
+
+        try {
+            if (patch.parent_node_id) {
+                const parent = await pool.query(
+                    'SELECT id FROM mindmap_nodes WHERE id = $1 AND device_id = $2',
+                    [patch.parent_node_id, deviceId]
+                );
+                if (parent.rowCount === 0) {
+                    return res.status(400).json({ success: false, error: 'parent_node_id not found on this device' });
+                }
+            }
+            const result = await pool.query(
+                `UPDATE mindmap_nodes SET ${sets.join(', ')}
+                 WHERE id = $${i++} AND device_id = $${i++}
+                 RETURNING *`,
+                params
+            );
+            if (result.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'Node not found' });
+            }
+            res.json({ success: true, node: result.rows[0] });
+        } catch (err) {
+            console.error('[Mindmap] PATCH /node/:id failed:', err.message);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // ─── DELETE /node/:id ────────────────────────────────────────────────────
+    router.delete('/node/:id', async (req, res) => {
+        const deviceId = authenticate(req, res);
+        if (!deviceId) return;
+        if (!requirePool(res)) return;
+        const { id } = req.params;
+        if (!isUuid(id)) return res.status(400).json({ success: false, error: 'Invalid node id' });
+
+        try {
+            const result = await pool.query(
+                'DELETE FROM mindmap_nodes WHERE id = $1 AND device_id = $2 RETURNING id',
+                [id, deviceId]
+            );
+            if (result.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'Node not found' });
+            }
+            res.json({ success: true, deleted: result.rows[0].id });
+        } catch (err) {
+            console.error('[Mindmap] DELETE /node/:id failed:', err.message);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // ─── GET /neighbors/:id ──────────────────────────────────────────────────
+    router.get('/neighbors/:id', async (req, res) => {
+        const deviceId = authenticate(req, res);
+        if (!deviceId) return;
+        if (!requirePool(res)) return;
+        const { id } = req.params;
+        if (!isUuid(id)) return res.status(400).json({ success: false, error: 'Invalid node id' });
+
+        try {
+            const center = await pool.query(
+                'SELECT * FROM mindmap_nodes WHERE id = $1 AND device_id = $2',
+                [id, deviceId]
+            );
+            if (center.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'Node not found' });
+            }
+            const edges = await pool.query(
+                `SELECT * FROM mindmap_edges
+                 WHERE device_id = $1 AND (source_node_id = $2 OR target_node_id = $2)`,
+                [deviceId, id]
+            );
+            const neighborIds = new Set();
+            for (const e of edges.rows) {
+                if (e.source_node_id !== id) neighborIds.add(e.source_node_id);
+                if (e.target_node_id !== id) neighborIds.add(e.target_node_id);
+            }
+            const neighbors = neighborIds.size === 0 ? { rows: [] } : await pool.query(
+                `SELECT * FROM mindmap_nodes
+                 WHERE device_id = $1 AND id = ANY($2::uuid[])`,
+                [deviceId, [...neighborIds]]
+            );
+            res.json({
+                success: true,
+                center: center.rows[0],
+                neighbors: neighbors.rows,
+                edges: edges.rows,
+            });
+        } catch (err) {
+            console.error('[Mindmap] GET /neighbors/:id failed:', err.message);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // ─── GET /subgraph?root=ID&depth=N ───────────────────────────────────────
+    router.get('/subgraph', async (req, res) => {
+        const deviceId = authenticate(req, res);
+        if (!deviceId) return;
+        if (!requirePool(res)) return;
+        const root = req.query.root;
+        const depth = Math.min(MAX_TRAVERSE_DEPTH, Math.max(1, parseInt(req.query.depth, 10) || 1));
+        if (!root || !isUuid(root)) {
+            return res.status(400).json({ success: false, error: 'Invalid root id' });
+        }
+
+        try {
+            const seed = await pool.query(
+                'SELECT id FROM mindmap_nodes WHERE id = $1 AND device_id = $2',
+                [root, deviceId]
+            );
+            if (seed.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'Root node not found' });
+            }
+
+            // BFS by expanding frontier through edges, one hop at a time.
+            const visited = new Set([root]);
+            let frontier = [root];
+            const allEdges = [];
+            for (let hop = 0; hop < depth && frontier.length > 0 && visited.size < MAX_TRAVERSE_NODES; hop++) {
+                const edges = await pool.query(
+                    `SELECT * FROM mindmap_edges
+                     WHERE device_id = $1
+                       AND (source_node_id = ANY($2::uuid[]) OR target_node_id = ANY($2::uuid[]))`,
+                    [deviceId, frontier]
+                );
+                const nextFrontier = [];
+                for (const e of edges.rows) {
+                    allEdges.push(e);
+                    for (const nid of [e.source_node_id, e.target_node_id]) {
+                        if (!visited.has(nid)) {
+                            visited.add(nid);
+                            nextFrontier.push(nid);
+                            if (visited.size >= MAX_TRAVERSE_NODES) break;
+                        }
+                    }
+                    if (visited.size >= MAX_TRAVERSE_NODES) break;
+                }
+                frontier = nextFrontier;
+            }
+
+            const uniqueEdges = Array.from(new Map(allEdges.map(e => [e.id, e])).values());
+            const nodes = await pool.query(
+                `SELECT * FROM mindmap_nodes WHERE device_id = $1 AND id = ANY($2::uuid[])`,
+                [deviceId, [...visited]]
+            );
+            res.json({
+                success: true,
+                root,
+                depth,
+                truncated: visited.size >= MAX_TRAVERSE_NODES,
+                nodes: nodes.rows,
+                edges: uniqueEdges,
+            });
+        } catch (err) {
+            console.error('[Mindmap] GET /subgraph failed:', err.message);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // ─── POST /edge ──────────────────────────────────────────────────────────
+    router.post('/edge', async (req, res) => {
+        const deviceId = authenticate(req, res);
+        if (!deviceId) return;
+        if (!requirePool(res)) return;
+        const { source_node_id, target_node_id, edge_type, weight } = req.body || {};
+        if (!isUuid(source_node_id) || !isUuid(target_node_id)) {
+            return res.status(400).json({ success: false, error: 'Invalid source_node_id or target_node_id' });
+        }
+        if (source_node_id === target_node_id) {
+            return res.status(400).json({ success: false, error: 'Edge source and target must differ' });
+        }
+        if (edge_type && !EDGE_TYPES.has(edge_type)) {
+            return res.status(400).json({ success: false, error: `Invalid edge_type (want one of: ${[...EDGE_TYPES].join(', ')})` });
+        }
+        const w = weight === undefined ? 1.0 : parseFloat(weight);
+        if (!Number.isFinite(w)) {
+            return res.status(400).json({ success: false, error: 'Invalid weight' });
+        }
+
+        try {
+            // Confirm both endpoints belong to this device.
+            const both = await pool.query(
+                `SELECT id FROM mindmap_nodes
+                 WHERE device_id = $1 AND id = ANY($2::uuid[])`,
+                [deviceId, [source_node_id, target_node_id]]
+            );
+            if (both.rowCount !== 2) {
+                return res.status(400).json({ success: false, error: 'Both nodes must exist on this device' });
+            }
+            const result = await pool.query(
+                `INSERT INTO mindmap_edges (device_id, source_node_id, target_node_id, edge_type, weight)
+                 VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+                [deviceId, source_node_id, target_node_id, edge_type || null, w]
+            );
+            res.json({ success: true, edge: result.rows[0] });
+        } catch (err) {
+            console.error('[Mindmap] POST /edge failed:', err.message);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // ─── DELETE /edge/:id ────────────────────────────────────────────────────
+    router.delete('/edge/:id', async (req, res) => {
+        const deviceId = authenticate(req, res);
+        if (!deviceId) return;
+        if (!requirePool(res)) return;
+        const { id } = req.params;
+        if (!isUuid(id)) return res.status(400).json({ success: false, error: 'Invalid edge id' });
+
+        try {
+            const result = await pool.query(
+                'DELETE FROM mindmap_edges WHERE id = $1 AND device_id = $2 RETURNING id',
+                [id, deviceId]
+            );
+            if (result.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'Edge not found' });
+            }
+            res.json({ success: true, deleted: result.rows[0].id });
+        } catch (err) {
+            console.error('[Mindmap] DELETE /edge/:id failed:', err.message);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // ─── POST /node/:id/anchor ───────────────────────────────────────────────
+    router.post('/node/:id/anchor', async (req, res) => {
+        const deviceId = authenticate(req, res);
+        if (!deviceId) return;
+        if (!requirePool(res)) return;
+        const { id } = req.params;
+        if (!isUuid(id)) return res.status(400).json({ success: false, error: 'Invalid node id' });
+        const { anchor_type, anchor_ref, display_label } = req.body || {};
+        if (!ANCHOR_TYPES.has(anchor_type)) {
+            return res.status(400).json({ success: false, error: `Invalid anchor_type (want one of: ${[...ANCHOR_TYPES].join(', ')})` });
+        }
+        if (!anchor_ref || typeof anchor_ref !== 'string' || !anchor_ref.trim()) {
+            return res.status(400).json({ success: false, error: 'Missing anchor_ref' });
+        }
+
+        try {
+            const node = await pool.query(
+                'SELECT id FROM mindmap_nodes WHERE id = $1 AND device_id = $2',
+                [id, deviceId]
+            );
+            if (node.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'Node not found' });
+            }
+            const result = await pool.query(
+                `INSERT INTO mindmap_node_anchors (device_id, node_id, anchor_type, anchor_ref, display_label)
+                 VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+                [deviceId, id, anchor_type, clampStr(anchor_ref, 500), clampStr(display_label, 300)]
+            );
+            res.json({ success: true, anchor: result.rows[0] });
+        } catch (err) {
+            console.error('[Mindmap] POST /node/:id/anchor failed:', err.message);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // ─── DELETE /anchor/:id ──────────────────────────────────────────────────
+    router.delete('/anchor/:id', async (req, res) => {
+        const deviceId = authenticate(req, res);
+        if (!deviceId) return;
+        if (!requirePool(res)) return;
+        const { id } = req.params;
+        if (!isUuid(id)) return res.status(400).json({ success: false, error: 'Invalid anchor id' });
+
+        try {
+            const result = await pool.query(
+                'DELETE FROM mindmap_node_anchors WHERE id = $1 AND device_id = $2 RETURNING id',
+                [id, deviceId]
+            );
+            if (result.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'Anchor not found' });
+            }
+            res.json({ success: true, deleted: result.rows[0].id });
+        } catch (err) {
+            console.error('[Mindmap] DELETE /anchor/:id failed:', err.message);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // ─── POST /node/:id/comment ──────────────────────────────────────────────
+    router.post('/node/:id/comment', async (req, res) => {
+        const deviceId = authenticate(req, res);
+        if (!deviceId) return;
+        if (!requirePool(res)) return;
+        const { id } = req.params;
+        if (!isUuid(id)) return res.status(400).json({ success: false, error: 'Invalid node id' });
+        const text = req.body && req.body.text;
+        if (!text || typeof text !== 'string' || !text.trim()) {
+            return res.status(400).json({ success: false, error: 'Missing text' });
+        }
+        try {
+            const node = await pool.query(
+                'SELECT id FROM mindmap_nodes WHERE id = $1 AND device_id = $2',
+                [id, deviceId]
+            );
+            if (node.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'Node not found' });
+            }
+            const entityId = getEntityId(req);
+            const result = await pool.query(
+                `INSERT INTO mindmap_node_comments (device_id, node_id, entity_id, text)
+                 VALUES ($1, $2, $3, $4) RETURNING *`,
+                [deviceId, id, entityId, clampStr(text, 4000)]
+            );
+            res.json({ success: true, comment: result.rows[0] });
+        } catch (err) {
+            console.error('[Mindmap] POST /node/:id/comment failed:', err.message);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // ─── GET /node/:id/comments ──────────────────────────────────────────────
+    router.get('/node/:id/comments', async (req, res) => {
+        const deviceId = authenticate(req, res);
+        if (!deviceId) return;
+        if (!requirePool(res)) return;
+        const { id } = req.params;
+        if (!isUuid(id)) return res.status(400).json({ success: false, error: 'Invalid node id' });
+        try {
+            const result = await pool.query(
+                `SELECT * FROM mindmap_node_comments
+                 WHERE node_id = $1 AND device_id = $2
+                 ORDER BY created_at ASC`,
+                [id, deviceId]
+            );
+            res.json({ success: true, comments: result.rows });
+        } catch (err) {
+            console.error('[Mindmap] GET /node/:id/comments failed:', err.message);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    return {
+        router,
+        initMindmapTables,
+        // Exported for unit tests:
+        _internal: { isUuid, clampStr, NODE_TYPES, EDGE_TYPES, ANCHOR_TYPES, MAX_TRAVERSE_DEPTH, MAX_TRAVERSE_NODES },
+    };
+}
+
+module.exports = createMindmapModule;
