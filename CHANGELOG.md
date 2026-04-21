@@ -1,3 +1,11 @@
+# [1.1038.0](https://github.com/HankHuang0516/EClaw/compare/v1.1037.1...v1.1038.0) (2026-04-21)
+
+
+### Features
+
+* **chat:** /api/chat/message/:id/related — nearest-neighbor lookup anchored on a message ([#1926](https://github.com/HankHuang0516/EClaw/issues/1926)) ([4a6eadb](https://github.com/HankHuang0516/EClaw/commit/4a6eadb311933167e7f6ac341848430b1dd09c5b)), closes [#1918](https://github.com/HankHuang0516/EClaw/issues/1918)
+* **kanban:** sort dropdown on portal board ([#1924](https://github.com/HankHuang0516/EClaw/issues/1924)) ([1068e4b](https://github.com/HankHuang0516/EClaw/commit/1068e4b03df7f224b4fb3e9b2e20cbdaac4e2424))
+
 ## [1.1037.1](https://github.com/HankHuang0516/EClaw/compare/v1.1037.0...v1.1037.1) (2026-04-20)
 
 
