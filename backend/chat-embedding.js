@@ -139,11 +139,67 @@ async function countUnembeddedForDevice(deviceId) {
     }
 }
 
+/**
+ * Look up a single chat message scoped to device. Returns null if not found
+ * or if the pool isn't initialized.
+ */
+async function findMessage(deviceId, messageId) {
+    if (!poolRef || !deviceId || !messageId) return null;
+    try {
+        const r = await poolRef.query(
+            `SELECT id, entity_id, text, source, is_from_user, is_from_bot, created_at,
+                    (embedding IS NOT NULL) AS has_embedding
+             FROM chat_messages
+             WHERE id = $1 AND device_id = $2
+             LIMIT 1`,
+            [messageId, deviceId]
+        );
+        return r.rows[0] || null;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Nearest-neighbor search anchored on a stored message's embedding. Excludes
+ * the anchor message itself. Returns [] when pgvector is off or the anchor
+ * has no embedding — caller decides fallback strategy.
+ */
+async function searchRelatedBySemantic(deviceId, messageId, opts = {}) {
+    if (!vectorEnabled || !poolRef || !deviceId || !messageId) return [];
+    const limit = Math.min(Math.max(parseInt(opts.limit, 10) || 5, 1), 50);
+    const params = [deviceId, messageId, limit];
+    let filter = '';
+    if (opts.entityId != null && Number.isInteger(opts.entityId)) {
+        filter = ` AND c.entity_id = $${params.length + 1}`;
+        params.push(opts.entityId);
+    }
+    const sql = `
+        WITH anchor AS (
+            SELECT embedding FROM chat_messages
+            WHERE id = $2 AND device_id = $1 AND embedding IS NOT NULL
+        )
+        SELECT c.id, c.entity_id, c.text, c.source, c.is_from_user, c.is_from_bot, c.created_at,
+               c.embedding <=> (SELECT embedding FROM anchor) AS distance
+        FROM chat_messages c
+        WHERE c.device_id = $1
+          AND c.embedding IS NOT NULL
+          AND c.id <> $2
+          AND EXISTS (SELECT 1 FROM anchor)${filter}
+        ORDER BY c.embedding <=> (SELECT embedding FROM anchor)
+        LIMIT $3
+    `;
+    const result = await poolRef.query(sql, params);
+    return result.rows;
+}
+
 module.exports = {
     initSchema,
     isVectorEnabled,
     embedMessageAsync,
     searchBySemantic,
     searchByKeyword,
-    countUnembeddedForDevice
+    countUnembeddedForDevice,
+    findMessage,
+    searchRelatedBySemantic
 };
