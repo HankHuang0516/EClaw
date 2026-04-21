@@ -96,11 +96,88 @@ function pageviewMiddleware() {
     };
 }
 
+/**
+ * Convert a shell-style glob (with `*`) into a Postgres LIKE pattern.
+ * `*` → `%`, other chars are escaped. Returns null if input is empty.
+ */
+function globToLike(glob) {
+    if (!glob || typeof glob !== 'string') return null;
+    const esc = glob.replace(/[\\%_]/g, ch => '\\' + ch);
+    return esc.replace(/\*/g, '%');
+}
+
+/**
+ * Aggregate pageviews over the last `days` days, optionally filtered by
+ * a path glob. Returns totalViews, uniqueIPs, daily series, topPaths, byCampaign.
+ */
+async function queryPageviews(pool, { days = 7, path = null, topLimit = 20 } = {}) {
+    if (!pool) throw new Error('pool not set');
+    const d = Math.max(1, Math.min(365, parseInt(days, 10) || 7));
+    const like = globToLike(path);
+    // $1 = days, $2 = like-pattern or null. Using COALESCE so $2 NULL disables the filter.
+    const whereTimeAndPath = `
+        WHERE created_at >= NOW() - ($1::int * INTERVAL '1 day')
+          AND ($2::text IS NULL OR path ILIKE $2 ESCAPE '\\')
+    `;
+    const [totals, daily, topPaths, byCampaign] = await Promise.all([
+        pool.query(
+            `SELECT COUNT(*)::bigint AS total,
+                    COUNT(DISTINCT ip)::bigint AS uniq
+             FROM site_page_views ${whereTimeAndPath}`,
+            [d, like]
+        ),
+        pool.query(
+            `SELECT to_char(date_trunc('day', created_at), 'YYYY-MM-DD') AS date,
+                    COUNT(*)::bigint AS views,
+                    COUNT(DISTINCT ip)::bigint AS unique_ips
+             FROM site_page_views ${whereTimeAndPath}
+             GROUP BY 1 ORDER BY 1`,
+            [d, like]
+        ),
+        pool.query(
+            `SELECT path, COUNT(*)::bigint AS views
+             FROM site_page_views ${whereTimeAndPath}
+             GROUP BY path ORDER BY views DESC LIMIT $3`,
+            [d, like, topLimit]
+        ),
+        pool.query(
+            `SELECT utm_campaign, COUNT(*)::bigint AS views, COUNT(DISTINCT ip)::bigint AS unique_ips
+             FROM site_page_views ${whereTimeAndPath}
+               AND utm_campaign IS NOT NULL
+             GROUP BY utm_campaign ORDER BY views DESC LIMIT $3`,
+            [d, like, topLimit]
+        ),
+    ]);
+    const t = totals.rows[0] || { total: 0, uniq: 0 };
+    return {
+        days: d,
+        pathFilter: path || null,
+        totalViews: Number(t.total),
+        uniqueIPs: Number(t.uniq),
+        daily: daily.rows.map(r => ({
+            date: r.date,
+            views: Number(r.views),
+            uniqueIPs: Number(r.unique_ips),
+        })),
+        topPaths: topPaths.rows.map(r => ({
+            path: r.path,
+            views: Number(r.views),
+        })),
+        byCampaign: byCampaign.rows.map(r => ({
+            utm_campaign: r.utm_campaign,
+            views: Number(r.views),
+            uniqueIPs: Number(r.unique_ips),
+        })),
+    };
+}
+
 module.exports = {
     initPageviewsTable,
     pageviewMiddleware,
     setPool,
     shouldTrack, // exported for unit tests
+    globToLike,  // exported for unit tests
+    queryPageviews,
     EXCLUDE_PREFIXES,
     MARKETING_PREFIXES,
 };

@@ -16635,6 +16635,51 @@ function authenticateBot(deviceId, entityId, botSecret) {
     return entity && safeEqual(entity.botSecret, botSecret);
 }
 
+// Dual-auth (deviceSecret OR botSecret+entityId) for read-only analytics routes.
+function authenticateDeviceOrBot({ deviceId, deviceSecret, botSecret, entityId }) {
+    if (!deviceId) return false;
+    const device = devices[deviceId];
+    if (!device) return false;
+    if (deviceSecret && safeEqual(device.deviceSecret, deviceSecret)) return true;
+    if (botSecret && entityId != null) {
+        const entity = (device.entities || {})[entityId];
+        if (entity && safeEqual(entity.botSecret, botSecret)) return true;
+    }
+    return false;
+}
+
+/**
+ * GET /api/analytics/site-pageviews
+ * Aggregated view of site_page_views for the given device owner.
+ * Auth: either deviceSecret (owner) or botSecret+entityId (bot).
+ * Query: days=1..365 (default 7), path=glob (optional, e.g. "/docs/*"),
+ *        groupBy=path|day|utm_campaign (optional; echoes back as `primary`).
+ * Returns: { success, days, pathFilter, totalViews, uniqueIPs, daily[], topPaths[], byCampaign[], primary? }
+ */
+app.get('/api/analytics/site-pageviews', async (req, res) => {
+    const { deviceId, deviceSecret, botSecret, entityId } = req.query;
+    if (!authenticateDeviceOrBot({ deviceId, deviceSecret, botSecret, entityId })) {
+        return res.status(401).json({ success: false, error: 'Invalid credentials' });
+    }
+    const { days, path: pathGlob, groupBy } = req.query;
+    try {
+        const result = await sitePageviews.queryPageviews(chatPool, {
+            days: days != null ? days : 7,
+            path: pathGlob || null,
+        });
+        const allowedGroupBy = new Set(['path', 'day', 'utm_campaign']);
+        const primaryKey = allowedGroupBy.has(groupBy) ? groupBy : null;
+        const primary = primaryKey === 'path'         ? result.topPaths
+                      : primaryKey === 'day'          ? result.daily
+                      : primaryKey === 'utm_campaign' ? result.byCampaign
+                      : null;
+        res.json({ success: true, ...result, ...(primaryKey ? { groupBy: primaryKey, primary } : {}) });
+    } catch (err) {
+        console.error('[Analytics] site-pageviews query failed:', err.message);
+        res.status(500).json({ success: false, error: 'Query failed' });
+    }
+});
+
 /**
  * PUT /api/bot/file - Create or update a file (upsert)
  */
