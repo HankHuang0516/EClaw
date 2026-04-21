@@ -83,42 +83,15 @@ jobs:
           "
         working-directory: backend
 
-      - name: Check i18n key consistency across languages
-        run: |
-          node -e "
-          const fs = require('fs');
-          const vm = require('vm');
-          const content = fs.readFileSync('public/shared/i18n.js', 'utf8');
-          const noop = () => {};
-          const sandbox = {
-            _result: {},
-            localStorage: { getItem: noop, setItem: noop },
-            navigator: { language: 'en' },
-            document: { querySelectorAll: () => [], documentElement: { lang: 'en' }, addEventListener: noop, getElementById: () => null },
-            window: { location: { search: '' } },
-            setTimeout: noop,
-            console,
-          };
-          vm.createContext(sandbox);
-          vm.runInContext(content + '\n_result = TRANSLATIONS;', sandbox);
-          const TRANSLATIONS = sandbox._result;
-          const langs = Object.keys(TRANSLATIONS).sort();
-          console.log('Languages found:', langs.join(', '));
-          // Report key counts per language
-          for (const lang of langs) {
-            const keys = Object.keys(TRANSLATIONS[lang] || {});
-            console.log(lang + ': ' + keys.length + ' keys');
-          }
-          // Warn if any language has drastically fewer keys than English
-          const enKeys = Object.keys(TRANSLATIONS.en || {}).length;
-          for (const lang of langs) {
-            if (lang === 'en') continue;
-            const langKeys = Object.keys(TRANSLATIONS[lang] || {}).length;
-            if (langKeys < enKeys * 0.5) {
-              console.warn('⚠️ ' + lang + ' has only ' + langKeys + ' keys vs English ' + enKeys + ' (' + Math.round(langKeys/enKeys*100) + '% coverage)');
-            }
-          }
-          "
+      - name: Strict i18n reference check (hard-fail on missing EN keys)
+        # Every `data-i18n` / `data-i18n-title` / `data-i18n-placeholder`
+        # attribute and every `i18n.t('key')` call in backend/public/**
+        # must resolve in TRANSLATIONS.en. A missing key means the UI
+        # renders the raw key string — the exact "i18n not defined" class
+        # of low-level bug this gate exists to prevent.
+        # Also reports per-locale coverage (warn-only; EN fallback at runtime
+        # keeps missing non-EN keys from breaking the UI).
+        run: node scripts/i18n-check.js
         working-directory: backend
 
   # ── Jest + Supertest ────────────────────────────────────────────────────────
