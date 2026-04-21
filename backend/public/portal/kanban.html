@@ -429,10 +429,10 @@
                     <button class="kb-chip" data-filter="mine" data-i18n="kb_filter_mine" onclick="filterCards('mine')">My Cards</button>
                 </div>
                 <select class="kb-sort-select" onchange="sortCards(this.value)">
-                    <option value="default">Default Order</option>
-                    <option value="created_desc">Newest First</option>
-                    <option value="created_asc">Oldest First</option>
-                    <option value="priority_asc">High Priority First</option>
+                    <option value="default" data-i18n="kb_sort_default">Default Order</option>
+                    <option value="created_desc" data-i18n="kb_sort_newest">Newest First</option>
+                    <option value="created_asc" data-i18n="kb_sort_oldest">Oldest First</option>
+                    <option value="priority_asc" data-i18n="kb_sort_priority">High Priority First</option>
                 </select>
                 <button class="btn btn-primary" data-i18n="kb_new_card_btn" onclick="openNewCard()">+ New Card</button>
             </div>
