@@ -107,7 +107,34 @@ function extractKeysFromJs(filePath, text) {
     return hits;
 }
 
+function findOrphanKeys(translations) {
+    return Object.keys(translations).filter(
+        k => typeof translations[k] !== 'object' || translations[k] === null
+    );
+}
+
+const ORPHAN_BASELINE_FILE = path.join(__dirname, 'i18n-orphan-baseline.json');
+
+function loadOrphanBaseline() {
+    try {
+        return JSON.parse(fs.readFileSync(ORPHAN_BASELINE_FILE, 'utf8'));
+    } catch {
+        return [];
+    }
+}
+
+function updateOrphanBaseline() {
+    const TRANSLATIONS = loadTranslations();
+    const orphans = findOrphanKeys(TRANSLATIONS).sort();
+    fs.writeFileSync(ORPHAN_BASELINE_FILE, JSON.stringify(orphans, null, 2) + '\n');
+    console.log(`Wrote ${orphans.length} orphan keys to ${path.relative(REPO_ROOT, ORPHAN_BASELINE_FILE)}`);
+}
+
 function main() {
+    if (process.argv.includes('--update-baseline')) {
+        updateOrphanBaseline();
+        return;
+    }
     // 1. Load + parse TRANSLATIONS
     let TRANSLATIONS;
     try {
@@ -120,6 +147,33 @@ function main() {
     if (enKeys.size === 0) {
         console.error('FATAL: TRANSLATIONS.en is empty or missing');
         process.exit(1);
+    }
+
+    // 1b. Reject NEW orphan keys at outer TRANSLATIONS scope. Any non-object
+    // value here is a locale key that was accidentally inserted BETWEEN locale
+    // blocks (a sibling of `en`/`zh-TW`/... instead of a member). Syntactically
+    // legal JS but runtime-useless: TRANSLATIONS[lang][key] will miss it.
+    //
+    // There's an existing backlog of 558 orphan keys (mostly harmless EN
+    // duplicates) snapshot in `i18n-orphan-baseline.json`. CI fails only when
+    // NEW keys appear outside that baseline — that's how we stop regressions
+    // without blocking all PRs until the backlog is drained.
+    const orphans = findOrphanKeys(TRANSLATIONS);
+    const baseline = new Set(loadOrphanBaseline());
+    const newOrphans = orphans.filter(k => !baseline.has(k));
+    if (newOrphans.length > 0) {
+        console.error(`\n❌ FAIL: ${newOrphans.length} NEW orphan key(s) at outer TRANSLATIONS scope (not in baseline):\n`);
+        for (const k of newOrphans) {
+            const preview = String(TRANSLATIONS[k]).slice(0, 60).replace(/\n/g, ' ');
+            console.error(`  • ${k}: ${JSON.stringify(preview)}`);
+        }
+        console.error('\nThese keys are siblings of locale blocks inside TRANSLATIONS — they will never resolve via i18n.t().');
+        console.error('Fix: move each key INSIDE the intended locale object (e.g. `"de": { ... <here> }`), before its closing "},".');
+        process.exit(1);
+    }
+    const fixed = Array.from(baseline).filter(k => !orphans.includes(k));
+    if (fixed.length > 0) {
+        console.log(`[i18n-check] ℹ  ${fixed.length} baseline orphan(s) were cleaned up — regenerate baseline via: node backend/scripts/i18n-check.js --update-baseline`);
     }
 
     // 2. Scan references
@@ -186,3 +240,5 @@ function main() {
 }
 
 if (require.main === module) main();
+
+module.exports = { findOrphanKeys, loadOrphanBaseline };
