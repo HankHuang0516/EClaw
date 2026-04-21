@@ -1,3 +1,10 @@
+## [1.1046.1](https://github.com/HankHuang0516/EClaw/compare/v1.1046.0...v1.1046.1) (2026-04-21)
+
+
+### Bug Fixes
+
+* **chat:** vector-neighbor lookup 404s on every click when pgvector is unavailable ([#1950](https://github.com/HankHuang0516/EClaw/issues/1950)) ([5e73414](https://github.com/HankHuang0516/EClaw/commit/5e7341417d991f65e479f51771f0e17fb25cc362))
+
 # [1.1046.0](https://github.com/HankHuang0516/EClaw/compare/v1.1045.0...v1.1046.0) (2026-04-21)
 
 
