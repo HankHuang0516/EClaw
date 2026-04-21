@@ -23,6 +23,7 @@
         .kb-chip { padding:4px 12px; border-radius:var(--radius-pill); font-size:12px; font-weight:500; cursor:pointer; border:1px solid var(--card-border); background:none; color:var(--text-secondary); transition:all 0.2s; }
         .kb-chip.active { background:var(--primary); color:#fff; border-color:var(--primary); }
         .kb-chip:hover:not(.active) { border-color:var(--text-muted); color:var(--text); }
+        .kb-sort-select { background:var(--input-bg); border:1px solid var(--card-border); border-radius:var(--radius-sm); color:var(--text); font-size:12px; padding:6px 8px; cursor:pointer; transition:border-color 0.2s; min-width:140px; margin-left:8px; }
 
         /* ══════════════ Borderless full-width layout ══════════════ */
         .container { max-width:100% !important; padding-left:16px !important; padding-right:16px !important; }
@@ -427,6 +428,12 @@
                     <button class="kb-chip active" data-filter="all" data-i18n="kb_filter_all" onclick="filterCards('all')">All</button>
                     <button class="kb-chip" data-filter="mine" data-i18n="kb_filter_mine" onclick="filterCards('mine')">My Cards</button>
                 </div>
+                <select class="kb-sort-select" onchange="sortCards(this.value)">
+                    <option value="default">Default Order</option>
+                    <option value="created_desc">Newest First</option>
+                    <option value="created_asc">Oldest First</option>
+                    <option value="priority_asc">High Priority First</option>
+                </select>
                 <button class="btn btn-primary" data-i18n="kb_new_card_btn" onclick="openNewCard()">+ New Card</button>
             </div>
         </div>
@@ -669,6 +676,7 @@
 
         let allCards = [];
         let currentFilter = 'all';
+        let currentSort = 'default';
         let mobileTab = 'backlog';
         let openCardId = null;
         let boundEntities = [];
@@ -807,7 +815,8 @@
                 : allCards;
 
             STATUSES.forEach(status => {
-                const cards = filtered.filter(c => c.status === status);
+                const statusCards = filtered.filter(c => c.status === status);
+                const cards = applySorting(statusCards);
                 const col = document.getElementById('col-' + status);
                 const count = document.getElementById('count-' + status);
                 if (count) count.textContent = cards.length;
@@ -910,6 +919,30 @@
             currentFilter = filter;
             document.querySelectorAll('.kb-chip').forEach(c => c.classList.toggle('active', c.dataset.filter === filter));
             renderBoard(true);
+        }
+
+        // ── Sort Cards ──
+        function sortCards(sortType) {
+            currentSort = sortType;
+            renderBoard(true);
+        }
+
+        function applySorting(cards) {
+            if (currentSort === 'default') return cards;
+            const sorted = [...cards];
+            switch (currentSort) {
+                case 'created_asc':
+                    return sorted.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+                case 'created_desc':
+                    return sorted.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                case 'priority_asc':
+                    return sorted.sort((a, b) => {
+                        const pOrder = { 'P0': 0, 'P1': 1, 'P2': 2, 'P3': 3 };
+                        return (pOrder[a.priority] ?? 999) - (pOrder[b.priority] ?? 999);
+                    });
+                default:
+                    return cards;
+            }
         }
 
         // ── Drag & Drop ──
