@@ -1,3 +1,10 @@
+# [1.1044.0](https://github.com/HankHuang0516/EClaw/compare/v1.1043.0...v1.1044.0) (2026-04-21)
+
+
+### Features
+
+* **mindmap:** phase 1 — schema + CRUD API for multi-layer thinking graph ([#1945](https://github.com/HankHuang0516/EClaw/issues/1945)) ([3ccdac9](https://github.com/HankHuang0516/EClaw/commit/3ccdac992b42b96f0f91849e6502295b9f90a6b7)), closes [#19](https://github.com/HankHuang0516/EClaw/issues/19)
+
 # [1.1043.0](https://github.com/HankHuang0516/EClaw/compare/v1.1042.0...v1.1043.0) (2026-04-21)
 
 
