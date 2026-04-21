@@ -1,3 +1,10 @@
+# [1.1043.0](https://github.com/HankHuang0516/EClaw/compare/v1.1042.0...v1.1043.0) (2026-04-21)
+
+
+### Features
+
+* **analytics:** portal /analytics.html admin view for site pageviews ([#1944](https://github.com/HankHuang0516/EClaw/issues/1944)) ([95dc8d0](https://github.com/HankHuang0516/EClaw/commit/95dc8d0c783076aa3ce5d10369ffa471d9084899)), closes [21/#22](https://github.com/HankHuang0516/EClaw/issues/22)
+
 # [1.1042.0](https://github.com/HankHuang0516/EClaw/compare/v1.1041.0...v1.1042.0) (2026-04-21)
 
 
