@@ -122,6 +122,47 @@ describe('i18n.js syntax and structure', () => {
     });
 });
 
+// ── Orphan-key regression (i18n-check hardening) ────────────────────────────
+// Regression: Mac_E's PRs #1956-1962 inserted `analytics_*` blocks BETWEEN
+// locale objects (e.g. between `th: {...},` and `vi: {...},`). Syntactically
+// legal JS, but TRANSLATIONS[lang][key] resolves to undefined at runtime.
+// i18n-check.js now rejects this via findOrphanKeys().
+describe('i18n-check findOrphanKeys', () => {
+    const { findOrphanKeys } = require('../../scripts/i18n-check');
+
+    test('returns [] when every top-level entry is a locale object', () => {
+        expect(findOrphanKeys({ en: {}, 'zh-TW': {}, ja: {} })).toEqual([]);
+    });
+
+    test('detects string values at outer scope', () => {
+        expect(findOrphanKeys({ en: {}, analytics_title: 'Phân tích trang web' }))
+            .toEqual(['analytics_title']);
+    });
+
+    test('detects null values at outer scope', () => {
+        expect(findOrphanKeys({ en: {}, broken: null })).toEqual(['broken']);
+    });
+
+    test('production TRANSLATIONS has no NEW orphans beyond the baseline', () => {
+        const { loadOrphanBaseline } = require('../../scripts/i18n-check');
+        const content = fs.readFileSync(I18N_PATH, 'utf8');
+        const sandbox = {
+            localStorage: { getItem: () => null, setItem: () => {} },
+            navigator: { language: 'en' },
+            document: { addEventListener: () => {}, querySelectorAll: () => [], documentElement: { lang: '' } },
+            fetch: () => Promise.resolve(),
+            console,
+            _result: {}
+        };
+        vm.createContext(sandbox);
+        vm.runInContext(content + '\n_result.TRANSLATIONS = TRANSLATIONS;', sandbox);
+        const orphans = findOrphanKeys(sandbox._result.TRANSLATIONS);
+        const baseline = new Set(loadOrphanBaseline());
+        const newOrphans = orphans.filter(k => !baseline.has(k));
+        expect(newOrphans).toEqual([]);
+    });
+});
+
 // ── HTML page i18n integration ─────────────────────────────────────────────
 describe('HTML pages i18n integration', () => {
     const htmlFiles = findHtmlFiles(PUBLIC_DIR);
