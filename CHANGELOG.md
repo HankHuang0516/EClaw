@@ -1,3 +1,10 @@
+# [1.1041.0](https://github.com/HankHuang0516/EClaw/compare/v1.1040.0...v1.1041.0) (2026-04-21)
+
+
+### Features
+
+* **analytics:** site_page_views table + pageview middleware ([#1942](https://github.com/HankHuang0516/EClaw/issues/1942)) ([c0675a7](https://github.com/HankHuang0516/EClaw/commit/c0675a7b28137b203598f75aa961a188bf4992df)), closes [#21](https://github.com/HankHuang0516/EClaw/issues/21) [#22](https://github.com/HankHuang0516/EClaw/issues/22)
+
 # [1.1040.0](https://github.com/HankHuang0516/EClaw/compare/v1.1039.0...v1.1040.0) (2026-04-21)
 
 
