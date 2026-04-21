@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title data-i18n="analytics_title">EClawbot - Site Analytics</title>
+    <meta name="description" content="Site pageview analytics for marketing and public pages.">
+    <link rel="icon" type="image/png" href="assets/favicon-32.png">
+    <link rel="stylesheet" href="shared/style.css">
+    <style>
+        .ana-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+        .ana-controls label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ana-controls select, .ana-controls input {
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 6px 10px;
+            font-size: 13px;
+        }
+        .ana-controls input[type=text] { min-width: 180px; }
+        .ana-refresh-btn {
+            margin-left: auto;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 6px 14px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .ana-refresh-btn:hover { opacity: 0.85; }
+
+        .ana-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .ana-stat-card {
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+        }
+        .ana-stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .ana-stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .ana-section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            margin-bottom: 18px;
+        }
+        .ana-section h2 {
+            font-size: 15px;
+            font-weight: 600;
+            margin: 0 0 12px 0;
+            color: var(--text);
+        }
+
+        .ana-chart-wrap { width: 100%; overflow-x: auto; }
+        .ana-chart { display: block; width: 100%; max-width: 100%; height: 220px; }
+        .ana-chart .axis { stroke: var(--card-border); stroke-width: 1; }
+        .ana-chart .grid { stroke: var(--card-border); stroke-width: 1; stroke-dasharray: 2 3; opacity: 0.5; }
+        .ana-chart .series-views { fill: none; stroke: var(--primary); stroke-width: 2; }
+        .ana-chart .series-uniq  { fill: none; stroke: #ef9a46; stroke-width: 2; stroke-dasharray: 4 3; }
+        .ana-chart .dot-views { fill: var(--primary); }
+        .ana-chart .dot-uniq  { fill: #ef9a46; }
+        .ana-chart .label    { fill: var(--text-secondary); font-size: 10px; font-family: inherit; }
+        .ana-legend {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+        }
+        .ana-legend span.swatch {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+
+        .ana-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 720px) {
+            .ana-grid-2 { grid-template-columns: 1fr; }
+            .ana-refresh-btn { margin-left: 0; }
+        }
+
+        table.ana-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        table.ana-table th, table.ana-table td {
+            text-align: left;
+            padding: 7px 8px;
+            border-bottom: 1px solid var(--card-border);
+        }
+        table.ana-table th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        table.ana-table td.num {
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+        table.ana-table tr:last-child td { border-bottom: none; }
+
+        .ana-empty {
+            color: var(--text-secondary);
+            font-size: 13px;
+            padding: 14px 4px;
+            text-align: center;
+        }
+        .ana-error {
+            color: #f44;
+            background: rgba(255, 68, 68, 0.08);
+            border: 1px solid rgba(255, 68, 68, 0.3);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+        .ana-loading {
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 40px 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="navContainer"></div>
+
+    <main class="page">
+        <div class="page-header">
+            <h1 data-i18n="analytics_title">Site Analytics</h1>
+        </div>
+        <p style="color: var(--text-secondary); font-size: 13px; margin-top: 4px;" data-i18n="analytics_subtitle">
+            Anonymous pageviews on public and marketing pages. Portal pages have their own device-scoped telemetry.
+        </p>
+
+        <div id="loadingState" class="ana-loading" data-i18n="analytics_loading">Loading…</div>
+
+        <div id="analyticsContent" style="display: none;">
+            <div class="ana-controls">
+                <label>
+                    <span data-i18n="analytics_days_label">Range</span>
+                    <select id="daysSel">
+                        <option value="7" data-i18n="analytics_days_7">Last 7 days</option>
+                        <option value="30" selected data-i18n="analytics_days_30">Last 30 days</option>
+                        <option value="90" data-i18n="analytics_days_90">Last 90 days</option>
+                    </select>
+                </label>
+                <label>
+                    <span data-i18n="analytics_path_filter_label">Path filter</span>
+                    <input id="pathInput" type="text" data-i18n-placeholder="analytics_path_filter_placeholder" placeholder="e.g. /landing* or /docs/*">
+                </label>
+                <button id="refreshBtn" class="ana-refresh-btn" data-i18n="analytics_refresh">Refresh</button>
+            </div>
+
+            <div id="errorBanner" class="ana-error" style="display: none;"></div>
+
+            <div class="ana-summary">
+                <div class="ana-stat-card">
+                    <div class="ana-stat-label" data-i18n="analytics_total_views">Total views</div>
+                    <div class="ana-stat-value" id="statTotal">—</div>
+                </div>
+                <div class="ana-stat-card">
+                    <div class="ana-stat-label" data-i18n="analytics_unique_ips">Unique IPs</div>
+                    <div class="ana-stat-value" id="statUniq">—</div>
+                </div>
+                <div class="ana-stat-card">
+                    <div class="ana-stat-label" data-i18n="analytics_avg_daily">Avg views / day</div>
+                    <div class="ana-stat-value" id="statAvg">—</div>
+                </div>
+            </div>
+
+            <div class="ana-section">
+                <h2 data-i18n="analytics_daily_chart">Daily views</h2>
+                <div class="ana-chart-wrap">
+                    <svg id="dailyChart" class="ana-chart" viewBox="0 0 800 220" preserveAspectRatio="none"></svg>
+                </div>
+                <div class="ana-legend">
+                    <span><span class="swatch" style="background: var(--primary);"></span><span data-i18n="analytics_legend_views">Views</span></span>
+                    <span><span class="swatch" style="background: #ef9a46;"></span><span data-i18n="analytics_legend_uniq">Unique IPs</span></span>
+                </div>
+            </div>
+
+            <div class="ana-grid-2">
+                <div class="ana-section">
+                    <h2 data-i18n="analytics_top_paths">Top paths</h2>
+                    <table class="ana-table">
+                        <thead><tr>
+                            <th data-i18n="analytics_col_path">Path</th>
+                            <th class="num" data-i18n="analytics_col_views">Views</th>
+                        </tr></thead>
+                        <tbody id="topPathsBody"></tbody>
+                    </table>
+                </div>
+                <div class="ana-section">
+                    <h2 data-i18n="analytics_by_campaign">By UTM campaign</h2>
+                    <table class="ana-table">
+                        <thead><tr>
+                            <th data-i18n="analytics_col_campaign">Campaign</th>
+                            <th class="num" data-i18n="analytics_col_views">Views</th>
+                            <th class="num" data-i18n="analytics_col_uniq">Unique</th>
+                        </tr></thead>
+                        <tbody id="byCampaignBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="shared/api.js"></script>
+    <script src="shared/nav.js"></script>
+    <script src="shared/auth.js"></script>
+    <script src="../shared/telemetry.js"></script>
+    <script src="../shared/i18n.js"></script>
+    <script src="shared/footer.js"></script>
+    <script>
+        let refreshTimer = null;
+        let lastResult = null;
+
+        function fmtNumber(n) {
+            if (typeof n !== 'number' || !isFinite(n)) return '—';
+            return n.toLocaleString();
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorBanner');
+            if (!el) return;
+            if (!msg) { el.style.display = 'none'; el.textContent = ''; return; }
+            el.style.display = '';
+            el.textContent = msg;
+        }
+
+        function renderSummary(r) {
+            document.getElementById('statTotal').textContent = fmtNumber(r.totalViews);
+            document.getElementById('statUniq').textContent = fmtNumber(r.uniqueIPs);
+            const avg = r.days > 0 ? Math.round(r.totalViews / r.days) : 0;
+            document.getElementById('statAvg').textContent = fmtNumber(avg);
+        }
+
+        function renderChart(daily) {
+            const svg = document.getElementById('dailyChart');
+            svg.innerHTML = '';
+            const W = 800, H = 220;
+            const padL = 40, padR = 12, padT = 10, padB = 26;
+            const plotW = W - padL - padR;
+            const plotH = H - padT - padB;
+
+            if (!daily || daily.length === 0) {
+                const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                t.setAttribute('x', W / 2);
+                t.setAttribute('y', H / 2);
+                t.setAttribute('text-anchor', 'middle');
+                t.setAttribute('class', 'label');
+                t.textContent = i18n.t('analytics_no_data', 'No data in range');
+                svg.appendChild(t);
+                return;
+            }
+
+            const maxV = Math.max(1, ...daily.map(d => Math.max(d.views, d.uniqueIPs)));
+            const stepX = daily.length > 1 ? plotW / (daily.length - 1) : 0;
+
+            const y = (v) => padT + plotH - (v / maxV) * plotH;
+            const x = (i) => padL + i * stepX;
+
+            // grid lines (4 horizontal)
+            for (let i = 0; i <= 4; i++) {
+                const gy = padT + (plotH * i / 4);
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', padL); line.setAttribute('x2', W - padR);
+                line.setAttribute('y1', gy);   line.setAttribute('y2', gy);
+                line.setAttribute('class', 'grid');
+                svg.appendChild(line);
+
+                const val = Math.round(maxV * (1 - i / 4));
+                const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                lbl.setAttribute('x', padL - 6); lbl.setAttribute('y', gy + 3);
+                lbl.setAttribute('text-anchor', 'end');
+                lbl.setAttribute('class', 'label');
+                lbl.textContent = val;
+                svg.appendChild(lbl);
+            }
+
+            // axes
+            const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            xAxis.setAttribute('x1', padL); xAxis.setAttribute('x2', W - padR);
+            xAxis.setAttribute('y1', padT + plotH); xAxis.setAttribute('y2', padT + plotH);
+            xAxis.setAttribute('class', 'axis');
+            svg.appendChild(xAxis);
+
+            // polylines
+            const viewsPts = daily.map((d, i) => `${x(i)},${y(d.views)}`).join(' ');
+            const uniqPts  = daily.map((d, i) => `${x(i)},${y(d.uniqueIPs)}`).join(' ');
+
+            const pV = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            pV.setAttribute('points', viewsPts);
+            pV.setAttribute('class', 'series-views');
+            svg.appendChild(pV);
+
+            const pU = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            pU.setAttribute('points', uniqPts);
+            pU.setAttribute('class', 'series-uniq');
+            svg.appendChild(pU);
+
+            // dots + x-labels (thinned)
+            const labelStride = Math.max(1, Math.ceil(daily.length / 8));
+            daily.forEach((d, i) => {
+                const cV = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                cV.setAttribute('cx', x(i)); cV.setAttribute('cy', y(d.views));
+                cV.setAttribute('r', 2.5); cV.setAttribute('class', 'dot-views');
+                const titleV = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+                titleV.textContent = `${d.date} · ${d.views} views · ${d.uniqueIPs} unique`;
+                cV.appendChild(titleV);
+                svg.appendChild(cV);
+
+                const cU = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                cU.setAttribute('cx', x(i)); cU.setAttribute('cy', y(d.uniqueIPs));
+                cU.setAttribute('r', 2.5); cU.setAttribute('class', 'dot-uniq');
+                svg.appendChild(cU);
+
+                if (i % labelStride === 0 || i === daily.length - 1) {
+                    const tx = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    tx.setAttribute('x', x(i));
+                    tx.setAttribute('y', padT + plotH + 14);
+                    tx.setAttribute('text-anchor', 'middle');
+                    tx.setAttribute('class', 'label');
+                    tx.textContent = d.date.slice(5); // MM-DD
+                    svg.appendChild(tx);
+                }
+            });
+        }
+
+        function renderTopPaths(rows) {
+            const tbody = document.getElementById('topPathsBody');
+            tbody.innerHTML = '';
+            if (!rows || rows.length === 0) {
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 2;
+                td.className = 'ana-empty';
+                td.setAttribute('data-i18n', 'analytics_no_data');
+                td.textContent = i18n.t('analytics_no_data', 'No data in range');
+                tr.appendChild(td); tbody.appendChild(tr);
+                return;
+            }
+            rows.forEach(r => {
+                const tr = document.createElement('tr');
+                const tdP = document.createElement('td');
+                tdP.textContent = r.path;
+                tdP.style.fontFamily = 'monospace';
+                tdP.style.wordBreak = 'break-all';
+                const tdV = document.createElement('td');
+                tdV.className = 'num';
+                tdV.textContent = fmtNumber(r.views);
+                tr.appendChild(tdP); tr.appendChild(tdV);
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderByCampaign(rows) {
+            const tbody = document.getElementById('byCampaignBody');
+            tbody.innerHTML = '';
+            if (!rows || rows.length === 0) {
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 3;
+                td.className = 'ana-empty';
+                td.setAttribute('data-i18n', 'analytics_no_campaigns');
+                td.textContent = i18n.t('analytics_no_campaigns', 'No tagged campaigns in range');
+                tr.appendChild(td); tbody.appendChild(tr);
+                return;
+            }
+            rows.forEach(r => {
+                const tr = document.createElement('tr');
+                const tdC = document.createElement('td');
+                tdC.textContent = r.utm_campaign;
+                const tdV = document.createElement('td');
+                tdV.className = 'num';
+                tdV.textContent = fmtNumber(r.views);
+                const tdU = document.createElement('td');
+                tdU.className = 'num';
+                tdU.textContent = fmtNumber(r.uniqueIPs);
+                tr.appendChild(tdC); tr.appendChild(tdV); tr.appendChild(tdU);
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function fetchAnalytics() {
+            if (!currentUser || !currentUser.deviceId || !currentUser.deviceSecret) {
+                showError(i18n.t('analytics_err_no_device', 'Device credentials not available. Device owner access only.'));
+                return;
+            }
+            const days = document.getElementById('daysSel').value || '30';
+            const pathGlob = document.getElementById('pathInput').value.trim();
+            const params = new URLSearchParams({
+                deviceId: currentUser.deviceId,
+                deviceSecret: currentUser.deviceSecret,
+                days: days
+            });
+            if (pathGlob) params.set('path', pathGlob);
+            try {
+                const data = await apiCall('GET', `/api/analytics/site-pageviews?${params.toString()}`);
+                if (!data || data.success === false) {
+                    throw new Error((data && data.error) || 'Unknown error');
+                }
+                lastResult = data;
+                showError('');
+                renderSummary(data);
+                renderChart(data.daily || []);
+                renderTopPaths(data.topPaths || []);
+                renderByCampaign(data.byCampaign || []);
+            } catch (e) {
+                console.error('[Analytics] Fetch failed:', e);
+                showError(i18n.t('analytics_err_fetch', 'Failed to load analytics') + ': ' + (e.message || e));
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                renderNav('analytics');
+                if (typeof renderFooter === 'function') renderFooter();
+                const user = await checkAuth();
+                if (!user) return;
+
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('analyticsContent').style.display = '';
+
+                document.getElementById('daysSel').addEventListener('change', fetchAnalytics);
+                document.getElementById('refreshBtn').addEventListener('click', fetchAnalytics);
+                let pathDebounce = null;
+                document.getElementById('pathInput').addEventListener('input', () => {
+                    clearTimeout(pathDebounce);
+                    pathDebounce = setTimeout(fetchAnalytics, 500);
+                });
+
+                await fetchAnalytics();
+
+                refreshTimer = setInterval(() => {
+                    if (document.hidden) return;
+                    fetchAnalytics();
+                }, 60000);
+
+                if (typeof i18n !== 'undefined' && i18n.onLanguageChange) {
+                    i18n.onLanguageChange(() => {
+                        if (lastResult) {
+                            renderChart(lastResult.daily || []);
+                            renderTopPaths(lastResult.topPaths || []);
+                            renderByCampaign(lastResult.byCampaign || []);
+                        }
+                    });
+                }
+            } catch (initErr) {
+                console.error('[Analytics] Init error:', initErr);
+                const el = document.getElementById('loadingState');
+                if (el) el.innerHTML = '<p style="color:#f44;padding:20px;">Analytics init error: ' + initErr.message + '</p>';
+            }
+        });
+    </script>
+</body>
+</html>
