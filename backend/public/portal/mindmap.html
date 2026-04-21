@@ -184,6 +184,34 @@
         }
         .mm-edge-mode-banner.active { display: block; }
 
+        .mm-focus-banner {
+            position: absolute;
+            top: 56px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(80, 120, 200, 0.92);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            z-index: 14;
+            display: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        }
+        .mm-focus-banner.active { display: block; }
+
+        .mm-tier-badge {
+            background: var(--card-bg);
+            color: var(--text-secondary);
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            padding: 7px 10px;
+            font-size: 11px;
+            font-variant-numeric: tabular-nums;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
         @media (max-width: 820px) {
             .mm-shell { grid-template-columns: 1fr; grid-template-rows: 60vh 1fr; }
             .mm-sidebar { border-left: none; border-top: 1px solid var(--card-border); }
@@ -212,9 +240,11 @@
                 <button class="mm-tool-btn" id="btnAddEdge" data-i18n="mindmap_connect_mode">Connect mode</button>
                 <button class="mm-tool-btn" id="btnFit" data-i18n="mindmap_fit">Fit</button>
                 <button class="mm-tool-btn" id="btnReload" data-i18n="mindmap_reload">Reload</button>
+                <div class="mm-tier-badge" id="zoomTierLabel" title="">L1</div>
                 <div class="mm-status" id="mmStatus" data-i18n="mindmap_loading">Loading…</div>
             </div>
             <div class="mm-edge-mode-banner" id="edgeBanner" data-i18n="mindmap_edge_mode_hint">Pick the source node, then the target. Esc to cancel.</div>
+            <div class="mm-focus-banner" id="focusBanner" data-i18n="mindmap_focus_mode_hint">Focus mode — click empty space or press Esc to exit</div>
             <div id="cy"></div>
             <div id="cyNav"></div>
         </div>
@@ -289,6 +319,18 @@
     <script src="../shared/i18n.js"></script>
     <script src="shared/footer.js"></script>
     <script>
+        // cytoscape-navigator registers itself against the global `cytoscape`
+        // via its UMD wrapper, but on some bundler paths the extension only
+        // exposes itself as `window.cytoscapeNavigator`. Try both so the
+        // mini-map works regardless of how the CDN ships the module.
+        if (typeof cytoscape !== 'undefined' && typeof cytoscape.use === 'function') {
+            try {
+                if (typeof window.cytoscapeNavigator === 'function') {
+                    cytoscape.use(window.cytoscapeNavigator);
+                }
+            } catch (_) { /* already registered or incompatible — fallback handles */ }
+        }
+
         let cy = null;
         let navigator = null;
         let selectedNodeId = null;
@@ -296,6 +338,75 @@
         let edgeMode = false;
         let edgeSourceId = null;
         let cachedNodeData = new Map();
+        let focusMode = false;
+        let focusNodeId = null;
+        let currentZoomTier = 'L1';
+
+        function getZoomTier(zoom) {
+            if (zoom < 0.5) return 'L0';
+            if (zoom < 1.5) return 'L1';
+            return 'L2';
+        }
+
+        function applyZoomTier() {
+            if (!cy) return;
+            const tier = getZoomTier(cy.zoom());
+            const el = document.getElementById('zoomTierLabel');
+            if (el) {
+                const labelKey = `mindmap_zoom_${tier.toLowerCase()}_label`;
+                const fallback = tier === 'L0' ? 'Overview' : tier === 'L1' ? 'Topics' : 'Detail';
+                el.textContent = `${tier} · ${i18n.t(labelKey, fallback)}`;
+            }
+            if (tier === currentZoomTier) return;
+            currentZoomTier = tier;
+            cy.batch(() => {
+                cy.elements().removeClass('tier-fade');
+                if (tier === 'L0') {
+                    // Only `domain` nodes visible; everything else plus cross-type edges fade.
+                    cy.nodes().forEach(n => {
+                        if (n.data('type') !== 'domain') n.addClass('tier-fade');
+                    });
+                    cy.edges().forEach(e => {
+                        const s = e.source().data('type');
+                        const t = e.target().data('type');
+                        if (s !== 'domain' || t !== 'domain') e.addClass('tier-fade');
+                    });
+                } else if (tier === 'L1') {
+                    // `domain` + `topic` full; `leaf` + `concept` fade.
+                    cy.nodes().forEach(n => {
+                        const ty = n.data('type');
+                        if (ty === 'leaf' || ty === 'concept') n.addClass('tier-fade');
+                    });
+                }
+                // L2: nothing faded.
+            });
+        }
+
+        function enterFocusMode(nodeId) {
+            if (!cy || !nodeId) return;
+            const focus = cy.getElementById(nodeId);
+            if (!focus || focus.empty()) return;
+            focusMode = true;
+            focusNodeId = nodeId;
+            const neighborhood = focus.closedNeighborhood();
+            cy.batch(() => {
+                cy.elements().addClass('fog');
+                neighborhood.removeClass('fog');
+            });
+            const banner = document.getElementById('focusBanner');
+            if (banner) banner.classList.add('active');
+        }
+
+        function exitFocusMode() {
+            if (!cy || !focusMode) return;
+            focusMode = false;
+            focusNodeId = null;
+            cy.batch(() => {
+                cy.elements().removeClass('fog');
+            });
+            const banner = document.getElementById('focusBanner');
+            if (banner) banner.classList.remove('active');
+        }
 
         function creds() {
             return `deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`;
@@ -458,12 +569,16 @@
             ];
             cy.elements().remove();
             cy.add(elements);
+            // Re-render fog/tier classes against the freshly-added elements.
+            exitFocusMode();
+            currentZoomTier = null;
 
             const hasPositions = nodes.some(n => n.position && typeof n.position === 'object' && typeof n.position.x === 'number');
             if (!hasPositions && nodes.length > 1) {
                 cy.layout({ name: 'cose', animate: false, padding: 40, idealEdgeLength: 110 }).run();
             }
             cy.fit(null, 40);
+            applyZoomTier();
         }
 
         function initCytoscape() {
@@ -510,8 +625,14 @@
                         'text-background-padding': 2,
                     }},
                     { selector: '.dim', style: { 'opacity': 0.2 }},
+                    { selector: '.tier-fade', style: { 'opacity': 0.12, 'text-opacity': 0 }},
+                    { selector: '.fog', style: { 'opacity': 0.18, 'text-opacity': 0 }},
+                    { selector: 'edge.fog', style: { 'opacity': 0.08 }},
                 ],
             });
+
+            cy.on('zoom', applyZoomTier);
+            applyZoomTier();
 
             cy.on('tap', 'node', (evt) => {
                 const nodeId = evt.target.id();
@@ -526,11 +647,16 @@
                     return;
                 }
                 showEditor(nodeId);
+                // Focus re-anchors on every node tap so swapping selection
+                // immediately refreshes the fogged neighborhood.
+                exitFocusMode();
+                enterFocusMode(nodeId);
             });
 
             cy.on('tap', (evt) => {
                 if (evt.target === cy) {
                     if (edgeMode) setEdgeMode(false);
+                    exitFocusMode();
                     showEditor(null);
                 }
             });
@@ -552,6 +678,10 @@
                     viewLiveFramerate: 30,
                     thumbnailLiveFramerate: 10,
                 });
+            } else {
+                console.warn('[Mindmap] cytoscape-navigator not registered — mini-map disabled');
+                const nav = document.getElementById('cyNav');
+                if (nav) nav.style.display = 'none';
             }
         }
 
@@ -693,7 +823,9 @@
                 document.getElementById('btnAddComment').addEventListener('click', postComment);
 
                 document.addEventListener('keydown', (e) => {
-                    if (e.key === 'Escape' && edgeMode) setEdgeMode(false);
+                    if (e.key !== 'Escape') return;
+                    if (edgeMode) setEdgeMode(false);
+                    if (focusMode) exitFocusMode();
                 });
 
                 window.addEventListener('beforeunload', () => {

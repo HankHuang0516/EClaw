@@ -4514,6 +4514,11 @@ const TRANSLATIONS = {
         "mindmap_err_anchor": "Anchor failed",
         "mindmap_err_detach": "Detach failed",
         "mindmap_err_comment": "Comment failed",
+        // Phase 3: zoom-tier rendering + focus-mode fog
+        "mindmap_focus_mode_hint": "Focus mode — click empty space or press Esc to exit",
+        "mindmap_zoom_l0_label": "Overview",
+        "mindmap_zoom_l1_label": "Topics",
+        "mindmap_zoom_l2_label": "Detail",
         // Site Analytics (analytics.html)
         "analytics_title": "Site Analytics",
         "analytics_subtitle": "Anonymous pageviews on public and marketing pages. Portal pages have their own device-scoped telemetry.",
