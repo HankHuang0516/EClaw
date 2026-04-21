@@ -58,6 +58,20 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         return { allowed: true, remaining: max - entry.count };
     }
 
+    // Admin check — 5 routes below need this. Was duplicated as silent
+    // `try{...} catch (_) {}` blocks which hid schema drift on user_accounts
+    // (e.g. is_admin column rename would lock every admin out invisibly).
+    async function resolveIsAdmin(userId) {
+        if (!userId) return false;
+        try {
+            const r = await chatPool.query('SELECT is_admin FROM user_accounts WHERE id = $1', [userId]);
+            return r.rows[0]?.is_admin || false;
+        } catch (err) {
+            console.warn('[AI-Support] resolveIsAdmin failed for', userId, ':', err.message);
+            return false;
+        }
+    }
+
     // Clean up stale rate limit entries every 30 minutes
     setInterval(() => {
         const now = Date.now();
@@ -638,7 +652,9 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                 [deviceId]
             );
             ctx.recentErrors = r.rows;
-        } catch (_) {}
+        } catch (err) {
+            console.warn('[AI-Support] buildDeviceContext.recentErrors failed:', err.message);
+        }
 
         // Recent important activity — bind/unbind/push/transform/broadcast, last 1h
         try {
@@ -652,7 +668,9 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                 [deviceId]
             );
             ctx.recentActivity = r.rows;
-        } catch (_) {}
+        } catch (err) {
+            console.warn('[AI-Support] buildDeviceContext.recentActivity failed:', err.message);
+        }
 
         // Handshake failures — last 1h
         try {
@@ -664,7 +682,9 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                 [deviceId]
             );
             ctx.handshakeFailures = r.rows;
-        } catch (_) {}
+        } catch (err) {
+            console.warn('[AI-Support] buildDeviceContext.handshakeFailures failed:', err.message);
+        }
 
         return ctx;
     }
@@ -983,11 +1003,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         if (!req.user || !req.user.userId) {
             return res.status(401).json({ error: 'Not authenticated' });
         }
-        let isAdmin = false;
-        try {
-            const r = await chatPool.query('SELECT is_admin FROM user_accounts WHERE id = $1', [req.user.userId]);
-            isAdmin = r.rows[0]?.is_admin || false;
-        } catch (_) {}
+        const isAdmin = await resolveIsAdmin(req.user.userId);
         if (!isAdmin) {
             return res.status(403).json({ error: 'Admin access required' });
         }
@@ -1022,11 +1038,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         if (!req.user || !req.user.userId) {
             return res.status(401).json({ error: 'Not authenticated' });
         }
-        let isAdmin = false;
-        try {
-            const r = await chatPool.query('SELECT is_admin FROM user_accounts WHERE id = $1', [req.user.userId]);
-            isAdmin = r.rows[0]?.is_admin || false;
-        } catch (_) {}
+        const isAdmin = await resolveIsAdmin(req.user.userId);
         if (!isAdmin) {
             return res.status(403).json({ error: 'Admin access required' });
         }
@@ -1162,11 +1174,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         ).slice(0, 3);
 
         // Admin check via DB
-        let isAdmin = false;
-        try {
-            const r = await chatPool.query('SELECT is_admin FROM user_accounts WHERE id = $1', [req.user.userId]);
-            isAdmin = r.rows[0]?.is_admin || false;
-        } catch (_) {}
+        const isAdmin = await resolveIsAdmin(req.user.userId);
 
         // Rate limit
         const rateCheck = checkChatRateLimit(req.user.userId, isAdmin);
@@ -1346,11 +1354,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         }
 
         // Admin check
-        let isAdmin = false;
-        try {
-            const r = await chatPool.query('SELECT is_admin FROM user_accounts WHERE id = $1', [req.user.userId]);
-            isAdmin = r.rows[0]?.is_admin || false;
-        } catch (_) {}
+        const isAdmin = await resolveIsAdmin(req.user.userId);
         if (!isAdmin) {
             return res.status(403).json({ success: false, error: 'Admin access required' });
         }
@@ -1623,11 +1627,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         ).slice(0, 3);
 
         // Admin check
-        let isAdmin = false;
-        try {
-            const r = await chatPool.query('SELECT is_admin FROM user_accounts WHERE id = $1', [req.user.userId]);
-            isAdmin = r.rows[0]?.is_admin || false;
-        } catch (_) {}
+        const isAdmin = await resolveIsAdmin(req.user.userId);
 
         // Rate limit
         const rateCheck = checkChatRateLimit(req.user.userId, isAdmin);
@@ -1646,7 +1646,9 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
             if (existing.rows.length > 0) {
                 return res.json({ success: true, requestId, status: existing.rows[0].status });
             }
-        } catch (_) {}
+        } catch (err) {
+            console.warn('[AI-Support] idempotency lookup failed for', requestId, ':', err.message);
+        }
 
         // Insert pending request
         try {

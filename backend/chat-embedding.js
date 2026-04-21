@@ -134,7 +134,8 @@ async function countUnembeddedForDevice(deviceId) {
             [deviceId]
         );
         return r.rows[0]?.n || 0;
-    } catch {
+    } catch (err) {
+        console.warn('[ChatEmbedding] countUnembeddedForDevice failed:', err.message);
         return 0;
     }
 }

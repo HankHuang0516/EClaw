@@ -55,7 +55,8 @@ async function getDeviceLanguage(deviceId) {
         const lang = result.rows[0]?.language || 'en';
         deviceLangCache.set(deviceId, { lang, expires: Date.now() + DEVICE_LANG_TTL_MS });
         return lang;
-    } catch (_) {
+    } catch (err) {
+        console.warn('[Kanban] getDeviceLanguage failed for', deviceId, ':', err.message);
         return 'en';
     }
 }

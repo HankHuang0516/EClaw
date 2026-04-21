@@ -413,7 +413,8 @@ module.exports = function trustFactory({ authMiddleware, adminMiddleware, server
         try {
             const reviews = await getListingReviews(req.params.id, req.query);
             res.json({ success: true, reviews });
-        } catch {
+        } catch (err) {
+            console.warn('[trust] getListingReviews failed for', req.params.id, ':', err.message);
             res.status(500).json({ success: false, error: 'internal_error' });
         }
     });
