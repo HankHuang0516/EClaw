@@ -1,3 +1,10 @@
+# [1.1039.0](https://github.com/HankHuang0516/EClaw/compare/v1.1038.0...v1.1039.0) (2026-04-21)
+
+
+### Features
+
+* **chat:** related-neighbors panel on message bubbles ([#1933](https://github.com/HankHuang0516/EClaw/issues/1933)) ([bff515f](https://github.com/HankHuang0516/EClaw/commit/bff515fafb1a487c76260acaf6357cf419bc8642)), closes [#1926](https://github.com/HankHuang0516/EClaw/issues/1926)
+
 # [1.1038.0](https://github.com/HankHuang0516/EClaw/compare/v1.1037.1...v1.1038.0) (2026-04-21)
 
 
