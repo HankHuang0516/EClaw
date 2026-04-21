@@ -1,3 +1,10 @@
+## [1.1047.1](https://github.com/HankHuang0516/EClaw/compare/v1.1047.0...v1.1047.1) (2026-04-21)
+
+
+### Bug Fixes
+
+* **i18n-check:** catch orphan keys at outer TRANSLATIONS scope ([#1965](https://github.com/HankHuang0516/EClaw/issues/1965)) ([4521441](https://github.com/HankHuang0516/EClaw/commit/452144142f5ebc1f78b2c7e59af5d298cfd30773)), closes [1960/#1962](https://github.com/HankHuang0516/EClaw/issues/1962)
+
 # [1.1047.0](https://github.com/HankHuang0516/EClaw/compare/v1.1046.1...v1.1047.0) (2026-04-21)
 
 
