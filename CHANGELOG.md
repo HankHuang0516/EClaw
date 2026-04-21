@@ -1,3 +1,10 @@
+# [1.1040.0](https://github.com/HankHuang0516/EClaw/compare/v1.1039.0...v1.1040.0) (2026-04-21)
+
+
+### Features
+
+* **chat:** right-click + long-press context menu for reply/find-related ([#1941](https://github.com/HankHuang0516/EClaw/issues/1941)) ([1ae9e79](https://github.com/HankHuang0516/EClaw/commit/1ae9e79417c048d1d8c832ca8f0c9520884a23c6))
+
 # [1.1039.0](https://github.com/HankHuang0516/EClaw/compare/v1.1038.0...v1.1039.0) (2026-04-21)
 
 
