@@ -1,3 +1,10 @@
+# [1.1048.0](https://github.com/HankHuang0516/EClaw/compare/v1.1047.1...v1.1048.0) (2026-04-21)
+
+
+### Features
+
+* **info:** archive vector-memory feature into /info guide ([#1967](https://github.com/HankHuang0516/EClaw/issues/1967)) ([b06ff8b](https://github.com/HankHuang0516/EClaw/commit/b06ff8b6b0573e0677d431bf0736fb12c4e49776)), closes [#17](https://github.com/HankHuang0516/EClaw/issues/17) [#19](https://github.com/HankHuang0516/EClaw/issues/19)
+
 ## [1.1047.1](https://github.com/HankHuang0516/EClaw/compare/v1.1047.0...v1.1047.1) (2026-04-21)
 
 
