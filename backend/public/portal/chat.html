@@ -413,6 +413,99 @@
             .chat-reply-btn:active { opacity: 1; color: var(--primary); border-color: var(--primary); }
         }
 
+        /* ── Related-neighbors button + panel ── */
+        .chat-related-btn {
+            position: absolute;
+            bottom: 6px;
+            right: -60px;
+            opacity: 0;
+            transition: opacity 0.15s;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-muted);
+            z-index: 2;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+        .chat-msg:hover .chat-related-btn { opacity: 1; }
+        .chat-related-btn:hover { color: var(--primary); border-color: var(--primary); }
+        .chat-related-btn.active { opacity: 1; color: var(--primary); border-color: var(--primary); background: var(--primary-surface, var(--input-bg)); }
+        .chat-msg.sent .chat-related-btn { right: auto; left: -60px; }
+        @media (hover: none) {
+            .chat-related-btn { opacity: 0.75; width: 30px; height: 30px; font-size: 15px; right: -36px; }
+            .chat-msg.sent .chat-related-btn { left: -36px; right: auto; }
+        }
+        .chat-related-panel {
+            margin: 6px 0 10px;
+            padding: 8px 10px;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            font-size: 13px;
+            color: var(--text);
+        }
+        .chat-related-panel .crp-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        .chat-related-panel .crp-mode {
+            font-size: 11px;
+            padding: 1px 6px;
+            border-radius: 8px;
+            background: var(--card-border);
+            color: var(--text-muted);
+        }
+        .chat-related-panel .crp-item {
+            padding: 6px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            line-height: 1.35;
+        }
+        .chat-related-panel .crp-item + .crp-item { margin-top: 4px; }
+        .chat-related-panel .crp-item:hover { background: var(--card-border); border-color: var(--primary); }
+        .chat-related-panel .crp-snippet {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text);
+        }
+        .chat-related-panel .crp-meta {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+        .chat-related-panel .crp-empty,
+        .chat-related-panel .crp-loading,
+        .chat-related-panel .crp-error {
+            color: var(--text-muted);
+            font-style: italic;
+            padding: 4px 0;
+        }
+        .chat-related-panel .crp-error { color: var(--danger, #c0392b); font-style: normal; }
+        /* Highlight flash when a related item is clicked and the anchor scrolls into view */
+        .chat-msg.crp-flash .chat-bubble {
+            animation: crpFlash 1.6s ease-out 1;
+        }
+        @keyframes crpFlash {
+            0%   { box-shadow: 0 0 0 3px var(--primary); }
+            100% { box-shadow: 0 0 0 0 transparent; }
+        }
+
         /* ── Reply preview bar above input ── */
         .reply-preview-bar {
             display: none;
@@ -3920,12 +4013,14 @@
                 const replySnippet = stripReplyQuotePrefix(rawText || '').replace(/\n/g, ' ').slice(0, 120);
                 const replySenderName = isSent ? (i18n.t('chat_reply_you') || 'You') : isPlatform ? 'Platform' : (getEntityLabel(msg.entity_id) || '');
                 const replyBtnHtml = msg.id ? `<button class="chat-reply-btn" data-msg-id="${escapeHtml(msg.id)}" data-sender="${escapeHtml(replySenderName)}" data-text="${escapeHtml(replySnippet)}" onclick="handleReplyBtn(this);event.stopPropagation()" data-i18n-title="chat_reply_btn" title="Reply">↩</button>` : '';
+                const relatedBtnHtml = msg.id ? `<button class="chat-related-btn" data-msg-id="${escapeHtml(msg.id)}" onclick="toggleRelatedPanel(this);event.stopPropagation()" data-i18n-title="chat_related_btn" title="Find related" aria-label="Find related messages">◎</button>` : '';
 
                 return `${dateSep}${unreadSep}
-                    <div class="chat-msg ${msgClass}${isGrouped ? ' grouped' : ''}" style="position:relative">
+                    <div class="chat-msg ${msgClass}${isGrouped ? ' grouped' : ''}" data-message-id="${escapeHtml(msg.id || '')}" style="position:relative">
                         <div class="chat-source">${sourceLabel}</div>
                         <div class="chat-bubble${isMdRendered ? ' md-rendered' : ''}" data-full-time="${escapeHtml(fullTime)}">${textHtml}${mediaHtml}${inlineImgHtml}${cardHtml}${cardRefHtml}${attachmentsHtml}</div>
                         ${replyBtnHtml}
+                        ${relatedBtnHtml}
                         ${previewId ? `<div class="link-preview-slot" id="${previewId}" data-url="${escapeHtml(firstUrl)}"></div>` : ''}
                         ${reactionsHtml}
                         <div class="chat-meta">${time}</div>
@@ -4333,6 +4428,115 @@
         function clearReplyContext() {
             replyContext = null;
             document.getElementById('replyPreviewBar').classList.remove('show');
+        }
+
+        // ── Related-neighbors panel (vector / keyword nearest-neighbor on a bubble) ──
+        const RELATED_NEIGHBORS_LIMIT = 3;
+
+        function toggleRelatedPanel(btn) {
+            const msgId = btn.dataset.msgId;
+            if (!msgId) return;
+            const msgEl = btn.closest('.chat-msg');
+            if (!msgEl) return;
+
+            const existing = msgEl.querySelector(':scope > .chat-related-panel');
+            if (existing) {
+                existing.remove();
+                btn.classList.remove('active');
+                return;
+            }
+
+            // Close any other open panel first (one-at-a-time UX)
+            document.querySelectorAll('.chat-related-panel').forEach(p => p.remove());
+            document.querySelectorAll('.chat-related-btn.active').forEach(b => b.classList.remove('active'));
+
+            const panel = document.createElement('div');
+            panel.className = 'chat-related-panel';
+            panel.innerHTML = `
+                <div class="crp-header">
+                    <span data-i18n="chat_related_panel_title">Related messages</span>
+                    <span class="crp-mode" data-i18n="chat_related_loading">Finding…</span>
+                </div>
+                <div class="crp-loading" data-i18n="chat_related_loading">Finding related messages…</div>
+            `;
+            msgEl.appendChild(panel);
+            btn.classList.add('active');
+            if (window.i18n && typeof i18n.apply === 'function') i18n.apply();
+
+            fetchAndRenderRelated(msgId, panel);
+        }
+
+        async function fetchAndRenderRelated(msgId, panel) {
+            try {
+                const data = await apiCall('POST', `/api/chat/message/${encodeURIComponent(msgId)}/related`, {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    limit: RELATED_NEIGHBORS_LIMIT
+                });
+                renderRelatedPanel(panel, data);
+            } catch (err) {
+                panel.innerHTML = `
+                    <div class="crp-header">
+                        <span data-i18n="chat_related_panel_title">Related messages</span>
+                    </div>
+                    <div class="crp-error" data-i18n="chat_related_error">Failed to load related messages.</div>
+                `;
+                if (window.i18n && typeof i18n.apply === 'function') i18n.apply();
+            }
+        }
+
+        function renderRelatedPanel(panel, data) {
+            const results = Array.isArray(data && data.results) ? data.results : [];
+            const mode = data && data.mode ? String(data.mode) : '';
+            const modeKey = mode.startsWith('semantic') ? 'chat_related_mode_semantic' : 'chat_related_mode_keyword';
+            const modeFallback = mode.startsWith('semantic') ? 'semantic' : 'keyword';
+
+            if (results.length === 0) {
+                panel.innerHTML = `
+                    <div class="crp-header">
+                        <span data-i18n="chat_related_panel_title">Related messages</span>
+                        <span class="crp-mode" data-i18n="${modeKey}">${escapeHtml(modeFallback)}</span>
+                    </div>
+                    <div class="crp-empty" data-i18n="chat_related_empty">No related messages found.</div>
+                `;
+                if (window.i18n && typeof i18n.apply === 'function') i18n.apply();
+                return;
+            }
+
+            const itemsHtml = results.map(r => {
+                const snippet = (r.text || '').replace(/\s+/g, ' ').slice(0, 180);
+                const when = r.created_at ? new Date(r.created_at).toLocaleString() : '';
+                const dist = (typeof r.distance === 'number' && isFinite(r.distance))
+                    ? `· ${r.distance.toFixed(3)}` : '';
+                return `
+                    <div class="crp-item" data-target-id="${escapeHtml(r.id)}" onclick="jumpToRelatedMessage(this)">
+                        <div class="crp-snippet">${escapeHtml(snippet)}</div>
+                        <div class="crp-meta">${escapeHtml(when)} ${dist}</div>
+                    </div>`;
+            }).join('');
+
+            panel.innerHTML = `
+                <div class="crp-header">
+                    <span data-i18n="chat_related_panel_title">Related messages</span>
+                    <span class="crp-mode" data-i18n="${modeKey}">${escapeHtml(modeFallback)}</span>
+                </div>
+                ${itemsHtml}
+            `;
+            if (window.i18n && typeof i18n.apply === 'function') i18n.apply();
+        }
+
+        function jumpToRelatedMessage(itemEl) {
+            const targetId = itemEl && itemEl.dataset.targetId;
+            if (!targetId) return;
+            const target = document.querySelector(`.chat-msg[data-message-id="${CSS.escape(targetId)}"]`);
+            if (!target) {
+                showToast(i18n.t('chat_related_target_not_loaded') || 'Message not currently loaded', 'info');
+                return;
+            }
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            target.classList.remove('crp-flash');
+            void target.offsetWidth;
+            target.classList.add('crp-flash');
         }
 
         // Smart quote: activates the reply bar with source+excerpt, no full-content paste
