@@ -1,3 +1,10 @@
+# [1.1046.0](https://github.com/HankHuang0516/EClaw/compare/v1.1045.0...v1.1046.0) (2026-04-21)
+
+
+### Features
+
+* **marketing:** vector-memory hero image v1 (1200×630 OG) ([#1947](https://github.com/HankHuang0516/EClaw/issues/1947)) ([a63693a](https://github.com/HankHuang0516/EClaw/commit/a63693a9035486355c094926b1be5ce60e1fb29f)), closes [#17](https://github.com/HankHuang0516/EClaw/issues/17) [#17](https://github.com/HankHuang0516/EClaw/issues/17)
+
 # [1.1045.0](https://github.com/HankHuang0516/EClaw/compare/v1.1044.0...v1.1045.0) (2026-04-21)
 
 
