@@ -12960,7 +12960,7 @@ const TRANSLATIONS = {
         "analytics_col_uniq": "ユニーク",
         "analytics_no_data": "期間内にデータがありません",
         "analytics_no_campaigns": "期間内にタグ付きキャンペーンがありません",
-        "analytics_err_no_device": "デバイス凭证がありません。デバイス所有者のみアクセスできます。",
+        "analytics_err_no_device": "デバイス資格情報がありません。デバイス所有者のみアクセスできます。",
         "analytics_err_fetch": "分析の読み込みに失敗しました"
     },
 
