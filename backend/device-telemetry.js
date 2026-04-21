@@ -81,7 +81,10 @@ async function ensureSizeCache(pool, deviceId) {
             totalBytes: parseInt(r.rows[0].total) || 0,
             entryCount: parseInt(r.rows[0].cnt) || 0
         };
-    } catch {
+    } catch (err) {
+        // Don't throw — telemetry must never break callers — but at least log
+        // so schema drift on device_telemetry doesn't silently disable pruning.
+        console.warn('[DeviceTelemetry] ensureSizeCache failed for', deviceId, ':', err.message);
         sizeCache[deviceId] = { totalBytes: 0, entryCount: 0 };
     }
     return sizeCache[deviceId];
