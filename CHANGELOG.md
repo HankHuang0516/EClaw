@@ -1,3 +1,10 @@
+# [1.1047.0](https://github.com/HankHuang0516/EClaw/compare/v1.1046.1...v1.1047.0) (2026-04-21)
+
+
+### Features
+
+* **mindmap:** Phase 3 — zoom-tier rendering + focus-mode fog ([#1961](https://github.com/HankHuang0516/EClaw/issues/1961)) ([d039b5d](https://github.com/HankHuang0516/EClaw/commit/d039b5dd6f2c8cf1ad2ac926798ee5405f2255cf))
+
 ## [1.1046.1](https://github.com/HankHuang0516/EClaw/compare/v1.1046.0...v1.1046.1) (2026-04-21)
 
 
