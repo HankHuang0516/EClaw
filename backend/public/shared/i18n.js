@@ -16838,7 +16838,7 @@ const TRANSLATIONS = {
         "mr_action_failed": "실패",
         "analytics_title": "사이트 분석",
         "analytics_subtitle": "공개 페이지와 마케팅 페이지의 익명 페이지뷰. 포털 페이지는 장치 범위 원격 측정 보유.",
-        "analytics_loading": "読み込み中…",
+        "analytics_loading": "로딩 중…",
         "analytics_days_label": "기간",
         "analytics_days_7": "최근 7일",
         "analytics_days_30": "최근 30일",
