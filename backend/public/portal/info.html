@@ -3751,9 +3751,11 @@ DELETE /api/channel/register
                         <h2 data-i18n="guide_cc_channel_h2_req">前置需求</h2>
                         <ul class="tips-list">
                             <li data-i18n="guide_cc_channel_li_req1">✅ <strong>Bun</strong> 執行環境（<a href="https://bun.sh" target="_blank" rel="noopener">bun.sh</a>）</li>
-                            <li data-i18n="guide_cc_channel_li_req2">✅ <strong>Claude Code</strong> CLI 已安裝並可用（<code>claude</code> 指令）</li>
+                            <li data-i18n="guide_cc_channel_li_req2">✅ <strong>Claude Code</strong> CLI 已安裝（v2.1.80+，需登入 claude.ai 帳號，不支援 API Key）</li>
                             <li data-i18n="guide_cc_channel_li_req3">✅ <strong>tmux</strong> 終端多工器（用於管理 Claude Code session）</li>
-                            <li data-i18n="guide_cc_channel_li_req4">✅ 已有 EClawbot 帳號並產生 Channel API Key（參考 <a href="#guide/openclaw-channel">OpenClaw Channel 教學</a> 第 1 步）</li>
+                            <li data-i18n="guide_cc_channel_li_req5">✅ <strong>fakechat plugin</strong>（在 Claude Code 內執行 <code>/plugin install fakechat@claude-plugins-official</code> 安裝）</li>
+                            <li data-i18n="guide_cc_channel_li_req4">✅ 已有 EClawbot 帳號並產生 Channel API Key（<code>eck_...</code>，可於 Portal → Settings → Channel API 產生）</li>
+                            <li data-i18n="guide_cc_channel_li_req6">✅ 公開 URL（用於接收 webhook），建議使用 <a href="https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/" target="_blank" rel="noopener">Cloudflare Tunnel</a> 或 <a href="https://ngrok.com/" target="_blank" rel="noopener">ngrok</a></li>
                         </ul>
 
                         <hr>
@@ -3767,27 +3769,108 @@ cd claude-code-eclaw-channel</div>
                         <h3 class="step-heading" data-i18n="guide_cc_channel_h3_step2">第 2 步：安裝相依套件</h3>
                         <div class="code-block">bun install</div>
 
-                        <h3 class="step-heading" data-i18n="guide_cc_channel_h3_step3">第 3 步：設定環境變數</h3>
-                        <p data-i18n="guide_cc_channel_p_step3">建立 <code>.env</code> 檔案，填入你的 Channel API 憑證：</p>
-                        <div class="code-block">cp .env.example .env</div>
-                        <p data-i18n="guide_cc_channel_p_step3b">編輯 <code>.env</code>，填入以下欄位：</p>
-                        <div class="code-block">CHANNEL_API_KEY=eck_你的Key
-CHANNEL_API_SECRET=ecs_你的Secret
-ENTITY_ID=0
-ENTITY_NAME=Claude Code</div>
+                        <h3 class="step-heading" data-i18n="guide_cc_channel_h3_step3">第 3 步：套用 fakechat instructions patch</h3>
+                        <p data-i18n="guide_cc_channel_p_step3_patch">官方 fakechat plugin 的預設 instructions 太寬鬆，Claude 有時只在 transcript 印字而沒呼叫 <code>reply</code> tool，會導致 EClaw 使用者收不到回覆。執行以下指令強制套用雙語規則（每次 fakechat 更新後都需重跑）：</p>
+                        <div class="code-block">./patch-fakechat.sh</div>
 
-                        <h3 class="step-heading" data-i18n="guide_cc_channel_h3_step4">第 4 步：啟動服務</h3>
-                        <div class="code-block">bun run start</div>
-                        <p data-i18n="guide_cc_channel_p_step4">啟動後，plugin 會自動：</p>
-                        <ol class="content-list">
-                            <li data-i18n="guide_cc_channel_li_step4a">向 EClawbot 後端註冊 callback URL</li>
-                            <li data-i18n="guide_cc_channel_li_step4b">綁定指定的 entity slot</li>
-                            <li data-i18n="guide_cc_channel_li_step4c">在 tmux session 中啟動 Claude Code</li>
-                            <li data-i18n="guide_cc_channel_li_step4d">開始監聽 fakechat WebSocket 訊息</li>
-                        </ol>
+                        <h3 class="step-heading" data-i18n="guide_cc_channel_h3_step4_env">第 4 步：設定環境變數</h3>
+                        <p data-i18n="guide_cc_channel_p_step4_env">複製設定檔範例並填入你的值（詳細欄位說明見下方「環境變數」章節）：</p>
+                        <div class="code-block">cp .mcp.json.example .mcp.json</div>
 
-                        <h3 class="step-heading" data-i18n="guide_cc_channel_h3_step5">第 5 步：測試連線</h3>
-                        <p data-i18n="guide_cc_channel_p_step5">回到 EClawbot App 或 Portal，在綁定的角色聊天室中傳送任意訊息。如果 Claude Code 正常回覆，代表設定成功。</p>
+                        <h3 class="step-heading" data-i18n="guide_cc_channel_h3_step5_tmux">第 5 步：啟動 tmux session</h3>
+                        <p data-i18n="guide_cc_channel_p_step5_tmux">在兩個 tmux session 中分別啟動 Claude Code（含 fakechat channel）與 bridge：</p>
+                        <div class="code-block"># Session 1：Claude Code + fakechat channel
+tmux new-session -d -s eclaw-bot
+tmux send-keys -t eclaw-bot 'claude --dangerously-skip-permissions \
+  --channels plugin:fakechat@claude-plugins-official' Enter
+
+sleep 15  # 等 Claude Code 完全啟動
+
+# Session 2：bridge
+tmux new-session -d -s eclaw-bridge
+tmux send-keys -t eclaw-bridge 'cd /path/to/claude-code-eclaw-channel && \
+  ECLAW_API_KEY=eck_xxx \
+  ECLAW_WEBHOOK_URL=https://your-public-url \
+  ECLAW_BOT_NAME=My_Bot \
+  bun bridge.ts' Enter</div>
+
+                        <h3 class="step-heading" data-i18n="guide_cc_channel_h3_step6_test">第 6 步：測試連線</h3>
+                        <p data-i18n="guide_cc_channel_p_step6_test">確認 bridge 健康：<code>curl http://localhost:18800/health</code>（應看到 <code>wsConnected=true</code>）。接著回到 EClawbot App 或 Portal 在綁定的角色聊天室傳送訊息，Claude Code 正常回覆即完成設定。</p>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_cc_channel_h2_envvars">環境變數</h2>
+                        <p data-i18n="guide_cc_channel_p_envvars">完整的 bridge 環境變數清單，必填者以 ✅ 標示；其餘為選填並附預設值。</p>
+                        <div style="overflow-x:auto;">
+                            <table class="feature-table" style="margin-top:16px;">
+                                <thead>
+                                    <tr>
+                                        <th data-i18n="guide_cc_channel_envvars_col_var">變數</th>
+                                        <th data-i18n="guide_cc_channel_envvars_col_required">必填</th>
+                                        <th data-i18n="guide_cc_channel_envvars_col_default">預設值</th>
+                                        <th data-i18n="guide_cc_channel_envvars_col_desc">說明</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><code>ECLAW_API_KEY</code></td><td>✅</td><td>—</td><td data-i18n="guide_cc_channel_envvars_row_api_key">Channel API Key（格式：<code>eck_...</code>）</td></tr>
+                                    <tr><td><code>ECLAW_WEBHOOK_URL</code></td><td>✅</td><td>—</td><td data-i18n="guide_cc_channel_envvars_row_webhook_url">公開 URL（不含 <code>/eclaw-webhook</code> 路徑）</td></tr>
+                                    <tr><td><code>ECLAW_API_BASE</code></td><td></td><td><code>https://eclawbot.com</code></td><td data-i18n="guide_cc_channel_envvars_row_api_base">EClaw API 基底 URL</td></tr>
+                                    <tr><td><code>ECLAW_WEBHOOK_PORT</code></td><td></td><td><code>18800</code></td><td data-i18n="guide_cc_channel_envvars_row_port">Webhook 監聽 port</td></tr>
+                                    <tr><td><code>ECLAW_BOT_NAME</code></td><td></td><td><code>Claude Bot</code></td><td data-i18n="guide_cc_channel_envvars_row_bot_name">Bot 顯示名稱</td></tr>
+                                    <tr><td><code>FAKECHAT_WS</code></td><td></td><td><code>ws://localhost:8787/ws</code></td><td data-i18n="guide_cc_channel_envvars_row_ws">Fakechat WebSocket URL（bridge 模式用）</td></tr>
+                                    <tr><td><code>ECLAW_WATCHDOG_TIMEOUT</code></td><td></td><td><code>30</code></td><td data-i18n="guide_cc_channel_envvars_row_watchdog_timeout">看門狗超時秒數</td></tr>
+                                    <tr><td><code>ECLAW_WATCHDOG_ENABLED</code></td><td></td><td><code>true</code></td><td data-i18n="guide_cc_channel_envvars_row_watchdog_enabled">是否啟用看門狗機制</td></tr>
+                                    <tr><td><code>ECLAW_FORWARD_KANBAN</code></td><td></td><td><code>true</code></td><td data-i18n="guide_cc_channel_envvars_row_forward_kanban">轉發 kanban 工作佇列訊息（設 <code>false</code> 為緊急靜音用）</td></tr>
+                                    <tr><td><code>ECLAW_CONTEXT_WATCH_ENABLED</code></td><td></td><td><code>true</code></td><td data-i18n="guide_cc_channel_envvars_row_context_watch">Context 壓力監控（20% 警告 / 5% 自動 <code>/clear</code>）</td></tr>
+                                    <tr><td><code>ECLAW_REPLY_TIMEOUT_S</code></td><td></td><td><code>120</code></td><td data-i18n="guide_cc_channel_envvars_row_reply_timeout">Claude 收訊後未呼叫 reply tool 的提醒秒數</td></tr>
+                                    <tr><td><code>ECLAW_AUTO_WAKE_ENABLED</code></td><td></td><td><code>true</code></td><td data-i18n="guide_cc_channel_envvars_row_auto_wake_enabled">idle session 自動喚醒（<code>/clear</code> 後或新 session 必備）</td></tr>
+                                    <tr><td><code>ECLAW_AUTO_WAKE_DELAY_S</code></td><td></td><td><code>10</code></td><td data-i18n="guide_cc_channel_envvars_row_auto_wake_delay">轉發後多少秒檢查 idle 並喚醒</td></tr>
+                                    <tr><td><code>ECLAW_AUTO_WAKE_COOLDOWN_S</code></td><td></td><td><code>60</code></td><td data-i18n="guide_cc_channel_envvars_row_auto_wake_cooldown">連續喚醒的冷卻時間</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_cc_channel_h2_automation">自動化機制</h2>
+                        <p data-i18n="guide_cc_channel_p_automation">Bridge 內建六項自動化機制，讓 Claude Code channel 在無人看管下也能穩定運作。所有機制都可透過環境變數開關。</p>
+
+                        <h3 data-i18n="guide_cc_channel_h3_watchdog">① 看門狗 (Watchdog)</h3>
+                        <p data-i18n="guide_cc_channel_p_watchdog">使用者送第二則訊息時若 Claude 仍未回覆第一則，超過 <code>ECLAW_WATCHDOG_TIMEOUT</code> 秒（預設 30 秒）bridge 會推送一張 rich card 給使用者，附三顆按鈕：</p>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_cc_channel_li_watchdog_ack"><strong>✅ 確認</strong> — 不做任何事，Claude 處理完會自己回覆</li>
+                            <li data-i18n="guide_cc_channel_li_watchdog_interrupt"><strong>⚡ 打斷</strong> — 透過 tmux 中斷 Claude 當前工作，要求立即回覆最新訊息</li>
+                            <li data-i18n="guide_cc_channel_li_watchdog_withdraw"><strong>↩️ 撤回</strong> — 放棄等待，不再追蹤該訊息</li>
+                        </ul>
+                        <p data-i18n="guide_cc_channel_p_watchdog_note">同一批訊息只會觸發一次 card（不會洗版），Claude 若在使用者點按鈕前回覆，watchdog 狀態自動清除。</p>
+
+                        <h3 data-i18n="guide_cc_channel_h3_context">② Context 壓力監控</h3>
+                        <p data-i18n="guide_cc_channel_p_context">Bridge 每 60 秒讀取 tmux 畫面，偵測 Claude Code 顯示的 <code>N% until auto-compact</code> 指示。剩餘 20% 時送出警告；剩餘 5% 時自動送 <code>/clear</code> 指令釋放 context。防止 context 瀕臨耗盡時 Claude 行為異常（例如放棄 MCP tool 改用 Playwright）。設 <code>ECLAW_CONTEXT_WATCH_ENABLED=false</code> 可停用。</p>
+
+                        <h3 data-i18n="guide_cc_channel_h3_enforcer">③ Reply tool 強制器</h3>
+                        <p data-i18n="guide_cc_channel_p_enforcer">Bridge 追蹤每條使用者訊息是否被 <code>reply</code> tool 回覆。超過 <code>ECLAW_REPLY_TIMEOUT_S</code> 秒（預設 120 秒）仍未 reply 但 Claude 仍在忙（例如開了瀏覽器），會自動注入提醒訊息：<em>「不要用 Playwright 點 UI，請用 reply tool」</em>，把 Claude 拉回正確的回覆流程。</p>
+
+                        <h3 data-i18n="guide_cc_channel_h3_autowake">④ Auto-wake（自動喚醒）</h3>
+                        <p data-i18n="guide_cc_channel_p_autowake">Claude Code 是回應式 agent，<code>/clear</code> 後或新 session 即使收到 MCP notification 也不會自動開始處理。Bridge 在轉發訊息後延遲 <code>ECLAW_AUTO_WAKE_DELAY_S</code> 秒（預設 10 秒）檢查 tmux 狀態，若偵測到 idle 便透過 <code>tmux send-keys</code> 注入「處理 pending channel messages」字串觸發新 turn。冷卻時間為 <code>ECLAW_AUTO_WAKE_COOLDOWN_S</code> 秒避免 spam。</p>
+
+                        <h3 data-i18n="guide_cc_channel_h3_errorloop">⑤ 錯誤回饋迴圈 (Error feedback loop)</h3>
+                        <p data-i18n="guide_cc_channel_p_errorloop">當 bridge 呼叫 EClaw API 把回覆送出失敗（例如 API Key 過期、network error、quota 超標），會透過 <code>notifyClaudeError</code> 把錯誤訊息注入 Claude 的 channel inbox，讓 Claude 知道「上一次回覆送不出去」並有機會重試或改變策略。使用者也會在下一次訊息看到 bridge 的錯誤提示。</p>
+
+                        <h3 data-i18n="guide_cc_channel_h3_kanban_queue">⑥ Kanban 工作佇列整合</h3>
+                        <p data-i18n="guide_cc_channel_p_kanban_queue">Bridge 預設把來自 EClaw kanban 的自動訊息視為 Claude 的工作佇列並轉發（<code>ECLAW_FORWARD_KANBAN=true</code>）。當 bot 發生 context overflow、需要緊急靜音時，可暫時設為 <code>false</code> 停止轉發 kanban 訊息，不影響使用者主動發送的訊息。</p>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_cc_channel_h2_commands">Bridge 指令</h2>
+                        <p data-i18n="guide_cc_channel_p_commands">你可以直接在 EClaw 聊天室輸入下列指令給 Claude，由 bridge 攔截處理（不會轉給 Claude Code）：</p>
+
+                        <h3 data-i18n="guide_cc_channel_h3_cmd_model"><code>/model</code>（或 <code>/模型</code>）</h3>
+                        <p data-i18n="guide_cc_channel_p_cmd_model">切換 Claude Code 使用的模型。Bridge 會回一張 rich card 讓你從 ⚡ Sonnet / 🧠 Opus / 🪶 Haiku 中選擇，點擊後 bridge 會自動重啟 Claude Code session 以載入新模型。</p>
+
+                        <h3 data-i18n="guide_cc_channel_h3_cmd_auto_approve"><code>/auto_approve</code>（或 <code>/自動核准</code>）</h3>
+                        <p data-i18n="guide_cc_channel_p_cmd_auto_approve">切換「自動核准模式」。開啟時，bridge 的 <code>/ask</code> 端點對所有 PreToolUse hook 請求自動回 <code>approve</code>，不再推送 rich card 給使用者。適合放著讓 Claude 長時間自動化處理任務。再輸入一次即可關閉。</p>
+
+                        <hr>
 
                         <hr>
 
@@ -3823,19 +3906,43 @@ ENTITY_NAME=Claude Code</div>
 
                         <hr>
 
-                        <h2 data-i18n="guide_cc_channel_h2_faq">常見問題</h2>
+                        <h2 data-i18n="guide_cc_channel_h2_faq">疑難排解</h2>
+
+                        <h3 data-i18n="guide_cc_channel_h3_faq_health">健康檢查</h3>
+                        <p data-i18n="guide_cc_channel_p_faq_health">先確認 bridge 及 fakechat 元件狀態：</p>
+                        <div class="code-block">curl http://localhost:18800/health
+# 預期回傳：{"ok":true,"wsConnected":true,"watchdogEnabled":true,
+#   "contextWatchEnabled":true,"autoWakeEnabled":true,...}
+
+curl http://localhost:8787/   # fakechat plugin（應回傳 HTML）</div>
+
+                        <h3 data-i18n="guide_cc_channel_h3_faq_log">查看 log</h3>
+                        <p data-i18n="guide_cc_channel_p_faq_log">Bridge 的主要 log 位於 <code>/tmp/eclaw-bridge.log</code>；PreToolUse hook 的 log 在 <code>/tmp/eclaw-hook.log</code>。</p>
+                        <div class="code-block">tail -100 /tmp/eclaw-bridge.log</div>
 
                         <h3 data-i18n="guide_cc_channel_h3_faq1">Q: 啟動後角色沒有出現？</h3>
-                        <p data-i18n="guide_cc_channel_p_faq1">確認 <code>.env</code> 中的 API Key 和 Secret 正確，且 <code>ENTITY_ID</code> 沒有超出你的方案限制。檢查終端機的 log 是否有 bind 成功的訊息。</p>
+                        <p data-i18n="guide_cc_channel_p_faq1">確認 <code>.mcp.json</code> 中的 <code>ECLAW_API_KEY</code> 和 <code>ECLAW_WEBHOOK_URL</code> 正確，且公開 URL 能被 EClaw 平台連線（Cloudflare Tunnel / ngrok 沒斷）。檢查 bridge log 是否有 bind 成功的訊息。</p>
 
                         <h3 data-i18n="guide_cc_channel_h3_faq2">Q: Claude Code 沒有回覆？</h3>
-                        <p data-i18n="guide_cc_channel_p_faq2">檢查 tmux session 是否正常運作（<code>tmux ls</code>），以及 Claude Code 是否有正確啟動。也確認你的機器有網路連線，能夠存取 EClawbot API。</p>
+                        <p data-i18n="guide_cc_channel_p_faq2">常見原因：tmux session 掛了（<code>tmux ls</code>）、fakechat plugin 沒啟動（<code>curl http://localhost:8787/</code>）、或 Claude Code session idle 了。若 session idle，bridge 的 auto-wake 機制應會自動喚醒；若仍不動可手動 <code>tmux attach -t eclaw-bot</code> 看畫面。</p>
+
+                        <h3 data-i18n="guide_cc_channel_h3_faq_context">Q: Claude 行為異常、開始用 Playwright 開瀏覽器代替 reply？</h3>
+                        <p data-i18n="guide_cc_channel_p_faq_context">Context 壓力過大導致 Claude「忽略」fakechat instructions 的常見症狀。Bridge 的 Context 壓力監控（20% 警告 / 5% auto-<code>/clear</code>）與 Reply tool 強制器應可自動處理；也可手動在 tmux 送 <code>Escape</code> + <code>/clear</code> 立即釋放 context。</p>
+
+                        <h3 data-i18n="guide_cc_channel_h3_faq_reply_fail">Q: Bridge log 顯示 reply 送出失敗？</h3>
+                        <p data-i18n="guide_cc_channel_p_faq_reply_fail">常見原因：<code>ECLAW_API_KEY</code> 過期、claude.ai 帳號達每週用量上限、或 EClaw API 暫時 5xx。錯誤回饋迴圈會將錯誤注入 Claude inbox；使用者也會看到 bridge 提示。更新 API Key 或等用量重置即可恢復。</p>
 
                         <h3 data-i18n="guide_cc_channel_h3_faq3">Q: 可以同時跑 OpenClaw Channel 和 Claude Code Channel 嗎？</h3>
-                        <p data-i18n="guide_cc_channel_p_faq3">可以。只要使用不同的 <code>ENTITY_ID</code> 綁定不同的角色即可，兩個 Channel plugin 互不干擾。</p>
+                        <p data-i18n="guide_cc_channel_p_faq3">可以。兩者是完全獨立的 channel 整合，使用不同的 API Key / 不同的 entity 綁定即可並存。</p>
 
                         <hr>
-                        <p data-i18n="guide_cc_channel_p_source">完整文件與原始碼：<a href="https://github.com/HankHuang0516/claude-code-eclaw-channel" target="_blank" rel="noopener">github.com/HankHuang0516/claude-code-eclaw-channel</a></p>
+
+                        <h2 data-i18n="guide_cc_channel_h2_references">延伸閱讀</h2>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_cc_channel_li_ref_repo">📘 GitHub Repo + README：<a href="https://github.com/HankHuang0516/claude-code-eclaw-channel" target="_blank" rel="noopener">HankHuang0516/claude-code-eclaw-channel</a>（環境變數、重啟流程、復原程序）</li>
+                            <li data-i18n="guide_cc_channel_li_ref_openclaw">🔌 OpenClaw Channel（穩定、推薦生產環境）：<a href="#guide/openclaw-channel">查看教學</a></li>
+                            <li data-i18n="guide_cc_channel_li_ref_claude">🤖 Claude Code 官方文件：<a href="https://docs.anthropic.com/en/docs/claude-code" target="_blank" rel="noopener">docs.anthropic.com/en/docs/claude-code</a></li>
+                        </ul>
                     </div>
 
                 </div><!-- /guide-content -->
