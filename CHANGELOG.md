@@ -1,3 +1,10 @@
+# [1.1055.0](https://github.com/HankHuang0516/EClaw/compare/v1.1054.1...v1.1055.0) (2026-04-22)
+
+
+### Features
+
+* **mindmap:** Route A mirror — auto-pair notes with mindmap leaves ([#1984](https://github.com/HankHuang0516/EClaw/issues/1984)) ([6d0afb5](https://github.com/HankHuang0516/EClaw/commit/6d0afb5d389917401aead3bf2706826434a94e07))
+
 ## [1.1054.1](https://github.com/HankHuang0516/EClaw/compare/v1.1054.0...v1.1054.1) (2026-04-22)
 
 
