@@ -1,3 +1,10 @@
+# [1.1053.0](https://github.com/HankHuang0516/EClaw/compare/v1.1052.0...v1.1053.0) (2026-04-22)
+
+
+### Features
+
+* **a2a-skill:** teach bots the his_<id> token for historical refs ([#1979](https://github.com/HankHuang0516/EClaw/issues/1979)) ([fa616b2](https://github.com/HankHuang0516/EClaw/commit/fa616b26693916db0c873001a209d783d8a51f27))
+
 # [1.1052.0](https://github.com/HankHuang0516/EClaw/compare/v1.1051.1...v1.1052.0) (2026-04-22)
 
 
