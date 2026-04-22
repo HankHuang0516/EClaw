@@ -4360,7 +4360,11 @@
             let finalText = text;
             if (replyContext) {
                 const excerpt = replyContext.text.length > 80 ? replyContext.text.slice(0, 80) + '…' : replyContext.text;
-                const quotePrefix = `↩ ${replyContext.senderName}: "${excerpt}"`;
+                // Embed his_<id> token in the prefix so the referenced bubble
+                // renders as a clickable chip for everyone (sender + recipient
+                // bots see it inline and can scroll back).
+                const hisToken = replyContext.msgId ? ` his_${String(replyContext.msgId).replace(/[^0-9]/g, '')}` : '';
+                const quotePrefix = `↩ ${replyContext.senderName}:${hisToken} "${excerpt}"`;
                 finalText = text ? `${quotePrefix}\n\n${text}` : quotePrefix;
                 clearReplyContext();
             }
