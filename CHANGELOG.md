@@ -1,3 +1,10 @@
+# [1.1049.0](https://github.com/HankHuang0516/EClaw/compare/v1.1048.1...v1.1049.0) (2026-04-22)
+
+
+### Features
+
+* **mindmap:** AI traverse endpoint (Phase 4) over BFS subgraph ([#1969](https://github.com/HankHuang0516/EClaw/issues/1969)) ([42f9a04](https://github.com/HankHuang0516/EClaw/commit/42f9a0449af4606b04dc0c6b34f86a55f531b090)), closes [#19](https://github.com/HankHuang0516/EClaw/issues/19)
+
 ## [1.1048.1](https://github.com/HankHuang0516/EClaw/compare/v1.1048.0...v1.1048.1) (2026-04-21)
 
 
