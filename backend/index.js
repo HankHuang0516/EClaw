@@ -5730,6 +5730,13 @@ app.post('/api/transform', async (req, res) => {
         ? [`entityId mismatch: you provided ${parseInt(entityId) || 0} but your botSecret belongs to entity ${eId}. Auto-corrected to ${eId}.`]
         : [];
     let deliveryResults = null;
+    // Tracks whether the delivery path actually persisted a chat row. If
+    // hasDelivery was true but every target fell through (all speakTo codes
+    // unresolved, broadcast dedup/rate-limit/no-targets/device-missing), the
+    // original code left the message in no chat_messages row at all — silent
+    // data loss. We flip this flag only when a save happens, then use it below
+    // to run a sender-side fallback save.
+    let deliverySaved = false;
 
     if ((speakTo || broadcast) && finalMessage) {
         // If both provided, broadcast takes priority
@@ -5781,6 +5788,7 @@ app.post('/api/transform', async (req, res) => {
                         } else {
                             const sourceLabel = `entity:${eId}:${entity.character}`;
                             const broadcastChatMsgId = await saveChatMessage(broadcastDeviceId, eId, deliveryText, `${sourceLabel}->${targetIds.join(',')}`, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments);
+                            deliverySaved = true;
 
                             // Check recipient info preference
                             const bcastPrefs = await devicePrefs.getPrefs(broadcastDeviceId);
@@ -5906,9 +5914,28 @@ app.post('/api/transform', async (req, res) => {
 
                 console.log(`[Transform+SpeakTo] ${deviceId}:${eId} -> ${target.deviceId}:${target.entityId} (${code})`);
                 results.push({ publicCode: code, success: true, ...result });
+                deliverySaved = true;
             }
 
             deliveryResults = { speakTo: true, results };
+        }
+    }
+
+    // Fallback: delivery was requested but every target fell through (dedup,
+    // rate-limit, no-targets, device-missing, all codes unresolved). Without
+    // this, the sender's own chat row never gets written — message disappears.
+    // Save to sender so the author at least sees their own words, and surface
+    // a warning so the caller knows no delivery happened.
+    const hasDeliveryRequested = (broadcast || (speakTo && Array.isArray(speakTo) && speakTo.length > 0));
+    if (hasDeliveryRequested && !deliverySaved && finalMessage && !isSilentMessage) {
+        const isLeasedOut = entity.rental_status === 'leased_out';
+        if (!isLeasedOut) {
+            const pendingA2A = entity.messageQueue && entity.messageQueue.find(m => m.from && m.from.startsWith('entity:'));
+            const chatSource = pendingA2A
+                ? `entity:${eId}:${entity.character}->${pendingA2A.fromEntityId}`
+                : entity.name || `Entity ${eId}`;
+            await saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments);
+            warnings.push('All delivery targets failed; message saved to sender chat only.');
         }
     }
 
