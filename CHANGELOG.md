@@ -1,3 +1,10 @@
+# [1.1050.0](https://github.com/HankHuang0516/EClaw/compare/v1.1049.3...v1.1050.0) (2026-04-22)
+
+
+### Features
+
+* **viral:** wire CTA + pageview beacons on share-chat Proxy Window ([#1973](https://github.com/HankHuang0516/EClaw/issues/1973)) ([04d8230](https://github.com/HankHuang0516/EClaw/commit/04d82309948977ff7cc794a1f97f449519a3acb1))
+
 ## [1.1049.3](https://github.com/HankHuang0516/EClaw/compare/v1.1049.2...v1.1049.3) (2026-04-22)
 
 
