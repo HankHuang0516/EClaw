@@ -506,4 +506,4 @@ async function analyzeWithClaude({ problemDescription, errorMessages, logs, hand
     };
 }
 
-module.exports = { chatWithClaude, analyzeWithClaude, formatDiagnostics, CUSTOMER_SERVICE_TOOLS };
+module.exports = { chatWithClaude, analyzeWithClaude, callAnthropic, formatDiagnostics, CUSTOMER_SERVICE_TOOLS };
