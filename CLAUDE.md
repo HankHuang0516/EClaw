@@ -57,6 +57,7 @@ EClaw/
 │   ├── fraud-detection.js    # Rental fraud detection
 │   ├── feedback-email.js     # Email notifications for feedback (Resend)
 │   ├── mindmap.js            # Mind map multi-layer thinking graph (schema + CRUD + Cytoscape UI)
+│   ├── mindmap-mirror.js     # Note-to-mindmap mirror (auto-pair notes with leaf nodes)
 │   ├── entity-id.js          # Stripe-style entity ID factory (card_, note_, skill_, listing_, exam_, contract_)
 │   ├── safe-equal.js         # Timing-safe secret comparison utility
 │   ├── files.js              # Cloudflare R2 file storage (multipart upload, download, deletion)
@@ -123,6 +124,8 @@ EClaw/
 │   │   │   │   ├── nav.js         # Shared navigation bar
 │   │   │   │   ├── public-nav.js  # Public pages navigation
 │   │   │   │   ├── socket.js      # WebSocket client
+│   │   │   │   ├── his-link-render.js # Parse his_<id> tokens into clickable history chips
+│   │   │   │   ├── product-tour.js # Product tour/onboarding module
 │   │   │   │   └── style.css      # Shared styles (agent card, avatar, etc.)
 │   │   ├── shared/
 │   │   │   ├── telemetry.js       # Client-side telemetry SDK
@@ -293,7 +296,7 @@ EClaw/
 | `/api/gps/recommendations` | gps-recommendations.js | GPS-based entity recommendations (demo) |
 | `/api/device/org-chart` | org-chart.js + index.js | Organization hierarchy chart (GET/PUT hierarchy + behavior options) |
 | `/api/kanban/cards/summary` | index.js | Kanban card summary endpoint |
-| `/api/mindmap/*` | mindmap.js | Mind map CRUD (nodes, edges, anchors, comments) |
+| `/api/mindmap/*` | mindmap.js + mindmap-mirror.js | Mind map CRUD (nodes, edges, anchors, comments), AI traverse, note-mirror backfill |
 | `/api/analytics/*` | site-pageviews.js | Site pageview analytics aggregation |
 | `/api/growth/*` | growth.js | Growth metrics for admin bots |
 | `/api/chat/message/:id/related` | index.js + chat-embedding.js | Nearest-neighbor message lookup |
