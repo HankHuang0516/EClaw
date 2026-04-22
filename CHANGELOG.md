@@ -1,3 +1,10 @@
+## [1.1053.2](https://github.com/HankHuang0516/EClaw/compare/v1.1053.1...v1.1053.2) (2026-04-22)
+
+
+### Bug Fixes
+
+* **his-link:** handle UUID message ids, not numeric SERIAL ([#1981](https://github.com/HankHuang0516/EClaw/issues/1981)) ([1ea54f9](https://github.com/HankHuang0516/EClaw/commit/1ea54f948b0d22dfe4f5139382a9b554ba9341ae))
+
 ## [1.1053.1](https://github.com/HankHuang0516/EClaw/compare/v1.1053.0...v1.1053.1) (2026-04-22)
 
 
