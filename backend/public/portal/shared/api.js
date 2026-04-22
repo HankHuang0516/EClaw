@@ -2,7 +2,7 @@
 
 const API_BASE = window.location.origin;
 
-async function apiCall(method, path, body = null) {
+async function apiCall(method, path, body = null, opts = {}) {
     const options = {
         method: method,
         credentials: 'include', // Send cookies
@@ -26,9 +26,16 @@ async function apiCall(method, path, body = null) {
     const data = await response.json();
 
     if (response.status === 401) {
-        // Not authenticated - redirect to login (skip public pages, info page, and Android WebView)
+        // Not authenticated - redirect to login (skip public pages, info page, and Android WebView).
+        // Callers that handle 401 themselves (e.g. auth.js's /me probe that falls back to
+        // device-login) pass { skip401Redirect: true } so the redirect doesn't race against
+        // their fallback fetch — see the Portal auth race bug on iOS / Playwright.
         const isAndroidWebView = typeof AndroidBridge !== 'undefined';
-        if (!isAndroidWebView && !window.location.pathname.includes('index.html') && !window.location.pathname.endsWith('/portal/') && !window.location.pathname.includes('info.html')) {
+        if (!opts.skip401Redirect
+            && !isAndroidWebView
+            && !window.location.pathname.includes('index.html')
+            && !window.location.pathname.endsWith('/portal/')
+            && !window.location.pathname.includes('info.html')) {
             window.location.href = 'index.html';
         }
         throw new Error(data.error || 'Not authenticated');

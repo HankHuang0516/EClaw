@@ -19,7 +19,12 @@ async function checkAuth() {
     } catch (_) { /* ignore */ }
 
     try {
-        const data = await apiCall('GET', '/api/auth/me');
+        // Suppress api.js's built-in 401->index redirect so the WebView / URL-param
+        // fallbacks below get a chance to device-login. Without this, the redirect
+        // starts before our fallback fetch completes and the browser aborts it
+        // with "TypeError: Failed to fetch". If every fallback fails, we redirect
+        // to index.html explicitly at the bottom of this function.
+        const data = await apiCall('GET', '/api/auth/me', null, { skip401Redirect: true });
         currentUser = data.user;
         window.currentUser = currentUser;
 
