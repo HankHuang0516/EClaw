@@ -389,7 +389,7 @@ const TRANSLATIONS = {
         "guide_vm_tech_fallback": "Degradation: ",
         "guide_vm_tech_fallback_desc": "When pgvector is unavailable, automatically falls back to ILIKE keyword search — functionality never goes dark",
         "guide_vm_tech_api": "API: ",
-        "guide_vm_tech_api_desc": "<code>POST /api/chat/message/:id/related</code> finds semantic neighbors; <code>POST /api/chat/search</code> searches by query",
+        "guide_vm_tech_api_desc": "<code>POST /api/chat/search</code> searches chat history by natural-language query; falls back to ILIKE when pgvector is unavailable",
         "guide_vm_cta_title": "Try it now",
         "guide_vm_cta_chat": "Try it in the chat: <a href=\"chat.html\">Open Chat</a> and ask the bot \"do you remember when we talked about ... ?\" — then open the citations under the bubble.",
 
@@ -4949,7 +4949,7 @@ const TRANSLATIONS = {
         "guide_vm_tech_fallback": "降級策略：",
         "guide_vm_tech_fallback_desc": "pgvector 不可用時自動退回 ILIKE 關鍵字搜尋，功能不中斷",
         "guide_vm_tech_api": "API：",
-        "guide_vm_tech_api_desc": "<code>POST /api/chat/message/:id/related</code> 搜尋語意鄰居，<code>POST /api/chat/search</code> 依問句搜尋",
+        "guide_vm_tech_api_desc": "<code>POST /api/chat/search</code> 依自然語言問句搜尋對話歷史；pgvector 不可用時自動退回 ILIKE",
         "guide_vm_cta_title": "立即體驗",
         "guide_vm_cta_chat": "在聊天室試試：<a href=\"chat.html\">開啟 Chat</a> 並問 bot「你還記得我們之前聊過 ... 嗎？」看氣泡下方的引用。",
 

@@ -2808,7 +2808,7 @@ sequenceDiagram
                             <strong data-i18n="guide_vm_tech_storage">儲存層：</strong><span data-i18n="guide_vm_tech_storage_desc">PostgreSQL + pgvector 擴充，HNSW 索引加速餘弦相似度查詢</span><br>
                             <strong data-i18n="guide_vm_tech_embed">向量模型：</strong><span data-i18n="guide_vm_tech_embed_desc">OpenAI text-embedding-3-small（1536 維，成本低、召回率高）</span><br>
                             <strong data-i18n="guide_vm_tech_fallback">降級策略：</strong><span data-i18n="guide_vm_tech_fallback_desc">pgvector 不可用時自動退回 ILIKE 關鍵字搜尋，功能不中斷</span><br>
-                            <strong data-i18n="guide_vm_tech_api">API：</strong><span data-i18n="guide_vm_tech_api_desc"><code>POST /api/chat/message/:id/related</code> 搜尋語意鄰居，<code>POST /api/chat/search</code> 依問句搜尋</span>
+                            <strong data-i18n="guide_vm_tech_api">API：</strong><span data-i18n="guide_vm_tech_api_desc"><code>POST /api/chat/search</code> 依自然語言問句搜尋對話歷史；pgvector 不可用時自動退回 ILIKE</span>
                         </div>
 
                         <div class="cta-links">
