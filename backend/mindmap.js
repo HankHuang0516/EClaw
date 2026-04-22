@@ -1,12 +1,12 @@
 /**
- * Mindmap MVP — Phase 1 (Schema + CRUD API)
+ * Mindmap MVP — Schema + CRUD + AI traverse
  *
  * Mounted at: /api/mindmap
  *
  * Card #19: 心智圖 MVP — 多層次 Zoom + Mini-map + 聚焦模式渲染架構.
- * Phase 1 ships the data layer only — nodes, edges, anchors, per-node
- * comments — plus the CRUD / traversal endpoints the UI (Phase 2) and
- * AI traverse (Phase 4) will sit on top of. No client changes in this PR.
+ * Phases 1-3 ship the data layer + portal UI; Phase 4 adds the AI traverse
+ * endpoint that reads a BFS subgraph anchored at a node and asks Claude to
+ * reason across it.
  *
  * Dual-auth (deviceSecret OR botSecret+entityId) on every endpoint.
  * All rows are scoped by `device_id` — never leak between devices.
@@ -24,14 +24,14 @@
  *   DELETE /anchor/:id                  Detach an anchor
  *   POST   /node/:id/comment            Leave a comment on a node
  *   GET    /node/:id/comments           List comments on a node
- *
- * Phase 4 (AI traverse) lands in a follow-up PR.
+ *   POST   /traverse                    AI reasoning over a BFS subgraph (Phase 4)
  */
 
 'use strict';
 
 const express = require('express');
 const safeEqual = require('./safe-equal');
+const { callAnthropic } = require('./anthropic-client');
 
 const NODE_TYPES = new Set(['domain', 'topic', 'leaf', 'concept']);
 const EDGE_TYPES = new Set(['relates_to', 'causes', 'extends', 'opposes', 'parent_of']);
@@ -609,6 +609,135 @@ function createMindmapModule(devices) {
             res.json({ success: true, comment: result.rows[0] });
         } catch (err) {
             console.error('[Mindmap] POST /node/:id/comment failed:', err.message);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // ─── POST /traverse ─────────────────────────────────────────────────────
+    // Phase 4: AI reasoning over a BFS subgraph anchored at root_node_id.
+    // Fetches up to MAX_TRAVERSE_NODES nodes + their edges (depth clamped to
+    // MAX_TRAVERSE_DEPTH), serializes them into a compact outline, and asks
+    // Claude to answer the caller's question using only that subgraph.
+    router.post('/traverse', async (req, res) => {
+        const deviceId = authenticate(req, res);
+        if (!deviceId) return;
+        if (!requirePool(res)) return;
+
+        const { root_node_id, question } = req.body || {};
+        if (!isUuid(root_node_id)) {
+            return res.status(400).json({ success: false, error: 'Invalid root_node_id' });
+        }
+        if (!question || typeof question !== 'string' || !question.trim()) {
+            return res.status(400).json({ success: false, error: 'Missing question' });
+        }
+        if (!process.env.ANTHROPIC_API_KEY) {
+            return res.status(503).json({ success: false, error: 'AI unavailable (ANTHROPIC_API_KEY not set)' });
+        }
+        const depth = Math.min(MAX_TRAVERSE_DEPTH, Math.max(1, parseInt(req.body.depth, 10) || 2));
+
+        try {
+            const seed = await pool.query(
+                'SELECT id FROM mindmap_nodes WHERE id = $1 AND device_id = $2',
+                [root_node_id, deviceId]
+            );
+            if (seed.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'Root node not found' });
+            }
+
+            // Identical BFS to GET /subgraph — kept inline so the two routes
+            // can evolve independently (e.g. traverse may later weight edges).
+            const visited = new Set([root_node_id]);
+            let frontier = [root_node_id];
+            const allEdges = [];
+            for (let hop = 0; hop < depth && frontier.length > 0 && visited.size < MAX_TRAVERSE_NODES; hop++) {
+                const edges = await pool.query(
+                    `SELECT * FROM mindmap_edges
+                     WHERE device_id = $1
+                       AND (source_node_id = ANY($2::uuid[]) OR target_node_id = ANY($2::uuid[]))`,
+                    [deviceId, frontier]
+                );
+                const nextFrontier = [];
+                for (const e of edges.rows) {
+                    allEdges.push(e);
+                    for (const nid of [e.source_node_id, e.target_node_id]) {
+                        if (!visited.has(nid)) {
+                            visited.add(nid);
+                            nextFrontier.push(nid);
+                            if (visited.size >= MAX_TRAVERSE_NODES) break;
+                        }
+                    }
+                    if (visited.size >= MAX_TRAVERSE_NODES) break;
+                }
+                frontier = nextFrontier;
+            }
+
+            const uniqueEdges = Array.from(new Map(allEdges.map(e => [e.id, e])).values());
+            const nodeRows = await pool.query(
+                `SELECT id, title, summary, node_type FROM mindmap_nodes
+                 WHERE device_id = $1 AND id = ANY($2::uuid[])`,
+                [deviceId, [...visited]]
+            );
+
+            const nodesById = new Map(nodeRows.rows.map(n => [n.id, n]));
+            const rootRow = nodesById.get(root_node_id);
+            const shortId = (id) => id.slice(0, 8);
+
+            const nodeLines = nodeRows.rows.map(n => {
+                const typeTag = n.node_type ? `(${n.node_type})` : '(node)';
+                const marker = n.id === root_node_id ? ' [ROOT]' : '';
+                const summary = n.summary ? ` — ${clampStr(n.summary, 200)}` : '';
+                return `- [${shortId(n.id)}]${marker} "${n.title}" ${typeTag}${summary}`;
+            });
+            const edgeLines = uniqueEdges.map(e => {
+                const src = nodesById.get(e.source_node_id);
+                const tgt = nodesById.get(e.target_node_id);
+                if (!src || !tgt) return null;
+                const rel = e.edge_type || 'relates_to';
+                return `- [${shortId(e.source_node_id)}] "${src.title}" --(${rel})--> [${shortId(e.target_node_id)}] "${tgt.title}"`;
+            }).filter(Boolean);
+
+            const systemPrompt = [
+                'You are a reasoning engine over a mindmap subgraph.',
+                'Use ONLY the nodes and edges provided. Do not invent nodes.',
+                'When you reference a node, cite its short id in brackets like [a1b2c3d4].',
+                'Be concise: answer in 2-6 sentences plus an optional bulleted path of reasoning.',
+                'If the subgraph does not contain enough information, say so plainly.',
+            ].join('\n');
+
+            const userMessage = [
+                `Root node: [${shortId(root_node_id)}] "${rootRow?.title || '(unknown)'}"`,
+                `Depth: ${depth}, Nodes: ${nodeRows.rows.length}, Edges: ${uniqueEdges.length}`,
+                '',
+                'Nodes:',
+                nodeLines.join('\n') || '(none)',
+                '',
+                'Edges:',
+                edgeLines.join('\n') || '(none)',
+                '',
+                `Question: ${clampStr(question, 2000)}`,
+            ].join('\n');
+
+            const result = await callAnthropic(systemPrompt, [
+                { role: 'user', content: userMessage },
+            ]);
+            const answerText = (result.content || [])
+                .filter(b => b.type === 'text')
+                .map(b => b.text)
+                .join('\n')
+                .trim();
+
+            res.json({
+                success: true,
+                root: root_node_id,
+                depth,
+                truncated: visited.size >= MAX_TRAVERSE_NODES,
+                node_count: nodeRows.rows.length,
+                edge_count: uniqueEdges.length,
+                visited_node_ids: [...visited],
+                answer: answerText || '(no answer produced)',
+            });
+        } catch (err) {
+            console.error('[Mindmap] POST /traverse failed:', err.message);
             res.status(500).json({ success: false, error: err.message });
         }
     });
