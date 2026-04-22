@@ -1,3 +1,10 @@
+## [1.1049.2](https://github.com/HankHuang0516/EClaw/compare/v1.1049.1...v1.1049.2) (2026-04-22)
+
+
+### Bug Fixes
+
+* **portal:** rename HankHuang0516/realbot → EClaw + dash-tab a11y ([#1971](https://github.com/HankHuang0516/EClaw/issues/1971)) ([584cc66](https://github.com/HankHuang0516/EClaw/commit/584cc66144df9d6c4df8dee45ea068000439be61))
+
 ## [1.1049.1](https://github.com/HankHuang0516/EClaw/compare/v1.1049.0...v1.1049.1) (2026-04-22)
 
 
