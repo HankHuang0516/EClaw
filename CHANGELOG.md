@@ -1,3 +1,10 @@
+# [1.1051.0](https://github.com/HankHuang0516/EClaw/compare/v1.1050.1...v1.1051.0) (2026-04-22)
+
+
+### Features
+
+* **chat:** long-press focus mode for free text selection on bubble ([#1975](https://github.com/HankHuang0516/EClaw/issues/1975)) ([6b7477f](https://github.com/HankHuang0516/EClaw/commit/6b7477fe6fe0be4b5cc9bda1e5a8ef0549b2ff23))
+
 ## [1.1050.1](https://github.com/HankHuang0516/EClaw/compare/v1.1050.0...v1.1050.1) (2026-04-22)
 
 
