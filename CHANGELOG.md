@@ -1,3 +1,10 @@
+## [1.1049.1](https://github.com/HankHuang0516/EClaw/compare/v1.1049.0...v1.1049.1) (2026-04-22)
+
+
+### Bug Fixes
+
+* **portal:** prevent api.js 401 redirect from racing auth.js fallbacks ([#1970](https://github.com/HankHuang0516/EClaw/issues/1970)) ([85aac75](https://github.com/HankHuang0516/EClaw/commit/85aac752a6b05b820da3618494da18b2cc094fe6))
+
 # [1.1049.0](https://github.com/HankHuang0516/EClaw/compare/v1.1048.1...v1.1049.0) (2026-04-22)
 
 
