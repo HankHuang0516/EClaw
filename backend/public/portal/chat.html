@@ -506,6 +506,46 @@
             100% { box-shadow: 0 0 0 0 transparent; }
         }
 
+        /* Focus mode: user long-presses a bubble then picks "Focus bubble"
+           to get an unobstructed selectable view. The overlay popover buttons
+           (reply / related) are hidden for that message, and the bubble itself
+           gets user-select:text so the OS selection handles work as expected. */
+        .chat-focus-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 9500;
+        }
+        .chat-msg.chat-bubble-focus-host {
+            position: relative;
+            z-index: 9600;
+        }
+        .chat-msg.chat-bubble-focus-host .chat-reply-btn,
+        .chat-msg.chat-bubble-focus-host .chat-related-btn {
+            display: none !important;
+        }
+        .chat-bubble.chat-bubble-focused {
+            user-select: text !important;
+            -webkit-user-select: text !important;
+            -webkit-touch-callout: default;
+            box-shadow: 0 0 0 2px var(--primary), 0 10px 28px rgba(0, 0, 0, 0.35);
+            cursor: text;
+        }
+        .chat-focus-exit-btn {
+            position: fixed;
+            top: 14px;
+            right: 14px;
+            z-index: 9700;
+            background: var(--card-bg, #fff);
+            color: var(--text, #1a1a1a);
+            border: 1px solid var(--border, #d9e3ea);
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+
         /* Right-click / long-press message context menu */
         .chat-ctx-menu {
             position: fixed;
@@ -2739,6 +2779,9 @@
                 if (!msg) return;
                 if (e.target.closest('a, button, .chat-reply-btn, .chat-related-btn, .link-preview-slot, .chat-img, video')) return;
                 if (!msg.dataset.messageId) return;
+                // In focus mode, don't fire the ctx menu on long-press — the
+                // user is trying to drag-select the bubble text.
+                if (msg.querySelector('.chat-bubble.chat-bubble-focused')) return;
                 const touch = e.touches[0];
                 startX = touch.clientX;
                 startY = touch.clientY;
@@ -4593,6 +4636,7 @@
             menu.innerHTML = `
                 <button type="button" class="ctxm-item" data-action="reply"><span data-i18n="chat_reply_btn">Reply</span></button>
                 <button type="button" class="ctxm-item" data-action="related"><span data-i18n="chat_related_btn">Find related</span></button>
+                <button type="button" class="ctxm-item" data-action="focus"><span data-i18n="chat_focus_btn">Focus bubble</span></button>
             `;
             document.body.appendChild(menu);
             menu.addEventListener('click', (e) => {
@@ -4610,6 +4654,8 @@
                 } else if (action === 'related') {
                     const relBtn = msgEl.querySelector('.chat-related-btn');
                     if (relBtn) toggleRelatedPanel(relBtn);
+                } else if (action === 'focus') {
+                    enterChatFocusMode(msgEl);
                 }
             });
             if (window.i18n && typeof i18n.apply === 'function') i18n.apply();
@@ -4636,13 +4682,54 @@
             if (menu) menu.style.display = 'none';
         }
 
+        // Focus mode: raise a single bubble above a dim backdrop with
+        // user-select:text so users can drag-select and copy freely. Exits on
+        // ESC, backdrop tap, or the floating close button. Only one bubble is
+        // focused at a time — entering focus on a new bubble re-focuses.
+        let _chatFocusState = null;
+        function exitChatFocusMode() {
+            if (!_chatFocusState) return;
+            const { msgEl, bubble, backdrop, closeBtn } = _chatFocusState;
+            if (msgEl) msgEl.classList.remove('chat-bubble-focus-host');
+            if (bubble) bubble.classList.remove('chat-bubble-focused');
+            if (backdrop && backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+            if (closeBtn && closeBtn.parentNode) closeBtn.parentNode.removeChild(closeBtn);
+            _chatFocusState = null;
+        }
+        function enterChatFocusMode(msgEl) {
+            if (!msgEl) return;
+            const bubble = msgEl.querySelector('.chat-bubble');
+            if (!bubble) return;
+            exitChatFocusMode();
+            msgEl.classList.add('chat-bubble-focus-host');
+            bubble.classList.add('chat-bubble-focused');
+            const backdrop = document.createElement('div');
+            backdrop.className = 'chat-focus-backdrop';
+            backdrop.addEventListener('click', exitChatFocusMode);
+            document.body.appendChild(backdrop);
+            const closeBtn = document.createElement('button');
+            closeBtn.type = 'button';
+            closeBtn.className = 'chat-focus-exit-btn';
+            closeBtn.setAttribute('data-i18n', 'chat_focus_exit');
+            closeBtn.textContent = (window.i18n && typeof i18n.t === 'function')
+                ? i18n.t('chat_focus_exit') || 'Exit focus'
+                : 'Exit focus';
+            closeBtn.addEventListener('click', exitChatFocusMode);
+            document.body.appendChild(closeBtn);
+            _chatFocusState = { msgEl, bubble, backdrop, closeBtn };
+            try { bubble.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (_) {}
+        }
+
         document.addEventListener('click', (e) => {
             const menu = document.getElementById(CHAT_CTX_MENU_ID);
             if (!menu || menu.style.display === 'none') return;
             if (!e.target.closest('.chat-ctx-menu')) hideChatCtxMenu();
         });
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') hideChatCtxMenu();
+            if (e.key === 'Escape') {
+                hideChatCtxMenu();
+                exitChatFocusMode();
+            }
         });
         window.addEventListener('scroll', hideChatCtxMenu, { passive: true });
 
