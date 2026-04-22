@@ -814,6 +814,10 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             // ── speakTo / broadcast delivery ──
             const warnings = [];
             let deliveryResults = null;
+            // Mirror of the /api/transform fallback: set when delivery writes a
+            // chat row. If still false after the delivery block yet delivery was
+            // requested, we save the sender's copy so the message isn't lost.
+            let deliverySaved = false;
             if (entityIdCorrected) {
                 warnings.push(`entityId mismatch: auto-corrected to ${eId}.`);
             }
@@ -847,6 +851,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                         } else {
                             const sourceLabel = `entity:${eId}:${entity.character}`;
                             const broadcastChatMsgId = await saveChatMessage(broadcastDeviceId, eId, deliveryText, `${sourceLabel}->${targetIds.join(',')}`, false, true, null, null, null, null, null, null, validatedCard);
+                            deliverySaved = true;
                             const bcastPrefs = devicePrefs ? await devicePrefs.getPrefs(broadcastDeviceId) : {};
                             const showRecipientInfo = bcastPrefs.broadcast_recipient_info !== false;
                             const results = await Promise.all(targetIds.map(toId =>
@@ -892,9 +897,22 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                             card: validatedCard
                         });
                         results.push({ publicCode: code, success: true, ...result });
+                        deliverySaved = true;
                     }
                     deliveryResults = { speakTo: true, results };
                 }
+            }
+
+            // Fallback: delivery was requested but no target resolved — save
+            // sender's copy so chat UI still shows the message. Mirror of the
+            // same logic in /api/transform.
+            const hasDeliveryRequested = (broadcast || (speakTo && Array.isArray(speakTo) && speakTo.length > 0));
+            if (hasDeliveryRequested && !deliverySaved && message && !isSilentMsg) {
+                const localSource = hasCrossRoute
+                    ? `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`
+                    : (entity.name || `Entity ${eId}`);
+                await saveChatMessage(deviceId, eId, message, localSource, false, true, mediaType || null, mediaUrl || null, null, null, null, null, validatedCard);
+                warnings.push('All delivery targets failed; message saved to sender chat only.');
             }
 
             const response = {

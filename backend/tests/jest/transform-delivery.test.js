@@ -16,7 +16,14 @@
 require('./helpers/mock-setup');
 
 const request = require('supertest');
+const pg = require('pg');
 let app;
+
+// jest.config has clearMocks:true which wipes pg.Pool.mock.results before
+// every test. We need to snapshot Pool instances at require-time (when
+// chatPool/auth pool/etc. are created) and hold direct references so our
+// INSERT assertions can still scan them after clearMocks runs.
+const pgPoolSnapshot = [];
 
 const post = (path) => request(app).post(path).set('Host', 'localhost');
 
@@ -45,6 +52,11 @@ async function getPublicCode(deviceId, deviceSecret, entityId) {
 
 beforeAll(() => {
     app = require('../../index');
+    // Snapshot all Pool instances constructed during module load (before the
+    // first test fires jest.clearAllMocks and empties pg.Pool.mock.results).
+    for (const r of pg.Pool.mock.results) {
+        if (r.value && !pgPoolSnapshot.includes(r.value)) pgPoolSnapshot.push(r.value);
+    }
 });
 
 afterAll(async () => {
@@ -448,5 +460,147 @@ describe('POST /api/channel/message + speakTo', () => {
             });
         // 403 (invalid key) or 500 (mock DB lacks getChannelAccountByKey) — but NOT a field parsing error
         expect([403, 500].includes(res.status)).toBe(true);
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
+// 11. Fallback save when delivery requested but every target fails
+//     Regression for silent data loss: speakTo-all-fail, broadcast dead
+//     paths (dedup / rate-limit / no-targets / device-missing) used to
+//     leave zero chat rows. After the fix: sender-side row + warning.
+// ════════════════════════════════════════════════════════════════
+describe('Transform fallback save on delivery failure', () => {
+    const deviceId = 'transform-fallback-test';
+    const deviceSecret = `secret-${deviceId}`;
+    let botSecret0, code1;
+
+    beforeAll(async () => {
+        botSecret0 = await bindEntity(deviceId, deviceSecret, 0);
+        await bindEntity(deviceId, deviceSecret, 1);
+        code1 = await getPublicCode(deviceId, deviceSecret, 1);
+    });
+
+    function clearPoolQueries() {
+        for (const p of pgPoolSnapshot) p.query.mockClear();
+    }
+
+    // saveChatMessage uses chatPool; multiple modules create their own Pool
+    // instances, so we have to scan every Pool's query.mock.calls rather than
+    // guessing which one holds chat_messages.
+    function findChatInserts(text) {
+        const matches = [];
+        for (const p of pgPoolSnapshot) {
+            for (const call of p.query.mock.calls) {
+                if (typeof call[0] === 'string'
+                    && call[0].includes('INSERT INTO chat_messages')
+                    && Array.isArray(call[1])
+                    && call[1][2] === text) {
+                    matches.push(call);
+                }
+            }
+        }
+        return matches;
+    }
+
+    it('speakTo with only-unresolved codes → sender row saved + warning', async () => {
+        clearPoolQueries();
+
+        const msg = 'fallback-all-fail-' + Date.now();
+        const res = await post('/api/transform')
+            .send({
+                deviceId,
+                entityId: 0,
+                botSecret: botSecret0,
+                message: msg,
+                state: 'IDLE',
+                speakTo: ['nonexistent-code-xyz']
+            });
+
+        expect(res.status).toBe(200);
+        expect(res.body.delivery.results[0].success).toBe(false);
+        expect(res.body.warnings).toBeDefined();
+        expect(res.body.warnings.some(w => w.includes('saved to sender chat only'))).toBe(true);
+
+        // Sender-side row present: is_from_bot=true (index 5), deviceId matches, entity=0
+        const inserts = findChatInserts(msg);
+        expect(inserts.length).toBeGreaterThan(0);
+        const params = inserts[0][1];
+        expect(params[0]).toBe(deviceId);
+        expect(params[1]).toBe(0);
+        expect(params[2]).toBe(msg);
+        expect(params[4]).toBe(false); // is_from_user
+        expect(params[5]).toBe(true);  // is_from_bot
+    });
+
+    it('successful speakTo does not fire fallback (no duplicate save, no warning)', async () => {
+        clearPoolQueries();
+
+        const msg = 'fallback-success-path-' + Date.now();
+        const res = await post('/api/transform')
+            .send({
+                deviceId,
+                entityId: 0,
+                botSecret: botSecret0,
+                message: msg,
+                state: 'IDLE',
+                speakTo: [code1]
+            });
+
+        expect(res.status).toBe(200);
+        expect(res.body.delivery.results[0].success).toBe(true);
+        // No fallback warning
+        const fallbackWarn = (res.body.warnings || []).some(w => w.includes('saved to sender chat only'));
+        expect(fallbackWarn).toBe(false);
+        // Exactly one sender-side row (the normal speakTo save), not two
+        const inserts = findChatInserts(msg);
+        expect(inserts.length).toBe(1);
+    });
+
+    it('broadcast with no other bound entities → sender row saved + warning', async () => {
+        // Fresh single-entity device so broadcast has zero targets
+        const devId = 'transform-fallback-solo';
+        const devSecret = `secret-${devId}`;
+        const bs = await bindEntity(devId, devSecret, 0);
+
+        clearPoolQueries();
+
+        const msg = 'fallback-broadcast-solo-' + Date.now();
+        const res = await post('/api/transform')
+            .send({
+                deviceId: devId,
+                entityId: 0,
+                botSecret: bs,
+                message: msg,
+                state: 'IDLE',
+                broadcast: true
+            });
+
+        expect(res.status).toBe(200);
+        expect(res.body.warnings).toBeDefined();
+        expect(res.body.warnings.some(w => w.includes('saved to sender chat only'))).toBe(true);
+
+        const inserts = findChatInserts(msg);
+        expect(inserts.length).toBeGreaterThan(0);
+    });
+
+    it('[SILENT] sentinel message skips fallback save (no warning, no sender row)', async () => {
+        clearPoolQueries();
+
+        // [SILENT] is the explicit sentinel that suppresses sender-side saving
+        const msg = '[SILENT]';
+        const res = await post('/api/transform')
+            .send({
+                deviceId,
+                entityId: 0,
+                botSecret: botSecret0,
+                message: msg,
+                state: 'IDLE',
+                speakTo: ['nonexistent-code-xyz']
+            });
+
+        expect(res.status).toBe(200);
+        const fallbackWarn = (res.body.warnings || []).some(w => w.includes('saved to sender chat only'));
+        expect(fallbackWarn).toBe(false);
+        expect(findChatInserts(msg).length).toBe(0);
     });
 });
