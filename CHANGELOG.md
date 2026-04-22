@@ -1,3 +1,10 @@
+## [1.1050.1](https://github.com/HankHuang0516/EClaw/compare/v1.1050.0...v1.1050.1) (2026-04-22)
+
+
+### Bug Fixes
+
+* **mindmap:** rate-limit /traverse + clamp node titles in prompt ([#1974](https://github.com/HankHuang0516/EClaw/issues/1974)) ([dca1026](https://github.com/HankHuang0516/EClaw/commit/dca10269d4f67336d88304d170c7a0bb14a8c5dd)), closes [#1969](https://github.com/HankHuang0516/EClaw/issues/1969)
+
 # [1.1050.0](https://github.com/HankHuang0516/EClaw/compare/v1.1049.3...v1.1050.0) (2026-04-22)
 
 
