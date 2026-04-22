@@ -1,3 +1,10 @@
+## [1.1054.1](https://github.com/HankHuang0516/EClaw/compare/v1.1054.0...v1.1054.1) (2026-04-22)
+
+
+### Bug Fixes
+
+* **transform,channel:** save sender copy when all delivery targets fail ([#1983](https://github.com/HankHuang0516/EClaw/issues/1983)) ([9b81614](https://github.com/HankHuang0516/EClaw/commit/9b8161445f3d7384f5fe3106557e030481bd34bb))
+
 # [1.1054.0](https://github.com/HankHuang0516/EClaw/compare/v1.1053.2...v1.1054.0) (2026-04-22)
 
 
