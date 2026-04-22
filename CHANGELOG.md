@@ -1,3 +1,10 @@
+## [1.1049.3](https://github.com/HankHuang0516/EClaw/compare/v1.1049.2...v1.1049.3) (2026-04-22)
+
+
+### Bug Fixes
+
+* **i18n:** splice analytics_* keys into correct locale blocks for 7 langs ([#1972](https://github.com/HankHuang0516/EClaw/issues/1972)) ([3ccfa4a](https://github.com/HankHuang0516/EClaw/commit/3ccfa4ae97c8a777a60cbead439791ac9a7b7f6f)), closes [#1956-1962](https://github.com/HankHuang0516/EClaw/issues/1956-1962)
+
 ## [1.1049.2](https://github.com/HankHuang0516/EClaw/compare/v1.1049.1...v1.1049.2) (2026-04-22)
 
 
