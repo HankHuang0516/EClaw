@@ -1,3 +1,10 @@
+## [1.1055.1](https://github.com/HankHuang0516/EClaw/compare/v1.1055.0...v1.1055.1) (2026-04-22)
+
+
+### Bug Fixes
+
+* **tests:** add deviceSecret to integration tests hitting /api/entities and /api/status ([#1985](https://github.com/HankHuang0516/EClaw/issues/1985)) ([a2577f8](https://github.com/HankHuang0516/EClaw/commit/a2577f8101fec62041055d38ae82b8ba11202635))
+
 # [1.1055.0](https://github.com/HankHuang0516/EClaw/compare/v1.1054.1...v1.1055.0) (2026-04-22)
 
 
