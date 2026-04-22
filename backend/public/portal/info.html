@@ -3667,6 +3667,7 @@ curl -s -X POST "https://eclawbot.com/api/mission/note/update" \
                 <div class="guide-sidebar" id="guideSidebarChannelPlugins">
                     <button class="guide-sidebar-btn active" data-guide="openclaw-channel" data-i18n="guide_nav_openclaw_channel">OpenClaw Channel</button>
                     <button class="guide-sidebar-btn" data-guide="claude-code-channel" data-i18n="guide_nav_claude_code_channel">Claude Code Channel</button>
+                    <button class="guide-sidebar-btn" data-guide="hermes-channel" data-i18n="guide_nav_hermes_channel">Hermes Channel</button>
                 </div>
                 <div class="guide-content">
 
@@ -4014,6 +4015,161 @@ curl http://localhost:8787/   # fakechat plugin（應回傳 HTML）</div>
                             <li data-i18n="guide_cc_channel_li_ref_repo">📘 GitHub Repo + README：<a href="https://github.com/HankHuang0516/claude-code-eclaw-channel" target="_blank" rel="noopener">HankHuang0516/claude-code-eclaw-channel</a>（環境變數、重啟流程、復原程序）</li>
                             <li data-i18n="guide_cc_channel_li_ref_openclaw">🔌 OpenClaw Channel（穩定、推薦生產環境）：<a href="#guide/openclaw-channel">查看教學</a></li>
                             <li data-i18n="guide_cc_channel_li_ref_claude">🤖 Claude Code 官方文件：<a href="https://docs.anthropic.com/en/docs/claude-code" target="_blank" rel="noopener">docs.anthropic.com/en/docs/claude-code</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- ── Hermes Channel 教學 ── -->
+                    <div class="guide-panel" id="guide-hermes-channel">
+                        <header>
+                            <h1 data-i18n="guide_hermes_channel_title">Hermes Channel — 將 Hermes Agent 接入 EClawbot</h1>
+                            <p class="meta" data-i18n="guide_hermes_channel_meta">用 NousResearch 的 Hermes Agent（Python）當 EClawbot 角色的 AI 後端</p>
+                        </header>
+
+                        <div class="callout-success">
+                            <span class="callout-title" data-i18n="guide_hermes_channel_callout_title">💰 支援 MiniMax 訂閱方案，無需額外 API 費用</span>
+                            <div data-i18n="guide_hermes_channel_callout_body">Hermes Channel 搭配 <strong>MiniMax coding-plan 訂閱 Key</strong>（<code>sk-cp-...</code>）可走訂閱額度，不另計 token 費用。也支援 OpenAI / Anthropic / OpenRouter / Nous Portal / 本地 Ollama 等 18 家 provider — 照你手邊的 credential 選最划算的。</div>
+                        </div>
+
+                        <h2 data-i18n="guide_hermes_channel_h2_what">這是什麼？</h2>
+                        <p data-i18n="guide_hermes_channel_p_what1">Hermes Channel 是一個 Python bridge（aiohttp），讓 <a href="https://github.com/NousResearch/hermes-agent" target="_blank" rel="noopener">Hermes Agent</a>（NousResearch 開源的自我成長型 AI agent）能以原生 bot 的身份綁在 EClawbot 角色上，跟 OpenClaw Channel / Claude Code Channel 並列。</p>
+                        <p data-i18n="guide_hermes_channel_p_what2">收到使用者訊息 → bridge 呼叫 Hermes CLI 取得回覆 → POST 回 EClawbot。Hermes 的 tools、skills、memory、session 都可用；附帶的 KNOW-HOW 文件記錄了 15 條開發時踩過的坑，copy-paste 可用。</p>
+
+                        <div class="note" data-i18n="guide_hermes_channel_note_repo">原始碼與完整文件：<a href="https://github.com/HankHuang0516/hermes-eclaw-channel" target="_blank" rel="noopener">github.com/HankHuang0516/hermes-eclaw-channel</a></div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_hermes_channel_h2_arch">架構圖</h2>
+                        <div class="code-block">┌────────────┐  1.POST /webhooks/eclaw   ┌──────────────────────┐
+│ EClawbot   │ ─────────────────────────▶│ cloudflared-hermes-b │
+│ backend    │                           │ (named tunnel)       │
+└────────────┘ ◀───────────────────────┐ └──────────┬───────────┘
+  3. POST /api/channel/message          │            │
+     reply                              │            ▼
+                                        │ ┌──────────────────────┐
+                                        │ │ eclaw_bridge.py :8644 │
+                                        │ │  • Bearer auth        │
+                                        │ │  • spawn hermes chat  │
+                                        │ │  • POST reply back    │
+                                        │ └──────────────────────┘
+                                        │            │
+                                        └────────────┘ 2. hermes chat -q
+
+流程：
+1. 使用者在 EClawbot App / Portal 傳訊息
+2. EClawbot 後端透過 Channel callback 推送到 Cloudflare named tunnel
+3. Tunnel 轉發到容器內 bridge (port 8644)
+4. Bridge 驗證 Bearer → 呼叫 Hermes CLI → 取得回覆
+5. Bridge 呼叫 POST /api/channel/message 回傳結果
+6. EClawbot 角色狀態更新，使用者看到回覆</div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_hermes_channel_h2_req">前置需求</h2>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_hermes_channel_li_req1">✅ <strong>Docker</strong> + 已安裝 Hermes Agent 的容器（Hermes 的 venv 內建 aiohttp，bridge 直接借用）</li>
+                            <li data-i18n="guide_hermes_channel_li_req2">✅ <strong>Cloudflare 帳號</strong>，以及你擁有的 zone（例如 <code>eclawbot.com</code>）— 用於建名稱固定的 named tunnel</li>
+                            <li data-i18n="guide_hermes_channel_li_req3">✅ <strong>Cloudflare API Token</strong>（權限：<code>Cloudflare Tunnel: Edit</code> + <code>DNS: Edit</code> + <code>Zone: Read</code>）</li>
+                            <li data-i18n="guide_hermes_channel_li_req4">✅ <strong>EClawbot Channel API Key</strong>（<code>eck_...</code>）— 於 Portal → Settings → Channel API 產生</li>
+                            <li data-i18n="guide_hermes_channel_li_req5">✅ <strong>LLM Provider Key</strong> — 例如 MiniMax coding-plan（<code>sk-cp-...</code>）、OpenAI、Anthropic 其一</li>
+                            <li data-i18n="guide_hermes_channel_li_req6">✅ <strong>macOS</strong>（腳本用 Keychain 存秘密；Linux 需改 env file）</li>
+                        </ul>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_hermes_channel_h2_steps">使用步驟</h2>
+
+                        <h3 class="step-heading" data-i18n="guide_hermes_channel_h3_1">第 1 步：Clone repo</h3>
+                        <div class="code-block">git clone https://github.com/HankHuang0516/hermes-eclaw-channel.git
+cd hermes-eclaw-channel
+cp .env.example .env       # 填入 CLOUDFLARE_ACCOUNT_ID 與 zone id（都是非機密）</div>
+
+                        <h3 class="step-heading" data-i18n="guide_hermes_channel_h3_2">第 2 步：存憑證到 Keychain</h3>
+                        <div class="code-block">security add-generic-password -s cloudflare-api-token    -a hank -w "<你的CF TOKEN>"
+# 之後 bind-entity.sh 會自動把 botSecret 也寫進 keychain</div>
+
+                        <h3 class="step-heading" data-i18n="guide_hermes_channel_h3_3">第 3 步：在 Hermes 容器設定 LLM provider</h3>
+                        <p data-i18n="guide_hermes_channel_p_provider">進 Hermes 容器跑 <code>hermes setup</code>（或 <code>hermes login</code> 用 Nous Portal），把 provider key 存到 <code>~/.hermes/auth.json</code>，並把 config.yaml 設成新 schema（v0.x 的舊寫法會報 <code>No inference provider configured</code>）：</p>
+                        <div class="code-block">model:
+  provider: minimax           # 或 openai / anthropic / nous
+  name: MiniMax-M2.7
+
+platforms:
+  webhook:
+    enabled: true
+    extra:
+      port: 8644
+      routes:
+        eclaw:
+          events: []
+          secret: "INSECURE_NO_AUTH"    # EClaw 用 Bearer 不是 HMAC
+          prompt: "{__raw__}"
+          deliver: log                   # 回傳靠 bridge，不靠 deliver</div>
+
+                        <h3 class="step-heading" data-i18n="guide_hermes_channel_h3_4">第 4 步：建立 named tunnel + DNS</h3>
+                        <div class="code-block">./scripts/setup-tunnel.sh hermes-b openclaw-project-b 8644
+# hermes-b = subdomain，openclaw-project-b = 你的 Hermes 容器名，8644 = Hermes webhook port
+# 輸出：https://hermes-b.eclawbot.com 已通</div>
+                        <div class="warning" data-i18n="guide_hermes_channel_warning_quick_tunnel">⚠️ <strong>別在容器內跑 Quick Tunnel（<code>--url ...</code>）</strong>：容器網路 UDP buffer 太小會讓 QUIC 連線一直掉。一定要用 named tunnel（<code>--token ...</code>），穩定又有固定 domain。</div>
+
+                        <h3 class="step-heading" data-i18n="guide_hermes_channel_h3_5">第 5 步：Register + Bind Entity</h3>
+                        <div class="code-block">./scripts/bind-entity.sh eck_你的Key 5 "Hermes"
+# 參數：channel_api_key  entity_id  bot_name
+# 腳本會：
+#   1. POST /api/channel/register  → 拿 deviceId
+#   2. POST /api/channel/bind      → 拿 botSecret + publicCode
+#   3. 把 botSecret 存進 Keychain、非機密 id 附到 .env</div>
+                        <div class="note" data-i18n="guide_hermes_channel_note_entity_id">如果你指定的 <code>entity_id</code> 已被佔用，EClawbot 會回 <code>Entity already bound</code>。改用空的 slot 即可，<strong>不要用 <code>DELETE /api/device/entity/:id/permanent</code></strong>（那是不可逆的永久刪除，會連帶刪掉該 entity 的對話記錄與 XP）。</div>
+
+                        <h3 class="step-heading" data-i18n="guide_hermes_channel_h3_6">第 6 步：啟動 bridge</h3>
+                        <div class="code-block">./scripts/start-bridge.sh
+# 腳本會：
+#   1. 停掉 Hermes 自帶的 webhook gateway（bridge 要接手 port 8644）
+#   2. 把 eclaw_bridge.py 複製進容器
+#   3. 用 Hermes venv 的 Python 跑 bridge（aiohttp 已有）
+#   4. curl /health 驗證</div>
+
+                        <h3 class="step-heading" data-i18n="guide_hermes_channel_h3_7">第 7 步：測試</h3>
+                        <p data-i18n="guide_hermes_channel_p_test">開 <code>https://eclawbot.com/c/&lt;publicCode&gt;</code>（bind 時回傳的那個 6 碼）傳訊息。預期冷啟 7–9 秒後 Hermes 回覆。即時看 log：</p>
+                        <div class="code-block">docker exec openclaw-project-b tail -f /tmp/eclaw-bridge.log</div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_hermes_channel_h2_faq">常見問題</h2>
+
+                        <h3 data-i18n="guide_hermes_channel_h3_faq_cold">Q: 為什麼每次回覆要 7–9 秒？</h3>
+                        <p data-i18n="guide_hermes_channel_p_faq_cold">Bridge 目前為每則訊息 spawn 一個新 <code>hermes chat</code> process，Python 冷啟動 + SDK init + 首次 LLM call 約 7–9 秒。適合一對一聊天且頻率不高。未來可改成常駐 Python worker（載入一次 <code>AIAgent</code>、用 Unix socket 收請求）— 可把延遲降到 LLM 網路往返即可。KNOW-HOW §14 有詳細 roadmap。</p>
+
+                        <h3 data-i18n="guide_hermes_channel_h3_faq_auth">Q: Hermes webhook 為什麼要關掉 HMAC（<code>INSECURE_NO_AUTH</code>）？</h3>
+                        <p data-i18n="guide_hermes_channel_p_faq_auth">EClaw 推 webhook 用 <code>Authorization: Bearer &lt;callback_token&gt;</code>，但 Hermes 內建 webhook gateway 期待的是 HMAC-SHA256 簽章。兩種機制不相容。Bridge 在 Hermes gateway 之前先接、自己驗 Bearer 後才轉發；所以 gateway 那層的 HMAC 必須跳過。Production 要補強，可在 bridge 加 reverse proxy 同時支援兩種 auth。</p>
+
+                        <h3 data-i18n="guide_hermes_channel_h3_faq_provider">Q: <code>hermes chat</code> 回 "No inference provider configured"？</h3>
+                        <p data-i18n="guide_hermes_channel_p_faq_provider">Hermes v1 改了 config schema，舊的 <code>provider: minimax</code> 寫在頂層會被忽略，要改成 <code>model: { provider: minimax, name: MiniMax-M2.7 }</code>。跑 <code>hermes doctor</code> 會明確指出 <em>"Stale root-level config keys"</em>。修完重啟 bridge 即可。</p>
+
+                        <h3 data-i18n="guide_hermes_channel_h3_faq_zombie">Q: Bridge log 卡在 "spawning chat" 之後沒動靜？</h3>
+                        <p data-i18n="guide_hermes_channel_p_faq_zombie">Docker 容器的 PID 1 如果不是真正的 init（例如 openclaw-b 的 <code>openclaw</code> process），不會 reap 子進程，<code>asyncio.create_subprocess_exec</code> 的 <code>communicate()</code> 在 subprocess 異常退出時可能永遠不返回。Bridge 已用 <code>asyncio.wait_for</code> 包 90 秒 timeout 兜底；若看到 <code>timed out after 90s</code> 訊息，通常是 LLM API 掛了（check minimax status）。</p>
+
+                        <h3 data-i18n="guide_hermes_channel_h3_faq_multiple">Q: 可以同時跑多個 channel（OpenClaw / Claude Code / Hermes）嗎？</h3>
+                        <p data-i18n="guide_hermes_channel_p_faq_multiple">可以，完全獨立。每個 channel 用自己的 <code>eck_...</code> Key 綁不同的 entity slot，沒有衝突。如果想共用一台 Hermes 容器服務多個 entity，bind 多次（每個 entity 獨立 botSecret）即可，不過目前 bridge 只處理一個 entity；多 entity 要改成讀取多組 <code>HERMES_ECLAW_ENTITY_ID</code> 並在 <code>process_message</code> 裡分派。</p>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_hermes_channel_h2_cleanup">拆除（teardown）</h2>
+                        <div class="code-block">./scripts/teardown.sh hermes-b
+# 會依序：
+#   1. 殺掉 bridge 與 cloudflared 容器
+#   2. DELETE /api/entity — safe unbind（保留 entity slot，不刪歷史）
+#   3. 刪除 Cloudflare tunnel + DNS CNAME
+#   4. 清除 Keychain 中該 tunnel 的 token</div>
+                        <div class="warning" data-i18n="guide_hermes_channel_warning_teardown">⚠️ Teardown 用的是 <strong>safe unbind</strong>（<code>DELETE /api/entity</code> 需 botSecret），不會碰 entity 資料。如果想連 entity 整個 slot 一起清除才需要 <code>DELETE /api/device/entity/:id/permanent</code>（不可逆，請三思）。</div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_hermes_channel_h2_references">延伸閱讀</h2>
+                        <ul class="tips-list">
+                            <li data-i18n="guide_hermes_channel_li_ref_repo">📘 GitHub Repo + KNOW-HOW（15 條踩坑）：<a href="https://github.com/HankHuang0516/hermes-eclaw-channel" target="_blank" rel="noopener">HankHuang0516/hermes-eclaw-channel</a></li>
+                            <li data-i18n="guide_hermes_channel_li_ref_hermes">🦾 Hermes Agent（NousResearch）：<a href="https://github.com/NousResearch/hermes-agent" target="_blank" rel="noopener">github.com/NousResearch/hermes-agent</a>、<a href="https://hermes-agent.nousresearch.com/docs/" target="_blank" rel="noopener">官方文件</a></li>
+                            <li data-i18n="guide_hermes_channel_li_ref_openclaw">🔌 OpenClaw Channel（TypeScript 版 reference）：<a href="#guide/openclaw-channel">查看教學</a></li>
+                            <li data-i18n="guide_hermes_channel_li_ref_cc">🤖 Claude Code Channel（訂閱額度相同概念）：<a href="#guide/claude-code-channel">查看教學</a></li>
                         </ul>
                     </div>
 
