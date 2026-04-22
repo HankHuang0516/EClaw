@@ -7,7 +7,7 @@
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
-- **Current version**: 1.1045.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **Current version**: 1.1054.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
 - **Android app version**: 1.0.76 (versionCode 82); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
@@ -865,11 +865,23 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Chat Reply + Photo Fix**: Reply quote and photo attachment conflict resolved
 - **Marketing Hero Image**: Vector-memory hero image v1 (1200×630 OG) for social sharing
 
+### Recent Features (v1.1046.x – v1.1054.x)
+
+- **Onboarding Wizard (v1.1046–v1.1048)**: Scope 0 intent-based 3-question wizard router; 6 product tour tracks (free bot, paid bot, OpenClaw channel, Claude channel, Hermes channel, agent evaluation); dismiss flag persistence
+- **Chat History Token `his_<id>` (v1.1052–v1.1054)**: Parse `his_<id>` tokens into clickable history chips in chat; quote-reply auto-injects `his_<id>` prefix; bots taught the token via A2A skill update; UUID message ID support
+- **Mind Map Phase 3–4 (v1.1050–v1.1054)**: Zoom-tier rendering + focus-mode fog (Phase 3); AI traverse endpoint over BFS subgraph (Phase 4); rate-limit `/traverse` + clamp node titles; Route A mirror — auto-pair notes with mindmap leaves
+- **Share-Chat Proxy Window CTA (v1.1049)**: Viral CTA + pageview beacons wired on share-chat Proxy Window
+- **Hermes Channel Plugin Guide (v1.1054)**: Added to info.html for channel plugin documentation
+- **Transform Sender Copy Fix (v1.1054)**: Save sender copy even when all delivery targets fail
+- **i18n Hardening**: Analytics keys spliced into 7 locale blocks; orphan key detection at outer TRANSLATIONS scope; hi/ar deduplication; HankHuang0516/realbot → EClaw repo rename in portal
+- **Auth Race Fix (v1.1049)**: Prevent api.js 401 redirect from racing auth.js fallbacks
+- **Billing Retry (v1.1047)**: Retry stuck INAPP top-up purchases on Android app startup; WebView JS bridge wired for wallet tier clicks
+
 ---
 
 ## Test Coverage Summary
 
-**~440 total API routes** across all modules (390 excluding Article Publisher), **~75% covered** by Jest + integration tests (~1800 test cases across 108 Jest files + 78 integration tests).
+**~440 total API routes** across all modules (390 excluding Article Publisher), **~75% covered** by Jest + integration tests (~2017 test cases across 113 Jest files + 78 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -1024,7 +1036,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (97 files)
+cd backend && npm test                  # Jest unit tests (113 files)
 cd backend && npm run lint              # ESLint
 ```
 

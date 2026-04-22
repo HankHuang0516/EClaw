@@ -127,7 +127,7 @@ async function main() {
         console.log('── Phase 1: Setup ──');
 
         const allEntities = await fetchJSON(
-            `${API_BASE}/api/entities?deviceId=${deviceId}`
+            `${API_BASE}/api/entities?deviceId=${deviceId}&deviceSecret=${deviceSecret}`
         );
         check('Fetch all entities', allEntities.success !== false,
             `got ${allEntities.entities?.length || 0} entities`);
@@ -166,7 +166,7 @@ async function main() {
         console.log('── Phase 2: Entity Response Validation ──');
 
         const entitiesRes = await fetchJSON(
-            `${API_BASE}/api/entities?deviceId=${deviceId}`
+            `${API_BASE}/api/entities?deviceId=${deviceId}&deviceSecret=${deviceSecret}`
         );
 
         const boundCount = (entitiesRes.entities || []).length;
@@ -201,7 +201,7 @@ async function main() {
 
         for (let i = 0; i < 10; i++) {
             const pollRes = await fetchJSON(
-                `${API_BASE}/api/entities?deviceId=${deviceId}`
+                `${API_BASE}/api/entities?deviceId=${deviceId}&deviceSecret=${deviceSecret}`
             );
             const count = (pollRes.entities || []).length;
             if (count === 0) emptyResponses++;
@@ -225,7 +225,7 @@ async function main() {
         console.log('── Phase 4: Count Consistency ──');
 
         const finalRes = await fetchJSON(
-            `${API_BASE}/api/entities?deviceId=${deviceId}`
+            `${API_BASE}/api/entities?deviceId=${deviceId}&deviceSecret=${deviceSecret}`
         );
         check('maxEntitiesPerDevice is 4', finalRes.maxEntitiesPerDevice === 4,
             `got: ${finalRes.maxEntitiesPerDevice}`);

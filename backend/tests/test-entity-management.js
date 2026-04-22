@@ -123,7 +123,7 @@ async function main() {
         console.log('── Phase 1: Setup ──');
 
         const allEntities = await fetchJSON(
-            `${API_BASE}/api/entities?deviceId=${deviceId}`
+            `${API_BASE}/api/entities?deviceId=${deviceId}&deviceSecret=${deviceSecret}`
         );
         check('Fetch all entities', allEntities.success !== false, `got ${allEntities.entities?.length || 0} entities`);
 
@@ -285,7 +285,7 @@ async function main() {
         console.log('── Phase 7: Post-reorder state verification ──');
 
         await sleep(1000); // let server save
-        const afterEntities = await fetchJSON(`${API_BASE}/api/entities?deviceId=${deviceId}`);
+        const afterEntities = await fetchJSON(`${API_BASE}/api/entities?deviceId=${deviceId}&deviceSecret=${deviceSecret}`);
         check('Post-reorder fetch succeeds', afterEntities.success !== false);
 
         // After swap: entity at slotA should have marker from slotB, and vice versa
@@ -460,7 +460,7 @@ async function main() {
         // After reorder, botSecrets may have swapped slots.
         // We need to use the CURRENT entity state to find which botSecret is at which slot.
         try {
-            const currentEntities = await fetchJSON(`${API_BASE}/api/entities?deviceId=${deviceId}`);
+            const currentEntities = await fetchJSON(`${API_BASE}/api/entities?deviceId=${deviceId}&deviceSecret=${deviceSecret}`);
             const currentBound = currentEntities.entities?.filter(e => e.isBound) || [];
 
             // Delete entities that we created (identified by name pattern TestBot-*)
