@@ -1,3 +1,10 @@
+## [1.1053.1](https://github.com/HankHuang0516/EClaw/compare/v1.1053.0...v1.1053.1) (2026-04-22)
+
+
+### Bug Fixes
+
+* **chat:** quote-reply auto-injects his_<id> into outgoing prefix ([#1980](https://github.com/HankHuang0516/EClaw/issues/1980)) ([22bfb77](https://github.com/HankHuang0516/EClaw/commit/22bfb7774abfa4440b06618b0647ed6a3a51b237))
+
 # [1.1053.0](https://github.com/HankHuang0516/EClaw/compare/v1.1052.0...v1.1053.0) (2026-04-22)
 
 
