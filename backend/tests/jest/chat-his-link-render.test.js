@@ -37,6 +37,15 @@ describe('his_<id> chip — static wiring', () => {
         expect(chatHtml).toContain('.his-link');
         expect(chatHtml).toContain('his-flash');
     });
+
+    test('quote-reply composer auto-injects his_<id> into the outgoing prefix', () => {
+        // When replyContext is present, the send path must build a quotePrefix
+        // that contains his_<parent_id> so the referenced bubble renders as a
+        // chip for everyone. Regression guard: if someone removes the token,
+        // the feature silently regresses.
+        expect(chatHtml).toMatch(/const\s+hisToken\s*=\s*replyContext\.msgId/);
+        expect(chatHtml).toMatch(/his_\$\{String\(replyContext\.msgId\)/);
+    });
 });
 
 describe('his_<id> chip — module behaviour', () => {
