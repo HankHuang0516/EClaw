@@ -256,4 +256,71 @@ describe('mindmap /traverse — happy path (isolated module)', () => {
         expect(res.status).toBe(200);
         expect(res.body.depth).toBe(4); // MAX_TRAVERSE_DEPTH
     });
+
+    // The traverse prompt previously clamped summary to 200 but left title
+    // unclamped, so 500 long-titled nodes could explode the Anthropic prompt.
+    it('clamps node titles to 120 chars in the Anthropic prompt', async () => {
+        const longTitle = 'X'.repeat(300);
+        // Override the node fetch so both rows return the long title. Edges
+        // query still returns the same edge so src.title / tgt.title are
+        // exercised in the edgeLines builder too.
+        poolQueryMock.mockImplementation(async (sql, params) => {
+            const norm = sql.replace(/\s+/g, ' ').trim();
+            if (/SELECT id FROM mindmap_nodes WHERE id = \$1 AND device_id = \$2/i.test(norm)) {
+                return { rowCount: 1, rows: [{ id: ROOT_ID }] };
+            }
+            if (/FROM mindmap_edges/i.test(norm)) {
+                return { rowCount: 1, rows: [{
+                    id: EDGE_ID, device_id: DEVICE_ID,
+                    source_node_id: ROOT_ID, target_node_id: CHILD_ID,
+                    edge_type: 'relates_to', weight: 1.0,
+                }] };
+            }
+            if (/SELECT id, title, summary, node_type FROM mindmap_nodes/i.test(norm)) {
+                return { rowCount: 2, rows: [
+                    { id: ROOT_ID, title: longTitle, summary: 'anchor', node_type: 'topic' },
+                    { id: CHILD_ID, title: longTitle, summary: 'leaf', node_type: 'leaf' },
+                ] };
+            }
+            return { rowCount: 0, rows: [] };
+        });
+
+        const res = await supertest(testApp).post('/api/mindmap/traverse').send({
+            deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET,
+            root_node_id: ROOT_ID, question: 'why?',
+        });
+        expect(res.status).toBe(200);
+        const prompt = callAnthropicMock.mock.calls[0][1][0].content;
+        // No raw 300-char run of "X" should survive anywhere in the prompt
+        expect(prompt).not.toMatch(/X{121,}/);
+        // And the clamped 120-char run must actually appear (root + nodeLines + edgeLines)
+        expect(prompt).toMatch(/X{120}/);
+    });
+
+    // Per-device+entity bucket protects Anthropic credits from bot-secret holders
+    // looping the endpoint. Hits above TRAVERSE_MAX_PER_HOUR return 429 with
+    // Retry-After; separate entity ids get separate buckets.
+    it('returns 429 when per-device+entity rate limit is exceeded', async () => {
+        const TRAVERSE_MAX = 15; // must match mindmap.js constant
+        const ownerBody = {
+            deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET,
+            root_node_id: ROOT_ID, question: 'why?',
+        };
+        // Burn through the entity=owner bucket
+        for (let i = 0; i < TRAVERSE_MAX; i++) {
+            const ok = await supertest(testApp).post('/api/mindmap/traverse').send(ownerBody);
+            expect(ok.status).toBe(200);
+        }
+        const blocked = await supertest(testApp).post('/api/mindmap/traverse').send(ownerBody);
+        expect(blocked.status).toBe(429);
+        expect(blocked.body.error).toMatch(/Rate limit/i);
+        expect(blocked.body.retryAfterMs).toBeGreaterThan(0);
+        expect(blocked.headers['retry-after']).toBeDefined();
+
+        // A call with an explicit entityId should fall into a different bucket.
+        const otherEntity = await supertest(testApp).post('/api/mindmap/traverse').send({
+            ...ownerBody, entityId: 7,
+        });
+        expect(otherEntity.status).toBe(200);
+    });
 });

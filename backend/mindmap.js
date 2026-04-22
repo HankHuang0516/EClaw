@@ -59,6 +59,49 @@ function createMindmapModule(devices) {
 
     const router = express.Router();
 
+    // POST /traverse wraps an Anthropic call. Without this bucket a
+    // botSecret holder could loop the endpoint and drain credits. Keyed by
+    // deviceId+entityId (owner caller falls into an 'owner' bucket).
+    const TRAVERSE_WINDOW_MS = 3600000; // 1 hour
+    const TRAVERSE_MAX_PER_HOUR = 15;   // lower than chat (20/hr) — traverse
+                                        // is heavier and less interactive
+    const traverseRateLimit = {};
+
+    function traverseRateKey(deviceId, entityId) {
+        return `${deviceId}:${entityId == null ? 'owner' : entityId}`;
+    }
+
+    function checkTraverseRateLimit(deviceId, entityId) {
+        const key = traverseRateKey(deviceId, entityId);
+        const now = Date.now();
+        const entry = traverseRateLimit[key];
+        if (!entry || now - entry.windowStart > TRAVERSE_WINDOW_MS) {
+            traverseRateLimit[key] = { count: 1, windowStart: now };
+            return { allowed: true, remaining: TRAVERSE_MAX_PER_HOUR - 1 };
+        }
+        if (entry.count >= TRAVERSE_MAX_PER_HOUR) {
+            return {
+                allowed: false,
+                retryAfterMs: TRAVERSE_WINDOW_MS - (now - entry.windowStart),
+                remaining: 0,
+            };
+        }
+        entry.count++;
+        return { allowed: true, remaining: TRAVERSE_MAX_PER_HOUR - entry.count };
+    }
+
+    // Same GC cadence as ai-support.js — prune keys whose windows lapsed
+    // more than one full window ago so the map can't grow unbounded.
+    const traverseGcHandle = setInterval(() => {
+        const now = Date.now();
+        for (const key of Object.keys(traverseRateLimit)) {
+            if (now - traverseRateLimit[key].windowStart > TRAVERSE_WINDOW_MS * 2) {
+                delete traverseRateLimit[key];
+            }
+        }
+    }, 1800000);
+    if (traverseGcHandle.unref) traverseGcHandle.unref();
+
     async function initMindmapTables(p) {
         if (!p) return;
         pool = p;
@@ -623,7 +666,19 @@ function createMindmapModule(devices) {
         if (!deviceId) return;
         if (!requirePool(res)) return;
 
-        const { root_node_id, question } = req.body || {};
+        const { root_node_id, question, entityId } = req.body || {};
+        const gate = checkTraverseRateLimit(deviceId, entityId);
+        if (!gate.allowed) {
+            res.set('Retry-After', Math.ceil(gate.retryAfterMs / 1000));
+            return res.status(429).json({
+                success: false,
+                error: 'Rate limit exceeded',
+                retryAfterMs: gate.retryAfterMs,
+                limit: TRAVERSE_MAX_PER_HOUR,
+                windowMs: TRAVERSE_WINDOW_MS,
+            });
+        }
+
         if (!isUuid(root_node_id)) {
             return res.status(400).json({ success: false, error: 'Invalid root_node_id' });
         }
@@ -682,18 +737,21 @@ function createMindmapModule(devices) {
             const rootRow = nodesById.get(root_node_id);
             const shortId = (id) => id.slice(0, 8);
 
+            // Titles clamped to 120 alongside the existing summary/200 clamp.
+            // A 500-node subgraph × long titles would blow a multi-KB prompt
+            // otherwise; 120 is enough for any real human-written node title.
             const nodeLines = nodeRows.rows.map(n => {
                 const typeTag = n.node_type ? `(${n.node_type})` : '(node)';
                 const marker = n.id === root_node_id ? ' [ROOT]' : '';
                 const summary = n.summary ? ` — ${clampStr(n.summary, 200)}` : '';
-                return `- [${shortId(n.id)}]${marker} "${n.title}" ${typeTag}${summary}`;
+                return `- [${shortId(n.id)}]${marker} "${clampStr(n.title, 120)}" ${typeTag}${summary}`;
             });
             const edgeLines = uniqueEdges.map(e => {
                 const src = nodesById.get(e.source_node_id);
                 const tgt = nodesById.get(e.target_node_id);
                 if (!src || !tgt) return null;
                 const rel = e.edge_type || 'relates_to';
-                return `- [${shortId(e.source_node_id)}] "${src.title}" --(${rel})--> [${shortId(e.target_node_id)}] "${tgt.title}"`;
+                return `- [${shortId(e.source_node_id)}] "${clampStr(src.title, 120)}" --(${rel})--> [${shortId(e.target_node_id)}] "${clampStr(tgt.title, 120)}"`;
             }).filter(Boolean);
 
             const systemPrompt = [
@@ -705,7 +763,7 @@ function createMindmapModule(devices) {
             ].join('\n');
 
             const userMessage = [
-                `Root node: [${shortId(root_node_id)}] "${rootRow?.title || '(unknown)'}"`,
+                `Root node: [${shortId(root_node_id)}] "${clampStr(rootRow?.title, 120) || '(unknown)'}"`,
                 `Depth: ${depth}, Nodes: ${nodeRows.rows.length}, Edges: ${uniqueEdges.length}`,
                 '',
                 'Nodes:',
