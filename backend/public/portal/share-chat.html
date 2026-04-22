@@ -210,7 +210,7 @@
         <!-- Viral CTA: Create your own Bot -->
         <div class="proxy-cta">
             <div class="proxy-cta-text" data-i18n="sc_cta_create_bot">Like this bot? Create your own — it's free!</div>
-            <a class="proxy-cta-btn" href="#" onclick="showRegisterMode(); return false;" data-i18n="sc_cta_create_bot_btn">Create your own Bot</a>
+            <a class="proxy-cta-btn" href="#" onclick="beaconCta('share-chat-register-cta'); showRegisterMode(); return false;" data-i18n="sc_cta_create_bot_btn">Create your own Bot</a>
         </div>
 
         <div class="powered-by"><span data-i18n="sc_powered_by">Powered by</span> <a href="/" target="_blank">EClawbot</a></div>
@@ -952,6 +952,24 @@
     }
 
     // ── Registration ──
+    // Lightweight beacon into site_page_views (synthetic /_cta/<name> path).
+    // share-chat.html sits under /portal, which is excluded from the pageview
+    // middleware, so its CTR numbers are otherwise uncountable.
+    function beaconCta(name) {
+        try {
+            fetch('/api/analytics/cta-event', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name }),
+                keepalive: true
+            }).catch(() => {});
+        } catch (_) { /* ignore */ }
+    }
+
+    // Fire once on first interactive frame so we count denominators (views)
+    // the same way we count numerators (CTA clicks).
+    window.addEventListener('DOMContentLoaded', () => beaconCta('share-chat-view'));
+
     function showRegisterMode() {
         document.getElementById('registerModal').classList.remove('hidden');
         document.getElementById('loginModal').classList.add('hidden');

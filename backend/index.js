@@ -16694,6 +16694,18 @@ app.get('/api/analytics/site-pageviews', async (req, res) => {
     }
 });
 
+// POST /api/analytics/cta-event — beacon endpoint for public pages (under
+// /portal/*) that the pageview middleware doesn't cover. The `name` must
+// match CTA_EVENT_ALLOWLIST so a spammer can't fabricate paths.
+app.post('/api/analytics/cta-event', express.json({ limit: '1kb' }), async (req, res) => {
+    const { name } = req.body || {};
+    if (!sitePageviews.isValidCtaEvent(name)) {
+        return res.status(400).json({ success: false, error: 'Invalid event name' });
+    }
+    await sitePageviews.recordCtaEvent(chatPool, req, name);
+    res.json({ success: true });
+});
+
 /**
  * PUT /api/bot/file - Create or update a file (upsert)
  */

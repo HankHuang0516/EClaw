@@ -96,6 +96,50 @@ function pageviewMiddleware() {
     };
 }
 
+// Events we accept from unauthenticated public pages. Keeping a closed
+// allowlist here stops a spammer from writing arbitrary paths into
+// site_page_views, which would poison the analytics dashboards.
+const CTA_EVENT_ALLOWLIST = new Set([
+    'share-chat-view',         // share-chat.html pageview (not covered by
+                               // pageviewMiddleware because /portal is excluded)
+    'share-chat-register-cta', // "Create your own Bot" button click
+]);
+
+function isValidCtaEvent(name) {
+    return typeof name === 'string' && CTA_EVENT_ALLOWLIST.has(name);
+}
+
+/**
+ * Record a CTA / beacon event from a public page that the pageview
+ * middleware can't otherwise see (e.g. anything under /portal). Writes
+ * into the same `site_page_views` table with a synthetic `/_cta/<name>`
+ * path so the existing aggregation endpoint can report it via `path=_cta/*`.
+ *
+ * Fire-and-forget like the middleware — never throws, never blocks callers.
+ */
+async function recordCtaEvent(pool, req, name) {
+    if (!pool || !isValidCtaEvent(name)) return;
+    const q = req.query || {};
+    const params = [
+        '/_cta/' + name,
+        clientIp(req).substring(0, 64) || null,
+        (req.headers['user-agent'] || '').substring(0, 512) || null,
+        (req.headers['referer'] || req.headers['referrer'] || '').substring(0, 512) || null,
+        q.utm_source ? String(q.utm_source).substring(0, 128) : null,
+        q.utm_medium ? String(q.utm_medium).substring(0, 128) : null,
+        q.utm_campaign ? String(q.utm_campaign).substring(0, 128) : null,
+    ];
+    try {
+        await pool.query(
+            `INSERT INTO site_page_views (path, ip, ua, referer, utm_source, utm_medium, utm_campaign)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            params
+        );
+    } catch {
+        // swallow — CTA tracking must not break user flow
+    }
+}
+
 /**
  * Convert a shell-style glob (with `*`) into a Postgres LIKE pattern.
  * `*` → `%`, other chars are escaped. Returns null if input is empty.
@@ -178,6 +222,9 @@ module.exports = {
     shouldTrack, // exported for unit tests
     globToLike,  // exported for unit tests
     queryPageviews,
+    recordCtaEvent,
+    isValidCtaEvent,
+    CTA_EVENT_ALLOWLIST,
     EXCLUDE_PREFIXES,
     MARKETING_PREFIXES,
 };
