@@ -4360,10 +4360,14 @@
             let finalText = text;
             if (replyContext) {
                 const excerpt = replyContext.text.length > 80 ? replyContext.text.slice(0, 80) + '…' : replyContext.text;
-                // Embed his_<id> token in the prefix so the referenced bubble
+                // Embed his_<uuid> token in the prefix so the referenced bubble
                 // renders as a clickable chip for everyone (sender + recipient
-                // bots see it inline and can scroll back).
-                const hisToken = replyContext.msgId ? ` his_${String(replyContext.msgId).replace(/[^0-9]/g, '')}` : '';
+                // bots see it inline and can scroll back). messages.id is a
+                // UUID, so we validate the canonical 8-4-4-4-12 form and skip
+                // the token if it doesn't match (no silent digit-stripping).
+                const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+                const rawMsgId = replyContext.msgId ? String(replyContext.msgId).trim().toLowerCase() : '';
+                const hisToken = UUID_RE.test(rawMsgId) ? ` his_${rawMsgId}` : '';
                 const quotePrefix = `↩ ${replyContext.senderName}:${hisToken} "${excerpt}"`;
                 finalText = text ? `${quotePrefix}\n\n${text}` : quotePrefix;
                 clearReplyContext();
@@ -5311,8 +5315,12 @@
         // older than the /api/chat/history window). No new API — resolves
         // purely against the already-loaded `allMessages` + DOM.
         function openHistoryMessage(msgId) {
-            const id = String(msgId).replace(/[^0-9]/g, '');
-            if (!id) return;
+            // messages.id is a UUID — preserve hex+hyphens. Normalise to
+            // lower-case so comparisons against DOM attributes and message
+            // records are predictable (the renderer emits lower-case too).
+            const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            const id = String(msgId || '').trim().toLowerCase();
+            if (!UUID_RE.test(id)) return;
             const bubble = document.querySelector(`.chat-msg[data-message-id="${id}"]`);
             if (bubble) {
                 bubble.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -5322,7 +5330,7 @@
                 setTimeout(() => bubble.classList.remove('his-flash'), 1500);
                 return;
             }
-            const fallback = Array.isArray(allMessages) ? allMessages.find(m => String(m.id) === id) : null;
+            const fallback = Array.isArray(allMessages) ? allMessages.find(m => String(m.id).toLowerCase() === id) : null;
             const text = fallback && fallback.text ? String(fallback.text).slice(0, 240) : '';
             const notice = text
                 ? (i18n.t('chat_his_not_rendered_preview') || 'Message not in view — preview: ') + text

@@ -1,9 +1,9 @@
 /**
- * Static wiring audit for the `his_<id>` history-reference chip feature.
+ * Static wiring audit for the `his_<uuid>` history-reference chip feature.
  *
  * Ensures chat.html loads his-link-render.js, calls it in the bubble render
  * pipeline, defines openHistoryMessage(), carries the visual chip styling,
- * and the shared module itself transforms tokens as advertised.
+ * and the shared module itself transforms UUID tokens as advertised.
  */
 'use strict';
 
@@ -16,7 +16,10 @@ const chatHtml = fs.readFileSync(path.join(ROOT, 'public', 'portal', 'chat.html'
 const i18nJs = fs.readFileSync(path.join(ROOT, 'public', 'shared', 'i18n.js'), 'utf8');
 const hisRenderPath = path.join(ROOT, 'public', 'portal', 'shared', 'his-link-render.js');
 
-describe('his_<id> chip — static wiring', () => {
+const SAMPLE_UUID = '7c424d88-9007-4d9b-9363-d811755847b1';
+const SAMPLE_UUID_2 = '015181ca-52a7-439a-8971-34e2523f4adb';
+
+describe('his_<uuid> chip — static wiring', () => {
     test('his-link-render.js exists under portal/shared', () => {
         expect(fs.existsSync(hisRenderPath)).toBe(true);
     });
@@ -38,17 +41,21 @@ describe('his_<id> chip — static wiring', () => {
         expect(chatHtml).toContain('his-flash');
     });
 
-    test('quote-reply composer auto-injects his_<id> into the outgoing prefix', () => {
+    test('quote-reply composer auto-injects his_<uuid> into the outgoing prefix', () => {
         // When replyContext is present, the send path must build a quotePrefix
-        // that contains his_<parent_id> so the referenced bubble renders as a
-        // chip for everyone. Regression guard: if someone removes the token,
-        // the feature silently regresses.
-        expect(chatHtml).toMatch(/const\s+hisToken\s*=\s*replyContext\.msgId/);
-        expect(chatHtml).toMatch(/his_\$\{String\(replyContext\.msgId\)/);
+        // that contains his_<parent_uuid> so the referenced bubble renders as
+        // a chip for everyone. Regression guard against the earlier digit-only
+        // bug that mangled UUIDs into numeric garbage.
+        expect(chatHtml).toMatch(/UUID_RE\s*=\s*\/\^\[0-9a-f\]\{8\}/);
+        expect(chatHtml).toMatch(/hisToken\s*=\s*UUID_RE\.test\(rawMsgId\)/);
+        expect(chatHtml).toMatch(/`\s*his_\$\{rawMsgId\}`/);
+        // Negative guard: the old digit-stripping regex must be gone from this
+        // site so we don't silently regress to numeric-only handling.
+        expect(chatHtml).not.toMatch(/his_\$\{String\(replyContext\.msgId\)\.replace\(\/\[\^0-9\]/);
     });
 });
 
-describe('his_<id> chip — module behaviour', () => {
+describe('his_<uuid> chip — module behaviour', () => {
     // Run the IIFE against a throwaway sandbox so we can exercise the regex
     // without spinning a browser.
     const sandbox = { window: {} };
@@ -59,39 +66,53 @@ describe('his_<id> chip — module behaviour', () => {
         expect(typeof HisLinkRender.renderHisLinks).toBe('function');
     });
 
-    test('transforms "his_123" into a clickable chip with data-msg-id', () => {
-        const out = HisLinkRender.renderHisLinks('see his_42 for context');
+    test('transforms "his_<uuid>" into a clickable chip with data-msg-id', () => {
+        const out = HisLinkRender.renderHisLinks(`see his_${SAMPLE_UUID} for context`);
         expect(out).toContain('class="his-link"');
-        expect(out).toContain('data-msg-id="42"');
-        expect(out).toContain("openHistoryMessage('42')");
-        expect(out).toContain('his_42');
+        expect(out).toContain(`data-msg-id="${SAMPLE_UUID}"`);
+        expect(out).toContain(`openHistoryMessage('${SAMPLE_UUID}')`);
+        expect(out).toContain(`his_${SAMPLE_UUID}`);
     });
 
-    test('matches multiple tokens in one string', () => {
-        const out = HisLinkRender.renderHisLinks('compare his_1 and his_9999');
+    test('matches multiple UUID tokens in one string', () => {
+        const out = HisLinkRender.renderHisLinks(`compare his_${SAMPLE_UUID} and his_${SAMPLE_UUID_2}`);
         expect((out.match(/class="his-link"/g) || []).length).toBe(2);
     });
 
-    test('does NOT match non-numeric suffix (his_abc)', () => {
+    test('does NOT match digit-only suffix (his_123)', () => {
+        // Regression guard for the original numeric-SERIAL assumption. Now
+        // that messages.id is a UUID we should reject bare digit tokens —
+        // this also prevents matching the old buggy digit-stripped garbage
+        // like his_74248890074993638117558471.
+        const out = HisLinkRender.renderHisLinks('this his_123 should not render');
+        expect(out).not.toContain('class="his-link"');
+        const out2 = HisLinkRender.renderHisLinks('his_74248890074993638117558471 legacy garbage');
+        expect(out2).not.toContain('class="his-link"');
+    });
+
+    test('does NOT match non-hex suffix (his_abc)', () => {
         const out = HisLinkRender.renderHisLinks('this_is his_abc not a chip');
         expect(out).not.toContain('class="his-link"');
     });
 
-    test('respects word boundaries (xhis_5, his_5y)', () => {
-        const out1 = HisLinkRender.renderHisLinks('xhis_5');
+    test('respects word boundaries (xhis_<uuid>, his_<uuid>extra)', () => {
+        const out1 = HisLinkRender.renderHisLinks(`xhis_${SAMPLE_UUID}`);
         expect(out1).not.toContain('class="his-link"');
-        const out2 = HisLinkRender.renderHisLinks('his_5y');
+        // trailing hex char after the 12-block should block the match so we
+        // don't eat a longer hex run as if it were a UUID.
+        const out2 = HisLinkRender.renderHisLinks(`his_${SAMPLE_UUID}a`);
         expect(out2).not.toContain('class="his-link"');
     });
 
-    test('preserves leading zeros in id', () => {
-        const out = HisLinkRender.renderHisLinks('his_007');
-        expect(out).toContain('data-msg-id="007"');
-        expect(out).toContain("openHistoryMessage('007')");
+    test('normalises uppercase UUIDs to lowercase in output', () => {
+        const upper = SAMPLE_UUID.toUpperCase();
+        const out = HisLinkRender.renderHisLinks(`ref his_${upper}`);
+        expect(out).toContain(`data-msg-id="${SAMPLE_UUID}"`);
+        expect(out).toContain(`openHistoryMessage('${SAMPLE_UUID}')`);
     });
 });
 
-describe('his_<id> chip — i18n keys', () => {
+describe('his_<uuid> chip — i18n keys', () => {
     const REQUIRED_KEYS = [
         'chat_his_not_rendered_preview',
         'chat_his_not_found'
