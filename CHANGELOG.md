@@ -1,3 +1,10 @@
+# [1.1054.0](https://github.com/HankHuang0516/EClaw/compare/v1.1053.2...v1.1054.0) (2026-04-22)
+
+
+### Features
+
+* **portal:** add Hermes Channel plugin guide to info.html ([#1982](https://github.com/HankHuang0516/EClaw/issues/1982)) ([403b995](https://github.com/HankHuang0516/EClaw/commit/403b995106ab655155724677bb4673f2faa10df1))
+
 ## [1.1053.2](https://github.com/HankHuang0516/EClaw/compare/v1.1053.1...v1.1053.2) (2026-04-22)
 
 
