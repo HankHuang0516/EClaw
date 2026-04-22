@@ -32,6 +32,7 @@
 const express = require('express');
 const safeEqual = require('./safe-equal');
 const { callAnthropic } = require('./anthropic-client');
+const mindmapMirror = require('./mindmap-mirror');
 
 const NODE_TYPES = new Set(['domain', 'topic', 'leaf', 'concept']);
 const EDGE_TYPES = new Set(['relates_to', 'causes', 'extends', 'opposes', 'parent_of']);
@@ -796,6 +797,29 @@ function createMindmapModule(devices) {
             });
         } catch (err) {
             console.error('[Mindmap] POST /traverse failed:', err.message);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // ─── POST /mirror/backfill ───────────────────────────────────────────────
+    // Route A (Mirror mode) one-shot backfill: ensures every note in
+    // mission_dashboard.notes has a matching mindmap leaf node + note anchor.
+    // Idempotent — re-running only creates nodes for notes that still lack one.
+    router.post('/mirror/backfill', async (req, res) => {
+        const deviceId = authenticate(req, res);
+        if (!deviceId) return;
+        if (!requirePool(res)) return;
+        const entityId = getEntityId(req);
+        try {
+            const dash = await pool.query(
+                'SELECT notes FROM mission_dashboard WHERE device_id = $1',
+                [deviceId]
+            );
+            const notes = (dash.rows[0] && dash.rows[0].notes) || [];
+            const result = await mindmapMirror.mirrorBackfill(pool, deviceId, entityId, notes);
+            res.json({ success: true, ...result });
+        } catch (err) {
+            console.error('[Mindmap] POST /mirror/backfill failed:', err.message);
             res.status(500).json({ success: false, error: err.message });
         }
     });

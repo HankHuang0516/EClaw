@@ -31,6 +31,18 @@ const fs = require('fs');
 const path = require('path');
 const safeEqual = require('./safe-equal');
 const { newNoteId, newSkillId, newRuleId } = require('./entity-id');
+const mindmapMirror = require('./mindmap-mirror');
+
+// Mirror a note-CRUD event into the mindmap, swallowing errors. The mindmap
+// is a derived read model — a mirror failure must never roll back the note
+// write that has already committed.
+function fireMirror(op, args) {
+    return Promise.resolve()
+        .then(() => op(...args))
+        .catch(err => {
+            console.error(`[MindmapMirror] ${op.name} failed:`, err.message);
+        });
+}
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
@@ -721,6 +733,8 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
                 ON CONFLICT (device_id, note_id) DO NOTHING
             `, [deviceId, noteId, content || '']);
 
+            fireMirror(mindmapMirror.mirrorNoteCreate, [pool, deviceId, entityId, newNote]);
+
             if (serverLog) serverLog('info', 'mission', `[Mission] Note added: "${newNote.title}" by bot, device ${deviceId}`, { deviceId });
             res.json({ success: true, message: `Note "${newNote.title}" added`, item: newNote, noteId, version: updateResult.rows[0].version });
         } catch (error) {
@@ -738,7 +752,7 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
     // ============================================
     router.post('/note/update', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const { deviceId, title } = req.body;
+        const { deviceId, title, entityId } = req.body;
         // Accept content/category as aliases for newContent/newCategory (#1888)
         const newTitle = req.body.newTitle;
         const newContent = req.body.newContent !== undefined ? req.body.newContent : req.body.content;
@@ -784,6 +798,15 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
 
             if (process.env.DEBUG === 'true') console.log(`[Mission] Note updated: "${note.title}", device ${deviceId}`);
             if (serverLog) serverLog('info', 'mission', `[Mission] Note updated: "${note.title}", device ${deviceId}`, { deviceId });
+
+            const mirrorNote = {
+                id: note.id,
+                title: note.title,
+                content: note.content,
+                ...(newCategory !== undefined ? { category: note.category } : {}),
+            };
+            fireMirror(mindmapMirror.mirrorNoteUpdate, [pool, deviceId, entityId, mirrorNote]);
+
             res.json({ success: true, message: `Note "${note.title}" updated`, item: note, version: updateResult.rows[0].version });
         } catch (error) {
             await client.query('ROLLBACK');
@@ -828,6 +851,7 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
                 return res.status(404).json({ success: false, error: `Note not found: "${title}"` });
             }
 
+            const deletedNote = notes[foundIdx];
             notes.splice(foundIdx, 1);
 
             const updateResult = await client.query(
@@ -839,6 +863,11 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
 
             if (process.env.DEBUG === 'true') console.log(`[Mission] Note deleted: "${title}", device ${deviceId}`);
             if (serverLog) serverLog('info', 'mission', `[Mission] Note deleted: "${title}", device ${deviceId}`, { deviceId });
+
+            if (deletedNote && deletedNote.id) {
+                fireMirror(mindmapMirror.mirrorNoteDelete, [pool, deviceId, deletedNote.id]);
+            }
+
             res.json({ success: true, message: `Note "${title}" deleted`, version: updateResult.rows[0].version });
         } catch (error) {
             await client.query('ROLLBACK');
