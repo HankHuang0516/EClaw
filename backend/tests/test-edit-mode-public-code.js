@@ -135,7 +135,7 @@ async function main() {
         console.log('── Phase 1: Setup ──');
 
         const allEntities = await fetchJSON(
-            `${API_BASE}/api/entities?deviceId=${deviceId}`
+            `${API_BASE}/api/entities?deviceId=${deviceId}&deviceSecret=${deviceSecret}`
         );
         check('Fetch all entities', allEntities.success !== false,
             `got ${allEntities.entities?.length || 0} entities`);
@@ -183,7 +183,7 @@ async function main() {
         // Fetch entities again to get publicCodes
         await sleep(500);
         const withCodes = await fetchJSON(
-            `${API_BASE}/api/entities?deviceId=${deviceId}`
+            `${API_BASE}/api/entities?deviceId=${deviceId}&deviceSecret=${deviceSecret}`
         );
 
         for (const te of testEntities) {
@@ -220,7 +220,7 @@ async function main() {
         console.log(`  Swapping slot ${slotA} (code: ${codeA}) ↔ slot ${slotB} (code: ${codeB})`);
 
         // Build reorder permutation: fetch current entity IDs, swap only slotA and slotB
-        const preReorder = await fetchJSON(`${API_BASE}/api/entities?deviceId=${deviceId}`);
+        const preReorder = await fetchJSON(`${API_BASE}/api/entities?deviceId=${deviceId}&deviceSecret=${deviceSecret}`);
         const currentIds = preReorder.entityIds || [];
         const order = [...currentIds];
         const idxA = order.indexOf(slotA);
@@ -246,7 +246,7 @@ async function main() {
 
         await sleep(1000);
         const afterSwap = await fetchJSON(
-            `${API_BASE}/api/entities?deviceId=${deviceId}`
+            `${API_BASE}/api/entities?deviceId=${deviceId}&deviceSecret=${deviceSecret}`
         );
         check('Post-swap fetch succeeds', afterSwap.success !== false);
 
@@ -302,7 +302,7 @@ async function main() {
 
         await sleep(1000);
         const afterSwapBack = await fetchJSON(
-            `${API_BASE}/api/entities?deviceId=${deviceId}`
+            `${API_BASE}/api/entities?deviceId=${deviceId}&deviceSecret=${deviceSecret}`
         );
 
         const entityBackA = afterSwapBack.entities?.find(e => e.entityId === slotA);
@@ -360,7 +360,7 @@ async function main() {
         try {
             // Re-fetch current state (positions may have changed)
             const currentEntities = await fetchJSON(
-                `${API_BASE}/api/entities?deviceId=${deviceId}`
+                `${API_BASE}/api/entities?deviceId=${deviceId}&deviceSecret=${deviceSecret}`
             );
             const boundEntities = currentEntities.entities || [];
 

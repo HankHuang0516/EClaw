@@ -103,7 +103,7 @@ async function main() {
   if (numExtras === 0) numExtras = Math.floor(Math.random() * 3) + 1;
 
   // Pre-check: discover existing bound entities so we can ensure at least 2 total
-  const preCheckRes = await fetchJSON(`${API_BASE}/api/entities?deviceId=${deviceId}`);
+  const preCheckRes = await fetchJSON(`${API_BASE}/api/entities?deviceId=${deviceId}&deviceSecret=${deviceSecret}`);
   const preBoundCount = (preCheckRes.entities || []).length;
   const minNeeded = Math.max(numExtras, 2 - preBoundCount);
   if (minNeeded > numExtras) {
@@ -128,7 +128,7 @@ async function main() {
   // ────────────────────────────────────────────────────
   console.log('--- Phase 1: Discover existing entities ---');
 
-  const entitiesRes = await fetchJSON(`${API_BASE}/api/entities?deviceId=${deviceId}`);
+  const entitiesRes = await fetchJSON(`${API_BASE}/api/entities?deviceId=${deviceId}&deviceSecret=${deviceSecret}`);
   const existingBound = entitiesRes.entities || [];
   const existingIds = new Set(existingBound.map(e => e.entityId));
 
@@ -194,7 +194,7 @@ async function main() {
   }
 
   // Refresh bound entities list
-  const afterBindRes = await fetchJSON(`${API_BASE}/api/entities?deviceId=${deviceId}`);
+  const afterBindRes = await fetchJSON(`${API_BASE}/api/entities?deviceId=${deviceId}&deviceSecret=${deviceSecret}`);
   const allBound = afterBindRes.entities || [];
   const allBoundIds = allBound.map(e => e.entityId);
   console.log(`\n  All bound entities now: [${allBoundIds.join(', ')}] (${allBound.length} total)`);
@@ -234,7 +234,7 @@ async function main() {
   // Record baseline for each target
   const baselines = {};
   for (const tid of expectedTargets) {
-    const st = await fetchJSON(`${API_BASE}/api/status?deviceId=${deviceId}&entityId=${tid}`);
+    const st = await fetchJSON(`${API_BASE}/api/status?deviceId=${deviceId}&deviceSecret=${deviceSecret}&entityId=${tid}`);
     baselines[tid] = { message: st.message, lastUpdated: st.lastUpdated };
   }
 
@@ -291,7 +291,7 @@ async function main() {
   await sleep(2000);
 
   for (const tid of expectedTargets) {
-    const st = await fetchJSON(`${API_BASE}/api/status?deviceId=${deviceId}&entityId=${tid}`);
+    const st = await fetchJSON(`${API_BASE}/api/status?deviceId=${deviceId}&deviceSecret=${deviceSecret}&entityId=${tid}`);
     const baseline = baselines[tid];
 
     // Check if message was updated
@@ -325,7 +325,7 @@ async function main() {
   }
 
   for (const tid of expectedTargets) {
-    const st = await fetchJSON(`${API_BASE}/api/status?deviceId=${deviceId}&entityId=${tid}`);
+    const st = await fetchJSON(`${API_BASE}/api/status?deviceId=${deviceId}&deviceSecret=${deviceSecret}&entityId=${tid}`);
     console.log(`  Entity ${tid}: state=${st.state}, message="${st.message?.slice(0, 60)}"`);
   }
   console.log('');
@@ -447,7 +447,7 @@ async function main() {
 
       // Verify target entity message updated
       await sleep(2000);
-      const targetSt = await fetchJSON(`${API_BASE}/api/status?deviceId=${deviceId}&entityId=${replyTarget}`);
+      const targetSt = await fetchJSON(`${API_BASE}/api/status?deviceId=${deviceId}&deviceSecret=${deviceSecret}&entityId=${replyTarget}`);
       const hasReply = targetSt.message && targetSt.message.includes(replyText);
       check('Target entity received speak-to message', hasReply,
         `message="${targetSt.message?.slice(0, 60)}"`
