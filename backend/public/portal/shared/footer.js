@@ -29,7 +29,7 @@ function renderFooter() {
                 <div class="footer-col">
                     <div class="footer-col-title" data-i18n="footer_resources">${t('footer_resources', 'Resources')}</div>
                     <a href="https://play.google.com/store/apps/details?id=com.hank.clawlive" target="_blank" rel="noopener" class="footer-link">Google Play</a>
-                    <a href="https://github.com/HankHuang0516/realbot" target="_blank" rel="noopener" class="footer-link">GitHub</a>
+                    <a href="https://github.com/HankHuang0516/EClaw" target="_blank" rel="noopener" class="footer-link">GitHub</a>
                     <a href="/privacy-policy.html" target="_blank" rel="noopener" class="footer-link" data-i18n="footer_privacy">${t('footer_privacy', 'Privacy Policy')}</a>
                 </div>
             </div>

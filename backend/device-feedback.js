@@ -554,7 +554,7 @@ async function saveDebugResult(pool, id, debugStatus, debugResult) {
  */
 async function createGithubIssue(feedback, photos) {
     const token = process.env.GITHUB_TOKEN;
-    const repo = process.env.GITHUB_REPO; // e.g. "HankHuang0516/realbot"
+    const repo = process.env.GITHUB_REPO; // e.g. "HankHuang0516/EClaw"
     if (!token || !repo) return null;
 
     const prompt = generateAiPrompt(feedback, photos);

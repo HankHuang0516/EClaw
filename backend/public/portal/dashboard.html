@@ -1462,11 +1462,11 @@
         </div>
 
         <!-- Dashboard Tab Bar -->
-        <div class="dash-tabs" id="dashTabs">
-            <button class="dash-tab active" data-tab="entities" onclick="switchDashTab('entities')">
+        <div class="dash-tabs" id="dashTabs" role="tablist">
+            <button class="dash-tab active" data-tab="entities" role="tab" aria-selected="true" onclick="switchDashTab('entities')">
                 🤖 <span data-i18n="org_tab_entities">Entities</span>
             </button>
-            <button class="dash-tab" data-tab="orgchart" id="orgChartTab" onclick="switchDashTab('orgchart')">
+            <button class="dash-tab" data-tab="orgchart" id="orgChartTab" role="tab" aria-selected="false" onclick="switchDashTab('orgchart')">
                 🏢 <span data-i18n="org_tab_chart">Org Chart</span>
             </button>
         </div>
@@ -3032,7 +3032,11 @@
 
         function switchDashTab(tab) {
             if (document.body.classList.contains('embedded-orgchart') && tab !== 'orgchart') return;
-            document.querySelectorAll('.dash-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+            document.querySelectorAll('.dash-tab').forEach(t => {
+                const isActive = t.dataset.tab === tab;
+                t.classList.toggle('active', isActive);
+                t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            });
             // Toggle entity grid + empty state
             const entityGrid = document.getElementById('entityGrid');
             const emptyState = document.getElementById('emptyState');

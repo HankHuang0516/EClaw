@@ -90,7 +90,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
     // ── Auto-create GitHub issue (for AI-initiated actions) ──
     async function autoCreateIssue(action, user) {
         const token = process.env.GITHUB_TOKEN;
-        const repo = process.env.GITHUB_REPO || 'HankHuang0516/realbot';
+        const repo = process.env.GITHUB_REPO || 'HankHuang0516/EClaw';
         if (!token) return null;
 
         try {
@@ -133,7 +133,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
     // ── Close GitHub issue (for AI-initiated actions) ──
     async function closeIssue(issueNumber, comment) {
         const token = process.env.GITHUB_TOKEN;
-        const repo = process.env.GITHUB_REPO || 'HankHuang0516/realbot';
+        const repo = process.env.GITHUB_REPO || 'HankHuang0516/EClaw';
         if (!token) return { success: false, error: 'GITHUB_TOKEN not configured' };
 
         try {
@@ -1365,7 +1365,7 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         }
 
         const token = process.env.GITHUB_TOKEN;
-        const repo = process.env.GITHUB_REPO || 'HankHuang0516/realbot';
+        const repo = process.env.GITHUB_REPO || 'HankHuang0516/EClaw';
         if (!token) {
             return res.status(503).json({ success: false, error: 'GitHub integration not configured' });
         }
