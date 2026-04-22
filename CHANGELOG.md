@@ -1,3 +1,10 @@
+## [1.1051.1](https://github.com/HankHuang0516/EClaw/compare/v1.1051.0...v1.1051.1) (2026-04-22)
+
+
+### Reverts
+
+* **chat:** remove long-press popup + find-related UI + focus mode ([#1977](https://github.com/HankHuang0516/EClaw/issues/1977)) ([7bdf819](https://github.com/HankHuang0516/EClaw/commit/7bdf819d7db07bd11a1587bc6680cec1768dff17)), closes [#1975](https://github.com/HankHuang0516/EClaw/issues/1975)
+
 # [1.1051.0](https://github.com/HankHuang0516/EClaw/compare/v1.1050.1...v1.1051.0) (2026-04-22)
 
 
