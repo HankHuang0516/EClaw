@@ -1888,6 +1888,30 @@
             background: rgba(245, 158, 11, 0.35);
         }
 
+        /* ── History reference chip (his_<id>) ── */
+        .his-link {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 10px;
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            font-weight: 600;
+            font-size: 0.92em;
+            cursor: pointer;
+            transition: background 0.15s;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+        .his-link:hover {
+            background: rgba(59, 130, 246, 0.35);
+        }
+        @keyframes his-flash {
+            0%   { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.8); }
+            100% { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0); }
+        }
+        .chat-msg.his-flash > .chat-bubble {
+            animation: his-flash 1.4s ease-out;
+        }
+
         /* ── Note Preview Modal ── */
         #notePreviewModal .modal-box {
             max-width: 680px;
@@ -2372,6 +2396,7 @@
     <script src="shared/mention-render.js"></script>
     <script src="shared/note-link-render.js"></script>
     <script src="shared/entity-link-render.js"></script>
+    <script src="shared/his-link-render.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
     <script src="/socket.io/socket.io.js"></script>
@@ -3734,6 +3759,10 @@
                     // Render entity references (Card, Skill, Rule, etc.) as clickable chips
                     if (window.EntityLinkRender) {
                         textHtml = EntityLinkRender.renderEntityLinks(textHtml);
+                    }
+                    // Render his_<id> history tokens as clickable chips
+                    if (window.HisLinkRender) {
+                        textHtml = HisLinkRender.renderHisLinks(textHtml);
                     }
                 }
                 const firstUrlIsImage = firstUrl && isImageUrl(firstUrl);
@@ -5271,6 +5300,34 @@
                 }
             }
             return null;
+        }
+
+        // Open a historical message by id: scroll to it + flash its bubble.
+        // Falls back to a toast if the bubble isn't currently rendered (e.g.
+        // older than the /api/chat/history window). No new API — resolves
+        // purely against the already-loaded `allMessages` + DOM.
+        function openHistoryMessage(msgId) {
+            const id = String(msgId).replace(/[^0-9]/g, '');
+            if (!id) return;
+            const bubble = document.querySelector(`.chat-msg[data-message-id="${id}"]`);
+            if (bubble) {
+                bubble.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                bubble.classList.remove('his-flash');
+                void bubble.offsetWidth;
+                bubble.classList.add('his-flash');
+                setTimeout(() => bubble.classList.remove('his-flash'), 1500);
+                return;
+            }
+            const fallback = Array.isArray(allMessages) ? allMessages.find(m => String(m.id) === id) : null;
+            const text = fallback && fallback.text ? String(fallback.text).slice(0, 240) : '';
+            const notice = text
+                ? (i18n.t('chat_his_not_rendered_preview') || 'Message not in view — preview: ') + text
+                : (i18n.t('chat_his_not_found') || 'Referenced message is not currently loaded.');
+            if (typeof showToast === 'function') {
+                showToast(notice);
+            } else {
+                alert(notice);
+            }
         }
 
         async function openNoteModal(noteId) {
