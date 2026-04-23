@@ -5934,6 +5934,8 @@ app.post('/api/transform', async (req, res) => {
             const chatSource = pendingA2A
                 ? `entity:${eId}:${entity.character}->${pendingA2A.fromEntityId}`
                 : entity.name || `Entity ${eId}`;
+            const reasons = deliveryResults && deliveryResults.results ? deliveryResults.results.map(r => r.reason || 'ok').join(',') : 'none';
+            serverLog('warn', 'chat_save', `[CHAT_FALLBACK_TRANSFORM] all targets failed for entity ${eId}; saving sender copy. reasons=[${reasons}] speakTo=${JSON.stringify(speakTo || null)} broadcast=${!!broadcast}`, { deviceId, entityId: eId, metadata: { path: 'fallback_transform', reasons, hadSpeakTo: !!speakTo, hadBroadcast: !!broadcast } });
             await saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments);
             warnings.push('All delivery targets failed; message saved to sender chat only.');
         }
@@ -14981,7 +14983,11 @@ async function getDeviceVarForEmbedding(deviceId, varName) {
 
 // Save chat message to database, returns row ID (UUID) or null
 // Deduplication: bot messages with identical text for the same entity within 10s are skipped
+// Data-loss hardening (2026-04-23): one retry on INSERT failure, structured
+// log on every catch, dead-letter line to /tmp/chat_dead_letter.jsonl so we
+// can replay or grep for lost messages even when pg blips.
 async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null, scheduleId = null, scheduleLabel = null, backupUrl = null, mentions = null, card = null, attachments = null) {
+    const textPreview = text == null ? null : String(text).slice(0, 120);
     try {
         // Dedup: skip if the same BOT message was already saved recently
         // Bot dedup: prevents echo when bot calls multiple endpoints (broadcast + sync-message + transform)
@@ -14997,17 +15003,31 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
                 [deviceId, entityId, text, isFromUser || false, isFromBot || false, source || null]
             );
             if (dedup.rows.length > 0) {
-                console.log(`[Chat] Dedup: skipping duplicate ${isFromBot ? 'bot' : 'user'} message for entity ${entityId} (existing id=${dedup.rows[0].id}, source="${source}")`);
+                serverLog('info', 'chat_save', `[CHAT_DEDUP] returning existing id=${dedup.rows[0].id} entity_id=${entityId} source="${source}" preview="${textPreview}"`, { deviceId, entityId, metadata: { path: 'dedup', existingId: dedup.rows[0].id, source } });
                 return dedup.rows[0].id;
             }
         }
 
-        const result = await chatPool.query(
-            `INSERT INTO chat_messages (device_id, entity_id, text, source, is_from_user, is_from_bot, media_type, media_url, schedule_id, schedule_label, backup_url, mentions, card, attachments)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id`,
-            [deviceId, entityId, text, source, isFromUser || false, isFromBot || false, mediaType, mediaUrl, scheduleId, scheduleLabel, backupUrl, mentions ? JSON.stringify(mentions) : null, card ? JSON.stringify(card) : null, attachments ? JSON.stringify(attachments) : null]
-        );
+        const insertParams = [deviceId, entityId, text, source, isFromUser || false, isFromBot || false, mediaType, mediaUrl, scheduleId, scheduleLabel, backupUrl, mentions ? JSON.stringify(mentions) : null, card ? JSON.stringify(card) : null, attachments ? JSON.stringify(attachments) : null];
+        const insertSQL = `INSERT INTO chat_messages (device_id, entity_id, text, source, is_from_user, is_from_bot, media_type, media_url, schedule_id, schedule_label, backup_url, mentions, card, attachments)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id`;
+
+        let result;
+        try {
+            result = await chatPool.query(insertSQL, insertParams);
+        } catch (firstErr) {
+            serverLog('warn', 'chat_save', `[CHAT_SAVE_RETRY] first INSERT failed: ${firstErr.message}; retrying once`, { deviceId, entityId, metadata: { path: 'retry', source, errCode: firstErr.code } });
+            await new Promise(r => setTimeout(r, 400));
+            result = await chatPool.query(insertSQL, insertParams);
+        }
         const msgId = result.rows[0]?.id || null;
+        if (!msgId) {
+            // INSERT returned no row — should be impossible with RETURNING id, but
+            // fail loud so we see it in logs instead of silently dropping.
+            serverLog('error', 'chat_save', `[CHAT_SAVE_EMPTY] INSERT returned no row entity_id=${entityId} source="${source}" preview="${textPreview}"`, { deviceId, entityId, metadata: { path: 'empty_insert', source } });
+        } else {
+            serverLog('info', 'chat_save', `[CHAT_SAVE_OK] id=${msgId} entity_id=${entityId} source="${source}" preview="${textPreview}"`, { deviceId, entityId, metadata: { path: 'insert', source, chatMsgId: msgId } });
+        }
 
         // Fire-and-forget: generate semantic embedding for vector search (Phase 2)
         if (msgId && text) {
@@ -15042,10 +15062,11 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
 
         return msgId;
     } catch (err) {
-        // Silently fail - chat history is non-critical
-        if (!err.message.includes('does not exist')) {
-            console.warn('[Chat] Failed to save message:', err.message);
-        }
+        serverLog('error', 'chat_save', `[CHAT_SAVE_FAIL] entity_id=${entityId} source="${source}" err="${err.message}" preview="${textPreview}"`, { deviceId, entityId, metadata: { path: 'catch', source, errCode: err.code, errName: err.name } });
+        try {
+            const line = JSON.stringify({ t: new Date().toISOString(), deviceId, entityId, source, isFromUser: !!isFromUser, isFromBot: !!isFromBot, textPreview, err: err.message, errCode: err.code }) + '\n';
+            require('fs').appendFileSync('/tmp/chat_dead_letter.jsonl', line);
+        } catch (_) { /* best-effort */ }
         return null;
     }
 }
