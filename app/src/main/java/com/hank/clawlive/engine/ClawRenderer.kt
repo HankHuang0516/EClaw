@@ -15,7 +15,9 @@ import com.hank.clawlive.data.model.AgentStatus
 import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.EntityStatus
 import timber.log.Timber
+import kotlin.math.ceil
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 class ClawRenderer(private val context: Context) {
 
@@ -284,24 +286,28 @@ class ClawRenderer(private val context: Context) {
     }
 
     private fun calculateGrid2x2(width: Float, height: Float, count: Int, verticalPos: Float): List<Pair<Float, Float>> {
+        if (count <= 0) return emptyList()
+        val cols = ceil(sqrt(count.toDouble())).toInt().coerceAtLeast(1)
+        val rows = ceil(count.toDouble() / cols).toInt()
         val centerY = height * verticalPos
-        return when (count) {
-            1 -> listOf(Pair(width / 2f, centerY))
-            2 -> listOf(
-                Pair(width * 0.3f, centerY),
-                Pair(width * 0.7f, centerY)
-            )
-            3 -> listOf(
-                Pair(width / 2f, centerY - height * 0.15f),
-                Pair(width * 0.3f, centerY + height * 0.15f),
-                Pair(width * 0.7f, centerY + height * 0.15f)
-            )
-            else -> listOf(
-                Pair(width * 0.3f, centerY - height * 0.15f),
-                Pair(width * 0.7f, centerY - height * 0.15f),
-                Pair(width * 0.3f, centerY + height * 0.15f),
-                Pair(width * 0.7f, centerY + height * 0.15f)
-            )
+        val paddingX = width * 0.1f
+        val usableW = width - 2 * paddingX
+        val colStep = usableW / cols
+        // Vertical span: ±0.15h per row gap, capped at ±0.30h total (60% of screen)
+        val totalYSpan = (height * 0.3f * (rows - 1)).coerceAtMost(height * 0.6f)
+        val rowStep = if (rows > 1) totalYSpan / (rows - 1) else 0f
+        val startY = centerY - totalYSpan / 2f
+        val itemsInLastRow = count - (rows - 1) * cols
+        return (0 until count).map { i ->
+            val row = i / cols
+            val col = i % cols
+            val x = if (row == rows - 1 && itemsInLastRow < cols) {
+                paddingX + (usableW - itemsInLastRow * colStep) / 2f + col * colStep + colStep / 2f
+            } else {
+                paddingX + col * colStep + colStep / 2f
+            }
+            val y = if (rows <= 1) centerY else startY + row * rowStep
+            Pair(x, y)
         }
     }
 
