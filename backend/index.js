@@ -4879,11 +4879,39 @@ app.post('/api/bind', async (req, res) => {
 // ============================================
 
 /**
+ * Classify a channel callback_url into one of the known provider buckets
+ * so bots can route dispatches differently (OpenClaw vs Claude Code vs
+ * Hermes vs a custom webhook). Heuristic-only — the plugin never tells
+ * us directly what it is, so we read the URL the plugin registered.
+ *
+ * Returns: 'openclaw' | 'claude' | 'hermes' | 'custom' | null
+ * null means the entity is channel-bound but /register hasn't happened
+ * yet (callback_url still NULL in channel_accounts).
+ */
+function deriveChannelProvider(callbackUrl) {
+    if (!callbackUrl) return null;
+    let host = '';
+    let path = '';
+    try {
+        const u = new URL(callbackUrl);
+        host = (u.hostname || '').toLowerCase();
+        path = (u.pathname || '').toLowerCase();
+    } catch {
+        return 'custom';
+    }
+    const hay = `${host}${path}`;
+    if (hay.includes('openclaw')) return 'openclaw';
+    if (hay.includes('hermes')) return 'hermes';
+    if (hay.includes('claude') || hay.includes('claude-code')) return 'claude';
+    return 'custom';
+}
+
+/**
  * GET /api/entities
  * Get bound entities for a specific device.
  * Auth: deviceId+deviceSecret OR JWT cookie (web portal)
  */
-app.get('/api/entities', (req, res) => {
+app.get('/api/entities', async (req, res) => {
     const filterDeviceId = req.query.deviceId;
     const deviceSecret = req.query.deviceSecret;
 
@@ -4902,6 +4930,19 @@ app.get('/api/entities', (req, res) => {
     }
     if (!authedDeviceId) {
         return res.status(403).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    // One lookup so we can annotate each channel-bound entity with its
+    // derived provider (openclaw / claude / hermes / custom). Best-effort:
+    // DB failures leave channelProvider=null, never break /api/entities.
+    let providerByAccountId = new Map();
+    try {
+        const rows = await db.getChannelAccountsByDevice(authedDeviceId);
+        for (const row of rows || []) {
+            providerByAccountId.set(row.id, deriveChannelProvider(row.callback_url));
+        }
+    } catch (err) {
+        console.warn(`[/api/entities] channel_accounts lookup failed: ${err.message}`);
     }
 
     const entities = [];
@@ -4929,6 +4970,10 @@ app.get('/api/entities', (req, res) => {
                     level: entity.level || 1,
                     publicCode: entity.publicCode || null,
                     bindingType: entity.bindingType || null,
+                    channelAccountId: entity.channelAccountId || null,
+                    channelProvider: (entity.bindingType === 'channel' && entity.channelAccountId)
+                        ? (providerByAccountId.get(entity.channelAccountId) || null)
+                        : null,
                     encryptionStatus: entity.encryptionStatus || null,
                     isPublic: !!entity.isPublic,
                     rental_status: entity.rental_status || null,  // 'leased_in', 'leased_out', or null
@@ -4995,7 +5040,7 @@ app.get('/api/entities', (req, res) => {
  *
  * Returns rental status for each entity (leased_out, leased_in, null).
  */
-app.get('/api/entities/status', (req, res) => {
+app.get('/api/entities/status', async (req, res) => {
     const { deviceId, botSecret, entityId } = req.query;
 
     if (!deviceId) return res.status(400).json({ success: false, error: 'Missing deviceId' });
@@ -5011,16 +5056,39 @@ app.get('/api/entities/status', (req, res) => {
         return res.status(401).json({ success: false, error: 'Invalid credentials' });
     }
 
+    // One DB round-trip to get every channel_account for this device so we
+    // can derive provider per channel-bound entity without N+1 queries.
+    // Failures here must not break status — fall back to empty map and let
+    // the client see channelProvider=null.
+    let providerByAccountId = new Map();
+    try {
+        const rows = await db.getChannelAccountsByDevice(deviceId);
+        for (const row of rows || []) {
+            providerByAccountId.set(row.id, deriveChannelProvider(row.callback_url));
+        }
+    } catch (err) {
+        console.warn(`[/api/entities/status] channel_accounts lookup failed: ${err.message}`);
+    }
+
     const entityList = [];
     for (const id of Object.keys(device.entities).map(Number)) {
         const entity = device.entities[id];
         if (!entity) continue;
+        const bindingType = entity.bindingType || null;
+        const channelAccountId = entity.channelAccountId || null;
+        const channelProvider = (bindingType === 'channel' && channelAccountId)
+            ? (providerByAccountId.get(channelAccountId) || null)
+            : null;
         entityList.push({
             entityId: id,
             isBound: !!entity.isBound,
             character: entity.character || '',
             state: entity.state || 'IDLE',
-            rentalStatus: entity.rental_status || null, // 'leased_out', 'leased_in', or null
+            bindingType,            // 'channel' | 'webhook' | 'personal' | 'free' | null
+            channelAccountId,       // numeric id in channel_accounts (only when bindingType='channel')
+            channelProvider,        // 'openclaw' | 'claude' | 'hermes' | 'custom' | null
+            encryptionStatus: entity.encryptionStatus || null, // 'e2ee' | 'transport' | null
+            rentalStatus: entity.rental_status || null,
             rentalContractId: entity.rental_contract_id || null,
         });
     }
@@ -8533,6 +8601,11 @@ app.get('/api/entity/lookup', (req, res) => {
                 language: entity.identity.language || null,
                 public: entity.identity.public || null
             } : null,
+            // Coarse binding class so cross-device callers can tell how to
+            // reach this entity (via channel provider vs webhook vs direct app
+            // binding). Provider-level detail (openclaw/claude/hermes) is
+            // intentionally NOT exposed here to avoid fingerprinting.
+            bindingType: entity.bindingType || null,
             encryptionStatus: entity.encryptionStatus || null
         }
     });
