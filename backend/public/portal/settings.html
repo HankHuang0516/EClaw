@@ -267,6 +267,28 @@
             margin-top: 8px;
         }
 
+        /* ── Nudge status chips (checkbox pills) ── */
+        .nudge-status-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border: 1px solid var(--card-border);
+            border-radius: 999px;
+            font-size: 13px;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .nudge-status-chip:has(input:checked) {
+            background: var(--accent, #4a9eff);
+            border-color: var(--accent, #4a9eff);
+            color: #fff;
+        }
+        .nudge-status-chip input[type="checkbox"] {
+            accent-color: #fff;
+        }
+
         /* ── Feedback card ── */
         .feedback-header {
             display: flex;
@@ -826,6 +848,61 @@
                         </label>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Kanban Nudge Settings -->
+        <div class="card">
+            <div class="card-title">
+                <span>📋 <span data-i18n="kanban_nudge_title">Kanban Nudge</span></span>
+            </div>
+            <p class="section-desc" data-i18n="kanban_nudge_desc">Applies uniformly to all entities.</p>
+
+            <div class="setting-row">
+                <span class="setting-row-label" data-i18n="kanban_nudge_batch_label">Cards per cycle</span>
+                <input type="number" id="kanbanNudgeBatchSize" min="1" max="20" step="1"
+                       style="width:72px;padding:6px 8px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);text-align:right;"
+                       onchange="saveKanbanNudgePref('kanban_nudge_batch_size', Math.max(1, Math.min(20, parseInt(this.value)||1)))">
+            </div>
+
+            <div class="setting-row" style="flex-direction:column;align-items:stretch;">
+                <span class="setting-row-label" style="margin-bottom:8px;" data-i18n="kanban_nudge_priority_label">Priority mode</span>
+                <label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;cursor:pointer;">
+                    <input type="radio" name="kanbanNudgePriorityMode" value="priority_first" onchange="saveKanbanNudgePref('kanban_nudge_priority_mode', this.value)">
+                    <span data-i18n="kanban_nudge_priority_mode_level">Level-first (P0 &gt; P1 &gt; P2)</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;cursor:pointer;">
+                    <input type="radio" name="kanbanNudgePriorityMode" value="column_first" onchange="saveKanbanNudgePref('kanban_nudge_priority_mode', this.value)">
+                    <span data-i18n="kanban_nudge_priority_mode_column">Column-first (Review &gt; In Progress &gt; Todo)</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;cursor:pointer;">
+                    <input type="radio" name="kanbanNudgePriorityMode" value="column_level" onchange="saveKanbanNudgePref('kanban_nudge_priority_mode', this.value)">
+                    <span data-i18n="kanban_nudge_priority_mode_both">Column + level (Review P2 &gt; In Progress P1 &gt; Todo P0)</span>
+                </label>
+            </div>
+
+            <div class="setting-row" style="flex-direction:column;align-items:stretch;">
+                <span class="setting-row-label" style="margin-bottom:8px;" data-i18n="kanban_nudge_statuses_label">Nudge these columns</span>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                    <label class="nudge-status-chip"><input type="checkbox" value="backlog" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_backlog">Backlog</span></label>
+                    <label class="nudge-status-chip"><input type="checkbox" value="todo" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_todo">Todo</span></label>
+                    <label class="nudge-status-chip"><input type="checkbox" value="in_progress" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_in_progress">In Progress</span></label>
+                    <label class="nudge-status-chip"><input type="checkbox" value="review" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_review">Review</span></label>
+                </div>
+            </div>
+
+            <div class="setting-row">
+                <span class="setting-row-label" data-i18n="kanban_nudge_interval_label">Interval</span>
+                <span style="display:flex;align-items:center;gap:4px;">
+                    <input type="number" id="kanbanNudgeIntervalHours" min="0" max="24" step="1"
+                           style="width:56px;padding:6px 8px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);text-align:right;"
+                           onchange="saveKanbanNudgeInterval()">
+                    <span style="font-size:13px;" data-i18n="kanban_nudge_interval_hour">h</span>
+                    <input type="number" id="kanbanNudgeIntervalMinutes" min="0" max="59" step="1"
+                           style="width:56px;padding:6px 8px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);text-align:right;"
+                           onchange="saveKanbanNudgeInterval()">
+                    <span style="font-size:13px;" data-i18n="kanban_nudge_interval_min">m</span>
+                </span>
             </div>
         </div>
 
@@ -1686,6 +1763,7 @@
                 const prefs = data.prefs || {};
                 const toggle = document.getElementById('toggleBroadcastRecipientInfo');
                 if (toggle) toggle.checked = prefs.broadcast_recipient_info !== false;
+                applyKanbanNudgePrefs(prefs);
             } catch (e) {
                 console.error('Failed to load device preferences:', e);
             }
@@ -1699,6 +1777,57 @@
             } catch (e) {
                 showToast(i18n.t('toast_preference_update_failed'), 'error');
             }
+        }
+
+        // ── Kanban nudge settings ──
+        function applyKanbanNudgePrefs(prefs) {
+            const batchInput = document.getElementById('kanbanNudgeBatchSize');
+            if (batchInput) batchInput.value = prefs.kanban_nudge_batch_size ?? 1;
+
+            const mode = prefs.kanban_nudge_priority_mode || 'priority_first';
+            document.querySelectorAll('input[name="kanbanNudgePriorityMode"]').forEach(r => {
+                r.checked = (r.value === mode);
+            });
+
+            const statuses = Array.isArray(prefs.kanban_nudge_statuses) && prefs.kanban_nudge_statuses.length
+                ? prefs.kanban_nudge_statuses
+                : ['todo', 'in_progress', 'review'];
+            document.querySelectorAll('.nudge-status-chip input[type="checkbox"]').forEach(cb => {
+                cb.checked = statuses.includes(cb.value);
+            });
+
+            const total = Number.isFinite(prefs.kanban_nudge_interval_minutes) ? prefs.kanban_nudge_interval_minutes : 180;
+            const hoursEl = document.getElementById('kanbanNudgeIntervalHours');
+            const minsEl = document.getElementById('kanbanNudgeIntervalMinutes');
+            if (hoursEl) hoursEl.value = Math.floor(total / 60);
+            if (minsEl) minsEl.value = total % 60;
+        }
+
+        async function saveKanbanNudgePref(key, value) {
+            try {
+                await apiCall('PUT', '/api/device-preferences', { prefs: { [key]: value } });
+            } catch (e) {
+                showToast(i18n.t('toast_preference_update_failed'), 'error');
+            }
+        }
+
+        async function saveKanbanNudgeStatuses() {
+            const checked = Array.from(document.querySelectorAll('.nudge-status-chip input[type="checkbox"]:checked')).map(cb => cb.value);
+            // Guard: require at least one status (otherwise nudges would never fire).
+            if (checked.length === 0) {
+                showToast(i18n.t('kanban_nudge_need_status') || 'Select at least one column', 'error');
+                // Re-check the previously saved value by reloading prefs.
+                loadDevicePreferences();
+                return;
+            }
+            await saveKanbanNudgePref('kanban_nudge_statuses', checked);
+        }
+
+        async function saveKanbanNudgeInterval() {
+            const hours = Math.max(0, Math.min(24, parseInt(document.getElementById('kanbanNudgeIntervalHours').value) || 0));
+            const mins = Math.max(0, Math.min(59, parseInt(document.getElementById('kanbanNudgeIntervalMinutes').value) || 0));
+            const total = Math.max(5, Math.min(24 * 60, hours * 60 + mins));  // server clamps too; floor at 5 min
+            await saveKanbanNudgePref('kanban_nudge_interval_minutes', total);
         }
 
         // Web Push toggle

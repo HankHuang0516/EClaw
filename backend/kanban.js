@@ -40,6 +40,7 @@ const path = require('path');
 const safeEqual = require('./safe-equal');
 const { newCardId } = require('./entity-id');
 const { tKanban, statusLabel } = require('./i18n/kanban-notifications');
+const devicePrefs = require('./device-preferences');
 
 // Cache device→language to avoid repeated lookups
 const deviceLangCache = new Map();
@@ -1619,7 +1620,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
     let bgTimer = null;
     const BG_CHECK_INTERVAL = 5 * 60 * 1000;        // Unified check every 5 minutes
-    const MIN_NUDGE_GAP_MS = 60 * 60 * 1000;        // Minimum 1 hour between nudges
+    // Nudge-gap is now per-device (kanban_nudge_interval_minutes, default 3h).
 
     /**
      * Unified background tick: stale nudge + auto-archive + schedule triggers.
@@ -1642,97 +1643,170 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
      *   3. Block (>12h) — move to blocked status + system comment
      * Also checks for orphaned rental bot assignments.
      */
+    // Sort stale cards by user-chosen priority mode (see device_preferences.kanban_nudge_priority_mode).
+    function sortCardsByNudgeMode(cards, mode) {
+        const PRIORITY_RANK = { P0: 0, P1: 1, P2: 2, P3: 3 };
+        const STATUS_RANK = { review: 0, in_progress: 1, todo: 2 };
+        const byPri = (a, b) => (PRIORITY_RANK[a.priority] ?? 9) - (PRIORITY_RANK[b.priority] ?? 9);
+        const byStatus = (a, b) => (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9);
+        const byAge = (a, b) => new Date(a.status_changed_at) - new Date(b.status_changed_at);
+        if (mode === 'column_first') {
+            cards.sort((a, b) => byStatus(a, b) || byAge(a, b));
+        } else if (mode === 'column_level') {
+            cards.sort((a, b) => byStatus(a, b) || byPri(a, b) || byAge(a, b));
+        } else {  // 'priority_first' (default)
+            cards.sort((a, b) => byPri(a, b) || byAge(a, b));
+        }
+        return cards;
+    }
+
     async function checkStaleCards() {
         try {
+            // Fetch stale candidates WITHOUT the global nudge-gap filter; we apply
+            // per-device nudge interval + status filter (from device_preferences) below.
+            // backlog (待排程) included here and filtered per-device — users can opt in.
             const result = await pool.query(`
                 SELECT * FROM kanban_cards
                 WHERE archived = false
-                  AND status IN ('todo', 'in_progress', 'review')
+                  AND status IN ('backlog', 'todo', 'in_progress', 'review')
                   AND EXTRACT(EPOCH FROM (NOW() - status_changed_at)) * 1000 > stale_threshold_ms
-                  AND (last_stale_nudge_at IS NULL
-                       OR EXTRACT(EPOCH FROM (NOW() - last_stale_nudge_at)) * 1000 > $1)
-            `, [MIN_NUDGE_GAP_MS]);
+            `);
 
             if (result.rows.length === 0) return;
 
-            console.log(`[Kanban] Stale check: ${result.rows.length} card(s) need nudging`);
-
+            // Group candidates by device so each device's prefs (batch size, priority
+            // mode, interval) apply uniformly. Escalate/Block (Levels 2/3) run first
+            // for every candidate because they are clock-triggered safety rails —
+            // batch size only limits standard Level-1 nudges.
+            const byDevice = new Map();
             for (const card of result.rows) {
-                const bots = card.assigned_bots || [];
-                const cardStatusLabel = STATUS_LABELS[card.status] || card.status;
-                const elapsedMs = Date.now() - new Date(card.status_changed_at).getTime();
-                const elapsedHrs = Math.round(elapsedMs / 3600000 * 10) / 10;
+                if (!byDevice.has(card.device_id)) byDevice.set(card.device_id, []);
+                byDevice.get(card.device_id).push(card);
+            }
 
-                // Parse per-card escalation config (if set)
-                const config = card.config || {};
-                const esc = config.escalationPolicy || {};
-                const escalateAfterMs = esc.escalateAfterMs || DEFAULT_ESCALATE_MS;
-                const blockAfterMs = esc.blockAfterMs || DEFAULT_BLOCK_MS;
-                const notifyEntityId = esc.notifyEntityId || card.reviewer_entity_id;
-
-                // #1701 Level 3: Block (>12h default)
-                if (elapsedMs >= blockAfterMs && card.status !== 'blocked') {
-                    await pool.query(
-                        `UPDATE kanban_cards SET status = 'blocked', status_changed_at = NOW(), last_stale_nudge_at = NOW(), updated_at = NOW() WHERE id = $1`,
-                        [card.id]
-                    );
-                    await addSystemComment(card.id, card.device_id,
-                        `🚫 自動封鎖：此卡片已停滯 ${elapsedHrs} 小時，已自動移至「blocked」，請人工介入`);
-                    if (notifyEntityId != null) {
-                        const _lang = await getDeviceLanguage(card.device_id);
-                        notifyEntities(card.device_id, [notifyEntityId],
-                            `🚫 卡片「${card.title}」已停滯 ${elapsedHrs}h，自動 blocked，需人工介入`,
-                            { cardId: card.id });
-                    }
-                    if (serverLog) serverLog('warn', 'kanban', `[Stale] Card ${card.id} auto-blocked after ${elapsedHrs}h`, { deviceId: card.device_id });
-                    continue;
-                }
-
-                // #1701 Level 2: Escalate priority (>6h default)
-                if (elapsedMs >= escalateAfterMs) {
-                    const PRIORITY_UPGRADE = { P3: 'P2', P2: 'P1', P1: 'P0', P0: 'P0' };
-                    const newPriority = PRIORITY_UPGRADE[card.priority] || card.priority;
-                    if (newPriority !== card.priority) {
-                        await pool.query(
-                            `UPDATE kanban_cards SET priority = $1, last_stale_nudge_at = NOW(), updated_at = NOW() WHERE id = $2`,
-                            [newPriority, card.id]
-                        );
-                        await addSystemComment(card.id, card.device_id,
-                            `⬆️ 自動升級：停滯 ${elapsedHrs} 小時，優先級 ${card.priority} → ${newPriority}`);
-                        if (notifyEntityId != null) {
-                            notifyEntities(card.device_id, [notifyEntityId],
-                                `⬆️ 卡片「${card.title}」停滯 ${elapsedHrs}h，已自動升級至 ${newPriority}`,
-                                { cardId: card.id });
-                        }
-                        if (serverLog) serverLog('info', 'kanban', `[Stale] Card ${card.id} escalated ${card.priority}→${newPriority}`, { deviceId: card.device_id });
-                        continue;
-                    }
-                }
-
-                // Level 1: Standard nudge
-                await addSystemComment(card.id, card.device_id,
-                    `⏰ 催促：此卡片已在「${cardStatusLabel}」停留 ${elapsedHrs} 小時，請 ${bots.map(b => `#${b}`).join(', ') || '負責人'} 繼續推進`);
-
-                await pool.query(
-                    `UPDATE kanban_cards SET last_stale_nudge_at = NOW() WHERE id = $1`,
-                    [card.id]
-                );
-
-                if (bots.length > 0) {
-                    const lang = await getDeviceLanguage(card.device_id);
-                    const msg = tKanban(lang, 'staleNudge', {
-                        title: card.title,
-                        status: statusLabel(lang, card.status),
-                        hours: elapsedHrs
-                    });
-                    notifyEntities(card.device_id, bots, msg, { description: card.description, cardId: card.id });
-                }
-
-                console.log(`[Kanban] Nudged card ${card.id} (${card.title}) — ${elapsedHrs}h in ${card.status}`);
+            for (const [deviceId, cards] of byDevice) {
+                await processDeviceStaleCards(deviceId, cards);
             }
         } catch (err) {
             console.error('[Kanban] Stale check error:', err.message);
         }
+    }
+
+    async function processDeviceStaleCards(deviceId, cards) {
+        const prefs = await devicePrefs.getPrefs(deviceId).catch(() => ({}));
+        const intervalMs = Math.max(5, Number(prefs.kanban_nudge_interval_minutes) || 180) * 60 * 1000;
+        const batchSize = Math.max(1, Math.min(20, Number(prefs.kanban_nudge_batch_size) || 1));
+        const priorityMode = prefs.kanban_nudge_priority_mode || 'priority_first';
+        const allowedStatuses = new Set(
+            Array.isArray(prefs.kanban_nudge_statuses) && prefs.kanban_nudge_statuses.length
+                ? prefs.kanban_nudge_statuses
+                : ['todo', 'in_progress', 'review']
+        );
+
+        // Status filter applies to ALL levels — if user opts backlog out, no auto-escalation there either.
+        const eligible = cards.filter(c => allowedStatuses.has(c.status));
+        if (eligible.length === 0) return;
+
+        // Split: cards ready for Level 2/3 (time-based) fire regardless of batch size.
+        const level1Pending = [];
+        for (const card of eligible) {
+            const elapsedMs = Date.now() - new Date(card.status_changed_at).getTime();
+            const config = card.config || {};
+            const esc = config.escalationPolicy || {};
+            const escalateAfterMs = esc.escalateAfterMs || DEFAULT_ESCALATE_MS;
+            const blockAfterMs = esc.blockAfterMs || DEFAULT_BLOCK_MS;
+
+            // Level 2/3 still honor intervalMs to avoid re-firing on the same tick.
+            const sinceLast = card.last_stale_nudge_at
+                ? Date.now() - new Date(card.last_stale_nudge_at).getTime()
+                : Infinity;
+
+            if (elapsedMs >= blockAfterMs && card.status !== 'blocked' && sinceLast > intervalMs) {
+                await fireBlockEscalation(card);
+                continue;
+            }
+            if (elapsedMs >= escalateAfterMs && sinceLast > intervalMs) {
+                const fired = await fireLevelTwoEscalation(card);
+                if (fired) continue;
+            }
+            // Level 1 candidate if enough interval has passed.
+            if (sinceLast > intervalMs) level1Pending.push(card);
+        }
+
+        if (level1Pending.length === 0) return;
+
+        const picked = sortCardsByNudgeMode(level1Pending, priorityMode).slice(0, batchSize);
+        console.log(`[Kanban] Stale nudge for ${deviceId}: ${picked.length}/${level1Pending.length} (mode=${priorityMode}, batch=${batchSize}, interval=${intervalMs / 60000}m)`);
+
+        for (const card of picked) {
+            await fireLevelOneNudge(card);
+        }
+    }
+
+    async function fireBlockEscalation(card) {
+        const elapsedHrs = Math.round((Date.now() - new Date(card.status_changed_at).getTime()) / 3600000 * 10) / 10;
+        const config = card.config || {};
+        const esc = config.escalationPolicy || {};
+        const notifyEntityId = esc.notifyEntityId || card.reviewer_entity_id;
+        await pool.query(
+            `UPDATE kanban_cards SET status = 'blocked', status_changed_at = NOW(), last_stale_nudge_at = NOW(), updated_at = NOW() WHERE id = $1`,
+            [card.id]
+        );
+        await addSystemComment(card.id, card.device_id,
+            `🚫 自動封鎖：此卡片已停滯 ${elapsedHrs} 小時，已自動移至「blocked」，請人工介入`);
+        if (notifyEntityId != null) {
+            notifyEntities(card.device_id, [notifyEntityId],
+                `🚫 卡片「${card.title}」已停滯 ${elapsedHrs}h，自動 blocked，需人工介入`,
+                { cardId: card.id });
+        }
+        if (serverLog) serverLog('warn', 'kanban', `[Stale] Card ${card.id} auto-blocked after ${elapsedHrs}h`, { deviceId: card.device_id });
+    }
+
+    async function fireLevelTwoEscalation(card) {
+        const elapsedHrs = Math.round((Date.now() - new Date(card.status_changed_at).getTime()) / 3600000 * 10) / 10;
+        const config = card.config || {};
+        const esc = config.escalationPolicy || {};
+        const notifyEntityId = esc.notifyEntityId || card.reviewer_entity_id;
+        const PRIORITY_UPGRADE = { P3: 'P2', P2: 'P1', P1: 'P0', P0: 'P0' };
+        const newPriority = PRIORITY_UPGRADE[card.priority] || card.priority;
+        if (newPriority === card.priority) return false;
+        await pool.query(
+            `UPDATE kanban_cards SET priority = $1, last_stale_nudge_at = NOW(), updated_at = NOW() WHERE id = $2`,
+            [newPriority, card.id]
+        );
+        await addSystemComment(card.id, card.device_id,
+            `⬆️ 自動升級：停滯 ${elapsedHrs} 小時，優先級 ${card.priority} → ${newPriority}`);
+        if (notifyEntityId != null) {
+            notifyEntities(card.device_id, [notifyEntityId],
+                `⬆️ 卡片「${card.title}」停滯 ${elapsedHrs}h，已自動升級至 ${newPriority}`,
+                { cardId: card.id });
+        }
+        if (serverLog) serverLog('info', 'kanban', `[Stale] Card ${card.id} escalated ${card.priority}→${newPriority}`, { deviceId: card.device_id });
+        return true;
+    }
+
+    async function fireLevelOneNudge(card) {
+        const bots = card.assigned_bots || [];
+        const cardStatusLabel = STATUS_LABELS[card.status] || card.status;
+        const elapsedMs = Date.now() - new Date(card.status_changed_at).getTime();
+        const elapsedHrs = Math.round(elapsedMs / 3600000 * 10) / 10;
+
+        await addSystemComment(card.id, card.device_id,
+            `⏰ 催促：此卡片已在「${cardStatusLabel}」停留 ${elapsedHrs} 小時，請 ${bots.map(b => `#${b}`).join(', ') || '負責人'} 繼續推進`);
+        await pool.query(
+            `UPDATE kanban_cards SET last_stale_nudge_at = NOW() WHERE id = $1`,
+            [card.id]
+        );
+        if (bots.length > 0) {
+            const lang = await getDeviceLanguage(card.device_id);
+            const msg = tKanban(lang, 'staleNudge', {
+                title: card.title,
+                status: statusLabel(lang, card.status),
+                hours: elapsedHrs
+            });
+            notifyEntities(card.device_id, bots, msg, { description: card.description, cardId: card.id });
+        }
+        console.log(`[Kanban] Nudged card ${card.id} (${card.title}) — ${elapsedHrs}h in ${card.status}`);
     }
 
     /**
