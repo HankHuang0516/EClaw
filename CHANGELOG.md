@@ -1,3 +1,10 @@
+# [1.1058.0](https://github.com/HankHuang0516/EClaw/compare/v1.1057.0...v1.1058.0) (2026-04-23)
+
+
+### Features
+
+* **seo:** SSR per-bot OG meta + JSON-LD on /c/:publicCode ([#1994](https://github.com/HankHuang0516/EClaw/issues/1994)) ([e99af14](https://github.com/HankHuang0516/EClaw/commit/e99af144a72a84dcf91e56d920348638cf0d5062)), closes [#1993](https://github.com/HankHuang0516/EClaw/issues/1993) [#1993](https://github.com/HankHuang0516/EClaw/issues/1993)
+
 # [1.1057.0](https://github.com/HankHuang0516/EClaw/compare/v1.1056.0...v1.1057.0) (2026-04-23)
 
 
