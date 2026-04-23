@@ -14,6 +14,8 @@ import android.view.View
 import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.R
 import com.hank.clawlive.data.model.EntityStatus
+import kotlin.math.ceil
+import kotlin.math.sqrt
 import timber.log.Timber
 
 /**
@@ -171,27 +173,30 @@ class WallpaperPreviewView @JvmOverloads constructor(
     }
 
     /**
-     * Get default position for entity based on index and count
+     * Get default position for entity based on index and count.
+     * Uses ceil(sqrt(n)) columns to build a grid that adapts to any entity count.
+     * The last row is centered when it has fewer items than the column count.
      */
     private fun getDefaultPosition(index: Int, count: Int): Pair<Float, Float> {
-        return when (count) {
-            1 -> Pair(0.5f, 0.5f)
-            2 -> when (index) {
-                0 -> Pair(0.3f, 0.5f)
-                else -> Pair(0.7f, 0.5f)
-            }
-            3 -> when (index) {
-                0 -> Pair(0.5f, 0.35f)
-                1 -> Pair(0.3f, 0.65f)
-                else -> Pair(0.7f, 0.65f)
-            }
-            else -> when (index) {
-                0 -> Pair(0.3f, 0.35f)
-                1 -> Pair(0.7f, 0.35f)
-                2 -> Pair(0.3f, 0.65f)
-                else -> Pair(0.7f, 0.65f)
-            }
+        if (count <= 0) return Pair(0.5f, 0.5f)
+        val cols = ceil(sqrt(count.toDouble())).toInt().coerceAtLeast(1)
+        val rows = ceil(count.toDouble() / cols).toInt()
+        val paddingX = 0.1f
+        val paddingY = 0.15f
+        val usableW = 1f - 2 * paddingX
+        val usableH = 1f - 2 * paddingY
+        val colStep = usableW / cols
+        val rowStep = usableH / rows
+        val row = index / cols
+        val col = index % cols
+        val itemsInLastRow = count - (rows - 1) * cols
+        val x = if (row == rows - 1 && itemsInLastRow < cols) {
+            paddingX + (usableW - itemsInLastRow * colStep) / 2f + col * colStep + colStep / 2f
+        } else {
+            paddingX + col * colStep + colStep / 2f
         }
+        val y = paddingY + row * rowStep + rowStep / 2f
+        return Pair(x, y)
     }
 
     override fun onDraw(canvas: Canvas) {
