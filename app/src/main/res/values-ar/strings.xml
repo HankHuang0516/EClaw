@@ -468,7 +468,7 @@
     <string name="channel_api_copied">تم نسخ بيانات الاعتماد</string>
     <string name="channel_api_no_key">لا يوجد مفتاح API بعد. افتح بوابة الويب لإنشاء واحد.</string>
     <string name="channel_api_slots_active">متصل: %1$s</string>
-    <string name="kanban_nudge_settings_title">📋 إعدادات تذكير الكانban</string>
+    <string name="kanban_nudge_settings_title">📋 إعدادات تذكير كانبان</string>
 
     <!-- Account Status Card -->
     <string name="account_card_title">الحساب</string>
