@@ -1,3 +1,14 @@
+## [1.1060.1](https://github.com/HankHuang0516/EClaw/compare/v1.1060.0...v1.1060.1) (2026-04-23)
+
+
+### Bug Fixes
+
+* **i18n:** fix category_add prefix and translate dialog_add_friend_message in zh-rCN ([#2004](https://github.com/HankHuang0516/EClaw/issues/2004)) ([f16f9e2](https://github.com/HankHuang0516/EClaw/commit/f16f9e20a4d39e4f53b74c068f084d1470a9904f)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** translate dialog_add_friend_message in Japanese ([#2000](https://github.com/HankHuang0516/EClaw/issues/2000)) ([fedec3d](https://github.com/HankHuang0516/EClaw/commit/fedec3dc1d194f7ec5e1a8f831fc30c4d71a2fb0)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** translate dialog_add_friend_message in Korean ([#2001](https://github.com/HankHuang0516/EClaw/issues/2001)) ([4ef18b2](https://github.com/HankHuang0516/EClaw/commit/4ef18b2c50c197a719b82d5e7be1f51dd1f1ee73)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** translate dialog_add_friend_message in Thai ([#2002](https://github.com/HankHuang0516/EClaw/issues/2002)) ([ea2167e](https://github.com/HankHuang0516/EClaw/commit/ea2167e8bc8f563e341134cd55b0e687b4cca823)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **i18n:** translate dialog_add_friend_message in Vietnamese ([#2003](https://github.com/HankHuang0516/EClaw/issues/2003)) ([ab8a67c](https://github.com/HankHuang0516/EClaw/commit/ab8a67c9a2e5a111e539382c8422c8cc5bb7e0d8)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.1060.0](https://github.com/HankHuang0516/EClaw/compare/v1.1059.0...v1.1060.0) (2026-04-23)
 
 
