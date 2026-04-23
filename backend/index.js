@@ -1215,7 +1215,8 @@ app.get('/api/help', (req, res) => {
         notes:      ['note','筆記','rules','dashboard','rule','規則','儀表板','ノート','メモ','ルール','ダッシュボード','노트','메모','규칙','대시보드','บันทึก','กฎ','แดชบอร์ด','ghi chú','quy tắc','bảng điều khiển','catatan','aturan','dasbor','règles','tableau de bord','notas','reglas','panel','nota','peraturan','papan pemuka'],
         search:     ['搜尋','search','fetch','網頁','web','query','検索','ウェブ','スクレイピング','검색','웹','스크래핑','ค้นหา','เว็บ','ดึงข้อมูล','tìm kiếm','cạo dữ liệu','pencarian','pengikisan','recherche','extraction web','búsqueda','raspado web','carian'],
         files:      ['file','檔案','upload','download','上傳','下載','ファイル','アップロード','保存','파일','업로드','저장','ไฟล์','อัปโหลด','บันทึก','tệp','tải lên','lưu','unggah','simpan','fichier','téléchargement','enregistrer','archivo','subir','guardar','fail','muat naik'],
-        entities:   ['entity','實體','bind','綁定','status','lookup','查詢實體','エンティティ','バインディング','엔티티','연결','바인딩','เอนทิตี','การผูกมัด','thực thể','liên kết','kết nối','entitas','pengikatan','koneksi','entité','liaison','entidad','enlace','vínculo','entiti','sambungan']
+        entities:   ['entity','實體','bind','綁定','status','lookup','查詢實體','エンティティ','バインディング','엔티티','연결','바인딩','เอนทิตี','การผูกมัด','thực thể','liên kết','kết nối','entitas','pengikatan','koneksi','entité','liaison','entidad','enlace','vínculo','entiti','sambungan'],
+        vault:      ['vault','device-vars','devicevars','secret','api key','apikey','金鑰','密鑰','秘密','保險箱','audit','審計','variables','環境變數','환경 변수','보관소','감사','シークレット','金庫','監査','bí mật','kho','giám sát','rahasia','brankas','audit log']
     };
 
     const matched = Object.entries(INTENT_MAP).find(([, kws]) =>
@@ -1265,6 +1266,14 @@ app.get('/api/help', (req, res) => {
             { title: 'Lookup entity by publicCode', curl: `curl -s "${apiBase}/api/entity/lookup?publicCode=PUBLIC_CODE"` },
             { title: 'Get device status', curl: `curl -s "${apiBase}/api/status?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` }
         ],
+        vault: [
+            { title: 'Read vault key names (bot side)', curl: `curl -s "${apiBase}/api/device-vars?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
+            { title: 'Merge single key (owner, DEVICE_SECRET required)', curl: `curl -s -X POST "${apiBase}/api/device-vars" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","deviceSecret":"DEVICE_SECRET","source":"web","vars":{"KEY":"VALUE"}}'` },
+            { title: 'Delete single key (owner)', curl: `curl -s -X DELETE "${apiBase}/api/device-vars/KEY?deviceId=${deviceId}&deviceSecret=DEVICE_SECRET"` },
+            { title: 'WIPE all keys (owner, requires explicit confirm)', curl: `curl -s -X DELETE "${apiBase}/api/device-vars?deviceId=${deviceId}&deviceSecret=DEVICE_SECRET&confirm=YES_DELETE_ALL_VAULT"` },
+            { title: 'Audit log — who touched the vault (owner)', curl: `curl -s "${apiBase}/api/device-vars/audit?deviceId=${deviceId}&deviceSecret=DEVICE_SECRET&limit=50"` },
+            { title: 'Audit log since a timestamp (ISO-8601)', curl: `curl -s "${apiBase}/api/device-vars/audit?deviceId=${deviceId}&deviceSecret=DEVICE_SECRET&since=2026-04-23T00:00:00Z"` }
+        ],
         general: [
             { title: 'Full API documentation', curl: `curl -s "${apiBase}/api/skill-doc?format=text"` },
             { title: 'Read mission dashboard', curl: `curl -s "${apiBase}/api/mission/dashboard?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
@@ -1278,7 +1287,7 @@ app.get('/api/help', (req, res) => {
     res.json({
         intent,
         matched_category: matched,
-        tip: `Use ?intent=KEYWORD to discover APIs. Categories: messaging, kanban, schedule, notes, search, files, entities`,
+        tip: `Use ?intent=KEYWORD to discover APIs. Categories: messaging, kanban, schedule, notes, search, files, entities, vault`,
         curl_examples: curlBlock
     });
 });
@@ -10905,6 +10914,23 @@ app.post('/api/debug/set-entity-xp', (req, res) => {
     res.json({ success: true, entityId: eId, xp: entity.xp, level: entity.level });
 });
 
+// Debug: inspect device_vars_audit rows for any device.
+// Gated by the /api/debug/* namespace (NODE_ENV !== production). Paired with
+// the owner-auth /api/device-vars/audit endpoint; use this one from a dev shell
+// when DEVICE_SECRET is unknown or when inspecting across devices.
+app.get('/api/debug/device-vars-audit', async (req, res) => {
+    try {
+        const { deviceId, limit } = req.query;
+        if (!deviceId) {
+            return res.status(400).json({ success: false, error: 'deviceId required' });
+        }
+        const rows = await db.getDeviceVarsAudit(deviceId, { limit });
+        res.json({ success: true, deviceId, count: rows.length, events: rows });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 // ============================================
 // OFFICIAL BOT POOL - Admin API
 // ============================================
@@ -15391,6 +15417,11 @@ app.post('/api/device-vars', async (req, res) => {
         return res.status(500).json({ success: false, error: 'Encryption not configured' });
     }
 
+    // Audit: snapshot key count BEFORE mutation so we can record the delta.
+    const _auditCtx = { ip: req.ip, ua: req.get('user-agent') };
+    const _metaBefore = await db.getDeviceVarsMeta(deviceId);
+    const _beforeCount = _metaBefore && Array.isArray(_metaBefore.var_keys) ? _metaBefore.var_keys.length : 0;
+
     // Sanitize: only string keys + string values
     const incoming = {};
     for (const [k, v] of Object.entries(vars || {})) {
@@ -15495,6 +15526,7 @@ app.post('/api/device-vars', async (req, res) => {
                 const hadKeys = existing && Array.isArray(existing.var_keys) && existing.var_keys.length > 0;
                 if (hadKeys && confirm !== 'REPLACE_ALL_EMPTY') {
                     serverLog('warn', 'device_vars', `[Vars] refused legacy empty wipe for ${deviceId}: ${existing.var_keys.length} keys present, no confirm`, { deviceId, metadata: { existingKeyCount: existing.var_keys.length } });
+                    db.logDeviceVarsAudit({ deviceId, action: 'refuse_wipe', source: 'legacy', callerIp: _auditCtx.ip, callerUa: _auditCtx.ua, beforeCount: existing.var_keys.length, afterCount: existing.var_keys.length });
                     return res.status(400).json({
                         success: false,
                         error: 'refuse_empty_legacy_wipe',
@@ -15510,6 +15542,10 @@ app.post('/api/device-vars', async (req, res) => {
         const varKeys = Object.keys(merged);
         const { encrypted, iv, authTag } = encryptVars(merged);
         await db.upsertDeviceVars(deviceId, encrypted, iv, authTag, varKeys, isLocked, mergedSources);
+
+        // Audit the successful mutation. `source` = 'web'|'app' for merge-mode,
+        // 'legacy' for whole-object replace. Value is NEVER recorded.
+        db.logDeviceVarsAudit({ deviceId, action: src ? 'merge' : 'replace', source: src || 'legacy', callerIp: _auditCtx.ip, callerUa: _auditCtx.ua, beforeCount: _beforeCount, afterCount: varKeys.length });
 
         const response = { success: true, count: varKeys.length };
 
@@ -15600,11 +15636,13 @@ app.delete('/api/device-vars/:key', async (req, res) => {
         if (!(keyName in existingVars)) {
             return res.status(404).json({ success: false, error: 'Variable not found' });
         }
+        const _beforeKeys = Object.keys(existingVars).length;
         delete existingVars[keyName];
         delete existingSources[keyName];
         const { encrypted, iv, authTag } = encryptVars(existingVars);
         const varKeys = Object.keys(existingVars);
         await db.upsertDeviceVars(deviceId, encrypted, iv, authTag, varKeys, existing.is_locked || false, existingSources);
+        db.logDeviceVarsAudit({ deviceId, action: 'delete_one', keyName, callerIp: req.ip, callerUa: req.get('user-agent'), beforeCount: _beforeKeys, afterCount: varKeys.length });
         res.json({ success: true, deletedKey: keyName });
     } catch (err) {
         console.error('[DeviceVars] Delete key error:', err);
@@ -15632,6 +15670,7 @@ app.delete('/api/device-vars', async (req, res) => {
 
     if (existingKeyCount > 0 && confirm !== 'YES_DELETE_ALL_VAULT') {
         serverLog('warn', 'device_vars', `[Vars] refused DELETE for ${deviceId}: ${existingKeyCount} keys present, no confirm`, { deviceId, metadata: { existingKeyCount, ip: req.ip, userAgent: req.get('user-agent') } });
+        db.logDeviceVarsAudit({ deviceId, action: 'refuse_delete', callerIp: req.ip, callerUa: req.get('user-agent'), beforeCount: existingKeyCount, afterCount: existingKeyCount });
         return res.status(400).json({
             success: false,
             error: 'refuse_delete_without_confirm',
@@ -15641,7 +15680,35 @@ app.delete('/api/device-vars', async (req, res) => {
 
     serverLog('info', 'device_vars', `[Vars] DELETE ${deviceId}: wiping ${existingKeyCount} keys`, { deviceId, metadata: { existingKeyCount, ip: req.ip, userAgent: req.get('user-agent') } });
     await db.deleteDeviceVars(deviceId);
+    db.logDeviceVarsAudit({ deviceId, action: 'wipe', callerIp: req.ip, callerUa: req.get('user-agent'), beforeCount: existingKeyCount, afterCount: 0 });
     res.json({ success: true, deletedKeyCount: existingKeyCount });
+});
+
+// GET /api/device-vars/audit — owner-side audit trail for every vault mutation.
+// Rows record action (replace/merge/delete_one/wipe/refuse_wipe/refuse_delete),
+// key name (for single-key ops), source, caller IP + UA, and the before/after
+// key counts. Values are NEVER stored. Use this to trace mystery wipes and
+// unexpected shrinkages by caller.
+// Auth: deviceSecret (owner-only).
+app.get('/api/device-vars/audit', async (req, res) => {
+    const { deviceId, deviceSecret, since, limit } = req.query;
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    let sinceDate = null;
+    if (since) {
+        const parsed = new Date(since);
+        if (isNaN(parsed.getTime())) {
+            return res.status(400).json({ success: false, error: 'since must be an ISO-8601 timestamp' });
+        }
+        sinceDate = parsed;
+    }
+    const rows = await db.getDeviceVarsAudit(deviceId, { since: sinceDate, limit });
+    res.json({ success: true, count: rows.length, events: rows });
 });
 
 // GET /api/logs — Query server logs for debugging

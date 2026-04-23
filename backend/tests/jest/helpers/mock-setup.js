@@ -72,6 +72,8 @@ jest.mock('../../../db', () => ({
     getDeviceVarsMeta: jest.fn().mockResolvedValue(null),
     upsertDeviceVars: jest.fn().mockResolvedValue(true),
     deleteDeviceVars: jest.fn().mockResolvedValue(true),
+    logDeviceVarsAudit: jest.fn().mockResolvedValue(true),
+    getDeviceVarsAudit: jest.fn().mockResolvedValue([]),
 }));
 
 jest.mock('../../../flickr', () => ({
