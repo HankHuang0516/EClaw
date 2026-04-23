@@ -1,3 +1,10 @@
+## [1.1061.5](https://github.com/HankHuang0516/EClaw/compare/v1.1061.4...v1.1061.5) (2026-04-23)
+
+
+### Bug Fixes
+
+* **cloud drive:** 3 UX enhancements — mojibake, click-to-preview, pill-attachment ([#2012](https://github.com/HankHuang0516/EClaw/issues/2012)) ([c2295f2](https://github.com/HankHuang0516/EClaw/commit/c2295f253bc03822784d7306448294025110148c)), closes [hi#bit](https://github.com/hi/issues/bit)
+
 ## [1.1061.4](https://github.com/HankHuang0516/EClaw/compare/v1.1061.3...v1.1061.4) (2026-04-23)
 
 
