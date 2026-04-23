@@ -1,3 +1,10 @@
+# [1.1061.0](https://github.com/HankHuang0516/EClaw/compare/v1.1060.2...v1.1061.0) (2026-04-23)
+
+
+### Features
+
+* **chat:** remove generic File upload; keep Photo/Video + Cloud Drive ([#2005](https://github.com/HankHuang0516/EClaw/issues/2005)) ([9fe4934](https://github.com/HankHuang0516/EClaw/commit/9fe4934f88969dcb650b886412ab70f3fe23ec0a))
+
 ## [1.1060.2](https://github.com/HankHuang0516/EClaw/compare/v1.1060.1...v1.1060.2) (2026-04-23)
 
 
