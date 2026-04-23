@@ -175,6 +175,82 @@ describe('GET /api/device-vars', () => {
     });
 });
 
+describe('POST /api/device-vars — legacy empty-wipe guard', () => {
+    // 2026-04-23 incident: legacy mode {vars:{}} with no `source` wiped 17
+    // live keys. Guard refuses empty legacy replacement against a non-empty
+    // vault unless caller passes confirm:"REPLACE_ALL_EMPTY".
+    const db = require('../../db');
+
+    afterEach(() => {
+        db.getDeviceVars.mockResolvedValue(null);
+    });
+
+    it('refuses legacy {vars:{}} when vault has existing keys (no confirm, no source)', async () => {
+        const devId = `vars-post-wipeguard-${Date.now()}`;
+        const secret = await registerDevice(devId);
+        db.getDeviceVars.mockResolvedValueOnce({
+            vars: { EXISTING: 'value' },
+            var_keys: ['EXISTING'],
+        });
+        const res = await post('/api/device-vars').send({
+            deviceId: devId,
+            deviceSecret: secret,
+            vars: {},
+        });
+        expect(res.status).toBe(400);
+        expect(res.body.success).toBe(false);
+        expect(res.body.error).toBe('refuse_empty_legacy_wipe');
+        expect(res.body.message).toMatch(/Refusing to replace 1 existing keys/);
+    });
+
+    it('allows legacy {vars:{}} on an empty vault (nothing to lose)', async () => {
+        const devId = `vars-post-emptyvault-${Date.now()}`;
+        const secret = await registerDevice(devId);
+        // Default mock returns null (no row) → no existing keys
+        const res = await post('/api/device-vars').send({
+            deviceId: devId,
+            deviceSecret: secret,
+            vars: {},
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+    });
+
+    it('allows legacy {vars:{}} with confirm:"REPLACE_ALL_EMPTY" (explicit intent)', async () => {
+        const devId = `vars-post-confirm-${Date.now()}`;
+        const secret = await registerDevice(devId);
+        db.getDeviceVars.mockResolvedValueOnce({
+            vars: { EXISTING: 'value' },
+            var_keys: ['EXISTING'],
+        });
+        const res = await post('/api/device-vars').send({
+            deviceId: devId,
+            deviceSecret: secret,
+            vars: {},
+            confirm: 'REPLACE_ALL_EMPTY',
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+    });
+
+    it('does NOT guard merge-mode source:"web" with empty vars (merge is safe)', async () => {
+        const devId = `vars-post-mergeempty-${Date.now()}`;
+        const secret = await registerDevice(devId);
+        db.getDeviceVars.mockResolvedValueOnce({
+            vars: { EXISTING: 'value' },
+            var_keys: ['EXISTING'],
+        });
+        const res = await post('/api/device-vars').send({
+            deviceId: devId,
+            deviceSecret: secret,
+            vars: {},
+            source: 'web',
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+    });
+});
+
 describe('DELETE /api/device-vars', () => {
     it('returns 400 when deviceId is missing', async () => {
         const res = await del('/api/device-vars').send({ deviceSecret: 'x' });

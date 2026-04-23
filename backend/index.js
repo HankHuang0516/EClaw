@@ -15376,7 +15376,7 @@ function logHandshakeFailure(opts) {
 // instead of replacing. Conflicting keys (same key, different value, different source)
 // are split into KEY_Web and KEY_APP to avoid data loss.
 app.post('/api/device-vars', async (req, res) => {
-    const { deviceId, deviceSecret, vars, locked, source } = req.body;
+    const { deviceId, deviceSecret, vars, locked, source, confirm } = req.body;
     if (!deviceId || !deviceSecret) {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
@@ -15485,7 +15485,23 @@ app.post('/api/device-vars', async (req, res) => {
                 }
             }
         } else {
-            // Legacy mode (no source): replace all, no merge
+            // Legacy mode (no source): replace all, no merge.
+            // Guard: an empty `incoming` in legacy mode wipes the vault —
+            // 2026-04-23 incident erased 17 live keys. Require an explicit
+            // confirm flag for empty replacements on a non-empty vault so
+            // accidental curls / buggy scripts can't silently zero it out.
+            if (Object.keys(incoming).length === 0) {
+                const existing = await db.getDeviceVars(deviceId);
+                const hadKeys = existing && Array.isArray(existing.var_keys) && existing.var_keys.length > 0;
+                if (hadKeys && confirm !== 'REPLACE_ALL_EMPTY') {
+                    serverLog('warn', 'device_vars', `[Vars] refused legacy empty wipe for ${deviceId}: ${existing.var_keys.length} keys present, no confirm`, { deviceId, metadata: { existingKeyCount: existing.var_keys.length } });
+                    return res.status(400).json({
+                        success: false,
+                        error: 'refuse_empty_legacy_wipe',
+                        message: `Refusing to replace ${existing.var_keys.length} existing keys with empty vault in legacy mode. Pass confirm:"REPLACE_ALL_EMPTY" or use source:"web"|"app" for merge-mode.`,
+                    });
+                }
+            }
             for (const k of Object.keys(incoming)) {
                 mergedSources[k] = null;
             }
