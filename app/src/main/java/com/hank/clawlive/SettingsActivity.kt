@@ -300,6 +300,11 @@ class SettingsActivity : AppCompatActivity() {
             billingManager.launchPurchaseFlow(this)
         }
 
+        findViewById<MaterialButton>(R.id.btnKanbanNudge).setOnClickListener {
+            TelemetryHelper.trackAction("settings_kanban_nudge")
+            WebViewActivity.launch(this, "https://eclawbot.com/portal/settings.html#kanban-nudge-card", getString(R.string.kanban_nudge_settings_title))
+        }
+
         findViewById<MaterialButton>(R.id.btnWallet).setOnClickListener {
             TelemetryHelper.trackAction("settings_wallet")
             WebViewActivity.launch(this, "https://eclawbot.com/portal/wallet.html", getString(R.string.settings_wallet))

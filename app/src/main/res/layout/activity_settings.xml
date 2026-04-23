@@ -623,6 +623,22 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Kanban Nudge Settings Button — opens WebView deep-linked to the Kanban Nudge card -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnKanbanNudge"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/kanban_nudge_settings_title"
+                android:textColor="@color/text_white_80"
+                app:backgroundTint="@color/surface_input"
+                android:layout_marginTop="16dp"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_open_in_new"
+                app:iconTint="@color/text_white_80"
+                app:strokeColor="@color/text_dark"
+                app:strokeWidth="1dp"
+                style="@style/Widget.Material3.Button.TonalButton"/>
+
             <!-- Wallet Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnWallet"

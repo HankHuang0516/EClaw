@@ -229,6 +229,12 @@ export default function SettingsScreen() {
             right={(props) => <List.Icon {...props} icon="chevron-right" />}
             onPress={() => router.push('/invite')}
           />
+          <List.Item
+            title={t('settings.kanban_nudge', '📋 Kanban Nudge Settings')}
+            left={(props) => <List.Icon {...props} icon="clipboard-list" />}
+            right={(props) => <List.Icon {...props} icon="open-in-new" />}
+            onPress={() => Linking.openURL('https://eclawbot.com/portal/settings.html#kanban-nudge-card').catch(() => {})}
+          />
         </List.Section>
 
         <Divider />
