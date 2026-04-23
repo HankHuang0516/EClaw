@@ -506,12 +506,106 @@ setInterval(() => {
 
 // Shareable chat link: /c/<publicCode>
 // Logged-in users → redirect to chat.html with contact filter
-// Not logged-in → serve read-only share-chat.html
+// Not logged-in → SSR-personalized share-chat.html so crawlers (FB/Twitter/
+//                 Slack/LinkedIn/iMessage/Discord) see per-bot OG meta +
+//                 JSON-LD without running JS. Client-side JS still refines
+//                 the view for real visitors (locale, live lookup).
+const _SHARE_CHAT_HTML_PATH = path.join(__dirname, 'public/portal/share-chat.html');
+let _shareChatTemplateCache = null;
+function _loadShareChatTemplate() {
+    if (_shareChatTemplateCache === null) {
+        _shareChatTemplateCache = fs.readFileSync(_SHARE_CHAT_HTML_PATH, 'utf8');
+    }
+    return _shareChatTemplateCache;
+}
+function _escapeHtmlAttr(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+function _renderShareChatSSR(code) {
+    const target = publicCodeIndex[code];
+    if (!target) return null;
+    const device = devices[target.deviceId];
+    const entity = device && device.entities && device.entities[target.entityId];
+    if (!entity) return null;
+
+    const name = entity.name || `Entity #${target.entityId}`;
+    const nameAttr = _escapeHtmlAttr(name);
+    const url = `https://eclawbot.com/c/${code}`;
+    const agentDesc = entity.agentCard && entity.agentCard.description;
+    const entityDesc = entity.identity && entity.identity.public && entity.identity.public.description;
+    const descText = agentDesc || entityDesc ||
+        `Connect with ${name} — an AI agent on EClawbot. Start a conversation, ask questions, or explore capabilities.`;
+    const descAttr = _escapeHtmlAttr(descText);
+    const ogTitleAttr = _escapeHtmlAttr(`Chat with ${name} on EClawbot`);
+
+    const jsonld = {
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        name,
+        description: descText,
+        applicationCategory: 'BusinessApplication',
+        operatingSystem: 'Web',
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+        author: { '@type': 'Person', name },
+        url
+    };
+    if (entity.avatar && typeof entity.avatar === 'string' && entity.avatar.startsWith('http')) {
+        jsonld.image = entity.avatar;
+    }
+    if (entity.agentCard && Array.isArray(entity.agentCard.tags) && entity.agentCard.tags.length) {
+        jsonld.keywords = entity.agentCard.tags.join(', ');
+    }
+    const jsonldStr = JSON.stringify(jsonld).replace(/<\/(script)/gi, '<\\/$1');
+
+    return _loadShareChatTemplate()
+        .replace(
+            /<title data-i18n="sc_title">[^<]*<\/title>/,
+            `<title>Chat with ${nameAttr} - EClawbot</title>`
+        )
+        .replace(
+            /<meta name="description" content="[^"]*">/,
+            `<meta name="description" content="${descAttr}">`
+        )
+        .replace(
+            /<link rel="canonical" href="[^"]*">/,
+            `<link rel="canonical" href="${url}">`
+        )
+        .replace(
+            /<meta property="og:title" content="[^"]*" id="og-title">/,
+            `<meta property="og:title" content="${ogTitleAttr}" id="og-title">`
+        )
+        .replace(
+            /<meta property="og:description" content="[^"]*" id="og-desc">/,
+            `<meta property="og:description" content="${descAttr}" id="og-desc">`
+        )
+        .replace(
+            /<meta property="og:url" content="[^"]*" id="og-url">/,
+            `<meta property="og:url" content="${url}" id="og-url">`
+        )
+        .replace(
+            /<script type="application\/ld\+json" id="jsonld-data"><\/script>/,
+            `<script type="application/ld+json" id="jsonld-data">${jsonldStr}</script>`
+        );
+}
 app.get('/c/:code', (req, res) => {
     if (req.user && req.user.deviceId) {
         return res.redirect(`/portal/chat.html?contact=${encodeURIComponent(req.params.code)}`);
     }
-    res.sendFile(path.join(__dirname, 'public/portal/share-chat.html'));
+    try {
+        const rendered = _renderShareChatSSR(req.params.code);
+        if (rendered) {
+            res.set('Content-Type', 'text/html; charset=utf-8');
+            res.set('Cache-Control', 'no-cache');
+            return res.send(rendered);
+        }
+    } catch (err) {
+        console.warn(`[/c/:code] SSR failed for ${req.params.code}: ${err.message}`);
+    }
+    res.sendFile(_SHARE_CHAT_HTML_PATH);
 });
 
 // Legacy: rental-monitor moved to /portal/admin/rental-monitor.html in PR B
