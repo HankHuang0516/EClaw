@@ -721,7 +721,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                     const localSource = hasCrossRoute
                         ? `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`
                         : (entity.name || `Entity ${eId}`);
-                    saveChatMessage(deviceId, eId, message, localSource, false, true, mediaType || null, mediaUrl || null, null, null, null, null, validatedCard);
+                    await saveChatMessage(deviceId, eId, message, localSource, false, true, mediaType || null, mediaUrl || null, null, null, null, null, validatedCard);
                 }
 
                 // XP: Award for channel bot reply (same logic as /api/transform)
@@ -741,7 +741,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 const targetDev = devices[targetDeviceId];
                 if (targetDev) {
                     const replySource = `xdevice:${entity.publicCode}:${entity.character}->${targetDeviceId}`;
-                    saveChatMessage(targetDeviceId, 0, message, replySource, false, true);
+                    await saveChatMessage(targetDeviceId, 0, message, replySource, false, true);
                     serverLog('info', 'cross_speak_push', `[EXPLICIT_ROUTE] Channel routed reply to ${targetDeviceId}`, {
                         deviceId, entityId: eId,
                         metadata: { targetDeviceId, fromPublicCode: entity.publicCode }
@@ -761,7 +761,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             } else if (hasCrossRoute) {
                 const replySource = `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`;
                 const senderEntityId = pendingCross.fromEntityId >= 0 ? pendingCross.fromEntityId : 0;
-                saveChatMessage(pendingCross.fromDeviceId, senderEntityId, message, replySource, false, true);
+                await saveChatMessage(pendingCross.fromDeviceId, senderEntityId, message, replySource, false, true);
                 serverLog('info', 'cross_speak_push', `[CROSS_ROUTE] Channel auto-routed reply to sender ${pendingCross.fromDeviceId}:${senderEntityId}`, {
                     deviceId, entityId: eId,
                     metadata: { senderDeviceId: pendingCross.fromDeviceId, senderEntityId, fromPublicCode: pendingCross.fromPublicCode }

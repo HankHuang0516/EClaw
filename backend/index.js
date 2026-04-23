@@ -5686,7 +5686,7 @@ app.post('/api/transform', async (req, res) => {
         // Skip saving to owner's chat when entity is leased_out — rental mirror handles renter's copy
         const isLeasedOut = entity.rental_status === 'leased_out';
         if (!hasDelivery && !isLeasedOut) {
-            saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments);
+            await saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments);
         }
         if (!isLeasedOut) markMessagesAsRead(deviceId, eId);
         if (pendingA2A) {
@@ -5703,7 +5703,7 @@ app.post('/api/transform', async (req, res) => {
             const targetDev = devices[targetDeviceId];
             if (targetDev) {
                 const replySource = `xdevice:${entity.publicCode}:${entity.character}->${targetDeviceId}`;
-                saveChatMessage(targetDeviceId, 0, finalMessage, replySource, false, true);
+                await saveChatMessage(targetDeviceId, 0, finalMessage, replySource, false, true);
                 serverLog('info', 'cross_speak_push', `[EXPLICIT_ROUTE] Transform routed reply to ${targetDeviceId}`, {
                     deviceId, entityId: eId,
                     metadata: { targetDeviceId, fromPublicCode: entity.publicCode }
@@ -5724,7 +5724,7 @@ app.post('/api/transform', async (req, res) => {
             if (pendingCross && pendingCross.fromDeviceId) {
                 const replySource = `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`;
                 const senderEntityId = pendingCross.fromEntityId >= 0 ? pendingCross.fromEntityId : 0;
-                saveChatMessage(pendingCross.fromDeviceId, senderEntityId, finalMessage, replySource, false, true);
+                await saveChatMessage(pendingCross.fromDeviceId, senderEntityId, finalMessage, replySource, false, true);
                 serverLog('info', 'cross_speak_push', `[CROSS_ROUTE] Transform auto-routed reply to sender ${pendingCross.fromDeviceId}:${senderEntityId}`, {
                     deviceId, entityId: eId,
                     metadata: { senderDeviceId: pendingCross.fromDeviceId, senderEntityId, fromPublicCode: pendingCross.fromPublicCode }
@@ -5793,7 +5793,7 @@ app.post('/api/transform', async (req, res) => {
                             rentalEntity.message = finalMessage;
                             rentalEntity.lastUpdated = Date.now();
                             // Save to renter's chat history
-                            saveChatMessage(cRow.rows[0].renter_device_id, parseInt(slotId), finalMessage,
+                            await saveChatMessage(cRow.rows[0].renter_device_id, parseInt(slotId), finalMessage,
                                 rentalEntity.name || `Rental Bot`, false, true);
                             // Notify renter via Socket.IO
                             if (io) {
@@ -7752,7 +7752,7 @@ app.post('/api/client/speak', async (req, res) => {
     if (parsedCmd) {
         // Save user's command as a user message for each target
         for (const eId of targetIds) {
-            saveChatMessage(deviceId, eId, text, source, true, false);
+            await saveChatMessage(deviceId, eId, text, source, true, false);
         }
 
         const confirmed = req.body.confirmed === true;
@@ -7820,7 +7820,7 @@ app.post('/api/client/speak', async (req, res) => {
         };
         entity.messageQueue.push(messageObj);
         const chatBackupUrl = mediaType === 'photo' ? getBackupUrl(mediaUrl) : null;
-        saveChatMessage(deviceId, eId, text, source, true, false, mediaType || null, mediaUrl || null, null, null, chatBackupUrl, mentionsContext);
+        await saveChatMessage(deviceId, eId, text, source, true, false, mediaType || null, mediaUrl || null, null, null, chatBackupUrl, mentionsContext);
 
         // Reset bot-to-bot counter: human message breaks the loop
         resetBotToBotCounter(deviceId);
@@ -17150,7 +17150,7 @@ app.post('/api/bot/sync-message', async (req, res) => {
         entity.messageQueue = [];
     }
     entity.messageQueue.push(messageObj);
-    saveChatMessage(deviceId, entityId, msgText, fromLabel || "bot", false, true, mediaType || null, mediaUrl || null);
+    await saveChatMessage(deviceId, entityId, msgText, fromLabel || "bot", false, true, mediaType || null, mediaUrl || null);
     markMessagesAsRead(deviceId, entityId);
 
     // Also update entity.message for immediate display
