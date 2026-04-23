@@ -5,8 +5,39 @@
 
 const DEFAULTS = {
     broadcast_recipient_info: true,
-    remote_control_enabled: false
+    remote_control_enabled: false,
+    // Kanban nudge (stale-card reminder) — applies uniformly to all entities
+    kanban_nudge_batch_size: 1,
+    kanban_nudge_priority_mode: 'priority_first',  // 'priority_first' | 'column_first' | 'column_level'
+    kanban_nudge_interval_minutes: 180,
+    // Which columns get nudged. Default: everything except backlog (待排程).
+    kanban_nudge_statuses: ['todo', 'in_progress', 'review'],
 };
+
+const NUDGE_PRIORITY_MODES = new Set(['priority_first', 'column_first', 'column_level']);
+const NUDGE_STATUS_OPTIONS = new Set(['backlog', 'todo', 'in_progress', 'review']);
+
+function coerceValue(key, raw) {
+    const def = DEFAULTS[key];
+    if (typeof def === 'boolean') return !!raw;
+    if (typeof def === 'number') {
+        const n = Number(raw);
+        if (!Number.isFinite(n)) return def;
+        if (key === 'kanban_nudge_batch_size') return Math.max(1, Math.min(20, Math.round(n)));
+        if (key === 'kanban_nudge_interval_minutes') return Math.max(5, Math.min(24 * 60, Math.round(n)));
+        return n;
+    }
+    if (key === 'kanban_nudge_priority_mode') {
+        return NUDGE_PRIORITY_MODES.has(raw) ? raw : def;
+    }
+    if (key === 'kanban_nudge_statuses') {
+        if (!Array.isArray(raw)) return [...def];
+        const filtered = raw.filter(s => NUDGE_STATUS_OPTIONS.has(s));
+        // Must nudge at least one column, else fall back to default.
+        return filtered.length ? filtered : [...def];
+    }
+    return def;
+}
 
 let pool = null;
 
@@ -44,7 +75,7 @@ async function updatePrefs(deviceId, prefs) {
     if (!pool) return;
     const filtered = {};
     for (const key of Object.keys(DEFAULTS)) {
-        if (key in prefs) filtered[key] = !!prefs[key];
+        if (key in prefs) filtered[key] = coerceValue(key, prefs[key]);
     }
     await pool.query(`
         INSERT INTO device_preferences (device_id, prefs, updated_at)
