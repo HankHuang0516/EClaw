@@ -4746,11 +4746,15 @@
                 }
                 listEl.innerHTML = files.map(f => {
                     const kb = f.size < 1024 * 1024 ? Math.round(f.size / 1024) + ' KB' : Math.round(f.size / 1024 / 1024 * 10) / 10 + ' MB';
-                    const exp = new Date(f.expiresAt).toLocaleDateString('zh-TW');
+                    const created = f.createdAt ? new Date(f.createdAt).toLocaleDateString('zh-TW') : '';
+                    const exp = f.expiresAt ? new Date(f.expiresAt).toLocaleDateString('zh-TW') : '';
+                    const metaDate = created ? `上傳 ${created}` : '';
+                    const metaExp = exp ? `到期 ${exp}` : '';
+                    const metaParts = [kb, metaDate, metaExp].filter(Boolean).join(' · ');
                     return `<div class="r2-file-item" id="r2f-${_r2Esc(f.fileId)}">
                         <span class="r2-file-icon">${_r2FileIcon(f.mimeType)}</span>
                         <span class="r2-file-name" title="${_r2Esc(f.filename)}">${_r2Esc(f.filename)}</span>
-                        <span class="r2-file-meta">${kb} · ${exp}</span>
+                        <span class="r2-file-meta">${metaParts}</span>
                         <div class="r2-file-actions">
                             <button onclick="insertR2File('${_r2Esc(f.fileId)}','${_r2Esc(f.filename)}')" title="插入聊天訊息">📎</button>
                             <button onclick="deleteR2File('${_r2Esc(f.fileId)}')" title="刪除" style="color:var(--danger,#e53935);">🗑</button>
