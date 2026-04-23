@@ -485,6 +485,7 @@
 
             let detailRows = '';
             const REFS = ['OSWorld','WebArena','WebVoyager','OSWorld','WebArena','WorkArena','ST-WebAgentBench','HumanEval Pro','—','Context-Bench','—','Web Speech API'];
+            const examModel = data?.exam?.model || '—';
             NAMES.forEach((name, i) => {
                 const s = data.sessions ? data.sessions.find(x => x.test_index === i) : null;
                 const sc = s ? (s.score || 0) : (scores[i] || 0);
@@ -514,6 +515,7 @@
                     <div class="report-detail" style="display:none;padding:10px 12px;background:var(--bg-secondary);font-size:12px;color:var(--text-secondary);line-height:1.7;">
                         <div style="margin-bottom:6px;color:var(--text);font-size:13px;">${comment}</div>
                         <div><strong>Score:</strong> ${sc} / ${mx} (${scPct}%)</div>
+                        <div><strong>Model:</strong> ${examModel}</div>
                         ${speedInfo ? `<div><strong>Speed:</strong> ${speedInfo}</div>` : ''}
                         ${raw.score !== undefined && raw.maxScore !== undefined ? `<div><strong>Base accuracy:</strong> ${raw.score} / ${raw.maxScore}</div>` : ''}
                         <div><strong>Status:</strong> ${s ? s.status : (sc > 0 ? 'completed' : 'no data')}</div>
@@ -526,6 +528,7 @@
                 <div style="text-align:center;padding:16px 0 20px;">
                     <div style="font-size:48px;font-weight:900;color:${gradeColor};margin-bottom:4px;">Grade: ${grade}</div>
                     <div style="font-size:14px;color:var(--text-secondary);">${total} / ${maxS} (${pct}%) &mdash; ${passed} passed, ${failed} failed</div>
+                    <div style="font-size:12px;color:var(--accent-cyan);margin-top:6px;font-weight:600;">Model: ${examModel}</div>
                     <div style="font-size:13px;color:var(--text-muted);margin-top:8px;">${commentary}</div>
                 </div>
                 <div style="text-align:center;margin:16px 0 24px;"><canvas id="radarChart" width="300" height="300" style="max-width:100%;"></canvas></div>
@@ -1069,7 +1072,7 @@
     </div>
 
     <canvas id="confettiCanvas"></canvas>
-    <div class="modal-overlay" id="nameModal">
+    <div class="modal-overlay" id="nameModal" onclick="if(event.target===this)dismissModal()">
         <div class="modal-card">
             <div class="modal-title" data-i18n="arena_name_prompt">Submit to Leaderboard</div>
             <div class="modal-subtitle" data-i18n="arena_name_subtitle">Enter a name to claim your score</div>
