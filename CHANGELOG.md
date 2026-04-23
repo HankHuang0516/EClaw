@@ -1,3 +1,10 @@
+## [1.1061.1](https://github.com/HankHuang0516/EClaw/compare/v1.1061.0...v1.1061.1) (2026-04-23)
+
+
+### Bug Fixes
+
+* **chat-save:** await all saveChatMessage bot-reply calls ([#2006](https://github.com/HankHuang0516/EClaw/issues/2006)) ([bfc9da7](https://github.com/HankHuang0516/EClaw/commit/bfc9da7a651f09b5546cb85d320aebeefad86e72)), closes [#1988](https://github.com/HankHuang0516/EClaw/issues/1988)
+
 # [1.1061.0](https://github.com/HankHuang0516/EClaw/compare/v1.1060.2...v1.1061.0) (2026-04-23)
 
 
