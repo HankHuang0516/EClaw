@@ -1,3 +1,10 @@
+## [1.1058.1](https://github.com/HankHuang0516/EClaw/compare/v1.1058.0...v1.1058.1) (2026-04-23)
+
+
+### Bug Fixes
+
+* **device-vars:** refuse legacy empty-wipe on non-empty vault ([#1995](https://github.com/HankHuang0516/EClaw/issues/1995)) ([64e15b9](https://github.com/HankHuang0516/EClaw/commit/64e15b98ba04135a5efa5cccaa47150425f04c7b))
+
 # [1.1058.0](https://github.com/HankHuang0516/EClaw/compare/v1.1057.0...v1.1058.0) (2026-04-23)
 
 
