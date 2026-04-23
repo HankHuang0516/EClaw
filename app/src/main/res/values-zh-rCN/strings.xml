@@ -123,7 +123,7 @@
     <string name="broadcast_settings_title">广播设置</string>
     <string name="broadcast_to_all">广播给全部</string>
     <string name="cancel">取消</string>    <string name="card_holder_add_capability">添加能力</string>    <string name="card_holder_capabilities">功能</string>    <string name="card_holder_protocols">协议</string>    <string name="card_holder_tags">标签</string>
-    <string name="card_holder_tags_hint">添加标签…</string>    <string name="category_add">添加分类</string>
+    <string name="card_holder_tags_hint">添加标签…</string>    <string name="category_add">+ 添加分类</string>
     <string name="category_add_title">添加分类</string>
     <string name="category_already_exists">分类 "%1$s" 已存在</string>
     <string name="category_clear_confirm">清空 "%1$s" 中的所有项目？</string>
@@ -790,7 +790,7 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="feedback_photo_upload_failed">照片上传失败: %s</string>
     <string name="billing_google_play_loading">正在加载 Google Play...</string>
     <string name="dialog_unblock_message">确定要解除封锁 %s 吗？</string>
-    <string name="billing_subscription_unavailable">無法取得訂閱方案，請稍後再試</string>    <string name="dialog_add_friend_message">Add %s to your contacts?</string>
+    <string name="billing_subscription_unavailable">無法取得訂閱方案，請稍後再試</string>    <string name="dialog_add_friend_message">是否将 %s 添加到联系人？</string>
     <string name="dialog_add_friend_title">Add Friend</string>
     <string name="dialog_agent_card_title">Agent Card — Entity #%d</string>
     <string name="dialog_block_contact">Block %s? They will no longer be able to interact with you.</string>
