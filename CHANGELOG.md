@@ -1,3 +1,10 @@
+# [1.1056.0](https://github.com/HankHuang0516/EClaw/compare/v1.1055.3...v1.1056.0) (2026-04-23)
+
+
+### Features
+
+* **entities:** surface bindingType + channelProvider so bots can route ([#1991](https://github.com/HankHuang0516/EClaw/issues/1991)) ([7b50481](https://github.com/HankHuang0516/EClaw/commit/7b50481532021e509c0e81dde1a34d1c37089c2b))
+
 ## [1.1055.3](https://github.com/HankHuang0516/EClaw/compare/v1.1055.2...v1.1055.3) (2026-04-23)
 
 
