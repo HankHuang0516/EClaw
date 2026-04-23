@@ -15613,9 +15613,12 @@ app.delete('/api/device-vars/:key', async (req, res) => {
 });
 
 // DELETE /api/device-vars — client clears all vars
-// Auth: deviceSecret
+// Auth: deviceSecret + explicit confirm flag (2026-04-23 hardening: require
+// confirm:"YES_DELETE_ALL_VAULT" so a stray curl / misfired cron can't wipe
+// the vault without intent). Every attempt is server-logged with the
+// existing key count so we can trace who wiped what.
 app.delete('/api/device-vars', async (req, res) => {
-    const { deviceId, deviceSecret } = req.body;
+    const { deviceId, deviceSecret, confirm } = req.body;
     if (!deviceId || !deviceSecret) {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
@@ -15623,8 +15626,22 @@ app.delete('/api/device-vars', async (req, res) => {
     if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
         return res.status(403).json({ success: false, error: 'Invalid credentials' });
     }
+
+    const existing = await db.getDeviceVars(deviceId);
+    const existingKeyCount = existing && Array.isArray(existing.var_keys) ? existing.var_keys.length : 0;
+
+    if (existingKeyCount > 0 && confirm !== 'YES_DELETE_ALL_VAULT') {
+        serverLog('warn', 'device_vars', `[Vars] refused DELETE for ${deviceId}: ${existingKeyCount} keys present, no confirm`, { deviceId, metadata: { existingKeyCount, ip: req.ip, userAgent: req.get('user-agent') } });
+        return res.status(400).json({
+            success: false,
+            error: 'refuse_delete_without_confirm',
+            message: `Refusing to delete ${existingKeyCount} existing keys without explicit confirmation. Pass confirm:"YES_DELETE_ALL_VAULT" to proceed.`,
+        });
+    }
+
+    serverLog('info', 'device_vars', `[Vars] DELETE ${deviceId}: wiping ${existingKeyCount} keys`, { deviceId, metadata: { existingKeyCount, ip: req.ip, userAgent: req.get('user-agent') } });
     await db.deleteDeviceVars(deviceId);
-    res.json({ success: true });
+    res.json({ success: true, deletedKeyCount: existingKeyCount });
 });
 
 // GET /api/logs — Query server logs for debugging

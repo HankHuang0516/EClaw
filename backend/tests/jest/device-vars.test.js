@@ -287,6 +287,80 @@ describe('DELETE /api/device-vars', () => {
     });
 });
 
+describe('DELETE /api/device-vars — confirm-guard for non-empty vault', () => {
+    // 2026-04-23 follow-up to legacy-wipe incident: DELETE endpoint is the
+    // other vector that can wipe the vault in one call. Refuse unless caller
+    // passes confirm:"YES_DELETE_ALL_VAULT" when existing keys are present.
+    const db = require('../../db');
+
+    afterEach(() => {
+        db.getDeviceVars.mockResolvedValue(null);
+    });
+
+    it('refuses DELETE when vault has keys and no confirm is passed', async () => {
+        const devId = `vars-del-guard-${Date.now()}`;
+        const secret = await registerDevice(devId);
+        db.getDeviceVars.mockResolvedValueOnce({
+            vars: { EXISTING: 'value' },
+            var_keys: ['EXISTING'],
+        });
+        const res = await del('/api/device-vars').send({
+            deviceId: devId,
+            deviceSecret: secret,
+        });
+        expect(res.status).toBe(400);
+        expect(res.body.success).toBe(false);
+        expect(res.body.error).toBe('refuse_delete_without_confirm');
+        expect(res.body.message).toMatch(/Refusing to delete 1 existing keys/);
+    });
+
+    it('allows DELETE on non-empty vault with confirm:"YES_DELETE_ALL_VAULT"', async () => {
+        const devId = `vars-del-confirm-${Date.now()}`;
+        const secret = await registerDevice(devId);
+        db.getDeviceVars.mockResolvedValueOnce({
+            vars: { A: '1', B: '2', C: '3' },
+            var_keys: ['A', 'B', 'C'],
+        });
+        const res = await del('/api/device-vars').send({
+            deviceId: devId,
+            deviceSecret: secret,
+            confirm: 'YES_DELETE_ALL_VAULT',
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.deletedKeyCount).toBe(3);
+    });
+
+    it('allows DELETE on empty vault without confirm (nothing to lose)', async () => {
+        const devId = `vars-del-emptyvault-${Date.now()}`;
+        const secret = await registerDevice(devId);
+        // Default mock returns null → existingKeyCount = 0 → bypass guard
+        const res = await del('/api/device-vars').send({
+            deviceId: devId,
+            deviceSecret: secret,
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.deletedKeyCount).toBe(0);
+    });
+
+    it('rejects an incorrect confirm string', async () => {
+        const devId = `vars-del-wrongconfirm-${Date.now()}`;
+        const secret = await registerDevice(devId);
+        db.getDeviceVars.mockResolvedValueOnce({
+            vars: { EXISTING: 'value' },
+            var_keys: ['EXISTING'],
+        });
+        const res = await del('/api/device-vars').send({
+            deviceId: devId,
+            deviceSecret: secret,
+            confirm: 'yes_delete_all_vault', // wrong case
+        });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('refuse_delete_without_confirm');
+    });
+});
+
 describe('DELETE /api/device-vars/:key', () => {
     it('returns 400 when deviceId is missing', async () => {
         const res = await del('/api/device-vars/MY_KEY').send({ deviceSecret: 'x' });
