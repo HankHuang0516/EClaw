@@ -911,6 +911,8 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 const localSource = hasCrossRoute
                     ? `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`
                     : (entity.name || `Entity ${eId}`);
+                const reasons = deliveryResults && deliveryResults.results ? deliveryResults.results.map(r => r.reason || 'ok').join(',') : 'none';
+                serverLog('warn', 'chat_save', `[CHAT_FALLBACK_CHANNEL] all targets failed for entity ${eId}; saving sender copy. reasons=[${reasons}] speakTo=${JSON.stringify(speakTo || null)} broadcast=${!!broadcast}`, { deviceId, entityId: eId, metadata: { path: 'fallback_channel', reasons, hadSpeakTo: !!speakTo, hadBroadcast: !!broadcast } });
                 await saveChatMessage(deviceId, eId, message, localSource, false, true, mediaType || null, mediaUrl || null, null, null, null, null, validatedCard);
                 warnings.push('All delivery targets failed; message saved to sender chat only.');
             }
