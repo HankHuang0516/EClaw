@@ -6,14 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="sc_title">EClawbot - Chat</title>
     <meta name="description" content="Chat with an EClawbot entity">
-    <meta name="robots" content="noindex, nofollow">
+    <meta name="robots" content="index, follow">
     <link rel="icon" type="image/png" href="assets/favicon-32.png">
     <link rel="stylesheet" href="/portal/shared/style.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="canonical" href="https://eclawbot.com/portal/share-chat.html">
-    <meta property="og:title" content="EClawbot - Chat">
+    <meta property="og:title" content="EClawbot - Chat" id="og-title">
     <meta property="og:type" content="website">
     <meta property="og:image" content="/assets/og-image.png">
+    <meta property="og:description" content="Chat with an EClawbot entity" id="og-desc">
+    <meta property="og:url" content="https://eclawbot.com/c/" id="og-url">
     <style>
         body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; }
         .share-chat-wrap { max-width: 600px; margin: 0 auto; padding: 16px; height: 100vh; display: flex; flex-direction: column; box-sizing: border-box; }
@@ -172,6 +174,7 @@
         .proxy-cta-btn { display: inline-block; padding: 8px 20px; background: #fff; color: var(--primary); font-size: 13px; font-weight: 700; border-radius: 20px; text-decoration: none; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
         .proxy-cta-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
     </style>
+<script type="application/ld+json" id="jsonld-data"></script>
 </head>
 
 <body>
@@ -425,6 +428,36 @@
 
             // Update OG meta for link previews
             document.title = t('sc_chat_with', 'Chat with {name}').replace('{name}', targetEntity.name || targetCode) + ' - EClawbot';
+            // OG meta tags for rich link previews
+            var ogTitle=document.getElementById('og-title');
+            var ogDesc=document.getElementById('og-desc');
+            var ogUrl=document.getElementById('og-url');
+            var canonical=document.querySelector('link[rel=canonical]');
+            if(ogTitle) ogTitle.setAttribute('content',t('sc_og_title','Chat with {name} on EClawbot').replace('{name}',targetEntity.name||targetCode));
+            if(ogDesc) ogDesc.setAttribute('content',t('sc_og_description','Connect with {name} — an AI agent on EClawbot. Start a conversation, ask questions, or explore capabilities.').replace('{name}',targetEntity.name||targetCode));
+            if(ogUrl) ogUrl.setAttribute('content','https://eclawbot.com/c/'+targetCode);
+            if(canonical) canonical.setAttribute('href','https://eclawbot.com/c/'+targetCode);
+
+            // JSON-LD structured data
+            var jsonldEl=document.getElementById('jsonld-data');
+            if(jsonldEl&&targetEntity.agentCard){
+              var ac=targetEntity.agentCard;
+              var jsonld={
+                '@context':'https://schema.org',
+                '@type':'SoftwareApplication',
+                'name':targetEntity.name||targetCode,
+                'description':ac.description||t('sc_og_description','').replace('{name}',targetEntity.name||targetCode),
+                'applicationCategory':'BusinessApplication',
+                'operatingSystem':'Web',
+                'offers':{'@type':'Offer','price':'0','priceCurrency':'USD'},
+                'author':{'@type':'Person','name':targetEntity.name||targetCode},
+                'url':'https://eclawbot.com/c/'+targetCode,
+                'image':targetEntity.avatar&&targetEntity.avatar.startsWith('http')?targetEntity.avatar:undefined,
+                'keywords':ac.tags?ac.tags.join(', '):undefined,
+              };
+              jsonldEl.textContent=JSON.stringify(jsonld);
+            }
+
         } catch (e) {
             dbg('error', `Lookup failed: ${e.message}`);
             document.getElementById('entityName').textContent = t('sc_failed_to_load', 'Failed to load');
