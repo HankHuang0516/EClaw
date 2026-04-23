@@ -1,3 +1,10 @@
+## [1.1060.2](https://github.com/HankHuang0516/EClaw/compare/v1.1060.1...v1.1060.2) (2026-04-23)
+
+
+### Bug Fixes
+
+* **i18n:** translate dialog_add_friend_message in Indonesian ([#1999](https://github.com/HankHuang0516/EClaw/issues/1999)) ([0072062](https://github.com/HankHuang0516/EClaw/commit/0072062cd35094e7bcbe965b513e32309d75e4a7)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 ## [1.1060.1](https://github.com/HankHuang0516/EClaw/compare/v1.1060.0...v1.1060.1) (2026-04-23)
 
 
