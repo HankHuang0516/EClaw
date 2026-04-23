@@ -1,3 +1,10 @@
+## [1.1061.3](https://github.com/HankHuang0516/EClaw/compare/v1.1061.2...v1.1061.3) (2026-04-23)
+
+
+### Bug Fixes
+
+* **arena:** surface model in report + unblock chip clicks behind name modal ([#2009](https://github.com/HankHuang0516/EClaw/issues/2009)) ([200efdc](https://github.com/HankHuang0516/EClaw/commit/200efdc6c41b02cc166c080da8f7866562add24e))
+
 ## [1.1061.2](https://github.com/HankHuang0516/EClaw/compare/v1.1061.1...v1.1061.2) (2026-04-23)
 
 
