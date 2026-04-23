@@ -1,3 +1,10 @@
+## [1.1055.2](https://github.com/HankHuang0516/EClaw/compare/v1.1055.1...v1.1055.2) (2026-04-23)
+
+
+### Bug Fixes
+
+* **chat-save:** observability hardening for lost messages ([#1988](https://github.com/HankHuang0516/EClaw/issues/1988)) ([e42dd22](https://github.com/HankHuang0516/EClaw/commit/e42dd22b61a26b0468f0ae090082c6ff89cbbeaf))
+
 ## [1.1055.1](https://github.com/HankHuang0516/EClaw/compare/v1.1055.0...v1.1055.1) (2026-04-22)
 
 
