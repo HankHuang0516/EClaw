@@ -4341,11 +4341,17 @@
         async function sendMessage() {
             const input = document.getElementById('messageInput');
             const text = input.value.trim();
-            const readyFiles = pendingFiles.filter(f => f.status === 'ready');
+            // Split ready entries: uploaded media vs Cloud Drive refs. Media goes
+            // through the mediaType/mediaUrl path; r2refs are appended as Markdown
+            // links [📎 filename](signed-url) to the message text.
+            const allReady = pendingFiles.filter(f => f.status === 'ready');
+            const readyFiles = allReady.filter(f => f.type !== 'r2ref');
+            const readyR2Refs = allReady.filter(f => f.type === 'r2ref');
             const hasFiles = readyFiles.length > 0;
+            const hasR2Refs = readyR2Refs.length > 0;
 
-            // Must have text or pending files
-            if (!text && !hasFiles) return;
+            // Must have text, media, or r2refs
+            if (!text && !hasFiles && !hasR2Refs) return;
 
             let finalText = text;
             if (replyContext) {
@@ -4361,6 +4367,12 @@
                 const quotePrefix = `↩ ${replyContext.senderName}:${hisToken} "${excerpt}"`;
                 finalText = text ? `${quotePrefix}\n\n${text}` : quotePrefix;
                 clearReplyContext();
+            }
+            if (hasR2Refs) {
+                const refLinks = readyR2Refs
+                    .map(r => `[📎 ${r.fileName}](${r.mediaUrl})`)
+                    .join('\n');
+                finalText = finalText ? `${finalText}\n\n${refLinks}` : refLinks;
             }
 
             // Check if any files still uploading
@@ -4472,8 +4484,8 @@
                 localStorage.setItem('chat_last_targets', targets.local.join(','));
                 localStorage.setItem('chat_last_contact_targets', targets.contacts.join(','));
 
-                // Clear pending files
-                if (hasFiles) clearAllPendingFiles();
+                // Clear pending files (media and/or cloud-drive refs)
+                if (hasFiles || hasR2Refs) clearAllPendingFiles();
 
                 // Bump local usage
                 if (currentUser.usageToday !== undefined) {
@@ -4746,13 +4758,13 @@
                     const metaDate = created ? `上傳 ${created}` : '';
                     const metaExp = exp ? `到期 ${exp}` : '';
                     const metaParts = [kb, metaDate, metaExp].filter(Boolean).join(' · ');
-                    return `<div class="r2-file-item" id="r2f-${_r2Esc(f.fileId)}">
+                    return `<div class="r2-file-item" id="r2f-${_r2Esc(f.fileId)}" onclick="previewAttachment('${_r2Esc(f.fileId)}')" style="cursor:pointer;" title="點擊瀏覽">
                         <span class="r2-file-icon">${_r2FileIcon(f.mimeType)}</span>
                         <span class="r2-file-name" title="${_r2Esc(f.filename)}">${_r2Esc(f.filename)}</span>
                         <span class="r2-file-meta">${metaParts}</span>
                         <div class="r2-file-actions">
-                            <button onclick="insertR2File('${_r2Esc(f.fileId)}','${_r2Esc(f.filename)}')" title="插入聊天訊息">📎</button>
-                            <button onclick="deleteR2File('${_r2Esc(f.fileId)}')" title="刪除" style="color:var(--danger,#e53935);">🗑</button>
+                            <button onclick="event.stopPropagation();insertR2File('${_r2Esc(f.fileId)}','${_r2Esc(f.filename)}')" title="插入聊天訊息">📎</button>
+                            <button onclick="event.stopPropagation();deleteR2File('${_r2Esc(f.fileId)}')" title="刪除" style="color:var(--danger,#e53935);">🗑</button>
                         </div>
                     </div>`;
                 }).join('');
@@ -4765,12 +4777,23 @@
                 const res = await fetch(API_BASE + '/api/files/' + encodeURIComponent(fileId) + '?' + _r2Auth());
                 const data = await res.json();
                 if (!data.success) throw new Error(data.error);
-                const input = document.getElementById('messageInput');
-                const ref = '[' + filename + '](' + data.url + ')';
-                const s = input.selectionStart;
-                input.setRangeText(ref, s, input.selectionEnd, 'end');
-                input.focus();
+                // Queue as a pill in the attachment preview bar rather than pasting
+                // a long signed URL into the textarea. sendMessage() will append the
+                // Markdown link [📎 filename](url) to the outgoing text automatically.
+                const id = Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+                pendingFiles.push({
+                    id,
+                    type: 'r2ref',
+                    status: 'ready',
+                    fileId,
+                    fileName: filename,
+                    mediaUrl: data.url,
+                    mimeType: data.mimeType || '',
+                    size: data.size || 0,
+                });
+                renderFilePreviewBar();
                 closeR2FilesPanel();
+                document.getElementById('messageInput').focus();
             } catch (err) {
                 showToast('取得連結失敗：' + err.message, 'error');
             }
@@ -4898,13 +4921,17 @@
             bar.innerHTML = pendingFiles.map(f => {
                 const isImage = f.type === 'photo' && f.localUrl;
                 const isVideo = f.type === 'video' && f.localVideoUrl;
+                const isR2 = f.type === 'r2ref';
                 const thumb = isImage
                     ? `<img src="${f.localUrl}" alt="Preview">`
                     : isVideo
                     ? `<video src="${f.localVideoUrl}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;" muted></video>`
+                    : isR2
+                    ? `<div class="file-icon">${typeof _r2FileIcon === 'function' ? _r2FileIcon(f.mimeType) : '&#x2601;&#xFE0F;'}</div>`
                     : `<div class="file-icon">&#x1F4CE;</div>`;
                 const statusText = f.status === 'uploading' ? (i18n.t('chat_uploading') || 'Uploading...')
                     : f.status === 'error' ? (i18n.t('chat_upload_error') || 'Error')
+                    : isR2 ? '☁️ 雲端庫'
                     : '';
                 const nameDisplay = escapeHtml(f.fileName.length > 20 ? f.fileName.slice(0, 17) + '...' : f.fileName);
                 return `<div class="file-preview-item">
