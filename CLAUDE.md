@@ -225,6 +225,7 @@ EClaw/
 | `feedback` | User feedback/bug reports |
 | `agent_card_holder` | Collected agent cards per device (blocked, last_interacted_at columns for Card Holder redesign) |
 | `device_vars` | Per-device environment variables with cross-platform merge |
+| `device_vars_audit` | Audit trail of every vault mutation: action (replace/merge/wipe/refuse_*/delete_one), key_name, source, caller IP/UA, before/after key counts — **never stores values** |
 | `channel_accounts` | OpenClaw channel integration accounts (e2ee_capable flag for E2EE awareness) |
 | `skill_contributions` | Community-contributed skill templates |
 | `soul_contributions` | Community-contributed soul templates |
@@ -276,7 +277,8 @@ EClaw/
 | `/api/schedules` | _(deprecated, returns 410)_ | Legacy task scheduling (removed) |
 | `/api/notifications/*` | notifications.js | Push notification management |
 | `/api/device-telemetry` | device-telemetry.js | AI debug buffer |
-| `/api/device-vars` | index.js | Environment variable management |
+| `/api/device-vars` | index.js | Environment variable management (POST merge/replace, DELETE wipe w/ `confirm:"YES_DELETE_ALL_VAULT"`, DELETE single key) |
+| `/api/device-vars/audit` | index.js | Owner-auth audit trail: every POST/DELETE leaves a row; never stores values, only key names + caller IP/UA + before/after counts |
 | `/api/logs` | index.js | Server log querying |
 | `/api/audit-logs` | index.js | Admin audit log access |
 | `/api/admin/*` | index.js | Admin panel endpoints |
@@ -516,6 +518,15 @@ EClaw/
 - **Workflow**: develop on feature branch → push → create PR → merge PR → **check CI status on main** → **verify production**
 - 工作完成後 push feature branch、建立 PR、自行 merge 到 main，然後確認 main 的 CI actions 沒有 failed。
 - Codex 會在 git push 之前審查你的代碼
+
+### ⚠️ Code Review Checklist (MANDATORY — applies to every PR)
+
+Every PR — opened by the commander OR by a sub-agent (U##) — must be self-reviewed against the 10-item checklist at **[`docs/code-review-checklist.md`](docs/code-review-checklist.md)** before merge. The self-review comment posted to the PR must use the template at the bottom of that file, filled line-by-line.
+
+Part A (core, 5 items): logic trace / test coverage / return shape / what-this-does-NOT-fix / security.
+Part B (extended, 5 items): `/api/help` update / related docs / i18n audit / info page / debug endpoint.
+
+Every item is ✅ / ⚠️ NO-OP / ❌ — an unanswered item blocks merge. Sub-agent dispatch prompts must include the pointer to this file (see `reference_dispatch_template.md`).
 
 ### ⚠️ i18n Pre-PR Requirement (MANDATORY)
 

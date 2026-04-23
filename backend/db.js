@@ -357,6 +357,30 @@ async function createTables() {
             ALTER TABLE device_vars ADD COLUMN IF NOT EXISTS var_sources JSONB DEFAULT '{}'
         `);
 
+        // 2026-04-23: audit trail for every vault mutation. Rows deliberately
+        // store only the key name + action shape — NEVER the value — so a
+        // compromised audit table still can't leak secrets. Added after two
+        // same-day wipes (11:36 TW + 13:25 TW) that we couldn't trace to a
+        // specific caller because the write path had no durable history.
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS device_vars_audit (
+                id              BIGSERIAL PRIMARY KEY,
+                device_id       TEXT NOT NULL,
+                action          TEXT NOT NULL,
+                key_name        TEXT,
+                source          TEXT,
+                caller_ip       TEXT,
+                caller_ua       TEXT,
+                before_count    INTEGER,
+                after_count     INTEGER,
+                created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        `);
+        await client.query(`
+            CREATE INDEX IF NOT EXISTS device_vars_audit_device_created_idx
+                ON device_vars_audit (device_id, created_at DESC)
+        `);
+
         // Channel accounts (OpenClaw channel plugin integration)
         await client.query(`
             CREATE TABLE IF NOT EXISTS channel_accounts (
@@ -1593,6 +1617,59 @@ async function deleteDeviceVars(deviceId) {
     }
 }
 
+// device_vars_audit — one row per mutation. Never stores the value.
+// action ∈ { 'replace', 'merge', 'delete_one', 'wipe', 'refuse_wipe', 'refuse_delete' }
+// key_name: the specific key for single-key ops, null for bulk/wipe/refuse
+async function logDeviceVarsAudit({ deviceId, action, keyName = null, source = null, callerIp = null, callerUa = null, beforeCount = null, afterCount = null }) {
+    if (!pool) return false;
+    try {
+        await pool.query(
+            `INSERT INTO device_vars_audit
+               (device_id, action, key_name, source, caller_ip, caller_ua, before_count, after_count)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            [deviceId, action, keyName, source, callerIp, callerUa, beforeCount, afterCount]
+        );
+        return true;
+    } catch (err) {
+        // Audit failure must never break the main request.
+        console.error(`[DB] Failed to log device_vars_audit for ${deviceId}:`, err.message);
+        return false;
+    }
+}
+
+async function getDeviceVarsAudit(deviceId, { since = null, limit = 200 } = {}) {
+    if (!pool) return [];
+    const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 0, 1), 500);
+    try {
+        let rows;
+        if (since) {
+            const r = await pool.query(
+                `SELECT id, action, key_name, source, caller_ip, caller_ua, before_count, after_count, created_at
+                 FROM device_vars_audit
+                 WHERE device_id = $1 AND created_at >= $2
+                 ORDER BY created_at DESC
+                 LIMIT $3`,
+                [deviceId, since, safeLimit]
+            );
+            rows = r.rows;
+        } else {
+            const r = await pool.query(
+                `SELECT id, action, key_name, source, caller_ip, caller_ua, before_count, after_count, created_at
+                 FROM device_vars_audit
+                 WHERE device_id = $1
+                 ORDER BY created_at DESC
+                 LIMIT $2`,
+                [deviceId, safeLimit]
+            );
+            rows = r.rows;
+        }
+        return rows;
+    } catch (err) {
+        console.error(`[DB] Failed to query device_vars_audit for ${deviceId}:`, err.message);
+        return [];
+    }
+}
+
 // ============================================
 // Channel Accounts (OpenClaw Channel Plugin)
 // ============================================
@@ -2178,6 +2255,8 @@ module.exports = {
     getDeviceVars,
     getDeviceVarsMeta,
     deleteDeviceVars,
+    logDeviceVarsAudit,
+    getDeviceVarsAudit,
     // Channel accounts (OpenClaw plugin)
     createChannelAccount,
     getChannelAccountById,
