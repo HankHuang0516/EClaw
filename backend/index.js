@@ -15708,11 +15708,16 @@ app.get('/api/chat/history', async (req, res) => {
             WHERE m.device_id = $1`;
         const params = [deviceId];
 
-        // Bot auth: only show messages involving this entity (sent by or targeted at)
+        // Bot auth: only show messages involving this entity (sent by or targeted at).
+        // Broadcast sources look like `entity:X:CHAR->1,2,4,5`, so a naive
+        // `LIKE '%->${id}%'` only matches the FIRST recipient — every other
+        // recipient gets an empty chat history. Use a regex that anchors the
+        // recipient id between either `->` or `,` on the left and `,` or end
+        // of string on the right, which works for both single- and multi-target.
         if (botEntityId !== null) {
-            query += ` AND (m.entity_id = $${params.length + 1} OR m.source LIKE $${params.length + 2})`;
+            query += ` AND (m.entity_id = $${params.length + 1} OR m.source ~ $${params.length + 2})`;
             params.push(botEntityId);
-            params.push(`%->${botEntityId}%`);
+            params.push(`(->|,)${botEntityId}(,|$)`);
         }
 
         if (since) {
