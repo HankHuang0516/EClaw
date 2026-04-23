@@ -1,3 +1,10 @@
+# [1.1063.0](https://github.com/HankHuang0516/EClaw/compare/v1.1062.0...v1.1063.0) (2026-04-23)
+
+
+### Features
+
+* **app:** sync Kanban Nudge settings to Android + iOS apps ([#2015](https://github.com/HankHuang0516/EClaw/issues/2015)) ([e5fbe75](https://github.com/HankHuang0516/EClaw/commit/e5fbe756b9dbcf54fbb391934bd3cb254e36d5ea)), closes [#kanban-nudge-card](https://github.com/HankHuang0516/EClaw/issues/kanban-nudge-card)
+
 # [1.1062.0](https://github.com/HankHuang0516/EClaw/compare/v1.1061.5...v1.1062.0) (2026-04-23)
 
 
