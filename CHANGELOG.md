@@ -1,3 +1,10 @@
+# [1.1062.0](https://github.com/HankHuang0516/EClaw/compare/v1.1061.5...v1.1062.0) (2026-04-23)
+
+
+### Features
+
+* **kanban-nudge:** per-device settings — batch size / priority mode / status filter / interval ([#2013](https://github.com/HankHuang0516/EClaw/issues/2013)) ([22a0259](https://github.com/HankHuang0516/EClaw/commit/22a02596a8545d2ae792184f1c3af2cc5eacc4ed))
+
 ## [1.1061.5](https://github.com/HankHuang0516/EClaw/compare/v1.1061.4...v1.1061.5) (2026-04-23)
 
 
