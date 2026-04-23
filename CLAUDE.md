@@ -268,7 +268,7 @@ EClaw/
 | `/api/chat/search` | index.js + chat-embedding.js | Semantic (pgvector cosine) + keyword-fallback chat search |
 | `/api/bot/*` | index.js + bot-tools.js | Bot registration, push, files, web tools |
 | `/api/mission/*` | mission.js | Mission dashboard, notes, rules (legacy todo routes removed) |
-| `/api/mission/card*` | kanban.js | Kanban board — cards CRUD, move, comments, notes, files, config |
+| `/api/mission/card*` | kanban.js | Kanban board — cards CRUD, move, comments, notes, files, config. GET `/cards` supports `q` / `since` / `until` / `status` / `priority` filters; orders by `updated_at DESC`. POST `/card/:id/restore` un-archives a card. GET `/cards/archived` paginates soft-deleted cards (7-day retention, was 24h). |
 | `/api/auth/*` | auth.js | Login, register, OAuth, OIDC, RBAC |
 | `/api/oauth/*` | oauth-server.js | OAuth 2.0 server (clients, tokens) |
 | `/api/a2a/*` | a2a-compat.js | A2A protocol compatibility |

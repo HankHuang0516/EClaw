@@ -1210,7 +1210,7 @@ app.get('/api/help', (req, res) => {
     // Intent category matching — zh/en + ja/ko/th/vi/id/fr/es/ms (by @Mac_F)
     const INTENT_MAP = {
         messaging:  ['speakto','broadcast','發訊','reply','transform','message','send','私訊','廣播','メッセージ','送信','메시지','전송','ส่งข้อความ','ข้อความ','ส่ง','gửi tin nhắn','tin nhắn','gửi','phát sóng','kirım pesan','pesan','mengirim','envoyer message','diffusion','enviar mensaje','transmitir','hantar mesej','mesej','menghantar'],
-        kanban:     ['card','看板','任務','move','派任','assign','kanban','卡片','create task','建立任務','カード','タスク','칸반','카드','작업','กระดาน','บัตร','จัดการงาน','bảng','thẻ','quản lý công việc','papan','kartu','manajemen tugas','tableau','carte','gestion tâches','tablero','tarjeta','gestión tareas','kad','pengurusan tugas'],
+        kanban:     ['card','看板','任務','move','派任','assign','kanban','卡片','create task','建立任務','カード','タスク','칸반','카드','작업','กระดาน','บัตร','จัดการงาน','bảng','thẻ','quản lý công việc','papan','kartu','manajemen tugas','tableau','carte','gestion tâches','tablero','tarjeta','gestión tareas','kad','pengurusan tugas','history','archived','archive','restore','封存','歷史','還原','漏斗','過濾','filter','funnel'],
         schedule:   ['排程','schedule','暫停','pause','cron','recurring','stop schedule','disable','enable','スケジュール','予約','一時停止','크론','일정','예약','일시 중지','กำหนดการ','ตารางเวลา','หยุดชั่วคราว','lịch trình','đặt lịch','tạm dừng','jadwal','penjadwalan','jeda','planification','programmation','programación','jadual'],
         notes:      ['note','筆記','rules','dashboard','rule','規則','儀表板','ノート','メモ','ルール','ダッシュボード','노트','메모','규칙','대시보드','บันทึก','กฎ','แดชบอร์ด','ghi chú','quy tắc','bảng điều khiển','catatan','aturan','dasbor','règles','tableau de bord','notas','reglas','panel','nota','peraturan','papan pemuka'],
         search:     ['搜尋','search','fetch','網頁','web','query','検索','ウェブ','スクレイピング','검색','웹','스크래핑','ค้นหา','เว็บ','ดึงข้อมูล','tìm kiếm','cạo dữ liệu','pencarian','pengikisan','recherche','extraction web','búsqueda','raspado web','carian'],
@@ -1232,9 +1232,12 @@ app.get('/api/help', (req, res) => {
         ],
         kanban: [
             { title: 'Read kanban board', curl: `curl -s "${apiBase}/api/mission/cards?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
+            { title: 'Filter board (title/date/status/priority)', curl: `curl -s "${apiBase}/api/mission/cards?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}&q=KEYWORD&since=2026-04-01&until=2026-04-30&status=in_progress&priority=P0"` },
             { title: 'Move card status', curl: `curl -s -X POST "${apiBase}/api/mission/card/CARD_ID/move" -H "Content-Type: application/json" -d ${d},"newStatus":"done"}'` },
             { title: 'Add comment to card', curl: `curl -s -X POST "${apiBase}/api/mission/card/CARD_ID/comment" -H "Content-Type: application/json" -d ${d},"text":"COMMENT"}'` },
-            { title: 'Create new card', curl: `curl -s -X POST "${apiBase}/api/mission/card" -H "Content-Type: application/json" -d ${d},"title":"TASK_TITLE","status":"todo"}'` }
+            { title: 'Create new card', curl: `curl -s -X POST "${apiBase}/api/mission/card" -H "Content-Type: application/json" -d ${d},"title":"TASK_TITLE","status":"todo"}'` },
+            { title: 'List archived cards (history)', curl: `curl -s "${apiBase}/api/mission/cards/archived?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}&page=1&limit=20"` },
+            { title: 'Restore archived card to Backlog', curl: `curl -s -X POST "${apiBase}/api/mission/card/CARD_ID/restore" -H "Content-Type: application/json" -d ${d}}'` }
         ],
         schedule: [
             { title: 'Disable card schedule', curl: `curl -s -X PUT "${apiBase}/api/mission/card/CARD_ID/schedule" -H "Content-Type: application/json" -d ${d},"enabled":false}'` },
