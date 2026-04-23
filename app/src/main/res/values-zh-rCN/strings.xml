@@ -145,6 +145,7 @@
     <string name="channel_api_no_key">暂无 API 密钥</string>
     <string name="channel_api_secret_label">API 密钥</string>
     <string name="channel_api_slots_active">已连接：%1$s</string>
+    <string name="kanban_nudge_settings_title">📋 看板督促设置</string>
     <string name="channel_bind_warning">2026-03 版本以上强烈建议使用 EClaw Channel 绑定，避免绑定失败。</string>
     <string name="channel_learn_more">了解更多 →</string>
     <string name="channel_promo">试试 EClaw Channel？更原生、更快速</string>

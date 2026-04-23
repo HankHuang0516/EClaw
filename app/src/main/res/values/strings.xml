@@ -480,6 +480,9 @@
     <string name="channel_api_no_key">No API key yet. Open the Web Portal to generate one.</string>
     <string name="channel_api_slots_active">Connected: %1$s</string>
 
+    <!-- Kanban Nudge Settings -->
+    <string name="kanban_nudge_settings_title">📋 Kanban Nudge Settings</string>
+
     <!-- Account Status Card -->
     <string name="account_card_title">Account</string>
     <string name="account_status_loading">Checking account status\u2026</string>
