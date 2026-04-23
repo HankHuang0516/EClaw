@@ -274,10 +274,65 @@ describe('interview-arena: scoring engines', () => {
         expect(result.score).toBeLessThan(10);
     });
 
-    test('coding: all tests pass = full score', () => {
+    test('coding: self-reported testResults are untrusted → 0 + pending flag', () => {
+        // Anti-cheat: bots used to POST {testResults:[true,true,...]} and
+        // collect full marks. Until a real sandboxed executor lands we
+        // award 0 and surface server_side_execution_pending:true so
+        // downstream reporting can explain why.
         const config = { weight: 15, testCases: [{}, {}, {}] };
         const actions = [{ actionType: 'code_submitted', payload: { testResults: [true, true, true] } }];
-        expect(SCORING_ENGINES.arena_coding(config, actions).score).toBe(15);
+        const r = SCORING_ENGINES.arena_coding(config, actions);
+        expect(r.score).toBe(0);
+        expect(r.maxScore).toBe(15);
+        expect(r.server_side_execution_pending).toBe(true);
+        expect(r.claimedPassed).toBe(3);
+        expect(r.totalTests).toBe(3);
+    });
+
+    test('coding: empty submission = 0 + pending flag', () => {
+        const config = { weight: 15, testCases: [{}, {}, {}] };
+        const r = SCORING_ENGINES.arena_coding(config, []);
+        expect(r.score).toBe(0);
+        expect(r.server_side_execution_pending).toBe(true);
+    });
+
+    test('navigation: target_found with matching serial = full score', () => {
+        const config = { weight: 13, depth: 4, targetInfo: 'Serial: 8AF0C1B3' };
+        const actions = [
+            { actionType: 'page_navigated', payload: { depth: 4 } },
+            { actionType: 'target_found', payload: { targetInfo: '8af0c1b3' } },
+        ];
+        expect(SCORING_ENGINES.arena_navigation(config, actions).score).toBe(13);
+    });
+
+    test('navigation: target_found with exact "Serial: X" string = full score', () => {
+        const config = { weight: 13, depth: 4, targetInfo: 'Serial: 8AF0C1B3' };
+        const actions = [
+            { actionType: 'target_found', payload: { targetInfo: 'Serial: 8AF0C1B3' } },
+        ];
+        expect(SCORING_ENGINES.arena_navigation(config, actions).score).toBe(13);
+    });
+
+    test('navigation: target_found with bare empty payload = 0 (no depth)', () => {
+        const config = { weight: 13, depth: 4, targetInfo: 'Serial: 8AF0C1B3' };
+        const actions = [{ actionType: 'target_found', payload: {} }];
+        expect(SCORING_ENGINES.arena_navigation(config, actions).score).toBe(0);
+    });
+
+    test('navigation: target_found with WRONG serial = 0 (no depth)', () => {
+        const config = { weight: 13, depth: 4, targetInfo: 'Serial: 8AF0C1B3' };
+        const actions = [{ actionType: 'target_found', payload: { targetInfo: 'DEADBEEF' } }];
+        expect(SCORING_ENGINES.arena_navigation(config, actions).score).toBe(0);
+    });
+
+    test('navigation: partial depth credit when target not found', () => {
+        const config = { weight: 13, depth: 4, targetInfo: 'Serial: 8AF0C1B3' };
+        const actions = [
+            { actionType: 'page_navigated', payload: { depth: 2 } },
+        ];
+        const r = SCORING_ENGINES.arena_navigation(config, actions);
+        expect(r.score).toBeGreaterThan(0);
+        expect(r.score).toBeLessThan(13);
     });
 
     test('response_time: correct + fast = full score', () => {

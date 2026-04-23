@@ -69,9 +69,13 @@ const PERFECT_ACTIONS = {
                   payload: { dropX: t.x + Math.floor(t.w / 2), dropY: t.y + Math.floor(t.h / 2) },
                   timestamp: PERFECT_TIMESTAMP }];
     },
-    arena_navigation: () => [
+    arena_navigation: (c) => [
         { actionType: 'page_navigated', payload: { depth: 4 }, timestamp: PERFECT_TIMESTAMP },
-        { actionType: 'target_found', payload: {}, timestamp: PERFECT_TIMESTAMP + 1 },
+        // Post-anti-cheat-hardening: scorer requires the serial in payload.
+        // A bare empty {} no longer scores full marks (intentional — self-
+        // report exploit fix). Feed the real targetInfo so the synthetic
+        // "perfect" trial still exercises the happy path.
+        { actionType: 'target_found', payload: { targetInfo: c.targetInfo }, timestamp: PERFECT_TIMESTAMP + 1 },
     ],
     arena_table_extract: (c) => [
         { actionType: 'page_loaded', payload: {}, timestamp: PERFECT_TIMESTAMP },
@@ -240,6 +244,11 @@ function runOneTrial(testType, previousConfigs) {
         }
 
         // 6. Scoring with perfect synthetic actions — must score > 0
+        //    EXCEPTION: arena_coding currently degrades to score=0 by design
+        //    (anti-cheat: self-reported testResults are not trusted until a
+        //    real sandboxed executor lands). For coding we just verify the
+        //    scorer surfaces the server_side_execution_pending:true flag
+        //    and an expected shape — no "> 0" assertion.
         const perfectBuilder = PERFECT_ACTIONS[testType];
         if (perfectBuilder) {
             try {
@@ -247,6 +256,10 @@ function runOneTrial(testType, previousConfigs) {
                 const result = scorer(configWithWeight, actions);
                 if (!result || typeof result.score !== 'number') {
                     issues.push(`${testType}: scorer(perfect) returned invalid result: ${JSON.stringify(result)}`);
+                } else if (testType === 'arena_coding') {
+                    if (result.score !== 0 || result.server_side_execution_pending !== true) {
+                        issues.push(`arena_coding: expected degraded {score:0, server_side_execution_pending:true} shape, got ${summarize(result)}`);
+                    }
                 } else if (result.score === 0) {
                     issues.push(`${testType}: perfect action sequence scored 0 — scorer or config mismatch (config=${summarize(config)})`);
                 } else if (result.score > result.maxScore) {
@@ -594,6 +607,18 @@ async function validateRuntimeSelfTest({ arenaModule, dbPool, log }) {
                 const result  = scorer({ ...config, weight: s.max_score }, actions);
                 if (!result || typeof result.score !== 'number') {
                     out.issues.push(`${s.test_type}: scorer returned invalid result`);
+                    continue;
+                }
+                // arena_coding intentionally scores 0 until server-side
+                // sandboxed execution lands (anti-cheat: self-reported
+                // testResults are not trusted). Skip the "score > 0" gate
+                // for this one test type and instead verify the degraded
+                // shape carries the pending flag.
+                if (s.test_type === 'arena_coding') {
+                    if (result.server_side_execution_pending !== true) {
+                        out.issues.push(`arena_coding: expected server_side_execution_pending:true flag, got ${JSON.stringify(result)}`);
+                    }
+                    perTest.push({ testType: s.test_type, score: result.score, maxScore: result.maxScore, pending: true });
                     continue;
                 }
                 if (result.score <= 0) {
