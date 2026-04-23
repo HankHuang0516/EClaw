@@ -1,3 +1,10 @@
+## [1.1063.1](https://github.com/HankHuang0516/EClaw/compare/v1.1063.0...v1.1063.1) (2026-04-23)
+
+
+### Bug Fixes
+
+* **i18n:** add kanban_nudge_settings_title to 11 Android locales ([#2016](https://github.com/HankHuang0516/EClaw/issues/2016)) ([7b47934](https://github.com/HankHuang0516/EClaw/commit/7b479348278ec46c0f9c20ac9bc24749f51ba3db))
+
 # [1.1063.0](https://github.com/HankHuang0516/EClaw/compare/v1.1062.0...v1.1063.0) (2026-04-23)
 
 
