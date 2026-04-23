@@ -429,12 +429,59 @@
                     <button class="kb-chip" data-filter="mine" data-i18n="kb_filter_mine" onclick="filterCards('mine')">My Cards</button>
                 </div>
                 <select class="kb-sort-select" onchange="sortCards(this.value)">
+                    <option value="updated_desc" data-i18n="kb_sort_recently_updated">Recently Updated</option>
                     <option value="default" data-i18n="kb_sort_default">Default Order</option>
-                    <option value="created_desc" data-i18n="kb_sort_newest">Newest First</option>
-                    <option value="created_asc" data-i18n="kb_sort_oldest">Oldest First</option>
+                    <option value="created_desc" data-i18n="kb_sort_newest">Newest Created</option>
+                    <option value="created_asc" data-i18n="kb_sort_oldest">Oldest Created</option>
                     <option value="priority_asc" data-i18n="kb_sort_priority">High Priority First</option>
                 </select>
+                <button class="btn btn-ghost" onclick="toggleFunnel()" data-i18n-title="kb_funnel_toggle" title="Filter"
+                        aria-label="Filter"><span id="funnelIcon">▽</span> <span data-i18n="kb_funnel_label">Filter</span></button>
+                <button class="btn btn-ghost" onclick="openHistoryPanel()" data-i18n-title="kb_history_btn" title="History"
+                        aria-label="History">📦 <span data-i18n="kb_history_label">History</span></button>
                 <button class="btn btn-primary" data-i18n="kb_new_card_btn" onclick="openNewCard()">+ New Card</button>
+            </div>
+        </div>
+
+        <!-- Funnel (collapsible) -->
+        <div class="kb-funnel" id="kbFunnel" style="display:none; padding:8px 0 4px 0; gap:8px; flex-wrap:wrap;">
+            <input type="text" id="funnelSearch" placeholder="Search title…" data-i18n-placeholder="kb_funnel_search"
+                   oninput="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px; min-width:180px;">
+            <select id="funnelStatus" onchange="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px;">
+                <option value="" data-i18n="kb_funnel_status_all">All statuses</option>
+                <option value="backlog" data-i18n="kb_col_backlog">Backlog</option>
+                <option value="todo" data-i18n="kb_col_todo">TODO</option>
+                <option value="in_progress" data-i18n="kb_col_in_progress">In Progress</option>
+                <option value="review" data-i18n="kb_col_review">Review</option>
+                <option value="done" data-i18n="kb_col_done">Done</option>
+            </select>
+            <select id="funnelPriority" onchange="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px;">
+                <option value="" data-i18n="kb_funnel_priority_all">All priorities</option>
+                <option value="P0">P0</option>
+                <option value="P1">P1</option>
+                <option value="P2">P2</option>
+                <option value="P3">P3</option>
+            </select>
+            <label style="font-size:13px; color:#666;">
+                <span data-i18n="kb_funnel_since">Since</span>:
+                <input type="date" id="funnelSince" onchange="onFunnelChange()" style="padding:4px 6px; border:1px solid #ccc; border-radius:6px;">
+            </label>
+            <label style="font-size:13px; color:#666;">
+                <span data-i18n="kb_funnel_until">Until</span>:
+                <input type="date" id="funnelUntil" onchange="onFunnelChange()" style="padding:4px 6px; border:1px solid #ccc; border-radius:6px;">
+            </label>
+            <button class="btn btn-ghost" onclick="resetFunnel()" data-i18n="kb_funnel_reset" style="font-size:13px;">Reset</button>
+        </div>
+
+        <!-- History (archived cards) modal -->
+        <div id="kbHistoryOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:9000;" onclick="closeHistoryPanel(event)">
+            <div style="position:absolute; right:0; top:0; bottom:0; width:min(640px, 100%); background:#fff; overflow-y:auto; padding:20px; box-shadow:-4px 0 12px rgba(0,0,0,.15);" onclick="event.stopPropagation()">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <h3 style="margin:0;">📦 <span data-i18n="kb_history_title">Archived Cards</span> <span id="kbHistoryTotal" style="color:#888; font-weight:400; font-size:14px;"></span></h3>
+                    <button class="btn btn-ghost" onclick="closeHistoryPanel()" aria-label="Close">✕</button>
+                </div>
+                <div id="kbHistoryList" style="display:flex; flex-direction:column; gap:8px;"></div>
+                <div id="kbHistoryPager" style="margin-top:12px; display:flex; justify-content:center; gap:8px;"></div>
             </div>
         </div>
 
@@ -676,7 +723,10 @@
 
         let allCards = [];
         let currentFilter = 'all';
-        let currentSort = 'default';
+        let currentSort = 'updated_desc';
+        let funnelState = { q: '', status: '', priority: '', since: '', until: '' };
+        let funnelDebounce = null;
+        let historyPage = 1;
         let mobileTab = 'backlog';
         let openCardId = null;
         let boundEntities = [];
@@ -729,7 +779,9 @@
         // ── API ──
         async function loadCards() {
             try {
-                const data = await apiCall('GET', `/api/mission/cards?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+                const extra = funnelQueryParams();
+                const tail = extra ? '&' + extra : '';
+                const data = await apiCall('GET', `/api/mission/cards?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}${tail}`);
                 if (data.cards) { const changed = allCards.length > 0; allCards = data.cards.filter(c => !c.isAutomation); renderBoard(changed); }
                 console.log('[Kanban] loadCards:', (data.cards||[]).length, 'total cards');
             } catch(e) { console.error('[Kanban] loadCards failed:', e.message, e.stack); }
@@ -931,6 +983,8 @@
             if (currentSort === 'default') return cards;
             const sorted = [...cards];
             switch (currentSort) {
+                case 'updated_desc':
+                    return sorted.sort((a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0));
                 case 'created_asc':
                     return sorted.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
                 case 'created_desc':
@@ -942,6 +996,112 @@
                     });
                 default:
                     return cards;
+            }
+        }
+
+        // ── Funnel / advanced filter ──
+        function toggleFunnel() {
+            const el = document.getElementById('kbFunnel');
+            const icon = document.getElementById('funnelIcon');
+            if (!el) return;
+            const open = el.style.display === 'none';
+            el.style.display = open ? 'flex' : 'none';
+            if (icon) icon.textContent = open ? '▼' : '▽';
+        }
+
+        function onFunnelChange() {
+            funnelState = {
+                q: document.getElementById('funnelSearch').value.trim(),
+                status: document.getElementById('funnelStatus').value,
+                priority: document.getElementById('funnelPriority').value,
+                since: document.getElementById('funnelSince').value,
+                until: document.getElementById('funnelUntil').value,
+            };
+            clearTimeout(funnelDebounce);
+            funnelDebounce = setTimeout(() => loadCards(), 250);
+        }
+
+        function resetFunnel() {
+            ['funnelSearch','funnelStatus','funnelPriority','funnelSince','funnelUntil'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            funnelState = { q: '', status: '', priority: '', since: '', until: '' };
+            loadCards();
+        }
+
+        function funnelQueryParams() {
+            const p = [];
+            if (funnelState.q) p.push('q=' + encodeURIComponent(funnelState.q));
+            if (funnelState.status) p.push('status=' + encodeURIComponent(funnelState.status));
+            if (funnelState.priority) p.push('priority=' + encodeURIComponent(funnelState.priority));
+            if (funnelState.since) p.push('since=' + encodeURIComponent(new Date(funnelState.since).toISOString()));
+            if (funnelState.until) {
+                const untilEnd = new Date(funnelState.until);
+                untilEnd.setHours(23, 59, 59, 999);
+                p.push('until=' + encodeURIComponent(untilEnd.toISOString()));
+            }
+            return p.join('&');
+        }
+
+        // ── History / Archived cards ──
+        async function openHistoryPanel() {
+            document.getElementById('kbHistoryOverlay').style.display = 'block';
+            historyPage = 1;
+            await loadHistoryPage();
+        }
+
+        function closeHistoryPanel(ev) {
+            if (ev && ev.target && ev.target.id !== 'kbHistoryOverlay') return;
+            document.getElementById('kbHistoryOverlay').style.display = 'none';
+        }
+
+        async function loadHistoryPage() {
+            const list = document.getElementById('kbHistoryList');
+            const totalEl = document.getElementById('kbHistoryTotal');
+            const pagerEl = document.getElementById('kbHistoryPager');
+            list.innerHTML = '<div style="color:#888;">' + t('kb_history_loading', 'Loading…') + '</div>';
+            try {
+                const data = await apiCall('GET', `/api/mission/cards/archived?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}&page=${historyPage}&limit=20`);
+                if (!data.success) throw new Error(data.error || 'load failed');
+                totalEl.textContent = `(${data.total || 0})`;
+                if (!data.cards.length) {
+                    list.innerHTML = '<div style="color:#888; padding:20px; text-align:center;">' + t('kb_history_empty', 'No archived cards') + '</div>';
+                    pagerEl.innerHTML = '';
+                    return;
+                }
+                list.innerHTML = data.cards.map(c => {
+                    const when = c.archivedAt ? new Date(c.archivedAt).toLocaleString() : (c.updatedAt ? new Date(c.updatedAt).toLocaleString() : '');
+                    const title = (c.title || '').replace(/</g, '&lt;');
+                    return `<div style="border:1px solid #e0e0e0; border-radius:8px; padding:10px; display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                        <div style="flex:1; min-width:0;">
+                            <div style="font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${title}</div>
+                            <div style="font-size:12px; color:#888; margin-top:2px;">${c.priority} • ${c.status} • ${when}</div>
+                        </div>
+                        <button class="btn btn-ghost" style="font-size:13px;" onclick="restoreCard('${c.id}')" data-i18n="kb_history_restore">Restore</button>
+                    </div>`;
+                }).join('');
+                const totalPages = Math.max(1, Math.ceil((data.total || 0) / 20));
+                pagerEl.innerHTML = `
+                    <button class="btn btn-ghost" ${historyPage <= 1 ? 'disabled' : ''} onclick="historyPage--; loadHistoryPage()">‹</button>
+                    <span style="padding:6px 0; color:#666; font-size:13px;">${historyPage} / ${totalPages}</span>
+                    <button class="btn btn-ghost" ${historyPage >= totalPages ? 'disabled' : ''} onclick="historyPage++; loadHistoryPage()">›</button>`;
+            } catch (err) {
+                list.innerHTML = '<div style="color:#c33;">' + (err.message || err) + '</div>';
+            }
+        }
+
+        async function restoreCard(cardId) {
+            try {
+                const data = await apiCall('POST', `/api/mission/card/${cardId}/restore`, {
+                    deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret,
+                });
+                if (!data.success) throw new Error(data.error || 'restore failed');
+                showToast(t('kb_history_restored', 'Card restored to Backlog'));
+                await loadHistoryPage();
+                await loadCards();
+            } catch (err) {
+                showToast((err.message || err), true);
             }
         }
 

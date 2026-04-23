@@ -420,3 +420,101 @@ describe('GET /card/:id — short-ID prefix resolution', () => {
         expect(res.status).toBe(404);
     });
 });
+
+// ════════════════════════════════════════════════════════════════
+// GET /cards — funnel filters (q, since, until) — added 2026-04-23
+// ════════════════════════════════════════════════════════════════
+describe('GET /cards — funnel filters', () => {
+    beforeEach(() => {
+        // Default: main SELECT + summary SELECT both return empty
+        mockQuery.mockResolvedValue({ rows: [] });
+    });
+
+    it('passes q as ILIKE on title', async () => {
+        const res = await get('/api/mission/cards').query({ ...AUTH, q: 'deploy' });
+        expect(res.status).toBe(200);
+        const mainCall = mockQuery.mock.calls[0];
+        expect(mainCall[0]).toMatch(/c\.title ILIKE/);
+        expect(mainCall[1]).toContain('%deploy%');
+    });
+
+    it('passes since/until as updated_at range', async () => {
+        const res = await get('/api/mission/cards').query({
+            ...AUTH, since: '2026-04-01', until: '2026-04-30',
+        });
+        expect(res.status).toBe(200);
+        const sql = mockQuery.mock.calls[0][0];
+        expect(sql).toMatch(/c\.updated_at >= /);
+        expect(sql).toMatch(/c\.updated_at <= /);
+    });
+
+    it('ignores empty q', async () => {
+        await get('/api/mission/cards').query({ ...AUTH, q: '   ' });
+        const sql = mockQuery.mock.calls[0][0];
+        expect(sql).not.toMatch(/c\.title ILIKE/);
+    });
+
+    it('orders by updated_at DESC (sort change)', async () => {
+        await get('/api/mission/cards').query({ ...AUTH });
+        const sql = mockQuery.mock.calls[0][0];
+        expect(sql).toMatch(/c\.updated_at DESC NULLS LAST/);
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
+// POST /card/:id/restore — un-archive archived card
+// ════════════════════════════════════════════════════════════════
+describe('POST /card/:id/restore', () => {
+    const ARCHIVED_CARD = {
+        id: 'card_abc', device_id: 'test-dev', title: 'Old task',
+        description: '', priority: 'P2', status: 'backlog',
+        assigned_bots: [0], created_by: 0,
+        created_at: new Date(), updated_at: new Date(),
+        status_changed_at: new Date(), archived: false, archived_at: null,
+    };
+
+    it('restores archived card to backlog and returns the card', async () => {
+        mockQuery
+            .mockResolvedValueOnce({ rows: [ARCHIVED_CARD] })  // UPDATE ... RETURNING
+            .mockResolvedValueOnce({ rows: [] })               // addSystemComment INSERT
+            .mockResolvedValueOnce({ rows: [] })               // addSystemComment UPDATE updated_at
+            .mockResolvedValueOnce({ rows: [] });              // bumpVersion
+
+        const res = await post('/api/mission/card/card_abc/restore').send({ ...AUTH });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.card.id).toBe('card_abc');
+        const updateCall = mockQuery.mock.calls[0];
+        expect(updateCall[0]).toMatch(/archived = false/);
+        expect(updateCall[0]).toMatch(/archived = true/); // WHERE clause guards against non-archived rows
+        expect(updateCall[0]).toMatch(/status = 'backlog'/);
+    });
+
+    it('returns 404 if card is not archived or does not exist', async () => {
+        mockQuery.mockResolvedValueOnce({ rows: [] });
+        const res = await post('/api/mission/card/missing/restore').send({ ...AUTH });
+        expect(res.status).toBe(404);
+        expect(res.body.error).toMatch(/not found/i);
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
+// Comment / note / file insert bumps kanban_cards.updated_at
+// (so "Recently Updated" sort surfaces cards that get activity)
+// ════════════════════════════════════════════════════════════════
+describe('activity bumps updated_at', () => {
+    it('POST /card/:id/comment updates card.updated_at', async () => {
+        mockQuery
+            .mockResolvedValueOnce({ rows: [{ id: 'card_x', assigned_bots: [0] }] }) // card SELECT
+            .mockResolvedValueOnce({ rows: [{ id: 'c1', from_entity_id: 0, text: 'hi', created_at: new Date() }] }) // INSERT comment
+            .mockResolvedValueOnce({ rows: [] })   // UPDATE updated_at (new)
+            .mockResolvedValueOnce({ rows: [] });  // bumpVersion
+
+        const res = await post('/api/mission/card/card_x/comment').send({ ...AUTH, entityId: 1, text: 'hi' });
+        expect(res.status).toBe(200);
+        const updatedAtCall = mockQuery.mock.calls.find(c =>
+            /UPDATE kanban_cards SET updated_at = NOW/.test(c[0])
+        );
+        expect(updatedAtCall).toBeDefined();
+    });
+});

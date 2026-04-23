@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS kanban_cards (
     created_by INTEGER NOT NULL DEFAULT 0,               -- entity ID of creator
     status_changed_at TIMESTAMPTZ DEFAULT NOW(),         -- for stale detection
     stale_threshold_ms BIGINT DEFAULT 10800000,          -- 3 hours
-    done_retention_ms BIGINT DEFAULT 86400000,           -- 24 hours
+    done_retention_ms BIGINT DEFAULT 604800000,          -- 7 days (2026-04-23: bumped from 24h)
     last_stale_nudge_at TIMESTAMPTZ DEFAULT NULL,        -- last nudge timestamp (min 1hr gap)
     archived BOOLEAN DEFAULT FALSE,
     archived_at TIMESTAMPTZ DEFAULT NULL,
@@ -56,6 +56,19 @@ CREATE INDEX IF NOT EXISTS idx_kanban_cards_automation ON kanban_cards(device_id
     WHERE is_automation = true;
 CREATE INDEX IF NOT EXISTS idx_kanban_cards_parent ON kanban_cards(parent_card_id)
     WHERE parent_card_id IS NOT NULL;
+
+-- ============================================
+-- Migration: bump done_retention from 24h → 7d (2026-04-23)
+-- Change column default, then bump rows still sitting on the old 86400000 value.
+-- Rows that have an explicit per-card override (any other value) stay untouched.
+-- ============================================
+ALTER TABLE kanban_cards ALTER COLUMN done_retention_ms SET DEFAULT 604800000;
+UPDATE kanban_cards SET done_retention_ms = 604800000 WHERE done_retention_ms = 86400000;
+
+-- ============================================
+-- Index: updated_at DESC for the new default kanban sort (2026-04-23)
+-- ============================================
+CREATE INDEX IF NOT EXISTS idx_kanban_cards_device_updated ON kanban_cards(device_id, updated_at DESC);
 
 -- ============================================
 -- Kanban Comments Table (留言板)

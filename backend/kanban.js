@@ -185,11 +185,16 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     }
 
     // ── Helper: add system comment to card ──
+    // Bumps kanban_cards.updated_at so "Recently Updated" sort surfaces the card.
     async function addSystemComment(cardId, deviceId, text) {
         await pool.query(
             `INSERT INTO kanban_comments (card_id, device_id, from_entity_id, text, is_system)
              VALUES ($1, $2, -1, $3, true)`,
             [cardId, deviceId, text]
+        );
+        await pool.query(
+            `UPDATE kanban_cards SET updated_at = NOW() WHERE id = $1 AND device_id = $2`,
+            [cardId, deviceId]
         );
     }
 
@@ -318,7 +323,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             createdBy: row.created_by,
             statusChangedAt: row.status_changed_at ? new Date(row.status_changed_at).getTime() : null,
             staleThresholdMs: parseInt(row.stale_threshold_ms) || 10800000,
-            doneRetentionMs: parseInt(row.done_retention_ms) || 86400000,
+            doneRetentionMs: parseInt(row.done_retention_ms) || 604800000,
             archived: row.archived || false,
             createdAt: row.created_at ? new Date(row.created_at).getTime() : null,
             updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : null,
@@ -491,7 +496,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     router.get('/cards', async (req, res) => {
         if (!authenticate(req, res)) return;
         const { deviceId } = { ...req.query, ...req.body };
-        const { status: filterStatus, assignedBot, priority: filterPriority, automation } = req.query;
+        const { status: filterStatus, assignedBot, priority: filterPriority, automation, q: searchQuery, since, until } = req.query;
 
         try {
             let query = `
@@ -536,11 +541,35 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 params.push(filterPriority);
             }
 
-            // Order: P0 first, then by status position, then newest first
-            query += ` ORDER BY 
+            // Funnel filters added 2026-04-23:
+            // ?q=text  → ILIKE match on title (simple text search)
+            // ?since=ISO8601 / ?until=ISO8601  → updated_at range
+            if (searchQuery && typeof searchQuery === 'string' && searchQuery.trim()) {
+                query += ` AND c.title ILIKE $${paramIdx++}`;
+                params.push(`%${searchQuery.trim()}%`);
+            }
+            if (since) {
+                const sinceDate = new Date(since);
+                if (!isNaN(sinceDate.getTime())) {
+                    query += ` AND c.updated_at >= $${paramIdx++}`;
+                    params.push(sinceDate);
+                }
+            }
+            if (until) {
+                const untilDate = new Date(until);
+                if (!isNaN(untilDate.getTime())) {
+                    query += ` AND c.updated_at <= $${paramIdx++}`;
+                    params.push(untilDate);
+                }
+            }
+
+            // Order: P0 first, then by status position, then most-recently-updated first.
+            // Changed 2026-04-23 from created_at DESC to updated_at DESC so cards move
+            // to the top when they receive new comments/notes/status changes.
+            query += ` ORDER BY
                 CASE c.priority WHEN 'P0' THEN 0 WHEN 'P1' THEN 1 WHEN 'P2' THEN 2 WHEN 'P3' THEN 3 END,
                 CASE c.status WHEN 'in_progress' THEN 0 WHEN 'review' THEN 1 WHEN 'todo' THEN 2 WHEN 'backlog' THEN 3 WHEN 'done' THEN 4 END,
-                c.created_at DESC`;
+                c.updated_at DESC NULLS LAST`;
 
             const result = await pool.query(query, params);
             const cards = result.rows.map(serializeCard);
@@ -973,6 +1002,39 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     });
 
     // ============================================
+    // POST /card/:id/restore — Un-archive a card (bring it back to the board)
+    // ============================================
+    router.post('/card/:id/restore', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId } = { ...req.query, ...req.body };
+        const cardId = req.params.id;
+
+        try {
+            // Restore to 'backlog' so it doesn't immediately re-archive if it was 'done'.
+            const result = await pool.query(
+                `UPDATE kanban_cards
+                 SET archived = false, archived_at = NULL, status = 'backlog',
+                     status_changed_at = NOW(), updated_at = NOW()
+                 WHERE id = $1 AND device_id = $2 AND archived = true
+                 RETURNING *`,
+                [cardId, deviceId]
+            );
+
+            if (result.rows.length === 0) {
+                return res.status(404).json({ success: false, error: 'Archived card not found' });
+            }
+
+            await addSystemComment(cardId, deviceId, '♻️ 卡片已還原至 Backlog');
+            await bumpVersion(deviceId);
+
+            res.json({ success: true, card: serializeCard(result.rows[0]) });
+        } catch (err) {
+            console.error('[Kanban] Restore card error:', err);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // ============================================
     // POST /card/:id/move — Move card status
     // ============================================
     router.post('/card/:id/move', async (req, res) => {
@@ -1146,6 +1208,12 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 [cardId, deviceId, eId, text.trim()]
             );
 
+            // Bump card updated_at so "Recently Updated" sort surfaces the card.
+            await pool.query(
+                `UPDATE kanban_cards SET updated_at = NOW() WHERE id = $1 AND device_id = $2`,
+                [cardId, deviceId]
+            );
+
             const comment = {
                 id: result.rows[0].id,
                 fromEntityId: result.rows[0].from_entity_id,
@@ -1229,6 +1297,12 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                  VALUES ($1, $2, $3, $4, $5)
                  RETURNING *`,
                 [cardId, deviceId, (title || '').trim(), content.trim(), eId]
+            );
+
+            // Bump card updated_at so "Recently Updated" sort surfaces the card.
+            await pool.query(
+                `UPDATE kanban_cards SET updated_at = NOW() WHERE id = $1 AND device_id = $2`,
+                [cardId, deviceId]
             );
 
             const note = {
@@ -1315,6 +1389,12 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                  VALUES ($1, $2, $3, $4, $5, $6, $7)
                  RETURNING *`,
                 [cardId, deviceId, filename, url, mimeType || null, fileSize || null, uploadedBy]
+            );
+
+            // Bump card updated_at so "Recently Updated" sort surfaces the card.
+            await pool.query(
+                `UPDATE kanban_cards SET updated_at = NOW() WHERE id = $1 AND device_id = $2`,
+                [cardId, deviceId]
             );
 
             const file = {
