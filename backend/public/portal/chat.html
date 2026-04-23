@@ -2256,10 +2256,6 @@
                                 <span class="menu-icon">&#x1F3AC;</span>
                                 <span data-i18n="chat_attach_video">Video</span>
                             </button>
-                            <button class="attach-menu-item" onclick="openFilePicker()">
-                                <span class="menu-icon">&#x1F4CE;</span>
-                                <span data-i18n="chat_attach_file">File</span>
-                            </button>
                             <button class="attach-menu-item" onclick="openR2FilesPanel()">
                                 <span class="menu-icon">&#x1F4C1;</span>
                                 <span data-i18n="chat_attach_my_files">Cloud Drive</span>
@@ -2284,7 +2280,6 @@
                 </div>
                 <input type="file" id="photoFileInput" accept="image/jpeg,image/png,image/webp" multiple style="display:none" onchange="handleFilesSelected(this, 'photo')">
                 <input type="file" id="videoFileInput" accept="video/mp4,video/webm,video/quicktime" multiple style="display:none" onchange="handleFilesSelected(this, 'video')">
-                <input type="file" id="fileFileInput" multiple style="display:none" onchange="handleFilesSelected(this, 'file')">
             </div>
         </div>
     </div>
@@ -4833,11 +4828,6 @@
         function openVideoPicker() {
             document.getElementById('attachMenu').classList.remove('active');
             document.getElementById('videoFileInput').click();
-        }
-
-        function openFilePicker() {
-            document.getElementById('attachMenu').classList.remove('active');
-            document.getElementById('fileFileInput').click();
         }
 
         function handleFilesSelected(input, type) {
