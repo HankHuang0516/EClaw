@@ -1,3 +1,10 @@
+# [1.1059.0](https://github.com/HankHuang0516/EClaw/compare/v1.1058.2...v1.1059.0) (2026-04-23)
+
+
+### Features
+
+* **device-vars:** audit trail + code-review checklist ([#1997](https://github.com/HankHuang0516/EClaw/issues/1997)) ([a20f88b](https://github.com/HankHuang0516/EClaw/commit/a20f88b2cc207bbaa5dc1adb9af57ddbc6c534ed)), closes [#1995](https://github.com/HankHuang0516/EClaw/issues/1995) [#1996](https://github.com/HankHuang0516/EClaw/issues/1996)
+
 ## [1.1058.2](https://github.com/HankHuang0516/EClaw/compare/v1.1058.1...v1.1058.2) (2026-04-23)
 
 
