@@ -1,3 +1,10 @@
+## [1.1055.3](https://github.com/HankHuang0516/EClaw/compare/v1.1055.2...v1.1055.3) (2026-04-23)
+
+
+### Bug Fixes
+
+* **chat-history:** broadcast recipients beyond first can see their messages ([#1989](https://github.com/HankHuang0516/EClaw/issues/1989)) ([477d8e2](https://github.com/HankHuang0516/EClaw/commit/477d8e27fa9ddb49683b089d19e883e32a22c7b9))
+
 ## [1.1055.2](https://github.com/HankHuang0516/EClaw/compare/v1.1055.1...v1.1055.2) (2026-04-23)
 
 
