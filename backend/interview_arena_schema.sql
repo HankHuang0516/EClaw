@@ -123,3 +123,9 @@ ALTER TABLE arena_exams ADD COLUMN IF NOT EXISTS first_fetched_at TIMESTAMP WITH
 -- elapsed time for the leaderboard that isn't polluted by the user
 -- typing their display name after finalize.
 ALTER TABLE arena_exams ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP WITH TIME ZONE;
+
+-- Allow expires_at to be NULL at exam creation. The 3-min TTL is armed
+-- atomically by GET /arena/test/:id (see backend/index.js), so the
+-- countdown measures from the bot's first fetch rather than from the
+-- channel-delivery-delayed INSERT. NULL = "clock not yet armed".
+ALTER TABLE arena_exams ALTER COLUMN expires_at DROP NOT NULL;

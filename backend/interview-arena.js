@@ -611,8 +611,33 @@ function scoreNavigation(config, actionsLog) {
             deepest = Math.max(deepest, nav.payload.depth);
         }
     }
-    const reached = findAction(actionsLog, 'target_found') != null;
-    if (reached) return { score: config.weight, maxScore: config.weight };
+    // Full marks ONLY if the bot's `target_found` payload actually contains
+    // the serial string it was told to hunt for. A bare `{actionType:"target_found"}`
+    // with no payload used to net all 13 points — that was a self-report
+    // exploit. Normalize both sides (trim + lowercase + strip optional
+    // "Serial:" prefix) and require exact match OR strict substring so bots
+    // can echo "The serial is 8af0c1b3" without us false-negatives.
+    const found = findAction(actionsLog, 'target_found');
+    if (found) {
+        const norm = (v) => String(v == null ? '' : v)
+            .trim()
+            .toLowerCase()
+            .replace(/^serial\s*:\s*/i, '')
+            .trim();
+        const expected = norm(config.targetInfo);
+        const payload = found.payload || {};
+        const claimed = norm(
+            payload.targetInfo != null ? payload.targetInfo :
+            payload.serial != null ? payload.serial :
+            payload.value != null ? payload.value :
+            payload.text != null ? payload.text : ''
+        );
+        if (expected && claimed && (claimed === expected || claimed.includes(expected))) {
+            return { score: config.weight, maxScore: config.weight };
+        }
+        // target_found fired but payload empty/wrong → treat as not reached;
+        // fall through to depth-based partial credit rather than award full.
+    }
     const ratio = deepest / maxDepth;
     return { score: Math.round(config.weight * ratio * 0.75), maxScore: config.weight };
 }
@@ -655,17 +680,34 @@ function scoreDistraction(config, actionsLog) {
 }
 
 function scoreCoding(config, actionsLog) {
+    // Self-reported `testResults:[true,true,...]` used to net full marks
+    // without any actual code execution. Until a real sandboxed executor
+    // lands (vm2 / worker_thread with timeout + memory limit — see TODO),
+    // accept the submission metadata but award 0 and surface a machine-
+    // readable flag so downstream reporting can explain the gap.
+    //
+    // TODO(arena): replace this degraded scorer with a real sandboxed
+    // runner. Shape: spin up a worker_thread (or vm2 context) with
+    // resourceLimits.maxYoungGenerationSizeMb ~= 16, cpuTime timeout
+    // ~= 1000ms, no network/fs/require, feed each testCase.input via
+    // postMessage, compare stdout/return vs testCase.expected, then
+    // score ratio * weight with the existing speed bonus pipeline.
     const submit = findAction(actionsLog, 'code_submitted');
-    if (!submit || !submit.payload) return { score: 0, maxScore: config.weight };
-    const testResults = submit.payload.testResults || [];
+    if (!submit || !submit.payload) {
+        return { score: 0, maxScore: config.weight, server_side_execution_pending: true };
+    }
+    const claimedResults = Array.isArray(submit.payload.testResults) ? submit.payload.testResults
+        : Array.isArray(submit.payload.claimedResults) ? submit.payload.claimedResults
+        : [];
     const totalTests = (config.testCases || []).length;
-    if (totalTests === 0) return { score: 0, maxScore: config.weight };
-    const passed = testResults.filter(r => r === true || r === 'pass').length;
-    const ratio = passed / totalTests;
-    let score = Math.round(config.weight * 0.8 * ratio);
-    // Conciseness bonus (simplified: if code submitted and tests pass)
-    if (ratio >= 1.0) score = config.weight;
-    return { score, maxScore: config.weight };
+    return {
+        score: 0,
+        maxScore: config.weight,
+        server_side_execution_pending: true,
+        claimedPassed: claimedResults.filter(r => r === true || r === 'pass').length,
+        totalTests,
+        note: 'Self-reported testResults are not trusted. Awaiting server-side sandboxed execution.',
+    };
 }
 
 function scoreResponseTime(config, actionsLog) {
@@ -1087,15 +1129,20 @@ module.exports = function arenaFactory({ serverLog, io, devices } = {}) {
             // — INSERTs without an explicit id violate the NOT NULL constraint.
             const examId = newExamId();
             const examToken = generateToken(12);
-            const expiresAt = new Date(Date.now() + EXAM_TTL_MS);
-
-            // Optional: link this exam to a rental listing for interview qualification
+            // Clock-start fix: leave expires_at NULL at creation. The 3-min
+            // TTL budget is still EXAM_TTL_MS but the timer itself is armed
+            // atomically on the bot's first GET /arena/test/:id (see
+            // backend/index.js — first_fetched_at bump). Channel delivery
+            // latency (30-60s) no longer eats the bot's solving window,
+            // and exams that are never fetched simply never expire from
+            // the action endpoint's point of view (they're still garbage-
+            // collected by the daily pool updater).
             const listingId = req.body?.listingId || null;
             const examRes = await pool.query(
                 `INSERT INTO arena_exams (id, exam_token, listing_id, status, max_score, expires_at)
-                 VALUES ($1, $2, $3, $4, $5, $6)
+                 VALUES ($1, $2, $3, $4, $5, NULL)
                  RETURNING id, exam_token, listing_id, status, created_at, expires_at`,
-                [examId, examToken, listingId, EXAM_STATUS.WAITING, MAX_TOTAL_SCORE, expiresAt]
+                [examId, examToken, listingId, EXAM_STATUS.WAITING, MAX_TOTAL_SCORE]
             );
             const exam = examRes.rows[0];
 
@@ -1275,8 +1322,12 @@ module.exports = function arenaFactory({ serverLog, io, devices } = {}) {
             if (sessRes.rowCount === 0) return res.status(404).json({ success: false, error: 'session_not_found' });
             const session = sessRes.rows[0];
 
-            // Check expiry
-            if (new Date(session.expires_at) < new Date()) {
+            // Check expiry — NULL expires_at means the clock has not yet
+            // been armed (bot has not fetched GET /arena/test/:id). In that
+            // case the exam simply has not started, so the action is not
+            // "expired" — let it through. Normal case: timer was armed on
+            // first fetch and we compare normally.
+            if (session.expires_at != null && new Date(session.expires_at) < new Date()) {
                 return res.status(410).json({ success: false, error: 'exam_expired' });
             }
             if (session.status === 'completed') {
