@@ -1,3 +1,10 @@
+## [1.1058.2](https://github.com/HankHuang0516/EClaw/compare/v1.1058.1...v1.1058.2) (2026-04-23)
+
+
+### Bug Fixes
+
+* **device-vars:** guard DELETE /api/device-vars with explicit confirm ([#1996](https://github.com/HankHuang0516/EClaw/issues/1996)) ([7338948](https://github.com/HankHuang0516/EClaw/commit/73389483e94e675ecfc8fa661cc32e1d920322a3)), closes [#1995](https://github.com/HankHuang0516/EClaw/issues/1995)
+
 ## [1.1058.1](https://github.com/HankHuang0516/EClaw/compare/v1.1058.0...v1.1058.1) (2026-04-23)
 
 
