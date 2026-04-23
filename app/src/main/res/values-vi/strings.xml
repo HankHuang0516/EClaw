@@ -788,7 +788,7 @@ Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua
     <string name="feedback_photo_upload_failed">Tải ảnh thất bại: %s</string>
     <string name="billing_google_play_loading">Đang tải Google Play...</string>
     <string name="dialog_unblock_message">Bỏ chặn %s?</string>
-    <string name="billing_subscription_unavailable">無法取得訂閱方案，請稍後再試</string>    <string name="dialog_add_friend_message">Add %s to your contacts?</string>
+    <string name="billing_subscription_unavailable">無法取得訂閱方案，請稍後再試</string>    <string name="dialog_add_friend_message">Thêm %s vào danh bạ của bạn?</string>
     <string name="dialog_add_friend_title">Add Friend</string>
     <string name="dialog_agent_card_title">Agent Card — Entity #%d</string>
     <string name="dialog_block_contact">Block %s? They will no longer be able to interact with you.</string>
