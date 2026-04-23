@@ -1,3 +1,10 @@
+# [1.1057.0](https://github.com/HankHuang0516/EClaw/compare/v1.1056.0...v1.1057.0) (2026-04-23)
+
+
+### Features
+
+* **wallpaper:** smart layout for N entities (non-overlap >4) ([#1992](https://github.com/HankHuang0516/EClaw/issues/1992)) ([49686d8](https://github.com/HankHuang0516/EClaw/commit/49686d8c829daaadcd2219601891e1c4c077e59e))
+
 # [1.1056.0](https://github.com/HankHuang0516/EClaw/compare/v1.1055.3...v1.1056.0) (2026-04-23)
 
 
