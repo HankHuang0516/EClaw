@@ -1,3 +1,11 @@
+## [1.1061.2](https://github.com/HankHuang0516/EClaw/compare/v1.1061.1...v1.1061.2) (2026-04-23)
+
+
+### Bug Fixes
+
+* **arena:** harden navigation + coding + exam clock scoring against self-report exploits ([#2007](https://github.com/HankHuang0516/EClaw/issues/2007)) ([a90fc7f](https://github.com/HankHuang0516/EClaw/commit/a90fc7fed504d15144b7a728a7ae23c1e480571b))
+* **arena:** poll-fallback bootstraps exam timer when WS timer_started is missed ([#2008](https://github.com/HankHuang0516/EClaw/issues/2008)) ([f6357ff](https://github.com/HankHuang0516/EClaw/commit/f6357ffdde72ec83c3eb2f37b3511d6f4b07496b))
+
 ## [1.1061.1](https://github.com/HankHuang0516/EClaw/compare/v1.1061.0...v1.1061.1) (2026-04-23)
 
 
