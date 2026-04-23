@@ -1,3 +1,10 @@
+## [1.1061.4](https://github.com/HankHuang0516/EClaw/compare/v1.1061.3...v1.1061.4) (2026-04-23)
+
+
+### Bug Fixes
+
+* **chat/r2:** label cloud drive dates (上傳/到期) — unlabeled 到期 misread as upload date ([#2010](https://github.com/HankHuang0516/EClaw/issues/2010)) ([bdbd681](https://github.com/HankHuang0516/EClaw/commit/bdbd681e38950c4a15b879f103ff6216e3280f0f))
+
 ## [1.1061.3](https://github.com/HankHuang0516/EClaw/compare/v1.1061.2...v1.1061.3) (2026-04-23)
 
 
