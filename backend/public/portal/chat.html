@@ -2252,10 +2252,6 @@
                                 <span class="menu-icon">&#x1F4F7;</span>
                                 <span data-i18n="chat_attach_photo">Photo</span>
                             </button>
-                            <button class="attach-menu-item" onclick="openVideoPicker()">
-                                <span class="menu-icon">&#x1F3AC;</span>
-                                <span data-i18n="chat_attach_video">Video</span>
-                            </button>
                             <button class="attach-menu-item" onclick="openR2FilesPanel()">
                                 <span class="menu-icon">&#x1F4C1;</span>
                                 <span data-i18n="chat_attach_my_files">Cloud Drive</span>
@@ -2278,8 +2274,7 @@
                     <button class="btn btn-primary btn-send" id="btnSend" onclick="sendMessage()"
                         data-i18n="chat_btn_send" title="Send">&#10148;</button>
                 </div>
-                <input type="file" id="photoFileInput" accept="image/jpeg,image/png,image/webp" multiple style="display:none" onchange="handleFilesSelected(this, 'photo')">
-                <input type="file" id="videoFileInput" accept="video/mp4,video/webm,video/quicktime" multiple style="display:none" onchange="handleFilesSelected(this, 'video')">
+                <input type="file" id="photoFileInput" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" multiple style="display:none" onchange="handleFilesSelected(this, 'photo')">
             </div>
         </div>
     </div>
@@ -4827,11 +4822,6 @@
         function openPhotoPicker() {
             document.getElementById('attachMenu').classList.remove('active');
             document.getElementById('photoFileInput').click();
-        }
-
-        function openVideoPicker() {
-            document.getElementById('attachMenu').classList.remove('active');
-            document.getElementById('videoFileInput').click();
         }
 
         function handleFilesSelected(input, type) {
