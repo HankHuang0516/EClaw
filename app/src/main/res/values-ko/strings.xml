@@ -788,7 +788,7 @@ GPS: 온디맨드만, 백그라운드 추적 없음, 서버 재시작 시 데이
     <string name="feedback_photo_upload_failed">사진 업로드 실패: %s</string>
     <string name="billing_google_play_loading">Google Play 로드 중...</string>
     <string name="dialog_unblock_message">%s 차단을 해제하시겠습니까?</string>
-    <string name="billing_subscription_unavailable">無法取得訂閱方案，請稍後再試</string>    <string name="dialog_add_friend_message">Add %s to your contacts?</string>
+    <string name="billing_subscription_unavailable">無法取得訂閱方案，請稍後再試</string>    <string name="dialog_add_friend_message">%s을(를) 연락처에 추가하시겠습니까?</string>
     <string name="dialog_add_friend_title">Add Friend</string>
     <string name="dialog_agent_card_title">Agent Card — Entity #%d</string>
     <string name="dialog_block_contact">Block %s? They will no longer be able to interact with you.</string>
