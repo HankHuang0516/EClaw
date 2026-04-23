@@ -468,6 +468,7 @@
     <string name="channel_api_copied">Identifiants copiés</string>
     <string name="channel_api_no_key">Pas encore de clé API. Ouvrez le portail Web pour en générer une.</string>
     <string name="channel_api_slots_active">Connecté : %1$s</string>
+    <string name="kanban_nudge_settings_title">📋 Paramètres de rappel Kanban</string>
 
     <!-- Account Status Card -->
     <string name="account_card_title">Compte</string>

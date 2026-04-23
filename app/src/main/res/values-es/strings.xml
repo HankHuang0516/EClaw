@@ -148,6 +148,7 @@ Pregúntame lo que quieras sobre la plataforma.</string>
     <string name="channel_api_no_key">Sin clave API aún. Abre el Portal Web para generar una.</string>
     <string name="channel_api_secret_label">Secreto API</string>
     <string name="channel_api_slots_active">Conectado: %1$s</string>
+    <string name="kanban_nudge_settings_title">📋 Ajustes de recordatorio Kanban</string>
     <string name="channel_bind_warning">La versión 2026-03+ recomienda encarecidamente usar enlace de Canal EClaw para evitar fallos de enlace.</string>
     <string name="channel_learn_more">Saber más →</string>
     <string name="channel_promo">¿Probar EClaw Channel? Más nativo, más rápido</string>

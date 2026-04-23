@@ -145,6 +145,7 @@
     <string name="channel_api_no_key">APIキーがまだありません。Webポータルで開いて生成してください。</string>
     <string name="channel_api_secret_label">APIシークレット</string>
     <string name="channel_api_slots_active">接続中: %1$s</string>
+    <string name="kanban_nudge_settings_title">📋 カンバン催促設定</string>
     <string name="channel_bind_warning">バージョン 2026-03 以降は EClaw Channel バインドの使用を強く推奨します。バインド失敗を防止できます。</string>
     <string name="channel_learn_more">詳しく見る →</string>
     <string name="channel_promo">EClaw Channel を試してみませんか？よりネイティブ、より高速</string>

@@ -468,6 +468,7 @@
     <string name="channel_api_copied">Anmeldedaten kopiert</string>
     <string name="channel_api_no_key">Noch kein API-Schlüssel. Öffnen Sie das Webportal, um einen zu generieren.</string>
     <string name="channel_api_slots_active">Verbunden: %1$s</string>
+    <string name="kanban_nudge_settings_title">📋 Kanban-Erinnerungseinstellungen</string>
 
     <!-- Account Status Card -->
     <string name="account_card_title">Konto</string>

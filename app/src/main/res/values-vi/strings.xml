@@ -145,6 +145,7 @@
     <string name="channel_api_no_key">Chưa có API key. Mở Web Portal để tạo.</string>
     <string name="channel_api_secret_label">API Secret</string>
     <string name="channel_api_slots_active">Đã kết nối: %1$s</string>
+    <string name="kanban_nudge_settings_title">📋 Cài đặt nhắc Kanban</string>
     <string name="channel_bind_warning">Phiên bản 2026-03 trở lên khuyến nghị sử dụng EClaw Channel để liên kết nhằm tránh lỗi liên kết.</string>
     <string name="channel_learn_more">Tìm hiểu thêm →</string>
     <string name="channel_promo">Thử EClaw Channel? Tích hợp gốc hơn, nhanh hơn</string>
