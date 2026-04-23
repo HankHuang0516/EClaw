@@ -468,6 +468,7 @@
     <string name="channel_api_copied">Kelayakan disalin</string>
     <string name="channel_api_no_key">Belum ada kunci API. Buka Portal Web untuk menjana satu.</string>
     <string name="channel_api_slots_active">Disambung: %1$s</string>
+    <string name="kanban_nudge_settings_title">📋 Tetapan Peringatan Kanban</string>
 
     <!-- Account Status Card -->
     <string name="account_card_title">Akaun</string>

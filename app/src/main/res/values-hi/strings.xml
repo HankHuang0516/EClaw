@@ -468,6 +468,7 @@
     <string name="channel_api_copied">क्रेडेंशियल्स कॉपी हो गए</string>
     <string name="channel_api_no_key">अभी तक कोई API कुंजी नहीं। जनरेट करने के लिए वेब पोर्टल खोलें।</string>
     <string name="channel_api_slots_active">कनेक्टेड: %1$s</string>
+    <string name="kanban_nudge_settings_title">📋 कानबन नोटिस सेटिंग्स</string>
 
     <!-- Account Status Card -->
     <string name="account_card_title">खाता</string>

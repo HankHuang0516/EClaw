@@ -145,6 +145,7 @@
     <string name="channel_api_no_key">ยังไม่มี API key เปิด Web Portal เพื่อสร้าง</string>
     <string name="channel_api_secret_label">API Secret</string>
     <string name="channel_api_slots_active">เชื่อมต่อแล้ว: %1$s</string>
+    <string name="kanban_nudge_settings_title">📋 การตั้งค่าการเตือนการ์ดค้าง</string>
     <string name="channel_bind_warning">เวอร์ชัน 2026-03 ขึ้นไปแนะนำให้ใช้ EClaw Channel สำหรับการผูกเพื่อหลีกเลี่ยงการผูกล้มเหลว</string>
     <string name="channel_learn_more">เรียนรู้เพิ่มเติม →</string>
     <string name="channel_promo">ลอง EClaw Channel? เนทีฟกว่า เร็วกว่า</string>

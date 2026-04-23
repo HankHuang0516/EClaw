@@ -145,6 +145,7 @@
     <string name="channel_api_no_key">API 키가 아직 없습니다. 웹 포털에서 생성하세요.</string>
     <string name="channel_api_secret_label">API 시크릿</string>
     <string name="channel_api_slots_active">연결됨: %1$s</string>
+    <string name="kanban_nudge_settings_title">📋 칸반 촉구 설정</string>
     <string name="channel_bind_warning">2026-03 버전 이상에서는 바인딩 실패를 방지하기 위해 EClaw Channel 바인딩 사용을 강력히 권장합니다.</string>
     <string name="channel_learn_more">자세히 보기 →</string>
     <string name="channel_promo">EClaw Channel을 사용해 보세요! 더 네이티브하고 더 빠릅니다</string>
