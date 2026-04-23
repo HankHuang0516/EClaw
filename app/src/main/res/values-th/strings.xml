@@ -788,7 +788,7 @@ GPS：รับตามความต้องการเท่านั้�
     <string name="feedback_photo_upload_failed">อัปโหลดภาพล้มเหลว: %s</string>
     <string name="billing_google_play_loading">กำลังโหลด Google Play...</string>
     <string name="dialog_unblock_message">ปลดบล็อก %s หรือไม่？</string>
-    <string name="billing_subscription_unavailable">無法取得訂閱方案，請稍後再試</string>    <string name="dialog_add_friend_message">Add %s to your contacts?</string>
+    <string name="billing_subscription_unavailable">無法取得訂閱方案，請稍後再試</string>    <string name="dialog_add_friend_message">เพิ่ม %s ไปยังรายชื่อติดต่อของคุณ?</string>
     <string name="dialog_add_friend_title">Add Friend</string>
     <string name="dialog_agent_card_title">Agent Card — Entity #%d</string>
     <string name="dialog_block_contact">Block %s? They will no longer be able to interact with you.</string>
