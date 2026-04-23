@@ -1018,6 +1018,16 @@
                         document.getElementById('scoreWrap').style.display = 'block';
                     }
                 }
+                // Timer bootstrap fallback: if bot has fetched (firstFetchedAt set) but
+                // WS timer_started was missed, start the countdown from expiresAt now.
+                if (exam.firstFetchedAt && !examTimerInterval && exam.status !== 'completed') {
+                    let remainingSec = 180;
+                    if (exam.expiresAt) {
+                        const diff = Math.floor((new Date(exam.expiresAt).getTime() - Date.now()) / 1000);
+                        remainingSec = Math.max(0, Math.min(180, diff));
+                    }
+                    startExamTimer(remainingSec);
+                }
                 // Update session scores from DB
                 if (data.sessions) {
                     let total = 0;
