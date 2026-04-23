@@ -1,3 +1,10 @@
+# [1.1060.0](https://github.com/HankHuang0516/EClaw/compare/v1.1059.0...v1.1060.0) (2026-04-23)
+
+
+### Features
+
+* **kanban:** sort by updated, funnel filter, history panel, 7d retention ([#1998](https://github.com/HankHuang0516/EClaw/issues/1998)) ([430b02a](https://github.com/HankHuang0516/EClaw/commit/430b02a49a564fb1830db0068f4593094c6e9c46))
+
 # [1.1059.0](https://github.com/HankHuang0516/EClaw/compare/v1.1058.2...v1.1059.0) (2026-04-23)
 
 
