@@ -151,7 +151,14 @@ module.exports = function filesModule(devices) {
             }
 
             const { deviceId, entityId } = creds;
-            const { originalname, mimetype, size, buffer } = req.file;
+            const { mimetype, size, buffer } = req.file;
+            // Multer decodes multipart filenames as latin-1 by default; browsers send
+            // them as UTF-8, so non-ASCII names (e.g. Chinese) arrive as mojibake
+            // (é­ç¿ä¹...). Re-interpret the latin-1 string as UTF-8 bytes to recover.
+            const rawName = req.file.originalname || 'file';
+            const originalname = /[-ÿ]/.test(rawName)
+                ? Buffer.from(rawName, 'latin1').toString('utf8')
+                : rawName;
 
             // testQuotaBytes: deviceSecret-only param for integration tests to simulate quota exceeded
             const testQuotaBytes = creds.deviceSecret && req.body.testQuotaBytes
