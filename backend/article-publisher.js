@@ -11,6 +11,7 @@ const router = express.Router();
 const X_TWEET_WEIGHTED_LIMIT = 280;
 
 function truncateTweet(text) {
+    if (!text) return { text: text ?? '', truncated: false, originalWeighted: 0 };
     const parsed = twitterText.parseTweet(text);
     if (parsed.valid && parsed.weightedLength <= X_TWEET_WEIGHTED_LIMIT) {
         return { text, truncated: false, originalWeighted: parsed.weightedLength };

@@ -2390,7 +2390,7 @@
     <script src="shared/entity-utils.js"></script>
     <script src="shared/mention-autocomplete.js"></script>
     <script src="shared/mention-render.js"></script>
-    <script src="shared/note-link-render.js?v=0e95a36c"></script>
+    <script src="shared/note-link-render.js"></script>
     <script src="shared/entity-link-render.js"></script>
     <script src="shared/his-link-render.js"></script>
     <script src="../shared/telemetry.js"></script>
@@ -2522,7 +2522,15 @@
                                 const bubble = el.querySelector('.chat-bubble');
                                 if (bubble) {
                                     const domText = bubble.textContent || '';
-                                    const snippet = (msg.text||'').slice(0, 40).trim();
+                                    // Normalize server text: strip link-render patterns that the
+                                    // renderers (NoteLinkRender, EntityLinkRender, HisLinkRender)
+                                    // replace with short display chips in the DOM.
+                                    const normalized = (msg.text||'')
+                                        .replace(/\b(?:note|notes|筆記|笔记|備忘|备忘)\s*[:：#＃]?\s*[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}/gi, '')
+                                        .replace(/\bnote_[a-f0-9]{24}(?:\.{3}|…)?\b/gi, '')
+                                        .replace(/\b(?:card|skill|rule|listing|exam|contract)_[a-z0-9]{8,}/gi, '')
+                                        .replace(/\bhis_[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}/gi, '');
+                                    const snippet = normalized.slice(0, 40).trim();
                                     if (snippet && !domText.includes(snippet)) {
                                         _send({ layer: 'display', checkType: 'text_content',
                                             description: `Bubble ${i} text mismatch`,
