@@ -1497,6 +1497,39 @@
             display: block; cursor: pointer; object-fit: cover;
         }
 
+        /* ── Inline R2 attachment card (URL-stripped replacement) ── */
+        .r2-attachment-card {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 8px; margin: 2px 0;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+            font-size: 13px; max-width: 100%;
+            vertical-align: middle;
+        }
+        .chat-msg.received .r2-attachment-card {
+            background: var(--card); border-color: var(--card-border);
+        }
+        .r2-attachment-card .r2-attachment-icon { font-size: 16px; flex-shrink: 0; cursor: pointer; }
+        .r2-attachment-card .r2-attachment-name {
+            font-weight: 500; word-break: break-all; cursor: pointer;
+            overflow: hidden; text-overflow: ellipsis; max-width: 220px;
+            white-space: nowrap;
+        }
+        .r2-attachment-card .r2-attachment-btn {
+            flex-shrink: 0; font-size: 12px; padding: 3px 8px;
+            border-radius: 6px; background: var(--primary); color: #fff;
+            border: none; cursor: pointer; white-space: nowrap;
+        }
+        .r2-attachment-card.r2-inert { cursor: default; opacity: 0.85; }
+        .r2-legacy-chip {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 2px 6px; border-radius: 8px; font-size: 11px;
+            background: rgba(255,255,255,0.05);
+            color: var(--text-muted);
+        }
+        .r2-legacy-chip .r2-legacy-link { color: var(--text-muted); text-decoration: underline; }
+
         /* ── Scroll Navigator (side drag) ── */
         .scroll-nav {
             position: absolute;
@@ -2468,6 +2501,7 @@
     <script src="shared/note-link-render.js"></script>
     <script src="shared/entity-link-render.js"></script>
     <script src="shared/his-link-render.js"></script>
+    <script src="shared/r2-link-render.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
     <script src="/socket.io/socket.io.js"></script>
@@ -3849,12 +3883,20 @@
                     if (window.HisLinkRender) {
                         textHtml = HisLinkRender.renderHisLinks(textHtml);
                     }
+                    // Strip raw R2 presigned URLs — replace with attachment cards so
+                    // that access-key IDs and 10-minute bearer tokens never reach the DOM.
+                    if (window.R2LinkRender) {
+                        textHtml = R2LinkRender.replaceR2Links(textHtml);
+                    }
                 }
-                const firstUrlIsImage = firstUrl && isImageUrl(firstUrl);
+                // Suppress inline image + link preview when firstUrl is an R2 presigned URL;
+                // the attachment card rendered above is the safe surface for that file.
+                const firstUrlIsR2 = firstUrl && window.R2LinkRender && R2LinkRender.isR2Url(firstUrl);
+                const firstUrlIsImage = firstUrl && !firstUrlIsR2 && isImageUrl(firstUrl);
                 const inlineImgHtml = firstUrlIsImage
                     ? `<img class="chat-inline-img" src="${escapeHtml(firstUrl)}" alt="" loading="lazy" onclick="openLightbox('${escapeHtml(firstUrl)}')" onerror="this.style.display='none'">`
                     : '';
-                const previewId = firstUrl && !firstUrlIsImage ? `lp-${msg.id || Math.random().toString(36).slice(2)}` : '';
+                const previewId = firstUrl && !firstUrlIsImage && !firstUrlIsR2 ? `lp-${msg.id || Math.random().toString(36).slice(2)}` : '';
 
                 // Read receipt for sent messages
                 let receipt = '';

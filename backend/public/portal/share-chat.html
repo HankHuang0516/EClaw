@@ -94,6 +94,13 @@
 
         .empty-msg { text-align: center; color: var(--text-muted); padding: 40px 20px; font-size: 14px; }
 
+        /* ── Inert R2 attachment card (share-chat is read-only) ── */
+        .r2-attachment-card { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; margin: 2px 0; border-radius: 10px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); font-size: 13px; vertical-align: middle; opacity: 0.85; }
+        .r2-attachment-card .r2-attachment-icon { font-size: 16px; flex-shrink: 0; }
+        .r2-attachment-card .r2-attachment-name { font-weight: 500; word-break: break-all; overflow: hidden; text-overflow: ellipsis; max-width: 220px; white-space: nowrap; }
+        .r2-legacy-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 8px; font-size: 11px; background: rgba(255,255,255,0.05); color: var(--text-muted); }
+        .r2-legacy-chip .r2-legacy-link { color: var(--text-muted); text-decoration: underline; }
+
         /* ── Debug panel ── */
         .debug-panel { position: fixed; bottom: 0; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: #111827; color: #10b981; font-family: monospace; font-size: 11px; padding: 8px; z-index: 200; border-top: 2px solid #10b981; display: none; }
         .debug-panel.visible { display: block; }
@@ -348,6 +355,7 @@
     <button class="debug-toggle" id="debugToggle" onclick="toggleDebug()">DEBUG</button>
 
     <script src="/portal/shared/entity-utils.js"></script>
+    <script src="/portal/shared/r2-link-render.js"></script>
     <script src="/shared/i18n.js"></script>
     <script src="/shared/telemetry.js"></script>
     <script>
@@ -719,6 +727,11 @@
                 textSpan.className = 'md-content';
             } else {
                 textSpan.innerHTML = renderMessageContent(escapeHtml(cleanText));
+            }
+            // Share-chat is public — strip R2 presigned URLs so screenshots/forwards
+            // never leak access-key IDs. Inert mode renders filename only, no buttons.
+            if (window.R2LinkRender) {
+                textSpan.innerHTML = R2LinkRender.replaceR2Links(textSpan.innerHTML, { interactive: false });
             }
             div.appendChild(textSpan);
         }
