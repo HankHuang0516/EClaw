@@ -1411,7 +1411,8 @@ app.get('/api/help', (req, res) => {
         general: [
             { title: 'Full API documentation', curl: `curl -s "${apiBase}/api/skill-doc?format=text"` },
             { title: 'Read mission dashboard', curl: `curl -s "${apiBase}/api/mission/dashboard?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
-            { title: 'Read kanban board', curl: `curl -s "${apiBase}/api/mission/cards?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` }
+            { title: 'Read kanban board', curl: `curl -s "${apiBase}/api/mission/cards?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
+            { title: 'Scheduled messages (user action, DEVICE_SECRET required)', curl: `curl -s "${apiBase}/api/scheduled-messages?deviceId=${deviceId}&deviceSecret=DEVICE_SECRET&chatEntityId=${eId}"` }
         ],
         analytics: [
             { title: 'Daily growth snapshot (today, owner-admin only)', curl: `curl -s "${apiBase}/api/growth/daily?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
@@ -1591,6 +1592,22 @@ try {
 } catch (err) {
     console.error('[Mindmap] Failed to load module:', err.message);
     mindmapModule = { initMindmapTables: () => {} };
+}
+
+// Scheduled Messages — user-scheduled chat messages (Phase 1: backend)
+let scheduledMessagesModule;
+try {
+    scheduledMessagesModule = require('./scheduled-messages')(devices, {
+        saveChatMessage,
+        pushToBot,
+        unifiedPush,
+        serverLog,
+    });
+    app.use('/api/scheduled-messages', scheduledMessagesModule.router);
+    console.log('[ScheduledMessages] Module loaded successfully');
+} catch (err) {
+    console.error('[ScheduledMessages] Failed to load module:', err.message);
+    scheduledMessagesModule = { initDatabase: () => {}, startPoller: () => {}, stopPoller: () => {} };
 }
 
 // ============================================
@@ -1969,6 +1986,12 @@ nodeCron.schedule('17 3 * * *', () => {
 missionModule.initMissionDatabase();
 kanbanModule.initKanbanDatabase();
 kanbanModule.startBackgroundTimers();
+if (scheduledMessagesModule && scheduledMessagesModule.initDatabase) {
+    scheduledMessagesModule.initDatabase();
+    if (process.env.NODE_ENV !== 'test' && scheduledMessagesModule.startPoller) {
+        scheduledMessagesModule.startPoller();
+    }
+}
 // Wire notification callback (notifyDevice defined later, uses closure)
 missionModule.setNotifyCallback((deviceId, notif) => notifyDevice(deviceId, notif));
 
