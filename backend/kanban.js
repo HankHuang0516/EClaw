@@ -1447,8 +1447,10 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             filename = filename || r2row.rows[0].filename;
             mimeType = mimeType || r2row.rows[0].mime_type;
             fileSize = fileSize || parseInt(r2row.rows[0].size);
-            // Stored url is just a legacy cache; GET regenerates from fileId.
-            url = url || `r2:${fileId}`;
+            // Stored url is always the opaque cache when file_id is set — any
+            // `url` the caller passed (possibly a raw R2 signed URL that would
+            // leak) is discarded. GET regenerates from fileId on every read.
+            url = `r2:${fileId}`;
         }
 
         if (!filename || !url) {
