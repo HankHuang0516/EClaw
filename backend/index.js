@@ -620,6 +620,45 @@ app.use('/mission', express.static(path.join(__dirname, 'public'), {
     lastModified: true,
     maxAge: '10m'
 }));
+
+// Deploy-time version for <script src="shared/*.js"> cache-busting.
+// Browsers + Cloudflare page-rule cache shared JS for up to 4h with no
+// revalidation, so an unchanged src URL serves the pre-deploy bundle
+// well after a merge. Appending ?v=<sha> makes the URL change on every
+// deploy and invalidates both caches immediately.
+const SCRIPT_VERSION = (
+    process.env.RAILWAY_GIT_COMMIT_SHA ||
+    process.env.GIT_COMMIT_SHA ||
+    process.env.VERCEL_GIT_COMMIT_SHA ||
+    String(Date.now())
+).slice(0, 12);
+
+const _PORTAL_HTML_DIR = path.join(__dirname, 'public/portal');
+const _SHARED_SRC_RE = /<script(\s[^>]*?)?\ssrc=(["'])((?:\.\.\/)?shared\/[^"']+?\.js)(\?[^"']*)?\2([^>]*)><\/script>/g;
+
+function injectScriptVersion(html) {
+    return html.replace(_SHARED_SRC_RE, (_m, pre, q, src, existingQuery, post) => {
+        const query = existingQuery
+            ? existingQuery + '&v=' + SCRIPT_VERSION
+            : '?v=' + SCRIPT_VERSION;
+        return `<script${pre || ''} src=${q}${src}${query}${q}${post || ''}></script>`;
+    });
+}
+
+// Serve /portal/*.html through a middleware that version-stamps shared JS
+// script tags. Non-HTML requests fall through to express.static below.
+app.get(/^\/portal\/[^\/]+\.html$/, (req, res, next) => {
+    const rel = req.path.slice('/portal/'.length);
+    const filePath = path.join(_PORTAL_HTML_DIR, rel);
+    if (!filePath.startsWith(_PORTAL_HTML_DIR)) return next();
+    fs.readFile(filePath, 'utf8', (err, html) => {
+        if (err) return next();
+        res.set('Cache-Control', 'no-cache');
+        res.set('Content-Type', 'text/html; charset=utf-8');
+        res.send(injectScriptVersion(html));
+    });
+});
+
 app.use('/portal', express.static(path.join(__dirname, 'public/portal'), {
     etag: true,
     lastModified: true,

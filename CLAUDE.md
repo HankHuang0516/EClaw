@@ -7,8 +7,8 @@
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
-- **Current version**: 1.1054.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
-- **Android app version**: 1.0.76 (versionCode 82); `LATEST_APP_VERSION` constant in `backend/index.js`
+- **Current version**: 1.1063.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **Android app version**: 1.0.77 (versionCode 83); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
 ---
@@ -18,7 +18,7 @@
 ```
 EClaw/
 ├── backend/                  # Node.js Express server (deployed to Railway)
-│   ├── index.js              # Main server (~17,095 lines) — all API routes
+│   ├── index.js              # Main server (~17,335 lines) — all API routes
 │   ├── db.js                 # PostgreSQL connection pool + schema creation
 │   ├── auth.js               # Auth module (JWT, OAuth, OIDC, RBAC)
 │   ├── mission.js            # Mission Control dashboard system
@@ -110,6 +110,7 @@ EClaw/
 │   │   │   ├── wallet.html       # E-coin wallet management
 │   │   │   ├── my-rentals.html   # Active rental contracts display
 │   │   │   ├── plaza.html        # Bot rental marketplace / plaza
+│   │   │   ├── marketplace.html  # Bot rental marketplace (alternate entry)
 │   │   │   ├── onboarding.html   # New user onboarding flow
 │   │   │   ├── invite.html       # Referral/invite code page
 │   │   │   ├── invite-qr-generator.html # QR code generation for invites
@@ -125,6 +126,13 @@ EClaw/
 │   │   │   │   ├── public-nav.js  # Public pages navigation
 │   │   │   │   ├── socket.js      # WebSocket client
 │   │   │   │   ├── his-link-render.js # Parse his_<id> tokens into clickable history chips
+│   │   │   │   ├── note-link-render.js # Parse note links into inline preview chips
+│   │   │   │   ├── entity-link-render.js # Parse entity links into clickable chips
+│   │   │   │   ├── mention-autocomplete.js # @mention autocomplete for chat input
+│   │   │   │   ├── mention-render.js # @mention rendering in chat messages
+│   │   │   │   ├── agent-card-editor.js # Agent card editor component
+│   │   │   │   ├── info.js         # Info page shared logic
+│   │   │   │   ├── info.css        # Info page shared styles
 │   │   │   │   ├── product-tour.js # Product tour/onboarding module
 │   │   │   │   └── style.css      # Shared styles (agent card, avatar, etc.)
 │   │   ├── shared/
@@ -141,8 +149,8 @@ EClaw/
 │   │   │   └── og-image.png       # Open Graph social sharing image
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
-│   ├── tests/                # Regression + integration tests (78 files)
-│   ├── tests/jest/           # Jest unit tests (108 files, CI-run via `npm test`)
+│   ├── tests/                # Regression + integration tests (59 files)
+│   ├── tests/jest/           # Jest unit tests (116 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -205,7 +213,7 @@ EClaw/
 
 ### Backend (Node.js/Express)
 
-- **Single-file server**: `backend/index.js` (~17,095 lines) contains all API routes
+- **Single-file server**: `backend/index.js` (~17,335 lines) contains all API routes
 - **Database**: PostgreSQL (Railway-managed), connection in `backend/db.js`
 - **Real-time**: Socket.IO for live updates to Web Portal and Android app
 - **Auth**: JWT tokens (cookie-based for web, header-based for API), social OAuth (Google, Facebook), OIDC
@@ -337,6 +345,7 @@ EClaw/
 | Wallet | `/portal/wallet.html` | E-coin wallet management |
 | My Rentals | `/portal/my-rentals.html` | Active rental contracts |
 | Plaza | `/portal/plaza.html` | Bot rental marketplace |
+| Marketplace | `/portal/marketplace.html` | Bot rental marketplace (alternate) |
 | Onboarding | `/portal/onboarding.html` | New user onboarding flow |
 | Invite | `/portal/invite.html` | Referral/invite code page |
 | Roadmap | `/portal/roadmap.html` | Product roadmap display |
@@ -352,7 +361,7 @@ EClaw/
 - Billing: Google Play Billing (`BillingManager.kt`)
 - AI Chat: `AiChatViewModel.kt` manages state (fixes message loss, typing race condition)
 - Bottom nav: FILES tab renamed to CARDS (Card Holder); Files link moved to Settings
-- App version: 1.0.76 (versionCode 82)
+- App version: 1.0.77 (versionCode 83)
 
 ### iOS/React Native App (Expo)
 
@@ -849,7 +858,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Privacy Policy Page**: `/privacy-policy.html` with full i18n support; linked from registration terms dialog
 - **Admin Kanban Migration (v1.359)**: One-time migration from legacy mission + schedules to kanban cards
 - **Kanban Auto-Move (v1.217)**: Auto-move child cards to review when bot transforms IDLE
-- **App Version**: Updated to 1.0.76 (versionCode 82)
+- **App Version**: Updated to 1.0.77 (versionCode 83)
 
 ### Recent Features (v1.363.x+)
 
@@ -891,11 +900,26 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Auth Race Fix (v1.1049)**: Prevent api.js 401 redirect from racing auth.js fallbacks
 - **Billing Retry (v1.1047)**: Retry stuck INAPP top-up purchases on Android app startup; WebView JS bridge wired for wallet tier clicks
 
+### Recent Features (v1.1055.x – v1.1063.x)
+
+- **Broadcast Recipient Fix (v1.1055)**: Broadcast recipients beyond the first can now see their messages in chat history; regex fix locked with regression test
+- **Chat Save Observability (v1.1055)**: Hardened `saveChatMessage()` — await all bot-reply save calls; observability logging for lost messages
+- **bindingType/channelProvider Surfacing (v1.1056)**: `GET /api/entities` now returns `bindingType` and `channelProvider` so bots can route accordingly
+- **Smart Wallpaper Layout (v1.1057)**: Non-overlapping entity layout for >4 entities on Android live wallpaper
+- **SSR OG Meta for Public Profiles (v1.1058)**: Server-side rendered Open Graph meta + JSON-LD on `/c/:publicCode` for rich social sharing
+- **Device Vars Security (v1.1059–v1.1060)**: Explicit `confirm:"YES_DELETE_ALL_VAULT"` guard on DELETE wipe; refuse legacy empty-wipe on non-empty vault; full audit trail (`device_vars_audit` table) for every POST/DELETE
+- **Kanban Board Enhancements (v1.1060–v1.1063)**: Sort by updated/funnel filter/history panel/7-day archive retention; Kanban Nudge per-device settings (batch size, priority mode, status filter, interval); mobile toolbar overflow fix; dark mode history drawer fix
+- **Cloud Drive UX (v1.1061)**: Mojibake fix, click-to-preview, pill-shaped attachment chips; date labels (上傳/到期) for cloud drive files
+- **Chat Media Picker Merge (v1.1061)**: Generic File upload removed; Photo + Video merged into single Photo button; Cloud Drive retained as separate action
+- **Interview Arena Hardening (v1.1061)**: Anti-exploit scoring for navigation/coding/exam clock; poll-fallback bootstraps exam timer when WS `timer_started` is missed; model surfaced in report
+- **Code Review Checklist (v1.1060)**: Mandatory 10-item self-review checklist (`docs/code-review-checklist.md`) for all PRs — Part A (core) + Part B (extended)
+- **i18n Expansion**: `dialog_add_friend_message` translated across all 12 Android locales; `kanban_nudge_settings_title` synced to Android + iOS
+
 ---
 
 ## Test Coverage Summary
 
-**~440 total API routes** across all modules (390 excluding Article Publisher), **~75% covered** by Jest + integration tests (~2017 test cases across 113 Jest files + 78 integration tests).
+**~440 total API routes** across all modules (390 excluding Article Publisher), **~75% covered** by Jest + integration tests (~2093 test cases across 116 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -987,7 +1011,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | R2 Quota Rich Card | `node backend/tests/test-r2-quota-rich-card.js` | Device ID + Secret | R2 quota exceeded rich card E2E |
 | Subscription Plans Live | `node backend/tests/test-subscription-plans-live.js` | Device ID + Secret | Subscription plans + wallet live verification |
 
-### Jest Unit Tests (CI-run, `npm test`, 97 files)
+### Jest Unit Tests (CI-run, `npm test`, 116 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -1069,7 +1093,7 @@ Set in `backend/.env` (gitignored):
 - `server_logs` schema extension is backward-compatible — all existing 67+ `serverLog()` calls work without modification (new fields default to null)
 - Entity unbind calls `createDefaultEntity()` which resets all fields including new ones — no separate cleanup needed
 - `const` redeclaration in same scope is a JS error — check existing variable names before adding new ones (e.g., `adminAuth` already declared at line 1198)
-- `index.js` is a single 14,648-line file — use line numbers when referencing specific code sections
+- `index.js` is a single 17,335-line file — use line numbers when referencing specific code sections
 - Module initialization order matters: `db.js` → `devices` in-memory map → module `require()` calls with dependency injection
 - `scheduler.js` is dead code — no longer required by any module after v1.362 legacy schedule removal
 - `kanban.js` is the replacement for the legacy schedule/todo system — mounted at `/api/mission/card*`
