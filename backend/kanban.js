@@ -329,6 +329,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             createdAt: row.created_at ? new Date(row.created_at).getTime() : null,
             updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : null,
             reviewerEntityId: row.reviewer_entity_id != null ? parseInt(row.reviewer_entity_id) : null,
+            requiresScreenshotReview: row.requires_screenshot_review !== false,
             // Aggregated counts (if present from JOIN)
             commentCount: parseInt(row.comment_count) || 0,
             noteCount: parseInt(row.note_count) || 0,
@@ -364,7 +365,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     router.post('/card', async (req, res) => {
         if (!authenticate(req, res)) return;
         const _p = { ...req.query, ...req.body }; console.log('[Kanban] POST /card called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
-        const { deviceId, title, description, priority, status, assignedBots, entityId, reviewerEntityId, isAutomation, schedule } = req.body;
+        const { deviceId, title, description, priority, status, assignedBots, entityId, reviewerEntityId, isAutomation, schedule, requiresScreenshotReview } = req.body;
 
         if (!title || !title.trim()) {
             return res.status(400).json({ success: false, error: 'Missing title' });
@@ -450,16 +451,17 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
         // recurring schedule → auto-promote to automation
         const finalAutomation = wantAutomation || (schedEnabled && schedType === 'recurring');
+        const finalRequiresScreenshot = requiresScreenshotReview !== false;
 
         try {
             const result = await pool.query(
                 `INSERT INTO kanban_cards (id, device_id, title, description, priority, status, assigned_bots, created_by, reviewer_entity_id, status_changed_at,
-                    is_automation, schedule_enabled, schedule_type, schedule_cron, schedule_run_at, schedule_timezone, schedule_next_run_at)
+                    is_automation, schedule_enabled, schedule_type, schedule_cron, schedule_run_at, schedule_timezone, schedule_next_run_at, requires_screenshot_review)
                  VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, NOW(),
-                    $10, $11, $12, $13, $14, $15, $16)
+                    $10, $11, $12, $13, $14, $15, $16, $17)
                  RETURNING *`,
                 [newCardId(), deviceId, title.trim(), description || '', cardPriority, cardStatus, JSON.stringify(bots), createdBy, reviewer,
-                    finalAutomation, schedEnabled, schedType, schedCron, schedRunAt, schedTz, schedNextRunAt]
+                    finalAutomation, schedEnabled, schedType, schedCron, schedRunAt, schedTz, schedNextRunAt, finalRequiresScreenshot]
             );
 
             const card = serializeCard(result.rows[0]);
@@ -897,7 +899,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     router.put('/card/:id', async (req, res) => {
         if (!authenticate(req, res)) return;
         const _p = { ...req.query, ...req.body }; console.log('[Kanban] PUT /card/:id called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
-        const { deviceId, title, description, priority, assignedBots, reviewerEntityId } = req.body;
+        const { deviceId, title, description, priority, assignedBots, reviewerEntityId, requiresScreenshotReview } = req.body;
         const cardId = req.params.id;
 
         try {
@@ -946,6 +948,10 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             if (reviewerEntityId !== undefined) {
                 updates.push(`reviewer_entity_id = $${paramIdx++}`);
                 params.push(reviewerEntityId != null ? parseInt(reviewerEntityId) : null);
+            }
+            if (requiresScreenshotReview !== undefined) {
+                updates.push(`requires_screenshot_review = $${paramIdx++}`);
+                params.push(!!requiresScreenshotReview);
             }
 
             if (updates.length === 0) {
@@ -1075,9 +1081,27 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 return res.status(400).json({ success: false, error: 'At least one entity must be assigned' });
             }
 
+            // Screenshot-review gate: block review/done transitions if no image attached.
+            // Skip when card.requires_screenshot_review is explicitly false.
+            if ((newStatus === 'review' || newStatus === 'done') && card.requires_screenshot_review !== false) {
+                const shot = await pool.query(
+                    `SELECT COUNT(*)::int AS cnt FROM kanban_files
+                     WHERE card_id = $1 AND mime_type LIKE 'image/%'`,
+                    [cardId]
+                );
+                if ((shot.rows[0]?.cnt || 0) === 0) {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Screenshot review required',
+                        hint: `此卡開啟了「截圖審查」，需先附上任務完成截圖才能移到 ${STATUS_LABELS[newStatus] || newStatus}。請用 POST /api/mission/card/${cardId}/file 帶 { url, filename, mimeType: "image/png" } 上傳 R2 截圖 URL。`,
+                        code: 'SCREENSHOT_REQUIRED'
+                    });
+                }
+            }
+
             const result = await pool.query(
-                `UPDATE kanban_cards 
-                 SET status = $1, assigned_bots = $2::jsonb, status_changed_at = NOW(), 
+                `UPDATE kanban_cards
+                 SET status = $1, assigned_bots = $2::jsonb, status_changed_at = NOW(),
                      last_stale_nudge_at = NULL, updated_at = NOW()
                  WHERE id = $3 AND device_id = $4
                  RETURNING *`,
