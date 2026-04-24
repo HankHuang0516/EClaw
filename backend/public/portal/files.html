@@ -210,6 +210,10 @@
             cursor: pointer;
             transition: all 0.2s;
             position: relative;
+            /* Suppress iOS save-image callout during the long-press detection
+             * window. Without this, a 500ms hold on a photo thumbnail pops the
+             * system share sheet before our multi-select timer can fire. */
+            -webkit-touch-callout: none;
         }
 
         .file-card:hover {
@@ -526,6 +530,82 @@
             .preview-actions .btn {
                 width: 100%;
                 justify-content: center;
+            }
+        }
+
+        /* ===== Multi-select mode ===== */
+        body.multi-select-mode {
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+        body.multi-select-mode .file-card:hover {
+            transform: none;
+            box-shadow: none;
+        }
+        body.multi-select-mode .file-card::after {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.55);
+            border: 2px solid #fff;
+            z-index: 3;
+            transition: background 0.15s;
+        }
+        body.multi-select-mode .file-card.selected::after {
+            background: var(--primary, #6c63ff);
+            border-color: var(--primary, #6c63ff);
+            content: '\2713';
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        body.multi-select-mode .file-card.selected {
+            outline: 2px solid var(--primary, #6c63ff);
+            outline-offset: -2px;
+        }
+        body.multi-select-mode .file-delete-btn,
+        body.multi-select-mode .file-quote-btn {
+            display: none !important;
+        }
+
+        .multi-select-bar {
+            position: fixed;
+            left: 50%;
+            bottom: 20px;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: var(--card, #222);
+            border: 1px solid var(--card-border, #333);
+            border-radius: 999px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+            z-index: 250;
+            max-width: calc(100vw - 24px);
+        }
+        .multi-select-bar .ms-count {
+            color: var(--text, #eee);
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        @media (max-width: 480px) {
+            .multi-select-bar {
+                left: 12px;
+                right: 12px;
+                transform: none;
+                bottom: 16px;
+                justify-content: space-between;
             }
         }
     </style>
@@ -945,8 +1025,12 @@
 
                 const deleteBtn = '<button class="file-delete-btn" onclick="event.stopPropagation();deleteFile(' + realIdx + ')" title="Delete">&#x2715;</button>';
                 const quoteBtn = '<button class="file-quote-btn" onclick="event.stopPropagation();quoteFileToChat(' + realIdx + ')" title="引用到聊天">📌</button>';
+                const selCls = multiSelectIds.has(file.id) ? ' selected' : '';
+                const cardAttrs = 'class="file-card' + selCls + '" data-fileidx="' + realIdx + '"' +
+                    ' onclick="onFileCardClick(' + realIdx + ', event)"' +
+                    ' oncontextmenu="onFileCardContextMenu(' + realIdx + ', event)"';
                 if (file.type === 'photo') {
-                    return '<div class="file-card" onclick="previewFile(' + realIdx + ')" oncontextmenu="event.preventDefault();moveFileToFolder(' + realIdx + ')">' +
+                    return '<div ' + cardAttrs + '>' +
                         deleteBtn + quoteBtn +
                         '<div class="file-thumb">' +
                         '<img src="' + escapeHtml(file.url) + '" alt="photo" loading="lazy" onerror="this.parentElement.innerHTML=\'<div class=file-thumb-icon>🖼️</div>\'">' +
@@ -960,7 +1044,7 @@
                         '<div class="file-date">' + date + '</div>' +
                         '</div></div>';
                 } else {
-                    return '<div class="file-card" onclick="previewFile(' + realIdx + ')" oncontextmenu="event.preventDefault();moveFileToFolder(' + realIdx + ')">' +
+                    return '<div ' + cardAttrs + '>' +
                         deleteBtn + quoteBtn +
                         '<div class="file-thumb">' +
                         '<div class="file-thumb-icon">🎙️</div>' +
@@ -975,6 +1059,8 @@
                         '</div></div>';
                 }
             }).join('');
+
+            attachLongPressListeners(grid);
         }
 
         function getEntityName(entityId) {
@@ -1132,6 +1218,177 @@
                 showToast(i18n.t('files_delete_failed', 'Failed to delete file'), 'error');
             }
         }
+
+        // ===================================================================
+        // Multi-select mode (long-press a file card → batch-attach to chat)
+        // ===================================================================
+        let multiSelectMode = false;
+        const multiSelectIds = new Set();
+        const LONG_PRESS_MS = 500;
+        const LONG_PRESS_MOVE_TOL = 8;
+        let _lpTimer = null;
+        let _lpStart = null;
+        let _lpIdx = null;
+        let _lpFiredIdx = null; // suppress the click that follows a long-press
+
+        function onFileCardClick(idx, ev) {
+            // If the long-press just fired on this card, its mouseup/touchend
+            // synthesises a click — swallow it so we don't also toggle twice
+            // or open a preview right after entering multi-select.
+            if (_lpFiredIdx === idx) {
+                _lpFiredIdx = null;
+                ev.preventDefault();
+                ev.stopPropagation();
+                return;
+            }
+            if (multiSelectMode) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                toggleMultiSelect(idx);
+                return;
+            }
+            previewFile(idx);
+        }
+        function onFileCardContextMenu(idx, ev) {
+            // Desktop right-click → existing move-to-folder flow.
+            // On touch devices the long-press path enters multi-select first
+            // (_lpFiredIdx is set), so we suppress the synthesised contextmenu.
+            ev.preventDefault();
+            if (_lpFiredIdx === idx || multiSelectMode) return;
+            moveFileToFolder(idx);
+        }
+
+        function toggleMultiSelect(idx) {
+            const file = allFiles[idx];
+            if (!file) return;
+            if (multiSelectIds.has(file.id)) multiSelectIds.delete(file.id);
+            else multiSelectIds.add(file.id);
+            const card = document.querySelector('[data-fileidx="' + idx + '"]');
+            if (card) card.classList.toggle('selected', multiSelectIds.has(file.id));
+            renderMultiSelectBar();
+            // Exit when user deselects the last card (matches mobile photo-picker UX)
+            if (multiSelectIds.size === 0) exitMultiSelectMode();
+        }
+
+        function enterMultiSelectMode(initialIdx) {
+            if (!multiSelectMode) {
+                multiSelectMode = true;
+                document.body.classList.add('multi-select-mode');
+            }
+            if (initialIdx != null) toggleMultiSelect(initialIdx);
+            renderMultiSelectBar();
+        }
+        function exitMultiSelectMode() {
+            if (!multiSelectMode) return;
+            multiSelectMode = false;
+            multiSelectIds.clear();
+            document.body.classList.remove('multi-select-mode');
+            document.getElementById('multiSelectBar')?.remove();
+            // Strip .selected from any still-styled cards without re-fetching.
+            document.querySelectorAll('.file-card.selected').forEach(c => c.classList.remove('selected'));
+        }
+
+        function renderMultiSelectBar() {
+            const count = multiSelectIds.size;
+            let bar = document.getElementById('multiSelectBar');
+            if (count === 0) { bar?.remove(); return; }
+            if (!bar) {
+                bar = document.createElement('div');
+                bar.id = 'multiSelectBar';
+                bar.className = 'multi-select-bar';
+                document.body.appendChild(bar);
+            }
+            const countLabel = i18n.t('files_multi_select_count', 'Selected') + ': ' + count;
+            const attachLabel = '🧷 ' + i18n.t('files_multi_select_attach', 'Attach to chat');
+            const cancelLabel = '✖ ' + i18n.t('files_multi_select_cancel', 'Cancel');
+            bar.innerHTML =
+                '<span class="ms-count">' + escapeHtml(countLabel) + '</span>' +
+                '<button class="btn btn-primary btn-sm" onclick="attachSelectedFiles()">' + attachLabel + '</button>' +
+                '<button class="btn btn-outline btn-sm" onclick="exitMultiSelectMode()">' + cancelLabel + '</button>';
+        }
+
+        function attachSelectedFiles() {
+            if (multiSelectIds.size === 0) return;
+            const staged = allFiles
+                .filter(f => multiSelectIds.has(f.id))
+                .map(f => ({
+                    id: f.id,
+                    type: f.type,
+                    mediaUrl: f.url,
+                    fileName: (f.text && f.text.trim() ? f.text.trim().slice(0, 60) : '')
+                        || (f.type + '_' + new Date(f.createdAt).toISOString().slice(0, 10)),
+                }));
+            try {
+                sessionStorage.setItem('eclaw_pending_attach_files', JSON.stringify({
+                    files: staged, ts: Date.now()
+                }));
+            } catch (_) {}
+            exitMultiSelectMode();
+            window.location.href = '/portal/chat.html';
+        }
+
+        // --- Long-press / pointer handling ---
+        function _lpClear() {
+            if (_lpTimer) { clearTimeout(_lpTimer); _lpTimer = null; }
+            _lpStart = null;
+            _lpIdx = null;
+        }
+        function attachLongPressListeners(grid) {
+            if (!grid || grid._lpBound) return;
+            grid._lpBound = true;
+
+            grid.addEventListener('pointerdown', (e) => {
+                // Ignore right-button / middle-button (they have their own handlers).
+                if (e.button && e.button !== 0) return;
+                const card = e.target.closest('[data-fileidx]');
+                if (!card) return;
+                const idx = parseInt(card.getAttribute('data-fileidx'), 10);
+                if (isNaN(idx)) return;
+                // Skip long-press if user started on an action button.
+                if (e.target.closest('.file-delete-btn, .file-quote-btn')) return;
+
+                _lpClear();
+                _lpStart = { x: e.clientX, y: e.clientY };
+                _lpIdx = idx;
+                _lpTimer = setTimeout(() => {
+                    _lpTimer = null;
+                    _lpFiredIdx = idx;
+                    enterMultiSelectMode(idx);
+                    // Clear the suppression after the click event fires.
+                    setTimeout(() => { if (_lpFiredIdx === idx) _lpFiredIdx = null; }, 400);
+                }, LONG_PRESS_MS);
+            });
+
+            grid.addEventListener('pointermove', (e) => {
+                if (!_lpTimer || !_lpStart) return;
+                if (Math.abs(e.clientX - _lpStart.x) > LONG_PRESS_MOVE_TOL ||
+                    Math.abs(e.clientY - _lpStart.y) > LONG_PRESS_MOVE_TOL) {
+                    _lpClear();
+                }
+            });
+
+            const endHandler = () => { if (_lpTimer) _lpClear(); };
+            grid.addEventListener('pointerup', endHandler);
+            grid.addEventListener('pointercancel', endHandler);
+            grid.addEventListener('pointerleave', endHandler);
+        }
+
+        // Global ESC exits multi-select.
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && multiSelectMode) {
+                exitMultiSelectMode();
+            }
+        });
+
+        // Clicking outside any file card or the action bar exits multi-select.
+        // Use capture so we see the click before any inline onclick fires;
+        // we still let file-card / bar clicks through their own handlers.
+        document.addEventListener('click', (e) => {
+            if (!multiSelectMode) return;
+            if (e.target.closest('.file-card') || e.target.closest('.multi-select-bar')) return;
+            // Filter chips / folder chips / nav / footer all count as "empty area" for exit purposes.
+            exitMultiSelectMode();
+        });
 
         // --- Helpers ---
         function quoteToChat(source, title, excerpt) {
