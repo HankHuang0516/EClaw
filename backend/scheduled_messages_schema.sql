@@ -20,6 +20,20 @@ CREATE TABLE IF NOT EXISTS scheduled_messages (
     CONSTRAINT scheduled_messages_content_len CHECK (char_length(content) BETWEEN 1 AND 10000)
 );
 
+-- Idempotent column adds for environments that already have a legacy
+-- scheduled_messages table predating Phase 1 (CREATE TABLE IF NOT EXISTS
+-- skips column adds when the table exists, leaving prod missing the new
+-- columns and causing 500s on POST/GET).
+ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS chat_entity_id INTEGER;
+ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS user_entity_id INTEGER;
+ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS target_entity_ids JSONB;
+ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS content TEXT;
+ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS scheduled_at TIMESTAMPTZ;
+ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ;
+ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMPTZ;
+ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS last_error TEXT;
+
 CREATE INDEX IF NOT EXISTS idx_scheduled_messages_pending
     ON scheduled_messages (scheduled_at)
     WHERE sent_at IS NULL AND cancelled_at IS NULL;
