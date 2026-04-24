@@ -350,7 +350,7 @@
     "slots_available": "{{count}} ranuras disponibles",
     "sold_out": "Agotado",
     "webhook_testing": "Probando conexión...",
-    "webhook_success": "Conexión exitosa",
+    "webhook_success": "✓ Conexión exitosa",
     "iap_coming_soon": "Suscripción Apple IAP próximamente",
     "select_bot": "Seleccione un bot:",
     "active_users": "Usuarios activos"

@@ -349,7 +349,7 @@
     "slots_available": "剩餘 {{count}} 個槽位",
     "sold_out": "已售完",
     "webhook_testing": "測試連線中...",
-    "webhook_success": "連線成功",
+    "webhook_success": "✓ 連線成功",
     "iap_coming_soon": "Apple IAP 訂閱即將推出",
     "select_bot": "選擇機器人：",
     "active_users": "使用中人數"

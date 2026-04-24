@@ -350,7 +350,7 @@
     "slots_available": "슬롯 {{count}}개 남음",
     "sold_out": "매진",
     "webhook_testing": "연결 테스트 중...",
-    "webhook_success": "연결 성공",
+    "webhook_success": "✓ 연결 성공",
     "iap_coming_soon": "Apple IAP 결제 곧 출시 예정",
     "select_bot": "봇 선택:",
     "active_users": "사용 중인 사용자"
