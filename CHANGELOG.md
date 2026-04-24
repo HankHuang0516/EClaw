@@ -1,3 +1,10 @@
+# [1.1066.0](https://github.com/HankHuang0516/EClaw/compare/v1.1065.0...v1.1066.0) (2026-04-24)
+
+
+### Features
+
+* **security:** add POST /api/device/rotate-secret + Settings UI ([#2034](https://github.com/HankHuang0516/EClaw/issues/2034)) ([1502a17](https://github.com/HankHuang0516/EClaw/commit/1502a17e04595d9ee1cbf42e0f7c045b594323e9))
+
 # [1.1065.0](https://github.com/HankHuang0516/EClaw/compare/v1.1064.1...v1.1065.0) (2026-04-24)
 
 
