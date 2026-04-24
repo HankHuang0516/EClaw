@@ -1411,7 +1411,8 @@ app.get('/api/help', (req, res) => {
         general: [
             { title: 'Full API documentation', curl: `curl -s "${apiBase}/api/skill-doc?format=text"` },
             { title: 'Read mission dashboard', curl: `curl -s "${apiBase}/api/mission/dashboard?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
-            { title: 'Read kanban board', curl: `curl -s "${apiBase}/api/mission/cards?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` }
+            { title: 'Read kanban board', curl: `curl -s "${apiBase}/api/mission/cards?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
+            { title: 'Scheduled messages (user action, DEVICE_SECRET required)', curl: `curl -s "${apiBase}/api/scheduled-messages?deviceId=${deviceId}&deviceSecret=DEVICE_SECRET&chatEntityId=${eId}"` }
         ],
         analytics: [
             { title: 'Daily growth snapshot (today, owner-admin only)', curl: `curl -s "${apiBase}/api/growth/daily?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
@@ -1591,6 +1592,22 @@ try {
 } catch (err) {
     console.error('[Mindmap] Failed to load module:', err.message);
     mindmapModule = { initMindmapTables: () => {} };
+}
+
+// Scheduled Messages — user-scheduled chat messages (Phase 1: backend)
+let scheduledMessagesModule;
+try {
+    scheduledMessagesModule = require('./scheduled-messages')(devices, {
+        saveChatMessage,
+        pushToBot,
+        unifiedPush,
+        serverLog,
+    });
+    app.use('/api/scheduled-messages', scheduledMessagesModule.router);
+    console.log('[ScheduledMessages] Module loaded successfully');
+} catch (err) {
+    console.error('[ScheduledMessages] Failed to load module:', err.message);
+    scheduledMessagesModule = { initDatabase: () => {}, startPoller: () => {}, stopPoller: () => {} };
 }
 
 // ============================================
@@ -1969,6 +1986,12 @@ nodeCron.schedule('17 3 * * *', () => {
 missionModule.initMissionDatabase();
 kanbanModule.initKanbanDatabase();
 kanbanModule.startBackgroundTimers();
+if (scheduledMessagesModule && scheduledMessagesModule.initDatabase) {
+    scheduledMessagesModule.initDatabase();
+    if (process.env.NODE_ENV !== 'test' && scheduledMessagesModule.startPoller) {
+        scheduledMessagesModule.startPoller();
+    }
+}
 // Wire notification callback (notifyDevice defined later, uses closure)
 missionModule.setNotifyCallback((deviceId, notif) => notifyDevice(deviceId, notif));
 
@@ -6898,12 +6921,26 @@ async function compactEntitySlots(device, deviceId) {
                     [deviceId, affectedOldSlots]
                 );
 
-                // 3d: Migrate scheduled_messages entity_id
+                // 3d: Migrate scheduled_messages (Phase 1 schema uses user_entity_id /
+                // chat_entity_id / target_entity_ids JSONB, and tracks state via
+                // sent_at / cancelled_at — not status). Skip already-dispatched or
+                // cancelled rows; for live ones remap the two scalar slots and
+                // rebuild the JSONB target array element-by-element.
                 await client.query(
                     `UPDATE scheduled_messages
-                     SET entity_id = CASE entity_id ${caseClauses} ELSE entity_id END
-                     WHERE device_id = $1 AND entity_id = ANY($2) AND status IN ('pending', 'active')`,
-                    [deviceId, affectedOldSlots]
+                     SET user_entity_id = CASE user_entity_id ${caseClauses} ELSE user_entity_id END,
+                         chat_entity_id = CASE chat_entity_id ${caseClauses} ELSE chat_entity_id END,
+                         target_entity_ids = COALESCE(
+                             (SELECT jsonb_agg(
+                                 to_jsonb(CASE elem::int ${caseClauses} ELSE elem::int END)
+                                 ORDER BY ord
+                             ) FROM jsonb_array_elements_text(target_entity_ids) WITH ORDINALITY AS t(elem, ord)),
+                             target_entity_ids
+                         )
+                     WHERE device_id = $1
+                       AND sent_at IS NULL
+                       AND cancelled_at IS NULL`,
+                    [deviceId]
                 );
 
                 // 3d2: Migrate kanban_cards assigned_bots JSONB array
@@ -7512,12 +7549,26 @@ app.post('/api/device/reorder-entities', async (req, res) => {
                 [deviceId, affectedOldSlots]
             );
 
-            // 3c: Migrate scheduled_messages entity_id (active/pending only)
+            // 3c: Migrate scheduled_messages (Phase 1 schema uses user_entity_id /
+            // chat_entity_id / target_entity_ids JSONB, and tracks state via
+            // sent_at / cancelled_at — not status). Skip already-dispatched or
+            // cancelled rows; for live ones remap the two scalar slots and
+            // rebuild the JSONB target array element-by-element.
             await client.query(
                 `UPDATE scheduled_messages
-                 SET entity_id = CASE entity_id ${caseClauses} ELSE entity_id END
-                 WHERE device_id = $1 AND entity_id = ANY($2) AND status IN ('pending', 'active')`,
-                [deviceId, affectedOldSlots]
+                 SET user_entity_id = CASE user_entity_id ${caseClauses} ELSE user_entity_id END,
+                     chat_entity_id = CASE chat_entity_id ${caseClauses} ELSE chat_entity_id END,
+                     target_entity_ids = COALESCE(
+                         (SELECT jsonb_agg(
+                             to_jsonb(CASE elem::int ${caseClauses} ELSE elem::int END)
+                             ORDER BY ord
+                         ) FROM jsonb_array_elements_text(target_entity_ids) WITH ORDINALITY AS t(elem, ord)),
+                         target_entity_ids
+                     )
+                 WHERE device_id = $1
+                   AND sent_at IS NULL
+                   AND cancelled_at IS NULL`,
+                [deviceId]
             );
 
             // 3c2: Migrate kanban_cards assigned_bots + reviewer_entity_id
