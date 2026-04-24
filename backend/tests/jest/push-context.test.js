@@ -311,6 +311,34 @@ describe('materializeChannelText — wire format', () => {
         expect(hintsIdx).toBeGreaterThan(bodyIdx);
     });
 
+    test('referencesBlock is appended after body and after mentionsBlock, before missionHints', () => {
+        const out = materializeChannelText(
+            { event: 'message', text: '看 card_f6321df2 這張' },
+            {
+                mentionsBlock: '[MENTIONS] fake mentions block',
+                referencesBlock: '[REFERENCES — CONTEXT] The user cites 1 reference;\n  • card_f6321df2 — "Fix UI"',
+                missionHints: '[AVAILABLE TOOLS — Mission Dashboard] curl ...',
+            }
+        );
+        const bodyIdx = out.indexOf('看 card_f6321df2');
+        const mentIdx = out.indexOf('[MENTIONS]');
+        const refIdx = out.indexOf('[REFERENCES — CONTEXT]');
+        const hintIdx = out.indexOf('[AVAILABLE TOOLS');
+        expect(bodyIdx).toBeGreaterThan(-1);
+        expect(mentIdx).toBeGreaterThan(bodyIdx);
+        expect(refIdx).toBeGreaterThan(mentIdx);
+        expect(hintIdx).toBeGreaterThan(refIdx);
+    });
+
+    test('referencesBlock alone (no mentions) still renders in trailer', () => {
+        const out = materializeChannelText(
+            { event: 'message', text: 'see src://kanban/card/abcdef12' },
+            { referencesBlock: '[REFERENCES — CONTEXT] ...\n  • src://kanban/card/abcdef12 — "Card B"' }
+        );
+        expect(out).toContain('[REFERENCES — CONTEXT]');
+        expect(out.indexOf('src://kanban')).toBeLessThan(out.indexOf('[REFERENCES'));
+    });
+
     test('media attachment label is appended to body, not the trailer', () => {
         const out = materializeChannelText(
             {
