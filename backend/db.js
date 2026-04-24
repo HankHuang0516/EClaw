@@ -2169,6 +2169,55 @@ async function addCommunityMessage(publicCode, authorType, authorId, authorName,
     }
 }
 
+async function getCommunityStats(poolArg) {
+    const p = poolArg || pool;
+    try {
+        const [totals, categories] = await Promise.all([
+            p.query(
+                `WITH public_set AS (
+                   SELECT public_code, published_at FROM entities
+                   WHERE is_public = true AND bot_secret IS NOT NULL
+                 )
+                 SELECT
+                   (SELECT COUNT(*)::int FROM public_set) AS total_bots,
+                   (SELECT COUNT(*)::int FROM public_set
+                    WHERE published_at >= ((NOW() AT TIME ZONE 'Asia/Taipei')::date::timestamp) AT TIME ZONE 'Asia/Taipei'
+                   ) AS new_today,
+                   (SELECT COUNT(DISTINCT p.public_code)::int FROM public_set p
+                    WHERE EXISTS (
+                      SELECT 1 FROM community_messages m
+                      WHERE m.card_public_code = p.public_code
+                        AND m.created_at >= NOW() - INTERVAL '7 days'
+                    ) OR EXISTS (
+                      SELECT 1 FROM community_ratings r
+                      WHERE r.card_public_code = p.public_code
+                        AND r.updated_at >= NOW() - INTERVAL '7 days'
+                    )
+                   ) AS active_7d`
+            ),
+            p.query(
+                `SELECT tag, COUNT(*)::int AS count
+                 FROM entities e,
+                      jsonb_array_elements_text(COALESCE(e.agent_card->'tags','[]'::jsonb)) AS tag
+                 WHERE e.is_public = true AND e.bot_secret IS NOT NULL
+                 GROUP BY tag
+                 ORDER BY count DESC
+                 LIMIT 5`
+            ),
+        ]);
+        const row = totals.rows[0] || {};
+        return {
+            total_bots: row.total_bots || 0,
+            new_today: row.new_today || 0,
+            active_7d: row.active_7d || 0,
+            top_categories: categories.rows.map(r => ({ tag: r.tag, count: r.count })),
+        };
+    } catch (err) {
+        console.error('[DB] getCommunityStats error:', err.message);
+        return { total_bots: 0, new_today: 0, active_7d: 0, top_categories: [], error: 'query_failed' };
+    }
+}
+
 async function upsertCommunityRating(publicCode, deviceId, stars) {
     try {
         await pool.query(
@@ -2300,5 +2349,6 @@ module.exports = {
     getPublicCardDetail,
     getCommunityMessages,
     addCommunityMessage,
-    upsertCommunityRating
+    upsertCommunityRating,
+    getCommunityStats,
 };
