@@ -108,6 +108,54 @@ describe('POST /api/admin/bots/create', () => {
 });
 
 // ════════════════════════════════════════════════════════════════
+// GET /api/admin/invite/clicks — invite funnel step-1 telemetry
+// ════════════════════════════════════════════════════════════════
+describe('GET /api/admin/invite/clicks', () => {
+    const db = require('../../db');
+
+    afterEach(() => {
+        if (db.getInviteClickStats.mockReset) db.getInviteClickStats.mockReset();
+    });
+
+    it('returns empty-but-shaped summary when no clicks logged', async () => {
+        db.getInviteClickStats.mockResolvedValueOnce([]);
+        const res = await get('/api/admin/invite/clicks');
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.summary).toEqual({
+            codes_with_clicks: 0,
+            total_clicks: 0,
+            total_unique_clicks: 0,
+            redeemed: 0,
+            click_to_redeem_pct: null,
+        });
+        expect(res.body.rows).toEqual([]);
+    });
+
+    it('aggregates totals + computes click_to_redeem_pct rounded to 1 decimal', async () => {
+        db.getInviteClickStats.mockResolvedValueOnce([
+            { code: 'AAA1', clicks: 6, unique_clicks: 4, last_clicked_at: new Date('2026-04-24T01:00:00Z'), redeemed: true },
+            { code: 'BBB2', clicks: 2, unique_clicks: 2, last_clicked_at: new Date('2026-04-23T18:00:00Z'), redeemed: false },
+            { code: 'CCC3', clicks: 1, unique_clicks: 1, last_clicked_at: new Date('2026-04-23T10:00:00Z'), redeemed: false },
+        ]);
+        const res = await get('/api/admin/invite/clicks');
+        expect(res.status).toBe(200);
+        expect(res.body.summary.codes_with_clicks).toBe(3);
+        expect(res.body.summary.total_clicks).toBe(9);
+        expect(res.body.summary.total_unique_clicks).toBe(7);
+        expect(res.body.summary.redeemed).toBe(1);
+        expect(res.body.summary.click_to_redeem_pct).toBe(33.3);
+        expect(res.body.rows).toHaveLength(3);
+    });
+
+    it('returns 500 when helper throws', async () => {
+        db.getInviteClickStats.mockRejectedValueOnce(new Error('boom'));
+        const res = await get('/api/admin/invite/clicks');
+        expect(res.status).toBe(500);
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
 // PUT /api/admin/official-bot/:botId — update + sync bound entities
 // ════════════════════════════════════════════════════════════════
 describe('PUT /api/admin/official-bot/:botId', () => {
