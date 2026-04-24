@@ -787,6 +787,94 @@
             background: rgba(158, 158, 158, 0.15);
             color: #9E9E9E;
         }
+
+        /* Mind Map preview card */
+        .mm-card { position: relative; }
+        .mm-subtabs { display: flex; gap: 6px; margin: -4px 0 12px; border-bottom: 1px solid var(--border); }
+        .mm-subtab {
+            background: transparent; border: 0; color: var(--text-secondary);
+            padding: 8px 14px; cursor: pointer; font-size: 14px; font-weight: 500;
+            border-bottom: 2px solid transparent; margin-bottom: -1px;
+        }
+        .mm-subtab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .mm-panel { display: none; }
+        .mm-panel.active { display: block; }
+        .mm-graph-wrap {
+            position: relative; background: var(--bg-secondary);
+            border-radius: 10px; overflow: hidden; min-height: 360px;
+        }
+        .mm-graph-wrap svg { display: block; width: 100%; height: 360px; }
+        .mm-edge { stroke: var(--border); stroke-width: 1.5; opacity: 0.6; }
+        .mm-node-circle {
+            fill: var(--bg-primary); stroke: var(--primary); stroke-width: 2;
+            cursor: pointer; transition: r 0.2s, stroke-width 0.2s;
+        }
+        .mm-node:hover .mm-node-circle, .mm-node.selected .mm-node-circle {
+            stroke-width: 3; filter: drop-shadow(0 0 6px var(--primary));
+        }
+        .mm-node-center .mm-node-circle { fill: var(--primary); stroke: var(--primary); }
+        .mm-node-label {
+            fill: var(--text-primary); font-size: 13px; font-weight: 500;
+            pointer-events: none; text-anchor: middle; dominant-baseline: middle;
+        }
+        .mm-node-center .mm-node-label { fill: #fff; font-weight: 600; }
+        .mm-node-count {
+            fill: var(--text-secondary); font-size: 10px;
+            pointer-events: none; text-anchor: middle;
+        }
+        .mm-detail {
+            margin-top: 10px; padding: 10px 12px;
+            background: var(--bg-secondary); border-radius: 8px;
+            font-size: 13px; color: var(--text-secondary); min-height: 48px;
+        }
+        .mm-detail strong { color: var(--text-primary); }
+        .mm-detail-items { margin: 6px 0 0; padding: 0; list-style: none; }
+        .mm-detail-items li {
+            padding: 4px 0; border-top: 1px dashed var(--border);
+            color: var(--text-primary); font-size: 12px;
+        }
+        .mm-detail-items li:first-child { border-top: 0; }
+        .mm-search-row { display: flex; gap: 8px; margin-bottom: 10px; }
+        .mm-search-row input {
+            flex: 1; padding: 8px 12px; border-radius: 8px;
+            border: 1px solid var(--border); background: var(--bg-primary);
+            color: var(--text-primary); font-size: 14px;
+        }
+        .mm-search-row button {
+            padding: 8px 16px; border: 0; border-radius: 8px;
+            background: var(--primary); color: #fff; cursor: pointer; font-weight: 500;
+        }
+        .mm-results { display: flex; flex-direction: column; gap: 8px; }
+        .mm-result {
+            padding: 10px 12px; background: var(--bg-secondary);
+            border-radius: 8px; font-size: 13px;
+        }
+        .mm-result-meta {
+            font-size: 11px; color: var(--text-secondary);
+            margin-top: 4px; display: flex; gap: 10px; flex-wrap: wrap;
+        }
+        .mm-result-score {
+            display: inline-block; padding: 1px 6px; border-radius: 4px;
+            background: rgba(76, 175, 80, 0.15); color: #4CAF50; font-weight: 500;
+        }
+        .mm-result-score.weak { background: rgba(158, 158, 158, 0.15); color: #9E9E9E; }
+        .mm-empty, .mm-hint {
+            text-align: center; padding: 20px; color: var(--text-secondary);
+            font-size: 13px;
+        }
+        .mm-files-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+        .mm-file-item {
+            padding: 8px 12px; background: var(--bg-secondary); border-radius: 8px;
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 13px; cursor: pointer;
+        }
+        .mm-file-item:hover { background: var(--bg-hover, var(--bg-secondary)); }
+        .mm-file-meta { font-size: 11px; color: var(--text-secondary); }
+        .mm-pill {
+            display: inline-block; padding: 2px 8px; margin-left: 6px;
+            border-radius: 10px; background: rgba(33, 150, 243, 0.15);
+            color: #2196F3; font-size: 11px; font-weight: 500;
+        }
     </style>
     <link rel="canonical" href="https://eclawbot.com/portal/mission.html">
 </head>
@@ -829,6 +917,42 @@
 
         <!-- Dashboard Content (hidden until loaded) -->
         <div id="dashboardContent" style="display:none;">
+            <!-- Mind Map preview (connects your stuff into a graph; sub-tabs demo
+                 cross-session semantic recall and the upcoming file layer) -->
+            <div class="card mm-card">
+                <div class="card-header">
+                    <h2>🗺️ <span data-i18n="mm_card_title">Mind Map</span></h2>
+                </div>
+                <div class="mm-subtabs" role="tablist">
+                    <button type="button" class="mm-subtab active" data-panel="mind" data-i18n="mm_subtab_mind">🗺️ Graph</button>
+                    <button type="button" class="mm-subtab" data-panel="recall" data-i18n="mm_subtab_recall">🔍 Recall</button>
+                    <button type="button" class="mm-subtab" data-panel="files" data-i18n="mm_subtab_files">📎 Files</button>
+                </div>
+
+                <div class="mm-panel active" data-panel="mind">
+                    <div class="mm-graph-wrap">
+                        <svg id="mmSvg" viewBox="0 0 800 360" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Mind map graph"></svg>
+                    </div>
+                    <div class="mm-detail" id="mmDetail" data-i18n="mm_detail_hint">Tap a node to see its most recent items.</div>
+                </div>
+
+                <div class="mm-panel" data-panel="recall">
+                    <div class="mm-search-row">
+                        <input id="mmRecallInput" type="text" data-i18n-placeholder="mm_placeholder_recall" placeholder="Recall something you said before…" />
+                        <button type="button" onclick="mmRecallSearch()" data-i18n="mm_recall_btn">Recall</button>
+                    </div>
+                    <div id="mmRecallResults" class="mm-results">
+                        <div class="mm-hint" data-i18n="mm_recall_hint">Cross-session semantic recall. Try a fuzzy phrase — e.g. "the thing about invite redemption".</div>
+                    </div>
+                </div>
+
+                <div class="mm-panel" data-panel="files">
+                    <ul id="mmFilesList" class="mm-files-list">
+                        <li class="mm-hint" data-i18n="mm_files_loading">Loading files…</li>
+                    </ul>
+                </div>
+            </div>
+
             <!-- Notes -->
             <div class="card">
                 <div class="card-header">
@@ -1718,6 +1842,7 @@
             renderSouls();
             renderRules();
             renderSyncBar();
+            if (typeof mmRender === 'function') mmRender();
         }
 
         function renderCategorizedList(el, items, section, listType, renderItemFn, emptyKey) {
@@ -3407,6 +3532,243 @@
                 updateNotifiedSnapshot();
             }
         }
+
+        // =====================================================
+        // Mind Map preview card — 3 sub-tabs (Graph / Recall / Files)
+        // =====================================================
+        let _mmFilesLoaded = false;
+        let _mmSelectedNode = null;
+
+        function mmNodeCounts() {
+            const notes = (dashboard && dashboard.notes) || [];
+            const skills = (dashboard && dashboard.skills) || [];
+            const souls = (dashboard && dashboard.souls) || [];
+            const rules = (dashboard && dashboard.rules) || [];
+            return {
+                notes: { label: i18n.t('mc_notes_title') || 'Notes', icon: '📝', items: notes },
+                skills: { label: 'Skills', icon: '🔧', items: skills },
+                souls: { label: i18n.t('mc_souls_title') || 'Souls', icon: '🧠', items: souls },
+                rules: { label: i18n.t('mc_rules_title') || 'Rules', icon: '📏', items: rules },
+                chats: { label: i18n.t('mm_node_chats') || 'Chats', icon: '💬', items: null },
+                files: { label: i18n.t('mm_node_files') || 'Files', icon: '📎', items: null }
+            };
+        }
+
+        function mmRender() {
+            const svg = document.getElementById('mmSvg');
+            if (!svg) return;
+            const counts = mmNodeCounts();
+            const cx = 400, cy = 180;
+            const keys = Object.keys(counts);
+            const radius = 135;
+            const positions = {};
+            keys.forEach((k, i) => {
+                const angle = (i / keys.length) * Math.PI * 2 - Math.PI / 2;
+                positions[k] = {
+                    x: cx + radius * Math.cos(angle),
+                    y: cy + radius * Math.sin(angle)
+                };
+            });
+
+            const xmlns = 'http://www.w3.org/2000/svg';
+            svg.innerHTML = '';
+
+            // Edges first (so nodes render on top)
+            keys.forEach(k => {
+                const p = positions[k];
+                const line = document.createElementNS(xmlns, 'line');
+                line.setAttribute('x1', cx); line.setAttribute('y1', cy);
+                line.setAttribute('x2', p.x); line.setAttribute('y2', p.y);
+                line.setAttribute('class', 'mm-edge');
+                svg.appendChild(line);
+            });
+
+            // Center node ("You")
+            const centerG = document.createElementNS(xmlns, 'g');
+            centerG.setAttribute('class', 'mm-node mm-node-center');
+            const centerC = document.createElementNS(xmlns, 'circle');
+            centerC.setAttribute('cx', cx); centerC.setAttribute('cy', cy);
+            centerC.setAttribute('r', 36); centerC.setAttribute('class', 'mm-node-circle');
+            centerG.appendChild(centerC);
+            const centerT = document.createElementNS(xmlns, 'text');
+            centerT.setAttribute('x', cx); centerT.setAttribute('y', cy);
+            centerT.setAttribute('class', 'mm-node-label');
+            centerT.textContent = i18n.t('mm_center_label') || 'You';
+            centerG.appendChild(centerT);
+            svg.appendChild(centerG);
+
+            // Peripheral nodes
+            keys.forEach(k => {
+                const p = positions[k];
+                const info = counts[k];
+                const g = document.createElementNS(xmlns, 'g');
+                g.setAttribute('class', 'mm-node' + (_mmSelectedNode === k ? ' selected' : ''));
+                g.setAttribute('tabindex', '0');
+                g.dataset.nodeKey = k;
+                g.addEventListener('click', () => mmSelectNode(k));
+                g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); mmSelectNode(k); } });
+
+                const c = document.createElementNS(xmlns, 'circle');
+                c.setAttribute('cx', p.x); c.setAttribute('cy', p.y);
+                c.setAttribute('r', 32); c.setAttribute('class', 'mm-node-circle');
+                g.appendChild(c);
+
+                const label = document.createElementNS(xmlns, 'text');
+                label.setAttribute('x', p.x); label.setAttribute('y', p.y - 2);
+                label.setAttribute('class', 'mm-node-label');
+                label.textContent = `${info.icon} ${info.label}`;
+                g.appendChild(label);
+
+                if (Array.isArray(info.items)) {
+                    const count = document.createElementNS(xmlns, 'text');
+                    count.setAttribute('x', p.x); count.setAttribute('y', p.y + 14);
+                    count.setAttribute('class', 'mm-node-count');
+                    count.textContent = String(info.items.length);
+                    g.appendChild(count);
+                }
+                svg.appendChild(g);
+            });
+        }
+
+        function mmSelectNode(key) {
+            _mmSelectedNode = key;
+            const counts = mmNodeCounts();
+            const info = counts[key];
+            const detail = document.getElementById('mmDetail');
+            if (!detail) return;
+
+            if (Array.isArray(info.items)) {
+                const recent = info.items.slice(0, 5);
+                const titleKey = {
+                    notes: 'mc_notes_title', skills: 'mm_node_skills',
+                    souls: 'mc_souls_title', rules: 'mc_rules_title'
+                }[key];
+                const titleTxt = titleKey ? (i18n.t(titleKey) || info.label) : info.label;
+                if (recent.length === 0) {
+                    detail.innerHTML = `<strong>${info.icon} ${_esc(titleTxt)}</strong> — <span>${_esc(i18n.t('mm_empty_section') || 'No entries yet.')}</span>`;
+                } else {
+                    const itemsHtml = recent.map(it => {
+                        const t = (it.title || it.name || it.content || it.text || '').toString().slice(0, 80);
+                        return `<li>${_esc(t) || '—'}</li>`;
+                    }).join('');
+                    detail.innerHTML = `<strong>${info.icon} ${_esc(titleTxt)} · ${info.items.length}</strong><ul class="mm-detail-items">${itemsHtml}</ul>`;
+                }
+            } else if (key === 'chats') {
+                detail.innerHTML = `<strong>💬 ${_esc(i18n.t('mm_node_chats') || 'Chats')}</strong> — <span>${_esc(i18n.t('mm_chats_hint') || 'Use the Recall tab to search across all past sessions.')}</span>`;
+                mmActivateTab('recall');
+                setTimeout(() => {
+                    const el = document.getElementById('mmRecallInput');
+                    if (el) el.focus();
+                }, 50);
+            } else if (key === 'files') {
+                detail.innerHTML = `<strong>📎 ${_esc(i18n.t('mm_node_files') || 'Files')}</strong> — <span>${_esc(i18n.t('mm_files_hint') || 'Open the Files tab to browse every media you’ve shared.')}</span>`;
+                mmActivateTab('files');
+            }
+            mmRender();
+        }
+
+        function mmActivateTab(panel) {
+            document.querySelectorAll('.mm-card .mm-subtab').forEach(b => {
+                b.classList.toggle('active', b.dataset.panel === panel);
+            });
+            document.querySelectorAll('.mm-card .mm-panel').forEach(p => {
+                p.classList.toggle('active', p.dataset.panel === panel);
+            });
+            if (panel === 'files' && !_mmFilesLoaded) {
+                _mmFilesLoaded = true;
+                mmLoadFiles();
+            }
+        }
+
+        async function mmRecallSearch() {
+            const input = document.getElementById('mmRecallInput');
+            const out = document.getElementById('mmRecallResults');
+            if (!input || !out) return;
+            const query = (input.value || '').trim();
+            if (!query) { input.focus(); return; }
+            out.innerHTML = `<div class="mm-hint">${_esc(i18n.t('mm_recall_searching') || 'Searching…')}</div>`;
+            try {
+                const data = await apiCall('POST', '/api/chat/search', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    query,
+                    limit: 8
+                });
+                if (!data.success) throw new Error(data.error || 'search_failed');
+                const results = data.results || [];
+                if (results.length === 0) {
+                    out.innerHTML = `<div class="mm-empty">${_esc(i18n.t('mm_recall_empty') || 'No matches yet — try a different phrasing.')}</div>`;
+                    return;
+                }
+                const modeLabel = (data.mode && data.mode.startsWith('semantic')) ? 'semantic' : 'keyword';
+                const modePill = `<span class="mm-pill">${modeLabel}</span>`;
+                const rowsHtml = results.map(r => {
+                    const snippet = (r.text || '').slice(0, 240);
+                    const when = r.created_at ? new Date(r.created_at).toLocaleString() : '';
+                    const scoreClass = (r.distance != null && r.distance < 0.3) ? '' : 'weak';
+                    const score = r.distance != null
+                        ? `<span class="mm-result-score ${scoreClass}">${(1 - r.distance).toFixed(2)}</span>`
+                        : '';
+                    const who = r.is_from_user ? (i18n.t('mm_recall_you') || 'you') : (i18n.t('mm_recall_bot') || 'bot');
+                    return `<div class="mm-result">
+                        ${_esc(snippet)}
+                        <div class="mm-result-meta">${score}<span>${_esc(who)}</span><span>${_esc(when)}</span></div>
+                    </div>`;
+                }).join('');
+                out.innerHTML = `<div class="mm-hint" style="text-align:left;padding:4px 0;">${modePill} ${_esc(i18n.t('mm_recall_mode_hint') || 'ranked by cross-session relevance')}</div>${rowsHtml}`;
+            } catch (e) {
+                out.innerHTML = `<div class="mm-empty">${_esc(i18n.t('mm_recall_error') || 'Recall failed')}: ${_esc(e.message || '')}</div>`;
+            }
+        }
+
+        async function mmLoadFiles() {
+            const list = document.getElementById('mmFilesList');
+            if (!list) return;
+            list.innerHTML = `<li class="mm-hint">${_esc(i18n.t('mm_files_loading') || 'Loading files…')}</li>`;
+            try {
+                const data = await apiCall('GET',
+                    `/api/device/files?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}&limit=30`
+                );
+                if (!data.success) throw new Error(data.error || 'files_failed');
+                const files = data.files || [];
+                if (files.length === 0) {
+                    list.innerHTML = `<li class="mm-empty">${_esc(i18n.t('mm_no_files') || 'No files yet — share a photo or voice in chat and it will appear here.')}</li>`;
+                    return;
+                }
+                list.innerHTML = files.slice(0, 30).map(f => {
+                    const icon = f.type === 'photo' ? '🖼️' : (f.type === 'voice' ? '🎙️' : '📎');
+                    const when = f.createdAt ? new Date(f.createdAt).toLocaleString() : '';
+                    const label = (f.text || f.type || 'file').slice(0, 60);
+                    const url = f.url || '';
+                    return `<li class="mm-file-item" onclick="window.open('${_esc(url)}', '_blank')">
+                        <span>${icon} ${_esc(label)}</span>
+                        <span class="mm-file-meta">${_esc(when)}</span>
+                    </li>`;
+                }).join('');
+            } catch (e) {
+                list.innerHTML = `<li class="mm-empty">${_esc(i18n.t('mm_files_error') || 'Could not load files')}: ${_esc(e.message || '')}</li>`;
+            }
+        }
+
+        function _esc(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        // Wire sub-tab buttons + Enter-to-search once DOM is ready
+        (function mmWire() {
+            document.addEventListener('click', (e) => {
+                const btn = e.target.closest('.mm-card .mm-subtab');
+                if (btn) mmActivateTab(btn.dataset.panel);
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && e.target && e.target.id === 'mmRecallInput') {
+                    e.preventDefault();
+                    mmRecallSearch();
+                }
+            });
+        })();
 
         // Use visibilitychange (reliable) + beforeunload (fallback)
         let exitHandled = false;
