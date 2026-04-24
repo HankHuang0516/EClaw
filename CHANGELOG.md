@@ -1,3 +1,10 @@
+## [1.1071.2](https://github.com/HankHuang0516/EClaw/compare/v1.1071.1...v1.1071.2) (2026-04-24)
+
+
+### Bug Fixes
+
+* **kanban:** autoReviewOnTransform honors requires_screenshot_review ([#2046](https://github.com/HankHuang0516/EClaw/issues/2046)) ([51fb5d0](https://github.com/HankHuang0516/EClaw/commit/51fb5d055157193211030e92e30f9a310cea6b75))
+
 ## [1.1071.1](https://github.com/HankHuang0516/EClaw/compare/v1.1071.0...v1.1071.1) (2026-04-24)
 
 
