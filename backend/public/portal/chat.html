@@ -3454,7 +3454,8 @@
                 const msgText = msg.text || '';
                 if (!msg.is_from_user
                     || (msg.source && (msg.source.startsWith('mission_notify') || msg.source === 'scheduled'))
-                    || msgText.startsWith('[TASK FWD') || msgText.startsWith('[FWD')
+                    || msgText.startsWith('[📋 TASK FWD') || msgText.startsWith('[📢 FWD')
+                    || (msg.source && msg.source.startsWith('xdevice:'))
                 ) {
                     grouped.push(msg);
                     continue;
@@ -5433,7 +5434,7 @@
                     bodyEl.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
                 }
             } catch (err) {
-                bodyEl.innerHTML = `<div class="note-modal-error">Failed to load note: ${err.message || err}</div>`;
+                bodyEl.innerHTML = `<div class="note-modal-error">Failed to load note: ${escapeHtml(String(err.message || err))}</div>`;
             }
         }
 
@@ -5517,7 +5518,7 @@
                 // Async: fetch kanban tasks assigned to this entity
                 fetchEntityKanbanTasks(publicCode, bodyEl);
             } catch (err) {
-                bodyEl.innerHTML = `<div class="entity-modal-error">Failed to load: ${err.message || err}</div>`;
+                bodyEl.innerHTML = `<div class="entity-modal-error">Failed to load: ${escapeHtml(String(err.message || err))}</div>`;
             }
         }
 
@@ -5618,7 +5619,7 @@
                 idEl.textContent = (data.id || entityId).substring(0, 8);
                 bodyEl.innerHTML = data.html;
             } catch (err) {
-                bodyEl.innerHTML = `<div class="entity-modal-error">Failed to load: ${err.message || err}</div>`;
+                bodyEl.innerHTML = `<div class="entity-modal-error">Failed to load: ${escapeHtml(String(err.message || err))}</div>`;
             }
         }
 
