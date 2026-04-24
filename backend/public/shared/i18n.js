@@ -54314,8 +54314,6 @@ const TRANSLATIONS = {
         "broadcast_settings_title": "إعدادات البث",
         "broadcast_settings_desc": "تكوين كيفية عمل رسائل البث",
         "broadcast_pref_recipient_info": "عرض قائمة المستلمين في البث",
-        "kanban_nudge_title": "تذكير كانبان",
-        "kanban_nudge_desc": "تذكيرات بالبطاقات المعلقة — تنطبق بالتساوي على جميع الكيانات.",
         "chat_broadcast_tag": "بث",
         "chat_kanban_notify": "كانبان",
         "chat_form_submission": "نموذج",
