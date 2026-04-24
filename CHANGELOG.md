@@ -1,3 +1,10 @@
+## [1.1073.1](https://github.com/HankHuang0516/EClaw/compare/v1.1073.0...v1.1073.1) (2026-04-24)
+
+
+### Bug Fixes
+
+* **auth:** WebView device-mismatch guard for stale session cookies ([#2065](https://github.com/HankHuang0516/EClaw/issues/2065)) ([40f1b51](https://github.com/HankHuang0516/EClaw/commit/40f1b5126c2fe54253a4d969c7d0fa1661d18f68))
+
 # [1.1073.0](https://github.com/HankHuang0516/EClaw/compare/v1.1072.1...v1.1073.0) (2026-04-24)
 
 
