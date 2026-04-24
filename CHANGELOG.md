@@ -1,3 +1,10 @@
+## [1.1063.5](https://github.com/HankHuang0516/EClaw/compare/v1.1063.4...v1.1063.5) (2026-04-24)
+
+
+### Bug Fixes
+
+* **chat:** bust browser cache for note-link-render.js fix ([#2020](https://github.com/HankHuang0516/EClaw/issues/2020)) ([e56048d](https://github.com/HankHuang0516/EClaw/commit/e56048d8e9bfd723ae3e086fdf949c224a5984ce)), closes [#2019](https://github.com/HankHuang0516/EClaw/issues/2019)
+
 ## [1.1063.4](https://github.com/HankHuang0516/EClaw/compare/v1.1063.3...v1.1063.4) (2026-04-24)
 
 
