@@ -5,6 +5,20 @@ import { useColorScheme, View, ActivityIndicator, LogBox } from 'react-native';
 
 // Silence dev warnings overlay so it doesn't cover the tab bar.
 LogBox.ignoreAllLogs();
+
+// In production, swallow uncaught JS errors so the full-screen red-box
+// doesn't land on real users. Dev keeps the native handler so regressions
+// stay visible. Replace the console.log with a telemetry call once the
+// ios telemetry pipe lands — tracked in #1766.
+if (!__DEV__) {
+  const errorUtils = (global as unknown as { ErrorUtils?: { setGlobalHandler: (fn: (e: Error, isFatal?: boolean) => void) => void } }).ErrorUtils;
+  if (errorUtils?.setGlobalHandler) {
+    errorUtils.setGlobalHandler((e, isFatal) => {
+      // eslint-disable-next-line no-console
+      console.log('[prod-err]', isFatal ? 'fatal' : 'nonfatal', e?.message, e?.stack);
+    });
+  }
+}
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import '../i18n';
