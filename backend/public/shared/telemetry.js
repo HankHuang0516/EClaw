@@ -70,11 +70,13 @@ const _telemetry = (() => {
 
     if (typeof apiCall === 'function') {
         const _origApiCall = apiCall;
-        // Replace global apiCall
-        window.apiCall = async function (method, path, body) {
+        // Replace global apiCall — forward opts (e.g. skip401Redirect) so the underlying
+        // 401 redirect guard still honors caller intent. Dropping the 4th arg here silently
+        // disabled skip401Redirect on every page and caused a settings→index→dashboard loop.
+        window.apiCall = async function (method, path, body, opts) {
             const start = Date.now();
             try {
-                const result = await _origApiCall(method, path, body);
+                const result = await _origApiCall(method, path, body, opts);
                 _push({
                     type: 'api_call',
                     action: `${method} ${path.split('?')[0]}`,
