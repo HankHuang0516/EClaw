@@ -399,8 +399,15 @@
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
-            const _isEmbed = new URLSearchParams(window.location.search).get('embed') === '1' || window.self !== window.top;
+            const _params = new URLSearchParams(window.location.search);
+            const _isEmbed = _params.get('embed') === '1' || window.self !== window.top;
             if (_isEmbed) document.body.classList.add('embed-mode');
+            // Pre-fill redeem box when arriving via /invite/:code share link.
+            const _redeemParam = (_params.get('redeem') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12);
+            if (_redeemParam) {
+                const _input = document.getElementById('redeemInput');
+                if (_input) _input.value = _redeemParam;
+            }
             renderNav('settings');
             if (typeof renderFooter === 'function') renderFooter();
             if (typeof i18n !== 'undefined') i18n.apply();

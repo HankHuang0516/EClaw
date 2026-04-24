@@ -2218,6 +2218,49 @@ async function getCommunityStats(poolArg) {
     }
 }
 
+async function logInviteClick({ code, ipHash, userAgent, referer }, poolArg) {
+    const p = poolArg || pool;
+    if (!p) return false;
+    try {
+        await p.query(
+            `INSERT INTO invite_clicks (code, ip_hash, user_agent, referer)
+             VALUES ($1, $2, $3, $4)`,
+            [code, ipHash || null, userAgent || null, referer || null]
+        );
+        return true;
+    } catch (err) {
+        console.error('[DB] logInviteClick error:', err.message);
+        return false;
+    }
+}
+
+async function getInviteClickStats(poolArg) {
+    const p = poolArg || pool;
+    try {
+        const r = await p.query(
+            `SELECT c.code,
+                    COUNT(*)::int AS clicks,
+                    COUNT(DISTINCT c.ip_hash)::int AS unique_clicks,
+                    MAX(c.clicked_at) AS last_clicked_at,
+                    (SELECT used_by_device_id FROM invite_codes WHERE code = c.code) IS NOT NULL AS redeemed
+             FROM invite_clicks c
+             GROUP BY c.code
+             ORDER BY last_clicked_at DESC
+             LIMIT 100`
+        );
+        return r.rows.map(row => ({
+            code: row.code,
+            clicks: row.clicks,
+            unique_clicks: row.unique_clicks,
+            last_clicked_at: row.last_clicked_at,
+            redeemed: row.redeemed === true,
+        }));
+    } catch (err) {
+        console.error('[DB] getInviteClickStats error:', err.message);
+        return [];
+    }
+}
+
 async function upsertCommunityRating(publicCode, deviceId, stars) {
     try {
         await pool.query(
@@ -2351,4 +2394,6 @@ module.exports = {
     addCommunityMessage,
     upsertCommunityRating,
     getCommunityStats,
+    logInviteClick,
+    getInviteClickStats,
 };

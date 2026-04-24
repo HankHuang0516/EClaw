@@ -608,6 +608,34 @@ app.get('/c/:code', (req, res) => {
     res.sendFile(_SHARE_CHAT_HTML_PATH);
 });
 
+// Public invite link landing. The shared URL format shown in invite.html +
+// QR codes is `https://eclawbot.com/invite/{CODE}`. Before this route existed
+// those links 404'd — which explained 0/N invite conversion: nobody made it
+// past the click. This route logs the click (step-1 funnel telemetry) and
+// 302-redirects to the portal page with the code pre-filled.
+// IP hashed (sha256 truncated to 16) to keep PII minimal while still allowing
+// unique-click estimates. Logging is best-effort — a DB failure must NEVER
+// block the redirect (we'd just be replacing a 404 with a 500).
+app.get('/invite/:code', async (req, res) => {
+    const raw = String(req.params.code || '').toUpperCase();
+    const code = /^[A-Z0-9]{4,12}$/.test(raw) ? raw : null;
+    if (!code) {
+        return res.redirect(302, '/portal/invite.html');
+    }
+    try {
+        const ipRaw = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || '';
+        const ipHash = ipRaw
+            ? require('crypto').createHash('sha256').update(ipRaw).digest('hex').slice(0, 16)
+            : null;
+        const userAgent = String(req.headers['user-agent'] || '').slice(0, 500) || null;
+        const referer = String(req.headers.referer || req.headers.referrer || '').slice(0, 500) || null;
+        await db.logInviteClick({ code, ipHash, userAgent, referer });
+    } catch (err) {
+        console.warn(`[/invite/:code] click log failed for ${code}: ${err.message}`);
+    }
+    return res.redirect(302, `/portal/invite.html?redeem=${encodeURIComponent(code)}`);
+});
+
 // Legacy: rental-monitor moved to /portal/admin/rental-monitor.html in PR B
 // (admin-only gate). Redirect so old bookmarks still land somewhere sensible —
 // non-admins will bounce back to /portal/ from the admin hub's gate check.

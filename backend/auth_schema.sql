@@ -191,3 +191,21 @@ CREATE TABLE IF NOT EXISTS invite_rewards (
 -- bit0=bronze (3 invites), bit1=silver (10), bit2=gold (30), bit3=diamond (100).
 -- Thresholds + bonuses live in index.js INVITE_TIERS.
 ALTER TABLE invite_rewards ADD COLUMN IF NOT EXISTS milestones_claimed INTEGER NOT NULL DEFAULT 0;
+
+-- invite_clicks: funnel step 1 telemetry. Logged when anyone hits
+-- /invite/:code (the share URL shown on invite.html + QR codes). Exists
+-- because prior to this table the /invite/:code route didn't exist at all
+-- — shared links 404'd, so conversion showed 0/N and we had no visibility
+-- into whether it was a click problem or a redeem problem.
+-- IP is hashed (sha256 truncated to 16 hex) to keep PII footprint low
+-- while still allowing unique-visitor heuristics.
+CREATE TABLE IF NOT EXISTS invite_clicks (
+    id BIGSERIAL PRIMARY KEY,
+    code VARCHAR(12) NOT NULL,
+    clicked_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    ip_hash VARCHAR(16),
+    user_agent TEXT,
+    referer TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_invite_clicks_code ON invite_clicks(code);
+CREATE INDEX IF NOT EXISTS idx_invite_clicks_clicked_at ON invite_clicks(clicked_at);
