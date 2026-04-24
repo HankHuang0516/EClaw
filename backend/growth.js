@@ -57,36 +57,48 @@ async function isOwnerAdmin(deviceId) {
 }
 
 const TZ = 'Asia/Taipei';
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-async function fetchTodaySignups() {
+function taipeiTodayISO() {
+    // Asia/Taipei is UTC+8 with no DST — shift and slice.
+    return new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10);
+}
+
+function isValidDateStr(s) {
+    if (typeof s !== 'string' || !DATE_RE.test(s)) return false;
+    const d = new Date(s + 'T00:00:00Z');
+    return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
+}
+
+async function fetchSignupsForDate(dateStr) {
     const r = await pool.query(
         `SELECT COUNT(*)::int AS c FROM user_accounts
-         WHERE created_at >= date_trunc('day', NOW() AT TIME ZONE $1) AT TIME ZONE $1
-           AND created_at <  (date_trunc('day', NOW() AT TIME ZONE $1) + INTERVAL '1 day') AT TIME ZONE $1`,
-        [TZ]
+         WHERE created_at >= ($2::date::timestamp) AT TIME ZONE $1
+           AND created_at <  (($2::date + INTERVAL '1 day')::timestamp) AT TIME ZONE $1`,
+        [TZ, dateStr]
     );
     return r.rows[0].c;
 }
 
-async function fetchRetention7d() {
+async function fetchRetention7dForDate(dateStr) {
     const r = await pool.query(
-        `WITH today_start AS (
-           SELECT date_trunc('day', NOW() AT TIME ZONE $1) AS d
+        `WITH anchor AS (
+           SELECT $2::date AS d
          ),
          cohort AS (
-           SELECT id FROM user_accounts, today_start
-           WHERE created_at >= (d - INTERVAL '7 days') AT TIME ZONE $1
-             AND created_at <  (d - INTERVAL '6 days') AT TIME ZONE $1
+           SELECT id FROM user_accounts, anchor
+           WHERE created_at >= ((d - INTERVAL '7 days')::timestamp) AT TIME ZONE $1
+             AND created_at <  ((d - INTERVAL '6 days')::timestamp) AT TIME ZONE $1
          ),
          active AS (
            SELECT c.id FROM cohort c
-           JOIN user_accounts u ON u.id = c.id, today_start
-           WHERE u.last_login_at >= d AT TIME ZONE $1
-             AND u.last_login_at <  (d + INTERVAL '1 day') AT TIME ZONE $1
+           JOIN user_accounts u ON u.id = c.id, anchor
+           WHERE u.last_login_at >= (d::timestamp) AT TIME ZONE $1
+             AND u.last_login_at <  ((d + INTERVAL '1 day')::timestamp) AT TIME ZONE $1
          )
          SELECT (SELECT COUNT(*) FROM cohort)::int AS cohort_size,
                 (SELECT COUNT(*) FROM active)::int AS active_size`,
-        [TZ]
+        [TZ, dateStr]
     );
     const { cohort_size, active_size } = r.rows[0];
     if (cohort_size === 0) return { cohort_size: 0, active_size: 0, pct: null };
@@ -97,13 +109,13 @@ async function fetchRetention7d() {
     };
 }
 
-async function fetchPlazaNewListed() {
+async function fetchPlazaNewListedForDate(dateStr) {
     const r = await pool.query(
         `SELECT COUNT(*)::int AS c FROM bot_listings
          WHERE status = 'listed'
-           AND created_at >= date_trunc('day', NOW() AT TIME ZONE $1) AT TIME ZONE $1
-           AND created_at <  (date_trunc('day', NOW() AT TIME ZONE $1) + INTERVAL '1 day') AT TIME ZONE $1`,
-        [TZ]
+           AND created_at >= ($2::date::timestamp) AT TIME ZONE $1
+           AND created_at <  (($2::date + INTERVAL '1 day')::timestamp) AT TIME ZONE $1`,
+        [TZ, dateStr]
     );
     return r.rows[0].c;
 }
@@ -131,10 +143,19 @@ module.exports = function(devices) {
     const router = express.Router();
 
     router.get('/daily', async (req, res) => {
-        const { deviceId, botSecret, entityId } = req.query;
+        const { deviceId, botSecret, entityId, date } = req.query;
 
         if (!deviceId || !botSecret || !entityId) {
             return res.status(400).json({ success: false, error: 'Missing deviceId, botSecret, or entityId' });
+        }
+
+        let anchorDate;
+        if (date === undefined || date === '') {
+            anchorDate = taipeiTodayISO();
+        } else if (isValidDateStr(date)) {
+            anchorDate = date;
+        } else {
+            return res.status(400).json({ success: false, error: 'Invalid date — expected YYYY-MM-DD' });
         }
 
         const entity = findEntity(devices, deviceId, parseInt(entityId), botSecret);
@@ -159,14 +180,14 @@ module.exports = function(devices) {
 
         try {
             const [today_signups, retention_7d, plaza_new_listed_today, invite_conversion] = await Promise.all([
-                fetchTodaySignups(),
-                fetchRetention7d(),
-                fetchPlazaNewListed(),
+                fetchSignupsForDate(anchorDate),
+                fetchRetention7dForDate(anchorDate),
+                fetchPlazaNewListedForDate(anchorDate),
                 fetchInviteConversion()
             ]);
             return res.json({
                 success: true,
-                date: new Date().toISOString().slice(0, 10),
+                date: anchorDate,
                 today_signups,
                 retention_7d,
                 plaza_new_listed_today,
@@ -174,7 +195,8 @@ module.exports = function(devices) {
                 follow_ups: [
                     'source_channel: schema lacks signup_source column',
                     'visitor_to_signup_conversion: page_views has no FK to user_accounts',
-                    'plaza_new_listed_today: counts created_at not status_changed_at (bot_listings has no listed_at column)'
+                    'plaza_new_listed_today: counts created_at not status_changed_at (bot_listings has no listed_at column)',
+                    'invite_conversion is cumulative-to-now (not date-scoped); needs invite_redemptions.redeemed_at filter for historical k-value by day'
                 ]
             });
         } catch (err) {
@@ -185,6 +207,6 @@ module.exports = function(devices) {
 
     return {
         router,
-        _internal: { checkRate, findEntity, isOwnerAdmin, fetchTodaySignups, fetchRetention7d, fetchPlazaNewListed, rateBuckets }
+        _internal: { checkRate, findEntity, isOwnerAdmin, fetchSignupsForDate, fetchRetention7dForDate, fetchPlazaNewListedForDate, fetchInviteConversion, isValidDateStr, taipeiTodayISO, rateBuckets }
     };
 };

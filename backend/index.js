@@ -1255,7 +1255,8 @@ app.get('/api/help', (req, res) => {
         search:     ['搜尋','search','fetch','網頁','web','query','検索','ウェブ','スクレイピング','검색','웹','스크래핑','ค้นหา','เว็บ','ดึงข้อมูล','tìm kiếm','cạo dữ liệu','pencarian','pengikisan','recherche','extraction web','búsqueda','raspado web','carian'],
         files:      ['file','檔案','upload','download','上傳','下載','ファイル','アップロード','保存','파일','업로드','저장','ไฟล์','อัปโหลด','บันทึก','tệp','tải lên','lưu','unggah','simpan','fichier','téléchargement','enregistrer','archivo','subir','guardar','fail','muat naik'],
         entities:   ['entity','實體','bind','綁定','status','lookup','查詢實體','エンティティ','バインディング','엔티티','연결','바인딩','เอนทิตี','การผูกมัด','thực thể','liên kết','kết nối','entitas','pengikatan','koneksi','entité','liaison','entidad','enlace','vínculo','entiti','sambungan'],
-        vault:      ['vault','device-vars','devicevars','secret','api key','apikey','金鑰','密鑰','秘密','保險箱','audit','審計','variables','環境變數','환경 변수','보관소','감사','シークレット','金庫','監査','bí mật','kho','giám sát','rahasia','brankas','audit log']
+        vault:      ['vault','device-vars','devicevars','secret','api key','apikey','金鑰','密鑰','秘密','保險箱','audit','審計','variables','環境變數','환경 변수','보관소','감사','シークレット','金庫','監査','bí mật','kho','giám sát','rahasia','brankas','audit log'],
+        analytics:  ['analytics','growth','metrics','signup','retention','kpi','viral','k-value','成長','指標','留存','分析','회귀','분석','지표','メトリクス','分析','指標']
     };
 
     const matched = Object.entries(INTENT_MAP).find(([, kws]) =>
@@ -1320,6 +1321,10 @@ app.get('/api/help', (req, res) => {
             { title: 'Full API documentation', curl: `curl -s "${apiBase}/api/skill-doc?format=text"` },
             { title: 'Read mission dashboard', curl: `curl -s "${apiBase}/api/mission/dashboard?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
             { title: 'Read kanban board', curl: `curl -s "${apiBase}/api/mission/cards?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` }
+        ],
+        analytics: [
+            { title: 'Daily growth snapshot (today, owner-admin only)', curl: `curl -s "${apiBase}/api/growth/daily?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
+            { title: 'Daily growth snapshot for a specific date (YYYY-MM-DD)', curl: `curl -s "${apiBase}/api/growth/daily?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}&date=2026-04-17"` }
         ]
     };
 
