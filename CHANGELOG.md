@@ -1,3 +1,10 @@
+## [1.1063.9](https://github.com/HankHuang0516/EClaw/compare/v1.1063.8...v1.1063.9) (2026-04-24)
+
+
+### Bug Fixes
+
+* **device-vars:** prevent empty-merge wipe (Android WebView incident) ([#2029](https://github.com/HankHuang0516/EClaw/issues/2029)) ([dcb9d22](https://github.com/HankHuang0516/EClaw/commit/dcb9d220877ba36b700fb4e9ba01e858003bda11)), closes [#25](https://github.com/HankHuang0516/EClaw/issues/25)
+
 ## [1.1063.8](https://github.com/HankHuang0516/EClaw/compare/v1.1063.7...v1.1063.8) (2026-04-24)
 
 
