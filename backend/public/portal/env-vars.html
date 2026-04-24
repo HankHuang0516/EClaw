@@ -577,7 +577,13 @@
 
             renderAll();
             renderBotHint();
-            syncVarsToServer(); // sync on page load
+            // Page-load sync only when local has entries to push. An empty local
+            // here would otherwise POST {vars:{},source:'web'} and, in merge mode,
+            // silently drop every existing same-source key on the server.
+            // Incident 2026-04-24: Android WebView fresh storage partition → wipe.
+            if (Object.keys(loadLocalVars()).length > 0) {
+                syncVarsToServer();
+            }
             initTourTrack4();
         });
 

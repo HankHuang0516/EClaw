@@ -15495,6 +15495,24 @@ app.post('/api/device-vars', async (req, res) => {
                 }
             }
 
+            // Merge-mode empty guard (2026-04-24): same-source merge with an empty
+            // payload silently drops every key whose source matches `src`.
+            // Incident: Android WebView opened env-vars.html with empty localStorage
+            // and POSTed {vars:{},source:'web'}, wiping 17 keys. Refuse unless caller
+            // explicitly asks for REPLACE_ALL_EMPTY.
+            if (Object.keys(incoming).length === 0) {
+                const hadKeys = existing && Array.isArray(existing.var_keys) && existing.var_keys.length > 0;
+                if (hadKeys && confirm !== 'REPLACE_ALL_EMPTY') {
+                    serverLog('warn', 'device_vars', `[Vars] refused merge-mode empty wipe for ${deviceId}: ${existing.var_keys.length} keys present, src=${src}, no confirm`, { deviceId, metadata: { existingKeyCount: existing.var_keys.length, src, ip: _auditCtx.ip, ua: _auditCtx.ua } });
+                    db.logDeviceVarsAudit({ deviceId, action: 'refuse_wipe', source: src, callerIp: _auditCtx.ip, callerUa: _auditCtx.ua, beforeCount: existing.var_keys.length, afterCount: existing.var_keys.length });
+                    return res.status(400).json({
+                        success: false,
+                        error: 'refuse_empty_merge_wipe',
+                        message: `Refusing to merge empty vars into ${existing.var_keys.length} existing keys (src=${src}). Pass confirm:"REPLACE_ALL_EMPTY" to override.`,
+                    });
+                }
+            }
+
             merged = {};
             mergedSources = {};
 
