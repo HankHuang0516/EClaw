@@ -2584,7 +2584,8 @@
     <script src="shared/his-link-render.js"></script>
     <script src="shared/autolink-chip.js"></script>
     <script src="shared/autolink-chip-preview.js"></script>
-    <script src="shared/r2-link-render.js"></script>
+    <script src="../shared/r2-link-render.js"></script>
+    <script src="../shared/chat-message-render.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
     <script src="/socket.io/socket.io.js"></script>
@@ -3977,30 +3978,12 @@
                         textHtml = linkified.html;
                         firstUrl = linkified.urls[0] || '';
                     }
-                    // Render @mention tokens as chips (applies to both bot and user messages)
-                    if (window.MentionRender) {
-                        textHtml = MentionRender.renderMentionTokens(textHtml, buildMentionEntityMap(msg));
-                    }
-                    // Render Note ID patterns as clickable chips
-                    if (window.NoteLinkRender) {
-                        textHtml = NoteLinkRender.renderNoteLinks(textHtml);
-                    }
-                    // Render entity references (Card, Skill, Rule, etc.) as clickable chips
-                    if (window.EntityLinkRender) {
-                        textHtml = EntityLinkRender.renderEntityLinks(textHtml);
-                    }
-                    // Render his_<id> history tokens as clickable chips
-                    if (window.HisLinkRender) {
-                        textHtml = HisLinkRender.renderHisLinks(textHtml);
-                    }
-                    // 智慧引用：detect review_ / src:// tokens → 引用晶片 (autolink-chip)
-                    if (window.AutolinkChip) {
-                        textHtml = AutolinkChip.render(textHtml);
-                    }
-                    // Strip raw R2 presigned URLs — replace with attachment cards so
-                    // that access-key IDs and 10-minute bearer tokens never reach the DOM.
-                    if (window.R2LinkRender) {
-                        textHtml = R2LinkRender.replaceR2Links(textHtml);
+                    // Run shared chip pipeline (mention → note → entity → his → autolink-chip → R2)
+                    if (window.ChatMessageRender) {
+                        textHtml = ChatMessageRender.renderTextChips(textHtml, {
+                            surface: 'chat',
+                            mentionEntityMap: buildMentionEntityMap(msg)
+                        });
                     }
                 }
                 // Suppress inline image + link preview when firstUrl is an R2 presigned URL;

@@ -16,6 +16,7 @@ const ROOT = path.join(__dirname, '..', '..');
 const chatHtml = fs.readFileSync(path.join(ROOT, 'public', 'portal', 'chat.html'), 'utf8');
 const i18nJs = fs.readFileSync(path.join(ROOT, 'public', 'shared', 'i18n.js'), 'utf8');
 const indexJs = fs.readFileSync(path.join(ROOT, 'index.js'), 'utf8');
+const sharedRenderJs = fs.readFileSync(path.join(ROOT, 'public', 'shared', 'chat-message-render.js'), 'utf8');
 
 describe('Mention feature — static wiring', () => {
     test('mention-autocomplete.js and mention-render.js are present in portal/shared', () => {
@@ -39,8 +40,13 @@ describe('Mention feature — static wiring', () => {
         expect(chatHtml).toMatch(/MentionAutocomplete\.attach\(\s*document\.getElementById\(['"]messageInput['"]\)/);
     });
 
-    test('chat.html calls MentionRender.renderMentionTokens in the bubble pipeline', () => {
-        expect(chatHtml).toContain('MentionRender.renderMentionTokens');
+    test('chat.html runs MentionRender via the shared ChatMessageRender pipeline', () => {
+        // The bubble pipeline now delegates the chip chain to ChatMessageRender
+        // (shared between chat.html and kanban.html). Verify chat.html invokes
+        // the shared module *and* the shared module wires MentionRender into
+        // the chain — together these still guarantee @mention chip rendering.
+        expect(chatHtml).toContain('ChatMessageRender.renderTextChips');
+        expect(sharedRenderJs).toContain('MentionRender.renderMentionTokens');
     });
 
     test('chat.html exposes buildMentionEntityMap helper', () => {

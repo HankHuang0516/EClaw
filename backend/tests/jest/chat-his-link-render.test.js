@@ -15,6 +15,7 @@ const ROOT = path.join(__dirname, '..', '..');
 const chatHtml = fs.readFileSync(path.join(ROOT, 'public', 'portal', 'chat.html'), 'utf8');
 const i18nJs = fs.readFileSync(path.join(ROOT, 'public', 'shared', 'i18n.js'), 'utf8');
 const hisRenderPath = path.join(ROOT, 'public', 'portal', 'shared', 'his-link-render.js');
+const sharedRenderJs = fs.readFileSync(path.join(ROOT, 'public', 'shared', 'chat-message-render.js'), 'utf8');
 
 const SAMPLE_UUID = '7c424d88-9007-4d9b-9363-d811755847b1';
 const SAMPLE_UUID_2 = '015181ca-52a7-439a-8971-34e2523f4adb';
@@ -28,8 +29,13 @@ describe('his_<uuid> chip — static wiring', () => {
         expect(chatHtml).toContain('shared/his-link-render.js');
     });
 
-    test('chat.html calls HisLinkRender.renderHisLinks in the bubble pipeline', () => {
-        expect(chatHtml).toContain('HisLinkRender.renderHisLinks');
+    test('chat.html runs HisLinkRender via the shared ChatMessageRender pipeline', () => {
+        // The bubble pipeline now delegates the chip chain to ChatMessageRender
+        // (shared between chat.html and kanban.html). Verify chat.html invokes
+        // the shared module *and* the shared module wires HisLinkRender into
+        // the chain — together these still guarantee his_<uuid> rendering.
+        expect(chatHtml).toContain('ChatMessageRender.renderTextChips');
+        expect(sharedRenderJs).toContain('HisLinkRender.renderHisLinks');
     });
 
     test('chat.html defines openHistoryMessage function', () => {
