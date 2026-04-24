@@ -1,3 +1,10 @@
+# [1.1068.0](https://github.com/HankHuang0516/EClaw/compare/v1.1067.0...v1.1068.0) (2026-04-24)
+
+
+### Features
+
+* **invite:** per-code click funnel dashboard (card_8a0be5df777ea57296148d43) ([#2037](https://github.com/HankHuang0516/EClaw/issues/2037)) ([df805be](https://github.com/HankHuang0516/EClaw/commit/df805be1825852c5204288f5d962318467ffa0dc))
+
 # [1.1067.0](https://github.com/HankHuang0516/EClaw/compare/v1.1066.0...v1.1067.0) (2026-04-24)
 
 
