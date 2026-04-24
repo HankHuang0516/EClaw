@@ -810,6 +810,22 @@
     <script src="shared/ai-chat.js"></script>
     <script>if(typeof renderAvatarHtml==='undefined'){window.renderAvatarHtml=function(a){return a||'🦞'};window.isAvatarUrl=function(){return false}}</script>
     <script>
+        // Mention chips and his_ chips rendered by shared MentionRender /
+        // HisLinkRender call openMentionProfile() / openHistoryMessage() which
+        // live in chat.html. Stub them here so kanban-side clicks don't throw —
+        // route the user to chat with the target pre-resolved.
+        if (typeof window.openMentionProfile !== 'function') {
+            window.openMentionProfile = function (code) {
+                if (!code) return;
+                window.location.href = '/portal/chat.html?mention=' + encodeURIComponent(code);
+            };
+        }
+        if (typeof window.openHistoryMessage !== 'function') {
+            window.openHistoryMessage = function (msgId) {
+                if (!msgId) return;
+                window.location.href = '/portal/chat.html?his=' + encodeURIComponent(msgId);
+            };
+        }
         // 智慧引用 render chain — delegates to shared ChatMessageRender so chat
         // and kanban surfaces always run the same chip pipeline. Falls back to
         // the in-line chain if the shared module hasn't loaded yet.
