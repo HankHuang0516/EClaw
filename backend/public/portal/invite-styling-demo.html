@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>邀請頁 樣式拆解 Demo</title>
+<style>
+    :root {
+        --bg: #0f172a;
+        --text: #e2e8f0;
+        --text-secondary: #94a3b8;
+        --card: #1e293b;
+        --card-border: #334155;
+        --input-bg: #0f172a;
+        --primary: #6d28d9;
+        --radius: 12px;
+        --radius-sm: 8px;
+    }
+    * { box-sizing: border-box; }
+    body {
+        margin: 0; padding: 0;
+        background: var(--bg); color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+        line-height: 1.5;
+    }
+    .page-header {
+        background: #020617;
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--card-border);
+        position: sticky; top: 0; z-index: 10;
+    }
+    .page-header h1 {
+        margin: 0; font-size: 18px; font-weight: 700;
+    }
+    .page-header p {
+        margin: 4px 0 0; font-size: 12px; color: var(--text-secondary);
+    }
+    .demo-grid {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 24px;
+        max-width: 1100px;
+        margin: 24px auto;
+        padding: 0 20px;
+    }
+    @media (max-width: 900px) {
+        .demo-grid { grid-template-columns: 1fr; }
+    }
+    .invite-preview {
+        max-width: 600px; margin: 0;
+    }
+    .annotations {
+        display: flex; flex-direction: column; gap: 16px;
+    }
+    .note {
+        background: var(--card);
+        border: 1px solid var(--card-border);
+        border-left: 4px solid var(--primary);
+        border-radius: var(--radius-sm);
+        padding: 14px 16px;
+        font-size: 13px;
+    }
+    .note h4 {
+        margin: 0 0 8px; font-size: 13px; font-weight: 700;
+        color: #a78bfa;
+    }
+    .note code {
+        background: #020617; padding: 1px 6px; border-radius: 3px;
+        font-size: 11px; color: #fbbf24;
+    }
+    .note .swatch {
+        display: inline-block; width: 14px; height: 14px;
+        border-radius: 3px; vertical-align: middle;
+        margin-right: 4px; border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* ========= ACTUAL INVITE PAGE STYLES (copy-paste from invite.html) ========= */
+    .inv-hero {
+        background: linear-gradient(135deg, #1e3a8a 0%, #6d28d9 100%);
+        color: #fff; border-radius: var(--radius);
+        padding: 32px; text-align: center; margin-bottom: 16px;
+    }
+    .inv-hero h2 { font-size: 22px; font-weight: 800; margin: 0 0 6px; }
+    .inv-hero p { margin: 0; opacity: 0.9; font-size: 13px; }
+
+    .inv-section {
+        background: var(--card);
+        border: 1px solid var(--card-border);
+        border-radius: var(--radius);
+        padding: 20px; margin-bottom: 16px;
+    }
+    .inv-section h3 { margin: 0 0 12px; font-size: 15px; font-weight: 700; }
+
+    .inv-code-box { display: flex; align-items: center; gap: 8px; }
+    .inv-code {
+        flex: 1; padding: 14px;
+        font-size: 24px; font-weight: 800; letter-spacing: 4px;
+        text-align: center;
+        background: var(--input-bg);
+        border: 2px dashed var(--card-border);
+        border-radius: var(--radius-sm);
+        color: var(--primary); font-family: monospace;
+    }
+    .inv-copy-btn {
+        padding: 14px 20px; border: none;
+        border-radius: var(--radius-sm);
+        background: var(--primary); color: #fff;
+        font-size: 13px; font-weight: 700; cursor: pointer;
+    }
+    .inv-share-url {
+        margin-top: 10px; padding: 10px;
+        font-size: 12px; color: var(--text-secondary);
+        background: var(--input-bg); border-radius: var(--radius-sm);
+        word-break: break-all;
+    }
+
+    .inv-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 10px; margin-bottom: 16px;
+    }
+    .inv-kpi-card {
+        padding: 14px 10px; text-align: center;
+        border: 1px solid var(--card-border);
+        border-radius: var(--radius-sm);
+        background: var(--input-bg);
+    }
+    .inv-kpi-value {
+        font-size: 22px; font-weight: 800;
+        color: var(--primary);
+        font-variant-numeric: tabular-nums;
+    }
+    .inv-kpi-label { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+
+    .inv-usage-bar-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; text-align: right; }
+    .inv-usage-bar-track {
+        height: 8px; background: var(--input-bg);
+        border-radius: 4px; overflow: hidden;
+        border: 1px solid var(--card-border);
+    }
+    .inv-usage-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #10b981, #6d28d9);
+        width: 62%;
+    }
+
+    .inv-timeline-title { font-size: 13px; font-weight: 700; margin: 16px 0 8px; }
+    .inv-timeline-wrap {
+        display: flex; align-items: flex-end; gap: 2px;
+        height: 88px; padding: 4px 0;
+    }
+    .inv-timeline-bar { flex: 1; min-width: 8px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; }
+    .inv-timeline-fill {
+        width: 100%;
+        background: linear-gradient(180deg, #6d28d9, #1e3a8a);
+        border-radius: 2px 2px 0 0;
+    }
+
+    .inv-rewards { }
+    .inv-reward-row {
+        display: flex; justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--card-border);
+        font-size: 13px;
+    }
+    .inv-reward-row:last-child { border-bottom: 0; }
+    .inv-reward-label { color: var(--text-secondary); }
+    .inv-reward-value { font-weight: 700; color: #10b981; }
+
+    .inv-tier-current {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 14px; border-radius: var(--radius-sm);
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #78350f; margin-bottom: 14px;
+    }
+    .inv-tier-current-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.8; }
+    .inv-tier-current-name { font-size: 20px; font-weight: 800; margin-top: 2px; }
+    .inv-tier-current-icon { font-size: 32px; }
+    .inv-tier-list { display: grid; gap: 8px; }
+    .inv-tier-row {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 12px;
+        border: 1px solid var(--card-border); border-radius: var(--radius-sm);
+        background: var(--input-bg); font-size: 13px;
+    }
+    .inv-tier-row.unlocked {
+        border-color: #f59e0b;
+        background: linear-gradient(135deg, #fffbeb, #fef3c7);
+        color: #78350f;
+    }
+    .inv-tier-row-name { font-weight: 700; flex: 1; }
+    .inv-tier-row-bonus { font-weight: 700; color: #10b981; }
+    .inv-tier-row.unlocked .inv-tier-row-bonus { color: #d97706; }
+
+    .inv-redeem { display: flex; gap: 8px; }
+    .inv-redeem input {
+        flex: 1; padding: 10px;
+        border: 1px solid var(--card-border);
+        border-radius: var(--radius-sm);
+        background: var(--input-bg); color: var(--text);
+        font-size: 14px; letter-spacing: 2px; text-transform: uppercase;
+    }
+    .inv-redeem button {
+        padding: 10px 18px; border: none;
+        border-radius: var(--radius-sm);
+        background: var(--primary); color: #fff;
+        font-weight: 700; cursor: pointer;
+    }
+
+    /* ===== diff before/after section ===== */
+    .diff-banner {
+        background: #064e3b; color: #d1fae5;
+        padding: 16px 20px; border-radius: var(--radius);
+        margin: 24px auto; max-width: 1060px;
+    }
+    .diff-banner h2 { margin: 0; font-size: 18px; }
+    .diff-compare {
+        display: grid; grid-template-columns: 1fr 1fr;
+        gap: 16px; margin-top: 12px;
+    }
+    @media (max-width: 900px) { .diff-compare { grid-template-columns: 1fr; } }
+    .diff-col {
+        background: var(--card); color: var(--text);
+        padding: 16px; border-radius: var(--radius-sm);
+        position: relative;
+    }
+    .diff-col.before { border-left: 4px solid #ef4444; }
+    .diff-col.after { border-left: 4px solid #10b981; }
+    .diff-col h4 { margin: 14px 0 8px; font-size: 13px; color: #a78bfa; }
+    .diff-col h4:first-of-type { margin-top: 0; }
+    .diff-tag {
+        display: inline-block; padding: 3px 10px;
+        background: #ef4444; color: #fff;
+        font-size: 11px; font-weight: 700;
+        border-radius: 4px; letter-spacing: 0.1em;
+        margin-bottom: 10px;
+    }
+    .diff-tag.after { background: #10b981; }
+    .mock-browser {
+        background: var(--input-bg);
+        border: 1px solid var(--card-border);
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+    }
+    .mock-url {
+        padding: 6px 10px; background: #020617;
+        font-family: monospace; font-size: 11px;
+        color: #fbbf24;
+        border-bottom: 1px solid var(--card-border);
+        word-break: break-all;
+    }
+    .mock-404 {
+        padding: 24px 16px; text-align: center;
+        background: #fee2e2; color: #7f1d1d;
+    }
+    .mock-404 strong { font-family: monospace; font-size: 14px; }
+    .mock-404 p { margin: 8px 0 0; font-size: 12px; color: #991b1b; }
+    .mock-flow { padding: 14px; }
+    .flow-step {
+        padding: 8px 10px; margin-bottom: 4px;
+        background: var(--input-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 4px; font-size: 12px;
+    }
+    .flow-step code {
+        background: #020617; color: #fbbf24;
+        padding: 1px 5px; border-radius: 3px;
+        font-size: 11px;
+    }
+    .flow-step.ok { background: #064e3b; color: #d1fae5; border-color: #10b981; }
+    .flow-arrow {
+        text-align: center; color: #10b981;
+        font-size: 16px; padding: 2px 0;
+    }
+    .mock-section {
+        background: var(--input-bg); padding: 12px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--card-border);
+    }
+    .diff-caption { font-size: 11px; color: var(--text-secondary); margin: 8px 0 0; }
+    .diff-code {
+        background: #020617; border-radius: var(--radius-sm);
+        padding: 12px; margin-top: 10px;
+        font-size: 12px; overflow-x: auto;
+    }
+    .diff-code pre { margin: 0; font-family: "SF Mono", Consolas, monospace; line-height: 1.6; }
+    .diff-add { color: #86efac; display: block; }
+    .diff-ctx { color: var(--text-secondary); display: block; }
+
+    /* ===== i18n bug section ===== */
+    .bug-banner {
+        background: #7f1d1d; color: #fee2e2;
+        padding: 16px 20px; border-radius: var(--radius);
+        margin: 24px auto; max-width: 1060px;
+    }
+    .bug-banner h2 { margin: 0 0 8px; font-size: 18px; }
+    .bug-compare {
+        display: grid; grid-template-columns: 1fr 1fr;
+        gap: 12px; margin-top: 12px;
+    }
+    @media (max-width: 700px) {
+        .bug-compare { grid-template-columns: 1fr; }
+    }
+    .bug-col {
+        background: var(--card); color: var(--text);
+        padding: 14px; border-radius: var(--radius-sm);
+    }
+    .bug-col h4 { margin: 0 0 10px; font-size: 13px; color: #a78bfa; }
+    .bug-row {
+        display: grid; grid-template-columns: 1fr 1fr;
+        gap: 6px; padding: 6px 0;
+        border-bottom: 1px dashed var(--card-border);
+        font-size: 13px;
+    }
+    .bug-row:last-child { border-bottom: 0; }
+    .bug-row .rendered { color: #fbbf24; font-weight: 600; }
+    .bug-row .rendered.mix { color: #f87171; }
+    .bug-row .label { color: var(--text-secondary); font-size: 11px; }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+    <h1>邀請頁 (`/portal/invite.html`) 樣式拆解 Demo</h1>
+    <p>左邊是真實頁面的縮小版（同 CSS）· 右邊是每個區塊在做什麼。全部都用 `var(--primary)=#6d28d9` 紫色為主色。</p>
+</header>
+
+<main class="demo-grid">
+
+    <!-- === LEFT: real styling preview === -->
+    <div class="invite-preview">
+
+        <div class="inv-hero">
+            <h2>邀請好友，賺 e幣</h2>
+            <p>分享你的邀請碼，你得 500 e幣，朋友得 100 e幣。</p>
+        </div>
+
+        <div class="inv-section">
+            <h3>① 我的邀請碼</h3>
+            <div class="inv-code-box">
+                <div class="inv-code">ABCD-23</div>
+                <button class="inv-copy-btn">複製</button>
+            </div>
+            <div class="inv-share-url">https://eclawbot.com/invite/ABCD23</div>
+        </div>
+
+        <div class="inv-section">
+            <h3>② 邀請儀表板</h3>
+            <div class="inv-kpi-grid">
+                <div class="inv-kpi-card">
+                    <div class="inv-kpi-value">3</div>
+                    <div class="inv-kpi-label">累計邀請</div>
+                </div>
+                <div class="inv-kpi-card">
+                    <div class="inv-kpi-value">1,500</div>
+                    <div class="inv-kpi-label">獲得 e幣</div>
+                </div>
+                <div class="inv-kpi-card">
+                    <div class="inv-kpi-value">12</div>
+                    <div class="inv-kpi-label">今日使用</div>
+                </div>
+                <div class="inv-kpi-card">
+                    <div class="inv-kpi-value">33%</div>
+                    <div class="inv-kpi-label">轉換率</div>
+                </div>
+            </div>
+            <div class="inv-usage-bar-label">62 / 100</div>
+            <div class="inv-usage-bar-track"><div class="inv-usage-bar-fill"></div></div>
+            <h4 class="inv-timeline-title">過去 30 天使用量</h4>
+            <div class="inv-timeline-wrap">
+                <div class="inv-timeline-bar"><div class="inv-timeline-fill" style="height:20%"></div></div>
+                <div class="inv-timeline-bar"><div class="inv-timeline-fill" style="height:40%"></div></div>
+                <div class="inv-timeline-bar"><div class="inv-timeline-fill" style="height:55%"></div></div>
+                <div class="inv-timeline-bar"><div class="inv-timeline-fill" style="height:30%"></div></div>
+                <div class="inv-timeline-bar"><div class="inv-timeline-fill" style="height:70%"></div></div>
+                <div class="inv-timeline-bar"><div class="inv-timeline-fill" style="height:45%"></div></div>
+                <div class="inv-timeline-bar"><div class="inv-timeline-fill" style="height:60%"></div></div>
+                <div class="inv-timeline-bar"><div class="inv-timeline-fill" style="height:80%"></div></div>
+                <div class="inv-timeline-bar"><div class="inv-timeline-fill" style="height:35%"></div></div>
+                <div class="inv-timeline-bar"><div class="inv-timeline-fill" style="height:50%"></div></div>
+                <div class="inv-timeline-bar"><div class="inv-timeline-fill" style="height:90%"></div></div>
+                <div class="inv-timeline-bar"><div class="inv-timeline-fill" style="height:25%"></div></div>
+                <div class="inv-timeline-bar"><div class="inv-timeline-fill" style="height:65%"></div></div>
+                <div class="inv-timeline-bar"><div class="inv-timeline-fill" style="height:48%"></div></div>
+            </div>
+        </div>
+
+        <div class="inv-section">
+            <h3>③ 獎勵說明</h3>
+            <div class="inv-rewards">
+                <div class="inv-reward-row"><span class="inv-reward-label">你獲得</span><span class="inv-reward-value">+500 e幣</span></div>
+                <div class="inv-reward-row"><span class="inv-reward-label">好友獲得</span><span class="inv-reward-value">+100 e幣</span></div>
+                <div class="inv-reward-row"><span class="inv-reward-label">朋友首次儲值獎勵（你）</span><span class="inv-reward-value">+500 e幣</span></div>
+            </div>
+        </div>
+
+        <div class="inv-section">
+            <h3>④ 階級與里程碑</h3>
+            <div class="inv-tier-current">
+                <div>
+                    <div class="inv-tier-current-label">目前階級</div>
+                    <div class="inv-tier-current-name">青銅邀請者</div>
+                </div>
+                <div class="inv-tier-current-icon">🥉</div>
+            </div>
+            <div class="inv-tier-list">
+                <div class="inv-tier-row unlocked">
+                    <div class="inv-tier-row-name">青銅（1 位好友）</div>
+                    <div class="inv-tier-row-bonus">✓ 解鎖</div>
+                </div>
+                <div class="inv-tier-row">
+                    <div class="inv-tier-row-name">白銀（5 位好友）</div>
+                    <div class="inv-tier-row-bonus">+1000 e幣</div>
+                </div>
+                <div class="inv-tier-row">
+                    <div class="inv-tier-row-name">黃金（10 位好友）</div>
+                    <div class="inv-tier-row-bonus">+3000 e幣</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="inv-section">
+            <h3>⑤ 兌換邀請碼</h3>
+            <div class="inv-redeem">
+                <input placeholder="ABCDEF" maxlength="8">
+                <button>兌換</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- === RIGHT: annotations === -->
+    <aside class="annotations">
+
+        <div class="note">
+            <h4>整體排版</h4>
+            <code>max-width: 600px</code> 單欄置中；每個 section 都是 <code>var(--card)</code> 底 + 1px border + 圓角 <code>var(--radius)=12px</code>，垂直堆疊，<code>margin-bottom: 16px</code>。手機同樣版型（不變欄數）。
+        </div>
+
+        <div class="note">
+            <h4>Hero banner (①上方)</h4>
+            <span class="swatch" style="background:linear-gradient(135deg,#1e3a8a,#6d28d9)"></span>
+            深藍 <code>#1e3a8a</code> → 紫 <code>#6d28d9</code> 135° 漸層，白字，32px padding 置中。全站唯一走漸層 banner 的頁面。
+        </div>
+
+        <div class="note">
+            <h4>① 邀請碼框</h4>
+            <code>.inv-code</code>：24px 特大、800 weight、monospace、<code>letter-spacing: 4px</code>、2px <strong>虛線</strong>邊框、紫色字。右邊 <code>.inv-copy-btn</code> 是實色紫鈕，兩者高度用 padding 對齊。
+        </div>
+
+        <div class="note">
+            <h4>② 儀表板 KPI</h4>
+            <code>.inv-kpi-grid</code>：<code>repeat(auto-fit, minmax(130px, 1fr))</code>，螢幕寬 4 格一列、手機自動換 2 格。數字用 <code>tabular-nums</code> 等寬對齊。下方 usage bar 是
+            <span class="swatch" style="background:linear-gradient(90deg,#10b981,#6d28d9)"></span>
+            綠→紫橫條，timeline 是
+            <span class="swatch" style="background:linear-gradient(180deg,#6d28d9,#1e3a8a)"></span>
+            紫→藍直條。
+        </div>
+
+        <div class="note">
+            <h4>③ 獎勵 3 行</h4>
+            左標題 secondary 灰 / 右數字 <code>#10b981</code> 綠色強調，中間用 1px border-bottom 分隔。
+        </div>
+
+        <div class="note">
+            <h4>④ Tier 階級</h4>
+            目前階級用
+            <span class="swatch" style="background:linear-gradient(135deg,#fef3c7,#fde68a)"></span>
+            奶油黃漸層 + 棕字 <code>#78350f</code> 當 award 感。已解鎖 row 用 amber <code>#f59e0b</code> border + 淺黃背景，未解鎖維持 card 灰底。
+        </div>
+
+        <div class="note">
+            <h4>⑤ 兌換</h4>
+            input + button 平排；input 有 <code>text-transform: uppercase</code> + <code>letter-spacing: 2px</code>，打字會自動變大寫寬字。
+        </div>
+
+        <div class="note" style="border-left-color:#ef4444;">
+            <h4 style="color:#fca5a5;">🐞 發現的 bug — 簡繁混雜</h4>
+            頁面 <code>i18n.lang = "zh-CN"</code>，但 zh-CN 字典**大量殘留繁體**，甚至單字串內簡繁混寫。看右下詳表。
+        </div>
+
+    </aside>
+</main>
+
+<section class="diff-banner">
+    <h2>🔧 這次 PR 動到的 UI — before / after</h2>
+    <p style="font-size:13px;color:var(--text-secondary);margin:4px 0 14px;">為了修 invite 0/8 轉換率，<strong>後端加了 <code>/invite/:code</code> redirect</strong>（原本 404）+ <strong>前端在 invite.html DOMContentLoaded 加 5 行 JS 把 <code>?redeem=CODE</code> 自動填入 input</strong>。UI 視覺本身完全沒改，只有行為改了。</p>
+
+    <div class="diff-compare">
+        <div class="diff-col before">
+            <div class="diff-tag">BEFORE</div>
+            <h4>1. 分享連結行為</h4>
+            <div class="mock-browser">
+                <div class="mock-url">https://eclawbot.com/invite/ABCD23</div>
+                <div class="mock-404">
+                    <div style="font-size:48px;">💀</div>
+                    <strong>Cannot GET /invite/ABCD23</strong>
+                    <p>Express 預設 404 — 零路由，所有分享出去的碼都是死的</p>
+                </div>
+            </div>
+
+            <h4 style="margin-top:18px;">2. 兌換框（直接進 portal 的話）</h4>
+            <div class="mock-section">
+                <h3 style="font-size:14px;margin:0 0 10px;">有邀請碼？</h3>
+                <div class="inv-redeem">
+                    <input placeholder="ABCDEF" maxlength="8">
+                    <button>兌換</button>
+                </div>
+                <p class="diff-caption">↑ 空白，使用者要手動從訊息裡抄</p>
+            </div>
+        </div>
+
+        <div class="diff-col after">
+            <div class="diff-tag after">AFTER</div>
+            <h4>1. 分享連結行為</h4>
+            <div class="mock-browser">
+                <div class="mock-url">https://eclawbot.com/invite/ABCD23</div>
+                <div class="mock-flow">
+                    <div class="flow-step">1. <code>302 Redirect</code> (+ 寫 click log)</div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step">2. <code>/portal/invite.html?redeem=ABCD23</code></div>
+                    <div class="flow-arrow">↓</div>
+                    <div class="flow-step ok">✓ 落地頁正常渲染 + 兌換框已預填</div>
+                </div>
+            </div>
+
+            <h4 style="margin-top:18px;">2. 兌換框（從分享連結進來）</h4>
+            <div class="mock-section">
+                <h3 style="font-size:14px;margin:0 0 10px;">有邀請碼？</h3>
+                <div class="inv-redeem">
+                    <input value="ABCD23" placeholder="ABCDEF" maxlength="8">
+                    <button>兌換</button>
+                </div>
+                <p class="diff-caption">↑ 自動填入，使用者一按兌換就完成</p>
+            </div>
+        </div>
+    </div>
+
+    <details style="margin-top:16px;background:var(--card);border-radius:var(--radius-sm);padding:12px 16px;">
+        <summary style="cursor:pointer;font-weight:700;font-size:13px;">展開：動到的 code（完整 diff）</summary>
+        <div class="diff-code">
+<pre><span class="diff-add">+ // index.js (新增路由)</span>
+<span class="diff-add">+ app.get('/invite/:code', async (req, res) =&gt; {</span>
+<span class="diff-add">+     const raw = String(req.params.code || '').toUpperCase();</span>
+<span class="diff-add">+     const code = /^[A-Z0-9]{4,12}$/.test(raw) ? raw : null;</span>
+<span class="diff-add">+     if (!code) return res.redirect(302, '/portal/invite.html');</span>
+<span class="diff-add">+     // best-effort click log (PII-hashed IP, 不擋 redirect)</span>
+<span class="diff-add">+     try { await db.logInviteClick({ code, ipHash, userAgent, referer }); } catch {}</span>
+<span class="diff-add">+     return res.redirect(302, `/portal/invite.html?redeem=${encodeURIComponent(code)}`);</span>
+<span class="diff-add">+ });</span>
+
+<span class="diff-ctx">  // public/portal/invite.html DOMContentLoaded 裡面加 5 行：</span>
+  window.addEventListener('DOMContentLoaded', async () =&gt; {
+      const _params = new URLSearchParams(window.location.search);
+      const _isEmbed = _params.get('embed') === '1' || window.self !== window.top;
+      if (_isEmbed) document.body.classList.add('embed-mode');
+<span class="diff-add">+     const _redeemParam = (_params.get('redeem') || '').toUpperCase()</span>
+<span class="diff-add">+         .replace(/[^A-Z0-9]/g, '').slice(0, 12);</span>
+<span class="diff-add">+     if (_redeemParam) {</span>
+<span class="diff-add">+         const _input = document.getElementById('redeemInput');</span>
+<span class="diff-add">+         if (_input) _input.value = _redeemParam;</span>
+<span class="diff-add">+     }</span>
+      renderNav('settings');
+      ...
+  });
+
+<span class="diff-ctx">  // invite.html 的 HTML (input 本身完全沒動)：</span>
+  &lt;div class="inv-redeem"&gt;
+      &lt;input id="redeemInput" placeholder="ABCDEF" maxlength="8"&gt;
+      &lt;button onclick="redeemCode()"&gt;兌換&lt;/button&gt;
+  &lt;/div&gt;</pre>
+        </div>
+    </details>
+</section>
+
+<section class="bug-banner">
+    <h2>🐞 zh-CN 字典 bug — 簡繁混雜範例（實測頁面看到的）</h2>
+    <p>下面是今天從線上頁面抓下來的真實渲染字串，這不是邀請頁獨有，而是 <code>i18n.zh-CN</code> 全站字典的問題。</p>
+
+    <div class="bug-compare">
+        <div class="bug-col">
+            <h4>繁體直接當簡體用（應該翻成簡體）</h4>
+            <div class="bug-row"><span class="label">key: inv_dashboard</span><span class="rendered">儀表板</span></div>
+            <div class="bug-row"><span class="label">key: inv_invite_friends</span><span class="rendered">邀請好友</span></div>
+            <div class="bug-row"><span class="label">key: inv_copy</span><span class="rendered">複製</span></div>
+            <div class="bug-row"><span class="label">key: inv_qr_gen_cta</span><span class="rendered">產生分享圖</span></div>
+            <div class="bug-row"><span class="label">key: invite_stats_kpi_conversion</span><span class="rendered">轉換率</span></div>
+            <div class="bug-row"><span class="label">key: inv_you_get</span><span class="rendered">你獲得</span></div>
+            <div class="bug-row"><span class="label">key: topup_btn</span><span class="rendered">儲值</span></div>
+            <div class="bug-row"><span class="label">key: footer_privacy</span><span class="rendered">隱私權政策</span></div>
+        </div>
+
+        <div class="bug-col">
+            <h4>🚨 單字串內簡繁混寫（最糟）</h4>
+            <div class="bug-row"><span class="label">key: inv_earn_coin</span><span class="rendered mix">赚取 e幣</span></div>
+            <div class="bug-row"><span class="label">　（赚=簡，幣=繁）</span><span class="label">應：賺取 e幣 (繁) / 赚取 e币 (簡)</span></div>
+            <div class="bug-row"><span class="label">key: topbar_info</span><span class="rendered mix">资訊</span></div>
+            <div class="bug-row"><span class="label">　（资=簡，訊=繁）</span><span class="label">應：資訊 (繁) / 资讯 (簡)</span></div>
+            <div class="bug-row"><span class="label">key: invite_stats_timeline_title</span><span class="rendered mix">过去 30 天</span></div>
+            <div class="bug-row"><span class="label">　（过=簡，其他繁）</span><span class="label">應：過去 30 天 (繁)</span></div>
+            <div class="bug-row"><span class="label">key: inv_rewards_title</span><span class="rendered mix">獎勵说明</span></div>
+            <div class="bug-row"><span class="label">　（獎勵=繁，说=簡）</span><span class="label">應：獎勵說明 (繁) / 奖励说明 (簡)</span></div>
+            <div class="bug-row"><span class="label">key: inv_tier_title</span><span class="rendered mix">阶級与里程碑</span></div>
+            <div class="bug-row"><span class="label">　（阶/与=簡，級=繁）</span><span class="label">應：階級與里程碑 (繁)</span></div>
+            <div class="bug-row"><span class="label">key: faq_title</span><span class="rendered mix">常見問题</span></div>
+            <div class="bug-row"><span class="label">　（見=繁，题=簡）</span><span class="label">應：常見問題 (繁) / 常见问题 (簡)</span></div>
+        </div>
+    </div>
+
+    <p style="margin-top: 14px; font-size: 13px;">
+        <strong>推測成因：</strong>zh-CN 字典是從 zh-TW 字典複製過來後只翻了一部分 key（或機翻工具吃到半個字串就漏字）。影響範圍：<strong>全站</strong>，不是只有邀請頁。<br>
+        <strong>建議：</strong>另開一張 P2 卡做 zh-CN 字典全面清洗（or 直接用 OpenCC zh-TW → zh-CN 自動轉一次當 baseline）。
+    </p>
+</section>
+
+</body>
+</html>
