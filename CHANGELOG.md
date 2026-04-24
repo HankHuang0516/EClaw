@@ -1,3 +1,10 @@
+# [1.1065.0](https://github.com/HankHuang0516/EClaw/compare/v1.1064.1...v1.1065.0) (2026-04-24)
+
+
+### Features
+
+* **admin:** add GET /api/admin/invite/clicks — funnel step-1 visibility ([#2033](https://github.com/HankHuang0516/EClaw/issues/2033)) ([c994f20](https://github.com/HankHuang0516/EClaw/commit/c994f2017cfaabb82d20e3c883f9df7b44dde112)), closes [#2032](https://github.com/HankHuang0516/EClaw/issues/2032) [#2031](https://github.com/HankHuang0516/EClaw/issues/2031)
+
 ## [1.1064.1](https://github.com/HankHuang0516/EClaw/compare/v1.1064.0...v1.1064.1) (2026-04-24)
 
 
