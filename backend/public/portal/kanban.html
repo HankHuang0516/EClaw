@@ -112,6 +112,7 @@
         .kb-btn-quote-chat:hover { background:var(--primary,#3b82f6); color:#fff; }
         .kb-modal-meta { padding:12px 24px; display:flex; gap:12px; flex-wrap:wrap; font-size:12px; color:var(--text-secondary); border-bottom:1px solid var(--card-border); }
         .kb-modal-meta .meta-item { display:flex; align-items:center; gap:4px; }
+        .kb-detail-desc { width:100%; font-size:13px; color:var(--text-secondary); margin-top:8px; white-space:pre-wrap; word-break:break-word; max-height:30vh; overflow-y:auto; overscroll-behavior:contain; padding-right:4px; }
 
         /* Modal tabs */
         .kb-modal-tabs { display:flex; gap:0; padding:0 24px; border-bottom:1px solid var(--card-border); }
@@ -1239,7 +1240,7 @@
                 ${reviewerName ? `<span class="meta-item">🔍 ${escapeHtml(reviewerName)}</span>` : ''}
                 <span class="meta-item">🕐 ${formatTime(card.createdAt || card.created_at)}</span>
                 ${scheduleInfo}
-                ${card.description ? '<div style="width:100%;font-size:13px;color:var(--text-secondary);margin-top:8px;white-space:pre-wrap;word-break:break-word">'+escapeHtml(card.description)+'</div>' : ''}
+                ${card.description ? '<div class="kb-detail-desc">'+escapeHtml(card.description)+'</div>' : ''}
             `;
 
             // Move bar — shared assign + reviewer UI for all cards
