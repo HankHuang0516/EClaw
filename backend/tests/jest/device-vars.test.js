@@ -233,7 +233,10 @@ describe('POST /api/device-vars — legacy empty-wipe guard', () => {
         expect(res.body.success).toBe(true);
     });
 
-    it('does NOT guard merge-mode source:"web" with empty vars (merge is safe)', async () => {
+    it('refuses merge-mode source:"web" with empty vars against non-empty vault (2026-04-24 incident)', async () => {
+        // Audit event #25 showed 17 keys → 0 via Android WebView POST
+        // {vars:{},source:'web'}. Merge branch now refuses empty incoming
+        // against a non-empty vault unless confirm:"REPLACE_ALL_EMPTY".
         const devId = `vars-post-mergeempty-${Date.now()}`;
         const secret = await registerDevice(devId);
         db.getDeviceVars.mockResolvedValueOnce({
@@ -245,6 +248,40 @@ describe('POST /api/device-vars — legacy empty-wipe guard', () => {
             deviceSecret: secret,
             vars: {},
             source: 'web',
+        });
+        expect(res.status).toBe(400);
+        expect(res.body.success).toBe(false);
+        expect(res.body.error).toBe('refuse_empty_merge_wipe');
+        expect(res.body.message).toMatch(/Refusing to merge empty vars into 1 existing keys/);
+    });
+
+    it('allows merge-mode source:"web" with empty vars on empty vault (no-op, nothing to lose)', async () => {
+        const devId = `vars-post-mergeempty-empty-${Date.now()}`;
+        const secret = await registerDevice(devId);
+        // Default mock returns null → no existing row
+        const res = await post('/api/device-vars').send({
+            deviceId: devId,
+            deviceSecret: secret,
+            vars: {},
+            source: 'web',
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+    });
+
+    it('allows merge-mode source:"web" with empty vars + confirm:"REPLACE_ALL_EMPTY" (explicit intent)', async () => {
+        const devId = `vars-post-mergeempty-confirm-${Date.now()}`;
+        const secret = await registerDevice(devId);
+        db.getDeviceVars.mockResolvedValueOnce({
+            vars: { EXISTING: 'value' },
+            var_keys: ['EXISTING'],
+        });
+        const res = await post('/api/device-vars').send({
+            deviceId: devId,
+            deviceSecret: secret,
+            vars: {},
+            source: 'web',
+            confirm: 'REPLACE_ALL_EMPTY',
         });
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
