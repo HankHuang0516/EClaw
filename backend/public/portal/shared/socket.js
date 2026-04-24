@@ -96,7 +96,7 @@ function handleIncomingNotification(notif) {
 
 async function updateNotifBadge() {
     try {
-        const data = await apiCall('GET', '/api/notifications/count');
+        const data = await apiCall('GET', '/api/notifications/count', null, { skip401Redirect: true });
         unreadNotifCount = data.count || 0;
         renderNotifBadge(unreadNotifCount);
     } catch (e) {
