@@ -1129,7 +1129,8 @@
                     <span style="padding:6px 0; color:#666; font-size:13px;">${historyPage} / ${totalPages}</span>
                     <button class="btn btn-ghost" ${historyPage >= totalPages ? 'disabled' : ''} onclick="historyPage++; loadHistoryPage()">›</button>`;
             } catch (err) {
-                list.innerHTML = '<div style="color:#c33;">' + (err.message || err) + '</div>';
+                const _esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                list.innerHTML = '<div style="color:#c33;">' + _esc(err.message || err) + '</div>';
             }
         }
 
