@@ -210,6 +210,10 @@
             cursor: pointer;
             transition: all 0.2s;
             position: relative;
+            /* Suppress iOS save-image callout during the long-press detection
+             * window. Without this, a 500ms hold on a photo thumbnail pops the
+             * system share sheet before our multi-select timer can fire. */
+            -webkit-touch-callout: none;
         }
 
         .file-card:hover {
