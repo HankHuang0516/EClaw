@@ -1,3 +1,10 @@
+## [1.1071.3](https://github.com/HankHuang0516/EClaw/compare/v1.1071.2...v1.1071.3) (2026-04-24)
+
+
+### Bug Fixes
+
+* **env-vars:** hydrate localStorage from server on page load ([#2047](https://github.com/HankHuang0516/EClaw/issues/2047)) ([c3e01c0](https://github.com/HankHuang0516/EClaw/commit/c3e01c028d7ff74076d4bb8696cbf1f6f2f3c4f1))
+
 ## [1.1071.2](https://github.com/HankHuang0516/EClaw/compare/v1.1071.1...v1.1071.2) (2026-04-24)
 
 
