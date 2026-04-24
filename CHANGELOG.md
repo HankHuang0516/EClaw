@@ -1,3 +1,10 @@
+# [1.1075.0](https://github.com/HankHuang0516/EClaw/compare/v1.1074.0...v1.1075.0) (2026-04-24)
+
+
+### Features
+
+* **ui:** unify 📌 quote icon across chat bubbles + kanban card comments ([#2068](https://github.com/HankHuang0516/EClaw/issues/2068)) ([49bf888](https://github.com/HankHuang0516/EClaw/commit/49bf8888283ca5cb9007d28f1ac99acd8134318e))
+
 # [1.1074.0](https://github.com/HankHuang0516/EClaw/compare/v1.1073.1...v1.1074.0) (2026-04-24)
 
 
