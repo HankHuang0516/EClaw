@@ -4032,7 +4032,7 @@
 
                 const replySnippet = stripReplyQuotePrefix(rawText || '').replace(/\n/g, ' ').slice(0, 120);
                 const replySenderName = isSent ? (i18n.t('chat_reply_you') || 'You') : isPlatform ? 'Platform' : (getEntityLabel(msg.entity_id) || '');
-                const replyBtnHtml = msg.id ? `<button class="chat-reply-btn" data-msg-id="${escapeHtml(msg.id)}" data-sender="${escapeHtml(replySenderName)}" data-text="${escapeHtml(replySnippet)}" onclick="handleReplyBtn(this);event.stopPropagation()" data-i18n-title="chat_reply_btn" title="Reply">↩</button>` : '';
+                const replyBtnHtml = msg.id ? `<button class="chat-reply-btn" data-msg-id="${escapeHtml(msg.id)}" data-sender="${escapeHtml(replySenderName)}" data-text="${escapeHtml(replySnippet)}" onclick="handleReplyBtn(this);event.stopPropagation()" data-i18n-title="chat_reply_btn" title="Quote">📌</button>` : '';
 
                 return `${dateSep}${unreadSep}
                     <div class="chat-msg ${msgClass}${isGrouped ? ' grouped' : ''}" data-message-id="${escapeHtml(msg.id || '')}" style="position:relative">
