@@ -1,3 +1,10 @@
+# [1.1081.0](https://github.com/HankHuang0516/EClaw/compare/v1.1080.0...v1.1081.0) (2026-04-24)
+
+
+### Features
+
+* **chat:** Phase 2 schedule-popup UI — long-press send → schedule modal ([#2082](https://github.com/HankHuang0516/EClaw/issues/2082)) ([35a40da](https://github.com/HankHuang0516/EClaw/commit/35a40daf1857142cbe70ee04562e22d649d91d76)), closes [#2067](https://github.com/HankHuang0516/EClaw/issues/2067)
+
 # [1.1080.0](https://github.com/HankHuang0516/EClaw/compare/v1.1079.0...v1.1080.0) (2026-04-24)
 
 
