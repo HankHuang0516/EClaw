@@ -1780,6 +1780,243 @@
             color: var(--text-secondary);
         }
 
+        /* ── Schedule Popup (long-press btnSend) ── */
+        #schedulePopupModal .modal-box {
+            max-width: 540px;
+            width: 92%;
+            text-align: left;
+            padding: 20px 22px;
+            max-height: 86vh;
+            overflow-y: auto;
+        }
+
+        .schedule-tabs {
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid var(--card-border);
+            margin: 4px 0 14px;
+        }
+
+        .schedule-tab-btn {
+            background: none;
+            border: none;
+            padding: 8px 14px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+        }
+
+        .schedule-tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .schedule-section {
+            display: none;
+        }
+
+        .schedule-section.active {
+            display: block;
+        }
+
+        .sched-field {
+            margin-bottom: 12px;
+        }
+
+        .sched-field-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .sched-message-echo {
+            background: var(--bg-secondary, rgba(0, 0, 0, 0.04));
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            min-height: 48px;
+            max-height: 140px;
+            overflow-y: auto;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: var(--text-primary);
+        }
+
+        .sched-message-echo.empty {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .sched-targets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 8px;
+            min-height: 48px;
+        }
+
+        .sched-target-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--bg-secondary, rgba(0, 0, 0, 0.04));
+            border: 1px solid var(--card-border);
+            border-radius: 999px;
+            padding: 3px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sched-target-chip input {
+            margin: 0;
+        }
+
+        .sched-target-chip.checked {
+            background: var(--accent);
+            color: var(--bg);
+            border-color: var(--accent);
+        }
+
+        .sched-mode-toggle {
+            display: flex;
+            gap: 6px;
+        }
+
+        .sched-mode-btn {
+            flex: 1;
+            padding: 8px 10px;
+            background: var(--bg-secondary, rgba(0, 0, 0, 0.04));
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+
+        .sched-mode-btn.active {
+            background: var(--accent);
+            color: var(--bg);
+            border-color: var(--accent);
+        }
+
+        .sched-mode-pane {
+            display: none;
+            margin-top: 8px;
+        }
+
+        .sched-mode-pane.active {
+            display: block;
+        }
+
+        .sched-countdown-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .sched-countdown-row input {
+            width: 64px;
+            text-align: center;
+        }
+
+        .sched-error {
+            color: var(--danger, #dc2626);
+            font-size: 12px;
+            min-height: 16px;
+            margin-top: 4px;
+        }
+
+        .sched-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            margin-top: 14px;
+        }
+
+        .sched-queue-empty {
+            color: var(--text-muted);
+            text-align: center;
+            padding: 32px 12px;
+            font-size: 13px;
+        }
+
+        .sched-queue-item {
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            background: var(--bg-secondary, rgba(0, 0, 0, 0.02));
+        }
+
+        .sched-queue-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .sched-queue-countdown {
+            font-family: ui-monospace, "SF Mono", Menlo, monospace;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .sched-queue-countdown.late {
+            color: var(--danger, #dc2626);
+        }
+
+        .sched-queue-body {
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin-bottom: 6px;
+        }
+
+        .sched-queue-targets {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .sched-queue-actions {
+            display: flex;
+            gap: 6px;
+            justify-content: flex-end;
+        }
+
+        .sched-queue-edit-form {
+            background: var(--card);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 6px;
+        }
+
+        .sched-queue-edit-form textarea {
+            width: 100%;
+            min-height: 56px;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .sched-queue-edit-form input[type="datetime-local"] {
+            font-size: 13px;
+        }
+
         /* ── Link Preview Card ── */
         .link-preview {
             display: flex;
@@ -2573,6 +2810,70 @@
         </div>
     </div>
 
+    <!-- Schedule Popup Modal (long-press btnSend) -->
+    <div class="modal-overlay" id="schedulePopupModal" onclick="if(event.target===this)closeSchedulePopup()">
+        <div class="modal-box">
+            <div class="modal-title" data-i18n="chat_schedule_title">⏰ Schedule Message</div>
+            <div class="schedule-tabs">
+                <button class="schedule-tab-btn active" id="schedTabCreate" type="button" onclick="switchScheduleTab('create')" data-i18n="chat_schedule_tab_create">New</button>
+                <button class="schedule-tab-btn" id="schedTabQueue" type="button" onclick="switchScheduleTab('queue')">
+                    <span data-i18n="chat_schedule_tab_queue">Queue</span> (<span id="schedQueueCount">0</span>)
+                </button>
+            </div>
+
+            <!-- Create section -->
+            <div class="schedule-section active" id="schedSectionCreate">
+                <div class="sched-field">
+                    <span class="sched-field-label" data-i18n="chat_schedule_message_label">Message</span>
+                    <div class="sched-message-echo" id="schedMessageEcho"></div>
+                </div>
+                <div class="sched-field">
+                    <span class="sched-field-label">
+                        <span data-i18n="chat_schedule_target_label">Send to</span>
+                        <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted)" data-i18n="chat_schedule_local_only">(local entities only)</span>
+                    </span>
+                    <div class="sched-targets" id="schedTargetsBox"></div>
+                </div>
+                <div class="sched-field">
+                    <span class="sched-field-label" data-i18n="chat_schedule_mode_label">When</span>
+                    <div class="sched-mode-toggle">
+                        <button type="button" class="sched-mode-btn active" id="schedModeFixedBtn" onclick="setScheduleMode('fixed')" data-i18n="chat_schedule_mode_fixed">Fixed time</button>
+                        <button type="button" class="sched-mode-btn" id="schedModeCountdownBtn" onclick="setScheduleMode('countdown')" data-i18n="chat_schedule_mode_countdown">Countdown</button>
+                    </div>
+                    <div class="sched-mode-pane active" id="schedModeFixedPane">
+                        <input type="datetime-local" id="schedFixedAt" oninput="validateScheduleInput()" style="width:100%;padding:8px 10px;border:1px solid var(--card-border);border-radius:8px;font-size:14px;">
+                    </div>
+                    <div class="sched-mode-pane" id="schedModeCountdownPane">
+                        <div class="sched-countdown-row">
+                            <input type="number" id="schedCdH" min="0" max="167" value="0" oninput="validateScheduleInput()">
+                            <span data-i18n="chat_schedule_h">h</span>
+                            <input type="number" id="schedCdM" min="0" max="59" value="5" oninput="validateScheduleInput()">
+                            <span data-i18n="chat_schedule_m">m</span>
+                            <input type="number" id="schedCdS" min="0" max="59" value="0" oninput="validateScheduleInput()">
+                            <span data-i18n="chat_schedule_s">s</span>
+                            <span style="margin-left:auto;font-size:11px;color:var(--text-muted)" data-i18n="chat_schedule_max_7days">(max 7 days)</span>
+                        </div>
+                    </div>
+                    <div class="sched-error" id="schedError"></div>
+                </div>
+                <div class="sched-actions">
+                    <button class="btn btn-outline btn-sm" type="button" onclick="closeSchedulePopup()" data-i18n="chat_schedule_cancel">Cancel</button>
+                    <button class="btn btn-primary btn-sm" type="button" id="schedSubmitBtn" onclick="submitScheduledMessage()" data-i18n="chat_schedule_submit">Schedule</button>
+                </div>
+            </div>
+
+            <!-- Queue section -->
+            <div class="schedule-section" id="schedSectionQueue">
+                <div id="schedQueueList">
+                    <div class="sched-queue-empty" data-i18n="chat_schedule_loading">Loading…</div>
+                </div>
+                <div class="sched-actions">
+                    <button class="btn btn-outline btn-sm" type="button" onclick="closeSchedulePopup()" data-i18n="chat_schedule_close">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="shared/api.js"></script>
     <script src="shared/nav.js"></script>
     <script src="shared/auth.js"></script>
@@ -2961,6 +3262,10 @@
                     }
                 });
             }
+
+            // Wire long-press on send button to open schedule popup. Idempotent
+            // — re-init is guarded by btn._schedWired inside the helper.
+            attachSchedulePopupHandlers();
 
             // Restore unsent draft
             const savedDraft = localStorage.getItem('chat_draft');
@@ -4770,6 +5075,408 @@
             } finally {
                 btn.disabled = false;
                 input.focus();
+            }
+        }
+
+        // ── Schedule Popup (long-press btnSend) ──
+        // Phase 2 of card_aa55c721b512c1d10288f1e9. Phase 1 backend (PR #2067)
+        // exposes /api/scheduled-messages CRUD + a 5s poller. The popup lets
+        // the user pick fixed-time or countdown, edits the local-target list,
+        // and views/edits/cancels their pending queue. Cross-device contacts
+        // are out of scope for v1 because the backend dispatch path uses the
+        // local saveChatMessage/unifiedPush pair.
+
+        let _schedLongPressTimer = null;
+        let _schedLongPressFired = false;
+        let _schedMode = 'fixed'; // 'fixed' | 'countdown'
+        let _schedQueue = []; // cached items {id, content, scheduledAt, targetEntityIds, ...}
+        let _schedCountdownTicker = null;
+        let _schedEditingId = null;
+
+        function _schedFmtCountdown(ms) {
+            if (ms < 0) ms = 0;
+            const totalSec = Math.floor(ms / 1000);
+            const h = Math.floor(totalSec / 3600);
+            const m = Math.floor((totalSec % 3600) / 60);
+            const s = totalSec % 60;
+            return (h > 0 ? String(h).padStart(2, '0') + ':' : '') +
+                String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        }
+
+        function _schedFmtAbs(ms) {
+            const d = new Date(ms);
+            const pad = n => String(n).padStart(2, '0');
+            return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+                ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+        }
+
+        function _schedToLocalDatetimeInput(ms) {
+            const d = new Date(ms);
+            const pad = n => String(n).padStart(2, '0');
+            return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+                'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+        }
+
+        function attachSchedulePopupHandlers() {
+            const btn = document.getElementById('btnSend');
+            if (!btn || btn._schedWired) return;
+            btn._schedWired = true;
+
+            const onPressStart = (ev) => {
+                _schedLongPressFired = false;
+                _schedLongPressTimer = setTimeout(() => {
+                    _schedLongPressFired = true;
+                    openSchedulePopup();
+                }, 500);
+            };
+            const onPressEnd = () => {
+                if (_schedLongPressTimer) {
+                    clearTimeout(_schedLongPressTimer);
+                    _schedLongPressTimer = null;
+                }
+            };
+            btn.addEventListener('mousedown', onPressStart);
+            btn.addEventListener('mouseup', onPressEnd);
+            btn.addEventListener('mouseleave', onPressEnd);
+            btn.addEventListener('touchstart', onPressStart, { passive: true });
+            btn.addEventListener('touchend', onPressEnd);
+            btn.addEventListener('touchcancel', onPressEnd);
+            // Suppress the click that follows a long-press so we don't ALSO
+            // dispatch the message immediately.
+            btn.addEventListener('click', (ev) => {
+                if (_schedLongPressFired) {
+                    _schedLongPressFired = false;
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    return false;
+                }
+            }, true);
+        }
+
+        function openSchedulePopup() {
+            const modal = document.getElementById('schedulePopupModal');
+            if (!modal) return;
+
+            const input = document.getElementById('messageInput');
+            const text = (input && input.value) ? input.value : '';
+            const echo = document.getElementById('schedMessageEcho');
+            if (text.trim()) {
+                echo.textContent = text;
+                echo.classList.remove('empty');
+            } else {
+                echo.textContent = i18n.t('chat_schedule_empty_text') || '(empty — type a message before scheduling)';
+                echo.classList.add('empty');
+            }
+
+            // Render local-entity targets, pre-checked from current selection.
+            const tgtBox = document.getElementById('schedTargetsBox');
+            tgtBox.innerHTML = '';
+            const sel = (typeof getSelectedTargets === 'function') ? getSelectedTargets() : { local: [], contacts: [] };
+            const preset = new Set((sel.local || []).map(Number));
+            (boundEntities || []).forEach(e => {
+                const lab = document.createElement('label');
+                const checked = preset.has(e.entityId);
+                lab.className = 'sched-target-chip' + (checked ? ' checked' : '');
+                const name = (typeof getEntityDisplayName === 'function') ? getEntityDisplayName(e.entityId) : (e.name || ('Entity ' + e.entityId));
+                lab.innerHTML = '<input type="checkbox" data-sched-entity="' + e.entityId + '" ' +
+                    (checked ? 'checked' : '') + '> <span>' + escapeHtml(name) + ' (#' + e.entityId + ')</span>';
+                lab.querySelector('input').addEventListener('change', (ev) => {
+                    lab.classList.toggle('checked', ev.target.checked);
+                    validateScheduleInput();
+                });
+                tgtBox.appendChild(lab);
+            });
+
+            // Reset mode to fixed and seed default values
+            _schedMode = 'fixed';
+            document.getElementById('schedModeFixedBtn').classList.add('active');
+            document.getElementById('schedModeCountdownBtn').classList.remove('active');
+            document.getElementById('schedModeFixedPane').classList.add('active');
+            document.getElementById('schedModeCountdownPane').classList.remove('active');
+            // Seed fixed-time input to NOW + 5min so it's always ahead.
+            const seed = Date.now() + 5 * 60 * 1000;
+            document.getElementById('schedFixedAt').value = _schedToLocalDatetimeInput(seed);
+            document.getElementById('schedCdH').value = 0;
+            document.getElementById('schedCdM').value = 5;
+            document.getElementById('schedCdS').value = 0;
+
+            switchScheduleTab('create');
+            modal.classList.add('active');
+            // Kick off queue load in background so the count badge updates.
+            loadScheduledQueue();
+            validateScheduleInput();
+        }
+
+        function closeSchedulePopup() {
+            const modal = document.getElementById('schedulePopupModal');
+            if (modal) modal.classList.remove('active');
+            if (_schedCountdownTicker) {
+                clearInterval(_schedCountdownTicker);
+                _schedCountdownTicker = null;
+            }
+            _schedEditingId = null;
+        }
+
+        function switchScheduleTab(tab) {
+            document.getElementById('schedTabCreate').classList.toggle('active', tab === 'create');
+            document.getElementById('schedTabQueue').classList.toggle('active', tab === 'queue');
+            document.getElementById('schedSectionCreate').classList.toggle('active', tab === 'create');
+            document.getElementById('schedSectionQueue').classList.toggle('active', tab === 'queue');
+            if (tab === 'queue') {
+                loadScheduledQueue(/*render=*/true);
+                if (!_schedCountdownTicker) {
+                    _schedCountdownTicker = setInterval(tickScheduledCountdowns, 1000);
+                }
+            } else if (_schedCountdownTicker) {
+                clearInterval(_schedCountdownTicker);
+                _schedCountdownTicker = null;
+            }
+        }
+
+        function setScheduleMode(mode) {
+            _schedMode = mode;
+            document.getElementById('schedModeFixedBtn').classList.toggle('active', mode === 'fixed');
+            document.getElementById('schedModeCountdownBtn').classList.toggle('active', mode === 'countdown');
+            document.getElementById('schedModeFixedPane').classList.toggle('active', mode === 'fixed');
+            document.getElementById('schedModeCountdownPane').classList.toggle('active', mode === 'countdown');
+            validateScheduleInput();
+        }
+
+        function _schedComputeScheduledAt() {
+            if (_schedMode === 'fixed') {
+                const v = document.getElementById('schedFixedAt').value;
+                if (!v) return null;
+                const ms = new Date(v).getTime();
+                return Number.isFinite(ms) ? ms : null;
+            }
+            // countdown
+            const h = parseInt(document.getElementById('schedCdH').value, 10) || 0;
+            const m = parseInt(document.getElementById('schedCdM').value, 10) || 0;
+            const s = parseInt(document.getElementById('schedCdS').value, 10) || 0;
+            const total = ((h * 60 + m) * 60 + s) * 1000;
+            if (total <= 0) return null;
+            return Date.now() + total;
+        }
+
+        function _schedSelectedEntityIds() {
+            const ids = [];
+            document.querySelectorAll('#schedTargetsBox input[type="checkbox"]').forEach(cb => {
+                if (cb.checked) ids.push(parseInt(cb.dataset.schedEntity, 10));
+            });
+            return ids;
+        }
+
+        function validateScheduleInput() {
+            const errEl = document.getElementById('schedError');
+            const btn = document.getElementById('schedSubmitBtn');
+            errEl.textContent = '';
+
+            const text = (document.getElementById('messageInput').value || '').trim();
+            const at = _schedComputeScheduledAt();
+            const ids = _schedSelectedEntityIds();
+            const MAX_AHEAD = 7 * 24 * 60 * 60 * 1000;
+
+            let err = '';
+            if (!text) err = i18n.t('chat_schedule_err_empty') || 'Type a message first';
+            else if (ids.length === 0) err = i18n.t('chat_schedule_err_no_target') || 'Pick at least one target';
+            else if (at == null) err = i18n.t('chat_schedule_err_invalid_time') || 'Enter a valid time';
+            else if (at <= Date.now()) err = i18n.t('chat_schedule_err_in_past') || 'Time must be in the future';
+            else if (at - Date.now() > MAX_AHEAD) err = i18n.t('chat_schedule_err_too_far') || 'Cannot schedule more than 7 days ahead';
+
+            errEl.textContent = err;
+            btn.disabled = !!err;
+            return !err;
+        }
+
+        async function submitScheduledMessage() {
+            if (!validateScheduleInput()) return;
+            const text = document.getElementById('messageInput').value;
+            const ids = _schedSelectedEntityIds();
+            const at = _schedComputeScheduledAt();
+
+            const btn = document.getElementById('schedSubmitBtn');
+            btn.disabled = true;
+            try {
+                const resp = await apiCall('POST', '/api/scheduled-messages', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    chatEntityId: currentUser.entityId || 0,
+                    userEntityId: currentUser.entityId || 0,
+                    targetEntityIds: ids,
+                    content: text,
+                    scheduledAt: at
+                });
+                if (resp && (resp.success || resp.id)) {
+                    showToast(i18n.t('chat_schedule_ok') || 'Scheduled', 'success');
+                    // Clear the chat input — the message will appear at the
+                    // scheduled moment via the backend poller's dispatch.
+                    const input = document.getElementById('messageInput');
+                    input.value = '';
+                    input.style.height = 'auto';
+                    localStorage.removeItem('chat_draft');
+                    await loadScheduledQueue(/*render=*/true);
+                    switchScheduleTab('queue');
+                } else {
+                    document.getElementById('schedError').textContent =
+                        (resp && resp.error) ? resp.error : (i18n.t('chat_send_failed') || 'Schedule failed');
+                }
+            } catch (e) {
+                document.getElementById('schedError').textContent = e.message || String(e);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function loadScheduledQueue(render) {
+            try {
+                const params = new URLSearchParams({
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret
+                });
+                const resp = await apiCall('GET', '/api/scheduled-messages?' + params.toString());
+                _schedQueue = (resp && Array.isArray(resp.messages)) ? resp.messages
+                    : (resp && Array.isArray(resp.items)) ? resp.items
+                    : (Array.isArray(resp) ? resp : []);
+                document.getElementById('schedQueueCount').textContent = _schedQueue.length;
+                if (render) renderScheduledQueue();
+            } catch (e) {
+                console.error('[schedule] loadQueue failed', e);
+            }
+        }
+
+        function renderScheduledQueue() {
+            const list = document.getElementById('schedQueueList');
+            if (!_schedQueue.length) {
+                list.innerHTML = '<div class="sched-queue-empty">' +
+                    escapeHtml(i18n.t('chat_schedule_no_pending') || 'No pending scheduled messages') + '</div>';
+                return;
+            }
+            const sorted = _schedQueue.slice().sort((a, b) => a.scheduledAt - b.scheduledAt);
+            list.innerHTML = sorted.map(it => _schedRenderItem(it)).join('');
+        }
+
+        function _schedRenderItem(it) {
+            const targetNames = (it.targetEntityIds || []).map(id => {
+                const e = (boundEntities || []).find(be => be.entityId === id);
+                const name = e ? ((typeof getEntityDisplayName === 'function') ? getEntityDisplayName(id) : (e.name || ('#' + id))) : ('#' + id);
+                return escapeHtml(name);
+            }).join(', ');
+            const remaining = it.scheduledAt - Date.now();
+            const cdClass = remaining < 0 ? 'sched-queue-countdown late' : 'sched-queue-countdown';
+            const cdText = _schedFmtCountdown(Math.abs(remaining));
+            const editLabel = i18n.t('chat_schedule_edit') || 'Edit';
+            const delLabel = i18n.t('chat_schedule_delete') || 'Delete';
+            return '<div class="sched-queue-item" data-sched-id="' + escapeHtml(it.id) + '">' +
+                '<div class="sched-queue-head">' +
+                    '<span>' + escapeHtml(_schedFmtAbs(it.scheduledAt)) + '</span>' +
+                    '<span class="' + cdClass + '" data-cd-at="' + it.scheduledAt + '">⏱ ' + cdText + '</span>' +
+                '</div>' +
+                '<div class="sched-queue-body">' + escapeHtml(it.content || '') + '</div>' +
+                '<div class="sched-queue-targets">→ ' + (targetNames || '<i>(no targets)</i>') + '</div>' +
+                '<div class="sched-queue-actions">' +
+                    '<button class="btn btn-outline btn-sm" type="button" onclick="schedStartEdit(\'' + escapeHtml(it.id) + '\')">' + escapeHtml(editLabel) + '</button>' +
+                    '<button class="btn btn-outline btn-sm" type="button" onclick="schedCancel(\'' + escapeHtml(it.id) + '\')" style="color:var(--danger,#dc2626)">' + escapeHtml(delLabel) + '</button>' +
+                '</div>' +
+            '</div>';
+        }
+
+        function tickScheduledCountdowns() {
+            document.querySelectorAll('#schedQueueList [data-cd-at]').forEach(el => {
+                const at = parseInt(el.dataset.cdAt, 10);
+                const rem = at - Date.now();
+                el.classList.toggle('late', rem < 0);
+                el.textContent = '⏱ ' + _schedFmtCountdown(Math.abs(rem));
+            });
+        }
+
+        function schedStartEdit(id) {
+            const it = _schedQueue.find(x => x.id === id);
+            if (!it) return;
+            _schedEditingId = id;
+            const node = document.querySelector('.sched-queue-item[data-sched-id="' + id + '"]');
+            if (!node) return;
+            // Replace in-place with an inline edit form.
+            const formHtml =
+                '<div class="sched-queue-edit-form">' +
+                    '<textarea id="schedEditContent">' + escapeHtml(it.content || '') + '</textarea>' +
+                    '<input type="datetime-local" id="schedEditAt" value="' + _schedToLocalDatetimeInput(it.scheduledAt) + '" oninput="schedValidateEdit()" style="width:100%;padding:6px;border:1px solid var(--card-border);border-radius:6px;">' +
+                    '<div class="sched-error" id="schedEditError"></div>' +
+                    '<div class="sched-actions">' +
+                        '<button class="btn btn-outline btn-sm" type="button" onclick="schedCancelEdit()" data-i18n="chat_schedule_cancel">Cancel</button>' +
+                        '<button class="btn btn-primary btn-sm" type="button" id="schedEditSubmit" onclick="schedSubmitEdit(\'' + escapeHtml(id) + '\')" data-i18n="chat_schedule_save">Save</button>' +
+                    '</div>' +
+                '</div>';
+            // Hide actions and append form
+            const actions = node.querySelector('.sched-queue-actions');
+            if (actions) actions.style.display = 'none';
+            node.insertAdjacentHTML('beforeend', formHtml);
+            schedValidateEdit();
+        }
+
+        function schedCancelEdit() {
+            _schedEditingId = null;
+            renderScheduledQueue();
+        }
+
+        function schedValidateEdit() {
+            const errEl = document.getElementById('schedEditError');
+            if (!errEl) return false;
+            const btn = document.getElementById('schedEditSubmit');
+            const v = document.getElementById('schedEditAt').value;
+            const ms = v ? new Date(v).getTime() : NaN;
+            const MAX = 7 * 24 * 60 * 60 * 1000;
+            let err = '';
+            if (!Number.isFinite(ms)) err = i18n.t('chat_schedule_err_invalid_time') || 'Enter a valid time';
+            else if (ms <= Date.now()) err = i18n.t('chat_schedule_err_in_past') || 'Time must be in the future';
+            else if (ms - Date.now() > MAX) err = i18n.t('chat_schedule_err_too_far') || 'Cannot schedule more than 7 days ahead';
+            errEl.textContent = err;
+            if (btn) btn.disabled = !!err;
+            return !err;
+        }
+
+        async function schedSubmitEdit(id) {
+            if (!schedValidateEdit()) return;
+            const content = document.getElementById('schedEditContent').value;
+            const at = new Date(document.getElementById('schedEditAt').value).getTime();
+            const btn = document.getElementById('schedEditSubmit');
+            btn.disabled = true;
+            try {
+                const resp = await apiCall('PUT', '/api/scheduled-messages/' + encodeURIComponent(id), {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    content: content,
+                    scheduledAt: at
+                });
+                if (resp && (resp.success || resp.id)) {
+                    showToast(i18n.t('chat_schedule_saved') || 'Saved', 'success');
+                    _schedEditingId = null;
+                    await loadScheduledQueue(/*render=*/true);
+                } else {
+                    document.getElementById('schedEditError').textContent =
+                        (resp && resp.error) ? resp.error : (i18n.t('chat_send_failed') || 'Save failed');
+                }
+            } catch (e) {
+                document.getElementById('schedEditError').textContent = e.message || String(e);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function schedCancel(id) {
+            const ok = await showConfirm({
+                message: i18n.t('chat_schedule_delete_confirm') || 'Cancel this scheduled message?',
+                danger: true
+            });
+            if (!ok) return;
+            try {
+                await apiCall('DELETE', '/api/scheduled-messages/' + encodeURIComponent(id), {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret
+                });
+                showToast(i18n.t('chat_schedule_cancelled') || 'Cancelled', 'success');
+                await loadScheduledQueue(/*render=*/true);
+            } catch (e) {
+                showToast(e.message || String(e), 'error');
             }
         }
 
