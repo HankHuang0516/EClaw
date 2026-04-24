@@ -1,3 +1,10 @@
+## [1.1063.6](https://github.com/HankHuang0516/EClaw/compare/v1.1063.5...v1.1063.6) (2026-04-24)
+
+
+### Bug Fixes
+
+* **chat:** normalize integrity checker to avoid link-render false positives ([#2021](https://github.com/HankHuang0516/EClaw/issues/2021)) ([f13c0d0](https://github.com/HankHuang0516/EClaw/commit/f13c0d066d3eb5baac59373838413e3b7b2a4a44))
+
 ## [1.1063.5](https://github.com/HankHuang0516/EClaw/compare/v1.1063.4...v1.1063.5) (2026-04-24)
 
 
