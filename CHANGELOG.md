@@ -1,3 +1,10 @@
+## [1.1081.1](https://github.com/HankHuang0516/EClaw/compare/v1.1081.0...v1.1081.1) (2026-04-24)
+
+
+### Bug Fixes
+
+* **scheduled-messages:** hotfix prod schema migration for legacy tables ([#2083](https://github.com/HankHuang0516/EClaw/issues/2083)) ([2c81a2b](https://github.com/HankHuang0516/EClaw/commit/2c81a2bbecba86ae595f7f2645b918a8d31cf505)), closes [#2067](https://github.com/HankHuang0516/EClaw/issues/2067) [#2082](https://github.com/HankHuang0516/EClaw/issues/2082)
+
 # [1.1081.0](https://github.com/HankHuang0516/EClaw/compare/v1.1080.0...v1.1081.0) (2026-04-24)
 
 
