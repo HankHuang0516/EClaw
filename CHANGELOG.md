@@ -1,3 +1,10 @@
+## [1.1068.1](https://github.com/HankHuang0516/EClaw/compare/v1.1068.0...v1.1068.1) (2026-04-24)
+
+
+### Bug Fixes
+
+* **invite:** per-code funnel table headers use tt() instead of data-i18n ([#2038](https://github.com/HankHuang0516/EClaw/issues/2038)) ([ab5d707](https://github.com/HankHuang0516/EClaw/commit/ab5d707060f26adcc1d5db5210c0832a160c02cb))
+
 # [1.1068.0](https://github.com/HankHuang0516/EClaw/compare/v1.1067.0...v1.1068.0) (2026-04-24)
 
 
