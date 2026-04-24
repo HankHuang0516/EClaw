@@ -1,3 +1,10 @@
+# [1.1064.0](https://github.com/HankHuang0516/EClaw/compare/v1.1063.10...v1.1064.0) (2026-04-24)
+
+
+### Features
+
+* **community:** add /api/community/stats + /list endpoints ([#2031](https://github.com/HankHuang0516/EClaw/issues/2031)) ([4ba09f9](https://github.com/HankHuang0516/EClaw/commit/4ba09f941f21555bd2c5faffbe58f51645dbe80c))
+
 ## [1.1063.10](https://github.com/HankHuang0516/EClaw/compare/v1.1063.9...v1.1063.10) (2026-04-24)
 
 
