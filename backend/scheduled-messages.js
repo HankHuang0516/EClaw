@@ -36,6 +36,16 @@ const POLLER_INTERVAL_MS = 5000;
 const POLLER_BATCH_SIZE = 50;
 
 // ── Schema init ──
+// Columns the Phase 1 routes INSERT into. If a legacy prod table has any
+// other NOT NULL columns (predating Phase 1), our INSERTs will fail with
+// "null value in column X violates not-null constraint", so we relax those
+// at init time.
+const PHASE1_INSERT_COLUMNS = new Set([
+    'id', 'device_id', 'chat_entity_id', 'user_entity_id',
+    'target_entity_ids', 'content', 'scheduled_at', 'created_at',
+    'sent_at', 'cancelled_at', 'last_error',
+]);
+
 async function initScheduledMessagesDatabase() {
     try {
         const schemaPath = path.join(__dirname, 'scheduled_messages_schema.sql');
@@ -59,6 +69,32 @@ async function initScheduledMessagesDatabase() {
                 }
             }
         }
+
+        // Legacy NOT NULL columns predating Phase 1 would block our INSERTs,
+        // since the route handlers don't populate them. Drop NOT NULL on any
+        // unknown column.
+        try {
+            const colRes = await pool.query(
+                `SELECT column_name, is_nullable
+                   FROM information_schema.columns
+                  WHERE table_name = 'scheduled_messages' AND table_schema = 'public'`
+            );
+            for (const row of colRes.rows) {
+                if (row.is_nullable === 'NO' && !PHASE1_INSERT_COLUMNS.has(row.column_name)) {
+                    try {
+                        await pool.query(
+                            `ALTER TABLE scheduled_messages ALTER COLUMN "${row.column_name}" DROP NOT NULL`
+                        );
+                        console.log(`[ScheduledMessages] Relaxed legacy NOT NULL on column "${row.column_name}"`);
+                    } catch (e) {
+                        console.warn(`[ScheduledMessages] Could not relax NOT NULL on "${row.column_name}":`, e.message);
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('[ScheduledMessages] Legacy-column scan failed:', e.message);
+        }
+
         console.log(`[ScheduledMessages] Database initialized: ${ok} OK, ${skipped} skipped, ${failed} failed`);
     } catch (error) {
         console.error('[ScheduledMessages] Failed to init database:', error.message);
