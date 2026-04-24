@@ -4512,8 +4512,10 @@
             const input = document.getElementById('messageInput');
             const text = input.value.trim();
             // Split ready entries: uploaded media vs Cloud Drive refs. Media goes
-            // through the mediaType/mediaUrl path; r2refs are appended as Markdown
-            // links [📎 filename](signed-url) to the message text.
+            // through the mediaType/mediaUrl path; r2refs are sent as structured
+            // `attachments:[{fileId,filename,size,mimeType}]` so the signed R2
+            // URL never enters message.text. The render path resolves fresh
+            // URLs from fileId via /api/files/:id on demand.
             const allReady = pendingFiles.filter(f => f.status === 'ready');
             const readyFiles = allReady.filter(f => f.type !== 'r2ref');
             const readyR2Refs = allReady.filter(f => f.type === 'r2ref');
@@ -4538,12 +4540,16 @@
                 finalText = text ? `${quotePrefix}\n\n${text}` : quotePrefix;
                 clearReplyContext();
             }
-            if (hasR2Refs) {
-                const refLinks = readyR2Refs
-                    .map(r => `[📎 ${r.fileName}](${r.mediaUrl})`)
-                    .join('\n');
-                finalText = finalText ? `${finalText}\n\n${refLinks}` : refLinks;
-            }
+            // Structured attachments (fileId-based) — the signed URL intentionally
+            // stays out of finalText. speakBody / crossSpeakSafe pick this up below.
+            const r2Attachments = hasR2Refs
+                ? readyR2Refs.map(r => ({
+                    fileId: r.fileId,
+                    filename: r.fileName,
+                    size: r.size || 0,
+                    mimeType: r.mimeType || 'application/octet-stream'
+                }))
+                : null;
 
             // Check if any files still uploading
             if (pendingFiles.some(f => f.status === 'uploading')) {
@@ -4613,6 +4619,7 @@
                             text: finalText,
                             source: 'web_chat'
                         };
+                        if (r2Attachments) speakBody.attachments = r2Attachments;
                         // Inject confirmation flag for slash command re-send
                         if (pendingConfirmCommand && text === `/${pendingConfirmCommand}`) {
                             speakBody.confirmed = true;
@@ -4630,7 +4637,7 @@
                 }
 
                 // ── Cross-device contacts ──
-                if (targets.contacts.length > 0 && (finalText || hasFiles)) {
+                if (targets.contacts.length > 0 && (finalText || hasFiles || r2Attachments)) {
                     const explicitLocal = targets.local.length > 0
                         ? boundEntities.find(e => e.entityId === targets.local[0])
                         : null;
@@ -4644,9 +4651,11 @@
                             ));
                         }
                     } else {
-                        await Promise.all(targets.contacts.map(code =>
-                            crossSpeakSafe({ deviceId: currentUser.deviceId, fromEntityId, targetCode: code, text: finalText, source: 'web_chat' })
-                        ));
+                        await Promise.all(targets.contacts.map(code => {
+                            const body = { deviceId: currentUser.deviceId, fromEntityId, targetCode: code, text: finalText, source: 'web_chat' };
+                            if (r2Attachments) body.attachments = r2Attachments;
+                            return crossSpeakSafe(body);
+                        }));
                     }
                 }
 

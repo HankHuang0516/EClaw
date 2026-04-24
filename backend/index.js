@@ -7942,10 +7942,29 @@ app.post('/api/device/entity/avatar/upload', avatarUpload.single('file'), async 
  * If bot has registered webhook, push notification is sent.
  */
 app.post('/api/client/speak', async (req, res) => {
-    const { deviceId, deviceSecret, entityId, text, source = "client", mediaType, mediaUrl } = req.body;
+    const { deviceId, deviceSecret, entityId, text, source = "client", mediaType, mediaUrl, attachments } = req.body;
 
     if (!deviceId) {
         return res.status(400).json({ success: false, message: "deviceId required" });
+    }
+
+    // Validate optional attachments[] — structured fileId-based payload so the
+    // raw R2 signed URL stays out of message.text (security: 1-hour presigned
+    // URL = bearer token; keeping it in text means it leaks via transcript
+    // copy, API export, cross-device sync, etc. Display layer resolves fresh
+    // URLs from fileId via /api/files/:id at render time).
+    let validatedAttachments = null;
+    if (Array.isArray(attachments) && attachments.length > 0) {
+        if (attachments.length > 10) {
+            return res.status(400).json({ success: false, message: "attachments max 10 items" });
+        }
+        validatedAttachments = attachments.map(a => ({
+            fileId: String(a.fileId || '').slice(0, 128),
+            filename: String(a.filename || '').slice(0, 255),
+            size: typeof a.size === 'number' ? a.size : 0,
+            mimeType: String(a.mimeType || 'application/octet-stream').slice(0, 128),
+        })).filter(a => a.fileId);
+        if (validatedAttachments.length === 0) validatedAttachments = null;
     }
 
     const device = devices[deviceId];
@@ -8102,6 +8121,18 @@ app.post('/api/client/speak', async (req, res) => {
     // gets stored in chat_messages so the frontend can re-render chips.
     let pushText = (mentionParse && mentionParse.displayText) || text;
 
+    // Surface structured attachments to the bot as filename-only hints so the
+    // receiving side knows files are attached without leaking the signed URL.
+    // Bots can call GET /api/files/:id to fetch a fresh presigned URL. The raw
+    // URL is intentionally kept out of both chat_messages.text and the push
+    // body; chat.html renders attachments from the structured JSONB column.
+    if (validatedAttachments && validatedAttachments.length > 0) {
+        const hints = validatedAttachments
+            .map(a => `[📎 ${a.filename || a.fileId}]`)
+            .join(' ');
+        pushText = pushText ? `${pushText}\n${hints}` : hints;
+    }
+
     // ── Vault variable interpolation: {{KEY_NAME}} → actual value ──
     // Resolve {{KEY_NAME}} tokens in pushText only (bot-facing).
     // Original text (with {{KEY_NAME}}) is stored in chat_messages for privacy.
@@ -8217,7 +8248,7 @@ app.post('/api/client/speak', async (req, res) => {
         };
         entity.messageQueue.push(messageObj);
         const chatBackupUrl = mediaType === 'photo' ? getBackupUrl(mediaUrl) : null;
-        await saveChatMessage(deviceId, eId, text, source, true, false, mediaType || null, mediaUrl || null, null, null, chatBackupUrl, mentionsContext);
+        await saveChatMessage(deviceId, eId, text, source, true, false, mediaType || null, mediaUrl || null, null, null, chatBackupUrl, mentionsContext, null, validatedAttachments);
 
         // Reset bot-to-bot counter: human message breaks the loop
         resetBotToBotCounter(deviceId);
@@ -10377,7 +10408,22 @@ app.delete('/api/contacts/:publicCode/unfriend', async (req, res) => {
  * Body: { deviceId, fromEntityId, targetCode, text, mediaType?, mediaUrl? }
  */
 app.post('/api/client/cross-speak', async (req, res) => {
-    let { deviceId, fromEntityId, targetCode, text, mediaType, mediaUrl } = req.body;
+    let { deviceId, fromEntityId, targetCode, text, mediaType, mediaUrl, attachments } = req.body;
+
+    // Validate optional attachments[] (same fileId-based schema as /api/client/speak)
+    let validatedAttachments = null;
+    if (Array.isArray(attachments) && attachments.length > 0) {
+        if (attachments.length > 10) {
+            return res.status(400).json({ success: false, message: "attachments max 10 items" });
+        }
+        validatedAttachments = attachments.map(a => ({
+            fileId: String(a.fileId || '').slice(0, 128),
+            filename: String(a.filename || '').slice(0, 255),
+            size: typeof a.size === 'number' ? a.size : 0,
+            mimeType: String(a.mimeType || 'application/octet-stream').slice(0, 128),
+        })).filter(a => a.fileId);
+        if (validatedAttachments.length === 0) validatedAttachments = null;
+    }
 
     console.log(`[ClientCrossSpeak:DEBUG] Received request: deviceId=${deviceId}, fromEntityId=${fromEntityId}, targetCode=${targetCode}, text="${(text||'').slice(0,30)}", hasUser=${!!req.user}, hasCookie=${!!(req.cookies && req.cookies.eclaw_session)}`);
 
@@ -10399,10 +10445,16 @@ app.post('/api/client/cross-speak', async (req, res) => {
         }
     }
 
-    if (!deviceId || fromEntityId === undefined || !targetCode || !text) {
-        console.log(`[ClientCrossSpeak:DEBUG] Validation failed: deviceId=${!!deviceId}, fromEntityId=${fromEntityId}, targetCode=${!!targetCode}, text=${!!text}`);
-        return res.status(400).json({ success: false, message: "deviceId, fromEntityId, targetCode, and text are required" });
+    // Message requires at least text OR a structured attachment — attachment-only
+    // sends are valid (user drops a file from cloud library with no typed text).
+    const hasAttachments = validatedAttachments && validatedAttachments.length > 0;
+    if (!deviceId || fromEntityId === undefined || !targetCode || (!text && !hasAttachments)) {
+        console.log(`[ClientCrossSpeak:DEBUG] Validation failed: deviceId=${!!deviceId}, fromEntityId=${fromEntityId}, targetCode=${!!targetCode}, text=${!!text}, attachments=${hasAttachments}`);
+        return res.status(400).json({ success: false, message: "deviceId, fromEntityId, targetCode, and text (or attachments) are required" });
     }
+    // Normalise text so downstream code that expects a string works whether
+    // caller sent "" or omitted the field.
+    if (!text) text = '';
 
     const fromId = parseInt(fromEntityId);
     if (isNaN(fromId) || fromId < -1) {
@@ -10499,6 +10551,14 @@ app.post('/api/client/cross-speak', async (req, res) => {
 
     // ── Vault variable interpolation for cross-speak ──
     let pushText = text;
+    // Surface structured attachments as filename-only hints (same rationale as
+    // /api/client/speak — keep signed URL out of push text / DB).
+    if (validatedAttachments && validatedAttachments.length > 0) {
+        const hints = validatedAttachments
+            .map(a => `[📎 ${a.filename || a.fileId}]`)
+            .join(' ');
+        pushText = pushText ? `${pushText}\n${hints}` : hints;
+    }
     const vaultTokenReXD = /\{\{(\w+)\}\}/g;
     if (vaultTokenReXD.test(text)) {
         try {
@@ -10534,11 +10594,11 @@ app.post('/api/client/cross-speak', async (req, res) => {
 
     // Save chat message — always save to both sender and target devices
     const sourceTag = `${sourceLabel}->${targetCode}`;
-    const chatMsgId = await saveChatMessage(target.deviceId, target.entityId, text, sourceTag, true, false, mediaType || null, mediaUrl || null);
+    const chatMsgId = await saveChatMessage(target.deviceId, target.entityId, text, sourceTag, true, false, mediaType || null, mediaUrl || null, null, null, null, null, null, validatedAttachments);
     // Also save sender's copy: in owner mode use entity 0; in entity mode use fromId
     const senderEntityId = isOwnerMode ? 0 : fromId;
     if (deviceId !== target.deviceId || senderEntityId !== target.entityId) {
-        await saveChatMessage(deviceId, senderEntityId, text, sourceTag, true, false, mediaType || null, mediaUrl || null);
+        await saveChatMessage(deviceId, senderEntityId, text, sourceTag, true, false, mediaType || null, mediaUrl || null, null, null, null, null, null, validatedAttachments);
     }
 
     toEntity.message = isOwnerMode ? `xdevice:owner: ${text}` : `xdevice:${fromEntity.publicCode}:${fromEntity.character}: ${text}`;
