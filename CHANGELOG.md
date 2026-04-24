@@ -1,3 +1,10 @@
+## [1.1071.4](https://github.com/HankHuang0516/EClaw/compare/v1.1071.3...v1.1071.4) (2026-04-24)
+
+
+### Reverts
+
+* Revert "feat(mission): embed Mind Map card as first item in 心智 tab ([#2040](https://github.com/HankHuang0516/EClaw/issues/2040))" ([#2048](https://github.com/HankHuang0516/EClaw/issues/2048)) ([f87b06a](https://github.com/HankHuang0516/EClaw/commit/f87b06a8bed23aa5ea3b99fb7bedc6c021f8b462))
+
 ## [1.1071.3](https://github.com/HankHuang0516/EClaw/compare/v1.1071.2...v1.1071.3) (2026-04-24)
 
 
