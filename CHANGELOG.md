@@ -1,3 +1,10 @@
+# [1.1079.0](https://github.com/HankHuang0516/EClaw/compare/v1.1078.0...v1.1079.0) (2026-04-24)
+
+
+### Features
+
+* **chip:** Smart Chip B — reference-preview popover with card support + requote ([#2079](https://github.com/HankHuang0516/EClaw/issues/2079)) ([e692fa0](https://github.com/HankHuang0516/EClaw/commit/e692fa05b955cc49aba68dd8075077abc89cca04))
+
 # [1.1078.0](https://github.com/HankHuang0516/EClaw/compare/v1.1077.3...v1.1078.0) (2026-04-24)
 
 
