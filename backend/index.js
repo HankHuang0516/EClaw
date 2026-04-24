@@ -4396,6 +4396,37 @@ app.get('/api/invite/stats', async (req, res) => {
     }
 });
 
+// GET /api/invite/clicks — per-code funnel breakdown for the caller's own
+// invite codes. Device-scoped twin of /api/admin/invite/clicks: no IP hashes
+// or referers, just aggregate counts + redemption state so the user can see
+// which codes are pulling traffic but not converting.
+app.get('/api/invite/clicks', async (req, res) => {
+    const auth = resolveInviteAuth(req);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    try {
+        const rows = await db.getInviteClickStatsForOwner(auth.deviceId);
+        const totalClicks = rows.reduce((s, r) => s + r.clicks, 0);
+        const totalUnique = rows.reduce((s, r) => s + r.unique_clicks, 0);
+        const redeemedCount = rows.filter(r => r.redeemed).length;
+        return res.json({
+            success: true,
+            summary: {
+                codes: rows.length,
+                total_clicks: totalClicks,
+                total_unique_clicks: totalUnique,
+                redeemed: redeemedCount,
+                click_to_redeem_pct: totalUnique > 0
+                    ? Math.round((redeemedCount / totalUnique) * 1000) / 10
+                    : null,
+            },
+            rows,
+        });
+    } catch (e) {
+        console.error('[Invite] clicks error:', e);
+        return res.status(500).json({ success: false, error: 'Internal error' });
+    }
+});
+
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: Date.now(), build: SERVER_BUILD_TAG, uptime: process.uptime(), startedAt: SERVER_STARTED_AT.toISOString() });
 });

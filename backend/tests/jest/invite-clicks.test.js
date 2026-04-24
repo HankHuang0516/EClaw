@@ -104,3 +104,40 @@ describe('db.getInviteClickStats', () => {
         expect(stats[0].redeemed).toBe(false);
     });
 });
+
+describe('db.getInviteClickStatsForOwner', () => {
+    it('filters by owner_device_id via JOIN on invite_codes', async () => {
+        mockQuery.mockResolvedValueOnce({ rows: [] });
+        await db.getInviteClickStatsForOwner('owner-1', fakePool());
+        const [sql, params] = mockQuery.mock.calls[0];
+        expect(sql).toMatch(/WHERE ic\.owner_device_id = \$1/);
+        expect(sql).toMatch(/LEFT JOIN/);
+        expect(params).toEqual(['owner-1']);
+    });
+
+    it('includes codes with zero clicks (LEFT JOIN keeps never-shared codes)', async () => {
+        mockQuery.mockResolvedValueOnce({ rows: [
+            { code: 'UNUSED', created_at: new Date(), used_by_device_id: null, used_at: null, clicks: 0, unique_clicks: 0, last_clicked_at: null },
+        ]});
+        const rows = await db.getInviteClickStatsForOwner('owner-2', fakePool());
+        expect(rows).toHaveLength(1);
+        expect(rows[0].code).toBe('UNUSED');
+        expect(rows[0].clicks).toBe(0);
+        expect(rows[0].redeemed).toBe(false);
+    });
+
+    it('marks redeemed=true when used_by_device_id is not null', async () => {
+        mockQuery.mockResolvedValueOnce({ rows: [
+            { code: 'USED1', created_at: new Date(), used_by_device_id: 'friend-1', used_at: new Date(), clicks: 3, unique_clicks: 2, last_clicked_at: new Date() },
+        ]});
+        const rows = await db.getInviteClickStatsForOwner('owner-3', fakePool());
+        expect(rows[0].redeemed).toBe(true);
+        expect(rows[0].redeemed_at).toBeTruthy();
+    });
+
+    it('returns [] on DB error', async () => {
+        mockQuery.mockRejectedValueOnce(new Error('boom'));
+        const rows = await db.getInviteClickStatsForOwner('owner-4', fakePool());
+        expect(rows).toEqual([]);
+    });
+});

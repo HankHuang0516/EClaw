@@ -2261,6 +2261,45 @@ async function getInviteClickStats(poolArg) {
     }
 }
 
+async function getInviteClickStatsForOwner(ownerDeviceId, poolArg) {
+    const p = poolArg || pool;
+    try {
+        const r = await p.query(
+            `SELECT ic.code,
+                    ic.created_at,
+                    ic.used_by_device_id,
+                    ic.used_at,
+                    COALESCE(click_agg.clicks, 0)::int AS clicks,
+                    COALESCE(click_agg.unique_clicks, 0)::int AS unique_clicks,
+                    click_agg.last_clicked_at
+             FROM invite_codes ic
+             LEFT JOIN (
+                 SELECT code,
+                        COUNT(*)::int AS clicks,
+                        COUNT(DISTINCT ip_hash)::int AS unique_clicks,
+                        MAX(clicked_at) AS last_clicked_at
+                 FROM invite_clicks
+                 GROUP BY code
+             ) click_agg ON click_agg.code = ic.code
+             WHERE ic.owner_device_id = $1
+             ORDER BY ic.created_at ASC`,
+            [ownerDeviceId]
+        );
+        return r.rows.map(row => ({
+            code: row.code,
+            clicks: row.clicks,
+            unique_clicks: row.unique_clicks,
+            last_clicked_at: row.last_clicked_at,
+            redeemed: row.used_by_device_id != null,
+            redeemed_at: row.used_at,
+            created_at: row.created_at,
+        }));
+    } catch (err) {
+        console.error('[DB] getInviteClickStatsForOwner error:', err.message);
+        return [];
+    }
+}
+
 async function upsertCommunityRating(publicCode, deviceId, stars) {
     try {
         await pool.query(
@@ -2396,4 +2435,5 @@ module.exports = {
     getCommunityStats,
     logInviteClick,
     getInviteClickStats,
+    getInviteClickStatsForOwner,
 };
