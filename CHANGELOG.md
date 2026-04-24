@@ -1,3 +1,10 @@
+# [1.1076.0](https://github.com/HankHuang0516/EClaw/compare/v1.1075.1...v1.1076.0) (2026-04-24)
+
+
+### Features
+
+* **autolink-chip:** render review_ + src:// references as 引用晶片 ([#2070](https://github.com/HankHuang0516/EClaw/issues/2070)) ([e93602b](https://github.com/HankHuang0516/EClaw/commit/e93602b8f61c1a4e91240c5aac3113215bdccfd3)), closes [#anchor](https://github.com/HankHuang0516/EClaw/issues/anchor)
+
 ## [1.1075.1](https://github.com/HankHuang0516/EClaw/compare/v1.1075.0...v1.1075.1) (2026-04-24)
 
 
