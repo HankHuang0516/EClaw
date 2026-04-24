@@ -1,3 +1,10 @@
+## [1.1063.10](https://github.com/HankHuang0516/EClaw/compare/v1.1063.9...v1.1063.10) (2026-04-24)
+
+
+### Bug Fixes
+
+* **growth:** honor date=YYYY-MM-DD param in /api/growth/daily ([#2030](https://github.com/HankHuang0516/EClaw/issues/2030)) ([845954d](https://github.com/HankHuang0516/EClaw/commit/845954dd68922fbd454e34344f9f9fa75a3c53ab))
+
 ## [1.1063.9](https://github.com/HankHuang0516/EClaw/compare/v1.1063.8...v1.1063.9) (2026-04-24)
 
 
