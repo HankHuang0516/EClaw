@@ -739,6 +739,69 @@ if (process.env.NODE_ENV !== 'test') {
     });
 }
 
+// ============================================
+// GLOBAL RATE LIMITING (issue #1948)
+// ============================================
+// Three tiers:
+//   1. Global /api/* — 100 req/min per IP
+//   2. Auth endpoints — 10 req/min per IP (login/register brute-force)
+//   3. Message endpoints — 30 req/min per device (transform / client/speak)
+//
+// Skipped when NODE_ENV === 'test' to keep existing Jest suites running
+// (unset or set to '1' via ENABLE_RATE_LIMIT_IN_TEST to exercise the
+// regression test below).
+// /api/health and /api/version are always skipped so Railway health probes
+// and external monitors never trip the limiter.
+//
+// Per-route limiters already exist in bot-tools.js, growth.js, channel-api.js;
+// the limits below are additive and not intended to override them.
+const rateLimit = require('express-rate-limit');
+const rateLimitDisabled = () =>
+    process.env.NODE_ENV === 'test' && process.env.ENABLE_RATE_LIMIT_IN_TEST !== '1';
+
+const globalApiLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => {
+        if (rateLimitDisabled()) return true;
+        // Health + version probes are unconditionally exempt.
+        if (req.path === '/health' || req.path === '/version') return true;
+        return false;
+    },
+    message: { success: false, error: 'Too many requests — try again shortly' },
+});
+app.use('/api', globalApiLimiter);
+
+const authLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: () => rateLimitDisabled(),
+    message: { success: false, error: 'Too many auth attempts — try again in a minute' },
+});
+// Mount auth limiter BEFORE the auth router (line ~1917) so it fires first.
+app.use(['/api/auth/login', '/api/auth/register'], authLimiter);
+
+const messageLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+    // Key by deviceId (attacker-controlled IP rotation shouldn't help) with
+    // IP fallback when body is absent (e.g. malformed request hits limiter
+    // before it reaches route validation).
+    keyGenerator: (req) => {
+        const deviceId = (req.body && req.body.deviceId) || null;
+        return deviceId ? `dev:${deviceId}` : `ip:${req.ip}`;
+    },
+    skip: () => rateLimitDisabled(),
+    message: { success: false, error: 'Too many messages — slow down' },
+});
+app.use(['/api/transform', '/api/client/speak'], messageLimiter);
+
 // Telemetry auto-capture middleware (pool linked lazily after chatPool init)
 let _telemetryPool = null;
 const telemetryPoolProxy = {

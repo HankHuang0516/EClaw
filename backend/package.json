@@ -34,6 +34,7 @@
     "cron-parser": "^5.5.0",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
+    "express-rate-limit": "^8.4.0",
     "firebase-admin": "^13.6.1",
     "flickr-sdk": "^6.3.0",
     "google-auth-library": "^9.0.0",
