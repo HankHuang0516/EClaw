@@ -783,8 +783,12 @@
     <script src="shared/entity-utils.js"></script>
     <script src="shared/entity-link-render.js"></script>
     <script src="shared/note-link-render.js"></script>
+    <script src="shared/mention-render.js"></script>
+    <script src="shared/his-link-render.js"></script>
     <script src="shared/autolink-chip.js"></script>
     <script src="shared/autolink-chip-preview.js"></script>
+    <script src="../shared/r2-link-render.js"></script>
+    <script src="../shared/chat-message-render.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
     <script src="/socket.io/socket.io.js"></script>
@@ -806,9 +810,14 @@
     <script src="shared/ai-chat.js"></script>
     <script>if(typeof renderAvatarHtml==='undefined'){window.renderAvatarHtml=function(a){return a||'🦞'};window.isAvatarUrl=function(){return false}}</script>
     <script>
-        // 智慧引用 render chain — escape text then apply entity-link / note-link / autolink-chip
+        // 智慧引用 render chain — delegates to shared ChatMessageRender so chat
+        // and kanban surfaces always run the same chip pipeline. Falls back to
+        // the in-line chain if the shared module hasn't loaded yet.
         function renderSmartChips(rawText) {
             if (rawText == null) return '';
+            if (window.ChatMessageRender) {
+                return ChatMessageRender.renderTextChipsFromRaw(rawText, { surface: 'kanban' });
+            }
             let html = escapeHtml(String(rawText));
             if (window.EntityLinkRender) html = EntityLinkRender.renderEntityLinks(html);
             if (window.NoteLinkRender)   html = NoteLinkRender.renderNoteLinks(html);
