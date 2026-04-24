@@ -4285,9 +4285,9 @@ app.post('/api/invite/redeem', async (req, res) => {
         if (used_by_device_id) return res.status(409).json({ success: false, error: 'Invite code already used' });
         if (owner_device_id === deviceId) return res.status(400).json({ success: false, error: 'Cannot redeem your own invite code' });
 
-        // Check if this device already redeemed any code
-        const alreadyRedeemed = await pg.query('SELECT 1 FROM invite_codes WHERE used_by_device_id = $1', [deviceId]);
-        if (alreadyRedeemed.rows.length > 0) return res.status(409).json({ success: false, error: 'You have already redeemed an invite code' });
+        // Note: Option B — a device can redeem multiple different codes (one per
+        // inviter). Per-code-once is enforced above via used_by_device_id. See
+        // docs/invite-redemption-policy.md.
 
         // Mark code as used
         await pg.query(
