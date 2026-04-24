@@ -2083,7 +2083,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             // Find active cards assigned to this entity that are in todo/in_progress
             // Supports both auto-generated child cards AND manually created cards with reviewer
             const result = await pool.query(
-                `SELECT c.id, c.title, c.status, c.parent_card_id, c.assigned_bots, c.reviewer_entity_id
+                `SELECT c.id, c.title, c.status, c.parent_card_id, c.assigned_bots, c.reviewer_entity_id, c.requires_screenshot_review
                  FROM kanban_cards c
                  WHERE c.device_id = $1
                    AND (c.is_auto_generated = true OR c.reviewer_entity_id IS NOT NULL)
@@ -2098,10 +2098,33 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             for (const card of result.rows) {
                 const reviewerId = card.reviewer_entity_id;
 
+                // Screenshot-review gate: mirror the /move endpoint gate (see L1086).
+                // When gate is on and no image is attached, do NOT auto-close.
+                // Instead, leave the card in its current status, post a system comment,
+                // and nudge the bot to attach a screenshot before its next IDLE transform.
+                if (card.requires_screenshot_review !== false) {
+                    const shot = await pool.query(
+                        `SELECT COUNT(*)::int AS cnt FROM kanban_files
+                         WHERE card_id = $1 AND mime_type LIKE 'image/%'`,
+                        [card.id]
+                    );
+                    if ((shot.rows[0]?.cnt || 0) === 0) {
+                        const nudge = `⏸️ Bot #${entityId} 已回報完成，但此卡開啟「截圖審查」且尚無完成截圖 — 不自動結案。請用 POST /api/mission/card/${card.id}/file 附上 image/png R2 URL 後，再讓 bot 重送 IDLE transform。`;
+                        await addSystemComment(card.id, deviceId, nudge);
+                        console.log(`[Kanban] Auto-close blocked by screenshot gate: card ${card.id} (${card.title}) by entity ${entityId} — awaiting screenshot`);
+                        try {
+                            notifyEntities(deviceId, [entityId],
+                                `⏸️ 「${card.title}」需附上完成截圖才能自動結案。請先 POST /api/mission/card/${card.id}/file 附 image/png，再重送 IDLE transform。`,
+                                { cardId: card.id });
+                        } catch (_) { /* notify best-effort */ }
+                        continue;
+                    }
+                }
+
                 // Move directly to done (not review) — avoids blocking next schedule trigger
                 await pool.query(
-                    `UPDATE kanban_cards 
-                     SET status = 'done', status_changed_at = NOW(), 
+                    `UPDATE kanban_cards
+                     SET status = 'done', status_changed_at = NOW(),
                          last_stale_nudge_at = NULL, updated_at = NOW()
                      WHERE id = $1 AND device_id = $2`,
                     [card.id, deviceId]
