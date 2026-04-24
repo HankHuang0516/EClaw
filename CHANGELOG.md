@@ -1,3 +1,19 @@
+# [1.1073.0](https://github.com/HankHuang0516/EClaw/compare/v1.1072.1...v1.1073.0) (2026-04-24)
+
+
+### Bug Fixes
+
+* **ios:** hide portal chrome + match deep-purple bg in WebView ([#1770](https://github.com/HankHuang0516/EClaw/issues/1770)) ([#2062](https://github.com/HankHuang0516/EClaw/issues/2062)) ([12f539d](https://github.com/HankHuang0516/EClaw/commit/12f539d20450911aceb260af94955462647da24d)), closes [#0D0D1A](https://github.com/HankHuang0516/EClaw/issues/0D0D1A)
+* **ios:** icon-only bottom nav so CJK labels stop squeezing ([#1769](https://github.com/HankHuang0516/EClaw/issues/1769)) ([#2060](https://github.com/HankHuang0516/EClaw/issues/2060)) ([e1116fc](https://github.com/HankHuang0516/EClaw/commit/e1116fc09c4513ae4659b1971370f14818e668f2))
+* **kanban:** regen R2 signed URL on every card-file read ([#2064](https://github.com/HankHuang0516/EClaw/issues/2064)) ([e43bce9](https://github.com/HankHuang0516/EClaw/commit/e43bce9953cbb2a935e3023eb59fd6a0ea31685b))
+* **ios:** swallow uncaught JS errors in production, not dev ([#1766](https://github.com/HankHuang0516/EClaw/issues/1766)) ([#2058](https://github.com/HankHuang0516/EClaw/issues/2058)) ([b13fd33](https://github.com/HankHuang0516/EClaw/commit/b13fd33dcbf5c95b3b783bc51e4394d92bd5014f))
+
+
+### Features
+
+* **settings:** add Switch Device UI for multi-account device-row migration ([#2061](https://github.com/HankHuang0516/EClaw/issues/2061)) ([a1a9583](https://github.com/HankHuang0516/EClaw/commit/a1a95838bdbfe24be425c3ea4351bdeaacc69aac)), closes [#1773](https://github.com/HankHuang0516/EClaw/issues/1773)
+* **transform:** support multipart/form-data for single-request file delivery ([#2057](https://github.com/HankHuang0516/EClaw/issues/2057)) ([1fb2c20](https://github.com/HankHuang0516/EClaw/commit/1fb2c209e6eb644273a4c01b5c004b8f01477a2c)), closes [#1781](https://github.com/HankHuang0516/EClaw/issues/1781)
+
 ## [1.1072.1](https://github.com/HankHuang0516/EClaw/compare/v1.1072.0...v1.1072.1) (2026-04-24)
 
 
