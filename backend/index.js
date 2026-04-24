@@ -15814,40 +15814,60 @@ app.post('/api/device-vars', async (req, res) => {
     }
 });
 
-// GET /api/device-vars — bot reads vars (botSecret auth)
-// Auth: botSecret (entity must be bound to the device)
+// GET /api/device-vars — read vault. Dual-auth:
+//   - botSecret  → entity-side read, subject to the owner's lock flag
+//   - deviceSecret → owner-side read (read-only, bypasses lock because
+//                    the owner can toggle it anyway). This is the owner-side
+//                    "hydrate empty local cache from server" path used by the
+//                    env-vars.html page-load to avoid the 2026-04-24 incident
+//                    where a fresh Android WebView with empty localStorage
+//                    rendered blank while the web (with cached localStorage)
+//                    showed 17 keys.
 app.get('/api/device-vars', async (req, res) => {
-    const { deviceId, botSecret } = req.query;
-    if (!deviceId || !botSecret) {
-        return res.status(400).json({ success: false, error: 'deviceId and botSecret required' });
+    const { deviceId, botSecret, deviceSecret } = req.query;
+    if (!deviceId || (!botSecret && !deviceSecret)) {
+        return res.status(400).json({ success: false, error: 'deviceId and (botSecret or deviceSecret) required' });
     }
     const device = devices[deviceId];
     if (!device) {
         return res.status(404).json({ success: false, error: 'Device not found' });
     }
 
-    // Authenticate bot
-    const allEntities = Object.values(device.entities || {});
-    const botEntity = allEntities.find(e => e.isBound && safeEqual(e.botSecret, botSecret));
-    if (!botEntity) {
-        return res.status(403).json({ success: false, error: 'Invalid botSecret' });
+    let authMode; // 'owner' | 'bot'
+    if (deviceSecret) {
+        if (!safeEqual(device.deviceSecret, deviceSecret)) {
+            return res.status(403).json({ success: false, error: 'Invalid deviceSecret' });
+        }
+        authMode = 'owner';
+    } else {
+        const allEntities = Object.values(device.entities || {});
+        const botEntity = allEntities.find(e => e.isBound && safeEqual(e.botSecret, botSecret));
+        if (!botEntity) {
+            return res.status(403).json({ success: false, error: 'Invalid botSecret' });
+        }
+        authMode = 'bot';
     }
 
-    // Check if vars exist in DB
     const row = await db.getDeviceVars(deviceId);
     if (!row) {
-        return res.json({ success: true, vars: {}, hint: 'No vars saved — owner has not configured any variables' });
+        const base = { success: true, vars: {}, hint: 'No vars saved — owner has not configured any variables' };
+        if (authMode === 'owner') base.sources = {};
+        return res.json(base);
     }
 
-    // Check lock
-    if (row.is_locked) {
+    // Bots are blocked by the owner's lock flag; owner always bypasses.
+    if (authMode === 'bot' && row.is_locked) {
         return res.status(403).json({ success: false, error: 'locked', message: 'Variables are locked by owner' });
     }
 
-    // Decrypt and return
     try {
         const vars = decryptVars(row.encrypted_vars, row.iv, row.auth_tag);
-        return res.json({ success: true, vars });
+        const out = { success: true, vars };
+        if (authMode === 'owner') {
+            out.sources = row.var_sources || {};
+            out.locked = !!row.is_locked;
+        }
+        return res.json(out);
     } catch (err) {
         console.error(`[Vars] Decrypt failed for ${deviceId}:`, err.message);
         return res.status(500).json({ success: false, error: 'Decryption failed' });

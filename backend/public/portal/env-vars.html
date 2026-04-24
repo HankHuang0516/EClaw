@@ -565,6 +565,30 @@
             }
         }
 
+        // Read-only server-side hydrate. Fixes the symmetric bug of the
+        // "empty-POST wipe": on a fresh WebView with empty localStorage, the
+        // page used to render blank forever because there was no GET path.
+        // Now we always GET first, populate localStorage from the server, and
+        // render. POST is still gated to avoid the original wipe footgun.
+        async function hydrateFromServer() {
+            if (!currentUser) return;
+            try {
+                const qs = new URLSearchParams({
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret
+                }).toString();
+                const result = await apiCall('GET', `/api/device-vars?${qs}`);
+                if (result && result.vars && typeof result.vars === 'object') {
+                    localStorage.setItem(varsKey(), JSON.stringify(result.vars));
+                }
+                if (typeof result?.locked === 'boolean') {
+                    localStorage.setItem(lockKey(), String(result.locked));
+                }
+            } catch (e) {
+                // Best-effort — offline or auth drift shouldn't crash the page.
+            }
+        }
+
         // ── Init ──
         window.addEventListener('DOMContentLoaded', async () => {
             renderNav('mission');
@@ -575,12 +599,17 @@
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('varsContent').style.display = '';
 
+            // Hydrate localStorage from server BEFORE first render so fresh
+            // WebView partitions (incident 2026-04-24: Android app empty, web
+            // 17 keys) don't render an empty list.
+            await hydrateFromServer();
             renderAll();
             renderBotHint();
-            // Page-load sync only when local has entries to push. An empty local
-            // here would otherwise POST {vars:{},source:'web'} and, in merge mode,
-            // silently drop every existing same-source key on the server.
-            // Incident 2026-04-24: Android WebView fresh storage partition → wipe.
+            // Page-load POST sync only when local has entries to push. An empty
+            // local here would otherwise POST {vars:{},source:'web'} and, in
+            // merge mode, silently drop every existing same-source key on the
+            // server. Server now also refuses empty merges without confirm, but
+            // we gate client-side too so the refused POST doesn't flood logs.
             if (Object.keys(loadLocalVars()).length > 0) {
                 syncVarsToServer();
             }
