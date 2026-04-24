@@ -1417,9 +1417,8 @@
             padding: 8px 12px;
             background: rgba(255,255,255,0.1);
             border-radius: 8px;
-            cursor: pointer;
-            text-decoration: none;
             color: inherit;
+            /* raw URL stays in JS data-*, not in href — no hover tooltip, no "Copy link" */
         }
 
         .chat-msg.received .chat-file {
@@ -1427,15 +1426,48 @@
             border: 1px solid var(--card-border);
         }
 
-        .chat-file:hover { opacity: 0.85; }
-
         .chat-file .file-icon {
             font-size: 20px;
+            flex-shrink: 0;
         }
 
         .chat-file .file-name {
             font-size: 13px;
             word-break: break-all;
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .chat-file .chat-file-dl {
+            flex-shrink: 0;
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: inherit;
+            font: inherit;
+            font-size: 14px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .chat-file .chat-file-dl:hover {
+            background: rgba(255,255,255,0.28);
+        }
+
+        .chat-msg.received .chat-file .chat-file-dl {
+            background: rgba(0,0,0,0.08);
+        }
+
+        .chat-msg.received .chat-file .chat-file-dl:hover {
+            background: rgba(0,0,0,0.18);
+        }
+
+        .chat-file .chat-file-dl[disabled] {
+            opacity: 0.6;
+            cursor: wait;
         }
 
         /* ── Attachment Cards ── */
@@ -3744,10 +3776,12 @@
                 } else if (msg.media_type === 'file' && msg.media_url) {
                     const fname = extractFileName(msg.text, msg.media_url);
                     const fileSlotId = 'fn-' + (msg.id || Math.random().toString(36).slice(2));
-                    mediaHtml = `<a class="chat-file" href="${escapeHtml(msg.media_url)}" onclick="event.preventDefault();window.open(this.href,'_blank','noopener,noreferrer')">
+                    const dlLabel = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t('chat_file_download') : 'Download';
+                    mediaHtml = `<div class="chat-file" data-url="${escapeHtml(msg.media_url)}" data-name="${escapeHtml(fname)}">
                         <span class="file-icon">&#x1F4CE;</span>
                         <span class="file-name" id="${escapeHtml(fileSlotId)}">${escapeHtml(fname)}</span>
-                    </a>`;
+                        <button type="button" class="chat-file-dl" onclick="event.stopPropagation(); downloadChatFile(this);">&#x2B07;&#xFE0F; ${escapeHtml(dlLabel)}</button>
+                    </div>`;
                     // Async-resolve real filename from Content-Disposition if we only have a UUID
                     if (/^[0-9a-f-]{36}$/.test(fname)) {
                         const url = msg.media_url;
@@ -3756,8 +3790,11 @@
                             const cd = r.headers.get('content-disposition') || '';
                             const m = cd.match(/filename="?([^";\n]+)"?/i);
                             if (m) {
+                                const resolved = decodeURIComponent(m[1].replace(/\+/g, ' '));
                                 const el = document.getElementById(slotId);
-                                if (el) el.textContent = decodeURIComponent(m[1].replace(/\+/g, ' '));
+                                if (el) el.textContent = resolved;
+                                const host = el && el.closest('.chat-file');
+                                if (host) host.dataset.name = resolved;
                             }
                         }).catch(() => {});
                     }
@@ -4638,6 +4675,39 @@
                 const parts = url.split('/');
                 return decodeURIComponent(parts[parts.length - 1]) || 'File';
             } catch (e) { return 'File'; }
+        }
+
+        // File download — fetch as blob and trigger a download so the presigned URL
+        // (which contains X-Amz-Credential etc.) never appears in the address bar,
+        // hover tooltip, or right-click menu.
+        async function downloadChatFile(btn) {
+            const host = btn.closest('.chat-file');
+            if (!host) return;
+            const url = host.dataset.url;
+            const name = host.dataset.name || 'file';
+            if (!url) return;
+            btn.disabled = true;
+            try {
+                const resp = await fetch(url);
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                const blob = await resp.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 0);
+            } catch (err) {
+                console.error('[chat-file] download failed', err);
+                try {
+                    const msg = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t('chat_file_download_failed') : 'Download failed';
+                    if (typeof showToast === 'function') showToast(msg, 'error');
+                } catch (_) {}
+            } finally {
+                btn.disabled = false;
+            }
         }
 
         // URL regex for detecting links in message text
