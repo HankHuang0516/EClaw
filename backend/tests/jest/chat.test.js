@@ -195,6 +195,75 @@ describe('client/speak messageQueue structure (shadow bug regression)', () => {
 });
 
 // ════════════════════════════════════════════════════════════════
+// Structured attachments on /api/client/speak — signed R2 URL must
+// NEVER enter message.text or the push body. Bots see only a
+// [📎 filename] hint + fileId-based metadata.
+// ════════════════════════════════════════════════════════════════
+describe('client/speak structured attachments', () => {
+    it('accepts attachments[] and rejects > 10 items', async () => {
+        const deviceSecret = await registerDevice('test-att-limit');
+        await post('/api/bind').send({
+            deviceId: 'test-att-limit', entityId: 0,
+            name: 'TestBot', character: '🤖', webhook: ''
+        });
+
+        const tooMany = Array.from({ length: 11 }, (_, i) => ({
+            fileId: `file-${i}`, filename: `f${i}.txt`, size: 1, mimeType: 'text/plain',
+        }));
+
+        const res = await post('/api/client/speak').send({
+            deviceId: 'test-att-limit', deviceSecret,
+            entityId: 0, text: 'too many', source: 'web_chat',
+            attachments: tooMany,
+        });
+        expect(res.status).toBe(400);
+        expect(res.body.message).toMatch(/attachments max 10/);
+    });
+
+    it('strips unknown attachment fields and preserves fileId/filename/size/mimeType', async () => {
+        const deviceSecret = await registerDevice('test-att-shape');
+        await post('/api/bind').send({
+            deviceId: 'test-att-shape', entityId: 0,
+            name: 'TestBot', character: '🤖', webhook: ''
+        });
+
+        const res = await post('/api/client/speak').send({
+            deviceId: 'test-att-shape', deviceSecret,
+            entityId: 0,
+            text: 'here you go',
+            source: 'web_chat',
+            attachments: [{
+                fileId: 'abcd1234',
+                filename: 'report.pdf',
+                size: 12345,
+                mimeType: 'application/pdf',
+                // A signed URL must be silently dropped by the validator.
+                url: 'https://r2.cloudflarestorage.com/evil-url?X-Amz-Signature=abc',
+            }],
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+    });
+
+    it('drops attachments without fileId', async () => {
+        const deviceSecret = await registerDevice('test-att-nofileid');
+        await post('/api/bind').send({
+            deviceId: 'test-att-nofileid', entityId: 0,
+            name: 'TestBot', character: '🤖', webhook: ''
+        });
+
+        const res = await post('/api/client/speak').send({
+            deviceId: 'test-att-nofileid', deviceSecret,
+            entityId: 0, text: 'with bad att', source: 'web_chat',
+            attachments: [{ filename: 'noid.pdf', size: 10, mimeType: 'application/pdf' }],
+        });
+        // No fileId → validator filters out → treat as plain text message, no error
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
 // POST /api/chat/upload-media
 // ════════════════════════════════════════════════════════════════
 describe('POST /api/chat/upload-media', () => {
