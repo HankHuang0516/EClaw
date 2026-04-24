@@ -1,3 +1,10 @@
+## [1.1072.1](https://github.com/HankHuang0516/EClaw/compare/v1.1072.0...v1.1072.1) (2026-04-24)
+
+
+### Bug Fixes
+
+* **chat:** strip raw R2 presigned URLs from message text + shorten TTL ([#2059](https://github.com/HankHuang0516/EClaw/issues/2059)) ([b8920a7](https://github.com/HankHuang0516/EClaw/commit/b8920a7b3ca978d01597dd49ed8ddadb3beb3fc7)), closes [#2045](https://github.com/HankHuang0516/EClaw/issues/2045) [#2045](https://github.com/HankHuang0516/EClaw/issues/2045)
+
 # [1.1072.0](https://github.com/HankHuang0516/EClaw/compare/v1.1071.6...v1.1072.0) (2026-04-24)
 
 
