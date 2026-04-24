@@ -625,7 +625,7 @@ app.get('/invite/:code', async (req, res) => {
     try {
         const ipRaw = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || '';
         const ipHash = ipRaw
-            ? require('crypto').createHash('sha256').update(ipRaw).digest('hex').slice(0, 16)
+            ? crypto.createHash('sha256').update(ipRaw).digest('hex').slice(0, 16)
             : null;
         const userAgent = String(req.headers['user-agent'] || '').slice(0, 500) || null;
         const referer = String(req.headers.referer || req.headers.referrer || '').slice(0, 500) || null;
