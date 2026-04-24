@@ -73,6 +73,19 @@
         .inv-stats-loading { color: var(--text-secondary); font-size: 12px; text-align: center; padding: 12px 0; }
         .inv-stats-error { color: #ef4444; font-size: 12px; text-align: center; padding: 12px 0; }
 
+        .inv-funnel-wrap { margin-top: 4px; }
+        .inv-funnel-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .inv-funnel-table th, .inv-funnel-table td { padding: 7px 8px; text-align: left; border-bottom: 1px solid var(--card-border); }
+        .inv-funnel-table th { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; }
+        .inv-funnel-table td { font-variant-numeric: tabular-nums; color: var(--text); }
+        .inv-funnel-table td.num { text-align: right; }
+        .inv-funnel-code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-weight: 600; color: #7c83ff; }
+        .inv-funnel-badge { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 600; }
+        .inv-funnel-badge.redeemed { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+        .inv-funnel-badge.pending { background: rgba(148, 163, 184, 0.15); color: var(--text-secondary); }
+        .inv-funnel-summary { display: flex; gap: 16px; flex-wrap: wrap; font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; }
+        .inv-funnel-summary strong { color: var(--text); font-weight: 700; font-variant-numeric: tabular-nums; }
+
         .inv-rewards { margin-top: 12px; }
         .inv-reward-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--card-border); font-size: 13px; }
         .inv-reward-label { color: var(--text-secondary); }
@@ -167,6 +180,11 @@
 
                 <h4 class="inv-timeline-title" data-i18n="invite_stats_timeline_title">Daily usage (past 30 days)</h4>
                 <div id="invTimeline" class="inv-timeline-wrap">
+                    <div class="inv-stats-loading" data-i18n="invite_stats_loading">Loading…</div>
+                </div>
+
+                <h4 class="inv-timeline-title" data-i18n="invite_per_code_funnel_header">Per-code click funnel</h4>
+                <div id="invCodeFunnel" class="inv-funnel-wrap">
                     <div class="inv-stats-loading" data-i18n="invite_stats_loading">Loading…</div>
                 </div>
             </div>
@@ -367,11 +385,59 @@
                 renderInviteTimeline(history);
 
                 renderTier(data);
+                loadClickFunnel();
             } catch (err) {
                 const timeline = document.getElementById('invTimeline');
                 if (timeline) timeline.innerHTML = `<div class="inv-stats-error">${tt('invite_stats_error', 'Failed to load stats. Try again.')}</div>`;
             } finally {
                 if (refreshBtn) refreshBtn.classList.remove('inv-spinning');
+            }
+        }
+
+        async function loadClickFunnel() {
+            const host = document.getElementById('invCodeFunnel');
+            if (!host) return;
+            try {
+                const data = await apiCall('GET', '/api/invite/clicks');
+                if (!data?.success) throw new Error(data?.error || 'load_failed');
+                const rows = Array.isArray(data.rows) ? data.rows : [];
+                if (rows.length === 0) {
+                    host.innerHTML = `<div class="inv-timeline-empty">${tt('invite_per_code_funnel_empty', 'No invite codes yet — share your link to start tracking clicks.')}</div>`;
+                    return;
+                }
+                const s = data.summary || {};
+                const summaryHtml = `
+                    <div class="inv-funnel-summary">
+                        <span>${tt('invite_per_code_summary_codes', 'Codes')}: <strong>${s.codes ?? 0}</strong></span>
+                        <span>${tt('invite_per_code_summary_clicks', 'Total clicks')}: <strong>${s.total_clicks ?? 0}</strong></span>
+                        <span>${tt('invite_per_code_summary_unique', 'Unique')}: <strong>${s.total_unique_clicks ?? 0}</strong></span>
+                        <span>${tt('invite_per_code_summary_redeemed', 'Redeemed')}: <strong>${s.redeemed ?? 0}</strong></span>
+                    </div>`;
+                const tableHtml = `
+                    <table class="inv-funnel-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="invite_per_code_col_code">Code</th>
+                                <th class="num" data-i18n="invite_per_code_col_clicks">Clicks</th>
+                                <th class="num" data-i18n="invite_per_code_col_unique">Unique</th>
+                                <th data-i18n="invite_per_code_col_status">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows.map(r => `
+                            <tr>
+                                <td><span class="inv-funnel-code">${r.code}</span></td>
+                                <td class="num">${r.clicks}</td>
+                                <td class="num">${r.unique_clicks}</td>
+                                <td>${r.redeemed
+                                    ? `<span class="inv-funnel-badge redeemed">${tt('invite_per_code_status_redeemed', 'Redeemed')}</span>`
+                                    : `<span class="inv-funnel-badge pending">${tt('invite_per_code_status_pending', 'Pending')}</span>`
+                                }</td>
+                            </tr>`).join('')}
+                        </tbody>
+                    </table>`;
+                host.innerHTML = summaryHtml + tableHtml;
+            } catch (err) {
+                host.innerHTML = `<div class="inv-stats-error">${tt('invite_stats_error', 'Failed to load stats. Try again.')}</div>`;
             }
         }
 
