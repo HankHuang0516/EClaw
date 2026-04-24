@@ -1,3 +1,10 @@
+## [1.1070.1](https://github.com/HankHuang0516/EClaw/compare/v1.1070.0...v1.1070.1) (2026-04-24)
+
+
+### Bug Fixes
+
+* **nav:** wallet/balance 401 should not redirect to login ([#2041](https://github.com/HankHuang0516/EClaw/issues/2041)) ([bf486fa](https://github.com/HankHuang0516/EClaw/commit/bf486fa28b502b24b0c8ee5026e1e8d5a4551d13)), closes [#2036](https://github.com/HankHuang0516/EClaw/issues/2036)
+
 # [1.1070.0](https://github.com/HankHuang0516/EClaw/compare/v1.1069.0...v1.1070.0) (2026-04-24)
 
 
