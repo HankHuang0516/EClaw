@@ -1376,6 +1376,16 @@
             }
         });
 
+        // Clicking outside any file card or the action bar exits multi-select.
+        // Use capture so we see the click before any inline onclick fires;
+        // we still let file-card / bar clicks through their own handlers.
+        document.addEventListener('click', (e) => {
+            if (!multiSelectMode) return;
+            if (e.target.closest('.file-card') || e.target.closest('.multi-select-bar')) return;
+            // Filter chips / folder chips / nav / footer all count as "empty area" for exit purposes.
+            exitMultiSelectMode();
+        });
+
         // --- Helpers ---
         function quoteToChat(source, title, excerpt) {
             if (window.self !== window.top) {
