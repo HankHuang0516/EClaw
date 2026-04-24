@@ -1,3 +1,10 @@
+## [1.1071.6](https://github.com/HankHuang0516/EClaw/compare/v1.1071.5...v1.1071.6) (2026-04-24)
+
+
+### Bug Fixes
+
+* **portal:** keep sub-tabs visible in split-view embed mode ([#2052](https://github.com/HankHuang0516/EClaw/issues/2052)) ([b643a1b](https://github.com/HankHuang0516/EClaw/commit/b643a1bbbb60d1331fd1c3c1d5644c859802c909))
+
 ## [1.1071.5](https://github.com/HankHuang0516/EClaw/compare/v1.1071.4...v1.1071.5) (2026-04-24)
 
 
