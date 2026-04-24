@@ -1,3 +1,10 @@
+## [1.1063.3](https://github.com/HankHuang0516/EClaw/compare/v1.1063.2...v1.1063.3) (2026-04-24)
+
+
+### Bug Fixes
+
+* **portal/chat:** cloud-library filename invisible on mobile ([#2018](https://github.com/HankHuang0516/EClaw/issues/2018)) ([bc9eb8a](https://github.com/HankHuang0516/EClaw/commit/bc9eb8a86bad3a42759aebad81de5ef47fe91cd2))
+
 ## [1.1063.2](https://github.com/HankHuang0516/EClaw/compare/v1.1063.1...v1.1063.2) (2026-04-24)
 
 
