@@ -1209,7 +1209,7 @@
             const reviewerName = card.reviewerEntityId != null ? getEntityDisplayName(card.reviewerEntityId) : '';
             meta.innerHTML = `
                 <span class="meta-item"><span class="kb-card-priority" data-p="${card.priority}">${card.priority}</span></span>
-                <span class="meta-item">📌 ${STATUS_LABELS[card.status]}</span>
+                <span class="meta-item">📌 ${STATUS_LABELS[card.status] || card.status || '—'}</span>
                 <span class="meta-item">👤 ${(card.assignedBots||[]).map(id=>{ const e=boundEntities.find(x=>x.entityId===id); return e?(e.name||e.character||'#'+id):'#'+id; }).join(', ')}</span>
                 ${reviewerName ? `<span class="meta-item">🔍 ${escapeHtml(reviewerName)}</span>` : ''}
                 <span class="meta-item">🕐 ${formatTime(card.createdAt || card.created_at)}</span>
@@ -1320,7 +1320,20 @@
 
         async function toggleAutoSchedule(cardId, enable) {
             const card = findCard(cardId);
-            if (!card) return;
+            if (!card) {
+                showToast(t('kb_auto_card_missing', 'Card not loaded — refresh the board'), true);
+                return;
+            }
+            if (enable) {
+                const schedType = card.schedule?.type || 'recurring';
+                const needsCron = schedType === 'recurring' && !card.schedule?.cronExpression;
+                const needsRunAt = schedType === 'once' && !card.schedule?.runAt;
+                if (needsCron || needsRunAt) {
+                    showToast(t('kb_auto_need_config', 'Schedule config missing — opening editor'), true);
+                    editAutoSchedule(cardId);
+                    return;
+                }
+            }
             const btn = document.querySelector('.kb-auto-action-btn.pause,.kb-auto-action-btn.resume');
             const body = { deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret, enabled: enable, type: card.schedule?.type || 'recurring' };
             if (card.schedule?.cronExpression) body.cronExpression = card.schedule.cronExpression;

@@ -23,19 +23,20 @@
     // Matches: "Note a51136e1-...", "note: a51136e1-...", "Note：a51136e1-...", "筆記 a51136e1-..."
     const UUID_NOTE_RE = new RegExp(NOTE_KW + '\\s*[:：#＃]?\\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\\b', 'gi');
 
-    // Keyword + short 8-char hex ID
-    // Matches: "Note a51136e1", "note:a51136e1", "筆記 a51136e1"
-    const SHORT_NOTE_RE = new RegExp(NOTE_KW + '\\s*[:：#＃]?\\s*([0-9a-f]{8})\\b', 'gi');
+    // Keyword + short 8-char hex ID — trailing "...", "…", or bare word-boundary all accepted
+    // Matches: "Note a51136e1", "note:a51136e1", "筆記 a51136e1", "note a51136e1..."
+    const SHORT_NOTE_RE = new RegExp(NOTE_KW + '\\s*[:：#＃]?\\s*([0-9a-f]{8})(?:\\.{3}|…)?\\b', 'gi');
 
     // Markdown renders `backtick-wrapped` IDs as <code>ID</code>, and the code-segment
     // skip in renderNoteLinks() hides them from the patterns above. Match
     // "<keyword> <code>ID</code>" explicitly before the split.
-    const CODE_UUID_NOTE_RE = new RegExp(NOTE_KW + '\\s*[:：#＃]?\\s*<code[^>]*>\\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\\s*</code>', 'gi');
-    const CODE_SHORT_NOTE_RE = new RegExp(NOTE_KW + '\\s*[:：#＃]?\\s*<code[^>]*>\\s*([0-9a-f]{8})\\s*</code>', 'gi');
+    const CODE_UUID_NOTE_RE = new RegExp(NOTE_KW + '\\s*[:：#＃]?\\s*<code[^>]*>\\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\\.{3}|…)?\\s*</code>', 'gi');
+    const CODE_SHORT_NOTE_RE = new RegExp(NOTE_KW + '\\s*[:：#＃]?\\s*<code[^>]*>\\s*([0-9a-f]{8})(?:\\.{3}|…)?\\s*</code>', 'gi');
 
     // Prefixed note IDs like "note_b7dd9e3a4c2..." — self-identifying, no keyword needed.
-    const PREFIXED_NOTE_RE = /\bnote_([a-f0-9]{24})\b/gi;
-    const CODE_PREFIXED_NOTE_RE = /<code[^>]*>\s*note_([a-f0-9]{24})\s*<\/code>/gi;
+    // Trailing "..." or "…" after the 24-hex body is tolerated (user-written ellipsis).
+    const PREFIXED_NOTE_RE = /\bnote_([a-f0-9]{24})(?:\.{3}|…)?\b/gi;
+    const CODE_PREFIXED_NOTE_RE = /<code[^>]*>\s*note_([a-f0-9]{24})(?:\.{3}|…)?\s*<\/code>/gi;
 
     // Cache: short prefix → full noteId (populated on successful API fetches)
     const resolvedIds = {};
