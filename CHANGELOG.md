@@ -1,3 +1,10 @@
+## [1.1070.2](https://github.com/HankHuang0516/EClaw/compare/v1.1070.1...v1.1070.2) (2026-04-24)
+
+
+### Bug Fixes
+
+* **socket:** /api/notifications/count shouldn't bounce to index on 401 ([#2042](https://github.com/HankHuang0516/EClaw/issues/2042)) ([49c870a](https://github.com/HankHuang0516/EClaw/commit/49c870a63e34cb0ff2b25c2b311461a096560c7d)), closes [#2041](https://github.com/HankHuang0516/EClaw/issues/2041)
+
 ## [1.1070.1](https://github.com/HankHuang0516/EClaw/compare/v1.1070.0...v1.1070.1) (2026-04-24)
 
 
