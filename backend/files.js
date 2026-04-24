@@ -474,6 +474,85 @@ module.exports = function filesModule(devices) {
     return { router };
 };
 
+// Shared helper used by POST /api/transform multipart path so file delivery
+// can be done in a single request. Throws Error with .httpStatus and .code.
+module.exports.uploadBufferToR2 = async function uploadBufferToR2({
+    deviceId, entityId, buffer, originalname, mimetype, size, testQuotaBytes,
+}) {
+    if (!deviceId) {
+        const e = new Error('deviceId required'); e.httpStatus = 400; e.code = 'bad_request'; throw e;
+    }
+    if (!buffer || !size) {
+        const e = new Error('No file provided'); e.httpStatus = 400; e.code = 'no_file'; throw e;
+    }
+    if (size > MAX_FILE_SIZE) {
+        const e = new Error(`File exceeds ${MAX_FILE_SIZE / 1024 / 1024}MB limit`);
+        e.httpStatus = 413; e.code = 'too_large'; throw e;
+    }
+
+    const usageResult = await pool.query(
+        'SELECT COALESCE(SUM(size), 0) AS total FROM r2_files WHERE device_id = $1 AND expires_at > NOW()',
+        [deviceId]
+    );
+    const currentUsage = parseInt(usageResult.rows[0].total);
+    const effectiveQuota = testQuotaBytes != null ? testQuotaBytes : QUOTA_SOFT_BYTES;
+
+    if (currentUsage + size > effectiveQuota) {
+        const oldestFiles = await pool.query(
+            `SELECT file_id, filename, size, created_at
+             FROM r2_files WHERE device_id = $1 AND expires_at > NOW()
+             ORDER BY created_at ASC LIMIT 5`,
+            [deviceId]
+        );
+        const e = new Error(`Storage quota exceeded (${Math.round(currentUsage / 1024 / 1024)}MB / ${Math.round(effectiveQuota / 1024 / 1024)}MB). Please remove some old files first.`);
+        e.httpStatus = 507;
+        e.code = 'quota_exceeded';
+        e.details = {
+            currentUsageMB: Math.round(currentUsage / 1024 / 1024),
+            quotaMB: Math.round(effectiveQuota / 1024 / 1024),
+            oldestFiles: oldestFiles.rows.map(f => ({
+                fileId: f.file_id,
+                filename: f.filename,
+                sizeMB: Math.round(f.size / 1024 / 1024 * 10) / 10,
+                createdAt: f.created_at,
+            })),
+        };
+        throw e;
+    }
+
+    const fileId = crypto.randomUUID();
+    const safeName = originalname.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 200);
+    const r2Key = `files/${deviceId}/${fileId}/${safeName}`;
+    const expiresAt = new Date(Date.now() + FILE_TTL_DAYS * 24 * 60 * 60 * 1000);
+
+    await r2.send(new PutObjectCommand({
+        Bucket: BUCKET,
+        Key: r2Key,
+        Body: buffer,
+        ContentType: mimetype,
+        ContentLength: size,
+        Metadata: {
+            deviceId,
+            entityId: entityId != null ? String(entityId) : '',
+            originalName: encodeURIComponent(originalname),
+        },
+    }));
+
+    await pool.query(
+        `INSERT INTO r2_files (file_id, device_id, entity_id, filename, size, mime_type, r2_key, expires_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [fileId, deviceId, entityId, originalname, size, mimetype, r2Key, expiresAt]
+    );
+
+    return {
+        fileId,
+        filename: originalname,
+        size,
+        mimeType: mimetype,
+        expiresAt: expiresAt.toISOString(),
+    };
+};
+
 // Export cleanup function for daily cron
 module.exports.cleanupExpiredFiles = async function () {
     const expired = await pool.query(
