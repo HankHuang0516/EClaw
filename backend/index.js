@@ -5783,8 +5783,43 @@ async function deliverToEntity(opts) {
  * If both speakTo and broadcast are provided, broadcast takes priority + warning.
  *
  * REQUIRES botSecret for authentication!
+ *
+ * Supports both `application/json` and `multipart/form-data`. In the multipart
+ * form, a `file` field is uploaded to R2 inline and prepended to `attachments`
+ * so bots can deliver a file in one request instead of upload-then-attach.
+ * JSON fields (speakTo, attachments, card, parts, broadcast) are accepted as
+ * JSON-encoded strings when using multipart.
  */
-app.post('/api/transform', async (req, res) => {
+const transformUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 20 * 1024 * 1024 }, // 20MB — matches /api/files/upload
+});
+function transformMaybeMultipart(req, res, next) {
+    const ct = String(req.headers['content-type'] || '').toLowerCase();
+    if (ct.startsWith('multipart/form-data')) {
+        return transformUpload.single('file')(req, res, next);
+    }
+    return next();
+}
+app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
+    // Multipart sends text fields as strings; re-parse the JSON-shaped ones
+    // and coerce scalar types so downstream logic stays uniform with JSON mode.
+    if (req.file || String(req.headers['content-type'] || '').toLowerCase().startsWith('multipart/form-data')) {
+        for (const field of ['speakTo', 'parts', 'attachments', 'card']) {
+            const v = req.body[field];
+            if (typeof v === 'string' && v.length > 0) {
+                try { req.body[field] = JSON.parse(v); } catch (_) { /* leave as-is */ }
+            }
+        }
+        if (typeof req.body.entityId === 'string' && req.body.entityId !== '') {
+            const n = Number(req.body.entityId);
+            if (!Number.isNaN(n)) req.body.entityId = n;
+        }
+        if (typeof req.body.broadcast === 'string') {
+            req.body.broadcast = req.body.broadcast === 'true' || req.body.broadcast === '1';
+        }
+    }
+
     let { deviceId, entityId, botSecret, name, character, state, message, parts, targetDeviceId, speakTo, broadcast, card, attachments } = req.body;
 
     if (!deviceId) {
@@ -5882,6 +5917,50 @@ app.post('/api/transform', async (req, res) => {
     }
 
     const entity = device.entities[eId];
+
+    // Multipart: upload attached file to R2 and prepend to attachments so the
+    // bot can deliver a file in a single transform call. Uses shared helper
+    // from files.js; maps its structured errors back to HTTP status.
+    if (req.file) {
+        try {
+            // multer decodes filenames as latin-1; re-decode as UTF-8 to avoid
+            // mojibake for non-ASCII (CJK / accented) filenames.
+            const rawName = req.file.originalname || 'upload.bin';
+            const originalname = /[-ÿ]/.test(rawName)
+                ? Buffer.from(rawName, 'latin1').toString('utf8')
+                : rawName;
+
+            const uploaded = await require('./files').uploadBufferToR2({
+                deviceId,
+                entityId: eId,
+                buffer: req.file.buffer,
+                originalname,
+                mimetype: req.file.mimetype || 'application/octet-stream',
+                size: req.file.size,
+            });
+
+            const inline = {
+                fileId: uploaded.fileId,
+                filename: uploaded.filename,
+                size: uploaded.size,
+                mimeType: uploaded.mimeType,
+            };
+            validatedAttachments = validatedAttachments
+                ? [inline, ...validatedAttachments].slice(0, 10)
+                : [inline];
+        } catch (e) {
+            const status = e.httpStatus || 500;
+            const body = {
+                success: false,
+                error: e.code || 'upload_failed',
+                message: e.message || 'Upload failed',
+            };
+            if (e.code === 'quota_exceeded' && e.details) {
+                Object.assign(body, e.details);
+            }
+            return res.status(status).json(body);
+        }
+    }
 
     // Validate and update name if provided
     if (name !== undefined) {
