@@ -136,7 +136,7 @@ async function _loadNavEcoinBadge() {
         const badge = document.getElementById('ecoinBadge');
         const amountEl = document.getElementById('ecoinAmount');
         if (!badge || !amountEl) return;
-        const data = await apiCall('GET', '/api/wallet/balance');
+        const data = await apiCall('GET', '/api/wallet/balance', null, { skip401Redirect: true });
         if (!data || !data.success) return;
         amountEl.textContent = (data.wallet.balance_ecoin || 0).toLocaleString();
         badge.style.display = '';
