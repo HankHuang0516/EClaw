@@ -1,3 +1,10 @@
+# [1.1078.0](https://github.com/HankHuang0516/EClaw/compare/v1.1077.3...v1.1078.0) (2026-04-24)
+
+
+### Features
+
+* **files:** long-press multi-select + batch attach to chat ([#2078](https://github.com/HankHuang0516/EClaw/issues/2078)) ([a901fb4](https://github.com/HankHuang0516/EClaw/commit/a901fb40fb2da3143441ff1a11fe845f7784bc3c))
+
 ## [1.1077.3](https://github.com/HankHuang0516/EClaw/compare/v1.1077.2...v1.1077.3) (2026-04-24)
 
 
