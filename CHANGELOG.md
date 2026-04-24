@@ -1,3 +1,10 @@
+## [1.1077.2](https://github.com/HankHuang0516/EClaw/compare/v1.1077.1...v1.1077.2) (2026-04-24)
+
+
+### Bug Fixes
+
+* **security+i18n:** session audit — DOMPurify for share-chat, i18n orphan fix, sourceTag compliance ([#2073](https://github.com/HankHuang0516/EClaw/issues/2073)) ([c22cc2c](https://github.com/HankHuang0516/EClaw/commit/c22cc2c3349180eeeb475065a0739910f901daf1))
+
 ## [1.1077.1](https://github.com/HankHuang0516/EClaw/compare/v1.1077.0...v1.1077.1) (2026-04-24)
 
 
