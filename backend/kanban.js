@@ -37,6 +37,8 @@ const { Pool } = require('pg');
 const _crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const safeEqual = require('./safe-equal');
 const { newCardId } = require('./entity-id');
 const { tKanban, statusLabel } = require('./i18n/kanban-notifications');
@@ -72,6 +74,55 @@ try {
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
 });
+
+// R2 client (shared config with files.js) — used to regenerate fresh signed URLs
+// for card attachments on every read, so UI never shows an expired link.
+const r2 = new S3Client({
+    region: 'auto',
+    endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+        accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+    },
+});
+const R2_BUCKET = process.env.R2_BUCKET_NAME || 'eclaw-files';
+const R2_URL_TTL_SECONDS = 600; // 10 min — fresh on every GET, short blast radius.
+
+async function signCardFileUrl(fileId, deviceId, filename) {
+    const result = await pool.query(
+        'SELECT r2_key, filename, mime_type FROM r2_files WHERE file_id = $1 AND device_id = $2 AND expires_at > NOW()',
+        [fileId, deviceId]
+    );
+    if (!result.rows.length) return null;
+    const row = result.rows[0];
+    const cmdParams = { Bucket: R2_BUCKET, Key: row.r2_key };
+    if (filename) {
+        cmdParams.ResponseContentDisposition = `inline; filename="${encodeURIComponent(row.filename)}"`;
+    }
+    return await getSignedUrl(r2, new GetObjectCommand(cmdParams), { expiresIn: R2_URL_TTL_SECONDS });
+}
+
+async function mapCardFileRow(r) {
+    let url = r.url;
+    if (r.file_id) {
+        try {
+            const fresh = await signCardFileUrl(r.file_id, r.device_id, r.filename);
+            if (fresh) url = fresh;
+        } catch (err) {
+            console.warn('[Kanban] signCardFileUrl failed, falling back to stored url:', err.message);
+        }
+    }
+    return {
+        id: r.id,
+        fileId: r.file_id || null,
+        filename: r.filename,
+        url,
+        mimeType: r.mime_type,
+        fileSize: r.file_size ? parseInt(r.file_size) : null,
+        uploadedBy: r.uploaded_by,
+        createdAt: new Date(r.created_at).getTime(),
+    };
+}
 
 // Valid statuses in order
 const STATUSES = ['backlog', 'todo', 'in_progress', 'review', 'done', 'blocked'];
@@ -871,20 +922,13 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 updatedAt: new Date(r.updated_at).getTime()
             }));
 
-            // Fetch files
+            // Fetch files — regenerate fresh R2 signed URLs for rows that were
+            // stored as fileId refs (stored url in DB is just a legacy cache).
             const filesResult = await pool.query(
                 `SELECT * FROM kanban_files WHERE card_id = $1 ORDER BY created_at DESC`,
                 [cardId]
             );
-            card.files = filesResult.rows.map(r => ({
-                id: r.id,
-                filename: r.filename,
-                url: r.url,
-                mimeType: r.mime_type,
-                fileSize: r.file_size ? parseInt(r.file_size) : null,
-                uploadedBy: r.uploaded_by,
-                createdAt: new Date(r.created_at).getTime()
-            }));
+            card.files = await Promise.all(filesResult.rows.map(mapCardFileRow));
 
             res.json({ success: true, card });
         } catch (err) {
@@ -1369,15 +1413,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 [cardId]
             );
 
-            const files = result.rows.map(r => ({
-                id: r.id,
-                filename: r.filename,
-                url: r.url,
-                mimeType: r.mime_type,
-                fileSize: r.file_size ? parseInt(r.file_size) : null,
-                uploadedBy: r.uploaded_by,
-                createdAt: new Date(r.created_at).getTime()
-            }));
+            const files = await Promise.all(result.rows.map(mapCardFileRow));
 
             res.json({ success: true, files });
         } catch (err) {
@@ -1391,13 +1427,34 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     // ============================================
     router.post('/card/:id/file', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const _p = { ...req.query, ...req.body }; console.log('[Kanban] POST /card/:id/file called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
-        const { deviceId, filename, url, mimeType, fileSize, entityId } = req.body;
+        const _p = { ...req.query, ...req.body }; console.log('[Kanban] POST /card/:id/file called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id, fileId: _p.fileId });
+        const { deviceId, entityId } = req.body;
+        let { fileId, filename, url, mimeType, fileSize } = req.body;
         const cardId = req.params.id;
         const uploadedBy = parseInt(entityId || 0);
 
+        // Preferred path: caller passes fileId from /api/files/upload. Server
+        // hydrates filename/mime/size from r2_files so the attachment always
+        // resolves via a freshly-signed URL on every read, never an expired one.
+        if (fileId) {
+            const r2row = await pool.query(
+                'SELECT filename, mime_type, size FROM r2_files WHERE file_id = $1 AND device_id = $2 AND expires_at > NOW()',
+                [fileId, deviceId]
+            );
+            if (!r2row.rows.length) {
+                return res.status(404).json({ success: false, error: 'fileId not found in r2_files or expired' });
+            }
+            filename = filename || r2row.rows[0].filename;
+            mimeType = mimeType || r2row.rows[0].mime_type;
+            fileSize = fileSize || parseInt(r2row.rows[0].size);
+            // Stored url is always the opaque cache when file_id is set — any
+            // `url` the caller passed (possibly a raw R2 signed URL that would
+            // leak) is discarded. GET regenerates from fileId on every read.
+            url = `r2:${fileId}`;
+        }
+
         if (!filename || !url) {
-            return res.status(400).json({ success: false, error: 'Missing filename or url' });
+            return res.status(400).json({ success: false, error: 'Missing filename or url (or fileId)' });
         }
 
         try {
@@ -1410,10 +1467,10 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             }
 
             const result = await pool.query(
-                `INSERT INTO kanban_files (card_id, device_id, filename, url, mime_type, file_size, uploaded_by)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7)
+                `INSERT INTO kanban_files (card_id, device_id, filename, url, mime_type, file_size, uploaded_by, file_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                  RETURNING *`,
-                [cardId, deviceId, filename, url, mimeType || null, fileSize || null, uploadedBy]
+                [cardId, deviceId, filename, url, mimeType || null, fileSize || null, uploadedBy, fileId || null]
             );
 
             // Bump card updated_at so "Recently Updated" sort surfaces the card.
@@ -1422,15 +1479,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 [cardId, deviceId]
             );
 
-            const file = {
-                id: result.rows[0].id,
-                filename: result.rows[0].filename,
-                url: result.rows[0].url,
-                mimeType: result.rows[0].mime_type,
-                fileSize: result.rows[0].file_size ? parseInt(result.rows[0].file_size) : null,
-                uploadedBy: result.rows[0].uploaded_by,
-                createdAt: new Date(result.rows[0].created_at).getTime()
-            };
+            const file = await mapCardFileRow(result.rows[0]);
 
             await bumpVersion(deviceId);
             res.json({ success: true, file });

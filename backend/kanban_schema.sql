@@ -122,6 +122,11 @@ CREATE TABLE IF NOT EXISTS kanban_files (
 
 CREATE INDEX IF NOT EXISTS idx_kanban_files_card ON kanban_files(card_id);
 
+-- Link to r2_files.file_id so GET can regenerate a fresh signed URL on demand.
+-- Nullable for backward-compat with rows that only stored a raw URL.
+ALTER TABLE kanban_files ADD COLUMN IF NOT EXISTS file_id TEXT;
+CREATE INDEX IF NOT EXISTS idx_kanban_files_file_id ON kanban_files(file_id);
+
 -- ============================================
 -- ID prefix migration (idempotent; no-ops after first run)
 -- Widen kanban_cards.id UUID → VARCHAR(48) so Stripe-style prefixed IDs
