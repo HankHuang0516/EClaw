@@ -28,6 +28,7 @@ const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
 const { runInterview, getProbeList } = require('./bot-interview');
+const { safeEqual } = require('./safe-equal');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
@@ -1482,7 +1483,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         const devRes = await pool.query(
             'SELECT device_id, device_secret FROM devices WHERE device_id = $1', [deviceId]
         );
-        if (!devRes.rows.length || devRes.rows[0].device_secret !== deviceSecret) {
+        if (!devRes.rows.length || !safeEqual(devRes.rows[0].device_secret, deviceSecret)) {
             return res.json({ success: false, error: 'auth_failed' });
         }
         // In-memory device state
@@ -1583,7 +1584,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         const devRes = await pool.query(
             'SELECT device_id, device_secret FROM devices WHERE device_id = $1', [deviceId]
         );
-        if (!devRes.rows.length || devRes.rows[0].device_secret !== deviceSecret) {
+        if (!devRes.rows.length || !safeEqual(devRes.rows[0].device_secret, deviceSecret)) {
             return res.json({ success: false, error: 'auth_failed' });
         }
         const userRes = await pool.query(

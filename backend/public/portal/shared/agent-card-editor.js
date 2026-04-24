@@ -292,12 +292,12 @@ window.AgentCardEditor = (function() {
                     ' <a href="' + examUrl + '?returnUrl=' + returnUrl + '" target="_blank" style="color:var(--primary);">' +
                     t('dash_interview_view_results', 'View Results →') + '</a></span>';
             } else {
-                if (statusEl) statusEl.innerHTML = '<span style="color:#ef4444;">❌ ' + (examRes.error || 'Failed to create exam') + '</span>';
+                if (statusEl) { statusEl.textContent = ''; var _sp2 = document.createElement('span'); _sp2.style.color = '#ef4444'; _sp2.textContent = '\u274c ' + (examRes.error || 'Failed to create exam'); statusEl.appendChild(_sp2); }
             }
         } catch (err) {
             btn.disabled = false;
             btn.textContent = '🧪 ' + t('dash_run_interview', 'Run Interview');
-            if (statusEl) statusEl.innerHTML = '<span style="color:#ef4444;">❌ ' + (err.message || 'Error') + '</span>';
+            if (statusEl) { statusEl.textContent = ''; var _sp = document.createElement('span'); _sp.style.color = '#ef4444'; _sp.textContent = '\u274c ' + (err.message || 'Error'); statusEl.appendChild(_sp); }
         }
     };
 
