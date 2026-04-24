@@ -5,7 +5,7 @@
  *
  * Endpoints:
  * POST /upload              - Upload a file (multipart/form-data)
- * GET  /:fileId             - Get signed download URL (15-day TTL, 1h signed URL)
+ * GET  /:fileId             - Get signed download URL (15-day TTL, 10-min signed URL)
  * DELETE /:fileId           - Delete a file
  * GET  /list                - List files for a device (with usage stats)
  *
@@ -42,7 +42,7 @@ const BUCKET = process.env.R2_BUCKET_NAME || 'eclaw-files';
 const FILE_TTL_DAYS = 15;
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB per file
 const QUOTA_SOFT_BYTES = 500 * 1024 * 1024; // 500MB per device (soft cap)
-const SIGNED_URL_EXPIRES = 3600; // 1 hour
+const SIGNED_URL_EXPIRES = 600; // 10 minutes — shorter window reduces leak blast radius if URL ends up in a log or screenshot before chat.html's R2LinkRender strips it.
 const MAX_EDIT_SIZE = 512 * 1024; // 512KB cap for online text editing
 
 // File extensions allowed for online text editing (Monaco). Server is the
