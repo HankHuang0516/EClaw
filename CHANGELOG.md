@@ -1,3 +1,10 @@
+## [1.1070.3](https://github.com/HankHuang0516/EClaw/compare/v1.1070.2...v1.1070.3) (2026-04-24)
+
+
+### Bug Fixes
+
+* **telemetry:** forward opts to wrapped apiCall (was silently dropping skip401Redirect) ([#2043](https://github.com/HankHuang0516/EClaw/issues/2043)) ([4c7e7ca](https://github.com/HankHuang0516/EClaw/commit/4c7e7ca2c4b88f23e5fef41f092fbc283c49b355)), closes [#2041](https://github.com/HankHuang0516/EClaw/issues/2041) [#2042](https://github.com/HankHuang0516/EClaw/issues/2042)
+
 ## [1.1070.2](https://github.com/HankHuang0516/EClaw/compare/v1.1070.1...v1.1070.2) (2026-04-24)
 
 
