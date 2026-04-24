@@ -1,3 +1,11 @@
+## [1.1063.8](https://github.com/HankHuang0516/EClaw/compare/v1.1063.7...v1.1063.8) (2026-04-24)
+
+
+### Bug Fixes
+
+* **i18n:** add kanban_nudge_settings_title to EN/zh-TW + remove ar duplicate ([#2028](https://github.com/HankHuang0516/EClaw/issues/2028)) ([160a0d3](https://github.com/HankHuang0516/EClaw/commit/160a0d3049fd11e3458a531e63d595f4f6697c03))
+* **security:** XSS escape error messages + fix org-chart forward grouping exclusion ([#2027](https://github.com/HankHuang0516/EClaw/issues/2027)) ([dffd21e](https://github.com/HankHuang0516/EClaw/commit/dffd21eef051917ff6d1cbdce179506f35d8c227))
+
 ## [1.1063.7](https://github.com/HankHuang0516/EClaw/compare/v1.1063.6...v1.1063.7) (2026-04-24)
 
 
