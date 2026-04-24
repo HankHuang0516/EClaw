@@ -10,6 +10,7 @@
     <link rel="icon" type="image/png" href="assets/favicon-32.png">
     <link rel="stylesheet" href="/portal/shared/style.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
     <link rel="canonical" href="https://eclawbot.com/portal/share-chat.html">
     <meta property="og:title" content="EClawbot - Chat" id="og-title">
     <meta property="og:type" content="website">
@@ -486,7 +487,11 @@
     function renderEntityHeader(e) {
         const avatarEl = document.getElementById('entityAvatar');
         if (e.avatar && e.avatar.startsWith('http')) {
-            avatarEl.innerHTML = `<img src="${e.avatar}" alt="avatar">`;
+            const img = document.createElement('img');
+            img.src = e.avatar;
+            img.alt = 'avatar';
+            avatarEl.textContent = '';
+            avatarEl.appendChild(img);
         } else {
             avatarEl.textContent = e.avatar || (e.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
         }
@@ -1345,12 +1350,19 @@
         return escapedHtml.replace(/(https?:\/\/[^\s<&]+)/g, '<a href="$1" target="_blank" style="color:var(--primary)">$1</a>');
     }
 
-    // Sanitize HTML from Markdown output (strip dangerous tags/attributes)
+    // Sanitize HTML from Markdown output using DOMPurify
     function sanitizeHtml(html) {
-        return html
-            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-            .replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-            .replace(/href\s*=\s*["']?\s*javascript\s*:/gi, 'href="');
+        if (typeof DOMPurify !== 'undefined') {
+            return DOMPurify.sanitize(html, {
+                ALLOWED_TAGS: ['p','br','strong','em','a','ul','ol','li','code','pre','blockquote','h1','h2','h3','h4','h5','h6','hr','table','thead','tbody','tr','th','td','img','span','div','del','sup','sub'],
+                ALLOWED_ATTR: ['href','target','src','alt','class','style','rel'],
+                ALLOW_DATA_ATTR: false
+            });
+        }
+        // Fallback: strip all HTML if DOMPurify failed to load
+        const tmp = document.createElement('div');
+        tmp.textContent = html;
+        return tmp.innerHTML;
     }
     </script>
     </main>

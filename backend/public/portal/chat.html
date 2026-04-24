@@ -4175,6 +4175,8 @@
                 else if (src === 'widget' || src === 'android_widget') sourceTag = 'Widget';
                 else if (src === 'kanban_notify') sourceTag = i18n.t('chat_kanban_notify') || 'Kanban';
                 else if (src === 'form_submission') sourceTag = i18n.t('chat_form_submission') || 'Form';
+                else if (src === 'scheduled') sourceTag = '📅 ' + (i18n.t('chat_scheduled') || 'Scheduled');
+                else if (src === 'mission_notify') sourceTag = '🎯 ' + (i18n.t('chat_mission_notify') || 'Mission');
 
                 // Grouped broadcast: show all target entities in one label
                 if (msg._groupedEntityIds && msg._groupedEntityIds.length > 1) {

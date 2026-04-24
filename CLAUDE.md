@@ -67,6 +67,9 @@ EClaw/
 │   ├── site-pageviews.js     # Anonymous pageview tracking for marketing/public pages
 │   ├── arena-pool-updater.js # Daily auto-refresh of interview arena questions via Claude
 │   ├── arena-pool-validator.js # Validates arena question pool (static + live modes)
+│   ├── scheduled-messages.js  # Scheduled message system (Phase 1 — CRUD + poller)
+│   ├── reference-parser.js    # Smart chip reference scanner (card_/review_/src://)
+│   ├── reference-resolver.js  # Smart chip async DB resolver
 │   ├── rental-proxy.js       # Token metering proxy for rented bots (balance check + charge)
 │   ├── openapi.yaml          # OpenAPI 3.0 specification
 │   ├── auth_schema.sql       # User accounts + auth SQL schema
@@ -75,6 +78,7 @@ EClaw/
 │   ├── oauth_schema.sql      # OAuth server SQL schema
 │   ├── interview_arena_schema.sql # Interview Arena table definitions
 │   ├── invite_schema.sql     # Referral/invite code system tables
+│   ├── scheduled_messages_schema.sql # Scheduled messages table definitions
 │   ├── rental_schema.sql     # Bot rental marketplace tables
 │   ├── trust_schema.sql      # Reviews, disputes, credit scoring tables
 │   ├── wallet_schema.sql     # E-coin wallet and transaction ledger tables
@@ -130,6 +134,7 @@ EClaw/
 │   │   │   │   ├── entity-link-render.js # Parse entity links into clickable chips
 │   │   │   │   ├── mention-autocomplete.js # @mention autocomplete for chat input
 │   │   │   │   ├── mention-render.js # @mention rendering in chat messages
+│   │   │   │   ├── autolink-chip.js # Smart chip rendering (review_ + src:// references)
 │   │   │   │   ├── agent-card-editor.js # Agent card editor component
 │   │   │   │   ├── info.js         # Info page shared logic
 │   │   │   │   ├── info.css        # Info page shared styles
@@ -915,11 +920,28 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Code Review Checklist (v1.1060)**: Mandatory 10-item self-review checklist (`docs/code-review-checklist.md`) for all PRs — Part A (core) + Part B (extended)
 - **i18n Expansion**: `dialog_add_friend_message` translated across all 12 Android locales; `kanban_nudge_settings_title` synced to Android + iOS
 
+### Recent Features (v1.1064.x – v1.1077.x)
+
+- **Scheduled Messages Phase 1 (v1.1074)**: New `scheduled-messages.js` module + `scheduled_messages_schema.sql`; 4 CRUD endpoints (`POST/GET/PUT/DELETE /api/schedule`); background poller with `SELECT...FOR UPDATE SKIP LOCKED`; 7-day ahead cap; deviceSecret-only auth; 22 Jest test cases
+- **Smart Chip Reference System (v1.1075–v1.1076)**: `reference-parser.js` + `reference-resolver.js` — scan `card_<hex>`, `review_<slug>`, `src://<kind>/<type>/<id>` references in messages; async DB resolution for title/status/priority; hooked into `channel-api.js` via `pushToChannelCallback()`; UI `autolink-chip.js` renders clickable chips in chat + kanban; 33 Jest test cases
+- **Global Rate Limiting (v1.1075)**: Three tiers via `express-rate-limit` — global (100/min/IP on `/api/*`), auth (10/min/IP on login/register), messages (30/min/deviceId on transform/speak); health/version exempt; skipped in test mode
+- **Device Secret Rotation (v1.1074)**: `POST /api/device/rotate-secret` — validates old secret, mints fresh UUID, atomically updates DB + in-memory; rate-limited; Settings page UI with confirm + reveal dialog; 8 i18n keys
+- **Switch Device UI (v1.1074)**: Settings page "Switch Device" button for multi-account users; calls `POST /api/auth/device-login`; updates localStorage credentials; 8 i18n keys
+- **Transform multipart/form-data (v1.1072)**: `POST /api/transform` accepts `multipart/form-data` for single-request file delivery; auto-uploads to R2; JSON fields auto-parsed; 160 Jest test cases
+- **Invite Per-Code Refactor (v1.1074)**: Removed per-device lifetime lock at `/api/invite/redeem`; per-code-once enforcement retained; enables multi-code viral loop
+- **Community Stats API (v1.1064)**: `GET /api/community/stats` + `/api/community/list` for community template hub
+- **Invite Click Funnel (v1.1064–v1.1068)**: `POST /api/invite/:code/click` telemetry + `GET /api/admin/invite/clicks` admin dashboard; per-code click funnel dashboard on kanban card
+- **WebView Device-Mismatch Guard (v1.1073)**: Auth fix for stale session cookies in Android WebView
+- **Kanban Card Description Cap (v1.1075)**: Cap long card description height in detail modal
+- **Quote Icon Unification (v1.1074)**: Unified 📌 quote icon across chat bubbles + kanban card comments
+- **Kanban .btn-ghost Fix (v1.1077)**: Defined `.btn-ghost` CSS so kanban header icons render correctly (not white-on-white)
+- **i18n Backfill**: `invite_per_code_*` keys backfilled to 9 locales; Kanban nudge settings synced
+
 ---
 
 ## Test Coverage Summary
 
-**~440 total API routes** across all modules (390 excluding Article Publisher), **~75% covered** by Jest + integration tests (~2093 test cases across 116 Jest files + 59 integration tests).
+**~450 total API routes** across all modules (400 excluding Article Publisher), **~78% covered** by Jest + integration tests (~2264 test cases across 133 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
