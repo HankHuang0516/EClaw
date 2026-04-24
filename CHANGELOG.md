@@ -1,3 +1,10 @@
+# [1.1069.0](https://github.com/HankHuang0516/EClaw/compare/v1.1068.1...v1.1069.0) (2026-04-24)
+
+
+### Features
+
+* **invite:** Option B — per-code-once, many codes per device ([#2039](https://github.com/HankHuang0516/EClaw/issues/2039)) ([d1ce8fc](https://github.com/HankHuang0516/EClaw/commit/d1ce8fc6c4ad513914f137b9169d600ec81de448))
+
 ## [1.1068.1](https://github.com/HankHuang0516/EClaw/compare/v1.1068.0...v1.1068.1) (2026-04-24)
 
 
