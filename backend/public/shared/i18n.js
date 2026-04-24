@@ -3035,6 +3035,13 @@ const TRANSLATIONS = {
         "files_multi_select_attach": "Attach to chat",
         "files_multi_select_cancel": "Cancel",
 
+        // 智慧引用 Chip B — preview popover
+        "chip_popover_loading": "Loading…",
+        "chip_popover_load_error": "Load failed",
+        "chip_popover_not_supported": "Preview not yet supported for this reference type",
+        "chip_popover_requote": "Quote to chat again",
+        "chip_popover_open_full": "Open full page →",
+
         // Compare Channels (compare-channels.html)
         "cmp_title": "EClawbot vs Telegram - Channel Comparison",
         "cmp_eclaw_name": "EClawbot",
@@ -7649,6 +7656,11 @@ const TRANSLATIONS = {
         "files_multi_select_count": "已選",
         "files_multi_select_attach": "夾帶到聊天",
         "files_multi_select_cancel": "取消",
+        "chip_popover_loading": "載入中…",
+        "chip_popover_load_error": "載入失敗",
+        "chip_popover_not_supported": "此引用類型尚未支援預覽",
+        "chip_popover_requote": "再引用到聊天",
+        "chip_popover_open_full": "打開完整頁面 →",
         "cmp_title": "EClawbot vs Telegram — 頻道比較",
         "cmp_eclaw_name": "EClawbot",
         "cmp_telegram_name": "Telegram",
