@@ -5,18 +5,28 @@
  */
 
 const WebSocket = require('ws');
+try { require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') }); } catch { /* optional */ }
 
-// Bot 1 credentials (provided by user)
-const WSS_URL = 'wss://clawdbot-railway-template-production-e663.up.railway.app';
-const HTTPS_URL = 'https://clawdbot-railway-template-production-e663.up.railway.app/tools/invoke';
-const GATEWAY_TOKEN = '1a712b828ffc1b3d3a94978b7e9805be1591b175f3ee11637840e4437e49d232';
-const SETUP_USERNAME = 'admin';
-const SETUP_PASSWORD = 'asasas123';
+function requireEnv(name) {
+  const v = process.env[name];
+  if (!v) {
+    console.error(`[FATAL] Missing env var ${name}. Set it in backend/.env or export it before running this script.`);
+    process.exit(2);
+  }
+  return v;
+}
+
+// Credentials must come from env — never commit secrets to the repo (issue #2022).
+const WSS_URL = process.env.GATEWAY_WSS_URL || 'wss://clawdbot-railway-template-production-e663.up.railway.app';
+const HTTPS_URL = process.env.GATEWAY_HTTP_URL || 'https://clawdbot-railway-template-production-e663.up.railway.app/tools/invoke';
+const GATEWAY_TOKEN = requireEnv('GATEWAY_TOKEN');
+const SETUP_USERNAME = process.env.SETUP_USERNAME || 'admin';
+const SETUP_PASSWORD = requireEnv('SETUP_PASSWORD');
 
 // New test device
 const NEW_DEVICE_ID = 'test-bot-' + Date.now();
 const NEW_DEVICE_SECRET = 'secret-' + Date.now();
-const ECLAW_API = 'https://eclawbot.com';
+const ECLAW_API = process.env.ECLAW_API_URL || 'https://eclawbot.com';
 
 async function wsConnect(url, username, password, gatewayToken, setupPassword) {
   return new Promise((resolve, reject) => {

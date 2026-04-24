@@ -9,11 +9,23 @@ global.WebSocket = WebSocket;
 // Since index.js doesn't export them, we test the WebSocket protocol directly
 
 const crypto = require('crypto');
-const GATEWAY_URL = 'wss://clawdbot-railway-template-production-e663.up.railway.app';
-const HTTP_URL = 'https://clawdbot-railway-template-production-e663.up.railway.app/tools/invoke';
-const GATEWAY_TOKEN = '1a712b828ffc1b3d3a94978b7e9805be1591b175f3ee11637840e4437e49d232';
-const SETUP_PASSWORD = 'asasas123';
-const SETUP_USERNAME = 'admin';
+try { require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') }); } catch { /* optional */ }
+
+function requireEnv(name) {
+  const v = process.env[name];
+  if (!v) {
+    console.error(`[FATAL] Missing env var ${name}. Set it in backend/.env or export it before running this test.`);
+    process.exit(2);
+  }
+  return v;
+}
+
+// Credentials must come from env — never commit secrets to the repo (issue #2022).
+const GATEWAY_URL = process.env.GATEWAY_WSS_URL || 'wss://clawdbot-railway-template-production-e663.up.railway.app';
+const HTTP_URL = process.env.GATEWAY_HTTP_URL || 'https://clawdbot-railway-template-production-e663.up.railway.app/tools/invoke';
+const GATEWAY_TOKEN = requireEnv('GATEWAY_TOKEN');
+const SETUP_PASSWORD = requireEnv('SETUP_PASSWORD');
+const SETUP_USERNAME = process.env.SETUP_USERNAME || 'admin';
 
 async function testWsFlow() {
   console.log('=== Testing WebSocket Gateway Transport ===\n');
