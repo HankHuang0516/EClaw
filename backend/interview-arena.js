@@ -181,6 +181,12 @@ let VISION_IMAGES = [
     { file: null, description: 'A weather dashboard panel showing temperature 28°C, humidity 65%, wind speed 12 km/h, and UV index 7 in four separate tiles', keywords: ['temperature', '28', 'humidity', '65', 'UV', '7'] },
     { file: null, description: 'A printed circuit board with fourteen resistors, eight capacitors, and one microcontroller chip labeled ATmega328P', keywords: ['circuit', 'fourteen', 'resistors', 'eight', 'capacitors', 'ATmega'] },
     { file: null, description: 'A hotel room floor plan: bedroom 18m² on the left, bathroom 6m² top right, living area 22m² bottom right, with a corridor connecting all rooms', keywords: ['floor', 'plan', 'bedroom', '18', 'bathroom', '6', 'living', '22'] },
+    // ── Additional hard tier ──
+    { file: null, description: 'A network topology diagram showing 6 nodes in a star pattern with one central hub labeled Router-01 and five peripheral nodes labeled Node-A through Node-E', keywords: ['network', 'topology', 'six', 'star', 'hub', 'Router'] },
+    { file: null, description: 'A spreadsheet screenshot with three columns: Name, Sales, Region — row 3 shows Alice $12,400 West and is highlighted in yellow', keywords: ['spreadsheet', 'three', 'columns', 'Alice', 'West', 'highlighted'] },
+    { file: null, description: 'A dark terminal window showing a git log with five recent commits; the topmost entry reads "fix: resolve null pointer exception in session handler"', keywords: ['terminal', 'git', 'log', 'five', 'null', 'pointer'] },
+    { file: null, description: 'A pie chart labeled Market Share 2024 with four slices: Company A 45%, Company B 30%, Company C 15%, Others 10%', keywords: ['pie', 'chart', 'market', 'share', '45', 'Company A'] },
+    { file: null, description: 'A Kanban board with three columns: To-Do (4 cards), In Progress (2 cards), Done (7 cards); the In Progress column has a red badge reading "overdue"', keywords: ['kanban', 'three', 'columns', 'To-Do', 'four', 'In Progress', 'Done', 'seven', 'overdue'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -350,6 +356,23 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '"babad"', expected: '"bab"' },{ input: '"cbbd"', expected: '"bb"' },{ input: '"a"', expected: '"a"' },{ input: '"racecar"', expected: '"racecar"' }] },
     { title: '0-1 Knapsack', description: 'Write `solve(weights, values, capacity)` — given items with weights and values arrays and a knapsack of given capacity, return the maximum total value (each item used at most once).',
       testCases: [{ input: '[1,3,4,5], [1,4,5,7], 7', expected: '9' },{ input: '[2,3,4,5], [3,4,5,6], 5', expected: '7' },{ input: '[1], [10], 0', expected: '0' }] },
+    // ── Additional medium-hard problems ──
+    { title: 'Word Break', description: 'Write `solve(s, wordDict)` — return true if string s can be segmented into one or more words from wordDict (words may be reused).',
+      testCases: [{ input: '"leetcode", ["leet","code"]', expected: 'true' },{ input: '"applepenapple", ["apple","pen"]', expected: 'true' },{ input: '"catsandog", ["cats","dog","sand","and","cat"]', expected: 'false' },{ input: '"ab", ["a","b"]', expected: 'true' }] },
+    { title: 'Course Schedule', description: 'Write `solve(numCourses, prerequisites)` — prerequisites is a list of [a,b] pairs meaning you must take course b before a. Return true if it is possible to finish all numCourses courses (i.e. no cycle).',
+      testCases: [{ input: '2, [[1,0]]', expected: 'true' },{ input: '2, [[1,0],[0,1]]', expected: 'false' },{ input: '4, [[1,0],[2,0],[3,1],[3,2]]', expected: 'true' },{ input: '1, []', expected: 'true' }] },
+    { title: 'Minimum Window Substring', description: 'Write `solve(s, t)` — return the shortest substring of s that contains every character in t (including duplicates). Return "" if no such window exists.',
+      testCases: [{ input: '"ADOBECODEBANC", "ABC"', expected: '"BANC"' },{ input: '"a", "a"', expected: '"a"' },{ input: '"a", "aa"', expected: '""' },{ input: '"abc", "b"', expected: '"b"' }] },
+    { title: 'Jump Game II', description: 'Write `solve(nums)` — each element is the max jump length at that position. Return the minimum number of jumps to reach the last index (it is guaranteed you can always reach it).',
+      testCases: [{ input: '[2,3,1,1,4]', expected: '2' },{ input: '[2,3,0,1,4]', expected: '2' },{ input: '[1,1,1,1]', expected: '3' },{ input: '[0]', expected: '0' }] },
+    { title: 'Longest Common Subsequence', description: 'Write `solve(text1, text2)` — return the length of the longest common subsequence of the two strings (subsequence: delete some characters without reordering).',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"bl", "yby"', expected: '1' }] },
+    { title: 'Letter Combinations of a Phone Number', description: 'Write `solve(digits)` — given a string of digits 2-9, return all possible letter combinations (phone keypad mapping: 2→abc, 3→def, 4→ghi, 5→jkl, 6→mno, 7→pqrs, 8→tuv, 9→wxyz). Return sorted array.',
+      testCases: [{ input: '"23"', expected: '["ad","ae","af","bd","be","bf","cd","ce","cf"]' },{ input: '""', expected: '[]' },{ input: '"2"', expected: '["a","b","c"]' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array representing an elevation map, return how much water it can trap after raining.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[1,0,1]', expected: '1' },{ input: '[3,0,2,0,4]', expected: '7' }] },
+    { title: 'Find All Anagrams in a String', description: 'Write `solve(s, p)` — return all start indices (sorted) where an anagram of p begins in s.',
+      testCases: [{ input: '"cbaebabacd", "abc"', expected: '[0,6]' },{ input: '"abab", "ab"', expected: '[0,1,2]' },{ input: '"baa", "aa"', expected: '[1]' },{ input: '"abc", "def"', expected: '[]' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -392,6 +415,14 @@ let RESPONSE_QUESTIONS = [
     { question: 'What is 2 to the power of 10?', expectedKeywords: ['1024'] },
     { question: 'A store sells apples for $0.75 each and oranges for $1.20 each. If someone buys 4 apples and 3 oranges, what is the total cost?', expectedKeywords: ['6.6', '6.60'] },
     { question: 'The sides of a right triangle are in the ratio 3:4:5. If the hypotenuse is 20 cm, what is the perimeter?', expectedKeywords: ['48'] },
+    // ── Additional medium/hard reasoning questions ──
+    { question: 'A father is currently 3 times his son\'s age. In 12 years, the father will be twice the son\'s age. How old is the son now?', expectedKeywords: ['12'] },
+    { question: 'If you flip a fair coin three times, what is the probability of getting at least one head? Express as a fraction.', expectedKeywords: ['7/8'] },
+    { question: 'How many diagonals does a regular decagon (10-sided polygon) have?', expectedKeywords: ['35'] },
+    { question: 'A car travels from city A to city B at 60 km/h and returns via the same route at 40 km/h. What is the average speed for the entire trip in km/h?', expectedKeywords: ['48'] },
+    { question: 'If today is Tuesday, what day of the week will it be 100 days from now?', expectedKeywords: ['thursday'] },
+    { question: 'A bucket is 2/5 full. After adding 12 litres it becomes 4/5 full. What is the total capacity of the bucket in litres?', expectedKeywords: ['30'] },
+    { question: 'In a class of 30 students, 18 play football and 15 play basketball. If 8 play both sports, how many students play neither?', expectedKeywords: ['5'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -462,6 +493,12 @@ let TTS_PHRASES = [
     { text: 'Your one-time verification code is 8 4 3 7 2 and expires in five minutes', keywords: ['verification', 'code', '84372', 'five', 'minutes'] },
     { text: 'The SQL query selects all records from the users table where the account status equals active and the score is greater than 100', keywords: ['SQL', 'query', 'users', 'active', 'score', '100'] },
     { text: 'Bernoulli and Euler each contributed foundational theorems to both fluid dynamics and graph theory', keywords: ['bernoulli', 'euler', 'fluid', 'dynamics', 'graph', 'theory'] },
+    // ── Additional hard phrases ──
+    { text: 'The international standard ISO 8601 defines date and time formats as YYYY hyphen MM hyphen DD followed by T and the time', keywords: ['ISO', '8601', 'YYYY', 'date', 'time'] },
+    { text: 'Please authenticate using your six digit TOTP code before the thirty second window expires', keywords: ['authenticate', 'TOTP', 'thirty', 'window', 'expires'] },
+    { text: 'The API endpoint expects an OAuth 2 point 0 bearer token in the Authorization header with a 3600 second expiry', keywords: ['API', 'OAuth', 'bearer', 'Authorization', '3600'] },
+    { text: 'Administer 500 milligrams of amoxicillin every 8 hours for 10 days and take with meals', keywords: ['500', 'milligrams', 'amoxicillin', '8', 'hours', '10', 'meals'] },
+    { text: 'Professor Kim teaches distributed systems every Monday and Wednesday from 2 30 to 4 00 PM in Engineering Hall room 207', keywords: ['Professor', 'distributed', 'systems', 'Monday', 'Wednesday', '2', '30', '207'] },
 ];
 
 // ============================================
