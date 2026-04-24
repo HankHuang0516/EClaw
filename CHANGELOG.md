@@ -1,3 +1,10 @@
+## [1.1063.4](https://github.com/HankHuang0516/EClaw/compare/v1.1063.3...v1.1063.4) (2026-04-24)
+
+
+### Bug Fixes
+
+* **portal:** schedule-enable silent-fail + note-chip ellipsis miss + 📌 undefined ([#2019](https://github.com/HankHuang0516/EClaw/issues/2019)) ([0e95a36](https://github.com/HankHuang0516/EClaw/commit/0e95a36c9b1c799624eb10a0520350249874a834))
+
 ## [1.1063.3](https://github.com/HankHuang0516/EClaw/compare/v1.1063.2...v1.1063.3) (2026-04-24)
 
 
