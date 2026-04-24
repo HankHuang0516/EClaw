@@ -2093,6 +2093,60 @@
             border-color: rgba(168, 85, 247, 0.35);
         }
 
+        /* ── 引用預覽卡 popover (Chip B) ── */
+        .autolink-chip-popover {
+            background: #1e1e28;
+            border: 1px solid rgba(168, 85, 247, 0.45);
+            border-radius: 10px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+            color: #eee;
+            font-size: 13px;
+            overflow: hidden;
+        }
+        .autolink-chip-popover .chip-popover-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 10px;
+            background: rgba(168, 85, 247, 0.10);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .autolink-chip-popover .chip-popover-title {
+            flex: 1;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .autolink-chip-popover .chip-popover-status {
+            font-size: 11px;
+            padding: 1px 6px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.08);
+            text-transform: uppercase;
+        }
+        .autolink-chip-popover .chip-status--done { background: rgba(34,197,94,0.2); color: #4ade80; }
+        .autolink-chip-popover .chip-status--in_progress { background: rgba(59,130,246,0.2); color: #60a5fa; }
+        .autolink-chip-popover .chip-status--todo { background: rgba(250,204,21,0.2); color: #facc15; }
+        .autolink-chip-popover .chip-status--blocked { background: rgba(239,68,68,0.2); color: #f87171; }
+        .autolink-chip-popover .chip-popover-btn {
+            background: transparent;
+            border: none;
+            color: #aaa;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+        .autolink-chip-popover .chip-popover-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .autolink-chip-popover .chip-popover-body { padding: 8px 10px; max-height: 180px; overflow-y: auto; }
+        .autolink-chip-popover .chip-popover-desc { color: #ccc; line-height: 1.45; margin-bottom: 6px; white-space: pre-wrap; }
+        .autolink-chip-popover .chip-popover-comment { font-size: 12px; color: #aaa; margin-top: 4px; padding-left: 4px; border-left: 2px solid rgba(168,85,247,0.3); }
+        .autolink-chip-popover .chip-popover-footer { padding: 6px 10px; border-top: 1px solid rgba(255,255,255,0.06); text-align: right; }
+        .autolink-chip-popover .chip-popover-open { color: #c084fc; font-size: 12px; text-decoration: none; }
+        .autolink-chip-popover .chip-popover-open:hover { text-decoration: underline; }
+        .autolink-chip-popover .chip-popover-loading, .autolink-chip-popover .chip-popover-error { padding: 16px; text-align: center; color: #888; font-size: 12px; }
+
         /* ── Entity Preview Modal ── */
         #entityPreviewModal .modal-box {
             max-width: 600px;
@@ -2528,6 +2582,7 @@
     <script src="shared/entity-link-render.js"></script>
     <script src="shared/his-link-render.js"></script>
     <script src="shared/autolink-chip.js"></script>
+    <script src="shared/autolink-chip-preview.js"></script>
     <script src="shared/r2-link-render.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
