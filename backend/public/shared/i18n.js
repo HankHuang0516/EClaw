@@ -3041,6 +3041,8 @@ const TRANSLATIONS = {
         "chip_popover_not_supported": "Preview not yet supported for this reference type",
         "chip_popover_requote": "Quote to chat again",
         "chip_popover_open_full": "Open full page →",
+        "chip_popover_cycle": "Already in the reference stack",
+        "chip_popover_too_deep": "Too deep — open the full page instead",
 
         // Compare Channels (compare-channels.html)
         "cmp_title": "EClawbot vs Telegram - Channel Comparison",
@@ -7661,6 +7663,8 @@ const TRANSLATIONS = {
         "chip_popover_not_supported": "此引用類型尚未支援預覽",
         "chip_popover_requote": "再引用到聊天",
         "chip_popover_open_full": "打開完整頁面 →",
+        "chip_popover_cycle": "已在引用堆疊上",
+        "chip_popover_too_deep": "太深，請直接跳頁",
         "cmp_title": "EClawbot vs Telegram — 頻道比較",
         "cmp_eclaw_name": "EClawbot",
         "cmp_telegram_name": "Telegram",

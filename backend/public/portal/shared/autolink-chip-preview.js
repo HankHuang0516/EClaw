@@ -1,24 +1,26 @@
 /**
- * AutolinkChipPreview — Smart-quote Chip B.
+ * AutolinkChipPreview — Smart-quote Chip B + nested-recursion Chip C.
  *
- * Registers window.AutolinkChipPreview so AutolinkChip.onChipClick opens a
- * popover instead of deep-linking. Popover shows the referenced entity's
- * title / status / first 200 chars / last 1–2 comments, with a requote (📌)
- * button that inserts a fresh [引用 <id>] token into the active chat input.
+ * Click an autolink chip → popover with title/status/desc/last-2 comments and
+ * a 📌 requote button. Embedded refs inside the popover content (a card whose
+ * description mentions another card_/src:// token) re-render as nested chips;
+ * clicking one stacks a child popover on top, up to MAX_DEPTH layers.
  *
- * Only one popover at a time. ESC / outside-click closes it.
+ * Cycle guard: clicking a chip whose refId is already on the open stack shows
+ * a transient toast "已在引用堆疊上". Depth guard: stack at MAX_DEPTH shows
+ * "太深，請直接跳頁".
+ *
+ * ESC / outside-click closes the entire stack.
  *
  * Supported ref types (Phase 1):
  *   - src://kanban/card/<id>  → GET /api/mission/card/:id
- *
- * Unsupported types render a graceful "尚未支援" popover (later cards will
- * add note/review endpoints + rendering).
  */
 (function (global) {
     'use strict';
 
-    let currentPopover = null;
-    let currentAnchor = null;
+    const MAX_DEPTH = 5;
+    let stack = []; // pop elements; stack[0] = root, last = innermost
+    let rootAnchor = null;
 
     function t(key, fallback) {
         try { return (global.i18n && typeof global.i18n.t === 'function') ? (global.i18n.t(key) || fallback) : fallback; }
@@ -31,11 +33,21 @@
         return d.innerHTML;
     }
 
-    function closePopover() {
-        if (!currentPopover) return;
-        currentPopover.remove();
-        currentPopover = null;
-        currentAnchor = null;
+    function renderChips(escapedHtml) {
+        if (global.AutolinkChip && typeof global.AutolinkChip.render === 'function') {
+            try { return global.AutolinkChip.render(escapedHtml); } catch (_) {}
+        }
+        return escapedHtml;
+    }
+
+    function closeAll() {
+        while (stack.length) stack.pop().remove();
+        rootAnchor = null;
+    }
+
+    function closeFromIndex(idx) {
+        while (stack.length > idx) stack.pop().remove();
+        if (!stack.length) rootAnchor = null;
     }
 
     function positionPopover(pop, anchorEl) {
@@ -52,11 +64,33 @@
         pop.style.top = (rect.bottom + window.scrollY + gap) + 'px';
         pop.style.left = left + 'px';
         pop.style.width = width + 'px';
-        pop.style.zIndex = '9999';
+        pop.style.zIndex = String(9999 + stack.length);
+    }
+
+    function refKey(refType, refId) { return refType + '|' + refId; }
+
+    function isOnStack(refType, refId) {
+        const key = refKey(refType, refId);
+        return stack.some(p => refKey(p._refType, p._refId) === key);
     }
 
     function openPreview(refType, refId, anchorEl) {
-        closePopover();
+        // Top-level call (from a chip outside any popover) — close existing stack first
+        if (!anchorEl || !anchorEl.closest('.autolink-chip-popover')) {
+            closeAll();
+            rootAnchor = anchorEl;
+        }
+
+        // Cycle / depth guards
+        if (isOnStack(refType, refId)) {
+            showToast(anchorEl, t('chip_popover_cycle', '已在引用堆疊上'));
+            return;
+        }
+        if (stack.length >= MAX_DEPTH) {
+            showToast(anchorEl, t('chip_popover_too_deep', '太深，請直接跳頁'));
+            return;
+        }
+
         const pop = document.createElement('div');
         pop.className = 'autolink-chip-popover';
         pop.setAttribute('data-ref-type', refType);
@@ -64,19 +98,19 @@
         pop._refType = refType;
         pop._refId = refId;
         pop._data = null;
+        pop._depth = stack.length;
         pop.innerHTML = buildLoadingHtml();
         document.body.appendChild(pop);
         positionPopover(pop, anchorEl);
-        currentPopover = pop;
-        currentAnchor = anchorEl;
+        stack.push(pop);
         bindPopoverActions(pop);
 
         resolveRef(refType, refId).then(data => {
-            if (currentPopover !== pop) return;
+            if (!stack.includes(pop)) return;
             pop._data = data;
             pop.innerHTML = buildContentHtml(data, refType, refId);
         }).catch(err => {
-            if (currentPopover !== pop) return;
+            if (!stack.includes(pop)) return;
             pop._data = null;
             pop.innerHTML = buildErrorHtml(err, refType, refId);
         });
@@ -128,12 +162,15 @@
         if (d.kind !== 'card') return buildErrorHtml(new Error('ref_not_supported:kind'), refType, refId);
         const c = d.data;
         const status = c.status || 'todo';
-        const desc = (c.description || '').slice(0, 200);
+        const descRaw = (c.description || '').slice(0, 200);
         const hasMoreDesc = (c.description || '').length > 200;
+        const desc = renderChips(escapeHtml(descRaw)) + (hasMoreDesc ? '…' : '');
         const comments = (Array.isArray(c.comments) ? c.comments.slice(-2) : []).map(cmt => {
-            const text = (cmt.text || '').slice(0, 120);
-            return '<div class="chip-popover-comment">💬 ' + escapeHtml(text) + (cmt.text && cmt.text.length > 120 ? '…' : '') + '</div>';
+            const raw = (cmt.text || '').slice(0, 120);
+            const truncated = cmt.text && cmt.text.length > 120 ? '…' : '';
+            return '<div class="chip-popover-comment">💬 ' + renderChips(escapeHtml(raw)) + truncated + '</div>';
         }).join('');
+        const titleRendered = renderChips(escapeHtml(c.title || ''));
         const hashId = c.id.indexOf('card_') === 0 ? c.id : ('card_' + c.id);
         const fullUrl = '/portal/kanban.html#' + hashId;
         const requoteTitle = t('chip_popover_requote', '再引用到聊天');
@@ -141,13 +178,13 @@
         const openFullLabel = t('chip_popover_open_full', '打開完整頁面 →');
         return `
             <div class="chip-popover-header">
-                <span class="chip-popover-title" title="${escapeHtml(c.title || '')}">${escapeHtml(c.title || '')}</span>
+                <span class="chip-popover-title" title="${escapeHtml(c.title || '')}">${titleRendered}</span>
                 <span class="chip-popover-status chip-status--${escapeHtml(status)}">${escapeHtml(status)}</span>
                 <button class="chip-popover-btn chip-popover-quote" title="${escapeHtml(requoteTitle)}" data-action="requote">📌</button>
                 <button class="chip-popover-btn chip-popover-close" title="${escapeHtml(closeTitle)}" data-action="close">✖</button>
             </div>
             <div class="chip-popover-body">
-                ${desc ? '<div class="chip-popover-desc">' + escapeHtml(desc) + (hasMoreDesc ? '…' : '') + '</div>' : ''}
+                ${descRaw ? '<div class="chip-popover-desc">' + desc + '</div>' : ''}
                 ${comments}
             </div>
             <div class="chip-popover-footer">
@@ -158,13 +195,46 @@
 
     function bindPopoverActions(pop) {
         pop.addEventListener('click', (e) => {
+            // Nested chip click → recurse into openPreview
+            const chip = e.target.closest('.autolink-chip');
+            if (chip && pop.contains(chip)) {
+                e.stopPropagation();
+                e.preventDefault();
+                const refType = chip.getAttribute('data-ref-type');
+                const refId = chip.getAttribute('data-ref-id');
+                if (refType && refId) {
+                    // Truncate stack above this popover (close any deeper siblings) before opening
+                    const myIdx = stack.indexOf(pop);
+                    if (myIdx >= 0) closeFromIndex(myIdx + 1);
+                    openPreview(refType, refId, chip);
+                }
+                return;
+            }
             const btn = e.target.closest('[data-action]');
             if (!btn) return;
             e.stopPropagation();
             const action = btn.getAttribute('data-action');
-            if (action === 'close') { closePopover(); return; }
-            if (action === 'requote') { insertRequoteToken(pop._data, pop._refType, pop._refId); closePopover(); return; }
+            if (action === 'close') {
+                const idx = stack.indexOf(pop);
+                if (idx >= 0) closeFromIndex(idx);
+                return;
+            }
+            if (action === 'requote') { insertRequoteToken(pop._data, pop._refType, pop._refId); closeAll(); return; }
         });
+    }
+
+    function showToast(anchorEl, msg) {
+        const tip = document.createElement('div');
+        tip.className = 'autolink-chip-toast';
+        tip.textContent = msg;
+        const rect = (anchorEl && anchorEl.getBoundingClientRect) ? anchorEl.getBoundingClientRect() : { left: 100, top: 100, bottom: 120 };
+        tip.style.position = 'absolute';
+        tip.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+        tip.style.left = (rect.left + window.scrollX) + 'px';
+        tip.style.zIndex = String(9999 + stack.length + 1);
+        document.body.appendChild(tip);
+        setTimeout(() => { tip.style.opacity = '0'; }, 1200);
+        setTimeout(() => { tip.remove(); }, 1800);
     }
 
     function insertRequoteToken(data, refType, refId) {
@@ -189,21 +259,25 @@
 
     function tokenFor(data, refType, refId) {
         if (data && data.kind === 'card' && data.data && data.data.id) {
-            return data.data.id; // already `card_<hex>`; EntityLinkRender will re-chip it on render
+            return data.data.id;
         }
         return refId;
     }
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && currentPopover) { closePopover(); }
+        if (e.key === 'Escape' && stack.length) { closeAll(); }
     });
     document.addEventListener('click', (e) => {
-        if (!currentPopover) return;
-        if (e.target.closest('.autolink-chip-popover') || e.target === currentAnchor || e.target.closest('.autolink-chip')) return;
-        closePopover();
+        if (!stack.length) return;
+        if (e.target.closest('.autolink-chip-popover')) return;
+        if (e.target.closest('.autolink-chip-toast')) return;
+        if (e.target === rootAnchor) return;
+        if (e.target.closest('.autolink-chip')) return;
+        closeAll();
     });
 
     global.AutolinkChipPreview = openPreview;
-    global.AutolinkChipPreview._close = closePopover;
-    global.AutolinkChipPreview._current = () => currentPopover;
+    global.AutolinkChipPreview._closeAll = closeAll;
+    global.AutolinkChipPreview._stack = () => stack.slice();
+    global.AutolinkChipPreview._MAX_DEPTH = MAX_DEPTH;
 })(window);
