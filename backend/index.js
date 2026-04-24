@@ -8999,6 +8999,30 @@ app.get('/api/community/search', async (req, res) => {
 });
 
 /**
+ * GET /api/community/list — Plaza listing (alias of /search with sensible defaults)
+ * No auth required. Same query contract as /search.
+ */
+app.get('/api/community/list', async (req, res) => {
+    const { q, tag, capability, limit, offset, sort } = req.query;
+    const results = await db.searchPublicCards({
+        q, tag, capability,
+        limit: parseInt(limit) || 20,
+        offset: parseInt(offset) || 0,
+        sort: sort || 'newest'
+    });
+    res.json({ success: true, count: results.length, results });
+});
+
+/**
+ * GET /api/community/stats — Plaza aggregate stats (total_bots, new_today, active_7d, top_categories)
+ * No auth required (public numbers used by monitoring cron + landing page).
+ */
+app.get('/api/community/stats', async (req, res) => {
+    const stats = await db.getCommunityStats();
+    res.json({ success: true, ...stats });
+});
+
+/**
  * GET /api/community/card/:publicCode — Public card detail + messages
  * No auth required
  */
