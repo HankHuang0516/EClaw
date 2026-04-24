@@ -350,7 +350,7 @@
     "slots_available": "{{count}} Slots verfügbar",
     "sold_out": "Ausverkauft",
     "webhook_testing": "Verbindung wird getestet...",
-    "webhook_success": "Verbindung erfolgreich",
+    "webhook_success": "✓ Verbindung erfolgreich",
     "iap_coming_soon": "Apple IAP-Abonnement bald verfügbar",
     "select_bot": "Wählen Sie einen Bot:",
     "active_users": "Aktive Benutzer"

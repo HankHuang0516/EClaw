@@ -88,7 +88,7 @@ export default function OfficialBorrowScreen() {
     try {
       await officialBorrowApi.bindFree(entityId, selectedBotId ?? undefined);
       await loadStatus();
-      setSnack('✓ ' + t('official_borrow.webhook_success'));
+      setSnack(t('official_borrow.webhook_success'));
     } catch {
       setSnack(t('errors.server'));
     } finally {

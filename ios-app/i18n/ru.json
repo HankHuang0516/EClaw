@@ -288,7 +288,7 @@
     "slots_available": "Доступно слотов: {{count}}",
     "sold_out": "Распродано",
     "webhook_testing": "Проверка подключения...",
-    "webhook_success": "Подключение успешно",
+    "webhook_success": "✓ Подключение успешно",
     "iap_coming_soon": "Подписка Apple IAP скоро появится",
     "select_bot": "Выберите бота:",
     "active_users": "Активные пользователи"

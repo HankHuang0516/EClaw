@@ -288,7 +288,7 @@
     "slots_available": "{{count}} slots beschikbaar",
     "sold_out": "Uitverkocht",
     "webhook_testing": "Verbinding testen...",
-    "webhook_success": "Verbinding succesvol",
+    "webhook_success": "✓ Verbinding succesvol",
     "iap_coming_soon": "Apple IAP-abonnement binnenkort beschikbaar",
     "select_bot": "Selecteer een bot:",
     "active_users": "Actieve gebruikers"

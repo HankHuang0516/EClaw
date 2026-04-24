@@ -350,7 +350,7 @@
     "slots_available": "{{count}} slot tersedia",
     "sold_out": "Habis Terjual",
     "webhook_testing": "Menguji koneksi...",
-    "webhook_success": "Koneksi berhasil",
+    "webhook_success": "✓ Koneksi berhasil",
     "iap_coming_soon": "Apple IAP akan segera hadir",
     "select_bot": "Pilih bot:",
     "active_users": "Pengguna aktif"
