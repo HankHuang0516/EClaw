@@ -1,3 +1,10 @@
+# [1.1071.0](https://github.com/HankHuang0516/EClaw/compare/v1.1070.3...v1.1071.0) (2026-04-24)
+
+
+### Features
+
+* **kanban:** screenshot-review gate + 截圖審查 tab on cards + chip ([#2044](https://github.com/HankHuang0516/EClaw/issues/2044)) ([d63debb](https://github.com/HankHuang0516/EClaw/commit/d63debb8a300b2a701b6bcf4d3d4fc45df54a202))
+
 ## [1.1070.3](https://github.com/HankHuang0516/EClaw/compare/v1.1070.2...v1.1070.3) (2026-04-24)
 
 
