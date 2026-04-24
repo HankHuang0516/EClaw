@@ -10971,10 +10971,12 @@ app.post('/api/debug/reset', (req, res) => {
     const adminToken = req.headers['x-admin-token'] || req.body.adminToken;
     const expectedToken = process.env.ADMIN_SECRET;
 
-    // Only allow from localhost or with correct token
+    // Dev-only localhost bypass; production always requires ADMIN_SECRET (issue #2024).
     const isLocalhost = req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1';
+    const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT;
+    const localhostBypass = isLocalhost && !isProduction;
 
-    if (!isLocalhost && (!expectedToken || !adminToken || !safeEqual(adminToken, expectedToken))) {
+    if (!localhostBypass && (!expectedToken || !adminToken || !safeEqual(adminToken, expectedToken))) {
         return res.status(403).json({ success: false, error: 'Forbidden: admin token required' });
     }
 
@@ -11170,8 +11172,11 @@ function verifyAdmin(req) {
     const adminToken = req.headers['x-admin-token'] || req.body.adminToken;
     const expectedToken = process.env.ADMIN_SECRET;
     const isLocalhost = req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1';
-    // Require ADMIN_SECRET to be set for non-localhost; timing-safe compare
-    if (isLocalhost) return true;
+    // Dev-only: localhost bypass disabled in production to prevent proxy/header
+    // spoofing bypassing admin auth (issue #2024). Production always requires
+    // ADMIN_SECRET to be set AND presented.
+    const isProduction = process.env.NODE_ENV === 'production' || !!process.env.RAILWAY_ENVIRONMENT;
+    if (isLocalhost && !isProduction) return true;
     if (!expectedToken || !adminToken) return false;
     return safeEqual(adminToken, expectedToken);
 }
