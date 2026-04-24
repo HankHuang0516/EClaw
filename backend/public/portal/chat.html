@@ -2839,6 +2839,33 @@
                 }
             } catch(e) {}
 
+            // Pick up batch attachments handed off from files.html multi-select.
+            // Each staged file is pre-uploaded (has a live mediaUrl), so we
+            // inject directly as status:'ready' — sendMessage then replays
+            // them through the existing per-file mediaType/mediaUrl path.
+            try {
+                const pa = sessionStorage.getItem('eclaw_pending_attach_files');
+                if (pa) {
+                    sessionStorage.removeItem('eclaw_pending_attach_files');
+                    const payload = JSON.parse(pa);
+                    if (payload && Array.isArray(payload.files) && Date.now() - (payload.ts || 0) < 120000) {
+                        payload.files.forEach(f => {
+                            if (!f || !f.mediaUrl || !f.type) return;
+                            const id = Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+                            pendingFiles.push({
+                                id,
+                                type: f.type,
+                                status: 'ready',
+                                mediaUrl: f.mediaUrl,
+                                fileName: f.fileName || (f.type + '_' + id),
+                            });
+                        });
+                        renderFilePreviewBar();
+                        document.getElementById('messageInput')?.focus();
+                    }
+                }
+            } catch(e) {}
+
             // Cross-iframe quote from workspace.html relay — only accepted from same origin
             window.addEventListener('message', (e) => {
                 if (e.origin !== window.location.origin) return;

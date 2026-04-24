@@ -3031,6 +3031,9 @@ const TRANSLATIONS = {
         "files_folder_enter_number": "Enter the number:",
         "files_entities_badge": "entities",
         "files_broadcast": "Broadcast",
+        "files_multi_select_count": "Selected",
+        "files_multi_select_attach": "Attach to chat",
+        "files_multi_select_cancel": "Cancel",
 
         // Compare Channels (compare-channels.html)
         "cmp_title": "EClawbot vs Telegram - Channel Comparison",
@@ -7643,6 +7646,9 @@ const TRANSLATIONS = {
         "files_folder_enter_number": "請輸入編號：",
         "files_entities_badge": "個實體",
         "files_broadcast": "廣播",
+        "files_multi_select_count": "已選",
+        "files_multi_select_attach": "夾帶到聊天",
+        "files_multi_select_cancel": "取消",
         "cmp_title": "EClawbot vs Telegram — 頻道比較",
         "cmp_eclaw_name": "EClawbot",
         "cmp_telegram_name": "Telegram",
