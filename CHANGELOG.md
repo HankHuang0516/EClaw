@@ -1,3 +1,10 @@
+## [1.1063.2](https://github.com/HankHuang0516/EClaw/compare/v1.1063.1...v1.1063.2) (2026-04-24)
+
+
+### Bug Fixes
+
+* **kanban:** mobile toolbar overflow + invisible history drawer in dark mode ([#2017](https://github.com/HankHuang0516/EClaw/issues/2017)) ([5bef6ff](https://github.com/HankHuang0516/EClaw/commit/5bef6ffd4376c4703038ae4c6594373905829e15)), closes [#kbHistoryOverlay](https://github.com/HankHuang0516/EClaw/issues/kbHistoryOverlay)
+
 ## [1.1063.1](https://github.com/HankHuang0516/EClaw/compare/v1.1063.0...v1.1063.1) (2026-04-23)
 
 
