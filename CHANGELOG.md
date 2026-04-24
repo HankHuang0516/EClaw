@@ -1,3 +1,10 @@
+# [1.1077.0](https://github.com/HankHuang0516/EClaw/compare/v1.1076.0...v1.1077.0) (2026-04-24)
+
+
+### Features
+
+* **smart-chip:** backend expansion of card_/review_/src:// refs ([#2071](https://github.com/HankHuang0516/EClaw/issues/2071)) ([f09f3b5](https://github.com/HankHuang0516/EClaw/commit/f09f3b5625cbbaa69e8349654e4f54140d687a39))
+
 # [1.1076.0](https://github.com/HankHuang0516/EClaw/compare/v1.1075.1...v1.1076.0) (2026-04-24)
 
 
