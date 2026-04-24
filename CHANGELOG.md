@@ -1,3 +1,10 @@
+## [1.1077.3](https://github.com/HankHuang0516/EClaw/compare/v1.1077.2...v1.1077.3) (2026-04-24)
+
+
+### Bug Fixes
+
+* **chat:** move R2 attachments to structured metadata, keep signed URL out of message.text ([#2077](https://github.com/HankHuang0516/EClaw/issues/2077)) ([c0e4e55](https://github.com/HankHuang0516/EClaw/commit/c0e4e5507bd23157843386dda9c45ab7b18a768b)), closes [#2059](https://github.com/HankHuang0516/EClaw/issues/2059)
+
 ## [1.1077.2](https://github.com/HankHuang0516/EClaw/compare/v1.1077.1...v1.1077.2) (2026-04-24)
 
 
