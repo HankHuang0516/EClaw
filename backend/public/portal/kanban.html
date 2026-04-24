@@ -151,6 +151,19 @@
         .kb-file-name { font-size:13px; color:var(--primary); text-decoration:none; }
         .kb-file-name:hover { text-decoration:underline; }
 
+        /* Screenshot review tab */
+        .kb-ss-banner { font-size:12px; padding:8px 12px; border-radius:var(--radius-sm); margin-bottom:12px; border:1px solid var(--card-border); }
+        .kb-ss-banner.on { background:rgba(255,193,7,0.12); border-color:#f0ad4e; color:#f0ad4e; }
+        .kb-ss-banner.off { background:var(--input-bg); color:var(--text-muted); }
+        .kb-ss-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:10px; }
+        .kb-ss-thumb { cursor:pointer; background:var(--input-bg); border:1px solid var(--card-border); border-radius:var(--radius-sm); overflow:hidden; transition:transform .15s, border-color .15s; }
+        .kb-ss-thumb:hover { transform:scale(1.03); border-color:var(--primary); }
+        .kb-ss-thumb img { width:100%; height:96px; object-fit:cover; display:block; }
+        .kb-ss-caption { font-size:10px; padding:4px 6px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .kb-lightbox { position:fixed; inset:0; background:rgba(0,0,0,0.92); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:300; cursor:zoom-out; padding:24px; }
+        .kb-lightbox img { max-width:96vw; max-height:88vh; object-fit:contain; box-shadow:0 8px 40px rgba(0,0,0,0.6); }
+        .kb-lightbox-caption { margin-top:12px; color:#eee; font-size:13px; text-align:center; max-width:90vw; }
+
         /* Move actions */
         .kb-move-bar { padding:12px 24px; border-top:1px solid var(--card-border); display:flex; gap:8px; flex-wrap:wrap; }
         .kb-move-btn { padding:6px 14px; border-radius:var(--radius-sm); font-size:12px; font-weight:600; cursor:pointer; border:1px solid var(--card-border); background:none; color:var(--text-secondary); transition:all 0.2s; }
@@ -592,11 +605,13 @@
                 <button class="kb-modal-tab active" data-i18n="kb_tab_comments" onclick="switchDetailTab('comments',this)">💬 Comments</button>
                 <button class="kb-modal-tab" data-i18n="kb_tab_notes" onclick="switchDetailTab('notes',this)">📝 Notes</button>
                 <button class="kb-modal-tab" data-i18n="kb_tab_files" onclick="switchDetailTab('files',this)">📎 Files</button>
+                <button class="kb-modal-tab" data-i18n="kb_tab_screenshots" onclick="switchDetailTab('screenshots',this)">📸 截圖審查</button>
                 <button class="kb-modal-tab" id="scheduleTab" data-i18n="kb_tab_schedule" onclick="switchDetailTab('schedule',this)" style="display:none">⚙️ Schedule</button>
             </div>
             <div class="kb-modal-panel active" id="panel-comments"></div>
             <div class="kb-modal-panel" id="panel-notes"></div>
             <div class="kb-modal-panel" id="panel-files"></div>
+            <div class="kb-modal-panel" id="panel-screenshots"></div>
             <div class="kb-modal-panel" id="panel-schedule"></div>
             <div class="kb-move-bar" id="moveBar"></div>
         </div>
@@ -634,6 +649,11 @@
             <div class="kb-form-group">
                 <label class="kb-form-label" data-i18n="kb_label_assign">Assign To</label>
                 <div id="newAssignees"></div>
+            </div>
+            <div class="kb-form-group">
+                <div class="kb-auto-toggle-row">
+                    <label class="kb-auto-toggle-label"><input type="checkbox" id="newRequiresScreenshot" checked> 📸 <span data-i18n="kb_label_requires_screenshot">需截圖審查（完成時附截圖才可推進 review/done）</span></label>
+                </div>
             </div>
             <div class="kb-form-group">
                 <div class="kb-auto-toggle-row">
@@ -1638,6 +1658,7 @@
             if (tab === 'comments') await loadComments();
             if (tab === 'notes') await loadNotes();
             if (tab === 'files') await loadFiles();
+            if (tab === 'screenshots') await loadScreenshots();
             if (tab === 'schedule' && !document.getElementById('panel-schedule').innerHTML.trim()) renderSchedulePanel(openCardId);
         }
 
@@ -1723,6 +1744,42 @@
                     </div>
                 `).join('') : '<div class="kb-empty" data-i18n="kb_empty_no_files">' + t('kb_empty_no_files', 'No files yet') + '</div>';
             } catch(e) { panel.innerHTML = '<div class="kb-empty">Failed to load files</div>'; }
+        }
+
+        async function loadScreenshots() {
+            const panel = document.getElementById('panel-screenshots');
+            try {
+                const data = await apiGetFiles(openCardId);
+                const shots = (data.files || []).filter(f => (f.mimeType || f.mime_type || '').startsWith('image/'));
+                const card = findCard(openCardId);
+                const gate = card && card.requiresScreenshotReview !== false;
+                const gateBanner = gate
+                    ? `<div class="kb-ss-banner on">📸 此卡需截圖審查：${shots.length ? `已附 ${shots.length} 張` : '尚未附任何截圖，無法移到 review/done'}</div>`
+                    : `<div class="kb-ss-banner off">此卡未開啟截圖審查門檻</div>`;
+                if (shots.length === 0) {
+                    panel.innerHTML = gateBanner + '<div class="kb-empty">尚無截圖。Bot 完成任務時用 POST /api/mission/card/&lt;id&gt;/file 附上 image/* 檔即可。</div>';
+                    return;
+                }
+                panel.innerHTML = gateBanner + '<div class="kb-ss-grid">' + shots.map(f => `
+                    <div class="kb-ss-thumb" data-url="${escapeHtml(f.url)}" data-name="${escapeHtml(f.filename)}" onclick="openLightbox(this.dataset.url, this.dataset.name)">
+                        <img src="${escapeHtml(f.url)}" alt="${escapeHtml(f.filename)}" loading="lazy">
+                        <div class="kb-ss-caption">${escapeHtml(f.filename)}</div>
+                    </div>
+                `).join('') + '</div>';
+            } catch(e) { panel.innerHTML = '<div class="kb-empty">Failed to load screenshots</div>'; }
+        }
+
+        function openLightbox(url, name) {
+            let lb = document.getElementById('kbLightbox');
+            if (!lb) {
+                lb = document.createElement('div');
+                lb.id = 'kbLightbox';
+                lb.className = 'kb-lightbox';
+                lb.addEventListener('click', () => { lb.style.display = 'none'; });
+                document.body.appendChild(lb);
+            }
+            lb.innerHTML = `<img src="${escapeHtml(url)}" alt="${escapeHtml(name || '')}"><div class="kb-lightbox-caption">${escapeHtml(name || '')}</div>`;
+            lb.style.display = 'flex';
         }
 
         async function moveCardTo(cardId, newStatus) {
@@ -2019,12 +2076,14 @@
             const assignedBots = [...document.querySelectorAll('#newAssignees input:checked')].map(cb => Number(cb.value));
             if (assignedBots.length === 0) { showToast(t('kb_err_no_entity','At least one entity must be assigned'), true); return; }
             const isAutomation = document.getElementById('newIsAutomation').checked;
+            const requiresScreenshotReview = document.getElementById('newRequiresScreenshot').checked;
             const body = {
                 title,
                 description: document.getElementById('newDesc').value.trim(),
                 priority: document.getElementById('newPriority').value,
                 status: isAutomation ? 'backlog' : document.getElementById('newStatus').value,
-                assignedBots
+                assignedBots,
+                requiresScreenshotReview
             };
             if (isAutomation) {
                 const customCron = document.getElementById('newCronCustom').value.trim();
@@ -2042,6 +2101,7 @@
                 document.getElementById('newTitle').value = '';
                 document.getElementById('newDesc').value = '';
                 document.getElementById('newIsAutomation').checked = false;
+                document.getElementById('newRequiresScreenshot').checked = true;
                 toggleAutoFields();
                 await loadCards();
             } catch(e) {

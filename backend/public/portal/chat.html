@@ -2137,6 +2137,49 @@
             white-space: pre-wrap;
             word-break: break-word;
         }
+        #entityPreviewModal .entity-screenshots {
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+        }
+        #entityPreviewModal .entity-ss-banner {
+            font-size: 12px; padding: 6px 10px; border-radius: 6px; margin-bottom: 10px;
+            border: 1px solid var(--card-border);
+        }
+        #entityPreviewModal .entity-ss-banner.on {
+            background: rgba(255,193,7,0.12); border-color: #f0ad4e; color: #f0ad4e;
+        }
+        #entityPreviewModal .entity-ss-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px;
+        }
+        #entityPreviewModal .entity-ss-thumb {
+            cursor: pointer; background: rgba(255,255,255,0.04); border: 1px solid var(--card-border);
+            border-radius: 6px; overflow: hidden; transition: transform .15s, border-color .15s;
+        }
+        #entityPreviewModal .entity-ss-thumb:hover {
+            transform: scale(1.03); border-color: var(--accent, #4a9eff);
+        }
+        #entityPreviewModal .entity-ss-thumb img {
+            width: 100%; height: 88px; object-fit: cover; display: block;
+        }
+        #entityPreviewModal .entity-ss-caption {
+            font-size: 10px; padding: 3px 5px; color: var(--text-secondary);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chat-lightbox {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 9999; cursor: zoom-out; padding: 24px;
+        }
+        .chat-lightbox img {
+            max-width: 96vw; max-height: 88vh; object-fit: contain;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+        }
+        .chat-lightbox-caption {
+            margin-top: 12px; color: #eee; font-size: 13px; text-align: center; max-width: 90vw;
+        }
     </style>
     <link rel="canonical" href="https://eclawbot.com/portal/chat.html">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -5624,9 +5667,10 @@
         }
 
         async function fetchCardData(auth, cardId) {
-            const [resp, commentsResp] = await Promise.all([
+            const [resp, commentsResp, filesResp] = await Promise.all([
                 apiCall('GET', `/api/mission/card/${cardId}?${auth}`),
                 apiCall('GET', `/api/mission/card/${cardId}/comments?${auth}&limit=20`).catch(() => null),
+                apiCall('GET', `/api/mission/card/${cardId}/files?${auth}`).catch(() => null),
             ]);
             if (!resp || !resp.card) return null;
             const c = resp.card;
@@ -5669,7 +5713,41 @@
             }
             html += `</div>`;
 
+            // Screenshot review section — images attached via POST /api/mission/card/:id/file.
+            const filesList = (filesResp && Array.isArray(filesResp.files)) ? filesResp.files : [];
+            const shots = filesList.filter(f => (f.mimeType || f.mime_type || '').startsWith('image/'));
+            const gate = c.requiresScreenshotReview !== false;
+            if (gate || shots.length > 0) {
+                const banner = gate
+                    ? `<div class="entity-ss-banner on">📸 此卡需截圖審查：${shots.length ? `已附 ${shots.length} 張` : '尚未附任何截圖，無法移到 review/done'}</div>`
+                    : '';
+                html += `<div class="entity-screenshots"><div class="entity-comments-header">📸 截圖審查</div>${banner}`;
+                if (shots.length === 0) {
+                    html += `<div class="entity-comments-empty">尚無截圖</div>`;
+                } else {
+                    html += `<div class="entity-ss-grid">` + shots.map(f => {
+                        const u = escapeHtml(f.url);
+                        const n = escapeHtml(f.filename || '');
+                        return `<div class="entity-ss-thumb" data-url="${u}" data-name="${n}" onclick="openChatLightbox(this.dataset.url, this.dataset.name)"><img src="${u}" alt="${n}" loading="lazy"><div class="entity-ss-caption">${n}</div></div>`;
+                    }).join('') + `</div>`;
+                }
+                html += `</div>`;
+            }
+
             return { title: c.title, id: c.id, html };
+        }
+
+        function openChatLightbox(url, name) {
+            let lb = document.getElementById('chatLightbox');
+            if (!lb) {
+                lb = document.createElement('div');
+                lb.id = 'chatLightbox';
+                lb.className = 'chat-lightbox';
+                lb.addEventListener('click', () => { lb.style.display = 'none'; });
+                document.body.appendChild(lb);
+            }
+            lb.innerHTML = `<img src="${escapeHtml(url)}" alt="${escapeHtml(name || '')}"><div class="chat-lightbox-caption">${escapeHtml(name || '')}</div>`;
+            lb.style.display = 'flex';
         }
 
         async function fetchDashboardItem(auth, type, itemId) {

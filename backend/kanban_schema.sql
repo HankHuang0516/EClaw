@@ -52,6 +52,10 @@ ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS active_child_id VARCHAR(48) DE
 
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS reviewer_entity_id INTEGER DEFAULT NULL;
 
+-- Screenshot review gate (2026-04-24): cards with this flag cannot move to review/done
+-- without at least one image/* file attached via POST /api/mission/card/:id/file.
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS requires_screenshot_review BOOLEAN DEFAULT TRUE;
+
 CREATE INDEX IF NOT EXISTS idx_kanban_cards_automation ON kanban_cards(device_id, is_automation)
     WHERE is_automation = true;
 CREATE INDEX IF NOT EXISTS idx_kanban_cards_parent ON kanban_cards(parent_card_id)
