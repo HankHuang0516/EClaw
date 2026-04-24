@@ -1,3 +1,10 @@
+## [1.1077.1](https://github.com/HankHuang0516/EClaw/compare/v1.1077.0...v1.1077.1) (2026-04-24)
+
+
+### Bug Fixes
+
+* **ui:** define .btn-ghost so kanban header icons stop rendering as white-on-white ([#2072](https://github.com/HankHuang0516/EClaw/issues/2072)) ([7bfdc6c](https://github.com/HankHuang0516/EClaw/commit/7bfdc6c72f2c28887ccd1bbe7812b18b267cebf6))
+
 # [1.1077.0](https://github.com/HankHuang0516/EClaw/compare/v1.1076.0...v1.1077.0) (2026-04-24)
 
 
