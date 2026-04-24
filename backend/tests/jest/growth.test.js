@@ -113,7 +113,8 @@ describe('Growth /daily aggregation contract', () => {
         expect(res.body.invite_conversion).toEqual({ total_codes: 50, redeemed_codes: 11, pct: 22 });
         expect(res.body.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
         expect(Array.isArray(res.body.follow_ups)).toBe(true);
-        expect(res.body.follow_ups.length).toBe(3);
+        expect(res.body.follow_ups.length).toBe(4);
+        expect(res.body.follow_ups.some(s => /invite_conversion.*cumulative/i.test(s))).toBe(true);
     });
 
     it('reports invite_conversion pct as null when no codes issued', async () => {
@@ -170,6 +171,65 @@ describe('Growth /daily aggregation contract', () => {
         mockQuery.mockRejectedValueOnce(new Error('admin check failed'));
         const res = await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2');
         expect(res.status).toBe(500);
+    });
+});
+
+describe('Growth /daily date param (historical snapshots)', () => {
+    it('accepts date=YYYY-MM-DD and echoes it back in response', async () => {
+        setupAdminQueries({ signups: 3, cohort: 10, active: 2, plaza: 1, total_codes: 20, redeemed_codes: 4 });
+        const res = await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2&date=2026-04-17');
+        expect(res.status).toBe(200);
+        expect(res.body.date).toBe('2026-04-17');
+    });
+
+    it('passes the supplied date into the signups SQL (not NOW())', async () => {
+        setupAdminQueries({ signups: 9 });
+        await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2&date=2026-04-17');
+        // Find the signups query (first metric after is_admin). Params[1] should be the anchor date.
+        const signupsCall = mockQuery.mock.calls.find(c => /FROM user_accounts\s+WHERE created_at/.test(c[0]) && Array.isArray(c[1]));
+        expect(signupsCall).toBeDefined();
+        expect(signupsCall[1]).toEqual(['Asia/Taipei', '2026-04-17']);
+    });
+
+    it('two requests with different dates query DB with different anchor params', async () => {
+        setupAdminQueries({ signups: 5 });
+        await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2&date=2026-04-17');
+        const firstCalls = mockQuery.mock.calls.slice();
+        mockQuery.mockReset();
+        setupAdminQueries({ signups: 12 });
+        await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2&date=2026-04-18');
+        const secondCalls = mockQuery.mock.calls.slice();
+
+        const firstAnchors = firstCalls.map(c => (c[1] || [])[1]).filter(Boolean);
+        const secondAnchors = secondCalls.map(c => (c[1] || [])[1]).filter(Boolean);
+        expect(firstAnchors).toContain('2026-04-17');
+        expect(secondAnchors).toContain('2026-04-18');
+        expect(firstAnchors).not.toContain('2026-04-18');
+        expect(secondAnchors).not.toContain('2026-04-17');
+    });
+
+    it('rejects malformed date with 400', async () => {
+        const res = await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2&date=2026/04/17');
+        expect(res.status).toBe(400);
+        expect(res.body.error).toMatch(/date/i);
+    });
+
+    it('rejects impossible date (Feb 30) with 400', async () => {
+        const res = await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2&date=2026-02-30');
+        expect(res.status).toBe(400);
+    });
+
+    it('defaults to today in Taipei TZ when date omitted', async () => {
+        setupAdminQueries({ signups: 2 });
+        const res = await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2');
+        expect(res.status).toBe(200);
+        const expected = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10);
+        expect(res.body.date).toBe(expected);
+    });
+
+    it('validates date before auth/rate — bad date 400 even without valid creds', async () => {
+        const res = await get('?deviceId=admin-dev&botSecret=wrong&entityId=2&date=garbage');
+        expect(res.status).toBe(400);
     });
 });
 
