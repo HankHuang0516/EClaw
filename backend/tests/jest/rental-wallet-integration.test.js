@@ -215,6 +215,10 @@ async function seedAndStart({ rate = 5_000, fund = 1_000_000 } = {}) {
         ownerUserId: OWNER, ownerDeviceId: 'owner-dev', ownerEntityId: 0,
         title: 'Test bot', rateMliPerKtoken: rate,
     });
+    // Interview-gate fix (2026-04-24): createListing now forces rate=0. Poke the
+    // in-memory row so the wallet math sees the rate this test wants to exercise.
+    const row = globalThis.__rwState.listings.find(l => l.id === listing.id);
+    if (row) { row.rate_mli_per_ktoken = rate; row.interview_passed = true; }
     await walletApi.creditTopup({
         userId: RENTER, amountMli: fund, orderId: 'seed',
         channel: 'admin_grant', idempotencyKey: `seed-${Date.now()}-${Math.random()}`,

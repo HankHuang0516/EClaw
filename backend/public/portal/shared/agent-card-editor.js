@@ -329,22 +329,40 @@ window.AgentCardEditor = (function() {
             var existing = (listings.listings || []).find(function(l) {
                 return String(l.owner_entity_id) === String(this.entityId);
             }.bind(this));
-            if (existing) {
+            // Interview gate (Hank 2026-04-24): you cannot set a rate or list
+            // for rent until the listing has passed an interview.
+            if (!existing) {
+                if (typeof showToast === 'function') showToast(
+                    t('dash_interview_required_first', 'Please run the interview first before listing for rent.'),
+                    'warning'
+                );
+                return;
+            }
+            if (!existing.interview_passed) {
+                if (typeof showToast === 'function') showToast(
+                    t('dash_interview_not_passed_yet', 'Interview not passed yet — finish the interview before setting a price.'),
+                    'warning'
+                );
+                return;
+            }
+            if (existing.status === 'listed') {
                 if (typeof showToast === 'function') showToast(t('dash_listing_exists', 'Listing already exists'), 'info');
                 return;
             }
             var rate = prompt(t('dash_listing_rate_prompt', 'Set rate (e-coin per 1K tokens):'), '5');
             if (!rate) return;
-            var res = await apiCall('POST', '/api/rental/listing', {
-                ownerDeviceId: this.deviceId,
-                ownerEntityId: this.entityId,
-                title: 'My Bot',
+            var patchRes = await apiCall('PATCH', '/api/rental/listing/' + existing.id, {
                 rateMliPerKtoken: parseInt(rate, 10) * 1000,
             });
-            if (res.success) {
-                if (typeof showToast === 'function') showToast(t('dash_listing_created', 'Listing created!'), 'success');
+            if (!patchRes || !patchRes.success) {
+                if (typeof showToast === 'function') showToast((patchRes && patchRes.error) || 'Failed', 'error');
+                return;
+            }
+            var pubRes = await apiCall('POST', '/api/rental/listing/' + existing.id + '/publish', {});
+            if (pubRes && pubRes.success) {
+                if (typeof showToast === 'function') showToast(t('dash_listing_published', 'Listed for rent!'), 'success');
             } else {
-                if (typeof showToast === 'function') showToast(res.error || 'Failed', 'error');
+                if (typeof showToast === 'function') showToast((pubRes && pubRes.error) || 'Failed', 'error');
             }
         } catch (err) {
             if (typeof showToast === 'function') showToast(err.message || 'Failed', 'error');
