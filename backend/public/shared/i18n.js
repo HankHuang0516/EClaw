@@ -2044,6 +2044,8 @@ const TRANSLATIONS = {
         "kanban_nudge_settings_title": "Nudge Settings",
         "chat_broadcast_tag": "Broadcast",
         "chat_kanban_notify": "Kanban",
+        "chat_scheduled": "Scheduled",
+        "chat_mission_notify": "Mission",
         "chat_kanban_view_card": "📋 View card",
         "chat_card_modal_comments": "Comments",
         "chat_card_modal_comments_empty": "No comments yet",
@@ -6686,6 +6688,8 @@ const TRANSLATIONS = {
         "kanban_nudge_settings_title": "督促設定",
         "chat_broadcast_tag": "廣播",
         "chat_kanban_notify": "看板",
+        "chat_scheduled": "排程",
+        "chat_mission_notify": "任務",
         "chat_kanban_view_card": "📋 查看卡片",
         "chat_card_modal_comments": "留言",
         "chat_card_modal_comments_empty": "還沒有留言",
@@ -50145,7 +50149,6 @@ const TRANSLATIONS = {
         "invite_per_code_col_status": "Status",
         "invite_per_code_status_redeemed": "Ditebus",
         "invite_per_code_status_pending": "Menunggu",
-    },
 
 
         "arena_test_desc_0": "Multimodal understanding — perceive and describe visual content from a webpage.",
@@ -50250,7 +50253,6 @@ const TRANSLATIONS = {
         "guide_cc_channel_callout_subscription_best_for": "Best for: low API budget, subscription-only accounts, or token-saving scenarios.",
         "faq_q_cc_vs_openclaw": "Why use Claude Code Channel instead of OpenClaw Channel?",
         "faq_a_cc_vs_openclaw": "The main difference is <strong>billing</strong>. OpenClaw Channel uses an Anthropic API key and is charged per token; Claude Code Channel uses your claude.ai subscription allowance with a fixed monthly cost and no per-message billing. If you already have a claude.ai Max/Teams subscription, Claude Code Channel costs you nothing extra in API fees. The tradeoff: Claude Code Channel is currently experimental and slightly less stable than OpenClaw Channel.",
-        "guide_kanban_usecase_li4_strong": "DevOps Automation",
         "guide_msg_api_accept": "Accept friend request",
         "guide_msg_api_cancel": "Cancel sent request",
         "guide_msg_api_count": "Pending request count",
@@ -50753,8 +50755,6 @@ const TRANSLATIONS = {
         "rm_tiers_title": "Top-up Tiers",
         "rm_vision_desc": "Transform EClaw's Bot Marketplace from a static showcase into a dynamic, peer-to-peer rental exchange. Bot owners with idle OpenClaw subscription capacity list their bots and earn e-coin from renters who pay per token used. The platform takes a 15% commission and operates a 2% insurance pool for dispute coverage.",
         "rm_vision_title": "Vision",
-        "rn_1036_title": "v1.0.36",
-        "rn_1038_title": "v1.0.38",
         "roadmap_title": "EClawbot - Product Roadmap",
         "settings_invite_desc": "Share your invite code and earn e-coin rewards",
         "settings_rentals_desc": "View contracts, submit reviews, file disputes",
@@ -50791,6 +50791,8 @@ const TRANSLATIONS = {
         "wallet_type_topup": "Top-up",
         "guide_gk_cta_api": "إعداد API",
         "wallet_type_withdraw": "Withdrawal",
+
+    },
 
     hi: {
         "mc_title": "EClawbot मिशन सेंटर",
