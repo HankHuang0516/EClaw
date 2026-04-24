@@ -71,11 +71,12 @@ jest.mock('pg', () => {
         // Specific status-transition handlers MUST come before the generic
         // UPDATE handler, because the generic one would otherwise match.
 
-        // Publish: UPDATE ... WHERE id AND owner AND interview_passed AND status IN (draft,paused)
+        // Publish: UPDATE ... WHERE id AND owner AND interview_passed AND rate>0 AND status IN (draft,paused)
         if (/^UPDATE bot_listings SET status = 'listed'/i.test(norm)) {
             const [id, ownerUserId] = params;
             const row = state.listings.find(l => l.id === id);
             if (!row || row.owner_user_id !== ownerUserId || !row.interview_passed
+                || Number(row.rate_mli_per_ktoken || 0) <= 0
                 || !['draft', 'paused'].includes(row.status)) {
                 return { rows: [], rowCount: 0 };
             }
@@ -84,11 +85,24 @@ jest.mock('pg', () => {
             return { rows: [{ id: row.id, status: row.status }], rowCount: 1 };
         }
 
-        // SELECT interview_passed, owner_user_id, status FROM bot_listings WHERE id = $1
+        // SELECT interview_passed, owner_user_id, status[, rate] FROM bot_listings WHERE id = $1
         if (/^SELECT interview_passed, owner_user_id.*FROM bot_listings WHERE id = \$1$/i.test(norm)) {
             const row = state.listings.find(l => l.id === params[0]);
             if (!row) return { rows: [], rowCount: 0 };
-            return { rows: [{ interview_passed: row.interview_passed, owner_user_id: row.owner_user_id, status: row.status }], rowCount: 1 };
+            return { rows: [{
+                interview_passed: row.interview_passed,
+                owner_user_id: row.owner_user_id,
+                status: row.status,
+                rate_mli_per_ktoken: row.rate_mli_per_ktoken,
+            }], rowCount: 1 };
+        }
+
+        // Interview gate: SELECT interview_passed FROM bot_listings WHERE id = $1 AND owner_user_id = $2
+        if (/^SELECT interview_passed FROM bot_listings WHERE id = \$1 AND owner_user_id = \$2$/i.test(norm)) {
+            const [id, ownerUserId] = params;
+            const row = state.listings.find(l => l.id === id && l.owner_user_id === ownerUserId);
+            if (!row) return { rows: [], rowCount: 0 };
+            return { rows: [{ interview_passed: row.interview_passed }], rowCount: 1 };
         }
 
         // Pause: UPDATE ... status='paused' WHERE id AND owner AND status='listed'
@@ -241,23 +255,19 @@ describe('rental: constants', () => {
 });
 
 describe('rental: createListing', () => {
-    test('creates a draft listing with valid input', async () => {
+    test('creates a draft listing with rate forced to 0 (interview-gate)', async () => {
         const listing = await api.createListing({
             ownerUserId: OWNER,
             ownerDeviceId: 'device-abc',
             ownerEntityId: 0,
             title: 'My Bot',
-            rateMliPerKtoken: 5000,
+            rateMliPerKtoken: 5000, // ignored — always 0 at creation
         });
         expect(listing.id).toMatch(/^listing-/);
         expect(listing.status).toBe('draft');
-    });
-
-    test('rejects zero or negative rate', async () => {
-        await expect(api.createListing({
-            ownerUserId: OWNER, ownerDeviceId: 'd', ownerEntityId: 0,
-            title: 'Bad', rateMliPerKtoken: 0,
-        })).rejects.toThrow('rate_mli_per_ktoken_invalid');
+        const row = globalThis.__rentalFakeState.listings.find(l => l.id === listing.id);
+        expect(row.rate_mli_per_ktoken).toBe(0);
+        expect(row.interview_passed).toBe(false);
     });
 
     test('rejects title longer than 120 chars', async () => {
@@ -292,15 +302,33 @@ describe('rental: updateListing', () => {
         });
     }
 
-    test('owner can update rate and title', async () => {
+    test('title/description edits are allowed before interview passes', async () => {
         const listing = await seed();
-        await api.updateListing(listing.id, OWNER, {
-            title: 'Updated', rateMliPerKtoken: 8000,
-        });
-        const state = globalThis.__rentalFakeState;
-        const row = state.listings.find(l => l.id === listing.id);
+        await api.updateListing(listing.id, OWNER, { title: 'Updated' });
+        const row = globalThis.__rentalFakeState.listings.find(l => l.id === listing.id);
         expect(row.title).toBe('Updated');
+    });
+
+    test('rate update is blocked before interview passes', async () => {
+        const listing = await seed();
+        await expect(api.updateListing(listing.id, OWNER, {
+            rateMliPerKtoken: 8000,
+        })).rejects.toThrow('interview_required_before_pricing');
+    });
+
+    test('rate update succeeds after interview_passed=true', async () => {
+        const listing = await seed();
+        const row = globalThis.__rentalFakeState.listings.find(l => l.id === listing.id);
+        row.interview_passed = true;
+        await api.updateListing(listing.id, OWNER, { rateMliPerKtoken: 8000 });
         expect(row.rate_mli_per_ktoken).toBe(8000);
+    });
+
+    test('min/max duration updates also require interview_passed', async () => {
+        const listing = await seed();
+        await expect(api.updateListing(listing.id, OWNER, {
+            minRentalMinutes: 60,
+        })).rejects.toThrow('interview_required_before_pricing');
     });
 
     test('non-owner is rejected with listing_not_found_or_forbidden', async () => {
@@ -330,6 +358,13 @@ describe('rental: publish / pause / delist', () => {
             title: 'Publishable', rateMliPerKtoken: 5000,
         });
     }
+    // Helper: simulate a successful interview + rate set (both gates cleared).
+    function markReadyToPublish(listingId, rate = 5000) {
+        const row = globalThis.__rentalFakeState.listings.find(l => l.id === listingId);
+        row.interview_passed = true;
+        row.rate_mli_per_ktoken = rate;
+        return row;
+    }
 
     test('cannot publish without interview_passed=true', async () => {
         const listing = await seedDraft();
@@ -337,19 +372,25 @@ describe('rental: publish / pause / delist', () => {
             .rejects.toThrow('interview_not_passed');
     });
 
-    test('can publish after interview passes', async () => {
+    test('cannot publish with interview_passed=true but rate still 0', async () => {
         const listing = await seedDraft();
         const row = globalThis.__rentalFakeState.listings.find(l => l.id === listing.id);
         row.interview_passed = true;
+        // rate stays 0 (createListing forces it)
+        await expect(api.publishListing(listing.id, OWNER))
+            .rejects.toThrow('rate_not_set');
+    });
 
+    test('can publish after interview passes AND rate set', async () => {
+        const listing = await seedDraft();
+        markReadyToPublish(listing.id);
         const pub = await api.publishListing(listing.id, OWNER);
         expect(pub.status).toBe('listed');
     });
 
     test('non-owner cannot publish', async () => {
         const listing = await seedDraft();
-        const row = globalThis.__rentalFakeState.listings.find(l => l.id === listing.id);
-        row.interview_passed = true;
+        markReadyToPublish(listing.id);
         await expect(api.publishListing(listing.id, OTHER))
             .rejects.toThrow('listing_forbidden');
     });
@@ -362,8 +403,7 @@ describe('rental: publish / pause / delist', () => {
 
     test('pause then delist flow', async () => {
         const listing = await seedDraft();
-        const row = globalThis.__rentalFakeState.listings.find(l => l.id === listing.id);
-        row.interview_passed = true;
+        const row = markReadyToPublish(listing.id);
         await api.publishListing(listing.id, OWNER);
         await api.pauseListing(listing.id, OWNER);
         expect(row.status).toBe('paused');
@@ -414,6 +454,7 @@ describe('rental: searchMarketplace', () => {
         const state = globalThis.__rentalFakeState;
         const rowA = state.listings.find(l => l.id === a.id);
         rowA.interview_passed = true;
+        rowA.rate_mli_per_ktoken = 5000;
         await api.publishListing(a.id, OWNER);
         // b stays draft
 
@@ -430,6 +471,7 @@ describe('rental: searchMarketplace', () => {
             });
             const row = globalThis.__rentalFakeState.listings.find(x => x.id === l.id);
             row.interview_passed = true;
+            row.rate_mli_per_ktoken = 5000 + i * 100;
             await api.publishListing(l.id, OWNER);
         }
         const results = await api.searchMarketplace({ limit: 2 });

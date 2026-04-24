@@ -317,10 +317,15 @@ function resetState() {
 beforeEach(() => { resetState(); });
 
 async function seedListing({ rate = 5000 } = {}) {
-    return rentalApi.createListing({
+    const listing = await rentalApi.createListing({
         ownerUserId: OWNER, ownerDeviceId: 'owner-dev', ownerEntityId: 0,
         title: 'Test bot', rateMliPerKtoken: rate,
     });
+    // Interview-gate fix (2026-04-24): createListing forces rate=0. These
+    // contract tests bypass publish and assume rate is set; poke in-memory row.
+    const row = globalThis.__rcState.listings.find(l => l.id === listing.id);
+    if (row) row.rate_mli_per_ktoken = rate;
+    return listing;
 }
 
 async function fundRenter(amountMli) {

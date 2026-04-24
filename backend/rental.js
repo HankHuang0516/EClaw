@@ -174,7 +174,11 @@ async function createListing({
     assertNonNegativeInt('owner_entity_id', ownerEntityId);
     assertString('title', title, { max: 120 });
     if (description !== null) assertString('description', description, { max: 2000 });
-    assertRateMli(rateMliPerKtoken);
+    // Interview gate (Hank 2026-04-24): pricing is locked at creation — draft rows
+    // always start at rate=0. Owner must pass interview before PATCH /listing/:id
+    // can set a real rate. Prevents "list for rent + set price" shortcut that
+    // bypasses the arena exam.
+    rateMliPerKtoken = 0;
     if (minRentalMinutes < MIN_RENTAL_MINUTES) throw new Error('min_rental_minutes_invalid');
     if (maxRentalMinutes > MAX_RENTAL_MINUTES) throw new Error('max_rental_minutes_invalid');
     if (minRentalMinutes > maxRentalMinutes) throw new Error('rental_duration_range_invalid');
@@ -217,6 +221,24 @@ async function updateListing(listingId, ownerUserId, patch) {
     // are LOCKED after interview and cannot be edited via this API.
     const allowed = ['title', 'description', 'rate_mli_per_ktoken',
                      'min_rental_minutes', 'max_rental_minutes', 'availability_windows'];
+    // Interview gate (Hank 2026-04-24): commercial fields — rate and duration
+    // limits — can only be mutated after the listing's interview has passed.
+    // Bare 'title' and 'description' edits are always allowed.
+    const commercialCols = new Set([
+        'rate_mli_per_ktoken', 'min_rental_minutes', 'max_rental_minutes', 'availability_windows',
+    ]);
+    const wantsCommercial = Object.keys(patch || {}).some(k => {
+        const col = k.replace(/[A-Z]/g, m => '_' + m.toLowerCase());
+        return commercialCols.has(col);
+    });
+    if (wantsCommercial) {
+        const gate = await pool.query(
+            `SELECT interview_passed FROM bot_listings WHERE id = $1 AND owner_user_id = $2`,
+            [listingId, ownerUserId]
+        );
+        if (gate.rowCount === 0) throw new Error('listing_not_found');
+        if (!gate.rows[0].interview_passed) throw new Error('interview_required_before_pricing');
+    }
     const sets = [];
     const params = [listingId, ownerUserId];
     for (const [key, value] of Object.entries(patch || {})) {
@@ -244,21 +266,27 @@ async function updateListing(listingId, ownerUserId, patch) {
 async function publishListing(listingId, ownerUserId) {
     assertString('listing_id', listingId, { max: 64 });
     // V5 fix: only draft/paused can be published — prevents delisted resurrection
+    // Hank 2026-04-24: also block publish when rate is still the 0 placeholder,
+    // so a user can't click publish before doing the rate-setting step.
     const res = await pool.query(
         `UPDATE bot_listings SET status = 'listed', updated_at = NOW()
          WHERE id = $1 AND owner_user_id = $2 AND interview_passed = TRUE
+           AND rate_mli_per_ktoken > 0
            AND status IN ('draft', 'paused')
          RETURNING id, status`,
         [listingId, ownerUserId]
     );
     if (res.rowCount === 0) {
         const check = await pool.query(
-            `SELECT interview_passed, owner_user_id, status FROM bot_listings WHERE id = $1`,
+            `SELECT interview_passed, owner_user_id, status, rate_mli_per_ktoken FROM bot_listings WHERE id = $1`,
             [listingId]
         );
         if (check.rowCount === 0) throw new Error('listing_not_found');
         if (check.rows[0].owner_user_id !== ownerUserId) throw new Error('listing_forbidden');
         if (!check.rows[0].interview_passed) throw new Error('interview_not_passed');
+        if (!check.rows[0].rate_mli_per_ktoken || Number(check.rows[0].rate_mli_per_ktoken) === 0) {
+            throw new Error('rate_not_set');
+        }
         if (check.rows[0].status === 'listed') throw new Error('already_listed');
         if (check.rows[0].status === 'delisted') throw new Error('listing_permanently_delisted');
         if (check.rows[0].status === 'interview') throw new Error('interview_in_progress');
