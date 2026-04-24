@@ -1,3 +1,10 @@
+## [1.1075.1](https://github.com/HankHuang0516/EClaw/compare/v1.1075.0...v1.1075.1) (2026-04-24)
+
+
+### Bug Fixes
+
+* **kanban:** cap long card description height in detail modal ([#2069](https://github.com/HankHuang0516/EClaw/issues/2069)) ([c04dbaf](https://github.com/HankHuang0516/EClaw/commit/c04dbaf7bcddb66d5517dadbb3a0b2bec6502e5e))
+
 # [1.1075.0](https://github.com/HankHuang0516/EClaw/compare/v1.1074.0...v1.1075.0) (2026-04-24)
 
 
