@@ -18,6 +18,16 @@ async function checkAuth() {
         }
     } catch (_) { /* ignore */ }
 
+    // Collect any URL-param device credentials up-front so we can detect a
+    // session-vs-URL device mismatch after /me succeeds.
+    let urlDeviceId = null;
+    let urlDeviceSecret = null;
+    try {
+        const params = new URLSearchParams(window.location.search);
+        urlDeviceId = params.get('deviceId');
+        urlDeviceSecret = params.get('deviceSecret');
+    } catch (_) { /* ignore */ }
+
     try {
         // Suppress api.js's built-in 401->index redirect so the WebView / URL-param
         // fallbacks below get a chance to device-login. Without this, the redirect
@@ -27,6 +37,31 @@ async function checkAuth() {
         const data = await apiCall('GET', '/api/auth/me', null, { skip401Redirect: true });
         currentUser = data.user;
         window.currentUser = currentUser;
+
+        // WebView stale-session guard: if the host passed deviceId+deviceSecret
+        // in the URL but /me returned a DIFFERENT device (e.g. leftover session
+        // cookie from a prior account or test device), the URL-param device is
+        // authoritative for this launch. Re-login so env-vars and other pages
+        // hit the device the shell intended, not whoever the stale cookie
+        // happens to belong to. Without this, pages like env-vars.html render
+        // empty because they query the wrong device_vars row.
+        if (urlDeviceId && urlDeviceSecret && currentUser.deviceId && urlDeviceId !== currentUser.deviceId) {
+            try {
+                const relogin = await apiCall('POST', '/api/auth/device-login', {
+                    deviceId: urlDeviceId,
+                    deviceSecret: urlDeviceSecret
+                });
+                if (relogin && relogin.success && relogin.user) {
+                    currentUser = relogin.user;
+                    if (!currentUser.deviceSecret) currentUser.deviceSecret = urlDeviceSecret;
+                    if (!currentUser.deviceId) currentUser.deviceId = urlDeviceId;
+                    window.currentUser = currentUser;
+                    console.log('[Auth] WebView device mismatch → re-logged into URL-param device');
+                }
+            } catch (reloginErr) {
+                console.warn('[Auth] WebView device mismatch but re-login failed, staying on session user:', reloginErr);
+            }
+        }
 
         // Restore language preference from server if not set locally
         if (currentUser.language && typeof i18n !== 'undefined') {

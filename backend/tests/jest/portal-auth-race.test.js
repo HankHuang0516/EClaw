@@ -149,4 +149,14 @@ describe('auth.js wiring (static analysis)', () => {
         // itself (api.js no longer does it for the /me probe).
         expect(source).toMatch(/window\.location\.href\s*=\s*['"]index\.html['"]/);
     });
+
+    test('WebView device-mismatch guard re-logs into URL-param device', () => {
+        // Incident 2026-04-24 card_f0d95b8d: mission.html's env-vars sub-tab
+        // rendered blank in the iOS WebView because a stale session cookie
+        // belonged to a different device than the URL params. The guard
+        // detects mismatch between URL deviceId and /me's returned deviceId,
+        // then calls /api/auth/device-login with the URL-param credentials.
+        expect(source).toMatch(/urlDeviceId\s*!==\s*currentUser\.deviceId/);
+        expect(source).toMatch(/apiCall\(\s*['"]POST['"]\s*,\s*['"]\/api\/auth\/device-login['"]/);
+    });
 });
