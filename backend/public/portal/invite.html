@@ -417,10 +417,10 @@
                     <table class="inv-funnel-table">
                         <thead>
                             <tr>
-                                <th data-i18n="invite_per_code_col_code">Code</th>
-                                <th class="num" data-i18n="invite_per_code_col_clicks">Clicks</th>
-                                <th class="num" data-i18n="invite_per_code_col_unique">Unique</th>
-                                <th data-i18n="invite_per_code_col_status">Status</th>
+                                <th>${tt('invite_per_code_col_code', 'Code')}</th>
+                                <th class="num">${tt('invite_per_code_col_clicks', 'Clicks')}</th>
+                                <th class="num">${tt('invite_per_code_col_unique', 'Unique')}</th>
+                                <th>${tt('invite_per_code_col_status', 'Status')}</th>
                             </tr>
                         </thead>
                         <tbody>${rows.map(r => `
