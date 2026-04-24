@@ -8,6 +8,34 @@ interface WebViewScreenProps {
   url: string;
 }
 
+// Short-term chrome-hide for #1770 — the full native rewrite is a separate
+// roadmap item. This CSS closes the most jarring seams (portal navbar,
+// light background, non-system fonts) when portal pages are hosted inside
+// the iOS WebView. Scoped via html.eclaw-ios-chrome so it cannot leak to
+// browser users.
+const CHROME_HIDE_CSS = `
+  html.eclaw-ios-chrome,
+  html.eclaw-ios-chrome body {
+    background-color: #0D0D1A !important;
+    color: #E5E5EA !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif !important;
+  }
+  html.eclaw-ios-chrome .nav,
+  html.eclaw-ios-chrome nav.nav,
+  html.eclaw-ios-chrome header.nav,
+  html.eclaw-ios-chrome .public-nav,
+  html.eclaw-ios-chrome .page-nav,
+  html.eclaw-ios-chrome .site-footer,
+  html.eclaw-ios-chrome footer.footer {
+    display: none !important;
+  }
+  html.eclaw-ios-chrome button,
+  html.eclaw-ios-chrome .btn,
+  html.eclaw-ios-chrome input[type="submit"] {
+    accent-color: #7C3AED;
+  }
+`;
+
 const INJECTED_JS = `
 (function() {
   try {
@@ -27,6 +55,17 @@ const INJECTED_JS = `
       try { localStorage.setItem('authToken', tok); } catch (_) {}
       try { document.cookie = 'eclaw_session=' + tok + '; path=/; SameSite=Lax; Secure'; } catch (_) {}
     }
+    // Chrome-hide — tag root + inject CSS so portal pages visually align
+    // with the native deep-purple container. Tracked in #1770.
+    if (params.get('hideChrome') === '1') {
+      try { document.documentElement.classList.add('eclaw-ios-chrome'); } catch (_) {}
+      try {
+        const style = document.createElement('style');
+        style.setAttribute('data-eclaw-ios-chrome', '1');
+        style.textContent = ${JSON.stringify(CHROME_HIDE_CSS)};
+        (document.head || document.documentElement).appendChild(style);
+      } catch (_) {}
+    }
   } catch(e) {
     if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
       window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'auth-diag-error', err: String(e) }));
@@ -42,7 +81,7 @@ export default function WebViewScreen({ url }: WebViewScreenProps) {
   const [loading, setLoading] = useState(true);
 
   const sep = url.includes('?') ? '&' : '?';
-  const qs: string[] = ['embed=1'];
+  const qs: string[] = ['embed=1', 'hideChrome=1'];
   if (deviceId) qs.push(`deviceId=${encodeURIComponent(deviceId)}`);
   if (deviceSecret) qs.push(`deviceSecret=${encodeURIComponent(deviceSecret)}`);
   if (authToken) qs.push(`authToken=${encodeURIComponent(authToken)}`);
