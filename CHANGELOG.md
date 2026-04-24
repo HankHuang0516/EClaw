@@ -1,3 +1,10 @@
+## [1.1063.7](https://github.com/HankHuang0516/EClaw/compare/v1.1063.6...v1.1063.7) (2026-04-24)
+
+
+### Bug Fixes
+
+* **i18n:** add kanban_nudge translations to 11 locales + zh-CN analytics keys ([#2014](https://github.com/HankHuang0516/EClaw/issues/2014), [#1955](https://github.com/HankHuang0516/EClaw/issues/1955)) ([#2025](https://github.com/HankHuang0516/EClaw/issues/2025)) ([2f943f3](https://github.com/HankHuang0516/EClaw/commit/2f943f3b47412a13391f5f968211ca56336b0283))
+
 ## [1.1063.6](https://github.com/HankHuang0516/EClaw/compare/v1.1063.5...v1.1063.6) (2026-04-24)
 
 
