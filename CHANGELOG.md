@@ -1,3 +1,17 @@
+# [1.1072.0](https://github.com/HankHuang0516/EClaw/compare/v1.1071.6...v1.1072.0) (2026-04-24)
+
+
+### Bug Fixes
+
+* **security:** gate admin localhost bypass on non-production ([#2024](https://github.com/HankHuang0516/EClaw/issues/2024)) ([#2053](https://github.com/HankHuang0516/EClaw/issues/2053)) ([f219cb0](https://github.com/HankHuang0516/EClaw/commit/f219cb06e6e9e5eab8afdab7356290b578e86ed4))
+* **ios:** move hardcoded ✓ prefix from code into i18n values ([#1779](https://github.com/HankHuang0516/EClaw/issues/1779)) ([#2050](https://github.com/HankHuang0516/EClaw/issues/2050)) ([67900e0](https://github.com/HankHuang0516/EClaw/commit/67900e0bffaea4c6233fac093c0446ca7aa4656d))
+* **security:** read gateway/setup creds from env, never inline ([#2022](https://github.com/HankHuang0516/EClaw/issues/2022)) ([#2054](https://github.com/HankHuang0516/EClaw/issues/2054)) ([701c607](https://github.com/HankHuang0516/EClaw/commit/701c60775969c3f7de65d77fcb60258189b28ac3))
+
+
+### Features
+
+* **security:** global rate limiting on /api/* ([#1948](https://github.com/HankHuang0516/EClaw/issues/1948)) ([#2055](https://github.com/HankHuang0516/EClaw/issues/2055)) ([1c996ec](https://github.com/HankHuang0516/EClaw/commit/1c996ec7bf1863113b65e588834c08f06ae45d5d))
+
 ## [1.1071.6](https://github.com/HankHuang0516/EClaw/compare/v1.1071.5...v1.1071.6) (2026-04-24)
 
 
