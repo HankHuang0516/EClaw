@@ -3468,6 +3468,37 @@ app.get('/api/admin/bots', adminAuth, adminCheck, async (req, res) => {
     }
 });
 
+// GET /api/admin/invite/clicks — step-1 funnel telemetry for the invite
+// conversion metric. Pairs with /api/growth/daily which reports cumulative
+// redemptions; this endpoint shows per-code click counts + unique visitors
+// so we can see where drop-off happens (shared-but-not-clicked vs
+// clicked-but-not-redeemed). Admin-gated because the rows include IP hashes
+// and referrers — aggregate is public-safe, raw rows are not.
+app.get('/api/admin/invite/clicks', adminAuth, adminCheck, async (req, res) => {
+    try {
+        const rows = await db.getInviteClickStats();
+        const totalClicks = rows.reduce((s, r) => s + r.clicks, 0);
+        const totalUnique = rows.reduce((s, r) => s + r.unique_clicks, 0);
+        const redeemedCount = rows.filter(r => r.redeemed).length;
+        res.json({
+            success: true,
+            summary: {
+                codes_with_clicks: rows.length,
+                total_clicks: totalClicks,
+                total_unique_clicks: totalUnique,
+                redeemed: redeemedCount,
+                click_to_redeem_pct: rows.length > 0
+                    ? Math.round((redeemedCount / rows.length) * 1000) / 10
+                    : null,
+            },
+            rows,
+        });
+    } catch (err) {
+        console.error('[Admin] invite/clicks error:', err);
+        res.status(500).json({ success: false, error: 'Failed to load invite clicks' });
+    }
+});
+
 // POST /api/admin/push-update - Broadcast app update notification to all devices via FCM
 app.post('/api/admin/push-update', adminAuth, adminCheck, async (req, res) => {
     if (!firebaseAdmin) {

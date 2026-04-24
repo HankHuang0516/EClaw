@@ -74,6 +74,11 @@ jest.mock('../../../db', () => ({
     deleteDeviceVars: jest.fn().mockResolvedValue(true),
     logDeviceVarsAudit: jest.fn().mockResolvedValue(true),
     getDeviceVarsAudit: jest.fn().mockResolvedValue([]),
+    getCommunityStats: jest.fn().mockResolvedValue({ total_bots: 0, new_today: 0, active_7d: 0, top_categories: [] }),
+    searchPublicCards: jest.fn().mockResolvedValue([]),
+    upsertCommunityRating: jest.fn().mockResolvedValue(null),
+    logInviteClick: jest.fn().mockResolvedValue(false),
+    getInviteClickStats: jest.fn().mockResolvedValue([]),
 }));
 
 jest.mock('../../../flickr', () => ({
