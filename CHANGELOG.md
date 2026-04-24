@@ -1,3 +1,10 @@
+# [1.1067.0](https://github.com/HankHuang0516/EClaw/compare/v1.1066.0...v1.1067.0) (2026-04-24)
+
+
+### Features
+
+* **settings:** collapsible Kanban Nudge section, default collapsed ([#2035](https://github.com/HankHuang0516/EClaw/issues/2035)) ([a9cf5b0](https://github.com/HankHuang0516/EClaw/commit/a9cf5b054a1afd0eb19c88c3569f2d8acbc18df4))
+
 # [1.1066.0](https://github.com/HankHuang0516/EClaw/compare/v1.1065.0...v1.1066.0) (2026-04-24)
 
 
