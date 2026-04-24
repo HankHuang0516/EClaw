@@ -22,6 +22,8 @@ const db = require('./db');
 const { URL } = require('url');
 const dnsLookup = require('util').promisify(require('dns').lookup);
 const { enrichContext, materializeChannelText } = require('./push-context');
+const { scanReferences, buildReferencesBlock } = require('./reference-parser');
+const { resolveReferences } = require('./reference-resolver');
 
 // ── SSRF protection: reject private/internal callback URLs ──
 function isPrivateIp(ip) {
@@ -1122,6 +1124,22 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             const targetEntity = targetDevice && targetDevice.entities
                 ? targetDevice.entities[entityId]
                 : null;
+
+            // 智慧引用 / Smart Chip expansion — scan the outgoing text for
+            // card_/review_/src:// references and append a [REFERENCES] block
+            // so the receiving bot truly understands what is being cited
+            // instead of guessing from the opaque ID. See backend/reference-*.js.
+            let referencesBlock = null;
+            try {
+                const parsedRefs = scanReferences(payload.text || '');
+                if (parsedRefs.length > 0 && chatPool) {
+                    const resolved = await resolveReferences(chatPool, deviceId, parsedRefs);
+                    referencesBlock = buildReferencesBlock(resolved);
+                }
+            } catch (refErr) {
+                serverLog('warn', 'channel', `reference expansion failed: ${refErr.message}`, { deviceId, entityId });
+            }
+
             const enrichedCtx = enrichContext(payload.eclaw_context, {
                 helpers: pushContextHelpers,
                 apiBase,
@@ -1131,6 +1149,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 targetEntityId: entityId,
                 broadcastRecipients: payload.broadcastRecipients,
             });
+            if (referencesBlock) enrichedCtx.referencesBlock = referencesBlock;
             const materializedText = materializeChannelText(payload, enrichedCtx);
 
             const bodyStr = JSON.stringify({

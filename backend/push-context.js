@@ -167,6 +167,7 @@ function materializeChannelText(payload, ctx = {}) {
 
     // Trailer.
     if (ctx.mentionsBlock) sections.push(String(ctx.mentionsBlock).trim());
+    if (ctx.referencesBlock) sections.push(String(ctx.referencesBlock).trim());
     if (ctx.missionHints) sections.push(String(ctx.missionHints).trim());
     if (ctx.identityHint) sections.push(String(ctx.identityHint).trim());
 
