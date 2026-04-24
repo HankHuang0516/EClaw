@@ -1,3 +1,10 @@
+## [1.1071.5](https://github.com/HankHuang0516/EClaw/compare/v1.1071.4...v1.1071.5) (2026-04-24)
+
+
+### Bug Fixes
+
+* **rental:** gate pricing + publish on interview_passed=TRUE ([#2049](https://github.com/HankHuang0516/EClaw/issues/2049)) ([8d93f17](https://github.com/HankHuang0516/EClaw/commit/8d93f175c10bd7f5615d2316126c711cc9d14584))
+
 ## [1.1071.4](https://github.com/HankHuang0516/EClaw/compare/v1.1071.3...v1.1071.4) (2026-04-24)
 
 
