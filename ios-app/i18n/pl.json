@@ -288,7 +288,7 @@
     "slots_available": "{{count}} gniazd dostępne",
     "sold_out": "Wyprzedane",
     "webhook_testing": "Testowanie połączenia...",
-    "webhook_success": "Połączenie udane",
+    "webhook_success": "✓ Połączenie udane",
     "iap_coming_soon": "Subskrypcja Apple IAP już wkrótce",
     "select_bot": "Wybierz bota:",
     "active_users": "Aktywni użytkownicy"

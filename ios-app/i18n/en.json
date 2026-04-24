@@ -350,7 +350,7 @@
     "slots_available": "{{count}} slots available",
     "sold_out": "Sold Out",
     "webhook_testing": "Testing connection...",
-    "webhook_success": "Connection successful",
+    "webhook_success": "✓ Connection successful",
     "iap_coming_soon": "Apple IAP subscription coming soon",
     "select_bot": "Select a bot:",
     "active_users": "Active users"
