@@ -1,3 +1,10 @@
+## [1.1064.1](https://github.com/HankHuang0516/EClaw/compare/v1.1064.0...v1.1064.1) (2026-04-24)
+
+
+### Bug Fixes
+
+* **invite:** add /invite/:code route + click telemetry — shared URLs were 404ing ([#2032](https://github.com/HankHuang0516/EClaw/issues/2032)) ([f53a093](https://github.com/HankHuang0516/EClaw/commit/f53a093aad18c7df3634ba1b88313022ea2c41d7))
+
 # [1.1064.0](https://github.com/HankHuang0516/EClaw/compare/v1.1063.10...v1.1064.0) (2026-04-24)
 
 
