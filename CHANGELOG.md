@@ -1,3 +1,10 @@
+# [1.1074.0](https://github.com/HankHuang0516/EClaw/compare/v1.1073.1...v1.1074.0) (2026-04-24)
+
+
+### Features
+
+* **scheduled-messages:** Phase 1 backend — schema + 4 CRUD + poller ([#2067](https://github.com/HankHuang0516/EClaw/issues/2067)) ([144b281](https://github.com/HankHuang0516/EClaw/commit/144b2817da2a98c12bfdb2d68da6896ea6074efd))
+
 ## [1.1073.1](https://github.com/HankHuang0516/EClaw/compare/v1.1073.0...v1.1073.1) (2026-04-24)
 
 
