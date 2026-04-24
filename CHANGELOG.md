@@ -1,3 +1,10 @@
+## [1.1071.1](https://github.com/HankHuang0516/EClaw/compare/v1.1071.0...v1.1071.1) (2026-04-24)
+
+
+### Bug Fixes
+
+* **chat:** hide raw R2 URL from file message UI ([#2045](https://github.com/HankHuang0516/EClaw/issues/2045)) ([5bf6e78](https://github.com/HankHuang0516/EClaw/commit/5bf6e78709729e662bde472d22e0d0cdec4bee78))
+
 # [1.1071.0](https://github.com/HankHuang0516/EClaw/compare/v1.1070.3...v1.1071.0) (2026-04-24)
 
 
