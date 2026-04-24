@@ -132,7 +132,11 @@
         .kb-comment.sent .kb-comment-bubble { background:var(--primary); color:#fff; border-bottom-right-radius:4px; }
         .kb-comment.received .kb-comment-bubble { background:var(--input-bg); border:1px solid var(--card-border); border-bottom-left-radius:4px; }
         .kb-comment.system-msg .kb-comment-bubble { background:none; color:var(--text-secondary); font-style:italic; font-size:12px; text-align:center; padding:4px 0; }
-        .kb-comment-time { font-size:10px; color:var(--text-muted); margin-top:2px; }
+        .kb-comment-time { font-size:10px; color:var(--text-muted); }
+        .kb-comment-row { display:flex; align-items:center; gap:6px; margin-top:2px; }
+        .kb-comment.sent .kb-comment-row { flex-direction:row-reverse; }
+        .kb-comment-pin { background:none; border:none; padding:0; margin:0; font-size:13px; cursor:pointer; opacity:0.5; transition:opacity 0.15s; line-height:1; }
+        .kb-comment-pin:hover { opacity:1; }
         .kb-comment-input { display:flex; gap:8px; margin-top:12px; }
         .kb-comment-input textarea { flex:1; background:var(--input-bg); border:1px solid var(--card-border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text); font-size:13px; resize:vertical; min-height:60px; font-family:inherit; }
         .kb-comment-input button { align-self:flex-end; }
@@ -1503,6 +1507,14 @@
             quoteToChat('看板卡片', title, meta);
         }
 
+        function quoteCommentToChat(payload) {
+            if (!payload) return;
+            const src = payload.src || '留言';
+            const sender = payload.sender || '';
+            const text = (payload.text || '').replace(/\s+/g, ' ').slice(0, 80);
+            quoteToChat(src, sender, text);
+        }
+
         // ── Inline Schedule Panel (detail modal tab) ──
         function renderSchedulePanel(cardId) {
             const card = findCard(cardId);
@@ -1684,10 +1696,16 @@
                     const avatar = typeof getAvatarForEntity === 'function' ? getAvatarForEntity(c.from_entity_id) : '🦞';
                     const name = typeof getEntityDisplayName === 'function' ? getEntityDisplayName(c.from_entity_id) : '#'+(c.from_entity_id??'?');
                     const avatarHtml = typeof renderAvatarHtml === 'function' ? renderAvatarHtml(avatar, 16) : avatar;
+                    const cardTitle = (findCard(openCardId) || {}).title || '';
+                    const pinPayload = JSON.stringify({ src: '留言 · ' + cardTitle, sender: name, text: c.text || '' })
+                        .replace(/'/g, '&#39;');
                     return `<div class="kb-comment ${isSent ? 'sent' : 'received'}">
                         <div class="kb-comment-source"><span class="comment-avatar">${avatarHtml}</span> ${escapeHtml(name)}</div>
                         <div class="kb-comment-bubble">${escapeHtml(c.text)}</div>
-                        <div class="kb-comment-time">${formatTime(c.created_at)}</div>
+                        <div class="kb-comment-row">
+                            <button class="kb-comment-pin" onclick='quoteCommentToChat(${pinPayload})' title="引用到聊天">📌</button>
+                            <span class="kb-comment-time">${formatTime(c.created_at)}</span>
+                        </div>
                     </div>`;
                 }).join('');
 
