@@ -1305,6 +1305,12 @@
             transition: background 0.15s;
         }
         .r2-file-actions button:hover { background: var(--input-bg); }
+        @media (max-width: 640px) {
+            .r2-file-item { flex-wrap: wrap; row-gap: 4px; }
+            .r2-file-name { flex: 1 1 100%; order: 1; white-space: normal; overflow: visible; text-overflow: clip; word-break: break-all; }
+            .r2-file-actions { order: 2; margin-left: auto; }
+            .r2-file-meta { flex: 1 1 100%; order: 3; font-size: 10px; white-space: normal; }
+        }
         .r2-modal-footer { display: flex; gap: 8px; }
         .r2-upload-label {
             flex: 1;
