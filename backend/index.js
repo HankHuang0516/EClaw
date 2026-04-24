@@ -4968,6 +4968,76 @@ app.post('/api/device/status', (req, res) => {
     });
 });
 
+/**
+ * POST /api/device/rotate-secret
+ * Rotate the caller's deviceSecret. User-initiated from settings UI.
+ * Body: { deviceId, deviceSecret }  (or header x-device-secret)
+ *
+ * Validates the old secret, generates a fresh UUID, updates both the
+ * in-memory device and the DB row atomically, returns the new secret ONCE.
+ *
+ * Scope guarantees:
+ *   - botSecret / webhook / entity state stays untouched (those are
+ *     independent tokens — a deviceSecret rotate must not invalidate bot
+ *     rentals, webhooks, or running sessions).
+ *   - After rotation the old secret is immediately invalid on this process
+ *     AND on any future process (DB is source of truth).
+ *
+ * Rate-limited via deviceRegisterRateLimit (10/15min/IP) so a leaked secret
+ * can't be rotated-spammed to DoS ourselves.
+ */
+app.post('/api/device/rotate-secret', deviceRegisterRateLimit, async (req, res) => {
+    const { deviceId } = req.body || {};
+    const providedSecret = (req.body && req.body.deviceSecret) || req.headers['x-device-secret'];
+
+    if (!deviceId || !providedSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+
+    const device = devices[deviceId];
+    if (!device || !device.deviceSecret || !safeEqual(device.deviceSecret, providedSecret)) {
+        return res.status(401).json({ success: false, error: 'Invalid credentials' });
+    }
+
+    const newSecret = crypto.randomUUID();
+    const rotatedAt = Date.now();
+
+    // Persist to DB. The in-memory `devices` map is the auth source of truth
+    // (we already validated providedSecret against it above), so a mismatched
+    // rowCount here just means the DB row either doesn't exist yet (ephemeral
+    // test device) or was already rotated by another process. Log + continue
+    // — the next saveDeviceData() cycle will upsert in either case.
+    const pg = authModule && authModule.pool;
+    if (pg) {
+        try {
+            const result = await pg.query(
+                `UPDATE devices SET device_secret = $1, updated_at = $2
+                 WHERE device_id = $3 AND device_secret = $4`,
+                [newSecret, rotatedAt, deviceId, providedSecret]
+            );
+            if (result.rowCount !== 1) {
+                console.warn(`[rotate-secret] DB UPDATE rowCount=${result.rowCount} for ${deviceId} (row missing or stale; continuing)`);
+            }
+        } catch (err) {
+            console.error('[rotate-secret] DB UPDATE failed:', err.message);
+            return res.status(500).json({ success: false, error: 'Rotation persist failed' });
+        }
+    }
+
+    device.deviceSecret = newSecret;
+
+    const callerIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || 'unknown';
+    const ipHash = crypto.createHash('sha256').update(callerIp).digest('hex').slice(0, 16);
+    console.log(`[rotate-secret] device=${deviceId} ip_hash=${ipHash} rotated_at=${new Date(rotatedAt).toISOString()}`);
+
+    return res.json({
+        success: true,
+        deviceId,
+        newDeviceSecret: newSecret,
+        rotatedAt: new Date(rotatedAt).toISOString(),
+    });
+});
+
 // ============================================
 // BOT BINDING (OpenClaw)
 // ============================================

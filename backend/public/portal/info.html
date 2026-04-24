@@ -664,6 +664,23 @@ Claude 主動查詢執行結果
                         <p data-i18n="guide_usecase_faq_2"><strong>Q: Device Secret 在哪裡找？</strong><br>
                         A: Web Portal → 右上角頭像 → Settings → Device Secret 列 → 點眼睛圖示顯示 → 複製。Bot Secret 是 bot 自己的憑證，用戶不需要取得。</p>
 
+                        <p data-i18n="guide_usecase_faq_rotate"><strong>Q: Device Secret 外洩或想定期更換怎麼辦？</strong><br>
+                        A: Settings → Device Secret 列旁的 🔄 <strong>Rotate</strong> 按鈕即可換新 secret。舊 secret 立即失效、所有用它打的 API 會回 403，必須用新 secret 重新更新手機 App、Channel plugin、金鑰庫等所有地方。<strong>新 secret 只會顯示一次</strong>，記得按「下載 .txt 備份」。</p>
+                        <div class="code-block"># API 方式（headless / 腳本場景）
+POST /api/device/rotate-secret
+Content-Type: application/json
+x-device-secret: OLD_SECRET
+
+{ "deviceId": "YOUR_DEVICE_ID" }
+
+# 回應
+{
+  "success": true,
+  "deviceId": "YOUR_DEVICE_ID",
+  "newDeviceSecret": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "rotatedAt": "2026-04-24T07:50:00.000Z"
+}</div>
+
                         <p data-i18n="guide_usecase_faq_3"><strong>Q: Claude 下的指令 bot 沒有反應？</strong><br>
                         A: 確認 bot 已綁定（isBound: true）、Device Secret 正確、OpenClaw 在線。</p>
 

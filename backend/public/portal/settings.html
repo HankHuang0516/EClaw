@@ -675,6 +675,15 @@
                     style="width:100%;background:none;border:1px solid var(--card-border);border-radius:6px;padding:7px 0;cursor:pointer;font-size:13px;color:var(--text-secondary);opacity:0.8;display:flex;align-items:center;justify-content:center;gap:6px;"
                     data-i18n="settings_copy_credentials">Copy Credentials</button>
             </div>
+            <div style="padding: 10px 0; border-top: 1px dashed var(--card-border);">
+                <button onclick="openRotateSecretDialog()"
+                    style="width:100%;background:none;border:1px solid var(--danger);border-radius:6px;padding:7px 0;cursor:pointer;font-size:13px;color:var(--danger);opacity:0.85;display:flex;align-items:center;justify-content:center;gap:6px;"
+                    data-i18n="settings_rotate_device_secret">🔄 Rotate Device Secret</button>
+                <p style="margin:6px 2px 0;font-size:11px;color:var(--text-muted);line-height:1.4;"
+                    data-i18n="settings_rotate_device_secret_hint">
+                    Generate a new Device Secret if the current one has leaked. All other sessions will need to re-enter the new secret.
+                </p>
+            </div>
             <div class="info-row" id="connectedAccountsRow" style="display:none">
                 <span class="info-label" data-i18n="settings_connected_accounts">Connected Accounts</span>
                 <span class="info-value" id="connectedAccounts">--</span>
@@ -991,6 +1000,44 @@
         </div>
     </div>
 
+    <!-- Rotate Device Secret: Confirm -->
+    <div class="dialog-overlay" id="rotateSecretConfirmDialog" style="display:none">
+        <div class="dialog">
+            <div class="dialog-title" data-i18n="settings_rotate_confirm_title">Rotate Device Secret?</div>
+            <p style="font-size:14px;line-height:1.55;" data-i18n="settings_rotate_confirm_body">
+                This immediately invalidates the current Device Secret. Any other device or browser tab still using the old value will need to sign in again with the new one.
+            </p>
+            <p style="font-size:13px;color:var(--danger);line-height:1.5;" data-i18n="settings_rotate_confirm_warn">
+                ⚠ The new secret is shown only once. Back it up before closing the next dialog.
+            </p>
+            <div class="dialog-actions">
+                <button class="btn btn-outline" onclick="closeRotateSecretConfirm()" data-i18n="common_cancel">Cancel</button>
+                <button class="btn btn-danger" id="btnConfirmRotate" onclick="performRotateSecret()" data-i18n="settings_rotate_confirm_ok">Rotate Now</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rotate Device Secret: Reveal (shown once after successful rotate) -->
+    <div class="dialog-overlay" id="rotateSecretRevealDialog" style="display:none">
+        <div class="dialog" style="max-width:520px;width:92%;">
+            <div class="dialog-title" data-i18n="settings_rotate_reveal_title">🔑 Your New Device Secret</div>
+            <p style="font-size:13px;color:var(--text-secondary);line-height:1.5;" data-i18n="settings_rotate_reveal_body">
+                Save this now. You will not be able to view it again — if you lose it, you must rotate again.
+            </p>
+            <div style="margin:10px 0;padding:12px;background:var(--bg-secondary);border-radius:8px;border:1px solid var(--accent);">
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;" data-i18n="settings_device_id">Device ID</div>
+                <div class="mono" id="rotateRevealDeviceId" style="word-break:break-all;font-size:13px;margin-bottom:10px;">--</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;" data-i18n="settings_device_secret">Device Secret</div>
+                <div class="mono" id="rotateRevealSecret" style="word-break:break-all;font-size:13px;color:var(--accent);">--</div>
+            </div>
+            <div class="dialog-actions" style="flex-wrap:wrap;gap:8px;">
+                <button class="btn btn-outline" onclick="downloadRotatedSecretBackup()" data-i18n="settings_rotate_reveal_download">⬇ Download .txt Backup</button>
+                <button class="btn btn-outline" onclick="copyRotatedSecret()" data-i18n="settings_rotate_reveal_copy">📋 Copy Secret</button>
+                <button class="btn btn-primary" onclick="closeRotateSecretReveal()" data-i18n="settings_rotate_reveal_done">I've Saved It, Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Privacy Policy Dialog -->
     <div class="dialog-overlay" id="privacyDialog" style="display:none">
         <div class="dialog" style="max-width:600px;width:90%;">
@@ -1177,6 +1224,84 @@
                 await navigator.clipboard.writeText(text);
                 showCopyToast();
             } catch (e) { console.error('Copy failed:', e); }
+        }
+
+        // ── Rotate Device Secret ─────────────────────────────────────────
+        let _rotatedSecretCache = null;
+
+        function openRotateSecretDialog() {
+            if (!_fullDeviceId || !_fullDeviceSecret) return;
+            document.getElementById('rotateSecretConfirmDialog').style.display = 'flex';
+        }
+
+        function closeRotateSecretConfirm() {
+            document.getElementById('rotateSecretConfirmDialog').style.display = 'none';
+        }
+
+        async function performRotateSecret() {
+            const btn = document.getElementById('btnConfirmRotate');
+            btn.disabled = true;
+            try {
+                const res = await fetch('/api/device/rotate-secret', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ deviceId: _fullDeviceId, deviceSecret: _fullDeviceSecret }),
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success || !data.newDeviceSecret) {
+                    alert((data && data.error) || 'Rotation failed');
+                    return;
+                }
+                // Commit the new secret to localStorage + cached user state so the next
+                // API call doesn't 401. The session cookie keeps this tab authed for UI.
+                _fullDeviceSecret = data.newDeviceSecret;
+                _rotatedSecretCache = data.newDeviceSecret;
+                try { localStorage.setItem('deviceSecret', data.newDeviceSecret); } catch (_) { }
+                try {
+                    const u = JSON.parse(localStorage.getItem('user') || '{}');
+                    u.deviceSecret = data.newDeviceSecret;
+                    localStorage.setItem('user', JSON.stringify(u));
+                } catch (_) { }
+                document.getElementById('accountDeviceSecret').textContent = maskSecret(data.newDeviceSecret);
+                document.getElementById('rotateRevealDeviceId').textContent = _fullDeviceId;
+                document.getElementById('rotateRevealSecret').textContent = data.newDeviceSecret;
+                closeRotateSecretConfirm();
+                document.getElementById('rotateSecretRevealDialog').style.display = 'flex';
+            } catch (e) {
+                console.error('rotate-secret failed:', e);
+                alert('Network error during rotation');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function closeRotateSecretReveal() {
+            document.getElementById('rotateSecretRevealDialog').style.display = 'none';
+            _rotatedSecretCache = null;
+        }
+
+        async function copyRotatedSecret() {
+            if (!_rotatedSecretCache) return;
+            try {
+                await navigator.clipboard.writeText(_rotatedSecretCache);
+                showCopyToast();
+            } catch (e) { console.error('Copy failed:', e); }
+        }
+
+        function downloadRotatedSecretBackup() {
+            if (!_rotatedSecretCache || !_fullDeviceId) return;
+            const date = new Date().toISOString().slice(0, 10);
+            const warn = '# Keep this file private. Anyone with the Device Secret can sign in as you.\n# Store it in a password manager, then delete this file.\n';
+            const body = `${warn}\nDevice ID: ${_fullDeviceId}\nDevice Secret: ${_rotatedSecretCache}\nRotated At: ${new Date().toISOString()}\n`;
+            const blob = new Blob([body], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `eclaw-device-secret-${date}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
 
         function populateAccountInfo(user) {
