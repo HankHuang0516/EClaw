@@ -1,3 +1,10 @@
+# [1.1080.0](https://github.com/HankHuang0516/EClaw/compare/v1.1079.0...v1.1080.0) (2026-04-24)
+
+
+### Features
+
+* **chip:** Smart Chip C — nested popover stack with cycle/depth guards ([#2080](https://github.com/HankHuang0516/EClaw/issues/2080)) ([6f6dd0f](https://github.com/HankHuang0516/EClaw/commit/6f6dd0fdf61cd80985508ba6f5929e5df3ee575b))
+
 # [1.1079.0](https://github.com/HankHuang0516/EClaw/compare/v1.1078.0...v1.1079.0) (2026-04-24)
 
 
