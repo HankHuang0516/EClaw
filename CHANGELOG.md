@@ -1,3 +1,10 @@
+# [1.1070.0](https://github.com/HankHuang0516/EClaw/compare/v1.1069.0...v1.1070.0) (2026-04-24)
+
+
+### Features
+
+* **mission:** embed Mind Map card as first item in 心智 tab ([#2040](https://github.com/HankHuang0516/EClaw/issues/2040)) ([481bd8c](https://github.com/HankHuang0516/EClaw/commit/481bd8caf0a15fc1c34ea6aca76834ea445f8933)), closes [#2036](https://github.com/HankHuang0516/EClaw/issues/2036)
+
 # [1.1069.0](https://github.com/HankHuang0516/EClaw/compare/v1.1068.1...v1.1069.0) (2026-04-24)
 
 
