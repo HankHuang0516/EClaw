@@ -1,3 +1,10 @@
+## [1.1086.2](https://github.com/HankHuang0516/EClaw/compare/v1.1086.1...v1.1086.2) (2026-04-25)
+
+
+### Bug Fixes
+
+* **arena:** form_fill country select defaults to expected value ([#2111](https://github.com/HankHuang0516/EClaw/issues/2111)) ([3d1ade5](https://github.com/HankHuang0516/EClaw/commit/3d1ade5e3fd310980e4dc6508748c78f5f779a8d))
+
 ## [1.1086.1](https://github.com/HankHuang0516/EClaw/compare/v1.1086.0...v1.1086.1) (2026-04-25)
 
 
