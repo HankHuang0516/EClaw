@@ -86,7 +86,12 @@ const r2 = new S3Client({
     },
 });
 const R2_BUCKET = process.env.R2_BUCKET_NAME || 'eclaw-files';
-const R2_URL_TTL_SECONDS = 600; // 10 min — fresh on every GET, short blast radius.
+// 3 days. Files re-sign on every /card/:id/files GET (mapCardFileRow), but the
+// rendered <img src> in the user's browser stays fixed at the URL it received,
+// so the lifetime of a card screenshot in an opened tab is bounded by this TTL.
+// 10 min was too short — Hank reported screenshots vanishing after ~10 min on
+// done cards. R2 / SigV4 max is 7 days; 3 days is well inside that.
+const R2_URL_TTL_SECONDS = 3 * 24 * 60 * 60;
 
 async function signCardFileUrl(fileId, deviceId, filename) {
     const result = await pool.query(
