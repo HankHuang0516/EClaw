@@ -1,3 +1,10 @@
+# [1.1085.0](https://github.com/HankHuang0516/EClaw/compare/v1.1084.1...v1.1085.0) (2026-04-25)
+
+
+### Features
+
+* [@mention](https://github.com/mention) helper auto-resolves entityId on the sender side (card_1e59f703) ([#2104](https://github.com/HankHuang0516/EClaw/issues/2104)) ([accbc57](https://github.com/HankHuang0516/EClaw/commit/accbc57be939426441a51d7721186cffaeab0ee2))
+
 ## [1.1084.1](https://github.com/HankHuang0516/EClaw/compare/v1.1084.0...v1.1084.1) (2026-04-25)
 
 
