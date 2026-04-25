@@ -7,7 +7,7 @@
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
-- **Current version**: 1.1063.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **Current version**: 1.1091.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
 - **Android app version**: 1.0.77 (versionCode 83); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
@@ -18,7 +18,7 @@
 ```
 EClaw/
 ├── backend/                  # Node.js Express server (deployed to Railway)
-│   ├── index.js              # Main server (~17,335 lines) — all API routes
+│   ├── index.js              # Main server (~17,979 lines) — all API routes
 │   ├── db.js                 # PostgreSQL connection pool + schema creation
 │   ├── auth.js               # Auth module (JWT, OAuth, OIDC, RBAC)
 │   ├── mission.js            # Mission Control dashboard system
@@ -67,6 +67,8 @@ EClaw/
 │   ├── site-pageviews.js     # Anonymous pageview tracking for marketing/public pages
 │   ├── arena-pool-updater.js # Daily auto-refresh of interview arena questions via Claude
 │   ├── arena-pool-validator.js # Validates arena question pool (static + live modes)
+│   ├── arena-test-pages.js    # Visual test pages for interview arena challenges
+│   ├── ack-retry-sweep.js     # Google Play ack-retry sweep for revenue leak prevention
 │   ├── scheduled-messages.js  # Scheduled message system (Phase 1 — CRUD + poller)
 │   ├── reference-parser.js    # Smart chip reference scanner (card_/review_/src://)
 │   ├── reference-resolver.js  # Smart chip async DB resolver
@@ -135,6 +137,9 @@ EClaw/
 │   │   │   │   ├── mention-autocomplete.js # @mention autocomplete for chat input
 │   │   │   │   ├── mention-render.js # @mention rendering in chat messages
 │   │   │   │   ├── autolink-chip.js # Smart chip rendering (review_ + src:// references)
+│   │   │   │   ├── autolink-chip-preview.js # Smart chip preview popover rendering
+│   │   │   │   ├── mention-resolver.js # @mention entity resolution
+│   │   │   │   ├── mission-mindmap.js # Mind map card component for mission page
 │   │   │   │   ├── agent-card-editor.js # Agent card editor component
 │   │   │   │   ├── info.js         # Info page shared logic
 │   │   │   │   ├── info.css        # Info page shared styles
@@ -155,7 +160,7 @@ EClaw/
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
 │   ├── tests/                # Regression + integration tests (59 files)
-│   ├── tests/jest/           # Jest unit tests (116 files, CI-run via `npm test`)
+│   ├── tests/jest/           # Jest unit tests (140 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -218,7 +223,7 @@ EClaw/
 
 ### Backend (Node.js/Express)
 
-- **Single-file server**: `backend/index.js` (~17,335 lines) contains all API routes
+- **Single-file server**: `backend/index.js` (~17,979 lines) contains all API routes
 - **Database**: PostgreSQL (Railway-managed), connection in `backend/db.js`
 - **Real-time**: Socket.IO for live updates to Web Portal and Android app
 - **Auth**: JWT tokens (cookie-based for web, header-based for API), social OAuth (Google, Facebook), OIDC
@@ -937,11 +942,33 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Kanban .btn-ghost Fix (v1.1077)**: Defined `.btn-ghost` CSS so kanban header icons render correctly (not white-on-white)
 - **i18n Backfill**: `invite_per_code_*` keys backfilled to 9 locales; Kanban nudge settings synced
 
+### Recent Features (v1.1078.x – v1.1091.x)
+
+- **R2 File Improvements (v1.1078)**: Structured metadata for attachments; long-press multi-select batch attach to chat
+- **Smart Chip B/C (v1.1079–v1.1080)**: Nested reference-preview popover with card support, requote, cycle/depth guards
+- **Chat text-chip pipeline refactor (v1.1081)**: Shared `ChatMessageRender` across chat and kanban
+- **Scheduled Messages Phase 2 (v1.1082)**: Long-press send to open schedule modal in chat UI
+- **Kanban chip deep-link anchor (v1.1082)**: Auto-open modal + flash comment on deep link
+- **CSS class coverage guardrail (v1.1082)**: Jest test for portal HTML CSS class usage
+- **Community hero CTA (v1.1084)**: "Create your own Bot" linking to register tab
+- **Schedule popup fixes (v1.1084–v1.1085)**: Edit form, contrast fix, legacy ID support
+- **@mention auto-resolve entityId (v1.1085)**: Sender-side entity resolution for mentions
+- **Security: token redaction (v1.1085)**: Redact GitHub PAT, sk-, Slack tokens in A2A outbound + chat
+- **i18n fixes (v1.1086)**: hi-locale block fix, 557 orphan key reclamation, 30 missing roadmap keys
+- **Arena visual test pages (v1.1086)**: drag_drop, navigation, distraction, form_fill visual pages
+- **Mind Map v3 UI (v1.1086–v1.1089)**: Dense mockup alignment, search bar, pin tray, chip popover, mobile portrait
+- **Rebind cascade P0 Phases 1–4 (v1.1087–v1.1088)**: Track rebindCount, hide drifted listings, auto-pause on rebind, terminate contracts on rebind
+- **Backend spec documents (v1.1088)**: INDEX + rental + rebind-cascade + vault + wallet + channel-bridge specs
+- **Mind Map Phase 4 (v1.1090)**: Live kanban data feed for portal mind-map
+- **Mind Map note anchoring (v1.1091)**: Anchor notes to kanban cards / chat messages
+- **Rental: my listings tab (v1.1091)**: Listing pause/delist outside agent card
+- **compactEntitySlots SAVEPOINT guard**: scheduled_messages migration wrapped in SAVEPOINT to prevent compaction failure when schema is incomplete
+
 ---
 
 ## Test Coverage Summary
 
-**~450 total API routes** across all modules (400 excluding Article Publisher), **~78% covered** by Jest + integration tests (~2264 test cases across 133 Jest files + 59 integration tests).
+**~450 total API routes** across all modules (400 excluding Article Publisher), **~82% covered** by Jest + integration tests (~2353 test cases across 140 Jest files + 78 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -1096,7 +1123,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (113 files)
+cd backend && npm test                  # Jest unit tests (140 files)
 cd backend && npm run lint              # ESLint
 ```
 
@@ -1115,7 +1142,7 @@ Set in `backend/.env` (gitignored):
 - `server_logs` schema extension is backward-compatible — all existing 67+ `serverLog()` calls work without modification (new fields default to null)
 - Entity unbind calls `createDefaultEntity()` which resets all fields including new ones — no separate cleanup needed
 - `const` redeclaration in same scope is a JS error — check existing variable names before adding new ones (e.g., `adminAuth` already declared at line 1198)
-- `index.js` is a single 17,335-line file — use line numbers when referencing specific code sections
+- `index.js` is a single ~17,979-line file — use line numbers when referencing specific code sections
 - Module initialization order matters: `db.js` → `devices` in-memory map → module `require()` calls with dependency injection
 - `scheduler.js` is dead code — no longer required by any module after v1.362 legacy schedule removal
 - `kanban.js` is the replacement for the legacy schedule/todo system — mounted at `/api/mission/card*`
@@ -1233,6 +1260,22 @@ Set in `backend/.env` (gitignored):
 | `2026-03-15-security-audit-findings.md` | Security audit findings |
 | `2026-03-15-ui-code-audit.md` | UI code audit (contrast, accessibility) |
 | `2026-03-18-test-coverage-gap-analysis.md` | Test coverage gap analysis |
+
+### Specs (`docs/specs/`)
+| File | Description |
+|------|-------------|
+| `INDEX.md` | Spec directory index |
+| `agent-message-rendering-spec.md` | Chat message rendering across all platforms |
+| `android-app-spec.md` | Android app specification |
+| `android-uiux-rendering-spec.md` | Android UI/UX rendering spec |
+| `ios-app-spec.md` | iOS app specification |
+| `ios-iap-spec.md` | iOS In-App Purchase spec |
+| `invite-redemption-policy.md` | Invite redemption policy |
+| `channel-bridge.md` | Channel bridge spec |
+| `wallet.md` | Wallet system spec |
+| `vault.md` | Vault (device vars) spec |
+| `rental.md` | Rental marketplace spec |
+| `rebind-cascade.md` | Rebind cascade spec |
 
 ### Design Plans (`docs/plans/`)
 Key documents: `broadcast-recipient-info-design`, `env-vars-encrypted-persistence`, `channel-bot-context-parity`, `rebrand-ai-agent`, `soul-rule-templates`, `ai-search-brand-platform-design`, `news-publishing-api`, `ai-chat-viewmodel-refactor`, `eclawbot-seo-implementation`, `rich-message-unified-plan`, `bot-identity-layer`, `shareable-chat-link-qr`

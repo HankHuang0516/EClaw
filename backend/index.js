@@ -7025,22 +7025,31 @@ async function compactEntitySlots(device, deviceId) {
                 // sent_at / cancelled_at — not status). Skip already-dispatched or
                 // cancelled rows; for live ones remap the two scalar slots and
                 // rebuild the JSONB target array element-by-element.
-                await client.query(
-                    `UPDATE scheduled_messages
-                     SET user_entity_id = CASE user_entity_id ${caseClauses} ELSE user_entity_id END,
-                         chat_entity_id = CASE chat_entity_id ${caseClauses} ELSE chat_entity_id END,
-                         target_entity_ids = COALESCE(
-                             (SELECT jsonb_agg(
-                                 to_jsonb(CASE elem::int ${caseClauses} ELSE elem::int END)
-                                 ORDER BY ord
-                             ) FROM jsonb_array_elements_text(target_entity_ids) WITH ORDINALITY AS t(elem, ord)),
-                             target_entity_ids
-                         )
-                     WHERE device_id = $1
-                       AND sent_at IS NULL
-                       AND cancelled_at IS NULL`,
-                    [deviceId]
-                );
+                // Wrapped in SAVEPOINT: table/column may not exist if scheduled-messages
+                // module failed to initialise its schema.
+                await client.query('SAVEPOINT sp_sched_msg');
+                try {
+                    await client.query(
+                        `UPDATE scheduled_messages
+                         SET user_entity_id = CASE user_entity_id ${caseClauses} ELSE user_entity_id END,
+                             chat_entity_id = CASE chat_entity_id ${caseClauses} ELSE chat_entity_id END,
+                             target_entity_ids = COALESCE(
+                                 (SELECT jsonb_agg(
+                                     to_jsonb(CASE elem::int ${caseClauses} ELSE elem::int END)
+                                     ORDER BY ord
+                                 ) FROM jsonb_array_elements_text(target_entity_ids) WITH ORDINALITY AS t(elem, ord)),
+                                 target_entity_ids
+                             )
+                         WHERE device_id = $1
+                           AND sent_at IS NULL
+                           AND cancelled_at IS NULL`,
+                        [deviceId]
+                    );
+                    await client.query('RELEASE SAVEPOINT sp_sched_msg');
+                } catch (schedErr) {
+                    console.warn(`[Compact] scheduled_messages migration skipped: ${schedErr.message}`);
+                    await client.query('ROLLBACK TO SAVEPOINT sp_sched_msg');
+                }
 
                 // 3d2: Migrate kanban_cards assigned_bots JSONB array
                 for (const s of movedSlots) {
