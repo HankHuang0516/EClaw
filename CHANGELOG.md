@@ -1,3 +1,10 @@
+# [1.1091.0](https://github.com/HankHuang0516/EClaw/compare/v1.1090.0...v1.1091.0) (2026-04-25)
+
+
+### Features
+
+* **mindmap:** phase 4 — anchor notes to kanban cards / chat messages ([#2128](https://github.com/HankHuang0516/EClaw/issues/2128)) ([bffc3de](https://github.com/HankHuang0516/EClaw/commit/bffc3de2609ce923e8b223e3bf0e46083063b300))
+
 # [1.1090.0](https://github.com/HankHuang0516/EClaw/compare/v1.1089.0...v1.1090.0) (2026-04-25)
 
 
