@@ -72,9 +72,9 @@ a value requires touching both files in the same PR** + this matrix.
 | `deposit_hold` | `DEPOSIT_HOLD` | `wallet.js` `holdDeposit` (`:500`) — used by `rental.js:734` | − | + | `rental-hold:<contractId>` | renter freezes deposit on rental start |
 | `deposit_release` | `DEPOSIT_RELEASE` | `wallet.js` `releaseDeposit` (`:518`) — used by `rental.js:837` | + | − | `rental-release:<contractId>` | full or partial refund on rental end |
 | `deposit_forfeit` | `DEPOSIT_FORFEIT` | `wallet.js` `forfeitDeposit` (`:538`) — used by `rental.js:853` | 0 | − | `rental-forfeit:<contractId>` | held leaves renter; counterparty credits are separate ledger rows |
-| `rental_income` | `RENTAL_INCOME` | `rental-proxy.js:234` (token metering, post-fee net) | + | 0 | `<contractId>:<chunk>:income` (`rental-proxy.js:234`) | owner receives net of token charge; written to `pending_income_mli` (T+24h hold) |
-| `rental_spend` | `RENTAL_SPEND` | `rental-proxy.js:187` (token metering, renter side) | − | 0 | `<contractId>:<chunk>:spend`, `<...>:dep-deduct` for held leg | renter is debited per token chunk |
-| `platform_fee` | `PLATFORM_FEE` | `rental-proxy.js:246` (15% per token charge) + `rental.js:880` (forfeit-pfee) | + (to platform pool) | 0 | `<contractId>:<chunk>:pfee`, `rental-forfeit-pfee:<contractId>` | gross fee includes the 2% insurance share |
+| `rental_income` | `RENTAL_INCOME` | `rental-proxy.js:234` (token metering, post-fee net) | + | 0 | `rental-usage:<contractId>:<msgId>:income` | owner receives net of token charge; written to `pending_income_mli` (T+24h hold) |
+| `rental_spend` | `RENTAL_SPEND` | `rental-proxy.js:187` (token metering, renter side) | − | 0 | `rental-usage:<contractId>:<msgId>:spend`, `:dep-deduct` for held leg | renter is debited per token chunk |
+| `platform_fee` | `PLATFORM_FEE` | `rental-proxy.js:246` (15% per token charge) + `rental.js:880` (forfeit-pfee) | + (to platform pool) | 0 | `rental-usage:<contractId>:<msgId>:pfee`, `rental-forfeit-pfee:<contractId>` | gross fee includes the 2% insurance share |
 | `refund` | `REFUND` | (reserved — used by tests + admin paths) | + | 0 | (caller-defined) | distinct from `deposit_release`; explicit refund of paid topups |
 | `admin_adjust` | `ADMIN_ADJUST` | `wallet.js` `adminAdjust` (`:556`) — `/api/wallet/admin/grant` | ± | 0 | `admin-grant:<adminId>:<ts>:<rand>` (`wallet.js:1472`) | always audited via `serverLog warn` |
 | `withdraw` | `WITHDRAW` | (reserved — no current caller) | − | 0 | (caller-defined) | bank/payment-processor withdraw, not yet wired |
@@ -177,11 +177,11 @@ Convention: `<scope>:<id>[:<leg>]`, lower-snake, colon-separated.
 | `rental-forfeit-ins:` | rental.js | `rental-forfeit-ins:<contractId>` | insurance pool (2%) |
 | `rebind-refund-debit:` | rental.js | `rebind-refund-debit:<contractId>` | owner debit (Phase 4) |
 | `rebind-refund-credit:` | rental.js | `rebind-refund-credit:<contractId>` | renter credit (Phase 4) |
-| `<contractId>:<chunk>:spend` | rental-proxy.js | per token charge | renter debit |
-| `<contractId>:<chunk>:dep-deduct` | rental-proxy.js | per token charge | held debit (when balance exhausts) |
-| `<contractId>:<chunk>:income` | rental-proxy.js | per token charge | owner pending_income credit |
-| `<contractId>:<chunk>:pfee` | rental-proxy.js | per token charge | platform fee leg |
-| `<contractId>:<chunk>:ins` | rental-proxy.js | per token charge | insurance pool leg |
+| `rental-usage:<contractId>:<msgId>:spend` | rental-proxy.js (`:153,:187`) | per token charge | renter debit; `<msgId>` = caller-supplied messageId or `Date.now()` |
+| `rental-usage:<contractId>:<msgId>:dep-deduct` | rental-proxy.js (`:210`) | per token charge | held debit (when balance exhausts) |
+| `rental-usage:<contractId>:<msgId>:income` | rental-proxy.js (`:234`) | per token charge | owner pending_income credit |
+| `rental-usage:<contractId>:<msgId>:pfee` | rental-proxy.js (`:246`) | per token charge | platform fee leg |
+| `rental-usage:<contractId>:<msgId>:ins` | rental-proxy.js (`:260`) | per token charge | insurance pool leg |
 | `income-release:<userId>:<ts>` | rental-proxy.js | per sweep run | T+24h pending_income release |
 | `invite-inviter:<code>:<inviteeUserId>:<ts>` | invite.js | inviter bonus | |
 | `invite-invitee:<code>:<inviteeUserId>:<ts>` | invite.js | invitee bonus | |
