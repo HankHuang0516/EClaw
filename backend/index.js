@@ -2313,6 +2313,48 @@ app.get('/arena/test/:examId', async (req, res) => {
         res.status(500).json({ error: 'internal_error', detail: err.message });
     }
 });
+// Bot's per-test visual page. card_e49f897b — without this, browser-required
+// arena tests (button_click, form_fill, drag_drop, navigation, distraction)
+// were unwinnable: stripSecretsForBot hides correctLabel / expectedValue from
+// the public JSON so the bot can ONLY learn the answer by viewing this page.
+const { renderArenaTestPage } = require('./arena-test-pages');
+app.get('/arena/:sessionToken', async (req, res) => {
+    try {
+        const { sessionToken } = req.params;
+        // Reject non-token paths (exam UUIDs, "test", "exam") so the existing
+        // /arena/test/:examId and /arena/exam/:examId routes still take precedence.
+        if (sessionToken === 'test' || sessionToken === 'exam' || sessionToken === 'index.html') {
+            return res.status(404).send('Cannot GET /arena/' + sessionToken);
+        }
+        if (!/^[a-f0-9]{16,32}$/i.test(sessionToken)) {
+            return res.status(404).send('Cannot GET /arena/' + sessionToken);
+        }
+        const sess = await arenaModule._internals.pool.query(
+            `SELECT s.exam_id, s.session_token, s.test_type, s.test_index,
+                    s.challenge_config, s.status, e.expires_at, e.status AS exam_status
+             FROM arena_sessions s JOIN arena_exams e ON e.id = s.exam_id
+             WHERE s.session_token = $1`,
+            [sessionToken]
+        );
+        if (sess.rowCount === 0) {
+            return res.status(404).type('html').send(
+                '<!doctype html><meta charset=utf-8><title>Arena · session not found</title>' +
+                '<body style="font-family:sans-serif;background:#0f172a;color:#e2e8f0;padding:32px">' +
+                '<h1 style="color:#f87171">Session not found</h1>' +
+                '<p>The session token <code>' + sessionToken.replace(/[<>&"]/g, '') +
+                '</code> does not match any arena_sessions row. ' +
+                'Tokens come from <code>GET /arena/test/:examId</code> response (<code>tests[].sessionToken</code>).</p></body>'
+            );
+        }
+        const apiBase = process.env.API_BASE || 'https://eclawbot.com';
+        const html = renderArenaTestPage(sess.rows[0], sessionToken, apiBase);
+        res.set('Cache-Control', 'no-store').type('html').send(html);
+    } catch (err) {
+        console.error('[Arena] /arena/:sessionToken error:', err);
+        serverLog('error', 'arena', `GET /arena/${req.params.sessionToken} failed: ${err.message}`);
+        res.status(500).type('html').send('<h1>500 internal_error</h1><pre>' + (err.message || '') + '</pre>');
+    }
+});
 if (process.env.NODE_ENV !== 'test') {
     setTimeout(() => arenaModule.initArenaDatabase(), 4000);
 }
