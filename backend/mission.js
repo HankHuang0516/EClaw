@@ -431,12 +431,17 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
                 }
             }
 
-            // Preserve system skills on upload (merge: keep existing system skills)
+            // Preserve system skills on upload (merge: keep existing system skills).
+            // Also pick up the existing notes set so we can diff it against the
+            // upload and replay create/update/delete through the mindmap mirror —
+            // otherwise edits via the bulk dashboard save (portal autosave path)
+            // never reach the mindmap_nodes table.
             let uploadedSkills = dashboard.skills || [];
             const existingRow = await client.query(
-                'SELECT skills FROM mission_dashboard WHERE device_id = $1',
+                'SELECT skills, notes FROM mission_dashboard WHERE device_id = $1',
                 [deviceId]
             );
+            const existingNotes = (existingRow.rows[0] && existingRow.rows[0].notes) || [];
             if (existingRow.rows.length > 0) {
                 const existingSkills = existingRow.rows[0].skills || [];
                 const systemSkills = existingSkills.filter(s => s.isSystem === true);
@@ -471,6 +476,37 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
             );
 
             await client.query('COMMIT');
+
+            // Phase 4: replay note diff through the mindmap mirror so portal
+            // bulk-save flows reach the mind-map graph. This runs AFTER the
+            // dashboard commit; failures are logged + swallowed because the
+            // mirror is a derived read model.
+            try {
+                const uploadedNotes = dashboard.notes || [];
+                const existingById = new Map(existingNotes.map(n => [n.id, n]));
+                const uploadedById = new Map(uploadedNotes.map(n => [n.id, n]));
+                for (const note of uploadedNotes) {
+                    if (!note || !note.id) continue;
+                    const before = existingById.get(note.id);
+                    if (!before) {
+                        fireMirror(mindmapMirror.mirrorNoteCreate, [pool, deviceId, entityId, note]);
+                    } else if (
+                        before.title !== note.title ||
+                        before.content !== note.content ||
+                        before.category !== note.category ||
+                        JSON.stringify(before.anchor || null) !== JSON.stringify(note.anchor || null)
+                    ) {
+                        fireMirror(mindmapMirror.mirrorNoteUpdate, [pool, deviceId, entityId, note]);
+                    }
+                }
+                for (const note of existingNotes) {
+                    if (note && note.id && !uploadedById.has(note.id)) {
+                        fireMirror(mindmapMirror.mirrorNoteDelete, [pool, deviceId, note.id]);
+                    }
+                }
+            } catch (mirrorErr) {
+                console.warn('[Mission] Dashboard-save mirror replay failed:', mirrorErr.message);
+            }
 
             if (process.env.DEBUG === 'true') console.log(`[Mission] Dashboard updated for ${deviceId}, version: ${result.rows[0].version}`);
             if (serverLog) serverLog('info', 'mission', `[Mission] Dashboard updated for ${deviceId}, version: ${result.rows[0].version}`, { deviceId });
@@ -694,11 +730,16 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
     // ============================================
     router.post('/note/add', async (req, res) => {
         if (!authenticate(req, res)) return;
-        const { deviceId, entityId, title, content, category } = req.body;
+        const { deviceId, entityId, title, content, category, anchor } = req.body;
 
         if (!title) {
             return res.status(400).json({ success: false, error: 'Missing title' });
         }
+
+        // Phase 4: optional anchor pins the note to a kanban card or chat
+        // message in the mind-map. Anything else is dropped silently so a
+        // mistyped client can't poison the JSON column.
+        const normAnchor = mindmapMirror.normalizeAnchor(anchor);
 
         const noteId = newNoteId();
         // Create dashboard note entry
@@ -717,7 +758,8 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
                 category: (category || 'general').trim(),
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
-                createdBy: entityId != null ? `entity_${entityId}` : 'bot'
+                createdBy: entityId != null ? `entity_${entityId}` : 'bot',
+                ...(normAnchor ? { anchor: normAnchor } : {})
             };
             notes.push(newNote);
             const updateResult = await client.query(
@@ -757,6 +799,12 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
         const newTitle = req.body.newTitle;
         const newContent = req.body.newContent !== undefined ? req.body.newContent : req.body.content;
         const newCategory = req.body.newCategory !== undefined ? req.body.newCategory : req.body.category;
+        // Phase 4: anchor edits. `anchor: null` clears, anchor object sets,
+        // omitted leaves the existing anchor alone.
+        const anchorTouched = Object.prototype.hasOwnProperty.call(req.body, 'anchor');
+        const newAnchor = anchorTouched
+            ? (req.body.anchor === null ? null : mindmapMirror.normalizeAnchor(req.body.anchor))
+            : undefined;
 
         if (!title) {
             return res.status(400).json({ success: false, error: 'Missing title' });
@@ -787,6 +835,10 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
             if (newTitle) note.title = newTitle.trim();
             if (newContent !== undefined) note.content = (newContent ?? '').trim();
             if (newCategory !== undefined) note.category = newCategory ? newCategory.trim() : null;
+            if (anchorTouched) {
+                if (newAnchor) note.anchor = newAnchor;
+                else delete note.anchor;
+            }
             note.updatedAt = Date.now();
 
             const updateResult = await client.query(
@@ -804,6 +856,10 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
                 title: note.title,
                 content: note.content,
                 ...(newCategory !== undefined ? { category: note.category } : {}),
+                // Pass anchor through only when the caller touched it. The
+                // mirror treats `undefined` as "leave parent alone" and
+                // `null` as "clear anchor → fall back to category".
+                ...(anchorTouched ? { anchor: newAnchor } : {}),
             };
             fireMirror(mindmapMirror.mirrorNoteUpdate, [pool, deviceId, entityId, mirrorNote]);
 
