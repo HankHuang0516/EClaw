@@ -1,3 +1,10 @@
+# [1.1083.0](https://github.com/HankHuang0516/EClaw/compare/v1.1082.2...v1.1083.0) (2026-04-25)
+
+
+### Features
+
+* **community:** add hero CTA "Create your own Bot" linking to register tab ([#2091](https://github.com/HankHuang0516/EClaw/issues/2091)) ([70bff12](https://github.com/HankHuang0516/EClaw/commit/70bff12941b54fa8f8513a22a495ba6b274c0d2b))
+
 ## [1.1082.2](https://github.com/HankHuang0516/EClaw/compare/v1.1082.1...v1.1082.2) (2026-04-25)
 
 
