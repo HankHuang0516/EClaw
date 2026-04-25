@@ -401,6 +401,41 @@ describe('Deep persistence assertions in update endpoints', () => {
         expect(res.status).toBe(200);
         expect(persisted('souls')[0].description).toBe('');
     });
+
+    // ── Phase 4: anchor field round-trip on update ──
+
+    it('note/update — valid kanban_card anchor persists on the note JSON', async () => {
+        dashboardRow.notes = [{ title: 'N1', content: 'body' }];
+        const res = await post('/api/mission/note/update')
+            .send({ ...auth, title: 'N1', anchor: { type: 'kanban_card', refId: 'card_abc', label: 'big card' } });
+        expect(res.status).toBe(200);
+        expect(persisted('notes')[0].anchor).toEqual({ type: 'kanban_card', refId: 'card_abc', label: 'big card' });
+    });
+
+    it('note/update — anchor:null clears the anchor', async () => {
+        dashboardRow.notes = [{ title: 'N1', anchor: { type: 'kanban_card', refId: 'card_x', label: null } }];
+        const res = await post('/api/mission/note/update')
+            .send({ ...auth, title: 'N1', anchor: null });
+        expect(res.status).toBe(200);
+        expect(persisted('notes')[0].anchor).toBeUndefined();
+    });
+
+    it('note/update — malformed anchor (bad type / missing refId) is dropped, not persisted', async () => {
+        dashboardRow.notes = [{ title: 'N1' }];
+        const res = await post('/api/mission/note/update')
+            .send({ ...auth, title: 'N1', anchor: { type: 'note', refId: 'x' } });
+        expect(res.status).toBe(200);
+        expect(persisted('notes')[0].anchor).toBeUndefined();
+    });
+
+    it('note/update — omitting anchor leaves an existing anchor intact', async () => {
+        const original = { type: 'chat_message', refId: 'msg_1', label: null };
+        dashboardRow.notes = [{ title: 'N1', anchor: original }];
+        const res = await post('/api/mission/note/update')
+            .send({ ...auth, title: 'N1', content: 'just a body change' });
+        expect(res.status).toBe(200);
+        expect(persisted('notes')[0].anchor).toEqual(original);
+    });
 });
 
 // ════════════════════════════════════════════════════════════════

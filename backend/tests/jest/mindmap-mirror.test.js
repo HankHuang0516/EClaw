@@ -42,14 +42,29 @@ function makeFakePool() {
                 : { rowCount: 0, rows: [] };
         }
 
-        // ensureCategoryDomainNode lookup
-        if (norm.startsWith("SELECT n.id FROM mindmap_nodes n JOIN mindmap_node_anchors a ON a.node_id = n.id")) {
+        // ensureCategoryDomainNode lookup (anchor_type literal 'note_category' on a 'domain' node)
+        if (norm.startsWith("SELECT n.id FROM mindmap_nodes n JOIN mindmap_node_anchors a ON a.node_id = n.id")
+            && norm.includes("n.node_type = 'domain'")) {
             const [deviceId, normCat] = params;
             const anchor = anchors.find(a =>
                 a.device_id === deviceId && a.anchor_type === 'note_category' && a.anchor_ref === normCat
             );
             if (!anchor) return { rowCount: 0, rows: [] };
             const node = nodes.find(n => n.id === anchor.node_id && n.node_type === 'domain');
+            return node
+                ? { rowCount: 1, rows: [{ id: node.id }] }
+                : { rowCount: 0, rows: [] };
+        }
+
+        // ensureAnchoredTopicNode lookup (anchor_type as $2 on a 'topic' node)
+        if (norm.startsWith("SELECT n.id FROM mindmap_nodes n JOIN mindmap_node_anchors a ON a.node_id = n.id")
+            && norm.includes("n.node_type = 'topic'")) {
+            const [deviceId, anchorType, anchorRef] = params;
+            const anchor = anchors.find(a =>
+                a.device_id === deviceId && a.anchor_type === anchorType && a.anchor_ref === anchorRef
+            );
+            if (!anchor) return { rowCount: 0, rows: [] };
+            const node = nodes.find(n => n.id === anchor.node_id && n.node_type === 'topic');
             return node
                 ? { rowCount: 1, rows: [{ id: node.id }] }
                 : { rowCount: 0, rows: [] };
@@ -64,28 +79,37 @@ function makeFakePool() {
             return edge ? { rowCount: 1, rows: [{ id: edge.id }] } : { rowCount: 0, rows: [] };
         }
 
-        // INSERT node (domain or leaf)
+        // INSERT node (domain, topic, or leaf — distinguished by literal in SQL)
         if (norm.startsWith('INSERT INTO mindmap_nodes')) {
             const [deviceId, entityId, title, summary, ...rest] = params;
-            const isLeaf = norm.includes("'leaf'");
+            const node_type = norm.includes("'leaf'") ? 'leaf'
+                : norm.includes("'topic'") ? 'topic'
+                : 'domain';
             const node = {
                 id: uuid('node', nodeSeq++),
                 device_id: deviceId,
                 entity_id: entityId,
                 title,
                 summary,
-                node_type: isLeaf ? 'leaf' : 'domain',
-                parent_node_id: isLeaf ? rest[0] : null,
+                node_type,
+                parent_node_id: node_type === 'leaf' ? rest[0] : null,
             };
             nodes.push(node);
             return { rowCount: 1, rows: [{ id: node.id }] };
         }
 
-        // INSERT anchor (note or note_category) — anchor_type is a SQL literal,
-        // not a placeholder, so it must be parsed from the VALUES clause.
+        // INSERT anchor — note/note_category use anchor_type as a SQL literal
+        // (4 placeholders); kanban_card / chat_message use anchor_type as $3
+        // (5 placeholders). Distinguish by placeholder count.
         if (norm.startsWith('INSERT INTO mindmap_node_anchors')) {
-            const [deviceId, nodeId, anchor_ref, display_label] = params;
-            const anchor_type = norm.includes("'note_category'") ? 'note_category' : 'note';
+            const fivePh = /\(\$1, \$2, \$3, \$4, \$5\)/.test(norm);
+            let anchor_type, deviceId, nodeId, anchor_ref, display_label;
+            if (fivePh) {
+                [deviceId, nodeId, anchor_type, anchor_ref, display_label] = params;
+            } else {
+                [deviceId, nodeId, anchor_ref, display_label] = params;
+                anchor_type = norm.includes("'note_category'") ? 'note_category' : 'note';
+            }
             const row = {
                 id: uuid('anch', anchorSeq++),
                 device_id: deviceId,
@@ -351,5 +375,116 @@ describe('mindmap-mirror — Route A mirror mode', () => {
             { id: 'n1', title: '', content: '', category: 'c' });
         const leaf = pool._state.nodes.find(n => n.node_type === 'leaf');
         expect(leaf.title).toBe('(untitled note)');
+    });
+
+    // ── Phase 4: anchor field — note pinned to a kanban card / chat message ──
+
+    it('phase 4: kanban_card-anchored note hangs off a topic node, not a category domain', async () => {
+        const pool = makeFakePool();
+        await mirror.mirrorNoteCreate(pool, DEVICE_ID, ENTITY_ID, {
+            id: 'n1', title: 'review thoughts', content: 'rebind cascade is loose', category: 'whatever',
+            anchor: { type: 'kanban_card', refId: 'card_3054e26eeea4', label: '心智圖 phase 4' },
+        });
+        const { nodes, edges, anchors } = pool._state;
+        const topic = nodes.find(n => n.node_type === 'topic');
+        const leaf = nodes.find(n => n.node_type === 'leaf');
+        expect(topic).toBeDefined();
+        expect(topic.title).toBe('心智圖 phase 4');
+        expect(leaf.parent_node_id).toBe(topic.id);
+        // Category domain is NOT created — anchor wins.
+        expect(nodes.filter(n => n.node_type === 'domain')).toHaveLength(0);
+        // Anchor row on the topic node points at the card.
+        const cardAnchor = anchors.find(a => a.anchor_type === 'kanban_card');
+        expect(cardAnchor.node_id).toBe(topic.id);
+        expect(cardAnchor.anchor_ref).toBe('card_3054e26eeea4');
+        // parent_of edge from topic → leaf
+        expect(edges.find(e => e.source_node_id === topic.id && e.target_node_id === leaf.id)).toBeDefined();
+    });
+
+    it('phase 4: two notes anchored to the same card share one topic node', async () => {
+        const pool = makeFakePool();
+        const anchor = { type: 'kanban_card', refId: 'card_X', label: 'shared card' };
+        await mirror.mirrorNoteCreate(pool, DEVICE_ID, ENTITY_ID,
+            { id: 'a', title: 'one', content: '', anchor });
+        await mirror.mirrorNoteCreate(pool, DEVICE_ID, ENTITY_ID,
+            { id: 'b', title: 'two', content: '', anchor });
+        const topics = pool._state.nodes.filter(n => n.node_type === 'topic');
+        const leaves = pool._state.nodes.filter(n => n.node_type === 'leaf');
+        expect(topics).toHaveLength(1);
+        expect(leaves).toHaveLength(2);
+        expect(leaves.every(l => l.parent_node_id === topics[0].id)).toBe(true);
+    });
+
+    it('phase 4: chat_message anchor uses anchor_type=chat_message and label fallback', async () => {
+        const pool = makeFakePool();
+        await mirror.mirrorNoteCreate(pool, DEVICE_ID, ENTITY_ID, {
+            id: 'n1', title: 'flag', content: 'follow up', category: 'general',
+            anchor: { type: 'chat_message', refId: 'msg_abc' },
+        });
+        const topic = pool._state.nodes.find(n => n.node_type === 'topic');
+        // No label → falls back to default Chinese label
+        expect(topic.title).toBe('聊天訊息');
+        const a = pool._state.anchors.find(x => x.anchor_type === 'chat_message');
+        expect(a.anchor_ref).toBe('msg_abc');
+    });
+
+    it('phase 4: malformed anchor is dropped (falls back to category)', async () => {
+        const pool = makeFakePool();
+        await mirror.mirrorNoteCreate(pool, DEVICE_ID, ENTITY_ID, {
+            id: 'n1', title: 'a', content: '', category: 'safe',
+            // Wrong type, missing refId, etc.
+            anchor: { type: 'lolwut', refId: 'whatever' },
+        });
+        const domains = pool._state.nodes.filter(n => n.node_type === 'domain');
+        const topics = pool._state.nodes.filter(n => n.node_type === 'topic');
+        expect(domains).toHaveLength(1);
+        expect(domains[0].title).toBe('safe');
+        expect(topics).toHaveLength(0);
+    });
+
+    it('phase 4: mirrorNoteUpdate switching from category to anchor re-parents the leaf', async () => {
+        const pool = makeFakePool();
+        await mirror.mirrorNoteCreate(pool, DEVICE_ID, ENTITY_ID,
+            { id: 'n1', title: 'a', content: '', category: 'general' });
+        const leafId = pool._state.nodes.find(n => n.node_type === 'leaf').id;
+        await mirror.mirrorNoteUpdate(pool, DEVICE_ID, ENTITY_ID, {
+            id: 'n1', title: 'a', content: '',
+            anchor: { type: 'kanban_card', refId: 'card_Y', label: 'late attach' },
+        });
+        const topic = pool._state.nodes.find(n => n.node_type === 'topic');
+        const leaf = pool._state.nodes.find(n => n.id === leafId);
+        expect(leaf.parent_node_id).toBe(topic.id);
+        const parentEdges = pool._state.edges.filter(e =>
+            e.edge_type === 'parent_of' && e.target_node_id === leafId
+        );
+        expect(parentEdges).toHaveLength(1);
+        expect(parentEdges[0].source_node_id).toBe(topic.id);
+    });
+
+    it('phase 4: mirrorNoteUpdate clearing anchor (anchor:null) falls back to category domain', async () => {
+        const pool = makeFakePool();
+        await mirror.mirrorNoteCreate(pool, DEVICE_ID, ENTITY_ID, {
+            id: 'n1', title: 'a', content: '', category: 'home',
+            anchor: { type: 'kanban_card', refId: 'card_Z', label: 'card' },
+        });
+        await mirror.mirrorNoteUpdate(pool, DEVICE_ID, ENTITY_ID, {
+            id: 'n1', title: 'a', content: '', category: 'home', anchor: null,
+        });
+        const leaf = pool._state.nodes.find(n => n.node_type === 'leaf');
+        const domain = pool._state.nodes.find(n => n.node_type === 'domain' && n.title === 'home');
+        expect(domain).toBeDefined();
+        expect(leaf.parent_node_id).toBe(domain.id);
+    });
+
+    it('phase 4: normalizeAnchor accepts kanban_card / chat_message and rejects everything else', () => {
+        expect(mirror.normalizeAnchor({ type: 'kanban_card', refId: 'c1' }))
+            .toEqual({ type: 'kanban_card', refId: 'c1', label: null });
+        expect(mirror.normalizeAnchor({ type: 'chat_message', refId: 'm1', label: 'hi' }))
+            .toEqual({ type: 'chat_message', refId: 'm1', label: 'hi' });
+        expect(mirror.normalizeAnchor(null)).toBeNull();
+        expect(mirror.normalizeAnchor({})).toBeNull();
+        expect(mirror.normalizeAnchor({ type: 'note', refId: 'x' })).toBeNull();
+        expect(mirror.normalizeAnchor({ type: 'kanban_card' })).toBeNull();
+        expect(mirror.normalizeAnchor({ type: 'kanban_card', refId: '   ' })).toBeNull();
     });
 });

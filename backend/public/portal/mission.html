@@ -1934,13 +1934,61 @@
         }
 
         // ========== Notes ==========
-        function showAddNote() {
+        let _kanbanCardsCache = null;
+        async function getKanbanCardsForAnchor() {
+            if (_kanbanCardsCache) return _kanbanCardsCache;
+            try {
+                const data = await apiCall('GET',
+                    `/api/mission/cards?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`
+                );
+                const cards = (data && data.cards) || [];
+                _kanbanCardsCache = cards.filter(c => c && c.id && !c.archived && c.status !== 'done');
+                return _kanbanCardsCache;
+            } catch (e) {
+                return [];
+            }
+        }
+        function pickerValueFromAnchor(a) {
+            if (!a || !a.type || !a.refId) return '';
+            return `${a.type}:${a.refId}`;
+        }
+        function anchorFromPickerValue(val) {
+            if (!val) return null;
+            const idx = val.indexOf(':');
+            if (idx < 0) return null;
+            const type = val.slice(0, idx);
+            const refId = val.slice(idx + 1);
+            if (!refId) return null;
+            return { type, refId };
+        }
+        function getAnchorOptions(cards, current) {
+            const opts = [{ value: '', label: i18n.t('mc_dlg_anchor_none') || '(無 — 依分類分組)' }];
+            for (const c of cards) {
+                opts.push({
+                    value: `kanban_card:${c.id}`,
+                    label: `📌 ${(c.title || c.id).slice(0, 60)}`
+                });
+            }
+            // Preserve current anchor if it points to something not in the active card list
+            if (current) {
+                const cur = pickerValueFromAnchor(current);
+                if (cur && !opts.some(o => o.value === cur)) {
+                    opts.push({ value: cur, label: `📌 ${(current.label || current.refId).slice(0, 60)}` });
+                }
+            }
+            return opts;
+        }
+
+        async function showAddNote() {
+            const cards = await getKanbanCardsForAnchor();
             showDialog(i18n.t('mc_dlg_add_note'), [
                 { key: 'title', label: i18n.t('mc_dlg_title'), value: '' },
                 { key: 'content', label: i18n.t('mc_dlg_content'), type: 'textarea', value: '' },
-                { key: 'category', label: i18n.t('mc_dlg_category'), type: 'select', value: '', options: getCategoryOptions('notes') }
+                { key: 'category', label: i18n.t('mc_dlg_category'), type: 'select', value: '', options: getCategoryOptions('notes') },
+                { key: 'anchor', label: i18n.t('mc_dlg_anchor') || '釘到看板卡片', type: 'select', value: '', options: getAnchorOptions(cards, null) }
             ], vals => {
                 if (!vals.title.trim()) return;
+                const anchor = anchorFromPickerValue(vals.anchor);
                 dashboard.notes.push({
                     id: genId(),
                     title: vals.title.trim(),
@@ -1948,26 +1996,32 @@
                     category: vals.category || null,
                     createdAt: Date.now(),
                     updatedAt: Date.now(),
-                    createdBy: 'user'
+                    createdBy: 'user',
+                    ...(anchor ? { anchor } : {})
                 });
                 markChanged();
                 renderNotes();
             });
         }
 
-        function showEditNote(id) {
+        async function showEditNote(id) {
             const note = dashboard.notes.find(n => n.id === id);
             if (!note) return;
 
+            const cards = await getKanbanCardsForAnchor();
             showDialog(i18n.t('mc_dlg_edit_note'), [
                 { key: 'title', label: i18n.t('mc_dlg_title'), value: note.title },
                 { key: 'content', label: i18n.t('mc_dlg_content'), type: 'textarea', value: note.content },
-                { key: 'category', label: i18n.t('mc_dlg_category'), type: 'select', value: note.category || '', options: getCategoryOptions('notes') }
+                { key: 'category', label: i18n.t('mc_dlg_category'), type: 'select', value: note.category || '', options: getCategoryOptions('notes') },
+                { key: 'anchor', label: i18n.t('mc_dlg_anchor') || '釘到看板卡片', type: 'select', value: pickerValueFromAnchor(note.anchor), options: getAnchorOptions(cards, note.anchor) }
             ], vals => {
                 if (!vals.title.trim()) return;
                 note.title = vals.title.trim();
                 note.content = vals.content.trim();
                 note.category = vals.category || null;
+                const newAnchor = anchorFromPickerValue(vals.anchor);
+                if (newAnchor) note.anchor = newAnchor;
+                else delete note.anchor;
                 note.updatedAt = Date.now();
                 markChanged();
                 renderNotes();
