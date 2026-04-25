@@ -1,3 +1,10 @@
+## [1.1081.3](https://github.com/HankHuang0516/EClaw/compare/v1.1081.2...v1.1081.3) (2026-04-25)
+
+
+### Bug Fixes
+
+* **chat:** schedule-popup contrast — replace undefined --accent var ([#2085](https://github.com/HankHuang0516/EClaw/issues/2085)) ([f90061e](https://github.com/HankHuang0516/EClaw/commit/f90061e29f0701dae5369a27e8398d113179257a)), closes [#6C63FF](https://github.com/HankHuang0516/EClaw/issues/6C63FF)
+
 ## [1.1081.2](https://github.com/HankHuang0516/EClaw/compare/v1.1081.1...v1.1081.2) (2026-04-25)
 
 
