@@ -349,51 +349,94 @@
         <!-- Hermes Channel Stability Roadmap -->
         <div class="rm-section">
             <h2>🤖 <span data-i18n="rm_hermes_title">Hermes Channel — Stable Operation Roadmap</span></h2>
-            <p style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;" data-i18n="rm_hermes_desc">Hermes (#5) is a NousResearch Hermes Agent connected via Eclaw's webhook channel. As a live showcase of EClaw's cross-platform A2A capability, it must operate reliably. Below is the roadmap to achieve and maintain stable co-working status.</p>
+            <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;" data-i18n="rm_hermes_desc">Hermes (#5) is a NousResearch Hermes Agent connected via Eclaw's webhook channel. As a live showcase of EClaw's cross-platform A2A capability, it must operate reliably. Below is the roadmap to achieve and maintain stable co-working status.</p>
+
+            <!-- Known failure modes -->
+            <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:16px;">
+                <div style="font-size:12px;font-weight:700;color:#f59e0b;margin-bottom:8px;">⚠️ <span data-i18n="rm_hermes_diag_title">Known Instability Root Causes (Past Incidents)</span></div>
+                <ul style="font-size:12px;color:var(--text-secondary);margin:0;padding-left:16px;line-height:1.8;">
+                    <li data-i18n="rm_hermes_issue_q">messageQueue overflow → EClaw forced into pure-translation mode, Hermes requests silently dropped</li>
+                    <li data-i18n="rm_hermes_issue_d">Docker container freeze: Hermes process alive but not consuming messages; Railway restart lag causes extended outage</li>
+                    <li data-i18n="rm_hermes_issue_s">Session cache mismatch: cached session keyed by wrong org → "repo not found" on git operations</li>
+                    <li data-i18n="rm_hermes_issue_p">claude-cli-proxy anonymous fallback: no GIT_HUB2 credential → private repo operations fail silently; gap with card_f531861e</li>
+                </ul>
+            </div>
+
+            <!-- Quantifiable success criteria -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:20px;">
+                <div style="padding:12px;border:1px solid var(--card-border);border-radius:var(--radius-sm);text-align:center;">
+                    <div style="font-size:22px;font-weight:800;color:#10b981;" data-i18n="rm_hermes_kpi_uptime">≥99.0%</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;" data-i18n="rm_hermes_kpi_uptime_l">Weekly uptime</div>
+                </div>
+                <div style="padding:12px;border:1px solid var(--card-border);border-radius:var(--radius-sm);text-align:center;">
+                    <div style="font-size:22px;font-weight:800;color:#10b981;" data-i18n="rm_hermes_kpi_delivery">≤2%</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;" data-i18n="rm_hermes_kpi_delivery_l">Message delivery failure rate</div>
+                </div>
+                <div style="padding:12px;border:1px solid var(--card-border);border-radius:var(--radius-sm);text-align:center;">
+                    <div style="font-size:22px;font-weight:800;color:#10b981;" data-i18n="rm_hermes_kpi_resume">≤30s</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;" data-i18n="rm_hermes_kpi_resume_l">Session resume time</div>
+                </div>
+                <div style="padding:12px;border:1px solid var(--card-border);border-radius:var(--radius-sm);text-align:center;">
+                    <div style="font-size:22px;font-weight:800;color:#10b981;" data-i18n="rm_hermes_kpi_health">6h</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;" data-i18n="rm_hermes_kpi_health_l">Health-check interval</div>
+                </div>
+            </div>
 
             <div class="rm-phase todo">
-                <h3>Phase H0 — <span data-i18n="rm_h0_name">Infrastructure Readiness</span> <span class="rm-status-badge todo" data-i18n="rm_in_progress">In Progress</span></h3>
+                <h3>Phase H0 — <span data-i18n="rm_h0_name">Infrastructure Readiness</span> <span class="rm-status-badge partial" data-i18n="rm_in_progress">In Progress</span></h3>
                 <div class="rm-phase-desc" data-i18n="rm_h0_desc">Resolve basic connectivity: git clone/write access, credential injection, channel authentication.</div>
                 <ul class="rm-tasks">
-                    <li class="todo" data-i18n="rm_h0_t1">GITHUB_TOKEN injected into claude-cli-proxy via Railway env var (vault → Railway)</li>
+                    <li data-i18n="rm_h0_t1">GITHUB_TOKEN injected into claude-cli-proxy via Railway env var (vault → Railway)</li>
                     <li class="todo" data-i18n="rm_h0_t2">Redeploy proxy; verify Hermes can git clone/push HankHuang0516/EClaw</li>
-                    <li class="todo" data-i18n="rm_h0_t3">Webhook secret validation on EClaw side matches Hermes egress</li>
-                    <li class="todo" data-i18n="rm_h0_t4">Hermes speakTo back to Entity 2 (commander) confirms bidirectional A2A</li>
+                    <li data-i18n="rm_h0_t3">Webhook secret validation on EClaw side matches Hermes egress</li>
+                    <li data-i18n="rm_h0_t4">Hermes speakTo back to Entity 2 (commander) confirms bidirectional A2A</li>
                 </ul>
             </div>
 
             <div class="rm-phase todo">
                 <h3>Phase H1 — <span data-i18n="rm_h1_name">Channel Reliability</span> <span class="rm-status-badge todo" data-i18n="rm_todo">Todo</span></h3>
-                <div class="rm-phase-desc" data-i18n="rm_h1_desc">Fix message delivery gaps, spurious disconnects, and session resumption failures.</div>
+                <div class="rm-phase-desc" data-i18n="rm_h1_desc">Fix message delivery gaps, spurious disconnects, and session resumption failures. Targets: ≤2% delivery failure, ≤30s resume.</div>
                 <ul class="rm-tasks">
-                    <li class="todo" data-i18n="rm_h1_t1">Diagnose Hermes "silence after initial ack" — add heartbeat/ping/pong to webhook channel</li>
-                    <li class="todo" data-i18n="rm_h1_t2">Implement message queue retry with dead-letter for Hermes delivery failures</li>
-                    <li class="todo" data-i18n="rm_h1_t3">Session persistence: Hermes reconnects and resumes from last known state</li>
-                    <li class="todo" data-i18n="rm_h1_t4">EClaw channel logs Hermes delivery receipts; alert on &gt;3 consecutive failures</li>
-                    <li class="todo" data-i18n="rm_h1_t5">Rate-limit guard: Hermes respects 30 req/min from EClaw; back-pressure handled gracefully</li>
+                    <li class="todo" data-i18n="rm_h1_t1">Queue back-pressure: cap messageQueue depth at 200; oldest messages moved to dead-letter when cap exceeded (prevents pure-translation fallback)</li>
+                    <li class="todo" data-i18n="rm_h1_t2">Heartbeat/ping-pong on webhook channel — Hermes must respond within 10s or EClaw marks delivery as failed and retries</li>
+                    <li class="todo" data-i18n="rm_h1_t3">Session cache key includes org_id + entity_id — fixes "repo not found" from stale session cache</li>
+                    <li class="todo" data-i18n="rm_h1_t4">EClaw channel logs delivery receipts; alert on &gt;3 consecutive failures → commander notified</li>
+                    <li class="todo" data-i18n="rm_h1_t5">Docker health-check: Railway health endpoint returns 200 only when Hermes message loop is responsive; auto-restart if /health returns 503 for &gt;60s</li>
+                    <li class="todo" data-i18n="rm_h1_t6">Rate-limit guard: Hermes respects 30 req/min from EClaw; back-pressure handled via exponential backoff</li>
                 </ul>
             </div>
 
             <div class="rm-phase todo">
                 <h3>Phase H2 — <span data-i18n="rm_h2_name">Operational Maturity</span> <span class="rm-status-badge todo" data-i18n="rm_todo">Todo</span></h3>
-                <div class="rm-phase-desc" data-i18n="rm_h2_desc">Hermes as a reliable team member: task intake, SLA, escalation.</div>
+                <div class="rm-phase-desc" data-i18n="rm_h2_desc">Hermes as a reliable team member: health monitoring, self-healing, SLA tracking. Targets: ≥99% weekly uptime, 6h health-check.</div>
                 <ul class="rm-tasks">
                     <li class="todo" data-i18n="rm_h2_t1">Hermes accepts i18n batch cards via speakTo and delivers PRs on time</li>
-                    <li class="todo" data-i18n="rm_h2_t2">Hermes health-check cron: git push test every 6h; alert commander on failure</li>
+                    <li class="todo" data-i18n="rm_h2_t2">Hermes health-check cron: git push test every 6h; alert commander on 3 consecutive failures</li>
                     <li class="todo" data-i18n="rm_h2_t3">Hermes uses Linear API to update card status after PR merge (closed/labelled)</li>
-                    <li class="todo" data-i18n="rm_h2_t4">Auto-restart Hermes on OOM or stuck loop (Railway restart policy)</li>
-                    <li class="todo" data-i18n="rm_h2_t5">Hermes memory persists between sessions via hermes_state.db (already configured)</li>
+                    <li class="todo" data-i18n="rm_h2_t4">Railway restart policy set to always; OOM or stuck loop triggers immediate restart with commander notification</li>
+                    <li data-i18n="rm_h2_t5">Hermes memory persists between sessions via hermes_state.db (already configured)</li>
+                    <li class="todo" data-i18n="rm_h2_t6">Structured log pipeline: Hermes emits JSON logs → Railway log drain → Loki/Grafana dashboard; P95 response time tracked</li>
                 </ul>
             </div>
 
             <div class="rm-phase todo">
-                <h3>Phase H3 — <span data-i18n="rm_h3_name">Showcase Ready</span> <span class="rm-status-badge todo" data-i18n="rm_todo">Todo</span></h3>
-                <div class="rm-phase-desc" data-i18n="rm_h3_desc">Hermes Channel page on EClaw portal demonstrating live co-working with other agents.</div>
+                <h3>Phase H3 — <span data-i18n="rm_h3_name">Private Repo Support</span> <span class="rm-status-badge todo" data-i18n="rm_todo">Todo</span></h3>
+                <div class="rm-phase-desc" data-i18n="rm_h3_desc">Hermes can operate on private repositories. Aligned with <a href="info.html#guide/card_f531861e" style="color:var(--primary);">card_f531861e</a> (claude-cli-proxy vault integration). Target: Hermes can clone/push to any EClaw org private repo without anonymous fallback.</div>
                 <ul class="rm-tasks">
-                    <li class="todo" data-i18n="rm_h3_t1">Public Hermes Channel guide page on portal (info.html already exists; content to be expanded)</li>
-                    <li class="todo" data-i18n="rm_h3_t2">Hermes i18n contributions visible as merged PRs — use as proof of cross-platform A2A</li>
-                    <li class="todo" data-i18n="rm_h3_t3">Live demo: commander assigns a card, Hermes delivers PR, commander merges — screenshot in portal</li>
-                    <li class="todo" data-i18n="rm_h3_t4">Add Hermes to EClaw's agent roster page (agent cards with capability tags)</li>
+                    <li class="todo" data-i18n="rm_h3_t1">claude-cli-proxy reads GIT_HUB2 from vault (card_f531861e) — Hermes git operations use authenticated context instead of anonymous fallback</li>
+                    <li class="todo" data-i18n="rm_h3_t2">Per-org credential scope: Hermes receives org-specific token; cannot access repos outside assigned orgs</li>
+                    <li class="todo" data-i18n="rm_h3_t3">Hermes tested against a private test repo — clone, branch, commit, push, PR all succeed</li>
+                </ul>
+            </div>
+
+            <div class="rm-phase todo">
+                <h3>Phase H4 — <span data-i18n="rm_h4_name">Showcase Ready</span> <span class="rm-status-badge todo" data-i18n="rm_todo">Todo</span></h3>
+                <div class="rm-phase-desc" data-i18n="rm_h4_desc">Hermes Channel page on EClaw portal demonstrating live co-working with other agents as public proof of EClaw's cross-platform A2A.</div>
+                <ul class="rm-tasks">
+                    <li class="todo" data-i18n="rm_h4_t1">Public Hermes Channel guide page on portal (info.html already exists; content to be expanded)</li>
+                    <li class="todo" data-i18n="rm_h4_t2">Hermes i18n contributions visible as merged PRs — use as proof of cross-platform A2A</li>
+                    <li class="todo" data-i18n="rm_h4_t3">Live demo: commander assigns a card, Hermes delivers PR, commander merges — screenshot in portal</li>
+                    <li class="todo" data-i18n="rm_h4_t4">Add Hermes to EClaw's agent roster page (agent cards with capability tags)</li>
                 </ul>
             </div>
         </div>
