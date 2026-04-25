@@ -805,6 +805,153 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     });
 
     // ============================================
+    // GET /mindmap — Live data feed for mission.html mind-map
+    // ============================================
+    // Projects active kanban cards into the {id,label,sys,tier,status,summary}
+    // shape consumed by public/portal/shared/mission-mindmap.js. Edges come
+    // from parent_card_id. The 8-system frame (invite/device/i18n/kanban/chat/
+    // payment/broadcast/bridge) is preserved as virtual hub nodes so the
+    // sys-rail UI keeps working even when zero cards classify into a system.
+    //
+    // The frontend (mission.html) calls this and falls back to the in-file
+    // MOCK_NODES when totalCards < 5 or when this endpoint errors.
+    const SYS_KEYWORDS = [
+        ['i18n',      /(i18n|locale|翻譯|翻译|hermes|cc_warn)/i],
+        ['chat',      /(聊天|chat|引用|chip|popover|embed=1|message|心智圖|mindmap|mind-map)/i],
+        ['kanban',    /(看板|kanban|卡片|card|screenshot|note|筆記|comment)/i],
+        ['invite',    /(邀請|invite|redeem|tier|funnel|leaderboard|qr)/i],
+        ['device',    /(裝置|device|secret|vault|rental|health|switch)/i],
+        ['payment',   /(支付|wallet|payment|iap|topup|top-up|storekit|訂閱)/i],
+        ['broadcast', /(廣播|broadcast|publisher|twitter|mastodon|wordpress|wp\.com|社群|x \(twitter\))/i],
+        ['bridge',    /(橋接|bridge|osascript|u\d{2}|ssh|terminal-bridge|hermes-bridge)/i],
+    ];
+    function classifySys(title) {
+        const t = String(title || '');
+        for (const [sys, rx] of SYS_KEYWORDS) {
+            if (rx.test(t)) return sys;
+        }
+        return 'kanban';
+    }
+    function tierFor(priority, isAutomation) {
+        if (isAutomation) return 'leaf';
+        if (priority === 'P0' || priority === 'P1') return 'topic';
+        return 'leaf';
+    }
+    function statusFor(kanbanStatus) {
+        if (kanbanStatus === 'done') return 'done';
+        if (kanbanStatus === 'backlog') return 'blocked';
+        return 'active';
+    }
+    router.get('/mindmap', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId } = { ...req.query, ...req.body };
+        const includeAutomation = req.query.includeAutomation === 'true';
+        try {
+            const cardsResult = await pool.query(
+                `SELECT id, title, description, priority, status, parent_card_id, is_automation, assigned_bots
+                 FROM kanban_cards
+                 WHERE device_id = $1 AND archived = false
+                   ${includeAutomation ? '' : 'AND (is_automation = false OR is_automation IS NULL)'}
+                 ORDER BY
+                    CASE priority WHEN 'P0' THEN 0 WHEN 'P1' THEN 1 WHEN 'P2' THEN 2 WHEN 'P3' THEN 3 END,
+                    updated_at DESC NULLS LAST
+                 LIMIT 80`,
+                [deviceId]
+            );
+
+            const sysHubs = {
+                invite:    { id: 'sys:invite',    label: '邀請',     sys: 'invite',    tier: 'domain', status: 'active', summary: '' },
+                device:    { id: 'sys:device',    label: '裝置',     sys: 'device',    tier: 'domain', status: 'active', summary: '' },
+                i18n:      { id: 'sys:i18n',      label: 'i18n',     sys: 'i18n',      tier: 'domain', status: 'active', summary: '' },
+                kanban:    { id: 'sys:kanban',    label: '看板',     sys: 'kanban',    tier: 'domain', status: 'active', summary: '' },
+                chat:      { id: 'sys:chat',      label: '聊天',     sys: 'chat',      tier: 'domain', status: 'active', summary: '' },
+                payment:   { id: 'sys:payment',   label: '支付',     sys: 'payment',   tier: 'domain', status: 'active', summary: '' },
+                broadcast: { id: 'sys:broadcast', label: '廣播',     sys: 'broadcast', tier: 'domain', status: 'active', summary: '' },
+                bridge:    { id: 'sys:bridge',    label: '橋接',     sys: 'bridge',    tier: 'domain', status: 'active', summary: '' },
+            };
+
+            const nodes = [];
+            const edges = [];
+            const cardIds = new Set();
+            const sysCount = {};
+
+            for (const c of cardsResult.rows) {
+                const sys = classifySys(c.title);
+                sysCount[sys] = (sysCount[sys] || 0) + 1;
+                const summary = (c.description || '').replace(/\s+/g, ' ').trim().slice(0, 120);
+                nodes.push({
+                    id: c.id,
+                    label: (c.title || '').slice(0, 40),
+                    sys,
+                    tier: tierFor(c.priority, c.is_automation),
+                    status: statusFor(c.status),
+                    summary,
+                    priority: c.priority,
+                    cardStatus: c.status,
+                });
+                cardIds.add(c.id);
+            }
+
+            // Hub nodes: include hubs that own ≥1 card (keeps the rail tidy)
+            for (const sys of Object.keys(sysHubs)) {
+                if (sysCount[sys]) {
+                    const hub = { ...sysHubs[sys], summary: `${sysCount[sys]} 張卡片` };
+                    nodes.unshift(hub);
+                    // Connect each card in this sys to its hub when no parent_card edge exists yet
+                    for (const c of cardsResult.rows) {
+                        if (classifySys(c.title) === sys && !c.parent_card_id) {
+                            edges.push([hub.id, c.id]);
+                        }
+                    }
+                }
+            }
+
+            // Parent → child edges (only when both endpoints are in the result set)
+            for (const c of cardsResult.rows) {
+                if (c.parent_card_id && cardIds.has(c.parent_card_id)) {
+                    edges.push([c.parent_card_id, c.id]);
+                }
+            }
+
+            // Chat embedding telemetry — surface as a hub-level annotation.
+            // chat_messages has no card_id link, so we can only report the
+            // device-wide count here; per-card linkage will land in a follow-up.
+            let messagesWithEmbedding = 0;
+            try {
+                const embedResult = await pool.query(
+                    `SELECT COUNT(*)::int AS n FROM chat_messages
+                     WHERE device_id = $1 AND embedding IS NOT NULL`,
+                    [deviceId]
+                );
+                messagesWithEmbedding = embedResult.rows[0]?.n || 0;
+                if (messagesWithEmbedding > 0) {
+                    const chatHub = nodes.find(n => n.id === 'sys:chat');
+                    if (chatHub) {
+                        chatHub.summary = `${sysCount.chat || 0} 張卡片 · ${messagesWithEmbedding} 則訊息已嵌入`;
+                    }
+                }
+            } catch (e) {
+                // pgvector not installed or column missing — skip silently
+            }
+
+            res.json({
+                success: true,
+                live: true,
+                nodes,
+                edges,
+                stats: {
+                    totalCards: cardsResult.rows.length,
+                    messagesWithEmbedding,
+                    sysCount,
+                },
+            });
+        } catch (err) {
+            console.error('[Kanban] Mindmap error:', err.message);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // ============================================
     // GET /cards/archived — Archived cards (paginated)
     // ============================================
     router.get('/cards/archived', async (req, res) => {

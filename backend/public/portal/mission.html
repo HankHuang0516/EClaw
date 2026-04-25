@@ -957,7 +957,24 @@
             if (mmExpanded && !mmInitialized && window.MissionMindmap) {
                 mmInitialized = true;
                 try {
-                    await window.MissionMindmap.init({ rootEl: container });
+                    let liveData = null;
+                    try {
+                        const resp = await fetch(
+                            `/api/mission/mindmap?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`
+                        );
+                        if (resp.ok) {
+                            const j = await resp.json();
+                            // Need at least 5 nodes for a mind-map to be useful;
+                            // below that, fall back to the curated demo so the
+                            // UX doesn't look empty for fresh devices.
+                            if (j.success && Array.isArray(j.nodes) && j.nodes.length >= 5) {
+                                liveData = { nodes: j.nodes, edges: j.edges || [] };
+                            }
+                        }
+                    } catch (fetchErr) {
+                        console.warn('mindmap live fetch failed, falling back to mock:', fetchErr);
+                    }
+                    await window.MissionMindmap.init({ rootEl: container, data: liveData });
                 } catch (err) {
                     console.error('mindmap init failed:', err);
                     container.innerHTML = '<div style="padding:14px;color:var(--text-secondary);font-size:12px;">載入失敗：' + (err.message || err) + '</div>';
