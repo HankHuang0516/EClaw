@@ -1,3 +1,10 @@
+## [1.1081.4](https://github.com/HankHuang0516/EClaw/compare/v1.1081.3...v1.1081.4) (2026-04-25)
+
+
+### Bug Fixes
+
+* **i18n:** close hi-locale block properly; reclaim 557 orphan keys ([#2086](https://github.com/HankHuang0516/EClaw/issues/2086)) ([6be453e](https://github.com/HankHuang0516/EClaw/commit/6be453e162783fe45e8e51ac1c3d061d069f51ed))
+
 ## [1.1081.3](https://github.com/HankHuang0516/EClaw/compare/v1.1081.2...v1.1081.3) (2026-04-25)
 
 
