@@ -26,6 +26,8 @@ import re
 import shutil
 import sys
 import time
+import urllib.parse
+import urllib.request
 import uuid
 from collections import deque
 from contextlib import asynccontextmanager
@@ -45,6 +47,13 @@ PORT = int(os.getenv("PORT", "4000"))
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN", "")
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 
+# Vault-backed GitHub token (preferred over GITHUB_TOKEN env). Lets us rotate
+# the PAT centrally without redeploying Railway, and avoids permanent PAT
+# exposure in Railway env vars.
+EVAULT_API_BASE = os.getenv("EVAULT_API_BASE", "https://eclawbot.com")
+EVAULT_DEVICE_ID = os.getenv("EVAULT_DEVICE_ID", "")
+EVAULT_BOT_SECRET = os.getenv("EVAULT_BOT_SECRET", "")
+
 CLAUDE_TIMEOUT_MS = 55  # seconds (Haiku binding analysis)
 CHAT_TIMEOUT_MS = 180  # seconds (Sonnet general chat with tool access)
 
@@ -52,11 +61,8 @@ MAX_CONCURRENT = 2
 MAX_QUEUE = 8
 
 REPO_DIR = Path(os.getenv("HOME", "/root")) / ".claude" / "repo"
-REPO_URL = (
-    f"https://{GITHUB_TOKEN}@github.com/HankHuang0516/realbot.git"
-    if GITHUB_TOKEN
-    else "https://github.com/HankHuang0516/realbot.git"
-)
+REPO_GIT_HOST_PATH = "github.com/HankHuang0516/realbot.git"
+REPO_GIT_URL_ANON = f"https://{REPO_GIT_HOST_PATH}"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", stream=sys.stdout)
 log = logging.getLogger("claude-proxy")
@@ -610,20 +616,82 @@ Rules:
 
 
 # ── Repo Clone & Sync ────────────────────────
-def ensure_repo_clone():
+# Vault key names checked in priority order. GIT_HUB2 is the canonical key
+# Hank uses across bots; GITHUBTOKEN / GIT are accepted aliases.
+_VAULT_TOKEN_KEYS = ("GIT_HUB2", "GITHUBTOKEN", "GIT")
+
+
+def _fetch_vault_github_token() -> Optional[str]:
+    """Pull a GitHub PAT from /api/device-vars using service-account bot creds.
+
+    Returns the raw token on success, None on any failure. The token is held
+    only by the immediate caller's frame and the in-memory git remote URL —
+    we never write it to env, log, or disk.
+    """
+    if not (EVAULT_DEVICE_ID and EVAULT_BOT_SECRET):
+        return None
+    qs = urllib.parse.urlencode({"deviceId": EVAULT_DEVICE_ID, "botSecret": EVAULT_BOT_SECRET})
+    url = f"{EVAULT_API_BASE}/api/device-vars?{qs}"
     try:
+        req = urllib.request.Request(url, headers={"User-Agent": "claude-cli-proxy/2.0"})
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
+    except Exception as e:
+        log.warning(f"[Vault] Fetch failed: {str(e)[:200]}")
+        return None
+    if not body.get("success"):
+        log.warning(f"[Vault] device-vars returned error: {body.get('error')}")
+        return None
+    vars_map = body.get("vars") or {}
+    for k in _VAULT_TOKEN_KEYS:
+        v = vars_map.get(k)
+        if isinstance(v, str) and v.strip():
+            log.info(f"[Vault] Using token from key={k} (vault has {len(vars_map)} keys)")
+            return v.strip()
+    log.warning(f"[Vault] No GitHub token in vault (looked for {_VAULT_TOKEN_KEYS}; vault has {len(vars_map)} keys)")
+    return None
+
+
+def _resolve_repo_url() -> tuple:
+    """Return (url, source) for cloning realbot.
+
+    source ∈ {'vault', 'env', 'anonymous'}. Vault is preferred so the PAT can
+    rotate without a Railway redeploy; env GITHUB_TOKEN is the legacy
+    fallback; anonymous works while the repo is public.
+    """
+    token = _fetch_vault_github_token()
+    if token:
+        return (f"https://{token}@{REPO_GIT_HOST_PATH}", "vault")
+    if GITHUB_TOKEN:
+        return (f"https://{GITHUB_TOKEN}@{REPO_GIT_HOST_PATH}", "env")
+    return (REPO_GIT_URL_ANON, "anonymous")
+
+
+def ensure_repo_clone():
+    import subprocess
+    try:
+        repo_url, source = _resolve_repo_url()
         git_dir = REPO_DIR / ".git"
         if git_dir.exists():
-            log.info("[Repo] Pulling latest...")
-            import subprocess
-            subprocess.run(["git", "pull", "--ff-only"], cwd=str(REPO_DIR), timeout=30, capture_output=True)
+            log.info(f"[Repo] Pulling latest (auth={source})...")
+            # Refresh remote so a rotated vault token takes effect immediately.
+            subprocess.run(
+                ["git", "remote", "set-url", "origin", repo_url],
+                cwd=str(REPO_DIR), timeout=10, capture_output=True,
+            )
+            subprocess.run(
+                ["git", "pull", "--ff-only"],
+                cwd=str(REPO_DIR), timeout=30, capture_output=True,
+            )
             log.info("[Repo] Updated.")
         else:
-            log.info("[Repo] Cloning repository...")
+            log.info(f"[Repo] Cloning repository (auth={source})...")
             REPO_DIR.mkdir(parents=True, exist_ok=True)
-            import subprocess
-            subprocess.run(["git", "clone", "--depth", "50", REPO_URL, str(REPO_DIR)], timeout=120, capture_output=True)
-            log.info(f"[Repo] Cloned to {REPO_DIR}")
+            subprocess.run(
+                ["git", "clone", "--depth", "50", repo_url, str(REPO_DIR)],
+                timeout=120, capture_output=True,
+            )
+            log.info(f"[Repo] Cloned to {REPO_DIR} (auth={source})")
     except Exception as e:
         log.error(f"[Repo] Git error: {str(e)[:300]}")
 
