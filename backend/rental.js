@@ -320,6 +320,37 @@ async function delistListing(listingId, ownerUserId) {
     return res.rows[0];
 }
 
+/**
+ * P0 Phase 3: when an entity slot is rebound to a different bot, every active
+ * listing pointing at that slot is now stale. Auto-pause them so the
+ * marketplace stops booking the slot, while leaving the row in place so the
+ * owner can decide to re-list (after a fresh interview) or delist permanently.
+ *
+ * Statuses we touch: 'draft', 'interview', 'listed'.
+ * Statuses we leave alone: 'paused' (already safe), 'delisted' (terminal).
+ *
+ * Returns the affected listing IDs for caller logging. Errors are caught
+ * and logged — a DB hiccup must not abort the rebind itself.
+ */
+async function pauseListingsOnRebind(deviceId, entityId) {
+    if (!deviceId || !Number.isInteger(entityId)) return [];
+    try {
+        const res = await pool.query(
+            `UPDATE bot_listings
+                SET status = 'paused', updated_at = NOW()
+              WHERE owner_device_id = $1
+                AND owner_entity_id = $2
+                AND status IN ('draft', 'interview', 'listed')
+            RETURNING id, status`,
+            [deviceId, entityId]
+        );
+        return res.rows.map((r) => r.id);
+    } catch (err) {
+        console.error('[Rental] pauseListingsOnRebind error:', err.message);
+        return [];
+    }
+}
+
 async function getListing(listingId) {
     const res = await pool.query(
         `SELECT id, owner_user_id, owner_device_id, owner_entity_id,
@@ -1919,6 +1950,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         publishListing,
         pauseListing,
         delistListing,
+        pauseListingsOnRebind,
         getListing,
         listMyListings,
         searchMarketplace,

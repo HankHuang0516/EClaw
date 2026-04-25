@@ -1286,6 +1286,7 @@ setInterval(async () => {
                 device.entities[binding.entity_id].level = prev.level || 1;
                 device.entities[binding.entity_id].rebindCount = (prev.rebindCount || 0) + 1;
                 device.entities[binding.entity_id].lastRebindAt = Date.now();
+                await pauseRentalListingsOnRebind(binding.device_id, binding.entity_id);
             }
 
             delete officialBindingsCache[getBindingCacheKey(binding.device_id, binding.entity_id)];
@@ -2184,6 +2185,24 @@ const rentalModule = require('./rental')({
     serverLog,
 });
 app.use('/api/rental', rentalModule.router);
+
+// P0 Phase 3: when an entity slot is rebound, every active listing pointing
+// at it now references a different bot. Auto-pause the listings so the
+// marketplace stops booking the slot. Owner can manually re-publish or delist.
+// Errors are swallowed inside rentalModule.pauseListingsOnRebind — must not
+// abort the rebind itself.
+async function pauseRentalListingsOnRebind(deviceId, entityId) {
+    if (typeof rentalModule?.pauseListingsOnRebind !== 'function') return;
+    try {
+        const paused = await rentalModule.pauseListingsOnRebind(deviceId, entityId);
+        if (Array.isArray(paused) && paused.length > 0) {
+            serverLog('info', 'rental', `[Rebind cascade] auto-paused ${paused.length} listing(s)`,
+                { deviceId, entityId, listingIds: paused });
+        }
+    } catch (err) {
+        console.error('[Rebind cascade] pauseRentalListingsOnRebind error:', err.message);
+    }
+}
 // Defer schema init: rental_contracts has FKs to user_accounts and
 // bot_listings, so user_accounts must be created first.
 if (process.env.NODE_ENV !== 'test') {
@@ -6659,6 +6678,7 @@ app.delete('/api/entity', async (req, res) => {
     device.entities[eId].level = removedEntity?.level || 1;
     device.entities[eId].rebindCount = (removedEntity?.rebindCount || 0) + 1;
     device.entities[eId].lastRebindAt = Date.now();
+    await pauseRentalListingsOnRebind(deviceId, eId);
 
     console.log(`[Remove] Device ${deviceId} Entity ${eId} unbound`);
     serverLog('info', 'unbind', `Entity ${eId} unbound`, { deviceId, entityId: eId });
@@ -6779,6 +6799,7 @@ app.delete('/api/device/entity', async (req, res) => {
     device.entities[eId].level = removedEntity2?.level || 1;
     device.entities[eId].rebindCount = (removedEntity2?.rebindCount || 0) + 1;
     device.entities[eId].lastRebindAt = Date.now();
+    await pauseRentalListingsOnRebind(deviceId, eId);
 
     console.log(`[Device Remove] Device ${deviceId} Entity ${eId} unbound by device owner`);
 
@@ -11680,6 +11701,7 @@ async function autoUnbindEntity(deviceId, eId, device) {
     device.entities[eId].level = prevEntity?.level || 1;
     device.entities[eId].rebindCount = (prevEntity?.rebindCount || 0) + 1;
     device.entities[eId].lastRebindAt = Date.now();
+    await pauseRentalListingsOnRebind(deviceId, eId);
 }
 
 /**
@@ -11938,6 +11960,7 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
         }
     };
     publicCodeIndex[freePublicCode] = { deviceId, entityId: eId };
+    await pauseRentalListingsOnRebind(deviceId, eId);
 
     // Save binding record
     const binding = {
@@ -12100,6 +12123,7 @@ app.post('/api/official-borrow/bind-personal', async (req, res) => {
             setupPassword: personalBot.setup_password || null
         }
     };
+    await pauseRentalListingsOnRebind(deviceId, eId);
 
     // Mark personal bot as assigned
     personalBot.status = 'assigned';
@@ -12274,6 +12298,7 @@ app.post('/api/official-borrow/unbind', async (req, res) => {
     device.entities[eId].level = prevBorrow?.level || 1;
     device.entities[eId].rebindCount = (prevBorrow?.rebindCount || 0) + 1;
     device.entities[eId].lastRebindAt = Date.now();
+    await pauseRentalListingsOnRebind(deviceId, eId);
     await saveData();
 
     console.log(`[Borrow] Official binding removed: device ${deviceId} entity ${eId}`);
@@ -14434,6 +14459,7 @@ app.post('/api/admin/transfer-device', async (req, res) => {
             sourceDevice.entities[eId] = createDefaultEntity(eId);
             sourceDevice.entities[eId].rebindCount = (srcEntity.rebindCount || 0) + 1;
             sourceDevice.entities[eId].lastRebindAt = Date.now();
+            await pauseRentalListingsOnRebind(sourceDeviceId, eId);
             transferred.push({ entityId: eId, name: srcEntity.name, character: srcEntity.character });
         }
 
