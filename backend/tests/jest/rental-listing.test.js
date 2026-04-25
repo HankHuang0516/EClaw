@@ -110,6 +110,20 @@ jest.mock('pg', () => {
             return { rows: [{ interview_passed: row.interview_passed }], rowCount: 1 };
         }
 
+        // P0 Phase 3 rebind cascade: UPDATE ... status='paused' WHERE owner_device_id AND owner_entity_id AND status IN (...)
+        if (/^UPDATE bot_listings SET status = 'paused', updated_at = NOW\(\) WHERE owner_device_id = \$1 AND owner_entity_id = \$2 AND status IN/i.test(norm)) {
+            const [deviceId, entityId] = params;
+            const affected = state.listings.filter(l =>
+                l.owner_device_id === deviceId &&
+                l.owner_entity_id === entityId &&
+                ['draft', 'interview', 'listed'].includes(l.status));
+            for (const row of affected) {
+                row.status = 'paused';
+                row.updated_at = new Date();
+            }
+            return { rows: affected.map(r => ({ id: r.id, status: r.status })), rowCount: affected.length };
+        }
+
         // Pause: UPDATE ... status='paused' WHERE id AND owner AND status='listed'
         if (/^UPDATE bot_listings SET status = 'paused'/i.test(norm)) {
             const [id, ownerUserId] = params;
@@ -566,6 +580,55 @@ describe('rental: filterDriftedListings (P0 Phase 2)', () => {
         const oldListings = [{ id: 'lo', owner_device_id: 'd1', owner_entity_id: 0 }];
         // d1.0 has rebindCount=0, listing has no bound_rebind_count → both 0 → keep
         expect(api.filterDriftedListings(oldListings, devices)).toHaveLength(1);
+    });
+});
+
+describe('rental: pauseListingsOnRebind (P0 Phase 3)', () => {
+    const DEV_A = 'dev-a';
+    const DEV_B = 'dev-b';
+
+    function seedListing({ id, deviceId, entityId, status = 'listed' }) {
+        const state = globalThis.__rentalFakeState;
+        state.listings.push({
+            id, owner_user_id: OWNER,
+            owner_device_id: deviceId, owner_entity_id: entityId,
+            title: id, description: '', rate_mli_per_ktoken: 1,
+            min_rental_minutes: 5, max_rental_minutes: 60,
+            interview_passed: true, status,
+            bound_rebind_count: 0,
+            created_at: new Date(), updated_at: new Date(),
+        });
+    }
+
+    test('flips draft/interview/listed → paused for matching device+entity', async () => {
+        seedListing({ id: 'p1', deviceId: DEV_A, entityId: 0, status: 'draft' });
+        seedListing({ id: 'p2', deviceId: DEV_A, entityId: 0, status: 'listed' });
+        seedListing({ id: 'p3', deviceId: DEV_A, entityId: 0, status: 'paused' });
+        seedListing({ id: 'p4', deviceId: DEV_A, entityId: 0, status: 'delisted' });
+        seedListing({ id: 'p5', deviceId: DEV_A, entityId: 1, status: 'listed' }); // different entity
+        seedListing({ id: 'p6', deviceId: DEV_B, entityId: 0, status: 'listed' }); // different device
+
+        const paused = await api.pauseListingsOnRebind(DEV_A, 0);
+        expect(paused.sort()).toEqual(['p1', 'p2']);
+
+        const state = globalThis.__rentalFakeState;
+        expect(state.listings.find(l => l.id === 'p1').status).toBe('paused');
+        expect(state.listings.find(l => l.id === 'p2').status).toBe('paused');
+        expect(state.listings.find(l => l.id === 'p3').status).toBe('paused'); // unchanged
+        expect(state.listings.find(l => l.id === 'p4').status).toBe('delisted'); // unchanged
+        expect(state.listings.find(l => l.id === 'p5').status).toBe('listed'); // entity 1 untouched
+        expect(state.listings.find(l => l.id === 'p6').status).toBe('listed'); // device B untouched
+    });
+
+    test('returns [] when no listings match', async () => {
+        const paused = await api.pauseListingsOnRebind('nope-device', 0);
+        expect(paused).toEqual([]);
+    });
+
+    test('rejects bad inputs without throwing', async () => {
+        await expect(api.pauseListingsOnRebind(null, 0)).resolves.toEqual([]);
+        await expect(api.pauseListingsOnRebind('dev', null)).resolves.toEqual([]);
+        await expect(api.pauseListingsOnRebind('dev', 'not-int')).resolves.toEqual([]);
     });
 });
 
