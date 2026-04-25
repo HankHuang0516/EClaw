@@ -1,3 +1,10 @@
+## [1.1081.2](https://github.com/HankHuang0516/EClaw/compare/v1.1081.1...v1.1081.2) (2026-04-25)
+
+
+### Bug Fixes
+
+* **schedule-popup:** edit form opens on legacy ids; styled confirm shows i18n labels ([#2084](https://github.com/HankHuang0516/EClaw/issues/2084)) ([7b4d90e](https://github.com/HankHuang0516/EClaw/commit/7b4d90ec2a7c17cf9deb1d8922b51a23b65137bd)), closes [#2082](https://github.com/HankHuang0516/EClaw/issues/2082)
+
 ## [1.1081.1](https://github.com/HankHuang0516/EClaw/compare/v1.1081.0...v1.1081.1) (2026-04-24)
 
 
