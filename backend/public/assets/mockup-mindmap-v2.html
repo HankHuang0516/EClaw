@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Mockup v2 — 任務 &gt; 心智 (cytoscape inline)</title>
+<style>
+:root {
+  --bg: #0d1117;
+  --bg-elev: #161b22;
+  --card-border: #2a2f3a;
+  --text: #e6edf3;
+  --text-secondary: #8b949e;
+  --primary: #7c83ff;
+  --kanban: #4ade80;
+  --chat: #58a6ff;
+  --note: #f0883e;
+  --review: #c084fc;
+  --domain: #7c83ff;
+  --topic: #58a6ff;
+  --leaf: #f0883e;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  overflow: hidden;
+}
+
+.mockup-banner {
+  background: rgba(124, 131, 255, 0.12);
+  border-bottom: 1px solid var(--primary);
+  padding: 8px 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+.mockup-banner strong { color: var(--primary); }
+.mockup-banner code { background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 3px; }
+
+/* Top nav (mimics mission.html) */
+.topnav {
+  height: 52px;
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--card-border);
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  gap: 14px;
+}
+.topnav .brand {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--primary);
+}
+.topnav .crumbs {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.topnav .crumbs strong { color: var(--text); }
+
+/* Sub-tabs (preserved from mission.html) */
+.sub-tabs {
+  display: flex;
+  background: var(--bg-elev);
+  border-bottom: 1px solid var(--card-border);
+  padding: 0 18px;
+}
+.sub-tab {
+  padding: 12px 18px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  text-decoration: none;
+  user-select: none;
+}
+.sub-tab:hover { color: var(--text); }
+.sub-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+
+/* Mind tab body */
+.mind-shell {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  height: calc(100vh - 52px - 45px - 36px);
+  min-height: 480px;
+}
+.mind-canvas-wrap {
+  position: relative;
+  background: var(--bg);
+  overflow: hidden;
+  border-right: 1px solid var(--card-border);
+}
+#cy {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 50%, rgba(120, 160, 220, 0.06), transparent 70%), var(--bg);
+}
+
+/* Floating toolbar */
+.mm-toolbar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  display: flex;
+  gap: 6px;
+  background: rgba(22, 27, 34, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 6px;
+}
+.mm-toolbar button {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid transparent;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.mm-toolbar button:hover { background: rgba(255,255,255,0.06); }
+.mm-toolbar button.primary { background: var(--primary); color: #fff; }
+.mm-toolbar .sep { width: 1px; background: var(--card-border); margin: 4px 2px; }
+
+/* Tier badge */
+.zoom-tier {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  background: rgba(22, 27, 34, 0.85);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.zoom-tier strong { color: var(--primary); }
+
+/* Mini-nav */
+#cyNav {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 180px;
+  height: 120px;
+  background: rgba(20, 24, 40, 0.9);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  z-index: 5;
+  pointer-events: auto;
+}
+
+/* Right-side panel */
+.mind-side {
+  background: var(--bg-elev);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.side-empty {
+  padding: 30px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.side-empty .hint {
+  margin-top: 12px;
+  font-size: 11px;
+  opacity: 0.7;
+}
+.side-detail {
+  padding: 16px;
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+.side-detail.visible { display: flex; }
+.side-detail h2 {
+  font-size: 16px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.node-type-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.node-type-badge.domain { background: rgba(124,131,255,0.15); color: var(--domain); }
+.node-type-badge.topic { background: rgba(88,166,255,0.15); color: var(--topic); }
+.node-type-badge.leaf { background: rgba(240,136,62,0.15); color: var(--leaf); }
+.side-detail .summary {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.55;
+}
+.anchor-section h3 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+.anchor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.anchor-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.1s;
+}
+.anchor-row:hover { border-color: var(--primary); }
+.anchor-row .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.anchor-row.kanban .dot { background: var(--kanban); }
+.anchor-row.chat .dot { background: var(--chat); }
+.anchor-row.note .dot { background: var(--note); }
+.anchor-row.review .dot { background: var(--review); }
+.anchor-row .label { flex: 1; }
+.anchor-row .meta { color: var(--text-secondary); font-size: 11px; }
+
+/* Footer hint */
+.mind-foot {
+  height: 36px;
+  background: var(--bg-elev);
+  border-top: 1px solid var(--card-border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 14px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.legend { display: flex; gap: 12px; align-items: center; }
+.legend-item { display: flex; gap: 5px; align-items: center; }
+.legend-item .dot { width: 8px; height: 8px; border-radius: 50%; }
+.legend-item.domain .dot { background: var(--domain); }
+.legend-item.topic .dot { background: var(--topic); }
+.legend-item.leaf .dot { background: var(--leaf); }
+</style>
+</head>
+<body>
+
+<div class="mockup-banner">
+  <strong>MOCKUP v2</strong> · <code>assets/mockup-mindmap-v2.html</code> · 心智 tab 嵌入在 <code>mission.html</code> 內部 · cytoscape graph + zoom-tier + 點選節點看 anchor (kanban / chat / note / review)
+</div>
+
+<!-- Mimic top nav -->
+<nav class="topnav">
+  <span class="brand">🦞 EClawbot</span>
+  <span class="crumbs">/ <strong>任務</strong></span>
+</nav>
+
+<!-- mission.html sub-tabs (preserved) -->
+<nav class="sub-tabs">
+  <a class="sub-tab active">🧠 心智</a>
+  <a class="sub-tab">📋 看板</a>
+  <a class="sub-tab">🔐 環境</a>
+  <a class="sub-tab">📱 遠端</a>
+  <a class="sub-tab">📰 Publisher</a>
+</nav>
+
+<div class="mind-shell">
+  <!-- Canvas with cytoscape -->
+  <div class="mind-canvas-wrap">
+
+    <div class="mm-toolbar">
+      <button class="primary">＋ 新節點</button>
+      <button>🔗 連線</button>
+      <span class="sep"></span>
+      <button>🎯 Fit</button>
+      <button>🔄 Reload</button>
+    </div>
+
+    <div class="zoom-tier" id="zoomTier">L1 · <strong>Topics</strong></div>
+
+    <div id="cy"></div>
+    <div id="cyNav"></div>
+  </div>
+
+  <!-- Side panel -->
+  <aside class="mind-side">
+    <div class="side-empty" id="sideEmpty">
+      <div style="font-size: 28px; margin-bottom: 8px;">🧠</div>
+      點擊任一節點查看詳情、anchor 連結、和 chat 引用座標。
+      <div class="hint">滾輪 zoom · 拖曳 pan · 雙擊節點 = 進入 focus mode</div>
+    </div>
+
+    <div class="side-detail" id="sideDetail">
+      <h2><span id="dTitle">—</span> <span class="node-type-badge" id="dType">—</span></h2>
+      <div class="summary" id="dSummary">—</div>
+
+      <div class="anchor-section">
+        <h3>Kanban / Chat anchors</h3>
+        <div class="anchor-list" id="anchorList"></div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<div class="mind-foot">
+  <span>圖例：</span>
+  <div class="legend">
+    <div class="legend-item domain"><span class="dot"></span>Domain (主題域)</div>
+    <div class="legend-item topic"><span class="dot"></span>Topic (子主題)</div>
+    <div class="legend-item leaf"><span class="dot"></span>Leaf (具體想法)</div>
+  </div>
+  <span style="margin-left: auto;">47 節點 · 62 連線 · 12 kanban anchor · 8 chat embedding</span>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
+<script>
+const NODES = [
+  // Domain (3 大主題)
+  { data: { id: 'd1', label: '邀請成長', type: 'domain', summary: '邀請碼、推薦獎勵、leaderboard 等成長機制', anchors: [
+    { type: 'kanban', label: 'card_fc9a512f Daily viral cron' },
+    { type: 'note', label: 'note: 0/9 invite codes redeemed' },
+  ]}},
+  { data: { id: 'd2', label: '智慧引用', type: 'domain', summary: '聊天訊息中的 anchor、chip、預覽卡', anchors: [
+    { type: 'kanban', label: 'card_71c833d5 智慧引用 i18n' },
+    { type: 'chat', label: '#chip 📌 重新引用 PR #2089' },
+  ]}},
+  { data: { id: 'd3', label: '基礎建設', type: 'domain', summary: 'Docker / bridge / CI 等下層支撐', anchors: [
+    { type: 'kanban', label: 'card_7102c915 Hermes Docker' },
+    { type: 'review', label: 'PR #2090 R2 TTL fix' },
+  ]}},
+
+  // Topic (subgraph)
+  { data: { id: 't1', label: 'Bot Plaza CTA', type: 'topic', summary: '在 community.html hero 加 Create-your-own-Bot CTA', anchors: [
+    { type: 'review', label: 'PR #2091 已 merge' },
+    { type: 'kanban', label: 'card_81f6ae7a' },
+  ]}},
+  { data: { id: 't2', label: 'i18n 13 locale', type: 'topic', summary: '13 種語系全覆蓋；目前 chip_popover_* 缺 10 種', anchors: [
+    { type: 'kanban', label: 'card_71c833d5' },
+  ]}},
+  { data: { id: 't3', label: 'autolink-chip-preview', type: 'topic', summary: '聊天訊息中的引用即時預覽彈出卡', anchors: [
+    { type: 'note', label: 'PR #2068 chip + popover phase 1' },
+  ]}},
+  { data: { id: 't4', label: 'hermes-bridge service', type: 'topic', summary: '獨立 docker-compose service，解耦 openclaw 重啟', anchors: [
+    { type: 'kanban', label: 'card_7102c915' },
+    { type: 'note', label: 'TROUBLESHOOTING.md §5' },
+  ]}},
+
+  // Leaf
+  { data: { id: 'l1', label: '?tab=register 深層連結', type: 'leaf', summary: 'index.html 解析 query, showTab(register)', anchors: [{ type: 'review', label: 'PR #2091' }] }},
+  { data: { id: 'l2', label: 'community_cta_create_bot key', type: 'leaf', summary: 'i18n key 新增 (en/zh-TW/zh-CN)', anchors: [{ type: 'review', label: 'PR #2091' }] }},
+  { data: { id: 'l3', label: 'init: true (PID 1 reaper)', type: 'leaf', summary: 'docker-compose 防止 zombie process', anchors: [{ type: 'note', label: 'docker-compose.yml' }] }},
+  { data: { id: 'l4', label: 'restart: unless-stopped', type: 'leaf', summary: 'crash 自動重啟', anchors: [{ type: 'note', label: 'docker-compose.yml' }] }},
+];
+
+const EDGES = [
+  { data: { source: 'd1', target: 't1' }},
+  { data: { source: 'd2', target: 't2' }},
+  { data: { source: 'd2', target: 't3' }},
+  { data: { source: 'd3', target: 't4' }},
+  { data: { source: 't1', target: 'l1' }},
+  { data: { source: 't1', target: 'l2' }},
+  { data: { source: 't4', target: 'l3' }},
+  { data: { source: 't4', target: 'l4' }},
+  // Cross-domain edges (interesting connections)
+  { data: { source: 't2', target: 'l2', label: 'i18n key' }},
+  { data: { source: 'd2', target: 'd3', label: 'depends-on' }},
+];
+
+const cy = cytoscape({
+  container: document.getElementById('cy'),
+  elements: [...NODES, ...EDGES],
+  layout: { name: 'cose', padding: 60, animate: true, idealEdgeLength: 120, nodeRepulsion: 8000 },
+  style: [
+    {
+      selector: 'node',
+      style: {
+        'label': 'data(label)',
+        'color': '#e6edf3',
+        'font-size': 12,
+        'font-weight': 600,
+        'text-valign': 'center',
+        'text-halign': 'center',
+        'text-wrap': 'wrap',
+        'text-max-width': 90,
+        'background-color': '#161b22',
+        'border-width': 2,
+        'border-color': '#2a2f3a',
+        'width': 70,
+        'height': 70,
+        'shape': 'round-rectangle',
+      }
+    },
+    { selector: 'node[type="domain"]', style: {
+      'background-color': '#7c83ff',
+      'background-opacity': 0.18,
+      'border-color': '#7c83ff',
+      'width': 110, 'height': 110, 'font-size': 14
+    }},
+    { selector: 'node[type="topic"]', style: {
+      'background-color': '#58a6ff',
+      'background-opacity': 0.15,
+      'border-color': '#58a6ff',
+      'width': 80, 'height': 80,
+    }},
+    { selector: 'node[type="leaf"]', style: {
+      'background-color': '#f0883e',
+      'background-opacity': 0.12,
+      'border-color': '#f0883e',
+      'width': 60, 'height': 60, 'font-size': 11,
+    }},
+    { selector: 'node:selected', style: {
+      'border-color': '#fde047',
+      'border-width': 3,
+      'overlay-color': '#fde047',
+      'overlay-opacity': 0.1,
+    }},
+    {
+      selector: 'edge',
+      style: {
+        'width': 1.5,
+        'line-color': '#2a2f3a',
+        'target-arrow-color': '#2a2f3a',
+        'target-arrow-shape': 'triangle',
+        'curve-style': 'bezier',
+        'opacity': 0.7,
+        'label': 'data(label)',
+        'font-size': 10,
+        'color': '#8b949e',
+        'text-background-color': '#0d1117',
+        'text-background-opacity': 0.8,
+        'text-background-padding': 2,
+      }
+    }
+  ]
+});
+
+cy.on('tap', 'node', (evt) => {
+  const n = evt.target;
+  const d = n.data();
+  document.getElementById('sideEmpty').style.display = 'none';
+  const detail = document.getElementById('sideDetail');
+  detail.classList.add('visible');
+  document.getElementById('dTitle').textContent = d.label;
+  const typeEl = document.getElementById('dType');
+  typeEl.textContent = d.type;
+  typeEl.className = 'node-type-badge ' + d.type;
+  document.getElementById('dSummary').textContent = d.summary || '';
+  const list = document.getElementById('anchorList');
+  list.innerHTML = '';
+  (d.anchors || []).forEach(a => {
+    const row = document.createElement('div');
+    row.className = 'anchor-row ' + a.type;
+    row.innerHTML = `<span class="dot"></span><span class="label">${a.label}</span><span class="meta">${a.type}</span>`;
+    list.appendChild(row);
+  });
+});
+
+cy.on('tap', (evt) => {
+  if (evt.target === cy) {
+    document.getElementById('sideEmpty').style.display = 'block';
+    document.getElementById('sideDetail').classList.remove('visible');
+  }
+});
+
+cy.on('zoom', () => {
+  const z = cy.zoom();
+  let tier = 'L1', label = 'Topics';
+  if (z < 0.6) { tier = 'L0'; label = 'Overview'; }
+  else if (z >= 1.4) { tier = 'L2'; label = 'Detail'; }
+  document.getElementById('zoomTier').innerHTML = `${tier} · <strong>${label}</strong>`;
+});
+
+// auto-select demo node so screenshot shows the panel populated
+setTimeout(() => {
+  const target = cy.getElementById('d2');
+  if (target.length) {
+    target.select();
+    target.trigger('tap');
+  }
+}, 400);
+</script>
+</body>
+</html>
