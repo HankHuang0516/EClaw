@@ -178,7 +178,15 @@ function renderFormFill(session, config, sessionToken, apiBase) {
             <div class="hint">expected: ${escHtml(expectedShown)}</div></div>`;
         }
         if (f.type === 'select' && Array.isArray(f.options)) {
-            const opts = f.options.map(o =>
+            // Defensive: if the generator's expectedValue isn't in the options
+            // list, prepend it so the rendered form still defaults to the right
+            // answer. card_f0d0a2eb: a buggy generator can otherwise leave the
+            // select on options[0] and a bot reading the DOM (not the hint)
+            // submits the wrong value.
+            const optsList = f.options.includes(expected)
+                ? f.options
+                : (expected != null ? [expected, ...f.options] : f.options);
+            const opts = optsList.map(o =>
                 `<option value="${escAttr(o)}"${o === expected ? ' selected' : ''}>${escHtml(o)}</option>`
             ).join('');
             return `<div class="field"><label>${label}</label>
