@@ -1,3 +1,10 @@
+# [1.1086.0](https://github.com/HankHuang0516/EClaw/compare/v1.1085.1...v1.1086.0) (2026-04-25)
+
+
+### Features
+
+* **mindmap:** align PR-B implementation with v3 dense mockup spec ([#2109](https://github.com/HankHuang0516/EClaw/issues/2109)) ([a016930](https://github.com/HankHuang0516/EClaw/commit/a01693048528181cd074e6a7f48df6447b670efa))
+
 ## [1.1085.1](https://github.com/HankHuang0516/EClaw/compare/v1.1085.0...v1.1085.1) (2026-04-25)
 
 
