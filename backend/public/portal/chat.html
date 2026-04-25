@@ -2882,6 +2882,7 @@
     <script src="shared/auth.js"></script>
     <script src="shared/entity-utils.js"></script>
     <script src="shared/mention-autocomplete.js"></script>
+    <script src="shared/mention-resolver.js"></script>
     <script src="shared/mention-render.js"></script>
     <script src="shared/note-link-render.js"></script>
     <script src="shared/entity-link-render.js"></script>
@@ -4933,13 +4934,36 @@
 
             const targets = getSelectedTargets();
 
-            // C-strict mention design: @-tags inside the message are intent
-            // hints for the receiving bot, NOT routing overrides. The user's
-            // explicit target-bar selection is the sole source of truth for
-            // which entities receive the message. The backend forwards the
-            // parsed mentions in eclaw_context.mentions and the webhook push
-            // [MENTIONS] block so receiving bots can decide whether to relay
-            // via /api/transform speakTo / broadcast.
+            // Resolve @-mentions to entityIds and reconcile with the target-bar
+            // selection. C-strict (target-bar wins) is preserved for entities
+            // already selected, but any @-mention pointing to an entity NOT in
+            // the target-bar gets auto-added — this closes the silent-misroute
+            // gap where typed `@Hermes` (#5) drifted to `entityId: 3` (Mac_E).
+            // Unresolved @-tokens surface a toast so the operator notices the
+            // typo before send.
+            if (window.MentionResolver) {
+                const pool = MentionResolver.buildPool({
+                    boundEntities: boundEntities || [],
+                    contacts: contacts || []
+                });
+                const reconciled = MentionResolver.resolve(finalText, targets, pool);
+                if (reconciled.missingLocal.length > 0) {
+                    console.warn('[mention-resolver] @-mention auto-add (local entityIds)', reconciled.missingLocal, reconciled.conflicts);
+                    for (const eid of reconciled.missingLocal) {
+                        if (!targets.local.includes(eid)) targets.local.push(eid);
+                    }
+                }
+                if (reconciled.missingRemote.length > 0) {
+                    console.warn('[mention-resolver] @-mention auto-add (remote codes)', reconciled.missingRemote);
+                    for (const code of reconciled.missingRemote) {
+                        if (!targets.contacts.includes(code)) targets.contacts.push(code);
+                    }
+                }
+                if (reconciled.unresolved.length > 0) {
+                    const tmpl = i18n.t('chat_mention_unresolved') || 'Unknown @mention: {tokens}';
+                    showToast(tmpl.replace('{tokens}', '@' + reconciled.unresolved.join(' @')), 'warn');
+                }
+            }
 
             if (targets.local.length === 0 && targets.contacts.length === 0) {
                 showToast(i18n.t('chat_select_entity'), 'error');

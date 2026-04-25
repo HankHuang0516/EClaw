@@ -59,17 +59,22 @@ describe('Mention feature — static wiring', () => {
         expect(chatHtml).toContain('.mention-chip-cross');
     });
 
-    test('chat.html does NOT override targets from mentions (C-strict)', () => {
-        // Regression: mentions must be hint-only. Target-bar selection is the
-        // sole source of truth for routing. Verify the override branch was
-        // removed and the C-strict explanation comment is present.
-        expect(chatHtml).toContain('C-strict mention design');
-        // The old override pattern must not be present anywhere in sendMessage
+    test('chat.html auto-adds @-mentioned entities without overriding the target-bar', () => {
+        // Card_1e59f703 design: target-bar selection is preserved (never
+        // wholesale overwritten) but @-mentions resolve to entityIds and any
+        // mention pointing OUTSIDE the current selection is auto-added so the
+        // typed `@Hermes` can never silently land at a different entityId.
+        // Wholesale-overwrite patterns are still forbidden — only `.push()`
+        // expansion is allowed.
+        expect(chatHtml).toContain('shared/mention-resolver.js');
+        expect(chatHtml).toMatch(/MentionResolver\.resolve\s*\(/);
         const sendMsgIdx = chatHtml.indexOf('async function sendMessage');
         const sendMsgEnd = chatHtml.indexOf('} // sendMessage', sendMsgIdx);
-        const sendMsgBody = chatHtml.slice(sendMsgIdx, sendMsgEnd > 0 ? sendMsgEnd : sendMsgIdx + 5000);
+        const sendMsgBody = chatHtml.slice(sendMsgIdx, sendMsgEnd > 0 ? sendMsgEnd : sendMsgIdx + 6000);
         expect(sendMsgBody).not.toMatch(/targets\.local\s*=\s*localMentions/);
         expect(sendMsgBody).not.toMatch(/targets\.local\s*=\s*\(boundEntities\s*\|\|\s*\[\]\)\.map/);
+        // Auto-add path: mention resolver result must be merged into targets via push()
+        expect(sendMsgBody).toMatch(/targets\.local\.push\(/);
     });
 });
 
