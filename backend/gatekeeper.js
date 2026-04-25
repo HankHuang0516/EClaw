@@ -25,6 +25,10 @@ try {
 const MAX_STRIKES = 3;
 const FREE_BOT_TOS_VERSION = '1.0';
 
+// Mask characters for secret redaction
+const REDACTED = '\u2736\u2736\u2736[REDACTED:'; // ✱✱✱[REDACTED:
+const REDACTED_SUFFIX = ']\u2736\u2736\u2736';   // ]✱✱✱
+
 // ============================================
 // FIRST LOCK: Malicious message detection
 // ============================================
@@ -234,6 +238,20 @@ const DEVICE_INFO_PATTERNS = [
     /https?:\/\/[^\s]+\/tools\/invoke[^\s]*/gi,
 ];
 
+// Explicit token-shape patterns (GitHub PAT, Slack, OpenAI/Anthropic keys)
+const EXPLICIT_TOKEN_PATTERNS = [
+    // GitHub Personal Access Token: ghp_ / gho_ / ghu_ / ghs_ / ghr_ + 36+ chars
+    /gh[pousr]_[A-Za-z0-9]{36,}/g,
+    // OpenAI / Anthropic / other sk- API keys: sk- + 30+ chars
+    /sk-[A-Za-z0-9_-]{30,}/g,
+    // Slack token: xoxb-/xoxa-/xoxp-/xoxr-/xoxs- + 20+ chars
+    /xox[abprs]-[A-Za-z0-9-]{20,}/g,
+];
+
+// Admin notify cache to prevent duplicate notifies within 60 seconds per device+kind
+const notifyCache = {};
+const NOTIFY_COOLDOWN_MS = 60000;
+
 /**
  * Second Lock: Detect and mask token/info leaks in bot response
  * @param {string} text - The bot response text
@@ -241,11 +259,20 @@ const DEVICE_INFO_PATTERNS = [
  * @param {string} botSecret - Current entity's botSecret (to detect its leak)
  * @returns {{ leaked: boolean, maskedText: string, leakTypes: string[] }}
  */
-function detectAndMaskLeaks(text, deviceId, botSecret) {
+/**
+ * Second Lock: Detect and mask token/info leaks in bot response
+ * @param {string} text - The bot response text
+ * @param {string} deviceId - Current device ID (to avoid false positives on own deviceId)
+ * @param {string} botSecret - Current entity's botSecret (to detect its leak)
+ * @param {boolean} isOutbound - If true, this is an outbound A2A broadcast (log admin notify)
+ * @returns {{ leaked: boolean, maskedText: string, leakTypes: string[] }}
+ */
+function detectAndMaskLeaks(text, deviceId, botSecret, isOutbound) {
     if (!text || typeof text !== 'string') return { leaked: false, maskedText: text, leakTypes: [] };
 
     let maskedText = text;
     const leakTypes = [];
+    isOutbound = !!isOutbound;
 
     // Check if botSecret is exposed in clear text
     if (botSecret && maskedText.includes(botSecret)) {
@@ -258,7 +285,6 @@ function detectAndMaskLeaks(text, deviceId, botSecret) {
         const matches = maskedText.match(pattern);
         if (matches) {
             for (const match of matches) {
-                // Don't mask if it's the deviceId itself in a normal context (like API URLs we provide)
                 if (match.includes('/tools/invoke')) {
                     maskedText = maskedText.replace(match, '[REDACTED_WEBHOOK]');
                     leakTypes.push('webhook_leak');
@@ -270,49 +296,89 @@ function detectAndMaskLeaks(text, deviceId, botSecret) {
         }
     }
 
-    // Check for token-like patterns
-    for (const pattern of TOKEN_LEAK_PATTERNS) {
-        // Reset lastIndex for global patterns
+    // Check for explicit token patterns (GitHub PAT, Slack, OpenAI/Anthropic)
+    for (const pattern of EXPLICIT_TOKEN_PATTERNS) {
         pattern.lastIndex = 0;
         const matches = maskedText.match(pattern);
         if (matches) {
             for (const match of matches) {
-                // Skip if it's the deviceId itself (acceptable in normal responses)
                 if (match === deviceId) continue;
-                // Skip if it looks like a normal part of a URL we constructed
-                if (maskedText.includes(`"deviceId":"${match}"`)) continue;
+                const idCheck = String.fromCharCode(34) + 'deviceId' + String.fromCharCode(58,34) + match + String.fromCharCode(34);
+                if (maskedText.includes(idCheck)) continue;
 
-                // Classify the match
+                let kind;
+                if (/^gh[pousr]_/.test(match)) kind = 'github_pat';
+                else if (match.startsWith('sk-')) kind = 'api_key';
+                else if (match.startsWith('xox')) kind = 'slack_token';
+                else kind = 'token';
+
+                const replacement = REDACTED + kind + REDACTED_SUFFIX;
+                maskedText = maskedText.split(match).join(replacement);
+                if (!leakTypes.includes('explicit_token_leak')) leakTypes.push('explicit_token_leak');
+
+                if (isOutbound) scheduleAdminNotify(deviceId, 'explicit_token', kind, match.length);
+            }
+        }
+    }
+
+    // Check for generic token-like patterns (hex 32+, UUID, JWT, Bearer, etc.)
+    for (const pattern of TOKEN_LEAK_PATTERNS) {
+        pattern.lastIndex = 0;
+        const matches = maskedText.match(pattern);
+        if (matches) {
+            for (const match of matches) {
+                if (match === deviceId) continue;
+                const idCheck = String.fromCharCode(34) + 'deviceId' + String.fromCharCode(58,34) + match + String.fromCharCode(34);
+                if (maskedText.includes(idCheck)) continue;
+
                 const isPureHex = /^[0-9a-f]+$/i.test(match);
                 const isUUID = /^[0-9a-f]{8}-/.test(match);
                 const isJWT = match.startsWith('eyJ');
                 const isBearer = /^Bearer\s/i.test(match);
 
-                // For non-hex, non-special matches, require high entropy (avoids false positives on normal text)
                 if (!isPureHex && !isUUID && !isJWT && !isBearer) {
                     if (!looksLikeToken(match)) continue;
                 }
-                // For pure hex, still require minimum length
                 if (isPureHex && match.length < 32) continue;
 
-                // This looks like a leaked token/secret
-                const redacted = match.substring(0, 4) + '***' + match.substring(match.length - 4);
-                maskedText = maskedText.split(match).join(`[REDACTED:${redacted}]`);
-                if (!leakTypes.includes('token_pattern_leak')) {
-                    leakTypes.push('token_pattern_leak');
-                }
+                const replacement = REDACTED + 'hex_token' + REDACTED_SUFFIX;
+                maskedText = maskedText.split(match).join(replacement);
+                if (!leakTypes.includes('token_pattern_leak')) leakTypes.push('token_pattern_leak');
             }
         }
     }
 
-    return {
-        leaked: leakTypes.length > 0,
-        maskedText: maskedText,
-        leakTypes: leakTypes
-    };
+    return { leaked: leakTypes.length > 0, maskedText: maskedText, leakTypes: leakTypes };
 }
 
 // ============================================
+
+/**
+ * Fire-and-forget admin notify for secret-leak events (does not block the response).
+ * Cooldown cached per deviceId+kind to avoid spam.
+ */
+async function scheduleAdminNotify(deviceId, kind, tokenKind, byteLength) {
+    const cacheKey = deviceId + ':' + kind;
+    const now = Date.now();
+    if (notifyCache[cacheKey] && (now - notifyCache[cacheKey]) < NOTIFY_COOLDOWN_MS) return;
+    notifyCache[cacheKey] = now;
+
+    setImmediate(async () => {
+        try {
+            if (!pool) return;
+            const preview = REDACTED + tokenKind + REDACTED_SUFFIX;
+            const text = '\u26a0\ufe0f Secret leak blocked: ' + preview + ' (len=' + byteLength + ') device=' + deviceId.substring(0, 8) + '...';
+            await pool.query(
+                'INSERT INTO chat_messages (device_id, entity_id, text, source, is_from_user, is_from_bot)' +
+                ' VALUES ($1, NULL, $2, $3, false, true)',
+                [deviceId, text, 'admin_secret_notify']
+            );
+        } catch (err) {
+            console.warn('[Gatekeeper] admin notify failed:', err.message);
+        }
+    });
+}
+
 // STRIKE SYSTEM
 // ============================================
 
