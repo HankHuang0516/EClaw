@@ -1,3 +1,10 @@
+## [1.1082.2](https://github.com/HankHuang0516/EClaw/compare/v1.1082.1...v1.1082.2) (2026-04-25)
+
+
+### Bug Fixes
+
+* **kanban:** bump R2 signed URL TTL from 10min to 3 days ([#2090](https://github.com/HankHuang0516/EClaw/issues/2090)) ([84217a8](https://github.com/HankHuang0516/EClaw/commit/84217a8659a7c54408d162f4b11b29083c9b3ef8))
+
 ## [1.1082.1](https://github.com/HankHuang0516/EClaw/compare/v1.1082.0...v1.1082.1) (2026-04-25)
 
 
