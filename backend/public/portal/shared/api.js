@@ -74,9 +74,19 @@ function showToast(message, type = 'info') {
  * @param {boolean} [opts.danger=false] - Red confirm button for destructive actions
  * @returns {Promise<boolean>}
  */
+// i18n helper that honours a fallback string. i18n.t(key, params) uses the
+// 2nd arg as substitution params, not as a fallback — so passing 'OK' was
+// silently ignored and the dialog rendered the raw key. Wrap to fall back
+// when the lookup returns the key itself.
+function _tFb(k, fb) {
+    if (typeof i18n === 'undefined' || !i18n.t) return fb || k;
+    const v = i18n.t(k);
+    return (v === k || !v) ? (fb || k) : v;
+}
+
 function showConfirm({ message, title, confirmText, cancelText, danger } = {}) {
     return new Promise((resolve) => {
-        const t = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t.bind(i18n) : (k, fb) => fb || k;
+        const t = _tFb;
         const overlay = document.createElement('div');
         overlay.className = 'dialog-overlay eclaw-confirm-overlay';
         overlay.innerHTML = `<div class="dialog eclaw-confirm-dialog">
@@ -113,7 +123,7 @@ function showConfirm({ message, title, confirmText, cancelText, danger } = {}) {
  */
 function showPrompt({ message, title, defaultValue, placeholder, confirmText, cancelText } = {}) {
     return new Promise((resolve) => {
-        const t = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t.bind(i18n) : (k, fb) => fb || k;
+        const t = _tFb;
         const overlay = document.createElement('div');
         overlay.className = 'dialog-overlay eclaw-confirm-overlay';
         overlay.innerHTML = `<div class="dialog eclaw-confirm-dialog">

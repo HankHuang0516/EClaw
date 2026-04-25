@@ -5390,7 +5390,10 @@
         }
 
         function schedStartEdit(id) {
-            const it = _schedQueue.find(x => x.id === id);
+            // Legacy scheduled_messages.id is INT (SERIAL); rendered onclick passes
+            // a string. Coerce both sides to string before comparing — strict ===
+            // would silently no-op the Edit button on existing rows.
+            const it = _schedQueue.find(x => String(x.id) === String(id));
             if (!it) return;
             _schedEditingId = id;
             const node = document.querySelector('.sched-queue-item[data-sched-id="' + id + '"]');
