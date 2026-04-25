@@ -172,6 +172,12 @@
         .kb-comment-input { display:flex; gap:8px; margin-top:12px; }
         .kb-comment-input textarea { flex:1; background:var(--input-bg); border:1px solid var(--card-border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text); font-size:13px; resize:vertical; min-height:60px; font-family:inherit; }
         .kb-comment-input button { align-self:flex-end; }
+        @keyframes kb-comment-flash {
+            0%   { box-shadow:0 0 0 0 rgba(99,102,241,0); background-color:transparent; }
+            18%  { box-shadow:0 0 0 6px rgba(99,102,241,0.45); background-color:rgba(99,102,241,0.18); }
+            100% { box-shadow:0 0 0 0 rgba(99,102,241,0); background-color:transparent; }
+        }
+        .kb-comment.kb-comment-flash > .kb-comment-bubble { animation:kb-comment-flash 1.6s ease-out; border-radius:12px; }
 
         /* Notes list */
         .kb-note { padding:10px 0; border-bottom:1px solid var(--card-border); }
@@ -905,7 +911,44 @@
 
             // Poll every 15s
             setInterval(loadCards, 15000);
+
+            // Smart Chip deep-link: open card modal (and scroll-flash a comment)
+            // when arriving with location.hash like #card_<id> or
+            // #card_<id>#comment-<uuid>. autolink-chip.js produces this URL.
+            handleHashDeepLink();
+            window.addEventListener('hashchange', handleHashDeepLink);
         });
+
+        function parseDeepLinkHash() {
+            // Accept either single-hash (#card_X[?#comment-Y]) or double-hash
+            // (#card_X#comment-Y). location.hash normalises to one leading '#'.
+            const raw = (window.location.hash || '').replace(/^#/, '');
+            if (!raw) return null;
+            const parts = raw.split('#');
+            const head = parts[0] || '';
+            const cardMatch = /^card_[a-f0-9]{8,}$/i.exec(head);
+            if (!cardMatch) return null;
+            let commentAnchor = null;
+            for (let i = 1; i < parts.length; i++) {
+                const m = /^comment-([a-f0-9-]{8,})$/i.exec(parts[i]);
+                if (m) { commentAnchor = m[1]; break; }
+            }
+            return { cardId: head, commentAnchor };
+        }
+
+        function handleHashDeepLink() {
+            const target = parseDeepLinkHash();
+            if (!target) return;
+            const card = findCard(target.cardId);
+            if (!card) return; // card not loaded yet — loadCards finished, but it's gone
+            pendingCommentAnchor = target.commentAnchor || null;
+            if (openCardId !== target.cardId) {
+                openDetail(target.cardId);
+            } else if (pendingCommentAnchor) {
+                // Modal already open on the right card — just refresh comments to flash.
+                loadComments();
+            }
+        }
 
         let automationCards = [];
         let cardProjections = {};
@@ -1756,25 +1799,29 @@
                 const myEntityIds = new Set(boundEntities.map(e => e.entityId));
 
                 const commentsHtml = comments.map(c => {
-                    if (c.is_system) {
-                        return `<div class="kb-comment system-msg">
+                    const cid = c.id != null ? String(c.id) : '';
+                    const ts = c.createdAt != null ? c.createdAt : c.created_at;
+                    const fromId = c.fromEntityId != null ? c.fromEntityId : c.from_entity_id;
+                    const isSys = c.isSystem != null ? c.isSystem : c.is_system;
+                    if (isSys) {
+                        return `<div class="kb-comment system-msg" data-comment-id="${escapeHtml(cid)}">
                             <div class="kb-comment-bubble">${renderSmartChips(c.text)}</div>
-                            <div class="kb-comment-time">${formatTime(c.created_at)}</div>
+                            <div class="kb-comment-time">${formatTime(ts)}</div>
                         </div>`;
                     }
-                    const isSent = c.from_entity_id != null && myEntityIds.has(c.from_entity_id);
-                    const avatar = typeof getAvatarForEntity === 'function' ? getAvatarForEntity(c.from_entity_id) : '🦞';
-                    const name = typeof getEntityDisplayName === 'function' ? getEntityDisplayName(c.from_entity_id) : '#'+(c.from_entity_id??'?');
+                    const isSent = fromId != null && myEntityIds.has(fromId);
+                    const avatar = typeof getAvatarForEntity === 'function' ? getAvatarForEntity(fromId) : '🦞';
+                    const name = typeof getEntityDisplayName === 'function' ? getEntityDisplayName(fromId) : '#'+(fromId??'?');
                     const avatarHtml = typeof renderAvatarHtml === 'function' ? renderAvatarHtml(avatar, 16) : avatar;
                     const cardTitle = (findCard(openCardId) || {}).title || '';
                     const pinPayload = JSON.stringify({ src: '留言 · ' + cardTitle, sender: name, text: c.text || '' })
                         .replace(/'/g, '&#39;');
-                    return `<div class="kb-comment ${isSent ? 'sent' : 'received'}">
+                    return `<div class="kb-comment ${isSent ? 'sent' : 'received'}" data-comment-id="${escapeHtml(cid)}">
                         <div class="kb-comment-source"><span class="comment-avatar">${avatarHtml}</span> ${escapeHtml(name)}</div>
                         <div class="kb-comment-bubble">${renderSmartChips(c.text)}</div>
                         <div class="kb-comment-row">
                             <button class="kb-comment-pin" onclick='quoteCommentToChat(${pinPayload})' title="引用到聊天">📌</button>
-                            <span class="kb-comment-time">${formatTime(c.created_at)}</span>
+                            <span class="kb-comment-time">${formatTime(ts)}</span>
                         </div>
                     </div>`;
                 }).join('');
@@ -1789,11 +1836,28 @@
                 // Auto-scroll comments to bottom
                 const list = panel.querySelector('.kb-comments-list');
                 if (list) list.scrollTop = list.scrollHeight;
+
+                // If a deep-link anchor is pending, scroll to + flash that comment.
+                if (pendingCommentAnchor && list) {
+                    const target = list.querySelector(`[data-comment-id="${CSS.escape(pendingCommentAnchor)}"]`);
+                    if (target) {
+                        target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                        target.classList.remove('kb-comment-flash');
+                        // Force reflow so the animation re-triggers if class lingered.
+                        void target.offsetWidth;
+                        target.classList.add('kb-comment-flash');
+                        setTimeout(() => target.classList.remove('kb-comment-flash'), 1700);
+                    }
+                    pendingCommentAnchor = null;
+                }
             } catch(e) {
                 console.error('[Kanban] loadComments failed:', e.message, e.stack);
                 panel.innerHTML = '<div class="kb-empty">' + t('kb_load_failed','Failed to load comments') + '</div>';
             }
         }
+
+        // Deep-link anchor: comment id pulled from #card_X#comment-Y; consumed by loadComments after render.
+        let pendingCommentAnchor = null;
 
         async function postComment() {
             const text = document.getElementById('commentText')?.value?.trim();
