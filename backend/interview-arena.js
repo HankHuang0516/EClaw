@@ -181,6 +181,15 @@ let VISION_IMAGES = [
     { file: null, description: 'A weather dashboard panel showing temperature 28°C, humidity 65%, wind speed 12 km/h, and UV index 7 in four separate tiles', keywords: ['temperature', '28', 'humidity', '65', 'UV', '7'] },
     { file: null, description: 'A printed circuit board with fourteen resistors, eight capacitors, and one microcontroller chip labeled ATmega328P', keywords: ['circuit', 'fourteen', 'resistors', 'eight', 'capacitors', 'ATmega'] },
     { file: null, description: 'A hotel room floor plan: bedroom 18m² on the left, bathroom 6m² top right, living area 22m² bottom right, with a corridor connecting all rooms', keywords: ['floor', 'plan', 'bedroom', '18', 'bathroom', '6', 'living', '22'] },
+    // ── Additional hard tier — complex OCR, data visualizations, spatial ──
+    { file: null, description: 'A stock candlestick chart over five trading days where Wednesday has the largest red candle dropping from $152 to $141', keywords: ['candlestick', 'wednesday', 'red', '152', '141'] },
+    { file: null, description: 'A network topology diagram with six server icons, three switch icons, and two router icons connected by lines labeling each device', keywords: ['network', 'six', 'servers', 'three', 'switches', 'two', 'routers'] },
+    { file: null, description: 'An e-commerce product page showing a blue running shoe priced at $129.99 with 4.5-star rating and 283 customer reviews', keywords: ['shoe', 'blue', '129', '4.5', 'stars', '283', 'reviews'] },
+    { file: null, description: 'A Python code editor screenshot with 12 lines of code where line 7 has a red underline indicating a SyntaxError: invalid syntax', keywords: ['python', 'code', 'twelve', 'line', '7', 'syntax', 'error'] },
+    { file: null, description: 'A medication label: Drug: Amoxicillin 500mg, Dosage: Take 1 capsule 3 times daily, Lot: B2049, Expires: 08/2026', keywords: ['amoxicillin', '500', 'three', 'daily', '2026'] },
+    { file: null, description: 'A theater seating chart with 10 rows of 8 seats each; row C seats 3, 4, and 5 are shaded red and marked "Reserved"', keywords: ['theater', 'ten', 'rows', 'eight', 'row', 'reserved'] },
+    { file: null, description: 'A subway map showing Line 2 (blue) and Line 5 (orange) with an interchange station labeled "Central" where both lines cross', keywords: ['subway', 'line', 'blue', 'orange', 'central', 'interchange'] },
+    { file: null, description: 'A screenshot of a to-do app with five tasks: two marked done (green checkmarks), one in progress (blue), and two pending (gray)', keywords: ['tasks', 'five', 'two', 'done', 'green', 'one', 'progress', 'blue', 'pending'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -197,9 +206,9 @@ function generateButtonClickChallenge() {
     return { correctIndex, correctLabel, buttonCount, seed: Math.floor(Math.random() * 1e9) };
 }
 
-const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Wei Zhang','Amara Osei','Ravi Kapoor','Isabella Rossi','Dmitri Volkov'];
-const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se','wei@demo.cn','amara@test.gh','ravi@sample.in','isabella@demo.it','dmitri@test.ru'];
-const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','China','Ghana','Italy','Russia','Netherlands'];
+const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Wei Zhang','Amara Osei','Ravi Kapoor','Isabella Rossi','Dmitri Volkov','Nguyen Thi Lan','Kwame Mensah','Elena Popescu','Mateus Ferreira','Hana Nakamura','David Okonkwo','Sara Lindqvist','Arjun Mehta','Valentina Cruz','Sven Eriksson'];
+const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se','wei@demo.cn','amara@test.gh','ravi@sample.in','isabella@demo.it','dmitri@test.ru','lan@demo.vn','kwame@test.gh','elena@sample.ro','mateus@demo.br','hana@test.jp','david@example.ng','sara@demo.se','arjun@test.in','valentina@sample.mx','sven@test.se'];
+const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','China','Ghana','Italy','Russia','Netherlands','Vietnam','Romania','Nigeria','Portugal','Argentina','Thailand','Poland','Malaysia','Egypt','New Zealand'];
 const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123','+46-70-123-4567','+65-9123-4567','+52-55-1234-5678','+353-87-123-4567'];
 const FORM_DATES = ['1990-06-15','1985-03-22','1992-11-08','1988-01-30','1995-07-14','1983-09-25','1991-12-01','1987-04-17','1993-08-09','1986-02-14','1994-10-31','1989-05-20'];
 const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund'];
@@ -354,6 +363,21 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '"babad"', expected: '"bab"' },{ input: '"cbbd"', expected: '"bb"' },{ input: '"a"', expected: '"a"' },{ input: '"racecar"', expected: '"racecar"' }] },
     { title: '0-1 Knapsack', description: 'Write `solve(weights, values, capacity)` — given items with weights and values arrays and a knapsack of given capacity, return the maximum total value (each item used at most once).',
       testCases: [{ input: '[1,3,4,5], [1,4,5,7], 7', expected: '9' },{ input: '[2,3,4,5], [3,4,5,6], 5', expected: '7' },{ input: '[1], [10], 0', expected: '0' }] },
+    // ── Additional medium-hard — sliding window, backtracking, intervals, greedy, DP ──
+    { title: 'Minimum Window Substring', description: 'Write `solve(s, t)` — return the minimum window substring of s that contains all characters of t. Return "" if no such window exists.',
+      testCases: [{ input: '"ADOBECODEBANC", "ABC"', expected: '"BANC"' },{ input: '"a", "a"', expected: '"a"' },{ input: '"a", "aa"', expected: '""' },{ input: '"aa", "aa"', expected: '"aa"' }] },
+    { title: 'Merge Intervals', description: 'Write `solve(intervals)` — merge all overlapping intervals. Return the resulting sorted array of non-overlapping intervals.',
+      testCases: [{ input: '[[1,3],[2,6],[8,10],[15,18]]', expected: '[[1,6],[8,10],[15,18]]' },{ input: '[[1,4],[4,5]]', expected: '[[1,5]]' },{ input: '[[1,4],[2,3]]', expected: '[[1,4]]' },{ input: '[[1,4]]', expected: '[[1,4]]' }] },
+    { title: 'Jump Game II', description: 'Write `solve(nums)` — each element is the max jump length from that position. Return the minimum number of jumps to reach the last index.',
+      testCases: [{ input: '[2,3,1,1,4]', expected: '2' },{ input: '[2,3,0,1,4]', expected: '2' },{ input: '[1,1,1,1]', expected: '3' },{ input: '[1]', expected: '0' }] },
+    { title: 'Word Search', description: 'Write `solve(board, word)` — given a 2D character grid, return true if the word exists (adjacent horizontal/vertical cells, each cell used at most once).',
+      testCases: [{ input: '[["A","B","C","E"],["S","F","C","S"],["A","D","E","E"]], "ABCCED"', expected: 'true' },{ input: '[["A","B","C","E"],["S","F","C","S"],["A","D","E","E"]], "SEE"', expected: 'true' },{ input: '[["A","B","C","E"],["S","F","C","S"],["A","D","E","E"]], "ABCB"', expected: 'false' }] },
+    { title: 'Subarray Sum Equals K', description: 'Write `solve(nums, k)` — return the total number of continuous subarrays whose sum equals k.',
+      testCases: [{ input: '[1,1,1], 2', expected: '2' },{ input: '[1,2,3], 3', expected: '2' },{ input: '[-1,-1,1], 0', expected: '1' },{ input: '[0,0,0,0], 0', expected: '10' }] },
+    { title: 'Longest Increasing Subsequence', description: 'Write `solve(nums)` — return the length of the longest strictly increasing subsequence.',
+      testCases: [{ input: '[10,9,2,5,3,7,101,18]', expected: '4' },{ input: '[0,1,0,3,2,3]', expected: '4' },{ input: '[7,7,7,7,7]', expected: '1' },{ input: '[1,3,6,7,9,4,10,5,6]', expected: '6' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array representing elevation heights, return the total units of water that can be trapped after raining.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[3,0,3]', expected: '3' },{ input: '[1,0,1,0,1]', expected: '2' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -396,6 +420,15 @@ let RESPONSE_QUESTIONS = [
     { question: 'What is 2 to the power of 10?', expectedKeywords: ['1024'] },
     { question: 'A store sells apples for $0.75 each and oranges for $1.20 each. If someone buys 4 apples and 3 oranges, what is the total cost?', expectedKeywords: ['6.6', '6.60'] },
     { question: 'The sides of a right triangle are in the ratio 3:4:5. If the hypotenuse is 20 cm, what is the perimeter?', expectedKeywords: ['48'] },
+    // ── Additional medium/hard reasoning questions ──
+    { question: 'You invest $1000 at 10% annual compound interest. What is the total value after 3 years? (Round to the nearest dollar.)', expectedKeywords: ['1331'] },
+    { question: 'A bag has 4 red balls and 6 blue balls. You draw 2 without replacement. What is the probability both are red? Give your answer as a simplified fraction.', expectedKeywords: ['2/15'] },
+    { question: 'All programmers drink coffee. Alice only drinks tea. Therefore, is Alice a programmer?', expectedKeywords: ['no', 'not'] },
+    { question: 'A jacket costs $250. A store gives 40% off, then applies an additional 10% off the discounted price at checkout. What is the final price?', expectedKeywords: ['135'] },
+    { question: 'How many seconds are there in a leap year?', expectedKeywords: ['31622400'] },
+    { question: 'A train leaves Station A at 9:00 AM traveling at 90 km/h. Another train leaves Station B at 10:00 AM on the same track traveling toward Station A at 110 km/h. The stations are 400 km apart. At what time do the trains meet? (24-hour format)', expectedKeywords: ['12:30', '12:30:00'] },
+    { question: 'What is the minimum number of colors needed to color any planar map such that no two adjacent regions share the same color?', expectedKeywords: ['4', 'four'] },
+    { question: 'A rope is cut into three pieces in the ratio 2:3:5. If the total length is 80 meters, what is the length of the longest piece?', expectedKeywords: ['40'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -466,6 +499,14 @@ let TTS_PHRASES = [
     { text: 'Your one-time verification code is 8 4 3 7 2 and expires in five minutes', keywords: ['verification', 'code', '84372', 'five', 'minutes'] },
     { text: 'The SQL query selects all records from the users table where the account status equals active and the score is greater than 100', keywords: ['SQL', 'query', 'users', 'active', 'score', '100'] },
     { text: 'Bernoulli and Euler each contributed foundational theorems to both fluid dynamics and graph theory', keywords: ['bernoulli', 'euler', 'fluid', 'dynamics', 'graph', 'theory'] },
+    // ── Additional hard phrases — medical, financial, technical, logistics ──
+    { text: 'The patient is prescribed 250 milligrams of ibuprofen every six hours not to exceed 1500 milligrams per day', keywords: ['patient', '250', 'ibuprofen', 'six', '1500'] },
+    { text: 'The neural network achieved 97.3 percent accuracy on the MNIST benchmark using a learning rate of 0.001', keywords: ['neural', 'network', '97', 'MNIST', 'learning', '0.001'] },
+    { text: 'Tracking number TRK-2024-08471 shows your shipment departed Chicago ORD at 23:15 and arrives LAX by 02:40', keywords: ['tracking', 'TRK', 'Chicago', 'ORD', 'LAX', '02'] },
+    { text: 'The interest rate on the 30-year fixed mortgage is 6.875 percent with an APR of 7.012 percent', keywords: ['interest', '30', 'mortgage', '6.875', 'APR', '7.012'] },
+    { text: 'In IEEE 754 double precision format uses 1 sign bit 11 exponent bits and 52 mantissa bits to represent floating point numbers', keywords: ['IEEE', '754', 'sign', '11', 'exponent', '52', 'mantissa'] },
+    { text: 'Your conference call PIN is 7 3 9 4 1 6 dial in 5 minutes early to avoid delays', keywords: ['conference', 'PIN', '739416', 'five', 'delays'] },
+    { text: 'The International Space Station orbits Earth at approximately 408 kilometers altitude completing 15.5 revolutions per day', keywords: ['space', 'station', '408', 'kilometers', '15', 'revolutions'] },
 ];
 
 // ============================================
