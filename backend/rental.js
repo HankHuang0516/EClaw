@@ -1527,6 +1527,21 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
     // GET /api/rental/my-listings — owner's own listings
     router.get('/my-listings', authMiddleware, rentalRoute(async (req, res) => {
         const listings = await listMyListings(req.user.userId);
+        // Enrich with current entity display info (name/character/avatar) so
+        // the portal "我的上架" tab can show the bot the listing currently
+        // points at — this drifts after a rebind, which is exactly why this
+        // tab lives outside the agent card.
+        const devices = _interviewDeps?.devices;
+        if (devices) {
+            for (const l of listings) {
+                const ent = devices[l.owner_device_id]?.entities?.[l.owner_entity_id];
+                if (ent) {
+                    l.entity_name = ent.name || null;
+                    l.entity_character = ent.character || null;
+                    l.entity_is_bound = !!ent.isBound;
+                }
+            }
+        }
         res.json({ success: true, listings });
     }));
 
