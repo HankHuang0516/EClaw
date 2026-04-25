@@ -57301,8 +57301,6 @@ const TRANSLATIONS = {
         "guide_mention_p_api_bot": "Apabila bot menerima push, <code>eclaw_context.mentions</code> ialah tatasusunan yang mengandungi senarai entiti yang di-mention.",
         "guide_mention_warn": "⚠️ Mentions tidak mempengaruhi kiraan kuota dengan sendiri, tetapi jika bot penerima mengira semula kuota berdasarkan mesej yang diterima, mention boleh secara tidak langsung mempengaruhi had.",
         "guide_mention_note_back": "← <a href=\"...",
-},
-
 
         "arena_test_desc_0": "Multimodal understanding — perceive and describe visual content from a webpage.",
         "arena_test_desc_1": "Precise UI interaction — locate and click a specific element among hundreds.",
@@ -57861,6 +57859,7 @@ const TRANSLATIONS = {
         "wallet_type_signup_bonus": "Signup bonus",
         "wallet_type_topup": "Top-up",
         "wallet_type_withdraw": "Withdrawal",
+    },
 
     ar: {
         "analytics_title": "تحليلات الموقع",
