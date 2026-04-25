@@ -1,3 +1,10 @@
+## [1.1092.1](https://github.com/HankHuang0516/EClaw/compare/v1.1092.0...v1.1092.1) (2026-04-25)
+
+
+### Bug Fixes
+
+* **compact:** wrap scheduled_messages migration in SAVEPOINT + update CLAUDE.md ([#2132](https://github.com/HankHuang0516/EClaw/issues/2132)) ([5379414](https://github.com/HankHuang0516/EClaw/commit/53794147be70a5065656d3a1e5717d4d7cac02ab))
+
 # [1.1092.0](https://github.com/HankHuang0516/EClaw/compare/v1.1091.0...v1.1092.0) (2026-04-25)
 
 
