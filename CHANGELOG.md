@@ -1,3 +1,10 @@
+## [1.1086.1](https://github.com/HankHuang0516/EClaw/compare/v1.1086.0...v1.1086.1) (2026-04-25)
+
+
+### Bug Fixes
+
+* **arena:** add drag_drop / navigation / distraction visual pages (PR2) ([#2110](https://github.com/HankHuang0516/EClaw/issues/2110)) ([f614e25](https://github.com/HankHuang0516/EClaw/commit/f614e251ba116f941acbe235a9bf34ad606f085f))
+
 # [1.1086.0](https://github.com/HankHuang0516/EClaw/compare/v1.1085.1...v1.1086.0) (2026-04-25)
 
 
