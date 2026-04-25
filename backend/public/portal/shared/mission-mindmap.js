@@ -1,10 +1,21 @@
-// mission-mindmap.js — Phase A static-mock integration (PR-A)
+// mission-mindmap.js — PR-B v4 (chip+📌 + responsive)
 //
 // Lazy-loaded on first expand of the "🧠 心智圖" card in mission.html.
-// PR-A ships the mockup verbatim (52 nodes / 76 edges / 8 subsystems) so
-// Hank can verify layout + interaction in production.
-// PR-B will replace MOCK_NODES/MOCK_EDGES by mapping /api/mission/cards
-// (assignedTo→sys, status→active|blocked|done) and chat embedding coords.
+// Same MOCK_NODES/MOCK_EDGES as PR-A (52 nodes / 76 edges / 8 subsystems).
+//
+// Interaction model (rewritten 2026-04-25 after Hank rejected v3 dense):
+//   • Tap a node → spawn a floating 引用預覽卡 (chip popover) anchored near
+//     the node, mirroring autolink-chip-preview.js semantics in chat.
+//   • 📌 button → moves the chip to a top-right 釘選 tray (pin-tray) and
+//     closes the popover. Clicking a pinned chip re-opens its popover.
+//   • ✖ or canvas tap → close the active popover. ESC → close all + unpin.
+//   • Cross-system "相關節點" rows inside the popover re-render as nested
+//     chips (recursive — replaces the active popover with the next one).
+//   • No more 320px right side panel: the chips ARE the detail surface.
+//
+// Responsive: <=720px viewport (mobile portrait) → sys-rail collapses to a
+// horizontal scrolling strip above the canvas; canvas takes full width;
+// popover anchors to viewport-bottom as a bottom-sheet.
 (function (global) {
   'use strict';
 
@@ -91,7 +102,7 @@
   { id: 'br-eye', label: 'eye 螢幕全覽', sys: 'bridge', tier: 'leaf', status: 'done' },
   { id: 'br-hermes-docker', label: 'hermes-bridge service', sys: 'bridge', tier: 'topic', status: 'done', summary: 'card_7102c915 closed' },
   { id: 'br-unit-u01', label: 'U01 = app E2E', sys: 'bridge', tier: 'leaf', status: 'active' },
-]
+];
 
   const MOCK_EDGES = [
   // 邀請 tree
@@ -121,9 +132,9 @@
   ['br-hub','br-auth'],['br-auth','br-eye'],['br-hub','br-hermes-docker'],['br-hub','br-unit-u01'],
 
   // ⛓ Cross-system dependencies (different style)
-  ['i18n-chip','chat-chip','depends'],         // chip 引用要等 i18n
+  ['i18n-chip','chat-chip','depends'],
   ['i18n-kb','kb-hub','depends'],
-  ['i18n-translator','br-auth','via'],         // i18n 派工經 bridge-auth
+  ['i18n-translator','br-auth','via'],
   ['inv-redeem','dev-vars','via'],
   ['inv-tier','chat-chip','unlocks'],
   ['kb-screenshot-gate','bcast-cron','required'],
@@ -140,175 +151,301 @@
   ['br-unit-u01','kb-screenshot-gate','attaches'],
   ['chat-share','bcast-x','outbound'],
   ['inv-qr','bcast-design','asset'],
-]
+];
 
   const STYLE_ID = 'mission-mindmap-style';
   const STYLE_CSS = `
-    :root {
-      --bg: #0d1117; --bg-elev: #161b22;
-      --card-border: #2a2f3a; --text: #e6edf3;
-      --text-secondary: #8b949e;
-    }
     .mm-root {
+      --mm-bg: #0d1117; --mm-bg-elev: #161b22;
+      --mm-border: #2a2f3a; --mm-text: #e6edf3;
+      --mm-text-secondary: #8b949e;
       display: grid;
-      grid-template-columns: 220px 1fr 320px;
+      grid-template-columns: 200px 1fr;
+      grid-template-rows: 1fr;
       height: 540px;
-      background: var(--bg, #0d1117);
-      border: 1px solid var(--card-border, #2a2f3a);
+      background: var(--mm-bg);
+      border: 1px solid var(--mm-border);
       border-radius: 8px; overflow: hidden;
-      font-size: 13px; color: var(--text, #e6edf3);
+      font-size: 13px; color: var(--mm-text);
+      position: relative;
     }
-    .sys-rail {
-      background: var(--bg-elev, #161b22);
-      border-right: 1px solid var(--card-border, #2a2f3a);
-      padding: 14px 12px; overflow-y: auto;
-      display: flex; flex-direction: column; gap: 10px;
+    .mm-root .sys-rail {
+      background: var(--mm-bg-elev);
+      border-right: 1px solid var(--mm-border);
+      padding: 12px 10px; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 8px;
     }
-    .sys-row {
+    .mm-root .sys-rail h3 {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+      color: var(--mm-text-secondary); margin: 6px 0 2px 0; font-weight: 600;
+    }
+    .mm-root .sys-row {
       display: flex; align-items: center; gap: 7px;
-      padding: 5px 8px; border-radius: 5px; cursor: pointer;
+      padding: 5px 7px; border-radius: 5px; cursor: pointer;
       font-size: 12px; transition: background 0.15s;
+      flex: none;
     }
-    .sys-row:hover { background: rgba(255,255,255,0.06); }
-    .sys-row.active { background: rgba(255,255,255,0.10); }
-    .sys-row .swatch { width: 8px; height: 8px; border-radius: 2px; flex: none; }
-    .sys-row .name { flex: 1; color: var(--text, #e6edf3); }
-    .sys-row .count {
+    .mm-root .sys-row:hover { background: rgba(255,255,255,0.06); }
+    .mm-root .sys-row.active { background: rgba(255,255,255,0.10); }
+    .mm-root .sys-row.hilite { background: rgba(59,130,246,0.18); outline: 1px solid #3b82f6; }
+    .mm-root .sys-row .swatch { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+    .mm-root .sys-row .name { flex: 1; color: var(--mm-text); }
+    .mm-root .sys-row .count {
       font-size: 10px; background: rgba(255,255,255,0.08);
-      padding: 1px 6px; border-radius: 8px; color: var(--text-secondary, #8b949e);
+      padding: 1px 6px; border-radius: 8px; color: var(--mm-text-secondary);
     }
-    .mm-rail-toolbar {
+    .mm-root .mm-rail-toolbar {
       display: flex; flex-direction: column; gap: 6px;
     }
-    .mm-search {
+    .mm-root .mm-search {
       width: 100%; box-sizing: border-box;
-      background: var(--bg, #0d1117); color: var(--text, #e6edf3);
-      border: 1px solid var(--card-border, #2a2f3a);
+      background: var(--mm-bg); color: var(--mm-text);
+      border: 1px solid var(--mm-border);
       border-radius: 5px; padding: 6px 8px; font-size: 12px;
       outline: none; transition: border-color 0.15s;
     }
-    .mm-search:focus { border-color: #3b82f6; }
-    .mm-add-btn {
+    .mm-root .mm-search:focus { border-color: #3b82f6; }
+    .mm-root .mm-add-btn {
       background: #3b82f6; color: #fff; border: none;
       border-radius: 5px; padding: 6px 10px; font-size: 12px;
       cursor: pointer; font-weight: 600; transition: filter 0.15s;
     }
-    .mm-add-btn:hover { filter: brightness(1.1); }
-    .mm-sep {
-      height: 1px; background: var(--card-border, #2a2f3a);
-      margin: 4px -12px;
+    .mm-root .mm-add-btn:hover { filter: brightness(1.1); }
+    .mm-root .mm-sep {
+      height: 1px; background: var(--mm-border);
+      margin: 4px -10px;
     }
-    .legend-block {
-      padding-top: 4px; margin-top: auto;
-    }
-    .legend-block h4 {
-      font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
-      color: var(--text-secondary, #8b949e); margin: 0 0 6px 0;
-    }
-    .legend-row {
+    .mm-root .legend-block { padding-top: 2px; }
+    .mm-root .legend-row {
       display: flex; align-items: center; gap: 6px;
-      font-size: 11px; color: var(--text-secondary, #8b949e); margin-bottom: 3px;
+      font-size: 11px; color: var(--mm-text-secondary); margin-bottom: 3px;
     }
-    .status-ring {
-      width: 8px; height: 8px; border-radius: 50%; flex: none;
+    .mm-root .status-ring { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+    .mm-root .status-ring.active { background: #fde047; }
+    .mm-root .status-ring.blocked { background: #ef4444; }
+    .mm-root .status-ring.done { background: #22c55e; }
+    .mm-root .summary-block {
+      padding-top: 2px; font-size: 11px;
+      color: var(--mm-text-secondary); line-height: 1.6;
+      margin-top: auto;
     }
-    .status-ring.active { background: #fde047; }
-    .status-ring.blocked { background: #ef4444; }
-    .status-ring.done { background: #22c55e; }
-    .summary-block {
-      padding-top: 4px; font-size: 11px;
-      color: var(--text-secondary, #8b949e); line-height: 1.6;
+    .mm-root .summary-block .num { color: var(--mm-text); font-weight: 600; }
+
+    /* Canvas wrap */
+    .mm-root .mind-canvas-wrap {
+      position: relative; background: var(--mm-bg); overflow: hidden;
     }
-    .mm-modal-bg {
+    .mm-root .mm-toolbar {
+      position: absolute; top: 10px; left: 10px; z-index: 10;
+      display: flex; gap: 4px;
+      background: rgba(22,27,34,0.85); backdrop-filter: blur(8px);
+      border: 1px solid var(--mm-border);
+      border-radius: 8px; padding: 4px;
+    }
+    .mm-root .mm-toolbar button {
+      background: transparent; border: none; color: var(--mm-text);
+      padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px;
+    }
+    .mm-root .mm-toolbar button:hover { background: rgba(255,255,255,0.08); }
+    .mm-root .mm-tier {
+      position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+      font-size: 10px; color: var(--mm-text-secondary);
+      z-index: 5; pointer-events: none;
+    }
+    .mm-root .mm-tier strong { color: var(--mm-text); }
+    .mm-root .mm-cy { position: absolute; inset: 0; }
+
+    /* Pin tray (top-right of canvas) */
+    .mm-root .mm-pin-tray {
+      position: absolute; top: 10px; right: 10px; z-index: 11;
+      display: flex; gap: 4px; flex-wrap: wrap;
+      max-width: calc(100% - 200px);
+      background: rgba(22,27,34,0.85); backdrop-filter: blur(8px);
+      border: 1px solid var(--mm-border); border-radius: 8px; padding: 4px;
+    }
+    .mm-root .mm-pin-tray:empty { display: none; }
+    .mm-root .mm-pin-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 5px 3px 7px; border-radius: 11px;
+      background: rgba(255,255,255,0.08); font-size: 11px; cursor: pointer;
+      color: var(--mm-text); user-select: none;
+      transition: background 0.15s;
+    }
+    .mm-root .mm-pin-chip:hover { background: rgba(255,255,255,0.14); }
+    .mm-root .mm-pin-chip .swatch { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+    .mm-root .mm-pin-chip .x {
+      opacity: 0.45; padding: 0 2px; line-height: 1; font-size: 13px;
+      color: var(--mm-text-secondary);
+    }
+    .mm-root .mm-pin-chip:hover .x { opacity: 1; }
+
+    /* Chip popover (the 引用預覽卡) */
+    .mm-root .mm-chip-pop {
+      position: absolute; z-index: 50;
+      width: min(300px, calc(100% - 24px));
+      background: var(--mm-bg-elev);
+      border: 1px solid var(--mm-border); border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.55);
+      font-size: 12px; color: var(--mm-text);
+      animation: mm-pop-in 0.12s ease-out;
+    }
+    @keyframes mm-pop-in {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .mm-root .mm-chip-pop-header {
+      display: flex; align-items: center; gap: 6px;
+      padding: 9px 10px 7px;
+      border-bottom: 1px solid var(--mm-border);
+    }
+    .mm-root .mm-chip-pop-header .swatch {
+      width: 8px; height: 8px; border-radius: 2px; flex: none;
+    }
+    .mm-root .mm-chip-pop-title {
+      font-weight: 600; flex: 1; font-size: 13px;
+      color: var(--mm-text);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .mm-root .mm-chip-pop-status {
+      font-size: 9px; padding: 2px 6px; border-radius: 8px;
+      font-weight: 600; letter-spacing: 0.4px; flex: none;
+    }
+    .mm-root .mm-chip-pop-status.active { background: rgba(253,224,71,0.15); color: #fde047; }
+    .mm-root .mm-chip-pop-status.blocked { background: rgba(239,68,68,0.15); color: #ef4444; }
+    .mm-root .mm-chip-pop-status.done { background: rgba(34,197,94,0.15); color: #22c55e; }
+    .mm-root .mm-chip-pop-btn {
+      background: transparent; border: none; cursor: pointer;
+      color: var(--mm-text-secondary); font-size: 13px;
+      padding: 2px 5px; border-radius: 4px; line-height: 1;
+      transition: background 0.15s, color 0.15s;
+      flex: none;
+    }
+    .mm-root .mm-chip-pop-btn:hover {
+      background: rgba(255,255,255,0.08); color: var(--mm-text);
+    }
+    .mm-root .mm-chip-pop-btn.pin-btn:hover { color: #fde047; }
+    .mm-root .mm-chip-pop-body { padding: 8px 10px 10px; }
+    .mm-root .mm-chip-pop-summary {
+      color: var(--mm-text-secondary); font-size: 11.5px;
+      line-height: 1.55; margin-bottom: 8px;
+    }
+    .mm-root .mm-chip-pop-section h5 {
+      font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.6px;
+      color: var(--mm-text-secondary); margin: 6px 0 4px 0; font-weight: 600;
+    }
+    .mm-root .mm-chip-pop-related { display: flex; flex-direction: column; gap: 2px; }
+    .mm-root .mm-chip-pop-related-row {
+      font-size: 11px; padding: 4px 6px; border-radius: 4px;
+      background: rgba(255,255,255,0.03); cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: background 0.15s;
+    }
+    .mm-root .mm-chip-pop-related-row:hover { background: rgba(255,255,255,0.09); }
+    .mm-root .mm-chip-pop-related-row .swatch { width: 7px; height: 7px; border-radius: 2px; flex: none; }
+    .mm-root .mm-chip-pop-related-row .relname {
+      flex: 1; color: var(--mm-text);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .mm-root .mm-chip-pop-related-row .relsys {
+      color: var(--mm-text-secondary); font-size: 10px; flex: none;
+    }
+    .mm-root .mm-chip-pop-empty {
+      font-size: 11px; color: var(--mm-text-secondary); padding: 4px 4px;
+    }
+
+    /* Add-node modal */
+    .mm-root .mm-modal-bg {
       position: fixed; inset: 0; background: rgba(0,0,0,0.55);
       display: none; align-items: center; justify-content: center; z-index: 1000;
     }
-    .mm-modal-bg.visible { display: flex; }
-    .mm-modal {
-      background: var(--bg-elev, #161b22); border: 1px solid var(--card-border, #2a2f3a);
-      border-radius: 8px; padding: 18px 20px; min-width: 320px;
-      color: var(--text, #e6edf3); font-size: 13px;
+    .mm-root .mm-modal-bg.visible { display: flex; }
+    .mm-root .mm-modal {
+      background: var(--mm-bg-elev); border: 1px solid var(--mm-border);
+      border-radius: 8px; padding: 18px 20px; min-width: 280px; max-width: 92vw;
+      color: var(--mm-text); font-size: 13px;
     }
-    .mm-modal h3 { margin: 0 0 12px 0; font-size: 14px; }
-    .mm-modal label { display: block; font-size: 11px; color: var(--text-secondary, #8b949e); margin: 8px 0 3px; }
-    .mm-modal input, .mm-modal select {
+    .mm-root .mm-modal h3 { margin: 0 0 12px 0; font-size: 14px; }
+    .mm-root .mm-modal label { display: block; font-size: 11px; color: var(--mm-text-secondary); margin: 8px 0 3px; }
+    .mm-root .mm-modal input, .mm-root .mm-modal select {
       width: 100%; box-sizing: border-box;
-      background: var(--bg, #0d1117); color: var(--text, #e6edf3);
-      border: 1px solid var(--card-border, #2a2f3a);
+      background: var(--mm-bg); color: var(--mm-text);
+      border: 1px solid var(--mm-border);
       border-radius: 4px; padding: 5px 8px; font-size: 12px; outline: none;
     }
-    .mm-modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
-    .mm-modal-actions button {
+    .mm-root .mm-modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+    .mm-root .mm-modal-actions button {
       padding: 6px 14px; border-radius: 4px; border: none; cursor: pointer; font-size: 12px;
     }
-    .mm-modal-cancel { background: transparent; color: var(--text-secondary, #8b949e); }
-    .mm-modal-submit { background: #3b82f6; color: #fff; font-weight: 600; }
-    .sys-row.hilite { background: rgba(59,130,246,0.18); outline: 1px solid #3b82f6; }
-    .summary-block .num { color: var(--text, #e6edf3); font-weight: 600; }
-    .mind-canvas-wrap {
-      position: relative; background: var(--bg, #0d1117); overflow: hidden;
+    .mm-root .mm-modal-cancel { background: transparent; color: var(--mm-text-secondary); }
+    .mm-root .mm-modal-submit { background: #3b82f6; color: #fff; font-weight: 600; }
+
+    /* Toast */
+    .mm-root .mm-toast {
+      position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+      background: rgba(22,27,34,0.95); border: 1px solid var(--mm-border);
+      color: var(--mm-text); padding: 6px 12px; border-radius: 6px;
+      font-size: 11px; z-index: 100; pointer-events: none;
+      transition: opacity 0.25s;
     }
-    .mm-toolbar {
-      position: absolute; top: 12px; left: 12px; z-index: 10;
-      display: flex; gap: 6px;
-      background: rgba(22,27,34,0.85); backdrop-filter: blur(8px);
-      border: 1px solid var(--card-border, #2a2f3a);
-      border-radius: 8px; padding: 6px;
+
+    /* ── Mobile portrait (<=720px) ── */
+    @media (max-width: 720px) {
+      .mm-root {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        height: min(540px, 70vh);
+      }
+      .mm-root .sys-rail {
+        flex-direction: row;
+        overflow-x: auto; overflow-y: hidden;
+        padding: 8px 8px;
+        border-right: none;
+        border-bottom: 1px solid var(--mm-border);
+        gap: 6px; align-items: center;
+        scrollbar-width: thin;
+      }
+      .mm-root .sys-rail h3,
+      .mm-root .legend-block,
+      .mm-root .summary-block,
+      .mm-root .mm-sep { display: none; }
+      .mm-root .mm-rail-toolbar {
+        flex-direction: row;
+        flex: 0 0 auto;
+        gap: 5px; min-width: unset;
+      }
+      .mm-root .mm-search {
+        width: 130px; padding: 5px 7px; font-size: 11.5px;
+      }
+      .mm-root .mm-add-btn {
+        padding: 5px 9px; font-size: 11.5px; flex: none;
+      }
+      .mm-root .sys-row {
+        padding: 4px 8px; flex: 0 0 auto;
+        font-size: 11px; gap: 5px;
+        border: 1px solid var(--mm-border);
+      }
+      .mm-root .sys-row .name { white-space: nowrap; }
+      /* Popover becomes a bottom-sheet */
+      .mm-root .mm-chip-pop {
+        position: absolute !important;
+        left: 8px !important; right: 8px !important;
+        top: auto !important; bottom: 8px !important;
+        width: auto !important;
+      }
+      .mm-root .mm-pin-tray {
+        max-width: calc(100% - 90px);
+        top: 8px; right: 8px;
+      }
+      .mm-root .mm-toolbar {
+        top: 8px; left: 8px; padding: 3px;
+      }
+      .mm-root .mm-toolbar button {
+        padding: 4px 8px; font-size: 11.5px;
+      }
+      .mm-root .mm-tier {
+        top: 50px; font-size: 9px;
+      }
     }
-    .mm-toolbar button {
-      background: transparent; border: none; color: var(--text, #e6edf3);
-      padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px;
-    }
-    .mm-toolbar button:hover { background: rgba(255,255,255,0.08); }
-    .mm-tier {
-      position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
-      font-size: 10px; color: var(--text-secondary, #8b949e);
-      z-index: 5; pointer-events: none;
-    }
-    .mm-tier strong { color: var(--text, #e6edf3); }
-    .mm-cy { position: absolute; inset: 0; }
-    .mind-side {
-      background: var(--bg-elev, #161b22);
-      border-left: 1px solid var(--card-border, #2a2f3a);
-      display: flex; flex-direction: column; overflow-y: auto;
-    }
-    .mm-empty {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; height: 100%; padding: 24px; text-align: center;
-      color: var(--text-secondary, #8b949e); font-size: 13px;
-    }
-    .mm-empty .mm-emoji { font-size: 28px; margin-bottom: 8px; }
-    .mm-empty .mm-hint {
-      margin-top: 8px; font-size: 10px; opacity: 0.7; line-height: 1.6;
-    }
-    .mm-detail {
-      padding: 14px; display: none; flex-direction: column; gap: 10px; overflow-y: auto;
-    }
-    .mm-detail.visible { display: flex; }
-    .mm-detail h4 { font-size: 14px; margin: 0; color: var(--text, #e6edf3); }
-    .mm-pills { display: flex; gap: 5px; flex-wrap: wrap; }
-    .mm-pill {
-      font-size: 10px; padding: 2px 7px; border-radius: 10px;
-      font-weight: 600; letter-spacing: 0.4px;
-    }
-    .mm-pill-status.active { background: rgba(253,224,71,0.15); color: #fde047; }
-    .mm-pill-status.blocked { background: rgba(239,68,68,0.15); color: #ef4444; }
-    .mm-pill-status.done { background: rgba(34,197,94,0.15); color: #22c55e; }
-    .mm-summary-text {
-      color: var(--text-secondary, #8b949e); font-size: 12px; line-height: 1.55;
-    }
-    .mm-section h5 {
-      font-size: 10px; text-transform: uppercase; letter-spacing: 0.6px;
-      color: var(--text-secondary, #8b949e); margin: 0 0 6px 0; font-weight: 600;
-    }
-    .mm-related { display: flex; flex-direction: column; gap: 3px; }
-    .mm-related-row {
-      font-size: 11px; padding: 5px 7px; border-radius: 4px;
-      background: rgba(255,255,255,0.03); cursor: pointer;
-      display: flex; align-items: center; gap: 6px;
-    }
-    .mm-related-row:hover { background: rgba(255,255,255,0.07); }
-    .mm-related-row .swatch { width: 7px; height: 7px; border-radius: 2px; flex: none; }
   `;
 
   function injectStyle() {
@@ -334,6 +471,12 @@
       s.onerror = () => reject(new Error('cytoscape CDN failed'));
       document.head.appendChild(s);
     });
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
   }
 
   function countBySys(nodes) {
@@ -407,28 +550,13 @@
       </div>
       <div class="mind-canvas-wrap">
         <div class="mm-toolbar">
-          <button data-act="fit">🎯 Fit</button>
-          <button data-act="reset">🔄 重整</button>
+          <button data-act="fit" title="Fit">🎯</button>
+          <button data-act="reset" title="重整">🔄</button>
         </div>
+        <div class="mm-pin-tray" data-pin-tray></div>
         <div class="mm-tier">L1 · <strong>Topics</strong></div>
         <div class="mm-cy"></div>
       </div>
-      <aside class="mind-side">
-        <div class="mm-empty">
-          <div class="mm-emoji">🧠</div>
-          點任一節點查看相關依賴。
-          <div class="mm-hint">滾輪 zoom · 拖曳 pan<br>左側點子系統可單獨高亮</div>
-        </div>
-        <div class="mm-detail">
-          <h4></h4>
-          <div class="mm-pills"></div>
-          <div class="mm-summary-text"></div>
-          <div class="mm-section">
-            <h5>跨系統相關節點</h5>
-            <div class="mm-related"></div>
-          </div>
-        </div>
-      </aside>
     `;
   }
 
@@ -485,6 +613,10 @@
           'border-color': '#fde047', 'border-width': 4,
           'overlay-color': '#fde047', 'overlay-opacity': 0.18,
         }},
+        { selector: 'node.pinned', style: {
+          'border-color': '#fde047', 'border-width': 3,
+          'overlay-color': '#fde047', 'overlay-opacity': 0.15,
+        }},
         { selector: 'edge', style: {
           'width': 1.1,
           'line-color': '#2a2f3a',
@@ -519,64 +651,217 @@
     return { cy, nodesById };
   }
 
-  function bindEvents(rootEl, cy, nodesById) {
-    const emptyEl = rootEl.querySelector('.mm-empty');
-    const detailEl = rootEl.querySelector('.mm-detail');
-    const titleEl = detailEl.querySelector('h4');
-    const pillsEl = detailEl.querySelector('.mm-pills');
-    const summaryEl = detailEl.querySelector('.mm-summary-text');
-    const relatedEl = detailEl.querySelector('.mm-related');
-    const tierEl = rootEl.querySelector('.mm-tier');
+  // ── Chip popover + pin tray controller ──
+  function createChipController(rootEl, cy, nodesById) {
+    const wrap = rootEl.querySelector('.mind-canvas-wrap');
+    const pinTray = rootEl.querySelector('[data-pin-tray]');
+    const pinned = new Map(); // id → { node }
+    let activePop = null;     // currently visible popover element (at most 1)
+    let activeId = null;      // node id backing activePop
 
-    function showSide(n) {
-      emptyEl.style.display = 'none';
-      detailEl.classList.add('visible');
-      const d = n.data();
-      titleEl.textContent = d.label;
-      const sysMeta = SYS[d.sys];
-      pillsEl.innerHTML = `
-        <span class="mm-pill" style="background:${sysMeta.color}26;color:${sysMeta.color};">${sysMeta.label}</span>
-        <span class="mm-pill mm-pill-status ${d.status}">${d.status}</span>
-      `;
-      summaryEl.textContent = d.summary || `(${sysMeta.label} 子系統 · ${d.tier})`;
-
-      relatedEl.innerHTML = '';
-      const seen = new Set();
-      n.neighborhood('node').forEach(nb => {
-        if (nb.id() === n.id()) return;
-        const nd = nb.data();
-        if (nd.sys === d.sys) return;
-        if (seen.has(nb.id())) return;
-        seen.add(nb.id());
-        const row = document.createElement('div');
-        row.className = 'mm-related-row';
-        row.dataset.target = nb.id();
-        row.innerHTML = `
-          <span class="swatch" style="background:${SYS[nd.sys].color}"></span>
-          <span>${nd.label}</span>
-          <span style="color:var(--text-secondary,#8b949e);font-size:10px;margin-left:auto;">${SYS[nd.sys].label}</span>
-        `;
-        relatedEl.appendChild(row);
-      });
-      if (!relatedEl.children.length) {
-        relatedEl.innerHTML = '<div style="font-size:11px;color:var(--text-secondary,#8b949e);padding:5px;">沒有跨系統依賴</div>';
-      }
+    function isMobile() {
+      return window.matchMedia('(max-width: 720px)').matches;
     }
 
-    cy.on('tap', 'node', (evt) => {
-      const n = evt.target;
+    function buildRelatedRows(node) {
+      const seen = new Set();
+      const rows = [];
+      node.neighborhood('node').forEach(nb => {
+        if (nb.id() === node.id()) return;
+        const nd = nb.data();
+        if (nd.sys === node.data('sys')) return;
+        if (seen.has(nb.id())) return;
+        seen.add(nb.id());
+        rows.push({
+          id: nb.id(),
+          label: nd.label,
+          sys: nd.sys,
+          sysColor: SYS[nd.sys].color,
+          sysLabel: SYS[nd.sys].label,
+        });
+      });
+      return rows;
+    }
+
+    function buildPopHtml(d, isPinned, related) {
+      const sysMeta = SYS[d.sys];
+      const pinTitle = isPinned ? '取消釘選' : '釘選引用';
+      const pinIcon = isPinned ? '📍' : '📌';
+      const pinClass = isPinned ? 'pin-btn pinned' : 'pin-btn';
+      const summary = d.summary || `${sysMeta.label} 子系統 · ${d.tier}`;
+      const relatedHtml = related.length
+        ? related.map(r => `
+            <div class="mm-chip-pop-related-row" data-related-id="${escapeHtml(r.id)}">
+              <span class="swatch" style="background:${r.sysColor}"></span>
+              <span class="relname">${escapeHtml(r.label)}</span>
+              <span class="relsys">${escapeHtml(r.sysLabel)}</span>
+            </div>`).join('')
+        : '<div class="mm-chip-pop-empty">沒有跨系統依賴</div>';
+
+      return `
+        <div class="mm-chip-pop-header">
+          <span class="swatch" style="background:${sysMeta.color}"></span>
+          <span class="mm-chip-pop-title" title="${escapeHtml(d.label)}">${escapeHtml(d.label)}</span>
+          <span class="mm-chip-pop-status ${escapeHtml(d.status)}">${escapeHtml(d.status)}</span>
+          <button class="mm-chip-pop-btn ${pinClass}" data-pop-act="pin" title="${escapeHtml(pinTitle)}">${pinIcon}</button>
+          <button class="mm-chip-pop-btn" data-pop-act="close" title="關閉">✖</button>
+        </div>
+        <div class="mm-chip-pop-body">
+          <div class="mm-chip-pop-summary">${escapeHtml(summary)}</div>
+          <div class="mm-chip-pop-section">
+            <h5>跨系統相關節點</h5>
+            <div class="mm-chip-pop-related">${relatedHtml}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function positionPop(pop, node) {
+      if (isMobile()) {
+        // CSS handles positioning via @media bottom-sheet rule
+        pop.style.left = '';
+        pop.style.top = '';
+        return;
+      }
+      const wrapRect = wrap.getBoundingClientRect();
+      const pos = node.renderedPosition();
+      const popW = 300, popH = pop.offsetHeight || 200;
+      let left = pos.x + 28;
+      let top = pos.y - popH / 2;
+      if (left + popW > wrapRect.width - 8) left = pos.x - popW - 28;
+      if (left < 8) left = 8;
+      if (top < 50) top = 50;
+      if (top + popH > wrapRect.height - 8) top = wrapRect.height - popH - 8;
+      pop.style.left = left + 'px';
+      pop.style.top = top + 'px';
+    }
+
+    function closeActive() {
+      if (activePop) {
+        activePop.remove();
+        activePop = null;
+      }
+      activeId = null;
+    }
+
+    function openPop(nodeId) {
+      const node = cy.getElementById(nodeId);
+      if (!node || node.empty()) return;
+      const d = node.data();
+
+      closeActive();
+
+      const pop = document.createElement('div');
+      pop.className = 'mm-chip-pop';
+      pop.dataset.nodeId = nodeId;
+      const related = buildRelatedRows(node);
+      pop.innerHTML = buildPopHtml(d, pinned.has(nodeId), related);
+      wrap.appendChild(pop);
+      // After insertion, height is known — position
+      positionPop(pop, node);
+
+      activePop = pop;
+      activeId = nodeId;
+
+      // Highlight the node + neighborhood
       cy.elements().removeClass('faded').removeClass('highlighted');
       cy.elements().addClass('faded');
-      n.removeClass('faded').addClass('highlighted');
-      n.neighborhood().removeClass('faded').addClass('highlighted');
-      showSide(n);
+      node.removeClass('faded').addClass('highlighted');
+      node.neighborhood().removeClass('faded').addClass('highlighted');
+
+      pop.addEventListener('click', (e) => {
+        const relRow = e.target.closest('[data-related-id]');
+        if (relRow) {
+          e.stopPropagation();
+          const targetId = relRow.dataset.relatedId;
+          openPop(targetId);
+          const target = cy.getElementById(targetId);
+          if (target.length) cy.center(target);
+          return;
+        }
+        const btn = e.target.closest('[data-pop-act]');
+        if (!btn) return;
+        e.stopPropagation();
+        const act = btn.dataset.popAct;
+        if (act === 'close') {
+          closeActive();
+          cy.elements().removeClass('faded').removeClass('highlighted');
+          return;
+        }
+        if (act === 'pin') {
+          if (pinned.has(nodeId)) {
+            unpin(nodeId);
+          } else {
+            pin(nodeId, d);
+          }
+        }
+      });
+    }
+
+    function pin(nodeId, d) {
+      pinned.set(nodeId, { id: nodeId, label: d.label, sys: d.sys });
+      cy.getElementById(nodeId).addClass('pinned');
+      renderTray();
+      // Re-render the popover so its 📌 → 📍 toggle reflects the new state
+      if (activeId === nodeId) openPop(nodeId);
+    }
+
+    function unpin(nodeId) {
+      pinned.delete(nodeId);
+      cy.getElementById(nodeId).removeClass('pinned');
+      renderTray();
+      if (activeId === nodeId) openPop(nodeId);
+    }
+
+    function renderTray() {
+      pinTray.innerHTML = '';
+      pinned.forEach((p) => {
+        const chip = document.createElement('div');
+        chip.className = 'mm-pin-chip';
+        chip.dataset.nodeId = p.id;
+        chip.innerHTML = `
+          <span class="swatch" style="background:${SYS[p.sys].color}"></span>
+          <span class="lbl">${escapeHtml(p.label)}</span>
+          <span class="x" data-pin-x="${escapeHtml(p.id)}">×</span>
+        `;
+        pinTray.appendChild(chip);
+      });
+    }
+
+    pinTray.addEventListener('click', (e) => {
+      const xBtn = e.target.closest('[data-pin-x]');
+      if (xBtn) {
+        e.stopPropagation();
+        unpin(xBtn.dataset.pinX);
+        return;
+      }
+      const chip = e.target.closest('.mm-pin-chip');
+      if (chip && chip.dataset.nodeId) {
+        const target = cy.getElementById(chip.dataset.nodeId);
+        if (target.length) cy.center(target);
+        openPop(chip.dataset.nodeId);
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && activePop) closeActive();
+    });
+
+    return { openPop, closeActive, pinned, isMobile };
+  }
+
+  function bindEvents(rootEl, cy, nodesById) {
+    const tierEl = rootEl.querySelector('.mm-tier');
+    const ctrl = createChipController(rootEl, cy, nodesById);
+
+    cy.on('tap', 'node', (evt) => {
+      ctrl.openPop(evt.target.id());
     });
 
     cy.on('tap', (evt) => {
       if (evt.target === cy) {
+        ctrl.closeActive();
         cy.elements().removeClass('faded').removeClass('highlighted');
-        emptyEl.style.display = 'block';
-        detailEl.classList.remove('visible');
       }
     });
 
@@ -586,19 +871,6 @@
       if (z < 0.55) { tier = 'L0'; label = 'Overview'; }
       else if (z >= 1.4) { tier = 'L2'; label = 'Detail'; }
       tierEl.innerHTML = `${tier} · <strong>${label}</strong>`;
-    });
-
-    relatedEl.addEventListener('click', (evt) => {
-      const row = evt.target.closest('.mm-related-row');
-      if (!row) return;
-      const target = cy.getElementById(row.dataset.target);
-      if (!target.length) return;
-      cy.elements().removeClass('faded').removeClass('highlighted');
-      cy.elements().addClass('faded');
-      target.removeClass('faded').addClass('highlighted');
-      target.neighborhood().removeClass('faded').addClass('highlighted');
-      cy.center(target);
-      showSide(target);
     });
 
     rootEl.querySelectorAll('.sys-row').forEach(row => {
@@ -623,13 +895,14 @@
         const act = btn.dataset.act;
         if (act === 'fit') cy.fit(undefined, 30);
         if (act === 'reset') {
-          cy.elements().removeClass('faded').removeClass('highlighted');
+          ctrl.closeActive();
+          cy.elements().removeClass('faded').removeClass('highlighted').removeClass('pinned');
+          ctrl.pinned.clear();
+          rootEl.querySelector('[data-pin-tray]').innerHTML = '';
           rootEl.querySelectorAll('.sys-row').forEach(r => r.classList.remove('active'));
           rootEl.querySelectorAll('.sys-row.hilite').forEach(r => r.classList.remove('hilite'));
           const sb = rootEl.querySelector('.mm-search');
           if (sb) sb.value = '';
-          emptyEl.style.display = 'block';
-          detailEl.classList.remove('visible');
           cy.fit(undefined, 30);
         }
       });
@@ -696,7 +969,7 @@
       });
     }
 
-    return { showSide };
+    return ctrl;
   }
 
   async function init(opts) {
@@ -708,9 +981,6 @@
 
     injectStyle();
     rootEl.classList.add('mm-root');
-    // Clear any inline display set by callers ("block"/"none" toggles) so the
-    // .mm-root grid rule wins. Callers should toggle visibility via a class
-    // (e.g. .mm-hidden { display: none }) or by replacing inline display with ''.
     if (rootEl.style.display === 'block') rootEl.style.display = '';
     renderShell(rootEl, nodes, edges);
 
