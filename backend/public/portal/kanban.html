@@ -559,6 +559,9 @@
                 <option value="P2">P2</option>
                 <option value="P3">P3</option>
             </select>
+            <select id="funnelEntity" onchange="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px;">
+                <option value="" data-i18n="kb_funnel_entity_all">All entities</option>
+            </select>
             <label style="font-size:13px; color:#666;">
                 <span data-i18n="kb_funnel_since">Since</span>:
                 <input type="date" id="funnelSince" onchange="onFunnelChange()" style="padding:4px 6px; border:1px solid #ccc; border-radius:6px;">
@@ -866,7 +869,7 @@
         let allCards = [];
         let currentFilter = 'all';
         let currentSort = 'updated_desc';
-        let funnelState = { q: '', status: '', priority: '', since: '', until: '' };
+        let funnelState = { q: '', status: '', priority: '', assignedBot: '', since: '', until: '' };
         let funnelDebounce = null;
         let historyPage = 1;
         let mobileTab = 'backlog';
@@ -905,6 +908,7 @@
                     if (typeof updateEntityMaps === 'function') updateEntityMaps(boundEntities);
                 }
             } catch(e) {}
+            populateFunnelEntities();
 
             await loadCards();
             initDragDrop();
@@ -1193,19 +1197,22 @@
                 q: document.getElementById('funnelSearch').value.trim(),
                 status: document.getElementById('funnelStatus').value,
                 priority: document.getElementById('funnelPriority').value,
+                assignedBot: document.getElementById('funnelEntity').value,
                 since: document.getElementById('funnelSince').value,
                 until: document.getElementById('funnelUntil').value,
             };
+            syncFunnelUrl();
             clearTimeout(funnelDebounce);
             funnelDebounce = setTimeout(() => loadCards(), 250);
         }
 
         function resetFunnel() {
-            ['funnelSearch','funnelStatus','funnelPriority','funnelSince','funnelUntil'].forEach(id => {
+            ['funnelSearch','funnelStatus','funnelPriority','funnelEntity','funnelSince','funnelUntil'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
             });
-            funnelState = { q: '', status: '', priority: '', since: '', until: '' };
+            funnelState = { q: '', status: '', priority: '', assignedBot: '', since: '', until: '' };
+            syncFunnelUrl();
             loadCards();
         }
 
@@ -1214,6 +1221,7 @@
             if (funnelState.q) p.push('q=' + encodeURIComponent(funnelState.q));
             if (funnelState.status) p.push('status=' + encodeURIComponent(funnelState.status));
             if (funnelState.priority) p.push('priority=' + encodeURIComponent(funnelState.priority));
+            if (funnelState.assignedBot) p.push('assignedBot=' + encodeURIComponent(funnelState.assignedBot));
             if (funnelState.since) p.push('since=' + encodeURIComponent(new Date(funnelState.since).toISOString()));
             if (funnelState.until) {
                 const untilEnd = new Date(funnelState.until);
@@ -1221,6 +1229,46 @@
                 p.push('until=' + encodeURIComponent(untilEnd.toISOString()));
             }
             return p.join('&');
+        }
+
+        // Sync ?entity=<n> to URL so funnel filter is permalinkable.
+        // Only `entity` is mirrored — other funnel keys are session-local
+        // (search/date) or already mirrored elsewhere (status via swimlane).
+        function syncFunnelUrl() {
+            try {
+                const url = new URL(location.href);
+                if (funnelState.assignedBot) url.searchParams.set('entity', funnelState.assignedBot);
+                else url.searchParams.delete('entity');
+                history.replaceState(null, '', url.toString());
+            } catch(e) {}
+        }
+
+        // Populate entity dropdown from boundEntities (loaded post-auth).
+        // Picks up ?entity=N from URL on first call so permalinks work.
+        function populateFunnelEntities() {
+            const sel = document.getElementById('funnelEntity');
+            if (!sel) return;
+            const allOpt = sel.querySelector('option[value=""]');
+            sel.innerHTML = '';
+            if (allOpt) sel.appendChild(allOpt);
+            (boundEntities || []).forEach(e => {
+                const opt = document.createElement('option');
+                opt.value = String(e.entityId);
+                const label = e.name || e.character || ('#' + e.entityId);
+                opt.textContent = '#' + e.entityId + ' ' + label;
+                sel.appendChild(opt);
+            });
+            const urlEntity = new URLSearchParams(location.search).get('entity');
+            if (urlEntity && (boundEntities || []).some(e => String(e.entityId) === urlEntity)) {
+                sel.value = urlEntity;
+                funnelState.assignedBot = urlEntity;
+                const funnelEl = document.getElementById('kbFunnel');
+                if (funnelEl && funnelEl.style.display === 'none') {
+                    funnelEl.style.display = 'flex';
+                    const icon = document.getElementById('funnelIcon');
+                    if (icon) icon.textContent = '▼';
+                }
+            }
         }
 
         // ── History / Archived cards ──
