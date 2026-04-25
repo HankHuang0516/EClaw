@@ -1,3 +1,10 @@
+# [1.1093.0](https://github.com/HankHuang0516/EClaw/compare/v1.1092.1...v1.1093.0) (2026-04-25)
+
+
+### Features
+
+* **kanban:** add entity_id funnel filter with permalink ([#2134](https://github.com/HankHuang0516/EClaw/issues/2134)) ([f1b3f6e](https://github.com/HankHuang0516/EClaw/commit/f1b3f6e44a15878d1f2a218a0905be7430339c03)), closes [#5](https://github.com/HankHuang0516/EClaw/issues/5)
+
 ## [1.1092.1](https://github.com/HankHuang0516/EClaw/compare/v1.1092.0...v1.1092.1) (2026-04-25)
 
 
