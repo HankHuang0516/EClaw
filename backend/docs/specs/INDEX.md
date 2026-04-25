@@ -13,7 +13,7 @@ Per Hank 2026-04-25 1on1 Q2: 用 grep 理解 code 架構容易撞名 — 規範�
 | 4 | kanban (mission v2) | `backend/kanban.js`, `backend/mission.js` | △ | repo-root [`docs/mission-v2-kanban-spec.md`](../../../docs/mission-v2-kanban-spec.md) — written before screenshot-review gate / cron 子卡; needs supplement |
 | 5 | vault — device_vars + encryptVars | `backend/index.js` (encryptVars / decryptVars), `backend/mission.js` (decryptVarsLocal) | ✅ | [`backend/docs/specs/vault.md`](vault.md) (encryption boundary, dual-auth, no-rental-leak rule, audit trail) |
 | 6 | official-bind / public-code | `backend/index.js` (officialBindingsCache, public_code_index), `backend/auth.js` | ❌ | borrow flow + free vs personal binding only documented in code paths |
-| 7 | channel-bridge (fakechat / web_chat) | `backend/index.js` (`/api/client/speak`, `/api/transform`, `/api/chat/history`), `bridge.ts` | ❌ | `bridge.ts` has inline comments; AVAILABLE TOOLS dashboard format only encoded in mission notify code |
+| 7 | channel-bridge (fakechat / web_chat) | `backend/index.js` (`/api/client/speak`, `/api/transform`, `/api/chat/history`), `bridge.ts` | ✅ | [`backend/docs/specs/channel-bridge.md`](channel-bridge.md) (3 endpoints, AVAILABLE TOOLS format, `{{KEY}}` interpolation sites, Hermes vs OpenClaw push templates, bridge.ts daemon role) |
 | 8 | mission-dashboard / notes / chat-history | `backend/mission.js`, `backend/index.js` (`/api/mission/dashboard`, `/api/chat/history`) | ❌ | endpoint shapes only in code |
 | 9 | publisher (X/Mastodon retired/Discord) | `backend/publisher*.js`, `backend/x-tweet*.js`, `backend/discord*.js` | △ | scattered; news-publishing-api 2026-03-15 doc covers only one path |
 | 10 | arena (browser interview / E2E test) | `backend/arena.js`, `backend/interview-arena.js` | ❌ | arena page_loaded protocol only in [memory](../../../docs/specs/) reference, not yet a backend spec |
@@ -25,7 +25,7 @@ Per Hank 2026-04-25 1on1 Q2: 用 grep 理解 code 架構容易撞名 — 規範�
 **P0 / blocks mind-map first layer:**
 1. ~~**wallet.md**~~ — ✅ shipped (see row #3). Ledger type matrix, balance/held invariants, idempotency-key registry, platform/insurance pool UUIDs.
 2. ~~**vault.md**~~ — ✅ shipped (see row #5). Encryption boundary, dual-auth model, no-`allowed_vars` rule now anchored in the repo.
-3. **channel-bridge.md** — fakechat ↔ web_chat ↔ AVAILABLE TOOLS dashboard contract. Drives every bot's runtime behavior; absence is why Hermes shipped broken i18n on 2026-04-25 (he didn't have a doc to cite).
+3. ~~**channel-bridge.md**~~ — ✅ shipped (see row #7). 3 endpoints, AVAILABLE TOOLS format, `{{KEY}}` interpolation sites, Hermes vs OpenClaw push templates, `bridge.ts` daemon — all anchored.
 
 **P1 / fills mind-map second layer:**
 4. **official-bind.md** — borrow vs personal vs free; unbind cascade (now Phase 1-4 documented separately); public-code allocator constraints.
