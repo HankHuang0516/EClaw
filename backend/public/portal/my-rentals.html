@@ -83,6 +83,7 @@
         <div class="mr-tabs">
             <button class="mr-tab active" onclick="switchTab('renter')" id="tabRenter" data-i18n="mr_tab_renting">Renting</button>
             <button class="mr-tab" onclick="switchTab('owner')" id="tabOwner" data-i18n="mr_tab_leasing">Leasing Out</button>
+            <button class="mr-tab" onclick="switchTab('listings')" id="tabListings" data-i18n="mr_tab_listings">My Listings</button>
             <button class="mr-tab" onclick="switchTab('disputes')" id="tabDisputes" data-i18n="mr_tab_disputes">Disputes</button>
         </div>
 
@@ -183,10 +184,12 @@
                 <div class="mr-progress-bar"><div class="mr-progress-fill" style="width:${pct.toFixed(1)}%"></div></div>`;
         }
 
+        const TAB_BUTTONS = { renter: 'tabRenter', owner: 'tabOwner', listings: 'tabListings', disputes: 'tabDisputes' };
         function switchTab(tab) {
             currentTab = tab;
             document.querySelectorAll('.mr-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById(tab === 'renter' ? 'tabRenter' : tab === 'owner' ? 'tabOwner' : 'tabDisputes').classList.add('active');
+            const btnId = TAB_BUTTONS[tab] || 'tabRenter';
+            document.getElementById(btnId).classList.add('active');
             loadTab();
         }
 
@@ -197,6 +200,9 @@
                 if (currentTab === 'disputes') {
                     const data = await apiCall('GET', '/api/rental/my-disputes?limit=50');
                     renderDisputes(data?.disputes || []);
+                } else if (currentTab === 'listings') {
+                    const data = await apiCall('GET', '/api/rental/my-listings');
+                    renderListings(data?.listings || []);
                 } else {
                     const data = await apiCall('GET', `/api/rental/my-contracts?role=${currentTab}&limit=50`);
                     renderContracts(data?.contracts || []);
@@ -326,6 +332,120 @@
                     </div>
                 </div>`;
             }).join('');
+        }
+
+        /* ── Listings tab ── */
+        const LISTING_STATUS = {
+            listed:    { class: 'active',  i18n: 'mr_listing_status_listed',    fb: 'Listed' },
+            paused:    { class: 'suspended', i18n: 'mr_listing_status_paused',  fb: 'Paused' },
+            delisted:  { class: 'ended',   i18n: 'mr_listing_status_delisted',  fb: 'Delisted' },
+            draft:     { class: 'ended',   i18n: 'mr_listing_status_draft',     fb: 'Draft' },
+        };
+        function listingStatusBadge(s) {
+            const m = LISTING_STATUS[s] || { class: 'ended', i18n: '', fb: s };
+            return `<span class="mr-status ${m.class}">${tt(m.i18n, m.fb)}</span>`;
+        }
+
+        function renderListings(listings) {
+            const wrap = document.getElementById('mrContent');
+            if (listings.length === 0) {
+                wrap.innerHTML = `<div class="mr-empty">${tt('mr_no_listings', 'No listings yet')}</div>`;
+                return;
+            }
+            wrap.innerHTML = listings.map(l => {
+                const rate = (l.rate_mli_per_ktoken / 1000).toFixed(1);
+                const rentalsTxt = `${l.total_rentals || 0} ${tt('mr_listing_rentals', 'rentals')}`;
+                const ratingTxt = (l.avg_rating && Number(l.avg_rating) > 0)
+                    ? `★ ${Number(l.avg_rating).toFixed(1)}`
+                    : tt('mr_listing_no_rating', 'No ratings yet');
+                const entityLabel = (l.entity_name && l.entity_is_bound)
+                    ? `${esc(l.entity_character || '🤖')} ${esc(l.entity_name)}`
+                    : tt('mr_listing_unbound', '(slot empty)');
+
+                let actions = '';
+                const titleAttr = esc(l.title);
+                if (l.status === 'listed') {
+                    actions = `
+                        <button class="mr-btn" onclick="pauseListing('${l.id}', this)">${tt('mr_listing_pause', 'Pause')}</button>
+                        <button class="mr-btn danger" data-listing-id="${l.id}" data-listing-title="${titleAttr}" onclick="showDelistModal(this.dataset.listingId, this.dataset.listingTitle)">${tt('mr_listing_delist', 'Delist')}</button>
+                    `;
+                } else if (l.status === 'paused') {
+                    actions = `
+                        <button class="mr-btn primary" onclick="resumeListing('${l.id}', this)">${tt('mr_listing_resume', 'Resume')}</button>
+                        <button class="mr-btn danger" data-listing-id="${l.id}" data-listing-title="${titleAttr}" onclick="showDelistModal(this.dataset.listingId, this.dataset.listingTitle)">${tt('mr_listing_delist', 'Delist')}</button>
+                    `;
+                }
+                /* delisted/draft: no actions */
+
+                return `<div class="mr-section" id="listing-${l.id}">
+                    <div class="mr-contract">
+                        <div class="mr-contract-info">
+                            <div class="mr-contract-title">${esc(l.title)}</div>
+                            <div class="mr-contract-meta">${tt('mr_listing_bound_to', 'Bound to')}: ${entityLabel}</div>
+                            <div class="mr-contract-meta">${tt('mr_listing_rate', 'Rate')}: ${rate} e${tt('mr_ecoin', 'coins')}/1K · ${rentalsTxt} · ${ratingTxt}</div>
+                        </div>
+                        ${listingStatusBadge(l.status)}
+                        <div class="mr-actions">${actions}</div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function pauseListing(listingId, btn) {
+            btn.disabled = true;
+            try {
+                await apiCall('POST', `/api/rental/listing/${listingId}/pause`);
+                showToast(tt('mr_listing_paused_toast', 'Listing paused'), 'success');
+                loadTab();
+            } catch (err) {
+                showToast(err.message || tt('mr_action_failed', 'Failed'), 'error');
+                btn.disabled = false;
+            }
+        }
+
+        async function resumeListing(listingId, btn) {
+            btn.disabled = true;
+            try {
+                /* Resume = re-publish a paused listing */
+                await apiCall('POST', `/api/rental/listing/${listingId}/publish`);
+                showToast(tt('mr_listing_resumed_toast', 'Listing live again'), 'success');
+                loadTab();
+            } catch (err) {
+                showToast(err.message || tt('mr_action_failed', 'Failed'), 'error');
+                btn.disabled = false;
+            }
+        }
+
+        function showDelistModal(listingId, listingTitle) {
+            const overlay = document.createElement('div');
+            overlay.className = 'mr-modal-overlay';
+            overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+            overlay.innerHTML = `<div class="mr-modal">
+                <h3>${tt('mr_listing_delist_title', 'Permanently delist?')}</h3>
+                <p><strong>${esc(listingTitle || '')}</strong></p>
+                <p>${tt('mr_listing_delist_warning', 'This cannot be undone. Existing rental contracts will run to their end — only new rentals are blocked.')}</p>
+                <div class="mr-modal-actions">
+                    <button class="mr-btn" onclick="this.closest('.mr-modal-overlay').remove()">${tt('mr_cancel', 'Cancel')}</button>
+                    <button class="mr-btn danger" onclick="confirmDelist('${listingId}', this)">${tt('mr_listing_delist_confirm', 'Confirm Delist')}</button>
+                </div>
+            </div>`;
+            document.body.appendChild(overlay);
+        }
+
+        async function confirmDelist(listingId, btn) {
+            btn.disabled = true;
+            btn.textContent = '...';
+            try {
+                await apiCall('DELETE', `/api/rental/listing/${listingId}`);
+                const overlay = btn.closest('.mr-modal-overlay');
+                if (overlay) overlay.remove();
+                showToast(tt('mr_listing_delisted_toast', 'Listing delisted'), 'success');
+                loadTab();
+            } catch (err) {
+                showToast(err.message || tt('mr_action_failed', 'Failed'), 'error');
+                btn.disabled = false;
+                btn.textContent = tt('mr_listing_delist_confirm', 'Confirm Delist');
+            }
         }
 
         /* ── End Early Modal ── */
