@@ -1,3 +1,10 @@
+## [1.1087.1](https://github.com/HankHuang0516/EClaw/compare/v1.1087.0...v1.1087.1) (2026-04-25)
+
+
+### Bug Fixes
+
+* **i18n:** unblock all portal pages — escape inner quotes + add 30 missing roadmap keys ([#2116](https://github.com/HankHuang0516/EClaw/issues/2116)) ([f988139](https://github.com/HankHuang0516/EClaw/commit/f9881399e89ece205e7096f622b90d397486b2d0))
+
 # [1.1087.0](https://github.com/HankHuang0516/EClaw/compare/v1.1086.2...v1.1087.0) (2026-04-25)
 
 
