@@ -10,12 +10,14 @@ on:
     paths:
       - 'backend/**'
       - 'backend/public/shared/i18n.js'
+      - 'i18n.js'
       - '.github/workflows/backend-ci.yml'
   pull_request:
     branches: [main]
     paths:
       - 'backend/**'
       - 'backend/public/shared/i18n.js'
+      - 'i18n.js'
       - '.github/workflows/backend-ci.yml'
 
 jobs:
@@ -50,6 +52,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Guard against dead top-level i18n.js
+        # The only live i18n.js is backend/public/shared/i18n.js. A top-level
+        # ./i18n.js used to exist as a stale duplicate; bots have edited it
+        # in good faith and shipped non-functional commits. Keep it gone.
+        run: |
+          if [ -f i18n.js ]; then
+            echo "::error::Top-level i18n.js was re-created. The only live i18n file is backend/public/shared/i18n.js — delete the duplicate."
+            exit 1
+          fi
 
       - name: Validate i18n.js syntax
         run: node --check public/shared/i18n.js
