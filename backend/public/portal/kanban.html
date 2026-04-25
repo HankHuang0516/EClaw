@@ -1878,7 +1878,7 @@
                     <div class="kb-note">
                         <div class="kb-note-title">${escapeHtml(n.title)}</div>
                         <div class="kb-note-content">${escapeHtml(n.content)}</div>
-                        <div class="kb-note-meta">#${n.from_entity_id ?? '?'} · ${formatTime(n.created_at)}</div>
+                        <div class="kb-note-meta">#${n.fromEntityId ?? n.from_entity_id ?? '?'} · ${formatTime(n.createdAt ?? n.created_at)}</div>
                     </div>
                 `).join('') : '<div class="kb-empty" data-i18n="kb_empty_no_notes">' + t('kb_empty_no_notes', 'No notes yet') + '</div>';
             } catch(e) { panel.innerHTML = '<div class="kb-empty">Failed to load notes</div>'; }
