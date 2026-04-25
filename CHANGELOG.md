@@ -1,3 +1,10 @@
+# [1.1087.0](https://github.com/HankHuang0516/EClaw/compare/v1.1086.2...v1.1087.0) (2026-04-25)
+
+
+### Features
+
+* **mindmap:** add v3 search bar + 新節點 button + .mm-sep dividers ([#2112](https://github.com/HankHuang0516/EClaw/issues/2112)) ([bf3e2be](https://github.com/HankHuang0516/EClaw/commit/bf3e2be97a14b4db296a450d943b002ede4fc65c))
+
 ## [1.1086.2](https://github.com/HankHuang0516/EClaw/compare/v1.1086.1...v1.1086.2) (2026-04-25)
 
 
