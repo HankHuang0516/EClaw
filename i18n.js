@@ -21970,6 +21970,16 @@ const TRANSLATIONS = {
         "kb_placeholder_cron": "Cron personalizado: */30 * * * *",
         "kb_stale_overdue": "Atrasado"
 
+        // Smart Chip / Autolink Chip (autolink-chip-preview.js)
+        "autolink_chip_open_full": "Abrir página completa",
+        "autolink_chip_ref_not_found": "La referencia ya no existe",
+        "autolink_chip_repin": "Citar esto al chat",
+        "autolink_chip_close_preview": "Cerrar vista previa",
+        "autolink_chip_nested_too_deep": "Demasiado profundo — abre la página completa para continuar",
+        "autolink_chip_circular": "Ya está en esta pila de vista previa",
+        "autolink_chip_ref_card": "Tarjeta",
+        "autolink_chip_ref_note": "Nota",
+        "autolink_chip_ref_review": "Reseña"
     },
     ms: {
         "cardholder_cap_desc": "Keterangan",
@@ -22159,6 +22169,16 @@ const TRANSLATIONS = {
         "kb_placeholder_cron": "Cron tersuai: */30 * * * *",
         "kb_stale_overdue": "Lewat tempo"
 
+        // Smart Chip / Autolink Chip (autolink-chip-preview.js)
+        "autolink_chip_open_full": "Buka halaman penuh",
+        "autolink_chip_ref_not_found": "Rujukan tidak lagi wujud",
+        "autolink_chip_repin": "Petik ini ke chat",
+        "autolink_chip_close_preview": "Tutup pratonton",
+        "autolink_chip_nested_too_deep": "Terlalu dalam — buka halaman penuh untuk teruskan",
+        "autolink_chip_circular": "Sudah dalam timbunan pratonton ini",
+        "autolink_chip_ref_card": "Kad",
+        "autolink_chip_ref_note": "Nota",
+        "autolink_chip_ref_review": "Semakan"
     },
     hi: {
         "cardholder_cap_desc": "विवरण",
@@ -24188,6 +24208,16 @@ const TRANSLATIONS = {
         "kb_priority_p3": "P3 - निम्न",
         "kb_cron_4h": "हर 4 घंटे"
     },
+        // Smart Chip / Autolink Chip (autolink-chip-preview.js)
+        "autolink_chip_open_full": "पूर्ण पृष्ठ खोलें",
+        "autolink_chip_ref_not_found": "संदर्भ अब मौजूद नहीं है",
+        "autolink_chip_repin": "इसे चैट में उद्धरण करें",
+        "autolink_chip_close_preview": "पूर्वावलोकन बंद करें",
+        "autolink_chip_nested_too_deep": "बहुत गहरा — जारी रखने के लिए पूर्ण पृष्ठ खोलें",
+        "autolink_chip_circular": "पहले से ही इस पूर्वावलोकन स्टैक में है",
+        "autolink_chip_ref_card": "कार्ड",
+        "autolink_chip_ref_note": "नोट",
+        "autolink_chip_ref_review": "समीक्षा"
     },
     ar: {
         "cardholder_cap_desc": "الوصف",
@@ -26217,6 +26247,16 @@ const TRANSLATIONS = {
         "kb_priority_p3": "P3 - منخفض",
         "kb_cron_4h": "كل 4 ساعات"
     },
+        // Smart Chip / Autolink Chip (autolink-chip-preview.js)
+        "autolink_chip_open_full": "فتح الصفحة الكاملة",
+        "autolink_chip_ref_not_found": "المرجع لم يعد موجودًا",
+        "autolink_chip_repin": "اقتبس هذا في المحادثة",
+        "autolink_chip_close_preview": "إغلاق المعاينة",
+        "autolink_chip_nested_too_deep": "عميق جدًا — افتح الصفحة الكاملة للمتابعة",
+        "autolink_chip_circular": "موجود بالفعل في قائمة المعاينة هذه",
+        "autolink_chip_ref_card": "بطاقة",
+        "autolink_chip_ref_note": "ملاحظة",
+        "autolink_chip_ref_review": "مراجعة"
     },
 
 };
