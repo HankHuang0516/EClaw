@@ -829,6 +829,18 @@
 
         <!-- Dashboard Content (hidden until loaded) -->
         <div id="dashboardContent" style="display:none;">
+            <!-- Mind-map (PR-A: static mockup; PR-B will wire to /api/mission/cards) -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>🧠 <span data-i18n="mm_card_title">心智圖</span> <span style="font-size:11px;color:var(--text-secondary);font-weight:500;margin-left:6px;" data-i18n="mm_card_beta">(beta · 模擬資料)</span></h2>
+                    <div class="section-header-actions">
+                        <button class="btn btn-outline btn-sm" id="mmToggleBtn" onclick="toggleMindmap()" data-i18n="mm_card_expand">展開</button>
+                    </div>
+                </div>
+                <div id="mmContainer" style="display:none;"></div>
+                <div id="mmHint" style="font-size:12px;color:var(--text-secondary);padding:4px 2px;" data-i18n="mm_card_hint">52 個節點 · 8 子系統 · 76 條連線（含跨系統依賴）。展開可互動探索。</div>
+            </div>
+
             <!-- Notes -->
             <div class="card">
                 <div class="card-header">
@@ -918,6 +930,7 @@
     <script src="shared/entity-utils.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
+    <script src="shared/mission-mindmap.js" defer></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>
     <script src="shared/footer.js"></script>
@@ -925,6 +938,31 @@
     <script src="shared/ai-chat.js"></script>
     <script>if(typeof renderAvatarHtml==='undefined'){window.renderAvatarHtml=function(a){return a||'\u{1F99E}'};window.isAvatarUrl=function(){return false}}</script>
     <script>
+        // --- Mind-map (PR-A: static mockup, lazy-init on first expand) ---
+        let mmInitialized = false;
+        let mmExpanded = false;
+        async function toggleMindmap() {
+            const container = document.getElementById('mmContainer');
+            const hint = document.getElementById('mmHint');
+            const btn = document.getElementById('mmToggleBtn');
+            if (!container || !btn) return;
+            mmExpanded = !mmExpanded;
+            container.style.display = mmExpanded ? 'block' : 'none';
+            if (hint) hint.style.display = mmExpanded ? 'none' : 'block';
+            btn.textContent = mmExpanded
+                ? (window.i18n && i18n.t('mm_card_collapse')) || '收起'
+                : (window.i18n && i18n.t('mm_card_expand')) || '展開';
+            if (mmExpanded && !mmInitialized && window.MissionMindmap) {
+                mmInitialized = true;
+                try {
+                    await window.MissionMindmap.init({ rootEl: container });
+                } catch (err) {
+                    console.error('mindmap init failed:', err);
+                    container.innerHTML = '<div style="padding:14px;color:var(--text-secondary);font-size:12px;">載入失敗：' + (err.message || err) + '</div>';
+                }
+            }
+        }
+
         // --- State ---
         let dashboard = { notes: [], rules: [], skills: [], souls: [], categoryOrder: {} };
         let lastSavedDashboard = null; // snapshot for auto-save conflict detection
