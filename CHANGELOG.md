@@ -1,3 +1,10 @@
+## [1.1085.1](https://github.com/HankHuang0516/EClaw/compare/v1.1085.0...v1.1085.1) (2026-04-25)
+
+
+### Bug Fixes
+
+* **arena:** add /arena/:sessionToken visual test page (PR1) ([#2108](https://github.com/HankHuang0516/EClaw/issues/2108)) ([3f1478f](https://github.com/HankHuang0516/EClaw/commit/3f1478f733e323cd8d0d2dff84959690ca6aa584))
+
 # [1.1085.0](https://github.com/HankHuang0516/EClaw/compare/v1.1084.1...v1.1085.0) (2026-04-25)
 
 
