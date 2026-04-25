@@ -947,8 +947,10 @@
             const btn = document.getElementById('mmToggleBtn');
             if (!container || !btn) return;
             mmExpanded = !mmExpanded;
-            container.style.display = mmExpanded ? 'block' : 'none';
-            if (hint) hint.style.display = mmExpanded ? 'none' : 'block';
+            // After init, the module sets .mm-root { display:grid } — so use
+            // '' (let CSS class win) when expanded, 'none' when collapsed.
+            container.style.display = mmExpanded ? '' : 'none';
+            if (hint) hint.style.display = mmExpanded ? 'none' : '';
             btn.textContent = mmExpanded
                 ? (window.i18n && i18n.t('mm_card_collapse')) || '收起'
                 : (window.i18n && i18n.t('mm_card_expand')) || '展開';

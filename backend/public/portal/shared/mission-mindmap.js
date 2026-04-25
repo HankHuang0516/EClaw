@@ -616,6 +616,10 @@
 
     injectStyle();
     rootEl.classList.add('mm-root');
+    // Clear any inline display set by callers ("block"/"none" toggles) so the
+    // .mm-root grid rule wins. Callers should toggle visibility via a class
+    // (e.g. .mm-hidden { display: none }) or by replacing inline display with ''.
+    if (rootEl.style.display === 'block') rootEl.style.display = '';
     renderShell(rootEl, nodes, edges);
 
     await loadCytoscape();
