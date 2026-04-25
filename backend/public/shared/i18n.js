@@ -68,6 +68,8 @@ const TRANSLATIONS = {
         "mc_dlg_edit_note": "Edit Note",
         "mc_dlg_content": "Content",
         "mc_dlg_category": "Category",
+        "mc_dlg_anchor": "Pin to kanban card",
+        "mc_dlg_anchor_none": "(none — group by category)",
         "mc_add_category": "+ Category",
         "mc_rename_category": "Rename",
         "mc_delete_category": "Delete category",
