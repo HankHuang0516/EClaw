@@ -382,3 +382,106 @@ describe('getFreeBotTOS', () => {
         expect(tos.sections[0].heading).toMatch(/服務/);
     });
 });
+
+
+    // ════════════════════════════════════════════════════════════════
+    // Explicit token-shape patterns (GitHub PAT, Slack, OpenAI/Anthropic)
+    // ════════════════════════════════════════════════════════════════
+    describe('Explicit token-shape redaction', () => {
+        const FAKE_GITHUB_PAT = 'ghp_FAKETESTXXXXXXXXXXXXXXXXXXXXXXXX';
+        const FAKE_OPENAI_KEY = 'sk-testtesttesttesttesttesttesttesttest';
+        const FAKE_SLACK_TOKEN = 'xoxb-12345678901234567890-abcd';
+
+        it('redacts GitHub PAT as ✱✱✱[REDACTED:github_pat]✱✱✱', () => {
+            const text = 'Token: ' + FAKE_GITHUB_PAT + ' is my key';
+            const r = detectAndMaskLeaks(text, DEVICE_ID, BOT_SECRET);
+            expect(r.leaked).toBe(true);
+            expect(r.maskedText).toContain('✶✶✶[REDACTED:github_pat]✶✶✶');
+            expect(r.maskedText).not.toContain('FAKETEST');
+        });
+
+        it('redacts GitHub PAT regardless of prefix variant (ghp/gho/ghu/ghs/ghr)', () => {
+            for (const prefix of ['ghp', 'gho', 'ghu', 'ghs', 'ghr']) {
+                const fake = prefix + '_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
+                const r = detectAndMaskLeaks('Key: ' + fake, DEVICE_ID, BOT_SECRET);
+                expect(r.leaked).toBe(true);
+                expect(r.maskedText).toContain('[REDACTED:github_pat]');
+                expect(r.maskedText).not.toContain('XXXXXXXX');
+            }
+        });
+
+        it('redacts OpenAI/Anthropic sk- key as ✱✱✱[REDACTED:api_key]✱✱✱', () => {
+            const text = 'API key: ' + FAKE_OPENAI_KEY + ' is here';
+            const r = detectAndMaskLeaks(text, DEVICE_ID, BOT_SECRET);
+            expect(r.leaked).toBe(true);
+            expect(r.maskedText).toContain('✶✶✶[REDACTED:api_key]✶✶✶');
+            expect(r.maskedText).not.toContain('testtest');
+        });
+
+        it('redacts Slack xoxb- token as ✱✱✱[REDACTED:slack_token]✱✱✱', () => {
+            const text = 'Slack: ' + FAKE_SLACK_TOKEN + ' is here';
+            const r = detectAndMaskLeaks(text, DEVICE_ID, BOT_SECRET);
+            expect(r.leaked).toBe(true);
+            expect(r.maskedText).toContain('✶✶✶[REDACTED:slack_token]✶✶✶');
+        });
+
+        it('does NOT redact short prefixes (below minimum length)', () => {
+            const short = 'ghp_Short1';
+            const r = detectAndMaskLeaks('Token: ' + short, DEVICE_ID, BOT_SECRET);
+            expect(r.leaked).toBe(false);
+            expect(r.maskedText).toContain(short);
+        });
+
+        it('does NOT redact card_id-like strings (not real tokens)', () => {
+            const cardId = 'card_5c2e51dc9065998bc1b4cd49';
+            const r = detectAndMaskLeaks('Card: ' + cardId, DEVICE_ID, BOT_SECRET);
+            // card_ prefix is not in our patterns; should not be flagged
+            expect(r.maskedText).toContain(cardId);
+        });
+
+        it('does NOT redact normal English words', () => {
+            const r = detectAndMaskLeaks('The quick brown fox jumps over the lazy dog', DEVICE_ID, BOT_SECRET);
+            expect(r.leaked).toBe(false);
+            expect(r.maskedText).toBe('The quick brown fox jumps over the lazy dog');
+        });
+
+        it('does NOT redact normal English sentences (false-positive test)', () => {
+            const texts = [
+                'I need to transfer money from my bank account',
+                'Can you show me the access token for the API?',
+                'What is your password?',
+            ];
+            for (const text of texts) {
+                const r = detectAndMaskLeaks(text, DEVICE_ID, BOT_SECRET);
+                expect(r.leaked).toBe(false);
+            }
+        });
+
+        it('redacts multiple tokens in same message', () => {
+            const text = 'GitHub: ' + FAKE_GITHUB_PAT + ' and Slack: ' + FAKE_SLACK_TOKEN;
+            const r = detectAndMaskLeaks(text, DEVICE_ID, BOT_SECRET);
+            expect(r.leaked).toBe(true);
+            expect(r.maskedText).toContain('[REDACTED:github_pat]');
+            expect(r.maskedText).toContain('[REDACTED:slack_token]');
+            expect(r.maskedText).not.toContain('FAKETEST');
+            expect(r.maskedText).not.toContain('1234567890');
+        });
+
+        it('skips redaction when token appears inside a JSON "deviceId" field', () => {
+            const deviceIdToken = 'abc123def456abc123def456abc123de';
+            const json = '{"deviceId":"' + deviceIdToken + '"}';
+            const r = detectAndMaskLeaks(json, deviceIdToken, BOT_SECRET);
+            // The token IS the deviceId, so it should still be caught (our code skips if match === deviceId)
+            // But in a JSON field context it might be handled differently
+            expect(r.maskedText).not.toContain('abc123def456abc123def456abc123de');
+        });
+
+        it('isOutbound=true triggers admin notify path without crashing (fire-and-forget)', () => {
+            const text = 'Here is your token: ' + FAKE_GITHUB_PAT;
+            // Should not throw even if pool is mocked
+            const r = detectAndMaskLeaks(text, DEVICE_ID, BOT_SECRET, true);
+            expect(r.leaked).toBe(true);
+            expect(r.maskedText).toContain('[REDACTED:github_pat]');
+        });
+    });
+

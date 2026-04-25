@@ -8507,7 +8507,7 @@ app.post('/api/entity/speak-to', async (req, res) => {
     const fromBindingST = officialBindingsCache[getBindingCacheKey(deviceId, fromId)];
     const isFreeBotSpeakTo = fromBindingST && officialBots[fromBindingST.bot_id] && officialBots[fromBindingST.bot_id].bot_type === 'free';
     if (isFreeBotSpeakTo && speakToText) {
-        const leakCheck = gatekeeper.detectAndMaskLeaks(speakToText, deviceId, fromEntity.botSecret);
+        const leakCheck = gatekeeper.detectAndMaskLeaks(speakToText, deviceId, fromEntity.botSecret, true);
         if (leakCheck.leaked) {
             speakToText = leakCheck.maskedText;
             console.warn(`[Gatekeeper] Second lock (speak-to): masked ${leakCheck.leakTypes.join(', ')} from device ${deviceId} entity ${fromId}`);
@@ -10833,7 +10833,7 @@ app.post('/api/entity/broadcast', async (req, res) => {
     const fromBinding = officialBindingsCache[getBindingCacheKey(deviceId, fromId)];
     const isFreeBotBroadcast = fromBinding && officialBots[fromBinding.bot_id] && officialBots[fromBinding.bot_id].bot_type === 'free';
     if (isFreeBotBroadcast && broadcastText) {
-        const leakCheck = gatekeeper.detectAndMaskLeaks(broadcastText, deviceId, fromEntity.botSecret);
+        const leakCheck = gatekeeper.detectAndMaskLeaks(broadcastText, deviceId, fromEntity.botSecret, true);
         if (leakCheck.leaked) {
             broadcastText = leakCheck.maskedText;
             console.warn(`[Gatekeeper] Second lock (broadcast): masked ${leakCheck.leakTypes.join(', ')} from device ${deviceId} entity ${fromId}`);
