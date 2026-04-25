@@ -384,13 +384,15 @@ describe('getFreeBotTOS', () => {
 });
 
 
-    // ════════════════════════════════════════════════════════════════
-    // Explicit token-shape patterns (GitHub PAT, Slack, OpenAI/Anthropic)
-    // ════════════════════════════════════════════════════════════════
-    describe('Explicit token-shape redaction', () => {
-        const FAKE_GITHUB_PAT = 'ghp_FAKETESTXXXXXXXXXXXXXXXXXXXXXXXX';
-        const FAKE_OPENAI_KEY = 'sk-testtesttesttesttesttesttesttesttest';
-        const FAKE_SLACK_TOKEN = 'xoxb-12345678901234567890-abcd';
+// ════════════════════════════════════════════════════════════════
+// Explicit token-shape patterns (GitHub PAT, Slack, OpenAI/Anthropic)
+// ════════════════════════════════════════════════════════════════
+describe('Explicit token-shape redaction', () => {
+    const DEVICE_ID = 'test-device-001';
+    const BOT_SECRET = 'abc123SecretXYZ789verylongstring';
+    const FAKE_GITHUB_PAT = 'ghp_FAKETESTXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
+    const FAKE_OPENAI_KEY = 'sk-testtesttesttesttesttesttesttesttest';
+    const FAKE_SLACK_TOKEN = 'xoxb-12345678901234567890-abcd';
 
         it('redacts GitHub PAT as ✱✱✱[REDACTED:github_pat]✱✱✱', () => {
             const text = 'Token: ' + FAKE_GITHUB_PAT + ' is my key';
@@ -402,7 +404,7 @@ describe('getFreeBotTOS', () => {
 
         it('redacts GitHub PAT regardless of prefix variant (ghp/gho/ghu/ghs/ghr)', () => {
             for (const prefix of ['ghp', 'gho', 'ghu', 'ghs', 'ghr']) {
-                const fake = prefix + '_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
+                const fake = prefix + '_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX';
                 const r = detectAndMaskLeaks('Key: ' + fake, DEVICE_ID, BOT_SECRET);
                 expect(r.leaked).toBe(true);
                 expect(r.maskedText).toContain('[REDACTED:github_pat]');
@@ -467,13 +469,11 @@ describe('getFreeBotTOS', () => {
             expect(r.maskedText).not.toContain('1234567890');
         });
 
-        it('skips redaction when token appears inside a JSON "deviceId" field', () => {
+        it('skips redaction when token equals current deviceId', () => {
             const deviceIdToken = 'abc123def456abc123def456abc123de';
             const json = '{"deviceId":"' + deviceIdToken + '"}';
             const r = detectAndMaskLeaks(json, deviceIdToken, BOT_SECRET);
-            // The token IS the deviceId, so it should still be caught (our code skips if match === deviceId)
-            // But in a JSON field context it might be handled differently
-            expect(r.maskedText).not.toContain('abc123def456abc123def456abc123de');
+            expect(r.maskedText).toContain(deviceIdToken);
         });
 
         it('isOutbound=true triggers admin notify path without crashing (fire-and-forget)', () => {

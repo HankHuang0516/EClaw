@@ -241,7 +241,7 @@ const DEVICE_INFO_PATTERNS = [
 // Explicit token-shape patterns (GitHub PAT, Slack, OpenAI/Anthropic keys)
 const EXPLICIT_TOKEN_PATTERNS = [
     // GitHub Personal Access Token: ghp_ / gho_ / ghu_ / ghs_ / ghr_ + 36+ chars
-    /gh[pous]_[A-Za-z0-9]{36,}/g,
+    /gh[pousr]_[A-Za-z0-9]{36,}/g,
     // OpenAI / Anthropic / other sk- API keys: sk- + 30+ chars
     /sk-[A-Za-z0-9_-]{30,}/g,
     // Slack token: xoxb-/xoxa-/xoxp-/xoxr-/xoxs- + 20+ chars
@@ -307,7 +307,7 @@ function detectAndMaskLeaks(text, deviceId, botSecret, isOutbound) {
                 if (maskedText.includes(idCheck)) continue;
 
                 let kind;
-                if (match.startsWith('ghp') || match.startsWith('gho') || match.startsWith('ghu') || match.startsWith('ghs') || match.startsWith('ghr')) kind = 'github_pat';
+                if (/^gh[pousr]_/.test(match)) kind = 'github_pat';
                 else if (match.startsWith('sk-')) kind = 'api_key';
                 else if (match.startsWith('xox')) kind = 'slack_token';
                 else kind = 'token';
