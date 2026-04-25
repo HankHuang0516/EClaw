@@ -1,3 +1,10 @@
+# [1.1090.0](https://github.com/HankHuang0516/EClaw/compare/v1.1089.0...v1.1090.0) (2026-04-25)
+
+
+### Features
+
+* **mindmap:** live kanban data feed for portal mind-map (PR-C) ([#2126](https://github.com/HankHuang0516/EClaw/issues/2126)) ([47eb4e8](https://github.com/HankHuang0516/EClaw/commit/47eb4e83b22bec553dd7c9d5491d998a0296e628))
+
 # [1.1089.0](https://github.com/HankHuang0516/EClaw/compare/v1.1088.0...v1.1089.0) (2026-04-25)
 
 
