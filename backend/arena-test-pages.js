@@ -12,7 +12,7 @@
  * points were unreachable. card_e49f897b.
  *
  * PR1 covers: button_click, form_fill.
- * PR2 will add: drag_drop, navigation, distraction.
+ * PR2 covers: drag_drop, navigation, distraction.
  */
 
 function escHtml(s) {
@@ -225,6 +225,253 @@ document.querySelector('[data-arena-form]').addEventListener('submit', async (e)
     return pageShell('Arena · Form Fill', sessionToken, apiBase, body, script);
 }
 
+function renderDragDrop(session, config, sessionToken, apiBase) {
+    const src = config.sourcePosition || { x: 100, y: 150 };
+    const tgt = config.targetRect || { x: 500, y: 150, w: 150, h: 150 };
+    const sourceLabel = String(config.sourceLabel || 'Package');
+    const targetLabel = String(config.targetLabel || 'Delivery Zone');
+
+    const stageW = Math.max(tgt.x + tgt.w + 80, src.x + 100, 760);
+    const stageH = Math.max(tgt.y + tgt.h + 80, src.y + 100, 380);
+
+    const body = `
+<style>
+.dd-stage{position:relative;width:${stageW}px;height:${stageH}px;background:#0b1220;border:1px solid #334155;border-radius:8px;margin-top:12px;overflow:hidden}
+.dd-source{position:absolute;left:${src.x}px;top:${src.y}px;width:80px;height:80px;background:#38bdf8;color:#0b1220;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;cursor:grab;user-select:none;touch-action:none;box-shadow:0 2px 8px rgba(56,189,248,.4)}
+.dd-source.dragging{cursor:grabbing;opacity:.85;box-shadow:0 6px 18px rgba(56,189,248,.6)}
+.dd-target{position:absolute;left:${tgt.x}px;top:${tgt.y}px;width:${tgt.w}px;height:${tgt.h}px;border:2px dashed #22c55e;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#86efac;font-size:13px;font-weight:600;background:rgba(34,197,94,.08)}
+.dd-target.hit{background:rgba(34,197,94,.25)}
+.dd-coords{position:absolute;bottom:6px;left:8px;font-size:11px;color:#64748b;font-family:ui-monospace,Menlo,monospace}
+</style>
+<p style="font-size:13px;color:#cbd5e1;margin:6px 0 0">
+  Task: drag <b>${escHtml(sourceLabel)}</b> into the <b>${escHtml(targetLabel)}</b> zone.
+  Drop coordinates are reported as <code>element_dragged {dropX, dropY}</code>.
+</p>
+<div class="dd-stage" data-stage>
+  <div class="dd-source" data-source>${escHtml(sourceLabel)}</div>
+  <div class="dd-target" data-target>${escHtml(targetLabel)}</div>
+  <div class="dd-coords" data-coords>source=(${src.x},${src.y}) target=(${tgt.x},${tgt.y},${tgt.w}×${tgt.h})</div>
+</div>`;
+
+    const script = `
+(function(){
+  const stage = document.querySelector('[data-stage]');
+  const src = document.querySelector('[data-source]');
+  const tgt = document.querySelector('[data-target]');
+  const coords = document.querySelector('[data-coords]');
+  let dragging = false, offX = 0, offY = 0;
+
+  function start(e){
+    dragging = true;
+    src.classList.add('dragging');
+    const rect = src.getBoundingClientRect();
+    const pt = e.touches ? e.touches[0] : e;
+    offX = pt.clientX - rect.left;
+    offY = pt.clientY - rect.top;
+    e.preventDefault();
+  }
+  function move(e){
+    if (!dragging) return;
+    const stageRect = stage.getBoundingClientRect();
+    const pt = e.touches ? e.touches[0] : e;
+    const x = pt.clientX - stageRect.left - offX;
+    const y = pt.clientY - stageRect.top - offY;
+    src.style.left = x + 'px';
+    src.style.top = y + 'px';
+    e.preventDefault();
+  }
+  async function end(e){
+    if (!dragging) return;
+    dragging = false;
+    src.classList.remove('dragging');
+    const stageRect = stage.getBoundingClientRect();
+    const srcRect = src.getBoundingClientRect();
+    const dropX = Math.round(srcRect.left - stageRect.left + srcRect.width / 2);
+    const dropY = Math.round(srcRect.top - stageRect.top + srcRect.height / 2);
+    const tgtRect = { x: ${tgt.x}, y: ${tgt.y}, w: ${tgt.w}, h: ${tgt.h} };
+    const inside = dropX >= tgtRect.x && dropX <= tgtRect.x + tgtRect.w
+                && dropY >= tgtRect.y && dropY <= tgtRect.y + tgtRect.h;
+    if (inside) tgt.classList.add('hit');
+    coords.textContent = 'drop=(' + dropX + ',' + dropY + ') ' + (inside ? '✓ in target' : '✗ outside');
+    const r = await window.__arenaPost('element_dragged', { dropX, dropY });
+    const s = document.querySelector('[data-status]');
+    if (s) s.textContent = 'element_dragged ('+dropX+','+dropY+') → ' + (r.ok ? 'sent ('+ r.status +')' : 'failed ('+ r.status +')');
+  }
+  src.addEventListener('mousedown', start);
+  src.addEventListener('touchstart', start, { passive: false });
+  document.addEventListener('mousemove', move);
+  document.addEventListener('touchmove', move, { passive: false });
+  document.addEventListener('mouseup', end);
+  document.addEventListener('touchend', end);
+})();`;
+
+    return pageShell('Arena · Drag & Drop', sessionToken, apiBase, body, script);
+}
+
+function renderNavigation(session, config, sessionToken, apiBase) {
+    const correctPath = Array.isArray(config.correctPath) ? config.correctPath : [];
+    const targetInfo = String(config.targetInfo || '');
+    const linksPerLevel = Number(config.linksPerLevel) || 8;
+    const depth = Number(config.depth) || 4;
+
+    const NOISE_POOL = [
+        'analytics','reports','billing','users','admin','settings','support','docs',
+        'inbox','archive','drafts','spam','trash','calendar','tasks','notes',
+        'photos','videos','music','files','search','filter','export','import',
+        'profile','security','privacy','api','plans','pricing','about','contact',
+        'logout','dashboard','overview','metrics','revenue','growth','retention','churn',
+    ];
+
+    const levelLabels = ['category','subcategory','section','item'];
+
+    const body = `
+<style>
+.nav-shell{background:#1e293b;padding:14px 18px;border-radius:8px;margin-top:12px;max-width:680px}
+.nav-crumb{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#94a3b8;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #334155}
+.nav-level{font-size:12px;color:#86efac;margin:8px 0 6px;text-transform:uppercase;letter-spacing:.5px}
+.nav-links{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.nav-links a{display:block;padding:8px 12px;background:#0b1220;border:1px solid #334155;border-radius:4px;color:#e2e8f0;text-decoration:none;font-size:13px}
+.nav-links a:hover{border-color:#38bdf8;color:#38bdf8}
+.nav-links a.correct{border-color:#22c55e}
+.nav-leaf{margin-top:14px;padding:14px;background:#0b1220;border-left:3px solid #22c55e;border-radius:6px}
+.nav-leaf b{color:#86efac;font-family:ui-monospace,Menlo,monospace}
+.nav-back{display:inline-block;margin-top:10px;font-size:12px;color:#94a3b8;cursor:pointer;text-decoration:underline}
+</style>
+<p style="font-size:13px;color:#cbd5e1;margin:6px 0 0">
+  Task: navigate ${depth} levels deep, find the target, and report its info.
+  Correct path is highlighted ✓; each click POSTs <code>page_navigated {depth}</code>;
+  the leaf auto-POSTs <code>target_found {targetInfo}</code>.
+</p>
+<div class="nav-shell">
+  <div class="nav-crumb" data-crumb>/ root</div>
+  <div data-content></div>
+</div>`;
+
+    const script = `
+(function(){
+  const CORRECT = ${escJson(correctPath)};
+  const TARGET_INFO = ${escJson(targetInfo)};
+  const LINKS = ${linksPerLevel};
+  const DEPTH = ${depth};
+  const LEVELS = ${escJson(levelLabels)};
+  const NOISE = ${escJson(NOISE_POOL)};
+
+  const crumb = document.querySelector('[data-crumb]');
+  const content = document.querySelector('[data-content]');
+  let path = [];
+
+  function linksFor(level){
+    const correctSlug = CORRECT[level];
+    const out = [];
+    let correctIdx = (level * 7 + 3) % LINKS;
+    for (let i = 0; i < LINKS; i++){
+      if (i === correctIdx){
+        out.push({ slug: correctSlug, correct: true });
+      } else {
+        out.push({ slug: NOISE[(i * 13 + level * 5) % NOISE.length] + '-' + i, correct: false });
+      }
+    }
+    return out;
+  }
+
+  async function go(level, slug){
+    path = path.slice(0, level);
+    path.push(slug);
+    crumb.textContent = '/ ' + path.join(' / ');
+    await window.__arenaPost('page_navigated', { depth: path.length });
+    if (path.length >= DEPTH){
+      content.innerHTML = '<div class="nav-leaf">Target reached.<br>Info: <b>' + TARGET_INFO + '</b></div><span class="nav-back" data-back>← back to root</span>';
+      content.querySelector('[data-back]').onclick = () => render(0);
+      const r = await window.__arenaPost('target_found', { targetInfo: TARGET_INFO });
+      const s = document.querySelector('[data-status]');
+      if (s) s.textContent = 'target_found → ' + (r.ok ? 'sent ('+ r.status +')' : 'failed ('+ r.status +')');
+      return;
+    }
+    render(path.length);
+  }
+
+  function render(level){
+    if (level === 0) { path = []; crumb.textContent = '/ root'; }
+    const links = linksFor(level);
+    let html = '<div class="nav-level">' + (LEVELS[level] || ('level ' + level)) + '</div>';
+    html += '<div class="nav-links">';
+    links.forEach(l => {
+      html += '<a href="javascript:void(0)" data-slug="' + l.slug + '"' + (l.correct ? ' class="correct"' : '') + '>' + (l.correct ? '✓ ' : '') + l.slug + '</a>';
+    });
+    html += '</div>';
+    content.innerHTML = html;
+    content.querySelectorAll('a[data-slug]').forEach(a => {
+      a.onclick = () => go(level, a.getAttribute('data-slug'));
+    });
+  }
+  render(0);
+})();`;
+
+    return pageShell('Arena · Navigation', sessionToken, apiBase, body, script);
+}
+
+function renderDistraction(session, config, sessionToken, apiBase) {
+    const realId = String(config.realButtonId || 'real-submit');
+    const fakeIds = Array.isArray(config.fakeButtonIds) ? config.fakeButtonIds : [];
+
+    const REAL_LABELS = ['Submit', 'Confirm', 'Save', 'OK'];
+    const FAKE_LABELS = [
+        '🎉 You won! Click here',
+        '⚠ ERROR — click to fix',
+        'FREE upgrade — limited time',
+        '🔥 Trending now',
+        'Click to claim reward',
+        'New message (1)',
+        '⭐ Recommended for you',
+        'Verify your account',
+        'Update available',
+        'Special offer ending',
+    ];
+
+    const realLabel = REAL_LABELS[(realId.length) % REAL_LABELS.length];
+
+    const all = [];
+    fakeIds.forEach((id, i) => all.push({ id, label: FAKE_LABELS[i % FAKE_LABELS.length], real: false }));
+    const insertAt = Math.floor(all.length / 2);
+    all.splice(insertAt, 0, { id: realId, label: realLabel, real: true });
+
+    const items = all.map(b =>
+        `<button data-bid="${escAttr(b.id)}" class="${b.real ? 'real' : 'fake'}">${escHtml(b.label)}</button>`
+    ).join('');
+
+    const body = `
+<style>
+.distract-stage{margin-top:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:680px}
+.distract-stage button{padding:14px 12px;border-radius:6px;border:1px solid #334155;font-size:13px;cursor:pointer;text-align:left;font-family:inherit;background:#1e293b;color:#e2e8f0}
+.distract-stage button.fake{background:linear-gradient(135deg,#7c2d12,#9a3412);color:#fed7aa;border-color:#9a3412;animation:pulse 2.4s ease-in-out infinite}
+.distract-stage button.real{background:#1e293b;border:1px solid #475569;color:#e2e8f0;font-weight:600}
+.distract-stage button:hover{filter:brightness(1.15)}
+.distract-stage button.clicked{outline:2px solid #38bdf8}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.02)}}
+.distract-hint{margin-top:8px;font-size:11px;color:#64748b;font-family:ui-monospace,Menlo,monospace}
+</style>
+<p style="font-size:13px;color:#cbd5e1;margin:6px 0 0">
+  Task: ignore the eye-catching distractors and click the real action button.
+  Click POSTs <code>button_clicked {buttonId}</code>.
+</p>
+<div class="distract-stage">${items}</div>
+<div class="distract-hint">real button id (revealed because secrets are stripped from /arena/test): <code>${escHtml(realId)}</code></div>`;
+
+    const script = `
+document.querySelectorAll('.distract-stage button').forEach(b => {
+  b.addEventListener('click', async () => {
+    document.querySelectorAll('.distract-stage button.clicked').forEach(x => x.classList.remove('clicked'));
+    b.classList.add('clicked');
+    const bid = b.getAttribute('data-bid');
+    const r = await window.__arenaPost('button_clicked', { buttonId: bid });
+    const s = document.querySelector('[data-status]');
+    if (s) s.textContent = 'button_clicked id="' + bid + '" → ' + (r.ok ? 'sent ('+ r.status +')' : 'failed ('+ r.status +')');
+  });
+});`;
+
+    return pageShell('Arena · Distraction', sessionToken, apiBase, body, script);
+}
+
 function renderUnsupported(session, config, sessionToken, apiBase) {
     const body = `
 <p style="font-size:13px;color:#cbd5e1">
@@ -247,6 +494,9 @@ function renderArenaTestPage(session, sessionToken, apiBase) {
     switch (session.test_type) {
         case 'arena_button_click': return renderButtonClick(session, config, sessionToken, apiBase);
         case 'arena_form_fill':    return renderFormFill(session, config, sessionToken, apiBase);
+        case 'arena_drag_drop':    return renderDragDrop(session, config, sessionToken, apiBase);
+        case 'arena_navigation':   return renderNavigation(session, config, sessionToken, apiBase);
+        case 'arena_distraction':  return renderDistraction(session, config, sessionToken, apiBase);
         default:                   return renderUnsupported(session, config, sessionToken, apiBase);
     }
 }
