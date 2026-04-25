@@ -1,3 +1,10 @@
+# [1.1084.0](https://github.com/HankHuang0516/EClaw/compare/v1.1083.0...v1.1084.0) (2026-04-25)
+
+
+### Features
+
+* **mission:** mind-map card on mission.html (PR-A static mockup) ([#2096](https://github.com/HankHuang0516/EClaw/issues/2096)) ([d001420](https://github.com/HankHuang0516/EClaw/commit/d0014205cbdaabb7f0103df181a77cd628f0c6d3))
+
 # [1.1083.0](https://github.com/HankHuang0516/EClaw/compare/v1.1082.2...v1.1083.0) (2026-04-25)
 
 
