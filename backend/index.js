@@ -1284,6 +1284,8 @@ setInterval(async () => {
                 device.entities[binding.entity_id].name = prev.name || null;
                 device.entities[binding.entity_id].xp = prev.xp || 0;
                 device.entities[binding.entity_id].level = prev.level || 1;
+                device.entities[binding.entity_id].rebindCount = (prev.rebindCount || 0) + 1;
+                device.entities[binding.entity_id].lastRebindAt = Date.now();
             }
 
             delete officialBindingsCache[getBindingCacheKey(binding.device_id, binding.entity_id)];
@@ -3875,7 +3877,9 @@ function createDefaultEntity(entityId) {
         channelAccountId: null,
         agentCard: null, // derived from identity.public for backward compat
         identity: null, // Bot Identity Layer: unified role/instructions/boundaries + public profile
-        encryptionStatus: null // "e2ee" | "transport" | null (Issue #212)
+        encryptionStatus: null, // "e2ee" | "transport" | null (Issue #212)
+        rebindCount: 0, // Bumped each time the slot is rebound to a new bot; rental listings snapshot this to detect identity drift
+        lastRebindAt: null
     };
 }
 
@@ -6653,6 +6657,8 @@ app.delete('/api/entity', async (req, res) => {
     device.entities[eId].name = removedEntity?.name || null;
     device.entities[eId].xp = removedEntity?.xp || 0;
     device.entities[eId].level = removedEntity?.level || 1;
+    device.entities[eId].rebindCount = (removedEntity?.rebindCount || 0) + 1;
+    device.entities[eId].lastRebindAt = Date.now();
 
     console.log(`[Remove] Device ${deviceId} Entity ${eId} unbound`);
     serverLog('info', 'unbind', `Entity ${eId} unbound`, { deviceId, entityId: eId });
@@ -6771,6 +6777,8 @@ app.delete('/api/device/entity', async (req, res) => {
     device.entities[eId].name = removedEntity2?.name || null;
     device.entities[eId].xp = removedEntity2?.xp || 0;
     device.entities[eId].level = removedEntity2?.level || 1;
+    device.entities[eId].rebindCount = (removedEntity2?.rebindCount || 0) + 1;
+    device.entities[eId].lastRebindAt = Date.now();
 
     console.log(`[Device Remove] Device ${deviceId} Entity ${eId} unbound by device owner`);
 
@@ -11670,6 +11678,8 @@ async function autoUnbindEntity(deviceId, eId, device) {
     device.entities[eId].name = prevEntity?.name || null;
     device.entities[eId].xp = prevEntity?.xp || 0;
     device.entities[eId].level = prevEntity?.level || 1;
+    device.entities[eId].rebindCount = (prevEntity?.rebindCount || 0) + 1;
+    device.entities[eId].lastRebindAt = Date.now();
 }
 
 /**
@@ -11909,6 +11919,8 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
         ...createDefaultEntity(eId),
         xp: existingEntityFree?.xp || 0,
         level: existingEntityFree?.level || 1,
+        rebindCount: (existingEntityFree?.rebindCount || 0) + 1,
+        lastRebindAt: Date.now(),
         botSecret: botSecret,
         publicCode: freePublicCode,
         isBound: true,
@@ -12071,6 +12083,8 @@ app.post('/api/official-borrow/bind-personal', async (req, res) => {
         ...createDefaultEntity(eId),
         xp: existingEntityPersonal?.xp || 0,
         level: existingEntityPersonal?.level || 1,
+        rebindCount: (existingEntityPersonal?.rebindCount || 0) + 1,
+        lastRebindAt: Date.now(),
         botSecret: botSecret,
         isBound: true,
         name: existingEntityPersonal?.name || '月租版',
@@ -12258,6 +12272,8 @@ app.post('/api/official-borrow/unbind', async (req, res) => {
     device.entities[eId].name = prevBorrow?.name || null;
     device.entities[eId].xp = prevBorrow?.xp || 0;
     device.entities[eId].level = prevBorrow?.level || 1;
+    device.entities[eId].rebindCount = (prevBorrow?.rebindCount || 0) + 1;
+    device.entities[eId].lastRebindAt = Date.now();
     await saveData();
 
     console.log(`[Borrow] Official binding removed: device ${deviceId} entity ${eId}`);
@@ -14416,6 +14432,8 @@ app.post('/api/admin/transfer-device', async (req, res) => {
             }
 
             sourceDevice.entities[eId] = createDefaultEntity(eId);
+            sourceDevice.entities[eId].rebindCount = (srcEntity.rebindCount || 0) + 1;
+            sourceDevice.entities[eId].lastRebindAt = Date.now();
             transferred.push({ entityId: eId, name: srcEntity.name, character: srcEntity.character });
         }
 
@@ -17899,3 +17917,4 @@ module.exports._deletedPublicCodes = deletedPublicCodes;
 module.exports._classifyPublisher = classifyPublisher;
 module.exports._MONITORING_THRESHOLDS = MONITORING_THRESHOLDS;
 module.exports._requireAdmin = requireAdmin;
+module.exports._createDefaultEntity = createDefaultEntity;

@@ -43,6 +43,11 @@ CREATE TABLE IF NOT EXISTS bot_listings (
     uptime_pct NUMERIC(5,2) DEFAULT 100,
     -- Lifecycle
     status VARCHAR(32) NOT NULL DEFAULT 'draft',
+    -- Identity-drift detection (P0: silent rebind cascade)
+    -- Snapshot of entities[owner_entity_id].rebindCount at listing creation.
+    -- If the live entity rebindCount drifts past this value, the listing now
+    -- points at a different bot than was advertised; query layer must hide it.
+    bound_rebind_count INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     CONSTRAINT fk_listing_owner FOREIGN KEY (owner_user_id)
@@ -222,3 +227,9 @@ ALTER TABLE rental_usage_events ADD CONSTRAINT fk_usage_contract FOREIGN KEY (co
 ALTER TABLE bot_reviews ADD CONSTRAINT fk_review_contract FOREIGN KEY (contract_id) REFERENCES rental_contracts(id) ON DELETE CASCADE;
 ALTER TABLE bot_reviews ADD CONSTRAINT fk_review_listing FOREIGN KEY (listing_id) REFERENCES bot_listings(id) ON DELETE CASCADE;
 ALTER TABLE disputes ADD CONSTRAINT fk_dispute_contract FOREIGN KEY (contract_id) REFERENCES rental_contracts(id) ON DELETE CASCADE;
+
+-- ============================================
+-- Idempotent migration: add bound_rebind_count to existing deployments
+-- (P0 entity-rebind cascade — Phase 1)
+-- ============================================
+ALTER TABLE bot_listings ADD COLUMN IF NOT EXISTS bound_rebind_count INTEGER NOT NULL DEFAULT 0;

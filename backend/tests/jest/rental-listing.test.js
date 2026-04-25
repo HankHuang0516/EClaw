@@ -40,7 +40,7 @@ jest.mock('pg', () => {
         // INSERT new listing
         if (/^INSERT INTO bot_listings/i.test(norm)) {
             const [ownerUserId, ownerDeviceId, ownerEntityId, title, description,
-                   rate, minMin, maxMin /* 'draft' status is literal */] = params;
+                   rate, minMin, maxMin, avatarUrl, boundRebindCount /* 'draft' status is literal */] = params;
             const row = {
                 id: genId(),
                 owner_user_id: ownerUserId,
@@ -51,6 +51,7 @@ jest.mock('pg', () => {
                 rate_mli_per_ktoken: rate,
                 min_rental_minutes: minMin,
                 max_rental_minutes: maxMin,
+                avatar_url: avatarUrl,
                 availability_windows: [],
                 model_detected: null,
                 capabilities: {},
@@ -61,11 +62,15 @@ jest.mock('pg', () => {
                 total_rentals: 0,
                 uptime_pct: 100,
                 status: 'draft',
+                bound_rebind_count: boundRebindCount ?? 0,
                 created_at: new Date(),
                 updated_at: new Date(),
             };
             state.listings.push(row);
-            return { rows: [{ id: row.id, status: row.status, created_at: row.created_at }], rowCount: 1 };
+            return { rows: [{
+                id: row.id, status: row.status, created_at: row.created_at,
+                bound_rebind_count: row.bound_rebind_count,
+            }], rowCount: 1 };
         }
 
         // Specific status-transition handlers MUST come before the generic
@@ -291,6 +296,47 @@ describe('rental: createListing', () => {
             title: 'OK', rateMliPerKtoken: 5000,
             maxRentalMinutes: 999_999,
         })).rejects.toThrow('max_rental_minutes_invalid');
+    });
+
+    // P0 entity-rebind cascade — Phase 1
+    test('snapshots boundRebindCount=0 by default', async () => {
+        const listing = await api.createListing({
+            ownerUserId: OWNER,
+            ownerDeviceId: 'device-rb-default',
+            ownerEntityId: 0,
+            title: 'Default rebind',
+            rateMliPerKtoken: 0,
+        });
+        const row = globalThis.__rentalFakeState.listings.find(l => l.id === listing.id);
+        expect(row.bound_rebind_count).toBe(0);
+    });
+
+    test('snapshots boundRebindCount supplied at creation time', async () => {
+        const listing = await api.createListing({
+            ownerUserId: OWNER,
+            ownerDeviceId: 'device-rb-snap',
+            ownerEntityId: 1,
+            title: 'Snapshot rebind',
+            rateMliPerKtoken: 0,
+            boundRebindCount: 7,
+        });
+        const row = globalThis.__rentalFakeState.listings.find(l => l.id === listing.id);
+        expect(row.bound_rebind_count).toBe(7);
+    });
+
+    test('coerces negative or non-integer boundRebindCount to 0', async () => {
+        const a = await api.createListing({
+            ownerUserId: OWNER, ownerDeviceId: 'device-rb-neg', ownerEntityId: 0,
+            title: 'Neg', rateMliPerKtoken: 0, boundRebindCount: -3,
+        });
+        const b = await api.createListing({
+            ownerUserId: OWNER, ownerDeviceId: 'device-rb-str', ownerEntityId: 0,
+            title: 'Str', rateMliPerKtoken: 0, boundRebindCount: 'oops',
+        });
+        const rowA = globalThis.__rentalFakeState.listings.find(l => l.id === a.id);
+        const rowB = globalThis.__rentalFakeState.listings.find(l => l.id === b.id);
+        expect(rowA.bound_rebind_count).toBe(0);
+        expect(rowB.bound_rebind_count).toBe(0);
     });
 });
 

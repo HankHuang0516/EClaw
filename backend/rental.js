@@ -168,6 +168,7 @@ async function createListing({
     minRentalMinutes = MIN_RENTAL_MINUTES,
     maxRentalMinutes = MAX_RENTAL_MINUTES,
     avatarUrl = null,
+    boundRebindCount = 0,
 }) {
     assertString('owner_user_id', ownerUserId, { max: 64 });
     assertString('owner_device_id', ownerDeviceId, { max: 64 });
@@ -204,11 +205,13 @@ async function createListing({
     const res = await pool.query(
         `INSERT INTO bot_listings
             (owner_user_id, owner_device_id, owner_entity_id, title, description,
-             rate_mli_per_ktoken, min_rental_minutes, max_rental_minutes, avatar_url, status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'draft')
-         RETURNING id, status, created_at`,
+             rate_mli_per_ktoken, min_rental_minutes, max_rental_minutes, avatar_url, status,
+             bound_rebind_count)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'draft', $10)
+         RETURNING id, status, created_at, bound_rebind_count`,
         [ownerUserId, ownerDeviceId, ownerEntityId, title, description,
-         rateMliPerKtoken, minRentalMinutes, maxRentalMinutes, avatarUrl || null]
+         rateMliPerKtoken, minRentalMinutes, maxRentalMinutes, avatarUrl || null,
+         Number.isInteger(boundRebindCount) && boundRebindCount >= 0 ? boundRebindCount : 0]
     );
     return res.rows[0];
 }
@@ -1252,17 +1255,22 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
                 rateMliPerKtoken, minRentalMinutes, maxRentalMinutes } = req.body || {};
         // BUG-M1: capture entity avatar for marketplace display
         let avatarUrl = null;
+        // P0: snapshot rebindCount so we can detect identity drift after a rebind
+        let boundRebindCount = 0;
         if (_interviewDeps?.devices && ownerDeviceId) {
             const dev = _interviewDeps.devices[ownerDeviceId];
             const ent = dev?.entities?.[ownerEntityId];
             if (ent?.avatar && (ent.avatar.startsWith('http') || ent.avatar.length <= 4)) {
                 avatarUrl = ent.avatar;
             }
+            if (ent && Number.isInteger(ent.rebindCount)) {
+                boundRebindCount = ent.rebindCount;
+            }
         }
         const listing = await createListing({
             ownerUserId: req.user.userId,
             ownerDeviceId, ownerEntityId, title, description, rateMliPerKtoken,
-            minRentalMinutes, maxRentalMinutes, avatarUrl,
+            minRentalMinutes, maxRentalMinutes, avatarUrl, boundRebindCount,
         });
         audit('info', 'rental', `listing created ${listing.id} by ${req.user.userId}`, {
             userId: req.user.userId, action: 'listing_create', resource: listing.id,
