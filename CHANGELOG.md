@@ -1,3 +1,10 @@
+## [1.1084.1](https://github.com/HankHuang0516/EClaw/compare/v1.1084.0...v1.1084.1) (2026-04-25)
+
+
+### Bug Fixes
+
+* **kanban:** notes tab reads camelCase to match API response ([#2097](https://github.com/HankHuang0516/EClaw/issues/2097)) ([96c0d06](https://github.com/HankHuang0516/EClaw/commit/96c0d06a2d9ef8550c00b0c5efe6ac7585eec19d))
+
 # [1.1084.0](https://github.com/HankHuang0516/EClaw/compare/v1.1083.0...v1.1084.0) (2026-04-25)
 
 
