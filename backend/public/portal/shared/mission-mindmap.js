@@ -317,9 +317,9 @@
         ${railRows}
         <div class="legend-block">
           <h3>節點狀態</h3>
-          <div class="legend-row"><span class="status-ring"></span>進行中</div>
-          <div class="legend-row"><span class="mm-ring blocked"></span>阻塞</div>
-          <div class="legend-row"><span class="mm-ring done"></span>完成</div>
+          <div class="legend-row"><span class="status-ring active"></span>進行中</div>
+          <div class="legend-row"><span class="status-ring blocked"></span>阻塞</div>
+          <div class="legend-row"><span class="status-ring done"></span>完成</div>
         </div>
         <div class="summary-block">
           <span class="num">${nodes.length}</span> 節點 ·
