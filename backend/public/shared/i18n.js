@@ -16153,7 +16153,7 @@ const TRANSLATIONS = {
         "cardholder_friend_accepted": "Friend request accepted!",
         "cardholder_friend_rejected": "Friend request rejected",
         "cardholder_unfriend": "Unfriend",
-        "cardholder_start_chat": "开始对話",
+        "cardholder_start_chat": "开始对话",
         "cardholder_share": "分享",
         "cardholder_unfriend_confirm": "Remove this friend?",
         "cardholder_unfriended": "Friend removed",
