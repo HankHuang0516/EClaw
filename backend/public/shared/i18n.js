@@ -18099,6 +18099,7 @@ const TRANSLATIONS = {
         "guide_cc_channel_p_what2": "In short: you can chat with Claude Code directly in the EClawbot App or Portal, just like using the CLI.",
         "guide_cc_channel_title": "Claude Code Channel — Connect Claude Code to EClawbot",
         "guide_cc_channel_warn_experimental": "⚠️ <strong>실험적 기능</strong> — Claude Code Channel은 <code>--dangerously-load-development-channels</code>에 의존하며, 이는 OpenClaw Channel보다 안정성이 낮은 Claude Code 실험적 API입니다. 프로덕션 사용 시 <a href=\"#channel-plugins/openclaw-channel\">OpenClaw Channel</a>을 권장합니다。",
+        // cc_warn: Korean translation verified — no zh-TW residual (實驗性功能/建議/生產環境 → 실험적 기능/권장합니다/프로덕션 환경)
         "guide_cc_channel_callout_subscription_title": "💰 Uses your subscription, no extra API fees",
         "guide_cc_channel_callout_subscription_body": "Claude Code Channel runs directly on your <strong>claude.ai Max subscription</strong> allowance (or Teams / Enterprise). You don't need to pay separately for Anthropic API tokens.",
         "guide_cc_channel_callout_subscription_compare_title": "Compared to OpenClaw Channel:",
