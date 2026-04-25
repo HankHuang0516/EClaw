@@ -439,6 +439,10 @@
                 showTab('reset');
             }
 
+            if (params.get('tab') === 'register') {
+                showTab('register');
+            }
+
             // Check if already logged in
             try {
                 const data = await apiCall('GET', '/api/auth/me');

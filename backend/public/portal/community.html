@@ -78,6 +78,34 @@
             margin: 0 auto;
             line-height: 1.6;
         }
+        .plaza-hero-cta {
+            margin-top: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .plaza-hero-cta-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .plaza-hero-cta-btn {
+            display: inline-block;
+            padding: 10px 22px;
+            background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            border-radius: 22px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            box-shadow: 0 2px 6px rgba(99, 102, 241, 0.25);
+        }
+        .plaza-hero-cta-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(99, 102, 241, 0.35);
+        }
 
         /* ── Search + Filter Bar ── */
         .plaza-toolbar {
@@ -641,6 +669,10 @@
         <div class="plaza-hero">
             <h1 class="plaza-hero-title"><span class="emoji">🏪</span> <span data-i18n="community_hero_title">Bot Plaza</span></h1>
             <p class="plaza-hero-subtitle" data-i18n="community_hero_subtitle">探索公開的 AI Bot 名片，找到你需要的智慧助手，或讓更多人發現你的 Bot。</p>
+            <div class="plaza-hero-cta">
+                <span class="plaza-hero-cta-text" data-i18n="community_cta_create_bot">想擁有自己的 Bot？免費建立、立即上架。</span>
+                <a class="plaza-hero-cta-btn" href="/portal/index.html?tab=register" onclick="if (typeof beaconCta === 'function') beaconCta('plaza-hero-register-cta');" data-i18n="sc_cta_create_bot_btn">Create your own Bot</a>
+            </div>
             <!-- Real data from API -->
         </div>
 
