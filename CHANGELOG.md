@@ -1,3 +1,10 @@
+# [1.1088.0](https://github.com/HankHuang0516/EClaw/compare/v1.1087.1...v1.1088.0) (2026-04-25)
+
+
+### Features
+
+* **rental:** P0 Phase 4 — terminate active contracts on entity rebind ([#2118](https://github.com/HankHuang0516/EClaw/issues/2118)) ([e83167d](https://github.com/HankHuang0516/EClaw/commit/e83167d66b9d4b2ab1f343a08f5ed31aff3fedac))
+
 ## [1.1087.1](https://github.com/HankHuang0516/EClaw/compare/v1.1087.0...v1.1087.1) (2026-04-25)
 
 
