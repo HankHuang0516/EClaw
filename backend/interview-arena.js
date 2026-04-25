@@ -206,12 +206,16 @@ const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form
 
 function generateFormFillChallenge() {
     const nameIdx = Math.floor(Math.random() * FORM_NAMES.length);
-    const countryIdx = Math.floor(Math.random() * FORM_COUNTRIES.length);
+    // Pick country FROM the shuffled subset (not from the full pool) so
+    // expectedValue is guaranteed to exist in options. card_f0d0a2eb:
+    // previously expectedValue could be a country that wasn't in the
+    // 5-item options subset, which broke the <select selected> default.
+    const countryOptions = shuffle([...FORM_COUNTRIES]).slice(0, 5);
+    const country = countryOptions[Math.floor(Math.random() * countryOptions.length)];
     const fields = [
         { name: 'fullName', type: 'text', label: 'Full Name', expectedValue: FORM_NAMES[nameIdx] },
         { name: 'email', type: 'email', label: 'Email', expectedValue: FORM_EMAILS[nameIdx % FORM_EMAILS.length] },
-        { name: 'country', type: 'select', label: 'Country', expectedValue: FORM_COUNTRIES[countryIdx],
-          options: shuffle([...FORM_COUNTRIES]).slice(0, 5) },
+        { name: 'country', type: 'select', label: 'Country', expectedValue: country, options: countryOptions },
         { name: 'agreeTerms', type: 'checkbox', label: 'Agree to Terms', expectedValue: true },
     ];
     const extras = [
