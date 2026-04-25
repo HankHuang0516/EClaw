@@ -1,3 +1,10 @@
+## [1.1082.1](https://github.com/HankHuang0516/EClaw/compare/v1.1082.0...v1.1082.1) (2026-04-25)
+
+
+### Bug Fixes
+
+* **chip:** show 📌 requote button on chip popover error + entity modal ([#2089](https://github.com/HankHuang0516/EClaw/issues/2089)) ([99702d0](https://github.com/HankHuang0516/EClaw/commit/99702d07a7773b3ee796176b1643d79b512bbc1e)), closes [#entityPreviewModal](https://github.com/HankHuang0516/EClaw/issues/entityPreviewModal)
+
 # [1.1082.0](https://github.com/HankHuang0516/EClaw/compare/v1.1081.4...v1.1082.0) (2026-04-25)
 
 
