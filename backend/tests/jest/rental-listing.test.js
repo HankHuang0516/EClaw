@@ -525,6 +525,50 @@ describe('rental: searchMarketplace', () => {
     });
 });
 
+describe('rental: filterDriftedListings (P0 Phase 2)', () => {
+    const listings = [
+        { id: 'l1', title: 'Match', owner_device_id: 'd1', owner_entity_id: 0, bound_rebind_count: 0 },
+        { id: 'l2', title: 'Drifted', owner_device_id: 'd1', owner_entity_id: 1, bound_rebind_count: 0 },
+        { id: 'l3', title: 'Match-rebound', owner_device_id: 'd2', owner_entity_id: 0, bound_rebind_count: 3 },
+        { id: 'l4', title: 'Slot-gone',  owner_device_id: 'd3', owner_entity_id: 0, bound_rebind_count: 0 },
+    ];
+    const devices = {
+        d1: { entities: { 0: { rebindCount: 0 }, 1: { rebindCount: 5 } } },
+        d2: { entities: { 0: { rebindCount: 3 } } },
+        // d3 is missing → l4 hidden
+    };
+
+    test('returns input unchanged if devicesMap is missing', () => {
+        expect(api.filterDriftedListings(listings, null)).toEqual(listings);
+        expect(api.filterDriftedListings(listings, undefined)).toEqual(listings);
+    });
+
+    test('keeps listings whose live rebindCount matches the snapshot', () => {
+        const out = api.filterDriftedListings(listings, devices);
+        const ids = out.map(l => l.id).sort();
+        expect(ids).toEqual(['l1', 'l3']);
+    });
+
+    test('drops listings with no matching device or entity slot', () => {
+        const out = api.filterDriftedListings(listings, devices);
+        expect(out.find(l => l.id === 'l4')).toBeUndefined();
+    });
+
+    test('treats missing rebindCount on entity as 0 (legacy entities)', () => {
+        const legacyDevices = {
+            d1: { entities: { 0: { /* no rebindCount */ } } },
+        };
+        const matchedLegacy = [{ id: 'lz', owner_device_id: 'd1', owner_entity_id: 0, bound_rebind_count: 0 }];
+        expect(api.filterDriftedListings(matchedLegacy, legacyDevices)).toHaveLength(1);
+    });
+
+    test('treats missing bound_rebind_count on listing as 0', () => {
+        const oldListings = [{ id: 'lo', owner_device_id: 'd1', owner_entity_id: 0 }];
+        // d1.0 has rebindCount=0, listing has no bound_rebind_count → both 0 → keep
+        expect(api.filterDriftedListings(oldListings, devices)).toHaveLength(1);
+    });
+});
+
 describe('rental: factory hard-fail', () => {
     test('throws when authMiddleware is missing', () => {
         expect(() => rental({ walletModule: stubWallet })).toThrow(/authMiddleware/);

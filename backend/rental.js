@@ -398,6 +398,7 @@ async function searchMarketplace({
                 bl.avg_rating, bl.total_rentals, bl.uptime_pct,
                 bl.owner_device_id, bl.owner_entity_id,
                 bl.avatar_url,
+                bl.bound_rebind_count,
                 bl.created_at AS bl_created_at,
                 EXISTS (
                     SELECT 1 FROM rental_contracts ac
@@ -415,6 +416,32 @@ async function searchMarketplace({
         params
     );
     return res.rows;
+}
+
+/**
+ * P0 Phase 2: drop listings whose live entity rebindCount has drifted past
+ * bound_rebind_count (snapshot at listing creation). A drifted listing
+ * silently points at a different bot than the renter expects, so we hide it
+ * from public search but leave it in the DB — owner sees it in /my-rentals
+ * and can either re-publish (resnap) or delist.
+ *
+ * Fail-open semantics: if the in-memory devices map is unavailable (early
+ * boot, test harness), skip the filter and return all listings unchanged.
+ * The DB-level snapshot still records bound_rebind_count, so retroactive
+ * filtering works once the map is wired in.
+ */
+function filterDriftedListings(listings, devicesMap) {
+    if (!Array.isArray(listings)) return listings;
+    if (!devicesMap || typeof devicesMap !== 'object') return listings;
+    return listings.filter((l) => {
+        const dev = devicesMap[l.owner_device_id];
+        const ent = dev?.entities?.[l.owner_entity_id];
+        if (!ent) return false; // entity slot vanished → definitely drifted
+        const liveCount = Number.isInteger(ent.rebindCount) ? ent.rebindCount : 0;
+        const boundCount = Number.isFinite(Number(l.bound_rebind_count))
+            ? Number(l.bound_rebind_count) : 0;
+        return liveCount === boundCount;
+    });
 }
 
 // ============================================
@@ -1498,7 +1525,11 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
                 limit: req.query.limit,
                 offset: req.query.offset,
             });
-            res.json({ success: true, listings });
+            // P0 Phase 2: hide listings whose entity slot has been rebound since
+            // the listing was created (silent identity drift). Owner still sees
+            // them in /my-rentals so they can re-publish or delist explicitly.
+            const filtered = filterDriftedListings(listings, _interviewDeps?.devices);
+            res.json({ success: true, listings: filtered });
         } catch (err) {
             console.error('[Rental] /marketplace error:', err);
             res.status(500).json({ success: false, error: 'internal_error' });
@@ -1891,6 +1922,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         getListing,
         listMyListings,
         searchMarketplace,
+        filterDriftedListings,
         startRental,
         endRental,
         getMyContracts,
