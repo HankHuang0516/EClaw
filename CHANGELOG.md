@@ -1,3 +1,10 @@
+# [1.1092.0](https://github.com/HankHuang0516/EClaw/compare/v1.1091.0...v1.1092.0) (2026-04-25)
+
+
+### Features
+
+* **rental:** add 我的上架 tab for listing pause/delist outside agent card ([#2129](https://github.com/HankHuang0516/EClaw/issues/2129)) ([20d961b](https://github.com/HankHuang0516/EClaw/commit/20d961b782153c9ebef3b347ecefd07e24c9c004))
+
 # [1.1091.0](https://github.com/HankHuang0516/EClaw/compare/v1.1090.0...v1.1091.0) (2026-04-25)
 
 
