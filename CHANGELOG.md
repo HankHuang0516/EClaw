@@ -1,3 +1,10 @@
+# [1.1082.0](https://github.com/HankHuang0516/EClaw/compare/v1.1081.4...v1.1082.0) (2026-04-25)
+
+
+### Features
+
+* **kanban:** chip deep-link anchor — auto-open modal + flash comment ([#2087](https://github.com/HankHuang0516/EClaw/issues/2087)) ([b1f0f2b](https://github.com/HankHuang0516/EClaw/commit/b1f0f2b266f17afc488c0ca8df004af34016873d))
+
 ## [1.1081.4](https://github.com/HankHuang0516/EClaw/compare/v1.1081.3...v1.1081.4) (2026-04-25)
 
 
