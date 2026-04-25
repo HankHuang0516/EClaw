@@ -1287,6 +1287,7 @@ setInterval(async () => {
                 device.entities[binding.entity_id].rebindCount = (prev.rebindCount || 0) + 1;
                 device.entities[binding.entity_id].lastRebindAt = Date.now();
                 await pauseRentalListingsOnRebind(binding.device_id, binding.entity_id);
+                await terminateRentalContractsOnRebind(binding.device_id, binding.entity_id);
             }
 
             delete officialBindingsCache[getBindingCacheKey(binding.device_id, binding.entity_id)];
@@ -2201,6 +2202,31 @@ async function pauseRentalListingsOnRebind(deviceId, entityId) {
         }
     } catch (err) {
         console.error('[Rebind cascade] pauseRentalListingsOnRebind error:', err.message);
+    }
+}
+
+// P0 Phase 4: when an entity slot is rebound, every active rental contract
+// pointing at it is now serving a different bot. Terminate them and refund
+// the renter (owner pays pro-rata penalty per Hank's "重綁屬於 owner 問題" rule).
+// Errors are swallowed inside terminateActiveContractsOnRebind — must not
+// abort the rebind itself.
+async function terminateRentalContractsOnRebind(deviceId, entityId) {
+    if (typeof rentalModule?.terminateActiveContractsOnRebind !== 'function') return;
+    try {
+        const outcomes = await rentalModule.terminateActiveContractsOnRebind(deviceId, entityId, walletModule);
+        if (Array.isArray(outcomes) && outcomes.length > 0) {
+            serverLog('info', 'rental', `[Rebind cascade] terminated ${outcomes.length} contract(s)`,
+                { deviceId, entityId, outcomes });
+            for (const o of outcomes) {
+                if (o.shortfallMli > 0) {
+                    serverLog('warn', 'rental',
+                        `[Rebind cascade] owner shortfall on contract ${o.contractId}: ${o.shortfallMli} mli unpaid (owner balance insufficient)`,
+                        { contractId: o.contractId, shortfallMli: o.shortfallMli, ownerUserId: o.ownerUserId });
+                }
+            }
+        }
+    } catch (err) {
+        console.error('[Rebind cascade] terminateRentalContractsOnRebind error:', err.message);
     }
 }
 // Defer schema init: rental_contracts has FKs to user_accounts and
@@ -6679,6 +6705,7 @@ app.delete('/api/entity', async (req, res) => {
     device.entities[eId].rebindCount = (removedEntity?.rebindCount || 0) + 1;
     device.entities[eId].lastRebindAt = Date.now();
     await pauseRentalListingsOnRebind(deviceId, eId);
+    await terminateRentalContractsOnRebind(deviceId, eId);
 
     console.log(`[Remove] Device ${deviceId} Entity ${eId} unbound`);
     serverLog('info', 'unbind', `Entity ${eId} unbound`, { deviceId, entityId: eId });
@@ -6800,6 +6827,7 @@ app.delete('/api/device/entity', async (req, res) => {
     device.entities[eId].rebindCount = (removedEntity2?.rebindCount || 0) + 1;
     device.entities[eId].lastRebindAt = Date.now();
     await pauseRentalListingsOnRebind(deviceId, eId);
+    await terminateRentalContractsOnRebind(deviceId, eId);
 
     console.log(`[Device Remove] Device ${deviceId} Entity ${eId} unbound by device owner`);
 
@@ -11702,6 +11730,7 @@ async function autoUnbindEntity(deviceId, eId, device) {
     device.entities[eId].rebindCount = (prevEntity?.rebindCount || 0) + 1;
     device.entities[eId].lastRebindAt = Date.now();
     await pauseRentalListingsOnRebind(deviceId, eId);
+    await terminateRentalContractsOnRebind(deviceId, eId);
 }
 
 /**
@@ -11961,6 +11990,7 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
     };
     publicCodeIndex[freePublicCode] = { deviceId, entityId: eId };
     await pauseRentalListingsOnRebind(deviceId, eId);
+    await terminateRentalContractsOnRebind(deviceId, eId);
 
     // Save binding record
     const binding = {
@@ -12124,6 +12154,7 @@ app.post('/api/official-borrow/bind-personal', async (req, res) => {
         }
     };
     await pauseRentalListingsOnRebind(deviceId, eId);
+    await terminateRentalContractsOnRebind(deviceId, eId);
 
     // Mark personal bot as assigned
     personalBot.status = 'assigned';
@@ -12299,6 +12330,7 @@ app.post('/api/official-borrow/unbind', async (req, res) => {
     device.entities[eId].rebindCount = (prevBorrow?.rebindCount || 0) + 1;
     device.entities[eId].lastRebindAt = Date.now();
     await pauseRentalListingsOnRebind(deviceId, eId);
+    await terminateRentalContractsOnRebind(deviceId, eId);
     await saveData();
 
     console.log(`[Borrow] Official binding removed: device ${deviceId} entity ${eId}`);
@@ -14460,6 +14492,7 @@ app.post('/api/admin/transfer-device', async (req, res) => {
             sourceDevice.entities[eId].rebindCount = (srcEntity.rebindCount || 0) + 1;
             sourceDevice.entities[eId].lastRebindAt = Date.now();
             await pauseRentalListingsOnRebind(sourceDeviceId, eId);
+            await terminateRentalContractsOnRebind(sourceDeviceId, eId);
             transferred.push({ entityId: eId, name: srcEntity.name, character: srcEntity.character });
         }
 

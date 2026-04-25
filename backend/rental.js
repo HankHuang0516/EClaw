@@ -351,6 +351,135 @@ async function pauseListingsOnRebind(deviceId, entityId) {
     }
 }
 
+/**
+ * P0 Phase 4: when an entity slot is rebound, every active rental contract
+ * pointing at that slot is now serving a different bot from what the renter
+ * agreed to. Terminate them all and make the renter whole.
+ *
+ * Per Hank's policy decision (2026-04-25, "B 重綁屬於 owner 問題 所以虧要 owner 吃"):
+ *   1. End each contract with `ended_admin` — releases 100% of the renter's
+ *      remaining deposit (existing endRental behavior).
+ *   2. Additionally, owner pays the renter a pro-rata penalty equal to
+ *      `deposit_mli × remaining_time / planned_time` as compensation for
+ *      the disrupted rental. Penalty is clamped to the owner's available
+ *      balance — applyLedgerEntry rejects negative balances, so owner
+ *      cannot be debited past 0. Any shortfall is logged but not pursued.
+ *
+ * Statuses we touch: 'reserved', 'active', 'suspended_insufficient_funds'.
+ * Statuses we leave alone: any 'ended_*' (terminal).
+ *
+ * Returns per-contract outcome rows for caller logging. Errors on a single
+ * contract are caught and logged — one bad row must not block the rest of
+ * the rebind cascade.
+ */
+async function terminateActiveContractsOnRebind(deviceId, entityId, walletApi) {
+    if (!deviceId || !Number.isInteger(entityId)) return [];
+    if (!walletApi || typeof walletApi.withTransaction !== 'function') return [];
+
+    let contracts;
+    try {
+        const res = await pool.query(
+            `SELECT c.id, c.listing_id, c.owner_user_id, c.renter_user_id,
+                    c.deposit_mli, c.planned_duration_min, c.started_at, c.ends_at,
+                    c.status
+               FROM rental_contracts c
+               JOIN bot_listings l ON l.id = c.listing_id
+              WHERE l.owner_device_id = $1
+                AND l.owner_entity_id = $2
+                AND c.status IN ('reserved', 'active', 'suspended_insufficient_funds')`,
+            [deviceId, entityId]
+        );
+        contracts = res.rows;
+    } catch (err) {
+        console.error('[Rental] terminateActiveContractsOnRebind query error:', err.message);
+        return [];
+    }
+
+    const outcomes = [];
+    for (const c of contracts) {
+        try {
+            const depositMli = Number(c.deposit_mli);
+            // Pro-rata penalty: deposit × (remaining_ms / planned_ms).
+            // Reserved contracts (never started) have remaining_ratio = 1.
+            let penaltyMli = 0;
+            const plannedMs = Number(c.planned_duration_min) * 60 * 1000;
+            if (c.status === 'reserved' || !c.started_at || !c.ends_at) {
+                penaltyMli = depositMli;
+            } else if (plannedMs > 0) {
+                const endsAtMs = new Date(c.ends_at).getTime();
+                const remainingMs = Math.max(0, endsAtMs - Date.now());
+                const ratio = Math.min(1, remainingMs / plannedMs);
+                penaltyMli = Math.floor(depositMli * ratio);
+            }
+
+            // Step 1: end the contract with ended_admin → renter gets 100% of
+            // remaining held deposit. requesterUserId = owner so the auth check
+            // passes; the cascade itself is admin-initiated upstream.
+            await endRental(
+                {
+                    contractId: c.id,
+                    endReason: 'ended_admin',
+                    requesterUserId: c.owner_user_id,
+                },
+                walletApi
+            );
+
+            // Step 2: owner pays renter pro-rata penalty (clamped to owner balance).
+            let actualPenaltyMli = 0;
+            let shortfallMli = 0;
+            if (penaltyMli > 0) {
+                await walletApi.withTransaction(async (client) => {
+                    const w = await client.query(
+                        'SELECT balance_mli, held_mli FROM wallets WHERE user_id = $1 FOR UPDATE',
+                        [c.owner_user_id]
+                    );
+                    const ownerBalance = w.rowCount > 0 ? Number(w.rows[0].balance_mli) : 0;
+                    actualPenaltyMli = Math.min(penaltyMli, ownerBalance);
+                    shortfallMli = penaltyMli - actualPenaltyMli;
+
+                    if (actualPenaltyMli > 0) {
+                        await walletApi.applyLedgerEntry(client, {
+                            userId: c.owner_user_id,
+                            balanceDelta: -actualPenaltyMli,
+                            heldDelta: 0,
+                            type: walletApi.LEDGER_TYPES.REFUND,
+                            refType: 'rental_contract',
+                            refId: c.id,
+                            counterpartyUserId: c.renter_user_id,
+                            note: `rebind penalty (owner pays): ${c.id}`,
+                            idempotencyKey: `rebind-refund-debit:${c.id}`,
+                        });
+                        await walletApi.applyLedgerEntry(client, {
+                            userId: c.renter_user_id,
+                            balanceDelta: actualPenaltyMli,
+                            heldDelta: 0,
+                            type: walletApi.LEDGER_TYPES.REFUND,
+                            refType: 'rental_contract',
+                            refId: c.id,
+                            counterpartyUserId: c.owner_user_id,
+                            note: `rebind penalty (renter receives): ${c.id}`,
+                            idempotencyKey: `rebind-refund-credit:${c.id}`,
+                        });
+                    }
+                });
+            }
+
+            outcomes.push({
+                contractId: c.id,
+                renterUserId: c.renter_user_id,
+                ownerUserId: c.owner_user_id,
+                penaltyMli,
+                actualPenaltyMli,
+                shortfallMli,
+            });
+        } catch (err) {
+            console.error(`[Rental] terminateActiveContractsOnRebind contract ${c.id} error:`, err.message);
+            outcomes.push({ contractId: c.id, error: err.message });
+        }
+    }
+    return outcomes;
+}
+
 async function getListing(listingId) {
     const res = await pool.query(
         `SELECT id, owner_user_id, owner_device_id, owner_entity_id,
@@ -1951,6 +2080,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         pauseListing,
         delistListing,
         pauseListingsOnRebind,
+        terminateActiveContractsOnRebind,
         getListing,
         listMyListings,
         searchMarketplace,
