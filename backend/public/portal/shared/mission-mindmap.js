@@ -177,9 +177,29 @@
       font-size: 10px; background: rgba(255,255,255,0.08);
       padding: 1px 6px; border-radius: 8px; color: var(--text-secondary, #8b949e);
     }
+    .mm-rail-toolbar {
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .mm-search {
+      width: 100%; box-sizing: border-box;
+      background: var(--bg, #0d1117); color: var(--text, #e6edf3);
+      border: 1px solid var(--card-border, #2a2f3a);
+      border-radius: 5px; padding: 6px 8px; font-size: 12px;
+      outline: none; transition: border-color 0.15s;
+    }
+    .mm-search:focus { border-color: #3b82f6; }
+    .mm-add-btn {
+      background: #3b82f6; color: #fff; border: none;
+      border-radius: 5px; padding: 6px 10px; font-size: 12px;
+      cursor: pointer; font-weight: 600; transition: filter 0.15s;
+    }
+    .mm-add-btn:hover { filter: brightness(1.1); }
+    .mm-sep {
+      height: 1px; background: var(--card-border, #2a2f3a);
+      margin: 4px -12px;
+    }
     .legend-block {
-      border-top: 1px solid var(--card-border, #2a2f3a);
-      padding-top: 10px; margin-top: auto;
+      padding-top: 4px; margin-top: auto;
     }
     .legend-block h4 {
       font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
@@ -196,10 +216,34 @@
     .status-ring.blocked { background: #ef4444; }
     .status-ring.done { background: #22c55e; }
     .summary-block {
-      border-top: 1px solid var(--card-border, #2a2f3a);
-      padding-top: 8px; font-size: 11px;
+      padding-top: 4px; font-size: 11px;
       color: var(--text-secondary, #8b949e); line-height: 1.6;
     }
+    .mm-modal-bg {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+      display: none; align-items: center; justify-content: center; z-index: 1000;
+    }
+    .mm-modal-bg.visible { display: flex; }
+    .mm-modal {
+      background: var(--bg-elev, #161b22); border: 1px solid var(--card-border, #2a2f3a);
+      border-radius: 8px; padding: 18px 20px; min-width: 320px;
+      color: var(--text, #e6edf3); font-size: 13px;
+    }
+    .mm-modal h3 { margin: 0 0 12px 0; font-size: 14px; }
+    .mm-modal label { display: block; font-size: 11px; color: var(--text-secondary, #8b949e); margin: 8px 0 3px; }
+    .mm-modal input, .mm-modal select {
+      width: 100%; box-sizing: border-box;
+      background: var(--bg, #0d1117); color: var(--text, #e6edf3);
+      border: 1px solid var(--card-border, #2a2f3a);
+      border-radius: 4px; padding: 5px 8px; font-size: 12px; outline: none;
+    }
+    .mm-modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+    .mm-modal-actions button {
+      padding: 6px 14px; border-radius: 4px; border: none; cursor: pointer; font-size: 12px;
+    }
+    .mm-modal-cancel { background: transparent; color: var(--text-secondary, #8b949e); }
+    .mm-modal-submit { background: #3b82f6; color: #fff; font-weight: 600; }
+    .sys-row.hilite { background: rgba(59,130,246,0.18); outline: 1px solid #3b82f6; }
     .summary-block .num { color: var(--text, #e6edf3); font-weight: 600; }
     .mind-canvas-wrap {
       position: relative; background: var(--bg, #0d1117); overflow: hidden;
@@ -313,20 +357,54 @@
 
     rootEl.innerHTML = `
       <aside class="sys-rail">
+        <div class="mm-rail-toolbar">
+          <input type="text" class="mm-search" placeholder="🔍 搜尋節點..." aria-label="搜尋節點">
+          <button class="mm-add-btn" data-act="add-node">+ 新節點</button>
+        </div>
+        <div class="mm-sep"></div>
         <h3>子系統</h3>
         ${railRows}
+        <div class="mm-sep"></div>
         <div class="legend-block">
           <h3>節點狀態</h3>
           <div class="legend-row"><span class="status-ring active"></span>進行中</div>
           <div class="legend-row"><span class="status-ring blocked"></span>阻塞</div>
           <div class="legend-row"><span class="status-ring done"></span>完成</div>
         </div>
+        <div class="mm-sep"></div>
         <div class="summary-block">
           <span class="num">${nodes.length}</span> 節點 ·
           <span class="num">${edges.length}</span> 連線<br>
           <span class="num">${crossCount}</span> 跨系統依賴
         </div>
       </aside>
+      <div class="mm-modal-bg" data-modal>
+        <div class="mm-modal">
+          <h3>新增節點</h3>
+          <label>標籤 (label)</label>
+          <input type="text" data-modal-label placeholder="例：新功能名稱">
+          <label>子系統</label>
+          <select data-modal-sys>
+            ${Object.entries(SYS).map(([k, s]) => `<option value="${k}">${s.label}</option>`).join('')}
+          </select>
+          <label>層級 (tier)</label>
+          <select data-modal-tier>
+            <option value="domain">domain</option>
+            <option value="topic" selected>topic</option>
+            <option value="leaf">leaf</option>
+          </select>
+          <label>狀態</label>
+          <select data-modal-status>
+            <option value="active" selected>active</option>
+            <option value="blocked">blocked</option>
+            <option value="done">done</option>
+          </select>
+          <div class="mm-modal-actions">
+            <button class="mm-modal-cancel" data-modal-cancel>取消</button>
+            <button class="mm-modal-submit" data-modal-submit>新增</button>
+          </div>
+        </div>
+      </div>
       <div class="mind-canvas-wrap">
         <div class="mm-toolbar">
           <button data-act="fit">🎯 Fit</button>
@@ -547,12 +625,76 @@
         if (act === 'reset') {
           cy.elements().removeClass('faded').removeClass('highlighted');
           rootEl.querySelectorAll('.sys-row').forEach(r => r.classList.remove('active'));
+          rootEl.querySelectorAll('.sys-row.hilite').forEach(r => r.classList.remove('hilite'));
+          const sb = rootEl.querySelector('.mm-search');
+          if (sb) sb.value = '';
           emptyEl.style.display = 'block';
           detailEl.classList.remove('visible');
           cy.fit(undefined, 30);
         }
       });
     });
+
+    const searchEl = rootEl.querySelector('.mm-search');
+    if (searchEl) {
+      searchEl.addEventListener('input', () => {
+        const q = searchEl.value.trim().toLowerCase();
+        cy.elements().removeClass('faded').removeClass('highlighted');
+        rootEl.querySelectorAll('.sys-row').forEach(r => r.classList.remove('hilite'));
+        if (!q) return;
+        const matched = cy.nodes().filter(n =>
+            String(n.data('label') || '').toLowerCase().includes(q));
+        if (!matched.length) {
+          cy.nodes().addClass('faded');
+          return;
+        }
+        cy.elements().addClass('faded');
+        matched.removeClass('faded').addClass('highlighted');
+        const matchedSys = new Set(matched.map(n => n.data('sys')));
+        matchedSys.forEach(sys => {
+          const row = rootEl.querySelector('.sys-row[data-sys="' + sys + '"]');
+          if (row) row.classList.add('hilite');
+        });
+      });
+    }
+
+    const modalBg = rootEl.querySelector('[data-modal]');
+    const addBtn = rootEl.querySelector('[data-act="add-node"]');
+    if (modalBg && addBtn) {
+      const labelInput = modalBg.querySelector('[data-modal-label]');
+      const sysSel = modalBg.querySelector('[data-modal-sys]');
+      const tierSel = modalBg.querySelector('[data-modal-tier]');
+      const statusSel = modalBg.querySelector('[data-modal-status]');
+      const closeModal = () => {
+        modalBg.classList.remove('visible');
+        labelInput.value = '';
+      };
+      addBtn.addEventListener('click', () => {
+        labelInput.value = '';
+        modalBg.classList.add('visible');
+        labelInput.focus();
+      });
+      modalBg.querySelector('[data-modal-cancel]').addEventListener('click', closeModal);
+      modalBg.addEventListener('click', e => { if (e.target === modalBg) closeModal(); });
+      modalBg.querySelector('[data-modal-submit]').addEventListener('click', () => {
+        const label = labelInput.value.trim();
+        if (!label) { labelInput.focus(); return; }
+        const sys = sysSel.value;
+        const tier = tierSel.value;
+        const status = statusSel.value;
+        const id = 'usr-' + Date.now().toString(36);
+        const sysMeta = SYS[sys];
+        nodesById[id] = { id, label, sys, tier, status };
+        cy.add({
+          group: 'nodes',
+          data: { id, label, sys, tier, status, sysColor: sysMeta.color },
+          renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 },
+        });
+        const railRow = rootEl.querySelector('.sys-row[data-sys="' + sys + '"] .count');
+        if (railRow) railRow.textContent = String(parseInt(railRow.textContent || '0', 10) + 1);
+        closeModal();
+      });
+    }
 
     return { showSide };
   }
