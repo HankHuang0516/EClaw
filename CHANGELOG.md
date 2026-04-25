@@ -1,3 +1,10 @@
+# [1.1089.0](https://github.com/HankHuang0516/EClaw/compare/v1.1088.0...v1.1089.0) (2026-04-25)
+
+
+### Features
+
+* **mindmap:** chip popover + 📌 pin tray + mobile portrait fix ([#2124](https://github.com/HankHuang0516/EClaw/issues/2124)) ([01423a8](https://github.com/HankHuang0516/EClaw/commit/01423a8c85eb39eebcf32623cb25139024c9e49e))
+
 # [1.1088.0](https://github.com/HankHuang0516/EClaw/compare/v1.1087.1...v1.1088.0) (2026-04-25)
 
 
