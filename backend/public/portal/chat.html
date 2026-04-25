@@ -2778,7 +2778,7 @@
     </div>
 
     <!-- Entity Preview Modal (Card, Skill, Rule, Listing, etc.) -->
-    <div class="modal-overlay" id="entityPreviewModal">
+    <div class="modal-overlay" id="entityPreviewModal" data-entity-type="" data-entity-id="">
         <div class="modal-box">
             <div class="entity-modal-header">
                 <div>
@@ -2786,7 +2786,10 @@
                     <div class="entity-modal-title" id="entityModalTitle">Loading...</div>
                     <div class="entity-modal-id" id="entityModalId"></div>
                 </div>
-                <button class="entity-modal-close" onclick="closeModal('entityPreviewModal')">&times;</button>
+                <div style="display:flex;gap:6px;align-items:flex-start">
+                    <button class="entity-modal-close" id="entityModalRequoteBtn" data-i18n-title="chip_popover_requote" title="再引用到聊天" onclick="requoteFromEntityModal()" style="font-size:18px">📌</button>
+                    <button class="entity-modal-close" onclick="closeModal('entityPreviewModal')">&times;</button>
+                </div>
             </div>
             <div class="entity-modal-body" id="entityModalBody">
                 <div class="entity-modal-loading">Loading...</div>
@@ -6550,7 +6553,34 @@
             }
         }
 
+        function requoteFromEntityModal() {
+            const modal = document.getElementById('entityPreviewModal');
+            const type = modal && modal.dataset.entityType;
+            const id = modal && modal.dataset.entityId;
+            if (!type || !id) return;
+            const token = type === 'card' ? (id.startsWith('card_') ? id : 'card_' + id) : id;
+            const input = document.getElementById('messageInput') || document.querySelector('textarea, [contenteditable="true"]');
+            if (!input) return;
+            if (input.tagName === 'TEXTAREA' || input.tagName === 'INPUT') {
+                const cur = input.value || '';
+                const pos = input.selectionStart != null ? input.selectionStart : cur.length;
+                const before = cur.slice(0, pos), after = cur.slice(pos);
+                const insert = (before && !before.endsWith(' ') ? ' ' : '') + token + ' ';
+                input.value = before + insert + after;
+                input.focus();
+                const caret = before.length + insert.length;
+                try { input.setSelectionRange(caret, caret); } catch (_) {}
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            } else {
+                input.focus();
+                document.execCommand && document.execCommand('insertText', false, token + ' ');
+            }
+            closeModal('entityPreviewModal');
+        }
+
         async function openEntityModal(type, entityId) {
+            const modal = document.getElementById('entityPreviewModal');
+            if (modal) { modal.dataset.entityType = type; modal.dataset.entityId = entityId; }
             const typeEl = document.getElementById('entityModalType');
             const titleEl = document.getElementById('entityModalTitle');
             const idEl = document.getElementById('entityModalId');

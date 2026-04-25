@@ -123,7 +123,11 @@
             const kind = m[1], type = m[2], id = m[3], anchor = m[4] || null;
             if (kind === 'kanban' && type === 'card') {
                 const deviceId = (global.currentUser && global.currentUser.deviceId) || '';
-                const url = '/api/mission/card/card_' + id + (deviceId ? '?deviceId=' + encodeURIComponent(deviceId) : '');
+                const deviceSecret = (global.currentUser && global.currentUser.deviceSecret) || '';
+                const qs = deviceId
+                    ? '?deviceId=' + encodeURIComponent(deviceId) + (deviceSecret ? '&deviceSecret=' + encodeURIComponent(deviceSecret) : '')
+                    : '';
+                const url = '/api/mission/card/card_' + id + qs;
                 return fetch(url, { credentials: 'include' })
                     .then(r => r.json())
                     .then(j => {
@@ -149,10 +153,13 @@
         const msg = (err && err.message && err.message.startsWith('ref_not_supported:'))
             ? t('chip_popover_not_supported', '此引用類型尚未支援預覽')
             : t('chip_popover_load_error', '載入失敗') + (err && err.message ? ' (' + escapeHtml(err.message.slice(0, 60)) + ')' : '');
+        const requoteTitle = t('chip_popover_requote', '再引用到聊天');
+        const closeTitle = t('common_close', '關閉');
         return `
             <div class="chip-popover-header">
                 <span class="chip-popover-title">${escapeHtml(refId || '')}</span>
-                <button class="chip-popover-btn chip-popover-close" title="${escapeHtml(t('common_close', '關閉'))}" data-action="close">✖</button>
+                <button class="chip-popover-btn chip-popover-quote" title="${escapeHtml(requoteTitle)}" data-action="requote">📌</button>
+                <button class="chip-popover-btn chip-popover-close" title="${escapeHtml(closeTitle)}" data-action="close">✖</button>
             </div>
             <div class="chip-popover-body"><div class="chip-popover-error">${escapeHtml(msg)}</div></div>
         `;
