@@ -11,7 +11,7 @@ Per Hank 2026-04-25 1on1 Q2: 用 grep 理解 code 架構容易撞名 — 規範�
 | 2 | rental — rebind cascade Phase 1-4 | `backend/rental.js` (pause/terminate helpers), `backend/index.js` (8 callsites) | ✅ | [`backend/docs/specs/rental-rebind-cascade.md`](rental-rebind-cascade.md) (Phase 4 follow-through) |
 | 3 | wallet | `backend/wallet.js`, `backend/wallet_schema.sql` | ❌ | constants live in code (`LEDGER_TYPES`, `applyLedgerEntry`) — needs extraction |
 | 4 | kanban (mission v2) | `backend/kanban.js`, `backend/mission.js` | △ | repo-root [`docs/mission-v2-kanban-spec.md`](../../../docs/mission-v2-kanban-spec.md) — written before screenshot-review gate / cron 子卡; needs supplement |
-| 5 | vault — device_vars + encryptVars | `backend/index.js` (encryptVars / decryptVars), `backend/auth.js` | △ | repo-root [`docs/plans/2026-03-03-env-vars-encrypted-persistence-design.md`](../../../docs/plans/2026-03-03-env-vars-encrypted-persistence-design.md) — design only, no current-state spec; missing the "vault NEVER auto-injects, no allowed_vars whitelist" rule |
+| 5 | vault — device_vars + encryptVars | `backend/index.js` (encryptVars / decryptVars), `backend/mission.js` (decryptVarsLocal) | ✅ | [`backend/docs/specs/vault.md`](vault.md) (encryption boundary, dual-auth, no-rental-leak rule, audit trail) |
 | 6 | official-bind / public-code | `backend/index.js` (officialBindingsCache, public_code_index), `backend/auth.js` | ❌ | borrow flow + free vs personal binding only documented in code paths |
 | 7 | channel-bridge (fakechat / web_chat) | `backend/index.js` (`/api/client/speak`, `/api/transform`, `/api/chat/history`), `bridge.ts` | ❌ | `bridge.ts` has inline comments; AVAILABLE TOOLS dashboard format only encoded in mission notify code |
 | 8 | mission-dashboard / notes / chat-history | `backend/mission.js`, `backend/index.js` (`/api/mission/dashboard`, `/api/chat/history`) | ❌ | endpoint shapes only in code |
@@ -24,7 +24,7 @@ Per Hank 2026-04-25 1on1 Q2: 用 grep 理解 code 架構容易撞名 — 規範�
 
 **P0 / blocks mind-map first layer:**
 1. **wallet.md** — ledger type matrix + balance/held invariants + idempotency contract. Cited by every rental + topup card; absence makes "why does endRental return refund_mli + forfeit_mli but NOT credit owner directly" impossible to grep without reading source.
-2. **vault.md** — codify `feedback_no_whitelist_vault.md` rule into the repo. Encryption boundary, botSecret authority, what is NEVER auto-decrypted. Today only lives in my agent memory.
+2. ~~**vault.md**~~ — ✅ shipped (see row #5). Encryption boundary, dual-auth model, no-`allowed_vars` rule now anchored in the repo.
 3. **channel-bridge.md** — fakechat ↔ web_chat ↔ AVAILABLE TOOLS dashboard contract. Drives every bot's runtime behavior; absence is why Hermes shipped broken i18n on 2026-04-25 (he didn't have a doc to cite).
 
 **P1 / fills mind-map second layer:**
