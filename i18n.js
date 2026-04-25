@@ -3080,9 +3080,42 @@ const TRANSLATIONS = {
         "community_comment_send": "Send",
         "community_comment_reply": "Reply",
         "community_search_placeholder": "Search Bot name, description, tags...",
-        "community_comment_placeholder": "Leave your review..."
+        "community_comment_placeholder": "Leave your review...",
+
+        // Smart Chip / Autolink Chip (autolink-chip-preview.js)
+        "autolink_chip_open_full": "Open full page",
+        "autolink_chip_ref_not_found": "Reference no longer exists",
+        "autolink_chip_repin": "Quote this to chat",
+        "autolink_chip_close_preview": "Close preview",
+        "autolink_chip_nested_too_deep": "Too deep — open the full page to continue",
+        "autolink_chip_circular": "Already in this preview stack",
+        "autolink_chip_ref_card": "Card",
+        "autolink_chip_ref_note": "Note",
+        "autolink_chip_ref_review": "Review",
+        // Smart Chip / Autolink Chip (autolink-chip-preview.js)
+        "autolink_chip_open_full": "전체 페이지 열기",
+        "autolink_chip_ref_not_found": "참조가 더 이상 존재하지 않습니다",
+        "autolink_chip_repin": "채팅에 인용",
+        "autolink_chip_close_preview": "미리보기 닫기",
+        "autolink_chip_nested_too_deep": "너무 깊습니다 — 전체 페이지를 열어서 계속하세요",
+        "autolink_chip_circular": "이미 이 미리보기 스택에 있습니다",
+        "autolink_chip_ref_card": "카드",
+        "autolink_chip_ref_note": "노트",
+        "autolink_chip_ref_review": "리뷰"
+
     },
     zh: {
+        // Smart Chip / Autolink Chip (autolink-chip-preview.js)
+        "autolink_chip_open_full": "打開完整頁面",
+        "autolink_chip_ref_not_found": "引用已不存在",
+        "autolink_chip_repin": "引用到聊天",
+        "autolink_chip_close_preview": "關閉預覽",
+        "autolink_chip_nested_too_deep": "太深了 — 請直接跳頁繼續",
+        "autolink_chip_circular": "已在引用堆疊上",
+        "autolink_chip_ref_card": "卡片",
+        "autolink_chip_ref_note": "筆記",
+        "autolink_chip_ref_review": "評論",
+
         // Mission Control (mission.html)
         "mc_title": "EClawbot Mission Control",
         "mc_auth_title": "Mission Control",
@@ -6168,7 +6201,18 @@ const TRANSLATIONS = {
         "toast_subscription_cancelled": "訂閱已取消。存取權限持續到期限結束。",
         "toast_unbind_failed": "解除綁定失敗",
         "toast_update_failed": "更新失敗",
-        "toast_upload_failed": "上傳失敗"
+        "toast_upload_failed": "上傳失敗",
+        // Smart Chip / Autolink Chip (autolink-chip-preview.js)
+        "autolink_chip_open_full": "เปิดหน้าเต็ม",
+        "autolink_chip_ref_not_found": "ข้อมูลอ้างอิงไม่มีอยู่แล้ว",
+        "autolink_chip_repin": "อ้างอิงไปยังแชท",
+        "autolink_chip_close_preview": "ปิดตัวอย่าง",
+        "autolink_chip_nested_too_deep": "ลึกเกินไป — เปิดหน้าเต็มเพื่อดำเนินการต่อ",
+        "autolink_chip_circular": "อยู่ในสแต็กตัวอย่างแล้ว",
+        "autolink_chip_ref_card": "การ์ด",
+        "autolink_chip_ref_note": "โน้ต",
+        "autolink_chip_ref_review": "รีวิว"
+
     },
     "zh-CN": {
         "mc_title": "EClawbot 任务控制",
@@ -9236,7 +9280,29 @@ const TRANSLATIONS = {
         "guide_setup_use_mission": "管理任务 — 在 Mission Control 建立待办、派发任务给代理",
         "guide_setup_use_proxy": "对外开放 — 通过代理窗口让客户直接与你的代理互动",
         "guide_setup_what_is_eclawbot": "EClawbot 是什么？",
-        "guide_setup_what_is_eclawbot_desc": "<strong>EClawbot</strong> 是一个 Agent-to-Agent（A2A）通讯平台，让你建立、管理多个 AI 代理（Entity），并让它们彼此协作、自动化执行任务。无论是电商客服、内容营销、IT 运维还是预约排程，EClawbot 都能帮你搞定。"
+        "guide_setup_what_is_eclawbot_desc": "<strong>EClawbot</strong> 是一个 Agent-to-Agent（A2A）通讯平台，让你建立、管理多个 AI 代理（Entity），并让它们彼此协作、自动化执行任务。无论是电商客服、内容营销、IT 运维还是预约排程，EClawbot 都能帮你搞定。",
+
+        // Smart Chip / Autolink Chip (autolink-chip-preview.js)
+        "autolink_chip_open_full": "完整的ページを開く",
+        "autolink_chip_ref_not_found": "引用はもう存在しません",
+        "autolink_chip_repin": "チャットに引用",
+        "autolink_chip_close_preview": "プレビューを閉じる",
+        "autolink_chip_nested_too_deep": "深すぎます — 完全なページを開いてください",
+        "autolink_chip_circular": "すでにこのプレビュースタックにあります",
+        "autolink_chip_ref_card": "カード",
+        "autolink_chip_ref_note": "ノート",
+        "autolink_chip_ref_review": "レビュー",
+        // Smart Chip / Autolink Chip (autolink-chip-preview.js)
+        "autolink_chip_open_full": "Mở trang đầy đủ",
+        "autolink_chip_ref_not_found": "Tham chiếu không còn tồn tại",
+        "autolink_chip_repin": "Trích dẫn vào chat",
+        "autolink_chip_close_preview": "Đóng xem trước",
+        "autolink_chip_nested_too_deep": "Quá sâu — mở trang đầy đủ để tiếp tục",
+        "autolink_chip_circular": "Đã ở trong ngăn xếp xem trước này",
+        "autolink_chip_ref_card": "Thẻ",
+        "autolink_chip_ref_note": "Ghi chú",
+        "autolink_chip_ref_review": "Đánh giá"
+
     },
     ja: {
         "mc_title": "EClawbot ミッションコントロール",
@@ -11650,7 +11716,18 @@ const TRANSLATIONS = {
         "toast_cancel_failed": "キャンセルに失敗しました",
         "toast_notification_denied": "通知の許可が拒否されました",
         "toast_mark_failed": "マークに失敗しました",
-        "toast_generate_key_failed": "APIキーの生成に失敗しました"
+        "toast_generate_key_failed": "APIキーの生成に失敗しました",
+        // Smart Chip / Autolink Chip (autolink-chip-preview.js)
+        "autolink_chip_open_full": "Buka halaman lengkap",
+        "autolink_chip_ref_not_found": "Referensi tidak lagi ada",
+        "autolink_chip_repin": "Kutip ini ke chat",
+        "autolink_chip_close_preview": "Tutup pratinjau",
+        "autolink_chip_nested_too_deep": "Terlalu dalam — buka halaman lengkap untuk melanjutkan",
+        "autolink_chip_circular": "Sudah ada di stack pratinjau ini",
+        "autolink_chip_ref_card": "Kartu",
+        "autolink_chip_ref_note": "Catatan",
+        "autolink_chip_ref_review": "Ulasan"
+
     },
     ko: {
         "mc_title": "EClawbot 미션 컨트롤",
@@ -14064,7 +14141,18 @@ const TRANSLATIONS = {
         "toast_cancel_failed": "취소 실패",
         "toast_notification_denied": "알림 권한이 거부되었습니다",
         "toast_mark_failed": "마크 실패",
-        "toast_generate_key_failed": "API 키 생성 실패"
+        "toast_generate_key_failed": "API 키 생성 실패",
+        // Smart Chip / Autolink Chip (autolink-chip-preview.js)
+        "autolink_chip_open_full": "Abrir página completa",
+        "autolink_chip_ref_not_found": "La referencia ya no existe",
+        "autolink_chip_repin": "Citar esto al chat",
+        "autolink_chip_close_preview": "Cerrar vista previa",
+        "autolink_chip_nested_too_deep": "Demasiado profundo — abre la página completa para continuar",
+        "autolink_chip_circular": "Ya está en esta pila de vista previa",
+        "autolink_chip_ref_card": "Tarjeta",
+        "autolink_chip_ref_note": "Nota",
+        "autolink_chip_ref_review": "Reseña"
+
     },
     th: {
         "mc_title": "EClawbot ศูนย์ควบคุมภารกิจ",
@@ -16480,7 +16568,18 @@ const TRANSLATIONS = {
         "chat_wait_upload": "กรุณารอให้การอัปโหลดเสร็จสิ้น",
         "feedback_ask_ai": "🤖 ถาม AI",
         "feedback_ask_ai_title": "ต้องการความช่วยเหลือด่วน? ถาม AI",
-        "feedback_ask_ai_desc": "รับคำตอบทันทีก่อนส่งข้อเสนอแนะ"
+        "feedback_ask_ai_desc": "รับคำตอบทันทีก่อนส่งข้อเสนอแนะ",
+        // Smart Chip / Autolink Chip (autolink-chip-preview.js)
+        "autolink_chip_open_full": "Buka halaman penuh",
+        "autolink_chip_ref_not_found": "Rujukan tidak lagi wujud",
+        "autolink_chip_repin": "Petik ini ke chat",
+        "autolink_chip_close_preview": "Tutup pratonton",
+        "autolink_chip_nested_too_deep": "Terlalu dalam — buka halaman penuh untuk teruskan",
+        "autolink_chip_circular": "Sudah dalam timbunan pratonton ini",
+        "autolink_chip_ref_card": "Kad",
+        "autolink_chip_ref_note": "Nota",
+        "autolink_chip_ref_review": "Semakan"
+
     },
     vi: {
         "mc_title": "EClawbot Trung tâm Điều khiển",
@@ -18896,7 +18995,18 @@ const TRANSLATIONS = {
         "chat_wait_upload": "Vui lòng chờ tải lên hoàn tất",
         "feedback_ask_ai": "🤖 Hỏi AI",
         "feedback_ask_ai_title": "Cần trợ giúp nhanh? Hỏi AI",
-        "feedback_ask_ai_desc": "Nhận câu trả lời ngay trước khi gửi phản hồi"
+        "feedback_ask_ai_desc": "Nhận câu trả lời ngay trước khi gửi phản hồi",
+        // Smart Chip / Autolink Chip (autolink-chip-preview.js)
+        "autolink_chip_open_full": "पूर्ण पृष्ठ खोलें",
+        "autolink_chip_ref_not_found": "संदर्भ अब मौजूद नहीं है",
+        "autolink_chip_repin": "इसे चैट में उद्धरण करें",
+        "autolink_chip_close_preview": "पूर्वावलोकन बंद करें",
+        "autolink_chip_nested_too_deep": "बहुत गहरा — जारी रखने के लिए पूर्ण पृष्ठ खोलें",
+        "autolink_chip_circular": "पहले से ही इस पूर्वावलोकन स्टैक में है",
+        "autolink_chip_ref_card": "कार्ड",
+        "autolink_chip_ref_note": "नोट",
+        "autolink_chip_ref_review": "समीक्षा"
+
     },
     id: {
         "mc_title": "EClawbot Pusat Misi",
@@ -21311,7 +21421,18 @@ const TRANSLATIONS = {
         "chat_wait_upload": "Harap tunggu unggahan selesai",
         "feedback_ask_ai": "🤖 Tanya AI",
         "feedback_ask_ai_title": "Butuh bantuan cepat? Tanya AI",
-        "feedback_ask_ai_desc": "Dapatkan jawaban instan sebelum mengirim masukan"
+        "feedback_ask_ai_desc": "Dapatkan jawaban instan sebelum mengirim masukan",
+        // Smart Chip / Autolink Chip (autolink-chip-preview.js)
+        "autolink_chip_open_full": "فتح الصفحة الكاملة",
+        "autolink_chip_ref_not_found": "المرجع لم يعد موجودًا",
+        "autolink_chip_repin": "اقتبس هذا في المحادثة",
+        "autolink_chip_close_preview": "إغلاق المعاينة",
+        "autolink_chip_nested_too_deep": "عميق جدًا — افتح الصفحة الكاملة للمتابعة",
+        "autolink_chip_circular": "موجود بالفعل في قائمة المعاينة هذه",
+        "autolink_chip_ref_card": "بطاقة",
+        "autolink_chip_ref_note": "ملاحظة",
+        "autolink_chip_ref_review": "مراجعة"
+
     },
     es: {
         "mc_title": "EClawbot Centro de Misiones",
