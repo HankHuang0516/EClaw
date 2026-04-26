@@ -147,7 +147,6 @@ function weightedPick(items, keyFn, weights) {
 
 let VISION_IMAGES = [
     { file: 'img-f3a1.svg', keywords: ['red', 'circle'] },
-    { file: 'img-b7c2.svg', keywords: ['blue', 'square'] },
     { file: 'img-d4e9.svg', keywords: ['green', 'triangle'] },
     { file: 'img-a2f5.svg', keywords: ['yellow', 'star'] },
     { file: 'img-c8b3.svg', keywords: ['cat', 'orange'] },
@@ -170,10 +169,11 @@ let VISION_IMAGES = [
     { file: null, description: 'Two interlocking gold rings on a dark velvet surface', keywords: ['rings', 'gold', 'two'] },
     { file: null, description: 'An arrow pointing right with a dashed trail on black background', keywords: ['arrow', 'right', 'dashed'] },
     { file: null, description: 'A flowchart with a diamond decision node labeled "Is valid?" branching to Yes and No paths', keywords: ['flowchart', 'diamond', 'decision', 'yes', 'no'] },
+    { file: null, description: 'A Gantt chart showing three project tasks: Task A runs from Week 1 to Week 3, Task B from Week 2 to Week 5, Task C from Week 4 to Week 6', keywords: ['gantt', 'task', 'week', 'three', 'tasks'] },
+    { file: null, description: 'A dashboard showing four KPI cards: Active Users 1,247, Conversion Rate 3.8%, Revenue $52,400, and Churn Rate 2.1%', keywords: ['users', '1247', 'conversion', '3.8', 'revenue', 'churn', '2.1'] },
     // ── Hard tier (30%) — OCR, spatial reasoning, complex counting ──
     { file: null, description: 'An aerial parking lot with twelve cars, three of which are red', keywords: ['twelve', 'cars', 'three', 'red'] },
     { file: null, description: 'A chemistry lab bench with three beakers: left contains blue liquid, middle is empty, right has green precipitate at the bottom', keywords: ['three', 'beakers', 'blue', 'empty', 'green'] },
-    { file: null, description: 'A handwritten note on lined paper reading Meeting at 3pm Room 204 with the time and room number underlined', keywords: ['meeting', '3pm', '204', 'underlined'] },
     { file: null, description: 'A phone home screen showing 16 app icons in a 4x4 grid and a weather widget displaying 72 degrees', keywords: ['phone', '16', 'apps', 'weather', '72'] },
     { file: null, description: 'A line chart showing quarterly revenue: Q1 at $10K, Q2 at $15K, Q3 dips to $8K, Q4 recovers to $20K', keywords: ['chart', 'revenue', 'Q3', 'dip', 'Q4'] },
     { file: null, description: 'A world map with five red pins marking cities: New York, London, Tokyo, Sydney, and São Paulo', keywords: ['map', 'five', 'pins', 'Tokyo'] },
@@ -181,6 +181,9 @@ let VISION_IMAGES = [
     { file: null, description: 'A weather dashboard panel showing temperature 28°C, humidity 65%, wind speed 12 km/h, and UV index 7 in four separate tiles', keywords: ['temperature', '28', 'humidity', '65', 'UV', '7'] },
     { file: null, description: 'A printed circuit board with fourteen resistors, eight capacitors, and one microcontroller chip labeled ATmega328P', keywords: ['circuit', 'fourteen', 'resistors', 'eight', 'capacitors', 'ATmega'] },
     { file: null, description: 'A hotel room floor plan: bedroom 18m² on the left, bathroom 6m² top right, living area 22m² bottom right, with a corridor connecting all rooms', keywords: ['floor', 'plan', 'bedroom', '18', 'bathroom', '6', 'living', '22'] },
+    { file: null, description: 'A spreadsheet showing three rows of employee data: ID 1001 Alice Engineering $85,000, ID 1002 Bob Marketing $72,000, ID 1003 Carol HR $91,000, with a Total row showing $248,000', keywords: ['alice', 'engineering', '85000', 'carol', '91000', 'total', '248000'] },
+    { file: null, description: 'A shopping cart UI showing three items: Laptop $1,299, Wireless Mouse $49, Mechanical Keyboard $89; subtotal $1,437, shipping $15, total $1,452', keywords: ['laptop', '1299', 'mouse', '49', 'keyboard', '89', 'total', '1452'] },
+    { file: null, description: 'An office floor plan 12m wide by 8m deep divided into four equal cubicles, a reception desk near the entrance, and two windows on the north wall', keywords: ['floor', 'plan', '12', '8', 'four', 'cubicles', 'reception', 'windows'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -354,6 +357,12 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '"babad"', expected: '"bab"' },{ input: '"cbbd"', expected: '"bb"' },{ input: '"a"', expected: '"a"' },{ input: '"racecar"', expected: '"racecar"' }] },
     { title: '0-1 Knapsack', description: 'Write `solve(weights, values, capacity)` — given items with weights and values arrays and a knapsack of given capacity, return the maximum total value (each item used at most once).',
       testCases: [{ input: '[1,3,4,5], [1,4,5,7], 7', expected: '9' },{ input: '[2,3,4,5], [3,4,5,6], 5', expected: '7' },{ input: '[1], [10], 0', expected: '0' }] },
+    { title: 'Jump Game', description: 'Write `solve(nums)` — given an array where each element is the max jump length from that position, return true if you can reach the last index from index 0.',
+      testCases: [{ input: '[2,3,1,1,4]', expected: 'true' },{ input: '[3,2,1,0,4]', expected: 'false' },{ input: '[0]', expected: 'true' },{ input: '[1,0,0]', expected: 'false' }] },
+    { title: 'Product of Array Except Self', description: 'Write `solve(nums)` — return an array where each element is the product of all other elements in the original array. Do not use division.',
+      testCases: [{ input: '[1,2,3,4]', expected: '[24,12,8,6]' },{ input: '[2,3,4,5]', expected: '[60,40,30,24]' },{ input: '[-1,1,0,-3,3]', expected: '[0,0,9,0,0]' }] },
+    { title: 'House Robber', description: 'Write `solve(nums)` — you are a robber; you cannot rob two adjacent houses. Return the maximum amount you can rob from an array of house values.',
+      testCases: [{ input: '[1,2,3,1]', expected: '4' },{ input: '[2,7,9,3,1]', expected: '12' },{ input: '[0]', expected: '0' },{ input: '[2,1]', expected: '2' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -367,8 +376,8 @@ let RESPONSE_QUESTIONS = [
     { question: 'What is the capital of France?', expectedKeywords: ['paris'] },
     { question: 'What is 17 × 23?', expectedKeywords: ['391'] },
     { question: 'Name the largest planet in our solar system.', expectedKeywords: ['jupiter'] },
-    { question: 'What is the longest river in the world?', expectedKeywords: ['nile', 'amazon'] },
     { question: 'What is 13 × 17?', expectedKeywords: ['221'] },
+    { question: 'What is 2 to the power of 10?', expectedKeywords: ['1024'] },
     // ── Medium tier (50%) — multi-step math, applied reasoning ──
     { question: 'A pool fills in 3 hours with pipe A alone and 6 hours with pipe B alone. How many hours to fill it with both pipes open together?', expectedKeywords: ['2'] },
     { question: 'A train travels 240 km in 3 hours. What is its average speed in km/h?', expectedKeywords: ['80'] },
@@ -378,9 +387,13 @@ let RESPONSE_QUESTIONS = [
     { question: 'A shirt originally costs $80 and is discounted by 25%. What is the sale price?', expectedKeywords: ['60'] },
     { question: 'What is the sum of all integers from 1 to 100?', expectedKeywords: ['5050'] },
     { question: 'How many prime numbers are there between 1 and 20?', expectedKeywords: ['8'] },
-    { question: 'All cats are mammals. All mammals are warm-blooded. Are all cats warm-blooded?', expectedKeywords: ['yes'] },
     { question: 'What is the speed of light in km/s (approximately)?', expectedKeywords: ['300000', '299792'] },
     { question: 'What year did the Berlin Wall fall?', expectedKeywords: ['1989'] },
+    { question: 'A car drives 150 km at 60 km/h, then 120 km at 80 km/h. What is the total travel time in hours?', expectedKeywords: ['4'] },
+    { question: 'A store sells apples for $0.75 each and oranges for $1.20 each. If someone buys 4 apples and 3 oranges, what is the total cost?', expectedKeywords: ['6.6', '6.60'] },
+    { question: 'How many times does the digit 7 appear when writing all integers from 1 to 100 inclusive?', expectedKeywords: ['20'] },
+    { question: 'Water flows into a tank through pipe X at 12 liters per minute and out through pipe Y at 8 liters per minute. The tank currently holds 40 liters. How many minutes until the tank holds 100 liters?', expectedKeywords: ['15'] },
+    { question: 'A car travels from city A to city B at 90 km/h, then returns at 60 km/h. What is the average speed for the entire round trip in km/h?', expectedKeywords: ['72'] },
     // ── Hard tier (30%) — multi-step reasoning, tricky logic ──
     { question: 'A clock shows 3:15. What is the exact angle in degrees between the hour and minute hands?', expectedKeywords: ['7.5'] },
     { question: 'A farmer has chickens and cows. Together they have 30 heads and 74 legs. How many chickens does the farmer have?', expectedKeywords: ['23'] },
@@ -390,12 +403,10 @@ let RESPONSE_QUESTIONS = [
     { question: 'A ball is dropped from 100 meters. Each bounce reaches half the previous height. What is the total distance traveled after exactly 3 bounces (including all ups and downs)?', expectedKeywords: ['275'] },
     { question: 'Three people check into a hotel room that costs $30. They each pay $10. The manager realizes the room is only $25 and gives $5 to the bellboy to return. The bellboy keeps $2 and gives $1 back to each person. Each person paid $9 (total $27) plus $2 the bellboy kept = $29. Where is the missing dollar?', expectedKeywords: ['no missing', 'accounting', 'error', 'fallacy'] },
     { question: 'A snail climbs 3 meters up a wall during the day but slides back 2 meters at night. If the wall is 10 meters high, how many days does it take the snail to reach the top?', expectedKeywords: ['8'] },
-    // ── Additional medium/hard questions ──
-    { question: 'A car drives 150 km at 60 km/h, then 120 km at 80 km/h. What is the total travel time in hours?', expectedKeywords: ['4'] },
     { question: 'In how many different ways can the letters of the word "LISTEN" be arranged?', expectedKeywords: ['720'] },
-    { question: 'What is 2 to the power of 10?', expectedKeywords: ['1024'] },
-    { question: 'A store sells apples for $0.75 each and oranges for $1.20 each. If someone buys 4 apples and 3 oranges, what is the total cost?', expectedKeywords: ['6.6', '6.60'] },
     { question: 'The sides of a right triangle are in the ratio 3:4:5. If the hypotenuse is 20 cm, what is the perimeter?', expectedKeywords: ['48'] },
+    { question: 'A fair coin is flipped four times. What is the probability of getting exactly two heads? Express as a simplified fraction.', expectedKeywords: ['3/8'] },
+    { question: 'A store wants to make a 40% profit on the selling price (not on the cost) of an item that costs $60. What should the selling price be?', expectedKeywords: ['100'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -466,6 +477,9 @@ let TTS_PHRASES = [
     { text: 'Your one-time verification code is 8 4 3 7 2 and expires in five minutes', keywords: ['verification', 'code', '84372', 'five', 'minutes'] },
     { text: 'The SQL query selects all records from the users table where the account status equals active and the score is greater than 100', keywords: ['SQL', 'query', 'users', 'active', 'score', '100'] },
     { text: 'Bernoulli and Euler each contributed foundational theorems to both fluid dynamics and graph theory', keywords: ['bernoulli', 'euler', 'fluid', 'dynamics', 'graph', 'theory'] },
+    { text: 'Please confirm your itinerary: flight QR-517 departing Doha at 0230 local time arriving Heathrow Terminal 4 at 0615', keywords: ['QR', '517', 'Doha', 'Heathrow', 'Terminal'] },
+    { text: 'The compound interest formula states A equals P times the quantity one plus r divided by n raised to the power of n times t', keywords: ['compound', 'interest', 'principal', 'power', 'rate'] },
+    { text: 'The international dialing code for the Netherlands is plus 31 and for New Zealand is plus 64, not to be confused with each other', keywords: ['netherlands', '31', 'new zealand', '64', 'dialing'] },
 ];
 
 // ============================================
