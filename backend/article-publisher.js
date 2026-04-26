@@ -128,6 +128,11 @@ let redditTokenCache = { access_token: null, expires_at: 0 };
 // LinkedIn (OAuth2 Bearer)
 const LINKEDIN_ACCESS_TOKEN = process.env.LINKEDIN_ACCESS_TOKEN;
 const LINKEDIN_PERSON_URN = process.env.LINKEDIN_PERSON_URN; // e.g. "urn:li:person:abc123"
+const LINKEDIN_CRED_KEYS = ['LINKEDIN_ACCESS_TOKEN', 'LINKEDIN_PERSON_URN'];
+const LINKEDIN_CREDS_MISSING = {
+    error: 'LinkedIn credentials not set for this device',
+    setup_url: '/portal/publisher-setup.html'
+};
 
 // Mastodon (Bearer token, any instance)
 const MASTODON_ACCESS_TOKEN = process.env.MASTODON_ACCESS_TOKEN;
@@ -1930,19 +1935,28 @@ router.delete('/reddit/post/:postId', async (req, res) => {
 // Auth: Bearer token | Content: text/article
 // ============================================
 
-function requireLinkedin(res) {
-    if (!LINKEDIN_ACCESS_TOKEN || !LINKEDIN_PERSON_URN) {
-        res.status(501).json({ error: 'LinkedIn not configured (LINKEDIN_ACCESS_TOKEN, LINKEDIN_PERSON_URN missing)' });
-        return false;
+// Resolve LinkedIn credentials (vault-first, env fallback). Both access token AND person URN required.
+async function resolveLinkedinCreds(deviceId) {
+    if (deviceId && typeof _getDeviceVar === 'function') {
+        try {
+            const tok = await _getDeviceVar(deviceId, 'LINKEDIN_ACCESS_TOKEN');
+            const urn = await _getDeviceVar(deviceId, 'LINKEDIN_PERSON_URN');
+            if (typeof tok === 'string' && tok.length > 0 && typeof urn === 'string' && urn.length > 0) {
+                return { accessToken: tok, personUrn: urn, source: 'vault' };
+            }
+        } catch (_) { /* fall through to env */ }
     }
-    return true;
+    if (LINKEDIN_ACCESS_TOKEN && LINKEDIN_PERSON_URN) {
+        return { accessToken: LINKEDIN_ACCESS_TOKEN, personUrn: LINKEDIN_PERSON_URN, source: 'env' };
+    }
+    return { accessToken: null, personUrn: null, source: 'missing' };
 }
 
-async function linkedinRequest(method, path, body = null) {
+async function linkedinRequest(method, path, body = null, accessToken = LINKEDIN_ACCESS_TOKEN) {
     const options = {
         method,
         headers: {
-            Authorization: `Bearer ${LINKEDIN_ACCESS_TOKEN}`,
+            Authorization: `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
             'X-Restli-Protocol-Version': '2.0.0',
             'LinkedIn-Version': '202501'
@@ -1962,10 +1976,12 @@ async function linkedinRequest(method, path, body = null) {
 
 // GET /api/publisher/linkedin/me
 router.get('/linkedin/me', async (req, res) => {
-    if (!requireLinkedin(res)) return;
     try {
-        const data = await linkedinRequest('GET', '/v2/userinfo');
-        res.json({ success: true, user: { sub: data.sub, name: data.name, email: data.email, picture: data.picture } });
+        const deviceId = req.query?.deviceId || null;
+        const { accessToken, source } = await resolveLinkedinCreds(deviceId);
+        if (!accessToken) return res.status(400).json(LINKEDIN_CREDS_MISSING);
+        const data = await linkedinRequest('GET', '/v2/userinfo', null, accessToken);
+        res.json({ success: true, user: { sub: data.sub, name: data.name, email: data.email, picture: data.picture }, _credSource: source });
     } catch (err) {
         res.status(err.status || 500).json({ error: err.message });
     }
@@ -1973,13 +1989,15 @@ router.get('/linkedin/me', async (req, res) => {
 
 // POST /api/publisher/linkedin/publish — Create a post (text or article)
 router.post('/linkedin/publish', express.json(), async (req, res) => {
-    if (!requireLinkedin(res)) return;
-    const { text, articleUrl, articleTitle, articleDescription, visibility } = req.body;
+    const { text, articleUrl, articleTitle, articleDescription, visibility, deviceId } = req.body;
     if (!text) return res.status(400).json({ error: 'text required' });
 
     try {
+        const { accessToken, personUrn, source } = await resolveLinkedinCreds(deviceId || null);
+        if (!accessToken) return res.status(400).json(LINKEDIN_CREDS_MISSING);
+
         const postBody = {
-            author: LINKEDIN_PERSON_URN,
+            author: personUrn,
             commentary: text,
             visibility: visibility || 'PUBLIC',
             distribution: { feedDistribution: 'MAIN_FEED', targetEntities: [], thirdPartyDistributionChannels: [] },
@@ -1997,9 +2015,9 @@ router.post('/linkedin/publish', express.json(), async (req, res) => {
             };
         }
 
-        const data = await linkedinRequest('POST', '/rest/posts', postBody);
+        const data = await linkedinRequest('POST', '/rest/posts', postBody, accessToken);
         // LinkedIn returns 201 with x-restli-id header for the post URN
-        console.log(`[Publisher] LinkedIn post created`);
+        console.log(`[Publisher] LinkedIn post created (creds: ${source})`);
         res.json({ success: true, platform: 'linkedin', postId: data?.id || 'created' });
     } catch (err) {
         console.error('[Publisher] LinkedIn publish error:', err);
@@ -2008,11 +2026,13 @@ router.post('/linkedin/publish', express.json(), async (req, res) => {
 });
 
 // DELETE /api/publisher/linkedin/post/:postUrn — Delete a post
-router.delete('/linkedin/post/:postUrn', async (req, res) => {
-    if (!requireLinkedin(res)) return;
+router.delete('/linkedin/post/:postUrn', express.json(), async (req, res) => {
     const { postUrn } = req.params;
+    const deviceId = req.body?.deviceId || req.query?.deviceId || null;
     try {
-        await linkedinRequest('DELETE', `/rest/posts/${encodeURIComponent(postUrn)}`);
+        const { accessToken } = await resolveLinkedinCreds(deviceId);
+        if (!accessToken) return res.status(400).json(LINKEDIN_CREDS_MISSING);
+        await linkedinRequest('DELETE', `/rest/posts/${encodeURIComponent(postUrn)}`, null, accessToken);
         console.log(`[Publisher] LinkedIn post deleted: ${postUrn}`);
         res.json({ success: true, platform: 'linkedin', deleted: postUrn });
     } catch (err) {
