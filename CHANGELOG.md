@@ -1,3 +1,10 @@
+# [1.1100.0](https://github.com/HankHuang0516/EClaw/compare/v1.1099.0...v1.1100.0) (2026-04-26)
+
+
+### Features
+
+* **publisher:** Reddit vault-first multi-tenant support ([#2149](https://github.com/HankHuang0516/EClaw/issues/2149)) ([e03709d](https://github.com/HankHuang0516/EClaw/commit/e03709da809429649f47846ae47991633ff039c5))
+
 # [1.1099.0](https://github.com/HankHuang0516/EClaw/compare/v1.1098.0...v1.1099.0) (2026-04-26)
 
 
