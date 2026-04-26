@@ -527,6 +527,9 @@
             const pop = document.getElementById('subsystemsPop');
             const btn = document.getElementById('btnSubsystems');
             if (!pop || !btn) return;
+            // Re-render on open so the list always reflects live cy state
+            // (covers empty-graph load where renderGraph never ran).
+            if (open) renderSubsystemsPop();
             pop.classList.toggle('active', !!open);
             btn.setAttribute('aria-expanded', open ? 'true' : 'false');
         }
