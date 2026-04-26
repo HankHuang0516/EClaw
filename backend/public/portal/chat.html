@@ -3194,9 +3194,22 @@
                 const pq = localStorage.getItem('eclaw_pending_quote');
                 if (pq) {
                     localStorage.removeItem('eclaw_pending_quote');
-                    const { source, title, excerpt, ts } = JSON.parse(pq);
+                    const { source, title, excerpt, prefillInput, ts } = JSON.parse(pq);
                     if (Date.now() - ts < 120000) { // within 2 minutes
                         quoteToChat(source, title, excerpt || '');
+                        // prefillInput: drop a chip token (or any text) directly
+                        // into the input so users can press send without typing.
+                        // Used by mindmap chip 📌 引用 — delivers mindmap_<uuid>
+                        // / card_<id> token, which autolink-chip then renders
+                        // as a chip preview in the sent message.
+                        if (prefillInput) {
+                            const inp = document.getElementById('messageInput');
+                            if (inp) {
+                                inp.value = prefillInput;
+                                inp.focus();
+                                try { inp.setSelectionRange(prefillInput.length, prefillInput.length); } catch(e2) {}
+                            }
+                        }
                     }
                 }
             } catch(e) {}
@@ -3232,8 +3245,16 @@
             window.addEventListener('message', (e) => {
                 if (e.origin !== window.location.origin) return;
                 if (!e.data || e.data.type !== 'eclaw_quote') return;
-                const { source, title, excerpt } = e.data;
+                const { source, title, excerpt, prefillInput } = e.data;
                 quoteToChat(source, title, excerpt || '');
+                if (prefillInput) {
+                    const inp = document.getElementById('messageInput');
+                    if (inp) {
+                        inp.value = String(prefillInput);
+                        inp.focus();
+                        try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch(e2) {}
+                    }
+                }
             });
 
             // Mount @mention autocomplete on the message input.

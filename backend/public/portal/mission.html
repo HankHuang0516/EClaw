@@ -1911,11 +1911,15 @@
             document.getElementById('dialogContainer').innerHTML = '';
         }
 
-        function quoteToChat(source, title, excerpt) {
+        function quoteToChat(source, title, excerpt, opts) {
+            // opts.prefillInput — optional string to pre-fill the message input
+            // on the chat page (used by mind-map chip cite to deliver a chip
+            // token straight into the input, so user just hits send).
+            const prefillInput = opts && opts.prefillInput ? String(opts.prefillInput) : '';
             if (window.self !== window.top) {
-                window.parent.postMessage({ type: 'eclaw_quote', source, title, excerpt: excerpt || '' }, window.location.origin);
+                window.parent.postMessage({ type: 'eclaw_quote', source, title, excerpt: excerpt || '', prefillInput }, window.location.origin);
             } else {
-                localStorage.setItem('eclaw_pending_quote', JSON.stringify({ source, title, excerpt: excerpt || '', ts: Date.now() }));
+                localStorage.setItem('eclaw_pending_quote', JSON.stringify({ source, title, excerpt: excerpt || '', prefillInput, ts: Date.now() }));
                 window.location.href = '/portal/chat.html';
             }
         }
