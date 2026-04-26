@@ -117,6 +117,11 @@ const TUMBLR_CONSUMER_SECRET = process.env.TUMBLR_CONSUMER_SECRET;
 const TUMBLR_ACCESS_TOKEN = process.env.TUMBLR_ACCESS_TOKEN;
 const TUMBLR_ACCESS_TOKEN_SECRET = process.env.TUMBLR_ACCESS_TOKEN_SECRET;
 const TUMBLR_API_BASE = 'https://api.tumblr.com/v2';
+const TUMBLR_CRED_KEYS = ['TUMBLR_CONSUMER_KEY', 'TUMBLR_CONSUMER_SECRET', 'TUMBLR_ACCESS_TOKEN', 'TUMBLR_ACCESS_TOKEN_SECRET'];
+const TUMBLR_CREDS_MISSING = {
+    error: 'Tumblr credentials not set for this device',
+    setup_url: '/portal/publisher-setup.html'
+};
 
 // Reddit (OAuth2 password grant — script app)
 const REDDIT_CLIENT_ID = process.env.REDDIT_CLIENT_ID;
@@ -1707,17 +1712,37 @@ router.delete('/wechat/draft/:mediaId', async (req, res) => {
 // Auth: OAuth 1.0a | Content: NPF (Neue Post Format) / HTML
 // ============================================
 
-function requireTumblr(res) {
-    if (!TUMBLR_CONSUMER_KEY || !TUMBLR_ACCESS_TOKEN) {
-        res.status(501).json({ error: 'Tumblr not configured (TUMBLR_CONSUMER_KEY, TUMBLR_ACCESS_TOKEN missing)' });
-        return false;
+// Resolve Tumblr OAuth1.0a credentials (vault-first, env fallback). All 4 keys atomic.
+async function resolveTumblrCreds(deviceId) {
+    if (deviceId && typeof _getDeviceVar === 'function') {
+        try {
+            const ck = await _getDeviceVar(deviceId, 'TUMBLR_CONSUMER_KEY');
+            const cs = await _getDeviceVar(deviceId, 'TUMBLR_CONSUMER_SECRET');
+            const at = await _getDeviceVar(deviceId, 'TUMBLR_ACCESS_TOKEN');
+            const ats = await _getDeviceVar(deviceId, 'TUMBLR_ACCESS_TOKEN_SECRET');
+            if (typeof ck === 'string' && ck.length > 0
+                && typeof cs === 'string' && cs.length > 0
+                && typeof at === 'string' && at.length > 0
+                && typeof ats === 'string' && ats.length > 0) {
+                return { consumerKey: ck, consumerSecret: cs, accessToken: at, accessTokenSecret: ats, source: 'vault' };
+            }
+        } catch (_) { /* fall through to env */ }
     }
-    return true;
+    if (TUMBLR_CONSUMER_KEY && TUMBLR_CONSUMER_SECRET && TUMBLR_ACCESS_TOKEN && TUMBLR_ACCESS_TOKEN_SECRET) {
+        return {
+            consumerKey: TUMBLR_CONSUMER_KEY,
+            consumerSecret: TUMBLR_CONSUMER_SECRET,
+            accessToken: TUMBLR_ACCESS_TOKEN,
+            accessTokenSecret: TUMBLR_ACCESS_TOKEN_SECRET,
+            source: 'env'
+        };
+    }
+    return { consumerKey: null, consumerSecret: null, accessToken: null, accessTokenSecret: null, source: 'missing' };
 }
 
-function getTumblrOAuth() {
+function getTumblrOAuth(creds) {
     return OAuth({
-        consumer: { key: TUMBLR_CONSUMER_KEY, secret: TUMBLR_CONSUMER_SECRET },
+        consumer: { key: creds.consumerKey, secret: creds.consumerSecret },
         signature_method: 'HMAC-SHA1',
         hash_function(base_string, key) {
             return crypto.createHmac('sha1', key).update(base_string).digest('base64');
@@ -1725,10 +1750,16 @@ function getTumblrOAuth() {
     });
 }
 
-async function tumblrRequest(method, path, body = null) {
+async function tumblrRequest(method, path, body = null, creds = null) {
+    const effectiveCreds = creds || {
+        consumerKey: TUMBLR_CONSUMER_KEY,
+        consumerSecret: TUMBLR_CONSUMER_SECRET,
+        accessToken: TUMBLR_ACCESS_TOKEN,
+        accessTokenSecret: TUMBLR_ACCESS_TOKEN_SECRET
+    };
     const url = `${TUMBLR_API_BASE}${path}`;
-    const oauth = getTumblrOAuth();
-    const token = { key: TUMBLR_ACCESS_TOKEN, secret: TUMBLR_ACCESS_TOKEN_SECRET };
+    const oauth = getTumblrOAuth(effectiveCreds);
+    const token = { key: effectiveCreds.accessToken, secret: effectiveCreds.accessTokenSecret };
     const authHeader = oauth.toHeader(oauth.authorize({ url, method }, token));
 
     const options = {
@@ -1749,9 +1780,11 @@ async function tumblrRequest(method, path, body = null) {
 
 // GET /api/publisher/tumblr/me — Get user info + blogs
 router.get('/tumblr/me', async (req, res) => {
-    if (!requireTumblr(res)) return;
+    const deviceId = req.query.deviceId;
+    const creds = await resolveTumblrCreds(deviceId);
+    if (creds.source === 'missing') return res.status(501).json(TUMBLR_CREDS_MISSING);
     try {
-        const data = await tumblrRequest('GET', '/user/info');
+        const data = await tumblrRequest('GET', '/user/info', null, creds);
         const user = data.user;
         res.json({
             success: true,
@@ -1764,7 +1797,9 @@ router.get('/tumblr/me', async (req, res) => {
 
 // POST /api/publisher/tumblr/publish
 router.post('/tumblr/publish', express.json(), async (req, res) => {
-    if (!requireTumblr(res)) return;
+    const deviceId = req.body.deviceId;
+    const creds = await resolveTumblrCreds(deviceId);
+    if (creds.source === 'missing') return res.status(501).json(TUMBLR_CREDS_MISSING);
     const { blogName, title, content, tags, state, includeReferralCTA } = req.body;
     if (!blogName || !content) return res.status(400).json({ error: 'blogName, content required' });
 
@@ -1781,7 +1816,7 @@ router.post('/tumblr/publish', express.json(), async (req, res) => {
             postBody.content.unshift({ type: 'text', subtype: 'heading1', text: title });
         }
 
-        const data = await tumblrRequest('POST', `/blog/${blogName}/posts`, postBody);
+        const data = await tumblrRequest('POST', `/blog/${blogName}/posts`, postBody, creds);
         console.log(`[Publisher] Tumblr post created: ${data.id} on ${blogName}`);
         res.json({
             success: true, platform: 'tumblr', postId: String(data.id),
@@ -1795,13 +1830,15 @@ router.post('/tumblr/publish', express.json(), async (req, res) => {
 
 // DELETE /api/publisher/tumblr/post/:postId
 router.delete('/tumblr/post/:postId', async (req, res) => {
-    if (!requireTumblr(res)) return;
+    const deviceId = req.query.deviceId;
+    const creds = await resolveTumblrCreds(deviceId);
+    if (creds.source === 'missing') return res.status(501).json(TUMBLR_CREDS_MISSING);
     const { postId } = req.params;
     const { blogName } = req.query;
     if (!blogName) return res.status(400).json({ error: 'blogName query param required' });
 
     try {
-        await tumblrRequest('POST', `/blog/${blogName}/post/delete`, { id: postId });
+        await tumblrRequest('POST', `/blog/${blogName}/post/delete`, { id: postId }, creds);
         console.log(`[Publisher] Tumblr post deleted: ${postId}`);
         res.json({ success: true, platform: 'tumblr', deleted: postId });
     } catch (err) {
