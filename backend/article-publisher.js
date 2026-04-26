@@ -64,6 +64,11 @@ const BLOGGER_CLIENT_ID = process.env.BLOGGER_CLIENT_ID;
 const BLOGGER_CLIENT_SECRET = process.env.BLOGGER_CLIENT_SECRET;
 const BLOGGER_REDIRECT_URI = process.env.BLOGGER_REDIRECT_URI || 'https://eclawbot.com/api/publisher/blogger/oauth/callback';
 const BLOGGER_SCOPE = 'https://www.googleapis.com/auth/blogger';
+const BLOGGER_CRED_KEYS = ['BLOGGER_CLIENT_ID', 'BLOGGER_CLIENT_SECRET'];
+const BLOGGER_CREDS_MISSING = {
+    error: 'Blogger credentials not set for this device',
+    setup_url: '/portal/publisher-setup.html'
+};
 const HASHNODE_API_TOKEN = process.env.HASHNODE_API_TOKEN;
 const HASHNODE_GQL_ENDPOINT = 'https://gql.hashnode.com';
 const HASHNODE_CRED_KEYS = ['HASHNODE_API_TOKEN'];
@@ -376,14 +381,38 @@ function wpExpiryWarning() {
 // BLOGGER OAUTH FLOW
 // ============================================
 
+// Resolve Blogger OAuth-app credentials (vault-first, env fallback). 2-key
+// atomic: vault must have both CLIENT_ID and CLIENT_SECRET, or fall back to
+// env entirely. The per-user refresh_token is NOT a tenant credential — it's
+// stored per-device in blogger_tokens DB table after each OAuth callback.
+async function resolveBloggerCreds(deviceId) {
+    if (deviceId && typeof _getDeviceVar === 'function') {
+        try {
+            const ci = await _getDeviceVar(deviceId, 'BLOGGER_CLIENT_ID');
+            const cs = await _getDeviceVar(deviceId, 'BLOGGER_CLIENT_SECRET');
+            if (typeof ci === 'string' && ci.length > 0
+                && typeof cs === 'string' && cs.length > 0) {
+                return { clientId: ci, clientSecret: cs, source: 'vault' };
+            }
+        } catch (_) { /* fall through to env */ }
+    }
+    if (BLOGGER_CLIENT_ID && BLOGGER_CLIENT_SECRET) {
+        return { clientId: BLOGGER_CLIENT_ID, clientSecret: BLOGGER_CLIENT_SECRET, source: 'env' };
+    }
+    return { clientId: null, clientSecret: null, source: 'missing' };
+}
+
 // Step 1: Start OAuth — redirect user to Google consent
-router.get('/blogger/oauth/start', (req, res) => {
+router.get('/blogger/oauth/start', async (req, res) => {
     const { deviceId } = req.query;
     if (!deviceId) return res.status(400).json({ error: 'deviceId required' });
 
+    const creds = await resolveBloggerCreds(deviceId);
+    if (creds.source === 'missing') return res.status(501).json(BLOGGER_CREDS_MISSING);
+
     const state = crypto.randomBytes(16).toString('hex') + ':' + deviceId;
     const params = new URLSearchParams({
-        client_id: BLOGGER_CLIENT_ID,
+        client_id: creds.clientId,
         redirect_uri: BLOGGER_REDIRECT_URI,
         response_type: 'code',
         scope: BLOGGER_SCOPE,
@@ -403,14 +432,17 @@ router.get('/blogger/oauth/callback', async (req, res) => {
     const deviceId = state.split(':').slice(1).join(':');
 
     try {
+        const creds = await resolveBloggerCreds(deviceId);
+        if (creds.source === 'missing') return res.status(501).json(BLOGGER_CREDS_MISSING);
+
         // Exchange code for tokens
         const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
                 code,
-                client_id: BLOGGER_CLIENT_ID,
-                client_secret: BLOGGER_CLIENT_SECRET,
+                client_id: creds.clientId,
+                client_secret: creds.clientSecret,
                 redirect_uri: BLOGGER_REDIRECT_URI,
                 grant_type: 'authorization_code'
             })
@@ -456,12 +488,17 @@ async function refreshBloggerToken(deviceId) {
     if (!entry?.refresh_token) throw new Error('No refresh token for device ' + deviceId);
     if (entry.expires_at > Date.now()) return entry.access_token; // still valid
 
+    const creds = await resolveBloggerCreds(deviceId);
+    if (creds.source === 'missing') {
+        throw new Error('Blogger OAuth-app credentials not set for device ' + deviceId);
+    }
+
     const res = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
-            client_id: BLOGGER_CLIENT_ID,
-            client_secret: BLOGGER_CLIENT_SECRET,
+            client_id: creds.clientId,
+            client_secret: creds.clientSecret,
             refresh_token: entry.refresh_token,
             grant_type: 'refresh_token'
         })
