@@ -1,3 +1,10 @@
+# [1.1102.0](https://github.com/HankHuang0516/EClaw/compare/v1.1101.0...v1.1102.0) (2026-04-26)
+
+
+### Features
+
+* **publisher:** vault-first Blogger creds (multi-tenant 8/10) ([#2151](https://github.com/HankHuang0516/EClaw/issues/2151)) ([e7a432a](https://github.com/HankHuang0516/EClaw/commit/e7a432acc7aa8fe0d7e4866066bede006414eeb7))
+
 # [1.1101.0](https://github.com/HankHuang0516/EClaw/compare/v1.1100.0...v1.1101.0) (2026-04-26)
 
 
