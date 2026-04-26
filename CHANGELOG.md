@@ -1,3 +1,10 @@
+## [1.1093.2](https://github.com/HankHuang0516/EClaw/compare/v1.1093.1...v1.1093.2) (2026-04-26)
+
+
+### Bug Fixes
+
+* **mindmap:** wire mindmap node citation chip into chat ([#2140](https://github.com/HankHuang0516/EClaw/issues/2140)) ([1968d50](https://github.com/HankHuang0516/EClaw/commit/1968d50e48cf66ea6f36b5522a39dcbc567f58d4))
+
 ## [1.1093.1](https://github.com/HankHuang0516/EClaw/compare/v1.1093.0...v1.1093.1) (2026-04-26)
 
 
