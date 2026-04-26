@@ -4811,6 +4811,9 @@ const TRANSLATIONS = {
         "mindmap_zoom_l0_label": "Overview",
         "mindmap_zoom_l1_label": "Topics",
         "mindmap_zoom_l2_label": "Detail",
+        "mindmap_subsystems": "Subsystems",
+        "mindmap_subsystems_empty": "No subsystems — mark a node as \"Subgraph root\" to add one.",
+        "mindmap_untitled": "(untitled)",
         // Site Analytics (analytics.html)
         "analytics_title": "Site Analytics",
         "analytics_subtitle": "Anonymous pageviews on public and marketing pages. Portal pages have their own device-scoped telemetry.",

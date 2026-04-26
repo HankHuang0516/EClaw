@@ -212,10 +212,60 @@
             letter-spacing: 0.4px;
         }
 
+        .mm-subsystems-pop {
+            position: absolute;
+            top: 50px;
+            left: 8px;
+            min-width: 180px;
+            max-width: 260px;
+            max-height: 60vh;
+            overflow-y: auto;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 6px;
+            z-index: 16;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+            display: none;
+        }
+        .mm-subsystems-pop.active { display: block; }
+        .mm-subsystems-pop .mm-sub-empty {
+            color: var(--text-secondary);
+            font-size: 12px;
+            padding: 10px 8px;
+            text-align: center;
+        }
+        .mm-subsystems-pop button.mm-sub-item {
+            display: block;
+            width: 100%;
+            text-align: left;
+            background: transparent;
+            color: var(--text);
+            border: 1px solid transparent;
+            border-radius: 6px;
+            padding: 8px 10px;
+            margin: 2px 0;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: inherit;
+            line-height: 1.3;
+        }
+        .mm-subsystems-pop button.mm-sub-item:hover,
+        .mm-subsystems-pop button.mm-sub-item:focus-visible {
+            background: var(--input-bg);
+            border-color: var(--card-border);
+            outline: none;
+        }
+        .mm-subsystems-pop button.mm-sub-item.is-active {
+            background: rgba(255, 213, 79, 0.12);
+            border-color: #ffd54f;
+        }
+
         @media (max-width: 820px) {
             .mm-shell { grid-template-columns: 1fr; grid-template-rows: 60vh 1fr; }
             .mm-sidebar { border-left: none; border-top: 1px solid var(--card-border); }
             #cyNav { width: 120px; height: 90px; }
+            .mm-subsystems-pop { max-height: 40vh; left: 6px; right: 6px; min-width: 0; }
         }
 
         .mm-error {
@@ -237,12 +287,14 @@
         <div class="mm-canvas-wrap">
             <div class="mm-toolbar">
                 <button class="mm-tool-btn primary" id="btnAddNode">＋ <span data-i18n="mindmap_add_node">Add node</span></button>
+                <button class="mm-tool-btn" id="btnSubsystems" aria-haspopup="true" aria-expanded="false" aria-controls="subsystemsPop"><span data-i18n="mindmap_subsystems">Subsystems</span> ▾</button>
                 <button class="mm-tool-btn" id="btnAddEdge" data-i18n="mindmap_connect_mode">Connect mode</button>
                 <button class="mm-tool-btn" id="btnFit" data-i18n="mindmap_fit">Fit</button>
                 <button class="mm-tool-btn" id="btnReload" data-i18n="mindmap_reload">Reload</button>
                 <div class="mm-tier-badge" id="zoomTierLabel" title="">L1</div>
                 <div class="mm-status" id="mmStatus" data-i18n="mindmap_loading">Loading…</div>
             </div>
+            <div class="mm-subsystems-pop" id="subsystemsPop" role="menu" aria-labelledby="btnSubsystems"></div>
             <div class="mm-edge-mode-banner" id="edgeBanner" data-i18n="mindmap_edge_mode_hint">Pick the source node, then the target. Esc to cancel.</div>
             <div class="mm-focus-banner" id="focusBanner" data-i18n="mindmap_focus_mode_hint">Focus mode — click empty space or press Esc to exit</div>
             <div id="cy"></div>
@@ -382,7 +434,27 @@
             });
         }
 
-        function enterFocusMode(nodeId) {
+        // Smoothly pan/zoom the camera to a node so selection feels physical
+        // instead of teleporting. Used by node tap, subsystem quick-jump, and
+        // any other "focus this node" action. Caller picks the zoom target;
+        // we keep it within cytoscape's min/max bounds.
+        function animateCameraToNode(nodeId, opts = {}) {
+            if (!cy || !nodeId) return;
+            const node = cy.getElementById(nodeId);
+            if (!node || node.empty()) return;
+            const requestedZoom = opts.zoom != null ? opts.zoom : Math.max(cy.zoom(), 1.2);
+            const targetZoom = Math.min(Math.max(requestedZoom, cy.minZoom()), cy.maxZoom());
+            cy.stop(true, true);
+            cy.animate({
+                center: { eles: node },
+                zoom: targetZoom,
+            }, {
+                duration: opts.duration != null ? opts.duration : 600,
+                easing: 'ease-in-out',
+            });
+        }
+
+        function enterFocusMode(nodeId, opts = {}) {
             if (!cy || !nodeId) return;
             const focus = cy.getElementById(nodeId);
             if (!focus || focus.empty()) return;
@@ -395,6 +467,8 @@
             });
             const banner = document.getElementById('focusBanner');
             if (banner) banner.classList.add('active');
+            if (opts.animate !== false) animateCameraToNode(nodeId, opts);
+            updateSubsystemActiveState();
         }
 
         function exitFocusMode() {
@@ -406,6 +480,69 @@
             });
             const banner = document.getElementById('focusBanner');
             if (banner) banner.classList.remove('active');
+            updateSubsystemActiveState();
+        }
+
+        // Build the Subsystems quick-jump popover from cytoscape nodes flagged
+        // is_subgraph_root. Re-rendered after every loadGraph so the list
+        // tracks the live mindmap. Empty state prompts the user to mark a
+        // node as a subgraph root via the editor.
+        function renderSubsystemsPop() {
+            const pop = document.getElementById('subsystemsPop');
+            if (!pop || !cy) return;
+            const roots = cy.nodes('[?isRoot]').sort((a, b) => {
+                return (a.data('label') || '').localeCompare(b.data('label') || '');
+            });
+            pop.innerHTML = '';
+            if (!roots.length) {
+                const empty = document.createElement('div');
+                empty.className = 'mm-sub-empty';
+                empty.setAttribute('data-i18n', 'mindmap_subsystems_empty');
+                empty.textContent = i18n.t('mindmap_subsystems_empty', 'No subsystems — mark a node as "Subgraph root" to add one.');
+                pop.appendChild(empty);
+                return;
+            }
+            roots.forEach(node => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'mm-sub-item';
+                btn.setAttribute('role', 'menuitem');
+                btn.dataset.nodeId = node.id();
+                btn.textContent = node.data('label') || i18n.t('mindmap_untitled', '(untitled)');
+                btn.addEventListener('click', () => jumpToSubsystem(node.id()));
+                pop.appendChild(btn);
+            });
+            updateSubsystemActiveState();
+        }
+
+        function updateSubsystemActiveState() {
+            const pop = document.getElementById('subsystemsPop');
+            if (!pop) return;
+            pop.querySelectorAll('button.mm-sub-item').forEach(btn => {
+                btn.classList.toggle('is-active', btn.dataset.nodeId === focusNodeId);
+            });
+        }
+
+        function setSubsystemsPopOpen(open) {
+            const pop = document.getElementById('subsystemsPop');
+            const btn = document.getElementById('btnSubsystems');
+            if (!pop || !btn) return;
+            pop.classList.toggle('active', !!open);
+            btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+
+        function jumpToSubsystem(nodeId) {
+            if (!cy || !nodeId) return;
+            const node = cy.getElementById(nodeId);
+            if (!node || node.empty()) return;
+            setSubsystemsPopOpen(false);
+            cy.elements().unselect();
+            node.select();
+            showEditor(nodeId);
+            exitFocusMode();
+            // Slightly larger zoom + longer animation for explicit quick-jump
+            // so it feels like a deliberate camera move, not just selection.
+            enterFocusMode(nodeId, { zoom: 1.5, duration: 750 });
         }
 
         function creds() {
@@ -579,6 +716,7 @@
             }
             cy.fit(null, 40);
             applyZoomTier();
+            renderSubsystemsPop();
         }
 
         function initCytoscape() {
@@ -722,6 +860,7 @@
                 n.data('label', title);
                 n.data('type', body.node_type || 'topic');
                 n.data('isRoot', !!body.is_subgraph_root);
+                renderSubsystemsPop();
             } catch (e) {
                 showEditorError(i18n.t('mindmap_err_save', 'Save failed') + ': ' + (e.message || e));
             }
@@ -817,6 +956,19 @@
                 });
                 document.getElementById('btnFit').addEventListener('click', () => cy.fit(null, 40));
                 document.getElementById('btnReload').addEventListener('click', loadGraph);
+                document.getElementById('btnSubsystems').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const pop = document.getElementById('subsystemsPop');
+                    setSubsystemsPopOpen(!pop.classList.contains('active'));
+                });
+                document.addEventListener('click', (e) => {
+                    const pop = document.getElementById('subsystemsPop');
+                    const btn = document.getElementById('btnSubsystems');
+                    if (!pop || !btn) return;
+                    if (!pop.classList.contains('active')) return;
+                    if (pop.contains(e.target) || btn.contains(e.target)) return;
+                    setSubsystemsPopOpen(false);
+                });
                 document.getElementById('btnSaveNode').addEventListener('click', saveNode);
                 document.getElementById('btnDeleteNode').addEventListener('click', deleteSelectedNode);
                 document.getElementById('btnAddAnchor').addEventListener('click', attachAnchor);
@@ -824,6 +976,8 @@
 
                 document.addEventListener('keydown', (e) => {
                     if (e.key !== 'Escape') return;
+                    const pop = document.getElementById('subsystemsPop');
+                    if (pop && pop.classList.contains('active')) { setSubsystemsPopOpen(false); return; }
                     if (edgeMode) setEdgeMode(false);
                     if (focusMode) exitFocusMode();
                 });
