@@ -1,3 +1,10 @@
+## [1.1094.1](https://github.com/HankHuang0516/EClaw/compare/v1.1094.0...v1.1094.1) (2026-04-26)
+
+
+### Bug Fixes
+
+* **mindmap:** re-render Subsystems popover on every open ([#2143](https://github.com/HankHuang0516/EClaw/issues/2143)) ([ef0da2c](https://github.com/HankHuang0516/EClaw/commit/ef0da2cae4d9a7d64126d25eb689097808869e86))
+
 # [1.1094.0](https://github.com/HankHuang0516/EClaw/compare/v1.1093.2...v1.1094.0) (2026-04-26)
 
 
