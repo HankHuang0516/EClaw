@@ -1,3 +1,10 @@
+## [1.1093.1](https://github.com/HankHuang0516/EClaw/compare/v1.1093.0...v1.1093.1) (2026-04-26)
+
+
+### Bug Fixes
+
+* **info-page:** correct vector-memory cross-bot scope + embedding key prerequisite ([#2139](https://github.com/HankHuang0516/EClaw/issues/2139)) ([59bfba3](https://github.com/HankHuang0516/EClaw/commit/59bfba319feb39be7e75db33799114d488b07335))
+
 # [1.1093.0](https://github.com/HankHuang0516/EClaw/compare/v1.1092.1...v1.1093.0) (2026-04-25)
 
 
