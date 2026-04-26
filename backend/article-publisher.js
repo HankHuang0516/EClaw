@@ -99,6 +99,11 @@ let telegraphAccessToken = process.env.TELEGRAPH_ACCESS_TOKEN || null;
 // Qiita
 const QIITA_ACCESS_TOKEN = process.env.QIITA_ACCESS_TOKEN;
 const QIITA_API_BASE = 'https://qiita.com/api/v2';
+const QIITA_CRED_KEYS = ['QIITA_ACCESS_TOKEN'];
+const QIITA_CREDS_MISSING = {
+    error: 'Qiita credentials not set for this device',
+    setup_url: '/portal/publisher-setup.html'
+};
 
 // WeChat Official Account
 const WECHAT_APP_ID = process.env.WECHAT_APP_ID;
@@ -1413,16 +1418,23 @@ router.get('/telegraph/page/:path/views', async (req, res) => {
 // Rate limit: 1000 req/hr (authenticated)
 // ============================================
 
-function requireQiita(res) {
-    if (!QIITA_ACCESS_TOKEN) { res.status(501).json({ error: 'Qiita not configured (QIITA_ACCESS_TOKEN missing)' }); return false; }
-    return true;
+// Resolve the Qiita bearer token (vault-first, env fallback).
+async function resolveQiitaCreds(deviceId) {
+    if (deviceId && typeof _getDeviceVar === 'function') {
+        try {
+            const v = await _getDeviceVar(deviceId, QIITA_CRED_KEYS[0]);
+            if (typeof v === 'string' && v.length > 0) return { token: v, source: 'vault' };
+        } catch (_) { /* fall through to env */ }
+    }
+    if (QIITA_ACCESS_TOKEN) return { token: QIITA_ACCESS_TOKEN, source: 'env' };
+    return { token: null, source: 'missing' };
 }
 
-async function qiitaRequest(method, path, body = null) {
+async function qiitaRequest(method, path, body = null, token = QIITA_ACCESS_TOKEN) {
     const options = {
         method,
         headers: {
-            Authorization: `Bearer ${QIITA_ACCESS_TOKEN}`,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json'
         }
     };
@@ -1444,10 +1456,12 @@ async function qiitaRequest(method, path, body = null) {
 
 // GET /api/publisher/qiita/me
 router.get('/qiita/me', async (req, res) => {
-    if (!requireQiita(res)) return;
     try {
-        const data = await qiitaRequest('GET', '/authenticated_user');
-        res.json({ success: true, user: { id: data.id, name: data.name, items_count: data.items_count, followers_count: data.followers_count } });
+        const deviceId = req.query?.deviceId || null;
+        const { token, source } = await resolveQiitaCreds(deviceId);
+        if (!token) return res.status(400).json(QIITA_CREDS_MISSING);
+        const data = await qiitaRequest('GET', '/authenticated_user', null, token);
+        res.json({ success: true, user: { id: data.id, name: data.name, items_count: data.items_count, followers_count: data.followers_count }, _credSource: source });
     } catch (err) {
         res.status(err.status || 500).json({ error: err.message });
     }
@@ -1455,13 +1469,15 @@ router.get('/qiita/me', async (req, res) => {
 
 // POST /api/publisher/qiita/publish
 router.post('/qiita/publish', express.json(), async (req, res) => {
-    if (!requireQiita(res)) return;
     const rateLimitMsg = checkPublishRateLimit('qiita');
     if (rateLimitMsg) return res.status(429).json({ error: rateLimitMsg });
-    const { title, body, tags, private: isPrivate, tweet, includeReferralCTA } = req.body;
+    const { title, body, tags, private: isPrivate, tweet, includeReferralCTA, deviceId } = req.body;
     if (!title || !body) return res.status(400).json({ error: 'title, body required' });
 
     try {
+        const { token, source } = await resolveQiitaCreds(deviceId || null);
+        if (!token) return res.status(400).json(QIITA_CREDS_MISSING);
+
         const finalBody = appendReferralCTA(body, { format: 'md', skip: includeReferralCTA === false });
         const item = {
             title,
@@ -1472,9 +1488,9 @@ router.post('/qiita/publish', express.json(), async (req, res) => {
         };
         if (item.tags.length === 0) item.tags = [{ name: 'EClaw', versions: [] }];
 
-        const data = await qiitaRequest('POST', '/items', item);
+        const data = await qiitaRequest('POST', '/items', item, token);
         recordPublish('qiita');
-        console.log(`[Publisher] Qiita article created: ${data.id} "${title}"`);
+        console.log(`[Publisher] Qiita article created: ${data.id} "${title}" (creds: ${source})`);
         res.json({ success: true, platform: 'qiita', postId: data.id, url: data.url, title: data.title });
     } catch (err) {
         console.error('[Publisher] Qiita publish error:', err);
@@ -1484,18 +1500,20 @@ router.post('/qiita/publish', express.json(), async (req, res) => {
 
 // PUT /api/publisher/qiita/post/:postId
 router.put('/qiita/post/:postId', express.json(), async (req, res) => {
-    if (!requireQiita(res)) return;
     const { postId } = req.params;
-    const { title, body, tags, private: isPrivate } = req.body;
+    const { title, body, tags, private: isPrivate, deviceId } = req.body;
 
     try {
+        const { token } = await resolveQiitaCreds(deviceId || null);
+        if (!token) return res.status(400).json(QIITA_CREDS_MISSING);
+
         const item = {};
         if (title !== undefined) item.title = title;
         if (body !== undefined) item.body = body;
         if (isPrivate !== undefined) item.private = isPrivate;
         if (tags !== undefined) item.tags = tags.map(t => typeof t === 'string' ? { name: t, versions: [] } : t);
 
-        const data = await qiitaRequest('PATCH', `/items/${postId}`, item);
+        const data = await qiitaRequest('PATCH', `/items/${postId}`, item, token);
         console.log(`[Publisher] Qiita article updated: ${postId}`);
         res.json({ success: true, platform: 'qiita', postId: data.id, url: data.url, title: data.title });
     } catch (err) {
@@ -1505,11 +1523,13 @@ router.put('/qiita/post/:postId', express.json(), async (req, res) => {
 });
 
 // DELETE /api/publisher/qiita/post/:postId
-router.delete('/qiita/post/:postId', async (req, res) => {
-    if (!requireQiita(res)) return;
+router.delete('/qiita/post/:postId', express.json(), async (req, res) => {
     const { postId } = req.params;
+    const deviceId = req.body?.deviceId || req.query?.deviceId || null;
     try {
-        await qiitaRequest('DELETE', `/items/${postId}`);
+        const { token } = await resolveQiitaCreds(deviceId);
+        if (!token) return res.status(400).json(QIITA_CREDS_MISSING);
+        await qiitaRequest('DELETE', `/items/${postId}`, null, token);
         console.log(`[Publisher] Qiita article deleted: ${postId}`);
         res.json({ success: true, platform: 'qiita', deleted: postId });
     } catch (err) {
