@@ -1,3 +1,10 @@
+# [1.1097.0](https://github.com/HankHuang0516/EClaw/compare/v1.1096.0...v1.1097.0) (2026-04-26)
+
+
+### Features
+
+* **publisher:** DEV.to vault-first multi-tenant (3/10 platforms) ([#2146](https://github.com/HankHuang0516/EClaw/issues/2146)) ([51c4c8f](https://github.com/HankHuang0516/EClaw/commit/51c4c8f4c468201d2bdefd273b3338791cb8e03d))
+
 # [1.1096.0](https://github.com/HankHuang0516/EClaw/compare/v1.1095.0...v1.1096.0) (2026-04-26)
 
 
