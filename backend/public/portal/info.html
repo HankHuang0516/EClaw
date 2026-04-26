@@ -3679,14 +3679,14 @@ curl -s -X POST "https://eclawbot.com/api/mission/note/update" \
                     <div class="guide-panel" id="guide-publisher">
                         <header>
                             <h1 data-i18n="guide_pub_title">多平台發布 Publisher</h1>
-                            <p class="meta" data-i18n="guide_pub_meta">10 個內容平台 · 多租戶金鑰 roadmap · X / Hashnode / DEV.to / Qiita / LinkedIn 已上線、其餘 env-only</p>
+                            <p class="meta" data-i18n="guide_pub_meta">10 個內容平台 · 多租戶金鑰 roadmap · X / Hashnode / DEV.to / Qiita / LinkedIn / Reddit 已上線、其餘 env-only</p>
                         </header>
 
                         <h2 data-i18n="guide_pub_overview_h">總覽</h2>
                         <p data-i18n="guide_pub_overview_desc">
                             <code>backend/article-publisher.js</code> 把 10 個內容平台統一在 <code>/api/publisher/&lt;platform&gt;/*</code> 之下。
                             「多租戶」指的是<strong>每個 device 用自己金鑰庫裡的金鑰</strong>呼叫對應平台，而非全站共用 owner 一把 env 金鑰。
-                            目前 X、Hashnode、DEV.to、Qiita、LinkedIn 走完整的 vault-first 流程（<code>resolveXCreds()</code> / <code>resolveHashnodeCreds()</code> / <code>resolveDevtoCreds()</code> / <code>resolveQiitaCreds()</code> / <code>resolveLinkedinCreds()</code>），其餘平台仍是 env-only single-tenant。
+                            目前 X、Hashnode、DEV.to、Qiita、LinkedIn、Reddit 走完整的 vault-first 流程（<code>resolveXCreds()</code> / <code>resolveHashnodeCreds()</code> / <code>resolveDevtoCreds()</code> / <code>resolveQiitaCreds()</code> / <code>resolveLinkedinCreds()</code> / <code>resolveRedditCreds()</code>），其餘平台仍是 env-only single-tenant。
                         </p>
 
                         <h2 data-i18n="guide_pub_status_h">平台狀態總表</h2>
@@ -3767,7 +3767,7 @@ curl -s -X POST "https://eclawbot.com/api/mission/note/update" \
                                     <td>global</td>
                                     <td>OAuth2 password</td>
                                     <td><code>REDDIT_CLIENT_ID</code> · <code>REDDIT_CLIENT_SECRET</code> · <code>REDDIT_USERNAME</code> · <code>REDDIT_PASSWORD</code></td>
-                                    <td><span class="pub-badge pub-badge-env">⚙️ env-only</span></td>
+                                    <td><span class="pub-badge pub-badge-vault">🔓 vault-first</span></td>
                                 </tr>
                                 <tr>
                                     <td><strong>LinkedIn</strong></td>
@@ -3793,7 +3793,7 @@ curl -s -X POST "https://eclawbot.com/api/mission/note/update" \
                             </tbody>
                         </table>
 
-                        <h2 data-i18n="guide_pub_roadmap_h">Roadmap：把剩下 5 個平台搬上 vault-first</h2>
+                        <h2 data-i18n="guide_pub_roadmap_h">Roadmap：把剩下 4 個平台搬上 vault-first</h2>
                         <p data-i18n="guide_pub_roadmap_desc">每一個平台只要照 X 的樣板做：先在 publisher router 頂部加一個 <code>resolve&lt;Platform&gt;Creds(deviceId)</code>，先讀 <code>_getDeviceVar()</code>、若缺則 fallback 到 <code>process.env</code>，然後在每個 endpoint 把 <code>process.env.XXX</code> 換成 <code>(await resolve())</code> 結果。</p>
                         <ol>
                             <li data-i18n="guide_pub_roadmap_step1">複製 <code>resolveXCreds()</code> 為 <code>resolveTumblrCreds()</code>、<code>resolveRedditCreds()</code> ... 共 9 份。</li>
