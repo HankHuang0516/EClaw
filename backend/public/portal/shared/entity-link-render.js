@@ -25,7 +25,8 @@
         rule:     { color: '#f87171', bg: 'rgba(248,113,113,0.2)', icon: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' },
         listing:  { color: '#fb923c', bg: 'rgba(251,146,60,0.2)',  icon: 'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' },
         exam:     { color: '#2dd4bf', bg: 'rgba(45,212,191,0.2)',  icon: 'M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11' },
-        contract: { color: '#4ade80', bg: 'rgba(74,222,128,0.2)',  icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8' }
+        contract: { color: '#4ade80', bg: 'rgba(74,222,128,0.2)',  icon: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8' },
+        mindmap:  { color: '#a78bfa', bg: 'rgba(167,139,250,0.2)', icon: 'M12 2a3 3 0 0 1 3 3v2a3 3 0 0 1-3 3 3 3 0 0 1-3-3V5a3 3 0 0 1 3-3zM5 14a3 3 0 0 1 3 3v2a3 3 0 0 1-3 3 3 3 0 0 1-3-3v-2a3 3 0 0 1 3-3zm14 0a3 3 0 0 1 3 3v2a3 3 0 0 1-3 3 3 3 0 0 1-3-3v-2a3 3 0 0 1 3-3zM12 10v3M9 16l3-3 3 3' }
     };
 
     // Keyword → entity type. ASCII keys are matched case-insensitively (regex 'i').
@@ -42,7 +43,9 @@
         'exam': 'exam', 'exams': 'exam',
         '考試': 'exam', '考试': 'exam', '測驗': 'exam', '测验': 'exam',
         'contract': 'contract', 'contracts': 'contract',
-        '合約': 'contract', '合约': 'contract'
+        '合約': 'contract', '合约': 'contract',
+        'mindmap': 'mindmap', 'mindmaps': 'mindmap',
+        '心智圖': 'mindmap', '心智图': 'mindmap', '節點': 'mindmap', '节点': 'mindmap'
     };
 
     const ASCII_KEYWORDS = Object.keys(KEYWORD_TO_TYPE).filter(k => /^[a-z]+$/i.test(k));
@@ -84,9 +87,9 @@
     //   - 24 hex  (legacy full-suffix form):                      card_d3cdda1455152e3caee8d4ac
     //   - UUID    (8-4-4-4-12):                                    card_7b7dd9e3-55e1-4074-b101-40c47161d8de
     const PREFIXED_HEX = '[a-f0-9]{8}(?:[a-f0-9]{16}|-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})?';
-    const PREFIXED_RE = new RegExp('\\b(card|skill|rule|listing|exam|contract)_(' + PREFIXED_HEX + ')\\b', 'gi');
+    const PREFIXED_RE = new RegExp('\\b(card|skill|rule|listing|exam|contract|mindmap)_(' + PREFIXED_HEX + ')\\b', 'gi');
     // Code-wrapped variant: <code>card_xxx</code> (e.g. backtick-quoted in markdown).
-    const CODE_PREFIXED_RE = new RegExp('<code[^>]*>\\s*(card|skill|rule|listing|exam|contract)_(' + PREFIXED_HEX + ')\\s*</code>', 'gi');
+    const CODE_PREFIXED_RE = new RegExp('<code[^>]*>\\s*(card|skill|rule|listing|exam|contract|mindmap)_(' + PREFIXED_HEX + ')\\s*</code>', 'gi');
 
     // Placeholder system (same approach as note-link-render)
     const pendingChips = [];
