@@ -1,3 +1,10 @@
+## [1.1103.3](https://github.com/HankHuang0516/EClaw/compare/v1.1103.2...v1.1103.3) (2026-04-26)
+
+
+### Bug Fixes
+
+* **mission-mindmap:** citable card_<hex> + sidebar zoom ([#2171](https://github.com/HankHuang0516/EClaw/issues/2171)) ([684e88b](https://github.com/HankHuang0516/EClaw/commit/684e88b7b99e7611dd89e264ed5a0a7a7a2d9a4e))
+
 ## [1.1103.2](https://github.com/HankHuang0516/EClaw/compare/v1.1103.1...v1.1103.2) (2026-04-26)
 
 
