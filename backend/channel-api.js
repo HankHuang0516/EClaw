@@ -581,7 +581,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 '[AVAILABLE TOOLS — Mission Dashboard]',
                 `Read tasks/notes/rules/skills: exec: curl -s "${apiBase}/api/mission/dashboard?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"`,
                 `Read notes: exec: curl -s "${apiBase}/api/mission/notes?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"`,
-                `Read chat history: exec: curl -s "${apiBase}/api/chat/history?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}&limit=100"`,
+                `Read chat history (scope: msgs to/from your entityId only — NOT full device transcript): exec: curl -s "${apiBase}/api/chat/history?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}&limit=100"`,
                 `Create kanban card: exec: curl -s -X POST "${apiBase}/api/mission/card" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${eId},"botSecret":"${botSecret}","title":"TASK_TITLE","status":"todo"}'`,
                 `Add note: exec: curl -s -X POST "${apiBase}/api/mission/note/add" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${eId},"botSecret":"${botSecret}","title":"TITLE","content":"CONTENT"}'`,
                 `Update wallpaper: exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${eId},"botSecret":"${botSecret}","state":"IDLE","message":"hello"}'`
