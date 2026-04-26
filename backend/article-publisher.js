@@ -66,6 +66,11 @@ const BLOGGER_REDIRECT_URI = process.env.BLOGGER_REDIRECT_URI || 'https://eclawb
 const BLOGGER_SCOPE = 'https://www.googleapis.com/auth/blogger';
 const HASHNODE_API_TOKEN = process.env.HASHNODE_API_TOKEN;
 const HASHNODE_GQL_ENDPOINT = 'https://gql.hashnode.com';
+const HASHNODE_CRED_KEYS = ['HASHNODE_API_TOKEN'];
+const HASHNODE_CREDS_MISSING = {
+    error: 'Hashnode credentials not set for this device',
+    setup_url: '/portal/publisher-setup.html'
+};
 
 // DEV.to (Forem API)
 const DEVTO_API_KEY = process.env.DEVTO_API_KEY;
@@ -526,12 +531,25 @@ router.delete('/blogger/post/:postId', async (req, res) => {
 // HASHNODE PUBLISH / DELETE
 // ============================================
 
-async function hashnodeGQL(query, variables = {}) {
+// Resolve the Hashnode API token (vault-first, env fallback). Returns
+// { token, source: 'vault'|'env'|'missing' }. Caller passes token into hashnodeGQL.
+async function resolveHashnodeCreds(deviceId) {
+    if (deviceId && typeof _getDeviceVar === 'function') {
+        try {
+            const v = await _getDeviceVar(deviceId, HASHNODE_CRED_KEYS[0]);
+            if (typeof v === 'string' && v.length > 0) return { token: v, source: 'vault' };
+        } catch (_) { /* fall through to env */ }
+    }
+    if (HASHNODE_API_TOKEN) return { token: HASHNODE_API_TOKEN, source: 'env' };
+    return { token: null, source: 'missing' };
+}
+
+async function hashnodeGQL(query, variables = {}, token = HASHNODE_API_TOKEN) {
     const res = await fetch(HASHNODE_GQL_ENDPOINT, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            Authorization: HASHNODE_API_TOKEN
+            Authorization: token
         },
         body: JSON.stringify({ query, variables })
     });
@@ -543,20 +561,26 @@ async function hashnodeGQL(query, variables = {}) {
 // Get current user's publications
 router.get('/hashnode/me', async (req, res) => {
     try {
-        const data = await hashnodeGQL(`query { me { id username publications(first: 10) { edges { node { id title url } } } } }`);
-        res.json({ success: true, user: data.me });
+        const deviceId = req.query?.deviceId || null;
+        const { token, source } = await resolveHashnodeCreds(deviceId);
+        if (!token) return res.status(400).json(HASHNODE_CREDS_MISSING);
+        const data = await hashnodeGQL(`query { me { id username publications(first: 10) { edges { node { id title url } } } } }`, {}, token);
+        res.json({ success: true, user: data.me, _credSource: source });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
 router.post('/hashnode/publish', express.json(), async (req, res) => {
-    const { publicationId, title, contentMarkdown, tags, slug, includeReferralCTA } = req.body;
+    const { publicationId, title, contentMarkdown, tags, slug, includeReferralCTA, deviceId } = req.body;
     if (!publicationId || !title || !contentMarkdown) {
         return res.status(400).json({ error: 'publicationId, title, contentMarkdown required' });
     }
 
     try {
+        const { token, source } = await resolveHashnodeCreds(deviceId || null);
+        if (!token) return res.status(400).json(HASHNODE_CREDS_MISSING);
+
         const finalMarkdown = appendReferralCTA(contentMarkdown, { format: 'md', locale: 'en', skip: includeReferralCTA === false });
 
         const data = await hashnodeGQL(`
@@ -573,9 +597,9 @@ router.post('/hashnode/publish', express.json(), async (req, res) => {
                 slug: slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
                 tags: tags ? tags.map(t => typeof t === 'string' ? { slug: t, name: t } : t) : []
             }
-        });
+        }, token);
         const post = data.publishPost.post;
-        console.log(`[Publisher] Hashnode post created: ${post.id} "${title}"`);
+        console.log(`[Publisher] Hashnode post created: ${post.id} "${title}" (creds: ${source})`);
         res.json({ success: true, platform: 'hashnode', postId: post.id, url: post.url, slug: post.slug });
     } catch (err) {
         console.error('[Publisher] Hashnode publish error:', err);
@@ -583,16 +607,19 @@ router.post('/hashnode/publish', express.json(), async (req, res) => {
     }
 });
 
-router.delete('/hashnode/post/:postId', async (req, res) => {
+router.delete('/hashnode/post/:postId', express.json(), async (req, res) => {
     const { postId } = req.params;
+    const deviceId = req.body?.deviceId || req.query?.deviceId || null;
     try {
+        const { token } = await resolveHashnodeCreds(deviceId);
+        if (!token) return res.status(400).json(HASHNODE_CREDS_MISSING);
         await hashnodeGQL(`
             mutation RemovePost($id: ID!) {
                 removePost(input: { id: $id }) {
                     post { id }
                 }
             }
-        `, { id: postId });
+        `, { id: postId }, token);
         console.log(`[Publisher] Hashnode post deleted: ${postId}`);
         res.json({ success: true, platform: 'hashnode', deleted: postId });
     } catch (err) {
