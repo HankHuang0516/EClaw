@@ -1,3 +1,10 @@
+# [1.1104.0](https://github.com/HankHuang0516/EClaw/compare/v1.1103.3...v1.1104.0) (2026-04-26)
+
+
+### Features
+
+* **mindmap:** automation subsystem + dual-axis edges + unified cite ([#2173](https://github.com/HankHuang0516/EClaw/issues/2173)) ([f01c10c](https://github.com/HankHuang0516/EClaw/commit/f01c10cbffd11009687aa73bf24a4c3e455e154d))
+
 ## [1.1103.3](https://github.com/HankHuang0516/EClaw/compare/v1.1103.2...v1.1103.3) (2026-04-26)
 
 
