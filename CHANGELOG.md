@@ -1,3 +1,10 @@
+# [1.1099.0](https://github.com/HankHuang0516/EClaw/compare/v1.1098.0...v1.1099.0) (2026-04-26)
+
+
+### Features
+
+* **publisher:** LinkedIn vault-first multi-tenant support ([#2148](https://github.com/HankHuang0516/EClaw/issues/2148)) ([d20f9e2](https://github.com/HankHuang0516/EClaw/commit/d20f9e2019bd15fdabbe2fb12623bc0197a70721))
+
 # [1.1098.0](https://github.com/HankHuang0516/EClaw/compare/v1.1097.0...v1.1098.0) (2026-04-26)
 
 
