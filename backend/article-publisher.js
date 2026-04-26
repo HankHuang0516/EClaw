@@ -114,7 +114,15 @@ const QIITA_CREDS_MISSING = {
 const WECHAT_APP_ID = process.env.WECHAT_APP_ID;
 const WECHAT_APP_SECRET = process.env.WECHAT_APP_SECRET;
 const WECHAT_API_BASE = 'https://api.weixin.qq.com/cgi-bin';
-let wechatTokenCache = { access_token: null, expires_at: 0 };
+const WECHAT_CRED_KEYS = ['WECHAT_APP_ID', 'WECHAT_APP_SECRET'];
+const WECHAT_CREDS_MISSING = {
+    error: 'WeChat credentials not set for this device',
+    setup_url: '/portal/publisher-setup.html'
+};
+// Per-tenant token cache. Key = appId (so device A's token cannot be served
+// to device B). access_tokens have ~2h TTL and would leak across tenants if
+// stored globally.
+const wechatTokenCacheByCreds = new Map();
 
 // Tumblr (API v2, OAuth 1.0a — reuse oauth-1.0a lib)
 const TUMBLR_CONSUMER_KEY = process.env.TUMBLR_CONSUMER_KEY;
@@ -1597,46 +1605,69 @@ router.delete('/qiita/post/:postId', express.json(), async (req, res) => {
 // Note: Creates drafts only — manual publish required from WeChat admin
 // ============================================
 
-function requireWechat(res) {
-    if (!WECHAT_APP_ID || !WECHAT_APP_SECRET) { res.status(501).json({ error: 'WeChat not configured (WECHAT_APP_ID, WECHAT_APP_SECRET missing)' }); return false; }
-    return true;
+// Resolve WeChat AppID + AppSecret (vault-first, env fallback). 2-key atomic.
+async function resolveWechatCreds(deviceId) {
+    if (deviceId && typeof _getDeviceVar === 'function') {
+        try {
+            const ai = await _getDeviceVar(deviceId, 'WECHAT_APP_ID');
+            const as = await _getDeviceVar(deviceId, 'WECHAT_APP_SECRET');
+            if (typeof ai === 'string' && ai.length > 0
+                && typeof as === 'string' && as.length > 0) {
+                return { appId: ai, appSecret: as, source: 'vault' };
+            }
+        } catch (_) { /* fall through to env */ }
+    }
+    if (WECHAT_APP_ID && WECHAT_APP_SECRET) {
+        return { appId: WECHAT_APP_ID, appSecret: WECHAT_APP_SECRET, source: 'env' };
+    }
+    return { appId: null, appSecret: null, source: 'missing' };
 }
 
-async function getWechatToken() {
-    // Return cached token if still valid (with 5min buffer)
-    if (wechatTokenCache.access_token && wechatTokenCache.expires_at > Date.now() + 300000) {
-        return wechatTokenCache.access_token;
+// Get a valid access_token for the given creds. Cache is keyed by appId so
+// tokens don't leak between tenants. ~2h TTL with 5min buffer before refresh.
+async function getWechatToken(creds) {
+    const cacheKey = creds.appId;
+    const cached = wechatTokenCacheByCreds.get(cacheKey);
+    if (cached && cached.expires_at > Date.now() + 300000) {
+        return { token: cached.access_token, expires_at: cached.expires_at };
     }
     const res = await fetch(
-        `${WECHAT_API_BASE}/token?grant_type=client_credential&appid=${WECHAT_APP_ID}&secret=${WECHAT_APP_SECRET}`
+        `${WECHAT_API_BASE}/token?grant_type=client_credential&appid=${creds.appId}&secret=${creds.appSecret}`
     );
     const data = await res.json();
     if (data.errcode) throw new Error(`WeChat token error: ${data.errcode} ${data.errmsg}`);
-    wechatTokenCache = {
+    const entry = {
         access_token: data.access_token,
         expires_at: Date.now() + (data.expires_in * 1000)
     };
-    console.log('[Publisher] WeChat access_token refreshed');
-    return data.access_token;
+    wechatTokenCacheByCreds.set(cacheKey, entry);
+    console.log('[Publisher] WeChat access_token refreshed for appId=' + creds.appId.slice(0, 6) + '…');
+    return { token: entry.access_token, expires_at: entry.expires_at };
 }
 
 // GET /api/publisher/wechat/token — Get/refresh access_token status
 router.get('/wechat/token', async (req, res) => {
-    if (!requireWechat(res)) return;
+    const deviceId = req.query.deviceId;
+    const creds = await resolveWechatCreds(deviceId);
+    if (creds.source === 'missing') return res.status(501).json(WECHAT_CREDS_MISSING);
     try {
-        const token = await getWechatToken();
-        res.json({ success: true, platform: 'wechat', token_expires_at: wechatTokenCache.expires_at, has_token: !!token });
+        const t = await getWechatToken(creds);
+        res.json({ success: true, platform: 'wechat', token_expires_at: t.expires_at, has_token: !!t.token });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
 // POST /api/publisher/wechat/upload-image — Upload cover image (permanent material)
+// deviceId via query param because route forwards raw multipart body to WeChat
+// (no JSON body parsing — would consume the multipart stream).
 router.post('/wechat/upload-image', async (req, res) => {
-    if (!requireWechat(res)) return;
+    const deviceId = req.query.deviceId;
+    const creds = await resolveWechatCreds(deviceId);
+    if (creds.source === 'missing') return res.status(501).json(WECHAT_CREDS_MISSING);
 
     try {
-        const token = await getWechatToken();
+        const t = await getWechatToken(creds);
         // Expect multipart/form-data with 'media' field
         // Forward the raw request body to WeChat
         const contentType = req.headers['content-type'];
@@ -1649,7 +1680,7 @@ router.post('/wechat/upload-image', async (req, res) => {
         const rawBody = Buffer.concat(chunks);
 
         const wxRes = await fetch(
-            `${WECHAT_API_BASE}/material/add_material?access_token=${token}&type=image`,
+            `${WECHAT_API_BASE}/material/add_material?access_token=${t.token}&type=image`,
             { method: 'POST', headers: { 'Content-Type': contentType }, body: rawBody }
         );
         const data = await wxRes.json();
@@ -1665,14 +1696,15 @@ router.post('/wechat/upload-image', async (req, res) => {
 
 // POST /api/publisher/wechat/draft — Create a draft article
 router.post('/wechat/draft', express.json(), async (req, res) => {
-    if (!requireWechat(res)) return;
-    const { title, content, thumb_media_id, author, digest } = req.body;
+    const { deviceId, title, content, thumb_media_id, author, digest } = req.body;
     if (!title || !content || !thumb_media_id) {
         return res.status(400).json({ error: 'title, content, thumb_media_id required' });
     }
+    const creds = await resolveWechatCreds(deviceId);
+    if (creds.source === 'missing') return res.status(501).json(WECHAT_CREDS_MISSING);
 
     try {
-        const token = await getWechatToken();
+        const t = await getWechatToken(creds);
         const article = {
             title,
             content,
@@ -1684,7 +1716,7 @@ router.post('/wechat/draft', express.json(), async (req, res) => {
             only_fans_can_comment: 0
         };
 
-        const wxRes = await fetch(`${WECHAT_API_BASE}/draft/add?access_token=${token}`, {
+        const wxRes = await fetch(`${WECHAT_API_BASE}/draft/add?access_token=${t.token}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ articles: [article] })
@@ -1702,13 +1734,15 @@ router.post('/wechat/draft', express.json(), async (req, res) => {
 
 // GET /api/publisher/wechat/drafts — List drafts
 router.get('/wechat/drafts', async (req, res) => {
-    if (!requireWechat(res)) return;
+    const deviceId = req.query.deviceId;
+    const creds = await resolveWechatCreds(deviceId);
+    if (creds.source === 'missing') return res.status(501).json(WECHAT_CREDS_MISSING);
     try {
-        const token = await getWechatToken();
+        const t = await getWechatToken(creds);
         const offset = parseInt(req.query.offset) || 0;
         const count = Math.min(parseInt(req.query.count) || 20, 20);
 
-        const wxRes = await fetch(`${WECHAT_API_BASE}/draft/batchget?access_token=${token}`, {
+        const wxRes = await fetch(`${WECHAT_API_BASE}/draft/batchget?access_token=${t.token}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ offset, count, no_content: 1 })
@@ -1724,11 +1758,13 @@ router.get('/wechat/drafts', async (req, res) => {
 
 // DELETE /api/publisher/wechat/draft/:mediaId
 router.delete('/wechat/draft/:mediaId', async (req, res) => {
-    if (!requireWechat(res)) return;
+    const deviceId = req.query.deviceId;
     const { mediaId } = req.params;
+    const creds = await resolveWechatCreds(deviceId);
+    if (creds.source === 'missing') return res.status(501).json(WECHAT_CREDS_MISSING);
     try {
-        const token = await getWechatToken();
-        const wxRes = await fetch(`${WECHAT_API_BASE}/draft/delete?access_token=${token}`, {
+        const t = await getWechatToken(creds);
+        const wxRes = await fetch(`${WECHAT_API_BASE}/draft/delete?access_token=${t.token}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ media_id: mediaId })
