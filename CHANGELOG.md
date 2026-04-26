@@ -1,3 +1,10 @@
+## [1.1104.1](https://github.com/HankHuang0516/EClaw/compare/v1.1104.0...v1.1104.1) (2026-04-26)
+
+
+### Bug Fixes
+
+* **chat:** clear stale chat_draft when mindmap cite prefills input ([#2174](https://github.com/HankHuang0516/EClaw/issues/2174)) ([1144575](https://github.com/HankHuang0516/EClaw/commit/11445757210691e3483e5a9f502f91e35c32bdc9))
+
 # [1.1104.0](https://github.com/HankHuang0516/EClaw/compare/v1.1103.3...v1.1104.0) (2026-04-26)
 
 
