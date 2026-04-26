@@ -695,9 +695,19 @@
       const pinTitle = isPinned ? '取消釘選' : '釘選引用';
       const pinIcon = isPinned ? '📍' : '📌';
       const pinClass = isPinned ? 'pin-btn pinned' : 'pin-btn';
+      // Citable IDs: real mindmap UUIDs (mindmap_xxxx) or kanban card prefix IDs
+      // (card_xxxxxxxx). Virtual `sys:*` hubs are aggregations, not entities.
+      // Anything else (slug seed nodes like inv-hub) is non-citable demo data.
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(d.id);
-      const citeTitle = isUuid ? '複製引用 token (聊天可貼上為 chip)' : '示範資料無法引用 — 需先在心智圖新增實際節點';
-      const citeClass = isUuid ? 'cite-btn' : 'cite-btn is-disabled';
+      const isCardId = /^card_[a-f0-9]{8}([a-f0-9]{16}|-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})?$/i.test(d.id);
+      const isVirtualHub = String(d.id).startsWith('sys:');
+      const canCite = isUuid || isCardId;
+      const citeTitle = canCite
+        ? '複製引用 token (聊天可貼上為 chip)'
+        : isVirtualHub
+          ? '子系統 hub 為彙總節點,無法引用'
+          : '示範資料無法引用 — 需先在心智圖新增實際節點';
+      const citeClass = canCite ? 'cite-btn' : 'cite-btn is-disabled';
       const summary = d.summary || `${sysMeta.label} 子系統 · ${d.tier}`;
       const relatedHtml = related.length
         ? related.map(r => `
@@ -808,12 +818,20 @@
         }
         if (act === 'cite') {
           if (btn.classList.contains('is-disabled')) {
-            showToast('示範資料無法引用,需先在心智圖新增實際節點');
+            showToast(String(nodeId).startsWith('sys:')
+              ? '子系統 hub 為彙總節點,請點下層節點再引用'
+              : '示範資料無法引用,需先在心智圖新增實際節點');
             return;
           }
-          const token = 'mindmap_' + nodeId;
+          // card_<hex> nodes are kanban cards — chat's entity-link-render auto-detects
+          // the prefix and renders a card chip. UUID nodes use the legacy mindmap_ token.
+          const isCard = /^card_[a-f0-9]{8}/i.test(nodeId);
+          const token = isCard ? nodeId : 'mindmap_' + nodeId;
           copyToClipboard(token).then(ok => {
-            showToast(ok ? `已複製「${token.slice(0, 22)}…」— 切到聊天貼上即為 chip` : `複製失敗,請手動複製: ${token}`);
+            const kind = isCard ? '卡片' : '心智圖節點';
+            showToast(ok
+              ? `已複製${kind}引用「${token.slice(0, 22)}…」— 切到聊天貼上即為 chip`
+              : `複製失敗,請手動複製: ${token}`);
           });
         }
       });
@@ -931,7 +949,10 @@
         const wasActive = row.classList.contains('active');
         rootEl.querySelectorAll('.sys-row').forEach(r => r.classList.remove('active'));
         cy.elements().removeClass('faded');
-        if (wasActive) return;
+        if (wasActive) {
+          cy.animate({ fit: { eles: cy.elements(), padding: 30 }, duration: 500, easing: 'ease-in-out' });
+          return;
+        }
         row.classList.add('active');
         cy.nodes().forEach(n => { if (n.data('sys') !== sys) n.addClass('faded'); });
         cy.edges().forEach(e => {
@@ -939,6 +960,10 @@
           const ta = nodesById[e.data('target')]?.sys;
           if (sa !== sys && ta !== sys) e.addClass('faded');
         });
+        const focusNodes = cy.nodes().filter(n => n.data('sys') === sys);
+        if (focusNodes.length) {
+          cy.animate({ fit: { eles: focusNodes, padding: 60 }, duration: 600, easing: 'ease-in-out' });
+        }
       });
     });
 
