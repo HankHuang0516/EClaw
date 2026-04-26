@@ -24,14 +24,15 @@
   const CDN = 'https://cdn.jsdelivr.net/npm/cytoscape@3.28.1/dist/cytoscape.min.js';
 
   const SYS = {
-    invite:    { color: '#f43f5e', label: '邀請成長' },
-    device:    { color: '#06b6d4', label: '裝置' },
-    i18n:      { color: '#a855f7', label: 'i18n' },
-    kanban:    { color: '#22c55e', label: '看板' },
-    chat:      { color: '#3b82f6', label: '聊天' },
-    payment:   { color: '#eab308', label: '支付' },
-    broadcast: { color: '#f97316', label: '廣播' },
-    bridge:    { color: '#ec4899', label: '橋接' },
+    invite:     { color: '#f43f5e', label: '邀請成長' },
+    device:     { color: '#06b6d4', label: '裝置' },
+    i18n:       { color: '#a855f7', label: 'i18n' },
+    kanban:     { color: '#22c55e', label: '看板' },
+    chat:       { color: '#3b82f6', label: '聊天' },
+    payment:    { color: '#eab308', label: '支付' },
+    broadcast:  { color: '#f97316', label: '廣播' },
+    bridge:     { color: '#ec4899', label: '橋接' },
+    automation: { color: '#64748b', label: '自動化' },
   };
 
   const MOCK_NODES = [
@@ -692,8 +693,11 @@
 
     function buildPopHtml(d, isPinned, related) {
       const sysMeta = SYS[d.sys];
-      const pinTitle = isPinned ? '取消釘選' : '釘選引用';
-      const pinIcon = isPinned ? '📍' : '📌';
+      // Pin = local bookmark to top-tray of this page (no deep-link, no API).
+      // Distinct from cite (📌, deep-links into chat) — different icons to
+      // avoid the 📌 collision now that cite uses the canonical 引用 emoji.
+      const pinTitle = isPinned ? '取消釘選' : '釘選到頂部列 (僅當前頁面)';
+      const pinIcon = isPinned ? '📍' : '🔖';
       const pinClass = isPinned ? 'pin-btn pinned' : 'pin-btn';
       // Citable IDs: real mindmap UUIDs (mindmap_xxxx) or kanban card prefix IDs
       // (card_xxxxxxxx). Virtual `sys:*` hubs are aggregations, not entities.
@@ -703,7 +707,7 @@
       const isVirtualHub = String(d.id).startsWith('sys:');
       const canCite = isUuid || isCardId;
       const citeTitle = canCite
-        ? '複製引用 token (聊天可貼上為 chip)'
+        ? '引用到聊天 — 跳到聊天頁,訊息框已預填 chip token,按送出即可'
         : isVirtualHub
           ? '子系統 hub 為彙總節點,無法引用'
           : '示範資料無法引用 — 需先在心智圖新增實際節點';
@@ -723,7 +727,7 @@
           <span class="swatch" style="background:${sysMeta.color}"></span>
           <span class="mm-chip-pop-title" title="${escapeHtml(d.label)}">${escapeHtml(d.label)}</span>
           <span class="mm-chip-pop-status ${escapeHtml(d.status)}">${escapeHtml(d.status)}</span>
-          <button class="mm-chip-pop-btn ${citeClass}" data-pop-act="cite" title="${escapeHtml(citeTitle)}">📋</button>
+          <button class="mm-chip-pop-btn ${citeClass}" data-pop-act="cite" title="${escapeHtml(citeTitle)}">📌</button>
           <button class="mm-chip-pop-btn ${pinClass}" data-pop-act="pin" title="${escapeHtml(pinTitle)}">${pinIcon}</button>
           <button class="mm-chip-pop-btn" data-pop-act="close" title="關閉">✖</button>
         </div>
@@ -827,12 +831,47 @@
           // the prefix and renders a card chip. UUID nodes use the legacy mindmap_ token.
           const isCard = /^card_[a-f0-9]{8}/i.test(nodeId);
           const token = isCard ? nodeId : 'mindmap_' + nodeId;
-          copyToClipboard(token).then(ok => {
-            const kind = isCard ? '卡片' : '心智圖節點';
-            showToast(ok
-              ? `已複製${kind}引用「${token.slice(0, 22)}…」— 切到聊天貼上即為 chip`
-              : `複製失敗,請手動複製: ${token}`);
-          });
+          const kind = isCard ? '卡片' : '心智圖節點';
+          // Unified 引用到聊天 UX — same path as card-holder/files/mission
+          // dialog 📌 buttons. Hands the token to chat as quote context +
+          // pre-fills the message input so the user just hits send. The
+          // chat onload reader (chat.html) consumes eclaw_pending_quote +
+          // optional prefillInput. Falls back to clipboard copy if neither
+          // postMessage nor localStorage path is available (offline / no
+          // chat page mounted).
+          const quoteSource = '心智圖';
+          const quoteTitle = d.label || token;
+          const quoteExcerpt = token;
+          try {
+            if (typeof global.quoteToChat === 'function') {
+              global.quoteToChat(quoteSource, quoteTitle, quoteExcerpt, { prefillInput: token });
+            } else if (global.self !== global.top) {
+              global.parent.postMessage({
+                type: 'eclaw_quote',
+                source: quoteSource,
+                title: quoteTitle,
+                excerpt: quoteExcerpt,
+                prefillInput: token,
+              }, global.location.origin);
+            } else {
+              global.localStorage.setItem('eclaw_pending_quote', JSON.stringify({
+                source: quoteSource,
+                title: quoteTitle,
+                excerpt: quoteExcerpt,
+                prefillInput: token,
+                ts: Date.now(),
+              }));
+              global.location.href = '/portal/chat.html';
+            }
+            showToast(`引用 ${kind}「${quoteTitle.slice(0, 18)}」到聊天 — 訊息框已預填,按送出即可`);
+          } catch (err) {
+            // Last resort — clipboard copy + manual paste hint
+            copyToClipboard(token).then(ok => {
+              showToast(ok
+                ? `引用直送失敗,已複製 token 請手動貼上聊天: ${token.slice(0, 22)}…`
+                : `引用失敗 (${err && err.message || 'unknown'}): ${token}`);
+            });
+          }
         }
       });
     }

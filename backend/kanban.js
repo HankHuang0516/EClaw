@@ -825,7 +825,12 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
         ['broadcast', /(廣播|broadcast|publisher|twitter|mastodon|wordpress|wp\.com|社群|x \(twitter\))/i],
         ['bridge',    /(橋接|bridge|osascript|u\d{2}|ssh|terminal-bridge|hermes-bridge)/i],
     ];
-    function classifySys(title) {
+    // Automation triggers (is_automation=true) anchor to a dedicated subsystem
+    // so the lineage (which cron spawned which real cards) becomes navigable.
+    // Spawned children keep their content classification — they get a
+    // sysHub edge for content + parent edge for lineage = dual-axis.
+    function classifySys(title, isAutomation) {
+        if (isAutomation) return 'automation';
         const t = String(title || '');
         for (const [sys, rx] of SYS_KEYWORDS) {
             if (rx.test(t)) return sys;
@@ -845,13 +850,11 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     router.get('/mindmap', async (req, res) => {
         if (!authenticate(req, res)) return;
         const { deviceId } = { ...req.query, ...req.body };
-        const includeAutomation = req.query.includeAutomation === 'true';
         try {
             const cardsResult = await pool.query(
                 `SELECT id, title, description, priority, status, parent_card_id, is_automation, assigned_bots
                  FROM kanban_cards
                  WHERE device_id = $1 AND archived = false
-                   ${includeAutomation ? '' : 'AND (is_automation = false OR is_automation IS NULL)'}
                  ORDER BY
                     CASE priority WHEN 'P0' THEN 0 WHEN 'P1' THEN 1 WHEN 'P2' THEN 2 WHEN 'P3' THEN 3 END,
                     updated_at DESC NULLS LAST
@@ -860,14 +863,15 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             );
 
             const sysHubs = {
-                invite:    { id: 'sys:invite',    label: '邀請',     sys: 'invite',    tier: 'domain', status: 'active', summary: '' },
-                device:    { id: 'sys:device',    label: '裝置',     sys: 'device',    tier: 'domain', status: 'active', summary: '' },
-                i18n:      { id: 'sys:i18n',      label: 'i18n',     sys: 'i18n',      tier: 'domain', status: 'active', summary: '' },
-                kanban:    { id: 'sys:kanban',    label: '看板',     sys: 'kanban',    tier: 'domain', status: 'active', summary: '' },
-                chat:      { id: 'sys:chat',      label: '聊天',     sys: 'chat',      tier: 'domain', status: 'active', summary: '' },
-                payment:   { id: 'sys:payment',   label: '支付',     sys: 'payment',   tier: 'domain', status: 'active', summary: '' },
-                broadcast: { id: 'sys:broadcast', label: '廣播',     sys: 'broadcast', tier: 'domain', status: 'active', summary: '' },
-                bridge:    { id: 'sys:bridge',    label: '橋接',     sys: 'bridge',    tier: 'domain', status: 'active', summary: '' },
+                invite:     { id: 'sys:invite',     label: '邀請',     sys: 'invite',     tier: 'domain', status: 'active', summary: '' },
+                device:     { id: 'sys:device',     label: '裝置',     sys: 'device',     tier: 'domain', status: 'active', summary: '' },
+                i18n:       { id: 'sys:i18n',       label: 'i18n',     sys: 'i18n',       tier: 'domain', status: 'active', summary: '' },
+                kanban:     { id: 'sys:kanban',     label: '看板',     sys: 'kanban',     tier: 'domain', status: 'active', summary: '' },
+                chat:       { id: 'sys:chat',       label: '聊天',     sys: 'chat',       tier: 'domain', status: 'active', summary: '' },
+                payment:    { id: 'sys:payment',    label: '支付',     sys: 'payment',    tier: 'domain', status: 'active', summary: '' },
+                broadcast:  { id: 'sys:broadcast',  label: '廣播',     sys: 'broadcast',  tier: 'domain', status: 'active', summary: '' },
+                bridge:     { id: 'sys:bridge',     label: '橋接',     sys: 'bridge',     tier: 'domain', status: 'active', summary: '' },
+                automation: { id: 'sys:automation', label: '自動化',   sys: 'automation', tier: 'domain', status: 'active', summary: '' },
             };
 
             const nodes = [];
@@ -876,7 +880,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             const sysCount = {};
 
             for (const c of cardsResult.rows) {
-                const sys = classifySys(c.title);
+                const sys = classifySys(c.title, c.is_automation);
                 sysCount[sys] = (sysCount[sys] || 0) + 1;
                 const summary = (c.description || '').replace(/\s+/g, ' ').trim().slice(0, 120);
                 nodes.push({
@@ -888,18 +892,21 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     summary,
                     priority: c.priority,
                     cardStatus: c.status,
+                    isAutomation: !!c.is_automation,
                 });
                 cardIds.add(c.id);
             }
 
-            // Hub nodes: include hubs that own ≥1 card (keeps the rail tidy)
+            // Hub nodes: include hubs that own ≥1 card (keeps the rail tidy).
+            // Every card gets a hub edge — the parent_card_id edge is added
+            // separately below, so cards with parents end up dual-axis
+            // (lineage to parent + content/automation to hub).
             for (const sys of Object.keys(sysHubs)) {
                 if (sysCount[sys]) {
                     const hub = { ...sysHubs[sys], summary: `${sysCount[sys]} 張卡片` };
                     nodes.unshift(hub);
-                    // Connect each card in this sys to its hub when no parent_card edge exists yet
                     for (const c of cardsResult.rows) {
-                        if (classifySys(c.title) === sys && !c.parent_card_id) {
+                        if (classifySys(c.title, c.is_automation) === sys) {
                             edges.push([hub.id, c.id]);
                         }
                     }
