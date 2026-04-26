@@ -75,6 +75,11 @@ const HASHNODE_CREDS_MISSING = {
 // DEV.to (Forem API)
 const DEVTO_API_KEY = process.env.DEVTO_API_KEY;
 const DEVTO_API_BASE = 'https://dev.to/api';
+const DEVTO_CRED_KEYS = ['DEVTO_API_KEY'];
+const DEVTO_CREDS_MISSING = {
+    error: 'DEV.to credentials not set for this device',
+    setup_url: '/portal/publisher-setup.html'
+};
 
 // WordPress (supports OAuth2 with DB-backed tokens OR Application Password)
 const WORDPRESS_CLIENT_ID = process.env.WORDPRESS_CLIENT_ID;
@@ -891,16 +896,23 @@ router.get('/x/me', async (req, res) => {
 // Auth: api-key header | Content: Markdown
 // ============================================
 
-function requireDevto(res) {
-    if (!DEVTO_API_KEY) { res.status(501).json({ error: 'DEV.to not configured (DEVTO_API_KEY missing)' }); return false; }
-    return true;
+// Resolve the DEV.to api-key (vault-first, env fallback).
+async function resolveDevtoCreds(deviceId) {
+    if (deviceId && typeof _getDeviceVar === 'function') {
+        try {
+            const v = await _getDeviceVar(deviceId, DEVTO_CRED_KEYS[0]);
+            if (typeof v === 'string' && v.length > 0) return { apiKey: v, source: 'vault' };
+        } catch (_) { /* fall through to env */ }
+    }
+    if (DEVTO_API_KEY) return { apiKey: DEVTO_API_KEY, source: 'env' };
+    return { apiKey: null, source: 'missing' };
 }
 
-async function devtoRequest(method, path, body = null) {
+async function devtoRequest(method, path, body = null, apiKey = DEVTO_API_KEY) {
     const options = {
         method,
         headers: {
-            'api-key': DEVTO_API_KEY,
+            'api-key': apiKey,
             'Accept': 'application/vnd.forem.api-v1+json',
             'Content-Type': 'application/json'
         }
@@ -918,10 +930,12 @@ async function devtoRequest(method, path, body = null) {
 
 // GET /api/publisher/devto/me
 router.get('/devto/me', async (req, res) => {
-    if (!requireDevto(res)) return;
     try {
-        const data = await devtoRequest('GET', '/users/me');
-        res.json({ success: true, user: { id: data.id, username: data.username, name: data.name } });
+        const deviceId = req.query?.deviceId || null;
+        const { apiKey, source } = await resolveDevtoCreds(deviceId);
+        if (!apiKey) return res.status(400).json(DEVTO_CREDS_MISSING);
+        const data = await devtoRequest('GET', '/users/me', null, apiKey);
+        res.json({ success: true, user: { id: data.id, username: data.username, name: data.name }, _credSource: source });
     } catch (err) {
         res.status(err.status || 500).json({ error: err.message });
     }
@@ -929,19 +943,21 @@ router.get('/devto/me', async (req, res) => {
 
 // POST /api/publisher/devto/publish
 router.post('/devto/publish', express.json(), async (req, res) => {
-    if (!requireDevto(res)) return;
-    const { title, body_markdown, published, tags, series, canonical_url, includeReferralCTA } = req.body;
+    const { title, body_markdown, published, tags, series, canonical_url, includeReferralCTA, deviceId } = req.body;
     if (!title || !body_markdown) return res.status(400).json({ error: 'title, body_markdown required' });
 
     try {
+        const { apiKey, source } = await resolveDevtoCreds(deviceId || null);
+        if (!apiKey) return res.status(400).json(DEVTO_CREDS_MISSING);
+
         const finalBody = appendReferralCTA(body_markdown, { format: 'md', locale: 'en', skip: includeReferralCTA === false });
         const article = { title, body_markdown: finalBody, published: published !== false };
         if (tags) article.tags = tags;
         if (series) article.series = series;
         if (canonical_url) article.canonical_url = canonical_url;
 
-        const data = await devtoRequest('POST', '/articles', { article });
-        console.log(`[Publisher] DEV.to article created: ${data.id} "${title}"`);
+        const data = await devtoRequest('POST', '/articles', { article }, apiKey);
+        console.log(`[Publisher] DEV.to article created: ${data.id} "${title}" (creds: ${source})`);
         res.json({ success: true, platform: 'devto', postId: String(data.id), url: data.url, title: data.title, slug: data.slug });
     } catch (err) {
         console.error('[Publisher] DEV.to publish error:', err);
@@ -951,11 +967,13 @@ router.post('/devto/publish', express.json(), async (req, res) => {
 
 // PUT /api/publisher/devto/post/:postId
 router.put('/devto/post/:postId', express.json(), async (req, res) => {
-    if (!requireDevto(res)) return;
     const { postId } = req.params;
-    const { title, body_markdown, published, tags, series, canonical_url } = req.body;
+    const { title, body_markdown, published, tags, series, canonical_url, deviceId } = req.body;
 
     try {
+        const { apiKey } = await resolveDevtoCreds(deviceId || null);
+        if (!apiKey) return res.status(400).json(DEVTO_CREDS_MISSING);
+
         const article = {};
         if (title !== undefined) article.title = title;
         if (body_markdown !== undefined) article.body_markdown = body_markdown;
@@ -964,7 +982,7 @@ router.put('/devto/post/:postId', express.json(), async (req, res) => {
         if (series !== undefined) article.series = series;
         if (canonical_url !== undefined) article.canonical_url = canonical_url;
 
-        const data = await devtoRequest('PUT', `/articles/${postId}`, { article });
+        const data = await devtoRequest('PUT', `/articles/${postId}`, { article }, apiKey);
         console.log(`[Publisher] DEV.to article updated: ${postId}`);
         res.json({ success: true, platform: 'devto', postId: String(data.id), url: data.url, title: data.title });
     } catch (err) {
@@ -974,11 +992,13 @@ router.put('/devto/post/:postId', express.json(), async (req, res) => {
 });
 
 // DELETE /api/publisher/devto/post/:postId — unpublish (DEV.to doesn't support true delete via API)
-router.delete('/devto/post/:postId', async (req, res) => {
-    if (!requireDevto(res)) return;
+router.delete('/devto/post/:postId', express.json(), async (req, res) => {
     const { postId } = req.params;
+    const deviceId = req.body?.deviceId || req.query?.deviceId || null;
     try {
-        await devtoRequest('PUT', `/articles/${postId}`, { article: { published: false } });
+        const { apiKey } = await resolveDevtoCreds(deviceId);
+        if (!apiKey) return res.status(400).json(DEVTO_CREDS_MISSING);
+        await devtoRequest('PUT', `/articles/${postId}`, { article: { published: false } }, apiKey);
         console.log(`[Publisher] DEV.to article unpublished: ${postId}`);
         res.json({ success: true, platform: 'devto', unpublished: String(postId) });
     } catch (err) {
