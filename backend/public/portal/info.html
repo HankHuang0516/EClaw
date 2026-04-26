@@ -3060,6 +3060,7 @@ sequenceDiagram
                     </div>
                     <button class="guide-sidebar-btn" data-guide="envvars" data-i18n="guide_nav_envvars">環境變數</button>
                     <button class="guide-sidebar-btn" data-guide="intent-api-injection" data-i18n="guide_nav_intent_api">動態 API 注入</button>
+                    <button class="guide-sidebar-btn" data-guide="publisher" data-i18n="guide_nav_publisher">多平台發布 Publisher</button>
                     <button class="guide-sidebar-btn" data-guide="remotecontrol" data-i18n="guide_nav_remotecontrol">遠端控制</button>
                     <button class="guide-sidebar-btn" data-guide="testing" data-i18n="guide_nav_testing">測試與文件</button>
                 </div>
@@ -3672,6 +3673,155 @@ curl -s -X POST "https://eclawbot.com/api/mission/note/update" \
                             <li data-i18n="guide_intent_safety_3">只附加 hint，不修改原始訊息內容</li>
                             <li data-i18n="guide_intent_safety_4">只命中第一個 intent（避免 hint 過長）</li>
                         </ul>
+                    </div>
+
+                    <!-- ── 多平台發布 Publisher ── -->
+                    <div class="guide-panel" id="guide-publisher">
+                        <header>
+                            <h1 data-i18n="guide_pub_title">多平台發布 Publisher</h1>
+                            <p class="meta" data-i18n="guide_pub_meta">10 個內容平台 · 多租戶金鑰 roadmap · X 已上線、其餘 env-only</p>
+                        </header>
+
+                        <h2 data-i18n="guide_pub_overview_h">總覽</h2>
+                        <p data-i18n="guide_pub_overview_desc">
+                            <code>backend/article-publisher.js</code> 把 10 個內容平台統一在 <code>/api/publisher/&lt;platform&gt;/*</code> 之下。
+                            「多租戶」指的是<strong>每個 device 用自己金鑰庫裡的金鑰</strong>呼叫對應平台，而非全站共用 owner 一把 env 金鑰。
+                            目前只有 X 走完整的 vault-first 流程（<code>resolveXCreds(deviceId)</code>），其餘平台仍是 env-only single-tenant。
+                        </p>
+
+                        <h2 data-i18n="guide_pub_status_h">平台狀態總表</h2>
+                        <p data-i18n="guide_pub_status_legend">
+                            <span class="pub-badge pub-badge-vault">🔓 vault-first</span> 多租戶就緒（每 device 各自金鑰）
+                            <span class="pub-badge pub-badge-env">⚙️ env-only</span> 仍是單租戶（共用 owner env）
+                            <span class="pub-badge pub-badge-skip">— retired</span> 已下架
+                        </p>
+                        <table class="api-table">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="guide_pub_col_platform">Platform</th>
+                                    <th data-i18n="guide_pub_col_region">Region</th>
+                                    <th data-i18n="guide_pub_col_auth">Auth</th>
+                                    <th data-i18n="guide_pub_col_keys">需要的 Vault / Env Keys</th>
+                                    <th data-i18n="guide_pub_col_status">多租戶狀態</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>X (Twitter)</strong></td>
+                                    <td>global</td>
+                                    <td>OAuth1a</td>
+                                    <td><code>X_CONSUMER_KEY</code> · <code>X_CONSUMER_SECRET</code> · <code>X_ACCESS_TOKEN</code> · <code>X_ACCESS_TOKEN_SECRET</code></td>
+                                    <td><span class="pub-badge pub-badge-vault">🔓 vault-first</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Blogger</strong></td>
+                                    <td>global</td>
+                                    <td>OAuth2</td>
+                                    <td><code>BLOGGER_CLIENT_ID</code> · <code>BLOGGER_CLIENT_SECRET</code> （+ DB token）</td>
+                                    <td><span class="pub-badge pub-badge-env">⚙️ env-only</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Hashnode</strong></td>
+                                    <td>global</td>
+                                    <td>API Key</td>
+                                    <td><code>HASHNODE_API_TOKEN</code></td>
+                                    <td><span class="pub-badge pub-badge-env">⚙️ env-only</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>DEV.to</strong></td>
+                                    <td>global</td>
+                                    <td>API Key</td>
+                                    <td><code>DEVTO_API_KEY</code></td>
+                                    <td><span class="pub-badge pub-badge-env">⚙️ env-only</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Telegraph</strong></td>
+                                    <td>global</td>
+                                    <td>auto</td>
+                                    <td><em data-i18n="guide_pub_telegraph_note">無需金鑰（首呼叫自動建匿名帳號）</em></td>
+                                    <td><span class="pub-badge pub-badge-vault">🔓 N/A</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Qiita</strong></td>
+                                    <td>ja</td>
+                                    <td>Bearer</td>
+                                    <td><code>QIITA_ACCESS_TOKEN</code></td>
+                                    <td><span class="pub-badge pub-badge-env">⚙️ env-only</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>WeChat 公眾號</strong></td>
+                                    <td>zh-CN</td>
+                                    <td>App credentials</td>
+                                    <td><code>WECHAT_APP_ID</code> · <code>WECHAT_APP_SECRET</code> （drafts only）</td>
+                                    <td><span class="pub-badge pub-badge-env">⚙️ env-only</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Tumblr</strong></td>
+                                    <td>global</td>
+                                    <td>OAuth1a</td>
+                                    <td><code>TUMBLR_CONSUMER_KEY</code> · <code>TUMBLR_CONSUMER_SECRET</code> · <code>TUMBLR_ACCESS_TOKEN</code> · <code>TUMBLR_ACCESS_TOKEN_SECRET</code></td>
+                                    <td><span class="pub-badge pub-badge-env">⚙️ env-only</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Reddit</strong></td>
+                                    <td>global</td>
+                                    <td>OAuth2 password</td>
+                                    <td><code>REDDIT_CLIENT_ID</code> · <code>REDDIT_CLIENT_SECRET</code> · <code>REDDIT_USERNAME</code> · <code>REDDIT_PASSWORD</code></td>
+                                    <td><span class="pub-badge pub-badge-env">⚙️ env-only</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>LinkedIn</strong></td>
+                                    <td>global</td>
+                                    <td>Bearer</td>
+                                    <td><code>LINKEDIN_ACCESS_TOKEN</code> · <code>LINKEDIN_PERSON_URN</code></td>
+                                    <td><span class="pub-badge pub-badge-env">⚙️ env-only</span></td>
+                                </tr>
+                                <tr class="pub-row-retired">
+                                    <td><s>WordPress.com</s></td>
+                                    <td>global</td>
+                                    <td>OAuth2</td>
+                                    <td>—</td>
+                                    <td><span class="pub-badge pub-badge-skip">— retired 2026-04-20</span></td>
+                                </tr>
+                                <tr class="pub-row-retired">
+                                    <td><s>Mastodon</s></td>
+                                    <td>global</td>
+                                    <td>Bearer</td>
+                                    <td>—</td>
+                                    <td><span class="pub-badge pub-badge-skip">— retired 2026-04-15</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <h2 data-i18n="guide_pub_roadmap_h">Roadmap：把另外 9 個平台搬上 vault-first</h2>
+                        <p data-i18n="guide_pub_roadmap_desc">每一個平台只要照 X 的樣板做：先在 publisher router 頂部加一個 <code>resolve&lt;Platform&gt;Creds(deviceId)</code>，先讀 <code>_getDeviceVar()</code>、若缺則 fallback 到 <code>process.env</code>，然後在每個 endpoint 把 <code>process.env.XXX</code> 換成 <code>(await resolve())</code> 結果。</p>
+                        <ol>
+                            <li data-i18n="guide_pub_roadmap_step1">複製 <code>resolveXCreds()</code> 為 <code>resolveTumblrCreds()</code>、<code>resolveRedditCreds()</code> ... 共 9 份。</li>
+                            <li data-i18n="guide_pub_roadmap_step2">每個 publish endpoint 改成 <code>const c = await resolveXxx(deviceId);</code> 並把 OAuth 簽章 / Bearer header 換成 c 內的值。</li>
+                            <li data-i18n="guide_pub_roadmap_step3"><code>/&lt;platform&gt;/me</code> 加上 vault 路徑回報（看哪幾把金鑰來自 vault、哪幾把 fallback env）。</li>
+                            <li data-i18n="guide_pub_roadmap_step4">寫 jest 多租戶測試：mock <code>_getDeviceVar()</code> 回不同 device 不同金鑰，確認沒有跨 device 漏 key。</li>
+                            <li data-i18n="guide_pub_roadmap_step5">逐平台填卡 + 一個 PR 一個平台，避免大爆炸 diff。</li>
+                        </ol>
+
+                        <h2 data-i18n="guide_pub_test_h">怎麼自我驗證金鑰是否正確接好</h2>
+                        <p data-i18n="guide_pub_test_desc">所有平台都有 <code>/me</code> 或等價的「safe self-check」endpoint，會打到平台 API 但<strong>不會發任何貼文</strong>，是測金鑰最快的方法：</p>
+                        <div class="code-block"><pre><code class="language-bash"># X (vault-first，會回傳 @screen_name)
+curl -s -H "X-Publisher-Key: $PUBLISHER_API_KEY" \
+  "https://eclawbot.com/api/publisher/x/me?deviceId=DEVICE_ID"
+
+# Hashnode / DEV.to / Qiita / Tumblr / Reddit / LinkedIn / WeChat / Blogger / Telegraph
+# 全都有對應 GET /&lt;platform&gt;/me 或 /status，回 200 = 金鑰活著
+for p in hashnode devto qiita tumblr reddit linkedin; do
+  echo "=== $p ==="
+  curl -s -H "X-Publisher-Key: $PUBLISHER_API_KEY" \
+    "https://eclawbot.com/api/publisher/$p/me" | head -c 200
+  echo
+done</code></pre></div>
+
+                        <h2 data-i18n="guide_pub_status_endpoint_h">查當前哪些平台有設好</h2>
+                        <p data-i18n="guide_pub_status_endpoint_desc">不需要逐個 platform 試，<code>GET /api/publisher/platforms</code> 一次回所有 platform 的 <code>configured</code> 旗標：</p>
+                        <div class="code-block"><pre><code class="language-bash">curl -s -H "X-Publisher-Key: $PUBLISHER_API_KEY" \
+  "https://eclawbot.com/api/publisher/platforms" | python3 -m json.tool</code></pre></div>
                     </div>
 
                 </div><!-- /guide-content -->
