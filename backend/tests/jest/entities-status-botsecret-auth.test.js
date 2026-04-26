@@ -32,11 +32,16 @@ describe('/api/entities auth paths', () => {
     });
 
     it('validates botSecret against entity.botSecret via safeEqual', () => {
-        expect(handler).toMatch(/safeEqual\([^)]*botSecret[^)]*botSecret\)/);
+        expect(handler).toMatch(/safeEqual\(e\.botSecret,\s*botSecret\)/);
     });
 
     it('requires entity to be bound for botSecret path', () => {
-        expect(handler).toMatch(/botEntity\.isBound/);
+        expect(handler).toMatch(/e\.isBound/);
+    });
+
+    it('scans entities when entityId omitted (matches help-text curl)', () => {
+        // help text shows: /api/entities?deviceId=...&botSecret=...  (no entityId)
+        expect(handler).toMatch(/Object\.values\(ents\)\.some/);
     });
 
     it('still supports deviceSecret path', () => {
@@ -60,7 +65,7 @@ describe('/api/status auth paths', () => {
     });
 
     it('validates botSecret against entity.botSecret via safeEqual', () => {
-        expect(handler).toMatch(/safeEqual\([^)]*botSecret[^)]*botSecret\)/);
+        expect(handler).toMatch(/safeEqual\(botEntity\.botSecret,\s*botSecret\)/);
     });
 
     it('requires entity to be bound for botSecret path', () => {

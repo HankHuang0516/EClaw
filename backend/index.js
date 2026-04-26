@@ -5404,13 +5404,22 @@ app.get('/api/entities', async (req, res) => {
     const botSecret = req.query.botSecret;
     const queryEntityId = parseInt(req.query.entityId) || 0;
 
-    // Auth: deviceId+deviceSecret OR deviceId+botSecret+entityId OR JWT cookie
+    // Auth: deviceId+deviceSecret OR deviceId+botSecret(+entityId) OR JWT cookie.
+    // For botSecret path, entityId is optional — when omitted we scan the
+    // device's bound entities for a matching botSecret (matches help-text
+    // curl template at index.js:1403 + skill-templates "List all entities").
     const jwtDeviceId = req.user && req.user.deviceId;
     const deviceAuthed = filterDeviceId && deviceSecret && devices[filterDeviceId] && safeEqual(devices[filterDeviceId].deviceSecret, deviceSecret);
-    const botEntity = (filterDeviceId && botSecret && queryEntityId > 0 && devices[filterDeviceId])
-        ? devices[filterDeviceId].entities?.[queryEntityId]
-        : null;
-    const botAuthed = botEntity && botEntity.isBound && safeEqual(botEntity.botSecret, botSecret);
+    let botAuthed = false;
+    if (!deviceAuthed && filterDeviceId && botSecret && devices[filterDeviceId]) {
+        const ents = devices[filterDeviceId].entities || {};
+        if (queryEntityId > 0) {
+            const e = ents[queryEntityId];
+            botAuthed = !!(e && e.isBound && e.botSecret && safeEqual(e.botSecret, botSecret));
+        } else {
+            botAuthed = Object.values(ents).some(e => e && e.isBound && e.botSecret && safeEqual(e.botSecret, botSecret));
+        }
+    }
     const authedDeviceId = deviceAuthed
         ? filterDeviceId
         : botAuthed
