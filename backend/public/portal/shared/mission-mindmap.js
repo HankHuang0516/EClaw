@@ -324,6 +324,13 @@
       background: rgba(255,255,255,0.08); color: var(--mm-text);
     }
     .mm-root .mm-chip-pop-btn.pin-btn:hover { color: #fde047; }
+    .mm-root .mm-chip-pop-btn.cite-btn:hover { color: #a78bfa; }
+    .mm-root .mm-chip-pop-btn.is-disabled {
+      opacity: 0.35; cursor: not-allowed;
+    }
+    .mm-root .mm-chip-pop-btn.is-disabled:hover {
+      background: transparent; color: var(--mm-text-secondary);
+    }
     .mm-root .mm-chip-pop-body { padding: 8px 10px 10px; }
     .mm-root .mm-chip-pop-summary {
       color: var(--mm-text-secondary); font-size: 11.5px;
@@ -688,6 +695,9 @@
       const pinTitle = isPinned ? '取消釘選' : '釘選引用';
       const pinIcon = isPinned ? '📍' : '📌';
       const pinClass = isPinned ? 'pin-btn pinned' : 'pin-btn';
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(d.id);
+      const citeTitle = isUuid ? '複製引用 token (聊天可貼上為 chip)' : '示範資料無法引用 — 需先在心智圖新增實際節點';
+      const citeClass = isUuid ? 'cite-btn' : 'cite-btn is-disabled';
       const summary = d.summary || `${sysMeta.label} 子系統 · ${d.tier}`;
       const relatedHtml = related.length
         ? related.map(r => `
@@ -703,6 +713,7 @@
           <span class="swatch" style="background:${sysMeta.color}"></span>
           <span class="mm-chip-pop-title" title="${escapeHtml(d.label)}">${escapeHtml(d.label)}</span>
           <span class="mm-chip-pop-status ${escapeHtml(d.status)}">${escapeHtml(d.status)}</span>
+          <button class="mm-chip-pop-btn ${citeClass}" data-pop-act="cite" title="${escapeHtml(citeTitle)}">📋</button>
           <button class="mm-chip-pop-btn ${pinClass}" data-pop-act="pin" title="${escapeHtml(pinTitle)}">${pinIcon}</button>
           <button class="mm-chip-pop-btn" data-pop-act="close" title="關閉">✖</button>
         </div>
@@ -795,7 +806,48 @@
             pin(nodeId, d);
           }
         }
+        if (act === 'cite') {
+          if (btn.classList.contains('is-disabled')) {
+            showToast('示範資料無法引用,需先在心智圖新增實際節點');
+            return;
+          }
+          const token = 'mindmap_' + nodeId;
+          copyToClipboard(token).then(ok => {
+            showToast(ok ? `已複製「${token.slice(0, 22)}…」— 切到聊天貼上即為 chip` : `複製失敗,請手動複製: ${token}`);
+          });
+        }
       });
+    }
+
+    function copyToClipboard(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text).then(() => true).catch(() => fallbackCopy(text));
+      }
+      return Promise.resolve(fallbackCopy(text));
+    }
+
+    function fallbackCopy(text) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand('copy');
+        ta.remove();
+        return ok;
+      } catch (_) { return false; }
+    }
+
+    function showToast(msg) {
+      const root = rootEl.querySelector('.mind-canvas-wrap') || rootEl;
+      const tip = document.createElement('div');
+      tip.className = 'mm-toast';
+      tip.textContent = msg;
+      root.appendChild(tip);
+      setTimeout(() => { tip.style.opacity = '0'; }, 1800);
+      setTimeout(() => { tip.remove(); }, 2200);
     }
 
     function pin(nodeId, d) {

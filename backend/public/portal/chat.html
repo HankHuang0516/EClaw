@@ -6441,7 +6441,8 @@
         // ── Entity Preview Modal (Card, Skill, Rule, etc.) ──
         const entityTypeLabels = {
             card: 'Kanban Card', skill: 'Skill', rule: 'Rule',
-            listing: 'Rental Listing', exam: 'Arena Exam', contract: 'Rental Contract'
+            listing: 'Rental Listing', exam: 'Arena Exam', contract: 'Rental Contract',
+            mindmap: 'Mindmap Node'
         };
 
         const statusEmojis = {
@@ -6632,6 +6633,8 @@
                     data = await fetchExamData(auth, entityId);
                 } else if (type === 'contract') {
                     data = await fetchContractData(auth, entityId);
+                } else if (type === 'mindmap') {
+                    data = await fetchMindmapNodeData(auth, entityId);
                 } else {
                     bodyEl.innerHTML = `<div class="entity-modal-error">Unknown entity type: ${type}</div>`;
                     return;
@@ -6809,6 +6812,42 @@
             </div>`;
 
             return { title: c.listing_title || `Contract ${contractId.substring(0, 8)}`, id: c.id, html };
+        }
+
+        async function fetchMindmapNodeData(auth, nodeId) {
+            const cleanId = String(nodeId || '').replace(/^mindmap_/i, '');
+            const isUuidLike = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId);
+            if (!isUuidLike) {
+                const demoMsg = i18n.t('chat_mindmap_demo_node') || '此節點為示範資料或短前綴 ID,無法跨頁引用 — 請從心智圖頁面用 📋 複製完整 token';
+                return { title: cleanId, id: cleanId, html: `<div class="entity-description">${escapeHtml(demoMsg)}</div>` };
+            }
+            const resp = await apiCall('GET', `/api/mindmap/node/${cleanId}?${auth}`);
+            if (!resp || !resp.node) return null;
+            const n = resp.node;
+            const anchors = Array.isArray(resp.anchors) ? resp.anchors : [];
+            const comments = Array.isArray(resp.comments) ? resp.comments : [];
+
+            const summaryLabel = i18n.t('chat_mindmap_field_summary') || 'Summary';
+            const typeLabel = i18n.t('chat_mindmap_field_type') || 'Type';
+            const anchorsLabel = i18n.t('chat_mindmap_field_anchors') || 'Anchors';
+            const commentsLabel = i18n.t('chat_mindmap_field_comments') || 'Comments';
+            const emptyLabel = i18n.t('chat_mindmap_empty') || '—';
+
+            let html = `<div class="entity-meta">
+                <div class="entity-meta-item"><div class="entity-meta-label">${escapeHtml(typeLabel)}</div><div class="entity-meta-value">${escapeHtml(n.node_type || emptyLabel)}</div></div>
+                <div class="entity-meta-item"><div class="entity-meta-label">${escapeHtml(anchorsLabel)}</div><div class="entity-meta-value">${anchors.length}</div></div>
+                <div class="entity-meta-item"><div class="entity-meta-label">${escapeHtml(commentsLabel)}</div><div class="entity-meta-value">${comments.length}</div></div>
+            </div>`;
+
+            if (n.summary) {
+                html += `<div class="entity-description"><strong>${escapeHtml(summaryLabel)}：</strong> ${escapeHtml(n.summary)}</div>`;
+            }
+            if (anchors.length) {
+                html += `<div class="entity-comments"><div class="entity-comments-header">📎 ${escapeHtml(anchorsLabel)}</div>` +
+                    anchors.map(a => `<div class="entity-comment"><div class="entity-comment-meta">${escapeHtml(a.anchor_type || '')}</div><div class="entity-comment-text">${escapeHtml(a.anchor_label || a.anchor_ref || '')}</div></div>`).join('') +
+                    `</div>`;
+            }
+            return { title: n.title || `Node ${nodeId.substring(0, 8)}`, id: n.id, html };
         }
 
         function hasNoWebhookWarning(resp) {
