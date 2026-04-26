@@ -444,14 +444,50 @@
             if (!node || node.empty()) return;
             const requestedZoom = opts.zoom != null ? opts.zoom : Math.max(cy.zoom(), 1.2);
             const targetZoom = Math.min(Math.max(requestedZoom, cy.minZoom()), cy.maxZoom());
+            const totalDur = opts.duration != null ? opts.duration : 600;
             cy.stop(true, true);
-            cy.animate({
-                center: { eles: node },
-                zoom: targetZoom,
-            }, {
-                duration: opts.duration != null ? opts.duration : 600,
-                easing: 'ease-in-out',
-            });
+            if (opts.cinematic) {
+                // Three-phase camera move so the focus shift is visible even
+                // when the target node is already on-screen at the target zoom.
+                // Phase 1 zooms out for context, phase 2 glides at the wide
+                // zoom, phase 3 dives back in. Caller asks for this when the
+                // jump is explicit (subsystem quick-jump) instead of just
+                // following a node tap.
+                const overviewZoom = Math.max(
+                    cy.minZoom(),
+                    Math.min(cy.zoom(), targetZoom) * 0.5
+                );
+                const phaseOut = Math.round(totalDur * 0.35);
+                const phasePan = Math.round(totalDur * 0.30);
+                const phaseIn = Math.max(150, totalDur - phaseOut - phasePan);
+                // cy.animate is fire-and-forget — calling three in a row runs
+                // them in parallel and the last one wins. Chain via complete
+                // callbacks so we actually get out → pan → in.
+                cy.animate({ zoom: overviewZoom }, {
+                    duration: phaseOut,
+                    easing: 'ease-out',
+                    complete: () => {
+                        cy.animate({ center: { eles: node }, zoom: overviewZoom }, {
+                            duration: phasePan,
+                            easing: 'linear',
+                            complete: () => {
+                                cy.animate({ center: { eles: node }, zoom: targetZoom }, {
+                                    duration: phaseIn,
+                                    easing: 'ease-in',
+                                });
+                            },
+                        });
+                    },
+                });
+            } else {
+                cy.animate({
+                    center: { eles: node },
+                    zoom: targetZoom,
+                }, {
+                    duration: totalDur,
+                    easing: 'ease-in-out',
+                });
+            }
         }
 
         function enterFocusMode(nodeId, opts = {}) {
@@ -543,9 +579,9 @@
             node.select();
             showEditor(nodeId);
             exitFocusMode();
-            // Slightly larger zoom + longer animation for explicit quick-jump
-            // so it feels like a deliberate camera move, not just selection.
-            enterFocusMode(nodeId, { zoom: 1.5, duration: 750 });
+            // Cinematic three-phase camera so the jump reads even when the
+            // target subsystem is already on-screen at the target zoom.
+            enterFocusMode(nodeId, { zoom: 1.5, duration: 1100, cinematic: true });
         }
 
         function creds() {
