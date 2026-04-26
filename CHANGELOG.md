@@ -1,3 +1,10 @@
+# [1.1096.0](https://github.com/HankHuang0516/EClaw/compare/v1.1095.0...v1.1096.0) (2026-04-26)
+
+
+### Features
+
+* **publisher:** Hashnode vault-first multi-tenant (2/10 platforms) ([#2145](https://github.com/HankHuang0516/EClaw/issues/2145)) ([aa6f7d2](https://github.com/HankHuang0516/EClaw/commit/aa6f7d2c9c3d94caa909a7a66ad229465711421d))
+
 # [1.1095.0](https://github.com/HankHuang0516/EClaw/compare/v1.1094.1...v1.1095.0) (2026-04-26)
 
 
