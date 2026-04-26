@@ -1,3 +1,10 @@
+# [1.1101.0](https://github.com/HankHuang0516/EClaw/compare/v1.1100.0...v1.1101.0) (2026-04-26)
+
+
+### Features
+
+* **publisher:** Tumblr vault-first multi-tenant ([#7](https://github.com/HankHuang0516/EClaw/issues/7)/10) ([#2150](https://github.com/HankHuang0516/EClaw/issues/2150)) ([9ed972d](https://github.com/HankHuang0516/EClaw/commit/9ed972d4e4a9a54a3f71260cb41d316d2aa00601))
+
 # [1.1100.0](https://github.com/HankHuang0516/EClaw/compare/v1.1099.0...v1.1100.0) (2026-04-26)
 
 
