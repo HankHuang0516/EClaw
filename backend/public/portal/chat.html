@@ -3209,6 +3209,10 @@
                                 inp.focus();
                                 try { inp.setSelectionRange(prefillInput.length, prefillInput.length); } catch(e2) {}
                             }
+                            // The chat_draft restore below would otherwise
+                            // overwrite the prefill with a stale draft; the
+                            // deep-link explicitly asked for prefill, so it wins.
+                            localStorage.removeItem('chat_draft');
                         }
                     }
                 }
