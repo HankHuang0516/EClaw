@@ -1,3 +1,10 @@
+## [1.1103.1](https://github.com/HankHuang0516/EClaw/compare/v1.1103.0...v1.1103.1) (2026-04-26)
+
+
+### Bug Fixes
+
+* **mindmap:** chain subsystem zoom phases so out→pan→in actually plays ([#2155](https://github.com/HankHuang0516/EClaw/issues/2155)) ([9656b4b](https://github.com/HankHuang0516/EClaw/commit/9656b4bb1c447dcb6184500e0fe091d2a7d68040))
+
 # [1.1103.0](https://github.com/HankHuang0516/EClaw/compare/v1.1102.0...v1.1103.0) (2026-04-26)
 
 
