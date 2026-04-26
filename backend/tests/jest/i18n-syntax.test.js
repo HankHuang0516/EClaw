@@ -163,6 +163,98 @@ describe('i18n-check findOrphanKeys', () => {
     });
 });
 
+// ── Locale-tag enforcement (script charset guard) ───────────────────────────
+// Regression: PR #2123 pasted Korean translations into ja/th/vi/id/fr/es/de/ms/hi
+// blocks of guide_cc_channel_warn_experimental, leaking 한글 into 9 non-ko
+// locales until PR #2136. This guard catches script-foreign-to-locale at CI time.
+//
+// Existing leaks (1745 keys as of 2026-04-26 — mass mistranslation across the
+// fr/es/de/ja/ko/hi/ar guide_* blocks) are tracked in i18n-locale-leak-baseline.json.
+// Cleanup is a separate companion card; this guard ensures no NEW leak slips in.
+describe('i18n locale-tag enforcement (per-locale charset)', () => {
+    const SCRIPTS = {
+        hangul: /[가-힯ᄀ-ᇿ㄰-㆏]/,
+        thai: /[฀-๿]/,
+        devanagari: /[ऀ-ॿ]/,
+        arabic: /[؀-ۿݐ-ݿﭐ-﷿ﹰ-﻿]/,
+        hiragana: /[぀-ゟ]/,
+        katakana: /[゠-ヿㇰ-ㇿ]/,
+        cjk: /[㐀-䶿一-鿿豈-﫿]/,
+    };
+
+    // For each locale: scripts that MUST NOT appear in any value.
+    // ja allows cjk (kanji); ko allows cjk (hanja); zh-* allows cjk; everyone
+    // else is Latin-script and must reject all CJ/K/Thai/Arabic/Devanagari.
+    const FORBID = {
+        en:      ['hangul','thai','devanagari','arabic','hiragana','katakana','cjk'],
+        'zh-TW': ['hangul','thai','devanagari','arabic','hiragana','katakana'],
+        'zh-CN': ['hangul','thai','devanagari','arabic','hiragana','katakana'],
+        zh:      ['hangul','thai','devanagari','arabic','hiragana','katakana'],
+        ja:      ['hangul','thai','devanagari','arabic'],
+        ko:      ['thai','devanagari','arabic','hiragana','katakana'],
+        fr:      ['hangul','thai','devanagari','arabic','hiragana','katakana','cjk'],
+        es:      ['hangul','thai','devanagari','arabic','hiragana','katakana','cjk'],
+        de:      ['hangul','thai','devanagari','arabic','hiragana','katakana','cjk'],
+        th:      ['hangul','devanagari','arabic','hiragana','katakana','cjk'],
+        vi:      ['hangul','thai','devanagari','arabic','hiragana','katakana','cjk'],
+        id:      ['hangul','thai','devanagari','arabic','hiragana','katakana','cjk'],
+        ms:      ['hangul','thai','devanagari','arabic','hiragana','katakana','cjk'],
+        hi:      ['hangul','thai','arabic','hiragana','katakana','cjk'],
+        ar:      ['hangul','thai','devanagari','hiragana','katakana','cjk'],
+    };
+
+    let TRANSLATIONS;
+    let baseline;
+    beforeAll(() => {
+        const content = fs.readFileSync(I18N_PATH, 'utf8');
+        const sandbox = {
+            localStorage: { getItem: () => null, setItem: () => {} },
+            navigator: { language: 'en' },
+            document: { addEventListener: () => {}, querySelectorAll: () => [], documentElement: { lang: '' } },
+            fetch: () => Promise.resolve(),
+            console,
+            _result: {}
+        };
+        vm.createContext(sandbox);
+        vm.runInContext(content + '\n_result.TRANSLATIONS = TRANSLATIONS;', sandbox);
+        TRANSLATIONS = sandbox._result.TRANSLATIONS;
+        const baselinePath = path.join(__dirname, 'i18n-locale-leak-baseline.json');
+        baseline = new Set(JSON.parse(fs.readFileSync(baselinePath, 'utf8')).keys);
+    });
+
+    test('no NEW value contains script foreign to its locale', () => {
+        const newViolations = [];
+        const stillLeaking = new Set();
+        for (const [locale, forbidList] of Object.entries(FORBID)) {
+            const block = TRANSLATIONS[locale];
+            if (!block) continue;
+            for (const [key, val] of Object.entries(block)) {
+                if (typeof val !== 'string') continue;
+                const id = `${locale}.${key}`;
+                for (const script of forbidList) {
+                    if (SCRIPTS[script].test(val)) {
+                        if (baseline.has(id)) {
+                            stillLeaking.add(id);
+                        } else {
+                            newViolations.push(`${id}: contains ${script} (forbidden in ${locale}) — "${val.slice(0, 80).replace(/\n/g, ' ')}"`);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        if (newViolations.length) {
+            throw new Error(
+                `NEW locale-tag leak detected — translation contains script foreign to its locale block.\n` +
+                `Same regression class as PR #2123 cc_warn ko-leak (fixed by #2136).\n` +
+                `If a key is intentionally non-native (brand name, quoted foreign phrase), add it to ` +
+                `backend/tests/jest/i18n-locale-leak-baseline.json. Otherwise translate to the correct script.\n\n  ` +
+                newViolations.join('\n  ')
+            );
+        }
+    });
+});
+
 // ── HTML page i18n integration ─────────────────────────────────────────────
 describe('HTML pages i18n integration', () => {
     const htmlFiles = findHtmlFiles(PUBLIC_DIR);
