@@ -123,7 +123,13 @@ const REDDIT_CLIENT_ID = process.env.REDDIT_CLIENT_ID;
 const REDDIT_CLIENT_SECRET = process.env.REDDIT_CLIENT_SECRET;
 const REDDIT_USERNAME = process.env.REDDIT_USERNAME;
 const REDDIT_PASSWORD = process.env.REDDIT_PASSWORD;
-let redditTokenCache = { access_token: null, expires_at: 0 };
+const REDDIT_CRED_KEYS = ['REDDIT_CLIENT_ID', 'REDDIT_CLIENT_SECRET', 'REDDIT_USERNAME', 'REDDIT_PASSWORD'];
+const REDDIT_CREDS_MISSING = {
+    error: 'Reddit credentials not set for this device',
+    setup_url: '/portal/publisher-setup.html'
+};
+// Per-tenant token cache. Key = clientId+username (so device A's token cannot be served to device B).
+const redditTokenCacheByCreds = new Map();
 
 // LinkedIn (OAuth2 Bearer)
 const LINKEDIN_ACCESS_TOKEN = process.env.LINKEDIN_ACCESS_TOKEN;
@@ -1809,49 +1815,69 @@ router.delete('/tumblr/post/:postId', async (req, res) => {
 // Auth: OAuth2 password grant | Content: text/link
 // ============================================
 
-function requireReddit(res) {
-    if (!REDDIT_CLIENT_ID || !REDDIT_CLIENT_SECRET || !REDDIT_USERNAME || !REDDIT_PASSWORD) {
-        res.status(501).json({ error: 'Reddit not configured (REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET, REDDIT_USERNAME, REDDIT_PASSWORD missing)' });
-        return false;
+// Resolve Reddit credentials (vault-first, env fallback). All 4 keys atomic.
+async function resolveRedditCreds(deviceId) {
+    if (deviceId && typeof _getDeviceVar === 'function') {
+        try {
+            const cid = await _getDeviceVar(deviceId, 'REDDIT_CLIENT_ID');
+            const csec = await _getDeviceVar(deviceId, 'REDDIT_CLIENT_SECRET');
+            const usr = await _getDeviceVar(deviceId, 'REDDIT_USERNAME');
+            const pwd = await _getDeviceVar(deviceId, 'REDDIT_PASSWORD');
+            if ([cid, csec, usr, pwd].every(v => typeof v === 'string' && v.length > 0)) {
+                return { clientId: cid, clientSecret: csec, username: usr, password: pwd, source: 'vault' };
+            }
+        } catch (_) { /* fall through to env */ }
     }
-    return true;
+    if (REDDIT_CLIENT_ID && REDDIT_CLIENT_SECRET && REDDIT_USERNAME && REDDIT_PASSWORD) {
+        return {
+            clientId: REDDIT_CLIENT_ID, clientSecret: REDDIT_CLIENT_SECRET,
+            username: REDDIT_USERNAME, password: REDDIT_PASSWORD, source: 'env'
+        };
+    }
+    return { clientId: null, clientSecret: null, username: null, password: null, source: 'missing' };
 }
 
-async function getRedditToken() {
-    if (redditTokenCache.access_token && redditTokenCache.expires_at > Date.now() + 60000) {
-        return redditTokenCache.access_token;
+async function getRedditToken(creds) {
+    const cacheKey = `${creds.clientId}:${creds.username}`;
+    const cached = redditTokenCacheByCreds.get(cacheKey);
+    if (cached && cached.access_token && cached.expires_at > Date.now() + 60000) {
+        return cached.access_token;
     }
-    const auth = Buffer.from(`${REDDIT_CLIENT_ID}:${REDDIT_CLIENT_SECRET}`).toString('base64');
+    const auth = Buffer.from(`${creds.clientId}:${creds.clientSecret}`).toString('base64');
     const res = await fetch('https://www.reddit.com/api/v1/access_token', {
         method: 'POST',
         headers: {
             Authorization: `Basic ${auth}`,
             'Content-Type': 'application/x-www-form-urlencoded',
-            'User-Agent': 'EClaw:v1.0 (by /u/' + REDDIT_USERNAME + ')'
+            'User-Agent': 'EClaw:v1.0 (by /u/' + creds.username + ')'
         },
         body: new URLSearchParams({
             grant_type: 'password',
-            username: REDDIT_USERNAME,
-            password: REDDIT_PASSWORD
+            username: creds.username,
+            password: creds.password
         })
     });
     const data = await res.json();
     if (data.error) throw new Error(`Reddit auth: ${data.error}`);
-    redditTokenCache = {
+    redditTokenCacheByCreds.set(cacheKey, {
         access_token: data.access_token,
         expires_at: Date.now() + (data.expires_in * 1000)
-    };
+    });
     return data.access_token;
 }
 
-async function redditRequest(method, path, body = null) {
-    const token = await getRedditToken();
+async function redditRequest(method, path, body = null, creds = null) {
+    const effectiveCreds = creds || {
+        clientId: REDDIT_CLIENT_ID, clientSecret: REDDIT_CLIENT_SECRET,
+        username: REDDIT_USERNAME, password: REDDIT_PASSWORD
+    };
+    const token = await getRedditToken(effectiveCreds);
     const options = {
         method,
         headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/x-www-form-urlencoded',
-            'User-Agent': 'EClaw:v1.0 (by /u/' + REDDIT_USERNAME + ')'
+            'User-Agent': 'EClaw:v1.0 (by /u/' + effectiveCreds.username + ')'
         }
     };
     if (body) options.body = new URLSearchParams(body);
@@ -1867,17 +1893,19 @@ async function redditRequest(method, path, body = null) {
 
 // GET /api/publisher/reddit/me
 router.get('/reddit/me', async (req, res) => {
-    if (!requireReddit(res)) return;
     try {
-        const token = await getRedditToken();
+        const deviceId = req.query?.deviceId || null;
+        const creds = await resolveRedditCreds(deviceId);
+        if (!creds.clientId) return res.status(400).json(REDDIT_CREDS_MISSING);
+        const token = await getRedditToken(creds);
         const meRes = await fetch('https://oauth.reddit.com/api/v1/me', {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'User-Agent': 'EClaw:v1.0 (by /u/' + REDDIT_USERNAME + ')'
+                'User-Agent': 'EClaw:v1.0 (by /u/' + creds.username + ')'
             }
         });
         const data = await meRes.json();
-        res.json({ success: true, user: { name: data.name, id: data.id, link_karma: data.link_karma, comment_karma: data.comment_karma } });
+        res.json({ success: true, user: { name: data.name, id: data.id, link_karma: data.link_karma, comment_karma: data.comment_karma }, _credSource: creds.source });
     } catch (err) {
         res.status(err.status || 500).json({ error: err.message });
     }
@@ -1885,11 +1913,13 @@ router.get('/reddit/me', async (req, res) => {
 
 // POST /api/publisher/reddit/submit — Submit a text or link post
 router.post('/reddit/submit', express.json(), async (req, res) => {
-    if (!requireReddit(res)) return;
-    const { subreddit, title, text, url: linkUrl, kind } = req.body;
+    const { subreddit, title, text, url: linkUrl, kind, deviceId } = req.body;
     if (!subreddit || !title) return res.status(400).json({ error: 'subreddit, title required' });
 
     try {
+        const creds = await resolveRedditCreds(deviceId || null);
+        if (!creds.clientId) return res.status(400).json(REDDIT_CREDS_MISSING);
+
         const postBody = {
             sr: subreddit,
             title,
@@ -1899,12 +1929,12 @@ router.post('/reddit/submit', express.json(), async (req, res) => {
         if (linkUrl) postBody.url = linkUrl;
         if (text) postBody.text = text;
 
-        const data = await redditRequest('POST', '/api/submit', postBody);
+        const data = await redditRequest('POST', '/api/submit', postBody, creds);
         const result = data.json?.data;
         if (data.json?.errors?.length > 0) {
             return res.status(400).json({ error: data.json.errors.map(e => e.join(': ')).join('; ') });
         }
-        console.log(`[Publisher] Reddit post submitted to r/${subreddit}: ${result?.id}`);
+        console.log(`[Publisher] Reddit post submitted to r/${subreddit}: ${result?.id} (creds: ${creds.source})`);
         res.json({
             success: true, platform: 'reddit', postId: result?.id,
             url: result?.url, subreddit, title
@@ -1916,12 +1946,14 @@ router.post('/reddit/submit', express.json(), async (req, res) => {
 });
 
 // DELETE /api/publisher/reddit/post/:postId — Delete (requires fullname t3_id)
-router.delete('/reddit/post/:postId', async (req, res) => {
-    if (!requireReddit(res)) return;
+router.delete('/reddit/post/:postId', express.json(), async (req, res) => {
     const { postId } = req.params;
+    const deviceId = req.body?.deviceId || req.query?.deviceId || null;
     try {
+        const creds = await resolveRedditCreds(deviceId);
+        if (!creds.clientId) return res.status(400).json(REDDIT_CREDS_MISSING);
         const fullname = postId.startsWith('t3_') ? postId : `t3_${postId}`;
-        await redditRequest('POST', '/api/del', { id: fullname });
+        await redditRequest('POST', '/api/del', { id: fullname }, creds);
         console.log(`[Publisher] Reddit post deleted: ${postId}`);
         res.json({ success: true, platform: 'reddit', deleted: postId });
     } catch (err) {
