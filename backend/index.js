@@ -13923,7 +13923,7 @@ function getMissionApiHints(apiBase, deviceId, entityId, botSecret) {
     hints += `Current Taiwan Time: ${twTime} (UTC+8)\n`;
     hints += `Read tasks/notes/rules/skills: exec: curl -s "${apiBase}/api/mission/dashboard?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}"\n`;
     hints += `Read notes: exec: curl -s "${apiBase}/api/mission/notes?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}"\n`;
-    hints += `Read chat history: exec: curl -s "${apiBase}/api/chat/history?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}&limit=100"\n`;
+    hints += `Read chat history (scope: msgs to/from your entityId only — NOT full device transcript): exec: curl -s "${apiBase}/api/chat/history?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}&limit=100"\n`;
     hints += `Create kanban card: exec: curl -s -X POST "${apiBase}/api/mission/card" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","title":"TASK_TITLE","status":"todo"}'\n`;
     hints += `Add note: exec: curl -s -X POST "${apiBase}/api/mission/note/add" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","title":"TITLE","content":"CONTENT"}'\n`;
     hints += `\n[AVAILABLE TOOLS — Kanban Board]\n`;

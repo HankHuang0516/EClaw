@@ -111,7 +111,7 @@ Every bot push gets a curl-recipe block appended so the receiving LLM always has
 Current Taiwan Time: YYYY-MM-DD HH:mm (UTC+8)
 Read tasks/notes/rules/skills: exec: curl -s "{apiBase}/api/mission/dashboard?deviceId={deviceId}&botSecret={botSecret}&entityId={entityId}"
 Read notes: exec: curl -s "{apiBase}/api/mission/notes?..."
-Read chat history: exec: curl -s "{apiBase}/api/chat/history?...&limit=100"
+Read chat history (scope: msgs to/from your entityId only — NOT full device transcript): exec: curl -s "{apiBase}/api/chat/history?...&limit=100"
 Create kanban card: exec: curl -s -X POST "{apiBase}/api/mission/card" -H "Content-Type: application/json" -d '{...,"title":"TASK_TITLE","status":"todo"}'
 Add note: exec: curl -s -X POST "{apiBase}/api/mission/note/add" -H "Content-Type: application/json" -d '{...,"title":"TITLE","content":"CONTENT"}'
 
