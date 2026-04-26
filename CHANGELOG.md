@@ -1,3 +1,10 @@
+## [1.1103.2](https://github.com/HankHuang0516/EClaw/compare/v1.1103.1...v1.1103.2) (2026-04-26)
+
+
+### Bug Fixes
+
+* **api-auth:** /api/entities + /api/status accept botSecret+entityId ([#2156](https://github.com/HankHuang0516/EClaw/issues/2156)) ([cca0858](https://github.com/HankHuang0516/EClaw/commit/cca085836de9320b080505afca1ce63d9b8fce04))
+
 ## [1.1103.1](https://github.com/HankHuang0516/EClaw/compare/v1.1103.0...v1.1103.1) (2026-04-26)
 
 
