@@ -1,3 +1,10 @@
+# [1.1095.0](https://github.com/HankHuang0516/EClaw/compare/v1.1094.1...v1.1095.0) (2026-04-26)
+
+
+### Features
+
+* **info:** publisher multi-tenant status panel + key roadmap ([#2144](https://github.com/HankHuang0516/EClaw/issues/2144)) ([ea9a257](https://github.com/HankHuang0516/EClaw/commit/ea9a2572d04a78e73cec57dfb4a825d0052f7de7))
+
 ## [1.1094.1](https://github.com/HankHuang0516/EClaw/compare/v1.1094.0...v1.1094.1) (2026-04-26)
 
 
