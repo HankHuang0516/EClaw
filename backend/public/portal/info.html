@@ -3679,14 +3679,14 @@ curl -s -X POST "https://eclawbot.com/api/mission/note/update" \
                     <div class="guide-panel" id="guide-publisher">
                         <header>
                             <h1 data-i18n="guide_pub_title">多平台發布 Publisher</h1>
-                            <p class="meta" data-i18n="guide_pub_meta">10 個內容平台 · 多租戶金鑰 roadmap · X / Hashnode / DEV.to / Qiita / LinkedIn / Reddit / Tumblr / Blogger / WeChat 已上線、其餘 env-only</p>
+                            <p class="meta" data-i18n="guide_pub_meta">10 個內容平台 · 多租戶金鑰已全平台上線（Telegraph 為 auto-key 不需金鑰）</p>
                         </header>
 
                         <h2 data-i18n="guide_pub_overview_h">總覽</h2>
                         <p data-i18n="guide_pub_overview_desc">
                             <code>backend/article-publisher.js</code> 把 10 個內容平台統一在 <code>/api/publisher/&lt;platform&gt;/*</code> 之下。
                             「多租戶」指的是<strong>每個 device 用自己金鑰庫裡的金鑰</strong>呼叫對應平台，而非全站共用 owner 一把 env 金鑰。
-                            目前 X、Hashnode、DEV.to、Qiita、LinkedIn、Reddit、Tumblr、Blogger、WeChat 走完整的 vault-first 流程（<code>resolveXCreds()</code> / <code>resolveHashnodeCreds()</code> / <code>resolveDevtoCreds()</code> / <code>resolveQiitaCreds()</code> / <code>resolveLinkedinCreds()</code> / <code>resolveRedditCreds()</code> / <code>resolveTumblrCreds()</code> / <code>resolveBloggerCreds()</code> / <code>resolveWechatCreds()</code>），其餘平台仍是 env-only single-tenant。
+                            9 個需要金鑰的平台（X、Hashnode、DEV.to、Qiita、LinkedIn、Reddit、Tumblr、Blogger、WeChat）全部走 vault-first 流程：每平台一個 <code>resolve&lt;Platform&gt;Creds(deviceId)</code>，先讀 device vault，缺 key 才 fallback 到 <code>process.env</code>。Telegraph 是 auto-key（首次呼叫匿名建帳）所以不需要 vault 路徑。
                         </p>
 
                         <h2 data-i18n="guide_pub_status_h">平台狀態總表</h2>
@@ -3793,14 +3793,14 @@ curl -s -X POST "https://eclawbot.com/api/mission/note/update" \
                             </tbody>
                         </table>
 
-                        <h2 data-i18n="guide_pub_roadmap_h">Roadmap：剩下 1 個平台（Telegraph 是 auto-key 不需）</h2>
-                        <p data-i18n="guide_pub_roadmap_desc">每一個平台只要照 X 的樣板做：先在 publisher router 頂部加一個 <code>resolve&lt;Platform&gt;Creds(deviceId)</code>，先讀 <code>_getDeviceVar()</code>、若缺則 fallback 到 <code>process.env</code>，然後在每個 endpoint 把 <code>process.env.XXX</code> 換成 <code>(await resolve())</code> 結果。</p>
+                        <h2 data-i18n="guide_pub_roadmap_h">已完工：multi-tenant migration 全平台上線 ✅</h2>
+                        <p data-i18n="guide_pub_roadmap_desc">2026-04 完工。9 個需要金鑰的平台全部走 vault-first；Telegraph 為 auto-key 不需 vault。一律 backwards-compat：vault 缺 key 自動 fallback 到 <code>process.env</code>，舊部署零影響。下表為各平台簽章類型 + 上線 PR 對照：</p>
                         <ol>
-                            <li data-i18n="guide_pub_roadmap_step1">複製 <code>resolveXCreds()</code> 為 <code>resolveTumblrCreds()</code>、<code>resolveRedditCreds()</code> ... 共 9 份。</li>
-                            <li data-i18n="guide_pub_roadmap_step2">每個 publish endpoint 改成 <code>const c = await resolveXxx(deviceId);</code> 並把 OAuth 簽章 / Bearer header 換成 c 內的值。</li>
-                            <li data-i18n="guide_pub_roadmap_step3"><code>/&lt;platform&gt;/me</code> 加上 vault 路徑回報（看哪幾把金鑰來自 vault、哪幾把 fallback env）。</li>
-                            <li data-i18n="guide_pub_roadmap_step4">寫 jest 多租戶測試：mock <code>_getDeviceVar()</code> 回不同 device 不同金鑰，確認沒有跨 device 漏 key。</li>
-                            <li data-i18n="guide_pub_roadmap_step5">逐平台填卡 + 一個 PR 一個平台，避免大爆炸 diff。</li>
+                            <li data-i18n="guide_pub_roadmap_step1"><strong>1-key bearer 平台</strong>（Hashnode / DEV.to / Qiita）：單把 API token，最簡單，先收尾。</li>
+                            <li data-i18n="guide_pub_roadmap_step2"><strong>2-key bearer + URN</strong>（LinkedIn）：access_token + author URN，兩把都從 vault 取。</li>
+                            <li data-i18n="guide_pub_roadmap_step3"><strong>4-key OAuth1a 即時簽章</strong>（X / Tumblr）：consumer + access 各一對，每次 request 用 HMAC-SHA1 即時簽 nonce + timestamp。</li>
+                            <li data-i18n="guide_pub_roadmap_step4"><strong>4-key OAuth2 password grant + per-tenant token cache</strong>（Reddit）：username/password 換 access_token，cache 用 <code>Map keyed by clientId+username</code> 防跨租戶污染。</li>
+                            <li data-i18n="guide_pub_roadmap_step5"><strong>OAuth2 authorization-code / app-credential + per-tenant token cache</strong>（Blogger / WeChat）：Blogger 走 user 同意流程拿 refresh_token，per-device 存 DB；WeChat 用 AppID/AppSecret 換 ~2h access_token，<code>Map keyed by appId</code>。</li>
                         </ol>
 
                         <h2 data-i18n="guide_pub_test_h">怎麼自我驗證金鑰是否正確接好</h2>
