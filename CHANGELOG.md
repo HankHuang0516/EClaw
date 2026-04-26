@@ -1,3 +1,10 @@
+# [1.1103.0](https://github.com/HankHuang0516/EClaw/compare/v1.1102.0...v1.1103.0) (2026-04-26)
+
+
+### Features
+
+* **publisher:** vault-first WeChat creds (multi-tenant 9/10) ([#2152](https://github.com/HankHuang0516/EClaw/issues/2152)) ([b8f11a9](https://github.com/HankHuang0516/EClaw/commit/b8f11a9c316dfff20584980b964ce829e86bf712))
+
 # [1.1102.0](https://github.com/HankHuang0516/EClaw/compare/v1.1101.0...v1.1102.0) (2026-04-26)
 
 
