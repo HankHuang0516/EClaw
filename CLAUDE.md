@@ -7,7 +7,7 @@
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
-- **Current version**: 1.1091.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **Current version**: 1.1104.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
 - **Android app version**: 1.0.77 (versionCode 83); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
@@ -223,7 +223,7 @@ EClaw/
 
 ### Backend (Node.js/Express)
 
-- **Single-file server**: `backend/index.js` (~17,979 lines) contains all API routes
+- **Single-file server**: `backend/index.js` (~18,014 lines) contains all API routes
 - **Database**: PostgreSQL (Railway-managed), connection in `backend/db.js`
 - **Real-time**: Socket.IO for live updates to Web Portal and Android app
 - **Auth**: JWT tokens (cookie-based for web, header-based for API), social OAuth (Google, Facebook), OIDC
@@ -964,11 +964,29 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Rental: my listings tab (v1.1091)**: Listing pause/delist outside agent card
 - **compactEntitySlots SAVEPOINT guard**: scheduled_messages migration wrapped in SAVEPOINT to prevent compaction failure when schema is incomplete
 
+### Recent Features (v1.1092.x – v1.1104.x)
+
+- **Rental: My Listings Tab (v1.1092)**: Listing pause/delist outside agent card for rental marketplace management
+- **Kanban Entity Funnel Filter (v1.1093)**: `entity_id` funnel filter with permalink support on kanban board; 6-locale i18n
+- **i18n Korean Leak Fix (v1.1093)**: Fixed `cc_warn` Korean text leaking into 9 non-Korean locales + Japanese typo
+- **Mindmap Node Citation Chip (v1.1094)**: Wire mindmap node citations into chat as clickable chips
+- **Mindmap Subsystems Toolbar (v1.1095–v1.1096)**: Subsystems toolbar dropdown + Cytoscape pan/zoom animation; re-render popover on every open
+- **Publisher Multi-Tenant Vault (v1.1096–v1.1103)**: Vault-first credentials for 8 platforms (Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) — users can provide their own API keys via device-vars instead of relying on server-wide env vars
+- **Info Page Publisher Roadmap (v1.1097)**: Publisher multi-tenant status panel + key migration roadmap on info page
+- **Arena Intro i18n (v1.1100–v1.1104)**: Interview arena intro panel translated to all 12 languages (zh-CN, ja, ko, th, vi, id, fr, es, de, ms, hi, ar)
+- **Hindi i18n Batch 1 (v1.1103)**: 469 new Hindi translation keys (batch 1 of 3)
+- **API Auth Broadening (v1.1103)**: `/api/entities` and `/api/status` now accept `botSecret+entityId` auth (in addition to `deviceSecret`)
+- **Mindmap Automation Subsystem (v1.1104)**: `sys:automation` as first-class subsystem; dual-axis edges (lineage + content); unified cite (`quoteToChat`) for mindmap nodes
+- **Mission-Mindmap Citable Fix (v1.1103)**: Citable `card_<hex>` references + sidebar zoom in mission-mindmap component
+- **Chat Draft Fix (v1.1104)**: Clear stale `chat_draft` when mindmap cite prefills chat input
+- **Claude CLI Proxy Vault PAT (v1.1093)**: Vault-first PAT resolution for Claude CLI proxy
+- **Compact SAVEPOINT Guard (v1.1092)**: `scheduled_messages` migration wrapped in SAVEPOINT to prevent entity compaction failure
+
 ---
 
 ## Test Coverage Summary
 
-**~450 total API routes** across all modules (400 excluding Article Publisher), **~82% covered** by Jest + integration tests (~2353 test cases across 140 Jest files + 78 integration tests).
+**~450 total API routes** across all modules (400 excluding Article Publisher), **~82% covered** by Jest + integration tests (~2368 test cases across 141 Jest files + 78 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
