@@ -2787,7 +2787,7 @@ sequenceDiagram
                         <h2 data-i18n="guide_vm_pain">沒有向量記憶前的三個痛點</h2>
                         <ul style="line-height:2; padding-left:1.5rem;">
                             <li data-i18n="guide_vm_pain1">❌ Context window 塞滿就失憶 — 昨天講過的事今天要重講</li>
-                            <li data-i18n="guide_vm_pain2">❌ 多個 bot 各自為政 — Bot A 學到的東西 Bot B 看不到</li>
+                            <li data-i18n="guide_vm_pain2">❌ 多個 bot 各自為政 — 主人想一次回顧多隻 bot 的對話沒有統一入口</li>
                             <li data-i18n="guide_vm_pain3">❌ Bot 回答沒有根據 — 你沒辦法追問「你剛才說的那個來源在哪？」</li>
                         </ul>
 
@@ -2798,11 +2798,11 @@ sequenceDiagram
                             <p class="solution-desc" data-i18n="guide_vm_sp1_desc">每則訊息都寫進 pgvector，即使過了一個月、不同 session、不同裝置，只要語意沾邊就能撈出來。記憶是資料庫層級，不是 prompt 層級 — 不再受 8k / 32k / 200k token 上限綁架。</p>
                         </div>
 
-                        <!-- Selling Point 2: Cross-agent memory sharing -->
+                        <!-- Selling Point 2: Owner-side cross-bot view (bots themselves remain pool-isolated) -->
                         <div class="why-eclaw-card">
-                            <p class="pain-point" data-i18n="guide_vm_sp2_pain">想讓整個 AI 團隊共享同一份記憶？</p>
-                            <p class="solution" data-i18n="guide_vm_sp2_solution">→ 同一裝置下所有 bot 共用同一個向量記憶池</p>
-                            <p class="solution-desc" data-i18n="guide_vm_sp2_desc">Bot #3 存的訊息，Bot #5 也查得到。特別適合 Kanban 協作 — 總指揮派任務時，被派的 bot 能自動拿到該話題的完整脈絡，不用再重新交接背景。</p>
+                            <p class="pain-point" data-i18n="guide_vm_sp2_pain">想一次橫跨自己持有的多隻 bot 找對話？</p>
+                            <p class="solution" data-i18n="guide_vm_sp2_solution">→ 主人視角:跨 bot 統一檢索；Bot 之間維持各自的對話池隔離</p>
+                            <p class="solution-desc" data-i18n="guide_vm_sp2_desc">你（裝置主人）開 chat 時可以橫跨自己持有的所有 bot 查任意對話，看一眼就掌握 Bot #3 與 Bot #5 的歷史脈絡。Bot 與 Bot 之間的協作則透過 Kanban 卡片內容、speakTo 訊息正文與 @提及推送主動傳遞 — 每個 bot 自己只查得到屬於自己的對話池，確保隔離與權責分明。</p>
                         </div>
 
                         <!-- Selling Point 3: Citation/recall -->
@@ -2823,9 +2823,9 @@ sequenceDiagram
                         <h2 data-i18n="guide_vm_tech">技術內幕（給好奇的開發者）</h2>
                         <div style="background:var(--input-bg); border-radius:8px; padding:16px; font-size:13px; line-height:1.8;">
                             <strong data-i18n="guide_vm_tech_storage">儲存層：</strong><span data-i18n="guide_vm_tech_storage_desc">PostgreSQL + pgvector 擴充，HNSW 索引加速餘弦相似度查詢</span><br>
-                            <strong data-i18n="guide_vm_tech_embed">向量模型：</strong><span data-i18n="guide_vm_tech_embed_desc">OpenAI text-embedding-3-small（1536 維，成本低、召回率高）</span><br>
-                            <strong data-i18n="guide_vm_tech_fallback">降級策略：</strong><span data-i18n="guide_vm_tech_fallback_desc">pgvector 不可用時自動退回 ILIKE 關鍵字搜尋，功能不中斷</span><br>
-                            <strong data-i18n="guide_vm_tech_api">API：</strong><span data-i18n="guide_vm_tech_api_desc"><code>POST /api/chat/search</code> 依自然語言問句搜尋對話歷史；pgvector 不可用時自動退回 ILIKE</span>
+                            <strong data-i18n="guide_vm_tech_embed">向量模型：</strong><span data-i18n="guide_vm_tech_embed_desc">OpenAI text-embedding-3-small（1536 維，成本低、召回率高）；需在 device-vars 配置 OPENAI 或 VOYAGE embedding key 才會實際寫入向量欄位</span><br>
+                            <strong data-i18n="guide_vm_tech_fallback">降級策略：</strong><span data-i18n="guide_vm_tech_fallback_desc">未配置 embedding key 或 pgvector 不可用時，訊息原文仍保留，自動退回 ILIKE 關鍵字搜尋，功能不中斷（差別只在能不能跨措辭召回）</span><br>
+                            <strong data-i18n="guide_vm_tech_api">API：</strong><span data-i18n="guide_vm_tech_api_desc"><code>POST /api/chat/search</code> 依自然語言問句搜尋對話歷史；用 botSecret 認證會被綁定到該 bot 自己的 entity，用 deviceSecret（主人）認證可選擇性指定 entityId 或省略以橫跨整台裝置</span>
                         </div>
 
                         <div class="cta-links">
