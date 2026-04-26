@@ -1,3 +1,10 @@
+# [1.1098.0](https://github.com/HankHuang0516/EClaw/compare/v1.1097.0...v1.1098.0) (2026-04-26)
+
+
+### Features
+
+* **publisher:** Qiita vault-first multi-tenant (4/10 platforms) ([#2147](https://github.com/HankHuang0516/EClaw/issues/2147)) ([7bc9816](https://github.com/HankHuang0516/EClaw/commit/7bc9816bfd956f74bde0b6901ab988c44cf3d8db)), closes [#2146](https://github.com/HankHuang0516/EClaw/issues/2146)
+
 # [1.1097.0](https://github.com/HankHuang0516/EClaw/compare/v1.1096.0...v1.1097.0) (2026-04-26)
 
 
