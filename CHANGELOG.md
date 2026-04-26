@@ -1,3 +1,10 @@
+# [1.1094.0](https://github.com/HankHuang0516/EClaw/compare/v1.1093.2...v1.1094.0) (2026-04-26)
+
+
+### Features
+
+* **mindmap:** subsystems toolbar dropdown + cytoscape pan/zoom animation ([#2142](https://github.com/HankHuang0516/EClaw/issues/2142)) ([f93d72b](https://github.com/HankHuang0516/EClaw/commit/f93d72b37ecea1d13f7640546ea4171d38a886b4))
+
 ## [1.1093.2](https://github.com/HankHuang0516/EClaw/compare/v1.1093.1...v1.1093.2) (2026-04-26)
 
 
