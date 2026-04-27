@@ -1,3 +1,10 @@
+## [1.1107.4](https://github.com/HankHuang0516/EClaw/compare/v1.1107.3...v1.1107.4) (2026-04-27)
+
+
+### Bug Fixes
+
+* **i18n:** make dup-key lint script string-aware + accept all locale headers (#card_b4e0ac79) ([#2198](https://github.com/HankHuang0516/EClaw/issues/2198)) ([3288547](https://github.com/HankHuang0516/EClaw/commit/32885471b0f2f6bd72ce375d3571709ab8323330)), closes [#card_b4e0ac79](https://github.com/HankHuang0516/EClaw/issues/card_b4e0ac79) [#2195](https://github.com/HankHuang0516/EClaw/issues/2195)
+
 ## [1.1107.3](https://github.com/HankHuang0516/EClaw/compare/v1.1107.2...v1.1107.3) (2026-04-27)
 
 
