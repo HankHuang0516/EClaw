@@ -1,3 +1,10 @@
+## [1.1107.2](https://github.com/HankHuang0516/EClaw/compare/v1.1107.1...v1.1107.2) (2026-04-27)
+
+
+### Bug Fixes
+
+* **mindmap:** wrap toolbar on narrow viewports so status stays visible ([#2194](https://github.com/HankHuang0516/EClaw/issues/2194)) ([577ccbc](https://github.com/HankHuang0516/EClaw/commit/577ccbcc00bb5a7de7df9f43db0b0b7906e0f17a)), closes [#mmStatus](https://github.com/HankHuang0516/EClaw/issues/mmStatus)
+
 ## [1.1107.1](https://github.com/HankHuang0516/EClaw/compare/v1.1107.0...v1.1107.1) (2026-04-27)
 
 
