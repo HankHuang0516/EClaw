@@ -1,3 +1,10 @@
+## [1.1104.2](https://github.com/HankHuang0516/EClaw/compare/v1.1104.1...v1.1104.2) (2026-04-27)
+
+
+### Bug Fixes
+
+* **usage:** remove daily message limit (15 + invite bonus) ([#2176](https://github.com/HankHuang0516/EClaw/issues/2176)) ([d550c96](https://github.com/HankHuang0516/EClaw/commit/d550c9651b209cbae19efb774c1be4af1e12452e))
+
 ## [1.1104.1](https://github.com/HankHuang0516/EClaw/compare/v1.1104.0...v1.1104.1) (2026-04-26)
 
 
