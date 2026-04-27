@@ -1,3 +1,10 @@
+## [1.1107.3](https://github.com/HankHuang0516/EClaw/compare/v1.1107.2...v1.1107.3) (2026-04-27)
+
+
+### Bug Fixes
+
+* scheduled_messages schema migration, skill-doc XSS, protobufjs critical vuln ([#2196](https://github.com/HankHuang0516/EClaw/issues/2196)) ([f9fea15](https://github.com/HankHuang0516/EClaw/commit/f9fea1577e322cc5cb4f13f91bec0749f956f2ed)), closes [#2131](https://github.com/HankHuang0516/EClaw/issues/2131)
+
 ## [1.1107.2](https://github.com/HankHuang0516/EClaw/compare/v1.1107.1...v1.1107.2) (2026-04-27)
 
 
