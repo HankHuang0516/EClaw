@@ -1541,10 +1541,11 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #444;padding:8p
 a{color:#00d4ff}blockquote{border-left:4px solid #f39c12;margin:16px 0;padding:8px 16px;background:#16213e}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js"><\/script>
 </head><body>
 <div id="content"></div>
 <script>
-document.getElementById('content').innerHTML = marked.parse(${JSON.stringify(mdContent)});
+document.getElementById('content').innerHTML = DOMPurify.sanitize(marked.parse(${JSON.stringify(mdContent)}));
 <\/script>
 </body></html>`);
     } catch (err) {
