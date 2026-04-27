@@ -726,7 +726,15 @@
                 renderGraph(data.nodes || [], data.edges || []);
                 setStatus(`${data.nodes.length} ${i18n.t('mindmap_nodes', 'nodes')} · ${data.edges.length} ${i18n.t('mindmap_edges', 'edges')}${data.truncated ? ' · ' + i18n.t('mindmap_truncated', 'truncated') : ''}`);
             } catch (e) {
-                setStatus(i18n.t('mindmap_err_load', 'Load failed') + ': ' + (e.message || e));
+                const msg = (e && e.message) || String(e);
+                if (/root.*not.*found|not.*found.*root|404/i.test(msg)) {
+                    try { localStorage.removeItem('mindmap:rootId'); } catch (_) {}
+                    rootNodeId = null;
+                    if (cy) cy.elements().remove();
+                    setStatus(i18n.t('mindmap_empty_graph', 'Empty graph — add your first node'));
+                    return;
+                }
+                setStatus(i18n.t('mindmap_err_load', 'Load failed') + ': ' + msg);
             }
         }
 
