@@ -1,3 +1,10 @@
+# [1.1106.0](https://github.com/HankHuang0516/EClaw/compare/v1.1105.1...v1.1106.0) (2026-04-27)
+
+
+### Features
+
+* **hermes-plugins:** hermes-trace JSONL diagnostic plugin ([#2180](https://github.com/HankHuang0516/EClaw/issues/2180)) ([f6c701d](https://github.com/HankHuang0516/EClaw/commit/f6c701d3b856ea374415a330314f7ffa216a8a6d))
+
 ## [1.1105.1](https://github.com/HankHuang0516/EClaw/compare/v1.1105.0...v1.1105.1) (2026-04-27)
 
 
