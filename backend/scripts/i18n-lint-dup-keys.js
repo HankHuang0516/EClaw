@@ -13,30 +13,55 @@ const fs = require('fs');
 
 const I18N_PATH = process.argv[2] || path.join(__dirname, '../public/shared/i18n.js');
 
-function findLocaleBlocks(content, lines) {
+// Match `xx:` or `xx-XX:` locale headers, with optional surrounding quotes.
+const LOCALE_HEADER_RE = /^"?([a-z]{2}(?:[-_][A-Z]{2})?)"?:\s*\{/;
+
+// Count `{` and `}` outside string literals. Honors `\"` escapes within "..." strings.
+function countBracesOutsideStrings(line, startInString) {
+  let opens = 0;
+  let closes = 0;
+  let inString = startInString;
+  let escape = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (escape) { escape = false; continue; }
+    if (inString) {
+      if (ch === '\\') { escape = true; continue; }
+      if (ch === '"') { inString = false; continue; }
+      continue;
+    }
+    if (ch === '"') { inString = true; continue; }
+    if (ch === '{') opens++;
+    else if (ch === '}') closes++;
+  }
+  return { opens, closes, inString };
+}
+
+function findLocaleBlocks(lines) {
   const blocks = {};
   let braceDepth = 0;
   let inTranslations = false;
+  let inString = false;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const trimmed = line.trimStart();
     const indent = line.length - trimmed.length;
 
-    // Check locale header BEFORE updating brace depth for this line
-    const m = trimmed.match(/^([a-z]{2}(?:[-_][A-Z]{2})?):\s*\{/);
-    if (m && indent === 4 && braceDepth === 1 && inTranslations) {
-      blocks[m[1]] = i + 1; // 1-indexed
+    // Locale header check uses brace depth at *start* of this line.
+    // Accept indent up to 4 (some locales like "zh-CN": have indent 0).
+    if (!inString && braceDepth === 1 && inTranslations && indent <= 4) {
+      const m = trimmed.match(LOCALE_HEADER_RE);
+      if (m) blocks[m[1]] = i + 1;
     }
 
-    // Update brace depth AFTER the check (depth at start of this line)
-    if (!inTranslations) {
-      if (line.includes('TRANSLATIONS') && line.includes('=')) {
-        inTranslations = true;
-      }
+    if (!inTranslations && line.includes('TRANSLATIONS') && line.includes('=')) {
+      inTranslations = true;
     }
-    braceDepth += (line.match(/\{/g) || []).length;
-    braceDepth -= (line.match(/\}/g) || []).length;
+
+    const counts = countBracesOutsideStrings(line, inString);
+    braceDepth += counts.opens - counts.closes;
+    inString = counts.inString;
   }
 
   return blocks;
@@ -45,7 +70,8 @@ function findLocaleBlocks(content, lines) {
 function findDuplicateKeys(lines, startLine, endLine) {
   const keyPositions = {};
   const dups = [];
-  const keyRe = /^\s+"([a-zA-Z_]+)":/;
+  // Match indented `"key":` at any depth within the locale block.
+  const keyRe = /^\s+"([a-zA-Z0-9_-]+)":/;
 
   for (let i = startLine - 1; i < Math.min(endLine - 1, lines.length); i++) {
     const m = lines[i].match(keyRe);
@@ -72,7 +98,7 @@ function main() {
   }
 
   const lines = content.split('\n');
-  const blocks = findLocaleBlocks(content, lines);
+  const blocks = findLocaleBlocks(lines);
 
   if (Object.keys(blocks).length === 0) {
     console.error('Error: No locale blocks found. Is this the i18n.js file?');
@@ -86,11 +112,13 @@ function main() {
     localeEnds[sorted[i][0]] = i + 1 < sorted.length ? sorted[i + 1][1] - 1 : lines.length + 1;
   }
 
+  const dupsByLocale = {};
   let hasErrors = false;
 
   for (const [locale, startLine] of sorted) {
     const endLine = localeEnds[locale];
     const dups = findDuplicateKeys(lines, startLine, endLine);
+    dupsByLocale[locale] = dups;
 
     if (dups.length > 0) {
       hasErrors = true;
@@ -108,8 +136,8 @@ function main() {
 
   console.error('\n=== SUMMARY ===');
   if (hasErrors) {
-    const totalDups = sorted.reduce((sum, [l]) => sum + findDuplicateKeys(lines, blocks[l], localeEnds[l]).length, 0);
-    const failCount = sorted.filter(([l]) => findDuplicateKeys(lines, blocks[l], localeEnds[l]).length > 0).length;
+    const totalDups = sorted.reduce((sum, [l]) => sum + dupsByLocale[l].length, 0);
+    const failCount = sorted.filter(([l]) => dupsByLocale[l].length > 0).length;
     console.error(`Total: ${totalDups} duplicate key(s) across ${failCount} locale(s)`);
     process.exit(1);
   } else {
