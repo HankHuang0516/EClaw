@@ -1,3 +1,10 @@
+## [1.1107.1](https://github.com/HankHuang0516/EClaw/compare/v1.1107.0...v1.1107.1) (2026-04-27)
+
+
+### Bug Fixes
+
+* **mindmap:** recover from stale rootNodeId 404 instead of dead-end ([#2193](https://github.com/HankHuang0516/EClaw/issues/2193)) ([711d74a](https://github.com/HankHuang0516/EClaw/commit/711d74a32c2e580ff64f877eb603ad560bee095d)), closes [#2192](https://github.com/HankHuang0516/EClaw/issues/2192)
+
 # [1.1107.0](https://github.com/HankHuang0516/EClaw/compare/v1.1106.0...v1.1107.0) (2026-04-27)
 
 
