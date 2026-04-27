@@ -538,6 +538,37 @@ async function createTables() {
         `);
         await client.query(`CREATE INDEX IF NOT EXISTS idx_discord_bots_app ON discord_bots(application_id)`);
 
+        // Scheduled messages (Phase 1) — consolidated from scheduled_messages_schema.sql
+        // to ensure migration runs under db.js retry loop (not module-level init)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS scheduled_messages (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                device_id TEXT NOT NULL,
+                chat_entity_id INTEGER NOT NULL,
+                user_entity_id INTEGER NOT NULL,
+                target_entity_ids JSONB NOT NULL,
+                content TEXT NOT NULL,
+                scheduled_at TIMESTAMPTZ NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                sent_at TIMESTAMPTZ,
+                cancelled_at TIMESTAMPTZ,
+                last_error TEXT,
+                CONSTRAINT scheduled_messages_content_len CHECK (char_length(content) BETWEEN 1 AND 10000)
+            )
+        `);
+        // Idempotent column adds for legacy tables predating Phase 1
+        await client.query(`ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS chat_entity_id INTEGER`);
+        await client.query(`ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS user_entity_id INTEGER`);
+        await client.query(`ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS target_entity_ids JSONB`);
+        await client.query(`ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS content TEXT`);
+        await client.query(`ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS scheduled_at TIMESTAMPTZ`);
+        await client.query(`ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()`);
+        await client.query(`ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ`);
+        await client.query(`ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMPTZ`);
+        await client.query(`ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS last_error TEXT`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_scheduled_messages_pending ON scheduled_messages (scheduled_at) WHERE sent_at IS NULL AND cancelled_at IS NULL`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_scheduled_messages_device ON scheduled_messages (device_id, chat_entity_id)`);
+
         console.log('[DB] Database tables ready');
         client.release();
     } catch (err) {
