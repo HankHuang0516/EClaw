@@ -146,7 +146,7 @@ module.exports = function (devices, authMiddleware, _unused, serverLog) {
                 provider: user.subscription_provider,
                 expiresAt: user.subscription_expires_at,
                 usageToday: usageResult.rows.length > 0 ? usageResult.rows[0].message_count : 0,
-                usageLimit: user.subscription_status === 'premium' ? null : 15
+                usageLimit: null
             });
         } catch (error) {
             console.error('[Subscription] Status error:', error);
@@ -426,7 +426,7 @@ module.exports = function (devices, authMiddleware, _unused, serverLog) {
                 success: true,
                 isPremium: isPremium,
                 usageToday: usageToday,
-                usageLimit: isPremium ? null : 15
+                usageLimit: null
             });
         } catch (error) {
             console.error('[Subscription] Usage check error:', error);
@@ -517,71 +517,11 @@ module.exports = function (devices, authMiddleware, _unused, serverLog) {
     // ============================================
     // Usage enforcement helper (exported for index.js)
     // ============================================
-    async function enforceUsageLimit(deviceId) {
-        // Check if premium (in-memory cache)
-        const device = devices[deviceId];
-        if (device && device.isPremium) return { allowed: true, remaining: null };
-
-        // Check user account for premium status
-        const userResult = await pool.query(
-            "SELECT subscription_status, subscription_expires_at FROM user_accounts WHERE device_id = $1",
-            [deviceId]
-        );
-
-        if (userResult.rows.length > 0) {
-            const user = userResult.rows[0];
-            const expiresAt = user.subscription_expires_at ? parseInt(user.subscription_expires_at) : null;
-            const now = Date.now();
-
-            if (user.subscription_status === 'premium' && (!expiresAt || expiresAt > now)) {
-                if (device) device.isPremium = true;
-                if (process.env.DEBUG === 'true') console.log(`[Usage] Premium user ${deviceId} - bypassing limit`);
-                return { allowed: true, remaining: null };
-            }
-
-            if (user.subscription_status === 'premium' && expiresAt && expiresAt <= now) {
-                if (process.env.DEBUG === 'true') console.log(`[Usage] Premium EXPIRED for ${deviceId}: expiresAt=${expiresAt}, now=${now}`);
-                if (serverLog) serverLog('warn', 'payment', `[Usage] Premium EXPIRED for ${deviceId}: expiresAt=${expiresAt}, now=${now}`, { deviceId });
-            }
-        }
-
-        // Check usage count for free-tier users
-        // First check current count WITHOUT incrementing to avoid inflating the counter on denied requests
-        const [checkResult, bonusResult] = await Promise.all([
-            pool.query(
-                'SELECT message_count FROM usage_tracking WHERE device_id = $1 AND date = CURRENT_DATE',
-                [deviceId]
-            ),
-            pool.query(
-                'SELECT bonus_messages FROM invite_rewards WHERE device_id = $1',
-                [deviceId]
-            )
-        ]);
-
-        const currentCount = checkResult.rows.length > 0 ? checkResult.rows[0].message_count : 0;
-        const bonusMessages = bonusResult.rows.length > 0 ? bonusResult.rows[0].bonus_messages : 0;
-        const baseLimit = 15;
-        const limit = baseLimit + bonusMessages;
-
-        if (currentCount >= limit) {
-            if (process.env.DEBUG === 'true') console.log(`[Usage] LIMIT HIT for ${deviceId}: ${currentCount}/${limit} (base=15, bonus=${bonusMessages})`);
-            if (serverLog) serverLog('warn', 'payment', `[Usage] LIMIT HIT for ${deviceId}: ${currentCount}/${limit}`, { deviceId });
-            return { allowed: false, remaining: 0, limit: limit, used: currentCount, bonus: bonusMessages };
-        }
-
-        // Only increment if within limit
-        const usageResult = await pool.query(
-            `INSERT INTO usage_tracking (device_id, date, message_count)
-             VALUES ($1, CURRENT_DATE, 1)
-             ON CONFLICT (device_id, date)
-             DO UPDATE SET message_count = usage_tracking.message_count + 1
-             RETURNING message_count`,
-            [deviceId]
-        );
-
-        const count = usageResult.rows[0].message_count;
-
-        return { allowed: true, remaining: limit - count, limit: limit, used: count, bonus: bonusMessages };
+    async function enforceUsageLimit(_deviceId) {
+        // Daily message limit removed (was 15 + invite bonus). All devices now
+        // have unlimited messaging. Function is kept as a no-op to preserve
+        // the call site signature; usage_tracking is no longer incremented.
+        return { allowed: true, remaining: null, limit: null };
     }
 
     // Load premium status for all known users on startup

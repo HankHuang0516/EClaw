@@ -43,11 +43,13 @@ function scanCurrentUserFields() {
 }
 
 // Fields that are critical — removing any of these from /me will break portal pages
+// Note: `subscriptionStatus` was previously critical but is no longer consumed by
+// portal code after the daily message limit was removed (v1.1105+). It's still
+// returned by /me but treated as optional below.
 const CRITICAL_FIELDS = [
     'deviceId',
     'deviceSecret',
     'email',
-    'subscriptionStatus',
     'language',
 ];
 
