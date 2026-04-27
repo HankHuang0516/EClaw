@@ -1,3 +1,10 @@
+# [1.1105.0](https://github.com/HankHuang0516/EClaw/compare/v1.1104.3...v1.1105.0) (2026-04-27)
+
+
+### Features
+
+* **ios:** add Mind Map entry in Settings → Services ([#2178](https://github.com/HankHuang0516/EClaw/issues/2178)) ([7baa2bb](https://github.com/HankHuang0516/EClaw/commit/7baa2bbc3a7231aec629931e1da5fe26fcb1ee61))
+
 ## [1.1104.3](https://github.com/HankHuang0516/EClaw/compare/v1.1104.2...v1.1104.3) (2026-04-27)
 
 
