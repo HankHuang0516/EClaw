@@ -1,3 +1,10 @@
+## [1.1105.1](https://github.com/HankHuang0516/EClaw/compare/v1.1105.0...v1.1105.1) (2026-04-27)
+
+
+### Reverts
+
+* Revert "feat(ios): add Mind Map entry in Settings → Services ([#2178](https://github.com/HankHuang0516/EClaw/issues/2178))" ([#2179](https://github.com/HankHuang0516/EClaw/issues/2179)) ([97924cf](https://github.com/HankHuang0516/EClaw/commit/97924cf3063757dbdd783329e0783e4b73c86d9c))
+
 # [1.1105.0](https://github.com/HankHuang0516/EClaw/compare/v1.1104.3...v1.1105.0) (2026-04-27)
 
 
