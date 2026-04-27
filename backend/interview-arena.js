@@ -181,6 +181,14 @@ let VISION_IMAGES = [
     { file: null, description: 'A weather dashboard panel showing temperature 28°C, humidity 65%, wind speed 12 km/h, and UV index 7 in four separate tiles', keywords: ['temperature', '28', 'humidity', '65', 'UV', '7'] },
     { file: null, description: 'A printed circuit board with fourteen resistors, eight capacitors, and one microcontroller chip labeled ATmega328P', keywords: ['circuit', 'fourteen', 'resistors', 'eight', 'capacitors', 'ATmega'] },
     { file: null, description: 'A hotel room floor plan: bedroom 18m² on the left, bathroom 6m² top right, living area 22m² bottom right, with a corridor connecting all rooms', keywords: ['floor', 'plan', 'bedroom', '18', 'bathroom', '6', 'living', '22'] },
+    // ── Additional items (batch 2) ──
+    { file: null, description: 'A traffic light pole showing three colored circles from top to bottom: red at top, yellow in the middle, and green at the bottom', keywords: ['traffic', 'light', 'red', 'yellow', 'green', 'three'] },
+    { file: null, description: 'A bookshelf with four rows: top row has 4 blue books, second row has 5 red books, third row has 3 green books, bottom row has 2 yellow books — 14 books total', keywords: ['bookshelf', 'fourteen', 'four', 'blue', 'five', 'red', 'green', 'yellow'] },
+    { file: null, description: 'A nutrition facts label showing serving size 1 cup, calories 250, total fat 12g, sodium 480mg, and protein 8g with 2 servings per container', keywords: ['nutrition', 'calories', '250', 'fat', '12', 'sodium', '480', 'protein', '8'] },
+    { file: null, description: 'A scatter plot with 9 data points and a dashed trend line sloping upward: three points cluster in the bottom-left, four in the middle, two in the top-right; axes labeled Hours Studied (X) and Exam Score (Y)', keywords: ['scatter', 'plot', 'trend', 'nine', 'points', 'hours', 'exam', 'score'] },
+    { file: null, description: 'A Python code editor screenshot showing a function on lines 1-9 that raises an IndexError on line 7 by accessing index 5 of a 5-element list (valid indices 0-4)', keywords: ['python', 'code', 'error', 'line', '7', 'index', 'list', 'IndexError'] },
+    { file: null, description: 'A chessboard mid-game showing the white king on e1 in check from a black rook on e8; 6 white pieces and 8 black pieces remain on the board', keywords: ['chess', 'board', 'king', 'check', 'rook', 'six', 'eight', 'white', 'black'] },
+    { file: null, description: 'A 4×4 grid of colored tiles: the entire first row is red, the entire fourth row is blue, and the two middle rows alternate between white and gray squares in a checkerboard pattern', keywords: ['grid', 'four', 'red', 'blue', 'white', 'gray', 'alternate', 'checkerboard'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -354,6 +362,19 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '"babad"', expected: '"bab"' },{ input: '"cbbd"', expected: '"bb"' },{ input: '"a"', expected: '"a"' },{ input: '"racecar"', expected: '"racecar"' }] },
     { title: '0-1 Knapsack', description: 'Write `solve(weights, values, capacity)` — given items with weights and values arrays and a knapsack of given capacity, return the maximum total value (each item used at most once).',
       testCases: [{ input: '[1,3,4,5], [1,4,5,7], 7', expected: '9' },{ input: '[2,3,4,5], [3,4,5,6], 5', expected: '7' },{ input: '[1], [10], 0', expected: '0' }] },
+    // ── Additional medium/hard problems (batch 2) ──
+    { title: 'Jump Game', description: 'Write `solve(nums)` — each element is the max jump length from that position. Return true if you can reach the last index from index 0, false otherwise.',
+      testCases: [{ input: '[2,3,1,1,4]', expected: 'true' },{ input: '[3,2,1,0,4]', expected: 'false' },{ input: '[0]', expected: 'true' },{ input: '[1,0,2]', expected: 'true' }] },
+    { title: 'Top K Frequent Elements', description: 'Write `solve(nums, k)` — return the k most frequent elements sorted in ascending order. Test cases have no frequency ties in the top-k results.',
+      testCases: [{ input: '[1,1,1,2,2,3], 2', expected: '[1,2]' },{ input: '[1,2,3,3,3,3], 1', expected: '[3]' },{ input: '[4,4,4,5,5,6], 2', expected: '[4,5]' }] },
+    { title: 'Generate Subsets', description: 'Write `solve(nums)` — return all possible subsets (power set) of an array of unique integers. Each inner subset must be sorted ascending; the outer list must be sorted lexicographically.',
+      testCases: [{ input: '[1,2,3]', expected: '[[],[1],[1,2],[1,2,3],[1,3],[2],[2,3],[3]]' },{ input: '[0]', expected: '[[],[0]]' },{ input: '[]', expected: '[[]]' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given n non-negative integers representing an elevation map (bar width = 1), compute how much water can be trapped after raining.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[3,0,2,0,4]', expected: '7' },{ input: '[1,0,1]', expected: '1' }] },
+    { title: 'Word Break', description: 'Write `solve(s, wordDict)` — return true if string s can be fully segmented into one or more words from the dictionary (DP approach recommended).',
+      testCases: [{ input: '"leetcode", ["leet","code"]', expected: 'true' },{ input: '"applepenapple", ["apple","pen"]', expected: 'true' },{ input: '"catsandog", ["cats","dog","sand","and","cat"]', expected: 'false' },{ input: '"aaaaaaa", ["aaaa","aaa"]', expected: 'true' }] },
+    { title: 'Minimum Window Substring', description: 'Write `solve(s, t)` — return the minimum window substring of s that contains all characters of t (with multiplicity). If none exists, return "".',
+      testCases: [{ input: '"ADOBECODEBANC", "ABC"', expected: '"BANC"' },{ input: '"a", "a"', expected: '"a"' },{ input: '"a", "aa"', expected: '""' },{ input: '"aa", "aa"', expected: '"aa"' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -396,6 +417,13 @@ let RESPONSE_QUESTIONS = [
     { question: 'What is 2 to the power of 10?', expectedKeywords: ['1024'] },
     { question: 'A store sells apples for $0.75 each and oranges for $1.20 each. If someone buys 4 apples and 3 oranges, what is the total cost?', expectedKeywords: ['6.6', '6.60'] },
     { question: 'The sides of a right triangle are in the ratio 3:4:5. If the hypotenuse is 20 cm, what is the perimeter?', expectedKeywords: ['48'] },
+    // ── Additional medium/hard questions (batch 2) ──
+    { question: 'What is the 10th term of the sequence 1, 4, 9, 16, 25, ... (perfect squares)?', expectedKeywords: ['100'] },
+    { question: 'What is the 12th Fibonacci number, where F(1)=1, F(2)=1, and F(n)=F(n-1)+F(n-2)?', expectedKeywords: ['144'] },
+    { question: 'A fair coin is flipped 4 times. What is the probability of getting exactly 2 heads? Express as a simplified fraction.', expectedKeywords: ['3/8'] },
+    { question: 'How many different ways can 5 books be arranged on a shelf if 2 specific books must always be placed adjacent to each other?', expectedKeywords: ['48'] },
+    { question: 'What is the least common multiple (LCM) of all integers from 1 to 10 inclusive?', expectedKeywords: ['2520'] },
+    { question: 'In a class of 30 students, 18 play football, 15 play basketball, and 10 play both sports. How many students play neither sport?', expectedKeywords: ['7'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -466,6 +494,12 @@ let TTS_PHRASES = [
     { text: 'Your one-time verification code is 8 4 3 7 2 and expires in five minutes', keywords: ['verification', 'code', '84372', 'five', 'minutes'] },
     { text: 'The SQL query selects all records from the users table where the account status equals active and the score is greater than 100', keywords: ['SQL', 'query', 'users', 'active', 'score', '100'] },
     { text: 'Bernoulli and Euler each contributed foundational theorems to both fluid dynamics and graph theory', keywords: ['bernoulli', 'euler', 'fluid', 'dynamics', 'graph', 'theory'] },
+    // ── Additional medium/hard phrases (batch 2) ──
+    { text: 'Connect to the VPN using server address vpn dot corp dot example dot com on port 1194 using your employee credentials', keywords: ['vpn', 'server', 'port', '1194', 'credentials', 'employee'] },
+    { text: 'Your package tracking number is 1Z999AA10123456784 and estimated delivery is Thursday between 2 and 5 pm', keywords: ['tracking', '1Z999', 'thursday', 'delivery', 'estimated', '2', '5'] },
+    { text: 'The molecular formula for caffeine is C 8 H 10 N 4 O 2 with a molar mass of 194 point 19 grams per mole', keywords: ['caffeine', 'molecular', '194', 'molar', 'grams', 'mole'] },
+    { text: 'The Pythagorean theorem states that the square of the hypotenuse equals the sum of the squares of the other two sides', keywords: ['pythagorean', 'theorem', 'hypotenuse', 'squares', 'equals', 'two', 'sides'] },
+    { text: 'The API authorization header must contain Bearer space eyJhbGciOiJIUzI1NiJ9 which expires at Unix timestamp 1735689600', keywords: ['api', 'authorization', 'bearer', 'expires', 'unix', 'timestamp', '1735689600'] },
 ];
 
 // ============================================
