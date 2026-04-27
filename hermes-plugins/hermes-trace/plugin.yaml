@@ -1,0 +1,12 @@
+name: hermes-trace
+version: 1.0.0
+description: "JSONL trace of all 7 Hermes lifecycle hooks. Diagnoses brain-silence by recording every pre/post LLM, tool, session, and gateway-dispatch event."
+author: "Mac_ClaudeAce 主管 (entity #2)"
+hooks:
+  - pre_tool_call
+  - post_tool_call
+  - pre_llm_call
+  - post_llm_call
+  - on_session_start
+  - on_session_end
+  - pre_gateway_dispatch
