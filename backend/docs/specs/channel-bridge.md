@@ -32,7 +32,7 @@ Defined at `index.js:8043`. Body shape:
 
 **Auth model:** none required for the typical channel push (channel plugin owns the device). `deviceSecret` only buys you the **developer exemption** from Gatekeeper First Lock; without it free-bot-targeted devices that are blocked or that send malicious tokens get a `403 GATEKEEPER_BLOCKED` / `GATEKEEPER_BLOCKED_MESSAGE` (`index.js:8117-8177`).
 
-**Daily limit:** `DAILY_LIMIT = 15` (`index.js:8082`) for non-premium devices. DB enforcement first, in-memory fallback if the DB is down (`index.js:8095-8113`).
+**Daily limit:** **REMOVED.** Previously `DAILY_LIMIT = 15` (+ `invite_rewards.bonus_messages`) for non-premium devices. Cancelled — `enforceUsageLimit()` is now a no-op (`subscription.js:520`) and `/api/client/speak` no longer counts or caps messages. `usage_tracking` rows are no longer written by this endpoint.
 
 **Where the message lands:**
 1. `chat_messages` row via `saveChatMessage` per target entity (`index.js:8350`) — **stores raw `text` with `{{KEY}}` tokens unexpanded** (privacy + replay safety, see §4).
@@ -233,7 +233,7 @@ This repo's `bridge.ts` is the bridge between the **EClaw webhook** and the **fa
 
 ## 7. What this doc deliberately does NOT cover
 
-- **Endpoint-level rate limits / quotas** beyond `DAILY_LIMIT = 15` — see `subscriptionModule.enforceUsageLimit` (`index.js:8083`) and the `subscription` subsystem when its spec ships.
+- **Endpoint-level rate limits / quotas** — daily message cap was removed; only the global tiered rate limiters in `index.js` (auth/messages/global) still apply. See the `subscription` subsystem when its spec ships.
 - **Mention parsing** internals (`<@code>`, `@all`, cross-device block check) — lives in `mentionParser` + `pushContext.buildMentionsBlock`. The channel-bridge consumes them but does not own the syntax.
 - **Gatekeeper detection rules** — `gatekeeper.detectMaliciousMessage` / `detectAndMaskLeaks` belong to that subsystem's spec (P1 gap, see `INDEX.md`).
 - **Vault encryption / `is_locked` semantics** — see `vault.md`. This spec only references the read interface.

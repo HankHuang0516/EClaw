@@ -8112,41 +8112,8 @@ app.post('/api/client/speak', async (req, res) => {
         console.log(`[Gatekeeper Debug] deviceId=${deviceId}, secretMatch=${safeEqual(device.deviceSecret, deviceSecret)}, inDevSet=${developerDeviceIds.has(deviceId)}, devSetSize=${developerDeviceIds.size}, isDeveloper=${isDeveloper}`);
     }
 
-    // Usage enforcement — apply to all non-premium devices
-    // Premium check is inside enforceUsageLimit; personal bot exemption handled separately
-    const DAILY_LIMIT = 15;
-    try {
-        const usage = await subscriptionModule.enforceUsageLimit(deviceId);
-        if (!usage.allowed) {
-            return res.status(429).json({
-                success: false,
-                message: "Daily message limit reached",
-                error: "USAGE_LIMIT_EXCEEDED",
-                remaining: 0,
-                limit: usage.limit,
-                used: usage.used || 0
-            });
-        }
-    } catch (usageErr) {
-        // Fail-safe: use in-memory counter when DB is unavailable
-        console.warn('[Usage] DB enforcement failed, using in-memory fallback:', usageErr.message);
-        serverLog('warn', 'client_push', `Usage DB fallback: ${usageErr.message}`, { deviceId });
-        const today = new Date().toISOString().slice(0, 10);
-        const memKey = `${deviceId}:${today}`;
-        if (!global._usageMemCounter) global._usageMemCounter = {};
-        const memCount = (global._usageMemCounter[memKey] || 0) + 1;
-        global._usageMemCounter[memKey] = memCount;
-        if (memCount > DAILY_LIMIT) {
-            return res.status(429).json({
-                success: false,
-                message: "Daily message limit reached",
-                error: "USAGE_LIMIT_EXCEEDED",
-                remaining: 0,
-                limit: DAILY_LIMIT,
-                used: memCount
-            });
-        }
-    }
+    // Daily message limit removed — all devices have unlimited messaging.
+    // (Previously: 15 + invite_rewards.bonus_messages for non-premium devices.)
 
     // Gatekeeper First Lock: device owner with valid deviceSecret is exempt
     if (!isDeveloper && gatekeeper.isDeviceBlocked(deviceId)) {

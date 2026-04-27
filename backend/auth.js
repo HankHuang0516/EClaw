@@ -725,7 +725,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                         emailVerified: false,
                         createdAt: null,
                         usageToday: usageToday,
-                        usageLimit: isPremium ? null : 15
+                        usageLimit: null
                     }
                 });
             }
@@ -814,7 +814,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
                     googleLinked: !!user.google_id,
                     facebookLinked: !!user.facebook_id,
                     usageToday: usageToday,
-                    usageLimit: user.subscription_status === 'premium' ? null : 15,
+                    usageLimit: null,
                     channelAccounts
                 }
             });

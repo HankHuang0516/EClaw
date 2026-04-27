@@ -257,7 +257,7 @@ EClaw/
 | `scheduled_messages` | _(legacy/deprecated)_ Scheduled message definitions |
 | `schedule_executions` | _(legacy/deprecated)_ Scheduled message execution log |
 | `server_logs` | Server-side audit/event logs |
-| `usage_tracking` | Server-side usage limits |
+| `usage_tracking` | _(legacy)_ Was used for daily message limit (removed v1.1105+); table retained for audit only — no longer written by `/api/client/speak` |
 | `roles` | RBAC role definitions |
 | `user_roles` | User-to-role assignments |
 | `oauth_clients` | OAuth 2.0 client registrations |
@@ -981,6 +981,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Chat Draft Fix (v1.1104)**: Clear stale `chat_draft` when mindmap cite prefills chat input
 - **Claude CLI Proxy Vault PAT (v1.1093)**: Vault-first PAT resolution for Claude CLI proxy
 - **Compact SAVEPOINT Guard (v1.1092)**: `scheduled_messages` migration wrapped in SAVEPOINT to prevent entity compaction failure
+- **Daily Message Limit Removed (v1.1105)**: Cancelled the 15-msg/day cap (+ `invite_rewards.bonus_messages`) on `/api/client/speak`. `enforceUsageLimit()` is now a no-op; `usage_tracking` is no longer written; `usageLimit` field returned by `/api/auth/me`, `/api/subscription/status`, `/api/subscription/usage` is always `null`. Chat UI's limit warning, modal, and 429 handler removed. Regression test: `tests/jest/usage-limit-removed.test.js`. Reason: limit was incorrectly applied to ALL non-premium devices regardless of bot type (free / personal / channel), confusing users who chat with their own bots.
 
 ---
 
@@ -1097,6 +1098,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | AI Support Chat | `tests/jest/ai-support.test.js` | AI chat submit/poll endpoint validation, auth rejection (Issue #248) |
 | Auth Extended | `tests/jest/auth-extended.test.js` | device-login, verify-email, forgot-password, reset-password, bind-email, app-login, OAuth (Google/Facebook/OIDC), account deletion, RBAC roles |
 | Subscription | `tests/jest/subscription.test.js` | Subscription status, TapPay payment, cancellation, Google Play verification, usage limits |
+| Usage Limit Removed | `tests/jest/usage-limit-removed.test.js` | Regression: `enforceUsageLimit()` is a no-op; never queries `usage_tracking` / `invite_rewards`; always returns `allowed:true, limit:null` |
 | Official Borrow | `tests/jest/official-borrow.test.js` | Official bot borrowing lifecycle (bind-free, bind-personal, add-paid-slot, unbind, verify-subscription) |
 | Device Preferences | `tests/jest/device-preferences.test.js` | Device preference GET/PUT, auth validation |
 | Publisher Extended | `tests/jest/publisher-extended.test.js` | Blogger, Hashnode, X/Twitter, Tumblr, Reddit, LinkedIn, Mastodon publish/delete/me validation |
