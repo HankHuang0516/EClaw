@@ -1,3 +1,10 @@
+# [1.1107.0](https://github.com/HankHuang0516/EClaw/compare/v1.1106.0...v1.1107.0) (2026-04-27)
+
+
+### Features
+
+* **settings:** add Mind Map entry under Services (v1.0.1 release prep) ([#2192](https://github.com/HankHuang0516/EClaw/issues/2192)) ([b89cf0f](https://github.com/HankHuang0516/EClaw/commit/b89cf0f855c6c041940e3c0e45d3cf9e2262ec7d))
+
 # [1.1106.0](https://github.com/HankHuang0516/EClaw/compare/v1.1105.1...v1.1106.0) (2026-04-27)
 
 
