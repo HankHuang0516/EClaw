@@ -1,3 +1,10 @@
+## [1.1104.3](https://github.com/HankHuang0516/EClaw/compare/v1.1104.2...v1.1104.3) (2026-04-27)
+
+
+### Bug Fixes
+
+* **ui:** remove "15 msg/day" copy after limit removal (PR [#2176](https://github.com/HankHuang0516/EClaw/issues/2176) follow-up) ([#2177](https://github.com/HankHuang0516/EClaw/issues/2177)) ([399e20f](https://github.com/HankHuang0516/EClaw/commit/399e20f6dc0d1e98080c08e26ce5d9d72f43da8d)), closes [#5](https://github.com/HankHuang0516/EClaw/issues/5)
+
 ## [1.1104.2](https://github.com/HankHuang0516/EClaw/compare/v1.1104.1...v1.1104.2) (2026-04-27)
 
 
