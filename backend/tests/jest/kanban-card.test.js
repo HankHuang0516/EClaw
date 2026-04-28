@@ -82,7 +82,29 @@ describe('POST /card — assignedBots validation', () => {
         });
 
         const res = await post('/api/mission/card')
-            .send({ ...AUTH, title: 'Test card', assignedBots: [0] });
+            .send({ ...AUTH, title: 'Test card', assignedBots: [0], chatAnchorMessageId: 'msg-test-anchor' });
+        expect(res.status).not.toBe(400);
+    });
+
+    it('rejects USER-filed card with no chatAnchorMessageId (400 + errorKey)', async () => {
+        const res = await post('/api/mission/card')
+            .send({ ...AUTH, title: 'No anchor', assignedBots: [0] });
+        expect(res.status).toBe(400);
+        expect(res.body.errorKey).toBe('kb_anchor_required');
+    });
+
+    it('allows bot-filed card (entityId > 0) without chatAnchorMessageId', async () => {
+        mockQuery.mockResolvedValueOnce({
+            rows: [{
+                id: 2, device_id: 'test-dev', title: 'Bot card',
+                description: '', priority: 'P2', status: 'backlog',
+                assigned_bots: [0], created_by: 1,
+                created_at: new Date(), updated_at: new Date(),
+                status_changed_at: new Date(), archived: false,
+            }],
+        });
+        const res = await post('/api/mission/card')
+            .send({ ...AUTH, title: 'Bot card', assignedBots: [0], entityId: 1 });
         expect(res.status).not.toBe(400);
     });
 });
@@ -164,6 +186,7 @@ describe('POST /card — inline automation + schedule', () => {
             ...AUTH, title: 'Auto task', assignedBots: [0],
             isAutomation: true,
             schedule: { type: 'recurring', cron: '0 */4 * * *' },
+            chatAnchorMessageId: 'msg-test-anchor',
         });
 
         expect(res.status).toBe(200);
@@ -183,6 +206,7 @@ describe('POST /card — inline automation + schedule', () => {
         const res = await post('/api/mission/card').send({
             ...AUTH, title: 'Auto task', assignedBots: [0],
             schedule: { type: 'recurring', cron: '0 9 * * *' },
+            chatAnchorMessageId: 'msg-test-anchor',
         });
 
         expect(res.status).toBe(200);
