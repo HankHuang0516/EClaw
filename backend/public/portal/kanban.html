@@ -2559,16 +2559,21 @@
                 panel.innerHTML = `<div class="kb-anchor-empty">${t('kb_anchor_empty','沒有可引用的歷史訊息')}</div>`;
                 return;
             }
-            panel.innerHTML = messages.map(m => {
+            panel.innerHTML = messages.map((m, i) => {
                 const ts = m.created_at ? new Date(m.created_at).toLocaleString() : '';
-                const who = m.is_from_user ? '👤' : (m.is_from_bot ? `#${m.entity_id}` : `#${m.entity_id}`);
-                const id = String(m.id || '').replace(/'/g, "\\'");
-                const txt = String(m.text || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                return `<div class="kb-anchor-msg" onclick="selectAnchorMessage('${id}', &quot;${txt}&quot;, ${m.entity_id || 0}, '${m.created_at || ''}')">` +
+                const who = m.is_from_user ? '👤' : `#${m.entity_id}`;
+                return `<div class="kb-anchor-msg" data-idx="${i}">` +
                     `<div class="kb-anchor-msg-meta">${escapeHtml(who)} · ${escapeHtml(ts)}</div>` +
                     `<div class="kb-anchor-msg-text">${escapeHtml(m.text || '')}</div>` +
                 `</div>`;
             }).join('');
+            panel.querySelectorAll('.kb-anchor-msg').forEach(el => {
+                el.addEventListener('click', () => {
+                    const i = Number(el.getAttribute('data-idx'));
+                    const m = messages[i];
+                    if (m) selectAnchorMessage(m.id, m.text, m.entity_id || 0, m.created_at || '');
+                });
+            });
         }
 
         function selectAnchorMessage(id, text, fromEntityId, createdAt) {
