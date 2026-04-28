@@ -1,3 +1,10 @@
+# [1.1115.0](https://github.com/HankHuang0516/EClaw/compare/v1.1114.4...v1.1115.0) (2026-04-28)
+
+
+### Features
+
+* **kanban:** chat-anchor schema — pin originating chat msg + mind-map coord (#chat-anchor-P1) ([#2228](https://github.com/HankHuang0516/EClaw/issues/2228)) ([eed5f44](https://github.com/HankHuang0516/EClaw/commit/eed5f44eef3ad2e8b2510a37272dac5967cde1e0)), closes [#chat-anchor-P1](https://github.com/HankHuang0516/EClaw/issues/chat-anchor-P1)
+
 ## [1.1114.4](https://github.com/HankHuang0516/EClaw/compare/v1.1114.3...v1.1114.4) (2026-04-28)
 
 
