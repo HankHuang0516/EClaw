@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS kanban_cards (
     title VARCHAR(255) NOT NULL,
     description TEXT DEFAULT '',
     priority VARCHAR(8) NOT NULL DEFAULT 'P2',           -- P0, P1, P2, P3
-    status VARCHAR(16) NOT NULL DEFAULT 'backlog',       -- backlog, todo, in_progress, review, done
+    status VARCHAR(16) NOT NULL DEFAULT 'backlog',       -- canonical enum: see public/shared/kanban-status.js (backlog, todo, in_progress, review, done, blocked)
     assigned_bots JSONB DEFAULT '[]'::jsonb,             -- array of entity IDs e.g. [2, 4]
     created_by INTEGER NOT NULL DEFAULT 0,               -- entity ID of creator
     status_changed_at TIMESTAMPTZ DEFAULT NOW(),         -- for stale detection
