@@ -49,6 +49,8 @@
         .kb-column[data-status="in_progress"] .kb-col-title::before { background:#fbbf24; }
         .kb-column[data-status="review"] .kb-col-title { color:#fb923c; }
         .kb-column[data-status="review"] .kb-col-title::before { background:#fb923c; }
+        .kb-column[data-status="blocked"] .kb-col-title { color:#f87171; }
+        .kb-column[data-status="blocked"] .kb-col-title::before { background:#f87171; }
         .kb-column[data-status="done"] .kb-col-title { color:#4ade80; }
         .kb-column[data-status="done"] .kb-col-title::before { background:#4ade80; }
 
@@ -602,7 +604,7 @@
             </div>
         </div>
 
-        <!-- Desktop: 5-column board -->
+        <!-- Desktop: 6-column board -->
         <div class="kb-board" id="kbBoard">
             <div class="kb-column" data-status="backlog">
                 <div class="kb-col-header"><span class="kb-col-title" data-i18n="kb_col_backlog">Backlog</span><span class="kb-col-count" id="count-backlog">0</span></div>
@@ -620,6 +622,10 @@
                 <div class="kb-col-header"><span class="kb-col-title" data-i18n="kb_col_review">Review</span><span class="kb-col-count" id="count-review">0</span></div>
                 <div class="kb-col-cards" id="col-review"></div>
             </div>
+            <div class="kb-column" data-status="blocked">
+                <div class="kb-col-header"><span class="kb-col-title" data-i18n="kb_col_blocked">Blocked</span><span class="kb-col-count" id="count-blocked">0</span></div>
+                <div class="kb-col-cards" id="col-blocked"></div>
+            </div>
             <div class="kb-column" data-status="done">
                 <div class="kb-col-header"><span class="kb-col-title" data-i18n="kb_col_done">Done</span><span class="kb-col-count" id="count-done">0</span></div>
                 <div class="kb-col-cards" id="col-done"></div>
@@ -632,6 +638,7 @@
             <button class="kb-mobile-tab" data-status="todo" data-i18n="kb_col_todo" onclick="switchMobileTab('todo')">TODO</button>
             <button class="kb-mobile-tab" data-status="in_progress" data-i18n="kb_col_in_progress" onclick="switchMobileTab('in_progress')">In Progress</button>
             <button class="kb-mobile-tab" data-status="review" data-i18n="kb_col_review" onclick="switchMobileTab('review')">Review</button>
+            <button class="kb-mobile-tab" data-status="blocked" data-i18n="kb_col_blocked" onclick="switchMobileTab('blocked')">Blocked</button>
             <button class="kb-mobile-tab" data-status="done" data-i18n="kb_col_done" onclick="switchMobileTab('done')">Done</button>
         </div>
         <div class="kb-mobile-list" id="kbMobileList"></div>
@@ -800,6 +807,7 @@
     <script src="../shared/chat-message-render.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
+    <script src="../shared/kanban-status.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>
     <script src="shared/footer.js"></script>
@@ -849,9 +857,11 @@
             if (window.AutolinkChip)     html = AutolinkChip.render(html);
             return html;
         }
-        const STATUSES = ['backlog','todo','in_progress','review','done'];
-        const STATUS_LABELS = {backlog:'Backlog',todo:'TODO',in_progress:'In Progress',review:'Review',done:'Done'};
-        const STATUS_I18N = {backlog:'kb_col_backlog',todo:'kb_col_todo',in_progress:'kb_col_in_progress',review:'kb_col_review',done:'kb_col_done'};
+        // Status enum imported from shared/kanban-status.js (single source of
+        // truth; same module as backend/kanban.js). card_42526620af35fb0b27edb2a2.
+        const STATUSES = window.KanbanStatus.STATUSES;
+        const STATUS_LABELS = window.KanbanStatus.STATUS_LABELS_EN;
+        const STATUS_I18N = window.KanbanStatus.STATUS_I18N_KEYS;
         const PRIO_EMOJI = {P0:'🔴',P1:'🟠',P2:'🔵',P3:'⚪'};
         const CRON_PRESETS = [
             {c:'0 * * * *',    k:'kb_cron_hourly', l:'Every hour'},

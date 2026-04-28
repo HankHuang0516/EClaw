@@ -2870,6 +2870,7 @@
     <script src="../shared/chat-message-render.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
+    <script src="../shared/kanban-status.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>
     <script src="shared/footer.js"></script>
@@ -6482,8 +6483,11 @@
                 let html = `<div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--card-border);">`;
                 html += `<strong>Kanban Tasks (${assigned.length})</strong>`;
 
-                const statusOrder = ['blocked', 'in_progress', 'doing', 'review', 'todo', 'backlog'];
-                const statusLabels = { backlog: '📦 Backlog', blocked: '🚫 Blocked', todo: '📋 Todo', in_progress: '🔄 In Progress', doing: '🔄 Doing', review: '👀 Review' };
+                const KS = window.KanbanStatus;
+                const statusOrder = ['blocked', 'in_progress', 'review', 'todo', 'backlog'];
+                const statusLabels = Object.fromEntries(
+                    statusOrder.map(s => [s, `${KS.STATUS_EMOJI[s]} ${KS.STATUS_LABELS_EN[s]}`])
+                );
 
                 for (const status of statusOrder) {
                     if (!groups[status]) continue;

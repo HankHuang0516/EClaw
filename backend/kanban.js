@@ -129,16 +129,12 @@ async function mapCardFileRow(r) {
     };
 }
 
-// Valid statuses in order
-const STATUSES = ['backlog', 'todo', 'in_progress', 'review', 'done', 'blocked'];
+// Valid statuses + labels — imported from public/shared/kanban-status.js so
+// server, kanban UI, settings UI, chat smart-chip, and nudge all share one enum.
+const KanbanStatus = require('./public/shared/kanban-status.js');
+const STATUSES = KanbanStatus.STATUSES;
+const STATUS_LABELS = KanbanStatus.STATUS_LABELS_EN;
 const PRIORITIES = ['P0', 'P1', 'P2', 'P3'];
-const STATUS_LABELS = {
-    backlog: 'Backlog',
-    todo: 'TODO',
-    in_progress: 'In Progress',
-    review: 'Review',
-    done: 'Done'
-};
 const PRIORITY_COLORS = { P0: '🔴', P1: '🟠', P2: '🔵', P3: '⚪' };
 
 // ── Schema init ──
@@ -627,7 +623,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             // to the top when they receive new comments/notes/status changes.
             query += ` ORDER BY
                 CASE c.priority WHEN 'P0' THEN 0 WHEN 'P1' THEN 1 WHEN 'P2' THEN 2 WHEN 'P3' THEN 3 END,
-                CASE c.status WHEN 'in_progress' THEN 0 WHEN 'review' THEN 1 WHEN 'todo' THEN 2 WHEN 'backlog' THEN 3 WHEN 'done' THEN 4 END,
+                ${KanbanStatus.priorityOrderSql('c.status')},
                 c.updated_at DESC NULLS LAST`;
 
             const result = await pool.query(query, params);
