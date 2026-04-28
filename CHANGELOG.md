@@ -1,3 +1,10 @@
+## [1.1116.1](https://github.com/HankHuang0516/EClaw/compare/v1.1116.0...v1.1116.1) (2026-04-28)
+
+
+### Bug Fixes
+
+* **kanban:** screenshot lightbox supports wheel/dblclick/drag/pinch zoom ([#2230](https://github.com/HankHuang0516/EClaw/issues/2230)) ([3c56e60](https://github.com/HankHuang0516/EClaw/commit/3c56e6087bde1a31e40736cc80e4b3eed70438a1))
+
 # [1.1116.0](https://github.com/HankHuang0516/EClaw/compare/v1.1115.0...v1.1116.0) (2026-04-28)
 
 
