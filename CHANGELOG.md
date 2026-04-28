@@ -1,3 +1,10 @@
+# [1.1108.0](https://github.com/HankHuang0516/EClaw/compare/v1.1107.10...v1.1108.0) (2026-04-28)
+
+
+### Features
+
+* **kanban:** expand search to comments/subcards + archived detail ([#2211](https://github.com/HankHuang0516/EClaw/issues/2211)) ([8a93e4b](https://github.com/HankHuang0516/EClaw/commit/8a93e4b2881b3aa9e2fc283dea52d43370b24a89))
+
 ## [1.1107.10](https://github.com/HankHuang0516/EClaw/compare/v1.1107.9...v1.1107.10) (2026-04-28)
 
 
