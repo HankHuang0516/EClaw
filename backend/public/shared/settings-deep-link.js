@@ -45,6 +45,13 @@
             if (el !== targetEl) el.style.display = 'none';
         });
 
+        // Hide bottom actions (logout / delete-account) — they belong to the
+        // full settings page, not a focused single-card view. Leaving them
+        // visible turns the focused page into a small card on top of two
+        // dangerous red buttons that the user could mis-tap.
+        const actions = document.querySelectorAll('.actions-section');
+        actions.forEach(function (el) { el.style.display = 'none'; });
+
         if (typeof target.expand === 'function') {
             try { target.expand(); } catch (_) { }
         }
