@@ -4,7 +4,7 @@
 
 const TRANSLATIONS = {
     en: {
-        statusLabels: { backlog: 'Backlog', todo: 'TODO', in_progress: 'In Progress', review: 'Review', done: 'Done' },
+        statusLabels: { backlog: 'Backlog', todo: 'TODO', in_progress: 'In Progress', review: 'Review', done: 'Done', blocked: 'Blocked' },
         cardCreated: '📋 New task assigned: {priorityIcon} [{priority}] {title}\nStatus: {status}',
         statusChanged: '{direction} Task status changed: [{title}]\n{from} → {to}',
         staleNudge: '⏰ Task nudge: [{title}]\nStuck in "{status}" for {hours}h, please continue',
@@ -16,7 +16,7 @@ const TRANSLATIONS = {
         reviewerNoReply: '(no reply content)'
     },
     zh: {
-        statusLabels: { backlog: '待辦池', todo: '待辦', in_progress: '進行中', review: '審查', done: '完成' },
+        statusLabels: { backlog: '待辦池', todo: '待辦', in_progress: '進行中', review: '審查', done: '完成', blocked: '已封鎖' },
         cardCreated: '📋 新任務指派：{priorityIcon} [{priority}] {title}\n狀態: {status}',
         statusChanged: '{direction} 任務狀態變更：[{title}]\n{from} → {to}',
         staleNudge: '⏰ 任務催促：[{title}]\n已在「{status}」停留 {hours} 小時，請繼續推進',
