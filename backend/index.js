@@ -6541,6 +6541,11 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         if (typeof discordModule !== 'undefined' && discordModule.handleTransformFollowup) {
             discordModule.handleTransformFollowup(deviceId, eId, finalMessage, entity.name).catch(() => {});
         }
+
+        // Telegram followup: if a pending Telegram chat exists for this entity, sendMessage
+        if (typeof telegramModule !== 'undefined' && telegramModule.handleTransformFollowup) {
+            telegramModule.handleTransformFollowup(deviceId, eId, finalMessage).catch(() => {});
+        }
     }
 
     // Auto-move child cards to review when bot replies (any non-BUSY state with a message)
@@ -15288,6 +15293,17 @@ const discordModule = require('./discord-integration')(devices, {
     apiBase: process.env.API_BASE || 'https://eclawbot.com'
 });
 app.use('/api/discord', discordModule.router);
+
+// ============================================
+// TELEGRAM INTEGRATION — Long-poll PoC
+// ============================================
+const telegramModule = require('./telegram-integration')(devices, {
+    db,
+    decryptVars,
+    serverLog,
+    pushToBot
+});
+app.use('/api/telegram', telegramModule.router);
 
 // Close GitHub issue (device-authenticated)
 app.patch('/api/github/issues/:number', async (req, res) => {
