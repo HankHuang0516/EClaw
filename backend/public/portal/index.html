@@ -424,6 +424,17 @@
         let resetToken = null;
         let termsAccepted = false;
 
+        function redirectAfterAuth() {
+            let pendingCode = null;
+            try { pendingCode = localStorage.getItem('pendingInviteCode'); } catch (_) {}
+            if (pendingCode) {
+                try { localStorage.removeItem('pendingInviteCode'); } catch (_) {}
+                window.location.href = 'invite.html?redeem=' + encodeURIComponent(pendingCode);
+                return;
+            }
+            window.location.href = 'dashboard.html';
+        }
+
         // Check URL params
         window.addEventListener('DOMContentLoaded', async () => {
             if (typeof renderFooter === 'function') renderFooter();
@@ -447,7 +458,7 @@
             try {
                 const data = await apiCall('GET', '/api/auth/me');
                 if (data.success) {
-                    window.location.href = 'dashboard.html';
+                    redirectAfterAuth();
                 }
             } catch (e) { }
         });
@@ -543,7 +554,7 @@
             try {
                 const data = await apiCall('POST', '/api/auth/login', { email, password });
                 applyServerLanguage(data);
-                window.location.href = 'dashboard.html';
+                redirectAfterAuth();
             } catch (e) {
                 showMsg('loginError', e.message);
                 if (e.message.includes('not verified')) {
@@ -648,7 +659,7 @@
             try {
                 const data = await apiCall('POST', '/api/auth/device-login', { deviceId, deviceSecret });
                 applyServerLanguage(data);
-                window.location.href = 'dashboard.html';
+                redirectAfterAuth();
             } catch (e) {
                 showMsg('deviceError', e.message);
             } finally {
@@ -728,7 +739,7 @@
                                 accessToken: resp.access_token
                             });
                             applyServerLanguage(data);
-                            window.location.href = 'dashboard.html';
+                            redirectAfterAuth();
                         } catch (e) {
                             showMsg('loginError', e.message || 'Google login failed');
                         }
@@ -750,7 +761,7 @@
                         accessToken: response.authResponse.accessToken
                     }).then(function (data) {
                         applyServerLanguage(data);
-                        window.location.href = 'dashboard.html';
+                        redirectAfterAuth();
                     }).catch(function (e) {
                         showMsg('loginError', e.message || 'Facebook login failed');
                     });
