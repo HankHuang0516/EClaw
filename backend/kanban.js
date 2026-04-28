@@ -1973,6 +1973,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
         const intervalMs = Math.max(5, Number(prefs.kanban_nudge_interval_minutes) || 180) * 60 * 1000;
         const batchSize = Math.max(1, Math.min(20, Number(prefs.kanban_nudge_batch_size) || 1));
         const priorityMode = prefs.kanban_nudge_priority_mode || 'priority_first';
+        const perEntityThrottle = prefs.kanban_nudge_per_entity_throttle !== false;
         const allowedStatuses = new Set(
             Array.isArray(prefs.kanban_nudge_statuses) && prefs.kanban_nudge_statuses.length
                 ? prefs.kanban_nudge_statuses
@@ -2011,11 +2012,71 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
         if (level1Pending.length === 0) return;
 
-        const picked = sortCardsByNudgeMode(level1Pending, priorityMode).slice(0, batchSize);
-        console.log(`[Kanban] Stale nudge for ${deviceId}: ${picked.length}/${level1Pending.length} (mode=${priorityMode}, batch=${batchSize}, interval=${intervalMs / 60000}m)`);
+        // Per-entity throttle: skip Level-1 cards whose recipient bots all got
+        // nudged within intervalMs (regardless of which card the prior nudge cited).
+        // Cards with no assigned_bots fall through unchanged — the system comment
+        // is still added but no entity gets a duplicate push.
+        const lastByEntity = perEntityThrottle ? await loadEntityNudgeLog(deviceId) : null;
+        const sortedCandidates = sortCardsByNudgeMode(level1Pending, priorityMode);
+        const picked = [];
+        const willNudgeEntity = new Set();
+        for (const card of sortedCandidates) {
+            if (picked.length >= batchSize) break;
+            if (perEntityThrottle && !cardHasFreshRecipient(card, lastByEntity, willNudgeEntity, intervalMs)) {
+                continue;
+            }
+            picked.push(card);
+            for (const bid of (card.assigned_bots || [])) willNudgeEntity.add(bid);
+        }
+
+        if (picked.length === 0) return;
+
+        console.log(`[Kanban] Stale nudge for ${deviceId}: ${picked.length}/${level1Pending.length} (mode=${priorityMode}, batch=${batchSize}, interval=${intervalMs / 60000}m, perEntityThrottle=${perEntityThrottle})`);
 
         for (const card of picked) {
             await fireLevelOneNudge(card);
+        }
+    }
+
+    async function loadEntityNudgeLog(deviceId) {
+        const map = new Map();
+        try {
+            const r = await pool.query(
+                `SELECT entity_id, last_nudged_at FROM kanban_entity_nudge_log WHERE device_id = $1`,
+                [deviceId]
+            );
+            for (const row of r.rows) {
+                map.set(Number(row.entity_id), new Date(row.last_nudged_at).getTime());
+            }
+        } catch (err) {
+            console.error('[Kanban] loadEntityNudgeLog error:', err.message);
+        }
+        return map;
+    }
+
+    function cardHasFreshRecipient(card, lastByEntity, willNudgeEntity, intervalMs) {
+        const bots = card.assigned_bots || [];
+        if (bots.length === 0) return true;
+        const now = Date.now();
+        return bots.some(bid => {
+            if (willNudgeEntity.has(bid)) return false;
+            const last = lastByEntity.get(Number(bid));
+            return !last || (now - last) > intervalMs;
+        });
+    }
+
+    async function recordEntityNudge(deviceId, entityIds) {
+        if (!Array.isArray(entityIds) || entityIds.length === 0) return;
+        try {
+            const values = entityIds.map((_, i) => `($1, $${i + 2}, NOW())`).join(', ');
+            await pool.query(
+                `INSERT INTO kanban_entity_nudge_log (device_id, entity_id, last_nudged_at)
+                 VALUES ${values}
+                 ON CONFLICT (device_id, entity_id) DO UPDATE SET last_nudged_at = NOW()`,
+                [deviceId, ...entityIds.map(Number)]
+            );
+        } catch (err) {
+            console.error('[Kanban] recordEntityNudge error:', err.message);
         }
     }
 
@@ -2094,6 +2155,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 hours: elapsedHrs
             });
             notifyEntities(card.device_id, bots, msg, { description: card.description, cardId: card.id });
+            await recordEntityNudge(card.device_id, bots);
         }
         console.log(`[Kanban] Nudged card ${card.id} (${card.title}) — ${elapsedHrs}h in ${card.status}`);
     }
@@ -2252,8 +2314,12 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     await addSystemComment(childCard.id, card.device_id,
                         `📋 由自動化母卡 [${card.title}] 自動建立`);
 
-                    // Push notify assigned bots
-                    if (bots.length > 0) {
+                    // Push notify assigned bots — gated by kanban_cron_spawn_notify
+                    // (default false: child card has just been born; let stale-scan
+                    // pick it up later instead of pinging immediately, which Hank
+                    // experienced as 5–6 nudges within an hour on 2026-04-28).
+                    const spawnPrefs = await devicePrefs.getPrefs(card.device_id).catch(() => ({}));
+                    if (bots.length > 0 && spawnPrefs.kanban_cron_spawn_notify === true) {
                         const lang = await getDeviceLanguage(card.device_id);
                         const msg = tKanban(lang, 'automationTrigger', {
                             title: card.title,
@@ -2289,7 +2355,11 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     await addSystemComment(card.id, card.device_id,
                         `🗓️ 排程觸發（重複）— ${statusMsg}下次執行: ${nextRun ? nextRun.toISOString() : '未知'}`);
 
-                    if (bots.length > 0) {
+                    // Gated by kanban_cron_recurring_notify (default true) — these
+                    // are typically lower-frequency self-recurring母卡 (no子卡 spawn),
+                    // so user usually wants the ping. Allow opt-out for noisy crons.
+                    const recurringPrefs = await devicePrefs.getPrefs(card.device_id).catch(() => ({}));
+                    if (bots.length > 0 && recurringPrefs.kanban_cron_recurring_notify !== false) {
                         const lang = await getDeviceLanguage(card.device_id);
                         const msg = card.status !== newStatus
                             ? tKanban(lang, 'scheduleRecurringWithStatus', {
