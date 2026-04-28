@@ -170,6 +170,9 @@
       font-size: 13px; color: var(--mm-text);
       position: relative;
     }
+    .mm-root:fullscreen, .mm-root:-webkit-full-screen {
+      height: 100vh; width: 100vw; border-radius: 0; border: none;
+    }
     .mm-root .sys-rail {
       background: var(--mm-bg-elev);
       border-right: 1px solid var(--mm-border);
@@ -560,6 +563,7 @@
         <div class="mm-toolbar">
           <button data-act="fit" title="Fit">🎯</button>
           <button data-act="reset" title="重整">🔄</button>
+          <button data-act="fullscreen" title="全螢幕" aria-label="全螢幕">⛶</button>
         </div>
         <div class="mm-pin-tray" data-pin-tray></div>
         <div class="mm-tier">L1 · <strong>Topics</strong></div>
@@ -1006,10 +1010,41 @@
       });
     });
 
+    const fsTarget = rootEl;
+    const fsBtn = rootEl.querySelector('.mm-toolbar [data-act="fullscreen"]');
+    function isFsActive() {
+      const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+      return !!fsEl && (fsEl === fsTarget || fsEl.contains(fsTarget));
+    }
+    function updateFsBtn() {
+      if (!fsBtn) return;
+      const active = isFsActive();
+      fsBtn.title = active ? '退出全螢幕' : '全螢幕';
+      fsBtn.setAttribute('aria-label', fsBtn.title);
+      fsBtn.textContent = active ? '⛶✕' : '⛶';
+    }
+    function toggleFs() {
+      const req = fsTarget.requestFullscreen || fsTarget.webkitRequestFullscreen;
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (isFsActive()) {
+        exit && exit.call(document);
+      } else if (req) {
+        req.call(fsTarget).catch(err => console.warn('[Mindmap] Fullscreen rejected:', err));
+      }
+    }
+    ['fullscreenchange', 'webkitfullscreenchange'].forEach(evt => {
+      document.addEventListener(evt, () => {
+        updateFsBtn();
+        if (cy) setTimeout(() => { cy.resize(); cy.fit(undefined, 30); }, 80);
+      });
+    });
+    updateFsBtn();
+
     rootEl.querySelectorAll('.mm-toolbar button').forEach(btn => {
       btn.addEventListener('click', () => {
         const act = btn.dataset.act;
         if (act === 'fit') cy.fit(undefined, 30);
+        if (act === 'fullscreen') toggleFs();
         if (act === 'reset') {
           ctrl.closeActive();
           cy.elements().removeClass('faded').removeClass('highlighted').removeClass('pinned');
