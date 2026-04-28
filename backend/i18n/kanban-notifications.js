@@ -28,7 +28,7 @@ const TRANSLATIONS = {
         reviewerNoReply: '（無回覆內容）'
     },
     'zh-CN': {
-        statusLabels: { backlog: '待办池', todo: '待办', in_progress: '进行中', review: '审查', done: '完成' },
+        statusLabels: { backlog: '待办池', todo: '待办', in_progress: '进行中', review: '审查', done: '完成', blocked: '已封锁' },
         cardCreated: '📋 新任务指派：{priorityIcon} [{priority}] {title}\n状态: {status}',
         statusChanged: '{direction} 任务状态变更：[{title}]\n{from} → {to}',
         staleNudge: '⏰ 任务催促：[{title}]\n已在「{status}」停留 {hours} 小时，请继续推进',
@@ -40,7 +40,7 @@ const TRANSLATIONS = {
         reviewerNoReply: '（无回复内容）'
     },
     ja: {
-        statusLabels: { backlog: 'バックログ', todo: 'TODO', in_progress: '進行中', review: 'レビュー', done: '完了' },
+        statusLabels: { backlog: 'バックログ', todo: 'TODO', in_progress: '進行中', review: 'レビュー', done: '完了', blocked: 'ブロック中' },
         cardCreated: '📋 新タスク割当：{priorityIcon} [{priority}] {title}\nステータス: {status}',
         statusChanged: '{direction} タスク状態変更：[{title}]\n{from} → {to}',
         staleNudge: '⏰ タスク催促：[{title}]\n「{status}」で{hours}時間停滞中、進めてください',
@@ -52,7 +52,7 @@ const TRANSLATIONS = {
         reviewerNoReply: '（返信内容なし）'
     },
     ko: {
-        statusLabels: { backlog: '백로그', todo: '할 일', in_progress: '진행 중', review: '검토', done: '완료' },
+        statusLabels: { backlog: '백로그', todo: '할 일', in_progress: '진행 중', review: '검토', done: '완료', blocked: '차단됨' },
         cardCreated: '📋 새 작업 할당: {priorityIcon} [{priority}] {title}\n상태: {status}',
         statusChanged: '{direction} 작업 상태 변경: [{title}]\n{from} → {to}',
         staleNudge: '⏰ 작업 독촉: [{title}]\n"{status}"에서 {hours}시간 정체, 계속 진행해주세요',
@@ -64,7 +64,7 @@ const TRANSLATIONS = {
         reviewerNoReply: '(회신 내용 없음)'
     },
     th: {
-        statusLabels: { backlog: 'รอดำเนินการ', todo: 'รายการที่ต้องทำ', in_progress: 'กำลังดำเนินการ', review: 'ตรวจสอบ', done: 'เสร็จสิ้น' },
+        statusLabels: { backlog: 'รอดำเนินการ', todo: 'รายการที่ต้องทำ', in_progress: 'กำลังดำเนินการ', review: 'ตรวจสอบ', done: 'เสร็จสิ้น', blocked: 'ถูกบล็อก' },
         cardCreated: '📋 งานใหม่ที่ได้รับมอบหมาย: {priorityIcon} [{priority}] {title}\nสถานะ: {status}',
         statusChanged: '{direction} สถานะงานเปลี่ยน: [{title}]\n{from} → {to}',
         staleNudge: '⏰ เตือนงาน: [{title}]\nค้างใน "{status}" มา {hours} ชั่วโมง โปรดดำเนินการต่อ',
@@ -76,7 +76,7 @@ const TRANSLATIONS = {
         reviewerNoReply: '(ไม่มีเนื้อหาตอบกลับ)'
     },
     vi: {
-        statusLabels: { backlog: 'Hàng chờ', todo: 'Cần làm', in_progress: 'Đang làm', review: 'Đánh giá', done: 'Hoàn thành' },
+        statusLabels: { backlog: 'Hàng chờ', todo: 'Cần làm', in_progress: 'Đang làm', review: 'Đánh giá', done: 'Hoàn thành', blocked: 'Bị chặn' },
         cardCreated: '📋 Nhiệm vụ mới được giao: {priorityIcon} [{priority}] {title}\nTrạng thái: {status}',
         statusChanged: '{direction} Trạng thái nhiệm vụ đã thay đổi: [{title}]\n{from} → {to}',
         staleNudge: '⏰ Nhắc nhiệm vụ: [{title}]\nĐã ở "{status}" trong {hours} giờ, vui lòng tiếp tục',
@@ -88,7 +88,7 @@ const TRANSLATIONS = {
         reviewerNoReply: '(không có nội dung phản hồi)'
     },
     id: {
-        statusLabels: { backlog: 'Backlog', todo: 'TODO', in_progress: 'Sedang Berjalan', review: 'Tinjauan', done: 'Selesai' },
+        statusLabels: { backlog: 'Backlog', todo: 'TODO', in_progress: 'Sedang Berjalan', review: 'Tinjauan', done: 'Selesai', blocked: 'Diblokir' },
         cardCreated: '📋 Tugas baru ditugaskan: {priorityIcon} [{priority}] {title}\nStatus: {status}',
         statusChanged: '{direction} Status tugas berubah: [{title}]\n{from} → {to}',
         staleNudge: '⏰ Pengingat tugas: [{title}]\nMacet di "{status}" selama {hours} jam, mohon lanjutkan',
@@ -100,7 +100,7 @@ const TRANSLATIONS = {
         reviewerNoReply: '(tidak ada konten balasan)'
     },
     hi: {
-        statusLabels: { backlog: 'बैकलॉग', todo: 'करना है', in_progress: 'जारी है', review: 'समीक्षा', done: 'पूर्ण' },
+        statusLabels: { backlog: 'बैकलॉग', todo: 'करना है', in_progress: 'जारी है', review: 'समीक्षा', done: 'पूर्ण', blocked: 'अवरुद्ध' },
         cardCreated: '📋 नया कार्य सौंपा गया: {priorityIcon} [{priority}] {title}\nस्थिति: {status}',
         statusChanged: '{direction} कार्य स्थिति बदली: [{title}]\n{from} → {to}',
         staleNudge: '⏰ कार्य अनुस्मारक: [{title}]\n"{status}" में {hours} घंटे से अटका, कृपया जारी रखें',
@@ -112,7 +112,7 @@ const TRANSLATIONS = {
         reviewerNoReply: '(कोई उत्तर सामग्री नहीं)'
     },
     es: {
-        statusLabels: { backlog: 'Pendientes', todo: 'Por hacer', in_progress: 'En progreso', review: 'Revisión', done: 'Hecho' },
+        statusLabels: { backlog: 'Pendientes', todo: 'Por hacer', in_progress: 'En progreso', review: 'Revisión', done: 'Hecho', blocked: 'Bloqueado' },
         cardCreated: '📋 Nueva tarea asignada: {priorityIcon} [{priority}] {title}\nEstado: {status}',
         statusChanged: '{direction} Estado de tarea cambiado: [{title}]\n{from} → {to}',
         staleNudge: '⏰ Recordatorio de tarea: [{title}]\nAtascado en "{status}" durante {hours}h, por favor continúa',
@@ -124,7 +124,7 @@ const TRANSLATIONS = {
         reviewerNoReply: '(sin contenido de respuesta)'
     },
     fr: {
-        statusLabels: { backlog: 'Backlog', todo: 'À faire', in_progress: 'En cours', review: 'Révision', done: 'Terminé' },
+        statusLabels: { backlog: 'Backlog', todo: 'À faire', in_progress: 'En cours', review: 'Révision', done: 'Terminé', blocked: 'Bloqué' },
         cardCreated: '📋 Nouvelle tâche assignée: {priorityIcon} [{priority}] {title}\nStatut: {status}',
         statusChanged: '{direction} Statut de tâche modifié: [{title}]\n{from} → {to}',
         staleNudge: '⏰ Rappel de tâche: [{title}]\nBloqué dans "{status}" depuis {hours}h, veuillez continuer',
@@ -136,7 +136,7 @@ const TRANSLATIONS = {
         reviewerNoReply: '(aucun contenu de réponse)'
     },
     ms: {
-        statusLabels: { backlog: 'Backlog', todo: 'Perlu Buat', in_progress: 'Sedang Berjalan', review: 'Semakan', done: 'Selesai' },
+        statusLabels: { backlog: 'Backlog', todo: 'Perlu Buat', in_progress: 'Sedang Berjalan', review: 'Semakan', done: 'Selesai', blocked: 'Disekat' },
         cardCreated: '📋 Tugas baharu ditugaskan: {priorityIcon} [{priority}] {title}\nStatus: {status}',
         statusChanged: '{direction} Status tugas berubah: [{title}]\n{from} → {to}',
         staleNudge: '⏰ Peringatan tugas: [{title}]\nTersekat dalam "{status}" selama {hours} jam, sila teruskan',
@@ -148,7 +148,7 @@ const TRANSLATIONS = {
         reviewerNoReply: '(tiada kandungan balasan)'
     },
     ar: {
-        statusLabels: { backlog: 'قائمة الانتظار', todo: 'للقيام', in_progress: 'قيد التنفيذ', review: 'مراجعة', done: 'منجز' },
+        statusLabels: { backlog: 'قائمة الانتظار', todo: 'للقيام', in_progress: 'قيد التنفيذ', review: 'مراجعة', done: 'منجز', blocked: 'محظور' },
         cardCreated: '📋 مهمة جديدة معينة: {priorityIcon} [{priority}] {title}\nالحالة: {status}',
         statusChanged: '{direction} تغيرت حالة المهمة: [{title}]\n{from} → {to}',
         staleNudge: '⏰ تذكير بالمهمة: [{title}]\nعالقة في "{status}" منذ {hours} ساعة، يرجى المتابعة',
@@ -160,7 +160,7 @@ const TRANSLATIONS = {
         reviewerNoReply: '(لا يوجد محتوى رد)'
     },
     de: {
-        statusLabels: { backlog: 'Backlog', todo: 'Zu erledigen', in_progress: 'In Bearbeitung', review: 'Überprüfung', done: 'Erledigt' },
+        statusLabels: { backlog: 'Backlog', todo: 'Zu erledigen', in_progress: 'In Bearbeitung', review: 'Überprüfung', done: 'Erledigt', blocked: 'Blockiert' },
         cardCreated: '📋 Neue Aufgabe zugewiesen: {priorityIcon} [{priority}] {title}\nStatus: {status}',
         statusChanged: '{direction} Aufgabenstatus geändert: [{title}]\n{from} → {to}',
         staleNudge: '⏰ Aufgaben-Erinnerung: [{title}]\nSteckt in "{status}" seit {hours}h fest, bitte fortfahren',
