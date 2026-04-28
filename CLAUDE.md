@@ -7,8 +7,8 @@
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
-- **Current version**: 1.1104.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
-- **Android app version**: 1.0.77 (versionCode 83); `LATEST_APP_VERSION` constant in `backend/index.js`
+- **Current version**: 1.1121.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **Android app version**: 1.0.79 (versionCode 85); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
 ---
@@ -153,14 +153,14 @@ EClaw/
 │   │   ├── privacy-policy.html    # Privacy policy page (i18n, 12 languages)
 │   │   ├── llms.txt               # AI search engine discovery file
 │   │   ├── robots.txt             # SEO: crawler directives
-│   │   ├── sitemap.xml            # SEO: sitemap (5 URLs)
+│   │   ├── sitemap.xml            # SEO: sitemap (10 URLs)
 │   │   ├── sw.js                  # Service worker for PWA support
 │   │   ├── assets/
 │   │   │   └── og-image.png       # Open Graph social sharing image
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
 │   ├── tests/                # Regression + integration tests (59 files)
-│   ├── tests/jest/           # Jest unit tests (140 files, CI-run via `npm test`)
+│   ├── tests/jest/           # Jest unit tests (146 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -223,7 +223,7 @@ EClaw/
 
 ### Backend (Node.js/Express)
 
-- **Single-file server**: `backend/index.js` (~18,014 lines) contains all API routes
+- **Single-file server**: `backend/index.js` (~18,186 lines) contains all API routes
 - **Database**: PostgreSQL (Railway-managed), connection in `backend/db.js`
 - **Real-time**: Socket.IO for live updates to Web Portal and Android app
 - **Auth**: JWT tokens (cookie-based for web, header-based for API), social OAuth (Google, Facebook), OIDC
@@ -371,7 +371,7 @@ EClaw/
 - Billing: Google Play Billing (`BillingManager.kt`)
 - AI Chat: `AiChatViewModel.kt` manages state (fixes message loss, typing race condition)
 - Bottom nav: FILES tab renamed to CARDS (Card Holder); Files link moved to Settings
-- App version: 1.0.77 (versionCode 83)
+- App version: 1.0.79 (versionCode 85)
 
 ### iOS/React Native App (Expo)
 
@@ -981,13 +981,31 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Chat Draft Fix (v1.1104)**: Clear stale `chat_draft` when mindmap cite prefills chat input
 - **Claude CLI Proxy Vault PAT (v1.1093)**: Vault-first PAT resolution for Claude CLI proxy
 - **Compact SAVEPOINT Guard (v1.1092)**: `scheduled_messages` migration wrapped in SAVEPOINT to prevent entity compaction failure
-- **Daily Message Limit Removed (v1.1105)**: Cancelled the 15-msg/day cap (+ `invite_rewards.bonus_messages`) on `/api/client/speak`. `enforceUsageLimit()` is now a no-op; `usage_tracking` is no longer written; `usageLimit` field returned by `/api/auth/me`, `/api/subscription/status`, `/api/subscription/usage` is always `null`. Chat UI's limit warning, modal, and 429 handler removed. Regression test: `tests/jest/usage-limit-removed.test.js`. Reason: limit was incorrectly applied to ALL non-premium devices regardless of bot type (free / personal / channel), confusing users who chat with their own bots.
+
+### Recent Features (v1.1105.x – v1.1121.x)
+
+- **Daily Message Limit Removed (v1.1105)**: Cancelled 15-msg/day cap; `enforceUsageLimit()` is no-op; regression test `usage-limit-removed.test.js`
+- **Hermes Message Queue System (v1.1106–v1.1116)**: `enqueueMessage()` centralized push delivery; per-entity 200-msg cap + DLQ buffer; delivery-stuck heartbeat detection (Phase H1.2); `/api/health` 503 on severe stuck triggers Railway auto-restart (Phase H1.5); boot-time clamp for ghost entities
+- **Kanban Blocked Status (v1.1108–v1.1109)**: `blocked` status label added to all 12 locales; nudge config sources from `kanban-status.js` SoT
+- **Kanban Search Expansion (v1.1111)**: Search extends to comments/subcards + archived card detail view
+- **Mindmap UX (v1.1112)**: Finer wheel-zoom + decoupled trackpad pinch; fullscreen toggle + `?view-mode=full` URL flag; standalone mindmap.html removed, ported to mission embed
+- **Chat-Anchor System (v1.1114–v1.1120)**: Phase 1 — `chat_anchor_msg_id` + `chat_anchor_coord` schema on `kanban_cards`; Phase 2 — chat-anchor picker UI in kanban; Phase 3 — validator on POST /card; Phase 4 — write-side capture `chat_anchor_coord` on card create from mindmap
+- **Kanban-Nudge Split (v1.1117)**: Split 內容督促 vs 排程觸發 + per-entity throttle
+- **Settings Deep-Link (v1.1116)**: `?focus=` URL parameter for section filter; APP entry buttons wired to settings.html sections
+- **Screenshot Lightbox Zoom (v1.1116)**: Wheel/dblclick/drag/pinch zoom in kanban screenshot lightbox
+- **Kanban Escalation Fix (v1.1114)**: L2/L3 escalation notifies assigned_bots, not just notifyEntityId
+- **Landing CTA (v1.1113)**: Browse Bots CTA → community.html (13 locales)
+- **Community SEO (v1.1113)**: community.html og:locale + 13 og:locale:alternate
+- **Invite Redeem Fix (v1.1113)**: Preserve `?redeem=` across signup/login flow
+- **i18n Cron-Notify Fix (v1.1117)**: EN labels for cron-notify keys no longer leak CJK 母卡
+- **Telegram Adapter PoC (v1.1121, reverted)**: Long-poll Telegram adapter attempted then reverted
+- **App Version**: Updated to 1.0.79 (versionCode 85)
 
 ---
 
 ## Test Coverage Summary
 
-**~450 total API routes** across all modules (400 excluding Article Publisher), **~82% covered** by Jest + integration tests (~2368 test cases across 141 Jest files + 78 integration tests).
+**~450 total API routes** across all modules (400 excluding Article Publisher), **~83% covered** by Jest + integration tests (~2412 test cases across 146 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -1143,7 +1161,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (140 files)
+cd backend && npm test                  # Jest unit tests (146 files)
 cd backend && npm run lint              # ESLint
 ```
 

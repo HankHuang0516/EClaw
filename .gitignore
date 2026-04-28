@@ -57,3 +57,6 @@ nul
 compile_log.txt
 logs/
 ios-app/*.ipa
+
+# Evidence screenshots (local only)
+docs/evidence/
