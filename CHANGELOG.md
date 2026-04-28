@@ -1,3 +1,10 @@
+# [1.1118.0](https://github.com/HankHuang0516/EClaw/compare/v1.1117.2...v1.1118.0) (2026-04-28)
+
+
+### Features
+
+* **kanban:** chat-anchor picker UI (chat-anchor P2) ([#2235](https://github.com/HankHuang0516/EClaw/issues/2235)) ([d9ccca0](https://github.com/HankHuang0516/EClaw/commit/d9ccca0e64493650a10ec10bcb35a2524885f8ef)), closes [#2228](https://github.com/HankHuang0516/EClaw/issues/2228) [#5](https://github.com/HankHuang0516/EClaw/issues/5) [#5](https://github.com/HankHuang0516/EClaw/issues/5)
+
 ## [1.1117.2](https://github.com/HankHuang0516/EClaw/compare/v1.1117.1...v1.1117.2) (2026-04-28)
 
 
