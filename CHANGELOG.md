@@ -1,3 +1,10 @@
+## [1.1117.1](https://github.com/HankHuang0516/EClaw/compare/v1.1117.0...v1.1117.1) (2026-04-28)
+
+
+### Bug Fixes
+
+* **settings:** focus mode hides logout/delete-account block ([#2233](https://github.com/HankHuang0516/EClaw/issues/2233)) ([351c003](https://github.com/HankHuang0516/EClaw/commit/351c003023a532aaa6e288da2738db025c9106fc))
+
 # [1.1117.0](https://github.com/HankHuang0516/EClaw/compare/v1.1116.1...v1.1117.0) (2026-04-28)
 
 
