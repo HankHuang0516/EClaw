@@ -1,3 +1,10 @@
+# [1.1117.0](https://github.com/HankHuang0516/EClaw/compare/v1.1116.1...v1.1117.0) (2026-04-28)
+
+
+### Features
+
+* **kanban-nudge:** split 內容督促 vs 排程觸發 + per-entity throttle ([#2232](https://github.com/HankHuang0516/EClaw/issues/2232)) ([8354c92](https://github.com/HankHuang0516/EClaw/commit/8354c92999aa4efec99d5608c13dcc78e80dd493)), closes [#5](https://github.com/HankHuang0516/EClaw/issues/5)
+
 ## [1.1116.1](https://github.com/HankHuang0516/EClaw/compare/v1.1116.0...v1.1116.1) (2026-04-28)
 
 
