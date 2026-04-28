@@ -215,9 +215,13 @@
         .kb-ss-thumb:hover { transform:scale(1.03); border-color:var(--primary); }
         .kb-ss-thumb img { width:100%; height:96px; object-fit:cover; display:block; }
         .kb-ss-caption { font-size:10px; padding:4px 6px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .kb-lightbox { position:fixed; inset:0; background:rgba(0,0,0,0.92); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:300; cursor:zoom-out; padding:24px; }
-        .kb-lightbox img { max-width:96vw; max-height:88vh; object-fit:contain; box-shadow:0 8px 40px rgba(0,0,0,0.6); }
-        .kb-lightbox-caption { margin-top:12px; color:#eee; font-size:13px; text-align:center; max-width:90vw; }
+        .kb-lightbox { position:fixed; inset:0; background:rgba(0,0,0,0.92); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:300; padding:0; }
+        .kb-lightbox-stage { display:flex; align-items:center; justify-content:center; flex:1; width:100%; overflow:hidden; touch-action:none; }
+        .kb-lightbox-img { max-width:96vw; max-height:80vh; object-fit:contain; transform-origin:center center; user-select:none; -webkit-user-drag:none; cursor:zoom-in; box-shadow:0 8px 40px rgba(0,0,0,0.6); }
+        .kb-lightbox-close { position:absolute; top:14px; right:18px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.32); color:#fff; font-size:24px; line-height:1; width:36px; height:36px; border-radius:50%; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; z-index:1; }
+        .kb-lightbox-close:hover { background:rgba(255,255,255,0.22); }
+        .kb-lightbox-caption { margin-top:12px; color:#eee; font-size:13px; text-align:center; max-width:90vw; padding:0 16px; }
+        .kb-lightbox-hint { color:#888; font-size:12px; margin:6px 0 12px; padding:0 16px; text-align:center; }
 
         /* Move actions */
         .kb-move-bar { padding:12px 24px; border-top:1px solid var(--card-border); display:flex; gap:8px; flex-wrap:wrap; }
@@ -2054,10 +2058,122 @@
                 lb = document.createElement('div');
                 lb.id = 'kbLightbox';
                 lb.className = 'kb-lightbox';
-                lb.addEventListener('click', () => { lb.style.display = 'none'; });
+                lb.innerHTML = `
+                    <button class="kb-lightbox-close" type="button" aria-label="Close" title="Close (Esc)">×</button>
+                    <div class="kb-lightbox-stage">
+                        <img class="kb-lightbox-img" alt="">
+                    </div>
+                    <div class="kb-lightbox-caption"></div>
+                    <div class="kb-lightbox-hint">滾輪/捏合縮放 · 拖曳平移 · 雙擊重置 · ESC 關閉</div>
+                `;
                 document.body.appendChild(lb);
+
+                const stage = lb.querySelector('.kb-lightbox-stage');
+                const img = lb.querySelector('.kb-lightbox-img');
+                const closeBtn = lb.querySelector('.kb-lightbox-close');
+                let scale = 1, tx = 0, ty = 0;
+                let dragging = false, dragStartX = 0, dragStartY = 0, txStart = 0, tyStart = 0;
+                let pinchStartDist = 0, pinchStartScale = 1;
+                let touchPan = false, touchStartX = 0, touchStartY = 0;
+                const MIN = 1, MAX = 8;
+
+                function applyTransform() {
+                    img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+                    img.style.cursor = scale > 1 ? (dragging ? 'grabbing' : 'grab') : 'zoom-in';
+                }
+                function resetView() { scale = 1; tx = 0; ty = 0; applyTransform(); }
+                function close() { lb.style.display = 'none'; resetView(); }
+                lb._reset = resetView;
+
+                closeBtn.addEventListener('click', (e) => { e.stopPropagation(); close(); });
+                lb.addEventListener('click', (e) => { if (e.target === lb) close(); });
+                document.addEventListener('keydown', (e) => {
+                    if (lb.style.display === 'flex' && e.key === 'Escape') close();
+                });
+
+                stage.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const rect = img.getBoundingClientRect();
+                    const cx = e.clientX - rect.left - rect.width / 2;
+                    const cy = e.clientY - rect.top - rect.height / 2;
+                    const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+                    const newScale = Math.max(MIN, Math.min(MAX, scale * factor));
+                    const ratio = newScale / scale;
+                    tx = tx + (1 - ratio) * cx;
+                    ty = ty + (1 - ratio) * cy;
+                    scale = newScale;
+                    if (scale === MIN) { tx = 0; ty = 0; }
+                    applyTransform();
+                }, { passive: false });
+
+                img.addEventListener('dblclick', (e) => {
+                    e.preventDefault();
+                    if (scale > 1) resetView();
+                    else { scale = 2; applyTransform(); }
+                });
+
+                img.addEventListener('mousedown', (e) => {
+                    if (scale === 1) return;
+                    e.preventDefault();
+                    dragging = true;
+                    dragStartX = e.clientX; dragStartY = e.clientY;
+                    txStart = tx; tyStart = ty;
+                    applyTransform();
+                });
+                document.addEventListener('mousemove', (e) => {
+                    if (!dragging) return;
+                    tx = txStart + (e.clientX - dragStartX);
+                    ty = tyStart + (e.clientY - dragStartY);
+                    applyTransform();
+                });
+                document.addEventListener('mouseup', () => {
+                    if (dragging) { dragging = false; applyTransform(); }
+                });
+
+                stage.addEventListener('touchstart', (e) => {
+                    if (e.touches.length === 2) {
+                        pinchStartDist = Math.hypot(
+                            e.touches[0].clientX - e.touches[1].clientX,
+                            e.touches[0].clientY - e.touches[1].clientY
+                        );
+                        pinchStartScale = scale;
+                    } else if (e.touches.length === 1 && scale > 1) {
+                        touchPan = true;
+                        touchStartX = e.touches[0].clientX;
+                        touchStartY = e.touches[0].clientY;
+                        txStart = tx; tyStart = ty;
+                    }
+                }, { passive: true });
+                stage.addEventListener('touchmove', (e) => {
+                    if (e.touches.length === 2 && pinchStartDist > 0) {
+                        e.preventDefault();
+                        const dist = Math.hypot(
+                            e.touches[0].clientX - e.touches[1].clientX,
+                            e.touches[0].clientY - e.touches[1].clientY
+                        );
+                        scale = Math.max(MIN, Math.min(MAX, pinchStartScale * (dist / pinchStartDist)));
+                        if (scale === MIN) { tx = 0; ty = 0; }
+                        applyTransform();
+                    } else if (touchPan && e.touches.length === 1) {
+                        tx = txStart + (e.touches[0].clientX - touchStartX);
+                        ty = tyStart + (e.touches[0].clientY - touchStartY);
+                        applyTransform();
+                    }
+                }, { passive: false });
+                stage.addEventListener('touchend', () => {
+                    touchPan = false;
+                    pinchStartDist = 0;
+                });
+
+                applyTransform();
             }
-            lb.innerHTML = `<img src="${escapeHtml(url)}" alt="${escapeHtml(name || '')}"><div class="kb-lightbox-caption">${escapeHtml(name || '')}</div>`;
+
+            const img = lb.querySelector('.kb-lightbox-img');
+            const cap = lb.querySelector('.kb-lightbox-caption');
+            img.src = url;
+            img.alt = name || '';
+            cap.textContent = name || '';
+            if (lb._reset) lb._reset();
             lb.style.display = 'flex';
         }
 
