@@ -1928,7 +1928,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
         const allowedStatuses = new Set(
             Array.isArray(prefs.kanban_nudge_statuses) && prefs.kanban_nudge_statuses.length
                 ? prefs.kanban_nudge_statuses
-                : ['todo', 'in_progress', 'review']
+                : KanbanStatus.NUDGE_DEFAULT_STATUSES
         );
 
         // Status filter applies to ALL levels — if user opts backlog out, no auto-escalation there either.
