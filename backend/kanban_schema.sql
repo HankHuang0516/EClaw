@@ -62,6 +62,17 @@ ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS requires_screenshot_review BOO
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS chat_anchor_message_id TEXT DEFAULT NULL;
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS chat_anchor_coord JSONB DEFAULT NULL;
 
+-- Per-entity nudge log (2026-04-28): hard ceiling so a single bot can't be
+-- nudged more than once per kanban_nudge_interval_minutes regardless of how
+-- many stale cards reference it. Cron-schedule母卡 spawn子卡 path is gated
+-- by device_preferences.kanban_cron_spawn_notify and never writes here.
+CREATE TABLE IF NOT EXISTS kanban_entity_nudge_log (
+    device_id VARCHAR(64) NOT NULL,
+    entity_id INTEGER NOT NULL,
+    last_nudged_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (device_id, entity_id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_kanban_cards_automation ON kanban_cards(device_id, is_automation)
     WHERE is_automation = true;
 CREATE INDEX IF NOT EXISTS idx_kanban_cards_parent ON kanban_cards(parent_card_id)
