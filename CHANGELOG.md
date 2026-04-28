@@ -1,3 +1,10 @@
+## [1.1111.1](https://github.com/HankHuang0516/EClaw/compare/v1.1111.0...v1.1111.1) (2026-04-28)
+
+
+### Bug Fixes
+
+* **hermes:** exclude pre-H1.2 ghost entities from severe trigger (Phase H1.5 hotfix) ([#2217](https://github.com/HankHuang0516/EClaw/issues/2217)) ([a0fcc90](https://github.com/HankHuang0516/EClaw/commit/a0fcc9067c362184281a3cae731f5eed378a6d00))
+
 # [1.1111.0](https://github.com/HankHuang0516/EClaw/compare/v1.1110.0...v1.1111.0) (2026-04-28)
 
 
