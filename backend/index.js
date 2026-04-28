@@ -3923,17 +3923,31 @@ const SEVERE_STUCK_MS = 300_000;
 // crashloop where DB-loaded stale mq + cold daemon trips immediate 503 → kill → repeat.
 // 3 min gives a fresh Hermes plenty of time to start polling and reset lastDrainedAt.
 const HEALTH_BOOT_GRACE_MS = 180_000;
+// Severe requires at least this many "previously alive, now stopped" entities. Single-bot
+// orphans must NOT trigger restart. Pre-H1.2 historical state (lastDrainedAt=null forever)
+// must NOT trigger restart. Only a daemon-wide failure — multiple bots that USED to drain
+// suddenly stopping — warrants a process kill.
+const SEVERE_STUCK_MIN_COUNT = 5;
 
 function evaluateDeliveryHealth(stuckList, uptimeMs) {
     const oldestIdleMs = stuckList.length
         ? stuckList.reduce((m, s) => (s.idleMs > m ? s.idleMs : m), 0)
         : 0;
-    const severe = oldestIdleMs > SEVERE_STUCK_MS && uptimeMs > HEALTH_BOOT_GRACE_MS;
+    // Severe only counts entities that USED to drain (lastDrainedAt set) and stopped.
+    // Excludes ghost entities (never-drained, pre-H1.2 historical state) from triggering
+    // restarts — those are stale data, not a live-daemon failure.
+    const severeStuckCount = stuckList.filter(
+        s => s.lastDrainedAt && s.idleMs > SEVERE_STUCK_MS
+    ).length;
+    const severe = severeStuckCount >= SEVERE_STUCK_MIN_COUNT
+        && uptimeMs > HEALTH_BOOT_GRACE_MS;
     return {
         stuckThresholdMs: HEARTBEAT_STUCK_MS,
         severeThresholdMs: SEVERE_STUCK_MS,
+        severeMinCount: SEVERE_STUCK_MIN_COUNT,
         bootGraceMs: HEALTH_BOOT_GRACE_MS,
         stuckCount: stuckList.length,
+        severeStuckCount,
         oldestIdleMs,
         severe,
     };
@@ -18168,4 +18182,5 @@ module.exports._findStuckEntities = findStuckEntities;
 module.exports._HEARTBEAT_STUCK_MS = HEARTBEAT_STUCK_MS;
 module.exports._SEVERE_STUCK_MS = SEVERE_STUCK_MS;
 module.exports._HEALTH_BOOT_GRACE_MS = HEALTH_BOOT_GRACE_MS;
+module.exports._SEVERE_STUCK_MIN_COUNT = SEVERE_STUCK_MIN_COUNT;
 module.exports._evaluateDeliveryHealth = evaluateDeliveryHealth;
