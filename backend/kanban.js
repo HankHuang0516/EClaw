@@ -1996,19 +1996,34 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
         }
     }
 
-    async function fireBlockEscalation(card) {
-        const elapsedHrs = Math.round((Date.now() - new Date(card.status_changed_at).getTime()) / 3600000 * 10) / 10;
+    function buildEscalationRecipients(card) {
         const config = card.config || {};
         const esc = config.escalationPolicy || {};
         const notifyEntityId = esc.notifyEntityId || card.reviewer_entity_id;
+        const bots = Array.isArray(card.assigned_bots) ? card.assigned_bots : [];
+        const seen = new Set();
+        const out = [];
+        for (const id of [notifyEntityId, ...bots]) {
+            if (id == null) continue;
+            const key = String(id);
+            if (seen.has(key)) continue;
+            seen.add(key);
+            out.push(id);
+        }
+        return out;
+    }
+
+    async function fireBlockEscalation(card) {
+        const elapsedHrs = Math.round((Date.now() - new Date(card.status_changed_at).getTime()) / 3600000 * 10) / 10;
+        const recipients = buildEscalationRecipients(card);
         await pool.query(
             `UPDATE kanban_cards SET status = 'blocked', status_changed_at = NOW(), last_stale_nudge_at = NOW(), updated_at = NOW() WHERE id = $1`,
             [card.id]
         );
         await addSystemComment(card.id, card.device_id,
             `🚫 自動封鎖：此卡片已停滯 ${elapsedHrs} 小時，已自動移至「blocked」，請人工介入`);
-        if (notifyEntityId != null) {
-            notifyEntities(card.device_id, [notifyEntityId],
+        if (recipients.length > 0) {
+            notifyEntities(card.device_id, recipients,
                 `🚫 卡片「${card.title}」已停滯 ${elapsedHrs}h，自動 blocked，需人工介入`,
                 { cardId: card.id });
         }
@@ -2017,9 +2032,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
     async function fireLevelTwoEscalation(card) {
         const elapsedHrs = Math.round((Date.now() - new Date(card.status_changed_at).getTime()) / 3600000 * 10) / 10;
-        const config = card.config || {};
-        const esc = config.escalationPolicy || {};
-        const notifyEntityId = esc.notifyEntityId || card.reviewer_entity_id;
+        const recipients = buildEscalationRecipients(card);
         const PRIORITY_UPGRADE = { P3: 'P2', P2: 'P1', P1: 'P0', P0: 'P0' };
         const newPriority = PRIORITY_UPGRADE[card.priority] || card.priority;
         if (newPriority === card.priority) return false;
@@ -2029,8 +2042,8 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
         );
         await addSystemComment(card.id, card.device_id,
             `⬆️ 自動升級：停滯 ${elapsedHrs} 小時，優先級 ${card.priority} → ${newPriority}`);
-        if (notifyEntityId != null) {
-            notifyEntities(card.device_id, [notifyEntityId],
+        if (recipients.length > 0) {
+            notifyEntities(card.device_id, recipients,
                 `⬆️ 卡片「${card.title}」停滯 ${elapsedHrs}h，已自動升級至 ${newPriority}`,
                 { cardId: card.id });
         }
