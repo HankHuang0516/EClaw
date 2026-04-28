@@ -4795,7 +4795,7 @@ const TRANSLATIONS = {
         "settings_redeem_title": "Redeem an invite code",
         "privacy_title": "Privacy Policy - EClawbot",
         "ai_chat_view_feedback": "View Feedback History",
-        // Mind Map (mindmap.html) - Phase 2 Cytoscape portal UI
+        // Mind Map keys (Cytoscape portal UI). NOTE: standalone /portal/mindmap.html removed 2026-04-28; mission.html embed uses hardcoded labels. Keys retained for Hermes to reap if no longer referenced.
         "mindmap_title": "Mind Map",
         "mindmap_add_node": "Add node",
         "mindmap_connect_mode": "Connect mode",

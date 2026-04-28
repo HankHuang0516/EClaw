@@ -173,6 +173,9 @@
     .mm-root:fullscreen, .mm-root:-webkit-full-screen {
       height: 100vh; width: 100vw; border-radius: 0; border: none;
     }
+    body.mm-display-mode .mm-root {
+      height: 100vh; width: 100vw; border-radius: 0; border: none;
+    }
     .mm-root .sys-rail {
       background: var(--mm-bg-elev);
       border-right: 1px solid var(--mm-border);
