@@ -1,3 +1,10 @@
+## [1.1112.1](https://github.com/HankHuang0516/EClaw/compare/v1.1112.0...v1.1112.1) (2026-04-28)
+
+
+### Bug Fixes
+
+* **test:** chat-his-link-render expected locale count 15 → 14 ([#2219](https://github.com/HankHuang0516/EClaw/issues/2219)) ([b9ed8a7](https://github.com/HankHuang0516/EClaw/commit/b9ed8a7452546cda825abb984b8b82d7686f42e6))
+
 # [1.1112.0](https://github.com/HankHuang0516/EClaw/compare/v1.1111.1...v1.1112.0) (2026-04-28)
 
 
