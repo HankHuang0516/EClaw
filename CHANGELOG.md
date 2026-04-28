@@ -1,3 +1,10 @@
+# [1.1110.0](https://github.com/HankHuang0516/EClaw/compare/v1.1109.2...v1.1110.0) (2026-04-28)
+
+
+### Features
+
+* **hermes:** delivery-stuck heartbeat detection (Phase H1.2) ([#2215](https://github.com/HankHuang0516/EClaw/issues/2215)) ([6ee0a92](https://github.com/HankHuang0516/EClaw/commit/6ee0a92ffaf76fdcea5fededf1f97731d93ff17a))
+
 ## [1.1109.2](https://github.com/HankHuang0516/EClaw/compare/v1.1109.1...v1.1109.2) (2026-04-28)
 
 
