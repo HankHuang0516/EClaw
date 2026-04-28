@@ -1130,6 +1130,9 @@ async function initPersistence() {
     // Load existing data
     await loadData();
 
+    // Phase H1.1b: clamp legacy queues that exceeded the cap before this code shipped.
+    clampQueuesOnLoad();
+
     // Load official bot pool
     if (usePostgreSQL) {
         const loadedBots = await db.loadOfficialBots();
@@ -3928,6 +3931,32 @@ function enqueueMessage(toEntity, messageObj, ctx) {
         try {
             console.warn(`[Queue] entity ${toEntity.entityId} mq overflow — dropped oldest to DLQ. mqLen=${toEntity.messageQueue.length} dlqLen=${toEntity.deadLetterQueue.length} ctx=${ctx || ''}`);
         } catch (_) {}
+    }
+}
+
+// Phase H1.1b: Boot-time clamp. Legacy persisted state may already exceed cap
+// (we observed mqLen=1564 on Hermes after the H1.1 deploy because the queue was
+// loaded from DB pre-fix). Trim once on load so /api/health reflects truth and
+// the next push doesn't immediately torch 1300+ messages into the 50-slot DLQ.
+function clampQueuesOnLoad() {
+    let trimmed = 0, entitiesScanned = 0;
+    for (const dev of Object.values(devices || {})) {
+        const ents = dev && dev.entities;
+        if (!ents) continue;
+        for (const ent of Object.values(ents)) {
+            entitiesScanned++;
+            if (Array.isArray(ent.messageQueue) && ent.messageQueue.length > MESSAGE_QUEUE_CAP) {
+                const overflow = ent.messageQueue.length - MESSAGE_QUEUE_CAP;
+                ent.messageQueue.splice(0, overflow); // drop oldest, no DLQ — these are pre-fix legacy
+                trimmed += overflow;
+            }
+            if (Array.isArray(ent.deadLetterQueue) && ent.deadLetterQueue.length > DEAD_LETTER_CAP) {
+                ent.deadLetterQueue.splice(0, ent.deadLetterQueue.length - DEAD_LETTER_CAP);
+            }
+        }
+    }
+    if (trimmed > 0) {
+        console.warn(`[Queue] boot clamp: trimmed ${trimmed} stale messages across ${entitiesScanned} entities (pre-cap legacy state)`);
     }
 }
 
@@ -8415,7 +8444,7 @@ app.post('/api/client/speak', async (req, res) => {
             mediaType: mediaType || null,
             mediaUrl: mediaUrl || null
         };
-        entity.messageQueue.push(messageObj);
+        enqueueMessage(entity, messageObj, 'incoming_chat');
         const chatBackupUrl = mediaType === 'photo' ? getBackupUrl(mediaUrl) : null;
         await saveChatMessage(deviceId, eId, text, source, true, false, mediaType || null, mediaUrl || null, null, null, chatBackupUrl, mentionsContext, null, validatedAttachments);
 
@@ -9117,7 +9146,7 @@ app.post('/api/entity/cross-speak', async (req, res) => {
         mediaUrl: mediaUrl || null,
         crossDevice: true
     };
-    toEntity.messageQueue.push(messageObj);
+    enqueueMessage(toEntity, messageObj, 'xdevice_publiccode');
 
     // Save chat message on BOTH devices
     const chatMsgId = await saveChatMessage(target.deviceId, target.entityId, crossText, `${sourceLabel}->${targetCode}`, false, true, mediaType || null, mediaUrl || null);
@@ -10759,7 +10788,7 @@ app.post('/api/client/cross-speak', async (req, res) => {
         mediaUrl: mediaUrl || null,
         crossDevice: !isOwnerMode || deviceId !== target.deviceId // false only when owner sends to own entity
     };
-    toEntity.messageQueue.push(messageObj);
+    enqueueMessage(toEntity, messageObj, isOwnerMode ? 'owner_speakto' : 'entity_speakto');
 
     // Save chat message — always save to both sender and target devices
     const sourceTag = `${sourceLabel}->${targetCode}`;
@@ -11102,7 +11131,7 @@ app.post('/api/entity/broadcast', async (req, res) => {
             mediaType: mediaType || null,
             mediaUrl: mediaUrl || null
         };
-        toEntity.messageQueue.push(messageObj);
+        enqueueMessage(toEntity, messageObj, 'broadcast');
         markMessagesAsRead(deviceId, toId);
 
         // Update entity.message so Android app can display it
@@ -17859,10 +17888,7 @@ app.post('/api/bot/sync-message', async (req, res) => {
     };
 
     // Add to entity's message queue
-    if (!entity.messageQueue) {
-        entity.messageQueue = [];
-    }
-    entity.messageQueue.push(messageObj);
+    enqueueMessage(entity, messageObj, 'bot_delivery');
     await saveChatMessage(deviceId, entityId, msgText, fromLabel || "bot", false, true, mediaType || null, mediaUrl || null);
     markMessagesAsRead(deviceId, entityId);
 
@@ -18050,3 +18076,4 @@ module.exports._createDefaultEntity = createDefaultEntity;
 module.exports._enqueueMessage = enqueueMessage;
 module.exports._MESSAGE_QUEUE_CAP = MESSAGE_QUEUE_CAP;
 module.exports._DEAD_LETTER_CAP = DEAD_LETTER_CAP;
+module.exports._clampQueuesOnLoad = clampQueuesOnLoad;

@@ -38,6 +38,8 @@ const enqueue = app._enqueueMessage;
 const QUEUE_CAP = app._MESSAGE_QUEUE_CAP;
 const DLQ_CAP = app._DEAD_LETTER_CAP;
 const createDefaultEntity = app._createDefaultEntity;
+const clampQueuesOnLoad = app._clampQueuesOnLoad;
+const devices = app.devices;
 
 describe('Phase H1.1 — enqueueMessage cap + DLQ', () => {
     test('exposes the documented caps (200 / 50)', () => {
@@ -94,5 +96,35 @@ describe('Phase H1.1 — enqueueMessage cap + DLQ', () => {
         enqueue(ent, { text: 'first' }, 'legacy');
         expect(ent.messageQueue).toEqual([{ text: 'first' }]);
         expect(ent.deadLetterQueue).toEqual([]);
+    });
+
+    test('clampQueuesOnLoad trims pre-cap legacy state from devices map', () => {
+        // Stash + clear so we don't pollute prod-shape singleton between asserts.
+        const snapshot = { ...devices };
+        for (const k of Object.keys(devices)) delete devices[k];
+
+        const overflowEntity = { entityId: 42, messageQueue: [], deadLetterQueue: [] };
+        for (let i = 0; i < QUEUE_CAP + 500; i++) {
+            overflowEntity.messageQueue.push({ text: `legacy-${i}` });
+        }
+        const dlqOverflow = { entityId: 43, messageQueue: [], deadLetterQueue: [] };
+        for (let i = 0; i < DLQ_CAP + 20; i++) {
+            dlqOverflow.deadLetterQueue.push({ text: `dlq-${i}` });
+        }
+        devices['fake-device'] = { entities: { 42: overflowEntity, 43: dlqOverflow } };
+
+        clampQueuesOnLoad();
+
+        expect(overflowEntity.messageQueue.length).toBe(QUEUE_CAP);
+        // Oldest 500 are dropped wholesale (no DLQ promotion — they're pre-fix legacy)
+        expect(overflowEntity.messageQueue[0].text).toBe('legacy-500');
+        expect(overflowEntity.deadLetterQueue.length).toBe(0);
+
+        expect(dlqOverflow.deadLetterQueue.length).toBe(DLQ_CAP);
+        expect(dlqOverflow.deadLetterQueue[0].text).toBe('dlq-20');
+
+        // Restore
+        for (const k of Object.keys(devices)) delete devices[k];
+        Object.assign(devices, snapshot);
     });
 });
