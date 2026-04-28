@@ -4210,24 +4210,38 @@ curl http://localhost:8787/   # fakechat plugin（應回傳 HTML）</div>
 │ EClawbot   │ ─────────────────────────▶│ cloudflared-hermes-b │
 │ backend    │                           │ (named tunnel)       │
 └────────────┘ ◀───────────────────────┐ └──────────┬───────────┘
-  3. POST /api/channel/message          │            │
+  4. POST /api/channel/message          │            │
      reply                              │            ▼
                                         │ ┌──────────────────────┐
                                         │ │ eclaw_bridge.py :8644 │
                                         │ │  • Bearer auth        │
-                                        │ │  • spawn hermes chat  │
+                                        │ │  • POST /chat → SSE   │
                                         │ │  • POST reply back    │
-                                        │ └──────────────────────┘
-                                        │            │
-                                        └────────────┘ 2. hermes chat -q
+                                        │ └──────────┬────────────┘
+                                        │            │ 2. POST /chat (SSE)
+                                        │            ▼
+                                        │ ┌──────────────────────┐
+                                        │ │ hermes_daemon.py      │
+                                        │ │ :8645 (aiohttp)       │
+                                        │ │  • persistent hermes  │
+                                        │ │    --continue child   │
+                                        │ │  • SSE event stream   │
+                                        │ └──────────┬────────────┘
+                                        │            │ 3. stdin/stdout pipe
+                                        └────────────┘
 
 流程：
 1. 使用者在 EClawbot App / Portal 傳訊息
 2. EClawbot 後端透過 Channel callback 推送到 Cloudflare named tunnel
 3. Tunnel 轉發到容器內 bridge (port 8644)
-4. Bridge 驗證 Bearer → 呼叫 Hermes CLI → 取得回覆
+4. Bridge 驗證 Bearer → POST /chat 給常駐 daemon → 走 SSE 拿回覆
 5. Bridge 呼叫 POST /api/channel/message 回傳結果
-6. EClawbot 角色狀態更新，使用者看到回覆</div>
+6. EClawbot 角色狀態更新，使用者看到回覆
+
+（2026-04-28 daemon refactor：bridge 不再 per-message spawn `hermes chat`；
+daemon 在 boot 時起一個 `hermes --continue` 常駐 child，冷啟成本只付一次。
+若 `HERMES_DAEMON_URL` 未設定或 daemon 不可用，bridge 自動 fallback 回舊的
+subprocess 模式 — 零風險遷移。）</div>
 
                         <hr>
 
@@ -4303,8 +4317,8 @@ platforms:
 
                         <h2 data-i18n="guide_hermes_channel_h2_faq">常見問題</h2>
 
-                        <h3 data-i18n="guide_hermes_channel_h3_faq_cold">Q: 為什麼每次回覆要 7–9 秒？</h3>
-                        <p data-i18n="guide_hermes_channel_p_faq_cold">Bridge 目前為每則訊息 spawn 一個新 <code>hermes chat</code> process，Python 冷啟動 + SDK init + 首次 LLM call 約 7–9 秒。適合一對一聊天且頻率不高。未來可改成常駐 Python worker（載入一次 <code>AIAgent</code>、用 Unix socket 收請求）— 可把延遲降到 LLM 網路往返即可。KNOW-HOW §14 有詳細 roadmap。</p>
+                        <h3 data-i18n="guide_hermes_channel_h3_faq_cold">Q: 回覆延遲多少？</h3>
+                        <p data-i18n="guide_hermes_channel_p_faq_cold">2026-04-28 起 bridge 走 <code>hermes_daemon.py</code>（option B）— daemon 在 boot 時起一個 <code>hermes --continue</code> 常駐 child，冷啟成本只付一次。日常 per-message latency ≈ Hermes 推論時間（typically 1–3s）。當 <code>HERMES_DAEMON_URL</code> 未設定或 daemon 不可用，bridge 自動 fallback 回舊的 per-request <code>hermes chat</code> subprocess 模式，那條路徑仍會看到 7–9 秒冷啟。歷史紀錄與 fallback 行為見 KNOW-HOW §14、SPEC-bridge-refactor.md。</p>
 
                         <h3 data-i18n="guide_hermes_channel_h3_faq_auth">Q: Hermes webhook 為什麼要關掉 HMAC（<code>INSECURE_NO_AUTH</code>）？</h3>
                         <p data-i18n="guide_hermes_channel_p_faq_auth">EClaw 推 webhook 用 <code>Authorization: Bearer &lt;callback_token&gt;</code>，但 Hermes 內建 webhook gateway 期待的是 HMAC-SHA256 簽章。兩種機制不相容。Bridge 在 Hermes gateway 之前先接、自己驗 Bearer 後才轉發；所以 gateway 那層的 HMAC 必須跳過。Production 要補強，可在 bridge 加 reverse proxy 同時支援兩種 auth。</p>
