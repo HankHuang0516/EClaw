@@ -1,3 +1,10 @@
+## [1.1114.2](https://github.com/HankHuang0516/EClaw/compare/v1.1114.1...v1.1114.2) (2026-04-28)
+
+
+### Bug Fixes
+
+* **mindmap:** add fullscreen button to mission.html embed ([#2225](https://github.com/HankHuang0516/EClaw/issues/2225)) ([5351632](https://github.com/HankHuang0516/EClaw/commit/53516325f6850098e3142d5ac31d4006b9cc8b99)), closes [2222/#2223](https://github.com/HankHuang0516/EClaw/issues/2223)
+
 ## [1.1114.1](https://github.com/HankHuang0516/EClaw/compare/v1.1114.0...v1.1114.1) (2026-04-28)
 
 
