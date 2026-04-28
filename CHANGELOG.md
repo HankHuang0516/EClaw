@@ -1,3 +1,10 @@
+## [1.1113.1](https://github.com/HankHuang0516/EClaw/compare/v1.1113.0...v1.1113.1) (2026-04-28)
+
+
+### Bug Fixes
+
+* **invite:** preserve ?redeem= across signup/login flow ([#2221](https://github.com/HankHuang0516/EClaw/issues/2221)) ([c676bf9](https://github.com/HankHuang0516/EClaw/commit/c676bf941712316456711bdbb46b59e3b001e456))
+
 # [1.1113.0](https://github.com/HankHuang0516/EClaw/compare/v1.1112.1...v1.1113.0) (2026-04-28)
 
 
