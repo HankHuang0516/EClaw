@@ -3,6 +3,8 @@
 // Per-device settings stored in PostgreSQL
 // ============================================
 
+const KanbanStatus = require('./public/shared/kanban-status.js');
+
 const DEFAULTS = {
     broadcast_recipient_info: true,
     remote_control_enabled: false,
@@ -10,12 +12,12 @@ const DEFAULTS = {
     kanban_nudge_batch_size: 1,
     kanban_nudge_priority_mode: 'priority_first',  // 'priority_first' | 'column_first' | 'column_level'
     kanban_nudge_interval_minutes: 180,
-    // Which columns get nudged. Default: everything except backlog (待排程).
-    kanban_nudge_statuses: ['todo', 'in_progress', 'review'],
+    // Which columns get nudged. Default = active work columns; see kanban-status.js SoT.
+    kanban_nudge_statuses: [...KanbanStatus.NUDGE_DEFAULT_STATUSES],
 };
 
 const NUDGE_PRIORITY_MODES = new Set(['priority_first', 'column_first', 'column_level']);
-const NUDGE_STATUS_OPTIONS = new Set(['backlog', 'todo', 'in_progress', 'review']);
+const NUDGE_STATUS_OPTIONS = new Set(KanbanStatus.NUDGEABLE_STATUSES);
 
 function coerceValue(key, raw) {
     const def = DEFAULTS[key];

@@ -909,11 +909,13 @@
 
                 <div class="setting-row" style="flex-direction:column;align-items:stretch;">
                     <span class="setting-row-label" style="margin-bottom:8px;" data-i18n="kanban_nudge_statuses_label">Nudge these columns</span>
+                    <!-- Match this row to NUDGEABLE_STATUSES in shared/kanban-status.js. 'done' is intentionally excluded. -->
                     <div style="display:flex;flex-wrap:wrap;gap:8px;">
                         <label class="nudge-status-chip"><input type="checkbox" value="backlog" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_backlog">Backlog</span></label>
                         <label class="nudge-status-chip"><input type="checkbox" value="todo" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_todo">Todo</span></label>
                         <label class="nudge-status-chip"><input type="checkbox" value="in_progress" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_in_progress">In Progress</span></label>
                         <label class="nudge-status-chip"><input type="checkbox" value="review" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_review">Review</span></label>
+                        <label class="nudge-status-chip"><input type="checkbox" value="blocked" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_blocked">Blocked</span></label>
                     </div>
                 </div>
 
