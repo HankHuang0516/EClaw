@@ -1,3 +1,10 @@
+## [1.1107.7](https://github.com/HankHuang0516/EClaw/compare/v1.1107.6...v1.1107.7) (2026-04-28)
+
+
+### Bug Fixes
+
+* **kanban:** unify status enum via shared/kanban-status.js (P1.1) ([#2202](https://github.com/HankHuang0516/EClaw/issues/2202)) ([0960377](https://github.com/HankHuang0516/EClaw/commit/096037763de1a1f33ac16c3691cdac79ced6932f))
+
 ## [1.1107.6](https://github.com/HankHuang0516/EClaw/compare/v1.1107.5...v1.1107.6) (2026-04-28)
 
 
