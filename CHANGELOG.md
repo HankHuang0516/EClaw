@@ -1,3 +1,10 @@
+## [1.1107.6](https://github.com/HankHuang0516/EClaw/compare/v1.1107.5...v1.1107.6) (2026-04-28)
+
+
+### Bug Fixes
+
+* **card-holder:** remove dup Email field + i18n shared editor labels (#card_deeb022e) ([#2200](https://github.com/HankHuang0516/EClaw/issues/2200)) ([e885bce](https://github.com/HankHuang0516/EClaw/commit/e885bce1da3698836c39709644bb15c86d9261f1)), closes [#card_deeb022e](https://github.com/HankHuang0516/EClaw/issues/card_deeb022e) [#edit-email](https://github.com/HankHuang0516/EClaw/issues/edit-email)
+
 ## [1.1107.5](https://github.com/HankHuang0516/EClaw/compare/v1.1107.4...v1.1107.5) (2026-04-28)
 
 
