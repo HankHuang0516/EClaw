@@ -1,3 +1,10 @@
+## [1.1107.8](https://github.com/HankHuang0516/EClaw/compare/v1.1107.7...v1.1107.8) (2026-04-28)
+
+
+### Bug Fixes
+
+* **kanban:** nudge config now sources from kanban-status.js SoT (P1.2) ([#2203](https://github.com/HankHuang0516/EClaw/issues/2203)) ([2076b08](https://github.com/HankHuang0516/EClaw/commit/2076b08dba56abc491521f8ae00d4c63e0558024))
+
 ## [1.1107.7](https://github.com/HankHuang0516/EClaw/compare/v1.1107.6...v1.1107.7) (2026-04-28)
 
 
