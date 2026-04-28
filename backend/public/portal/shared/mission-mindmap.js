@@ -729,12 +729,19 @@
             </div>`).join('')
         : '<div class="mm-chip-pop-empty">沒有跨系統依賴</div>';
 
+      // 建卡 — Phase 4 write-side: stash node canvas coord (x,y) into
+      // localStorage and hand off to kanban.html, which auto-opens the
+      // new-card dialog with title pre-filled and chatAnchorCoord wired
+      // through to POST /api/mission/card. Available on every node
+      // (including demo seeds) — the coord is the value, not the node ID.
+      const cardTitle = '從這個節點建立看板卡片 — 自動錨定心智圖座標';
       return `
         <div class="mm-chip-pop-header">
           <span class="swatch" style="background:${sysMeta.color}"></span>
           <span class="mm-chip-pop-title" title="${escapeHtml(d.label)}">${escapeHtml(d.label)}</span>
           <span class="mm-chip-pop-status ${escapeHtml(d.status)}">${escapeHtml(d.status)}</span>
           <button class="mm-chip-pop-btn ${citeClass}" data-pop-act="cite" title="${escapeHtml(citeTitle)}">📌</button>
+          <button class="mm-chip-pop-btn card-btn" data-pop-act="card" title="${escapeHtml(cardTitle)}">➕</button>
           <button class="mm-chip-pop-btn ${pinClass}" data-pop-act="pin" title="${escapeHtml(pinTitle)}">${pinIcon}</button>
           <button class="mm-chip-pop-btn" data-pop-act="close" title="關閉">✖</button>
         </div>
@@ -878,6 +885,35 @@
                 ? `引用直送失敗,已複製 token 請手動貼上聊天: ${token.slice(0, 22)}…`
                 : `引用失敗 (${err && err.message || 'unknown'}): ${token}`);
             });
+          }
+        }
+        if (act === 'card') {
+          // Phase 4 write-side: hand the kanban.html new-card form a
+          // pre-filled title + chat_anchor_coord captured from the live
+          // cytoscape model position. Kanban reads eclaw_pending_mindmap_card
+          // on load and forwards chatAnchorCoord into POST /api/mission/card.
+          // The chat-anchor picker stays mandatory (validator/Phase 3 gate),
+          // so the user still pins an originating chat message.
+          try {
+            const node = cy.getElementById(nodeId);
+            const pos = node && node.length ? node.position() : null;
+            if (!pos || !Number.isFinite(pos.x) || !Number.isFinite(pos.y)) {
+              showToast('座標讀取失敗,無法建立錨定卡片');
+              return;
+            }
+            const payload = {
+              x: pos.x,
+              y: pos.y,
+              title: d.label || nodeId,
+              sys: d.sys || '',
+              nodeId,
+              ts: Date.now(),
+            };
+            global.localStorage.setItem('eclaw_pending_mindmap_card', JSON.stringify(payload));
+            showToast(`建立卡片中… 座標已錨定 (${Math.round(pos.x)}, ${Math.round(pos.y)})`);
+            global.location.href = '/portal/kanban.html';
+          } catch (err) {
+            showToast(`建卡失敗: ${err && err.message || 'unknown'}`);
           }
         }
       });

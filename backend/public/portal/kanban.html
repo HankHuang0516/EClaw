@@ -985,6 +985,25 @@
             // #card_<id>#comment-<uuid>. autolink-chip.js produces this URL.
             handleHashDeepLink();
             window.addEventListener('hashchange', handleHashDeepLink);
+
+            // Phase 4 mindmap write-side handoff: a node's ➕ action stashes
+            // {x,y,title} into localStorage and navigates here. We open the
+            // new-card dialog with title pre-filled and the coord wired into
+            // pendingMindmapCoord for createCard() to forward as chatAnchorCoord.
+            try {
+                const pmm = localStorage.getItem('eclaw_pending_mindmap_card');
+                if (pmm) {
+                    localStorage.removeItem('eclaw_pending_mindmap_card');
+                    const data = JSON.parse(pmm);
+                    if (data && Date.now() - (data.ts || 0) < 120000
+                        && Number.isFinite(data.x) && Number.isFinite(data.y)) {
+                        pendingMindmapCoord = { x: data.x, y: data.y };
+                        openNewCard({ title: data.title || '' });
+                    }
+                }
+            } catch (e) {
+                console.warn('[Kanban] mindmap pending-card pickup failed:', e);
+            }
         });
 
         function parseDeepLinkHash() {
@@ -2475,7 +2494,11 @@
         function selectCron(btn) { selectCronChip(btn, 'cronChips', 'newCronCustom'); }
 
         // ── New Card ──
-        function openNewCard() {
+        // Phase 4 mindmap write-side: when a card is filed via mindmap node →
+        // ➕ button, the coord+title arrives in localStorage. createCard()
+        // includes chatAnchorCoord in the POST body and clears the slot.
+        let pendingMindmapCoord = null;
+        function openNewCard(prefill) {
             const container = document.getElementById('newAssignees');
             container.innerHTML = boundEntities.map(e =>
                 `<label style="display:flex;align-items:center;gap:6px;font-size:13px;margin:4px 0">
@@ -2483,7 +2506,31 @@
                 </label>`
             ).join('') || '<span style="font-size:12px;color:var(--text-muted)">No entities found</span>';
             resetAnchorPicker();
+            if (prefill && prefill.title) {
+                document.getElementById('newTitle').value = prefill.title;
+            }
+            renderMindmapCoordHint();
             document.getElementById('newCardModal').classList.add('show');
+        }
+
+        function renderMindmapCoordHint() {
+            const host = document.getElementById('newAnchorRow');
+            if (!host) return;
+            const old = document.getElementById('mmCoordHint');
+            if (old) old.remove();
+            if (!pendingMindmapCoord) return;
+            const hint = document.createElement('div');
+            hint.id = 'mmCoordHint';
+            hint.style.cssText = 'margin-top:6px;font-size:12px;color:var(--text-secondary)';
+            hint.innerHTML =
+                `<span>📍 ${escapeHtml(t('kb_anchor_mindmap','Anchored from mindmap'))} (${Math.round(pendingMindmapCoord.x)}, ${Math.round(pendingMindmapCoord.y)})</span>` +
+                ` <button type="button" style="margin-left:6px;font-size:11px;background:transparent;border:1px solid var(--border);border-radius:4px;padding:1px 6px;cursor:pointer;color:var(--text-secondary)" onclick="clearMindmapCoord()">${escapeHtml(t('kb_anchor_clear','清除'))}</button>`;
+            host.appendChild(hint);
+        }
+
+        function clearMindmapCoord() {
+            pendingMindmapCoord = null;
+            renderMindmapCoordHint();
         }
 
         function closeNewCard() {
@@ -2605,6 +2652,9 @@
             if (selectedAnchor && selectedAnchor.id) {
                 body.chatAnchorMessageId = selectedAnchor.id;
             }
+            if (pendingMindmapCoord && Number.isFinite(pendingMindmapCoord.x) && Number.isFinite(pendingMindmapCoord.y)) {
+                body.chatAnchorCoord = { x: pendingMindmapCoord.x, y: pendingMindmapCoord.y };
+            }
             if (isAutomation) {
                 const customCron = document.getElementById('newCronCustom').value.trim();
                 const selectedChip = document.querySelector('#cronChips .kb-cron-chip.active');
@@ -2623,6 +2673,8 @@
                 document.getElementById('newIsAutomation').checked = false;
                 document.getElementById('newRequiresScreenshot').checked = true;
                 resetAnchorPicker();
+                pendingMindmapCoord = null;
+                renderMindmapCoordHint();
                 anchorHistoryCache = null;
                 toggleAutoFields();
                 await loadCards();
