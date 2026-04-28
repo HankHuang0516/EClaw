@@ -551,7 +551,12 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     router.get('/cards', async (req, res) => {
         if (!authenticate(req, res)) return;
         const { deviceId } = { ...req.query, ...req.body };
-        const { status: filterStatus, assignedBot, priority: filterPriority, automation, q: searchQuery, since, until } = req.query;
+        const { status: filterStatus, assignedBot, priority: filterPriority, automation, q: searchQuery, since, until, includeComments, includeSubcards, includeArchived } = req.query;
+
+        const hasSearch = !!(searchQuery && typeof searchQuery === 'string' && searchQuery.trim());
+        // Search auto-includes archived cards (Hank 2026-04-28: 歸檔卡找不回來 = 知識斷掉);
+        // ?includeArchived=false explicitly opts out. Outside search context, archived stays excluded.
+        const showArchived = hasSearch && includeArchived !== 'false';
 
         try {
             let query = `
@@ -563,7 +568,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 LEFT JOIN (SELECT card_id, COUNT(*) AS cnt FROM kanban_comments GROUP BY card_id) cm ON cm.card_id = c.id
                 LEFT JOIN (SELECT card_id, COUNT(*) AS cnt FROM kanban_notes GROUP BY card_id) n ON n.card_id = c.id
                 LEFT JOIN (SELECT card_id, COUNT(*) AS cnt FROM kanban_files GROUP BY card_id) f ON f.card_id = c.id
-                WHERE c.device_id = $1 AND c.archived = false
+                WHERE c.device_id = $1${showArchived ? '' : ' AND c.archived = false'}
             `;
             const params = [deviceId];
             let paramIdx = 2;
@@ -598,10 +603,24 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
             // Funnel filters added 2026-04-23:
             // ?q=text  → ILIKE match on title (simple text search)
+            //   2026-04-28: ?includeComments=true expands to kanban_comments.text;
+            //   ?includeSubcards=true expands to kanban_notes (title+content) and
+            //   child cards (title+description) reached via parent_card_id self-ref.
+            //   Archived cards auto-included unless ?includeArchived=false.
             // ?since=ISO8601 / ?until=ISO8601  → updated_at range
-            if (searchQuery && typeof searchQuery === 'string' && searchQuery.trim()) {
-                query += ` AND c.title ILIKE $${paramIdx++}`;
-                params.push(`%${searchQuery.trim()}%`);
+            if (hasSearch) {
+                const pattern = `%${searchQuery.trim()}%`;
+                const patternIdx = paramIdx++;
+                params.push(pattern);
+                const clauses = [`c.title ILIKE $${patternIdx}`, `c.description ILIKE $${patternIdx}`];
+                if (includeComments === 'true' || includeComments === '1') {
+                    clauses.push(`EXISTS (SELECT 1 FROM kanban_comments kc WHERE kc.card_id = c.id AND kc.text ILIKE $${patternIdx})`);
+                }
+                if (includeSubcards === 'true' || includeSubcards === '1') {
+                    clauses.push(`EXISTS (SELECT 1 FROM kanban_notes kn WHERE kn.card_id = c.id AND (kn.title ILIKE $${patternIdx} OR kn.content ILIKE $${patternIdx}))`);
+                    clauses.push(`EXISTS (SELECT 1 FROM kanban_cards child WHERE child.parent_card_id = c.id AND (child.title ILIKE $${patternIdx} OR child.description ILIKE $${patternIdx}))`);
+                }
+                query += ` AND (${clauses.join(' OR ')})`;
             }
             if (since) {
                 const sinceDate = new Date(since);
