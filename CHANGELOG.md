@@ -1,3 +1,10 @@
+## [1.1114.1](https://github.com/HankHuang0516/EClaw/compare/v1.1114.0...v1.1114.1) (2026-04-28)
+
+
+### Bug Fixes
+
+* **mindmap:** hide top nav when ?view-mode=full ([#2223](https://github.com/HankHuang0516/EClaw/issues/2223)) ([d7eef15](https://github.com/HankHuang0516/EClaw/commit/d7eef15a55b3b3d025c1fbbf99ab7b7a3eb706f7)), closes [#navContainer](https://github.com/HankHuang0516/EClaw/issues/navContainer)
+
 # [1.1114.0](https://github.com/HankHuang0516/EClaw/compare/v1.1113.1...v1.1114.0) (2026-04-28)
 
 
