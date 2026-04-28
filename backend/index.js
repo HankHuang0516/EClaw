@@ -3915,6 +3915,30 @@ const DEAD_LETTER_CAP = 50;
 // (Hermes typically polls every ~5s, so 90s = 18 missed polls = clearly dead).
 const HEARTBEAT_STUCK_MS = 90_000;
 
+// Phase H1.5: severe-stuck threshold for /api/health → 503 → Railway auto-restart.
+// 90s says "alert ops"; 5min says "the daemon is dead, kill the process". Set well above
+// the H1.2 alert window so transient blips don't cause restart thrash.
+const SEVERE_STUCK_MS = 300_000;
+// Boot-grace: process.uptime ≤ this skips the 503 even if state looks severe. Prevents
+// crashloop where DB-loaded stale mq + cold daemon trips immediate 503 → kill → repeat.
+// 3 min gives a fresh Hermes plenty of time to start polling and reset lastDrainedAt.
+const HEALTH_BOOT_GRACE_MS = 180_000;
+
+function evaluateDeliveryHealth(stuckList, uptimeMs) {
+    const oldestIdleMs = stuckList.length
+        ? stuckList.reduce((m, s) => (s.idleMs > m ? s.idleMs : m), 0)
+        : 0;
+    const severe = oldestIdleMs > SEVERE_STUCK_MS && uptimeMs > HEALTH_BOOT_GRACE_MS;
+    return {
+        stuckThresholdMs: HEARTBEAT_STUCK_MS,
+        severeThresholdMs: SEVERE_STUCK_MS,
+        bootGraceMs: HEALTH_BOOT_GRACE_MS,
+        stuckCount: stuckList.length,
+        oldestIdleMs,
+        severe,
+    };
+}
+
 function enqueueMessage(toEntity, messageObj, ctx) {
     if (!toEntity) return;
     if (!Array.isArray(toEntity.messageQueue)) toEntity.messageQueue = [];
@@ -4736,8 +4760,15 @@ app.get('/api/health', (req, res) => {
         .sort((a, b) => b.idleMs - a.idleMs)
         .slice(0, 5);
 
-    res.status(200).json({
-        status: 'ok',
+    // Phase H1.5: classify severity so Railway healthcheck (healthcheckPath=/api/health,
+    // restartPolicyType=ON_FAILURE) can auto-restart a wedged daemon. Returns 503 only
+    // when at least one bot is severely stuck AND we're past the boot grace.
+    const uptimeMs = process.uptime() * 1000;
+    const deliveryHealth = evaluateDeliveryHealth(stuckList, uptimeMs);
+    const httpStatus = deliveryHealth.severe ? 503 : 200;
+
+    res.status(httpStatus).json({
+        status: deliveryHealth.severe ? 'unhealthy' : 'ok',
         timestamp: Date.now(),
         build: SERVER_BUILD_TAG,
         uptime: process.uptime(),
@@ -4751,8 +4782,7 @@ app.get('/api/health', (req, res) => {
             entities: entitiesScanned,
         },
         delivery: {
-            stuckThresholdMs: HEARTBEAT_STUCK_MS,
-            stuckCount: stuckList.length,
+            ...deliveryHealth,
             stuck: stuckPreview,
         },
     });
@@ -18136,3 +18166,6 @@ module.exports._DEAD_LETTER_CAP = DEAD_LETTER_CAP;
 module.exports._clampQueuesOnLoad = clampQueuesOnLoad;
 module.exports._findStuckEntities = findStuckEntities;
 module.exports._HEARTBEAT_STUCK_MS = HEARTBEAT_STUCK_MS;
+module.exports._SEVERE_STUCK_MS = SEVERE_STUCK_MS;
+module.exports._HEALTH_BOOT_GRACE_MS = HEALTH_BOOT_GRACE_MS;
+module.exports._evaluateDeliveryHealth = evaluateDeliveryHealth;
