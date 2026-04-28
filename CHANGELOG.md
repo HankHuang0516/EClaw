@@ -1,3 +1,10 @@
+## [1.1107.5](https://github.com/HankHuang0516/EClaw/compare/v1.1107.4...v1.1107.5) (2026-04-28)
+
+
+### Bug Fixes
+
+* **i18n:** delete dup keys across en/zh/ms/hi (#card_c65bdf59) ([#2199](https://github.com/HankHuang0516/EClaw/issues/2199)) ([295b614](https://github.com/HankHuang0516/EClaw/commit/295b614152552bf2e5322d59fd47b2209a3efdfc)), closes [#card_c65bdf59](https://github.com/HankHuang0516/EClaw/issues/card_c65bdf59)
+
 ## [1.1107.4](https://github.com/HankHuang0516/EClaw/compare/v1.1107.3...v1.1107.4) (2026-04-27)
 
 
