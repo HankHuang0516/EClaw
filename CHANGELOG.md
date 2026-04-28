@@ -1,3 +1,10 @@
+# [1.1116.0](https://github.com/HankHuang0516/EClaw/compare/v1.1115.0...v1.1116.0) (2026-04-28)
+
+
+### Features
+
+* **settings:** deep-link section filter for APP entry buttons ([#2229](https://github.com/HankHuang0516/EClaw/issues/2229)) ([d0bc4a6](https://github.com/HankHuang0516/EClaw/commit/d0bc4a61f42920a0c8472e3838a8a95e2be5a148)), closes [#channelApiCard](https://github.com/HankHuang0516/EClaw/issues/channelApiCard) [#kanban-nudge-card](https://github.com/HankHuang0516/EClaw/issues/kanban-nudge-card)
+
 # [1.1115.0](https://github.com/HankHuang0516/EClaw/compare/v1.1114.4...v1.1115.0) (2026-04-28)
 
 
