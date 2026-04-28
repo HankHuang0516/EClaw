@@ -1,3 +1,10 @@
+# [1.1121.0](https://github.com/HankHuang0516/EClaw/compare/v1.1120.0...v1.1121.0) (2026-04-28)
+
+
+### Features
+
+* **telegram:** long-poll adapter PoC (card_406e612942ff062a06fc47be) ([#2238](https://github.com/HankHuang0516/EClaw/issues/2238)) ([f46f03a](https://github.com/HankHuang0516/EClaw/commit/f46f03acf94079b48a8807e77e057b24c0277e18))
+
 # [1.1120.0](https://github.com/HankHuang0516/EClaw/compare/v1.1119.0...v1.1120.0) (2026-04-28)
 
 
