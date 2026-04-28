@@ -154,13 +154,13 @@ let VISION_IMAGES = [
     // ── Easy tier (20%) — basic shape/object recognition ──
     { file: null, description: 'A red heart shape centered on a white background', keywords: ['heart', 'red'] },
     { file: null, description: 'A green checkmark inside a circle', keywords: ['checkmark', 'green', 'circle'] },
-    { file: null, description: 'A blue water droplet shape on gray', keywords: ['water', 'droplet', 'blue'] },
+    { file: null, description: 'A smartphone notification tray showing 7 missed calls from "Mom", battery at 15%, signal strength 2 bars, and the current time 11:47 PM', keywords: ['7', 'missed', '15', '11:47', 'mom'] },
     { file: null, description: 'A yellow sun with eight rays extending outward', keywords: ['sun', 'yellow', 'rays'] },
     { file: null, description: 'A simple house with a red roof and brown door', keywords: ['house', 'roof', 'door'] },
     // ── Medium tier (50%) — counting, labels, multi-object scenes ──
     { file: null, description: 'A bar chart with four bars labeled Q1 through Q4 where Q3 is the tallest', keywords: ['bar', 'chart', 'four', 'Q3'] },
-    { file: null, description: 'A desk with a laptop, two coffee cups, and a stack of three books', keywords: ['laptop', 'two', 'cups', 'three', 'books'] },
-    { file: null, description: 'A pie chart divided into four sections: blue 40%, green 30%, red 20%, yellow 10%', keywords: ['pie', 'chart', 'four', 'blue'] },
+    { file: null, description: 'A KPI dashboard with four metric tiles: Total Revenue $84,230 (up 12%), Active Users 1,247 (down 3%), Conversion Rate 3.8%, Churn Rate 4.1%', keywords: ['four', '84230', '1247', 'conversion', '3.8', 'churn', '4.1'] },
+    { file: null, description: 'A restaurant receipt: Pasta $14.90, Salad $8.50, Wine $22.00, subtotal $45.40, tax 8.5% ($3.86), tip $9.08, total $58.34, cash tendered $60.00, change $1.66', keywords: ['pasta', '14.90', 'total', '58.34', 'change', '1.66', 'tax', '3.86'] },
     { file: null, description: 'A Venn diagram with three overlapping circles labeled A, B, and C', keywords: ['venn', 'three', 'circles'] },
     { file: null, description: 'A road sign reading SPEED LIMIT 65 against a blue sky', keywords: ['sign', 'speed', '65'] },
     { file: null, description: 'A calendar page showing March with the 15th circled in red', keywords: ['calendar', 'march', '15', 'red'] },
@@ -173,12 +173,12 @@ let VISION_IMAGES = [
     // ── Hard tier (30%) — OCR, spatial reasoning, complex counting ──
     { file: null, description: 'An aerial parking lot with twelve cars, three of which are red', keywords: ['twelve', 'cars', 'three', 'red'] },
     { file: null, description: 'A chemistry lab bench with three beakers: left contains blue liquid, middle is empty, right has green precipitate at the bottom', keywords: ['three', 'beakers', 'blue', 'empty', 'green'] },
-    { file: null, description: 'A handwritten note on lined paper reading Meeting at 3pm Room 204 with the time and room number underlined', keywords: ['meeting', '3pm', '204', 'underlined'] },
+    { file: null, description: 'A medical wristband showing: Patient Name: Emma Rodriguez, DOB: 1967-09-12, Allergy: Penicillin, Blood Type: O+, Ward: 3B, Bed: 14', keywords: ['emma', 'rodriguez', '1967', 'penicillin', 'O+', '3B', '14'] },
     { file: null, description: 'A phone home screen showing 16 app icons in a 4x4 grid and a weather widget displaying 72 degrees', keywords: ['phone', '16', 'apps', 'weather', '72'] },
     { file: null, description: 'A line chart showing quarterly revenue: Q1 at $10K, Q2 at $15K, Q3 dips to $8K, Q4 recovers to $20K', keywords: ['chart', 'revenue', 'Q3', 'dip', 'Q4'] },
     { file: null, description: 'A world map with five red pins marking cities: New York, London, Tokyo, Sydney, and São Paulo', keywords: ['map', 'five', 'pins', 'Tokyo'] },
     { file: null, description: 'A receipt from a store dated 03/15 showing total $47.83 with three itemized lines and a barcode at bottom', keywords: ['receipt', 'total', '47', 'three', 'barcode'] },
-    { file: null, description: 'A weather dashboard panel showing temperature 28°C, humidity 65%, wind speed 12 km/h, and UV index 7 in four separate tiles', keywords: ['temperature', '28', 'humidity', '65', 'UV', '7'] },
+    { file: null, description: 'A data table showing five students\' test scores — Alice: 92, Bob: 78, Carol: 95, Dave: 81, Eve: 88 — with a footer row: Count 5, Min 78, Max 95, Average 86.8', keywords: ['carol', '95', 'average', '86.8', 'min', '78', 'max', 'five'] },
     { file: null, description: 'A printed circuit board with fourteen resistors, eight capacitors, and one microcontroller chip labeled ATmega328P', keywords: ['circuit', 'fourteen', 'resistors', 'eight', 'capacitors', 'ATmega'] },
     { file: null, description: 'A hotel room floor plan: bedroom 18m² on the left, bathroom 6m² top right, living area 22m² bottom right, with a corridor connecting all rooms', keywords: ['floor', 'plan', 'bedroom', '18', 'bathroom', '6', 'living', '22'] },
 ];
@@ -354,6 +354,13 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '"babad"', expected: '"bab"' },{ input: '"cbbd"', expected: '"bb"' },{ input: '"a"', expected: '"a"' },{ input: '"racecar"', expected: '"racecar"' }] },
     { title: '0-1 Knapsack', description: 'Write `solve(weights, values, capacity)` — given items with weights and values arrays and a knapsack of given capacity, return the maximum total value (each item used at most once).',
       testCases: [{ input: '[1,3,4,5], [1,4,5,7], 7', expected: '9' },{ input: '[2,3,4,5], [3,4,5,6], 5', expected: '7' },{ input: '[1], [10], 0', expected: '0' }] },
+    // ── Additional medium-hard problems ──
+    { title: 'Merge Intervals', description: 'Write `solve(intervals)` — given an array of intervals [start, end], merge all overlapping intervals and return the result sorted by start.',
+      testCases: [{ input: '[[1,3],[2,6],[8,10],[15,18]]', expected: '[[1,6],[8,10],[15,18]]' },{ input: '[[1,4],[4,5]]', expected: '[[1,5]]' },{ input: '[[1,4],[2,3]]', expected: '[[1,4]]' },{ input: '[[1,1]]', expected: '[[1,1]]' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array of non-negative integers representing elevation bar heights (width = 1 each), compute how many units of water it can trap after raining.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[3,0,2,0,4]', expected: '7' },{ input: '[1,0,1]', expected: '1' }] },
+    { title: 'Word Break', description: 'Write `solve(s, wordDict)` — given a string s and a dictionary array wordDict, return true if s can be fully segmented into one or more space-separated dictionary words.',
+      testCases: [{ input: '"leetcode", ["leet","code"]', expected: 'true' },{ input: '"applepenapple", ["apple","pen"]', expected: 'true' },{ input: '"catsandog", ["cats","dog","sand","and","cat"]', expected: 'false' },{ input: '"", ["a"]', expected: 'true' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -367,7 +374,7 @@ let RESPONSE_QUESTIONS = [
     { question: 'What is the capital of France?', expectedKeywords: ['paris'] },
     { question: 'What is 17 × 23?', expectedKeywords: ['391'] },
     { question: 'Name the largest planet in our solar system.', expectedKeywords: ['jupiter'] },
-    { question: 'What is the longest river in the world?', expectedKeywords: ['nile', 'amazon'] },
+    { question: 'You invest $5,000 at an annual compound interest rate of 4%. How much money, in dollars, will you have after exactly 3 years? Round to the nearest dollar.', expectedKeywords: ['5624', '5,624'] },
     { question: 'What is 13 × 17?', expectedKeywords: ['221'] },
     // ── Medium tier (50%) — multi-step math, applied reasoning ──
     { question: 'A pool fills in 3 hours with pipe A alone and 6 hours with pipe B alone. How many hours to fill it with both pipes open together?', expectedKeywords: ['2'] },
@@ -378,9 +385,9 @@ let RESPONSE_QUESTIONS = [
     { question: 'A shirt originally costs $80 and is discounted by 25%. What is the sale price?', expectedKeywords: ['60'] },
     { question: 'What is the sum of all integers from 1 to 100?', expectedKeywords: ['5050'] },
     { question: 'How many prime numbers are there between 1 and 20?', expectedKeywords: ['8'] },
-    { question: 'All cats are mammals. All mammals are warm-blooded. Are all cats warm-blooded?', expectedKeywords: ['yes'] },
+    { question: 'A car drives from City A to City B at 60 km/h, then returns from City B to City A at 90 km/h. What is the average speed for the entire round trip in km/h?', expectedKeywords: ['72'] },
     { question: 'What is the speed of light in km/s (approximately)?', expectedKeywords: ['300000', '299792'] },
-    { question: 'What year did the Berlin Wall fall?', expectedKeywords: ['1989'] },
+    { question: 'A number is increased by 20% and then the result is decreased by 20%. What is the net percentage change from the original value?', expectedKeywords: ['-4', '4%', 'decrease', 'loss'] },
     // ── Hard tier (30%) — multi-step reasoning, tricky logic ──
     { question: 'A clock shows 3:15. What is the exact angle in degrees between the hour and minute hands?', expectedKeywords: ['7.5'] },
     { question: 'A farmer has chickens and cows. Together they have 30 heads and 74 legs. How many chickens does the farmer have?', expectedKeywords: ['23'] },
@@ -466,6 +473,10 @@ let TTS_PHRASES = [
     { text: 'Your one-time verification code is 8 4 3 7 2 and expires in five minutes', keywords: ['verification', 'code', '84372', 'five', 'minutes'] },
     { text: 'The SQL query selects all records from the users table where the account status equals active and the score is greater than 100', keywords: ['SQL', 'query', 'users', 'active', 'score', '100'] },
     { text: 'Bernoulli and Euler each contributed foundational theorems to both fluid dynamics and graph theory', keywords: ['bernoulli', 'euler', 'fluid', 'dynamics', 'graph', 'theory'] },
+    // ── Additional hard tier — technical jargon + mixed formats ──
+    { text: 'The API endpoint returns HTTP 401 Unauthorized when the bearer token expires after 3600 seconds', keywords: ['API', 'HTTP', '401', 'bearer', 'token', '3600'] },
+    { text: 'The standard RFC 7519 defines JSON Web Token commonly abbreviated as JWT for stateless authentication across services', keywords: ['RFC', '7519', 'JSON', 'JWT', 'stateless', 'authentication'] },
+    { text: 'IPv6 address 2001 colon 0db8 colon 85a3 colon 0000 colon 0000 colon 8a2e colon 0370 colon 7334 has 128 bits', keywords: ['IPv6', '2001', '0db8', '85a3', '128', 'bits'] },
 ];
 
 // ============================================
