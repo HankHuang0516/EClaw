@@ -241,6 +241,23 @@
         .kb-form-textarea { width:100%; background:var(--input-bg); border:1px solid var(--card-border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text); font-size:13px; min-height:60px; resize:vertical; font-family:inherit; }
         .kb-form-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:16px; }
 
+        /* ══════════════ Chat-anchor picker (Phase 2) ══════════════ */
+        .kb-anchor-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+        .kb-anchor-btn { background:var(--input-bg); border:1px dashed var(--card-border); color:var(--text-secondary); border-radius:var(--radius-sm); padding:6px 12px; font-size:12px; cursor:pointer; }
+        .kb-anchor-btn:hover { border-color:var(--primary); color:var(--text); }
+        .kb-anchor-chip { display:inline-flex; align-items:center; gap:6px; background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.4); border-radius:14px; padding:4px 10px; font-size:12px; color:var(--text); max-width:100%; }
+        .kb-anchor-chip-text { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:240px; }
+        .kb-anchor-chip-clear { background:none; border:none; color:var(--text-muted); cursor:pointer; padding:0 2px; font-size:14px; line-height:1; }
+        .kb-anchor-chip-clear:hover { color:#ef4444; }
+        .kb-anchor-panel { display:none; margin-top:8px; max-height:240px; overflow-y:auto; background:var(--input-bg); border:1px solid var(--card-border); border-radius:var(--radius-sm); }
+        .kb-anchor-panel.show { display:block; }
+        .kb-anchor-msg { padding:8px 12px; border-bottom:1px solid var(--card-border); cursor:pointer; font-size:12px; line-height:1.4; }
+        .kb-anchor-msg:last-child { border-bottom:none; }
+        .kb-anchor-msg:hover { background:rgba(99,102,241,0.08); }
+        .kb-anchor-msg-meta { font-size:10px; color:var(--text-muted); margin-bottom:2px; }
+        .kb-anchor-msg-text { color:var(--text); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        .kb-anchor-empty { padding:16px; text-align:center; color:var(--text-muted); font-size:12px; }
+
         /* ══════════════ Empty state ══════════════ */
         .kb-empty { text-align:center; padding:40px 20px; color:var(--text-muted); font-size:13px; }
 
@@ -710,6 +727,13 @@
             <div class="kb-form-group">
                 <label class="kb-form-label" data-i18n="kb_label_description">Description</label>
                 <textarea class="kb-form-textarea" id="newDesc" data-i18n-placeholder="kb_placeholder_desc" placeholder="Brief description..."></textarea>
+            </div>
+            <div class="kb-form-group">
+                <label class="kb-form-label" data-i18n="kb_label_chat_anchor">📌 引用聊天訊息</label>
+                <div class="kb-anchor-row" id="newAnchorRow">
+                    <button type="button" class="kb-anchor-btn" id="newAnchorPickBtn" onclick="toggleAnchorPicker()" data-i18n="kb_anchor_pick">+ 選一條歷史訊息</button>
+                </div>
+                <div class="kb-anchor-panel" id="newAnchorPanel"></div>
             </div>
             <div class="kb-form-group">
                 <label class="kb-form-label" data-i18n="kb_label_priority">Priority</label>
@@ -2458,11 +2482,105 @@
                     <input type="checkbox" value="${e.entityId}"> #${e.entityId} ${escapeHtml(getEntityDisplayName?.(e.entityId)||'')}
                 </label>`
             ).join('') || '<span style="font-size:12px;color:var(--text-muted)">No entities found</span>';
+            resetAnchorPicker();
             document.getElementById('newCardModal').classList.add('show');
         }
 
         function closeNewCard() {
             document.getElementById('newCardModal').classList.remove('show');
+        }
+
+        // ── Chat-anchor picker (Phase 2: chat_anchor schema P1) ──
+        let selectedAnchor = null; // { id, text, fromEntityId, createdAt }
+        let anchorHistoryCache = null;
+
+        function resetAnchorPicker() {
+            selectedAnchor = null;
+            const panel = document.getElementById('newAnchorPanel');
+            if (panel) { panel.classList.remove('show'); panel.innerHTML = ''; }
+            renderAnchorRow();
+        }
+
+        function renderAnchorRow() {
+            const row = document.getElementById('newAnchorRow');
+            if (!row) return;
+            if (!selectedAnchor) {
+                row.innerHTML = `<button type="button" class="kb-anchor-btn" id="newAnchorPickBtn" onclick="toggleAnchorPicker()">+ ${t('kb_anchor_pick','選一條歷史訊息')}</button>`;
+                return;
+            }
+            const preview = (selectedAnchor.text || '').replace(/\s+/g, ' ').slice(0, 60);
+            row.innerHTML =
+                `<span class="kb-anchor-chip">` +
+                    `<span>📌</span>` +
+                    `<span class="kb-anchor-chip-text" title="${escapeHtml(selectedAnchor.text || '')}">${escapeHtml(preview) || '(empty)'}</span>` +
+                    `<button type="button" class="kb-anchor-chip-clear" onclick="clearAnchor()" title="${t('kb_anchor_clear','清除')}">×</button>` +
+                `</span>`;
+        }
+
+        function clearAnchor() {
+            selectedAnchor = null;
+            const panel = document.getElementById('newAnchorPanel');
+            if (panel) panel.classList.remove('show');
+            renderAnchorRow();
+        }
+
+        async function toggleAnchorPicker() {
+            const panel = document.getElementById('newAnchorPanel');
+            if (!panel) return;
+            if (panel.classList.contains('show')) {
+                panel.classList.remove('show');
+                return;
+            }
+            panel.classList.add('show');
+            panel.innerHTML = `<div class="kb-anchor-empty">${t('kb_anchor_loading','載入中…')}</div>`;
+            try {
+                if (!anchorHistoryCache) {
+                    anchorHistoryCache = await fetchChatHistoryForAnchor();
+                }
+                renderAnchorList(anchorHistoryCache);
+            } catch (e) {
+                console.error('[Kanban] anchor picker load failed:', e.message);
+                panel.innerHTML = `<div class="kb-anchor-empty">${t('kb_anchor_err','載入失敗')}</div>`;
+            }
+        }
+
+        async function fetchChatHistoryForAnchor() {
+            const url = `/api/chat/history?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}&limit=80`;
+            const res = await fetch(url);
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error || 'fetch failed');
+            return (data.messages || []).filter(m => m && m.text && m.source !== 'kanban_notify');
+        }
+
+        function renderAnchorList(messages) {
+            const panel = document.getElementById('newAnchorPanel');
+            if (!panel) return;
+            if (!messages.length) {
+                panel.innerHTML = `<div class="kb-anchor-empty">${t('kb_anchor_empty','沒有可引用的歷史訊息')}</div>`;
+                return;
+            }
+            panel.innerHTML = messages.map((m, i) => {
+                const ts = m.created_at ? new Date(m.created_at).toLocaleString() : '';
+                const who = m.is_from_user ? '👤' : `#${m.entity_id}`;
+                return `<div class="kb-anchor-msg" data-idx="${i}">` +
+                    `<div class="kb-anchor-msg-meta">${escapeHtml(who)} · ${escapeHtml(ts)}</div>` +
+                    `<div class="kb-anchor-msg-text">${escapeHtml(m.text || '')}</div>` +
+                `</div>`;
+            }).join('');
+            panel.querySelectorAll('.kb-anchor-msg').forEach(el => {
+                el.addEventListener('click', () => {
+                    const i = Number(el.getAttribute('data-idx'));
+                    const m = messages[i];
+                    if (m) selectAnchorMessage(m.id, m.text, m.entity_id || 0, m.created_at || '');
+                });
+            });
+        }
+
+        function selectAnchorMessage(id, text, fromEntityId, createdAt) {
+            selectedAnchor = { id, text, fromEntityId, createdAt };
+            const panel = document.getElementById('newAnchorPanel');
+            if (panel) panel.classList.remove('show');
+            renderAnchorRow();
         }
 
         async function createCard() {
@@ -2480,6 +2598,9 @@
                 assignedBots,
                 requiresScreenshotReview
             };
+            if (selectedAnchor && selectedAnchor.id) {
+                body.chatAnchorMessageId = selectedAnchor.id;
+            }
             if (isAutomation) {
                 const customCron = document.getElementById('newCronCustom').value.trim();
                 const selectedChip = document.querySelector('#cronChips .kb-cron-chip.active');
@@ -2497,6 +2618,8 @@
                 document.getElementById('newDesc').value = '';
                 document.getElementById('newIsAutomation').checked = false;
                 document.getElementById('newRequiresScreenshot').checked = true;
+                resetAnchorPicker();
+                anchorHistoryCache = null;
                 toggleAutoFields();
                 await loadCards();
             } catch(e) {
