@@ -408,6 +408,11 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
         if (row.last_run_result) card.lastRunResult = row.last_run_result;
         if (row.active_child_id) card.activeChildId = row.active_child_id;
 
+        // Chat-anchor (provenance back to chat message + mind-map coord);
+        // null on auto-generated cards (renders as N/A in UI).
+        card.chatAnchorMessageId = row.chat_anchor_message_id || null;
+        card.chatAnchorCoord = row.chat_anchor_coord || null;
+
         return card;
     }
 
@@ -417,7 +422,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     router.post('/card', async (req, res) => {
         if (!authenticate(req, res)) return;
         const _p = { ...req.query, ...req.body }; console.log('[Kanban] POST /card called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
-        const { deviceId, title, description, priority, status, assignedBots, entityId, reviewerEntityId, isAutomation, schedule, requiresScreenshotReview } = req.body;
+        const { deviceId, title, description, priority, status, assignedBots, entityId, reviewerEntityId, isAutomation, schedule, requiresScreenshotReview, chatAnchorMessageId, chatAnchorCoord } = req.body;
 
         if (!title || !title.trim()) {
             return res.status(400).json({ success: false, error: 'Missing title' });
@@ -511,15 +516,33 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             ? !isTextOnlyTitle
             : requiresScreenshotReview !== false;
 
+        // Chat-anchor: pin originating chat message + mind-map coord (Phase 1 — persist
+        // only; UI picker + validator enforcement land in follow-up PRs). Auto-cards leave
+        // both NULL so the UI renders N/A.
+        const anchorMsgId = (typeof chatAnchorMessageId === 'string' && chatAnchorMessageId.trim())
+            ? chatAnchorMessageId.trim().slice(0, 128)
+            : null;
+        let anchorCoord = null;
+        if (chatAnchorCoord && typeof chatAnchorCoord === 'object') {
+            const x = Number(chatAnchorCoord.x);
+            const y = Number(chatAnchorCoord.y);
+            if (Number.isFinite(x) && Number.isFinite(y)) {
+                anchorCoord = { x, y };
+            }
+        }
+
         try {
             const result = await pool.query(
                 `INSERT INTO kanban_cards (id, device_id, title, description, priority, status, assigned_bots, created_by, reviewer_entity_id, status_changed_at,
-                    is_automation, schedule_enabled, schedule_type, schedule_cron, schedule_run_at, schedule_timezone, schedule_next_run_at, requires_screenshot_review)
+                    is_automation, schedule_enabled, schedule_type, schedule_cron, schedule_run_at, schedule_timezone, schedule_next_run_at, requires_screenshot_review,
+                    chat_anchor_message_id, chat_anchor_coord)
                  VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, NOW(),
-                    $10, $11, $12, $13, $14, $15, $16, $17)
+                    $10, $11, $12, $13, $14, $15, $16, $17,
+                    $18, $19::jsonb)
                  RETURNING *`,
                 [newCardId(), deviceId, title.trim(), description || '', cardPriority, cardStatus, JSON.stringify(bots), createdBy, reviewer,
-                    finalAutomation, schedEnabled, schedType, schedCron, schedRunAt, schedTz, schedNextRunAt, finalRequiresScreenshot]
+                    finalAutomation, schedEnabled, schedType, schedCron, schedRunAt, schedTz, schedNextRunAt, finalRequiresScreenshot,
+                    anchorMsgId, anchorCoord ? JSON.stringify(anchorCoord) : null]
             );
 
             const card = serializeCard(result.rows[0]);

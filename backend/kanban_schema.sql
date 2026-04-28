@@ -56,6 +56,12 @@ ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS reviewer_entity_id INTEGER DEF
 -- without at least one image/* file attached via POST /api/mission/card/:id/file.
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS requires_screenshot_review BOOLEAN DEFAULT TRUE;
 
+-- Chat-anchor (2026-04-28): every human-filed card should pin the originating
+-- chat message + mind-map coord so the card has provenance back into 心智 / 對話.
+-- Auto-cards leave both NULL (rendered as N/A in UI).
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS chat_anchor_message_id TEXT DEFAULT NULL;
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS chat_anchor_coord JSONB DEFAULT NULL;
+
 CREATE INDEX IF NOT EXISTS idx_kanban_cards_automation ON kanban_cards(device_id, is_automation)
     WHERE is_automation = true;
 CREATE INDEX IF NOT EXISTS idx_kanban_cards_parent ON kanban_cards(parent_card_id)
