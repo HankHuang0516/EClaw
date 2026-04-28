@@ -1,3 +1,10 @@
+## [1.1107.9](https://github.com/HankHuang0516/EClaw/compare/v1.1107.8...v1.1107.9) (2026-04-28)
+
+
+### Bug Fixes
+
+* **kanban-i18n:** add 'blocked' status label to EN + zh-TW (P1.3 baseline) ([#2204](https://github.com/HankHuang0516/EClaw/issues/2204)) ([93e877e](https://github.com/HankHuang0516/EClaw/commit/93e877ef7f36883629b9beb1024b40dc2090767a)), closes [#5](https://github.com/HankHuang0516/EClaw/issues/5)
+
 ## [1.1107.8](https://github.com/HankHuang0516/EClaw/compare/v1.1107.7...v1.1107.8) (2026-04-28)
 
 
