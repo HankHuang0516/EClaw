@@ -3910,12 +3910,18 @@ async function backfillPublicCodes() {
 const MESSAGE_QUEUE_CAP = 200;
 const DEAD_LETTER_CAP = 50;
 
+// Phase H1.2: delivery-stuck detection. Bot daemons drain via POST /api/bot/pending-messages.
+// If mqLen > 0 AND now-lastDrainedAt exceeds this threshold, the entity is presumed stuck
+// (Hermes typically polls every ~5s, so 90s = 18 missed polls = clearly dead).
+const HEARTBEAT_STUCK_MS = 90_000;
+
 function enqueueMessage(toEntity, messageObj, ctx) {
     if (!toEntity) return;
     if (!Array.isArray(toEntity.messageQueue)) toEntity.messageQueue = [];
     if (!Array.isArray(toEntity.deadLetterQueue)) toEntity.deadLetterQueue = [];
 
     toEntity.messageQueue.push(messageObj);
+    toEntity.lastEnqueuedAt = Date.now();
 
     while (toEntity.messageQueue.length > MESSAGE_QUEUE_CAP) {
         const dropped = toEntity.messageQueue.shift();
@@ -3960,6 +3966,38 @@ function clampQueuesOnLoad() {
     }
 }
 
+// Phase H1.2: Scan all bound bot entities for stuck delivery (mq > 0 + lastDrainedAt stale).
+// Returns a list of stuck-entity descriptors for /api/health and admin tooling.
+function findStuckEntities(nowMs) {
+    const now = nowMs || Date.now();
+    const stuck = [];
+    for (const [deviceId, dev] of Object.entries(devices || {})) {
+        const ents = dev && dev.entities;
+        if (!ents) continue;
+        for (const ent of Object.values(ents)) {
+            if (!ent || !ent.isBound) continue;
+            const mqLen = (ent.messageQueue && ent.messageQueue.length) || 0;
+            if (mqLen === 0) continue;
+            // If a bot has never drained but has messages waiting, the time-since-enqueue is the
+            // best lower-bound for "how long has this been pending"
+            const referenceAt = ent.lastDrainedAt || ent.lastEnqueuedAt || ent.lastUpdated || 0;
+            const idleMs = now - referenceAt;
+            if (idleMs > HEARTBEAT_STUCK_MS) {
+                stuck.push({
+                    deviceId,
+                    entityId: ent.entityId,
+                    character: ent.character || null,
+                    mqLen,
+                    lastDrainedAt: ent.lastDrainedAt || null,
+                    lastEnqueuedAt: ent.lastEnqueuedAt || null,
+                    idleMs,
+                });
+            }
+        }
+    }
+    return stuck;
+}
+
 // Helper: Create default entity
 function createDefaultEntity(entityId) {
     return {
@@ -3974,6 +4012,8 @@ function createDefaultEntity(entityId) {
         lastUpdated: Date.now(),
         messageQueue: [],
         deadLetterQueue: [], // Phase H1.1: capped overflow buffer for forensics
+        lastEnqueuedAt: null, // Phase H1.2: when server last appended to messageQueue
+        lastDrainedAt: null, // Phase H1.2: when bot daemon last consumed messageQueue (heartbeat)
         webhook: null,
         appVersion: null, // Device app version (e.g., "1.0.3")
         avatar: null, // User-chosen emoji avatar (synced across devices)
@@ -4688,6 +4728,14 @@ app.get('/api/health', (req, res) => {
             }
         }
     } catch (_) { /* best-effort */ }
+
+    // Phase H1.2: stuck-delivery snapshot. Empty array under normal traffic.
+    let stuckList = [];
+    try { stuckList = findStuckEntities(); } catch (_) { /* best-effort */ }
+    const stuckPreview = stuckList
+        .sort((a, b) => b.idleMs - a.idleMs)
+        .slice(0, 5);
+
     res.status(200).json({
         status: 'ok',
         timestamp: Date.now(),
@@ -4701,6 +4749,11 @@ app.get('/api/health', (req, res) => {
             maxDlqLen: maxDlq,
             totalDlq,
             entities: entitiesScanned,
+        },
+        delivery: {
+            stuckThresholdMs: HEARTBEAT_STUCK_MS,
+            stuckCount: stuckList.length,
+            stuck: stuckPreview,
         },
     });
 });
@@ -13392,8 +13445,12 @@ app.post('/api/bot/pending-messages', async (req, res) => {
     // Clear messageQueue after delivery (bot acknowledges receipt)
     entity.messageQueue = [];
 
-    // Update entity status
-    entity.lastUpdated = Date.now();
+    // Phase H1.2: every poll is a heartbeat — record even when queue is empty.
+    // Stuck-detection uses lastDrainedAt to decide if Hermes is alive but starved
+    // (mq>0 + recent drain = backlog) vs dead (mq>0 + stale drain = no daemon).
+    const now = Date.now();
+    entity.lastDrainedAt = now;
+    entity.lastUpdated = now;
 
     res.json({
         success: true,
@@ -18077,3 +18134,5 @@ module.exports._enqueueMessage = enqueueMessage;
 module.exports._MESSAGE_QUEUE_CAP = MESSAGE_QUEUE_CAP;
 module.exports._DEAD_LETTER_CAP = DEAD_LETTER_CAP;
 module.exports._clampQueuesOnLoad = clampQueuesOnLoad;
+module.exports._findStuckEntities = findStuckEntities;
+module.exports._HEARTBEAT_STUCK_MS = HEARTBEAT_STUCK_MS;
