@@ -503,7 +503,13 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
         // recurring schedule → auto-promote to automation
         const finalAutomation = wantAutomation || (schedEnabled && schedType === 'recurring');
-        const finalRequiresScreenshot = requiresScreenshotReview !== false;
+        // Text-only work (i18n / translation) has no screenshot to attach — default the
+        // gate off when caller didn't pass requiresScreenshotReview explicitly. Caller can
+        // still force `true` to opt back in.
+        const isTextOnlyTitle = /i18n|translate|翻譯|locale/i.test(title);
+        const finalRequiresScreenshot = requiresScreenshotReview === undefined
+            ? !isTextOnlyTitle
+            : requiresScreenshotReview !== false;
 
         try {
             const result = await pool.query(
