@@ -767,13 +767,46 @@
             renderSubsystemsPop();
         }
 
+        // Trackpad pinch on Mac/Chrome arrives as wheel events with ctrlKey=true.
+        // Cytoscape's wheelSensitivity is shared between mouse-wheel and pinch — at the
+        // 0.05 step needed for fine mouse-wheel control, pinch becomes unusably slow.
+        // This handler intercepts pinch (capture phase) and applies a higher per-event
+        // gain, while plain mouse wheels keep flowing through cytoscape at sensitivity 0.05.
+        function attachPinchZoom(container) {
+            if (!container) return;
+            let pendingExp = 0;
+            let pendingPos = null;
+            let raf = null;
+            container.addEventListener('wheel', (ev) => {
+                if (!ev.ctrlKey || !cy) return;
+                ev.preventDefault();
+                ev.stopImmediatePropagation();
+                let dy = ev.deltaY;
+                if (ev.deltaMode === 1) dy *= 16;
+                else if (ev.deltaMode === 2) dy *= 400;
+                pendingExp += -dy * 0.012;
+                const rect = container.getBoundingClientRect();
+                pendingPos = { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+                if (raf == null) {
+                    raf = requestAnimationFrame(() => {
+                        raf = null;
+                        if (pendingExp === 0 || !cy) return;
+                        const factor = Math.exp(pendingExp);
+                        pendingExp = 0;
+                        const target = Math.max(cy.minZoom(), Math.min(cy.maxZoom(), cy.zoom() * factor));
+                        cy.zoom({ level: target, renderedPosition: pendingPos });
+                    });
+                }
+            }, { passive: false, capture: true });
+        }
+
         function initCytoscape() {
             cy = cytoscape({
                 container: document.getElementById('cy'),
                 elements: [],
                 minZoom: 0.1,
                 maxZoom: 4,
-                wheelSensitivity: 0.25,
+                wheelSensitivity: 0.05,
                 style: [
                     { selector: 'node', style: {
                         'background-color': '#4f6ad3',
@@ -819,6 +852,8 @@
 
             cy.on('zoom', applyZoomTier);
             applyZoomTier();
+
+            attachPinchZoom(document.getElementById('cy'));
 
             cy.on('tap', 'node', (evt) => {
                 const nodeId = evt.target.id();
