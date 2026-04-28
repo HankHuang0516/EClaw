@@ -1,3 +1,10 @@
+## [1.1114.3](https://github.com/HankHuang0516/EClaw/compare/v1.1114.2...v1.1114.3) (2026-04-28)
+
+
+### Bug Fixes
+
+* **kanban:** i18n cards default requires_screenshot_review=false ([#2224](https://github.com/HankHuang0516/EClaw/issues/2224)) ([368bc16](https://github.com/HankHuang0516/EClaw/commit/368bc166ff1743ee16c31dc0aa3f9bb6c26736b7))
+
 ## [1.1114.2](https://github.com/HankHuang0516/EClaw/compare/v1.1114.1...v1.1114.2) (2026-04-28)
 
 
