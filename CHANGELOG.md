@@ -1,3 +1,10 @@
+# [1.1113.0](https://github.com/HankHuang0516/EClaw/compare/v1.1112.1...v1.1113.0) (2026-04-28)
+
+
+### Features
+
+* **seo:** community.html og:locale + 13 og:locale:alternate ([#2220](https://github.com/HankHuang0516/EClaw/issues/2220)) ([b140b37](https://github.com/HankHuang0516/EClaw/commit/b140b371a1471113bbc81d09dc981e7a8f1e0e89)), closes [#2](https://github.com/HankHuang0516/EClaw/issues/2)
+
 ## [1.1112.1](https://github.com/HankHuang0516/EClaw/compare/v1.1112.0...v1.1112.1) (2026-04-28)
 
 
