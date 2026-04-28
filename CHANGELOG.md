@@ -1,3 +1,11 @@
+## [1.1114.4](https://github.com/HankHuang0516/EClaw/compare/v1.1114.3...v1.1114.4) (2026-04-28)
+
+
+### Bug Fixes
+
+* **portal:** delete mindmap.html standalone, port view-mode=full to mission embed ([#2226](https://github.com/HankHuang0516/EClaw/issues/2226)) ([147edb2](https://github.com/HankHuang0516/EClaw/commit/147edb2744dcb66652e1a07a8b0e3fbd3853a3ba)), closes [#2222](https://github.com/HankHuang0516/EClaw/issues/2222)
+* **kanban:** L2/L3 escalation also notifies assigned_bots, not just notifyEntityId ([#2227](https://github.com/HankHuang0516/EClaw/issues/2227)) ([b4fcd5b](https://github.com/HankHuang0516/EClaw/commit/b4fcd5bc7e35d0cf621099eab8df8a75a045fa9a))
+
 ## [1.1114.3](https://github.com/HankHuang0516/EClaw/compare/v1.1114.2...v1.1114.3) (2026-04-28)
 
 
