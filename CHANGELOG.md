@@ -1,3 +1,10 @@
+## [1.1107.10](https://github.com/HankHuang0516/EClaw/compare/v1.1107.9...v1.1107.10) (2026-04-28)
+
+
+### Bug Fixes
+
+* **kanban-i18n:** add 'blocked' statusLabel to 12 remaining locales (#card_45b3b009) ([#2208](https://github.com/HankHuang0516/EClaw/issues/2208)) ([c0bdf0e](https://github.com/HankHuang0516/EClaw/commit/c0bdf0e3f8c2136aa0124ce66b96320a17ebde31)), closes [#card_45b3b009](https://github.com/HankHuang0516/EClaw/issues/card_45b3b009) [#2204](https://github.com/HankHuang0516/EClaw/issues/2204) [#5](https://github.com/HankHuang0516/EClaw/issues/5)
+
 ## [1.1107.9](https://github.com/HankHuang0516/EClaw/compare/v1.1107.8...v1.1107.9) (2026-04-28)
 
 
