@@ -2588,6 +2588,10 @@
             if (!title) { showToast(t('kb_err_title','Title is required'), true); return; }
             const assignedBots = [...document.querySelectorAll('#newAssignees input:checked')].map(cb => Number(cb.value));
             if (assignedBots.length === 0) { showToast(t('kb_err_no_entity','At least one entity must be assigned'), true); return; }
+            if (!selectedAnchor || !selectedAnchor.id) {
+                showToast(t('kb_anchor_required','Please pick a chat message to anchor this card'), true);
+                return;
+            }
             const isAutomation = document.getElementById('newIsAutomation').checked;
             const requiresScreenshotReview = document.getElementById('newRequiresScreenshot').checked;
             const body = {
@@ -2624,7 +2628,13 @@
                 await loadCards();
             } catch(e) {
                 console.error('[Kanban] createCard failed:', e.message);
-                showToast(t('kb_err_create','Failed to create card'), true);
+                const errKey = e.data && e.data.errorKey;
+                const fallback = e.data && e.data.error;
+                if (errKey) {
+                    showToast(t(errKey, fallback || e.message || 'Failed to create card'), true);
+                } else {
+                    showToast(t('kb_err_create','Failed to create card'), true);
+                }
             }
         }
 

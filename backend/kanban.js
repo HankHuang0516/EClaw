@@ -531,6 +531,18 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             }
         }
 
+        // Phase 3 — chat-anchor validator: human-filed cards (createdBy === 0 / USER)
+        // must pin an originating chat message for traceability into 心智/對話.
+        // Bots self-filing (createdBy > 0) and cron-spawn children (internal INSERT,
+        // never POST /card) are exempt — they render N/A in the UI.
+        if (createdBy === 0 && !anchorMsgId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing chatAnchorMessageId — human-filed cards must pin an originating chat message.',
+                errorKey: 'kb_anchor_required',
+            });
+        }
+
         try {
             const result = await pool.query(
                 `INSERT INTO kanban_cards (id, device_id, title, description, priority, status, assigned_bots, created_by, reviewer_entity_id, status_changed_at,
