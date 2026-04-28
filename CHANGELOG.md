@@ -1,3 +1,10 @@
+# [1.1119.0](https://github.com/HankHuang0516/EClaw/compare/v1.1118.0...v1.1119.0) (2026-04-28)
+
+
+### Features
+
+* **kanban:** Phase 3 — chat-anchor validator on POST /card ([#2236](https://github.com/HankHuang0516/EClaw/issues/2236)) ([6f79510](https://github.com/HankHuang0516/EClaw/commit/6f79510069f1a45fd8e206465a687b43168fb0d7))
+
 # [1.1118.0](https://github.com/HankHuang0516/EClaw/compare/v1.1117.2...v1.1118.0) (2026-04-28)
 
 
