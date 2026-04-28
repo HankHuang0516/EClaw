@@ -1099,13 +1099,8 @@
                         <textarea id="edit-desc" rows="3" maxlength="500" style="resize:vertical;" placeholder="${t('cardholder_desc_placeholder', 'Describe this entity\'s purpose and capabilities...')}">${escapeHtml(ac.description || '')}</textarea>
                     </div>
 
-                    <!-- Shared Agent Card Editor component -->
+                    <!-- Shared Agent Card Editor component (renders email + protocols/tags/version/website/capabilities) -->
                     <div id="aceEditorCH" class="edit-field"></div>
-
-                    <div class="edit-field">
-                        <label>${t('cardholder_email_label', 'Email')}</label>
-                        <input type="email" id="edit-email" value="${escapeAttr(ac.contactEmail || '')}" maxlength="255" placeholder="contact@example.com">
-                    </div>
                 </div>
 
                 <div class="modal-actions">

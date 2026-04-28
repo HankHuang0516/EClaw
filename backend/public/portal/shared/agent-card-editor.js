@@ -90,29 +90,29 @@ window.AgentCardEditor = (function() {
             '</div>' +
             // ── Protocols ──
             '<div class="ace-field">' +
-                '<label>Protocols</label>' +
+                '<label>' + t('dash_protocols', 'Protocols') + '</label>' +
                 '<div class="ac-tags" id="aceProtos' + uid + '"></div>' +
                 '<div class="ac-tag-input"><input type="text" id="aceProtoIn' + uid + '" placeholder="e.g. A2A, REST" maxlength="64"><button class="btn btn-sm btn-outline" id="aceProtoAdd' + uid + '">+</button></div>' +
             '</div>' +
             // ── Tags ──
             '<div class="ace-field">' +
-                '<label>Tags</label>' +
+                '<label>' + t('dash_tags', 'Tags') + '</label>' +
                 '<div class="ac-tags" id="aceTags' + uid + '"></div>' +
                 '<div class="ac-tag-input"><input type="text" id="aceTagIn' + uid + '" placeholder="e.g. chat, IoT" maxlength="64"><button class="btn btn-sm btn-outline" id="aceTagAdd' + uid + '">+</button></div>' +
             '</div>' +
             // ── Version ──
             '<div class="ace-field">' +
-                '<label>Version</label>' +
+                '<label>' + t('dash_version', 'Version') + '</label>' +
                 '<input type="text" id="aceVersion' + uid + '" maxlength="32" placeholder="1.0.0" value="' + esc(ac.version) + '">' +
             '</div>' +
             // ── Website ──
             '<div class="ace-field">' +
-                '<label>Website</label>' +
+                '<label>' + t('dash_website', 'Website') + '</label>' +
                 '<input type="text" id="aceWebsite' + uid + '" maxlength="500" placeholder="https://..." value="' + esc(ac.website) + '">' +
             '</div>' +
             // ── Email ──
             '<div class="ace-field">' +
-                '<label>Email</label>' +
+                '<label>' + t('cardholder_email_label', 'Email') + '</label>' +
                 '<input type="text" id="aceEmail' + uid + '" maxlength="255" placeholder="contact@example.com" value="' + esc(ac.contactEmail) + '">' +
             '</div>';
 
