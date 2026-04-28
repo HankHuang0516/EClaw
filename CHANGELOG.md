@@ -1,3 +1,10 @@
+# [1.1111.0](https://github.com/HankHuang0516/EClaw/compare/v1.1110.0...v1.1111.0) (2026-04-28)
+
+
+### Features
+
+* **hermes:** /api/health 503 → Railway auto-restart on severe stuck (Phase H1.5) ([#2216](https://github.com/HankHuang0516/EClaw/issues/2216)) ([022c8a0](https://github.com/HankHuang0516/EClaw/commit/022c8a01819fe3bc3d30c474786cc0c36586c8a7))
+
 # [1.1110.0](https://github.com/HankHuang0516/EClaw/compare/v1.1109.2...v1.1110.0) (2026-04-28)
 
 
