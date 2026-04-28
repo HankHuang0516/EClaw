@@ -1,3 +1,10 @@
+# [1.1114.0](https://github.com/HankHuang0516/EClaw/compare/v1.1113.1...v1.1114.0) (2026-04-28)
+
+
+### Features
+
+* **mindmap:** add fullscreen toggle + ?view-mode=full URL flag ([#2222](https://github.com/HankHuang0516/EClaw/issues/2222)) ([fecc57a](https://github.com/HankHuang0516/EClaw/commit/fecc57aec84828df95bbe800cac64043d65c4555))
+
 ## [1.1113.1](https://github.com/HankHuang0516/EClaw/compare/v1.1113.0...v1.1113.1) (2026-04-28)
 
 
