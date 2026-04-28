@@ -1159,6 +1159,7 @@
     <script src="shared/auth.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
+    <script src="../shared/settings-deep-link.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/entity-utils.js"></script>
     <script src="shared/socket.js"></script>
@@ -1197,6 +1198,8 @@
             loadDevicePreferences();
             initKanbanNudgeCollapse();
             updatePushToggle();
+
+            if (typeof applyDeepLinkFocus === 'function') applyDeepLinkFocus();
 
             document.getElementById('pageContent').style.display = '';
             initTapPay();
