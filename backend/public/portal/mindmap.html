@@ -18,6 +18,11 @@
             height: calc(100vh - var(--nav-height, 60px));
             min-height: 400px;
         }
+        body.mm-display-mode #navContainer { display: none; }
+        body.mm-display-mode .mm-shell { height: 100vh; grid-template-columns: 1fr; }
+        body.mm-display-mode .mm-sidebar { display: none; }
+        .mm-fs-icon { font-size: 14px; line-height: 1; }
+        #btnFullscreen { font-variant-numeric: tabular-nums; }
         .mm-canvas-wrap {
             position: relative;
             background: var(--bg);
@@ -292,6 +297,7 @@
                 <button class="mm-tool-btn" id="btnAddEdge" data-i18n="mindmap_connect_mode">Connect mode</button>
                 <button class="mm-tool-btn" id="btnFit" data-i18n="mindmap_fit">Fit</button>
                 <button class="mm-tool-btn" id="btnReload" data-i18n="mindmap_reload">Reload</button>
+                <button class="mm-tool-btn" id="btnFullscreen" type="button" title="" aria-label=""><span class="mm-fs-icon" aria-hidden="true">⛶</span> <span class="mm-fs-label" data-i18n="mindmap_fullscreen">Fullscreen</span></button>
                 <div class="mm-tier-badge" id="zoomTierLabel" title="">L1</div>
                 <div class="mm-status" id="mmStatus" data-i18n="mindmap_loading">Loading…</div>
             </div>
@@ -1020,10 +1026,54 @@
             }
         }
 
+        function isMindmapFullscreen() {
+            return !!(document.fullscreenElement || document.webkitFullscreenElement);
+        }
+
+        function updateFullscreenButton() {
+            const btn = document.getElementById('btnFullscreen');
+            if (!btn) return;
+            const labelEl = btn.querySelector('.mm-fs-label');
+            const inFs = isMindmapFullscreen();
+            const labelKey = inFs ? 'mindmap_fullscreen_exit' : 'mindmap_fullscreen';
+            const fallback = inFs ? 'Exit fullscreen' : 'Fullscreen';
+            const text = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t(labelKey, fallback) : fallback;
+            if (labelEl) {
+                labelEl.textContent = text;
+                labelEl.setAttribute('data-i18n', labelKey);
+            }
+            btn.title = text;
+            btn.setAttribute('aria-label', text);
+        }
+
+        function toggleMindmapFullscreen() {
+            const root = document.documentElement;
+            if (isMindmapFullscreen()) {
+                const exit = document.exitFullscreen || document.webkitExitFullscreen;
+                if (exit) exit.call(document);
+            } else {
+                const req = root.requestFullscreen || root.webkitRequestFullscreen;
+                if (req) {
+                    req.call(root).catch(err => console.warn('[Mindmap] Fullscreen request rejected:', err));
+                } else {
+                    setStatus(i18n.t('mindmap_fullscreen_unsupported', 'Fullscreen not supported in this browser'));
+                }
+            }
+        }
+
         window.addEventListener('DOMContentLoaded', async () => {
             try {
                 renderNav('mindmap');
                 if (typeof renderFooter === 'function') renderFooter();
+
+                // Display mode: ?view-mode=full hides nav + sidebar so the canvas
+                // takes the full viewport. Useful for multi-monitor display where
+                // you drag this tab to a second screen and want maximum canvas.
+                try {
+                    const _viewMode = new URLSearchParams(location.search).get('view-mode');
+                    if (_viewMode === 'full') document.body.classList.add('mm-display-mode');
+                } catch (_) {}
+
                 const user = await checkAuth();
                 if (!user) return;
 
@@ -1039,6 +1089,17 @@
                 });
                 document.getElementById('btnFit').addEventListener('click', () => cy.fit(null, 40));
                 document.getElementById('btnReload').addEventListener('click', loadGraph);
+                document.getElementById('btnFullscreen').addEventListener('click', toggleMindmapFullscreen);
+                ['fullscreenchange', 'webkitfullscreenchange'].forEach(evt => {
+                    document.addEventListener(evt, () => {
+                        updateFullscreenButton();
+                        // Re-layout cytoscape after the viewport size changes so
+                        // node positions stay centred and the navigator mini-map
+                        // refreshes its bounding box.
+                        if (cy) setTimeout(() => { try { cy.resize(); cy.fit(null, 40); } catch (_) {} }, 80);
+                    });
+                });
+                updateFullscreenButton();
                 document.getElementById('btnSubsystems').addEventListener('click', (e) => {
                     e.stopPropagation();
                     const pop = document.getElementById('subsystemsPop');
