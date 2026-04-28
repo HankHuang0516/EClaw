@@ -787,6 +787,17 @@
             background: rgba(158, 158, 158, 0.15);
             color: #9E9E9E;
         }
+        body.mm-display-mode > nav.nav,
+        body.mm-display-mode #navContainer,
+        body.mm-display-mode footer,
+        body.mm-display-mode .footer { display: none !important; }
+        body.mm-display-mode #dashboardContent > .card { display: none; }
+        body.mm-display-mode #dashboardContent > .card.mm-card { display: block; padding: 0; border: none; background: transparent; }
+        body.mm-display-mode #dashboardContent > .card.mm-card .card-header { display: none; }
+        body.mm-display-mode #dashboardContent > .card.mm-card #mmHint { display: none; }
+        body.mm-display-mode #mmContainer { width: 100vw; height: 100vh; margin: 0; }
+        body.mm-display-mode { margin: 0; padding: 0; overflow: hidden; }
+        body.mm-display-mode .container { padding: 0; max-width: none; }
     </style>
     <link rel="canonical" href="https://eclawbot.com/portal/mission.html">
 </head>
@@ -830,7 +841,7 @@
         <!-- Dashboard Content (hidden until loaded) -->
         <div id="dashboardContent" style="display:none;">
             <!-- Mind-map (PR-A: static mockup; PR-B will wire to /api/mission/cards) -->
-            <div class="card">
+            <div class="card mm-card">
                 <div class="card-header">
                     <h2>🧠 <span data-i18n="mm_card_title">心智圖</span> <span style="font-size:11px;color:var(--text-secondary);font-weight:500;margin-left:6px;" data-i18n="mm_card_beta">(beta · 模擬資料)</span></h2>
                     <div class="section-header-actions">
@@ -1145,6 +1156,11 @@
             if (_isEmbed) {
                 document.body.classList.add('embed-mode');
             }
+            const _viewMode = new URLSearchParams(window.location.search).get('view-mode');
+            const _mmDisplayMode = _viewMode === 'full';
+            if (_mmDisplayMode) {
+                document.body.classList.add('mm-display-mode');
+            }
             renderNav('mission');
             if (typeof renderFooter === 'function') renderFooter();
             const user = await checkAuth();
@@ -1162,6 +1178,10 @@
 
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('dashboardContent').style.display = '';
+
+            if (_mmDisplayMode && !mmExpanded) {
+                toggleMindmap();
+            }
 
             // Auto-refresh every 30s (skip if editing or syncing)
             refreshTimer = setInterval(() => {
