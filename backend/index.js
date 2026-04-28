@@ -887,6 +887,7 @@ async function handlePlatformCommand(command, deviceId, device, targetIds, confi
                         [deviceId, eId]
                     );
                     entity.messageQueue = [];
+                    entity.deadLetterQueue = [];
                     const name = entity.name || `Entity ${eId}`;
                     results.push(`#${eId} ${name}: history cleared`);
                 } catch (err) {
@@ -2041,7 +2042,7 @@ authModule.setOnEmailVerified(async (deviceId) => {
                 mediaUrl: msg.media_url || null,
                 crossDevice: true
             };
-            toEntity.messageQueue.push(messageObj);
+            enqueueMessage(toEntity, messageObj, 'pending_flush');
 
             const sourceTag = `${sourceLabel}->${msg.target_code}`;
             await saveChatMessage(target.deviceId, target.entityId, msg.text, sourceTag, true, false, msg.media_type || null, msg.media_url || null);
@@ -3899,6 +3900,37 @@ async function backfillPublicCodes() {
     }
 }
 
+// Phase H1.1: bounded messageQueue + dead-letter buffer.
+// Hermes [回應超時] recurred 2026-04-28 because the per-entity messageQueue could grow
+// unbounded — daemon refactor (PR #2201) didn't actually cap it. Hard cap at 200; older
+// entries spill to a small deadLetterQueue (50) for forensics + Phase H1.2 alerting.
+const MESSAGE_QUEUE_CAP = 200;
+const DEAD_LETTER_CAP = 50;
+
+function enqueueMessage(toEntity, messageObj, ctx) {
+    if (!toEntity) return;
+    if (!Array.isArray(toEntity.messageQueue)) toEntity.messageQueue = [];
+    if (!Array.isArray(toEntity.deadLetterQueue)) toEntity.deadLetterQueue = [];
+
+    toEntity.messageQueue.push(messageObj);
+
+    while (toEntity.messageQueue.length > MESSAGE_QUEUE_CAP) {
+        const dropped = toEntity.messageQueue.shift();
+        toEntity.deadLetterQueue.push({
+            ...dropped,
+            droppedAt: Date.now(),
+            droppedReason: 'queue_overflow',
+            droppedCtx: ctx || null,
+        });
+        while (toEntity.deadLetterQueue.length > DEAD_LETTER_CAP) {
+            toEntity.deadLetterQueue.shift();
+        }
+        try {
+            console.warn(`[Queue] entity ${toEntity.entityId} mq overflow — dropped oldest to DLQ. mqLen=${toEntity.messageQueue.length} dlqLen=${toEntity.deadLetterQueue.length} ctx=${ctx || ''}`);
+        } catch (_) {}
+    }
+}
+
 // Helper: Create default entity
 function createDefaultEntity(entityId) {
     return {
@@ -3912,6 +3944,7 @@ function createDefaultEntity(entityId) {
         parts: {},
         lastUpdated: Date.now(),
         messageQueue: [],
+        deadLetterQueue: [], // Phase H1.1: capped overflow buffer for forensics
         webhook: null,
         appVersion: null, // Device app version (e.g., "1.0.3")
         avatar: null, // User-chosen emoji avatar (synced across devices)
@@ -4606,7 +4639,41 @@ app.get('/api/invite/clicks', async (req, res) => {
 });
 
 app.get('/api/health', (req, res) => {
-    res.status(200).json({ status: 'ok', timestamp: Date.now(), build: SERVER_BUILD_TAG, uptime: process.uptime(), startedAt: SERVER_STARTED_AT.toISOString() });
+    // Phase H1.1: surface worst-case mq/dlq depth so ops can spot Hermes-style fan-out
+    // before [回應超時] hits. Cheap O(entities) pass — devices is the in-memory map.
+    let maxMq = 0;
+    let maxDlq = 0;
+    let totalDlq = 0;
+    let entitiesScanned = 0;
+    try {
+        for (const dev of Object.values(devices || {})) {
+            const ents = dev && dev.entities;
+            if (!ents) continue;
+            for (const ent of Object.values(ents)) {
+                entitiesScanned++;
+                const m = (ent.messageQueue && ent.messageQueue.length) || 0;
+                const d = (ent.deadLetterQueue && ent.deadLetterQueue.length) || 0;
+                if (m > maxMq) maxMq = m;
+                if (d > maxDlq) maxDlq = d;
+                totalDlq += d;
+            }
+        }
+    } catch (_) { /* best-effort */ }
+    res.status(200).json({
+        status: 'ok',
+        timestamp: Date.now(),
+        build: SERVER_BUILD_TAG,
+        uptime: process.uptime(),
+        startedAt: SERVER_STARTED_AT.toISOString(),
+        queue: {
+            cap: MESSAGE_QUEUE_CAP,
+            dlqCap: DEAD_LETTER_CAP,
+            maxMqLen: maxMq,
+            maxDlqLen: maxDlq,
+            totalDlq,
+            entities: entitiesScanned,
+        },
+    });
 });
 
 // ============================================
@@ -5782,7 +5849,7 @@ async function deliverToEntity(opts) {
         messageObj.fromDeviceId = senderDeviceId;
         messageObj.crossDevice = true;
     }
-    toEntity.messageQueue.push(messageObj);
+    enqueueMessage(toEntity, messageObj, isCrossDevice ? 'speakto_xdevice' : (isBroadcast ? 'speakto_broadcast' : 'speakto'));
 
     // Save chat message
     const chatSource = isCrossDevice
@@ -8650,7 +8717,7 @@ app.post('/api/entity/speak-to', async (req, res) => {
         mediaType: mediaType || null,
         mediaUrl: mediaUrl || null
     };
-    toEntity.messageQueue.push(messageObj);
+    enqueueMessage(toEntity, messageObj, 'a2a_speakto');
     serverLog('info', 'speakto_push', `[A2A_MQ_PUSH] Entity ${toId}.messageQueue += item from Entity ${fromId} | mqLen=${toEntity.messageQueue.length}`, {
         deviceId, entityId: toId,
         metadata: { tag: 'A2A_MQ_PUSH', fromEntityId: fromId, toEntityId: toId, mqLen: toEntity.messageQueue.length }
@@ -17980,3 +18047,6 @@ module.exports._classifyPublisher = classifyPublisher;
 module.exports._MONITORING_THRESHOLDS = MONITORING_THRESHOLDS;
 module.exports._requireAdmin = requireAdmin;
 module.exports._createDefaultEntity = createDefaultEntity;
+module.exports._enqueueMessage = enqueueMessage;
+module.exports._MESSAGE_QUEUE_CAP = MESSAGE_QUEUE_CAP;
+module.exports._DEAD_LETTER_CAP = DEAD_LETTER_CAP;
