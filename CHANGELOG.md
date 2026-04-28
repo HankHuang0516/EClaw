@@ -1,3 +1,10 @@
+## [1.1109.2](https://github.com/HankHuang0516/EClaw/compare/v1.1109.1...v1.1109.2) (2026-04-28)
+
+
+### Bug Fixes
+
+* **hermes:** route all 5 push sites through enqueueMessage + boot-time clamp (Phase H1.1b) ([#2214](https://github.com/HankHuang0516/EClaw/issues/2214)) ([13807d1](https://github.com/HankHuang0516/EClaw/commit/13807d1b3b4cd3a9a33eca8dec2aae58fbb75bb2))
+
 ## [1.1109.1](https://github.com/HankHuang0516/EClaw/compare/v1.1109.0...v1.1109.1) (2026-04-28)
 
 
