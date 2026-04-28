@@ -1,3 +1,10 @@
+## [1.1109.1](https://github.com/HankHuang0516/EClaw/compare/v1.1109.0...v1.1109.1) (2026-04-28)
+
+
+### Bug Fixes
+
+* **hermes:** cap per-entity messageQueue at 200 + DLQ buffer (Phase H1.1) ([#2213](https://github.com/HankHuang0516/EClaw/issues/2213)) ([8c8a765](https://github.com/HankHuang0516/EClaw/commit/8c8a76513a4c9754ef8607241d431a23c1cf3101))
+
 # [1.1109.0](https://github.com/HankHuang0516/EClaw/compare/v1.1108.0...v1.1109.0) (2026-04-28)
 
 
