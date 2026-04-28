@@ -1,3 +1,10 @@
+# [1.1109.0](https://github.com/HankHuang0516/EClaw/compare/v1.1108.0...v1.1109.0) (2026-04-28)
+
+
+### Features
+
+* **mindmap:** finer wheel-zoom step + decoupled trackpad pinch ([#2212](https://github.com/HankHuang0516/EClaw/issues/2212)) ([6402305](https://github.com/HankHuang0516/EClaw/commit/6402305926bfb6380d0e5bd768be27f187bd38da))
+
 # [1.1108.0](https://github.com/HankHuang0516/EClaw/compare/v1.1107.10...v1.1108.0) (2026-04-28)
 
 
