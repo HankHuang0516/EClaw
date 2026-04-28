@@ -1,3 +1,10 @@
+## [1.1117.2](https://github.com/HankHuang0516/EClaw/compare/v1.1117.1...v1.1117.2) (2026-04-28)
+
+
+### Bug Fixes
+
+* **i18n:** EN labels for cron-notify keys leaked CJK 母卡 ([#2234](https://github.com/HankHuang0516/EClaw/issues/2234)) ([ea1e2d8](https://github.com/HankHuang0516/EClaw/commit/ea1e2d8f387ecfebb72237734d05512c763d634b)), closes [#2232](https://github.com/HankHuang0516/EClaw/issues/2232)
+
 ## [1.1117.1](https://github.com/HankHuang0516/EClaw/compare/v1.1117.0...v1.1117.1) (2026-04-28)
 
 
