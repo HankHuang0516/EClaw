@@ -1,3 +1,10 @@
+# [1.1112.0](https://github.com/HankHuang0516/EClaw/compare/v1.1111.1...v1.1112.0) (2026-04-28)
+
+
+### Features
+
+* **landing:** add Browse Bots CTA → /portal/community.html (13 locales) ([#2218](https://github.com/HankHuang0516/EClaw/issues/2218)) ([fa8a925](https://github.com/HankHuang0516/EClaw/commit/fa8a9252e72ebe0c313b12ccb580441d4d13063b))
+
 ## [1.1111.1](https://github.com/HankHuang0516/EClaw/compare/v1.1111.0...v1.1111.1) (2026-04-28)
 
 
