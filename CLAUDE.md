@@ -110,7 +110,7 @@ EClaw/
 │   │   │   ├── community.html     # Community template hub
 │   │   │   ├── workspace.html     # Split-view workspace mode
 │   │   │   ├── analytics.html    # Site pageview analytics admin dashboard
-│   │   │   ├── mindmap.html      # Mind map visualization (Cytoscape + canvas)
+│   │   │   ├── mindmap.html      # (deleted v1.1114; mindmap now embedded in mission.html)
 │   │   │   ├── publisher.html    # Multi-platform article publisher UI
 │   │   │   ├── publisher-setup.html # Publisher platform configuration wizard
 │   │   │   ├── wallet.html       # E-coin wallet management
@@ -349,7 +349,7 @@ EClaw/
 | Enterprise | `/enterprise` | Enterprise landing page (public, SEO, JSON-LD) |
 | Privacy Policy | `/privacy-policy.html` | Privacy policy (public, i18n) |
 | Analytics | `/portal/analytics.html` | Site pageview analytics (admin) |
-| Mind Map | `/portal/mindmap.html` | Mind map visualization (Cytoscape) |
+| Mind Map | `/portal/mission.html` (embedded) | Mind map visualization (Cytoscape, was standalone mindmap.html until v1.1114) |
 | Publisher | `/portal/publisher.html` | Multi-platform article publisher |
 | Publisher Setup | `/portal/publisher-setup.html` | Publisher platform config wizard |
 | Wallet | `/portal/wallet.html` | E-coin wallet management |
