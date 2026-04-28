@@ -1,3 +1,10 @@
+# [1.1120.0](https://github.com/HankHuang0516/EClaw/compare/v1.1119.0...v1.1120.0) (2026-04-28)
+
+
+### Features
+
+* **mindmap:** Phase 4 write-side — capture chat_anchor_coord on card create ([#2237](https://github.com/HankHuang0516/EClaw/issues/2237)) ([2431b11](https://github.com/HankHuang0516/EClaw/commit/2431b11b23a7cf4ffb3d70d3a80f5006971be804))
+
 # [1.1119.0](https://github.com/HankHuang0516/EClaw/compare/v1.1118.0...v1.1119.0) (2026-04-28)
 
 
