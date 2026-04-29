@@ -1,7 +1,10 @@
 // mission-mindmap.js — PR-B v4 (chip+📌 + responsive)
 //
 // Lazy-loaded on first expand of the "🧠 心智圖" card in mission.html.
-// Same MOCK_NODES/MOCK_EDGES as PR-A (52 nodes / 76 edges / 8 subsystems).
+// Renders the user's own kanban cards as a graph; data is fetched from
+// /api/mission/mindmap by the embedding page and passed in via init({data}).
+// When the device has zero cards the module renders an empty-state hint —
+// no demo seed data is shipped (every device sees only its own work).
 //
 // Interaction model (rewritten 2026-04-25 after Hank rejected v3 dense):
 //   • Tap a node → spawn a floating 引用預覽卡 (chip popover) anchored near
@@ -23,6 +26,17 @@
 
   const CDN = 'https://cdn.jsdelivr.net/npm/cytoscape@3.28.1/dist/cytoscape.min.js';
 
+  // Subsystem registry — single source of truth for mindmap node styling.
+  // Each key matches the `sys` field that the kanban → mindmap mapper
+  // (backend/kanban.js → /api/mission/mindmap) emits per card. The color
+  // also drives sys-rail swatches and cytoscape edge tinting.
+  //
+  // Why a constant: subsystem palette is a design decision, not user data.
+  // Adding a subsystem requires three coordinated changes (this dict, the
+  // backend mapper, an i18n key for the label) so the cost is intentional.
+  // Source authority: Hank — palette locked 2026-04-25 with the chip+📌
+  // redesign; do not recolor without his approval (palette is reused in
+  // info.html and roadmap.html previews).
   const SYS = {
     invite:     { color: '#f43f5e', label: '邀請成長' },
     device:     { color: '#06b6d4', label: '裝置' },
@@ -35,124 +49,6 @@
     automation: { color: '#64748b', label: '自動化' },
   };
 
-  const MOCK_NODES = [
-  // 邀請 (7)
-  { id: 'inv-hub', label: '邀請系統', sys: 'invite', tier: 'domain', status: 'active', summary: '8 碼邀請、redeem、tier milestone、funnel telemetry。本週 0/9 兌換率 0%。' },
-  { id: 'inv-code', label: '8 碼生碼', sys: 'invite', tier: 'topic', status: 'done' },
-  { id: 'inv-redeem', label: 'Redeem flow', sys: 'invite', tier: 'topic', status: 'active' },
-  { id: 'inv-tier', label: 'Tier milestone', sys: 'invite', tier: 'topic', status: 'active', summary: 'Tier 1=邀請 1 人解鎖 chip preview' },
-  { id: 'inv-leader', label: 'Leaderboard', sys: 'invite', tier: 'topic', status: 'blocked', summary: '需要先有 30+ 用戶才有意義' },
-  { id: 'inv-funnel', label: 'Funnel telemetry', sys: 'invite', tier: 'leaf', status: 'active' },
-  { id: 'inv-qr', label: 'QR 海報生成', sys: 'invite', tier: 'leaf', status: 'done' },
-
-  // 裝置 (6)
-  { id: 'dev-hub', label: '裝置 / Device', sys: 'device', tier: 'domain', status: 'active', summary: 'deviceId+secret 認證、輪替、health probe。' },
-  { id: 'dev-rotate', label: 'Secret 輪替', sys: 'device', tier: 'topic', status: 'active', summary: 'POST /api/device/rotate-secret + 一次性 dialog' },
-  { id: 'dev-health', label: 'rental-health cron', sys: 'device', tier: 'topic', status: 'done' },
-  { id: 'dev-vars', label: 'device-vars vault', sys: 'device', tier: 'topic', status: 'done' },
-  { id: 'dev-switch', label: 'Switch Device', sys: 'device', tier: 'leaf', status: 'blocked', summary: '12.4h stale; 等 i18n' },
-  { id: 'dev-logs', label: '/api/logs (DEVICE_SECRET)', sys: 'device', tier: 'leaf', status: 'done' },
-
-  // i18n (8)
-  { id: 'i18n-hub', label: 'i18n 13 locale', sys: 'i18n', tier: 'domain', status: 'active', summary: 'en/zh/zh-TW/ja/ko/de/es/fr/pt/it/vi/th/id/ms/hi/ar — chip_popover 缺 10' },
-  { id: 'i18n-shared', label: 'shared/i18n.js (live)', sys: 'i18n', tier: 'topic', status: 'active', summary: '~61k lines, 唯一被 HTML import' },
-  { id: 'i18n-deadtop', label: '頂層 ./i18n.js (dead)', sys: 'i18n', tier: 'leaf', status: 'done', summary: '已 git rm + CI guard' },
-  { id: 'i18n-chip', label: 'chip_popover_*', sys: 'i18n', tier: 'topic', status: 'blocked', summary: 'Mac_E 兩次 wrong-file fail' },
-  { id: 'i18n-kb', label: 'kb_/kanban_*', sys: 'i18n', tier: 'topic', status: 'blocked' },
-  { id: 'i18n-strict-ci', label: 'i18n-check.js (strict)', sys: 'i18n', tier: 'leaf', status: 'done' },
-  { id: 'i18n-key-audit', label: '558 stray }, audit', sys: 'i18n', tier: 'leaf', status: 'done' },
-  { id: 'i18n-translator', label: 'Mac_E i18n agent', sys: 'i18n', tier: 'leaf', status: 'blocked', summary: '錯檔路徑寫死，已 STOP' },
-
-  // 看板 (7)
-  { id: 'kb-hub', label: '看板系統', sys: 'kanban', tier: 'domain', status: 'active' },
-  { id: 'kb-card', label: '/mission/card API', sys: 'kanban', tier: 'topic', status: 'done' },
-  { id: 'kb-screenshot-gate', label: 'screenshot 截圖閘', sys: 'kanban', tier: 'topic', status: 'active' },
-  { id: 'kb-r2-ttl', label: 'R2 TTL ≥3 days', sys: 'kanban', tier: 'leaf', status: 'done', summary: 'PR #2090 merged' },
-  { id: 'kb-deeplink', label: '深層連結 anchor scroll', sys: 'kanban', tier: 'leaf', status: 'done' },
-  { id: 'kb-notes-tab', label: '筆記 tab snake_case bug', sys: 'kanban', tier: 'leaf', status: 'active' },
-  { id: 'kb-mention', label: '@mention → entityId', sys: 'kanban', tier: 'topic', status: 'active' },
-
-  // 聊天 (8)
-  { id: 'chat-hub', label: '聊天 / Chat', sys: 'chat', tier: 'domain', status: 'active' },
-  { id: 'chat-chip', label: '智慧引用晶片', sys: 'chat', tier: 'topic', status: 'active', summary: '@chip_popover_X 點擊預覽' },
-  { id: 'chat-chip-recursive', label: '預覽卡內遞迴 chip', sys: 'chat', tier: 'leaf', status: 'active' },
-  { id: 'chat-pin-btn', label: '📌 重新引用按鈕', sys: 'chat', tier: 'leaf', status: 'done', summary: 'PR #2089 merged' },
-  { id: 'chat-history-api', label: '/api/chat/history', sys: 'chat', tier: 'topic', status: 'done' },
-  { id: 'chat-schedule', label: '排程訊息 (long-press)', sys: 'chat', tier: 'topic', status: 'done' },
-  { id: 'chat-embed', label: 'embed=1 mode', sys: 'chat', tier: 'leaf', status: 'done' },
-  { id: 'chat-share', label: 'share-chat.html 公開', sys: 'chat', tier: 'leaf', status: 'active' },
-
-  // 支付 (5)
-  { id: 'pay-hub', label: '支付 / 訂閱', sys: 'payment', tier: 'domain', status: 'active' },
-  { id: 'pay-topup-b', label: 'Top-up Path B (sandbox)', sys: 'payment', tier: 'topic', status: 'active', summary: 'Android emu 已有 Play 帳號' },
-  { id: 'pay-iap-android', label: 'Android IAP', sys: 'payment', tier: 'topic', status: 'active' },
-  { id: 'pay-iap-ios', label: 'iOS StoreKit', sys: 'payment', tier: 'topic', status: 'blocked', summary: '等 Apple Connect 設定' },
-  { id: 'pay-wallet', label: 'wallet.html 餘額', sys: 'payment', tier: 'leaf', status: 'done' },
-
-  // 廣播 (6)
-  { id: 'bcast-hub', label: '廣播 / Publisher', sys: 'broadcast', tier: 'domain', status: 'active' },
-  { id: 'bcast-x', label: 'X (Twitter)', sys: 'broadcast', tier: 'topic', status: 'active' },
-  { id: 'bcast-mastodon', label: 'Mastodon', sys: 'broadcast', tier: 'leaf', status: 'done', summary: '已棄用 2026-04-15' },
-  { id: 'bcast-wp', label: 'WordPress.com', sys: 'broadcast', tier: 'leaf', status: 'done', summary: '已退役 2026-04-20' },
-  { id: 'bcast-cron', label: 'Daily viral cron', sys: 'broadcast', tier: 'topic', status: 'active' },
-  { id: 'bcast-design', label: 'Claude Design 視覺', sys: 'broadcast', tier: 'leaf', status: 'active' },
-
-  // 橋接 (5)
-  { id: 'br-hub', label: '橋接 / Bridge', sys: 'bridge', tier: 'domain', status: 'active' },
-  { id: 'br-auth', label: 'bridge-auth (osascript)', sys: 'bridge', tier: 'topic', status: 'done' },
-  { id: 'br-eye', label: 'eye 螢幕全覽', sys: 'bridge', tier: 'leaf', status: 'done' },
-  { id: 'br-hermes-docker', label: 'hermes-bridge service', sys: 'bridge', tier: 'topic', status: 'done', summary: 'card_7102c915 closed' },
-  { id: 'br-unit-u01', label: 'U01 = app E2E', sys: 'bridge', tier: 'leaf', status: 'active' },
-];
-
-  const MOCK_EDGES = [
-  // 邀請 tree
-  ['inv-hub','inv-code'],['inv-hub','inv-redeem'],['inv-hub','inv-tier'],
-  ['inv-hub','inv-leader'],['inv-redeem','inv-funnel'],['inv-code','inv-qr'],
-  // 裝置 tree
-  ['dev-hub','dev-rotate'],['dev-hub','dev-health'],['dev-hub','dev-vars'],
-  ['dev-hub','dev-switch'],['dev-hub','dev-logs'],
-  // i18n tree
-  ['i18n-hub','i18n-shared'],['i18n-hub','i18n-chip'],['i18n-hub','i18n-kb'],
-  ['i18n-shared','i18n-strict-ci'],['i18n-shared','i18n-key-audit'],
-  ['i18n-shared','i18n-deadtop'],['i18n-hub','i18n-translator'],
-  // 看板 tree
-  ['kb-hub','kb-card'],['kb-hub','kb-screenshot-gate'],['kb-screenshot-gate','kb-r2-ttl'],
-  ['kb-hub','kb-deeplink'],['kb-hub','kb-notes-tab'],['kb-hub','kb-mention'],
-  // 聊天 tree
-  ['chat-hub','chat-chip'],['chat-chip','chat-chip-recursive'],['chat-chip','chat-pin-btn'],
-  ['chat-hub','chat-history-api'],['chat-hub','chat-schedule'],['chat-hub','chat-embed'],
-  ['chat-hub','chat-share'],
-  // 支付 tree
-  ['pay-hub','pay-topup-b'],['pay-hub','pay-iap-android'],['pay-hub','pay-iap-ios'],
-  ['pay-hub','pay-wallet'],['pay-iap-android','pay-topup-b'],
-  // 廣播 tree
-  ['bcast-hub','bcast-x'],['bcast-hub','bcast-mastodon'],['bcast-hub','bcast-wp'],
-  ['bcast-hub','bcast-cron'],['bcast-cron','bcast-design'],
-  // 橋接 tree
-  ['br-hub','br-auth'],['br-auth','br-eye'],['br-hub','br-hermes-docker'],['br-hub','br-unit-u01'],
-
-  // ⛓ Cross-system dependencies (different style)
-  ['i18n-chip','chat-chip','depends'],
-  ['i18n-kb','kb-hub','depends'],
-  ['i18n-translator','br-auth','via'],
-  ['inv-redeem','dev-vars','via'],
-  ['inv-tier','chat-chip','unlocks'],
-  ['kb-screenshot-gate','bcast-cron','required'],
-  ['chat-schedule','kb-mention','reuses'],
-  ['br-hermes-docker','i18n-translator','runs'],
-  ['pay-topup-b','dev-health','telemetry'],
-  ['bcast-x','dev-vars','reads-key'],
-  ['bcast-design','br-auth','uses'],
-  ['kb-card','chat-history-api','share-DB'],
-  ['inv-funnel','bcast-cron','feeds'],
-  ['dev-switch','i18n-chip','blocked-by'],
-  ['chat-pin-btn','i18n-chip','i18n-key'],
-  ['kb-deeplink','chat-chip','same-anchor'],
-  ['br-unit-u01','kb-screenshot-gate','attaches'],
-  ['chat-share','bcast-x','outbound'],
-  ['inv-qr','bcast-design','asset'],
-];
 
   const STYLE_ID = 'mission-mindmap-style';
   const STYLE_CSS = `
@@ -460,6 +356,27 @@
         top: 50px; font-size: 9px;
       }
     }
+    .mm-root.mm-empty {
+      display: flex; align-items: center; justify-content: center;
+      grid-template-columns: none;
+    }
+    .mm-empty-card {
+      max-width: 360px; padding: 28px 24px; text-align: center;
+      background: var(--mm-bg-elev); border: 1px solid var(--mm-border);
+      border-radius: 10px; color: var(--mm-text);
+    }
+    .mm-empty-emoji { font-size: 36px; margin-bottom: 10px; }
+    .mm-empty-title { font-size: 16px; margin: 0 0 8px 0; font-weight: 600; }
+    .mm-empty-hint {
+      font-size: 13px; margin: 0 0 16px 0; line-height: 1.5;
+      color: var(--mm-text-secondary);
+    }
+    .mm-empty-cta {
+      display: inline-block; padding: 8px 16px; font-size: 13px;
+      background: #22c55e; color: #0d1117; border-radius: 6px;
+      text-decoration: none; font-weight: 600;
+    }
+    .mm-empty-cta:hover { background: #16a34a; }
   `;
 
   function injectStyle() {
@@ -1168,12 +1085,36 @@
     return ctrl;
   }
 
+  function renderEmptyState(rootEl) {
+    injectStyle();
+    rootEl.classList.add('mm-root');
+    rootEl.classList.add('mm-empty');
+    if (rootEl.style.display === 'block') rootEl.style.display = '';
+    const t = (key, fallback) => (window.i18n && window.i18n.t && window.i18n.t(key)) || fallback;
+    const title = t('mm_empty_title', '心智圖還沒有節點');
+    const hint = t('mm_empty_hint', '建立看板卡片後，這裡會自動把任務、子卡與聊天錨點連成圖。');
+    const cta = t('mm_empty_cta', '前往看板新增第一張卡');
+    rootEl.innerHTML = `
+      <div class="mm-empty-card">
+        <div class="mm-empty-emoji">🧠</div>
+        <h3 class="mm-empty-title">${title}</h3>
+        <p class="mm-empty-hint">${hint}</p>
+        <a class="mm-empty-cta" href="kanban.html">${cta}</a>
+      </div>
+    `;
+  }
+
   async function init(opts) {
     const { rootEl, data } = opts || {};
     if (!rootEl) throw new Error('MissionMindmap.init: rootEl required');
 
-    const nodes = (data && data.nodes) || MOCK_NODES;
-    const edges = (data && data.edges) || MOCK_EDGES;
+    const nodes = (data && Array.isArray(data.nodes)) ? data.nodes : [];
+    const edges = (data && Array.isArray(data.edges)) ? data.edges : [];
+
+    if (nodes.length === 0) {
+      renderEmptyState(rootEl);
+      return { empty: true, nodes, edges };
+    }
 
     injectStyle();
     rootEl.classList.add('mm-root');
@@ -1189,5 +1130,5 @@
     return { cy, ...ctrl, nodes, edges };
   }
 
-  global.MissionMindmap = { init, SYS, MOCK_NODES, MOCK_EDGES };
+  global.MissionMindmap = { init, SYS };
 })(window);

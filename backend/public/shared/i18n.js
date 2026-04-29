@@ -24,10 +24,13 @@ const TRANSLATIONS = {
         "mc_done_title": "Done List",
         // 心智圖 (Mind-map card on mission.html)
         "mm_card_title": "Mind Map",
-        "mm_card_beta": "(beta · mock data)",
+        "mm_card_beta": "(beta)",
         "mm_card_expand": "Expand",
         "mm_card_collapse": "Collapse",
-        "mm_card_hint": "52 nodes · 8 subsystems · 76 edges (incl. cross-system). Expand to explore.",
+        "mm_card_hint": "Connects your kanban cards into a graph: tasks, sub-cards and chat anchors. Expand to explore.",
+        "mm_empty_title": "Mind map has no nodes yet",
+        "mm_empty_hint": "Once you create kanban cards, this view will connect tasks, sub-cards and chat anchors into a graph automatically.",
+        "mm_empty_cta": "Open kanban to create your first card",
 
         "mc_notes_title": "Notes",
         "mc_rules_title": "Rules (Workflow)",
@@ -5024,10 +5027,13 @@ const TRANSLATIONS = {
         "mc_done_title": "已完成",
         // 心智圖 (Mind-map card on mission.html)
         "mm_card_title": "心智图",
-        "mm_card_beta": "(beta · 模拟数据)",
+        "mm_card_beta": "(beta)",
         "mm_card_expand": "展开",
         "mm_card_collapse": "收起",
-        "mm_card_hint": "52 个节点 · 8 子系统 · 76 条连线（含跨系统依赖）。展开可互动探索。",
+        "mm_card_hint": "把看板卡片連成圖：任務、子卡與聊天錨點互相關聯。展開可互動探索。",
+        "mm_empty_title": "心智圖還沒有節點",
+        "mm_empty_hint": "建立看板卡片後，這裡會自動把任務、子卡與聊天錨點連成圖。",
+        "mm_empty_cta": "前往看板新增第一張卡",
 
         "mc_notes_title": "筆記",
         "mc_rules_title": "規則 (Workflow)",
@@ -14061,10 +14067,10 @@ const TRANSLATIONS = {
         "mc_done_title": "完了一覧",
         // 心智圖 (Mind-map card on mission.html)
         "mm_card_title": "マインドマップ",
-        "mm_card_beta": "(beta · モックデータ)",
+        "mm_card_beta": "(beta)",
         "mm_card_expand": "展開",
         "mm_card_collapse": "折りたたむ",
-        "mm_card_hint": "52 ノード · 8 サブシステム · 76 リンク（クロスシステム依存含む）。展開して操作。",
+        "mm_card_hint": "カンバンのカードを地図に：タスク、サブカード、チャットアンカーを連結。展開して操作してください。",
 
         "mc_notes_title": "ノート",
         "mc_rules_title": "ルール (ワークフロー)",
@@ -18203,10 +18209,10 @@ const TRANSLATIONS = {
         "mc_done_title": "완료 목록",
         // 心智圖 (Mind-map card on mission.html)
         "mm_card_title": "마인드맵",
-        "mm_card_beta": "(beta · 모의 데이터)",
+        "mm_card_beta": "(beta)",
         "mm_card_expand": "펼치기",
         "mm_card_collapse": "접기",
-        "mm_card_hint": "52 노드 · 8 서브시스템 · 76 연결(시스템 간 의존성 포함). 펼쳐서 탐색.",
+        "mm_card_hint": "칸반 카드를 지도로 연결: 작업, 서브카드, 채팅 앵커. 펼쳐서 탐색하세요.",
 
         "mc_notes_title": "노트",
         "mc_rules_title": "규칙 (워크플로)",
@@ -22310,10 +22316,10 @@ const TRANSLATIONS = {
         "mc_done_title": "รายการที่เสร็จแล้ว",
         // 心智圖 (Mind-map card on mission.html)
         "mm_card_title": "แผนที่ความคิด",
-        "mm_card_beta": "(beta · ข้อมูลจำลอง)",
+        "mm_card_beta": "(beta)",
         "mm_card_expand": "ขยาย",
         "mm_card_collapse": "ย่อ",
-        "mm_card_hint": "52 โหนด · 8 ระบบย่อย · 76 ลิงก์ (รวมข้ามระบบ) — ขยายเพื่อสำรวจ",
+        "mm_card_hint": "เชื่อมโยงการ์ดคันบังเป็นแผนที่: งาน, การ์ดย่อย, จุดเชื่อมแชต — ขยายเพื่อสำรวจ",
 
         "mc_notes_title": "โน้ต",
         "mc_rules_title": "กฎ (เวิร์คโฟลว์)",
@@ -26428,10 +26434,10 @@ const TRANSLATIONS = {
         "mc_done_title": "Danh sách Hoàn thành",
         // 心智圖 (Mind-map card on mission.html)
         "mm_card_title": "Bản đồ tư duy",
-        "mm_card_beta": "(beta · dữ liệu mô phỏng)",
+        "mm_card_beta": "(beta)",
         "mm_card_expand": "Mở rộng",
         "mm_card_collapse": "Thu gọn",
-        "mm_card_hint": "52 nút · 8 hệ thống con · 76 liên kết (bao gồm phụ thuộc liên hệ thống). Mở rộng để khám phá.",
+        "mm_card_hint": "Kết nối thẻ kanban thành đồ thị: nhiệm vụ, thẻ con, mỏ neo trò chuyện. Mở rộng để khám phá.",
 
         "mc_notes_title": "Ghi chú",
         "mc_rules_title": "Quy tắc (Luồng công việc)",
@@ -30520,10 +30526,10 @@ const TRANSLATIONS = {
         "mc_done_title": "Daftar Selesai",
         // 心智圖 (Mind-map card on mission.html)
         "mm_card_title": "Peta Pikiran",
-        "mm_card_beta": "(beta · data tiruan)",
+        "mm_card_beta": "(beta)",
         "mm_card_expand": "Perluas",
         "mm_card_collapse": "Tutup",
-        "mm_card_hint": "52 simpul · 8 subsistem · 76 koneksi (termasuk lintas sistem). Perluas untuk menjelajah.",
+        "mm_card_hint": "Menghubungkan kartu kanban menjadi peta: tugas, sub-kartu, dan jangkar obrolan. Perluas untuk menjelajah.",
 
         "mc_notes_title": "Catatan",
         "mc_rules_title": "Aturan (Alur Kerja)",
@@ -34609,10 +34615,10 @@ const TRANSLATIONS = {
         "mc_done_title": "Liste Terminée",
         // 心智圖 (Mind-map card on mission.html)
         "mm_card_title": "Carte mentale",
-        "mm_card_beta": "(beta · données fictives)",
+        "mm_card_beta": "(beta)",
         "mm_card_expand": "Déplier",
         "mm_card_collapse": "Replier",
-        "mm_card_hint": "52 nœuds · 8 sous-systèmes · 76 liens (dépendances intersystèmes incluses). Déplier pour explorer.",
+        "mm_card_hint": "Vos fiches kanban en graphe : tâches, sous-fiches et ancrages de chat reliés. Dépliez pour explorer.",
 
         "mc_notes_title": "Notes",
         "mc_rules_title": "Règles (Flux de Travail)",
@@ -38688,10 +38694,10 @@ const TRANSLATIONS = {
         "mc_done_title": "Lista Completada",
         // 心智圖 (Mind-map card on mission.html)
         "mm_card_title": "Mapa mental",
-        "mm_card_beta": "(beta · datos simulados)",
+        "mm_card_beta": "(beta)",
         "mm_card_expand": "Expandir",
         "mm_card_collapse": "Contraer",
-        "mm_card_hint": "52 nodos · 8 subsistemas · 76 conexiones (incl. dependencias entre sistemas). Expande para explorar.",
+        "mm_card_hint": "Conecta las tarjetas del kanban en un grafo: tareas, sub-tarjetas y anclas de chat. Expande para explorar.",
 
         "mc_notes_title": "Notas",
         "mc_rules_title": "Reglas (Flujos de Trabajo)",
@@ -42735,10 +42741,10 @@ const TRANSLATIONS = {
         "mc_done_title": "Erledigt",
         // 心智圖 (Mind-map card on mission.html)
         "mm_card_title": "Mindmap",
-        "mm_card_beta": "(beta · Mock-Daten)",
+        "mm_card_beta": "(beta)",
         "mm_card_expand": "Aufklappen",
         "mm_card_collapse": "Zuklappen",
-        "mm_card_hint": "52 Knoten · 8 Subsysteme · 76 Verbindungen (inkl. systemübergreifender Abhängigkeiten). Aufklappen zum Erkunden.",
+        "mm_card_hint": "Verknüpft Ihre Kanban-Karten zu einer Karte: Aufgaben, Unterkarten und Chat-Anker. Aufklappen zum Erkunden.",
 
         "mc_notes_title": "Notizen",
         "mc_rules_title": "Regeln",
@@ -46815,10 +46821,10 @@ const TRANSLATIONS = {
         "mc_done_title": "Senarai Selesai",
         // 心智圖 (Mind-map card on mission.html)
         "mm_card_title": "Peta Minda",
-        "mm_card_beta": "(beta · data tiruan)",
+        "mm_card_beta": "(beta)",
         "mm_card_expand": "Buka",
         "mm_card_collapse": "Tutup",
-        "mm_card_hint": "52 nod · 8 subsistem · 76 sambungan (termasuk silang sistem). Buka untuk meneroka.",
+        "mm_card_hint": "Menghubungkan kad kanban menjadi peta: tugas, sub-kad, dan jangkar sembang. Buka untuk meneroka.",
 
         "mc_notes_title": "Nota",
         "mc_rules_title": "Aturan (Alur Kerja)",
@@ -51983,10 +51989,10 @@ const TRANSLATIONS = {
         "mc_done_title": "पूर्ण सूची",
         // 心智圖 (Mind-map card on mission.html)
         "mm_card_title": "माइंड मैप",
-        "mm_card_beta": "(beta · नकली डेटा)",
+        "mm_card_beta": "(beta)",
         "mm_card_expand": "विस्तार करें",
         "mm_card_collapse": "समेटें",
-        "mm_card_hint": "52 नोड · 8 सबसिस्टम · 76 लिंक (क्रॉस-सिस्टम सहित)। एक्सप्लोर करने के लिए विस्तार करें।",
+        "mm_card_hint": "कानबन कार्ड्स का मैप: कार्य, उप-कार्ड और चैट एंकर जुड़े। एक्सप्लोर करने के लिए विस्तार करें।",
 
         "mc_notes_title": "नोट्स",
         "mc_rules_title": "नियम (वर्कफ़्लो)",
@@ -57132,10 +57138,10 @@ const TRANSLATIONS = {
         "mc_done_title": "قائمة المكتمل",
         // 心智圖 (Mind-map card on mission.html)
         "mm_card_title": "الخريطة الذهنية",
-        "mm_card_beta": "(beta · بيانات وهمية)",
+        "mm_card_beta": "(beta)",
         "mm_card_expand": "توسيع",
         "mm_card_collapse": "طي",
-        "mm_card_hint": "52 عقدة · 8 أنظمة فرعية · 76 رابطًا (تشمل التبعيات بين الأنظمة). وسّع للاستكشاف.",
+        "mm_card_hint": "يربط بطاقات كانبان كرسم بياني: المهام والبطاقات الفرعية ومرابط الدردشة. وسّع للاستكشاف.",
 
         "mc_notes_title": "ملاحظات",
         "mc_rules_title": "القواعد (سير العمل)",
