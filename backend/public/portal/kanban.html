@@ -796,6 +796,11 @@
                 <label class="kb-form-label" data-i18n="kb_label_description">Description</label>
                 <textarea class="kb-form-textarea" id="editCardDesc" data-i18n-placeholder="kb_placeholder_desc" placeholder="Brief description..."></textarea>
             </div>
+            <div class="kb-form-group">
+                <div class="kb-auto-toggle-row">
+                    <label class="kb-auto-toggle-label"><input type="checkbox" id="editRequiresScreenshot"> 📸 <span data-i18n="kb_label_requires_screenshot">需截圖審查（完成時附截圖才可推進 review/done）</span></label>
+                </div>
+            </div>
             <div id="editSchedFields">
             <div class="kb-form-group">
                 <label class="kb-form-label" data-i18n="kb_label_sched_type">Schedule Type</label>
@@ -1672,6 +1677,7 @@
             document.getElementById('editSchedCardId').value = cardId;
             document.getElementById('editCardTitle').value = card.title || '';
             document.getElementById('editCardDesc').value = card.description || '';
+            document.getElementById('editRequiresScreenshot').checked = card.requiresScreenshotReview !== false;
             document.getElementById('editSchedFields').style.display = 'none';
             document.getElementById('editSchedModal').classList.add('show');
         }
@@ -1684,6 +1690,7 @@
             // Populate title & description
             document.getElementById('editCardTitle').value = card.title || '';
             document.getElementById('editCardDesc').value = card.description || '';
+            document.getElementById('editRequiresScreenshot').checked = card.requiresScreenshotReview !== false;
             const sc = card.schedule || {};
             // Set type
             const typeEl = document.getElementById('editSchedType');
@@ -1759,7 +1766,8 @@
                 const newTitle = document.getElementById('editCardTitle').value.trim();
                 const newDesc = document.getElementById('editCardDesc').value.trim();
                 if (!newTitle) { showToast(t('kb_err_title', 'Title is required'), true); return; }
-                const cardBody = { deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret, title: newTitle, description: newDesc };
+                const requiresScreenshotReview = document.getElementById('editRequiresScreenshot').checked;
+                const cardBody = { deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret, title: newTitle, description: newDesc, requiresScreenshotReview };
                 await apiCall('PUT', `/api/mission/card/${cardId}`, cardBody);
                 if (!cardOnlyMode) {
                     // Save schedule (automation cards only)

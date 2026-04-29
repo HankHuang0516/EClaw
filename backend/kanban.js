@@ -2301,16 +2301,23 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     }
                     const childTitle = `[Auto] ${card.title} (${timeLabel})`;
 
-                    // Create child card (inherit reviewerEntityId from parent)
+                    // Create child card (inherit reviewerEntityId + requires_screenshot_review from parent).
+                    // Mom-card editing surfaces a toggle so Hank can flip per-cron whether the
+                    // automated runs need an evidence screenshot before the screenshot-gate
+                    // releases /move to done. Passing the column through verbatim (NULL→NULL,
+                    // TRUE→TRUE, FALSE→FALSE) keeps child semantics aligned with the mom UI:
+                    // the helper's `!== false` rule treats NULL as "gate active" for both.
+                    const inheritScreenshot = card.requires_screenshot_review;
                     const childResult = await pool.query(
                         `INSERT INTO kanban_cards (id, device_id, title, description, priority, status, assigned_bots, created_by,
-                            status_changed_at, stale_threshold_ms, done_retention_ms, parent_card_id, is_auto_generated, reviewer_entity_id)
-                         VALUES ($1, $2, $3, $4, $5, 'todo', $6::jsonb, $7, NOW(), $8, $9, $10, true, $11)
+                            status_changed_at, stale_threshold_ms, done_retention_ms, parent_card_id, is_auto_generated, reviewer_entity_id,
+                            requires_screenshot_review)
+                         VALUES ($1, $2, $3, $4, $5, 'todo', $6::jsonb, $7, NOW(), $8, $9, $10, true, $11, $12)
                          RETURNING *`,
                         [newCardId(), card.device_id, childTitle, card.description || '', card.priority,
                          JSON.stringify(bots), card.created_by,
                          card.stale_threshold_ms, card.done_retention_ms, card.id,
-                         card.reviewer_entity_id || null]
+                         card.reviewer_entity_id || null, inheritScreenshot]
                     );
                     const childCard = childResult.rows[0];
                     console.log(`[Kanban] Automation child created: ${childCard.id} (${childTitle})`);
