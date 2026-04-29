@@ -1,3 +1,10 @@
+# [1.1122.0](https://github.com/HankHuang0516/EClaw/compare/v1.1121.0...v1.1122.0) (2026-04-29)
+
+
+### Features
+
+* **mindmap:** Phase 4 read-side — honor chat_anchor_coord in /api/mission/mindmap ([#2244](https://github.com/HankHuang0516/EClaw/issues/2244)) ([05d7782](https://github.com/HankHuang0516/EClaw/commit/05d7782fe468089573206d9d99aa771a77a9c081))
+
 # [1.1121.0](https://github.com/HankHuang0516/EClaw/compare/v1.1120.0...v1.1121.0) (2026-04-28)
 
 
