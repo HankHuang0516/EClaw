@@ -198,8 +198,8 @@ EClaw/
 │   ├── go/                        # Go SDK
 │   └── rust/                      # Rust SDK
 ├── docs/
-│   ├── plans/                     # Design documents (23 files)
-│   ├── reports/                   # Test & analysis reports (8 files)
+│   ├── plans/                     # Design documents (42 files)
+│   ├── reports/                   # Test & analysis reports (20 files)
 │   └── issues/                    # Issue documentation (4 files)
 ├── .github/workflows/
 │   ├── backend-ci.yml             # Backend lint + Jest tests
@@ -1000,6 +1000,12 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **i18n Cron-Notify Fix (v1.1117)**: EN labels for cron-notify keys no longer leak CJK 母卡
 - **Telegram Adapter PoC (v1.1121, reverted)**: Long-poll Telegram adapter attempted then reverted
 - **App Version**: Updated to 1.0.79 (versionCode 85)
+
+### Recent Features (v1.1122.x – v1.1123.x)
+
+- **Mindmap Empty-State for Fresh Devices (v1.1123)**: Ripped `MOCK_NODES`/`MOCK_EDGES` seed data; mindmap now renders an empty-state UI for fresh devices instead of mock content (#2246)
+- **Kanban Cron-Spawn Child Inheritance (v1.1122)**: Cron-spawned child cards inherit `requires_screenshot_review` flag from parent; mom card edit toggle for screenshot review setting (#2245)
+- **Mindmap Phase 4 Read-Side (v1.1122)**: `/api/mission/mindmap` honors `chat_anchor_coord` for read-side rendering, connecting mindmap nodes to chat anchor positions (#2244)
 
 ---
 
