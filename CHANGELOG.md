@@ -1,3 +1,10 @@
+# [1.1123.0](https://github.com/HankHuang0516/EClaw/compare/v1.1122.0...v1.1123.0) (2026-04-29)
+
+
+### Features
+
+* **kanban:** cron-spawn child inherits requires_screenshot_review + mom edit toggle ([#2245](https://github.com/HankHuang0516/EClaw/issues/2245)) ([ced2af7](https://github.com/HankHuang0516/EClaw/commit/ced2af7fc7a95bd405814fc791c91af12a6052cc))
+
 # [1.1122.0](https://github.com/HankHuang0516/EClaw/compare/v1.1121.0...v1.1122.0) (2026-04-29)
 
 
