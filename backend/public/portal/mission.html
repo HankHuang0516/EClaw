@@ -843,13 +843,13 @@
             <!-- Mind-map (PR-A: static mockup; PR-B will wire to /api/mission/cards) -->
             <div class="card mm-card">
                 <div class="card-header">
-                    <h2>🧠 <span data-i18n="mm_card_title">心智圖</span> <span style="font-size:11px;color:var(--text-secondary);font-weight:500;margin-left:6px;" data-i18n="mm_card_beta">(beta · 模擬資料)</span></h2>
+                    <h2>🧠 <span data-i18n="mm_card_title">心智圖</span> <span style="font-size:11px;color:var(--text-secondary);font-weight:500;margin-left:6px;" data-i18n="mm_card_beta">(beta)</span></h2>
                     <div class="section-header-actions">
                         <button class="btn btn-outline btn-sm" id="mmToggleBtn" onclick="toggleMindmap()" data-i18n="mm_card_expand">展開</button>
                     </div>
                 </div>
                 <div id="mmContainer" style="display:none;"></div>
-                <div id="mmHint" style="font-size:12px;color:var(--text-secondary);padding:4px 2px;" data-i18n="mm_card_hint">52 個節點 · 8 子系統 · 76 條連線（含跨系統依賴）。展開可互動探索。</div>
+                <div id="mmHint" style="font-size:12px;color:var(--text-secondary);padding:4px 2px;" data-i18n="mm_card_hint">把看板卡片連成圖：任務、子卡與聊天錨點互相關聯。展開可互動探索。</div>
             </div>
 
             <!-- Notes -->
@@ -968,22 +968,19 @@
             if (mmExpanded && !mmInitialized && window.MissionMindmap) {
                 mmInitialized = true;
                 try {
-                    let liveData = null;
+                    let liveData = { nodes: [], edges: [] };
                     try {
                         const resp = await fetch(
                             `/api/mission/mindmap?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`
                         );
                         if (resp.ok) {
                             const j = await resp.json();
-                            // Need at least 5 nodes for a mind-map to be useful;
-                            // below that, fall back to the curated demo so the
-                            // UX doesn't look empty for fresh devices.
-                            if (j.success && Array.isArray(j.nodes) && j.nodes.length >= 5) {
-                                liveData = { nodes: j.nodes, edges: j.edges || [] };
+                            if (j.success && Array.isArray(j.nodes)) {
+                                liveData = { nodes: j.nodes, edges: Array.isArray(j.edges) ? j.edges : [] };
                             }
                         }
                     } catch (fetchErr) {
-                        console.warn('mindmap live fetch failed, falling back to mock:', fetchErr);
+                        console.warn('mindmap live fetch failed:', fetchErr);
                     }
                     await window.MissionMindmap.init({ rootEl: container, data: liveData });
                 } catch (err) {
