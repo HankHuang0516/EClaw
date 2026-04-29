@@ -577,7 +577,13 @@
 
   function buildCy(canvasEl, nodes, edges) {
     const nodesById = Object.fromEntries(nodes.map(n => [n.id, n]));
-    const cyNodes = nodes.map(n => ({ data: { ...n, sysColor: SYS[n.sys].color } }));
+    const cyNodes = nodes.map(n => {
+      const sysColor = (SYS[n.sys] || SYS.kanban).color;
+      const cyNode = { data: { ...n, sysColor } };
+      const c = n.coord;
+      if (c && Number.isFinite(c.x) && Number.isFinite(c.y)) cyNode.position = { x: c.x, y: c.y };
+      return cyNode;
+    });
     const cyEdges = edges.map(([s, t, label]) => ({
       data: { id: `${s}__${t}`, source: s, target: t, label: label || '', cross: !!label }
     }));
@@ -586,7 +592,7 @@
       container: canvasEl,
       elements: [...cyNodes, ...cyEdges],
       layout: {
-        name: 'cose', padding: 30, animate: false, fit: true,
+        name: 'cose', padding: 30, animate: false, fit: true, randomize: false,
         idealEdgeLength: 95, nodeRepulsion: 8500, edgeElasticity: 100,
         nestingFactor: 1.2, gravity: 0.3, numIter: 1800, componentSpacing: 70,
       },

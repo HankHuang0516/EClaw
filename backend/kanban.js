@@ -908,7 +908,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
         const { deviceId } = { ...req.query, ...req.body };
         try {
             const cardsResult = await pool.query(
-                `SELECT id, title, description, priority, status, parent_card_id, is_automation, assigned_bots
+                `SELECT id, title, description, priority, status, parent_card_id, is_automation, assigned_bots, chat_anchor_coord
                  FROM kanban_cards
                  WHERE device_id = $1 AND archived = false
                  ORDER BY
@@ -939,7 +939,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 const sys = classifySys(c.title, c.is_automation);
                 sysCount[sys] = (sysCount[sys] || 0) + 1;
                 const summary = (c.description || '').replace(/\s+/g, ' ').trim().slice(0, 120);
-                nodes.push({
+                const node = {
                     id: c.id,
                     label: (c.title || '').slice(0, 40),
                     sys,
@@ -949,7 +949,12 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     priority: c.priority,
                     cardStatus: c.status,
                     isAutomation: !!c.is_automation,
-                });
+                };
+                const coord = c.chat_anchor_coord;
+                if (coord && Number.isFinite(coord.x) && Number.isFinite(coord.y)) {
+                    node.coord = { x: coord.x, y: coord.y };
+                }
+                nodes.push(node);
                 cardIds.add(c.id);
             }
 
