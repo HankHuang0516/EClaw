@@ -2304,9 +2304,10 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     // Create child card (inherit reviewerEntityId + requires_screenshot_review from parent).
                     // Mom-card editing surfaces a toggle so Hank can flip per-cron whether the
                     // automated runs need an evidence screenshot before the screenshot-gate
-                    // releases /move to done. NULL on parent → false (sensible default for
-                    // recurring automation; the gate exists for human-deliverable PR cards).
-                    const inheritScreenshot = card.requires_screenshot_review === true;
+                    // releases /move to done. Passing the column through verbatim (NULL→NULL,
+                    // TRUE→TRUE, FALSE→FALSE) keeps child semantics aligned with the mom UI:
+                    // the helper's `!== false` rule treats NULL as "gate active" for both.
+                    const inheritScreenshot = card.requires_screenshot_review;
                     const childResult = await pool.query(
                         `INSERT INTO kanban_cards (id, device_id, title, description, priority, status, assigned_bots, created_by,
                             status_changed_at, stale_threshold_ms, done_retention_ms, parent_card_id, is_auto_generated, reviewer_entity_id,
