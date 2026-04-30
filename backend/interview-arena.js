@@ -147,7 +147,7 @@ function weightedPick(items, keyFn, weights) {
 
 let VISION_IMAGES = [
     { file: 'img-f3a1.svg', keywords: ['red', 'circle'] },
-    { file: 'img-b7c2.svg', keywords: ['blue', 'square'] },
+    { file: null, description: 'A system monitoring dashboard showing CPU at 87%, RAM usage 11.2 GB of 16 GB, disk I/O at 340 MB/s, and 3 active processes flagged in red', keywords: ['CPU', '87', 'RAM', 'disk', 'three', 'red'] },
     { file: 'img-d4e9.svg', keywords: ['green', 'triangle'] },
     { file: 'img-a2f5.svg', keywords: ['yellow', 'star'] },
     { file: 'img-c8b3.svg', keywords: ['cat', 'orange'] },
@@ -159,8 +159,8 @@ let VISION_IMAGES = [
     { file: null, description: 'A simple house with a red roof and brown door', keywords: ['house', 'roof', 'door'] },
     // ── Medium tier (50%) — counting, labels, multi-object scenes ──
     { file: null, description: 'A bar chart with four bars labeled Q1 through Q4 where Q3 is the tallest', keywords: ['bar', 'chart', 'four', 'Q3'] },
-    { file: null, description: 'A desk with a laptop, two coffee cups, and a stack of three books', keywords: ['laptop', 'two', 'cups', 'three', 'books'] },
-    { file: null, description: 'A pie chart divided into four sections: blue 40%, green 30%, red 20%, yellow 10%', keywords: ['pie', 'chart', 'four', 'blue'] },
+    { file: null, description: 'A Git commit graph showing three branches: main has 5 commits, feature-auth branches off commit 2 with 3 commits, and hotfix branches off commit 4 of main with 1 commit', keywords: ['git', 'three', 'branches', 'main', 'feature', 'hotfix'] },
+    { file: null, description: 'A spreadsheet with five rows of sales data: Region A $142K, Region B $98K, Region C $227K, Region D $65K, Region E $183K — Region C is highlighted in green as the highest', keywords: ['spreadsheet', 'region', 'highest', '227', 'five', 'green'] },
     { file: null, description: 'A Venn diagram with three overlapping circles labeled A, B, and C', keywords: ['venn', 'three', 'circles'] },
     { file: null, description: 'A road sign reading SPEED LIMIT 65 against a blue sky', keywords: ['sign', 'speed', '65'] },
     { file: null, description: 'A calendar page showing March with the 15th circled in red', keywords: ['calendar', 'march', '15', 'red'] },
@@ -173,14 +173,16 @@ let VISION_IMAGES = [
     // ── Hard tier (30%) — OCR, spatial reasoning, complex counting ──
     { file: null, description: 'An aerial parking lot with twelve cars, three of which are red', keywords: ['twelve', 'cars', 'three', 'red'] },
     { file: null, description: 'A chemistry lab bench with three beakers: left contains blue liquid, middle is empty, right has green precipitate at the bottom', keywords: ['three', 'beakers', 'blue', 'empty', 'green'] },
-    { file: null, description: 'A handwritten note on lined paper reading Meeting at 3pm Room 204 with the time and room number underlined', keywords: ['meeting', '3pm', '204', 'underlined'] },
+    { file: null, description: 'A nutrition facts label showing per 100g: 2450mg sodium, 12g total fat, 8g protein, 34g carbohydrates, 4g dietary fiber, and 380 calories', keywords: ['nutrition', 'sodium', '2450', 'fat', 'protein', 'calories', '380'] },
     { file: null, description: 'A phone home screen showing 16 app icons in a 4x4 grid and a weather widget displaying 72 degrees', keywords: ['phone', '16', 'apps', 'weather', '72'] },
     { file: null, description: 'A line chart showing quarterly revenue: Q1 at $10K, Q2 at $15K, Q3 dips to $8K, Q4 recovers to $20K', keywords: ['chart', 'revenue', 'Q3', 'dip', 'Q4'] },
     { file: null, description: 'A world map with five red pins marking cities: New York, London, Tokyo, Sydney, and São Paulo', keywords: ['map', 'five', 'pins', 'Tokyo'] },
     { file: null, description: 'A receipt from a store dated 03/15 showing total $47.83 with three itemized lines and a barcode at bottom', keywords: ['receipt', 'total', '47', 'three', 'barcode'] },
-    { file: null, description: 'A weather dashboard panel showing temperature 28°C, humidity 65%, wind speed 12 km/h, and UV index 7 in four separate tiles', keywords: ['temperature', '28', 'humidity', '65', 'UV', '7'] },
+    { file: null, description: 'A chessboard mid-game: white has 9 pieces remaining including a king on e1 and a rook on a1; black has 7 pieces including a king on e8 and two bishops', keywords: ['chess', 'white', 'nine', 'black', 'seven', 'king', 'rook', 'bishop'] },
     { file: null, description: 'A printed circuit board with fourteen resistors, eight capacitors, and one microcontroller chip labeled ATmega328P', keywords: ['circuit', 'fourteen', 'resistors', 'eight', 'capacitors', 'ATmega'] },
     { file: null, description: 'A hotel room floor plan: bedroom 18m² on the left, bathroom 6m² top right, living area 22m² bottom right, with a corridor connecting all rooms', keywords: ['floor', 'plan', 'bedroom', '18', 'bathroom', '6', 'living', '22'] },
+    { file: null, description: 'A UI wireframe showing a navigation bar at top, a hero section with a button labeled Get Started, two feature cards side by side below, and a footer with three columns of links', keywords: ['wireframe', 'navigation', 'hero', 'get started', 'two', 'cards', 'footer', 'three'] },
+    { file: null, description: 'A project timeline Gantt chart: Planning phase Jan 1–15, Development phase Jan 16–Mar 30, Testing phase Apr 1–Apr 20, Launch on May 1 — four phases total', keywords: ['gantt', 'timeline', 'planning', 'development', 'testing', 'launch', 'four', 'may'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -367,7 +369,6 @@ let RESPONSE_QUESTIONS = [
     { question: 'What is the capital of France?', expectedKeywords: ['paris'] },
     { question: 'What is 17 × 23?', expectedKeywords: ['391'] },
     { question: 'Name the largest planet in our solar system.', expectedKeywords: ['jupiter'] },
-    { question: 'What is the longest river in the world?', expectedKeywords: ['nile', 'amazon'] },
     { question: 'What is 13 × 17?', expectedKeywords: ['221'] },
     // ── Medium tier (50%) — multi-step math, applied reasoning ──
     { question: 'A pool fills in 3 hours with pipe A alone and 6 hours with pipe B alone. How many hours to fill it with both pipes open together?', expectedKeywords: ['2'] },
@@ -378,9 +379,7 @@ let RESPONSE_QUESTIONS = [
     { question: 'A shirt originally costs $80 and is discounted by 25%. What is the sale price?', expectedKeywords: ['60'] },
     { question: 'What is the sum of all integers from 1 to 100?', expectedKeywords: ['5050'] },
     { question: 'How many prime numbers are there between 1 and 20?', expectedKeywords: ['8'] },
-    { question: 'All cats are mammals. All mammals are warm-blooded. Are all cats warm-blooded?', expectedKeywords: ['yes'] },
     { question: 'What is the speed of light in km/s (approximately)?', expectedKeywords: ['300000', '299792'] },
-    { question: 'What year did the Berlin Wall fall?', expectedKeywords: ['1989'] },
     // ── Hard tier (30%) — multi-step reasoning, tricky logic ──
     { question: 'A clock shows 3:15. What is the exact angle in degrees between the hour and minute hands?', expectedKeywords: ['7.5'] },
     { question: 'A farmer has chickens and cows. Together they have 30 heads and 74 legs. How many chickens does the farmer have?', expectedKeywords: ['23'] },
@@ -396,6 +395,12 @@ let RESPONSE_QUESTIONS = [
     { question: 'What is 2 to the power of 10?', expectedKeywords: ['1024'] },
     { question: 'A store sells apples for $0.75 each and oranges for $1.20 each. If someone buys 4 apples and 3 oranges, what is the total cost?', expectedKeywords: ['6.6', '6.60'] },
     { question: 'The sides of a right triangle are in the ratio 3:4:5. If the hypotenuse is 20 cm, what is the perimeter?', expectedKeywords: ['48'] },
+    // ── Additional medium/hard questions added in daily pool update ──
+    { question: 'A frog is at the bottom of a 20-meter well. Each day it climbs 4 meters; each night it slides back 2 meters. How many days does it take to escape the well?', expectedKeywords: ['9'] },
+    { question: 'What is the remainder when 2 to the power of 100 is divided by 3?', expectedKeywords: ['1'] },
+    { question: 'How many squares of all sizes (1×1, 2×2, up to 8×8) are there on a standard 8×8 chessboard?', expectedKeywords: ['204'] },
+    { question: 'A plane travels 2000 km at an effective speed of 1000 km/h (900 km/h airspeed plus 100 km/h tailwind). How many hours does the journey take?', expectedKeywords: ['2'] },
+    { question: 'A worker paints 1/3 of a fence on day 1 and 1/4 of the remaining unpainted fence on day 2. What fraction of the fence is still unpainted after day 2?', expectedKeywords: ['1/2', '0.5', 'half'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -455,17 +460,19 @@ let TTS_PHRASES = [
     { text: 'Encryption protects sensitive data during transmission', keywords: ['encryption', 'protects', 'sensitive', 'data', 'transmission'] },
     // ── Hard tier (30%) — acronyms, mixed content, technical jargon ──
     { text: 'The IPv4 address 192.168.1.1 is commonly used as a default gateway', keywords: ['IPv4', '192', '168', 'gateway'] },
-    { text: 'Tokyo Narita Airport code NRT handles approximately 45 million passengers annually', keywords: ['Narita', 'NRT', '45', 'million'] },
+    { text: 'Invoice number INV-2024-00784 for three hundred forty-nine dollars and fifty cents is due on April thirtieth', keywords: ['invoice', '2024', '00784', 'three', 'hundred', 'april', 'thirtieth'] },
     { text: 'Resume and naive are English words borrowed from French that retain their diacritical marks', keywords: ['resume', 'naive', 'French', 'diacritical'] },
     { text: 'Worcestershire sauce and Lieutenant Colonel are two commonly mispronounced English terms', keywords: ['worcestershire', 'lieutenant', 'colonel', 'mispronounced'] },
     { text: 'The Fibonacci sequence 1 1 2 3 5 8 13 21 grows approximately exponentially', keywords: ['fibonacci', 'sequence', '13', '21', 'exponentially'] },
     { text: 'The chemical compound CH3COOH commonly known as acetic acid has a pH of approximately 2.4', keywords: ['chemical', 'acetic', 'acid', 'pH'] },
     { text: 'Euler identity states that e to the power of i times pi plus 1 equals zero', keywords: ['euler', 'identity', 'pi', 'zero'] },
-    { text: 'The UNESCO World Heritage site Machu Picchu is located at 2430 meters elevation in Peru', keywords: ['UNESCO', 'Machu Picchu', '2430', 'Peru'] },
+    { text: 'The API endpoint requires an Authorization header with a Bearer token and a Content-Type of application slash JSON', keywords: ['API', 'authorization', 'bearer', 'token', 'content', 'JSON'] },
     // ── Additional hard phrases ──
     { text: 'Your one-time verification code is 8 4 3 7 2 and expires in five minutes', keywords: ['verification', 'code', '84372', 'five', 'minutes'] },
     { text: 'The SQL query selects all records from the users table where the account status equals active and the score is greater than 100', keywords: ['SQL', 'query', 'users', 'active', 'score', '100'] },
     { text: 'Bernoulli and Euler each contributed foundational theorems to both fluid dynamics and graph theory', keywords: ['bernoulli', 'euler', 'fluid', 'dynamics', 'graph', 'theory'] },
+    { text: 'Your one-time verification code is 7 4 2 9 1 — please enter it within ninety seconds before it expires', keywords: ['verification', 'code', '74291', 'ninety', 'seconds'] },
+    { text: 'Compound interest formula: principal times the quantity one plus rate divided by one hundred to the power of years minus one', keywords: ['compound', 'interest', 'principal', 'rate', 'power', 'years'] },
 ];
 
 // ============================================
