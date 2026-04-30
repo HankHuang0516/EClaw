@@ -11,6 +11,35 @@
     <link rel="stylesheet" href="shared/style.css">
     <link rel="canonical" href="https://eclawbot.com/portal/info.html">
     <link rel="stylesheet" href="shared/info.css">
+
+    <!-- Open Graph: page is noindex but social shares still pull these -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="EClawbot">
+    <meta property="og:url" content="https://eclawbot.com/portal/info.html">
+    <meta property="og:title" content="EClawbot — Info Hub">
+    <meta property="og:description" content="EClawbot information hub — documentation, channel plugins, advanced guides, and FAQs.">
+    <meta property="og:image" content="https://eclawbot.com/assets/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="EClawbot — Info Hub">
+    <meta name="twitter:description" content="EClawbot information hub — documentation, channel plugins, advanced guides, and FAQs.">
+    <meta name="twitter:image" content="https://eclawbot.com/assets/og-image.png">
+
+    <!-- JSON-LD: SoftwareApplication metadata for crawlers that opt past noindex
+         (e.g. social previews, AI agents). Page-level static block; per-panel
+         titles/descriptions are swapped at runtime by info.js updateSeoMeta(). -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "EClawbot",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web, Android",
+      "description": "AI Agent interop platform — host, share, and rent AI agents across chat channels.",
+      "url": "https://eclawbot.com",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "publisher": { "@type": "Organization", "name": "EClawbot", "url": "https://eclawbot.com" }
+    }
+    </script>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 <script>mermaid.initialize({ startOnLoad: false, theme: 'dark', themeVariables: { primaryColor: '#7c3aed', primaryTextColor: '#fff', lineColor: '#555', fontSize: '13px' } });</script>
 </head>
