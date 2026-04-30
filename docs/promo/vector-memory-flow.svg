@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 360" font-family="-apple-system, system-ui, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#666"/>
+    </marker>
+    <linearGradient id="bg" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0f1117"/>
+      <stop offset="100%" stop-color="#1a1d29"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="360" fill="url(#bg)"/>
+
+  <!-- Title -->
+  <text x="450" y="34" font-size="18" font-weight="700" fill="#e8eaf0" text-anchor="middle">EClawbot Vector Memory — write &amp; recall pipeline</text>
+
+  <!-- Step 1: Chat message -->
+  <rect x="30" y="80" width="160" height="80" rx="10" fill="#2a3042" stroke="#4a5278" stroke-width="1.5"/>
+  <text x="110" y="115" font-size="13" font-weight="600" fill="#e8eaf0" text-anchor="middle">Chat message</text>
+  <text x="110" y="135" font-size="11" fill="#9aa3b8" text-anchor="middle">user / bot turn</text>
+
+  <!-- Arrow 1 -->
+  <line x1="200" y1="120" x2="240" y2="120" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Step 2: Embedding -->
+  <rect x="250" y="80" width="180" height="80" rx="10" fill="#2a3a52" stroke="#5a78a8" stroke-width="1.5"/>
+  <text x="340" y="110" font-size="13" font-weight="600" fill="#e8eaf0" text-anchor="middle">Embed</text>
+  <text x="340" y="128" font-size="11" fill="#9aa3b8" text-anchor="middle">text-embedding-3-small</text>
+  <text x="340" y="144" font-size="11" fill="#9aa3b8" text-anchor="middle">1536-dim vector</text>
+
+  <!-- Arrow 2 -->
+  <line x1="440" y1="120" x2="480" y2="120" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Step 3: pgvector store -->
+  <rect x="490" y="80" width="180" height="80" rx="10" fill="#2a4252" stroke="#5a8a9a" stroke-width="1.5"/>
+  <text x="580" y="110" font-size="13" font-weight="600" fill="#e8eaf0" text-anchor="middle">pgvector store</text>
+  <text x="580" y="128" font-size="11" fill="#9aa3b8" text-anchor="middle">PostgreSQL + HNSW</text>
+  <text x="580" y="144" font-size="11" fill="#9aa3b8" text-anchor="middle">device-scoped pool</text>
+
+  <!-- Arrow down to query (curved) -->
+  <path d="M 580 165 Q 580 200 470 200 Q 360 200 360 220" fill="none" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Query box -->
+  <rect x="250" y="220" width="220" height="80" rx="10" fill="#3a2a52" stroke="#7858a8" stroke-width="1.5"/>
+  <text x="360" y="252" font-size="13" font-weight="600" fill="#e8eaf0" text-anchor="middle">Recall query</text>
+  <text x="360" y="270" font-size="11" fill="#9aa3b8" text-anchor="middle">"remember when we…"</text>
+  <text x="360" y="285" font-size="11" fill="#9aa3b8" text-anchor="middle">cosine top-K, &lt;100ms</text>
+
+  <!-- Arrow to citation -->
+  <line x1="480" y1="260" x2="520" y2="260" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Citation box -->
+  <rect x="530" y="220" width="200" height="80" rx="10" fill="#523a2a" stroke="#a87858" stroke-width="1.5"/>
+  <text x="630" y="252" font-size="13" font-weight="600" fill="#e8eaf0" text-anchor="middle">Cited reply</text>
+  <text x="630" y="270" font-size="11" fill="#9aa3b8" text-anchor="middle">answer + Related</text>
+  <text x="630" y="285" font-size="11" fill="#9aa3b8" text-anchor="middle">messages link list</text>
+
+  <!-- Auth scope band -->
+  <rect x="30" y="320" width="840" height="32" rx="6" fill="#1a1d29" stroke="#3a4060" stroke-width="1"/>
+  <text x="50" y="340" font-size="11" fill="#9aa3b8">Auth scope:</text>
+  <text x="120" y="340" font-size="11" fill="#7da3e8" font-weight="600">botSecret</text>
+  <text x="180" y="340" font-size="11" fill="#9aa3b8">→ own pool only.</text>
+  <text x="290" y="340" font-size="11" fill="#7da3e8" font-weight="600">deviceSecret</text>
+  <text x="365" y="340" font-size="11" fill="#9aa3b8">→ owner cross-bot view.</text>
+  <text x="510" y="340" font-size="11" fill="#9aa3b8">No embedding key →</text>
+  <text x="635" y="340" font-size="11" fill="#7da3e8" font-weight="600">ILIKE fallback</text>
+  <text x="720" y="340" font-size="11" fill="#9aa3b8">(graceful degrade).</text>
+</svg>
