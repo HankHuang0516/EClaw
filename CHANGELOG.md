@@ -1,3 +1,10 @@
+# [1.1124.0](https://github.com/HankHuang0516/EClaw/compare/v1.1123.0...v1.1124.0) (2026-04-30)
+
+
+### Features
+
+* **i18n:** add kanban search-scope keys for ja/ko/de ([#2248](https://github.com/HankHuang0516/EClaw/issues/2248)) ([2c9eca6](https://github.com/HankHuang0516/EClaw/commit/2c9eca6d3e8ba354f28c9ea8bb14b1e1e94923af))
+
 # [1.1123.0](https://github.com/HankHuang0516/EClaw/compare/v1.1122.0...v1.1123.0) (2026-04-29)
 
 
