@@ -99,6 +99,7 @@
         pop._refId = refId;
         pop._data = null;
         pop._depth = stack.length;
+        pop._anchorEl = anchorEl;
         pop.innerHTML = buildLoadingHtml();
         document.body.appendChild(pop);
         positionPopover(pop, anchorEl);
@@ -226,7 +227,7 @@
                 if (idx >= 0) closeFromIndex(idx);
                 return;
             }
-            if (action === 'requote') { insertRequoteToken(pop._data, pop._refType, pop._refId); closeAll(); return; }
+            if (action === 'requote') { insertRequoteToken(pop._data, pop._refType, pop._refId, pop._anchorEl || rootAnchor); closeAll(); return; }
         });
     }
 
@@ -244,10 +245,7 @@
         setTimeout(() => { tip.remove(); }, 1800);
     }
 
-    function insertRequoteToken(data, refType, refId) {
-        const token = tokenFor(data, refType, refId);
-        const input = document.getElementById('messageInput') || document.querySelector('textarea, [contenteditable="true"]');
-        if (!input) return;
+    function insertRequoteTokenIntoInput(input, token) {
         if (input.tagName === 'TEXTAREA' || input.tagName === 'INPUT') {
             const cur = input.value || '';
             const pos = input.selectionStart != null ? input.selectionStart : cur.length;
@@ -263,6 +261,37 @@
             document.execCommand && document.execCommand('insertText', false, token + ' ');
         }
     }
+
+    function insertRequoteToken(data, refType, refId, anchorEl) {
+        const token = tokenFor(data, refType, refId);
+        const input = document.getElementById('messageInput') || document.querySelector('textarea, [contenteditable="true"]');
+        if (input) {
+            insertRequoteTokenIntoInput(input, token);
+            return;
+        }
+        // No local chat input — try cross-pane relay (workspace split-view).
+        // Source page posts to its parent; workspace forwards to the chat iframe.
+        if (window.parent && window.parent !== window) {
+            try {
+                window.parent.postMessage(
+                    { type: 'eclaw_requote', token, refType, refId },
+                    window.location.origin
+                );
+                showToast(anchorEl, t('chip_popover_requoted', '已引用'));
+            } catch (_) {}
+        }
+    }
+
+    // Receive cross-pane requote (chat iframe side). Workspace forwards
+    // 'eclaw_requote' here; insert into messageInput if present.
+    window.addEventListener('message', (e) => {
+        if (e.origin !== window.location.origin) return;
+        if (!e.data || e.data.type !== 'eclaw_requote') return;
+        const input = document.getElementById('messageInput');
+        if (input && typeof e.data.token === 'string') {
+            insertRequoteTokenIntoInput(input, e.data.token);
+        }
+    });
 
     function tokenFor(data, refType, refId) {
         if (data && data.kind === 'card' && data.data && data.data.id) {
