@@ -59,6 +59,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             renderMermaidIn(panel);
         }
         history.replaceState(null, '', '#guide/' + tabId);
+        updateSeoMeta(tabId);
     }
 
     // Expose guide navigation for deep link handling (used by global handleHash)
@@ -135,6 +136,51 @@ function renderMermaidIn(root) {
     if (nodes.length) mermaid.run({ nodes });
 }
 
+// Per-panel SEO metadata. Used by updateSeoMeta() to swap document.title +
+// og:* / twitter:* tags when the user navigates to a panel or guide sub-page,
+// so a copy-pasted URL with a hash deep-link previews the right card on
+// social platforms.
+const SEO_META = {
+    'quickstart':       { title: 'Quick Start',       desc: 'Get started with EClawbot — create a device, bind a channel, rent or host AI agents.' },
+    'guide':            { title: 'User Guide',        desc: 'EClawbot user guide: features, use cases, mission center, kanban, mind-map, vector search.' },
+    'advanced':         { title: 'Advanced',          desc: 'Advanced EClawbot topics: mission center internals, broadcast, vault, debugging.' },
+    'channel-plugins':  { title: 'Channel Plugins',   desc: 'EClawbot channel plugins: OpenClaw, Claude Code, Telegram, Discord, web chat bridges.' },
+    'faq':              { title: 'FAQ',               desc: 'Frequently asked questions about EClawbot — billing, devices, rentals, plugins.' },
+    'release-notes':    { title: 'Release Notes',     desc: 'EClawbot release notes and changelog.' },
+    // Guide sub-pages (#guide/<id>)
+    'usecase-ecommerce':           { title: 'E-commerce Bot',          desc: 'Use EClawbot to run an AI-powered storefront and customer-service agent.' },
+    'usecase-kanban':              { title: 'Mission Center / Kanban', desc: 'Run AI agents against a shared kanban board with auto-cron tasks.' },
+    'usecase-gps':                 { title: 'GPS / Location Bot',      desc: 'Build location-aware agents on EClawbot.' },
+    'usecase-bot-plaza':           { title: 'Bot Plaza',               desc: 'Browse and rent community AI agents on the Bot Plaza.' },
+    'usecase-live-wallpaper':      { title: 'Live Wallpaper',          desc: 'Turn your AI agent into an animated wallpaper companion.' },
+    'usecase-gatekeeper':          { title: 'Gatekeeper Bot',          desc: 'Group access control and moderation via EClawbot agents.' },
+    'usecase-multiplatform':       { title: 'Multi-platform Bridge',   desc: 'One agent, many channels — Telegram, Discord, web, native app.' },
+    'usecase-minigame':            { title: 'Mini-game Bot',           desc: 'Build interactive mini-games served by EClawbot.' },
+    'usecase-bridge':              { title: 'Channel Bridge',          desc: 'Connect EClawbot to an external chat platform.' },
+    'usecase-proxy-window':        { title: 'Proxy Window',            desc: 'Embed an EClawbot agent into any web page via the proxy window.' },
+    'usecase-claude-openclaw':     { title: 'Claude / OpenClaw Bot',   desc: 'Run Claude or OpenClaw-engine bots on EClawbot.' },
+    'usecase-messaging-friends':   { title: 'Messaging Friends',       desc: 'Chat with other EClawbot users and their bots.' },
+    'usecase-voice-tts':           { title: 'Voice / TTS',             desc: 'Voice and text-to-speech features for EClawbot agents.' },
+    // Mission sub-pages
+    'mission-overview':            { title: 'Mission Overview',        desc: 'How EClawbot mission cards, kanban, and auto-crons fit together.' },
+};
+
+function updateSeoMeta(key) {
+    const meta = SEO_META[key];
+    if (!meta) return;
+    const fullTitle = `${meta.title} · EClawbot`;
+    document.title = fullTitle;
+    const setMeta = (selector, value) => {
+        const el = document.querySelector(selector);
+        if (el) el.setAttribute('content', value);
+    };
+    setMeta('meta[name="description"]', meta.desc);
+    setMeta('meta[property="og:title"]', fullTitle);
+    setMeta('meta[property="og:description"]', meta.desc);
+    setMeta('meta[name="twitter:title"]', fullTitle);
+    setMeta('meta[name="twitter:description"]', meta.desc);
+}
+
 function switchInfoTab(target) {
     const infoTabs = document.querySelectorAll('.info-tab');
     const infoPanels = document.querySelectorAll('.info-panel');
@@ -148,6 +194,7 @@ function switchInfoTab(target) {
         renderMermaidIn(panel);
     }
     history.replaceState(null, '', '#' + target);
+    updateSeoMeta(target);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
