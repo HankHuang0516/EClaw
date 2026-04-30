@@ -1,3 +1,10 @@
+# [1.1125.0](https://github.com/HankHuang0516/EClaw/compare/v1.1124.0...v1.1125.0) (2026-04-30)
+
+
+### Features
+
+* **info:** add og:/twitter: meta + JSON-LD + per-panel SEO swap ([#2249](https://github.com/HankHuang0516/EClaw/issues/2249)) ([9994b90](https://github.com/HankHuang0516/EClaw/commit/9994b90de91afe31aefa633cc80f0bd892b08e48))
+
 # [1.1124.0](https://github.com/HankHuang0516/EClaw/compare/v1.1123.0...v1.1124.0) (2026-04-30)
 
 
