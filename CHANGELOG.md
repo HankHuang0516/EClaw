@@ -1,3 +1,10 @@
+## [1.1126.1](https://github.com/HankHuang0516/EClaw/compare/v1.1126.0...v1.1126.1) (2026-04-30)
+
+
+### Bug Fixes
+
+* **publisher:** Qiita locale defaults to ja (was zh-TW) ([#2252](https://github.com/HankHuang0516/EClaw/issues/2252)) ([be68754](https://github.com/HankHuang0516/EClaw/commit/be68754170c93fd27d6c5b54a1afce186ca1a061))
+
 # [1.1126.0](https://github.com/HankHuang0516/EClaw/compare/v1.1125.0...v1.1126.0) (2026-04-30)
 
 
