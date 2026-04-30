@@ -1001,8 +1001,13 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Telegram Adapter PoC (v1.1121, reverted)**: Long-poll Telegram adapter attempted then reverted
 - **App Version**: Updated to 1.0.79 (versionCode 85)
 
-### Recent Features (v1.1122.x – v1.1123.x)
+### Recent Features (v1.1122.x – v1.1127.x)
 
+- **Smart Chip Cross-Pane Requote (v1.1127)**: 📌 cross-pane requote + 已引用 toast for smart chip references in workspace split-view (#2253)
+- **Publisher Qiita Locale Fix (v1.1126)**: Qiita platform locale defaults to `ja` instead of `zh-TW` (#2252)
+- **Vector-Memory Promo Content (v1.1126)**: Launch article + 5 social posts + flow diagram for vector-memory feature (#2251)
+- **Info Page SEO Meta Swap (v1.1125–v1.1126)**: Per-panel dynamic `og:`/`twitter:` meta + JSON-LD + 4 marketing hook panels for vector-memory on info.html (#2249–#2250)
+- **Kanban Search-Scope i18n (v1.1124)**: Added kanban search-scope keys for ja/ko/de locales (#2248)
 - **Mindmap Empty-State for Fresh Devices (v1.1123)**: Ripped `MOCK_NODES`/`MOCK_EDGES` seed data; mindmap now renders an empty-state UI for fresh devices instead of mock content (#2246)
 - **Kanban Cron-Spawn Child Inheritance (v1.1122)**: Cron-spawned child cards inherit `requires_screenshot_review` flag from parent; mom card edit toggle for screenshot review setting (#2245)
 - **Mindmap Phase 4 Read-Side (v1.1122)**: `/api/mission/mindmap` honors `chat_anchor_coord` for read-side rendering, connecting mindmap nodes to chat anchor positions (#2244)
