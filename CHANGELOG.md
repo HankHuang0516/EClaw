@@ -1,3 +1,10 @@
+# [1.1126.0](https://github.com/HankHuang0516/EClaw/compare/v1.1125.0...v1.1126.0) (2026-04-30)
+
+
+### Features
+
+* **info:** SEO meta swap for vector-memory + 4 marketing hook panels ([#2250](https://github.com/HankHuang0516/EClaw/issues/2250)) ([727d054](https://github.com/HankHuang0516/EClaw/commit/727d05484724893e181c6177c6a5044e3af5781e)), closes [#2249](https://github.com/HankHuang0516/EClaw/issues/2249) [#1967](https://github.com/HankHuang0516/EClaw/issues/1967) [#2139](https://github.com/HankHuang0516/EClaw/issues/2139)
+
 # [1.1125.0](https://github.com/HankHuang0516/EClaw/compare/v1.1124.0...v1.1125.0) (2026-04-30)
 
 
