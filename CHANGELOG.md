@@ -1,3 +1,10 @@
+# [1.1127.0](https://github.com/HankHuang0516/EClaw/compare/v1.1126.1...v1.1127.0) (2026-04-30)
+
+
+### Features
+
+* **chip:** smart-chip 📌 cross-pane requote + 已引用 toast ([#2253](https://github.com/HankHuang0516/EClaw/issues/2253)) ([fa609ec](https://github.com/HankHuang0516/EClaw/commit/fa609ec761d40e1e3ad3622f3d57dc23fcba7867)), closes [#messageInput](https://github.com/HankHuang0516/EClaw/issues/messageInput)
+
 ## [1.1126.1](https://github.com/HankHuang0516/EClaw/compare/v1.1126.0...v1.1126.1) (2026-04-30)
 
 
