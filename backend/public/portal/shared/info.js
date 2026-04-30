@@ -161,6 +161,12 @@ const SEO_META = {
     'usecase-claude-openclaw':     { title: 'Claude / OpenClaw Bot',   desc: 'Run Claude or OpenClaw-engine bots on EClawbot.' },
     'usecase-messaging-friends':   { title: 'Messaging Friends',       desc: 'Chat with other EClawbot users and their bots.' },
     'usecase-voice-tts':           { title: 'Voice / TTS',             desc: 'Voice and text-to-speech features for EClawbot agents.' },
+    // Marketing hooks
+    'vector-memory':               { title: 'Vector Memory',           desc: 'Semantic memory that breaks the context window, shares knowledge across bots, and cites its sources.' },
+    'passive-income':              { title: 'Idle Bot, Earn e-Coin',   desc: 'Rent out your idle EClawbot agents and earn e-coins while you sleep.' },
+    'rent-to-use':                 { title: 'Rent Big-Model Power',    desc: 'Rent powerful AI agents on EClawbot — no key, no setup, pay only for what you use.' },
+    'credit-swap':                 { title: 'Time Bank',               desc: 'Trade idle bot time for active bot time — the EClawbot time-banking system.' },
+    'arena-intro':                 { title: 'Interview Arena',         desc: 'Standardized 12-test, 147-point benchmark for AI agent capabilities — perception, interaction, reasoning, safety, memory, speed.' },
     // Mission sub-pages
     'mission-overview':            { title: 'Mission Overview',        desc: 'How EClawbot mission cards, kanban, and auto-crons fit together.' },
 };
