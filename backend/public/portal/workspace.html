@@ -396,13 +396,22 @@
 
     window.addEventListener('message', (e) => {
         if (e.origin !== window.location.origin) return;
-        if (!e.data || e.data.type !== 'eclaw_quote') return;
-        const chatPane = _getChatPane();
-        if (chatPane) {
-            chatPane.contentWindow.postMessage(e.data, window.location.origin);
-        } else {
-            // Fallback: chat pane not open — persist so it picks up on next open
-            localStorage.setItem('eclaw_pending_quote', JSON.stringify({ ...e.data, ts: Date.now() }));
+        if (!e.data) return;
+        if (e.data.type === 'eclaw_quote') {
+            const chatPane = _getChatPane();
+            if (chatPane) {
+                chatPane.contentWindow.postMessage(e.data, window.location.origin);
+            } else {
+                // Fallback: chat pane not open — persist so it picks up on next open
+                localStorage.setItem('eclaw_pending_quote', JSON.stringify({ ...e.data, ts: Date.now() }));
+            }
+            return;
+        }
+        if (e.data.type === 'eclaw_requote') {
+            // Smart-chip 📌 from a non-chat pane — forward to chat pane if open.
+            const chatPane = _getChatPane();
+            if (chatPane) chatPane.contentWindow.postMessage(e.data, window.location.origin);
+            return;
         }
     });
 
