@@ -196,6 +196,36 @@
             display: flex;
         }
 
+        .policy-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .policy-textarea {
+            width: 100%;
+            min-height: 92px;
+            resize: vertical;
+            padding: 10px 12px;
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            background: var(--input-bg);
+            color: var(--text);
+            font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+
+        .policy-preview {
+            display: none;
+            white-space: pre-wrap;
+            max-height: 260px;
+            overflow: auto;
+            padding: 12px;
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            background: var(--bg);
+            color: var(--text-secondary);
+            font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+
         /* ── Cancel section ── */
         .cancel-section {
             margin-top: 12px;
@@ -866,6 +896,68 @@
                         </label>
                     </div>
                 </div>
+
+                <!-- Agent Policy -->
+                <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--card-border);">
+                    <div class="card-title" style="font-size:14px;margin-bottom:6px;">
+                        <span>🧭 Agent Policy</span>
+                    </div>
+                    <p class="section-desc">Centrally injects device-level system prompt policy into Codex, Claude, and future channel bridges.</p>
+                    <div class="policy-grid">
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                            <input type="checkbox" id="promptPolicyEnabled">
+                            <span>Enable device prompt policy</span>
+                        </label>
+
+                        <label style="display:block;">
+                            <span class="setting-row-label">Device instructions</span>
+                            <textarea id="promptPolicyInstructions" class="policy-textarea" placeholder="One instruction per line"></textarea>
+                        </label>
+
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
+                            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="promptPolicyRequirePlan">
+                                <span>Require test plan</span>
+                            </label>
+                            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="promptPolicyRequireMilestones">
+                                <span>Require milestone updates</span>
+                            </label>
+                            <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
+                                <span>Heartbeat min</span>
+                                <input type="number" id="promptPolicyHeartbeatMinutes" min="1" max="30" step="1"
+                                       style="width:70px;padding:6px 8px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);text-align:right;">
+                            </label>
+                        </div>
+
+                        <label style="display:block;">
+                            <span class="setting-row-label">Codex override</span>
+                            <textarea id="promptPolicyCodexOverride" class="policy-textarea" placeholder="Codex-only instructions"></textarea>
+                        </label>
+
+                        <label style="display:block;">
+                            <span class="setting-row-label">Claude Code override</span>
+                            <textarea id="promptPolicyClaudeOverride" class="policy-textarea" placeholder="Claude Code-only instructions"></textarea>
+                        </label>
+
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+                            <button class="btn btn-primary btn-sm" onclick="savePromptPolicy()" id="promptPolicySaveBtn">Save Policy</button>
+                            <button class="btn btn-outline btn-sm" onclick="loadPromptPolicy()">Refresh</button>
+                            <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);">
+                                Preview entity #
+                                <input type="number" id="promptPolicyPreviewEntity" min="0" step="1" value="0"
+                                       style="width:64px;padding:6px 8px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);text-align:right;">
+                            </span>
+                            <select id="promptPolicyPreviewChannel" style="padding:6px 8px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);">
+                                <option value="codex">codex</option>
+                                <option value="claude_code">claude_code</option>
+                            </select>
+                            <button class="btn btn-outline btn-sm" onclick="previewPromptPolicy()">Preview</button>
+                        </div>
+                        <div id="promptPolicyStatus" class="section-desc" style="margin:0;"></div>
+                        <pre id="promptPolicyPreview" class="policy-preview"></pre>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1216,6 +1308,7 @@
             loadViewModePreference();
             loadNotifPreferences();
             loadDevicePreferences();
+            loadPromptPolicy(user);
             initKanbanNudgeCollapse();
             updatePushToggle();
 
@@ -2072,6 +2165,105 @@
                 await apiCall('PUT', '/api/device-preferences', { prefs });
             } catch (e) {
                 showToast(i18n.t('toast_preference_update_failed'), 'error');
+            }
+        }
+
+        // ── Agent prompt policy ──
+        function getPromptPolicyLines(id) {
+            const el = document.getElementById(id);
+            if (!el) return [];
+            return String(el.value || '')
+                .split('\n')
+                .map(line => line.trim())
+                .filter(Boolean);
+        }
+
+        function setPromptPolicyLines(id, lines) {
+            const el = document.getElementById(id);
+            if (el) el.value = Array.isArray(lines) ? lines.join('\n') : '';
+        }
+
+        function setPromptPolicyStatus(message, isError = false) {
+            const el = document.getElementById('promptPolicyStatus');
+            if (!el) return;
+            el.textContent = message || '';
+            el.style.color = isError ? 'var(--danger)' : 'var(--text-secondary)';
+        }
+
+        async function loadPromptPolicy(user = currentUser) {
+            if (!user?.deviceId || !user?.deviceSecret) return;
+            try {
+                const path = `/api/device/prompt-policy?deviceId=${encodeURIComponent(user.deviceId)}&deviceSecret=${encodeURIComponent(user.deviceSecret)}`;
+                const data = await apiCall('GET', path);
+                const policy = data.promptPolicy || {};
+                document.getElementById('promptPolicyEnabled').checked = policy.enabled !== false;
+                setPromptPolicyLines('promptPolicyInstructions', policy.instructions || []);
+                document.getElementById('promptPolicyRequirePlan').checked = policy.taskProtocol?.requireTestPlan !== false;
+                document.getElementById('promptPolicyRequireMilestones').checked = policy.taskProtocol?.requireMilestoneUpdates !== false;
+                document.getElementById('promptPolicyHeartbeatMinutes').value = Math.round((policy.taskProtocol?.statusHeartbeatMs || 180000) / 60000);
+                setPromptPolicyLines('promptPolicyCodexOverride', policy.channelOverrides?.codex?.instructions || []);
+                setPromptPolicyLines('promptPolicyClaudeOverride', policy.channelOverrides?.claude_code?.instructions || []);
+                setPromptPolicyStatus(policy.updatedAt ? `Loaded policy updated ${policy.updatedAt}` : 'No saved policy yet.');
+            } catch (e) {
+                setPromptPolicyStatus('Failed to load prompt policy', true);
+            }
+        }
+
+        async function savePromptPolicy(user = currentUser) {
+            if (!user?.deviceId || !user?.deviceSecret) return;
+            const btn = document.getElementById('promptPolicySaveBtn');
+            if (btn) btn.disabled = true;
+            try {
+                const heartbeatMinutes = Math.max(1, Math.min(30, parseInt(document.getElementById('promptPolicyHeartbeatMinutes').value) || 3));
+                const policy = {
+                    enabled: document.getElementById('promptPolicyEnabled').checked,
+                    instructions: getPromptPolicyLines('promptPolicyInstructions'),
+                    taskProtocol: {
+                        requireTestPlan: document.getElementById('promptPolicyRequirePlan').checked,
+                        requireMilestoneUpdates: document.getElementById('promptPolicyRequireMilestones').checked,
+                        statusHeartbeatMs: heartbeatMinutes * 60000
+                    },
+                    channelOverrides: {
+                        codex: {
+                            enabled: true,
+                            instructions: getPromptPolicyLines('promptPolicyCodexOverride')
+                        },
+                        claude_code: {
+                            enabled: true,
+                            instructions: getPromptPolicyLines('promptPolicyClaudeOverride')
+                        }
+                    }
+                };
+                await apiCall('PUT', '/api/device/prompt-policy', {
+                    deviceId: user.deviceId,
+                    deviceSecret: user.deviceSecret,
+                    promptPolicy: policy
+                });
+                setPromptPolicyStatus('Policy saved.');
+                showToast('Prompt policy saved');
+            } catch (e) {
+                setPromptPolicyStatus(e.message || 'Failed to save prompt policy', true);
+                showToast(e.message || 'Failed to save prompt policy', 'error');
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        async function previewPromptPolicy(user = currentUser) {
+            if (!user?.deviceId || !user?.deviceSecret) return;
+            const preview = document.getElementById('promptPolicyPreview');
+            const entityId = Math.max(0, parseInt(document.getElementById('promptPolicyPreviewEntity').value) || 0);
+            const channel = document.getElementById('promptPolicyPreviewChannel').value || 'codex';
+            if (preview) {
+                preview.style.display = 'block';
+                preview.textContent = 'Loading...';
+            }
+            try {
+                const path = `/api/channel/prompt-policy?deviceId=${encodeURIComponent(user.deviceId)}&deviceSecret=${encodeURIComponent(user.deviceSecret)}&entityId=${entityId}&channel=${encodeURIComponent(channel)}`;
+                const data = await apiCall('GET', path);
+                if (preview) preview.textContent = data.policy?.compiledPrompt || '(empty policy)';
+            } catch (e) {
+                if (preview) preview.textContent = e.message || 'Preview failed';
             }
         }
 

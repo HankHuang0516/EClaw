@@ -212,6 +212,11 @@ async function createTables() {
             ALTER TABLE devices ADD COLUMN IF NOT EXISTS paid_borrow_slots INTEGER DEFAULT 0
         `);
 
+        // Prompt Policy: device-level system prompt orchestration, merged with entity identity/policy at runtime
+        await client.query(`
+            ALTER TABLE devices ADD COLUMN IF NOT EXISTS prompt_policy JSONB
+        `);
+
         // Dynamic entity system: per-device counter for unique entity ID assignment
         await client.query(`
             ALTER TABLE devices ADD COLUMN IF NOT EXISTS next_entity_id INTEGER DEFAULT 1
@@ -620,11 +625,18 @@ async function saveDeviceData(deviceId, deviceData) {
 
             // Upsert device
             await client.query(
-                `INSERT INTO devices (device_id, device_secret, created_at, updated_at, next_entity_id)
-                 VALUES ($1, $2, $3, $4, $5)
+                `INSERT INTO devices (device_id, device_secret, created_at, updated_at, next_entity_id, prompt_policy)
+                 VALUES ($1, $2, $3, $4, $5, $6)
                  ON CONFLICT (device_id)
-                 DO UPDATE SET updated_at = $4, next_entity_id = $5`,
-                [deviceId, deviceData.deviceSecret, deviceData.createdAt, Date.now(), deviceData.nextEntityId || 1]
+                 DO UPDATE SET updated_at = $4, next_entity_id = $5, prompt_policy = $6`,
+                [
+                    deviceId,
+                    deviceData.deviceSecret,
+                    deviceData.createdAt,
+                    Date.now(),
+                    deviceData.nextEntityId || 1,
+                    deviceData.promptPolicy ? JSON.stringify(deviceData.promptPolicy) : null
+                ]
             );
 
             // Clear all public_code for this device first to avoid unique constraint
@@ -789,6 +801,9 @@ async function loadAllDevices() {
                 deviceSecret: row.device_secret,
                 createdAt: parseInt(row.created_at),
                 nextEntityId: parseInt(row.next_entity_id) || 1,
+                promptPolicy: row.prompt_policy
+                    ? (typeof row.prompt_policy === 'string' ? JSON.parse(row.prompt_policy) : row.prompt_policy)
+                    : null,
                 fcmToken: row.fcm_token || null,
                 apnsToken: row.apns_token || null,
                 entities: {}

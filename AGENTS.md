@@ -435,6 +435,7 @@ EClaw/
    |-----|----------|---------|--------|
    | Interview start fails with owner_device_not_found | `GET /api/rental/debug/interview-start-fail?deviceId=X&deviceSecret=Y` | 2026-04-12 | Active |
    | Rental contract start returns internal_error during rent/borrow E2E | `GET /api/rental/debug/contract-start-fail?deviceId=X&deviceSecret=Y&listingId=Y&renterDeviceId=Z&durationMinutes=30` | 2026-05-01 | Active |
+   | Chat first render delayed by cross-device label resolution | `GET /api/debug/chat-render-load-order?deviceId=X&deviceSecret=Y` | 2026-05-01 | Active |
 
 6. **Demand Elegance (Balanced)** — 在保持 minimal change 的前提下，追求可讀、一致的程式風格；不為了「漂亮」而過度重構，但也不容忍明顯的 code smell 在新增的程式碼中出現。
 
@@ -1152,6 +1153,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | AI Support Extended | `tests/jest/ai-support-extended.test.js` | Extended AI support chat validation |
 | Bot Registration | `tests/jest/bot-registration.test.js` | Bot registration endpoint validation |
 | Chat | `tests/jest/chat.test.js` | Chat history, file upload, message reactions |
+| Chat Render Load Order | `tests/jest/chat-render-load-order.test.js` | Static regression: chat.html renders history before async cross-device label lookups; no credentials |
 | Customer Service Tools | `tests/jest/customer-service-tools.test.js` | Customer service AI tool handler validation |
 | Entity Management | `tests/jest/entity-management.test.js` | Entity CRUD, reorder, refresh validation |
 | Entity Slot Compact | `tests/jest/entity-slot-compact.test.js` | Slot compaction renumbering validation |
