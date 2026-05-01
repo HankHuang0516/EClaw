@@ -727,6 +727,54 @@
             user-select: none;
         }
 
+        .target-label-main {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .entity-status-slot {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .entity-status-badge {
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap;
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 1;
+            padding: 3px 6px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+        }
+
+        .entity-status-badge.working {
+            color: #065f46;
+            background: #d1fae5;
+            border-color: #a7f3d0;
+        }
+
+        .entity-status-badge.waiting-approval {
+            color: #92400e;
+            background: #fef3c7;
+            border-color: #fde68a;
+        }
+
+        .entity-status-badge.no-progress {
+            color: #991b1b;
+            background: #fee2e2;
+            border-color: #fecaca;
+        }
+
+        .entity-status-badge.self-check-failed {
+            color: #831843;
+            background: #fce7f3;
+            border-color: #fbcfe8;
+        }
+
         .target-check input[type="checkbox"] {
             accent-color: var(--primary);
             width: 14px;
@@ -2893,6 +2941,8 @@
         let xdeviceLabelCache = {}; // publicCode -> label (remote entities)
         const xdeviceLookupInFlight = new Set();
         const xdeviceLookupMissCache = new Set();
+        const ENTITY_NO_PROGRESS_MS = 10 * 60 * 1000;
+        const entityRuntimeStatus = new Map();
 
         // ── Chat Integrity Validator ──
         const ChatIntegrityValidator = (() => {
@@ -3318,6 +3368,12 @@
                 if (!data) return;
                 const entityId = data.entityId ?? data.entity_id;
                 const state = (data.state || '').toUpperCase();
+                recordEntityRuntimeStatus({
+                    entityId,
+                    state,
+                    message: data.message || '',
+                    lastUpdated: data.lastUpdated || data.updatedAt || Date.now()
+                });
                 if (state === 'BUSY') {
                     showTypingIndicator(entityId);
                 } else {
@@ -3360,6 +3416,15 @@
                 if (boundEntities.length === 0) boundEntities = allEntities;
                 boundEntityIds = new Set(boundEntities.map(e => e.entityId));
                 updateEntityMaps(boundEntities);
+                boundEntities.forEach(e => {
+                    recordEntityRuntimeStatus({
+                        entityId: e.entityId,
+                        state: e.state,
+                        message: e.message || '',
+                        lastUpdated: e.lastUpdated || e.updatedAt || Date.now(),
+                        render: false
+                    });
+                });
                 // Build publicCode -> label map for own device
                 myPublicCodeMap = {};
                 boundEntities.forEach(e => {
@@ -3429,9 +3494,10 @@
                 const isChecked = savedTargets ? savedTargets.has(e.entityId) : true;
                 const label = document.createElement('label');
                 label.className = 'target-check target-entity-check';
+                label.dataset.entityId = e.entityId;
                 const e2eeBadge = e.encryptionStatus === 'e2ee' ? ' 🔒' : '';
                 label.innerHTML = `<input type="checkbox" data-entity="${e.entityId}" ${isChecked ? 'checked' : ''} onchange="updateTargetAll()">
-                    <span>${renderAvatarHtml(avatar, 20)} ${escapeHtml(name)} (#${e.entityId})${e2eeBadge}</span>`;
+                    <span class="target-label-main">${renderAvatarHtml(avatar, 20)} ${escapeHtml(name)} (#${e.entityId})${e2eeBadge}<span class="entity-status-slot">${renderEntityStatusBadge(e.entityId)}</span></span>`;
                 allItems.push({ el: label, type: 'entity' });
             });
 
@@ -3516,6 +3582,59 @@
                 updateTargetAll();
             });
         }
+
+        function normalizeEntityStatusTimestamp(value) {
+            if (!value) return Date.now();
+            if (typeof value === 'number') return value;
+            const parsed = Date.parse(value);
+            return Number.isNaN(parsed) ? Date.now() : parsed;
+        }
+
+        function recordEntityRuntimeStatus({ entityId, state, message = '', lastUpdated, render = true }) {
+            const id = Number(entityId);
+            if (!Number.isFinite(id)) return;
+            const normalizedState = (state || '').toUpperCase();
+            if (!normalizedState && !message) return;
+            entityRuntimeStatus.set(id, {
+                state: normalizedState,
+                message: String(message || ''),
+                updatedAt: normalizeEntityStatusTimestamp(lastUpdated)
+            });
+            if (render) refreshEntityStatusBadges();
+        }
+
+        function classifyEntityRuntimeStatus(entityId, now = Date.now()) {
+            const status = entityRuntimeStatus.get(Number(entityId));
+            if (!status) return null;
+            const message = (status.message || '').toLowerCase();
+            if (/self[-\s]?check.*fail|last self[-\s]?check.*failed|last self[-\s]?check.*false|selfcheck.*false/.test(message)) {
+                return { key: 'self-check-failed', label: 'Self-check failed' };
+            }
+            if (/pending approval|waiting approval|awaiting approval|approval required|needs approval/.test(message)) {
+                return { key: 'waiting-approval', label: 'Waiting approval' };
+            }
+            if (status.state !== 'BUSY') return null;
+            if (now - status.updatedAt > ENTITY_NO_PROGRESS_MS) {
+                return { key: 'no-progress', label: 'No progress 10m' };
+            }
+            return { key: 'working', label: 'Working' };
+        }
+
+        function renderEntityStatusBadge(entityId) {
+            const view = classifyEntityRuntimeStatus(entityId);
+            if (!view) return '';
+            return `<span class="entity-status-badge ${view.key}" title="${escapeHtml(view.label)}">${escapeHtml(view.label)}</span>`;
+        }
+
+        function refreshEntityStatusBadges() {
+            document.querySelectorAll('.target-entity-check[data-entity-id]').forEach(label => {
+                const slot = label.querySelector('.entity-status-slot');
+                if (!slot) return;
+                slot.innerHTML = renderEntityStatusBadge(label.dataset.entityId);
+            });
+        }
+
+        setInterval(refreshEntityStatusBadges, 60 * 1000);
 
         function toggleTargetAll(checkbox) {
             const checked = checkbox.checked;
