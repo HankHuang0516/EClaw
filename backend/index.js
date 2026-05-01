@@ -2167,6 +2167,130 @@ app.get('/api/debug/dashboard-empty', async (req, res) => {
     }
 });
 
+// Temporary diagnostic endpoint for the 2026-05-01 chat first-render delay.
+// Keep it content-safe: report counts, source shapes, and lookup pressure only;
+// never return chat text, secrets, tokens, or raw message payloads.
+app.get('/api/debug/chat-render-load-order', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query || {};
+    const timestamp = new Date().toISOString();
+    try {
+        if (!deviceId || !deviceSecret) {
+            return res.status(401).json({ success: false, bug: 'chat-render-load-order', error: 'deviceId and deviceSecret required', timestamp });
+        }
+
+        const memDevice = devices[deviceId];
+        const pool = db._getPool ? db._getPool() : authModule.pool;
+        const dbDevice = pool
+            ? await pool.query('SELECT device_secret FROM devices WHERE device_id = $1', [deviceId])
+            : { rows: [] };
+        const dbDeviceRow = dbDevice.rows[0] || null;
+        const memSecretOk = !!(memDevice && memDevice.deviceSecret && safeEqual(memDevice.deviceSecret, deviceSecret));
+        const dbSecretOk = !!(dbDeviceRow && dbDeviceRow.device_secret && safeEqual(dbDeviceRow.device_secret, deviceSecret));
+        if (!memSecretOk && !dbSecretOk) {
+            return res.status(403).json({ success: false, bug: 'chat-render-load-order', error: 'Invalid credentials', timestamp });
+        }
+
+        const [historyRows, entityRows] = pool ? await Promise.all([
+            pool.query(
+                `SELECT id, source, entity_id, is_from_user, is_from_bot, created_at
+                 FROM chat_messages
+                 WHERE device_id = $1
+                 ORDER BY created_at DESC
+                 LIMIT 500`,
+                [deviceId]
+            ),
+            pool.query(
+                `SELECT entity_id, is_bound, public_code
+                 FROM entities
+                 WHERE device_id = $1
+                 ORDER BY entity_id ASC`,
+                [deviceId]
+            ),
+        ]) : [{ rows: [] }, { rows: [] }];
+
+        const xdeviceCodes = new Set();
+        let xdeviceMessageCount = 0;
+        let sameDeviceRouteCount = 0;
+        let uuidStyleCodeCount = 0;
+        const sourceShapes = {};
+
+        for (const row of historyRows.rows) {
+            const source = row.source || '';
+            const shape = source.startsWith('xdevice:')
+                ? 'xdevice'
+                : source.startsWith('entity:')
+                    ? 'entity-route'
+                    : source || '(empty)';
+            sourceShapes[shape] = (sourceShapes[shape] || 0) + 1;
+
+            const xmatch = source.match(/^xdevice:([a-z0-9-]+):([^:]+)->(.+)$/);
+            if (xmatch) {
+                xdeviceMessageCount += 1;
+                xdeviceCodes.add(xmatch[1]);
+                xdeviceCodes.add(xmatch[3]);
+                continue;
+            }
+            if (/^entity:\d+:[^:]+->/.test(source)) sameDeviceRouteCount += 1;
+        }
+
+        const ownPublicCodes = new Set(entityRows.rows.map(r => r.public_code).filter(Boolean));
+        const lookupEligibleCodes = [];
+        for (const code of xdeviceCodes) {
+            if (!code || ownPublicCodes.has(code)) continue;
+            if (code.includes('-')) {
+                uuidStyleCodeCount += 1;
+                continue;
+            }
+            lookupEligibleCodes.push(code);
+        }
+
+        res.json({
+            success: true,
+            bug: 'chat-render-load-order',
+            diagnostics: {
+                server: {
+                    build: SERVER_BUILD_TAG,
+                    startedAt: SERVER_STARTED_AT.toISOString(),
+                    uptimeSec: Math.round(process.uptime()),
+                },
+                auth: {
+                    memSecretOk,
+                    dbSecretOk,
+                    requestUserDeviceId: req.user?.deviceId || null,
+                    requestUserId: req.user?.userId || null,
+                },
+                historyWindow: {
+                    limit: 500,
+                    returned: historyRows.rows.length,
+                    oldestAt: historyRows.rows.length ? historyRows.rows[historyRows.rows.length - 1].created_at : null,
+                    newestAt: historyRows.rows.length ? historyRows.rows[0].created_at : null,
+                },
+                routeSources: {
+                    sourceShapes,
+                    xdeviceMessageCount,
+                    sameDeviceRouteCount,
+                    uniqueXdeviceCodeCount: xdeviceCodes.size,
+                    lookupEligibleCodeCount: lookupEligibleCodes.length,
+                    uuidStyleCodeCount,
+                },
+                entities: {
+                    total: entityRows.rows.length,
+                    bound: entityRows.rows.filter(r => r.is_bound).length,
+                    ownPublicCodeCount: ownPublicCodes.size,
+                },
+                clientFix: {
+                    firstRenderBeforeXdeviceLookup: true,
+                    lookupRunsInBackground: true,
+                },
+            },
+            timestamp,
+        });
+    } catch (err) {
+        console.error('[Debug chat-render-load-order] failed:', err);
+        res.status(500).json({ success: false, bug: 'chat-render-load-order', error: err.message, timestamp });
+    }
+});
+
 // Wire up pending message flush on email verification
 authModule.setOnEmailVerified(async (deviceId) => {
     console.log(`[PendingFlush] onEmailVerified triggered for device ${deviceId}`);
