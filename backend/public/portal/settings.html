@@ -1363,9 +1363,8 @@
             initKanbanNudgeCollapse();
             updatePushToggle();
 
-            if (typeof applyDeepLinkFocus === 'function') applyDeepLinkFocus();
-
             document.getElementById('pageContent').style.display = '';
+            if (typeof applyDeepLinkFocus === 'function') applyDeepLinkFocus();
             initTapPay();
 
             setInterval(loadSubscriptionStatus, 15000);
@@ -2345,7 +2344,9 @@
 
             onPromptPolicyScopeChange();
             loadPromptPolicy(user);
-            setTimeout(() => document.getElementById('agentPolicySection')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
+            requestAnimationFrame(() => {
+                document.getElementById('agentPolicySection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
         }
 
         function applyDeepLinkFocus() {
