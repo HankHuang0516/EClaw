@@ -1,3 +1,10 @@
+## [1.1133.3](https://github.com/HankHuang0516/EClaw/compare/v1.1133.2...v1.1133.3) (2026-05-01)
+
+
+### Bug Fixes
+
+* guard saveChatMessage against null text parameter ([#2279](https://github.com/HankHuang0516/EClaw/issues/2279)) ([9fb168b](https://github.com/HankHuang0516/EClaw/commit/9fb168b10db5b3ca70bf9d77ae6e247f42fba652))
+
 ## [1.1133.2](https://github.com/HankHuang0516/EClaw/compare/v1.1133.1...v1.1133.2) (2026-05-01)
 
 
