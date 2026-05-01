@@ -1,3 +1,10 @@
+# [1.1128.0](https://github.com/HankHuang0516/EClaw/compare/v1.1127.3...v1.1128.0) (2026-05-01)
+
+
+### Features
+
+* add prompt policy orchestration ([0a1d2b7](https://github.com/HankHuang0516/EClaw/commit/0a1d2b7fc963e0b923df05a793e1e8995610b49e))
+
 ## [1.1127.3](https://github.com/HankHuang0516/EClaw/compare/v1.1127.2...v1.1127.3) (2026-05-01)
 
 
