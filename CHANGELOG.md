@@ -1,3 +1,10 @@
+# [1.1130.0](https://github.com/HankHuang0516/EClaw/compare/v1.1129.0...v1.1130.0) (2026-05-01)
+
+
+### Features
+
+* expand agent policy dashboard editor ([#2269](https://github.com/HankHuang0516/EClaw/issues/2269)) ([36b006e](https://github.com/HankHuang0516/EClaw/commit/36b006e3362238949dc2b5ca1d67bda325eec81f))
+
 # [1.1129.0](https://github.com/HankHuang0516/EClaw/compare/v1.1128.0...v1.1129.0) (2026-05-01)
 
 
