@@ -2888,8 +2888,11 @@
         let contacts = [];           // from /api/contacts
         let contactsLoaded = false;
         let _renderVersion = 0;
+        let _xdeviceResolutionSeq = 0;
         let myPublicCodeMap = {};   // publicCode -> { entityId, label }
         let xdeviceLabelCache = {}; // publicCode -> label (remote entities)
+        const xdeviceLookupInFlight = new Set();
+        const xdeviceLookupMissCache = new Set();
 
         // ── Chat Integrity Validator ──
         const ChatIntegrityValidator = (() => {
@@ -3715,9 +3718,9 @@
                     const prevCount = allMessages.length;
                     allMessages = data.messages;
                     _sourceParseCache.clear();
-                    await resolveXDeviceCodes(allMessages);
                     renderFilterChips();
                     renderMessages(prevCount < allMessages.length);
+                    refreshXDeviceLabelsInBackground(allMessages);
                     ChatIntegrityValidator.validateDataLayer(data.messages);
                 }
             } catch (e) {
@@ -4031,19 +4034,41 @@
                     if (!myPublicCodeMap[t] && !xdeviceLabelCache[t]) unknownCodes.add(t);
                 }
             }
-            const lookups = Array.from(unknownCodes)
+
+            const codesToLookup = Array.from(unknownCodes)
                 .filter(code => !code.includes('-')) // Skip UUID-style device IDs (owner mode); they aren't public codes
-                .map(async code => {
+                .filter(code => !xdeviceLookupInFlight.has(code) && !xdeviceLookupMissCache.has(code));
+
+            let resolvedAny = false;
+            const lookups = codesToLookup.map(async code => {
+                xdeviceLookupInFlight.add(code);
                 try {
                     const data = await apiCall('GET', `/api/entity/lookup?code=${encodeURIComponent(code)}`);
                     if (data.success && data.entity) {
                         const e = data.entity;
                         const avatar = e.avatar || (e.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
                         xdeviceLabelCache[code] = `${renderAvatarHtml(avatar, 20)} ${escapeHtml(e.name || e.character)}`;
+                        resolvedAny = true;
+                    } else {
+                        xdeviceLookupMissCache.add(code);
                     }
-                } catch (_) { /* silent — will show raw code as fallback */ }
+                } catch (_) {
+                    xdeviceLookupMissCache.add(code);
+                } finally {
+                    xdeviceLookupInFlight.delete(code);
+                }
             });
             await Promise.all(lookups);
+            return resolvedAny;
+        }
+
+        function refreshXDeviceLabelsInBackground(messages) {
+            const seq = ++_xdeviceResolutionSeq;
+            resolveXDeviceCodes(messages).then(resolvedAny => {
+                if (!resolvedAny || seq !== _xdeviceResolutionSeq) return;
+                renderFilterChips();
+                renderMessages(false);
+            }).catch(() => {});
         }
 
         // ── Render Messages ──
