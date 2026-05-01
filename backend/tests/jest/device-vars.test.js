@@ -679,5 +679,19 @@ describe('GET /api/help — vault category', () => {
         expect(res.body.curl_examples).toContain('/api/device-vars/audit');
         expect(res.body.curl_examples).toContain('YES_DELETE_ALL_VAULT');
     });
-});
 
+    it('matches exact category names such as messaging', async () => {
+        const devId = `help-category-${Date.now()}`;
+        const secret = await registerDevice(devId);
+
+        const regRes = await post('/api/device/register').send({ deviceId: devId, deviceSecret: secret, entityId: 0 });
+        const bindRes = await post('/api/bind').send({ code: regRes.body.bindingCode });
+        const botSecret = bindRes.body.botSecret;
+
+        const res = await get(`/api/help?deviceId=${devId}&botSecret=${botSecret}&entityId=0&intent=messaging`);
+        expect(res.status).toBe(200);
+        expect(res.body.matched_category).toBe('messaging');
+        expect(res.body.curl_examples).toContain('/api/transform');
+        expect(res.body.curl_examples).toContain('speakTo');
+    });
+});

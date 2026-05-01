@@ -756,6 +756,7 @@ if (process.env.NODE_ENV !== 'test') {
 // Per-route limiters already exist in bot-tools.js, growth.js, channel-api.js;
 // the limits below are additive and not intended to override them.
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = rateLimit;
 const rateLimitDisabled = () =>
     process.env.NODE_ENV === 'test' && process.env.ENABLE_RATE_LIMIT_IN_TEST !== '1';
 
@@ -795,7 +796,7 @@ const messageLimiter = rateLimit({
     // before it reaches route validation).
     keyGenerator: (req) => {
         const deviceId = (req.body && req.body.deviceId) || null;
-        return deviceId ? `dev:${deviceId}` : `ip:${req.ip}`;
+        return deviceId ? `dev:${deviceId}` : `ip:${ipKeyGenerator(req.ip)}`;
     },
     skip: () => rateLimitDisabled(),
     message: { success: false, error: 'Too many messages — slow down' },
@@ -1361,8 +1362,8 @@ app.get('/api/help', (req, res) => {
         analytics:  ['analytics','growth','metrics','signup','retention','kpi','viral','k-value','成長','指標','留存','分析','회귀','분석','지표','メトリクス','分析','指標']
     };
 
-    const matched = Object.entries(INTENT_MAP).find(([, kws]) =>
-        kws.some(kw => q.includes(kw))
+    const matched = Object.entries(INTENT_MAP).find(([category, kws]) =>
+        q === category || q.includes(category) || kws.some(kw => q.includes(kw))
     )?.[0] ?? 'general';
 
     const d = `'{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${eId}`; // shared body prefix
