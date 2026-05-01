@@ -2520,5 +2520,34 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
         }
     }
 
+    // Debug endpoint to trace screenshot review default logic
+    router.get('/debug/screenshot-review-default', (req, res) => {
+        const { title = "Sample Card", requiresScreenshotReview } = req.query;
+
+        // Simulate the logic from POST /card
+        const finalRequiresScreenshot = requiresScreenshotReview === undefined
+            ? false  // Default to disabled for all new cards
+            : requiresScreenshotReview !== 'false';
+
+        res.json({
+            debug: true,
+            input: {
+                title,
+                requiresScreenshotReview: requiresScreenshotReview || 'undefined'
+            },
+            logic: {
+                step1: 'requiresScreenshotReview === undefined',
+                step1Result: requiresScreenshotReview === undefined,
+                step2: 'requiresScreenshotReview === undefined ? false : requiresScreenshotReview !== "false"',
+                finalResult: finalRequiresScreenshot
+            },
+            output: {
+                requiresScreenshotReview: finalRequiresScreenshot
+            },
+            codeVersion: 'abf74108-debug',
+            timestamp: new Date().toISOString()
+        });
+    });
+
     return { router, initKanbanDatabase, startBackgroundTimers, stopBackgroundTimers, autoReviewOnTransform };
 };
