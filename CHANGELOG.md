@@ -1,3 +1,10 @@
+## [1.1127.1](https://github.com/HankHuang0516/EClaw/compare/v1.1127.0...v1.1127.1) (2026-05-01)
+
+
+### Bug Fixes
+
+* require postgres persistence in production ([ddee7fb](https://github.com/HankHuang0516/EClaw/commit/ddee7fb9e242e39e2ff222f224e2e128d2e3c250))
+
 # [1.1127.0](https://github.com/HankHuang0516/EClaw/compare/v1.1126.1...v1.1127.0) (2026-04-30)
 
 
