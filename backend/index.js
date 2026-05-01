@@ -2012,6 +2012,154 @@ app.use(authModule.softAuthMiddleware); // Populate req.user from cookie on ALL 
 app.use('/api/auth', authModule.router);
 authModule.initAuthDatabase();
 
+// Temporary diagnostic endpoint for the 2026-05-01 dashboard-empty incident.
+// Keep auth strict and redact all secrets: this endpoint reports presence/counts
+// and secret-match booleans only.
+app.get('/api/debug/dashboard-empty', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query || {};
+    const timestamp = new Date().toISOString();
+    try {
+        if (!deviceId || !deviceSecret) {
+            return res.status(401).json({ success: false, bug: 'dashboard-empty', error: 'deviceId and deviceSecret required', timestamp });
+        }
+
+        const memDevice = devices[deviceId];
+        const pool = db._getPool ? db._getPool() : authModule.pool;
+        const dbDevice = pool
+            ? await pool.query('SELECT device_id, device_secret, created_at, next_entity_id, updated_at FROM devices WHERE device_id = $1', [deviceId])
+            : { rows: [] };
+        const dbDeviceRow = dbDevice.rows[0] || null;
+        const memSecretOk = !!(memDevice && memDevice.deviceSecret && safeEqual(memDevice.deviceSecret, deviceSecret));
+        const dbSecretOk = !!(dbDeviceRow && dbDeviceRow.device_secret && safeEqual(dbDeviceRow.device_secret, deviceSecret));
+        if (!memSecretOk && !dbSecretOk) {
+            return res.status(403).json({ success: false, bug: 'dashboard-empty', error: 'Invalid credentials', timestamp });
+        }
+
+        const [
+            dbEntities,
+            userRows,
+            channelRows,
+            trashRows,
+            logRows,
+            chatRows,
+        ] = pool ? await Promise.all([
+            pool.query(
+                `SELECT entity_id, is_bound, name, character, state, public_code, binding_type, channel_account_id, last_updated, updated_at
+                 FROM entities WHERE device_id = $1 ORDER BY entity_id ASC`,
+                [deviceId]
+            ),
+            pool.query(
+                `SELECT id, email, device_id, email_verified, is_admin, created_at
+                 FROM user_accounts WHERE device_id = $1 ORDER BY created_at DESC LIMIT 5`,
+                [deviceId]
+            ),
+            pool.query(
+                `SELECT id, status, callback_url, created_at, updated_at
+                 FROM channel_accounts WHERE device_id = $1 ORDER BY id ASC`,
+                [deviceId]
+            ),
+            pool.query(
+                `SELECT entity_id, name, character, public_code, deleted_at
+                 FROM entity_trash WHERE device_id = $1 ORDER BY deleted_at DESC LIMIT 12`,
+                [deviceId]
+            ).catch(err => ({ rows: [{ error: err.message }] })),
+            pool.query(
+                `SELECT level, category, message, entity_id, created_at, metadata
+                 FROM server_logs WHERE device_id = $1
+                 ORDER BY created_at DESC LIMIT 20`,
+                [deviceId]
+            ).catch(err => ({ rows: [{ error: err.message }] })),
+            pool.query(
+                `SELECT source, entity_id, COUNT(*)::int AS count, MAX(created_at) AS latest
+                 FROM chat_messages WHERE device_id = $1
+                 GROUP BY source, entity_id ORDER BY latest DESC NULLS LAST LIMIT 20`,
+                [deviceId]
+            ).catch(err => ({ rows: [{ error: err.message }] })),
+        ]) : [{ rows: [] }, { rows: [] }, { rows: [] }, { rows: [] }, { rows: [] }, { rows: [] }];
+
+        const memEntities = memDevice?.entities || {};
+        const memEntityRows = Object.keys(memEntities).map(Number).sort((a, b) => a - b).map(id => {
+            const e = memEntities[id] || {};
+            return {
+                entityId: id,
+                isBound: !!e.isBound,
+                name: e.name || null,
+                character: e.character || null,
+                state: e.state || null,
+                publicCode: e.publicCode || null,
+                bindingType: e.bindingType || null,
+                channelAccountId: e.channelAccountId || null,
+            };
+        });
+
+        res.json({
+            success: true,
+            bug: 'dashboard-empty',
+            timestamp,
+            diagnostics: {
+                server: {
+                    build: SERVER_BUILD_TAG,
+                    startedAt: SERVER_STARTED_AT.toISOString(),
+                    uptimeSec: Math.round(process.uptime()),
+                    persistenceReady,
+                    usePostgreSQL,
+                    inMemoryDeviceCount: Object.keys(devices).length,
+                },
+                auth: {
+                    memSecretOk,
+                    dbSecretOk,
+                    requestUserDeviceId: req.user?.deviceId || null,
+                    requestUserId: req.user?.userId || null,
+                },
+                memoryDevice: memDevice ? {
+                    exists: true,
+                    nextEntityId: memDevice.nextEntityId || null,
+                    totalSlots: Object.keys(memEntities).length,
+                    boundCount: memEntityRows.filter(e => e.isBound).length,
+                    entities: memEntityRows,
+                } : { exists: false },
+                dbDevice: dbDeviceRow ? {
+                    exists: true,
+                    createdAt: dbDeviceRow.created_at,
+                    updatedAt: dbDeviceRow.updated_at,
+                    nextEntityId: dbDeviceRow.next_entity_id,
+                } : { exists: false },
+                dbEntities: {
+                    count: dbEntities.rows.length,
+                    boundCount: dbEntities.rows.filter(r => r.is_bound).length,
+                    rows: dbEntities.rows.map(r => ({
+                        entityId: Number(r.entity_id),
+                        isBound: !!r.is_bound,
+                        name: r.name || null,
+                        character: r.character || null,
+                        state: r.state || null,
+                        publicCode: r.public_code || null,
+                        bindingType: r.binding_type || null,
+                        channelAccountId: r.channel_account_id || null,
+                        lastUpdated: r.last_updated || null,
+                        updatedAt: r.updated_at || null,
+                    })),
+                },
+                userAccounts: userRows.rows,
+                channelAccounts: channelRows.rows.map(r => ({
+                    id: r.id,
+                    status: r.status,
+                    hasCallback: !!r.callback_url,
+                    callbackHost: r.callback_url ? (() => { try { return new URL(r.callback_url).host; } catch (_) { return 'invalid-url'; } })() : null,
+                    createdAt: r.created_at,
+                    updatedAt: r.updated_at,
+                })),
+                entityTrashRecent: trashRows.rows,
+                chatMessageSummary: chatRows.rows,
+                recentServerLogs: logRows.rows,
+            },
+        });
+    } catch (err) {
+        console.error('[Debug dashboard-empty] failed:', err);
+        res.status(500).json({ success: false, bug: 'dashboard-empty', error: err.message, timestamp });
+    }
+});
+
 // Wire up pending message flush on email verification
 authModule.setOnEmailVerified(async (deviceId) => {
     console.log(`[PendingFlush] onEmailVerified triggered for device ${deviceId}`);
