@@ -1,3 +1,10 @@
+# [1.1129.0](https://github.com/HankHuang0516/EClaw/compare/v1.1128.0...v1.1129.0) (2026-05-01)
+
+
+### Features
+
+* show channel status badges in chat ([#2268](https://github.com/HankHuang0516/EClaw/issues/2268)) ([dc3f415](https://github.com/HankHuang0516/EClaw/commit/dc3f41505097ccdf33c82f022f6d361a5318020f))
+
 # [1.1128.0](https://github.com/HankHuang0516/EClaw/compare/v1.1127.3...v1.1128.0) (2026-05-01)
 
 
