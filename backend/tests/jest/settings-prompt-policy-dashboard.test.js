@@ -56,5 +56,14 @@ describe('Settings Agent Policy dashboard editor', () => {
         expect(html).toContain("params.get('scope') === 'entity'");
         expect(html).toContain("window.location.hash === '#agent-policy'");
         expect(html).toContain("loadPromptPolicy(user)");
+        expect(html).toContain("requestAnimationFrame(() =>");
+    });
+
+    test('applies Agent Policy deep links after settings content is visible', () => {
+        const showContentIndex = html.indexOf("document.getElementById('pageContent').style.display = '';");
+        const deepLinkIndex = html.indexOf("if (typeof applyDeepLinkFocus === 'function') applyDeepLinkFocus();");
+        expect(showContentIndex).toBeGreaterThan(-1);
+        expect(deepLinkIndex).toBeGreaterThan(-1);
+        expect(showContentIndex).toBeLessThan(deepLinkIndex);
     });
 });
