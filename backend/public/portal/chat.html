@@ -3841,6 +3841,8 @@
                     renderMessages(prevCount < allMessages.length);
                     refreshXDeviceLabelsInBackground(allMessages);
                     ChatIntegrityValidator.validateDataLayer(data.messages);
+                    await syncCodexAutoApproveTargetsFromServer();
+                    await maybeAutoApproveRequests(allMessages);
                 }
             } catch (e) {
                 console.error('[CHAT_DEBUG] loadMessages FAILED:', e.message || e);
@@ -4925,6 +4927,103 @@
 
         // ── Slash Command Confirmation State ──
         let pendingConfirmCommand = null;
+        let codexAutoApproveSyncAt = 0;
+        const CODEX_AUTO_APPROVE_PREF_KEY = 'eclaw_codex_auto_approve_targets';
+        const CODEX_AUTO_APPROVE_REPLIED_KEY = 'eclaw_codex_auto_approve_replied_messages';
+        const CODEX_AUTO_APPROVE_REFRESH_MS = 60 * 1000;
+
+        function readJsonStorage(key, fallback) {
+            try {
+                const raw = localStorage.getItem(key);
+                if (!raw) return fallback;
+                const parsed = JSON.parse(raw);
+                return parsed && typeof parsed === 'object' ? parsed : fallback;
+            } catch (_) {
+                return fallback;
+            }
+        }
+
+        function writeJsonStorage(key, value) {
+            try { localStorage.setItem(key, JSON.stringify(value || {})); } catch (_) {}
+        }
+
+        function getCodexAutoApproveTargets() {
+            return readJsonStorage(CODEX_AUTO_APPROVE_PREF_KEY, {});
+        }
+
+        function setCodexAutoApproveTargets(targets) {
+            writeJsonStorage(CODEX_AUTO_APPROVE_PREF_KEY, targets);
+        }
+
+        function getCodexAutoApproveReplied() {
+            return readJsonStorage(CODEX_AUTO_APPROVE_REPLIED_KEY, {});
+        }
+
+        function markCodexAutoApproveReplied(messageId) {
+            const replied = getCodexAutoApproveReplied();
+            replied[String(messageId)] = true;
+            writeJsonStorage(CODEX_AUTO_APPROVE_REPLIED_KEY, replied);
+        }
+
+        function isAutoApproveEnabledForEntity(entityId) {
+            const targets = getCodexAutoApproveTargets();
+            return !!targets[String(entityId)];
+        }
+
+        async function syncCodexAutoApproveTargetsFromServer(force = false) {
+            const now = Date.now();
+            if (!force && codexAutoApproveSyncAt && now - codexAutoApproveSyncAt < CODEX_AUTO_APPROVE_REFRESH_MS) {
+                return getCodexAutoApproveTargets();
+            }
+            if (!currentUser?.deviceId || !currentUser?.deviceSecret) {
+                return getCodexAutoApproveTargets();
+            }
+            try {
+                const data = await apiCall('GET', `/api/device-preferences?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+                const targets = data?.prefs?.codex_auto_approve_targets || {};
+                setCodexAutoApproveTargets(targets);
+                codexAutoApproveSyncAt = now;
+                return targets;
+            } catch (_) {
+                return getCodexAutoApproveTargets();
+            }
+        }
+
+        async function maybeAutoApproveRequests(messages) {
+            if (!Array.isArray(messages) || !messages.length) return;
+            const replied = getCodexAutoApproveReplied();
+            const latestByEntity = new Map();
+
+            for (const msg of messages) {
+                if (!msg || !msg.is_from_bot) continue;
+                const entityId = Number(msg.entity_id);
+                if (!Number.isFinite(entityId) || !isAutoApproveEnabledForEntity(entityId)) continue;
+                const text = String(msg.text || '');
+                if (!/codex requests input/i.test(text)) continue;
+                if (replied[msg.id]) continue;
+
+                const ts = Date.parse(msg.created_at || msg.createdAt || 0) || 0;
+                const prev = latestByEntity.get(entityId);
+                if (!prev || ts > prev.ts) {
+                    latestByEntity.set(entityId, { msg, ts });
+                }
+            }
+
+            for (const { msg } of latestByEntity.values()) {
+                try {
+                    await apiCall('POST', '/api/client/speak', {
+                        deviceId: currentUser.deviceId,
+                        deviceSecret: currentUser.deviceSecret,
+                        entityId: msg.entity_id,
+                        text: 'yes',
+                        source: 'web_chat'
+                    });
+                    markCodexAutoApproveReplied(msg.id);
+                } catch (err) {
+                    console.warn('[CHAT] auto-approve failed:', err.message || err);
+                }
+            }
+        }
 
         // ── Quote Reply State ──
         let replyContext = null;
@@ -5112,6 +5211,10 @@
                         // Track confirmation state from platform commands
                         if (speakResp && speakResp.needsConfirmation && speakResp.confirmCommand) {
                             pendingConfirmCommand = speakResp.confirmCommand;
+                        }
+                        if (speakResp && speakResp.command === 'auto_approve') {
+                            await syncCodexAutoApproveTargetsFromServer(true);
+                            await maybeAutoApproveRequests(allMessages);
                         }
                         if (hasNoWebhookWarning(speakResp)) {
                             showWebhookTroubleModal();

@@ -8,6 +8,8 @@ const KanbanStatus = require('./public/shared/kanban-status.js');
 const DEFAULTS = {
     broadcast_recipient_info: true,
     remote_control_enabled: false,
+    // Codex channel: entity-specific auto-approve toggle for "requests input"
+    codex_auto_approve_targets: {},
     // Kanban nudge (stale-card reminder) — applies uniformly to all entities
     kanban_nudge_batch_size: 1,
     kanban_nudge_priority_mode: 'priority_first',  // 'priority_first' | 'column_first' | 'column_level'
@@ -45,6 +47,17 @@ function coerceValue(key, raw) {
         const filtered = raw.filter(s => NUDGE_STATUS_OPTIONS.has(s));
         // Must nudge at least one column, else fall back to default.
         return filtered.length ? filtered : [...def];
+    }
+    if (key === 'codex_auto_approve_targets') {
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+        const out = {};
+        for (const [entityId, enabled] of Object.entries(raw)) {
+            const n = Number(entityId);
+            if (Number.isFinite(n) && n >= 0) {
+                out[String(n)] = !!enabled;
+            }
+        }
+        return out;
     }
     return def;
 }

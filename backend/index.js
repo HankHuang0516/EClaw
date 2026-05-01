@@ -826,7 +826,7 @@ const DEFAULT_INITIAL_SLOTS = 1; // new devices start with 1 slot (entity #0)
 // ============================================
 // PLATFORM SLASH COMMANDS
 // ============================================
-const PLATFORM_COMMANDS = new Set(['help', 'status', 'reset']);
+const PLATFORM_COMMANDS = new Set(['help', 'status', 'reset', 'auto_approve']);
 
 function parsePlatformCommand(text) {
     if (!text || !text.startsWith('/')) return null;
@@ -900,6 +900,36 @@ async function handlePlatformCommand(command, deviceId, device, targetIds, confi
             }
             return {
                 text: 'Conversation Reset:\n' + results.join('\n'),
+                needsConfirmation: false
+            };
+        }
+
+        case 'auto_approve': {
+            const prefs = await devicePrefs.getPrefs(deviceId);
+            const currentTargets = {
+                ...(prefs.codex_auto_approve_targets || {})
+            };
+            const toggled = [];
+
+            for (const eId of targetIds) {
+                const key = String(eId);
+                const next = !currentTargets[key];
+                currentTargets[key] = next;
+                toggled.push({ entityId: eId, enabled: next });
+            }
+
+            await devicePrefs.updatePrefs(deviceId, {
+                codex_auto_approve_targets: currentTargets
+            });
+
+            const enabledCount = toggled.filter(t => t.enabled).length;
+            const disabledCount = toggled.length - enabledCount;
+            const statusText = toggled.length === 1
+                ? `Auto-approve ${toggled[0].enabled ? 'enabled' : 'disabled'} for #${toggled[0].entityId}.`
+                : `Auto-approve updated for ${toggled.length} entities (${enabledCount} enabled, ${disabledCount} disabled).`;
+
+            return {
+                text: `${statusText} Future "requests input" prompts will auto-answer yes for the enabled entities.`,
                 needsConfirmation: false
             };
         }
