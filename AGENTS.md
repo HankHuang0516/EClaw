@@ -1165,7 +1165,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Server Logs | `tests/jest/server-logs.test.js` | GET /api/logs and GET /api/audit-logs — auth, query filters, limit enforcement |
 | Channel API | `tests/jest/channel-api.test.js` | Channel provision, register, bind, message, test-sink — auth, CRUD lifecycle |
 | OAuth Server | `tests/jest/oauth-server.test.js` | OAuth client registration, token endpoint, revoke (RFC 7009), introspect (RFC 7662) |
-| Device Vars | `tests/jest/device-vars.test.js` | Environment variables POST/GET/DELETE — auth, encryption, bot access |
+| Device Vars + Help | `tests/jest/device-vars.test.js` | Environment variables POST/GET/DELETE — auth, encryption, bot access; `/api/help` category matching |
 | Cross-Speak | `tests/jest/cross-speak.test.js` | Cross-device entity messaging, client cross-speak, pending queue — auth, validation |
 | Cross-Speak Channel | `tests/jest/cross-speak-channel.test.js` | Cross-speak channel push parity — entity/client cross-speak channel-bound delivery |
 | Link Preview | `tests/jest/link-preview.test.js` | Link preview OG tag extraction, URL validation, SSRF protection, timeout handling |
