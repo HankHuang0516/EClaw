@@ -1,3 +1,10 @@
+# [1.1131.0](https://github.com/HankHuang0516/EClaw/compare/v1.1130.0...v1.1131.0) (2026-05-01)
+
+
+### Features
+
+* add dashboard agent policy card ([7ac8874](https://github.com/HankHuang0516/EClaw/commit/7ac88746b1c05e6013beac2257aa284d3df67dd3))
+
 # [1.1130.0](https://github.com/HankHuang0516/EClaw/compare/v1.1129.0...v1.1130.0) (2026-05-01)
 
 
