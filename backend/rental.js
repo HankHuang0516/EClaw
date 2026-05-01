@@ -28,7 +28,7 @@ const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
 const { runInterview, getProbeList } = require('./bot-interview');
-const { safeEqual } = require('./safe-equal');
+const safeEqual = require('./safe-equal');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
