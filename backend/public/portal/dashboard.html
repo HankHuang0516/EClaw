@@ -1391,6 +1391,7 @@
         body.embedded-orgchart .container { padding: 12px; max-width: 100%; }
         body.embedded-orgchart .page-header,
         body.embedded-orgchart .dash-tabs,
+        body.embedded-orgchart #dashboardAgentPolicyCard,
         body.embedded-orgchart #entityGrid,
         body.embedded-orgchart #emptyState,
         body.embedded-orgchart #addEntityCard,
@@ -1430,6 +1431,107 @@
             .invite-banner { flex-wrap: wrap; }
             .invite-banner-cta { flex: 1; text-align: center; }
         }
+
+        .agent-policy-card {
+            margin-bottom: 16px;
+            padding: 16px 18px;
+        }
+        .agent-policy-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 14px;
+            margin-bottom: 12px;
+        }
+        .agent-policy-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .agent-policy-status {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.45;
+            margin-top: 3px;
+        }
+        .agent-policy-badge {
+            display: inline-flex;
+            align-items: center;
+            min-height: 24px;
+            padding: 3px 9px;
+            border: 1px solid var(--card-border);
+            border-radius: 999px;
+            background: var(--input-bg);
+            color: var(--text-secondary);
+            font-size: 11px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .agent-policy-badge.enabled {
+            color: var(--success);
+            border-color: rgba(76, 175, 80, 0.35);
+            background: rgba(76, 175, 80, 0.1);
+        }
+        .agent-policy-badge.disabled {
+            color: var(--warning);
+            border-color: rgba(255, 193, 7, 0.35);
+            background: rgba(255, 193, 7, 0.1);
+        }
+        .agent-policy-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .agent-policy-controls {
+            display: grid;
+            grid-template-columns: minmax(120px, 160px) minmax(150px, 180px) auto auto;
+            gap: 8px;
+            align-items: center;
+        }
+        .agent-policy-controls input,
+        .agent-policy-controls select {
+            width: 100%;
+            min-height: 36px;
+            padding: 7px 10px;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            background: var(--input-bg);
+            color: var(--text);
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+        .agent-policy-preview {
+            display: none;
+            max-height: 220px;
+            overflow: auto;
+            margin: 12px 0 0;
+            padding: 12px;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.18);
+            color: var(--text-secondary);
+            font-family: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+            font-size: 12px;
+            line-height: 1.45;
+            white-space: pre-wrap;
+        }
+        @media (max-width: 760px) {
+            .agent-policy-header {
+                flex-direction: column;
+            }
+            .agent-policy-controls {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        @media (max-width: 520px) {
+            .agent-policy-controls {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
     <link rel="canonical" href="https://eclawbot.com/portal/dashboard.html">
 </head>
@@ -1460,6 +1562,40 @@
             <a href="invite.html" class="invite-banner-cta" data-i18n="invite_banner_cta">Invite now</a>
             <button type="button" class="invite-banner-close" onclick="dismissInviteBanner()" aria-label="Dismiss" title="Hide for 7 days">×</button>
         </div>
+
+        <section class="card agent-policy-card" id="dashboardAgentPolicyCard" aria-labelledby="dashboardAgentPolicyTitle">
+            <div class="agent-policy-header">
+                <div>
+                    <div class="agent-policy-title" id="dashboardAgentPolicyTitle">
+                        <span aria-hidden="true">🧭</span>
+                        <span>Agent Policy</span>
+                    </div>
+                    <div class="agent-policy-status" id="dashboardAgentPolicyStatus">
+                        Loading central prompt policy...
+                    </div>
+                </div>
+                <span class="agent-policy-badge" id="dashboardAgentPolicyEnabledBadge">Checking</span>
+            </div>
+            <div class="agent-policy-details" id="dashboardAgentPolicyDetails">
+                <span class="agent-policy-badge">Test plan</span>
+                <span class="agent-policy-badge">Milestones</span>
+                <span class="agent-policy-badge">Heartbeat</span>
+            </div>
+            <div class="agent-policy-controls" aria-label="Agent policy quick controls">
+                <input type="number" id="dashboardPolicyPreviewEntity" min="0" step="1" value="0"
+                       aria-label="Preview entity number" title="Preview entity #"
+                       oninput="this.dataset.userTouched='1'">
+                <select id="dashboardPolicyPreviewChannel" aria-label="Preview channel">
+                    <option value="codex">codex</option>
+                    <option value="claude_code">claude_code</option>
+                    <option value="hermes">hermes</option>
+                    <option value="generic">generic</option>
+                </select>
+                <button class="btn btn-sm btn-outline" type="button" onclick="previewDashboardPromptPolicy()">Preview</button>
+                <button class="btn btn-sm btn-primary" type="button" onclick="openDashboardAgentPolicyEditor('entity')">Open editor</button>
+            </div>
+            <pre class="agent-policy-preview" id="dashboardAgentPolicyPreview"></pre>
+        </section>
 
         <!-- Dashboard Tab Bar -->
         <div class="dash-tabs" id="dashTabs" role="tablist">
@@ -1809,6 +1945,8 @@
         let isAddExpanded = false;
         let isEditMode = false;
         let originalEntityOrder = [];
+        let dashboardPromptPolicy = null;
+        let dashboardEntityPromptPolicy = null;
 
         // --- Utilities ---
         function escapeHtml(str) {
@@ -1847,6 +1985,7 @@
             renderSlotSelector();
 
             await loadEntities();
+            loadDashboardPromptPolicy().catch(err => console.warn('[AgentPolicy] dashboard load failed', err));
 
             if (__embeddedOrg) switchDashTab('orgchart');
 
@@ -1900,6 +2039,139 @@
             if (banner) banner.style.display = 'none';
         }
 
+        // --- Agent Policy dashboard card ---
+        function findPreferredPolicyEntityId() {
+            const codexEntity = entities.find(e => {
+                const label = [
+                    e.name,
+                    e.character,
+                    e.message,
+                    e.webhook,
+                    getEntityDisplayName(e.entityId)
+                ].filter(Boolean).join(' ');
+                return /codex/i.test(label);
+            });
+            return (codexEntity || entities[0] || {}).entityId || 0;
+        }
+
+        function syncDashboardPolicyEntityInput() {
+            const input = document.getElementById('dashboardPolicyPreviewEntity');
+            if (!input || input.dataset.userTouched === '1') return;
+            const entityId = findPreferredPolicyEntityId();
+            input.value = entityId ? String(entityId) : '0';
+        }
+
+        function getDashboardOverrideLabels(policy = {}) {
+            return Object.entries(policy.channelOverrides || {})
+                .filter(([, cfg]) => Array.isArray(cfg?.instructions) && cfg.instructions.length)
+                .map(([channel, cfg]) => `${channel}: ${cfg.instructions.length}`);
+        }
+
+        function renderDashboardPromptPolicy(policy = {}, entityPolicy = null, entityId = 0) {
+            const status = document.getElementById('dashboardAgentPolicyStatus');
+            const badge = document.getElementById('dashboardAgentPolicyEnabledBadge');
+            const details = document.getElementById('dashboardAgentPolicyDetails');
+            if (!status || !badge || !details) return;
+
+            const enabled = policy.enabled !== false;
+            const taskProtocol = policy.taskProtocol || {};
+            const heartbeatMinutes = Math.round((taskProtocol.statusHeartbeatMs || 180000) / 60000);
+            const overrideLabels = getDashboardOverrideLabels(policy);
+            const entityOverrideLabels = getDashboardOverrideLabels(entityPolicy || {});
+            const statusParts = [
+                policy.updatedAt ? `Device policy updated ${policy.updatedAt}` : 'No saved device default policy',
+                entityId && entityPolicy?.updatedAt ? `Entity #${entityId} override updated ${entityPolicy.updatedAt}` : ''
+            ].filter(Boolean);
+
+            badge.textContent = enabled ? 'Enabled' : 'Disabled';
+            badge.classList.toggle('enabled', enabled);
+            badge.classList.toggle('disabled', !enabled);
+            status.textContent = statusParts.length
+                ? `${statusParts.join(' · ')}. Preview shows the compiled entity/channel prompt.`
+                : 'Open editor to create a central prompt policy.';
+
+            details.innerHTML = [
+                `<span class="agent-policy-badge ${taskProtocol.requireTestPlan !== false ? 'enabled' : 'disabled'}">Test plan ${taskProtocol.requireTestPlan !== false ? 'on' : 'off'}</span>`,
+                `<span class="agent-policy-badge ${taskProtocol.requireMilestoneUpdates !== false ? 'enabled' : 'disabled'}">Milestones ${taskProtocol.requireMilestoneUpdates !== false ? 'on' : 'off'}</span>`,
+                `<span class="agent-policy-badge">Heartbeat ${heartbeatMinutes}m</span>`,
+                `<span class="agent-policy-badge">Device overrides ${overrideLabels.length ? escapeHtml(overrideLabels.join(', ')) : 'none'}</span>`,
+                entityId ? `<span class="agent-policy-badge ${entityOverrideLabels.length ? 'enabled' : ''}">Entity #${entityId} overrides ${entityOverrideLabels.length ? escapeHtml(entityOverrideLabels.join(', ')) : 'none'}</span>` : ''
+            ].join('');
+        }
+
+        async function loadDashboardPromptPolicy() {
+            if (!currentUser?.deviceId || !currentUser?.deviceSecret) return;
+            syncDashboardPolicyEntityInput();
+            const { entityId } = getDashboardPolicyPreviewParams();
+            try {
+                const path = '/api/device/prompt-policy?deviceId=' + encodeURIComponent(currentUser.deviceId)
+                    + '&deviceSecret=' + encodeURIComponent(currentUser.deviceSecret);
+                const data = await apiCall('GET', path);
+                dashboardPromptPolicy = data.promptPolicy || {};
+                dashboardEntityPromptPolicy = null;
+                if (entityId) {
+                    try {
+                        const entityPath = '/api/entity/' + encodeURIComponent(entityId) + '/prompt-policy?deviceId=' + encodeURIComponent(currentUser.deviceId)
+                            + '&deviceSecret=' + encodeURIComponent(currentUser.deviceSecret);
+                        const entityData = await apiCall('GET', entityPath);
+                        dashboardEntityPromptPolicy = entityData.promptPolicy || null;
+                    } catch (entityErr) {
+                        console.warn('[AgentPolicy] entity policy load failed', entityErr);
+                    }
+                }
+                renderDashboardPromptPolicy(dashboardPromptPolicy, dashboardEntityPromptPolicy, entityId);
+            } catch (e) {
+                const status = document.getElementById('dashboardAgentPolicyStatus');
+                const badge = document.getElementById('dashboardAgentPolicyEnabledBadge');
+                if (status) status.textContent = e.message || 'Failed to load prompt policy.';
+                if (badge) {
+                    badge.textContent = 'Error';
+                    badge.classList.remove('enabled');
+                    badge.classList.add('disabled');
+                }
+            }
+        }
+
+        function getDashboardPolicyPreviewParams() {
+            const entityInput = document.getElementById('dashboardPolicyPreviewEntity');
+            const channelInput = document.getElementById('dashboardPolicyPreviewChannel');
+            return {
+                entityId: Math.max(0, parseInt(entityInput?.value, 10) || 0),
+                channel: channelInput?.value || 'codex'
+            };
+        }
+
+        async function previewDashboardPromptPolicy() {
+            if (!currentUser?.deviceId || !currentUser?.deviceSecret) return;
+            const preview = document.getElementById('dashboardAgentPolicyPreview');
+            const { entityId, channel } = getDashboardPolicyPreviewParams();
+            if (preview) {
+                preview.style.display = 'block';
+                preview.textContent = 'Loading compiled prompt...';
+            }
+            try {
+                const path = '/api/channel/prompt-policy?deviceId=' + encodeURIComponent(currentUser.deviceId)
+                    + '&deviceSecret=' + encodeURIComponent(currentUser.deviceSecret)
+                    + '&entityId=' + encodeURIComponent(entityId)
+                    + '&channel=' + encodeURIComponent(channel);
+                const data = await apiCall('GET', path);
+                if (preview) preview.textContent = data.policy?.compiledPrompt || '(empty policy)';
+            } catch (e) {
+                if (preview) preview.textContent = e.message || 'Preview failed';
+            }
+        }
+
+        function openDashboardAgentPolicyEditor(scope) {
+            const { entityId, channel } = getDashboardPolicyPreviewParams();
+            const params = new URLSearchParams({
+                agentPolicy: '1',
+                scope: scope === 'entity' ? 'entity' : 'device',
+                entityId: String(entityId),
+                channel
+            });
+            window.location.href = 'settings.html?' + params.toString() + '#agent-policy';
+        }
+
         // --- Socket Event Handlers ---
         function onSocketEntityAdded(data) {
             console.log('[Dashboard] entityAdded event', data);
@@ -1951,6 +2223,7 @@
                 renderEntities();
                 updateEntityCount();
                 updateSlotAvailability();
+                syncDashboardPolicyEntityInput();
             } catch (e) {
                 // Only show error on first load
                 const grid = document.getElementById('entityGrid');
