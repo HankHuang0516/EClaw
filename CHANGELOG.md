@@ -1,3 +1,10 @@
+## [1.1127.2](https://github.com/HankHuang0516/EClaw/compare/v1.1127.1...v1.1127.2) (2026-05-01)
+
+
+### Bug Fixes
+
+* match help api category intents ([#2257](https://github.com/HankHuang0516/EClaw/issues/2257)) ([5ac2456](https://github.com/HankHuang0516/EClaw/commit/5ac2456c2a88da9b24cfbf366bc4e183bd8ece8d))
+
 ## [1.1127.1](https://github.com/HankHuang0516/EClaw/compare/v1.1127.0...v1.1127.1) (2026-05-01)
 
 
