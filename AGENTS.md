@@ -435,6 +435,7 @@ EClaw/
    |-----|----------|---------|--------|
    | Interview start fails with owner_device_not_found | `GET /api/rental/debug/interview-start-fail?deviceId=X&deviceSecret=Y` | 2026-04-12 | Active |
    | Chat first render delayed by cross-device label resolution | `GET /api/debug/chat-render-load-order?deviceId=X&deviceSecret=Y` | 2026-05-01 | Active |
+   | Kanban nudges ignored by Codex channel bridge | `GET /api/mission/debug/kanban-codex-nudge?deviceId=X&deviceSecret=Y` | 2026-05-01 | Active |
 
 6. **Demand Elegance (Balanced)** — 在保持 minimal change 的前提下，追求可讀、一致的程式風格；不為了「漂亮」而過度重構，但也不容忍明顯的 code smell 在新增的程式碼中出現。
 
@@ -1176,6 +1177,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Cross-Speak Rendering | `tests/jest/cross-speak-chat-rendering.test.js` | Cross-device message direction rendering in chat.html |
 | Transform Cross-Route | `tests/jest/transform-cross-route.test.js` | Transform auto-route bot replies to sender device |
 | Mission Skill/Rule Dedup | `tests/jest/mission-skill-rule-dedup.test.js` | Skill/add and rule/add deduplication on concurrent multi-entity notify |
+| Kanban Chat Card Ref | `tests/jest/kanban-chat-card-ref.test.js` | Kanban notification chat deep-link plus Codex channel nudge payload contract (`expectsReply:true`) |
 | AI Chat Widget Guard | `tests/jest/ai-chat-widget-guard.test.js` | AI chat widget visibility guard in WebView contexts |
 | Discord Integration | `tests/jest/discord-integration.test.js` | Discord slash command integration, signature verification |
 | Note Pages | `tests/jest/note-pages.test.js` | Note page CRUD, public/private toggle, visitor analytics |
