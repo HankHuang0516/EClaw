@@ -37,11 +37,25 @@ describe('Dashboard Agent Policy card', () => {
     test('supports entity/channel preview controls from the dashboard', () => {
         expect(html).toContain('id="dashboardPolicyPreviewEntity"');
         expect(html).toContain('id="dashboardPolicyPreviewChannel"');
+        expect(html).toContain('id="dashboardPolicyDetectedChannel"');
         expect(html).toContain('<option value="codex">codex</option>');
         expect(html).toContain('<option value="claude_code">claude_code</option>');
         expect(html).toContain('<option value="hermes">hermes</option>');
+        expect(html).toContain('oninput="handleDashboardPolicyEntityInput()"');
         expect(html).toContain('function previewDashboardPromptPolicy()');
         expect(html).toContain('/api/channel/prompt-policy?deviceId=');
+    });
+
+    test('infers the policy channel from the selected entity', () => {
+        expect(html).toContain('function inferDashboardPolicyChannel(entityId)');
+        expect(html).toContain('function getDashboardPolicyEntitySignal(entity = {})');
+        expect(html).toContain('function syncDashboardPolicyChannelSelect(options = {})');
+        expect(html).toContain("return { channel: 'codex'");
+        expect(html).toContain("return { channel: 'claude_code'");
+        expect(html).toContain("return { channel: 'hermes'");
+        expect(html).toContain("return { channel: 'generic'");
+        expect(html).toContain("entity.channelProvider");
+        expect(html).toContain('Detected channel: ${inference.channel}');
     });
 
     test('links dashboard users into the scoped Settings editor', () => {
