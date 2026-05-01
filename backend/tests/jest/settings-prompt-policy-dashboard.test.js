@@ -48,4 +48,13 @@ describe('Settings Agent Policy dashboard editor', () => {
         expect(html).toContain("instructions: getPromptPolicyLines('promptPolicyHermesOverride')");
         expect(html).toContain("policy.channelOverrides?.hermes?.instructions || []");
     });
+
+    test('supports dashboard deep links into a scoped Agent Policy editor', () => {
+        expect(html).toContain('id="agentPolicySection"');
+        expect(html).toContain('function applyAgentPolicyDeepLink');
+        expect(html).toContain("params.get('agentPolicy') === '1'");
+        expect(html).toContain("params.get('scope') === 'entity'");
+        expect(html).toContain("window.location.hash === '#agent-policy'");
+        expect(html).toContain("loadPromptPolicy(user)");
+    });
 });

@@ -929,7 +929,7 @@
                 </div>
 
                 <!-- Agent Policy -->
-                <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--card-border);">
+                <div id="agentPolicySection" style="margin-top:18px;padding-top:16px;border-top:1px solid var(--card-border);">
                     <div class="card-title" style="font-size:14px;margin-bottom:6px;">
                         <span>🧭 Agent Policy</span>
                     </div>
@@ -2319,6 +2319,37 @@
             if (scope !== 'entity') return;
             document.getElementById('promptPolicyPreviewEntity').value = entityId;
             setPromptPolicyStatus(`Editing entity #${entityId} override.`);
+        }
+
+        function applyAgentPolicyDeepLink(user = currentUser) {
+            const params = new URLSearchParams(window.location.search || '');
+            const wantsAgentPolicy = window.location.hash === '#agent-policy' || params.get('agentPolicy') === '1';
+            if (!wantsAgentPolicy) return;
+
+            if (!isDeveloperExpanded) toggleDeveloperSection();
+
+            const scope = params.get('scope') === 'entity' ? 'entity' : 'device';
+            const entityId = Math.max(0, parseInt(params.get('entityId'), 10) || 0);
+            const channel = params.get('channel') || 'codex';
+
+            const scopeEl = document.getElementById('promptPolicyScope');
+            const entityEl = document.getElementById('promptPolicyEntityId');
+            const previewEntityEl = document.getElementById('promptPolicyPreviewEntity');
+            const previewChannelEl = document.getElementById('promptPolicyPreviewChannel');
+            if (scopeEl) scopeEl.value = scope;
+            if (entityEl) entityEl.value = String(entityId);
+            if (previewEntityEl) previewEntityEl.value = String(entityId);
+            if (previewChannelEl && [...previewChannelEl.options].some(opt => opt.value === channel)) {
+                previewChannelEl.value = channel;
+            }
+
+            onPromptPolicyScopeChange();
+            loadPromptPolicy(user);
+            setTimeout(() => document.getElementById('agentPolicySection')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
+        }
+
+        function applyDeepLinkFocus() {
+            applyAgentPolicyDeepLink(currentUser);
         }
 
         async function loadPromptPolicy(user = currentUser) {
