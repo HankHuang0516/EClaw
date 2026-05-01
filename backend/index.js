@@ -16611,7 +16611,9 @@ async function getDeviceVarForEmbedding(deviceId, varName) {
 // log on every catch, dead-letter line to /tmp/chat_dead_letter.jsonl so we
 // can replay or grep for lost messages even when pg blips.
 async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null, scheduleId = null, scheduleLabel = null, backupUrl = null, mentions = null, card = null, attachments = null) {
-    const textPreview = text == null ? null : String(text).slice(0, 120);
+    // Guard: coerce null/undefined text to empty string to avoid NOT NULL constraint violation
+    if (text == null) text = '';
+    const textPreview = String(text).slice(0, 120);
     try {
         // Dedup: skip if the same BOT message was already saved recently
         // Bot dedup: prevents echo when bot calls multiple endpoints (broadcast + sync-message + transform)
