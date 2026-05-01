@@ -183,6 +183,12 @@ let VISION_IMAGES = [
     { file: null, description: 'A hotel room floor plan: bedroom 18m² on the left, bathroom 6m² top right, living area 22m² bottom right, with a corridor connecting all rooms', keywords: ['floor', 'plan', 'bedroom', '18', 'bathroom', '6', 'living', '22'] },
     { file: null, description: 'A UI wireframe showing a navigation bar at top, a hero section with a button labeled Get Started, two feature cards side by side below, and a footer with three columns of links', keywords: ['wireframe', 'navigation', 'hero', 'get started', 'two', 'cards', 'footer', 'three'] },
     { file: null, description: 'A project timeline Gantt chart: Planning phase Jan 1–15, Development phase Jan 16–Mar 30, Testing phase Apr 1–Apr 20, Launch on May 1 — four phases total', keywords: ['gantt', 'timeline', 'planning', 'development', 'testing', 'launch', 'four', 'may'] },
+    // ── 2026-05-01 pool refresh ──
+    { file: null, description: 'A restaurant receipt showing subtotal $38.50, tax $3.08, tip $5.78, and total $47.36 — payment by Visa card ending in 4921', keywords: ['receipt', 'subtotal', '38', 'tax', 'tip', '47', 'visa', '4921'] },
+    { file: null, description: 'A smartphone home screen showing 23% battery with a charging lightning bolt icon and the time 10:42 displayed at the top', keywords: ['smartphone', '23', 'battery', 'charging', '10', '42'] },
+    { file: null, description: 'A network topology with five nodes: one Client, one Load Balancer, two Web Servers, and one Database — the Load Balancer connects to both Web Servers which each connect to the Database', keywords: ['network', 'five', 'load balancer', 'two', 'web', 'database'] },
+    { file: null, description: 'A git diff output showing four lines added in green with plus prefix and two lines removed in red with minus prefix inside a Python function named process_payment', keywords: ['diff', 'four', 'added', 'two', 'removed', 'python', 'process'] },
+    { file: null, description: 'A Kanban board with three columns: To Do has 5 cards, In Progress has 2 cards, and Done has 8 cards — one In Progress card is marked Critical in red', keywords: ['kanban', 'three', 'columns', 'five', 'two', 'eight', 'critical', 'red'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -356,6 +362,17 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '"babad"', expected: '"bab"' },{ input: '"cbbd"', expected: '"bb"' },{ input: '"a"', expected: '"a"' },{ input: '"racecar"', expected: '"racecar"' }] },
     { title: '0-1 Knapsack', description: 'Write `solve(weights, values, capacity)` — given items with weights and values arrays and a knapsack of given capacity, return the maximum total value (each item used at most once).',
       testCases: [{ input: '[1,3,4,5], [1,4,5,7], 7', expected: '9' },{ input: '[2,3,4,5], [3,4,5,6], 5', expected: '7' },{ input: '[1], [10], 0', expected: '0' }] },
+    // ── 2026-05-01 pool refresh ──
+    { title: 'Rotate Array', description: 'Write `solve(arr, k)` — rotate the array to the right by k positions and return the result.',
+      testCases: [{ input: '[1,2,3,4,5,6,7], 3', expected: '[5,6,7,1,2,3,4]' },{ input: '[-1,-100,3,99], 2', expected: '[3,99,-1,-100]' },{ input: '[1,2], 5', expected: '[2,1]' }] },
+    { title: 'First Missing Positive', description: 'Write `solve(nums)` — return the smallest missing positive integer. Input may contain negatives and duplicates.',
+      testCases: [{ input: '[1,2,0]', expected: '3' },{ input: '[3,4,-1,1]', expected: '2' },{ input: '[7,8,9,11,12]', expected: '1' },{ input: '[1,2,3]', expected: '4' }] },
+    { title: 'Find All Duplicates', description: 'Write `solve(nums)` — nums contains integers where values are in range [1, n]. Return all elements that appear exactly twice, sorted ascending.',
+      testCases: [{ input: '[4,3,2,7,8,2,3,1]', expected: '[2,3]' },{ input: '[1,1,2]', expected: '[1]' },{ input: '[1]', expected: '[]' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given non-negative integers representing bar heights, compute the total units of water trapped between bars after rain.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[3,0,3]', expected: '3' },{ input: '[1,2,3]', expected: '0' }] },
+    { title: 'Word Break', description: 'Write `solve(s, wordDict)` — return true if the string s can be fully segmented into one or more words from wordDict, false otherwise.',
+      testCases: [{ input: '"leetcode", ["leet","code"]', expected: 'true' },{ input: '"applepenapple", ["apple","pen"]', expected: 'true' },{ input: '"catsandog", ["cats","dog","sand","and","cat"]', expected: 'false' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -401,6 +418,15 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many squares of all sizes (1×1, 2×2, up to 8×8) are there on a standard 8×8 chessboard?', expectedKeywords: ['204'] },
     { question: 'A plane travels 2000 km at an effective speed of 1000 km/h (900 km/h airspeed plus 100 km/h tailwind). How many hours does the journey take?', expectedKeywords: ['2'] },
     { question: 'A worker paints 1/3 of a fence on day 1 and 1/4 of the remaining unpainted fence on day 2. What fraction of the fence is still unpainted after day 2?', expectedKeywords: ['1/2', '0.5', 'half'] },
+    // ── 2026-05-01 pool refresh ──
+    { question: 'How many days are in a non-leap year?', expectedKeywords: ['365'] },
+    { question: 'What is 15% of 200?', expectedKeywords: ['30'] },
+    { question: 'If a pizza is divided into 8 equal slices and 3 people each eat 2 slices, what fraction of the pizza remains? Give a simplified fraction.', expectedKeywords: ['1/4', '0.25', 'quarter'] },
+    { question: 'A car uses 8 liters of fuel per 100 km. How many liters are needed for a 350 km journey?', expectedKeywords: ['28'] },
+    { question: 'What is the smallest prime number greater than 50?', expectedKeywords: ['53'] },
+    { question: 'A ladder 10 meters long leans against a wall with its base 6 meters from the wall. How high up the wall does the top of the ladder reach in meters?', expectedKeywords: ['8'] },
+    { question: 'How many diagonals does a regular hexagon have?', expectedKeywords: ['9'] },
+    { question: 'If compound interest is applied annually at 10% on a $1000 principal, what is the total amount after 2 years?', expectedKeywords: ['1210'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -473,6 +499,12 @@ let TTS_PHRASES = [
     { text: 'Bernoulli and Euler each contributed foundational theorems to both fluid dynamics and graph theory', keywords: ['bernoulli', 'euler', 'fluid', 'dynamics', 'graph', 'theory'] },
     { text: 'Your one-time verification code is 7 4 2 9 1 — please enter it within ninety seconds before it expires', keywords: ['verification', 'code', '74291', 'ninety', 'seconds'] },
     { text: 'Compound interest formula: principal times the quantity one plus rate divided by one hundred to the power of years minus one', keywords: ['compound', 'interest', 'principal', 'rate', 'power', 'years'] },
+    // ── 2026-05-01 pool refresh ──
+    { text: 'The meeting is confirmed for Tuesday March eighteenth at half past two in conference room B on the fourth floor', keywords: ['meeting', 'tuesday', 'march', 'eighteenth', 'half', 'past', 'two', 'fourth'] },
+    { text: 'Your boarding pass shows seat 34C on flight QR-571 departing at 07:55 with gate closing at 07:25', keywords: ['boarding', 'seat', '34', 'flight', '571', '07', '55', '25'] },
+    { text: 'The medication dosage is 500 milligrams taken twice daily with food for a period of fourteen days', keywords: ['dosage', '500', 'milligrams', 'twice', 'daily', 'fourteen', 'days'] },
+    { text: 'The webhook endpoint accepts POST requests at slash api slash v2 slash events and requires HMAC-SHA256 signature verification via the X-Signature header', keywords: ['webhook', 'api', 'v2', 'events', 'hmac', 'sha256', 'signature', 'header'] },
+    { text: 'Registered company number 04937564 was incorporated on the third of September two thousand and three in England and Wales', keywords: ['company', 'number', '04937564', 'september', 'two', 'thousand', 'england', 'wales'] },
 ];
 
 // ============================================
