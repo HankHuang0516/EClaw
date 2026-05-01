@@ -1,3 +1,10 @@
+## [1.1133.2](https://github.com/HankHuang0516/EClaw/compare/v1.1133.1...v1.1133.2) (2026-05-01)
+
+
+### Bug Fixes
+
+* repair rental safeEqual import and share-chat R2 script path ([#2278](https://github.com/HankHuang0516/EClaw/issues/2278)) ([0167eb2](https://github.com/HankHuang0516/EClaw/commit/0167eb27bc8bea5c949668ff93d3542b2f52da49))
+
 ## [1.1133.1](https://github.com/HankHuang0516/EClaw/compare/v1.1133.0...v1.1133.1) (2026-05-01)
 
 
