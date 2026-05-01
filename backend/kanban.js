@@ -509,12 +509,10 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
         // recurring schedule → auto-promote to automation
         const finalAutomation = wantAutomation || (schedEnabled && schedType === 'recurring');
-        // Text-only work (i18n / translation) has no screenshot to attach — default the
-        // gate off when caller didn't pass requiresScreenshotReview explicitly. Caller can
-        // still force `true` to opt back in.
-        const isTextOnlyTitle = /i18n|translate|翻譯|locale/i.test(title);
+        // Screenshot review gate defaults to disabled for all new cards when not explicitly
+        // specified. Caller can force `true` to opt in for cards that need evidence review.
         const finalRequiresScreenshot = requiresScreenshotReview === undefined
-            ? !isTextOnlyTitle
+            ? false  // Default to disabled for all new cards
             : requiresScreenshotReview !== false;
 
         // Chat-anchor: pin originating chat message + mind-map coord (Phase 1 — persist
