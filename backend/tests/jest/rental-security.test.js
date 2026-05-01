@@ -238,3 +238,26 @@ describe('Security: rental proxy does not leak owner secrets', () => {
         expect(entity.botSecret.length).toBeGreaterThan(0);
     });
 });
+
+// ── Regression: safeEqual import in rental.js (#2263) ──────────────
+
+describe('Regression #2263: safeEqual import must not be destructured', () => {
+    test('rental.js imports safeEqual as a callable function', () => {
+        // The bug: `const { safeEqual } = require('./safe-equal')` yields undefined
+        // because safe-equal.js exports a bare function, not an object.
+        const safeEqual = require('../../safe-equal');
+        expect(typeof safeEqual).toBe('function');
+        expect(safeEqual('test', 'test')).toBe(true);
+        expect(safeEqual('a', 'b')).toBe(false);
+    });
+
+    test('rental.js source does not use destructured import for safe-equal', () => {
+        const fs = jest.requireActual('fs');
+        const path = require('path');
+        const src = fs.readFileSync(path.join(__dirname, '../../rental.js'), 'utf-8');
+        // Must NOT contain `{ safeEqual }` destructure pattern
+        expect(src).not.toMatch(/const\s*\{\s*safeEqual\s*\}\s*=\s*require\(['"]\.\/safe-equal['"]\)/);
+        // Must contain the correct import
+        expect(src).toMatch(/const\s+safeEqual\s*=\s*require\(['"]\.\/safe-equal['"]\)/);
+    });
+});
