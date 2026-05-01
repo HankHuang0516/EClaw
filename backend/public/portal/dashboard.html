@@ -1490,6 +1490,15 @@
             gap: 8px;
             margin-bottom: 12px;
         }
+        .agent-policy-detection {
+            display: none;
+            margin: -2px 0 10px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .agent-policy-detection.visible {
+            display: block;
+        }
         .agent-policy-controls {
             display: grid;
             grid-template-columns: minmax(120px, 160px) minmax(150px, 180px) auto auto;
@@ -1585,11 +1594,14 @@
                 <span class="agent-policy-badge">Milestones</span>
                 <span class="agent-policy-badge">Heartbeat</span>
             </div>
+            <div class="agent-policy-detection" id="dashboardPolicyDetectedChannel"></div>
             <div class="agent-policy-controls" aria-label="Agent policy quick controls">
                 <input type="number" id="dashboardPolicyPreviewEntity" min="0" step="1" value="0"
                        aria-label="Preview entity number" title="Preview entity #"
-                       oninput="this.dataset.userTouched='1'">
-                <select id="dashboardPolicyPreviewChannel" aria-label="Preview channel">
+                       oninput="handleDashboardPolicyEntityInput()"
+                       onchange="loadDashboardPromptPolicy().catch(err => console.warn('[AgentPolicy] dashboard load failed', err))">
+                <select id="dashboardPolicyPreviewChannel" aria-label="Preview channel"
+                        onchange="this.dataset.userTouched='1'; loadDashboardPromptPolicy().catch(err => console.warn('[AgentPolicy] dashboard load failed', err))">
                     <option value="codex">codex</option>
                     <option value="claude_code">claude_code</option>
                     <option value="hermes">hermes</option>
@@ -2045,16 +2057,68 @@
         // --- Agent Policy dashboard card ---
         function findPreferredPolicyEntityId() {
             const codexEntity = entities.find(e => {
-                const label = [
-                    e.name,
-                    e.character,
-                    e.message,
-                    e.webhook,
-                    getEntityDisplayName(e.entityId)
-                ].filter(Boolean).join(' ');
-                return /codex/i.test(label);
+                const label = getDashboardPolicyEntitySignal(e);
+                return /\bcodex\b/i.test(label);
             });
             return (codexEntity || entities[0] || {}).entityId || 0;
+        }
+
+        function getDashboardPolicyEntity(entityId) {
+            const id = Math.max(0, parseInt(entityId, 10) || 0);
+            return entities.find(e => Number(e.entityId) === id) || null;
+        }
+
+        function getDashboardPolicyEntitySignal(entity = {}) {
+            const webhook = typeof entity.webhook === 'string'
+                ? entity.webhook
+                : JSON.stringify(entity.webhook || {});
+            return [
+                entity.name,
+                entity.character,
+                entity.message,
+                entity.bindingType,
+                entity.channelProvider,
+                webhook,
+                entity.entityId ? getEntityDisplayName(entity.entityId) : ''
+            ].filter(Boolean).join(' ').toLowerCase();
+        }
+
+        function inferDashboardPolicyChannel(entityId) {
+            const entity = getDashboardPolicyEntity(entityId);
+            if (!entity) return { channel: 'generic', reason: 'no bound entity found' };
+            const signal = getDashboardPolicyEntitySignal(entity);
+            const provider = (entity.channelProvider || '').toLowerCase();
+            if (/\bcodex\b|codex-cli|gpt-5-codex/.test(signal)) {
+                return { channel: 'codex', reason: `Entity #${entity.entityId} looks like Codex` };
+            }
+            if (/claude[_\s-]?code|\bclaude\b|claudeace/.test(signal) || provider === 'claude') {
+                return { channel: 'claude_code', reason: `Entity #${entity.entityId} looks like Claude Code` };
+            }
+            if (/\bhermes\b/.test(signal) || provider === 'hermes') {
+                return { channel: 'hermes', reason: `Entity #${entity.entityId} looks like Hermes` };
+            }
+            return { channel: 'generic', reason: entity.bindingType === 'channel'
+                ? `Entity #${entity.entityId} is channel-bound but provider is generic`
+                : `Entity #${entity.entityId} has no known channel signature` };
+        }
+
+        function renderDashboardPolicyChannelDetection(inference) {
+            const el = document.getElementById('dashboardPolicyDetectedChannel');
+            if (!el) return;
+            el.textContent = `Detected channel: ${inference.channel} · ${inference.reason}`;
+            el.classList.add('visible');
+        }
+
+        function syncDashboardPolicyChannelSelect(options = {}) {
+            const entityInput = document.getElementById('dashboardPolicyPreviewEntity');
+            const channelInput = document.getElementById('dashboardPolicyPreviewChannel');
+            if (!entityInput || !channelInput) return;
+            const entityId = options.entityId ?? entityInput.value;
+            const inference = inferDashboardPolicyChannel(entityId);
+            if (options.force || channelInput.dataset.userTouched !== '1') {
+                channelInput.value = inference.channel;
+            }
+            renderDashboardPolicyChannelDetection(inference);
         }
 
         function syncDashboardPolicyEntityInput() {
@@ -2062,6 +2126,15 @@
             if (!input || input.dataset.userTouched === '1') return;
             const entityId = findPreferredPolicyEntityId();
             input.value = entityId ? String(entityId) : '0';
+            syncDashboardPolicyChannelSelect({ entityId, force: true });
+        }
+
+        function handleDashboardPolicyEntityInput() {
+            const input = document.getElementById('dashboardPolicyPreviewEntity');
+            const channelInput = document.getElementById('dashboardPolicyPreviewChannel');
+            if (input) input.dataset.userTouched = '1';
+            if (channelInput) channelInput.dataset.userTouched = '';
+            syncDashboardPolicyChannelSelect({ entityId: input?.value, force: true });
         }
 
         function setDashboardAgentPolicyCardVisible(visible) {
