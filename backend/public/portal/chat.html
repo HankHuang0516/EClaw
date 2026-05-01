@@ -3538,10 +3538,6 @@
             document.querySelectorAll('.target-contact-check input[type="checkbox"]').forEach(cb => {
                 if (cb.checked) contactCodes.push(cb.dataset.contactCode);
             });
-            // Only fall back to all entities when no contacts are selected either
-            if (local.length === 0 && contactCodes.length === 0 && boundEntities.length > 0) {
-                boundEntities.forEach(e => local.push(e.entityId));
-            }
             return { local, contacts: contactCodes };
         }
 

@@ -12,6 +12,7 @@
     "test:production": "API_BASE=https://eclawbot.com node stress-test.js",
     "test:persistence": "node test-persistence.js",
     "test:persistence:check": "node test-persistence.js --check",
+    "smoke:portal": "node scripts/portal-smoke-check.js",
     "lint": "eslint .",
     "lint:i18n-dups": "node scripts/i18n-lint-dup-keys.js"
   },
