@@ -1858,6 +1858,11 @@
                     <textarea class="kb-form-textarea" id="sp-desc">${escapeHtml(card.description||'')}</textarea>
                 </div>
                 <div class="kb-form-group">
+                    <div class="kb-auto-toggle-row">
+                        <label class="kb-auto-toggle-label"><input type="checkbox" id="sp-requires-screenshot"${card.requiresScreenshotReview !== false ? ' checked' : ''}> 📸 <span>${t('kb_label_requires_screenshot','需截圖審查（完成時附截圖才可推進 review/done）')}</span></label>
+                    </div>
+                </div>
+                <div class="kb-form-group">
                     <label class="kb-form-label">${t('kb_label_priority','Priority')}</label>
                     <select class="kb-form-select" id="sp-priority">${priorityOpts}</select>
                 </div>
@@ -1922,6 +1927,7 @@
             const type = document.getElementById('sp-type')?.value;
             const timezone = document.getElementById('sp-tz')?.value;
             const enabled = document.getElementById('sp-enabled')?.checked !== false;
+            const requiresScreenshotReview = document.getElementById('sp-requires-screenshot')?.checked !== false;
 
             if (!title) { showToast(t('kb_err_title','Title is required'), true); return; }
 
@@ -1945,7 +1951,7 @@
             try {
                 await apiCall('PUT', `/api/mission/card/${cardId}`, {
                     deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret,
-                    title, description: desc, priority, assignedBots,
+                    title, description: desc, priority, assignedBots, requiresScreenshotReview,
                 });
                 await apiCall('PUT', `/api/mission/card/${cardId}/schedule`, schedBody);
                 showToast(t('kb_auto_edit_saved','Schedule updated'));

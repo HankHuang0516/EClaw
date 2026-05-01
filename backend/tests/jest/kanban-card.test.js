@@ -4,7 +4,11 @@
  * Tests that kanban cards require at least one assigned entity.
  */
 
+const fs = require('fs');
+const path = require('path');
 const mockQuery = jest.fn().mockResolvedValue({ rows: [], rowCount: 0 });
+const ROOT = path.join(__dirname, '..', '..');
+const kanbanHtml = fs.readFileSync(path.join(ROOT, 'public', 'portal', 'kanban.html'), 'utf8');
 
 jest.mock('pg', () => ({
     Pool: jest.fn().mockImplementation(() => ({
@@ -175,6 +179,22 @@ describe('PUT /card/:id — assignedBots validation', () => {
             .send({ ...AUTH, assignedBots: [] });
         expect(res.status).toBe(400);
         expect(res.body.error).toMatch(/entity.*assigned/i);
+    });
+});
+
+describe('Kanban schedule panel — screenshot review toggle wiring', () => {
+    it('renders a screenshot review checkbox in the schedule panel', () => {
+        expect(kanbanHtml).toContain('id="sp-requires-screenshot"');
+        expect(kanbanHtml).toContain('kb_label_requires_screenshot');
+    });
+
+    it('submits requiresScreenshotReview when saving the schedule panel', () => {
+        const saveFn = kanbanHtml.slice(
+            kanbanHtml.indexOf('async function saveSchedulePanel'),
+            kanbanHtml.indexOf('async function saveSchedulePanel') + 2600
+        );
+        expect(saveFn).toContain('requiresScreenshotReview');
+        expect(saveFn).toContain("apiCall('PUT', `/api/mission/card/${cardId}`, {");
     });
 });
 
