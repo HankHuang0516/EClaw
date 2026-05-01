@@ -8,6 +8,10 @@ const { Pool } = require('pg');
 // Database connection pool
 let pool = null;
 
+function isProductionRuntime() {
+    return process.env.NODE_ENV === 'production' || Boolean(process.env.RAILWAY_ENVIRONMENT);
+}
+
 function shouldUseSsl(connectionString) {
     const sslMode = (process.env.PGSSLMODE || '').toLowerCase();
     if (sslMode === 'disable') return false;
@@ -24,7 +28,7 @@ function shouldUseSsl(connectionString) {
         // Fall through to the production default for non-URL connection strings.
     }
 
-    return process.env.NODE_ENV === 'production'
+    return isProductionRuntime()
         ? { rejectUnauthorized: false }
         : false;
 }

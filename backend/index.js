@@ -661,6 +661,9 @@ const SCRIPT_VERSION = (
     String(Date.now())
 ).slice(0, 12);
 
+const isProductionRuntime = () =>
+    process.env.NODE_ENV === 'production' || Boolean(process.env.RAILWAY_ENVIRONMENT);
+
 const _PORTAL_HTML_DIR = path.join(__dirname, 'public/portal');
 const _SHARED_SRC_RE = /<script(\s[^>]*?)?\ssrc=(["'])((?:\.\.\/)?shared\/[^"']+?\.js)(\?[^"']*)?\2([^>]*)><\/script>/g;
 
@@ -1124,7 +1127,7 @@ async function initPersistence() {
     if (usePostgreSQL) {
         console.log('[Persistence] Using PostgreSQL (primary)');
     } else {
-        if (process.env.NODE_ENV === 'production' && process.env.DATABASE_URL) {
+        if (isProductionRuntime() && process.env.DATABASE_URL) {
             throw new Error('PostgreSQL persistence unavailable in production; refusing file-storage fallback');
         }
         console.log('[Persistence] Using file storage (fallback)');
@@ -4934,7 +4937,7 @@ app.get('/api/health', (req, res) => {
     const persistenceHealth = {
         mode: usePostgreSQL ? 'postgresql' : 'file',
         postgresql: usePostgreSQL,
-        productionRequiresPostgresql: Boolean(process.env.NODE_ENV === 'production' && process.env.DATABASE_URL),
+        productionRequiresPostgresql: Boolean(isProductionRuntime() && process.env.DATABASE_URL),
     };
     const persistenceSevere = persistenceHealth.productionRequiresPostgresql && !usePostgreSQL;
     const httpStatus = deliveryHealth.severe || persistenceSevere ? 503 : 200;

@@ -28,6 +28,17 @@ describe('db SSL mode selection', () => {
         });
     });
 
+    test('treats Railway environment as production even without NODE_ENV', () => {
+        delete process.env.NODE_ENV;
+        process.env.RAILWAY_ENVIRONMENT = 'production';
+        delete process.env.PGSSLMODE;
+        const db = require('../../db');
+
+        expect(db._shouldUseSsl('postgresql://user:pass@example.com:5432/railway')).toEqual({
+            rejectUnauthorized: false,
+        });
+    });
+
     test('respects explicit PGSSLMODE disable', () => {
         process.env.NODE_ENV = 'production';
         process.env.PGSSLMODE = 'disable';
