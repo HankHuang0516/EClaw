@@ -8,6 +8,27 @@ const { Pool } = require('pg');
 // Database connection pool
 let pool = null;
 
+function shouldUseSsl(connectionString) {
+    const sslMode = (process.env.PGSSLMODE || '').toLowerCase();
+    if (sslMode === 'disable') return false;
+    if (sslMode === 'require' || sslMode === 'verify-ca' || sslMode === 'verify-full') {
+        return { rejectUnauthorized: sslMode !== 'require' };
+    }
+
+    try {
+        const host = new URL(connectionString).hostname;
+        if (host === 'localhost' || host === '127.0.0.1' || host.endsWith('.railway.internal')) {
+            return false;
+        }
+    } catch (_) {
+        // Fall through to the production default for non-URL connection strings.
+    }
+
+    return process.env.NODE_ENV === 'production'
+        ? { rejectUnauthorized: false }
+        : false;
+}
+
 // Initialize database connection
 async function initDatabase() {
     const connectionString = process.env.DATABASE_URL;
@@ -23,14 +44,13 @@ async function initDatabase() {
     // on the first attempt, causing a silent fallback to file storage that
     // wipes all in-memory entities (see 2026-04-20 incident).
     const MAX_RETRIES = 5;
+    let ssl = shouldUseSsl(connectionString);
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
             // Create / recreate connection pool on each attempt
             pool = new Pool({
                 connectionString: connectionString,
-                ssl: process.env.NODE_ENV === 'production' ? {
-                    rejectUnauthorized: false // Railway uses self-signed certificates
-                } : false
+                ssl
             });
 
             // Test connection
@@ -46,6 +66,10 @@ async function initDatabase() {
             console.error(`[DB] Init attempt ${attempt}/${MAX_RETRIES} failed: ${err.message}`);
             // Clean up the failed pool before retrying
             if (pool) { try { await pool.end(); } catch (_) {} pool = null; }
+            if (ssl && /does not support SSL connections/i.test(err.message)) {
+                console.warn('[DB] Server rejected SSL; retrying without SSL for this DATABASE_URL');
+                ssl = false;
+            }
             if (attempt < MAX_RETRIES) {
                 const delay = Math.pow(2, attempt - 1) * 1000;
                 console.log(`[DB] Retrying in ${delay / 1000}s...`);
@@ -2456,6 +2480,7 @@ module.exports = {
     cleanupExpiredPendingMessages,
     // Debug helper
     _getPool: () => pool,
+    _shouldUseSsl: shouldUseSsl,
     // Bot Plaza: Community
     setEntityPublic,
     searchPublicCards,

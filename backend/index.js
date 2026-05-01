@@ -1123,6 +1123,9 @@ async function initPersistence() {
     if (usePostgreSQL) {
         console.log('[Persistence] Using PostgreSQL (primary)');
     } else {
+        if (process.env.NODE_ENV === 'production' && process.env.DATABASE_URL) {
+            throw new Error('PostgreSQL persistence unavailable in production; refusing file-storage fallback');
+        }
         console.log('[Persistence] Using file storage (fallback)');
         console.log('[Persistence] To enable PostgreSQL: Add PostgreSQL service in Railway');
     }
@@ -4927,14 +4930,27 @@ app.get('/api/health', (req, res) => {
     // when at least one bot is severely stuck AND we're past the boot grace.
     const uptimeMs = process.uptime() * 1000;
     const deliveryHealth = evaluateDeliveryHealth(stuckList, uptimeMs);
-    const httpStatus = deliveryHealth.severe ? 503 : 200;
+    const persistenceHealth = {
+        mode: usePostgreSQL ? 'postgresql' : 'file',
+        postgresql: usePostgreSQL,
+        productionRequiresPostgresql: Boolean(process.env.NODE_ENV === 'production' && process.env.DATABASE_URL),
+    };
+    const persistenceSevere = persistenceHealth.productionRequiresPostgresql && !usePostgreSQL;
+    const httpStatus = deliveryHealth.severe || persistenceSevere ? 503 : 200;
 
     res.status(httpStatus).json({
-        status: deliveryHealth.severe ? 'unhealthy' : 'ok',
+        status: deliveryHealth.severe || persistenceSevere ? 'unhealthy' : 'ok',
         timestamp: Date.now(),
         build: SERVER_BUILD_TAG,
         uptime: process.uptime(),
         startedAt: SERVER_STARTED_AT.toISOString(),
+        persistence: {
+            ...persistenceHealth,
+            severe: persistenceSevere,
+            reason: persistenceSevere
+                ? 'PostgreSQL persistence is required in production when DATABASE_URL is configured'
+                : null,
+        },
         queue: {
             cap: MESSAGE_QUEUE_CAP,
             dlqCap: DEAD_LETTER_CAP,
