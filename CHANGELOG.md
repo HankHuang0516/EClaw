@@ -1,3 +1,10 @@
+# [1.1132.0](https://github.com/HankHuang0516/EClaw/compare/v1.1131.1...v1.1132.0) (2026-05-01)
+
+
+### Features
+
+* hide dashboard agent policy until edit mode ([149a217](https://github.com/HankHuang0516/EClaw/commit/149a21775a6796c361676ba07dd548cd01fb02be))
+
 ## [1.1131.1](https://github.com/HankHuang0516/EClaw/compare/v1.1131.0...v1.1131.1) (2026-05-01)
 
 
