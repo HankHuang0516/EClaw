@@ -201,6 +201,37 @@
             gap: 12px;
         }
 
+        .policy-inline-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+            align-items: end;
+        }
+
+        .policy-field {
+            display: grid;
+            gap: 5px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .policy-input,
+        .policy-select {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .policy-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
         .policy-textarea {
             width: 100%;
             min-height: 92px;
@@ -904,9 +935,23 @@
                     </div>
                     <p class="section-desc">Centrally injects device-level system prompt policy into Codex, Claude, and future channel bridges.</p>
                     <div class="policy-grid">
+                        <div class="policy-inline-grid" data-testid="prompt-policy-scope-controls">
+                            <label class="policy-field">
+                                <span class="setting-row-label">Policy scope</span>
+                                <select id="promptPolicyScope" class="policy-select" onchange="onPromptPolicyScopeChange()">
+                                    <option value="device">Device default</option>
+                                    <option value="entity">Entity override</option>
+                                </select>
+                            </label>
+                            <label class="policy-field" id="promptPolicyEntityField" style="display:none;">
+                                <span class="setting-row-label">Entity #</span>
+                                <input type="number" id="promptPolicyEntityId" min="0" step="1" value="0" class="policy-input" onchange="onPromptPolicyEntityChange()">
+                            </label>
+                        </div>
+
                         <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
                             <input type="checkbox" id="promptPolicyEnabled">
-                            <span>Enable device prompt policy</span>
+                            <span id="promptPolicyEnabledLabel">Enable device prompt policy</span>
                         </label>
 
                         <label style="display:block;">
@@ -940,17 +985,23 @@
                             <textarea id="promptPolicyClaudeOverride" class="policy-textarea" placeholder="Claude Code-only instructions"></textarea>
                         </label>
 
-                        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
-                            <button class="btn btn-primary btn-sm" onclick="savePromptPolicy()" id="promptPolicySaveBtn">Save Policy</button>
+                        <label style="display:block;">
+                            <span class="setting-row-label">Hermes override</span>
+                            <textarea id="promptPolicyHermesOverride" class="policy-textarea" placeholder="Hermes-only instructions"></textarea>
+                        </label>
+
+                        <div class="policy-actions">
+                            <button class="btn btn-primary btn-sm" onclick="savePromptPolicy()" id="promptPolicySaveBtn">Save Device Policy</button>
                             <button class="btn btn-outline btn-sm" onclick="loadPromptPolicy()">Refresh</button>
                             <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);">
                                 Preview entity #
-                                <input type="number" id="promptPolicyPreviewEntity" min="0" step="1" value="0"
-                                       style="width:64px;padding:6px 8px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);text-align:right;">
+                                <input type="number" id="promptPolicyPreviewEntity" min="0" step="1" value="0" class="policy-input" style="width:64px;text-align:right;">
                             </span>
-                            <select id="promptPolicyPreviewChannel" style="padding:6px 8px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);">
+                            <select id="promptPolicyPreviewChannel" class="policy-select" style="width:auto;">
                                 <option value="codex">codex</option>
                                 <option value="claude_code">claude_code</option>
+                                <option value="hermes">hermes</option>
+                                <option value="generic">generic</option>
                             </select>
                             <button class="btn btn-outline btn-sm" onclick="previewPromptPolicy()">Preview</button>
                         </div>
@@ -2190,20 +2241,94 @@
             el.style.color = isError ? 'var(--danger)' : 'var(--text-secondary)';
         }
 
+        function getPromptPolicyScope() {
+            const scope = document.getElementById('promptPolicyScope')?.value || 'device';
+            const entityId = Math.max(0, parseInt(document.getElementById('promptPolicyEntityId')?.value) || 0);
+            return { scope, entityId };
+        }
+
+        function getPromptPolicyRequest(scopeInfo = getPromptPolicyScope(), user = currentUser) {
+            if (scopeInfo.scope === 'entity') {
+                const entityId = scopeInfo.entityId;
+                return {
+                    label: `Entity #${entityId}`,
+                    getPath: `/api/entity/${entityId}/prompt-policy?deviceId=${encodeURIComponent(user.deviceId)}&deviceSecret=${encodeURIComponent(user.deviceSecret)}`,
+                    putPath: `/api/entity/${entityId}/prompt-policy`
+                };
+            }
+            return {
+                label: 'Device',
+                getPath: `/api/device/prompt-policy?deviceId=${encodeURIComponent(user.deviceId)}&deviceSecret=${encodeURIComponent(user.deviceSecret)}`,
+                putPath: '/api/device/prompt-policy'
+            };
+        }
+
+        function buildPromptPolicyFromForm() {
+            const heartbeatMinutes = Math.max(1, Math.min(30, parseInt(document.getElementById('promptPolicyHeartbeatMinutes').value) || 3));
+            return {
+                enabled: document.getElementById('promptPolicyEnabled').checked,
+                instructions: getPromptPolicyLines('promptPolicyInstructions'),
+                taskProtocol: {
+                    requireTestPlan: document.getElementById('promptPolicyRequirePlan').checked,
+                    requireMilestoneUpdates: document.getElementById('promptPolicyRequireMilestones').checked,
+                    statusHeartbeatMs: heartbeatMinutes * 60000
+                },
+                channelOverrides: {
+                    codex: {
+                        enabled: true,
+                        instructions: getPromptPolicyLines('promptPolicyCodexOverride')
+                    },
+                    claude_code: {
+                        enabled: true,
+                        instructions: getPromptPolicyLines('promptPolicyClaudeOverride')
+                    },
+                    hermes: {
+                        enabled: true,
+                        instructions: getPromptPolicyLines('promptPolicyHermesOverride')
+                    }
+                }
+            };
+        }
+
+        function applyPromptPolicyToForm(policy = {}) {
+            document.getElementById('promptPolicyEnabled').checked = policy.enabled !== false;
+            setPromptPolicyLines('promptPolicyInstructions', policy.instructions || []);
+            document.getElementById('promptPolicyRequirePlan').checked = policy.taskProtocol?.requireTestPlan !== false;
+            document.getElementById('promptPolicyRequireMilestones').checked = policy.taskProtocol?.requireMilestoneUpdates !== false;
+            document.getElementById('promptPolicyHeartbeatMinutes').value = Math.round((policy.taskProtocol?.statusHeartbeatMs || 180000) / 60000);
+            setPromptPolicyLines('promptPolicyCodexOverride', policy.channelOverrides?.codex?.instructions || []);
+            setPromptPolicyLines('promptPolicyClaudeOverride', policy.channelOverrides?.claude_code?.instructions || []);
+            setPromptPolicyLines('promptPolicyHermesOverride', policy.channelOverrides?.hermes?.instructions || []);
+        }
+
+        function onPromptPolicyScopeChange() {
+            const { scope, entityId } = getPromptPolicyScope();
+            const isEntity = scope === 'entity';
+            const entityField = document.getElementById('promptPolicyEntityField');
+            const saveBtn = document.getElementById('promptPolicySaveBtn');
+            const enabledLabel = document.getElementById('promptPolicyEnabledLabel');
+            if (entityField) entityField.style.display = isEntity ? 'grid' : 'none';
+            if (saveBtn) saveBtn.textContent = isEntity ? 'Save Entity Policy' : 'Save Device Policy';
+            if (enabledLabel) enabledLabel.textContent = isEntity ? 'Enable entity prompt policy' : 'Enable device prompt policy';
+            if (isEntity) document.getElementById('promptPolicyPreviewEntity').value = entityId;
+            setPromptPolicyStatus(isEntity ? `Editing entity #${entityId} override.` : 'Editing device default policy.');
+        }
+
+        function onPromptPolicyEntityChange() {
+            const { scope, entityId } = getPromptPolicyScope();
+            if (scope !== 'entity') return;
+            document.getElementById('promptPolicyPreviewEntity').value = entityId;
+            setPromptPolicyStatus(`Editing entity #${entityId} override.`);
+        }
+
         async function loadPromptPolicy(user = currentUser) {
             if (!user?.deviceId || !user?.deviceSecret) return;
             try {
-                const path = `/api/device/prompt-policy?deviceId=${encodeURIComponent(user.deviceId)}&deviceSecret=${encodeURIComponent(user.deviceSecret)}`;
-                const data = await apiCall('GET', path);
+                const request = getPromptPolicyRequest(getPromptPolicyScope(), user);
+                const data = await apiCall('GET', request.getPath);
                 const policy = data.promptPolicy || {};
-                document.getElementById('promptPolicyEnabled').checked = policy.enabled !== false;
-                setPromptPolicyLines('promptPolicyInstructions', policy.instructions || []);
-                document.getElementById('promptPolicyRequirePlan').checked = policy.taskProtocol?.requireTestPlan !== false;
-                document.getElementById('promptPolicyRequireMilestones').checked = policy.taskProtocol?.requireMilestoneUpdates !== false;
-                document.getElementById('promptPolicyHeartbeatMinutes').value = Math.round((policy.taskProtocol?.statusHeartbeatMs || 180000) / 60000);
-                setPromptPolicyLines('promptPolicyCodexOverride', policy.channelOverrides?.codex?.instructions || []);
-                setPromptPolicyLines('promptPolicyClaudeOverride', policy.channelOverrides?.claude_code?.instructions || []);
-                setPromptPolicyStatus(policy.updatedAt ? `Loaded policy updated ${policy.updatedAt}` : 'No saved policy yet.');
+                applyPromptPolicyToForm(policy);
+                setPromptPolicyStatus(policy.updatedAt ? `Loaded ${request.label} policy updated ${policy.updatedAt}` : `No saved ${request.label.toLowerCase()} policy yet.`);
             } catch (e) {
                 setPromptPolicyStatus('Failed to load prompt policy', true);
             }
@@ -2214,33 +2339,15 @@
             const btn = document.getElementById('promptPolicySaveBtn');
             if (btn) btn.disabled = true;
             try {
-                const heartbeatMinutes = Math.max(1, Math.min(30, parseInt(document.getElementById('promptPolicyHeartbeatMinutes').value) || 3));
-                const policy = {
-                    enabled: document.getElementById('promptPolicyEnabled').checked,
-                    instructions: getPromptPolicyLines('promptPolicyInstructions'),
-                    taskProtocol: {
-                        requireTestPlan: document.getElementById('promptPolicyRequirePlan').checked,
-                        requireMilestoneUpdates: document.getElementById('promptPolicyRequireMilestones').checked,
-                        statusHeartbeatMs: heartbeatMinutes * 60000
-                    },
-                    channelOverrides: {
-                        codex: {
-                            enabled: true,
-                            instructions: getPromptPolicyLines('promptPolicyCodexOverride')
-                        },
-                        claude_code: {
-                            enabled: true,
-                            instructions: getPromptPolicyLines('promptPolicyClaudeOverride')
-                        }
-                    }
-                };
-                await apiCall('PUT', '/api/device/prompt-policy', {
+                const request = getPromptPolicyRequest(getPromptPolicyScope(), user);
+                const policy = buildPromptPolicyFromForm();
+                await apiCall('PUT', request.putPath, {
                     deviceId: user.deviceId,
                     deviceSecret: user.deviceSecret,
                     promptPolicy: policy
                 });
-                setPromptPolicyStatus('Policy saved.');
-                showToast('Prompt policy saved');
+                setPromptPolicyStatus(`${request.label} policy saved.`);
+                showToast(`${request.label} prompt policy saved`);
             } catch (e) {
                 setPromptPolicyStatus(e.message || 'Failed to save prompt policy', true);
                 showToast(e.message || 'Failed to save prompt policy', 'error');
