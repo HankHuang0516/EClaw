@@ -4338,6 +4338,7 @@ function getOrCreateDevice(deviceId, deviceSecret = null, opts = {}) {
             createdAt: Date.now(),
             isTestDevice: opts.isTestDevice || false,
             nextEntityId: DEFAULT_INITIAL_SLOTS, // = 1
+            promptPolicy: null,
             entities: {}
         };
         // Initialize only 1 slot (entity #0)
@@ -10113,6 +10114,194 @@ function validateIdentity(identity) {
     return { valid: true, identity: cleaned };
 }
 
+const PROMPT_POLICY_VERSION = 1;
+const PROMPT_POLICY_MAX_ITEMS = 20;
+const PROMPT_POLICY_MAX_TEXT = 1000;
+const PROMPT_POLICY_MAX_CHANNELS = 12;
+const PROMPT_POLICY_MIN_HEARTBEAT_MS = 60 * 1000;
+const PROMPT_POLICY_MAX_HEARTBEAT_MS = 30 * 60 * 1000;
+
+const DEFAULT_PROMPT_POLICY_TASK_PROTOCOL = {
+    requireTestPlan: true,
+    requireMilestoneUpdates: true,
+    statusHeartbeatMs: 180000
+};
+
+const PLATFORM_PROMPT_POLICY_SECTION = [
+    'Follow EClaw channel routing, auth, and safety rules.',
+    'Never reveal device secrets, bot secrets, API keys, database URLs, or tokens.',
+    'For long-running work, keep the user updated with concrete progress and blockers.'
+].join('\n');
+
+function asPromptPolicyLines(value, fieldName, maxItems = PROMPT_POLICY_MAX_ITEMS) {
+    if (value === undefined) return { lines: undefined };
+    const rawLines = Array.isArray(value)
+        ? value
+        : String(value).split('\n');
+    if (rawLines.length > maxItems) {
+        return { error: `${fieldName} supports at most ${maxItems} lines` };
+    }
+    const lines = rawLines
+        .map(line => String(line || '').trim())
+        .filter(Boolean)
+        .map(line => line.substring(0, PROMPT_POLICY_MAX_TEXT));
+    const secretLine = lines.find(containsLikelyPromptSecret);
+    if (secretLine) {
+        return { error: `${fieldName} appears to contain a secret; store secrets in device vars instead` };
+    }
+    return { lines };
+}
+
+function containsLikelyPromptSecret(text) {
+    if (!text) return false;
+    return [
+        /\bsk-[A-Za-z0-9_-]{20,}/,
+        /\b(?:api[_-]?key|access[_-]?token|refresh[_-]?token|password|secret)\s*[:=]\s*\S{8,}/i,
+        /BEGIN (?:RSA |EC |OPENSSH |)?PRIVATE KEY/i,
+        /\bpostgres(?:ql)?:\/\/[^/\s:]+:[^@\s]+@/i
+    ].some(re => re.test(text));
+}
+
+function sanitizePromptTaskProtocol(input) {
+    const protocol = { ...DEFAULT_PROMPT_POLICY_TASK_PROTOCOL };
+    if (!input || typeof input !== 'object') return protocol;
+    if (input.requireTestPlan !== undefined) protocol.requireTestPlan = !!input.requireTestPlan;
+    if (input.requireMilestoneUpdates !== undefined) protocol.requireMilestoneUpdates = !!input.requireMilestoneUpdates;
+    if (input.statusHeartbeatMs !== undefined) {
+        const ms = parseInt(input.statusHeartbeatMs);
+        if (!Number.isFinite(ms)) return { error: 'taskProtocol.statusHeartbeatMs must be a number' };
+        protocol.statusHeartbeatMs = Math.max(PROMPT_POLICY_MIN_HEARTBEAT_MS, Math.min(PROMPT_POLICY_MAX_HEARTBEAT_MS, ms));
+    }
+    return protocol;
+}
+
+function sanitizePromptChannelOverrides(overrides) {
+    if (overrides === undefined) return { overrides: undefined };
+    if (!overrides || typeof overrides !== 'object' || Array.isArray(overrides)) {
+        return { error: 'channelOverrides must be an object' };
+    }
+    const entries = Object.entries(overrides).slice(0, PROMPT_POLICY_MAX_CHANNELS);
+    const cleaned = {};
+    for (const [rawChannel, rawOverride] of entries) {
+        const channel = String(rawChannel || '').trim().substring(0, 40).toLowerCase();
+        if (!/^[a-z0-9_-]+$/.test(channel)) return { error: `Invalid channel override key: ${rawChannel}` };
+        if (!rawOverride || typeof rawOverride !== 'object' || Array.isArray(rawOverride)) {
+            return { error: `channelOverrides.${channel} must be an object` };
+        }
+        const lines = asPromptPolicyLines(rawOverride.instructions, `channelOverrides.${channel}.instructions`);
+        if (lines.error) return { error: lines.error };
+        cleaned[channel] = {
+            enabled: rawOverride.enabled !== false,
+            instructions: lines.lines || []
+        };
+    }
+    return { overrides: cleaned };
+}
+
+function validatePromptPolicy(policy) {
+    if (!policy || typeof policy !== 'object' || Array.isArray(policy)) {
+        return { valid: false, error: 'promptPolicy must be an object' };
+    }
+
+    const instructions = asPromptPolicyLines(policy.instructions, 'instructions');
+    if (instructions.error) return { valid: false, error: instructions.error };
+
+    const taskProtocol = sanitizePromptTaskProtocol(policy.taskProtocol);
+    if (taskProtocol.error) return { valid: false, error: taskProtocol.error };
+
+    const channelOverrides = sanitizePromptChannelOverrides(policy.channelOverrides);
+    if (channelOverrides.error) return { valid: false, error: channelOverrides.error };
+
+    return {
+        valid: true,
+        promptPolicy: {
+            version: PROMPT_POLICY_VERSION,
+            enabled: policy.enabled !== false,
+            instructions: instructions.lines || [],
+            taskProtocol,
+            channelOverrides: channelOverrides.overrides || {},
+            updatedAt: new Date().toISOString()
+        }
+    };
+}
+
+function getEntityPromptPolicy(entity) {
+    return entity?.identity?.promptPolicy || null;
+}
+
+function setEntityPromptPolicy(entity, promptPolicy) {
+    if (!entity.identity) entity.identity = {};
+    entity.identity.promptPolicy = promptPolicy;
+    entity.lastUpdated = Date.now();
+}
+
+function appendPromptPolicySection(sections, scope, title, lines) {
+    const content = Array.isArray(lines) ? lines.filter(Boolean).join('\n') : String(lines || '').trim();
+    if (!content) return;
+    sections.push({ scope, title, content });
+}
+
+function buildPromptPolicySections(device, entity, channel = 'generic') {
+    const normalizedChannel = String(channel || 'generic').trim().toLowerCase();
+    const sections = [];
+    const devicePolicy = device?.promptPolicy?.enabled === false ? null : (device?.promptPolicy || null);
+    const identity = entity?.identity || {};
+    const entityPolicy = getEntityPromptPolicy(entity)?.enabled === false ? null : getEntityPromptPolicy(entity);
+
+    appendPromptPolicySection(sections, 'platform', 'EClaw Platform Policy', PLATFORM_PROMPT_POLICY_SECTION);
+
+    appendPromptPolicySection(sections, 'device', 'Device Instructions', devicePolicy?.instructions || []);
+
+    const identityLines = [];
+    if (identity.role) identityLines.push(`Role: ${identity.role}`);
+    if (identity.description) identityLines.push(`Description: ${identity.description}`);
+    if (identity.tone) identityLines.push(`Tone: ${identity.tone}`);
+    if (identity.language) identityLines.push(`Language: ${identity.language}`);
+    if (Array.isArray(identity.instructions) && identity.instructions.length) {
+        identityLines.push('Identity instructions:', ...identity.instructions.map(item => `- ${item}`));
+    }
+    if (Array.isArray(identity.boundaries) && identity.boundaries.length) {
+        identityLines.push('Boundaries:', ...identity.boundaries.map(item => `- ${item}`));
+    }
+    appendPromptPolicySection(sections, 'identity', 'Entity Identity', identityLines);
+
+    appendPromptPolicySection(sections, 'entity', 'Entity Prompt Policy', entityPolicy?.instructions || []);
+
+    const protocol = {
+        ...DEFAULT_PROMPT_POLICY_TASK_PROTOCOL,
+        ...(devicePolicy?.taskProtocol || {}),
+        ...(entityPolicy?.taskProtocol || {})
+    };
+    appendPromptPolicySection(sections, 'taskProtocol', 'Task Protocol', [
+        protocol.requireTestPlan ? 'Start long tasks with a concise test plan before implementation.' : '',
+        protocol.requireMilestoneUpdates ? 'Report progress after meaningful milestones and include blockers explicitly.' : '',
+        `Preferred autonomous status heartbeat interval: ${protocol.statusHeartbeatMs}ms.`
+    ]);
+
+    const deviceOverride = devicePolicy?.channelOverrides?.[normalizedChannel];
+    if (deviceOverride?.enabled !== false) {
+        appendPromptPolicySection(sections, 'channel', `Device ${normalizedChannel} Override`, deviceOverride?.instructions || []);
+    }
+    const entityOverride = entityPolicy?.channelOverrides?.[normalizedChannel];
+    if (entityOverride?.enabled !== false) {
+        appendPromptPolicySection(sections, 'channel', `Entity ${normalizedChannel} Override`, entityOverride?.instructions || []);
+    }
+
+    return {
+        version: PROMPT_POLICY_VERSION,
+        channel: normalizedChannel,
+        taskProtocol: protocol,
+        sections,
+        compiledPrompt: sections.map(section => `## ${section.title}\n${section.content}`).join('\n\n')
+    };
+}
+
+function requireDeviceOwner(device, deviceSecret) {
+    if (!deviceSecret) return { error: 'deviceSecret required', status: 400 };
+    if (!safeEqual(device.deviceSecret, deviceSecret)) return { error: 'Invalid deviceSecret', status: 403 };
+    return {};
+}
+
 /**
  * PUT /api/entity/identity — Create or update bot identity (partial merge)
  * Auth: deviceSecret (owner) OR botSecret (bot self-update)
@@ -10218,6 +10407,114 @@ app.delete('/api/entity/identity', async (req, res) => {
     io.to(deviceId).emit('entity:identity-updated', { entityId: parseInt(entityId), identity: null });
     serverLog('info', 'identity', `Entity ${entityId} identity cleared`, { deviceId, entityId: parseInt(entityId) });
     res.json({ success: true });
+});
+
+/**
+ * GET /api/device/prompt-policy — Read device-level prompt policy
+ * Auth: deviceSecret (owner)
+ */
+app.get('/api/device/prompt-policy', (req, res) => {
+    const { deviceId, deviceSecret } = req.query;
+    if (!deviceId) return res.status(400).json({ success: false, error: 'deviceId required' });
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+    const auth = requireDeviceOwner(device, deviceSecret);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    res.json({ success: true, promptPolicy: device.promptPolicy || null });
+});
+
+/**
+ * PUT /api/device/prompt-policy — Set device-level prompt policy
+ * Auth: deviceSecret (owner)
+ */
+app.put('/api/device/prompt-policy', async (req, res) => {
+    const { deviceId, deviceSecret, promptPolicy } = req.body || {};
+    if (!deviceId) return res.status(400).json({ success: false, error: 'deviceId required' });
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+    const auth = requireDeviceOwner(device, deviceSecret);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+
+    const { valid, promptPolicy: cleaned, error } = validatePromptPolicy(promptPolicy);
+    if (!valid) return res.status(400).json({ success: false, error });
+
+    device.promptPolicy = cleaned;
+    if (typeof db.saveDeviceData === 'function') {
+        db.saveDeviceData(deviceId, device).catch(err => console.error('[PromptPolicy] Device save error:', err.message));
+    }
+    io.to(deviceId).emit('prompt-policy:updated', { scope: 'device', promptPolicy: cleaned });
+    serverLog('info', 'prompt-policy', 'Device prompt policy updated', { deviceId });
+    res.json({ success: true, promptPolicy: cleaned });
+});
+
+/**
+ * GET /api/entity/:entityId/prompt-policy — Read entity-level prompt policy
+ * Auth: deviceSecret (owner)
+ */
+app.get('/api/entity/:entityId/prompt-policy', (req, res) => {
+    const { deviceId, deviceSecret } = req.query;
+    const { entityId } = req.params;
+    if (!deviceId || entityId === undefined) return res.status(400).json({ success: false, error: 'deviceId, entityId required' });
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+    const owner = requireDeviceOwner(device, deviceSecret);
+    if (owner.error) return res.status(owner.status).json({ success: false, error: owner.error });
+    const entity = device.entities[parseInt(entityId)];
+    if (!entity) return res.status(404).json({ success: false, error: 'Entity not found' });
+    res.json({ success: true, promptPolicy: getEntityPromptPolicy(entity) });
+});
+
+/**
+ * PUT /api/entity/:entityId/prompt-policy — Set entity-level prompt policy
+ * Auth: deviceSecret (owner)
+ */
+app.put('/api/entity/:entityId/prompt-policy', async (req, res) => {
+    const { deviceId, deviceSecret, promptPolicy } = req.body || {};
+    const { entityId } = req.params;
+    if (!deviceId || entityId === undefined) return res.status(400).json({ success: false, error: 'deviceId, entityId required' });
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+    const owner = requireDeviceOwner(device, deviceSecret);
+    if (owner.error) return res.status(owner.status).json({ success: false, error: owner.error });
+    const entity = device.entities[parseInt(entityId)];
+    if (!entity) return res.status(404).json({ success: false, error: 'Entity not found' });
+
+    const { valid, promptPolicy: cleaned, error } = validatePromptPolicy(promptPolicy);
+    if (!valid) return res.status(400).json({ success: false, error });
+
+    setEntityPromptPolicy(entity, cleaned);
+    if (typeof db.saveDeviceData === 'function') {
+        db.saveDeviceData(deviceId, device).catch(err => console.error('[PromptPolicy] Entity save error:', err.message));
+    }
+    io.to(deviceId).emit('prompt-policy:updated', { scope: 'entity', entityId: parseInt(entityId), promptPolicy: cleaned });
+    serverLog('info', 'prompt-policy', `Entity ${entityId} prompt policy updated`, { deviceId, entityId: parseInt(entityId) });
+    res.json({ success: true, promptPolicy: cleaned });
+});
+
+/**
+ * GET /api/channel/prompt-policy — Read composed prompt policy for channel bridges
+ * Auth: deviceSecret (owner preview) OR botSecret (bound channel runtime)
+ */
+app.get('/api/channel/prompt-policy', (req, res) => {
+    const { deviceId, deviceSecret, botSecret, entityId, channel } = req.query;
+    if (!deviceId || entityId === undefined) {
+        return res.status(400).json({ success: false, error: 'deviceId, entityId required' });
+    }
+    if (!deviceSecret && !botSecret) {
+        return res.status(400).json({ success: false, error: 'deviceSecret or botSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+
+    const policy = buildPromptPolicySections(device, auth.entity, channel || 'generic');
+    res.json({
+        success: true,
+        policy,
+        devicePolicy: device.promptPolicy || null,
+        entityPolicy: getEntityPromptPolicy(auth.entity)
+    });
 });
 
 // ── Agent Card Holder (replaces Cross-Device Contacts — no upper limit) ──
