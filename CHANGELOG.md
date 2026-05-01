@@ -1,3 +1,10 @@
+# [1.1133.0](https://github.com/HankHuang0516/EClaw/compare/v1.1132.0...v1.1133.0) (2026-05-01)
+
+
+### Features
+
+* infer dashboard agent policy channel ([6a961de](https://github.com/HankHuang0516/EClaw/commit/6a961de47c2e7a049dd6ebd070a03e8fb1b1bb1c))
+
 # [1.1132.0](https://github.com/HankHuang0516/EClaw/compare/v1.1131.1...v1.1132.0) (2026-05-01)
 
 
