@@ -315,6 +315,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                         from: 'kanban',
                         text: message + descBlock,
                         eclaw_context: {
+                            expectsReply: false,
                             silentToken: '[SILENT]',
                             missionHints: kanbanHints,
                         }

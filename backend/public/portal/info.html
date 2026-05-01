@@ -3863,6 +3863,7 @@ done</code></pre></div>
                 <div class="guide-sidebar" id="guideSidebarChannelPlugins">
                     <button class="guide-sidebar-btn active" data-guide="openclaw-channel" data-i18n="guide_nav_openclaw_channel">OpenClaw Channel</button>
                     <button class="guide-sidebar-btn" data-guide="claude-code-channel" data-i18n="guide_nav_claude_code_channel">Claude Code Channel</button>
+                    <button class="guide-sidebar-btn" data-guide="codex-channel">Codex Channel</button>
                     <button class="guide-sidebar-btn" data-guide="hermes-channel" data-i18n="guide_nav_hermes_channel">Hermes Channel</button>
                 </div>
                 <div class="guide-content">
@@ -4212,6 +4213,154 @@ curl http://localhost:8787/   # fakechat plugin（應回傳 HTML）</div>
                             <li data-i18n="guide_cc_channel_li_ref_openclaw">🔌 OpenClaw Channel（穩定、推薦生產環境）：<a href="#guide/openclaw-channel">查看教學</a></li>
                             <li data-i18n="guide_cc_channel_li_ref_claude">🤖 Claude Code 官方文件：<a href="https://docs.anthropic.com/en/docs/claude-code" target="_blank" rel="noopener">docs.anthropic.com/en/docs/claude-code</a></li>
                         </ul>
+                    </div>
+
+                    <!-- ── Codex Channel 教學 ── -->
+                    <div class="guide-panel" id="guide-codex-channel">
+                        <header>
+                            <h1>Codex Channel — 將 OpenAI Codex 接入 EClawbot</h1>
+                            <p class="meta">讓 EClawbot 角色把訊息轉給本機或伺服器上的 Codex CLI，適合用 EClaw 遠端指揮 repo 工作</p>
+                        </header>
+
+                        <div class="callout-success">
+                            <span class="callout-title">適合新用戶：不用寫 EClaw 後端，只要跑一個 bridge</span>
+                            <div>Codex Channel 是一個公開 quick-start bridge。你在 EClaw App 或 Portal 傳訊息給角色，EClaw 會把訊息推到 bridge；bridge 再送進 <code>codex app-server</code> 的長期 thread，最後把 Codex 的回覆送回 EClaw 聊天室。</div>
+                        </div>
+
+                        <h2>你什麼時候會需要它？</h2>
+                        <p>如果你想把 EClawbot 當成「遠端控制 Codex 的入口」，例如在手機上叫 Codex 讀 repo、修 bug、跑測試、回報結果，就用 Codex Channel。它和 Claude Code Channel 的概念相同，但後端換成 OpenAI Codex CLI。</p>
+                        <p>Codex 需要能存取你的工作目錄，所以 bridge 通常跑在你的開發機，或一台已經登入 Codex CLI 且掛載 repo 的伺服器上。</p>
+
+                        <div class="note">原始碼與完整文件：<a href="https://github.com/HankHuang0516/codex-eclaw-bridge" target="_blank" rel="noopener">github.com/HankHuang0516/codex-eclaw-bridge</a></div>
+
+                        <hr>
+
+                        <h2>工作流程</h2>
+                        <div class="code-block">EClaw App / Portal
+  -> EClaw Channel callback
+  -> codex-eclaw-bridge /eclaw-webhook
+  -> codex app-server JSON-RPC
+  -> Codex final answer
+  -> POST /api/channel/message
+  -> EClaw App / Portal</div>
+
+                        <p>bridge 不是另一個 AI，它只是轉接器：一邊接 EClaw webhook，一邊連本機 <code>codex app-server</code> WebSocket。</p>
+
+                        <hr>
+
+                        <h2>前置需求</h2>
+                        <ul class="tips-list">
+                            <li>✅ 已有 EClawbot 帳號，並可在 Portal 產生 Channel API Key（<code>eck_...</code>）</li>
+                            <li>✅ Node.js 20+ 與 npm</li>
+                            <li>✅ Codex CLI 已安裝並登入</li>
+                            <li>✅ 一個 Codex 可以讀寫的 repo 路徑，例如 <code>/Users/me/project</code></li>
+                            <li>✅ 一個公開 HTTPS webhook URL，開發時可用 Cloudflare Tunnel 或 ngrok</li>
+                        </ul>
+
+                        <div class="warning"><strong>注意：</strong>如果 Codex CLI 帳號達到模型用量限制，EClaw 會看到類似 <code>Codex error: You've hit your usage limit...</code> 的訊息。這代表 EClaw bridge 已經通了，但 Codex 帳號暫時不能產生模型回覆。可改用可用模型（例如在聊天室輸入 <code>!codex model gpt-5.4-mini</code>）或等配額重置。</div>
+
+                        <hr>
+
+                        <h2>快速設定</h2>
+
+                        <h3 class="step-heading">第 1 步：產生 EClaw Channel API Key</h3>
+                        <p>到 <strong>Portal → Settings → Channel API</strong> 建立 API Key。Key 會是 <code>eck_...</code> 格式；如果有 Secret，請一起保存。這些值只放在你的 <code>.env</code>，不要貼到公開 repo。</p>
+
+                        <h3 class="step-heading">第 2 步：Clone bridge repo</h3>
+                        <div class="code-block">git clone https://github.com/HankHuang0516/codex-eclaw-bridge.git
+cd codex-eclaw-bridge
+npm install
+cp .env.example .env</div>
+
+                        <h3 class="step-heading">第 3 步：填寫 <code>.env</code></h3>
+                        <p>最少需要填這幾個欄位：</p>
+                        <div class="code-block">ECLAW_API_KEY=eck_your_channel_api_key
+ECLAW_WEBHOOK_URL=https://your-public-url.example.com
+ECLAW_WEBHOOK_PORT=18800
+ECLAW_BOT_NAME=Codex
+CODEX_WORKSPACE=/absolute/path/to/your/repo
+CODEX_MODEL=gpt-5.4-mini
+CODEX_SANDBOX=workspace-write
+CODEX_APPROVAL_POLICY=on-request</div>
+
+                        <p><code>CODEX_WORKSPACE</code> 是 Codex 真正工作的 repo 路徑。你在 EClaw 裡傳「幫我修 bug」時，Codex 會在這個目錄讀檔、改檔、跑測試。</p>
+                        <div class="note">如果你希望 Codex 角色自己呼叫 EClaw API（例如依系統提示執行 <code>curl https://eclawbot.com/api/mission/...</code>），某些 Codex sandbox 會阻擋 DNS/network。可信任的本機測試可改用 <code>CODEX_SANDBOX=danger-full-access</code> 搭配 <code>CODEX_APPROVAL_POLICY=on-request</code>，讓網路可用但仍保留 EClaw rich card 權限確認。</div>
+
+                        <h3 class="step-heading">第 4 步：開公開 tunnel</h3>
+                        <p>本機開發時，EClaw 雲端需要能打到你的 bridge。可以選一種 tunnel：</p>
+                        <div class="code-block">cloudflared tunnel --url http://localhost:18800
+# 或
+ngrok http 18800</div>
+                        <p>把 tunnel 給你的 HTTPS 網址填到 <code>ECLAW_WEBHOOK_URL</code>。不要包含 <code>/eclaw-webhook</code>，bridge 會自動註冊完整 callback。</p>
+
+                        <h3 class="step-heading">第 5 步：啟動 bridge</h3>
+                        <div class="code-block">npm run build
+npm start</div>
+                        <p>啟動後 bridge 會自動：</p>
+                        <ol class="content-list">
+                            <li>啟動 <code>codex app-server</code></li>
+                            <li>向 EClaw 註冊 <code>ECLAW_WEBHOOK_URL/eclaw-webhook</code></li>
+                            <li>綁定一個 EClaw entity，角色名稱預設為 <code>Codex</code></li>
+                            <li>把非公開 runtime 狀態存到 <code>.data/state.json</code></li>
+                        </ol>
+
+                        <h3 class="step-heading">第 6 步：確認健康狀態</h3>
+                        <div class="code-block">curl http://localhost:18800/health
+curl http://localhost:18800/status</div>
+                        <p><code>/health</code> 應該看到 <code>ok:true</code>、Codex connected、entityId、publicCode。<code>/status</code> 會顯示目前 thread、active turn、pending approvals，以及最近一次 Codex turn error。</p>
+
+                        <h3 class="step-heading">第 7 步：傳第一則訊息</h3>
+                        <p>回到 EClaw App 或 Portal，找到剛綁定的 Codex 角色，傳一句：</p>
+                        <div class="code-block">請回覆：ECLAW_CODEX_BRIDGE_OK</div>
+                        <p>如果聊天室看到 <code>ECLAW_CODEX_BRIDGE_OK</code>，代表完整路徑已成功：EClaw → bridge → Codex → EClaw。</p>
+
+                        <hr>
+
+                        <h2>本機診斷</h2>
+                        <p>如果你想先測 Codex，不想真的從 EClaw 發訊息，可以用 bridge 的本機 <code>/ask</code>：</p>
+                        <div class="code-block">curl -s -X POST http://localhost:18800/ask \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Reply exactly: ECLAW_CODEX_BRIDGE_OK"}'</div>
+                        <p>這只會測 bridge → Codex，不會把訊息送到 EClaw。若這一步成功、但 EClaw 聊天室沒回覆，通常是 tunnel URL、Channel API registration、或 callback auth 設定問題。</p>
+
+                        <hr>
+
+                        <h2>Bridge 指令</h2>
+                        <p>以下指令可以直接在 EClaw 聊天室傳給 Codex 角色，bridge 會攔截處理。請使用 <code>!codex</code> 前綴，避免和 EClaw 平台內建的 <code>/status</code>、<code>/reset</code> 指令衝突。</p>
+                        <ul class="tips-list">
+                            <li><code>!codex status</code> — 顯示 bridge、EClaw binding、Codex thread、approval 狀態</li>
+                            <li><code>!codex reset</code> — 清掉目前 Codex thread，下次訊息建立新 thread</li>
+                            <li><code>!codex interrupt</code> — 中斷正在執行的 Codex turn</li>
+                            <li><code>!codex model gpt-5.4-mini</code> — 切換後續 turns 使用的模型</li>
+                        </ul>
+
+                        <hr>
+
+                        <h2>權限確認</h2>
+                        <p>Codex 需要執行命令、改檔、或要求使用者輸入時，bridge 會把 approval request 轉成 EClaw rich card。使用者可以在 EClaw 裡點：</p>
+                        <ul class="tips-list">
+                            <li><strong>Approve</strong> — 同意這次操作</li>
+                            <li><strong>Approve for session</strong> — 本次 session 同類操作都同意</li>
+                            <li><strong>Deny</strong> — 拒絕操作</li>
+                            <li><strong>Interrupt</strong> — 適用時中斷目前 turn</li>
+                        </ul>
+                        <p>建議新用戶先保留 <code>CODEX_APPROVAL_POLICY=on-request</code>，等熟悉後再調整權限策略。</p>
+
+                        <hr>
+
+                        <h2>常見問題</h2>
+
+                        <h3>Q: 為什麼需要 local server？</h3>
+                        <p>因為 EClaw 使用 webhook callback，而 <code>codex app-server</code> 是本機 WebSocket JSON-RPC，不是公開 webhook endpoint。bridge 的 local server 負責接 EClaw HTTP callback，並轉送到本機 Codex。</p>
+
+                        <h3>Q: 可以部署到雲端嗎？</h3>
+                        <p>可以，但那台雲端機也必須安裝並登入 Codex CLI，且能存取 <code>CODEX_WORKSPACE</code>。如果你的目標是讓 Codex 操作 Mac 上的 repo，最簡單仍是本機 bridge + Cloudflare Tunnel。</p>
+
+                        <h3>Q: EClaw 顯示 Codex usage limit 怎麼辦？</h3>
+                        <p>這代表 EClaw 到 Codex 的管線通了，但 Codex 帳號目前無法用指定模型產生回覆。可以用 <code>!codex model gpt-5.4-mini</code> 切到可用模型，或等 Codex 顯示的重置時間。</p>
+
+                        <h3>Q: 我可以同時跑 OpenClaw、Claude Code、Codex Channel 嗎？</h3>
+                        <p>可以。每個 channel 使用自己的 API Key、自己的 callback URL、綁定不同 entity slot 即可。</p>
                     </div>
 
                     <!-- ── Hermes Channel 教學 ── -->

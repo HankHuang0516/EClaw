@@ -58,7 +58,8 @@ window.addEventListener('DOMContentLoaded', async () => {
             panel.classList.add('active');
             renderMermaidIn(panel);
         }
-        history.replaceState(null, '', '#guide/' + tabId);
+        const section = btn.closest('#panel-channel-plugins') ? 'channel-plugins' : 'guide';
+        history.replaceState(null, '', '#' + section + '/' + tabId);
         updateSeoMeta(tabId);
     }
 
@@ -144,7 +145,7 @@ const SEO_META = {
     'quickstart':       { title: 'Quick Start',       desc: 'Get started with EClawbot — create a device, bind a channel, rent or host AI agents.' },
     'guide':            { title: 'User Guide',        desc: 'EClawbot user guide: features, use cases, mission center, kanban, mind-map, vector search.' },
     'advanced':         { title: 'Advanced',          desc: 'Advanced EClawbot topics: mission center internals, broadcast, vault, debugging.' },
-    'channel-plugins':  { title: 'Channel Plugins',   desc: 'EClawbot channel plugins: OpenClaw, Claude Code, Telegram, Discord, web chat bridges.' },
+    'channel-plugins':  { title: 'Channel Plugins',   desc: 'EClawbot channel plugins: OpenClaw, Claude Code, Codex, Telegram, Discord, web chat bridges.' },
     'faq':              { title: 'FAQ',               desc: 'Frequently asked questions about EClawbot — billing, devices, rentals, plugins.' },
     'release-notes':    { title: 'Release Notes',     desc: 'EClawbot release notes and changelog.' },
     // Guide sub-pages (#guide/<id>)
@@ -159,6 +160,7 @@ const SEO_META = {
     'usecase-bridge':              { title: 'Channel Bridge',          desc: 'Connect EClawbot to an external chat platform.' },
     'usecase-proxy-window':        { title: 'Proxy Window',            desc: 'Embed an EClawbot agent into any web page via the proxy window.' },
     'usecase-claude-openclaw':     { title: 'Claude / OpenClaw Bot',   desc: 'Run Claude or OpenClaw-engine bots on EClawbot.' },
+    'codex-channel':               { title: 'Codex Channel',           desc: 'Connect EClawbot to OpenAI Codex CLI through a persistent codex app-server bridge.' },
     'usecase-messaging-friends':   { title: 'Messaging Friends',       desc: 'Chat with other EClawbot users and their bots.' },
     'usecase-voice-tts':           { title: 'Voice / TTS',             desc: 'Voice and text-to-speech features for EClawbot agents.' },
     // Marketing hooks
@@ -199,6 +201,10 @@ function switchInfoTab(target) {
         panel.classList.add('active');
         renderMermaidIn(panel);
     }
+    if (target === 'channel-plugins' && window._navigateToGuide) {
+        window._navigateToGuide('codex-channel');
+        return;
+    }
     history.replaceState(null, '', '#' + target);
     updateSeoMeta(target);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -214,8 +220,12 @@ function handleHash() {
         const infoPanels = document.querySelectorAll('.info-panel');
         infoTabs.forEach(t => t.classList.remove('active'));
         infoPanels.forEach(p => p.classList.remove('active'));
-        const tab = document.querySelector('.info-tab[data-info-tab="quickstart"]');
-        const panel = document.getElementById('panel-guide');
+        const guideBtn = [...document.querySelectorAll('[data-guide]')].find(b => b.getAttribute('data-guide') === guideId);
+        const isChannelPlugin = guideBtn && guideBtn.closest('#panel-channel-plugins');
+        const tabName = isChannelPlugin ? 'channel-plugins' : 'quickstart';
+        const panelId = isChannelPlugin ? 'panel-channel-plugins' : 'panel-guide';
+        const tab = document.querySelector(`.info-tab[data-info-tab="${tabName}"]`);
+        const panel = document.getElementById(panelId);
         if (tab) tab.classList.add('active');
         if (panel) panel.classList.add('active');
         if (window._navigateToGuide) window._navigateToGuide(guideId);

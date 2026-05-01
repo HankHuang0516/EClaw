@@ -14091,8 +14091,12 @@ function getMissionApiHints(apiBase, deviceId, entityId, botSecret) {
     hints += `Read chat history (scope: msgs to/from your entityId only — NOT full device transcript): exec: curl -s "${apiBase}/api/chat/history?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}&limit=100"\n`;
     hints += `Create kanban card: exec: curl -s -X POST "${apiBase}/api/mission/card" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","title":"TASK_TITLE","status":"todo"}'\n`;
     hints += `Add note: exec: curl -s -X POST "${apiBase}/api/mission/note/add" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","title":"TITLE","content":"CONTENT"}'\n`;
+    hints += `Delete note: exec: curl -s -X POST "${apiBase}/api/mission/note/delete" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","title":"TITLE"}'\n`;
     hints += `\n[AVAILABLE TOOLS — Kanban Board]\n`;
     hints += `Read board: exec: curl -s "${apiBase}/api/mission/cards?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}"\n`;
+    hints += `List archived cards: exec: curl -s "${apiBase}/api/mission/cards/archived?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}&page=1&limit=20"\n`;
+    hints += `Archive card: exec: curl -s -X DELETE "${apiBase}/api/mission/card/CARD_ID" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${entityId}}'\n`;
+    hints += `Restore archived card: exec: curl -s -X POST "${apiBase}/api/mission/card/CARD_ID/restore" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${entityId}}'\n`;
     hints += `Move card: exec: curl -s -X POST "${apiBase}/api/mission/card/CARD_ID/move" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${entityId},"newStatus":"STATUS"}'\n`;
     hints += `Add comment: exec: curl -s -X POST "${apiBase}/api/mission/card/CARD_ID/comment" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${entityId},"text":"YOUR_COMMENT"}'\n`;
     hints += `Disable schedule: exec: curl -s -X PUT "${apiBase}/api/mission/card/CARD_ID/schedule" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${entityId},"enabled":false}'\n`;
