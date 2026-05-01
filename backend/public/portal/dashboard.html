@@ -1433,8 +1433,12 @@
         }
 
         .agent-policy-card {
+            display: none;
             margin-bottom: 16px;
             padding: 16px 18px;
+        }
+        .agent-policy-card.is-visible {
+            display: block;
         }
         .agent-policy-header {
             display: flex;
@@ -1563,7 +1567,7 @@
             <button type="button" class="invite-banner-close" onclick="dismissInviteBanner()" aria-label="Dismiss" title="Hide for 7 days">×</button>
         </div>
 
-        <section class="card agent-policy-card" id="dashboardAgentPolicyCard" aria-labelledby="dashboardAgentPolicyTitle">
+        <section class="card agent-policy-card" id="dashboardAgentPolicyCard" aria-labelledby="dashboardAgentPolicyTitle" aria-hidden="true">
             <div class="agent-policy-header">
                 <div>
                     <div class="agent-policy-title" id="dashboardAgentPolicyTitle">
@@ -1985,7 +1989,6 @@
             renderSlotSelector();
 
             await loadEntities();
-            loadDashboardPromptPolicy().catch(err => console.warn('[AgentPolicy] dashboard load failed', err));
 
             if (__embeddedOrg) switchDashTab('orgchart');
 
@@ -2059,6 +2062,22 @@
             if (!input || input.dataset.userTouched === '1') return;
             const entityId = findPreferredPolicyEntityId();
             input.value = entityId ? String(entityId) : '0';
+        }
+
+        function setDashboardAgentPolicyCardVisible(visible) {
+            const card = document.getElementById('dashboardAgentPolicyCard');
+            if (!card) return;
+            card.classList.toggle('is-visible', visible);
+            card.setAttribute('aria-hidden', visible ? 'false' : 'true');
+            if (visible) {
+                loadDashboardPromptPolicy().catch(err => console.warn('[AgentPolicy] dashboard load failed', err));
+            } else {
+                const preview = document.getElementById('dashboardAgentPolicyPreview');
+                if (preview) {
+                    preview.style.display = 'none';
+                    preview.textContent = '';
+                }
+            }
         }
 
         function getDashboardOverrideLabels(policy = {}) {
@@ -2498,6 +2517,7 @@
                 var orderChanged = JSON.stringify(currentOrder) !== JSON.stringify(originalEntityOrder);
                 isEditMode = false;
                 document.getElementById('btnEditMode').classList.remove('active');
+                setDashboardAgentPolicyCardVisible(false);
                 renderEntities();
                 if (orderChanged) {
                     persistReorder(currentOrder);
@@ -2510,6 +2530,7 @@
                 originalEntityOrder = entities.map(function(e) { return e.entityId; });
                 isEditMode = true;
                 document.getElementById('btnEditMode').classList.add('active');
+                setDashboardAgentPolicyCardVisible(true);
                 renderEntities();
             }
             if (window.telemetry) {
