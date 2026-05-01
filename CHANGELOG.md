@@ -1,3 +1,10 @@
+## [1.1131.1](https://github.com/HankHuang0516/EClaw/compare/v1.1131.0...v1.1131.1) (2026-05-01)
+
+
+### Bug Fixes
+
+* focus agent policy deep links ([567e6ba](https://github.com/HankHuang0516/EClaw/commit/567e6bacc938c968ce32de8074200e0adfc61b4b))
+
 # [1.1131.0](https://github.com/HankHuang0516/EClaw/compare/v1.1130.0...v1.1131.0) (2026-05-01)
 
 
