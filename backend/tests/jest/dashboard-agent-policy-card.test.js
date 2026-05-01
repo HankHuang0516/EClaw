@@ -16,9 +16,22 @@ describe('Dashboard Agent Policy card', () => {
 
     test('renders a dashboard Agent Policy status card', () => {
         expect(html).toContain('id="dashboardAgentPolicyCard"');
+        expect(html).toContain('id="dashboardAgentPolicyCard" aria-labelledby="dashboardAgentPolicyTitle" aria-hidden="true"');
+        expect(html).toContain('.agent-policy-card {');
+        expect(html).toContain('display: none;');
+        expect(html).toContain('.agent-policy-card.is-visible');
         expect(html).toContain('id="dashboardAgentPolicyStatus"');
         expect(html).toContain('id="dashboardAgentPolicyEnabledBadge"');
         expect(html).toContain('id="dashboardAgentPolicyDetails"');
+    });
+
+    test('only shows the Agent Policy card while dashboard edit mode is active', () => {
+        expect(html).not.toContain('loadDashboardPromptPolicy().catch(err => console.warn(\'[AgentPolicy] dashboard load failed\', err));\n\n            if (__embeddedOrg)');
+        expect(html).toContain('function setDashboardAgentPolicyCardVisible(visible)');
+        expect(html).toContain("card.classList.toggle('is-visible', visible);");
+        expect(html).toContain("card.setAttribute('aria-hidden', visible ? 'false' : 'true');");
+        expect(html).toContain('setDashboardAgentPolicyCardVisible(false);');
+        expect(html).toContain('setDashboardAgentPolicyCardVisible(true);');
     });
 
     test('supports entity/channel preview controls from the dashboard', () => {
