@@ -1,3 +1,10 @@
+## [1.1133.1](https://github.com/HankHuang0516/EClaw/compare/v1.1133.0...v1.1133.1) (2026-05-01)
+
+
+### Bug Fixes
+
+* **kanban:** change screenshot review default to disabled ([777aa37](https://github.com/HankHuang0516/EClaw/commit/777aa3723604100f46815c723ea8c5594b40e8ef))
+
 # [1.1133.0](https://github.com/HankHuang0516/EClaw/compare/v1.1132.0...v1.1133.0) (2026-05-01)
 
 
