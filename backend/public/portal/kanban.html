@@ -961,7 +961,7 @@
             if (_isEmbed) {
                 document.body.classList.add('embed-mode');
             }
-            renderNav('mission');
+            renderNav('kanban');
             if (typeof renderFooter === 'function') renderFooter();
             const user = await checkAuth();
             if (!user) return;
