@@ -1,0 +1,1357 @@
+# Codex Instructions
+
+## Claude.md Parity + Production Safety Overrides
+
+`CLAUDE.md` is the legacy operating guide for this repository. `AGENTS.md` must preserve every project rule from `CLAUDE.md`, adapted only where the acting agent name differs (`Claude` → `Codex`). When `CLAUDE.md` gains a workflow, safety, CI, deployment, debugging, or review rule, copy the equivalent rule into this file before relying on memory or ad hoc judgment.
+
+These overrides are mandatory for Codex in this repo:
+
+1. **No direct production/main pushes** — never push directly to `main`, never merge to production, and never trigger Railway production deploy unless the user explicitly asks for that exact action in the current thread.
+2. **PR-first workflow** — all code/docs changes must happen on a feature branch, be pushed to GitHub, and go through a pull request before merge.
+3. **CI gates before merge** — do not merge a PR until required GitHub Actions checks have completed successfully, or until the user explicitly accepts a known failing/pre-existing check after being told the concrete failure.
+4. **Production verification after merge** — after any approved merge to `main`, verify production health, critical affected pages/API routes, and the relevant regression tests before reporting done.
+5. **Incident mode** — if a production bug is reported, first create/keep the required debug endpoint and gather diagnostics; do not mask a production dependency failure with empty fallback data.
+6. **Secrets discipline** — never print, commit, or echo API keys, device secrets, database URLs, auth tokens, or password values. Redact command output before summarizing.
+
+## Project Overview
+
+**EClawbot** is an Agent-to-Agent (A2A) communication platform with an AI agent ecosystem, and a personal enterprise assistant (個人企業的小幫手，尤其是尹代理). It connects AI-powered "entities" (bots) for inter-agent collaboration, task dispatch, and automation, helping individuals and small businesses streamline their workflows. The platform spans three client surfaces (Android native app, iOS/React Native app, Web Portal) backed by a monolithic Node.js/Express server deployed on Railway with PostgreSQL.
+
+- **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
+- **Production URL**: `https://eclawbot.com`
+- **Package name**: `realbot-backend` (historical name; brand is "EClaw")
+- **Current version**: 1.1121.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **Android app version**: 1.0.79 (versionCode 85); `LATEST_APP_VERSION` constant in `backend/index.js`
+- **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
+
+---
+
+## Repository Structure
+
+```
+EClaw/
+├── backend/                  # Node.js Express server (deployed to Railway)
+│   ├── index.js              # Main server (~17,979 lines) — all API routes
+│   ├── db.js                 # PostgreSQL connection pool + schema creation
+│   ├── auth.js               # Auth module (JWT, OAuth, OIDC, RBAC)
+│   ├── mission.js            # Mission Control dashboard system
+│   ├── kanban.js             # Kanban Board API (Mission Center v2)
+│   ├── gatekeeper.js         # Bot message security filter
+│   ├── gps-recommendations.js # GPS-based entity recommendation API (demo)
+│   ├── ai-support.js         # AI chat support (Anthropic Codex integration)
+│   ├── anthropic-client.js   # Direct Anthropic API client
+│   ├── device-telemetry.js   # AI debug buffer per device
+│   ├── device-feedback.js    # Feedback/bug report system
+│   ├── chat-integrity.js     # Chat message integrity validation
+│   ├── chat-embedding.js     # pgvector schema + cosine search + embedMessageAsync
+│   ├── embedding-client.js   # OpenAI / Voyage embedding API wrapper (BYO key via device-vars)
+│   ├── notifications.js      # Push notification management (Web Push + FCM)
+│   ├── device-preferences.js # Device preference storage
+│   ├── entity-cross-device-settings.js  # Cross-device entity settings
+│   ├── subscription.js       # Subscription/billing management
+│   ├── a2a-compat.js         # Agent-to-Agent (A2A) protocol compatibility
+│   ├── oauth-server.js       # OAuth 2.0 server (client_credentials, tokens)
+│   ├── api-docs.js           # Swagger/OpenAPI docs endpoint
+│   ├── bot-tools.js          # Bot utility API (web-search, web-fetch)
+│   ├── article-publisher.js  # Multi-platform article publishing (12 platforms)
+│   ├── channel-api.js        # OpenClaw channel integration API
+│   ├── flickr.js             # Flickr photo storage for chat images
+│   ├── flickr-auth.js        # Flickr OAuth authentication
+│   ├── discord-integration.js # Native Discord slash command integration
+│   ├── grpc-server.js        # gRPC transport layer
+│   ├── interview-arena.js    # Interview Arena — 12-challenge bot evaluation (current interview system)
+│   ├── bot-interview.js      # LEGACY 8-probe text scoring (superseded by interview-arena.js)
+│   ├── rental.js             # Bot Rental Marketplace (listings, contracts, metering)
+│   ├── org-chart.js          # Organization Hierarchy Chart (entity hierarchy + behavior options)
+│   ├── wallet.js             # E-coin wallet + top-up + transaction ledger
+│   ├── trust.js              # Reviews, disputes, credit scoring
+│   ├── invite.js             # Referral/invite code system
+│   ├── pricing-advisor.js    # Bot rental pricing recommendations
+│   ├── fraud-detection.js    # Rental fraud detection
+│   ├── feedback-email.js     # Email notifications for feedback (Resend)
+│   ├── mindmap.js            # Mind map multi-layer thinking graph (schema + CRUD + Cytoscape UI)
+│   ├── mindmap-mirror.js     # Note-to-mindmap mirror (auto-pair notes with leaf nodes)
+│   ├── entity-id.js          # Stripe-style entity ID factory (card_, note_, skill_, listing_, exam_, contract_)
+│   ├── safe-equal.js         # Timing-safe secret comparison utility
+│   ├── files.js              # Cloudflare R2 file storage (multipart upload, download, deletion)
+│   ├── mention-parser.js     # Chat message @mention parsing and routing (@xxxxxx, @N, @#N, @all)
+│   ├── push-context.js       # Channel callback push context inlining and mentions block builder
+│   ├── growth.js             # Growth metrics API for admin bots (GET /api/growth/daily)
+│   ├── site-pageviews.js     # Anonymous pageview tracking for marketing/public pages
+│   ├── arena-pool-updater.js # Daily auto-refresh of interview arena questions via Codex
+│   ├── arena-pool-validator.js # Validates arena question pool (static + live modes)
+│   ├── arena-test-pages.js    # Visual test pages for interview arena challenges
+│   ├── ack-retry-sweep.js     # Google Play ack-retry sweep for revenue leak prevention
+│   ├── scheduled-messages.js  # Scheduled message system (Phase 1 — CRUD + poller)
+│   ├── reference-parser.js    # Smart chip reference scanner (card_/review_/src://)
+│   ├── reference-resolver.js  # Smart chip async DB resolver
+│   ├── rental-proxy.js       # Token metering proxy for rented bots (balance check + charge)
+│   ├── openapi.yaml          # OpenAPI 3.0 specification
+│   ├── auth_schema.sql       # User accounts + auth SQL schema
+│   ├── mission_schema.sql    # Mission dashboard SQL schema
+│   ├── kanban_schema.sql     # Kanban Board SQL schema
+│   ├── oauth_schema.sql      # OAuth server SQL schema
+│   ├── interview_arena_schema.sql # Interview Arena table definitions
+│   ├── invite_schema.sql     # Referral/invite code system tables
+│   ├── scheduled_messages_schema.sql # Scheduled messages table definitions
+│   ├── rental_schema.sql     # Bot rental marketplace tables
+│   ├── trust_schema.sql      # Reviews, disputes, credit scoring tables
+│   ├── wallet_schema.sql     # E-coin wallet and transaction ledger tables
+│   ├── data/
+│   │   ├── skill-templates.json   # Bot skill templates
+│   │   ├── soul-templates.json    # Bot personality templates
+│   │   └── rule-templates.json    # Bot behavior rule templates
+│   ├── proto/
+│   │   └── eclaw.proto            # gRPC service definitions
+│   ├── public/
+│   │   ├── portal/           # Web Portal (static HTML/JS/CSS)
+│   │   │   ├── index.html         # Login/registration page
+│   │   │   ├── dashboard.html     # Main device dashboard
+│   │   │   ├── chat.html          # Chat interface
+│   │   │   ├── mission.html       # Mission control (redirects to kanban)
+│   │   │   ├── settings.html      # Device settings
+│   │   │   ├── env-vars.html      # Environment variables manager
+│   │   │   ├── files.html         # File manager
+│   │   │   ├── feedback.html      # Feedback submission
+│   │   │   ├── admin.html         # Admin panel
+│   │   │   ├── info.html          # Device info
+│   │   │   ├── screen-control.html # Remote screen control
+│   │   │   ├── delete-account.html # Account deletion
+│   │   │   ├── share-chat.html    # Shareable read-only chat view
+│   │   │   ├── compare.html       # Channel comparison
+│   │   │   ├── kanban.html        # Kanban board (Mission Center v2)
+│   │   │   ├── community.html     # Community template hub
+│   │   │   ├── workspace.html     # Split-view workspace mode
+│   │   │   ├── analytics.html    # Site pageview analytics admin dashboard
+│   │   │   ├── mindmap.html      # (deleted v1.1114; mindmap now embedded in mission.html)
+│   │   │   ├── publisher.html    # Multi-platform article publisher UI
+│   │   │   ├── publisher-setup.html # Publisher platform configuration wizard
+│   │   │   ├── wallet.html       # E-coin wallet management
+│   │   │   ├── my-rentals.html   # Active rental contracts display
+│   │   │   ├── plaza.html        # Bot rental marketplace / plaza
+│   │   │   ├── marketplace.html  # Bot rental marketplace (alternate entry)
+│   │   │   ├── onboarding.html   # New user onboarding flow
+│   │   │   ├── invite.html       # Referral/invite code page
+│   │   │   ├── invite-qr-generator.html # QR code generation for invites
+│   │   │   ├── roadmap.html      # Product roadmap display
+│   │   │   └── schedule.html     # Legacy schedule (redirects to kanban)
+│   │   │   ├── shared/            # Portal-specific shared modules
+│   │   │   │   ├── ai-chat.js     # AI chat component
+│   │   │   │   ├── api.js         # API wrapper utilities
+│   │   │   │   ├── auth.js        # Auth utilities
+│   │   │   │   ├── entity-utils.js # Avatar rendering helpers (renderAvatarHtml, isAvatarUrl)
+│   │   │   │   ├── footer.js      # Shared footer
+│   │   │   │   ├── nav.js         # Shared navigation bar
+│   │   │   │   ├── public-nav.js  # Public pages navigation
+│   │   │   │   ├── socket.js      # WebSocket client
+│   │   │   │   ├── his-link-render.js # Parse his_<id> tokens into clickable history chips
+│   │   │   │   ├── note-link-render.js # Parse note links into inline preview chips
+│   │   │   │   ├── entity-link-render.js # Parse entity links into clickable chips
+│   │   │   │   ├── mention-autocomplete.js # @mention autocomplete for chat input
+│   │   │   │   ├── mention-render.js # @mention rendering in chat messages
+│   │   │   │   ├── autolink-chip.js # Smart chip rendering (review_ + src:// references)
+│   │   │   │   ├── autolink-chip-preview.js # Smart chip preview popover rendering
+│   │   │   │   ├── mention-resolver.js # @mention entity resolution
+│   │   │   │   ├── mission-mindmap.js # Mind map card component for mission page
+│   │   │   │   ├── agent-card-editor.js # Agent card editor component
+│   │   │   │   ├── info.js         # Info page shared logic
+│   │   │   │   ├── info.css        # Info page shared styles
+│   │   │   │   ├── product-tour.js # Product tour/onboarding module
+│   │   │   │   └── style.css      # Shared styles (agent card, avatar, etc.)
+│   │   ├── shared/
+│   │   │   ├── telemetry.js       # Client-side telemetry SDK
+│   │   │   └── i18n.js            # Internationalization
+│   │   ├── landing.html           # EClawbot brand landing page (SEO, JSON-LD)
+│   │   ├── enterprise.html        # Enterprise landing page (SEO, JSON-LD)
+│   │   ├── privacy-policy.html    # Privacy policy page (i18n, 12 languages)
+│   │   ├── llms.txt               # AI search engine discovery file
+│   │   ├── robots.txt             # SEO: crawler directives
+│   │   ├── sitemap.xml            # SEO: sitemap (10 URLs)
+│   │   ├── sw.js                  # Service worker for PWA support
+│   │   ├── assets/
+│   │   │   └── og-image.png       # Open Graph social sharing image
+│   │   └── docs/
+│   │       └── webhook-troubleshooting.md
+│   ├── tests/                # Regression + integration tests (59 files)
+│   ├── tests/jest/           # Jest unit tests (146 files, CI-run via `npm test`)
+│   └── scripts/              # Setup scripts
+├── app/                      # Android app (Kotlin)
+│   └── src/main/java/com/hank/clawlive/
+│       ├── MainActivity.kt        # Main activity
+│       ├── ChatActivity.kt        # Chat screen
+│       ├── AiChatActivity.kt      # AI chat screen
+│       ├── EntityManagerActivity.kt # Entity management
+│       ├── MissionControlActivity.kt # Mission control
+│       ├── SettingsActivity.kt    # Settings
+│       ├── FileManagerActivity.kt # File manager
+│       ├── FeedbackActivity.kt    # Feedback
+│       ├── WebViewActivity.kt     # Generic WebView host (wallet, invite, card-holder, …)
+│       ├── data/
+│       │   ├── local/             # SharedPreferences, Room DB
+│       │   ├── model/             # API data models
+│       │   ├── remote/            # API service, Socket, Telemetry
+│       │   └── repository/        # Data repositories
+│       ├── ui/                    # UI components, adapters, ViewModels
+│       ├── engine/                # Claw renderer (live wallpaper)
+│       ├── fcm/                   # Firebase Cloud Messaging
+│       ├── service/               # Wallpaper + screen control services
+│       ├── billing/               # Google Play billing
+│       ├── debug/                 # Crash logging
+│       └── widget/                # Home screen widget
+├── ios-app/                  # iOS/React Native app (Expo)
+│   ├── app/                       # Screen routes (Expo Router)
+│   ├── components/                # Reusable components
+│   ├── services/                  # API + socket services
+│   ├── store/                     # State management
+│   ├── hooks/                     # Custom hooks
+│   └── i18n/                      # Translations
+├── openclaw-channel-eclaw/   # OpenClaw channel plugin (npm package)
+├── Codex-cli-proxy/         # Codex CLI proxy service (Python/Docker)
+├── sdk/                      # Auto-generated SDKs
+│   ├── go/                        # Go SDK
+│   └── rust/                      # Rust SDK
+├── docs/
+│   ├── plans/                     # Design documents (42 files)
+│   ├── reports/                   # Test & analysis reports (20 files)
+│   └── issues/                    # Issue documentation (4 files)
+├── .github/workflows/
+│   ├── backend-ci.yml             # Backend lint + Jest tests
+│   ├── android-ci.yml             # Android build CI
+│   ├── entity-cards-ci.yml        # Entity cards CI
+│   ├── semantic-release.yml       # Semantic versioning
+│   └── railway-preview-cleanup.yml
+├── google_play/              # Play Store assets
+├── scripts/                  # Utility scripts (Python/JS)
+├── AGENTS.md                 # This file — AI assistant instructions
+├── railway.json              # Railway deployment config
+└── package.json              # Root (Android Gradle wrapper)
+```
+
+> **三平台頁面/功能完整盤點**：`docs/reports/2026-03-14-platform-pages-features-inventory.md`
+> 包含每個頁面的渲染邏輯、API 呼叫、跨平台對照表、可清除項目、缺口分析。
+
+---
+
+## Key Architecture
+
+### Backend (Node.js/Express)
+
+- **Single-file server**: `backend/index.js` (~18,186 lines) contains all API routes
+- **Database**: PostgreSQL (Railway-managed), connection in `backend/db.js`
+- **Real-time**: Socket.IO for live updates to Web Portal and Android app
+- **Auth**: JWT tokens (cookie-based for web, header-based for API), social OAuth (Google, Facebook), OIDC
+- **Entity model**: Each device has dynamically managed entity slots (starting with 1, no upper limit). Entity IDs are monotonically increasing per-device and never reused. Auto-expands on bind to ensure at least one empty slot. Manual add/delete via `POST /api/device/add-entity` and `DELETE /api/device/entity/:entityId/permanent`.
+- **Bot communication**: Webhook push + `exec+curl` pattern; bots on OpenClaw platform (Zeabur)
+- **Push format**: Instruction-first with pre-filled curl templates for bot responses
+
+### Database Tables (PostgreSQL)
+
+| Table | Purpose |
+|-------|---------|
+| `devices` | Registered devices (device_id, device_secret) |
+| `entities` | Entity slots per device (character, state, message, webhook, xp, avatar, public_code, agent_card, encryption_status, identity) |
+| `user_accounts` | Web portal user accounts (email, password, virtual device mapping) |
+| `official_bots` | Registry of official bots available for borrowing |
+| `official_bot_bindings` | Current official bot binding assignments |
+| `feedback` | User feedback/bug reports |
+| `agent_card_holder` | Collected agent cards per device (blocked, last_interacted_at columns for Card Holder redesign) |
+| `device_vars` | Per-device environment variables with cross-platform merge |
+| `device_vars_audit` | Audit trail of every vault mutation: action (replace/merge/wipe/refuse_*/delete_one), key_name, source, caller IP/UA, before/after key counts — **never stores values** |
+| `channel_accounts` | OpenClaw channel integration accounts (e2ee_capable flag for E2EE awareness) |
+| `skill_contributions` | Community-contributed skill templates |
+| `soul_contributions` | Community-contributed soul templates |
+| `rule_contributions` | Community-contributed rule templates |
+| `mission_dashboard` | Mission control dashboard (todo_list, mission_list, done_list are deprecated; notes, rules still active) |
+| `mission_items` | Individual mission items with priority/status |
+| `kanban_cards` | Kanban board cards (title, priority, status, assigned_bots, automation) |
+| `kanban_comments` | Card comments (留言板) |
+| `kanban_notes` | Card notes (筆記區) |
+| `kanban_files` | Card file attachments |
+| `scheduled_messages` | _(legacy/deprecated)_ Scheduled message definitions |
+| `schedule_executions` | _(legacy/deprecated)_ Scheduled message execution log |
+| `server_logs` | Server-side audit/event logs |
+| `usage_tracking` | _(legacy)_ Was used for daily message limit (removed v1.1105+); table retained for audit only — no longer written by `/api/client/speak` |
+| `roles` | RBAC role definitions |
+| `user_roles` | User-to-role assignments |
+| `oauth_clients` | OAuth 2.0 client registrations |
+| `oauth_tokens` | OAuth 2.0 access/refresh tokens |
+| `entity_trash` | Soft-deleted entity recovery (7-day retention) |
+| `message_reactions` | Chat message like/dislike tracking |
+| `pending_cross_messages` | Cross-device message queue |
+| `discord_bots` | Discord application registrations per entity |
+| `device_preferences` | Per-device settings (prefs JSONB, org_chart JSONB for hierarchy + behavior options) |
+
+### API Route Groups
+
+| Prefix | Module | Description |
+|--------|--------|-------------|
+| `/api/device/*` | index.js | Device registration, status, entity management |
+| `/api/bind`, `/api/entities`, `/api/status` | index.js | Entity binding and status |
+| `/api/transform` | index.js | Bot status update + unified communication (speakTo/broadcast fields) |
+| `/api/client/speak` | index.js | Client-to-entity messaging |
+| `/api/entity/speak-to` | index.js | _(deprecated)_ Entity-to-entity — use transform with `speakTo` |
+| `/api/entity/broadcast` | index.js | _(deprecated)_ Broadcast — use transform with `broadcast:true` |
+| `/api/entity/lookup` | index.js | Public entity lookup by publicCode |
+| `/api/entity/agent-card` | index.js | Agent card CRUD |
+| `/api/entity/cross-device-settings` | entity-cross-device-settings.js | Cross-device settings |
+| `/api/contacts` | index.js | Card Holder (名片夾) — collect, browse, search, pin, refresh agent cards |
+| `/api/chat/*` | index.js | Chat history, file upload, integrity |
+| `/api/chat/search` | index.js + chat-embedding.js | Semantic (pgvector cosine) + keyword-fallback chat search |
+| `/api/bot/*` | index.js + bot-tools.js | Bot registration, push, files, web tools |
+| `/api/mission/*` | mission.js | Mission dashboard, notes, rules (legacy todo routes removed) |
+| `/api/mission/card*` | kanban.js | Kanban board — cards CRUD, move, comments, notes, files, config. GET `/cards` supports `q` / `since` / `until` / `status` / `priority` filters; orders by `updated_at DESC`. POST `/card/:id/restore` un-archives a card. GET `/cards/archived` paginates soft-deleted cards (7-day retention, was 24h). |
+| `/api/auth/*` | auth.js | Login, register, OAuth, OIDC, RBAC |
+| `/api/oauth/*` | oauth-server.js | OAuth 2.0 server (clients, tokens) |
+| `/api/a2a/*` | a2a-compat.js | A2A protocol compatibility |
+| `/api/discord/*` | discord-integration.js | Native Discord slash command integration |
+| `/api/feedback/*` | index.js + device-feedback.js | Feedback system |
+| `/api/schedules` | _(deprecated, returns 410)_ | Legacy task scheduling (removed) |
+| `/api/notifications/*` | notifications.js | Push notification management |
+| `/api/device-telemetry` | device-telemetry.js | AI debug buffer |
+| `/api/device-vars` | index.js | Environment variable management (POST merge/replace, DELETE wipe w/ `confirm:"YES_DELETE_ALL_VAULT"`, DELETE single key) |
+| `/api/device-vars/audit` | index.js | Owner-auth audit trail: every POST/DELETE leaves a row; never stores values, only key names + caller IP/UA + before/after counts |
+| `/api/logs` | index.js | Server log querying |
+| `/api/audit-logs` | index.js | Admin audit log access |
+| `/api/admin/*` | index.js | Admin panel endpoints |
+| `/api/publisher/*` | article-publisher.js | Multi-platform article publishing (12 platforms: Blogger, Hashnode, X, DEV.to, WordPress, Telegraph, Qiita, WeChat, Tumblr, Reddit, LinkedIn, Mastodon) |
+| `/api/docs` | api-docs.js | Swagger UI + OpenAPI spec |
+| `/api/skill-templates` | index.js | Skill template CRUD + contributions |
+| `/api/soul-templates` | index.js | Soul template CRUD |
+| `/api/rule-templates` | index.js | Rule template CRUD |
+| `/api/official-borrow/*` | index.js | Official bot borrowing system |
+| `/api/device/entity/avatar/upload` | index.js + flickr.js | Avatar photo upload (multipart, 5MB, Flickr storage) |
+| `/api/device/entity-trash` | index.js | Entity trash: list, restore, permanent delete (7-day retention) |
+| `/api/device/compact-entities` | index.js | Entity slot compaction (renumber sparse IDs) |
+| `/api/entity/identity` | index.js | Bot identity CRUD (role, instructions, boundaries, tone) |
+| `/api/message/:messageId/react` | index.js | Chat message reactions (like/dislike, XP awards) |
+| `/api/link-preview` | index.js | URL link preview extraction (Open Graph/Twitter meta) |
+| `/api/gatekeeper/stats` | index.js | Gatekeeper aggregate interception statistics |
+| `/api/gps/recommendations` | gps-recommendations.js | GPS-based entity recommendations (demo) |
+| `/api/device/org-chart` | org-chart.js + index.js | Organization hierarchy chart (GET/PUT hierarchy + behavior options) |
+| `/api/kanban/cards/summary` | index.js | Kanban card summary endpoint |
+| `/api/mindmap/*` | mindmap.js + mindmap-mirror.js | Mind map CRUD (nodes, edges, anchors, comments), AI traverse, note-mirror backfill |
+| `/api/analytics/*` | site-pageviews.js | Site pageview analytics aggregation |
+| `/api/growth/*` | growth.js | Growth metrics for admin bots |
+| `/api/chat/message/:id/related` | index.js + chat-embedding.js | Nearest-neighbor message lookup |
+| `/api/health`, `/api/version` | index.js | Health check and version |
+| `/c/:code` | index.js | Shareable chat link (read-only view) |
+| `/`, `/landing`, `/llms.txt` | index.js | Landing page, SEO, AI search discovery |
+
+### Web Portal Pages
+
+| Page | URL | Purpose |
+|------|-----|---------|
+| Login | `/portal/` | Registration + login |
+| Dashboard | `/portal/dashboard.html` | Device overview, entity cards |
+| Chat | `/portal/chat.html` | Real-time chat with entities |
+| Mission | `/portal/mission.html` | Mission control (notes, rules) |
+| Kanban | `/portal/kanban.html` | Kanban board — cards, automation, timeline |
+| Settings | `/portal/settings.html` | Device and account settings |
+| Env Vars | `/portal/env-vars.html` | Environment variable editor |
+| Files | `/portal/files.html` | File manager |
+| Feedback | `/portal/feedback.html` | Bug reports and feedback |
+| Admin | `/portal/admin.html` | Admin management panel |
+| Card Holder | `/portal/card-holder.html` | Agent card collection (3-section: My Cards, Recent, Collected) |
+| Info | `/portal/info.html` | Device info, FAQ, release notes, user guides |
+| Community | `/portal/community.html` | Community template hub (real API, comments) |
+| Workspace | `/portal/workspace.html` | Split-view multi-pane workspace |
+| Screen Control | `/portal/screen-control.html` | Remote screen capture/control |
+| Delete Account | `/portal/delete-account.html` | Account deletion |
+| Share Chat | `/portal/share-chat.html` | Shareable read-only chat view |
+| Landing | `/` (root) | EClawbot brand landing page (public, SEO) |
+| Enterprise | `/enterprise` | Enterprise landing page (public, SEO, JSON-LD) |
+| Privacy Policy | `/privacy-policy.html` | Privacy policy (public, i18n) |
+| Analytics | `/portal/analytics.html` | Site pageview analytics (admin) |
+| Mind Map | `/portal/mission.html` (embedded) | Mind map visualization (Cytoscape, was standalone mindmap.html until v1.1114) |
+| Publisher | `/portal/publisher.html` | Multi-platform article publisher |
+| Publisher Setup | `/portal/publisher-setup.html` | Publisher platform config wizard |
+| Wallet | `/portal/wallet.html` | E-coin wallet management |
+| My Rentals | `/portal/my-rentals.html` | Active rental contracts |
+| Plaza | `/portal/plaza.html` | Bot rental marketplace |
+| Marketplace | `/portal/marketplace.html` | Bot rental marketplace (alternate) |
+| Onboarding | `/portal/onboarding.html` | New user onboarding flow |
+| Invite | `/portal/invite.html` | Referral/invite code page |
+| Roadmap | `/portal/roadmap.html` | Product roadmap display |
+
+### Android App (Kotlin)
+
+- Package: `com.hank.clawlive`
+- Architecture: Activity-based with ViewModels, Room DB for chat persistence
+- Networking: Retrofit (`ClawApiService.kt`) + OkHttp with `TelemetryInterceptor`
+- Real-time: Socket.IO via `SocketManager.kt`
+- Push: Firebase Cloud Messaging (`ClawFcmService.kt`)
+- Live Wallpaper: Custom `ClawRenderer` engine
+- Billing: Google Play Billing (`BillingManager.kt`)
+- AI Chat: `AiChatViewModel.kt` manages state (fixes message loss, typing race condition)
+- Bottom nav: FILES tab renamed to CARDS (Card Holder); Files link moved to Settings
+- App version: 1.0.79 (versionCode 85)
+
+### iOS/React Native App (Expo)
+
+- Framework: React Native with Expo Router
+- Screens: `app/` directory (tabs layout, chat, AI chat, entity manager, etc.)
+- Services: `services/api.ts`, `services/socketService.ts`, `services/notificationService.ts`
+- State: `store/` directory
+
+---
+
+## Workflow Orchestration Rules
+
+1. **Plan Mode Default** — 收到新任務時，先進入 Plan Mode（只讀 + 搜索），產出一份 step-by-step 計畫並讓使用者確認後才動手寫程式碼。
+
+2. **Subagent Strategy** — 遇到需要大量搜索或分析的子任務，使用 Task tool 派出 subagent（Explore / Plan / Bash）並行處理，減少主對話的 context 消耗。
+
+3. **Self-Improvement Loop** — 每次 session 結束前，把學到的 codebase 知識、常見陷阱、偏好寫回 AGENTS.md，讓下一個 session 的 Codex 不必從零開始。
+
+4. **Verification Before Done** — 修改程式碼後必須跑 lint / type-check / test；若任何一步失敗就修到通過為止，不把破損的 code commit。
+
+5. **Issue Fix → Regression Test Required** — 修好 GitHub Issue 後，**必須**新增 regression test 驗證該修復，測試通過後才能 close issue。
+   - Android UI bug → 在 `app/src/androidTest/` 或 `backend/tests/` 新增對應 case
+   - Backend bug → 在 `backend/tests/` 對應的 test 檔案新增 case
+   - 若沒有現成 test 檔案，新建一個（命名規則：`test-<feature>.js`）
+   - **新增的 test 檔案必須登錄到本文件的「Regression Tests」清單**，含說明、執行指令、所需 credentials
+   - Close issue 時在 comment 中附上測試 case 的檔案與行號
+
+5a. **Bug Report → Debug API Required** — 當使用者回報 bug 時，除了建立驗證測試，**必須**同時建立該 bug 專屬的 debug API endpoint，直到使用者明確確認 bug 已修復才可移除。
+
+   ### 流程
+   1. **收到 bug report** → 建立 `GET /api/debug/<bug-slug>` endpoint，回傳與該 bug 相關的所有診斷資訊（相關 DB 狀態、config、最近 log、變數值等）
+   2. **Debug endpoint 規格**：
+      - Route: `GET /api/debug/<bug-slug>?deviceId=X&deviceSecret=Y`
+      - 驗證: 需 deviceId + deviceSecret（同 `/api/logs` 的 auth 模式）
+      - Response: `{ success: true, bug: "<slug>", diagnostics: { ... }, timestamp: ISO }`
+      - 包含所有能幫助判斷 root cause 的資訊（不只 error，也包含正常路徑的狀態）
+   3. **在修復過程中**，每次嘗試修復後都用 debug API 驗證狀態變化，而非只靠主觀判斷
+   4. **修復完成後**，告知使用者 debug endpoint 存在，讓使用者自行驗證
+   5. **只有使用者明確說「已修復」或「可以移除」時**，才可刪除 debug endpoint
+   6. **登記追蹤**：在下方「Active Debug Endpoints」清單中登記，包含 bug 描述、endpoint、建立日期
+
+   ### 命名慣例
+   - Endpoint slug 用 kebab-case，簡短描述 bug：`/api/debug/wallet-auth-fail`、`/api/debug/entity-limit-stuck`
+   - 若 bug 與特定 issue 相關：`/api/debug/issue-1693-embed-mode`
+
+   ### Active Debug Endpoints
+   | Bug | Endpoint | Created | Status |
+   |-----|----------|---------|--------|
+   | Interview start fails with owner_device_not_found | `GET /api/rental/debug/interview-start-fail?deviceId=X&deviceSecret=Y` | 2026-04-12 | Active |
+
+6. **Demand Elegance (Balanced)** — 在保持 minimal change 的前提下，追求可讀、一致的程式風格；不為了「漂亮」而過度重構，但也不容忍明顯的 code smell 在新增的程式碼中出現。
+
+7. **Autonomous Bug Fixing** — 當執行過程中遇到錯誤（build fail、test fail、runtime error），不要立刻停下來問使用者，先自行分析 log 並嘗試修復，連續失敗 3 次才 escalate。
+
+8. **Task Management**
+   - 所有多步驟工作都使用 TodoWrite 追蹤，讓使用者隨時可見進度
+   - 完成一項立即標記 completed，不批量更新
+   - 同時只有一個 task 可以是 in_progress
+
+8a. **EClaw Progress Reporting + `/reasoning` Command** — 控制 Codex 在 EClaw chat 的推理可見度。
+
+   ### 狀態儲存
+   推理模式狀態存在 mission note `⚙️ Codex-settings`（note ID: `81cad8fc-1fac-406a-84e0-9113bea1f76c`）。
+   格式：`reasoning: on` 或 `reasoning: off`（預設 `off`）。
+
+   **讀取當前狀態：**
+   ```bash
+   curl -s "https://eclawbot.com/api/mission/dashboard?deviceId=480def4c-2183-4d8e-afd0-b131ae89adcc&botSecret=944738a1eece24cf64916beab7ce2640&entityId=2" | python3 -c "import sys,json; notes=json.load(sys.stdin).get('dashboard',{}).get('notes',[]); [print(n['content']) for n in notes if 'Codex-settings' in n.get('title','')]"
+   ```
+
+   **更新狀態：**
+   ```bash
+   curl -s -X POST "https://eclawbot.com/api/mission/note/update" \
+     -H "Content-Type: application/json" \
+     -d '{"deviceId":"480def4c-2183-4d8e-afd0-b131ae89adcc","botSecret":"944738a1eece24cf64916beab7ce2640","entityId":2,"title":"⚙️ Codex-settings","newContent":"reasoning: on"}'
+   ```
+
+   ### `/reasoning` 指令處理
+   收到來自 EClaw chat 的訊息 `/reasoning on` 或 `/reasoning off` 時：
+   1. 呼叫上方 PUT API 更新 note 內容
+   2. 透過 `/api/transform` speakTo `31tlkr` 回覆確認（例：「✅ Reasoning mode: ON」）
+
+   ### 推理模式行為
+
+   **`reasoning: off`（預設）— 只送結論：**
+   - 任務開始送「🔧 開始：{摘要}」
+   - 任務完成送「✅ 完成：{結果}」
+   - 不送中間步驟
+
+   **`reasoning: on` — 邊推理邊送：**
+   - 每個重要思考節點立即推送進度訊息
+   - 例：「🤔 正在分析...」→「💡 發現：...」→「🔧 修復中...」→「✅ 完成」
+   - 每個推理步驟完成時立刻送出，不等全部完成
+
+   ### 推送 channel 選擇（重要）
+   不同來源的訊息需要用不同方法回推，才能讓使用者在正確介面看到：
+
+   | 訊息來源 | 推理進度推送方式 |
+   |---------|----------------|
+   | `[EClaw from web_chat]`（fakechat） | 使用 `mcp__plugin_fakechat_fakechat__reply` tool（不帶 reply_to，直接送新訊息） |
+   | EClaw portal chat / 其他 channel | 使用 `POST /api/transform` + `speakTo: ["31tlkr"]`（出現在 EClaw 通知） |
+
+   fakechat `reply` 範例（reasoning=on 時每個節點）：
+   - 呼叫 `reply` tool，`text` 填入推理步驟（如「🤔 正在分析 GAME-093 form-submit 失敗原因...」）
+   - 不需要 `reply_to`，直接送出即可
+
+   EClaw transform 範例（非 fakechat）：
+   ```bash
+   curl -s -X POST "https://eclawbot.com/api/transform" \
+     -H "Content-Type: application/json" \
+     -d '{"deviceId":"480def4c-2183-4d8e-afd0-b131ae89adcc","entityId":2,"botSecret":"944738a1eece24cf64916beab7ce2640","message":"MESSAGE_HERE","state":"IDLE","speakTo":["31tlkr"]}'
+   ```
+
+   ### Session 初始化
+   每個新 session 開始處理 EClaw 任務時，先讀取 note 取得當前 reasoning 狀態。
+
+9. **Core Principles**
+   - 安全第一（不引入 OWASP Top-10 漏洞）
+   - 不臆測（先讀再改）
+   - 最小驚訝原則（行為與命名一致）
+   - DRY but not premature abstraction
+   - 優先使用專用工具（Read > cat, Edit > sed, Grep > grep）
+
+10. **Chinese Summary on Completion** — 每次任務完成後，用**繁體中文**回報總結，包含：修改了哪些檔案、做了什麼改動、有無需要注意的事項。
+
+12. **UI/UX Simplify Review** — 任何與 UI/UX 渲染相關的修復或改動，在 commit 之前**必須**先執行 `simplify` skill（代碼複用、品質、效率三項審查），根據審查結果修正問題後才能 commit。
+
+13a. **Smart Quote — 所有彈出視窗與卡片** — 任何新增或修改彈出視窗（modal）、側邊卡片（detail panel）、對話框（dialog）時，**必須**加入「引用到聊天」功能，並遵守以下規範：
+   - 使用 `quoteToChat(source, title, excerpt)` 函式，絕對不能直接貼入完整內容
+   - 偵測 iframe 環境：`window.self !== window.top` → 用 `postMessage`；否則 → localStorage + navigate
+   - 引用 UX 使用現有回覆列（reply bar）`setReplyContext()`，顯示 `📌 source: title: excerpt` 的摘要格式
+   - 所有 `message` 事件監聽器**必須**驗證 `e.origin === window.location.origin`，`postMessage` 目標**必須**指定 `window.location.origin`（不可用 `'*'`）
+
+13. **UI/UX I18n Audit** — 任何與 UI/UX 相關的改動，除了執行 `simplify` skill 外，還**必須**確認 i18n 做確實：
+    - 所有使用者可見的文字（按鈕、標題、提示、錯誤訊息、placeholder）都使用 `data-i18n` 屬性或 `i18n.t()` 呼叫
+    - 新增的 i18n key 必須同步加入所有語言檔案（Web `i18n.js`、Android `strings.xml`、iOS `i18n/`）
+    - 不可有 hardcoded 文字殘留在 HTML/Kotlin/React 中
+
+11. **Post-Push Production Verification** — push 到 main 後**必須**驗證 production：
+    - 等 Railway 部署完成（檢查 `/api/health` 的 build 版本或 uptime 重置）
+    - 跑所有 regression tests 對 live server（`test-bot-api-response.js`, `test-broadcast.js`, `test-cross-device-settings.js`, `test-edit-mode-public-code.js` 及新增的 feature tests）
+    - 若有 test failure，立即分析是 pre-existing 還是本次改動引起的
+    - 驗新功能的端點能正常回應（curl 檢查 status code + response body）
+    - 所有驗證通過後才算任務完成
+
+---
+
+14. **EClaw Skill Template Sync** — 所有與實體（entity）相關的新 API，都**必須**同步收錄到 `backend/data/skill-templates.json` 的 `eclaw-a2a-toolkit` skill template 中，讓 bot 能透過 skill 得知並使用這些 API。**例外**：Article Publisher 相關的 API（`/api/publisher/*`）不需收錄。
+
+15. **Intent Keyword System** — `pushToBot()` 會依訊息內容偵測 intent 關鍵字，自動附加對應 API hint block。
+
+   - **Keyword list 位置**：mission note `⚙️ api-intent-keywords`（ID: `c76d96a3-ae74-44bc-b65d-c0cd388f56ed`）
+   - **格式**：`{ "category": { "keywords": [...], "intent": "name" }, ... }`
+   - **Cache TTL**：5 分鐘
+   - **支援 intent**：kanban / messaging / notes / schedule / entities
+   - **新增關鍵字**：讀 note → merge JSON → `POST /api/mission/note/update` with `newContent`，無需重啟 server
+   - **故障安全**：JSON parse 失敗 → 靜默跳過，不影響正常 push 流程
+   - **實作位置**：`backend/index.js` — `loadIntentKeywords()` / `detectIntentApiHints()` / `pushToBot()`
+
+## Git Workflow
+
+- **PR then merge**: When work is complete, push the feature branch, create a PR via GitHub API, then merge it to `main` yourself (squash merge). After merging, check that the CI actions on `main` have not failed.
+- **Workflow**: develop on feature branch → push → create PR → merge PR → **check CI status on main** → **verify production**
+- 工作完成後 push feature branch、建立 PR、自行 merge 到 main，然後確認 main 的 CI actions 沒有 failed。
+- Codex 會在 git push 之前審查你的代碼
+
+### ⚠️ Code Review Checklist (MANDATORY — applies to every PR)
+
+Every PR — opened by the commander OR by a sub-agent (U##) — must be self-reviewed against the 10-item checklist at **[`docs/code-review-checklist.md`](docs/code-review-checklist.md)** before merge. The self-review comment posted to the PR must use the template at the bottom of that file, filled line-by-line.
+
+Part A (core, 5 items): logic trace / test coverage / return shape / what-this-does-NOT-fix / security.
+Part B (extended, 5 items): `/api/help` update / related docs / i18n audit / info page / debug endpoint.
+
+Every item is ✅ / ⚠️ NO-OP / ❌ — an unanswered item blocks merge. Sub-agent dispatch prompts must include the pointer to this file (see `reference_dispatch_template.md`).
+
+### ⚠️ i18n Pre-PR Requirement (MANDATORY)
+
+**If your PR touches any of the following, you MUST run BOTH i18n checks locally and confirm they pass BEFORE opening the PR:**
+
+- `backend/public/shared/i18n.js`
+- Any `*.html` file under `backend/public/`
+
+```bash
+# 1. Syntax + structure test (Jest)
+cd backend && npm test -- --testPathPattern=i18n-syntax
+
+# 2. Strict key-reference check — hard-fails if any `data-i18n` attr or
+#    `i18n.t('key')` call references a key missing from TRANSLATIONS.en
+node backend/scripts/i18n-check.js
+```
+
+Both are wired into Backend CI and block merges. Run them locally first — a missing key renders as the raw key string in the UI (the exact "i18n not defined"-class bug the gate exists to prevent).
+
+**What each check catches**:
+- Jest `i18n-syntax`: SyntaxError in `i18n.js`, missing locale sections, missing `<script src>` refs, inline handlers without `typeof i18n` guards.
+- `scripts/i18n-check.js`: every `data-i18n` / `data-i18n-title` / `data-i18n-placeholder` attr + every `i18n.t('key')` call must resolve to a real key in `TRANSLATIONS.en`. `[html]`-prefixed keys are treated as intentional HTML-fallback (no EN entry needed). Dynamic concatenation `i18n.t('prefix_' + var)` is skipped.
+
+## CI/CD
+
+- **Backend CI** (`.github/workflows/backend-ci.yml`): ESLint + Jest on every push to `backend/`; includes `i18n-syntax.test.js`
+- **Android CI** (`.github/workflows/android-ci.yml`): Android build verification
+- **Entity Cards CI** (`.github/workflows/entity-cards-ci.yml`): Entity card tests
+- **Semantic Release** (`.github/workflows/semantic-release.yml`): Auto-versioning
+- **Railway**: Auto-deploys from `backend/` on push to main (via `railway.json`)
+
+## GitHub CLI
+
+`GH_TOKEN` 已存入 `backend/.env`（gitignored）。Session startup 會自動注入。
+本地環境 PATH 中沒有 `gh` 二進位，改用 GitHub REST API + curl：
+
+```bash
+# 列出 open issues
+curl -sL -H "Authorization: Bearer $GH_TOKEN" \
+  "https://api.github.com/repositories/1150444936/issues?state=open&per_page=50"
+
+# Close issue
+curl -sL -X PATCH -H "Authorization: Bearer $GH_TOKEN" \
+  -d '{"state":"closed"}' \
+  "https://api.github.com/repositories/1150444936/issues/<number>"
+```
+
+PR 連結格式（無法用 gh CLI 建立時）：
+```
+https://github.com/HankHuang0516/realbot/compare/main...<branch-name>
+```
+
+---
+
+## Feature Parity Rule
+
+**All user-facing features must be kept in sync across all three client surfaces: Web Portal, Android App, and iOS App.**
+When implementing or modifying any feature on one platform, ensure the other platforms are updated to match. This includes UI elements, API fields sent, string resources, behavior, navigation structure, and tab bar layout.
+
+### Brand Asset Parity (NEW)
+
+**Brand assets must be identical across Android, iOS, and Web Portal** — app icon, splash screen, launch screen, store listing copy, screenshots, and marketing text. A user seeing the Android icon (red pixel creature on phone) and the iOS icon (default Expo triangle) at the same time is a brand failure, not a parity oversight. When replacing any brand asset on one platform, update the others in the same PR.
+
+Icon source of truth for iOS App Store = **Android launcher icon**:
+`app/src/main/res/mipmap-xxxhdpi/ic_launcher_background.png` (432×432, has alpha). Flatten transparency with the sampled corner color, upscale with LANCZOS to 1024×1024 (no alpha), save to `ios-app/assets/icon.png`. Both stores then show the same brand icon users see on their Android home screen (red pixel creatures + phone + "E‑Claw by OpenClaw" text). `google_play/play_store_icon_512.png` is a *store-listing* variant (single creature on phone), not the launcher — do not use it as iOS icon.
+
+App Store / Play Store listing text (name, subtitle, description, keywords, promo text) must also stay in sync — changes to one store listing require updating the other.
+
+---
+
+## Deployment
+
+- Railway auto-deploys from `backend/` folder on push to main
+- `railway.json` sets `startCommand: "node index.js"` (root dir = `backend/`)
+- `nixpacks.toml` in `backend/` configures the build
+- Changes to root files do NOT trigger deployment — must change files under `backend/`
+- Railway sits behind Cloudflare CDN — deploy can take 2-5 minutes
+- Use `/api/auth/oauth/providers` or `/api/audit-logs` as deploy canary endpoints
+- `/api/health` returns dynamic `startedAt` ISO timestamp and `uptime` — compare `startedAt` to detect new deploys
+
+---
+
+## Environment Variables
+
+See `backend/.env.example` for full list. Key variables:
+
+| Variable | Purpose |
+|----------|---------|
+| `DATABASE_URL` | PostgreSQL connection (auto-set by Railway) |
+| `PORT` | Server port (default: 3000) |
+| `JWT_SECRET` | JWT signing secret |
+| `WEBHOOK_SECRET` | Webhook verification secret |
+| `SEAL_KEY` | 64-hex-char encryption key |
+| `FLICKR_API_KEY/SECRET` | Flickr photo storage |
+| `ANTHROPIC_API_KEY` | Codex AI integration |
+| `GOOGLE_CLIENT_ID` | Google OAuth |
+| `FACEBOOK_APP_ID/SECRET` | Facebook OAuth |
+| `GITHUB_TOKEN` | GitHub API access |
+| `X_CONSUMER_KEY/SECRET` | X/Twitter publishing |
+| `DEVTO_API_KEY` | DEV.to article publishing |
+| `WORDPRESS_ACCESS_TOKEN` | WordPress.com publishing |
+| `TELEGRAPH_ACCESS_TOKEN` | Telegraph publishing (optional, auto-creates) |
+| `QIITA_ACCESS_TOKEN` | Qiita article publishing (Japan) |
+| `WECHAT_APP_ID/APP_SECRET` | WeChat Official Account drafts (China) |
+| `TUMBLR_CONSUMER_KEY/SECRET` + `TUMBLR_ACCESS_TOKEN/SECRET` | Tumblr publishing |
+| `REDDIT_CLIENT_ID/SECRET` + `REDDIT_USERNAME/PASSWORD` | Reddit posting |
+| `LINKEDIN_ACCESS_TOKEN` + `LINKEDIN_PERSON_URN` | LinkedIn publishing |
+| `MASTODON_ACCESS_TOKEN` + `MASTODON_INSTANCE_URL` | Mastodon/Fediverse publishing |
+| `FIREBASE_*` | FCM push notifications |
+| `CLAUDE_CLI_PROXY_URL` | Codex CLI proxy service URL |
+| `SUPPORT_API_KEY` | AI support shared secret |
+| `X_ACCESS_TOKEN/SECRET` | X/Twitter OAuth access tokens |
+| `FLICKR_OAUTH_TOKEN/SECRET` | Flickr OAuth tokens for photo uploads |
+| `GITHUB_REPO` | GitHub repo identifier (HankHuang0516/realbot) |
+
+Test-specific variables (in `backend/.env`, gitignored):
+- `TEST_DEVICE_ID` — for bot API response tests
+- `BROADCAST_TEST_DEVICE_ID` + `BROADCAST_TEST_DEVICE_SECRET` — for most integration tests
+
+---
+
+## Debugging Server Issues
+
+When investigating backend bugs (broadcast failure, push not delivered, etc.):
+
+1. **Query server logs FIRST** via `GET /api/logs`
+   - Requires `deviceId` + `deviceSecret` (ask user if not available)
+   - Filters: `category`, `level` (info/warn/error), `since` (timestamp ms), `filterDevice`, `limit`
+   - Categories: `bind`, `unbind`, `transform`, `broadcast`, `broadcast_push`, `speakto_push`, `client_push`, `entity_poll`
+   - Example: `curl -s "https://eclawbot.com/api/logs?deviceId=DEVICE_ID&deviceSecret=DEVICE_SECRET&category=broadcast_push&limit=50"`
+
+2. **Check credentials**: Look in `backend/.env` (local only, gitignored). If not available, ask user for a valid deviceId+deviceSecret pair.
+
+3. **Query device telemetry** for client-side context:
+   ```bash
+   curl "https://eclawbot.com/api/device-telemetry/summary?deviceId=ID&deviceSecret=SECRET"
+   ```
+
+---
+
+## Device Telemetry (AI Debug Buffer)
+
+Every device has a structured telemetry buffer (~1 MB cap) at `POST/GET/DELETE /api/device-telemetry`.
+This buffer is the **primary data source for AI-automated debugging**.
+
+### Auto-captured (no action needed)
+- **Backend middleware** auto-logs every device-scoped API call (endpoint, params, response, duration)
+- **Web `telemetry.js`** auto-tracks page views + wraps `apiCall()` for all portal pages
+- **Android `TelemetryInterceptor`** auto-logs all OkHttp requests via interceptor
+
+### When adding new features — MUST DO:
+1. **New backend endpoint**: If it accepts `deviceId`, the middleware captures it automatically. No action needed.
+2. **New web portal page**: Include `<script src="../shared/telemetry.js"></script>` AFTER `auth.js`. Page view auto-tracked.
+3. **New Android Activity**: Call `TelemetryHelper.trackPageView(context, "page_name")` in `onResume()`.
+4. **New user-facing action** (button click, dialog, etc.): Call `telemetry.trackAction()` (web) or `TelemetryHelper.trackAction()` (Android).
+5. **Error handling**: Call `telemetry.trackError()` / `TelemetryHelper.trackError()` in catch blocks for user-visible errors.
+
+### Querying telemetry for debugging
+```bash
+# Get summary (usage, type breakdown)
+curl "https://eclawbot.com/api/device-telemetry/summary?deviceId=ID&deviceSecret=SECRET"
+
+# Get all entries (newest 500)
+curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET"
+
+# Filter by type
+curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&type=api_req"
+
+# Filter by time range
+curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&since=TIMESTAMP_MS"
+```
+
+### Key files
+- Backend module: `backend/device-telemetry.js`
+- Web SDK: `backend/public/shared/telemetry.js`
+- Android interceptor: `app/.../data/remote/TelemetryInterceptor.kt`
+- Android helper: `app/.../data/remote/TelemetryHelper.kt`
+
+---
+
+## Enterprise Security Features (Issues #174-#178)
+
+- **TLS/HTTPS (#176)**: `trust proxy` enabled, HSTS + security headers middleware, HTTPS redirect for non-localhost
+- **Audit Logging (#177)**: `server_logs` table extended with `user_id`, `ip_address`, `action`, `resource`, `result` columns; auth events hooked in `auth.js`; admin-only `GET /api/audit-logs` endpoint
+- **Agent Card (#174)**: `agent_card` JSONB column on `entities` table; `PUT/GET/DELETE /api/entity/agent-card` CRUD; included in `GET /api/entity/lookup` response; auto-cleared on unbind
+- **OAuth OIDC (#175)**: Generic OIDC provider via env vars (`OIDC_PROVIDER_<NAME>_ISSUER/CLIENT_ID/CLIENT_SECRET`); discovery + code exchange at `POST /api/auth/oauth/oidc`; `GET /api/auth/oauth/providers` lists all configured providers
+- **RBAC (#178)**: `roles` + `user_roles` PostgreSQL tables; 4 default roles (admin/developer/operator/viewer); `requirePermission()` middleware exported from `auth.js`; `GET/POST/DELETE /api/auth/roles` and `/api/auth/user-roles` endpoints
+
+### Recent Features (v1.2.x – v1.100.x)
+
+- **Discord Webhook Support**: Auto-detects Discord webhook URLs in `POST /api/bot/register`; supports rich embeds, buttons, select menus via `discordOptions` field; handles rate limiting (429) and 2000-char content limit
+- **requiredVars Validation**: `POST /api/skill-templates/contribute` validates `requiredVars` format — must be `KEY=value` or `KEY=` (Gson-compatible for Android deserialization); rejects `key: value` YAML-style or bare `KEY` entries
+- **Agent Card UI (#203)**: Three-platform Agent Card CRUD (Web Portal, Android, iOS) with field validation and lookup integration
+- **A2A Protocol (#187)**: `/.well-known/agent.json` endpoint, `POST /api/a2a/tasks/send` for inter-agent task dispatch
+- **OAuth 2.0 Server (#189)**: `client_credentials` grant, token introspection, client registration at `/api/oauth/*`
+- **gRPC Transport (#191)**: `backend/grpc-server.js` + `backend/proto/eclaw.proto`, HealthService for load balancer probes
+- **E2EE Awareness (#212)**: `e2ee_capable` flag on `channel_accounts`, `encryption_status` on `entities`; channel register propagates to bound entities; UI badges on all 3 platforms; callback payload includes `e2ee` flag
+
+### Recent Features (v1.100.x – v1.103.x)
+
+- **Card Holder (名片夾)**: Full CRUD lifecycle for collecting, browsing, searching, pinning, and refreshing agent cards; three-platform support (Web Portal `card-holder.html`, Android `CardHolderActivity.kt`, iOS `card-holder.tsx`); Jest + integration tests
+- **SEO & PWA**: `robots.txt`, `sitemap.xml`, service worker (`sw.js`), meta tags, JSON-LD structured data added to public root
+- **Bot Audit Closed-Loop (#234)**: GitHub issue + audit-log endpoints for automated bot accountability
+- **UI/UX Audit Fixes**: Chat input text contrast fix (#235), screen-control auth regression (#236), i18n key gaps (#237), delete-account/screen-control telemetry path fixes (#239-#240), Card Holder i18n for 8 languages (#241)
+- **File Delete Fix (#250-#251)**: Race condition, NPE, file deletion issues resolved; proper Jest mocks added
+- **Publisher Enhancements**: Expanded to 12 platforms (Blogger, Hashnode, X, DEV.to, WordPress, Telegraph, Qiita, WeChat, Tumblr, Reddit, LinkedIn, Mastodon); publisher Jest tests fixed for env var isolation (#238)
+- **Bot Tools API**: `web-search` and `web-fetch` endpoints for bots; dedicated Jest test file (`bot-tools.test.js`)
+
+### Recent Features (v1.104.x – v1.110.x)
+
+- **AI Chat ViewModel Refactor (v1.104)**: Android `AiChatBottomSheet` refactored to use `AiChatViewModel`; fixes typing indicator race condition, message loss on reopen, idle timeout increased 60s→90s
+- **Jest Test Coverage Expansion (v1.104)**: Added 9 new Jest test files (auth-extended, subscription, official-borrow, device-preferences, publisher-extended, health, ai-support, card-holder, avatar-upload); total 20 files, ~65% API coverage
+- **UX Validation Framework (v1.104)**: 3-layer validation (static audit, cross-platform parity, live endpoint); report-only, non-blocking
+- **SEO Rebrand to EClawbot (v1.105)**: Root `/` serves landing page with hero, FAQ, JSON-LD; `llms.txt` for AI search discovery; OG image; sitemap expanded to 5 URLs; all portal pages rebranded "EClaw" → "EClawbot"
+- **Card Holder Redesign (v1.106–v1.108)**: 3-section layout (My Cards, Recent, Collected); block/unblock with DB-level enforcement; unified search (saved + external); chat history modal per card; cross-speak block enforcement; `blocked` and `last_interacted_at` columns added to `agent_card_holder`
+- **Complete Agent Card Rendering (v1.108)**: Full agent card display (capabilities, protocols, tags) across Web Portal, Android, iOS
+- **Avatar Photo Upload (v1.109–v1.110)**: `POST /api/device/entity/avatar/upload` multipart endpoint (5MB limit); Flickr storage integration; drag-drop UI on web; photo picker on Android; all pages render image avatars via `entity-utils.js`
+- **Portal Shared Modules**: Extracted `entity-utils.js`, `nav.js`, `footer.js`, `style.css` for cross-page reuse
+- **CDN Cache Fix (v1.109.1)**: Cache-control headers for `.js` files to prevent stale `entity-utils.js`
+- **Dialog Spam-Click Fix (v1.109.2)**: Template gallery buttons debounced to prevent multiple dialogs
+
+### Recent Features (v1.110.x+)
+
+- **Entity Trash System**: Soft-delete recovery on unbind/permanent delete; `entity_trash` table with 7-day retention; `GET/POST/DELETE /api/device/entity-trash`; auto-compaction on permanent delete
+- **Entity Slot Compaction**: `POST /api/device/compact-entities` renumbers sparse entity IDs to sequential 0, 1, 2, ...; auto-triggered on permanent entity deletion
+- **Bot Identity Layer**: Unified identity structure (role, instructions, boundaries, tone, language, soulTemplateId, ruleTemplateIds, public profile); `PUT/GET/DELETE /api/entity/identity` CRUD; `identity` JSONB column on `entities` table; dashboard identity editor UI
+- **Chat Message Reactions**: `POST /api/message/:messageId/react` for like/dislike; `message_reactions` table; XP awards (+5 like, -5 dislike); real-time Socket.IO `chat:reaction` events; `like_count`/`dislike_count` columns on `chat_messages`
+- **Link Preview**: `GET /api/link-preview` extracts Open Graph/Twitter meta tags; in-memory LRU cache with TTL; rendered in chat messages
+- **Shareable Chat Links**: `GET /c/:code` serves read-only chat view; `share-chat.html` portal page; share modal in card-holder
+- **Customer Service AI Tools**: Device context injection in AI support; tool handlers (`lookup_device`, `query_device_logs`, `lookup_user_by_email`) for Codex-powered customer service
+- **Portal Shared Modules Expansion**: Added `ai-chat.js`, `api.js`, `auth.js`, `socket.js`, `public-nav.js` to `portal/shared/` for cross-page reuse
+
+### Recent Features (v1.125.x – v1.131.x)
+
+- **Cross-Device Auto-Route (v1.125–v1.126)**: `POST /api/transform` auto-routes cross-device replies back to sender; cross-device message direction rendering fix; channel auto-route + `/c/:code` redirect + avatar rendering fixes
+- **Share-Chat Enhancements (v1.125–v1.127)**: Reply visibility and delivery status in share-chat; social login (Google/Facebook) and terms consent modals; pending message DB persistence; email verification polling
+- **Account Deletion Hardening (v1.127)**: SAVEPOINT-based resilient deletion skipping non-existent tables; FK constraint fix for `tappay_transactions`; debug logging for deletion flow
+- **MCP Skill Unification (v1.128)**: `E-claw_mcp_skill.md` integrated as single source of truth into `eclaw-a2a-toolkit` skill template
+- **Chat Duplicate Fix (v1.128–v1.129)**: Remove local messages before history reload; register endpoint sets session cookie for pending message save; contact checkbox rendering for zero-entity users
+- **Delete Account i18n (v1.129)**: Full 8-language i18n support for `delete-account.html`
+- **Pending Flush Fix (v1.130)**: Sender copy saved in pending flush; auto-collect contacts in owner mode
+- **Info Hub Guides (v1.130–v1.131)**: Proxy Window enterprise guide; Identity, Agent Card, Cross-Device detail guides with visual illustrations
+
+### Recent Features (v1.132.x – v1.145.x)
+
+- **Enterprise Landing Page (v1.132–v1.138)**: `/enterprise` public page with hero, use cases, FAQ, JSON-LD schema, 8-language hreflang; Beta tag on demo section; duplicate usecases fix; nav logo replaced with app icon
+- **Share-Chat Security (v1.137)**: Prevent message leakage in share-history; fix pending flush sender copy
+- **Comprehensive i18n Audit (v1.137)**: Two rounds of missing translation fixes for all 8 languages
+- **Speak-To Error Diagnostics (v1.138)**: Improved error messages for speak-to and client/speak failures
+- **Cross-Device Routing (v1.139–v1.144)**: 🔗 icon on cross-device labels; `targetDeviceId` added to all curl templates for explicit routing
+- **AI Chat WebView Guard (v1.139–v1.143)**: Hide AI chat widget in Android WebView to prevent duplicate AI service; User-Agent fallback detection; debug instrumentation added then removed; HTML caching fix
+- **Mission Control Categories (v1.140)**: Category folder structure for Android Mission Control
+- **Unified Icons (v1.141)**: All website icons updated to circular `ic_launcher_round`
+- **WebView Static Pages (v1.142)**: Mission notes rendered as static HTML for Android WebView
+- **File Manager Folders (v1.143–v1.144)**: Folder structure for both Android and Web Portal file managers; `View.generateViewId()` fix for Android
+- **Chat Filter Chips (v1.145)**: Collapsible filter chip group in Web Portal chat
+- **Canvas Drawing Fix (v1.145.1)**: Pointer capture and touch-action CSS for proper stroke drawing
+- **App version**: Updated to 1.0.57
+
+### Recent Features (v1.146.x – v1.154.x)
+
+- **Entity Public Home Page (v1.149)**: `GET /p/:publicCode` serves entity profile page with agent card, identity, chat preview
+- **Note Page Links in Chat (v1.148)**: Auto-detect `eclaw://note/` and `/p/` links, render iframe preview in messages
+- **Enterprise Demo GIF (v1.148)**: E-commerce demo GIF on enterprise page and GitHub README
+- **Page Navigation Bar (v1.150)**: Navigation bar component for public note pages
+- **Drawing Scroll Sync (v1.151)**: Canvas drawing scroll synchronization + bot-readable PNG snapshot
+- **Markdown Rendering for Notes (v1.152)**: Note pages support full Markdown rendering
+- **AI Widget Coverage Fix (v1.153)**: AI chat widget visibility, draft auto-save, long-press copy fixes
+- **Visitor Analytics + Custom Domain (v1.153.1)**: Visitor analytics and custom domain APIs for Note Pages
+- **Chat Auto-Refresh (v1.154)**: Auto-refresh chat on Android WebView foreground; Card Holder manual refresh button
+- **AI Chat Draft Persistence (v1.0.59)**: AI chat draft text persisted across sessions
+- **Mission Skill/Rule Deduplication**: Concurrent multi-entity mission-notify no longer creates duplicate skills/rules; fuzzy matching (85% similarity) merges instead
+- **Discord Integration Module**: Native Discord slash command integration (`/ask`, `/status`, `/mission`); Ed25519 signature verification; deferred response pattern
+- **Agent Message Rendering Spec**: `docs/specs/agent-message-rendering-spec.md` — authoritative specification for chat message rendering across all platforms
+
+### Recent Features (v1.155.x – v1.161.x)
+
+- **Security Hardening (v1.160)**: DNS rebinding protection, timing-safe secret comparison, landing.html i18n fixes
+- **Public Note URL Bar (v1.160)**: URL bar with copy button on public note pages
+- **Note Page Public/Private Toggle (v1.159)**: Badge in list + toggle in viewer for note visibility
+- **Clipboard Image Paste (v1.161)**: Paste image from clipboard (Ctrl+V / Cmd+V) in desktop chat
+- **Avatar HTML Fix (v1.161)**: Fix avatar HTML appearing as raw text in schedule display
+- **Free Bot Selector**: `GET /api/official-borrow/free-bots` endpoint; users can choose which free bot to bind; three-platform support (Web/Android/iOS); `display_name` column on `official_bots` table
+- **Whoami Endpoint**: `GET /api/whoami` for bot self-identification
+
+### Recent Features (v1.162.x – v1.198.x)
+
+- **Workspace Split-View (v1.193–v1.198)**: Multi-pane workspace mode with draggable tab reorder, draggable divider, Display card inside iframe; Settings page toggle
+- **Info Page Improvements (v1.193–v1.195)**: Mermaid architecture diagram, i18n preserve-original-HTML fix, restored Chinese guide panels, removed 314 orphan i18n tags
+- **Note Page Sanitizer (v1.194)**: Expanded allowed CSS styles and preserved `<style>` tags in public note page sanitizer
+- **Kanban Avatar Chips (v1.192)**: Avatar + name chip for assigned bots in kanban board
+- **Enterprise Page Fixes (v1.191)**: Corrected product catalog note page link, cache-busting for demo GIFs
+- **Webhook Payload Fix (#547)**: Added `deviceId` and `entityId` as structured fields in webhook push payload
+- **Device Register Rate Limiting (#491)**: Per-IP rate limiter (10 req/15min) on `POST /api/device/register`
+- **OAuth deviceSecret Leak Fix (#490)**: Removed `deviceSecret` from all OAuth, OIDC, and `/me` response bodies
+- **Screen Control i18n (#492)**: Full 8-language i18n coverage for screen-control.html (~31 new keys)
+- **Share-Chat Order Dialog i18n (#493)**: All hardcoded Chinese strings in order dialog replaced with i18n keys
+- **Chat Delivered Receipt**: Fixed `is_delivered` showing "Read" instead of "Delivered" in chat receipts
+
+### Recent Features (v1.199.x – v1.210.x)
+
+- **Kanban Card Summary (v1.200)**: `GET /api/kanban/cards/summary` endpoint for kanban card aggregation
+- **Info Page Use-Case Demos (v1.201–v1.210)**: Five interactive demo panels on info.html — [P1-1] E-commerce AI Customer Service, [P1-2] Kanban AI Team Board, [P1-3] GPS Smart Recommendations, [P1-4] Bot Marketplace + Live Wallpaper, [P1-5] Gatekeeper Security + Cross-Platform Sync; all with full 8-language i18n
+- **GPS Recommendations API (v1.205)**: `GET /api/gps/recommendations` mock endpoint for location-based entity discovery demo
+- **Gatekeeper Stats API (v1.206)**: `GET /api/gatekeeper/stats` endpoint for aggregate interception statistics
+- **Mission Mobile Card Detail (v1.202)**: Mobile-optimized card detail view with execution time countdown
+- **Kanban Avatar Fix (v1.203)**: Entity map population fix for assigned avatar chips rendering
+- **Gzip Compression (v1.210.1)**: Express gzip compression middleware + fixed Cache-Control headers to reduce egress bandwidth
+- **Schedule lastRunAt Fix (v1.210)**: Exposed `schedule.lastRunAt` after once-trigger completes for kanban display
+- **Auth /me Fix (v1.199.3)**: Restored `deviceSecret` in `/api/auth/me` response to fix mission 401 errors
+- **Nav Auto-Redirect Fix (v1.199.1)**: Removed auto-redirect to workspace, use direct navigation
+
+### Recent Features (v1.211.x – v1.362.x)
+
+- **Kanban Board (Mission Center v2)**: Full-featured kanban with cards CRUD, status transitions (backlog→todo→in_progress→review→done→archive), comments, notes, files, assigned entities, automation rules (auto-move on transform IDLE), FLIP card movement animation, timeline view; `kanban.js` + `kanban_schema.sql` + `kanban.html`
+- **Legacy Schedule Removal (v1.362)**: Removed all legacy schedule APIs (`/api/schedules` returns 410), `scheduler.js` is dead code, deleted `scheduler.test.js`, `test-schedule-channel.js`, `test-schedule-cron-update.js`, `test-scheduled-chat-visibility.js`, `migrate-to-kanban.js`; mission.html restored as full Mission Control page with notes/rules
+- **i18n Expansion (12 languages)**: Full translations for French (fr), Spanish (es), Malay (ms), Hindi (hi), Arabic (ar) added to existing en/zh/ja/ko/th/vi/id; dynamic language UI + smart device detection
+- **Android WebView Mission (v1.340+)**: Native Mission Center replaced with WebView host (Phase 2+3); sub-tab navigation preserved in WebView
+- **Community Hub (v1.218)**: `community.html` — replace mock data with real API + enable comments on community templates
+- **Privacy Policy Page**: `/privacy-policy.html` with full i18n support; linked from registration terms dialog
+- **Admin Kanban Migration (v1.359)**: One-time migration from legacy mission + schedules to kanban cards
+- **Kanban Auto-Move (v1.217)**: Auto-move child cards to review when bot transforms IDLE
+- **App Version**: Updated to 1.0.77 (versionCode 83)
+
+### Recent Features (v1.363.x+)
+
+- **Organization Hierarchy Chart**: Interactive drag-and-drop org chart on Dashboard (new Tab Bar: Entities | Org Chart); `backend/org-chart.js` module with JSONB hierarchy storage on `device_preferences.org_chart`; `GET/PUT /api/device/org-chart` API with cycle detection, max depth 5, partial update; three behavior options (kanbanReviewer auto-set, taskForward for incomplete tasks, allForward for all messages); backend auto-route forwarding in pushToBot/transform; animated dashed SVG connectors; FLIP drag-drop animation; WebView-compatible for Android/iOS; Jest + integration tests; skill template sync
+
+### Recent Features (v1.1003.x – v1.1015.x)
+
+- **Bot Rental Marketplace**: Full rental system with listings, contracts, metering; `backend/rental.js` + `backend/wallet.js` + `backend/trust.js` + `backend/invite.js`; interview arena (`interview-arena.js`) for bot evaluation; pricing advisor; fraud detection; e-coin wallet with Apple/Google IAP top-up
+- **Wallet & IAP**: E-coin wallet system (`wallet.js`) with balance, history, top-up tiers; Google Play purchase verification via androidpublisher v3; ack-retry sweep for revenue leak prevention; Apple IAP verification
+- **Trust & Reviews**: Credit scoring, reviews, disputes system (`trust.js`); age verification; admin blacklist
+- **Invite/Referral System**: Invite codes (`invite.js`), referral stats dashboard, QR-code share image generator, CTA banner on dashboard, referral footer on published articles
+- **Monaco Editor Integration**: Online text editor for chat attachments and note page HTML editing via Monaco (`?editor=monaco`)
+- **Rental Fleet Monitoring**: `GET /api/monitoring/rental-health` endpoint + admin dashboard; 15-minute auto health checks; gated admin access
+- **Info Hub Marketing**: 3 marketing hooks + 11-subsystem value propositions on info page; Terminal Bridge + Bridge-Auth combo usecase panel
+- **PublicCode Allocator Fix**: Tombstone freed publicCodes to prevent stale-QR re-routing
+- **Entity ID Never-Reuse**: Removed auto-compact on delete to preserve entity ID invariant; monotonically increasing IDs never reused
+
+### Recent Features (v1.1016.x – v1.1045.x)
+
+- **Chat Vector Search**: `POST /api/chat/embedding` async embedding; `GET /api/chat/message/:id/related` nearest-neighbor lookup; related-neighbors panel on message bubbles
+- **Mind Map MVP**: Phase 1 — `mindmap.js` schema + CRUD API for multi-layer thinking graph (nodes, edges, anchors, comments); Phase 2 — Cytoscape portal UI with mini-map (`mindmap.html`)
+- **Site Analytics**: `site-pageviews.js` anonymous pageview middleware; `GET /api/analytics/site-pageviews` aggregation endpoint; `analytics.html` admin dashboard
+- **Chat Context Menu**: Right-click + long-press context menu for reply/find-related on message bubbles
+- **Kanban Sort**: Sort dropdown on portal kanban board (by priority, date, status, title)
+- **Publisher X BYO Credentials**: Multi-tenant Phase 1 — users can provide their own X/Twitter API keys
+- **i18n Strict Checker**: `scripts/i18n-check.js` hard-fails if any `data-i18n` or `i18n.t()` references a missing EN key; wired into CI
+- **Chat Reply + Photo Fix**: Reply quote and photo attachment conflict resolved
+- **Marketing Hero Image**: Vector-memory hero image v1 (1200×630 OG) for social sharing
+
+### Recent Features (v1.1046.x – v1.1054.x)
+
+- **Onboarding Wizard (v1.1046–v1.1048)**: Scope 0 intent-based 3-question wizard router; 6 product tour tracks (free bot, paid bot, OpenClaw channel, Codex channel, Hermes channel, agent evaluation); dismiss flag persistence
+- **Chat History Token `his_<id>` (v1.1052–v1.1054)**: Parse `his_<id>` tokens into clickable history chips in chat; quote-reply auto-injects `his_<id>` prefix; bots taught the token via A2A skill update; UUID message ID support
+- **Mind Map Phase 3–4 (v1.1050–v1.1054)**: Zoom-tier rendering + focus-mode fog (Phase 3); AI traverse endpoint over BFS subgraph (Phase 4); rate-limit `/traverse` + clamp node titles; Route A mirror — auto-pair notes with mindmap leaves
+- **Share-Chat Proxy Window CTA (v1.1049)**: Viral CTA + pageview beacons wired on share-chat Proxy Window
+- **Hermes Channel Plugin Guide (v1.1054)**: Added to info.html for channel plugin documentation
+- **Transform Sender Copy Fix (v1.1054)**: Save sender copy even when all delivery targets fail
+- **i18n Hardening**: Analytics keys spliced into 7 locale blocks; orphan key detection at outer TRANSLATIONS scope; hi/ar deduplication; HankHuang0516/realbot → EClaw repo rename in portal
+- **Auth Race Fix (v1.1049)**: Prevent api.js 401 redirect from racing auth.js fallbacks
+- **Billing Retry (v1.1047)**: Retry stuck INAPP top-up purchases on Android app startup; WebView JS bridge wired for wallet tier clicks
+
+### Recent Features (v1.1055.x – v1.1063.x)
+
+- **Broadcast Recipient Fix (v1.1055)**: Broadcast recipients beyond the first can now see their messages in chat history; regex fix locked with regression test
+- **Chat Save Observability (v1.1055)**: Hardened `saveChatMessage()` — await all bot-reply save calls; observability logging for lost messages
+- **bindingType/channelProvider Surfacing (v1.1056)**: `GET /api/entities` now returns `bindingType` and `channelProvider` so bots can route accordingly
+- **Smart Wallpaper Layout (v1.1057)**: Non-overlapping entity layout for >4 entities on Android live wallpaper
+- **SSR OG Meta for Public Profiles (v1.1058)**: Server-side rendered Open Graph meta + JSON-LD on `/c/:publicCode` for rich social sharing
+- **Device Vars Security (v1.1059–v1.1060)**: Explicit `confirm:"YES_DELETE_ALL_VAULT"` guard on DELETE wipe; refuse legacy empty-wipe on non-empty vault; full audit trail (`device_vars_audit` table) for every POST/DELETE
+- **Kanban Board Enhancements (v1.1060–v1.1063)**: Sort by updated/funnel filter/history panel/7-day archive retention; Kanban Nudge per-device settings (batch size, priority mode, status filter, interval); mobile toolbar overflow fix; dark mode history drawer fix
+- **Cloud Drive UX (v1.1061)**: Mojibake fix, click-to-preview, pill-shaped attachment chips; date labels (上傳/到期) for cloud drive files
+- **Chat Media Picker Merge (v1.1061)**: Generic File upload removed; Photo + Video merged into single Photo button; Cloud Drive retained as separate action
+- **Interview Arena Hardening (v1.1061)**: Anti-exploit scoring for navigation/coding/exam clock; poll-fallback bootstraps exam timer when WS `timer_started` is missed; model surfaced in report
+- **Code Review Checklist (v1.1060)**: Mandatory 10-item self-review checklist (`docs/code-review-checklist.md`) for all PRs — Part A (core) + Part B (extended)
+- **i18n Expansion**: `dialog_add_friend_message` translated across all 12 Android locales; `kanban_nudge_settings_title` synced to Android + iOS
+
+### Recent Features (v1.1064.x – v1.1077.x)
+
+- **Scheduled Messages Phase 1 (v1.1074)**: New `scheduled-messages.js` module + `scheduled_messages_schema.sql`; 4 CRUD endpoints (`POST/GET/PUT/DELETE /api/schedule`); background poller with `SELECT...FOR UPDATE SKIP LOCKED`; 7-day ahead cap; deviceSecret-only auth; 22 Jest test cases
+- **Smart Chip Reference System (v1.1075–v1.1076)**: `reference-parser.js` + `reference-resolver.js` — scan `card_<hex>`, `review_<slug>`, `src://<kind>/<type>/<id>` references in messages; async DB resolution for title/status/priority; hooked into `channel-api.js` via `pushToChannelCallback()`; UI `autolink-chip.js` renders clickable chips in chat + kanban; 33 Jest test cases
+- **Global Rate Limiting (v1.1075)**: Three tiers via `express-rate-limit` — global (100/min/IP on `/api/*`), auth (10/min/IP on login/register), messages (30/min/deviceId on transform/speak); health/version exempt; skipped in test mode
+- **Device Secret Rotation (v1.1074)**: `POST /api/device/rotate-secret` — validates old secret, mints fresh UUID, atomically updates DB + in-memory; rate-limited; Settings page UI with confirm + reveal dialog; 8 i18n keys
+- **Switch Device UI (v1.1074)**: Settings page "Switch Device" button for multi-account users; calls `POST /api/auth/device-login`; updates localStorage credentials; 8 i18n keys
+- **Transform multipart/form-data (v1.1072)**: `POST /api/transform` accepts `multipart/form-data` for single-request file delivery; auto-uploads to R2; JSON fields auto-parsed; 160 Jest test cases
+- **Invite Per-Code Refactor (v1.1074)**: Removed per-device lifetime lock at `/api/invite/redeem`; per-code-once enforcement retained; enables multi-code viral loop
+- **Community Stats API (v1.1064)**: `GET /api/community/stats` + `/api/community/list` for community template hub
+- **Invite Click Funnel (v1.1064–v1.1068)**: `POST /api/invite/:code/click` telemetry + `GET /api/admin/invite/clicks` admin dashboard; per-code click funnel dashboard on kanban card
+- **WebView Device-Mismatch Guard (v1.1073)**: Auth fix for stale session cookies in Android WebView
+- **Kanban Card Description Cap (v1.1075)**: Cap long card description height in detail modal
+- **Quote Icon Unification (v1.1074)**: Unified 📌 quote icon across chat bubbles + kanban card comments
+- **Kanban .btn-ghost Fix (v1.1077)**: Defined `.btn-ghost` CSS so kanban header icons render correctly (not white-on-white)
+- **i18n Backfill**: `invite_per_code_*` keys backfilled to 9 locales; Kanban nudge settings synced
+
+### Recent Features (v1.1078.x – v1.1091.x)
+
+- **R2 File Improvements (v1.1078)**: Structured metadata for attachments; long-press multi-select batch attach to chat
+- **Smart Chip B/C (v1.1079–v1.1080)**: Nested reference-preview popover with card support, requote, cycle/depth guards
+- **Chat text-chip pipeline refactor (v1.1081)**: Shared `ChatMessageRender` across chat and kanban
+- **Scheduled Messages Phase 2 (v1.1082)**: Long-press send to open schedule modal in chat UI
+- **Kanban chip deep-link anchor (v1.1082)**: Auto-open modal + flash comment on deep link
+- **CSS class coverage guardrail (v1.1082)**: Jest test for portal HTML CSS class usage
+- **Community hero CTA (v1.1084)**: "Create your own Bot" linking to register tab
+- **Schedule popup fixes (v1.1084–v1.1085)**: Edit form, contrast fix, legacy ID support
+- **@mention auto-resolve entityId (v1.1085)**: Sender-side entity resolution for mentions
+- **Security: token redaction (v1.1085)**: Redact GitHub PAT, sk-, Slack tokens in A2A outbound + chat
+- **i18n fixes (v1.1086)**: hi-locale block fix, 557 orphan key reclamation, 30 missing roadmap keys
+- **Arena visual test pages (v1.1086)**: drag_drop, navigation, distraction, form_fill visual pages
+- **Mind Map v3 UI (v1.1086–v1.1089)**: Dense mockup alignment, search bar, pin tray, chip popover, mobile portrait
+- **Rebind cascade P0 Phases 1–4 (v1.1087–v1.1088)**: Track rebindCount, hide drifted listings, auto-pause on rebind, terminate contracts on rebind
+- **Backend spec documents (v1.1088)**: INDEX + rental + rebind-cascade + vault + wallet + channel-bridge specs
+- **Mind Map Phase 4 (v1.1090)**: Live kanban data feed for portal mind-map
+- **Mind Map note anchoring (v1.1091)**: Anchor notes to kanban cards / chat messages
+- **Rental: my listings tab (v1.1091)**: Listing pause/delist outside agent card
+- **compactEntitySlots SAVEPOINT guard**: scheduled_messages migration wrapped in SAVEPOINT to prevent compaction failure when schema is incomplete
+
+### Recent Features (v1.1092.x – v1.1104.x)
+
+- **Rental: My Listings Tab (v1.1092)**: Listing pause/delist outside agent card for rental marketplace management
+- **Kanban Entity Funnel Filter (v1.1093)**: `entity_id` funnel filter with permalink support on kanban board; 6-locale i18n
+- **i18n Korean Leak Fix (v1.1093)**: Fixed `cc_warn` Korean text leaking into 9 non-Korean locales + Japanese typo
+- **Mindmap Node Citation Chip (v1.1094)**: Wire mindmap node citations into chat as clickable chips
+- **Mindmap Subsystems Toolbar (v1.1095–v1.1096)**: Subsystems toolbar dropdown + Cytoscape pan/zoom animation; re-render popover on every open
+- **Publisher Multi-Tenant Vault (v1.1096–v1.1103)**: Vault-first credentials for 8 platforms (Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) — users can provide their own API keys via device-vars instead of relying on server-wide env vars
+- **Info Page Publisher Roadmap (v1.1097)**: Publisher multi-tenant status panel + key migration roadmap on info page
+- **Arena Intro i18n (v1.1100–v1.1104)**: Interview arena intro panel translated to all 12 languages (zh-CN, ja, ko, th, vi, id, fr, es, de, ms, hi, ar)
+- **Hindi i18n Batch 1 (v1.1103)**: 469 new Hindi translation keys (batch 1 of 3)
+- **API Auth Broadening (v1.1103)**: `/api/entities` and `/api/status` now accept `botSecret+entityId` auth (in addition to `deviceSecret`)
+- **Mindmap Automation Subsystem (v1.1104)**: `sys:automation` as first-class subsystem; dual-axis edges (lineage + content); unified cite (`quoteToChat`) for mindmap nodes
+- **Mission-Mindmap Citable Fix (v1.1103)**: Citable `card_<hex>` references + sidebar zoom in mission-mindmap component
+- **Chat Draft Fix (v1.1104)**: Clear stale `chat_draft` when mindmap cite prefills chat input
+- **Codex CLI Proxy Vault PAT (v1.1093)**: Vault-first PAT resolution for Codex CLI proxy
+- **Compact SAVEPOINT Guard (v1.1092)**: `scheduled_messages` migration wrapped in SAVEPOINT to prevent entity compaction failure
+
+### Recent Features (v1.1105.x – v1.1121.x)
+
+- **Daily Message Limit Removed (v1.1105)**: Cancelled 15-msg/day cap; `enforceUsageLimit()` is no-op; regression test `usage-limit-removed.test.js`
+- **Hermes Message Queue System (v1.1106–v1.1116)**: `enqueueMessage()` centralized push delivery; per-entity 200-msg cap + DLQ buffer; delivery-stuck heartbeat detection (Phase H1.2); `/api/health` 503 on severe stuck triggers Railway auto-restart (Phase H1.5); boot-time clamp for ghost entities
+- **Kanban Blocked Status (v1.1108–v1.1109)**: `blocked` status label added to all 12 locales; nudge config sources from `kanban-status.js` SoT
+- **Kanban Search Expansion (v1.1111)**: Search extends to comments/subcards + archived card detail view
+- **Mindmap UX (v1.1112)**: Finer wheel-zoom + decoupled trackpad pinch; fullscreen toggle + `?view-mode=full` URL flag; standalone mindmap.html removed, ported to mission embed
+- **Chat-Anchor System (v1.1114–v1.1120)**: Phase 1 — `chat_anchor_msg_id` + `chat_anchor_coord` schema on `kanban_cards`; Phase 2 — chat-anchor picker UI in kanban; Phase 3 — validator on POST /card; Phase 4 — write-side capture `chat_anchor_coord` on card create from mindmap
+- **Kanban-Nudge Split (v1.1117)**: Split 內容督促 vs 排程觸發 + per-entity throttle
+- **Settings Deep-Link (v1.1116)**: `?focus=` URL parameter for section filter; APP entry buttons wired to settings.html sections
+- **Screenshot Lightbox Zoom (v1.1116)**: Wheel/dblclick/drag/pinch zoom in kanban screenshot lightbox
+- **Kanban Escalation Fix (v1.1114)**: L2/L3 escalation notifies assigned_bots, not just notifyEntityId
+- **Landing CTA (v1.1113)**: Browse Bots CTA → community.html (13 locales)
+- **Community SEO (v1.1113)**: community.html og:locale + 13 og:locale:alternate
+- **Invite Redeem Fix (v1.1113)**: Preserve `?redeem=` across signup/login flow
+- **i18n Cron-Notify Fix (v1.1117)**: EN labels for cron-notify keys no longer leak CJK 母卡
+- **Telegram Adapter PoC (v1.1121, reverted)**: Long-poll Telegram adapter attempted then reverted
+- **App Version**: Updated to 1.0.79 (versionCode 85)
+
+### Recent Features (v1.1122.x – v1.1127.x)
+
+- **Smart Chip Cross-Pane Requote (v1.1127)**: 📌 cross-pane requote + 已引用 toast for smart chip references in workspace split-view (#2253)
+- **Publisher Qiita Locale Fix (v1.1126)**: Qiita platform locale defaults to `ja` instead of `zh-TW` (#2252)
+- **Vector-Memory Promo Content (v1.1126)**: Launch article + 5 social posts + flow diagram for vector-memory feature (#2251)
+- **Info Page SEO Meta Swap (v1.1125–v1.1126)**: Per-panel dynamic `og:`/`twitter:` meta + JSON-LD + 4 marketing hook panels for vector-memory on info.html (#2249–#2250)
+- **Kanban Search-Scope i18n (v1.1124)**: Added kanban search-scope keys for ja/ko/de locales (#2248)
+- **Mindmap Empty-State for Fresh Devices (v1.1123)**: Ripped `MOCK_NODES`/`MOCK_EDGES` seed data; mindmap now renders an empty-state UI for fresh devices instead of mock content (#2246)
+- **Kanban Cron-Spawn Child Inheritance (v1.1122)**: Cron-spawned child cards inherit `requires_screenshot_review` flag from parent; mom card edit toggle for screenshot review setting (#2245)
+- **Mindmap Phase 4 Read-Side (v1.1122)**: `/api/mission/mindmap` honors `chat_anchor_coord` for read-side rendering, connecting mindmap nodes to chat anchor positions (#2244)
+
+---
+
+## Test Coverage Summary
+
+**~450 total API routes** across all modules (400 excluding Article Publisher), **~83% covered** by Jest + integration tests (~2412 test cases across 146 Jest files + 59 integration tests).
+
+| Module | Coverage | Notes |
+|--------|----------|-------|
+| OAuth Server | 100% (8/8) | Full lifecycle tested |
+| A2A Compat | 100% (6/6) | |
+| Channel API | 100% (11/11) | Full CRUD + test-sink + Jest unit tests |
+| Entity Cross-Device Settings | 100% (3/3) | |
+| Auth | 92% (22/24) | Extended: device-login, verify-email, forgot-password, reset-password, bind-email, app-login, OAuth, RBAC, account deletion |
+| Subscription | 100% (5/5) | Status, TapPay, cancel, Google Play, usage |
+| Official Borrow | 100% (6/6) | All 6 endpoints tested |
+| Article Publisher | ~75% (37/49) | Extended: Blogger, Hashnode, X/Twitter, Tumblr, Reddit, LinkedIn, Mastodon |
+| Mission | 54% (14/26) | Missing: reorder, move, archive |
+| Core API (index.js) | ~75% (113/150) | +screen control, telemetry, logs, vars, cross-speak, link preview, org-chart |
+| Org Chart | 100% (2/2) | GET/PUT org-chart endpoints |
+
+Full analysis: `docs/reports/2026-03-14-test-coverage-analysis.md`
+
+---
+
+## Regression Tests
+
+All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
+
+### Core Tests (run after every deploy)
+
+| Test | Command | Credentials | Description |
+|------|---------|-------------|-------------|
+| Bot API response | `node backend/tests/test-bot-api-response.js` | `TEST_DEVICE_ID` | Verifies bots call POST /api/transform via exec+curl (target: 90%+) |
+| Broadcast flow | `node backend/tests/test-broadcast.js` | Device ID + Secret | Tests broadcast delivery, delivered_to tracking, speak-to, chat history |
+| Edit mode public code | `node backend/tests/test-edit-mode-public-code.js` | Device ID + Secret | Verifies publicCode survives entity reorder |
+| Cross-device settings | `node backend/tests/test-cross-device-settings.js` | Device ID + Secret | CRUD lifecycle, validation, merge behavior |
+| TLS/Security headers | `node backend/tests/test-tls-headers.js` | None | HSTS, X-Content-Type-Options, X-Frame-Options, Referrer-Policy |
+| Audit logging | `node backend/tests/test-audit-logging.js` | Device ID + Secret | GET /api/logs format, category filter, admin-only protection |
+
+### Feature Tests
+
+| Test | Command | Credentials | Description |
+|------|---------|-------------|-------------|
+| Agent Card | `node backend/tests/test-agent-card.js` | Device ID + Secret | PUT/GET/DELETE agent-card lifecycle |
+| OIDC foundation | `node backend/tests/test-oidc-foundation.js` | None | OAuth providers, OIDC validation |
+| RBAC | `node backend/tests/test-rbac.js` | None | Roles and user-roles auth protection |
+| Multi-entity push | `node backend/tests/test-multi-entity-push.js` | Device ID + Secret | POST /api/client/speak with entityId array |
+| A2A Compatibility | `node backend/tests/test-a2a-compat.js` | Device ID + Secret | /.well-known/agent.json, tasks/send |
+| API Docs | `node backend/tests/test-api-docs.js` | None | Swagger UI, OpenAPI spec validation |
+| OAuth 2.0 | `node backend/tests/test-oauth-server.js` | Device ID + Secret | Client registration, tokens, introspection |
+| SDK Generation | `node backend/tests/test-sdk-generation.js` | None | OpenAPI spec completeness for SDK gen |
+| gRPC Transport | `node backend/tests/test-grpc-transport.js` | None (local) | Proto loading, gRPC server, HealthService |
+| ENV Vars Merge | `node backend/tests/test-vars-merge.js` | Device ID + Secret | Cross-platform merge, conflict splitting |
+| Channel API | `node backend/tests/test-channel-api.js` | Device ID + Secret | OpenClaw channel integration |
+| Skill Templates | `node backend/tests/test-skill-templates.js` | None | Skill template CRUD, requiredVars format validation (Gson compat), contribute endpoint input guard |
+| WebSocket Auth | `node backend/tests/test-ws-auth.js` | Device ID + Secret | Socket.IO authentication |
+| AI Chat Image | `node backend/tests/test-ai-chat-image.js` | Device ID + Secret | AI chat with image support |
+| Discord Webhook | `node backend/tests/test-discord-webhook.js` | Device ID + Secret | Discord webhook URL detection, registration, rich messages, content limits |
+| Agent Card UI | `node backend/tests/test-agent-card-ui.js` | Device ID + Secret | Agent Card CRUD lifecycle, field validation, three-platform API parity |
+| Dynamic Entities | `node backend/tests/test-dynamic-entities.js` | Device ID + Secret | Dynamic entity add/delete, 20-entity extreme, sparse IDs, reorder, skip-ID permutations |
+| Publisher Platforms | `node backend/tests/test-publisher-platforms.js` | None | Platforms listing (12 platforms), input validation for all new platforms |
+| 4th Entity Visibility | `node backend/tests/test-4th-entity-visibility.js` | Device ID + Secret | Regression #48: 4th entity shows on home screen after binding |
+| A2A Task Dispatch | `node backend/tests/test-a2a-task-dispatch.js` | Device ID + Secret | Phase One A2A: official agent sends structured task to entity |
+| AI Diagnostics | `node backend/tests/test-ai-diagnostics.js` | Device ID + Secret | AI diagnostics context formatting and injection into Codex chat |
+| Broadcast Recipient Block | `node backend/tests/test-broadcast-recipient-block.js` | None | Unit: buildBroadcastRecipientBlock() output format |
+| Channel E2E | `node backend/tests/test-channel-e2e.js` | Device ID + Secret | End-to-end channel binding, plugin isolation, callback routing, revocation |
+| Channel E2EE Awareness | `node backend/tests/test-channel-e2ee.js` | Device ID + Secret | E2EE capability flag, encryptionStatus propagation, callback e2ee field (Issue #212) |
+| EClaw Context Injection | `node backend/tests/test-eclaw-context-injection.js` | Device ID + Secret | eclaw_context fields injected into channel push payloads (flaky) |
+| Entity Cards Stability | `node backend/tests/test-entity-cards-stability.js` | Device ID + Secret | Regression #16/#29: entity cards don't disappear during polling |
+| Entity Management | `node backend/tests/test-entity-management.js` | Device ID + Secret | Refresh cooldown, reorder validation, telemetry logging |
+| Issue Fixes | `node backend/tests/test-issue-fixes.js` | None | Regression #145-150: CancellationException, skill dialog, CLI proxy |
+| Mission Notify All Types | `node backend/tests/test-mission-notify-all-types.js` | Device ID + Secret | Mission notify pushes all types (TODO/SKILL/RULE/SOUL) to channel bots |
+| Mission Notify Channel | `node backend/tests/test-mission-notify-channel.js` | Device ID + Secret | Mission notify to channel-bound entities push payload format |
+| Rename Channel | `node backend/tests/test-rename-channel.js` | Device ID + Secret | Entity rename pushes NAME_CHANGED to channel-bound bots |
+| Reorder Channel | `node backend/tests/test-reorder-channel.js` | Device ID + Secret | Entity reorder ENTITY_MOVED payload to channel-bound bots |
+| Card Holder | `node backend/tests/test-card-holder.js` | Device ID + Secret | Card Holder CRUD lifecycle, search, refresh, pin, category, notes |
+| UI Text Contrast | `node backend/tests/test-ui-text-contrast.js` | None | Static analysis: input field text/bg contrast ratio, chat input regression |
+| Screen Control Auth | `node backend/tests/test-screen-control-auth.js` | Device ID + Secret | Regression: portal screen-capture/control uses deviceSecret not botSecret |
+| AI Chat Submit/Poll | `node backend/tests/test-ai-chat-submit-poll.js` | Device ID + Secret | AI chat async submit/poll pattern, validation, auth, idempotency, completion (Issue #248) |
+| Card Holder Redesign | `node backend/tests/test-card-holder-redesign.js` | Device ID + Secret | Card Holder 3-section redesign (My Cards, Recent, Collected), block/unblock |
+| Portal Duplicate Vars | `node backend/tests/test-portal-duplicate-vars.js` | Device ID + Secret | Portal env-vars duplicate variable detection |
+| UX Parity | `node backend/tests/test-ux-parity.js` | Device ID + Secret | Cross-platform (Web/Android/iOS) UX feature parity |
+| UX Static Audit | `node backend/tests/test-ux-static-audit.js` | None | Static audit: i18n coverage, form closure, auth guards |
+| UX Live Validation | `node backend/tests/test-ux-live-validation.js` | None | Live server validation: page reachability, security headers, static assets |
+| Channel Push Text | `node backend/tests/test-channel-push-text.js` | Device ID + Secret | Channel push text format verification |
+| Channel XP | `node backend/tests/test-channel-xp.js` | Device ID + Secret | Channel XP tracking and propagation |
+| Customer Service API | `node backend/tests/test-customer-service-api.js` | Device ID + Secret | Customer service AI tool handlers |
+| Entity Trash | `node backend/tests/test-entity-trash.js` | Device ID + Secret | Entity soft-delete, restore, 7-day retention |
+| Note Pages | `node backend/tests/test-note-pages.js` | Device ID + Secret | Note page public/private toggle, visitor analytics, custom domain |
+| AI Chat WebView Guard | `node backend/tests/test-ai-chat-webview-guard.js` | Device ID + Secret | AI chat widget hidden in Android WebView contexts |
+| Org Chart | `node backend/tests/test-org-chart.js` | Device ID + Secret | Org chart CRUD lifecycle, cycle detection, partial update, auth validation |
+| Parity Prober | `node backend/tests/test-parity-prober.js` | Device ID + Secret | API-UI parity prober (Layer 4) |
+| R2 Files | `node backend/tests/test-r2-files.js` | Device ID + Secret | R2 file storage CRUD validation |
+| R2 Quota Rich Card | `node backend/tests/test-r2-quota-rich-card.js` | Device ID + Secret | R2 quota exceeded rich card E2E |
+| Subscription Plans Live | `node backend/tests/test-subscription-plans-live.js` | Device ID + Secret | Subscription plans + wallet live verification |
+
+### Jest Unit Tests (CI-run, `npm test`, 116 files)
+
+| Test | File | Description |
+|------|------|-------------|
+| Health & Version | `tests/jest/health.test.js` | GET /api/health, /api/version, root redirect |
+| Input Validation | `tests/jest/validation.test.js` | POST /api/bind, /api/bot/sync-message, /api/transform — missing fields |
+| Gatekeeper Security | `tests/jest/gatekeeper.test.js` | First Lock (malicious message detection), Second Lock (leak masking), TOS, strike system |
+| Auth Validation | `tests/jest/auth.test.js` | POST register/login/logout, GET /me, OAuth providers — input validation |
+| Mutation Validation | `tests/jest/mutations.test.js` | POST client/speak, speak-to, broadcast, device/register, feedback, chat/history, GET entities/status/logs |
+| Admin Authorization | `tests/jest/admin-auth.test.js` | Admin endpoints reject unauthenticated + non-admin users, audit-logs auth |
+| Publisher Platforms | `tests/jest/publisher.test.js` | Platforms listing (12), input validation for all new platforms |
+| Feedback CRUD | `tests/jest/feedback-crud.test.js` | Feedback endpoint validation (submit, list, delete) |
+| Notifications | `tests/jest/notifications.test.js` | Notification endpoint validation (subscribe, send, manage) |
+| Card Holder | `tests/jest/card-holder.test.js` | Card Holder endpoint validation (CRUD, search, refresh, PATCH) |
+| Bot Tools | `tests/jest/bot-tools.test.js` | Bot tools API (web-search, web-fetch) validation |
+| File Delete | `tests/jest/file-delete.test.js` | File deletion endpoint validation and mocks |
+| AI Support Chat | `tests/jest/ai-support.test.js` | AI chat submit/poll endpoint validation, auth rejection (Issue #248) |
+| Auth Extended | `tests/jest/auth-extended.test.js` | device-login, verify-email, forgot-password, reset-password, bind-email, app-login, OAuth (Google/Facebook/OIDC), account deletion, RBAC roles |
+| Subscription | `tests/jest/subscription.test.js` | Subscription status, TapPay payment, cancellation, Google Play verification, usage limits |
+| Usage Limit Removed | `tests/jest/usage-limit-removed.test.js` | Regression: `enforceUsageLimit()` is a no-op; never queries `usage_tracking` / `invite_rewards`; always returns `allowed:true, limit:null` |
+| Official Borrow | `tests/jest/official-borrow.test.js` | Official bot borrowing lifecycle (bind-free, bind-personal, add-paid-slot, unbind, verify-subscription) |
+| Device Preferences | `tests/jest/device-preferences.test.js` | Device preference GET/PUT, auth validation |
+| Publisher Extended | `tests/jest/publisher-extended.test.js` | Blogger, Hashnode, X/Twitter, Tumblr, Reddit, LinkedIn, Mastodon publish/delete/me validation |
+| Avatar Upload | `tests/jest/avatar-upload.test.js` | Avatar photo upload endpoint validation (multipart, size limit, auth) |
+| A2A Message Rendering | `tests/jest/a2a-message-rendering.test.js` | A2A message rendering format validation |
+| Admin Operations | `tests/jest/admin-operations.test.js` | Admin panel operations (device management, logs) |
+| AI Support Extended | `tests/jest/ai-support-extended.test.js` | Extended AI support chat validation |
+| Bot Registration | `tests/jest/bot-registration.test.js` | Bot registration endpoint validation |
+| Chat | `tests/jest/chat.test.js` | Chat history, file upload, message reactions |
+| Customer Service Tools | `tests/jest/customer-service-tools.test.js` | Customer service AI tool handler validation |
+| Entity Management | `tests/jest/entity-management.test.js` | Entity CRUD, reorder, refresh validation |
+| Entity Slot Compact | `tests/jest/entity-slot-compact.test.js` | Slot compaction renumbering validation |
+| Entity Trash | `tests/jest/entity-trash.test.js` | Entity soft-delete/restore lifecycle |
+| Identity | `tests/jest/identity.test.js` | Bot identity CRUD validation |
+| Mission | `tests/jest/mission.test.js` | Mission dashboard endpoint validation |
+| Push Notifications | `tests/jest/push-notifications.test.js` | Push notification delivery validation |
+| Publisher Integration | `tests/jest/publisher-integration.test.js` | Publisher integration flow tests |
+| Share Chat | `tests/jest/share-chat.test.js` | Shareable chat link validation |
+| Templates | `tests/jest/templates.test.js` | Skill/soul/rule template CRUD validation |
+| Screen Control | `tests/jest/screen-control.test.js` | Screen capture, result, control endpoints — auth, rate limit, command validation, feature gate |
+| Device Telemetry | `tests/jest/device-telemetry.test.js` | Telemetry POST/GET/summary/DELETE — auth, input validation, buffer management |
+| Server Logs | `tests/jest/server-logs.test.js` | GET /api/logs and GET /api/audit-logs — auth, query filters, limit enforcement |
+| Channel API | `tests/jest/channel-api.test.js` | Channel provision, register, bind, message, test-sink — auth, CRUD lifecycle |
+| OAuth Server | `tests/jest/oauth-server.test.js` | OAuth client registration, token endpoint, revoke (RFC 7009), introspect (RFC 7662) |
+| Device Vars | `tests/jest/device-vars.test.js` | Environment variables POST/GET/DELETE — auth, encryption, bot access |
+| Cross-Speak | `tests/jest/cross-speak.test.js` | Cross-device entity messaging, client cross-speak, pending queue — auth, validation |
+| Cross-Speak Channel | `tests/jest/cross-speak-channel.test.js` | Cross-speak channel push parity — entity/client cross-speak channel-bound delivery |
+| Link Preview | `tests/jest/link-preview.test.js` | Link preview OG tag extraction, URL validation, SSRF protection, timeout handling |
+| Account Deletion | `tests/jest/account-deletion.test.js` | DELETE /api/auth/account cleanup of all related tables, FK constraint handling |
+| Channel Cross-Route | `tests/jest/channel-cross-route.test.js` | Channel message cross-device routing, auto-route consumption |
+| Cross-Speak Rendering | `tests/jest/cross-speak-chat-rendering.test.js` | Cross-device message direction rendering in chat.html |
+| Transform Cross-Route | `tests/jest/transform-cross-route.test.js` | Transform auto-route bot replies to sender device |
+| Mission Skill/Rule Dedup | `tests/jest/mission-skill-rule-dedup.test.js` | Skill/add and rule/add deduplication on concurrent multi-entity notify |
+| AI Chat Widget Guard | `tests/jest/ai-chat-widget-guard.test.js` | AI chat widget visibility guard in WebView contexts |
+| Discord Integration | `tests/jest/discord-integration.test.js` | Discord slash command integration, signature verification |
+| Note Pages | `tests/jest/note-pages.test.js` | Note page CRUD, public/private toggle, visitor analytics |
+| Speak-To Delivery | `tests/jest/speak-to-delivery.test.js` | Entity speak-to message delivery validation |
+| Cross-Speak Channel | `tests/jest/cross-speak-channel.test.js` | Cross-speak channel push parity — entity/client cross-speak channel-bound delivery |
+| Auth /me Contract | `tests/jest/auth-me-contract.test.js` | API/frontend contract test for /api/auth/me response fields |
+| Org Chart | `tests/jest/org-chart.test.js` | Org chart helpers (getSuperior, validateHierarchy, pruneHierarchy), GET/PUT endpoint auth validation |
+
+### Running All Tests
+```bash
+node backend/run_all_tests.js          # Run all tests sequentially
+cd backend && npm test                  # Jest unit tests (146 files)
+cd backend && npm run lint              # ESLint
+```
+
+### Test Environment Variables
+Set in `backend/.env` (gitignored):
+- `BROADCAST_TEST_DEVICE_ID` — Device ID for integration tests
+- `BROADCAST_TEST_DEVICE_SECRET` — Device secret for integration tests
+- `TEST_DEVICE_ID` — Device ID for bot API tests
+
+---
+
+## Key Learnings & Common Pitfalls
+
+### Backend Architecture
+- `serverLog()` function is hoisted so can be passed to auth module init at line 669 even though defined at ~line 8755
+- `server_logs` schema extension is backward-compatible — all existing 67+ `serverLog()` calls work without modification (new fields default to null)
+- Entity unbind calls `createDefaultEntity()` which resets all fields including new ones — no separate cleanup needed
+- `const` redeclaration in same scope is a JS error — check existing variable names before adding new ones (e.g., `adminAuth` already declared at line 1198)
+- `index.js` is a single ~17,979-line file — use line numbers when referencing specific code sections
+- Module initialization order matters: `db.js` → `devices` in-memory map → module `require()` calls with dependency injection
+- `scheduler.js` is dead code — no longer required by any module after v1.362 legacy schedule removal
+- `kanban.js` is the replacement for the legacy schedule/todo system — mounted at `/api/mission/card*`
+
+### Gatekeeper System
+- `backend/gatekeeper.js` filters bot messages for security
+- Sensitive keywords that trigger blocks: `botSecret`, `deviceSecret`, `API Key`, `token`, `fetch `+text, `exec(`
+- `eclawbot.com` is in the curl whitelist (added after a bug fix)
+- Mission Dashboard (Notes/TODOs) bypass Gatekeeper — useful for inter-agent communication
+- `POST /api/admin/gatekeeper/reset` — admin reset of strikes
+- `POST /api/gatekeeper/appeal` — self-service unblock with 24h cooldown
+
+### Bot Communication
+- `POST /api/client/speak` — client-to-entity, uses `deviceSecret`, no `botSecret` needed
+- `POST /api/transform` with `speakTo` field — entity-to-entity by publicCode (cross-device supported)
+- `POST /api/transform` with `broadcast:true` — one-to-many broadcast to all bound entities
+- _(deprecated)_ `POST /api/entity/speak-to`, `/api/entity/broadcast`, `/api/entity/cross-speak` — still functional with deprecation warning, use transform instead
+- Push → bot usually responds in 30-90 seconds
+- Free bots cannot use `speak-to` (agentToAgent disabled)
+- Skill templates in `backend/data/skill-templates.json`, `eclaw-a2a-toolkit` contains official API docs
+
+### Testing
+- Jest config in `backend/jest.config.js`: `runInBand: true` (Windows compat), `forceExit: true`, `testTimeout: 15000`
+- Jest tests use `supertest` against the Express app directly (no live server needed)
+- Integration tests in `backend/tests/` hit the live production server (`eclawbot.com`)
+- `backend/run_all_tests.js` orchestrates 53 registered integration tests sequentially
+- `requiredVars` in skill templates must be `KEY=value` or `KEY=` format (Gson deserialization constraint)
+
+### Avatar & Entity Utils
+- Avatar can be either an emoji character or an `https://` URL (Flickr image)
+- Use `isAvatarUrl(avatar)` helper from `entity-utils.js` to distinguish
+- `renderAvatarHtml(avatar, size)` generates either `<img>` or text span
+- All portal pages include `entity-utils.js` for consistent avatar rendering
+- Flickr upload via `POST /api/device/entity/avatar/upload` (multipart, 5MB limit)
+
+### Branding
+- Brand name changed from "EClaw" to "EClawbot" in v1.105.0
+- Root `/` now serves a landing page (was redirect to `/portal/`)
+- `llms.txt` at root for AI search engine discovery
+- Portal title/headers all reference "EClawbot"
+
+### CDN & Caching
+- Cloudflare CDN can cache stale `.js` files — use `Cache-Control: no-cache` for shared modules
+- After updating shared JS files (entity-utils.js, nav.js), verify CDN serves fresh version
+- CDN cache mismatch caused entity loading failures in v1.109.1
+
+### Entity Trash & Slot Compaction
+- Unbind and permanent delete move entities to `entity_trash` table with 7-day retention
+- `compactEntitySlots()` renumbers sparse IDs to sequential 0, 1, 2, ... — auto-triggered on permanent delete
+- Entity trash preserves `identity` JSONB field for recovery
+- Restore from trash re-creates the entity with original data
+
+### Bot Identity Layer
+- `identity` JSONB column on `entities` table stores unified bot identity
+- Structure: `{ role, instructions, boundaries, tone, language, soulTemplateId, ruleTemplateIds, publicProfile }`
+- `validateIdentity()` enforces field types and length limits
+- Socket.IO `entity:identity-updated` event broadcasts changes in real-time
+
+### Chat Reactions
+- `message_reactions` table tracks per-user reactions per message
+- Like awards +5 XP, dislike deducts -5 XP (atomic with reaction toggle)
+- Socket.IO `chat:reaction` event for real-time UI updates
+- `like_count`/`dislike_count` columns on `chat_messages` for aggregates
+
+### Deployment & Monitoring
+- Railway sits behind Cloudflare CDN — deploy can take 2-5 minutes
+- Changes must be under `backend/` to trigger Railway deployment
+- Use `backend/.deploy-trigger` file to force a deploy without code changes
+
+### ⚠️ Persistence Startup Safety (2026-04-20 Incident)
+
+**絕對不能破壞以下兩道防線，否則會導致所有 entity 消失：**
+
+1. **`db.initDatabase()` retry 邏輯**（`backend/db.js`）— 最多 5 次 exponential back-off（1s→16s）。Railway 重啟時 PG 可能尚未就緒，沒有 retry 會靜默 fallback 到 file storage，導致 in-memory devices map 從空白開始。
+2. **Startup 503 gate**（`backend/index.js`）— `/api/*` 在 `persistenceReady=true` 之前回傳 503。防止 `getOrCreateDevice()` 在 DB 未載入前建立空白 device 覆蓋真實資料。
+
+**事件鏈（如果防線被移除）：**
+`db.initDatabase()` 失敗 → `usePostgreSQL=false` → file fallback → Railway 無 `devices.json` → 空白啟動 → bot 打 `/register` 觸發 `getOrCreateDevice()` → 建立只有 1 個預設 LOBSTER entity 的空 device → 所有 channel entity 看起來「解綁」
+
+**PostgreSQL 資料不會被覆蓋**（file fallback 的 autosave 寫 `devices.json` 不寫 DB），重新部署即可恢復。
+
+**修改相關程式碼時的檢查清單：**
+- 不可移除 `db.initDatabase()` 的 retry loop
+- 不可移除 `persistenceReady` 503 middleware
+- 不可讓 `getOrCreateDevice()` 在 `persistenceReady=false` 時建立新 device
+- 修改 `db.js` 的 `createTables()` 時，確保新增的 SQL 語句不會讓整個 function throw（用 `IF NOT EXISTS` / `ADD COLUMN IF NOT EXISTS`）
+- 任何碰到 `initPersistence()`、`loadData()`、`loadAllDevices()` 的改動都要跑 production deploy 驗證
+
+### Telemetry Buffer
+- Device telemetry buffer has ~1 MB cap — can fill up and drop new entries
+- `DELETE /api/device-telemetry` requires JSON body (`req.body`), not query params
+- Flush periodically to prevent stale data accumulation
+
+### Cross-Device Messages
+- Chat integrity validator must use `isIncomingCrossDevice(msg)` to match rendering logic
+- `is_from_user=true` does NOT always mean "sent by this device" — cross-device messages from other devices also have `is_from_user=true`
+- `myPublicCodeMap` must be populated before integrity checks run
+
+### Issue #409 (bind-email 409)
+- HTTP 409 on `/api/auth/bind-email` is expected when device already has a linked account (e.g., via social login)
+- Not a bug — the Android UI should hide the bind-email button when `bound=true`
+
+---
+
+## Documentation Index
+
+### Reports (`docs/reports/`)
+| File | Description |
+|------|-------------|
+| `2026-03-10-eclaw-baseline-report.md` | AI search visibility baseline (score: 0/50) |
+| `2026-03-14-platform-pages-features-inventory.md` | Three-platform page/feature cross-reference |
+| `2026-03-14-test-coverage-analysis.md` | API route test coverage breakdown |
+| `2026-03-14-uiux-audit-report.md` | UI/UX audit findings and fixes |
+| `2026-03-15-scheduled-tasks.md` | Scheduled tasks export |
+| `2026-03-15-security-audit-findings.md` | Security audit findings |
+| `2026-03-15-ui-code-audit.md` | UI code audit (contrast, accessibility) |
+| `2026-03-18-test-coverage-gap-analysis.md` | Test coverage gap analysis |
+
+### Specs (`docs/specs/`)
+| File | Description |
+|------|-------------|
+| `INDEX.md` | Spec directory index |
+| `agent-message-rendering-spec.md` | Chat message rendering across all platforms |
+| `android-app-spec.md` | Android app specification |
+| `android-uiux-rendering-spec.md` | Android UI/UX rendering spec |
+| `ios-app-spec.md` | iOS app specification |
+| `ios-iap-spec.md` | iOS In-App Purchase spec |
+| `invite-redemption-policy.md` | Invite redemption policy |
+| `channel-bridge.md` | Channel bridge spec |
+| `wallet.md` | Wallet system spec |
+| `vault.md` | Vault (device vars) spec |
+| `rental.md` | Rental marketplace spec |
+| `rebind-cascade.md` | Rebind cascade spec |
+
+### Design Plans (`docs/plans/`)
+Key documents: `broadcast-recipient-info-design`, `env-vars-encrypted-persistence`, `channel-bot-context-parity`, `rebrand-ai-agent`, `soul-rule-templates`, `ai-search-brand-platform-design`, `news-publishing-api`, `ai-chat-viewmodel-refactor`, `eclawbot-seo-implementation`, `rich-message-unified-plan`, `bot-identity-layer`, `shareable-chat-link-qr`
+
+### Known Issues (`docs/issues/`)
+- `entity-speak-to-disabled-for-free-bots.md` — Free bots cannot use speak-to
+- `gatekeeper-domain-whitelist-bug.md` — Curl whitelist missing eclawbot.com (fixed)
+- `gatekeeper-false-positive-negation.md` — "不需要 API Key" false positive
+- `gatekeeper-fetch-pattern-too-broad.md` — `fetch` regex too broad (fixed)
+
+---
+
+## Phase 1 Testing Summary
+
+AI search brand visibility testing conducted 2026-03-10. Baseline score: 0/50 (zero visibility).
+Full session logs archived in `docs/reports/2026-03-10-eclaw-baseline-report.md`.
+Design plan: `docs/plans/2026-03-10-ai-search-brand-platform-design.md`.
