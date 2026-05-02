@@ -2051,11 +2051,16 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             // Fetch stale candidates WITHOUT the global nudge-gap filter; we apply
             // per-device nudge interval + status filter (from device_preferences) below.
             // backlog (待排程) included here and filtered per-device — users can opt in.
+            // Skip recurring-schedule automation parents: their status_changed_at never
+            // moves (cron creates child cards instead), so they would always look stale
+            // and get escalated to P0 every staleThresholdMs window. Mirrors the same
+            // filter used in checkDoneAutoArchive below.
             const result = await pool.query(`
                 SELECT * FROM kanban_cards
                 WHERE archived = false
                   AND status IN ('backlog', 'todo', 'in_progress', 'review')
                   AND EXTRACT(EPOCH FROM (NOW() - status_changed_at)) * 1000 > stale_threshold_ms
+                  AND (schedule_enabled = false OR schedule_type != 'recurring' OR schedule_enabled IS NULL)
             `);
 
             if (result.rows.length === 0) return;
