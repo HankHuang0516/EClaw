@@ -146,7 +146,6 @@ function weightedPick(items, keyFn, weights) {
 // ============================================
 
 let VISION_IMAGES = [
-    { file: 'img-f3a1.svg', keywords: ['red', 'circle'] },
     { file: null, description: 'A system monitoring dashboard showing CPU at 87%, RAM usage 11.2 GB of 16 GB, disk I/O at 340 MB/s, and 3 active processes flagged in red', keywords: ['CPU', '87', 'RAM', 'disk', 'three', 'red'] },
     { file: 'img-d4e9.svg', keywords: ['green', 'triangle'] },
     { file: 'img-a2f5.svg', keywords: ['yellow', 'star'] },
@@ -183,6 +182,11 @@ let VISION_IMAGES = [
     { file: null, description: 'A hotel room floor plan: bedroom 18m² on the left, bathroom 6m² top right, living area 22m² bottom right, with a corridor connecting all rooms', keywords: ['floor', 'plan', 'bedroom', '18', 'bathroom', '6', 'living', '22'] },
     { file: null, description: 'A UI wireframe showing a navigation bar at top, a hero section with a button labeled Get Started, two feature cards side by side below, and a footer with three columns of links', keywords: ['wireframe', 'navigation', 'hero', 'get started', 'two', 'cards', 'footer', 'three'] },
     { file: null, description: 'A project timeline Gantt chart: Planning phase Jan 1–15, Development phase Jan 16–Mar 30, Testing phase Apr 1–Apr 20, Launch on May 1 — four phases total', keywords: ['gantt', 'timeline', 'planning', 'development', 'testing', 'launch', 'four', 'may'] },
+    // ── Hard tier additions — spatial, multi-layer, OCR ──
+    { file: null, description: 'A network topology diagram: four routers arranged in a ring, three servers attached to router #2, and a firewall icon between the internet cloud symbol and router #1', keywords: ['network', 'four', 'routers', 'three', 'servers', 'firewall', 'router'] },
+    { file: null, description: 'A candlestick stock chart for five trading days: Monday opens $142 closes $148, Tuesday closes $139, Wednesday and Thursday both close above $145, Friday gaps up to open $152 and close $157', keywords: ['candlestick', 'stock', 'five', 'monday', 'friday', '157'] },
+    { file: null, description: 'A partially-filled sudoku puzzle where the top-left 3×3 box shows: row1=[5,3,_], row2=[6,_,_], row3=[_,9,8] — three cells are empty in that box', keywords: ['sudoku', 'three', 'empty', 'top-left', 'nine'] },
+    { file: null, description: 'A UML class diagram with four classes: Animal (parent) has subclasses Dog and Cat (both inherit via solid arrows), and a Shelter class has a composition diamond to Animal with multiplicity 0..*', keywords: ['UML', 'class', 'four', 'animal', 'dog', 'cat', 'shelter', 'composition'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -316,8 +320,8 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[1,3,5,7,9], 5', expected: '2' },{ input: '[1,3,5], 4', expected: '-1' }] },
     { title: 'Matrix Transpose', description: 'Write `solve(matrix)` — return transposed matrix.',
       testCases: [{ input: '[[1,2],[3,4]]', expected: '[[1,3],[2,4]]' },{ input: '[[1,2,3]]', expected: '[[1],[2],[3]]' }] },
-    { title: 'Count Vowels', description: 'Write `solve(s)` — return count of vowels (aeiouAEIOU).',
-      testCases: [{ input: '"Hello World"', expected: '3' },{ input: '"aEiOu"', expected: '5' }] },
+    { title: 'Jump Game', description: 'Write `solve(nums)` — given an array where each element is the maximum jump length from that index, return true if you can reach the last index starting from index 0.',
+      testCases: [{ input: '[2,3,1,1,4]', expected: 'true' },{ input: '[3,2,1,0,4]', expected: 'false' },{ input: '[0]', expected: 'true' },{ input: '[1,0,2]', expected: 'false' }] },
     { title: 'Flatten Array', description: 'Write `solve(arr)` — flatten nested arrays to single level.',
       testCases: [{ input: '[[1,2],[3,[4,5]]]', expected: '[1,2,3,4,5]' },{ input: '[1,[2,[3]]]', expected: '[1,2,3]' }] },
     { title: 'Roman to Integer', description: 'Write `solve(s)` — convert Roman numeral string to integer.',
@@ -356,6 +360,16 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '"babad"', expected: '"bab"' },{ input: '"cbbd"', expected: '"bb"' },{ input: '"a"', expected: '"a"' },{ input: '"racecar"', expected: '"racecar"' }] },
     { title: '0-1 Knapsack', description: 'Write `solve(weights, values, capacity)` — given items with weights and values arrays and a knapsack of given capacity, return the maximum total value (each item used at most once).',
       testCases: [{ input: '[1,3,4,5], [1,4,5,7], 7', expected: '9' },{ input: '[2,3,4,5], [3,4,5,6], 5', expected: '7' },{ input: '[1], [10], 0', expected: '0' }] },
+    // ── New medium/hard problems ──
+    { title: 'House Robber', description: 'Write `solve(nums)` — you are a robber and cannot rob two adjacent houses. Return the maximum amount you can rob.',
+      testCases: [{ input: '[1,2,3,1]', expected: '4' },{ input: '[2,7,9,3,1]', expected: '12' },{ input: '[0]', expected: '0' },{ input: '[2,1]', expected: '2' }] },
+    { title: 'Minimum Path Sum', description: 'Write `solve(grid)` — find a path from top-left to bottom-right of the 2D grid that minimizes the sum of numbers along the path (you can only move right or down).',
+      testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2],[5,6]]', expected: '9' },{ input: '[[1]]', expected: '1' }] },
+    { title: 'Valid Sudoku', description: 'Write `solve(board)` — determine if a 9×9 sudoku board is valid. Each row, column, and 3×3 sub-box must contain digits 1–9 without repetition. Empty cells are represented as ".".',
+      testCases: [
+        { input: '[["5","3",".",".","7",".",".",".","."],["6",".",".","1","9","5",".",".","."],[".","9","8",".",".",".",".","6","."],["8",".",".",".","6",".",".",".","3"],["4",".",".","8",".","3",".",".","1"],["7",".",".",".","2",".",".",".","6"],[".","6",".",".",".",".","2","8","."],[".",".",".","4","1","9",".",".","5"],[".",".",".",".","8",".",".","7","9"]]', expected: 'true' },
+        { input: '[["8","3",".",".","7",".",".",".","."],["6",".",".","1","9","5",".",".","."],[".","9","8",".",".",".",".","6","."],["8",".",".",".","6",".",".",".","3"],["4",".",".","8",".","3",".",".","1"],["7",".",".",".","2",".",".",".","6"],[".","6",".",".",".",".","2","8","."],[".",".",".","4","1","9",".",".","5"],[".",".",".",".","8",".",".","7","9"]]', expected: 'false' },
+      ] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -401,6 +415,10 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many squares of all sizes (1×1, 2×2, up to 8×8) are there on a standard 8×8 chessboard?', expectedKeywords: ['204'] },
     { question: 'A plane travels 2000 km at an effective speed of 1000 km/h (900 km/h airspeed plus 100 km/h tailwind). How many hours does the journey take?', expectedKeywords: ['2'] },
     { question: 'A worker paints 1/3 of a fence on day 1 and 1/4 of the remaining unpainted fence on day 2. What fraction of the fence is still unpainted after day 2?', expectedKeywords: ['1/2', '0.5', 'half'] },
+    // ── New medium/hard reasoning questions ──
+    { question: 'A bacteria population doubles every 30 minutes. Starting with 100 bacteria, how many will there be after 3 hours?', expectedKeywords: ['6400'] },
+    { question: 'Two trains 300 km apart move toward each other: Train A at 80 km/h and Train B at 70 km/h. How many hours until they meet?', expectedKeywords: ['2'] },
+    { question: 'A Fibonacci-like sequence starts with 2 and 3, and each subsequent term equals the sum of the two before it. What is the 7th term of this sequence?', expectedKeywords: ['39'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -452,11 +470,9 @@ let TTS_PHRASES = [
     { text: 'The GPS coordinates are 35.6762 degrees north 139.6503 degrees east', keywords: ['GPS', 'coordinates', '35', '139'] },
     { text: 'Doctor Zhang appointment is at 2:45 PM in Building C Room 301', keywords: ['Zhang', 'appointment', '2', '45', 'room', '301'] },
     { text: 'The Dow Jones index fell 2.3 percent to close at 38,547 points', keywords: ['Dow', 'Jones', 'percent', '38'] },
-    { text: 'Machine learning models require large datasets for training', keywords: ['machine', 'learning', 'models', 'datasets', 'training'] },
     { text: 'Renewable energy sources include solar wind and hydropower', keywords: ['renewable', 'energy', 'solar', 'wind', 'hydropower'] },
     { text: 'Quantum computing promises to solve complex optimization problems', keywords: ['quantum', 'computing', 'complex', 'optimization'] },
     { text: 'Version control helps teams collaborate on software projects', keywords: ['version', 'control', 'teams', 'collaborate', 'software'] },
-    { text: 'The server returned HTTP status code 503 service unavailable', keywords: ['server', 'HTTP', '503', 'service', 'unavailable'] },
     { text: 'Encryption protects sensitive data during transmission', keywords: ['encryption', 'protects', 'sensitive', 'data', 'transmission'] },
     // ── Hard tier (30%) — acronyms, mixed content, technical jargon ──
     { text: 'The IPv4 address 192.168.1.1 is commonly used as a default gateway', keywords: ['IPv4', '192', '168', 'gateway'] },
@@ -473,6 +489,11 @@ let TTS_PHRASES = [
     { text: 'Bernoulli and Euler each contributed foundational theorems to both fluid dynamics and graph theory', keywords: ['bernoulli', 'euler', 'fluid', 'dynamics', 'graph', 'theory'] },
     { text: 'Your one-time verification code is 7 4 2 9 1 — please enter it within ninety seconds before it expires', keywords: ['verification', 'code', '74291', 'ninety', 'seconds'] },
     { text: 'Compound interest formula: principal times the quantity one plus rate divided by one hundred to the power of years minus one', keywords: ['compound', 'interest', 'principal', 'rate', 'power', 'years'] },
+    // ── New hard tier TTS phrases ──
+    { text: 'The USD to JPY exchange rate closed at 152.43 and EUR to GBP finished at 0.8572 on Thursday', keywords: ['USD', 'JPY', '152', 'EUR', 'GBP', '0.8572', 'thursday'] },
+    { text: 'Flight QF-7472 from Sydney to Dallas-Fort Worth is cruising at thirty-seven thousand feet at Mach zero point eight five', keywords: ['QF', '7472', 'sydney', 'dallas', 'thirty-seven', 'thousand', 'mach'] },
+    { text: 'The molecular formula for glucose is C six H twelve O six with a molecular weight of one hundred eighty point sixteen grams per mole', keywords: ['glucose', 'molecular', 'six', 'twelve', 'one hundred', 'eighty', 'mole'] },
+    { text: 'Configure the subnet mask to two hundred fifty-five point two hundred fifty-five point two hundred fifty-five point zero for the class C network', keywords: ['subnet', 'mask', 'two hundred fifty-five', 'class', 'network'] },
 ];
 
 // ============================================
