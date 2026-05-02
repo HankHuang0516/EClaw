@@ -1,3 +1,10 @@
+## [1.1138.1](https://github.com/HankHuang0516/EClaw/compare/v1.1138.0...v1.1138.1) (2026-05-02)
+
+
+### Bug Fixes
+
+* **i18n:** honor ?lang= URL param at portal page init ([#2296](https://github.com/HankHuang0516/EClaw/issues/2296)) ([1e3b4f1](https://github.com/HankHuang0516/EClaw/commit/1e3b4f19d14cedf4c8a335813b2ec2827ce131df))
+
 # [1.1138.0](https://github.com/HankHuang0516/EClaw/compare/v1.1137.3...v1.1138.0) (2026-05-02)
 
 
