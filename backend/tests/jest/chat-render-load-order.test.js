@@ -41,7 +41,7 @@ describe('chat.html initial render order', () => {
     test('debug endpoint reports render-load diagnostics without chat message text', () => {
         const start = indexJs.indexOf("app.get('/api/debug/chat-render-load-order'");
         expect(start).toBeGreaterThan(0);
-        const end = indexJs.indexOf('// Wire up pending message flush on email verification', start);
+        const end = indexJs.indexOf('// Temporary diagnostic endpoint for Codex channel A2A loop suppression.', start);
         expect(end).toBeGreaterThan(start);
         const body = indexJs.slice(start, end);
 
