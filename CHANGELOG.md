@@ -1,3 +1,10 @@
+# [1.1137.0](https://github.com/HankHuang0516/EClaw/compare/v1.1136.0...v1.1137.0) (2026-05-02)
+
+
+### Features
+
+* **channel-api:** /api/channel/message accepts senderHint (Phase 3a [#2285](https://github.com/HankHuang0516/EClaw/issues/2285)) ([#2289](https://github.com/HankHuang0516/EClaw/issues/2289)) ([7a1d50d](https://github.com/HankHuang0516/EClaw/commit/7a1d50dce398b5a7d46b48a7aabcd186789ab229))
+
 # [1.1136.0](https://github.com/HankHuang0516/EClaw/compare/v1.1135.0...v1.1136.0) (2026-05-02)
 
 
