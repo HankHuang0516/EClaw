@@ -1,3 +1,10 @@
+## [1.1137.1](https://github.com/HankHuang0516/EClaw/compare/v1.1137.0...v1.1137.1) (2026-05-02)
+
+
+### Bug Fixes
+
+* **transform:** resolve routing before self-save to prevent duplicate chat rows ([#2290](https://github.com/HankHuang0516/EClaw/issues/2290)) ([d2fd70e](https://github.com/HankHuang0516/EClaw/commit/d2fd70ef9465250487dea952b44bc49e1668b3e5)), closes [#2285](https://github.com/HankHuang0516/EClaw/issues/2285) [#2285](https://github.com/HankHuang0516/EClaw/issues/2285) [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#5](https://github.com/HankHuang0516/EClaw/issues/5) [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#2287](https://github.com/HankHuang0516/EClaw/issues/2287) [#2282](https://github.com/HankHuang0516/EClaw/issues/2282) [#2282](https://github.com/HankHuang0516/EClaw/issues/2282)
+
 # [1.1137.0](https://github.com/HankHuang0516/EClaw/compare/v1.1136.0...v1.1137.0) (2026-05-02)
 
 
