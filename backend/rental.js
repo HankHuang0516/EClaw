@@ -1817,6 +1817,187 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         res.json({ success: true, cleared: result.rowCount });
     } catch (e) { res.status(500).json({ success: false, error: e.message }); } });
 
+    // ── Debug: contract-start-fail (#2263) (DO NOT REMOVE until user confirms fix) ──
+    router.get('/debug/contract-start-fail', async (req, res) => { try {
+        const { deviceId, deviceSecret, listingId, renterDeviceId } = req.query;
+        const durationMinutes = parseInt(req.query.durationMinutes || '30', 10);
+        if (!deviceId || !deviceSecret) {
+            return res.json({ success: false, error: 'deviceId and deviceSecret required' });
+        }
+        if (!listingId || !renterDeviceId) {
+            return res.json({ success: false, error: 'listingId and renterDeviceId required' });
+        }
+        const devRes = await pool.query(
+            'SELECT device_id, device_secret FROM devices WHERE device_id = $1',
+            [deviceId]
+        );
+        if (!devRes.rows.length || !safeEqual(devRes.rows[0].device_secret, deviceSecret)) {
+            return res.json({ success: false, error: 'auth_failed' });
+        }
+
+        const requesterUserRes = await pool.query(
+            'SELECT id, email, device_id FROM user_accounts WHERE device_id = $1',
+            [deviceId]
+        );
+        const renterUserRes = await pool.query(
+            'SELECT id, email, device_id FROM user_accounts WHERE device_id = $1',
+            [renterDeviceId]
+        );
+        const listingRes = await pool.query(
+            `SELECT id, owner_user_id, owner_device_id, owner_entity_id,
+                    title, status, interview_passed, rate_mli_per_ktoken,
+                    min_rental_minutes, max_rental_minutes, updated_at
+             FROM bot_listings WHERE id = $1`,
+            [listingId]
+        );
+
+        const listing = listingRes.rows[0] || null;
+        const renterUser = renterUserRes.rows[0] || null;
+        let cooldownRows = [];
+        let activeContractRows = [];
+        let walletRow = null;
+        let renterEntityRows = [];
+        let prediction = {
+            deposit_mli: null,
+            buffer_mli: null,
+            required_mli: null,
+            current_mli: null,
+            affordable: null,
+            predicted_error: null,
+        };
+
+        if (renterUser && listing) {
+            const cooldownRes = await pool.query(
+                `SELECT cooldown_until FROM rental_cooldowns
+                 WHERE user_id = $1 AND listing_id = $2 AND cooldown_until > NOW()`,
+                [renterUser.id, listingId]
+            );
+            cooldownRows = cooldownRes.rows;
+
+            const activeRes = await pool.query(
+                `SELECT id, status, started_at, ends_at
+                 FROM rental_contracts
+                 WHERE listing_id = $1
+                   AND status IN ('reserved', 'active', 'suspended_insufficient_funds')
+                 ORDER BY started_at DESC NULLS LAST LIMIT 10`,
+                [listingId]
+            );
+            activeContractRows = activeRes.rows;
+
+            const walletRes = await pool.query(
+                'SELECT balance_mli, held_mli FROM wallets WHERE user_id = $1',
+                [renterUser.id]
+            );
+            walletRow = walletRes.rows[0] || null;
+
+            const entitiesRes = await pool.query(
+                'SELECT entity_id, is_bound, character, webhook FROM entities WHERE device_id = $1 ORDER BY entity_id ASC',
+                [renterDeviceId]
+            );
+            renterEntityRows = entitiesRes.rows;
+
+            const rateSnapshot = Number(listing.rate_mli_per_ktoken || 0);
+            const depositMli = computeDepositMli(rateSnapshot);
+            const bufferMli = rateSnapshot * 60;
+            const requiredMli = depositMli + bufferMli;
+            const currentMli = BigInt(walletRow?.balance_mli || 0);
+            let predictedError = null;
+            if (listing.status !== 'listed') predictedError = 'listing_not_available';
+            else if (!listing.interview_passed) predictedError = 'interview_not_passed';
+            else if (listing.owner_user_id === renterUser.id) predictedError = 'self_rental_forbidden';
+            else if (!Number.isInteger(durationMinutes) || durationMinutes <= 0) predictedError = 'duration_minutes_invalid';
+            else if (durationMinutes < MIN_RENTAL_MINUTES) predictedError = 'duration_too_short';
+            else if (durationMinutes > MAX_RENTAL_MINUTES) predictedError = 'duration_too_long';
+            else if (durationMinutes < Number(listing.min_rental_minutes)) predictedError = 'duration_below_listing_min';
+            else if (durationMinutes > Number(listing.max_rental_minutes)) predictedError = 'duration_above_listing_max';
+            else if (cooldownRows.length > 0) predictedError = 'cooldown_active';
+            else if (activeContractRows.length > 0) predictedError = 'listing_already_rented';
+            else if (currentMli < BigInt(requiredMli)) predictedError = 'insufficient_balance_for_rental';
+
+            prediction = {
+                deposit_mli: String(depositMli),
+                buffer_mli: String(bufferMli),
+                required_mli: String(requiredMli),
+                current_mli: String(currentMli),
+                affordable: currentMli >= BigInt(requiredMli),
+                predicted_error: predictedError,
+            };
+        } else if (!listing) {
+            prediction.predicted_error = 'listing_not_found';
+        } else if (!renterUser) {
+            prediction.predicted_error = 'renter_user_not_found';
+        }
+
+        const ownerMemoryDevice = listing ? _interviewDeps.devices?.[listing.owner_device_id] : null;
+        const ownerMemoryEntity = ownerMemoryDevice && listing
+            ? ownerMemoryDevice.entities?.[listing.owner_entity_id]
+            : null;
+        const renterMemoryDevice = _interviewDeps.devices?.[renterDeviceId] || null;
+
+        res.json({
+            success: true,
+            bug: 'contract-start-fail',
+            diagnostics: {
+                requester: {
+                    device_id: requesterUserRes.rows[0]?.device_id || null,
+                    user_id: requesterUserRes.rows[0]?.id || null,
+                    email: requesterUserRes.rows[0]?.email || null,
+                },
+                renter: renterUser ? {
+                    device_id: renterUser.device_id,
+                    user_id: renterUser.id,
+                    email: renterUser.email,
+                } : null,
+                listing: listing ? {
+                    id: listing.id,
+                    owner_user_id: listing.owner_user_id,
+                    owner_device_id: listing.owner_device_id,
+                    owner_entity_id: listing.owner_entity_id,
+                    title: listing.title,
+                    status: listing.status,
+                    interview_passed: listing.interview_passed,
+                    rate_mli_per_ktoken: listing.rate_mli_per_ktoken,
+                    min_rental_minutes: listing.min_rental_minutes,
+                    max_rental_minutes: listing.max_rental_minutes,
+                    updated_at: listing.updated_at,
+                } : null,
+                requested: { listingId, renterDeviceId, durationMinutes },
+                economics: prediction,
+                cooldowns: cooldownRows,
+                activeContracts: activeContractRows,
+                renterWallet: walletRow ? {
+                    balance_mli: String(walletRow.balance_mli),
+                    held_mli: String(walletRow.held_mli),
+                } : null,
+                renterDbEntities: renterEntityRows.map(r => ({
+                    entity_id: r.entity_id,
+                    is_bound: r.is_bound,
+                    character: r.character,
+                    webhook: r.webhook ? 'set' : 'null',
+                })),
+                memory: {
+                    hasInterviewDeps: !!_interviewDeps.devices,
+                    ownerDeviceInMemory: !!ownerMemoryDevice,
+                    renterDeviceInMemory: !!renterMemoryDevice,
+                    ownerEntity: ownerMemoryEntity ? {
+                        isBound: !!ownerMemoryEntity.isBound,
+                        character: ownerMemoryEntity.character || null,
+                        name: ownerMemoryEntity.name || null,
+                        rental_status: ownerMemoryEntity.rental_status || null,
+                        rental_contract_id: ownerMemoryEntity.rental_contract_id || null,
+                        hasWebhook: !!ownerMemoryEntity.webhook,
+                        bindingType: ownerMemoryEntity.bindingType || 'webhook',
+                        channelAccountId: ownerMemoryEntity.channelAccountId || null,
+                    } : null,
+                },
+            },
+            timestamp: new Date().toISOString(),
+        });
+    } catch (err) {
+        console.error('[Rental] /debug/contract-start-fail error:', err);
+        res.status(500).json({ success: false, error: err.message });
+    } });
+
     // ── Debug: interview-start-fail (DO NOT REMOVE until user confirms fix) ──
     router.get('/debug/interview-start-fail', async (req, res) => { try {
         const { deviceId, deviceSecret } = req.query;

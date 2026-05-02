@@ -434,6 +434,7 @@ EClaw/
    | Bug | Endpoint | Created | Status |
    |-----|----------|---------|--------|
    | Interview start fails with owner_device_not_found | `GET /api/rental/debug/interview-start-fail?deviceId=X&deviceSecret=Y` | 2026-04-12 | Active |
+   | Rental contract start returns internal_error during rent/borrow E2E | `GET /api/rental/debug/contract-start-fail?deviceId=X&deviceSecret=Y&listingId=Y&renterDeviceId=Z&durationMinutes=30` | 2026-05-01 | Active |
    | Chat first render delayed by cross-device label resolution | `GET /api/debug/chat-render-load-order?deviceId=X&deviceSecret=Y` | 2026-05-01 | Active |
 
 6. **Demand Elegance (Balanced)** — 在保持 minimal change 的前提下，追求可讀、一致的程式風格；不為了「漂亮」而過度重構，但也不容忍明顯的 code smell 在新增的程式碼中出現。
@@ -1114,6 +1115,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Channel XP | `node backend/tests/test-channel-xp.js` | Device ID + Secret | Channel XP tracking and propagation |
 | Customer Service API | `node backend/tests/test-customer-service-api.js` | Device ID + Secret | Customer service AI tool handlers |
 | Entity Trash | `node backend/tests/test-entity-trash.js` | Device ID + Secret | Entity soft-delete, restore, 7-day retention |
+| Rental Debug Contract Start | `cd backend && npx jest tests/jest/rental-debug-contract-start.test.js` | None | Regression #2263: rental debug endpoints authenticate safely and report contract-start economics/predicted blockers |
 | Note Pages | `node backend/tests/test-note-pages.js` | Device ID + Secret | Note page public/private toggle, visitor analytics, custom domain |
 | AI Chat WebView Guard | `node backend/tests/test-ai-chat-webview-guard.js` | Device ID + Secret | AI chat widget hidden in Android WebView contexts |
 | Org Chart | `node backend/tests/test-org-chart.js` | Device ID + Secret | Org chart CRUD lifecycle, cycle detection, partial update, auth validation |
