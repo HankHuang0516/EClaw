@@ -1,3 +1,10 @@
+## [1.1137.3](https://github.com/HankHuang0516/EClaw/compare/v1.1137.2...v1.1137.3) (2026-05-02)
+
+
+### Bug Fixes
+
+* **transform:** self-save chatSource no longer leaks pendingA2A ([#2294](https://github.com/HankHuang0516/EClaw/issues/2294)) ([8939063](https://github.com/HankHuang0516/EClaw/commit/893906334b4851a316474645321f7dbc8e30866c)), closes [#3](https://github.com/HankHuang0516/EClaw/issues/3) [#2291](https://github.com/HankHuang0516/EClaw/issues/2291) [#2282](https://github.com/HankHuang0516/EClaw/issues/2282)
+
 ## [1.1137.2](https://github.com/HankHuang0516/EClaw/compare/v1.1137.1...v1.1137.2) (2026-05-02)
 
 
