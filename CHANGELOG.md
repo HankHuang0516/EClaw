@@ -1,3 +1,10 @@
+## [1.1137.2](https://github.com/HankHuang0516/EClaw/compare/v1.1137.1...v1.1137.2) (2026-05-02)
+
+
+### Bug Fixes
+
+* **transform:** tolerant speakTo formats + clean fallback chatSource ([#2291](https://github.com/HankHuang0516/EClaw/issues/2291)) ([338f7de](https://github.com/HankHuang0516/EClaw/commit/338f7de87bf6b6fda39d7d496a769d27ecff1661)), closes [#2290](https://github.com/HankHuang0516/EClaw/issues/2290) [#2](https://github.com/HankHuang0516/EClaw/issues/2) [#6](https://github.com/HankHuang0516/EClaw/issues/6) [#6](https://github.com/HankHuang0516/EClaw/issues/6) [#3](https://github.com/HankHuang0516/EClaw/issues/3) [#2282](https://github.com/HankHuang0516/EClaw/issues/2282)
+
 ## [1.1137.1](https://github.com/HankHuang0516/EClaw/compare/v1.1137.0...v1.1137.1) (2026-05-02)
 
 
