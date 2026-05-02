@@ -14043,6 +14043,16 @@ const TRANSLATIONS = {
         "guide_arena_intro_cta_diff": "\u6311\u6218\u9ad8\u96be\u5ea6\u81ea\u9002\u5e94\u8bc4\u6d4b \u2192",
         "guide_arena_intro_cta_lb": "\u67e5\u770b\u6392\u884c\u699c \u2192",
 
+        // ── Guidepub: Publisher Guide & Roadmap (added 2026-05-02) ──
+        "guidepubroadmaph": "发布者路线图",
+        "guidepubroadmapdesc": "了解如何让您的应用准备好发布。发布是一个5步流程：",
+        "guidepubstatush": "发布状态",
+        "guidepubstatuslegend": "状态图例",
+        "guidepubstatusendpointh": "每个端点的状态",
+        "guidepubstatusendpointdesc": "显示的状态基于您的发布者资料设置。",
+        "guidepubnavpublisher": "发布者",
+        "guidepubtitle": "发布者指南"
+
     },
 
     ja: {
@@ -18202,6 +18212,15 @@ const TRANSLATIONS = {
         "info_hero_credit_swap_title": "🕐 時間バンク：10 分でビッグデータ",
         "info_hero_credit_swap_body": "今日 10 分のタスクで誰かを助ければ、明日そのクレジットで誰かにあなたの大量データ処理を依頼できます。すべての助け合いは記録されます。",
         "info_hero_credit_swap_cta": "詳細を見る →",
+        // ── Guidepub: Publisher Guide & Roadmap (added 2026-05-02) ──
+        "guidepubroadmaph": "出版者ロードマップ",
+        "guidepubroadmapdesc": "アプリの公開準備方法を学びましょう。公開は5ステップのプロセスです：",
+        "guidepubstatush": "公開状況",
+        "guidepubstatuslegend": "ステータス凡例",
+        "guidepubstatusendpointh": "エンドポイントごとのステータス",
+        "guidepubstatusendpointdesc": "表示されるステータスは Publisher Profile の設定に基づいています。",
+        "guidepubnavpublisher": "パブリッシャー",
+        "guidepubtitle": "パブリッシャーガイド"
     },
 
     ko: {
@@ -22326,6 +22345,27 @@ const TRANSLATIONS = {
         "info_hero_credit_swap_title": "🕐 타임 뱅크: 10분으로 빅데이터",
         "info_hero_credit_swap_body": "오늘 10분짜리 작업으로 누군가를 도우면, 내일 그 크레딧으로 누군가가 당신의 대량 데이터를 처리할 수 있습니다. 모든 도움의 손길은 기록됩니다.",
         "info_hero_credit_swap_cta": "자세히 보기 →",
+        // ── Guidepub: Publisher Guide & Roadmap (added 2026-05-02) ──
+        "guidepubroadmaph": "게시자 로드맵",
+        "guidepubroadmapdesc": "앱을 출판 준비하는 방법을 알아보세요. 출판은 5단계 프로세스입니다:",
+        "guidepubstatush": "게시 상태",
+        "guidepubstatuslegend": "상태 범례",
+        "guidepubstatusendpointh": "엔드포인트별 상태",
+        "guidepubstatusendpointdesc": "표시된 상태는 게시자 프로필 설정에 기반합니다.",
+        "guidepubnavpublisher": "게시자",
+        "guidepubtitle": "게시자 가이드"
+    },
+
+    "zh-TW": {
+        // ── Guidepub: Publisher Guide & Roadmap (added 2026-05-02) ──
+        "guidepubroadmaph": "發布者路線圖",
+        "guidepubroadmapdesc": "瞭解如何讓您的應用程式准备好发布。發布是一個5步驟流程：",
+        "guidepubstatush": "發布狀態",
+        "guidepubstatuslegend": "狀態圖例",
+        "guidepubstatusendpointh": "每個端點的狀態",
+        "guidepubstatusendpointdesc": "顯示的狀態基於您的發布者資料設定。",
+        "guidepubnavpublisher": "發布者",
+        "guidepubtitle": "發布者指南"
     },
 
     th: {
@@ -52112,13 +52152,11 @@ const TRANSLATIONS = {
         "mc_deprecated_add": "कृपया इसके बजाय कानबन बोर्ड का उपयोग करें। कानबन बोर्ड में पूर्ण पारिस्थितिकी तंत्र है — मौजूदा आइटम को धीरे-धीरे स्थानांतरित करें।",
         "mc_mission_title": "मिशन सूची",
         "mc_done_title": "पूर्ण सूची",
-        // 心智圖 (Mind-map card on mission.html)
         "mm_card_title": "माइंड मैप",
         "mm_card_beta": "(beta)",
         "mm_card_expand": "विस्तार करें",
         "mm_card_collapse": "समेटें",
         "mm_card_hint": "कानबन कार्ड्स का मैप: कार्य, उप-कार्ड और चैट एंकर जुड़े। एक्सप्लोर करने के लिए विस्तार करें।",
-
         "mc_notes_title": "नोट्स",
         "mc_rules_title": "नियम (वर्कफ़्लो)",
         "mc_sync_unsaved": "* सेव नहीं किए गए बदलाव",
@@ -52962,7 +53000,6 @@ const TRANSLATIONS = {
         "cmp_tg_setup_title": "टेलीग्राम पर बॉट खोजें",
         "cmp_tg_wp_desc": "टेलीग्राम बॉट आपके फोन के लाइव वॉलपेपर को अपडेट नहीं कर सकते। ",
         "cmp_tg_wp_title": "कोई वॉलपेपर नियंत्रण नहीं",
-        // 智慧引用 Chip B — preview popover
         "chip_popover_loading": "लोड हो रहा है…",
         "chip_popover_load_error": "लोड विफल",
         "chip_popover_not_supported": "इस संदर्भ प्रकार के लिए पूर्वावलोकन अभी समर्थित नहीं",
@@ -52970,7 +53007,6 @@ const TRANSLATIONS = {
         "chip_popover_open_full": "पूरा पेज खोलें →",
         "chip_popover_cycle": "पहले से ही संदर्भ स्टैक में",
         "chip_popover_too_deep": "बहुत गहरा — कृपया पूरा पेज खोलें",
-
         "cmp_title": "EClawbot बनाम टेलीग्राम - चैनल तुलना",
         "common_add": "जोड़ना",
         "common_attach": "संलग्न करना",
@@ -53088,8 +53124,7 @@ const TRANSLATIONS = {
         "dash_label_select_slot": "एंटिटी स्लॉट चुनें",
         "dash_loading": "इकाइयां लोड हो रही हैं...",
         "dash_new_slot": "नया स्लॉट",
-
-                "org_tab_entities": "Entities",
+        "org_tab_entities": "Entities",
         "org_tab_chart": "Org Chart",
         "org_title": "Organization Chart",
         "org_user_node": "You (Owner)",
@@ -53129,7 +53164,7 @@ const TRANSLATIONS = {
         "dash_reorder_saving": "नया ऑर्डर सहेजा जा रहा है...",
         "dash_reorder_success": "इकाई आदेश अपडेट किया गया!",
         "dash_slot": "छेद",
-        "dash_slot_occupied": "स्लॉट {आईडी} पहले से ही भरा हुआ है",
+        "dash_slot_occupied": "स्लॉट {id} पहले से ही भरा हुआ है",
         "dash_title": "डैशबोर्ड",
         "dash_xd_allowed_media": "अनुमत मीडिया प्रकार",
         "dash_xd_blacklist": "ब्लैकलिस्ट (सार्वजनिक कोड)",
@@ -53183,7 +53218,7 @@ const TRANSLATIONS = {
         "env_bot_read_title": "🤖बॉट्स वेरिएबल्स को कैसे पढ़ते हैं",
         "env_btn_add": "+ जोड़ें",
         "env_btn_add_var": "+ वेरिएबल जोड़ें",
-        "env_confirm_delete": "वेरिएबल हटाएँ \\",
+        "env_confirm_delete": "वेरिएबल \"{key}\" हटाएँ?",
         "env_dialog_add": "वेरिएबल जोड़ें",
         "env_dialog_edit": "वेरिएबल संपादित करें",
         "env_lock_readable": "बॉट पढ़ सकता है",
@@ -53670,7 +53705,7 @@ const TRANSLATIONS = {
         "guide_usecase_code_multibot": "وكلاء متعددون",
         "guide_usecase_copy_device_id_placeholder": "معرف الجهاز",
         "guide_usecase_copy_device_secret_placeholder": "كلمة سر الجهاز",
-        "guide_usecase_copy_template": "نسخ القالب",
+        "guide_usecase_copy_template": "कृपया WebFetch का उपयोग करके https://eclawbot.com/api/skill-doc पढ़ें, फिर मेरे OpenClaw bot को नियंत्रित करने में मदद करें\n\nमेरी EClaw settings:\nDevice ID: {{DEVICE_ID}}\nDevice Secret: {{DEVICE_SECRET}}\n- जिस bot को मैं नियंत्रित करना चाहता हूँ वह Entity 0 है\n\nकृपया इस OpenClaw bot को नियंत्रित करने में मेरी मदद करें।\n\nShort-term goal: [आपका short-term goal]\nShort-term goal पूरा होने के बाद, समीक्षा करें और सुनिश्चित करें कि कोई गलती नहीं है\nFinal goal: [आपका final goal]\nFinal goal पूरा होने के बाद, समीक्षा करें और सुनिश्चित करें कि कोई गलती नहीं है",
         "guide_usecase_meta": "دع Claude AI يصبح مساعدك",
         "guide_usecase_title": "استخدام Claude للتحكم في OpenClaw عبر Eclaw",
         "guide_voice_api_desc": "يرسل البوت <code>POST /api/device/tts</code> لجعل الهاتف يقرأ النص بصوت عالٍ:",
@@ -53692,7 +53727,7 @@ const TRANSLATIONS = {
         "kanban_heading": "لوحة كانبان",
         "kanban_tab": "كانبان",
         "kanban_title": "كانبان",
-        "kb_auto_next": "التالي",
+        "kb_auto_next": "अगला: {nextRun}",
         "kb_auto_title": "تشغيل تلقائي",
         "kb_btn_cancel": "إلغاء",
         "kb_btn_create": "إنشاء",
@@ -54077,7 +54112,7 @@ const TRANSLATIONS = {
         "toast_load_failed": "فشل التحميل",
         "toast_mark_failed": "فشل التحديد",
         "toast_max_capabilities": "الحد الأقصى للقدرات",
-        "toast_max_items": "الحد الأقصى للعناصر",
+        "toast_max_items": "अधिकतम {count} आइटम",
         "toast_network_error": "خطأ في الشبكة",
         "toast_no_code_to_copy": "لا يوجد كود للنسخ",
         "toast_no_slot_selected": "لم يتم تحديد Slot",
@@ -55368,7 +55403,6 @@ const TRANSLATIONS = {
         "guide_mention_flow_target": "चेक किए गए बॉट को भेजा जाता है",
         "guide_mention_flow_target_sub": "[MENTIONS] hint के साथ",
         "guide_mention_flow_relay": "बॉट स्वतंत्र रूप से relay करता है",
-
         "action_add": "action जोड़ें",
         "action_confirm": "action पुष्टि करें",
         "action_delete": "action हटाएं",
@@ -56490,8 +56524,7 @@ const TRANSLATIONS = {
         "work": "work",
         "wrong": "गलत",
         "yes": "हां",
-        "young": "young",    
-        // Rescued from duplicate hi: block before dedup (2026-04-22)
+        "young": "young",
         "guide_mention_behavior_bot": "बॉट का व्यवहार",
         "guide_mention_behavior_user": "उपयोगकर्ता का व्यवहार",
         "guide_mention_case1_input_label": "आपका इनपुट",
@@ -56554,7 +56587,6 @@ const TRANSLATIONS = {
         "guide_mention_p_api_bot": "Apabila bot menerima push, <code>eclaw_context.mentions</code> ialah tatasusunan yang mengandungi senarai entiti yang di-mention.",
         "guide_mention_warn": "⚠️ Mentions tidak mempengaruhi kiraan kuota dengan sendiri, tetapi jika bot penerima mengira semula kuota berdasarkan mesej yang diterima, mention boleh secara tidak langsung mempengaruhi had.",
         "guide_mention_note_back": "← <a href=\"...",
-
         "arena_test_desc_0": "Multimodal understanding — perceive and describe visual content from a webpage.",
         "arena_test_desc_1": "Precise UI interaction — locate and click a specific element among hundreds.",
         "arena_test_desc_10": "Storage workflow — download, rename, and re-upload files via cloud API.",
@@ -56681,13 +56713,13 @@ const TRANSLATIONS = {
         "guide_msg_h2_protection": "Message Security Layers",
         "guide_msg_h2_settings": "Enable 'Friends Only' Mode",
         "guide_msg_h2_socket": "Socket.IO Events",
-        "guide_msg_layer1": "\uD83D\uDCC7 Card Holder",
+        "guide_msg_layer1": "📇 Card Holder",
         "guide_msg_layer1_desc": "One-way agent card collection with pin, categorize, block, and notes support",
         "guide_msg_layer1_func": "Collect / Search / Manage contacts",
-        "guide_msg_layer2": "\uD83E\uDD1D Friend System",
+        "guide_msg_layer2": "🤝 Friend System",
         "guide_msg_layer2_desc": "Send friend request → Accept → Mutual friends. Friends bypass rate limits and can use 'friends_only' mode",
         "guide_msg_layer2_func": "Bidirectional friendship",
-        "guide_msg_layer3": "\uD83D\uDCAC Cross-Device Messaging",
+        "guide_msg_layer3": "💬 Cross-Device Messaging",
         "guide_msg_layer3_desc": "Send messages to any Agent on any device via publicCode, supporting text/photo/voice/video/file",
         "guide_msg_layer3_func": "Real-time cross-device communication",
         "guide_msg_meta": "Complete architecture for messaging, contacts, and friend relationships",
@@ -56695,11 +56727,11 @@ const TRANSLATIONS = {
         "guide_msg_p_overview": "EClawbot's messaging and friend system integrates cross-device communication, card holder management, and friend requests, enabling AI Agents to establish trusted relationships and exchange messages securely.",
         "guide_msg_p_protection": "Cross-device messages go through 6 security checks:",
         "guide_msg_p_settings": "In the Settings page under Cross-Device Settings, enable 'friends_only' to restrict your Agent to only accept messages from friends.",
-        "guide_msg_perk1": "\u2705 Bypass owner rate limit (friend messages are not throttled)",
-        "guide_msg_perk2": "\u2705 Pass through 'friends_only' mode filter",
-        "guide_msg_perk3": "\u2705 Green 'Friend' badge in card holder, sorted first",
-        "guide_msg_perk4": "\u2705 Real-time Socket.IO friend event notifications",
-        "guide_msg_step1_desc": "Find the Agent Card in your card holder, click '\uD83E\uDD1D Add Friend', and optionally attach a greeting message.",
+        "guide_msg_perk1": "✅ Bypass owner rate limit (friend messages are not throttled)",
+        "guide_msg_perk2": "✅ Pass through 'friends_only' mode filter",
+        "guide_msg_perk3": "✅ Green 'Friend' badge in card holder, sorted first",
+        "guide_msg_perk4": "✅ Real-time Socket.IO friend event notifications",
+        "guide_msg_step1_desc": "Find the Agent Card in your card holder, click '🤝 Add Friend', and optionally attach a greeting message.",
         "guide_msg_step1_title": "Step 1: Send Friend Request",
         "guide_msg_step2_desc": "The target device receives a real-time Socket.IO 'friend:request' notification. Check the 'Requests' tab in card holder.",
         "guide_msg_step2_title": "Step 2: Target Receives Notification",
@@ -56716,7 +56748,7 @@ const TRANSLATIONS = {
         "guide_msg_title": "Cross-Device Messaging & Friend System",
         "guide_nav_detail_mention": "@ Tag Entities",
         "guide_nav_intent_api": "Dynamic API Injection",
-        "guide_nav_usecase_messaging": "\uD83D\uDCAC Messaging & Friends",
+        "guide_nav_usecase_messaging": "💬 Messaging & Friends",
         "guide_nav_usecase_minigame": "🎮 Game Factory",
         "guide_usecase_recommend_compare": "Claude Code Channel is easy to set up but has a weekly limit; OpenClaw Channel is more flexible but requires an API token. Choose the option that best fits your needs.",
         "guide_usecase_recommend_desc": "Instead of manually controlling the lobster via the Claude Code terminal, you can set up a <strong>Channel Plugin</strong> to let the lobster automatically receive and reply to messages — no need to stay at the terminal.",
@@ -57211,7 +57243,6 @@ const TRANSLATIONS = {
         "guide_arena_intro_cta_open": "एजेंट बेंचमार्क खोलें →",
         "guide_arena_intro_cta_diff": "वर्तमान कठिनाई वज़न देखें →",
         "guide_arena_intro_cta_lb": "लीडरबोर्ड API देखें →",
-        // ── Info Hub: Marketing Hooks (Quick Start hero + User Guide deep-dives) ──
         "info_hooks_title": "💎 आज ही जीतने के तीन तरीके",
         "info_hooks_subtitle": "बेकार पड़े AI को निष्क्रिय आय में बदलें, बड़े मॉडल की शक्ति प्रति मिनट किराये पर लें, या अभी कार्य का आदान-प्रदान बाद में खर्च करने योग्य क्रेडिट के लिए करें।",
         "info_hero_passive_income_title": "💤 बेकार bot e-coin कमाता है",
