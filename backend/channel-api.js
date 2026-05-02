@@ -60,7 +60,46 @@ async function assertPublicCallbackUrl(callbackUrl) {
     if (isPrivateIp(address)) throw new Error('callback_url must not resolve to a private/internal IP');
 }
 
-module.exports = function (devices, { authMiddleware, serverLog, generateBotSecret, generatePublicCode, publicCodeIndex, saveChatMessage, io, saveData, createDefaultEntity, apiBase, awardEntityXP, XP_AMOUNTS, notifyDevice, deliverToEntity, gatekeeperCheckText, resolveSpeakToTarget, checkBotToBotRateLimit, checkCrossSpeakRateLimit, crossDeviceSettings, devicePrefs, recentBroadcasts: _recentBroadcasts, BOT2BOT_MAX_MESSAGES: _BOT2BOT_MAX_MESSAGES, db: dbRef, getMissionApiHints, buildIdentitySetupHint, buildBroadcastRecipientBlock, chatPool }) {
+function isTruthyFlag(value) {
+    if (value === true || value === 1) return true;
+    if (typeof value !== 'string') return false;
+    return ['true', '1', 'yes', 'on'].includes(value.trim().toLowerCase());
+}
+
+function isOperationalChannelMessage(message) {
+    if (!message || typeof message !== 'string') return false;
+    const text = message.trim();
+    return [
+        /^Codex bridge error\b/i,
+        /^Codex status heartbeat\b/i,
+        /^Codex watchdog\b/i,
+        /^Codex bridge status\b/i,
+        /^Codex bridge thread reset\./i,
+        /^Codex turn interrupted\./i,
+        /^No active Codex turn\./i,
+        /^Codex is working\.\.\./i,
+        /^Codex model set to\b/i,
+        /^Codex intelligence set to\b/i,
+        /^Invalid Codex model name\./i,
+        /^Invalid Codex intelligence value\./i,
+        /^Unknown Codex model option:/i,
+        /^Unknown Codex intelligence option:/i,
+        /^Choose the Codex model\b/i,
+        /^選擇 Codex 智慧功能等級/i,
+        /^EClaw progress update\b/i,
+        /^\[SYSTEM:/i,
+    ].some(pattern => pattern.test(text));
+}
+
+function shouldSuppressA2A(reqBody, message) {
+    return isTruthyFlag(reqBody.suppressA2A)
+        || isTruthyFlag(reqBody.suppress_a2a)
+        || isTruthyFlag(reqBody.noA2A)
+        || isTruthyFlag(reqBody.no_a2a)
+        || isOperationalChannelMessage(message);
+}
+
+function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecret, generatePublicCode, publicCodeIndex, saveChatMessage, io, saveData, createDefaultEntity, apiBase, awardEntityXP, XP_AMOUNTS, notifyDevice, deliverToEntity, gatekeeperCheckText, resolveSpeakToTarget, checkBotToBotRateLimit, checkCrossSpeakRateLimit, crossDeviceSettings, devicePrefs, recentBroadcasts: _recentBroadcasts, BOT2BOT_MAX_MESSAGES: _BOT2BOT_MAX_MESSAGES, db: dbRef, getMissionApiHints, buildIdentitySetupHint, buildBroadcastRecipientBlock, chatPool }) {
     const pushContextHelpers = { getMissionApiHints, buildIdentitySetupHint, buildBroadcastRecipientBlock };
     // Late-bound kanban auto-review hook (set after kanbanModule init)
     let kanbanAutoReview = null;
@@ -615,6 +654,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
     router.post('/message', async (req, res) => {
         try {
             const { channel_api_key, deviceId, entityId, botSecret, message, state, mediaType, mediaUrl, targetDeviceId, speakTo, broadcast, card } = req.body;
+            const suppressA2AForward = shouldSuppressA2A(req.body || {}, message);
 
             if (process.env.DEBUG === 'true') serverLog('info', 'client_push', `[PUSH] /channel/message called, state=${state}, hasMsg=${!!message}`, { deviceId, entityId: entityId !== undefined ? parseInt(entityId) : 'auto' });
 
@@ -716,7 +756,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             // Skip silent tokens — internal signals should not appear in chat
             const isSilentMsg = message && /^\[SILENT\]$/i.test(message.trim());
             // Skip self chat save when speakTo/broadcast is present — deliverToEntity will save with routing source
-            const hasDelivery = (broadcast || (speakTo && Array.isArray(speakTo) && speakTo.length > 0));
+            const hasDelivery = !suppressA2AForward && (broadcast || (speakTo && Array.isArray(speakTo) && speakTo.length > 0));
             if (message && !isSilentMsg) {
                 if (!hasDelivery) {
                     // If replying to a cross-device message, tag local copy with routing info
@@ -738,7 +778,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             }
 
             // [CROSS-DEVICE ROUTING] — explicit targetDeviceId OR auto-route from pending cross-device message
-            if (targetDeviceId && message) {
+            if (!suppressA2AForward && targetDeviceId && message) {
                 // Explicit routing — bot specifies which device to route reply to
                 const targetDev = devices[targetDeviceId];
                 if (targetDev) {
@@ -760,7 +800,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 } else {
                     serverLog('warn', 'cross_speak_push', `[EXPLICIT_ROUTE] targetDeviceId ${targetDeviceId} not found`, { deviceId, entityId: eId });
                 }
-            } else if (hasCrossRoute) {
+            } else if (!suppressA2AForward && hasCrossRoute) {
                 const replySource = `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`;
                 const senderEntityId = pendingCross.fromEntityId >= 0 ? pendingCross.fromEntityId : 0;
                 await saveChatMessage(pendingCross.fromDeviceId, senderEntityId, message, replySource, false, true);
@@ -802,14 +842,14 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             serverLog('info', 'transform', `${state || entity.state}: ${(message || '').slice(0, 100)}`, { deviceId, entityId: eId, metadata: { state: state || entity.state, via: 'channel' } });
 
             // Auto-move kanban child cards to done (same as /api/transform)
-            if (state !== 'BUSY' && message && kanbanAutoReview) {
+            if (!suppressA2AForward && state !== 'BUSY' && message && kanbanAutoReview) {
                 kanbanAutoReview(deviceId, eId, message).catch(err => {
                     console.error(`[Channel] autoReviewOnTransform failed:`, err.message);
                 });
             }
 
             // Org chart: auto-forward channel bot response to superior entity (fire-and-forget)
-            if (finalMessage && entity && orgChartForwardFn) {
+            if (!suppressA2AForward && finalMessage && entity && orgChartForwardFn) {
                 orgChartForwardFn(entity, deviceId, finalMessage).catch(() => {});
             }
 
@@ -823,8 +863,11 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             if (entityIdCorrected) {
                 warnings.push(`entityId mismatch: auto-corrected to ${eId}.`);
             }
+            if (suppressA2AForward) {
+                warnings.push('A2A routing suppressed for operational channel message.');
+            }
 
-            if ((speakTo || broadcast) && message && !isSilentMsg && deliverToEntity && resolveSpeakToTarget) {
+            if (!suppressA2AForward && (speakTo || broadcast) && message && !isSilentMsg && deliverToEntity && resolveSpeakToTarget) {
                 if (speakTo && broadcast) {
                     warnings.push('Both speakTo and broadcast provided — broadcast takes priority, speakTo ignored.');
                 }
@@ -908,7 +951,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             // Fallback: delivery was requested but no target resolved — save
             // sender's copy so chat UI still shows the message. Mirror of the
             // same logic in /api/transform.
-            const hasDeliveryRequested = (broadcast || (speakTo && Array.isArray(speakTo) && speakTo.length > 0));
+            const hasDeliveryRequested = !suppressA2AForward && (broadcast || (speakTo && Array.isArray(speakTo) && speakTo.length > 0));
             if (hasDeliveryRequested && !deliverySaved && message && !isSilentMsg) {
                 const localSource = hasCrossRoute
                     ? `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`
@@ -931,6 +974,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 }
             };
             if (deliveryResults) response.delivery = deliveryResults;
+            if (suppressA2AForward) response.suppressedA2A = true;
             if (warnings.length > 0) response.warnings = warnings;
             res.json(response);
         } catch (err) {
@@ -1220,4 +1264,9 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
         setKanbanAutoReview,
         setOrgChartForward
     };
-};
+}
+
+channelApiModule.isOperationalChannelMessage = isOperationalChannelMessage;
+channelApiModule.shouldSuppressA2A = shouldSuppressA2A;
+
+module.exports = channelApiModule;

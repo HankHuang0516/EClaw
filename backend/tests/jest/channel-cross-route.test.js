@@ -214,6 +214,29 @@ describe('POST /api/channel/message — cross-device routing', () => {
         expect(crossRemaining.length).toBe(1);
     });
 
+    it('suppresses Codex bridge operational errors from A2A routing', async () => {
+        const { devices } = require('../../index');
+        const entity = devices[DEVICE_A].entities[0];
+        injectCrossDeviceMessage(entity, DEVICE_B, 'B_CODE');
+
+        const res = await post('/api/channel/message').send({
+            channel_api_key: CHANNEL_API_KEY,
+            deviceId: DEVICE_A,
+            entityId: 0,
+            botSecret: botSecretA,
+            message: [
+                'Codex bridge error',
+                '- Reason: Codex is still processing the previous message.'
+            ].join('\n')
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.suppressedA2A).toBe(true);
+        expect(res.body.warnings).toContain('A2A routing suppressed for operational channel message.');
+        expect(entity.messageQueue.filter(m => m.crossDevice).length).toBe(1);
+    });
+
     it('handles owner-mode cross-device message (fromEntityId=-1)', async () => {
         const { devices } = require('../../index');
         const entity = devices[DEVICE_A].entities[0];
