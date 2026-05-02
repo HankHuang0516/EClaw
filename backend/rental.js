@@ -1436,6 +1436,142 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         };
     }
 
+    async function diagnoseStartRentalDryRun({ listingId, renterUserId, renterDeviceId, durationMinutes }) {
+        const steps = [];
+        const client = await pool.connect();
+        let failedStep = null;
+
+        const step = async (name, fn) => {
+            failedStep = name;
+            const value = await fn();
+            steps.push({ name, ok: true });
+            return value;
+        };
+
+        try {
+            await client.query('BEGIN');
+
+            const listing = await step('lock_listing', async () => {
+                const listingRes = await client.query(
+                    `SELECT id, owner_user_id, rate_mli_per_ktoken,
+                            min_rental_minutes, max_rental_minutes,
+                            status, interview_passed
+                       FROM bot_listings WHERE id = $1 FOR UPDATE`,
+                    [listingId]
+                );
+                if (listingRes.rowCount === 0) throw new Error('listing_not_found');
+                return listingRes.rows[0];
+            });
+
+            await step('validate_listing', async () => {
+                if (listing.status !== 'listed') throw new Error('listing_not_available');
+                if (!listing.interview_passed) throw new Error('interview_not_passed');
+                if (listing.owner_user_id === renterUserId) throw new Error('self_rental_forbidden');
+                if (durationMinutes < listing.min_rental_minutes) throw new Error('duration_below_listing_min');
+                if (durationMinutes > listing.max_rental_minutes) throw new Error('duration_above_listing_max');
+            });
+
+            await step('check_cooldown', async () => {
+                const cooldownRes = await client.query(
+                    `SELECT cooldown_until FROM rental_cooldowns
+                       WHERE user_id = $1 AND listing_id = $2 AND cooldown_until > NOW()`,
+                    [renterUserId, listingId]
+                );
+                if (cooldownRes.rowCount > 0) throw new Error('cooldown_active');
+            });
+
+            await step('check_active_contract', async () => {
+                const activeRes = await client.query(
+                    `SELECT id FROM rental_contracts
+                       WHERE listing_id = $1
+                         AND status IN ('reserved', 'active', 'suspended_insufficient_funds')`,
+                    [listingId]
+                );
+                if (activeRes.rowCount > 0) throw new Error('listing_already_rented');
+            });
+
+            const rateSnapshot = Number(listing.rate_mli_per_ktoken);
+            const depositMli = computeDepositMli(rateSnapshot);
+            const bufferMli = rateSnapshot * 60;
+            const requiredMli = depositMli + bufferMli;
+
+            await step('check_wallet_balance', async () => {
+                const balRes = await client.query(
+                    `SELECT balance_mli FROM wallets WHERE user_id = $1`,
+                    [renterUserId]
+                );
+                const currentBalance = balRes.rowCount > 0 ? BigInt(balRes.rows[0].balance_mli) : 0n;
+                if (currentBalance < BigInt(requiredMli)) {
+                    const err = new Error('insufficient_balance_for_rental');
+                    err.details = {
+                        required_mli: String(requiredMli),
+                        current_mli: String(currentBalance),
+                        deposit_mli: String(depositMli),
+                        buffer_mli: String(bufferMli),
+                    };
+                    throw err;
+                }
+            });
+
+            const contract = await step('insert_contract', async () => {
+                const contractRes = await client.query(
+                    `INSERT INTO rental_contracts
+                        (listing_id, owner_user_id, renter_user_id, renter_device_id,
+                         rate_mli_per_ktoken_snapshot, deposit_mli,
+                         planned_duration_min, started_at, ends_at, status)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW() + make_interval(mins => $7), 'active')
+                     RETURNING id, status, started_at, ends_at, deposit_mli`,
+                    [listingId, listing.owner_user_id, renterUserId, renterDeviceId,
+                     rateSnapshot, depositMli, durationMinutes]
+                );
+                return contractRes.rows[0];
+            });
+
+            await step('insert_snapshot', async () => {
+                await client.query(
+                    `INSERT INTO rental_snapshots
+                        (contract_id, identity, rules, skills, webhook_url, allowed_vars)
+                     VALUES ($1, $2, $3, $4, $5, $6)`,
+                    [contract.id, null, null, null, null, '[]']
+                );
+            });
+
+            await step('hold_deposit', async () => {
+                await walletModule.applyLedgerEntry(client, {
+                    userId: renterUserId,
+                    balanceDelta: -depositMli,
+                    heldDelta: depositMli,
+                    type: walletModule.LEDGER_TYPES.DEPOSIT_HOLD,
+                    refType: 'rental_contract',
+                    refId: contract.id,
+                    note: `dry-run rental deposit: ${listingId}`,
+                    idempotencyKey: `rental-dry-run:${contract.id}`,
+                });
+            });
+
+            await client.query('ROLLBACK');
+            return { ok: true, steps, contractIdPreview: contract.id };
+        } catch (err) {
+            try { await client.query('ROLLBACK'); } catch { /* ignore */ }
+            steps.push({
+                name: failedStep || 'unknown',
+                ok: false,
+                error: {
+                    message: err.message,
+                    code: err.code || null,
+                    detail: err.detail || null,
+                    constraint: err.constraint || null,
+                    table: err.table || null,
+                    column: err.column || null,
+                    details: err.details || null,
+                },
+            });
+            return { ok: false, failedStep: failedStep || 'unknown', steps };
+        } finally {
+            client.release();
+        }
+    }
+
     // POST /api/rental/listing — create a draft listing
     router.post('/listing', authMiddleware, rentalRoute(async (req, res) => {
         const { ownerDeviceId, ownerEntityId, title, description,
@@ -1933,6 +2069,14 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
             ? ownerMemoryDevice.entities?.[listing.owner_entity_id]
             : null;
         const renterMemoryDevice = _interviewDeps.devices?.[renterDeviceId] || null;
+        const dryRunStart = renterUser && listing
+            ? await diagnoseStartRentalDryRun({
+                listingId,
+                renterUserId: renterUser.id,
+                renterDeviceId,
+                durationMinutes,
+            })
+            : null;
 
         res.json({
             success: true,
@@ -1969,6 +2113,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
                     balance_mli: String(walletRow.balance_mli),
                     held_mli: String(walletRow.held_mli),
                 } : null,
+                dryRunStart,
                 renterDbEntities: renterEntityRows.map(r => ({
                     entity_id: r.entity_id,
                     is_bound: r.is_bound,

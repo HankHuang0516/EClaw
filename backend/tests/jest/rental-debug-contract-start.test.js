@@ -36,6 +36,11 @@ jest.mock('pg', () => {
             return { rows: row ? [{ ...row }] : [], rowCount: row ? 1 : 0 };
         }
 
+        if (/^SELECT id, owner_user_id, rate_mli_per_ktoken,/i.test(norm)) {
+            const row = state.listings.get(params[0]);
+            return { rows: row ? [{ ...row }] : [], rowCount: row ? 1 : 0 };
+        }
+
         if (/^SELECT cooldown_until FROM rental_cooldowns/i.test(norm)) {
             const rows = state.cooldowns.filter(c => c.user_id === params[0] && c.listing_id === params[1]);
             return { rows, rowCount: rows.length };
@@ -47,6 +52,31 @@ jest.mock('pg', () => {
                 ['reserved', 'active', 'suspended_insufficient_funds'].includes(c.status)
             );
             return { rows, rowCount: rows.length };
+        }
+
+        if (/^SELECT id FROM rental_contracts/i.test(norm)) {
+            const rows = state.contracts.filter(c =>
+                c.listing_id === params[0] &&
+                ['reserved', 'active', 'suspended_insufficient_funds'].includes(c.status)
+            );
+            return { rows: rows.map(c => ({ id: c.id })), rowCount: rows.length };
+        }
+
+        if (/^INSERT INTO rental_contracts/i.test(norm)) {
+            return {
+                rows: [{
+                    id: 'contract-dry-run',
+                    status: 'active',
+                    started_at: new Date('2026-05-01T00:00:00Z'),
+                    ends_at: new Date('2026-05-01T00:30:00Z'),
+                    deposit_mli: params[5],
+                }],
+                rowCount: 1,
+            };
+        }
+
+        if (/^INSERT INTO rental_snapshots/i.test(norm)) {
+            return { rows: [], rowCount: 1 };
         }
 
         if (/^SELECT id, listing_id, status, started_at, ends_at, renter_device_id FROM rental_contracts/i.test(norm)) {
@@ -62,9 +92,18 @@ jest.mock('pg', () => {
             return { rows: row ? [{ ...row }] : [], rowCount: row ? 1 : 0 };
         }
 
+        if (/^SELECT balance_mli FROM wallets WHERE user_id = \$1$/i.test(norm)) {
+            const row = state.wallets.get(params[0]);
+            return { rows: row ? [{ balance_mli: row.balance_mli }] : [], rowCount: row ? 1 : 0 };
+        }
+
         if (/^SELECT entity_id, is_bound, character, webhook FROM entities WHERE device_id = \$1/i.test(norm)) {
             const rows = state.entitiesByDevice.get(params[0]) || [];
             return { rows: rows.map(r => ({ ...r })), rowCount: rows.length };
+        }
+
+        if (/^(BEGIN|ROLLBACK)$/i.test(norm)) {
+            return { rows: [], rowCount: 0 };
         }
 
         throw new Error(`[rental-debug fake pg] Unhandled SQL: ${norm}`);
@@ -73,6 +112,10 @@ jest.mock('pg', () => {
     return {
         Pool: jest.fn(() => ({
             query: jest.fn((sql, params) => Promise.resolve(runQuery(sql, params))),
+            connect: jest.fn(() => Promise.resolve({
+                query: jest.fn((sql, params) => Promise.resolve(runQuery(sql, params))),
+                release: jest.fn(),
+            })),
         })),
     };
 });
@@ -91,6 +134,8 @@ function buildApp() {
         },
         walletModule: {
             withTransaction: async (fn) => fn({ query: () => Promise.resolve({ rows: [], rowCount: 0 }) }),
+            applyLedgerEntry: jest.fn(() => Promise.resolve({})),
+            LEDGER_TYPES: { DEPOSIT_HOLD: 'deposit_hold' },
         },
     });
     rental.setInterviewDeps({
@@ -198,6 +243,10 @@ describe('rental debug endpoints', () => {
         expect(res.body.diagnostics.renterDbEntities).toEqual([
             expect.objectContaining({ entity_id: 15, is_bound: false }),
         ]);
+        expect(res.body.diagnostics.dryRunStart).toMatchObject({
+            ok: true,
+            contractIdPreview: 'contract-dry-run',
+        });
     });
 
     test('contract-start-fail predicts insufficient rental balance', async () => {
