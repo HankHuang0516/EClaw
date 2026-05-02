@@ -264,9 +264,10 @@
 
     function insertRequoteToken(data, refType, refId, anchorEl) {
         const token = tokenFor(data, refType, refId);
-        const input = document.getElementById('messageInput') || document.querySelector('textarea, [contenteditable="true"]');
-        if (input) {
-            insertRequoteTokenIntoInput(input, token);
+        const chatInput = document.getElementById('messageInput');
+        if (chatInput) {
+            insertRequoteTokenIntoInput(chatInput, token);
+            showToast(anchorEl, t('chip_popover_requoted', '已引用'));
             return;
         }
         // No local chat input — try cross-pane relay (workspace split-view).
@@ -278,8 +279,14 @@
                     window.location.origin
                 );
                 showToast(anchorEl, t('chip_popover_requoted', '已引用'));
+                return;
             } catch (_) {}
         }
+        // Last-resort fallback: any other writable surface on the page (e.g. a
+        // mindmap inline-note editor). Silent — caller doesn't know if landing
+        // target was actually chat-shaped.
+        const fallback = document.querySelector('textarea, [contenteditable="true"]');
+        if (fallback) insertRequoteTokenIntoInput(fallback, token);
     }
 
     // Receive cross-pane requote (chat iframe side). Workspace forwards
