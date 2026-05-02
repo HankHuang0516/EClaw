@@ -88,6 +88,7 @@ EClaw/
 │   │   ├── skill-templates.json   # Bot skill templates
 │   │   ├── soul-templates.json    # Bot personality templates
 │   │   └── rule-templates.json    # Bot behavior rule templates
+│   ├── data/routing-policies/     # Channel routing policy prompts (generic.en.txt, generic.zh-TW.txt)
 │   ├── proto/
 │   │   └── eclaw.proto            # gRPC service definitions
 │   ├── public/
@@ -1012,11 +1013,25 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Kanban Cron-Spawn Child Inheritance (v1.1122)**: Cron-spawned child cards inherit `requires_screenshot_review` flag from parent; mom card edit toggle for screenshot review setting (#2245)
 - **Mindmap Phase 4 Read-Side (v1.1122)**: `/api/mission/mindmap` honors `chat_anchor_coord` for read-side rendering, connecting mindmap nodes to chat anchor positions (#2244)
 
+### Recent Features (v1.1128.x – v1.1138.x)
+
+- **i18n URL Parameter Override (v1.1138)**: `?lang=` URL param honored at portal page init with fallback chain (URL param → localStorage → navigator.language); supports exact codes and case-insensitive prefix matches; enables deep-links from social/email i18n probes
+- **Split-Pane In-Place Quote Delivery (v1.1137)**: Smart chip cross-pane requote via parent postMessage relay when chat sub-pane is already open in workspace split-view; confirms with floating toast on source page (#2295)
+- **Transform Self-Save pendingA2A Leak Fix (v1.1137)**: Self-save block no longer writes fake routing arrows when messageQueue has pending A2A; preserves audit-trail via server logs (#2294)
+- **Transform Tolerant SpeakTo Format (v1.1137)**: `POST /api/transform` tolerates malformed speakTo field and falls back to clean sender row (#2291)
+- **Transform Routing Before Self-Save (v1.1137)**: Routing decision resolved before self-save to prevent duplicate chat rows (#2290)
+- **Channel API SenderHint Support (v1.1136)**: `POST /api/channel/message` accepts optional `senderHint` field for channel bridges to delegate smart routing to server (Phase 3a #2285) (#2289)
+- **Channel Routing Policy Endpoint (v1.1136)**: `GET /api/channel/routing-policy?channel=&lang=` serves bilingual smart-routing system-prompt; centralizes L1 prompt SoT (#2287)
+- **Rental Contract ID Generation Fix (v1.1136)**: Fixed UUID→hex contract ID conversion; resolves contract creation failures (#2286)
+- **Rental Contract Start Dry-Run Diagnostics (v1.1136)**: `GET /api/rental/debug/contract-start-fail` debug endpoint with step-by-step economics verification (#2284)
+- **Kanban Codex Channel Nudge Fix (v1.1134)**: Fixed nudge delivery for channel-bound entities (#2274)
+- **i18n Marketing Locales (v1.1134–v1.1135)**: `info_hooks`/`info_hero` marketing keys × 11 locales; `guidepub*` translations for ja/ko/zh-CN/zh-TW (#2281)
+
 ---
 
 ## Test Coverage Summary
 
-**~450 total API routes** across all modules (400 excluding Article Publisher), **~83% covered** by Jest + integration tests (~2412 test cases across 146 Jest files + 59 integration tests).
+**~450 total API routes** across all modules (400 excluding Article Publisher), **~85% covered** by Jest + integration tests (~2496 test cases across 161 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -1168,11 +1183,19 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Cross-Speak Channel | `tests/jest/cross-speak-channel.test.js` | Cross-speak channel push parity — entity/client cross-speak channel-bound delivery |
 | Auth /me Contract | `tests/jest/auth-me-contract.test.js` | API/frontend contract test for /api/auth/me response fields |
 | Org Chart | `tests/jest/org-chart.test.js` | Org chart helpers (getSuperior, validateHierarchy, pruneHierarchy), GET/PUT endpoint auth validation |
+| Channel Message SenderHint | `tests/jest/channel-message-sender-hint.test.js` | Channel message senderHint field validation and resolution |
+| Channel Routing Policy | `tests/jest/channel-routing-policy.test.js` | GET /api/channel/routing-policy endpoint validation |
+| Dashboard Agent Policy Card | `tests/jest/dashboard-agent-policy-card.test.js` | Dashboard agent policy card rendering validation |
+| Rental Debug Contract Start | `tests/jest/rental-debug-contract-start.test.js` | Rental contract start dry-run diagnostics endpoint |
+| Transform Self-Save No PendingA2A | `tests/jest/transform-self-save-no-pendingA2A.test.js` | Regression: self-save no longer leaks pendingA2A into chatSource |
+| Transform Self-Save Phantom | `tests/jest/transform-self-save-phantom.test.js` | Transform self-save phantom row prevention |
+| Transform Sender Hint | `tests/jest/transform-sender-hint.test.js` | Transform senderHint field validation and routing |
+| Transform SpeakTo Tolerant Formats | `tests/jest/transform-speakto-tolerant-formats.test.js` | Tolerant speakTo field format parsing |
 
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (146 files)
+cd backend && npm test                  # Jest unit tests (161 files)
 cd backend && npm run lint              # ESLint
 ```
 
