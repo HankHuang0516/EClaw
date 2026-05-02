@@ -1,3 +1,10 @@
+# [1.1136.0](https://github.com/HankHuang0516/EClaw/compare/v1.1135.0...v1.1136.0) (2026-05-02)
+
+
+### Features
+
+* **channel-routing:** add senderHint + /api/channel/routing-policy ([#2285](https://github.com/HankHuang0516/EClaw/issues/2285)) ([#2287](https://github.com/HankHuang0516/EClaw/issues/2287)) ([f6b3434](https://github.com/HankHuang0516/EClaw/commit/f6b34343b15d5d44a4f7e547e4002a390f471f3f)), closes [#2282](https://github.com/HankHuang0516/EClaw/issues/2282)
+
 # [1.1135.0](https://github.com/HankHuang0516/EClaw/compare/v1.1134.0...v1.1135.0) (2026-05-02)
 
 
