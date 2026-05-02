@@ -6691,6 +6691,89 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         if (speakTo.length === 0) speakTo = undefined;
     }
 
+    // ── @-mention auto-fill + senderHint resolution (PR #2290 / fixes #2282) ──
+    // These two routing-resolution passes USED to live further down (after the
+    // self-save block), but that meant `hasDelivery` was computed before
+    // routing was resolved. When a bot called transform with `@#N` in the
+    // message text but no explicit speakTo, hasDelivery was false → the
+    // self-save block fired (using `pendingA2A.fromEntityId` as anchor), and
+    // THEN the auto-router populated speakTo → delivery loop saved a second
+    // chat row. Net result: every such transform produced a phantom
+    // `entity:N:CHAR->X delivered=false` row in addition to the real
+    // `->target delivered=true` row.
+    //
+    // Reordering so routing is resolved first lets `hasDelivery` reflect the
+    // final state, and the self-save correctly skips when delivery is going
+    // to happen.
+    let transformMentionContext = null;
+    if (finalMessage) {
+        const tParse = mentionParser.parseMentions(finalMessage, {
+            senderDeviceId: deviceId,
+            devices,
+            publicCodeIndex
+        });
+        transformMentionContext = mentionParser.toContextPayload(tParse);
+        if (transformMentionContext) {
+            if (tParse.hasAll && !broadcast && !(speakTo && speakTo.length > 0)) {
+                broadcast = true;
+            } else if (tParse.mentions.length > 0 && !broadcast && !(speakTo && speakTo.length > 0)) {
+                speakTo = tParse.mentions.map(m => m.publicCode);
+            }
+        }
+    }
+
+    // ── senderHint resolution (channel-bridge centralization, issue #2285) ──
+    // Lowest precedence — only fills speakTo/broadcast when neither explicit
+    // fields nor in-text @-mentions resolved a target. Channel bridges pass
+    // senderHint derived from the inbound payload's "from" fields so the
+    // server (not the bridge) decides where the bot's reply routes.
+    let senderHintResolution = null;
+    const noTargetYet = !broadcast && !(speakTo && Array.isArray(speakTo) && speakTo.length > 0);
+    if (senderHint && noTargetYet && finalMessage) {
+        const kind = senderHint.kind || 'unknown';
+        if (kind === 'broadcast') {
+            broadcast = true;
+            senderHintResolution = { kind, applied: 'broadcast' };
+        } else if (kind === 'entity') {
+            // Resolve hint → publicCode. publicCode > entityId because publicCode
+            // is cross-device safe; entityId only resolves on sender's own device.
+            let resolvedCode = null;
+            if (senderHint.publicCode && typeof senderHint.publicCode === 'string') {
+                const code = senderHint.publicCode.trim();
+                // Accept the publicCode if it exists in the global index OR
+                // belongs to the current device (covers freshly-bound entities
+                // not yet propagated through the proxy).
+                if (publicCodeIndex[code]) {
+                    resolvedCode = code;
+                } else {
+                    for (const i of Object.keys(device.entities).map(Number)) {
+                        if (device.entities[i]?.publicCode === code) { resolvedCode = code; break; }
+                    }
+                }
+            }
+            if (!resolvedCode && Number.isFinite(Number(senderHint.entityId))) {
+                const hintId = Number(senderHint.entityId);
+                const target = device.entities[hintId];
+                if (target && target.publicCode) resolvedCode = target.publicCode;
+            }
+            if (resolvedCode) {
+                speakTo = [resolvedCode];
+                senderHintResolution = { kind, applied: 'speakTo', publicCode: resolvedCode };
+            } else {
+                senderHintResolution = { kind, applied: 'none', reason: 'unresolved_sender' };
+            }
+        } else {
+            // 'user' or 'unknown' — no routing, message is a status update.
+            senderHintResolution = { kind, applied: 'none' };
+        }
+    } else if (senderHint) {
+        senderHintResolution = {
+            kind: senderHint.kind || 'unknown',
+            applied: 'none',
+            reason: noTargetYet ? 'no_message' : 'explicit_or_mention_won'
+        };
+    }
+
     // Save bot message to chat history so it appears in Chat page
     // Skip silent tokens — these are internal signals that should not appear in chat
     const isSilentMessage = finalMessage && /^\[SILENT\]$/i.test(finalMessage.trim());
@@ -6899,79 +6982,6 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // Skip for leased_out entities — owner's org chart should not apply to rental responses
     if (finalMessage && entity && entity.rental_status !== 'leased_out') {
         orgChartForward(entity, deviceId, finalMessage).catch(() => {});
-    }
-
-    // ── @mention auto-fill ──
-    // If the bot's message contains <@publicCode> tokens or @all and speakTo/broadcast
-    // were not explicitly provided, auto-fill them from the parsed mentions so bots can
-    // naturally relay user-directed @-tags without having to rebuild the speakTo array.
-    let transformMentionContext = null;
-    if (finalMessage) {
-        const tParse = mentionParser.parseMentions(finalMessage, {
-            senderDeviceId: deviceId,
-            devices,
-            publicCodeIndex
-        });
-        transformMentionContext = mentionParser.toContextPayload(tParse);
-        if (transformMentionContext) {
-            if (tParse.hasAll && !broadcast && !(speakTo && speakTo.length > 0)) {
-                broadcast = true;
-            } else if (tParse.mentions.length > 0 && !broadcast && !(speakTo && speakTo.length > 0)) {
-                speakTo = tParse.mentions.map(m => m.publicCode);
-            }
-        }
-    }
-
-    // ── senderHint resolution (channel-bridge centralization, issue #2285) ──
-    // Lowest precedence — only fills speakTo/broadcast when neither explicit
-    // fields nor in-text @-mentions resolved a target. Channel bridges pass
-    // senderHint derived from the inbound payload's "from" fields so the
-    // server (not the bridge) decides where the bot's reply routes.
-    let senderHintResolution = null;
-    const noTargetYet = !broadcast && !(speakTo && Array.isArray(speakTo) && speakTo.length > 0);
-    if (senderHint && noTargetYet && finalMessage) {
-        const kind = senderHint.kind || 'unknown';
-        if (kind === 'broadcast') {
-            broadcast = true;
-            senderHintResolution = { kind, applied: 'broadcast' };
-        } else if (kind === 'entity') {
-            // Resolve hint → publicCode. publicCode > entityId because publicCode
-            // is cross-device safe; entityId only resolves on sender's own device.
-            let resolvedCode = null;
-            if (senderHint.publicCode && typeof senderHint.publicCode === 'string') {
-                const code = senderHint.publicCode.trim();
-                // Accept the publicCode if it exists in the global index OR
-                // belongs to the current device (covers freshly-bound entities
-                // not yet propagated through the proxy).
-                if (publicCodeIndex[code]) {
-                    resolvedCode = code;
-                } else {
-                    for (const i of Object.keys(device.entities).map(Number)) {
-                        if (device.entities[i]?.publicCode === code) { resolvedCode = code; break; }
-                    }
-                }
-            }
-            if (!resolvedCode && Number.isFinite(Number(senderHint.entityId))) {
-                const hintId = Number(senderHint.entityId);
-                const target = device.entities[hintId];
-                if (target && target.publicCode) resolvedCode = target.publicCode;
-            }
-            if (resolvedCode) {
-                speakTo = [resolvedCode];
-                senderHintResolution = { kind, applied: 'speakTo', publicCode: resolvedCode };
-            } else {
-                senderHintResolution = { kind, applied: 'none', reason: 'unresolved_sender' };
-            }
-        } else {
-            // 'user' or 'unknown' — no routing, message is a status update.
-            senderHintResolution = { kind, applied: 'none' };
-        }
-    } else if (senderHint) {
-        senderHintResolution = {
-            kind: senderHint.kind || 'unknown',
-            applied: 'none',
-            reason: noTargetYet ? 'no_message' : 'explicit_or_mention_won'
-        };
     }
 
     // ── speakTo / broadcast delivery ──
