@@ -14043,6 +14043,16 @@ const TRANSLATIONS = {
         "guide_arena_intro_cta_diff": "\u6311\u6218\u9ad8\u96be\u5ea6\u81ea\u9002\u5e94\u8bc4\u6d4b \u2192",
         "guide_arena_intro_cta_lb": "\u67e5\u770b\u6392\u884c\u699c \u2192",
 
+        // ── Guidepub: Publisher Guide & Roadmap (added 2026-05-02) ──
+        "guidepubroadmaph": "发布者路线图",
+        "guidepubroadmapdesc": "了解如何让您的应用准备好发布。发布是一个5步流程：",
+        "guidepubstatush": "发布状态",
+        "guidepubstatuslegend": "状态图例",
+        "guidepubstatusendpointh": "每个端点的状态",
+        "guidepubstatusendpointdesc": "显示的状态基于您的发布者资料设置。",
+        "guidepubnavpublisher": "发布者",
+        "guidepubtitle": "发布者指南"
+
     },
 
     ja: {
@@ -22344,18 +22354,6 @@ const TRANSLATIONS = {
         "guidepubstatusendpointdesc": "표시된 상태는 게시자 프로필 설정에 기반합니다.",
         "guidepubnavpublisher": "게시자",
         "guidepubtitle": "게시자 가이드"
-    },
-
-    "zh-CN": {
-        // ── Guidepub: Publisher Guide & Roadmap (added 2026-05-02) ──
-        "guidepubroadmaph": "发布者路线图",
-        "guidepubroadmapdesc": "了解如何让您的应用准备好发布。发布是一个5步流程：",
-        "guidepubstatush": "发布状态",
-        "guidepubstatuslegend": "状态图例",
-        "guidepubstatusendpointh": "每个端点的状态",
-        "guidepubstatusendpointdesc": "显示的状态基于您的发布者资料设置。",
-        "guidepubnavpublisher": "发布者",
-        "guidepubtitle": "发布者指南"
     },
 
     "zh-TW": {
