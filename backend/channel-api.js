@@ -614,9 +614,27 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
     // ============================================
     router.post('/message', async (req, res) => {
         try {
-            const { channel_api_key, deviceId, entityId, botSecret, message, state, mediaType, mediaUrl, targetDeviceId, speakTo, broadcast, card } = req.body;
+            const { channel_api_key, deviceId, entityId, botSecret, message, state, mediaType, mediaUrl, targetDeviceId, card, senderHint } = req.body;
+            let { speakTo, broadcast } = req.body;
 
             if (process.env.DEBUG === 'true') serverLog('info', 'client_push', `[PUSH] /channel/message called, state=${state}, hasMsg=${!!message}`, { deviceId, entityId: entityId !== undefined ? parseInt(entityId) : 'auto' });
+
+            // Validate optional senderHint — bridges pass this so the server resolves
+            // routing centrally instead of each bridge implementing its own logic.
+            // Same shape and precedence as /api/transform (issue #2285): explicit
+            // speakTo/broadcast win, senderHint is the lowest-precedence fallback.
+            if (senderHint !== undefined && senderHint !== null) {
+                if (typeof senderHint !== 'object' || Array.isArray(senderHint)) {
+                    return res.status(400).json({ success: false, message: 'senderHint must be an object' });
+                }
+                const allowedKinds = new Set(['entity', 'user', 'broadcast', 'unknown']);
+                if (senderHint.kind && !allowedKinds.has(senderHint.kind)) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `senderHint.kind must be one of: ${[...allowedKinds].join(', ')}`
+                    });
+                }
+            }
 
             if (!channel_api_key || !deviceId || !botSecret) {
                 if (process.env.DEBUG === 'true') serverLog('warn', 'client_push', `[PUSH] /channel/message missing required fields`, { deviceId });
@@ -708,6 +726,52 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             if (state) entity.state = state;
             if (message) entity.message = message;
             entity.lastUpdated = Date.now();
+
+            // ── senderHint resolution (channel-bridge centralization, issue #2285) ──
+            // Lowest precedence — only fills speakTo/broadcast when neither was
+            // explicitly set on the request body. Channel bridges pass senderHint
+            // derived from the inbound payload's "from*" fields so the server
+            // (not the bridge) decides where the bot's reply routes.
+            let senderHintResolution = null;
+            const noTargetYet = !broadcast && !(speakTo && Array.isArray(speakTo) && speakTo.length > 0);
+            if (senderHint && noTargetYet && message) {
+                const kind = senderHint.kind || 'unknown';
+                if (kind === 'broadcast') {
+                    broadcast = true;
+                    senderHintResolution = { kind, applied: 'broadcast' };
+                } else if (kind === 'entity') {
+                    let resolvedCode = null;
+                    if (senderHint.publicCode && typeof senderHint.publicCode === 'string') {
+                        const code = senderHint.publicCode.trim();
+                        if (publicCodeIndex && publicCodeIndex[code]) {
+                            resolvedCode = code;
+                        } else {
+                            for (const i of Object.keys(device.entities).map(Number)) {
+                                if (device.entities[i]?.publicCode === code) { resolvedCode = code; break; }
+                            }
+                        }
+                    }
+                    if (!resolvedCode && Number.isFinite(Number(senderHint.entityId))) {
+                        const hintId = Number(senderHint.entityId);
+                        const target = device.entities[hintId];
+                        if (target && target.publicCode) resolvedCode = target.publicCode;
+                    }
+                    if (resolvedCode) {
+                        speakTo = [resolvedCode];
+                        senderHintResolution = { kind, applied: 'speakTo', publicCode: resolvedCode };
+                    } else {
+                        senderHintResolution = { kind, applied: 'none', reason: 'unresolved_sender' };
+                    }
+                } else {
+                    senderHintResolution = { kind, applied: 'none' };
+                }
+            } else if (senderHint) {
+                senderHintResolution = {
+                    kind: senderHint.kind || 'unknown',
+                    applied: 'none',
+                    reason: noTargetYet ? 'no_message' : 'explicit_won'
+                };
+            }
 
             // Save to chat history
             // Check for pending cross-device context first, so local copy also shows routing direction
@@ -932,6 +996,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             };
             if (deliveryResults) response.delivery = deliveryResults;
             if (warnings.length > 0) response.warnings = warnings;
+            if (senderHintResolution) response.senderHintResolution = senderHintResolution;
             res.json(response);
         } catch (err) {
             console.error('[Channel] Message error:', err.message);
