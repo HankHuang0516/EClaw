@@ -1,3 +1,10 @@
+# [1.1138.0](https://github.com/HankHuang0516/EClaw/compare/v1.1137.3...v1.1138.0) (2026-05-02)
+
+
+### Features
+
+* **quote:** split-pane in-place delivery + source-page toast ([#2295](https://github.com/HankHuang0516/EClaw/issues/2295)) ([a22ee22](https://github.com/HankHuang0516/EClaw/commit/a22ee22989616c30c55e71340051c81720771643))
+
 ## [1.1137.3](https://github.com/HankHuang0516/EClaw/compare/v1.1137.2...v1.1137.3) (2026-05-02)
 
 
