@@ -6196,19 +6196,43 @@ app.get('/api/status', (req, res) => {
 
 /**
  * Resolve a speakTo target code to { deviceId, entityId }.
- * Supports both publicCode (cross-device) and numeric entityId string (same-device fallback).
- * @param {string} code - publicCode or entityId string
+ *
+ * Accepted forms (PR #2291 — defensive against LLM misuse):
+ *   - "abc123"     6-char publicCode (cross-device)
+ *   - "5"          numeric entityId  (same-device)
+ *   - "#5"         hash + numeric    (same-device — Claude/LLM often confuses
+ *                                     the @-mention routing token with speakTo)
+ *   - "@#5"        @-prefixed         (same as above with @)
+ *   - "<#5>"       bracketed numeric  (legacy form mentioned in older docs)
+ *   - "@abc123"    @-prefixed pubCode (same as above with @)
+ *   - "<@abc123>"  bracketed pubCode  (mention-parser's <@xxxxxx> form)
+ *
+ * @param {string} code
  * @param {string} senderDeviceId - sender's device for same-device entityId fallback
  * @returns {{ deviceId, entityId } | null}
  */
 function resolveSpeakToTarget(code, senderDeviceId) {
-    // Try publicCode first
-    const byCode = publicCodeIndex[code];
+    if (typeof code !== 'string' || code.length === 0) return null;
+
+    // Strip routing-token prefixes/suffixes that Claude/LLMs sometimes paste
+    // into speakTo when they confuse the in-text @-mention syntax with the
+    // speakTo array contract. We never strip any character that could be part
+    // of a real publicCode (publicCodes are exactly 6 chars of [a-z0-9]).
+    let normalized = code.trim();
+    if (normalized.startsWith('<') && normalized.endsWith('>')) {
+        normalized = normalized.slice(1, -1);
+    }
+    if (normalized.startsWith('@')) normalized = normalized.slice(1);
+    if (normalized.startsWith('#')) normalized = normalized.slice(1);
+
+    // Try publicCode first (both raw and normalized — a real publicCode never
+    // starts with @/#/< so the normalized form just unwraps decorator syntax).
+    const byCode = publicCodeIndex[normalized] || publicCodeIndex[code];
     if (byCode) return byCode;
 
     // Fallback: pure numeric string → same-device entityId
-    if (/^\d+$/.test(code)) {
-        const eid = parseInt(code);
+    if (/^\d+$/.test(normalized)) {
+        const eid = parseInt(normalized);
         const device = devices[senderDeviceId];
         if (device && device.entities[eid]) {
             return { deviceId: senderDeviceId, entityId: eid };
@@ -7185,14 +7209,20 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // this, the sender's own chat row never gets written — message disappears.
     // Save to sender so the author at least sees their own words, and surface
     // a warning so the caller knows no delivery happened.
+    //
+    // PR #2291 — chatSource here MUST NOT use the `pendingA2A` arrow form.
+    // When the requested delivery failed (e.g. Claude/LLM passes
+    // `speakTo: ["#6"]` and the resolver doesn't recognise the form), the
+    // user-visible result is the message rendered as if it were sent to
+    // pendingA2A's fromEntityId — because the source string is
+    // `entity:N:CHAR->X`. That's a misleading routing trail in chat history
+    // ("looks like sent to #X but never delivered to anyone"). Use the plain
+    // entity name so chat UI clearly renders this as a sender-only row.
     const hasDeliveryRequested = (broadcast || (speakTo && Array.isArray(speakTo) && speakTo.length > 0));
     if (hasDeliveryRequested && !deliverySaved && finalMessage && !isSilentMessage) {
         const isLeasedOut = entity.rental_status === 'leased_out';
         if (!isLeasedOut) {
-            const pendingA2A = entity.messageQueue && entity.messageQueue.find(m => m.from && m.from.startsWith('entity:'));
-            const chatSource = pendingA2A
-                ? `entity:${eId}:${entity.character}->${pendingA2A.fromEntityId}`
-                : entity.name || `Entity ${eId}`;
+            const chatSource = entity.name || `Entity ${eId}`;
             const reasons = deliveryResults && deliveryResults.results ? deliveryResults.results.map(r => r.reason || 'ok').join(',') : 'none';
             serverLog('warn', 'chat_save', `[CHAT_FALLBACK_TRANSFORM] all targets failed for entity ${eId}; saving sender copy. reasons=[${reasons}] speakTo=${JSON.stringify(speakTo || null)} broadcast=${!!broadcast}`, { deviceId, entityId: eId, metadata: { path: 'fallback_transform', reasons, hadSpeakTo: !!speakTo, hadBroadcast: !!broadcast } });
             await saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments);
