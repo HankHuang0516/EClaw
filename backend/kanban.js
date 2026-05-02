@@ -315,7 +315,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                         from: 'kanban',
                         text: message + descBlock,
                         eclaw_context: {
-                            expectsReply: false,
+                            expectsReply: true,
                             silentToken: '[SILENT]',
                             missionHints: kanbanHints,
                         }
@@ -352,6 +352,100 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             }
         }
     }
+
+    // Debug: kanban-codex-nudge (#2273) — keep until user confirms Codex channel nudges are reliable.
+    router.get('/debug/kanban-codex-nudge', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId } = { ...req.query, ...req.body };
+        const cardId = req.query.cardId ? String(req.query.cardId) : null;
+        const entityId = req.query.entityId !== undefined ? Number(req.query.entityId) : null;
+
+        try {
+            const prefs = await devicePrefs.getPrefs(deviceId).catch(() => ({}));
+            const cardParams = [deviceId];
+            let cardWhere = `device_id = $1 AND archived = false`;
+            if (cardId) {
+                cardParams.push(cardId);
+                cardWhere += ` AND id = $${cardParams.length}`;
+            } else {
+                cardWhere += `
+                  AND status IN ('backlog', 'todo', 'in_progress', 'review')
+                  AND EXTRACT(EPOCH FROM (NOW() - status_changed_at)) * 1000 > stale_threshold_ms`;
+            }
+            const cardsRes = await pool.query(
+                `SELECT id, title, status, priority, assigned_bots, stale_threshold_ms,
+                        status_changed_at, last_stale_nudge_at
+                   FROM kanban_cards
+                  WHERE ${cardWhere}
+                  ORDER BY updated_at DESC NULLS LAST
+                  LIMIT 20`,
+                cardParams
+            );
+
+            const device = devices[deviceId] || null;
+            const entityRows = [];
+            const ids = new Set();
+            for (const card of cardsRes.rows) {
+                for (const bid of (card.assigned_bots || [])) ids.add(Number(bid));
+            }
+            if (Number.isFinite(entityId)) ids.add(entityId);
+
+            for (const id of ids) {
+                const ent = device?.entities?.[id] || null;
+                entityRows.push({
+                    entityId: id,
+                    exists: !!ent,
+                    isBound: !!ent?.isBound,
+                    bindingType: ent?.bindingType || null,
+                    hasChannelAccountId: !!ent?.channelAccountId,
+                    hasWebhook: !!ent?.webhook,
+                    channelPushPossible: !!(ent && ent.bindingType === 'channel' && ent.channelAccountId && pushToChannelCallback),
+                    codexBridgeWouldIgnoreOldPayload: true,
+                    fixedPayloadExpectsReply: true,
+                });
+            }
+
+            res.json({
+                success: true,
+                bug: 'kanban-codex-nudge',
+                diagnostics: {
+                    deviceInMemory: !!device,
+                    hasPushToChannelCallback: !!pushToChannelCallback,
+                    prefs: {
+                        kanban_nudge_interval_minutes: prefs.kanban_nudge_interval_minutes || null,
+                        kanban_nudge_batch_size: prefs.kanban_nudge_batch_size || null,
+                        kanban_nudge_priority_mode: prefs.kanban_nudge_priority_mode || null,
+                        kanban_nudge_per_entity_throttle: prefs.kanban_nudge_per_entity_throttle !== false,
+                        kanban_nudge_statuses: prefs.kanban_nudge_statuses || KanbanStatus.NUDGE_DEFAULT_STATUSES,
+                    },
+                    cards: cardsRes.rows.map((card) => ({
+                        id: card.id,
+                        title: card.title,
+                        status: card.status,
+                        priority: card.priority,
+                        assigned_bots: card.assigned_bots || [],
+                        stale_threshold_ms: card.stale_threshold_ms,
+                        status_changed_at: card.status_changed_at,
+                        last_stale_nudge_at: card.last_stale_nudge_at,
+                    })),
+                    assignedEntities: entityRows,
+                    expectedChannelPayload: {
+                        event: 'kanban_notification',
+                        from: 'kanban',
+                        eclaw_context: {
+                            expectsReply: true,
+                            silentToken: '[SILENT]',
+                            missionHints: 'present_when_getMissionApiHints_is_configured',
+                        },
+                    },
+                },
+                timestamp: new Date().toISOString(),
+            });
+        } catch (err) {
+            console.error('[Kanban] debug kanban-codex-nudge error:', err.message);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
 
     // ── Helper: compute next cron run time ──
     function computeNextRun(cronExpression, timezone) {

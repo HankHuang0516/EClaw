@@ -25,6 +25,7 @@ const request = require('supertest');
 
 let app;
 let saveChatSpy;
+let channelPushSpy;
 
 beforeAll(() => {
     app = express();
@@ -40,10 +41,12 @@ beforeAll(() => {
     };
 
     saveChatSpy = jest.fn().mockResolvedValue('chat-msg-uuid');
+    channelPushSpy = jest.fn().mockResolvedValue({ pushed: true });
 
     const kanbanModule = require('../../kanban')(mockDevices, {
         saveChatMessage: saveChatSpy,
-        pushToChannelCallback: jest.fn().mockResolvedValue({ pushed: true }),
+        pushToChannelCallback: channelPushSpy,
+        getMissionApiHints: () => '[AVAILABLE TOOLS - Kanban Board]',
     });
     app.use('/api/mission', kanbanModule.router);
 });
@@ -52,6 +55,7 @@ beforeEach(() => {
     mockQuery.mockReset();
     mockQuery.mockResolvedValue({ rows: [], rowCount: 0 });
     saveChatSpy.mockClear();
+    channelPushSpy.mockClear();
 });
 
 const AUTH = { deviceId: 'dev-1', deviceSecret: 'secret-1' };
@@ -86,6 +90,14 @@ describe('notifyEntities → saveChatMessage kanban_ref card arg', () => {
         //                             backupUrl, mentions, card, attachments)
         const cardArg = args[12];
         expect(cardArg).toEqual({ kind: 'kanban_ref', id: 'card_abc' });
+        expect(channelPushSpy).toHaveBeenCalledWith('dev-1', 0, expect.objectContaining({
+            event: 'kanban_notification',
+            from: 'kanban',
+            eclaw_context: expect.objectContaining({
+                expectsReply: true,
+                silentToken: '[SILENT]',
+            }),
+        }), 'ch-0');
     });
 
     it('forwards the moved card id on status change (todo → in_progress)', async () => {
@@ -114,5 +126,41 @@ describe('notifyEntities → saveChatMessage kanban_ref card arg', () => {
         expect(saveChatSpy).toHaveBeenCalled();
         const cardArg = saveChatSpy.mock.calls[0][12];
         expect(cardArg).toEqual({ kind: 'kanban_ref', id: 'card_xyz' });
+    });
+
+    it('debug endpoint reports the fixed Codex-channel nudge payload contract', async () => {
+        const staleCard = {
+            ...createdCardRow,
+            id: 'card_stale',
+            assigned_bots: [0],
+            stale_threshold_ms: 1000,
+            status_changed_at: new Date(Date.now() - 3600_000),
+            last_stale_nudge_at: null,
+        };
+        mockQuery.mockResolvedValueOnce({ rows: [staleCard], rowCount: 1 });
+
+        const res = await request(app)
+            .get('/api/mission/debug/kanban-codex-nudge')
+            .query(AUTH)
+            .expect(200);
+
+        expect(res.body.success).toBe(true);
+        expect(res.body.bug).toBe('kanban-codex-nudge');
+        expect(res.body.diagnostics.expectedChannelPayload).toMatchObject({
+            event: 'kanban_notification',
+            from: 'kanban',
+            eclaw_context: {
+                expectsReply: true,
+                silentToken: '[SILENT]',
+            },
+        });
+        expect(res.body.diagnostics.assignedEntities).toEqual([
+            expect.objectContaining({
+                entityId: 0,
+                bindingType: 'channel',
+                channelPushPossible: true,
+                fixedPayloadExpectsReply: true,
+            }),
+        ]);
     });
 });
