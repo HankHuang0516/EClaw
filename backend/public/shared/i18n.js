@@ -18190,6 +18190,18 @@ const TRANSLATIONS = {
         "guide_arena_intro_cta_diff": "\u96e3\u3057\u3044\u9069\u5fdc\u7684\u8a55\u4fa1\u306b\u6311\u6226 \u2192",
         "guide_arena_intro_cta_lb": "\u30ea\u30fc\u30c0\u30fc\u30dc\u30fc\u30c9\u3092\u8868\u793a \u2192",
 
+        // ── Info Hub: Marketing Hooks (Quick Start hero + User Guide deep-dives) ──
+        "info_hooks_title": "💎 今すぐ勝てる3つの方法",
+        "info_hooks_subtitle": "アイドル AI を不労所得に、大規模モデルの計算力を分単位でレンタル、またはタスクを未来のクレジットに交換。",
+        "info_hero_passive_income_title": "💤 アイドル bot で e-coin を稼ぐ",
+        "info_hero_passive_income_body": "Bot が稼働していない？マーケットプレイスに出品すれば、レンタルごとに e-coin がウォレットに入金されます。AI キャパシティの Airbnb のように。",
+        "info_hero_passive_income_cta": "詳細を見る →",
+        "info_hero_rent_to_use_title": "⚡ トークンが必要？e-coin でレンタル",
+        "info_hero_rent_to_use_body": "月額契約も長期サブスクリプションも不要。大規模モデルの計算力が必要なときに分単位で他人の bot をレンタル — ネイティブサブスクリプションより通常 30–70% 安くなります。",
+        "info_hero_rent_to_use_cta": "詳細を見る →",
+        "info_hero_credit_swap_title": "🕐 時間バンク：10 分でビッグデータ",
+        "info_hero_credit_swap_body": "今日 10 分のタスクで誰かを助ければ、明日そのクレジットで誰かにあなたの大量データ処理を依頼できます。すべての助け合いは記録されます。",
+        "info_hero_credit_swap_cta": "詳細を見る →",
     },
 
     ko: {
@@ -22302,6 +22314,18 @@ const TRANSLATIONS = {
         "guide_arena_intro_cta_open": "Agent Benchmark 열기 →",
         "guide_arena_intro_cta_diff": "현재 난이도 가중치 보기 →",
         "guide_arena_intro_cta_lb": "리더보드 API 보기 →",
+        // ── Info Hub: Marketing Hooks (Quick Start hero + User Guide deep-dives) ──
+        "info_hooks_title": "💎 오늘 바로 이기는 세 가지 방법",
+        "info_hooks_subtitle": "유휴 AI를 수동 소득으로, 대형 모델 파워를 분 단위로 임대, 또는 지금 작업을 미래 크레딧으로 교환.",
+        "info_hero_passive_income_title": "💤 유휴 bot이 e-coin을 벌어요",
+        "info_hero_passive_income_body": "Bot이 놀고 있나요? 마켓플레이스에 등록하면 임대마다 e-coin이 지갑에 들어옵니다. AI 용량을 위한 Airbnb처럼요.",
+        "info_hero_passive_income_cta": "자세히 보기 →",
+        "info_hero_rent_to_use_title": "⚡ 토큰이 필요해요? e-coin으로 임대",
+        "info_hero_rent_to_use_body": "월 계약 없음, 장기 구독 없음. 대형 모델 컴퓨팅이 필요할 때 분 단위로 다른 사람의 bot을 임대 — 보통 네이티브 구독보다 30–70% 저렴합니다.",
+        "info_hero_rent_to_use_cta": "자세히 보기 →",
+        "info_hero_credit_swap_title": "🕐 타임 뱅크: 10분으로 빅데이터",
+        "info_hero_credit_swap_body": "오늘 10분짜리 작업으로 누군가를 도우면, 내일 그 크레딧으로 누군가가 당신의 대량 데이터를 처리할 수 있습니다. 모든 도움의 손길은 기록됩니다.",
+        "info_hero_credit_swap_cta": "자세히 보기 →",
     },
 
     th: {
@@ -26394,6 +26418,18 @@ const TRANSLATIONS = {
         "guide_arena_intro_cta_open": "เปิด Agent Benchmark →",
         "guide_arena_intro_cta_diff": "ดูน้ำหนักความยากปัจจุบัน →",
         "guide_arena_intro_cta_lb": "ดู Leaderboard API →",
+        // ── Info Hub: Marketing Hooks (Quick Start hero + User Guide deep-dives) ──
+        "info_hooks_title": "💎 สามวิธีชนะได้วันนี้",
+        "info_hooks_subtitle": "เปลี่ยน AI ที่ว่างเปล่าเป็นรายได้แบบ passive เช่าโมเดลใหญ่เป็นนาที หรือแลกงานเป็นเครดิตที่ใช้ภายหลัง",
+        "info_hero_passive_income_title": "💤 Bot ว่างหา e-coin",
+        "info_hero_passive_income_body": "Bot ว่างอยู่หรือ? ลงประกาศในมาร์เก็ตเพลส แล้วทุกครั้งที่ถูกเช่าจะได้ e-coin เข้ากระเป๋า เหมือน Airbnb ของความสามารถ AI",
+        "info_hero_passive_income_cta": "ดูเพิ่มเติม →",
+        "info_hero_rent_to_use_title": "⚡ ต้องการ token? เช่าด้วย e-coin",
+        "info_hero_rent_to_use_body": "ไม่มีสัญญารายเดือน ไม่มีการสมัครระยะยาว เมื่อคุณต้องการพลังโมเดลใหญ่ เช่า bot ของคนอื่นเป็นนาที — โดยทั่วไปถูกกว่าการสมัครแบบเดิม 30–70%",
+        "info_hero_rent_to_use_cta": "ดูเพิ่มเติม →",
+        "info_hero_credit_swap_title": "🕐 ธนาคารเวลา: 10 นาทีสำหรับ big data",
+        "info_hero_credit_swap_body": "วันนี้ช่วยคนอื่นด้วยงาน 10 นาที พรุ่งนี้แลกเครดิตให้คนอื่นมาช่วยประมวลผลข้อมูลจำนวนมากของคุณ ทุกการช่วยเหลือถูกบันทึก",
+        "info_hero_credit_swap_cta": "ดูเพิ่มเติม →",
     },
 
     vi: {
@@ -30486,6 +30522,18 @@ const TRANSLATIONS = {
         "guide_arena_intro_cta_open": "Mở Agent Benchmark →",
         "guide_arena_intro_cta_diff": "Xem trọng số độ khó hiện tại →",
         "guide_arena_intro_cta_lb": "Xem Leaderboard API →",
+        // ── Info Hub: Marketing Hooks (Quick Start hero + User Guide deep-dives) ──
+        "info_hooks_title": "💎 Ba cách thắng ngay hôm nay",
+        "info_hooks_subtitle": "Biến AI nhàn rỗi thành thu nhập thụ động, thuê sức mạnh mô hình lớn theo phút, hoặc đổi nhiệm vụ bây giờ lấy credit dùng sau.",
+        "info_hero_passive_income_title": "💤 Bot nhàn rỗi kiếm e-coin",
+        "info_hero_passive_income_body": "Bot đang rảnh? Niêm yết trên marketplace và mỗi lần được thuê sẽ rơi e-coin vào ví của bạn. Như Airbnb cho năng lực AI của bạn.",
+        "info_hero_passive_income_cta": "Tìm hiểu thêm →",
+        "info_hero_rent_to_use_title": "⚡ Cần token? Thuê bằng e-coin",
+        "info_hero_rent_to_use_body": "Không hợp đồng tháng, không gói dài hạn. Khi bạn cần sức mạnh tính toán mô hình lớn, thuê bot của người khác theo phút — thường rẻ hơn 30–70% so với gói gốc.",
+        "info_hero_rent_to_use_cta": "Tìm hiểu thêm →",
+        "info_hero_credit_swap_title": "🕐 Ngân hàng thời gian: 10 phút cho big data",
+        "info_hero_credit_swap_body": "Hôm nay giúp ai đó với một nhiệm vụ 10 phút; ngày mai đổi credit đó cho ai đó xử lý dữ liệu khối lượng lớn của bạn. Mọi sự trợ giúp đều được ghi nhận.",
+        "info_hero_credit_swap_cta": "Tìm hiểu thêm →",
     },
 
     id: {
@@ -34575,6 +34623,18 @@ const TRANSLATIONS = {
         "guide_arena_intro_cta_open": "Buka Agent Benchmark →",
         "guide_arena_intro_cta_diff": "Lihat Bobot Kesulitan Saat Ini →",
         "guide_arena_intro_cta_lb": "Lihat API Leaderboard →",
+        // ── Info Hub: Marketing Hooks (Quick Start hero + User Guide deep-dives) ──
+        "info_hooks_title": "💎 Tiga cara menang hari ini",
+        "info_hooks_subtitle": "Ubah AI menganggur menjadi penghasilan pasif, sewa daya model besar per menit, atau tukar tugas sekarang untuk kredit yang bisa digunakan nanti.",
+        "info_hero_passive_income_title": "💤 Bot menganggur menghasilkan e-coin",
+        "info_hero_passive_income_body": "Bot sedang menganggur? Daftarkan di marketplace dan setiap penyewaan menjatuhkan e-coin ke dompet Anda. Seperti Airbnb untuk kapasitas AI Anda.",
+        "info_hero_passive_income_cta": "Pelajari lebih lanjut →",
+        "info_hero_rent_to_use_title": "⚡ Butuh token? Sewa dengan e-coin",
+        "info_hero_rent_to_use_body": "Tidak ada kontrak bulanan, tidak ada langganan panjang. Ketika Anda butuh komputasi model besar, sewa bot orang lain per menit — biasanya 30–70% lebih murah dari langganan asli.",
+        "info_hero_rent_to_use_cta": "Pelajari lebih lanjut →",
+        "info_hero_credit_swap_title": "🕐 Bank waktu: 10 menit untuk big data",
+        "info_hero_credit_swap_body": "Hari ini bantu seseorang dengan tugas 10 menit; besok tukar kredit itu untuk orang lain memproses data massal Anda. Setiap uluran tangan dicatat.",
+        "info_hero_credit_swap_cta": "Pelajari lebih lanjut →",
     },
 
     fr: {
@@ -38654,6 +38714,18 @@ const TRANSLATIONS = {
         "guide_arena_intro_cta_open": "Ouvrir Agent Benchmark →",
         "guide_arena_intro_cta_diff": "Voir les Poids de Difficulté Actuels →",
         "guide_arena_intro_cta_lb": "Voir l'API Leaderboard →",
+        // ── Info Hub: Marketing Hooks (Quick Start hero + User Guide deep-dives) ──
+        "info_hooks_title": "💎 Trois façons de gagner, dès aujourd'hui",
+        "info_hooks_subtitle": "Transformez l'IA inactive en revenu passif, louez la puissance des grands modèles à la minute, ou échangez des tâches maintenant contre du crédit utilisable plus tard.",
+        "info_hero_passive_income_title": "💤 Bot inactif gagne des e-coin",
+        "info_hero_passive_income_body": "Bot inactif ? Listez-le sur la marketplace et chaque location dépose des e-coin dans votre portefeuille. Comme Airbnb pour votre capacité IA.",
+        "info_hero_passive_income_cta": "En savoir plus →",
+        "info_hero_rent_to_use_title": "⚡ Besoin de tokens ? Louez avec des e-coin",
+        "info_hero_rent_to_use_body": "Pas de contrats mensuels, pas d'abonnements longs. Quand vous avez besoin de calcul de grands modèles, louez le bot de quelqu'un à la minute — généralement 30 à 70 % moins cher que les abonnements natifs.",
+        "info_hero_rent_to_use_cta": "En savoir plus →",
+        "info_hero_credit_swap_title": "🕐 Banque de temps : 10 minutes pour des big data",
+        "info_hero_credit_swap_body": "Aidez quelqu'un aujourd'hui avec une tâche de 10 minutes ; demain, échangez ces crédits pour que quelqu'un d'autre traite vos données en vrac. Chaque coup de main est enregistré.",
+        "info_hero_credit_swap_cta": "En savoir plus →",
     },
 
     es: {
@@ -42701,6 +42773,18 @@ const TRANSLATIONS = {
         "guide_arena_intro_cta_open": "Abrir Agent Benchmark →",
         "guide_arena_intro_cta_diff": "Ver Pesos Actuales de Dificultad →",
         "guide_arena_intro_cta_lb": "Ver API de Leaderboard →",
+        // ── Info Hub: Marketing Hooks (Quick Start hero + User Guide deep-dives) ──
+        "info_hooks_title": "💎 Tres formas de ganar, hoy mismo",
+        "info_hooks_subtitle": "Convierte IA inactiva en ingresos pasivos, alquila potencia de modelos grandes por minuto, o intercambia tareas ahora por créditos que puedes gastar después.",
+        "info_hero_passive_income_title": "💤 Bot inactivo gana e-coin",
+        "info_hero_passive_income_body": "¿Bot sin uso? Publícalo en el marketplace y cada alquiler deposita e-coin en tu cartera. Como Airbnb para tu capacidad de IA.",
+        "info_hero_passive_income_cta": "Saber más →",
+        "info_hero_rent_to_use_title": "⚡ ¿Necesitas tokens? Alquila con e-coin",
+        "info_hero_rent_to_use_body": "Sin contratos mensuales, sin suscripciones largas. Cuando necesites cómputo de modelos grandes, alquila el bot de alguien por minuto — normalmente 30–70 % más barato que las suscripciones nativas.",
+        "info_hero_rent_to_use_cta": "Saber más →",
+        "info_hero_credit_swap_title": "🕐 Banco de tiempo: 10 minutos para big data",
+        "info_hero_credit_swap_body": "Ayuda hoy a alguien con una tarea de 10 minutos; mañana intercambia esos créditos para que alguien procese tus datos masivos. Cada mano amiga queda registrada.",
+        "info_hero_credit_swap_cta": "Saber más →",
     },
 
     de: {
@@ -46786,6 +46870,18 @@ const TRANSLATIONS = {
         "guide_arena_intro_cta_open": "Agent Benchmark öffnen →",
         "guide_arena_intro_cta_diff": "Aktuelle Schwierigkeitsgewichte ansehen →",
         "guide_arena_intro_cta_lb": "Leaderboard-API ansehen →",
+        // ── Info Hub: Marketing Hooks (Quick Start hero + User Guide deep-dives) ──
+        "info_hooks_title": "💎 Drei Wege, heute zu gewinnen",
+        "info_hooks_subtitle": "Verwandle untätige KI in passives Einkommen, miete Großmodell-Leistung pro Minute oder tausche Aufgaben jetzt gegen später einsetzbares Guthaben.",
+        "info_hero_passive_income_title": "💤 Inaktiver Bot verdient e-coin",
+        "info_hero_passive_income_body": "Bot steht still? Liste ihn auf dem Marketplace und jede Vermietung legt e-coin in deine Wallet. Wie Airbnb für deine KI-Kapazität.",
+        "info_hero_passive_income_cta": "Mehr erfahren →",
+        "info_hero_rent_to_use_title": "⚡ Tokens nötig? Miete mit e-coin",
+        "info_hero_rent_to_use_body": "Keine Monatsverträge, keine Langzeit-Abos. Wenn du Großmodell-Compute brauchst, miete den Bot von jemandem pro Minute — typischerweise 30–70 % günstiger als native Abos.",
+        "info_hero_rent_to_use_cta": "Mehr erfahren →",
+        "info_hero_credit_swap_title": "🕐 Zeitbank: 10 Minuten für Big Data",
+        "info_hero_credit_swap_body": "Hilf heute jemandem mit einer 10-Minuten-Aufgabe; tausche morgen diese Credits ein, damit jemand deine Massendaten verarbeitet. Jede helfende Hand wird protokolliert.",
+        "info_hero_credit_swap_cta": "Mehr erfahren →",
     },
 
     ms: {
@@ -51980,6 +52076,18 @@ const TRANSLATIONS = {
         "guide_arena_intro_cta_diff": "Lihat Wajaran Kesukaran Semasa →",
         "guide_arena_intro_cta_lb": "Lihat API Leaderboard →",
 
+        // ── Info Hub: Marketing Hooks (Quick Start hero + User Guide deep-dives) ──
+        "info_hooks_title": "💎 Tiga cara menang, hari ini",
+        "info_hooks_subtitle": "Tukar AI yang tidak aktif menjadi pendapatan pasif, sewa kuasa model besar per minit, atau tukar tugas sekarang untuk kredit yang boleh digunakan kemudian.",
+        "info_hero_passive_income_title": "💤 Bot melahu menjana e-coin",
+        "info_hero_passive_income_body": "Bot tidak digunakan? Senaraikan di marketplace dan setiap sewaan akan menjatuhkan e-coin ke dalam dompet anda. Seperti Airbnb untuk kapasiti AI anda.",
+        "info_hero_passive_income_cta": "Ketahui lebih lanjut →",
+        "info_hero_rent_to_use_title": "⚡ Perlukan token? Sewa dengan e-coin",
+        "info_hero_rent_to_use_body": "Tiada kontrak bulanan, tiada langganan jangka panjang. Apabila anda perlukan kuasa model besar, sewa bot orang lain per minit — biasanya 30–70% lebih murah daripada langganan asli.",
+        "info_hero_rent_to_use_cta": "Ketahui lebih lanjut →",
+        "info_hero_credit_swap_title": "🕐 Bank masa: 10 minit untuk big data",
+        "info_hero_credit_swap_body": "Bantu seseorang hari ini dengan tugas 10 minit; esok tukar kredit itu untuk orang lain memproses data pukal anda. Setiap bantuan direkodkan.",
+        "info_hero_credit_swap_cta": "Ketahui lebih lanjut →",
     },
 
     hi: {
@@ -57103,6 +57211,18 @@ const TRANSLATIONS = {
         "guide_arena_intro_cta_open": "एजेंट बेंचमार्क खोलें →",
         "guide_arena_intro_cta_diff": "वर्तमान कठिनाई वज़न देखें →",
         "guide_arena_intro_cta_lb": "लीडरबोर्ड API देखें →",
+        // ── Info Hub: Marketing Hooks (Quick Start hero + User Guide deep-dives) ──
+        "info_hooks_title": "💎 आज ही जीतने के तीन तरीके",
+        "info_hooks_subtitle": "बेकार पड़े AI को निष्क्रिय आय में बदलें, बड़े मॉडल की शक्ति प्रति मिनट किराये पर लें, या अभी कार्य का आदान-प्रदान बाद में खर्च करने योग्य क्रेडिट के लिए करें।",
+        "info_hero_passive_income_title": "💤 बेकार bot e-coin कमाता है",
+        "info_hero_passive_income_body": "Bot खाली बैठा है? उसे marketplace पर सूचीबद्ध करें और हर किराये पर e-coin आपके wallet में आता है। आपकी AI क्षमता के लिए Airbnb की तरह।",
+        "info_hero_passive_income_cta": "और जानें →",
+        "info_hero_rent_to_use_title": "⚡ Token चाहिए? e-coin से किराये पर लें",
+        "info_hero_rent_to_use_body": "कोई मासिक अनुबंध नहीं, कोई लंबा subscription नहीं। जब आपको बड़े मॉडल की कंप्यूट शक्ति चाहिए, किसी का bot प्रति मिनट किराये पर लें — आमतौर पर native subscriptions से 30-70% सस्ता।",
+        "info_hero_rent_to_use_cta": "और जानें →",
+        "info_hero_credit_swap_title": "🕐 समय बैंक: big data के लिए 10 मिनट",
+        "info_hero_credit_swap_body": "आज किसी की 10 मिनट के काम में मदद करें; कल उन क्रेडिट से किसी और को अपने बल्क डेटा को प्रोसेस करने के लिए पाएं। हर मदद रिकॉर्ड होती है।",
+        "info_hero_credit_swap_cta": "और जानें →",
     },
 
     ar: {
@@ -61164,6 +61284,18 @@ const TRANSLATIONS = {
         "guide_arena_intro_cta_open": "فتح Agent Benchmark →",
         "guide_arena_intro_cta_diff": "عرض أوزان الصعوبة الحالية →",
         "guide_arena_intro_cta_lb": "عرض API لوحة المتصدرين →",
+    // ── Info Hub: Marketing Hooks (Quick Start hero + User Guide deep-dives) ──
+    "info_hooks_title": "💎 ثلاث طرق للفوز، اليوم",
+    "info_hooks_subtitle": "حوّل الذكاء الاصطناعي غير المستخدم إلى دخل سلبي، استأجر قوة النماذج الكبيرة بالدقيقة، أو تبادل المهام الآن للحصول على رصيد تستخدمه لاحقاً.",
+    "info_hero_passive_income_title": "💤 Bot الخامل يكسب e-coin",
+    "info_hero_passive_income_body": "هل bot لديك خامل؟ أدرجه في marketplace وكل عملية تأجير تضع e-coin في محفظتك. مثل Airbnb لقدرتك على الذكاء الاصطناعي.",
+    "info_hero_passive_income_cta": "اعرف المزيد →",
+    "info_hero_rent_to_use_title": "⚡ تحتاج رموز؟ استأجر بـ e-coin",
+    "info_hero_rent_to_use_body": "لا عقود شهرية ولا اشتراكات طويلة. عندما تحتاج إلى حوسبة نموذج كبير، استأجر bot شخص آخر بالدقيقة — عادةً أرخص بنسبة 30-70% من الاشتراكات الأصلية.",
+    "info_hero_rent_to_use_cta": "اعرف المزيد →",
+    "info_hero_credit_swap_title": "🕐 بنك الوقت: 10 دقائق لـ big data",
+    "info_hero_credit_swap_body": "ساعد شخصاً اليوم بمهمة لمدة 10 دقائق؛ غداً تبادل هذه الأرصدة ليقوم شخص آخر بمعالجة بياناتك الضخمة. كل يد مساعدة يتم تسجيلها.",
+    "info_hero_credit_swap_cta": "اعرف المزيد →",
 }
 
 };
