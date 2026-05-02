@@ -1,3 +1,10 @@
+# [1.1135.0](https://github.com/HankHuang0516/EClaw/compare/v1.1134.0...v1.1135.0) (2026-05-02)
+
+
+### Features
+
+* **i18n:** Add guidepub* translations for ja/ko/zh-CN/zh-TW ([#2281](https://github.com/HankHuang0516/EClaw/issues/2281)) ([eeba930](https://github.com/HankHuang0516/EClaw/commit/eeba9307650df9aa89dc48fabec87220121017c7)), closes [#2157](https://github.com/HankHuang0516/EClaw/issues/2157) [#5](https://github.com/HankHuang0516/EClaw/issues/5) [#2](https://github.com/HankHuang0516/EClaw/issues/2)
+
 # [1.1134.0](https://github.com/HankHuang0516/EClaw/compare/v1.1133.3...v1.1134.0) (2026-05-02)
 
 
