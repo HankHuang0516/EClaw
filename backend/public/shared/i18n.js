@@ -18202,6 +18202,15 @@ const TRANSLATIONS = {
         "info_hero_credit_swap_title": "🕐 時間バンク：10 分でビッグデータ",
         "info_hero_credit_swap_body": "今日 10 分のタスクで誰かを助ければ、明日そのクレジットで誰かにあなたの大量データ処理を依頼できます。すべての助け合いは記録されます。",
         "info_hero_credit_swap_cta": "詳細を見る →",
+        // ── Guidepub: Publisher Guide & Roadmap (added 2026-05-02) ──
+        "guidepubroadmaph": "出版者ロードマップ",
+        "guidepubroadmapdesc": "アプリの公開準備方法を学びましょう。公開は5ステップのプロセスです：",
+        "guidepubstatush": "公開状況",
+        "guidepubstatuslegend": "ステータス凡例",
+        "guidepubstatusendpointh": "エンドポイントごとのステータス",
+        "guidepubstatusendpointdesc": "表示されるステータスは Publisher Profile の設定に基づいています。",
+        "guidepubnavpublisher": "パブリッシャー",
+        "guidepubtitle": "パブリッシャーガイド"
     },
 
     ko: {
@@ -22326,6 +22335,39 @@ const TRANSLATIONS = {
         "info_hero_credit_swap_title": "🕐 타임 뱅크: 10분으로 빅데이터",
         "info_hero_credit_swap_body": "오늘 10분짜리 작업으로 누군가를 도우면, 내일 그 크레딧으로 누군가가 당신의 대량 데이터를 처리할 수 있습니다. 모든 도움의 손길은 기록됩니다.",
         "info_hero_credit_swap_cta": "자세히 보기 →",
+        // ── Guidepub: Publisher Guide & Roadmap (added 2026-05-02) ──
+        "guidepubroadmaph": "게시자 로드맵",
+        "guidepubroadmapdesc": "앱을 출판 준비하는 방법을 알아보세요. 출판은 5단계 프로세스입니다:",
+        "guidepubstatush": "게시 상태",
+        "guidepubstatuslegend": "상태 범례",
+        "guidepubstatusendpointh": "엔드포인트별 상태",
+        "guidepubstatusendpointdesc": "표시된 상태는 게시자 프로필 설정에 기반합니다.",
+        "guidepubnavpublisher": "게시자",
+        "guidepubtitle": "게시자 가이드"
+    },
+
+    "zh-CN": {
+        // ── Guidepub: Publisher Guide & Roadmap (added 2026-05-02) ──
+        "guidepubroadmaph": "发布者路线图",
+        "guidepubroadmapdesc": "了解如何让您的应用准备好发布。发布是一个5步流程：",
+        "guidepubstatush": "发布状态",
+        "guidepubstatuslegend": "状态图例",
+        "guidepubstatusendpointh": "每个端点的状态",
+        "guidepubstatusendpointdesc": "显示的状态基于您的发布者资料设置。",
+        "guidepubnavpublisher": "发布者",
+        "guidepubtitle": "发布者指南"
+    },
+
+    "zh-TW": {
+        // ── Guidepub: Publisher Guide & Roadmap (added 2026-05-02) ──
+        "guidepubroadmaph": "發布者路線圖",
+        "guidepubroadmapdesc": "瞭解如何讓您的應用程式准备好发布。發布是一個5步驟流程：",
+        "guidepubstatush": "發布狀態",
+        "guidepubstatuslegend": "狀態圖例",
+        "guidepubstatusendpointh": "每個端點的狀態",
+        "guidepubstatusendpointdesc": "顯示的狀態基於您的發布者資料設定。",
+        "guidepubnavpublisher": "發布者",
+        "guidepubtitle": "發布者指南"
     },
 
     th: {
