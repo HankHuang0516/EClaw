@@ -196,6 +196,67 @@
             display: flex;
         }
 
+        .policy-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .policy-inline-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 10px;
+            align-items: end;
+        }
+
+        .policy-field {
+            display: grid;
+            gap: 5px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .policy-input,
+        .policy-select {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .policy-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .policy-textarea {
+            width: 100%;
+            min-height: 92px;
+            resize: vertical;
+            padding: 10px 12px;
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            background: var(--input-bg);
+            color: var(--text);
+            font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+
+        .policy-preview {
+            display: none;
+            white-space: pre-wrap;
+            max-height: 260px;
+            overflow: auto;
+            padding: 12px;
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            background: var(--bg);
+            color: var(--text-secondary);
+            font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+
         /* ── Cancel section ── */
         .cancel-section {
             margin-top: 12px;
@@ -866,6 +927,88 @@
                         </label>
                     </div>
                 </div>
+
+                <!-- Agent Policy -->
+                <div id="agentPolicySection" style="margin-top:18px;padding-top:16px;border-top:1px solid var(--card-border);">
+                    <div class="card-title" style="font-size:14px;margin-bottom:6px;">
+                        <span>🧭 Agent Policy</span>
+                    </div>
+                    <p class="section-desc">Centrally injects device-level system prompt policy into Codex, Claude, and future channel bridges.</p>
+                    <div class="policy-grid">
+                        <div class="policy-inline-grid" data-testid="prompt-policy-scope-controls">
+                            <label class="policy-field">
+                                <span class="setting-row-label">Policy scope</span>
+                                <select id="promptPolicyScope" class="policy-select" onchange="onPromptPolicyScopeChange()">
+                                    <option value="device">Device default</option>
+                                    <option value="entity">Entity override</option>
+                                </select>
+                            </label>
+                            <label class="policy-field" id="promptPolicyEntityField" style="display:none;">
+                                <span class="setting-row-label">Entity #</span>
+                                <input type="number" id="promptPolicyEntityId" min="0" step="1" value="0" class="policy-input" onchange="onPromptPolicyEntityChange()">
+                            </label>
+                        </div>
+
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                            <input type="checkbox" id="promptPolicyEnabled">
+                            <span id="promptPolicyEnabledLabel">Enable device prompt policy</span>
+                        </label>
+
+                        <label style="display:block;">
+                            <span class="setting-row-label">Device instructions</span>
+                            <textarea id="promptPolicyInstructions" class="policy-textarea" placeholder="One instruction per line"></textarea>
+                        </label>
+
+                        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
+                            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="promptPolicyRequirePlan">
+                                <span>Require test plan</span>
+                            </label>
+                            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="promptPolicyRequireMilestones">
+                                <span>Require milestone updates</span>
+                            </label>
+                            <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
+                                <span>Heartbeat min</span>
+                                <input type="number" id="promptPolicyHeartbeatMinutes" min="1" max="30" step="1"
+                                       style="width:70px;padding:6px 8px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);text-align:right;">
+                            </label>
+                        </div>
+
+                        <label style="display:block;">
+                            <span class="setting-row-label">Codex override</span>
+                            <textarea id="promptPolicyCodexOverride" class="policy-textarea" placeholder="Codex-only instructions"></textarea>
+                        </label>
+
+                        <label style="display:block;">
+                            <span class="setting-row-label">Claude Code override</span>
+                            <textarea id="promptPolicyClaudeOverride" class="policy-textarea" placeholder="Claude Code-only instructions"></textarea>
+                        </label>
+
+                        <label style="display:block;">
+                            <span class="setting-row-label">Hermes override</span>
+                            <textarea id="promptPolicyHermesOverride" class="policy-textarea" placeholder="Hermes-only instructions"></textarea>
+                        </label>
+
+                        <div class="policy-actions">
+                            <button class="btn btn-primary btn-sm" onclick="savePromptPolicy()" id="promptPolicySaveBtn">Save Device Policy</button>
+                            <button class="btn btn-outline btn-sm" onclick="loadPromptPolicy()">Refresh</button>
+                            <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);">
+                                Preview entity #
+                                <input type="number" id="promptPolicyPreviewEntity" min="0" step="1" value="0" class="policy-input" style="width:64px;text-align:right;">
+                            </span>
+                            <select id="promptPolicyPreviewChannel" class="policy-select" style="width:auto;">
+                                <option value="codex">codex</option>
+                                <option value="claude_code">claude_code</option>
+                                <option value="hermes">hermes</option>
+                                <option value="generic">generic</option>
+                            </select>
+                            <button class="btn btn-outline btn-sm" onclick="previewPromptPolicy()">Preview</button>
+                        </div>
+                        <div id="promptPolicyStatus" class="section-desc" style="margin:0;"></div>
+                        <pre id="promptPolicyPreview" class="policy-preview"></pre>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -909,11 +1052,13 @@
 
                 <div class="setting-row" style="flex-direction:column;align-items:stretch;">
                     <span class="setting-row-label" style="margin-bottom:8px;" data-i18n="kanban_nudge_statuses_label">Nudge these columns</span>
+                    <!-- Match this row to NUDGEABLE_STATUSES in shared/kanban-status.js. 'done' is intentionally excluded. -->
                     <div style="display:flex;flex-wrap:wrap;gap:8px;">
                         <label class="nudge-status-chip"><input type="checkbox" value="backlog" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_backlog">Backlog</span></label>
                         <label class="nudge-status-chip"><input type="checkbox" value="todo" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_todo">Todo</span></label>
                         <label class="nudge-status-chip"><input type="checkbox" value="in_progress" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_in_progress">In Progress</span></label>
                         <label class="nudge-status-chip"><input type="checkbox" value="review" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_review">Review</span></label>
+                        <label class="nudge-status-chip"><input type="checkbox" value="blocked" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_blocked">Blocked</span></label>
                     </div>
                 </div>
 
@@ -929,6 +1074,26 @@
                                onchange="saveKanbanNudgeInterval()">
                         <span style="font-size:13px;" data-i18n="kanban_nudge_interval_min">m</span>
                     </span>
+                </div>
+
+                <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:6px;">
+                    <span class="setting-row-label" style="margin-bottom:4px;" data-i18n="kanban_nudge_advanced_label">Two-type nudge controls</span>
+                    <p class="section-desc" style="margin:0 0 6px 0;font-size:12px;" data-i18n="kanban_nudge_advanced_desc">🅰️ stale-card nudge vs 🅱️ cron-schedule trigger — separate switches.</p>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                        <input type="checkbox" id="kanbanNudgePerEntityThrottle"
+                               onchange="saveKanbanNudgePref('kanban_nudge_per_entity_throttle', this.checked)">
+                        <span data-i18n="kanban_nudge_per_entity_throttle_label">🅰️ Stale-card: cap each entity at 1 nudge per interval</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                        <input type="checkbox" id="kanbanCronSpawnNotify"
+                               onchange="saveKanbanNudgePref('kanban_cron_spawn_notify', this.checked)">
+                        <span data-i18n="kanban_cron_spawn_notify_label">🅱️ Cron母卡 spawning child: notify immediately</span>
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                        <input type="checkbox" id="kanbanCronRecurringNotify"
+                               onchange="saveKanbanNudgePref('kanban_cron_recurring_notify', this.checked)">
+                        <span data-i18n="kanban_cron_recurring_notify_label">🅱️ Cron母卡 self-recurring (no child): notify on each fire</span>
+                    </label>
                 </div>
             </div>
         </div>
@@ -1007,7 +1172,7 @@
             <div class="dialog-title" data-i18n="settings_cancel_title">Cancel Subscription</div>
             <p data-i18n="settings_cancel_desc">
                 Your premium access will remain active until the current billing period ends.
-                After that, you'll revert to the free plan with 15 messages per day for free bots.
+                After that, you'll revert to the free plan (shared bots, unlimited messages).
             </p>
             <div class="dialog-actions">
                 <button class="btn btn-outline" onclick="closeCancelDialog()" data-i18n="settings_btn_keep">Keep
@@ -1157,6 +1322,7 @@
     <script src="shared/auth.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
+    <script src="../shared/settings-deep-link.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/entity-utils.js"></script>
     <script src="shared/socket.js"></script>
@@ -1193,10 +1359,12 @@
             loadViewModePreference();
             loadNotifPreferences();
             loadDevicePreferences();
+            loadPromptPolicy(user);
             initKanbanNudgeCollapse();
             updatePushToggle();
 
             document.getElementById('pageContent').style.display = '';
+            if (typeof applyDeepLinkFocus === 'function') applyDeepLinkFocus();
             initTapPay();
 
             setInterval(loadSubscriptionStatus, 15000);
@@ -2050,6 +2218,194 @@
             }
         }
 
+        // ── Agent prompt policy ──
+        function getPromptPolicyLines(id) {
+            const el = document.getElementById(id);
+            if (!el) return [];
+            return String(el.value || '')
+                .split('\n')
+                .map(line => line.trim())
+                .filter(Boolean);
+        }
+
+        function setPromptPolicyLines(id, lines) {
+            const el = document.getElementById(id);
+            if (el) el.value = Array.isArray(lines) ? lines.join('\n') : '';
+        }
+
+        function setPromptPolicyStatus(message, isError = false) {
+            const el = document.getElementById('promptPolicyStatus');
+            if (!el) return;
+            el.textContent = message || '';
+            el.style.color = isError ? 'var(--danger)' : 'var(--text-secondary)';
+        }
+
+        function getPromptPolicyScope() {
+            const scope = document.getElementById('promptPolicyScope')?.value || 'device';
+            const entityId = Math.max(0, parseInt(document.getElementById('promptPolicyEntityId')?.value) || 0);
+            return { scope, entityId };
+        }
+
+        function getPromptPolicyRequest(scopeInfo = getPromptPolicyScope(), user = currentUser) {
+            if (scopeInfo.scope === 'entity') {
+                const entityId = scopeInfo.entityId;
+                return {
+                    label: `Entity #${entityId}`,
+                    getPath: `/api/entity/${entityId}/prompt-policy?deviceId=${encodeURIComponent(user.deviceId)}&deviceSecret=${encodeURIComponent(user.deviceSecret)}`,
+                    putPath: `/api/entity/${entityId}/prompt-policy`
+                };
+            }
+            return {
+                label: 'Device',
+                getPath: `/api/device/prompt-policy?deviceId=${encodeURIComponent(user.deviceId)}&deviceSecret=${encodeURIComponent(user.deviceSecret)}`,
+                putPath: '/api/device/prompt-policy'
+            };
+        }
+
+        function buildPromptPolicyFromForm() {
+            const heartbeatMinutes = Math.max(1, Math.min(30, parseInt(document.getElementById('promptPolicyHeartbeatMinutes').value) || 3));
+            return {
+                enabled: document.getElementById('promptPolicyEnabled').checked,
+                instructions: getPromptPolicyLines('promptPolicyInstructions'),
+                taskProtocol: {
+                    requireTestPlan: document.getElementById('promptPolicyRequirePlan').checked,
+                    requireMilestoneUpdates: document.getElementById('promptPolicyRequireMilestones').checked,
+                    statusHeartbeatMs: heartbeatMinutes * 60000
+                },
+                channelOverrides: {
+                    codex: {
+                        enabled: true,
+                        instructions: getPromptPolicyLines('promptPolicyCodexOverride')
+                    },
+                    claude_code: {
+                        enabled: true,
+                        instructions: getPromptPolicyLines('promptPolicyClaudeOverride')
+                    },
+                    hermes: {
+                        enabled: true,
+                        instructions: getPromptPolicyLines('promptPolicyHermesOverride')
+                    }
+                }
+            };
+        }
+
+        function applyPromptPolicyToForm(policy = {}) {
+            document.getElementById('promptPolicyEnabled').checked = policy.enabled !== false;
+            setPromptPolicyLines('promptPolicyInstructions', policy.instructions || []);
+            document.getElementById('promptPolicyRequirePlan').checked = policy.taskProtocol?.requireTestPlan !== false;
+            document.getElementById('promptPolicyRequireMilestones').checked = policy.taskProtocol?.requireMilestoneUpdates !== false;
+            document.getElementById('promptPolicyHeartbeatMinutes').value = Math.round((policy.taskProtocol?.statusHeartbeatMs || 180000) / 60000);
+            setPromptPolicyLines('promptPolicyCodexOverride', policy.channelOverrides?.codex?.instructions || []);
+            setPromptPolicyLines('promptPolicyClaudeOverride', policy.channelOverrides?.claude_code?.instructions || []);
+            setPromptPolicyLines('promptPolicyHermesOverride', policy.channelOverrides?.hermes?.instructions || []);
+        }
+
+        function onPromptPolicyScopeChange() {
+            const { scope, entityId } = getPromptPolicyScope();
+            const isEntity = scope === 'entity';
+            const entityField = document.getElementById('promptPolicyEntityField');
+            const saveBtn = document.getElementById('promptPolicySaveBtn');
+            const enabledLabel = document.getElementById('promptPolicyEnabledLabel');
+            if (entityField) entityField.style.display = isEntity ? 'grid' : 'none';
+            if (saveBtn) saveBtn.textContent = isEntity ? 'Save Entity Policy' : 'Save Device Policy';
+            if (enabledLabel) enabledLabel.textContent = isEntity ? 'Enable entity prompt policy' : 'Enable device prompt policy';
+            if (isEntity) document.getElementById('promptPolicyPreviewEntity').value = entityId;
+            setPromptPolicyStatus(isEntity ? `Editing entity #${entityId} override.` : 'Editing device default policy.');
+        }
+
+        function onPromptPolicyEntityChange() {
+            const { scope, entityId } = getPromptPolicyScope();
+            if (scope !== 'entity') return;
+            document.getElementById('promptPolicyPreviewEntity').value = entityId;
+            setPromptPolicyStatus(`Editing entity #${entityId} override.`);
+        }
+
+        function applyAgentPolicyDeepLink(user = currentUser) {
+            const params = new URLSearchParams(window.location.search || '');
+            const wantsAgentPolicy = window.location.hash === '#agent-policy' || params.get('agentPolicy') === '1';
+            if (!wantsAgentPolicy) return;
+
+            if (!isDeveloperExpanded) toggleDeveloperSection();
+
+            const scope = params.get('scope') === 'entity' ? 'entity' : 'device';
+            const entityId = Math.max(0, parseInt(params.get('entityId'), 10) || 0);
+            const channel = params.get('channel') || 'codex';
+
+            const scopeEl = document.getElementById('promptPolicyScope');
+            const entityEl = document.getElementById('promptPolicyEntityId');
+            const previewEntityEl = document.getElementById('promptPolicyPreviewEntity');
+            const previewChannelEl = document.getElementById('promptPolicyPreviewChannel');
+            if (scopeEl) scopeEl.value = scope;
+            if (entityEl) entityEl.value = String(entityId);
+            if (previewEntityEl) previewEntityEl.value = String(entityId);
+            if (previewChannelEl && [...previewChannelEl.options].some(opt => opt.value === channel)) {
+                previewChannelEl.value = channel;
+            }
+
+            onPromptPolicyScopeChange();
+            loadPromptPolicy(user);
+            requestAnimationFrame(() => {
+                document.getElementById('agentPolicySection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+
+        function applyDeepLinkFocus() {
+            applyAgentPolicyDeepLink(currentUser);
+        }
+
+        async function loadPromptPolicy(user = currentUser) {
+            if (!user?.deviceId || !user?.deviceSecret) return;
+            try {
+                const request = getPromptPolicyRequest(getPromptPolicyScope(), user);
+                const data = await apiCall('GET', request.getPath);
+                const policy = data.promptPolicy || {};
+                applyPromptPolicyToForm(policy);
+                setPromptPolicyStatus(policy.updatedAt ? `Loaded ${request.label} policy updated ${policy.updatedAt}` : `No saved ${request.label.toLowerCase()} policy yet.`);
+            } catch (e) {
+                setPromptPolicyStatus('Failed to load prompt policy', true);
+            }
+        }
+
+        async function savePromptPolicy(user = currentUser) {
+            if (!user?.deviceId || !user?.deviceSecret) return;
+            const btn = document.getElementById('promptPolicySaveBtn');
+            if (btn) btn.disabled = true;
+            try {
+                const request = getPromptPolicyRequest(getPromptPolicyScope(), user);
+                const policy = buildPromptPolicyFromForm();
+                await apiCall('PUT', request.putPath, {
+                    deviceId: user.deviceId,
+                    deviceSecret: user.deviceSecret,
+                    promptPolicy: policy
+                });
+                setPromptPolicyStatus(`${request.label} policy saved.`);
+                showToast(`${request.label} prompt policy saved`);
+            } catch (e) {
+                setPromptPolicyStatus(e.message || 'Failed to save prompt policy', true);
+                showToast(e.message || 'Failed to save prompt policy', 'error');
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        async function previewPromptPolicy(user = currentUser) {
+            if (!user?.deviceId || !user?.deviceSecret) return;
+            const preview = document.getElementById('promptPolicyPreview');
+            const entityId = Math.max(0, parseInt(document.getElementById('promptPolicyPreviewEntity').value) || 0);
+            const channel = document.getElementById('promptPolicyPreviewChannel').value || 'codex';
+            if (preview) {
+                preview.style.display = 'block';
+                preview.textContent = 'Loading...';
+            }
+            try {
+                const path = `/api/channel/prompt-policy?deviceId=${encodeURIComponent(user.deviceId)}&deviceSecret=${encodeURIComponent(user.deviceSecret)}&entityId=${entityId}&channel=${encodeURIComponent(channel)}`;
+                const data = await apiCall('GET', path);
+                if (preview) preview.textContent = data.policy?.compiledPrompt || '(empty policy)';
+            } catch (e) {
+                if (preview) preview.textContent = e.message || 'Preview failed';
+            }
+        }
+
         // ── Kanban nudge settings ──
         function applyKanbanNudgePrefs(prefs) {
             const batchInput = document.getElementById('kanbanNudgeBatchSize');
@@ -2072,6 +2428,13 @@
             const minsEl = document.getElementById('kanbanNudgeIntervalMinutes');
             if (hoursEl) hoursEl.value = Math.floor(total / 60);
             if (minsEl) minsEl.value = total % 60;
+
+            const throttleEl = document.getElementById('kanbanNudgePerEntityThrottle');
+            if (throttleEl) throttleEl.checked = prefs.kanban_nudge_per_entity_throttle !== false;
+            const spawnNotifyEl = document.getElementById('kanbanCronSpawnNotify');
+            if (spawnNotifyEl) spawnNotifyEl.checked = prefs.kanban_cron_spawn_notify === true;
+            const recurringNotifyEl = document.getElementById('kanbanCronRecurringNotify');
+            if (recurringNotifyEl) recurringNotifyEl.checked = prefs.kanban_cron_recurring_notify !== false;
         }
 
         async function saveKanbanNudgePref(key, value) {

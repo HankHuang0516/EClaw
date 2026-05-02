@@ -220,6 +220,12 @@ const REFERRAL_CTA_COPY = {
         rewards: 'You get +100 e-coins / I get +500 / First top-up +500 bonus',
         cta: 'Claim your bonus',
         disclaimer: 'This link goes to the official EClaw invite page'
+    },
+    ja: {
+        header: '— この記事が気に入ったら、招待コードで EClaw を始めよう —',
+        rewards: '招待した人 +500 e-coin / 招待された人 +100 e-coin / 初回チャージで +500 ボーナス',
+        cta: '招待ページを開く',
+        disclaimer: 'このリンクは EClaw 公式の招待ページに移動します'
     }
 };
 
@@ -1539,7 +1545,7 @@ router.post('/qiita/publish', express.json(), async (req, res) => {
         const { token, source } = await resolveQiitaCreds(deviceId || null);
         if (!token) return res.status(400).json(QIITA_CREDS_MISSING);
 
-        const finalBody = appendReferralCTA(body, { format: 'md', skip: includeReferralCTA === false });
+        const finalBody = appendReferralCTA(body, { format: 'md', locale: 'ja', skip: includeReferralCTA === false });
         const item = {
             title,
             body: finalBody,

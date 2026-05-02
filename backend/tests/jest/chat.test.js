@@ -7,8 +7,13 @@
 
 require('./helpers/mock-setup');
 
+const fs = require('fs');
+const path = require('path');
 const request = require('supertest');
 let app;
+const ROOT = path.join(__dirname, '..', '..');
+const chatHtml = fs.readFileSync(path.join(ROOT, 'public', 'portal', 'chat.html'), 'utf8');
+const backendIndex = fs.readFileSync(path.join(ROOT, 'index.js'), 'utf8');
 
 const get = (path) => request(app).get(path).set('Host', 'localhost');
 const post = (path) => request(app).post(path).set('Host', 'localhost');
@@ -260,6 +265,23 @@ describe('client/speak structured attachments', () => {
         // No fileId → validator filters out → treat as plain text message, no error
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
+// Codex channel auto-approve wiring
+// ════════════════════════════════════════════════════════════════
+describe('Codex channel auto-approve wiring', () => {
+    it('chat UI includes /auto_approve handling and request auto-yes helper', () => {
+        expect(chatHtml).toContain("'/auto_approve'");
+        expect(chatHtml).toContain('maybeAutoApproveRequests');
+        expect(chatHtml).toContain('codex_auto_approve_targets');
+        expect(chatHtml.toLowerCase()).toContain('codex requests input');
+    });
+
+    it('backend platform command includes auto_approve', () => {
+        expect(backendIndex).toContain("new Set(['help', 'status', 'reset', 'auto_approve'])");
+        expect(backendIndex).toContain("case 'auto_approve'");
     });
 });
 

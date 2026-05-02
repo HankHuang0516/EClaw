@@ -727,6 +727,54 @@
             user-select: none;
         }
 
+        .target-label-main {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .entity-status-slot {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .entity-status-badge {
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap;
+            font-size: 10px;
+            font-weight: 600;
+            line-height: 1;
+            padding: 3px 6px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+        }
+
+        .entity-status-badge.working {
+            color: #065f46;
+            background: #d1fae5;
+            border-color: #a7f3d0;
+        }
+
+        .entity-status-badge.waiting-approval {
+            color: #92400e;
+            background: #fef3c7;
+            border-color: #fde68a;
+        }
+
+        .entity-status-badge.no-progress {
+            color: #991b1b;
+            background: #fee2e2;
+            border-color: #fecaca;
+        }
+
+        .entity-status-badge.self-check-failed {
+            color: #831843;
+            background: #fce7f3;
+            border-color: #fbcfe8;
+        }
+
         .target-check input[type="checkbox"] {
             accent-color: var(--primary);
             width: 14px;
@@ -742,13 +790,6 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
-        }
-
-        .limit-warning {
-            color: var(--warning);
-            font-size: 12px;
-            text-align: center;
-            display: none;
         }
 
         .input-row {
@@ -2654,9 +2695,6 @@
 
             <!-- Input Bar -->
             <div class="chat-input-bar">
-                <div class="limit-warning" id="limitWarning" data-i18n="chat_limit_reached">
-                    Daily message limit reached. Upgrade to Premium for unlimited messages!
-                </div>
                 <div class="recording-indicator" id="recordingIndicator">
                     <span class="recording-dot"></span>
                     <span id="recordingTime">0:00</span>
@@ -2737,19 +2775,6 @@
         <img id="lightboxImg" src="" alt="Enlarged chat image" onclick="event.stopPropagation();toggleLightboxZoom()">
         <button class="lightbox-arrow next" onclick="event.stopPropagation();lightboxNav(1)">&#8250;</button>
         <div class="lightbox-counter" id="lightboxCounter"></div>
-    </div>
-
-    <!-- Usage Limit Modal -->
-    <div class="modal-overlay" id="usageLimitModal">
-        <div class="modal-box">
-            <div class="modal-icon">⚠️</div>
-            <div class="modal-title" data-i18n="chat_limit_title">Daily Limit Reached</div>
-            <div class="modal-message" data-i18n="chat_limit_body">You have reached the daily limit of 15 messages. Upgrade to Premium for unlimited messaging!</div>
-            <div class="modal-actions">
-                <button class="btn" onclick="closeUsageLimitModal()" data-i18n="chat_limit_close">Close</button>
-                <button class="btn btn-primary" onclick="window.location.href='settings.html'" data-i18n="chat_limit_upgrade">Upgrade</button>
-            </div>
-        </div>
     </div>
 
     <!-- Webhook Troubleshooting Modal -->
@@ -2893,6 +2918,7 @@
     <script src="../shared/chat-message-render.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
+    <script src="../shared/kanban-status.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>
     <script src="shared/footer.js"></script>
@@ -2910,8 +2936,13 @@
         let contacts = [];           // from /api/contacts
         let contactsLoaded = false;
         let _renderVersion = 0;
+        let _xdeviceResolutionSeq = 0;
         let myPublicCodeMap = {};   // publicCode -> { entityId, label }
         let xdeviceLabelCache = {}; // publicCode -> label (remote entities)
+        const xdeviceLookupInFlight = new Set();
+        const xdeviceLookupMissCache = new Set();
+        const ENTITY_NO_PROGRESS_MS = 10 * 60 * 1000;
+        const entityRuntimeStatus = new Map();
 
         // ── Chat Integrity Validator ──
         const ChatIntegrityValidator = (() => {
@@ -3194,9 +3225,26 @@
                 const pq = localStorage.getItem('eclaw_pending_quote');
                 if (pq) {
                     localStorage.removeItem('eclaw_pending_quote');
-                    const { source, title, excerpt, ts } = JSON.parse(pq);
+                    const { source, title, excerpt, prefillInput, ts } = JSON.parse(pq);
                     if (Date.now() - ts < 120000) { // within 2 minutes
                         quoteToChat(source, title, excerpt || '');
+                        // prefillInput: drop a chip token (or any text) directly
+                        // into the input so users can press send without typing.
+                        // Used by mindmap chip 📌 引用 — delivers mindmap_<uuid>
+                        // / card_<id> token, which autolink-chip then renders
+                        // as a chip preview in the sent message.
+                        if (prefillInput) {
+                            const inp = document.getElementById('messageInput');
+                            if (inp) {
+                                inp.value = prefillInput;
+                                inp.focus();
+                                try { inp.setSelectionRange(prefillInput.length, prefillInput.length); } catch(e2) {}
+                            }
+                            // The chat_draft restore below would otherwise
+                            // overwrite the prefill with a stale draft; the
+                            // deep-link explicitly asked for prefill, so it wins.
+                            localStorage.removeItem('chat_draft');
+                        }
                     }
                 }
             } catch(e) {}
@@ -3232,8 +3280,16 @@
             window.addEventListener('message', (e) => {
                 if (e.origin !== window.location.origin) return;
                 if (!e.data || e.data.type !== 'eclaw_quote') return;
-                const { source, title, excerpt } = e.data;
+                const { source, title, excerpt, prefillInput } = e.data;
                 quoteToChat(source, title, excerpt || '');
+                if (prefillInput) {
+                    const inp = document.getElementById('messageInput');
+                    if (inp) {
+                        inp.value = String(prefillInput);
+                        inp.focus();
+                        try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch(e2) {}
+                    }
+                }
             });
 
             // Mount @mention autocomplete on the message input.
@@ -3312,6 +3368,12 @@
                 if (!data) return;
                 const entityId = data.entityId ?? data.entity_id;
                 const state = (data.state || '').toUpperCase();
+                recordEntityRuntimeStatus({
+                    entityId,
+                    state,
+                    message: data.message || '',
+                    lastUpdated: data.lastUpdated || data.updatedAt || Date.now()
+                });
                 if (state === 'BUSY') {
                     showTypingIndicator(entityId);
                 } else {
@@ -3324,65 +3386,16 @@
                 if (!portalSocket || !portalSocket.connected) {
                     await loadMessages();
                 }
-                await refreshUsage();
             }, 5000);
         });
 
         // ── Usage Badge ──
+        // Daily message limit was removed — badge always shows "Unlimited".
         function updateUsageBadge() {
             const badge = document.getElementById('usageBadge');
-            if (!currentUser) return;
-
-            const isPremium = currentUser.subscriptionStatus === 'premium';
-            const limit = currentUser.usageLimit;
-            const used = currentUser.usageToday || 0;
-
-            if (limit === null || limit === undefined || isPremium) {
-                badge.textContent = i18n.t('chat_usage_unlimited') || 'Unlimited';
-                badge.className = 'usage-badge unlimited';
-            } else {
-                badge.textContent = i18n.t('chat_usage_count', { used }) || `${used}`;
-                if (used >= limit) {
-                    badge.className = 'usage-badge danger';
-                } else if (used >= limit * 0.8) {
-                    badge.className = 'usage-badge warning';
-                } else {
-                    badge.className = 'usage-badge';
-                }
-            }
-
-            checkLimit();
-        }
-
-        function checkLimit() {
-            if (!currentUser) return;
-            const isPremium = currentUser.subscriptionStatus === 'premium';
-            const limit = currentUser.usageLimit;
-            const used = currentUser.usageToday || 0;
-
-            if (!isPremium && limit !== null && limit !== undefined && used >= limit) {
-                document.getElementById('limitWarning').style.display = 'block';
-                document.getElementById('messageInput').disabled = true;
-                document.getElementById('btnSend').disabled = true;
-            } else {
-                document.getElementById('limitWarning').style.display = 'none';
-                document.getElementById('messageInput').disabled = false;
-                document.getElementById('btnSend').disabled = false;
-            }
-        }
-
-        async function refreshUsage() {
-            try {
-                const data = await apiCall('GET', '/api/auth/me');
-                if (data.user) {
-                    currentUser.usageToday = data.user.usageToday;
-                    currentUser.usageLimit = data.user.usageLimit;
-                    currentUser.subscriptionStatus = data.user.subscriptionStatus;
-                    updateUsageBadge();
-                }
-            } catch (e) {
-                // Silent - non-critical
-            }
+            if (!badge) return;
+            badge.textContent = i18n.t('chat_usage_unlimited') || 'Unlimited';
+            badge.className = 'usage-badge unlimited';
         }
 
         // ── Entities ──
@@ -3403,6 +3416,15 @@
                 if (boundEntities.length === 0) boundEntities = allEntities;
                 boundEntityIds = new Set(boundEntities.map(e => e.entityId));
                 updateEntityMaps(boundEntities);
+                boundEntities.forEach(e => {
+                    recordEntityRuntimeStatus({
+                        entityId: e.entityId,
+                        state: e.state,
+                        message: e.message || '',
+                        lastUpdated: e.lastUpdated || e.updatedAt || Date.now(),
+                        render: false
+                    });
+                });
                 // Build publicCode -> label map for own device
                 myPublicCodeMap = {};
                 boundEntities.forEach(e => {
@@ -3472,9 +3494,10 @@
                 const isChecked = savedTargets ? savedTargets.has(e.entityId) : true;
                 const label = document.createElement('label');
                 label.className = 'target-check target-entity-check';
+                label.dataset.entityId = e.entityId;
                 const e2eeBadge = e.encryptionStatus === 'e2ee' ? ' 🔒' : '';
                 label.innerHTML = `<input type="checkbox" data-entity="${e.entityId}" ${isChecked ? 'checked' : ''} onchange="updateTargetAll()">
-                    <span>${renderAvatarHtml(avatar, 20)} ${escapeHtml(name)} (#${e.entityId})${e2eeBadge}</span>`;
+                    <span class="target-label-main">${renderAvatarHtml(avatar, 20)} ${escapeHtml(name)} (#${e.entityId})${e2eeBadge}<span class="entity-status-slot">${renderEntityStatusBadge(e.entityId)}</span></span>`;
                 allItems.push({ el: label, type: 'entity' });
             });
 
@@ -3560,6 +3583,59 @@
             });
         }
 
+        function normalizeEntityStatusTimestamp(value) {
+            if (!value) return Date.now();
+            if (typeof value === 'number') return value;
+            const parsed = Date.parse(value);
+            return Number.isNaN(parsed) ? Date.now() : parsed;
+        }
+
+        function recordEntityRuntimeStatus({ entityId, state, message = '', lastUpdated, render = true }) {
+            const id = Number(entityId);
+            if (!Number.isFinite(id)) return;
+            const normalizedState = (state || '').toUpperCase();
+            if (!normalizedState && !message) return;
+            entityRuntimeStatus.set(id, {
+                state: normalizedState,
+                message: String(message || ''),
+                updatedAt: normalizeEntityStatusTimestamp(lastUpdated)
+            });
+            if (render) refreshEntityStatusBadges();
+        }
+
+        function classifyEntityRuntimeStatus(entityId, now = Date.now()) {
+            const status = entityRuntimeStatus.get(Number(entityId));
+            if (!status) return null;
+            const message = (status.message || '').toLowerCase();
+            if (/self[-\s]?check.*fail|last self[-\s]?check.*failed|last self[-\s]?check.*false|selfcheck.*false/.test(message)) {
+                return { key: 'self-check-failed', label: 'Self-check failed' };
+            }
+            if (/pending approval|waiting approval|awaiting approval|approval required|needs approval/.test(message)) {
+                return { key: 'waiting-approval', label: 'Waiting approval' };
+            }
+            if (status.state !== 'BUSY') return null;
+            if (now - status.updatedAt > ENTITY_NO_PROGRESS_MS) {
+                return { key: 'no-progress', label: 'No progress 10m' };
+            }
+            return { key: 'working', label: 'Working' };
+        }
+
+        function renderEntityStatusBadge(entityId) {
+            const view = classifyEntityRuntimeStatus(entityId);
+            if (!view) return '';
+            return `<span class="entity-status-badge ${view.key}" title="${escapeHtml(view.label)}">${escapeHtml(view.label)}</span>`;
+        }
+
+        function refreshEntityStatusBadges() {
+            document.querySelectorAll('.target-entity-check[data-entity-id]').forEach(label => {
+                const slot = label.querySelector('.entity-status-slot');
+                if (!slot) return;
+                slot.innerHTML = renderEntityStatusBadge(label.dataset.entityId);
+            });
+        }
+
+        setInterval(refreshEntityStatusBadges, 60 * 1000);
+
         function toggleTargetAll(checkbox) {
             const checked = checkbox.checked;
             document.querySelectorAll('.target-entity-check input[type="checkbox"]').forEach(cb => {
@@ -3584,10 +3660,6 @@
             document.querySelectorAll('.target-contact-check input[type="checkbox"]').forEach(cb => {
                 if (cb.checked) contactCodes.push(cb.dataset.contactCode);
             });
-            // Only fall back to all entities when no contacts are selected either
-            if (local.length === 0 && contactCodes.length === 0 && boundEntities.length > 0) {
-                boundEntities.forEach(e => local.push(e.entityId));
-            }
             return { local, contacts: contactCodes };
         }
 
@@ -3765,10 +3837,12 @@
                     const prevCount = allMessages.length;
                     allMessages = data.messages;
                     _sourceParseCache.clear();
-                    await resolveXDeviceCodes(allMessages);
                     renderFilterChips();
                     renderMessages(prevCount < allMessages.length);
+                    refreshXDeviceLabelsInBackground(allMessages);
                     ChatIntegrityValidator.validateDataLayer(data.messages);
+                    await syncCodexAutoApproveTargetsFromServer();
+                    await maybeAutoApproveRequests(allMessages);
                 }
             } catch (e) {
                 console.error('[CHAT_DEBUG] loadMessages FAILED:', e.message || e);
@@ -4081,19 +4155,41 @@
                     if (!myPublicCodeMap[t] && !xdeviceLabelCache[t]) unknownCodes.add(t);
                 }
             }
-            const lookups = Array.from(unknownCodes)
+
+            const codesToLookup = Array.from(unknownCodes)
                 .filter(code => !code.includes('-')) // Skip UUID-style device IDs (owner mode); they aren't public codes
-                .map(async code => {
+                .filter(code => !xdeviceLookupInFlight.has(code) && !xdeviceLookupMissCache.has(code));
+
+            let resolvedAny = false;
+            const lookups = codesToLookup.map(async code => {
+                xdeviceLookupInFlight.add(code);
                 try {
                     const data = await apiCall('GET', `/api/entity/lookup?code=${encodeURIComponent(code)}`);
                     if (data.success && data.entity) {
                         const e = data.entity;
                         const avatar = e.avatar || (e.character === 'PIG' ? '\u{1F437}' : '\u{1F99E}');
                         xdeviceLabelCache[code] = `${renderAvatarHtml(avatar, 20)} ${escapeHtml(e.name || e.character)}`;
+                        resolvedAny = true;
+                    } else {
+                        xdeviceLookupMissCache.add(code);
                     }
-                } catch (_) { /* silent — will show raw code as fallback */ }
+                } catch (_) {
+                    xdeviceLookupMissCache.add(code);
+                } finally {
+                    xdeviceLookupInFlight.delete(code);
+                }
             });
             await Promise.all(lookups);
+            return resolvedAny;
+        }
+
+        function refreshXDeviceLabelsInBackground(messages) {
+            const seq = ++_xdeviceResolutionSeq;
+            resolveXDeviceCodes(messages).then(resolvedAny => {
+                if (!resolvedAny || seq !== _xdeviceResolutionSeq) return;
+                renderFilterChips();
+                renderMessages(false);
+            }).catch(() => {});
         }
 
         // ── Render Messages ──
@@ -4831,6 +4927,103 @@
 
         // ── Slash Command Confirmation State ──
         let pendingConfirmCommand = null;
+        let codexAutoApproveSyncAt = 0;
+        const CODEX_AUTO_APPROVE_PREF_KEY = 'eclaw_codex_auto_approve_targets';
+        const CODEX_AUTO_APPROVE_REPLIED_KEY = 'eclaw_codex_auto_approve_replied_messages';
+        const CODEX_AUTO_APPROVE_REFRESH_MS = 60 * 1000;
+
+        function readJsonStorage(key, fallback) {
+            try {
+                const raw = localStorage.getItem(key);
+                if (!raw) return fallback;
+                const parsed = JSON.parse(raw);
+                return parsed && typeof parsed === 'object' ? parsed : fallback;
+            } catch (_) {
+                return fallback;
+            }
+        }
+
+        function writeJsonStorage(key, value) {
+            try { localStorage.setItem(key, JSON.stringify(value || {})); } catch (_) {}
+        }
+
+        function getCodexAutoApproveTargets() {
+            return readJsonStorage(CODEX_AUTO_APPROVE_PREF_KEY, {});
+        }
+
+        function setCodexAutoApproveTargets(targets) {
+            writeJsonStorage(CODEX_AUTO_APPROVE_PREF_KEY, targets);
+        }
+
+        function getCodexAutoApproveReplied() {
+            return readJsonStorage(CODEX_AUTO_APPROVE_REPLIED_KEY, {});
+        }
+
+        function markCodexAutoApproveReplied(messageId) {
+            const replied = getCodexAutoApproveReplied();
+            replied[String(messageId)] = true;
+            writeJsonStorage(CODEX_AUTO_APPROVE_REPLIED_KEY, replied);
+        }
+
+        function isAutoApproveEnabledForEntity(entityId) {
+            const targets = getCodexAutoApproveTargets();
+            return !!targets[String(entityId)];
+        }
+
+        async function syncCodexAutoApproveTargetsFromServer(force = false) {
+            const now = Date.now();
+            if (!force && codexAutoApproveSyncAt && now - codexAutoApproveSyncAt < CODEX_AUTO_APPROVE_REFRESH_MS) {
+                return getCodexAutoApproveTargets();
+            }
+            if (!currentUser?.deviceId || !currentUser?.deviceSecret) {
+                return getCodexAutoApproveTargets();
+            }
+            try {
+                const data = await apiCall('GET', `/api/device-preferences?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+                const targets = data?.prefs?.codex_auto_approve_targets || {};
+                setCodexAutoApproveTargets(targets);
+                codexAutoApproveSyncAt = now;
+                return targets;
+            } catch (_) {
+                return getCodexAutoApproveTargets();
+            }
+        }
+
+        async function maybeAutoApproveRequests(messages) {
+            if (!Array.isArray(messages) || !messages.length) return;
+            const replied = getCodexAutoApproveReplied();
+            const latestByEntity = new Map();
+
+            for (const msg of messages) {
+                if (!msg || !msg.is_from_bot) continue;
+                const entityId = Number(msg.entity_id);
+                if (!Number.isFinite(entityId) || !isAutoApproveEnabledForEntity(entityId)) continue;
+                const text = String(msg.text || '');
+                if (!/codex requests input/i.test(text)) continue;
+                if (replied[msg.id]) continue;
+
+                const ts = Date.parse(msg.created_at || msg.createdAt || 0) || 0;
+                const prev = latestByEntity.get(entityId);
+                if (!prev || ts > prev.ts) {
+                    latestByEntity.set(entityId, { msg, ts });
+                }
+            }
+
+            for (const { msg } of latestByEntity.values()) {
+                try {
+                    await apiCall('POST', '/api/client/speak', {
+                        deviceId: currentUser.deviceId,
+                        deviceSecret: currentUser.deviceSecret,
+                        entityId: msg.entity_id,
+                        text: 'yes',
+                        source: 'web_chat'
+                    });
+                    markCodexAutoApproveReplied(msg.id);
+                } catch (err) {
+                    console.warn('[CHAT] auto-approve failed:', err.message || err);
+                }
+            }
+        }
 
         // ── Quote Reply State ──
         let replyContext = null;
@@ -4970,15 +5163,6 @@
                 return;
             }
 
-            // Client-side limit check
-            const isPremium = currentUser.subscriptionStatus === 'premium';
-            const limit = currentUser.usageLimit;
-            const used = currentUser.usageToday || 0;
-            if (!isPremium && limit !== null && limit !== undefined && used >= limit) {
-                showToast(i18n.t('chat_limit_reached'), 'error');
-                return;
-            }
-
             const btn = document.getElementById('btnSend');
             btn.disabled = true;
             const savedContent = input.value;
@@ -5028,6 +5212,10 @@
                         if (speakResp && speakResp.needsConfirmation && speakResp.confirmCommand) {
                             pendingConfirmCommand = speakResp.confirmCommand;
                         }
+                        if (speakResp && speakResp.command === 'auto_approve') {
+                            await syncCodexAutoApproveTargetsFromServer(true);
+                            await maybeAutoApproveRequests(allMessages);
+                        }
                         if (hasNoWebhookWarning(speakResp)) {
                             showWebhookTroubleModal();
                         }
@@ -5064,13 +5252,6 @@
                 // Clear pending files (media and/or cloud-drive refs)
                 if (hasFiles || hasR2Refs) clearAllPendingFiles();
 
-                // Bump local usage
-                if (currentUser.usageToday !== undefined) {
-                    const msgCount = hasFiles ? readyFiles.length : 1;
-                    currentUser.usageToday += msgCount * (targets.local.length + targets.contacts.length);
-                    updateUsageBadge();
-                }
-
                 // Notify Android widget
                 if (isAndroidWebView && text) {
                     try { AndroidBridge.updateWidget(text); } catch(e) { /* ignore */ }
@@ -5082,9 +5263,7 @@
                 container.scrollTop = container.scrollHeight;
 
             } catch (e) {
-                if (e.status === 429) {
-                    showUsageLimitModal();
-                } else if (e.status === 403 && e.data && (e.data.error === 'GATEKEEPER_BLOCKED_MESSAGE' || e.data.error === 'GATEKEEPER_BLOCKED')) {
+                if (e.status === 403 && e.data && (e.data.error === 'GATEKEEPER_BLOCKED_MESSAGE' || e.data.error === 'GATEKEEPER_BLOCKED')) {
                     const reason = e.data.message || i18n.t('chat_gatekeeper_blocked');
                     if (e.data.error === 'GATEKEEPER_BLOCKED') {
                         showToast(e.data.message, 'error');
@@ -6179,11 +6358,6 @@
                     });
                 }
 
-                if (currentUser.usageToday !== undefined) {
-                    currentUser.usageToday += targets.local.length + targets.contacts.length;
-                    updateUsageBadge();
-                }
-
                 await loadMessages();
                 const container = document.getElementById('chatMessages');
                 container.scrollTop = container.scrollHeight;
@@ -6306,8 +6480,6 @@
         // ── Modal helpers ──
         function openModal(id) { document.getElementById(id).classList.add('active'); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-        function showUsageLimitModal() { openModal('usageLimitModal'); }
-        function closeUsageLimitModal() { closeModal('usageLimitModal'); }
         function showWebhookTroubleModal() { openModal('webhookTroubleModal'); }
         function closeWebhookTroubleModal() { closeModal('webhookTroubleModal'); }
 
@@ -6554,8 +6726,11 @@
                 let html = `<div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--card-border);">`;
                 html += `<strong>Kanban Tasks (${assigned.length})</strong>`;
 
-                const statusOrder = ['blocked', 'in_progress', 'doing', 'review', 'todo', 'backlog'];
-                const statusLabels = { backlog: '📦 Backlog', blocked: '🚫 Blocked', todo: '📋 Todo', in_progress: '🔄 In Progress', doing: '🔄 Doing', review: '👀 Review' };
+                const KS = window.KanbanStatus;
+                const statusOrder = ['blocked', 'in_progress', 'review', 'todo', 'backlog'];
+                const statusLabels = Object.fromEntries(
+                    statusOrder.map(s => [s, `${KS.STATUS_EMOJI[s]} ${KS.STATUS_LABELS_EN[s]}`])
+                );
 
                 for (const status of statusOrder) {
                     if (!groups[status]) continue;

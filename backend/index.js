@@ -661,6 +661,9 @@ const SCRIPT_VERSION = (
     String(Date.now())
 ).slice(0, 12);
 
+const isProductionRuntime = () =>
+    process.env.NODE_ENV === 'production' || Boolean(process.env.RAILWAY_ENVIRONMENT);
+
 const _PORTAL_HTML_DIR = path.join(__dirname, 'public/portal');
 const _SHARED_SRC_RE = /<script(\s[^>]*?)?\ssrc=(["'])((?:\.\.\/)?shared\/[^"']+?\.js)(\?[^"']*)?\2([^>]*)><\/script>/g;
 
@@ -756,6 +759,7 @@ if (process.env.NODE_ENV !== 'test') {
 // Per-route limiters already exist in bot-tools.js, growth.js, channel-api.js;
 // the limits below are additive and not intended to override them.
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = rateLimit;
 const rateLimitDisabled = () =>
     process.env.NODE_ENV === 'test' && process.env.ENABLE_RATE_LIMIT_IN_TEST !== '1';
 
@@ -795,7 +799,7 @@ const messageLimiter = rateLimit({
     // before it reaches route validation).
     keyGenerator: (req) => {
         const deviceId = (req.body && req.body.deviceId) || null;
-        return deviceId ? `dev:${deviceId}` : `ip:${req.ip}`;
+        return deviceId ? `dev:${deviceId}` : `ip:${ipKeyGenerator(req.ip)}`;
     },
     skip: () => rateLimitDisabled(),
     message: { success: false, error: 'Too many messages — slow down' },
@@ -822,7 +826,7 @@ const DEFAULT_INITIAL_SLOTS = 1; // new devices start with 1 slot (entity #0)
 // ============================================
 // PLATFORM SLASH COMMANDS
 // ============================================
-const PLATFORM_COMMANDS = new Set(['help', 'status', 'reset']);
+const PLATFORM_COMMANDS = new Set(['help', 'status', 'reset', 'auto_approve']);
 
 function parsePlatformCommand(text) {
     if (!text || !text.startsWith('/')) return null;
@@ -887,6 +891,7 @@ async function handlePlatformCommand(command, deviceId, device, targetIds, confi
                         [deviceId, eId]
                     );
                     entity.messageQueue = [];
+                    entity.deadLetterQueue = [];
                     const name = entity.name || `Entity ${eId}`;
                     results.push(`#${eId} ${name}: history cleared`);
                 } catch (err) {
@@ -895,6 +900,36 @@ async function handlePlatformCommand(command, deviceId, device, targetIds, confi
             }
             return {
                 text: 'Conversation Reset:\n' + results.join('\n'),
+                needsConfirmation: false
+            };
+        }
+
+        case 'auto_approve': {
+            const prefs = await devicePrefs.getPrefs(deviceId);
+            const currentTargets = {
+                ...(prefs.codex_auto_approve_targets || {})
+            };
+            const toggled = [];
+
+            for (const eId of targetIds) {
+                const key = String(eId);
+                const next = !currentTargets[key];
+                currentTargets[key] = next;
+                toggled.push({ entityId: eId, enabled: next });
+            }
+
+            await devicePrefs.updatePrefs(deviceId, {
+                codex_auto_approve_targets: currentTargets
+            });
+
+            const enabledCount = toggled.filter(t => t.enabled).length;
+            const disabledCount = toggled.length - enabledCount;
+            const statusText = toggled.length === 1
+                ? `Auto-approve ${toggled[0].enabled ? 'enabled' : 'disabled'} for #${toggled[0].entityId}.`
+                : `Auto-approve updated for ${toggled.length} entities (${enabledCount} enabled, ${disabledCount} disabled).`;
+
+            return {
+                text: `${statusText} Future "requests input" prompts will auto-answer yes for the enabled entities.`,
                 needsConfirmation: false
             };
         }
@@ -929,7 +964,7 @@ function ensureOneEmptySlot(device) {
 
 // Latest app version - update this with each release
 // Bot will warn users if their app version is older than this
-const LATEST_APP_VERSION = "1.0.77";
+const LATEST_APP_VERSION = "1.0.79";
 const FORCE_UPDATE_BELOW = null; // Set to version string (e.g. "1.0.30") to force-update anything below
 const APP_RELEASE_NOTES = process.env.APP_RELEASE_NOTES || null;
 
@@ -1122,12 +1157,18 @@ async function initPersistence() {
     if (usePostgreSQL) {
         console.log('[Persistence] Using PostgreSQL (primary)');
     } else {
+        if (isProductionRuntime() && process.env.DATABASE_URL) {
+            throw new Error('PostgreSQL persistence unavailable in production; refusing file-storage fallback');
+        }
         console.log('[Persistence] Using file storage (fallback)');
         console.log('[Persistence] To enable PostgreSQL: Add PostgreSQL service in Railway');
     }
 
     // Load existing data
     await loadData();
+
+    // Phase H1.1b: clamp legacy queues that exceeded the cap before this code shipped.
+    clampQueuesOnLoad();
 
     // Load official bot pool
     if (usePostgreSQL) {
@@ -1354,8 +1395,8 @@ app.get('/api/help', (req, res) => {
         analytics:  ['analytics','growth','metrics','signup','retention','kpi','viral','k-value','成長','指標','留存','分析','회귀','분석','지표','メトリクス','分析','指標']
     };
 
-    const matched = Object.entries(INTENT_MAP).find(([, kws]) =>
-        kws.some(kw => q.includes(kw))
+    const matched = Object.entries(INTENT_MAP).find(([category, kws]) =>
+        q === category || q.includes(category) || kws.some(kw => q.includes(kw))
     )?.[0] ?? 'general';
 
     const d = `'{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${eId}`; // shared body prefix
@@ -1541,10 +1582,11 @@ table{border-collapse:collapse;width:100%}th,td{border:1px solid #444;padding:8p
 a{color:#00d4ff}blockquote{border-left:4px solid #f39c12;margin:16px 0;padding:8px 16px;background:#16213e}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"><\/script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js"><\/script>
 </head><body>
 <div id="content"></div>
 <script>
-document.getElementById('content').innerHTML = marked.parse(${JSON.stringify(mdContent)});
+document.getElementById('content').innerHTML = DOMPurify.sanitize(marked.parse(${JSON.stringify(mdContent)}));
 <\/script>
 </body></html>`);
     } catch (err) {
@@ -2007,6 +2049,278 @@ app.use(authModule.softAuthMiddleware); // Populate req.user from cookie on ALL 
 app.use('/api/auth', authModule.router);
 authModule.initAuthDatabase();
 
+// Temporary diagnostic endpoint for the 2026-05-01 dashboard-empty incident.
+// Keep auth strict and redact all secrets: this endpoint reports presence/counts
+// and secret-match booleans only.
+app.get('/api/debug/dashboard-empty', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query || {};
+    const timestamp = new Date().toISOString();
+    try {
+        if (!deviceId || !deviceSecret) {
+            return res.status(401).json({ success: false, bug: 'dashboard-empty', error: 'deviceId and deviceSecret required', timestamp });
+        }
+
+        const memDevice = devices[deviceId];
+        const pool = db._getPool ? db._getPool() : authModule.pool;
+        const dbDevice = pool
+            ? await pool.query('SELECT device_id, device_secret, created_at, next_entity_id, updated_at FROM devices WHERE device_id = $1', [deviceId])
+            : { rows: [] };
+        const dbDeviceRow = dbDevice.rows[0] || null;
+        const memSecretOk = !!(memDevice && memDevice.deviceSecret && safeEqual(memDevice.deviceSecret, deviceSecret));
+        const dbSecretOk = !!(dbDeviceRow && dbDeviceRow.device_secret && safeEqual(dbDeviceRow.device_secret, deviceSecret));
+        if (!memSecretOk && !dbSecretOk) {
+            return res.status(403).json({ success: false, bug: 'dashboard-empty', error: 'Invalid credentials', timestamp });
+        }
+
+        const [
+            dbEntities,
+            userRows,
+            channelRows,
+            trashRows,
+            logRows,
+            chatRows,
+        ] = pool ? await Promise.all([
+            pool.query(
+                `SELECT entity_id, is_bound, name, character, state, public_code, binding_type, channel_account_id, last_updated, updated_at
+                 FROM entities WHERE device_id = $1 ORDER BY entity_id ASC`,
+                [deviceId]
+            ),
+            pool.query(
+                `SELECT id, email, device_id, email_verified, is_admin, created_at
+                 FROM user_accounts WHERE device_id = $1 ORDER BY created_at DESC LIMIT 5`,
+                [deviceId]
+            ),
+            pool.query(
+                `SELECT id, status, callback_url, created_at, updated_at
+                 FROM channel_accounts WHERE device_id = $1 ORDER BY id ASC`,
+                [deviceId]
+            ),
+            pool.query(
+                `SELECT entity_id, name, character, public_code, deleted_at
+                 FROM entity_trash WHERE device_id = $1 ORDER BY deleted_at DESC LIMIT 12`,
+                [deviceId]
+            ).catch(err => ({ rows: [{ error: err.message }] })),
+            pool.query(
+                `SELECT level, category, message, entity_id, created_at, metadata
+                 FROM server_logs WHERE device_id = $1
+                 ORDER BY created_at DESC LIMIT 20`,
+                [deviceId]
+            ).catch(err => ({ rows: [{ error: err.message }] })),
+            pool.query(
+                `SELECT source, entity_id, COUNT(*)::int AS count, MAX(created_at) AS latest
+                 FROM chat_messages WHERE device_id = $1
+                 GROUP BY source, entity_id ORDER BY latest DESC NULLS LAST LIMIT 20`,
+                [deviceId]
+            ).catch(err => ({ rows: [{ error: err.message }] })),
+        ]) : [{ rows: [] }, { rows: [] }, { rows: [] }, { rows: [] }, { rows: [] }, { rows: [] }];
+
+        const memEntities = memDevice?.entities || {};
+        const memEntityRows = Object.keys(memEntities).map(Number).sort((a, b) => a - b).map(id => {
+            const e = memEntities[id] || {};
+            return {
+                entityId: id,
+                isBound: !!e.isBound,
+                name: e.name || null,
+                character: e.character || null,
+                state: e.state || null,
+                publicCode: e.publicCode || null,
+                bindingType: e.bindingType || null,
+                channelAccountId: e.channelAccountId || null,
+            };
+        });
+
+        res.json({
+            success: true,
+            bug: 'dashboard-empty',
+            timestamp,
+            diagnostics: {
+                server: {
+                    build: SERVER_BUILD_TAG,
+                    startedAt: SERVER_STARTED_AT.toISOString(),
+                    uptimeSec: Math.round(process.uptime()),
+                    persistenceReady,
+                    usePostgreSQL,
+                    inMemoryDeviceCount: Object.keys(devices).length,
+                },
+                auth: {
+                    memSecretOk,
+                    dbSecretOk,
+                    requestUserDeviceId: req.user?.deviceId || null,
+                    requestUserId: req.user?.userId || null,
+                },
+                memoryDevice: memDevice ? {
+                    exists: true,
+                    nextEntityId: memDevice.nextEntityId || null,
+                    totalSlots: Object.keys(memEntities).length,
+                    boundCount: memEntityRows.filter(e => e.isBound).length,
+                    entities: memEntityRows,
+                } : { exists: false },
+                dbDevice: dbDeviceRow ? {
+                    exists: true,
+                    createdAt: dbDeviceRow.created_at,
+                    updatedAt: dbDeviceRow.updated_at,
+                    nextEntityId: dbDeviceRow.next_entity_id,
+                } : { exists: false },
+                dbEntities: {
+                    count: dbEntities.rows.length,
+                    boundCount: dbEntities.rows.filter(r => r.is_bound).length,
+                    rows: dbEntities.rows.map(r => ({
+                        entityId: Number(r.entity_id),
+                        isBound: !!r.is_bound,
+                        name: r.name || null,
+                        character: r.character || null,
+                        state: r.state || null,
+                        publicCode: r.public_code || null,
+                        bindingType: r.binding_type || null,
+                        channelAccountId: r.channel_account_id || null,
+                        lastUpdated: r.last_updated || null,
+                        updatedAt: r.updated_at || null,
+                    })),
+                },
+                userAccounts: userRows.rows,
+                channelAccounts: channelRows.rows.map(r => ({
+                    id: r.id,
+                    status: r.status,
+                    hasCallback: !!r.callback_url,
+                    callbackHost: r.callback_url ? (() => { try { return new URL(r.callback_url).host; } catch (_) { return 'invalid-url'; } })() : null,
+                    createdAt: r.created_at,
+                    updatedAt: r.updated_at,
+                })),
+                entityTrashRecent: trashRows.rows,
+                chatMessageSummary: chatRows.rows,
+                recentServerLogs: logRows.rows,
+            },
+        });
+    } catch (err) {
+        console.error('[Debug dashboard-empty] failed:', err);
+        res.status(500).json({ success: false, bug: 'dashboard-empty', error: err.message, timestamp });
+    }
+});
+
+// Temporary diagnostic endpoint for the 2026-05-01 chat first-render delay.
+// Keep it content-safe: report counts, source shapes, and lookup pressure only;
+// never return chat text, secrets, tokens, or raw message payloads.
+app.get('/api/debug/chat-render-load-order', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query || {};
+    const timestamp = new Date().toISOString();
+    try {
+        if (!deviceId || !deviceSecret) {
+            return res.status(401).json({ success: false, bug: 'chat-render-load-order', error: 'deviceId and deviceSecret required', timestamp });
+        }
+
+        const memDevice = devices[deviceId];
+        const pool = db._getPool ? db._getPool() : authModule.pool;
+        const dbDevice = pool
+            ? await pool.query('SELECT device_secret FROM devices WHERE device_id = $1', [deviceId])
+            : { rows: [] };
+        const dbDeviceRow = dbDevice.rows[0] || null;
+        const memSecretOk = !!(memDevice && memDevice.deviceSecret && safeEqual(memDevice.deviceSecret, deviceSecret));
+        const dbSecretOk = !!(dbDeviceRow && dbDeviceRow.device_secret && safeEqual(dbDeviceRow.device_secret, deviceSecret));
+        if (!memSecretOk && !dbSecretOk) {
+            return res.status(403).json({ success: false, bug: 'chat-render-load-order', error: 'Invalid credentials', timestamp });
+        }
+
+        const [historyRows, entityRows] = pool ? await Promise.all([
+            pool.query(
+                `SELECT id, source, entity_id, is_from_user, is_from_bot, created_at
+                 FROM chat_messages
+                 WHERE device_id = $1
+                 ORDER BY created_at DESC
+                 LIMIT 500`,
+                [deviceId]
+            ),
+            pool.query(
+                `SELECT entity_id, is_bound, public_code
+                 FROM entities
+                 WHERE device_id = $1
+                 ORDER BY entity_id ASC`,
+                [deviceId]
+            ),
+        ]) : [{ rows: [] }, { rows: [] }];
+
+        const xdeviceCodes = new Set();
+        let xdeviceMessageCount = 0;
+        let sameDeviceRouteCount = 0;
+        let uuidStyleCodeCount = 0;
+        const sourceShapes = {};
+
+        for (const row of historyRows.rows) {
+            const source = row.source || '';
+            const shape = source.startsWith('xdevice:')
+                ? 'xdevice'
+                : source.startsWith('entity:')
+                    ? 'entity-route'
+                    : source || '(empty)';
+            sourceShapes[shape] = (sourceShapes[shape] || 0) + 1;
+
+            const xmatch = source.match(/^xdevice:([a-z0-9-]+):([^:]+)->(.+)$/);
+            if (xmatch) {
+                xdeviceMessageCount += 1;
+                xdeviceCodes.add(xmatch[1]);
+                xdeviceCodes.add(xmatch[3]);
+                continue;
+            }
+            if (/^entity:\d+:[^:]+->/.test(source)) sameDeviceRouteCount += 1;
+        }
+
+        const ownPublicCodes = new Set(entityRows.rows.map(r => r.public_code).filter(Boolean));
+        const lookupEligibleCodes = [];
+        for (const code of xdeviceCodes) {
+            if (!code || ownPublicCodes.has(code)) continue;
+            if (code.includes('-')) {
+                uuidStyleCodeCount += 1;
+                continue;
+            }
+            lookupEligibleCodes.push(code);
+        }
+
+        res.json({
+            success: true,
+            bug: 'chat-render-load-order',
+            diagnostics: {
+                server: {
+                    build: SERVER_BUILD_TAG,
+                    startedAt: SERVER_STARTED_AT.toISOString(),
+                    uptimeSec: Math.round(process.uptime()),
+                },
+                auth: {
+                    memSecretOk,
+                    dbSecretOk,
+                    requestUserDeviceId: req.user?.deviceId || null,
+                    requestUserId: req.user?.userId || null,
+                },
+                historyWindow: {
+                    limit: 500,
+                    returned: historyRows.rows.length,
+                    oldestAt: historyRows.rows.length ? historyRows.rows[historyRows.rows.length - 1].created_at : null,
+                    newestAt: historyRows.rows.length ? historyRows.rows[0].created_at : null,
+                },
+                routeSources: {
+                    sourceShapes,
+                    xdeviceMessageCount,
+                    sameDeviceRouteCount,
+                    uniqueXdeviceCodeCount: xdeviceCodes.size,
+                    lookupEligibleCodeCount: lookupEligibleCodes.length,
+                    uuidStyleCodeCount,
+                },
+                entities: {
+                    total: entityRows.rows.length,
+                    bound: entityRows.rows.filter(r => r.is_bound).length,
+                    ownPublicCodeCount: ownPublicCodes.size,
+                },
+                clientFix: {
+                    firstRenderBeforeXdeviceLookup: true,
+                    lookupRunsInBackground: true,
+                },
+            },
+            timestamp,
+        });
+    } catch (err) {
+        console.error('[Debug chat-render-load-order] failed:', err);
+        res.status(500).json({ success: false, bug: 'chat-render-load-order', error: err.message, timestamp });
+    }
+});
+
 // Wire up pending message flush on email verification
 authModule.setOnEmailVerified(async (deviceId) => {
     console.log(`[PendingFlush] onEmailVerified triggered for device ${deviceId}`);
@@ -2040,7 +2354,7 @@ authModule.setOnEmailVerified(async (deviceId) => {
                 mediaUrl: msg.media_url || null,
                 crossDevice: true
             };
-            toEntity.messageQueue.push(messageObj);
+            enqueueMessage(toEntity, messageObj, 'pending_flush');
 
             const sourceTag = `${sourceLabel}->${msg.target_code}`;
             await saveChatMessage(target.deviceId, target.entityId, msg.text, sourceTag, true, false, msg.media_type || null, msg.media_url || null);
@@ -3898,6 +4212,139 @@ async function backfillPublicCodes() {
     }
 }
 
+// Phase H1.1: bounded messageQueue + dead-letter buffer.
+// Hermes [回應超時] recurred 2026-04-28 because the per-entity messageQueue could grow
+// unbounded — daemon refactor (PR #2201) didn't actually cap it. Hard cap at 200; older
+// entries spill to a small deadLetterQueue (50) for forensics + Phase H1.2 alerting.
+const MESSAGE_QUEUE_CAP = 200;
+const DEAD_LETTER_CAP = 50;
+
+// Phase H1.2: delivery-stuck detection. Bot daemons drain via POST /api/bot/pending-messages.
+// If mqLen > 0 AND now-lastDrainedAt exceeds this threshold, the entity is presumed stuck
+// (Hermes typically polls every ~5s, so 90s = 18 missed polls = clearly dead).
+const HEARTBEAT_STUCK_MS = 90_000;
+
+// Phase H1.5: severe-stuck threshold for /api/health → 503 → Railway auto-restart.
+// 90s says "alert ops"; 5min says "the daemon is dead, kill the process". Set well above
+// the H1.2 alert window so transient blips don't cause restart thrash.
+const SEVERE_STUCK_MS = 300_000;
+// Boot-grace: process.uptime ≤ this skips the 503 even if state looks severe. Prevents
+// crashloop where DB-loaded stale mq + cold daemon trips immediate 503 → kill → repeat.
+// 3 min gives a fresh Hermes plenty of time to start polling and reset lastDrainedAt.
+const HEALTH_BOOT_GRACE_MS = 180_000;
+// Severe requires at least this many "previously alive, now stopped" entities. Single-bot
+// orphans must NOT trigger restart. Pre-H1.2 historical state (lastDrainedAt=null forever)
+// must NOT trigger restart. Only a daemon-wide failure — multiple bots that USED to drain
+// suddenly stopping — warrants a process kill.
+const SEVERE_STUCK_MIN_COUNT = 5;
+
+function evaluateDeliveryHealth(stuckList, uptimeMs) {
+    const oldestIdleMs = stuckList.length
+        ? stuckList.reduce((m, s) => (s.idleMs > m ? s.idleMs : m), 0)
+        : 0;
+    // Severe only counts entities that USED to drain (lastDrainedAt set) and stopped.
+    // Excludes ghost entities (never-drained, pre-H1.2 historical state) from triggering
+    // restarts — those are stale data, not a live-daemon failure.
+    const severeStuckCount = stuckList.filter(
+        s => s.lastDrainedAt && s.idleMs > SEVERE_STUCK_MS
+    ).length;
+    const severe = severeStuckCount >= SEVERE_STUCK_MIN_COUNT
+        && uptimeMs > HEALTH_BOOT_GRACE_MS;
+    return {
+        stuckThresholdMs: HEARTBEAT_STUCK_MS,
+        severeThresholdMs: SEVERE_STUCK_MS,
+        severeMinCount: SEVERE_STUCK_MIN_COUNT,
+        bootGraceMs: HEALTH_BOOT_GRACE_MS,
+        stuckCount: stuckList.length,
+        severeStuckCount,
+        oldestIdleMs,
+        severe,
+    };
+}
+
+function enqueueMessage(toEntity, messageObj, ctx) {
+    if (!toEntity) return;
+    if (!Array.isArray(toEntity.messageQueue)) toEntity.messageQueue = [];
+    if (!Array.isArray(toEntity.deadLetterQueue)) toEntity.deadLetterQueue = [];
+
+    toEntity.messageQueue.push(messageObj);
+    toEntity.lastEnqueuedAt = Date.now();
+
+    while (toEntity.messageQueue.length > MESSAGE_QUEUE_CAP) {
+        const dropped = toEntity.messageQueue.shift();
+        toEntity.deadLetterQueue.push({
+            ...dropped,
+            droppedAt: Date.now(),
+            droppedReason: 'queue_overflow',
+            droppedCtx: ctx || null,
+        });
+        while (toEntity.deadLetterQueue.length > DEAD_LETTER_CAP) {
+            toEntity.deadLetterQueue.shift();
+        }
+        try {
+            console.warn(`[Queue] entity ${toEntity.entityId} mq overflow — dropped oldest to DLQ. mqLen=${toEntity.messageQueue.length} dlqLen=${toEntity.deadLetterQueue.length} ctx=${ctx || ''}`);
+        } catch (_) {}
+    }
+}
+
+// Phase H1.1b: Boot-time clamp. Legacy persisted state may already exceed cap
+// (we observed mqLen=1564 on Hermes after the H1.1 deploy because the queue was
+// loaded from DB pre-fix). Trim once on load so /api/health reflects truth and
+// the next push doesn't immediately torch 1300+ messages into the 50-slot DLQ.
+function clampQueuesOnLoad() {
+    let trimmed = 0, entitiesScanned = 0;
+    for (const dev of Object.values(devices || {})) {
+        const ents = dev && dev.entities;
+        if (!ents) continue;
+        for (const ent of Object.values(ents)) {
+            entitiesScanned++;
+            if (Array.isArray(ent.messageQueue) && ent.messageQueue.length > MESSAGE_QUEUE_CAP) {
+                const overflow = ent.messageQueue.length - MESSAGE_QUEUE_CAP;
+                ent.messageQueue.splice(0, overflow); // drop oldest, no DLQ — these are pre-fix legacy
+                trimmed += overflow;
+            }
+            if (Array.isArray(ent.deadLetterQueue) && ent.deadLetterQueue.length > DEAD_LETTER_CAP) {
+                ent.deadLetterQueue.splice(0, ent.deadLetterQueue.length - DEAD_LETTER_CAP);
+            }
+        }
+    }
+    if (trimmed > 0) {
+        console.warn(`[Queue] boot clamp: trimmed ${trimmed} stale messages across ${entitiesScanned} entities (pre-cap legacy state)`);
+    }
+}
+
+// Phase H1.2: Scan all bound bot entities for stuck delivery (mq > 0 + lastDrainedAt stale).
+// Returns a list of stuck-entity descriptors for /api/health and admin tooling.
+function findStuckEntities(nowMs) {
+    const now = nowMs || Date.now();
+    const stuck = [];
+    for (const [deviceId, dev] of Object.entries(devices || {})) {
+        const ents = dev && dev.entities;
+        if (!ents) continue;
+        for (const ent of Object.values(ents)) {
+            if (!ent || !ent.isBound) continue;
+            const mqLen = (ent.messageQueue && ent.messageQueue.length) || 0;
+            if (mqLen === 0) continue;
+            // If a bot has never drained but has messages waiting, the time-since-enqueue is the
+            // best lower-bound for "how long has this been pending"
+            const referenceAt = ent.lastDrainedAt || ent.lastEnqueuedAt || ent.lastUpdated || 0;
+            const idleMs = now - referenceAt;
+            if (idleMs > HEARTBEAT_STUCK_MS) {
+                stuck.push({
+                    deviceId,
+                    entityId: ent.entityId,
+                    character: ent.character || null,
+                    mqLen,
+                    lastDrainedAt: ent.lastDrainedAt || null,
+                    lastEnqueuedAt: ent.lastEnqueuedAt || null,
+                    idleMs,
+                });
+            }
+        }
+    }
+    return stuck;
+}
+
 // Helper: Create default entity
 function createDefaultEntity(entityId) {
     return {
@@ -3911,6 +4358,9 @@ function createDefaultEntity(entityId) {
         parts: {},
         lastUpdated: Date.now(),
         messageQueue: [],
+        deadLetterQueue: [], // Phase H1.1: capped overflow buffer for forensics
+        lastEnqueuedAt: null, // Phase H1.2: when server last appended to messageQueue
+        lastDrainedAt: null, // Phase H1.2: when bot daemon last consumed messageQueue (heartbeat)
         webhook: null,
         appVersion: null, // Device app version (e.g., "1.0.3")
         avatar: null, // User-chosen emoji avatar (synced across devices)
@@ -4042,6 +4492,7 @@ function getOrCreateDevice(deviceId, deviceSecret = null, opts = {}) {
             createdAt: Date.now(),
             isTestDevice: opts.isTestDevice || false,
             nextEntityId: DEFAULT_INITIAL_SLOTS, // = 1
+            promptPolicy: null,
             entities: {}
         };
         // Initialize only 1 slot (entity #0)
@@ -4605,7 +5056,73 @@ app.get('/api/invite/clicks', async (req, res) => {
 });
 
 app.get('/api/health', (req, res) => {
-    res.status(200).json({ status: 'ok', timestamp: Date.now(), build: SERVER_BUILD_TAG, uptime: process.uptime(), startedAt: SERVER_STARTED_AT.toISOString() });
+    // Phase H1.1: surface worst-case mq/dlq depth so ops can spot Hermes-style fan-out
+    // before [回應超時] hits. Cheap O(entities) pass — devices is the in-memory map.
+    let maxMq = 0;
+    let maxDlq = 0;
+    let totalDlq = 0;
+    let entitiesScanned = 0;
+    try {
+        for (const dev of Object.values(devices || {})) {
+            const ents = dev && dev.entities;
+            if (!ents) continue;
+            for (const ent of Object.values(ents)) {
+                entitiesScanned++;
+                const m = (ent.messageQueue && ent.messageQueue.length) || 0;
+                const d = (ent.deadLetterQueue && ent.deadLetterQueue.length) || 0;
+                if (m > maxMq) maxMq = m;
+                if (d > maxDlq) maxDlq = d;
+                totalDlq += d;
+            }
+        }
+    } catch (_) { /* best-effort */ }
+
+    // Phase H1.2: stuck-delivery snapshot. Empty array under normal traffic.
+    let stuckList = [];
+    try { stuckList = findStuckEntities(); } catch (_) { /* best-effort */ }
+    const stuckPreview = stuckList
+        .sort((a, b) => b.idleMs - a.idleMs)
+        .slice(0, 5);
+
+    // Phase H1.5: classify severity so Railway healthcheck (healthcheckPath=/api/health,
+    // restartPolicyType=ON_FAILURE) can auto-restart a wedged daemon. Returns 503 only
+    // when at least one bot is severely stuck AND we're past the boot grace.
+    const uptimeMs = process.uptime() * 1000;
+    const deliveryHealth = evaluateDeliveryHealth(stuckList, uptimeMs);
+    const persistenceHealth = {
+        mode: usePostgreSQL ? 'postgresql' : 'file',
+        postgresql: usePostgreSQL,
+        productionRequiresPostgresql: Boolean(isProductionRuntime() && process.env.DATABASE_URL),
+    };
+    const persistenceSevere = persistenceHealth.productionRequiresPostgresql && !usePostgreSQL;
+    const httpStatus = deliveryHealth.severe || persistenceSevere ? 503 : 200;
+
+    res.status(httpStatus).json({
+        status: deliveryHealth.severe || persistenceSevere ? 'unhealthy' : 'ok',
+        timestamp: Date.now(),
+        build: SERVER_BUILD_TAG,
+        uptime: process.uptime(),
+        startedAt: SERVER_STARTED_AT.toISOString(),
+        persistence: {
+            ...persistenceHealth,
+            severe: persistenceSevere,
+            reason: persistenceSevere
+                ? 'PostgreSQL persistence is required in production when DATABASE_URL is configured'
+                : null,
+        },
+        queue: {
+            cap: MESSAGE_QUEUE_CAP,
+            dlqCap: DEAD_LETTER_CAP,
+            maxMqLen: maxMq,
+            maxDlqLen: maxDlq,
+            totalDlq,
+            entities: entitiesScanned,
+        },
+        delivery: {
+            ...deliveryHealth,
+            stuck: stuckPreview,
+        },
+    });
 });
 
 // ============================================
@@ -5401,12 +5918,30 @@ function deriveChannelProvider(callbackUrl) {
 app.get('/api/entities', async (req, res) => {
     const filterDeviceId = req.query.deviceId;
     const deviceSecret = req.query.deviceSecret;
+    const botSecret = req.query.botSecret;
+    const queryEntityId = parseInt(req.query.entityId) || 0;
 
-    // Auth: deviceId+deviceSecret OR JWT cookie
+    // Auth: deviceId+deviceSecret OR deviceId+botSecret(+entityId) OR JWT cookie.
+    // For botSecret path, entityId is optional — when omitted we scan the
+    // device's bound entities for a matching botSecret (matches help-text
+    // curl template at index.js:1403 + skill-templates "List all entities").
     const jwtDeviceId = req.user && req.user.deviceId;
-    const authedDeviceId = (filterDeviceId && deviceSecret && devices[filterDeviceId] && safeEqual(devices[filterDeviceId].deviceSecret, deviceSecret))
+    const deviceAuthed = filterDeviceId && deviceSecret && devices[filterDeviceId] && safeEqual(devices[filterDeviceId].deviceSecret, deviceSecret);
+    let botAuthed = false;
+    if (!deviceAuthed && filterDeviceId && botSecret && devices[filterDeviceId]) {
+        const ents = devices[filterDeviceId].entities || {};
+        if (queryEntityId > 0) {
+            const e = ents[queryEntityId];
+            botAuthed = !!(e && e.isBound && e.botSecret && safeEqual(e.botSecret, botSecret));
+        } else {
+            botAuthed = Object.values(ents).some(e => e && e.isBound && e.botSecret && safeEqual(e.botSecret, botSecret));
+        }
+    }
+    const authedDeviceId = deviceAuthed
         ? filterDeviceId
-        : (jwtDeviceId && (!filterDeviceId || filterDeviceId === jwtDeviceId)) ? jwtDeviceId : null;
+        : botAuthed
+            ? filterDeviceId
+            : (jwtDeviceId && (!filterDeviceId || filterDeviceId === jwtDeviceId)) ? jwtDeviceId : null;
 
     if (!filterDeviceId && !jwtDeviceId) {
         return res.status(400).json({ success: false, message: 'deviceId required' });
@@ -5595,14 +6130,22 @@ app.get('/api/entities/status', async (req, res) => {
 app.get('/api/status', (req, res) => {
     const deviceId = req.query.deviceId;
     const deviceSecret = req.query.deviceSecret;
+    const botSecret = req.query.botSecret;
     const eId = parseInt(req.query.entityId) || 0;
     const appVersion = req.query.appVersion;
 
-    // Auth: deviceId+deviceSecret OR JWT cookie
+    // Auth: deviceId+deviceSecret OR deviceId+botSecret+entityId OR JWT cookie
     const jwtDeviceId = req.user && req.user.deviceId;
-    const authedDeviceId = (deviceId && deviceSecret && devices[deviceId] && safeEqual(devices[deviceId].deviceSecret, deviceSecret))
+    const deviceAuthed = deviceId && deviceSecret && devices[deviceId] && safeEqual(devices[deviceId].deviceSecret, deviceSecret);
+    const botEntity = (deviceId && botSecret && eId > 0 && devices[deviceId])
+        ? devices[deviceId].entities?.[eId]
+        : null;
+    const botAuthed = botEntity && botEntity.isBound && safeEqual(botEntity.botSecret, botSecret);
+    const authedDeviceId = deviceAuthed
         ? deviceId
-        : (jwtDeviceId && (!deviceId || deviceId === jwtDeviceId)) ? jwtDeviceId : null;
+        : botAuthed
+            ? deviceId
+            : (jwtDeviceId && (!deviceId || deviceId === jwtDeviceId)) ? jwtDeviceId : null;
 
     if (!deviceId && !jwtDeviceId) {
         return res.status(400).json({ success: false, message: "deviceId required" });
@@ -5755,7 +6298,7 @@ async function deliverToEntity(opts) {
         messageObj.fromDeviceId = senderDeviceId;
         messageObj.crossDevice = true;
     }
-    toEntity.messageQueue.push(messageObj);
+    enqueueMessage(toEntity, messageObj, isCrossDevice ? 'speakto_xdevice' : (isBroadcast ? 'speakto_broadcast' : 'speakto'));
 
     // Save chat message
     const chatSource = isCrossDevice
@@ -8086,41 +8629,8 @@ app.post('/api/client/speak', async (req, res) => {
         console.log(`[Gatekeeper Debug] deviceId=${deviceId}, secretMatch=${safeEqual(device.deviceSecret, deviceSecret)}, inDevSet=${developerDeviceIds.has(deviceId)}, devSetSize=${developerDeviceIds.size}, isDeveloper=${isDeveloper}`);
     }
 
-    // Usage enforcement — apply to all non-premium devices
-    // Premium check is inside enforceUsageLimit; personal bot exemption handled separately
-    const DAILY_LIMIT = 15;
-    try {
-        const usage = await subscriptionModule.enforceUsageLimit(deviceId);
-        if (!usage.allowed) {
-            return res.status(429).json({
-                success: false,
-                message: "Daily message limit reached",
-                error: "USAGE_LIMIT_EXCEEDED",
-                remaining: 0,
-                limit: usage.limit,
-                used: usage.used || 0
-            });
-        }
-    } catch (usageErr) {
-        // Fail-safe: use in-memory counter when DB is unavailable
-        console.warn('[Usage] DB enforcement failed, using in-memory fallback:', usageErr.message);
-        serverLog('warn', 'client_push', `Usage DB fallback: ${usageErr.message}`, { deviceId });
-        const today = new Date().toISOString().slice(0, 10);
-        const memKey = `${deviceId}:${today}`;
-        if (!global._usageMemCounter) global._usageMemCounter = {};
-        const memCount = (global._usageMemCounter[memKey] || 0) + 1;
-        global._usageMemCounter[memKey] = memCount;
-        if (memCount > DAILY_LIMIT) {
-            return res.status(429).json({
-                success: false,
-                message: "Daily message limit reached",
-                error: "USAGE_LIMIT_EXCEEDED",
-                remaining: 0,
-                limit: DAILY_LIMIT,
-                used: memCount
-            });
-        }
-    }
+    // Daily message limit removed — all devices have unlimited messaging.
+    // (Previously: 15 + invite_rewards.bonus_messages for non-premium devices.)
 
     // Gatekeeper First Lock: device owner with valid deviceSecret is exempt
     if (!isDeveloper && gatekeeper.isDeviceBlocked(deviceId)) {
@@ -8354,7 +8864,7 @@ app.post('/api/client/speak', async (req, res) => {
             mediaType: mediaType || null,
             mediaUrl: mediaUrl || null
         };
-        entity.messageQueue.push(messageObj);
+        enqueueMessage(entity, messageObj, 'incoming_chat');
         const chatBackupUrl = mediaType === 'photo' ? getBackupUrl(mediaUrl) : null;
         await saveChatMessage(deviceId, eId, text, source, true, false, mediaType || null, mediaUrl || null, null, null, chatBackupUrl, mentionsContext, null, validatedAttachments);
 
@@ -8656,7 +9166,7 @@ app.post('/api/entity/speak-to', async (req, res) => {
         mediaType: mediaType || null,
         mediaUrl: mediaUrl || null
     };
-    toEntity.messageQueue.push(messageObj);
+    enqueueMessage(toEntity, messageObj, 'a2a_speakto');
     serverLog('info', 'speakto_push', `[A2A_MQ_PUSH] Entity ${toId}.messageQueue += item from Entity ${fromId} | mqLen=${toEntity.messageQueue.length}`, {
         deviceId, entityId: toId,
         metadata: { tag: 'A2A_MQ_PUSH', fromEntityId: fromId, toEntityId: toId, mqLen: toEntity.messageQueue.length }
@@ -9056,7 +9566,7 @@ app.post('/api/entity/cross-speak', async (req, res) => {
         mediaUrl: mediaUrl || null,
         crossDevice: true
     };
-    toEntity.messageQueue.push(messageObj);
+    enqueueMessage(toEntity, messageObj, 'xdevice_publiccode');
 
     // Save chat message on BOTH devices
     const chatMsgId = await saveChatMessage(target.deviceId, target.entityId, crossText, `${sourceLabel}->${targetCode}`, false, true, mediaType || null, mediaUrl || null);
@@ -9758,6 +10268,194 @@ function validateIdentity(identity) {
     return { valid: true, identity: cleaned };
 }
 
+const PROMPT_POLICY_VERSION = 1;
+const PROMPT_POLICY_MAX_ITEMS = 20;
+const PROMPT_POLICY_MAX_TEXT = 1000;
+const PROMPT_POLICY_MAX_CHANNELS = 12;
+const PROMPT_POLICY_MIN_HEARTBEAT_MS = 60 * 1000;
+const PROMPT_POLICY_MAX_HEARTBEAT_MS = 30 * 60 * 1000;
+
+const DEFAULT_PROMPT_POLICY_TASK_PROTOCOL = {
+    requireTestPlan: true,
+    requireMilestoneUpdates: true,
+    statusHeartbeatMs: 180000
+};
+
+const PLATFORM_PROMPT_POLICY_SECTION = [
+    'Follow EClaw channel routing, auth, and safety rules.',
+    'Never reveal device secrets, bot secrets, API keys, database URLs, or tokens.',
+    'For long-running work, keep the user updated with concrete progress and blockers.'
+].join('\n');
+
+function asPromptPolicyLines(value, fieldName, maxItems = PROMPT_POLICY_MAX_ITEMS) {
+    if (value === undefined) return { lines: undefined };
+    const rawLines = Array.isArray(value)
+        ? value
+        : String(value).split('\n');
+    if (rawLines.length > maxItems) {
+        return { error: `${fieldName} supports at most ${maxItems} lines` };
+    }
+    const lines = rawLines
+        .map(line => String(line || '').trim())
+        .filter(Boolean)
+        .map(line => line.substring(0, PROMPT_POLICY_MAX_TEXT));
+    const secretLine = lines.find(containsLikelyPromptSecret);
+    if (secretLine) {
+        return { error: `${fieldName} appears to contain a secret; store secrets in device vars instead` };
+    }
+    return { lines };
+}
+
+function containsLikelyPromptSecret(text) {
+    if (!text) return false;
+    return [
+        /\bsk-[A-Za-z0-9_-]{20,}/,
+        /\b(?:api[_-]?key|access[_-]?token|refresh[_-]?token|password|secret)\s*[:=]\s*\S{8,}/i,
+        /BEGIN (?:RSA |EC |OPENSSH |)?PRIVATE KEY/i,
+        /\bpostgres(?:ql)?:\/\/[^/\s:]+:[^@\s]+@/i
+    ].some(re => re.test(text));
+}
+
+function sanitizePromptTaskProtocol(input) {
+    const protocol = { ...DEFAULT_PROMPT_POLICY_TASK_PROTOCOL };
+    if (!input || typeof input !== 'object') return protocol;
+    if (input.requireTestPlan !== undefined) protocol.requireTestPlan = !!input.requireTestPlan;
+    if (input.requireMilestoneUpdates !== undefined) protocol.requireMilestoneUpdates = !!input.requireMilestoneUpdates;
+    if (input.statusHeartbeatMs !== undefined) {
+        const ms = parseInt(input.statusHeartbeatMs);
+        if (!Number.isFinite(ms)) return { error: 'taskProtocol.statusHeartbeatMs must be a number' };
+        protocol.statusHeartbeatMs = Math.max(PROMPT_POLICY_MIN_HEARTBEAT_MS, Math.min(PROMPT_POLICY_MAX_HEARTBEAT_MS, ms));
+    }
+    return protocol;
+}
+
+function sanitizePromptChannelOverrides(overrides) {
+    if (overrides === undefined) return { overrides: undefined };
+    if (!overrides || typeof overrides !== 'object' || Array.isArray(overrides)) {
+        return { error: 'channelOverrides must be an object' };
+    }
+    const entries = Object.entries(overrides).slice(0, PROMPT_POLICY_MAX_CHANNELS);
+    const cleaned = {};
+    for (const [rawChannel, rawOverride] of entries) {
+        const channel = String(rawChannel || '').trim().substring(0, 40).toLowerCase();
+        if (!/^[a-z0-9_-]+$/.test(channel)) return { error: `Invalid channel override key: ${rawChannel}` };
+        if (!rawOverride || typeof rawOverride !== 'object' || Array.isArray(rawOverride)) {
+            return { error: `channelOverrides.${channel} must be an object` };
+        }
+        const lines = asPromptPolicyLines(rawOverride.instructions, `channelOverrides.${channel}.instructions`);
+        if (lines.error) return { error: lines.error };
+        cleaned[channel] = {
+            enabled: rawOverride.enabled !== false,
+            instructions: lines.lines || []
+        };
+    }
+    return { overrides: cleaned };
+}
+
+function validatePromptPolicy(policy) {
+    if (!policy || typeof policy !== 'object' || Array.isArray(policy)) {
+        return { valid: false, error: 'promptPolicy must be an object' };
+    }
+
+    const instructions = asPromptPolicyLines(policy.instructions, 'instructions');
+    if (instructions.error) return { valid: false, error: instructions.error };
+
+    const taskProtocol = sanitizePromptTaskProtocol(policy.taskProtocol);
+    if (taskProtocol.error) return { valid: false, error: taskProtocol.error };
+
+    const channelOverrides = sanitizePromptChannelOverrides(policy.channelOverrides);
+    if (channelOverrides.error) return { valid: false, error: channelOverrides.error };
+
+    return {
+        valid: true,
+        promptPolicy: {
+            version: PROMPT_POLICY_VERSION,
+            enabled: policy.enabled !== false,
+            instructions: instructions.lines || [],
+            taskProtocol,
+            channelOverrides: channelOverrides.overrides || {},
+            updatedAt: new Date().toISOString()
+        }
+    };
+}
+
+function getEntityPromptPolicy(entity) {
+    return entity?.identity?.promptPolicy || null;
+}
+
+function setEntityPromptPolicy(entity, promptPolicy) {
+    if (!entity.identity) entity.identity = {};
+    entity.identity.promptPolicy = promptPolicy;
+    entity.lastUpdated = Date.now();
+}
+
+function appendPromptPolicySection(sections, scope, title, lines) {
+    const content = Array.isArray(lines) ? lines.filter(Boolean).join('\n') : String(lines || '').trim();
+    if (!content) return;
+    sections.push({ scope, title, content });
+}
+
+function buildPromptPolicySections(device, entity, channel = 'generic') {
+    const normalizedChannel = String(channel || 'generic').trim().toLowerCase();
+    const sections = [];
+    const devicePolicy = device?.promptPolicy?.enabled === false ? null : (device?.promptPolicy || null);
+    const identity = entity?.identity || {};
+    const entityPolicy = getEntityPromptPolicy(entity)?.enabled === false ? null : getEntityPromptPolicy(entity);
+
+    appendPromptPolicySection(sections, 'platform', 'EClaw Platform Policy', PLATFORM_PROMPT_POLICY_SECTION);
+
+    appendPromptPolicySection(sections, 'device', 'Device Instructions', devicePolicy?.instructions || []);
+
+    const identityLines = [];
+    if (identity.role) identityLines.push(`Role: ${identity.role}`);
+    if (identity.description) identityLines.push(`Description: ${identity.description}`);
+    if (identity.tone) identityLines.push(`Tone: ${identity.tone}`);
+    if (identity.language) identityLines.push(`Language: ${identity.language}`);
+    if (Array.isArray(identity.instructions) && identity.instructions.length) {
+        identityLines.push('Identity instructions:', ...identity.instructions.map(item => `- ${item}`));
+    }
+    if (Array.isArray(identity.boundaries) && identity.boundaries.length) {
+        identityLines.push('Boundaries:', ...identity.boundaries.map(item => `- ${item}`));
+    }
+    appendPromptPolicySection(sections, 'identity', 'Entity Identity', identityLines);
+
+    appendPromptPolicySection(sections, 'entity', 'Entity Prompt Policy', entityPolicy?.instructions || []);
+
+    const protocol = {
+        ...DEFAULT_PROMPT_POLICY_TASK_PROTOCOL,
+        ...(devicePolicy?.taskProtocol || {}),
+        ...(entityPolicy?.taskProtocol || {})
+    };
+    appendPromptPolicySection(sections, 'taskProtocol', 'Task Protocol', [
+        protocol.requireTestPlan ? 'Start long tasks with a concise test plan before implementation.' : '',
+        protocol.requireMilestoneUpdates ? 'Report progress after meaningful milestones and include blockers explicitly.' : '',
+        `Preferred autonomous status heartbeat interval: ${protocol.statusHeartbeatMs}ms.`
+    ]);
+
+    const deviceOverride = devicePolicy?.channelOverrides?.[normalizedChannel];
+    if (deviceOverride?.enabled !== false) {
+        appendPromptPolicySection(sections, 'channel', `Device ${normalizedChannel} Override`, deviceOverride?.instructions || []);
+    }
+    const entityOverride = entityPolicy?.channelOverrides?.[normalizedChannel];
+    if (entityOverride?.enabled !== false) {
+        appendPromptPolicySection(sections, 'channel', `Entity ${normalizedChannel} Override`, entityOverride?.instructions || []);
+    }
+
+    return {
+        version: PROMPT_POLICY_VERSION,
+        channel: normalizedChannel,
+        taskProtocol: protocol,
+        sections,
+        compiledPrompt: sections.map(section => `## ${section.title}\n${section.content}`).join('\n\n')
+    };
+}
+
+function requireDeviceOwner(device, deviceSecret) {
+    if (!deviceSecret) return { error: 'deviceSecret required', status: 400 };
+    if (!safeEqual(device.deviceSecret, deviceSecret)) return { error: 'Invalid deviceSecret', status: 403 };
+    return {};
+}
+
 /**
  * PUT /api/entity/identity — Create or update bot identity (partial merge)
  * Auth: deviceSecret (owner) OR botSecret (bot self-update)
@@ -9863,6 +10561,114 @@ app.delete('/api/entity/identity', async (req, res) => {
     io.to(deviceId).emit('entity:identity-updated', { entityId: parseInt(entityId), identity: null });
     serverLog('info', 'identity', `Entity ${entityId} identity cleared`, { deviceId, entityId: parseInt(entityId) });
     res.json({ success: true });
+});
+
+/**
+ * GET /api/device/prompt-policy — Read device-level prompt policy
+ * Auth: deviceSecret (owner)
+ */
+app.get('/api/device/prompt-policy', (req, res) => {
+    const { deviceId, deviceSecret } = req.query;
+    if (!deviceId) return res.status(400).json({ success: false, error: 'deviceId required' });
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+    const auth = requireDeviceOwner(device, deviceSecret);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    res.json({ success: true, promptPolicy: device.promptPolicy || null });
+});
+
+/**
+ * PUT /api/device/prompt-policy — Set device-level prompt policy
+ * Auth: deviceSecret (owner)
+ */
+app.put('/api/device/prompt-policy', async (req, res) => {
+    const { deviceId, deviceSecret, promptPolicy } = req.body || {};
+    if (!deviceId) return res.status(400).json({ success: false, error: 'deviceId required' });
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+    const auth = requireDeviceOwner(device, deviceSecret);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+
+    const { valid, promptPolicy: cleaned, error } = validatePromptPolicy(promptPolicy);
+    if (!valid) return res.status(400).json({ success: false, error });
+
+    device.promptPolicy = cleaned;
+    if (typeof db.saveDeviceData === 'function') {
+        db.saveDeviceData(deviceId, device).catch(err => console.error('[PromptPolicy] Device save error:', err.message));
+    }
+    io.to(deviceId).emit('prompt-policy:updated', { scope: 'device', promptPolicy: cleaned });
+    serverLog('info', 'prompt-policy', 'Device prompt policy updated', { deviceId });
+    res.json({ success: true, promptPolicy: cleaned });
+});
+
+/**
+ * GET /api/entity/:entityId/prompt-policy — Read entity-level prompt policy
+ * Auth: deviceSecret (owner)
+ */
+app.get('/api/entity/:entityId/prompt-policy', (req, res) => {
+    const { deviceId, deviceSecret } = req.query;
+    const { entityId } = req.params;
+    if (!deviceId || entityId === undefined) return res.status(400).json({ success: false, error: 'deviceId, entityId required' });
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+    const owner = requireDeviceOwner(device, deviceSecret);
+    if (owner.error) return res.status(owner.status).json({ success: false, error: owner.error });
+    const entity = device.entities[parseInt(entityId)];
+    if (!entity) return res.status(404).json({ success: false, error: 'Entity not found' });
+    res.json({ success: true, promptPolicy: getEntityPromptPolicy(entity) });
+});
+
+/**
+ * PUT /api/entity/:entityId/prompt-policy — Set entity-level prompt policy
+ * Auth: deviceSecret (owner)
+ */
+app.put('/api/entity/:entityId/prompt-policy', async (req, res) => {
+    const { deviceId, deviceSecret, promptPolicy } = req.body || {};
+    const { entityId } = req.params;
+    if (!deviceId || entityId === undefined) return res.status(400).json({ success: false, error: 'deviceId, entityId required' });
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+    const owner = requireDeviceOwner(device, deviceSecret);
+    if (owner.error) return res.status(owner.status).json({ success: false, error: owner.error });
+    const entity = device.entities[parseInt(entityId)];
+    if (!entity) return res.status(404).json({ success: false, error: 'Entity not found' });
+
+    const { valid, promptPolicy: cleaned, error } = validatePromptPolicy(promptPolicy);
+    if (!valid) return res.status(400).json({ success: false, error });
+
+    setEntityPromptPolicy(entity, cleaned);
+    if (typeof db.saveDeviceData === 'function') {
+        db.saveDeviceData(deviceId, device).catch(err => console.error('[PromptPolicy] Entity save error:', err.message));
+    }
+    io.to(deviceId).emit('prompt-policy:updated', { scope: 'entity', entityId: parseInt(entityId), promptPolicy: cleaned });
+    serverLog('info', 'prompt-policy', `Entity ${entityId} prompt policy updated`, { deviceId, entityId: parseInt(entityId) });
+    res.json({ success: true, promptPolicy: cleaned });
+});
+
+/**
+ * GET /api/channel/prompt-policy — Read composed prompt policy for channel bridges
+ * Auth: deviceSecret (owner preview) OR botSecret (bound channel runtime)
+ */
+app.get('/api/channel/prompt-policy', (req, res) => {
+    const { deviceId, deviceSecret, botSecret, entityId, channel } = req.query;
+    if (!deviceId || entityId === undefined) {
+        return res.status(400).json({ success: false, error: 'deviceId, entityId required' });
+    }
+    if (!deviceSecret && !botSecret) {
+        return res.status(400).json({ success: false, error: 'deviceSecret or botSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+    const auth = authEntityAccess(device, deviceSecret, botSecret, entityId);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+
+    const policy = buildPromptPolicySections(device, auth.entity, channel || 'generic');
+    res.json({
+        success: true,
+        policy,
+        devicePolicy: device.promptPolicy || null,
+        entityPolicy: getEntityPromptPolicy(auth.entity)
+    });
 });
 
 // ── Agent Card Holder (replaces Cross-Device Contacts — no upper limit) ──
@@ -10698,7 +11504,7 @@ app.post('/api/client/cross-speak', async (req, res) => {
         mediaUrl: mediaUrl || null,
         crossDevice: !isOwnerMode || deviceId !== target.deviceId // false only when owner sends to own entity
     };
-    toEntity.messageQueue.push(messageObj);
+    enqueueMessage(toEntity, messageObj, isOwnerMode ? 'owner_speakto' : 'entity_speakto');
 
     // Save chat message — always save to both sender and target devices
     const sourceTag = `${sourceLabel}->${targetCode}`;
@@ -11041,7 +11847,7 @@ app.post('/api/entity/broadcast', async (req, res) => {
             mediaType: mediaType || null,
             mediaUrl: mediaUrl || null
         };
-        toEntity.messageQueue.push(messageObj);
+        enqueueMessage(toEntity, messageObj, 'broadcast');
         markMessagesAsRead(deviceId, toId);
 
         // Update entity.message so Android app can display it
@@ -13302,8 +14108,12 @@ app.post('/api/bot/pending-messages', async (req, res) => {
     // Clear messageQueue after delivery (bot acknowledges receipt)
     entity.messageQueue = [];
 
-    // Update entity status
-    entity.lastUpdated = Date.now();
+    // Phase H1.2: every poll is a heartbeat — record even when queue is empty.
+    // Stuck-detection uses lastDrainedAt to decide if Hermes is alive but starved
+    // (mq>0 + recent drain = backlog) vs dead (mq>0 + stale drain = no daemon).
+    const now = Date.now();
+    entity.lastDrainedAt = now;
+    entity.lastUpdated = now;
 
     res.json({
         success: true,
@@ -13897,11 +14707,15 @@ function getMissionApiHints(apiBase, deviceId, entityId, botSecret) {
     hints += `Current Taiwan Time: ${twTime} (UTC+8)\n`;
     hints += `Read tasks/notes/rules/skills: exec: curl -s "${apiBase}/api/mission/dashboard?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}"\n`;
     hints += `Read notes: exec: curl -s "${apiBase}/api/mission/notes?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}"\n`;
-    hints += `Read chat history: exec: curl -s "${apiBase}/api/chat/history?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}&limit=100"\n`;
+    hints += `Read chat history (scope: msgs to/from your entityId only — NOT full device transcript): exec: curl -s "${apiBase}/api/chat/history?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}&limit=100"\n`;
     hints += `Create kanban card: exec: curl -s -X POST "${apiBase}/api/mission/card" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","title":"TASK_TITLE","status":"todo"}'\n`;
     hints += `Add note: exec: curl -s -X POST "${apiBase}/api/mission/note/add" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","title":"TITLE","content":"CONTENT"}'\n`;
+    hints += `Delete note: exec: curl -s -X POST "${apiBase}/api/mission/note/delete" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","title":"TITLE"}'\n`;
     hints += `\n[AVAILABLE TOOLS — Kanban Board]\n`;
     hints += `Read board: exec: curl -s "${apiBase}/api/mission/cards?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}"\n`;
+    hints += `List archived cards: exec: curl -s "${apiBase}/api/mission/cards/archived?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${entityId}&page=1&limit=20"\n`;
+    hints += `Archive card: exec: curl -s -X DELETE "${apiBase}/api/mission/card/CARD_ID" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${entityId}}'\n`;
+    hints += `Restore archived card: exec: curl -s -X POST "${apiBase}/api/mission/card/CARD_ID/restore" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${entityId}}'\n`;
     hints += `Move card: exec: curl -s -X POST "${apiBase}/api/mission/card/CARD_ID/move" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${entityId},"newStatus":"STATUS"}'\n`;
     hints += `Add comment: exec: curl -s -X POST "${apiBase}/api/mission/card/CARD_ID/comment" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${entityId},"text":"YOUR_COMMENT"}'\n`;
     hints += `Disable schedule: exec: curl -s -X PUT "${apiBase}/api/mission/card/CARD_ID/schedule" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","botSecret":"${botSecret}","entityId":${entityId},"enabled":false}'\n`;
@@ -15797,7 +16611,9 @@ async function getDeviceVarForEmbedding(deviceId, varName) {
 // log on every catch, dead-letter line to /tmp/chat_dead_letter.jsonl so we
 // can replay or grep for lost messages even when pg blips.
 async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null, scheduleId = null, scheduleLabel = null, backupUrl = null, mentions = null, card = null, attachments = null) {
-    const textPreview = text == null ? null : String(text).slice(0, 120);
+    // Guard: coerce null/undefined text to empty string to avoid NOT NULL constraint violation
+    if (text == null) text = '';
+    const textPreview = String(text).slice(0, 120);
     try {
         // Dedup: skip if the same BOT message was already saved recently
         // Bot dedup: prevents echo when bot calls multiple endpoints (broadcast + sync-message + transform)
@@ -17798,10 +18614,7 @@ app.post('/api/bot/sync-message', async (req, res) => {
     };
 
     // Add to entity's message queue
-    if (!entity.messageQueue) {
-        entity.messageQueue = [];
-    }
-    entity.messageQueue.push(messageObj);
+    enqueueMessage(entity, messageObj, 'bot_delivery');
     await saveChatMessage(deviceId, entityId, msgText, fromLabel || "bot", false, true, mediaType || null, mediaUrl || null);
     markMessagesAsRead(deviceId, entityId);
 
@@ -17986,3 +18799,13 @@ module.exports._classifyPublisher = classifyPublisher;
 module.exports._MONITORING_THRESHOLDS = MONITORING_THRESHOLDS;
 module.exports._requireAdmin = requireAdmin;
 module.exports._createDefaultEntity = createDefaultEntity;
+module.exports._enqueueMessage = enqueueMessage;
+module.exports._MESSAGE_QUEUE_CAP = MESSAGE_QUEUE_CAP;
+module.exports._DEAD_LETTER_CAP = DEAD_LETTER_CAP;
+module.exports._clampQueuesOnLoad = clampQueuesOnLoad;
+module.exports._findStuckEntities = findStuckEntities;
+module.exports._HEARTBEAT_STUCK_MS = HEARTBEAT_STUCK_MS;
+module.exports._SEVERE_STUCK_MS = SEVERE_STUCK_MS;
+module.exports._HEALTH_BOOT_GRACE_MS = HEALTH_BOOT_GRACE_MS;
+module.exports._SEVERE_STUCK_MIN_COUNT = SEVERE_STUCK_MIN_COUNT;
+module.exports._evaluateDeliveryHealth = evaluateDeliveryHealth;

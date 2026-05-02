@@ -25,7 +25,7 @@ let app;
 // INSERT assertions can still scan them after clearMocks runs.
 const pgPoolSnapshot = [];
 
-const post = (path) => request(app).post(path).set('Host', 'localhost');
+const post = (path) => request(app).post(path).set('Host', 'localhost').set('Accept-Encoding', 'identity');
 
 /** Register + bind entity, return botSecret */
 async function bindEntity(deviceId, deviceSecret, entityId = 0) {
@@ -45,7 +45,8 @@ async function bindEntity(deviceId, deviceSecret, entityId = 0) {
 async function getPublicCode(deviceId, deviceSecret, entityId) {
     const res = await request(app).get('/api/entities')
         .query({ deviceId, deviceSecret })
-        .set('Host', 'localhost');
+        .set('Host', 'localhost')
+        .set('Accept-Encoding', 'identity');
     const entity = (res.body.entities || []).find(e => e.entityId === entityId);
     return entity ? entity.publicCode : null;
 }

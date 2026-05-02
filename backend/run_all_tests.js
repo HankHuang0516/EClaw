@@ -42,7 +42,7 @@ const TEST_FILES = [
     'test_entity_delete.js',        // Feature: Entity deletion (40 entities stress test)
     'test_widget_ux.js',            // Widget: Chat dialog flow, broadcast
     'test_chat_monitoring.js',      // Chat: Multi-entity speak-to, broadcast, dedup, rate limit
-    'test_usage_limit.js',          // Usage: 15-message limit, premium bypass
+    // test_usage_limit.js removed — daily message limit cancelled (was 15 + invite bonus)
     // test_mission_publish.js removed — relies on legacy todo/add endpoints (now 410)
     'test_entity_name_preservation.js', // Entity name persistence across rebind
     'test_entity_echo_bug.js',      // Echo deduplication regression

@@ -129,16 +129,12 @@ async function mapCardFileRow(r) {
     };
 }
 
-// Valid statuses in order
-const STATUSES = ['backlog', 'todo', 'in_progress', 'review', 'done', 'blocked'];
+// Valid statuses + labels — imported from public/shared/kanban-status.js so
+// server, kanban UI, settings UI, chat smart-chip, and nudge all share one enum.
+const KanbanStatus = require('./public/shared/kanban-status.js');
+const STATUSES = KanbanStatus.STATUSES;
+const STATUS_LABELS = KanbanStatus.STATUS_LABELS_EN;
 const PRIORITIES = ['P0', 'P1', 'P2', 'P3'];
-const STATUS_LABELS = {
-    backlog: 'Backlog',
-    todo: 'TODO',
-    in_progress: 'In Progress',
-    review: 'Review',
-    done: 'Done'
-};
 const PRIORITY_COLORS = { P0: '🔴', P1: '🟠', P2: '🔵', P3: '⚪' };
 
 // ── Schema init ──
@@ -319,6 +315,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                         from: 'kanban',
                         text: message + descBlock,
                         eclaw_context: {
+                            expectsReply: true,
                             silentToken: '[SILENT]',
                             missionHints: kanbanHints,
                         }
@@ -355,6 +352,100 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             }
         }
     }
+
+    // Debug: kanban-codex-nudge (#2273) — keep until user confirms Codex channel nudges are reliable.
+    router.get('/debug/kanban-codex-nudge', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId } = { ...req.query, ...req.body };
+        const cardId = req.query.cardId ? String(req.query.cardId) : null;
+        const entityId = req.query.entityId !== undefined ? Number(req.query.entityId) : null;
+
+        try {
+            const prefs = await devicePrefs.getPrefs(deviceId).catch(() => ({}));
+            const cardParams = [deviceId];
+            let cardWhere = `device_id = $1 AND archived = false`;
+            if (cardId) {
+                cardParams.push(cardId);
+                cardWhere += ` AND id = $${cardParams.length}`;
+            } else {
+                cardWhere += `
+                  AND status IN ('backlog', 'todo', 'in_progress', 'review')
+                  AND EXTRACT(EPOCH FROM (NOW() - status_changed_at)) * 1000 > stale_threshold_ms`;
+            }
+            const cardsRes = await pool.query(
+                `SELECT id, title, status, priority, assigned_bots, stale_threshold_ms,
+                        status_changed_at, last_stale_nudge_at
+                   FROM kanban_cards
+                  WHERE ${cardWhere}
+                  ORDER BY updated_at DESC NULLS LAST
+                  LIMIT 20`,
+                cardParams
+            );
+
+            const device = devices[deviceId] || null;
+            const entityRows = [];
+            const ids = new Set();
+            for (const card of cardsRes.rows) {
+                for (const bid of (card.assigned_bots || [])) ids.add(Number(bid));
+            }
+            if (Number.isFinite(entityId)) ids.add(entityId);
+
+            for (const id of ids) {
+                const ent = device?.entities?.[id] || null;
+                entityRows.push({
+                    entityId: id,
+                    exists: !!ent,
+                    isBound: !!ent?.isBound,
+                    bindingType: ent?.bindingType || null,
+                    hasChannelAccountId: !!ent?.channelAccountId,
+                    hasWebhook: !!ent?.webhook,
+                    channelPushPossible: !!(ent && ent.bindingType === 'channel' && ent.channelAccountId && pushToChannelCallback),
+                    codexBridgeWouldIgnoreOldPayload: true,
+                    fixedPayloadExpectsReply: true,
+                });
+            }
+
+            res.json({
+                success: true,
+                bug: 'kanban-codex-nudge',
+                diagnostics: {
+                    deviceInMemory: !!device,
+                    hasPushToChannelCallback: !!pushToChannelCallback,
+                    prefs: {
+                        kanban_nudge_interval_minutes: prefs.kanban_nudge_interval_minutes || null,
+                        kanban_nudge_batch_size: prefs.kanban_nudge_batch_size || null,
+                        kanban_nudge_priority_mode: prefs.kanban_nudge_priority_mode || null,
+                        kanban_nudge_per_entity_throttle: prefs.kanban_nudge_per_entity_throttle !== false,
+                        kanban_nudge_statuses: prefs.kanban_nudge_statuses || KanbanStatus.NUDGE_DEFAULT_STATUSES,
+                    },
+                    cards: cardsRes.rows.map((card) => ({
+                        id: card.id,
+                        title: card.title,
+                        status: card.status,
+                        priority: card.priority,
+                        assigned_bots: card.assigned_bots || [],
+                        stale_threshold_ms: card.stale_threshold_ms,
+                        status_changed_at: card.status_changed_at,
+                        last_stale_nudge_at: card.last_stale_nudge_at,
+                    })),
+                    assignedEntities: entityRows,
+                    expectedChannelPayload: {
+                        event: 'kanban_notification',
+                        from: 'kanban',
+                        eclaw_context: {
+                            expectsReply: true,
+                            silentToken: '[SILENT]',
+                            missionHints: 'present_when_getMissionApiHints_is_configured',
+                        },
+                    },
+                },
+                timestamp: new Date().toISOString(),
+            });
+        } catch (err) {
+            console.error('[Kanban] debug kanban-codex-nudge error:', err.message);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
 
     // ── Helper: compute next cron run time ──
     function computeNextRun(cronExpression, timezone) {
@@ -412,6 +503,11 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
         if (row.last_run_result) card.lastRunResult = row.last_run_result;
         if (row.active_child_id) card.activeChildId = row.active_child_id;
 
+        // Chat-anchor (provenance back to chat message + mind-map coord);
+        // null on auto-generated cards (renders as N/A in UI).
+        card.chatAnchorMessageId = row.chat_anchor_message_id || null;
+        card.chatAnchorCoord = row.chat_anchor_coord || null;
+
         return card;
     }
 
@@ -421,7 +517,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     router.post('/card', async (req, res) => {
         if (!authenticate(req, res)) return;
         const _p = { ...req.query, ...req.body }; console.log('[Kanban] POST /card called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
-        const { deviceId, title, description, priority, status, assignedBots, entityId, reviewerEntityId, isAutomation, schedule, requiresScreenshotReview } = req.body;
+        const { deviceId, title, description, priority, status, assignedBots, entityId, reviewerEntityId, isAutomation, schedule, requiresScreenshotReview, chatAnchorMessageId, chatAnchorCoord } = req.body;
 
         if (!title || !title.trim()) {
             return res.status(400).json({ success: false, error: 'Missing title' });
@@ -507,17 +603,51 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
         // recurring schedule → auto-promote to automation
         const finalAutomation = wantAutomation || (schedEnabled && schedType === 'recurring');
-        const finalRequiresScreenshot = requiresScreenshotReview !== false;
+        // Screenshot review gate defaults to disabled for all new cards when not explicitly
+        // specified. Caller can force `true` to opt in for cards that need evidence review.
+        const finalRequiresScreenshot = requiresScreenshotReview === undefined
+            ? false  // Default to disabled for all new cards
+            : requiresScreenshotReview !== false;
+
+        // Chat-anchor: pin originating chat message + mind-map coord (Phase 1 — persist
+        // only; UI picker + validator enforcement land in follow-up PRs). Auto-cards leave
+        // both NULL so the UI renders N/A.
+        const anchorMsgId = (typeof chatAnchorMessageId === 'string' && chatAnchorMessageId.trim())
+            ? chatAnchorMessageId.trim().slice(0, 128)
+            : null;
+        let anchorCoord = null;
+        if (chatAnchorCoord && typeof chatAnchorCoord === 'object') {
+            const x = Number(chatAnchorCoord.x);
+            const y = Number(chatAnchorCoord.y);
+            if (Number.isFinite(x) && Number.isFinite(y)) {
+                anchorCoord = { x, y };
+            }
+        }
+
+        // Phase 3 — chat-anchor validator: human-filed cards (createdBy === 0 / USER)
+        // must pin an originating chat message for traceability into 心智/對話.
+        // Bots self-filing (createdBy > 0) and cron-spawn children (internal INSERT,
+        // never POST /card) are exempt — they render N/A in the UI.
+        if (createdBy === 0 && !anchorMsgId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing chatAnchorMessageId — human-filed cards must pin an originating chat message.',
+                errorKey: 'kb_anchor_required',
+            });
+        }
 
         try {
             const result = await pool.query(
                 `INSERT INTO kanban_cards (id, device_id, title, description, priority, status, assigned_bots, created_by, reviewer_entity_id, status_changed_at,
-                    is_automation, schedule_enabled, schedule_type, schedule_cron, schedule_run_at, schedule_timezone, schedule_next_run_at, requires_screenshot_review)
+                    is_automation, schedule_enabled, schedule_type, schedule_cron, schedule_run_at, schedule_timezone, schedule_next_run_at, requires_screenshot_review,
+                    chat_anchor_message_id, chat_anchor_coord)
                  VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, NOW(),
-                    $10, $11, $12, $13, $14, $15, $16, $17)
+                    $10, $11, $12, $13, $14, $15, $16, $17,
+                    $18, $19::jsonb)
                  RETURNING *`,
                 [newCardId(), deviceId, title.trim(), description || '', cardPriority, cardStatus, JSON.stringify(bots), createdBy, reviewer,
-                    finalAutomation, schedEnabled, schedType, schedCron, schedRunAt, schedTz, schedNextRunAt, finalRequiresScreenshot]
+                    finalAutomation, schedEnabled, schedType, schedCron, schedRunAt, schedTz, schedNextRunAt, finalRequiresScreenshot,
+                    anchorMsgId, anchorCoord ? JSON.stringify(anchorCoord) : null]
             );
 
             const card = serializeCard(result.rows[0]);
@@ -555,7 +685,12 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     router.get('/cards', async (req, res) => {
         if (!authenticate(req, res)) return;
         const { deviceId } = { ...req.query, ...req.body };
-        const { status: filterStatus, assignedBot, priority: filterPriority, automation, q: searchQuery, since, until } = req.query;
+        const { status: filterStatus, assignedBot, priority: filterPriority, automation, q: searchQuery, since, until, includeComments, includeSubcards, includeArchived } = req.query;
+
+        const hasSearch = !!(searchQuery && typeof searchQuery === 'string' && searchQuery.trim());
+        // Search auto-includes archived cards (Hank 2026-04-28: 歸檔卡找不回來 = 知識斷掉);
+        // ?includeArchived=false explicitly opts out. Outside search context, archived stays excluded.
+        const showArchived = hasSearch && includeArchived !== 'false';
 
         try {
             let query = `
@@ -567,7 +702,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 LEFT JOIN (SELECT card_id, COUNT(*) AS cnt FROM kanban_comments GROUP BY card_id) cm ON cm.card_id = c.id
                 LEFT JOIN (SELECT card_id, COUNT(*) AS cnt FROM kanban_notes GROUP BY card_id) n ON n.card_id = c.id
                 LEFT JOIN (SELECT card_id, COUNT(*) AS cnt FROM kanban_files GROUP BY card_id) f ON f.card_id = c.id
-                WHERE c.device_id = $1 AND c.archived = false
+                WHERE c.device_id = $1${showArchived ? '' : ' AND c.archived = false'}
             `;
             const params = [deviceId];
             let paramIdx = 2;
@@ -602,10 +737,24 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
             // Funnel filters added 2026-04-23:
             // ?q=text  → ILIKE match on title (simple text search)
+            //   2026-04-28: ?includeComments=true expands to kanban_comments.text;
+            //   ?includeSubcards=true expands to kanban_notes (title+content) and
+            //   child cards (title+description) reached via parent_card_id self-ref.
+            //   Archived cards auto-included unless ?includeArchived=false.
             // ?since=ISO8601 / ?until=ISO8601  → updated_at range
-            if (searchQuery && typeof searchQuery === 'string' && searchQuery.trim()) {
-                query += ` AND c.title ILIKE $${paramIdx++}`;
-                params.push(`%${searchQuery.trim()}%`);
+            if (hasSearch) {
+                const pattern = `%${searchQuery.trim()}%`;
+                const patternIdx = paramIdx++;
+                params.push(pattern);
+                const clauses = [`c.title ILIKE $${patternIdx}`, `c.description ILIKE $${patternIdx}`];
+                if (includeComments === 'true' || includeComments === '1') {
+                    clauses.push(`EXISTS (SELECT 1 FROM kanban_comments kc WHERE kc.card_id = c.id AND kc.text ILIKE $${patternIdx})`);
+                }
+                if (includeSubcards === 'true' || includeSubcards === '1') {
+                    clauses.push(`EXISTS (SELECT 1 FROM kanban_notes kn WHERE kn.card_id = c.id AND (kn.title ILIKE $${patternIdx} OR kn.content ILIKE $${patternIdx}))`);
+                    clauses.push(`EXISTS (SELECT 1 FROM kanban_cards child WHERE child.parent_card_id = c.id AND (child.title ILIKE $${patternIdx} OR child.description ILIKE $${patternIdx}))`);
+                }
+                query += ` AND (${clauses.join(' OR ')})`;
             }
             if (since) {
                 const sinceDate = new Date(since);
@@ -627,7 +776,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             // to the top when they receive new comments/notes/status changes.
             query += ` ORDER BY
                 CASE c.priority WHEN 'P0' THEN 0 WHEN 'P1' THEN 1 WHEN 'P2' THEN 2 WHEN 'P3' THEN 3 END,
-                CASE c.status WHEN 'in_progress' THEN 0 WHEN 'review' THEN 1 WHEN 'todo' THEN 2 WHEN 'backlog' THEN 3 WHEN 'done' THEN 4 END,
+                ${KanbanStatus.priorityOrderSql('c.status')},
                 c.updated_at DESC NULLS LAST`;
 
             const result = await pool.query(query, params);
@@ -825,7 +974,12 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
         ['broadcast', /(廣播|broadcast|publisher|twitter|mastodon|wordpress|wp\.com|社群|x \(twitter\))/i],
         ['bridge',    /(橋接|bridge|osascript|u\d{2}|ssh|terminal-bridge|hermes-bridge)/i],
     ];
-    function classifySys(title) {
+    // Automation triggers (is_automation=true) anchor to a dedicated subsystem
+    // so the lineage (which cron spawned which real cards) becomes navigable.
+    // Spawned children keep their content classification — they get a
+    // sysHub edge for content + parent edge for lineage = dual-axis.
+    function classifySys(title, isAutomation) {
+        if (isAutomation) return 'automation';
         const t = String(title || '');
         for (const [sys, rx] of SYS_KEYWORDS) {
             if (rx.test(t)) return sys;
@@ -845,13 +999,11 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     router.get('/mindmap', async (req, res) => {
         if (!authenticate(req, res)) return;
         const { deviceId } = { ...req.query, ...req.body };
-        const includeAutomation = req.query.includeAutomation === 'true';
         try {
             const cardsResult = await pool.query(
-                `SELECT id, title, description, priority, status, parent_card_id, is_automation, assigned_bots
+                `SELECT id, title, description, priority, status, parent_card_id, is_automation, assigned_bots, chat_anchor_coord
                  FROM kanban_cards
                  WHERE device_id = $1 AND archived = false
-                   ${includeAutomation ? '' : 'AND (is_automation = false OR is_automation IS NULL)'}
                  ORDER BY
                     CASE priority WHEN 'P0' THEN 0 WHEN 'P1' THEN 1 WHEN 'P2' THEN 2 WHEN 'P3' THEN 3 END,
                     updated_at DESC NULLS LAST
@@ -860,14 +1012,15 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             );
 
             const sysHubs = {
-                invite:    { id: 'sys:invite',    label: '邀請',     sys: 'invite',    tier: 'domain', status: 'active', summary: '' },
-                device:    { id: 'sys:device',    label: '裝置',     sys: 'device',    tier: 'domain', status: 'active', summary: '' },
-                i18n:      { id: 'sys:i18n',      label: 'i18n',     sys: 'i18n',      tier: 'domain', status: 'active', summary: '' },
-                kanban:    { id: 'sys:kanban',    label: '看板',     sys: 'kanban',    tier: 'domain', status: 'active', summary: '' },
-                chat:      { id: 'sys:chat',      label: '聊天',     sys: 'chat',      tier: 'domain', status: 'active', summary: '' },
-                payment:   { id: 'sys:payment',   label: '支付',     sys: 'payment',   tier: 'domain', status: 'active', summary: '' },
-                broadcast: { id: 'sys:broadcast', label: '廣播',     sys: 'broadcast', tier: 'domain', status: 'active', summary: '' },
-                bridge:    { id: 'sys:bridge',    label: '橋接',     sys: 'bridge',    tier: 'domain', status: 'active', summary: '' },
+                invite:     { id: 'sys:invite',     label: '邀請',     sys: 'invite',     tier: 'domain', status: 'active', summary: '' },
+                device:     { id: 'sys:device',     label: '裝置',     sys: 'device',     tier: 'domain', status: 'active', summary: '' },
+                i18n:       { id: 'sys:i18n',       label: 'i18n',     sys: 'i18n',       tier: 'domain', status: 'active', summary: '' },
+                kanban:     { id: 'sys:kanban',     label: '看板',     sys: 'kanban',     tier: 'domain', status: 'active', summary: '' },
+                chat:       { id: 'sys:chat',       label: '聊天',     sys: 'chat',       tier: 'domain', status: 'active', summary: '' },
+                payment:    { id: 'sys:payment',    label: '支付',     sys: 'payment',    tier: 'domain', status: 'active', summary: '' },
+                broadcast:  { id: 'sys:broadcast',  label: '廣播',     sys: 'broadcast',  tier: 'domain', status: 'active', summary: '' },
+                bridge:     { id: 'sys:bridge',     label: '橋接',     sys: 'bridge',     tier: 'domain', status: 'active', summary: '' },
+                automation: { id: 'sys:automation', label: '自動化',   sys: 'automation', tier: 'domain', status: 'active', summary: '' },
             };
 
             const nodes = [];
@@ -876,10 +1029,10 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             const sysCount = {};
 
             for (const c of cardsResult.rows) {
-                const sys = classifySys(c.title);
+                const sys = classifySys(c.title, c.is_automation);
                 sysCount[sys] = (sysCount[sys] || 0) + 1;
                 const summary = (c.description || '').replace(/\s+/g, ' ').trim().slice(0, 120);
-                nodes.push({
+                const node = {
                     id: c.id,
                     label: (c.title || '').slice(0, 40),
                     sys,
@@ -888,18 +1041,26 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     summary,
                     priority: c.priority,
                     cardStatus: c.status,
-                });
+                    isAutomation: !!c.is_automation,
+                };
+                const coord = c.chat_anchor_coord;
+                if (coord && Number.isFinite(coord.x) && Number.isFinite(coord.y)) {
+                    node.coord = { x: coord.x, y: coord.y };
+                }
+                nodes.push(node);
                 cardIds.add(c.id);
             }
 
-            // Hub nodes: include hubs that own ≥1 card (keeps the rail tidy)
+            // Hub nodes: include hubs that own ≥1 card (keeps the rail tidy).
+            // Every card gets a hub edge — the parent_card_id edge is added
+            // separately below, so cards with parents end up dual-axis
+            // (lineage to parent + content/automation to hub).
             for (const sys of Object.keys(sysHubs)) {
                 if (sysCount[sys]) {
                     const hub = { ...sysHubs[sys], summary: `${sysCount[sys]} 張卡片` };
                     nodes.unshift(hub);
-                    // Connect each card in this sys to its hub when no parent_card edge exists yet
                     for (const c of cardsResult.rows) {
-                        if (classifySys(c.title) === sys && !c.parent_card_id) {
+                        if (classifySys(c.title, c.is_automation) === sys) {
                             edges.push([hub.id, c.id]);
                         }
                     }
@@ -1922,10 +2083,11 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
         const intervalMs = Math.max(5, Number(prefs.kanban_nudge_interval_minutes) || 180) * 60 * 1000;
         const batchSize = Math.max(1, Math.min(20, Number(prefs.kanban_nudge_batch_size) || 1));
         const priorityMode = prefs.kanban_nudge_priority_mode || 'priority_first';
+        const perEntityThrottle = prefs.kanban_nudge_per_entity_throttle !== false;
         const allowedStatuses = new Set(
             Array.isArray(prefs.kanban_nudge_statuses) && prefs.kanban_nudge_statuses.length
                 ? prefs.kanban_nudge_statuses
-                : ['todo', 'in_progress', 'review']
+                : KanbanStatus.NUDGE_DEFAULT_STATUSES
         );
 
         // Status filter applies to ALL levels — if user opts backlog out, no auto-escalation there either.
@@ -1960,27 +2122,102 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
         if (level1Pending.length === 0) return;
 
-        const picked = sortCardsByNudgeMode(level1Pending, priorityMode).slice(0, batchSize);
-        console.log(`[Kanban] Stale nudge for ${deviceId}: ${picked.length}/${level1Pending.length} (mode=${priorityMode}, batch=${batchSize}, interval=${intervalMs / 60000}m)`);
+        // Per-entity throttle: skip Level-1 cards whose recipient bots all got
+        // nudged within intervalMs (regardless of which card the prior nudge cited).
+        // Cards with no assigned_bots fall through unchanged — the system comment
+        // is still added but no entity gets a duplicate push.
+        const lastByEntity = perEntityThrottle ? await loadEntityNudgeLog(deviceId) : null;
+        const sortedCandidates = sortCardsByNudgeMode(level1Pending, priorityMode);
+        const picked = [];
+        const willNudgeEntity = new Set();
+        for (const card of sortedCandidates) {
+            if (picked.length >= batchSize) break;
+            if (perEntityThrottle && !cardHasFreshRecipient(card, lastByEntity, willNudgeEntity, intervalMs)) {
+                continue;
+            }
+            picked.push(card);
+            for (const bid of (card.assigned_bots || [])) willNudgeEntity.add(bid);
+        }
+
+        if (picked.length === 0) return;
+
+        console.log(`[Kanban] Stale nudge for ${deviceId}: ${picked.length}/${level1Pending.length} (mode=${priorityMode}, batch=${batchSize}, interval=${intervalMs / 60000}m, perEntityThrottle=${perEntityThrottle})`);
 
         for (const card of picked) {
             await fireLevelOneNudge(card);
         }
     }
 
-    async function fireBlockEscalation(card) {
-        const elapsedHrs = Math.round((Date.now() - new Date(card.status_changed_at).getTime()) / 3600000 * 10) / 10;
+    async function loadEntityNudgeLog(deviceId) {
+        const map = new Map();
+        try {
+            const r = await pool.query(
+                `SELECT entity_id, last_nudged_at FROM kanban_entity_nudge_log WHERE device_id = $1`,
+                [deviceId]
+            );
+            for (const row of r.rows) {
+                map.set(Number(row.entity_id), new Date(row.last_nudged_at).getTime());
+            }
+        } catch (err) {
+            console.error('[Kanban] loadEntityNudgeLog error:', err.message);
+        }
+        return map;
+    }
+
+    function cardHasFreshRecipient(card, lastByEntity, willNudgeEntity, intervalMs) {
+        const bots = card.assigned_bots || [];
+        if (bots.length === 0) return true;
+        const now = Date.now();
+        return bots.some(bid => {
+            if (willNudgeEntity.has(bid)) return false;
+            const last = lastByEntity.get(Number(bid));
+            return !last || (now - last) > intervalMs;
+        });
+    }
+
+    async function recordEntityNudge(deviceId, entityIds) {
+        if (!Array.isArray(entityIds) || entityIds.length === 0) return;
+        try {
+            const values = entityIds.map((_, i) => `($1, $${i + 2}, NOW())`).join(', ');
+            await pool.query(
+                `INSERT INTO kanban_entity_nudge_log (device_id, entity_id, last_nudged_at)
+                 VALUES ${values}
+                 ON CONFLICT (device_id, entity_id) DO UPDATE SET last_nudged_at = NOW()`,
+                [deviceId, ...entityIds.map(Number)]
+            );
+        } catch (err) {
+            console.error('[Kanban] recordEntityNudge error:', err.message);
+        }
+    }
+
+    function buildEscalationRecipients(card) {
         const config = card.config || {};
         const esc = config.escalationPolicy || {};
         const notifyEntityId = esc.notifyEntityId || card.reviewer_entity_id;
+        const bots = Array.isArray(card.assigned_bots) ? card.assigned_bots : [];
+        const seen = new Set();
+        const out = [];
+        for (const id of [notifyEntityId, ...bots]) {
+            if (id == null) continue;
+            const key = String(id);
+            if (seen.has(key)) continue;
+            seen.add(key);
+            out.push(id);
+        }
+        return out;
+    }
+
+    async function fireBlockEscalation(card) {
+        const elapsedHrs = Math.round((Date.now() - new Date(card.status_changed_at).getTime()) / 3600000 * 10) / 10;
+        const recipients = buildEscalationRecipients(card);
         await pool.query(
             `UPDATE kanban_cards SET status = 'blocked', status_changed_at = NOW(), last_stale_nudge_at = NOW(), updated_at = NOW() WHERE id = $1`,
             [card.id]
         );
         await addSystemComment(card.id, card.device_id,
             `🚫 自動封鎖：此卡片已停滯 ${elapsedHrs} 小時，已自動移至「blocked」，請人工介入`);
-        if (notifyEntityId != null) {
-            notifyEntities(card.device_id, [notifyEntityId],
+        if (recipients.length > 0) {
+            notifyEntities(card.device_id, recipients,
                 `🚫 卡片「${card.title}」已停滯 ${elapsedHrs}h，自動 blocked，需人工介入`,
                 { cardId: card.id });
         }
@@ -1989,9 +2226,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
 
     async function fireLevelTwoEscalation(card) {
         const elapsedHrs = Math.round((Date.now() - new Date(card.status_changed_at).getTime()) / 3600000 * 10) / 10;
-        const config = card.config || {};
-        const esc = config.escalationPolicy || {};
-        const notifyEntityId = esc.notifyEntityId || card.reviewer_entity_id;
+        const recipients = buildEscalationRecipients(card);
         const PRIORITY_UPGRADE = { P3: 'P2', P2: 'P1', P1: 'P0', P0: 'P0' };
         const newPriority = PRIORITY_UPGRADE[card.priority] || card.priority;
         if (newPriority === card.priority) return false;
@@ -2001,8 +2236,8 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
         );
         await addSystemComment(card.id, card.device_id,
             `⬆️ 自動升級：停滯 ${elapsedHrs} 小時，優先級 ${card.priority} → ${newPriority}`);
-        if (notifyEntityId != null) {
-            notifyEntities(card.device_id, [notifyEntityId],
+        if (recipients.length > 0) {
+            notifyEntities(card.device_id, recipients,
                 `⬆️ 卡片「${card.title}」停滯 ${elapsedHrs}h，已自動升級至 ${newPriority}`,
                 { cardId: card.id });
         }
@@ -2030,6 +2265,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 hours: elapsedHrs
             });
             notifyEntities(card.device_id, bots, msg, { description: card.description, cardId: card.id });
+            await recordEntityNudge(card.device_id, bots);
         }
         console.log(`[Kanban] Nudged card ${card.id} (${card.title}) — ${elapsedHrs}h in ${card.status}`);
     }
@@ -2158,16 +2394,23 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     }
                     const childTitle = `[Auto] ${card.title} (${timeLabel})`;
 
-                    // Create child card (inherit reviewerEntityId from parent)
+                    // Create child card (inherit reviewerEntityId + requires_screenshot_review from parent).
+                    // Mom-card editing surfaces a toggle so Hank can flip per-cron whether the
+                    // automated runs need an evidence screenshot before the screenshot-gate
+                    // releases /move to done. Passing the column through verbatim (NULL→NULL,
+                    // TRUE→TRUE, FALSE→FALSE) keeps child semantics aligned with the mom UI:
+                    // the helper's `!== false` rule treats NULL as "gate active" for both.
+                    const inheritScreenshot = card.requires_screenshot_review;
                     const childResult = await pool.query(
                         `INSERT INTO kanban_cards (id, device_id, title, description, priority, status, assigned_bots, created_by,
-                            status_changed_at, stale_threshold_ms, done_retention_ms, parent_card_id, is_auto_generated, reviewer_entity_id)
-                         VALUES ($1, $2, $3, $4, $5, 'todo', $6::jsonb, $7, NOW(), $8, $9, $10, true, $11)
+                            status_changed_at, stale_threshold_ms, done_retention_ms, parent_card_id, is_auto_generated, reviewer_entity_id,
+                            requires_screenshot_review)
+                         VALUES ($1, $2, $3, $4, $5, 'todo', $6::jsonb, $7, NOW(), $8, $9, $10, true, $11, $12)
                          RETURNING *`,
                         [newCardId(), card.device_id, childTitle, card.description || '', card.priority,
                          JSON.stringify(bots), card.created_by,
                          card.stale_threshold_ms, card.done_retention_ms, card.id,
-                         card.reviewer_entity_id || null]
+                         card.reviewer_entity_id || null, inheritScreenshot]
                     );
                     const childCard = childResult.rows[0];
                     console.log(`[Kanban] Automation child created: ${childCard.id} (${childTitle})`);
@@ -2188,8 +2431,12 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     await addSystemComment(childCard.id, card.device_id,
                         `📋 由自動化母卡 [${card.title}] 自動建立`);
 
-                    // Push notify assigned bots
-                    if (bots.length > 0) {
+                    // Push notify assigned bots — gated by kanban_cron_spawn_notify
+                    // (default false: child card has just been born; let stale-scan
+                    // pick it up later instead of pinging immediately, which Hank
+                    // experienced as 5–6 nudges within an hour on 2026-04-28).
+                    const spawnPrefs = await devicePrefs.getPrefs(card.device_id).catch(() => ({}));
+                    if (bots.length > 0 && spawnPrefs.kanban_cron_spawn_notify === true) {
                         const lang = await getDeviceLanguage(card.device_id);
                         const msg = tKanban(lang, 'automationTrigger', {
                             title: card.title,
@@ -2225,7 +2472,11 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     await addSystemComment(card.id, card.device_id,
                         `🗓️ 排程觸發（重複）— ${statusMsg}下次執行: ${nextRun ? nextRun.toISOString() : '未知'}`);
 
-                    if (bots.length > 0) {
+                    // Gated by kanban_cron_recurring_notify (default true) — these
+                    // are typically lower-frequency self-recurring母卡 (no子卡 spawn),
+                    // so user usually wants the ping. Allow opt-out for noisy crons.
+                    const recurringPrefs = await devicePrefs.getPrefs(card.device_id).catch(() => ({}));
+                    if (bots.length > 0 && recurringPrefs.kanban_cron_recurring_notify !== false) {
                         const lang = await getDeviceLanguage(card.device_id);
                         const msg = card.status !== newStatus
                             ? tKanban(lang, 'scheduleRecurringWithStatus', {
@@ -2362,6 +2613,35 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             console.error(`[Kanban] autoReviewOnTransform error:`, err.message);
         }
     }
+
+    // Debug endpoint to trace screenshot review default logic
+    router.get('/debug/screenshot-review-default', (req, res) => {
+        const { title = "Sample Card", requiresScreenshotReview } = req.query;
+
+        // Simulate the logic from POST /card
+        const finalRequiresScreenshot = requiresScreenshotReview === undefined
+            ? false  // Default to disabled for all new cards
+            : requiresScreenshotReview !== 'false';
+
+        res.json({
+            debug: true,
+            input: {
+                title,
+                requiresScreenshotReview: requiresScreenshotReview || 'undefined'
+            },
+            logic: {
+                step1: 'requiresScreenshotReview === undefined',
+                step1Result: requiresScreenshotReview === undefined,
+                step2: 'requiresScreenshotReview === undefined ? false : requiresScreenshotReview !== "false"',
+                finalResult: finalRequiresScreenshot
+            },
+            output: {
+                requiresScreenshotReview: finalRequiresScreenshot
+            },
+            codeVersion: 'abf74108-debug',
+            timestamp: new Date().toISOString()
+        });
+    });
 
     return { router, initKanbanDatabase, startBackgroundTimers, stopBackgroundTimers, autoReviewOnTransform };
 };

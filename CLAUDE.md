@@ -7,8 +7,8 @@
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
-- **Current version**: 1.1091.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
-- **Android app version**: 1.0.77 (versionCode 83); `LATEST_APP_VERSION` constant in `backend/index.js`
+- **Current version**: 1.1121.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **Android app version**: 1.0.79 (versionCode 85); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
 ---
@@ -110,7 +110,7 @@ EClaw/
 │   │   │   ├── community.html     # Community template hub
 │   │   │   ├── workspace.html     # Split-view workspace mode
 │   │   │   ├── analytics.html    # Site pageview analytics admin dashboard
-│   │   │   ├── mindmap.html      # Mind map visualization (Cytoscape + canvas)
+│   │   │   ├── mindmap.html      # (deleted v1.1114; mindmap now embedded in mission.html)
 │   │   │   ├── publisher.html    # Multi-platform article publisher UI
 │   │   │   ├── publisher-setup.html # Publisher platform configuration wizard
 │   │   │   ├── wallet.html       # E-coin wallet management
@@ -153,14 +153,14 @@ EClaw/
 │   │   ├── privacy-policy.html    # Privacy policy page (i18n, 12 languages)
 │   │   ├── llms.txt               # AI search engine discovery file
 │   │   ├── robots.txt             # SEO: crawler directives
-│   │   ├── sitemap.xml            # SEO: sitemap (5 URLs)
+│   │   ├── sitemap.xml            # SEO: sitemap (10 URLs)
 │   │   ├── sw.js                  # Service worker for PWA support
 │   │   ├── assets/
 │   │   │   └── og-image.png       # Open Graph social sharing image
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
 │   ├── tests/                # Regression + integration tests (59 files)
-│   ├── tests/jest/           # Jest unit tests (140 files, CI-run via `npm test`)
+│   ├── tests/jest/           # Jest unit tests (146 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -198,8 +198,8 @@ EClaw/
 │   ├── go/                        # Go SDK
 │   └── rust/                      # Rust SDK
 ├── docs/
-│   ├── plans/                     # Design documents (23 files)
-│   ├── reports/                   # Test & analysis reports (8 files)
+│   ├── plans/                     # Design documents (42 files)
+│   ├── reports/                   # Test & analysis reports (20 files)
 │   └── issues/                    # Issue documentation (4 files)
 ├── .github/workflows/
 │   ├── backend-ci.yml             # Backend lint + Jest tests
@@ -223,7 +223,7 @@ EClaw/
 
 ### Backend (Node.js/Express)
 
-- **Single-file server**: `backend/index.js` (~17,979 lines) contains all API routes
+- **Single-file server**: `backend/index.js` (~18,186 lines) contains all API routes
 - **Database**: PostgreSQL (Railway-managed), connection in `backend/db.js`
 - **Real-time**: Socket.IO for live updates to Web Portal and Android app
 - **Auth**: JWT tokens (cookie-based for web, header-based for API), social OAuth (Google, Facebook), OIDC
@@ -257,7 +257,7 @@ EClaw/
 | `scheduled_messages` | _(legacy/deprecated)_ Scheduled message definitions |
 | `schedule_executions` | _(legacy/deprecated)_ Scheduled message execution log |
 | `server_logs` | Server-side audit/event logs |
-| `usage_tracking` | Server-side usage limits |
+| `usage_tracking` | _(legacy)_ Was used for daily message limit (removed v1.1105+); table retained for audit only — no longer written by `/api/client/speak` |
 | `roles` | RBAC role definitions |
 | `user_roles` | User-to-role assignments |
 | `oauth_clients` | OAuth 2.0 client registrations |
@@ -349,7 +349,7 @@ EClaw/
 | Enterprise | `/enterprise` | Enterprise landing page (public, SEO, JSON-LD) |
 | Privacy Policy | `/privacy-policy.html` | Privacy policy (public, i18n) |
 | Analytics | `/portal/analytics.html` | Site pageview analytics (admin) |
-| Mind Map | `/portal/mindmap.html` | Mind map visualization (Cytoscape) |
+| Mind Map | `/portal/mission.html` (embedded) | Mind map visualization (Cytoscape, was standalone mindmap.html until v1.1114) |
 | Publisher | `/portal/publisher.html` | Multi-platform article publisher |
 | Publisher Setup | `/portal/publisher-setup.html` | Publisher platform config wizard |
 | Wallet | `/portal/wallet.html` | E-coin wallet management |
@@ -371,7 +371,7 @@ EClaw/
 - Billing: Google Play Billing (`BillingManager.kt`)
 - AI Chat: `AiChatViewModel.kt` manages state (fixes message loss, typing race condition)
 - Bottom nav: FILES tab renamed to CARDS (Card Holder); Files link moved to Settings
-- App version: 1.0.77 (versionCode 83)
+- App version: 1.0.79 (versionCode 85)
 
 ### iOS/React Native App (Expo)
 
@@ -964,11 +964,59 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Rental: my listings tab (v1.1091)**: Listing pause/delist outside agent card
 - **compactEntitySlots SAVEPOINT guard**: scheduled_messages migration wrapped in SAVEPOINT to prevent compaction failure when schema is incomplete
 
+### Recent Features (v1.1092.x – v1.1104.x)
+
+- **Rental: My Listings Tab (v1.1092)**: Listing pause/delist outside agent card for rental marketplace management
+- **Kanban Entity Funnel Filter (v1.1093)**: `entity_id` funnel filter with permalink support on kanban board; 6-locale i18n
+- **i18n Korean Leak Fix (v1.1093)**: Fixed `cc_warn` Korean text leaking into 9 non-Korean locales + Japanese typo
+- **Mindmap Node Citation Chip (v1.1094)**: Wire mindmap node citations into chat as clickable chips
+- **Mindmap Subsystems Toolbar (v1.1095–v1.1096)**: Subsystems toolbar dropdown + Cytoscape pan/zoom animation; re-render popover on every open
+- **Publisher Multi-Tenant Vault (v1.1096–v1.1103)**: Vault-first credentials for 8 platforms (Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) — users can provide their own API keys via device-vars instead of relying on server-wide env vars
+- **Info Page Publisher Roadmap (v1.1097)**: Publisher multi-tenant status panel + key migration roadmap on info page
+- **Arena Intro i18n (v1.1100–v1.1104)**: Interview arena intro panel translated to all 12 languages (zh-CN, ja, ko, th, vi, id, fr, es, de, ms, hi, ar)
+- **Hindi i18n Batch 1 (v1.1103)**: 469 new Hindi translation keys (batch 1 of 3)
+- **API Auth Broadening (v1.1103)**: `/api/entities` and `/api/status` now accept `botSecret+entityId` auth (in addition to `deviceSecret`)
+- **Mindmap Automation Subsystem (v1.1104)**: `sys:automation` as first-class subsystem; dual-axis edges (lineage + content); unified cite (`quoteToChat`) for mindmap nodes
+- **Mission-Mindmap Citable Fix (v1.1103)**: Citable `card_<hex>` references + sidebar zoom in mission-mindmap component
+- **Chat Draft Fix (v1.1104)**: Clear stale `chat_draft` when mindmap cite prefills chat input
+- **Claude CLI Proxy Vault PAT (v1.1093)**: Vault-first PAT resolution for Claude CLI proxy
+- **Compact SAVEPOINT Guard (v1.1092)**: `scheduled_messages` migration wrapped in SAVEPOINT to prevent entity compaction failure
+
+### Recent Features (v1.1105.x – v1.1121.x)
+
+- **Daily Message Limit Removed (v1.1105)**: Cancelled 15-msg/day cap; `enforceUsageLimit()` is no-op; regression test `usage-limit-removed.test.js`
+- **Hermes Message Queue System (v1.1106–v1.1116)**: `enqueueMessage()` centralized push delivery; per-entity 200-msg cap + DLQ buffer; delivery-stuck heartbeat detection (Phase H1.2); `/api/health` 503 on severe stuck triggers Railway auto-restart (Phase H1.5); boot-time clamp for ghost entities
+- **Kanban Blocked Status (v1.1108–v1.1109)**: `blocked` status label added to all 12 locales; nudge config sources from `kanban-status.js` SoT
+- **Kanban Search Expansion (v1.1111)**: Search extends to comments/subcards + archived card detail view
+- **Mindmap UX (v1.1112)**: Finer wheel-zoom + decoupled trackpad pinch; fullscreen toggle + `?view-mode=full` URL flag; standalone mindmap.html removed, ported to mission embed
+- **Chat-Anchor System (v1.1114–v1.1120)**: Phase 1 — `chat_anchor_msg_id` + `chat_anchor_coord` schema on `kanban_cards`; Phase 2 — chat-anchor picker UI in kanban; Phase 3 — validator on POST /card; Phase 4 — write-side capture `chat_anchor_coord` on card create from mindmap
+- **Kanban-Nudge Split (v1.1117)**: Split 內容督促 vs 排程觸發 + per-entity throttle
+- **Settings Deep-Link (v1.1116)**: `?focus=` URL parameter for section filter; APP entry buttons wired to settings.html sections
+- **Screenshot Lightbox Zoom (v1.1116)**: Wheel/dblclick/drag/pinch zoom in kanban screenshot lightbox
+- **Kanban Escalation Fix (v1.1114)**: L2/L3 escalation notifies assigned_bots, not just notifyEntityId
+- **Landing CTA (v1.1113)**: Browse Bots CTA → community.html (13 locales)
+- **Community SEO (v1.1113)**: community.html og:locale + 13 og:locale:alternate
+- **Invite Redeem Fix (v1.1113)**: Preserve `?redeem=` across signup/login flow
+- **i18n Cron-Notify Fix (v1.1117)**: EN labels for cron-notify keys no longer leak CJK 母卡
+- **Telegram Adapter PoC (v1.1121, reverted)**: Long-poll Telegram adapter attempted then reverted
+- **App Version**: Updated to 1.0.79 (versionCode 85)
+
+### Recent Features (v1.1122.x – v1.1127.x)
+
+- **Smart Chip Cross-Pane Requote (v1.1127)**: 📌 cross-pane requote + 已引用 toast for smart chip references in workspace split-view (#2253)
+- **Publisher Qiita Locale Fix (v1.1126)**: Qiita platform locale defaults to `ja` instead of `zh-TW` (#2252)
+- **Vector-Memory Promo Content (v1.1126)**: Launch article + 5 social posts + flow diagram for vector-memory feature (#2251)
+- **Info Page SEO Meta Swap (v1.1125–v1.1126)**: Per-panel dynamic `og:`/`twitter:` meta + JSON-LD + 4 marketing hook panels for vector-memory on info.html (#2249–#2250)
+- **Kanban Search-Scope i18n (v1.1124)**: Added kanban search-scope keys for ja/ko/de locales (#2248)
+- **Mindmap Empty-State for Fresh Devices (v1.1123)**: Ripped `MOCK_NODES`/`MOCK_EDGES` seed data; mindmap now renders an empty-state UI for fresh devices instead of mock content (#2246)
+- **Kanban Cron-Spawn Child Inheritance (v1.1122)**: Cron-spawned child cards inherit `requires_screenshot_review` flag from parent; mom card edit toggle for screenshot review setting (#2245)
+- **Mindmap Phase 4 Read-Side (v1.1122)**: `/api/mission/mindmap` honors `chat_anchor_coord` for read-side rendering, connecting mindmap nodes to chat anchor positions (#2244)
+
 ---
 
 ## Test Coverage Summary
 
-**~450 total API routes** across all modules (400 excluding Article Publisher), **~82% covered** by Jest + integration tests (~2353 test cases across 140 Jest files + 78 integration tests).
+**~450 total API routes** across all modules (400 excluding Article Publisher), **~83% covered** by Jest + integration tests (~2412 test cases across 146 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -1079,6 +1127,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | AI Support Chat | `tests/jest/ai-support.test.js` | AI chat submit/poll endpoint validation, auth rejection (Issue #248) |
 | Auth Extended | `tests/jest/auth-extended.test.js` | device-login, verify-email, forgot-password, reset-password, bind-email, app-login, OAuth (Google/Facebook/OIDC), account deletion, RBAC roles |
 | Subscription | `tests/jest/subscription.test.js` | Subscription status, TapPay payment, cancellation, Google Play verification, usage limits |
+| Usage Limit Removed | `tests/jest/usage-limit-removed.test.js` | Regression: `enforceUsageLimit()` is a no-op; never queries `usage_tracking` / `invite_rewards`; always returns `allowed:true, limit:null` |
 | Official Borrow | `tests/jest/official-borrow.test.js` | Official bot borrowing lifecycle (bind-free, bind-personal, add-paid-slot, unbind, verify-subscription) |
 | Device Preferences | `tests/jest/device-preferences.test.js` | Device preference GET/PUT, auth validation |
 | Publisher Extended | `tests/jest/publisher-extended.test.js` | Blogger, Hashnode, X/Twitter, Tumblr, Reddit, LinkedIn, Mastodon publish/delete/me validation |
@@ -1123,7 +1172,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (140 files)
+cd backend && npm test                  # Jest unit tests (146 files)
 cd backend && npm run lint              # ESLint
 ```
 

@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS kanban_cards (
     title VARCHAR(255) NOT NULL,
     description TEXT DEFAULT '',
     priority VARCHAR(8) NOT NULL DEFAULT 'P2',           -- P0, P1, P2, P3
-    status VARCHAR(16) NOT NULL DEFAULT 'backlog',       -- backlog, todo, in_progress, review, done
+    status VARCHAR(16) NOT NULL DEFAULT 'backlog',       -- canonical enum: see public/shared/kanban-status.js (backlog, todo, in_progress, review, done, blocked)
     assigned_bots JSONB DEFAULT '[]'::jsonb,             -- array of entity IDs e.g. [2, 4]
     created_by INTEGER NOT NULL DEFAULT 0,               -- entity ID of creator
     status_changed_at TIMESTAMPTZ DEFAULT NOW(),         -- for stale detection
@@ -55,6 +55,23 @@ ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS reviewer_entity_id INTEGER DEF
 -- Screenshot review gate (2026-04-24): cards with this flag cannot move to review/done
 -- without at least one image/* file attached via POST /api/mission/card/:id/file.
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS requires_screenshot_review BOOLEAN DEFAULT TRUE;
+
+-- Chat-anchor (2026-04-28): every human-filed card should pin the originating
+-- chat message + mind-map coord so the card has provenance back into 心智 / 對話.
+-- Auto-cards leave both NULL (rendered as N/A in UI).
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS chat_anchor_message_id TEXT DEFAULT NULL;
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS chat_anchor_coord JSONB DEFAULT NULL;
+
+-- Per-entity nudge log (2026-04-28): hard ceiling so a single bot can't be
+-- nudged more than once per kanban_nudge_interval_minutes regardless of how
+-- many stale cards reference it. Cron-schedule母卡 spawn子卡 path is gated
+-- by device_preferences.kanban_cron_spawn_notify and never writes here.
+CREATE TABLE IF NOT EXISTS kanban_entity_nudge_log (
+    device_id VARCHAR(64) NOT NULL,
+    entity_id INTEGER NOT NULL,
+    last_nudged_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (device_id, entity_id)
+);
 
 CREATE INDEX IF NOT EXISTS idx_kanban_cards_automation ON kanban_cards(device_id, is_automation)
     WHERE is_automation = true;

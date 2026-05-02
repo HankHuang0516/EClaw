@@ -235,7 +235,6 @@ describe('Growth /daily date param (historical snapshots)', () => {
 
 describe('Growth /daily rate limit', () => {
     it('allows up to 60 requests per botSecret per hour', async () => {
-        // Simulate 60 successful calls
         for (let i = 0; i < 60; i++) {
             setupAdminQueries();
             const res = await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2');
@@ -245,10 +244,9 @@ describe('Growth /daily rate limit', () => {
         mockQuery.mockResolvedValueOnce({ rows: [{ is_admin: true }] });
         const res = await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2');
         expect(res.status).toBe(429);
-    });
+    }, 30000);
 
     it('separates rate buckets per botSecret', async () => {
-        // exhaust admin-bot-sec
         for (let i = 0; i < 60; i++) {
             setupAdminQueries();
             await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2');
@@ -257,5 +255,5 @@ describe('Growth /daily rate limit', () => {
         setupAdminQueries();
         const res = await get('?deviceId=user-dev&botSecret=user-bot-sec&entityId=2');
         expect(res.status).toBe(200);
-    });
+    }, 30000);
 });

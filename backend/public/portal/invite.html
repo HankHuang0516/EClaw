@@ -367,17 +367,22 @@
 
                 const invited = Number(data.total_invited) || 0;
                 const dailyUsed = Number(data.daily_used) || 0;
-                const dailyLimit = Number(data.daily_limit) || 15;
+                const dailyLimit = data.daily_limit == null ? null : Number(data.daily_limit);
+                const isUnlimited = dailyLimit == null;
                 const estEarned = invited * INVITER_REWARD_ECOIN;
 
                 document.getElementById('kpiInvited').textContent = invited.toLocaleString();
                 document.getElementById('kpiBonus').textContent = estEarned.toLocaleString();
-                document.getElementById('kpiTodayUsed').textContent = `${dailyUsed} / ${dailyLimit}`;
+                document.getElementById('kpiTodayUsed').textContent = isUnlimited
+                    ? `${dailyUsed} / ∞`
+                    : `${dailyUsed} / ${dailyLimit}`;
                 document.getElementById('kpiConversion').textContent = '—';
 
-                const pct = dailyLimit > 0 ? Math.min(100, (dailyUsed / dailyLimit) * 100) : 0;
+                const pct = isUnlimited ? 0 : (dailyLimit > 0 ? Math.min(100, (dailyUsed / dailyLimit) * 100) : 0);
                 document.getElementById('usageBarFill').style.width = pct + '%';
-                document.getElementById('usageBarLabel').textContent = `${dailyUsed} / ${dailyLimit}`;
+                document.getElementById('usageBarLabel').textContent = isUnlimited
+                    ? `${dailyUsed} ${tt('invite_unlimited_label', 'sent (unlimited)')}`
+                    : `${dailyUsed} / ${dailyLimit}`;
 
                 const history = loadInviteHistory();
                 history[invDayKey(new Date())] = dailyUsed;
@@ -471,6 +476,7 @@
             // Pre-fill redeem box when arriving via /invite/:code share link.
             const _redeemParam = (_params.get('redeem') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12);
             if (_redeemParam) {
+                try { localStorage.setItem('pendingInviteCode', _redeemParam); } catch (_) {}
                 const _input = document.getElementById('redeemInput');
                 if (_input) _input.value = _redeemParam;
             }

@@ -302,7 +302,7 @@ class SettingsActivity : AppCompatActivity() {
 
         findViewById<MaterialButton>(R.id.btnKanbanNudge).setOnClickListener {
             TelemetryHelper.trackAction("settings_kanban_nudge")
-            WebViewActivity.launch(this, "https://eclawbot.com/portal/settings.html#kanban-nudge-card", getString(R.string.kanban_nudge_settings_title))
+            WebViewActivity.launch(this, "https://eclawbot.com/portal/settings.html?focus=kanban-nudge", getString(R.string.kanban_nudge_settings_title))
         }
 
         findViewById<MaterialButton>(R.id.btnWallet).setOnClickListener {
@@ -1424,7 +1424,7 @@ class SettingsActivity : AppCompatActivity() {
 
         findViewById<com.google.android.material.button.MaterialButton>(R.id.btnChannelApiManage).setOnClickListener {
             TelemetryHelper.trackAction("channel_api_manage_all")
-            WebViewActivity.launch(this, "https://eclawbot.com/portal/settings.html", getString(R.string.channel_api_card_title))
+            WebViewActivity.launch(this, "https://eclawbot.com/portal/settings.html?focus=channel-api", getString(R.string.channel_api_card_title))
         }
     }
 

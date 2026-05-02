@@ -8,6 +8,31 @@ const { Pool } = require('pg');
 // Database connection pool
 let pool = null;
 
+function isProductionRuntime() {
+    return process.env.NODE_ENV === 'production' || Boolean(process.env.RAILWAY_ENVIRONMENT);
+}
+
+function shouldUseSsl(connectionString) {
+    const sslMode = (process.env.PGSSLMODE || '').toLowerCase();
+    if (sslMode === 'disable') return false;
+    if (sslMode === 'require' || sslMode === 'verify-ca' || sslMode === 'verify-full') {
+        return { rejectUnauthorized: sslMode !== 'require' };
+    }
+
+    try {
+        const host = new URL(connectionString).hostname;
+        if (host === 'localhost' || host === '127.0.0.1' || host.endsWith('.railway.internal')) {
+            return false;
+        }
+    } catch (_) {
+        // Fall through to the production default for non-URL connection strings.
+    }
+
+    return isProductionRuntime()
+        ? { rejectUnauthorized: false }
+        : false;
+}
+
 // Initialize database connection
 async function initDatabase() {
     const connectionString = process.env.DATABASE_URL;
@@ -23,14 +48,13 @@ async function initDatabase() {
     // on the first attempt, causing a silent fallback to file storage that
     // wipes all in-memory entities (see 2026-04-20 incident).
     const MAX_RETRIES = 5;
+    let ssl = shouldUseSsl(connectionString);
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
         try {
             // Create / recreate connection pool on each attempt
             pool = new Pool({
                 connectionString: connectionString,
-                ssl: process.env.NODE_ENV === 'production' ? {
-                    rejectUnauthorized: false // Railway uses self-signed certificates
-                } : false
+                ssl
             });
 
             // Test connection
@@ -46,6 +70,10 @@ async function initDatabase() {
             console.error(`[DB] Init attempt ${attempt}/${MAX_RETRIES} failed: ${err.message}`);
             // Clean up the failed pool before retrying
             if (pool) { try { await pool.end(); } catch (_) {} pool = null; }
+            if (ssl && /does not support SSL connections/i.test(err.message)) {
+                console.warn('[DB] Server rejected SSL; retrying without SSL for this DATABASE_URL');
+                ssl = false;
+            }
             if (attempt < MAX_RETRIES) {
                 const delay = Math.pow(2, attempt - 1) * 1000;
                 console.log(`[DB] Retrying in ${delay / 1000}s...`);
@@ -182,6 +210,11 @@ async function createTables() {
         // Add paid_borrow_slots column to devices table (tracks how many personal bots a device has paid for)
         await client.query(`
             ALTER TABLE devices ADD COLUMN IF NOT EXISTS paid_borrow_slots INTEGER DEFAULT 0
+        `);
+
+        // Prompt Policy: device-level system prompt orchestration, merged with entity identity/policy at runtime
+        await client.query(`
+            ALTER TABLE devices ADD COLUMN IF NOT EXISTS prompt_policy JSONB
         `);
 
         // Dynamic entity system: per-device counter for unique entity ID assignment
@@ -538,6 +571,37 @@ async function createTables() {
         `);
         await client.query(`CREATE INDEX IF NOT EXISTS idx_discord_bots_app ON discord_bots(application_id)`);
 
+        // Scheduled messages (Phase 1) — consolidated from scheduled_messages_schema.sql
+        // to ensure migration runs under db.js retry loop (not module-level init)
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS scheduled_messages (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                device_id TEXT NOT NULL,
+                chat_entity_id INTEGER NOT NULL,
+                user_entity_id INTEGER NOT NULL,
+                target_entity_ids JSONB NOT NULL,
+                content TEXT NOT NULL,
+                scheduled_at TIMESTAMPTZ NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                sent_at TIMESTAMPTZ,
+                cancelled_at TIMESTAMPTZ,
+                last_error TEXT,
+                CONSTRAINT scheduled_messages_content_len CHECK (char_length(content) BETWEEN 1 AND 10000)
+            )
+        `);
+        // Idempotent column adds for legacy tables predating Phase 1
+        await client.query(`ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS chat_entity_id INTEGER`);
+        await client.query(`ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS user_entity_id INTEGER`);
+        await client.query(`ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS target_entity_ids JSONB`);
+        await client.query(`ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS content TEXT`);
+        await client.query(`ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS scheduled_at TIMESTAMPTZ`);
+        await client.query(`ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()`);
+        await client.query(`ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ`);
+        await client.query(`ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMPTZ`);
+        await client.query(`ALTER TABLE scheduled_messages ADD COLUMN IF NOT EXISTS last_error TEXT`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_scheduled_messages_pending ON scheduled_messages (scheduled_at) WHERE sent_at IS NULL AND cancelled_at IS NULL`);
+        await client.query(`CREATE INDEX IF NOT EXISTS idx_scheduled_messages_device ON scheduled_messages (device_id, chat_entity_id)`);
+
         console.log('[DB] Database tables ready');
         client.release();
     } catch (err) {
@@ -561,11 +625,18 @@ async function saveDeviceData(deviceId, deviceData) {
 
             // Upsert device
             await client.query(
-                `INSERT INTO devices (device_id, device_secret, created_at, updated_at, next_entity_id)
-                 VALUES ($1, $2, $3, $4, $5)
+                `INSERT INTO devices (device_id, device_secret, created_at, updated_at, next_entity_id, prompt_policy)
+                 VALUES ($1, $2, $3, $4, $5, $6)
                  ON CONFLICT (device_id)
-                 DO UPDATE SET updated_at = $4, next_entity_id = $5`,
-                [deviceId, deviceData.deviceSecret, deviceData.createdAt, Date.now(), deviceData.nextEntityId || 1]
+                 DO UPDATE SET updated_at = $4, next_entity_id = $5, prompt_policy = $6`,
+                [
+                    deviceId,
+                    deviceData.deviceSecret,
+                    deviceData.createdAt,
+                    Date.now(),
+                    deviceData.nextEntityId || 1,
+                    deviceData.promptPolicy ? JSON.stringify(deviceData.promptPolicy) : null
+                ]
             );
 
             // Clear all public_code for this device first to avoid unique constraint
@@ -730,6 +801,9 @@ async function loadAllDevices() {
                 deviceSecret: row.device_secret,
                 createdAt: parseInt(row.created_at),
                 nextEntityId: parseInt(row.next_entity_id) || 1,
+                promptPolicy: row.prompt_policy
+                    ? (typeof row.prompt_policy === 'string' ? JSON.parse(row.prompt_policy) : row.prompt_policy)
+                    : null,
                 fcmToken: row.fcm_token || null,
                 apnsToken: row.apns_token || null,
                 entities: {}
@@ -2425,6 +2499,7 @@ module.exports = {
     cleanupExpiredPendingMessages,
     // Debug helper
     _getPool: () => pool,
+    _shouldUseSsl: shouldUseSsl,
     // Bot Plaza: Community
     setEntityPublic,
     searchPublicCards,

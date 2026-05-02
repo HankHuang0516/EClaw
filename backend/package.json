@@ -12,7 +12,9 @@
     "test:production": "API_BASE=https://eclawbot.com node stress-test.js",
     "test:persistence": "node test-persistence.js",
     "test:persistence:check": "node test-persistence.js --check",
-    "lint": "eslint ."
+    "smoke:portal": "node scripts/portal-smoke-check.js",
+    "lint": "eslint .",
+    "lint:i18n-dups": "node scripts/i18n-lint-dup-keys.js"
   },
   "keywords": [
     "realbot",
@@ -43,6 +45,7 @@
     "node-cron": "^3.0.3",
     "oauth-1.0a": "^2.2.6",
     "pg": "^8.18.0",
+    "protobufjs": "^7.5.5",
     "resend": "^6.9.2",
     "sanitize-html": "^2.17.2",
     "socket.io": "^4.8.3",

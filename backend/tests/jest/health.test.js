@@ -152,8 +152,12 @@ jest.mock('../../subscription', () => {
 // ── Load app after mocks are established ──
 const request = require('supertest');
 let app;
+const originalRailwayEnvironment = process.env.RAILWAY_ENVIRONMENT;
+const originalDatabaseUrl = process.env.DATABASE_URL;
 
 beforeAll(() => {
+    process.env.RAILWAY_ENVIRONMENT = 'production';
+    process.env.DATABASE_URL = 'postgresql://user:pass@postgres-pgvector.railway.internal:5432/railway';
     // jest.mock calls above ensure mocked modules are used when index.js loads
     app = require('../../index');
 });
@@ -161,6 +165,16 @@ beforeAll(() => {
 afterAll(async () => {
     const { httpServer } = require('../../index');
     await new Promise(resolve => httpServer.close(resolve));
+    if (originalRailwayEnvironment === undefined) {
+        delete process.env.RAILWAY_ENVIRONMENT;
+    } else {
+        process.env.RAILWAY_ENVIRONMENT = originalRailwayEnvironment;
+    }
+    if (originalDatabaseUrl === undefined) {
+        delete process.env.DATABASE_URL;
+    } else {
+        process.env.DATABASE_URL = originalDatabaseUrl;
+    }
     jest.resetModules();
 });
 
@@ -201,6 +215,12 @@ describe('GET /api/health', () => {
         const res = await request(app).get('/api/health');
         expect(typeof res.body.uptime).toBe('number');
         expect(res.body.uptime).toBeGreaterThanOrEqual(0);
+    });
+
+    it('requires PostgreSQL persistence on Railway when DATABASE_URL is configured', async () => {
+        const res = await request(app).get('/api/health');
+        expect(res.body.persistence.productionRequiresPostgresql).toBe(true);
+        expect(res.body.persistence.mode).toBe('postgresql');
     });
 });
 

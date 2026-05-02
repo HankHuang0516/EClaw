@@ -49,6 +49,8 @@
         .kb-column[data-status="in_progress"] .kb-col-title::before { background:#fbbf24; }
         .kb-column[data-status="review"] .kb-col-title { color:#fb923c; }
         .kb-column[data-status="review"] .kb-col-title::before { background:#fb923c; }
+        .kb-column[data-status="blocked"] .kb-col-title { color:#f87171; }
+        .kb-column[data-status="blocked"] .kb-col-title::before { background:#f87171; }
         .kb-column[data-status="done"] .kb-col-title { color:#4ade80; }
         .kb-column[data-status="done"] .kb-col-title::before { background:#4ade80; }
 
@@ -94,6 +96,17 @@
         /* Stale indicator */
         .kb-card.stale { border-color:#fbbf24; }
         .kb-card.stale::after { content:'⏰'; position:absolute; top:8px; right:8px; font-size:12px; }
+
+        /* Archived indicator (shown when search auto-includes archived cards) */
+        .kb-card.archived { opacity:0.78; border-style:dashed; }
+        .kb-card-archived-badge { font-size:10px; padding:1px 6px; border-radius:4px; background:rgba(107,114,128,0.18); color:#6b7280; font-weight:600; }
+
+        /* Search-scope chip cluster (next to funnel search input) */
+        .kb-search-scope { flex-wrap:wrap; }
+        .kb-search-scope label.kb-scope-chip { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border:1px solid var(--card-border); border-radius:var(--radius-pill); font-size:12px; font-weight:500; color:var(--text-secondary); cursor:pointer; user-select:none; transition:all 0.2s; background:none; }
+        .kb-search-scope label.kb-scope-chip.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+        .kb-search-scope label.kb-scope-chip:hover:not(.active) { border-color:var(--text-muted); color:var(--text); }
+        .kb-search-scope label.kb-scope-chip > input[type="checkbox"] { display:none; }
 
         /* ══════════════ Mobile Tabs ══════════════ */
         .kb-mobile-tabs { display:none; overflow-x:auto; gap:0; border-bottom:1px solid var(--card-border); margin-bottom:12px; scrollbar-width:none; }
@@ -202,9 +215,13 @@
         .kb-ss-thumb:hover { transform:scale(1.03); border-color:var(--primary); }
         .kb-ss-thumb img { width:100%; height:96px; object-fit:cover; display:block; }
         .kb-ss-caption { font-size:10px; padding:4px 6px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-        .kb-lightbox { position:fixed; inset:0; background:rgba(0,0,0,0.92); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:300; cursor:zoom-out; padding:24px; }
-        .kb-lightbox img { max-width:96vw; max-height:88vh; object-fit:contain; box-shadow:0 8px 40px rgba(0,0,0,0.6); }
-        .kb-lightbox-caption { margin-top:12px; color:#eee; font-size:13px; text-align:center; max-width:90vw; }
+        .kb-lightbox { position:fixed; inset:0; background:rgba(0,0,0,0.92); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:300; padding:0; }
+        .kb-lightbox-stage { display:flex; align-items:center; justify-content:center; flex:1; width:100%; overflow:hidden; touch-action:none; }
+        .kb-lightbox-img { max-width:96vw; max-height:80vh; object-fit:contain; transform-origin:center center; user-select:none; -webkit-user-drag:none; cursor:zoom-in; box-shadow:0 8px 40px rgba(0,0,0,0.6); }
+        .kb-lightbox-close { position:absolute; top:14px; right:18px; background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.32); color:#fff; font-size:24px; line-height:1; width:36px; height:36px; border-radius:50%; cursor:pointer; padding:0; display:flex; align-items:center; justify-content:center; z-index:1; }
+        .kb-lightbox-close:hover { background:rgba(255,255,255,0.22); }
+        .kb-lightbox-caption { margin-top:12px; color:#eee; font-size:13px; text-align:center; max-width:90vw; padding:0 16px; }
+        .kb-lightbox-hint { color:#888; font-size:12px; margin:6px 0 12px; padding:0 16px; text-align:center; }
 
         /* Move actions */
         .kb-move-bar { padding:12px 24px; border-top:1px solid var(--card-border); display:flex; gap:8px; flex-wrap:wrap; }
@@ -223,6 +240,23 @@
         .kb-form-select { width:100%; background:var(--input-bg); border:1px solid var(--card-border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text); font-size:13px; appearance:auto; }
         .kb-form-textarea { width:100%; background:var(--input-bg); border:1px solid var(--card-border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text); font-size:13px; min-height:60px; resize:vertical; font-family:inherit; }
         .kb-form-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:16px; }
+
+        /* ══════════════ Chat-anchor picker (Phase 2) ══════════════ */
+        .kb-anchor-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+        .kb-anchor-btn { background:var(--input-bg); border:1px dashed var(--card-border); color:var(--text-secondary); border-radius:var(--radius-sm); padding:6px 12px; font-size:12px; cursor:pointer; }
+        .kb-anchor-btn:hover { border-color:var(--primary); color:var(--text); }
+        .kb-anchor-chip { display:inline-flex; align-items:center; gap:6px; background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.4); border-radius:14px; padding:4px 10px; font-size:12px; color:var(--text); max-width:100%; }
+        .kb-anchor-chip-text { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:240px; }
+        .kb-anchor-chip-clear { background:none; border:none; color:var(--text-muted); cursor:pointer; padding:0 2px; font-size:14px; line-height:1; }
+        .kb-anchor-chip-clear:hover { color:#ef4444; }
+        .kb-anchor-panel { display:none; margin-top:8px; max-height:240px; overflow-y:auto; background:var(--input-bg); border:1px solid var(--card-border); border-radius:var(--radius-sm); }
+        .kb-anchor-panel.show { display:block; }
+        .kb-anchor-msg { padding:8px 12px; border-bottom:1px solid var(--card-border); cursor:pointer; font-size:12px; line-height:1.4; }
+        .kb-anchor-msg:last-child { border-bottom:none; }
+        .kb-anchor-msg:hover { background:rgba(99,102,241,0.08); }
+        .kb-anchor-msg-meta { font-size:10px; color:var(--text-muted); margin-bottom:2px; }
+        .kb-anchor-msg-text { color:var(--text); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        .kb-anchor-empty { padding:16px; text-align:center; color:var(--text-muted); font-size:12px; }
 
         /* ══════════════ Empty state ══════════════ */
         .kb-empty { text-align:center; padding:40px 20px; color:var(--text-muted); font-size:13px; }
@@ -542,8 +576,23 @@
 
         <!-- Funnel (collapsible) -->
         <div class="kb-funnel" id="kbFunnel" style="display:none; padding:8px 0 4px 0; gap:8px; flex-wrap:wrap;">
-            <input type="text" id="funnelSearch" placeholder="Search title…" data-i18n-placeholder="kb_funnel_search"
+            <input type="text" id="funnelSearch" placeholder="Search…" data-i18n-placeholder="kb_funnel_search"
                    oninput="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px; min-width:180px;">
+            <div class="kb-search-scope" id="kbSearchScope" style="display:flex; gap:4px; align-items:center;">
+                <span style="font-size:12px; color:#888;" data-i18n="kb_search_scope_label">Scope:</span>
+                <label class="kb-scope-chip active" data-scope="title">
+                    <input type="checkbox" value="title" checked onchange="onSearchScopeChange()">
+                    <span data-i18n="kb_search_scope_title">Title</span>
+                </label>
+                <label class="kb-scope-chip" data-scope="comments">
+                    <input type="checkbox" value="comments" onchange="onSearchScopeChange()">
+                    <span data-i18n="kb_search_scope_comments">Comments</span>
+                </label>
+                <label class="kb-scope-chip" data-scope="subcards">
+                    <input type="checkbox" value="subcards" onchange="onSearchScopeChange()">
+                    <span data-i18n="kb_search_scope_subcards">Sub-cards</span>
+                </label>
+            </div>
             <select id="funnelStatus" onchange="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px;">
                 <option value="" data-i18n="kb_funnel_status_all">All statuses</option>
                 <option value="backlog" data-i18n="kb_col_backlog">Backlog</option>
@@ -602,7 +651,7 @@
             </div>
         </div>
 
-        <!-- Desktop: 5-column board -->
+        <!-- Desktop: 6-column board -->
         <div class="kb-board" id="kbBoard">
             <div class="kb-column" data-status="backlog">
                 <div class="kb-col-header"><span class="kb-col-title" data-i18n="kb_col_backlog">Backlog</span><span class="kb-col-count" id="count-backlog">0</span></div>
@@ -620,6 +669,10 @@
                 <div class="kb-col-header"><span class="kb-col-title" data-i18n="kb_col_review">Review</span><span class="kb-col-count" id="count-review">0</span></div>
                 <div class="kb-col-cards" id="col-review"></div>
             </div>
+            <div class="kb-column" data-status="blocked">
+                <div class="kb-col-header"><span class="kb-col-title" data-i18n="kb_col_blocked">Blocked</span><span class="kb-col-count" id="count-blocked">0</span></div>
+                <div class="kb-col-cards" id="col-blocked"></div>
+            </div>
             <div class="kb-column" data-status="done">
                 <div class="kb-col-header"><span class="kb-col-title" data-i18n="kb_col_done">Done</span><span class="kb-col-count" id="count-done">0</span></div>
                 <div class="kb-col-cards" id="col-done"></div>
@@ -632,6 +685,7 @@
             <button class="kb-mobile-tab" data-status="todo" data-i18n="kb_col_todo" onclick="switchMobileTab('todo')">TODO</button>
             <button class="kb-mobile-tab" data-status="in_progress" data-i18n="kb_col_in_progress" onclick="switchMobileTab('in_progress')">In Progress</button>
             <button class="kb-mobile-tab" data-status="review" data-i18n="kb_col_review" onclick="switchMobileTab('review')">Review</button>
+            <button class="kb-mobile-tab" data-status="blocked" data-i18n="kb_col_blocked" onclick="switchMobileTab('blocked')">Blocked</button>
             <button class="kb-mobile-tab" data-status="done" data-i18n="kb_col_done" onclick="switchMobileTab('done')">Done</button>
         </div>
         <div class="kb-mobile-list" id="kbMobileList"></div>
@@ -673,6 +727,13 @@
             <div class="kb-form-group">
                 <label class="kb-form-label" data-i18n="kb_label_description">Description</label>
                 <textarea class="kb-form-textarea" id="newDesc" data-i18n-placeholder="kb_placeholder_desc" placeholder="Brief description..."></textarea>
+            </div>
+            <div class="kb-form-group">
+                <label class="kb-form-label" data-i18n="kb_label_chat_anchor">📌 引用聊天訊息</label>
+                <div class="kb-anchor-row" id="newAnchorRow">
+                    <button type="button" class="kb-anchor-btn" id="newAnchorPickBtn" onclick="toggleAnchorPicker()" data-i18n="kb_anchor_pick">+ 選一條歷史訊息</button>
+                </div>
+                <div class="kb-anchor-panel" id="newAnchorPanel"></div>
             </div>
             <div class="kb-form-group">
                 <label class="kb-form-label" data-i18n="kb_label_priority">Priority</label>
@@ -734,6 +795,11 @@
             <div class="kb-form-group">
                 <label class="kb-form-label" data-i18n="kb_label_description">Description</label>
                 <textarea class="kb-form-textarea" id="editCardDesc" data-i18n-placeholder="kb_placeholder_desc" placeholder="Brief description..."></textarea>
+            </div>
+            <div class="kb-form-group">
+                <div class="kb-auto-toggle-row">
+                    <label class="kb-auto-toggle-label"><input type="checkbox" id="editRequiresScreenshot"> 📸 <span data-i18n="kb_label_requires_screenshot">需截圖審查（完成時附截圖才可推進 review/done）</span></label>
+                </div>
             </div>
             <div id="editSchedFields">
             <div class="kb-form-group">
@@ -800,6 +866,7 @@
     <script src="../shared/chat-message-render.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
+    <script src="../shared/kanban-status.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>
     <script src="shared/footer.js"></script>
@@ -849,9 +916,11 @@
             if (window.AutolinkChip)     html = AutolinkChip.render(html);
             return html;
         }
-        const STATUSES = ['backlog','todo','in_progress','review','done'];
-        const STATUS_LABELS = {backlog:'Backlog',todo:'TODO',in_progress:'In Progress',review:'Review',done:'Done'};
-        const STATUS_I18N = {backlog:'kb_col_backlog',todo:'kb_col_todo',in_progress:'kb_col_in_progress',review:'kb_col_review',done:'kb_col_done'};
+        // Status enum imported from shared/kanban-status.js (single source of
+        // truth; same module as backend/kanban.js). card_42526620af35fb0b27edb2a2.
+        const STATUSES = window.KanbanStatus.STATUSES;
+        const STATUS_LABELS = window.KanbanStatus.STATUS_LABELS_EN;
+        const STATUS_I18N = window.KanbanStatus.STATUS_I18N_KEYS;
         const PRIO_EMOJI = {P0:'🔴',P1:'🟠',P2:'🔵',P3:'⚪'};
         const CRON_PRESETS = [
             {c:'0 * * * *',    k:'kb_cron_hourly', l:'Every hour'},
@@ -869,7 +938,7 @@
         let allCards = [];
         let currentFilter = 'all';
         let currentSort = 'updated_desc';
-        let funnelState = { q: '', status: '', priority: '', assignedBot: '', since: '', until: '' };
+        let funnelState = { q: '', status: '', priority: '', assignedBot: '', since: '', until: '', includeComments: false, includeSubcards: false };
         let funnelDebounce = null;
         let historyPage = 1;
         let mobileTab = 'backlog';
@@ -892,7 +961,7 @@
             if (_isEmbed) {
                 document.body.classList.add('embed-mode');
             }
-            renderNav('mission');
+            renderNav('kanban');
             if (typeof renderFooter === 'function') renderFooter();
             const user = await checkAuth();
             if (!user) return;
@@ -921,6 +990,25 @@
             // #card_<id>#comment-<uuid>. autolink-chip.js produces this URL.
             handleHashDeepLink();
             window.addEventListener('hashchange', handleHashDeepLink);
+
+            // Phase 4 mindmap write-side handoff: a node's ➕ action stashes
+            // {x,y,title} into localStorage and navigates here. We open the
+            // new-card dialog with title pre-filled and the coord wired into
+            // pendingMindmapCoord for createCard() to forward as chatAnchorCoord.
+            try {
+                const pmm = localStorage.getItem('eclaw_pending_mindmap_card');
+                if (pmm) {
+                    localStorage.removeItem('eclaw_pending_mindmap_card');
+                    const data = JSON.parse(pmm);
+                    if (data && Date.now() - (data.ts || 0) < 120000
+                        && Number.isFinite(data.x) && Number.isFinite(data.y)) {
+                        pendingMindmapCoord = { x: data.x, y: data.y };
+                        openNewCard({ title: data.title || '' });
+                    }
+                }
+            } catch (e) {
+                console.warn('[Kanban] mindmap pending-card pickup failed:', e);
+            }
         });
 
         function parseDeepLinkHash() {
@@ -1106,17 +1194,20 @@
         function renderCard(card) {
             console.log('[Kanban] renderCard:', card.id, card.title, 'assigned:', card.assignedBots);
             const isStale = card.is_stale ? ' stale' : '';
+            const isArchived = card.archived ? ' archived' : '';
             const commentCount = card.comment_count || 0;
             const noteCount = card.note_count || 0;
             const fileCount = card.file_count || 0;
             const countdown = staleCountdown(card);
             const timeAgo = relativeTime(card.created_at);
             const autoBadge = card.isAutoGenerated ? '<span class="kb-auto-badge">⚡</span>' : '';
-            return `<div class="kb-card${isStale}" data-id="${card.id}" data-priority="${card.priority}" draggable="true"
+            const archivedBadge = card.archived ? '<span class="kb-card-archived-badge" data-i18n="kb_archived_badge">已歸檔</span>' : '';
+            return `<div class="kb-card${isStale}${isArchived}" data-id="${card.id}" data-priority="${card.priority}" draggable="${card.archived ? 'false' : 'true'}"
                          ondragstart="onDragStart(event)" onclick="openDetail('${card.id}')">
                 ${autoBadge}
                 <div class="kb-card-top">
                     <span class="kb-card-priority" data-p="${card.priority}">${card.priority}</span>
+                    ${archivedBadge}
                     <span class="kb-card-assigned">${renderAssignedAvatars(card.assignedBots)}</span>
                 </div>
                 <div class="kb-card-title">${escapeHtml(card.title)}</div>
@@ -1193,6 +1284,8 @@
         }
 
         function onFunnelChange() {
+            const scopeRoot = document.getElementById('kbSearchScope');
+            const checks = scopeRoot ? Array.from(scopeRoot.querySelectorAll('input[type="checkbox"]')) : [];
             funnelState = {
                 q: document.getElementById('funnelSearch').value.trim(),
                 status: document.getElementById('funnelStatus').value,
@@ -1200,10 +1293,23 @@
                 assignedBot: document.getElementById('funnelEntity').value,
                 since: document.getElementById('funnelSince').value,
                 until: document.getElementById('funnelUntil').value,
+                includeComments: checks.some(c => c.value === 'comments' && c.checked),
+                includeSubcards: checks.some(c => c.value === 'subcards' && c.checked),
             };
             syncFunnelUrl();
             clearTimeout(funnelDebounce);
             funnelDebounce = setTimeout(() => loadCards(), 250);
+        }
+
+        function onSearchScopeChange() {
+            const scopeRoot = document.getElementById('kbSearchScope');
+            if (scopeRoot) {
+                scopeRoot.querySelectorAll('label.kb-scope-chip').forEach(lab => {
+                    const cb = lab.querySelector('input[type="checkbox"]');
+                    lab.classList.toggle('active', !!(cb && cb.checked));
+                });
+            }
+            onFunnelChange();
         }
 
         function resetFunnel() {
@@ -1211,14 +1317,27 @@
                 const el = document.getElementById(id);
                 if (el) el.value = '';
             });
-            funnelState = { q: '', status: '', priority: '', assignedBot: '', since: '', until: '' };
+            const scopeRoot = document.getElementById('kbSearchScope');
+            if (scopeRoot) {
+                scopeRoot.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                    cb.checked = (cb.value === 'title');
+                });
+                scopeRoot.querySelectorAll('label.kb-scope-chip').forEach(lab => {
+                    lab.classList.toggle('active', lab.dataset.scope === 'title');
+                });
+            }
+            funnelState = { q: '', status: '', priority: '', assignedBot: '', since: '', until: '', includeComments: false, includeSubcards: false };
             syncFunnelUrl();
             loadCards();
         }
 
         function funnelQueryParams() {
             const p = [];
-            if (funnelState.q) p.push('q=' + encodeURIComponent(funnelState.q));
+            if (funnelState.q) {
+                p.push('q=' + encodeURIComponent(funnelState.q));
+                if (funnelState.includeComments) p.push('includeComments=true');
+                if (funnelState.includeSubcards) p.push('includeSubcards=true');
+            }
             if (funnelState.status) p.push('status=' + encodeURIComponent(funnelState.status));
             if (funnelState.priority) p.push('priority=' + encodeURIComponent(funnelState.priority));
             if (funnelState.assignedBot) p.push('assignedBot=' + encodeURIComponent(funnelState.assignedBot));
@@ -1300,12 +1419,12 @@
                 list.innerHTML = data.cards.map(c => {
                     const when = c.archivedAt ? new Date(c.archivedAt).toLocaleString() : (c.updatedAt ? new Date(c.updatedAt).toLocaleString() : '');
                     const title = (c.title || '').replace(/</g, '&lt;');
-                    return `<div style="border:1px solid #e0e0e0; border-radius:8px; padding:10px; display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                    return `<div style="border:1px solid #e0e0e0; border-radius:8px; padding:10px; display:flex; justify-content:space-between; align-items:center; gap:10px; cursor:pointer;" onclick="openDetail('${c.id}')">
                         <div style="flex:1; min-width:0;">
                             <div style="font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${title}</div>
                             <div style="font-size:12px; color:#888; margin-top:2px;">${c.priority} • ${c.status} • ${when}</div>
                         </div>
-                        <button class="btn btn-ghost" style="font-size:13px;" onclick="restoreCard('${c.id}')" data-i18n="kb_history_restore">Restore</button>
+                        <button class="btn btn-ghost" style="font-size:13px;" onclick="event.stopPropagation(); restoreCard('${c.id}')" data-i18n="kb_history_restore">Restore</button>
                     </div>`;
                 }).join('');
                 const totalPages = Math.max(1, Math.ceil((data.total || 0) / 20));
@@ -1371,8 +1490,20 @@
 
         async function openDetail(cardId) {
             openCardId = cardId;
-            const card = findCard(cardId);
-            if (!card) return;
+            let card = findCard(cardId);
+            // Archived cards are not in allCards/automationCards. Fetch on demand
+            // so detail modal works from the History panel and from search results
+            // that include archived rows.
+            if (!card) {
+                try {
+                    const data = await apiCall('GET', `/api/mission/card/${cardId}?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+                    if (data && data.success && data.card) {
+                        card = data.card;
+                        if (card.archived && !allCards.find(c => c.id === card.id)) allCards.push(card);
+                    }
+                } catch (_) { /* fall through */ }
+                if (!card) return;
+            }
 
             document.getElementById('detailTitle').textContent = card.title;
             const meta = document.getElementById('detailMeta');
@@ -1546,6 +1677,7 @@
             document.getElementById('editSchedCardId').value = cardId;
             document.getElementById('editCardTitle').value = card.title || '';
             document.getElementById('editCardDesc').value = card.description || '';
+            document.getElementById('editRequiresScreenshot').checked = card.requiresScreenshotReview !== false;
             document.getElementById('editSchedFields').style.display = 'none';
             document.getElementById('editSchedModal').classList.add('show');
         }
@@ -1558,6 +1690,7 @@
             // Populate title & description
             document.getElementById('editCardTitle').value = card.title || '';
             document.getElementById('editCardDesc').value = card.description || '';
+            document.getElementById('editRequiresScreenshot').checked = card.requiresScreenshotReview !== false;
             const sc = card.schedule || {};
             // Set type
             const typeEl = document.getElementById('editSchedType');
@@ -1633,7 +1766,8 @@
                 const newTitle = document.getElementById('editCardTitle').value.trim();
                 const newDesc = document.getElementById('editCardDesc').value.trim();
                 if (!newTitle) { showToast(t('kb_err_title', 'Title is required'), true); return; }
-                const cardBody = { deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret, title: newTitle, description: newDesc };
+                const requiresScreenshotReview = document.getElementById('editRequiresScreenshot').checked;
+                const cardBody = { deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret, title: newTitle, description: newDesc, requiresScreenshotReview };
                 await apiCall('PUT', `/api/mission/card/${cardId}`, cardBody);
                 if (!cardOnlyMode) {
                     // Save schedule (automation cards only)
@@ -1975,10 +2109,122 @@
                 lb = document.createElement('div');
                 lb.id = 'kbLightbox';
                 lb.className = 'kb-lightbox';
-                lb.addEventListener('click', () => { lb.style.display = 'none'; });
+                lb.innerHTML = `
+                    <button class="kb-lightbox-close" type="button" aria-label="Close" title="Close (Esc)">×</button>
+                    <div class="kb-lightbox-stage">
+                        <img class="kb-lightbox-img" alt="">
+                    </div>
+                    <div class="kb-lightbox-caption"></div>
+                    <div class="kb-lightbox-hint">滾輪/捏合縮放 · 拖曳平移 · 雙擊重置 · ESC 關閉</div>
+                `;
                 document.body.appendChild(lb);
+
+                const stage = lb.querySelector('.kb-lightbox-stage');
+                const img = lb.querySelector('.kb-lightbox-img');
+                const closeBtn = lb.querySelector('.kb-lightbox-close');
+                let scale = 1, tx = 0, ty = 0;
+                let dragging = false, dragStartX = 0, dragStartY = 0, txStart = 0, tyStart = 0;
+                let pinchStartDist = 0, pinchStartScale = 1;
+                let touchPan = false, touchStartX = 0, touchStartY = 0;
+                const MIN = 1, MAX = 8;
+
+                function applyTransform() {
+                    img.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+                    img.style.cursor = scale > 1 ? (dragging ? 'grabbing' : 'grab') : 'zoom-in';
+                }
+                function resetView() { scale = 1; tx = 0; ty = 0; applyTransform(); }
+                function close() { lb.style.display = 'none'; resetView(); }
+                lb._reset = resetView;
+
+                closeBtn.addEventListener('click', (e) => { e.stopPropagation(); close(); });
+                lb.addEventListener('click', (e) => { if (e.target === lb) close(); });
+                document.addEventListener('keydown', (e) => {
+                    if (lb.style.display === 'flex' && e.key === 'Escape') close();
+                });
+
+                stage.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    const rect = img.getBoundingClientRect();
+                    const cx = e.clientX - rect.left - rect.width / 2;
+                    const cy = e.clientY - rect.top - rect.height / 2;
+                    const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+                    const newScale = Math.max(MIN, Math.min(MAX, scale * factor));
+                    const ratio = newScale / scale;
+                    tx = tx + (1 - ratio) * cx;
+                    ty = ty + (1 - ratio) * cy;
+                    scale = newScale;
+                    if (scale === MIN) { tx = 0; ty = 0; }
+                    applyTransform();
+                }, { passive: false });
+
+                img.addEventListener('dblclick', (e) => {
+                    e.preventDefault();
+                    if (scale > 1) resetView();
+                    else { scale = 2; applyTransform(); }
+                });
+
+                img.addEventListener('mousedown', (e) => {
+                    if (scale === 1) return;
+                    e.preventDefault();
+                    dragging = true;
+                    dragStartX = e.clientX; dragStartY = e.clientY;
+                    txStart = tx; tyStart = ty;
+                    applyTransform();
+                });
+                document.addEventListener('mousemove', (e) => {
+                    if (!dragging) return;
+                    tx = txStart + (e.clientX - dragStartX);
+                    ty = tyStart + (e.clientY - dragStartY);
+                    applyTransform();
+                });
+                document.addEventListener('mouseup', () => {
+                    if (dragging) { dragging = false; applyTransform(); }
+                });
+
+                stage.addEventListener('touchstart', (e) => {
+                    if (e.touches.length === 2) {
+                        pinchStartDist = Math.hypot(
+                            e.touches[0].clientX - e.touches[1].clientX,
+                            e.touches[0].clientY - e.touches[1].clientY
+                        );
+                        pinchStartScale = scale;
+                    } else if (e.touches.length === 1 && scale > 1) {
+                        touchPan = true;
+                        touchStartX = e.touches[0].clientX;
+                        touchStartY = e.touches[0].clientY;
+                        txStart = tx; tyStart = ty;
+                    }
+                }, { passive: true });
+                stage.addEventListener('touchmove', (e) => {
+                    if (e.touches.length === 2 && pinchStartDist > 0) {
+                        e.preventDefault();
+                        const dist = Math.hypot(
+                            e.touches[0].clientX - e.touches[1].clientX,
+                            e.touches[0].clientY - e.touches[1].clientY
+                        );
+                        scale = Math.max(MIN, Math.min(MAX, pinchStartScale * (dist / pinchStartDist)));
+                        if (scale === MIN) { tx = 0; ty = 0; }
+                        applyTransform();
+                    } else if (touchPan && e.touches.length === 1) {
+                        tx = txStart + (e.touches[0].clientX - touchStartX);
+                        ty = tyStart + (e.touches[0].clientY - touchStartY);
+                        applyTransform();
+                    }
+                }, { passive: false });
+                stage.addEventListener('touchend', () => {
+                    touchPan = false;
+                    pinchStartDist = 0;
+                });
+
+                applyTransform();
             }
-            lb.innerHTML = `<img src="${escapeHtml(url)}" alt="${escapeHtml(name || '')}"><div class="kb-lightbox-caption">${escapeHtml(name || '')}</div>`;
+
+            const img = lb.querySelector('.kb-lightbox-img');
+            const cap = lb.querySelector('.kb-lightbox-caption');
+            img.src = url;
+            img.alt = name || '';
+            cap.textContent = name || '';
+            if (lb._reset) lb._reset();
             lb.style.display = 'flex';
         }
 
@@ -2256,18 +2502,140 @@
         function selectCron(btn) { selectCronChip(btn, 'cronChips', 'newCronCustom'); }
 
         // ── New Card ──
-        function openNewCard() {
+        // Phase 4 mindmap write-side: when a card is filed via mindmap node →
+        // ➕ button, the coord+title arrives in localStorage. createCard()
+        // includes chatAnchorCoord in the POST body and clears the slot.
+        let pendingMindmapCoord = null;
+        function openNewCard(prefill) {
             const container = document.getElementById('newAssignees');
             container.innerHTML = boundEntities.map(e =>
                 `<label style="display:flex;align-items:center;gap:6px;font-size:13px;margin:4px 0">
                     <input type="checkbox" value="${e.entityId}"> #${e.entityId} ${escapeHtml(getEntityDisplayName?.(e.entityId)||'')}
                 </label>`
             ).join('') || '<span style="font-size:12px;color:var(--text-muted)">No entities found</span>';
+            resetAnchorPicker();
+            if (prefill && prefill.title) {
+                document.getElementById('newTitle').value = prefill.title;
+            }
+            renderMindmapCoordHint();
             document.getElementById('newCardModal').classList.add('show');
+        }
+
+        function renderMindmapCoordHint() {
+            const host = document.getElementById('newAnchorRow');
+            if (!host) return;
+            const old = document.getElementById('mmCoordHint');
+            if (old) old.remove();
+            if (!pendingMindmapCoord) return;
+            const hint = document.createElement('div');
+            hint.id = 'mmCoordHint';
+            hint.style.cssText = 'margin-top:6px;font-size:12px;color:var(--text-secondary)';
+            hint.innerHTML =
+                `<span>📍 ${escapeHtml(t('kb_anchor_mindmap','Anchored from mindmap'))} (${Math.round(pendingMindmapCoord.x)}, ${Math.round(pendingMindmapCoord.y)})</span>` +
+                ` <button type="button" style="margin-left:6px;font-size:11px;background:transparent;border:1px solid var(--border);border-radius:4px;padding:1px 6px;cursor:pointer;color:var(--text-secondary)" onclick="clearMindmapCoord()">${escapeHtml(t('kb_anchor_clear','清除'))}</button>`;
+            host.appendChild(hint);
+        }
+
+        function clearMindmapCoord() {
+            pendingMindmapCoord = null;
+            renderMindmapCoordHint();
         }
 
         function closeNewCard() {
             document.getElementById('newCardModal').classList.remove('show');
+        }
+
+        // ── Chat-anchor picker (Phase 2: chat_anchor schema P1) ──
+        let selectedAnchor = null; // { id, text, fromEntityId, createdAt }
+        let anchorHistoryCache = null;
+
+        function resetAnchorPicker() {
+            selectedAnchor = null;
+            const panel = document.getElementById('newAnchorPanel');
+            if (panel) { panel.classList.remove('show'); panel.innerHTML = ''; }
+            renderAnchorRow();
+        }
+
+        function renderAnchorRow() {
+            const row = document.getElementById('newAnchorRow');
+            if (!row) return;
+            if (!selectedAnchor) {
+                row.innerHTML = `<button type="button" class="kb-anchor-btn" id="newAnchorPickBtn" onclick="toggleAnchorPicker()">+ ${t('kb_anchor_pick','選一條歷史訊息')}</button>`;
+                return;
+            }
+            const preview = (selectedAnchor.text || '').replace(/\s+/g, ' ').slice(0, 60);
+            row.innerHTML =
+                `<span class="kb-anchor-chip">` +
+                    `<span>📌</span>` +
+                    `<span class="kb-anchor-chip-text" title="${escapeHtml(selectedAnchor.text || '')}">${escapeHtml(preview) || '(empty)'}</span>` +
+                    `<button type="button" class="kb-anchor-chip-clear" onclick="clearAnchor()" title="${t('kb_anchor_clear','清除')}">×</button>` +
+                `</span>`;
+        }
+
+        function clearAnchor() {
+            selectedAnchor = null;
+            const panel = document.getElementById('newAnchorPanel');
+            if (panel) panel.classList.remove('show');
+            renderAnchorRow();
+        }
+
+        async function toggleAnchorPicker() {
+            const panel = document.getElementById('newAnchorPanel');
+            if (!panel) return;
+            if (panel.classList.contains('show')) {
+                panel.classList.remove('show');
+                return;
+            }
+            panel.classList.add('show');
+            panel.innerHTML = `<div class="kb-anchor-empty">${t('kb_anchor_loading','載入中…')}</div>`;
+            try {
+                if (!anchorHistoryCache) {
+                    anchorHistoryCache = await fetchChatHistoryForAnchor();
+                }
+                renderAnchorList(anchorHistoryCache);
+            } catch (e) {
+                console.error('[Kanban] anchor picker load failed:', e.message);
+                panel.innerHTML = `<div class="kb-anchor-empty">${t('kb_anchor_err','載入失敗')}</div>`;
+            }
+        }
+
+        async function fetchChatHistoryForAnchor() {
+            const url = `/api/chat/history?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}&limit=80`;
+            const res = await fetch(url);
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error || 'fetch failed');
+            return (data.messages || []).filter(m => m && m.text && m.source !== 'kanban_notify');
+        }
+
+        function renderAnchorList(messages) {
+            const panel = document.getElementById('newAnchorPanel');
+            if (!panel) return;
+            if (!messages.length) {
+                panel.innerHTML = `<div class="kb-anchor-empty">${t('kb_anchor_empty','沒有可引用的歷史訊息')}</div>`;
+                return;
+            }
+            panel.innerHTML = messages.map((m, i) => {
+                const ts = m.created_at ? new Date(m.created_at).toLocaleString() : '';
+                const who = m.is_from_user ? '👤' : `#${m.entity_id}`;
+                return `<div class="kb-anchor-msg" data-idx="${i}">` +
+                    `<div class="kb-anchor-msg-meta">${escapeHtml(who)} · ${escapeHtml(ts)}</div>` +
+                    `<div class="kb-anchor-msg-text">${escapeHtml(m.text || '')}</div>` +
+                `</div>`;
+            }).join('');
+            panel.querySelectorAll('.kb-anchor-msg').forEach(el => {
+                el.addEventListener('click', () => {
+                    const i = Number(el.getAttribute('data-idx'));
+                    const m = messages[i];
+                    if (m) selectAnchorMessage(m.id, m.text, m.entity_id || 0, m.created_at || '');
+                });
+            });
+        }
+
+        function selectAnchorMessage(id, text, fromEntityId, createdAt) {
+            selectedAnchor = { id, text, fromEntityId, createdAt };
+            const panel = document.getElementById('newAnchorPanel');
+            if (panel) panel.classList.remove('show');
+            renderAnchorRow();
         }
 
         async function createCard() {
@@ -2275,6 +2643,10 @@
             if (!title) { showToast(t('kb_err_title','Title is required'), true); return; }
             const assignedBots = [...document.querySelectorAll('#newAssignees input:checked')].map(cb => Number(cb.value));
             if (assignedBots.length === 0) { showToast(t('kb_err_no_entity','At least one entity must be assigned'), true); return; }
+            if (!selectedAnchor || !selectedAnchor.id) {
+                showToast(t('kb_anchor_required','Please pick a chat message to anchor this card'), true);
+                return;
+            }
             const isAutomation = document.getElementById('newIsAutomation').checked;
             const requiresScreenshotReview = document.getElementById('newRequiresScreenshot').checked;
             const body = {
@@ -2285,6 +2657,12 @@
                 assignedBots,
                 requiresScreenshotReview
             };
+            if (selectedAnchor && selectedAnchor.id) {
+                body.chatAnchorMessageId = selectedAnchor.id;
+            }
+            if (pendingMindmapCoord && Number.isFinite(pendingMindmapCoord.x) && Number.isFinite(pendingMindmapCoord.y)) {
+                body.chatAnchorCoord = { x: pendingMindmapCoord.x, y: pendingMindmapCoord.y };
+            }
             if (isAutomation) {
                 const customCron = document.getElementById('newCronCustom').value.trim();
                 const selectedChip = document.querySelector('#cronChips .kb-cron-chip.active');
@@ -2302,11 +2680,21 @@
                 document.getElementById('newDesc').value = '';
                 document.getElementById('newIsAutomation').checked = false;
                 document.getElementById('newRequiresScreenshot').checked = true;
+                resetAnchorPicker();
+                pendingMindmapCoord = null;
+                renderMindmapCoordHint();
+                anchorHistoryCache = null;
                 toggleAutoFields();
                 await loadCards();
             } catch(e) {
                 console.error('[Kanban] createCard failed:', e.message);
-                showToast(t('kb_err_create','Failed to create card'), true);
+                const errKey = e.data && e.data.errorKey;
+                const fallback = e.data && e.data.error;
+                if (errKey) {
+                    showToast(t(errKey, fallback || e.message || 'Failed to create card'), true);
+                } else {
+                    showToast(t('kb_err_create','Failed to create card'), true);
+                }
             }
         }
 

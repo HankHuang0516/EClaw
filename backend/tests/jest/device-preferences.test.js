@@ -6,6 +6,8 @@
  * - PUT /api/device-preferences
  */
 
+const devicePrefsModule = require('../../device-preferences');
+
 // ── Mock all modules with side-effects before requiring index.js ──
 
 jest.mock('pg', () => ({
@@ -223,5 +225,12 @@ describe('PUT /api/device-preferences', () => {
             .send({ deviceId: 'dev-1', deviceSecret: 'sec', prefs: 'not-an-object' });
         // Returns 400 (invalid prefs) or 401 (auth fail)
         expect(res.status).toBeGreaterThanOrEqual(400);
+    });
+});
+
+describe('codex auto-approve preference', () => {
+    it('includes codex_auto_approve_targets in defaults', () => {
+        expect(devicePrefsModule.DEFAULTS).toHaveProperty('codex_auto_approve_targets');
+        expect(devicePrefsModule.DEFAULTS.codex_auto_approve_targets).toEqual({});
     });
 });

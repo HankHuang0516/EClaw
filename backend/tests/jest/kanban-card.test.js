@@ -82,8 +82,82 @@ describe('POST /card — assignedBots validation', () => {
         });
 
         const res = await post('/api/mission/card')
-            .send({ ...AUTH, title: 'Test card', assignedBots: [0] });
+            .send({ ...AUTH, title: 'Test card', assignedBots: [0], chatAnchorMessageId: 'msg-test-anchor' });
         expect(res.status).not.toBe(400);
+    });
+
+    it('rejects USER-filed card with no chatAnchorMessageId (400 + errorKey)', async () => {
+        const res = await post('/api/mission/card')
+            .send({ ...AUTH, title: 'No anchor', assignedBots: [0] });
+        expect(res.status).toBe(400);
+        expect(res.body.errorKey).toBe('kb_anchor_required');
+    });
+
+    it('allows bot-filed card (entityId > 0) without chatAnchorMessageId', async () => {
+        mockQuery.mockResolvedValueOnce({
+            rows: [{
+                id: 2, device_id: 'test-dev', title: 'Bot card',
+                description: '', priority: 'P2', status: 'backlog',
+                assigned_bots: [0], created_by: 1,
+                created_at: new Date(), updated_at: new Date(),
+                status_changed_at: new Date(), archived: false,
+            }],
+        });
+        const res = await post('/api/mission/card')
+            .send({ ...AUTH, title: 'Bot card', assignedBots: [0], entityId: 1 });
+        expect(res.status).not.toBe(400);
+    });
+
+    // Phase 4 mindmap write-side: chatAnchorCoord {x,y} from mindmap node
+    // is forwarded to INSERT params and shows up in the response payload.
+    it('persists chatAnchorCoord {x,y} when filed from mindmap', async () => {
+        mockQuery.mockResolvedValueOnce({
+            rows: [{
+                id: 3, device_id: 'test-dev', title: 'From mindmap',
+                description: '', priority: 'P2', status: 'backlog',
+                assigned_bots: [0], created_by: 0,
+                chat_anchor_message_id: 'msg-test-anchor',
+                chat_anchor_coord: { x: 142.5, y: -87.3 },
+                created_at: new Date(), updated_at: new Date(),
+                status_changed_at: new Date(), archived: false,
+            }],
+        });
+        const res = await post('/api/mission/card').send({
+            ...AUTH, title: 'From mindmap', assignedBots: [0],
+            chatAnchorMessageId: 'msg-test-anchor',
+            chatAnchorCoord: { x: 142.5, y: -87.3 },
+        });
+        expect(res.status).not.toBe(400);
+        const insertCall = mockQuery.mock.calls.find(c => /INSERT INTO kanban_cards/.test(c[0]));
+        expect(insertCall).toBeTruthy();
+        const params = insertCall[1];
+        const coordParam = params.find(p => typeof p === 'string' && /"x":142\.5/.test(p));
+        expect(coordParam).toBeTruthy();
+        expect(JSON.parse(coordParam)).toEqual({ x: 142.5, y: -87.3 });
+    });
+
+    it('ignores malformed chatAnchorCoord (NaN coords stored as null)', async () => {
+        mockQuery.mockResolvedValueOnce({
+            rows: [{
+                id: 4, device_id: 'test-dev', title: 'Bad coord',
+                description: '', priority: 'P2', status: 'backlog',
+                assigned_bots: [0], created_by: 0,
+                chat_anchor_message_id: 'msg-test-anchor',
+                chat_anchor_coord: null,
+                created_at: new Date(), updated_at: new Date(),
+                status_changed_at: new Date(), archived: false,
+            }],
+        });
+        const res = await post('/api/mission/card').send({
+            ...AUTH, title: 'Bad coord', assignedBots: [0],
+            chatAnchorMessageId: 'msg-test-anchor',
+            chatAnchorCoord: { x: 'not-a-number', y: null },
+        });
+        expect(res.status).not.toBe(400);
+        const insertCall = mockQuery.mock.calls.find(c => /INSERT INTO kanban_cards/.test(c[0]));
+        const params = insertCall[1];
+        // The coord param is the last positional arg; null when invalid.
+        expect(params[params.length - 1]).toBe(null);
     });
 });
 
@@ -164,6 +238,7 @@ describe('POST /card — inline automation + schedule', () => {
             ...AUTH, title: 'Auto task', assignedBots: [0],
             isAutomation: true,
             schedule: { type: 'recurring', cron: '0 */4 * * *' },
+            chatAnchorMessageId: 'msg-test-anchor',
         });
 
         expect(res.status).toBe(200);
@@ -183,6 +258,7 @@ describe('POST /card — inline automation + schedule', () => {
         const res = await post('/api/mission/card').send({
             ...AUTH, title: 'Auto task', assignedBots: [0],
             schedule: { type: 'recurring', cron: '0 9 * * *' },
+            chatAnchorMessageId: 'msg-test-anchor',
         });
 
         expect(res.status).toBe(200);

@@ -3,19 +3,31 @@
 // Per-device settings stored in PostgreSQL
 // ============================================
 
+const KanbanStatus = require('./public/shared/kanban-status.js');
+
 const DEFAULTS = {
     broadcast_recipient_info: true,
     remote_control_enabled: false,
+    // Codex channel: entity-specific auto-approve toggle for "requests input"
+    codex_auto_approve_targets: {},
     // Kanban nudge (stale-card reminder) — applies uniformly to all entities
     kanban_nudge_batch_size: 1,
     kanban_nudge_priority_mode: 'priority_first',  // 'priority_first' | 'column_first' | 'column_level'
     kanban_nudge_interval_minutes: 180,
-    // Which columns get nudged. Default: everything except backlog (待排程).
-    kanban_nudge_statuses: ['todo', 'in_progress', 'review'],
+    // Which columns get nudged. Default = active work columns; see kanban-status.js SoT.
+    kanban_nudge_statuses: [...KanbanStatus.NUDGE_DEFAULT_STATUSES],
+    // 內容督促 hard cap per (device, entity): 1 nudge / interval regardless of card count.
+    kanban_nudge_per_entity_throttle: true,
+    // 排程觸發母卡 spawning child cards: notify assigned bots immediately?
+    // Default false — let stale-scan decide once the child has aged past stale_threshold_ms.
+    kanban_cron_spawn_notify: false,
+    // 排程觸發母卡 self-recurring (no子卡, only re-trigger self): notify on each fire?
+    // Default true — these fire less often (one per cron tick) and the user usually wants to know.
+    kanban_cron_recurring_notify: true,
 };
 
 const NUDGE_PRIORITY_MODES = new Set(['priority_first', 'column_first', 'column_level']);
-const NUDGE_STATUS_OPTIONS = new Set(['backlog', 'todo', 'in_progress', 'review']);
+const NUDGE_STATUS_OPTIONS = new Set(KanbanStatus.NUDGEABLE_STATUSES);
 
 function coerceValue(key, raw) {
     const def = DEFAULTS[key];
@@ -35,6 +47,17 @@ function coerceValue(key, raw) {
         const filtered = raw.filter(s => NUDGE_STATUS_OPTIONS.has(s));
         // Must nudge at least one column, else fall back to default.
         return filtered.length ? filtered : [...def];
+    }
+    if (key === 'codex_auto_approve_targets') {
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+        const out = {};
+        for (const [entityId, enabled] of Object.entries(raw)) {
+            const n = Number(entityId);
+            if (Number.isFinite(n) && n >= 0) {
+                out[String(n)] = !!enabled;
+            }
+        }
+        return out;
     }
     return def;
 }

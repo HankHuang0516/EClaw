@@ -1,0 +1,52 @@
+name: Portal Smoke CI
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'backend/public/portal/**'
+      - 'backend/public/shared/**'
+      - 'backend/scripts/portal-smoke-check.js'
+      - 'backend/tests/jest/chat-targets-static.test.js'
+      - 'backend/tests/jest/kanban-nav-static.test.js'
+      - 'backend/tests/jest/portal-smoke-static.test.js'
+      - 'backend/package.json'
+      - 'backend/package-lock.json'
+      - '.github/workflows/portal-smoke-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/public/portal/**'
+      - 'backend/public/shared/**'
+      - 'backend/scripts/portal-smoke-check.js'
+      - 'backend/tests/jest/chat-targets-static.test.js'
+      - 'backend/tests/jest/kanban-nav-static.test.js'
+      - 'backend/tests/jest/portal-smoke-static.test.js'
+      - 'backend/package.json'
+      - 'backend/package-lock.json'
+      - '.github/workflows/portal-smoke-ci.yml'
+
+jobs:
+  smoke:
+    name: Critical portal pages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Run portal smoke check
+        run: npm run smoke:portal
+        working-directory: backend
+
+      - name: Run portal smoke Jest guard
+        run: npx jest tests/jest/portal-smoke-static.test.js tests/jest/chat-targets-static.test.js tests/jest/kanban-nav-static.test.js --runInBand
+        working-directory: backend

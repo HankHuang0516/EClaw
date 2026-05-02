@@ -787,6 +787,17 @@
             background: rgba(158, 158, 158, 0.15);
             color: #9E9E9E;
         }
+        body.mm-display-mode > nav.nav,
+        body.mm-display-mode #navContainer,
+        body.mm-display-mode footer,
+        body.mm-display-mode .footer { display: none !important; }
+        body.mm-display-mode #dashboardContent > .card { display: none; }
+        body.mm-display-mode #dashboardContent > .card.mm-card { display: block; padding: 0; border: none; background: transparent; }
+        body.mm-display-mode #dashboardContent > .card.mm-card .card-header { display: none; }
+        body.mm-display-mode #dashboardContent > .card.mm-card #mmHint { display: none; }
+        body.mm-display-mode #mmContainer { width: 100vw; height: 100vh; margin: 0; }
+        body.mm-display-mode { margin: 0; padding: 0; overflow: hidden; }
+        body.mm-display-mode .container { padding: 0; max-width: none; }
     </style>
     <link rel="canonical" href="https://eclawbot.com/portal/mission.html">
 </head>
@@ -830,15 +841,15 @@
         <!-- Dashboard Content (hidden until loaded) -->
         <div id="dashboardContent" style="display:none;">
             <!-- Mind-map (PR-A: static mockup; PR-B will wire to /api/mission/cards) -->
-            <div class="card">
+            <div class="card mm-card">
                 <div class="card-header">
-                    <h2>🧠 <span data-i18n="mm_card_title">心智圖</span> <span style="font-size:11px;color:var(--text-secondary);font-weight:500;margin-left:6px;" data-i18n="mm_card_beta">(beta · 模擬資料)</span></h2>
+                    <h2>🧠 <span data-i18n="mm_card_title">心智圖</span> <span style="font-size:11px;color:var(--text-secondary);font-weight:500;margin-left:6px;" data-i18n="mm_card_beta">(beta)</span></h2>
                     <div class="section-header-actions">
                         <button class="btn btn-outline btn-sm" id="mmToggleBtn" onclick="toggleMindmap()" data-i18n="mm_card_expand">展開</button>
                     </div>
                 </div>
                 <div id="mmContainer" style="display:none;"></div>
-                <div id="mmHint" style="font-size:12px;color:var(--text-secondary);padding:4px 2px;" data-i18n="mm_card_hint">52 個節點 · 8 子系統 · 76 條連線（含跨系統依賴）。展開可互動探索。</div>
+                <div id="mmHint" style="font-size:12px;color:var(--text-secondary);padding:4px 2px;" data-i18n="mm_card_hint">把看板卡片連成圖：任務、子卡與聊天錨點互相關聯。展開可互動探索。</div>
             </div>
 
             <!-- Notes -->
@@ -957,22 +968,19 @@
             if (mmExpanded && !mmInitialized && window.MissionMindmap) {
                 mmInitialized = true;
                 try {
-                    let liveData = null;
+                    let liveData = { nodes: [], edges: [] };
                     try {
                         const resp = await fetch(
                             `/api/mission/mindmap?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`
                         );
                         if (resp.ok) {
                             const j = await resp.json();
-                            // Need at least 5 nodes for a mind-map to be useful;
-                            // below that, fall back to the curated demo so the
-                            // UX doesn't look empty for fresh devices.
-                            if (j.success && Array.isArray(j.nodes) && j.nodes.length >= 5) {
-                                liveData = { nodes: j.nodes, edges: j.edges || [] };
+                            if (j.success && Array.isArray(j.nodes)) {
+                                liveData = { nodes: j.nodes, edges: Array.isArray(j.edges) ? j.edges : [] };
                             }
                         }
                     } catch (fetchErr) {
-                        console.warn('mindmap live fetch failed, falling back to mock:', fetchErr);
+                        console.warn('mindmap live fetch failed:', fetchErr);
                     }
                     await window.MissionMindmap.init({ rootEl: container, data: liveData });
                 } catch (err) {
@@ -1145,6 +1153,11 @@
             if (_isEmbed) {
                 document.body.classList.add('embed-mode');
             }
+            const _viewMode = new URLSearchParams(window.location.search).get('view-mode');
+            const _mmDisplayMode = _viewMode === 'full';
+            if (_mmDisplayMode) {
+                document.body.classList.add('mm-display-mode');
+            }
             renderNav('mission');
             if (typeof renderFooter === 'function') renderFooter();
             const user = await checkAuth();
@@ -1162,6 +1175,10 @@
 
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('dashboardContent').style.display = '';
+
+            if (_mmDisplayMode && !mmExpanded) {
+                toggleMindmap();
+            }
 
             // Auto-refresh every 30s (skip if editing or syncing)
             refreshTimer = setInterval(() => {
@@ -1911,11 +1928,15 @@
             document.getElementById('dialogContainer').innerHTML = '';
         }
 
-        function quoteToChat(source, title, excerpt) {
+        function quoteToChat(source, title, excerpt, opts) {
+            // opts.prefillInput — optional string to pre-fill the message input
+            // on the chat page (used by mind-map chip cite to deliver a chip
+            // token straight into the input, so user just hits send).
+            const prefillInput = opts && opts.prefillInput ? String(opts.prefillInput) : '';
             if (window.self !== window.top) {
-                window.parent.postMessage({ type: 'eclaw_quote', source, title, excerpt: excerpt || '' }, window.location.origin);
+                window.parent.postMessage({ type: 'eclaw_quote', source, title, excerpt: excerpt || '', prefillInput }, window.location.origin);
             } else {
-                localStorage.setItem('eclaw_pending_quote', JSON.stringify({ source, title, excerpt: excerpt || '', ts: Date.now() }));
+                localStorage.setItem('eclaw_pending_quote', JSON.stringify({ source, title, excerpt: excerpt || '', prefillInput, ts: Date.now() }));
                 window.location.href = '/portal/chat.html';
             }
         }

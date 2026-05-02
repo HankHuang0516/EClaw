@@ -1,3 +1,473 @@
+# [1.1134.0](https://github.com/HankHuang0516/EClaw/compare/v1.1133.3...v1.1134.0) (2026-05-02)
+
+
+### Features
+
+* **i18n:** info_hooks/info_hero marketing × 11 locales ([31a8792](https://github.com/HankHuang0516/EClaw/commit/31a8792ea9368797cd7af17634aeaafd9b8de121))
+
+## [1.1133.3](https://github.com/HankHuang0516/EClaw/compare/v1.1133.2...v1.1133.3) (2026-05-01)
+
+
+### Bug Fixes
+
+* guard saveChatMessage against null text parameter ([#2279](https://github.com/HankHuang0516/EClaw/issues/2279)) ([9fb168b](https://github.com/HankHuang0516/EClaw/commit/9fb168b10db5b3ca70bf9d77ae6e247f42fba652))
+
+## [1.1133.2](https://github.com/HankHuang0516/EClaw/compare/v1.1133.1...v1.1133.2) (2026-05-01)
+
+
+### Bug Fixes
+
+* repair rental safeEqual import and share-chat R2 script path ([#2278](https://github.com/HankHuang0516/EClaw/issues/2278)) ([0167eb2](https://github.com/HankHuang0516/EClaw/commit/0167eb27bc8bea5c949668ff93d3542b2f52da49))
+
+## [1.1133.1](https://github.com/HankHuang0516/EClaw/compare/v1.1133.0...v1.1133.1) (2026-05-01)
+
+
+### Bug Fixes
+
+* **kanban:** change screenshot review default to disabled ([777aa37](https://github.com/HankHuang0516/EClaw/commit/777aa3723604100f46815c723ea8c5594b40e8ef))
+
+# [1.1133.0](https://github.com/HankHuang0516/EClaw/compare/v1.1132.0...v1.1133.0) (2026-05-01)
+
+
+### Features
+
+* infer dashboard agent policy channel ([6a961de](https://github.com/HankHuang0516/EClaw/commit/6a961de47c2e7a049dd6ebd070a03e8fb1b1bb1c))
+
+# [1.1132.0](https://github.com/HankHuang0516/EClaw/compare/v1.1131.1...v1.1132.0) (2026-05-01)
+
+
+### Features
+
+* hide dashboard agent policy until edit mode ([149a217](https://github.com/HankHuang0516/EClaw/commit/149a21775a6796c361676ba07dd548cd01fb02be))
+
+## [1.1131.1](https://github.com/HankHuang0516/EClaw/compare/v1.1131.0...v1.1131.1) (2026-05-01)
+
+
+### Bug Fixes
+
+* focus agent policy deep links ([567e6ba](https://github.com/HankHuang0516/EClaw/commit/567e6bacc938c968ce32de8074200e0adfc61b4b))
+
+# [1.1131.0](https://github.com/HankHuang0516/EClaw/compare/v1.1130.0...v1.1131.0) (2026-05-01)
+
+
+### Features
+
+* add dashboard agent policy card ([7ac8874](https://github.com/HankHuang0516/EClaw/commit/7ac88746b1c05e6013beac2257aa284d3df67dd3))
+
+# [1.1130.0](https://github.com/HankHuang0516/EClaw/compare/v1.1129.0...v1.1130.0) (2026-05-01)
+
+
+### Features
+
+* expand agent policy dashboard editor ([#2269](https://github.com/HankHuang0516/EClaw/issues/2269)) ([36b006e](https://github.com/HankHuang0516/EClaw/commit/36b006e3362238949dc2b5ca1d67bda325eec81f))
+
+# [1.1129.0](https://github.com/HankHuang0516/EClaw/compare/v1.1128.0...v1.1129.0) (2026-05-01)
+
+
+### Features
+
+* show channel status badges in chat ([#2268](https://github.com/HankHuang0516/EClaw/issues/2268)) ([dc3f415](https://github.com/HankHuang0516/EClaw/commit/dc3f41505097ccdf33c82f022f6d361a5318020f))
+
+# [1.1128.0](https://github.com/HankHuang0516/EClaw/compare/v1.1127.3...v1.1128.0) (2026-05-01)
+
+
+### Features
+
+* add prompt policy orchestration ([0a1d2b7](https://github.com/HankHuang0516/EClaw/commit/0a1d2b7fc963e0b923df05a793e1e8995610b49e))
+
+## [1.1127.3](https://github.com/HankHuang0516/EClaw/compare/v1.1127.2...v1.1127.3) (2026-05-01)
+
+
+### Bug Fixes
+
+* treat railway as production for persistence ([#2258](https://github.com/HankHuang0516/EClaw/issues/2258)) ([36afc2b](https://github.com/HankHuang0516/EClaw/commit/36afc2b405f39f284c2ef265a277fdbbf13ea908))
+
+## [1.1127.2](https://github.com/HankHuang0516/EClaw/compare/v1.1127.1...v1.1127.2) (2026-05-01)
+
+
+### Bug Fixes
+
+* match help api category intents ([#2257](https://github.com/HankHuang0516/EClaw/issues/2257)) ([5ac2456](https://github.com/HankHuang0516/EClaw/commit/5ac2456c2a88da9b24cfbf366bc4e183bd8ece8d))
+
+## [1.1127.1](https://github.com/HankHuang0516/EClaw/compare/v1.1127.0...v1.1127.1) (2026-05-01)
+
+
+### Bug Fixes
+
+* require postgres persistence in production ([ddee7fb](https://github.com/HankHuang0516/EClaw/commit/ddee7fb9e242e39e2ff222f224e2e128d2e3c250))
+
+# [1.1127.0](https://github.com/HankHuang0516/EClaw/compare/v1.1126.1...v1.1127.0) (2026-04-30)
+
+
+### Features
+
+* **chip:** smart-chip 📌 cross-pane requote + 已引用 toast ([#2253](https://github.com/HankHuang0516/EClaw/issues/2253)) ([fa609ec](https://github.com/HankHuang0516/EClaw/commit/fa609ec761d40e1e3ad3622f3d57dc23fcba7867)), closes [#messageInput](https://github.com/HankHuang0516/EClaw/issues/messageInput)
+
+## [1.1126.1](https://github.com/HankHuang0516/EClaw/compare/v1.1126.0...v1.1126.1) (2026-04-30)
+
+
+### Bug Fixes
+
+* **publisher:** Qiita locale defaults to ja (was zh-TW) ([#2252](https://github.com/HankHuang0516/EClaw/issues/2252)) ([be68754](https://github.com/HankHuang0516/EClaw/commit/be68754170c93fd27d6c5b54a1afce186ca1a061))
+
+# [1.1126.0](https://github.com/HankHuang0516/EClaw/compare/v1.1125.0...v1.1126.0) (2026-04-30)
+
+
+### Features
+
+* **info:** SEO meta swap for vector-memory + 4 marketing hook panels ([#2250](https://github.com/HankHuang0516/EClaw/issues/2250)) ([727d054](https://github.com/HankHuang0516/EClaw/commit/727d05484724893e181c6177c6a5044e3af5781e)), closes [#2249](https://github.com/HankHuang0516/EClaw/issues/2249) [#1967](https://github.com/HankHuang0516/EClaw/issues/1967) [#2139](https://github.com/HankHuang0516/EClaw/issues/2139)
+
+# [1.1125.0](https://github.com/HankHuang0516/EClaw/compare/v1.1124.0...v1.1125.0) (2026-04-30)
+
+
+### Features
+
+* **info:** add og:/twitter: meta + JSON-LD + per-panel SEO swap ([#2249](https://github.com/HankHuang0516/EClaw/issues/2249)) ([9994b90](https://github.com/HankHuang0516/EClaw/commit/9994b90de91afe31aefa633cc80f0bd892b08e48))
+
+# [1.1124.0](https://github.com/HankHuang0516/EClaw/compare/v1.1123.0...v1.1124.0) (2026-04-30)
+
+
+### Features
+
+* **i18n:** add kanban search-scope keys for ja/ko/de ([#2248](https://github.com/HankHuang0516/EClaw/issues/2248)) ([2c9eca6](https://github.com/HankHuang0516/EClaw/commit/2c9eca6d3e8ba354f28c9ea8bb14b1e1e94923af))
+
+# [1.1123.0](https://github.com/HankHuang0516/EClaw/compare/v1.1122.0...v1.1123.0) (2026-04-29)
+
+
+### Features
+
+* **kanban:** cron-spawn child inherits requires_screenshot_review + mom edit toggle ([#2245](https://github.com/HankHuang0516/EClaw/issues/2245)) ([ced2af7](https://github.com/HankHuang0516/EClaw/commit/ced2af7fc7a95bd405814fc791c91af12a6052cc))
+
+# [1.1122.0](https://github.com/HankHuang0516/EClaw/compare/v1.1121.0...v1.1122.0) (2026-04-29)
+
+
+### Features
+
+* **mindmap:** Phase 4 read-side — honor chat_anchor_coord in /api/mission/mindmap ([#2244](https://github.com/HankHuang0516/EClaw/issues/2244)) ([05d7782](https://github.com/HankHuang0516/EClaw/commit/05d7782fe468089573206d9d99aa771a77a9c081))
+
+# [1.1121.0](https://github.com/HankHuang0516/EClaw/compare/v1.1120.0...v1.1121.0) (2026-04-28)
+
+
+### Features
+
+* **telegram:** long-poll adapter PoC (card_406e612942ff062a06fc47be) ([#2238](https://github.com/HankHuang0516/EClaw/issues/2238)) ([f46f03a](https://github.com/HankHuang0516/EClaw/commit/f46f03acf94079b48a8807e77e057b24c0277e18))
+
+# [1.1120.0](https://github.com/HankHuang0516/EClaw/compare/v1.1119.0...v1.1120.0) (2026-04-28)
+
+
+### Features
+
+* **mindmap:** Phase 4 write-side — capture chat_anchor_coord on card create ([#2237](https://github.com/HankHuang0516/EClaw/issues/2237)) ([2431b11](https://github.com/HankHuang0516/EClaw/commit/2431b11b23a7cf4ffb3d70d3a80f5006971be804))
+
+# [1.1119.0](https://github.com/HankHuang0516/EClaw/compare/v1.1118.0...v1.1119.0) (2026-04-28)
+
+
+### Features
+
+* **kanban:** Phase 3 — chat-anchor validator on POST /card ([#2236](https://github.com/HankHuang0516/EClaw/issues/2236)) ([6f79510](https://github.com/HankHuang0516/EClaw/commit/6f79510069f1a45fd8e206465a687b43168fb0d7))
+
+# [1.1118.0](https://github.com/HankHuang0516/EClaw/compare/v1.1117.2...v1.1118.0) (2026-04-28)
+
+
+### Features
+
+* **kanban:** chat-anchor picker UI (chat-anchor P2) ([#2235](https://github.com/HankHuang0516/EClaw/issues/2235)) ([d9ccca0](https://github.com/HankHuang0516/EClaw/commit/d9ccca0e64493650a10ec10bcb35a2524885f8ef)), closes [#2228](https://github.com/HankHuang0516/EClaw/issues/2228) [#5](https://github.com/HankHuang0516/EClaw/issues/5) [#5](https://github.com/HankHuang0516/EClaw/issues/5)
+
+## [1.1117.2](https://github.com/HankHuang0516/EClaw/compare/v1.1117.1...v1.1117.2) (2026-04-28)
+
+
+### Bug Fixes
+
+* **i18n:** EN labels for cron-notify keys leaked CJK 母卡 ([#2234](https://github.com/HankHuang0516/EClaw/issues/2234)) ([ea1e2d8](https://github.com/HankHuang0516/EClaw/commit/ea1e2d8f387ecfebb72237734d05512c763d634b)), closes [#2232](https://github.com/HankHuang0516/EClaw/issues/2232)
+
+## [1.1117.1](https://github.com/HankHuang0516/EClaw/compare/v1.1117.0...v1.1117.1) (2026-04-28)
+
+
+### Bug Fixes
+
+* **settings:** focus mode hides logout/delete-account block ([#2233](https://github.com/HankHuang0516/EClaw/issues/2233)) ([351c003](https://github.com/HankHuang0516/EClaw/commit/351c003023a532aaa6e288da2738db025c9106fc))
+
+# [1.1117.0](https://github.com/HankHuang0516/EClaw/compare/v1.1116.1...v1.1117.0) (2026-04-28)
+
+
+### Features
+
+* **kanban-nudge:** split 內容督促 vs 排程觸發 + per-entity throttle ([#2232](https://github.com/HankHuang0516/EClaw/issues/2232)) ([8354c92](https://github.com/HankHuang0516/EClaw/commit/8354c92999aa4efec99d5608c13dcc78e80dd493)), closes [#5](https://github.com/HankHuang0516/EClaw/issues/5)
+
+## [1.1116.1](https://github.com/HankHuang0516/EClaw/compare/v1.1116.0...v1.1116.1) (2026-04-28)
+
+
+### Bug Fixes
+
+* **kanban:** screenshot lightbox supports wheel/dblclick/drag/pinch zoom ([#2230](https://github.com/HankHuang0516/EClaw/issues/2230)) ([3c56e60](https://github.com/HankHuang0516/EClaw/commit/3c56e6087bde1a31e40736cc80e4b3eed70438a1))
+
+# [1.1116.0](https://github.com/HankHuang0516/EClaw/compare/v1.1115.0...v1.1116.0) (2026-04-28)
+
+
+### Features
+
+* **settings:** deep-link section filter for APP entry buttons ([#2229](https://github.com/HankHuang0516/EClaw/issues/2229)) ([d0bc4a6](https://github.com/HankHuang0516/EClaw/commit/d0bc4a61f42920a0c8472e3838a8a95e2be5a148)), closes [#channelApiCard](https://github.com/HankHuang0516/EClaw/issues/channelApiCard) [#kanban-nudge-card](https://github.com/HankHuang0516/EClaw/issues/kanban-nudge-card)
+
+# [1.1115.0](https://github.com/HankHuang0516/EClaw/compare/v1.1114.4...v1.1115.0) (2026-04-28)
+
+
+### Features
+
+* **kanban:** chat-anchor schema — pin originating chat msg + mind-map coord (#chat-anchor-P1) ([#2228](https://github.com/HankHuang0516/EClaw/issues/2228)) ([eed5f44](https://github.com/HankHuang0516/EClaw/commit/eed5f44eef3ad2e8b2510a37272dac5967cde1e0)), closes [#chat-anchor-P1](https://github.com/HankHuang0516/EClaw/issues/chat-anchor-P1)
+
+## [1.1114.4](https://github.com/HankHuang0516/EClaw/compare/v1.1114.3...v1.1114.4) (2026-04-28)
+
+
+### Bug Fixes
+
+* **portal:** delete mindmap.html standalone, port view-mode=full to mission embed ([#2226](https://github.com/HankHuang0516/EClaw/issues/2226)) ([147edb2](https://github.com/HankHuang0516/EClaw/commit/147edb2744dcb66652e1a07a8b0e3fbd3853a3ba)), closes [#2222](https://github.com/HankHuang0516/EClaw/issues/2222)
+* **kanban:** L2/L3 escalation also notifies assigned_bots, not just notifyEntityId ([#2227](https://github.com/HankHuang0516/EClaw/issues/2227)) ([b4fcd5b](https://github.com/HankHuang0516/EClaw/commit/b4fcd5bc7e35d0cf621099eab8df8a75a045fa9a))
+
+## [1.1114.3](https://github.com/HankHuang0516/EClaw/compare/v1.1114.2...v1.1114.3) (2026-04-28)
+
+
+### Bug Fixes
+
+* **kanban:** i18n cards default requires_screenshot_review=false ([#2224](https://github.com/HankHuang0516/EClaw/issues/2224)) ([368bc16](https://github.com/HankHuang0516/EClaw/commit/368bc166ff1743ee16c31dc0aa3f9bb6c26736b7))
+
+## [1.1114.2](https://github.com/HankHuang0516/EClaw/compare/v1.1114.1...v1.1114.2) (2026-04-28)
+
+
+### Bug Fixes
+
+* **mindmap:** add fullscreen button to mission.html embed ([#2225](https://github.com/HankHuang0516/EClaw/issues/2225)) ([5351632](https://github.com/HankHuang0516/EClaw/commit/53516325f6850098e3142d5ac31d4006b9cc8b99)), closes [2222/#2223](https://github.com/HankHuang0516/EClaw/issues/2223)
+
+## [1.1114.1](https://github.com/HankHuang0516/EClaw/compare/v1.1114.0...v1.1114.1) (2026-04-28)
+
+
+### Bug Fixes
+
+* **mindmap:** hide top nav when ?view-mode=full ([#2223](https://github.com/HankHuang0516/EClaw/issues/2223)) ([d7eef15](https://github.com/HankHuang0516/EClaw/commit/d7eef15a55b3b3d025c1fbbf99ab7b7a3eb706f7)), closes [#navContainer](https://github.com/HankHuang0516/EClaw/issues/navContainer)
+
+# [1.1114.0](https://github.com/HankHuang0516/EClaw/compare/v1.1113.1...v1.1114.0) (2026-04-28)
+
+
+### Features
+
+* **mindmap:** add fullscreen toggle + ?view-mode=full URL flag ([#2222](https://github.com/HankHuang0516/EClaw/issues/2222)) ([fecc57a](https://github.com/HankHuang0516/EClaw/commit/fecc57aec84828df95bbe800cac64043d65c4555))
+
+## [1.1113.1](https://github.com/HankHuang0516/EClaw/compare/v1.1113.0...v1.1113.1) (2026-04-28)
+
+
+### Bug Fixes
+
+* **invite:** preserve ?redeem= across signup/login flow ([#2221](https://github.com/HankHuang0516/EClaw/issues/2221)) ([c676bf9](https://github.com/HankHuang0516/EClaw/commit/c676bf941712316456711bdbb46b59e3b001e456))
+
+# [1.1113.0](https://github.com/HankHuang0516/EClaw/compare/v1.1112.1...v1.1113.0) (2026-04-28)
+
+
+### Features
+
+* **seo:** community.html og:locale + 13 og:locale:alternate ([#2220](https://github.com/HankHuang0516/EClaw/issues/2220)) ([b140b37](https://github.com/HankHuang0516/EClaw/commit/b140b371a1471113bbc81d09dc981e7a8f1e0e89)), closes [#2](https://github.com/HankHuang0516/EClaw/issues/2)
+
+## [1.1112.1](https://github.com/HankHuang0516/EClaw/compare/v1.1112.0...v1.1112.1) (2026-04-28)
+
+
+### Bug Fixes
+
+* **test:** chat-his-link-render expected locale count 15 → 14 ([#2219](https://github.com/HankHuang0516/EClaw/issues/2219)) ([b9ed8a7](https://github.com/HankHuang0516/EClaw/commit/b9ed8a7452546cda825abb984b8b82d7686f42e6))
+
+# [1.1112.0](https://github.com/HankHuang0516/EClaw/compare/v1.1111.1...v1.1112.0) (2026-04-28)
+
+
+### Features
+
+* **landing:** add Browse Bots CTA → /portal/community.html (13 locales) ([#2218](https://github.com/HankHuang0516/EClaw/issues/2218)) ([fa8a925](https://github.com/HankHuang0516/EClaw/commit/fa8a9252e72ebe0c313b12ccb580441d4d13063b))
+
+## [1.1111.1](https://github.com/HankHuang0516/EClaw/compare/v1.1111.0...v1.1111.1) (2026-04-28)
+
+
+### Bug Fixes
+
+* **hermes:** exclude pre-H1.2 ghost entities from severe trigger (Phase H1.5 hotfix) ([#2217](https://github.com/HankHuang0516/EClaw/issues/2217)) ([a0fcc90](https://github.com/HankHuang0516/EClaw/commit/a0fcc9067c362184281a3cae731f5eed378a6d00))
+
+# [1.1111.0](https://github.com/HankHuang0516/EClaw/compare/v1.1110.0...v1.1111.0) (2026-04-28)
+
+
+### Features
+
+* **hermes:** /api/health 503 → Railway auto-restart on severe stuck (Phase H1.5) ([#2216](https://github.com/HankHuang0516/EClaw/issues/2216)) ([022c8a0](https://github.com/HankHuang0516/EClaw/commit/022c8a01819fe3bc3d30c474786cc0c36586c8a7))
+
+# [1.1110.0](https://github.com/HankHuang0516/EClaw/compare/v1.1109.2...v1.1110.0) (2026-04-28)
+
+
+### Features
+
+* **hermes:** delivery-stuck heartbeat detection (Phase H1.2) ([#2215](https://github.com/HankHuang0516/EClaw/issues/2215)) ([6ee0a92](https://github.com/HankHuang0516/EClaw/commit/6ee0a92ffaf76fdcea5fededf1f97731d93ff17a))
+
+## [1.1109.2](https://github.com/HankHuang0516/EClaw/compare/v1.1109.1...v1.1109.2) (2026-04-28)
+
+
+### Bug Fixes
+
+* **hermes:** route all 5 push sites through enqueueMessage + boot-time clamp (Phase H1.1b) ([#2214](https://github.com/HankHuang0516/EClaw/issues/2214)) ([13807d1](https://github.com/HankHuang0516/EClaw/commit/13807d1b3b4cd3a9a33eca8dec2aae58fbb75bb2))
+
+## [1.1109.1](https://github.com/HankHuang0516/EClaw/compare/v1.1109.0...v1.1109.1) (2026-04-28)
+
+
+### Bug Fixes
+
+* **hermes:** cap per-entity messageQueue at 200 + DLQ buffer (Phase H1.1) ([#2213](https://github.com/HankHuang0516/EClaw/issues/2213)) ([8c8a765](https://github.com/HankHuang0516/EClaw/commit/8c8a76513a4c9754ef8607241d431a23c1cf3101))
+
+# [1.1109.0](https://github.com/HankHuang0516/EClaw/compare/v1.1108.0...v1.1109.0) (2026-04-28)
+
+
+### Features
+
+* **mindmap:** finer wheel-zoom step + decoupled trackpad pinch ([#2212](https://github.com/HankHuang0516/EClaw/issues/2212)) ([6402305](https://github.com/HankHuang0516/EClaw/commit/6402305926bfb6380d0e5bd768be27f187bd38da))
+
+# [1.1108.0](https://github.com/HankHuang0516/EClaw/compare/v1.1107.10...v1.1108.0) (2026-04-28)
+
+
+### Features
+
+* **kanban:** expand search to comments/subcards + archived detail ([#2211](https://github.com/HankHuang0516/EClaw/issues/2211)) ([8a93e4b](https://github.com/HankHuang0516/EClaw/commit/8a93e4b2881b3aa9e2fc283dea52d43370b24a89))
+
+## [1.1107.10](https://github.com/HankHuang0516/EClaw/compare/v1.1107.9...v1.1107.10) (2026-04-28)
+
+
+### Bug Fixes
+
+* **kanban-i18n:** add 'blocked' statusLabel to 12 remaining locales (#card_45b3b009) ([#2208](https://github.com/HankHuang0516/EClaw/issues/2208)) ([c0bdf0e](https://github.com/HankHuang0516/EClaw/commit/c0bdf0e3f8c2136aa0124ce66b96320a17ebde31)), closes [#card_45b3b009](https://github.com/HankHuang0516/EClaw/issues/card_45b3b009) [#2204](https://github.com/HankHuang0516/EClaw/issues/2204) [#5](https://github.com/HankHuang0516/EClaw/issues/5)
+
+## [1.1107.9](https://github.com/HankHuang0516/EClaw/compare/v1.1107.8...v1.1107.9) (2026-04-28)
+
+
+### Bug Fixes
+
+* **kanban-i18n:** add 'blocked' status label to EN + zh-TW (P1.3 baseline) ([#2204](https://github.com/HankHuang0516/EClaw/issues/2204)) ([93e877e](https://github.com/HankHuang0516/EClaw/commit/93e877ef7f36883629b9beb1024b40dc2090767a)), closes [#5](https://github.com/HankHuang0516/EClaw/issues/5)
+
+## [1.1107.8](https://github.com/HankHuang0516/EClaw/compare/v1.1107.7...v1.1107.8) (2026-04-28)
+
+
+### Bug Fixes
+
+* **kanban:** nudge config now sources from kanban-status.js SoT (P1.2) ([#2203](https://github.com/HankHuang0516/EClaw/issues/2203)) ([2076b08](https://github.com/HankHuang0516/EClaw/commit/2076b08dba56abc491521f8ae00d4c63e0558024))
+
+## [1.1107.7](https://github.com/HankHuang0516/EClaw/compare/v1.1107.6...v1.1107.7) (2026-04-28)
+
+
+### Bug Fixes
+
+* **kanban:** unify status enum via shared/kanban-status.js (P1.1) ([#2202](https://github.com/HankHuang0516/EClaw/issues/2202)) ([0960377](https://github.com/HankHuang0516/EClaw/commit/096037763de1a1f33ac16c3691cdac79ced6932f))
+
+## [1.1107.6](https://github.com/HankHuang0516/EClaw/compare/v1.1107.5...v1.1107.6) (2026-04-28)
+
+
+### Bug Fixes
+
+* **card-holder:** remove dup Email field + i18n shared editor labels (#card_deeb022e) ([#2200](https://github.com/HankHuang0516/EClaw/issues/2200)) ([e885bce](https://github.com/HankHuang0516/EClaw/commit/e885bce1da3698836c39709644bb15c86d9261f1)), closes [#card_deeb022e](https://github.com/HankHuang0516/EClaw/issues/card_deeb022e) [#edit-email](https://github.com/HankHuang0516/EClaw/issues/edit-email)
+
+## [1.1107.5](https://github.com/HankHuang0516/EClaw/compare/v1.1107.4...v1.1107.5) (2026-04-28)
+
+
+### Bug Fixes
+
+* **i18n:** delete dup keys across en/zh/ms/hi (#card_c65bdf59) ([#2199](https://github.com/HankHuang0516/EClaw/issues/2199)) ([295b614](https://github.com/HankHuang0516/EClaw/commit/295b614152552bf2e5322d59fd47b2209a3efdfc)), closes [#card_c65bdf59](https://github.com/HankHuang0516/EClaw/issues/card_c65bdf59)
+
+## [1.1107.4](https://github.com/HankHuang0516/EClaw/compare/v1.1107.3...v1.1107.4) (2026-04-27)
+
+
+### Bug Fixes
+
+* **i18n:** make dup-key lint script string-aware + accept all locale headers (#card_b4e0ac79) ([#2198](https://github.com/HankHuang0516/EClaw/issues/2198)) ([3288547](https://github.com/HankHuang0516/EClaw/commit/32885471b0f2f6bd72ce375d3571709ab8323330)), closes [#card_b4e0ac79](https://github.com/HankHuang0516/EClaw/issues/card_b4e0ac79) [#2195](https://github.com/HankHuang0516/EClaw/issues/2195)
+
+## [1.1107.3](https://github.com/HankHuang0516/EClaw/compare/v1.1107.2...v1.1107.3) (2026-04-27)
+
+
+### Bug Fixes
+
+* scheduled_messages schema migration, skill-doc XSS, protobufjs critical vuln ([#2196](https://github.com/HankHuang0516/EClaw/issues/2196)) ([f9fea15](https://github.com/HankHuang0516/EClaw/commit/f9fea1577e322cc5cb4f13f91bec0749f956f2ed)), closes [#2131](https://github.com/HankHuang0516/EClaw/issues/2131)
+
+## [1.1107.2](https://github.com/HankHuang0516/EClaw/compare/v1.1107.1...v1.1107.2) (2026-04-27)
+
+
+### Bug Fixes
+
+* **mindmap:** wrap toolbar on narrow viewports so status stays visible ([#2194](https://github.com/HankHuang0516/EClaw/issues/2194)) ([577ccbc](https://github.com/HankHuang0516/EClaw/commit/577ccbcc00bb5a7de7df9f43db0b0b7906e0f17a)), closes [#mmStatus](https://github.com/HankHuang0516/EClaw/issues/mmStatus)
+
+## [1.1107.1](https://github.com/HankHuang0516/EClaw/compare/v1.1107.0...v1.1107.1) (2026-04-27)
+
+
+### Bug Fixes
+
+* **mindmap:** recover from stale rootNodeId 404 instead of dead-end ([#2193](https://github.com/HankHuang0516/EClaw/issues/2193)) ([711d74a](https://github.com/HankHuang0516/EClaw/commit/711d74a32c2e580ff64f877eb603ad560bee095d)), closes [#2192](https://github.com/HankHuang0516/EClaw/issues/2192)
+
+# [1.1107.0](https://github.com/HankHuang0516/EClaw/compare/v1.1106.0...v1.1107.0) (2026-04-27)
+
+
+### Features
+
+* **settings:** add Mind Map entry under Services (v1.0.1 release prep) ([#2192](https://github.com/HankHuang0516/EClaw/issues/2192)) ([b89cf0f](https://github.com/HankHuang0516/EClaw/commit/b89cf0f855c6c041940e3c0e45d3cf9e2262ec7d))
+
+# [1.1106.0](https://github.com/HankHuang0516/EClaw/compare/v1.1105.1...v1.1106.0) (2026-04-27)
+
+
+### Features
+
+* **hermes-plugins:** hermes-trace JSONL diagnostic plugin ([#2180](https://github.com/HankHuang0516/EClaw/issues/2180)) ([f6c701d](https://github.com/HankHuang0516/EClaw/commit/f6c701d3b856ea374415a330314f7ffa216a8a6d))
+
+## [1.1105.1](https://github.com/HankHuang0516/EClaw/compare/v1.1105.0...v1.1105.1) (2026-04-27)
+
+
+### Reverts
+
+* Revert "feat(ios): add Mind Map entry in Settings → Services ([#2178](https://github.com/HankHuang0516/EClaw/issues/2178))" ([#2179](https://github.com/HankHuang0516/EClaw/issues/2179)) ([97924cf](https://github.com/HankHuang0516/EClaw/commit/97924cf3063757dbdd783329e0783e4b73c86d9c))
+
+# [1.1105.0](https://github.com/HankHuang0516/EClaw/compare/v1.1104.3...v1.1105.0) (2026-04-27)
+
+
+### Features
+
+* **ios:** add Mind Map entry in Settings → Services ([#2178](https://github.com/HankHuang0516/EClaw/issues/2178)) ([7baa2bb](https://github.com/HankHuang0516/EClaw/commit/7baa2bbc3a7231aec629931e1da5fe26fcb1ee61))
+
+## [1.1104.3](https://github.com/HankHuang0516/EClaw/compare/v1.1104.2...v1.1104.3) (2026-04-27)
+
+
+### Bug Fixes
+
+* **ui:** remove "15 msg/day" copy after limit removal (PR [#2176](https://github.com/HankHuang0516/EClaw/issues/2176) follow-up) ([#2177](https://github.com/HankHuang0516/EClaw/issues/2177)) ([399e20f](https://github.com/HankHuang0516/EClaw/commit/399e20f6dc0d1e98080c08e26ce5d9d72f43da8d)), closes [#5](https://github.com/HankHuang0516/EClaw/issues/5)
+
+## [1.1104.2](https://github.com/HankHuang0516/EClaw/compare/v1.1104.1...v1.1104.2) (2026-04-27)
+
+
+### Bug Fixes
+
+* **usage:** remove daily message limit (15 + invite bonus) ([#2176](https://github.com/HankHuang0516/EClaw/issues/2176)) ([d550c96](https://github.com/HankHuang0516/EClaw/commit/d550c9651b209cbae19efb774c1be4af1e12452e))
+
+## [1.1104.1](https://github.com/HankHuang0516/EClaw/compare/v1.1104.0...v1.1104.1) (2026-04-26)
+
+
+### Bug Fixes
+
+* **chat:** clear stale chat_draft when mindmap cite prefills input ([#2174](https://github.com/HankHuang0516/EClaw/issues/2174)) ([1144575](https://github.com/HankHuang0516/EClaw/commit/11445757210691e3483e5a9f502f91e35c32bdc9))
+
+# [1.1104.0](https://github.com/HankHuang0516/EClaw/compare/v1.1103.3...v1.1104.0) (2026-04-26)
+
+
+### Features
+
+* **mindmap:** automation subsystem + dual-axis edges + unified cite ([#2173](https://github.com/HankHuang0516/EClaw/issues/2173)) ([f01c10c](https://github.com/HankHuang0516/EClaw/commit/f01c10cbffd11009687aa73bf24a4c3e455e154d))
+
+## [1.1103.3](https://github.com/HankHuang0516/EClaw/compare/v1.1103.2...v1.1103.3) (2026-04-26)
+
+
+### Bug Fixes
+
+* **mission-mindmap:** citable card_<hex> + sidebar zoom ([#2171](https://github.com/HankHuang0516/EClaw/issues/2171)) ([684e88b](https://github.com/HankHuang0516/EClaw/commit/684e88b7b99e7611dd89e264ed5a0a7a7a2d9a4e))
+
+## [1.1103.2](https://github.com/HankHuang0516/EClaw/compare/v1.1103.1...v1.1103.2) (2026-04-26)
+
+
+### Bug Fixes
+
+* **api-auth:** /api/entities + /api/status accept botSecret+entityId ([#2156](https://github.com/HankHuang0516/EClaw/issues/2156)) ([cca0858](https://github.com/HankHuang0516/EClaw/commit/cca085836de9320b080505afca1ce63d9b8fce04))
+
 ## [1.1103.1](https://github.com/HankHuang0516/EClaw/compare/v1.1103.0...v1.1103.1) (2026-04-26)
 
 

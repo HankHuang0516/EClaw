@@ -338,7 +338,7 @@
     "title": "Official Bots",
     "free_tier": "Free",
     "paid_tier": "Personal",
-    "free_desc": "Shared memory, 15 messages/day",
+    "free_desc": "Shared memory, unlimited messages",
     "paid_desc": "Private memory, unlimited messages, 24/7 online",
     "price_month": "NT$288/month",
     "bind_free": "Try Free",

@@ -1,7 +1,10 @@
 // mission-mindmap.js — PR-B v4 (chip+📌 + responsive)
 //
 // Lazy-loaded on first expand of the "🧠 心智圖" card in mission.html.
-// Same MOCK_NODES/MOCK_EDGES as PR-A (52 nodes / 76 edges / 8 subsystems).
+// Renders the user's own kanban cards as a graph; data is fetched from
+// /api/mission/mindmap by the embedding page and passed in via init({data}).
+// When the device has zero cards the module renders an empty-state hint —
+// no demo seed data is shipped (every device sees only its own work).
 //
 // Interaction model (rewritten 2026-04-25 after Hank rejected v3 dense):
 //   • Tap a node → spawn a floating 引用預覽卡 (chip popover) anchored near
@@ -23,135 +26,29 @@
 
   const CDN = 'https://cdn.jsdelivr.net/npm/cytoscape@3.28.1/dist/cytoscape.min.js';
 
+  // Subsystem registry — single source of truth for mindmap node styling.
+  // Each key matches the `sys` field that the kanban → mindmap mapper
+  // (backend/kanban.js → /api/mission/mindmap) emits per card. The color
+  // also drives sys-rail swatches and cytoscape edge tinting.
+  //
+  // Why a constant: subsystem palette is a design decision, not user data.
+  // Adding a subsystem requires three coordinated changes (this dict, the
+  // backend mapper, an i18n key for the label) so the cost is intentional.
+  // Source authority: Hank — palette locked 2026-04-25 with the chip+📌
+  // redesign; do not recolor without his approval (palette is reused in
+  // info.html and roadmap.html previews).
   const SYS = {
-    invite:    { color: '#f43f5e', label: '邀請成長' },
-    device:    { color: '#06b6d4', label: '裝置' },
-    i18n:      { color: '#a855f7', label: 'i18n' },
-    kanban:    { color: '#22c55e', label: '看板' },
-    chat:      { color: '#3b82f6', label: '聊天' },
-    payment:   { color: '#eab308', label: '支付' },
-    broadcast: { color: '#f97316', label: '廣播' },
-    bridge:    { color: '#ec4899', label: '橋接' },
+    invite:     { color: '#f43f5e', label: '邀請成長' },
+    device:     { color: '#06b6d4', label: '裝置' },
+    i18n:       { color: '#a855f7', label: 'i18n' },
+    kanban:     { color: '#22c55e', label: '看板' },
+    chat:       { color: '#3b82f6', label: '聊天' },
+    payment:    { color: '#eab308', label: '支付' },
+    broadcast:  { color: '#f97316', label: '廣播' },
+    bridge:     { color: '#ec4899', label: '橋接' },
+    automation: { color: '#64748b', label: '自動化' },
   };
 
-  const MOCK_NODES = [
-  // 邀請 (7)
-  { id: 'inv-hub', label: '邀請系統', sys: 'invite', tier: 'domain', status: 'active', summary: '8 碼邀請、redeem、tier milestone、funnel telemetry。本週 0/9 兌換率 0%。' },
-  { id: 'inv-code', label: '8 碼生碼', sys: 'invite', tier: 'topic', status: 'done' },
-  { id: 'inv-redeem', label: 'Redeem flow', sys: 'invite', tier: 'topic', status: 'active' },
-  { id: 'inv-tier', label: 'Tier milestone', sys: 'invite', tier: 'topic', status: 'active', summary: 'Tier 1=邀請 1 人解鎖 chip preview' },
-  { id: 'inv-leader', label: 'Leaderboard', sys: 'invite', tier: 'topic', status: 'blocked', summary: '需要先有 30+ 用戶才有意義' },
-  { id: 'inv-funnel', label: 'Funnel telemetry', sys: 'invite', tier: 'leaf', status: 'active' },
-  { id: 'inv-qr', label: 'QR 海報生成', sys: 'invite', tier: 'leaf', status: 'done' },
-
-  // 裝置 (6)
-  { id: 'dev-hub', label: '裝置 / Device', sys: 'device', tier: 'domain', status: 'active', summary: 'deviceId+secret 認證、輪替、health probe。' },
-  { id: 'dev-rotate', label: 'Secret 輪替', sys: 'device', tier: 'topic', status: 'active', summary: 'POST /api/device/rotate-secret + 一次性 dialog' },
-  { id: 'dev-health', label: 'rental-health cron', sys: 'device', tier: 'topic', status: 'done' },
-  { id: 'dev-vars', label: 'device-vars vault', sys: 'device', tier: 'topic', status: 'done' },
-  { id: 'dev-switch', label: 'Switch Device', sys: 'device', tier: 'leaf', status: 'blocked', summary: '12.4h stale; 等 i18n' },
-  { id: 'dev-logs', label: '/api/logs (DEVICE_SECRET)', sys: 'device', tier: 'leaf', status: 'done' },
-
-  // i18n (8)
-  { id: 'i18n-hub', label: 'i18n 13 locale', sys: 'i18n', tier: 'domain', status: 'active', summary: 'en/zh/zh-TW/ja/ko/de/es/fr/pt/it/vi/th/id/ms/hi/ar — chip_popover 缺 10' },
-  { id: 'i18n-shared', label: 'shared/i18n.js (live)', sys: 'i18n', tier: 'topic', status: 'active', summary: '~61k lines, 唯一被 HTML import' },
-  { id: 'i18n-deadtop', label: '頂層 ./i18n.js (dead)', sys: 'i18n', tier: 'leaf', status: 'done', summary: '已 git rm + CI guard' },
-  { id: 'i18n-chip', label: 'chip_popover_*', sys: 'i18n', tier: 'topic', status: 'blocked', summary: 'Mac_E 兩次 wrong-file fail' },
-  { id: 'i18n-kb', label: 'kb_/kanban_*', sys: 'i18n', tier: 'topic', status: 'blocked' },
-  { id: 'i18n-strict-ci', label: 'i18n-check.js (strict)', sys: 'i18n', tier: 'leaf', status: 'done' },
-  { id: 'i18n-key-audit', label: '558 stray }, audit', sys: 'i18n', tier: 'leaf', status: 'done' },
-  { id: 'i18n-translator', label: 'Mac_E i18n agent', sys: 'i18n', tier: 'leaf', status: 'blocked', summary: '錯檔路徑寫死，已 STOP' },
-
-  // 看板 (7)
-  { id: 'kb-hub', label: '看板系統', sys: 'kanban', tier: 'domain', status: 'active' },
-  { id: 'kb-card', label: '/mission/card API', sys: 'kanban', tier: 'topic', status: 'done' },
-  { id: 'kb-screenshot-gate', label: 'screenshot 截圖閘', sys: 'kanban', tier: 'topic', status: 'active' },
-  { id: 'kb-r2-ttl', label: 'R2 TTL ≥3 days', sys: 'kanban', tier: 'leaf', status: 'done', summary: 'PR #2090 merged' },
-  { id: 'kb-deeplink', label: '深層連結 anchor scroll', sys: 'kanban', tier: 'leaf', status: 'done' },
-  { id: 'kb-notes-tab', label: '筆記 tab snake_case bug', sys: 'kanban', tier: 'leaf', status: 'active' },
-  { id: 'kb-mention', label: '@mention → entityId', sys: 'kanban', tier: 'topic', status: 'active' },
-
-  // 聊天 (8)
-  { id: 'chat-hub', label: '聊天 / Chat', sys: 'chat', tier: 'domain', status: 'active' },
-  { id: 'chat-chip', label: '智慧引用晶片', sys: 'chat', tier: 'topic', status: 'active', summary: '@chip_popover_X 點擊預覽' },
-  { id: 'chat-chip-recursive', label: '預覽卡內遞迴 chip', sys: 'chat', tier: 'leaf', status: 'active' },
-  { id: 'chat-pin-btn', label: '📌 重新引用按鈕', sys: 'chat', tier: 'leaf', status: 'done', summary: 'PR #2089 merged' },
-  { id: 'chat-history-api', label: '/api/chat/history', sys: 'chat', tier: 'topic', status: 'done' },
-  { id: 'chat-schedule', label: '排程訊息 (long-press)', sys: 'chat', tier: 'topic', status: 'done' },
-  { id: 'chat-embed', label: 'embed=1 mode', sys: 'chat', tier: 'leaf', status: 'done' },
-  { id: 'chat-share', label: 'share-chat.html 公開', sys: 'chat', tier: 'leaf', status: 'active' },
-
-  // 支付 (5)
-  { id: 'pay-hub', label: '支付 / 訂閱', sys: 'payment', tier: 'domain', status: 'active' },
-  { id: 'pay-topup-b', label: 'Top-up Path B (sandbox)', sys: 'payment', tier: 'topic', status: 'active', summary: 'Android emu 已有 Play 帳號' },
-  { id: 'pay-iap-android', label: 'Android IAP', sys: 'payment', tier: 'topic', status: 'active' },
-  { id: 'pay-iap-ios', label: 'iOS StoreKit', sys: 'payment', tier: 'topic', status: 'blocked', summary: '等 Apple Connect 設定' },
-  { id: 'pay-wallet', label: 'wallet.html 餘額', sys: 'payment', tier: 'leaf', status: 'done' },
-
-  // 廣播 (6)
-  { id: 'bcast-hub', label: '廣播 / Publisher', sys: 'broadcast', tier: 'domain', status: 'active' },
-  { id: 'bcast-x', label: 'X (Twitter)', sys: 'broadcast', tier: 'topic', status: 'active' },
-  { id: 'bcast-mastodon', label: 'Mastodon', sys: 'broadcast', tier: 'leaf', status: 'done', summary: '已棄用 2026-04-15' },
-  { id: 'bcast-wp', label: 'WordPress.com', sys: 'broadcast', tier: 'leaf', status: 'done', summary: '已退役 2026-04-20' },
-  { id: 'bcast-cron', label: 'Daily viral cron', sys: 'broadcast', tier: 'topic', status: 'active' },
-  { id: 'bcast-design', label: 'Claude Design 視覺', sys: 'broadcast', tier: 'leaf', status: 'active' },
-
-  // 橋接 (5)
-  { id: 'br-hub', label: '橋接 / Bridge', sys: 'bridge', tier: 'domain', status: 'active' },
-  { id: 'br-auth', label: 'bridge-auth (osascript)', sys: 'bridge', tier: 'topic', status: 'done' },
-  { id: 'br-eye', label: 'eye 螢幕全覽', sys: 'bridge', tier: 'leaf', status: 'done' },
-  { id: 'br-hermes-docker', label: 'hermes-bridge service', sys: 'bridge', tier: 'topic', status: 'done', summary: 'card_7102c915 closed' },
-  { id: 'br-unit-u01', label: 'U01 = app E2E', sys: 'bridge', tier: 'leaf', status: 'active' },
-];
-
-  const MOCK_EDGES = [
-  // 邀請 tree
-  ['inv-hub','inv-code'],['inv-hub','inv-redeem'],['inv-hub','inv-tier'],
-  ['inv-hub','inv-leader'],['inv-redeem','inv-funnel'],['inv-code','inv-qr'],
-  // 裝置 tree
-  ['dev-hub','dev-rotate'],['dev-hub','dev-health'],['dev-hub','dev-vars'],
-  ['dev-hub','dev-switch'],['dev-hub','dev-logs'],
-  // i18n tree
-  ['i18n-hub','i18n-shared'],['i18n-hub','i18n-chip'],['i18n-hub','i18n-kb'],
-  ['i18n-shared','i18n-strict-ci'],['i18n-shared','i18n-key-audit'],
-  ['i18n-shared','i18n-deadtop'],['i18n-hub','i18n-translator'],
-  // 看板 tree
-  ['kb-hub','kb-card'],['kb-hub','kb-screenshot-gate'],['kb-screenshot-gate','kb-r2-ttl'],
-  ['kb-hub','kb-deeplink'],['kb-hub','kb-notes-tab'],['kb-hub','kb-mention'],
-  // 聊天 tree
-  ['chat-hub','chat-chip'],['chat-chip','chat-chip-recursive'],['chat-chip','chat-pin-btn'],
-  ['chat-hub','chat-history-api'],['chat-hub','chat-schedule'],['chat-hub','chat-embed'],
-  ['chat-hub','chat-share'],
-  // 支付 tree
-  ['pay-hub','pay-topup-b'],['pay-hub','pay-iap-android'],['pay-hub','pay-iap-ios'],
-  ['pay-hub','pay-wallet'],['pay-iap-android','pay-topup-b'],
-  // 廣播 tree
-  ['bcast-hub','bcast-x'],['bcast-hub','bcast-mastodon'],['bcast-hub','bcast-wp'],
-  ['bcast-hub','bcast-cron'],['bcast-cron','bcast-design'],
-  // 橋接 tree
-  ['br-hub','br-auth'],['br-auth','br-eye'],['br-hub','br-hermes-docker'],['br-hub','br-unit-u01'],
-
-  // ⛓ Cross-system dependencies (different style)
-  ['i18n-chip','chat-chip','depends'],
-  ['i18n-kb','kb-hub','depends'],
-  ['i18n-translator','br-auth','via'],
-  ['inv-redeem','dev-vars','via'],
-  ['inv-tier','chat-chip','unlocks'],
-  ['kb-screenshot-gate','bcast-cron','required'],
-  ['chat-schedule','kb-mention','reuses'],
-  ['br-hermes-docker','i18n-translator','runs'],
-  ['pay-topup-b','dev-health','telemetry'],
-  ['bcast-x','dev-vars','reads-key'],
-  ['bcast-design','br-auth','uses'],
-  ['kb-card','chat-history-api','share-DB'],
-  ['inv-funnel','bcast-cron','feeds'],
-  ['dev-switch','i18n-chip','blocked-by'],
-  ['chat-pin-btn','i18n-chip','i18n-key'],
-  ['kb-deeplink','chat-chip','same-anchor'],
-  ['br-unit-u01','kb-screenshot-gate','attaches'],
-  ['chat-share','bcast-x','outbound'],
-  ['inv-qr','bcast-design','asset'],
-];
 
   const STYLE_ID = 'mission-mindmap-style';
   const STYLE_CSS = `
@@ -168,6 +65,12 @@
       border-radius: 8px; overflow: hidden;
       font-size: 13px; color: var(--mm-text);
       position: relative;
+    }
+    .mm-root:fullscreen, .mm-root:-webkit-full-screen {
+      height: 100vh; width: 100vw; border-radius: 0; border: none;
+    }
+    body.mm-display-mode .mm-root {
+      height: 100vh; width: 100vw; border-radius: 0; border: none;
     }
     .mm-root .sys-rail {
       background: var(--mm-bg-elev);
@@ -453,6 +356,27 @@
         top: 50px; font-size: 9px;
       }
     }
+    .mm-root.mm-empty {
+      display: flex; align-items: center; justify-content: center;
+      grid-template-columns: none;
+    }
+    .mm-empty-card {
+      max-width: 360px; padding: 28px 24px; text-align: center;
+      background: var(--mm-bg-elev); border: 1px solid var(--mm-border);
+      border-radius: 10px; color: var(--mm-text);
+    }
+    .mm-empty-emoji { font-size: 36px; margin-bottom: 10px; }
+    .mm-empty-title { font-size: 16px; margin: 0 0 8px 0; font-weight: 600; }
+    .mm-empty-hint {
+      font-size: 13px; margin: 0 0 16px 0; line-height: 1.5;
+      color: var(--mm-text-secondary);
+    }
+    .mm-empty-cta {
+      display: inline-block; padding: 8px 16px; font-size: 13px;
+      background: #22c55e; color: #0d1117; border-radius: 6px;
+      text-decoration: none; font-weight: 600;
+    }
+    .mm-empty-cta:hover { background: #16a34a; }
   `;
 
   function injectStyle() {
@@ -559,6 +483,7 @@
         <div class="mm-toolbar">
           <button data-act="fit" title="Fit">🎯</button>
           <button data-act="reset" title="重整">🔄</button>
+          <button data-act="fullscreen" title="全螢幕" aria-label="全螢幕">⛶</button>
         </div>
         <div class="mm-pin-tray" data-pin-tray></div>
         <div class="mm-tier">L1 · <strong>Topics</strong></div>
@@ -569,7 +494,13 @@
 
   function buildCy(canvasEl, nodes, edges) {
     const nodesById = Object.fromEntries(nodes.map(n => [n.id, n]));
-    const cyNodes = nodes.map(n => ({ data: { ...n, sysColor: SYS[n.sys].color } }));
+    const cyNodes = nodes.map(n => {
+      const sysColor = (SYS[n.sys] || SYS.kanban).color;
+      const cyNode = { data: { ...n, sysColor } };
+      const c = n.coord;
+      if (c && Number.isFinite(c.x) && Number.isFinite(c.y)) cyNode.position = { x: c.x, y: c.y };
+      return cyNode;
+    });
     const cyEdges = edges.map(([s, t, label]) => ({
       data: { id: `${s}__${t}`, source: s, target: t, label: label || '', cross: !!label }
     }));
@@ -578,7 +509,7 @@
       container: canvasEl,
       elements: [...cyNodes, ...cyEdges],
       layout: {
-        name: 'cose', padding: 30, animate: false, fit: true,
+        name: 'cose', padding: 30, animate: false, fit: true, randomize: false,
         idealEdgeLength: 95, nodeRepulsion: 8500, edgeElasticity: 100,
         nestingFactor: 1.2, gravity: 0.3, numIter: 1800, componentSpacing: 70,
       },
@@ -692,12 +623,25 @@
 
     function buildPopHtml(d, isPinned, related) {
       const sysMeta = SYS[d.sys];
-      const pinTitle = isPinned ? '取消釘選' : '釘選引用';
-      const pinIcon = isPinned ? '📍' : '📌';
+      // Pin = local bookmark to top-tray of this page (no deep-link, no API).
+      // Distinct from cite (📌, deep-links into chat) — different icons to
+      // avoid the 📌 collision now that cite uses the canonical 引用 emoji.
+      const pinTitle = isPinned ? '取消釘選' : '釘選到頂部列 (僅當前頁面)';
+      const pinIcon = isPinned ? '📍' : '🔖';
       const pinClass = isPinned ? 'pin-btn pinned' : 'pin-btn';
+      // Citable IDs: real mindmap UUIDs (mindmap_xxxx) or kanban card prefix IDs
+      // (card_xxxxxxxx). Virtual `sys:*` hubs are aggregations, not entities.
+      // Anything else (slug seed nodes like inv-hub) is non-citable demo data.
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(d.id);
-      const citeTitle = isUuid ? '複製引用 token (聊天可貼上為 chip)' : '示範資料無法引用 — 需先在心智圖新增實際節點';
-      const citeClass = isUuid ? 'cite-btn' : 'cite-btn is-disabled';
+      const isCardId = /^card_[a-f0-9]{8}([a-f0-9]{16}|-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})?$/i.test(d.id);
+      const isVirtualHub = String(d.id).startsWith('sys:');
+      const canCite = isUuid || isCardId;
+      const citeTitle = canCite
+        ? '引用到聊天 — 跳到聊天頁,訊息框已預填 chip token,按送出即可'
+        : isVirtualHub
+          ? '子系統 hub 為彙總節點,無法引用'
+          : '示範資料無法引用 — 需先在心智圖新增實際節點';
+      const citeClass = canCite ? 'cite-btn' : 'cite-btn is-disabled';
       const summary = d.summary || `${sysMeta.label} 子系統 · ${d.tier}`;
       const relatedHtml = related.length
         ? related.map(r => `
@@ -708,12 +652,19 @@
             </div>`).join('')
         : '<div class="mm-chip-pop-empty">沒有跨系統依賴</div>';
 
+      // 建卡 — Phase 4 write-side: stash node canvas coord (x,y) into
+      // localStorage and hand off to kanban.html, which auto-opens the
+      // new-card dialog with title pre-filled and chatAnchorCoord wired
+      // through to POST /api/mission/card. Available on every node
+      // (including demo seeds) — the coord is the value, not the node ID.
+      const cardTitle = '從這個節點建立看板卡片 — 自動錨定心智圖座標';
       return `
         <div class="mm-chip-pop-header">
           <span class="swatch" style="background:${sysMeta.color}"></span>
           <span class="mm-chip-pop-title" title="${escapeHtml(d.label)}">${escapeHtml(d.label)}</span>
           <span class="mm-chip-pop-status ${escapeHtml(d.status)}">${escapeHtml(d.status)}</span>
-          <button class="mm-chip-pop-btn ${citeClass}" data-pop-act="cite" title="${escapeHtml(citeTitle)}">📋</button>
+          <button class="mm-chip-pop-btn ${citeClass}" data-pop-act="cite" title="${escapeHtml(citeTitle)}">📌</button>
+          <button class="mm-chip-pop-btn card-btn" data-pop-act="card" title="${escapeHtml(cardTitle)}">➕</button>
           <button class="mm-chip-pop-btn ${pinClass}" data-pop-act="pin" title="${escapeHtml(pinTitle)}">${pinIcon}</button>
           <button class="mm-chip-pop-btn" data-pop-act="close" title="關閉">✖</button>
         </div>
@@ -808,13 +759,85 @@
         }
         if (act === 'cite') {
           if (btn.classList.contains('is-disabled')) {
-            showToast('示範資料無法引用,需先在心智圖新增實際節點');
+            showToast(String(nodeId).startsWith('sys:')
+              ? '子系統 hub 為彙總節點,請點下層節點再引用'
+              : '示範資料無法引用,需先在心智圖新增實際節點');
             return;
           }
-          const token = 'mindmap_' + nodeId;
-          copyToClipboard(token).then(ok => {
-            showToast(ok ? `已複製「${token.slice(0, 22)}…」— 切到聊天貼上即為 chip` : `複製失敗,請手動複製: ${token}`);
-          });
+          // card_<hex> nodes are kanban cards — chat's entity-link-render auto-detects
+          // the prefix and renders a card chip. UUID nodes use the legacy mindmap_ token.
+          const isCard = /^card_[a-f0-9]{8}/i.test(nodeId);
+          const token = isCard ? nodeId : 'mindmap_' + nodeId;
+          const kind = isCard ? '卡片' : '心智圖節點';
+          // Unified 引用到聊天 UX — same path as card-holder/files/mission
+          // dialog 📌 buttons. Hands the token to chat as quote context +
+          // pre-fills the message input so the user just hits send. The
+          // chat onload reader (chat.html) consumes eclaw_pending_quote +
+          // optional prefillInput. Falls back to clipboard copy if neither
+          // postMessage nor localStorage path is available (offline / no
+          // chat page mounted).
+          const quoteSource = '心智圖';
+          const quoteTitle = d.label || token;
+          const quoteExcerpt = token;
+          try {
+            if (typeof global.quoteToChat === 'function') {
+              global.quoteToChat(quoteSource, quoteTitle, quoteExcerpt, { prefillInput: token });
+            } else if (global.self !== global.top) {
+              global.parent.postMessage({
+                type: 'eclaw_quote',
+                source: quoteSource,
+                title: quoteTitle,
+                excerpt: quoteExcerpt,
+                prefillInput: token,
+              }, global.location.origin);
+            } else {
+              global.localStorage.setItem('eclaw_pending_quote', JSON.stringify({
+                source: quoteSource,
+                title: quoteTitle,
+                excerpt: quoteExcerpt,
+                prefillInput: token,
+                ts: Date.now(),
+              }));
+              global.location.href = '/portal/chat.html';
+            }
+            showToast(`引用 ${kind}「${quoteTitle.slice(0, 18)}」到聊天 — 訊息框已預填,按送出即可`);
+          } catch (err) {
+            // Last resort — clipboard copy + manual paste hint
+            copyToClipboard(token).then(ok => {
+              showToast(ok
+                ? `引用直送失敗,已複製 token 請手動貼上聊天: ${token.slice(0, 22)}…`
+                : `引用失敗 (${err && err.message || 'unknown'}): ${token}`);
+            });
+          }
+        }
+        if (act === 'card') {
+          // Phase 4 write-side: hand the kanban.html new-card form a
+          // pre-filled title + chat_anchor_coord captured from the live
+          // cytoscape model position. Kanban reads eclaw_pending_mindmap_card
+          // on load and forwards chatAnchorCoord into POST /api/mission/card.
+          // The chat-anchor picker stays mandatory (validator/Phase 3 gate),
+          // so the user still pins an originating chat message.
+          try {
+            const node = cy.getElementById(nodeId);
+            const pos = node && node.length ? node.position() : null;
+            if (!pos || !Number.isFinite(pos.x) || !Number.isFinite(pos.y)) {
+              showToast('座標讀取失敗,無法建立錨定卡片');
+              return;
+            }
+            const payload = {
+              x: pos.x,
+              y: pos.y,
+              title: d.label || nodeId,
+              sys: d.sys || '',
+              nodeId,
+              ts: Date.now(),
+            };
+            global.localStorage.setItem('eclaw_pending_mindmap_card', JSON.stringify(payload));
+            showToast(`建立卡片中… 座標已錨定 (${Math.round(pos.x)}, ${Math.round(pos.y)})`);
+            global.location.href = '/portal/kanban.html';
+          } catch (err) {
+            showToast(`建卡失敗: ${err && err.message || 'unknown'}`);
+          }
         }
       });
     }
@@ -931,7 +954,10 @@
         const wasActive = row.classList.contains('active');
         rootEl.querySelectorAll('.sys-row').forEach(r => r.classList.remove('active'));
         cy.elements().removeClass('faded');
-        if (wasActive) return;
+        if (wasActive) {
+          cy.animate({ fit: { eles: cy.elements(), padding: 30 }, duration: 500, easing: 'ease-in-out' });
+          return;
+        }
         row.classList.add('active');
         cy.nodes().forEach(n => { if (n.data('sys') !== sys) n.addClass('faded'); });
         cy.edges().forEach(e => {
@@ -939,13 +965,48 @@
           const ta = nodesById[e.data('target')]?.sys;
           if (sa !== sys && ta !== sys) e.addClass('faded');
         });
+        const focusNodes = cy.nodes().filter(n => n.data('sys') === sys);
+        if (focusNodes.length) {
+          cy.animate({ fit: { eles: focusNodes, padding: 60 }, duration: 600, easing: 'ease-in-out' });
+        }
       });
     });
+
+    const fsTarget = rootEl;
+    const fsBtn = rootEl.querySelector('.mm-toolbar [data-act="fullscreen"]');
+    function isFsActive() {
+      const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+      return !!fsEl && (fsEl === fsTarget || fsEl.contains(fsTarget));
+    }
+    function updateFsBtn() {
+      if (!fsBtn) return;
+      const active = isFsActive();
+      fsBtn.title = active ? '退出全螢幕' : '全螢幕';
+      fsBtn.setAttribute('aria-label', fsBtn.title);
+      fsBtn.textContent = active ? '⛶✕' : '⛶';
+    }
+    function toggleFs() {
+      const req = fsTarget.requestFullscreen || fsTarget.webkitRequestFullscreen;
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (isFsActive()) {
+        exit && exit.call(document);
+      } else if (req) {
+        req.call(fsTarget).catch(err => console.warn('[Mindmap] Fullscreen rejected:', err));
+      }
+    }
+    ['fullscreenchange', 'webkitfullscreenchange'].forEach(evt => {
+      document.addEventListener(evt, () => {
+        updateFsBtn();
+        if (cy) setTimeout(() => { cy.resize(); cy.fit(undefined, 30); }, 80);
+      });
+    });
+    updateFsBtn();
 
     rootEl.querySelectorAll('.mm-toolbar button').forEach(btn => {
       btn.addEventListener('click', () => {
         const act = btn.dataset.act;
         if (act === 'fit') cy.fit(undefined, 30);
+        if (act === 'fullscreen') toggleFs();
         if (act === 'reset') {
           ctrl.closeActive();
           cy.elements().removeClass('faded').removeClass('highlighted').removeClass('pinned');
@@ -1024,12 +1085,36 @@
     return ctrl;
   }
 
+  function renderEmptyState(rootEl) {
+    injectStyle();
+    rootEl.classList.add('mm-root');
+    rootEl.classList.add('mm-empty');
+    if (rootEl.style.display === 'block') rootEl.style.display = '';
+    const t = (key, fallback) => (window.i18n && window.i18n.t && window.i18n.t(key)) || fallback;
+    const title = t('mm_empty_title', '心智圖還沒有節點');
+    const hint = t('mm_empty_hint', '建立看板卡片後，這裡會自動把任務、子卡與聊天錨點連成圖。');
+    const cta = t('mm_empty_cta', '前往看板新增第一張卡');
+    rootEl.innerHTML = `
+      <div class="mm-empty-card">
+        <div class="mm-empty-emoji">🧠</div>
+        <h3 class="mm-empty-title">${title}</h3>
+        <p class="mm-empty-hint">${hint}</p>
+        <a class="mm-empty-cta" href="kanban.html">${cta}</a>
+      </div>
+    `;
+  }
+
   async function init(opts) {
     const { rootEl, data } = opts || {};
     if (!rootEl) throw new Error('MissionMindmap.init: rootEl required');
 
-    const nodes = (data && data.nodes) || MOCK_NODES;
-    const edges = (data && data.edges) || MOCK_EDGES;
+    const nodes = (data && Array.isArray(data.nodes)) ? data.nodes : [];
+    const edges = (data && Array.isArray(data.edges)) ? data.edges : [];
+
+    if (nodes.length === 0) {
+      renderEmptyState(rootEl);
+      return { empty: true, nodes, edges };
+    }
 
     injectStyle();
     rootEl.classList.add('mm-root');
@@ -1045,5 +1130,5 @@
     return { cy, ...ctrl, nodes, edges };
   }
 
-  global.MissionMindmap = { init, SYS, MOCK_NODES, MOCK_EDGES };
+  global.MissionMindmap = { init, SYS };
 })(window);

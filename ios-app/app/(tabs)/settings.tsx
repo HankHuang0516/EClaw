@@ -235,6 +235,12 @@ export default function SettingsScreen() {
             right={(props) => <List.Icon {...props} icon="open-in-new" />}
             onPress={() => Linking.openURL('https://eclawbot.com/portal/settings.html#kanban-nudge-card').catch(() => {})}
           />
+          <List.Item
+            title={t('settings.mindmap', '🧠 Mind Map')}
+            left={(props) => <List.Icon {...props} icon="graph-outline" />}
+            right={(props) => <List.Icon {...props} icon="open-in-new" />}
+            onPress={() => Linking.openURL('https://eclawbot.com/portal/mindmap.html').catch(() => {})}
+          />
         </List.Section>
 
         <Divider />

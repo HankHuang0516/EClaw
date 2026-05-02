@@ -281,3 +281,112 @@ describe('Agent Card backward compatibility', () => {
         expect(res.status).toBe(404); // device not found
     });
 });
+
+// ── Prompt Policy orchestration ──
+describe('Prompt Policy endpoints', () => {
+    beforeEach(() => {
+        for (const key of Object.keys(app.devices)) delete app.devices[key];
+        const entity = app._createDefaultEntity(6);
+        entity.isBound = true;
+        entity.botSecret = 'bot-secret';
+        entity.name = 'Codex';
+        entity.identity = {
+            role: 'QA reviewer',
+            instructions: ['Review UI and API regressions']
+        };
+        app.devices['prompt-device'] = {
+            deviceId: 'prompt-device',
+            deviceSecret: 'device-secret',
+            createdAt: Date.now(),
+            nextEntityId: 7,
+            promptPolicy: null,
+            entities: { 6: entity }
+        };
+    });
+
+    test('PUT /api/device/prompt-policy saves sanitized policy', async () => {
+        const res = await request(app)
+            .put('/api/device/prompt-policy')
+            .send({
+                deviceId: 'prompt-device',
+                deviceSecret: 'device-secret',
+                promptPolicy: {
+                    instructions: 'Use short status updates.\nAlways name blockers.',
+                    taskProtocol: { statusHeartbeatMs: 5000 },
+                    channelOverrides: {
+                        codex: { instructions: ['Prefer test-plan first replies.'] }
+                    }
+                }
+            });
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.promptPolicy.instructions).toEqual(['Use short status updates.', 'Always name blockers.']);
+        expect(res.body.promptPolicy.taskProtocol.statusHeartbeatMs).toBe(60000);
+        expect(app.devices['prompt-device'].promptPolicy.channelOverrides.codex.instructions).toEqual(['Prefer test-plan first replies.']);
+    });
+
+    test('PUT /api/entity/:entityId/prompt-policy stores policy under identity', async () => {
+        const res = await request(app)
+            .put('/api/entity/6/prompt-policy')
+            .send({
+                deviceId: 'prompt-device',
+                deviceSecret: 'device-secret',
+                promptPolicy: {
+                    instructions: ['When running QA, report page and command progress.'],
+                    channelOverrides: {
+                        claude_code: { instructions: ['Use concise wake-up diagnostics.'] }
+                    }
+                }
+            });
+
+        expect(res.status).toBe(200);
+        expect(res.body.promptPolicy.instructions).toEqual(['When running QA, report page and command progress.']);
+        expect(app.devices['prompt-device'].entities[6].identity.promptPolicy.instructions).toEqual([
+            'When running QA, report page and command progress.'
+        ]);
+    });
+
+    test('GET /api/channel/prompt-policy composes device, identity, entity, and channel policy', async () => {
+        app.devices['prompt-device'].promptPolicy = {
+            version: 1,
+            enabled: true,
+            instructions: ['Device-wide system prompt.'],
+            taskProtocol: { requireTestPlan: true, requireMilestoneUpdates: true, statusHeartbeatMs: 180000 },
+            channelOverrides: { codex: { enabled: true, instructions: ['Codex override.'] } }
+        };
+        app.devices['prompt-device'].entities[6].identity.promptPolicy = {
+            version: 1,
+            enabled: true,
+            instructions: ['Entity prompt policy.'],
+            taskProtocol: { requireTestPlan: true, requireMilestoneUpdates: true, statusHeartbeatMs: 120000 },
+            channelOverrides: {}
+        };
+
+        const res = await request(app)
+            .get('/api/channel/prompt-policy?deviceId=prompt-device&entityId=6&botSecret=bot-secret&channel=codex');
+
+        expect(res.status).toBe(200);
+        expect(res.body.policy.channel).toBe('codex');
+        expect(res.body.policy.taskProtocol.statusHeartbeatMs).toBe(120000);
+        expect(res.body.policy.compiledPrompt).toContain('Device-wide system prompt.');
+        expect(res.body.policy.compiledPrompt).toContain('Role: QA reviewer');
+        expect(res.body.policy.compiledPrompt).toContain('Entity prompt policy.');
+        expect(res.body.policy.compiledPrompt).toContain('Codex override.');
+    });
+
+    test('rejects likely secrets in prompt policy', async () => {
+        const res = await request(app)
+            .put('/api/device/prompt-policy')
+            .send({
+                deviceId: 'prompt-device',
+                deviceSecret: 'device-secret',
+                promptPolicy: {
+                    instructions: ['api_key=sk-thisShouldNotBeStoredInPromptPolicy1234567890']
+                }
+            });
+
+        expect(res.status).toBe(400);
+        expect(res.body.error).toMatch(/secret/i);
+    });
+});
