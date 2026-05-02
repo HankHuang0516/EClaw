@@ -6477,13 +6477,33 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         }
     }
 
-    let { deviceId, entityId, botSecret, name, character, state, message, parts, targetDeviceId, speakTo, broadcast, card, attachments } = req.body;
+    let { deviceId, entityId, botSecret, name, character, state, message, parts, targetDeviceId, speakTo, broadcast, card, attachments, senderHint } = req.body;
 
     if (!deviceId) {
         return res.status(400).json({ success: false, message: "deviceId required" });
     }
     if (!botSecret) {
         return res.status(400).json({ success: false, message: "botSecret required" });
+    }
+
+    // Validate optional senderHint — channel bridges pass this so the server
+    // can resolve smart routing centrally instead of each bridge implementing
+    // its own decideReplyRouting logic. See issue #2285.
+    //
+    // Shape: { kind: "entity"|"user"|"broadcast"|"unknown", entityId?, publicCode? }
+    // Precedence: explicit speakTo/broadcast > in-text @-mention > senderHint.
+    // senderHint is consulted only when none of the above resolved a target.
+    if (senderHint !== undefined && senderHint !== null) {
+        if (typeof senderHint !== 'object' || Array.isArray(senderHint)) {
+            return res.status(400).json({ success: false, message: "senderHint must be an object" });
+        }
+        const allowedKinds = new Set(['entity', 'user', 'broadcast', 'unknown']);
+        if (senderHint.kind && !allowedKinds.has(senderHint.kind)) {
+            return res.status(400).json({
+                success: false,
+                message: `senderHint.kind must be one of: ${[...allowedKinds].join(', ')}`
+            });
+        }
     }
 
     // Validate optional rich card payload (backward compatible — card is always optional)
@@ -6902,6 +6922,58 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         }
     }
 
+    // ── senderHint resolution (channel-bridge centralization, issue #2285) ──
+    // Lowest precedence — only fills speakTo/broadcast when neither explicit
+    // fields nor in-text @-mentions resolved a target. Channel bridges pass
+    // senderHint derived from the inbound payload's "from" fields so the
+    // server (not the bridge) decides where the bot's reply routes.
+    let senderHintResolution = null;
+    const noTargetYet = !broadcast && !(speakTo && Array.isArray(speakTo) && speakTo.length > 0);
+    if (senderHint && noTargetYet && finalMessage) {
+        const kind = senderHint.kind || 'unknown';
+        if (kind === 'broadcast') {
+            broadcast = true;
+            senderHintResolution = { kind, applied: 'broadcast' };
+        } else if (kind === 'entity') {
+            // Resolve hint → publicCode. publicCode > entityId because publicCode
+            // is cross-device safe; entityId only resolves on sender's own device.
+            let resolvedCode = null;
+            if (senderHint.publicCode && typeof senderHint.publicCode === 'string') {
+                const code = senderHint.publicCode.trim();
+                // Accept the publicCode if it exists in the global index OR
+                // belongs to the current device (covers freshly-bound entities
+                // not yet propagated through the proxy).
+                if (publicCodeIndex[code]) {
+                    resolvedCode = code;
+                } else {
+                    for (const i of Object.keys(device.entities).map(Number)) {
+                        if (device.entities[i]?.publicCode === code) { resolvedCode = code; break; }
+                    }
+                }
+            }
+            if (!resolvedCode && Number.isFinite(Number(senderHint.entityId))) {
+                const hintId = Number(senderHint.entityId);
+                const target = device.entities[hintId];
+                if (target && target.publicCode) resolvedCode = target.publicCode;
+            }
+            if (resolvedCode) {
+                speakTo = [resolvedCode];
+                senderHintResolution = { kind, applied: 'speakTo', publicCode: resolvedCode };
+            } else {
+                senderHintResolution = { kind, applied: 'none', reason: 'unresolved_sender' };
+            }
+        } else {
+            // 'user' or 'unknown' — no routing, message is a status update.
+            senderHintResolution = { kind, applied: 'none' };
+        }
+    } else if (senderHint) {
+        senderHintResolution = {
+            kind: senderHint.kind || 'unknown',
+            applied: 'none',
+            reason: noTargetYet ? 'no_message' : 'explicit_or_mention_won'
+        };
+    }
+
     // ── speakTo / broadcast delivery ──
     const warnings = entityIdCorrected
         ? [`entityId mismatch: you provided ${parseInt(entityId) || 0} but your botSecret belongs to entity ${eId}. Auto-corrected to ${eId}.`]
@@ -7139,6 +7211,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     if (deliveryResults) response.delivery = deliveryResults;
     if (warnings.length > 0) response.warnings = warnings;
     if (transformMentionContext) response.mentions = transformMentionContext;
+    if (senderHintResolution) response.senderHintResolution = senderHintResolution;
 
     res.json(response);
 });
@@ -10668,6 +10741,75 @@ app.get('/api/channel/prompt-policy', (req, res) => {
         policy,
         devicePolicy: device.promptPolicy || null,
         entityPolicy: getEntityPromptPolicy(auth.entity)
+    });
+});
+
+/**
+ * GET /api/channel/routing-policy — single source of truth for the smart-routing
+ * system prompt that channel bridges inject into their host LLM (issue #2285).
+ *
+ * Replaces the previous per-bridge approach where each channel patched its host
+ * LLM's plugin separately (e.g. claude-code-eclaw-channel/patch-fakechat.sh).
+ * Bridges fetch this endpoint at startup and prepend the policy text to the
+ * host LLM's system prompt — no per-bridge string maintenance.
+ *
+ * Query: ?channel=<name>&lang=<en|zh-TW>
+ *   - channel: optional, currently informational. Future: per-channel overrides.
+ *     Defaults to 'generic'.
+ *   - lang:    optional, en | zh-TW. Defaults to 'en'. Unknown lang falls back
+ *     to en.
+ *
+ * Auth: NONE — content is identical for every device, intended to be cached
+ * client-side, and contains no secrets. (Per-channel custom policies, if we
+ * ever add them, would still be public — this is system-prompt content.)
+ */
+const ROUTING_POLICY_VERSION = '1.0';
+const _routingPolicyCache = new Map();
+function loadRoutingPolicy(channel, lang) {
+    const safeChannel = /^[a-z0-9-]{1,32}$/i.test(channel || '') ? channel : 'generic';
+    const safeLang = /^[a-z]{2}(?:-[A-Z]{2})?$/.test(lang || '') ? lang : 'en';
+    const cacheKey = `${safeChannel}.${safeLang}`;
+    if (_routingPolicyCache.has(cacheKey)) return _routingPolicyCache.get(cacheKey);
+
+    const fsPath = require('path');
+    const fsMod = require('fs');
+    const tryFiles = [
+        fsPath.join(__dirname, 'data', 'routing-policies', `${safeChannel}.${safeLang}.txt`),
+        fsPath.join(__dirname, 'data', 'routing-policies', `generic.${safeLang}.txt`),
+        fsPath.join(__dirname, 'data', 'routing-policies', `generic.en.txt`),
+    ];
+    for (const p of tryFiles) {
+        try {
+            const text = fsMod.readFileSync(p, 'utf8');
+            const base = fsPath.basename(p, '.txt'); // e.g. "generic.en"
+            const dotIdx = base.lastIndexOf('.');
+            const actualLang = dotIdx > 0 ? base.slice(dotIdx + 1) : safeLang;
+            const actualChannel = dotIdx > 0 ? base.slice(0, dotIdx) : safeChannel;
+            const result = {
+                policy: text,
+                channel: safeChannel,
+                lang: actualLang,
+                source: fsPath.basename(p),
+                ...(actualLang !== safeLang ? { requestedLang: safeLang } : {}),
+                ...(actualChannel !== safeChannel ? { fallbackChannel: actualChannel } : {}),
+            };
+            _routingPolicyCache.set(cacheKey, result);
+            return result;
+        } catch (_) { /* try next */ }
+    }
+    return null;
+}
+
+app.get('/api/channel/routing-policy', (req, res) => {
+    const result = loadRoutingPolicy(req.query.channel, req.query.lang);
+    if (!result) {
+        return res.status(500).json({ success: false, error: 'routing policy file missing' });
+    }
+    res.set('Cache-Control', 'public, max-age=300');
+    res.json({
+        success: true,
+        version: ROUTING_POLICY_VERSION,
+        ...result,
     });
 });
 

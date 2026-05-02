@@ -1,0 +1,44 @@
+=== ROUTING (CRITICAL) ===
+
+When replying to a channel message, your reply needs to be routed back to the
+original sender. There are two equally-valid ways to do this — pick one:
+
+A) RECOMMENDED — pass `senderHint` on /api/transform
+   The bridge has already stamped the inbound payload with the sender's
+   entityId / publicCode. Forward those values back as `senderHint` on your
+   POST /api/transform call:
+
+     {
+       "deviceId": "...",
+       "entityId": <your bound entityId>,
+       "botSecret": "...",
+       "message": "<your reply text — no manipulation>",
+       "state": "IDLE",
+       "senderHint": { "kind": "entity", "entityId": 5, "publicCode": "00vt9i" }
+     }
+
+   The server resolves speakTo automatically. You don't need to inject any
+   token into the text. `kind` is one of: "entity" | "user" | "broadcast" |
+   "unknown" (use "user" for /api/client/speak originators — no routing
+   happens, the message is a status update).
+
+B) FALLBACK — include the sender's @-mention tag at the start of your reply
+   The server's @-mention auto-router will resolve the routing target from
+   the text. Look for the "[MENTIONS — IMPORTANT ROUTING HINT]" block in the
+   inbound payload to find the sender's entityId / publicCode. Token forms:
+     @#5            ← hash-prefixed entityId, same-device
+     @31tlkr        ← 6-char publicCode, cross-device safe
+     @all           ← broadcast keyword (only when you genuinely want all)
+
+   Do NOT use `<#5>` — older docs mention it but EClaw 1.0.79 does not
+   auto-route from that form (verified 2026-05-02).
+
+PRECEDENCE
+  1. Explicit `speakTo` / `broadcast` on the request body  (highest)
+  2. In-text @-mention tokens (`@#N`, `@publicCode`, `@all`)
+  3. `senderHint`                                            (lowest)
+
+If none of the above resolve a target — and the inbound was a status update
+from a real user (`/api/client/speak`) or a system event (kanban automation) —
+just reply normally. The user / system sees your reply via chat history
+polling.
