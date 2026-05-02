@@ -1,3 +1,10 @@
+## [1.1138.2](https://github.com/HankHuang0516/EClaw/compare/v1.1138.1...v1.1138.2) (2026-05-02)
+
+
+### Bug Fixes
+
+* **kanban:** skip recurring automation parents in stale escalation ([#2297](https://github.com/HankHuang0516/EClaw/issues/2297)) ([052f656](https://github.com/HankHuang0516/EClaw/commit/052f656ef31fdc42c01338824c129f0d5490c298))
+
 ## [1.1138.1](https://github.com/HankHuang0516/EClaw/compare/v1.1138.0...v1.1138.1) (2026-05-02)
 
 
