@@ -19,6 +19,8 @@ node_modules/
 backend/node_modules/
 backend/data/*
 !backend/data/skill-templates.json
+!backend/data/routing-policies/
+!backend/data/routing-policies/*.txt
 dist/
 coverage/
 .env
