@@ -29,6 +29,7 @@ const fs = require('fs');
 const path = require('path');
 const { runInterview, getProbeList } = require('./bot-interview');
 const safeEqual = require('./safe-equal');
+const { newContractId } = require('./entity-id');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
@@ -146,6 +147,11 @@ async function initRentalDatabase() {
         try {
             await pool.query(`ALTER TABLE bot_listings ADD COLUMN IF NOT EXISTS avatar_url TEXT`);
         } catch (_) { /* column may already exist */ }
+        try {
+            await pool.query(`ALTER TABLE rental_contracts ALTER COLUMN id SET DEFAULT ('contract_' || encode(gen_random_bytes(12), 'hex'))`);
+        } catch (err) {
+            console.warn('[Rental] Schema warning: rental_contracts.id default:', err.message);
+        }
 
         // Startup cleanup: revert any listings stuck in 'interview' (server crashed mid-run)
         await pool.query(
@@ -701,14 +707,15 @@ async function startRental({
 
         // 5. Create the contract row. Computed ends_at lets the cron find
         //    expiring contracts without recomputing.
+        const contractId = newContractId();
         const contractRes = await client.query(
             `INSERT INTO rental_contracts
-                (listing_id, owner_user_id, renter_user_id, renter_device_id,
+                (id, listing_id, owner_user_id, renter_user_id, renter_device_id,
                  rate_mli_per_ktoken_snapshot, deposit_mli,
                  planned_duration_min, started_at, ends_at, status)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW() + make_interval(mins => $7), 'active')
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW() + make_interval(mins => $8), 'active')
              RETURNING id, status, started_at, ends_at, deposit_mli`,
-            [listingId, listing.owner_user_id, renterUserId, renterDeviceId,
+            [contractId, listingId, listing.owner_user_id, renterUserId, renterDeviceId,
              rateSnapshot, depositMli, durationMinutes]
         );
         const contract = contractRes.rows[0];
@@ -1513,15 +1520,16 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
                 }
             });
 
+            const contractId = newContractId();
             const contract = await step('insert_contract', async () => {
                 const contractRes = await client.query(
                     `INSERT INTO rental_contracts
-                        (listing_id, owner_user_id, renter_user_id, renter_device_id,
+                        (id, listing_id, owner_user_id, renter_user_id, renter_device_id,
                          rate_mli_per_ktoken_snapshot, deposit_mli,
                          planned_duration_min, started_at, ends_at, status)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW() + make_interval(mins => $7), 'active')
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW() + make_interval(mins => $8), 'active')
                      RETURNING id, status, started_at, ends_at, deposit_mli`,
-                    [listingId, listing.owner_user_id, renterUserId, renterDeviceId,
+                    [contractId, listingId, listing.owner_user_id, renterUserId, renterDeviceId,
                      rateSnapshot, depositMli, durationMinutes]
                 );
                 return contractRes.rows[0];
