@@ -112,9 +112,9 @@ jest.mock('pg', () => {
 
         // INSERT rental_contracts
         if (/^INSERT INTO rental_contracts/i.test(norm)) {
-            const id = `contract-${state.nextContractId++}`;
-            const [listingId, ownerUserId, renterUserId, renterDeviceId,
+            const [id, listingId, ownerUserId, renterUserId, renterDeviceId,
                    rateSnapshot, depositMli, durationMin] = params;
+            state.nextContractId++;
             const startedAt = new Date();
             const endsAt = new Date(Date.now() + durationMin * 60 * 1000);
             const row = {
@@ -349,7 +349,7 @@ describe('rental: startRental happy path', () => {
             durationMinutes: 60,
         }, walletApi);
 
-        expect(contract.id).toMatch(/^contract-/);
+        expect(contract.id).toMatch(/^contract_[a-f0-9]{24}$/);
         expect(contract.status).toBe('active');
         // Deposit = rate × 20 = 5000 × 20 = 100_000
         expect(String(contract.deposit_mli)).toBe('100000');

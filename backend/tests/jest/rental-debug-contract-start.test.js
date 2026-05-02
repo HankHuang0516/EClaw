@@ -65,11 +65,11 @@ jest.mock('pg', () => {
         if (/^INSERT INTO rental_contracts/i.test(norm)) {
             return {
                 rows: [{
-                    id: 'contract-dry-run',
+                    id: params[0],
                     status: 'active',
                     started_at: new Date('2026-05-01T00:00:00Z'),
                     ends_at: new Date('2026-05-01T00:30:00Z'),
-                    deposit_mli: params[5],
+                    deposit_mli: params[6],
                 }],
                 rowCount: 1,
             };
@@ -245,8 +245,8 @@ describe('rental debug endpoints', () => {
         ]);
         expect(res.body.diagnostics.dryRunStart).toMatchObject({
             ok: true,
-            contractIdPreview: 'contract-dry-run',
         });
+        expect(res.body.diagnostics.dryRunStart.contractIdPreview).toMatch(/^contract_[a-f0-9]{24}$/);
     });
 
     test('contract-start-fail predicts insufficient rental balance', async () => {

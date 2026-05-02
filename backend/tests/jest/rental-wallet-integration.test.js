@@ -80,8 +80,8 @@ jest.mock('pg', () => {
 
         // INSERT rental_contracts
         if (/^INSERT INTO rental_contracts/i.test(norm)) {
-            const id = `contract-${state.nextContractId++}`;
-            const [listingId, ownerUserId, renterUserId, renterDeviceId, rateSnapshot, depositMli, durationMin] = params;
+            const [id, listingId, ownerUserId, renterUserId, renterDeviceId, rateSnapshot, depositMli, durationMin] = params;
+            state.nextContractId++;
             const startedAt = new Date();
             const endsAt = new Date(Date.now() + durationMin * 60 * 1000);
             state.contracts.push({
