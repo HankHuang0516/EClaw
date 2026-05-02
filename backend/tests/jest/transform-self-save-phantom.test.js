@@ -180,8 +180,10 @@ describe('POST /api/transform — self-save phantom-row regression (#2282)', () 
         const rows = rowsForProbe(tag);
         // No routing resolved → exactly one self-save row (no duplicate).
         expect(rows).toHaveLength(1);
-        // Source uses pendingA2A path: entity:2:CHAR->0
-        expect(rows[0].source).toMatch(/entity:2:[A-Z]+->0/);
+        // Post-PR-#2292: chatSource is plain entity name (no `->X` arrow).
+        // The pendingA2A presence is logged via [A2A_BOT_REPLY] but does not
+        // pollute the chat row's source field with a fake routing target.
+        expect(/->\d+$/.test(rows[0].source)).toBe(false);
     });
 
     it('@all in text → broadcast resolved before self-save → no phantom', async () => {

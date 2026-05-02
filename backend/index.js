@@ -6807,10 +6807,19 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         // [A2A_BOT_REPLY] — detect if this transform is in response to an A2A speak-to
         const pendingA2A = entity.messageQueue && entity.messageQueue.find(m => m.from && m.from.startsWith('entity:'));
 
-        // Build source: if replying to a speak-to, include routing info so chat renders "Entity A → Entity B"
-        const chatSource = pendingA2A
-            ? `entity:${eId}:${entity.character}->${pendingA2A.fromEntityId}`
-            : entity.name || `Entity ${eId}`;
+        // PR #2292 — chatSource used to be `entity:N:CHAR->X` when pendingA2A
+        // existed (X = whoever last A2A'd this entity). Intent was "show that
+        // this status was in response to X". In practice the chat UI renders
+        // the same arrow as a real delivery ("Sent to Entity X"), which is
+        // misleading because:
+        //   - is_delivered is still false / delivered_to is null
+        //   - the bot didn't actually route the reply anywhere
+        //   - X is whoever sat at the head of messageQueue, often unrelated
+        //     to the message body
+        // The audit-trail value of "this followed an A2A from X" is preserved
+        // by the [A2A_BOT_REPLY] server log below; the chat row should be a
+        // plain sender-only row.
+        const chatSource = entity.name || `Entity ${eId}`;
 
         // Only save self chat message if NOT doing speakTo/broadcast delivery (avoid duplicate)
         // Skip saving to owner's chat when entity is leased_out — rental mirror handles renter's copy
