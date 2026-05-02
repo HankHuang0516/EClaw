@@ -1,3 +1,10 @@
+# [1.1134.0](https://github.com/HankHuang0516/EClaw/compare/v1.1133.3...v1.1134.0) (2026-05-02)
+
+
+### Features
+
+* **i18n:** info_hooks/info_hero marketing × 11 locales ([31a8792](https://github.com/HankHuang0516/EClaw/commit/31a8792ea9368797cd7af17634aeaafd9b8de121))
+
 ## [1.1133.3](https://github.com/HankHuang0516/EClaw/compare/v1.1133.2...v1.1133.3) (2026-05-01)
 
 
