@@ -3496,7 +3496,7 @@
                 label.className = 'target-check target-entity-check';
                 label.dataset.entityId = e.entityId;
                 const e2eeBadge = e.encryptionStatus === 'e2ee' ? ' 🔒' : '';
-                label.innerHTML = `<input type="checkbox" data-entity="${e.entityId}" ${isChecked ? 'checked' : ''} onchange="updateTargetAll()">
+                label.innerHTML = `<input type="checkbox" data-entity="${e.entityId}" ${isChecked ? 'checked' : ''} onchange="handleTargetSelectionChange()">
                     <span class="target-label-main">${renderAvatarHtml(avatar, 20)} ${escapeHtml(name)} (#${e.entityId})${e2eeBadge}<span class="entity-status-slot">${renderEntityStatusBadge(e.entityId)}</span></span>`;
                 allItems.push({ el: label, type: 'entity' });
             });
@@ -3521,7 +3521,7 @@
 
                     const chip = document.createElement('label');
                     chip.className = `target-check target-contact-check contact-chip${isOffline ? ' offline' : ''}`;
-                    chip.innerHTML = `<input type="checkbox" data-contact-code="${escapeHtml(c.publicCode)}" ${isChecked ? 'checked' : ''}>
+                    chip.innerHTML = `<input type="checkbox" data-contact-code="${escapeHtml(c.publicCode)}" ${isChecked ? 'checked' : ''} onchange="rerenderSlashSuggestionsForCurrentInput()">
                         <span>${avatarHtml} ${escapeHtml(name)}</span>
                         ${isOffline ? `<span class="contact-offline-tag">${i18n.t('chat_contacts_offline')}</span>` : ''}
                         <button class="btn-remove-contact" onclick="removeContact('${escapeHtml(c.publicCode)}', event)" title="${i18n.t('common_remove')}">&#x2715;</button>`;
@@ -3641,6 +3641,12 @@
             document.querySelectorAll('.target-entity-check input[type="checkbox"]').forEach(cb => {
                 cb.checked = checked;
             });
+            rerenderSlashSuggestionsForCurrentInput();
+        }
+
+        function handleTargetSelectionChange() {
+            updateTargetAll();
+            rerenderSlashSuggestionsForCurrentInput();
         }
 
         function updateTargetAll() {
@@ -4891,28 +4897,107 @@
 
         // ── Slash Commands Autocomplete ──
         const SLASH_COMMANDS = [
-            { command: '/help',       key: 'slash_cmd_help' },
-            { command: '/status',     key: 'slash_cmd_status' },
-            { command: '/reset',      key: 'slash_cmd_reset' },
-            { command: '/activation', key: 'slash_cmd_activation' },
-            { command: '/pair',       key: 'slash_cmd_pair' },
-            { command: '/reasoning',  key: 'slash_cmd_reasoning' },
-            { command: '/config',     key: 'slash_cmd_config' },
-            { command: '/broadcast',  key: 'slash_cmd_broadcast' },
-            { command: '/model',      key: 'slash_cmd_model' },
-            { command: '/auto_approve', key: 'slash_cmd_auto_approve' },
+            { command: '/help',       key: 'slash_cmd_help', aliases: ['help', '幫助', '指令'] },
+            { command: '/status',     key: 'slash_cmd_status', aliases: ['status', '狀態', '連線'] },
+            { command: '/reset',      key: 'slash_cmd_reset', aliases: ['reset', '重置', '清除'] },
+            { command: '/activation', key: 'slash_cmd_activation', aliases: ['activation', '啟用', '啟動'] },
+            { command: '/pair',       key: 'slash_cmd_pair', aliases: ['pair', '配對'] },
+            { command: '/reasoning',  key: 'slash_cmd_reasoning', aliases: ['reasoning', '推理', '智慧'] },
+            { command: '/config',     key: 'slash_cmd_config', aliases: ['config', '設定'] },
+            { command: '/broadcast',  key: 'slash_cmd_broadcast', aliases: ['broadcast', '廣播'] },
+            { command: '/model',      key: 'slash_cmd_model', providerAware: true, aliases: ['model', '模型', 'gpt', 'claude', 'codex'] },
+            { command: '/auto_approve', key: 'slash_cmd_auto_approve', providerAware: true, aliases: ['auto', 'approve', 'auto_approve', '自動核准', '自動批准', 'codex', 'claude'] },
         ];
+
+        function rerenderSlashSuggestionsForCurrentInput() {
+            const input = document.getElementById('messageInput');
+            if (input && input.value.startsWith('/')) renderSlashSuggestions(input.value);
+        }
+
+        function selectedSlashTargetEntities() {
+            const targets = typeof getSelectedTargets === 'function' ? getSelectedTargets() : { local: [] };
+            const ids = new Set((targets.local || []).map(id => Number(id)).filter(Number.isFinite));
+            return (boundEntities || []).filter(e => ids.has(Number(e.entityId)));
+        }
+
+        function slashEntitySignal(entity) {
+            if (!entity) return '';
+            const parts = [
+                entity.name,
+                entity.character,
+                entity.bindingType,
+                entity.boundBy,
+                entity.provider,
+                entity.webhook,
+                entity.publicCode,
+                entity.identity && entity.identity.role,
+                entity.identity && entity.identity.description,
+                entity.agentCard && entity.agentCard.name,
+                entity.agentCard && entity.agentCard.description,
+            ];
+            return parts.filter(Boolean).join(' ').toLowerCase();
+        }
+
+        function inferSlashProvider(entity) {
+            const signal = slashEntitySignal(entity);
+            if (!signal) return null;
+            if (/\bcodex\b|gpt[-_\s]?\d|openai|chatgpt/.test(signal)) return 'Codex';
+            if (/claude|anthropic/.test(signal)) return 'Claude Code';
+            if (/openclaw|hermes|eclaw[_\s-]?office/.test(signal)) return 'OpenClaw';
+            return null;
+        }
+
+        function smartSlashProviderLabel(command) {
+            const selected = selectedSlashTargetEntities();
+            const providers = [];
+            let unknownCount = 0;
+            selected.forEach(entity => {
+                const provider = inferSlashProvider(entity);
+                if (provider && !providers.includes(provider)) providers.push(provider);
+                if (!provider) unknownCount += 1;
+            });
+            if (providers.length === 0) {
+                return command === '/auto_approve' ? 'Codex / Claude Code' : 'Claude Code / Codex';
+            }
+            if (unknownCount > 0) providers.push(i18n.t('chat_slash_selected_entities') || 'selected entities');
+            return providers.join(' / ');
+        }
+
+        function baseSlashDescription(command) {
+            const desc = i18n.t(command.key);
+            return String(desc || '')
+                .replace(/\s*[（(][^）)]*Claude Code[^）)]*[）)]/gi, '')
+                .trim();
+        }
+
+        function slashCommandDescription(command) {
+            const desc = baseSlashDescription(command);
+            if (!command.providerAware) return desc;
+            return `${desc} (${smartSlashProviderLabel(command.command)})`;
+        }
+
+        function slashCommandMatches(command, query) {
+            const normalized = query.replace(/^\//, '').trim();
+            if (!normalized) return true;
+            if (command.command.toLowerCase().startsWith(query)) return true;
+            const searchText = [
+                command.command,
+                slashCommandDescription(command),
+                ...(command.aliases || []),
+            ].join(' ').toLowerCase();
+            return searchText.includes(normalized);
+        }
 
         function renderSlashSuggestions(text) {
             const el = document.getElementById('slashSuggestions');
             if (!text.startsWith('/')) { el.classList.remove('visible'); return; }
             const q = text.toLowerCase();
-            const filtered = SLASH_COMMANDS.filter(c => c.command.startsWith(q));
+            const filtered = SLASH_COMMANDS.filter(c => slashCommandMatches(c, q));
             if (filtered.length === 0) { el.classList.remove('visible'); return; }
             el.innerHTML = filtered.map(c =>
                 `<div class="slash-suggestion-item" onmousedown="pickSlashCommand('${c.command}')">
                     <span class="slash-suggestion-cmd">${c.command}</span>
-                    <span class="slash-suggestion-desc">${i18n.t(c.key)}</span>
+                    <span class="slash-suggestion-desc">${escapeHtml(slashCommandDescription(c))}</span>
                 </div>`
             ).join('');
             el.classList.add('visible');

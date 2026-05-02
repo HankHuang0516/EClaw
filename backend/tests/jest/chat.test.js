@@ -279,6 +279,16 @@ describe('Codex channel auto-approve wiring', () => {
         expect(chatHtml.toLowerCase()).toContain('codex requests input');
     });
 
+    it('chat slash suggestions use smart provider matching for model and auto-approve', () => {
+        expect(chatHtml).toContain('providerAware: true');
+        expect(chatHtml).toContain('function inferSlashProvider');
+        expect(chatHtml).toContain('function smartSlashProviderLabel');
+        expect(chatHtml).toContain("return 'Codex'");
+        expect(chatHtml).toContain("return 'Claude Code'");
+        expect(chatHtml).toContain("aliases: ['model', '模型', 'gpt', 'claude', 'codex']");
+        expect(chatHtml).toContain("aliases: ['auto', 'approve', 'auto_approve', '自動核准'");
+    });
+
     it('backend platform command includes auto_approve', () => {
         expect(backendIndex).toContain("new Set(['help', 'status', 'reset', 'auto_approve'])");
         expect(backendIndex).toContain("case 'auto_approve'");
