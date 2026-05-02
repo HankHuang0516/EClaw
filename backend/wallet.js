@@ -21,7 +21,6 @@ const express = require('express');
 const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 
 const pool = new Pool({
