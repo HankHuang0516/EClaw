@@ -61331,45 +61331,68 @@ const TRANSLATIONS = {
 
 };
 // Portal version for sync tracking
-const PORTAL_VERSION = '1.2.0';
+const PORTAL_VERSION = '1.2.1';
 
 class I18n {
     constructor() {
-        const saved = localStorage.getItem('eclaw-language');
-        if (saved && TRANSLATIONS[saved]) {
-            this.lang = saved;
-        } else {
-            // Auto-detect from browser/device language
-            const browserLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
-            const langMap = [
-                [['zh-cn', 'zh-hans', 'zh-sg'], 'zh-CN'],
-                [['zh'], 'zh'],
-                [['ja'], 'ja'],
-                [['ko'], 'ko'],
-                [['th'], 'th'],
-                [['vi'], 'vi'],
-                [['id', 'in'], 'id'],
-                [['es'], 'es'],
-                [['fr'], 'fr'],
-                [['de'], 'de'],
-                [['pt'], 'pt'],
-                [['it'], 'it'],
-                [['ru'], 'ru'],
-                [['tr'], 'tr'],
-                [['ms', 'my'], 'ms'],
-                [['hi'], 'hi'],
-                [['ar'], 'ar'],
-                [['nl'], 'nl'],
-                [['pl'], 'pl'],
-            ];
-            let detected = 'en';
+        const langMap = [
+            [['zh-cn', 'zh-hans', 'zh-sg'], 'zh-CN'],
+            [['zh'], 'zh'],
+            [['ja'], 'ja'],
+            [['ko'], 'ko'],
+            [['th'], 'th'],
+            [['vi'], 'vi'],
+            [['id', 'in'], 'id'],
+            [['es'], 'es'],
+            [['fr'], 'fr'],
+            [['de'], 'de'],
+            [['pt'], 'pt'],
+            [['it'], 'it'],
+            [['ru'], 'ru'],
+            [['tr'], 'tr'],
+            [['ms', 'my'], 'ms'],
+            [['hi'], 'hi'],
+            [['ar'], 'ar'],
+            [['nl'], 'nl'],
+            [['pl'], 'pl'],
+        ];
+        const resolveLang = (raw) => {
+            if (!raw) return null;
+            const lower = String(raw).toLowerCase();
+            // Exact match against supported codes (handles zh-CN, zh-TW, etc.)
+            for (const code of Object.keys(TRANSLATIONS)) {
+                if (code.toLowerCase() === lower) return code;
+            }
+            // Prefix match against canonical map
             for (const [prefixes, lang] of langMap) {
-                if (prefixes.some(p => browserLang.startsWith(p)) && TRANSLATIONS[lang]) {
-                    detected = lang;
-                    break;
+                if (prefixes.some(p => lower.startsWith(p)) && TRANSLATIONS[lang]) {
+                    return lang;
                 }
             }
-            this.lang = detected;
+            return null;
+        };
+
+        // Priority 1: ?lang= URL param (explicit deep-link from social/email/cron i18n probes)
+        let urlLang = null;
+        try {
+            const sp = new URLSearchParams(location.search);
+            urlLang = resolveLang(sp.get('lang'));
+        } catch (_) { /* SSR / non-browser; ignore */ }
+
+        if (urlLang) {
+            this.lang = urlLang;
+            // Persist explicit URL choice so subsequent same-tab navigation keeps it.
+            try { localStorage.setItem('eclaw-language', urlLang); } catch (_) {}
+        } else {
+            // Priority 2: previously chosen language
+            const saved = localStorage.getItem('eclaw-language');
+            if (saved && TRANSLATIONS[saved]) {
+                this.lang = saved;
+            } else {
+                // Priority 3: navigator.language
+                const browserLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+                this.lang = resolveLang(browserLang) || 'en';
+            }
         }
         this.observers = [];
     }
