@@ -310,7 +310,7 @@ _老闆已確認所有問題，開始分拆任務開工。_
 自動建立臨時卡片（子卡）→ TODO
     │ assignedBots = 母卡的 assignedBots
     │ title = "[Auto] 母卡標題 (03/26 18:30)"
-    │ push 通知 assigned bots（走 smart per-bot queue：bot 沒有活躍卡才立即推；有活躍卡則 enqueue，等他 done 一張再放出，見下節）
+    │ push 通知 assigned bots（走 smart per-bot queue：queue 空才立即推；queue 已有 entry 則 enqueue，等他 done 一張再放出，見下節）
     ▼
 Bot 執行 → In Progress → Review → Done → 自動歸檔
     │
@@ -327,8 +327,8 @@ cron 觸發的通知走**每個 bot 各自一條 queue**，避免一個 bot 同�
 
 | 觸發來源 | Bot 狀態 | 行為 |
 |---|---|---|
-| cron 母卡 spawn 子卡（automation→child） | bot 沒有 todo/in_progress 卡 | 立即 push notify（保留原 wakeup chain） |
-| cron 母卡 spawn 子卡（automation→child） | bot 有 todo/in_progress 卡 | 寫入 `kanban_pending_notify` queue，**不**推送；等 bot 自己把現有的某張卡推到 done，drain 一筆出來 |
+| cron 母卡 spawn 子卡（automation→child） | bot 的 `kanban_pending_notify` queue 為空 | 立即 push notify（保留原 wakeup chain） |
+| cron 母卡 spawn 子卡（automation→child） | bot 的 `kanban_pending_notify` queue 已有 entry | 寫入 `kanban_pending_notify` queue，**不**推送；等 bot 自己把任一卡推到 done，drain 一筆出來 |
 | 自身重複觸發母卡（recurring，無子卡） | 任意 | 走 `kanban_cron_recurring_notify` device pref（預設 `true`，這類卡片觸發頻率低，使用者通常希望立刻知道） |
 | 手動建立子卡（`POST /api/mission/card`，status≠backlog） | 任意 | 不走 queue，直接 notify（手動行為由人控制節奏，不需要降噪） |
 
@@ -351,7 +351,7 @@ CREATE INDEX idx_kanban_pending_notify_bot ON kanban_pending_notify(device_id, b
 
 **目標：** 同時最多 1 通新任務通知 per bot，避免 5–6 通連環炸；但保留下一張卡的 wakeup chain（done 一張就放出下一張）。
 
-**沿革：** 2026-04-28 cron 自動化在 1 小時內噴 5–6 通，引入 `kanban_cron_spawn_notify` flag 預設關閉作緊急止血，但完全 silent 的代價是 stale-scan 過 3hr 才喚醒，反而造成積壓。2026-05-03 (card_dfe3b8df Phase 2) 換成 smart-queue：`kanban_cron_spawn_notify` flag 退役，改寫死 always-on smart 路由邏輯。Code anchor: `backend/kanban.js` `botHasActiveCards` / `enqueuePendingNotify` / `drainOnePendingNotify`、`backend/kanban_schema.sql` table `kanban_pending_notify`。
+**沿革：** 2026-04-28 cron 自動化在 1 小時內噴 5–6 通，引入 `kanban_cron_spawn_notify` flag 預設關閉作緊急止血，但完全 silent 的代價是 stale-scan 過 3hr 才喚醒，反而造成積壓。2026-05-03 (card_dfe3b8df Phase 2, PR #2303) 換成 smart-queue：`kanban_cron_spawn_notify` flag 退役，改寫死 always-on smart 路由邏輯。**2026-05-03 (PR #2307 hotfix)** Phase 2 原本以「bot 是否有 active todo/in_progress 卡」當 gate，但 active developer bot 永遠有活躍卡 → 每次 spawn 都被 silent enqueue、queue 從不 drain → 通知完全消失。Gate 改成「queue 是否已有 entry」：queue 空就立即推，queue 已堆才靜音 enqueue，仍由 done 事件 drain。Code anchor: `backend/kanban.js` `botHasPendingNotify` / `enqueuePendingNotify` / `drainOnePendingNotify`、`backend/kanban_schema.sql` table `kanban_pending_notify`。
 
 ### 子卡特殊屬性
 
