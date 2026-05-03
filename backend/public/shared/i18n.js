@@ -52908,6 +52908,7 @@ const TRANSLATIONS = {
         "chat_broadcast_tag": "ब्रॉडकास्ट",
         "chat_kanban_notify": "कानबन",
 
+
         "chat_form_submission": "रूप",
         "broadcast_settings_desc": "कॉन्फ़िगर करें कि प्रसारण संदेश कैसे काम करते हैं",
         "broadcast_settings_title": "प्रसारण सेटिंग्स",
@@ -53769,107 +53770,206 @@ const TRANSLATIONS = {
 
         "guide_kb_col_review_sub": "जांच के लिए टास्क",
 
-        "guide_kb_col_todo": "للتنفيذ",
-        "guide_kb_col_todo_sub": "مهام جاهزة للبدء",
-        "guide_kb_cta_api": "إعداد API",
-        "guide_kb_cta_kanban": "إنشاء لوحة",
-        "guide_kb_cta_mission": "إنشاء مهمة",
-        "guide_kb_cta_title": "ابدأ الآن",
-        "guide_kb_feat_assign": "تعيين",
-        "guide_kb_feat_assign_desc": "تعيين المهام للأعضاء",
-        "guide_kb_feat_auto": "أتمتة",
-        "guide_kb_feat_auto_desc": "قواعد تلقائية للمهام",
-        "guide_kb_feat_comment": "تعليقات",
-        "guide_kb_feat_comment_desc": "إضافة تعليقات على البطاقات",
-        "guide_kb_feat_move": "نقل",
-        "guide_kb_feat_move_desc": "اسحب وأفلت البطاقات",
-        "guide_kb_feat_priority": "الأولوية",
-        "guide_kb_feat_priority_desc": "تعيين أولوية البطاقات",
-        "guide_kb_feat_stale": "متأخر",
-        "guide_kb_feat_stale_desc": "تحديد المهام المتأخرة",
-        "guide_kb_meta": "إدارة المهام البصرية",
-        "guide_kb_note_demo": "جرب الآن!",
-        "guide_kb_p_automation": "ما هي الأتمتة؟",
-        "guide_kb_p_stale": "ما هو المهام المتأخرة؟",
-        "guide_kb_p_what": "ما هو كانبان؟",
-        "guide_kb_stale_example": "مهمة لم يتم تحديثها لأكثر من 7 أيام",
-        "guide_kb_stale_preview_title": "مثال على المهام المتأخرة",
-        "guide_kb_th_desc": "مهام بطاقات كانبان",
-        "guide_kb_th_feature": "الميزات",
-        "guide_kb_title": "كانبان",
-        "guide_kb_uc_content": "صانعي المحتوى",
-        "guide_kb_uc_content_desc": "جدولة المحتوى",
-        "guide_kb_uc_dev": "المطورين",
-        "guide_kb_uc_dev_desc": "إدارة مهام التطوير",
-        "guide_kb_uc_marketing": "التسويق",
-        "guide_kb_uc_marketing_desc": "إدارة الحملات",
-        "guide_kb_uc_ops": "العمليات",
-        "guide_kb_uc_ops_desc": "أتمتة سير العمل",
-        "guide_kb_uc_th_bot": "بوتات كانبان",
-        "guide_kb_uc_th_scene": "مثال على المشهد",
-        "guide_lw_cta_android": "تحميل Android",
+        "guide_kb_col_todo": "TODO",
+
+        "guide_kb_col_todo_sub": "शुरू करने के लिए तैयार टास्क",
+
+        "guide_kb_cta_api": "API डॉक्यूमेंटेशन: <a href=\"https://eclawbot.com/api/skill-doc\" target=\"_blank\" rel=\"noopener\">पूरा API Skill Doc</a>",
+
+        "guide_kb_cta_kanban": "बोर्ड पर जाएं: <a href=\"/portal/kanban.html\">कानबन बोर्ड पेज</a>",
+
+        "guide_kb_cta_mission": "मिशन कंट्रोल: <a href=\"/portal/mission.html\">Mission Control</a>",
+
+        "guide_kb_cta_title": "कानबन के साथ अपनी बॉट टीम का मैनेजमेंट शुरू करें",
+
+        "guide_kb_feat_assign": "🤖 बॉट को असाइन करें",
+
+        "guide_kb_feat_assign_desc": "हर कार्ड कई बॉट्स को असाइन किया जा सकता है; उन्हें पुश नोटिफिकेशन मिलते हैं",
+
+        "guide_kb_feat_auto": "⚡ ऑटोमेशन कार्ड्स",
+
+        "guide_kb_feat_auto_desc": "isAutomation=true वाले कार्ड क्रॉन से शेड्यूल किए जा सकते हैं",
+
+        "guide_kb_feat_comment": "💬 बोर्ड पर कमेंट करें",
+
+        "guide_kb_feat_comment_desc": "बॉट्स कार्ड कमेंट्स में प्रोग्रेस अपडेट, इश्यू और PR लिंक पोस्ट करते हैं",
+
+        "guide_kb_feat_move": "➡️ बॉट सेल्फ-एडवांस",
+
+        "guide_kb_feat_move_desc": "बॉट पूरा होने पर कार्ड को Review में मूव करने के लिए API कॉल करता है",
+
+        "guide_kb_feat_priority": "🚦 प्रायोरिटी",
+
+        "guide_kb_feat_priority_desc": "P0 (क्रिटिकल) से P3 (लो); PM बॉट प्रायोरिटी के हिसाब से टास्क भेजता है",
+
+        "guide_kb_feat_stale": "⏰ Nudge सिस्टम",
+
+        "guide_kb_feat_stale_desc": "staleThresholdMs बिना मूवमेंट के पार करने वाले कार्ड ऑटो-Nudge होते हैं",
+
+        "guide_kb_meta": "5-कॉलम बोर्ड + बॉट collaboration + ऑटो Nudge — AI टीम के लिए",
+
+        "guide_kb_note_demo": "📋 <strong>आप अभी इसका इस्तेमाल कर रहे हैं!</strong> डेवलपमेंट बोर्ड पर कार्ड देखें",
+
+        "guide_kb_p_automation": "isAutomation: true वाले कार्ड शेड्यूल्ड कार्य के रूप में काम करते हैं",
+
+        "guide_kb_p_stale": "हर कार्ड में staleThresholdMs है (डिफ़ॉल्ट 3 घंटे)",
+
+        "guide_kb_p_what": "EClawbot का Kanban बॉट टीम्स के लिए डिज़ाइन किया गया टास्क बोर्ड है।",
+
+        "guide_kb_stale_example": "#5 आपका कार्ड 7 दिनों से अपडेट नहीं हुआ",
+
+        "guide_kb_stale_preview_title": "⏰ Nudge नोटिफिकेशन उदाहरण",
+
+        "guide_kb_th_desc": "विवरण",
+
+        "guide_kb_th_feature": "फीचर",
+
+        "guide_kb_title": "कानबन AI टीम बोर्ड — बॉट्स को टास्क फॉरवर्ड करने दें",
+
+        "guide_kb_uc_content": "✍️ कंटेंट टीम",
+
+        "guide_kb_uc_content_desc": "राइटर बॉट ड्राफ्ट करता है → एडिटर बॉट रिव्यू करता है → SEO बॉट ऑप्टिमाइज़ करता है",
+
+        "guide_kb_uc_dev": "🛠️ डेव टीम",
+
+        "guide_kb_uc_dev_desc": "PM बॉट भेजता है → Dev बॉट इम्प्लीमेंट करता है → QA बॉट टेस्ट करता है → Merge बॉट",
+
+        "guide_kb_uc_marketing": "📣 मार्केटिंग",
+
+        "guide_kb_uc_marketing_desc": "कैंपेन बॉट प्लान करता है → कॉपी बॉट लिखता है → पब्लिशर बॉट भेजता है",
+
+        "guide_kb_uc_ops": "🔧 IT Ops",
+
+        "guide_kb_uc_ops_desc": "मॉनिटर बॉट इश्यू डिटेक्ट करता है → ऑटो-कार्ड बनाता है → Ops बॉट सॉल्व करता है",
+
+        "guide_kb_uc_th_bot": "बॉट सेटअप",
+
+        "guide_kb_uc_th_scene": "सीनاريو उदाहरण",
+
+        "guide_lw_cta_android": "ऐप डाउनलोड करें: <a href=\"https://play.google.com/store/apps/details?id=com.eclawbot\" target=\"_blank\" rel=\"noopener\">Google Play पर डाउनलोड करें</a>",
+
         "guide_lw_cta_plaza": "BotPlaza",
-        "guide_lw_cta_setup": "إعداد",
-        "guide_lw_cta_title": "ابدأ الآن",
-        "guide_mdone_meta": "مركز المهام &gt; منجز",
-        "guide_mission_overview_feature_tree": "شجرة الميزات",
-        "guide_mission_overview_sub_overview": "نظرة عامة على العنصر الفرعي",
-        "guide_mission_overview_sync_desc": "تستخدم لوحة معلومات مركز المهام <strong>أرقام الإصدار</strong> للقفل المتفائل. كل عملية تزيد رقم الإصدار تلقائيًا. يمكن للبوتات اكتشاف تعديلات المستخدم الصامتة عن طريق الاستطلاع الدوري لـ <code>GET /api/mission/dashboard</code> ومقارنة أرقام الإصدار.",
-        "guide_mission_overview_sync_note": "يُوصى بأن يستعلم البوت عن لوحة المعلومات كل 15 دقيقة، بمقارنة حقل <code>version</code>. إذا تغير الإصدار، فأعد قراءة جميع العناصر. يضمن هذا أن البوت يستجيب على الفور لإجراءات المستخدم على بوابة الويب.",
-        "guide_mission_overview_tbl_done_access": "المستخدم + البوت مشترك",
-        "guide_mission_overview_tbl_done_desc": "أرشفة العناصر المكتملة مع طوابع الوقت للإكمال",
-        "guide_mission_overview_tbl_done_item": "منجز",
-        "guide_mission_overview_tbl_env_access": "المستخدم يصرح / البوت يقرأ",
-        "guide_mission_overview_tbl_env_desc": "تخزين مشفر AES-256-GCM لمتغيرات سر البوت مع التفويض في الوقت المناسب",
-        "guide_mission_overview_tbl_env_item": "متغيرات البيئة",
-        "guide_mission_overview_tbl_h_access": "الوصول",
-        "guide_mission_overview_tbl_h_desc": "الوصف",
-        "guide_mission_overview_tbl_h_item": "العنصر",
-        "guide_mission_overview_tbl_mission_access": "المستخدم + البوت مشترك",
-        "guide_mission_overview_tbl_mission_desc": "تتبع المهام الجارية، مرتبة حسب الأولوية",
-        "guide_mission_overview_tbl_mission_item": "قائمة المهام",
-        "guide_mission_overview_tbl_notes_access": "المستخدم + البوت مشترك",
-        "guide_mission_overview_tbl_notes_desc": "تسجيل معلومات المرجع مع إدارة الفئة ومشاركة الكيانات المشتركة",
-        "guide_mission_overview_tbl_notes_item": "ملاحظات",
-        "guide_mission_overview_tbl_remote_access": "المستخدم يفعّل / البوت ينفذ",
-        "guide_mission_overview_tbl_remote_desc": "البوت يتحكم في واجهة الهاتف بشكل مستقل عبر شجرة إمكانية الوصول (معطّل افتراضيًا)",
-        "guide_mission_overview_tbl_remote_item": "التحكم عن بُعد",
-        "guide_mission_overview_tbl_rules_access": "سلوك معرّف من المستخدم",
-        "guide_mission_overview_tbl_rules_desc": "تحديد إرشادات السلوك وسير العمل الآلي مع 6 أنواع من القواعد",
-        "guide_mission_overview_tbl_rules_item": "القواعد",
-        "guide_mission_overview_tbl_schedule_access": "المستخدم + البوت مشترك",
-        "guide_mission_overview_tbl_schedule_desc": "تنفيذ المهمة المجدولة مع تتبع الحالة في الوقت الفعلي وسجل التنفيذ",
-        "guide_mission_overview_tbl_schedule_item": "الجدول",
-        "guide_mission_overview_tbl_skills_access": "امتداد قدرة البوت",
-        "guide_mission_overview_tbl_skills_desc": "تمديد قدرات البوت مع عناوين URL لوثائق API",
-        "guide_mission_overview_tbl_skills_item": "المهارات",
-        "guide_mission_overview_tbl_soul_access": "شخصية معرّفة من المستخدم",
-        "guide_mission_overview_tbl_soul_desc": "تحديد سمات شخصية البوت وأسلوب الاتصال",
-        "guide_mission_overview_tbl_soul_item": "الروح",
-        "guide_mission_overview_tbl_todo_access": "المستخدم + البوت مشترك",
-        "guide_mission_overview_tbl_todo_desc": "إدارة عناصر العمل التي لم تبدأ بعد، مع دعم الأولوية وتعيين الكيان",
-        "guide_mission_overview_tbl_todo_item": "قائمة المهام",
-        "guide_mlist_meta": "مركز المهام &gt; قائمة المهام <span class=\\\"",
-        "guide_mp_android_best": "أفضل للتحكم",
-        "guide_mp_android_strength": "UI أصلية + تحكم كامل",
-        "guide_mp_cta_android": "استخدام Android",
-        "guide_mp_cta_title": "ابدأ الآن",
+        "guide_lw_cta_setup": "सेटअप गाइड: <a href=\"#guide/setup\">पूरी सेटअप गाइड</a>",
+
+        "guide_lw_cta_title": "लाइव वॉलपेपर का अनुभव लेने के लिए Android ऐप डाउनलोड करें",
+
+        "guide_mdone_meta": "मिशन कंट्रोल > Done",
+
+        "guide_mission_overview_feature_tree": "फीचर ट्री",
+
+        "guide_mission_overview_sub_overview": "सब-आइटम ओवरव्यू",
+
+        "guide_mission_overview_sync_desc": "मिशन कंट्रोल डैशबोर्ड <strong>वर्जन नंबर</strong> का उपयोग करता है",
+
+        "guide_mission_overview_sync_note": "बॉट्स को हर 15 मिनट में डैशबोर्ड पोल करने की सलाह दी जाती है",
+
+        "guide_mission_overview_tbl_done_access": "यूज़र + बॉट शेयर्ड",
+
+        "guide_mission_overview_tbl_done_desc": "पूर्णता टाइमस्टैम्प के साथ पूर्ण आइटम आर्काइव करें",
+
+        "guide_mission_overview_tbl_done_item": "Done",
+
+        "guide_mission_overview_tbl_env_access": "यूज़र ऑथराइज़ / बॉट रीड",
+
+        "guide_mission_overview_tbl_env_desc": "AES-256-GCM एन्क्रिप्टेड स्टोरेज",
+
+        "guide_mission_overview_tbl_env_item": "एनवायरनमेंट वेरिएबल्स",
+
+        "guide_mission_overview_tbl_h_access": "एक्सेस",
+
+        "guide_mission_overview_tbl_h_desc": "विवरण",
+
+        "guide_mission_overview_tbl_h_item": "सब-आइटम",
+
+        "guide_mission_overview_tbl_mission_access": "यूज़र + बॉट शेयर्ड",
+
+        "guide_mission_overview_tbl_mission_desc": "प्रायोरिटी के हिसाब से इन-प्रोग्रेस मिशन ट्रैक करें",
+
+        "guide_mission_overview_tbl_mission_item": "मिशन लिस्ट",
+
+        "guide_mission_overview_tbl_notes_access": "यूज़र + बॉट शेयर्ड",
+
+        "guide_mission_overview_tbl_notes_desc": "कैटेगरी मैनेजमेंट और क्रिएशन के साथ रेफरेंस इन्फो रिकॉर्ड करें",
+
+        "guide_mission_overview_tbl_notes_item": "नोट्स",
+
+        "guide_mission_overview_tbl_remote_access": "यूज़र enable / बॉट execute",
+
+        "guide_mission_overview_tbl_remote_desc": "बॉट Accessibility Tree के ज़रिए फोन UI ऑटोनोमसली कंट्रोल करता है",
+
+        "guide_mission_overview_tbl_remote_item": "रिमोट कंट्रोल",
+
+        "guide_mission_overview_tbl_rules_access": "यूज़र-डिफाइंड बिहेवियर",
+
+        "guide_mission_overview_tbl_rules_desc": "6 चेक्स के साथ बिहेवियर गाइडलाइन और ऑटो वर्कफ़्लो डिफाइन करें",
+
+        "guide_mission_overview_tbl_rules_item": "Rules",
+
+        "guide_mission_overview_tbl_schedule_access": "यूज़र + बॉट शेयर्ड",
+
+        "guide_mission_overview_tbl_schedule_desc": "रियल-टाइम स्टेटस ट्रैकिंग और एक्जीक्यूशन के साथ टाइम्ड टास्क",
+
+        "guide_mission_overview_tbl_schedule_item": "Schedule",
+
+        "guide_mission_overview_tbl_skills_access": "बॉट क्षमता एक्सटेंशन",
+
+        "guide_mission_overview_tbl_skills_desc": "API डॉक्यूमेंटेशन URLs के साथ बॉट क्षमताएं बढ़ाएं",
+
+        "guide_mission_overview_tbl_skills_item": "Skills",
+
+        "guide_mission_overview_tbl_soul_access": "यूज़र-डिफाइंड पर्सना",
+
+        "guide_mission_overview_tbl_soul_desc": "बॉट पर्सनालिटी ट्रेट्स और कम्युनिकेशन स्टाइल डिफाइन करें",
+
+        "guide_mission_overview_tbl_soul_item": "Soul",
+
+        "guide_mission_overview_tbl_todo_access": "यूज़र + बॉट शेयर्ड",
+
+        "guide_mission_overview_tbl_todo_desc": "प्रायोरिटी और Entity के साथ अभी शुरू नहीं हुए वर्क आइटम मैनेज करें",
+
+        "guide_mission_overview_tbl_todo_item": "TODO",
+
+        "guide_mlist_meta": "मिशन कंट्रोल > मिशन लिस्ट",
+
+        "guide_mp_android_best": "ऑन-द-गो उपयोग, वॉइस इंटरैक्शन, वॉलपेपर असिस्टेंट",
+
+        "guide_mp_android_strength": "लाइव वॉलपेपर, TTS वॉइस, GPS, FCM पुश",
+
+        "guide_mp_cta_android": "Android ऐप: <a href=\"https://play.google.com/store/apps/details?id=com.hank.clawlive\" target=\"_blank\" rel=\"noopener\">Google Play</a>",
+
+        "guide_mp_cta_title": "अपना मल्टी-प्लेटफॉर्म अनुभव शुरू करें",
+
         "guide_mp_cta_wallpaper": "Wallpaper",
-        "guide_mp_cta_web": "استخدام Web",
-        "guide_mp_ios_best": "أفضل للأمان",
-        "guide_mp_ios_strength": "UI أصلية + أمان",
-        "guide_mp_meta": "إدارة رسائل متعددة المنصات في مكان واحد",
-        "guide_mp_note_realtime": "ملاحظة: مزامنة الوقت الفعلي تتطلب الإعداد",
-        "guide_mp_p_what": "ما هو multiplatform؟",
-        "guide_mp_sync_chat": "الدردشة",
-        "guide_mp_sync_chat_desc": "الرسائل والقروبات",
-        "guide_mp_sync_config": "الإعدادات",
-        "guide_mp_sync_config_desc": "البوتات والإعدادات",
-        "guide_mp_sync_entity": "الكيانات",
-        "guide_mp_sync_entity_desc": "إدارة الكيانات",
-        "guide_mp_sync_mission": "المهام",
-        "guide_mp_sync_mission_desc": "المهام المجدولة",
-        "guide_mp_sync_notif": "الإشعارات",
+        "guide_mp_cta_web": "वेब पोर्टल: <a href=\"/portal/dashboard.html\">Dashboard पर जाएं</a>",
+
+        "guide_mp_ios_best": "iPhone यूज़र्स, रोज़मर्रा की चैट",
+
+        "guide_mp_ios_strength": "नेटिव Swift, Apple Push, चैट UI",
+
+        "guide_mp_meta": "वेब पोर्टल, Android ऐप, iOS ऐप रियल-टाइम सिंक — स्विच करें",
+
+        "guide_mp_note_realtime": "⚡ <strong>सच में रियल-टाइम:</strong> Socket.IO लेटेंसी कम रखता है",
+
+        "guide_mp_p_what": "EClawbot तीन प्लेटफॉर्म सपोर्ट करता है: वेब पोर्टल, Android, iOS",
+
+        "guide_mp_sync_chat": "💬 चैट मैसेज",
+
+        "guide_mp_sync_chat_desc": "सभी प्लेटफॉर्म रियल-टाइम में नए मैसेज दिखाते हैं",
+
+        "guide_mp_sync_config": "⚙️ सेटिंग्स",
+
+        "guide_mp_sync_config_desc": "Identity, Soul, Rules बदलाव सभी प्लेटफॉर्म पर प्रभावी होते हैं",
+
+        "guide_mp_sync_entity": "🤖 एजेंट स्टेटस",
+
+        "guide_mp_sync_entity_desc": "बाइंड/अनबाइंड और ऑनलाइन स्टेटस रियल-टाइम सिंक",
+
+        "guide_mp_sync_mission": "📋 टास्क बोर्ड",
+
+        "guide_mp_sync_mission_desc": "वेब पर कार्ड स्टेटस अपडेट ऐप में तुरंत रिफ्लेक्ट होते हैं",
+
+        "guide_mp_sync_notif": "🔔 नोटिफिकेशन",
+
         "guide_mp_sync_notif_desc": "إشعارات فورية",
         "guide_mp_sync_th_data": "البيانات",
         "guide_mp_sync_th_desc": "كل شيء يتم مزامنته تلقائيًا",
