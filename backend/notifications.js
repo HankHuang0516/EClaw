@@ -214,9 +214,20 @@ async function updatePrefs(deviceId, prefs) {
     }
 }
 
+// Some dispatch sites use sub-categories that share a single user-facing toggle.
+// e.g. "speak_to" toggle in Settings governs bot-to-bot pushes regardless of
+// whether the dispatch is same-device (`speak_to`) or cross-device
+// (`cross_speak`, `cross_speak_sent`). Without this map, cross-device pushes
+// bypass the toggle because the unknown key falls through DEFAULT_PREFS.
+const CATEGORY_ALIASES = {
+    cross_speak: 'speak_to',
+    cross_speak_sent: 'speak_to'
+};
+
 function isCategoryEnabled(prefs, category) {
     if (!prefs || typeof prefs !== 'object') return true;
-    return prefs[category] !== false;
+    const effective = CATEGORY_ALIASES[category] || category;
+    return prefs[effective] !== false;
 }
 
 // ============================================
