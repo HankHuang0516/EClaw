@@ -52891,6 +52891,7 @@ const TRANSLATIONS = {
         "kanban_nudge_settings_title": "अनुस्मारक सेटिंग्स",
         "chat_broadcast_tag": "ब्रॉडकास्ट",
         "chat_kanban_notify": "कानबन",
+
         "chat_form_submission": "रूप",
         "broadcast_settings_desc": "कॉन्फ़िगर करें कि प्रसारण संदेश कैसे काम करते हैं",
         "broadcast_settings_title": "प्रसारण सेटिंग्स",
@@ -53550,109 +53551,208 @@ const TRANSLATIONS = {
         "guide_ec_feat_recommend_how": "Soul पर्सनालिटी + Identity इंस्ट्रक्शन्स रिकमेंडेशन लॉजिक को गाइड करते हैं",
         "guide_ec_feat_return_desc": "रिटर्न प्रोसेस हैंडल करता है, इन्फो एकत्र करता है और ओनर को फॉरवर्ड करता है",
         "guide_ec_feat_return_how": "Rules रिटर्न/एक्सचेंज SOP तय करते हैं",
-        "guide_ec_feat_track_desc": "تتبع الشحنات",
-        "guide_ec_feat_track_how": "كيف يعمل التتبع؟",
-        "guide_ec_feat_voice_desc": "مساعد صوتي",
-        "guide_ec_feat_voice_how": "كيف يعمل الصوت؟",
-        "guide_ec_note_demo": "جرب الآن!",
-        "guide_envvars_meta": "مركز المهام &gt; متغيرات البيئة <span class=\\\"",
-        "guide_features_gps_list": "🍜 طعام قريب · 🅿️ بحث مواقف · 👥 موقع صديق · 🚕 ركوب وتنقل · 🏥 أقرب مستشفى",
-        "guide_features_gps_scenarios": "حالات الاستخدام",
-        "guide_features_tbl_h_desc": "الوصف",
-        "guide_features_tbl_h_feature": "الميزة",
-        "guide_gk_cta_api": "إعداد API",
-        "guide_gk_cta_crossdevice": "الإعداد عبر الأجهزة",
-        "guide_gk_cta_proxy": "إعداد Proxy",
-        "guide_gk_cta_title": "ابدأ الآن",
-        "guide_gk_note_nav": "ملاحظة: يمكنك التنقل بين علامات التبويب",
-        "guide_gk_note_stats": "ملاحظة: الإحصائيات تتطلب Gatekeeper",
-        "guide_gps_api_get_title": "الحصول على الموقع",
-        "guide_gps_api_msg_example": "رسالة GPS",
-        "guide_gps_api_request_title": "مثال على الطلب",
-        "guide_gps_api_response_title": "مثال على الاستجابة",
-        "guide_gps_cta_api": "إعداد API",
-        "guide_gps_cta_ecommerce": "مثال التجارة الإلكترونية",
-        "guide_gps_cta_proxy": "إعداد Proxy",
-        "guide_gps_cta_title": "ابدأ الآن",
-        "guide_gps_flow_ask_sub": "سؤال المستخدم عن الموقع",
-        "guide_gps_flow_rec_sub": "تسجيل الموقع",
-        "guide_gps_flow_report_sub": "إرسال الموقع كرسالة",
-        "guide_gps_flow_request_sub": "طلب الموقع من الجهاز",
+        "guide_ec_feat_track_desc": "शिपमेंट ट्रैकिंग — ऑर्डर प्रोग्रेस रियल-टाइम में देखें",
+
+        "guide_ec_feat_track_how": "Mission कार्ड ऑर्डर स्टेटस अपडेट करता है; क्रॉस-डिवाइड मैसेजिंग ओनर को नोटिफाई करता है",
+
+        "guide_ec_feat_voice_desc": "बॉट वॉइस रिप्लाई जनरेट करता है — टेक्स्ट मैसेज को ऑडियो में बदलता है",
+
+        "guide_ec_feat_voice_how": "TTS इंटीग्रेशन — बॉट रेस्पॉन्स को वॉइस में कन्वर्ट करता है",
+
+        "guide_ec_note_demo": "📝 बॉट द्वारा जनरेट किया गया इंटरैक्टिव प्रोडक्ट पेज",
+
+        "guide_envvars_meta": "🔧 कॉन्फ़िगरेशन वेरिएबल्स सेट करने के लिए OpenClaw डैशबोर्ड इस्तेमाल करें",
+
+        "guide_features_gps_list": "📍 GPS शेयरिंग फीचर्स",
+
+        "guide_features_gps_scenarios": "💡 उपयोग केस: डिलीवरी ट्रैकिंग, नेविगेशन, पार्किंग अलर्ट, लोकेशन-बेस्ड रिकमेंडेशन",
+
+        "guide_features_tbl_h_desc": "विवरण",
+
+        "guide_features_tbl_h_feature": "फीचर",
+
+        "guide_gk_cta_api": "🔌 API एक्सप्लोर करें",
+
+        "guide_gk_cta_crossdevice": "📱 क्रॉस-डिवाइड सेटअप करें",
+
+        "guide_gk_cta_proxy": "🖥️ प्रॉक्सी विंडो सेटअप",
+
+        "guide_gk_cta_title": "अपना बॉट एक्सप्लोर करें",
+
+        "guide_gk_note_nav": "📍 GPS / नेविगेशन फीचर्स के बारे में जानें",
+
+        "guide_gk_note_stats": "📊 बॉट परफॉर्मेंस डैशबोर्ड",
+
+        "guide_gps_api_get_title": "📍 GET GPS Data",
+
+        "guide_gps_api_msg_example": "📨 Example: <code>bot.request GPS</code> या बटन टैप करें",
+
+        "guide_gps_api_request_title": "📨 GPS Data Request",
+
+        "guide_gps_api_response_title": "📍 GPS Data Response",
+
+        "guide_gps_cta_api": "🔌 API डॉक्यूमेंटेशन देखें",
+
+        "guide_gps_cta_ecommerce": "🛒 ई-कॉमर्स में इंटीग्रेट करें",
+
+        "guide_gps_cta_proxy": "🖥️ प्रॉक्सी में GPS शेयर करें",
+
+        "guide_gps_cta_title": "GPS शेयरिंग शुरू करें",
+
+        "guide_gps_flow_ask_sub": "बॉट GPS लोकेशन का अनुरोध करता है",
+
+        "guide_gps_flow_rec_sub": "आपके आसपास की जगहों की सिफारिशें",
+
+        "guide_gps_flow_report_sub": "लोकेशन-बेस्ड अपडेट्स",
+
+        "guide_gps_flow_request_sub": "GPS डेटा शेयर करें और सेव करें",
+
         "guide_gps_gif_label": "GIF",
-        "guide_gps_subtitle": "الموقع",
-        "guide_identity_api_auth": "التصريح: Header <code>x-device-secret</code> أو <code>x-bot-secret</code>",
-        "guide_identity_config_dashboard": "محرر الهوية — لوحة المعلومات",
-        "guide_identity_ex_boundaries": "لا استرداد، لا الإفصاح عن التسعير الداخلي",
-        "guide_identity_ex_instructions": "عند استلام استعلام الطلب، قم أولاً بتأكيد رقم الطلب، ثم تحقق من اللوجستيات...",
-        "guide_identity_ex_profile": "دعم تجارة إلكترونية احترافي، خدمة على مدار الساعة",
-        "guide_identity_ex_role": "دعم التجارة الإلكترونية، مستشار السفر، مساعد عمليات تكنولوجيا المعلومات",
-        "guide_identity_ex_tone": "ودود، محترف، موجز",
-        "guide_identity_note_analogy": "💡 فكر في الهوية على أنها \\\"",
+        "guide_gps_subtitle": "📍 GPS-Enabled AI Agents",
+
+        "guide_identity_api_auth": "🔐 <code>x-entity-secret</code> Header से ऑथेंटिकेट करें",
+
+        "guide_identity_config_dashboard": "⚙️ Identity कॉन्फ़िगर करें: Dashboard → Entity → Identity",
+
+        "guide_identity_ex_boundaries": "📋 बाउंडरीज़ (क्या कर सकता है / क्या नहीं)",
+
+        "guide_identity_ex_instructions": "📝 निर्देश (बॉट कैसे बात करे)",
+
+        "guide_identity_ex_profile": "👤 प्रोफाइल (नाम, टाइटल, डिस्क्रिप्शन)",
+
+        "guide_identity_ex_role": "🎭 रोल (शॉप असिस्टेंट, कस्टमर सर्विस, etc.)",
+
+        "guide_identity_ex_tone": "💬 टोन (ऑनलाइन/ऑफ़लाइन मैसेज)",
+
+        "guide_identity_note_analogy": "💡 सोचें इस तरह: Identity = बॉट का पर्सनालिटी + FAQ कंबाइंड",
+
         "guide_identity_note_back": "← <a href=\\\"",
-        "guide_identity_p_templates": "يمكنك استخدام <strong>قوالب الروح</strong> و <strong>قوالب القواعد</strong> لتكوين الهوية بسرعة دون البدء من الصفر.",
-        "guide_identity_p_what": "الهوية هي بنية الهوية الموحدة لكل كيان، بما في ذلك تعريف الدور وتعليمات السلوك والنبرة والقيود. إنها تحدد \\\"",
-        "guide_identity_preview_boundaries": "لا حجز طيران، لا معالجة تأشيرات",
-        "guide_identity_preview_instructions": "يوصي بخطط السفر بناءً على ميزانية العميل والوقت والتفضيلات...",
-        "guide_identity_preview_role": "مخطط مسار الرحلة",
-        "guide_identity_preview_tone": "متحمس، صبور، внимание",
-        "guide_identity_th_desc": "الوصف",
-        "guide_identity_th_example": "مثال",
-        "guide_identity_th_field": "الحقل",
+        "guide_identity_p_templates": "📋 Templates",
+
+        "guide_identity_p_what": "🤖 Identity क्या है?",
+
+        "guide_identity_preview_boundaries": "📋 बाउंडरीज़",
+
+        "guide_identity_preview_instructions": "📝 निर्देश",
+
+        "guide_identity_preview_role": "🎭 रोल",
+
+        "guide_identity_preview_tone": "💬 टोन",
+
+        "guide_identity_th_desc": "विवरण",
+
+        "guide_identity_th_example": "उदाहरण",
+
+        "guide_identity_th_field": "फील्ड",
+
         "guide_kanban_api": "API",
-        "guide_kanban_api_comment_comment": "تعليق",
-        "guide_kanban_api_comment_create": "إنشاء تعليق",
-        "guide_kanban_api_comment_list": "قائمة التعليقات",
-        "guide_kanban_api_comment_move": "نقل بطاقة",
-        "guide_kanban_board_caption": "لوحة كانبان",
-        "guide_kanban_collab": "تعاون",
-        "guide_kanban_collab_desc": "تعاون الفريق",
-        "guide_kanban_cta_ecommerce": "إعداد التجارة",
-        "guide_kanban_cta_kanban": "إنشاء لوحة",
-        "guide_kanban_cta_mission": "إنشاء مهمة",
-        "guide_kanban_cta_title": "ابدأ الآن",
-        "guide_kanban_demo_card_ecommerce_demo": "التجارة",
-        "guide_kanban_demo_card_gatekeeper": "بوت حارس البوابة",
+        "guide_kanban_api_comment_comment": "💬 Comment",
+
+        "guide_kanban_api_comment_create": "➕ Create comment",
+
+        "guide_kanban_api_comment_list": "📋 List comments",
+
+        "guide_kanban_api_comment_move": "🔄 Move card",
+
+        "guide_kanban_board_caption": "📋 बोर्ड-व्यू कानबन — टास्क और प्रोग्रेस एक जगह",
+
+        "guide_kanban_collab": "👥 Collaboration",
+
+        "guide_kanban_collab_desc": "इकाइयां एक-दूसरे के कार्ड्स में comment कर सकती हैं",
+
+        "guide_kanban_cta_ecommerce": "🛒 ई-कॉमर्स मिशन मैनेजमेंट के लिए",
+
+        "guide_kanban_cta_kanban": "📋 कानबन बोर्ड खोलें",
+
+        "guide_kanban_cta_mission": "📊 मिशन ट्रैकिंग के लिए",
+
+        "guide_kanban_cta_title": "अपना कानबन बोर्ड बनाएं",
+
+        "guide_kanban_demo_card_ecommerce_demo": "🛒 E-Commerce Demo",
+
+        "guide_kanban_demo_card_gatekeeper": "🚦 Gatekeeper Demo",
+
         "guide_kanban_demo_card_gps_demo": "GPS",
-        "guide_kanban_demo_card_kanban_backend": "كانبان الخلفية",
-        "guide_kanban_demo_card_kanban_demo": "كانبان",
-        "guide_kanban_demo_card_kanban_ui": "كانبان UI",
-        "guide_kanban_demo_card_summary_api": "API الملخص",
-        "guide_kanban_demo_card_voice_demo": "صوت",
-        "guide_kanban_demo_done": "تم",
-        "guide_kanban_demo_just_started": "بدأ للتو",
-        "guide_kanban_demo_me": "أنا",
-        "guide_kanban_demo_stale": "متأخر",
-        "guide_kanban_flow_card": "بطاقة",
-        "guide_kanban_flow_card_sub": "إنشاء بطاقة",
-        "guide_kanban_flow_done": "تم",
-        "guide_kanban_flow_done_sub": "إنجاز البطاقة",
-        "guide_kanban_flow_stale": "متأخر",
-        "guide_kanban_flow_stale_sub": "البطاقات المتأخرة",
-        "guide_kanban_flow_timer": "مؤقت",
-        "guide_kanban_flow_timer_sub": "تشغيل مؤقت",
-        "guide_kanban_role_backend": "المطور الخلفي",
-        "guide_kanban_role_backend_desc": "يكتب الكود الخلفي",
-        "guide_kanban_role_content": "صانع المحتوى",
-        "guide_kanban_role_content_desc": "ينشئ المحتوى",
-        "guide_kanban_role_frontend": "مطور الواجهة",
-        "guide_kanban_role_frontend_desc": "يكتب كود الواجهة",
-        "guide_kanban_role_pm": "مدير المشروع",
-        "guide_kanban_role_pm_desc": "يدير الفريق",
-        "guide_kanban_stale": "متأخر",
-        "guide_kanban_stale_desc": "البطاقات المتأخرة",
-        "guide_kanban_subtitle": "إدارة المهام",
-        "guide_kanban_title": "كانبان",
-        "guide_kanban_usecase": "سيناريو الاستخدام",
-        "guide_kanban_what": "ما هو كانبان؟",
-        "guide_kanban_what_desc": "كانبان هو نظام إدارة المهام البصري",
-        "guide_kb_col_backlog": "قيد الانتظار",
-        "guide_kb_col_backlog_sub": "مهام لم تبدأ بعد",
-        "guide_kb_col_done": "تم",
-        "guide_kb_col_done_sub": "مهام مكتملة",
-        "guide_kb_col_inprogress": "قيد التنفيذ",
-        "guide_kb_col_inprogress_sub": "مهام تعمل عليها",
-        "guide_kb_col_review": "مراجعة",
-        "guide_kb_col_review_sub": "مهام تنتظر المراجعة",
+        "guide_kanban_demo_card_kanban_backend": "🔧 Kanban Backend",
+
+        "guide_kanban_demo_card_kanban_demo": "📋 Kanban Demo",
+
+        "guide_kanban_demo_card_kanban_ui": "🖥️ Kanban UI",
+
+        "guide_kanban_demo_card_summary_api": "📊 Summary API",
+
+        "guide_kanban_demo_card_voice_demo": "🎤 Voice Demo",
+
+        "guide_kanban_demo_done": "✅ Done",
+
+        "guide_kanban_demo_just_started": "🚀 Just Started",
+
+        "guide_kanban_demo_me": "👤 Me",
+
+        "guide_kanban_demo_stale": "⏰ Stale",
+
+        "guide_kanban_flow_card": "📝 Card Created",
+
+        "guide_kanban_flow_card_sub": "न्यू टास्क बनाया गया",
+
+        "guide_kanban_flow_done": "✅ Done",
+
+        "guide_kanban_flow_done_sub": "टास्क पूरा हुआ",
+
+        "guide_kanban_flow_stale": "⏰ Stale",
+
+        "guide_kanban_flow_stale_sub": "टास्क पुराना है",
+
+        "guide_kanban_flow_timer": "⏱️ Timer",
+
+        "guide_kanban_flow_timer_sub": "काउंटडाउन",
+
+        "guide_kanban_role_backend": "🔧 Backend Bot",
+
+        "guide_kanban_role_backend_desc": "API और डेटाबेस ऑपरेशन",
+
+        "guide_kanban_role_content": "📝 Content Bot",
+
+        "guide_kanban_role_content_desc": "आर्टिकल जनरेशन, SEO ऑप्टिमाइज़ेशन",
+
+        "guide_kanban_role_frontend": "🖥️ Frontend Bot",
+
+        "guide_kanban_role_frontend_desc": "UI इंटरैक्शन, यूज़र इनपुट हैंडलिंग",
+
+        "guide_kanban_role_pm": "📊 PM Bot",
+
+        "guide_kanban_role_pm_desc": "प्रोजेक्ट मैनेजमेंट, डेडलाइन ट्रैकिंग",
+
+        "guide_kanban_stale": "⏰ Stale Cards",
+
+        "guide_kanban_stale_desc": "पुराने कार्ड्स को ऑटो-एस्केलेट करें",
+
+        "guide_kanban_subtitle": "🤖 AI Agents की टीम — बोर्ड-व्यू में प्रोजेक्ट मैनेज करें",
+
+        "guide_kanban_title": "📋 AI Kanban",
+
+        "guide_kanban_usecase": "💡 यूज़ केस: AI एजेंट्स की टीम — हर एजेंट एक रोल, सब एक बोर्ड पर",
+
+        "guide_kanban_what": "🤖 AI Kanban क्या है?",
+
+        "guide_kanban_what_desc": "AI एजेंट्स का टीम-बेस्ड कानबन — हर इकाई एक specialized bot जो अपने टास्क मैनेज करती है और दूसरों के साथ coordinate करती है।",
+
+        "guide_kb_col_backlog": "📥 Backlog",
+
+        "guide_kb_col_backlog_sub": "टास्क जो शुरू नहीं हुए",
+
+        "guide_kb_col_done": "✅ Done",
+
+        "guide_kb_col_done_sub": "पूरे हुए टास्क",
+
+        "guide_kb_col_inprogress": "🔄 In Progress",
+
+        "guide_kb_col_inprogress_sub": "जो चल रहे हैं",
+
+        "guide_kb_col_review": "👀 Review",
+
+        "guide_kb_col_review_sub": "जांच के लिए टास्क",
+
         "guide_kb_col_todo": "للتنفيذ",
         "guide_kb_col_todo_sub": "مهام جاهزة للبدء",
         "guide_kb_cta_api": "إعداد API",
