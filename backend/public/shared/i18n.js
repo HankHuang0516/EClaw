@@ -53846,7 +53846,7 @@ const TRANSLATIONS = {
 
         "guide_kb_uc_th_bot": "बॉट सेटअप",
 
-        "guide_kb_uc_th_scene": "सीनاريو उदाहरण",
+        "guide_kb_uc_th_scene": "परिदृश्य",
 
         "guide_lw_cta_android": "ऐप डाउनलोड करें: <a href=\"https://play.google.com/store/apps/details?id=com.eclawbot\" target=\"_blank\" rel=\"noopener\">Google Play पर डाउनलोड करें</a>",
 
