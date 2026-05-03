@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EClaw - 🕐 時間銀行</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, "Noto Sans TC", "PingFang TC", sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #F39C12 15%, #FFFFFF 85%);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(circle at 25% 25%, rgba(243, 156, 18, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(46, 134, 193, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes slideInDown {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes glow {
+            from {
+                box-shadow:
+                    0 0 30px rgba(243, 156, 18, 0.4),
+                    inset 0 0 20px rgba(0, 0, 0, 0.1);
+            }
+            to {
+                box-shadow:
+                    0 0 50px rgba(243, 156, 18, 0.6),
+                    inset 0 0 30px rgba(0, 0, 0, 0.05);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes coinFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-15px) rotate(120deg); }
+            66% { transform: translateY(-5px) rotate(240deg); }
+        }
+
+        .slide-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-section {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: slideInDown 0.8s ease-out;
+        }
+
+        .emoji-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            display: block;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .headline {
+            font-weight: 700;
+            font-size: 28px;
+            color: #2C3E50;
+            line-height: 1.2;
+            margin-bottom: 12px;
+        }
+
+        .subline {
+            font-weight: 400;
+            font-size: 15px;
+            color: #2E86C1;
+            margin-bottom: 24px;
+        }
+
+        .central-illustration {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 40px;
+            animation: slideInUp 1s ease-out 0.3s both;
+        }
+
+        .time-bank-fusion {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .clock-coin-hybrid {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background:
+                linear-gradient(45deg, #F39C12 0%, #E67E22 50%, #F39C12 100%),
+                conic-gradient(from 0deg, #F39C12 0deg, #E67E22 90deg, #D68910 180deg, #F39C12 270deg, #F39C12 360deg);
+            border: 6px solid #FFFFFF;
+            box-shadow:
+                0 0 30px rgba(243, 156, 18, 0.4),
+                inset 0 0 20px rgba(0, 0, 0, 0.1);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: glow 3s ease-in-out infinite alternate;
+        }
+
+        .clock-face {
+            width: 160px;
+            height: 160px;
+            background: #FFFFFF;
+            border-radius: 50%;
+            position: relative;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .clock-number {
+            position: absolute;
+            font-weight: 700;
+            font-size: 13px;
+            color: #2C3E50;
+        }
+
+        .clock-number.n12 { top: 8px; left: 50%; transform: translate(-50%, 0); }
+        .clock-number.n3 { top: 50%; right: 8px; transform: translate(50%, -50%); }
+        .clock-number.n6 { bottom: 8px; left: 50%; transform: translate(-50%, 0); }
+        .clock-number.n9 { top: 50%; left: 8px; transform: translate(-50%, -50%); }
+
+        .coin-value {
+            position: absolute;
+            font-weight: 700;
+            font-size: 10px;
+            color: #F39C12;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2px 5px;
+            border-radius: 8px;
+            transform: translate(-50%, -50%);
+        }
+
+        .coin-value.cv1 { top: 30%; left: 70%; }
+        .coin-value.cv2 { top: 70%; left: 70%; }
+        .coin-value.cv3 { top: 70%; left: 30%; }
+        .coin-value.cv4 { top: 30%; left: 30%; }
+
+        .clock-hands {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .hour-hand {
+            position: absolute;
+            width: 3px;
+            height: 38px;
+            background: #2C3E50;
+            border-radius: 2px;
+            transform-origin: bottom center;
+            top: -32px;
+            left: -1.5px;
+            transform: rotate(45deg);
+        }
+
+        .minute-hand {
+            position: absolute;
+            width: 2px;
+            height: 50px;
+            background: #2C3E50;
+            border-radius: 2px;
+            transform-origin: bottom center;
+            top: -32px;
+            left: -1px;
+            transform: rotate(135deg);
+        }
+
+        .center-dot {
+            width: 10px;
+            height: 10px;
+            background: #2C3E50;
+            border-radius: 50%;
+            position: absolute;
+            top: -5px;
+            left: -5px;
+        }
+
+        .digital-assets {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            top: 0;
+            left: 0;
+        }
+
+        .data-node {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #2E86C1;
+            border-radius: 50%;
+            animation: float 4s ease-in-out infinite;
+            opacity: 0.7;
+        }
+
+        .data-node.dn1 { top: 10%; left: 20%; animation-delay: 0s; }
+        .data-node.dn2 { top: 20%; right: 15%; animation-delay: 1s; }
+        .data-node.dn3 { bottom: 15%; right: 25%; animation-delay: 2s; }
+        .data-node.dn4 { bottom: 20%; left: 15%; animation-delay: 3s; }
+        .data-node.dn5 { top: 50%; left: 5%; animation-delay: 0.5s; }
+        .data-node.dn6 { top: 50%; right: 5%; animation-delay: 1.5s; }
+
+        .floating-ecoin {
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: linear-gradient(45deg, #F39C12, #E67E22);
+            border-radius: 50%;
+            border: 2px solid #FFFFFF;
+            box-shadow: 0 2px 8px rgba(243, 156, 18, 0.3);
+            animation: coinFloat 6s ease-in-out infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 700;
+            color: #FFFFFF;
+        }
+
+        .floating-ecoin.fc1 { top: 5%; left: 80%; animation-delay: 0s; }
+        .floating-ecoin.fc2 { top: 75%; left: 5%; animation-delay: 2s; }
+        .floating-ecoin.fc3 { top: 85%; right: 10%; animation-delay: 4s; }
+
+        .portfolio-dashboard {
+            position: relative;
+            margin-top: 24px;
+            width: 200px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            padding: 12px;
+            animation: slideInUp 1.2s ease-out 0.6s both;
+        }
+
+        .dashboard-header {
+            font-weight: 600;
+            font-size: 12px;
+            color: #2C3E50;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .mini-chart {
+            width: 100%;
+            height: 36px;
+            background: linear-gradient(90deg, #27AE60 0%, #2ECC71 100%);
+            border-radius: 4px;
+            margin-bottom: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mini-chart::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 40' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'%3E%3Cpath d='M0,35 Q25,10 50,15 T100,5' stroke='white' stroke-width='2' fill='none' opacity='0.8'/%3E%3C/svg%3E");
+            background-size: 100% 100%;
+        }
+
+        .conversion-display {
+            font-size: 10px;
+            color: #2E86C1;
+            text-align: center;
+            line-height: 1.3;
+        }
+
+        .dashboard-wrap {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 32px;
+            animation: slideInUp 1.2s ease-out 0.6s both;
+        }
+
+        .feature-cards {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            width: 100%;
+            animation: slideInUp 1s ease-out 0.6s both;
+        }
+
+        .feature-card {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 20px;
+            border: 2px solid #ECF0F1;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #F39C12, #E67E22);
+        }
+
+        .card-icon {
+            font-size: 28px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 16px;
+            color: #2C3E50;
+            margin-bottom: 8px;
+        }
+
+        .card-description {
+            font-weight: 400;
+            font-size: 13px;
+            color: #7F8C8D;
+            line-height: 1.5;
+        }
+
+        .cta-section {
+            text-align: center;
+            margin-top: 32px;
+            animation: slideInUp 1s ease-out 0.9s both;
+        }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #F39C12 0%, #E67E22 100%);
+            color: #FFFFFF;
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(243, 156, 18, 0.3);
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <section class="header-section">
+            <span class="emoji-icon">🕐</span>
+            <h1 class="headline">Time Bank - 將時間轉化為數位資產</h1>
+            <p class="subline">e-coin 代表儲存的時間價值，建立您的個人AI資產組合</p>
+        </section>
+
+        <section class="central-illustration">
+            <div class="time-bank-fusion">
+                <div class="clock-coin-hybrid">
+                    <div class="clock-face">
+                        <div class="clock-number n12">12</div>
+                        <div class="clock-number n3">3</div>
+                        <div class="clock-number n6">6</div>
+                        <div class="clock-number n9">9</div>
+
+                        <div class="coin-value cv1">100e</div>
+                        <div class="coin-value cv2">50e</div>
+                        <div class="coin-value cv3">75e</div>
+                        <div class="coin-value cv4">25e</div>
+
+                        <div class="clock-hands">
+                            <div class="hour-hand"></div>
+                            <div class="minute-hand"></div>
+                            <div class="center-dot"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="digital-assets">
+                    <div class="data-node dn1"></div>
+                    <div class="data-node dn2"></div>
+                    <div class="data-node dn3"></div>
+                    <div class="data-node dn4"></div>
+                    <div class="data-node dn5"></div>
+                    <div class="data-node dn6"></div>
+                </div>
+
+                <div class="floating-ecoin fc1">E</div>
+                <div class="floating-ecoin fc2">E</div>
+                <div class="floating-ecoin fc3">E</div>
+            </div>
+        </section>
+
+        <div class="dashboard-wrap">
+            <div class="portfolio-dashboard">
+                <div class="dashboard-header">資產組合</div>
+                <div class="mini-chart"></div>
+                <div class="conversion-display">
+                    時間 → 價值<br>
+                    1hr = 10e-coin
+                </div>
+            </div>
+        </div>
+
+        <section class="feature-cards">
+            <div class="feature-card">
+                <span class="card-icon">💰</span>
+                <h3 class="card-title">時間價值儲存</h3>
+                <p class="card-description">e-coin 代表儲存的時間價值，可隨時兌換服務</p>
+            </div>
+            <div class="feature-card">
+                <span class="card-icon">🌐</span>
+                <h3 class="card-title">跨平台通用</h3>
+                <p class="card-description">打破傳統積分限制，真正的通用數位資產</p>
+            </div>
+            <div class="feature-card">
+                <span class="card-icon">📈</span>
+                <h3 class="card-title">投資組合管理</h3>
+                <p class="card-description">建立個人AI資產組合，實現時間投資回報</p>
+            </div>
+        </section>
+
+        <section class="cta-section">
+            <a class="cta-button" href="#">
+                了解時間銀行機制
+                <span>→</span>
+            </a>
+        </section>
+    </div>
+</body>
+</html>
