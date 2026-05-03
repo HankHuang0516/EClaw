@@ -54163,7 +54163,7 @@ const TRANSLATIONS = {
         "login_tab_device": "डिवाइस",
         "login_tab_login": "लॉगिन",
         "login_tab_register": "रजिस्टर करें",
-        "maintenance_payment_desc": "भुगतान सुविधाcurrently under maintenance. कृपया बाद में जाँचें।",
+        "maintenance_payment_desc": "भुगतान सुविधा वर्तमान में रखरखाव में है। कृपया बाद में जाँचें।",
         "maintenance_payment_title": "भुगतान रखरखाव में",
         "message_copied": "संदेश कॉपी किया गया",
         "nav_env_vars": "एनवायरनमेंट वेरिएबल्स",
