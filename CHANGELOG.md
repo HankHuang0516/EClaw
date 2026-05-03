@@ -1,3 +1,11 @@
+# [1.1144.0](https://github.com/HankHuang0516/EClaw/compare/v1.1143.1...v1.1144.0) (2026-05-03)
+
+
+### Features
+
+* **info:** embed Claude Design slide for rent_to_use (slide 02/55) ([#2333](https://github.com/HankHuang0516/EClaw/issues/2333)) ([be2467e](https://github.com/HankHuang0516/EClaw/commit/be2467e90fa45158ca9b419347311b8c601e8a66))
+* **info:** embed Claude Design slide for why_eclaw_b2_topup_tiers ([d31c45a](https://github.com/HankHuang0516/EClaw/commit/d31c45a28044741237e1a998f3b2f79ca3ec2e7f))
+
 ## [1.1143.1](https://github.com/HankHuang0516/EClaw/compare/v1.1143.0...v1.1143.1) (2026-05-03)
 
 
