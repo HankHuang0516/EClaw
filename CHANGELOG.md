@@ -1,3 +1,10 @@
+# [1.1155.0](https://github.com/HankHuang0516/EClaw/compare/v1.1154.0...v1.1155.0) (2026-05-03)
+
+
+### Features
+
+* **info:** embed Claude Design slide for why_eclaw_b9_live_bot_handover ([fa6aa07](https://github.com/HankHuang0516/EClaw/commit/fa6aa077c2522d6dc7c31777a276b03128e031b7))
+
 # [1.1154.0](https://github.com/HankHuang0516/EClaw/compare/v1.1153.0...v1.1154.0) (2026-05-03)
 
 
