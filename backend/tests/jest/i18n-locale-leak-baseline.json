@@ -1,6 +1,6 @@
 {
   "_comment": "Pre-existing locale-tag leaks (script foreign to its locale block) on main as of 2026-04-26. New leaks beyond this list will fail CI. Cleanup tracked in companion card for hi/ar/fr/es/de/ja/ko translation fixes.",
-  "_generated": "2026-05-03 (hi.ent_* batch)",
+  "_generated": "2026-05-03 (hi.wallet_* batch)",
   "_count": 1079,
   "keys": [
     "ar.chat_reply_btn",
