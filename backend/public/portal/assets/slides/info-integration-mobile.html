@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EClaw Mobile - 🔗 跨平台整合生態系統</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #3F51B5 15%, #FFFFFF 85%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(circle at 25% 25%, rgba(63, 81, 181, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(155, 89, 182, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Animations */
+        @keyframes slideInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50%      { transform: scale(1.05); }
+        }
+        @keyframes coreGlow {
+            0%, 100% { box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16); }
+            50%      { box-shadow: 0 6px 24px rgba(46, 134, 193, 0.45); }
+        }
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .mobile-slide {
+            max-width: 390px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding: 24px 20px 40px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header-section {
+            text-align: center;
+            margin-bottom: 24px;
+            animation: slideInDown 0.8s ease-out;
+        }
+
+        .mobile-emoji {
+            font-size: 44px;
+            margin-bottom: 12px;
+            display: block;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .mobile-headline {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 700;
+            font-size: 24px;
+            color: #2C3E50;
+            line-height: 1.25;
+            margin-bottom: 8px;
+        }
+
+        .mobile-subline {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 500;
+            font-size: 14px;
+            color: #FFFFFF;
+            line-height: 1.5;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Central hub (compact circular layout) */
+        .central-hub {
+            position: relative;
+            width: 290px;
+            height: 290px;
+            margin: 0 auto 28px;
+            animation: slideInUp 0.8s ease-out 0.2s both;
+        }
+
+        .hub-core {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 96px;
+            height: 96px;
+            background: linear-gradient(135deg, #2E86C1 0%, #3498DB 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFFFFF;
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            text-align: center;
+            line-height: 1.25;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+            z-index: 10;
+            animation: coreGlow 3s ease-in-out infinite;
+        }
+
+        .hub-core::after {
+            content: '';
+            position: absolute;
+            width: 116px;
+            height: 116px;
+            border: 2px dashed #2E86C1;
+            border-radius: 50%;
+            animation: rotate 20s linear infinite;
+        }
+
+        .hub-connectors {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .integration-node {
+            position: absolute;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFFFFF;
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 600;
+            font-size: 11px;
+            text-align: center;
+            line-height: 1.2;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.18);
+            z-index: 5;
+        }
+
+        /* Five satellites positioned around 290x290 box, hub center 145,145 */
+        .node-top {
+            top: 0;
+            left: 50%;
+            margin-left: -32px;
+            background: linear-gradient(135deg, #27AE60 0%, #2ECC71 100%);
+        }
+        .node-right {
+            top: 96px;
+            right: 4px;
+            background: linear-gradient(135deg, #F39C12 0%, #E67E22 100%);
+        }
+        .node-bottom-right {
+            bottom: 8px;
+            right: 40px;
+            background: linear-gradient(135deg, #9B59B6 0%, #8E44AD 100%);
+        }
+        .node-bottom-left {
+            bottom: 8px;
+            left: 40px;
+            background: linear-gradient(135deg, #E91E63 0%, #C2185B 100%);
+        }
+        .node-left {
+            top: 96px;
+            left: 4px;
+            background: linear-gradient(135deg, #3F51B5 0%, #303F9F 100%);
+        }
+
+        /* Categories — single column */
+        .integration-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .integration-category {
+            background: #FFFFFF;
+            border-radius: 18px;
+            padding: 22px 18px;
+            text-align: center;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+            border: 2px solid #E5E7EB;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .integration-category::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+        }
+
+        .integration-category.c1::before { background: linear-gradient(135deg, #27AE60 0%, #2ECC71 100%); }
+        .integration-category.c2::before { background: linear-gradient(135deg, #F39C12 0%, #E67E22 100%); }
+        .integration-category.c3::before { background: linear-gradient(135deg, #9B59B6 0%, #8E44AD 100%); }
+
+        .integration-category.c1 { animation: slideInUp 0.7s ease-out 0.6s both; }
+        .integration-category.c2 { animation: slideInUp 0.7s ease-out 0.8s both; }
+        .integration-category.c3 { animation: slideInUp 0.7s ease-out 1.0s both; }
+
+        .category-icon {
+            font-size: 38px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .category-title {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 600;
+            font-size: 17px;
+            color: #2C3E50;
+            margin-bottom: 8px;
+        }
+
+        .category-description {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 400;
+            font-size: 13px;
+            color: #7F8C8D;
+            line-height: 1.55;
+            margin-bottom: 14px;
+        }
+
+        .platform-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .platform-tag {
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 11px;
+            background: #F8F9FA;
+            color: #34495E;
+            padding: 5px 10px;
+            border-radius: 20px;
+            border: 1px solid #E5E7EB;
+        }
+
+        /* Stats banner — stacked */
+        .stats-banner {
+            background: linear-gradient(135deg, #3F51B5 0%, #303F9F 100%);
+            color: #FFFFFF;
+            padding: 22px 20px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 24px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+            animation: slideInUp 0.8s ease-out 1.2s both;
+        }
+
+        .stats-content {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .stat-item { text-align: center; }
+
+        .stat-number {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            font-size: 28px;
+            margin-bottom: 4px;
+            line-height: 1;
+        }
+
+        .stats-banner .stat-item:nth-child(1) .stat-number { animation: countUp 0.8s ease-out 1.4s both; }
+        .stats-banner .stat-item:nth-child(2) .stat-number { animation: countUp 0.8s ease-out 1.6s both; }
+        .stats-banner .stat-item:nth-child(3) .stat-number { animation: countUp 0.8s ease-out 1.8s both; }
+
+        .stat-label {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 500;
+            font-size: 13px;
+            opacity: 0.92;
+        }
+
+        /* CTA */
+        .cta-section {
+            text-align: center;
+            animation: slideInUp 0.8s ease-out 2.0s both;
+        }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 13px 26px;
+            background: linear-gradient(135deg, #3F51B5 0%, #303F9F 100%);
+            color: #FFFFFF;
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 14px rgba(63, 81, 181, 0.3);
+            letter-spacing: 0.4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-slide">
+        <section class="header-section">
+            <span class="mobile-emoji">🔗</span>
+            <h1 class="mobile-headline">Cross-platform Integration<br>跨平台整合生態系統</h1>
+            <p class="mobile-subline">無縫連接各大平台，打造全方位AI服務體驗</p>
+        </section>
+
+        <section class="central-hub">
+            <svg class="hub-connectors" viewBox="0 0 290 290" preserveAspectRatio="none">
+                <defs>
+                    <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#2E86C1" stop-opacity="0.55"/>
+                        <stop offset="100%" stop-color="#E5E7EB" stop-opacity="0.2"/>
+                    </linearGradient>
+                </defs>
+                <!-- Center 145,145; node centers: top(145,32), right(258,128), bottom-right(208,250), bottom-left(82,250), left(32,128) -->
+                <line x1="145" y1="145" x2="145" y2="32"  stroke="url(#lineGrad)" stroke-width="2" stroke-dasharray="4 4"/>
+                <line x1="145" y1="145" x2="258" y2="128" stroke="url(#lineGrad)" stroke-width="2" stroke-dasharray="4 4"/>
+                <line x1="145" y1="145" x2="208" y2="250" stroke="url(#lineGrad)" stroke-width="2" stroke-dasharray="4 4"/>
+                <line x1="145" y1="145" x2="82"  y2="250" stroke="url(#lineGrad)" stroke-width="2" stroke-dasharray="4 4"/>
+                <line x1="145" y1="145" x2="32"  y2="128" stroke="url(#lineGrad)" stroke-width="2" stroke-dasharray="4 4"/>
+            </svg>
+
+            <div class="hub-core">EClaw<br>Hub</div>
+
+            <div class="integration-node node-top">通訊<br>平台</div>
+            <div class="integration-node node-right">社群<br>媒體</div>
+            <div class="integration-node node-bottom-right">開發<br>工具</div>
+            <div class="integration-node node-bottom-left">商務<br>平台</div>
+            <div class="integration-node node-left">雲端<br>服務</div>
+        </section>
+
+        <section class="integration-grid">
+            <div class="integration-category c1">
+                <span class="category-icon">💬</span>
+                <h3 class="category-title">通訊整合</h3>
+                <p class="category-description">連接各大通訊平台，讓AI機器人在用戶常用的平台上提供服務</p>
+                <div class="platform-list">
+                    <span class="platform-tag">Discord</span>
+                    <span class="platform-tag">Telegram</span>
+                    <span class="platform-tag">Slack</span>
+                    <span class="platform-tag">Teams</span>
+                    <span class="platform-tag">LINE</span>
+                    <span class="platform-tag">WhatsApp</span>
+                </div>
+            </div>
+            <div class="integration-category c2">
+                <span class="category-icon">🚀</span>
+                <h3 class="category-title">開發生態</h3>
+                <p class="category-description">與主流開發工具深度整合，提升開發者體驗和工作效率</p>
+                <div class="platform-list">
+                    <span class="platform-tag">GitHub</span>
+                    <span class="platform-tag">GitLab</span>
+                    <span class="platform-tag">VS Code</span>
+                    <span class="platform-tag">JetBrains</span>
+                    <span class="platform-tag">Docker</span>
+                    <span class="platform-tag">Kubernetes</span>
+                </div>
+            </div>
+            <div class="integration-category c3">
+                <span class="category-icon">☁️</span>
+                <h3 class="category-title">雲端基建</h3>
+                <p class="category-description">支援各大雲端平台部署，確保高可用性和全球化服務</p>
+                <div class="platform-list">
+                    <span class="platform-tag">AWS</span>
+                    <span class="platform-tag">Azure</span>
+                    <span class="platform-tag">GCP</span>
+                    <span class="platform-tag">Railway</span>
+                    <span class="platform-tag">Vercel</span>
+                    <span class="platform-tag">DigitalOcean</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="stats-banner">
+            <div class="stats-content">
+                <div class="stat-item">
+                    <div class="stat-number">50+</div>
+                    <div class="stat-label">支援平台</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">99.9%</div>
+                    <div class="stat-label">整合成功率</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">24/7</div>
+                    <div class="stat-label">即時同步</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta-section">
+            <a class="cta-button" href="#">
+                查看完整整合列表
+                <span>→</span>
+            </a>
+        </section>
+    </div>
+</body>
+</html>

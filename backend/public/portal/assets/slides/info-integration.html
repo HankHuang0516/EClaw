@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280, initial-scale=1.0">
+    <title>EClaw - 🔗 跨平台整合生態系統</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #3F51B5 15%, #FFFFFF 85%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(circle at 25% 25%, rgba(63, 81, 181, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(155, 89, 182, 0.06) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Animations */
+        @keyframes slideInDown {
+            from { opacity: 0; transform: translateY(-50px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-50px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(50px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50%      { transform: scale(1.05); }
+        }
+        @keyframes coreGlow {
+            0%, 100% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16); }
+            50%      { box-shadow: 0 8px 32px rgba(46, 134, 193, 0.45); }
+        }
+        @keyframes nodeFloat {
+            0%, 100% { transform: var(--float-base, translateY(0)); }
+            50%      { transform: var(--float-up,   translateY(-10px)); }
+        }
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .content-wrapper {
+            max-width: 1200px;
+            width: 100%;
+            padding: 48px 64px;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Header */
+        .header-section {
+            text-align: center;
+            margin-bottom: 36px;
+            animation: slideInDown 0.8s ease-out;
+        }
+
+        .emoji-icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+            display: block;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .headline {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 700;
+            font-size: 40px;
+            color: #2C3E50;
+            line-height: 1.2;
+            margin-bottom: 12px;
+        }
+
+        .subline {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 400;
+            font-size: 18px;
+            color: #3F51B5;
+        }
+
+        /* Ecosystem container */
+        .ecosystem-container {
+            width: 100%;
+            max-width: 1080px;
+            margin-bottom: 28px;
+            animation: slideInUp 1s ease-out 0.3s both;
+        }
+
+        /* Central Hub */
+        .central-hub {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 56px;
+            height: 260px;
+            width: 520px;
+        }
+
+        .hub-core {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #2E86C1 0%, #3498DB 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFFFFF;
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            text-align: center;
+            line-height: 1.25;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+            position: relative;
+            z-index: 10;
+            animation: coreGlow 3s ease-in-out infinite;
+        }
+
+        .hub-core::after {
+            content: '';
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            border: 2px dashed #2E86C1;
+            border-radius: 50%;
+            animation: rotate 20s linear infinite;
+        }
+
+        /* SVG connector lines (drawn under nodes) */
+        .hub-connectors {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .integration-node {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFFFFF;
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 600;
+            font-size: 12px;
+            text-align: center;
+            line-height: 1.2;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+            z-index: 5;
+            white-space: pre-line;
+        }
+
+        .node-top {
+            top: -10px;
+            left: 50%;
+            margin-left: -40px;
+            background: linear-gradient(135deg, #27AE60 0%, #2ECC71 100%);
+            animation: pulse 2.4s ease-in-out infinite 0.5s;
+        }
+
+        .node-right {
+            top: 90px;
+            right: 30px;
+            background: linear-gradient(135deg, #F39C12 0%, #E67E22 100%);
+            animation: pulse 2.4s ease-in-out infinite 1s;
+        }
+
+        .node-bottom-right {
+            bottom: -10px;
+            right: 80px;
+            background: linear-gradient(135deg, #9B59B6 0%, #8E44AD 100%);
+            animation: pulse 2.4s ease-in-out infinite 1.5s;
+        }
+
+        .node-bottom-left {
+            bottom: -10px;
+            left: 80px;
+            background: linear-gradient(135deg, #E91E63 0%, #C2185B 100%);
+            animation: pulse 2.4s ease-in-out infinite 2s;
+        }
+
+        .node-left {
+            top: 90px;
+            left: 30px;
+            background: linear-gradient(135deg, #3F51B5 0%, #303F9F 100%);
+            animation: pulse 2.4s ease-in-out infinite 2.5s;
+        }
+
+        /* Integration grid */
+        .integration-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        .integration-category {
+            background: #FFFFFF;
+            border-radius: 20px;
+            padding: 26px 22px;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            border: 2px solid #E5E7EB;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+
+        .integration-category::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+
+        .integration-category.c1::before { background: linear-gradient(135deg, #27AE60 0%, #2ECC71 100%); }
+        .integration-category.c2::before { background: linear-gradient(135deg, #F39C12 0%, #E67E22 100%); }
+        .integration-category.c3::before { background: linear-gradient(135deg, #9B59B6 0%, #8E44AD 100%); }
+
+        .integration-category:hover::before { transform: scaleX(1); }
+        .integration-category:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+        }
+
+        .integration-category.c1 { animation: slideInLeft  0.8s ease-out 1.0s both; }
+        .integration-category.c2 { animation: slideInUp    0.8s ease-out 1.3s both; }
+        .integration-category.c3 { animation: slideInRight 0.8s ease-out 1.6s both; }
+
+        .category-icon {
+            font-size: 44px;
+            margin-bottom: 14px;
+            display: block;
+        }
+
+        .category-title {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 600;
+            font-size: 18px;
+            color: #2C3E50;
+            margin-bottom: 12px;
+        }
+
+        .category-description {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 400;
+            font-size: 13px;
+            color: #7F8C8D;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .platform-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .platform-tag {
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 11px;
+            background: #F8F9FA;
+            color: #34495E;
+            padding: 5px 11px;
+            border-radius: 20px;
+            border: 1px solid #E5E7EB;
+            transition: all 0.3s ease;
+        }
+
+        .platform-tag:hover {
+            background: #2E86C1;
+            color: #FFFFFF;
+            border-color: #2E86C1;
+        }
+
+        /* Stats banner */
+        .stats-banner {
+            background: linear-gradient(135deg, #3F51B5 0%, #303F9F 100%);
+            color: #FFFFFF;
+            padding: 22px 32px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 28px;
+            animation: slideInUp 1s ease-out 2.0s both;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+        }
+
+        .stats-content {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            align-items: center;
+        }
+
+        .stat-item { text-align: center; }
+
+        .stat-number {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            font-size: 32px;
+            margin-bottom: 6px;
+            line-height: 1;
+        }
+
+        .stats-banner .stat-item:nth-child(1) .stat-number { animation: countUp 1s ease-out 2.4s both; }
+        .stats-banner .stat-item:nth-child(2) .stat-number { animation: countUp 1s ease-out 2.6s both; }
+        .stats-banner .stat-item:nth-child(3) .stat-number { animation: countUp 1s ease-out 2.8s both; }
+
+        .stat-label {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 500;
+            font-size: 14px;
+            opacity: 0.92;
+        }
+
+        /* CTA */
+        .cta-section {
+            text-align: center;
+            animation: slideInUp 1s ease-out 3.0s both;
+        }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 30px;
+            background: linear-gradient(135deg, #3F51B5 0%, #303F9F 100%);
+            color: #FFFFFF;
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            text-decoration: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(63, 81, 181, 0.3);
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+        }
+
+        .cta-button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 24px rgba(63, 81, 181, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="content-wrapper">
+        <section class="header-section">
+            <span class="emoji-icon">🔗</span>
+            <h1 class="headline">Cross-platform Integration Ecosystem<br>跨平台整合生態系統</h1>
+            <p class="subline">無縫連接各大平台，打造全方位AI服務體驗</p>
+        </section>
+
+        <section class="ecosystem-container">
+            <div class="central-hub">
+                <!-- Connector lines from hub center to each satellite -->
+                <svg class="hub-connectors" viewBox="0 0 520 260" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#2E86C1" stop-opacity="0.55"/>
+                            <stop offset="100%" stop-color="#E5E7EB" stop-opacity="0.2"/>
+                        </linearGradient>
+                    </defs>
+                    <!-- Hub center: (260, 130). Node centers: top (260, 30), right (450, 130), bottom-right (380, 230), bottom-left (140, 230), left (70, 130) -->
+                    <line x1="260" y1="130" x2="260" y2="30"  stroke="url(#lineGrad)" stroke-width="2" stroke-dasharray="4 4"/>
+                    <line x1="260" y1="130" x2="450" y2="130" stroke="url(#lineGrad)" stroke-width="2" stroke-dasharray="4 4"/>
+                    <line x1="260" y1="130" x2="380" y2="230" stroke="url(#lineGrad)" stroke-width="2" stroke-dasharray="4 4"/>
+                    <line x1="260" y1="130" x2="140" y2="230" stroke="url(#lineGrad)" stroke-width="2" stroke-dasharray="4 4"/>
+                    <line x1="260" y1="130" x2="70"  y2="130" stroke="url(#lineGrad)" stroke-width="2" stroke-dasharray="4 4"/>
+                </svg>
+
+                <div class="hub-core">EClaw<br>Hub</div>
+
+                <div class="integration-node node-top">通訊<br>平台</div>
+                <div class="integration-node node-right">社群<br>媒體</div>
+                <div class="integration-node node-bottom-right">開發<br>工具</div>
+                <div class="integration-node node-bottom-left">商務<br>平台</div>
+                <div class="integration-node node-left">雲端<br>服務</div>
+            </div>
+
+            <div class="integration-grid">
+                <div class="integration-category c1">
+                    <span class="category-icon">💬</span>
+                    <h3 class="category-title">通訊整合</h3>
+                    <p class="category-description">連接各大通訊平台，讓AI機器人在用戶常用的平台上提供服務</p>
+                    <div class="platform-list">
+                        <span class="platform-tag">Discord</span>
+                        <span class="platform-tag">Telegram</span>
+                        <span class="platform-tag">Slack</span>
+                        <span class="platform-tag">Teams</span>
+                        <span class="platform-tag">LINE</span>
+                        <span class="platform-tag">WhatsApp</span>
+                    </div>
+                </div>
+                <div class="integration-category c2">
+                    <span class="category-icon">🚀</span>
+                    <h3 class="category-title">開發生態</h3>
+                    <p class="category-description">與主流開發工具深度整合，提升開發者體驗和工作效率</p>
+                    <div class="platform-list">
+                        <span class="platform-tag">GitHub</span>
+                        <span class="platform-tag">GitLab</span>
+                        <span class="platform-tag">VS Code</span>
+                        <span class="platform-tag">JetBrains</span>
+                        <span class="platform-tag">Docker</span>
+                        <span class="platform-tag">Kubernetes</span>
+                    </div>
+                </div>
+                <div class="integration-category c3">
+                    <span class="category-icon">☁️</span>
+                    <h3 class="category-title">雲端基建</h3>
+                    <p class="category-description">支援各大雲端平台部署，確保高可用性和全球化服務</p>
+                    <div class="platform-list">
+                        <span class="platform-tag">AWS</span>
+                        <span class="platform-tag">Azure</span>
+                        <span class="platform-tag">GCP</span>
+                        <span class="platform-tag">Railway</span>
+                        <span class="platform-tag">Vercel</span>
+                        <span class="platform-tag">DigitalOcean</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-banner">
+                <div class="stats-content">
+                    <div class="stat-item">
+                        <div class="stat-number">50+</div>
+                        <div class="stat-label">支援平台</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">99.9%</div>
+                        <div class="stat-label">整合成功率</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">24/7</div>
+                        <div class="stat-label">即時同步</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta-section">
+            <a class="cta-button" href="#">
+                查看完整整合列表
+                <span>→</span>
+            </a>
+        </section>
+    </div>
+</body>
+</html>
