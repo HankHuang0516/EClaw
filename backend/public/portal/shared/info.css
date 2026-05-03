@@ -1024,7 +1024,9 @@
     }
     .guide-sub-btn.active { border-left: none; border-bottom-color: var(--primary); }
     .guide-sidebar-btn .expand-arrow { display: none; }
-    .info-tab { padding: 10px 14px; font-size: 13px; }
+    .info-tab { padding: 8px 10px; font-size: 12px; }
+    .info-tabs { -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; }
+    .info-tab { scroll-snap-align: start; flex-shrink: 0; }
     .cmp-channels { gap: 8px; }
     .cmp-channel-header { padding: 14px 10px; }
     .cmp-channel-icon { font-size: 32px; }
