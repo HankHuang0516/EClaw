@@ -764,7 +764,7 @@
         <div class="card" id="channelApiCard">
             <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;">
                 <span>🔗 Channel API</span>
-                <button class="btn btn-sm btn-primary" id="btnGenChannel" onclick="generateChannelKey()">+ New Key</button>
+                <button class="btn btn-sm btn-primary" id="btnGenChannel" onclick="generateChannelKey()" data-i18n="common_new_key">+ New Key</button>
             </div>
             <p class="section-desc" style="margin-bottom:12px;">Each OpenClaw plugin gets its own key pair. Paste the key into your OpenClaw channel config.</p>
 
@@ -836,7 +836,7 @@
             </div>
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
                 <code id="inviteCode" style="flex:1;background:var(--card-bg);border:1px solid var(--card-border);border-radius:6px;padding:8px 12px;font-size:16px;letter-spacing:3px;color:#f6c90e;font-family:monospace;text-align:center;">——</code>
-                <button class="btn btn-outline btn-sm" onclick="copyInviteCode()" id="inviteCopyBtn" style="white-space:nowrap;">📋 Copy</button>
+                <button class="btn btn-outline btn-sm" onclick="copyInviteCode()" id="inviteCopyBtn" style="white-space:nowrap;" data-i18n="common_copy">📋 Copy</button>
             </div>
             <div style="display:flex;gap:16px;font-size:13px;color:var(--text-secondary);">
                 <span>👥 <span data-i18n="settings_invited">Invited</span>: <strong id="inviteTotalInvited">—</strong></span>
@@ -846,7 +846,7 @@
                 <div style="font-size:13px;font-weight:600;margin-bottom:8px;" data-i18n="settings_redeem_title">Redeem an invite code</div>
                 <div style="display:flex;gap:8px;">
                     <input type="text" id="redeemCodeInput" maxlength="12" placeholder="XXXXXXXX" style="flex:1;background:var(--card-bg);border:1px solid var(--card-border);border-radius:6px;padding:8px 12px;font-size:14px;color:var(--text);font-family:monospace;letter-spacing:2px;text-transform:uppercase;">
-                    <button class="btn btn-primary btn-sm" onclick="redeemInviteCode()" id="redeemBtn">Redeem</button>
+                    <button class="btn btn-primary btn-sm" onclick="redeemInviteCode()" id="redeemBtn" data-i18n="common_redeem">Redeem</button>
                 </div>
                 <div id="redeemMsg" style="margin-top:8px;font-size:13px;display:none;"></div>
             </div>
@@ -991,8 +991,8 @@
                         </label>
 
                         <div class="policy-actions">
-                            <button class="btn btn-primary btn-sm" onclick="savePromptPolicy()" id="promptPolicySaveBtn">Save Device Policy</button>
-                            <button class="btn btn-outline btn-sm" onclick="loadPromptPolicy()">Refresh</button>
+                            <button class="btn btn-primary btn-sm" onclick="savePromptPolicy()" id="promptPolicySaveBtn" data-i18n="settings_save_policy">Save Device Policy</button>
+                            <button class="btn btn-outline btn-sm" onclick="loadPromptPolicy()" data-i18n="common_refresh">Refresh</button>
                             <span style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);">
                                 Preview entity #
                                 <input type="number" id="promptPolicyPreviewEntity" min="0" step="1" value="0" class="policy-input" style="width:64px;text-align:right;">
@@ -1003,7 +1003,7 @@
                                 <option value="hermes">hermes</option>
                                 <option value="generic">generic</option>
                             </select>
-                            <button class="btn btn-outline btn-sm" onclick="previewPromptPolicy()">Preview</button>
+                            <button class="btn btn-outline btn-sm" onclick="previewPromptPolicy()" data-i18n="common_preview">Preview</button>
                         </div>
                         <div id="promptPolicyStatus" class="section-desc" style="margin:0;"></div>
                         <pre id="promptPolicyPreview" class="policy-preview"></pre>
@@ -1136,7 +1136,7 @@
                         Found a bug or have a suggestion? Let us know!
                     </div>
                 </div>
-                <button class="btn-mark" onclick="markBugMoment()" id="btnMark">Mark</button>
+                <button class="btn-mark" onclick="markBugMoment()" id="btnMark" data-i18n="common_mark">Mark</button>
             </div>
             <div class="mark-status" id="markStatus"></div>
             <div class="feedback-actions">
@@ -1661,8 +1661,8 @@
                         ${entitiesHtml}
                     </div>
                     <div style="display:flex;gap:6px;flex-shrink:0;margin-top:2px;">
-                        <button class="btn btn-sm btn-outline" onclick="copyAccountKeys('${safeKey}')">Copy</button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteChannelAccount(${a.id})">Delete</button>
+                        <button class="btn btn-sm btn-outline" onclick="copyAccountKeys('${safeKey}')" data-i18n="common_copy">Copy</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteChannelAccount(${a.id})" data-i18n="common_delete">Delete</button>
                     </div>
                 </div>`;
             }).join('');
