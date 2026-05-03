@@ -1,3 +1,10 @@
+## [1.1140.4](https://github.com/HankHuang0516/EClaw/compare/v1.1140.3...v1.1140.4) (2026-05-03)
+
+
+### Bug Fixes
+
+* **notif:** merge partial prefs PUT instead of overwriting whole blob ([#2322](https://github.com/HankHuang0516/EClaw/issues/2322)) ([7345f83](https://github.com/HankHuang0516/EClaw/commit/7345f835666e64fa89100c6efc5b554ad6f16fdd))
+
 ## [1.1140.3](https://github.com/HankHuang0516/EClaw/compare/v1.1140.2...v1.1140.3) (2026-05-03)
 
 
