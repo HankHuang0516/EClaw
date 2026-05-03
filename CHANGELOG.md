@@ -1,3 +1,10 @@
+# [1.1139.0](https://github.com/HankHuang0516/EClaw/compare/v1.1138.4...v1.1139.0) (2026-05-03)
+
+
+### Features
+
+* **mention-parser:** support bare [@public](https://github.com/public)Code form (Slack convention) ([#2300](https://github.com/HankHuang0516/EClaw/issues/2300)) ([5302ca6](https://github.com/HankHuang0516/EClaw/commit/5302ca66c282a3d7a3590b00320b3d2644078f2f)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6) [#2287](https://github.com/HankHuang0516/EClaw/issues/2287) [#2299](https://github.com/HankHuang0516/EClaw/issues/2299) [#2299](https://github.com/HankHuang0516/EClaw/issues/2299)
+
 ## [1.1138.4](https://github.com/HankHuang0516/EClaw/compare/v1.1138.3...v1.1138.4) (2026-05-03)
 
 
