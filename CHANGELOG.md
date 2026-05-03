@@ -1,3 +1,10 @@
+# [1.1141.0](https://github.com/HankHuang0516/EClaw/compare/v1.1140.5...v1.1141.0) (2026-05-03)
+
+
+### Features
+
+* **chat:** jump-to-latest button for scroll-up reading ([#2328](https://github.com/HankHuang0516/EClaw/issues/2328)) ([e896c89](https://github.com/HankHuang0516/EClaw/commit/e896c89f244175d73865247cf0148dc1c9ae6c7f))
+
 ## [1.1140.5](https://github.com/HankHuang0516/EClaw/compare/v1.1140.4...v1.1140.5) (2026-05-03)
 
 
