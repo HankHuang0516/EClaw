@@ -1,3 +1,10 @@
+## [1.1140.3](https://github.com/HankHuang0516/EClaw/compare/v1.1140.2...v1.1140.3) (2026-05-03)
+
+
+### Bug Fixes
+
+* **notif:** FCM logs to serverLog + /api/device/fcm-status diagnostic ([#2321](https://github.com/HankHuang0516/EClaw/issues/2321)) ([7ec3487](https://github.com/HankHuang0516/EClaw/commit/7ec3487a6a00a82b7862196733423317e7c2cd6f))
+
 ## [1.1140.2](https://github.com/HankHuang0516/EClaw/compare/v1.1140.1...v1.1140.2) (2026-05-03)
 
 
