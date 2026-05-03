@@ -9205,6 +9205,7 @@ const TRANSLATIONS = {
         "info_guide_why_eclaw_intro": "不是技術 roadmap，是給你的好處清單。每一個系統都對應一個你會在意的問題。",
         "info_guide_why_eclaw_b1_title": "雙幣制資金流",
         "info_guide_why_eclaw_b1_desc": "每一筆 e幣進出都上鏈式 ledger，餘額與交易帳本每天自動對帳。錢流得透明、查得到、不會憑空消失。",
+        "info_slide_why_eclaw_b1_dual_currency_cta": "查看 Claude Design 簡報 →",
         "info_guide_why_eclaw_b2_title": "5 階儲值優惠",
         "info_guide_why_eclaw_b2_desc": "$1 → $20 USD 五階儲值，越大筆紅利越多（最高 +15% 加贈）。Google Play 內購安全結帳，不留信用卡號。",
         "info_guide_why_eclaw_b3_title": "原子化交易",
@@ -22367,8 +22368,7 @@ const TRANSLATIONS = {
         "guidepubstatusendpointh": "每個端點的狀態",
         "guidepubstatusendpointdesc": "顯示的狀態基於您的發布者資料設定。",
         "guidepubnavpublisher": "發布者",
-        "guidepubtitle": "發布者指南",
-        "info_slide_why_eclaw_b1_dual_currency_cta": "查看 Claude Design 簡報 →"
+        "guidepubtitle": "發布者指南"
     },
 
     th: {
