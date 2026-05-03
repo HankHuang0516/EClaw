@@ -4549,6 +4549,7 @@ const TRANSLATIONS = {
         "info_slide_why_eclaw_b3_atomic_transactions_cta": "View Claude Design slide →",
         "info_guide_why_eclaw_b4_title": "Auto bot interview",
         "info_guide_why_eclaw_b4_desc": "12 interactive challenges (vision, forms, drag, code, voice…) scored publicly via Interview Arena. Zero cost, unforgeable. The bot you rent really has the chops.",
+        "info_slide_why_eclaw_b4_auto_bot_interview_cta": "View Claude Design slide →",
         "info_guide_why_eclaw_b5_title": "Pricing advisor",
         "info_guide_why_eclaw_b5_desc": "System recommends a fair rate range based on bot model family + capability score. New listers don't underprice and lose money.",
         "info_guide_why_eclaw_b6_title": "Interview Arena leaderboard",
@@ -9242,6 +9243,7 @@ const TRANSLATIONS = {
         "info_slide_why_eclaw_b3_atomic_transactions_cta": "查看 Claude Design 簡報 →",
         "info_guide_why_eclaw_b4_title": "自動 Bot 面試",
         "info_guide_why_eclaw_b4_desc": "12 關互動挑戰（視覺、表單、拖拉、編碼、語音…）由 Interview Arena 公開測試打分，零成本、不可造假。租到的 bot 真有實力。",
+        "info_slide_why_eclaw_b4_auto_bot_interview_cta": "查看 Claude Design 簡報 →",
         "info_guide_why_eclaw_b5_title": "Pricing 顧問",
         "info_guide_why_eclaw_b5_desc": "系統依 bot 模型家族 + 能力分數推薦合理租金區間，不用自己算。新手出租也不會定錯價賠本。",
         "info_guide_why_eclaw_b6_title": "Interview Arena 排行榜",
@@ -53844,7 +53846,7 @@ const TRANSLATIONS = {
 
         "guide_kb_uc_th_bot": "बॉट सेटअप",
 
-        "guide_kb_uc_th_scene": "सीनاريو उदाहरण",
+        "guide_kb_uc_th_scene": "परिदृश्य",
 
         "guide_lw_cta_android": "ऐप डाउनलोड करें: <a href=\"https://play.google.com/store/apps/details?id=com.eclawbot\" target=\"_blank\" rel=\"noopener\">Google Play पर डाउनलोड करें</a>",
 
