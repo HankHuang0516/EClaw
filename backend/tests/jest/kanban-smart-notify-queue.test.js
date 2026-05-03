@@ -49,12 +49,19 @@ describe('kanban smart-queue notify — schema', () => {
 });
 
 describe('kanban smart-queue notify — helpers', () => {
-    test('botHasActiveCards is defined', () => {
-        expect(kanbanSrc).toMatch(/async function botHasActiveCards\(deviceId, botId\)/);
+    test('botHasPendingNotify is defined', () => {
+        // Phase 2 hotfix #2307: gate switched from "bot has active cards" →
+        // "bot has pending notify queued" to avoid burying every spawn for
+        // bots with persistent work.
+        expect(kanbanSrc).toMatch(/async function botHasPendingNotify\(deviceId, botId\)/);
     });
 
-    test('botHasActiveCards filters to todo/in_progress only', () => {
-        expect(kanbanSrc).toMatch(/status IN \('todo', 'in_progress'\)/);
+    test('botHasPendingNotify reads from kanban_pending_notify, not kanban_cards', () => {
+        // Match the helper body (starts with botHasPendingNotify, ends at next async function).
+        const helper = kanbanSrc.match(/async function botHasPendingNotify[\s\S]*?\n    \}/);
+        expect(helper).not.toBeNull();
+        expect(helper[0]).toMatch(/FROM kanban_pending_notify/);
+        expect(helper[0]).not.toMatch(/FROM kanban_cards/);
     });
 
     test('enqueuePendingNotify is defined and writes to kanban_pending_notify', () => {
@@ -80,9 +87,10 @@ describe('kanban smart-queue notify — helpers', () => {
 });
 
 describe('kanban smart-queue notify — cron-spawn integration', () => {
-    test('cron-spawn block enqueues when bot has active work, fires immediately when idle', () => {
-        // The smart-queue gate must check botHasActiveCards before deciding push vs enqueue.
-        expect(kanbanSrc).toMatch(/const active = await botHasActiveCards\(card\.device_id, botId\)/);
+    test('cron-spawn block enqueues when queue non-empty, fires when queue empty', () => {
+        // Hotfix #2307: gate must check botHasPendingNotify (not active-cards),
+        // so first ping always fires for bots with persistent work.
+        expect(kanbanSrc).toMatch(/const hasPending = await botHasPendingNotify\(card\.device_id, botId\)/);
         expect(kanbanSrc).toMatch(/await enqueuePendingNotify\(card\.device_id, botId, childCard\.id/);
     });
 
@@ -91,6 +99,12 @@ describe('kanban smart-queue notify — cron-spawn integration', () => {
         // it, this test fails so reviewers can challenge.
         expect(kanbanSrc).not.toMatch(/spawnPrefs\.kanban_cron_spawn_notify/);
         expect(kanbanSrc).not.toMatch(/kanban_cron_spawn_notify\s*===\s*true/);
+    });
+
+    test('cron-spawn block no longer uses the active-cards gate (Phase 2 buried-spawn bug)', () => {
+        // Regression-pin for #2307: the "active cards" gate buried every spawn
+        // for bots with persistent todo/in_progress work. Must not return.
+        expect(kanbanSrc).not.toMatch(/botHasActiveCards/);
     });
 });
 

@@ -353,19 +353,22 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
         }
     }
 
-    // ── Smart-queue notify helpers (card_dfe3b8df Phase 2) ──
+    // ── Smart-queue notify helpers (card_dfe3b8df Phase 2 + #2307 hotfix) ──
     // Replaces the deprecated kanban_cron_spawn_notify boolean gate. cron auto-spawn
-    // notifies are routed per-bot: fire immediately if the bot has no active work,
-    // else enqueue silently and drain one entry on each move-to-done.
-    async function botHasActiveCards(deviceId, botId) {
+    // notifies are routed per-bot: fire immediately if the bot has no pending notify
+    // queued; else enqueue silently and drain one entry on each move-to-done.
+    //
+    // Original Phase 2 used "bot has active todo/in_progress cards" as the gate —
+    // that buried EVERY new spawn for any bot with persistent work (the common
+    // case for active developer bots), because the queue only drained on
+    // move-to-done. The empty-queue gate preserves the rate-limit intent (one
+    // fresh ping at a time per bot) without silencing first pings.
+    async function botHasPendingNotify(deviceId, botId) {
         const r = await pool.query(
-            `SELECT 1 FROM kanban_cards
-              WHERE device_id = $1
-                AND archived = false
-                AND status IN ('todo', 'in_progress')
-                AND assigned_bots @> $2::jsonb
+            `SELECT 1 FROM kanban_pending_notify
+              WHERE device_id = $1 AND bot_entity_id = $2
               LIMIT 1`,
-            [deviceId, JSON.stringify([Number(botId)])]
+            [deviceId, Number(botId)]
         );
         return r.rows.length > 0;
     }
@@ -2513,13 +2516,13 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                         const payload = { description: card.description, cardId: childCard.id };
                         for (const botId of bots) {
                             try {
-                                const active = await botHasActiveCards(card.device_id, botId);
-                                if (active) {
+                                const hasPending = await botHasPendingNotify(card.device_id, botId);
+                                if (hasPending) {
                                     await enqueuePendingNotify(card.device_id, botId, childCard.id, msg, payload);
-                                    console.log(`[Kanban] Smart-queue: enqueued notify for bot #${botId} card ${childCard.id} (bot has active work)`);
+                                    console.log(`[Kanban] Smart-queue: enqueued notify for bot #${botId} card ${childCard.id} (bot has pending notify)`);
                                 } else {
                                     await notifyEntities(card.device_id, [botId], msg, payload);
-                                    console.log(`[Kanban] Smart-queue: pushed immediate notify for bot #${botId} card ${childCard.id} (bot idle)`);
+                                    console.log(`[Kanban] Smart-queue: pushed immediate notify for bot #${botId} card ${childCard.id} (queue empty)`);
                                 }
                             } catch (notifyErr) {
                                 console.error(`[Kanban] Smart-queue notify failed for bot #${botId}:`, notifyErr.message);
