@@ -53772,11 +53772,11 @@ const TRANSLATIONS = {
 
         "guide_kb_col_todo_sub": "शुरू करने के लिए तैयार टास्क",
 
-        "guide_kb_cta_api": "API डॉक्यूमेंटेशन: <a href=\"roadmap.html\" target=\"_blank\">",
+        "guide_kb_cta_api": "API डॉक्यूमेंटेशन: <a href=\"https://eclawbot.com/api/skill-doc\" target=\"_blank\" rel=\"noopener\">पूरा API Skill Doc</a>",
 
-        "guide_kb_cta_kanban": "बोर्ड पर जाएं: <a href=\"roadmap.html\" target=\"_blank\">",
+        "guide_kb_cta_kanban": "बोर्ड पर जाएं: <a href=\"/portal/kanban.html\">कानबन बोर्ड पेज</a>",
 
-        "guide_kb_cta_mission": "मिशन कंट्रोल: <a href=\"roadmap.html\" target=\"_blank\">",
+        "guide_kb_cta_mission": "मिशन कंट्रोल: <a href=\"/portal/mission.html\">Mission Control</a>",
 
         "guide_kb_cta_title": "कानबन के साथ अपनी बॉट टीम का मैनेजमेंट शुरू करें",
 
@@ -53844,10 +53844,10 @@ const TRANSLATIONS = {
 
         "guide_kb_uc_th_scene": "सीनاريو उदाहरण",
 
-        "guide_lw_cta_android": "ऐप डाउनलोड करें: <a href=\"roadmap.html\" target=\"_blank\">",
+        "guide_lw_cta_android": "ऐप डाउनलोड करें: <a href=\"https://play.google.com/store/apps/details?id=com.eclawbot\" target=\"_blank\" rel=\"noopener\">Google Play पर डाउनलोड करें</a>",
 
         "guide_lw_cta_plaza": "BotPlaza",
-        "guide_lw_cta_setup": "सेटअप गाइड: <a href=\"roadmap.html\" target=\"_blank\">",
+        "guide_lw_cta_setup": "सेटअप गाइड: <a href=\"#guide/setup\">पूरी सेटअप गाइड</a>",
 
         "guide_lw_cta_title": "लाइव वॉलपेपर का अनुभव लेने के लिए Android ऐप डाउनलोड करें",
 
@@ -53933,12 +53933,12 @@ const TRANSLATIONS = {
 
         "guide_mp_android_strength": "लाइव वॉलपेपर, TTS वॉइस, GPS, FCM पुश",
 
-        "guide_mp_cta_android": "Android ऐप: <a href=\"roadmap.html\" target=\"_blank\">",
+        "guide_mp_cta_android": "Android ऐप: <a href=\"https://play.google.com/store/apps/details?id=com.hank.clawlive\" target=\"_blank\" rel=\"noopener\">Google Play</a>",
 
         "guide_mp_cta_title": "अपना मल्टी-प्लेटफॉर्म अनुभव शुरू करें",
 
         "guide_mp_cta_wallpaper": "Wallpaper",
-        "guide_mp_cta_web": "वेब पोर्टल: <a href=\"roadmap.html\" target=\"_blank\">",
+        "guide_mp_cta_web": "वेब पोर्टल: <a href=\"/portal/dashboard.html\">Dashboard पर जाएं</a>",
 
         "guide_mp_ios_best": "iPhone यूज़र्स, रोज़मर्रा की चैट",
 
