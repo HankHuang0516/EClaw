@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EClaw - ⚡ 用 e幣租借大模型</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: radial-gradient(800px circle at center, #FFFFFF 0%, #ECF0F1 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes coinBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        @keyframes arrowPulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .floating-coins {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .floating-coin {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(145deg, #F39C12, #E67E22);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+            font-weight: bold;
+            animation: float 3s infinite ease-in-out;
+        }
+
+        .floating-coin:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+        .floating-coin:nth-child(2) { top: 20%; right: 15%; animation-delay: 0.5s; }
+        .floating-coin:nth-child(3) { top: 70%; left: 5%; animation-delay: 1s; }
+        .floating-coin:nth-child(4) { top: 80%; right: 10%; animation-delay: 1.5s; }
+        .floating-coin:nth-child(5) { top: 40%; left: 3%; animation-delay: 2s; }
+        .floating-coin:nth-child(6) { top: 60%; right: 8%; animation-delay: 2.5s; }
+
+        .content-wrapper {
+            max-width: 1200px;
+            width: 100%;
+            padding: 64px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header Section */
+        .header-section {
+            margin-bottom: 60px;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .emoji-icon {
+            font-size: 56px;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .headline {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-size: 44px;
+            font-weight: 700;
+            color: #2C3E50;
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+
+        .subline {
+            font-size: 20px;
+            color: #2E86C1;
+            font-weight: 400;
+            margin-bottom: 40px;
+        }
+
+        /* Exchange Diagram */
+        .exchange-container {
+            margin-bottom: 80px;
+            position: relative;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeInUp 0.8s ease-out 0.3s both;
+        }
+
+        .bot-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .source-bot {
+            background: linear-gradient(145deg, #2E86C1, #1B4F72);
+            margin-right: 200px;
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        .target-bot {
+            background: linear-gradient(145deg, #27AE60, #1E8449);
+            margin-left: 200px;
+            animation: pulse 2s infinite ease-in-out 0.5s;
+        }
+
+        .bot-emoji {
+            font-size: 36px;
+            line-height: 1;
+        }
+
+        .bot-label {
+            font-size: 12px;
+            margin-top: 8px;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .coin-stack {
+            position: absolute;
+            top: -15px;
+            right: -15px;
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(145deg, #F39C12, #E67E22);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: white;
+            font-weight: bold;
+            animation: coinBounce 1.5s infinite ease-in-out;
+        }
+
+        .capability-badge {
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #27AE60;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .exchange-arrow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .arrow-svg {
+            width: 160px;
+            height: 60px;
+            animation: arrowPulse 2s infinite ease-in-out;
+        }
+
+        .arrow-label {
+            font-size: 14px;
+            color: #F39C12;
+            font-weight: 600;
+            margin-top: 8px;
+            background: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Feature Cards */
+        .feature-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            animation: fadeInUp 0.8s ease-out 0.6s both;
+        }
+
+        .feature-card {
+            background: white;
+            border: 2px solid #ECF0F1;
+            border-radius: 12px;
+            padding: 32px 24px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            border-color: #2E86C1;
+        }
+
+        .feature-icon {
+            font-size: 40px;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .feature-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2C3E50;
+            margin-bottom: 8px;
+        }
+
+        .feature-description {
+            font-size: 14px;
+            color: #5D6D7E;
+            line-height: 1.5;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .floating-coin {
+                display: none;
+            }
+
+            .content-wrapper {
+                padding: 24px;
+            }
+
+            .headline {
+                font-size: 32px;
+            }
+
+            .subline {
+                font-size: 18px;
+            }
+
+            .exchange-container {
+                height: auto;
+                flex-direction: column;
+                gap: 40px;
+                margin-bottom: 60px;
+            }
+
+            .source-bot {
+                margin-right: 0;
+            }
+
+            .target-bot {
+                margin-left: 0;
+            }
+
+            .exchange-arrow {
+                position: static;
+                transform: none;
+                order: 1;
+            }
+
+            .arrow-svg {
+                width: 120px;
+                height: 45px;
+                transform: rotate(90deg);
+            }
+
+            .feature-cards {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
+
+            .feature-card {
+                padding: 24px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-coins">
+        <div class="floating-coin">E</div>
+        <div class="floating-coin">E</div>
+        <div class="floating-coin">E</div>
+        <div class="floating-coin">E</div>
+        <div class="floating-coin">E</div>
+        <div class="floating-coin">E</div>
+    </div>
+
+    <div class="content-wrapper">
+        <section class="header-section">
+            <span class="emoji-icon">⚡</span>
+            <h1 class="headline">智能代幣經濟</h1>
+            <p class="subline">用賺到的 e-coin 租用更強大的AI</p>
+        </section>
+
+        <section class="exchange-container">
+            <div class="bot-avatar source-bot">
+                <div class="bot-emoji">🤖</div>
+                <div class="bot-label">基礎AI</div>
+                <div class="coin-stack">5</div>
+            </div>
+
+            <div class="exchange-arrow">
+                <svg class="arrow-svg" viewBox="0 0 160 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M20 20 C60 10, 100 10, 140 20"
+                        stroke="#F39C12"
+                        stroke-width="3"
+                        fill="none"
+                        marker-end="url(#arrowhead1)"
+                    />
+                    <path
+                        d="M140 40 C100 50, 60 50, 20 40"
+                        stroke="#F39C12"
+                        stroke-width="3"
+                        fill="none"
+                        marker-end="url(#arrowhead2)"
+                    />
+                    <defs>
+                        <marker
+                            id="arrowhead1"
+                            markerWidth="10"
+                            markerHeight="7"
+                            refX="10"
+                            refY="3.5"
+                            orient="auto"
+                        >
+                            <polygon points="0 0, 10 3.5, 0 7" fill="#F39C12"/>
+                        </marker>
+                        <marker
+                            id="arrowhead2"
+                            markerWidth="10"
+                            markerHeight="7"
+                            refX="0"
+                            refY="3.5"
+                            orient="auto"
+                        >
+                            <polygon points="10 0, 0 3.5, 10 7" fill="#F39C12"/>
+                        </marker>
+                    </defs>
+                </svg>
+                <div class="arrow-label">e-coin 交換</div>
+            </div>
+
+            <div class="bot-avatar target-bot">
+                <div class="bot-emoji">🧠</div>
+                <div class="bot-label">進階AI</div>
+                <div class="capability-badge">GPT-4級別</div>
+            </div>
+        </section>
+
+        <section class="feature-cards">
+            <div class="feature-card">
+                <span class="feature-icon">💰</span>
+                <h3 class="feature-title">無需額外付費</h3>
+                <p class="feature-description">用賺取的 e-coin 直接租用，不需要額外的現金支出</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🔄</span>
+                <h3 class="feature-title">靈活選擇AI助手</h3>
+                <p class="feature-description">根據任務需求，隨時切換不同能力等級的AI助手</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🌱</span>
+                <h3 class="feature-title">真正的循環經濟</h3>
+                <p class="feature-description">賺取→租用→更高效→賺更多，形成正向循環</p>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

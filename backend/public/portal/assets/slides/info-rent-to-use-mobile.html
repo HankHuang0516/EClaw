@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EClaw Mobile - ⚡ 用 e幣租借大模型</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: radial-gradient(600px circle at center, #FFFFFF 0%, #ECF0F1 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes coinBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        @keyframes arrowPulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+
+        .mobile-slide {
+            max-width: 375px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        /* Header */
+        .header-section {
+            margin-bottom: 40px;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .mobile-emoji {
+            font-size: 48px;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        .mobile-headline {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: #2C3E50;
+            line-height: 1.2;
+            margin-bottom: 12px;
+        }
+
+        .mobile-subline {
+            font-size: 18px;
+            color: #2E86C1;
+            font-weight: 400;
+            margin-bottom: 0;
+        }
+
+        /* Exchange Diagram (stacked) */
+        .exchange-container {
+            margin-bottom: 48px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            animation: fadeInUp 0.8s ease-out 0.3s both;
+        }
+
+        .bot-avatar {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .source-bot {
+            background: linear-gradient(145deg, #2E86C1, #1B4F72);
+            animation: pulse 2s infinite ease-in-out;
+        }
+
+        .target-bot {
+            background: linear-gradient(145deg, #27AE60, #1E8449);
+            animation: pulse 2s infinite ease-in-out 0.5s;
+        }
+
+        .bot-emoji {
+            font-size: 32px;
+            line-height: 1;
+        }
+
+        .bot-label {
+            font-size: 12px;
+            margin-top: 6px;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .coin-stack {
+            position: absolute;
+            top: -12px;
+            right: -12px;
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(145deg, #F39C12, #E67E22);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            color: white;
+            font-weight: bold;
+            animation: coinBounce 1.5s infinite ease-in-out;
+        }
+
+        .capability-badge {
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #27AE60;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .exchange-arrow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .arrow-svg {
+            width: 60px;
+            height: 80px;
+            animation: arrowPulse 2s infinite ease-in-out;
+        }
+
+        .arrow-label {
+            font-size: 13px;
+            color: #F39C12;
+            font-weight: 600;
+            margin-top: 6px;
+            background: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Feature Cards (stacked) */
+        .feature-cards {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            animation: fadeInUp 0.8s ease-out 0.6s both;
+        }
+
+        .feature-card {
+            background: white;
+            border: 2px solid #ECF0F1;
+            border-radius: 12px;
+            padding: 20px 18px;
+            text-align: center;
+        }
+
+        .feature-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .feature-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: #2C3E50;
+            margin-bottom: 6px;
+        }
+
+        .feature-description {
+            font-size: 14px;
+            color: #5D6D7E;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 375px) {
+            .mobile-slide {
+                padding: 16px;
+            }
+
+            .mobile-headline {
+                font-size: 28px;
+            }
+
+            .mobile-subline {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-slide">
+        <section class="header-section">
+            <span class="mobile-emoji">⚡</span>
+            <h1 class="mobile-headline">智能代幣經濟</h1>
+            <p class="mobile-subline">用賺到的 e-coin 租用更強大的AI</p>
+        </section>
+
+        <section class="exchange-container">
+            <div class="bot-avatar source-bot">
+                <div class="bot-emoji">🤖</div>
+                <div class="bot-label">基礎AI</div>
+                <div class="coin-stack">5</div>
+            </div>
+
+            <div class="exchange-arrow">
+                <svg class="arrow-svg" viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M20 10 C10 30, 10 50, 20 70"
+                        stroke="#F39C12"
+                        stroke-width="3"
+                        fill="none"
+                        marker-end="url(#arrowDown)"
+                    />
+                    <path
+                        d="M40 70 C50 50, 50 30, 40 10"
+                        stroke="#F39C12"
+                        stroke-width="3"
+                        fill="none"
+                        marker-end="url(#arrowUp)"
+                    />
+                    <defs>
+                        <marker id="arrowDown" markerWidth="10" markerHeight="7" refX="5" refY="7" orient="auto">
+                            <polygon points="0 0, 10 0, 5 7" fill="#F39C12"/>
+                        </marker>
+                        <marker id="arrowUp" markerWidth="10" markerHeight="7" refX="5" refY="0" orient="auto">
+                            <polygon points="0 7, 10 7, 5 0" fill="#F39C12"/>
+                        </marker>
+                    </defs>
+                </svg>
+                <div class="arrow-label">e-coin 交換</div>
+            </div>
+
+            <div class="bot-avatar target-bot">
+                <div class="bot-emoji">🧠</div>
+                <div class="bot-label">進階AI</div>
+                <div class="capability-badge">GPT-4級別</div>
+            </div>
+        </section>
+
+        <section class="feature-cards">
+            <div class="feature-card">
+                <span class="feature-icon">💰</span>
+                <h3 class="feature-title">無需額外付費</h3>
+                <p class="feature-description">用賺取的 e-coin 直接租用，不需要額外的現金支出</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🔄</span>
+                <h3 class="feature-title">靈活選擇AI助手</h3>
+                <p class="feature-description">根據任務需求，隨時切換不同能力等級的AI助手</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🌱</span>
+                <h3 class="feature-title">真正的循環經濟</h3>
+                <p class="feature-description">賺取→租用→更高效→賺更多，形成正向循環</p>
+            </div>
+        </section>
+    </div>
+</body>
+</html>
