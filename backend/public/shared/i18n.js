@@ -52130,6 +52130,7 @@ const TRANSLATIONS = {
     hi: {
         // Info Hub nav
         "info_nav_passive_income": "💤 बेकार बॉट से e-coin कमाएं",
+        "info_nav_rent_to_use": "⚡ बड़े मॉडल की शक्ति किराये पर लें",
         "info_nav_credit_swap": "🕐 टाइम बैंक",
 
         // Info Hub: Passive Income Guide
@@ -52177,6 +52178,30 @@ const TRANSLATIONS = {
         "info_guide_credit_swap_cta_publish": "अपना आइडल बॉट लिस्ट करें: <a href=\"community.html\">Bot Plaza</a>",
         "info_guide_credit_swap_cta_invite": "दोस्तों को इन्वाइट करें: <a href=\"settings.html\">सेटिंग्स → रेफरल</a> (दोनों को रिवॉर्ड मिलता है)",
         "info_guide_credit_swap_cta_history": "अपना टास्क हिस्ट्री देखें: <a href=\"kanban.html\">Mission Center</a>",
+
+        // Info Hub: Rent To Use Guide
+        "info_guide_rent_to_use_title": "⚡ e-coin से बड़े मॉडल की शक्ति किराये पर लें — कोई मासिक अनुबंध नहीं, प्रति मिनट बिलिंग",
+        "info_guide_rent_to_use_meta": "क्या सिर्फ एक बड़ा डेटा टास्क के लिए Claude Max सब्सक्राइब करना नहीं चाहते? e-coin से किसी के बेकार bot किराये पर लें — आमतौर पर official subscriptions से 30-70% सस्ता।",
+        "info_guide_rent_to_use_h2_problem": "आपकी समस्या",
+        "info_guide_rent_to_use_problem_desc": "आपको सिर्फ कभी-कभी एक 200K-context मॉडल चाहिए ताकि एक ऑफ-डेटासेट प्रोसेस कर सकें। लेकिन Claude Max की कीमत NT$600+/महीना, ChatGPT Pro NT$6,000+, Gemini Advanced NT$650+। आप एक टास्क के लिए सब्सक्राइब नहीं करना चाहते — लेकिन official providers pay-as-you-go ऑप्शन नहीं देते।",
+        "info_guide_rent_to_use_h2_solution": "EClaw कैसे मदद करता है",
+        "info_guide_rent_to_use_solution_li1": "✅ <strong>मार्केट ब्राउज़ करें</strong>: मॉडल, रेटिंग, क्षमता के हिसाब से फ़िल्टर करें — सही bot जल्दी खोजें।",
+        "info_guide_rent_to_use_solution_li2": "✅ <strong>डिपॉज़िट दें और शुरू करें</strong>: deposit = rate × 20 (20K-token की रनवे)। असल में टोकन इस्तेमाल होने पर सेटल होता है।",
+        "info_guide_rent_to_use_solution_li3": "✅ <strong>प्रति टोकन भुगतान</strong>: बैकएंड हर मैसेज के साथ टोकन मीटर करता है — आपसे ज़्यादा चार्ज नहीं लिया जा सकता।",
+        "info_guide_rent_to_use_solution_li4": "✅ <strong>30 मिनट से 7 दिन</strong>: जल्दी टास्क के लिए किराये पर लें या पूरे हफ्ते की प्रोजेक्ट के लिए — जो भी फिट बैठे।",
+        "info_guide_rent_to_use_solution_li5": "✅ <strong>जल्दी खत्म करने पर 50% रिफंड</strong>: हो जाए तो रुक जाएं, अनुबंध खत्म होने का इंतज़ार न करें।",
+        "info_guide_rent_to_use_solution_li6": "✅ <strong>2% इंश्योरेंस पूल</strong>: bot क्रैश हो, टास्क फेल हो → प्लेटफॉर्म अपने आप आपको मुआवज़ा दे। कोई झगड़ा नहीं।",
+        "info_guide_rent_to_use_h2_scenario": "असली परिदृश्य",
+        "info_guide_rent_to_use_scenario1_title": "परिदृश्य A: कभी-कभी बड़े दस्तावेज़ों का विश्लेषण",
+        "info_guide_rent_to_use_scenario1_solution": "→ 2 घंटे के लिए Claude Opus किराये पर लें, मासिक सब्सक्रिप्शन से 90% सस्ता",
+        "info_guide_rent_to_use_scenario1_desc": "100K-शब्द PDF सारांशित करना है? 2 घंटे के लिए 200K-context Opus bot किराये पर लें। e-coin खर्च: ~NT$30-80, NT$600+ मासिक फीस के मुकाबले।",
+        "info_guide_rent_to_use_scenario2_title": "परिदृश्य B: सब्सक्राइब करने से पहले मॉडल ट्राय करें",
+        "info_guide_rent_to_use_scenario2_solution": "→ मूल्यांकन के लिए 30 मिनट किराये पर लें, फिर तय करें सब्सक्राइब करना है या नहीं",
+        "info_guide_rent_to_use_scenario2_desc": "जानना चाहते हैं कि Gemini 2.5 Pro कोडिंग में Claude से बेहतर है? अपने असली वर्कलोड पर 30 मिनट किराये पर लेकर देखें — तुलना के लिए सब्सक्रिप्शन ज़रूरी नहीं। e-coin को अपना 'फ्री ट्रायल क्रेडिट' मानें।",
+        "info_guide_rent_to_use_cta_title": "अभी किराये पर लेना शुरू करें",
+        "info_guide_rent_to_use_cta_browse": "किराये का मार्केट ब्राउज़ करें: <a href=\"community.html\">Bot Plaza</a>",
+        "info_guide_rent_to_use_cta_topup": "e-coin रिचार्ज करें: <a href=\"settings.html\">सेटिंग्स</a> (5 स्तर, जितना ज़्यादा उतना बड़ा बोनस)",
+        "info_guide_rent_to_use_cta_pricing": "मूल्य निर्धारण संरचना देखें: <a href=\"roadmap.html\">पूर्ण Pricing</a>",
 
         "mc_title": "EClawbot मिशन सेंटर",
         "mc_tab_label": "मन",
