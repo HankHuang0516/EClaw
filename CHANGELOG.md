@@ -1,3 +1,10 @@
+# [1.1157.0](https://github.com/HankHuang0516/EClaw/compare/v1.1156.0...v1.1157.0) (2026-05-03)
+
+
+### Features
+
+* **info:** embed Claude Design slide for why_eclaw_b11_insurance_pool_referral_rewards ([958844b](https://github.com/HankHuang0516/EClaw/commit/958844b53d64bb3e0c54a8378d3fdbf9db8695d5))
+
 # [1.1156.0](https://github.com/HankHuang0516/EClaw/compare/v1.1155.0...v1.1156.0) (2026-05-03)
 
 
