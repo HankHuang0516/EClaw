@@ -5082,7 +5082,8 @@ app.get('/api/health', (req, res) => {
     try { stuckList = findStuckEntities(); } catch (_) { /* best-effort */ }
     const stuckPreview = stuckList
         .sort((a, b) => b.idleMs - a.idleMs)
-        .slice(0, 5);
+        .slice(0, 5)
+        .map(s => ({ ...s, deviceId: s.deviceId ? s.deviceId.slice(0, 8) + '…' : null }));
 
     // Phase H1.5: classify severity so Railway healthcheck (healthcheckPath=/api/health,
     // restartPolicyType=ON_FAILURE) can auto-restart a wedged daemon. Returns 503 only
