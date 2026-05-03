@@ -353,6 +353,50 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
         }
     }
 
+    // ── Smart-queue notify helpers (card_dfe3b8df Phase 2) ──
+    // Replaces the deprecated kanban_cron_spawn_notify boolean gate. cron auto-spawn
+    // notifies are routed per-bot: fire immediately if the bot has no active work,
+    // else enqueue silently and drain one entry on each move-to-done.
+    async function botHasActiveCards(deviceId, botId) {
+        const r = await pool.query(
+            `SELECT 1 FROM kanban_cards
+              WHERE device_id = $1
+                AND archived = false
+                AND status IN ('todo', 'in_progress')
+                AND assigned_bots @> $2::jsonb
+              LIMIT 1`,
+            [deviceId, JSON.stringify([Number(botId)])]
+        );
+        return r.rows.length > 0;
+    }
+
+    async function enqueuePendingNotify(deviceId, botId, cardId, message, payload) {
+        await pool.query(
+            `INSERT INTO kanban_pending_notify (device_id, bot_entity_id, card_id, msg, payload)
+             VALUES ($1, $2, $3, $4, $5::jsonb)`,
+            [deviceId, Number(botId), cardId, message, JSON.stringify(payload || {})]
+        );
+    }
+
+    async function drainOnePendingNotify(deviceId, botId) {
+        const r = await pool.query(
+            `DELETE FROM kanban_pending_notify
+              WHERE id = (
+                  SELECT id FROM kanban_pending_notify
+                   WHERE device_id = $1 AND bot_entity_id = $2
+                   ORDER BY created_at ASC
+                   LIMIT 1
+                   FOR UPDATE SKIP LOCKED
+              )
+              RETURNING card_id, msg, payload`,
+            [deviceId, Number(botId)]
+        );
+        if (r.rows.length === 0) return null;
+        const row = r.rows[0];
+        await notifyEntities(deviceId, [Number(botId)], row.msg, row.payload || {});
+        return row;
+    }
+
     // Debug: kanban-codex-nudge (#2273) — keep until user confirms Codex channel nudges are reliable.
     router.get('/debug/kanban-codex-nudge', async (req, res) => {
         if (!authenticate(req, res)) return;
@@ -1494,6 +1538,22 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 }
             }
 
+            // Smart-queue drain (card_dfe3b8df Phase 2): when a bot completes a
+            // card, drain ONE oldest pending_notify entry for them so queued
+            // cron-spawn child cards surface one-at-a-time as the bot frees up.
+            if (newStatus === 'done') {
+                for (const bot of bots) {
+                    try {
+                        const drained = await drainOnePendingNotify(deviceId, bot);
+                        if (drained) {
+                            console.log(`[Kanban] Smart-queue: drained one pending notify for bot #${bot} (card ${drained.card_id})`);
+                        }
+                    } catch (drainErr) {
+                        console.error(`[Kanban] Smart-queue drain error for bot #${bot}:`, drainErr.message);
+                    }
+                }
+            }
+
             // If this is an auto-generated child card moving to Done → update parent
             if (newStatus === 'done' && card.is_auto_generated && card.parent_card_id) {
                 console.log(`[Kanban] Child card ${cardId} done, updating parent ${card.parent_card_id}`);
@@ -2436,19 +2496,35 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     await addSystemComment(childCard.id, card.device_id,
                         `📋 由自動化母卡 [${card.title}] 自動建立`);
 
-                    // Push notify assigned bots — gated by kanban_cron_spawn_notify
-                    // (default false: child card has just been born; let stale-scan
-                    // pick it up later instead of pinging immediately, which Hank
-                    // experienced as 5–6 nudges within an hour on 2026-04-28).
-                    // Spec: docs/mission-v2-kanban-spec.md §十一 "通知 gates（device preferences）".
-                    const spawnPrefs = await devicePrefs.getPrefs(card.device_id).catch(() => ({}));
-                    if (bots.length > 0 && spawnPrefs.kanban_cron_spawn_notify === true) {
+                    // Smart-queue notify (card_dfe3b8df Phase 2 — supersedes the
+                    // kanban_cron_spawn_notify boolean gate). Per assigned bot: if the
+                    // bot has any active todo/in_progress card, enqueue silently into
+                    // kanban_pending_notify; otherwise push immediately. One queued
+                    // entry drains per move-to-done event for that bot, so the bot
+                    // sees at most one new-task ping at a time without losing the
+                    // wakeup chain. Spec: docs/mission-v2-kanban-spec.md §十一
+                    // "通知 gates（smart per-bot queue）".
+                    if (bots.length > 0) {
                         const lang = await getDeviceLanguage(card.device_id);
                         const msg = tKanban(lang, 'automationTrigger', {
                             title: card.title,
                             childTitle
                         });
-                        notifyEntities(card.device_id, bots, msg, { description: card.description, cardId: childCard.id });
+                        const payload = { description: card.description, cardId: childCard.id };
+                        for (const botId of bots) {
+                            try {
+                                const active = await botHasActiveCards(card.device_id, botId);
+                                if (active) {
+                                    await enqueuePendingNotify(card.device_id, botId, childCard.id, msg, payload);
+                                    console.log(`[Kanban] Smart-queue: enqueued notify for bot #${botId} card ${childCard.id} (bot has active work)`);
+                                } else {
+                                    await notifyEntities(card.device_id, [botId], msg, payload);
+                                    console.log(`[Kanban] Smart-queue: pushed immediate notify for bot #${botId} card ${childCard.id} (bot idle)`);
+                                }
+                            } catch (notifyErr) {
+                                console.error(`[Kanban] Smart-queue notify failed for bot #${botId}:`, notifyErr.message);
+                            }
+                        }
                     }
 
                     try { await bumpVersion(card.device_id); } catch (e) { /* ignore */ }

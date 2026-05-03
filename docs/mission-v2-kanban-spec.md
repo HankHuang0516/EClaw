@@ -310,7 +310,7 @@ _老闆已確認所有問題，開始分拆任務開工。_
 自動建立臨時卡片（子卡）→ TODO
     │ assignedBots = 母卡的 assignedBots
     │ title = "[Auto] 母卡標題 (03/26 18:30)"
-    │ push 通知 assigned bots（受 device pref kanban_cron_spawn_notify 控制；預設 false，見下節）
+    │ push 通知 assigned bots（走 smart per-bot queue：bot 沒有活躍卡才立即推；有活躍卡則 enqueue，等他 done 一張再放出，見下節）
     ▼
 Bot 執行 → In Progress → Review → Done → 自動歸檔
     │
@@ -319,18 +319,39 @@ Bot 執行 → In Progress → Review → Done → 自動歸檔
 母卡更新 lastRunAt + 留言板記錄執行結果
 ```
 
-### 通知 gates（device preferences）
+### 通知 gates（smart per-bot queue）
 
-排程觸發的通知行為由兩個 device preference flag 控制（`backend/device-preferences.js` `DEFAULTS`，可透過 `PUT /api/device-preferences` 修改）：
+cron 觸發的通知走**每個 bot 各自一條 queue**，避免一個 bot 同時被多張新卡擠爆。Decision logic 由 backend 寫死，沒有 device-preference flag。
 
-| Pref key | Default | 適用場景 | 行為 |
-|---|---|---|---|
-| `kanban_cron_spawn_notify` | `false` | 母卡 cron 生子卡（automation→child） | 預設關閉。子卡剛誕生先放著，由 stale-scan 過 `stale_threshold_ms` 後再督促，避免新卡片被立即推送一次、stale 又再推送一次的雙重通知。 |
-| `kanban_cron_recurring_notify` | `true` | 自身重複觸發母卡（recurring，無子卡） | 預設開啟。這類卡片觸發頻率低（每 cron tick 一次），使用者通常希望立刻知道。 |
+**Queue 行為：**
 
-**手動建立子卡（`POST /api/mission/card`）不受此 gate 約束** — 只要 `status` 不是 `backlog`，仍會無條件 notify assigned bots（見 `backend/kanban.js` 的 `/card` POST handler）。Gate 僅針對 `backgroundTick` 跑出來的 cron 自動化路徑。
+| 觸發來源 | Bot 狀態 | 行為 |
+|---|---|---|
+| cron 母卡 spawn 子卡（automation→child） | bot 沒有 todo/in_progress 卡 | 立即 push notify（保留原 wakeup chain） |
+| cron 母卡 spawn 子卡（automation→child） | bot 有 todo/in_progress 卡 | 寫入 `kanban_pending_notify` queue，**不**推送；等 bot 自己把現有的某張卡推到 done，drain 一筆出來 |
+| 自身重複觸發母卡（recurring，無子卡） | 任意 | 走 `kanban_cron_recurring_notify` device pref（預設 `true`，這類卡片觸發頻率低，使用者通常希望立刻知道） |
+| 手動建立子卡（`POST /api/mission/card`，status≠backlog） | 任意 | 不走 queue，直接 notify（手動行為由人控制節奏，不需要降噪） |
 
-**沿革：** 2026-04-28 觀察到自動 nudge 在 1 小時內噴出 5–6 次（自動化母卡每小時 fire 一次 × stale-scan 每 30 分鐘掃一次），導致頻道訊息洪災。`kanban_cron_spawn_notify` 預設改為 `false`，把通知時機交給 stale-scan 統一決定，避免 spawn + stale 雙計。Code anchor: `backend/kanban.js:2439-2451`、`backend/device-preferences.js:23-26`。
+**Drain hook：** `POST /api/mission/card/:id/move` 把 `newStatus` 設成 `done` 時，對該卡的每個 `assignedBot` 從 `kanban_pending_notify` 撈出該 bot 最舊的一筆 entry，push 出來。FIFO ordering by `created_at`，搭配 PostgreSQL `FOR UPDATE SKIP LOCKED` 確保多個 worker 同時 drain 不會撞單。
+
+**Schema：**
+
+```sql
+CREATE TABLE kanban_pending_notify (
+    id BIGSERIAL PRIMARY KEY,
+    device_id UUID NOT NULL,
+    bot_entity_id INTEGER NOT NULL,
+    card_id VARCHAR(48) NOT NULL,
+    msg TEXT NOT NULL,
+    payload JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_kanban_pending_notify_bot ON kanban_pending_notify(device_id, bot_entity_id, created_at);
+```
+
+**目標：** 同時最多 1 通新任務通知 per bot，避免 5–6 通連環炸；但保留下一張卡的 wakeup chain（done 一張就放出下一張）。
+
+**沿革：** 2026-04-28 cron 自動化在 1 小時內噴 5–6 通，引入 `kanban_cron_spawn_notify` flag 預設關閉作緊急止血，但完全 silent 的代價是 stale-scan 過 3hr 才喚醒，反而造成積壓。2026-05-03 (card_dfe3b8df Phase 2) 換成 smart-queue：`kanban_cron_spawn_notify` flag 退役，改寫死 always-on smart 路由邏輯。Code anchor: `backend/kanban.js` `botHasActiveCards` / `enqueuePendingNotify` / `drainOnePendingNotify`、`backend/kanban_schema.sql` table `kanban_pending_notify`。
 
 ### 子卡特殊屬性
 

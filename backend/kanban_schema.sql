@@ -64,8 +64,8 @@ ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS chat_anchor_coord JSONB DEFAUL
 
 -- Per-entity nudge log (2026-04-28): hard ceiling so a single bot can't be
 -- nudged more than once per kanban_nudge_interval_minutes regardless of how
--- many stale cards reference it. Cron-schedule母卡 spawn子卡 path is gated
--- by device_preferences.kanban_cron_spawn_notify and never writes here.
+-- many stale cards reference it. Cron-schedule母卡 spawn子卡 path uses the
+-- smart per-bot queue (kanban_pending_notify, see below) and never writes here.
 CREATE TABLE IF NOT EXISTS kanban_entity_nudge_log (
     device_id VARCHAR(64) NOT NULL,
     entity_id INTEGER NOT NULL,
@@ -163,3 +163,20 @@ ALTER TABLE kanban_notes ADD CONSTRAINT kanban_notes_card_id_fkey FOREIGN KEY (c
 ALTER TABLE kanban_files ADD CONSTRAINT kanban_files_card_id_fkey FOREIGN KEY (card_id) REFERENCES kanban_cards(id) ON DELETE CASCADE;
 ALTER TABLE kanban_cards ALTER COLUMN parent_card_id TYPE VARCHAR(48) USING parent_card_id::text;
 ALTER TABLE kanban_cards ALTER COLUMN active_child_id TYPE VARCHAR(48) USING active_child_id::text;
+
+-- ============================================
+-- Smart-queue notify (card_dfe3b8df Phase 2)
+-- Per-bot pending_notify queue: cron auto-spawn child cards enqueue
+-- silently when the assignedBot already has active todo/in_progress
+-- work; one entry drains per move-to-done event for that bot.
+-- ============================================
+CREATE TABLE IF NOT EXISTS kanban_pending_notify (
+    id BIGSERIAL PRIMARY KEY,
+    device_id VARCHAR(64) NOT NULL,
+    bot_entity_id INTEGER NOT NULL,
+    card_id VARCHAR(48) NOT NULL,
+    msg TEXT NOT NULL,
+    payload JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_kanban_pending_notify_bot ON kanban_pending_notify(device_id, bot_entity_id, created_at);
