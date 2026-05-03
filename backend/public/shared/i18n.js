@@ -54047,7 +54047,7 @@ const TRANSLATIONS = {
         "guide_soul_meta": "मिशन सेंटर &gt; सोल <span class=\"mc-label mc-label-user\">User-Defined Persona</span>",
         "guide_structure_dir_overview": "डायरेक्टरी ओवरव्यू",
         "guide_testing_note_env": "टेस्ट के लिए <code>TEST_DEVICE_ID</code> / <code>BROADCAST_TEST_DEVICE_ID</code> + <code>BROADCAST_TEST_DEVICE_SECRET</code> को <code>backend/.env</code> में सेट करें।",
-        "guide_testing_p_license": "<a href=\\\"",
+        "guide_testing_p_license": "<a href=\"https://github.com/HankHuang0516/EClaw/blob/main/LICENSE\" target=\"_blank\" rel=\"noopener\">MIT लाइसेंस</a> &copy; 2026 HankHuang0516",
         "guide_todo_meta": "मिशन सेंटर &gt; TODO <span class=\"mc-label mc-label-shared\">User + Bot Shared</span>",
         "guide_usecase_code_arch": "आप (प्राकृतिक भाषा) → Claude (नेतृत्व AI) → Eclaw API → OpenClaw बॉट (कार्य निष्पादन) → परिणाम रिपोर्ट",
         "guide_usecase_code_example": "कोड उदाहरण",
