@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EClaw — 雙幣制資金流</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root{--blue:#2E86C1;--ink:#102033;--muted:#64748b;--gold:#f6c453;--green:#14b8a6;--card:rgba(255,255,255,.88)}
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;font-family:'Noto Sans TC',Inter,sans-serif;color:var(--ink);background:radial-gradient(circle at 8% 12%,rgba(246,196,83,.28),transparent 28%),radial-gradient(circle at 88% 18%,rgba(20,184,166,.20),transparent 30%),linear-gradient(135deg,#eef7ff 0%,#fff 54%,#eaf8f6 100%);overflow-x:hidden}
+    body:before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(46,134,193,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(46,134,193,.08) 1px,transparent 1px);background-size:42px 42px;mask-image:linear-gradient(120deg,black,transparent 72%);pointer-events:none}
+    .slide{max-width:1180px;min-height:100vh;margin:0 auto;padding:56px 54px;display:grid;grid-template-columns:1.03fr .97fr;gap:44px;align-items:center;position:relative}
+    .eyebrow{display:inline-flex;gap:10px;align-items:center;padding:9px 14px;border:1px solid rgba(46,134,193,.22);background:rgba(255,255,255,.72);border-radius:999px;color:#1d5f8f;font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:13px;box-shadow:0 10px 30px rgba(46,134,193,.12)}
+    h1{font-size:clamp(40px,5vw,68px);line-height:1.05;margin:22px 0 18px;font-weight:900;letter-spacing:-.04em}.accent{color:var(--blue)}
+    .lead{font-size:22px;line-height:1.65;color:#334155;margin:0 0 28px;max-width:680px}.lead strong{color:#0f766e}
+    .promise{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:28px}.promise div{background:var(--card);border:1px solid rgba(15,32,51,.08);border-radius:20px;padding:18px;box-shadow:0 18px 50px rgba(16,32,51,.09)}.promise b{font-size:26px;display:block;margin-bottom:6px}.promise span{font-size:14px;color:var(--muted);line-height:1.45}
+    .ledger-card{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(255,255,255,.76));border:1px solid rgba(46,134,193,.18);border-radius:34px;padding:28px;box-shadow:0 28px 90px rgba(16,32,51,.16);overflow:hidden}.ledger-card:before{content:'ledger';position:absolute;right:-18px;top:6px;font:900 82px Inter,sans-serif;color:rgba(46,134,193,.06);letter-spacing:-.08em}.coin-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}.coin{width:118px;height:118px;border-radius:50%;display:grid;place-items:center;font-size:42px;font-weight:900;box-shadow:inset 0 -10px 22px rgba(0,0,0,.12),0 18px 35px rgba(0,0,0,.12)}.ecoin{background:linear-gradient(145deg,#ffd66b,#f59e0b);color:#7c3e00}.usd{background:linear-gradient(145deg,#70e1d8,#14b8a6);color:#064e3b}.pipe{flex:1;height:8px;border-radius:999px;background:linear-gradient(90deg,var(--gold),var(--blue),var(--green));position:relative}.pipe:after{content:'每日自動對帳';position:absolute;left:50%;top:-30px;transform:translateX(-50%);white-space:nowrap;font-weight:800;color:#1d5f8f;font-size:13px;background:#fff;padding:5px 10px;border-radius:999px;box-shadow:0 8px 22px rgba(16,32,51,.12)}
+    .rows{display:grid;gap:12px}.row{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;padding:14px 16px}.row .dot{width:12px;height:12px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 6px rgba(46,134,193,.10)}.row b{font-size:15px}.row span{color:#64748b;font-size:13px}.tag{font:800 12px Inter,sans-serif;border-radius:999px;padding:6px 9px;background:#e0f2fe;color:#0369a1}.tag.ok{background:#ccfbf1;color:#0f766e}.tag.warn{background:#fef3c7;color:#92400e}
+    .foot{margin-top:18px;padding:15px 16px;border-radius:18px;background:linear-gradient(90deg,rgba(46,134,193,.12),rgba(20,184,166,.12));font-weight:800;color:#17415f;line-height:1.5}
+    @media(max-width:760px){.slide{grid-template-columns:1fr;padding:34px 20px;gap:24px}.promise{grid-template-columns:1fr}.coin{width:88px;height:88px;font-size:32px}.pipe:after{font-size:11px;top:-27px}h1{font-size:40px}.lead{font-size:18px}.ledger-card{border-radius:26px;padding:20px}.row{grid-template-columns:auto 1fr}.tag{grid-column:2}}
+  </style>
+</head>
+<body>
+  <main class="slide">
+    <section>
+      <div class="eyebrow">💼 Why EClaw / Benefit 01</div>
+      <h1>雙幣制資金流：<span class="accent">每一筆都查得到</span></h1>
+      <p class="lead">e幣與真實支付分開記帳，所有收入、支出、退款與分潤都進入 ledger。你看到的不只是餘額，而是<strong>可追溯的金流證據</strong>。</p>
+      <div class="promise">
+        <div><b>🧾</b><span>每筆 e幣進出都有交易帳本，不靠人工記憶。</span></div>
+        <div><b>🔍</b><span>租金、平台費、保險池分潤來源清楚可查。</span></div>
+        <div><b>🛡️</b><span>每日對帳降低「錢扣了但狀態沒更新」風險。</span></div>
+      </div>
+    </section>
+    <section class="ledger-card" aria-label="dual currency ledger diagram">
+      <div class="coin-row">
+        <div class="coin ecoin">e</div>
+        <div class="pipe"></div>
+        <div class="coin usd">$</div>
+      </div>
+      <div class="rows">
+        <div class="row"><i class="dot"></i><b>使用者儲值</b><span>USD → e幣</span><em class="tag">in</em></div>
+        <div class="row"><i class="dot"></i><b>Bot 租借扣款</b><span>e幣 → 合約 escrow</span><em class="tag warn">hold</em></div>
+        <div class="row"><i class="dot"></i><b>出租方收益</b><span>結算後自動入帳</span><em class="tag ok">settled</em></div>
+        <div class="row"><i class="dot"></i><b>保險池 / 平台費</b><span>每筆分潤可回溯</span><em class="tag ok">audited</em></div>
+      </div>
+      <div class="foot">結果：錢流透明、爭議好查、平台與出租方都不必手工對帳。</div>
+    </section>
+  </main>
+</body>
+</html>
