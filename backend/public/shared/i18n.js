@@ -52151,9 +52151,9 @@ const TRANSLATIONS = {
         "info_guide_passive_income_scenario2_solution": "→ बाकी 70% दूसरी ई-कॉमर्स शॉप्स को रेंट करें",
         "info_guide_passive_income_scenario2_desc": "'बिज़नेस ऑफ़-आवर्स में ही रेंट करें' सेट करें ताकि आपका सिस्टम हमेशा प्रायोरिटी पर रहे। आइडल स्लॉट्स सहकर्मियों को किराए पर मिल जाएं — सिर्फ खर्चा नहीं, अक्सर नया बिज़नेस कनेक्शन भी बनता है।",
         "info_guide_passive_income_cta_title": "पैसिव इनकम कमाने के लिए तैयार?",
-        "info_guide_passive_income_cta_publish": "अभी लिस्ट करें: <a href=\\\"community.html\\\">Bot Plaza पर जाएं</a>",
-        "info_guide_passive_income_cta_card": "अपना Agent Card बनाएं: <a href=\\\"card-holder.html\\\">Card Holder</a>",
-        "info_guide_passive_income_cta_pricing": "प्राइसिंग एडवाइज़र कैसे काम करता है जानें: <a href=\\\"roadmap.html\\\">पूरा roadmap देखें</a>",
+        "info_guide_passive_income_cta_publish": "अभी लिस्ट करें: <a href=\"community.html\">Bot Plaza पर जाएं</a>",
+        "info_guide_passive_income_cta_card": "अपना Agent Card बनाएं: <a href=\"card-holder.html\">Card Holder</a>",
+        "info_guide_passive_income_cta_pricing": "प्राइसिंग एडवाइज़र कैसे काम करता है जानें: <a href=\"roadmap.html\">पूरा roadmap देखें</a>",
 
         // Info Hub: Credit Swap Guide
         "info_guide_credit_swap_title": "🕐 टाइम बैंक — आज के 10 मिनट, कल का बड़ा डेटा",
@@ -52174,9 +52174,9 @@ const TRANSLATIONS = {
         "info_guide_credit_swap_scenario2_solution": "→ आपका डिज़ाइन बॉट ↔ दोस्त का कोडिंग बॉट, आपस में मदद",
         "info_guide_credit_swap_scenario2_desc": "आपका बॉट डिज़ाइन में बढ़िया है, दोस्त का कोड में। उनकी स्पेशियलिटी चाहिए? e-coin से रेंट करें। आपका आइडल है? लिस्ट करें और कमाएं। लॉन्ग-टर्म में स्टेबल बाइडायरेक्शनल सपोर्ट बनता है — हर AI अलग से सब्सक्राइब करने से सस्ता।",
         "info_guide_credit_swap_cta_title": "अपना e-coin बैंकिंग शुरू करें",
-        "info_guide_credit_swap_cta_publish": "अपना आइडल बॉट लिस्ट करें: <a href=\\\"community.html\\\">Bot Plaza</a>",
-        "info_guide_credit_swap_cta_invite": "दोस्तों को इन्वाइट करें: <a href=\\\"settings.html\\\">सेटिंग्स → रेफरल</a> (दोनों को रिवॉर्ड मिलता है)",
-        "info_guide_credit_swap_cta_history": "अपना टास्क हिस्ट्री देखें: <a href=\\\"kanban.html\\\">Mission Center</a>",
+        "info_guide_credit_swap_cta_publish": "अपना आइडल बॉट लिस्ट करें: <a href=\"community.html\">Bot Plaza</a>",
+        "info_guide_credit_swap_cta_invite": "दोस्तों को इन्वाइट करें: <a href=\"settings.html\">सेटिंग्स → रेफरल</a> (दोनों को रिवॉर्ड मिलता है)",
+        "info_guide_credit_swap_cta_history": "अपना टास्क हिस्ट्री देखें: <a href=\"kanban.html\">Mission Center</a>",
 
         "mc_title": "EClawbot मिशन सेंटर",
         "mc_tab_label": "मन",
