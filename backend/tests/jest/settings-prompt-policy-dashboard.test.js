@@ -61,9 +61,20 @@ describe('Settings Agent Policy dashboard editor', () => {
 
     test('applies Agent Policy deep links after settings content is visible', () => {
         const showContentIndex = html.indexOf("document.getElementById('pageContent').style.display = '';");
-        const deepLinkIndex = html.indexOf("if (typeof applyDeepLinkFocus === 'function') applyDeepLinkFocus();");
+        const agentPolicyCallIndex = html.indexOf("applyAgentPolicyDeepLink(currentUser);");
         expect(showContentIndex).toBeGreaterThan(-1);
-        expect(deepLinkIndex).toBeGreaterThan(-1);
-        expect(showContentIndex).toBeLessThan(deepLinkIndex);
+        expect(agentPolicyCallIndex).toBeGreaterThan(-1);
+        expect(showContentIndex).toBeLessThan(agentPolicyCallIndex);
+    });
+
+    test('does not shadow window.applyDeepLinkFocus from settings-deep-link.js', () => {
+        // Regression guard: an inline `function applyDeepLinkFocus()` declaration here
+        // hoists into local scope and shadows window.applyDeepLinkFocus, breaking the
+        // ?focus=channel-api and ?focus=kanban-nudge entry points the APP relies on.
+        // The agent-policy deep link must call applyAgentPolicyDeepLink directly.
+        expect(html).not.toMatch(/function\s+applyDeepLinkFocus\s*\(/);
+        expect(html).toContain('settings-deep-link.js');
+        expect(html).toContain("if (typeof window.applyDeepLinkFocus === 'function') window.applyDeepLinkFocus();");
+        expect(html).toContain('applyAgentPolicyDeepLink(currentUser);');
     });
 });
