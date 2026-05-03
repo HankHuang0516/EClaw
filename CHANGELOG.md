@@ -1,3 +1,10 @@
+## [1.1150.3](https://github.com/HankHuang0516/EClaw/compare/v1.1150.2...v1.1150.3) (2026-05-03)
+
+
+### Bug Fixes
+
+* **i18n:** add data-i18n attrs to 11 hardcoded buttons in settings & dashboard ([#2348](https://github.com/HankHuang0516/EClaw/issues/2348)) ([39443d1](https://github.com/HankHuang0516/EClaw/commit/39443d119dad389cd7a44d16d70ce56bbc192a66))
+
 ## [1.1150.2](https://github.com/HankHuang0516/EClaw/compare/v1.1150.1...v1.1150.2) (2026-05-03)
 
 
