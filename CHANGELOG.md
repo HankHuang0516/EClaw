@@ -1,3 +1,10 @@
+# [1.1145.0](https://github.com/HankHuang0516/EClaw/compare/v1.1144.0...v1.1145.0) (2026-05-03)
+
+
+### Features
+
+* **info:** embed credit_swap slide in info guide panel ([#2334](https://github.com/HankHuang0516/EClaw/issues/2334)) ([c2ed2ed](https://github.com/HankHuang0516/EClaw/commit/c2ed2ed4cb30bad54ae407141d8f2a483e47deac))
+
 # [1.1144.0](https://github.com/HankHuang0516/EClaw/compare/v1.1143.1...v1.1144.0) (2026-05-03)
 
 
