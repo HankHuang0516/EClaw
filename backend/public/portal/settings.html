@@ -1085,11 +1085,6 @@
                         <span data-i18n="kanban_nudge_per_entity_throttle_label">🅰️ Stale-card: cap each entity at 1 nudge per interval</span>
                     </label>
                     <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
-                        <input type="checkbox" id="kanbanCronSpawnNotify"
-                               onchange="saveKanbanNudgePref('kanban_cron_spawn_notify', this.checked)">
-                        <span data-i18n="kanban_cron_spawn_notify_label">🅱️ Cron母卡 spawning child: notify immediately</span>
-                    </label>
-                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
                         <input type="checkbox" id="kanbanCronRecurringNotify"
                                onchange="saveKanbanNudgePref('kanban_cron_recurring_notify', this.checked)">
                         <span data-i18n="kanban_cron_recurring_notify_label">🅱️ Cron母卡 self-recurring (no child): notify on each fire</span>
@@ -2431,8 +2426,6 @@
 
             const throttleEl = document.getElementById('kanbanNudgePerEntityThrottle');
             if (throttleEl) throttleEl.checked = prefs.kanban_nudge_per_entity_throttle !== false;
-            const spawnNotifyEl = document.getElementById('kanbanCronSpawnNotify');
-            if (spawnNotifyEl) spawnNotifyEl.checked = prefs.kanban_cron_spawn_notify === true;
             const recurringNotifyEl = document.getElementById('kanbanCronRecurringNotify');
             if (recurringNotifyEl) recurringNotifyEl.checked = prefs.kanban_cron_recurring_notify !== false;
         }

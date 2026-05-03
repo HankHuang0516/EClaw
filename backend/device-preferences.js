@@ -18,13 +18,15 @@ const DEFAULTS = {
     kanban_nudge_statuses: [...KanbanStatus.NUDGE_DEFAULT_STATUSES],
     // 內容督促 hard cap per (device, entity): 1 nudge / interval regardless of card count.
     kanban_nudge_per_entity_throttle: true,
-    // 排程觸發母卡 spawning child cards: notify assigned bots immediately?
-    // Default false — let stale-scan decide once the child has aged past stale_threshold_ms.
-    kanban_cron_spawn_notify: false,
     // 排程觸發母卡 self-recurring (no子卡, only re-trigger self): notify on each fire?
     // Default true — these fire less often (one per cron tick) and the user usually wants to know.
     kanban_cron_recurring_notify: true,
 };
+
+// Decommissioned 2026-05-03 (card_dfe3b8df Phase 2): kanban_cron_spawn_notify.
+// Replaced by always-on smart-queue notify (per-bot pending_notify table —
+// see backend/kanban.js helpers + kanban_schema.sql `kanban_pending_notify`).
+// Spec: docs/mission-v2-kanban-spec.md §十一 "通知 gates（smart per-bot queue）".
 
 const NUDGE_PRIORITY_MODES = new Set(['priority_first', 'column_first', 'column_level']);
 const NUDGE_STATUS_OPTIONS = new Set(KanbanStatus.NUDGEABLE_STATUSES);
