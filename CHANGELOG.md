@@ -1,3 +1,10 @@
+## [1.1140.2](https://github.com/HankHuang0516/EClaw/compare/v1.1140.1...v1.1140.2) (2026-05-03)
+
+
+### Bug Fixes
+
+* **notif:** cross_speak/cross_speak_sent honor speak_to toggle ([#2320](https://github.com/HankHuang0516/EClaw/issues/2320)) ([1cb5ede](https://github.com/HankHuang0516/EClaw/commit/1cb5ede7d0ca974d60f51dd4a469237b65164444))
+
 ## [1.1140.1](https://github.com/HankHuang0516/EClaw/compare/v1.1140.0...v1.1140.1) (2026-05-03)
 
 
