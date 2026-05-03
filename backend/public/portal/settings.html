@@ -1359,7 +1359,8 @@
             updatePushToggle();
 
             document.getElementById('pageContent').style.display = '';
-            if (typeof applyDeepLinkFocus === 'function') applyDeepLinkFocus();
+            if (typeof window.applyDeepLinkFocus === 'function') window.applyDeepLinkFocus();
+            applyAgentPolicyDeepLink(currentUser);
             initTapPay();
 
             setInterval(loadSubscriptionStatus, 15000);
@@ -2342,10 +2343,6 @@
             requestAnimationFrame(() => {
                 document.getElementById('agentPolicySection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
-        }
-
-        function applyDeepLinkFocus() {
-            applyAgentPolicyDeepLink(currentUser);
         }
 
         async function loadPromptPolicy(user = currentUser) {
