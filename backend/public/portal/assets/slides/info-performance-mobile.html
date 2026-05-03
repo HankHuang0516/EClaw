@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EClaw Mobile - 📊 即時效能追蹤儀表板</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #2E86C1 15%, #FFFFFF 85%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(circle at 25% 25%, rgba(46, 134, 193, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(243, 156, 18, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Animations */
+        @keyframes slideInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50%      { transform: scale(1.05); }
+        }
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%      { opacity: 0.6; transform: scale(1.2); }
+        }
+
+        .mobile-slide {
+            max-width: 390px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding: 24px 20px 40px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header-section {
+            text-align: center;
+            margin-bottom: 28px;
+            animation: slideInDown 0.8s ease-out;
+        }
+
+        .mobile-emoji {
+            font-size: 48px;
+            margin-bottom: 12px;
+            display: block;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .mobile-headline {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 700;
+            font-size: 26px;
+            color: #2C3E50;
+            line-height: 1.25;
+            margin-bottom: 10px;
+        }
+
+        .mobile-subline {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 500;
+            font-size: 14px;
+            color: #FFFFFF;
+            line-height: 1.5;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Metrics — single column */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+            margin-bottom: 24px;
+            animation: slideInUp 1s ease-out 0.3s both;
+        }
+
+        .metric-card {
+            background: #FFFFFF;
+            border-radius: 14px;
+            padding: 18px 20px 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
+            border: 1px solid #E5E7EB;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .metric-card.m1::before { background: linear-gradient(180deg, #27AE60, #2ECC71); }
+        .metric-card.m2::before { background: linear-gradient(180deg, #2E86C1, #3498DB); }
+        .metric-card.m3::before { background: linear-gradient(180deg, #F39C12, #E67E22); }
+        .metric-card.m4::before { background: linear-gradient(180deg, #9B59B6, #8E44AD); }
+
+        .metric-left {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .metric-value {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            font-size: 24px;
+            color: #2C3E50;
+            line-height: 1;
+            animation: countUp 1s ease-out 0.6s both;
+        }
+
+        .metric-label {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 500;
+            font-size: 12px;
+            color: #7F8C8D;
+        }
+
+        .metric-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+        }
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 9px;
+            color: #27AE60;
+            background: rgba(39, 174, 96, 0.1);
+            padding: 3px 7px;
+            border-radius: 20px;
+        }
+
+        .live-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: #27AE60;
+            animation: livePulse 1.5s ease-in-out infinite;
+        }
+
+        .metric-trend {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 20px;
+        }
+
+        .metric-trend.positive {
+            background: rgba(39, 174, 96, 0.1);
+            color: #27AE60;
+        }
+
+        .metric-trend.negative {
+            background: rgba(231, 76, 60, 0.1);
+            color: #E74C3C;
+        }
+
+        /* Chart */
+        .chart-container {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 18px 18px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
+            border: 1px solid #E5E7EB;
+            margin-bottom: 18px;
+            animation: slideInUp 1s ease-out 0.6s both;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .chart-title {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 600;
+            font-size: 15px;
+            color: #2C3E50;
+        }
+
+        .chart-period {
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 11px;
+            color: #7F8C8D;
+            background: #F8F9FA;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .chart-visual {
+            width: 100%;
+            height: 110px;
+            background: linear-gradient(135deg, #F8F9FA 0%, #FFFFFF 100%);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-svg {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            right: 12px;
+            bottom: 12px;
+            width: calc(100% - 24px);
+            height: calc(100% - 24px);
+        }
+
+        /* Activity feed */
+        .activity-feed {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 18px 18px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
+            border: 1px solid #E5E7EB;
+            margin-bottom: 18px;
+            animation: slideInUp 1s ease-out 0.8s both;
+        }
+
+        .activity-header {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 600;
+            font-size: 15px;
+            color: #2C3E50;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(231, 234, 236, 0.5);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .activity-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #27AE60;
+            margin-top: 5px;
+            flex-shrink: 0;
+        }
+
+        .activity-text {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 400;
+            font-size: 12.5px;
+            color: #34495E;
+            line-height: 1.4;
+            margin-bottom: 2px;
+        }
+
+        .activity-time {
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 10.5px;
+            color: #7F8C8D;
+        }
+
+        /* Alerts */
+        .alert-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+            animation: slideInUp 1s ease-out 1.0s both;
+        }
+
+        .alert-card {
+            background: #FFFFFF;
+            border-radius: 14px;
+            padding: 14px 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10);
+        }
+
+        .alert-card.success { border-left: 4px solid #27AE60; }
+        .alert-card.warning { border-left: 4px solid #F1C40F; }
+
+        .alert-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .alert-icon {
+            font-size: 18px;
+        }
+
+        .alert-title {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            color: #2C3E50;
+        }
+
+        .alert-description {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 400;
+            font-size: 12.5px;
+            color: #7F8C8D;
+            line-height: 1.5;
+        }
+
+        /* CTA */
+        .cta-section {
+            text-align: center;
+            margin-top: 8px;
+            animation: slideInUp 1s ease-out 1.2s both;
+        }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 13px 26px;
+            background: linear-gradient(135deg, #2E86C1 0%, #3498DB 100%);
+            color: #FFFFFF;
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 14px rgba(46, 134, 193, 0.3);
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-slide">
+        <section class="header-section">
+            <span class="mobile-emoji">📊</span>
+            <h1 class="mobile-headline">即時效能追蹤儀表板</h1>
+            <p class="mobile-subline">全方位監控機器人表現，數據驅動優化決策</p>
+        </section>
+
+        <div class="metrics-grid">
+            <div class="metric-card m1">
+                <div class="metric-left">
+                    <div class="metric-value">1,247</div>
+                    <div class="metric-label">今日任務完成</div>
+                </div>
+                <div class="metric-right">
+                    <span class="live-indicator"><span class="live-dot"></span>LIVE</span>
+                    <span class="metric-trend positive">↗ +15.3%</span>
+                </div>
+            </div>
+            <div class="metric-card m2">
+                <div class="metric-left">
+                    <div class="metric-value">98.7%</div>
+                    <div class="metric-label">系統可用率</div>
+                </div>
+                <div class="metric-right">
+                    <span class="live-indicator"><span class="live-dot"></span>LIVE</span>
+                    <span class="metric-trend positive">↗ +0.2%</span>
+                </div>
+            </div>
+            <div class="metric-card m3">
+                <div class="metric-left">
+                    <div class="metric-value">₩847K</div>
+                    <div class="metric-label">今日收益</div>
+                </div>
+                <div class="metric-right">
+                    <span class="live-indicator"><span class="live-dot"></span>LIVE</span>
+                    <span class="metric-trend positive">↗ +22.1%</span>
+                </div>
+            </div>
+            <div class="metric-card m4">
+                <div class="metric-left">
+                    <div class="metric-value">156ms</div>
+                    <div class="metric-label">平均回應時間</div>
+                </div>
+                <div class="metric-right">
+                    <span class="live-indicator"><span class="live-dot"></span>LIVE</span>
+                    <span class="metric-trend negative">↘ +12ms</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-header">
+                <h3 class="chart-title">效能趨勢</h3>
+                <span class="chart-period">過去24小時</span>
+            </div>
+            <div class="chart-visual">
+                <svg class="chart-svg" viewBox="0 0 400 120" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="lineFillM" x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="0%" stop-color="#2E86C1" stop-opacity="0.35"/>
+                            <stop offset="100%" stop-color="#2E86C1" stop-opacity="0"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M0,90 L40,72 L80,80 L120,55 L160,62 L200,40 L240,48 L280,28 L320,38 L360,18 L400,24 L400,120 L0,120 Z" fill="url(#lineFillM)"/>
+                    <path d="M0,90 L40,72 L80,80 L120,55 L160,62 L200,40 L240,48 L280,28 L320,38 L360,18 L400,24" fill="none" stroke="#2E86C1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="activity-feed">
+            <h3 class="activity-header">即時動態</h3>
+            <div class="activity-item">
+                <div class="activity-dot"></div>
+                <div>
+                    <div class="activity-text">機器人 #AI-247 完成翻譯任務</div>
+                    <div class="activity-time">2分鐘前</div>
+                </div>
+            </div>
+            <div class="activity-item">
+                <div class="activity-dot"></div>
+                <div>
+                    <div class="activity-text">新訂單自動分派至最佳機器人</div>
+                    <div class="activity-time">5分鐘前</div>
+                </div>
+            </div>
+            <div class="activity-item">
+                <div class="activity-dot"></div>
+                <div>
+                    <div class="activity-text">系統效能優化完成</div>
+                    <div class="activity-time">12分鐘前</div>
+                </div>
+            </div>
+            <div class="activity-item">
+                <div class="activity-dot"></div>
+                <div>
+                    <div class="activity-text">收益達成今日目標</div>
+                    <div class="activity-time">15分鐘前</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert-section">
+            <div class="alert-card success">
+                <div class="alert-header">
+                    <span class="alert-icon">✅</span>
+                    <h4 class="alert-title">系統運作正常</h4>
+                </div>
+                <p class="alert-description">所有機器人運作狀態良好，無異常警報</p>
+            </div>
+            <div class="alert-card warning">
+                <div class="alert-header">
+                    <span class="alert-icon">⚠️</span>
+                    <h4 class="alert-title">建議優化</h4>
+                </div>
+                <p class="alert-description">檢測到回應時間略有增長，建議檢查伺服器負載</p>
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <a class="cta-button" href="#">
+                查看完整儀表板
+                <span>→</span>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
