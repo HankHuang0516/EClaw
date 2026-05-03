@@ -1,3 +1,10 @@
+## [1.1138.3](https://github.com/HankHuang0516/EClaw/compare/v1.1138.2...v1.1138.3) (2026-05-03)
+
+
+### Bug Fixes
+
+* **kanban:** guard autoReviewOnTransform against unrelated batch-close ([#2298](https://github.com/HankHuang0516/EClaw/issues/2298)) ([637e894](https://github.com/HankHuang0516/EClaw/commit/637e8948d56bac5a5bc121d32ee5fc66c2aa4b5e))
+
 ## [1.1138.2](https://github.com/HankHuang0516/EClaw/compare/v1.1138.1...v1.1138.2) (2026-05-02)
 
 
