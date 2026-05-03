@@ -1,3 +1,10 @@
+# [1.1154.0](https://github.com/HankHuang0516/EClaw/compare/v1.1153.0...v1.1154.0) (2026-05-03)
+
+
+### Features
+
+* **info:** embed Claude Design slide for why_eclaw_b8_token_metering ([8360743](https://github.com/HankHuang0516/EClaw/commit/83607434bffd2fa90dfed49f3e82e1ac607bfcdb))
+
 # [1.1153.0](https://github.com/HankHuang0516/EClaw/compare/v1.1152.0...v1.1153.0) (2026-05-03)
 
 
