@@ -1,3 +1,10 @@
+# [1.1146.0](https://github.com/HankHuang0516/EClaw/compare/v1.1145.0...v1.1146.0) (2026-05-03)
+
+
+### Features
+
+* **info:** embed quick_start slide in qs-steps-section (4/8) ([#2335](https://github.com/HankHuang0516/EClaw/issues/2335)) ([7137a12](https://github.com/HankHuang0516/EClaw/commit/7137a12d7915f1af8d2b583aecafe0884c0c03ae)), closes [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+
 # [1.1145.0](https://github.com/HankHuang0516/EClaw/compare/v1.1144.0...v1.1145.0) (2026-05-03)
 
 
