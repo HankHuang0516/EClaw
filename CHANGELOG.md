@@ -1,3 +1,11 @@
+# [1.1151.0](https://github.com/HankHuang0516/EClaw/compare/v1.1150.7...v1.1151.0) (2026-05-03)
+
+
+### Features
+
+* **info:** embed Claude Design slide for why_eclaw_b4_auto_bot_interview ([50075d5](https://github.com/HankHuang0516/EClaw/commit/50075d53bc9e68e5d372cc4bbc1bc1ab614a6935))
+* **info:** embed Claude Design slide for why_eclaw_b5_pricing_advisor ([b4601d4](https://github.com/HankHuang0516/EClaw/commit/b4601d44fff49a5d5adf8e3ed3aa19c9ec9f7496))
+
 ## [1.1150.7](https://github.com/HankHuang0516/EClaw/compare/v1.1150.6...v1.1150.7) (2026-05-03)
 
 
