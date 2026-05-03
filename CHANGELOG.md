@@ -1,3 +1,10 @@
+# [1.1152.0](https://github.com/HankHuang0516/EClaw/compare/v1.1151.0...v1.1152.0) (2026-05-03)
+
+
+### Features
+
+* **info:** embed Claude Design slide for why_eclaw_b6_interview_arena_leaderboard ([badc355](https://github.com/HankHuang0516/EClaw/commit/badc355fd7d61c1ec6d7af89410e4bdb3cf480d8))
+
 # [1.1151.0](https://github.com/HankHuang0516/EClaw/compare/v1.1150.7...v1.1151.0) (2026-05-03)
 
 
