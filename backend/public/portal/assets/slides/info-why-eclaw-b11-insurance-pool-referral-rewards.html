@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EClaw — 2% 保險池 + 推薦獎勵</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root{--ink:#0f172a;--muted:#64748b;--blue:#2563eb;--cyan:#06b6d4;--green:#10b981;--gold:#f59e0b;--rose:#f43f5e;--violet:#7c3aed;--card:rgba(255,255,255,.92)}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:'Noto Sans TC',Inter,sans-serif;color:var(--ink);background:radial-gradient(circle at 14% 16%,rgba(16,185,129,.22),transparent 30%),radial-gradient(circle at 78% 18%,rgba(245,158,11,.20),transparent 28%),radial-gradient(circle at 84% 88%,rgba(37,99,235,.18),transparent 30%),linear-gradient(135deg,#ecfdf5 0%,#fffbeb 50%,#f8fbff 100%);overflow-x:hidden}
+    body:before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.07) 1px,transparent 1px);background-size:34px 34px;mask-image:radial-gradient(circle at center,#000 0,#000 64%,transparent 100%);pointer-events:none}.slide{max-width:1180px;min-height:100vh;margin:0 auto;padding:24px 42px;display:grid;grid-template-columns:1fr 1.06fr;gap:28px;align-items:center}.eyebrow{display:inline-flex;align-items:center;gap:10px;padding:9px 14px;border-radius:999px;background:rgba(255,255,255,.84);border:1px solid rgba(16,185,129,.24);box-shadow:0 14px 36px rgba(16,185,129,.13);font:900 13px Inter,sans-serif;letter-spacing:.08em;color:#047857;text-transform:uppercase}h1{font-size:clamp(38px,4.45vw,60px);line-height:1.02;letter-spacing:-.055em;margin:18px 0 14px;font-weight:900}.accent{background:linear-gradient(90deg,var(--green),var(--gold),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}.lead{font-size:19px;line-height:1.52;color:#334155;margin:0 0 18px}.lead strong{color:#047857}.bullets{display:grid;gap:10px}.bullets div{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid rgba(15,32,51,.08);border-radius:18px;padding:10px 13px;box-shadow:0 16px 44px rgba(16,32,51,.08)}.bullets b{font-size:24px;line-height:1}.bullets span{font-size:15px;line-height:1.55;color:#475569;min-width:0}.ecosystem{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,255,255,.84));border:1px solid rgba(16,185,129,.20);border-radius:34px;padding:18px;box-shadow:0 28px 90px rgba(16,32,51,.16);overflow:hidden}.ecosystem:before{content:'2%';position:absolute;right:24px;top:-12px;font:900 96px Inter,sans-serif;color:rgba(16,185,129,.075);letter-spacing:-.08em}.top{position:relative;z-index:1;display:grid;grid-template-columns:1fr auto;gap:18px;align-items:start}.top h2{margin:0;font-size:28px;line-height:1.08;letter-spacing:-.036em}.top p{margin:8px 0 0;color:#475569;line-height:1.48;font-size:15px}.badge{min-width:132px;text-align:center;border-radius:24px;padding:14px;background:linear-gradient(135deg,#ecfdf5,#fffbeb);border:1px solid rgba(16,185,129,.18);box-shadow:0 18px 42px rgba(16,185,129,.13)}.badge strong{display:block;font:900 31px Inter,sans-serif;color:#047857}.badge span{display:block;margin-top:3px;font:900 11px Inter,sans-serif;color:#64748b;letter-spacing:.08em}.flow{position:relative;z-index:1;margin-top:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.flow div{border-radius:20px;padding:13px;background:#fff;border:1px solid rgba(15,32,51,.08);box-shadow:0 14px 34px rgba(15,32,51,.07)}.flow b{display:grid;place-items:center;width:38px;height:38px;border-radius:14px;background:linear-gradient(135deg,var(--green),var(--blue));color:#fff;margin-bottom:9px}.flow strong{display:block;font-size:16px}.flow span{display:block;margin-top:5px;color:#64748b;font-size:12px;line-height:1.35}.pool{margin-top:14px;border-radius:24px;padding:14px;background:linear-gradient(135deg,#0f172a,#047857);color:#fff;box-shadow:0 22px 48px rgba(4,120,87,.22)}.pool small{display:block;text-transform:uppercase;letter-spacing:.12em;font:900 12px Inter,sans-serif;color:#a7f3d0}.pool strong{display:block;margin-top:6px;font:900 clamp(25px,2.9vw,34px) Inter,sans-serif;letter-spacing:-.045em}.pool span{display:block;margin-top:5px;color:#d1fae5;line-height:1.38}.rewards{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px}.rewards div{border-radius:18px;padding:12px;background:linear-gradient(180deg,#f8fafc,#fff);border:1px solid #e2e8f0}.rewards b{display:block;color:#1d4ed8;margin-bottom:5px}.rewards span{font-size:13px;line-height:1.36;color:#64748b}.done{margin-top:12px;border-radius:20px;padding:12px 14px;background:linear-gradient(90deg,rgba(16,185,129,.14),rgba(245,158,11,.12));font-weight:900;color:#047857;line-height:1.45}
+    @media(max-width:760px){body{overflow-x:hidden}.slide{grid-template-columns:1fr;padding:34px 36px 34px 20px;gap:24px;width:min(390px,100%);max-width:390px;overflow:hidden;margin:0}h1{font-size:34px;letter-spacing:-.045em;overflow-wrap:anywhere}.accent{display:block}.lead{font-size:17px;overflow-wrap:anywhere;word-break:break-all}.bullets div{max-width:100%;min-width:0}.bullets b{flex:0 0 auto}.bullets span,.top p,.flow span,.pool span,.rewards span{overflow-wrap:anywhere;word-break:break-all}.ecosystem{padding:20px;border-radius:26px;max-width:100%;overflow:hidden}.top{grid-template-columns:1fr}.badge{width:100%;min-width:0}.top h2{font-size:27px;overflow-wrap:anywhere}.flow,.rewards{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="slide">
+    <section>
+      <div class="eyebrow">🛡️ Why EClaw / Benefit 11</div>
+      <h1>2% 保險池：<span class="accent">讓生態自己變強</span></h1>
+      <p class="lead">EClaw 把每筆平台費的一部分自動放進<strong>保險池與成長回饋</strong>。遇到糾紛能有資金緩衝，邀請新成員也能讓雙方獲得 e幣獎勵。</p>
+      <div class="bullets">
+        <div><b>🛡️</b><span>2% 自動進保險池，為租賃糾紛、風險事件與補償提供緩衝。</span></div>
+        <div><b>🎁</b><span>推薦朋友加入，邀請方與新用戶都能拿到 e幣，降低冷啟動成本。</span></div>
+        <div><b>🌱</b><span>每次交易都同時支持信任與成長，讓平台不是抽成黑洞。</span></div>
+      </div>
+    </section>
+    <section class="ecosystem" aria-label="insurance pool and referral rewards panel">
+      <div class="top">
+        <div>
+          <h2>交易費用回流成信任基礎建設</h2>
+          <p>平台收入不只被抽走；它會有一部分回到風險保護與用戶成長。</p>
+        </div>
+        <div class="badge"><strong>2%</strong><span>POOL</span></div>
+      </div>
+      <div class="flow">
+        <div><b>💳</b><strong>交易成立</strong><span>租客付款、合約啟動、平台費自動計算。</span></div>
+        <div><b>🛡️</b><strong>保險池累積</strong><span>固定比例流入池子，支援爭議與補償。</span></div>
+        <div><b>🎁</b><strong>推薦回饋</strong><span>新用戶加入，雙方取得 e幣獎勵。</span></div>
+      </div>
+      <div class="pool">
+        <small>Trust + growth loop</small>
+        <strong>每筆交易，都在替下一筆交易降低風險</strong>
+        <span>保險池讓市場遇到爭議時不必只靠吵架；推薦獎勵讓好用戶自然帶來更多好用戶。</span>
+      </div>
+      <div class="rewards">
+        <div><b>使用者安心</b><span>糾紛時有預留資金支援，而不是完全靠人工協調。</span></div>
+        <div><b>生態成長</b><span>邀請獎勵把推廣成本轉成用戶可見的 e幣價值。</span></div>
+      </div>
+      <div class="done">信任不是口號；它被寫進每一筆交易的資金流。</div>
+    </section>
+  </main>
+</body>
+</html>
