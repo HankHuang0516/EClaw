@@ -1,3 +1,10 @@
+# [1.1142.0](https://github.com/HankHuang0516/EClaw/compare/v1.1141.0...v1.1142.0) (2026-05-03)
+
+
+### Features
+
+* **info:** embed Claude Design slide for passive_income ([#2330](https://github.com/HankHuang0516/EClaw/issues/2330)) ([4a7ab10](https://github.com/HankHuang0516/EClaw/commit/4a7ab103b050fdc60798071923fb582e75343d9c))
+
 # [1.1141.0](https://github.com/HankHuang0516/EClaw/compare/v1.1140.5...v1.1141.0) (2026-05-03)
 
 
