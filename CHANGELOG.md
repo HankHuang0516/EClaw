@@ -1,3 +1,10 @@
+# [1.1150.0](https://github.com/HankHuang0516/EClaw/compare/v1.1149.0...v1.1150.0) (2026-05-03)
+
+
+### Features
+
+* **info:** embed privacy slide in qs-hooks-section (8/8 — final) ([#2339](https://github.com/HankHuang0516/EClaw/issues/2339)) ([b9fce9f](https://github.com/HankHuang0516/EClaw/commit/b9fce9faf75a8ac78b0848957e3a646b4a72d9e6))
+
 # [1.1149.0](https://github.com/HankHuang0516/EClaw/compare/v1.1148.0...v1.1149.0) (2026-05-03)
 
 
