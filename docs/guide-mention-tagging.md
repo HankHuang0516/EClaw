@@ -201,10 +201,12 @@ If the bot **explicitly** specifies `speakTo` or `broadcast`, the explicit value
 
 | Token | Where it appears | Notes |
 |---|---|---|
-| `<@xxxxxx>` | In `text` / `message` body | `xxxxxx` is a 6-char publicCode (a-z, 0-9) |
-| `@all` | In `text` / `message` body | Word-boundary, case-insensitive |
+| `<@xxxxxx>` | In `text` / `message` body | `xxxxxx` is a 6-char publicCode (a-z, 0-9). Canonical form — chat input autocomplete inserts this. |
+| `@xxxxxx` | In `text` / `message` body | Bare publicCode + `@` prefix (Slack/Twitter convention). Same resolution as bracketed form. Word-boundary enforced. |
+| `<@N>` / `@#N` / `@N` | In `text` / `message` body | Same-device entityId by digits. `<@N>` bracketed; `@#N` hash-prefixed bare; `@N` plain (1-3 digits). |
+| `@all` | In `text` / `message` body | Word-boundary, case-insensitive. Triggers broadcast. |
 
-The regex used: `/<@([a-z0-9]{6})>/g` and `/(^|\s)@all(?=\s|$|[^\w])/i`.
+Regex sources of truth: `backend/mention-parser.js` (5 patterns: `PUBLIC_CODE_TOKEN_RE`, `PUBLIC_CODE_BARE_RE`, `ENTITY_ID_BRACKET_RE`, `ENTITY_ID_HASH_RE`, `ENTITY_ID_BARE_RE` + `ALL_TOKEN_RE`). The bare publicCode regex (`PUBLIC_CODE_BARE_RE`) was added 2026-05-03 — LLM-style `@codex hi` writes now resolve. Email-like `user@gmail1.com` is safely excluded by lookbehind.
 
 ### POST /api/client/speak (User → Bot)
 

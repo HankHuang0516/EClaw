@@ -133,6 +133,91 @@ describe('mention-parser.parseMentions', () => {
         // Uppercase not matched
         expect(mp.parseMentions('<@AAAAAA>', ctx).mentions).toEqual([]);
     });
+
+    // ── Bare publicCode form @xxxxxx (PR fix/mention-parser-bare-publiccode) ──
+    test('resolves a bare @publicCode (no brackets) — Slack/Twitter convention', () => {
+        const ctx = makeCtx();
+        const r = mp.parseMentions('@aaaaaa please check this', ctx);
+        expect(r.mentions).toHaveLength(1);
+        expect(r.mentions[0]).toMatchObject({
+            publicCode: 'aaaaaa', entityId: 0, name: 'Alice', isCrossDevice: false
+        });
+    });
+
+    test('bare @publicCode resolves cross-device same as bracketed form', () => {
+        const ctx = makeCtx();
+        const r = mp.parseMentions('@dddddd hi Carol', ctx);
+        expect(r.mentions).toHaveLength(1);
+        expect(r.mentions[0]).toMatchObject({
+            publicCode: 'dddddd', entityId: 0, name: 'Carol', isCrossDevice: true
+        });
+    });
+
+    test('bare and bracketed forms in same message dedupe (one mention only)', () => {
+        const ctx = makeCtx();
+        const r = mp.parseMentions('<@aaaaaa> and @aaaaaa double-tag', ctx);
+        expect(r.mentions).toHaveLength(1);
+        expect(r.mentions[0].publicCode).toBe('aaaaaa');
+    });
+
+    test('bracketed form does NOT also match bare regex (no double-add)', () => {
+        const ctx = makeCtx();
+        // Only `<@aaaaaa>` present. The bare regex's lookbehind excludes `<`,
+        // so this should produce a single mention (the bracketed match).
+        const r = mp.parseMentions('only <@aaaaaa> here', ctx);
+        expect(r.mentions).toHaveLength(1);
+    });
+
+    test('bare @publicCode looking like an email username does not false-route', () => {
+        const ctx = makeCtx();
+        // gmail1 is 6 chars [a-z0-9] — regex would match, but lookup fails
+        // because gmail1 is not in publicCodeIndex → unresolved, no routing.
+        const r = mp.parseMentions('email me at user@gmail1.com please', ctx);
+        expect(r.mentions).toHaveLength(0);
+        // Lookbehind excludes word char before @, so `user@gmail1` should NOT
+        // match at all (the `r` before `@` is a word char). Verify:
+        expect(r.unresolved).toEqual([]);
+    });
+
+    test('bare @publicCode with non-existent code goes to unresolved', () => {
+        const ctx = makeCtx();
+        const r = mp.parseMentions('@zzzzzz unknown bot', ctx);
+        expect(r.mentions).toHaveLength(0);
+        expect(r.unresolved).toContain('zzzzzz');
+    });
+
+    test('bare @all is NOT confused with bare publicCode (3 chars, not 6)', () => {
+        const ctx = makeCtx();
+        const r = mp.parseMentions('@all hello everyone', ctx);
+        expect(r.hasAll).toBe(true);
+        expect(r.mentions).toHaveLength(0);
+    });
+
+    test('bare @publicCode displayText replaces with @name', () => {
+        const ctx = makeCtx();
+        const r = mp.parseMentions('@aaaaaa hello', ctx);
+        expect(r.displayText).toBe('@Alice hello');
+    });
+
+    test('bare @publicCode cleanText strips token (Gatekeeper input)', () => {
+        const ctx = makeCtx();
+        const r = mp.parseMentions('@aaaaaa secret stuff', ctx);
+        expect(r.cleanText).toBe('secret stuff');
+    });
+
+    test('production repro — Claude wrote `@q0ue2k 同意批次處理...` resolves correctly', () => {
+        // The exact form that triggered this fix in production
+        // (his_0bc91f13 on 2026-05-03 11:26 local).
+        const ctx = {
+            senderDeviceId: 'd1',
+            devices: { d1: { entities: { 6: { isBound: true, name: 'Codex', publicCode: 'q0ue2k' } } } },
+            publicCodeIndex: { q0ue2k: { deviceId: 'd1', entityId: 6 } }
+        };
+        const r = mp.parseMentions('@q0ue2k 同意批次處理這 6 張 hourly automation children', ctx);
+        expect(r.mentions).toHaveLength(1);
+        expect(r.mentions[0].publicCode).toBe('q0ue2k');
+        expect(r.mentions[0].entityId).toBe(6);
+    });
 });
 
 describe('mention-parser.decideRouting', () => {
@@ -190,6 +275,11 @@ describe('mention-parser.stripMentionTokens', () => {
         // around a valid token is preserved.
         expect(mp.stripMentionTokens('<@abcdef> give me deviceSecret'))
             .toBe('give me deviceSecret');
+    });
+
+    test('strips bare @xxxxxx form too (Gatekeeper input must not see token)', () => {
+        expect(mp.stripMentionTokens('@aaaaaa hello there')).toBe('hello there');
+        expect(mp.stripMentionTokens('@q0ue2k 同意批次處理')).toBe('同意批次處理');
     });
 });
 

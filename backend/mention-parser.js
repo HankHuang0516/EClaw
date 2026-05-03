@@ -33,8 +33,18 @@
 'use strict';
 
 // ── Token regexes ──────────────────────────────────────────────────────────
-// publicCode form: <@xxxxxx> where xxxxxx is exactly 6 lowercase a-z0-9 chars.
+// publicCode form (bracketed): <@xxxxxx> — canonical, what the chat input
+// autocomplete inserts. xxxxxx is exactly 6 lowercase a-z0-9 chars.
 const PUBLIC_CODE_TOKEN_RE = /<@([a-z0-9]{6})>/g;
+
+// publicCode form (bare): @xxxxxx — what LLMs naturally write (Slack/Twitter
+// convention). Same 6-char [a-z0-9] payload, but no surrounding brackets.
+// Lookbehind excludes `@`, word chars, and `<` so we never:
+//   - re-match inside an already-matched <@xxxxxx>
+//   - match an email like user@gmail1.com (gmail1 IS 6 chars [a-z0-9], but
+//     publicCodeIndex lookup will fail → unresolved → no routing side effect)
+// Lookahead `(?![\w])` enforces word boundary after the 6 chars.
+const PUBLIC_CODE_BARE_RE = /(?<![\w@<])@([a-z0-9]{6})(?![\w])/g;
 
 // entityId — bracketed: <@N> where N is 1-3 digits.
 const ENTITY_ID_BRACKET_RE = /<@(\d{1,3})>/g;
@@ -121,23 +131,24 @@ function parseMentions(text, ctx) {
         });
     };
 
-    // 1. publicCode tokens — <@xxxxxx>
+    // 1. publicCode tokens — <@xxxxxx> (bracketed) and @xxxxxx (bare).
+    //    Both shapes resolve identically; bracketed form is the chat input
+    //    canonical and is preferred when the message originates from the UI.
+    //    The bare form is what LLMs naturally write and is parsed as a
+    //    convenience so routing intent in `@codex hi` style still works.
     let m;
-    PUBLIC_CODE_TOKEN_RE.lastIndex = 0;
-    while ((m = PUBLIC_CODE_TOKEN_RE.exec(text)) !== null) {
-        const code = m[1];
-        if (seenPublicCodes.has(code)) continue;
-
+    const resolvePublicCodeToken = (code) => {
+        if (seenPublicCodes.has(code)) return;
         const target = publicCodeIndex[code];
         if (!target) {
             result.unresolved.push(code);
-            continue;
+            return;
         }
         const device = devices[target.deviceId];
         const entity = device && device.entities && device.entities[target.entityId];
         if (!entity || !entity.isBound) {
             result.unresolved.push(code);
-            continue;
+            return;
         }
         seenPublicCodes.add(code);
         result.mentions.push({
@@ -148,6 +159,16 @@ function parseMentions(text, ctx) {
             isCrossDevice: target.deviceId !== senderDeviceId,
             isBound: true
         });
+    };
+
+    PUBLIC_CODE_TOKEN_RE.lastIndex = 0;
+    while ((m = PUBLIC_CODE_TOKEN_RE.exec(text)) !== null) {
+        resolvePublicCodeToken(m[1]);
+    }
+
+    PUBLIC_CODE_BARE_RE.lastIndex = 0;
+    while ((m = PUBLIC_CODE_BARE_RE.exec(text)) !== null) {
+        resolvePublicCodeToken(m[1]);
     }
 
     // 2. entityId tokens — <@N>, @#N, @N (in that order; later forms only
@@ -170,6 +191,8 @@ function parseMentions(text, ctx) {
     };
     replaceWithName(PUBLIC_CODE_TOKEN_RE, (code) =>
         result.mentions.find(x => x.publicCode === code));
+    replaceWithName(PUBLIC_CODE_BARE_RE, (code) =>
+        result.mentions.find(x => x.publicCode === code));
     const findByEntityId = (id) => {
         const eid = parseInt(id, 10);
         return result.mentions.find(x => !x.isCrossDevice && x.entityId === eid);
@@ -179,8 +202,10 @@ function parseMentions(text, ctx) {
     replaceWithName(ENTITY_ID_BARE_RE, findByEntityId);
 
     // 4. cleanText: strip every token form + @all; collapse whitespace.
+    //    PUBLIC_CODE_TOKEN_RE first (eats `<@xxxxxx>` whole), then bare form.
     result.cleanText = text
         .replace(PUBLIC_CODE_TOKEN_RE, '')
+        .replace(PUBLIC_CODE_BARE_RE, '')
         .replace(ENTITY_ID_BRACKET_RE, '')
         .replace(ENTITY_ID_HASH_RE, '')
         .replace(ENTITY_ID_BARE_RE, '')
@@ -217,6 +242,7 @@ function stripMentionTokens(text) {
     if (!text || typeof text !== 'string') return text;
     return text
         .replace(PUBLIC_CODE_TOKEN_RE, '')
+        .replace(PUBLIC_CODE_BARE_RE, '')
         .replace(ENTITY_ID_BRACKET_RE, '')
         .replace(ENTITY_ID_HASH_RE, '')
         .replace(ENTITY_ID_BARE_RE, '')
@@ -259,6 +285,7 @@ module.exports = {
     // Regex exports kept for compatibility with any consumer that imported them.
     MENTION_TOKEN_RE: PUBLIC_CODE_TOKEN_RE,
     PUBLIC_CODE_TOKEN_RE,
+    PUBLIC_CODE_BARE_RE,
     ENTITY_ID_BRACKET_RE,
     ENTITY_ID_HASH_RE,
     ENTITY_ID_BARE_RE,
