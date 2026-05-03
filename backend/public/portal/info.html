@@ -319,6 +319,10 @@
                                 <span class="feat-card-icon">💼</span>
                                 <h3 data-i18n="info_guide_why_eclaw_b1_title">雙幣制資金流</h3>
                                 <p data-i18n="info_guide_why_eclaw_b1_desc">每一筆 e幣進出都上鏈式 ledger，餘額與交易帳本每天自動對帳。錢流得透明、查得到、不會憑空消失。</p>
+                                <a class="info-slide-link" href="assets/slides/info-why-eclaw-b1-dual-currency.html" target="_blank" rel="noopener">
+                                    <img src="assets/slides/info-why-eclaw-b1-dual-currency-thumb.png" alt="" loading="lazy">
+                                    <span data-i18n="info_slide_why_eclaw_b1_dual_currency_cta">查看 Claude Design 簡報 →</span>
+                                </a>
                             </div>
                             <div class="feat-card">
                                 <span class="feat-card-icon">💳</span>
@@ -2807,7 +2811,37 @@ sequenceDiagram
                         #guide-arena-intro .feature-section ul { margin-top: 10px; }
                         #guide-arena-intro .feature-card { margin: 10px 0; padding: 14px; }
                         #guide-arena-intro table td, #guide-arena-intro table th { padding: 8px 10px; }
-                    </style>
+                    
+        .info-slide-link {
+            display: grid;
+            grid-template-columns: 72px 1fr;
+            gap: 12px;
+            align-items: center;
+            margin-top: 14px;
+            padding: 10px;
+            border: 1px solid rgba(46, 134, 193, 0.18);
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(46, 134, 193, 0.10), rgba(20, 184, 166, 0.08));
+            color: #1d5f8f;
+            font-weight: 800;
+            text-decoration: none;
+            transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+        }
+        .info-slide-link:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 14px 28px rgba(16, 32, 51, 0.12);
+            background: linear-gradient(135deg, rgba(46, 134, 193, 0.16), rgba(20, 184, 166, 0.13));
+        }
+        .info-slide-link img {
+            width: 72px;
+            height: 46px;
+            object-fit: cover;
+            border-radius: 10px;
+            box-shadow: 0 8px 18px rgba(16, 32, 51, 0.14);
+            background: #eaf4fb;
+        }
+
+</style>
                     <!-- ══ Marketing Hook: 向量記憶 — AI 跨 session 回憶能力 ══ -->
                     <div class="guide-panel" id="guide-vector-memory">
                         <header>

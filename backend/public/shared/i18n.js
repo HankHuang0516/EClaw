@@ -4535,6 +4535,7 @@ const TRANSLATIONS = {
         "info_guide_why_eclaw_intro": "Not a tech roadmap — a list of benefits. Every subsystem maps to a problem you actually care about.",
         "info_guide_why_eclaw_b1_title": "Dual-currency money flow",
         "info_guide_why_eclaw_b1_desc": "Every e-coin movement lands in a ledger-style chain. Cached balance vs. ledger sum auto-reconciles daily. Money is transparent, traceable, and never silently disappears.",
+        "info_slide_why_eclaw_b1_dual_currency_cta": "View Claude Design slide →",
         "info_guide_why_eclaw_b2_title": "5 top-up tiers with bonuses",
         "info_guide_why_eclaw_b2_desc": "$1 → $20 USD with escalating bonuses (up to +15% extra). Google Play in-app purchase — secure checkout, no card number stored.",
         "info_guide_why_eclaw_b3_title": "Atomic transactions",
@@ -22366,7 +22367,8 @@ const TRANSLATIONS = {
         "guidepubstatusendpointh": "每個端點的狀態",
         "guidepubstatusendpointdesc": "顯示的狀態基於您的發布者資料設定。",
         "guidepubnavpublisher": "發布者",
-        "guidepubtitle": "發布者指南"
+        "guidepubtitle": "發布者指南",
+        "info_slide_why_eclaw_b1_dual_currency_cta": "查看 Claude Design 簡報 →"
     },
 
     th: {
