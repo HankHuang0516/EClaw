@@ -1,3 +1,10 @@
+## [1.1140.1](https://github.com/HankHuang0516/EClaw/compare/v1.1140.0...v1.1140.1) (2026-05-03)
+
+
+### Bug Fixes
+
+* **kanban:** smart-queue gate uses queue-empty, not bot-active (Phase 2 hotfix) ([#2307](https://github.com/HankHuang0516/EClaw/issues/2307)) ([929732e](https://github.com/HankHuang0516/EClaw/commit/929732ec00a6e3fc9d9cf6fc2cec790dd8b33e8b)), closes [#2303](https://github.com/HankHuang0516/EClaw/issues/2303)
+
 # [1.1140.0](https://github.com/HankHuang0516/EClaw/compare/v1.1139.0...v1.1140.0) (2026-05-03)
 
 
