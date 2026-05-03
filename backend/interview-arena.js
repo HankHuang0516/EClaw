@@ -146,17 +146,17 @@ function weightedPick(items, keyFn, weights) {
 // ============================================
 
 let VISION_IMAGES = [
-    { file: 'img-f3a1.svg', keywords: ['red', 'circle'] },
+    { file: null, description: 'A server rack diagram with 4U of equipment: top unit is a firewall labeled FW-01 showing green active status, second unit is a load balancer showing amber standby, units 3 and 4 are application servers both showing active green indicators', keywords: ['server', 'rack', 'firewall', 'load balancer', 'application', 'active', 'green'] },
     { file: null, description: 'A system monitoring dashboard showing CPU at 87%, RAM usage 11.2 GB of 16 GB, disk I/O at 340 MB/s, and 3 active processes flagged in red', keywords: ['CPU', '87', 'RAM', 'disk', 'three', 'red'] },
     { file: 'img-d4e9.svg', keywords: ['green', 'triangle'] },
     { file: 'img-a2f5.svg', keywords: ['yellow', 'star'] },
     { file: 'img-c8b3.svg', keywords: ['cat', 'orange'] },
     // ── Easy tier (20%) — basic shape/object recognition ──
-    { file: null, description: 'A red heart shape centered on a white background', keywords: ['heart', 'red'] },
     { file: null, description: 'A green checkmark inside a circle', keywords: ['checkmark', 'green', 'circle'] },
     { file: null, description: 'A blue water droplet shape on gray', keywords: ['water', 'droplet', 'blue'] },
-    { file: null, description: 'A yellow sun with eight rays extending outward', keywords: ['sun', 'yellow', 'rays'] },
     { file: null, description: 'A simple house with a red roof and brown door', keywords: ['house', 'roof', 'door'] },
+    { file: null, description: 'A stop sign (octagonal, red background, white text reading STOP) at a street corner with a blue sky background', keywords: ['stop', 'sign', 'octagonal', 'red', 'white'] },
+    { file: null, description: 'A shopping cart icon with a badge showing the number 3 items in the top right corner, colored blue on white background', keywords: ['shopping', 'cart', 'badge', 'three', 'blue'] },
     // ── Medium tier (50%) — counting, labels, multi-object scenes ──
     { file: null, description: 'A bar chart with four bars labeled Q1 through Q4 where Q3 is the tallest', keywords: ['bar', 'chart', 'four', 'Q3'] },
     { file: null, description: 'A Git commit graph showing three branches: main has 5 commits, feature-auth branches off commit 2 with 3 commits, and hotfix branches off commit 4 of main with 1 commit', keywords: ['git', 'three', 'branches', 'main', 'feature', 'hotfix'] },
@@ -183,6 +183,13 @@ let VISION_IMAGES = [
     { file: null, description: 'A hotel room floor plan: bedroom 18m² on the left, bathroom 6m² top right, living area 22m² bottom right, with a corridor connecting all rooms', keywords: ['floor', 'plan', 'bedroom', '18', 'bathroom', '6', 'living', '22'] },
     { file: null, description: 'A UI wireframe showing a navigation bar at top, a hero section with a button labeled Get Started, two feature cards side by side below, and a footer with three columns of links', keywords: ['wireframe', 'navigation', 'hero', 'get started', 'two', 'cards', 'footer', 'three'] },
     { file: null, description: 'A project timeline Gantt chart: Planning phase Jan 1–15, Development phase Jan 16–Mar 30, Testing phase Apr 1–Apr 20, Launch on May 1 — four phases total', keywords: ['gantt', 'timeline', 'planning', 'development', 'testing', 'launch', 'four', 'may'] },
+    // ── New medium questions ──
+    { file: null, description: 'A mobile app notification center showing three alerts: 12 new emails from work, a weather alert for thunderstorms at 3pm, and a low battery warning at 15%', keywords: ['notification', 'twelve', 'emails', 'thunderstorm', 'three', 'battery', '15'] },
+    { file: null, description: 'A kanban board with three columns labeled Backlog, In Progress, and Done; Backlog has seven cards, In Progress has three cards, Done has nine cards', keywords: ['kanban', 'backlog', 'seven', 'three', 'nine', 'done'] },
+    // ── New hard questions ──
+    { file: null, description: 'A stock market terminal showing AAPL at $182.45 (+2.3%), GOOGL at $156.20 (-0.8%), MSFT at $418.30 (+1.1%), with a total portfolio value of $127,840 and today net gain of +$2,340 displayed in the top right panel', keywords: ['AAPL', '182', 'GOOGL', 'MSFT', 'portfolio', '127', '2340'] },
+    { file: null, description: 'A Python traceback showing RuntimeError in line 42 of app.py: KeyError with value user_id, with the call stack showing middleware.py line 28 and router.py line 95 below it', keywords: ['python', 'traceback', 'RuntimeError', 'KeyError', 'user_id', '42', 'app.py'] },
+    { file: null, description: 'A network topology diagram with five nodes labeled A through E connected by directed edges: A to B, A to C, B to D, C to D, C to E, and D to E — with two distinct paths highlighted from A to E', keywords: ['network', 'topology', 'five', 'nodes', 'directed', 'paths', 'A', 'E'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -356,6 +363,13 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '"babad"', expected: '"bab"' },{ input: '"cbbd"', expected: '"bb"' },{ input: '"a"', expected: '"a"' },{ input: '"racecar"', expected: '"racecar"' }] },
     { title: '0-1 Knapsack', description: 'Write `solve(weights, values, capacity)` — given items with weights and values arrays and a knapsack of given capacity, return the maximum total value (each item used at most once).',
       testCases: [{ input: '[1,3,4,5], [1,4,5,7], 7', expected: '9' },{ input: '[2,3,4,5], [3,4,5,6], 5', expected: '7' },{ input: '[1], [10], 0', expected: '0' }] },
+    // ── New hard problems (DP + Graph) ──
+    { title: 'Longest Common Subsequence', description: 'Write `solve(text1, text2)` — return the length of the longest common subsequence between text1 and text2. A subsequence is a sequence that appears in the same relative order but not necessarily contiguous.',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"bl", "yby"', expected: '1' }] },
+    { title: 'Minimum Path Sum', description: 'Write `solve(grid)` — find a path from the top-left to the bottom-right of a 2D grid of non-negative integers, moving only right or down at each step, that minimizes the sum of all numbers along the path. Return that minimum sum.',
+      testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' },{ input: '[[1,2],[3,4]]', expected: '7' }] },
+    { title: 'Word Break', description: 'Write `solve(s, wordDict)` — return true if the string s can be segmented into one or more words from the dictionary wordDict (each word can be reused).',
+      testCases: [{ input: '"leetcode", ["leet","code"]', expected: 'true' },{ input: '"applepenapple", ["apple","pen"]', expected: 'true' },{ input: '"catsandog", ["cats","dog","sand","and","cat"]', expected: 'false' },{ input: '"a", ["b"]', expected: 'false' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -401,6 +415,9 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many squares of all sizes (1×1, 2×2, up to 8×8) are there on a standard 8×8 chessboard?', expectedKeywords: ['204'] },
     { question: 'A plane travels 2000 km at an effective speed of 1000 km/h (900 km/h airspeed plus 100 km/h tailwind). How many hours does the journey take?', expectedKeywords: ['2'] },
     { question: 'A worker paints 1/3 of a fence on day 1 and 1/4 of the remaining unpainted fence on day 2. What fraction of the fence is still unpainted after day 2?', expectedKeywords: ['1/2', '0.5', 'half'] },
+    // ── New hard reasoning questions ──
+    { question: 'A jar contains 4 red marbles, 6 blue marbles, and 2 green marbles. You draw two marbles without replacement. What is the probability that both are blue? Express as a simplified fraction.', expectedKeywords: ['5/22'] },
+    { question: 'You have three tasks. Task A takes 2 hours and Task B takes 3 hours — they can run in parallel. Task C takes 1 hour but cannot start until both A and B finish. What is the minimum total time in hours to complete all three tasks?', expectedKeywords: ['4'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -452,11 +469,11 @@ let TTS_PHRASES = [
     { text: 'The GPS coordinates are 35.6762 degrees north 139.6503 degrees east', keywords: ['GPS', 'coordinates', '35', '139'] },
     { text: 'Doctor Zhang appointment is at 2:45 PM in Building C Room 301', keywords: ['Zhang', 'appointment', '2', '45', 'room', '301'] },
     { text: 'The Dow Jones index fell 2.3 percent to close at 38,547 points', keywords: ['Dow', 'Jones', 'percent', '38'] },
-    { text: 'Machine learning models require large datasets for training', keywords: ['machine', 'learning', 'models', 'datasets', 'training'] },
     { text: 'Renewable energy sources include solar wind and hydropower', keywords: ['renewable', 'energy', 'solar', 'wind', 'hydropower'] },
     { text: 'Quantum computing promises to solve complex optimization problems', keywords: ['quantum', 'computing', 'complex', 'optimization'] },
     { text: 'Version control helps teams collaborate on software projects', keywords: ['version', 'control', 'teams', 'collaborate', 'software'] },
-    { text: 'The server returned HTTP status code 503 service unavailable', keywords: ['server', 'HTTP', '503', 'service', 'unavailable'] },
+    { text: 'The next available appointment is on Thursday June twelfth at ten forty-five in the morning', keywords: ['thursday', 'june', 'twelfth', 'ten', 'forty', 'morning'] },
+    { text: 'Your order number 8 8 7 4 2 1 has been shipped via FedEx and will arrive by Friday afternoon', keywords: ['order', '887421', 'fedex', 'friday', 'afternoon'] },
     { text: 'Encryption protects sensitive data during transmission', keywords: ['encryption', 'protects', 'sensitive', 'data', 'transmission'] },
     // ── Hard tier (30%) — acronyms, mixed content, technical jargon ──
     { text: 'The IPv4 address 192.168.1.1 is commonly used as a default gateway', keywords: ['IPv4', '192', '168', 'gateway'] },
@@ -473,6 +490,9 @@ let TTS_PHRASES = [
     { text: 'Bernoulli and Euler each contributed foundational theorems to both fluid dynamics and graph theory', keywords: ['bernoulli', 'euler', 'fluid', 'dynamics', 'graph', 'theory'] },
     { text: 'Your one-time verification code is 7 4 2 9 1 — please enter it within ninety seconds before it expires', keywords: ['verification', 'code', '74291', 'ninety', 'seconds'] },
     { text: 'Compound interest formula: principal times the quantity one plus rate divided by one hundred to the power of years minus one', keywords: ['compound', 'interest', 'principal', 'rate', 'power', 'years'] },
+    // ── New hard phrases ──
+    { text: 'In Python the lambda syntax is lambda colon expression allowing you to pass anonymous functions to built-in methods like sorted or map or filter', keywords: ['python', 'lambda', 'anonymous', 'sorted', 'map', 'filter'] },
+    { text: 'The exchange rate today is one US dollar equals one point zero nine euros or zero point seven nine British pounds sterling', keywords: ['exchange', 'dollar', 'euro', 'zero', 'pounds', 'sterling'] },
 ];
 
 // ============================================
