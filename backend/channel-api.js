@@ -1,4 +1,5 @@
 const safeEqual = require('./safe-equal');
+const mentionParser = require('./mention-parser');
 
 /**
  * Channel API Module — OpenClaw Channel Plugin Integration
@@ -727,6 +728,31 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             if (message) entity.message = message;
             entity.lastUpdated = Date.now();
 
+            // ── @-mention auto-fill (PR #2300, parity with /api/transform) ──
+            // /api/transform has had this since #1619 (2026-04-06). LLM channel
+            // bridges (claude / codex / hermes) embed routing intent in text
+            // (`@#6 hello`) but used to silently drop it here because this
+            // endpoint was originally designed as a "thin pipe" relaying state.
+            //
+            // Same precedence as /api/transform: explicit speakTo / broadcast
+            // wins, in-text @-mention fills next, senderHint is last.
+            let transformMentionContext = null;
+            if (message) {
+                const tParse = mentionParser.parseMentions(message, {
+                    senderDeviceId: deviceId,
+                    devices,
+                    publicCodeIndex
+                });
+                transformMentionContext = mentionParser.toContextPayload(tParse);
+                if (transformMentionContext) {
+                    if (tParse.hasAll && !broadcast && !(speakTo && speakTo.length > 0)) {
+                        broadcast = true;
+                    } else if (tParse.mentions.length > 0 && !broadcast && !(speakTo && speakTo.length > 0)) {
+                        speakTo = tParse.mentions.map(m => m.publicCode);
+                    }
+                }
+            }
+
             // ── senderHint resolution (channel-bridge centralization, issue #2285) ──
             // Lowest precedence — only fills speakTo/broadcast when neither was
             // explicitly set on the request body. Channel bridges pass senderHint
@@ -996,6 +1022,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             };
             if (deliveryResults) response.delivery = deliveryResults;
             if (warnings.length > 0) response.warnings = warnings;
+            if (transformMentionContext) response.mentions = transformMentionContext;
             if (senderHintResolution) response.senderHintResolution = senderHintResolution;
             res.json(response);
         } catch (err) {
