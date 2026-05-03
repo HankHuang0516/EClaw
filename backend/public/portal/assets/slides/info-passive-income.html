@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EClaw - 💤 閒置機器人賺取 e-coin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #2E86C1 15%, #FFFFFF 85%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Geometric pattern overlay */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                radial-gradient(circle at 20% 20%, rgba(46, 134, 193, 0.03) 1px, transparent 1px),
+                radial-gradient(circle at 80% 20%, rgba(46, 134, 193, 0.03) 1px, transparent 1px),
+                radial-gradient(circle at 20% 80%, rgba(46, 134, 193, 0.03) 1px, transparent 1px),
+                radial-gradient(circle at 80% 80%, rgba(46, 134, 193, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+        }
+
+        .slide-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 64px;
+        }
+
+        .content-layout {
+            display: grid;
+            grid-template-columns: 60% 40%;
+            gap: 64px;
+            align-items: center;
+            width: 100%;
+        }
+
+        .content-area {
+            position: relative;
+            animation: slideInLeft 0.8s ease-out;
+        }
+
+        .emoji-icon {
+            font-size: 64px;
+            position: absolute;
+            top: -32px;
+            left: 0;
+            z-index: 10;
+        }
+
+        .headline {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 700;
+            font-size: 48px;
+            color: #2C3E50;
+            line-height: 1.2;
+            margin-bottom: 16px;
+            margin-top: 32px;
+        }
+
+        .subline {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 500;
+            font-size: 28px;
+            color: #2E86C1;
+            margin-bottom: 32px;
+        }
+
+        .key-points {
+            list-style: none;
+            margin-bottom: 40px;
+        }
+
+        .key-points li {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 400;
+            font-size: 18px;
+            color: #2C3E50;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .key-points li::before {
+            content: '';
+            width: 16px;
+            height: 16px;
+            background: radial-gradient(circle, #F39C12 40%, #E67E22 100%);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: #F39C12;
+            color: white;
+            text-decoration: none;
+            padding: 18px 32px;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            width: 280px;
+            text-align: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.2);
+        }
+
+        .cta-button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 20px rgba(243, 156, 18, 0.3);
+        }
+
+        .visual-area {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: slideInRight 0.8s ease-out;
+        }
+
+        .robot-container {
+            position: relative;
+            width: 240px;
+            height: 180px;
+            margin-right: -80px;
+        }
+
+        .robot {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, #3498DB, #2980B9);
+            border-radius: 40px;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(52, 152, 219, 0.3);
+        }
+
+        .robot-head {
+            width: 80px;
+            height: 60px;
+            background: linear-gradient(145deg, #5DADE2, #3498DB);
+            border-radius: 30px;
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .robot-eyes {
+            display: flex;
+            gap: 12px;
+        }
+
+        .robot-eye {
+            width: 12px;
+            height: 12px;
+            background: #2C3E50;
+            border-radius: 50%;
+            animation: blink 3s infinite;
+        }
+
+        .robot-body {
+            width: 120px;
+            height: 80px;
+            background: linear-gradient(145deg, #3498DB, #2980B9);
+            border-radius: 20px;
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .sleep-indicator {
+            position: absolute;
+            top: -20px;
+            right: -40px;
+            font-size: 24px;
+            color: #2C3E50;
+            animation: zzz 2s infinite;
+        }
+
+        .digital-clock {
+            position: absolute;
+            top: -30px;
+            right: -100px;
+            background: #2C3E50;
+            color: #27AE60;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: 'Inter', monospace;
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        .floating-coins {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+
+        .coin {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(145deg, #F39C12, #E67E22);
+            border-radius: 50%;
+            box-shadow: 0 4px 8px rgba(243, 156, 18, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 14px;
+        }
+
+        .coin.small { width: 24px; height: 24px; font-size: 12px; }
+        .coin.tiny { width: 20px; height: 20px; font-size: 10px; }
+
+        .coin:nth-child(1) { top: 20%; left: 10%; animation: coinFloat1 2s infinite ease-in-out; }
+        .coin:nth-child(2) { top: 40%; left: 20%; animation: coinFloat2 2.5s infinite ease-in-out 0.3s; }
+        .coin:nth-child(3) { top: 60%; left: 5%; animation: coinFloat3 2.2s infinite ease-in-out 0.6s; }
+        .coin:nth-child(4) { top: 30%; right: 10%; animation: coinFloat4 2.8s infinite ease-in-out 0.9s; }
+        .coin:nth-child(5) { top: 70%; right: 20%; animation: coinFloat5 2.4s infinite ease-in-out 1.2s; }
+        .coin:nth-child(6) { top: 50%; right: 5%; animation: coinFloat6 2.6s infinite ease-in-out 1.5s; }
+
+        /* Animations */
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes blink {
+            0%, 95% { transform: scaleY(1); }
+            97.5% { transform: scaleY(0.1); }
+        }
+
+        @keyframes zzz {
+            0%, 100% { opacity: 0.3; transform: translateY(0); }
+            50% { opacity: 1; transform: translateY(-10px); }
+        }
+
+        @keyframes coinFloat1 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        @keyframes coinFloat2 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+        @keyframes coinFloat3 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+        @keyframes coinFloat4 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-18px); } }
+        @keyframes coinFloat5 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-16px); } }
+        @keyframes coinFloat6 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .slide-container {
+                padding: 24px;
+            }
+
+            .content-layout {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+
+            .visual-area {
+                order: -1;
+                height: 280px;
+                margin-bottom: 32px;
+            }
+
+            .headline {
+                font-size: 32px;
+                margin-top: 16px;
+            }
+
+            .subline {
+                font-size: 20px;
+            }
+
+            .key-points li {
+                font-size: 16px;
+            }
+
+            .cta-button {
+                font-size: 14px;
+                width: 100%;
+                max-width: 280px;
+            }
+
+            .robot-container {
+                margin-right: 0;
+                transform: scale(0.8);
+            }
+
+            /* Simplified animations for mobile */
+            .coin {
+                animation-duration: 3s !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="content-layout">
+            <div class="content-area">
+                <div class="emoji-icon">💤</div>
+                <h1 class="headline">讓你的AI助手為你賺錢</h1>
+                <p class="subline">就算在睡覺時！</p>
+
+                <ul class="key-points">
+                    <li>將閒置的AI助手出租給需要的用戶</li>
+                    <li>24/7 自動運作，無需人工干預</li>
+                    <li>透過 e-coin 代幣系統獲得穩定收益</li>
+                    <li>完全被動收入，睡覺也在賺錢</li>
+                </ul>
+
+                <a href="#" class="cta-button">立即註冊，開始賺取被動收入</a>
+            </div>
+
+            <div class="visual-area">
+                <div class="robot-container">
+                    <div class="robot">
+                        <div class="robot-head">
+                            <div class="robot-eyes">
+                                <div class="robot-eye"></div>
+                                <div class="robot-eye"></div>
+                            </div>
+                        </div>
+                        <div class="robot-body"></div>
+                        <div class="sleep-indicator">ZZZ</div>
+                        <div class="digital-clock">24/7 ACTIVE</div>
+                    </div>
+                </div>
+
+                <div class="floating-coins">
+                    <div class="coin">E</div>
+                    <div class="coin small">E</div>
+                    <div class="coin tiny">E</div>
+                    <div class="coin">E</div>
+                    <div class="coin small">E</div>
+                    <div class="coin tiny">E</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

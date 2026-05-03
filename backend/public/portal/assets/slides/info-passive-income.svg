@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="15%" style="stop-color:#2E86C1"/>
+      <stop offset="85%" style="stop-color:#FFFFFF"/>
+    </linearGradient>
+
+    <!-- Robot gradients -->
+    <linearGradient id="robotBodyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3498DB"/>
+      <stop offset="100%" style="stop-color:#2980B9"/>
+    </linearGradient>
+
+    <linearGradient id="robotHeadGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#5DADE2"/>
+      <stop offset="100%" style="stop-color:#3498DB"/>
+    </linearGradient>
+
+    <!-- Coin gradient -->
+    <linearGradient id="coinGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F39C12"/>
+      <stop offset="100%" style="stop-color:#E67E22"/>
+    </linearGradient>
+
+    <!-- Geometric pattern -->
+    <pattern id="geometricPattern" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse">
+      <circle cx="10" cy="10" r="1" fill="#2E86C1" opacity="0.03"/>
+      <circle cx="40" cy="10" r="1" fill="#2E86C1" opacity="0.03"/>
+      <circle cx="10" cy="40" r="1" fill="#2E86C1" opacity="0.03"/>
+      <circle cx="40" cy="40" r="1" fill="#2E86C1" opacity="0.03"/>
+    </pattern>
+
+    <!-- Drop shadows -->
+    <filter id="robotShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="20" stdDeviation="20" flood-color="#3498DB" flood-opacity="0.3"/>
+    </filter>
+
+    <filter id="coinShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#F39C12" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1920" height="1080" fill="url(#bgGradient)"/>
+  <rect width="1920" height="1080" fill="url(#geometricPattern)"/>
+
+  <!-- Content Area -->
+  <g transform="translate(64, 64)">
+    <!-- Emoji Icon -->
+    <text x="0" y="50" font-family="Apple Color Emoji, Segoe UI Emoji, Noto Emoji" font-size="64">💤</text>
+
+    <!-- Main Headline -->
+    <text x="0" y="160" font-family="Noto Sans TC" font-weight="700" font-size="48" fill="#2C3E50">
+      讓你的AI助手為你賺錢
+    </text>
+
+    <!-- Subline -->
+    <text x="0" y="210" font-family="Noto Sans TC" font-weight="500" font-size="28" fill="#2E86C1">
+      就算在睡覺時！
+    </text>
+
+    <!-- Key Points -->
+    <g transform="translate(0, 270)">
+      <!-- Point 1 -->
+      <circle cx="8" cy="10" r="8" fill="url(#coinGradient)"/>
+      <text x="32" y="18" font-family="Noto Sans TC" font-size="18" fill="#2C3E50">
+        將閒置的AI助手出租給需要的用戶
+      </text>
+
+      <!-- Point 2 -->
+      <circle cx="8" cy="50" r="8" fill="url(#coinGradient)"/>
+      <text x="32" y="58" font-family="Noto Sans TC" font-size="18" fill="#2C3E50">
+        24/7 自動運作，無需人工干預
+      </text>
+
+      <!-- Point 3 -->
+      <circle cx="8" cy="90" r="8" fill="url(#coinGradient)"/>
+      <text x="32" y="98" font-family="Noto Sans TC" font-size="18" fill="#2C3E50">
+        透過 e-coin 代幣系統獲得穩定收益
+      </text>
+
+      <!-- Point 4 -->
+      <circle cx="8" cy="130" r="8" fill="url(#coinGradient)"/>
+      <text x="32" y="138" font-family="Noto Sans TC" font-size="18" fill="#2C3E50">
+        完全被動收入，睡覺也在賺錢
+      </text>
+    </g>
+
+    <!-- CTA Button -->
+    <g transform="translate(0, 470)">
+      <rect width="280" height="56" rx="8" fill="#F39C12"/>
+      <text x="140" y="35" font-family="Inter" font-weight="700" font-size="16"
+            fill="white" text-anchor="middle">立即註冊，開始賺取被動收入</text>
+    </g>
+  </g>
+
+  <!-- Visual Area (Right Side) -->
+  <g transform="translate(1200, 300)">
+    <!-- Robot Container -->
+    <g transform="translate(-80, 0)">
+      <!-- Robot Main Body -->
+      <rect width="240" height="180" rx="40" fill="url(#robotBodyGradient)" filter="url(#robotShadow)"/>
+
+      <!-- Robot Head -->
+      <rect x="80" y="20" width="80" height="60" rx="30" fill="url(#robotHeadGradient)"/>
+
+      <!-- Robot Eyes -->
+      <circle cx="105" cy="50" r="6" fill="#2C3E50"/>
+      <circle cx="135" cy="50" r="6" fill="#2C3E50"/>
+
+      <!-- Robot Body Panel -->
+      <rect x="60" y="110" width="120" height="80" rx="20" fill="url(#robotBodyGradient)"/>
+
+      <!-- Sleep Indicator -->
+      <text x="280" y="25" font-family="Arial" font-size="24" fill="#2C3E50">ZZZ</text>
+
+      <!-- Digital Clock -->
+      <rect x="140" y="-40" width="100" height="25" rx="6" fill="#2C3E50"/>
+      <text x="190" y="-23" font-family="Inter" font-weight="700" font-size="12"
+            fill="#27AE60" text-anchor="middle">24/7 ACTIVE</text>
+    </g>
+
+    <!-- Floating Coins -->
+    <g>
+      <!-- Coin 1 -->
+      <circle cx="50" cy="40" r="16" fill="url(#coinGradient)" filter="url(#coinShadow)"/>
+      <text x="50" y="47" font-family="Inter" font-weight="700" font-size="14"
+            fill="white" text-anchor="middle">E</text>
+
+      <!-- Coin 2 -->
+      <circle cx="100" cy="80" r="12" fill="url(#coinGradient)" filter="url(#coinShadow)"/>
+      <text x="100" y="85" font-family="Inter" font-weight="700" font-size="12"
+            fill="white" text-anchor="middle">E</text>
+
+      <!-- Coin 3 -->
+      <circle cx="30" cy="120" r="10" fill="url(#coinGradient)" filter="url(#coinShadow)"/>
+      <text x="30" y="125" font-family="Inter" font-weight="700" font-size="10"
+            fill="white" text-anchor="middle">E</text>
+
+      <!-- Coin 4 -->
+      <circle cx="350" cy="60" r="16" fill="url(#coinGradient)" filter="url(#coinShadow)"/>
+      <text x="350" y="67" font-family="Inter" font-weight="700" font-size="14"
+            fill="white" text-anchor="middle">E</text>
+
+      <!-- Coin 5 -->
+      <circle cx="300" cy="140" r="12" fill="url(#coinGradient)" filter="url(#coinShadow)"/>
+      <text x="300" y="145" font-family="Inter" font-weight="700" font-size="12"
+            fill="white" text-anchor="middle">E</text>
+
+      <!-- Coin 6 -->
+      <circle cx="370" cy="100" r="10" fill="url(#coinGradient)" filter="url(#coinShadow)"/>
+      <text x="370" y="105" font-family="Inter" font-weight="700" font-size="10"
+            fill="white" text-anchor="middle">E</text>
+    </g>
+  </g>
+
+  <!-- Animations -->
+  <style>
+    <![CDATA[
+    @keyframes coinFloat1 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+    @keyframes coinFloat2 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+    @keyframes coinFloat3 { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+    ]]>
+  </style>
+</svg>
