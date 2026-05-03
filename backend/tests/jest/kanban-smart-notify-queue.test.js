@@ -33,7 +33,7 @@ const devicePrefsSrc = fs.readFileSync(
 describe('kanban smart-queue notify — schema', () => {
     test('kanban_pending_notify table exists with required columns', () => {
         expect(schemaSrc).toMatch(/CREATE TABLE IF NOT EXISTS kanban_pending_notify/);
-        expect(schemaSrc).toMatch(/device_id\s+UUID\s+NOT NULL/);
+        expect(schemaSrc).toMatch(/device_id\s+VARCHAR\(64\)\s+NOT NULL/);
         expect(schemaSrc).toMatch(/bot_entity_id\s+INTEGER\s+NOT NULL/);
         expect(schemaSrc).toMatch(/card_id\s+VARCHAR\(48\)\s+NOT NULL/);
         expect(schemaSrc).toMatch(/msg\s+TEXT\s+NOT NULL/);

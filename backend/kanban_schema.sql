@@ -172,7 +172,7 @@ ALTER TABLE kanban_cards ALTER COLUMN active_child_id TYPE VARCHAR(48) USING act
 -- ============================================
 CREATE TABLE IF NOT EXISTS kanban_pending_notify (
     id BIGSERIAL PRIMARY KEY,
-    device_id UUID NOT NULL,
+    device_id VARCHAR(64) NOT NULL,
     bot_entity_id INTEGER NOT NULL,
     card_id VARCHAR(48) NOT NULL,
     msg TEXT NOT NULL,
