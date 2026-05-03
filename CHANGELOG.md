@@ -1,3 +1,10 @@
+## [1.1150.4](https://github.com/HankHuang0516/EClaw/compare/v1.1150.3...v1.1150.4) (2026-05-03)
+
+
+### Bug Fixes
+
+* **security:** redact device IDs from /api/health ([#2350](https://github.com/HankHuang0516/EClaw/issues/2350)) ([88aebf4](https://github.com/HankHuang0516/EClaw/commit/88aebf4c00b71eb9737f86be6a736037d29cd5c2))
+
 ## [1.1150.3](https://github.com/HankHuang0516/EClaw/compare/v1.1150.2...v1.1150.3) (2026-05-03)
 
 
