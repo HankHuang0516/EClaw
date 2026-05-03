@@ -1,3 +1,10 @@
+## [1.1150.2](https://github.com/HankHuang0516/EClaw/compare/v1.1150.1...v1.1150.2) (2026-05-03)
+
+
+### Bug Fixes
+
+* **ux:** kanban Escape-key + info mobile tab overflow ([#2345](https://github.com/HankHuang0516/EClaw/issues/2345)) ([7bda4dc](https://github.com/HankHuang0516/EClaw/commit/7bda4dcb6fb237ac8f2719aea8eadb0492efbfb7)), closes [#2343](https://github.com/HankHuang0516/EClaw/issues/2343) [#2265](https://github.com/HankHuang0516/EClaw/issues/2265)
+
 ## [1.1150.1](https://github.com/HankHuang0516/EClaw/compare/v1.1150.0...v1.1150.1) (2026-05-03)
 
 
