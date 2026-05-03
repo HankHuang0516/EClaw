@@ -1,3 +1,10 @@
+# [1.1140.0](https://github.com/HankHuang0516/EClaw/compare/v1.1139.0...v1.1140.0) (2026-05-03)
+
+
+### Features
+
+* **kanban:** smart per-bot pending_notify queue (card_dfe3b8df Phase 2) ([#2303](https://github.com/HankHuang0516/EClaw/issues/2303)) ([e065e11](https://github.com/HankHuang0516/EClaw/commit/e065e11cb0e7c56840f701eb8c0bc4f7b54fcc40))
+
 # [1.1139.0](https://github.com/HankHuang0516/EClaw/compare/v1.1138.4...v1.1139.0) (2026-05-03)
 
 
