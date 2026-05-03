@@ -1635,6 +1635,44 @@
             border-bottom: 2px solid rgba(255,255,255,0.6);
         }
 
+        /* ── Jump-to-Latest Button ── */
+        .scroll-to-bottom-btn {
+            position: absolute;
+            right: 18px;
+            bottom: 16px;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            border: 0;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            opacity: 0;
+            transform: translateY(8px);
+            pointer-events: none;
+            transition: opacity 0.2s, transform 0.2s, background 0.15s;
+            z-index: 55;
+        }
+        .scroll-to-bottom-btn.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .scroll-to-bottom-btn:hover {
+            background: var(--primary-hover, var(--primary));
+        }
+        .scroll-to-bottom-btn:active {
+            transform: translateY(0) scale(0.95);
+        }
+        .scroll-to-bottom-btn svg {
+            display: block;
+        }
+
         /* ── Target Bar Expand Upward ── */
         .target-bar-row {
             display: flex;
@@ -1692,6 +1730,7 @@
         @media (prefers-reduced-motion: reduce) {
             .scroll-nav { transition: none; }
             .scroll-nav-thumb { transition: none; }
+            .scroll-to-bottom-btn { transition: none; }
             .target-bar-toggle { transition: none; }
         }
 
@@ -2679,6 +2718,13 @@
                     <div class="scroll-nav-track"></div>
                     <div class="scroll-nav-thumb" id="scrollNavThumb"></div>
                 </div>
+                <!-- Jump-to-latest button (visible when user has scrolled up) -->
+                <button class="scroll-to-bottom-btn" id="scrollToBottomBtn" type="button"
+                        aria-label="Scroll to latest message"
+                        data-i18n-title="chat_scroll_to_latest"
+                        title="Scroll to latest">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
             </div>
 
             <!-- Target Bar (checkboxes) -->
@@ -4548,11 +4594,15 @@
                     </div>`;
             }).join('');
 
-            // Auto-scroll — skip when smart filter is locked on a specific entity/contact
-            const isFilteredView = currentFilter !== 'all';
-            if (isFirstLoad || (hasNewMessages && !isFilteredView) || wasAtBottom) {
+            // Auto-scroll only on first load or when the user was already at the bottom.
+            // If the user has scrolled up to read history, leave their position alone —
+            // the floating jump-to-latest button (#scrollToBottomBtn) gives them an
+            // explicit way to return to the newest message. Same rule applies in
+            // smart-filter mode so the behavior is consistent across views.
+            if (isFirstLoad || wasAtBottom) {
                 container.scrollTop = container.scrollHeight;
             }
+            updateScrollToBottomBtn();
 
             // Fetch link previews for visible messages
             container.querySelectorAll('.link-preview-slot[data-url]').forEach(slot => {
@@ -7028,6 +7078,34 @@
         function hasNoWebhookWarning(resp) {
             return resp && resp.warning && resp.warning.includes('no webhook');
         }
+
+        // ── Jump-to-Latest Button ──
+        // Shown when the user is more than NEAR_BOTTOM_PX away from the latest
+        // bubble; click smooth-scrolls back to the bottom. Wired to the scroll
+        // event so it reacts to both user-driven and programmatic scrolls.
+        const NEAR_BOTTOM_PX = 120;
+        function updateScrollToBottomBtn() {
+            const container = document.getElementById('chatMessages');
+            const btn = document.getElementById('scrollToBottomBtn');
+            if (!container || !btn) return;
+            const distance = container.scrollHeight - container.scrollTop - container.clientHeight;
+            btn.classList.toggle('visible', distance > NEAR_BOTTOM_PX);
+        }
+        (() => {
+            const container = document.getElementById('chatMessages');
+            const btn = document.getElementById('scrollToBottomBtn');
+            if (!container || !btn) return;
+            container.addEventListener('scroll', updateScrollToBottomBtn, { passive: true });
+            btn.addEventListener('click', () => {
+                const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: reduce ? 'auto' : 'smooth'
+                });
+                btn.classList.remove('visible');
+            });
+            updateScrollToBottomBtn();
+        })();
 
         // ── Scroll Navigator ──
         (() => {
