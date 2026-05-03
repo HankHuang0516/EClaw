@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EClaw Mobile - 💼 企業級解決方案</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #1A252F 0%, #2C3E50 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(circle at 25% 25%, rgba(212, 175, 55, 0.10) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(52, 73, 94, 0.15) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Animations */
+        @keyframes slideInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50%      { transform: scale(1.05); }
+        }
+        @keyframes premiumGlow {
+            0%, 100% { box-shadow: 0 6px 22px rgba(212, 175, 55, 0.25); }
+            50%      { box-shadow: 0 6px 30px rgba(212, 175, 55, 0.45); }
+        }
+
+        .mobile-slide {
+            max-width: 390px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding: 24px 20px 40px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header-section {
+            text-align: center;
+            margin-bottom: 22px;
+            animation: slideInDown 0.8s ease-out;
+        }
+
+        .mobile-emoji {
+            font-size: 44px;
+            margin-bottom: 10px;
+            display: block;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .mobile-headline {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 700;
+            font-size: 24px;
+            color: #FFFFFF;
+            line-height: 1.25;
+            margin-bottom: 8px;
+        }
+
+        .mobile-subline {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 500;
+            font-size: 13.5px;
+            color: #D4AF37;
+            line-height: 1.5;
+        }
+
+        /* Pricing tiers — single column */
+        .tier-showcase {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+
+        .tier-card {
+            background: #FFFFFF;
+            border-radius: 18px;
+            padding: 22px 18px;
+            text-align: center;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+            border: 2px solid #E5E7EB;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tier-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+        }
+
+        .tier-card.tier-pro::after {
+            background: linear-gradient(135deg, #2E86C1 0%, #3498DB 100%);
+        }
+
+        .tier-card.tier-private::after {
+            background: linear-gradient(135deg, #34495E 0%, #2C3E50 100%);
+        }
+
+        .tier-card.tier-pro     { animation: slideInUp 0.7s ease-out 0.2s both; }
+        .tier-card.premium      { animation: slideInUp 0.7s ease-out 0.4s both, premiumGlow 3s ease-in-out 1.5s infinite; }
+        .tier-card.tier-private { animation: slideInUp 0.7s ease-out 0.6s both; }
+
+        .tier-card.premium {
+            background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+            color: #FFFFFF;
+            border-color: #D4AF37;
+            padding-top: 38px;
+        }
+
+        .tier-card.premium::before {
+            content: '⭐ 推薦方案';
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.22);
+            color: #FFFFFF;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            font-weight: 600;
+            font-size: 10.5px;
+            letter-spacing: 0.3px;
+        }
+
+        .tier-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .tier-name {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 700;
+            font-size: 19px;
+            color: #2C3E50;
+            margin-bottom: 6px;
+        }
+
+        .tier-card.premium .tier-name { color: #FFFFFF; }
+
+        .tier-price {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            font-size: 28px;
+            margin-bottom: 4px;
+            color: #2E86C1;
+            line-height: 1;
+        }
+
+        .tier-card.premium .tier-price { color: #FFFFFF; }
+        .tier-card.tier-private .tier-price { color: #34495E; }
+
+        .tier-period {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            font-weight: 500;
+            font-size: 12.5px;
+            color: #7F8C8D;
+            margin-bottom: 16px;
+        }
+
+        .tier-card.premium .tier-period { color: rgba(255, 255, 255, 0.85); }
+
+        .feature-list {
+            text-align: left;
+            margin-bottom: 16px;
+            flex: 1;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 5px 0;
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 400;
+            font-size: 13px;
+            color: #34495E;
+        }
+
+        .tier-card.premium .feature-item { color: #FFFFFF; }
+
+        .feature-check {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #27AE60;
+            color: #FFFFFF;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            flex-shrink: 0;
+        }
+
+        .tier-card.premium .feature-check {
+            background: rgba(255, 255, 255, 0.32);
+        }
+
+        .tier-button {
+            width: 100%;
+            padding: 11px 18px;
+            background: linear-gradient(135deg, #2E86C1 0%, #3498DB 100%);
+            color: #FFFFFF;
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            font-weight: 600;
+            font-size: 13.5px;
+            text-decoration: none;
+            border-radius: 11px;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .tier-card.premium .tier-button {
+            background: rgba(255, 255, 255, 0.22);
+            border: 2px solid rgba(255, 255, 255, 0.35);
+        }
+
+        .tier-card.tier-private .tier-button {
+            background: linear-gradient(135deg, #34495E 0%, #2C3E50 100%);
+        }
+
+        /* Enterprise features — single column */
+        .enterprise-features {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+
+        .feature-category {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 18px 18px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+            border: 2px solid #E5E7EB;
+        }
+
+        .feature-category.f1 { animation: slideInUp 0.7s ease-out 0.8s both; }
+        .feature-category.f2 { animation: slideInUp 0.7s ease-out 1.0s both; }
+        .feature-category.f3 { animation: slideInUp 0.7s ease-out 1.2s both; }
+        .feature-category.f4 { animation: slideInUp 0.7s ease-out 1.4s both; }
+
+        .feature-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .feature-emoji { font-size: 26px; }
+
+        .feature-title {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 600;
+            font-size: 16px;
+            color: #2C3E50;
+        }
+
+        .feature-description {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 400;
+            font-size: 12.5px;
+            color: #7F8C8D;
+            line-height: 1.55;
+            margin-bottom: 10px;
+        }
+
+        .feature-highlights {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .feature-highlight {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 2px 0;
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 400;
+            font-size: 12.5px;
+            color: #34495E;
+        }
+
+        .feature-highlight::before {
+            content: '•';
+            color: #D4AF37;
+            font-weight: 700;
+        }
+
+        /* Security banner */
+        .security-banner {
+            background: linear-gradient(135deg, #34495E 0%, #2C3E50 100%);
+            color: #FFFFFF;
+            padding: 20px 20px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 22px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+            position: relative;
+            overflow: hidden;
+            animation: slideInUp 0.8s ease-out 1.6s both;
+        }
+
+        .security-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(circle at 1px 1px, rgba(212, 175, 55, 0.18) 1px, transparent 0);
+            background-size: 16px 16px;
+            pointer-events: none;
+        }
+
+        .security-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .security-title {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .security-description {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 400;
+            font-size: 13px;
+            opacity: 0.92;
+            line-height: 1.6;
+        }
+
+        /* CTA */
+        .cta-section {
+            text-align: center;
+            animation: slideInUp 0.8s ease-out 2.0s both;
+        }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 30px;
+            background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+            color: #FFFFFF;
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-slide">
+        <section class="header-section">
+            <span class="mobile-emoji">💼</span>
+            <h1 class="mobile-headline">Enterprise Solutions<br>企業級解決方案</h1>
+            <p class="mobile-subline">專為企業打造的AI機器人解決方案，安全可靠，規模無限</p>
+        </section>
+
+        <section class="tier-showcase">
+            <div class="tier-card tier-pro">
+                <span class="tier-icon">🚀</span>
+                <h3 class="tier-name">專業版</h3>
+                <div class="tier-price">$299</div>
+                <div class="tier-period">每月 / 團隊</div>
+                <div class="feature-list">
+                    <div class="feature-item"><span class="feature-check">✓</span>最多50個AI機器人</div>
+                    <div class="feature-item"><span class="feature-check">✓</span>團隊協作工具</div>
+                    <div class="feature-item"><span class="feature-check">✓</span>基礎API整合</div>
+                    <div class="feature-item"><span class="feature-check">✓</span>電子郵件支援</div>
+                </div>
+                <a href="#" class="tier-button">開始使用</a>
+            </div>
+
+            <div class="tier-card premium">
+                <span class="tier-icon">⭐</span>
+                <h3 class="tier-name">企業版</h3>
+                <div class="tier-price">$999</div>
+                <div class="tier-period">每月 / 組織</div>
+                <div class="feature-list">
+                    <div class="feature-item"><span class="feature-check">✓</span>無限AI機器人</div>
+                    <div class="feature-item"><span class="feature-check">✓</span>高級安全控制</div>
+                    <div class="feature-item"><span class="feature-check">✓</span>客製化整合</div>
+                    <div class="feature-item"><span class="feature-check">✓</span>24/7專屬支援</div>
+                </div>
+                <a href="#" class="tier-button">聯繫業務</a>
+            </div>
+
+            <div class="tier-card tier-private">
+                <span class="tier-icon">🏢</span>
+                <h3 class="tier-name">私有部署</h3>
+                <div class="tier-price">客製</div>
+                <div class="tier-period">報價 / 專案</div>
+                <div class="feature-list">
+                    <div class="feature-item"><span class="feature-check">✓</span>完全私有化部署</div>
+                    <div class="feature-item"><span class="feature-check">✓</span>企業級SLA</div>
+                    <div class="feature-item"><span class="feature-check">✓</span>專屬架構設計</div>
+                    <div class="feature-item"><span class="feature-check">✓</span>現場技術支援</div>
+                </div>
+                <a href="#" class="tier-button">申請評估</a>
+            </div>
+        </section>
+
+        <section class="enterprise-features">
+            <div class="feature-category f1">
+                <div class="feature-header">
+                    <span class="feature-emoji">🔒</span>
+                    <h4 class="feature-title">企業級安全</h4>
+                </div>
+                <p class="feature-description">符合國際安全標準，保護您的企業資料和商業機密</p>
+                <ul class="feature-highlights">
+                    <li class="feature-highlight">ISO 27001 認證</li>
+                    <li class="feature-highlight">端到端加密</li>
+                    <li class="feature-highlight">存取控制管理</li>
+                    <li class="feature-highlight">合規性審計</li>
+                </ul>
+            </div>
+            <div class="feature-category f2">
+                <div class="feature-header">
+                    <span class="feature-emoji">📈</span>
+                    <h4 class="feature-title">無限擴展</h4>
+                </div>
+                <p class="feature-description">彈性架構設計，隨著業務成長自動擴展服務容量</p>
+                <ul class="feature-highlights">
+                    <li class="feature-highlight">自動水平擴展</li>
+                    <li class="feature-highlight">負載平衡機制</li>
+                    <li class="feature-highlight">高可用性保證</li>
+                    <li class="feature-highlight">災難恢復方案</li>
+                </ul>
+            </div>
+            <div class="feature-category f3">
+                <div class="feature-header">
+                    <span class="feature-emoji">🔧</span>
+                    <h4 class="feature-title">客製化服務</h4>
+                </div>
+                <p class="feature-description">專業團隊為您量身打造符合業務需求的AI解決方案</p>
+                <ul class="feature-highlights">
+                    <li class="feature-highlight">專屬架構設計</li>
+                    <li class="feature-highlight">客製化功能開發</li>
+                    <li class="feature-highlight">企業系統整合</li>
+                    <li class="feature-highlight">專業顧問服務</li>
+                </ul>
+            </div>
+            <div class="feature-category f4">
+                <div class="feature-header">
+                    <span class="feature-emoji">🏆</span>
+                    <h4 class="feature-title">專業支援</h4>
+                </div>
+                <p class="feature-description">全天候專業技術團隊，確保您的AI機器人穩定運行</p>
+                <ul class="feature-highlights">
+                    <li class="feature-highlight">24/7技術支援</li>
+                    <li class="feature-highlight">專屬客戶經理</li>
+                    <li class="feature-highlight">定期健檢服務</li>
+                    <li class="feature-highlight">培訓與諮詢</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="security-banner">
+            <div class="security-content">
+                <h3 class="security-title">🛡️ 企業級安全保障</h3>
+                <p class="security-description">我們理解企業對於資料安全的重視，因此採用最高等級的安全措施，包括多層加密、身份驗證、存取控制等，確保您的商業資料絕對安全。</p>
+            </div>
+        </section>
+
+        <section class="cta-section">
+            <a class="cta-button" href="#">
+                預約企業諮詢
+                <span>→</span>
+            </a>
+        </section>
+    </div>
+</body>
+</html>
