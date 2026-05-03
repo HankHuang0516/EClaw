@@ -1,3 +1,10 @@
+# [1.1143.0](https://github.com/HankHuang0516/EClaw/compare/v1.1142.0...v1.1143.0) (2026-05-03)
+
+
+### Features
+
+* **info:** embed Claude Design slide for why_eclaw_b1_dual_currency ([3cfb580](https://github.com/HankHuang0516/EClaw/commit/3cfb58098c722a37ef1cc0fa9d8fce9921e4ca02))
+
 # [1.1142.0](https://github.com/HankHuang0516/EClaw/compare/v1.1141.0...v1.1142.0) (2026-05-03)
 
 
