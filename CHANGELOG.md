@@ -1,3 +1,10 @@
+## [1.1150.1](https://github.com/HankHuang0516/EClaw/compare/v1.1150.0...v1.1150.1) (2026-05-03)
+
+
+### Bug Fixes
+
+* **settings:** unbreak channel-api and kanban-nudge APP deep links ([#2340](https://github.com/HankHuang0516/EClaw/issues/2340)) ([f6aa25d](https://github.com/HankHuang0516/EClaw/commit/f6aa25d7bbdc232cf1cecfd8a8cdcb431646b255))
+
 # [1.1150.0](https://github.com/HankHuang0516/EClaw/compare/v1.1149.0...v1.1150.0) (2026-05-03)
 
 
