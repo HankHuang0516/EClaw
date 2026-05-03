@@ -1,3 +1,10 @@
+# [1.1156.0](https://github.com/HankHuang0516/EClaw/compare/v1.1155.0...v1.1156.0) (2026-05-03)
+
+
+### Features
+
+* **info:** embed Claude Design slide for why_eclaw_b10_post_rental_a2a_collaboration ([dadf695](https://github.com/HankHuang0516/EClaw/commit/dadf6958992a46fa884407266426e2ab050d3845))
+
 # [1.1155.0](https://github.com/HankHuang0516/EClaw/compare/v1.1154.0...v1.1155.0) (2026-05-03)
 
 
