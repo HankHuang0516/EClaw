@@ -1,3 +1,10 @@
+## [1.1143.1](https://github.com/HankHuang0516/EClaw/compare/v1.1143.0...v1.1143.1) (2026-05-03)
+
+
+### Bug Fixes
+
+* **i18n:** relocate b1_dual_currency_cta zh value from ko block to zh block ([#2331](https://github.com/HankHuang0516/EClaw/issues/2331)) ([2873732](https://github.com/HankHuang0516/EClaw/commit/2873732395f3795555a2faf4328b7e9f7cb8ee1b)), closes [#2329](https://github.com/HankHuang0516/EClaw/issues/2329)
+
 # [1.1143.0](https://github.com/HankHuang0516/EClaw/compare/v1.1142.0...v1.1143.0) (2026-05-03)
 
 
