@@ -1,3 +1,10 @@
+## [1.1138.4](https://github.com/HankHuang0516/EClaw/compare/v1.1138.3...v1.1138.4) (2026-05-03)
+
+
+### Bug Fixes
+
+* **channel-api:** add @-mention auto-router parity with /api/transform ([#2299](https://github.com/HankHuang0516/EClaw/issues/2299)) ([a295bea](https://github.com/HankHuang0516/EClaw/commit/a295beaaacb62185cc74da7106738df0cf95ba13)), closes [#1619](https://github.com/HankHuang0516/EClaw/issues/1619) [#6](https://github.com/HankHuang0516/EClaw/issues/6) [#6](https://github.com/HankHuang0516/EClaw/issues/6) [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 ## [1.1138.3](https://github.com/HankHuang0516/EClaw/compare/v1.1138.2...v1.1138.3) (2026-05-03)
 
 
