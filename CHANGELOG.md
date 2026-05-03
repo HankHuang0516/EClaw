@@ -1,3 +1,10 @@
+## [1.1150.5](https://github.com/HankHuang0516/EClaw/compare/v1.1150.4...v1.1150.5) (2026-05-03)
+
+
+### Bug Fixes
+
+* **info:** cache-bust why_eclaw_b3 thumbnail ([c79b921](https://github.com/HankHuang0516/EClaw/commit/c79b92144b52174d6626532e9364ef7ba461c039))
+
 ## [1.1150.4](https://github.com/HankHuang0516/EClaw/compare/v1.1150.3...v1.1150.4) (2026-05-03)
 
 
