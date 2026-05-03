@@ -1,3 +1,10 @@
+# [1.1158.0](https://github.com/HankHuang0516/EClaw/compare/v1.1157.0...v1.1158.0) (2026-05-03)
+
+
+### Features
+
+* **info:** embed Claude Design slide for guide_usecase_claude_openclaw ([48c703c](https://github.com/HankHuang0516/EClaw/commit/48c703cfc9bc8d79a9acf2fa0c3d23e7e67c13a8))
+
 # [1.1157.0](https://github.com/HankHuang0516/EClaw/compare/v1.1156.0...v1.1157.0) (2026-05-03)
 
 
