@@ -701,7 +701,7 @@
             <div class="kb-modal-header">
                 <h3 id="detailTitle"></h3>
                 <button class="kb-btn-quote-chat" onclick="quoteKanbanCardToChat()" title="引用到聊天視窗">📌 引用</button>
-                <button class="kb-modal-close" onclick="closeDetail()">&times;</button>
+                <button class="kb-modal-close" onclick="closeDetail()" aria-label="Close">&times;</button>
             </div>
             <div class="kb-modal-meta" id="detailMeta"></div>
             <div class="kb-modal-tabs">
@@ -1790,6 +1790,9 @@
             document.getElementById('detailModal').classList.remove('show');
             openCardId = null;
         }
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.getElementById('detailModal').classList.contains('show')) closeDetail();
+        });
 
         function eclawShowFloatToast(msg) {
             const tip = document.createElement('div');
