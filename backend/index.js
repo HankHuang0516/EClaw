@@ -6501,7 +6501,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         }
     }
 
-    let { deviceId, entityId, botSecret, name, character, state, message, parts, targetDeviceId, speakTo, broadcast, card, attachments, senderHint } = req.body;
+    let { deviceId, entityId, botSecret, name, character, state, message, parts, targetDeviceId, speakTo, broadcast, card, attachments, senderHint, aboutCardId } = req.body;
 
     if (!deviceId) {
         return res.status(400).json({ success: false, message: "deviceId required" });
@@ -7006,7 +7006,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // Previously required state === 'IDLE', but some bots don't send state explicitly
     // Skip for leased_out entities — rental bot responses belong to the renter's context
     if (state !== 'BUSY' && finalMessage && entity.rental_status !== 'leased_out' && kanbanModule && kanbanModule.autoReviewOnTransform) {
-        kanbanModule.autoReviewOnTransform(deviceId, eId, finalMessage).catch(err => {
+        kanbanModule.autoReviewOnTransform(deviceId, eId, finalMessage, aboutCardId).catch(err => {
             console.error(`[Transform] autoReviewOnTransform failed:`, err.message);
         });
     }
