@@ -1,3 +1,10 @@
+## [1.1150.7](https://github.com/HankHuang0516/EClaw/compare/v1.1150.6...v1.1150.7) (2026-05-03)
+
+
+### Bug Fixes
+
+* **i18n hi:** translate guide_kb_uc_th_scene to clear stripped-baseline leak ([#2358](https://github.com/HankHuang0516/EClaw/issues/2358)) ([28cbc64](https://github.com/HankHuang0516/EClaw/commit/28cbc64960c9d99ab752b2f66278315522650943)), closes [#2352](https://github.com/HankHuang0516/EClaw/issues/2352) [#2356](https://github.com/HankHuang0516/EClaw/issues/2356)
+
 ## [1.1150.6](https://github.com/HankHuang0516/EClaw/compare/v1.1150.5...v1.1150.6) (2026-05-03)
 
 
