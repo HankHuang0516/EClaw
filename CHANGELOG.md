@@ -1,3 +1,10 @@
+## [1.1140.5](https://github.com/HankHuang0516/EClaw/compare/v1.1140.4...v1.1140.5) (2026-05-03)
+
+
+### Bug Fixes
+
+* **enterprise:** replace stale product catalog demo link ([#2325](https://github.com/HankHuang0516/EClaw/issues/2325)) ([830be25](https://github.com/HankHuang0516/EClaw/commit/830be25aa3124aa1cdf7423d08b571076aabdba8))
+
 ## [1.1140.4](https://github.com/HankHuang0516/EClaw/compare/v1.1140.3...v1.1140.4) (2026-05-03)
 
 
