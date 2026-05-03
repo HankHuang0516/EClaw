@@ -2440,6 +2440,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     // (default false: child card has just been born; let stale-scan
                     // pick it up later instead of pinging immediately, which Hank
                     // experienced as 5–6 nudges within an hour on 2026-04-28).
+                    // Spec: docs/mission-v2-kanban-spec.md §十一 "通知 gates（device preferences）".
                     const spawnPrefs = await devicePrefs.getPrefs(card.device_id).catch(() => ({}));
                     if (bots.length > 0 && spawnPrefs.kanban_cron_spawn_notify === true) {
                         const lang = await getDeviceLanguage(card.device_id);
