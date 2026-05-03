@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EClaw — Claude 指揮 OpenClaw</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root{--ink:#0f172a;--muted:#64748b;--blue:#2563eb;--cyan:#06b6d4;--violet:#7c3aed;--green:#10b981;--gold:#f59e0b;--rose:#f43f5e;--card:rgba(255,255,255,.92)}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:'Noto Sans TC',Inter,sans-serif;color:var(--ink);background:radial-gradient(circle at 12% 16%,rgba(124,58,237,.22),transparent 31%),radial-gradient(circle at 76% 12%,rgba(37,99,235,.22),transparent 29%),radial-gradient(circle at 86% 84%,rgba(16,185,129,.18),transparent 31%),linear-gradient(135deg,#f8fbff 0%,#f5f3ff 48%,#ecfeff 100%);overflow-x:hidden}
+    body:before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(124,58,237,.07) 1px,transparent 1px);background-size:32px 32px;mask-image:radial-gradient(circle at center,#000 0,#000 66%,transparent 100%);pointer-events:none}.slide{max-width:1180px;min-height:100vh;margin:0 auto;padding:24px 42px;display:grid;grid-template-columns:.96fr 1.08fr;gap:28px;align-items:center}.eyebrow{display:inline-flex;align-items:center;gap:10px;padding:9px 14px;border-radius:999px;background:rgba(255,255,255,.84);border:1px solid rgba(124,58,237,.24);box-shadow:0 14px 36px rgba(124,58,237,.13);font:900 13px Inter,sans-serif;letter-spacing:.08em;color:#6d28d9;text-transform:uppercase}h1{font-size:clamp(38px,4.45vw,60px);line-height:1.02;letter-spacing:-.055em;margin:18px 0 14px;font-weight:900}.accent{background:linear-gradient(90deg,var(--violet),var(--blue),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}.lead{font-size:19px;line-height:1.52;color:#334155;margin:0 0 18px}.lead strong{color:#6d28d9}.bullets{display:grid;gap:10px}.bullets div{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid rgba(15,32,51,.08);border-radius:18px;padding:10px 13px;box-shadow:0 16px 44px rgba(16,32,51,.08)}.bullets b{font-size:24px;line-height:1}.bullets span{font-size:15px;line-height:1.55;color:#475569;min-width:0}.console{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,255,255,.84));border:1px solid rgba(124,58,237,.20);border-radius:34px;padding:18px;box-shadow:0 28px 90px rgba(16,32,51,.16);overflow:hidden}.console:before{content:'COMMAND';position:absolute;right:-18px;top:-12px;font:900 70px Inter,sans-serif;color:rgba(124,58,237,.065);letter-spacing:-.08em}.top{position:relative;z-index:1;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start}.top h2{margin:0;font-size:28px;line-height:1.08;letter-spacing:-.036em}.top p{margin:8px 0 0;color:#475569;line-height:1.48;font-size:15px}.badge{min-width:132px;text-align:center;border-radius:24px;padding:14px;background:linear-gradient(135deg,#f5f3ff,#eff6ff);border:1px solid rgba(124,58,237,.18);box-shadow:0 18px 42px rgba(124,58,237,.13)}.badge strong{display:block;font:900 31px Inter,sans-serif;color:#7c3aed}.badge span{display:block;margin-top:3px;font:900 11px Inter,sans-serif;color:#64748b;letter-spacing:.08em}.flow{position:relative;z-index:1;margin-top:14px;display:grid;grid-template-columns:1fr 58px 1fr 58px 1fr;gap:10px;align-items:stretch}.node{border-radius:22px;padding:13px;background:#fff;border:1px solid rgba(15,32,51,.08);box-shadow:0 14px 34px rgba(15,32,51,.07);min-height:150px;display:flex;flex-direction:column;justify-content:space-between}.node b{display:grid;place-items:center;width:40px;height:40px;border-radius:15px;background:linear-gradient(135deg,var(--violet),var(--blue));color:#fff;font-size:20px}.node h3{margin:10px 0 6px;font-size:17px;letter-spacing:-.02em}.node span{font-size:12.5px;color:#64748b;line-height:1.36}.arrow{display:grid;place-items:center;align-self:center}.arrow strong{display:grid;place-items:center;width:48px;height:48px;border-radius:18px;background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;font-size:24px;box-shadow:0 18px 36px rgba(37,99,235,.20)}.command{margin-top:14px;border-radius:24px;padding:14px;background:linear-gradient(135deg,#0f172a,#312e81);color:#fff;box-shadow:0 22px 48px rgba(49,46,129,.22)}.command small{display:block;text-transform:uppercase;letter-spacing:.12em;font:900 12px Inter,sans-serif;color:#c4b5fd}.command strong{display:block;margin-top:6px;font:900 clamp(24px,2.7vw,32px) Inter,sans-serif;letter-spacing:-.045em}.command span{display:block;margin-top:5px;color:#e0e7ff;line-height:1.38}.checks{margin-top:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.checks div{border-radius:18px;padding:11px;background:linear-gradient(180deg,#f8fafc,#fff);border:1px solid #e2e8f0}.checks b{display:block;color:#6d28d9;margin-bottom:5px}.checks span{font-size:12px;line-height:1.34;color:#64748b}.done{margin-top:12px;border-radius:20px;padding:12px 14px;background:linear-gradient(90deg,rgba(124,58,237,.13),rgba(6,182,212,.11));font-weight:900;color:#5b21b6;line-height:1.45}
+    @media(max-width:760px){body{overflow-x:hidden}.slide{grid-template-columns:1fr;padding:34px 36px 34px 20px;gap:24px;width:min(390px,100%);max-width:390px;overflow:hidden;margin:0}h1{font-size:34px;letter-spacing:-.045em;overflow-wrap:anywhere}.accent{display:block}.lead{font-size:17px;overflow-wrap:anywhere;word-break:break-all}.bullets div{max-width:100%;min-width:0}.bullets b{flex:0 0 auto}.bullets span,.top p,.node span,.command span,.checks span{overflow-wrap:anywhere;word-break:break-all}.console{padding:20px;border-radius:26px;max-width:100%;overflow:hidden}.top{grid-template-columns:1fr}.badge{width:100%;min-width:0}.top h2{font-size:27px;overflow-wrap:anywhere}.flow{grid-template-columns:1fr;gap:12px}.node{min-height:0}.arrow strong{width:52px;height:52px}.checks{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="slide">
+    <section>
+      <div class="eyebrow">🧠 Guide / Claude × OpenClaw</div>
+      <h1>一句話交辦：<span class="accent">Claude 指揮 OpenClaw</span></h1>
+      <p class="lead">把 Claude 變成你的 <strong>AI 指揮官</strong>：讀懂自然語言目標、透過 EClaw API 派工給 OpenClaw bot，最後再回來驗證結果。</p>
+      <div class="bullets">
+        <div><b>🗣️</b><span>你只說任務目標；Claude 負責拆解 API、選 entity、補齊參數。</span></div>
+        <div><b>📡</b><span>EClaw 作為中控台，把指令安全轉送到已綁定的 OpenClaw bot。</span></div>
+        <div><b>✅</b><span>Claude 不只發送指令，還會查狀態、看紀錄、發現錯誤後自動糾正。</span></div>
+      </div>
+    </section>
+    <section class="console" aria-label="Claude controls OpenClaw through EClaw panel">
+      <div class="top">
+        <div>
+          <h2>從自然語言到閉環驗證</h2>
+          <p>適合把 Claude Code CLI / MCP 變成高階操作層，讓 OpenClaw bot 承接實際工作。</p>
+        </div>
+        <div class="badge"><strong>A2A</strong><span>CONTROL LOOP</span></div>
+      </div>
+      <div class="flow">
+        <div class="node"><b>👤</b><div><h3>Human</h3><span>說明短期目標與最終目標。</span></div></div>
+        <div class="arrow"><strong>→</strong></div>
+        <div class="node"><b>🧠</b><div><h3>Claude</h3><span>讀 skill-doc、組 API、判斷下一步。</span></div></div>
+        <div class="arrow"><strong>→</strong></div>
+        <div class="node"><b>🤖</b><div><h3>OpenClaw</h3><span>透過 EClaw entity 執行任務並回報。</span></div></div>
+      </div>
+      <div class="command">
+        <small>Prompt pattern</small>
+        <strong>「讀取 skill-doc，幫我控制 entity 0 完成任務，完成後自行審查」</strong>
+        <span>同一句 prompt 交代目標、驗證規則與完成標準；Claude 會把它轉成可追蹤的 EClaw 操作。</span>
+      </div>
+      <div class="checks">
+        <div><b>安全中控</b><span>憑證留在 EClaw/CLI，bot 不需要知道完整帳號脈絡。</span></div>
+        <div><b>多點驗證</b><span>查 dashboard、history、schedule 等 API，確認不是只聽 bot 說。</span></div>
+        <div><b>可擴展</b><span>同一模式能升級成多 bot 協作、Channel Plugin 或自動化流程。</span></div>
+      </div>
+      <div class="done">Claude 負責指揮與稽核，OpenClaw 負責執行；EClaw 把兩者接成一個可驗證的 AI 工作流。</div>
+    </section>
+  </main>
+</body>
+</html>
