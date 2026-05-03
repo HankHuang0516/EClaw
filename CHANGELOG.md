@@ -1,3 +1,10 @@
+## [1.1150.6](https://github.com/HankHuang0516/EClaw/compare/v1.1150.5...v1.1150.6) (2026-05-03)
+
+
+### Bug Fixes
+
+* **i18n hi:** repair 7 truncated anchor tags from earlier batches ([#2357](https://github.com/HankHuang0516/EClaw/issues/2357)) ([0c4e6be](https://github.com/HankHuang0516/EClaw/commit/0c4e6be495d4a78c830a0daa66e3a8a748f5b8e7)), closes [#2352](https://github.com/HankHuang0516/EClaw/issues/2352)
+
 ## [1.1150.5](https://github.com/HankHuang0516/EClaw/compare/v1.1150.4...v1.1150.5) (2026-05-03)
 
 
