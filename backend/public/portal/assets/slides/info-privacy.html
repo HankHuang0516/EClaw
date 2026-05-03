@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1280, initial-scale=1.0">
+    <title>EClaw - 🛡️ 安全與隱私保障</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #1565C0 0%, #0D47A1 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(251, 192, 45, 0.08) 0%, transparent 45%),
+                radial-gradient(circle at 80% 70%, rgba(69, 39, 160, 0.10) 0%, transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(46, 125, 50, 0.06) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Animations */
+        @keyframes slideInDown {
+            from { opacity: 0; transform: translateY(-50px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-50px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(50px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50%      { transform: scale(1.05); }
+        }
+        @keyframes shieldPulse {
+            0%, 100% { transform: scale(1); }
+            33%      { transform: scale(1.05); }
+            66%      { transform: scale(0.95); }
+        }
+        @keyframes shieldGlow {
+            0%, 100% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16); filter: brightness(1); }
+            50%      { box-shadow: 0 8px 32px rgba(251, 192, 45, 0.45); filter: brightness(1.1); }
+        }
+        @keyframes rotate {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to   { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        @keyframes rotateRev {
+            from { transform: translate(-50%, -50%) rotate(360deg); }
+            to   { transform: translate(-50%, -50%) rotate(0deg); }
+        }
+        @keyframes securityPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            50%      { transform: translate(-50%, -50%) scale(1.1); opacity: 0.85; }
+        }
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .content-wrapper {
+            max-width: 1200px;
+            width: 100%;
+            padding: 36px 56px;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Header */
+        .header-section {
+            text-align: center;
+            margin-bottom: 24px;
+            animation: slideInDown 0.8s ease-out;
+        }
+
+        .emoji-icon {
+            font-size: 56px;
+            margin-bottom: 12px;
+            display: block;
+            animation: shieldPulse 3s ease-in-out infinite;
+        }
+
+        .headline {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 700;
+            font-size: 40px;
+            color: #FFFFFF;
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
+
+        .subline {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 400;
+            font-size: 17px;
+            color: #FBC02D;
+        }
+
+        /* Container */
+        .privacy-container {
+            width: 100%;
+            max-width: 1080px;
+            animation: slideInUp 1s ease-out 0.3s both;
+        }
+
+        /* Shield visualization */
+        .security-shield {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 28px;
+            position: relative;
+            height: 180px;
+        }
+
+        .security-indicator,
+        .shield-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            border-radius: 50%;
+        }
+
+        .security-indicator {
+            width: 260px;
+            height: 260px;
+            border: 2px solid rgba(251, 192, 45, 0.25);
+            animation: securityPulse 6s ease-in-out infinite;
+        }
+
+        .shield-ring.r1 {
+            width: 170px;
+            height: 170px;
+            border: 3px solid rgba(251, 192, 45, 0.45);
+            animation: rotate 15s linear infinite;
+        }
+
+        .shield-ring.r2 {
+            width: 210px;
+            height: 210px;
+            border: 3px solid rgba(187, 134, 252, 0.45);
+            animation: rotateRev 15s linear infinite;
+        }
+
+        .shield-ring.r3 {
+            width: 250px;
+            height: 250px;
+            border: 3px solid rgba(129, 199, 132, 0.40);
+            animation: rotate 22s linear infinite;
+        }
+
+        .shield-core {
+            width: 110px;
+            height: 130px;
+            background: linear-gradient(135deg, #FBC02D 0%, #F57F17 100%);
+            clip-path: polygon(50% 0%, 0% 30%, 0% 80%, 50% 100%, 100% 80%, 100% 30%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #263238;
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            font-size: 14px;
+            text-align: center;
+            line-height: 1.25;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+            position: relative;
+            z-index: 10;
+            animation: shieldGlow 4s ease-in-out infinite;
+        }
+
+        /* Security pillars */
+        .security-pillars {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 22px;
+            margin-bottom: 28px;
+        }
+
+        .pillar-card {
+            background: #FFFFFF;
+            border-radius: 18px;
+            padding: 24px 20px;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+            border: 2px solid #E0E0E0;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.4s ease;
+        }
+
+        .pillar-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+        }
+
+        .pillar-card.p1::after { background: linear-gradient(135deg, #1565C0 0%, #0D47A1 100%); }
+        .pillar-card.p2::after { background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%); }
+        .pillar-card.p3::after { background: linear-gradient(135deg, #4527A0 0%, #311B92 100%); }
+
+        .pillar-card.p1 { animation: slideInLeft  0.8s ease-out 1.1s both; }
+        .pillar-card.p2 { animation: slideInUp    0.8s ease-out 1.3s both; }
+        .pillar-card.p3 { animation: slideInRight 0.8s ease-out 1.5s both; }
+
+        .pillar-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+        }
+
+        .pillar-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 14px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: #FFFFFF;
+        }
+
+        .pillar-card.p1 .pillar-icon { background: linear-gradient(135deg, #1565C0 0%, #0D47A1 100%); }
+        .pillar-card.p2 .pillar-icon { background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%); }
+        .pillar-card.p3 .pillar-icon { background: linear-gradient(135deg, #4527A0 0%, #311B92 100%); }
+
+        .pillar-title {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 600;
+            font-size: 18px;
+            color: #263238;
+            margin-bottom: 10px;
+        }
+
+        .pillar-description {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 400;
+            font-size: 13px;
+            color: #78909C;
+            line-height: 1.55;
+            margin-bottom: 14px;
+        }
+
+        .security-features {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            text-align: left;
+        }
+
+        .security-feature {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px 0;
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 500;
+            font-size: 12.5px;
+            color: #37474F;
+        }
+
+        .feature-check {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #2E7D32;
+            color: #FFFFFF;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            flex-shrink: 0;
+        }
+
+        /* Compliance badges */
+        .compliance-section {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 26px;
+        }
+
+        .compliance-badge {
+            background: #FFFFFF;
+            border-radius: 14px;
+            padding: 18px 14px;
+            text-align: center;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14);
+            border: 2px solid #BBDEFB;
+            transition: all 0.4s ease;
+        }
+
+        .compliance-badge:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.20);
+            border-color: #1565C0;
+        }
+
+        .compliance-badge.b1 { animation: slideInLeft  0.7s ease-out 2.0s both; }
+        .compliance-badge.b2 { animation: slideInUp    0.7s ease-out 2.15s both; }
+        .compliance-badge.b3 { animation: slideInUp    0.7s ease-out 2.3s both; }
+        .compliance-badge.b4 { animation: slideInRight 0.7s ease-out 2.45s both; }
+
+        .badge-icon {
+            font-size: 22px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .badge-name {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            color: #263238;
+            margin-bottom: 6px;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-description {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 400;
+            font-size: 11px;
+            color: #78909C;
+            line-height: 1.45;
+        }
+
+        /* Trust banner */
+        .trust-banner {
+            background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+            color: #FFFFFF;
+            padding: 24px 32px;
+            border-radius: 18px;
+            text-align: center;
+            margin-bottom: 24px;
+            animation: slideInUp 1s ease-out 2.8s both;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .trust-banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(circle at 1px 1px, rgba(251, 192, 45, 0.18) 1px, transparent 0);
+            background-size: 18px 18px;
+            pointer-events: none;
+        }
+
+        .trust-content {
+            position: relative;
+            z-index: 2;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 28px;
+            align-items: center;
+        }
+
+        .trust-stat { text-align: center; }
+
+        .trust-number {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            font-size: 34px;
+            margin-bottom: 6px;
+            animation: countUp 1s ease-out 3.2s both;
+            line-height: 1;
+        }
+
+        .trust-label {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 500;
+            font-size: 13px;
+            opacity: 0.92;
+        }
+
+        /* CTA */
+        .cta-section {
+            text-align: center;
+            animation: slideInUp 1s ease-out 3.5s both;
+        }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 34px;
+            background: linear-gradient(135deg, #FBC02D 0%, #F57F17 100%);
+            color: #263238;
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            text-decoration: none;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(251, 192, 45, 0.30);
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+        }
+
+        .cta-button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 32px rgba(251, 192, 45, 0.45);
+        }
+    </style>
+</head>
+<body>
+    <div class="content-wrapper">
+        <section class="header-section">
+            <span class="emoji-icon">🛡️</span>
+            <h1 class="headline">Security &amp; Privacy Protection<br>安全與隱私保障</h1>
+            <p class="subline">多層次安全架構，守護您的數據與隱私</p>
+        </section>
+
+        <section class="privacy-container">
+            <div class="security-shield">
+                <div class="security-indicator"></div>
+                <div class="shield-ring r3"></div>
+                <div class="shield-ring r2"></div>
+                <div class="shield-ring r1"></div>
+                <div class="shield-core">🔐<br>EClaw<br>Shield</div>
+            </div>
+
+            <div class="security-pillars">
+                <div class="pillar-card p1">
+                    <div class="pillar-icon">🔒</div>
+                    <h3 class="pillar-title">資料加密</h3>
+                    <p class="pillar-description">採用軍用級AES-256加密標準，確保資料在傳輸和存儲過程中的絕對安全</p>
+                    <ul class="security-features">
+                        <li class="security-feature"><span class="feature-check">✓</span>端到端加密傳輸</li>
+                        <li class="security-feature"><span class="feature-check">✓</span>資料庫加密存儲</li>
+                        <li class="security-feature"><span class="feature-check">✓</span>密鑰管理系統</li>
+                        <li class="security-feature"><span class="feature-check">✓</span>定期加密更新</li>
+                    </ul>
+                </div>
+
+                <div class="pillar-card p2">
+                    <div class="pillar-icon">👤</div>
+                    <h3 class="pillar-title">身份驗證</h3>
+                    <p class="pillar-description">多因子身份驗證系統，確保只有授權人員能夠存取您的AI機器人和資料</p>
+                    <ul class="security-features">
+                        <li class="security-feature"><span class="feature-check">✓</span>多重身份驗證</li>
+                        <li class="security-feature"><span class="feature-check">✓</span>生物識別支援</li>
+                        <li class="security-feature"><span class="feature-check">✓</span>單點登錄(SSO)</li>
+                        <li class="security-feature"><span class="feature-check">✓</span>存取權限管控</li>
+                    </ul>
+                </div>
+
+                <div class="pillar-card p3">
+                    <div class="pillar-icon">🔍</div>
+                    <h3 class="pillar-title">隱私保護</h3>
+                    <p class="pillar-description">嚴格遵循GDPR、CCPA等國際隱私法規，保障用戶個人資料隱私權</p>
+                    <ul class="security-features">
+                        <li class="security-feature"><span class="feature-check">✓</span>資料最小化原則</li>
+                        <li class="security-feature"><span class="feature-check">✓</span>同意機制管理</li>
+                        <li class="security-feature"><span class="feature-check">✓</span>資料可攜權</li>
+                        <li class="security-feature"><span class="feature-check">✓</span>被遺忘權</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="compliance-section">
+                <div class="compliance-badge b1">
+                    <span class="badge-icon">📋</span>
+                    <h4 class="badge-name">ISO 27001</h4>
+                    <p class="badge-description">國際資訊安全管理標準認證</p>
+                </div>
+                <div class="compliance-badge b2">
+                    <span class="badge-icon">🇪🇺</span>
+                    <h4 class="badge-name">GDPR</h4>
+                    <p class="badge-description">歐盟一般資料保護規範合規</p>
+                </div>
+                <div class="compliance-badge b3">
+                    <span class="badge-icon">🏛️</span>
+                    <h4 class="badge-name">SOC 2</h4>
+                    <p class="badge-description">服務組織控制報告認證</p>
+                </div>
+                <div class="compliance-badge b4">
+                    <span class="badge-icon">🏥</span>
+                    <h4 class="badge-name">HIPAA</h4>
+                    <p class="badge-description">健康保險隱私法案合規</p>
+                </div>
+            </div>
+
+            <div class="trust-banner">
+                <div class="trust-content">
+                    <div class="trust-stat">
+                        <div class="trust-number">99.99%</div>
+                        <div class="trust-label">安全可用時間</div>
+                    </div>
+                    <div class="trust-stat">
+                        <div class="trust-number">0</div>
+                        <div class="trust-label">資料外洩事件</div>
+                    </div>
+                    <div class="trust-stat">
+                        <div class="trust-number">24/7</div>
+                        <div class="trust-label">安全監控</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta-section">
+            <a class="cta-button" href="#">
+                了解安全架構
+                <span>→</span>
+            </a>
+        </section>
+    </div>
+</body>
+</html>
