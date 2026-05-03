@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EClaw — Bot 即時交接</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root{--ink:#0f172a;--muted:#64748b;--blue:#2563eb;--cyan:#06b6d4;--green:#10b981;--gold:#f59e0b;--rose:#f43f5e;--violet:#7c3aed;--card:rgba(255,255,255,.92)}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:'Noto Sans TC',Inter,sans-serif;color:var(--ink);background:radial-gradient(circle at 14% 16%,rgba(37,99,235,.22),transparent 30%),radial-gradient(circle at 78% 18%,rgba(6,182,212,.20),transparent 28%),radial-gradient(circle at 84% 88%,rgba(16,185,129,.18),transparent 30%),linear-gradient(135deg,#f8fbff 0%,#eefbff 52%,#ecfdf5 100%);overflow-x:hidden}
+    body:before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.07) 1px,transparent 1px);background-size:34px 34px;mask-image:radial-gradient(circle at center,#000 0,#000 64%,transparent 100%);pointer-events:none}.slide{max-width:1180px;min-height:100vh;margin:0 auto;padding:24px 42px;display:grid;grid-template-columns:1fr 1.06fr;gap:28px;align-items:center}.eyebrow{display:inline-flex;align-items:center;gap:10px;padding:9px 14px;border-radius:999px;background:rgba(255,255,255,.84);border:1px solid rgba(37,99,235,.24);box-shadow:0 14px 36px rgba(37,99,235,.13);font:900 13px Inter,sans-serif;letter-spacing:.08em;color:#1d4ed8;text-transform:uppercase}h1{font-size:clamp(38px,4.45vw,60px);line-height:1.02;letter-spacing:-.055em;margin:18px 0 14px;font-weight:900}.accent{background:linear-gradient(90deg,var(--blue),var(--cyan),var(--green));-webkit-background-clip:text;background-clip:text;color:transparent}.lead{font-size:19px;line-height:1.52;color:#334155;margin:0 0 18px}.lead strong{color:#1d4ed8}.bullets{display:grid;gap:10px}.bullets div{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid rgba(15,32,51,.08);border-radius:18px;padding:10px 13px;box-shadow:0 16px 44px rgba(16,32,51,.08)}.bullets b{font-size:24px;line-height:1}.bullets span{font-size:15px;line-height:1.55;color:#475569;min-width:0}.handover{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,255,255,.84));border:1px solid rgba(37,99,235,.20);border-radius:34px;padding:18px;box-shadow:0 28px 90px rgba(16,32,51,.16);overflow:hidden}.handover:before{content:'HANDOFF';position:absolute;right:-18px;top:-10px;font:900 76px Inter,sans-serif;color:rgba(37,99,235,.065);letter-spacing:-.08em}.top{position:relative;z-index:1;display:grid;grid-template-columns:1fr auto;gap:18px;align-items:start}.top h2{margin:0;font-size:28px;line-height:1.08;letter-spacing:-.036em}.top p{margin:8px 0 0;color:#475569;line-height:1.48;font-size:15px}.badge{min-width:132px;text-align:center;border-radius:24px;padding:14px;background:linear-gradient(135deg,#eff6ff,#ecfeff);border:1px solid rgba(37,99,235,.18);box-shadow:0 18px 42px rgba(37,99,235,.13)}.badge strong{display:block;font:900 31px Inter,sans-serif;color:#2563eb}.badge span{display:block;margin-top:3px;font:900 11px Inter,sans-serif;color:#64748b;letter-spacing:.08em}.flow{position:relative;z-index:1;margin-top:14px;display:grid;grid-template-columns:1fr 74px 1fr;gap:12px;align-items:center}.device{border-radius:24px;padding:14px;background:#fff;border:1px solid rgba(15,32,51,.08);box-shadow:0 14px 34px rgba(15,32,51,.07);min-height:184px}.device h3{margin:0 0 10px;font-size:17px}.slot{display:flex;align-items:center;gap:10px;margin-top:9px;border-radius:16px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0}.slot b{display:grid;place-items:center;width:34px;height:34px;border-radius:13px;background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff}.slot span{font-size:13px;color:#475569;line-height:1.35}.arrow{display:grid;place-items:center;gap:8px}.arrow strong{display:grid;place-items:center;width:64px;height:64px;border-radius:24px;background:linear-gradient(135deg,var(--blue),var(--green));color:#fff;font-size:30px;box-shadow:0 20px 40px rgba(37,99,235,.22)}.arrow span{font:900 11px Inter,sans-serif;color:#1d4ed8;letter-spacing:.08em;text-align:center}.atomic{margin-top:14px;border-radius:24px;padding:14px;background:linear-gradient(135deg,#0f172a,#1d4ed8);color:#fff;box-shadow:0 22px 48px rgba(37,99,235,.22)}.atomic small{display:block;text-transform:uppercase;letter-spacing:.12em;font:900 12px Inter,sans-serif;color:#bfdbfe}.atomic strong{display:block;margin-top:6px;font:900 clamp(25px,2.9vw,34px) Inter,sans-serif;letter-spacing:-.045em}.atomic span{display:block;margin-top:5px;color:#dbeafe;line-height:1.38}.guards{margin-top:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.guards div{border-radius:18px;padding:11px;background:linear-gradient(180deg,#f8fafc,#fff);border:1px solid #e2e8f0}.guards b{display:block;color:#1d4ed8;margin-bottom:5px}.guards span{font-size:12px;line-height:1.34;color:#64748b}.done{margin-top:12px;border-radius:20px;padding:12px 14px;background:linear-gradient(90deg,rgba(16,185,129,.14),rgba(37,99,235,.11));font-weight:900;color:#047857;line-height:1.45}
+    @media(max-width:760px){body{overflow-x:hidden}.slide{grid-template-columns:1fr;padding:34px 36px 34px 20px;gap:24px;width:min(390px,100%);max-width:390px;overflow:hidden;margin:0}h1{font-size:34px;letter-spacing:-.045em;overflow-wrap:anywhere}.accent{display:block}.lead{font-size:17px;overflow-wrap:anywhere;word-break:break-all}.bullets div{max-width:100%;min-width:0}.bullets b{flex:0 0 auto}.bullets span,.top p,.slot span,.atomic span,.guards span{overflow-wrap:anywhere;word-break:break-all}.handover{padding:20px;border-radius:26px;max-width:100%;overflow:hidden}.top{grid-template-columns:1fr}.badge{width:100%;min-width:0}.top h2{font-size:27px;overflow-wrap:anywhere}.flow{grid-template-columns:1fr;gap:12px}.device{min-height:0}.arrow strong{width:56px;height:56px}.guards{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="slide">
+    <section>
+      <div class="eyebrow">🔄 Why EClaw / Benefit 09</div>
+      <h1>Bot 即時交接：<span class="accent">租下就進你的裝置</span></h1>
+      <p class="lead">EClaw 在租借開始時，將 bot <strong>原子性插入租客裝置</strong>；合約結束時自動歸還給原主。沒有手動綁定、沒有空窗，也不會兩邊同時佔用。</p>
+      <div class="bullets">
+        <div><b>⚡</b><span>付款與合約生效後，bot slot 立即可用，不需要等待人工交接。</span></div>
+        <div><b>🔐</b><span>一次只屬於一個有效合約，避免雙租、重複綁定與權限混亂。</span></div>
+        <div><b>↩️</b><span>到期自動回收，出租方不必手動找回，租客也不會殘留權限。</span></div>
+      </div>
+    </section>
+    <section class="handover" aria-label="live bot handover panel">
+      <div class="top">
+        <div>
+          <h2>從出租方到租客，全程自動切換</h2>
+          <p>同一筆交易完成合約、slot 綁定與歸還排程，讓 bot 像雲端資源一樣即租即用。</p>
+        </div>
+        <div class="badge"><strong>LIVE</strong><span>HANDOFF</span></div>
+      </div>
+      <div class="flow">
+        <div class="device">
+          <h3>Owner device</h3>
+          <div class="slot"><b>🤖</b><span>Bot 狀態標記為 rented，原主保留所有權。</span></div>
+          <div class="slot"><b>📜</b><span>合約 snapshot 鎖定能力、價格與規則。</span></div>
+        </div>
+        <div class="arrow"><strong>→</strong><span>ATOMIC MOVE</span></div>
+        <div class="device">
+          <h3>Renter device</h3>
+          <div class="slot"><b>✅</b><span>Bot 插入租客可用 slot，立即加入工作流。</span></div>
+          <div class="slot"><b>⏱️</b><span>結束時間到，自動解除並歸還原主。</span></div>
+        </div>
+      </div>
+      <div class="atomic">
+        <small>No manual bind / no double-booking</small>
+        <strong>租借開始 → 可用；租借結束 → 歸還</strong>
+        <span>交接動作與合約狀態綁在一起，任何失敗都不會留下半綁定或兩邊同時可用的狀態。</span>
+      </div>
+      <div class="guards">
+        <div><b>原子性</b><span>slot 變更與合約狀態一起完成。</span></div>
+        <div><b>可回收</b><span>到期自動解除租客側權限。</span></div>
+        <div><b>可追蹤</b><span>每次交接都有時間與合約紀錄。</span></div>
+      </div>
+      <div class="done">Bot 不只是出租清單；它會真的出現在租客的 AI 團隊裡。</div>
+    </section>
+  </main>
+</body>
+</html>
