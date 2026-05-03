@@ -1,3 +1,10 @@
+# [1.1153.0](https://github.com/HankHuang0516/EClaw/compare/v1.1152.0...v1.1153.0) (2026-05-03)
+
+
+### Features
+
+* **info:** embed Claude Design slide for why_eclaw_b7_contract_version_locking ([7912878](https://github.com/HankHuang0516/EClaw/commit/7912878621de9c007b5831d99c15ca828b07278f))
+
 # [1.1152.0](https://github.com/HankHuang0516/EClaw/compare/v1.1151.0...v1.1152.0) (2026-05-03)
 
 
