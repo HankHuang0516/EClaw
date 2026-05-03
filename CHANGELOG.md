@@ -1,3 +1,10 @@
+# [1.1148.0](https://github.com/HankHuang0516/EClaw/compare/v1.1147.0...v1.1148.0) (2026-05-03)
+
+
+### Features
+
+* **info:** embed integration slide in qs-hooks-section (6/8) ([#2337](https://github.com/HankHuang0516/EClaw/issues/2337)) ([b905663](https://github.com/HankHuang0516/EClaw/commit/b9056634aed8c1b9e3eb9b66cfda874251c2fdd1))
+
 # [1.1147.0](https://github.com/HankHuang0516/EClaw/compare/v1.1146.0...v1.1147.0) (2026-05-03)
 
 
