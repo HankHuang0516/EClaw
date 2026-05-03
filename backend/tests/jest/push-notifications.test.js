@@ -132,3 +132,53 @@ describe('POST /api/device/fcm-token', () => {
         expect(res.status).toBeGreaterThanOrEqual(400);
     });
 });
+
+// ════════════════════════════════════════════════════════════════
+// GET /api/device/fcm-status — diagnostic read endpoint
+// Reports whether the backend has an FCM/APNs token registered for the
+// device, without exposing the token itself. Added to investigate "no
+// notifications despite enabled" (card_5385cfeacade16ce86b56378).
+// ════════════════════════════════════════════════════════════════
+describe('GET /api/device/fcm-status', () => {
+    it('returns 400 when deviceId is missing', async () => {
+        const res = await get('/api/device/fcm-status');
+        expect(res.status).toBe(400);
+    });
+
+    it('returns 401 with wrong deviceSecret', async () => {
+        await registerDevice('test-fcm-status-401');
+        const res = await get('/api/device/fcm-status?deviceId=test-fcm-status-401&deviceSecret=wrong');
+        expect(res.status).toBe(401);
+    });
+
+    it('reports unregistered when no token has been sent', async () => {
+        const deviceSecret = await registerDevice('test-fcm-status-empty');
+        const res = await get(`/api/device/fcm-status?deviceId=test-fcm-status-empty&deviceSecret=${deviceSecret}`);
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.fcm.registered).toBe(false);
+        expect(res.body.fcm.prefix).toBeNull();
+        expect(res.body.apns.registered).toBe(false);
+    });
+
+    it('reports registered + prefix after fcm-token POST', async () => {
+        const deviceSecret = await registerDevice('test-fcm-status-set');
+        await post('/api/device/fcm-token')
+            .send({ deviceId: 'test-fcm-status-set', deviceSecret, token: 'fcmToken-abcdef-123456' });
+
+        const res = await get(`/api/device/fcm-status?deviceId=test-fcm-status-set&deviceSecret=${deviceSecret}`);
+        expect(res.status).toBe(200);
+        expect(res.body.fcm.registered).toBe(true);
+        expect(res.body.fcm.prefix).toBe('fcmToken-abc');
+        // Sanity: never leak the full token
+        const body = JSON.stringify(res.body);
+        expect(body).not.toContain('fcmToken-abcdef-123456');
+    });
+
+    it('exposes firebaseAdminInitialized boolean', async () => {
+        const deviceSecret = await registerDevice('test-fcm-status-fb');
+        const res = await get(`/api/device/fcm-status?deviceId=test-fcm-status-fb&deviceSecret=${deviceSecret}`);
+        expect(res.status).toBe(200);
+        expect(typeof res.body.firebaseAdminInitialized).toBe('boolean');
+    });
+});

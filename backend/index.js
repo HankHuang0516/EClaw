@@ -16697,16 +16697,38 @@ app.post('/api/device/fcm-token', (req, res) => {
         device.apnsToken = resolvedToken;
         chatPool.query('ALTER TABLE devices ADD COLUMN IF NOT EXISTS apns_token TEXT').catch(() => {});
         chatPool.query('UPDATE devices SET apns_token = $1 WHERE device_id = $2', [resolvedToken, deviceId]).catch(() => {});
-        console.log(`[PUSH] APNs token registered`, { deviceId, prevPrefix, newPrefix, changed });
+        serverLog('info', 'fcm_token', `APNs token registered`, { deviceId, metadata: { prevPrefix, newPrefix, changed, platform: 'apns' } });
     } else {
         // Android FCM token (default)
         device.fcmToken = resolvedToken;
         chatPool.query('ALTER TABLE devices ADD COLUMN IF NOT EXISTS fcm_token TEXT').catch(() => {});
         chatPool.query('UPDATE devices SET fcm_token = $1 WHERE device_id = $2', [resolvedToken, deviceId]).catch(() => {});
-        console.log(`[PUSH] FCM token registered`, { deviceId, prevPrefix, newPrefix, changed });
+        serverLog('info', 'fcm_token', `FCM token registered`, { deviceId, metadata: { prevPrefix, newPrefix, changed, platform: 'fcm' } });
     }
 
     res.json({ success: true, platform: resolvedPlatform });
+});
+
+// Read-only FCM/APNs registration status. Diagnostic for "no notifications
+// despite enabled" — lets the device owner check whether the token even made
+// it to the backend without exposing the token itself.
+app.get('/api/device/fcm-status', (req, res) => {
+    const { deviceId, deviceSecret } = req.query;
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+    const device = devices[deviceId];
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+        return res.status(401).json({ success: false, error: 'Invalid credentials' });
+    }
+    const fcm = device.fcmToken || null;
+    const apns = device.apnsToken || null;
+    res.json({
+        success: true,
+        firebaseAdminInitialized: !!firebaseAdmin,
+        fcm: { registered: !!fcm, prefix: fcm ? fcm.slice(0, 12) : null },
+        apns: { registered: !!apns, prefix: apns ? apns.slice(0, 12) : null }
+    });
 });
 
 // Send FCM push notification (enabled when FIREBASE_SERVICE_ACCOUNT is set)
@@ -16717,21 +16739,21 @@ try {
         firebaseAdmin.initializeApp({
             credential: firebaseAdmin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT))
         });
-        console.log('[FCM] Firebase Admin initialized');
+        serverLog('info', 'fcm_init', 'Firebase Admin initialized');
     }
 } catch (e) {
-    console.warn('[FCM] Firebase Admin init skipped:', e.message);
+    serverLog('warn', 'fcm_init', `Firebase Admin init skipped: ${e.message}`);
 }
 
 async function sendFcm(deviceId, notif) {
     if (!firebaseAdmin) {
-        console.log('[FCM] skip: firebaseAdmin not initialized', { deviceId });
+        serverLog('warn', 'fcm_send', 'skip: firebaseAdmin not initialized', { deviceId, metadata: { category: notif?.category } });
         return;
     }
     const device = devices[deviceId];
     const token = device?.fcmToken;
     if (!token) {
-        console.log('[FCM] skip: no fcmToken for device', { deviceId, deviceExists: !!device, category: notif?.category });
+        serverLog('warn', 'fcm_send', 'skip: no fcmToken for device', { deviceId, metadata: { deviceExists: !!device, category: notif?.category } });
         return;
     }
     const tokenPrefix = token.slice(0, 12);
@@ -16759,13 +16781,13 @@ async function sendFcm(deviceId, notif) {
     }
     try {
         const resp = await firebaseAdmin.messaging().send(fcmMessage);
-        console.log('[FCM] sent OK', { deviceId, tokenPrefix, category: notif?.category, messageId: resp });
+        serverLog('info', 'fcm_send', 'sent OK', { deviceId, metadata: { tokenPrefix, category: notif?.category, messageId: resp } });
     } catch (e) {
         if (e.code === 'messaging/registration-token-not-registered') {
             delete devices[deviceId]?.fcmToken;
             chatPool.query('UPDATE devices SET fcm_token = NULL WHERE device_id = $1', [deviceId]).catch(() => {});
         }
-        console.warn('[FCM] Send failed:', { deviceId, tokenPrefix, code: e.code, message: e.message });
+        serverLog('error', 'fcm_send', `send failed: ${e.message}`, { deviceId, metadata: { tokenPrefix, code: e.code } });
     }
 }
 
