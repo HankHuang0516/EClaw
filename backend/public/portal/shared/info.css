@@ -567,6 +567,44 @@
     color: var(--text);
 }
 
+/* ── Guide: Slide preview link ── */
+.guide-content .guide-slide-link {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 24px 0 28px;
+    padding: 14px 18px;
+    background: rgba(108, 99, 255, 0.08);
+    border: 1px solid rgba(108, 99, 255, 0.25);
+    border-radius: var(--radius);
+    text-decoration: none;
+    color: var(--text);
+    transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+.guide-content .guide-slide-link:hover {
+    background: rgba(108, 99, 255, 0.14);
+    border-color: rgba(108, 99, 255, 0.45);
+    transform: translateY(-1px);
+}
+.guide-content .guide-slide-thumb {
+    flex: 0 0 auto;
+    width: 120px;
+    height: 68px;
+    object-fit: cover;
+    border-radius: 6px;
+    background: #1a1a1a;
+}
+.guide-content .guide-slide-cta {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+}
+@media (max-width: 480px) {
+    .guide-content .guide-slide-link { gap: 10px; padding: 10px 12px; }
+    .guide-content .guide-slide-thumb { width: 92px; height: 52px; }
+    .guide-content .guide-slide-cta { font-size: 14px; }
+}
+
 /* ── Guide: MC section ── */
 .guide-content .mc-section {
     margin-top: 24px;

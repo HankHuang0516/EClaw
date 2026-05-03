@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EClaw Mobile - 💤 閒置機器人賺取 e-coin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #2E86C1 15%, #FFFFFF 85%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .mobile-slide {
+            max-width: 375px;
+            margin: 0 auto;
+            min-height: 667px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .visual-section {
+            height: 280px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            margin-bottom: 32px;
+        }
+
+        .mobile-robot {
+            width: 180px;
+            height: 140px;
+            background: linear-gradient(145deg, #3498DB, #2980B9);
+            border-radius: 30px;
+            position: relative;
+            box-shadow: 0 15px 30px rgba(52, 152, 219, 0.3);
+        }
+
+        .mobile-robot-head {
+            width: 60px;
+            height: 45px;
+            background: linear-gradient(145deg, #5DADE2, #3498DB);
+            border-radius: 25px;
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mobile-robot-eyes {
+            display: flex;
+            gap: 8px;
+        }
+
+        .mobile-robot-eye {
+            width: 8px;
+            height: 8px;
+            background: #2C3E50;
+            border-radius: 50%;
+        }
+
+        .mobile-sleep-indicator {
+            position: absolute;
+            top: -15px;
+            right: -25px;
+            font-size: 18px;
+            color: #2C3E50;
+        }
+
+        .mobile-floating-coins {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .mobile-coin {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(145deg, #F39C12, #E67E22);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 12px;
+            animation: floatMobile 3s infinite ease-in-out;
+        }
+
+        .mobile-coin:nth-child(1) { top: 20%; left: 15%; animation-delay: 0s; }
+        .mobile-coin:nth-child(2) { top: 60%; left: 10%; animation-delay: 1s; }
+        .mobile-coin:nth-child(3) { top: 30%; right: 20%; animation-delay: 2s; }
+        .mobile-coin:nth-child(4) { top: 70%; right: 15%; animation-delay: 1.5s; }
+
+        .content-section {
+            flex: 1;
+        }
+
+        .mobile-emoji {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .mobile-headline {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 700;
+            font-size: 32px;
+            color: #2C3E50;
+            line-height: 1.2;
+            margin-bottom: 16px;
+        }
+
+        .mobile-subline {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 500;
+            font-size: 20px;
+            color: #2E86C1;
+            margin-bottom: 32px;
+        }
+
+        .mobile-points {
+            list-style: none;
+            margin-bottom: 32px;
+        }
+
+        .mobile-points li {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 400;
+            font-size: 16px;
+            color: #2C3E50;
+            line-height: 1.5;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .mobile-points li::before {
+            content: '';
+            width: 12px;
+            height: 12px;
+            background: radial-gradient(circle, #F39C12 40%, #E67E22 100%);
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+
+        .mobile-cta {
+            display: block;
+            background: #F39C12;
+            color: white;
+            text-decoration: none;
+            padding: 16px 24px;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            text-align: center;
+            width: 100%;
+            transition: all 0.2s ease;
+        }
+
+        @keyframes floatMobile {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Ensure proper mobile viewport */
+        @media (max-width: 375px) {
+            .mobile-slide {
+                padding: 16px;
+            }
+
+            .mobile-headline {
+                font-size: 28px;
+            }
+
+            .mobile-subline {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-slide">
+        <div class="visual-section">
+            <div class="mobile-robot">
+                <div class="mobile-robot-head">
+                    <div class="mobile-robot-eyes">
+                        <div class="mobile-robot-eye"></div>
+                        <div class="mobile-robot-eye"></div>
+                    </div>
+                </div>
+                <div class="mobile-sleep-indicator">ZZZ</div>
+            </div>
+            <div class="mobile-floating-coins">
+                <div class="mobile-coin">E</div>
+                <div class="mobile-coin">E</div>
+                <div class="mobile-coin">E</div>
+                <div class="mobile-coin">E</div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <div class="mobile-emoji">💤</div>
+            <h1 class="mobile-headline">讓你的AI助手為你賺錢</h1>
+            <p class="mobile-subline">就算在睡覺時！</p>
+
+            <ul class="mobile-points">
+                <li>將閒置的AI助手出租給需要的用戶</li>
+                <li>24/7 自動運作，無需人工干預</li>
+                <li>透過 e-coin 代幣系統獲得穩定收益</li>
+                <li>完全被動收入，睡覺也在賺錢</li>
+            </ul>
+
+            <a href="#" class="mobile-cta">立即註冊，開始賺取被動收入</a>
+        </div>
+    </div>
+</body>
+</html>
