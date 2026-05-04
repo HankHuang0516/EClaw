@@ -2539,6 +2539,77 @@ app.get('/api/debug/info-integration-slide', async (req, res) => {
     }
 });
 
+// Temporary diagnostic endpoint for Info guide mobile layout density:
+// the user guide must not render its long sidebar and dense card/slide groups
+// as one uninterrupted vertical wall on 390px mobile viewports.
+// Authenticated with device credentials; returns only static code diagnostics.
+app.get('/api/debug/info-guide-mobile-layout', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query || {};
+    const timestamp = new Date().toISOString();
+    try {
+        if (!deviceId || !deviceSecret) {
+            return res.status(401).json({ success: false, bug: 'info-guide-mobile-layout', error: 'deviceId and deviceSecret required', timestamp });
+        }
+
+        const memDevice = devices[deviceId];
+        const pool = db._getPool ? db._getPool() : authModule.pool;
+        const dbDevice = pool
+            ? await pool.query('SELECT device_secret FROM devices WHERE device_id = $1', [deviceId])
+            : { rows: [] };
+        const dbDeviceRow = dbDevice.rows[0] || null;
+        const memSecretOk = !!(memDevice && memDevice.deviceSecret && safeEqual(memDevice.deviceSecret, deviceSecret));
+        const dbSecretOk = !!(dbDeviceRow && dbDeviceRow.device_secret && safeEqual(dbDeviceRow.device_secret, deviceSecret));
+        if (!memSecretOk && !dbSecretOk) {
+            return res.status(403).json({ success: false, bug: 'info-guide-mobile-layout', error: 'Invalid credentials', timestamp });
+        }
+
+        const portalDir = path.join(__dirname, 'public', 'portal');
+        const infoHtmlPath = path.join(portalDir, 'info.html');
+        const infoCssPath = path.join(portalDir, 'shared', 'info.css');
+        const infoJsPath = path.join(portalDir, 'shared', 'info.js');
+        const infoHtml = fs.existsSync(infoHtmlPath) ? fs.readFileSync(infoHtmlPath, 'utf8') : '';
+        const infoCss = fs.existsSync(infoCssPath) ? fs.readFileSync(infoCssPath, 'utf8') : '';
+        const infoJs = fs.existsSync(infoJsPath) ? fs.readFileSync(infoJsPath, 'utf8') : '';
+
+        const guidePanelMatches = infoHtml.match(/class=["'][^"']*\bguide-panel\b/g) || [];
+        const whyEclawSlideLinks = infoHtml.match(/info-why-eclaw-b\d+-[^"']+\.html/g) || [];
+
+        res.json({
+            success: true,
+            bug: 'info-guide-mobile-layout',
+            diagnostics: {
+                server: {
+                    build: SERVER_BUILD_TAG,
+                    startedAt: SERVER_STARTED_AT.toISOString(),
+                    uptimeSec: Math.round(process.uptime()),
+                },
+                auth: {
+                    memSecretOk,
+                    dbSecretOk,
+                    requestUserDeviceId: req.user?.deviceId || null,
+                    requestUserId: req.user?.userId || null,
+                },
+                guide: {
+                    infoHtmlExists: !!infoHtml,
+                    guidePanelCount: guidePanelMatches.length,
+                    whyEclawSlideLinkCount: whyEclawSlideLinks.length,
+                    mobilePickerJsPresent: /buildGuideMobilePicker/.test(infoJs)
+                        && /guide-mobile-picker/.test(infoJs),
+                    mobileSidebarHidden: /#panel-guide\s+#guideSidebarUG\s*\{[\s\S]*display:\s*none/.test(infoCss),
+                    featureCardsUseCarousel: /#panel-guide\s+\.guide-content\s+\.feat-grid[\s\S]*overflow-x:\s*auto/.test(infoCss)
+                        && /scroll-snap-type:\s*x\s+mandatory/.test(infoCss),
+                    demoCardsUseCarousel: /#panel-guide\s+\.guide-content\s+\.demo-showcase[\s\S]*overflow-x:\s*auto/.test(infoCss),
+                    onlyActiveGuidePanelVisible: /\.guide-panel\s*\{\s*display:\s*none;\s*\}[\s\S]*\.guide-panel\.active\s*\{\s*display:\s*block;\s*\}/.test(infoCss),
+                },
+            },
+            timestamp,
+        });
+    } catch (err) {
+        console.error('[Debug info-guide-mobile-layout] failed:', err);
+        res.status(500).json({ success: false, bug: 'info-guide-mobile-layout', error: err.message, timestamp });
+    }
+});
+
 // Temporary diagnostic endpoint for Pricing Advisor slide accuracy:
 // the marketing slide must not present unavailable model tiers or computed
 // pricing scores as real system output before Pricing Advisor is live.
