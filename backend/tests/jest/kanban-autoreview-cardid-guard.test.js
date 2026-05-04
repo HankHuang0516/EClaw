@@ -28,32 +28,26 @@ describe('autoReviewOnTransform — cardId guard against false batch-close', () 
         expect(kanbanSrc).toContain(sig);
     });
 
-    test('targeted branch filters SELECT by c.id when aboutCardId is provided', () => {
-        expect(body).toMatch(/if\s*\(\s*aboutCardId\s*\)\s*{[\s\S]*?WHERE c\.id = \$1[\s\S]*?AND c\.device_id = \$2[\s\S]*?AND c\.assigned_bots::jsonb @> \$3::jsonb/);
+    test('SELECT filters by c.id and ties query to aboutCardId', () => {
+        expect(body).toMatch(/WHERE c\.id = \$1[\s\S]*?AND c\.device_id = \$2[\s\S]*?AND c\.assigned_bots::jsonb @> \$3::jsonb/);
     });
 
-    test('untargeted branch refuses to batch-close when more than one card matches', () => {
-        expect(body).toMatch(/result\.rows\.length\s*>\s*1[\s\S]*?return/);
-        expect(body).toMatch(/autoReviewOnTransform skipped/);
+    test('skips entirely when aboutCardId is missing — no IDLE-content fallback close', () => {
+        expect(body).toMatch(/if\s*\(\s*!\s*aboutCardId\s*\)\s*{[\s\S]*?autoReviewOnTransform skipped[\s\S]*?return/);
     });
 
-    test('untargeted branch still proceeds when exactly one card matches', () => {
-        expect(body).toMatch(/if\s*\(\s*result\.rows\.length === 0\s*\)\s*return/);
+    test('does not contain the legacy "exactly one eligible card" untargeted branch', () => {
+        expect(body).not.toMatch(/result\.rows\.length\s*>\s*1/);
+        expect(body).not.toMatch(/}\s*else\s*{[\s\S]*?WHERE c\.device_id = \$1/);
     });
 
-    test('eligibility filter (auto-generated OR reviewer-tagged + active status) is preserved on both branches', () => {
-        const targeted = body.match(/if\s*\(\s*aboutCardId\s*\)\s*{[\s\S]*?\)\s*;/);
-        const fallback = body.match(/}\s*else\s*{[\s\S]*?if\s*\(\s*result\.rows\.length\s*>\s*1\s*\)/);
-        expect(targeted).not.toBeNull();
-        expect(fallback).not.toBeNull();
-        for (const slice of [targeted[0], fallback[0]]) {
-            expect(slice).toMatch(/is_auto_generated = true OR .*reviewer_entity_id IS NOT NULL/);
-            expect(slice).toMatch(/status IN \('todo', 'in_progress'\)/);
-            expect(slice).toMatch(/archived = false/);
-        }
+    test('eligibility filter (auto-generated OR reviewer-tagged + active status) is intact', () => {
+        expect(body).toMatch(/is_auto_generated = true OR .*reviewer_entity_id IS NOT NULL/);
+        expect(body).toMatch(/status IN \('todo', 'in_progress'\)/);
+        expect(body).toMatch(/archived = false/);
     });
 
-    test('screenshot-review gate at line ~2557 is still in place after refactor', () => {
+    test('screenshot-review gate is still in place after refactor', () => {
         expect(body).toMatch(/requires_screenshot_review !== false/);
         expect(body).toMatch(/Auto-close blocked by screenshot gate/);
     });

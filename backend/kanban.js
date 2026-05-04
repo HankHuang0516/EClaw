@@ -2626,39 +2626,29 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
      */
     async function autoReviewOnTransform(deviceId, entityId, transformMessage, aboutCardId) {
         try {
-            // Find active cards assigned to this entity that are in todo/in_progress
-            // Supports both auto-generated child cards AND manually created cards with reviewer
-            let result;
-            if (aboutCardId) {
-                result = await pool.query(
-                    `SELECT c.id, c.title, c.status, c.parent_card_id, c.assigned_bots, c.reviewer_entity_id, c.requires_screenshot_review
-                     FROM kanban_cards c
-                     WHERE c.id = $1
-                       AND c.device_id = $2
-                       AND (c.is_auto_generated = true OR c.reviewer_entity_id IS NOT NULL)
-                       AND c.archived = false
-                       AND c.status IN ('todo', 'in_progress')
-                       AND c.assigned_bots::jsonb @> $3::jsonb`,
-                    [aboutCardId, deviceId, JSON.stringify([entityId])]
-                );
-            } else {
-                result = await pool.query(
-                    `SELECT c.id, c.title, c.status, c.parent_card_id, c.assigned_bots, c.reviewer_entity_id, c.requires_screenshot_review
-                     FROM kanban_cards c
-                     WHERE c.device_id = $1
-                       AND (c.is_auto_generated = true OR c.reviewer_entity_id IS NOT NULL)
-                       AND c.archived = false
-                       AND c.status IN ('todo', 'in_progress')
-                       AND c.assigned_bots::jsonb @> $2::jsonb`,
-                    [deviceId, JSON.stringify([entityId])]
-                );
-                // Without an explicit aboutCardId, refuse to batch-close: only proceed
-                // when exactly one card is eligible (the unambiguous in-flight target).
-                if (result.rows.length > 1) {
-                    console.warn(`[Kanban] autoReviewOnTransform skipped: ${result.rows.length} eligible cards for entity ${entityId} but no aboutCardId in transform body — pass {aboutCardId:"card_..."} to auto-close a specific card`);
-                    return;
-                }
+            // aboutCardId is now required. Without it, we skip entirely — the
+            // previous "exactly one eligible card" fallback would close cards
+            // whose title had nothing to do with the IDLE message content
+            // (e.g. a bot reporting completion of task X while only task Y was
+            // eligible for auto-close on its board would close Y by mistake).
+            // See card_393752f8 / card_819d50f1 RCA for a real instance.
+            if (!aboutCardId) {
+                console.warn(`[Kanban] autoReviewOnTransform skipped: no aboutCardId provided by entity ${entityId} — pass {aboutCardId:"card_..."} in transform body to auto-close a specific card`);
+                return;
             }
+            // Find active card assigned to this entity that is in todo/in_progress.
+            // Supports both auto-generated child cards AND manually created cards with reviewer.
+            const result = await pool.query(
+                `SELECT c.id, c.title, c.status, c.parent_card_id, c.assigned_bots, c.reviewer_entity_id, c.requires_screenshot_review
+                 FROM kanban_cards c
+                 WHERE c.id = $1
+                   AND c.device_id = $2
+                   AND (c.is_auto_generated = true OR c.reviewer_entity_id IS NOT NULL)
+                   AND c.archived = false
+                   AND c.status IN ('todo', 'in_progress')
+                   AND c.assigned_bots::jsonb @> $3::jsonb`,
+                [aboutCardId, deviceId, JSON.stringify([entityId])]
+            );
 
             if (result.rows.length === 0) return;
 
