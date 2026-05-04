@@ -1,3 +1,10 @@
+# [1.1166.0](https://github.com/HankHuang0516/EClaw/compare/v1.1165.0...v1.1166.0) (2026-05-04)
+
+
+### Features
+
+* **transform:** channel key auth for /api/transform (Phase 1) ([#2401](https://github.com/HankHuang0516/EClaw/issues/2401)) ([627ab30](https://github.com/HankHuang0516/EClaw/commit/627ab3099d6e0d8b16cb2c63ca3095bab44b0535))
+
 # [1.1165.0](https://github.com/HankHuang0516/EClaw/compare/v1.1164.1...v1.1165.0) (2026-05-04)
 
 
