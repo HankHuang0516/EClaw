@@ -892,8 +892,11 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
 
             serverLog('info', 'transform', `${state || entity.state}: ${(message || '').slice(0, 100)}`, { deviceId, entityId: eId, metadata: { state: state || entity.state, via: 'channel' } });
 
-            // Auto-move kanban child cards to done (same as /api/transform)
-            if (state !== 'BUSY' && message && kanbanAutoReview) {
+            // Auto-move kanban child cards to done (same as /api/transform).
+            // START/progress heartbeats must use BUSY/PROCESSING/WORKING without closing cards.
+            const kanbanBusyStates = new Set(['BUSY', 'PROCESSING', 'WORKING', 'IN_PROGRESS', 'IN-PROGRESS']);
+            const isKanbanBusyState = kanbanBusyStates.has(String(state || '').trim().toUpperCase());
+            if (!isKanbanBusyState && message && kanbanAutoReview) {
                 kanbanAutoReview(deviceId, eId, message).catch(err => {
                     console.error(`[Channel] autoReviewOnTransform failed:`, err.message);
                 });

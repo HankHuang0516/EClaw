@@ -7067,10 +7067,14 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         }
     }
 
-    // Auto-move child cards to review when bot replies (any non-BUSY state with a message)
-    // Previously required state === 'IDLE', but some bots don't send state explicitly
-    // Skip for leased_out entities — rental bot responses belong to the renter's context
-    if (state !== 'BUSY' && finalMessage && entity.rental_status !== 'leased_out' && kanbanModule && kanbanModule.autoReviewOnTransform) {
+    // Auto-move child cards to review only when bot replies from a completion/non-busy state.
+    // START/progress heartbeats must use BUSY/PROCESSING/WORKING without closing cards.
+    // Previously this checked only state !== 'BUSY', so PROCESSING/WORKING heartbeats could
+    // silently false-close cron child cards before the audit actually ran (card_8e5d242...).
+    // Skip for leased_out entities — rental bot responses belong to the renter's context.
+    const kanbanBusyStates = new Set(['BUSY', 'PROCESSING', 'WORKING', 'IN_PROGRESS', 'IN-PROGRESS']);
+    const isKanbanBusyState = kanbanBusyStates.has(String(state || '').trim().toUpperCase());
+    if (!isKanbanBusyState && finalMessage && entity.rental_status !== 'leased_out' && kanbanModule && kanbanModule.autoReviewOnTransform) {
         kanbanModule.autoReviewOnTransform(deviceId, eId, finalMessage, aboutCardId).catch(err => {
             console.error(`[Transform] autoReviewOnTransform failed:`, err.message);
         });
