@@ -1,3 +1,10 @@
+## [1.1167.2](https://github.com/HankHuang0516/EClaw/compare/v1.1167.1...v1.1167.2) (2026-05-04)
+
+
+### Bug Fixes
+
+* **growth:** count invite redemptions from invite_codes, not unmounted Phase-5 table ([#2404](https://github.com/HankHuang0516/EClaw/issues/2404)) ([0d42828](https://github.com/HankHuang0516/EClaw/commit/0d4282801335471b3dcaf4d15a307a48c52b5506))
+
 ## [1.1167.1](https://github.com/HankHuang0516/EClaw/compare/v1.1167.0...v1.1167.1) (2026-05-04)
 
 
