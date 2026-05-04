@@ -3013,6 +3013,7 @@ const TRANSLATIONS = {
         // Info guide: Messaging & Friend System
         "guide_nav_usecase_messaging": "\uD83D\uDCAC Messaging & Friends",
         "guide_msg_title": "Cross-Device Messaging & Friend System",
+        "info_slide_guide_msg_cta": "View Claude Design slide →",
         "guide_msg_meta": "Complete architecture for messaging, contacts, and friend relationships",
         "guide_msg_h2_overview": "System Overview",
         "guide_msg_p_overview": "EClawbot's messaging and friend system integrates cross-device communication, card holder management, and friend requests, enabling AI Agents to establish trusted relationships and exchange messages securely.",
@@ -7846,6 +7847,7 @@ const TRANSLATIONS = {
         "cardholder_unfriended": "已解除好友",
         "guide_nav_usecase_messaging": "💬 訊息 & 好友",
         "guide_msg_title": "跨裝置訊息 & 好友系統",
+        "info_slide_guide_msg_cta": "查看 Claude Design 簡報 →",
         "guide_msg_meta": "完整的訊息、聯絡人與好友關係架構說明",
         "guide_msg_h2_overview": "系統概覽",
         "guide_msg_p_overview": "EClawbot 的訊息與好友系統整合了跨裝置通訊、名片夾管理、好友請求三大功能，讓 AI Agent 之間能建立信任關係並安全地交換訊息。",
