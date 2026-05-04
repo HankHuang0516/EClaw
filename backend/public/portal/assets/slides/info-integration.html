@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=1280, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EClaw - 🔗 跨平台整合生態系統</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -317,6 +317,12 @@
             transition: all 0.3s ease;
         }
 
+        .platform-tag.supported {
+            background: rgba(46, 134, 193, 0.10);
+            border-color: rgba(46, 134, 193, 0.28);
+            color: #1F5F8B;
+        }
+
         .platform-tag:hover {
             background: #2E86C1;
             color: #FFFFFF;
@@ -363,6 +369,14 @@
             opacity: 0.92;
         }
 
+        .stats-note {
+            margin-top: 16px;
+            font-family: 'Noto Sans TC', sans-serif;
+            font-size: 13px;
+            line-height: 1.55;
+            opacity: 0.88;
+        }
+
         /* CTA */
         .cta-section {
             text-align: center;
@@ -390,14 +404,41 @@
             transform: scale(1.02);
             box-shadow: 0 8px 24px rgba(63, 81, 181, 0.4);
         }
+
+        @media (max-width: 768px) {
+            body { align-items: flex-start; }
+            .content-wrapper { padding: 32px 20px; }
+            .emoji-icon { font-size: 44px; }
+            .headline { font-size: 28px; overflow-wrap: anywhere; }
+            .subline { font-size: 15px; }
+            .central-hub { width: 100%; max-width: 320px; height: 132px; margin-bottom: 32px; }
+            .hub-connectors,
+            .integration-node { display: none; }
+            .hub-core { width: 104px; height: 104px; }
+            .hub-core::after { width: 120px; height: 120px; }
+            .integration-grid { grid-template-columns: 1fr; gap: 16px; }
+            .stats-content { grid-template-columns: 1fr; gap: 18px; }
+            .header-section,
+            .emoji-icon,
+            .ecosystem-container,
+            .integration-category,
+            .stats-banner,
+            .stat-number { animation: none !important; opacity: 1; transform: none; }
+        }
+
+        @media (max-width: 430px) {
+            .content-wrapper { padding: 28px 16px; }
+            .headline { font-size: 20px; }
+            .central-hub { max-width: 300px; height: 124px; }
+        }
     </style>
 </head>
 <body>
     <div class="content-wrapper">
         <section class="header-section">
             <span class="emoji-icon">🔗</span>
-            <h1 class="headline">Cross-platform Integration Ecosystem<br>跨平台整合生態系統</h1>
-            <p class="subline">無縫連接各大平台，打造全方位AI服務體驗</p>
+            <h1 class="headline">Integrations<br>已上線整合</h1>
+            <p class="subline">僅列出已上線或已接線能力</p>
         </section>
 
         <section class="ecosystem-container">
@@ -420,51 +461,40 @@
 
                 <div class="hub-core">EClaw<br>Hub</div>
 
-                <div class="integration-node node-top">通訊<br>平台</div>
-                <div class="integration-node node-right">社群<br>媒體</div>
-                <div class="integration-node node-bottom-right">開發<br>工具</div>
-                <div class="integration-node node-bottom-left">商務<br>平台</div>
-                <div class="integration-node node-left">雲端<br>服務</div>
+                <div class="integration-node node-top">Channel<br>Plugin</div>
+                <div class="integration-node node-right">AI<br>Models</div>
+                <div class="integration-node node-bottom-right">GitHub<br>Workflow</div>
+                <div class="integration-node node-bottom-left">Embedding<br>Search</div>
+                <div class="integration-node node-left">Railway<br>Deploy</div>
             </div>
 
             <div class="integration-grid">
                 <div class="integration-category c1">
                     <span class="category-icon">💬</span>
-                    <h3 class="category-title">通訊整合</h3>
-                    <p class="category-description">連接各大通訊平台，讓AI機器人在用戶常用的平台上提供服務</p>
+                    <h3 class="category-title">Channel Plugin</h3>
+                    <p class="category-description">已上線的外部通訊入口，聚焦可實際接入的 bot channel</p>
                     <div class="platform-list">
-                        <span class="platform-tag">Discord</span>
-                        <span class="platform-tag">Telegram</span>
-                        <span class="platform-tag">Slack</span>
-                        <span class="platform-tag">Teams</span>
-                        <span class="platform-tag">LINE</span>
-                        <span class="platform-tag">WhatsApp</span>
+                        <span class="platform-tag supported">Telegram</span>
                     </div>
                 </div>
                 <div class="integration-category c2">
                     <span class="category-icon">🚀</span>
-                    <h3 class="category-title">開發生態</h3>
-                    <p class="category-description">與主流開發工具深度整合，提升開發者體驗和工作效率</p>
+                    <h3 class="category-title">開發與部署</h3>
+                    <p class="category-description">目前用於 EClawbot 開發、PR 審查與正式服務部署的實際工具鏈</p>
                     <div class="platform-list">
-                        <span class="platform-tag">GitHub</span>
-                        <span class="platform-tag">GitLab</span>
-                        <span class="platform-tag">VS Code</span>
-                        <span class="platform-tag">JetBrains</span>
-                        <span class="platform-tag">Docker</span>
-                        <span class="platform-tag">Kubernetes</span>
+                        <span class="platform-tag supported">GitHub</span>
+                        <span class="platform-tag supported">Railway</span>
                     </div>
                 </div>
                 <div class="integration-category c3">
-                    <span class="category-icon">☁️</span>
-                    <h3 class="category-title">雲端基建</h3>
-                    <p class="category-description">支援各大雲端平台部署，確保高可用性和全球化服務</p>
+                    <span class="category-icon">🧠</span>
+                    <h3 class="category-title">AI / Embedding Provider</h3>
+                    <p class="category-description">後端已接線的模型與向量搜尋供應商，依 device vault 設定啟用</p>
                     <div class="platform-list">
-                        <span class="platform-tag">AWS</span>
-                        <span class="platform-tag">Azure</span>
-                        <span class="platform-tag">GCP</span>
-                        <span class="platform-tag">Railway</span>
-                        <span class="platform-tag">Vercel</span>
-                        <span class="platform-tag">DigitalOcean</span>
+                        <span class="platform-tag supported">MiniMax</span>
+                        <span class="platform-tag supported">Anthropic</span>
+                        <span class="platform-tag supported">OpenAI</span>
+                        <span class="platform-tag supported">Voyage</span>
                     </div>
                 </div>
             </div>
@@ -472,26 +502,20 @@
             <div class="stats-banner">
                 <div class="stats-content">
                     <div class="stat-item">
-                        <div class="stat-number">50+</div>
-                        <div class="stat-label">支援平台</div>
+                        <div class="stat-number">7</div>
+                        <div class="stat-label">已上線 / 已接線整合</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-number">99.9%</div>
-                        <div class="stat-label">整合成功率</div>
+                        <div class="stat-number">1</div>
+                        <div class="stat-label">公開 channel plugin</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-number">24/7</div>
-                        <div class="stat-label">即時同步</div>
+                        <div class="stat-number">2026-05</div>
+                        <div class="stat-label">清單更新月份</div>
                     </div>
                 </div>
+                <p class="stats-note">僅展示目前可用或已接線能力；未上線/未實作項目不列為正式支援，規劃中的整合會待完成後再加入清單。</p>
             </div>
-        </section>
-
-        <section class="cta-section">
-            <a class="cta-button" href="#">
-                查看完整整合列表
-                <span>→</span>
-            </a>
         </section>
     </div>
 </body>

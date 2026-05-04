@@ -440,6 +440,7 @@ EClaw/
    | Info public pages: roadmap redirects unauthenticated visitors + release notes show raw Markdown links | `GET /api/debug/info-public-pages?deviceId=X&deviceSecret=Y` | 2026-05-04 | Active |
    | Info slide uses invented Interview Arena leaderboard bot names | `GET /api/debug/info-leaderboard-slide?deviceId=X&deviceSecret=Y` | 2026-05-04 | Active |
    | Info Pricing Advisor slide claims unavailable GPT-5 tier and unsourced computed scores | `GET /api/debug/info-pricing-slide?deviceId=X&deviceSecret=Y` | 2026-05-04 | Active |
+   | Info Integration slide lists unsupported integrations and fake platform/SLA stats | `GET /api/debug/info-integration-slide?deviceId=X&deviceSecret=Y` | 2026-05-05 | Active |
 
 6. **Demand Elegance (Balanced)** — 在保持 minimal change 的前提下，追求可讀、一致的程式風格；不為了「漂亮」而過度重構，但也不容忍明顯的 code smell 在新增的程式碼中出現。
 
