@@ -2464,6 +2464,76 @@ app.get('/api/debug/info-leaderboard-slide', async (req, res) => {
     }
 });
 
+// Temporary diagnostic endpoint for Performance Tracking slide accuracy:
+// the marketing slide must not present static mock metrics as live production
+// telemetry, unrelated currency, or precise production SLO/revenue claims.
+// Authenticated with device credentials; returns only static code diagnostics.
+app.get('/api/debug/info-performance-slide', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query || {};
+    const timestamp = new Date().toISOString();
+    try {
+        if (!deviceId || !deviceSecret) {
+            return res.status(401).json({ success: false, bug: 'info-performance-slide', error: 'deviceId and deviceSecret required', timestamp });
+        }
+
+        const memDevice = devices[deviceId];
+        const pool = db._getPool ? db._getPool() : authModule.pool;
+        const dbDevice = pool
+            ? await pool.query('SELECT device_secret FROM devices WHERE device_id = $1', [deviceId])
+            : { rows: [] };
+        const dbDeviceRow = dbDevice.rows[0] || null;
+        const memSecretOk = !!(memDevice && memDevice.deviceSecret && safeEqual(memDevice.deviceSecret, deviceSecret));
+        const dbSecretOk = !!(dbDeviceRow && dbDeviceRow.device_secret && safeEqual(dbDeviceRow.device_secret, deviceSecret));
+        if (!memSecretOk && !dbSecretOk) {
+            return res.status(403).json({ success: false, bug: 'info-performance-slide', error: 'Invalid credentials', timestamp });
+        }
+
+        const slideDir = path.join(__dirname, 'public', 'portal', 'assets', 'slides');
+        const slidePath = path.join(slideDir, 'info-performance.html');
+        const slideHtml = fs.existsSync(slidePath) ? fs.readFileSync(slidePath, 'utf8') : '';
+
+        res.json({
+            success: true,
+            bug: 'info-performance-slide',
+            diagnostics: {
+                server: {
+                    build: SERVER_BUILD_TAG,
+                    startedAt: SERVER_STARTED_AT.toISOString(),
+                    uptimeSec: Math.round(process.uptime()),
+                },
+                auth: {
+                    memSecretOk,
+                    dbSecretOk,
+                    requestUserDeviceId: req.user?.deviceId || null,
+                    requestUserId: req.user?.userId || null,
+                },
+                slide: {
+                    fileExists: !!slideHtml,
+                    claimsLiveTelemetry: />LIVE</.test(slideHtml) || /class=["']live-indicator["']/.test(slideHtml),
+                    usesKoreanWonSymbol: /₩|₩847K/.test(slideHtml),
+                    hasDemoBadge: /DEMO/.test(slideHtml) && /示意資料/.test(slideHtml),
+                    avoidsPreciseMockClaims: !/98\.7%|156ms|₩847K/.test(slideHtml),
+                    usesTaiwanSampleCurrency: /NT\$76K/.test(slideHtml),
+                    hasDemoDisclaimer: /即時效能追蹤功能展示/.test(slideHtml)
+                        && /不代表目前 EClawbot 生產營收、SLO 或即時監控結果/.test(slideHtml),
+                    hasResponsiveViewport: /width=device-width/.test(slideHtml),
+                    hasMobileMediaQuery: /@media \(max-width: 768px\)/.test(slideHtml)
+                        && /@media \(max-width: 430px\)/.test(slideHtml),
+                },
+                screenshots: {
+                    webAssetExists: fs.existsSync(path.join(slideDir, 'info-performance-web.png')),
+                    mobileAssetExists: fs.existsSync(path.join(slideDir, 'info-performance-mobile.png')),
+                    thumbAssetExists: fs.existsSync(path.join(slideDir, 'info-performance-thumb.png')),
+                },
+            },
+            timestamp,
+        });
+    } catch (err) {
+        console.error('[Debug info-performance-slide] failed:', err);
+        res.status(500).json({ success: false, bug: 'info-performance-slide', error: err.message, timestamp });
+    }
+});
+
 // Temporary diagnostic endpoint for Pricing Advisor slide accuracy:
 // the marketing slide must not present unavailable model tiers or computed
 // pricing scores as real system output before Pricing Advisor is live.
