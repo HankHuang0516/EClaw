@@ -1,3 +1,12 @@
+## [1.1167.7](https://github.com/HankHuang0516/EClaw/compare/v1.1167.6...v1.1167.7) (2026-05-04)
+
+
+### Bug Fixes
+
+* **i18n:** clean de locale leak baseline ([#2427](https://github.com/HankHuang0516/EClaw/issues/2427)) ([5a56578](https://github.com/HankHuang0516/EClaw/commit/5a565788f08e70b3dd01d3f2e6e11816b19d5f43))
+* **android:** cross-device message direction uses publicCode map ([#2130](https://github.com/HankHuang0516/EClaw/issues/2130)) ([#2429](https://github.com/HankHuang0516/EClaw/issues/2429)) ([0b434a7](https://github.com/HankHuang0516/EClaw/commit/0b434a774345446bd0e9f605aa6030a6326117af))
+* **i18n:** es baseline cleanup (31 keys) ([#2428](https://github.com/HankHuang0516/EClaw/issues/2428)) ([3edebcb](https://github.com/HankHuang0516/EClaw/commit/3edebcbea560f89e8e190bb0185e600f2e52a198))
+
 ## [1.1167.6](https://github.com/HankHuang0516/EClaw/compare/v1.1167.5...v1.1167.6) (2026-05-04)
 
 
