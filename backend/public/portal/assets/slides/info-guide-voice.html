@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EClaw — Voice TTS 語音對話</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root{--ink:#0f172a;--muted:#64748b;--cyan:#06b6d4;--blue:#2563eb;--violet:#7c3aed;--green:#10b981;--amber:#f59e0b;--rose:#f43f5e;--card:rgba(255,255,255,.92)}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:'Noto Sans TC',Inter,sans-serif;color:var(--ink);background:radial-gradient(circle at 11% 16%,rgba(6,182,212,.22),transparent 31%),radial-gradient(circle at 77% 10%,rgba(37,99,235,.18),transparent 28%),radial-gradient(circle at 88% 84%,rgba(124,58,237,.16),transparent 31%),linear-gradient(135deg,#f0fdff 0%,#f8fbff 46%,#f5f3ff 100%);overflow-x:hidden}
+    body:before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(6,182,212,.075) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.065) 1px,transparent 1px);background-size:34px 34px;mask-image:radial-gradient(circle at center,#000 0,#000 68%,transparent 100%);pointer-events:none}.slide{max-width:1180px;min-height:100vh;margin:0 auto;padding:10px 42px;display:grid;grid-template-columns:.94fr 1.1fr;gap:24px;align-items:center}.eyebrow{display:inline-flex;align-items:center;gap:10px;padding:9px 14px;border-radius:999px;background:rgba(255,255,255,.88);border:1px solid rgba(6,182,212,.28);box-shadow:0 14px 36px rgba(6,182,212,.13);font:900 13px Inter,sans-serif;letter-spacing:.08em;color:#0e7490;text-transform:uppercase}h1{font-size:clamp(38px,4.45vw,60px);line-height:1.02;letter-spacing:-.055em;margin:14px 0 10px;font-weight:900}.accent{background:linear-gradient(90deg,var(--cyan),var(--blue),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}.lead{font-size:18px;line-height:1.52;color:#334155;margin:0 0 14px}.lead strong{color:#0e7490}.badges{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.pill{display:inline-flex;align-items:center;gap:7px;padding:9px 12px;border-radius:999px;background:linear-gradient(135deg,#ecfeff,#eff6ff);border:1px solid rgba(6,182,212,.22);font-weight:900;color:#0e7490}.bullets{display:grid;gap:8px}.bullets div{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid rgba(15,32,51,.08);border-radius:18px;padding:9px 12px;box-shadow:0 16px 44px rgba(16,32,51,.08)}.bullets b{font-size:24px;line-height:1}.bullets span{font-size:15px;line-height:1.55;color:#475569;min-width:0}.panel{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,255,255,.84));border:1px solid rgba(6,182,212,.22);border-radius:34px;padding:13px;box-shadow:0 28px 90px rgba(16,32,51,.16);overflow:hidden}.panel:before{content:'VOICE';position:absolute;right:-12px;top:-14px;font:900 82px Inter,sans-serif;color:rgba(6,182,212,.08);letter-spacing:-.08em}.top{position:relative;z-index:1;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start}.top h2{margin:0;font-size:26px;line-height:1.08;letter-spacing:-.036em}.top p{margin:8px 0 0;color:#475569;line-height:1.48;font-size:14px}.badge{min-width:122px;text-align:center;border-radius:24px;padding:11px;background:linear-gradient(135deg,#ecfeff,#eff6ff);border:1px solid rgba(6,182,212,.22);box-shadow:0 18px 42px rgba(6,182,212,.13)}.badge strong{display:block;font:900 29px Inter,sans-serif;color:#0891b2}.badge span{display:block;margin-top:3px;font:900 11px Inter,sans-serif;color:#64748b;letter-spacing:.08em}.phone{position:relative;z-index:1;margin-top:10px;border-radius:30px;padding:14px;background:linear-gradient(180deg,#0f172a,#1e3a8a);box-shadow:0 22px 54px rgba(15,23,42,.22);color:#fff}.speaker{width:70px;height:6px;margin:0 auto 12px;border-radius:999px;background:rgba(255,255,255,.35)}.chat{display:grid;gap:10px}.bubble{max-width:84%;border-radius:20px;padding:10px 12px;line-height:1.35;font-size:14px}.user{justify-self:end;background:#dbeafe;color:#1e3a8a}.bot{justify-self:start;background:#fff;color:#0f172a}.voicecard{margin-top:10px;border-radius:22px;padding:12px;background:linear-gradient(135deg,#06b6d4,#7c3aed);box-shadow:0 18px 40px rgba(6,182,212,.25)}.voicebar{display:flex;align-items:center;gap:10px}.play{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.92);color:#0891b2;font-size:18px}.wave{flex:1;height:36px;display:flex;gap:4px;align-items:center}.wave i{display:block;width:6px;border-radius:999px;background:rgba(255,255,255,.85)}.wave i:nth-child(1){height:12px}.wave i:nth-child(2){height:24px}.wave i:nth-child(3){height:16px}.wave i:nth-child(4){height:30px}.wave i:nth-child(5){height:20px}.wave i:nth-child(6){height:28px}.wave i:nth-child(7){height:14px}.voicecard strong{display:block;margin-top:8px;font-size:16px}.flow{margin-top:10px;border-radius:22px;padding:10px;background:linear-gradient(135deg,#111827,#0e7490);color:#fff;box-shadow:0 22px 48px rgba(14,116,144,.22)}.flow small{display:block;text-transform:uppercase;letter-spacing:.12em;font:900 12px Inter,sans-serif;color:#a5f3fc}.flow strong{display:block;margin-top:6px;font:900 25px Inter,sans-serif;letter-spacing:-.045em}.flow span{display:block;margin-top:5px;color:#cffafe;line-height:1.38}.checks{margin-top:9px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.checks div{border-radius:18px;padding:8px;background:linear-gradient(180deg,#f8fafc,#fff);border:1px solid #e2e8f0}.checks b{display:block;color:#0e7490;margin-bottom:5px}.checks span{font-size:12px;line-height:1.36;color:#64748b}.done{margin-top:7px;border-radius:18px;padding:8px 10px;background:linear-gradient(90deg,rgba(6,182,212,.13),rgba(124,58,237,.11));font-weight:900;color:#0e7490;line-height:1.45;font-size:14px}
+    @media(max-width:760px){body{overflow-x:hidden}.slide{grid-template-columns:1fr;padding:34px 36px 34px 20px;gap:24px;width:min(390px,100%);max-width:390px;overflow:hidden;margin:0}h1{font-size:34px;letter-spacing:-.045em;overflow-wrap:anywhere}.accent{display:block}.lead{font-size:17px;overflow-wrap:anywhere;word-break:break-all}.bullets div{max-width:100%;min-width:0}.bullets b{flex:0 0 auto}.bullets span,.top p,.flow span,.checks span{overflow-wrap:anywhere;word-break:break-all}.panel{padding:20px;border-radius:26px;max-width:100%;overflow:hidden}.top{grid-template-columns:1fr}.badge{width:100%;min-width:0}.top h2{font-size:27px;overflow-wrap:anywhere}.checks{grid-template-columns:1fr}.flow strong{font-size:23px}.phone{border-radius:28px}}
+  </style>
+</head>
+<body>
+  <main class="slide">
+    <section>
+      <div class="eyebrow">🔊 Guide / Voice TTS</div>
+      <h1>語音對話：<span class="accent">讓 Bot 直接開口服務</span></h1>
+      <p class="lead">EClawbot TTS 讓 AI 代理把文字回覆轉成<strong>手機喇叭語音</strong>，客服、語音助手與無障礙場景都能即時播報。</p>
+      <div class="badges"><span class="pill">Android TTS</span><span class="pill">Socket.IO</span><span class="pill">FCM fallback</span></div>
+      <div class="bullets">
+        <div><b>📣</b><span>Bot 呼叫 API 後，伺服器推送到 Android App，由 TextToSpeech 朗讀。</span></div>
+        <div><b>⚡</b><span>文字與語音可同步送出，通常低於 1 秒抵達使用者耳邊。</span></div>
+        <div><b>🌍</b><span>支援多語言、語速與音調參數，適合多語客服與現場播報。</span></div>
+      </div>
+    </section>
+    <section class="panel" aria-label="voice tts slide">
+      <div class="top">
+        <div>
+          <h2>從「看訊息」升級成「聽見代理」</h2>
+          <p>語音不是附加效果，而是讓 AI 服務進入櫃台、倉庫、車上與無障礙情境的入口。</p>
+        </div>
+        <div class="badge"><strong>&lt;1s</strong><span>VOICE PUSH</span></div>
+      </div>
+      <div class="phone">
+        <div class="speaker"></div>
+        <div class="chat">
+          <div class="bubble user">我的訂單明天會到嗎？</div>
+          <div class="bubble bot">您的訂單已出貨，預計明天下午送達。</div>
+        </div>
+        <div class="voicecard">
+          <div class="voicebar"><div class="play">▶</div><div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span>zh-TW</span></div>
+          <strong>「您的訂單已出貨，預計明天下午送達。」</strong>
+        </div>
+      </div>
+      <div class="flow">
+        <small>Runtime path</small>
+        <strong>Bot → /api/device/tts → Socket/FCM → Android speaker</strong>
+        <span>App 在背景也能播報；斷線時可用 FCM 備援觸發，讓重要回覆不漏接。</span>
+      </div>
+      <div class="checks">
+        <div><b>客服播報</b><span>訂單、物流、預約提醒不用盯螢幕也能收到。</span></div>
+        <div><b>語音助手</b><span>搭配語音輸入，形成完整 voice loop。</span></div>
+        <div><b>無障礙</b><span>可調語速與多語言，照顧不同使用情境。</span></div>
+      </div>
+      <div class="done">Voice TTS 讓 Bot 從「文字客服」變成能在現場即時說話的 AI 代理。</div>
+    </section>
+  </main>
+</body>
+</html>

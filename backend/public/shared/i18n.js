@@ -1456,6 +1456,7 @@ const TRANSLATIONS = {
         // ── Voice TTS Guide ──
         "guide_nav_usecase_voice": "Voice TTS",
         "guide_voice_title": "🔊 Voice Chat — Bot TTS Real-Time Voice Reply",
+        "info_slide_guide_voice_cta": "View Claude Design slide →",
         "guide_voice_subtitle": "Let your AI agent \"speak out loud\" — voice replies straight from the phone speaker",
         "guide_voice_what": "What is this?",
         "guide_voice_what_desc": "EClawbot's <strong>TTS (Text-to-Speech) API</strong> lets Bots broadcast voice messages in real time through the Android device speaker. Voice plays even when the App is in the background. Ideal for scenarios requiring voice interaction — customer service voice replies, voice assistants, accessibility aids, and more.",
@@ -6431,6 +6432,7 @@ const TRANSLATIONS = {
         "guide_crossdevice_note_back": "← <a href=\"#guide/usecase-proxy-window\">返回代理窗口指南</a>",
         "guide_nav_usecase_voice": "語音對話 TTS",
         "guide_voice_title": "🔊 語音對話 — Bot TTS 即時語音回覆",
+        "info_slide_guide_voice_cta": "查看 Claude Design 簡報 →",
         "guide_voice_subtitle": "讓你的 AI 代理「開口說話」，透過手機喇叭直接語音回覆用戶",
         "guide_voice_what": "這是什麼？",
         "guide_voice_what_desc": "EClawbot 的 <strong>TTS（Text-to-Speech）API</strong> 讓 Bot 能透過 Android 裝置的喇叭即時語音播報。即使 App 在背景運行，語音也能正常播出。適合需要語音互動的場景 —— 客服語音回覆、語音助手、無障礙輔助等。",
