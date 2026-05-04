@@ -61815,7 +61815,18 @@ class I18n {
 
     t(key, params = {}) {
         const dict = TRANSLATIONS[this.lang] || TRANSLATIONS['en'];
-        let str = dict[key] || TRANSLATIONS['en'][key] || key;
+        let str = dict[key];
+        if (str === undefined) {
+            // zh-TW / zh-CN fall back to `zh` (Traditional Chinese canonical
+            // dict) before en. Without this, browsers reporting `zh-TW` exact-
+            // match the 8-key publisher-guide stub and see English for the
+            // other ~4875 keys.
+            if ((this.lang === 'zh-TW' || this.lang === 'zh-CN') && TRANSLATIONS['zh']) {
+                str = TRANSLATIONS['zh'][key];
+            }
+            if (str === undefined) str = TRANSLATIONS['en'][key];
+            if (str === undefined) str = key;
+        }
 
         // Simple parameter replacement {name}
         Object.keys(params).forEach(k => {
