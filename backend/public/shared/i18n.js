@@ -14212,7 +14212,7 @@ const TRANSLATIONS = {
         "mindmap_zoom_l2_label": "細節",
         "mr_listing_bound_to": "綁定至",
         "mr_listing_delist": "下架",
-        "mr_listing_delist_confirm": "確認下架"
+        "mr_listing_delist_confirm": "確認下架",
 
         // ── Guidepub: Publisher Guide & Roadmap (added 2026-05-02) ──
         "guidepubroadmaph": "发布者路线图",

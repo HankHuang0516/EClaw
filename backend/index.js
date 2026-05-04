@@ -2394,6 +2394,75 @@ app.get('/api/debug/info-public-pages', async (req, res) => {
     }
 });
 
+// Temporary diagnostic endpoint for Interview Arena leaderboard slide accuracy:
+// the marketing slide must not present invented bot names as real platform data.
+// Authenticated with device credentials; returns only static code diagnostics.
+app.get('/api/debug/info-leaderboard-slide', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query || {};
+    const timestamp = new Date().toISOString();
+    try {
+        if (!deviceId || !deviceSecret) {
+            return res.status(401).json({ success: false, bug: 'info-leaderboard-slide', error: 'deviceId and deviceSecret required', timestamp });
+        }
+
+        const memDevice = devices[deviceId];
+        const pool = db._getPool ? db._getPool() : authModule.pool;
+        const dbDevice = pool
+            ? await pool.query('SELECT device_secret FROM devices WHERE device_id = $1', [deviceId])
+            : { rows: [] };
+        const dbDeviceRow = dbDevice.rows[0] || null;
+        const memSecretOk = !!(memDevice && memDevice.deviceSecret && safeEqual(memDevice.deviceSecret, deviceSecret));
+        const dbSecretOk = !!(dbDeviceRow && dbDeviceRow.device_secret && safeEqual(dbDeviceRow.device_secret, deviceSecret));
+        if (!memSecretOk && !dbSecretOk) {
+            return res.status(403).json({ success: false, bug: 'info-leaderboard-slide', error: 'Invalid credentials', timestamp });
+        }
+
+        const slideDir = path.join(__dirname, 'public', 'portal', 'assets', 'slides');
+        const slidePath = path.join(slideDir, 'info-why-eclaw-b6-interview-arena-leaderboard.html');
+        const slideHtml = fs.existsSync(slidePath) ? fs.readFileSync(slidePath, 'utf8') : '';
+        const fakeNames = [
+            ['Research', 'Ops', 'Bot'].join(' '),
+            ['Sales', 'Workflow', 'Bot'].join(' '),
+            ['Support', 'Triage', 'Bot'].join(' '),
+        ];
+
+        res.json({
+            success: true,
+            bug: 'info-leaderboard-slide',
+            diagnostics: {
+                server: {
+                    build: SERVER_BUILD_TAG,
+                    startedAt: SERVER_STARTED_AT.toISOString(),
+                    uptimeSec: Math.round(process.uptime()),
+                },
+                auth: {
+                    memSecretOk,
+                    dbSecretOk,
+                    requestUserDeviceId: req.user?.deviceId || null,
+                    requestUserId: req.user?.userId || null,
+                },
+                slide: {
+                    fileExists: !!slideHtml,
+                    fakeNamesPresent: fakeNames.filter(name => slideHtml.includes(name)),
+                    usesAnonymousSampleNames: /<b>Bot A<\/b>/.test(slideHtml) && /<b>Bot B<\/b>/.test(slideHtml) && /<b>Bot C<\/b>/.test(slideHtml),
+                    hasSampleBadge: /Sample display/.test(slideHtml),
+                    hasNonActualScoreDisclaimer: /不代表實際 bot 名稱或真實分數/.test(slideHtml),
+                    linksToArena: /href=["']\/arena["']/.test(slideHtml),
+                },
+                screenshots: {
+                    webAssetExists: fs.existsSync(path.join(slideDir, 'info-why-eclaw-b6-interview-arena-leaderboard-web.png')),
+                    mobileAssetExists: fs.existsSync(path.join(slideDir, 'info-why-eclaw-b6-interview-arena-leaderboard-mobile.png')),
+                    thumbAssetExists: fs.existsSync(path.join(slideDir, 'info-why-eclaw-b6-interview-arena-leaderboard-thumb.png')),
+                },
+            },
+            timestamp,
+        });
+    } catch (err) {
+        console.error('[Debug info-leaderboard-slide] failed:', err);
+        res.status(500).json({ success: false, bug: 'info-leaderboard-slide', error: err.message, timestamp });
+    }
+});
+
 // Wire up pending message flush on email verification
 authModule.setOnEmailVerified(async (deviceId) => {
     console.log(`[PendingFlush] onEmailVerified triggered for device ${deviceId}`);
