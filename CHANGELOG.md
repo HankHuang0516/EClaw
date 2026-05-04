@@ -1,3 +1,10 @@
+## [1.1167.8](https://github.com/HankHuang0516/EClaw/compare/v1.1167.7...v1.1167.8) (2026-05-04)
+
+
+### Bug Fixes
+
+* **portal:** align cross-device code display with spec S4.1.3 ([#2430](https://github.com/HankHuang0516/EClaw/issues/2430)) ([60b5265](https://github.com/HankHuang0516/EClaw/commit/60b526569e89c2e26f8aed5a083937b17d431fc6))
+
 ## [1.1167.7](https://github.com/HankHuang0516/EClaw/compare/v1.1167.6...v1.1167.7) (2026-05-04)
 
 
