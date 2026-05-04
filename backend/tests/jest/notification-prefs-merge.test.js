@@ -29,7 +29,15 @@ function makeMockPool() {
                 return { rows: [{ prefs: stored }] };
             }
             if (/INSERT INTO notification_preferences/i.test(sql)) {
-                stored = params[1]; // JSON string
+                // Emulate `prefs = COALESCE(prefs,'{}'::jsonb) || EXCLUDED.prefs`
+                // shallow-merge so the test exercises post-refactor behavior.
+                const incoming = typeof params[1] === 'string' ? JSON.parse(params[1]) : params[1];
+                if (stored === null) {
+                    stored = JSON.stringify(incoming);
+                } else {
+                    const existing = typeof stored === 'string' ? JSON.parse(stored) : (stored || {});
+                    stored = JSON.stringify({ ...existing, ...incoming });
+                }
                 return { rows: [], rowCount: 1 };
             }
             return { rows: [] };

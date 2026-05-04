@@ -200,25 +200,16 @@ async function updatePrefs(deviceId, prefs) {
                 sanitized[key] = !!prefs[key];
             }
         }
-        // Merge with existing prefs so partial PUTs don't clobber other keys.
-        // The settings UI sends one toggle per request; without merge, each
-        // toggle erases all prior toggles back to DEFAULT_PREFS.
-        const existingRow = await pool.query(
-            'SELECT prefs FROM notification_preferences WHERE device_id = $1',
-            [deviceId]
-        );
-        let existing = {};
-        if (existingRow.rows.length > 0) {
-            const stored = existingRow.rows[0].prefs;
-            existing = typeof stored === 'string' ? JSON.parse(stored) : (stored || {});
-        }
-        const merged = { ...existing, ...sanitized };
+        // Atomic shallow-merge via PostgreSQL JSONB `||` so concurrent partial
+        // PUTs cannot interleave a stale read with a fresh write. Without the
+        // merge, each toggle would erase all prior toggles back to DEFAULT_PREFS.
         await pool.query(
             `INSERT INTO notification_preferences (device_id, prefs, updated_at)
-             VALUES ($1, $2, $3)
+             VALUES ($1, $2::jsonb, $3)
              ON CONFLICT (device_id)
-             DO UPDATE SET prefs = $2, updated_at = $3`,
-            [deviceId, JSON.stringify(merged), Date.now()]
+             DO UPDATE SET prefs = COALESCE(notification_preferences.prefs, '{}'::jsonb) || EXCLUDED.prefs,
+                           updated_at = EXCLUDED.updated_at`,
+            [deviceId, JSON.stringify(sanitized), Date.now()]
         );
         return true;
     } catch (err) {
