@@ -6,6 +6,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..', '..');
 const kanbanSrc = fs.readFileSync(path.join(ROOT, 'kanban.js'), 'utf8');
 const indexSrc = fs.readFileSync(path.join(ROOT, 'index.js'), 'utf8');
+const channelApiSrc = fs.readFileSync(path.join(ROOT, 'channel-api.js'), 'utf8');
 
 function extractFunctionBody(src, signature) {
     const start = src.indexOf(signature);
@@ -60,5 +61,18 @@ describe('transform handler — wires aboutCardId through to autoReviewOnTransfo
 
     test('autoReviewOnTransform call passes aboutCardId as 4th argument', () => {
         expect(indexSrc).toMatch(/autoReviewOnTransform\(deviceId,\s*eId,\s*finalMessage,\s*aboutCardId\)/);
+    });
+});
+
+describe('channel-api — wires aboutCardId through to kanbanAutoReview', () => {
+    test('POST /channel/message destructure includes aboutCardId from req.body', () => {
+        // Match the destructuring line in the /channel/message handler
+        expect(channelApiSrc).toMatch(/const\s*\{[^}]*\baboutCardId\b[^}]*\}\s*=\s*req\.body/);
+    });
+
+    test('kanbanAutoReview call in channel transform passes aboutCardId as 4th argument', () => {
+        // The kanbanAutoReview call inside the channel transform handler
+        // (after kanbanBusyStates check) should pass aboutCardId
+        expect(channelApiSrc).toMatch(/kanbanAutoReview\(deviceId,\s*eId,\s*message,\s*aboutCardId\)/);
     });
 });

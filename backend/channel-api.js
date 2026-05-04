@@ -616,7 +616,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
     // ============================================
     router.post('/message', async (req, res) => {
         try {
-            const { channel_api_key, deviceId, entityId, botSecret, message, state, mediaType, mediaUrl, targetDeviceId, card, senderHint } = req.body;
+            const { channel_api_key, deviceId, entityId, botSecret, message, state, mediaType, mediaUrl, targetDeviceId, card, senderHint, aboutCardId } = req.body;
             let { speakTo, broadcast } = req.body;
 
             if (process.env.DEBUG === 'true') serverLog('info', 'client_push', `[PUSH] /channel/message called, state=${state}, hasMsg=${!!message}`, { deviceId, entityId: entityId !== undefined ? parseInt(entityId) : 'auto' });
@@ -897,7 +897,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             const kanbanBusyStates = new Set(['BUSY', 'PROCESSING', 'WORKING', 'IN_PROGRESS', 'IN-PROGRESS']);
             const isKanbanBusyState = kanbanBusyStates.has(String(state || '').trim().toUpperCase());
             if (!isKanbanBusyState && message && kanbanAutoReview) {
-                kanbanAutoReview(deviceId, eId, message).catch(err => {
+                kanbanAutoReview(deviceId, eId, message, aboutCardId).catch(err => {
                     console.error(`[Channel] autoReviewOnTransform failed:`, err.message);
                 });
             }
