@@ -2464,6 +2464,81 @@ app.get('/api/debug/info-leaderboard-slide', async (req, res) => {
     }
 });
 
+// Temporary diagnostic endpoint for Integration slide accuracy:
+// the marketing slide must only list integrations that are actually supported
+// or wired today, and must not claim invented platform counts/SLA metrics.
+// Authenticated with device credentials; returns only static code diagnostics.
+app.get('/api/debug/info-integration-slide', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query || {};
+    const timestamp = new Date().toISOString();
+    try {
+        if (!deviceId || !deviceSecret) {
+            return res.status(401).json({ success: false, bug: 'info-integration-slide', error: 'deviceId and deviceSecret required', timestamp });
+        }
+
+        const memDevice = devices[deviceId];
+        const pool = db._getPool ? db._getPool() : authModule.pool;
+        const dbDevice = pool
+            ? await pool.query('SELECT device_secret FROM devices WHERE device_id = $1', [deviceId])
+            : { rows: [] };
+        const dbDeviceRow = dbDevice.rows[0] || null;
+        const memSecretOk = !!(memDevice && memDevice.deviceSecret && safeEqual(memDevice.deviceSecret, deviceSecret));
+        const dbSecretOk = !!(dbDeviceRow && dbDeviceRow.device_secret && safeEqual(dbDeviceRow.device_secret, deviceSecret));
+        if (!memSecretOk && !dbSecretOk) {
+            return res.status(403).json({ success: false, bug: 'info-integration-slide', error: 'Invalid credentials', timestamp });
+        }
+
+        const slideDir = path.join(__dirname, 'public', 'portal', 'assets', 'slides');
+        const slidePath = path.join(slideDir, 'info-integration.html');
+        const slideHtml = fs.existsSync(slidePath) ? fs.readFileSync(slidePath, 'utf8') : '';
+        const supported = ['Telegram', 'Railway', 'GitHub', 'MiniMax', 'Anthropic', 'OpenAI', 'Voyage'];
+        const unsupported = [
+            'Discord', 'Slack', 'Teams', 'LINE', 'WhatsApp',
+            'GitLab', 'VS Code', 'JetBrains', 'Docker', 'Kubernetes',
+            'AWS', 'Azure', 'GCP', 'Vercel', 'DigitalOcean',
+        ];
+
+        res.json({
+            success: true,
+            bug: 'info-integration-slide',
+            diagnostics: {
+                server: {
+                    build: SERVER_BUILD_TAG,
+                    startedAt: SERVER_STARTED_AT.toISOString(),
+                    uptimeSec: Math.round(process.uptime()),
+                },
+                auth: {
+                    memSecretOk,
+                    dbSecretOk,
+                    requestUserDeviceId: req.user?.deviceId || null,
+                    requestUserId: req.user?.userId || null,
+                },
+                slide: {
+                    fileExists: !!slideHtml,
+                    supportedIntegrationsPresent: supported.filter(name => slideHtml.includes(name)),
+                    unsupportedClaimsPresent: unsupported.filter(name => slideHtml.includes(name)),
+                    hasFakeScaleStats: /50\+|99\.9%|24\/7/.test(slideHtml),
+                    hasActualStats: /已上線 \/ 已接線整合/.test(slideHtml)
+                        && /公開 channel plugin/.test(slideHtml)
+                        && /2026-05/.test(slideHtml),
+                    hasAvailabilityDisclaimer: /僅列出已上線或已接線的整合能力/.test(slideHtml)
+                        && /未上線\/未實作項目不列為正式支援/.test(slideHtml),
+                    hasDeadCompleteListCta: /查看完整整合列表/.test(slideHtml) || /href=["']#["']/.test(slideHtml),
+                },
+                screenshots: {
+                    webAssetExists: fs.existsSync(path.join(slideDir, 'info-integration-web.png')),
+                    mobileAssetExists: fs.existsSync(path.join(slideDir, 'info-integration-mobile.png')),
+                    thumbAssetExists: fs.existsSync(path.join(slideDir, 'info-integration-thumb.png')),
+                },
+            },
+            timestamp,
+        });
+    } catch (err) {
+        console.error('[Debug info-integration-slide] failed:', err);
+        res.status(500).json({ success: false, bug: 'info-integration-slide', error: err.message, timestamp });
+    }
+});
+
 // Temporary diagnostic endpoint for Pricing Advisor slide accuracy:
 // the marketing slide must not present unavailable model tiers or computed
 // pricing scores as real system output before Pricing Advisor is live.
