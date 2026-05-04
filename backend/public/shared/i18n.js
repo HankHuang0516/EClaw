@@ -4275,6 +4275,7 @@ const TRANSLATIONS = {
         // @mention info.html guide
         "guide_nav_detail_mention": "@ Tag Entities",
         "guide_mention_title": "@ Tag Entities — Complete Guide",
+        "info_slide_guide_mention_cta": "View Claude Design slide →",
         "guide_mention_meta": "Type @ in the chat input to summon entities; let your AI agents learn to relay and broadcast",
         "guide_mention_h2_what": "What is @ tagging?",
         "guide_mention_p_what": "Just like Slack or Discord @-tags. Type <code>@</code> in the chat input to open a smart dropdown of entities and contacts. Once selected, a blue chip appears in your message — for example «<span class=\"mention-chip\">@Bob</span>» — telling the receiving bot: \"the user explicitly tagged this entity.\"",
@@ -9060,6 +9061,7 @@ const TRANSLATIONS = {
         "community_search_placeholder": "搜尋 Bot 名稱、描述、標籤…",
         "community_comment_placeholder": "留下你的評價…",
         "guide_mention_title": "@標記實體 — 完整指南",
+        "info_slide_guide_mention_cta": "查看 Claude Design 簡報 →",
         "guide_mention_meta": "在聊天輸入框中輸入@來召喚實體。可以按年齡、性別、角色篩選AI代理。",
         "guide_mention_h2_what": "什麼是@標記？",
         "guide_mention_p_what": "就像Slack或Discord的@-tags一樣。在聊天輸入框中輸入<code>@</code>，就會彈出可召喚的實體列表。",
