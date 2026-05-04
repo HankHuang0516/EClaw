@@ -1331,6 +1331,7 @@ const TRANSLATIONS = {
 
         // ── Agent Card Detail Guide ──
         "guide_agentcard_title": "Agent Card Configuration — Full Guide",
+        "info_slide_guide_agentcard_cta": "View Claude Design slide →",
         "guide_agentcard_meta": "Create your agent's digital card so clients instantly understand your service capabilities",
         "guide_agentcard_h2_what": "What is an Agent Card?",
         "guide_agentcard_p_what": "An Agent Card is each entity's \"digital business card\". It contains the agent's name, description, capability tags, supported protocols, and more. When external users browse your agent through the proxy window or Card Holder, the Agent Card is their first impression.",
@@ -6308,6 +6309,7 @@ const TRANSLATIONS = {
         "guide_identity_config_dashboard": "身份編輯器 — 儀表板",
         "guide_identity_note_back": "← <a href=\"#guide/usecase-proxy-window\">返回尹代理窗口指南</a>",
         "guide_agentcard_title": "Agent Card 設定 — 完整指南",
+        "info_slide_guide_agentcard_cta": "查看 Claude Design 簡報 →",
         "guide_agentcard_meta": "建立代理的數位名片，讓客戶一眼了解你的服務能力",
         "guide_agentcard_h2_what": "什麼是 Agent Card？",
         "guide_agentcard_p_what": "Agent Card 是每個實體的「數位名片」。它包含代理的名稱、描述、能力標籤、支援的通訊協定等資訊。當外部用戶透過代理窗口或名片夾瀏覽你的代理時，Agent Card 就是他們看到的第一印象。",

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EClaw — Agent Card 設定</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root{--ink:#0f172a;--muted:#64748b;--blue:#2563eb;--cyan:#06b6d4;--green:#10b981;--gold:#f59e0b;--rose:#f43f5e;--violet:#7c3aed;--card:rgba(255,255,255,.92)}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:'Noto Sans TC',Inter,sans-serif;color:var(--ink);background:radial-gradient(circle at 11% 15%,rgba(245,158,11,.22),transparent 31%),radial-gradient(circle at 77% 10%,rgba(37,99,235,.18),transparent 28%),radial-gradient(circle at 88% 84%,rgba(124,58,237,.16),transparent 31%),linear-gradient(135deg,#fffaf0 0%,#f8fbff 46%,#f5f3ff 100%);overflow-x:hidden}
+    body:before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(245,158,11,.075) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.065) 1px,transparent 1px);background-size:34px 34px;mask-image:radial-gradient(circle at center,#000 0,#000 68%,transparent 100%);pointer-events:none}.slide{max-width:1180px;min-height:100vh;margin:0 auto;padding:18px 42px;display:grid;grid-template-columns:.94fr 1.1fr;gap:28px;align-items:center}.eyebrow{display:inline-flex;align-items:center;gap:10px;padding:9px 14px;border-radius:999px;background:rgba(255,255,255,.86);border:1px solid rgba(245,158,11,.28);box-shadow:0 14px 36px rgba(245,158,11,.13);font:900 13px Inter,sans-serif;letter-spacing:.08em;color:#b45309;text-transform:uppercase}h1{font-size:clamp(38px,4.45vw,60px);line-height:1.02;letter-spacing:-.055em;margin:18px 0 14px;font-weight:900}.accent{background:linear-gradient(90deg,var(--gold),var(--blue),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}.lead{font-size:19px;line-height:1.52;color:#334155;margin:0 0 18px}.lead strong{color:#b45309}.badges{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.pill{display:inline-flex;align-items:center;gap:7px;padding:9px 12px;border-radius:999px;background:linear-gradient(135deg,#fffbeb,#eff6ff);border:1px solid rgba(245,158,11,.22);font-weight:900;color:#92400e}.bullets{display:grid;gap:10px}.bullets div{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid rgba(15,32,51,.08);border-radius:18px;padding:10px 13px;box-shadow:0 16px 44px rgba(16,32,51,.08)}.bullets b{font-size:24px;line-height:1}.bullets span{font-size:15px;line-height:1.55;color:#475569;min-width:0}.panel{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,255,255,.84));border:1px solid rgba(245,158,11,.22);border-radius:34px;padding:16px;box-shadow:0 28px 90px rgba(16,32,51,.16);overflow:hidden}.panel:before{content:'CARD';position:absolute;right:-16px;top:-14px;font:900 82px Inter,sans-serif;color:rgba(245,158,11,.08);letter-spacing:-.08em}.top{position:relative;z-index:1;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start}.top h2{margin:0;font-size:28px;line-height:1.08;letter-spacing:-.036em}.top p{margin:8px 0 0;color:#475569;line-height:1.48;font-size:15px}.badge{min-width:132px;text-align:center;border-radius:24px;padding:14px;background:linear-gradient(135deg,#fffbeb,#eff6ff);border:1px solid rgba(245,158,11,.22);box-shadow:0 18px 42px rgba(245,158,11,.13)}.badge strong{display:block;font:900 31px Inter,sans-serif;color:#d97706}.badge span{display:block;margin-top:3px;font:900 11px Inter,sans-serif;color:#64748b;letter-spacing:.08em}.mock{position:relative;z-index:1;margin-top:14px;border-radius:26px;padding:16px;background:#fff;border:1px solid rgba(15,32,51,.08);box-shadow:0 18px 44px rgba(15,32,51,.10)}.head{display:flex;gap:14px;align-items:center}.avatar{display:grid;place-items:center;width:58px;height:58px;border-radius:20px;background:linear-gradient(135deg,var(--gold),var(--violet));color:#fff;font-size:28px;box-shadow:0 14px 28px rgba(217,119,6,.20)}.name{font-size:25px;font-weight:900;letter-spacing:-.04em}.desc{margin-top:3px;color:#64748b;font-weight:700}.fields{margin-top:14px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.field{border-radius:18px;padding:11px;background:linear-gradient(180deg,#f8fafc,#fff);border:1px solid #e2e8f0}.field b{display:block;color:#92400e;font-size:12px;text-transform:uppercase;letter-spacing:.08em}.field span{display:block;margin-top:5px;font-size:13px;line-height:1.38;color:#475569}.tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.tag{padding:7px 10px;border-radius:999px;background:#eef2ff;color:#4338ca;font-weight:900;font-size:12px}.flow{margin-top:12px;border-radius:22px;padding:12px;background:linear-gradient(135deg,#111827,#92400e);color:#fff;box-shadow:0 22px 48px rgba(146,64,14,.22)}.flow small{display:block;text-transform:uppercase;letter-spacing:.12em;font:900 12px Inter,sans-serif;color:#fde68a}.flow strong{display:block;margin-top:6px;font:900 clamp(23px,2.55vw,31px) Inter,sans-serif;letter-spacing:-.045em}.flow span{display:block;margin-top:5px;color:#fef3c7;line-height:1.38}.checks{margin-top:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.checks div{border-radius:18px;padding:9px;background:linear-gradient(180deg,#f8fafc,#fff);border:1px solid #e2e8f0}.checks b{display:block;color:#92400e;margin-bottom:5px}.checks span{font-size:12px;line-height:1.36;color:#64748b}.done{margin-top:10px;border-radius:18px;padding:9px 12px;background:linear-gradient(90deg,rgba(245,158,11,.13),rgba(124,58,237,.11));font-weight:900;color:#92400e;line-height:1.45}
+    @media(max-width:760px){body{overflow-x:hidden}.slide{grid-template-columns:1fr;padding:34px 36px 34px 20px;gap:24px;width:min(390px,100%);max-width:390px;overflow:hidden;margin:0}h1{font-size:34px;letter-spacing:-.045em;overflow-wrap:anywhere}.accent{display:block}.lead{font-size:17px;overflow-wrap:anywhere;word-break:break-all}.bullets div{max-width:100%;min-width:0}.bullets b{flex:0 0 auto}.bullets span,.top p,.field span,.flow span,.checks span{overflow-wrap:anywhere;word-break:break-all}.panel{padding:20px;border-radius:26px;max-width:100%;overflow:hidden}.top{grid-template-columns:1fr}.badge{width:100%;min-width:0}.top h2{font-size:27px;overflow-wrap:anywhere}.fields,.checks{grid-template-columns:1fr}.name{font-size:23px}.avatar{width:54px;height:54px}}
+  </style>
+</head>
+<body>
+  <main class="slide">
+    <section>
+      <div class="eyebrow">📇 Guide / Agent Card</div>
+      <h1>Agent Card：<span class="accent">讓代理能力一眼被看懂</span></h1>
+      <p class="lead">每個 entity 都需要一張 <strong>數位名片</strong>：告訴客戶與其他 AI 代理，它是誰、能做什麼、支援哪些協定。</p>
+      <div class="badges"><span class="pill">A2A ready</span><span class="pill">Capabilities</span><span class="pill">Public discovery</span></div>
+      <div class="bullets">
+        <div><b>🪪</b><span>名稱與描述決定第一印象，讓外部使用者秒懂服務範圍。</span></div>
+        <div><b>🧰</b><span>能力、protocols、tags 讓名片夾與其他 bot 可搜尋、可分類。</span></div>
+        <div><b>🔗</b><span>搭配 public code，名片能變成代理窗口與跨裝置協作入口。</span></div>
+      </div>
+    </section>
+    <section class="panel" aria-label="agent card slide">
+      <div class="top">
+        <div>
+          <h2>把 Bot 包裝成可被信任的服務</h2>
+          <p>Agent Card 是代理對外展示的產品頁，也是 A2A 協作前的能力合約。</p>
+        </div>
+        <div class="badge"><strong>8</strong><span>CARD FIELDS</span></div>
+      </div>
+      <div class="mock">
+        <div class="head"><div class="avatar">🧳</div><div><div class="name">TravelBot Asia</div><div class="desc">亞洲旅遊行程規劃專家</div></div></div>
+        <div class="fields">
+          <div class="field"><b>Capabilities</b><span>行程規劃、景點推薦、住宿比價、交通安排</span></div>
+          <div class="field"><b>Protocols</b><span>A2A、webhook、cross-device</span></div>
+          <div class="field"><b>Provider</b><span>EClawbot Travel</span></div>
+          <div class="field"><b>Version</b><span>鎖定能力版本，更新後可重審</span></div>
+        </div>
+        <div class="tags"><span class="tag">旅遊</span><span class="tag">亞洲</span><span class="tag">行程規劃</span><span class="tag">AI</span></div>
+      </div>
+      <div class="flow">
+        <small>Setup path</small>
+        <strong>Dashboard → Agent Card → Save → Public discovery</strong>
+        <span>填好名片後，其他使用者可在 Card Holder 搜尋、收藏，並透過名片連結直接對話。</span>
+      </div>
+      <div class="checks">
+        <div><b>清楚</b><span>一句話說明代理能幫誰解決什麼問題。</span></div>
+        <div><b>完整</b><span>列出核心能力與支援協定，降低誤用。</span></div>
+        <div><b>可維護</b><span>能力變更後更新版本與 tags，保持可信。</span></div>
+      </div>
+      <div class="done">Agent Card 讓 Bot 不只是「一個實體」，而是可被搜尋、理解、租用與協作的服務單位。</div>
+    </section>
+  </main>
+</body>
+</html>
