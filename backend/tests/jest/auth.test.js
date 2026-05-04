@@ -175,6 +175,14 @@ jest.mock('../../auth', () => {
         return res.json({ success: true, user: { id: 1, email: 'test@test.com' } });
     });
 
+    // GET /session — public-safe optional auth probe
+    router.get('/session', (req, res) => {
+        if (!req.cookies || !req.cookies.eclaw_session) {
+            return res.json({ success: true, authenticated: false, user: null });
+        }
+        return res.json({ success: true, authenticated: true, user: { id: 1, email: 'test@test.com' } });
+    });
+
     // GET /oauth/providers — public
     router.get('/oauth/providers', (_req, res) => {
         return res.json({ success: true, providers: [] });
@@ -318,6 +326,21 @@ describe('GET /api/auth/me', () => {
     it('returns 401 when not authenticated', async () => {
         const res = await get('/api/auth/me');
         expect(res.status).toBe(401);
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
+// GET /api/auth/session
+// ════════════════════════════════════════════════════════════════
+describe('GET /api/auth/session', () => {
+    it('returns 200 anonymous session state when not authenticated', async () => {
+        const res = await get('/api/auth/session');
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({
+            success: true,
+            authenticated: false,
+            user: null,
+        });
     });
 });
 

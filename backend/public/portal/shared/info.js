@@ -5,13 +5,17 @@ let currentUser = null;
 window.addEventListener('DOMContentLoaded', async () => {
     // Soft auth check: show authenticated nav if logged in, public nav otherwise
     try {
-        const data = await apiCall('GET', '/api/auth/me');
-        currentUser = data.user;
-        window.currentUser = currentUser;
-        renderNav('info');
-        if (window._addAdminLink) window._addAdminLink();
-        const emailEl = document.getElementById('navEmail');
-        if (emailEl) emailEl.textContent = currentUser.email;
+        const data = await apiCall('GET', '/api/auth/session', null, { skip401Redirect: true });
+        if (data?.authenticated && data.user) {
+            currentUser = data.user;
+            window.currentUser = currentUser;
+            renderNav('info');
+            if (window._addAdminLink) window._addAdminLink();
+            const emailEl = document.getElementById('navEmail');
+            if (emailEl) emailEl.textContent = currentUser.email;
+        } else {
+            renderPublicNav('info');
+        }
     } catch (e) {
         renderPublicNav('info');
     }
@@ -296,9 +300,9 @@ async function copyClaudeOpenclawExample() {
     let deviceSecret = i18n.t('guide_usecase_copy_device_secret_placeholder');
 
     try {
-        const data = await apiCall('GET', '/api/auth/me');
-        if (data?.user?.deviceId) deviceId = data.user.deviceId;
-        if (data?.user?.deviceSecret) deviceSecret = data.user.deviceSecret;
+        const data = await apiCall('GET', '/api/auth/session', null, { skip401Redirect: true });
+        if (data?.authenticated && data?.user?.deviceId) deviceId = data.user.deviceId;
+        if (data?.authenticated && data?.user?.deviceSecret) deviceSecret = data.user.deviceSecret;
     } catch (e) {
         // Not logged in, use placeholder
     }
