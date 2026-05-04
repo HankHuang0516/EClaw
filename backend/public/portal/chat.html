@@ -3955,7 +3955,7 @@
             xdeviceCodesWithMessages.forEach(code => {
                 const existing = group.querySelector(`[data-filter="xdevice-${code}"]`);
                 if (existing) return;
-                const shortCode = code.length > 12 ? code.slice(0, 8) : code;
+                const shortCode = code.length > 12 ? code.slice(0, 6) : code;
                 const label = xdeviceLabelCache[code] || `\u{1F310} ${shortCode}`;
                 const chip = document.createElement('button');
                 chip.className = `filter-chip filter-chip-entity filter-chip-contact${currentFilter === 'xdevice-' + code ? ' active' : ''}`;
@@ -4186,7 +4186,7 @@
             if (myPublicCodeMap[code]) return myPublicCodeMap[code].label;
             if (xdeviceLabelCache[code]) return xdeviceLabelCache[code];
             // Shorten UUID-style device IDs to first 8 chars for readability
-            const display = code && code.length > 12 ? code.slice(0, 8) : code;
+            const display = code && code.length > 12 ? code.slice(0, 6) : code;
             return `&#x1F310; ${escapeHtml(display)}`;
         }
 
