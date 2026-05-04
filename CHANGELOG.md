@@ -1,3 +1,10 @@
+# [1.1160.0](https://github.com/HankHuang0516/EClaw/compare/v1.1159.0...v1.1160.0) (2026-05-04)
+
+
+### Features
+
+* **info:** embed Claude Design slide for guide_proxy_window ([221598d](https://github.com/HankHuang0516/EClaw/commit/221598d68be9e8923e340765b7b33a7c473c0ad4))
+
 # [1.1159.0](https://github.com/HankHuang0516/EClaw/compare/v1.1158.0...v1.1159.0) (2026-05-04)
 
 
