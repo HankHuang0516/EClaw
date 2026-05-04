@@ -922,4 +922,8 @@ GPS: केवल अनुरोध पर, कोई बैकग्राउ�
     <string name="topup_tier_standard">मानक</string>
     <string name="topup_tier_starter">स्टार्टर</string>
     <string name="channel_api_manage_all">सभी कुंजी प्रबंधित करें →</string>
+    <string name="facebook_app_id" translatable="false">772387505935344</string>
+    <string name="facebook_client_token" translatable="false">139b350cf525d7785d370b1813e77838</string>
+    <string name="fb_login_protocol_scheme" translatable="false">fb772387505935344</string>
+    <string name="google_server_client_id" translatable="false">857252321032-3e8ajfc30up4957l8lqns562dee7ll72.apps.googleusercontent.com</string>
 </resources>

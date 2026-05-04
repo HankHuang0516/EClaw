@@ -819,4 +819,8 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="topup_tier_small">小额</string>
     <string name="topup_tier_standard">标准</string>
     <string name="topup_tier_starter">入门</string>
-    <string name="channel_api_manage_all">管理所有密钥 →</string></resources>
+    <string name="channel_api_manage_all">管理所有密钥 →</string>    <string name="facebook_app_id" translatable="false">772387505935344</string>
+    <string name="facebook_client_token" translatable="false">139b350cf525d7785d370b1813e77838</string>
+    <string name="fb_login_protocol_scheme" translatable="false">fb772387505935344</string>
+    <string name="google_server_client_id" translatable="false">857252321032-3e8ajfc30up4957l8lqns562dee7ll72.apps.googleusercontent.com</string>
+</resources>

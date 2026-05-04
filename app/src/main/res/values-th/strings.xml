@@ -817,4 +817,8 @@ GPS：รับตามความต้องการเท่านั้�
     <string name="topup_tier_standard">มาตรฐาน</string>
     <string name="topup_tier_starter">เริ่มต้น</string>
     <string name="channel_api_manage_all">จัดการคีย์ทั้งหมด →</string>
+    <string name="facebook_app_id" translatable="false">772387505935344</string>
+    <string name="facebook_client_token" translatable="false">139b350cf525d7785d370b1813e77838</string>
+    <string name="fb_login_protocol_scheme" translatable="false">fb772387505935344</string>
+    <string name="google_server_client_id" translatable="false">857252321032-3e8ajfc30up4957l8lqns562dee7ll72.apps.googleusercontent.com</string>
 </resources>
