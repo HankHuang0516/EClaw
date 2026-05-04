@@ -1231,7 +1231,7 @@ setInterval(async () => {
     if (deviceCount > 0) {
         await saveData();
     }
-}, AUTO_SAVE_INTERVAL);
+}, AUTO_SAVE_INTERVAL).unref();
 
 // ============================================
 // DEVICE CLEANUP (Remove test & zombie devices)
@@ -1299,7 +1299,7 @@ setInterval(async () => {
         console.log(`[Cleanup] Removed ${testRemoved} test device(s), ${zombieRemoved} zombie device(s). Remaining: ${Object.keys(devices).length}`);
         await saveData();
     }
-}, CLEANUP_INTERVAL);
+}, CLEANUP_INTERVAL).unref();
 
 // Subscription expiry cleanup - auto-unbind personal bots not verified in 48h
 const SUBSCRIPTION_EXPIRY_MS = 48 * 60 * 60 * 1000; // 48 hours
@@ -1342,7 +1342,7 @@ setInterval(async () => {
     } catch (err) {
         console.error('[Borrow Cleanup] Error:', err.message);
     }
-}, CLEANUP_INTERVAL);
+}, CLEANUP_INTERVAL).unref();
 
 // Graceful shutdown - save data before exit
 process.on('SIGINT', async () => {
@@ -2773,7 +2773,7 @@ authModule.setOnEmailVerified(async (deviceId) => {
 const subscriptionModule = require('./subscription')(devices, authModule.authMiddleware, ensureOneEmptySlot, serverLog);
 app.use('/api/subscription', subscriptionModule.router);
 // Load premium status after persistence is ready
-setTimeout(() => subscriptionModule.loadPremiumStatus(), 5000);
+if (process.env.NODE_ENV !== 'test') setTimeout(() => subscriptionModule.loadPremiumStatus(), 5000);
 
 // ============================================
 // WALLET (e-coin) — bot rental marketplace foundation
@@ -2938,7 +2938,7 @@ const trustModule = require('./trust')({
     serverLog,
 });
 app.use('/api/rental', trustModule.router); // extends /api/rental with review/dispute routes
-setTimeout(() => trustModule.initTrustDatabase(), 3000);
+if (process.env.NODE_ENV !== 'test') setTimeout(() => trustModule.initTrustDatabase(), 3000);
 
 // ============================================
 // INVITE / REFERRAL SYSTEM (P5)
@@ -2955,7 +2955,7 @@ const inviteModule = require('./invite')({
     walletModule,
     serverLog,
 });
-setTimeout(() => inviteModule.initInviteDatabase(), 3500);
+if (process.env.NODE_ENV !== 'test') setTimeout(() => inviteModule.initInviteDatabase(), 3500);
 
 // ============================================
 // INTERVIEW ARENA — public bot capability testing
@@ -3142,7 +3142,7 @@ nodeCron.schedule('23 4 * * *', async () => {
 // ============================================
 gatekeeper.initGatekeeperTable();
 gatekeeper.setServerLog(serverLog);
-setTimeout(() => gatekeeper.loadBlockedDevices(), 3000);
+if (process.env.NODE_ENV !== 'test') setTimeout(() => gatekeeper.loadBlockedDevices(), 3000);
 
 // Developer device cache — devices owned by admin accounts are exempt from Gatekeeper First Lock
 const developerDeviceIds = new Set();
@@ -3160,7 +3160,7 @@ async function loadDeveloperDevices() {
         console.error('[Gatekeeper] Failed to load developer devices:', err.message);
     }
 }
-setTimeout(() => loadDeveloperDevices(), 3500);
+if (process.env.NODE_ENV !== 'test') setTimeout(() => loadDeveloperDevices(), 3500);
 
 // --- Skill / Soul / Rule Templates API ---
 
@@ -17019,7 +17019,7 @@ app.post('/api/device/tts', async (req, res) => {
 });
 
 // Prune old notifications daily
-setInterval(() => notifModule.pruneOldNotifications(), 24 * 60 * 60 * 1000);
+setInterval(() => notifModule.pruneOldNotifications(), 24 * 60 * 60 * 1000).unref();
 
 // ============================================
 // WEB PUSH NOTIFICATIONS (VAPID)
