@@ -130,6 +130,17 @@ describe('Growth /daily aggregation contract', () => {
         expect(res.body.invite_conversion.pct).toBe(33.3);
     });
 
+    it('invite_conversion SQL targets invite_codes (live table), not Phase-5 invite_redemptions', async () => {
+        setupAdminQueries({ total_codes: 5, redeemed_codes: 2 });
+        await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2');
+        const inviteCall = mockQuery.mock.calls.find(c => /total_codes/i.test(c[0]) && /redeemed_codes/i.test(c[0]));
+        expect(inviteCall).toBeDefined();
+        const sql = inviteCall[0];
+        expect(sql).toMatch(/FROM\s+invite_codes\b/i);
+        expect(sql).toMatch(/used_by_device_id/);
+        expect(sql).not.toMatch(/invite_redemptions/);
+    });
+
     it('never leaks PII fields (id/email/ip/device_id) in response', async () => {
         setupAdminQueries({ signups: 1, cohort: 1, active: 1, plaza: 1 });
         const res = await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2');
