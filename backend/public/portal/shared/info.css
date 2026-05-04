@@ -131,6 +131,7 @@
 
 .guide-panel { display: none; }
 .guide-panel.active { display: block; }
+.guide-mobile-picker { display: none; }
 
 /* ── Guide Typography (dark theme) ── */
 .guide-content header {
@@ -1045,6 +1046,77 @@
     .demo-card,
     .demo-card:nth-child(even) { flex-direction: column; }
     .demo-card-media { width: 100%; }
+
+    /* Mobile guide: replace the long clipped tab rail with a compact picker. */
+    #panel-guide #guideSidebarUG {
+        display: none;
+    }
+    #panel-guide .guide-mobile-picker {
+        display: grid;
+        gap: 6px;
+        margin: 0 0 16px;
+    }
+    #panel-guide .guide-mobile-picker-label {
+        color: var(--text-secondary);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+    #panel-guide .guide-mobile-select {
+        width: 100%;
+        min-height: 44px;
+        padding: 10px 12px;
+        color: var(--text);
+        background: var(--card);
+        border: 1px solid var(--card-border);
+        border-radius: var(--radius-sm);
+        font: inherit;
+    }
+
+    /*
+     * Mobile guide: keep only the active sidebar content visible (existing
+     * .guide-panel logic) and collapse dense card groups into swipe carousels
+     * so 10+ feature/slide cards do not become a five-screen vertical wall.
+     */
+    #panel-guide .guide-content .feat-grid,
+    #panel-guide .guide-content .demo-showcase {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        padding: 2px 4px 12px;
+        margin-left: -4px;
+        margin-right: -4px;
+    }
+    #panel-guide .guide-content .feat-grid::after,
+    #panel-guide .guide-content .demo-showcase::after {
+        content: '';
+        flex: 0 0 4px;
+    }
+    #panel-guide .guide-content .feat-grid > .feat-card,
+    #panel-guide .guide-content .demo-showcase > .demo-card {
+        flex: 0 0 min(82vw, 320px);
+        scroll-snap-align: start;
+        margin-bottom: 0;
+    }
+    #panel-guide .guide-content .feat-card {
+        padding: 18px 16px;
+    }
+    #panel-guide .guide-content .demo-card,
+    #panel-guide .guide-content .demo-card:nth-child(even) {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    #panel-guide .guide-content .demo-card-media {
+        width: 100%;
+    }
+    #panel-guide .guide-content .guide-slide-link,
+    #panel-guide .guide-content .info-slide-link {
+        margin-top: 10px;
+    }
 }
 
 @media (max-width: 480px) {

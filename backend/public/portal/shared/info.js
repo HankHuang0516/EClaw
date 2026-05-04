@@ -41,6 +41,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     const missionSubNav = document.getElementById('missionSubNav');
     const usecaseToggle = document.getElementById('usecaseToggle');
     const usecaseSubNav = document.getElementById('usecaseSubNav');
+    const guideMobilePicker = buildGuideMobilePicker();
 
     // Expandable toggle groups: [toggle btn, sub nav, first sub item data-guide]
     const toggleGroups = [
@@ -62,9 +63,45 @@ window.addEventListener('DOMContentLoaded', async () => {
             panel.classList.add('active');
             renderMermaidIn(panel);
         }
+        if (guideMobilePicker && btn.closest('#panel-guide')) {
+            guideMobilePicker.value = tabId;
+        }
         const section = btn.closest('#panel-channel-plugins') ? 'channel-plugins' : 'guide';
         history.replaceState(null, '', '#' + section + '/' + tabId);
         updateSeoMeta(tabId);
+    }
+
+    function buildGuideMobilePicker() {
+        const sidebar = document.getElementById('guideSidebarUG');
+        const layout = sidebar?.closest('.guide-layout');
+        if (!sidebar || !layout || layout.querySelector('.guide-mobile-picker')) return null;
+
+        const wrapper = document.createElement('label');
+        wrapper.className = 'guide-mobile-picker';
+        wrapper.setAttribute('aria-label', 'Guide section picker');
+
+        const label = document.createElement('span');
+        label.className = 'guide-mobile-picker-label';
+        label.textContent = 'Guide section';
+
+        const select = document.createElement('select');
+        select.className = 'guide-mobile-select';
+        const buttons = [...sidebar.querySelectorAll('[data-guide]')];
+        buttons.forEach(btn => {
+            const option = document.createElement('option');
+            option.value = btn.getAttribute('data-guide');
+            option.textContent = btn.textContent.replace('▶', '').trim();
+            select.appendChild(option);
+        });
+
+        select.addEventListener('change', () => {
+            const target = buttons.find(btn => btn.getAttribute('data-guide') === select.value);
+            if (target) target.click();
+        });
+
+        wrapper.append(label, select);
+        layout.insertBefore(wrapper, sidebar.nextSibling);
+        return select;
     }
 
     // Expose guide navigation for deep link handling (used by global handleHash)
