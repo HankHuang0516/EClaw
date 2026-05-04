@@ -1,3 +1,10 @@
+## [1.1164.1](https://github.com/HankHuang0516/EClaw/compare/v1.1164.0...v1.1164.1) (2026-05-04)
+
+
+### Bug Fixes
+
+* **mockup-chat:** prevent product-card / note-preview collapse to 2px ([#2399](https://github.com/HankHuang0516/EClaw/issues/2399)) ([9b6ed18](https://github.com/HankHuang0516/EClaw/commit/9b6ed18c7917984506dddf58b32fc985ef9caa54))
+
 # [1.1164.0](https://github.com/HankHuang0516/EClaw/compare/v1.1163.0...v1.1164.0) (2026-05-04)
 
 
