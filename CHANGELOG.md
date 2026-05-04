@@ -1,3 +1,10 @@
+## [1.1167.1](https://github.com/HankHuang0516/EClaw/compare/v1.1167.0...v1.1167.1) (2026-05-04)
+
+
+### Bug Fixes
+
+* **kanban:** guard auto-review during progress heartbeats ([#2403](https://github.com/HankHuang0516/EClaw/issues/2403)) ([371b619](https://github.com/HankHuang0516/EClaw/commit/371b619172aafb19c654094d41aa65d9ef4223ab))
+
 # [1.1167.0](https://github.com/HankHuang0516/EClaw/compare/v1.1166.0...v1.1167.0) (2026-05-04)
 
 
