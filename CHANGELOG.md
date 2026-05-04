@@ -1,3 +1,10 @@
+## [1.1167.12](https://github.com/HankHuang0516/EClaw/compare/v1.1167.11...v1.1167.12) (2026-05-04)
+
+
+### Bug Fixes
+
+* **portal:** resolve emoji-icon mobile positioning conflicts ([#2438](https://github.com/HankHuang0516/EClaw/issues/2438)) ([f32e900](https://github.com/HankHuang0516/EClaw/commit/f32e9006d83a743e44ad077d75d95d5d50ce5b0c)), closes [portal/info.html#quickstart](https://github.com/portal/info.html/issues/quickstart)
+
 ## [1.1167.11](https://github.com/HankHuang0516/EClaw/compare/v1.1167.10...v1.1167.11) (2026-05-04)
 
 
