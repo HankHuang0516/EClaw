@@ -2463,6 +2463,72 @@ app.get('/api/debug/info-leaderboard-slide', async (req, res) => {
     }
 });
 
+// Temporary diagnostic endpoint for Pricing Advisor slide accuracy:
+// the marketing slide must not present unavailable model tiers or computed
+// pricing scores as real system output before Pricing Advisor is live.
+// Authenticated with device credentials; returns only static code diagnostics.
+app.get('/api/debug/info-pricing-slide', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query || {};
+    const timestamp = new Date().toISOString();
+    try {
+        if (!deviceId || !deviceSecret) {
+            return res.status(401).json({ success: false, bug: 'info-pricing-slide', error: 'deviceId and deviceSecret required', timestamp });
+        }
+
+        const memDevice = devices[deviceId];
+        const pool = db._getPool ? db._getPool() : authModule.pool;
+        const dbDevice = pool
+            ? await pool.query('SELECT device_secret FROM devices WHERE device_id = $1', [deviceId])
+            : { rows: [] };
+        const dbDeviceRow = dbDevice.rows[0] || null;
+        const memSecretOk = !!(memDevice && memDevice.deviceSecret && safeEqual(memDevice.deviceSecret, deviceSecret));
+        const dbSecretOk = !!(dbDeviceRow && dbDeviceRow.device_secret && safeEqual(dbDeviceRow.device_secret, deviceSecret));
+        if (!memSecretOk && !dbSecretOk) {
+            return res.status(403).json({ success: false, bug: 'info-pricing-slide', error: 'Invalid credentials', timestamp });
+        }
+
+        const slideDir = path.join(__dirname, 'public', 'portal', 'assets', 'slides');
+        const slidePath = path.join(slideDir, 'info-why-eclaw-b5-pricing-advisor.html');
+        const slideHtml = fs.existsSync(slidePath) ? fs.readFileSync(slidePath, 'utf8') : '';
+
+        res.json({
+            success: true,
+            bug: 'info-pricing-slide',
+            diagnostics: {
+                server: {
+                    build: SERVER_BUILD_TAG,
+                    startedAt: SERVER_STARTED_AT.toISOString(),
+                    uptimeSec: Math.round(process.uptime()),
+                },
+                auth: {
+                    memSecretOk,
+                    dbSecretOk,
+                    requestUserDeviceId: req.user?.deviceId || null,
+                    requestUserId: req.user?.userId || null,
+                },
+                slide: {
+                    fileExists: !!slideHtml,
+                    claimsGpt5Tier: /GPT-5\s*tier/i.test(slideHtml),
+                    usesCurrentModelLabel: /MiniMax 2\.7/.test(slideHtml),
+                    hasSampleBadge: /Sample display/.test(slideHtml),
+                    rangeMarkedAsDemo: /Demo rental range/.test(slideHtml) && /示範 18–24 e-coin \/ min/.test(slideHtml),
+                    fitScoreMarkedAsDemo: /<span>DEMO FIT<\/span>/.test(slideHtml),
+                    hasPricingDisclaimer: /Pricing 顧問功能展示/.test(slideHtml) && /以系統運算結果為準/.test(slideHtml),
+                },
+                screenshots: {
+                    webAssetExists: fs.existsSync(path.join(slideDir, 'info-why-eclaw-b5-pricing-advisor-web.png')),
+                    mobileAssetExists: fs.existsSync(path.join(slideDir, 'info-why-eclaw-b5-pricing-advisor-mobile.png')),
+                    thumbAssetExists: fs.existsSync(path.join(slideDir, 'info-why-eclaw-b5-pricing-advisor-thumb.png')),
+                },
+            },
+            timestamp,
+        });
+    } catch (err) {
+        console.error('[Debug info-pricing-slide] failed:', err);
+        res.status(500).json({ success: false, bug: 'info-pricing-slide', error: err.message, timestamp });
+    }
+});
+
 // Wire up pending message flush on email verification
 authModule.setOnEmailVerified(async (deviceId) => {
     console.log(`[PendingFlush] onEmailVerified triggered for device ${deviceId}`);
