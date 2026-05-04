@@ -146,18 +146,22 @@ function weightedPick(items, keyFn, weights) {
 // ============================================
 
 let VISION_IMAGES = [
-    { file: 'img-f3a1.svg', keywords: ['red', 'circle'] },
-    { file: null, description: 'A system monitoring dashboard showing CPU at 87%, RAM usage 11.2 GB of 16 GB, disk I/O at 340 MB/s, and 3 active processes flagged in red', keywords: ['CPU', '87', 'RAM', 'disk', 'three', 'red'] },
     { file: 'img-d4e9.svg', keywords: ['green', 'triangle'] },
     { file: 'img-a2f5.svg', keywords: ['yellow', 'star'] },
     { file: 'img-c8b3.svg', keywords: ['cat', 'orange'] },
     // ── Easy tier (20%) — basic shape/object recognition ──
     { file: null, description: 'A red heart shape centered on a white background', keywords: ['heart', 'red'] },
     { file: null, description: 'A green checkmark inside a circle', keywords: ['checkmark', 'green', 'circle'] },
-    { file: null, description: 'A blue water droplet shape on gray', keywords: ['water', 'droplet', 'blue'] },
     { file: null, description: 'A yellow sun with eight rays extending outward', keywords: ['sun', 'yellow', 'rays'] },
     { file: null, description: 'A simple house with a red roof and brown door', keywords: ['house', 'roof', 'door'] },
+    { file: null, description: 'A red octagon stop sign with white text on a blue sky background', keywords: ['stop', 'sign', 'red', 'octagon'] },
+    { file: null, description: 'A yellow warning triangle with a black exclamation mark in the center', keywords: ['warning', 'triangle', 'yellow', 'exclamation'] },
     // ── Medium tier (50%) — counting, labels, multi-object scenes ──
+    { file: null, description: 'A scoreboard showing Home: 3, Away: 1, 4th Quarter, 2:34 remaining', keywords: ['scoreboard', 'three', 'one', 'quarter', 'four', '2:34'] },
+    { file: null, description: 'A network diagram with five server nodes connected by lines, the central node labeled Load Balancer', keywords: ['network', 'five', 'servers', 'load', 'balancer'] },
+    { file: null, description: 'A weekly calendar view showing three meetings on Monday, one on Wednesday, and two on Friday', keywords: ['calendar', 'three', 'monday', 'one', 'wednesday', 'two', 'friday'] },
+    { file: null, description: 'A bar chart comparing sales for five products: Product A $12K, B $8K, C $19K, D $6K, E $14K — Product C is tallest', keywords: ['bar', 'chart', 'five', 'products', '19', 'C'] },
+    { file: null, description: 'A smartphone lock screen at 11:47 displaying three notification badges from different apps', keywords: ['phone', '11', '47', 'three', 'notifications'] },
     { file: null, description: 'A bar chart with four bars labeled Q1 through Q4 where Q3 is the tallest', keywords: ['bar', 'chart', 'four', 'Q3'] },
     { file: null, description: 'A Git commit graph showing three branches: main has 5 commits, feature-auth branches off commit 2 with 3 commits, and hotfix branches off commit 4 of main with 1 commit', keywords: ['git', 'three', 'branches', 'main', 'feature', 'hotfix'] },
     { file: null, description: 'A spreadsheet with five rows of sales data: Region A $142K, Region B $98K, Region C $227K, Region D $65K, Region E $183K — Region C is highlighted in green as the highest', keywords: ['spreadsheet', 'region', 'highest', '227', 'five', 'green'] },
@@ -171,6 +175,9 @@ let VISION_IMAGES = [
     { file: null, description: 'An arrow pointing right with a dashed trail on black background', keywords: ['arrow', 'right', 'dashed'] },
     { file: null, description: 'A flowchart with a diamond decision node labeled "Is valid?" branching to Yes and No paths', keywords: ['flowchart', 'diamond', 'decision', 'yes', 'no'] },
     // ── Hard tier (30%) — OCR, spatial reasoning, complex counting ──
+    { file: null, description: 'A bus timetable for Route 47 with six stops: Central 08:15, Market St 08:23, Park Ave 08:31, Library 08:39, Hospital 08:47, Terminal 08:55', keywords: ['route', '47', 'six', 'stops', '08:15', '08:55', 'terminal'] },
+    { file: null, description: 'A pricing table with three tiers: Basic $9.99/mo, Pro $29.99/mo, Enterprise $99.99/mo; five feature rows with Enterprise column fully checked', keywords: ['pricing', 'three', 'basic', 'pro', 'enterprise', '99', 'five'] },
+    { file: null, description: 'A git diff showing three files changed: auth.js with +15 -3 lines, index.js with +47 -12 lines, and db.js with +8 -0 lines', keywords: ['git', 'diff', 'three', 'files', 'auth', 'index', 'db', '47'] },
     { file: null, description: 'An aerial parking lot with twelve cars, three of which are red', keywords: ['twelve', 'cars', 'three', 'red'] },
     { file: null, description: 'A chemistry lab bench with three beakers: left contains blue liquid, middle is empty, right has green precipitate at the bottom', keywords: ['three', 'beakers', 'blue', 'empty', 'green'] },
     { file: null, description: 'A nutrition facts label showing per 100g: 2450mg sodium, 12g total fat, 8g protein, 34g carbohydrates, 4g dietary fiber, and 380 calories', keywords: ['nutrition', 'sodium', '2450', 'fat', 'protein', 'calories', '380'] },
@@ -199,9 +206,9 @@ function generateButtonClickChallenge() {
     return { correctIndex, correctLabel, buttonCount, seed: Math.floor(Math.random() * 1e9) };
 }
 
-const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Wei Zhang','Amara Osei','Ravi Kapoor','Isabella Rossi','Dmitri Volkov'];
-const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se','wei@demo.cn','amara@test.gh','ravi@sample.in','isabella@demo.it','dmitri@test.ru'];
-const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','China','Ghana','Italy','Russia','Netherlands'];
+const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Wei Zhang','Amara Osei','Ravi Kapoor','Isabella Rossi','Dmitri Volkov','Nguyen Van An','Amira Hassan','Takumi Nakamura','Elena Kowalski','Ibrahim Diallo','Ana Folau','Marco Bianchi','Zara Patel','Jonas Lindqvist','Farrukh Tashkentov'];
+const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se','wei@demo.cn','amara@test.gh','ravi@sample.in','isabella@demo.it','dmitri@test.ru','nguyen@example.vn','amira@test.eg','takumi@demo.jp','elena@mail.pl','ibrahim@test.sn','ana@sample.nz','marco@demo.it','zara@test.in','jonas@sample.se','farrukh@demo.uz'];
+const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','China','Ghana','Italy','Russia','Netherlands','Vietnam','Egypt','Poland','New Zealand','Ukraine','Argentina','Thailand','Turkey','Indonesia','Nigeria'];
 const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123','+46-70-123-4567','+65-9123-4567','+52-55-1234-5678','+353-87-123-4567'];
 const FORM_DATES = ['1990-06-15','1985-03-22','1992-11-08','1988-01-30','1995-07-14','1983-09-25','1991-12-01','1987-04-17','1993-08-09','1986-02-14','1994-10-31','1989-05-20'];
 const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund'];
@@ -356,6 +363,17 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '"babad"', expected: '"bab"' },{ input: '"cbbd"', expected: '"bb"' },{ input: '"a"', expected: '"a"' },{ input: '"racecar"', expected: '"racecar"' }] },
     { title: '0-1 Knapsack', description: 'Write `solve(weights, values, capacity)` — given items with weights and values arrays and a knapsack of given capacity, return the maximum total value (each item used at most once).',
       testCases: [{ input: '[1,3,4,5], [1,4,5,7], 7', expected: '9' },{ input: '[2,3,4,5], [3,4,5,6], 5', expected: '7' },{ input: '[1], [10], 0', expected: '0' }] },
+    // ── New problems (2026-05-04 pool refresh) ──
+    { title: 'Unique Paths', description: 'Write `solve(m, n)` — a robot starts at the top-left of an m×n grid and can only move right or down. Return the number of distinct paths to reach the bottom-right corner.',
+      testCases: [{ input: '3, 7', expected: '28' },{ input: '3, 2', expected: '3' },{ input: '1, 1', expected: '1' },{ input: '5, 5', expected: '70' }] },
+    { title: 'Minimum Window Substring', description: 'Write `solve(s, t)` — return the minimum window substring of s that contains all characters in t. Return an empty string if no such window exists.',
+      testCases: [{ input: '"ADOBECODEBANC", "ABC"', expected: '"BANC"' },{ input: '"a", "a"', expected: '"a"' },{ input: '"a", "aa"', expected: '""' }] },
+    { title: 'Longest Common Subsequence', description: 'Write `solve(text1, text2)` — return the length of the longest common subsequence of text1 and text2.',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"bl", "yby"', expected: '1' }] },
+    { title: 'Word Break', description: 'Write `solve(s, wordDict)` — given string s and a dictionary wordDict, return true if s can be segmented into a space-separated sequence of dictionary words.',
+      testCases: [{ input: '"leetcode", ["leet","code"]', expected: 'true' },{ input: '"applepenapple", ["apple","pen"]', expected: 'true' },{ input: '"catsandog", ["cats","dog","sand","and","cat"]', expected: 'false' }] },
+    { title: 'Flood Fill', description: 'Write `solve(image, sr, sc, color)` — perform flood fill starting at pixel (sr, sc) with the new color. Return the modified image. Connected pixels share an edge.',
+      testCases: [{ input: '[[1,1,1],[1,1,0],[1,0,1]], 1, 1, 2', expected: '[[2,2,2],[2,2,0],[2,0,1]]' },{ input: '[[0,0,0],[0,0,0]], 0, 0, 0', expected: '[[0,0,0],[0,0,0]]' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -401,6 +419,17 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many squares of all sizes (1×1, 2×2, up to 8×8) are there on a standard 8×8 chessboard?', expectedKeywords: ['204'] },
     { question: 'A plane travels 2000 km at an effective speed of 1000 km/h (900 km/h airspeed plus 100 km/h tailwind). How many hours does the journey take?', expectedKeywords: ['2'] },
     { question: 'A worker paints 1/3 of a fence on day 1 and 1/4 of the remaining unpainted fence on day 2. What fraction of the fence is still unpainted after day 2?', expectedKeywords: ['1/2', '0.5', 'half'] },
+    // ── New questions (2026-05-04 pool refresh) ──
+    // Medium
+    { question: 'Pipe A fills a tank in 4 hours. Pipe B drains it in 12 hours. With both open simultaneously, how many hours does it take to fill the tank?', expectedKeywords: ['6'] },
+    { question: 'A car travels from city A to B at 60 km/h and returns at 40 km/h. What is the average speed for the entire round trip in km/h?', expectedKeywords: ['48'] },
+    { question: 'How many distinct ways can you arrange 5 different books on a shelf?', expectedKeywords: ['120'] },
+    { question: 'A store marks up all items by 40% over cost. If an item costs $50, what is the selling price in dollars?', expectedKeywords: ['70'] },
+    { question: 'What is 8 × 9 × 7?', expectedKeywords: ['504'] },
+    // Hard
+    { question: 'A snail is at the bottom of a 15-meter well. Each day it climbs 5 meters; each night it slides back 3 meters. On which day does it reach the top of the well?', expectedKeywords: ['7'] },
+    { question: 'A committee of 3 people must be chosen from a group of 7. How many different committees are possible?', expectedKeywords: ['35'] },
+    { question: 'A rectangular box has length 4 cm, width 6 cm, and height 3 cm. What is the length of its space diagonal to two decimal places?', expectedKeywords: ['7.81', '√61'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -452,12 +481,13 @@ let TTS_PHRASES = [
     { text: 'The GPS coordinates are 35.6762 degrees north 139.6503 degrees east', keywords: ['GPS', 'coordinates', '35', '139'] },
     { text: 'Doctor Zhang appointment is at 2:45 PM in Building C Room 301', keywords: ['Zhang', 'appointment', '2', '45', 'room', '301'] },
     { text: 'The Dow Jones index fell 2.3 percent to close at 38,547 points', keywords: ['Dow', 'Jones', 'percent', '38'] },
-    { text: 'Machine learning models require large datasets for training', keywords: ['machine', 'learning', 'models', 'datasets', 'training'] },
     { text: 'Renewable energy sources include solar wind and hydropower', keywords: ['renewable', 'energy', 'solar', 'wind', 'hydropower'] },
     { text: 'Quantum computing promises to solve complex optimization problems', keywords: ['quantum', 'computing', 'complex', 'optimization'] },
     { text: 'Version control helps teams collaborate on software projects', keywords: ['version', 'control', 'teams', 'collaborate', 'software'] },
-    { text: 'The server returned HTTP status code 503 service unavailable', keywords: ['server', 'HTTP', '503', 'service', 'unavailable'] },
     { text: 'Encryption protects sensitive data during transmission', keywords: ['encryption', 'protects', 'sensitive', 'data', 'transmission'] },
+    { text: 'Please submit the form before the deadline on Friday afternoon', keywords: ['submit', 'form', 'deadline', 'friday', 'afternoon'] },
+    { text: 'Meeting room B-204 is booked from 10:00 AM to 11:30 AM for the Q3 strategy review', keywords: ['meeting', 'B-204', '10', '11', '30', 'Q3', 'strategy'] },
+    { text: 'Call 1-800-555-0199 between 8 AM and 5 PM Eastern Time to reach a customer representative', keywords: ['1-800', '555', '0199', '8', '5', 'eastern'] },
     // ── Hard tier (30%) — acronyms, mixed content, technical jargon ──
     { text: 'The IPv4 address 192.168.1.1 is commonly used as a default gateway', keywords: ['IPv4', '192', '168', 'gateway'] },
     { text: 'Invoice number INV-2024-00784 for three hundred forty-nine dollars and fifty cents is due on April thirtieth', keywords: ['invoice', '2024', '00784', 'three', 'hundred', 'april', 'thirtieth'] },
@@ -468,6 +498,11 @@ let TTS_PHRASES = [
     { text: 'Euler identity states that e to the power of i times pi plus 1 equals zero', keywords: ['euler', 'identity', 'pi', 'zero'] },
     { text: 'The API endpoint requires an Authorization header with a Bearer token and a Content-Type of application slash JSON', keywords: ['API', 'authorization', 'bearer', 'token', 'content', 'JSON'] },
     // ── Additional hard phrases ──
+    { text: 'The parcel tracking number is JD-2847-5931-KL and estimated delivery is Thursday afternoon', keywords: ['parcel', 'tracking', 'JD', '2847', '5931', 'thursday'] },
+    { text: 'Deployment target is version 3.14.2 scheduled for Saturday at 00:00 UTC', keywords: ['deployment', 'version', '3', '14', '2', 'saturday', 'UTC'] },
+    { text: 'The CIDR block 10.0.0.0 slash 24 contains 256 addresses of which 254 are usable host addresses', keywords: ['CIDR', '10', '256', 'addresses', '254', 'usable'] },
+    { text: 'The Schwarzschild radius of a black hole with mass equal to the sun is approximately 2.95 kilometers', keywords: ['schwarzschild', 'radius', 'sun', '2.95', 'kilometers'] },
+    { text: 'Transfer 2500 euro to IBAN DE89 3704 0044 0532 0130 00 by end of business Friday', keywords: ['2500', 'euro', 'IBAN', 'DE89', '3704', 'friday'] },
     { text: 'Your one-time verification code is 8 4 3 7 2 and expires in five minutes', keywords: ['verification', 'code', '84372', 'five', 'minutes'] },
     { text: 'The SQL query selects all records from the users table where the account status equals active and the score is greater than 100', keywords: ['SQL', 'query', 'users', 'active', 'score', '100'] },
     { text: 'Bernoulli and Euler each contributed foundational theorems to both fluid dynamics and graph theory', keywords: ['bernoulli', 'euler', 'fluid', 'dynamics', 'graph', 'theory'] },
