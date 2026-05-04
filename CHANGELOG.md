@@ -1,3 +1,47 @@
+## [1.1167.12](https://github.com/HankHuang0516/EClaw/compare/v1.1167.11...v1.1167.12) (2026-05-04)
+
+
+### Bug Fixes
+
+* **portal:** resolve emoji-icon mobile positioning conflicts ([#2438](https://github.com/HankHuang0516/EClaw/issues/2438)) ([f32e900](https://github.com/HankHuang0516/EClaw/commit/f32e9006d83a743e44ad077d75d95d5d50ce5b0c)), closes [portal/info.html#quickstart](https://github.com/portal/info.html/issues/quickstart)
+
+## [1.1167.11](https://github.com/HankHuang0516/EClaw/compare/v1.1167.10...v1.1167.11) (2026-05-04)
+
+
+### Bug Fixes
+
+* **info:** mark performance slide metrics as illustrative ([167107d](https://github.com/HankHuang0516/EClaw/commit/167107da9fadf3b3318d6b277ec938e6d7006052)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
+## [1.1167.10](https://github.com/HankHuang0516/EClaw/compare/v1.1167.9...v1.1167.10) (2026-05-04)
+
+
+### Bug Fixes
+
+* replace embedded Quick Start slides with image cards to resolve visual conflicts ([#2434](https://github.com/HankHuang0516/EClaw/issues/2434)) ([57585d5](https://github.com/HankHuang0516/EClaw/commit/57585d5082bc2316f4cfcbaf0ff513a229385302)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
+## [1.1167.9](https://github.com/HankHuang0516/EClaw/compare/v1.1167.8...v1.1167.9) (2026-05-04)
+
+
+### Bug Fixes
+
+* **test:** guard module-scope timers to prevent Jest flakiness ([#2433](https://github.com/HankHuang0516/EClaw/issues/2433)) ([7578aca](https://github.com/HankHuang0516/EClaw/commit/7578acaa6015cba9f68ed246a9affccf0794d160))
+
+## [1.1167.8](https://github.com/HankHuang0516/EClaw/compare/v1.1167.7...v1.1167.8) (2026-05-04)
+
+
+### Bug Fixes
+
+* **portal:** align cross-device code display with spec S4.1.3 ([#2430](https://github.com/HankHuang0516/EClaw/issues/2430)) ([60b5265](https://github.com/HankHuang0516/EClaw/commit/60b526569e89c2e26f8aed5a083937b17d431fc6))
+
+## [1.1167.7](https://github.com/HankHuang0516/EClaw/compare/v1.1167.6...v1.1167.7) (2026-05-04)
+
+
+### Bug Fixes
+
+* **i18n:** clean de locale leak baseline ([#2427](https://github.com/HankHuang0516/EClaw/issues/2427)) ([5a56578](https://github.com/HankHuang0516/EClaw/commit/5a565788f08e70b3dd01d3f2e6e11816b19d5f43))
+* **android:** cross-device message direction uses publicCode map ([#2130](https://github.com/HankHuang0516/EClaw/issues/2130)) ([#2429](https://github.com/HankHuang0516/EClaw/issues/2429)) ([0b434a7](https://github.com/HankHuang0516/EClaw/commit/0b434a774345446bd0e9f605aa6030a6326117af))
+* **i18n:** es baseline cleanup (31 keys) ([#2428](https://github.com/HankHuang0516/EClaw/issues/2428)) ([3edebcb](https://github.com/HankHuang0516/EClaw/commit/3edebcbea560f89e8e190bb0185e600f2e52a198))
+
 ## [1.1167.6](https://github.com/HankHuang0516/EClaw/compare/v1.1167.5...v1.1167.6) (2026-05-04)
 
 
