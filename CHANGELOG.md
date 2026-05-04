@@ -1,3 +1,10 @@
+## [1.1167.5](https://github.com/HankHuang0516/EClaw/compare/v1.1167.4...v1.1167.5) (2026-05-04)
+
+
+### Bug Fixes
+
+* auth console noise on public pages (PR [#2420](https://github.com/HankHuang0516/EClaw/issues/2420)) ([6f0acac](https://github.com/HankHuang0516/EClaw/commit/6f0acac9d46dfe9bbe47e0ad3f436d68691df24d))
+
 ## [1.1167.4](https://github.com/HankHuang0516/EClaw/compare/v1.1167.3...v1.1167.4) (2026-05-04)
 
 
