@@ -2463,6 +2463,105 @@ app.get('/api/debug/info-leaderboard-slide', async (req, res) => {
     }
 });
 
+// Temporary diagnostic endpoint for public Info-page privacy/security claims:
+// the privacy slide currently contains legal-risk certification/security claims and
+// must not be reachable from user-visible Info page entry points until rewritten.
+// Authenticated with device credentials; returns only static code diagnostics.
+app.get('/api/debug/info-privacy-claims', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query || {};
+    const timestamp = new Date().toISOString();
+    try {
+        if (!deviceId || !deviceSecret) {
+            return res.status(401).json({ success: false, bug: 'info-privacy-claims', error: 'deviceId and deviceSecret required', timestamp });
+        }
+
+        const memDevice = devices[deviceId];
+        const pool = db._getPool ? db._getPool() : authModule.pool;
+        const dbDevice = pool
+            ? await pool.query('SELECT device_secret FROM devices WHERE device_id = $1', [deviceId])
+            : { rows: [] };
+        const dbDeviceRow = dbDevice.rows[0] || null;
+        const memSecretOk = !!(memDevice && memDevice.deviceSecret && safeEqual(memDevice.deviceSecret, deviceSecret));
+        const dbSecretOk = !!(dbDeviceRow && dbDeviceRow.device_secret && safeEqual(dbDeviceRow.device_secret, deviceSecret));
+        if (!memSecretOk && !dbSecretOk) {
+            return res.status(403).json({ success: false, bug: 'info-privacy-claims', error: 'Invalid credentials', timestamp });
+        }
+
+        const portalDir = path.join(__dirname, 'public', 'portal');
+        const infoPath = path.join(portalDir, 'info.html');
+        const slideDir = path.join(portalDir, 'assets', 'slides');
+        const privacySlidePath = path.join(slideDir, 'info-privacy.html');
+        const privacyMobilePath = path.join(slideDir, 'info-privacy-mobile.html');
+        const read = (p) => fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : '';
+        const infoHtml = read(infoPath);
+        const privacySlideHtml = read(privacySlidePath);
+        const privacyMobileHtml = read(privacyMobilePath);
+        const riskyClaimPatterns = [
+            /ISO\s*27001/i,
+            /GDPR/i,
+            /SOC\s*2/i,
+            /HIPAA/i,
+            /軍用級\s*AES-?256|military-grade\s*AES-?256/i,
+            /端到端加密傳輸|end-to-end encrypted transmission/i,
+            /資料庫加密存儲|encrypted database storage/i,
+            /99\.99%|0\s*資料外洩|24\/7\s*安全監控/i,
+        ];
+        const publicPortalReferences = [];
+        const walk = (dir) => {
+            if (!fs.existsSync(dir)) return;
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+                const p = path.join(dir, entry.name);
+                if (entry.isDirectory()) {
+                    if (p === slideDir) continue;
+                    walk(p);
+                } else if (/\.(html|js|css)$/i.test(entry.name)) {
+                    const body = read(p);
+                    if (/info-privacy(?:-mobile)?\.html|info-privacy-thumb\.png/.test(body)) {
+                        publicPortalReferences.push(path.relative(portalDir, p));
+                    }
+                }
+            }
+        };
+        walk(portalDir);
+
+        res.json({
+            success: true,
+            bug: 'info-privacy-claims',
+            diagnostics: {
+                server: {
+                    build: SERVER_BUILD_TAG,
+                    startedAt: SERVER_STARTED_AT.toISOString(),
+                    uptimeSec: Math.round(process.uptime()),
+                },
+                auth: {
+                    memSecretOk,
+                    dbSecretOk,
+                    requestUserDeviceId: req.user?.deviceId || null,
+                    requestUserId: req.user?.userId || null,
+                },
+                infoPageExposure: {
+                    infoFileExists: !!infoHtml,
+                    linksPrivacySlide: /href=["']assets\/slides\/info-privacy\.html["']/.test(infoHtml),
+                    displaysPrivacyThumb: /src=["']assets\/slides\/info-privacy-thumb\.png["']/.test(infoHtml),
+                    usesPrivacyCtaKey: /data-i18n=["']info_privacy_slide_cta["']/.test(infoHtml),
+                    publicPortalReferences,
+                },
+                retainedSlideFiles: {
+                    privacySlideExists: !!privacySlideHtml,
+                    privacyMobileSlideExists: !!privacyMobileHtml,
+                    slideStillContainsRiskyClaims: riskyClaimPatterns.some(pattern => pattern.test(privacySlideHtml)),
+                    mobileSlideStillContainsRiskyClaims: riskyClaimPatterns.some(pattern => pattern.test(privacyMobileHtml)),
+                },
+            },
+            timestamp,
+        });
+    } catch (err) {
+        console.error('[Debug info-privacy-claims] failed:', err);
+        res.status(500).json({ success: false, bug: 'info-privacy-claims', error: err.message, timestamp });
+    }
+});
+
+
 // Wire up pending message flush on email verification
 authModule.setOnEmailVerified(async (deviceId) => {
     console.log(`[PendingFlush] onEmailVerified triggered for device ${deviceId}`);

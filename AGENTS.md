@@ -439,6 +439,7 @@ EClaw/
    | Kanban nudges ignored by Codex channel bridge | `GET /api/mission/debug/kanban-codex-nudge?deviceId=X&deviceSecret=Y` | 2026-05-01 | Active |
    | Info public pages: roadmap redirects unauthenticated visitors + release notes show raw Markdown links | `GET /api/debug/info-public-pages?deviceId=X&deviceSecret=Y` | 2026-05-04 | Active |
    | Info slide uses invented Interview Arena leaderboard bot names | `GET /api/debug/info-leaderboard-slide?deviceId=X&deviceSecret=Y` | 2026-05-04 | Active |
+   | Info privacy slide contains unverified certification/security claims | `GET /api/debug/info-privacy-claims?deviceId=X&deviceSecret=Y` | 2026-05-04 | Active |
 
 6. **Demand Elegance (Balanced)** — 在保持 minimal change 的前提下，追求可讀、一致的程式風格；不為了「漂亮」而過度重構，但也不容忍明顯的 code smell 在新增的程式碼中出現。
 
