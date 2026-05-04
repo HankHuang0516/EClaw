@@ -42,6 +42,24 @@ describe('Info privacy/security slide exposure', () => {
     });
 });
 
+describe('Info enterprise false claims regression', () => {
+    test('info.html does not link or thumbnail the false enterprise claims slide', () => {
+        const source = fs.readFileSync(INFO_HTML, 'utf8');
+        expect(source).not.toMatch(/href=["']assets\/slides\/info-enterprise\.html["']/);
+        expect(source).not.toMatch(/src=["']assets\/slides\/info-enterprise-thumb\.png["']/);
+        expect(source).not.toMatch(/data-i18n=["']info_enterprise_slide_cta["']/);
+    });
+
+    test('no public portal file outside the slide folder references the false enterprise slide', () => {
+        const offenders = walkFiles(PORTAL_DIR).filter((file) => {
+            const source = fs.readFileSync(file, 'utf8');
+            return /info-enterprise(?:-mobile)?\.html|info-enterprise-thumb\.png/.test(source);
+        }).map((file) => path.relative(PORTAL_DIR, file));
+
+        expect(offenders).toEqual([]);
+    });
+});
+
 describe('info-privacy-claims debug endpoint registration', () => {
     test('backend exposes an authenticated temporary debug endpoint for exposure verification', () => {
         const source = fs.readFileSync(INDEX_JS, 'utf8');
