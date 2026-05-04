@@ -594,6 +594,18 @@
     border-radius: 6px;
     background: #1a1a1a;
 }
+.guide-content .guide-slide-icon {
+    flex: 0 0 auto;
+    width: 120px;
+    height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, var(--primary), rgba(108, 99, 255, 0.7));
+    color: white;
+}
 .guide-content .guide-slide-cta {
     font-size: 15px;
     font-weight: 600;
@@ -602,6 +614,7 @@
 @media (max-width: 480px) {
     .guide-content .guide-slide-link { gap: 10px; padding: 10px 12px; }
     .guide-content .guide-slide-thumb { width: 92px; height: 52px; }
+    .guide-content .guide-slide-icon { width: 92px; height: 52px; font-size: 24px; }
     .guide-content .guide-slide-cta { font-size: 14px; }
 }
 
