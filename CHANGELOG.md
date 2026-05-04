@@ -1,3 +1,10 @@
+# [1.1159.0](https://github.com/HankHuang0516/EClaw/compare/v1.1158.0...v1.1159.0) (2026-05-04)
+
+
+### Features
+
+* **info:** embed Claude Design slide for guide_publisher ([8662474](https://github.com/HankHuang0516/EClaw/commit/8662474ca7e4396b1e210c8ea0a6a40523f89a82))
+
 # [1.1158.0](https://github.com/HankHuang0516/EClaw/compare/v1.1157.0...v1.1158.0) (2026-05-03)
 
 
