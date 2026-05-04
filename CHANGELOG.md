@@ -1,3 +1,10 @@
+## [1.1167.3](https://github.com/HankHuang0516/EClaw/compare/v1.1167.2...v1.1167.3) (2026-05-04)
+
+
+### Bug Fixes
+
+* **kanban:** require aboutCardId for auto-close to stop IDLE-content false-close ([#2405](https://github.com/HankHuang0516/EClaw/issues/2405)) ([5bc502f](https://github.com/HankHuang0516/EClaw/commit/5bc502f5cff06e1d93fe90dd2774ea33ab0e35fa)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6) [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#2403](https://github.com/HankHuang0516/EClaw/issues/2403)
+
 ## [1.1167.2](https://github.com/HankHuang0516/EClaw/compare/v1.1167.1...v1.1167.2) (2026-05-04)
 
 
