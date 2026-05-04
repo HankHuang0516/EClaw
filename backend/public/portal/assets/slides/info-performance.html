@@ -2,8 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=1280, initial-scale=1.0">
-    <title>EClaw - 📊 即時效能追蹤儀表板</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EClaw - 📊 效能追蹤示意儀表板</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
@@ -57,10 +57,6 @@
         @keyframes countUp {
             from { opacity: 0; transform: translateY(20px); }
             to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes livePulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50%      { opacity: 0.6; transform: scale(1.2); }
         }
         @keyframes chartGrow {
             from { transform: scaleY(0); }
@@ -159,7 +155,7 @@
             border-color: #2E86C1;
         }
 
-        .live-indicator {
+        .sample-indicator {
             position: absolute;
             top: 12px;
             right: 12px;
@@ -169,18 +165,17 @@
             font-family: 'Inter', sans-serif;
             font-weight: 600;
             font-size: 10px;
-            color: #27AE60;
-            background: rgba(39, 174, 96, 0.1);
+            color: #2E86C1;
+            background: rgba(46, 134, 193, 0.12);
             padding: 4px 8px;
             border-radius: 20px;
         }
 
-        .live-dot {
+        .sample-dot {
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            background: #27AE60;
-            animation: livePulse 1.5s ease-in-out infinite;
+            background: #2E86C1;
         }
 
         .metric-value {
@@ -225,6 +220,11 @@
         .metric-trend.negative {
             background: rgba(231, 76, 60, 0.1);
             color: #E74C3C;
+        }
+
+        .metric-trend.neutral {
+            background: rgba(46, 134, 193, 0.1);
+            color: #2E86C1;
         }
 
         /* Chart + activity feed */
@@ -457,49 +457,122 @@
             transform: scale(1.02);
             box-shadow: 0 8px 24px rgba(46, 134, 193, 0.4);
         }
+
+        @media (max-width: 700px) {
+            body {
+                align-items: flex-start;
+            }
+
+            .content-wrapper {
+                width: 100%;
+                padding: 28px 16px;
+            }
+
+            .headline {
+                font-size: 30px;
+                line-height: 1.25;
+            }
+
+            .subline {
+                max-width: 340px;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+
+            .dashboard-container {
+                padding: 18px;
+            }
+
+            .metrics-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 12px;
+            }
+
+            .metric-card {
+                min-width: 0;
+                padding: 18px 10px 14px;
+            }
+
+            .metric-value {
+                font-size: 24px;
+                margin-top: 18px;
+                word-break: keep-all;
+            }
+
+            .metric-label {
+                font-size: 12px;
+                line-height: 1.4;
+            }
+
+            .metric-trend {
+                font-size: 10px;
+                padding: 4px 7px;
+            }
+
+            .chart-section,
+            .alert-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .activity-content {
+                min-width: 0;
+            }
+
+            .activity-text,
+            .activity-time,
+            .alert-description {
+                word-break: keep-all;
+                overflow-wrap: anywhere;
+            }
+
+            .cta-button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="content-wrapper">
         <section class="header-section">
             <span class="emoji-icon">📊</span>
-            <h1 class="headline">Real-time Performance Tracking<br>即時效能追蹤儀表板</h1>
-            <p class="subline">全方位監控機器人表現，數據驅動優化決策</p>
+            <h1 class="headline">Performance Tracking Example<br>效能追蹤示意儀表板</h1>
+            <p class="subline">行銷示意畫面：展示可追蹤的營運指標類型，非即時生產資料</p>
         </section>
 
         <section class="dashboard-container">
             <div class="metrics-grid">
                 <div class="metric-card m1">
-                    <div class="live-indicator"><span class="live-dot"></span>LIVE</div>
-                    <div class="metric-value">1,247</div>
-                    <div class="metric-label">今日任務完成</div>
-                    <span class="metric-trend positive">↗ +15.3%</span>
+                    <div class="sample-indicator"><span class="sample-dot"></span>示意</div>
+                    <div class="metric-value">Up to 1.2K</div>
+                    <div class="metric-label">任務處理量示意</div>
+                    <span class="metric-trend neutral">範例上限</span>
                 </div>
                 <div class="metric-card m2">
-                    <div class="live-indicator"><span class="live-dot"></span>LIVE</div>
-                    <div class="metric-value">98.7%</div>
-                    <div class="metric-label">系統可用率</div>
-                    <span class="metric-trend positive">↗ +0.2%</span>
+                    <div class="sample-indicator"><span class="sample-dot"></span>示意</div>
+                    <div class="metric-value">Typical 99%</div>
+                    <div class="metric-label">可用率目標示意</div>
+                    <span class="metric-trend neutral">目標區間</span>
                 </div>
                 <div class="metric-card m3">
-                    <div class="live-indicator"><span class="live-dot"></span>LIVE</div>
-                    <div class="metric-value">₩847K</div>
-                    <div class="metric-label">今日收益</div>
-                    <span class="metric-trend positive">↗ +22.1%</span>
+                    <div class="sample-indicator"><span class="sample-dot"></span>示意</div>
+                    <div class="metric-value">NT$76K</div>
+                    <div class="metric-label">月度價值示意</div>
+                    <span class="metric-trend neutral">情境估算</span>
                 </div>
                 <div class="metric-card m4">
-                    <div class="live-indicator"><span class="live-dot"></span>LIVE</div>
-                    <div class="metric-value">156ms</div>
-                    <div class="metric-label">平均回應時間</div>
-                    <span class="metric-trend negative">↘ +12ms</span>
+                    <div class="sample-indicator"><span class="sample-dot"></span>示意</div>
+                    <div class="metric-value">Typical 160ms</div>
+                    <div class="metric-label">回應延遲示意</div>
+                    <span class="metric-trend neutral">典型範圍</span>
                 </div>
             </div>
 
             <div class="chart-section">
                 <div class="chart-container">
                     <div class="chart-header">
-                        <h3 class="chart-title">效能趨勢</h3>
-                        <span class="chart-period">過去24小時</span>
+                        <h3 class="chart-title">趨勢示意</h3>
+                        <span class="chart-period">範例曲線</span>
                     </div>
                     <div class="chart-visual">
                         <svg class="chart-svg" viewBox="0 0 400 120" preserveAspectRatio="none">
@@ -516,33 +589,33 @@
                 </div>
 
                 <div class="activity-feed">
-                    <h3 class="activity-header">即時動態</h3>
+                    <h3 class="activity-header">範例事件</h3>
                     <div class="activity-item a1">
                         <div class="activity-dot"></div>
                         <div class="activity-content">
-                            <div class="activity-text">機器人 #AI-247 完成翻譯任務</div>
-                            <div class="activity-time">2分鐘前</div>
+                            <div class="activity-text">Codex 完成品質巡檢範例</div>
+                            <div class="activity-time">示意事件</div>
                         </div>
                     </div>
                     <div class="activity-item a2">
                         <div class="activity-dot"></div>
                         <div class="activity-content">
-                            <div class="activity-text">新訂單自動分派至最佳機器人</div>
-                            <div class="activity-time">5分鐘前</div>
+                            <div class="activity-text">LOBSTER 協調任務分派範例</div>
+                            <div class="activity-time">範例流程</div>
                         </div>
                     </div>
                     <div class="activity-item a3">
                         <div class="activity-dot"></div>
                         <div class="activity-content">
-                            <div class="activity-text">系統效能優化完成</div>
-                            <div class="activity-time">12分鐘前</div>
+                            <div class="activity-text">Hermes 回報翻譯批次進度</div>
+                            <div class="activity-time">Demo log</div>
                         </div>
                     </div>
                     <div class="activity-item a4">
                         <div class="activity-dot"></div>
                         <div class="activity-content">
-                            <div class="activity-text">收益達成今日目標</div>
-                            <div class="activity-time">15分鐘前</div>
+                            <div class="activity-text">Mac_F 完成卡片 Review 範例</div>
+                            <div class="activity-time">示意紀錄</div>
                         </div>
                     </div>
                 </div>
@@ -553,24 +626,24 @@
                     <div class="alert-card success">
                         <div class="alert-header">
                             <span class="alert-icon">✅</span>
-                            <h4 class="alert-title">系統運作正常</h4>
+                            <h4 class="alert-title">展示：健康檢查通過</h4>
                         </div>
-                        <p class="alert-description">所有機器人運作狀態良好，無異常警報</p>
+                        <p class="alert-description">示意自動巡檢可呈現的狀態，不代表即時資料</p>
                     </div>
                     <div class="alert-card warning">
                         <div class="alert-header">
                             <span class="alert-icon">⚠️</span>
-                            <h4 class="alert-title">建議優化</h4>
+                            <h4 class="alert-title">展示：需要人工確認</h4>
                         </div>
-                        <p class="alert-description">檢測到回應時間略有增長，建議檢查伺服器負載</p>
+                        <p class="alert-description">示意監控可提示的優化項目，實際判斷以正式報表為準</p>
                     </div>
                 </div>
             </div>
         </section>
 
         <section class="cta-section">
-            <a class="cta-button" href="#">
-                查看完整儀表板
+            <a class="cta-button" href="/portal/info.html">
+                了解監控設計
                 <span>→</span>
             </a>
         </section>
