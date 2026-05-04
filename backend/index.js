@@ -6293,7 +6293,8 @@ async function deliverToEntity(opts) {
         broadcastChatMsgId,
         showRecipientInfo = false,
         isCrossDevice = false,
-        card = null
+        card = null,
+        viaChannel = null
     } = opts;
 
     const sourceLabel = isCrossDevice
@@ -6335,12 +6336,12 @@ async function deliverToEntity(opts) {
         // Broadcast: reuse the single shared chat message ID for delivery tracking
         chatMsgId = broadcastChatMsgId;
     } else {
-        chatMsgId = await saveChatMessage(targetDeviceId, isCrossDevice ? toId : fromId, text, chatSource, false, true, mediaType || null, mediaUrl || null, null, null, null, null, card);
+        chatMsgId = await saveChatMessage(targetDeviceId, isCrossDevice ? toId : fromId, text, chatSource, false, true, mediaType || null, mediaUrl || null, null, null, null, null, card, null, viaChannel);
     }
 
     // Cross-device: also save sender's copy
     if (isCrossDevice) {
-        await saveChatMessage(senderDeviceId, fromId, text, chatSource, false, true, mediaType || null, mediaUrl || null, null, null, null, null, card);
+        await saveChatMessage(senderDeviceId, fromId, text, chatSource, false, true, mediaType || null, mediaUrl || null, null, null, null, null, card, null, viaChannel);
     }
 
     markMessagesAsRead(targetDeviceId, toId);
@@ -6502,12 +6503,42 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         }
     }
 
-    let { deviceId, entityId, botSecret, name, character, state, message, parts, targetDeviceId, speakTo, broadcast, card, attachments, senderHint, aboutCardId } = req.body;
+    let { deviceId, entityId, botSecret, actAs, name, character, state, message, parts, targetDeviceId, speakTo, broadcast, card, attachments, senderHint, aboutCardId } = req.body;
 
     if (!deviceId) {
         return res.status(400).json({ success: false, message: "deviceId required" });
     }
-    if (!botSecret) {
+
+    // ── Dual-auth: channel key XOR botSecret ──
+    const channelKey = req.headers['x-channel-key'];
+    const usingChannelKey = !!(channelKey && actAs === 'channel');
+    const usingBotSecret = !!botSecret;
+
+    if (usingChannelKey && usingBotSecret) {
+        return res.status(400).json({ success: false, message: "Provide either X-Channel-Key + actAs:\"channel\" or botSecret, not both" });
+    }
+
+    // ── Channel key auth path ──
+    let channelAuthResult = null; // { registration, entityEntry, grantedPermissions }
+    if (usingChannelKey) {
+        if (entityId === undefined || entityId === null) {
+            return res.status(400).json({ success: false, message: "entityId required when using channel key auth" });
+        }
+        const requestedEntityId = parseInt(entityId);
+        if (isNaN(requestedEntityId) || requestedEntityId < 0) {
+            return res.status(400).json({ success: false, message: "entityId must be a non-negative integer" });
+        }
+        try {
+            const result = await channelModule.verifyChannelKey({ channelKey, deviceId, entityId: requestedEntityId });
+            channelAuthResult = {
+                registration: result.registration,
+                entityEntry: result.entityEntry,
+                grantedPermissions: result.entityEntry.permissions || []
+            };
+        } catch (err) {
+            return res.status(err.status || 403).json({ success: false, message: err.message, code: err.code });
+        }
+    } else if (!usingBotSecret) {
         return res.status(400).json({ success: false, message: "botSecret required" });
     }
 
@@ -6589,36 +6620,60 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         return res.status(404).json({ success: false, message: "Device not found" });
     }
 
-    // Resolve entityId: auto-detect from botSecret if not provided
+    // Resolve entityId and verify auth
     let eId;
     let entityIdCorrected = false;
-    if (entityId === undefined || entityId === null) {
-        // Auto-detect: find entity by botSecret
-        eId = Object.keys(device.entities).map(Number)
-            .find(i => device.entities[i]?.isBound && device.entities[i].botSecret && safeEqual(device.entities[i].botSecret, botSecret));
-        if (eId === undefined) {
-            return res.status(403).json({ success: false, message: "Invalid botSecret — no matching entity found" });
+    if (channelAuthResult) {
+        // Channel key path: entityId already validated and entity confirmed in ACL
+        eId = parseInt(entityId);
+        const channelEntity = device.entities[eId];
+        if (!channelEntity || !channelEntity.isBound) {
+            return res.status(403).json({ success: false, message: `Entity ${eId} is not bound on this device` });
+        }
+
+        // Permission enforcement: Phase 1 full-open (all 3 perms pass), but check state/a2a gating
+        const perms = new Set(channelAuthResult.grantedPermissions);
+        // speak is always required for transform
+        if (!perms.has('speak')) {
+            return res.status(403).json({ success: false, message: 'Missing permission: speak', missingPermissions: ['speak'] });
+        }
+        // state permission gate
+        if (state !== undefined && !perms.has('state')) {
+            return res.status(403).json({ success: false, message: 'Missing permission: state', missingPermissions: ['state'] });
+        }
+        // broadcast permission gate for @all / broadcast:true
+        if (broadcast && !perms.has('broadcast')) {
+            return res.status(403).json({ success: false, message: 'Missing permission: broadcast', missingPermissions: ['broadcast'] });
         }
     } else {
-        const requestedId = parseInt(entityId) || 0;
-        // Verify botSecret matches the requested entityId
-        const requestedEntity = device.entities[requestedId];
-        if (requestedEntity && requestedEntity.isBound && requestedEntity.botSecret && safeEqual(requestedEntity.botSecret, botSecret)) {
-            eId = requestedId;
-        } else {
-            // entityId doesn't match botSecret — find the correct one
-            const correctId = Object.keys(device.entities).map(Number)
+        // botSecret path: auto-detect or verify entityId
+        if (entityId === undefined || entityId === null) {
+            eId = Object.keys(device.entities).map(Number)
                 .find(i => device.entities[i]?.isBound && device.entities[i].botSecret && safeEqual(device.entities[i].botSecret, botSecret));
-            if (correctId === undefined) {
-                return res.status(403).json({ success: false, message: "Invalid botSecret" });
+            if (eId === undefined) {
+                return res.status(403).json({ success: false, message: "Invalid botSecret — no matching entity found" });
             }
-            eId = correctId;
-            entityIdCorrected = true;
-            console.warn(`[Transform] Device ${deviceId}: entityId=${requestedId} doesn't match botSecret, auto-corrected to ${correctId}`);
+        } else {
+            const requestedId = parseInt(entityId) || 0;
+            const requestedEntity = device.entities[requestedId];
+            if (requestedEntity && requestedEntity.isBound && requestedEntity.botSecret && safeEqual(requestedEntity.botSecret, botSecret)) {
+                eId = requestedId;
+            } else {
+                const correctId = Object.keys(device.entities).map(Number)
+                    .find(i => device.entities[i]?.isBound && device.entities[i].botSecret && safeEqual(device.entities[i].botSecret, botSecret));
+                if (correctId === undefined) {
+                    return res.status(403).json({ success: false, message: "Invalid botSecret" });
+                }
+                eId = correctId;
+                entityIdCorrected = true;
+                console.warn(`[Transform] Device ${deviceId}: entityId=${requestedId} doesn't match botSecret, auto-corrected to ${correctId}`);
+            }
         }
     }
 
     const entity = device.entities[eId];
+    // For channel key path, record channel name for chat history tagging
+    const viaChannel = channelAuthResult ? channelAuthResult.registration.channel_name : null;
 
     // Multipart: upload attached file to R2 and prepend to attachments so the
     // bot can deliver a file in a single transform call. Uses shared helper
@@ -6799,6 +6854,15 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         };
     }
 
+    // Channel key: re-check broadcast permission after @all mention resolution
+    // (broadcast may have been set by @all in message text above)
+    if (channelAuthResult && broadcast) {
+        const perms = new Set(channelAuthResult.grantedPermissions);
+        if (!perms.has('broadcast')) {
+            return res.status(403).json({ success: false, message: 'Missing permission: broadcast', missingPermissions: ['broadcast'] });
+        }
+    }
+
     // Save bot message to chat history so it appears in Chat page
     // Skip silent tokens — these are internal signals that should not appear in chat
     const isSilentMessage = finalMessage && /^\[SILENT\]$/i.test(finalMessage.trim());
@@ -6826,7 +6890,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         // Skip saving to owner's chat when entity is leased_out — rental mirror handles renter's copy
         const isLeasedOut = entity.rental_status === 'leased_out';
         if (!hasDelivery && !isLeasedOut) {
-            await saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments);
+            await saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments, viaChannel);
         }
         if (!isLeasedOut) markMessagesAsRead(deviceId, eId);
         if (pendingA2A) {
@@ -7080,7 +7144,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
                             deliveryResults = { broadcast: true, sentCount: 0, targets: [], message: 'No other bound entities to broadcast to.' };
                         } else {
                             const sourceLabel = `entity:${eId}:${entity.character}`;
-                            const broadcastChatMsgId = await saveChatMessage(broadcastDeviceId, eId, deliveryText, `${sourceLabel}->${targetIds.join(',')}`, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments);
+                            const broadcastChatMsgId = await saveChatMessage(broadcastDeviceId, eId, deliveryText, `${sourceLabel}->${targetIds.join(',')}`, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments, viaChannel);
                             deliverySaved = true;
 
                             // Check recipient info preference
@@ -7096,7 +7160,8 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
                                     broadcastTargetIds: targetIds, broadcastChatMsgId,
                                     showRecipientInfo,
                                     isCrossDevice: broadcastDeviceId !== deviceId,
-                                    card: validatedCard
+                                    card: validatedCard,
+                                    viaChannel
                                 })
                             ));
 
@@ -7188,7 +7253,8 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
                     text: deliveryText, mediaType: null, mediaUrl: null,
                     expectsReply: true, isBroadcast: false,
                     isCrossDevice,
-                    card: validatedCard
+                    card: validatedCard,
+                    viaChannel
                 });
 
                 // Org chart: auto-forward incoming speakTo message to superior (same-device only, fire-and-forget)
@@ -7235,7 +7301,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
             const chatSource = entity.name || `Entity ${eId}`;
             const reasons = deliveryResults && deliveryResults.results ? deliveryResults.results.map(r => r.reason || 'ok').join(',') : 'none';
             serverLog('warn', 'chat_save', `[CHAT_FALLBACK_TRANSFORM] all targets failed for entity ${eId}; saving sender copy. reasons=[${reasons}] speakTo=${JSON.stringify(speakTo || null)} broadcast=${!!broadcast}`, { deviceId, entityId: eId, metadata: { path: 'fallback_transform', reasons, hadSpeakTo: !!speakTo, hadBroadcast: !!broadcast } });
-            await saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments);
+            await saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments, viaChannel);
             warnings.push('All delivery targets failed; message saved to sender chat only.');
         }
     }
@@ -7256,7 +7322,10 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
             encryptionStatus: entity.encryptionStatus || null
         },
         versionInfo: getVersionInfo(entity.appVersion),
-        push_status: entity.pushStatus || null
+        push_status: entity.pushStatus || null,
+        auth: channelAuthResult
+            ? { via: 'channelKey', channelName: channelAuthResult.registration.channel_name, grantedPermissions: channelAuthResult.grantedPermissions }
+            : { via: 'botSecret' }
     };
     if (deliveryResults) response.delivery = deliveryResults;
     if (warnings.length > 0) response.warnings = warnings;
@@ -16824,7 +16893,7 @@ async function getDeviceVarForEmbedding(deviceId, varName) {
 // Data-loss hardening (2026-04-23): one retry on INSERT failure, structured
 // log on every catch, dead-letter line to /tmp/chat_dead_letter.jsonl so we
 // can replay or grep for lost messages even when pg blips.
-async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null, scheduleId = null, scheduleLabel = null, backupUrl = null, mentions = null, card = null, attachments = null) {
+async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null, scheduleId = null, scheduleLabel = null, backupUrl = null, mentions = null, card = null, attachments = null, viaChannel = null) {
     // Guard: coerce null/undefined text to empty string to avoid NOT NULL constraint violation
     if (text == null) text = '';
     const textPreview = String(text).slice(0, 120);
@@ -16838,9 +16907,10 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
                  WHERE device_id = $1 AND entity_id = $2 AND text = $3
                  AND is_from_user = $4 AND is_from_bot = $5
                  AND source IS NOT DISTINCT FROM $6
+                 AND via_channel IS NOT DISTINCT FROM $7
                  AND created_at > NOW() - INTERVAL '10 seconds'
                  LIMIT 1`,
-                [deviceId, entityId, text, isFromUser || false, isFromBot || false, source || null]
+                [deviceId, entityId, text, isFromUser || false, isFromBot || false, source || null, viaChannel || null]
             );
             if (dedup.rows.length > 0) {
                 serverLog('info', 'chat_save', `[CHAT_DEDUP] returning existing id=${dedup.rows[0].id} entity_id=${entityId} source="${source}" preview="${textPreview}"`, { deviceId, entityId, metadata: { path: 'dedup', existingId: dedup.rows[0].id, source } });
@@ -16848,9 +16918,9 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
             }
         }
 
-        const insertParams = [deviceId, entityId, text, source, isFromUser || false, isFromBot || false, mediaType, mediaUrl, scheduleId, scheduleLabel, backupUrl, mentions ? JSON.stringify(mentions) : null, card ? JSON.stringify(card) : null, attachments ? JSON.stringify(attachments) : null];
-        const insertSQL = `INSERT INTO chat_messages (device_id, entity_id, text, source, is_from_user, is_from_bot, media_type, media_url, schedule_id, schedule_label, backup_url, mentions, card, attachments)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id`;
+        const insertParams = [deviceId, entityId, text, source, isFromUser || false, isFromBot || false, mediaType, mediaUrl, scheduleId, scheduleLabel, backupUrl, mentions ? JSON.stringify(mentions) : null, card ? JSON.stringify(card) : null, attachments ? JSON.stringify(attachments) : null, viaChannel || null];
+        const insertSQL = `INSERT INTO chat_messages (device_id, entity_id, text, source, is_from_user, is_from_bot, media_type, media_url, schedule_id, schedule_label, backup_url, mentions, card, attachments, via_channel)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id`;
 
         let result;
         try {

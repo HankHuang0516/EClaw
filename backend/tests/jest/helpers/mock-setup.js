@@ -22,7 +22,13 @@ jest.mock('pg', () => ({
     })),
 }));
 
-jest.mock('../../../db', () => ({
+jest.mock('../../../db', () => {
+    // Shared in-memory pool for code that calls db._getPool().query(...)
+    // Tests can override: require('../../../db')._mockPool.query.mockResolvedValueOnce(result)
+    const _mockPool = { query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }) };
+    return {
+    _mockPool,
+    _getPool: () => _mockPool,
     initDatabase: jest.fn().mockResolvedValue(true),
     saveDeviceData: jest.fn().mockResolvedValue(true),
     saveAllDevices: jest.fn().mockResolvedValue(true),
@@ -79,7 +85,9 @@ jest.mock('../../../db', () => ({
     upsertCommunityRating: jest.fn().mockResolvedValue(null),
     logInviteClick: jest.fn().mockResolvedValue(false),
     getInviteClickStats: jest.fn().mockResolvedValue([]),
-}));
+    saveEntityToTrash: jest.fn().mockResolvedValue(true),
+    };
+});
 
 jest.mock('../../../flickr', () => ({
     initFlickr: jest.fn(),
