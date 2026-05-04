@@ -1,3 +1,10 @@
+## [1.1167.6](https://github.com/HankHuang0516/EClaw/compare/v1.1167.5...v1.1167.6) (2026-05-04)
+
+
+### Bug Fixes
+
+* **portal:** collaborative Quick Start + mobile guide optimization ([4f8f58d](https://github.com/HankHuang0516/EClaw/commit/4f8f58de0b8fbda0df706319e576801a18eb4538)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 ## [1.1167.5](https://github.com/HankHuang0516/EClaw/compare/v1.1167.4...v1.1167.5) (2026-05-04)
 
 
