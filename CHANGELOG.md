@@ -1,3 +1,10 @@
+# [1.1161.0](https://github.com/HankHuang0516/EClaw/compare/v1.1160.0...v1.1161.0) (2026-05-04)
+
+
+### Features
+
+* **info:** embed Claude Design slide for guide_crossdevice ([f52af59](https://github.com/HankHuang0516/EClaw/commit/f52af59eee87b39f24dcb082d18354872b419acd))
+
 # [1.1160.0](https://github.com/HankHuang0516/EClaw/compare/v1.1159.0...v1.1160.0) (2026-05-04)
 
 
