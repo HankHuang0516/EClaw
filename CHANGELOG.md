@@ -1,3 +1,10 @@
+## [1.1167.10](https://github.com/HankHuang0516/EClaw/compare/v1.1167.9...v1.1167.10) (2026-05-04)
+
+
+### Bug Fixes
+
+* replace embedded Quick Start slides with image cards to resolve visual conflicts ([#2434](https://github.com/HankHuang0516/EClaw/issues/2434)) ([57585d5](https://github.com/HankHuang0516/EClaw/commit/57585d5082bc2316f4cfcbaf0ff513a229385302)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 ## [1.1167.9](https://github.com/HankHuang0516/EClaw/compare/v1.1167.8...v1.1167.9) (2026-05-04)
 
 
