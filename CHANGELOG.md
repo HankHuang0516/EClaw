@@ -1,3 +1,10 @@
+## [1.1167.13](https://github.com/HankHuang0516/EClaw/compare/v1.1167.12...v1.1167.13) (2026-05-04)
+
+
+### Bug Fixes
+
+* **i18n:** clean ja locale leak baseline keys ([25a3b0e](https://github.com/HankHuang0516/EClaw/commit/25a3b0e27cbf8f8de3b5108880140d32d5ba019a))
+
 ## [1.1167.12](https://github.com/HankHuang0516/EClaw/compare/v1.1167.11...v1.1167.12) (2026-05-04)
 
 
