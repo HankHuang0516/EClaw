@@ -1,3 +1,10 @@
+## [1.1167.11](https://github.com/HankHuang0516/EClaw/compare/v1.1167.10...v1.1167.11) (2026-05-04)
+
+
+### Bug Fixes
+
+* **info:** mark performance slide metrics as illustrative ([167107d](https://github.com/HankHuang0516/EClaw/commit/167107da9fadf3b3318d6b277ec938e6d7006052)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 ## [1.1167.10](https://github.com/HankHuang0516/EClaw/compare/v1.1167.9...v1.1167.10) (2026-05-04)
 
 
