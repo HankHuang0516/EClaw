@@ -1,6 +1,6 @@
 /**
  * Regression coverage for public Info-page regressions reported 2026-05-04:
- * 1. /portal/roadmap.html must remain publicly viewable when /api/auth/me returns 401.
+ * 1. /portal/roadmap.html must remain publicly viewable without noisy /api/auth/me 401 probes.
  * 2. /portal/info.html release-note descriptions must render Markdown links safely.
  * 3. Temporary debug endpoint remains available while the production bug is verified.
  */
@@ -35,16 +35,22 @@ function freshMarkdownRenderer({ marked, DOMPurify } = {}) {
 }
 
 describe('roadmap public page auth gate', () => {
-    test('roadmap.html probes /api/auth/me without triggering api.js 401 redirect', () => {
+    test('roadmap.html uses the optional /api/auth/session probe instead of /api/auth/me', () => {
         const source = fs.readFileSync(ROADMAP_HTML, 'utf8');
-        const pattern = /apiCall\(\s*['"]GET['"]\s*,\s*['"]\/api\/auth\/me['"]\s*,\s*null\s*,\s*\{[^}]*skip401Redirect\s*:\s*true[^}]*\}\s*\)/;
-        expect(source).toMatch(pattern);
+        expect(source).toMatch(/apiCall\(\s*['"]GET['"]\s*,\s*['"]\/api\/auth\/session['"]/);
+        expect(source).not.toMatch(/apiCall\(\s*['"]GET['"]\s*,\s*['"]\/api\/auth\/me['"]/);
     });
 
     test('roadmap.html remains a public page with public nav available', () => {
         const source = fs.readFileSync(ROADMAP_HTML, 'utf8');
         expect(source).toMatch(/shared\/public-nav\.js/);
         expect(source).toMatch(/renderPublicNav/);
+    });
+
+    test('info.js uses the optional /api/auth/session probe for public nav detection', () => {
+        const source = fs.readFileSync(INFO_JS, 'utf8');
+        expect(source).toMatch(/\/api\/auth\/session/);
+        expect(source).not.toMatch(/apiCall\(\s*['"]GET['"]\s*,\s*['"]\/api\/auth\/me['"]/);
     });
 });
 
@@ -114,7 +120,8 @@ describe('info-public-pages debug endpoint registration', () => {
     test('backend exposes an authenticated temporary debug endpoint for the info public-page bugs', () => {
         const source = fs.readFileSync(INDEX_JS, 'utf8');
         expect(source).toMatch(/app\.get\(['"]\/api\/debug\/info-public-pages['"]/);
-        expect(source).toMatch(/authProbeUsesSkip401Redirect/);
+        expect(source).toMatch(/authProbeUsesOptionalSession/);
+        expect(source).toMatch(/avoidsNoisyAuthMeProbe/);
         expect(source).toMatch(/releaseRendererCallsMarkdownHelper/);
         expect(source).toMatch(/fallbackHandlesMarkdownLinks/);
     });

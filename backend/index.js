@@ -2374,7 +2374,8 @@ app.get('/api/debug/info-public-pages', async (req, res) => {
                 },
                 roadmapPublicGate: {
                     fileExists: !!roadmapHtml,
-                    authProbeUsesSkip401Redirect: /apiCall\(\s*['"]GET['"]\s*,\s*['"]\/api\/auth\/me['"]\s*,\s*null\s*,\s*\{[^}]*skip401Redirect\s*:\s*true/.test(roadmapHtml),
+                    authProbeUsesOptionalSession: /apiCall\(\s*['"]GET['"]\s*,\s*['"]\/api\/auth\/session['"]/.test(roadmapHtml),
+                    avoidsNoisyAuthMeProbe: !/apiCall\(\s*['"]GET['"]\s*,\s*['"]\/api\/auth\/me['"]/.test(roadmapHtml),
                     includesAuthJs: /shared\/auth\.js/.test(roadmapHtml),
                 },
                 releaseNotesMarkdown: {

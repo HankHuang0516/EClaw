@@ -697,6 +697,77 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
     });
 
     // ============================================
+    // GET /session (optional auth; public-page safe)
+    // ============================================
+    router.get('/session', softAuthMiddleware, async (req, res) => {
+        try {
+            if (!req.user) {
+                return res.json({ success: true, authenticated: false, user: null });
+            }
+
+            // Device-only login (no user account)
+            if (!req.user.userId) {
+                const deviceId = req.user.deviceId;
+                const device = devices[deviceId];
+                const isPremium = device && device.isPremium;
+
+                return res.json({
+                    success: true,
+                    authenticated: true,
+                    user: {
+                        id: null,
+                        email: null,
+                        deviceId,
+                        deviceSecret: req.user.deviceSecret || null,
+                        subscriptionStatus: isPremium ? 'premium' : 'free',
+                        subscriptionExpiresAt: null,
+                        language: 'en',
+                        emailVerified: false,
+                        createdAt: null,
+                        isAdmin: false,
+                        displayName: null,
+                        avatarUrl: null,
+                    }
+                });
+            }
+
+            const result = await pool.query(
+                'SELECT id, email, device_id, device_secret, subscription_status, subscription_expires_at, language, email_verified, is_admin, created_at, display_name, avatar_url, google_id, facebook_id FROM user_accounts WHERE id = $1',
+                [req.user.userId]
+            );
+
+            if (result.rows.length === 0) {
+                return res.json({ success: true, authenticated: false, user: null });
+            }
+
+            const user = result.rows[0];
+            return res.json({
+                success: true,
+                authenticated: true,
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    deviceId: user.device_id,
+                    deviceSecret: user.device_secret,
+                    subscriptionStatus: user.subscription_status,
+                    subscriptionExpiresAt: user.subscription_expires_at,
+                    language: user.language,
+                    emailVerified: user.email_verified,
+                    createdAt: user.created_at,
+                    isAdmin: user.is_admin || false,
+                    displayName: user.display_name || null,
+                    avatarUrl: user.avatar_url || null,
+                    googleLinked: !!user.google_id,
+                    facebookLinked: !!user.facebook_id,
+                }
+            });
+        } catch (error) {
+            console.error('[Auth] Get session error:', error);
+            res.status(500).json({ success: false, error: 'Failed to get session info' });
+        }
+    });
+
+    // ============================================
     // GET /me (requires auth)
     // ============================================
     router.get('/me', authMiddleware, async (req, res) => {

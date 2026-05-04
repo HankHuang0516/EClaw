@@ -484,8 +484,12 @@
     <script>
         window.addEventListener('DOMContentLoaded', async () => {
             try {
-                await apiCall('GET', '/api/auth/me', null, { skip401Redirect: true });
-                renderNav('info');
+                const data = await apiCall('GET', '/api/auth/session', null, { skip401Redirect: true });
+                if (data?.authenticated && data.user) {
+                    renderNav('info');
+                } else {
+                    renderPublicNav('info');
+                }
             } catch (e) {
                 renderPublicNav('info');
             }
