@@ -1,3 +1,10 @@
+## [1.1167.9](https://github.com/HankHuang0516/EClaw/compare/v1.1167.8...v1.1167.9) (2026-05-04)
+
+
+### Bug Fixes
+
+* **test:** guard module-scope timers to prevent Jest flakiness ([#2433](https://github.com/HankHuang0516/EClaw/issues/2433)) ([7578aca](https://github.com/HankHuang0516/EClaw/commit/7578acaa6015cba9f68ed246a9affccf0794d160))
+
 ## [1.1167.8](https://github.com/HankHuang0516/EClaw/compare/v1.1167.7...v1.1167.8) (2026-05-04)
 
 
