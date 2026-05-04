@@ -322,6 +322,21 @@ describe('GET /api/auth/me', () => {
 });
 
 // ════════════════════════════════════════════════════════════════
+// GET /api/auth/session
+// ════════════════════════════════════════════════════════════════
+describe('GET /api/auth/session', () => {
+    it('returns 200 anonymous session state when not authenticated', async () => {
+        const res = await get('/api/auth/session');
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({
+            success: true,
+            authenticated: false,
+            user: null,
+        });
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
 // GET /api/auth/oauth/providers
 // ════════════════════════════════════════════════════════════════
 describe('GET /api/auth/oauth/providers', () => {
