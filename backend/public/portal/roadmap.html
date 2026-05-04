@@ -484,7 +484,7 @@
     <script>
         window.addEventListener('DOMContentLoaded', async () => {
             try {
-                await apiCall('GET', '/api/auth/me');
+                await apiCall('GET', '/api/auth/me', null, { skip401Redirect: true });
                 renderNav('info');
             } catch (e) {
                 renderPublicNav('info');

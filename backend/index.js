@@ -2321,6 +2321,79 @@ app.get('/api/debug/chat-render-load-order', async (req, res) => {
     }
 });
 
+// Temporary diagnostic endpoint for public Info-page regressions:
+// - roadmap.html must not redirect unauthenticated visitors to index.html
+// - release notes must render Markdown links instead of raw `(https://...)`
+// Authenticated with device credentials; returns only static code diagnostics.
+app.get('/api/debug/info-public-pages', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query || {};
+    const timestamp = new Date().toISOString();
+    try {
+        if (!deviceId || !deviceSecret) {
+            return res.status(401).json({ success: false, bug: 'info-public-pages', error: 'deviceId and deviceSecret required', timestamp });
+        }
+
+        const memDevice = devices[deviceId];
+        const pool = db._getPool ? db._getPool() : authModule.pool;
+        const dbDevice = pool
+            ? await pool.query('SELECT device_secret FROM devices WHERE device_id = $1', [deviceId])
+            : { rows: [] };
+        const dbDeviceRow = dbDevice.rows[0] || null;
+        const memSecretOk = !!(memDevice && memDevice.deviceSecret && safeEqual(memDevice.deviceSecret, deviceSecret));
+        const dbSecretOk = !!(dbDeviceRow && dbDeviceRow.device_secret && safeEqual(dbDeviceRow.device_secret, deviceSecret));
+        if (!memSecretOk && !dbSecretOk) {
+            return res.status(403).json({ success: false, bug: 'info-public-pages', error: 'Invalid credentials', timestamp });
+        }
+
+        const portalDir = path.join(__dirname, 'public', 'portal');
+        const roadmapPath = path.join(portalDir, 'roadmap.html');
+        const infoPath = path.join(portalDir, 'info.html');
+        const infoJsPath = path.join(portalDir, 'shared', 'info.js');
+        const markdownRenderPath = path.join(portalDir, 'shared', 'markdown-render.js');
+
+        const read = (p) => fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : '';
+        const roadmapHtml = read(roadmapPath);
+        const infoHtml = read(infoPath);
+        const infoJs = read(infoJsPath);
+        const markdownRenderJs = read(markdownRenderPath);
+
+        res.json({
+            success: true,
+            bug: 'info-public-pages',
+            diagnostics: {
+                server: {
+                    build: SERVER_BUILD_TAG,
+                    startedAt: SERVER_STARTED_AT.toISOString(),
+                    uptimeSec: Math.round(process.uptime()),
+                },
+                auth: {
+                    memSecretOk,
+                    dbSecretOk,
+                    requestUserDeviceId: req.user?.deviceId || null,
+                    requestUserId: req.user?.userId || null,
+                },
+                roadmapPublicGate: {
+                    fileExists: !!roadmapHtml,
+                    authProbeUsesSkip401Redirect: /apiCall\(\s*['"]GET['"]\s*,\s*['"]\/api\/auth\/me['"]\s*,\s*null\s*,\s*\{[^}]*skip401Redirect\s*:\s*true/.test(roadmapHtml),
+                    includesAuthJs: /shared\/auth\.js/.test(roadmapHtml),
+                },
+                releaseNotesMarkdown: {
+                    infoIncludesMarked: /marked\.min\.js/.test(infoHtml),
+                    infoIncludesDOMPurify: /purify\.min\.js/.test(infoHtml),
+                    infoIncludesMarkdownRenderer: /shared\/markdown-render\.js/.test(infoHtml),
+                    releaseRendererCallsMarkdownHelper: /renderSafeMarkdownInline\(ch\.description\)/.test(infoJs),
+                    markdownRendererFileExists: !!markdownRenderJs,
+                    fallbackHandlesMarkdownLinks: markdownRenderJs.includes('fallbackMarkdownInline') && markdownRenderJs.includes('https?:\\/\\/'),
+                },
+            },
+            timestamp,
+        });
+    } catch (err) {
+        console.error('[Debug info-public-pages] failed:', err);
+        res.status(500).json({ success: false, bug: 'info-public-pages', error: err.message, timestamp });
+    }
+});
+
 // Wire up pending message flush on email verification
 authModule.setOnEmailVerified(async (deviceId) => {
     console.log(`[PendingFlush] onEmailVerified triggered for device ${deviceId}`);
