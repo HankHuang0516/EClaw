@@ -1282,6 +1282,7 @@ const TRANSLATIONS = {
 
         // ── Identity Detail Guide ──
         "guide_identity_title": "Identity Configuration — Full Guide",
+        "info_slide_guide_identity_cta": "View Claude Design slide →",
         "guide_identity_meta": "Define your agent's role, behavior, and communication style for precise AI performance",
         "guide_identity_h2_what": "What is Identity?",
         "guide_identity_p_what": "Identity is the unified identity structure for each Entity, including role definition, behavior instructions, tone, and boundaries. It determines \"who\" your AI agent is and \"how\" it acts. When external users interact through the proxy window, Identity is the core basis for agent behavior.",
@@ -6262,6 +6263,7 @@ const TRANSLATIONS = {
         "guide_nav_detail_agentcard": "Agent Card",
         "guide_nav_detail_crossdevice": "跨裝置訊息",
         "guide_identity_title": "身份設定（Identity）— 完整指南",
+        "info_slide_guide_identity_cta": "查看 Claude Design 簡報 →",
         "guide_identity_meta": "定義代理的角色、行為準則與溝通風格，讓 AI 精準扮演你需要的角色",
         "guide_identity_h2_what": "什麼是 Identity？",
         "guide_identity_p_what": "Identity 是每個實體（Entity）的統一身份結構，包含角色定位、行為指示、語調風格、邊界限制等設定。它決定了你的 AI 代理「是誰」以及「如何行動」。當外部用戶透過代理窗口互動時，Identity 就是代理表現的核心依據。",
