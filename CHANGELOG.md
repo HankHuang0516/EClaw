@@ -1,3 +1,10 @@
+# [1.1167.0](https://github.com/HankHuang0516/EClaw/compare/v1.1166.0...v1.1167.0) (2026-05-04)
+
+
+### Features
+
+* **info:** embed Claude Design slide for guide_voice ([ccfc69b](https://github.com/HankHuang0516/EClaw/commit/ccfc69b0ba6a81cc6e0a8d93ad523dafbce507c5))
+
 # [1.1166.0](https://github.com/HankHuang0516/EClaw/compare/v1.1165.0...v1.1166.0) (2026-05-04)
 
 
