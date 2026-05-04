@@ -1,3 +1,10 @@
+## [1.1167.4](https://github.com/HankHuang0516/EClaw/compare/v1.1167.3...v1.1167.4) (2026-05-04)
+
+
+### Bug Fixes
+
+* **i18n:** zh-TW / zh-CN fall back to canonical zh dict before en ([#2407](https://github.com/HankHuang0516/EClaw/issues/2407)) ([7173ec0](https://github.com/HankHuang0516/EClaw/commit/7173ec059edfec9edd650a7c1a09db362e72bee5)), closes [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+
 ## [1.1167.3](https://github.com/HankHuang0516/EClaw/compare/v1.1167.2...v1.1167.3) (2026-05-04)
 
 
