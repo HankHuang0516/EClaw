@@ -356,7 +356,10 @@ async function copyClaudeOpenclawExample() {
                 const tag = ch.type === 'Features' ? 'feat' : ch.type === 'Bug Fixes' ? 'fix' : 'chore';
                 const tagClass = tag === 'feat' ? 'rn-tag-feat' : tag === 'fix' ? 'rn-tag-fix' : 'rn-tag-chore';
                 const scope = ch.scope ? '<strong>' + ch.scope + ':</strong> ' : '';
-                return '<li><span class="rn-tag ' + tagClass + '">' + tag + '</span> ' + scope + escHtml(ch.description) + '</li>';
+                const descriptionHtml = typeof window.renderSafeMarkdownInline === 'function'
+                    ? window.renderSafeMarkdownInline(ch.description)
+                    : escHtml(ch.description);
+                return '<li><span class="rn-tag ' + tagClass + '">' + tag + '</span> ' + scope + descriptionHtml + '</li>';
             }).join('');
             const openAttr = isLatest ? 'open' : '';
             return '<details class="rn-entry' + (isLatest ? ' latest' : '') + '" ' + openAttr + '>' +
