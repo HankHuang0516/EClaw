@@ -1,3 +1,10 @@
+# [1.1164.0](https://github.com/HankHuang0516/EClaw/compare/v1.1163.0...v1.1164.0) (2026-05-04)
+
+
+### Features
+
+* **info:** embed Claude Design slide for guide_agentcard ([7bbe4b9](https://github.com/HankHuang0516/EClaw/commit/7bbe4b91c99e89aaaaa7a105f142d5307bbf962e))
+
 # [1.1163.0](https://github.com/HankHuang0516/EClaw/compare/v1.1162.0...v1.1163.0) (2026-05-04)
 
 
