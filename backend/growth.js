@@ -80,6 +80,21 @@ async function fetchSignupsForDate(dateStr) {
     return r.rows[0].c;
 }
 
+async function fetchSignupSourceForDate(dateStr) {
+    const r = await pool.query(
+        `SELECT COALESCE(NULLIF(signup_source, ''), 'unknown') AS source,
+                COUNT(*)::int AS count
+         FROM user_accounts
+         WHERE created_at >= ($2::date::timestamp) AT TIME ZONE $1
+           AND created_at <  (($2::date + INTERVAL '1 day')::timestamp) AT TIME ZONE $1
+         GROUP BY 1
+         ORDER BY count DESC, source ASC
+         LIMIT 20`,
+        [TZ, dateStr]
+    );
+    return r.rows.map(row => ({ source: row.source || 'unknown', count: Number(row.count) || 0 }));
+}
+
 async function fetchRetention7dForDate(dateStr) {
     const r = await pool.query(
         `WITH anchor AS (
@@ -183,21 +198,22 @@ module.exports = function(devices) {
         }
 
         try {
-            const [today_signups, retention_7d, plaza_new_listed_today, invite_conversion] = await Promise.all([
+            const [today_signups, retention_7d, plaza_new_listed_today, invite_conversion, source_channel] = await Promise.all([
                 fetchSignupsForDate(anchorDate),
                 fetchRetention7dForDate(anchorDate),
                 fetchPlazaNewListedForDate(anchorDate),
-                fetchInviteConversion()
+                fetchInviteConversion(),
+                fetchSignupSourceForDate(anchorDate)
             ]);
             return res.json({
                 success: true,
                 date: anchorDate,
                 today_signups,
+                source_channel,
                 retention_7d,
                 plaza_new_listed_today,
                 invite_conversion,
                 follow_ups: [
-                    'source_channel: schema lacks signup_source column',
                     'visitor_to_signup_conversion: page_views has no FK to user_accounts',
                     'plaza_new_listed_today: counts created_at not status_changed_at (bot_listings has no listed_at column)',
                     'invite_conversion is cumulative-to-now (not date-scoped); needs invite_codes.used_at filter for historical k-value by day'
@@ -211,6 +227,6 @@ module.exports = function(devices) {
 
     return {
         router,
-        _internal: { checkRate, findEntity, isOwnerAdmin, fetchSignupsForDate, fetchRetention7dForDate, fetchPlazaNewListedForDate, fetchInviteConversion, isValidDateStr, taipeiTodayISO, rateBuckets }
+        _internal: { checkRate, findEntity, isOwnerAdmin, fetchSignupsForDate, fetchSignupSourceForDate, fetchRetention7dForDate, fetchPlazaNewListedForDate, fetchInviteConversion, isValidDateStr, taipeiTodayISO, rateBuckets }
     };
 };

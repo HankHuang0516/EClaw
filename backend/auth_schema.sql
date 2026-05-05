@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS user_accounts (
     tappay_card_token TEXT,
     -- Admin
     is_admin BOOLEAN DEFAULT FALSE,
+    -- Growth attribution (aggregate-only source channel, never stores UTM params with PII)
+    signup_source VARCHAR(64) DEFAULT 'unknown',
     -- Preferences
     language VARCHAR(10) DEFAULT 'en',
     -- Metadata
@@ -33,6 +35,7 @@ CREATE INDEX IF NOT EXISTS idx_user_accounts_email ON user_accounts(email);
 CREATE INDEX IF NOT EXISTS idx_user_accounts_device_id ON user_accounts(device_id);
 CREATE INDEX IF NOT EXISTS idx_user_accounts_verify_token ON user_accounts(verify_token);
 CREATE INDEX IF NOT EXISTS idx_user_accounts_reset_token ON user_accounts(reset_token);
+CREATE INDEX IF NOT EXISTS idx_user_accounts_signup_source ON user_accounts(signup_source);
 
 -- ============================================
 -- Server-side Usage Tracking
@@ -89,6 +92,8 @@ ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS delivered_to TEXT DEFAULT NUL
 
 -- Migration: add is_admin column to existing user_accounts tables
 ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE;
+ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS signup_source VARCHAR(64) DEFAULT 'unknown';
+CREATE INDEX IF NOT EXISTS idx_user_accounts_signup_source ON user_accounts(signup_source);
 
 -- Set admins
 UPDATE user_accounts SET is_admin = TRUE WHERE email IN ('hankhuang0516@gmail.com', 'bbb880008@gmail.com');

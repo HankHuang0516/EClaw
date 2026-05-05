@@ -1054,7 +1054,7 @@
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password: pw })
+                body: JSON.stringify({ email, password: pw, signupSource: 'share_chat' })
             });
             const data = await resp.json();
             dbg('info', `Register response: ${resp.status}`, data);
@@ -1132,7 +1132,7 @@
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password: pw })
+                body: JSON.stringify({ email, password: pw, signupSource: 'share_chat' })
             });
             const data = await resp.json();
             if (!resp.ok || !data.success) {

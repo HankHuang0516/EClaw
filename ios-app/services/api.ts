@@ -263,8 +263,8 @@ export const authApi = {
     apiClient.post('/api/auth/login', { email, password }),
 
   /** Register new account with email + password */
-  register: (email: string, password: string, displayName?: string) =>
-    apiClient.post('/api/auth/register', { email, password, displayName }),
+  register: (email: string, password: string, displayName?: string, signupSource = 'ios_app') =>
+    apiClient.post('/api/auth/register', { email, password, displayName, signupSource }),
 
   /** Login with device credentials (returns JWT) */
   deviceLogin: (deviceId: string, deviceSecret: string) =>
