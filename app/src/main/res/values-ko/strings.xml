@@ -268,7 +268,7 @@
     <string name="feedback_photo_uploaded">%d장의 사진이 업로드되었습니다</string>
     <string name="feedback_photo_uploading">사진 업로드 중…</string>
     <string name="feedback_result_issue">GitHub 이슈 #%d 보기</string>
-    <string name="feedback_result_logs">캡처됨: API 호출 %d건, 서버 로그 %d건</string>
+    <string name="feedback_result_logs">캡처됨: API 호출 %1$d건, 서버 로그 %2$d건</string>
     <string name="feedback_result_severity">심각도: %s</string>
     <string name="feedback_result_title">피드백 #%d이(가) 접수되었습니다</string>
     <string name="feedback_sending">전송 중…</string>

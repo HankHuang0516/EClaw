@@ -268,7 +268,7 @@
     <string name="feedback_photo_uploaded">Đã tải lên %d ảnh</string>
     <string name="feedback_photo_uploading">Đang tải ảnh lên…</string>
     <string name="feedback_result_issue">Xem GitHub Issue #%d</string>
-    <string name="feedback_result_logs">Đã thu thập: %d lệnh gọi API, %d nhật ký máy chủ</string>
+    <string name="feedback_result_logs">Đã thu thập: %1$d lệnh gọi API, %2$d nhật ký máy chủ</string>
     <string name="feedback_result_severity">Mức độ: %s</string>
     <string name="feedback_result_title">Đã nhận phản hồi #%d</string>
     <string name="feedback_sending">Đang gửi…</string>

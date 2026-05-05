@@ -179,11 +179,11 @@
     <string name="crash_log_collapse">Sembunyikan</string>
     <string name="crash_log_delete">Hapus</string>
     <string name="crash_log_delete_all">Hapus Semua</string>
-    <string name="crash_log_delete_all_confirm">Hapus %d log crash?</string>
+    <string name="crash_log_delete_all_confirm">Hapus %2$d log crash?</string>
     <string name="crash_log_deleted">Log crash dihapus</string>
     <string name="crash_log_expand">Detail</string>
     <string name="crash_log_share">Bagikan</string>
-    <string name="crash_logs_all_deleted">%d log crash dihapus</string>
+    <string name="crash_logs_all_deleted">%2$d log crash dihapus</string>
     <string name="crash_logs_empty">Tidak ada log crash tercatat.\nLaporan crash akan muncul di sini secara otomatis.</string>
     <string name="crash_logs_title">Log Crash</string>
     <string name="custom_background">Latar Belakang Kustom</string>
@@ -268,7 +268,7 @@
     <string name="feedback_photo_uploaded">%d foto diunggah</string>
     <string name="feedback_photo_uploading">Mengunggah foto…</string>
     <string name="feedback_result_issue">Lihat GitHub Issue #%d</string>
-    <string name="feedback_result_logs">Diambil: %d panggilan API, %d log server</string>
+    <string name="feedback_result_logs">Diambil: %1$d panggilan API, %2$d log server</string>
     <string name="feedback_result_severity">Tingkat keparahan: %s</string>
     <string name="feedback_result_title">Umpan balik #%d diterima</string>
     <string name="feedback_sending">Mengirim…</string>

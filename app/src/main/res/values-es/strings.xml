@@ -280,7 +280,7 @@ Tus comentarios enviados aparecerán aquí.</string>
     <string name="feedback_photo_uploaded">%d foto(s) subida(s)</string>
     <string name="feedback_photo_uploading">Subiendo fotos…</string>
     <string name="feedback_result_issue">Ver Issue de GitHub #%d</string>
-    <string name="feedback_result_logs">Capturados: %d llamadas API, %d registros del servidor</string>
+    <string name="feedback_result_logs">Capturados: %1$d llamadas API, %2$d registros del servidor</string>
     <string name="feedback_result_severity">Severidad: %s</string>
     <string name="feedback_result_title">Comentarios #%d recibidos</string>
     <string name="feedback_sending">Enviando…</string>
