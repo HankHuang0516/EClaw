@@ -308,8 +308,11 @@ describe('Growth signup_source schema contract', () => {
         const iosApi = fs.readFileSync(path.join(__dirname, '../../../ios-app/services/api.ts'), 'utf8');
         const growthTracking = fs.readFileSync(path.join(__dirname, '../../public/js/growth-tracking.js'), 'utf8');
 
+        const backendIndex = fs.readFileSync(path.join(__dirname, '../../index.js'), 'utf8');
+
         expect(growthTracking).toMatch(/collectSignupSource/);
         expect(growthTracking).toMatch(/utm:/);
+        expect(backendIndex).toMatch(/app\.use\('\/js',\s*express\.static\(path\.join\(__dirname, 'public\/js'\)/);
         expect(portalIndex).toMatch(/EClawGrowthTracking\.collectSignupSource\(\{ fallback: 'web_portal' \}\)/);
         expect(portalIndex).toMatch(/signupSource:\s*collectSignupSource\(\)/);
         expect(shareChat).toMatch(/EClawGrowthTracking\.collectSignupSource\(\{ fallback: 'share_chat' \}\)/);
