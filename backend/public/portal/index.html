@@ -529,6 +529,17 @@
             return null;
         }
 
+        function collectSignupSource() {
+            const params = new URLSearchParams(window.location.search);
+            const explicit = params.get('signup_source') || params.get('signupSource') || params.get('source');
+            const utmSource = params.get('utm_source') || params.get('utmSource');
+            const inviteCode = params.get('code') || params.get('invite') || params.get('invite_code') || localStorage.getItem('pendingInviteCode');
+            if (explicit) return explicit;
+            if (utmSource) return `utm:${utmSource}`;
+            if (inviteCode) return 'invite';
+            return 'web_portal';
+        }
+
         function applyServerLanguage(data) {
             if (data && data.user && data.user.language) {
                 const lang = data.user.language;
@@ -590,7 +601,7 @@
             btn.textContent = i18n.t('login_btn_creating');
 
             try {
-                await apiCall('POST', '/api/auth/register', { email, password });
+                await apiCall('POST', '/api/auth/register', { email, password, signupSource: collectSignupSource() });
                 showMsg('regSuccess', i18n.t('sc_register_success_verify'), 'success');
                 document.getElementById('regEmail').value = '';
                 document.getElementById('regPassword').value = '';

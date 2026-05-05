@@ -62,6 +62,32 @@ function generateDeviceCredentials() {
     return { deviceId, deviceSecret };
 }
 
+function normalizeSignupSource(value, fallback = 'unknown') {
+    const raw = (typeof value === 'string' ? value : '').trim().toLowerCase();
+    const normalized = raw
+        .replace(/\s+/g, '_')
+        .replace(/[^a-z0-9._:-]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^[-_.:]+|[-_.:]+$/g, '')
+        .slice(0, 64);
+    return normalized || fallback;
+}
+
+function getSignupSource(req, fallback = 'unknown') {
+    const body = req?.body || {};
+    const query = req?.query || {};
+    const explicit = body.signup_source || body.signupSource || body.source
+        || query.signup_source || query.signupSource || query.source
+        || req?.get?.('x-signup-source') || req?.get?.('x-client-source');
+    const utmSource = body.utm_source || body.utmSource || query.utm_source || query.utmSource;
+    const inviteCode = body.invite_code || body.inviteCode || query.invite_code || query.inviteCode;
+
+    if (explicit) return normalizeSignupSource(explicit, fallback);
+    if (utmSource) return normalizeSignupSource(`utm:${utmSource}`, fallback);
+    if (inviteCode) return normalizeSignupSource('invite', fallback);
+    return normalizeSignupSource(fallback, 'unknown');
+}
+
 // Initialize database tables from schema file
 async function initAuthDatabase() {
     try {
@@ -208,6 +234,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
     router.post('/register', authRateLimit, async (req, res) => {
         try {
             const { email, password } = req.body;
+            const signupSource = getSignupSource(req, 'web_email');
 
             if (!email || !password) {
                 return res.status(400).json({ success: false, error: 'Email and password required' });
@@ -243,10 +270,10 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
 
             // Insert user
             const result = await pool.query(
-                `INSERT INTO user_accounts (email, password_hash, device_id, device_secret, verify_token, verify_token_expires)
-                 VALUES ($1, $2, $3, $4, $5, $6)
+                `INSERT INTO user_accounts (email, password_hash, device_id, device_secret, verify_token, verify_token_expires, signup_source)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7)
                  RETURNING id, email, device_id, device_secret`,
-                [emailLower, passwordHash, deviceId, deviceSecret, verifyToken, verifyExpires]
+                [emailLower, passwordHash, deviceId, deviceSecret, verifyToken, verifyExpires, signupSource]
             );
 
             const user = result.rows[0];
@@ -1003,6 +1030,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
     router.post('/bind-email', async (req, res) => {
         try {
             const { deviceId, deviceSecret, email, password } = req.body;
+            const signupSource = getSignupSource(req, 'device_bind_email');
 
             if (!deviceId || !deviceSecret || !email || !password) {
                 return res.status(400).json({ success: false, error: 'deviceId, deviceSecret, email, and password are required' });
@@ -1056,10 +1084,10 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
 
             // Create user account linked to existing device
             const result = await pool.query(
-                `INSERT INTO user_accounts (email, password_hash, device_id, device_secret, verify_token, verify_token_expires)
-                 VALUES ($1, $2, $3, $4, $5, $6)
+                `INSERT INTO user_accounts (email, password_hash, device_id, device_secret, verify_token, verify_token_expires, signup_source)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7)
                  RETURNING id, email, device_id`,
-                [emailLower, passwordHash, deviceId, deviceSecret, verifyTokenValue, verifyExpires]
+                [emailLower, passwordHash, deviceId, deviceSecret, verifyTokenValue, verifyExpires, signupSource]
             );
 
             const user = result.rows[0];
@@ -1386,12 +1414,13 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
         const creds = (deviceId && deviceSecret && devices[deviceId] && safeEqual(devices[deviceId].deviceSecret, deviceSecret))
             ? { deviceId, deviceSecret }
             : generateDeviceCredentials();
+        const signupSource = getSignupSource(req, `${provider}_oauth`);
 
         const insertResult = await pool.query(
-            `INSERT INTO user_accounts (email, ${providerCol}, display_name, avatar_url, email_verified, auth_provider, device_id, device_secret)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            `INSERT INTO user_accounts (email, ${providerCol}, display_name, avatar_url, email_verified, auth_provider, device_id, device_secret, signup_source)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
              RETURNING *`,
-            [email ? email.toLowerCase() : null, providerId, displayName, avatarUrl, !!email, provider, creds.deviceId, creds.deviceSecret]
+            [email ? email.toLowerCase() : null, providerId, displayName, avatarUrl, !!email, provider, creds.deviceId, creds.deviceSecret, signupSource]
         );
 
         const newUser = insertResult.rows[0];
@@ -1865,11 +1894,12 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
             if (!user) {
                 // Create new account
                 const { deviceId: newDeviceId, deviceSecret: newDeviceSecret } = generateDeviceCredentials();
+                const signupSource = getSignupSource(req, `oidc:${providerName.toLowerCase()}`);
                 const result = await pool.query(
-                    `INSERT INTO user_accounts (email, oidc_provider, oidc_subject, display_name, avatar_url, auth_provider, device_id, device_secret, email_verified)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE)
+                    `INSERT INTO user_accounts (email, oidc_provider, oidc_subject, display_name, avatar_url, auth_provider, device_id, device_secret, email_verified, signup_source)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE, $9)
                      RETURNING *`,
-                    [email, providerName.toLowerCase(), sub, displayName, avatarUrl, `oidc:${providerName.toLowerCase()}`, newDeviceId, newDeviceSecret]
+                    [email, providerName.toLowerCase(), sub, displayName, avatarUrl, `oidc:${providerName.toLowerCase()}`, newDeviceId, newDeviceSecret, signupSource]
                 );
                 user = result.rows[0];
                 isNewAccount = true;
