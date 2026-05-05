@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title data-i18n="tutorial_title">EClawbot — Quick Start Tutorial</title>
+    <meta name="description" content="Get started with EClawbot in 30 seconds. Choose your track: content creation, coding, or translation.">
+    <link rel="icon" type="image/png" href="/portal/assets/favicon-32.png">
+    <link rel="stylesheet" href="/portal/shared/style.css">
+    <link rel="canonical" href="https://eclawbot.com/portal/onboarding/tutorial.html">
+    <style>
+        :root {
+            --tut-accent: #7c3aed;
+            --tut-accent-dark: #6d28d9;
+            --tut-success: #10b981;
+            --tut-radius: 12px;
+            --tut-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            background: var(--page-bg);
+            min-height: 100vh;
+            margin: 0;
+            font-family: inherit;
+        }
+
+        /* ── Layout ───────────────────────────────────────────── */
+        .tut-shell {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 40px 20px 80px;
+        }
+
+        /* ── Header ───────────────────────────────────────────── */
+        .tut-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .tut-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            color: var(--tut-accent);
+            background: color-mix(in srgb, var(--tut-accent) 12%, transparent);
+            border: 1px solid color-mix(in srgb, var(--tut-accent) 25%, transparent);
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 14px;
+        }
+
+        .tut-header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0 0 10px;
+            line-height: 1.2;
+        }
+
+        .tut-header p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        /* ── Step progress ─────────────────────────────────────── */
+        .tut-progress {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            margin: 28px 0 36px;
+        }
+
+        .tut-step-dot {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            position: relative;
+        }
+
+        .tut-step-dot::before {
+            content: '';
+            position: absolute;
+            top: 14px;
+            left: calc(50% + 18px);
+            width: calc(100% - 8px);
+            height: 2px;
+            background: var(--card-border);
+            transition: background var(--tut-transition);
+        }
+
+        .tut-step-dot:last-child::before {
+            display: none;
+        }
+
+        .tut-step-dot.done::before,
+        .tut-step-dot.active::before {
+            background: var(--tut-accent);
+        }
+
+        .tut-dot-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid var(--card-border);
+            background: var(--card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: border-color var(--tut-transition), background var(--tut-transition), color var(--tut-transition);
+            position: relative;
+            z-index: 1;
+        }
+
+        .tut-step-dot.active .tut-dot-circle {
+            border-color: var(--tut-accent);
+            background: var(--tut-accent);
+            color: #fff;
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--tut-accent) 20%, transparent);
+        }
+
+        .tut-step-dot.done .tut-dot-circle {
+            border-color: var(--tut-success);
+            background: var(--tut-success);
+            color: #fff;
+        }
+
+        .tut-step-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .tut-step-dot.active .tut-step-label {
+            color: var(--tut-accent);
+            font-weight: 600;
+        }
+
+        /* ── Scenario cards ────────────────────────────────────── */
+        .tut-scenarios {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 28px;
+        }
+
+        .tut-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 18px 20px;
+            border-radius: var(--tut-radius);
+            border: 1.5px solid var(--card-border);
+            background: var(--card);
+            cursor: pointer;
+            transition: border-color var(--tut-transition), background var(--tut-transition), transform 0.15s;
+            user-select: none;
+        }
+
+        .tut-card:hover {
+            border-color: var(--tut-accent);
+            background: color-mix(in srgb, var(--tut-accent) 5%, var(--card));
+            transform: translateY(-1px);
+        }
+
+        .tut-card.selected {
+            border-color: var(--tut-accent);
+            background: color-mix(in srgb, var(--tut-accent) 8%, var(--card));
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--tut-accent) 15%, transparent);
+        }
+
+        .tut-card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+            background: color-mix(in srgb, var(--tut-accent) 12%, var(--card-bg));
+        }
+
+        .tut-card-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .tut-card-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin: 0 0 3px;
+        }
+
+        .tut-card-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.45;
+        }
+
+        .tut-card-check {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid var(--card-border);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: border-color var(--tut-transition), background var(--tut-transition);
+        }
+
+        .tut-card.selected .tut-card-check {
+            border-color: var(--tut-accent);
+            background: var(--tut-accent);
+            color: #fff;
+        }
+
+        /* ── Step content panels ───────────────────────────────── */
+        .tut-panel {
+            display: none;
+            animation: tutFadeIn 0.3s ease;
+        }
+
+        .tut-panel.active {
+            display: block;
+        }
+
+        @keyframes tutFadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tut-demo-box {
+            background: var(--card);
+            border: 1.5px solid var(--card-border);
+            border-radius: var(--tut-radius);
+            padding: 24px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .tut-demo-msg {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 10px 18px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .tut-demo-msg .tut-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--tut-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #fff;
+        }
+
+        .tut-demo-response {
+            background: color-mix(in srgb, var(--tut-accent) 8%, var(--card));
+            border: 1px solid color-mix(in srgb, var(--tut-accent) 20%, var(--card-border));
+            border-radius: var(--tut-radius);
+            padding: 16px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-primary);
+            text-align: left;
+        }
+
+        .tut-demo-response strong {
+            color: var(--tut-accent);
+        }
+
+        /* ── Step 3 example prompt ────────────────────────────── */
+        .tut-prompt-example {
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-left: 3px solid var(--tut-accent);
+            border-radius: var(--tut-radius);
+            padding: 14px 16px;
+            font-size: 13px;
+            font-family: var(--font-mono, monospace);
+            color: var(--text-secondary);
+            margin: 16px 0;
+            line-height: 1.55;
+        }
+
+        /* ── Success screen ────────────────────────────────────── */
+        .tut-success-screen {
+            text-align: center;
+            padding: 20px 0 12px;
+        }
+
+        .tut-success-icon {
+            font-size: 56px;
+            line-height: 1;
+            margin-bottom: 16px;
+            animation: tutBounce 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes tutBounce {
+            0% { transform: scale(0.5); opacity: 0; }
+            60% { transform: scale(1.15); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .tut-success-screen h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0 0 10px;
+        }
+
+        .tut-success-screen p {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin: 0 0 28px;
+            line-height: 1.6;
+        }
+
+        .tut-next-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            text-align: left;
+        }
+
+        .tut-next-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            border-radius: var(--tut-radius);
+            border: 1px solid var(--card-border);
+            background: var(--card);
+            text-decoration: none;
+            color: inherit;
+            transition: border-color 0.15s, background 0.15s, transform 0.1s;
+        }
+
+        .tut-next-card:hover {
+            border-color: var(--tut-accent);
+            transform: translateY(-1px);
+        }
+
+        .tut-next-icon {
+            font-size: 20px;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: color-mix(in srgb, var(--tut-accent) 12%, var(--card-bg));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .tut-next-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0 0 2px;
+        }
+
+        .tut-next-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        /* ── Navigation buttons ────────────────────────────────── */
+        .tut-nav {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+
+        .tut-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 11px 22px;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: var(--radius-sm, 8px);
+            border: 1.5px solid var(--card-border);
+            background: transparent;
+            color: inherit;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.15s, border-color 0.15s, transform 0.1s;
+        }
+
+        .tut-btn:hover {
+            border-color: var(--tut-accent);
+            background: var(--input-bg);
+        }
+
+        .tut-btn-primary {
+            background: var(--tut-accent);
+            border-color: var(--tut-accent);
+            color: #fff;
+        }
+
+        .tut-btn-primary:hover {
+            background: var(--tut-accent-dark);
+            border-color: var(--tut-accent-dark);
+            color: #fff;
+        }
+
+        .tut-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ── Responsive ─────────────────────────────────────────── */
+        @media (max-width: 480px) {
+            .tut-shell { padding: 28px 16px 60px; }
+            .tut-header h1 { font-size: 22px; }
+            .tut-step-label { display: none; }
+            .tut-nav { flex-direction: column-reverse; }
+            .tut-btn { justify-content: center; }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="tut-shell">
+
+        <!-- Header -->
+        <header class="tut-header">
+            <div class="tut-badge" data-i18n="tutorial_badge">30-second setup</div>
+            <h1 data-i18n="tutorial_header_h">Welcome to EClawbot!</h1>
+            <p data-i18n="tutorial_header_desc">Pick the scenario that matches what you want to do, and we'll show you exactly how it works.</p>
+        </header>
+
+        <!-- Progress dots (steps 1-4) -->
+        <div class="tut-progress" id="tutProgress" role="progressbar" aria-label="Tutorial steps">
+            <div class="tut-step-dot active" data-step="1" aria-current="step">
+                <div class="tut-dot-circle">1</div>
+                <span class="tut-step-label" data-i18n="tut_step1_label">Choose</span>
+            </div>
+            <div class="tut-step-dot" data-step="2">
+                <div class="tut-dot-circle">2</div>
+                <span class="tut-step-label" data-i18n="tut_step2_label">See it</span>
+            </div>
+            <div class="tut-step-dot" data-step="3">
+                <div class="tut-dot-circle">3</div>
+                <span class="tut-step-label" data-i18n="tut_step3_label">Try it</span>
+            </div>
+            <div class="tut-step-dot" data-step="4">
+                <div class="tut-dot-circle">4</div>
+                <span class="tut-step-label" data-i18n="tut_step4_label">Go!</span>
+            </div>
+        </div>
+
+        <!-- Step 1: Scenario selection -->
+        <div class="tut-panel active" data-panel="1" id="tutPanel1">
+            <div class="tut-scenarios" id="tutScenarios">
+                <div class="tut-card" data-scenario="creation" tabindex="0" role="button" aria-pressed="false">
+                    <div class="tut-card-icon">✍️</div>
+                    <div class="tut-card-body">
+                        <p class="tut-card-title" data-i18n="tut_scenario_creation_title">Content Creation</p>
+                        <p class="tut-card-desc" data-i18n="tut_scenario_creation_desc">Blog posts, social media, newsletters, and marketing copy</p>
+                    </div>
+                    <div class="tut-card-check" aria-hidden="true"></div>
+                </div>
+                <div class="tut-card" data-scenario="coding" tabindex="0" role="button" aria-pressed="false">
+                    <div class="tut-card-icon">💻</div>
+                    <div class="tut-card-body">
+                        <p class="tut-card-title" data-i18n="tut_scenario_coding_title">Coding & Dev</p>
+                        <p class="tut-card-desc" data-i18n="tut_scenario_coding_desc">Debug, refactor, explain code, or generate boilerplate</p>
+                    </div>
+                    <div class="tut-card-check" aria-hidden="true"></div>
+                </div>
+                <div class="tut-card" data-scenario="translation" tabindex="0" role="button" aria-pressed="false">
+                    <div class="tut-card-icon">🌏</div>
+                    <div class="tut-card-body">
+                        <p class="tut-card-title" data-i18n="tut_scenario_translation_title">Translation</p>
+                        <p class="tut-card-desc" data-i18n="tut_scenario_translation_desc">Translate documents, apps, or websites between languages</p>
+                    </div>
+                    <div class="tut-card-check" aria-hidden="true"></div>
+                </div>
+            </div>
+            <div class="tut-nav">
+                <button class="tut-btn tut-btn-primary" id="tutNext1" disabled data-i18n="tut_btn_next">Next →</button>
+            </div>
+        </div>
+
+        <!-- Step 2: Live demo -->
+        <div class="tut-panel" data-panel="2" id="tutPanel2">
+            <div class="tut-demo-box">
+                <div class="tut-demo-msg">
+                    <div class="tut-avatar" id="tutDemoAvatar">E</div>
+                    <span id="tutDemoQuery">Loading...</span>
+                </div>
+                <div class="tut-demo-response" id="tutDemoResponse">
+                    Loading example...
+                </div>
+            </div>
+            <div class="tut-nav">
+                <button class="tut-btn" id="tutBack2" data-i18n="tut_btn_back">← Back</button>
+                <button class="tut-btn tut-btn-primary" id="tutNext2" data-i18n="tut_btn_next">Next →</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Try it yourself -->
+        <div class="tut-panel" data-panel="3" id="tutPanel3">
+            <p style="font-size:14px; color:var(--text-secondary); margin:0 0 16px;" data-i18n="tut_step3_intro">
+                Here's a prompt you can try right now. Tap it to copy, then paste it into the chat:
+            </p>
+            <div class="tut-prompt-example" id="tutPromptExample" title="Tap to copy" style="cursor:pointer;">
+                Loading prompt...
+            </div>
+            <p style="font-size:12px; color:var(--text-secondary); margin:0;" data-i18n="tut_step3_hint">
+                Or craft your own — EClawbot handles any task you throw at it.
+            </p>
+            <div class="tut-nav">
+                <button class="tut-btn" id="tutBack3" data-i18n="tut_btn_back">← Back</button>
+                <button class="tut-btn tut-btn-primary" id="tutNext3" data-i18n="tut_btn_next">Next →</button>
+            </div>
+        </div>
+
+        <!-- Step 4: Done -->
+        <div class="tut-panel" data-panel="4" id="tutPanel4">
+            <div class="tut-success-screen">
+                <div class="tut-success-icon">🎉</div>
+                <h2 data-i18n="tut_done_h">You're ready!</h2>
+                <p data-i18n="tut_done_desc">You've seen how EClawbot works. Dive into the dashboard to explore more features.</p>
+            </div>
+            <nav class="tut-next-actions" aria-label="Next steps">
+                <a class="tut-next-card" href="/portal/chat.html" id="tutGoChat">
+                    <div class="tut-next-icon">💬</div>
+                    <div>
+                        <p class="tut-next-title" data-i18n="tut_next_chat_title">Open Chat</p>
+                        <p class="tut-next-desc" data-i18n="tut_next_chat_desc">Start your first conversation</p>
+                    </div>
+                </a>
+                <a class="tut-next-card" href="/portal/dashboard.html" id="tutGoDashboard">
+                    <div class="tut-next-icon">📊</div>
+                    <div>
+                        <p class="tut-next-title" data-i18n="tut_next_dashboard_title">Dashboard</p>
+                        <p class="tut-next-desc" data-i18n="tut_next_dashboard_desc">Manage your entities and settings</p>
+                    </div>
+                </a>
+                <a class="tut-next-card" href="/portal/onboarding/wizard.html" id="tutGoWizard">
+                    <div class="tut-next-icon">🧙</div>
+                    <div>
+                        <p class="tut-next-title" data-i18n="tut_next_wizard_title">Onboarding Wizard</p>
+                        <p class="tut-next-desc" data-i18n="tut_next_wizard_desc">Configure your entities step by step</p>
+                    </div>
+                </a>
+            </nav>
+        </div>
+
+    </main>
+
+    <script src="/shared/i18n.js"></script>
+    <script src="tutorial.js"></script>
+</body>
+
+</html>
