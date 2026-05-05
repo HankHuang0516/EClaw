@@ -1,3 +1,38 @@
+## [1.1167.14](https://github.com/HankHuang0516/EClaw/compare/v1.1167.13...v1.1167.14) (2026-05-05)
+
+
+### Bug Fixes
+
+* **i18n:** clean ko locale leak baseline ([#2426](https://github.com/HankHuang0516/EClaw/issues/2426)) ([cb85bec](https://github.com/HankHuang0516/EClaw/commit/cb85bec14bfc34e67894d5b0694edde930d467ce))
+
+## [1.1167.13](https://github.com/HankHuang0516/EClaw/compare/v1.1167.12...v1.1167.13) (2026-05-04)
+
+
+### Bug Fixes
+
+* **i18n:** clean ja locale leak baseline keys ([25a3b0e](https://github.com/HankHuang0516/EClaw/commit/25a3b0e27cbf8f8de3b5108880140d32d5ba019a))
+
+## [1.1167.12](https://github.com/HankHuang0516/EClaw/compare/v1.1167.11...v1.1167.12) (2026-05-04)
+
+
+### Bug Fixes
+
+* **portal:** resolve emoji-icon mobile positioning conflicts ([#2438](https://github.com/HankHuang0516/EClaw/issues/2438)) ([f32e900](https://github.com/HankHuang0516/EClaw/commit/f32e9006d83a743e44ad077d75d95d5d50ce5b0c)), closes [portal/info.html#quickstart](https://github.com/portal/info.html/issues/quickstart)
+
+## [1.1167.11](https://github.com/HankHuang0516/EClaw/compare/v1.1167.10...v1.1167.11) (2026-05-04)
+
+
+### Bug Fixes
+
+* **info:** mark performance slide metrics as illustrative ([167107d](https://github.com/HankHuang0516/EClaw/commit/167107da9fadf3b3318d6b277ec938e6d7006052)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
+## [1.1167.10](https://github.com/HankHuang0516/EClaw/compare/v1.1167.9...v1.1167.10) (2026-05-04)
+
+
+### Bug Fixes
+
+* replace embedded Quick Start slides with image cards to resolve visual conflicts ([#2434](https://github.com/HankHuang0516/EClaw/issues/2434)) ([57585d5](https://github.com/HankHuang0516/EClaw/commit/57585d5082bc2316f4cfcbaf0ff513a229385302)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 ## [1.1167.9](https://github.com/HankHuang0516/EClaw/compare/v1.1167.8...v1.1167.9) (2026-05-04)
 
 
