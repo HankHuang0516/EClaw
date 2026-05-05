@@ -15,6 +15,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.hank.clawlive.R
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -84,7 +85,7 @@ class WebViewActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        val title = intent.getStringExtra(EXTRA_TITLE) ?: "webview"
+        val title = intent.getStringExtra(EXTRA_TITLE) ?: getString(R.string.unknown_error)
         TelemetryHelper.trackPageView(this, title.lowercase().replace(" ", "_"))
         RecordingIndicatorHelper.attach(this)
         billingManager.refreshState()

@@ -56,7 +56,7 @@ class ScheduleAdapter(
 
         // Entity — use real avatar from entityAvatars map, fall back to defaults
         val emoji = entityAvatars[item.entityId] ?: ENTITY_EMOJIS_DEFAULT[item.entityId] ?: "?"
-        val name = entityNames[item.entityId] ?: "Entity"
+        val name = entityNames[item.entityId] ?: context.getString(R.string.entity_format, item.entityId)
         holder.tvEntity.text = "$emoji $name #${item.entityId}"
 
         // Repeat badge
