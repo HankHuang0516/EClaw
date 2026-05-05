@@ -3,6 +3,7 @@ package com.hank.clawlive.ui
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.hank.clawlive.R
 import com.hank.clawlive.BuildConfig
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.LayoutPreferences
@@ -112,7 +113,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 } else {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = "Failed to generate binding code"
+                        error = application.getString(R.string.error_occurred)
                     )
                 }
             } catch (e: retrofit2.HttpException) {
