@@ -1,3 +1,10 @@
+## [1.1168.1](https://github.com/HankHuang0516/EClaw/compare/v1.1168.0...v1.1168.1) (2026-05-05)
+
+
+### Bug Fixes
+
+* **growth:** serve tracking helper ([fb42302](https://github.com/HankHuang0516/EClaw/commit/fb4230255a35d8f6d99b37eb7c08aa39eea3d2e0))
+
 # [1.1168.0](https://github.com/HankHuang0516/EClaw/compare/v1.1167.14...v1.1168.0) (2026-05-05)
 
 
