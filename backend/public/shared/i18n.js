@@ -1,3 +1,5 @@
+        "rn_1036_title": "v1.0.36",
+        "rn_1038_title": "v1.0.38"
         "guide_kanban_usecase_li2_strong": "E-Commerce Orders",
         "guide_kanban_usecase_li3": "📝 <strong>Content Pipeline</strong>: Research → Write → Translate → Review → Publish, a Bot for every step",
         "guide_kanban_usecase_li3_strong": "Content Pipeline",
