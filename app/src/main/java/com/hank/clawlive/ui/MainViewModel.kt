@@ -113,7 +113,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 } else {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        error = application.getString(R.string.error_occurred)
+                        error = getApplication<Application>().getString(R.string.error_occurred)
                     )
                 }
             } catch (e: retrofit2.HttpException) {
