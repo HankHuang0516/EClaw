@@ -1,3 +1,11 @@
+## [1.1168.2](https://github.com/HankHuang0516/EClaw/compare/v1.1168.1...v1.1168.2) (2026-05-05)
+
+
+### Bug Fixes
+
+* **android:** i18n-ify 'Failed to generate binding code' in MainViewModel ([318bc98](https://github.com/HankHuang0516/EClaw/commit/318bc98b020155a5642f6673e5311828e23b6fb1))
+* **android:** i18n-ify 3 hardcoded strings ([e1e2dcd](https://github.com/HankHuang0516/EClaw/commit/e1e2dcd40de8659c78c22c93f747670925ddc0d5))
+
 ## [1.1168.1](https://github.com/HankHuang0516/EClaw/compare/v1.1168.0...v1.1168.1) (2026-05-05)
 
 
