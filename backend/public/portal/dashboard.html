@@ -1564,7 +1564,7 @@
         </div>
 
         <!-- Invite Onboarding Banner (shown only when use_count=0 and not dismissed in last 7d) -->
-        <div id="inviteBanner" class="invite-banner" role="region" aria-label="Invite friends">
+        <div id="inviteOnboardingBanner" class="invite-banner" role="region" aria-label="Invite friends">
             <div class="invite-banner-icon">🎁</div>
             <div class="invite-banner-text">
                 <div class="invite-banner-title" data-i18n="invite_banner_title">Invite friends, earn e-coin together</div>
@@ -1686,7 +1686,7 @@
         </div>
 
         <!-- Invite Friends Banner (viral loop entry) -->
-        <a class="invite-banner" href="/portal/invite.html" id="inviteBanner">
+        <a class="invite-banner" href="/portal/invite.html" id="inviteFriendsBanner">
             <span class="invite-banner-icon" aria-hidden="true">🎁</span>
             <div class="invite-banner-text">
                 <div class="invite-banner-title" data-i18n="dash_invite_title">Invite friends, earn 500 e-coin per signup</div>
@@ -2038,7 +2038,7 @@
             if (useCount === 0) {
                 const dismissedAt = parseInt(localStorage.getItem(BANNER_KEY) || '0', 10);
                 if (!dismissedAt || (Date.now() - dismissedAt) > SEVEN_DAYS_MS) {
-                    const banner = document.getElementById('inviteBanner');
+                    const banner = document.getElementById('inviteOnboardingBanner');
                     const codeEl = document.getElementById('inviteBannerCode');
                     if (banner && codeEl) {
                         codeEl.textContent = code;
@@ -2050,7 +2050,7 @@
 
         function dismissInviteBanner() {
             try { localStorage.setItem('invite_banner_dismissed_at', String(Date.now())); } catch (e) {}
-            const banner = document.getElementById('inviteBanner');
+            const banner = document.getElementById('inviteOnboardingBanner');
             if (banner) banner.style.display = 'none';
         }
 
