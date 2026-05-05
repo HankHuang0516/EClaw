@@ -1,3 +1,12 @@
+# [1.1168.0](https://github.com/HankHuang0516/EClaw/compare/v1.1167.14...v1.1168.0) (2026-05-05)
+
+
+### Features
+
+* **onboarding:** add five-minute quick win demo ([2bd1ac7](https://github.com/HankHuang0516/EClaw/commit/2bd1ac79882b0c8e85f159f8a69848f923e368dd))
+* **onboarding:** integrate tutorial and growth tracking ([87061b5](https://github.com/HankHuang0516/EClaw/commit/87061b5c65966952026ea971a7735c07b1f4d247))
+* **growth:** track signup source attribution ([743ec9d](https://github.com/HankHuang0516/EClaw/commit/743ec9d58e12795fa92332d5a621aed7d7a1f687))
+
 ## [1.1167.14](https://github.com/HankHuang0516/EClaw/compare/v1.1167.13...v1.1167.14) (2026-05-05)
 
 
