@@ -437,6 +437,11 @@ EClaw/
 | Rental contract start returns internal_error during rent/borrow E2E (#2283) | `GET /api/rental/debug/contract-start-fail?deviceId=X&deviceSecret=Y&listingId=Y&renterDeviceId=Z&durationMinutes=30` | 2026-05-01 | Active |
    | Chat first render delayed by cross-device label resolution | `GET /api/debug/chat-render-load-order?deviceId=X&deviceSecret=Y` | 2026-05-01 | Active |
    | Kanban nudges ignored by Codex channel bridge | `GET /api/mission/debug/kanban-codex-nudge?deviceId=X&deviceSecret=Y` | 2026-05-01 | Active |
+   | Info public pages: roadmap redirects unauthenticated visitors + release notes show raw Markdown links | `GET /api/debug/info-public-pages?deviceId=X&deviceSecret=Y` | 2026-05-04 | Active |
+   | Info slide uses invented Interview Arena leaderboard bot names | `GET /api/debug/info-leaderboard-slide?deviceId=X&deviceSecret=Y` | 2026-05-04 | Active |
+   | Info Pricing Advisor slide claims unavailable GPT-5 tier and unsourced computed scores | `GET /api/debug/info-pricing-slide?deviceId=X&deviceSecret=Y` | 2026-05-04 | Active |
+   | Info Integration slide lists unsupported integrations and fake platform/SLA stats | `GET /api/debug/info-integration-slide?deviceId=X&deviceSecret=Y` | 2026-05-05 | Active |
+   | Info Guide mobile renders too many sidebar sections/cards/slides as one long vertical wall | `GET /api/debug/info-guide-mobile-layout?deviceId=X&deviceSecret=Y` | 2026-05-05 | Active |
 
 6. **Demand Elegance (Balanced)** — 在保持 minimal change 的前提下，追求可讀、一致的程式風格；不為了「漂亮」而過度重構，但也不容忍明顯的 code smell 在新增的程式碼中出現。
 
@@ -1082,6 +1087,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | gRPC Transport | `node backend/tests/test-grpc-transport.js` | None (local) | Proto loading, gRPC server, HealthService |
 | ENV Vars Merge | `node backend/tests/test-vars-merge.js` | Device ID + Secret | Cross-platform merge, conflict splitting |
 | Channel API | `node backend/tests/test-channel-api.js` | Device ID + Secret | OpenClaw channel integration |
+| Kanban auto-review busy-state guard | `cd backend && npx jest tests/jest/kanban-autoreview-busy-state-guard.test.js --runInBand` | None | Regression: BUSY/PROCESSING/WORKING progress heartbeats must not auto-close kanban child cards before work completes |
 | Skill Templates | `node backend/tests/test-skill-templates.js` | None | Skill template CRUD, requiredVars format validation (Gson compat), contribute endpoint input guard |
 | WebSocket Auth | `node backend/tests/test-ws-auth.js` | Device ID + Secret | Socket.IO authentication |
 | AI Chat Image | `node backend/tests/test-ai-chat-image.js` | Device ID + Secret | AI chat with image support |

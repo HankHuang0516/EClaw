@@ -1231,7 +1231,7 @@ setInterval(async () => {
     if (deviceCount > 0) {
         await saveData();
     }
-}, AUTO_SAVE_INTERVAL);
+}, AUTO_SAVE_INTERVAL).unref();
 
 // ============================================
 // DEVICE CLEANUP (Remove test & zombie devices)
@@ -1299,7 +1299,7 @@ setInterval(async () => {
         console.log(`[Cleanup] Removed ${testRemoved} test device(s), ${zombieRemoved} zombie device(s). Remaining: ${Object.keys(devices).length}`);
         await saveData();
     }
-}, CLEANUP_INTERVAL);
+}, CLEANUP_INTERVAL).unref();
 
 // Subscription expiry cleanup - auto-unbind personal bots not verified in 48h
 const SUBSCRIPTION_EXPIRY_MS = 48 * 60 * 60 * 1000; // 48 hours
@@ -1342,7 +1342,7 @@ setInterval(async () => {
     } catch (err) {
         console.error('[Borrow Cleanup] Error:', err.message);
     }
-}, CLEANUP_INTERVAL);
+}, CLEANUP_INTERVAL).unref();
 
 // Graceful shutdown - save data before exit
 process.on('SIGINT', async () => {
@@ -2321,6 +2321,361 @@ app.get('/api/debug/chat-render-load-order', async (req, res) => {
     }
 });
 
+// Temporary diagnostic endpoint for public Info-page regressions:
+// - roadmap.html must not redirect unauthenticated visitors to index.html
+// - release notes must render Markdown links instead of raw `(https://...)`
+// Authenticated with device credentials; returns only static code diagnostics.
+app.get('/api/debug/info-public-pages', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query || {};
+    const timestamp = new Date().toISOString();
+    try {
+        if (!deviceId || !deviceSecret) {
+            return res.status(401).json({ success: false, bug: 'info-public-pages', error: 'deviceId and deviceSecret required', timestamp });
+        }
+
+        const memDevice = devices[deviceId];
+        const pool = db._getPool ? db._getPool() : authModule.pool;
+        const dbDevice = pool
+            ? await pool.query('SELECT device_secret FROM devices WHERE device_id = $1', [deviceId])
+            : { rows: [] };
+        const dbDeviceRow = dbDevice.rows[0] || null;
+        const memSecretOk = !!(memDevice && memDevice.deviceSecret && safeEqual(memDevice.deviceSecret, deviceSecret));
+        const dbSecretOk = !!(dbDeviceRow && dbDeviceRow.device_secret && safeEqual(dbDeviceRow.device_secret, deviceSecret));
+        if (!memSecretOk && !dbSecretOk) {
+            return res.status(403).json({ success: false, bug: 'info-public-pages', error: 'Invalid credentials', timestamp });
+        }
+
+        const portalDir = path.join(__dirname, 'public', 'portal');
+        const roadmapPath = path.join(portalDir, 'roadmap.html');
+        const infoPath = path.join(portalDir, 'info.html');
+        const infoJsPath = path.join(portalDir, 'shared', 'info.js');
+        const markdownRenderPath = path.join(portalDir, 'shared', 'markdown-render.js');
+
+        const read = (p) => fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : '';
+        const roadmapHtml = read(roadmapPath);
+        const infoHtml = read(infoPath);
+        const infoJs = read(infoJsPath);
+        const markdownRenderJs = read(markdownRenderPath);
+
+        res.json({
+            success: true,
+            bug: 'info-public-pages',
+            diagnostics: {
+                server: {
+                    build: SERVER_BUILD_TAG,
+                    startedAt: SERVER_STARTED_AT.toISOString(),
+                    uptimeSec: Math.round(process.uptime()),
+                },
+                auth: {
+                    memSecretOk,
+                    dbSecretOk,
+                    requestUserDeviceId: req.user?.deviceId || null,
+                    requestUserId: req.user?.userId || null,
+                },
+                roadmapPublicGate: {
+                    fileExists: !!roadmapHtml,
+                    authProbeUsesOptionalSession: /apiCall\(\s*['"]GET['"]\s*,\s*['"]\/api\/auth\/session['"]/.test(roadmapHtml),
+                    avoidsNoisyAuthMeProbe: !/apiCall\(\s*['"]GET['"]\s*,\s*['"]\/api\/auth\/me['"]/.test(roadmapHtml),
+                    includesAuthJs: /shared\/auth\.js/.test(roadmapHtml),
+                },
+                releaseNotesMarkdown: {
+                    infoIncludesMarked: /marked\.min\.js/.test(infoHtml),
+                    infoIncludesDOMPurify: /purify\.min\.js/.test(infoHtml),
+                    infoIncludesMarkdownRenderer: /shared\/markdown-render\.js/.test(infoHtml),
+                    releaseRendererCallsMarkdownHelper: /renderSafeMarkdownInline\(ch\.description\)/.test(infoJs),
+                    markdownRendererFileExists: !!markdownRenderJs,
+                    fallbackHandlesMarkdownLinks: markdownRenderJs.includes('fallbackMarkdownInline') && markdownRenderJs.includes('https?:\\/\\/'),
+                },
+            },
+            timestamp,
+        });
+    } catch (err) {
+        console.error('[Debug info-public-pages] failed:', err);
+        res.status(500).json({ success: false, bug: 'info-public-pages', error: err.message, timestamp });
+    }
+});
+
+// Temporary diagnostic endpoint for Interview Arena leaderboard slide accuracy:
+// the marketing slide must not present invented bot names as real platform data.
+// Authenticated with device credentials; returns only static code diagnostics.
+app.get('/api/debug/info-leaderboard-slide', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query || {};
+    const timestamp = new Date().toISOString();
+    try {
+        if (!deviceId || !deviceSecret) {
+            return res.status(401).json({ success: false, bug: 'info-leaderboard-slide', error: 'deviceId and deviceSecret required', timestamp });
+        }
+
+        const memDevice = devices[deviceId];
+        const pool = db._getPool ? db._getPool() : authModule.pool;
+        const dbDevice = pool
+            ? await pool.query('SELECT device_secret FROM devices WHERE device_id = $1', [deviceId])
+            : { rows: [] };
+        const dbDeviceRow = dbDevice.rows[0] || null;
+        const memSecretOk = !!(memDevice && memDevice.deviceSecret && safeEqual(memDevice.deviceSecret, deviceSecret));
+        const dbSecretOk = !!(dbDeviceRow && dbDeviceRow.device_secret && safeEqual(dbDeviceRow.device_secret, deviceSecret));
+        if (!memSecretOk && !dbSecretOk) {
+            return res.status(403).json({ success: false, bug: 'info-leaderboard-slide', error: 'Invalid credentials', timestamp });
+        }
+
+        const slideDir = path.join(__dirname, 'public', 'portal', 'assets', 'slides');
+        const slidePath = path.join(slideDir, 'info-why-eclaw-b6-interview-arena-leaderboard.html');
+        const slideHtml = fs.existsSync(slidePath) ? fs.readFileSync(slidePath, 'utf8') : '';
+        const fakeNames = [
+            ['Research', 'Ops', 'Bot'].join(' '),
+            ['Sales', 'Workflow', 'Bot'].join(' '),
+            ['Support', 'Triage', 'Bot'].join(' '),
+        ];
+
+        res.json({
+            success: true,
+            bug: 'info-leaderboard-slide',
+            diagnostics: {
+                server: {
+                    build: SERVER_BUILD_TAG,
+                    startedAt: SERVER_STARTED_AT.toISOString(),
+                    uptimeSec: Math.round(process.uptime()),
+                },
+                auth: {
+                    memSecretOk,
+                    dbSecretOk,
+                    requestUserDeviceId: req.user?.deviceId || null,
+                    requestUserId: req.user?.userId || null,
+                },
+                slide: {
+                    fileExists: !!slideHtml,
+                    fakeNamesPresent: fakeNames.filter(name => slideHtml.includes(name)),
+                    usesAnonymousSampleNames: /<b>Bot A<\/b>/.test(slideHtml) && /<b>Bot B<\/b>/.test(slideHtml) && /<b>Bot C<\/b>/.test(slideHtml),
+                    hasSampleBadge: /Sample display/.test(slideHtml),
+                    hasNonActualScoreDisclaimer: /不代表實際 bot 名稱或真實分數/.test(slideHtml),
+                    linksToArena: /href=["']\/arena["']/.test(slideHtml),
+                },
+                screenshots: {
+                    webAssetExists: fs.existsSync(path.join(slideDir, 'info-why-eclaw-b6-interview-arena-leaderboard-web.png')),
+                    mobileAssetExists: fs.existsSync(path.join(slideDir, 'info-why-eclaw-b6-interview-arena-leaderboard-mobile.png')),
+                    thumbAssetExists: fs.existsSync(path.join(slideDir, 'info-why-eclaw-b6-interview-arena-leaderboard-thumb.png')),
+                },
+            },
+            timestamp,
+        });
+    } catch (err) {
+        console.error('[Debug info-leaderboard-slide] failed:', err);
+        res.status(500).json({ success: false, bug: 'info-leaderboard-slide', error: err.message, timestamp });
+    }
+});
+
+// Temporary diagnostic endpoint for Integration slide accuracy:
+// the marketing slide must only list integrations that are actually supported
+// or wired today, and must not claim invented platform counts/SLA metrics.
+// Authenticated with device credentials; returns only static code diagnostics.
+app.get('/api/debug/info-integration-slide', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query || {};
+    const timestamp = new Date().toISOString();
+    try {
+        if (!deviceId || !deviceSecret) {
+            return res.status(401).json({ success: false, bug: 'info-integration-slide', error: 'deviceId and deviceSecret required', timestamp });
+        }
+
+        const memDevice = devices[deviceId];
+        const pool = db._getPool ? db._getPool() : authModule.pool;
+        const dbDevice = pool
+            ? await pool.query('SELECT device_secret FROM devices WHERE device_id = $1', [deviceId])
+            : { rows: [] };
+        const dbDeviceRow = dbDevice.rows[0] || null;
+        const memSecretOk = !!(memDevice && memDevice.deviceSecret && safeEqual(memDevice.deviceSecret, deviceSecret));
+        const dbSecretOk = !!(dbDeviceRow && dbDeviceRow.device_secret && safeEqual(dbDeviceRow.device_secret, deviceSecret));
+        if (!memSecretOk && !dbSecretOk) {
+            return res.status(403).json({ success: false, bug: 'info-integration-slide', error: 'Invalid credentials', timestamp });
+        }
+
+        const slideDir = path.join(__dirname, 'public', 'portal', 'assets', 'slides');
+        const slidePath = path.join(slideDir, 'info-integration.html');
+        const slideHtml = fs.existsSync(slidePath) ? fs.readFileSync(slidePath, 'utf8') : '';
+        const supported = ['Telegram', 'Railway', 'GitHub', 'MiniMax', 'Anthropic', 'OpenAI', 'Voyage'];
+        const unsupported = [
+            'Discord', 'Slack', 'Teams', 'LINE', 'WhatsApp',
+            'GitLab', 'VS Code', 'JetBrains', 'Docker', 'Kubernetes',
+            'AWS', 'Azure', 'GCP', 'Vercel', 'DigitalOcean',
+        ];
+
+        res.json({
+            success: true,
+            bug: 'info-integration-slide',
+            diagnostics: {
+                server: {
+                    build: SERVER_BUILD_TAG,
+                    startedAt: SERVER_STARTED_AT.toISOString(),
+                    uptimeSec: Math.round(process.uptime()),
+                },
+                auth: {
+                    memSecretOk,
+                    dbSecretOk,
+                    requestUserDeviceId: req.user?.deviceId || null,
+                    requestUserId: req.user?.userId || null,
+                },
+                slide: {
+                    fileExists: !!slideHtml,
+                    supportedIntegrationsPresent: supported.filter(name => slideHtml.includes(name)),
+                    unsupportedClaimsPresent: unsupported.filter(name => slideHtml.includes(name)),
+                    hasFakeScaleStats: /50\+|99\.9%|24\/7/.test(slideHtml),
+                    hasActualStats: /已上線 \/ 已接線整合/.test(slideHtml)
+                        && /公開 channel plugin/.test(slideHtml)
+                        && /2026-05/.test(slideHtml),
+                    hasAvailabilityDisclaimer: /僅列出已上線或已接線的整合能力/.test(slideHtml)
+                        && /未上線\/未實作項目不列為正式支援/.test(slideHtml),
+                    hasDeadCompleteListCta: /查看完整整合列表/.test(slideHtml) || /href=["']#["']/.test(slideHtml),
+                },
+                screenshots: {
+                    webAssetExists: fs.existsSync(path.join(slideDir, 'info-integration-web.png')),
+                    mobileAssetExists: fs.existsSync(path.join(slideDir, 'info-integration-mobile.png')),
+                    thumbAssetExists: fs.existsSync(path.join(slideDir, 'info-integration-thumb.png')),
+                },
+            },
+            timestamp,
+        });
+    } catch (err) {
+        console.error('[Debug info-integration-slide] failed:', err);
+        res.status(500).json({ success: false, bug: 'info-integration-slide', error: err.message, timestamp });
+    }
+});
+
+// Temporary diagnostic endpoint for Info guide mobile layout density:
+// the user guide must not render its long sidebar and dense card/slide groups
+// as one uninterrupted vertical wall on 390px mobile viewports.
+// Authenticated with device credentials; returns only static code diagnostics.
+app.get('/api/debug/info-guide-mobile-layout', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query || {};
+    const timestamp = new Date().toISOString();
+    try {
+        if (!deviceId || !deviceSecret) {
+            return res.status(401).json({ success: false, bug: 'info-guide-mobile-layout', error: 'deviceId and deviceSecret required', timestamp });
+        }
+
+        const memDevice = devices[deviceId];
+        const pool = db._getPool ? db._getPool() : authModule.pool;
+        const dbDevice = pool
+            ? await pool.query('SELECT device_secret FROM devices WHERE device_id = $1', [deviceId])
+            : { rows: [] };
+        const dbDeviceRow = dbDevice.rows[0] || null;
+        const memSecretOk = !!(memDevice && memDevice.deviceSecret && safeEqual(memDevice.deviceSecret, deviceSecret));
+        const dbSecretOk = !!(dbDeviceRow && dbDeviceRow.device_secret && safeEqual(dbDeviceRow.device_secret, deviceSecret));
+        if (!memSecretOk && !dbSecretOk) {
+            return res.status(403).json({ success: false, bug: 'info-guide-mobile-layout', error: 'Invalid credentials', timestamp });
+        }
+
+        const portalDir = path.join(__dirname, 'public', 'portal');
+        const infoHtmlPath = path.join(portalDir, 'info.html');
+        const infoCssPath = path.join(portalDir, 'shared', 'info.css');
+        const infoJsPath = path.join(portalDir, 'shared', 'info.js');
+        const infoHtml = fs.existsSync(infoHtmlPath) ? fs.readFileSync(infoHtmlPath, 'utf8') : '';
+        const infoCss = fs.existsSync(infoCssPath) ? fs.readFileSync(infoCssPath, 'utf8') : '';
+        const infoJs = fs.existsSync(infoJsPath) ? fs.readFileSync(infoJsPath, 'utf8') : '';
+
+        const guidePanelMatches = infoHtml.match(/class=["'][^"']*\bguide-panel\b/g) || [];
+        const whyEclawSlideLinks = infoHtml.match(/info-why-eclaw-b\d+-[^"']+\.html/g) || [];
+
+        res.json({
+            success: true,
+            bug: 'info-guide-mobile-layout',
+            diagnostics: {
+                server: {
+                    build: SERVER_BUILD_TAG,
+                    startedAt: SERVER_STARTED_AT.toISOString(),
+                    uptimeSec: Math.round(process.uptime()),
+                },
+                auth: {
+                    memSecretOk,
+                    dbSecretOk,
+                    requestUserDeviceId: req.user?.deviceId || null,
+                    requestUserId: req.user?.userId || null,
+                },
+                guide: {
+                    infoHtmlExists: !!infoHtml,
+                    guidePanelCount: guidePanelMatches.length,
+                    whyEclawSlideLinkCount: whyEclawSlideLinks.length,
+                    mobilePickerJsPresent: /buildGuideMobilePicker/.test(infoJs)
+                        && /guide-mobile-picker/.test(infoJs),
+                    mobileSidebarHidden: /#panel-guide\s+#guideSidebarUG\s*\{[\s\S]*display:\s*none/.test(infoCss),
+                    featureCardsUseCarousel: /#panel-guide\s+\.guide-content\s+\.feat-grid[\s\S]*overflow-x:\s*auto/.test(infoCss)
+                        && /scroll-snap-type:\s*x\s+mandatory/.test(infoCss),
+                    demoCardsUseCarousel: /#panel-guide\s+\.guide-content\s+\.demo-showcase[\s\S]*overflow-x:\s*auto/.test(infoCss),
+                    onlyActiveGuidePanelVisible: /\.guide-panel\s*\{\s*display:\s*none;\s*\}[\s\S]*\.guide-panel\.active\s*\{\s*display:\s*block;\s*\}/.test(infoCss),
+                },
+            },
+            timestamp,
+        });
+    } catch (err) {
+        console.error('[Debug info-guide-mobile-layout] failed:', err);
+        res.status(500).json({ success: false, bug: 'info-guide-mobile-layout', error: err.message, timestamp });
+    }
+});
+
+// Temporary diagnostic endpoint for Pricing Advisor slide accuracy:
+// the marketing slide must not present unavailable model tiers or computed
+// pricing scores as real system output before Pricing Advisor is live.
+// Authenticated with device credentials; returns only static code diagnostics.
+app.get('/api/debug/info-pricing-slide', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query || {};
+    const timestamp = new Date().toISOString();
+    try {
+        if (!deviceId || !deviceSecret) {
+            return res.status(401).json({ success: false, bug: 'info-pricing-slide', error: 'deviceId and deviceSecret required', timestamp });
+        }
+
+        const memDevice = devices[deviceId];
+        const pool = db._getPool ? db._getPool() : authModule.pool;
+        const dbDevice = pool
+            ? await pool.query('SELECT device_secret FROM devices WHERE device_id = $1', [deviceId])
+            : { rows: [] };
+        const dbDeviceRow = dbDevice.rows[0] || null;
+        const memSecretOk = !!(memDevice && memDevice.deviceSecret && safeEqual(memDevice.deviceSecret, deviceSecret));
+        const dbSecretOk = !!(dbDeviceRow && dbDeviceRow.device_secret && safeEqual(dbDeviceRow.device_secret, deviceSecret));
+        if (!memSecretOk && !dbSecretOk) {
+            return res.status(403).json({ success: false, bug: 'info-pricing-slide', error: 'Invalid credentials', timestamp });
+        }
+
+        const slideDir = path.join(__dirname, 'public', 'portal', 'assets', 'slides');
+        const slidePath = path.join(slideDir, 'info-why-eclaw-b5-pricing-advisor.html');
+        const slideHtml = fs.existsSync(slidePath) ? fs.readFileSync(slidePath, 'utf8') : '';
+
+        res.json({
+            success: true,
+            bug: 'info-pricing-slide',
+            diagnostics: {
+                server: {
+                    build: SERVER_BUILD_TAG,
+                    startedAt: SERVER_STARTED_AT.toISOString(),
+                    uptimeSec: Math.round(process.uptime()),
+                },
+                auth: {
+                    memSecretOk,
+                    dbSecretOk,
+                    requestUserDeviceId: req.user?.deviceId || null,
+                    requestUserId: req.user?.userId || null,
+                },
+                slide: {
+                    fileExists: !!slideHtml,
+                    claimsGpt5Tier: /GPT-5\s*tier/i.test(slideHtml),
+                    usesCurrentModelLabel: /MiniMax 2\.7/.test(slideHtml),
+                    hasSampleBadge: /Sample display/.test(slideHtml),
+                    rangeMarkedAsDemo: /Demo rental range/.test(slideHtml) && /示範 18–24 e-coin \/ min/.test(slideHtml),
+                    fitScoreMarkedAsDemo: /<span>DEMO FIT<\/span>/.test(slideHtml),
+                    hasPricingDisclaimer: /Pricing 顧問功能展示/.test(slideHtml) && /以系統運算結果為準/.test(slideHtml),
+                },
+                screenshots: {
+                    webAssetExists: fs.existsSync(path.join(slideDir, 'info-why-eclaw-b5-pricing-advisor-web.png')),
+                    mobileAssetExists: fs.existsSync(path.join(slideDir, 'info-why-eclaw-b5-pricing-advisor-mobile.png')),
+                    thumbAssetExists: fs.existsSync(path.join(slideDir, 'info-why-eclaw-b5-pricing-advisor-thumb.png')),
+                },
+            },
+            timestamp,
+        });
+    } catch (err) {
+        console.error('[Debug info-pricing-slide] failed:', err);
+        res.status(500).json({ success: false, bug: 'info-pricing-slide', error: err.message, timestamp });
+    }
+});
+
 // Wire up pending message flush on email verification
 authModule.setOnEmailVerified(async (deviceId) => {
     console.log(`[PendingFlush] onEmailVerified triggered for device ${deviceId}`);
@@ -2418,7 +2773,7 @@ authModule.setOnEmailVerified(async (deviceId) => {
 const subscriptionModule = require('./subscription')(devices, authModule.authMiddleware, ensureOneEmptySlot, serverLog);
 app.use('/api/subscription', subscriptionModule.router);
 // Load premium status after persistence is ready
-setTimeout(() => subscriptionModule.loadPremiumStatus(), 5000);
+if (process.env.NODE_ENV !== 'test') setTimeout(() => subscriptionModule.loadPremiumStatus(), 5000);
 
 // ============================================
 // WALLET (e-coin) — bot rental marketplace foundation
@@ -2583,7 +2938,7 @@ const trustModule = require('./trust')({
     serverLog,
 });
 app.use('/api/rental', trustModule.router); // extends /api/rental with review/dispute routes
-setTimeout(() => trustModule.initTrustDatabase(), 3000);
+if (process.env.NODE_ENV !== 'test') setTimeout(() => trustModule.initTrustDatabase(), 3000);
 
 // ============================================
 // INVITE / REFERRAL SYSTEM (P5)
@@ -2600,7 +2955,7 @@ const inviteModule = require('./invite')({
     walletModule,
     serverLog,
 });
-setTimeout(() => inviteModule.initInviteDatabase(), 3500);
+if (process.env.NODE_ENV !== 'test') setTimeout(() => inviteModule.initInviteDatabase(), 3500);
 
 // ============================================
 // INTERVIEW ARENA — public bot capability testing
@@ -2787,7 +3142,7 @@ nodeCron.schedule('23 4 * * *', async () => {
 // ============================================
 gatekeeper.initGatekeeperTable();
 gatekeeper.setServerLog(serverLog);
-setTimeout(() => gatekeeper.loadBlockedDevices(), 3000);
+if (process.env.NODE_ENV !== 'test') setTimeout(() => gatekeeper.loadBlockedDevices(), 3000);
 
 // Developer device cache — devices owned by admin accounts are exempt from Gatekeeper First Lock
 const developerDeviceIds = new Set();
@@ -2805,7 +3160,7 @@ async function loadDeveloperDevices() {
         console.error('[Gatekeeper] Failed to load developer devices:', err.message);
     }
 }
-setTimeout(() => loadDeveloperDevices(), 3500);
+if (process.env.NODE_ENV !== 'test') setTimeout(() => loadDeveloperDevices(), 3500);
 
 // --- Skill / Soul / Rule Templates API ---
 
@@ -6293,7 +6648,8 @@ async function deliverToEntity(opts) {
         broadcastChatMsgId,
         showRecipientInfo = false,
         isCrossDevice = false,
-        card = null
+        card = null,
+        viaChannel = null
     } = opts;
 
     const sourceLabel = isCrossDevice
@@ -6335,12 +6691,12 @@ async function deliverToEntity(opts) {
         // Broadcast: reuse the single shared chat message ID for delivery tracking
         chatMsgId = broadcastChatMsgId;
     } else {
-        chatMsgId = await saveChatMessage(targetDeviceId, isCrossDevice ? toId : fromId, text, chatSource, false, true, mediaType || null, mediaUrl || null, null, null, null, null, card);
+        chatMsgId = await saveChatMessage(targetDeviceId, isCrossDevice ? toId : fromId, text, chatSource, false, true, mediaType || null, mediaUrl || null, null, null, null, null, card, null, viaChannel);
     }
 
     // Cross-device: also save sender's copy
     if (isCrossDevice) {
-        await saveChatMessage(senderDeviceId, fromId, text, chatSource, false, true, mediaType || null, mediaUrl || null, null, null, null, null, card);
+        await saveChatMessage(senderDeviceId, fromId, text, chatSource, false, true, mediaType || null, mediaUrl || null, null, null, null, null, card, null, viaChannel);
     }
 
     markMessagesAsRead(targetDeviceId, toId);
@@ -6502,12 +6858,42 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         }
     }
 
-    let { deviceId, entityId, botSecret, name, character, state, message, parts, targetDeviceId, speakTo, broadcast, card, attachments, senderHint, aboutCardId } = req.body;
+    let { deviceId, entityId, botSecret, actAs, name, character, state, message, parts, targetDeviceId, speakTo, broadcast, card, attachments, senderHint, aboutCardId } = req.body;
 
     if (!deviceId) {
         return res.status(400).json({ success: false, message: "deviceId required" });
     }
-    if (!botSecret) {
+
+    // ── Dual-auth: channel key XOR botSecret ──
+    const channelKey = req.headers['x-channel-key'];
+    const usingChannelKey = !!(channelKey && actAs === 'channel');
+    const usingBotSecret = !!botSecret;
+
+    if (usingChannelKey && usingBotSecret) {
+        return res.status(400).json({ success: false, message: "Provide either X-Channel-Key + actAs:\"channel\" or botSecret, not both" });
+    }
+
+    // ── Channel key auth path ──
+    let channelAuthResult = null; // { registration, entityEntry, grantedPermissions }
+    if (usingChannelKey) {
+        if (entityId === undefined || entityId === null) {
+            return res.status(400).json({ success: false, message: "entityId required when using channel key auth" });
+        }
+        const requestedEntityId = parseInt(entityId);
+        if (isNaN(requestedEntityId) || requestedEntityId < 0) {
+            return res.status(400).json({ success: false, message: "entityId must be a non-negative integer" });
+        }
+        try {
+            const result = await channelModule.verifyChannelKey({ channelKey, deviceId, entityId: requestedEntityId });
+            channelAuthResult = {
+                registration: result.registration,
+                entityEntry: result.entityEntry,
+                grantedPermissions: result.entityEntry.permissions || []
+            };
+        } catch (err) {
+            return res.status(err.status || 403).json({ success: false, message: err.message, code: err.code });
+        }
+    } else if (!usingBotSecret) {
         return res.status(400).json({ success: false, message: "botSecret required" });
     }
 
@@ -6589,36 +6975,60 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         return res.status(404).json({ success: false, message: "Device not found" });
     }
 
-    // Resolve entityId: auto-detect from botSecret if not provided
+    // Resolve entityId and verify auth
     let eId;
     let entityIdCorrected = false;
-    if (entityId === undefined || entityId === null) {
-        // Auto-detect: find entity by botSecret
-        eId = Object.keys(device.entities).map(Number)
-            .find(i => device.entities[i]?.isBound && device.entities[i].botSecret && safeEqual(device.entities[i].botSecret, botSecret));
-        if (eId === undefined) {
-            return res.status(403).json({ success: false, message: "Invalid botSecret — no matching entity found" });
+    if (channelAuthResult) {
+        // Channel key path: entityId already validated and entity confirmed in ACL
+        eId = parseInt(entityId);
+        const channelEntity = device.entities[eId];
+        if (!channelEntity || !channelEntity.isBound) {
+            return res.status(403).json({ success: false, message: `Entity ${eId} is not bound on this device` });
+        }
+
+        // Permission enforcement: Phase 1 full-open (all 3 perms pass), but check state/a2a gating
+        const perms = new Set(channelAuthResult.grantedPermissions);
+        // speak is always required for transform
+        if (!perms.has('speak')) {
+            return res.status(403).json({ success: false, message: 'Missing permission: speak', missingPermissions: ['speak'] });
+        }
+        // state permission gate
+        if (state !== undefined && !perms.has('state')) {
+            return res.status(403).json({ success: false, message: 'Missing permission: state', missingPermissions: ['state'] });
+        }
+        // broadcast permission gate for @all / broadcast:true
+        if (broadcast && !perms.has('broadcast')) {
+            return res.status(403).json({ success: false, message: 'Missing permission: broadcast', missingPermissions: ['broadcast'] });
         }
     } else {
-        const requestedId = parseInt(entityId) || 0;
-        // Verify botSecret matches the requested entityId
-        const requestedEntity = device.entities[requestedId];
-        if (requestedEntity && requestedEntity.isBound && requestedEntity.botSecret && safeEqual(requestedEntity.botSecret, botSecret)) {
-            eId = requestedId;
-        } else {
-            // entityId doesn't match botSecret — find the correct one
-            const correctId = Object.keys(device.entities).map(Number)
+        // botSecret path: auto-detect or verify entityId
+        if (entityId === undefined || entityId === null) {
+            eId = Object.keys(device.entities).map(Number)
                 .find(i => device.entities[i]?.isBound && device.entities[i].botSecret && safeEqual(device.entities[i].botSecret, botSecret));
-            if (correctId === undefined) {
-                return res.status(403).json({ success: false, message: "Invalid botSecret" });
+            if (eId === undefined) {
+                return res.status(403).json({ success: false, message: "Invalid botSecret — no matching entity found" });
             }
-            eId = correctId;
-            entityIdCorrected = true;
-            console.warn(`[Transform] Device ${deviceId}: entityId=${requestedId} doesn't match botSecret, auto-corrected to ${correctId}`);
+        } else {
+            const requestedId = parseInt(entityId) || 0;
+            const requestedEntity = device.entities[requestedId];
+            if (requestedEntity && requestedEntity.isBound && requestedEntity.botSecret && safeEqual(requestedEntity.botSecret, botSecret)) {
+                eId = requestedId;
+            } else {
+                const correctId = Object.keys(device.entities).map(Number)
+                    .find(i => device.entities[i]?.isBound && device.entities[i].botSecret && safeEqual(device.entities[i].botSecret, botSecret));
+                if (correctId === undefined) {
+                    return res.status(403).json({ success: false, message: "Invalid botSecret" });
+                }
+                eId = correctId;
+                entityIdCorrected = true;
+                console.warn(`[Transform] Device ${deviceId}: entityId=${requestedId} doesn't match botSecret, auto-corrected to ${correctId}`);
+            }
         }
     }
 
     const entity = device.entities[eId];
+    // For channel key path, record channel name for chat history tagging
+    const viaChannel = channelAuthResult ? channelAuthResult.registration.channel_name : null;
 
     // Multipart: upload attached file to R2 and prepend to attachments so the
     // bot can deliver a file in a single transform call. Uses shared helper
@@ -6799,6 +7209,15 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         };
     }
 
+    // Channel key: re-check broadcast permission after @all mention resolution
+    // (broadcast may have been set by @all in message text above)
+    if (channelAuthResult && broadcast) {
+        const perms = new Set(channelAuthResult.grantedPermissions);
+        if (!perms.has('broadcast')) {
+            return res.status(403).json({ success: false, message: 'Missing permission: broadcast', missingPermissions: ['broadcast'] });
+        }
+    }
+
     // Save bot message to chat history so it appears in Chat page
     // Skip silent tokens — these are internal signals that should not appear in chat
     const isSilentMessage = finalMessage && /^\[SILENT\]$/i.test(finalMessage.trim());
@@ -6826,7 +7245,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         // Skip saving to owner's chat when entity is leased_out — rental mirror handles renter's copy
         const isLeasedOut = entity.rental_status === 'leased_out';
         if (!hasDelivery && !isLeasedOut) {
-            await saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments);
+            await saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments, viaChannel);
         }
         if (!isLeasedOut) markMessagesAsRead(deviceId, eId);
         if (pendingA2A) {
@@ -7003,10 +7422,14 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         }
     }
 
-    // Auto-move child cards to review when bot replies (any non-BUSY state with a message)
-    // Previously required state === 'IDLE', but some bots don't send state explicitly
-    // Skip for leased_out entities — rental bot responses belong to the renter's context
-    if (state !== 'BUSY' && finalMessage && entity.rental_status !== 'leased_out' && kanbanModule && kanbanModule.autoReviewOnTransform) {
+    // Auto-move child cards to review only when bot replies from a completion/non-busy state.
+    // START/progress heartbeats must use BUSY/PROCESSING/WORKING without closing cards.
+    // Previously this checked only state !== 'BUSY', so PROCESSING/WORKING heartbeats could
+    // silently false-close cron child cards before the audit actually ran (card_8e5d242...).
+    // Skip for leased_out entities — rental bot responses belong to the renter's context.
+    const kanbanBusyStates = new Set(['BUSY', 'PROCESSING', 'WORKING', 'IN_PROGRESS', 'IN-PROGRESS']);
+    const isKanbanBusyState = kanbanBusyStates.has(String(state || '').trim().toUpperCase());
+    if (!isKanbanBusyState && finalMessage && entity.rental_status !== 'leased_out' && kanbanModule && kanbanModule.autoReviewOnTransform) {
         kanbanModule.autoReviewOnTransform(deviceId, eId, finalMessage, aboutCardId).catch(err => {
             console.error(`[Transform] autoReviewOnTransform failed:`, err.message);
         });
@@ -7080,7 +7503,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
                             deliveryResults = { broadcast: true, sentCount: 0, targets: [], message: 'No other bound entities to broadcast to.' };
                         } else {
                             const sourceLabel = `entity:${eId}:${entity.character}`;
-                            const broadcastChatMsgId = await saveChatMessage(broadcastDeviceId, eId, deliveryText, `${sourceLabel}->${targetIds.join(',')}`, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments);
+                            const broadcastChatMsgId = await saveChatMessage(broadcastDeviceId, eId, deliveryText, `${sourceLabel}->${targetIds.join(',')}`, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments, viaChannel);
                             deliverySaved = true;
 
                             // Check recipient info preference
@@ -7096,7 +7519,8 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
                                     broadcastTargetIds: targetIds, broadcastChatMsgId,
                                     showRecipientInfo,
                                     isCrossDevice: broadcastDeviceId !== deviceId,
-                                    card: validatedCard
+                                    card: validatedCard,
+                                    viaChannel
                                 })
                             ));
 
@@ -7188,7 +7612,8 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
                     text: deliveryText, mediaType: null, mediaUrl: null,
                     expectsReply: true, isBroadcast: false,
                     isCrossDevice,
-                    card: validatedCard
+                    card: validatedCard,
+                    viaChannel
                 });
 
                 // Org chart: auto-forward incoming speakTo message to superior (same-device only, fire-and-forget)
@@ -7235,7 +7660,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
             const chatSource = entity.name || `Entity ${eId}`;
             const reasons = deliveryResults && deliveryResults.results ? deliveryResults.results.map(r => r.reason || 'ok').join(',') : 'none';
             serverLog('warn', 'chat_save', `[CHAT_FALLBACK_TRANSFORM] all targets failed for entity ${eId}; saving sender copy. reasons=[${reasons}] speakTo=${JSON.stringify(speakTo || null)} broadcast=${!!broadcast}`, { deviceId, entityId: eId, metadata: { path: 'fallback_transform', reasons, hadSpeakTo: !!speakTo, hadBroadcast: !!broadcast } });
-            await saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments);
+            await saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments, viaChannel);
             warnings.push('All delivery targets failed; message saved to sender chat only.');
         }
     }
@@ -7256,7 +7681,10 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
             encryptionStatus: entity.encryptionStatus || null
         },
         versionInfo: getVersionInfo(entity.appVersion),
-        push_status: entity.pushStatus || null
+        push_status: entity.pushStatus || null,
+        auth: channelAuthResult
+            ? { via: 'channelKey', channelName: channelAuthResult.registration.channel_name, grantedPermissions: channelAuthResult.grantedPermissions }
+            : { via: 'botSecret' }
     };
     if (deliveryResults) response.delivery = deliveryResults;
     if (warnings.length > 0) response.warnings = warnings;
@@ -16591,7 +17019,7 @@ app.post('/api/device/tts', async (req, res) => {
 });
 
 // Prune old notifications daily
-setInterval(() => notifModule.pruneOldNotifications(), 24 * 60 * 60 * 1000);
+setInterval(() => notifModule.pruneOldNotifications(), 24 * 60 * 60 * 1000).unref();
 
 // ============================================
 // WEB PUSH NOTIFICATIONS (VAPID)
@@ -16824,7 +17252,7 @@ async function getDeviceVarForEmbedding(deviceId, varName) {
 // Data-loss hardening (2026-04-23): one retry on INSERT failure, structured
 // log on every catch, dead-letter line to /tmp/chat_dead_letter.jsonl so we
 // can replay or grep for lost messages even when pg blips.
-async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null, scheduleId = null, scheduleLabel = null, backupUrl = null, mentions = null, card = null, attachments = null) {
+async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null, scheduleId = null, scheduleLabel = null, backupUrl = null, mentions = null, card = null, attachments = null, viaChannel = null) {
     // Guard: coerce null/undefined text to empty string to avoid NOT NULL constraint violation
     if (text == null) text = '';
     const textPreview = String(text).slice(0, 120);
@@ -16838,9 +17266,10 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
                  WHERE device_id = $1 AND entity_id = $2 AND text = $3
                  AND is_from_user = $4 AND is_from_bot = $5
                  AND source IS NOT DISTINCT FROM $6
+                 AND via_channel IS NOT DISTINCT FROM $7
                  AND created_at > NOW() - INTERVAL '10 seconds'
                  LIMIT 1`,
-                [deviceId, entityId, text, isFromUser || false, isFromBot || false, source || null]
+                [deviceId, entityId, text, isFromUser || false, isFromBot || false, source || null, viaChannel || null]
             );
             if (dedup.rows.length > 0) {
                 serverLog('info', 'chat_save', `[CHAT_DEDUP] returning existing id=${dedup.rows[0].id} entity_id=${entityId} source="${source}" preview="${textPreview}"`, { deviceId, entityId, metadata: { path: 'dedup', existingId: dedup.rows[0].id, source } });
@@ -16848,9 +17277,9 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
             }
         }
 
-        const insertParams = [deviceId, entityId, text, source, isFromUser || false, isFromBot || false, mediaType, mediaUrl, scheduleId, scheduleLabel, backupUrl, mentions ? JSON.stringify(mentions) : null, card ? JSON.stringify(card) : null, attachments ? JSON.stringify(attachments) : null];
-        const insertSQL = `INSERT INTO chat_messages (device_id, entity_id, text, source, is_from_user, is_from_bot, media_type, media_url, schedule_id, schedule_label, backup_url, mentions, card, attachments)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id`;
+        const insertParams = [deviceId, entityId, text, source, isFromUser || false, isFromBot || false, mediaType, mediaUrl, scheduleId, scheduleLabel, backupUrl, mentions ? JSON.stringify(mentions) : null, card ? JSON.stringify(card) : null, attachments ? JSON.stringify(attachments) : null, viaChannel || null];
+        const insertSQL = `INSERT INTO chat_messages (device_id, entity_id, text, source, is_from_user, is_from_bot, media_type, media_url, schedule_id, schedule_label, backup_url, mentions, card, attachments, via_channel)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id`;
 
         let result;
         try {

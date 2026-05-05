@@ -357,7 +357,7 @@ class ChatRepository private constructor(
      * This ensures bot responses appear in Chat regardless of wallpaper state.
      * Returns the number of new messages added.
      */
-    suspend fun syncFromBackend(messages: List<ChatHistoryMessage>): Int {
+    suspend fun syncFromBackend(messages: List<ChatHistoryMessage>, ownPublicCodes: Set<String> = emptySet()): Int {
         var addedCount = 0
 
         for (msg in messages) {
@@ -420,7 +420,7 @@ class ChatRepository private constructor(
             val entityMatch = entityPattern.find(msg.source)
 
             // Detect cross-device pattern: "xdevice:ABC123:LOBSTER->XYZ789"
-            val xdevicePattern = Regex("^xdevice:([A-Za-z0-9]+):([^:]+)->([A-Za-z0-9]+)$")
+            val xdevicePattern = Regex("^xdevice:([A-Za-z0-9-]+):([^:]+)->([A-Za-z0-9-]+)$")
             val xdeviceMatch = xdevicePattern.find(msg.source)
 
             // [A2A_SYNC_MISS] — warn if source starts with "entity:" but didn't match the pattern
@@ -524,7 +524,9 @@ class ChatRepository private constructor(
                 val senderCode = xdeviceMatch.groupValues[1]
                 val senderCharacter = xdeviceMatch.groupValues[2]
                 val targetCode = xdeviceMatch.groupValues[3]
-                val msgType = if (msg.is_from_user) MessageType.CROSS_DEVICE_SENT else MessageType.CROSS_DEVICE_RECEIVED
+                // Per agent-message-rendering-spec S4.0.1: determine direction by
+                // checking senderCode against this device's own publicCodes, not is_from_user
+                val msgType = if (ownPublicCodes.contains(senderCode)) MessageType.CROSS_DEVICE_SENT else MessageType.CROSS_DEVICE_RECEIVED
 
                 ChatMessage(
                     text = msg.text,
@@ -601,7 +603,8 @@ class ChatRepository private constructor(
     suspend fun performFullSyncIfNeeded(
         api: ClawApiService,
         deviceId: String,
-        deviceSecret: String
+        deviceSecret: String,
+        ownPublicCodes: Set<String> = emptySet()
     ): Boolean {
         val localCount = chatDao.getMessageCount()
         if (localCount >= FULL_SYNC_THRESHOLD) return false
@@ -615,7 +618,7 @@ class ChatRepository private constructor(
                 limit = 500
             )
             if (response.success && response.messages.isNotEmpty()) {
-                val added = syncFromBackend(response.messages)
+                val added = syncFromBackend(response.messages, ownPublicCodes)
                 Timber.i("Full cloud sync complete: restored $added messages from ${response.messages.size} server records")
             }
         } catch (e: Exception) {

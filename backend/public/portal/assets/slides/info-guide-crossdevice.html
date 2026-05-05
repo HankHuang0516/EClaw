@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EClaw — 跨裝置訊息閘門</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root{--ink:#0f172a;--muted:#64748b;--blue:#2563eb;--cyan:#06b6d4;--green:#10b981;--gold:#f59e0b;--rose:#f43f5e;--violet:#7c3aed;--card:rgba(255,255,255,.92)}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:'Noto Sans TC',Inter,sans-serif;color:var(--ink);background:radial-gradient(circle at 9% 18%,rgba(37,99,235,.22),transparent 31%),radial-gradient(circle at 75% 10%,rgba(16,185,129,.18),transparent 28%),radial-gradient(circle at 88% 82%,rgba(6,182,212,.18),transparent 31%),linear-gradient(135deg,#f8fbff 0%,#eef7ff 46%,#ecfdf5 100%);overflow-x:hidden}
+    body:before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(37,99,235,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(16,185,129,.07) 1px,transparent 1px);background-size:34px 34px;mask-image:radial-gradient(circle at center,#000 0,#000 68%,transparent 100%);pointer-events:none}.slide{max-width:1180px;min-height:100vh;margin:0 auto;padding:18px 42px;display:grid;grid-template-columns:.94fr 1.1fr;gap:28px;align-items:center}.eyebrow{display:inline-flex;align-items:center;gap:10px;padding:9px 14px;border-radius:999px;background:rgba(255,255,255,.84);border:1px solid rgba(37,99,235,.24);box-shadow:0 14px 36px rgba(37,99,235,.13);font:900 13px Inter,sans-serif;letter-spacing:.08em;color:#1d4ed8;text-transform:uppercase}h1{font-size:clamp(38px,4.45vw,60px);line-height:1.02;letter-spacing:-.055em;margin:18px 0 14px;font-weight:900}.accent{background:linear-gradient(90deg,var(--blue),var(--green),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}.lead{font-size:19px;line-height:1.52;color:#334155;margin:0 0 18px}.lead strong{color:#047857}.bullets{display:grid;gap:10px}.bullets div{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid rgba(15,32,51,.08);border-radius:18px;padding:10px 13px;box-shadow:0 16px 44px rgba(16,32,51,.08)}.bullets b{font-size:24px;line-height:1}.bullets span{font-size:15px;line-height:1.55;color:#475569;min-width:0}.gate{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,255,255,.84));border:1px solid rgba(37,99,235,.20);border-radius:34px;padding:16px;box-shadow:0 28px 90px rgba(16,32,51,.16);overflow:hidden}.gate:before{content:'GATE';position:absolute;right:-16px;top:-12px;font:900 82px Inter,sans-serif;color:rgba(16,185,129,.075);letter-spacing:-.08em}.top{position:relative;z-index:1;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start}.top h2{margin:0;font-size:28px;line-height:1.08;letter-spacing:-.036em}.top p{margin:8px 0 0;color:#475569;line-height:1.48;font-size:15px}.badge{min-width:132px;text-align:center;border-radius:24px;padding:14px;background:linear-gradient(135deg,#eff6ff,#ecfdf5);border:1px solid rgba(16,185,129,.22);box-shadow:0 18px 42px rgba(16,185,129,.13)}.badge strong{display:block;font:900 31px Inter,sans-serif;color:#059669}.badge span{display:block;margin-top:3px;font:900 11px Inter,sans-serif;color:#64748b;letter-spacing:.08em}.route{position:relative;z-index:1;margin-top:14px;display:grid;grid-template-columns:1fr 36px 1.1fr 36px 1fr;gap:8px;align-items:center}.node{border-radius:22px;padding:14px 12px;background:#fff;border:1px solid rgba(15,32,51,.08);box-shadow:0 12px 28px rgba(15,32,51,.07);text-align:center;min-height:118px}.node b{display:grid;place-items:center;margin:0 auto 7px;width:40px;height:40px;border-radius:16px;background:linear-gradient(135deg,var(--blue),var(--green));color:#fff;font-size:22px}.node strong{display:block;font-size:14px;color:#0f172a}.node span{display:block;margin-top:6px;font-size:12px;color:#64748b;line-height:1.36}.arrow{display:grid;place-items:center;color:#059669;font:900 24px Inter,sans-serif}.checks{margin-top:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.checks div{border-radius:18px;padding:9px;background:linear-gradient(180deg,#f8fafc,#fff);border:1px solid #e2e8f0}.checks b{display:block;color:#047857;margin-bottom:5px}.checks span{font-size:12px;line-height:1.36;color:#64748b}.six{margin-top:12px;border-radius:22px;padding:12px;background:linear-gradient(135deg,#0f172a,#047857);color:#fff;box-shadow:0 22px 48px rgba(4,120,87,.22)}.six small{display:block;text-transform:uppercase;letter-spacing:.12em;font:900 12px Inter,sans-serif;color:#bbf7d0}.six strong{display:block;margin-top:6px;font:900 clamp(23px,2.55vw,31px) Inter,sans-serif;letter-spacing:-.045em}.six span{display:block;margin-top:5px;color:#dcfce7;line-height:1.38}.rulegrid{margin-top:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.rule{border-radius:16px;padding:9px;background:rgba(255,255,255,.11);border:1px solid rgba(255,255,255,.18);font-size:12px;line-height:1.25}.done{margin-top:10px;border-radius:18px;padding:9px 12px;background:linear-gradient(90deg,rgba(37,99,235,.12),rgba(16,185,129,.12));font-weight:900;color:#047857;line-height:1.45}
+    @media(max-width:760px){body{overflow-x:hidden}.slide{grid-template-columns:1fr;padding:34px 36px 34px 20px;gap:24px;width:min(390px,100%);max-width:390px;overflow:hidden;margin:0}h1{font-size:34px;letter-spacing:-.045em;overflow-wrap:anywhere}.accent{display:block}.lead{font-size:17px;overflow-wrap:anywhere;word-break:break-all}.bullets div{max-width:100%;min-width:0}.bullets b{flex:0 0 auto}.bullets span,.top p,.node span,.six span,.checks span{overflow-wrap:anywhere;word-break:break-all}.gate{padding:20px;border-radius:26px;max-width:100%;overflow:hidden}.top{grid-template-columns:1fr}.badge{width:100%;min-width:0}.top h2{font-size:27px;overflow-wrap:anywhere}.route{grid-template-columns:1fr;gap:10px}.arrow{transform:rotate(90deg)}.checks,.rulegrid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <main class="slide">
+    <section>
+      <div class="eyebrow">🛡️ Guide / Cross-Device Messaging</div>
+      <h1>跨裝置訊息：<span class="accent">外部訊息進 Bot 前的第一道門</span></h1>
+      <p class="lead">當客戶透過 Public Code 對你的代理說話，Cross-Device Messaging 會先判斷 <strong>誰能進來、什麼內容能通過、多久能發一次</strong>。</p>
+      <div class="bullets">
+        <div><b>🚦</b><span>黑白名單與名片夾封鎖，讓來源先被授權或拒絕。</span></div>
+        <div><b>🧹</b><span>禁用詞、媒體類型與預注入指令，控制訊息內容與上下文。</span></div>
+        <div><b>⏱️</b><span>每位發送者獨立冷卻，避免外部窗口被洗版或濫用。</span></div>
+      </div>
+    </section>
+    <section class="gate" aria-label="cross-device gate slide">
+      <div class="top">
+        <div>
+          <h2>把公開連結變成可控入口</h2>
+          <p>外部訊息不會直接打進 Bot；它先經過 gate，再把合規內容交給代理處理。</p>
+        </div>
+        <div class="badge"><strong>6</strong><span>GATE CHECKS</span></div>
+      </div>
+      <div class="route">
+        <div class="node"><b>👤</b><strong>External User</strong><span>從代理窗口、好友或公開連結送訊息。</span></div>
+        <div class="arrow">→</div>
+        <div class="node"><b>🛡️</b><strong>Cross-Device Gate</strong><span>套用封鎖、名單、內容、格式與速率規則。</span></div>
+        <div class="arrow">→</div>
+        <div class="node"><b>🤖</b><strong>Bot Runtime</strong><span>只接收通過檢查、可安全處理的訊息。</span></div>
+      </div>
+      <div class="six">
+        <small>Evaluation order</small>
+        <strong>Card block → Blacklist → Whitelist → Words → Media → Rate limit</strong>
+        <span>任何一關不通過就拒絕，可回自訂拒絕訊息；通過後才交給 Bot 執行。</span>
+        <div class="rulegrid">
+          <div class="rule">Pre-inject：補上情境與工作指令</div>
+          <div class="rule">Reject message：清楚回覆拒絕原因</div>
+          <div class="rule">Allowed media：限定 text/photo/voice/file</div>
+        </div>
+      </div>
+      <div class="checks">
+        <div><b>防騷擾</b><span>封鎖特定 public code 或敏感關鍵字。</span></div>
+        <div><b>VIP 服務</b><span>白名單模式只讓指定來源進入。</span></div>
+        <div><b>情境預設</b><span>每則外部訊息自動帶入代理規則。</span></div>
+      </div>
+      <div class="done">Cross-Device Messaging 讓 Bot 的公開入口既能被看見，也能被治理。</div>
+    </section>
+  </main>
+</body>
+</html>

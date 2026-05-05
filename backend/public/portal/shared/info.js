@@ -5,13 +5,17 @@ let currentUser = null;
 window.addEventListener('DOMContentLoaded', async () => {
     // Soft auth check: show authenticated nav if logged in, public nav otherwise
     try {
-        const data = await apiCall('GET', '/api/auth/me');
-        currentUser = data.user;
-        window.currentUser = currentUser;
-        renderNav('info');
-        if (window._addAdminLink) window._addAdminLink();
-        const emailEl = document.getElementById('navEmail');
-        if (emailEl) emailEl.textContent = currentUser.email;
+        const data = await apiCall('GET', '/api/auth/session', null, { skip401Redirect: true });
+        if (data?.authenticated && data.user) {
+            currentUser = data.user;
+            window.currentUser = currentUser;
+            renderNav('info');
+            if (window._addAdminLink) window._addAdminLink();
+            const emailEl = document.getElementById('navEmail');
+            if (emailEl) emailEl.textContent = currentUser.email;
+        } else {
+            renderPublicNav('info');
+        }
     } catch (e) {
         renderPublicNav('info');
     }
@@ -37,6 +41,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     const missionSubNav = document.getElementById('missionSubNav');
     const usecaseToggle = document.getElementById('usecaseToggle');
     const usecaseSubNav = document.getElementById('usecaseSubNav');
+    const guideMobilePicker = buildGuideMobilePicker();
 
     // Expandable toggle groups: [toggle btn, sub nav, first sub item data-guide]
     const toggleGroups = [
@@ -58,9 +63,45 @@ window.addEventListener('DOMContentLoaded', async () => {
             panel.classList.add('active');
             renderMermaidIn(panel);
         }
+        if (guideMobilePicker && btn.closest('#panel-guide')) {
+            guideMobilePicker.value = tabId;
+        }
         const section = btn.closest('#panel-channel-plugins') ? 'channel-plugins' : 'guide';
         history.replaceState(null, '', '#' + section + '/' + tabId);
         updateSeoMeta(tabId);
+    }
+
+    function buildGuideMobilePicker() {
+        const sidebar = document.getElementById('guideSidebarUG');
+        const layout = sidebar?.closest('.guide-layout');
+        if (!sidebar || !layout || layout.querySelector('.guide-mobile-picker')) return null;
+
+        const wrapper = document.createElement('label');
+        wrapper.className = 'guide-mobile-picker';
+        wrapper.setAttribute('aria-label', 'Guide section picker');
+
+        const label = document.createElement('span');
+        label.className = 'guide-mobile-picker-label';
+        label.textContent = 'Guide section';
+
+        const select = document.createElement('select');
+        select.className = 'guide-mobile-select';
+        const buttons = [...sidebar.querySelectorAll('[data-guide]')];
+        buttons.forEach(btn => {
+            const option = document.createElement('option');
+            option.value = btn.getAttribute('data-guide');
+            option.textContent = btn.textContent.replace('▶', '').trim();
+            select.appendChild(option);
+        });
+
+        select.addEventListener('change', () => {
+            const target = buttons.find(btn => btn.getAttribute('data-guide') === select.value);
+            if (target) target.click();
+        });
+
+        wrapper.append(label, select);
+        layout.insertBefore(wrapper, sidebar.nextSibling);
+        return select;
     }
 
     // Expose guide navigation for deep link handling (used by global handleHash)
@@ -296,9 +337,9 @@ async function copyClaudeOpenclawExample() {
     let deviceSecret = i18n.t('guide_usecase_copy_device_secret_placeholder');
 
     try {
-        const data = await apiCall('GET', '/api/auth/me');
-        if (data?.user?.deviceId) deviceId = data.user.deviceId;
-        if (data?.user?.deviceSecret) deviceSecret = data.user.deviceSecret;
+        const data = await apiCall('GET', '/api/auth/session', null, { skip401Redirect: true });
+        if (data?.authenticated && data?.user?.deviceId) deviceId = data.user.deviceId;
+        if (data?.authenticated && data?.user?.deviceSecret) deviceSecret = data.user.deviceSecret;
     } catch (e) {
         // Not logged in, use placeholder
     }
@@ -356,7 +397,10 @@ async function copyClaudeOpenclawExample() {
                 const tag = ch.type === 'Features' ? 'feat' : ch.type === 'Bug Fixes' ? 'fix' : 'chore';
                 const tagClass = tag === 'feat' ? 'rn-tag-feat' : tag === 'fix' ? 'rn-tag-fix' : 'rn-tag-chore';
                 const scope = ch.scope ? '<strong>' + ch.scope + ':</strong> ' : '';
-                return '<li><span class="rn-tag ' + tagClass + '">' + tag + '</span> ' + scope + escHtml(ch.description) + '</li>';
+                const descriptionHtml = typeof window.renderSafeMarkdownInline === 'function'
+                    ? window.renderSafeMarkdownInline(ch.description)
+                    : escHtml(ch.description);
+                return '<li><span class="rn-tag ' + tagClass + '">' + tag + '</span> ' + scope + descriptionHtml + '</li>';
             }).join('');
             const openAttr = isLatest ? 'open' : '';
             return '<details class="rn-entry' + (isLatest ? ' latest' : '') + '" ' + openAttr + '>' +

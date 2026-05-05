@@ -15,7 +15,7 @@
 // Simulate the client-side functions from chat.html
 function parseEntitySource(source) {
     if (!source) return null;
-    const xmatch = source.match(/^xdevice:([a-z0-9]+):([^:]+)->(.+)$/);
+    const xmatch = source.match(/^xdevice:([a-z0-9-]+):([^:]+)->(.+)$/i);
     if (xmatch) {
         return {
             fromPublicCode: xmatch[1],
@@ -120,6 +120,14 @@ describe('parseEntitySource', () => {
         expect(parsed.crossDevice).toBeUndefined();
         expect(parsed.fromEntityId).toBe(0);
         expect(parsed.targets).toEqual([1, 2]);
+    });
+
+    it('parses cross-device source with hyphens in publicCode (Issue #2130)', () => {
+        const parsed = parseEntitySource('xdevice:abc-123:LOBSTER->xyz-789');
+        expect(parsed).not.toBeNull();
+        expect(parsed.crossDevice).toBe(true);
+        expect(parsed.fromPublicCode).toBe('abc-123');
+        expect(parsed.targets).toEqual(['xyz-789']);
     });
 
     it('returns null for non-entity sources', () => {

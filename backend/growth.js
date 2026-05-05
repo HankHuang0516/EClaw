@@ -121,14 +121,18 @@ async function fetchPlazaNewListedForDate(dateStr) {
 }
 
 async function fetchInviteConversion() {
-    // Phase-5 viral-loop conversion: distinct codes with at least one redemption
-    // row in invite_redemptions, divided by total codes issued. Using the
-    // redemptions table (not invite_codes.used_at / use_count) because two
-    // competing invite_codes schemas exist in the repo — redemptions is the
-    // canonical Phase-5 source and is unambiguous.
+    // Viral-loop conversion: count from invite_codes directly because the live
+    // POST /api/invite/redeem endpoint (index.js) writes to
+    // invite_codes.used_by_device_id + used_at and never touches the Phase-5
+    // invite_redemptions table (whose router in backend/invite.js is not
+    // mounted as of 2026-04-20). Counting from invite_redemptions previously
+    // pinned this metric at 0 indefinitely. When the Phase-5 router lands
+    // and dual-writes to both tables, this query stays correct as long as
+    // used_by_device_id is also populated.
     const r = await pool.query(
-        `SELECT (SELECT COUNT(*)::int FROM invite_codes) AS total_codes,
-                (SELECT COUNT(DISTINCT code)::int FROM invite_redemptions) AS redeemed_codes`
+        `SELECT COUNT(*)::int AS total_codes,
+                COUNT(*) FILTER (WHERE used_by_device_id IS NOT NULL)::int AS redeemed_codes
+         FROM invite_codes`
     );
     const { total_codes, redeemed_codes } = r.rows[0];
     if (total_codes === 0) return { total_codes: 0, redeemed_codes: 0, pct: null };
@@ -196,7 +200,7 @@ module.exports = function(devices) {
                     'source_channel: schema lacks signup_source column',
                     'visitor_to_signup_conversion: page_views has no FK to user_accounts',
                     'plaza_new_listed_today: counts created_at not status_changed_at (bot_listings has no listed_at column)',
-                    'invite_conversion is cumulative-to-now (not date-scoped); needs invite_redemptions.redeemed_at filter for historical k-value by day'
+                    'invite_conversion is cumulative-to-now (not date-scoped); needs invite_codes.used_at filter for historical k-value by day'
                 ]
             });
         } catch (err) {

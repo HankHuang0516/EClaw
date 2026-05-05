@@ -1,3 +1,159 @@
+## [1.1167.14](https://github.com/HankHuang0516/EClaw/compare/v1.1167.13...v1.1167.14) (2026-05-05)
+
+
+### Bug Fixes
+
+* **i18n:** clean ko locale leak baseline ([#2426](https://github.com/HankHuang0516/EClaw/issues/2426)) ([cb85bec](https://github.com/HankHuang0516/EClaw/commit/cb85bec14bfc34e67894d5b0694edde930d467ce))
+
+## [1.1167.13](https://github.com/HankHuang0516/EClaw/compare/v1.1167.12...v1.1167.13) (2026-05-04)
+
+
+### Bug Fixes
+
+* **i18n:** clean ja locale leak baseline keys ([25a3b0e](https://github.com/HankHuang0516/EClaw/commit/25a3b0e27cbf8f8de3b5108880140d32d5ba019a))
+
+## [1.1167.12](https://github.com/HankHuang0516/EClaw/compare/v1.1167.11...v1.1167.12) (2026-05-04)
+
+
+### Bug Fixes
+
+* **portal:** resolve emoji-icon mobile positioning conflicts ([#2438](https://github.com/HankHuang0516/EClaw/issues/2438)) ([f32e900](https://github.com/HankHuang0516/EClaw/commit/f32e9006d83a743e44ad077d75d95d5d50ce5b0c)), closes [portal/info.html#quickstart](https://github.com/portal/info.html/issues/quickstart)
+
+## [1.1167.11](https://github.com/HankHuang0516/EClaw/compare/v1.1167.10...v1.1167.11) (2026-05-04)
+
+
+### Bug Fixes
+
+* **info:** mark performance slide metrics as illustrative ([167107d](https://github.com/HankHuang0516/EClaw/commit/167107da9fadf3b3318d6b277ec938e6d7006052)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
+## [1.1167.10](https://github.com/HankHuang0516/EClaw/compare/v1.1167.9...v1.1167.10) (2026-05-04)
+
+
+### Bug Fixes
+
+* replace embedded Quick Start slides with image cards to resolve visual conflicts ([#2434](https://github.com/HankHuang0516/EClaw/issues/2434)) ([57585d5](https://github.com/HankHuang0516/EClaw/commit/57585d5082bc2316f4cfcbaf0ff513a229385302)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
+## [1.1167.9](https://github.com/HankHuang0516/EClaw/compare/v1.1167.8...v1.1167.9) (2026-05-04)
+
+
+### Bug Fixes
+
+* **test:** guard module-scope timers to prevent Jest flakiness ([#2433](https://github.com/HankHuang0516/EClaw/issues/2433)) ([7578aca](https://github.com/HankHuang0516/EClaw/commit/7578acaa6015cba9f68ed246a9affccf0794d160))
+
+## [1.1167.8](https://github.com/HankHuang0516/EClaw/compare/v1.1167.7...v1.1167.8) (2026-05-04)
+
+
+### Bug Fixes
+
+* **portal:** align cross-device code display with spec S4.1.3 ([#2430](https://github.com/HankHuang0516/EClaw/issues/2430)) ([60b5265](https://github.com/HankHuang0516/EClaw/commit/60b526569e89c2e26f8aed5a083937b17d431fc6))
+
+## [1.1167.7](https://github.com/HankHuang0516/EClaw/compare/v1.1167.6...v1.1167.7) (2026-05-04)
+
+
+### Bug Fixes
+
+* **i18n:** clean de locale leak baseline ([#2427](https://github.com/HankHuang0516/EClaw/issues/2427)) ([5a56578](https://github.com/HankHuang0516/EClaw/commit/5a565788f08e70b3dd01d3f2e6e11816b19d5f43))
+* **android:** cross-device message direction uses publicCode map ([#2130](https://github.com/HankHuang0516/EClaw/issues/2130)) ([#2429](https://github.com/HankHuang0516/EClaw/issues/2429)) ([0b434a7](https://github.com/HankHuang0516/EClaw/commit/0b434a774345446bd0e9f605aa6030a6326117af))
+* **i18n:** es baseline cleanup (31 keys) ([#2428](https://github.com/HankHuang0516/EClaw/issues/2428)) ([3edebcb](https://github.com/HankHuang0516/EClaw/commit/3edebcbea560f89e8e190bb0185e600f2e52a198))
+
+## [1.1167.6](https://github.com/HankHuang0516/EClaw/compare/v1.1167.5...v1.1167.6) (2026-05-04)
+
+
+### Bug Fixes
+
+* **portal:** collaborative Quick Start + mobile guide optimization ([4f8f58d](https://github.com/HankHuang0516/EClaw/commit/4f8f58de0b8fbda0df706319e576801a18eb4538)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
+## [1.1167.5](https://github.com/HankHuang0516/EClaw/compare/v1.1167.4...v1.1167.5) (2026-05-04)
+
+
+### Bug Fixes
+
+* auth console noise on public pages (PR [#2420](https://github.com/HankHuang0516/EClaw/issues/2420)) ([6f0acac](https://github.com/HankHuang0516/EClaw/commit/6f0acac9d46dfe9bbe47e0ad3f436d68691df24d))
+
+## [1.1167.4](https://github.com/HankHuang0516/EClaw/compare/v1.1167.3...v1.1167.4) (2026-05-04)
+
+
+### Bug Fixes
+
+* **i18n:** zh-TW / zh-CN fall back to canonical zh dict before en ([#2407](https://github.com/HankHuang0516/EClaw/issues/2407)) ([7173ec0](https://github.com/HankHuang0516/EClaw/commit/7173ec059edfec9edd650a7c1a09db362e72bee5)), closes [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+
+## [1.1167.3](https://github.com/HankHuang0516/EClaw/compare/v1.1167.2...v1.1167.3) (2026-05-04)
+
+
+### Bug Fixes
+
+* **kanban:** require aboutCardId for auto-close to stop IDLE-content false-close ([#2405](https://github.com/HankHuang0516/EClaw/issues/2405)) ([5bc502f](https://github.com/HankHuang0516/EClaw/commit/5bc502f5cff06e1d93fe90dd2774ea33ab0e35fa)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6) [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#2403](https://github.com/HankHuang0516/EClaw/issues/2403)
+
+## [1.1167.2](https://github.com/HankHuang0516/EClaw/compare/v1.1167.1...v1.1167.2) (2026-05-04)
+
+
+### Bug Fixes
+
+* **growth:** count invite redemptions from invite_codes, not unmounted Phase-5 table ([#2404](https://github.com/HankHuang0516/EClaw/issues/2404)) ([0d42828](https://github.com/HankHuang0516/EClaw/commit/0d4282801335471b3dcaf4d15a307a48c52b5506))
+
+## [1.1167.1](https://github.com/HankHuang0516/EClaw/compare/v1.1167.0...v1.1167.1) (2026-05-04)
+
+
+### Bug Fixes
+
+* **kanban:** guard auto-review during progress heartbeats ([#2403](https://github.com/HankHuang0516/EClaw/issues/2403)) ([371b619](https://github.com/HankHuang0516/EClaw/commit/371b619172aafb19c654094d41aa65d9ef4223ab))
+
+# [1.1167.0](https://github.com/HankHuang0516/EClaw/compare/v1.1166.0...v1.1167.0) (2026-05-04)
+
+
+### Features
+
+* **info:** embed Claude Design slide for guide_voice ([ccfc69b](https://github.com/HankHuang0516/EClaw/commit/ccfc69b0ba6a81cc6e0a8d93ad523dafbce507c5))
+
+# [1.1166.0](https://github.com/HankHuang0516/EClaw/compare/v1.1165.0...v1.1166.0) (2026-05-04)
+
+
+### Features
+
+* **transform:** channel key auth for /api/transform (Phase 1) ([#2401](https://github.com/HankHuang0516/EClaw/issues/2401)) ([627ab30](https://github.com/HankHuang0516/EClaw/commit/627ab3099d6e0d8b16cb2c63ca3095bab44b0535))
+
+# [1.1165.0](https://github.com/HankHuang0516/EClaw/compare/v1.1164.1...v1.1165.0) (2026-05-04)
+
+
+### Features
+
+* **info:** embed Claude Design slide for guide_identity ([33f6e52](https://github.com/HankHuang0516/EClaw/commit/33f6e5250f1b16fa689f57829cc865223de16ffb))
+
+## [1.1164.1](https://github.com/HankHuang0516/EClaw/compare/v1.1164.0...v1.1164.1) (2026-05-04)
+
+
+### Bug Fixes
+
+* **mockup-chat:** prevent product-card / note-preview collapse to 2px ([#2399](https://github.com/HankHuang0516/EClaw/issues/2399)) ([9b6ed18](https://github.com/HankHuang0516/EClaw/commit/9b6ed18c7917984506dddf58b32fc985ef9caa54))
+
+# [1.1164.0](https://github.com/HankHuang0516/EClaw/compare/v1.1163.0...v1.1164.0) (2026-05-04)
+
+
+### Features
+
+* **info:** embed Claude Design slide for guide_agentcard ([7bbe4b9](https://github.com/HankHuang0516/EClaw/commit/7bbe4b91c99e89aaaaa7a105f142d5307bbf962e))
+
+# [1.1163.0](https://github.com/HankHuang0516/EClaw/compare/v1.1162.0...v1.1163.0) (2026-05-04)
+
+
+### Features
+
+* **info:** embed Claude Design slide for guide_msg ([ad4a33d](https://github.com/HankHuang0516/EClaw/commit/ad4a33dcf8792b20df455b311b2c5ad8cf6469b7))
+
+# [1.1162.0](https://github.com/HankHuang0516/EClaw/compare/v1.1161.0...v1.1162.0) (2026-05-04)
+
+
+### Features
+
+* **info:** embed Claude Design slide for guide_mention ([12596fd](https://github.com/HankHuang0516/EClaw/commit/12596fdcd9ce141023b4cbf588e4e6197de4b57b))
+
+# [1.1161.0](https://github.com/HankHuang0516/EClaw/compare/v1.1160.0...v1.1161.0) (2026-05-04)
+
+
+### Features
+
+* **info:** embed Claude Design slide for guide_crossdevice ([f52af59](https://github.com/HankHuang0516/EClaw/commit/f52af59eee87b39f24dcb082d18354872b419acd))
+
 # [1.1160.0](https://github.com/HankHuang0516/EClaw/compare/v1.1159.0...v1.1160.0) (2026-05-04)
 
 

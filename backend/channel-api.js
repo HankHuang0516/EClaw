@@ -1,5 +1,6 @@
 const safeEqual = require('./safe-equal');
 const mentionParser = require('./mention-parser');
+const bcrypt = require('bcrypt');
 
 /**
  * Channel API Module — OpenClaw Channel Plugin Integration
@@ -615,7 +616,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
     // ============================================
     router.post('/message', async (req, res) => {
         try {
-            const { channel_api_key, deviceId, entityId, botSecret, message, state, mediaType, mediaUrl, targetDeviceId, card, senderHint } = req.body;
+            const { channel_api_key, deviceId, entityId, botSecret, message, state, mediaType, mediaUrl, targetDeviceId, card, senderHint, aboutCardId } = req.body;
             let { speakTo, broadcast } = req.body;
 
             if (process.env.DEBUG === 'true') serverLog('info', 'client_push', `[PUSH] /channel/message called, state=${state}, hasMsg=${!!message}`, { deviceId, entityId: entityId !== undefined ? parseInt(entityId) : 'auto' });
@@ -891,9 +892,12 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
 
             serverLog('info', 'transform', `${state || entity.state}: ${(message || '').slice(0, 100)}`, { deviceId, entityId: eId, metadata: { state: state || entity.state, via: 'channel' } });
 
-            // Auto-move kanban child cards to done (same as /api/transform)
-            if (state !== 'BUSY' && message && kanbanAutoReview) {
-                kanbanAutoReview(deviceId, eId, message).catch(err => {
+            // Auto-move kanban child cards to done (same as /api/transform).
+            // START/progress heartbeats must use BUSY/PROCESSING/WORKING without closing cards.
+            const kanbanBusyStates = new Set(['BUSY', 'PROCESSING', 'WORKING', 'IN_PROGRESS', 'IN-PROGRESS']);
+            const isKanbanBusyState = kanbanBusyStates.has(String(state || '').trim().toUpperCase());
+            if (!isKanbanBusyState && message && kanbanAutoReview) {
+                kanbanAutoReview(deviceId, eId, message, aboutCardId).catch(err => {
                     console.error(`[Channel] autoReviewOnTransform failed:`, err.message);
                 });
             }
@@ -1306,10 +1310,238 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
         }
     }
 
+    // ============================================
+    // Channel Registration Management (Phase 1)
+    // Auth: deviceId + deviceSecret (owner-scope)
+    // ============================================
+
+    const VALID_PERMISSIONS = new Set(['speak', 'state', 'a2a', 'broadcast']);
+    const BCRYPT_ROUNDS = 10;
+
+    function validateAllowedEntities(raw) {
+        if (!Array.isArray(raw)) return 'allowedEntities must be an array';
+        for (const entry of raw) {
+            if (typeof entry !== 'object' || entry === null || Array.isArray(entry)) {
+                return 'each allowedEntities entry must be an object';
+            }
+            if (typeof entry.entity_id !== 'number' || !Number.isInteger(entry.entity_id) || entry.entity_id < 0) {
+                return 'allowedEntities[].entity_id must be a non-negative integer';
+            }
+            if (!Array.isArray(entry.permissions)) return 'allowedEntities[].permissions must be an array';
+            for (const p of entry.permissions) {
+                if (!VALID_PERMISSIONS.has(p)) {
+                    return `unknown permission: ${p}. Allowed: ${[...VALID_PERMISSIONS].join(', ')}`;
+                }
+            }
+        }
+        return null;
+    }
+
+    // POST /api/channel/registrations — create new channel registration
+    router.post('/registrations', async (req, res) => {
+        const auth = deviceAuth(req, res);
+        if (!auth) return;
+        const { deviceId } = auth;
+
+        const { channelName, allowedEntities } = req.body;
+        if (!channelName || typeof channelName !== 'string' || channelName.trim().length === 0) {
+            return res.status(400).json({ success: false, error: 'channelName required' });
+        }
+        const name = channelName.trim().slice(0, 128);
+        const entities = allowedEntities || [];
+        const validationErr = validateAllowedEntities(entities);
+        if (validationErr) return res.status(400).json({ success: false, error: validationErr });
+
+        try {
+            const pool = dbRef._getPool();
+            // Check for existing active registration
+            const existing = await pool.query(
+                `SELECT id FROM channel_registrations WHERE channel_name=$1 AND device_id=$2 AND revoked_at IS NULL`,
+                [name, deviceId]
+            );
+            if (existing.rowCount > 0) {
+                return res.status(409).json({ success: false, error: 'channel registration already exists; use rotate-key or PATCH to modify' });
+            }
+
+            const rawKey = crypto.randomBytes(32).toString('hex');
+            const keyHash = await bcrypt.hash(rawKey, BCRYPT_ROUNDS);
+
+            await pool.query(
+                `INSERT INTO channel_registrations (channel_name, device_id, key_hash, allowed_entities)
+                 VALUES ($1, $2, $3, $4)`,
+                [name, deviceId, keyHash, JSON.stringify(entities)]
+            );
+
+            serverLog('info', 'channel', `Channel registration created: ${name}`, { deviceId, metadata: { channelName: name } });
+            return res.status(201).json({ success: true, channelName: name, channelKey: rawKey, allowedEntities: entities });
+        } catch (err) {
+            serverLog('error', 'channel', `Create registration failed: ${err.message}`, { deviceId });
+            return res.status(500).json({ success: false, error: 'internal error' });
+        }
+    });
+
+    // GET /api/channel/registrations — list active registrations for device
+    router.get('/registrations', async (req, res) => {
+        const auth = deviceAuth(req, res);
+        if (!auth) return;
+        const { deviceId } = auth;
+
+        try {
+            const pool = dbRef._getPool();
+            const rows = await pool.query(
+                `SELECT id, channel_name, allowed_entities, created_at, last_seen_at
+                 FROM channel_registrations
+                 WHERE device_id=$1 AND revoked_at IS NULL
+                 ORDER BY created_at DESC`,
+                [deviceId]
+            );
+            return res.json({
+                success: true,
+                registrations: rows.rows.map(r => ({
+                    id: r.id,
+                    channelName: r.channel_name,
+                    allowedEntities: r.allowed_entities,
+                    createdAt: r.created_at,
+                    lastSeenAt: r.last_seen_at
+                }))
+            });
+        } catch (err) {
+            serverLog('error', 'channel', `List registrations failed: ${err.message}`, { deviceId });
+            return res.status(500).json({ success: false, error: 'internal error' });
+        }
+    });
+
+    // PATCH /api/channel/registrations/:name — update ACL
+    router.patch('/registrations/:name', async (req, res) => {
+        const auth = deviceAuth(req, res);
+        if (!auth) return;
+        const { deviceId } = auth;
+        const name = req.params.name;
+
+        const { allowedEntities } = req.body;
+        if (!Array.isArray(allowedEntities)) {
+            return res.status(400).json({ success: false, error: 'allowedEntities array required' });
+        }
+        const validationErr = validateAllowedEntities(allowedEntities);
+        if (validationErr) return res.status(400).json({ success: false, error: validationErr });
+
+        try {
+            const pool = dbRef._getPool();
+            const result = await pool.query(
+                `UPDATE channel_registrations SET allowed_entities=$1
+                 WHERE channel_name=$2 AND device_id=$3 AND revoked_at IS NULL`,
+                [JSON.stringify(allowedEntities), name, deviceId]
+            );
+            if (result.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'registration not found' });
+            }
+            serverLog('info', 'channel', `Channel registration updated: ${name}`, { deviceId });
+            return res.json({ success: true, channelName: name, allowedEntities });
+        } catch (err) {
+            serverLog('error', 'channel', `Update registration failed: ${err.message}`, { deviceId });
+            return res.status(500).json({ success: false, error: 'internal error' });
+        }
+    });
+
+    // DELETE /api/channel/registrations/:name — revoke channel key
+    router.delete('/registrations/:name', async (req, res) => {
+        const auth = deviceAuth(req, res);
+        if (!auth) return;
+        const { deviceId } = auth;
+        const name = req.params.name;
+
+        try {
+            const pool = dbRef._getPool();
+            const result = await pool.query(
+                `UPDATE channel_registrations SET revoked_at=NOW()
+                 WHERE channel_name=$1 AND device_id=$2 AND revoked_at IS NULL`,
+                [name, deviceId]
+            );
+            if (result.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'registration not found' });
+            }
+            serverLog('info', 'channel', `Channel registration revoked: ${name}`, { deviceId });
+            return res.json({ success: true, channelName: name, revokedAt: new Date().toISOString() });
+        } catch (err) {
+            serverLog('error', 'channel', `Revoke registration failed: ${err.message}`, { deviceId });
+            return res.status(500).json({ success: false, error: 'internal error' });
+        }
+    });
+
+    // POST /api/channel/registrations/:name/rotate-key — generate new key, old key immediately invalid
+    router.post('/registrations/:name/rotate-key', async (req, res) => {
+        const auth = deviceAuth(req, res);
+        if (!auth) return;
+        const { deviceId } = auth;
+        const name = req.params.name;
+
+        try {
+            const pool = dbRef._getPool();
+            const rawKey = crypto.randomBytes(32).toString('hex');
+            const keyHash = await bcrypt.hash(rawKey, BCRYPT_ROUNDS);
+
+            const result = await pool.query(
+                `UPDATE channel_registrations SET key_hash=$1, last_seen_at=NULL
+                 WHERE channel_name=$2 AND device_id=$3 AND revoked_at IS NULL
+                 RETURNING id`,
+                [keyHash, name, deviceId]
+            );
+            if (result.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'registration not found' });
+            }
+            serverLog('info', 'channel', `Channel key rotated: ${name}`, { deviceId });
+            return res.json({ success: true, channelName: name, channelKey: rawKey });
+        } catch (err) {
+            serverLog('error', 'channel', `Rotate key failed: ${err.message}`, { deviceId });
+            return res.status(500).json({ success: false, error: 'internal error' });
+        }
+    });
+
+    // ── verifyChannelKey: called by /api/transform to authenticate channel key path ──
+    // Returns { registration, entityEntry } or throws { status, error }
+    async function verifyChannelKey({ channelKey, deviceId, entityId }) {
+        const pool = dbRef._getPool();
+        const rows = await pool.query(
+            `SELECT id, channel_name, key_hash, allowed_entities
+             FROM channel_registrations
+             WHERE device_id=$1 AND revoked_at IS NULL`,
+            [deviceId]
+        );
+
+        for (const row of rows.rows) {
+            const match = await bcrypt.compare(channelKey, row.key_hash);
+            if (!match) continue;
+
+            // Update last_seen_at (fire-and-forget)
+            pool.query(
+                `UPDATE channel_registrations SET last_seen_at=NOW() WHERE id=$1`,
+                [row.id]
+            ).catch(() => {});
+
+            // Check entity is in allowed_entities
+            const allowed = Array.isArray(row.allowed_entities) ? row.allowed_entities : [];
+            const entityEntry = allowed.find(e => e.entity_id === entityId);
+            if (!entityEntry) {
+                const err = new Error(`Entity ${entityId} not in allowedEntities for channel ${row.channel_name}`);
+                err.status = 403;
+                err.code = 'entity_not_allowed';
+                throw err;
+            }
+
+            return { registration: row, entityEntry };
+        }
+
+        const err = new Error('Invalid channel key');
+        err.status = 403;
+        err.code = 'invalid_channel_key';
+        throw err;
+    }
+
     return {
         router,
         pushToChannelCallback,
         setKanbanAutoReview,
-        setOrgChartForward
+        setOrgChartForward,
+        verifyChannelKey
     };
 };

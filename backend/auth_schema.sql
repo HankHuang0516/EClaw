@@ -209,3 +209,30 @@ CREATE TABLE IF NOT EXISTS invite_clicks (
 );
 CREATE INDEX IF NOT EXISTS idx_invite_clicks_code ON invite_clicks(code);
 CREATE INDEX IF NOT EXISTS idx_invite_clicks_clicked_at ON invite_clicks(clicked_at);
+
+-- ============================================
+-- Channel Registrations (Phase 1 — channel key auth for /api/transform)
+-- ============================================
+-- Each row represents one registered bridge (channel) that can authenticate
+-- via X-Channel-Key header instead of botSecret.
+-- key_hash stores a bcrypt hash of the raw channel key (never stored in plain).
+-- allowed_entities is a JSONB array: [{entity_id, permissions:[speak,state,a2a,broadcast]}]
+CREATE TABLE IF NOT EXISTS channel_registrations (
+    id              SERIAL PRIMARY KEY,
+    channel_name    VARCHAR(128) NOT NULL,
+    device_id       VARCHAR(64)  NOT NULL,
+    key_hash        TEXT         NOT NULL,
+    allowed_entities JSONB       NOT NULL DEFAULT '[]',
+    created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    last_seen_at    TIMESTAMP WITH TIME ZONE DEFAULT NULL,
+    revoked_at      TIMESTAMP WITH TIME ZONE DEFAULT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_channel_reg_name_device
+    ON channel_registrations(channel_name, device_id)
+    WHERE revoked_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_channel_reg_device
+    ON channel_registrations(device_id);
+
+-- via_channel: records which registered channel a transform was authenticated via.
+-- Stored separately from source so chat.html parser never needs to understand it.
+ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS via_channel VARCHAR(128) DEFAULT NULL;
