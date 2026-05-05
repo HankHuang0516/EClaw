@@ -18,6 +18,8 @@ jest.mock('pg', () => ({
 
 const express = require('express');
 const request = require('supertest');
+const fs = require('fs');
+const path = require('path');
 
 let app;
 let growthModule;
@@ -62,14 +64,17 @@ const get = (qs) => request(app).get('/api/growth/daily' + qs);
 function setupAdminQueries({
     signups = 5, cohort = 10, active = 4, plaza = 2,
     total_codes = 0, redeemed_codes = 0,
+    sourceRows,
 } = {}) {
-    // is_admin lookup → 4 metric queries (parallel order: signups, retention, plaza, invite)
+    const finalSourceRows = sourceRows || [{ source: 'web_portal', count: signups }];
+    // is_admin lookup → 5 metric queries (parallel order: signups, retention, plaza, invite, source_channel)
     mockQuery
         .mockResolvedValueOnce({ rows: [{ is_admin: true }] })
         .mockResolvedValueOnce({ rows: [{ c: signups }] })
         .mockResolvedValueOnce({ rows: [{ cohort_size: cohort, active_size: active }] })
         .mockResolvedValueOnce({ rows: [{ c: plaza }] })
-        .mockResolvedValueOnce({ rows: [{ total_codes, redeemed_codes }] });
+        .mockResolvedValueOnce({ rows: [{ total_codes, redeemed_codes }] })
+        .mockResolvedValueOnce({ rows: finalSourceRows });
 }
 
 describe('Growth /daily auth', () => {
@@ -102,19 +107,39 @@ describe('Growth /daily auth', () => {
 });
 
 describe('Growth /daily aggregation contract', () => {
-    it('returns the 4 metrics + date + follow-ups list', async () => {
-        setupAdminQueries({ signups: 7, cohort: 20, active: 8, plaza: 3, total_codes: 50, redeemed_codes: 11 });
+    it('returns the 5 metrics + date + follow-ups list', async () => {
+        setupAdminQueries({
+            signups: 7, cohort: 20, active: 8, plaza: 3, total_codes: 50, redeemed_codes: 11,
+            sourceRows: [{ source: 'invite', count: 4 }, { source: 'web_portal', count: 3 }],
+        });
         const res = await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2');
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
         expect(res.body.today_signups).toBe(7);
+        expect(res.body.source_channel).toEqual([{ source: 'invite', count: 4 }, { source: 'web_portal', count: 3 }]);
         expect(res.body.retention_7d).toEqual({ cohort_size: 20, active_size: 8, pct: 40 });
         expect(res.body.plaza_new_listed_today).toBe(3);
         expect(res.body.invite_conversion).toEqual({ total_codes: 50, redeemed_codes: 11, pct: 22 });
         expect(res.body.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
         expect(Array.isArray(res.body.follow_ups)).toBe(true);
-        expect(res.body.follow_ups.length).toBe(4);
+        expect(res.body.follow_ups.length).toBe(3);
+        expect(res.body.follow_ups.some(s => /schema lacks signup_source/i.test(s))).toBe(false);
         expect(res.body.follow_ups.some(s => /invite_conversion.*cumulative/i.test(s))).toBe(true);
+    });
+
+    it('source_channel SQL groups by signup_source without leaking user rows', async () => {
+        setupAdminQueries({
+            signups: 6,
+            sourceRows: [{ source: 'utm:twitter', count: 4 }, { source: 'unknown', count: 2 }],
+        });
+        const res = await get('?deviceId=admin-dev&botSecret=admin-bot-sec&entityId=2&date=2026-04-17');
+        expect(res.status).toBe(200);
+        expect(res.body.source_channel).toEqual([{ source: 'utm:twitter', count: 4 }, { source: 'unknown', count: 2 }]);
+
+        const sourceCall = mockQuery.mock.calls.find(c => /signup_source/i.test(c[0]) && /GROUP BY 1/i.test(c[0]));
+        expect(sourceCall).toBeDefined();
+        expect(sourceCall[1]).toEqual(['Asia/Taipei', '2026-04-17']);
+        expect(sourceCall[0]).not.toMatch(/email|device_id|ip/i);
     });
 
     it('reports invite_conversion pct as null when no codes issued', async () => {
@@ -267,4 +292,27 @@ describe('Growth /daily rate limit', () => {
         const res = await get('?deviceId=user-dev&botSecret=user-bot-sec&entityId=2');
         expect(res.status).toBe(200);
     }, 30000);
+});
+
+describe('Growth signup_source schema contract', () => {
+    it('auth schema creates and migrates user_accounts.signup_source', () => {
+        const schema = fs.readFileSync(path.join(__dirname, '../../auth_schema.sql'), 'utf8');
+        expect(schema).toMatch(/signup_source\s+VARCHAR\(64\)/i);
+        expect(schema).toMatch(/ALTER TABLE user_accounts ADD COLUMN IF NOT EXISTS signup_source/i);
+        expect(schema).toMatch(/idx_user_accounts_signup_source/i);
+    });
+
+    it('portal registration surfaces send a signupSource field', () => {
+        const portalIndex = fs.readFileSync(path.join(__dirname, '../../public/portal/index.html'), 'utf8');
+        const shareChat = fs.readFileSync(path.join(__dirname, '../../public/portal/share-chat.html'), 'utf8');
+        const iosApi = fs.readFileSync(path.join(__dirname, '../../../ios-app/services/api.ts'), 'utf8');
+        const growthTracking = fs.readFileSync(path.join(__dirname, '../../public/js/growth-tracking.js'), 'utf8');
+
+        expect(growthTracking).toMatch(/collectSignupSource/);
+        expect(growthTracking).toMatch(/utm:/);
+        expect(portalIndex).toMatch(/EClawGrowthTracking\.collectSignupSource\(\{ fallback: 'web_portal' \}\)/);
+        expect(portalIndex).toMatch(/signupSource:\s*collectSignupSource\(\)/);
+        expect(shareChat).toMatch(/EClawGrowthTracking\.collectSignupSource\(\{ fallback: 'share_chat' \}\)/);
+        expect(iosApi).toMatch(/signupSource\s*=\s*'ios_app'/);
+    });
 });

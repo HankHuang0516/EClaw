@@ -420,6 +420,7 @@
     <script src="../shared/i18n.js"></script>
     <script src="shared/footer.js"></script>
     <script src="../shared/telemetry.js"></script>
+    <script src="/js/growth-tracking.js"></script>
     <script>
         let resetToken = null;
         let termsAccepted = false;
@@ -529,6 +530,13 @@
             return null;
         }
 
+        function collectSignupSource() {
+            if (window.EClawGrowthTracking && window.EClawGrowthTracking.collectSignupSource) {
+                return window.EClawGrowthTracking.collectSignupSource({ fallback: 'web_portal' });
+            }
+            return 'web_portal';
+        }
+
         function applyServerLanguage(data) {
             if (data && data.user && data.user.language) {
                 const lang = data.user.language;
@@ -590,7 +598,7 @@
             btn.textContent = i18n.t('login_btn_creating');
 
             try {
-                await apiCall('POST', '/api/auth/register', { email, password });
+                await apiCall('POST', '/api/auth/register', { email, password, signupSource: collectSignupSource() });
                 showMsg('regSuccess', i18n.t('sc_register_success_verify'), 'success');
                 document.getElementById('regEmail').value = '';
                 document.getElementById('regPassword').value = '';
