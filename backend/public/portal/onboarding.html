@@ -114,6 +114,229 @@
             border: 1px solid var(--card-border);
         }
 
+
+        .ob-quickwin {
+            margin: 0 0 34px;
+            padding: 22px;
+            border: 1px solid rgba(124, 58, 237, 0.28);
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.12), rgba(14, 165, 233, 0.08));
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+        }
+
+        .ob-quickwin-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .ob-quickwin-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #6d28d9;
+            background: rgba(124, 58, 237, 0.12);
+            border: 1px solid rgba(124, 58, 237, 0.24);
+            border-radius: 999px;
+            padding: 5px 10px;
+            margin-bottom: 10px;
+        }
+
+        .ob-quickwin-title {
+            font-size: 22px;
+            margin: 0 0 8px;
+        }
+
+        .ob-quickwin-desc {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.55;
+            margin: 0;
+            max-width: 560px;
+        }
+
+        .ob-quickwin-eta {
+            flex: 0 0 auto;
+            text-align: right;
+            font-weight: 700;
+            color: var(--text-primary, inherit);
+        }
+
+        .ob-quickwin-eta small {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 11px;
+            font-weight: 500;
+            margin-top: 4px;
+        }
+
+        .ob-progress {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 18px 0;
+        }
+
+        .ob-progress-step {
+            position: relative;
+            border: 1px solid var(--card-border);
+            background: var(--card);
+            border-radius: 12px;
+            padding: 10px 8px 10px 34px;
+            color: var(--text-secondary);
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .ob-progress-step::before {
+            content: attr(data-step-index);
+            position: absolute;
+            left: 9px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: var(--input-bg);
+            color: var(--text-secondary);
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .ob-progress-step.active,
+        .ob-progress-step.done {
+            border-color: rgba(124, 58, 237, 0.5);
+            color: var(--text-primary, inherit);
+        }
+
+        .ob-progress-step.done::before {
+            content: "✓";
+            background: #10b981;
+            color: #fff;
+        }
+
+        .ob-progress-step.active::before {
+            background: #7c3aed;
+            color: #fff;
+        }
+
+        .ob-template-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .ob-template-btn {
+            text-align: left;
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            background: var(--card);
+            color: inherit;
+            padding: 14px;
+            cursor: pointer;
+            transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+        }
+
+        .ob-template-btn:hover,
+        .ob-template-btn.active {
+            border-color: #7c3aed;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(124, 58, 237, 0.14);
+        }
+
+        .ob-template-icon {
+            font-size: 22px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .ob-template-title {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .ob-template-desc {
+            color: var(--text-secondary);
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .ob-demo-panel {
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            background: var(--card);
+            padding: 16px;
+        }
+
+        .ob-demo-flow {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .ob-demo-node {
+            border: 1px dashed rgba(124, 58, 237, 0.35);
+            border-radius: 12px;
+            padding: 10px;
+            min-height: 58px;
+            background: rgba(124, 58, 237, 0.06);
+            font-size: 12px;
+        }
+
+        .ob-demo-node strong {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .ob-demo-result {
+            border-radius: 12px;
+            background: var(--input-bg);
+            padding: 14px;
+            line-height: 1.55;
+            font-size: 13px;
+        }
+
+        .ob-demo-result h3 {
+            margin: 0 0 8px;
+            font-size: 14px;
+        }
+
+        .ob-quickwin-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .ob-primary-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 0;
+            border-radius: 10px;
+            background: #7c3aed;
+            color: #fff;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .ob-primary-btn:hover {
+            background: #6d28d9;
+        }
+
         .ob-footer {
             display: flex;
             flex-direction: column;
@@ -191,8 +414,19 @@
                 font-size: 22px;
             }
 
-            .ob-grid {
+            .ob-grid,
+            .ob-template-grid,
+            .ob-demo-flow,
+            .ob-progress {
                 grid-template-columns: 1fr;
+            }
+
+            .ob-quickwin-head {
+                flex-direction: column;
+            }
+
+            .ob-quickwin-eta {
+                text-align: left;
             }
         }
     </style>
@@ -206,6 +440,63 @@
                 <h1 data-i18n="onboarding_hero_title">Welcome to EClawbot</h1>
                 <p data-i18n="onboarding_hero_desc">Choose where you want to start — we'll walk you through it step by step.</p>
             </div>
+
+
+            <section class="ob-quickwin" id="ob-quickwin" aria-labelledby="ob-quickwin-title">
+                <div class="ob-quickwin-head">
+                    <div>
+                        <div class="ob-quickwin-badge" data-i18n="onboarding_quickwin_badge">⚡ 30-second quick win</div>
+                        <h2 class="ob-quickwin-title" id="ob-quickwin-title" data-i18n="onboarding_quickwin_title">See agents collaborate before setup</h2>
+                        <p class="ob-quickwin-desc" data-i18n="onboarding_quickwin_desc">Pick a workflow template and watch EClaw turn one request into a useful first result. No API key or payment required for this preview.</p>
+                    </div>
+                    <div class="ob-quickwin-eta">
+                        <span data-i18n="onboarding_quickwin_eta">Goal: useful result in 5 min</span>
+                        <small data-i18n="onboarding_quickwin_eta_sub">Preview result appears in under 30 sec</small>
+                    </div>
+                </div>
+
+                <div class="ob-progress" id="ob-progress" aria-label="5-minute onboarding progress">
+                    <div class="ob-progress-step active" data-ob-step="1" data-step-index="1" data-i18n="onboarding_progress_step1">Choose a template</div>
+                    <div class="ob-progress-step" data-ob-step="2" data-step-index="2" data-i18n="onboarding_progress_step2">Watch agents split work</div>
+                    <div class="ob-progress-step" data-ob-step="3" data-step-index="3" data-i18n="onboarding_progress_step3">Get a first useful result</div>
+                    <div class="ob-progress-step" data-ob-step="4" data-step-index="4" data-i18n="onboarding_progress_step4">Continue in chat</div>
+                </div>
+
+                <div class="ob-template-grid" id="ob-template-grid" aria-label="Prebuilt workflow templates">
+                    <button class="ob-template-btn active" type="button" data-ob-template="content">
+                        <span class="ob-template-icon">✍️</span>
+                        <div class="ob-template-title" data-i18n="onboarding_template_content_title">Content creation</div>
+                        <div class="ob-template-desc" data-i18n="onboarding_template_content_desc">Research, outline, and draft a launch post.</div>
+                    </button>
+                    <button class="ob-template-btn" type="button" data-ob-template="code">
+                        <span class="ob-template-icon">🧑‍💻</span>
+                        <div class="ob-template-title" data-i18n="onboarding_template_code_title">Code review</div>
+                        <div class="ob-template-desc" data-i18n="onboarding_template_code_desc">Find risks, propose fixes, and write a checklist.</div>
+                    </button>
+                    <button class="ob-template-btn" type="button" data-ob-template="translate">
+                        <span class="ob-template-icon">🌐</span>
+                        <div class="ob-template-title" data-i18n="onboarding_template_translate_title">Translation workflow</div>
+                        <div class="ob-template-desc" data-i18n="onboarding_template_translate_desc">Translate, localize tone, and QA key strings.</div>
+                    </button>
+                </div>
+
+                <div class="ob-demo-panel" id="ob-demo-panel">
+                    <div class="ob-demo-flow" aria-label="Agent collaboration demo">
+                        <div class="ob-demo-node"><strong data-i18n="onboarding_demo_user">You</strong><span id="ob-demo-user">Ask for one useful outcome</span></div>
+                        <div class="ob-demo-node"><strong data-i18n="onboarding_demo_planner">Planner agent</strong><span data-i18n="onboarding_demo_planner_desc">Breaks the task into steps</span></div>
+                        <div class="ob-demo-node"><strong data-i18n="onboarding_demo_worker">Worker agent</strong><span data-i18n="onboarding_demo_worker_desc">Drafts the first result</span></div>
+                        <div class="ob-demo-node"><strong data-i18n="onboarding_demo_reviewer">Reviewer agent</strong><span data-i18n="onboarding_demo_reviewer_desc">Checks quality and next actions</span></div>
+                    </div>
+                    <div class="ob-demo-result" id="ob-demo-result" aria-live="polite">
+                        <h3 data-i18n="onboarding_demo_result_title">First useful result</h3>
+                        <p id="ob-demo-result-text" data-i18n="onboarding_demo_result_content">Launch post outline: problem → how EClaw coordinates agents → 3 proof points → CTA to try a free bot.</p>
+                    </div>
+                    <div class="ob-quickwin-actions">
+                        <button class="ob-primary-btn" type="button" id="ob-run-demo" data-i18n="onboarding_quickwin_run">Run 30-sec preview</button>
+                        <a class="ob-primary-btn" id="ob-open-chat" href="/portal/chat.html?quickWin=content" data-i18n="onboarding_quickwin_continue">Continue this in chat</a>
+                    </div>
+                </div>
+            </section>
 
             <div class="ob-intent-heading" data-i18n="onboarding_intent_heading">What do you want to do first?</div>
 
@@ -270,6 +561,58 @@
             const DISMISS_KEY = 'eclaw_onboarding_dismissed';
             const LAST_SEEN_KEY = 'eclaw_onboarding_last_seen';
 
+
+            const quickWinTemplates = {
+                content: {
+                    user: 'Draft a launch post in 30 seconds',
+                    resultKey: 'onboarding_demo_result_content',
+                    resultFallback: 'Launch post outline: problem → how EClaw coordinates agents → 3 proof points → CTA to try a free bot.'
+                },
+                code: {
+                    user: 'Review this pull request quickly',
+                    resultKey: 'onboarding_demo_result_code',
+                    resultFallback: 'Code review checklist: verify auth boundaries, add regression tests, confirm CI gates, and note deployment risks.'
+                },
+                translate: {
+                    user: 'Localize this onboarding copy',
+                    resultKey: 'onboarding_demo_result_translate',
+                    resultFallback: 'Translation plan: preserve product terms, adapt tone for Taiwan users, QA placeholders, and compare final strings side by side.'
+                }
+            };
+
+            function tr(key, fallback) {
+                try {
+                    if (typeof i18n !== 'undefined' && i18n.t) {
+                        const value = i18n.t(key);
+                        if (value && value !== key) return value;
+                    }
+                } catch (_) { /* ignore */ }
+                return fallback;
+            }
+
+            function setQuickWinProgress(step) {
+                document.querySelectorAll('[data-ob-step]').forEach((el) => {
+                    const index = parseInt(el.getAttribute('data-ob-step'), 10);
+                    el.classList.toggle('done', index < step);
+                    el.classList.toggle('active', index === step);
+                });
+            }
+
+            function selectQuickWinTemplate(templateId, progressStep) {
+                const config = quickWinTemplates[templateId] || quickWinTemplates.content;
+                document.querySelectorAll('[data-ob-template]').forEach((btn) => {
+                    btn.classList.toggle('active', btn.getAttribute('data-ob-template') === templateId);
+                });
+                const userEl = document.getElementById('ob-demo-user');
+                const resultEl = document.getElementById('ob-demo-result-text');
+                const chatLink = document.getElementById('ob-open-chat');
+                if (userEl) userEl.textContent = config.user;
+                if (resultEl) resultEl.textContent = tr(config.resultKey, config.resultFallback);
+                if (chatLink) chatLink.href = `/portal/chat.html?quickWin=${encodeURIComponent(templateId)}`;
+                try { localStorage.setItem('eclaw_onboarding_quickwin_template', templateId); } catch (_) {}
+                setQuickWinProgress(progressStep || 1);
+            }
+
             const trackRoutes = {
                 '1': '/portal/plaza.html?tour=track1',
                 '2': '/portal/community.html?tour=track2#rental',
@@ -318,6 +661,26 @@
                         location.href = route;
                     }
                 });
+
+
+                document.querySelectorAll('[data-ob-template]').forEach((btn) => {
+                    btn.addEventListener('click', () => selectQuickWinTemplate(btn.getAttribute('data-ob-template'), 2));
+                });
+
+                const runDemo = document.getElementById('ob-run-demo');
+                if (runDemo) {
+                    runDemo.addEventListener('click', () => {
+                        setQuickWinProgress(3);
+                        runDemo.disabled = true;
+                        setTimeout(() => {
+                            setQuickWinProgress(4);
+                            runDemo.disabled = false;
+                        }, 650);
+                    });
+                }
+
+                const savedQuickWin = localStorage.getItem('eclaw_onboarding_quickwin_template') || 'content';
+                selectQuickWinTemplate(savedQuickWin, 1);
 
                 document.getElementById('ob-skip-btn').addEventListener('click', () => {
                     const dontShow = document.getElementById('ob-dont-show').checked;
