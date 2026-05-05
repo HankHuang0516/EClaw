@@ -1,3 +1,10 @@
+## [1.1168.3](https://github.com/HankHuang0516/EClaw/compare/v1.1168.2...v1.1168.3) (2026-05-05)
+
+
+### Bug Fixes
+
+* **android:** resolve compilation errors in MainViewModel and ScheduleAdapter ([#2467](https://github.com/HankHuang0516/EClaw/issues/2467)) ([829bfe7](https://github.com/HankHuang0516/EClaw/commit/829bfe715a9f669f3c4d925dd2bc34b755086a99))
+
 ## [1.1168.2](https://github.com/HankHuang0516/EClaw/compare/v1.1168.1...v1.1168.2) (2026-05-05)
 
 
