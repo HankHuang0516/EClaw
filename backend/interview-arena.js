@@ -146,7 +146,7 @@ function weightedPick(items, keyFn, weights) {
 // ============================================
 
 let VISION_IMAGES = [
-    { file: 'img-f3a1.svg', keywords: ['red', 'circle'] },
+    // img-f3a1.svg retired (pass rate 100%) — replaced below
     { file: null, description: 'A system monitoring dashboard showing CPU at 87%, RAM usage 11.2 GB of 16 GB, disk I/O at 340 MB/s, and 3 active processes flagged in red', keywords: ['CPU', '87', 'RAM', 'disk', 'three', 'red'] },
     { file: 'img-d4e9.svg', keywords: ['green', 'triangle'] },
     { file: 'img-a2f5.svg', keywords: ['yellow', 'star'] },
@@ -154,7 +154,7 @@ let VISION_IMAGES = [
     // ── Easy tier (20%) — basic shape/object recognition ──
     { file: null, description: 'A red heart shape centered on a white background', keywords: ['heart', 'red'] },
     { file: null, description: 'A green checkmark inside a circle', keywords: ['checkmark', 'green', 'circle'] },
-    { file: null, description: 'A blue water droplet shape on gray', keywords: ['water', 'droplet', 'blue'] },
+    // A blue water droplet shape on gray retired (pass rate 100%) — replaced below
     { file: null, description: 'A yellow sun with eight rays extending outward', keywords: ['sun', 'yellow', 'rays'] },
     { file: null, description: 'A simple house with a red roof and brown door', keywords: ['house', 'roof', 'door'] },
     // ── Medium tier (50%) — counting, labels, multi-object scenes ──
@@ -183,6 +183,11 @@ let VISION_IMAGES = [
     { file: null, description: 'A hotel room floor plan: bedroom 18m² on the left, bathroom 6m² top right, living area 22m² bottom right, with a corridor connecting all rooms', keywords: ['floor', 'plan', 'bedroom', '18', 'bathroom', '6', 'living', '22'] },
     { file: null, description: 'A UI wireframe showing a navigation bar at top, a hero section with a button labeled Get Started, two feature cards side by side below, and a footer with three columns of links', keywords: ['wireframe', 'navigation', 'hero', 'get started', 'two', 'cards', 'footer', 'three'] },
     { file: null, description: 'A project timeline Gantt chart: Planning phase Jan 1–15, Development phase Jan 16–Mar 30, Testing phase Apr 1–Apr 20, Launch on May 1 — four phases total', keywords: ['gantt', 'timeline', 'planning', 'development', 'testing', 'launch', 'four', 'may'] },
+    // ── Replacements for retired easy items + new hard-tier additions ──
+    { file: null, description: 'A network topology star diagram with one central router connected to five switches, each switch connected to three endpoints — sixteen devices total, one switch shown in red indicating a fault', keywords: ['network', 'router', 'five', 'switches', 'sixteen', 'red', 'fault'] },
+    { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
+    { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
+    { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -356,6 +361,13 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '"babad"', expected: '"bab"' },{ input: '"cbbd"', expected: '"bb"' },{ input: '"a"', expected: '"a"' },{ input: '"racecar"', expected: '"racecar"' }] },
     { title: '0-1 Knapsack', description: 'Write `solve(weights, values, capacity)` — given items with weights and values arrays and a knapsack of given capacity, return the maximum total value (each item used at most once).',
       testCases: [{ input: '[1,3,4,5], [1,4,5,7], 7', expected: '9' },{ input: '[2,3,4,5], [3,4,5,6], 5', expected: '7' },{ input: '[1], [10], 0', expected: '0' }] },
+    // ── New medium-hard additions ──
+    { title: 'Word Break', description: 'Write `solve(s, wordDict)` — return true if the string s can be segmented into a space-separated sequence of one or more dictionary words.',
+      testCases: [{ input: '"leetcode", ["leet","code"]', expected: 'true' },{ input: '"applepenapple", ["apple","pen"]', expected: 'true' },{ input: '"catsandog", ["cats","dog","sand","an","cat"]', expected: 'false' },{ input: '"", ["a"]', expected: 'true' }] },
+    { title: 'Minimum Path Sum', description: 'Write `solve(grid)` — given an m×n grid of non-negative integers, find a path from top-left to bottom-right that minimizes the sum. You can only move right or down.',
+      testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
+    { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
+      testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -401,6 +413,10 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many squares of all sizes (1×1, 2×2, up to 8×8) are there on a standard 8×8 chessboard?', expectedKeywords: ['204'] },
     { question: 'A plane travels 2000 km at an effective speed of 1000 km/h (900 km/h airspeed plus 100 km/h tailwind). How many hours does the journey take?', expectedKeywords: ['2'] },
     { question: 'A worker paints 1/3 of a fence on day 1 and 1/4 of the remaining unpainted fence on day 2. What fraction of the fence is still unpainted after day 2?', expectedKeywords: ['1/2', '0.5', 'half'] },
+    // ── New additions to fill easy + medium-hard tiers ──
+    { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
+    { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
+    { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -452,11 +468,11 @@ let TTS_PHRASES = [
     { text: 'The GPS coordinates are 35.6762 degrees north 139.6503 degrees east', keywords: ['GPS', 'coordinates', '35', '139'] },
     { text: 'Doctor Zhang appointment is at 2:45 PM in Building C Room 301', keywords: ['Zhang', 'appointment', '2', '45', 'room', '301'] },
     { text: 'The Dow Jones index fell 2.3 percent to close at 38,547 points', keywords: ['Dow', 'Jones', 'percent', '38'] },
-    { text: 'Machine learning models require large datasets for training', keywords: ['machine', 'learning', 'models', 'datasets', 'training'] },
+    // 'Machine learning models require large datasets for training' retired (pass rate 100%)
     { text: 'Renewable energy sources include solar wind and hydropower', keywords: ['renewable', 'energy', 'solar', 'wind', 'hydropower'] },
     { text: 'Quantum computing promises to solve complex optimization problems', keywords: ['quantum', 'computing', 'complex', 'optimization'] },
     { text: 'Version control helps teams collaborate on software projects', keywords: ['version', 'control', 'teams', 'collaborate', 'software'] },
-    { text: 'The server returned HTTP status code 503 service unavailable', keywords: ['server', 'HTTP', '503', 'service', 'unavailable'] },
+    // 'The server returned HTTP status code 503 service unavailable' retired (pass rate 100%)
     { text: 'Encryption protects sensitive data during transmission', keywords: ['encryption', 'protects', 'sensitive', 'data', 'transmission'] },
     // ── Hard tier (30%) — acronyms, mixed content, technical jargon ──
     { text: 'The IPv4 address 192.168.1.1 is commonly used as a default gateway', keywords: ['IPv4', '192', '168', 'gateway'] },
@@ -473,6 +489,11 @@ let TTS_PHRASES = [
     { text: 'Bernoulli and Euler each contributed foundational theorems to both fluid dynamics and graph theory', keywords: ['bernoulli', 'euler', 'fluid', 'dynamics', 'graph', 'theory'] },
     { text: 'Your one-time verification code is 7 4 2 9 1 — please enter it within ninety seconds before it expires', keywords: ['verification', 'code', '74291', 'ninety', 'seconds'] },
     { text: 'Compound interest formula: principal times the quantity one plus rate divided by one hundred to the power of years minus one', keywords: ['compound', 'interest', 'principal', 'rate', 'power', 'years'] },
+    // ── Replacements for retired easy phrases + new hard-tier additions ──
+    { text: 'Please enter your six-digit PIN 4 8 2 0 1 9 to confirm the wire transfer of three thousand five hundred dollars', keywords: ['PIN', '482019', 'confirm', 'transfer', 'three', 'thousand'] },
+    { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
+    { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
+    { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
 ];
 
 // ============================================
