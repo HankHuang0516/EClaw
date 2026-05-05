@@ -1,3 +1,10 @@
+## [1.1167.14](https://github.com/HankHuang0516/EClaw/compare/v1.1167.13...v1.1167.14) (2026-05-05)
+
+
+### Bug Fixes
+
+* **i18n:** clean ko locale leak baseline ([#2426](https://github.com/HankHuang0516/EClaw/issues/2426)) ([cb85bec](https://github.com/HankHuang0516/EClaw/commit/cb85bec14bfc34e67894d5b0694edde930d467ce))
+
 ## [1.1167.13](https://github.com/HankHuang0516/EClaw/compare/v1.1167.12...v1.1167.13) (2026-05-04)
 
 
