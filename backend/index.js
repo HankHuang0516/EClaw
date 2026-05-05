@@ -264,6 +264,17 @@ app.use('/assets', express.static(path.join(__dirname, 'public/assets'), {
         }
     }
 }));
+// Serve public JavaScript helpers mounted outside /portal and /shared.
+// Keep short revalidation so registration attribution fixes roll out quickly.
+app.use('/js', express.static(path.join(__dirname, 'public/js'), {
+    etag: true,
+    lastModified: true,
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.js')) {
+            res.set('Cache-Control', 'public, max-age=600, must-revalidate');
+        }
+    }
+}));
 // Landing page
 app.get('/landing', (req, res) => {
     res.set('Cache-Control', 'public, max-age=3600');
