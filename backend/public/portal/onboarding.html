@@ -554,12 +554,14 @@
 
     <script src="/shared/i18n.js"></script>
     <script src="/shared/telemetry.js"></script>
+    <script src="/portal/onboarding/onboarding.js"></script>
     <script>
         (function () {
             'use strict';
 
             const DISMISS_KEY = 'eclaw_onboarding_dismissed';
             const LAST_SEEN_KEY = 'eclaw_onboarding_last_seen';
+            let onboardingTutorialManager = null;
 
 
             const quickWinTemplates = {
@@ -611,6 +613,9 @@
                 if (chatLink) chatLink.href = `/portal/chat.html?quickWin=${encodeURIComponent(templateId)}`;
                 try { localStorage.setItem('eclaw_onboarding_quickwin_template', templateId); } catch (_) {}
                 setQuickWinProgress(progressStep || 1);
+                if (onboardingTutorialManager && progressStep >= 1) {
+                    onboardingTutorialManager.start();
+                }
             }
 
             const trackRoutes = {
@@ -645,6 +650,11 @@
             }
 
             document.addEventListener('DOMContentLoaded', () => {
+                if (window.Onboarding && window.Onboarding.TutorialManager) {
+                    onboardingTutorialManager = new window.Onboarding.TutorialManager({ containerEl: document.getElementById('ob-quickwin') });
+                    window.eclawOnboardingTutorial = onboardingTutorialManager;
+                }
+
                 const grid = document.getElementById('ob-grid');
                 grid.addEventListener('click', (e) => {
                     const card = e.target.closest('.ob-card');
@@ -674,6 +684,7 @@
                         runDemo.disabled = true;
                         setTimeout(() => {
                             setQuickWinProgress(4);
+                            if (onboardingTutorialManager) onboardingTutorialManager.complete();
                             runDemo.disabled = false;
                         }, 650);
                     });

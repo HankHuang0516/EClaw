@@ -1,6 +1,6 @@
 /**
  * onboarding.js — Tutorial step logic, template showcase, and progress tracking
- * Used by onboarding.html for the new user onboarding flow (card_a3ec2d95fa9448729239b086)
+ * Used by /portal/onboarding.html for the canonical new user onboarding flow (card_a3ec2d95fa9448729239b086)
  *
  * Exports:
  *   TutorialManager  — step-by-step tutorial flow (1→2→3→success)
@@ -101,27 +101,27 @@
    */
   var TEMPLATES = [
     {
-      id: 'code-review',
+      id: 'code',
       icon: '🔍',
-      titleKey: 'onboarding_template_code_review_title',
-      descKey:  'onboarding_template_code_review_desc',
-      hintKey:  'onboarding_template_code_review_hint',
+      titleKey: 'onboarding_template_code_title',
+      descKey:  'onboarding_template_code_desc',
+      hintKey:  'onboarding_template_code_desc',
       example: 'Paste your code → Get instant review with suggestions'
     },
     {
-      id: 'translation',
+      id: 'translate',
       icon: '🌐',
-      titleKey: 'onboarding_template_translation_title',
-      descKey:  'onboarding_template_translation_desc',
-      hintKey:  'onboarding_template_translation_hint',
+      titleKey: 'onboarding_template_translate_title',
+      descKey:  'onboarding_template_translate_desc',
+      hintKey:  'onboarding_template_translate_desc',
       example: 'Enter text → Choose language → Get polished translation'
     },
     {
-      id: 'creative',
+      id: 'content',
       icon: '✨',
-      titleKey: 'onboarding_template_creative_title',
-      descKey:  'onboarding_template_creative_desc',
-      hintKey:  'onboarding_template_creative_hint',
+      titleKey: 'onboarding_template_content_title',
+      descKey:  'onboarding_template_content_desc',
+      hintKey:  'onboarding_template_content_desc',
       example: 'Describe idea → Generate content → Refine with feedback'
     }
   ];
@@ -269,6 +269,7 @@
     list.className = 'ob-quickwin-steps';
     this._stepEls = [];
 
+    var self = this;
     steps.forEach(function (step, i) {
       var li = document.createElement('li');
       li.className = 'ob-quickwin-step';
@@ -286,7 +287,6 @@
     this.containerEl.appendChild(this._contentArea);
 
     // Advance steps every 10 seconds
-    var self = this;
     [10, 20].forEach(function (delaySec) {
       setTimeout(function () {
         self._advanceStep();

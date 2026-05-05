@@ -306,10 +306,13 @@ describe('Growth signup_source schema contract', () => {
         const portalIndex = fs.readFileSync(path.join(__dirname, '../../public/portal/index.html'), 'utf8');
         const shareChat = fs.readFileSync(path.join(__dirname, '../../public/portal/share-chat.html'), 'utf8');
         const iosApi = fs.readFileSync(path.join(__dirname, '../../../ios-app/services/api.ts'), 'utf8');
+        const growthTracking = fs.readFileSync(path.join(__dirname, '../../public/js/growth-tracking.js'), 'utf8');
 
+        expect(growthTracking).toMatch(/collectSignupSource/);
+        expect(growthTracking).toMatch(/utm:/);
+        expect(portalIndex).toMatch(/EClawGrowthTracking\.collectSignupSource\(\{ fallback: 'web_portal' \}\)/);
         expect(portalIndex).toMatch(/signupSource:\s*collectSignupSource\(\)/);
-        expect(portalIndex).toMatch(/utm:/);
-        expect(shareChat).toMatch(/signupSource:\s*'share_chat'/);
+        expect(shareChat).toMatch(/EClawGrowthTracking\.collectSignupSource\(\{ fallback: 'share_chat' \}\)/);
         expect(iosApi).toMatch(/signupSource\s*=\s*'ios_app'/);
     });
 });

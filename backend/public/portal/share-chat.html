@@ -359,6 +359,7 @@
     <script src="/shared/r2-link-render.js"></script>
     <script src="/shared/i18n.js"></script>
     <script src="/shared/telemetry.js"></script>
+    <script src="/js/growth-tracking.js"></script>
     <script>
     const API_BASE = window.location.origin;
 
@@ -1054,7 +1055,7 @@
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password: pw, signupSource: 'share_chat' })
+                body: JSON.stringify({ email, password: pw, signupSource: (window.EClawGrowthTracking ? window.EClawGrowthTracking.collectSignupSource({ fallback: 'share_chat' }) : 'share_chat') })
             });
             const data = await resp.json();
             dbg('info', `Register response: ${resp.status}`, data);
@@ -1132,7 +1133,7 @@
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password: pw, signupSource: 'share_chat' })
+                body: JSON.stringify({ email, password: pw, signupSource: (window.EClawGrowthTracking ? window.EClawGrowthTracking.collectSignupSource({ fallback: 'share_chat' }) : 'share_chat') })
             });
             const data = await resp.json();
             if (!resp.ok || !data.success) {
