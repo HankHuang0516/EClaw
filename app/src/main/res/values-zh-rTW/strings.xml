@@ -818,4 +818,8 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="dialog_unblock_message">確定要解除封鎖 %s 嗎？</string>
     <string name="org_chart_sheet_title">組織圖</string>
     <string name="close">關閉</string>    <string name="channel_api_manage_all">管理所有金鑰 →</string>
+    <string name="facebook_app_id">772387505935344</string>
+    <string name="facebook_client_token">139b350cf525d7785d370b1813e77838</string>
+    <string name="fb_login_protocol_scheme">fb772387505935344</string>
+    <string name="google_server_client_id">857252321032-3e8ajfc30up4957l8lqns562dee7ll72.apps.googleusercontent.com</string>
 </resources>

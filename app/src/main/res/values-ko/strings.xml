@@ -817,4 +817,9 @@ GPS: 온디맨드만, 백그라운드 추적 없음, 서버 재시작 시 데이
     <string name="topup_tier_small">스몰</string>
     <string name="topup_tier_standard">표준</string>
     <string name="topup_tier_starter">스타터</string>
-    <string name="channel_api_manage_all">모든 키 관리 →</string></resources>
+    <string name="channel_api_manage_all">모든 키 관리 →</string>
+    <string name="facebook_app_id">772387505935344</string>
+    <string name="facebook_client_token">139b350cf525d7785d370b1813e77838</string>
+    <string name="fb_login_protocol_scheme">fb772387505935344</string>
+    <string name="google_server_client_id">857252321032-3e8ajfc30up4957l8lqns562dee7ll72.apps.googleusercontent.com</string>
+</resources>
