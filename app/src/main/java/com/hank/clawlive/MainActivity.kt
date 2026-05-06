@@ -1241,7 +1241,7 @@ class MainActivity : AppCompatActivity() {
 
             val nameField = EditText(this@MainActivity).apply {
                 setText(name)
-                hint = "Name"
+                hint = getString(R.string.name_field_hint)
                 setTextColor(android.graphics.Color.WHITE)
                 setHintTextColor(android.graphics.Color.parseColor("#555555"))
                 textSize = 12f
@@ -1252,7 +1252,7 @@ class MainActivity : AppCompatActivity() {
             }
             val descField = EditText(this@MainActivity).apply {
                 setText(desc)
-                hint = "Description"
+                hint = getString(R.string.desc_field_hint)
                 setTextColor(android.graphics.Color.parseColor("#AAAAAA"))
                 setHintTextColor(android.graphics.Color.parseColor("#555555"))
                 textSize = 12f
