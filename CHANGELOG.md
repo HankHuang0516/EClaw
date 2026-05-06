@@ -1,3 +1,10 @@
+## [1.1172.4](https://github.com/HankHuang0516/EClaw/compare/v1.1172.3...v1.1172.4) (2026-05-06)
+
+
+### Bug Fixes
+
+* **android:** clean up i18n hints + docs update ([#2492](https://github.com/HankHuang0516/EClaw/issues/2492)) ([8fc5176](https://github.com/HankHuang0516/EClaw/commit/8fc517696193c4fec85cc0beb10fc7bf0444afaf))
+
 ## [1.1172.3](https://github.com/HankHuang0516/EClaw/compare/v1.1172.2...v1.1172.3) (2026-05-06)
 
 
