@@ -1,3 +1,10 @@
+## [1.1172.1](https://github.com/HankHuang0516/EClaw/compare/v1.1172.0...v1.1172.1) (2026-05-06)
+
+
+### Bug Fixes
+
+* **chat:** lock scroll position when user scrolls up (rework PR [#2487](https://github.com/HankHuang0516/EClaw/issues/2487)) ([#2488](https://github.com/HankHuang0516/EClaw/issues/2488)) ([09c16ba](https://github.com/HankHuang0516/EClaw/commit/09c16ba1d79bffb533c217a2722a7a0ea505563b))
+
 # [1.1172.0](https://github.com/HankHuang0516/EClaw/compare/v1.1171.2...v1.1172.0) (2026-05-06)
 
 
