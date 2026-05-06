@@ -1,3 +1,10 @@
+## [1.1171.2](https://github.com/HankHuang0516/EClaw/compare/v1.1171.1...v1.1171.2) (2026-05-06)
+
+
+### Bug Fixes
+
+* **portal:** restore workspace telemetry page view ([#2486](https://github.com/HankHuang0516/EClaw/issues/2486)) ([ca1d9ad](https://github.com/HankHuang0516/EClaw/commit/ca1d9ad3e6208da2ab8975c00ee969c817bcc8e6))
+
 ## [1.1171.1](https://github.com/HankHuang0516/EClaw/compare/v1.1171.0...v1.1171.1) (2026-05-06)
 
 
