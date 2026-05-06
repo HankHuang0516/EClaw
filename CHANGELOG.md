@@ -1,3 +1,23 @@
+# [1.1171.0](https://github.com/HankHuang0516/EClaw/compare/v1.1170.0...v1.1171.0) (2026-05-06)
+
+
+### Bug Fixes
+
+* **i18n:** P1 Emergency Patch — Critical missing keys for es/de/ar ([77b4e00](https://github.com/HankHuang0516/EClaw/commit/77b4e00a18e92e41f0c5d0db81fbcb9a87637eae)), closes [#3](https://github.com/HankHuang0516/EClaw/issues/3)
+* **i18n:** P1 Emergency Patch — Critical missing keys for Japanese (ja) ([408800b](https://github.com/HankHuang0516/EClaw/commit/408800b69710a905fb8450eebef9ded253edb160))
+* Remove over-escaped quotes in i18n translations (1,821 instances) ([3b98a7f](https://github.com/HankHuang0516/EClaw/commit/3b98a7f979287d5564054031b8313423dadad6e5))
+* **pr-2481:** resolve lint errors and i18n missing keys ([521b404](https://github.com/HankHuang0516/EClaw/commit/521b404757eab4b591e307b67d00452df0193d04))
+
+
+### Features
+
+* **roadmap:** add EClaw desktop one-click configuration roadmap ([323521b](https://github.com/HankHuang0516/EClaw/commit/323521b10082f49ba6e11aedadb023af0301ed6f))
+* **kanban:** Add idle dispatch automation ([c1acfab](https://github.com/HankHuang0516/EClaw/commit/c1acfabda99c61c1b731fecdea4bc363425d28cd))
+* add MiniGame admin analytics ([faefcb8](https://github.com/HankHuang0516/EClaw/commit/faefcb844c4f6409e76722287701e21ab64d37ed))
+* complete idle dispatch automation system ([289700f](https://github.com/HankHuang0516/EClaw/commit/289700f82eacde569a06c6b6e05dc621bae69b46))
+* implement idle dispatch automation system ([f7aff72](https://github.com/HankHuang0516/EClaw/commit/f7aff72bf2f7d744a28023749f478f844e846257))
+* resolve merge conflict with main - idle dispatch ready for production ([1e89015](https://github.com/HankHuang0516/EClaw/commit/1e8901575cbd6c77cdb5db61aca76589e731d074)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.1170.0](https://github.com/HankHuang0516/EClaw/compare/v1.1169.0...v1.1170.0) (2026-05-06)
 
 
