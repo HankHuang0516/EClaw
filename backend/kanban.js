@@ -1310,7 +1310,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     router.put('/card/:id', async (req, res) => {
         if (!authenticate(req, res)) return;
         const _p = { ...req.query, ...req.body }; console.log('[Kanban] PUT /card/:id called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
-        const { deviceId, title, description, priority, assignedBots, reviewerEntityId, requiresScreenshotReview } = req.body;
+        const { deviceId, title, description, priority, assignedBots, reviewerEntityId, requiresScreenshotReview, dispatchMode } = req.body;
         const cardId = req.params.id;
 
         try {
@@ -1363,6 +1363,19 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             if (requiresScreenshotReview !== undefined) {
                 updates.push(`requires_screenshot_review = $${paramIdx++}`);
                 params.push(!!requiresScreenshotReview);
+            }
+            if (dispatchMode !== undefined) {
+                const normalizedDispatchMode = dispatchMode === 'idle_only' ? 'idle_only' : (dispatchMode === 'immediate' ? 'immediate' : null);
+                if (!normalizedDispatchMode) {
+                    return res.status(400).json({ success: false, error: 'dispatchMode must be "immediate" or "idle_only"' });
+                }
+                updates.push(`dispatch_mode = $${paramIdx++}`);
+                params.push(normalizedDispatchMode);
+                // Switching back to immediate mode must clear any old queued marker so
+                // automation parents do not remain invisible to the scheduler.
+                if (normalizedDispatchMode === 'immediate') {
+                    updates.push(`pending_dispatch = FALSE`);
+                }
             }
 
             if (updates.length === 0) {
