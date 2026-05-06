@@ -551,6 +551,295 @@ async function getMiniGameSubmissions(pool, { limit = 50, offset = 0 } = {}) {
     }
 }
 
+function clampAnalyticsWindowHours(value, fallback = 24, max = 24 * 30) {
+    const parsed = parseInt(value, 10);
+    if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+    return Math.min(parsed, max);
+}
+
+const MINIGAME_SERVER_LOG_SIGNAL_SQL = `(
+    category ILIKE '%minigame%'
+    OR message ILIKE '%minigame%'
+    OR message ILIKE '%mini game%'
+    OR message ILIKE '%game factory%'
+    OR message ~* 'GAME-[0-9]+'
+    OR COALESCE(metadata::text, '') ILIKE '%minigame%'
+    OR COALESCE(metadata::text, '') ILIKE '%mini game%'
+    OR COALESCE(metadata::text, '') ILIKE '%game factory%'
+    OR COALESCE(metadata::text, '') ~* 'GAME-[0-9]+'
+)`;
+
+const MINIGAME_TELEMETRY_SIGNAL_SQL = `(
+    COALESCE(page, '') ILIKE '%minigame%'
+    OR COALESCE(page, '') ~* 'GAME-[0-9]+'
+    OR COALESCE(action, '') ILIKE '%minigame%'
+    OR COALESCE(action, '') ILIKE '%mini game%'
+    OR COALESCE(action, '') ILIKE '%game factory%'
+    OR COALESCE(action, '') ~* 'GAME-[0-9]+'
+    OR COALESCE(input::text, '') ILIKE '%minigame%'
+    OR COALESCE(output::text, '') ILIKE '%minigame%'
+    OR COALESCE(meta::text, '') ILIKE '%minigame%'
+    OR COALESCE(input::text, '') ~* 'GAME-[0-9]+'
+    OR COALESCE(output::text, '') ~* 'GAME-[0-9]+'
+    OR COALESCE(meta::text, '') ~* 'GAME-[0-9]+'
+)`;
+
+function normalizeMiniGameAnalyticsRows(rows = []) {
+    return rows.map(row => ({
+        ...row,
+        count: parseInt(row.count, 10) || 0,
+        events: parseInt(row.events, 10) || 0,
+        totalEvents: parseInt(row.total_events, 10) || parseInt(row.totalEvents, 10) || 0,
+        pageViews: parseInt(row.page_views, 10) || parseInt(row.pageViews, 10) || 0,
+        playActions: parseInt(row.play_actions, 10) || parseInt(row.playActions, 10) || 0,
+        errors: parseInt(row.errors, 10) || 0,
+        serverErrors: parseInt(row.server_errors, 10) || parseInt(row.serverErrors, 10) || 0,
+        telemetryErrors: parseInt(row.telemetry_errors, 10) || parseInt(row.telemetryErrors, 10) || 0,
+        uniqueDevices: parseInt(row.unique_devices, 10) || parseInt(row.uniqueDevices, 10) || 0,
+        avgDurationMs: row.avg_duration_ms == null && row.avgDurationMs == null
+            ? null
+            : Math.round(parseFloat(row.avg_duration_ms ?? row.avgDurationMs) || 0),
+        gameId: row.game_id || row.gameId || 'unknown',
+        errorSignature: row.error_signature || row.errorSignature || null,
+        firstSeenAt: row.first_seen_at || row.firstSeenAt || null,
+        lastSeenAt: row.last_seen_at || row.lastSeenAt || null,
+        createdAt: row.created_at || row.createdAt || null
+    }));
+}
+
+/**
+ * Admin-facing MiniGame telemetry/error analytics.
+ *
+ * Data sources are production tables, not ad-hoc CSV exports:
+ * - server_logs: backend/runtime error signatures mentioning MiniGame or GAME-###.
+ * - device_telemetry: page views, user actions, play starts, and client errors.
+ *
+ * This intentionally aggregates/limits results so the admin dashboard can show
+ * patterns without leaking full logs or secrets.
+ */
+async function getMiniGameAnalytics(pool, { hours = 24, limit = 25 } = {}) {
+    const safeHours = clampAnalyticsWindowHours(hours);
+    const safeLimit = clampFeedbackPage(limit, 25, 100);
+    const empty = {
+        windowHours: safeHours,
+        summary: {
+            errorEvents: 0,
+            serverErrorEvents: 0,
+            telemetryErrorEvents: 0,
+            totalEvents: 0,
+            pageViews: 0,
+            playActions: 0,
+            uniqueDevices: 0,
+            affectedGames: 0
+        },
+        errorStats: [],
+        gameStats: [],
+        recentErrors: []
+    };
+    if (!pool) return empty;
+
+    const params = [safeHours, safeLimit];
+    try {
+        const summaryResult = await pool.query(
+            `WITH telemetry AS (
+                SELECT
+                    COALESCE(
+                        substring(COALESCE(page, '') from '(GAME-[0-9]{3,})'),
+                        substring(COALESCE(action, '') from '(GAME-[0-9]{3,})'),
+                        substring(COALESCE(input::text, '') from '(GAME-[0-9]{3,})'),
+                        substring(COALESCE(output::text, '') from '(GAME-[0-9]{3,})'),
+                        substring(COALESCE(meta::text, '') from '(GAME-[0-9]{3,})')
+                    ) AS game_id,
+                    device_id,
+                    type,
+                    action
+                FROM device_telemetry
+                WHERE created_at >= NOW() - ($1::int * INTERVAL '1 hour')
+                  AND ${MINIGAME_TELEMETRY_SIGNAL_SQL}
+            ),
+            server_errors AS (
+                SELECT
+                    COALESCE(
+                        substring(message from '(GAME-[0-9]{3,})'),
+                        substring(COALESCE(metadata::text, '') from '(GAME-[0-9]{3,})')
+                    ) AS game_id,
+                    device_id
+                FROM server_logs
+                WHERE created_at >= NOW() - ($1::int * INTERVAL '1 hour')
+                  AND level IN ('error', 'warn')
+                  AND ${MINIGAME_SERVER_LOG_SIGNAL_SQL}
+            )
+            SELECT
+                CAST((SELECT COUNT(*) FROM telemetry) AS int) AS total_events,
+                CAST((SELECT COUNT(*) FROM telemetry WHERE type = 'page_view') AS int) AS page_views,
+                CAST((SELECT COUNT(*) FROM telemetry WHERE action ILIKE '%play%' OR action ILIKE '%start%' OR action ILIKE '%game_start%') AS int) AS play_actions,
+                CAST((SELECT COUNT(*) FROM telemetry WHERE type = 'error') AS int) AS telemetry_error_events,
+                CAST((SELECT COUNT(*) FROM server_errors) AS int) AS server_error_events,
+                CAST((SELECT COUNT(DISTINCT device_id) FROM telemetry WHERE device_id IS NOT NULL) AS int) AS unique_devices,
+                CAST((SELECT COUNT(DISTINCT game_id) FROM (
+                    SELECT game_id FROM telemetry WHERE game_id IS NOT NULL
+                    UNION ALL
+                    SELECT game_id FROM server_errors WHERE game_id IS NOT NULL
+                ) games) AS int) AS affected_games`,
+            [safeHours]
+        );
+
+        const errorStatsResult = await pool.query(
+            `WITH errors AS (
+                SELECT
+                    'server_log' AS source,
+                    COALESCE(
+                        substring(message from '(GAME-[0-9]{3,})'),
+                        substring(COALESCE(metadata::text, '') from '(GAME-[0-9]{3,})'),
+                        'unknown'
+                    ) AS game_id,
+                    regexp_replace(left(message, 240), '\\s+', ' ', 'g') AS error_signature,
+                    device_id,
+                    created_at
+                FROM server_logs
+                WHERE created_at >= NOW() - ($1::int * INTERVAL '1 hour')
+                  AND level IN ('error', 'warn')
+                  AND ${MINIGAME_SERVER_LOG_SIGNAL_SQL}
+                UNION ALL
+                SELECT
+                    'telemetry' AS source,
+                    COALESCE(
+                        substring(COALESCE(page, '') from '(GAME-[0-9]{3,})'),
+                        substring(COALESCE(action, '') from '(GAME-[0-9]{3,})'),
+                        substring(COALESCE(input::text, '') from '(GAME-[0-9]{3,})'),
+                        substring(COALESCE(output::text, '') from '(GAME-[0-9]{3,})'),
+                        substring(COALESCE(meta::text, '') from '(GAME-[0-9]{3,})'),
+                        'unknown'
+                    ) AS game_id,
+                    regexp_replace(left(COALESCE(output->>'message', meta->>'message', input->>'message', action, 'client error'), 240), '\\s+', ' ', 'g') AS error_signature,
+                    device_id,
+                    created_at
+                FROM device_telemetry
+                WHERE created_at >= NOW() - ($1::int * INTERVAL '1 hour')
+                  AND type = 'error'
+                  AND ${MINIGAME_TELEMETRY_SIGNAL_SQL}
+            )
+            SELECT
+                game_id,
+                error_signature,
+                CAST(COUNT(*) AS int) AS count,
+                CAST(COUNT(*) FILTER (WHERE source = 'server_log') AS int) AS server_errors,
+                CAST(COUNT(*) FILTER (WHERE source = 'telemetry') AS int) AS telemetry_errors,
+                CAST(COUNT(DISTINCT device_id) AS int) AS unique_devices,
+                MIN(created_at) AS first_seen_at,
+                MAX(created_at) AS last_seen_at
+            FROM errors
+            GROUP BY game_id, error_signature
+            ORDER BY count DESC, last_seen_at DESC
+            LIMIT $2`,
+            params
+        );
+
+        const gameStatsResult = await pool.query(
+            `WITH telemetry AS (
+                SELECT
+                    COALESCE(
+                        substring(COALESCE(page, '') from '(GAME-[0-9]{3,})'),
+                        substring(COALESCE(action, '') from '(GAME-[0-9]{3,})'),
+                        substring(COALESCE(input::text, '') from '(GAME-[0-9]{3,})'),
+                        substring(COALESCE(output::text, '') from '(GAME-[0-9]{3,})'),
+                        substring(COALESCE(meta::text, '') from '(GAME-[0-9]{3,})'),
+                        'unknown'
+                    ) AS game_id,
+                    device_id,
+                    type,
+                    action,
+                    duration,
+                    created_at
+                FROM device_telemetry
+                WHERE created_at >= NOW() - ($1::int * INTERVAL '1 hour')
+                  AND ${MINIGAME_TELEMETRY_SIGNAL_SQL}
+            )
+            SELECT
+                game_id,
+                CAST(COUNT(*) AS int) AS total_events,
+                CAST(COUNT(*) FILTER (WHERE type = 'page_view') AS int) AS page_views,
+                CAST(COUNT(*) FILTER (WHERE action ILIKE '%play%' OR action ILIKE '%start%' OR action ILIKE '%game_start%') AS int) AS play_actions,
+                CAST(COUNT(*) FILTER (WHERE type = 'error') AS int) AS errors,
+                CAST(COUNT(DISTINCT device_id) AS int) AS unique_devices,
+                ROUND(AVG(duration)) AS avg_duration_ms,
+                MAX(created_at) AS last_seen_at
+            FROM telemetry
+            GROUP BY game_id
+            ORDER BY total_events DESC, errors DESC, last_seen_at DESC
+            LIMIT $2`,
+            params
+        );
+
+        const recentErrorsResult = await pool.query(
+            `WITH recent AS (
+                SELECT
+                    'server_log' AS source,
+                    COALESCE(
+                        substring(message from '(GAME-[0-9]{3,})'),
+                        substring(COALESCE(metadata::text, '') from '(GAME-[0-9]{3,})'),
+                        'unknown'
+                    ) AS game_id,
+                    level,
+                    regexp_replace(left(message, 360), '\\s+', ' ', 'g') AS message,
+                    device_id,
+                    created_at
+                FROM server_logs
+                WHERE created_at >= NOW() - ($1::int * INTERVAL '1 hour')
+                  AND level IN ('error', 'warn')
+                  AND ${MINIGAME_SERVER_LOG_SIGNAL_SQL}
+                UNION ALL
+                SELECT
+                    'telemetry' AS source,
+                    COALESCE(
+                        substring(COALESCE(page, '') from '(GAME-[0-9]{3,})'),
+                        substring(COALESCE(action, '') from '(GAME-[0-9]{3,})'),
+                        substring(COALESCE(input::text, '') from '(GAME-[0-9]{3,})'),
+                        substring(COALESCE(output::text, '') from '(GAME-[0-9]{3,})'),
+                        substring(COALESCE(meta::text, '') from '(GAME-[0-9]{3,})'),
+                        'unknown'
+                    ) AS game_id,
+                    'error' AS level,
+                    regexp_replace(left(COALESCE(output->>'message', meta->>'message', input->>'message', action, 'client error'), 360), '\\s+', ' ', 'g') AS message,
+                    device_id,
+                    created_at
+                FROM device_telemetry
+                WHERE created_at >= NOW() - ($1::int * INTERVAL '1 hour')
+                  AND type = 'error'
+                  AND ${MINIGAME_TELEMETRY_SIGNAL_SQL}
+            )
+            SELECT source, game_id, level, message, device_id, created_at
+            FROM recent
+            ORDER BY created_at DESC
+            LIMIT $2`,
+            params
+        );
+
+        const summaryRow = summaryResult.rows[0] || {};
+        const serverErrorEvents = parseInt(summaryRow.server_error_events, 10) || 0;
+        const telemetryErrorEvents = parseInt(summaryRow.telemetry_error_events, 10) || 0;
+        return {
+            windowHours: safeHours,
+            summary: {
+                errorEvents: serverErrorEvents + telemetryErrorEvents,
+                serverErrorEvents,
+                telemetryErrorEvents,
+                totalEvents: parseInt(summaryRow.total_events, 10) || 0,
+                pageViews: parseInt(summaryRow.page_views, 10) || 0,
+                playActions: parseInt(summaryRow.play_actions, 10) || 0,
+                uniqueDevices: parseInt(summaryRow.unique_devices, 10) || 0,
+                affectedGames: parseInt(summaryRow.affected_games, 10) || 0
+            },
+            errorStats: normalizeMiniGameAnalyticsRows(errorStatsResult.rows),
+            gameStats: normalizeMiniGameAnalyticsRows(gameStatsResult.rows),
+            recentErrors: normalizeMiniGameAnalyticsRows(recentErrorsResult.rows)
+        };
+    } catch (err) {
+        console.error('[Feedback] MiniGame analytics error:', err.message);
+        return empty;
+    }
+}
+
 /**
  * Get single feedback by ID (full record with log_snapshot).
  */
@@ -923,6 +1212,7 @@ module.exports = {
     saveFeedback,
     getFeedbackList,
     getMiniGameSubmissions,
+    getMiniGameAnalytics,
     miniGameFeedbackWhereClause,
     MINIGAME_FEEDBACK_TERMS,
     getFeedbackById,
