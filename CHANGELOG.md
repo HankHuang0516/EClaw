@@ -1,3 +1,10 @@
+# [1.1169.0](https://github.com/HankHuang0516/EClaw/compare/v1.1168.3...v1.1169.0) (2026-05-06)
+
+
+### Features
+
+* show MiniGame submissions in admin ([#2472](https://github.com/HankHuang0516/EClaw/issues/2472)) ([a5a900b](https://github.com/HankHuang0516/EClaw/commit/a5a900bb063f1d5989abd83eb57f30c0910c1dc8))
+
 ## [1.1168.3](https://github.com/HankHuang0516/EClaw/compare/v1.1168.2...v1.1168.3) (2026-05-05)
 
 
