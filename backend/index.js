@@ -3731,6 +3731,30 @@ app.get('/api/admin/ping', (req, res) => {
 });
 
 /**
+ * GET /api/admin/minigame-submissions
+ * Admin: view MiniGame user submissions stored through the shared feedback
+ * intake. MiniGame can mark submissions with source/category/tags; older
+ * reports that only mention MiniGame in the body are also included.
+ */
+app.get('/api/admin/minigame-submissions', adminAuth, adminCheck, async (req, res) => {
+    try {
+        const result = await feedbackModule.getMiniGameSubmissions(chatPool, {
+            limit: req.query.limit,
+            offset: req.query.offset
+        });
+        res.json({
+            success: true,
+            count: result.submissions.length,
+            summary: result.summary,
+            submissions: result.submissions
+        });
+    } catch (err) {
+        console.error('[Admin] MiniGame submissions error:', err);
+        res.status(500).json({ success: false, error: 'Failed to load MiniGame submissions' });
+    }
+});
+
+/**
  * GET /api/skill-templates/contributions
  * Admin: view full contribution history (all statuses).
  */
