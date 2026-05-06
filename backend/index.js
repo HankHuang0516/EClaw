@@ -1631,6 +1631,15 @@ try {
     kanbanModule = { initKanbanDatabase: () => {}, startBackgroundTimers: () => {} };
 }
 
+// Idle Dispatch System — smart bot availability-based card dispatch
+try {
+    const idleDispatchRouter = require('./api_idle_dispatch');
+    app.use('/api/mission/idle-dispatch', idleDispatchRouter);
+    console.log('[IdleDispatch] Module loaded successfully');
+} catch (err) {
+    console.error('[IdleDispatch] Failed to load module:', err.message);
+}
+
 // Growth metrics — botSecret + admin-owner gated, aggregate-only
 try {
     const growthModule = require('./growth')(devices);
