@@ -2986,15 +2986,6 @@
         let myPublicCodeMap = {};   // publicCode -> { entityId, label }
         let xdeviceLabelCache = {}; // publicCode -> label (remote entities)
 
-        // ── Chat Scroll Position Locking ──
-        let _chatScrollState = {
-            userScrolling: false,
-            lastScrollTop: 0,
-            scrollCheckTimeout: null
-        };
-
-        // Expose to window for E2E testing
-        window._chatScrollState = _chatScrollState;
         const xdeviceLookupInFlight = new Set();
         const xdeviceLookupMissCache = new Set();
         const ENTITY_NO_PROGRESS_MS = 10 * 60 * 1000;
@@ -4278,6 +4269,7 @@
             _renderVersion++;
             const container = document.getElementById('chatMessages');
             const wasAtBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 50;
+            const prevScrollTop = container.scrollTop;
             const filtered = getFilteredMessages();
 
             if (filtered.length === 0) {
@@ -4604,13 +4596,16 @@
                     </div>`;
             }).join('');
 
-            // Auto-scroll only on first load or when the user was already at the bottom
-            // and not actively browsing chat history. Enhanced scroll position locking
-            // prevents new messages from disrupting user's reading position when they've
-            // scrolled up to view older messages. The floating jump-to-latest button
-            // (#scrollToBottomBtn) provides explicit control to return to newest messages.
-            if (isFirstLoad || (wasAtBottom && !_chatScrollState.userScrolling)) {
+            // Auto-follow only when the user was already at the bottom (within 50px).
+            // Otherwise lock scrollTop to its prior value: browsers don't reliably preserve
+            // scrollTop across `innerHTML =` replacement, so we restore it explicitly to
+            // keep the user's reading anchor stable when new messages arrive while they're
+            // scrolled up reading history. The jump-to-latest button is the explicit
+            // opt-in to return to the newest message.
+            if (isFirstLoad || wasAtBottom) {
                 container.scrollTop = container.scrollHeight;
+            } else {
+                container.scrollTop = prevScrollTop;
             }
             updateScrollToBottomBtn();
 
@@ -7098,32 +7093,7 @@
             const container = document.getElementById('chatMessages');
             const btn = document.getElementById('scrollToBottomBtn');
             if (!container || !btn) return;
-
             const distance = container.scrollHeight - container.scrollTop - container.clientHeight;
-            const isAtBottom = distance <= NEAR_BOTTOM_PX;
-
-            // Track user scrolling behavior for history browsing mode
-            const currentScrollTop = container.scrollTop;
-            const scrolledUp = currentScrollTop < _chatScrollState.lastScrollTop;
-
-            if (scrolledUp && !isAtBottom) {
-                // User scrolled up away from bottom - entering history browsing mode
-                _chatScrollState.userScrolling = true;
-            } else if (isAtBottom) {
-                // User at bottom - exit history browsing mode
-                _chatScrollState.userScrolling = false;
-            }
-
-            // Clear any pending timeout and set new one to detect if scrolling has stopped
-            clearTimeout(_chatScrollState.scrollCheckTimeout);
-            _chatScrollState.scrollCheckTimeout = setTimeout(() => {
-                // After 150ms of no scrolling, finalize the state
-                if (isAtBottom) {
-                    _chatScrollState.userScrolling = false;
-                }
-            }, 150);
-
-            _chatScrollState.lastScrollTop = currentScrollTop;
             btn.classList.toggle('visible', distance > NEAR_BOTTOM_PX);
         }
         (() => {
@@ -7137,9 +7107,6 @@
                     top: container.scrollHeight,
                     behavior: reduce ? 'auto' : 'smooth'
                 });
-                // Reset scroll state - user explicitly returned to bottom
-                _chatScrollState.userScrolling = false;
-                _chatScrollState.lastScrollTop = container.scrollHeight;
                 btn.classList.remove('visible');
             });
             updateScrollToBottomBtn();

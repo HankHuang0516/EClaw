@@ -1,184 +1,197 @@
 /**
- * E2E Test: Chat Scroll Position Locking
+ * E2E Test: Chat Scroll Position Locking (rework)
  *
- * Tests the scroll position locking mechanism that prevents new messages
- * from disrupting user's reading position when browsing chat history.
+ * Verifies that when the user has scrolled up to read history, ≥10 new
+ * incoming messages do NOT yank their viewport back to the bottom.
  *
- * CI-Safe: Uses headless mode and environment-based test credentials
+ * Strategy:
+ *   - Load /portal/chat.html with BROADCAST_TEST_DEVICE creds.
+ *   - Pad allMessages so the container is scrollable, then scroll to middle.
+ *   - Capture scrollTop, fire 10+ window.onSocketChatMessage() calls
+ *     (the real WebSocket entry point that calls renderMessages(true)),
+ *     and assert scrollTop drift ≤ 50px after each injection.
+ *   - Then click #scrollToBottomBtn and assert we land near bottom.
+ *
+ * CI-safe: headless when E2E_HEADLESS=true / CI=true.
  */
 
 const { chromium } = require('playwright');
+const path = require('path');
 
 const TEST_CONFIG = {
-    chatUrl: process.env.E2E_CHAT_URL || 'http://localhost:3000/portal/chat.html',
-    deviceId: process.env.E2E_DEVICE_ID || 'test-device-id',
-    deviceSecret: process.env.E2E_DEVICE_SECRET || 'test-device-secret',
-    headless: process.env.CI === 'true' || process.env.E2E_HEADLESS === 'true',
-    timeout: 10000
+    chatUrl: process.env.E2E_CHAT_URL || 'http://localhost:8765/portal/chat.html',
+    deviceId: process.env.E2E_DEVICE_ID || 'e2e-stub-device',
+    deviceSecret: process.env.E2E_DEVICE_SECRET || 'e2e-stub-secret',
+    headless: process.env.CI !== 'false' && (process.env.CI === 'true' || process.env.E2E_HEADLESS !== 'false'),
+    timeout: 15000,
+    newMessageCount: 12,
 };
 
-async function runChatScrollPositionLockingTest() {
-    console.log('🧪 Starting Chat Scroll Position Locking E2E Test...');
-    console.log('📊 Config:', {
-        url: TEST_CONFIG.chatUrl.replace(/deviceSecret=[^&]+/, 'deviceSecret=***'),
-        headless: TEST_CONFIG.headless
-    });
+const TOLERANCE_PX = 50;
 
-    const browser = await chromium.launch({
-        headless: TEST_CONFIG.headless,
-        slowMo: TEST_CONFIG.headless ? 0 : 100
+async function runChatScrollPositionLockingTest() {
+    const browser = await chromium.launch({ headless: TEST_CONFIG.headless });
+    const context = await browser.newContext({ viewport: { width: 412, height: 850 } });
+    const page = await context.newPage();
+    const evidenceDir = process.env.E2E_EVIDENCE_DIR || '/tmp/scroll-lock-evidence';
+    require('fs').mkdirSync(evidenceDir, { recursive: true });
+
+    // Stub all /api/* and any external calls so chat.html boots offline.
+    await page.route('**/api/**', route => {
+        const url = route.request().url();
+        const stubUser = {
+            deviceId: TEST_CONFIG.deviceId,
+            deviceSecret: TEST_CONFIG.deviceSecret,
+            entityId: 2,
+            displayName: 'E2E Stub',
+        };
+        let body = { success: true, ok: true, messages: [], cards: [], notes: [], entities: [], user: stubUser };
+        if (/\/auth\/me/.test(url)) body = { success: true, user: stubUser };
+        else if (/\/auth\/device-login/.test(url)) body = { success: true, user: stubUser };
+        else if (/\/chat\/history/.test(url)) body = { success: true, messages: [] };
+        else if (/\/mission\/dashboard/.test(url)) body = { success: true, tasks: [], notes: [], rules: [], skills: [] };
+        else if (/\/mission\/cards/.test(url)) body = { success: true, cards: [] };
+        else if (/\/entity/.test(url)) body = { success: true, entities: [] };
+        route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(body) });
     });
-    const page = await browser.newPage();
+    // Block external CDNs / sockets we don't need
+    await page.route(/(^https:\/\/cdn|^wss:|^https:\/\/.*socket\.io)/, route => route.abort());
+
+    const consoleErrors = [];
+    page.on('pageerror', err => consoleErrors.push('pageerror: ' + err.message));
+    page.on('console', msg => {
+        if (msg.type() !== 'error') return;
+        const text = msg.text();
+        // Suppress noise from intentionally-blocked external resources
+        if (/Failed to load resource|net::ERR_FAILED|Socket\.IO/i.test(text)) return;
+        consoleErrors.push('console.error: ' + text);
+    });
 
     try {
-        // Construct test URL with credentials
-        const testUrl = `${TEST_CONFIG.chatUrl}?deviceId=${TEST_CONFIG.deviceId}&deviceSecret=${TEST_CONFIG.deviceSecret}`;
+        const url = `${TEST_CONFIG.chatUrl}?deviceId=${TEST_CONFIG.deviceId}&deviceSecret=${TEST_CONFIG.deviceSecret}`;
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: TEST_CONFIG.timeout });
+        await page.waitForSelector('#chatMessages', { timeout: TEST_CONFIG.timeout });
+        await page.waitForTimeout(1200); // let initial init settle
 
-        // Navigate to chat page
-        await page.goto(testUrl);
-        await page.waitForLoadState('networkidle', { timeout: TEST_CONFIG.timeout });
-        console.log('✅ Chat page loaded');
-
-        // Wait for chat container
-        const chatContainer = await page.locator('#chatMessages');
-        await chatContainer.waitFor({ timeout: TEST_CONFIG.timeout });
-        console.log('✅ Chat container found');
-
-        // Test 1: Verify _chatScrollState is exposed and initialized
-        const scrollStateExists = await page.evaluate(() => {
-            return typeof window._chatScrollState === 'object' &&
-                   window._chatScrollState !== null &&
-                   typeof window._chatScrollState.userScrolling === 'boolean';
-        });
-
-        if (!scrollStateExists) {
-            throw new Error('_chatScrollState not properly exposed to window');
-        }
-        console.log('✅ _chatScrollState properly exposed and initialized');
-
-        // Test 2: Check initial scroll state
-        const initialState = await page.evaluate(() => {
-            return {
-                userScrolling: window._chatScrollState.userScrolling,
-                lastScrollTop: window._chatScrollState.lastScrollTop,
-                containerExists: !!document.getElementById('chatMessages')
-            };
-        });
-        console.log('📊 Initial state:', initialState);
-
-        // Test 3: Simulate adding content and scrolling behavior
-        await page.evaluate(() => {
-            const container = document.getElementById('chatMessages');
-            if (container) {
-                // Add test content to make scrolling possible
-                for (let i = 0; i < 20; i++) {
-                    const messageDiv = document.createElement('div');
-                    messageDiv.style.height = '60px';
-                    messageDiv.style.marginBottom = '10px';
-                    messageDiv.style.background = '#f0f0f0';
-                    messageDiv.style.padding = '10px';
-                    messageDiv.textContent = `Test message ${i + 1}`;
-                    container.appendChild(messageDiv);
-                }
-
-                // Scroll to middle to trigger user scrolling state
-                container.scrollTop = Math.floor(container.scrollHeight * 0.4);
-                container.dispatchEvent(new Event('scroll'));
+        // Pad allMessages so the container is scrollable. Use the real entry point
+        // so the rendered DOM matches production.
+        await page.evaluate((padCount) => {
+            if (typeof window.onSocketChatMessage !== 'function') {
+                throw new Error('onSocketChatMessage not exposed');
             }
+            const baseTs = Date.now() - padCount * 60000;
+            for (let i = 0; i < padCount; i++) {
+                window.onSocketChatMessage({
+                    id: `e2e-pad-${i}-${Date.now()}`,
+                    text: `[E2E pad ${i + 1}] lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.`,
+                    is_from_bot: i % 2 === 0,
+                    is_from_user: i % 2 !== 0,
+                    entity_id: i % 2 === 0 ? 5 : null,
+                    source: i % 2 === 0 ? 'entity:5' : 'web_chat',
+                    timestamp: baseTs + i * 60000,
+                });
+            }
+        }, 30);
+
+        await page.waitForTimeout(500);
+
+        // Make sure the container actually overflows; if not, the test is meaningless.
+        const overflow = await page.evaluate(() => {
+            const c = document.getElementById('chatMessages');
+            return { scrollHeight: c.scrollHeight, clientHeight: c.clientHeight, scrollTop: c.scrollTop };
         });
+        if (overflow.scrollHeight - overflow.clientHeight < 200) {
+            throw new Error(`Container not scrollable enough: ${JSON.stringify(overflow)}`);
+        }
 
-        await page.waitForTimeout(500); // Wait for scroll handlers
-
-        // Test 4: Verify user scrolling state is detected
-        const afterScrollState = await page.evaluate(() => {
-            return {
-                userScrolling: window._chatScrollState.userScrolling,
-                lastScrollTop: window._chatScrollState.lastScrollTop,
-                scrollTop: document.getElementById('chatMessages')?.scrollTop
-            };
+        // Scroll to ~40% from top (i.e. user reading history).
+        const captured = await page.evaluate(() => {
+            const c = document.getElementById('chatMessages');
+            c.scrollTop = Math.floor(c.scrollHeight * 0.4);
+            c.dispatchEvent(new Event('scroll'));
+            return c.scrollTop;
         });
-        console.log('📊 After scroll state:', afterScrollState);
+        await page.waitForTimeout(200);
+        const screenshotBefore = path.join(evidenceDir, 'scroll-lock-before.png');
+        await page.screenshot({ path: screenshotBefore, fullPage: false });
 
-        // Test 5: Verify scroll-to-bottom button appears
-        const jumpButtonVisible = await page.locator('#scrollToBottomBtn.visible').count() > 0;
-        console.log('📊 Jump-to-bottom button visible:', jumpButtonVisible);
+        // Fire ≥10 new messages and check after each one.
+        const drifts = [];
+        for (let i = 0; i < 12; i++) {
+            await page.evaluate((idx) => {
+                window.onSocketChatMessage({
+                    id: `e2e-new-${idx}-${Date.now()}`,
+                    text: `[E2E new ${idx + 1}] incoming chatter from bot`,
+                    is_from_bot: true,
+                    is_from_user: false,
+                    entity_id: 5,
+                    source: 'entity:5',
+                    timestamp: Date.now(),
+                });
+            }, i);
+            await page.waitForTimeout(120);
+            const after = await page.evaluate(() => document.getElementById('chatMessages').scrollTop);
+            drifts.push({ i: i + 1, scrollTop: after, drift: Math.abs(after - captured) });
+        }
 
-        // Test 6: Test scroll-to-bottom functionality
-        if (jumpButtonVisible) {
+        const maxDrift = drifts.reduce((m, d) => Math.max(m, d.drift), 0);
+        const screenshotAfter = path.join(evidenceDir, 'scroll-lock-after-12msgs.png');
+        await page.screenshot({ path: screenshotAfter, fullPage: false });
+
+        // Verify jump-to-bottom button surfaced
+        const jumpBtnVisible = await page.locator('#scrollToBottomBtn.visible').count() > 0;
+
+        // Click jump-to-bottom and verify we land near bottom
+        if (jumpBtnVisible) {
             await page.click('#scrollToBottomBtn');
-            await page.waitForTimeout(300);
-
-            const afterJumpState = await page.evaluate(() => {
-                const container = document.getElementById('chatMessages');
-                return {
-                    userScrolling: window._chatScrollState.userScrolling,
-                    isAtBottom: container ?
-                        (container.scrollHeight - container.scrollTop - container.clientHeight) < 120 : false
-                };
-            });
-            console.log('📊 After jump-to-bottom:', afterJumpState);
+            // smooth-scroll can take ~1-2s; poll until close to bottom or timeout
+            await page.waitForFunction(() => {
+                const c = document.getElementById('chatMessages');
+                return c.scrollHeight - c.scrollTop - c.clientHeight < 200;
+            }, { timeout: 5000 }).catch(() => {});
         }
-
-        // Test Results Summary
-        const testResults = {
-            scrollStateExposed: scrollStateExists,
-            initialStateValid: initialState.containerExists && typeof initialState.userScrolling === 'boolean',
-            userScrollingDetected: afterScrollState.userScrolling === true,
-            jumpButtonFunctional: jumpButtonVisible
-        };
-
-        console.log('📊 Test Results Summary:');
-        Object.entries(testResults).forEach(([test, passed]) => {
-            console.log(`  - ${test}: ${passed ? '✅' : '❌'}`);
+        const finalState = await page.evaluate(() => {
+            const c = document.getElementById('chatMessages');
+            return {
+                scrollTop: c.scrollTop,
+                distanceFromBottom: c.scrollHeight - c.scrollTop - c.clientHeight,
+            };
         });
+        const screenshotJump = path.join(evidenceDir, 'scroll-lock-after-jump.png');
+        await page.screenshot({ path: screenshotJump, fullPage: false });
 
-        const allTestsPassed = Object.values(testResults).every(result => result === true);
+        const passed = (
+            maxDrift <= TOLERANCE_PX &&
+            jumpBtnVisible &&
+            finalState.distanceFromBottom < 200 &&
+            consoleErrors.length === 0
+        );
 
-        // Take screenshot for evidence (only if not in CI)
-        if (!TEST_CONFIG.headless) {
-            await page.screenshot({
-                path: 'chat_scroll_position_locking_evidence.png',
-                fullPage: true
-            });
-            console.log('📸 Evidence screenshot saved');
-        }
-
-        console.log(allTestsPassed ? '🎉 All scroll position locking tests PASSED!' : '❌ Some tests FAILED!');
-
-        return {
-            passed: allTestsPassed,
-            results: testResults,
-            scrollStates: {
-                initial: initialState,
-                afterScroll: afterScrollState
-            }
+        const report = {
+            passed,
+            captured,
+            maxDrift,
+            tolerance: TOLERANCE_PX,
+            messageCount: drifts.length,
+            jumpBtnVisible,
+            finalState,
+            consoleErrors,
+            drifts,
+            evidence: { before: screenshotBefore, after: screenshotAfter, afterJump: screenshotJump },
         };
-
-    } catch (error) {
-        console.error('❌ E2E test error:', error);
-
-        // Take error screenshot (only if not in CI)
-        if (!TEST_CONFIG.headless) {
-            await page.screenshot({
-                path: 'chat_scroll_position_locking_error.png',
-                fullPage: true
-            });
-        }
-
-        return { passed: false, error: error.message };
+        console.log(JSON.stringify(report, null, 2));
+        return report;
     } finally {
         await browser.close();
     }
 }
 
-// Run test if called directly
 if (require.main === module) {
-    runChatScrollPositionLockingTest().then(result => {
-        console.log('\n📊 Final Test Result:', result);
-        process.exit(result.passed ? 0 : 1);
+    runChatScrollPositionLockingTest().then(r => {
+        process.exit(r.passed ? 0 : 1);
     }).catch(err => {
-        console.error('Test execution error:', err);
-        process.exit(1);
+        console.error('E2E error:', err);
+        process.exit(2);
     });
 }
 
