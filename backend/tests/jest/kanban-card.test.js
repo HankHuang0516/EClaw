@@ -156,8 +156,9 @@ describe('POST /card — assignedBots validation', () => {
         expect(res.status).not.toBe(400);
         const insertCall = mockQuery.mock.calls.find(c => /INSERT INTO kanban_cards/.test(c[0]));
         const params = insertCall[1];
-        // The coord param is the last positional arg; null when invalid.
-        expect(params[params.length - 1]).toBe(null);
+        // The coord param immediately precedes dispatch_mode; null when invalid.
+        expect(params[params.length - 2]).toBe(null);
+        expect(params[params.length - 1]).toBe('immediate');
     });
 });
 
@@ -175,6 +176,71 @@ describe('PUT /card/:id — assignedBots validation', () => {
             .send({ ...AUTH, assignedBots: [] });
         expect(res.status).toBe(400);
         expect(res.body.error).toMatch(/entity.*assigned/i);
+    });
+
+    it('updates automation dispatchMode to idle_only', async () => {
+        mockQuery
+            .mockResolvedValueOnce({
+                rows: [{ id: 'card_auto', device_id: 'test-dev', assigned_bots: [0], dispatch_mode: 'immediate' }],
+            })
+            .mockResolvedValueOnce({
+                rows: [{
+                    id: 'card_auto', device_id: 'test-dev', title: 'Automation',
+                    description: '', priority: 'P0', status: 'backlog',
+                    assigned_bots: [0], created_by: 0, is_automation: true,
+                    dispatch_mode: 'idle_only', pending_dispatch: false,
+                    created_at: new Date(), updated_at: new Date(),
+                    status_changed_at: new Date(), archived: false,
+                }],
+            })
+            .mockResolvedValueOnce({ rows: [] });
+
+        const res = await put('/api/mission/card/card_auto')
+            .send({ ...AUTH, dispatchMode: 'idle_only' });
+
+        expect(res.status).toBe(200);
+        expect(res.body.card.dispatchMode).toBe('idle_only');
+        const updateCall = mockQuery.mock.calls.find(c => /UPDATE kanban_cards SET/.test(c[0]));
+        expect(updateCall[0]).toMatch(/dispatch_mode =/);
+        expect(updateCall[1]).toContain('idle_only');
+    });
+
+    it('clears pending_dispatch when switching dispatchMode back to immediate', async () => {
+        mockQuery
+            .mockResolvedValueOnce({
+                rows: [{ id: 'card_auto', device_id: 'test-dev', assigned_bots: [0], dispatch_mode: 'idle_only', pending_dispatch: true }],
+            })
+            .mockResolvedValueOnce({
+                rows: [{
+                    id: 'card_auto', device_id: 'test-dev', title: 'Automation',
+                    description: '', priority: 'P0', status: 'backlog',
+                    assigned_bots: [0], created_by: 0, is_automation: true,
+                    dispatch_mode: 'immediate', pending_dispatch: false,
+                    created_at: new Date(), updated_at: new Date(),
+                    status_changed_at: new Date(), archived: false,
+                }],
+            })
+            .mockResolvedValueOnce({ rows: [] });
+
+        const res = await put('/api/mission/card/card_auto')
+            .send({ ...AUTH, dispatchMode: 'immediate' });
+
+        expect(res.status).toBe(200);
+        const updateCall = mockQuery.mock.calls.find(c => /UPDATE kanban_cards SET/.test(c[0]));
+        expect(updateCall[0]).toMatch(/dispatch_mode =/);
+        expect(updateCall[0]).toMatch(/pending_dispatch = FALSE/);
+    });
+
+    it('rejects invalid dispatchMode values', async () => {
+        mockQuery.mockResolvedValueOnce({
+            rows: [{ id: 'card_auto', device_id: 'test-dev', assigned_bots: [0], dispatch_mode: 'immediate' }],
+        });
+
+        const res = await put('/api/mission/card/card_auto')
+            .send({ ...AUTH, dispatchMode: 'later' });
+
+        expect(res.status).toBe(400);
+        expect(res.body.error).toMatch(/dispatchMode/i);
     });
 });
 

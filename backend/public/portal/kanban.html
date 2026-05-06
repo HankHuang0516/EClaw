@@ -778,6 +778,11 @@
                         <button type="button" class="kb-cron-chip" data-cron="0 9 * * 1" onclick="selectCron(this)" data-i18n="kb_cron_weekly">Weekly Mon</button>
                     </div>
                     <input class="kb-form-input" id="newCronCustom" style="margin-top:8px" placeholder="Custom cron: */30 * * * *" data-i18n-placeholder="kb_placeholder_cron">
+                    <label class="kb-form-label" style="margin-top:12px">Dispatch Mode</label>
+                    <select class="kb-form-select" id="newDispatchMode">
+                        <option value="immediate">Immediate</option>
+                        <option value="idle_only">Idle only</option>
+                    </select>
                 </div>
             </div>
             <div class="kb-form-actions">
@@ -804,6 +809,14 @@
                 <div class="kb-auto-toggle-row">
                     <label class="kb-auto-toggle-label"><input type="checkbox" id="editRequiresScreenshot"> 📸 <span data-i18n="kb_label_requires_screenshot">需截圖審查（完成時附截圖才可推進 review/done）</span></label>
                 </div>
+            </div>
+            <div class="kb-form-group" id="editDispatchGroup">
+                <label class="kb-form-label">Dispatch Mode</label>
+                <select class="kb-form-select" id="editDispatchMode">
+                    <option value="immediate">Immediate</option>
+                    <option value="idle_only">Idle only</option>
+                </select>
+                <div style="font-size:12px;color:var(--text-secondary);margin-top:6px">Idle only queues the next child card until one assigned bot is idle.</div>
             </div>
             <div id="editSchedFields">
             <div class="kb-form-group">
@@ -1519,8 +1532,10 @@
                 const dateFmt = { timeZone: 'Asia/Taipei', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false };
                 const nextRun = sc.nextRunAt ? new Date(sc.nextRunAt).toLocaleString(undefined, dateFmt) : '—';
                 const lastRun = sc.lastRunAt ? new Date(sc.lastRunAt).toLocaleString(undefined, dateFmt) : t('kb_auto_not_triggered', 'Not triggered');
+                const dispatchLabel = card.dispatchMode === 'idle_only' ? 'idle_only' : 'immediate';
                 scheduleInfo = `<div style="width:100%;margin-top:8px;padding:8px 10px;background:rgba(var(--accent-rgb,99,102,241),0.08);border-radius:6px;font-size:12px;color:var(--text-secondary)">` +
                     `⚡ <strong>${t('kb_auto_badge','Automation')}</strong> &nbsp;|&nbsp; ` +
+                    `🚦 dispatch: <code>${dispatchLabel}</code> &nbsp;|&nbsp; ` +
                     `🕐 ${t('kb_auto_next_trigger','Next')}: ${nextRun} &nbsp;|&nbsp; ` +
                     `✅ ${t('kb_auto_last_trigger','Last')}: ${lastRun}` +
                     (sc.cronExpression ? ` &nbsp;|&nbsp; cron: <code>${sc.cronExpression}</code>` : '') +
@@ -1553,6 +1568,15 @@
                         reviewerOpts +
                     `</select>` +
                 `</div>`;
+            const dispatchMode = card.dispatchMode === 'idle_only' ? 'idle_only' : 'immediate';
+            const dispatchHtml =
+                `<div class="kb-auto-reviewer">` +
+                    `<label>🚦 Dispatch</label>` +
+                    `<select onchange="setAutoDispatchMode('${cardId}',this.value)">` +
+                        `<option value="immediate"${dispatchMode === 'immediate' ? ' selected' : ''}>Immediate</option>` +
+                        `<option value="idle_only"${dispatchMode === 'idle_only' ? ' selected' : ''}>Idle only</option>` +
+                    `</select>` +
+                `</div>`;
             const currentBots = card.assignedBots || [];
             const assignHtml =
                 `<div class="kb-auto-assign">` +
@@ -1575,6 +1599,7 @@
                 moveBar.innerHTML =
                     assignHtml +
                     reviewerHtml +
+                    dispatchHtml +
                     `<div class="kb-auto-actions">` +
                         `<button class="kb-auto-action-btn edit" onclick="editAutoSchedule('${cardId}')" title="${t('kb_auto_edit_tip','Edit schedule')}">✏️ ${t('kb_auto_edit','Edit')}</button>` +
                         `<button class="${pauseCls}" onclick="toggleAutoSchedule('${cardId}',${!isEnabled})">${pauseLabel}</button>` +
@@ -1639,6 +1664,13 @@
             }), { successMsg: t('kb_auto_reviewer', 'Reviewer') + ' → ' + reviewerName });
         }
 
+        async function setAutoDispatchMode(cardId, val) {
+            const dispatchMode = val === 'idle_only' ? 'idle_only' : 'immediate';
+            await withAutoAction(null, () => apiCall('PUT', `/api/mission/card/${cardId}`, {
+                deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret, dispatchMode,
+            }), { refreshModal: true, cardId, successMsg: 'Dispatch → ' + dispatchMode });
+        }
+
         async function toggleAutoSchedule(cardId, enable) {
             const card = findCard(cardId);
             if (!card) {
@@ -1682,6 +1714,10 @@
             document.getElementById('editCardTitle').value = card.title || '';
             document.getElementById('editCardDesc').value = card.description || '';
             document.getElementById('editRequiresScreenshot').checked = card.requiresScreenshotReview !== false;
+            const editDispatchEl = document.getElementById('editDispatchMode');
+            if (editDispatchEl) editDispatchEl.value = card.dispatchMode === 'idle_only' ? 'idle_only' : 'immediate';
+            const editDispatchGroup = document.getElementById('editDispatchGroup');
+            if (editDispatchGroup) editDispatchGroup.style.display = 'none';
             document.getElementById('editSchedFields').style.display = 'none';
             document.getElementById('editSchedModal').classList.add('show');
         }
@@ -1695,6 +1731,10 @@
             document.getElementById('editCardTitle').value = card.title || '';
             document.getElementById('editCardDesc').value = card.description || '';
             document.getElementById('editRequiresScreenshot').checked = card.requiresScreenshotReview !== false;
+            const editDispatchEl = document.getElementById('editDispatchMode');
+            if (editDispatchEl) editDispatchEl.value = card.dispatchMode === 'idle_only' ? 'idle_only' : 'immediate';
+            const editDispatchGroup = document.getElementById('editDispatchGroup');
+            if (editDispatchGroup) editDispatchGroup.style.display = '';
             const sc = card.schedule || {};
             // Set type
             const typeEl = document.getElementById('editSchedType');
@@ -1729,6 +1769,8 @@
         function closeEditSchedule() {
             document.getElementById('editSchedModal').classList.remove('show');
             document.getElementById('editSchedFields').style.display = '';
+            const editDispatchGroup = document.getElementById('editDispatchGroup');
+            if (editDispatchGroup) editDispatchGroup.style.display = '';
         }
 
         function toggleEditSchedFields() {
@@ -1771,7 +1813,10 @@
                 const newDesc = document.getElementById('editCardDesc').value.trim();
                 if (!newTitle) { showToast(t('kb_err_title', 'Title is required'), true); return; }
                 const requiresScreenshotReview = document.getElementById('editRequiresScreenshot').checked;
+                const editDispatchEl = document.getElementById('editDispatchMode');
+                const dispatchMode = editDispatchEl && editDispatchEl.value === 'idle_only' ? 'idle_only' : 'immediate';
                 const cardBody = { deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret, title: newTitle, description: newDesc, requiresScreenshotReview };
+                if (!cardOnlyMode) cardBody.dispatchMode = dispatchMode;
                 await apiCall('PUT', `/api/mission/card/${cardId}`, cardBody);
                 if (!cardOnlyMode) {
                     // Save schedule (automation cards only)
@@ -2691,6 +2736,7 @@
                 const cron = customCron || (selectedChip ? selectedChip.dataset.cron : '0 */4 * * *');
                 body.isAutomation = true;
                 body.schedule = { type: 'recurring', cron };
+                body.dispatchMode = document.getElementById('newDispatchMode').value === 'idle_only' ? 'idle_only' : 'immediate';
                 console.log('[Kanban] createCard: automation, cron=', cron);
             }
             console.log('[Kanban] createCard:', JSON.stringify(body));
@@ -2701,6 +2747,7 @@
                 document.getElementById('newTitle').value = '';
                 document.getElementById('newDesc').value = '';
                 document.getElementById('newIsAutomation').checked = false;
+                document.getElementById('newDispatchMode').value = 'immediate';
                 document.getElementById('newRequiresScreenshot').checked = true;
                 resetAnchorPicker();
                 pendingMindmapCoord = null;
