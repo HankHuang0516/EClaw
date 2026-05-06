@@ -56,6 +56,32 @@ function readDir(dirPath) {
     }
 }
 
+
+function findFileRecursive(rootDir, targetRelativePath) {
+    const normalizedTarget = targetRelativePath.replace(/^\/+/, '');
+    const direct = path.join(rootDir, normalizedTarget);
+    if (fs.existsSync(direct)) return direct;
+
+    const targetBase = path.basename(normalizedTarget).replace(/\.tsx$/, '');
+    const stack = [rootDir];
+    while (stack.length) {
+        const dir = stack.pop();
+        for (const entry of readDir(dir)) {
+            const full = path.join(dir, entry);
+            let stat;
+            try { stat = fs.statSync(full); } catch { continue; }
+            if (stat.isDirectory()) {
+                stack.push(full);
+                continue;
+            }
+            if (!stat.isFile()) continue;
+            const base = path.basename(entry, path.extname(entry));
+            if (entry === normalizedTarget || base === targetBase) return full;
+        }
+    }
+    return null;
+}
+
 // ── Platform Scanners ───────────────────────────────────────
 
 /**
@@ -145,7 +171,7 @@ const FEATURES = [
         apis: ['/api/chat/history'],
         webPages: ['chat.html'],
         androidActivity: 'ChatActivity.kt',
-        iosScreen: 'chat',
+        iosScreen: '(tabs)/chat.tsx',
     },
     {
         name: 'Agent Card',
@@ -160,7 +186,8 @@ const FEATURES = [
         apis: ['/api/schedules'],
         webPages: ['kanban.html'],
         androidActivity: 'ScheduleActivity.kt',
-        iosScreen: 'schedule.tsx',
+        // Legacy /api/schedules is intentionally deprecated; iOS no longer has a standalone schedule screen.
+        iosScreen: null,
     },
     {
         name: 'Feedback',
@@ -175,8 +202,8 @@ const FEATURES = [
         apis: ['/api/contacts'],
         crudOps: { GET: '/api/contacts', POST: '/api/contacts', DELETE: '/api/contacts' },
         webPages: ['card-holder.html'],
-        androidActivity: 'CardHolderActivity.kt',
-        iosScreen: 'card-holder.tsx',
+        androidActivity: 'WebViewActivity.kt', // Android CARDS tab opens /portal/card-holder.html in WebView
+        iosScreen: '(tabs)/cards.tsx',
     },
     {
         name: 'Files',
@@ -354,9 +381,8 @@ for (const feature of FEATURES) {
 
     // iOS screen check
     if (feature.iosScreen) {
-        const screenPath = path.join(IOS_APP_DIR, feature.iosScreen);
-        const exists = fs.existsSync(screenPath) || fs.existsSync(path.join(IOS_APP_DIR, feature.iosScreen.replace('.tsx', '')));
-        check(`${feature.name} iOS: ${feature.iosScreen}`, exists);
+        const matchPath = findFileRecursive(IOS_APP_DIR, feature.iosScreen);
+        check(`${feature.name} iOS: ${feature.iosScreen}`, !!matchPath, matchPath || 'not found');
     }
 }
 

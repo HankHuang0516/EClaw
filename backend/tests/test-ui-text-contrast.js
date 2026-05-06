@@ -213,10 +213,14 @@ function checkChatInputFixed() {
 
     const content = fs.readFileSync(chatLayout, 'utf8');
 
-    // Find the editMessage input
+    // The Android ChatActivity now hosts the canonical web chat UI in a WebView.
+    // Older native layouts had @+id/editMessage; if that view is gone, verify the
+    // WebView exists and let the full layout scanner cover all remaining native inputs.
     const editMsgMatch = content.match(/<(?:EditText|com\.google\.android\.material\.textfield\.TextInputEditText)\b[^>]*android:id="@\+id\/editMessage"[^>]*\/>/s);
     if (!editMsgMatch) {
-        check('editMessage input found', false, 'Not found in activity_chat.xml');
+        const hasWebChat = /<WebView\b[^>]*android:id="@\+id\/webViewChat"/s.test(content);
+        check('chat input hosted by canonical WebView', hasWebChat,
+            hasWebChat ? 'activity_chat.xml uses webViewChat; no native editMessage expected' : 'No editMessage or webViewChat found');
         return;
     }
     check('editMessage input found', true);
