@@ -1,3 +1,10 @@
+## [1.1172.2](https://github.com/HankHuang0516/EClaw/compare/v1.1172.1...v1.1172.2) (2026-05-06)
+
+
+### Bug Fixes
+
+* **i18n:** remove shadowed duplicate locale keys ([#2489](https://github.com/HankHuang0516/EClaw/issues/2489)) ([08be1ca](https://github.com/HankHuang0516/EClaw/commit/08be1ca51c25e9440d8422fa8698b7f6278913a9))
+
 ## [1.1172.1](https://github.com/HankHuang0516/EClaw/compare/v1.1172.0...v1.1172.1) (2026-05-06)
 
 
