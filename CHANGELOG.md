@@ -1,3 +1,10 @@
+# [1.1170.0](https://github.com/HankHuang0516/EClaw/compare/v1.1169.0...v1.1170.0) (2026-05-06)
+
+
+### Features
+
+* add MiniGame admin analytics ([#2473](https://github.com/HankHuang0516/EClaw/issues/2473)) ([a40c9b5](https://github.com/HankHuang0516/EClaw/commit/a40c9b5f72484c909a176e5bf06d8725095a4ba6))
+
 # [1.1169.0](https://github.com/HankHuang0516/EClaw/compare/v1.1168.3...v1.1169.0) (2026-05-06)
 
 
