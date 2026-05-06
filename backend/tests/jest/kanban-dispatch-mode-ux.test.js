@@ -22,4 +22,14 @@ describe('kanban automation dispatch mode UX', () => {
     test('card detail displays dispatch mode state', () => {
         expect(kanbanHtml).toContain('🚦 dispatch: <code>${dispatchLabel}</code>');
     });
+
+    test('schedule tab exposes dispatch mode control', () => {
+        expect(kanbanHtml).toContain('id="sp-dispatch-mode"');
+        expect(kanbanHtml).toMatch(/assignedBots, dispatchMode/);
+    });
+
+    test('automation list and timeline surface dispatch mode without opening edit form', () => {
+        expect(kanbanHtml).toContain('🚦 ${c.dispatchMode');
+        expect(kanbanHtml).toContain('🚦 ${dispatchMode}');
+    });
 });
