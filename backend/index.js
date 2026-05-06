@@ -1631,6 +1631,15 @@ try {
     kanbanModule = { initKanbanDatabase: () => {}, startBackgroundTimers: () => {} };
 }
 
+// Idle Dispatch System — smart bot availability-based card dispatch
+try {
+    const idleDispatchRouter = require('./api_idle_dispatch');
+    app.use('/api/mission/idle-dispatch', idleDispatchRouter);
+    console.log('[IdleDispatch] Module loaded successfully');
+} catch (err) {
+    console.error('[IdleDispatch] Failed to load module:', err.message);
+}
+
 // Growth metrics — botSecret + admin-owner gated, aggregate-only
 try {
     const growthModule = require('./growth')(devices);
@@ -11253,6 +11262,84 @@ app.put('/api/entity/:entityId/prompt-policy', async (req, res) => {
     io.to(deviceId).emit('prompt-policy:updated', { scope: 'entity', entityId: parseInt(entityId), promptPolicy: cleaned });
     serverLog('info', 'prompt-policy', `Entity ${entityId} prompt policy updated`, { deviceId, entityId: parseInt(entityId) });
     res.json({ success: true, promptPolicy: cleaned });
+});
+
+/**
+ * GET /api/entity/:entityId/workload — Get entity workload status for idle dispatch
+ * Auth: deviceSecret (owner) OR botSecret (entity self-check)
+ */
+app.get('/api/entity/:entityId/workload', async (req, res) => {
+    const { deviceId, deviceSecret, botSecret } = req.query;
+    const { entityId } = req.params;
+
+    if (!deviceId || entityId === undefined) {
+        return res.status(400).json({ success: false, error: 'deviceId, entityId required' });
+    }
+
+    // Auth: device owner OR entity self-check
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+
+    const entityIdInt = parseInt(entityId);
+    let authResult = null;
+
+    if (deviceSecret) {
+        authResult = requireDeviceOwner(device, deviceSecret);
+    } else if (botSecret) {
+        authResult = requireBotSecret(device, entityIdInt, botSecret);
+    } else {
+        return res.status(400).json({ success: false, error: 'deviceSecret or botSecret required' });
+    }
+
+    if (authResult.error) {
+        return res.status(authResult.status).json({ success: false, error: authResult.error });
+    }
+
+    const entity = device.entities[entityIdInt];
+    if (!entity) return res.status(404).json({ success: false, error: 'Entity not found' });
+
+    try {
+        // Query kanban cards for active tasks
+        const result = await pool.query(`
+            SELECT
+                status,
+                COUNT(*) as count
+            FROM kanban_cards
+            WHERE device_id = $1
+              AND $2 = ANY(assigned_bots::integer[])
+              AND archived = false
+              AND status IN ('scheduled', 'todo', 'in_progress', 'review')
+            GROUP BY status
+        `, [deviceId, entityIdInt]);
+
+        // Count tasks by status
+        const taskCounts = {
+            scheduled: 0,
+            todo: 0,
+            in_progress: 0,
+            review: 0
+        };
+
+        let totalActiveTasks = 0;
+        for (const row of result.rows) {
+            taskCounts[row.status] = parseInt(row.count);
+            totalActiveTasks += parseInt(row.count);
+        }
+
+        const hasActiveTasks = totalActiveTasks > 0;
+
+        res.json({
+            success: true,
+            entityId: entityIdInt,
+            hasActiveTasks,
+            taskCounts,
+            lastUpdateTime: new Date().toISOString()
+        });
+
+    } catch (err) {
+        console.error('[Workload] Entity workload check error:', err);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
 });
 
 /**

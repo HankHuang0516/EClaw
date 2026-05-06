@@ -550,6 +550,10 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
         if (row.last_run_result) card.lastRunResult = row.last_run_result;
         if (row.active_child_id) card.activeChildId = row.active_child_id;
 
+        // Idle dispatch fields
+        card.dispatchMode = row.dispatch_mode || 'immediate';
+        if (row.pending_dispatch) card.pendingDispatch = true;
+
         // Chat-anchor (provenance back to chat message + mind-map coord);
         // null on auto-generated cards (renders as N/A in UI).
         card.chatAnchorMessageId = row.chat_anchor_message_id || null;
@@ -564,7 +568,7 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     router.post('/card', async (req, res) => {
         if (!authenticate(req, res)) return;
         const _p = { ...req.query, ...req.body }; console.log('[Kanban] POST /card called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
-        const { deviceId, title, description, priority, status, assignedBots, entityId, reviewerEntityId, isAutomation, schedule, requiresScreenshotReview, chatAnchorMessageId, chatAnchorCoord } = req.body;
+        const { deviceId, title, description, priority, status, assignedBots, entityId, reviewerEntityId, isAutomation, schedule, requiresScreenshotReview, chatAnchorMessageId, chatAnchorCoord, dispatchMode } = req.body;
 
         if (!title || !title.trim()) {
             return res.status(400).json({ success: false, error: 'Missing title' });
@@ -656,6 +660,9 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             ? false  // Default to disabled for all new cards
             : requiresScreenshotReview !== false;
 
+        // Validate dispatch mode
+        const finalDispatchMode = (dispatchMode === 'idle_only') ? 'idle_only' : 'immediate';
+
         // Chat-anchor: pin originating chat message + mind-map coord (Phase 1 — persist
         // only; UI picker + validator enforcement land in follow-up PRs). Auto-cards leave
         // both NULL so the UI renders N/A.
@@ -687,14 +694,14 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             const result = await pool.query(
                 `INSERT INTO kanban_cards (id, device_id, title, description, priority, status, assigned_bots, created_by, reviewer_entity_id, status_changed_at,
                     is_automation, schedule_enabled, schedule_type, schedule_cron, schedule_run_at, schedule_timezone, schedule_next_run_at, requires_screenshot_review,
-                    chat_anchor_message_id, chat_anchor_coord)
+                    chat_anchor_message_id, chat_anchor_coord, dispatch_mode)
                  VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8, $9, NOW(),
                     $10, $11, $12, $13, $14, $15, $16, $17,
-                    $18, $19::jsonb)
+                    $18, $19::jsonb, $20)
                  RETURNING *`,
                 [newCardId(), deviceId, title.trim(), description || '', cardPriority, cardStatus, JSON.stringify(bots), createdBy, reviewer,
                     finalAutomation, schedEnabled, schedType, schedCron, schedRunAt, schedTz, schedNextRunAt, finalRequiresScreenshot,
-                    anchorMsgId, anchorCoord ? JSON.stringify(anchorCoord) : null]
+                    anchorMsgId, anchorCoord ? JSON.stringify(anchorCoord) : null, finalDispatchMode]
             );
 
             const card = serializeCard(result.rows[0]);
@@ -2072,12 +2079,13 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     // Nudge-gap is now per-device (kanban_nudge_interval_minutes, default 3h).
 
     /**
-     * Unified background tick: stale nudge + auto-archive + schedule triggers.
+     * Unified background tick: stale nudge + auto-archive + schedule triggers + pending dispatch retry.
      */
     async function backgroundTick() {
         await checkStaleCards();
         await checkDoneAutoArchive();
         await checkScheduleTriggers();
+        await checkPendingDispatch();
     }
 
     // #1701: Escalation thresholds (can be overridden per-card via config.escalationPolicy)
@@ -2451,6 +2459,67 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                         }
                     }
 
+                    // Check idle dispatch mode before creating child card
+                    const dispatchMode = card.dispatch_mode || 'immediate';
+                    if (dispatchMode === 'idle_only') {
+                        console.log(`[Kanban] Automation ${card.id}: checking entity idle status (dispatch_mode=idle_only)`);
+
+                        // Check if target entities are idle (no active tasks)
+                        const bots = card.assigned_bots || [];
+                        let hasActiveEntity = false;
+                        let activeEntityInfo = '';
+
+                        for (const botId of bots) {
+                            try {
+                                const workloadCheck = await pool.query(`
+                                    SELECT COUNT(*) as active_count
+                                    FROM kanban_cards
+                                    WHERE device_id = $1
+                                      AND $2 = ANY(assigned_bots::integer[])
+                                      AND archived = false
+                                      AND status IN ('scheduled', 'todo', 'in_progress', 'review')
+                                `, [card.device_id, botId]);
+
+                                const activeCount = parseInt(workloadCheck.rows[0]?.active_count || 0);
+                                if (activeCount > 0) {
+                                    hasActiveEntity = true;
+                                    activeEntityInfo += `Entity ${botId}: ${activeCount} 項任務; `;
+                                    console.log(`[Kanban] Entity ${botId} busy: ${activeCount} active tasks`);
+                                }
+                            } catch (err) {
+                                console.error(`[Kanban] Workload check error for entity ${botId}:`, err.message);
+                                // On error, assume entity is available to avoid blocking
+                            }
+                        }
+
+                        if (hasActiveEntity) {
+                            // Entities are busy, mark as pending dispatch
+                            await pool.query(
+                                `UPDATE kanban_cards SET pending_dispatch = true, updated_at = NOW() WHERE id = $1`,
+                                [card.id]
+                            );
+
+                            const nextRun = computeNextRun(card.schedule_cron, card.schedule_timezone);
+                            await pool.query(
+                                `UPDATE kanban_cards SET schedule_last_run_at = NOW(), schedule_next_run_at = $1, updated_at = NOW() WHERE id = $2`,
+                                [nextRun, card.id]
+                            );
+
+                            await addSystemComment(card.id, card.device_id,
+                                `⏸️ 閒置派發暫停 — 目標實體忙碌中：${activeEntityInfo.trim()}`);
+                            console.log(`[Kanban] Idle dispatch deferred: ${card.id}, entities busy: ${activeEntityInfo}`);
+                            continue;
+                        } else {
+                            // All entities idle, proceed with dispatch
+                            console.log(`[Kanban] All entities idle, proceeding with child card creation`);
+                            // Clear pending_dispatch flag if previously set
+                            await pool.query(
+                                `UPDATE kanban_cards SET pending_dispatch = false WHERE id = $1`,
+                                [card.id]
+                            );
+                        }
+                    }
+
                     // Generate timestamp for child title
                     const now = new Date();
                     const tz = card.schedule_timezone || 'Asia/Taipei';
@@ -2579,6 +2648,121 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             }
         } catch (err) {
             console.error('[Kanban] Schedule trigger error:', err.message);
+        }
+    }
+
+    /**
+     * Check pending dispatch cards and retry if target entities are now idle.
+     */
+    async function checkPendingDispatch() {
+        try {
+            const result = await pool.query(`
+                SELECT * FROM kanban_cards
+                WHERE pending_dispatch = true
+                  AND is_automation = true
+                  AND archived = false
+                  AND dispatch_mode = 'idle_only'
+                ORDER BY updated_at ASC
+            `);
+
+            if (result.rows.length === 0) return;
+            console.log(`[Kanban] Pending dispatch check: ${result.rows.length} card(s) waiting`);
+
+            for (const card of result.rows) {
+                console.log(`[Kanban] Checking pending dispatch: ${card.id} (${card.title})`);
+
+                // Check if target entities are idle now
+                const bots = card.assigned_bots || [];
+                let hasActiveEntity = false;
+                let activeEntityInfo = '';
+
+                for (const botId of bots) {
+                    try {
+                        const workloadCheck = await pool.query(`
+                            SELECT COUNT(*) as active_count
+                            FROM kanban_cards
+                            WHERE device_id = $1
+                              AND $2 = ANY(assigned_bots::integer[])
+                              AND archived = false
+                              AND status IN ('scheduled', 'todo', 'in_progress', 'review')
+                        `, [card.device_id, botId]);
+
+                        const activeCount = parseInt(workloadCheck.rows[0]?.active_count || 0);
+                        if (activeCount > 0) {
+                            hasActiveEntity = true;
+                            activeEntityInfo += `Entity ${botId}: ${activeCount} 項任務; `;
+                        }
+                    } catch (err) {
+                        console.error(`[Kanban] Pending workload check error for entity ${botId}:`, err.message);
+                    }
+                }
+
+                if (!hasActiveEntity) {
+                    // All entities are now idle, trigger the dispatch
+                    console.log(`[Kanban] Entities now idle, triggering pending dispatch: ${card.id}`);
+
+                    // Generate timestamp for child title
+                    const now = new Date();
+                    const tz = card.schedule_timezone || 'Asia/Taipei';
+                    let timeLabel;
+                    try {
+                        timeLabel = now.toLocaleString('en-US', { timeZone: tz, month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+                    } catch (e) {
+                        timeLabel = now.toISOString().slice(5, 16).replace('T', ' ');
+                    }
+                    const childTitle = `[Auto] ${card.title} (${timeLabel})`;
+
+                    // Create child card with inherited settings
+                    const inheritScreenshot = card.requires_screenshot_review;
+                    const childResult = await pool.query(
+                        `INSERT INTO kanban_cards (id, device_id, title, description, priority, status, assigned_bots, created_by,
+                            status_changed_at, stale_threshold_ms, done_retention_ms, parent_card_id, is_auto_generated, reviewer_entity_id,
+                            requires_screenshot_review)
+                         VALUES ($1, $2, $3, $4, $5, 'todo', $6::jsonb, $7, NOW(), $8, $9, $10, true, $11, $12)
+                         RETURNING *`,
+                        [newCardId(), card.device_id, childTitle, card.description || '', card.priority,
+                         JSON.stringify(bots), card.created_by,
+                         card.stale_threshold_ms, card.done_retention_ms, card.id,
+                         card.reviewer_entity_id || null, inheritScreenshot]
+                    );
+                    const childCard = childResult.rows[0];
+
+                    // Update parent card: clear pending_dispatch, set active_child_id
+                    await pool.query(
+                        `UPDATE kanban_cards SET
+                            pending_dispatch = false,
+                            active_child_id = $1,
+                            last_run_result = '閒置派發成功',
+                            updated_at = NOW()
+                         WHERE id = $2`,
+                        [childCard.id, card.id]
+                    );
+
+                    await addSystemComment(card.id, card.device_id,
+                        `✅ 閒置派發成功 — 子卡 ${childCard.id} 已創建（實體現已閒置）`);
+
+                    // Notify assigned entities
+                    if (bots.length > 0) {
+                        const lang = await getDeviceLanguage(card.device_id);
+                        const msg = tKanban(lang, 'automationTrigger', {
+                            title: card.title,
+                            childId: childCard.id
+                        });
+                        notifyEntities(card.device_id, bots, msg, {
+                            description: card.description,
+                            cardId: childCard.id,
+                            parentCardId: card.id
+                        });
+                    }
+
+                    try { await bumpVersion(card.device_id); } catch (e) { /* ignore */ }
+                    console.log(`[Kanban] Pending dispatch completed: ${card.id} → child ${childCard.id}`);
+                } else {
+                    console.log(`[Kanban] Still waiting for idle: ${card.id}, busy entities: ${activeEntityInfo}`);
+                }
+            }
+        } catch (err) {
+            console.error('[Kanban] Pending dispatch error:', err.message);
         }
     }
 

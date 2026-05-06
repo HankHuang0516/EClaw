@@ -180,3 +180,12 @@ CREATE TABLE IF NOT EXISTS kanban_pending_notify (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_kanban_pending_notify_bot ON kanban_pending_notify(device_id, bot_entity_id, created_at);
+
+-- ============================================
+-- Migration: Idle dispatch automation
+-- ============================================
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS dispatch_mode VARCHAR(20) DEFAULT 'immediate';
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS pending_dispatch BOOLEAN DEFAULT FALSE;
+
+CREATE INDEX IF NOT EXISTS idx_kanban_cards_pending_dispatch ON kanban_cards(device_id, pending_dispatch, dispatch_mode)
+    WHERE pending_dispatch = TRUE;
