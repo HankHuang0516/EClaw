@@ -938,5 +938,12 @@ If you have any questions, please contact us via our official email.
     <string name="wallpaper_load_entities_failed">Failed to load entities: %s</string>
     <string name="org_chart_sheet_title">Org Chart</string>
     <string name="close">Close</string>
+    <string name="tool_status_reading">Reading file…</string>
+    <string name="tool_status_searching">Searching code…</string>
+    <string name="tool_status_finding">Finding files…</string>
+    <string name="tool_status_analyzing">Running analysis…</string>
+    <string name="tool_status_editing">Editing file…</string>
+    <string name="tool_status_writing">Writing file…</string>
+    <string name="no_bound_entities">No bound entities</string>
 </resources>
 

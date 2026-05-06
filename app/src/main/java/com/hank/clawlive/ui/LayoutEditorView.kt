@@ -183,7 +183,7 @@ class LayoutEditorView @JvmOverloads constructor(
             // Draw empty message
             labelPaint.textSize = 36f
             labelPaint.color = Color.GRAY
-            canvas.drawText("No bound entities", width / 2f, height / 2f, labelPaint)
+            canvas.drawText(getString(R.string.no_bound_entities), width / 2f, height / 2f, labelPaint)
             return
         }
 
