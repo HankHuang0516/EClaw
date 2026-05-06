@@ -188,6 +188,12 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Daily pool update: new hard-tier vision challenges ──
+    { file: null, description: 'A Kubernetes cluster diagram: one control plane at the top connected to three worker nodes; each worker node contains two running pods and one pending (yellow) pod — nine pods total', keywords: ['kubernetes', 'three', 'worker', 'nine', 'pods', 'pending', 'control'] },
+    { file: null, description: 'A terminal window showing git log --oneline with five commits; the third commit message reads "fix: null pointer exception in UserService.java"', keywords: ['git', 'five', 'commits', 'null', 'pointer', 'fix', 'UserService'] },
+    { file: null, description: 'A marketing analytics dashboard with four KPI tiles: conversion rate 3.2%, bounce rate 67.4%, average session duration 4 min 32 sec, and total revenue $12,847 highlighted in green', keywords: ['conversion', '3.2', 'bounce', '67', 'revenue', '12847', 'four'] },
+    { file: null, description: 'A UML class diagram with three classes: Animal (parent) has attributes name and age plus method speak(); Dog and Cat both extend Animal shown with dashed inheritance arrows pointing up to Animal', keywords: ['UML', 'three', 'animal', 'dog', 'cat', 'extend', 'speak'] },
+    { file: null, description: 'An ERD showing four tables: users (id, email, created_at), orders (id, user_id, total, status), order_items (id, order_id, product_id, qty), products (id, name, price) — foreign key lines connect them', keywords: ['ERD', 'four', 'tables', 'users', 'orders', 'products', 'foreign'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +374,15 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── Daily pool update: new medium-hard coding challenges ──
+    { title: 'Jump Game', description: 'Write `solve(nums)` — given an array of non-negative integers where each element is the maximum jump length from that position, return true if you can reach the last index starting from index 0.',
+      testCases: [{ input: '[2,3,1,1,4]', expected: 'true' },{ input: '[3,2,1,0,4]', expected: 'false' },{ input: '[0]', expected: 'true' },{ input: '[2,0,0]', expected: 'true' }] },
+    { title: 'Letter Combinations', description: 'Write `solve(digits)` — given a digit string (2-9), return all possible letter combinations from a phone keypad (2=abc,3=def,4=ghi,5=jkl,6=mno,7=pqrs,8=tuv,9=wxyz). Return sorted alphabetically. Empty string returns [].',
+      testCases: [{ input: '"23"', expected: '["ad","ae","af","bd","be","bf","cd","ce","cf"]' },{ input: '""', expected: '[]' },{ input: '"2"', expected: '["a","b","c"]' }] },
+    { title: 'Top K Frequent', description: 'Write `solve(nums, k)` — return the k most frequent elements. If tied in frequency, return in ascending numeric order.',
+      testCases: [{ input: '[1,1,1,2,2,3], 2', expected: '[1,2]' },{ input: '[1], 1', expected: '[1]' },{ input: '[1,2,2,3,3,3], 2', expected: '[2,3]' }] },
+    { title: 'Subarray Sum Equals K', description: 'Write `solve(nums, k)` — return the total number of continuous subarrays whose elements sum to k.',
+      testCases: [{ input: '[1,1,1], 2', expected: '2' },{ input: '[1,2,3], 3', expected: '2' },{ input: '[1,-1,0], 0', expected: '3' },{ input: '[0,0,0], 0', expected: '6' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +432,12 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Daily pool update: new medium-hard response questions ──
+    { question: 'A job takes 12 days when 8 workers do it. At the same rate, how many days would 16 workers take?', expectedKeywords: ['6'] },
+    { question: 'From a group of 5 people, how many different committees of 3 people can be formed?', expectedKeywords: ['10'] },
+    { question: 'A shopkeeper buys goods for $200 and marks them up 40%. He then gives a 10% discount on the marked price. What is his profit percentage?', expectedKeywords: ['26'] },
+    { question: 'What is the smallest prime number greater than 50?', expectedKeywords: ['53'] },
+    { question: 'A car depreciates by 20% each year. If it was worth $25,000 new, what is its value after 2 years?', expectedKeywords: ['16000'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +515,11 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Daily pool update: new hard-tier TTS phrases ──
+    { text: 'NASDAQ futures rose 1.7 percent to 18,423 points as investors anticipated Federal Reserve rate cut signals', keywords: ['NASDAQ', 'futures', '1.7', '18423', 'federal', 'reserve'] },
+    { text: 'The patient was prescribed 250 milligrams of amoxicillin three times daily for seven days taken with meals', keywords: ['amoxicillin', '250', 'milligrams', 'three', 'seven', 'meals'] },
+    { text: 'Ladies and gentlemen this is your final boarding call for flight QF-031 to Sydney departing from Gate D14 in five minutes', keywords: ['boarding', 'QF', '031', 'Sydney', 'gate', 'D14'] },
+    { text: 'TypeError: Cannot read properties of undefined reading forEach at line 142 in components slash DataTable dot jsx', keywords: ['TypeError', 'undefined', 'forEach', '142', 'DataTable'] },
 ];
 
 // ============================================
