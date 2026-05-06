@@ -1275,10 +1275,17 @@
             html += '<div id="arenaFeedbackContent" style="color:var(--text-secondary);">Loading...</div>';
             html += '</div>';
 
+            // MiniGame submissions section
+            html += '<div class="section-card">';
+            html += '<div class="section-title">🎮 MiniGame Submissions</div>';
+            html += '<div id="miniGameSubmissionsContent" style="color:var(--text-secondary);">Loading...</div>';
+            html += '</div>';
+
             content.innerHTML = html;
 
-            // Load arena feedback asynchronously
+            // Load optional feedback sections asynchronously
             loadArenaFeedback();
+            loadMiniGameSubmissions();
         }
 
         async function loadArenaFeedback() {
@@ -1302,6 +1309,53 @@
                     fbHtml += '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(caps) + '</td>';
                     fbHtml += '<td>' + (f.credibility_score != null ? f.credibility_score + '/10' : '-') + '</td>';
                     fbHtml += '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(f.comment || '-') + '</td>';
+                    fbHtml += '</tr>';
+                }
+                fbHtml += '</tbody></table></div>';
+                el.innerHTML = fbHtml;
+            } catch (e) {
+                el.innerHTML = '<p style="color:var(--danger);">Failed to load: ' + escapeHtml(e.message) + '</p>';
+            }
+        }
+
+        async function loadMiniGameSubmissions() {
+            const el = document.getElementById('miniGameSubmissionsContent');
+            if (!el) return;
+            try {
+                const data = await apiCall('GET', '/api/admin/minigame-submissions?limit=50');
+                const submissions = data.submissions || [];
+                const summary = data.summary || {};
+                let fbHtml = '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">';
+                fbHtml += '<span style="background:var(--bg-secondary);padding:6px 10px;border-radius:8px;">Total: ' + (summary.total || 0) + '</span>';
+                fbHtml += '<span style="background:var(--bg-secondary);padding:6px 10px;border-radius:8px;">Open: ' + (summary.open || 0) + '</span>';
+                fbHtml += '<span style="background:var(--bg-secondary);padding:6px 10px;border-radius:8px;">Bug reports: ' + (summary.bugReports || 0) + '</span>';
+                fbHtml += '<span style="background:var(--bg-secondary);padding:6px 10px;border-radius:8px;">High priority: ' + (summary.highPriority || 0) + '</span>';
+                fbHtml += '</div>';
+
+                if (submissions.length === 0) {
+                    el.innerHTML = fbHtml + '<p style="padding:12px;">No MiniGame submissions yet.</p>';
+                    return;
+                }
+
+                fbHtml += '<div class="table-scroll"><table class="data-table"><thead><tr>';
+                fbHtml += '<th>Time</th><th>Category</th><th>Severity</th><th>Status</th><th>Source</th><th>Tags</th><th>Message</th><th>Device</th><th>Issue</th>';
+                fbHtml += '</tr></thead><tbody>';
+                for (const f of submissions) {
+                    const tags = Array.isArray(f.tags) ? f.tags.join(', ') : '';
+                    const message = f.message || '-';
+                    const issue = f.github_issue_url
+                        ? '<a href="' + escapeHtml(f.github_issue_url) + '" target="_blank" rel="noopener noreferrer">Issue</a>'
+                        : '—';
+                    fbHtml += '<tr>';
+                    fbHtml += '<td>' + formatDate(f.created_at) + '</td>';
+                    fbHtml += '<td>' + escapeHtml(f.category || '-') + '</td>';
+                    fbHtml += '<td>' + escapeHtml(f.severity || '-') + '</td>';
+                    fbHtml += '<td>' + escapeHtml(f.status || '-') + '</td>';
+                    fbHtml += '<td>' + escapeHtml(f.source || '-') + '</td>';
+                    fbHtml += '<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;">' + escapeHtml(tags || '-') + '</td>';
+                    fbHtml += '<td style="max-width:360px;white-space:normal;">' + escapeHtml(message.length > 240 ? message.slice(0, 240) + '…' : message) + '</td>';
+                    fbHtml += '<td><code>' + escapeHtml(f.device_id || '-') + '</code></td>';
+                    fbHtml += '<td>' + issue + '</td>';
                     fbHtml += '</tr>';
                 }
                 fbHtml += '</tbody></table></div>';

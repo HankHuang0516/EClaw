@@ -205,6 +205,11 @@ describe('Admin endpoints — unauthenticated access blocked', () => {
         expect(res.status).toBe(401);
     });
 
+    it('GET /api/admin/minigame-submissions rejects without auth', async () => {
+        const res = await get('/api/admin/minigame-submissions');
+        expect(res.status).toBe(401);
+    });
+
     it('POST /api/admin/gatekeeper/reset rejects without auth', async () => {
         const res = await post('/api/admin/gatekeeper/reset')
             .send({ deviceId: 'test' });

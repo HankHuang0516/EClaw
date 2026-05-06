@@ -38,6 +38,8 @@ async function initFeedbackTable(pool) {
         await pool.query(`ALTER TABLE feedback ADD COLUMN IF NOT EXISTS source VARCHAR(16) DEFAULT 'unknown'`);
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_feedback_device ON feedback(device_id)`);
         await pool.query(`CREATE INDEX IF NOT EXISTS idx_feedback_status ON feedback(status)`);
+        await pool.query(`CREATE INDEX IF NOT EXISTS idx_feedback_source ON feedback(source)`);
+        await pool.query(`CREATE INDEX IF NOT EXISTS idx_feedback_tags ON feedback USING GIN(tags)`);
         console.log('[Feedback] Table migration complete');
     } catch (err) {
         console.error('[Feedback] Migration error:', err.message);
@@ -460,6 +462,95 @@ async function getFeedbackList(pool, { deviceId, status, severity, limit = 50, o
     }
 }
 
+const MINIGAME_FEEDBACK_TERMS = Object.freeze([
+    'minigame',
+    'mini_game',
+    'mini-game',
+    'mini game',
+    'game_factory',
+    'game-factory',
+    'game factory'
+]);
+
+function clampFeedbackPage(value, fallback, max) {
+    const parsed = parseInt(value, 10);
+    if (!Number.isFinite(parsed) || parsed < 0) return fallback;
+    return Math.min(parsed, max);
+}
+
+function miniGameFeedbackWhereClause(termParam = '$1') {
+    return `(
+        LOWER(COALESCE(source, '')) = ANY(${termParam}::text[])
+        OR LOWER(COALESCE(category, '')) = ANY(${termParam}::text[])
+        OR EXISTS (
+            SELECT 1
+            FROM unnest(COALESCE(tags, ARRAY[]::text[])) AS feedback_tag(tag)
+            WHERE LOWER(feedback_tag.tag) = ANY(${termParam}::text[])
+        )
+        OR message ILIKE '%minigame%'
+        OR message ILIKE '%mini game%'
+        OR message ILIKE '%game factory%'
+    )`;
+}
+
+/**
+ * Admin-facing MiniGame submission list.
+ *
+ * MiniGame submissions are stored in the shared feedback table. The public
+ * submitter can identify them through source/category/tags; the message
+ * fallback keeps older submissions visible if they only mentioned MiniGame in
+ * the text body.
+ */
+async function getMiniGameSubmissions(pool, { limit = 50, offset = 0 } = {}) {
+    const empty = {
+        summary: { total: 0, open: 0, bugReports: 0, highPriority: 0 },
+        submissions: []
+    };
+    if (!pool) return empty;
+
+    const safeLimit = clampFeedbackPage(limit, 50, 200);
+    const safeOffset = clampFeedbackPage(offset, 0, Number.MAX_SAFE_INTEGER);
+    const terms = Array.from(MINIGAME_FEEDBACK_TERMS);
+    const where = miniGameFeedbackWhereClause('$1');
+
+    try {
+        const summaryResult = await pool.query(
+            `SELECT
+                CAST(COUNT(*) AS int) AS total,
+                CAST(COUNT(*) FILTER (WHERE status = 'open') AS int) AS open,
+                CAST(COUNT(*) FILTER (WHERE category = 'bug') AS int) AS bug_reports,
+                CAST(COUNT(*) FILTER (WHERE severity IN ('critical', 'high')) AS int) AS high_priority
+             FROM feedback
+             WHERE ${where}`,
+            [terms]
+        );
+
+        const listResult = await pool.query(
+            `SELECT id, device_id, message, category, severity, status, tags, app_version,
+                    source, github_issue_url, created_at
+             FROM feedback
+             WHERE ${where}
+             ORDER BY created_at DESC
+             LIMIT $2 OFFSET $3`,
+            [terms, safeLimit, safeOffset]
+        );
+
+        const summaryRow = summaryResult.rows[0] || {};
+        return {
+            summary: {
+                total: parseInt(summaryRow.total, 10) || 0,
+                open: parseInt(summaryRow.open, 10) || 0,
+                bugReports: parseInt(summaryRow.bug_reports, 10) || 0,
+                highPriority: parseInt(summaryRow.high_priority, 10) || 0
+            },
+            submissions: listResult.rows
+        };
+    } catch (err) {
+        console.error('[Feedback] MiniGame submissions list error:', err.message);
+        return empty;
+    }
+}
+
 /**
  * Get single feedback by ID (full record with log_snapshot).
  */
@@ -831,6 +922,9 @@ module.exports = {
     generateAiPrompt,
     saveFeedback,
     getFeedbackList,
+    getMiniGameSubmissions,
+    miniGameFeedbackWhereClause,
+    MINIGAME_FEEDBACK_TERMS,
     getFeedbackById,
     updateFeedback,
     createGithubIssue,

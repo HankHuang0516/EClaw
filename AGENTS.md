@@ -1087,6 +1087,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | gRPC Transport | `node backend/tests/test-grpc-transport.js` | None (local) | Proto loading, gRPC server, HealthService |
 | ENV Vars Merge | `node backend/tests/test-vars-merge.js` | Device ID + Secret | Cross-platform merge, conflict splitting |
 | Channel API | `node backend/tests/test-channel-api.js` | Device ID + Secret | OpenClaw channel integration |
+| MiniGame Admin Submissions | `cd backend && npx jest tests/jest/minigame-admin-submissions.test.js tests/jest/admin-auth.test.js --runInBand` | None | Regression: admin-only MiniGame submissions API matches feedback source/category/tags/body and admin page endpoint remains auth-gated |
 | Kanban auto-review busy-state guard | `cd backend && npx jest tests/jest/kanban-autoreview-busy-state-guard.test.js --runInBand` | None | Regression: BUSY/PROCESSING/WORKING progress heartbeats must not auto-close kanban child cards before work completes |
 | Portal static IDs | `cd backend && npx jest tests/jest/portal-static-ids.test.js --runInBand` | None | Regression #2468: dashboard invite banners must have unique IDs and onboarding JS must target the onboarding banner |
 | Skill Templates | `node backend/tests/test-skill-templates.js` | None | Skill template CRUD, requiredVars format validation (Gson compat), contribute endpoint input guard |
