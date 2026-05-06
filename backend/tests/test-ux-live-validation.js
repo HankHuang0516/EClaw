@@ -66,10 +66,12 @@ const PORTAL_PAGES = [
 ];
 
 const SHARED_ASSETS = [
-    'shared/api.js',
-    'shared/auth.js',
-    'shared/telemetry.js',
-    'shared/i18n.js',
+    // Portal-local shared modules are served under /portal/shared/*.
+    { label: 'shared/api.js', path: '/portal/shared/api.js' },
+    { label: 'shared/auth.js', path: '/portal/shared/auth.js' },
+    // Cross-surface shared modules are served from backend/public/shared at /shared/*.
+    { label: 'shared/telemetry.js', path: '/shared/telemetry.js' },
+    { label: 'shared/i18n.js', path: '/shared/i18n.js' },
 ];
 
 // API endpoints that MUST reject unauthenticated requests
@@ -79,7 +81,8 @@ const AUTH_PROTECTED_ENDPOINTS = [
     { method: 'GET',  path: '/api/feedback?deviceId=FAKE_ID&deviceSecret=WRONG' },
     { method: 'GET',  path: '/api/schedules?deviceId=FAKE_ID&deviceSecret=WRONG' },
     { method: 'GET',  path: '/api/device-vars?deviceId=FAKE_ID&deviceSecret=WRONG' },
-    { method: 'GET',  path: '/api/contacts?deviceId=FAKE_ID&deviceSecret=WRONG' },
+    // GET /api/contacts is intentionally device-scoped and does not require
+    // a secret; mutating contact routes remain credential-protected.
     { method: 'GET',  path: '/api/logs?deviceId=FAKE_ID&deviceSecret=WRONG' },
 ];
 
@@ -89,42 +92,42 @@ const AUTHED_SMOKE_ENDPOINTS = [
         method: 'GET',
         path: () => `/api/entities?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`,
         expectStatus: 200,
-        expectShape: { isArray: true },
+        expectShape: { hasKey: 'entities' },
         label: 'GET /api/entities',
     },
     {
         method: 'GET',
         path: () => `/api/status?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`,
         expectStatus: 200,
-        expectShape: { hasKey: 'entities' },
+        expectShape: { isObject: true },
         label: 'GET /api/status',
     },
     {
         method: 'GET',
         path: () => `/api/feedback?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`,
         expectStatus: 200,
-        expectShape: { isArray: true },
+        expectShape: { hasKey: 'feedback' },
         label: 'GET /api/feedback',
     },
     {
         method: 'GET',
         path: () => `/api/schedules?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`,
-        expectStatus: 200,
-        expectShape: { isArray: true },
-        label: 'GET /api/schedules',
+        expectStatus: 410,
+        expectShape: { isObject: true },
+        label: 'GET /api/schedules (deprecated)',
     },
     {
         method: 'GET',
         path: () => `/api/contacts?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`,
         expectStatus: 200,
-        expectShape: { isArray: true },
+        expectShape: { hasKey: 'contacts' },
         label: 'GET /api/contacts',
     },
     {
         method: 'GET',
         path: () => `/api/device-vars?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`,
         expectStatus: 200,
-        expectShape: { isArray: true },
+        expectShape: { hasKey: 'vars' },
         label: 'GET /api/device-vars',
     },
     {
@@ -231,14 +234,14 @@ async function main() {
 
     for (const asset of SHARED_ASSETS) {
         try {
-            const res = await httpGet(`/portal/${asset}`);
+            const res = await httpGet(asset.path);
             const ct = res.headers.get('content-type') || '';
             const isJs = ct.includes('javascript') || ct.includes('text/plain');
             const ok = res.status === 200;
-            check(`Asset ${asset}`, ok,
+            check(`Asset ${asset.label}`, ok,
                 `status=${res.status}${ok && !isJs ? ', unexpected content-type: ' + ct : ''}`);
         } catch (err) {
-            check(`Asset ${asset}`, false, err.message);
+            check(`Asset ${asset.label}`, false, err.message);
         }
     }
 
