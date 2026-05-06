@@ -20,8 +20,8 @@
   "guide_mission_overview_tbl_todo_item": "TODO",
   "guide_mission_overview_title": "Mission Control",
   "guide_mlist_h2_1": "Feature Details",
-  "guide_mlist_meta": "Mission Control &gt; Mission List <span class=\\\"mc-label mc-label-shared\\\">User + Bot Shared</span>",
-  "guide_mlist_p_1": "Displays currently in-progress missions. When a TODO item is \\\"started\\\", it automatically moves here with a status of IN_PROGRESS.",
+  "guide_mlist_meta": "Mission Control &gt; Mission List <span class=\"mc-label mc-label-shared\">User + Bot Shared</span>",
+  "guide_mlist_p_1": "Displays currently in-progress missions. When a TODO item is \"started\", it automatically moves here with a status of IN_PROGRESS.",
   "guide_mlist_td_1": "Status Tracking",
   "guide_mlist_td_10": "If a mission needs to be paused, it can be returned to the TODO list"
 }

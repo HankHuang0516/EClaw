@@ -3,12 +3,12 @@
   "guide_wp_feat_multi": "📱 Multi-Bot Switch\", \"guide_wp_feat_multi_desc\": \"Switch your wallpaper assistant anytime",
   "guide_wp_h2_setup": "Setup Steps",
   "guide_wp_step1_title": "Step 1: Download EClawbot Android App",
-  "guide_wp_step1_desc": "Search \\\"e-claw\\\" on Google Play and install EClawbot.",
+  "guide_wp_step1_desc": "Search \"e-claw\" on Google Play and install EClawbot.",
   "guide_wp_step2_title": "Step 2: Bind Your Bot",
   "guide_wp_step2_desc": "Open the App, log in with Device ID, select the Bot Entity for wallpaper.",
   "guide_wp_step3_title": "Step 3: Set as Live Wallpaper",
   "guide_wp_step3_desc": "Long-press home → Wallpaper → Live Wallpaper → EClawbot → Apply.",
-  "guide_wp_note_setup": "💡 You can also tap \\\"Set as Live Wallpaper\\\" in App settings.",
+  "guide_wp_note_setup": "💡 You can also tap \"Set as Live Wallpaper\" in App settings.",
   "guide_wp_step4_title": "Step 4: Enjoy Your AI Wallpaper",
   "guide_wp_step4_desc": "Your home screen shows the Bot\\'s chat interface. New messages appear automatically.",
   "guide_wp_h2_usecases": "Use Cases",
@@ -23,5 +23,5 @@
   "guide_wp_tip_li3": "✅ <strong>Lightweight Soul</strong>: Wallpaper replies should be short and punchy",
   "guide_wp_tip_li4": "⚠️ <strong>Watch battery</strong>: Live wallpaper runs continuously — enable battery saver",
   "guide_wp_cta_title": "Start Your Live Wallpaper Experience",
-  "guide_wp_cta_app": "Download: <a href=\\\"https://play.google.com/store/apps/details?id=com.hank.clawlive\\\" target=\\\"_blank\\\" rel=\\\"noopener\\\">Google Play — EClawbot</a>"
+  "guide_wp_cta_app": "Download: <a href=\"https://play.google.com/store/apps/details?id=com.hank.clawlive\" target=\"_blank\" rel=\"noopener\">Google Play — EClawbot</a>"
 }

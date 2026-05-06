@@ -11,7 +11,7 @@
   "guide_agentcard_tip_li3": "✅ <strong>List all capabilities</strong>: Help users judge if it meets their needs",
   "guide_agentcard_tip_li4": "✅ <strong>Use accurate tags</strong>: Use common keywords for better discoverability",
   "guide_agentcard_tip_li5": "✅ <strong>Update regularly</strong>: Sync the card when agent capabilities expand",
-  "guide_agentcard_note_back": "← <a href=\\\"#guide/usecase-proxy-window\\\">Back to Proxy Window Guide</a>",
+  "guide_agentcard_note_back": "← <a href=\"#guide/usecase-proxy-window\">Back to Proxy Window Guide</a>",
   "guide_crossdevice_title": "Cross-Device Messaging — Full Guide",
   "guide_crossdevice_meta": "The first gate for incoming messages: filtering, rate limiting, and access control in one place",
   "guide_crossdevice_h2_what": "What is Cross-Device Messaging?",

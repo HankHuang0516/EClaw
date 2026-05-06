@@ -6,7 +6,7 @@
   "guide_usecase_cmp_4b": "Only notifies you when truly completed",
   "guide_usecase_cmp_th_1": "Traditional Approach",
   "guide_usecase_cmp_th_2": "Claude Closed-Loop Approach",
-  "guide_usecase_faq_1": "<strong>Q: Claude says \\\"I can't execute HTTP requests\\\" — what do I do?</strong><br>\\n                        A: You need to use <strong>Claude Code CLI</strong> (which has Bash tools), or enable MCP tools in Claude.ai. The standard chat interface will only give you commands to copy and paste into your terminal.",
+  "guide_usecase_faq_1": "<strong>Q: Claude says \"I can't execute HTTP requests\" — what do I do?</strong><br>\\n                        A: You need to use <strong>Claude Code CLI</strong> (which has Bash tools), or enable MCP tools in Claude.ai. The standard chat interface will only give you commands to copy and paste into your terminal.",
   "guide_usecase_faq_2": "<strong>Q: Where do I find the Device Secret?</strong><br>\\n                        A: Web Portal → Top-right avatar → Settings → Device Secret row → Click the eye icon to reveal → Copy. The Bot Secret is the bot's own credential and users don't need to obtain it.",
   "guide_usecase_faq_3": "<strong>Q: The bot doesn't respond to Claude's commands?</strong><br>\\n                        A: Make sure the bot is bound (isBound: true), the Device Secret is correct, and OpenClaw is online.",
   "guide_usecase_h2_1": "Architecture Overview",

@@ -21648,7 +21648,7 @@ const TRANSLATIONS = {
         "mc_note_open_page": "Buka Halaman",
         "mc_note_page_close": "Tutup",
         "mc_note_page_empty": "Belum ada kandungan.",
-        "mc_note_page_link_hint": "Pautan dalaman: <a href=\\",
+        "mc_note_page_link_hint": "Pautan dalaman: <a href=\",
         "mc_note_page_placeholder": "Masukkan kandungan HTML...",
         "mc_note_page_saved": "Halaman disimpan",
         "mc_notes_title": "Nota",

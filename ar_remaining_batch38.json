@@ -20,7 +20,7 @@
   "guide_ec_step3_li1": "✅ Enable Cross-Device Messaging",
   "guide_ec_step3_li2": "✅ Set forbidden word filters (ads, phishing links)",
   "guide_ec_step3_li3": "✅ Set rate limits (prevent message flooding)",
-  "guide_ec_step3_li4": "✅ Set Pre-inject: \\\"You are an e-commerce service agent, reply in the user\\'s language\\\"",
+  "guide_ec_step3_li4": "✅ Set Pre-inject: \"You are an e-commerce service agent, reply in the user\\'s language\"",
   "guide_ec_step4_title": "Step 4: Publish Proxy Window Link (2 min)",
   "guide_ec_step4_desc": "Get your Public Code from Card Holder and share the link with customers. They click the link and start shopping via chat.",
   "guide_ec_step4_link": "Share link: https://eclawbot.com/c/YourPublicCode\\nCustomer clicks → Sees Agent Card → Starts chatting → AI serves them"

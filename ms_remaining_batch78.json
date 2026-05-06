@@ -14,7 +14,7 @@
   "guide_ec_adv_a2a": "🤝 A2A Multi-Agent",
   "guide_ec_adv_a2a_desc": "Service Bot takes order → dispatches to Logistics Bot via A2A for shipping tracking",
   "guide_ec_adv_tts": "🔊 Voice + Text Dual Channel",
-  "guide_ec_adv_tts_desc": "Store tablet with <a href=\\\"#guide/usecase-voice-tts\\\">TTS voice</a> — customers hear a welcome message when entering",
+  "guide_ec_adv_tts_desc": "Store tablet with <a href=\"#guide/usecase-voice-tts\">TTS voice</a> — customers hear a welcome message when entering",
   "guide_ec_adv_note": "📝 Dynamic Product Catalog",
   "guide_ec_adv_note_desc": "Manage products via Note Page; updates are reflected instantly by the Bot",
   "guide_ec_adv_mission": "📊 Mission Control Tracking",
