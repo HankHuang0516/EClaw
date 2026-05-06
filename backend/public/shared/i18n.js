@@ -43411,6 +43411,27 @@ const TRANSLATIONS = {
         "info_hero_credit_swap_title": "🕐 Banco de tiempo: 10 minutos para big data",
         "info_hero_credit_swap_body": "Ayuda hoy a alguien con una tarea de 10 minutos; mañana intercambia esos créditos para que alguien procese tus datos masivos. Cada mano amiga queda registrada.",
         "info_hero_credit_swap_cta": "Saber más →",
+        // ── P1 Emergency Patch: Critical missing keys ──
+        "mm_empty_title": "El mapa mental aún no tiene nodos",
+        "mm_empty_hint": "Una vez que crees tarjetas kanban, esta vista conectará tareas, sub-tarjetas y anclajes de chat en un gráfico automáticamente.",
+        "mm_empty_cta": "Abrir kanban para crear tu primera tarjeta",
+        "mc_dlg_anchor": "Anclar a tarjeta kanban",
+        "mc_dlg_anchor_none": "(ninguno — agrupar por categoría)",
+        "invite_banner_title": "Invita amigos, gana e-coin juntos",
+        "invite_banner_desc_prefix": "Tu código ",
+        "invite_banner_desc_suffix": " — ambos lados ganan 500 e-coin por invitación exitosa.",
+        "invite_banner_cta": "Invitar ahora",
+        "invite_toast_welcome": "🎁 Tu código de invitación {code} está listo — cada amigo les hace ganar 500 e-coin a ambos",
+        "mc_bulk_cancel": "Cancelar",
+        "mc_bulk_undo": "Deshacer",
+        "mc_bulk_clearing": "Limpiando...",
+        "mc_bulk_cleared": "{count} elementos eliminados",
+        "mc_bulk_restoring": "Restaurando...",
+        "mc_bulk_deleting_cat": "Eliminando categoría...",
+        "mc_bulk_cat_deleted": "Categoría eliminada",
+        "mc_prompt_category_name": "Nombre de categoría:",
+        "mc_prompt_rename_category": "Nuevo nombre de categoría:",
+        "mc_category_exists": "La categoría ya existe"
     },
 
     de: {
@@ -47508,6 +47529,27 @@ const TRANSLATIONS = {
         "info_hero_credit_swap_title": "🕐 Zeitbank: 10 Minuten für Big Data",
         "info_hero_credit_swap_body": "Hilf heute jemandem mit einer 10-Minuten-Aufgabe; tausche morgen diese Credits ein, damit jemand deine Massendaten verarbeitet. Jede helfende Hand wird protokolliert.",
         "info_hero_credit_swap_cta": "Mehr erfahren →",
+        // ── P1 Emergency Patch: Critical missing keys ──
+        "mm_empty_title": "Mind Map hat noch keine Knoten",
+        "mm_empty_hint": "Sobald Sie Kanban-Karten erstellen, verbindet diese Ansicht Aufgaben, Unter-Karten und Chat-Anker automatisch in einem Graphen.",
+        "mm_empty_cta": "Kanban öffnen, um Ihre erste Karte zu erstellen",
+        "mc_dlg_anchor": "An Kanban-Karte anheften",
+        "mc_dlg_anchor_none": "(keine — nach Kategorie gruppieren)",
+        "invite_banner_title": "Freunde einladen, gemeinsam e-coin verdienen",
+        "invite_banner_desc_prefix": "Ihr Code ",
+        "invite_banner_desc_suffix": " — beide Seiten erhalten 500 e-coin pro erfolgreicher Einladung.",
+        "invite_banner_cta": "Jetzt einladen",
+        "invite_toast_welcome": "🎁 Ihr Einladungscode {code} ist bereit — jeder Freund bringt Ihnen beiden 500 e-coin",
+        "mc_bulk_cancel": "Abbrechen",
+        "mc_bulk_undo": "Rückgängig machen",
+        "mc_bulk_clearing": "Wird gelöscht...",
+        "mc_bulk_cleared": "{count} Elemente gelöscht",
+        "mc_bulk_restoring": "Wird wiederhergestellt...",
+        "mc_bulk_deleting_cat": "Kategorie wird gelöscht...",
+        "mc_bulk_cat_deleted": "Kategorie gelöscht",
+        "mc_prompt_category_name": "Kategoriename:",
+        "mc_prompt_rename_category": "Neuer Kategoriename:",
+        "mc_category_exists": "Kategorie existiert bereits"
     },
 
     ms: {
@@ -62243,6 +62285,27 @@ const TRANSLATIONS = {
     "info_hero_credit_swap_title": "🕐 بنك الوقت: 10 دقائق لـ big data",
     "info_hero_credit_swap_body": "ساعد شخصاً اليوم بمهمة لمدة 10 دقائق؛ غداً تبادل هذه الأرصدة ليقوم شخص آخر بمعالجة بياناتك الضخمة. كل يد مساعدة يتم تسجيلها.",
     "info_hero_credit_swap_cta": "اعرف المزيد →",
+    // ── P1 Emergency Patch: Critical missing keys ──
+    "mm_empty_title": "خريطة العقل لا تحتوي على عقد بعد",
+    "mm_empty_hint": "بمجرد إنشاء بطاقات كانبان، ستربط هذه العرض المهام والبطاقات الفرعية ومراسي الدردشة في مخطط تلقائياً.",
+    "mm_empty_cta": "افتح كانبان لإنشاء بطاقتك الأولى",
+    "mc_dlg_anchor": "تثبيت على بطاقة كانبان",
+    "mc_dlg_anchor_none": "(لا شيء — تجميع حسب الفئة)",
+    "invite_banner_title": "ادع الأصدقاء، احصل على e-coin معاً",
+    "invite_banner_desc_prefix": "رمزك ",
+    "invite_banner_desc_suffix": " — كلا الجانبين يكسب 500 e-coin لكل دعوة ناجحة.",
+    "invite_banner_cta": "ادع الآن",
+    "invite_toast_welcome": "🎁 رمز دعوتك {code} جاهز — كل صديق يكسبكما 500 e-coin",
+    "mc_bulk_cancel": "إلغاء",
+    "mc_bulk_undo": "تراجع",
+    "mc_bulk_clearing": "جاري المسح...",
+    "mc_bulk_cleared": "تم مسح {count} عنصر",
+    "mc_bulk_restoring": "جاري الاستعادة...",
+    "mc_bulk_deleting_cat": "جاري حذف الفئة...",
+    "mc_bulk_cat_deleted": "تم حذف الفئة",
+    "mc_prompt_category_name": "اسم الفئة:",
+    "mc_prompt_rename_category": "اسم الفئة الجديد:",
+    "mc_category_exists": "الفئة موجودة بالفعل"
 }
 
 };
