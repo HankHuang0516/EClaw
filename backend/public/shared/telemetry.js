@@ -7,6 +7,7 @@
  *   - Errors (window.onerror + unhandledrejection)
  *
  * Manual tracking:
+ *   - telemetry.trackPageView(page, meta)
  *   - telemetry.trackAction(action, meta)
  *   - telemetry.trackError(error, meta)
  *   - telemetry.trackLifecycle(action, meta)
@@ -175,6 +176,13 @@ const _telemetry = (() => {
     // ---- public API ----
 
     return {
+        /** Track a page view explicitly (for pages that initialize after dynamic layout setup) */
+        trackPageView(page = null, meta = null) {
+            const detectedPage = page || _detectPage();
+            _page = detectedPage;
+            _push({ type: 'page_view', action: detectedPage, meta });
+        },
+
         /** Track a user action (button click, dialog open, etc.) */
         trackAction(action, meta = null) {
             _push({ type: 'user_action', action, meta });
