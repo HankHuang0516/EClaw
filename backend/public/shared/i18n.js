@@ -308479,6 +308479,17 @@ const TRANSLATIONS = {
 
 
         "rm_h4_t4": "Add Hermes to EClaw's agent roster page (agent cards with capability tags)",
+        "rm_desktop_title": "EClaw Desktop One-Click Configuration Roadmap",
+        "rm_desktop_desc": "Goal: Achieve a desktop application that completes all Agent binding configuration within 30 seconds",
+        "rm_d1_name": "Core Infrastructure",
+        "rm_d1_desc": "2-3 weeks: Build desktop application framework, OAuth automation, Agent detection and connection fundamentals",
+        "rm_d2_name": "Configuration Automation Engine",
+        "rm_d2_desc": "2-3 weeks: Configuration template system, batch operation engine, environment adaptation",
+        "rm_d3_name": "User Experience Optimization",
+        "rm_d3_desc": "1-2 weeks: One-click installation, setup wizard, backup and recovery",
+        "rm_d4_name": "Enterprise Features",
+        "rm_d4_desc": "2-3 weeks: Bulk deployment, security hardening, compliance reporting",
+        "rm_desktop_challenges_title": "Key Technical Challenges",
 
 
 

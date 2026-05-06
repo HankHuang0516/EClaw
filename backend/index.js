@@ -11075,6 +11075,15 @@ function requireDeviceOwner(device, deviceSecret) {
     return {};
 }
 
+function requireBotSecret(device, entityId, botSecret) {
+    if (!botSecret) return { error: 'botSecret required', status: 400 };
+    const entity = device.entities?.[entityId];
+    if (!entity) return { error: 'Entity not found', status: 404 };
+    if (!entity.isBound) return { error: 'Entity not bound', status: 403 };
+    if (!safeEqual(entity.botSecret, botSecret)) return { error: 'Invalid botSecret', status: 403 };
+    return {};
+}
+
 /**
  * PUT /api/entity/identity — Create or update bot identity (partial merge)
  * Auth: deviceSecret (owner) OR botSecret (bot self-update)
@@ -11299,6 +11308,9 @@ app.get('/api/entity/:entityId/workload', async (req, res) => {
     if (!entity) return res.status(404).json({ success: false, error: 'Entity not found' });
 
     try {
+        // Get pool from db or auth module
+        const pool = db._getPool ? db._getPool() : authModule.pool;
+
         // Query kanban cards for active tasks
         const result = await pool.query(`
             SELECT
