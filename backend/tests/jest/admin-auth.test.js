@@ -78,6 +78,8 @@ jest.mock('../../device-feedback', () => ({
     generateAiPrompt: jest.fn().mockReturnValue(''),
     saveFeedback: jest.fn().mockResolvedValue({ id: 1 }),
     getFeedbackList: jest.fn().mockResolvedValue([]),
+    getMiniGameSubmissions: jest.fn().mockResolvedValue({ summary: {}, submissions: [] }),
+    getMiniGameAnalytics: jest.fn().mockResolvedValue({ summary: {}, errorStats: [], gameStats: [], recentErrors: [] }),
     getFeedbackById: jest.fn().mockResolvedValue(null),
     updateFeedback: jest.fn().mockResolvedValue(true),
     createGithubIssue: jest.fn().mockResolvedValue(null),
@@ -207,6 +209,11 @@ describe('Admin endpoints — unauthenticated access blocked', () => {
 
     it('GET /api/admin/minigame-submissions rejects without auth', async () => {
         const res = await get('/api/admin/minigame-submissions');
+        expect(res.status).toBe(401);
+    });
+
+    it('GET /api/admin/minigame-analytics rejects without auth', async () => {
+        const res = await get('/api/admin/minigame-analytics');
         expect(res.status).toBe(401);
     });
 

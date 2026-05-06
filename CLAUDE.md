@@ -1066,7 +1066,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | gRPC Transport | `node backend/tests/test-grpc-transport.js` | None (local) | Proto loading, gRPC server, HealthService |
 | ENV Vars Merge | `node backend/tests/test-vars-merge.js` | Device ID + Secret | Cross-platform merge, conflict splitting |
 | Channel API | `node backend/tests/test-channel-api.js` | Device ID + Secret | OpenClaw channel integration |
-| MiniGame Admin Submissions | `cd backend && npx jest tests/jest/minigame-admin-submissions.test.js tests/jest/admin-auth.test.js --runInBand` | None | Regression: admin-only MiniGame submissions API matches feedback source/category/tags/body and admin page endpoint remains auth-gated |
+| MiniGame Admin Submissions + Analytics | `cd backend && npx jest tests/jest/minigame-admin-submissions.test.js tests/jest/admin-auth.test.js --runInBand` | None | Regression: admin-only MiniGame submissions API matches feedback source/category/tags/body, MiniGame error/play analytics aggregate server_logs + device_telemetry, and admin endpoints remain auth-gated |
 | Skill Templates | `node backend/tests/test-skill-templates.js` | None | Skill template CRUD, requiredVars format validation (Gson compat), contribute endpoint input guard |
 | WebSocket Auth | `node backend/tests/test-ws-auth.js` | Device ID + Secret | Socket.IO authentication |
 | AI Chat Image | `node backend/tests/test-ai-chat-image.js` | Device ID + Secret | AI chat with image support |

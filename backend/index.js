@@ -3755,6 +3755,30 @@ app.get('/api/admin/minigame-submissions', adminAuth, adminCheck, async (req, re
 });
 
 /**
+ * GET /api/admin/minigame-analytics
+ * Admin: aggregated MiniGame runtime error and play telemetry dashboard.
+ *
+ * Uses production telemetry/log tables so admins can see the same kind of
+ * GAME-### error patterns previously analyzed from ad-hoc CSV exports, plus
+ * page-view/play-action analytics for the related games.
+ */
+app.get('/api/admin/minigame-analytics', adminAuth, adminCheck, async (req, res) => {
+    try {
+        const result = await feedbackModule.getMiniGameAnalytics(chatPool, {
+            hours: req.query.hours,
+            limit: req.query.limit
+        });
+        res.json({
+            success: true,
+            ...result
+        });
+    } catch (err) {
+        console.error('[Admin] MiniGame analytics error:', err);
+        res.status(500).json({ success: false, error: 'Failed to load MiniGame analytics' });
+    }
+});
+
+/**
  * GET /api/skill-templates/contributions
  * Admin: view full contribution history (all statuses).
  */

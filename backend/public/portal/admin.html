@@ -1281,11 +1281,18 @@
             html += '<div id="miniGameSubmissionsContent" style="color:var(--text-secondary);">Loading...</div>';
             html += '</div>';
 
+            // MiniGame runtime analytics section
+            html += '<div class="section-card">';
+            html += '<div class="section-title">🎮 MiniGame Error & Play Analytics</div>';
+            html += '<div id="miniGameAnalyticsContent" style="color:var(--text-secondary);">Loading...</div>';
+            html += '</div>';
+
             content.innerHTML = html;
 
             // Load optional feedback sections asynchronously
             loadArenaFeedback();
             loadMiniGameSubmissions();
+            loadMiniGameAnalytics();
         }
 
         async function loadArenaFeedback() {
@@ -1360,6 +1367,95 @@
                 }
                 fbHtml += '</tbody></table></div>';
                 el.innerHTML = fbHtml;
+            } catch (e) {
+                el.innerHTML = '<p style="color:var(--danger);">Failed to load: ' + escapeHtml(e.message) + '</p>';
+            }
+        }
+
+        async function loadMiniGameAnalytics() {
+            const el = document.getElementById('miniGameAnalyticsContent');
+            if (!el) return;
+            try {
+                const data = await apiCall('GET', '/api/admin/minigame-analytics?hours=24&limit=25');
+                const summary = data.summary || {};
+                const errorStats = data.errorStats || [];
+                const gameStats = data.gameStats || [];
+                const recentErrors = data.recentErrors || [];
+
+                let html = '<p style="margin:0 0 12px;color:var(--text-secondary);">Last ' + escapeHtml(data.windowHours || 24) + 'h production telemetry/log aggregate. Data source: server_logs + device_telemetry.</p>';
+                html += '<div class="stats-grid" style="margin-bottom:16px;">';
+                html += statCard(summary.errorEvents || 0, 'Error events', summary.errorEvents ? 'danger' : 'success');
+                html += statCard(summary.affectedGames || 0, 'Affected games', summary.affectedGames ? 'warning' : 'success');
+                html += statCard(summary.pageViews || 0, 'Page views', '');
+                html += statCard(summary.playActions || 0, 'Play actions', '');
+                html += statCard(summary.uniqueDevices || 0, 'Unique devices', '');
+                html += statCard(summary.totalEvents || 0, 'Telemetry events', '');
+                html += '</div>';
+
+                html += '<h4 style="margin:12px 0 8px;">Top error signatures</h4>';
+                if (!errorStats.length) {
+                    html += '<p style="padding:12px;">No MiniGame errors in this window.</p>';
+                } else {
+                    html += '<div class="table-scroll"><table class="data-table"><thead><tr>';
+                    html += '<th>Game</th><th>Count</th><th>Server</th><th>Client</th><th>Devices</th><th>Last Seen</th><th>Error Signature</th>';
+                    html += '</tr></thead><tbody>';
+                    for (const row of errorStats) {
+                        html += '<tr>';
+                        html += '<td><code>' + escapeHtml(row.gameId || 'unknown') + '</code></td>';
+                        html += '<td>' + escapeHtml(row.count || 0) + '</td>';
+                        html += '<td>' + escapeHtml(row.serverErrors || 0) + '</td>';
+                        html += '<td>' + escapeHtml(row.telemetryErrors || 0) + '</td>';
+                        html += '<td>' + escapeHtml(row.uniqueDevices || 0) + '</td>';
+                        html += '<td>' + formatDate(row.lastSeenAt) + '</td>';
+                        html += '<td style="max-width:520px;white-space:normal;">' + escapeHtml(row.errorSignature || '-') + '</td>';
+                        html += '</tr>';
+                    }
+                    html += '</tbody></table></div>';
+                }
+
+                html += '<h4 style="margin:16px 0 8px;">Gameplay analytics by game</h4>';
+                if (!gameStats.length) {
+                    html += '<p style="padding:12px;">No MiniGame play telemetry in this window.</p>';
+                } else {
+                    html += '<div class="table-scroll"><table class="data-table"><thead><tr>';
+                    html += '<th>Game</th><th>Events</th><th>Page Views</th><th>Play Actions</th><th>Errors</th><th>Devices</th><th>Avg Duration</th><th>Last Seen</th>';
+                    html += '</tr></thead><tbody>';
+                    for (const row of gameStats) {
+                        html += '<tr>';
+                        html += '<td><code>' + escapeHtml(row.gameId || 'unknown') + '</code></td>';
+                        html += '<td>' + escapeHtml(row.totalEvents || 0) + '</td>';
+                        html += '<td>' + escapeHtml(row.pageViews || 0) + '</td>';
+                        html += '<td>' + escapeHtml(row.playActions || 0) + '</td>';
+                        html += '<td>' + escapeHtml(row.errors || 0) + '</td>';
+                        html += '<td>' + escapeHtml(row.uniqueDevices || 0) + '</td>';
+                        html += '<td>' + (row.avgDurationMs ? escapeHtml(row.avgDurationMs + 'ms') : '—') + '</td>';
+                        html += '<td>' + formatDate(row.lastSeenAt) + '</td>';
+                        html += '</tr>';
+                    }
+                    html += '</tbody></table></div>';
+                }
+
+                html += '<h4 style="margin:16px 0 8px;">Recent error samples</h4>';
+                if (!recentErrors.length) {
+                    html += '<p style="padding:12px;">No recent MiniGame error samples.</p>';
+                } else {
+                    html += '<div class="table-scroll"><table class="data-table"><thead><tr>';
+                    html += '<th>Time</th><th>Source</th><th>Game</th><th>Level</th><th>Device</th><th>Message</th>';
+                    html += '</tr></thead><tbody>';
+                    for (const row of recentErrors) {
+                        html += '<tr>';
+                        html += '<td>' + formatDate(row.createdAt) + '</td>';
+                        html += '<td>' + escapeHtml(row.source || '-') + '</td>';
+                        html += '<td><code>' + escapeHtml(row.gameId || 'unknown') + '</code></td>';
+                        html += '<td>' + escapeHtml(row.level || '-') + '</td>';
+                        html += '<td><code>' + escapeHtml(row.device_id || '-') + '</code></td>';
+                        html += '<td style="max-width:520px;white-space:normal;">' + escapeHtml(row.message || '-') + '</td>';
+                        html += '</tr>';
+                    }
+                    html += '</tbody></table></div>';
+                }
+
+                el.innerHTML = html;
             } catch (e) {
                 el.innerHTML = '<p style="color:var(--danger);">Failed to load: ' + escapeHtml(e.message) + '</p>';
             }
