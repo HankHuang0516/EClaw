@@ -14,7 +14,7 @@
   "sched_30min": "30 min",
   "sched_1hr": "1 hr",
   "sched_3hr": "3 hr",
-  "sched_cron_hint": "Format: minute hour day month weekday (e.g., \\\"30 8 * * *\\\" = every day at 08:30)",
+  "sched_cron_hint": "Format: minute hour day month weekday (e.g., \"30 8 * * *\" = every day at 08:30)",
   "sched_btn_create": "Create",
   "sched_creating": "Creating...",
   "sched_created_ok": "Schedule created!",

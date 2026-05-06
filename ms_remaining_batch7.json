@@ -5,7 +5,7 @@
   "guide_envvars_h2_1": "Feature Details",
   "guide_envvars_h2_2": "Authorization Flow",
   "guide_envvars_h2_3": "API Endpoints",
-  "guide_envvars_meta": "Mission Control &gt; Environment Variables <span class=\\\"mc-label\\\" style=\\\"background:rgba(255,152,0,0.15);color:#FF9800;\\\">User Authorizes / Bot Reads</span>",
+  "guide_envvars_meta": "Mission Control &gt; Environment Variables <span class=\"mc-label\" style=\"background:rgba(255,152,0,0.15);color:#FF9800;\">User Authorizes / Bot Reads</span>",
   "guide_envvars_p_1": "Allows Bots to securely access sensitive information (API Keys, Tokens, etc.). Variables are stored encrypted with <strong>AES-256-GCM</strong> on the server, and every Bot read request requires real-time authorization from the device owner (JIT — Just-in-Time Approval).",
   "guide_envvars_td_1": "Encrypted Storage",
   "guide_envvars_td_10": "Add, edit, and delete variables on the Portal → Env Variables page",

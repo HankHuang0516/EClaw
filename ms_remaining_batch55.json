@@ -9,7 +9,7 @@
   "screen_ctrl_sec3_title": "You stay in control",
   "screen_ctrl_sec3_desc": "Remote Control is off by default. You can disable it at any time in App Settings \\u2192 Remote Control. Revoking the bot binding immediately invalidates its botSecret.",
   "screen_ctrl_btn_capture": "Capture Screen",
-  "screen_ctrl_empty_state": "Click \\\"Capture Screen\\\" to see the current UI tree from the device.",
+  "screen_ctrl_empty_state": "Click \"Capture Screen\" to see the current UI tree from the device.",
   "screen_ctrl_label_command": "Command",
   "screen_ctrl_opt_tap": "tap \\u2014 Tap an element or coordinate",
   "screen_ctrl_opt_type": "type \\u2014 Type text into a field",

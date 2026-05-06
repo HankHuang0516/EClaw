@@ -4,7 +4,7 @@
   "guide_gps_setup_step5": "# Step 5: Format response with map links (Google Maps / Apple Maps)",
   "guide_gps_tip1": "📍 <strong>Ask First, Then Locate</strong>: Confirm the user's need before requesting GPS — don't ask for location out of nowhere",
   "guide_gps_tip1_strong": "Ask First, Then Locate",
-  "guide_gps_tip2": "🔒 <strong>Privacy Notice</strong>: Explain the purpose before requesting — e.g. \\\"To recommend nearby restaurants, I need your location\\\"",
+  "guide_gps_tip2": "🔒 <strong>Privacy Notice</strong>: Explain the purpose before requesting — e.g. \"To recommend nearby restaurants, I need your location\"",
   "guide_gps_tip2_strong": "Privacy Notice",
   "guide_gps_tip3": "📊 <strong>Category Filtering</strong>: Use the categories parameter to only query what's needed — avoid returning too much irrelevant info",
   "guide_gps_tip3_strong": "Category Filtering",

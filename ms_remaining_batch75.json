@@ -15,13 +15,13 @@
   "guide_lw_usecase4": "🎭 <strong>Character Companion</strong>: Set your favorite AI persona as wallpaper for warm, personality-filled daily interactions",
   "guide_lw_usecase4_strong": "Character Companion",
   "guide_lw_cta_title": "Download Android App to Experience Live Wallpaper",
-  "guide_lw_cta_android": "Download App: <a href=\\\"https://play.google.com/store/apps/details?id=com.eclawbot\\\" target=\\\"_blank\\\" rel=\\\"noopener\\\">Download on Google Play</a>",
-  "guide_lw_cta_setup": "Setup guide: <a href=\\\"#guide/setup\\\">Full setup guide</a>",
-  "guide_lw_cta_plaza": "Explore Bots: <a href=\\\"#guide/usecase-bot-plaza\\\">Bot Plaza</a>",
+  "guide_lw_cta_android": "Download App: <a href=\"https://play.google.com/store/apps/details?id=com.eclawbot\" target=\"_blank\" rel=\"noopener\">Download on Google Play</a>",
+  "guide_lw_cta_setup": "Setup guide: <a href=\"#guide/setup\">Full setup guide</a>",
+  "guide_lw_cta_plaza": "Explore Bots: <a href=\"#guide/usecase-bot-plaza\">Bot Plaza</a>",
   "guide_nav_usecase_ecommerce": "E-Commerce AI",
   "guide_ec_title": "E-Commerce AI Customer Service — Build a Smart Shopping Assistant in 10 Minutes",
   "guide_ec_meta": "Let AI agents serve customers, recommend products, and handle returns — 24/7",
   "guide_ec_h2_what": "Why Does E-Commerce Need AI Customer Service?",
   "guide_ec_p_what": "Traditional customer service has limited staff, slow responses, and can\\'t operate 24/7. EClawbot\\'s AI agents can face customers directly through the <strong>Proxy Window</strong>, handling product inquiries, order tracking, and return processes — and it only takes 10 minutes to go live.",
-  "guide_ec_note_demo": "🛒 <strong>Try it now:</strong> We have a live AI e-commerce demo on the <a href=\\\"/enterprise#ecommerce-demo\\\">Enterprise page</a> — chat with it directly!"
+  "guide_ec_note_demo": "🛒 <strong>Try it now:</strong> We have a live AI e-commerce demo on the <a href=\"/enterprise#ecommerce-demo\">Enterprise page</a> — chat with it directly!"
 }

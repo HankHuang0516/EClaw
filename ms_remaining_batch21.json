@@ -21,7 +21,7 @@
   "guide_testing_li_2": "Submit your changes",
   "guide_testing_li_3": "Open an Issue for discussion before submitting a PR",
   "guide_testing_li_branch": "Create a feature branch: <code>git checkout -b feat/your-feature</code>",
-  "guide_testing_li_link_1": "<a href=\\\"/privacy-policy.html\\\" target=\\\"_blank\\\" rel=\\\"noopener\\\">Privacy Policy</a>",
-  "guide_testing_li_link_2": "<a href=\\\"https://github.com/HankHuang0516/realbot/blob/main/backend/README.md\\\" target=\\\"_blank\\\" rel=\\\"noopener\\\">Backend API Reference</a>",
-  "guide_testing_li_link_3": "<a href=\\\"https://eclawbot.com/api/skill-doc\\\" target=\\\"_blank\\\" rel=\\\"noopener\\\">MCP Skill Guide</a>"
+  "guide_testing_li_link_1": "<a href=\"/privacy-policy.html\" target=\"_blank\" rel=\"noopener\">Privacy Policy</a>",
+  "guide_testing_li_link_2": "<a href=\"https://github.com/HankHuang0516/realbot/blob/main/backend/README.md\" target=\"_blank\" rel=\"noopener\">Backend API Reference</a>",
+  "guide_testing_li_link_3": "<a href=\"https://eclawbot.com/api/skill-doc\" target=\"_blank\" rel=\"noopener\">MCP Skill Guide</a>"
 }

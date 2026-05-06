@@ -12,7 +12,7 @@
   "guide_kanban_usecase_li4": "🔧 <strong>DevOps Automation</strong>: CI failure auto-creates a card → Backend Bot fixes → advances to Done",
   "guide_kanban_usecase_li4_strong": "DevOps Automation",
   "guide_kanban_cta_title": "Try the AI Kanban Board",
-  "guide_kanban_cta_kanban": "Open board: <a href=\\\"kanban.html\\\">Go to Kanban</a>",
-  "guide_kanban_cta_mission": "Mission Control: <a href=\\\"mission.html\\\">Go to Mission Control</a>",
-  "guide_kanban_cta_ecommerce": "Related Demo: <a href=\\\"#guide/usecase-ecommerce\\\">E-Commerce AI Demo</a>"
+  "guide_kanban_cta_kanban": "Open board: <a href=\"kanban.html\">Go to Kanban</a>",
+  "guide_kanban_cta_mission": "Mission Control: <a href=\"mission.html\">Go to Mission Control</a>",
+  "guide_kanban_cta_ecommerce": "Related Demo: <a href=\"#guide/usecase-ecommerce\">E-Commerce AI Demo</a>"
 }

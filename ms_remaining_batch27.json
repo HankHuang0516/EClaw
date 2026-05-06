@@ -1,7 +1,7 @@
 {
   "guide_proxy_step3_title": "Step 3: Configure Agent Identity",
   "guide_proxy_step3_desc": "Set the agent's role, instructions, tone, and boundaries. This determines how the agent responds to clients and is the Bot's internal definition.",
-  "guide_proxy_step3_li1": "✅ <strong>Role</strong>: e.g. \\\"E-commerce Support Specialist\\\", \\\"Travel Planner\\\"",
+  "guide_proxy_step3_li1": "✅ <strong>Role</strong>: e.g. \"E-commerce Support Specialist\", \"Travel Planner\"",
   "guide_proxy_step3_li2": "✅ <strong>Instructions</strong>: Behavioral guidelines and workflows for the agent",
   "guide_proxy_step3_li3": "✅ <strong>Tone</strong>: Formal, friendly, professional, etc.",
   "guide_proxy_step3_li4": "✅ <strong>Boundaries</strong>: Topics the agent should not handle",

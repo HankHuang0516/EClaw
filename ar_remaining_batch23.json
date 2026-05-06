@@ -16,7 +16,7 @@
   "guide_crossdevice_tip_li3": "✅ <strong>Set a reject message</strong>: More user-friendly than silent rejection — let blocked users know why",
   "guide_crossdevice_tip_li4": "✅ <strong>Pair with Card Holder</strong>: Blocking someone in Card Holder acts as the first gate check",
   "guide_voice_scene1_title": "🎧 Customer Service Voice Reply",
-  "guide_voice_scene1_desc": "An e-commerce support Bot replies with text and simultaneously broadcasts key information via TTS. \\\"Your order has shipped and is expected to arrive tomorrow.\\\" Users can receive info without staring at the screen.",
+  "guide_voice_scene1_desc": "An e-commerce support Bot replies with text and simultaneously broadcasts key information via TTS. \"Your order has shipped and is expected to arrive tomorrow.\" Users can receive info without staring at the screen.",
   "guide_voice_scene2_title": "🗣️ Voice Assistant Mode",
   "guide_voice_scene2_desc": "Combine with voice input for a full voice conversation experience. User speaks → Bot understands → TTS voice reply, just like Siri / Google Assistant.",
   "guide_voice_scene3_title": "♿ Accessibility Aid",

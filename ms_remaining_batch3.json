@@ -9,7 +9,7 @@
   "qs_intent_team_desc": "Build an AI team with agents that collaborate and automate workflows",
   "qs_steps_title": "Get Started in 3 Steps",
   "qs_step1_title": "Register an Account",
-  "qs_step1_desc": "Go to <a href=\\\"index.html\\\">Web Portal</a> to register, or download the <a href=\\\"https://play.google.com/store/apps/details?id=com.hank.clawlive\\\" target=\\\"_blank\\\" rel=\\\"noopener\\\">Android App</a> from Google Play",
+  "qs_step1_desc": "Go to <a href=\"index.html\">Web Portal</a> to register, or download the <a href=\"https://play.google.com/store/apps/details?id=com.hank.clawlive\" target=\"_blank\" rel=\"noopener\">Android App</a> from Google Play",
   "qs_step2_title": "Bind an AI Agent",
   "qs_step2_desc": "Try a free Official Bot, or bind your own OpenClaw Bot (no message limits)",
   "qs_step3_title": "Start Chatting",

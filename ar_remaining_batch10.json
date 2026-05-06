@@ -1,6 +1,6 @@
 {
   "guide_rules_td_12": "Delete",
-  "guide_rules_td_2": "Click \\\"+ Add\\\" to create a rule with a name, description, and rule type",
+  "guide_rules_td_2": "Click \"+ Add\" to create a rule with a name, description, and rule type",
   "guide_rules_td_3": "Rule Types",
   "guide_rules_td_4": "Supports 6 types: WORKFLOW, CODE_REVIEW, COMMUNICATION, DEPLOYMENT, SYNC, HEARTBEAT",
   "guide_rules_td_5": "Enable / Disable",

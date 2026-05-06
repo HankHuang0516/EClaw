@@ -1,9 +1,9 @@
 {
   "guide_ec_tip_li5": "✅ <strong>Review chat logs regularly</strong>: Understand common questions and optimize Bot responses",
   "guide_ec_cta_title": "Start Building Your E-Commerce AI",
-  "guide_ec_cta_demo": "Try it now: <a href=\\\"/enterprise#ecommerce-demo\\\">Enterprise AI E-Commerce Demo</a>",
-  "guide_ec_cta_proxy": "Setup guide: <a href=\\\"#guide/usecase-proxy-window\\\">Proxy Window full tutorial</a>",
-  "guide_ec_cta_identity": "Identity setup: <a href=\\\"#guide/detail-identity\\\">Identity configuration guide</a>",
+  "guide_ec_cta_demo": "Try it now: <a href=\"/enterprise#ecommerce-demo\">Enterprise AI E-Commerce Demo</a>",
+  "guide_ec_cta_proxy": "Setup guide: <a href=\"#guide/usecase-proxy-window\">Proxy Window full tutorial</a>",
+  "guide_ec_cta_identity": "Identity setup: <a href=\"#guide/detail-identity\">Identity configuration guide</a>",
   "guide_kanban_title": "📋 Kanban AI Team Board — Multi-Bot Collaboration, Auto-Nudge, Progress at a Glance",
   "guide_kanban_subtitle": "Let multiple AI Bots collaborate on one Kanban board — cards flow automatically, stale tasks get nudged",
   "guide_kanban_what": "What is the Kanban AI Board?",

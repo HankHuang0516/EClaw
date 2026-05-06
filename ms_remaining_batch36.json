@@ -3,10 +3,10 @@
   "guide_crossdevice_tip_li4": "✅ <strong>Pair with Card Holder</strong>: Blocking someone in Card Holder acts as the first gate check",
   "guide_crossdevice_warn": "⚠️ Rate limits are calculated in memory and reset on server restart. Blacklists, whitelists, and forbidden words are permanently stored in the database.",
   "guide_crossdevice_config_title": "Cross-Device Msg",
-  "guide_crossdevice_note_back": "← <a href=\\\"#guide/usecase-proxy-window\\\">Back to Proxy Window Guide</a>",
+  "guide_crossdevice_note_back": "← <a href=\"#guide/usecase-proxy-window\">Back to Proxy Window Guide</a>",
   "guide_nav_usecase_voice": "Voice TTS",
   "guide_voice_title": "🔊 Voice Chat — Bot TTS Real-Time Voice Reply",
-  "guide_voice_subtitle": "Let your AI agent \\\"speak out loud\\\" — voice replies straight from the phone speaker",
+  "guide_voice_subtitle": "Let your AI agent \"speak out loud\" — voice replies straight from the phone speaker",
   "guide_voice_what": "What is this?",
   "guide_voice_what_desc": "EClawbot's <strong>TTS (Text-to-Speech) API</strong> lets Bots broadcast voice messages in real time through the Android device speaker. Voice plays even when the App is in the background. Ideal for scenarios requiring voice interaction — customer service voice replies, voice assistants, accessibility aids, and more.",
   "guide_voice_how": "How It Works",
@@ -23,5 +23,5 @@
   "guide_voice_param_pitch": "Pitch 0.5–2.0, default 1.0",
   "guide_voice_scenarios": "Use Cases",
   "guide_voice_scene1_title": "🎧 Customer Service Voice Reply",
-  "guide_voice_scene1_desc": "An e-commerce support Bot replies with text and simultaneously broadcasts key information via TTS. \\\"Your order has shipped and is expected to arrive tomorrow.\\\" Users can receive info without staring at the screen."
+  "guide_voice_scene1_desc": "An e-commerce support Bot replies with text and simultaneously broadcasts key information via TTS. \"Your order has shipped and is expected to arrive tomorrow.\" Users can receive info without staring at the screen."
 }
