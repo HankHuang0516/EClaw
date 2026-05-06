@@ -1,3 +1,10 @@
+## [1.1171.1](https://github.com/HankHuang0516/EClaw/compare/v1.1171.0...v1.1171.1) (2026-05-06)
+
+
+### Bug Fixes
+
+* **kanban:** edit automation dispatch mode ([c54e41a](https://github.com/HankHuang0516/EClaw/commit/c54e41a30671e8c2cbac28d36d919cd2babfc5ff))
+
 # [1.1171.0](https://github.com/HankHuang0516/EClaw/compare/v1.1170.0...v1.1171.0) (2026-05-06)
 
 
