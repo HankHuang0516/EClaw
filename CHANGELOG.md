@@ -1,3 +1,10 @@
+# [1.1172.0](https://github.com/HankHuang0516/EClaw/compare/v1.1171.2...v1.1172.0) (2026-05-06)
+
+
+### Features
+
+* **chat:** implement scroll position locking mechanism ([#2487](https://github.com/HankHuang0516/EClaw/issues/2487)) ([e1c5168](https://github.com/HankHuang0516/EClaw/commit/e1c51687e9c27f2a401899497067b7879b6ad715))
+
 ## [1.1171.2](https://github.com/HankHuang0516/EClaw/compare/v1.1171.1...v1.1171.2) (2026-05-06)
 
 
