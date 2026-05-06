@@ -18806,7 +18806,17 @@ const TRANSLATIONS = {
         "files_delete_failed": "ファイルの削除に失敗しました",
         "files_deleted": "ファイルを削除しました",
         "files_multi_select_attach": "チャットに添付",
-        "files_multi_select_cancel": "キャンセル"
+        "files_multi_select_cancel": "キャンセル",
+        "mm_empty_title": "マインドマップにはまだノードがありません",
+        "mm_empty_hint": "カンバンカードを作成すると、このビューがタスク、サブカード、チャットアンカーを自動的にグラフに接続します。",
+        "mm_empty_cta": "カンバンを開いて最初のカードを作成",
+        "mc_dlg_anchor": "カンバンカードにピン留め",
+        "mc_dlg_anchor_none": "(なし — カテゴリ別にグループ化)",
+        "invite_banner_title": "友達を招待して、一緒にe-coinを獲得",
+        "invite_banner_desc_prefix": "あなたのコード ",
+        "invite_banner_desc_suffix": " — 招待成功につき、双方が500 e-coinを獲得。",
+        "invite_banner_cta": "今すぐ招待",
+        "invite_toast_welcome": "🎁 招待コード {code} の準備ができました — 友達を招待すると双方が500 e-coinを獲得",
     },
 
     ko: {
