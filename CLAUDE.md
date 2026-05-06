@@ -45,6 +45,8 @@ EClaw/
 │   ├── flickr.js             # Flickr photo storage for chat images
 │   ├── flickr-auth.js        # Flickr OAuth authentication
 │   ├── discord-integration.js # Native Discord slash command integration
+│   ├── idle_dispatch_handler.js # Idle dispatch: bot busy check + queue + drain
+│   ├── api_idle_dispatch.js    # Idle dispatch REST API endpoints
 │   ├── grpc-server.js        # gRPC transport layer
 │   ├── interview-arena.js    # Interview Arena — 12-challenge bot evaluation (current interview system)
 │   ├── bot-interview.js      # LEGACY 8-probe text scoring (superseded by interview-arena.js)
@@ -1012,11 +1014,23 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Kanban Cron-Spawn Child Inheritance (v1.1122)**: Cron-spawned child cards inherit `requires_screenshot_review` flag from parent; mom card edit toggle for screenshot review setting (#2245)
 - **Mindmap Phase 4 Read-Side (v1.1122)**: `/api/mission/mindmap` honors `chat_anchor_coord` for read-side rendering, connecting mindmap nodes to chat anchor positions (#2244)
 
+### Recent Features (v1.1128.x – v1.1172.x)
+
+- **Idle Dispatch Automation (v1.1170–v1.1172)**: Smart bot availability system — `dispatch_mode` column on `kanban_cards` (`immediate` or `idle_only`); `pending_dispatch` flag queues cards when assigned bot is busy; auto-dispatches when bot goes IDLE; `idle_dispatch_handler.js` + `api_idle_dispatch.js` modules; kanban UI dispatch mode toggle; full Jest test suite
+- **MiniGame Admin Analytics (v1.1169–v1.1170)**: Admin submissions view + error/play analytics aggregation from `server_logs` + `device_telemetry`
+- **Chat Scroll Position Lock (v1.1172)**: Users scrolling up in chat no longer get force-scrolled to bottom on new messages; scroll lock mechanism in `chat.html`
+- **i18n Massive Leak Fix (v1.1128–v1.1171)**: Hundreds of missing/leaked keys fixed across ja, es, de, ar locales; over-escaped quotes fixed (1,821 instances); orphan key cleanup
+- **Android i18n Hardcoded Strings (v1.1168)**: `no_bound_entities`, `name_field_hint`, `desc_field_hint` strings added to all 14 Android locale files
+- **Dashboard Invite Banner Fix (v1.1168)**: Duplicate element IDs in invite banner resolved
+- **Growth Tracking Helper (v1.1168)**: Static serving fix for growth tracking client-side helper
+- **Workspace Telemetry Fix (v1.1171)**: Restored workspace page view telemetry tracking
+- **UIUX Audit Script Alignment (v1.1172)**: QA/UIUX audit test scripts aligned with current portal contracts
+
 ---
 
 ## Test Coverage Summary
 
-**~450 total API routes** across all modules (400 excluding Article Publisher), **~83% covered** by Jest + integration tests (~2412 test cases across 146 Jest files + 59 integration tests).
+**~460 total API routes** across all modules (410 excluding Article Publisher), **~84% covered** by Jest + integration tests (~2687 test cases across 183 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
