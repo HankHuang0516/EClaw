@@ -450,6 +450,105 @@
             </div>
         </div>
 
+        <!-- Desktop One-Click Configuration Roadmap -->
+        <div class="rm-section">
+            <h2>🖥️ <span data-i18n="rm_desktop_title">EClaw 電腦版一鍵配置 Roadmap</span></h2>
+            <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;" data-i18n="rm_desktop_desc">目標：實現 30 秒內完成所有 Agent 綁定配置的桌面應用程式</p>
+
+            <!-- Success Metrics -->
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:20px;">
+                <div style="padding:14px;border:1px solid var(--card-border);border-radius:var(--radius-sm);text-align:center;">
+                    <div style="font-size:24px;font-weight:800;color:#10b981;">&lt;30s</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Average Configuration Time</div>
+                </div>
+                <div style="padding:14px;border:1px solid var(--card-border);border-radius:var(--radius-sm);text-align:center;">
+                    <div style="font-size:24px;font-weight:800;color:#10b981;">&gt;95%</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Configuration Success Rate</div>
+                </div>
+                <div style="padding:14px;border:1px solid var(--card-border);border-radius:var(--radius-sm);text-align:center;">
+                    <div style="font-size:24px;font-weight:800;color:#10b981;">&lt;5%</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">User Abandonment Rate</div>
+                </div>
+                <div style="padding:14px;border:1px solid var(--card-border);border-radius:var(--radius-sm);text-align:center;">
+                    <div style="font-size:24px;font-weight:800;color:#10b981;">-80%</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Tech Support Requests</div>
+                </div>
+            </div>
+
+            <div class="rm-phase todo">
+                <h3>Phase 1 — <span data-i18n="rm_d1_name">核心基礎架構</span> <span class="rm-status-badge todo" data-i18n="rm_todo">Todo</span></h3>
+                <div class="rm-phase-desc" data-i18n="rm_d1_desc">2-3 週：建立桌面應用框架、OAuth 自動化、Agent 探測連接基礎</div>
+                <ul class="rm-tasks">
+                    <li class="todo">Electron/Tauri 跨平台桌面應用</li>
+                    <li class="todo">系統權限管理（檔案存取、網路連接）</li>
+                    <li class="todo">安全的本地儲存機制</li>
+                    <li class="todo">內嵌瀏覽器元件</li>
+                    <li class="todo">自動截取 authorization code</li>
+                    <li class="todo">Token 安全存儲與更新</li>
+                    <li class="todo">自動掃描本機已安裝 AI 工具</li>
+                    <li class="todo">API endpoint 自動探測</li>
+                    <li class="todo">連接狀態即時驗證</li>
+                </ul>
+            </div>
+
+            <div class="rm-phase todo">
+                <h3>Phase 2 — <span data-i18n="rm_d2_name">配置自動化引擎</span> <span class="rm-status-badge todo" data-i18n="rm_todo">Todo</span></h3>
+                <div class="rm-phase-desc" data-i18n="rm_d2_desc">2-3 週：配置模板系統、批次操作引擎、環境自適應</div>
+                <ul class="rm-tasks">
+                    <li class="todo">預建常用 Agent 組合</li>
+                    <li class="todo">用戶使用場景快速匹配</li>
+                    <li class="todo">動態配置生成</li>
+                    <li class="todo">並行 API 調用優化</li>
+                    <li class="todo">失敗重試機制</li>
+                    <li class="todo">進度即時回饋</li>
+                    <li class="todo">網路環境檢測</li>
+                    <li class="todo">防火牆/代理自動適配</li>
+                    <li class="todo">不同作業系統適配</li>
+                </ul>
+            </div>
+
+            <div class="rm-phase todo">
+                <h3>Phase 3 — <span data-i18n="rm_d3_name">用戶體驗優化</span> <span class="rm-status-badge todo" data-i18n="rm_todo">Todo</span></h3>
+                <div class="rm-phase-desc" data-i18n="rm_d3_desc">1-2 週：一鍵安裝、配置引導、備份恢復</div>
+                <ul class="rm-tasks">
+                    <li class="todo">數位簽證（避免安全警告）</li>
+                    <li class="todo">智能安裝路徑選擇</li>
+                    <li class="todo">最小權限請求</li>
+                    <li class="todo">30 秒配置倒數計時</li>
+                    <li class="todo">實時配置狀態顯示</li>
+                    <li class="todo">失敗診斷與修復建議</li>
+                    <li class="todo">配置自動備份</li>
+                    <li class="todo">一鍵恢復機制</li>
+                    <li class="todo">跨設備配置同步</li>
+                </ul>
+            </div>
+
+            <div class="rm-phase todo">
+                <h3>Phase 4 — <span data-i18n="rm_d4_name">企業級功能</span> <span class="rm-status-badge todo" data-i18n="rm_todo">Todo</span></h3>
+                <div class="rm-phase-desc" data-i18n="rm_d4_desc">2-3 週：批量部署、安全強化、合規報告</div>
+                <ul class="rm-tasks">
+                    <li class="todo">企業配置模板</li>
+                    <li class="todo">靜默安裝選項</li>
+                    <li class="todo">集中管理介面</li>
+                    <li class="todo">企業憑證整合</li>
+                    <li class="todo">審計日誌</li>
+                    <li class="todo">合規報告生成</li>
+                </ul>
+            </div>
+
+            <!-- Key Technical Challenges -->
+            <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-top:16px;">
+                <div style="font-size:12px;font-weight:700;color:#ef4444;margin-bottom:8px;">🔧 <span data-i18n="rm_desktop_challenges_title">關鍵技術挑戰</span></div>
+                <ul style="font-size:12px;color:var(--text-secondary);margin:0;padding-left:16px;line-height:1.8;">
+                    <li>跨平台 API 調用穩定性</li>
+                    <li>OAuth flow 在桌面環境的安全處理</li>
+                    <li>Agent 版本相容性自動檢測</li>
+                    <li>網路環境適配（企業防火牆）</li>
+                    <li>配置失敗的智能診斷</li>
+                </ul>
+            </div>
+        </div>
+
         <!-- Technical Highlights -->
         <div class="rm-section">
             <h2>🏗️ <span data-i18n="rm_tech_title">Technical Highlights</span></h2>
