@@ -65,15 +65,18 @@ function setupAdminQueries({
     signups = 5, cohort = 10, active = 4, plaza = 2,
     total_codes = 0, redeemed_codes = 0,
     sourceRows,
+    inviteClickRows,
 } = {}) {
     const finalSourceRows = sourceRows || [{ source: 'web_portal', count: signups }];
-    // is_admin lookup → 5 metric queries (parallel order: signups, retention, plaza, invite, source_channel)
+    const finalInviteClickRows = inviteClickRows || [];
+    // is_admin lookup → 6 metric queries (parallel order: signups, retention, plaza, invite, invite_clicks, source_channel)
     mockQuery
         .mockResolvedValueOnce({ rows: [{ is_admin: true }] })
         .mockResolvedValueOnce({ rows: [{ c: signups }] })
         .mockResolvedValueOnce({ rows: [{ cohort_size: cohort, active_size: active }] })
         .mockResolvedValueOnce({ rows: [{ c: plaza }] })
         .mockResolvedValueOnce({ rows: [{ total_codes, redeemed_codes }] })
+        .mockResolvedValueOnce({ rows: finalInviteClickRows })
         .mockResolvedValueOnce({ rows: finalSourceRows });
 }
 
@@ -314,7 +317,7 @@ describe('Growth signup_source schema contract', () => {
         expect(growthTracking).toMatch(/utm:/);
         expect(backendIndex).toMatch(/app\.use\('\/js',\s*express\.static\(path\.join\(__dirname, 'public\/js'\)/);
         expect(portalIndex).toMatch(/EClawGrowthTracking\.collectSignupSource\(\{ fallback: 'web_portal' \}\)/);
-        expect(portalIndex).toMatch(/signupSource:\s*collectSignupSource\(\)/);
+        expect(portalIndex).toMatch(/const\s+signupSource\s*=\s*collectSignupSource\(\)/);
         expect(shareChat).toMatch(/EClawGrowthTracking\.collectSignupSource\(\{ fallback: 'share_chat' \}\)/);
         expect(iosApi).toMatch(/signupSource\s*=\s*'ios_app'/);
     });
