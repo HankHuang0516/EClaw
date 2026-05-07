@@ -441,6 +441,21 @@
             if (typeof renderFooter === 'function') renderFooter();
             const params = new URLSearchParams(window.location.search);
 
+            // Capture UTM params for beacon tracking (no PII)
+            if (window.EClawGrowthTracking && window.EClawGrowthTracking.getUtmParams) {
+                window._growthUtm = window.EClawGrowthTracking.getUtmParams();
+                // Propagate UTM to beacon meta for portal_open
+                if (typeof telemetry !== 'undefined' && telemetry.trackAction) {
+                    telemetry.trackAction('portal_open', {
+                        source: window._growthUtm.source,
+                        channel: window._growthUtm.channel,
+                        utm_source: window._growthUtm.utm_source,
+                        utm_medium: window._growthUtm.utm_medium,
+                        utm_campaign: window._growthUtm.utm_campaign
+                    });
+                }
+            }
+
             if (params.get('verified') === 'true') {
                 showTab('login');
                 showMsg('loginError', i18n.t('login_msg_email_verified'), 'success');
@@ -465,6 +480,20 @@
         });
 
         function showTab(tab) {
+            // Track register tab open beacon
+            if (tab === 'register') {
+                const utm = window._growthUtm || {};
+                const meta = {
+                    source: utm.source || utm.utm_source || new URLSearchParams(window.location.search).get('source') || 'direct',
+                    channel: utm.channel || null,
+                    utm_source: utm.utm_source || null,
+                    utm_medium: utm.utm_medium || null,
+                    utm_campaign: utm.utm_campaign || null
+                };
+                if (typeof telemetry !== 'undefined' && telemetry.trackAction) {
+                    telemetry.trackAction('register_tab_open', meta);
+                }
+            }
             // If switching to register and terms not yet accepted, show terms dialog first
             if (tab === 'register' && !termsAccepted) {
                 showTermsDialog();
@@ -597,13 +626,33 @@
             btn.disabled = true;
             btn.textContent = i18n.t('login_btn_creating');
 
+            // Build signup source with UTM attribution
+            const signupSource = collectSignupSource();
+            const utm = window._growthUtm || {};
+            const regMeta = {
+                source: utm.source || utm.utm_source || signupSource,
+                channel: utm.channel || null,
+                utm_source: utm.utm_source || null,
+                utm_medium: utm.utm_medium || null,
+                utm_campaign: utm.utm_campaign || null
+            };
+
             try {
-                await apiCall('POST', '/api/auth/register', { email, password, signupSource: collectSignupSource() });
+                if (typeof telemetry !== 'undefined' && telemetry.trackAction) {
+                    telemetry.trackAction('register_submit', regMeta);
+                }
+                await apiCall('POST', '/api/auth/register', { email, password, signupSource });
+                if (typeof telemetry !== 'undefined' && telemetry.trackAction) {
+                    telemetry.trackAction('register_success', { ...regMeta, email_hash: 'REDACTED' });
+                }
                 showMsg('regSuccess', i18n.t('sc_register_success_verify'), 'success');
                 document.getElementById('regEmail').value = '';
                 document.getElementById('regPassword').value = '';
                 document.getElementById('regPasswordConfirm').value = '';
             } catch (e) {
+                if (typeof telemetry !== 'undefined' && telemetry.trackAction) {
+                    telemetry.trackAction('register_error', { ...regMeta, error_type: e.status || 'unknown' });
+                }
                 showMsg('regError', e.message);
             } finally {
                 btn.disabled = false;

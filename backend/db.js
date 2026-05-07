@@ -2292,14 +2292,14 @@ async function getCommunityStats(poolArg) {
     }
 }
 
-async function logInviteClick({ code, ipHash, userAgent, referer }, poolArg) {
+async function logInviteClick({ code, ipHash, userAgent, referer, source }, poolArg) {
     const p = poolArg || pool;
     if (!p) return false;
     try {
         await p.query(
-            `INSERT INTO invite_clicks (code, ip_hash, user_agent, referer)
-             VALUES ($1, $2, $3, $4)`,
-            [code, ipHash || null, userAgent || null, referer || null]
+            `INSERT INTO invite_clicks (code, ip_hash, user_agent, referer, source)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [code, ipHash || null, userAgent || null, referer || null, source || 'direct']
         );
         return true;
     } catch (err) {

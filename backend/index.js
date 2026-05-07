@@ -640,7 +640,8 @@ app.get('/invite/:code', async (req, res) => {
             : null;
         const userAgent = String(req.headers['user-agent'] || '').slice(0, 500) || null;
         const referer = String(req.headers.referer || req.headers.referrer || '').slice(0, 500) || null;
-        await db.logInviteClick({ code, ipHash, userAgent, referer });
+        const source = (req.query && req.query.utm_source) || (req.query && req.query.source) || 'direct';
+        await db.logInviteClick({ code, ipHash, userAgent, referer, source });
     } catch (err) {
         console.warn(`[/invite/:code] click log failed for ${code}: ${err.message}`);
     }
@@ -16557,6 +16558,38 @@ _telemetryPool = chatPool;
 telemetry.initTelemetryTable(chatPool, serverLog);
 sitePageviews.setPool(chatPool);
 sitePageviews.initPageviewsTable(chatPool);
+// Anonymous portal beacons table (for growth funnel tracking)
+(async () => {
+    try {
+        await chatPool.query(`
+            CREATE TABLE IF NOT EXISTS portal_beacons (
+                id          BIGSERIAL   PRIMARY KEY,
+                action      TEXT        NOT NULL,
+                ip_hash     TEXT,
+                ua          TEXT,
+                meta        JSONB,
+                created_at  TIMESTAMPTZ DEFAULT NOW()
+            )
+        `);
+        await chatPool.query(`CREATE INDEX IF NOT EXISTS idx_pb_action_ts ON portal_beacons (action, created_at DESC)`);
+        await chatPool.query(`CREATE INDEX IF NOT EXISTS idx_pb_ts         ON portal_beacons (created_at DESC)`);
+        await chatPool.query(`CREATE INDEX IF NOT EXISTS idx_pb_meta       ON portal_beacons USING GIN (meta)`);
+        console.log('[PortalBeacons] Table ready');
+    } catch (err) {
+        console.error('[PortalBeacons] Table init error:', err.message);
+    }
+})();
+
+// Migration: add source column to existing invite_clicks table (idempotent)
+(async () => {
+    try {
+        await chatPool.query(`ALTER TABLE invite_clicks ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'direct'`);
+        console.log('[Migration] invite_clicks.source column ready');
+    } catch (err) {
+        console.error('[Migration] invite_clicks.source error:', err.message);
+    }
+})();
+
 if (mindmapModule && typeof mindmapModule.initMindmapTables === 'function') {
     mindmapModule.initMindmapTables(chatPool);
 }
@@ -18133,6 +18166,66 @@ app.post('/api/device-telemetry', async (req, res) => {
         bufferUsed: result.bufferUsed,
         maxBuffer: telemetry.MAX_BUFFER_BYTES
     });
+});
+
+// Anonymous portal beacon endpoint — no device auth required.
+// Accepts pre-login events (portal_open, register_tab_open, register_submit,
+// register_success, register_error) and stores them for funnel analysis.
+// All entries must be non-PII (no email, phone, IP raw — use hashes only).
+
+// POST /api/portal/beacons — no device auth required.
+// Rate-limited: 60 events/min per IP. Explicit 64kb body cap.
+const beaconLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: () => rateLimitDisabled(),
+    keyGenerator: (req) => req.ip || 'unknown',
+    message: { success: false, error: 'Too many beacon events — try again shortly' },
+});
+app.post('/api/portal/beacons', express.json({ limit: '64kb' }), beaconLimiter, async (req, res) => {
+    const { entries } = req.body;
+    if (!Array.isArray(entries) || entries.length === 0) {
+        return res.status(400).json({ success: false, error: 'entries array required' });
+    }
+    const VALID_ACTIONS = new Set([
+        'portal_open', 'register_tab_open', 'register_submit',
+        'register_success', 'register_error'
+    ]);
+    const clientIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim()
+        || (req.socket && req.socket.remoteAddress) || '';
+    const ua = (req.headers['user-agent'] || '').substring(0, 512) || null;
+    let stored = 0;
+    for (const entry of entries.slice(0, 50)) {
+        const action = String(entry.action || '').substring(0, 128);
+        if (!VALID_ACTIONS.has(action)) continue;
+        const meta = entry.meta ? (() => {
+            const m = {};
+            // Only allow whitelisted non-PII fields
+            const ALLOWED = ['source','channel','utm_source','utm_medium','utm_campaign','utm_content','utm_term','email_hash','error_type'];
+            for (const k of ALLOWED) {
+                if (entry.meta[k] !== undefined) m[k] = String(entry.meta[k]).substring(0, 256);
+            }
+            return Object.keys(m).length > 0 ? JSON.stringify(m) : null;
+        })() : null;
+        try {
+            await chatPool.query(
+                `INSERT INTO portal_beacons (action, ip_hash, ua, meta, created_at)
+                 VALUES ($1,$2,$3,$4,NOW())`,
+                [
+                    action,
+                    clientIp ? require('crypto').createHash('sha256').update(clientIp).digest('hex').substring(0, 16) : null,
+                    ua,
+                    meta
+                ]
+            );
+            stored++;
+        } catch (err) {
+            console.error('[PortalBeacons] Insert error:', err.message);
+        }
+    }
+    res.json({ success: true, stored });
 });
 
 // GET /api/device-telemetry — Read telemetry for debugging

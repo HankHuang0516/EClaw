@@ -49,8 +49,23 @@
         return normalizeSource(fallback, 'web_portal');
     }
 
+
+    function getUtmParams() {
+        const params = getParams();
+        return {
+            utm_source: params.get('utm_source') || params.get('utmSource') || null,
+            utm_medium: params.get('utm_medium') || params.get('utmMedium') || null,
+            utm_campaign: params.get('utm_campaign') || params.get('utmCampaign') || null,
+            utm_content: params.get('utm_content') || params.get('utmContent') || null,
+            utm_term: params.get('utm_term') || params.get('utmTerm') || null,
+            source: params.get('source') || null,
+            channel: params.get('channel') || null,
+        };
+    }
+
     return {
         collectSignupSource,
-        normalizeSource
+        normalizeSource,
+        getUtmParams
     };
 }));
