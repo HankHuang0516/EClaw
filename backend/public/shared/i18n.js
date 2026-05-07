@@ -135,6 +135,21 @@ const TRANSLATIONS = {
         "promo_video_primary_cta": "Open EClawbot Portal",
         "promo_video_secondary_cta": "Back to homepage",
         "promo_video_note": "Published from a HyperFrames composition built outside the EClaw repo.",
+        "promo_meta_meta_title": "EClawbot Concept A | Meta-recursion Documentary",
+        "promo_meta_meta_description": "Watch Concept A: a documentary-realism EClawbot promo where the behind-the-scenes AI workflow becomes the product demo.",
+        "promo_meta_eyebrow": "Concept A · meta-recursion documentary",
+        "promo_meta_title": "This video was made by AI agents",
+        "promo_meta_lede": "A verifiable 75-second documentary: the brief, agent coordination, render, upload, and embed become the EClawbot product demo.",
+        "promo_meta_embed_heading": "EClawbot Concept A video",
+        "promo_meta_proof_agents_title": "2 AI agents",
+        "promo_meta_proof_agents_body": "LOBSTER routed; Codex rendered.",
+        "promo_meta_proof_trace_title": "Verifiable trail",
+        "promo_meta_proof_trace_body": "Chat, git, kanban, and Studio captures are real history.",
+        "promo_meta_proof_output_title": "One finished output",
+        "promo_meta_proof_output_body": "The behind-the-scenes work is the demo.",
+        "promo_meta_primary_cta": "Open EClawbot Portal",
+        "promo_meta_secondary_cta": "Watch the 75s demo",
+        "promo_meta_note": "Concept A was rendered from a HyperFrames project outside this repo, then embedded here through a reviewed PR.",
 
 
 
@@ -649755,6 +649770,21 @@ const TRANSLATIONS = {
         "promo_video_primary_cta": "開啟 EClawbot Portal",
         "promo_video_secondary_cta": "回到首頁",
         "promo_video_note": "影片由 EClaw repo 外部的 HyperFrames composition 發布。",
+        "promo_meta_meta_title": "EClawbot Concept A｜Meta-recursion 紀錄片",
+        "promo_meta_meta_description": "觀看 Concept A：以紀錄式真實素材呈現 EClawbot，讓幕後 AI 工作流本身成為產品展示。",
+        "promo_meta_eyebrow": "Concept A · meta-recursion 紀錄式驚喜版",
+        "promo_meta_title": "這支影片是 AI agent 自己做的",
+        "promo_meta_lede": "一支可驗證的 75 秒紀錄片：需求、agent 協作、渲染、上傳與嵌入，全部反過來成為 EClawbot 產品展示。",
+        "promo_meta_embed_heading": "EClawbot Concept A 影片",
+        "promo_meta_proof_agents_title": "2 個 AI agent",
+        "promo_meta_proof_agents_body": "LOBSTER 路由任務；Codex 完成渲染。",
+        "promo_meta_proof_trace_title": "可驗證軌跡",
+        "promo_meta_proof_trace_body": "Chat、git、kanban、Studio 畫面都來自真實歷史。",
+        "promo_meta_proof_output_title": "一個完成品",
+        "promo_meta_proof_output_body": "幕後製作過程，就是產品 demo。",
+        "promo_meta_primary_cta": "開啟 EClawbot Portal",
+        "promo_meta_secondary_cta": "觀看 75 秒 demo",
+        "promo_meta_note": "Concept A 由 repo 外部的 HyperFrames 專案渲染，再透過審查 PR 嵌入此頁。",
 
 
 
