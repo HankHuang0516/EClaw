@@ -290,6 +290,11 @@ app.get(['/promo', '/promo.html'], (req, res) => {
     res.set('Cache-Control', 'public, max-age=3600');
     res.sendFile(path.join(__dirname, 'public/promo.html'));
 });
+// Promo meta page (SEO structured data for promo)
+app.get('/promo-meta.html', (req, res) => {
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.join(__dirname, 'public/promo-meta.html'));
+});
 // Info Hub page — redirect to /portal/info.html so relative asset paths resolve correctly
 app.get('/info', (req, res) => {
     res.redirect(301, '/portal/info.html');
