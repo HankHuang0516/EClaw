@@ -7,6 +7,7 @@
  *   - Errors (window.onerror + unhandledrejection)
  *
  * Manual tracking:
+ *   - telemetry.trackPageView(page, meta)
  *   - telemetry.trackAction(action, meta)
  *   - telemetry.trackError(error, meta)
  *   - telemetry.trackLifecycle(action, meta)
@@ -43,25 +44,41 @@ const _telemetry = (() => {
     async function _flush() {
         if (_buffer.length === 0) return;
         const creds = _getDeviceCredentials();
-        if (!creds) return; // not authenticated yet
-
         const batch = _buffer.splice(0, MAX_BATCH);
-        try {
-            await fetch(`${API_BASE}/api/device-telemetry`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    deviceId: creds.deviceId,
-                    deviceSecret: creds.deviceSecret,
-                    platform: 'web',
-                    entries: batch
-                })
-            });
-        } catch {
-            // Re-queue on failure (drop if buffer is huge to avoid memory leak)
-            if (_buffer.length < 200) {
-                _buffer.unshift(...batch);
+
+        if (creds) {
+            // Authenticated: send to device-telemetry
+            try {
+                await fetch(`${API_BASE}/api/device-telemetry`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        deviceId: creds.deviceId,
+                        deviceSecret: creds.deviceSecret,
+                        platform: 'web',
+                        entries: batch
+                    })
+                });
+            } catch {
+                if (_buffer.length < 200) _buffer.unshift(...batch);
+            }
+        } else {
+            // Anonymous (pre-login): send public beacon events to /api/portal/beacons
+            // Filter to only valid public beacon actions
+            const beaconEntries = batch.filter(e =>
+                ['portal_open','register_tab_open','register_submit','register_success','register_error'].includes(e.action)
+            );
+            if (beaconEntries.length > 0) {
+                try {
+                    await fetch(`${API_BASE}/api/portal/beacons`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ entries: beaconEntries })
+                    });
+                } catch (err) {
+                    console.warn('[telemetry] anonymous beacon flush failed', err);
+                }
             }
         }
     }
@@ -175,6 +192,13 @@ const _telemetry = (() => {
     // ---- public API ----
 
     return {
+        /** Track a page view explicitly (for pages that initialize after dynamic layout setup) */
+        trackPageView(page = null, meta = null) {
+            const detectedPage = page || _detectPage();
+            _page = detectedPage;
+            _push({ type: 'page_view', action: detectedPage, meta });
+        },
+
         /** Track a user action (button click, dialog open, etc.) */
         trackAction(action, meta = null) {
             _push({ type: 'user_action', action, meta });
