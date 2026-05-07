@@ -1,11 +1,12 @@
-# Idle Dispatch Hooks - PR-A Instrumentation
+# Idle Dispatch Hooks
 
-> Status: PR-A - instrumentation only (no listener logic)
+> Status: PR-A foundation + PR-B/PR-C call-sites — emit-only, no listeners
 
 ## Overview
 
-PR-A adds instrumentation hooks for kanban card lifecycle events.
-It is purely observational. Default OFF - production behavior changes zero.
+Instrumentation hooks for kanban card lifecycle events. Purely
+observational at this stage. Default OFF — production behavior changes
+zero until a listener is registered AND the env flag is set.
 
 ## Architecture
 
@@ -30,22 +31,28 @@ backend/
 
 ## Events
 
-| Event | Payload |
-|---|---|
-| card_status_changed | `{cardId, fromStatus, toStatus, deviceId, entityId, ts}` |
+| Event | Emitted from | Payload |
+|---|---|---|
+| card_status_changed | `kanban.js` POST /card/:id/move (PR-B) | `{cardId, fromStatus, toStatus, deviceId, entityId, ts}` |
+| auto_cron_card_created | `idle_dispatch_integration.js` createAutoCronCard (PR-C) | `{cardId, parentCardId, deviceId, assignedBots, ts}` |
+
+Both events fire AFTER the durable DB write completes, so listeners
+never see a transition that gets rolled back.
 
 ## Structured Logs
 
 ```json
-{"ev":"idle_dispatch.card_status_changed","name":"card_status_changed","payload":{...},"ts":"..."}
-{"ev":"idle_dispatch.emit_error","name":"card_status_changed","error":"...","ts":"..."}
+{"ev":"idle_dispatch.card_status_changed","name":"<event>","payload":{...},"ts":"..."}
+{"ev":"idle_dispatch.emit_error","name":"<event>","error":"...","ts":"..."}
 ```
 
 No secrets logged (botSecret/deviceSecret excluded from emit() payload by design).
 
-## PR-B (Future)
+## Future work
 
-PR-B will add listeners for: queue depth, drain attempt, drain result, latency.
+A listener subsystem (queue-depth metrics, dispatch-latency tracking,
+drain attempts) is out of scope for the current PR series. Adding one
+only requires `kanbanEvents.on('<event>', handler)` somewhere in startup.
 
 ## Rollback
 
