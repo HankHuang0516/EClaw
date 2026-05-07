@@ -12,7 +12,7 @@
  * dep-chain code actually exercises.
  */
 
-const { newDb } = require('pg-mem');
+const { newDb, DataType } = require('pg-mem');
 
 const MINIMAL_SCHEMA = `
     CREATE TABLE kanban_cards (
@@ -42,6 +42,30 @@ const MINIMAL_SCHEMA = `
 
 async function bootstrap() {
     const db = newDb({ autoCreateForeignKeyIndices: true });
+    // PR-DCC: pg-mem does not ship `pg_advisory_xact_lock`. Register as a no-op
+    // so the locked POST path executes; real mutual-exclusion proof lives in
+    // tests gated behind RUN_PG_INTEGRATION=1 (real PG only).
+    db.public.registerFunction({
+        name: 'pg_advisory_xact_lock',
+        args: [DataType.integer, DataType.integer],
+        returns: DataType.text,
+        implementation: () => null,
+    });
+    // hashtext(text)::int — pg-mem lacks it; deterministic 32-bit FNV-1a is
+    // close enough for tests that only need stable per-deviceId integers.
+    db.public.registerFunction({
+        name: 'hashtext',
+        args: [DataType.text],
+        returns: DataType.integer,
+        implementation: (s) => {
+            let h = 0x811c9dc5;
+            for (let i = 0; i < (s || '').length; i++) {
+                h ^= s.charCodeAt(i);
+                h = Math.imul(h, 0x01000193);
+            }
+            return h | 0;
+        },
+    });
     const { Pool } = db.adapters.createPg();
     const pool = new Pool();
     await pool.query(MINIMAL_SCHEMA);
