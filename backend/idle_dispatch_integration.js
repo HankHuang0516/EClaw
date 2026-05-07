@@ -5,6 +5,7 @@
 
 const { Pool } = require('pg');
 const { smartDispatch, drainBotQueue } = require('./idle_dispatch_handler');
+const { emit: emitKanbanEvent } = require('./lib/kanban-events');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
@@ -127,6 +128,19 @@ async function createAutoCronCard(parentCardId, deviceId, assignedBots) {
         `, [parentCardId, deviceId, autoCard.id]);
 
         console.log(`Auto cron card created: ${autoCard.id} for parent ${parentCardId}`);
+
+        // Idle-dispatch hook (PR-C). emit() is a no-op when
+        // IDLE_DISPATCH_HOOKS_ENABLED !== 'true'. Synchronous, never
+        // throws (wrapped internally), and runs after the spawn + parent-
+        // link UPDATE so listeners only see committed cron spawns.
+        emitKanbanEvent('auto_cron_card_created', {
+            cardId: autoCard.id,
+            parentCardId,
+            deviceId,
+            assignedBots,
+            ts: new Date().toISOString()
+        });
+
         return autoCard;
 
     } catch (error) {
