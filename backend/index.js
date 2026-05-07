@@ -285,6 +285,11 @@ app.get('/enterprise', (req, res) => {
     res.set('Cache-Control', 'public, max-age=3600');
     res.sendFile(path.join(__dirname, 'public/enterprise.html'));
 });
+// Promo video page
+app.get(['/promo', '/promo.html'], (req, res) => {
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.join(__dirname, 'public/promo.html'));
+});
 // Info Hub page — redirect to /portal/info.html so relative asset paths resolve correctly
 app.get('/info', (req, res) => {
     res.redirect(301, '/portal/info.html');
