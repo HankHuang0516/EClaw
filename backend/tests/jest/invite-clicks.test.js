@@ -41,7 +41,7 @@ describe('db.logInviteClick', () => {
         expect(mockQuery).toHaveBeenCalledTimes(1);
         const [sql, params] = mockQuery.mock.calls[0];
         expect(sql).toMatch(/INSERT INTO invite_clicks/);
-        expect(params).toEqual(['ABC123', 'deadbeef12345678', 'UA/1.0', 'https://x.example/p']);
+        expect(params).toEqual(['ABC123', 'deadbeef12345678', 'UA/1.0', 'https://x.example/p', 'direct']);
     });
 
     it('coerces missing metadata to NULL instead of undefined', async () => {
@@ -49,7 +49,7 @@ describe('db.logInviteClick', () => {
         const ok = await db.logInviteClick({ code: 'XY99' }, fakePool());
         expect(ok).toBe(true);
         const [, params] = mockQuery.mock.calls[0];
-        expect(params).toEqual(['XY99', null, null, null]);
+        expect(params).toEqual(['XY99', null, null, null, 'direct']);
     });
 
     it('returns false (no throw) on DB error — redirect path must not break', async () => {
