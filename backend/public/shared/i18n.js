@@ -127,6 +127,15 @@ const TRANSLATIONS = {
 
 
     en: {
+        "promo_video_meta_title": "EClawbot Promo Video | AI Agent Kanban Demo",
+        "promo_video_meta_description": "Watch the 75-second EClawbot promo video: turn multiple AI tools into a trackable kanban workflow.",
+        "promo_video_title": "See EClawbot in 75 seconds",
+        "promo_video_lede": "Watch how EClawbot turns multiple AI agents into a trackable A2A chat and kanban workflow.",
+        "promo_video_embed_heading": "EClawbot promo video",
+        "promo_video_primary_cta": "Open EClawbot Portal",
+        "promo_video_secondary_cta": "Back to homepage",
+        "promo_video_note": "Published from a HyperFrames composition built outside the EClaw repo.",
+
 
 
 
@@ -649738,6 +649747,15 @@ const TRANSLATIONS = {
 
 
     zh: {
+        "promo_video_meta_title": "EClawbot 推廣影片 | AI agent kanban demo",
+        "promo_video_meta_description": "觀看 75 秒 EClawbot 推廣影片：把多個 AI 工具串成可追蹤的 kanban 工作流。",
+        "promo_video_title": "75 秒看懂 EClawbot",
+        "promo_video_lede": "看看 EClawbot 如何把多個 AI agent 串成可追蹤的 A2A 對話與 kanban 工作流。",
+        "promo_video_embed_heading": "EClawbot 推廣影片",
+        "promo_video_primary_cta": "開啟 EClawbot Portal",
+        "promo_video_secondary_cta": "回到首頁",
+        "promo_video_note": "影片由 EClaw repo 外部的 HyperFrames composition 發布。",
+
 
 
 
