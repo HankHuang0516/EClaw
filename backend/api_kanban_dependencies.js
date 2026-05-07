@@ -21,6 +21,11 @@ const { detectDependencyCycle } = require('./kanban-dependencies');
 
 const VALID_DEPENDENCY_TYPES = new Set(['blocks', 'requires', 'related']);
 
+// PR-DCC: device-scoped advisory lock namespace. Mac_F sign-off 2026-05-07 β′
+// — namespace + hashtext(deviceId) serializes dep-edge writes per device so
+// the cycle-check ↔ INSERT window is closed (transitive cycles included).
+const DEP_LOCK_NAMESPACE = 0x44434843; // 'DCHC' — Dep-Chain Cycle
+
 module.exports = function (devices, options = {}) {
     const router = express.Router();
     const pool = options.pool || new Pool({
@@ -68,8 +73,9 @@ module.exports = function (devices, options = {}) {
         return null;
     }
 
-    async function cardExistsInDevice(cardId, deviceId) {
-        const { rows } = await pool.query(
+    async function cardExistsInDevice(cardId, deviceId, queryable) {
+        const q = queryable || pool;
+        const { rows } = await q.query(
             'SELECT id FROM kanban_cards WHERE id = $1 AND device_id = $2 LIMIT 1',
             [cardId, deviceId]
         );
@@ -94,15 +100,26 @@ module.exports = function (devices, options = {}) {
             return res.status(400).json({ success: false, error: 'A card cannot depend on itself' });
         }
 
+        const client = await pool.connect();
         try {
-            if (!(await cardExistsInDevice(cardId, deviceId))) {
+            await client.query('BEGIN');
+            // Acquire device-scoped lock first; releases automatically on COMMIT/ROLLBACK.
+            await client.query(
+                'SELECT pg_advisory_xact_lock($1::int, hashtext($2)::int)',
+                [DEP_LOCK_NAMESPACE, deviceId]
+            );
+
+            if (!(await cardExistsInDevice(cardId, deviceId, client))) {
+                await client.query('ROLLBACK');
                 return res.status(404).json({ success: false, error: 'Card not found' });
             }
-            if (!(await cardExistsInDevice(dependsOnCardId, deviceId))) {
+            if (!(await cardExistsInDevice(dependsOnCardId, deviceId, client))) {
+                await client.query('ROLLBACK');
                 return res.status(404).json({ success: false, error: 'Dependency card not found' });
             }
 
-            if (await detectDependencyCycle(pool, deviceId, cardId, dependsOnCardId)) {
+            if (await detectDependencyCycle(client, deviceId, cardId, dependsOnCardId)) {
+                await client.query('ROLLBACK');
                 return res.status(400).json({
                     success: false,
                     error: 'Adding this dependency would create a cycle',
@@ -110,7 +127,7 @@ module.exports = function (devices, options = {}) {
                 });
             }
 
-            const existing = await pool.query(
+            const existing = await client.query(
                 `SELECT id FROM kanban_card_dependencies
                  WHERE device_id = $1 AND card_id = $2 AND depends_on_card_id = $3
                  LIMIT 1`,
@@ -118,10 +135,11 @@ module.exports = function (devices, options = {}) {
             );
 
             if (existing.rows.length > 0) {
+                await client.query('COMMIT');
                 return res.json({ success: true, created: false, cardId, dependsOnCardId, dependencyType });
             }
 
-            await pool.query(
+            await client.query(
                 `INSERT INTO kanban_card_dependencies
                     (device_id, card_id, depends_on_card_id, dependency_type, created_by)
                  VALUES ($1, $2, $3, $4, $5)
@@ -129,10 +147,14 @@ module.exports = function (devices, options = {}) {
                 [deviceId, cardId, dependsOnCardId, dependencyType, entityId || 0]
             );
 
+            await client.query('COMMIT');
             res.json({ success: true, created: true, cardId, dependsOnCardId, dependencyType });
         } catch (err) {
+            try { await client.query('ROLLBACK'); } catch (_) { /* best-effort */ }
             console.error('[KanbanDeps] POST dependency error:', err);
             res.status(500).json({ success: false, error: 'Internal server error' });
+        } finally {
+            client.release();
         }
     });
 
