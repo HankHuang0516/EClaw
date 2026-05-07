@@ -1,3 +1,10 @@
+# [1.1174.0](https://github.com/HankHuang0516/EClaw/compare/v1.1173.0...v1.1174.0) (2026-05-07)
+
+
+### Features
+
+* **growth:** GET /api/growth/funnel — portal beacon aggregate (P1 follow-up) ([#2498](https://github.com/HankHuang0516/EClaw/issues/2498)) ([e095e3a](https://github.com/HankHuang0516/EClaw/commit/e095e3aa1b9686e16a2d568294330cc36a640324)), closes [#2496](https://github.com/HankHuang0516/EClaw/issues/2496) [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.1173.0](https://github.com/HankHuang0516/EClaw/compare/v1.1172.4...v1.1173.0) (2026-05-07)
 
 
