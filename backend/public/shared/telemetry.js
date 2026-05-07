@@ -76,8 +76,8 @@ const _telemetry = (() => {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ entries: beaconEntries })
                     });
-                } catch {
-                    // Drop anonymous beacons on failure — no re-queue to avoid PII accumulation
+                } catch (err) {
+                    console.warn('[telemetry] anonymous beacon flush failed', err);
                 }
             }
         }

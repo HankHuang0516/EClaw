@@ -16580,6 +16580,16 @@ sitePageviews.initPageviewsTable(chatPool);
     }
 })();
 
+// Migration: add source column to existing invite_clicks table (idempotent)
+(async () => {
+    try {
+        await chatPool.query(`ALTER TABLE invite_clicks ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'direct'`);
+        console.log('[Migration] invite_clicks.source column ready');
+    } catch (err) {
+        console.error('[Migration] invite_clicks.source error:', err.message);
+    }
+})();
+
 if (mindmapModule && typeof mindmapModule.initMindmapTables === 'function') {
     mindmapModule.initMindmapTables(chatPool);
 }
@@ -18162,7 +18172,19 @@ app.post('/api/device-telemetry', async (req, res) => {
 // Accepts pre-login events (portal_open, register_tab_open, register_submit,
 // register_success, register_error) and stores them for funnel analysis.
 // All entries must be non-PII (no email, phone, IP raw — use hashes only).
-app.post('/api/portal/beacons', async (req, res) => {
+
+// POST /api/portal/beacons — no device auth required.
+// Rate-limited: 60 events/min per IP. Explicit 64kb body cap.
+const beaconLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: () => rateLimitDisabled(),
+    keyGenerator: (req) => req.ip || 'unknown',
+    message: { success: false, error: 'Too many beacon events — try again shortly' },
+});
+app.post('/api/portal/beacons', express.json({ limit: '64kb' }), beaconLimiter, async (req, res) => {
     const { entries } = req.body;
     if (!Array.isArray(entries) || entries.length === 0) {
         return res.status(400).json({ success: false, error: 'entries array required' });
