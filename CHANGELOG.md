@@ -1,3 +1,11 @@
+# [1.1172.0](https://github.com/HankHuang0516/EClaw/compare/v1.1171.1...v1.1172.0) (2026-05-07)
+
+
+### Features
+
+* **idle-dispatch:** PR-A instrumentation - feature flag + event emitter + tests ([d7526e2](https://github.com/HankHuang0516/EClaw/commit/d7526e26daaee6bd1089af5491cc2aee30c9fa7e))
+* **idle-dispatch:** PR-A instrumentation - feature flag + event emitter + tests ([a3e5c9d](https://github.com/HankHuang0516/EClaw/commit/a3e5c9dca6eb380a52ccd540a2a9101b60a47fb9))
+
 ## [1.1171.1](https://github.com/HankHuang0516/EClaw/compare/v1.1171.0...v1.1171.1) (2026-05-06)
 
 
