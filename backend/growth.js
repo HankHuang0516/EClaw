@@ -183,6 +183,40 @@ async function fetchInviteClicksForDate(anchorDate) {
     };
 }
 
+async function fetchPortalFunnel(since, until) {
+    // Returns counts by action × meta->>'source' × meta->>'channel'
+    // from portal_beacons table (no auth required for read — auth is at API layer)
+    const r = await pool.query(
+        `SELECT
+            action,
+            COALESCE(meta->>'source', 'direct') AS source,
+            COALESCE(meta->>'channel', 'unknown') AS channel,
+            COUNT(*)::int AS event_count
+         FROM portal_beacons
+         WHERE created_at >= $1::timestamptz
+           AND created_at < ($2::timestamptz + INTERVAL '1 day')
+         GROUP BY action, COALESCE(meta->>'source', 'direct'), COALESCE(meta->>'channel', 'unknown')
+         ORDER BY action, event_count DESC`,
+        [since, until]
+    );
+
+    // Aggregate into: { action -> { total, by_source: [{source, channel, count}] }
+    const funnel = {};
+    for (const row of r.rows) {
+        if (!funnel[row.action]) {
+            funnel[row.action] = { total: 0, by_source: [] };
+        }
+        funnel[row.action].total += row.event_count;
+        funnel[row.action].by_source.push({
+            source: row.source,
+            channel: row.channel,
+            count: row.event_count
+        });
+    }
+    return funnel;
+}
+
+
 module.exports = function(devices) {
     const router = express.Router();
 
@@ -252,8 +286,40 @@ module.exports = function(devices) {
         }
     });
 
+
+    // GET /api/growth/funnel — portal beacon funnel counts by action × source × channel
+    router.get('/funnel', async (req, res) => {
+        const { deviceId, botSecret, entityId, since, until } = req.query;
+
+        if (!deviceId || !botSecret || !entityId) {
+            return res.status(400).json({ success: false, error: 'Missing deviceId, botSecret, or entityId' });
+        }
+        if (!since || !until) {
+            return res.status(400).json({ success: false, error: 'since and until (YYYY-MM-DD) are required' });
+        }
+        if (!isValidDateStr(since) || !isValidDateStr(until)) {
+            return res.status(400).json({ success: false, error: 'Invalid date — expected YYYY-MM-DD' });
+        }
+
+        const entity = findEntity(devices, deviceId, parseInt(entityId), botSecret);
+        if (!entity) {
+            return res.status(401).json({ success: false, error: 'Invalid credentials' });
+        }
+        if (!checkRate(botSecret)) {
+            return res.status(429).json({ success: false, error: 'Rate limit exceeded (60/hour)' });
+        }
+
+        try {
+            const funnel = await fetchPortalFunnel(since, until);
+            return res.json({ success: true, since, until, funnel });
+        } catch (err) {
+            console.error('[Growth] funnel error:', err);
+            return res.status(500).json({ success: false, error: 'Internal error' });
+        }
+    });
+
     return {
         router,
-        _internal: { checkRate, findEntity, isOwnerAdmin, fetchSignupsForDate, fetchSignupSourceForDate, fetchRetention7dForDate, fetchPlazaNewListedForDate, fetchInviteConversion, fetchInviteClicksForDate, isValidDateStr, taipeiTodayISO, rateBuckets }
+        _internal: { checkRate, findEntity, isOwnerAdmin, fetchSignupsForDate, fetchSignupSourceForDate, fetchRetention7dForDate, fetchPlazaNewListedForDate, fetchInviteConversion, fetchInviteClicksForDate, fetchPortalFunnel, isValidDateStr, taipeiTodayISO, rateBuckets }
     };
 };
