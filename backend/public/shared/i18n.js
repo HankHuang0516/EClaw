@@ -649481,7 +649481,42 @@ const TRANSLATIONS = {
 
 
 
-    },
+    
+        "common_close": "Close",
+        "common_copied": "Copied",
+        "dash_interview_creating": "Creating interview...",
+        "dash_interview_opened": "Interview opened",
+        "dialog_cancel": "Cancel",
+        "dialog_ok": "OK",
+        "kb_anchor_clear": "Clear anchor",
+        "kb_anchor_empty": "No anchor set",
+        "kb_anchor_err": "Failed to set anchor",
+        "kb_anchor_loading": "Loading anchors...",
+        "kb_auto_badge": "AUTO",
+        "kb_auto_card_missing": "Card missing",
+        "kb_auto_created": "Automation created",
+        "kb_auto_delete_tip": "This automation will be archived",
+        "kb_auto_need_config": "Configuration required",
+        "kb_auto_none": "No automations",
+        "kb_auto_running": "Running",
+        "kb_card_created": "Card created",
+        "kb_empty_no_cards_in": "No cards in",
+        "kb_err_create": "Failed to create",
+        "kb_err_title": "Error",
+        "kb_load_failed": "Failed to load",
+        "kb_no_comments": "No comments",
+        "kb_time_day": "day",
+        "kb_time_hr": "hr",
+        "kb_time_min": "min",
+        "kb_time_now": "just now",
+        "sc_facebook_login_failed": "Facebook login failed",
+        "sc_facebook_not_configured": "Facebook not configured",
+        "sc_google_login_failed": "Google login failed",
+        "sc_google_not_configured": "Google not configured",
+        "sc_note_preview": "Note preview",
+        "sc_open_page": "Open page",
+        "sc_sdk_loading": "Loading SDK...",
+        "sc_send_failed": "Failed to send",},
 
 
 
@@ -1233161,7 +1233196,42 @@ const TRANSLATIONS = {
 
 
 
-    },
+    
+        "common_close": "關閉",
+        "common_copied": "已複製",
+        "dash_interview_creating": "正在建立面試...",
+        "dash_interview_opened": "面試已開啟",
+        "dialog_cancel": "取消",
+        "dialog_ok": "確定",
+        "kb_anchor_clear": "清除錨點",
+        "kb_anchor_empty": "未設定錨點",
+        "kb_anchor_err": "設定錨點失敗",
+        "kb_anchor_loading": "正在載入錨點...",
+        "kb_auto_badge": "自動",
+        "kb_auto_card_missing": "卡片遺失",
+        "kb_auto_created": "自動化已建立",
+        "kb_auto_delete_tip": "此自動化將被封存",
+        "kb_auto_need_config": "需要設定",
+        "kb_auto_none": "無自動化",
+        "kb_auto_running": "執行中",
+        "kb_card_created": "卡片已建立",
+        "kb_empty_no_cards_in": "無卡片在",
+        "kb_err_create": "建立失敗",
+        "kb_err_title": "錯誤",
+        "kb_load_failed": "載入失敗",
+        "kb_no_comments": "無留言",
+        "kb_time_day": "天",
+        "kb_time_hr": "小時",
+        "kb_time_min": "分鐘",
+        "kb_time_now": "剛剛",
+        "sc_facebook_login_failed": "Facebook 登入失敗",
+        "sc_facebook_not_configured": "Facebook 未設定",
+        "sc_google_login_failed": "Google 登入失敗",
+        "sc_google_not_configured": "Google 未設定",
+        "sc_note_preview": "筆記預覽",
+        "sc_open_page": "開啟頁面",
+        "sc_sdk_loading": "SDK 載入中...",
+        "sc_send_failed": "傳送失敗",},
 
 
 
@@ -2408841,7 +2408911,42 @@ const TRANSLATIONS = {
 
 
 
-    },
+    
+        "common_close": "閉じる",
+        "common_copied": "コピーしました",
+        "dash_interview_creating": "インタビューを作成中...",
+        "dash_interview_opened": "インタビューが開きました",
+        "dialog_cancel": "キャンセル",
+        "dialog_ok": "OK",
+        "kb_anchor_clear": "アンカーをクリア",
+        "kb_anchor_empty": "アンカー未設定",
+        "kb_anchor_err": "アンカー設定失敗",
+        "kb_anchor_loading": "アンカー読み込み中...",
+        "kb_auto_badge": "自動",
+        "kb_auto_card_missing": "カードが見つかりません",
+        "kb_auto_created": "自動化が作成されました",
+        "kb_auto_delete_tip": "この自動化はアーカイブされます",
+        "kb_auto_need_config": "設定が必要です",
+        "kb_auto_none": "自動化なし",
+        "kb_auto_running": "実行中",
+        "kb_card_created": "カードが作成されました",
+        "kb_empty_no_cards_in": "カードなし",
+        "kb_err_create": "作成失敗",
+        "kb_err_title": "エラー",
+        "kb_load_failed": "読み込み失敗",
+        "kb_no_comments": "コメントなし",
+        "kb_time_day": "日",
+        "kb_time_hr": "時",
+        "kb_time_min": "分",
+        "kb_time_now": "たった今",
+        "sc_facebook_login_failed": "Facebook ログイン失敗",
+        "sc_facebook_not_configured": "Facebook 未設定",
+        "sc_google_login_failed": "Google ログイン失敗",
+        "sc_google_not_configured": "Google 未設定",
+        "sc_note_preview": "メモプレビュー",
+        "sc_open_page": "ページを開く",
+        "sc_sdk_loading": "SDK 読み込み中...",
+        "sc_send_failed": "送信失敗",},
 
 
 
@@ -2937865,7 +2937970,42 @@ const TRANSLATIONS = {
 
 
 
-    },
+    
+        "common_close": "닫기",
+        "common_copied": "복사됨",
+        "dash_interview_creating": "면접 생성 중...",
+        "dash_interview_opened": "면접 열림",
+        "dialog_cancel": "취소",
+        "dialog_ok": "확인",
+        "kb_anchor_clear": "앵커 지우기",
+        "kb_anchor_empty": "앵커 없음",
+        "kb_anchor_err": "앵커 설정 실패",
+        "kb_anchor_loading": "앵커 로딩 중...",
+        "kb_auto_badge": "자동",
+        "kb_auto_card_missing": "카드 없음",
+        "kb_auto_created": "자동화 생성됨",
+        "kb_auto_delete_tip": "이 자동화는 보관됨",
+        "kb_auto_need_config": "설정 필요",
+        "kb_auto_none": "자동화 없음",
+        "kb_auto_running": "실행 중",
+        "kb_card_created": "카드 생성됨",
+        "kb_empty_no_cards_in": "카드 없음",
+        "kb_err_create": "생성 실패",
+        "kb_err_title": "오류",
+        "kb_load_failed": "로딩 실패",
+        "kb_no_comments": "댓글 없음",
+        "kb_time_day": "일",
+        "kb_time_hr": "시간",
+        "kb_time_min": "분",
+        "kb_time_now": "방금",
+        "sc_facebook_login_failed": "Facebook 로그인 실패",
+        "sc_facebook_not_configured": "Facebook 미설정",
+        "sc_google_login_failed": "Google 로그인 실패",
+        "sc_google_not_configured": "Google 미설정",
+        "sc_note_preview": "노트 미리보기",
+        "sc_open_page": "페이지 열기",
+        "sc_sdk_loading": "SDK 로딩 중...",
+        "sc_send_failed": "전송 실패",},
 
 
 
@@ -3464713,7 +3464853,42 @@ const TRANSLATIONS = {
 
 
 
-    },
+    
+        "common_close": "ปิด",
+        "common_copied": "คัดลอกแล้ว",
+        "dash_interview_creating": "กำลังสร้างการสัมภาษณ์...",
+        "dash_interview_opened": "เปิดการสัมภาษณ์แล้ว",
+        "dialog_cancel": "ยกเลิก",
+        "dialog_ok": "ตกลง",
+        "kb_anchor_clear": "ล้าง anchor",
+        "kb_anchor_empty": "ไม่มี anchor",
+        "kb_anchor_err": "ตั้ง anchor ไม่สำเร็จ",
+        "kb_anchor_loading": "กำลังโหลด anchor...",
+        "kb_auto_badge": "อัตโนมัติ",
+        "kb_auto_card_missing": "การ์ดหาย",
+        "kb_auto_created": "สร้างออโต้เมชันแล้ว",
+        "kb_auto_delete_tip": "ออโต้เมชันนี้จะถูกเก็บถาวร",
+        "kb_auto_need_config": "ต้องตั้งค่า",
+        "kb_auto_none": "ไม่มีออโต้เมชัน",
+        "kb_auto_running": "กำลังทำงาน",
+        "kb_card_created": "สร้างการ์ดแล้ว",
+        "kb_empty_no_cards_in": "ไม่มีการ์ดใน",
+        "kb_err_create": "สร้างไม่สำเร็จ",
+        "kb_err_title": "ข้อผิดพลาด",
+        "kb_load_failed": "โหลดไม่สำเร็จ",
+        "kb_no_comments": "ไม่มีความคิดเห็น",
+        "kb_time_day": "วัน",
+        "kb_time_hr": "ชม.",
+        "kb_time_min": "นาที",
+        "kb_time_now": "เพิ่งนี้",
+        "sc_facebook_login_failed": "เข้าสู่ระบบ Facebook ล้มเหลว",
+        "sc_facebook_not_configured": "Facebook ไม่ได้ตั้งค่า",
+        "sc_google_login_failed": "เข้าสู่ระบบ Google ล้มเหลว",
+        "sc_google_not_configured": "Google ไม่ได้ตั้งค่า",
+        "sc_note_preview": "แสดงตัวอย่างโน้ต",
+        "sc_open_page": "เปิดหน้า",
+        "sc_sdk_loading": "กำลังโหลด SDK...",
+        "sc_send_failed": "ส่งไม่สำเร็จ",},
 
 
 
@@ -3990025,7 +3990200,42 @@ const TRANSLATIONS = {
 
 
 
-    },
+    
+        "common_close": "Đóng",
+        "common_copied": "Đã sao chép",
+        "dash_interview_creating": "Đang tạo phỏng vấn...",
+        "dash_interview_opened": "Phỏng vấn đã mở",
+        "dialog_cancel": "Hủy",
+        "dialog_ok": "OK",
+        "kb_anchor_clear": "Xóa neo",
+        "kb_anchor_empty": "Chưa đặt neo",
+        "kb_anchor_err": "Đặt neo thất bại",
+        "kb_anchor_loading": "Đang tải neo...",
+        "kb_auto_badge": "TỰ ĐỘNG",
+        "kb_auto_card_missing": "Thiếu thẻ",
+        "kb_auto_created": "Tự động hóa đã tạo",
+        "kb_auto_delete_tip": "Tự động hóa này sẽ bị lưu trữ",
+        "kb_auto_need_config": "Cần cấu hình",
+        "kb_auto_none": "Không có tự động hóa",
+        "kb_auto_running": "Đang chạy",
+        "kb_card_created": "Thẻ đã tạo",
+        "kb_empty_no_cards_in": "Không có thẻ trong",
+        "kb_err_create": "Tạo thất bại",
+        "kb_err_title": "Lỗi",
+        "kb_load_failed": "Tải thất bại",
+        "kb_no_comments": "Không có bình luận",
+        "kb_time_day": "ngày",
+        "kb_time_hr": "giờ",
+        "kb_time_min": "phút",
+        "kb_time_now": "vừa xong",
+        "sc_facebook_login_failed": "Đăng nhập Facebook thất bại",
+        "sc_facebook_not_configured": "Facebook chưa cấu hình",
+        "sc_google_login_failed": "Đăng nhập Google thất bại",
+        "sc_google_not_configured": "Google chưa cấu hình",
+        "sc_note_preview": "Xem trước ghi chú",
+        "sc_open_page": "Mở trang",
+        "sc_sdk_loading": "Đang tải SDK...",
+        "sc_send_failed": "Gửi thất bại",},
 
 
 
@@ -4514953,7 +4515163,42 @@ const TRANSLATIONS = {
 
 
 
-    },
+    
+        "common_close": "Tutup",
+        "common_copied": "Disalin",
+        "dash_interview_creating": "Membuat wawancara...",
+        "dash_interview_opened": "Wawancara dibuka",
+        "dialog_cancel": "Batal",
+        "dialog_ok": "OK",
+        "kb_anchor_clear": "Hapus anchor",
+        "kb_anchor_empty": "Tidak ada anchor",
+        "kb_anchor_err": "Gagal set anchor",
+        "kb_anchor_loading": "Memuat anchor...",
+        "kb_auto_badge": "AUTO",
+        "kb_auto_card_missing": "Kartu hilang",
+        "kb_auto_created": "Automasi dibuat",
+        "kb_auto_delete_tip": "Automasi ini akan diarsipkan",
+        "kb_auto_need_config": "Konfigurasi diperlukan",
+        "kb_auto_none": "Tidak ada automasi",
+        "kb_auto_running": "Berjalan",
+        "kb_card_created": "Kartu dibuat",
+        "kb_empty_no_cards_in": "Tidak ada kartu di",
+        "kb_err_create": "Gagal membuat",
+        "kb_err_title": "Error",
+        "kb_load_failed": "Gagal memuat",
+        "kb_no_comments": "Tidak ada komentar",
+        "kb_time_day": "hari",
+        "kb_time_hr": "jam",
+        "kb_time_min": "menit",
+        "kb_time_now": "baru saja",
+        "sc_facebook_login_failed": "Login Facebook gagal",
+        "sc_facebook_not_configured": "Facebook belum dikonfigurasi",
+        "sc_google_login_failed": "Login Google gagal",
+        "sc_google_not_configured": "Google belum dikonfigurasi",
+        "sc_note_preview": "Pratinjau catatan",
+        "sc_open_page": "Buka halaman",
+        "sc_sdk_loading": "Memuat SDK...",
+        "sc_send_failed": "Gagal kirim",},
 
 
 
@@ -5038601,7 +5038846,42 @@ const TRANSLATIONS = {
 
 
 
-    },
+    
+        "common_close": "Fermer",
+        "common_copied": "Copié",
+        "dash_interview_creating": "Création de l'entretien...",
+        "dash_interview_opened": "Entretien ouvert",
+        "dialog_cancel": "Annuler",
+        "dialog_ok": "OK",
+        "kb_anchor_clear": "Effacer l'ancre",
+        "kb_anchor_empty": "Aucune ancre définie",
+        "kb_anchor_err": "Échec du définition de l'ancre",
+        "kb_anchor_loading": "Chargement des ancres...",
+        "kb_auto_badge": "AUTO",
+        "kb_auto_card_missing": "Carte manquante",
+        "kb_auto_created": "Automatisation créée",
+        "kb_auto_delete_tip": "Cette automatisation sera archivée",
+        "kb_auto_need_config": "Configuration requise",
+        "kb_auto_none": "Aucune automatisation",
+        "kb_auto_running": "En cours",
+        "kb_card_created": "Carte créée",
+        "kb_empty_no_cards_in": "Aucune carte dans",
+        "kb_err_create": "Échec de création",
+        "kb_err_title": "Erreur",
+        "kb_load_failed": "Échec de chargement",
+        "kb_no_comments": "Aucun commentaire",
+        "kb_time_day": "jour",
+        "kb_time_hr": "h",
+        "kb_time_min": "min",
+        "kb_time_now": "à l'instant",
+        "sc_facebook_login_failed": "Échec connexion Facebook",
+        "sc_facebook_not_configured": "Facebook non configuré",
+        "sc_google_login_failed": "Échec connexion Google",
+        "sc_google_not_configured": "Google non configuré",
+        "sc_note_preview": "Aperçu note",
+        "sc_open_page": "Ouvrir page",
+        "sc_sdk_loading": "Chargement SDK...",
+        "sc_send_failed": "Échec d'envoi",},
 
 
 
@@ -8002302,6 +8002582,2635 @@ const TRANSLATIONS = {
 
 
 }
+        "common_copied": "Copiado",
+        "dash_interview_creating": "Creando entrevista...",
+        "dash_interview_opened": "Entrevista abierta",
+        "dialog_cancel": "Cancelar",
+        "dialog_ok": "Aceptar",
+        "kb_anchor_clear": "Borrar ancla",
+        "kb_anchor_empty": "Sin ancla",
+        "kb_anchor_err": "Error al establecer ancla",
+        "kb_anchor_loading": "Cargando anclas...",
+        "kb_auto_badge": "AUTO",
+        "kb_auto_card_missing": "Tarjeta faltante",
+        "kb_auto_created": "Automatización creada",
+        "kb_auto_delete_tip": "Esta automatización se archivará",
+        "kb_auto_need_config": "Configuración requerida",
+        "kb_auto_none": "Sin automatizaciones",
+        "kb_auto_running": "Ejecutando",
+        "kb_card_created": "Tarjeta creada",
+        "kb_empty_no_cards_in": "Sin tarjetas en",
+        "kb_err_create": "Error al crear",
+        "kb_err_title": "Error",
+        "kb_load_failed": "Error al cargar",
+        "kb_no_comments": "Sin comentarios",
+        "kb_time_day": "día",
+        "kb_time_hr": "h",
+        "kb_time_min": "min",
+        "kb_time_now": "ahora",
+        "sc_facebook_login_failed": "Error de login Facebook",
+        "sc_facebook_not_configured": "Facebook no configurado",
+        "sc_google_login_failed": "Error de login Google",
+        "sc_google_not_configured": "Google no configurado",
+        "sc_note_preview": "Vista previa nota",
+        "sc_open_page": "Abrir página",
+        "sc_sdk_loading": "Cargando SDK...",
+        "sc_send_failed": "Error al enviar",ark": "علامة",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "common_new_key": "+ مفتاح جديد",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "common_open_editor": "فتح المحرر",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "common_redeem": "استرداد",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "community_cta_create_bot": "هل تريد بوتك الخاص؟ أنشئ واحداً مجاناً وأدرجه فوراً.",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "compare_back": "← رجوع إلى مركز المعلومات",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "compare_page_title": "EClawbot مقابل Telegram — مقارنة القنوات",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "developer_section_title": "المطور",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "env_toggle_device_id": "إظهار/إخفاء معرف الجهاز",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "files_delete_confirm": "هل أنت متأكد من حذف هذا الملف؟",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "files_delete_failed": "فشل حذف الملف",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "files_deleted": "تم حذف الملف",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "files_multi_select_attach": "إرفاق بالمحادثة",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "files_multi_select_cancel": "إلغاء",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "files_multi_select_count": "محدد",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "guide_bridge_case_li1": "Claude الرئيسي يرسل Sub (U12) لتشغيل تمرين سحب/إعادة تعيين المخطط التنظيمي على محاكي Android",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "guide_bridge_case_li2": "Sub يشغل Computer MCP لأخذ لقطة شاشة، مما يحفز Elicitation ويقفل TTY",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "guide_bridge_case_li3": "الرئيسي يستخدم <code>eye</code> (أداة نظرة عامة macOS للشاشة الكاملة) لرؤية الحوار → osascript ينقر تلقائياً",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "guide_bridge_case_li4": "Sub يستقبل allowAll → يستأنف التمرين → يكتشف أن BottomSheet يتمدد إلى ~20% فقط",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "guide_bridge_case_li5": "الرئيسي يحلل <code>OrgChartBottomSheetFragment</code> → يعزل سلوك BottomSheetDialog الغريب في قياس <code>match_parent</code> كـ <code>wrap_content</code>",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "guide_bridge_case_li6": "الإصلاح (PR #1854) → يرسل Sub للتحقق → يؤكد التمدد 90% → اكتمل الحلقة المغلقة",
+        "common_close": "إغلاق",
+        "common_copied": "تم النسخ",
+        "dash_interview_creating": "جاري إنشاء المقابلة...",
+        "dash_interview_opened": "تم فتح المقابلة",
+        "dialog_cancel": "إلغاء",
+        "dialog_ok": "موافق",
+        "kb_anchor_clear": "مسح المرساة",
+        "kb_anchor_empty": "لا توجد مرساة",
+        "kb_anchor_err": "فشل تعيين المرساة",
+        "kb_anchor_loading": "جاري تحميل المراسي...",
+        "kb_auto_badge": "تلقائي",
+        "kb_auto_card_missing": "البطاقة مفقودة",
+        "kb_auto_created": "تم إنشاء الأتمتة",
+        "kb_auto_delete_tip": "سيتم أرشفة هذه الأتمتة",
+        "kb_auto_need_config": "مطلوب تكوين",
+        "kb_auto_none": "لا توجد أتمتة",
+        "kb_auto_running": "قيد التشغيل",
+        "kb_card_created": "تم إنشاء البطاقة",
+        "kb_empty_no_cards_in": "لا توجد بطاقات في",
+        "kb_err_create": "فشل الإنشاء",
+        "kb_err_title": "خطأ",
+        "kb_load_failed": "فشل التحميل",
+        "kb_no_comments": "لا توجد تعليقات",
+        "kb_time_day": "يوم",
+        "kb_time_hr": "ساعة",
+        "kb_time_min": "دقيقة",
+        "kb_time_now": "الآن",
+        "sc_facebook_login_failed": "فشل تسجيل الدخول بفيسبوك",
+        "sc_facebook_not_configured": "فيسبوك غير مكون",
+        "sc_google_login_failed": "فشل تسجيل الدخول بجوجل",
+        "sc_google_not_configured": "جوجل غير مكون",
+        "sc_note_preview": "معاينة الملاحظة",
+        "sc_open_page": "فتح الصفحة",
+        "sc_sdk_loading": "جاري تحميل SDK...",
+        "sc_send_failed": "فشل الإرسال",}
 
 
 
