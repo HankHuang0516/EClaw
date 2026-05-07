@@ -10,6 +10,21 @@
 * **idle-dispatch:** PR-C wire createAutoCronCard to kanbanEvents.emit ([#2505](https://github.com/HankHuang0516/EClaw/issues/2505)) ([b68a61c](https://github.com/HankHuang0516/EClaw/commit/b68a61c385a7d6398fd678bcaee497be7870a333))
 * **kanban:** PR-DCA — dep-chain schema + cycle detection ([#2506](https://github.com/HankHuang0516/EClaw/issues/2506)) ([5c86b19](https://github.com/HankHuang0516/EClaw/commit/5c86b19c42f5597a6ef10f654028d0fd772b81b6)), closes [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#2481](https://github.com/HankHuang0516/EClaw/issues/2481) [#2494](https://github.com/HankHuang0516/EClaw/issues/2494)
 * **kanban:** PR-DCB — dep-chain HTTP API + jest supertest ([#2507](https://github.com/HankHuang0516/EClaw/issues/2507)) ([2a5d87c](https://github.com/HankHuang0516/EClaw/commit/2a5d87c01913159c2c930e02e33a03d773a646ee)), closes [#2481](https://github.com/HankHuang0516/EClaw/issues/2481) [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+* **kanban-deps:** PR-DCC race-window hardening with device-scoped advisory lock ([#2509](https://github.com/HankHuang0516/EClaw/issues/2509)) ([1bb65a0](https://github.com/HankHuang0516/EClaw/commit/1bb65a078ef29104a13e6f0d8b8f970f3ff1ee44))
+* **recovery:** rebuild P0 CTA register intent + portal beacons (PR [#2496](https://github.com/HankHuang0516/EClaw/issues/2496)) ([#2501](https://github.com/HankHuang0516/EClaw/issues/2501)) ([60ea806](https://github.com/HankHuang0516/EClaw/commit/60ea806baee665d166733681c03c8b2a27ef0bfd))
+
+# [1.1172.0](https://github.com/HankHuang0516/EClaw/compare/v1.1171.1...v1.1172.0) (2026-05-07)
+
+
+### Features
+
+* **growth:** P1a invite_clicks + P1 funnel endpoint (recovery rebuild — 2 commits) ([#2500](https://github.com/HankHuang0516/EClaw/issues/2500)) ([e965a72](https://github.com/HankHuang0516/EClaw/commit/e965a72a9c41734a24f6e108ea676702549bae09)), closes [#2499](https://github.com/HankHuang0516/EClaw/issues/2499)
+* **idle-dispatch:** PR-A instrumentation - feature flag + event emitter + tests ([d7526e2](https://github.com/HankHuang0516/EClaw/commit/d7526e26daaee6bd1089af5491cc2aee30c9fa7e))
+* **idle-dispatch:** PR-A instrumentation - feature flag + event emitter + tests ([a3e5c9d](https://github.com/HankHuang0516/EClaw/commit/a3e5c9dca6eb380a52ccd540a2a9101b60a47fb9))
+* **idle-dispatch:** PR-B wire onCardStatusChange to kanbanEvents.emit ([#2504](https://github.com/HankHuang0516/EClaw/issues/2504)) ([7a71a31](https://github.com/HankHuang0516/EClaw/commit/7a71a31c6c17249c561820a3ae53bc7e2e9ad726))
+* **idle-dispatch:** PR-C wire createAutoCronCard to kanbanEvents.emit ([#2505](https://github.com/HankHuang0516/EClaw/issues/2505)) ([b68a61c](https://github.com/HankHuang0516/EClaw/commit/b68a61c385a7d6398fd678bcaee497be7870a333))
+* **kanban:** PR-DCA — dep-chain schema + cycle detection ([#2506](https://github.com/HankHuang0516/EClaw/issues/2506)) ([5c86b19](https://github.com/HankHuang0516/EClaw/commit/5c86b19c42f5597a6ef10f654028d0fd772b81b6)), closes [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#2481](https://github.com/HankHuang0516/EClaw/issues/2481) [#2494](https://github.com/HankHuang0516/EClaw/issues/2494)
+* **kanban:** PR-DCB — dep-chain HTTP API + jest supertest ([#2507](https://github.com/HankHuang0516/EClaw/issues/2507)) ([2a5d87c](https://github.com/HankHuang0516/EClaw/commit/2a5d87c01913159c2c930e02e33a03d773a646ee)), closes [#2481](https://github.com/HankHuang0516/EClaw/issues/2481) [#1](https://github.com/HankHuang0516/EClaw/issues/1)
 * **recovery:** rebuild P0 CTA register intent + portal beacons (PR [#2496](https://github.com/HankHuang0516/EClaw/issues/2496)) ([#2501](https://github.com/HankHuang0516/EClaw/issues/2501)) ([60ea806](https://github.com/HankHuang0516/EClaw/commit/60ea806baee665d166733681c03c8b2a27ef0bfd))
 
 # [1.1172.0](https://github.com/HankHuang0516/EClaw/compare/v1.1171.1...v1.1172.0) (2026-05-07)
