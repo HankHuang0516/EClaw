@@ -1,3 +1,10 @@
+# [1.1173.0](https://github.com/HankHuang0516/EClaw/compare/v1.1172.4...v1.1173.0) (2026-05-07)
+
+
+### Features
+
+* **growth:** CTA register intent + portal beacon funnel (slice 1+2) ([#2496](https://github.com/HankHuang0516/EClaw/issues/2496)) ([4cc8675](https://github.com/HankHuang0516/EClaw/commit/4cc867589e2b5cb98225c56c9898af759eacee7f)), closes [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+
 ## [1.1172.4](https://github.com/HankHuang0516/EClaw/compare/v1.1172.3...v1.1172.4) (2026-05-06)
 
 
