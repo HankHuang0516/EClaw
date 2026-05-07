@@ -7,7 +7,7 @@
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
-- **Current version**: 1.1121.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **Current version**: 1.1172.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
 - **Android app version**: 1.0.79 (versionCode 85); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
@@ -73,6 +73,12 @@ EClaw/
 │   ├── reference-parser.js    # Smart chip reference scanner (card_/review_/src://)
 │   ├── reference-resolver.js  # Smart chip async DB resolver
 │   ├── rental-proxy.js       # Token metering proxy for rented bots (balance check + charge)
+│   ├── idle_dispatch_handler.js # Idle dispatch: bot busy check + queue + drain
+│   ├── api_idle_dispatch.js    # Idle dispatch REST API endpoints
+│   ├── idle_dispatch_integration.js # Idle dispatch kanban event integration
+│   ├── kanban-dependencies.js  # Kanban card dependency chain (cycle detection, topological sort)
+│   ├── api_kanban_dependencies.js # Kanban dependency HTTP API (add/remove/list deps)
+│   ├── lib/kanban-events.js    # Kanban event emitter (card status changes)
 │   ├── openapi.yaml          # OpenAPI 3.0 specification
 │   ├── auth_schema.sql       # User accounts + auth SQL schema
 │   ├── mission_schema.sql    # Mission dashboard SQL schema
@@ -151,6 +157,8 @@ EClaw/
 │   │   ├── landing.html           # EClawbot brand landing page (SEO, JSON-LD)
 │   │   ├── enterprise.html        # Enterprise landing page (SEO, JSON-LD)
 │   │   ├── privacy-policy.html    # Privacy policy page (i18n, 12 languages)
+│   │   ├── promo.html             # Promo video embed page
+│   │   ├── promo-meta.html        # Concept A meta-recursion documentary promo page
 │   │   ├── llms.txt               # AI search engine discovery file
 │   │   ├── robots.txt             # SEO: crawler directives
 │   │   ├── sitemap.xml            # SEO: sitemap (10 URLs)
@@ -160,7 +168,7 @@ EClaw/
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
 │   ├── tests/                # Regression + integration tests (59 files)
-│   ├── tests/jest/           # Jest unit tests (146 files, CI-run via `npm test`)
+│   ├── tests/jest/           # Jest unit tests (184 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -320,9 +328,13 @@ EClaw/
 | `/api/analytics/*` | site-pageviews.js | Site pageview analytics aggregation |
 | `/api/growth/*` | growth.js | Growth metrics for admin bots |
 | `/api/chat/message/:id/related` | index.js + chat-embedding.js | Nearest-neighbor message lookup |
+| `/api/mission/card/:id/deps` | api_kanban_dependencies.js | Kanban card dependency chain (add/remove/list dependencies) |
+| `/api/idle-dispatch/*` | api_idle_dispatch.js | Idle dispatch API (queue status, manual drain) |
 | `/api/health`, `/api/version` | index.js | Health check and version |
 | `/c/:code` | index.js | Shareable chat link (read-only view) |
 | `/`, `/landing`, `/llms.txt` | index.js | Landing page, SEO, AI search discovery |
+| `/promo`, `/promo.html` | index.js | Promo video embed page |
+| `/promo-meta.html` | index.js | Concept A meta-recursion documentary promo |
 
 ### Web Portal Pages
 
@@ -359,6 +371,8 @@ EClaw/
 | Onboarding | `/portal/onboarding.html` | New user onboarding flow |
 | Invite | `/portal/invite.html` | Referral/invite code page |
 | Roadmap | `/portal/roadmap.html` | Product roadmap display |
+| Promo | `/promo.html` | Promo video embed (public, SEO) |
+| Promo Meta | `/promo-meta.html` | Concept A documentary promo (public, SEO) |
 
 ### Android App (Kotlin)
 
@@ -1012,11 +1026,24 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Kanban Cron-Spawn Child Inheritance (v1.1122)**: Cron-spawned child cards inherit `requires_screenshot_review` flag from parent; mom card edit toggle for screenshot review setting (#2245)
 - **Mindmap Phase 4 Read-Side (v1.1122)**: `/api/mission/mindmap` honors `chat_anchor_coord` for read-side rendering, connecting mindmap nodes to chat anchor positions (#2244)
 
+### Recent Features (v1.1128.x – v1.1172.x)
+
+- **Idle Dispatch Automation (v1.1170–v1.1172)**: Smart bot availability system — `dispatch_mode` column on `kanban_cards` (`immediate` or `idle_only`); `pending_dispatch` flag queues cards when assigned bot is busy; auto-dispatches when bot goes IDLE; `idle_dispatch_handler.js` + `api_idle_dispatch.js` modules; kanban UI dispatch mode toggle; full Jest test suite
+- **Kanban Dependency Chain (v1.1172)**: Card dependency management — `kanban-dependencies.js` with cycle detection (topological sort); `api_kanban_dependencies.js` HTTP API (`POST/DELETE/GET /api/mission/card/:id/deps`); device-scoped advisory lock for race-window hardening; `kanban-dep-schema.js` fixture; Jest supertest suite
+- **Kanban Event System (v1.1172)**: `lib/kanban-events.js` EventEmitter for card status changes; idle dispatch hooks wired to kanban events; `idle_dispatch_integration.js` bridges kanban and idle dispatch
+- **Promo Pages (v1.1172)**: `/promo.html` video embed page + `/promo-meta.html` Concept A meta-recursion documentary; Express routes at root level; OG meta for social sharing
+- **MiniGame Admin Analytics (v1.1169–v1.1170)**: Admin submissions view + error/play analytics aggregation from `server_logs` + `device_telemetry`
+- **Chat Scroll Position Lock (v1.1172)**: Users scrolling up in chat no longer get force-scrolled to bottom on new messages
+- **i18n Massive Leak Fix (v1.1128–v1.1171)**: Hundreds of missing/leaked keys fixed across ja, es, de, ar locales; over-escaped quotes fixed (1,821 instances); orphan key cleanup
+- **Android i18n Hardcoded Strings (v1.1168)**: `no_bound_entities`, `name_field_hint`, `desc_field_hint` strings added to all 14 Android locale files
+- **Growth Tracking (v1.1168)**: `growth.js` module for admin bot growth metrics; static serving fix
+- **UIUX Audit Script Alignment (v1.1172)**: QA/UIUX audit test scripts aligned with current portal contracts
+
 ---
 
 ## Test Coverage Summary
 
-**~450 total API routes** across all modules (400 excluding Article Publisher), **~83% covered** by Jest + integration tests (~2412 test cases across 146 Jest files + 59 integration tests).
+**~460 total API routes** across all modules (410 excluding Article Publisher), **~84% covered** by Jest + integration tests (~2693 test cases across 184 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -1109,7 +1136,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | R2 Quota Rich Card | `node backend/tests/test-r2-quota-rich-card.js` | Device ID + Secret | R2 quota exceeded rich card E2E |
 | Subscription Plans Live | `node backend/tests/test-subscription-plans-live.js` | Device ID + Secret | Subscription plans + wallet live verification |
 
-### Jest Unit Tests (CI-run, `npm test`, 116 files)
+### Jest Unit Tests (CI-run, `npm test`, 184 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -1169,6 +1196,16 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Cross-Speak Channel | `tests/jest/cross-speak-channel.test.js` | Cross-speak channel push parity — entity/client cross-speak channel-bound delivery |
 | Auth /me Contract | `tests/jest/auth-me-contract.test.js` | API/frontend contract test for /api/auth/me response fields |
 | Org Chart | `tests/jest/org-chart.test.js` | Org chart helpers (getSuperior, validateHierarchy, pruneHierarchy), GET/PUT endpoint auth validation |
+| Idle Dispatch Hooks | `tests/jest/idle-dispatch-hooks.test.js` | Idle dispatch handler busy check, queue, drain logic |
+| Idle Dispatch PR-B Wire | `tests/jest/idle-dispatch-pr-b-wire.test.js` | onCardStatusChange wired to kanban event emitter |
+| Idle Dispatch PR-C Wire | `tests/jest/idle-dispatch-pr-c-wire.test.js` | createAutoCronCard wired to kanban event emitter |
+| Kanban Dependencies Cycle | `tests/jest/kanban-dependencies-cycle.test.js` | Cycle detection, topological sort, dependency CRUD |
+| API Kanban Dependencies | `tests/jest/api-kanban-dependencies.test.js` | Dependency chain HTTP API supertest validation |
+| API Kanban Deps Race | `tests/jest/api-kanban-dependencies-race.test.js` | Device-scoped advisory lock race-window hardening |
+| Growth | `tests/jest/growth.test.js` | Growth metrics API validation |
+| Invite Clicks | `tests/jest/invite-clicks.test.js` | Invite click telemetry + funnel dashboard |
+| Kanban Dispatch Mode UX | `tests/jest/kanban-dispatch-mode-ux.test.js` | Dispatch mode toggle UI validation |
+| Portal Workspace Telemetry | `tests/jest/portal-workspace-telemetry.test.js` | Workspace page view telemetry |
 
 ### Running All Tests
 ```bash
