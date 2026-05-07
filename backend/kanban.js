@@ -43,6 +43,7 @@ const safeEqual = require('./safe-equal');
 const { newCardId } = require('./entity-id');
 const { tKanban, statusLabel } = require('./i18n/kanban-notifications');
 const devicePrefs = require('./device-preferences');
+const { emit: emitKanbanEvent } = require('./lib/kanban-events');
 
 // Cache device→language to avoid repeated lookups
 const deviceLangCache = new Map();
@@ -1553,6 +1554,19 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
             }
 
             await bumpVersion(deviceId);
+
+            // Idle-dispatch hook (PR-B). emit() is a no-op when
+            // IDLE_DISPATCH_HOOKS_ENABLED !== 'true'. Synchronous, never
+            // throws (wrapped internally), and runs after the DB write +
+            // notify so listeners see a durable transition.
+            emitKanbanEvent('card_status_changed', {
+                cardId,
+                fromStatus: oldStatus,
+                toStatus: newStatus,
+                deviceId,
+                entityId: req.body.entityId,
+                ts: new Date().toISOString()
+            });
 
             // Award XP for moving to done
             if (newStatus === 'done' && awardEntityXP) {
