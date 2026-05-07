@@ -317,7 +317,7 @@ describe('Growth signup_source schema contract', () => {
         expect(growthTracking).toMatch(/utm:/);
         expect(backendIndex).toMatch(/app\.use\('\/js',\s*express\.static\(path\.join\(__dirname, 'public\/js'\)/);
         expect(portalIndex).toMatch(/EClawGrowthTracking\.collectSignupSource\(\{ fallback: 'web_portal' \}\)/);
-        expect(portalIndex).toMatch(/signupSource:\s*collectSignupSource\(\)/);
+        expect(portalIndex).toMatch(/const\s+signupSource\s*=\s*collectSignupSource\(\)/);
         expect(shareChat).toMatch(/EClawGrowthTracking\.collectSignupSource\(\{ fallback: 'share_chat' \}\)/);
         expect(iosApi).toMatch(/signupSource\s*=\s*'ios_app'/);
     });
