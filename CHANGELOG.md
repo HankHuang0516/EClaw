@@ -3,6 +3,15 @@
 
 ### Features
 
+* **growth:** P1a invite_clicks + P1 funnel endpoint (recovery rebuild — 2 commits) ([#2500](https://github.com/HankHuang0516/EClaw/issues/2500)) ([e965a72](https://github.com/HankHuang0516/EClaw/commit/e965a72a9c41734a24f6e108ea676702549bae09)), closes [#2499](https://github.com/HankHuang0516/EClaw/issues/2499)
+* **idle-dispatch:** PR-A instrumentation - feature flag + event emitter + tests ([d7526e2](https://github.com/HankHuang0516/EClaw/commit/d7526e26daaee6bd1089af5491cc2aee30c9fa7e))
+* **idle-dispatch:** PR-A instrumentation - feature flag + event emitter + tests ([a3e5c9d](https://github.com/HankHuang0516/EClaw/commit/a3e5c9dca6eb380a52ccd540a2a9101b60a47fb9))
+
+# [1.1172.0](https://github.com/HankHuang0516/EClaw/compare/v1.1171.1...v1.1172.0) (2026-05-07)
+
+
+### Features
+
 * **idle-dispatch:** PR-A instrumentation - feature flag + event emitter + tests ([d7526e2](https://github.com/HankHuang0516/EClaw/commit/d7526e26daaee6bd1089af5491cc2aee30c9fa7e))
 * **idle-dispatch:** PR-A instrumentation - feature flag + event emitter + tests ([a3e5c9d](https://github.com/HankHuang0516/EClaw/commit/a3e5c9dca6eb380a52ccd540a2a9101b60a47fb9))
 
