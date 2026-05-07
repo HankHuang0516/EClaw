@@ -1,1 +1,4 @@
+# Force LF line endings for cross-platform tools that break on CRLF
 *.js text eol=lf
+gradlew text eol=lf
+*.sh text eol=lf
