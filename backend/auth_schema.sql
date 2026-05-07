@@ -210,7 +210,8 @@ CREATE TABLE IF NOT EXISTS invite_clicks (
     clicked_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     ip_hash VARCHAR(16),
     user_agent TEXT,
-    referer TEXT
+    referer TEXT,
+    source TEXT DEFAULT 'direct'
 );
 CREATE INDEX IF NOT EXISTS idx_invite_clicks_code ON invite_clicks(code);
 CREATE INDEX IF NOT EXISTS idx_invite_clicks_clicked_at ON invite_clicks(clicked_at);

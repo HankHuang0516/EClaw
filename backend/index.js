@@ -640,7 +640,8 @@ app.get('/invite/:code', async (req, res) => {
             : null;
         const userAgent = String(req.headers['user-agent'] || '').slice(0, 500) || null;
         const referer = String(req.headers.referer || req.headers.referrer || '').slice(0, 500) || null;
-        await db.logInviteClick({ code, ipHash, userAgent, referer });
+        const source = req.query.utm_source || req.query.source || 'direct';
+        await db.logInviteClick({ code, ipHash, userAgent, referer, source });
     } catch (err) {
         console.warn(`[/invite/:code] click log failed for ${code}: ${err.message}`);
     }

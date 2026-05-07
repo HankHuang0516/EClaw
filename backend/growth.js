@@ -158,6 +158,31 @@ async function fetchInviteConversion() {
     };
 }
 
+async function fetchInviteClicksForDate(anchorDate) {
+    const r = await pool.query(
+        `SELECT COUNT(*)::int AS total_clicks,
+                COUNT(DISTINCT ic.ip_hash)::int AS unique_clicks,
+                COALESCE(ic.source, 'direct') AS source
+         FROM invite_clicks ic
+         WHERE DATE(ic.clicked_at AT TIME ZONE $1) = $2::date
+         GROUP BY COALESCE(ic.source, 'direct')
+         ORDER BY total_clicks DESC`,
+        [TZ, anchorDate]
+    );
+    const totalRow = r.rows.reduce((acc, row) => ({
+        total_clicks: acc.total_clicks + row.total_clicks,
+        unique_clicks: acc.unique_clicks + row.unique_clicks,
+    }), { total_clicks: 0, unique_clicks: 0 });
+    return {
+        total: totalRow,
+        by_source: r.rows.map(row => ({
+            source: row.source,
+            clicks: row.total_clicks,
+            unique_clicks: row.unique_clicks,
+        }))
+    };
+}
+
 module.exports = function(devices) {
     const router = express.Router();
 
@@ -198,11 +223,12 @@ module.exports = function(devices) {
         }
 
         try {
-            const [today_signups, retention_7d, plaza_new_listed_today, invite_conversion, source_channel] = await Promise.all([
+            const [today_signups, retention_7d, plaza_new_listed_today, invite_conversion, invite_clicks, source_channel] = await Promise.all([
                 fetchSignupsForDate(anchorDate),
                 fetchRetention7dForDate(anchorDate),
                 fetchPlazaNewListedForDate(anchorDate),
                 fetchInviteConversion(),
+                fetchInviteClicksForDate(anchorDate),
                 fetchSignupSourceForDate(anchorDate)
             ]);
             return res.json({
@@ -213,6 +239,7 @@ module.exports = function(devices) {
                 retention_7d,
                 plaza_new_listed_today,
                 invite_conversion,
+                invite_clicks,
                 follow_ups: [
                     'visitor_to_signup_conversion: page_views has no FK to user_accounts',
                     'plaza_new_listed_today: counts created_at not status_changed_at (bot_listings has no listed_at column)',
@@ -227,6 +254,6 @@ module.exports = function(devices) {
 
     return {
         router,
-        _internal: { checkRate, findEntity, isOwnerAdmin, fetchSignupsForDate, fetchSignupSourceForDate, fetchRetention7dForDate, fetchPlazaNewListedForDate, fetchInviteConversion, isValidDateStr, taipeiTodayISO, rateBuckets }
+        _internal: { checkRate, findEntity, isOwnerAdmin, fetchSignupsForDate, fetchSignupSourceForDate, fetchRetention7dForDate, fetchPlazaNewListedForDate, fetchInviteConversion, fetchInviteClicksForDate, isValidDateStr, taipeiTodayISO, rateBuckets }
     };
 };
