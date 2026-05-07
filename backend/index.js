@@ -16584,8 +16584,6 @@ if (mindmapModule && typeof mindmapModule.initMindmapTables === 'function') {
     }
 })();
 
-    mindmapModule.initMindmapTables(chatPool);
-}
 feedbackModule.initFeedbackTable(chatPool);
 feedbackModule.initFeedbackPhotosTable(chatPool);
 notifModule.initNotificationTables(chatPool);
