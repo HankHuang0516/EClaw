@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# EClaw pre-push guard.
+# Origin: 2026-05-07 force-push incident — Codex (#6) silently force-pushed
+# from a stale worktree, wiping 7 merged PRs (#2492-#2498). This hook would
+# have refused both the worktree-on-main and the non-fast-forward push.
+#
+# Install once per fresh checkout: `bash scripts/git-hooks/install.sh`
+# (sets core.hooksPath = scripts/git-hooks).
+set -euo pipefail
+
+remote_name="${1:-}"
+remote_url="${2:-}"
+current_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo UNKNOWN)"
+
+echo "[EClaw pre-push guard] remote=${remote_name} branch=${current_branch}" >&2
+
+# Rule 3: worktree currently on main -> STOP.
+if [[ "${current_branch}" == "main" ]]; then
+  echo "[EClaw pre-push guard] BLOCKED: current branch is main. Use feature branch + PR." >&2
+  exit 1
+fi
+
+# Rule 2: mandatory fetch + visibility of pending commits.
+git fetch origin main >&2
+echo "[EClaw pre-push guard] commits to push (origin/main..HEAD):" >&2
+git log --oneline origin/main..HEAD >&2 || true
+
+# Require a merge base with origin/main. If histories are unrelated, STOP.
+if ! git merge-base --is-ancestor "$(git merge-base HEAD origin/main)" origin/main 2>/dev/null; then
+  echo "[EClaw pre-push guard] BLOCKED: cannot prove branch base is on origin/main." >&2
+  exit 1
+fi
+
+# Read refs from stdin: <local ref> <local sha> <remote ref> <remote sha>
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [[ -z "${local_ref:-}" ]] && continue
+
+  # Rule 1: never push origin/main.
+  if [[ "${remote_name}" == "origin" && "${remote_ref}" == "refs/heads/main" ]]; then
+    echo "[EClaw pre-push guard] BLOCKED: direct push to origin/main is forbidden. Use feature branch + PR + review + merge." >&2
+    exit 1
+  fi
+
+  # Rule 4: reject non-fast-forward/force pushes.
+  # New remote branches have all-zero remote_sha — that's fine.
+  if [[ "${remote_sha}" != "0000000000000000000000000000000000000000" ]]; then
+    if ! git merge-base --is-ancestor "${remote_sha}" "${local_sha}" 2>/dev/null; then
+      echo "[EClaw pre-push guard] BLOCKED: non-fast-forward/force-style push detected. speakTo #2 approval required before any force push." >&2
+      exit 1
+    fi
+  fi
+
+done
+
+exit 0
