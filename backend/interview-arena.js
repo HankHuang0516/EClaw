@@ -188,6 +188,10 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── New hard-tier additions: 2026-05-07 daily update ──
+    { file: null, description: 'A terminal error log showing three lines: "ERROR [2024-03-15 08:47:22] database connection timeout after 30s", "WARN [2024-03-15 08:47:23] retrying connection attempt 3 of 5", and "FATAL [2024-03-15 08:47:53] max retries exceeded — service halted"', keywords: ['ERROR', 'timeout', '30', 'WARN', 'retrying', 'FATAL', 'halted'] },
+    { file: null, description: 'A restaurant menu section labeled Lunch Specials listing: Grilled Salmon $18.50, Caesar Salad $12.00, Pasta Primavera $14.75, Cheeseburger $11.25 — all items show a 15% service charge notice at the bottom', keywords: ['lunch', 'salmon', '18', 'caesar', '12', 'pasta', 'burger', '11', 'service'] },
+    { file: null, description: 'An e-commerce analytics dashboard with five KPI tiles showing: active users 2,847, orders today 341, revenue $18,492, conversion rate 3.7%, and cart abandonment 68% — a line graph below shows 7-day revenue trending upward with a noticeable dip on Wednesday', keywords: ['analytics', '2847', '341', '18492', 'conversion', 'abandonment', 'wednesday'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +372,13 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── New additions: 2026-05-07 daily update ──
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array of non-negative integers representing an elevation map (each bar has width 1), compute how much water can be trapped after raining.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[1,0,1]', expected: '1' },{ input: '[3,0,0,2,0,4]', expected: '10' }] },
+    { title: 'Longest Common Subsequence', description: 'Write `solve(text1, text2)` — return the length of the longest common subsequence of the two strings. A subsequence does not need to be contiguous.',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"aggtab", "gxtxayb"', expected: '4' }] },
+    { title: 'Rotate Image 90°', description: 'Write `solve(matrix)` — rotate an n×n matrix 90 degrees clockwise. Return the rotated matrix (do not modify in place; return a new matrix).',
+      testCases: [{ input: '[[1,2,3],[4,5,6],[7,8,9]]', expected: '[[7,4,1],[8,5,2],[9,6,3]]' },{ input: '[[5,1,9,11],[2,4,8,10],[13,3,6,7],[15,14,12,16]]', expected: '[[15,13,2,5],[14,3,4,1],[12,6,8,9],[16,7,10,11]]' },{ input: '[[1]]', expected: '[[1]]' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +428,12 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── New additions: 2026-05-07 daily update ──
+    { question: 'A bacteria culture starts with 200 cells and doubles every 30 minutes. How many cells are there after 2 hours?', expectedKeywords: ['3200'] },
+    { question: 'Two workers can complete a job together in 12 days. Worker A alone finishes the job in 20 days. How many days does Worker B need to complete it alone?', expectedKeywords: ['30'] },
+    { question: 'A car and a truck start from the same point and travel in opposite directions. The car travels at 70 km/h and the truck at 90 km/h. How many kilometers apart are they after 3 hours?', expectedKeywords: ['480'] },
+    { question: 'What is the units digit of 7 raised to the power of 50?', expectedKeywords: ['9'] },
+    { question: 'A rectangular garden is 15 meters long and 8 meters wide. What is the length of the diagonal in meters?', expectedKeywords: ['17'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +511,11 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── New hard-tier additions: 2026-05-07 daily update ──
+    { text: 'The IEEE 802 dot 11ax standard also known as Wi-Fi 6 supports OFDMA and MU-MIMO on the 2.4 gigahertz and 5 gigahertz frequency bands simultaneously', keywords: ['IEEE', '802', 'Wi-Fi', 'OFDMA', 'MU-MIMO', '2.4', '5'] },
+    { text: 'The three prime numbers between 80 and 100 in ascending order are 83 89 and 97 making a total of three primes in that range', keywords: ['prime', '83', '89', '97', 'three'] },
+    { text: 'Your order confirmation number is R-8 3 7 4 9 2 dash K and your estimated delivery window is Thursday March 6th through Monday March 10th', keywords: ['confirmation', '837492', 'Thursday', 'March', 'Monday'] },
+    { text: 'The patient hemoglobin A1c of 8.3 percent exceeds the target of 7 percent indicating suboptimal glycemic control per American Diabetes Association guidelines', keywords: ['hemoglobin', 'A1c', '8.3', 'glycemic', 'diabetes'] },
 ];
 
 // ============================================
