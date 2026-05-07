@@ -1632,6 +1632,15 @@ try {
     kanbanModule = { initKanbanDatabase: () => {}, startBackgroundTimers: () => {} };
 }
 
+// Kanban dep-chain HTTP API (PR-DCB) — mounted on same /api/mission path
+try {
+    const kanbanDepsModule = require('./api_kanban_dependencies')(devices);
+    app.use('/api/mission', kanbanDepsModule.router);
+    console.log('[KanbanDeps] Module loaded successfully');
+} catch (err) {
+    console.error('[KanbanDeps] Failed to load module:', err.message);
+}
+
 // Idle Dispatch System — smart bot availability-based card dispatch
 try {
     const idleDispatchRouter = require('./api_idle_dispatch');
