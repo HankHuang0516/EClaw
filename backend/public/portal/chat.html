@@ -4534,15 +4534,26 @@
                 let attachmentsHtml = '';
                 if (Array.isArray(msg.attachments) && msg.attachments.length > 0) {
                     const cards = msg.attachments.map(a => {
-                        const isImage = (a.mimeType || '').startsWith('image/');
+                        // Fallback when older uploads stored mime as octet-stream:
+                        // sniff the filename extension so a player still renders.
+                        const mt = sniffAttachmentMime(a.mimeType, a.filename).toLowerCase();
+                        const isImage = mt.startsWith('image/');
+                        const isVideo = mt.startsWith('video/');
+                        const isAudio = mt.startsWith('audio/');
                         const sizeStr = a.size > 0 ? (a.size >= 1048576 ? (a.size / 1048576).toFixed(1) + ' MB' : Math.round(a.size / 1024) + ' KB') : '';
-                        const icon = isImage ? '🖼️' : (a.mimeType || '').includes('pdf') ? '📄' : (a.mimeType || '').includes('video') ? '🎬' : '📎';
+                        const icon = isImage ? '🖼️' : mt.includes('pdf') ? '📄' : isVideo ? '🎬' : isAudio ? '🎵' : '📎';
                         const fileIdAttr = escapeHtml(a.fileId);
                         const filenameAttr = escapeHtml(a.filename || 'file');
                         const editBtn = isTextEditableFilename(a.filename)
                             ? `<button class="msg-attachment-btn" data-i18n="file_edit_btn" onclick="event.stopPropagation();openFileEditor('${fileIdAttr}','${filenameAttr}')">&#x270F;&#xFE0F; ${i18n.t('file_edit_btn') || '線上編輯'}</button>`
                             : '';
-                        return `<div class="msg-attachment" onclick="previewAttachment('${fileIdAttr}')">
+                        let playerHtml = '';
+                        if (isVideo) {
+                            playerHtml = `<video class="chat-video chat-attachment-media" data-attachment-fileid="${fileIdAttr}" controls preload="metadata" onclick="event.stopPropagation();" style="max-width:300px;max-height:240px;border-radius:8px;display:block;margin-bottom:6px;background:#000;"></video>`;
+                        } else if (isAudio) {
+                            playerHtml = `<audio class="chat-audio chat-attachment-media" data-attachment-fileid="${fileIdAttr}" controls preload="metadata" onclick="event.stopPropagation();" style="max-width:300px;display:block;margin-bottom:6px;"></audio>`;
+                        }
+                        return `${playerHtml}<div class="msg-attachment" onclick="previewAttachment('${fileIdAttr}')">
                             <span class="msg-attachment-icon">${icon}</span>
                             <div class="msg-attachment-info">
                                 <div class="msg-attachment-name">${filenameAttr}</div>
@@ -4609,6 +4620,12 @@
                 if (slot.children.length > 0) return; // already loaded
                 fetchLinkPreview(slot.dataset.url, slot);
             });
+
+            // Lazy-load signed URLs for inline video/audio attachments. R2 signed URLs
+            // are short-lived (10min) so we wait until the player scrolls into view
+            // before requesting one — otherwise a 100-message scrollback with media
+            // would burn 100 signed URLs that mostly expire before the user scrolls.
+            wireInlineMediaLazyLoad(container);
 
             // Integrity: display layer (non-blocking)
             ChatIntegrityValidator.validateDisplayLayer(displayMessages);
@@ -4776,6 +4793,87 @@
         // Android WebView does not support window.open(); instead navigate the current
         // window to the R2 URL — shouldOverrideUrlLoading intercepts it and opens the
         // system browser, leaving chat.html in place.
+
+        // Filename-extension mime sniff for attachments — mirrors backend
+        // sniffMimeFromExtension(). Covers old uploads stored with
+        // application/octet-stream so the inline player still renders.
+        const _ATTACHMENT_MIME_BY_EXT = {
+            mp4: 'video/mp4', m4v: 'video/mp4', mov: 'video/quicktime',
+            webm: 'video/webm', mkv: 'video/x-matroska', ogv: 'video/ogg',
+            mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac',
+            wav: 'audio/wav', ogg: 'audio/ogg', oga: 'audio/ogg',
+            flac: 'audio/flac', opus: 'audio/opus', weba: 'audio/webm',
+            jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+            webp: 'image/webp', gif: 'image/gif', svg: 'image/svg+xml',
+            pdf: 'application/pdf',
+        };
+        function sniffAttachmentMime(mimeType, filename) {
+            const supplied = String(mimeType || '').toLowerCase();
+            if (supplied && supplied !== 'application/octet-stream' && supplied !== 'application/binary') {
+                return mimeType;
+            }
+            const base = String(filename || '').split(/[/\\]/).pop() || '';
+            const dot = base.lastIndexOf('.');
+            const ext = dot >= 0 ? base.slice(dot + 1).toLowerCase() : '';
+            return _ATTACHMENT_MIME_BY_EXT[ext] || mimeType || '';
+        }
+
+        // Lazy signed-URL fetcher for inline video/audio attachments.
+        // Walks new attachment players in `container`, observes them with a shared
+        // IntersectionObserver, and on first intersection fetches /api/files/:fileId
+        // to get a 10-min signed URL and assigns it to .src. dataset.mediaLoaded
+        // gates re-fetching so a re-render after the user scrolls back doesn't
+        // burn a fresh URL on an element that's already playing.
+        let _inlineMediaObserver = null;
+        function wireInlineMediaLazyLoad(container) {
+            if (!currentUser) return;
+            const players = container.querySelectorAll('video[data-attachment-fileid], audio[data-attachment-fileid]');
+            if (!players.length) return;
+
+            const loadOne = async (el) => {
+                if (el.dataset.mediaLoaded === '1') return;
+                el.dataset.mediaLoaded = '1';
+                const fileId = el.dataset.attachmentFileid;
+                if (!fileId) return;
+                try {
+                    const params = new URLSearchParams({
+                        deviceId: currentUser.deviceId,
+                        deviceSecret: currentUser.deviceSecret,
+                    });
+                    const res = await fetch(`/api/files/${encodeURIComponent(fileId)}?${params}`);
+                    const data = await res.json();
+                    if (data && data.success && data.url) {
+                        el.src = data.url;
+                    } else {
+                        el.dataset.mediaLoaded = '';
+                    }
+                } catch (e) {
+                    el.dataset.mediaLoaded = '';
+                }
+            };
+
+            if (typeof IntersectionObserver !== 'function') {
+                players.forEach(loadOne);
+                return;
+            }
+
+            if (!_inlineMediaObserver) {
+                _inlineMediaObserver = new IntersectionObserver((entries) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting) {
+                            loadOne(entry.target);
+                            _inlineMediaObserver.unobserve(entry.target);
+                        }
+                    }
+                }, { rootMargin: '200px 0px' });
+            }
+
+            players.forEach(el => {
+                if (el.dataset.mediaLoaded !== '1' && !el.src) {
+                    _inlineMediaObserver.observe(el);
+                }
+            });
+        }
 
         // Preview: open file in new tab (PDF viewer, image viewer, etc.)
         async function previewAttachment(fileId) {
