@@ -1537,6 +1537,16 @@
             max-width: 200px; max-height: 160px; border-radius: 8px;
             display: block; cursor: pointer; object-fit: cover;
         }
+        /* Compact chip — one-line strip used when an inline <video>/<audio>
+           player already covers the same file, so the chip becomes a
+           caption + download link instead of a full card. */
+        .msg-attachment.compact {
+            padding: 4px 8px; gap: 6px; font-size: 11px; opacity: 0.75;
+        }
+        .msg-attachment.compact .msg-attachment-icon { display: none; }
+        .msg-attachment.compact .msg-attachment-size { display: none; }
+        .msg-attachment.compact .msg-attachment-name { font-weight: 400; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .msg-attachment.compact .msg-attachment-btn { padding: 2px 6px; font-size: 11px; }
 
         /* ── Inline R2 attachment card (URL-stripped replacement) ── */
         .r2-attachment-card {
@@ -4553,14 +4563,16 @@
                         } else if (isAudio) {
                             playerHtml = `<audio class="chat-audio chat-attachment-media" data-attachment-fileid="${fileIdAttr}" controls preload="metadata" onclick="event.stopPropagation();" style="max-width:300px;display:block;margin-bottom:6px;"></audio>`;
                         }
-                        return `${playerHtml}<div class="msg-attachment" onclick="previewAttachment('${fileIdAttr}')">
+                        const compactClass = (isVideo || isAudio) ? ' compact' : '';
+                        const downloadLabel = (isVideo || isAudio) ? '⬇' : '⬇ 下載';
+                        return `${playerHtml}<div class="msg-attachment${compactClass}" onclick="previewAttachment('${fileIdAttr}')">
                             <span class="msg-attachment-icon">${icon}</span>
                             <div class="msg-attachment-info">
                                 <div class="msg-attachment-name">${filenameAttr}</div>
                                 ${sizeStr ? `<div class="msg-attachment-size">${sizeStr}</div>` : ''}
                             </div>
                             ${editBtn}
-                            <button class="msg-attachment-btn" onclick="event.stopPropagation();downloadAttachment('${fileIdAttr}','${filenameAttr}')">⬇ 下載</button>
+                            <button class="msg-attachment-btn" onclick="event.stopPropagation();downloadAttachment('${fileIdAttr}','${filenameAttr}')">${downloadLabel}</button>
                         </div>`;
                     }).join('');
                     attachmentsHtml = `<div class="msg-attachments">${cards}</div>`;
