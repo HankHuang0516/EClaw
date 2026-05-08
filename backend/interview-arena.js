@@ -188,6 +188,12 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── New hard-tier additions (daily update 2026-05-08) ──
+    { file: null, description: 'A UML class diagram with four classes: User (id, name, email; methods: login, logout), Order (orderId, status; methods: place, cancel), Product (sku, price, stock), and Payment (amount, currency; methods: charge, refund) — User to Order: 1-to-many, Order to Product: many-to-many, Order to Payment: 1-to-1', keywords: ['UML', 'four', 'classes', 'user', 'order', 'product', 'payment'] },
+    { file: null, description: 'A 42U server rack: top 2U is a patch panel, units 3-10 hold eight 1U servers, units 11-12 hold a 2U firewall, units 13-14 hold a 2U load balancer, unit 15 is a 1U switch, units 16-19 are empty, units 20-25 hold a 6U storage array — thirteen active components total', keywords: ['rack', '42U', 'eight', 'servers', 'firewall', 'storage', 'thirteen'] },
+    { file: null, description: 'A subway transit map with seven stations on Line A (red): Central, Park, Museum, Airport, Harbor, Stadium, University — three transfer intersections: Line B (blue) at Park, Line C (green) at Museum, Line D (yellow) at Harbor', keywords: ['subway', 'seven', 'stations', 'three', 'transfer', 'harbor', 'museum'] },
+    { file: null, description: 'A Kubernetes namespace diagram: three Deployments (api-gateway 3 replicas, user-service 2 replicas, payment-service 1 replica), one StatefulSet for postgres with 2 replicas, one Ingress routing external traffic to api-gateway — nine running Pods total', keywords: ['kubernetes', 'three', 'deployments', 'api', 'gateway', 'postgres', 'nine', 'ingress'] },
+    { file: null, description: 'An ER diagram with five tables: customers (PK: customer_id), orders (PK: order_id, FK: customer_id), order_items (PK: item_id, FKs: order_id and product_id), products (PK: product_id, FK: category_id), categories (PK: category_id) — four foreign-key relationships with crow-foot notation', keywords: ['database', 'five', 'tables', 'foreign', 'key', 'four', 'customers', 'orders'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +374,19 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── New medium-hard additions (daily update 2026-05-08) ──
+    { title: 'Merge Intervals', description: 'Write `solve(intervals)` — merge all overlapping intervals. Return the merged list sorted by start time.',
+      testCases: [{ input: '[[1,3],[2,6],[8,10],[15,18]]', expected: '[[1,6],[8,10],[15,18]]' },{ input: '[[1,4],[4,5]]', expected: '[[1,5]]' },{ input: '[[1,4],[0,2],[3,5]]', expected: '[[0,5]]' },{ input: '[[1,1]]', expected: '[[1,1]]' }] },
+    { title: 'Sliding Window Maximum', description: 'Write `solve(nums, k)` — return an array of the maximum value in each contiguous sliding window of size k.',
+      testCases: [{ input: '[1,3,-1,-3,5,3,6,7], 3', expected: '[3,3,5,5,6,7]' },{ input: '[1], 1', expected: '[1]' },{ input: '[9,8,7,6], 2', expected: '[9,8,7]' },{ input: '[4,3,11,2], 1', expected: '[4,3,11,2]' }] },
+    { title: 'Course Schedule', description: 'Write `solve(numCourses, prerequisites)` — return true if it is possible to finish all courses. prerequisites[i] = [a, b] means course b must be taken before course a. Detect cycles in the dependency graph.',
+      testCases: [{ input: '2, [[1,0]]', expected: 'true' },{ input: '2, [[1,0],[0,1]]', expected: 'false' },{ input: '4, [[1,0],[2,0],[3,1],[3,2]]', expected: 'true' },{ input: '3, [[0,1],[1,2],[2,0]]', expected: 'false' }] },
+    { title: 'Unique Paths', description: 'Write `solve(m, n)` — a robot starts at top-left of an m×n grid and can only move right or down. Return the number of unique paths to reach the bottom-right corner.',
+      testCases: [{ input: '3, 7', expected: '28' },{ input: '3, 2', expected: '3' },{ input: '1, 1', expected: '1' },{ input: '2, 4', expected: '4' }] },
+    { title: 'Longest Common Subsequence', description: 'Write `solve(text1, text2)` — return the length of the longest common subsequence. A subsequence is formed by deleting some characters without changing the relative order.',
+      testCases: [{ input: 'abcde, ace', expected: '3' },{ input: 'abc, abc', expected: '3' },{ input: 'abc, def', expected: '0' },{ input: 'bl, yby', expected: '1' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array of non-negative integers representing the elevation map (each bar width 1), return how much water it can trap after raining.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[1,0,1]', expected: '1' },{ input: '[3,0,2,0,4]', expected: '7' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +436,15 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── New hard-tier additions (daily update 2026-05-08) ──
+    { question: 'A cistern has three pipes: A fills it in 6 hours, B fills it in 4 hours, and C empties it in 12 hours. If all three pipes are opened simultaneously, how many hours does it take to fill the cistern?', expectedKeywords: ['4'] },
+    { question: 'A merchant marks goods 40% above cost price, then gives a 20% discount on the marked price. What is the profit percentage?', expectedKeywords: ['12'] },
+    { question: 'What is the smallest positive integer that leaves remainder 1 when divided by 3, remainder 2 when divided by 4, and remainder 3 when divided by 5?', expectedKeywords: ['58'] },
+    { question: 'A ladder 10 meters long leans against a vertical wall. The foot of the ladder is 6 meters from the base of the wall. How high up the wall does the ladder reach?', expectedKeywords: ['8'] },
+    { question: 'Is the number 987,654,321 divisible by 9? Answer yes or no and state the sum of its digits.', expectedKeywords: ['yes', '45'] },
+    { question: 'If you fold a 0.1 mm thick piece of paper in half 42 times, approximately how thick is the resulting stack in kilometers? (Round to the nearest whole number.)', expectedKeywords: ['439'] },
+    { question: 'A store offers a 30% discount on a $200 item, then applies a further 10% discount on the discounted price. What is the final price?', expectedKeywords: ['126'] },
+    { question: 'Two trains 300 km apart travel toward each other at 80 km/h and 70 km/h respectively. A fly flying at 150 km/h starts at one train and flies back and forth between them until they meet. How far does the fly travel in total?', expectedKeywords: ['300'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +522,13 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── New hard-tier additions (daily update 2026-05-08) ──
+    { text: 'The International Space Station orbits at approximately 408 kilometers altitude traveling at 7.66 kilometers per second and completing 15.5 orbits per day', keywords: ['international', 'space', 'station', '408', '7.66', '15.5'] },
+    { text: 'Configure the HTTPS listener on port four-four-three with TLS one point three and cipher suite ECDHE hyphen RSA hyphen AES two-fifty-six hyphen GCM hyphen SHA three-eighty-four', keywords: ['HTTPS', '443', 'TLS', 'ECDHE', 'AES', 'SHA384'] },
+    { text: 'Dosage instructions: administer zero point five milligrams per kilogram intravenously every eight hours not to exceed six milligrams per dose in pediatric patients under twelve years of age', keywords: ['milligrams', 'kilogram', 'eight', 'hours', 'six', 'pediatric', 'twelve'] },
+    { text: 'The bond matures on September fifteenth twenty thirty paying a semi-annual coupon of three point eight seven five percent on a face value of one thousand dollars', keywords: ['bond', 'September', 'twenty', 'thirty', 'coupon', 'three', 'thousand'] },
+    { text: 'Git commit SHA b3f9a2e7 merged pull request four-two-eight fixing the race condition in the OAuth two point zero token refresh endpoint observed in Node version eighteen', keywords: ['git', 'commit', 'merged', 'OAuth', 'token', 'refresh', 'Node', 'eighteen'] },
+    { text: 'Package tracking number one Zulu Foxtrot Romeo four seven nine two Alpha shows customs clearance in Rotterdam on Tuesday at sixteen forty-five UTC plus one', keywords: ['tracking', 'Foxtrot', 'Romeo', 'customs', 'Rotterdam', 'sixteen', 'UTC'] },
 ];
 
 // ============================================
