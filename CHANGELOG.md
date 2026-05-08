@@ -14,6 +14,34 @@
 
 * add Concept A promo meta page ([#2514](https://github.com/HankHuang0516/EClaw/issues/2514)) ([a04d283](https://github.com/HankHuang0516/EClaw/commit/a04d283dc2b58848730d42bb993218c2bc29fd87))
 * add promo video embed page ([#2513](https://github.com/HankHuang0516/EClaw/issues/2513)) ([31f6094](https://github.com/HankHuang0516/EClaw/commit/31f6094808af7003044ffd1d99570797ec197d35)), closes [#2](https://github.com/HankHuang0516/EClaw/issues/2) [#5](https://github.com/HankHuang0516/EClaw/issues/5) [#3](https://github.com/HankHuang0516/EClaw/issues/3)
+* **landing:** embed Day 0 promo video on hero (#card_a3afc098) ([#2527](https://github.com/HankHuang0516/EClaw/issues/2527)) ([f348bc7](https://github.com/HankHuang0516/EClaw/commit/f348bc7ee4eb6f149dfd9b793ecb1a9bd161562c)), closes [#card_a3afc098](https://github.com/HankHuang0516/EClaw/issues/card_a3afc098)
+* **chat:** inline video/audio player for attachment messages ([#2521](https://github.com/HankHuang0516/EClaw/issues/2521)) ([5e1c3d9](https://github.com/HankHuang0516/EClaw/commit/5e1c3d92ae2bbcdc4c0da1ba1883a5ff28b9eac0))
+* **growth:** P1a invite_clicks + P1 funnel endpoint (recovery rebuild — 2 commits) ([#2500](https://github.com/HankHuang0516/EClaw/issues/2500)) ([e965a72](https://github.com/HankHuang0516/EClaw/commit/e965a72a9c41734a24f6e108ea676702549bae09)), closes [#2499](https://github.com/HankHuang0516/EClaw/issues/2499)
+* **idle-dispatch:** PR-A instrumentation - feature flag + event emitter + tests ([d7526e2](https://github.com/HankHuang0516/EClaw/commit/d7526e26daaee6bd1089af5491cc2aee30c9fa7e))
+* **idle-dispatch:** PR-A instrumentation - feature flag + event emitter + tests ([a3e5c9d](https://github.com/HankHuang0516/EClaw/commit/a3e5c9dca6eb380a52ccd540a2a9101b60a47fb9))
+* **idle-dispatch:** PR-B wire onCardStatusChange to kanbanEvents.emit ([#2504](https://github.com/HankHuang0516/EClaw/issues/2504)) ([7a71a31](https://github.com/HankHuang0516/EClaw/commit/7a71a31c6c17249c561820a3ae53bc7e2e9ad726))
+* **idle-dispatch:** PR-C wire createAutoCronCard to kanbanEvents.emit ([#2505](https://github.com/HankHuang0516/EClaw/issues/2505)) ([b68a61c](https://github.com/HankHuang0516/EClaw/commit/b68a61c385a7d6398fd678bcaee497be7870a333))
+* **kanban:** PR-DCA — dep-chain schema + cycle detection ([#2506](https://github.com/HankHuang0516/EClaw/issues/2506)) ([5c86b19](https://github.com/HankHuang0516/EClaw/commit/5c86b19c42f5597a6ef10f654028d0fd772b81b6)), closes [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#2481](https://github.com/HankHuang0516/EClaw/issues/2481) [#2494](https://github.com/HankHuang0516/EClaw/issues/2494)
+* **kanban:** PR-DCB — dep-chain HTTP API + jest supertest ([#2507](https://github.com/HankHuang0516/EClaw/issues/2507)) ([2a5d87c](https://github.com/HankHuang0516/EClaw/commit/2a5d87c01913159c2c930e02e33a03d773a646ee)), closes [#2481](https://github.com/HankHuang0516/EClaw/issues/2481) [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+* **kanban-deps:** PR-DCC race-window hardening with device-scoped advisory lock ([#2509](https://github.com/HankHuang0516/EClaw/issues/2509)) ([1bb65a0](https://github.com/HankHuang0516/EClaw/commit/1bb65a078ef29104a13e6f0d8b8f970f3ff1ee44))
+* **recovery:** rebuild P0 CTA register intent + portal beacons (PR [#2496](https://github.com/HankHuang0516/EClaw/issues/2496)) ([#2501](https://github.com/HankHuang0516/EClaw/issues/2501)) ([60ea806](https://github.com/HankHuang0516/EClaw/commit/60ea806baee665d166733681c03c8b2a27ef0bfd))
+
+# [1.1172.0](https://github.com/HankHuang0516/EClaw/compare/v1.1171.1...v1.1172.0) (2026-05-08)
+
+
+### Bug Fixes
+
+* **seo:** add Express route for /promo-meta.html ([#2515](https://github.com/HankHuang0516/EClaw/issues/2515)) ([#2516](https://github.com/HankHuang0516/EClaw/issues/2516)) ([8d96529](https://github.com/HankHuang0516/EClaw/commit/8d965292e98993bdf3e9295cc390cfb20b9349bf))
+* **csp:** add media-src so chat <video>/<audio> can load R2 signed URLs ([#2522](https://github.com/HankHuang0516/EClaw/issues/2522)) ([b39e7a9](https://github.com/HankHuang0516/EClaw/commit/b39e7a9261d24cda9331488a6d443ea632fb7026)), closes [#2521](https://github.com/HankHuang0516/EClaw/issues/2521)
+* **chat:** collapse attachment chip whitespace under chat-bubble pre-wrap ([#2524](https://github.com/HankHuang0516/EClaw/issues/2524)) ([cfccdb9](https://github.com/HankHuang0516/EClaw/commit/cfccdb93ab96694ab01075cddef407b0900ddc05))
+* **chat:** compact download chip when inline video/audio player is present ([#2523](https://github.com/HankHuang0516/EClaw/issues/2523)) ([9c4004b](https://github.com/HankHuang0516/EClaw/commit/9c4004bdcf828b85a7f3bb5d06eb3a25583f8990))
+* **portal:** improve QA accessibility shims ([#2520](https://github.com/HankHuang0516/EClaw/issues/2520)) ([5a170bb](https://github.com/HankHuang0516/EClaw/commit/5a170bbfaf4d24b88ad14da416e1cd481fe8b4e2))
+
+
+### Features
+
+* add Concept A promo meta page ([#2514](https://github.com/HankHuang0516/EClaw/issues/2514)) ([a04d283](https://github.com/HankHuang0516/EClaw/commit/a04d283dc2b58848730d42bb993218c2bc29fd87))
+* add promo video embed page ([#2513](https://github.com/HankHuang0516/EClaw/issues/2513)) ([31f6094](https://github.com/HankHuang0516/EClaw/commit/31f6094808af7003044ffd1d99570797ec197d35)), closes [#2](https://github.com/HankHuang0516/EClaw/issues/2) [#5](https://github.com/HankHuang0516/EClaw/issues/5) [#3](https://github.com/HankHuang0516/EClaw/issues/3)
 * **chat:** inline video/audio player for attachment messages ([#2521](https://github.com/HankHuang0516/EClaw/issues/2521)) ([5e1c3d9](https://github.com/HankHuang0516/EClaw/commit/5e1c3d92ae2bbcdc4c0da1ba1883a5ff28b9eac0))
 * **growth:** P1a invite_clicks + P1 funnel endpoint (recovery rebuild — 2 commits) ([#2500](https://github.com/HankHuang0516/EClaw/issues/2500)) ([e965a72](https://github.com/HankHuang0516/EClaw/commit/e965a72a9c41734a24f6e108ea676702549bae09)), closes [#2499](https://github.com/HankHuang0516/EClaw/issues/2499)
 * **idle-dispatch:** PR-A instrumentation - feature flag + event emitter + tests ([d7526e2](https://github.com/HankHuang0516/EClaw/commit/d7526e26daaee6bd1089af5491cc2aee30c9fa7e))
