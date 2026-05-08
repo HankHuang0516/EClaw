@@ -1525,7 +1525,7 @@
         }
         .msg-attachment:hover { opacity: 0.85; }
         .msg-attachment-icon { font-size: 18px; flex-shrink: 0; }
-        .msg-attachment-info { flex: 1; min-width: 0; }
+        .msg-attachment-info { flex: 1; min-width: 0; white-space: normal; }
         .msg-attachment-name { font-weight: 500; word-break: break-all; }
         .msg-attachment-size { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
         .msg-attachment-btn {
@@ -4565,15 +4565,14 @@
                         }
                         const compactClass = (isVideo || isAudio) ? ' compact' : '';
                         const downloadLabel = (isVideo || isAudio) ? '⬇' : '⬇ 下載';
-                        return `${playerHtml}<div class="msg-attachment${compactClass}" onclick="previewAttachment('${fileIdAttr}')">
-                            <span class="msg-attachment-icon">${icon}</span>
-                            <div class="msg-attachment-info">
-                                <div class="msg-attachment-name">${filenameAttr}</div>
-                                ${sizeStr ? `<div class="msg-attachment-size">${sizeStr}</div>` : ''}
-                            </div>
-                            ${editBtn}
-                            <button class="msg-attachment-btn" onclick="event.stopPropagation();downloadAttachment('${fileIdAttr}','${filenameAttr}')">${downloadLabel}</button>
-                        </div>`;
+                        return `${playerHtml}<div class="msg-attachment${compactClass}" onclick="previewAttachment('${fileIdAttr}')"`
+                            + `><span class="msg-attachment-icon">${icon}</span>`
+                            + `<div class="msg-attachment-info">`
+                            + `<div class="msg-attachment-name">${filenameAttr}</div>`
+                            + (sizeStr ? `<div class="msg-attachment-size">${sizeStr}</div>` : '')
+                            + `</div>${editBtn}`
+                            + `<button class="msg-attachment-btn" onclick="event.stopPropagation();downloadAttachment('${fileIdAttr}','${filenameAttr}')">${downloadLabel}</button>`
+                            + `</div>`;
                     }).join('');
                     attachmentsHtml = `<div class="msg-attachments">${cards}</div>`;
                 }
