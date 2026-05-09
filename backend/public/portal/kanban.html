@@ -1544,7 +1544,7 @@
             const filtered = currentFilter === 'mine'
                 ? allCards.filter(c => (c.assignedBots||[]).some(id => boundEntities.some(e => e.entityId === id)))
                 : allCards;
-            const cards = filtered.filter(c => c.status === mobileTab);
+            const cards = applySorting(filtered.filter(c => c.status === mobileTab));
             const label = t(STATUS_I18N[mobileTab], STATUS_LABELS[mobileTab]);
             list.innerHTML = cards.length ? cards.map(renderCard).join('') : '<div class="kb-empty">' + t('kb_empty_no_cards_in', 'No cards in') + ' ' + label + '</div>';
 
