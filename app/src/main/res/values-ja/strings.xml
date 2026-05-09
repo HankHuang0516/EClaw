@@ -822,4 +822,11 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="facebook_client_token">139b350cf525d7785d370b1813e77838</string>
     <string name="fb_login_protocol_scheme">fb772387505935344</string>
     <string name="google_server_client_id">857252321032-3e8ajfc30up4957l8lqns562dee7ll72.apps.googleusercontent.com</string>
+
+    <string name="tool_status_analyzing">分析を実行中…</string>
+    <string name="tool_status_editing">ファイルを編集中…</string>
+    <string name="tool_status_finding">ファイルを探しています…</string>
+    <string name="tool_status_reading">ファイルを読み込み中…</string>
+    <string name="tool_status_searching">コードを検索中…</string>
+    <string name="tool_status_writing">ファイルを書き込む中…</string>
 </resources>
