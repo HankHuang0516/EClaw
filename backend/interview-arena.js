@@ -188,6 +188,10 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── New hard-tier additions (2026-05-09 pool update) ──
+    { file: null, description: 'A database entity-relationship diagram with five tables: Users (user_id, email, created_at), Orders (order_id, user_id, total, status), Products (product_id, name, price, stock), OrderItems (item_id, order_id, product_id, quantity), and Reviews (review_id, user_id, product_id, rating) — foreign keys shown as arrows connecting Users to Orders, Products to OrderItems, Orders to OrderItems, and Users to Reviews', keywords: ['database', 'five', 'tables', 'users', 'orders', 'products', 'foreign'] },
+    { file: null, description: 'A CI/CD pipeline diagram with five stages left to right: Source (GitHub commit icon, green), Build (Docker whale icon, showing 2m 14s duration), Test (showing 847 passed and 3 failed in red), Staging (blue rocket icon, deployed to staging.example.com), and Production (padlock icon with a yellow Awaiting Approval badge) — a red X badge on the Test stage marks the current failure point', keywords: ['pipeline', 'five', 'stages', 'docker', 'test', 'staging', 'production', 'red'] },
+    { file: null, description: 'A Kubernetes cluster resource view with three worker nodes: node-01 (CPU 72%, 14 pods running, green border), node-02 (CPU 45%, 9 pods running, green border), and node-03 (status NotReady shown in red, CPU 0%, 0 pods) — a cluster summary bar at top shows 47.2 GB memory used of 64 GB total and 23 pods running cluster-wide', keywords: ['kubernetes', 'three', 'nodes', 'CPU', 'pods', 'NotReady', 'red', 'memory'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +372,13 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── New medium-hard additions (2026-05-09 pool update) ──
+    { title: 'Merge Intervals', description: 'Write `solve(intervals)` — given an array of [start, end] pairs, merge all overlapping intervals and return the result as a sorted array of non-overlapping intervals.',
+      testCases: [{ input: '[[1,3],[2,6],[8,10],[15,18]]', expected: '[[1,6],[8,10],[15,18]]' },{ input: '[[1,4],[4,5]]', expected: '[[1,5]]' },{ input: '[[1,4],[2,3]]', expected: '[[1,4]]' },{ input: '[[1,2]]', expected: '[[1,2]]' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array of non-negative integers representing an elevation map where each bar has width 1, compute how much water it can trap after raining.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[3,0,2,0,4]', expected: '7' },{ input: '[1,0,1]', expected: '1' }] },
+    { title: 'Longest Common Subsequence', description: 'Write `solve(text1, text2)` — return the length of the longest common subsequence of the two strings. A subsequence can skip characters but must maintain relative order.',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"oxcpqrsvwf", "shmtulqrypy"', expected: '2' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -414,9 +425,12 @@ let RESPONSE_QUESTIONS = [
     { question: 'A plane travels 2000 km at an effective speed of 1000 km/h (900 km/h airspeed plus 100 km/h tailwind). How many hours does the journey take?', expectedKeywords: ['2'] },
     { question: 'A worker paints 1/3 of a fence on day 1 and 1/4 of the remaining unpainted fence on day 2. What fraction of the fence is still unpainted after day 2?', expectedKeywords: ['1/2', '0.5', 'half'] },
     // ── New additions to fill easy + medium-hard tiers ──
-    { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── New medium-hard additions (2026-05-09 pool update) ──
+    { question: 'What is the 10th term of the arithmetic sequence 3, 7, 11, 15, ...?', expectedKeywords: ['39'] },
+    { question: 'A father is currently 4 times as old as his son. In 20 years, the father will be twice as old as the son. How old is the son now?', expectedKeywords: ['10'] },
+    { question: 'What is the units digit of 7 raised to the power of 100?', expectedKeywords: ['1'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +508,10 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── New hard-tier additions (2026-05-09 pool update) ──
+    { text: 'The board of directors approved a capital expenditure of two million four hundred thousand dollars for the Q3 data center expansion project', keywords: ['board', 'directors', 'capital', 'two', 'million', 'Q3', 'data'] },
+    { text: 'Pharmaceutical compound ibuprofen C13H18O2 inhibits cyclooxygenase enzymes COX-1 and COX-2 reducing prostaglandin synthesis', keywords: ['pharmaceutical', 'ibuprofen', 'cyclooxygenase', 'COX', 'prostaglandin'] },
+    { text: 'The seismic event registered magnitude 6.2 at coordinates 34 degrees north 118 degrees west triggering automated tsunami advisory protocols', keywords: ['seismic', 'magnitude', '6.2', 'coordinates', 'tsunami', 'advisory'] },
 ];
 
 // ============================================
