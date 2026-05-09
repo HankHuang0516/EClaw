@@ -570,6 +570,7 @@
         }
 
         /* ══════════════ Dependency Chain Chips ══════════════ */
+        .kb-dep-chips-container { display:contents; }
         .kb-dep-chips { display:flex; gap:4px; flex-wrap:wrap; align-items:center; }
         .kb-dep-chip { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:12px; font-size:10px; font-weight:500; cursor:pointer; transition:all 0.2s; text-decoration:none; border:1px solid transparent; max-width:120px; overflow:hidden; }
         .kb-dep-chip:hover { transform:translateY(-1px); }
@@ -1544,7 +1545,7 @@
             const filtered = currentFilter === 'mine'
                 ? allCards.filter(c => (c.assignedBots||[]).some(id => boundEntities.some(e => e.entityId === id)))
                 : allCards;
-            const cards = filtered.filter(c => c.status === mobileTab);
+            const cards = applySorting(filtered.filter(c => c.status === mobileTab));
             const label = t(STATUS_I18N[mobileTab], STATUS_LABELS[mobileTab]);
             list.innerHTML = cards.length ? cards.map(renderCard).join('') : '<div class="kb-empty">' + t('kb_empty_no_cards_in', 'No cards in') + ' ' + label + '</div>';
 
