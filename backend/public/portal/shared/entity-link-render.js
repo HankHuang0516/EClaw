@@ -112,6 +112,20 @@
     function buildChipHtml(type, entityId, displayId) {
         const t = ENTITY_TYPES[type] || ENTITY_TYPES.card;
         const label = type.charAt(0).toUpperCase() + type.slice(1);
+
+        // For cards, add dependency navigation buttons
+        if (type === 'card') {
+            return `<span class="entity-link entity-link-${type} entity-link-with-nav" data-entity-type="${type}" data-entity-id="${entityId}" ` +
+                   `onclick="openEntityModal('${type}','${entityId}')" title="${label} ${displayId}" ` +
+                   `style="background:${t.bg};color:${t.color};">` +
+                   `<button class="entity-nav-btn entity-nav-prev" onclick="event.stopPropagation(); navigateCardDependency('${entityId}', -1)" title="Previous dependency">←</button>` +
+                   `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ` +
+                   `style="vertical-align:-1px;margin:0 3px;"><path d="${t.icon}"/></svg>${displayId}` +
+                   `<button class="entity-nav-btn entity-nav-next" onclick="event.stopPropagation(); navigateCardDependency('${entityId}', 1)" title="Next dependency">→</button>` +
+                   `</span>`;
+        }
+
+        // For other entity types, use the original simple chip
         return `<span class="entity-link entity-link-${type}" data-entity-type="${type}" data-entity-id="${entityId}" ` +
                `onclick="openEntityModal('${type}','${entityId}')" title="${label} ${displayId}" ` +
                `style="background:${t.bg};color:${t.color};">` +
@@ -171,8 +185,104 @@
         return flushChips(parts.join(''));
     }
 
+    // ── Dependency Navigation Functions ──
+    async function navigateCardDependency(cardId, direction) {
+        try {
+            // Fetch dependency data for the card
+            const response = await fetch(`/api/mission/card/${cardId}/dependencies?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+            const data = await response.json();
+
+            if (!data.success || !data.dependencies || data.dependencies.length === 0) {
+                showToast('No dependencies found for this card', 'warning');
+                return;
+            }
+
+            // For simplicity, navigate to the first dependency (index -1)
+            // or next dependent (index +1) - this can be enhanced later
+            if (direction === -1 && data.dependencies.length > 0) {
+                // Navigate to what this card depends on
+                const targetCard = data.dependencies[0];
+                openEntityModal('card', targetCard.cardId);
+            } else if (direction === 1) {
+                // Fetch dependents (what depends on this card)
+                const depResponse = await fetch(`/api/mission/card/${cardId}/dependents?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+                const depData = await depResponse.json();
+
+                if (depData.success && depData.dependents && depData.dependents.length > 0) {
+                    const targetCard = depData.dependents[0];
+                    openEntityModal('card', targetCard.cardId);
+                } else {
+                    showToast('No dependent cards found', 'warning');
+                }
+            }
+        } catch (error) {
+            console.warn('[EntityLink] Navigation error:', error);
+            showToast('Failed to navigate dependency', 'error');
+        }
+    }
+
+    function showToast(message, type = 'info') {
+        // Simple toast notification - can be enhanced
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed; top: 20px; right: 20px; z-index: 10000;
+            background: ${type === 'error' ? '#ef4444' : type === 'warning' ? '#fbbf24' : '#4ade80'};
+            color: white; padding: 12px 20px; border-radius: 8px;
+            font-size: 14px; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: opacity 0.3s;
+        `;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => document.body.removeChild(toast), 300);
+        }, 3000);
+    }
+
+    // Add CSS styles for dependency navigation
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = `
+        .entity-link-with-nav {
+            display: inline-flex !important;
+            align-items: center;
+            gap: 2px;
+            padding: 4px 6px !important;
+        }
+
+        .entity-nav-btn {
+            background: none;
+            border: none;
+            color: inherit;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 3px;
+            transition: background 0.2s;
+            line-height: 1;
+        }
+
+        .entity-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .entity-link-with-nav .entity-nav-btn {
+            opacity: 0.7;
+        }
+
+        .entity-link-with-nav:hover .entity-nav-btn {
+            opacity: 1;
+        }
+    `;
+    document.head.appendChild(styleSheet);
+
     global.EntityLinkRender = {
         renderEntityLinks,
-        ENTITY_TYPES
+        ENTITY_TYPES,
+        navigateCardDependency
     };
+
+    // Export navigation function globally for onclick handlers
+    global.navigateCardDependency = navigateCardDependency;
 })(window);

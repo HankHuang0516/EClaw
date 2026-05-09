@@ -568,6 +568,21 @@
         @media (min-width: 769px) {
             .kb-mobile-list { display:none; }
         }
+
+        /* ══════════════ Dependency Chain Chips ══════════════ */
+        .kb-dep-chips { display:flex; gap:4px; flex-wrap:wrap; align-items:center; }
+        .kb-dep-chip { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:12px; font-size:10px; font-weight:500; cursor:pointer; transition:all 0.2s; text-decoration:none; border:1px solid transparent; max-width:120px; overflow:hidden; }
+        .kb-dep-chip:hover { transform:translateY(-1px); }
+
+        /* Dependency chip variants */
+        .kb-dep-chip--depends-on { background:rgba(59,130,246,0.15); color:#3b82f6; border-color:rgba(59,130,246,0.3); }
+        .kb-dep-chip--depends-on:hover { background:rgba(59,130,246,0.25); }
+        .kb-dep-chip--blocks { background:rgba(168,85,247,0.15); color:#a855f7; border-color:rgba(168,85,247,0.3); }
+        .kb-dep-chip--blocks:hover { background:rgba(168,85,247,0.25); }
+
+        .kb-dep-chip-icon { flex-shrink:0; font-size:8px; }
+        .kb-dep-chip-text { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .kb-dep-chip-count { font-size:9px; opacity:0.8; }
     </style>
 </head>
 <body>
@@ -1225,6 +1240,9 @@
 
             if (animate && oldPositions) animateCards(oldPositions);
 
+            // Load dependency chips asynchronously
+            loadDependenciesForVisibleCards();
+
             // Mobile
             renderMobileList();
         }
@@ -1374,6 +1392,111 @@
             return 'Unknown';
         }
 
+        // ── Dependency Chain Functions ──
+        const dependencyCache = new Map();
+
+        async function fetchCardDependencies(cardId) {
+            if (dependencyCache.has(cardId)) {
+                return dependencyCache.get(cardId);
+            }
+
+            try {
+                const [depsResponse, dependentsResponse] = await Promise.all([
+                    fetch(`/api/mission/card/${cardId}/dependencies?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`),
+                    fetch(`/api/mission/card/${cardId}/dependents?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`)
+                ]);
+
+                const depsData = depsResponse.ok ? await depsResponse.json() : { dependencies: [] };
+                const dependentsData = dependentsResponse.ok ? await dependentsResponse.json() : { dependents: [] };
+
+                const result = {
+                    dependencies: depsData.dependencies || [],
+                    dependents: dependentsData.dependents || []
+                };
+
+                dependencyCache.set(cardId, result);
+                return result;
+            } catch (error) {
+                console.warn('[Dependency] Failed to fetch for card:', cardId, error);
+                return { dependencies: [], dependents: [] };
+            }
+        }
+
+        function renderDependencyChips(dependencies, dependents) {
+            if (!dependencies.length && !dependents.length) return '';
+
+            const chips = [];
+
+            // Dependencies (what this card depends on) - blue chips with ← icon
+            if (dependencies.length > 0) {
+                if (dependencies.length === 1) {
+                    const dep = dependencies[0];
+                    const title = dep.title.length > 15 ? dep.title.substring(0, 15) + '…' : dep.title;
+                    chips.push(`<a href="#" class="kb-dep-chip kb-dep-chip--depends-on" onclick="navigateToCard('${dep.cardId}'); return false;" title="Depends on: ${escapeHtml(dep.title)}">
+                        <span class="kb-dep-chip-icon">←</span>
+                        <span class="kb-dep-chip-text">${escapeHtml(title)}</span>
+                    </a>`);
+                } else {
+                    chips.push(`<span class="kb-dep-chip kb-dep-chip--depends-on" title="Depends on ${dependencies.length} cards">
+                        <span class="kb-dep-chip-icon">←</span>
+                        <span class="kb-dep-chip-count">${dependencies.length}</span>
+                    </span>`);
+                }
+            }
+
+            // Dependents (what depends on this card) - purple chips with → icon
+            if (dependents.length > 0) {
+                if (dependents.length === 1) {
+                    const dep = dependents[0];
+                    const title = dep.title.length > 15 ? dep.title.substring(0, 15) + '…' : dep.title;
+                    chips.push(`<a href="#" class="kb-dep-chip kb-dep-chip--blocks" onclick="navigateToCard('${dep.cardId}'); return false;" title="Blocks: ${escapeHtml(dep.title)}">
+                        <span class="kb-dep-chip-icon">→</span>
+                        <span class="kb-dep-chip-text">${escapeHtml(title)}</span>
+                    </a>`);
+                } else {
+                    chips.push(`<span class="kb-dep-chip kb-dep-chip--blocks" title="Blocks ${dependents.length} cards">
+                        <span class="kb-dep-chip-icon">→</span>
+                        <span class="kb-dep-chip-count">${dependents.length}</span>
+                    </span>`);
+                }
+            }
+
+            return `<div class="kb-dep-chips">${chips.join('')}</div>`;
+        }
+
+        function navigateToCard(cardId) {
+            // Scroll to the card and highlight it
+            const cardElement = document.querySelector(`[data-card-id="${cardId}"]`);
+            if (cardElement) {
+                cardElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                cardElement.style.transition = 'border-color 0.3s';
+                cardElement.style.borderColor = 'var(--primary)';
+                setTimeout(() => {
+                    cardElement.style.borderColor = '';
+                }, 2000);
+            } else {
+                showToast('Card not found in current view', 'error');
+            }
+        }
+
+        async function loadDependenciesForVisibleCards() {
+            // Find all dependency chip containers in the current view
+            const containers = document.querySelectorAll('.kb-dep-chips-container');
+
+            for (const container of containers) {
+                const cardId = container.dataset.cardId;
+                if (!cardId) continue;
+
+                try {
+                    const { dependencies, dependents } = await fetchCardDependencies(cardId);
+                    const chipsHtml = renderDependencyChips(dependencies, dependents);
+                    container.innerHTML = chipsHtml;
+                } catch (error) {
+                    console.warn('[Dependency] Failed to load for card:', cardId, error);
+                }
+            }
+        }
+
         function renderCard(card) {
             console.log('[Kanban] renderCard:', card.id, card.title, 'assigned:', card.assignedBots);
             const isStale = card.is_stale ? ' stale' : '';
@@ -1386,7 +1509,7 @@
             const autoBadge = card.isAutoGenerated ? '<span class="kb-auto-badge">⚡</span>' : '';
             const archivedBadge = card.archived ? '<span class="kb-card-archived-badge" data-i18n="kb_archived_badge">已歸檔</span>' : '';
             const messageIndicators = renderMessageIndicators(card);
-            return `<div class="kb-card${isStale}${isArchived}" data-id="${card.id}" data-priority="${card.priority}" draggable="${card.archived ? 'false' : 'true'}"
+            return `<div class="kb-card${isStale}${isArchived}" data-id="${card.id}" data-card-id="${card.id}" data-priority="${card.priority}" draggable="${card.archived ? 'false' : 'true'}"
                          ondragstart="onDragStart(event)" onclick="openDetail('${card.id}')">
                 ${autoBadge}
                 ${messageIndicators}
@@ -1402,6 +1525,7 @@
                     ${noteCount ? '<span>📝 '+noteCount+'</span>' : ''}
                     ${fileCount ? '<span>📎 '+fileCount+'</span>' : ''}
                     ${countdown}
+                    <div class="kb-dep-chips-container" data-card-id="${card.id}"></div>
                     ${timeAgo ? '<span class="kb-card-time">' + timeAgo + '</span>' : ''}
                 </div>
             </div>`;
@@ -1423,6 +1547,9 @@
             const cards = filtered.filter(c => c.status === mobileTab);
             const label = t(STATUS_I18N[mobileTab], STATUS_LABELS[mobileTab]);
             list.innerHTML = cards.length ? cards.map(renderCard).join('') : '<div class="kb-empty">' + t('kb_empty_no_cards_in', 'No cards in') + ' ' + label + '</div>';
+
+            // Load dependency chips for mobile view
+            loadDependenciesForVisibleCards();
         }
 
         // ── Filter ──
