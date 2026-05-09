@@ -1691,6 +1691,7 @@
             flex-wrap: nowrap;
             overflow: hidden;
             min-height: 34px;
+            padding-right: 64px; /* reserve space for absolutely-positioned toggle (mobile-safe) */
         }
 
         .target-bar-overflow {
@@ -1717,6 +1718,11 @@
         }
 
         .target-bar-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 5;
             flex-shrink: 0;
             padding: 4px 10px;
             border-radius: 12px;
@@ -1728,7 +1734,7 @@
             white-space: nowrap;
             user-select: none;
             transition: all 0.2s;
-            margin-left: auto;
+            box-shadow: -4px 0 8px var(--input-bg); /* fade-out chips behind toggle */
         }
 
         .target-bar-toggle:hover {
@@ -3528,9 +3534,11 @@
             const row = document.getElementById('targetBarRow');
             const overflow = document.getElementById('targetBarOverflow');
             const allLabel = document.getElementById('targetAll');
+            const targetBar = document.getElementById('targetBar');
 
-            // Remove old dynamic elements from both row and overflow
-            row.querySelectorAll('.target-entity-check, .target-loading-hint, .target-separator, .target-contact-check, .btn-add-contact, .contact-add-inline, .target-bar-toggle').forEach(el => el.remove());
+            // Remove old dynamic elements from row, overflow, and parent (toggle was moved to parent for mobile visibility)
+            row.querySelectorAll('.target-entity-check, .target-loading-hint, .target-separator, .target-contact-check, .btn-add-contact, .contact-add-inline').forEach(el => el.remove());
+            targetBar.querySelectorAll(':scope > .target-bar-toggle').forEach(el => el.remove());
             overflow.innerHTML = '';
             overflow.classList.remove('open');
 
@@ -3622,17 +3630,20 @@
                         overflow.appendChild(item.el);
                     });
 
-                    // Add toggle button to the row
+                    // Add toggle button to the .target-bar parent (absolute-positioned, mobile-safe)
                     const toggle = document.createElement('button');
                     toggle.className = 'target-bar-toggle';
+                    toggle.type = 'button';
                     toggle.textContent = `▲ +${overflowItems.length}`;
+                    toggle.setAttribute('aria-expanded', 'false');
                     toggle.onclick = () => {
                         const isOpen = overflow.classList.toggle('open');
                         toggle.textContent = isOpen
                             ? '▼ ' + (i18n.t('chat_target_collapse') || 'Collapse')
                             : `▲ +${overflowItems.length}`;
+                        toggle.setAttribute('aria-expanded', String(isOpen));
                     };
-                    row.appendChild(toggle);
+                    document.getElementById('targetBar').appendChild(toggle);
                 }
 
                 updateTargetAll();
