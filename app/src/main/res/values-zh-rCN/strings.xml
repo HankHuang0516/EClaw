@@ -824,4 +824,11 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="facebook_client_token">139b350cf525d7785d370b1813e77838</string>
     <string name="fb_login_protocol_scheme">fb772387505935344</string>
     <string name="google_server_client_id">857252321032-3e8ajfc30up4957l8lqns562dee7ll72.apps.googleusercontent.com</string>
+
+    <string name="tool_status_analyzing">正在运行分析…</string>
+    <string name="tool_status_editing">正在编辑文件…</string>
+    <string name="tool_status_finding">正在查找文件…</string>
+    <string name="tool_status_reading">正在读取文件…</string>
+    <string name="tool_status_searching">正在搜索代码…</string>
+    <string name="tool_status_writing">正在写入文件…</string>
 </resources>

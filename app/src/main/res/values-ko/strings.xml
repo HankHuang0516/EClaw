@@ -822,4 +822,11 @@ GPS: 온디맨드만, 백그라운드 추적 없음, 서버 재시작 시 데이
     <string name="facebook_client_token">139b350cf525d7785d370b1813e77838</string>
     <string name="fb_login_protocol_scheme">fb772387505935344</string>
     <string name="google_server_client_id">857252321032-3e8ajfc30up4957l8lqns562dee7ll72.apps.googleusercontent.com</string>
+
+    <string name="tool_status_analyzing">분석 실행 중…</string>
+    <string name="tool_status_editing">파일 편집 중…</string>
+    <string name="tool_status_finding">파일 찾는 중…</string>
+    <string name="tool_status_reading">파일 읽는 중…</string>
+    <string name="tool_status_searching">코드 검색 중…</string>
+    <string name="tool_status_writing">파일 작성 중…</string>
 </resources>
