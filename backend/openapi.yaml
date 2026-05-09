@@ -499,32 +499,50 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /api/device/status:
-    post:
+  /api/status:
+    get:
       tags: [Device]
       summary: Poll entity status
-      operationId: getDeviceStatus
+      description: |
+        Returns the current state of a single entity. Auth accepts any of:
+        deviceId+deviceSecret, deviceId+botSecret+entityId, or JWT cookie.
+
+        Response schema MUST include `avatar` so polling clients (Android live
+        wallpaper, widget, iOS) keep entity avatars in sync with the dashboard.
+        See Entity schema for the full field list.
+      operationId: getEntityStatus
       security:
         - DeviceSecret: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [deviceId, deviceSecret]
-              properties:
-                deviceId:
-                  type: string
-                deviceSecret:
-                  type: string
-                entityId:
-                  type: integer
-                appVersion:
-                  type: string
+        - CookieAuth: []
+      parameters:
+        - name: deviceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: deviceSecret
+          in: query
+          schema:
+            type: string
+          description: Required unless using botSecret+entityId or JWT cookie auth
+        - name: botSecret
+          in: query
+          schema:
+            type: string
+          description: Bot-side auth; must be paired with entityId of the same bot
+        - name: entityId
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: appVersion
+          in: query
+          schema:
+            type: string
+          description: Client app version, recorded on entity for telemetry
       responses:
         '200':
-          description: Entity status
+          description: Entity status (subset of Entity schema, must include avatar)
           content:
             application/json:
               schema:

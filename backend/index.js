@@ -6156,6 +6156,10 @@ app.get('/api/status', (req, res) => {
         parts: entity.parts,
         lastUpdated: entity.lastUpdated,
         isBound: entity.isBound,
+        // Avatar must be returned so polling clients (Android live wallpaper,
+        // widget, iOS) keep entity avatars in sync with the dashboard.
+        // See backend/openapi.yaml `/api/status` and Entity schema.
+        avatar: entity.avatar || null,
         rental_status: entity.rental_status || null,  // 'leased_in', 'leased_out', or null
         rental_contract_id: entity.rental_contract_id || null,
         versionInfo: getVersionInfo(appVersion || entity.appVersion)

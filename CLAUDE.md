@@ -1128,6 +1128,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Auth Extended | `tests/jest/auth-extended.test.js` | device-login, verify-email, forgot-password, reset-password, bind-email, app-login, OAuth (Google/Facebook/OIDC), account deletion, RBAC roles |
 | Subscription | `tests/jest/subscription.test.js` | Subscription status, TapPay payment, cancellation, Google Play verification, usage limits |
 | Usage Limit Removed | `tests/jest/usage-limit-removed.test.js` | Regression: `enforceUsageLimit()` is a no-op; never queries `usage_tracking` / `invite_rewards`; always returns `allowed:true, limit:null` |
+| Status Avatar Sync | `tests/jest/status-avatar-sync.test.js` | Regression: `GET /api/status` MUST include `avatar` field so polling clients (Android live wallpaper / widget / iOS) keep entity avatars in sync; locks parity with `/api/entities` |
 | Official Borrow | `tests/jest/official-borrow.test.js` | Official bot borrowing lifecycle (bind-free, bind-personal, add-paid-slot, unbind, verify-subscription) |
 | Device Preferences | `tests/jest/device-preferences.test.js` | Device preference GET/PUT, auth validation |
 | Publisher Extended | `tests/jest/publisher-extended.test.js` | Blogger, Hashnode, X/Twitter, Tumblr, Reddit, LinkedIn, Mastodon publish/delete/me validation |
