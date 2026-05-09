@@ -1270,15 +1270,19 @@
 
         // Render message indicators for task chip history
         function renderMessageIndicators(card) {
-            // For now, use mock data until backend is available
-            // In production, this would fetch from /api/mission/card/:id/messages
-            const mockMessages = [
-                { type: 'chat', count: 2 },
-                { type: 'comment', count: card.comment_count || 0 },
-                { type: 'notification', count: 1 }
-            ];
+            // Use available data from card object
+            const messages = [];
 
-            const messages = mockMessages.filter(m => m.count > 0);
+            // Add comment indicator if there are comments
+            if (card.comment_count > 0) {
+                messages.push({ type: 'comment', count: card.comment_count });
+            }
+
+            // For now, we'll add other indicators when backend data is available
+            // Future: call /api/mission/card/:id/messages to get actual counts
+            // messages.push({ type: 'chat', count: chatCount });
+            // messages.push({ type: 'notification', count: notificationCount });
+
             if (messages.length === 0) return '';
 
             const maxVisible = 3;
