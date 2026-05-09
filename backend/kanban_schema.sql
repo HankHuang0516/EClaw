@@ -189,3 +189,28 @@ ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS pending_dispatch BOOLEAN DEFAU
 
 CREATE INDEX IF NOT EXISTS idx_kanban_cards_pending_dispatch ON kanban_cards(device_id, pending_dispatch, dispatch_mode)
     WHERE pending_dispatch = TRUE;
+
+-- ============================================
+-- Migration: Card dependency chain (PR-DCA)
+-- Restored from PR #2481 (cleaned in #2494) per Mac_F sign-off 2026-05-07.
+-- Cycle detection lives in backend/kanban-dependencies.js (BFS in JS); no
+-- PL/pgSQL function is registered, so this section stays compatible with
+-- the kanban_schema.sql `;`-splitter in initKanbanDatabase().
+-- ============================================
+CREATE TABLE IF NOT EXISTS kanban_card_dependencies (
+    id BIGSERIAL PRIMARY KEY,
+    device_id VARCHAR(64) NOT NULL,
+    card_id VARCHAR(48) NOT NULL REFERENCES kanban_cards(id) ON DELETE CASCADE,
+    depends_on_card_id VARCHAR(48) NOT NULL REFERENCES kanban_cards(id) ON DELETE CASCADE,
+    dependency_type VARCHAR(16) DEFAULT 'blocks',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    created_by INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(device_id, card_id, depends_on_card_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_kanban_dependencies_card ON kanban_card_dependencies(device_id, card_id);
+CREATE INDEX IF NOT EXISTS idx_kanban_dependencies_depends_on ON kanban_card_dependencies(device_id, depends_on_card_id);
+CREATE INDEX IF NOT EXISTS idx_kanban_dependencies_type ON kanban_card_dependencies(device_id, dependency_type);
+
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS has_dependencies BOOLEAN DEFAULT FALSE;
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS dependency_status VARCHAR(16) DEFAULT 'ready';

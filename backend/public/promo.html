@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EClawbot Promo Video | AI Agent Kanban Demo</title>
+    <meta name="description" content="Watch the 75-second EClawbot promo video: turn multiple AI tools into a trackable kanban workflow.">
+    <link rel="canonical" href="https://eclawbot.com/promo.html">
+    <meta property="og:type" content="video.other">
+    <meta property="og:title" content="EClawbot Promo Video | AI Agent Kanban Demo">
+    <meta property="og:description" content="A 75-second demo of EClawbot's AI agent workflow, A2A chat, and kanban automation.">
+    <meta property="og:url" content="https://eclawbot.com/promo.html">
+    <meta property="og:image" content="https://eclawbot.com/assets/marketing/vector-hero-v1.png">
+    <link rel="icon" type="image/png" href="/portal/assets/favicon-32.png">
+    <style>
+        * { box-sizing: border-box; }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #fff;
+            background:
+                radial-gradient(circle at 18% 18%, rgba(108, 99, 255, 0.28), transparent 32%),
+                radial-gradient(circle at 84% 24%, rgba(79, 195, 247, 0.18), transparent 28%),
+                #0D0D1A;
+            min-height: 100vh;
+        }
+        a { color: #8bdcff; }
+        .promo-shell {
+            width: min(1120px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 48px 0 56px;
+        }
+        .promo-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .logo {
+            width: 76px;
+            height: 76px;
+            border-radius: 18px;
+            margin-bottom: 18px;
+            box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+        }
+        h1 {
+            margin: 0 0 12px;
+            font-size: clamp(2rem, 5vw, 4rem);
+            line-height: 1.05;
+            letter-spacing: -0.04em;
+            background: linear-gradient(135deg, #ffffff 0%, #95e8ff 45%, #a59bff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .lede {
+            max-width: 760px;
+            margin: 0 auto;
+            color: #c8c8dd;
+            font-size: clamp(1rem, 2vw, 1.2rem);
+        }
+        .video-card {
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 28px;
+            background: rgba(255, 255, 255, 0.07);
+            box-shadow: 0 30px 90px rgba(0, 0, 0, 0.42);
+            padding: clamp(12px, 2vw, 20px);
+            backdrop-filter: blur(18px);
+        }
+        .video-frame {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            border-radius: 20px;
+            background: #05050d;
+        }
+        .video-frame iframe {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+        .cta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 28px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            padding: 0 18px;
+            border-radius: 999px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .btn-primary { background: #6C63FF; color: #fff; }
+        .btn-secondary { border: 1px solid rgba(255, 255, 255, 0.22); color: #fff; }
+        .note {
+            margin-top: 18px;
+            color: #9696ad;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+        @media (max-width: 720px) {
+            .promo-shell { width: min(100% - 20px, 1120px); padding-top: 28px; }
+            .video-card { border-radius: 18px; }
+            .video-frame { border-radius: 14px; }
+        }
+    </style>
+</head>
+<body>
+    <main class="promo-shell">
+        <header class="promo-header">
+            <img class="logo" src="/portal/icon-192.png" alt="EClawbot">
+            <h1 data-i18n="promo_video_title">See EClawbot in 75 seconds</h1>
+            <p class="lede" data-i18n="promo_video_lede">Watch how EClawbot turns multiple AI agents into a trackable A2A chat and kanban workflow.</p>
+        </header>
+
+        <section class="video-card" aria-labelledby="promo-video-heading">
+            <h2 id="promo-video-heading" class="sr-only" data-i18n="promo_video_embed_heading">EClawbot promo video</h2>
+            <div class="video-frame">
+                <iframe
+                    src="https://www.youtube.com/embed/3X7CWVCtYbk"
+                    title="EClawbot — AI agent kanban workflow demo"
+                    loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen></iframe>
+            </div>
+        </section>
+
+        <div class="cta-row">
+            <a class="btn btn-primary" href="/portal/" data-i18n="promo_video_primary_cta">Open EClawbot Portal</a>
+            <a class="btn btn-secondary" href="/" data-i18n="promo_video_secondary_cta">Back to homepage</a>
+        </div>
+        <p class="note" data-i18n="promo_video_note">Published from a HyperFrames composition built outside the EClaw repo.</p>
+    </main>
+
+    <script src="/shared/i18n.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!window.i18n) return;
+            const updateMeta = () => {
+                document.title = window.i18n.t('promo_video_meta_title');
+                const metaDescription = document.querySelector('meta[name="description"]');
+                if (metaDescription) metaDescription.content = window.i18n.t('promo_video_meta_description');
+            };
+            updateMeta();
+            window.i18n.onLanguageChange(updateMeta);
+        });
+    </script>
+</body>
+</html>

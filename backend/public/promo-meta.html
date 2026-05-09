@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EClawbot Concept A | Meta-recursion Documentary</title>
+    <meta name="description" content="Watch Concept A: a documentary-realism EClawbot promo where the behind-the-scenes AI workflow becomes the product demo.">
+    <link rel="canonical" href="https://eclawbot.com/promo-meta.html">
+    <meta property="og:type" content="video.other">
+    <meta property="og:title" content="EClawbot Concept A | Meta-recursion Documentary">
+    <meta property="og:description" content="A verifiable 75-second documentary promo: the brief, AI-agent coordination, render, upload, and embed become the EClawbot demo.">
+    <meta property="og:url" content="https://eclawbot.com/promo-meta.html">
+    <meta property="og:image" content="https://eclawbot.com/assets/marketing/promo-meta-og.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="EClawbot Concept A | Meta-recursion Documentary">
+    <meta name="twitter:description" content="The behind-the-scenes AI workflow becomes the product demo.">
+    <meta name="twitter:image" content="https://eclawbot.com/assets/marketing/promo-meta-og.png">
+    <link rel="icon" type="image/png" href="/portal/assets/favicon-32.png">
+    <style>
+        * { box-sizing: border-box; }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #fff;
+            background:
+                radial-gradient(circle at 18% 12%, rgba(108, 99, 255, 0.32), transparent 30%),
+                radial-gradient(circle at 82% 24%, rgba(79, 195, 247, 0.2), transparent 28%),
+                linear-gradient(135deg, #070711 0%, #101025 56%, #071018 100%);
+            min-height: 100vh;
+        }
+        a { color: #8bdcff; }
+        .promo-shell {
+            width: min(1120px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 48px 0 56px;
+        }
+        .eyebrow {
+            margin: 0 0 12px;
+            color: #8bdcff;
+            font-weight: 800;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            font-size: 0.78rem;
+        }
+        .promo-header {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .logo {
+            width: 76px;
+            height: 76px;
+            border-radius: 18px;
+            margin-bottom: 18px;
+            box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+        }
+        h1 {
+            margin: 0 0 12px;
+            font-size: clamp(2rem, 5vw, 4rem);
+            line-height: 1.05;
+            letter-spacing: -0.04em;
+            background: linear-gradient(135deg, #ffffff 0%, #95e8ff 45%, #a59bff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .lede {
+            max-width: 780px;
+            margin: 0 auto;
+            color: #c8c8dd;
+            font-size: clamp(1rem, 2vw, 1.2rem);
+        }
+        .video-card {
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 28px;
+            background: rgba(255, 255, 255, 0.07);
+            box-shadow: 0 30px 90px rgba(0, 0, 0, 0.42);
+            padding: clamp(12px, 2vw, 20px);
+            backdrop-filter: blur(18px);
+        }
+        .video-frame {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            border-radius: 20px;
+            background: #05050d;
+        }
+        .video-frame iframe {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+        .proof-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 18px;
+        }
+        .proof-card {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 18px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.06);
+            color: #d9d9ea;
+        }
+        .proof-card strong { display: block; color: #fff; margin-bottom: 6px; }
+        .cta-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 28px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            padding: 0 18px;
+            border-radius: 999px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .btn-primary { background: #6C63FF; color: #fff; }
+        .btn-secondary { border: 1px solid rgba(255, 255, 255, 0.22); color: #fff; }
+        .note {
+            margin-top: 18px;
+            color: #9696ad;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+        @media (max-width: 720px) {
+            .promo-shell { width: min(100% - 20px, 1120px); padding-top: 28px; }
+            .video-card { border-radius: 18px; }
+            .video-frame { border-radius: 14px; }
+            .proof-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <main class="promo-shell">
+        <header class="promo-header">
+            <img class="logo" src="/portal/icon-192.png" alt="EClawbot">
+            <p class="eyebrow" data-i18n="promo_meta_eyebrow">Concept A · meta-recursion documentary</p>
+            <h1 data-i18n="promo_meta_title">This video was made by AI agents</h1>
+            <p class="lede" data-i18n="promo_meta_lede">A verifiable 75-second documentary: the brief, agent coordination, render, upload, and embed become the EClawbot product demo.</p>
+        </header>
+
+        <section class="video-card" aria-labelledby="promo-meta-video-heading">
+            <h2 id="promo-meta-video-heading" class="sr-only" data-i18n="promo_meta_embed_heading">EClawbot Concept A video</h2>
+            <div class="video-frame">
+                <iframe
+                    src="https://www.youtube.com/embed/fgHY1bXg1xk"
+                    title="EClawbot Concept A — meta-recursion documentary"
+                    loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen></iframe>
+            </div>
+            <div class="proof-grid" aria-label="Concept A proof points">
+                <div class="proof-card"><strong data-i18n="promo_meta_proof_agents_title">2 AI agents</strong><span data-i18n="promo_meta_proof_agents_body">LOBSTER routed; Codex rendered.</span></div>
+                <div class="proof-card"><strong data-i18n="promo_meta_proof_trace_title">Verifiable trail</strong><span data-i18n="promo_meta_proof_trace_body">Chat, git, kanban, and Studio captures are real history.</span></div>
+                <div class="proof-card"><strong data-i18n="promo_meta_proof_output_title">One finished output</strong><span data-i18n="promo_meta_proof_output_body">The behind-the-scenes work is the demo.</span></div>
+            </div>
+        </section>
+
+        <div class="cta-row">
+            <a class="btn btn-primary" href="/portal/" data-i18n="promo_meta_primary_cta">Open EClawbot Portal</a>
+            <a class="btn btn-secondary" href="/promo.html" data-i18n="promo_meta_secondary_cta">Watch the 75s demo</a>
+        </div>
+        <p class="note" data-i18n="promo_meta_note">Concept A was rendered from a HyperFrames project outside this repo, then embedded here through a reviewed PR.</p>
+    </main>
+
+    <script src="/shared/i18n.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!window.i18n) return;
+            const updateMeta = () => {
+                document.title = window.i18n.t('promo_meta_meta_title');
+                const metaDescription = document.querySelector('meta[name="description"]');
+                if (metaDescription) metaDescription.content = window.i18n.t('promo_meta_meta_description');
+            };
+            updateMeta();
+            window.i18n.onLanguageChange(updateMeta);
+        });
+    </script>
+</body>
+</html>

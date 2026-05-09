@@ -1525,7 +1525,7 @@
         }
         .msg-attachment:hover { opacity: 0.85; }
         .msg-attachment-icon { font-size: 18px; flex-shrink: 0; }
-        .msg-attachment-info { flex: 1; min-width: 0; }
+        .msg-attachment-info { flex: 1; min-width: 0; white-space: normal; }
         .msg-attachment-name { font-weight: 500; word-break: break-all; }
         .msg-attachment-size { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
         .msg-attachment-btn {
@@ -1537,6 +1537,16 @@
             max-width: 200px; max-height: 160px; border-radius: 8px;
             display: block; cursor: pointer; object-fit: cover;
         }
+        /* Compact chip — one-line strip used when an inline <video>/<audio>
+           player already covers the same file, so the chip becomes a
+           caption + download link instead of a full card. */
+        .msg-attachment.compact {
+            padding: 4px 8px; gap: 6px; font-size: 11px; opacity: 0.75;
+        }
+        .msg-attachment.compact .msg-attachment-icon { display: none; }
+        .msg-attachment.compact .msg-attachment-size { display: none; }
+        .msg-attachment.compact .msg-attachment-name { font-weight: 400; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .msg-attachment.compact .msg-attachment-btn { padding: 2px 6px; font-size: 11px; }
 
         /* ── Inline R2 attachment card (URL-stripped replacement) ── */
         .r2-attachment-card {
@@ -1681,6 +1691,7 @@
             flex-wrap: nowrap;
             overflow: hidden;
             min-height: 34px;
+            padding-right: 64px; /* reserve space for absolutely-positioned toggle (mobile-safe) */
         }
 
         .target-bar-overflow {
@@ -1707,6 +1718,11 @@
         }
 
         .target-bar-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 5;
             flex-shrink: 0;
             padding: 4px 10px;
             border-radius: 12px;
@@ -1718,7 +1734,7 @@
             white-space: nowrap;
             user-select: none;
             transition: all 0.2s;
-            margin-left: auto;
+            box-shadow: -4px 0 8px var(--input-bg); /* fade-out chips behind toggle */
         }
 
         .target-bar-toggle:hover {
@@ -3518,9 +3534,11 @@
             const row = document.getElementById('targetBarRow');
             const overflow = document.getElementById('targetBarOverflow');
             const allLabel = document.getElementById('targetAll');
+            const targetBar = document.getElementById('targetBar');
 
-            // Remove old dynamic elements from both row and overflow
-            row.querySelectorAll('.target-entity-check, .target-loading-hint, .target-separator, .target-contact-check, .btn-add-contact, .contact-add-inline, .target-bar-toggle').forEach(el => el.remove());
+            // Remove old dynamic elements from row, overflow, and parent (toggle was moved to parent for mobile visibility)
+            row.querySelectorAll('.target-entity-check, .target-loading-hint, .target-separator, .target-contact-check, .btn-add-contact, .contact-add-inline').forEach(el => el.remove());
+            targetBar.querySelectorAll(':scope > .target-bar-toggle').forEach(el => el.remove());
             overflow.innerHTML = '';
             overflow.classList.remove('open');
 
@@ -3612,17 +3630,20 @@
                         overflow.appendChild(item.el);
                     });
 
-                    // Add toggle button to the row
+                    // Add toggle button to the .target-bar parent (absolute-positioned, mobile-safe)
                     const toggle = document.createElement('button');
                     toggle.className = 'target-bar-toggle';
+                    toggle.type = 'button';
                     toggle.textContent = `▲ +${overflowItems.length}`;
+                    toggle.setAttribute('aria-expanded', 'false');
                     toggle.onclick = () => {
                         const isOpen = overflow.classList.toggle('open');
                         toggle.textContent = isOpen
                             ? '▼ ' + (i18n.t('chat_target_collapse') || 'Collapse')
                             : `▲ +${overflowItems.length}`;
+                        toggle.setAttribute('aria-expanded', String(isOpen));
                     };
-                    row.appendChild(toggle);
+                    document.getElementById('targetBar').appendChild(toggle);
                 }
 
                 updateTargetAll();
@@ -4534,23 +4555,35 @@
                 let attachmentsHtml = '';
                 if (Array.isArray(msg.attachments) && msg.attachments.length > 0) {
                     const cards = msg.attachments.map(a => {
-                        const isImage = (a.mimeType || '').startsWith('image/');
+                        // Fallback when older uploads stored mime as octet-stream:
+                        // sniff the filename extension so a player still renders.
+                        const mt = sniffAttachmentMime(a.mimeType, a.filename).toLowerCase();
+                        const isImage = mt.startsWith('image/');
+                        const isVideo = mt.startsWith('video/');
+                        const isAudio = mt.startsWith('audio/');
                         const sizeStr = a.size > 0 ? (a.size >= 1048576 ? (a.size / 1048576).toFixed(1) + ' MB' : Math.round(a.size / 1024) + ' KB') : '';
-                        const icon = isImage ? '🖼️' : (a.mimeType || '').includes('pdf') ? '📄' : (a.mimeType || '').includes('video') ? '🎬' : '📎';
+                        const icon = isImage ? '🖼️' : mt.includes('pdf') ? '📄' : isVideo ? '🎬' : isAudio ? '🎵' : '📎';
                         const fileIdAttr = escapeHtml(a.fileId);
                         const filenameAttr = escapeHtml(a.filename || 'file');
                         const editBtn = isTextEditableFilename(a.filename)
                             ? `<button class="msg-attachment-btn" data-i18n="file_edit_btn" onclick="event.stopPropagation();openFileEditor('${fileIdAttr}','${filenameAttr}')">&#x270F;&#xFE0F; ${i18n.t('file_edit_btn') || '線上編輯'}</button>`
                             : '';
-                        return `<div class="msg-attachment" onclick="previewAttachment('${fileIdAttr}')">
-                            <span class="msg-attachment-icon">${icon}</span>
-                            <div class="msg-attachment-info">
-                                <div class="msg-attachment-name">${filenameAttr}</div>
-                                ${sizeStr ? `<div class="msg-attachment-size">${sizeStr}</div>` : ''}
-                            </div>
-                            ${editBtn}
-                            <button class="msg-attachment-btn" onclick="event.stopPropagation();downloadAttachment('${fileIdAttr}','${filenameAttr}')">⬇ 下載</button>
-                        </div>`;
+                        let playerHtml = '';
+                        if (isVideo) {
+                            playerHtml = `<video class="chat-video chat-attachment-media" data-attachment-fileid="${fileIdAttr}" controls preload="metadata" onclick="event.stopPropagation();" style="max-width:300px;max-height:240px;border-radius:8px;display:block;margin-bottom:6px;background:#000;"></video>`;
+                        } else if (isAudio) {
+                            playerHtml = `<audio class="chat-audio chat-attachment-media" data-attachment-fileid="${fileIdAttr}" controls preload="metadata" onclick="event.stopPropagation();" style="max-width:300px;display:block;margin-bottom:6px;"></audio>`;
+                        }
+                        const compactClass = (isVideo || isAudio) ? ' compact' : '';
+                        const downloadLabel = (isVideo || isAudio) ? '⬇' : '⬇ 下載';
+                        return `${playerHtml}<div class="msg-attachment${compactClass}" onclick="previewAttachment('${fileIdAttr}')"`
+                            + `><span class="msg-attachment-icon">${icon}</span>`
+                            + `<div class="msg-attachment-info">`
+                            + `<div class="msg-attachment-name">${filenameAttr}</div>`
+                            + (sizeStr ? `<div class="msg-attachment-size">${sizeStr}</div>` : '')
+                            + `</div>${editBtn}`
+                            + `<button class="msg-attachment-btn" onclick="event.stopPropagation();downloadAttachment('${fileIdAttr}','${filenameAttr}')">${downloadLabel}</button>`
+                            + `</div>`;
                     }).join('');
                     attachmentsHtml = `<div class="msg-attachments">${cards}</div>`;
                 }
@@ -4609,6 +4642,12 @@
                 if (slot.children.length > 0) return; // already loaded
                 fetchLinkPreview(slot.dataset.url, slot);
             });
+
+            // Lazy-load signed URLs for inline video/audio attachments. R2 signed URLs
+            // are short-lived (10min) so we wait until the player scrolls into view
+            // before requesting one — otherwise a 100-message scrollback with media
+            // would burn 100 signed URLs that mostly expire before the user scrolls.
+            wireInlineMediaLazyLoad(container);
 
             // Integrity: display layer (non-blocking)
             ChatIntegrityValidator.validateDisplayLayer(displayMessages);
@@ -4776,6 +4815,87 @@
         // Android WebView does not support window.open(); instead navigate the current
         // window to the R2 URL — shouldOverrideUrlLoading intercepts it and opens the
         // system browser, leaving chat.html in place.
+
+        // Filename-extension mime sniff for attachments — mirrors backend
+        // sniffMimeFromExtension(). Covers old uploads stored with
+        // application/octet-stream so the inline player still renders.
+        const _ATTACHMENT_MIME_BY_EXT = {
+            mp4: 'video/mp4', m4v: 'video/mp4', mov: 'video/quicktime',
+            webm: 'video/webm', mkv: 'video/x-matroska', ogv: 'video/ogg',
+            mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac',
+            wav: 'audio/wav', ogg: 'audio/ogg', oga: 'audio/ogg',
+            flac: 'audio/flac', opus: 'audio/opus', weba: 'audio/webm',
+            jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+            webp: 'image/webp', gif: 'image/gif', svg: 'image/svg+xml',
+            pdf: 'application/pdf',
+        };
+        function sniffAttachmentMime(mimeType, filename) {
+            const supplied = String(mimeType || '').toLowerCase();
+            if (supplied && supplied !== 'application/octet-stream' && supplied !== 'application/binary') {
+                return mimeType;
+            }
+            const base = String(filename || '').split(/[/\\]/).pop() || '';
+            const dot = base.lastIndexOf('.');
+            const ext = dot >= 0 ? base.slice(dot + 1).toLowerCase() : '';
+            return _ATTACHMENT_MIME_BY_EXT[ext] || mimeType || '';
+        }
+
+        // Lazy signed-URL fetcher for inline video/audio attachments.
+        // Walks new attachment players in `container`, observes them with a shared
+        // IntersectionObserver, and on first intersection fetches /api/files/:fileId
+        // to get a 10-min signed URL and assigns it to .src. dataset.mediaLoaded
+        // gates re-fetching so a re-render after the user scrolls back doesn't
+        // burn a fresh URL on an element that's already playing.
+        let _inlineMediaObserver = null;
+        function wireInlineMediaLazyLoad(container) {
+            if (!currentUser) return;
+            const players = container.querySelectorAll('video[data-attachment-fileid], audio[data-attachment-fileid]');
+            if (!players.length) return;
+
+            const loadOne = async (el) => {
+                if (el.dataset.mediaLoaded === '1') return;
+                el.dataset.mediaLoaded = '1';
+                const fileId = el.dataset.attachmentFileid;
+                if (!fileId) return;
+                try {
+                    const params = new URLSearchParams({
+                        deviceId: currentUser.deviceId,
+                        deviceSecret: currentUser.deviceSecret,
+                    });
+                    const res = await fetch(`/api/files/${encodeURIComponent(fileId)}?${params}`);
+                    const data = await res.json();
+                    if (data && data.success && data.url) {
+                        el.src = data.url;
+                    } else {
+                        el.dataset.mediaLoaded = '';
+                    }
+                } catch (e) {
+                    el.dataset.mediaLoaded = '';
+                }
+            };
+
+            if (typeof IntersectionObserver !== 'function') {
+                players.forEach(loadOne);
+                return;
+            }
+
+            if (!_inlineMediaObserver) {
+                _inlineMediaObserver = new IntersectionObserver((entries) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting) {
+                            loadOne(entry.target);
+                            _inlineMediaObserver.unobserve(entry.target);
+                        }
+                    }
+                }, { rootMargin: '200px 0px' });
+            }
+
+            players.forEach(el => {
+                if (el.dataset.mediaLoaded !== '1' && !el.src) {
+                    _inlineMediaObserver.observe(el);
+                }
+            });
+        }
 
         // Preview: open file in new tab (PDF viewer, image viewer, etc.)
         async function previewAttachment(fileId) {

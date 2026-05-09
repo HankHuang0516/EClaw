@@ -173,10 +173,10 @@ app.use((req, res, next) => {
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     // CSP: public note pages (/p/) allow external scripts (bot-authored content, consent-gated)
     if (req.path.startsWith('/p/')) {
-        res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; font-src 'self' https:; img-src 'self' data: https: blob:; connect-src 'self' wss: https:; frame-src 'self' https:; frame-ancestors 'self'");
+        res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; font-src 'self' https:; img-src 'self' data: https: blob:; media-src 'self' data: https: blob:; connect-src 'self' wss: https:; frame-src 'self' https:; frame-ancestors 'self'");
     } else {
         // Standard CSP for portal pages — restrict external sources
-        res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.socket.io https://accounts.google.com https://connect.facebook.net https://js.tappaysdk.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: https: blob:; connect-src 'self' wss: https:; frame-src 'self' https:; frame-ancestors 'self'");
+        res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.socket.io https://accounts.google.com https://connect.facebook.net https://js.tappaysdk.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: https: blob:; media-src 'self' data: https: blob:; connect-src 'self' wss: https:; frame-src 'self' https:; frame-ancestors 'self'");
     }
     next();
 });
@@ -284,6 +284,16 @@ app.get('/landing', (req, res) => {
 app.get('/enterprise', (req, res) => {
     res.set('Cache-Control', 'public, max-age=3600');
     res.sendFile(path.join(__dirname, 'public/enterprise.html'));
+});
+// Promo video page
+app.get(['/promo', '/promo.html'], (req, res) => {
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.join(__dirname, 'public/promo.html'));
+});
+// Promo meta page (SEO structured data for promo)
+app.get('/promo-meta.html', (req, res) => {
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.join(__dirname, 'public/promo-meta.html'));
 });
 // Info Hub page — redirect to /portal/info.html so relative asset paths resolve correctly
 app.get('/info', (req, res) => {
@@ -640,7 +650,8 @@ app.get('/invite/:code', async (req, res) => {
             : null;
         const userAgent = String(req.headers['user-agent'] || '').slice(0, 500) || null;
         const referer = String(req.headers.referer || req.headers.referrer || '').slice(0, 500) || null;
-        await db.logInviteClick({ code, ipHash, userAgent, referer });
+        const source = req.query.utm_source || req.query.source || 'direct';
+        await db.logInviteClick({ code, ipHash, userAgent, referer, source });
     } catch (err) {
         console.warn(`[/invite/:code] click log failed for ${code}: ${err.message}`);
     }
@@ -1629,6 +1640,15 @@ try {
 } catch (err) {
     console.error('[Kanban] Failed to load module:', err.message);
     kanbanModule = { initKanbanDatabase: () => {}, startBackgroundTimers: () => {} };
+}
+
+// Kanban dep-chain HTTP API (PR-DCB) — mounted on same /api/mission path
+try {
+    const kanbanDepsModule = require('./api_kanban_dependencies')(devices);
+    app.use('/api/mission', kanbanDepsModule.router);
+    console.log('[KanbanDeps] Module loaded successfully');
+} catch (err) {
+    console.error('[KanbanDeps] Failed to load module:', err.message);
 }
 
 // Idle Dispatch System — smart bot availability-based card dispatch
@@ -6610,6 +6630,10 @@ app.get('/api/status', (req, res) => {
         parts: entity.parts,
         lastUpdated: entity.lastUpdated,
         isBound: entity.isBound,
+        // Avatar must be returned so polling clients (Android live wallpaper,
+        // widget, iOS) keep entity avatars in sync with the dashboard.
+        // See backend/openapi.yaml `/api/status` and Entity schema.
+        avatar: entity.avatar || null,
         rental_status: entity.rental_status || null,  // 'leased_in', 'leased_out', or null
         rental_contract_id: entity.rental_contract_id || null,
         versionInfo: getVersionInfo(appVersion || entity.appVersion)
@@ -16560,6 +16584,29 @@ sitePageviews.initPageviewsTable(chatPool);
 if (mindmapModule && typeof mindmapModule.initMindmapTables === 'function') {
     mindmapModule.initMindmapTables(chatPool);
 }
+
+// Anonymous portal beacons table (for growth funnel tracking)
+(async () => {
+    try {
+        await chatPool.query(`
+            CREATE TABLE IF NOT EXISTS portal_beacons (
+                id          BIGSERIAL   PRIMARY KEY,
+                action      TEXT        NOT NULL,
+                ip_hash     TEXT,
+                ua          TEXT,
+                meta        JSONB,
+                created_at  TIMESTAMPTZ DEFAULT NOW()
+            )
+        `);
+        await chatPool.query(`CREATE INDEX IF NOT EXISTS idx_pb_action_ts ON portal_beacons (action, created_at DESC)`);
+        await chatPool.query(`CREATE INDEX IF NOT EXISTS idx_pb_ts         ON portal_beacons (created_at DESC)`);
+        await chatPool.query(`CREATE INDEX IF NOT EXISTS idx_pb_meta       ON portal_beacons USING GIN (meta)`);
+        console.log('[PortalBeacons] Table ready');
+    } catch (err) {
+        console.error('[PortalBeacons] Table init error:', err.message);
+    }
+})();
+
 feedbackModule.initFeedbackTable(chatPool);
 feedbackModule.initFeedbackPhotosTable(chatPool);
 notifModule.initNotificationTables(chatPool);
@@ -18133,6 +18180,66 @@ app.post('/api/device-telemetry', async (req, res) => {
         bufferUsed: result.bufferUsed,
         maxBuffer: telemetry.MAX_BUFFER_BYTES
     });
+});
+
+// Anonymous portal beacon endpoint — no device auth required.
+// Accepts pre-login events (portal_open, register_tab_open, register_submit,
+// register_success, register_error) and stores them for funnel analysis.
+// All entries must be non-PII (no email, phone, IP raw — use hashes only).
+
+// POST /api/portal/beacons — no device auth required.
+// Rate-limited: 60 events/min per IP. Explicit 64kb body cap.
+const beaconLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: () => rateLimitDisabled(),
+    keyGenerator: (req) => req.ip || 'unknown',
+    message: { success: false, error: 'Too many beacon events — try again shortly' },
+});
+app.post('/api/portal/beacons', express.json({ limit: '64kb' }), beaconLimiter, async (req, res) => {
+    const { entries } = req.body;
+    if (!Array.isArray(entries) || entries.length === 0) {
+        return res.status(400).json({ success: false, error: 'entries array required' });
+    }
+    const VALID_ACTIONS = new Set([
+        'portal_open', 'register_tab_open', 'register_submit',
+        'register_success', 'register_error'
+    ]);
+    const clientIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim()
+        || (req.socket && req.socket.remoteAddress) || '';
+    const ua = (req.headers['user-agent'] || '').substring(0, 512) || null;
+    let stored = 0;
+    for (const entry of entries.slice(0, 50)) {
+        const action = String(entry.action || '').substring(0, 128);
+        if (!VALID_ACTIONS.has(action)) continue;
+        const meta = entry.meta ? (() => {
+            const m = {};
+            // Only allow whitelisted non-PII fields
+            const ALLOWED = ['source','channel','utm_source','utm_medium','utm_campaign','utm_content','utm_term','email_hash','error_type'];
+            for (const k of ALLOWED) {
+                if (entry.meta[k] !== undefined) m[k] = String(entry.meta[k]).substring(0, 256);
+            }
+            return Object.keys(m).length > 0 ? JSON.stringify(m) : null;
+        })() : null;
+        try {
+            await chatPool.query(
+                `INSERT INTO portal_beacons (action, ip_hash, ua, meta, created_at)
+                 VALUES ($1,$2,$3,$4,NOW())`,
+                [
+                    action,
+                    clientIp ? require('crypto').createHash('sha256').update(clientIp).digest('hex').substring(0, 16) : null,
+                    ua,
+                    meta
+                ]
+            );
+            stored++;
+        } catch (err) {
+            console.error('[PortalBeacons] Insert error:', err.message);
+        }
+    }
+    res.json({ success: true, stored });
 });
 
 // GET /api/device-telemetry — Read telemetry for debugging

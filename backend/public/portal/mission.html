@@ -918,7 +918,7 @@
             <button id="wvClearBtn" style="display:none" onclick="clearDrawing()" data-i18n="mc_note_draw_clear">Clear</button>
             <button id="wvSaveDrawBtn" style="display:none" onclick="saveDrawing()" data-i18n="mc_note_draw_save">Save</button>
             <div class="wv-toolbar-sep"></div>
-            <button id="wvPublicToggle" onclick="togglePagePublic()" style="font-size:12px;"></button>
+            <button id="wvPublicToggle" onclick="togglePagePublic()" style="font-size:12px;" aria-label="Private">🔒 Private</button>
             <button id="wvCopyLinkBtn" onclick="copyNotePageLink()" style="display:none;font-size:12px;" data-i18n="mc_note_copy_link">Copy Link</button>
             <button id="wvEditHtmlBtn" onclick="editPageHtml()" data-i18n="mc_note_edit_page">Edit HTML</button>
             <button onclick="closePageViewer()" data-i18n="mc_note_page_close">Close</button>
@@ -2227,7 +2227,11 @@
             const btn = document.getElementById('wvPublicToggle');
             if (!btn) return;
             const isPublic = !!notePagePublic[noteId];
-            btn.textContent = isPublic ? '🌐 ' + (i18n.t('mc_note_public_label') || 'Public') : '🔒 ' + (i18n.t('mc_note_private_label') || 'Private');
+            const publicLabel = i18n.t('mc_note_public_label') || 'Public';
+            const privateLabel = i18n.t('mc_note_private_label') || 'Private';
+            const toggleLabel = isPublic ? publicLabel : privateLabel;
+            btn.textContent = (isPublic ? '🌐 ' : '🔒 ') + toggleLabel;
+            btn.setAttribute('aria-label', toggleLabel);
             btn.style.color = isPublic ? '#4CAF50' : '#9E9E9E';
             // Show/hide copy link button based on public status
             const copyBtn = document.getElementById('wvCopyLinkBtn');

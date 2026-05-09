@@ -22,7 +22,7 @@ describe('idle-dispatch hooks', () => {
         });
 
         test('emit() is no-op when flag is OFF', () => {
-            const { emit, kanbanEvents } = require('../../../lib/kanban-events');
+            const { emit, kanbanEvents } = require('../../lib/kanban-events');
             const listener = jest.fn();
             kanbanEvents.on('card_status_changed', listener);
             emit('card_status_changed', {
@@ -44,7 +44,7 @@ describe('idle-dispatch hooks', () => {
         });
 
         test('emit() calls listener once with correct payload', () => {
-            const { emit, kanbanEvents } = require('../../../lib/kanban-events');
+            const { emit, kanbanEvents } = require('../../lib/kanban-events');
             const listener = jest.fn();
             kanbanEvents.on('card_status_changed', listener);
             const payload = {
@@ -67,7 +67,7 @@ describe('idle-dispatch hooks', () => {
         });
 
         test('emit() does not throw on listener error', () => {
-            const { emit, kanbanEvents } = require('../../../lib/kanban-events');
+            const { emit, kanbanEvents } = require('../../lib/kanban-events');
             kanbanEvents.on('card_status_changed', () => {
                 throw new Error('listener crash');
             });
@@ -84,7 +84,7 @@ describe('idle-dispatch hooks', () => {
         });
 
         test('no secrets in payload', () => {
-            const { emit, kanbanEvents } = require('../../../lib/kanban-events');
+            const { emit, kanbanEvents } = require('../../lib/kanban-events');
             const listener = jest.fn();
             kanbanEvents.on('card_status_changed', listener);
             emit('card_status_changed', {
@@ -108,7 +108,7 @@ describe('idle-dispatch hooks', () => {
         });
 
         test('console.log JSON contains ev field', () => {
-            const { emit } = require('../../../lib/kanban-events');
+            const { emit } = require('../../lib/kanban-events');
             const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
             emit('card_status_changed', {
                 cardId: 'card_log',

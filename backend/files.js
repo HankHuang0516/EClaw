@@ -68,6 +68,31 @@ function isTextEditable(filename) {
     return TEXT_EDIT_EXTENSIONS.has(getExtension(filename));
 }
 
+// Multer/curl frequently report "application/octet-stream" for media files
+// (curl's default for .mp4 from `-F file=@...`), which makes chat.html's
+// `mimeType.startsWith('video/')` branch fall through to a plain download
+// chip. Sniff a better mime from the filename extension when the supplied
+// type is missing or generic; otherwise pass through unchanged.
+const EXTENSION_MIME_MAP = {
+    mp4: 'video/mp4', m4v: 'video/mp4', mov: 'video/quicktime',
+    webm: 'video/webm', mkv: 'video/x-matroska', ogv: 'video/ogg',
+    mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac',
+    wav: 'audio/wav', ogg: 'audio/ogg', oga: 'audio/ogg',
+    flac: 'audio/flac', opus: 'audio/opus', weba: 'audio/webm',
+    jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+    webp: 'image/webp', gif: 'image/gif', svg: 'image/svg+xml',
+    pdf: 'application/pdf',
+};
+
+function sniffMimeFromExtension(filename, fallback) {
+    const supplied = String(fallback || '').toLowerCase();
+    if (supplied && supplied !== 'application/octet-stream' && supplied !== 'application/binary') {
+        return fallback;
+    }
+    const ext = getExtension(filename);
+    return EXTENSION_MIME_MAP[ext] || fallback || 'application/octet-stream';
+}
+
 // Multer — memory storage (stream directly to R2)
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -151,7 +176,8 @@ module.exports = function filesModule(devices) {
             }
 
             const { deviceId, entityId } = creds;
-            const { mimetype, size, buffer } = req.file;
+            const { size, buffer } = req.file;
+            const mimetype = sniffMimeFromExtension(req.file.originalname, req.file.mimetype);
             // Multer decodes multipart filenames as latin-1 by default; browsers send
             // them as UTF-8, so non-ASCII names (e.g. Chinese) arrive as mojibake
             // (é­ç¿ä¹...). Re-interpret the latin-1 string as UTF-8 bytes to recover.
@@ -490,6 +516,8 @@ module.exports.uploadBufferToR2 = async function uploadBufferToR2({
         e.httpStatus = 413; e.code = 'too_large'; throw e;
     }
 
+    mimetype = sniffMimeFromExtension(originalname, mimetype);
+
     const usageResult = await pool.query(
         'SELECT COALESCE(SUM(size), 0) AS total FROM r2_files WHERE device_id = $1 AND expires_at > NOW()',
         [deviceId]
@@ -552,6 +580,8 @@ module.exports.uploadBufferToR2 = async function uploadBufferToR2({
         expiresAt: expiresAt.toISOString(),
     };
 };
+
+module.exports.sniffMimeFromExtension = sniffMimeFromExtension;
 
 // Export cleanup function for daily cron
 module.exports.cleanupExpiredFiles = async function () {

@@ -19,4 +19,26 @@ describe('portal static HTML IDs', () => {
     expect(html).toContain("document.getElementById('inviteOnboardingBanner')");
     expect(html).not.toContain("document.getElementById('inviteBanner')");
   });
+
+  test('mission note page public toggle has a stable accessible label before state hydration', () => {
+    const missionPath = path.join(__dirname, '../../public/portal/mission.html');
+    const html = fs.readFileSync(missionPath, 'utf8');
+
+    const buttonMatch = html.match(/<button\s+[^>]*id=["']wvPublicToggle["'][^>]*>([\s\S]*?)<\/button>/);
+    expect(buttonMatch).not.toBeNull();
+    const buttonMarkup = buttonMatch[0];
+    const initialText = buttonMatch[1].replace(/<[^>]*>/g, '').trim();
+
+    expect(buttonMarkup).toMatch(/aria-label=["'][^"']+["']/);
+    expect(initialText.length).toBeGreaterThan(0);
+    expect(html).toContain("btn.setAttribute('aria-label', toggleLabel)");
+  });
+
+  test('marketplace redirect shim keeps mobile viewport metadata', () => {
+    const marketplacePath = path.join(__dirname, '../../public/portal/marketplace.html');
+    const html = fs.readFileSync(marketplacePath, 'utf8');
+
+    expect(html).toMatch(/<meta\s+name=["']viewport["']\s+content=["']width=device-width,\s*initial-scale=1\.0["']>/);
+  });
+
 });
