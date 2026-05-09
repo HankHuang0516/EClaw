@@ -1233209,6 +1233209,30 @@ const TRANSLATIONS = {
 
 
 
+    
+        "guide_pub_col_auth": "認證方式",
+        "guide_pub_col_keys": "所需 Vault / Env 金鑰",
+        "guide_pub_col_platform": "平台",
+        "guide_pub_col_region": "地區",
+        "guide_pub_col_status": "多租戶狀態",
+        "guide_pub_meta": "10 個內容平台 · 多租戶金鑰全裝置可用（Telegraph 為自動金鑰，無需 vault）",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> 將 10 個內容平台統合至 <code>/api/publisher/&lt;platform&gt;/*</code>。「多租戶」指<strong>每台裝置呼叫平台時使用自己 vault 的金鑰</strong>，而非所有裝置共用 owner 的單一 env 金鑰。9 個需要金鑰的平台（X、Hashnode、DEV.to、Qiita、LinkedIn、Reddit、Tumblr、Blogger、WeChat）皆採 vault-first 流程：每個平台都有自己的 <code>resolve&lt;Platform&gt;Creds(deviceId)</code>，先讀裝置 vault，缺漏時 fallback 到 <code>process.env</code>。Telegraph 為自動金鑰（首次呼叫自動建立匿名帳號），故無需 vault 路徑。",
+        "guide_pub_overview_h": "概覽",
+        "guide_pub_roadmap_desc": "2026-04 完成。9 個需要金鑰的平台皆已 vault-first 上線；Telegraph 為自動金鑰，無需 vault 路徑。永遠向後相容：vault 金鑰缺漏時 fallback 至 <code>process.env</code>，既有 env-only 部署不受影響。下表依簽章模式分組各平台，並附上對應 PR：",
+        "guide_pub_roadmap_h": "完成：多租戶遷移已於每個平台上線 ✅",
+        "guide_pub_roadmap_step1": "<strong>單金鑰 bearer 平台</strong>（Hashnode / DEV.to / Qiita）：單一 API token — 最簡單，首批上線。",
+        "guide_pub_roadmap_step2": "<strong>雙金鑰 bearer + URN</strong>（LinkedIn）：access_token + author URN，兩者皆從 vault 取得。",
+        "guide_pub_roadmap_step3": "<strong>4 金鑰 OAuth1a 即時簽章</strong>（X / Tumblr）：consumer + access 兩組，每次請求以 HMAC-SHA1 簽 nonce + timestamp。",
+        "guide_pub_roadmap_step4": "<strong>4 金鑰 OAuth2 password grant + 每租戶 token 快取</strong>（Reddit）：username/password 換得 access_token；快取以 <code>Map keyed by clientId+username</code> 隔離租戶。",
+        "guide_pub_roadmap_step5": "<strong>OAuth2 authorization-code / app-credential + 每租戶 token 快取</strong>（Blogger / WeChat）：Blogger 走使用者授權同意流程取得 refresh_token（每裝置存於 DB）；WeChat 以 AppID/AppSecret 換得 ~2h access_token，依 <code>Map keyed by appId</code> 快取。",
+        "guide_pub_status_endpoint_desc": "與其逐一探測每個平台，<code>GET /api/publisher/platforms</code> 一次回傳所有平台的 <code>configured</code> 旗標：",
+        "guide_pub_status_endpoint_h": "列出已設定的平台",
+        "guide_pub_status_h": "平台狀態",
+        "guide_pub_status_legend": "<span class=\"pub-badge pub-badge-vault\">🔓 vault-first</span> 多租戶就緒（每台裝置使用自己的金鑰） <span class=\"pub-badge pub-badge-env\">⚙️ env-only</span> 仍為單租戶（共用 owner env） <span class=\"pub-badge pub-badge-skip\">— retired</span> 已移除",
+        "guide_pub_telegraph_note": "無需金鑰（首次呼叫自動建立匿名帳號）",
+        "guide_pub_test_desc": "每個平台都有 <code>/me</code> 或同等的「安全自我檢查」端點，會打平台 API 但<strong>絕不發布</strong> — 是測試金鑰最快的方式：",
+        "guide_pub_test_h": "自我檢查金鑰是否正確接上",
+        "guide_pub_title": "多平台 Publisher"
     },
 
 
@@ -2937913,6 +2937937,30 @@ const TRANSLATIONS = {
 
 
 
+    ,
+        "guide_pub_col_auth": "인증",
+        "guide_pub_col_keys": "필요한 Vault / Env 키",
+        "guide_pub_col_platform": "플랫폼",
+        "guide_pub_col_region": "지역",
+        "guide_pub_col_status": "멀티 테넌트 상태",
+        "guide_pub_meta": "10개 콘텐츠 플랫폼 · 모든 기기에서 멀티 테넌트 키 사용 가능 (Telegraph는 자동 키, vault 불필요)",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code>는 10개 콘텐츠 플랫폼을 <code>/api/publisher/&lt;platform&gt;/*</code>로 통합합니다. \"멀티 테넌트\"란 <strong>각 기기가 플랫폼 호출 시 자체 vault의 키를 사용</strong>한다는 의미입니다. 키가 필요한 9개 플랫폼(X, Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat)은 모두 vault-first 흐름으로 동작합니다: 각 플랫폼은 <code>resolve&lt;Platform&gt;Creds(deviceId)</code>를 가지며 기기 vault를 먼저 읽고 누락 시 <code>process.env</code>로 fallback합니다. Telegraph는 자동 키(첫 호출 시 익명 계정 자동 생성)이므로 vault 경로가 필요 없습니다.",
+        "guide_pub_overview_h": "개요",
+        "guide_pub_roadmap_desc": "2026-04 완료. 키가 필요한 9개 플랫폼은 모두 vault-first로 동작; Telegraph는 자동 키로 vault 경로가 필요 없습니다. 항상 하위 호환: vault 키 누락 시 <code>process.env</code>로 fallback되므로 기존 env-only 배포에 영향 없음. 아래 목록은 서명 패턴별로 플랫폼을 그룹화하며 각 출시 PR을 포함합니다:",
+        "guide_pub_roadmap_h": "완료: 멀티 테넌트 마이그레이션 모든 플랫폼 출시 ✅",
+        "guide_pub_roadmap_step1": "<strong>1키 bearer 플랫폼</strong> (Hashnode / DEV.to / Qiita): 단일 API 토큰 — 가장 단순, 가장 먼저 출시.",
+        "guide_pub_roadmap_step2": "<strong>2키 bearer + URN</strong> (LinkedIn): access_token + author URN, 둘 다 vault에서 가져옴.",
+        "guide_pub_roadmap_step3": "<strong>4키 OAuth1a 실시간 서명</strong> (X / Tumblr): consumer + access 쌍, 모든 요청에 nonce + timestamp를 HMAC-SHA1로 서명.",
+        "guide_pub_roadmap_step4": "<strong>4키 OAuth2 password grant + 테넌트별 토큰 캐시</strong> (Reddit): username/password를 access_token으로 교환; 캐시는 <code>Map keyed by clientId+username</code>로 테넌트 간 오염 방지.",
+        "guide_pub_roadmap_step5": "<strong>OAuth2 authorization-code / app-credential + 테넌트별 토큰 캐시</strong> (Blogger / WeChat): Blogger는 refresh_token을 위해 사용자 동의 흐름을 거침(기기별 DB 저장); WeChat은 AppID/AppSecret으로 ~2시간 access_token을 발급하며 <code>Map keyed by appId</code>로 캐시.",
+        "guide_pub_status_endpoint_desc": "각 플랫폼을 개별 탐색하는 대신, <code>GET /api/publisher/platforms</code>가 모든 플랫폼의 <code>configured</code> 플래그를 한 번에 반환합니다:",
+        "guide_pub_status_endpoint_h": "설정된 플랫폼 나열",
+        "guide_pub_status_h": "플랫폼 상태",
+        "guide_pub_status_legend": "<span class=\"pub-badge pub-badge-vault\">🔓 vault-first</span> 멀티 테넌트 준비 (각 기기 자체 키) <span class=\"pub-badge pub-badge-env\">⚙️ env-only</span> 여전히 단일 테넌트 (공유 owner env) <span class=\"pub-badge pub-badge-skip\">— retired</span> 제거됨",
+        "guide_pub_telegraph_note": "키 불필요 (첫 호출 시 익명 계정 자동 생성)",
+        "guide_pub_test_desc": "모든 플랫폼은 <code>/me</code> 또는 동등한 \"안전 자가 점검\" 엔드포인트를 가지며 플랫폼 API를 호출하지만 <strong>절대 게시하지 않음</strong> — 키를 가장 빠르게 테스트하는 방법:",
+        "guide_pub_test_h": "키가 올바르게 연결되었는지 자가 점검",
+        "guide_pub_title": "멀티 플랫폼 Publisher"
     },
 
 
@@ -3464761,6 +3464809,30 @@ const TRANSLATIONS = {
 
 
 
+    
+        "guide_pub_col_auth": "การยืนยันตัวตน",
+        "guide_pub_col_keys": "คีย์ Vault / Env ที่ต้องการ",
+        "guide_pub_col_platform": "แพลตฟอร์ม",
+        "guide_pub_col_region": "ภูมิภาค",
+        "guide_pub_col_status": "สถานะมัลติเทนแนนต์",
+        "guide_pub_meta": "10 แพลตฟอร์มเนื้อหา · คีย์มัลติเทนแนนต์ใช้ได้ทุกเครื่อง (Telegraph เป็นคีย์อัตโนมัติ ไม่ต้องใช้ vault)",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> รวม 10 แพลตฟอร์มเนื้อหาภายใต้ <code>/api/publisher/&lt;platform&gt;/*</code> \"มัลติเทนแนนต์\" หมายถึง <strong>แต่ละเครื่องใช้คีย์จาก vault ของตัวเอง</strong> เมื่อเรียกแพลตฟอร์ม — แทนที่จะใช้ env key ของ owner ร่วมกัน ทั้ง 9 แพลตฟอร์มที่ต้องใช้คีย์ (X, Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) ใช้ flow vault-first เต็มรูปแบบ: แต่ละแพลตฟอร์มมี <code>resolve&lt;Platform&gt;Creds(deviceId)</code> ของตัวเอง อ่าน vault ของเครื่องก่อน fallback ไปที่ <code>process.env</code> เมื่อไม่พบ Telegraph เป็นคีย์อัตโนมัติ (เรียกครั้งแรกสร้างบัญชีนิรนามอัตโนมัติ) จึงไม่ต้องใช้ path vault",
+        "guide_pub_overview_h": "ภาพรวม",
+        "guide_pub_roadmap_desc": "เสร็จสิ้น 2026-04 ทั้ง 9 แพลตฟอร์มที่ต้องใช้คีย์ทำงานแบบ vault-first; Telegraph เป็นคีย์อัตโนมัติไม่ต้องใช้ path vault รองรับย้อนหลังเสมอ: คีย์ vault ที่ขาดจะ fallback ไปที่ <code>process.env</code> deployment แบบ env-only ที่มีอยู่จึงไม่ได้รับผลกระทบ รายการด้านล่างจัดกลุ่มแพลตฟอร์มตามรูปแบบการลงนามพร้อม PR ที่ออก:",
+        "guide_pub_roadmap_h": "เสร็จสิ้น: การย้ายไปมัลติเทนแนนต์ออกครบทุกแพลตฟอร์ม ✅",
+        "guide_pub_roadmap_step1": "<strong>แพลตฟอร์ม bearer 1 คีย์</strong> (Hashnode / DEV.to / Qiita): API token เดียว — ง่ายที่สุด ออกก่อน",
+        "guide_pub_roadmap_step2": "<strong>bearer 2 คีย์ + URN</strong> (LinkedIn): access_token + author URN ดึงจาก vault ทั้งคู่",
+        "guide_pub_roadmap_step3": "<strong>OAuth1a 4 คีย์ ลงนามแบบ real-time</strong> (X / Tumblr): คู่ consumer + access ทุก request ลงนาม nonce + timestamp ด้วย HMAC-SHA1",
+        "guide_pub_roadmap_step4": "<strong>OAuth2 password grant 4 คีย์ + แคช token ต่อ tenant</strong> (Reddit): username/password แลกเป็น access_token; แคชใช้ <code>Map keyed by clientId+username</code> ป้องกันปนเปื้อนข้าม tenant",
+        "guide_pub_roadmap_step5": "<strong>OAuth2 authorization-code / app-credential + แคช token ต่อ tenant</strong> (Blogger / WeChat): Blogger ผ่าน user consent flow เพื่อ refresh_token (เก็บใน DB ต่อเครื่อง); WeChat ใช้ AppID/AppSecret ออก access_token ~2 ชั่วโมง แคชด้วย <code>Map keyed by appId</code>",
+        "guide_pub_status_endpoint_desc": "แทนที่จะตรวจสอบแต่ละแพลตฟอร์มทีละตัว, <code>GET /api/publisher/platforms</code> คืนค่า flag <code>configured</code> ของทุกแพลตฟอร์มในการเรียกครั้งเดียว:",
+        "guide_pub_status_endpoint_h": "รายการแพลตฟอร์มที่ตั้งค่าแล้ว",
+        "guide_pub_status_h": "สถานะแพลตฟอร์ม",
+        "guide_pub_status_legend": "<span class=\"pub-badge pub-badge-vault\">🔓 vault-first</span> พร้อมมัลติเทนแนนต์ (แต่ละเครื่องคีย์ของตัวเอง) <span class=\"pub-badge pub-badge-env\">⚙️ env-only</span> ยังเป็น single-tenant (env ของ owner ร่วมกัน) <span class=\"pub-badge pub-badge-skip\">— retired</span> ลบแล้ว",
+        "guide_pub_telegraph_note": "ไม่ต้องใช้คีย์ (เรียกครั้งแรกสร้างบัญชีนิรนามอัตโนมัติ)",
+        "guide_pub_test_desc": "ทุกแพลตฟอร์มมี <code>/me</code> หรือ endpoint \"self-check ปลอดภัย\" เทียบเท่า ที่เรียก API ของแพลตฟอร์มแต่ <strong>ไม่เผยแพร่</strong> — วิธีทดสอบคีย์ที่เร็วที่สุด:",
+        "guide_pub_test_h": "ตรวจสอบเองว่าคีย์เชื่อมต่อถูกต้อง",
+        "guide_pub_title": "Publisher หลายแพลตฟอร์ม"
     },
 
 
@@ -3990073,6 +3990145,30 @@ const TRANSLATIONS = {
 
 
 
+    
+        "guide_pub_col_auth": "Xác thực",
+        "guide_pub_col_keys": "Khóa Vault / Env yêu cầu",
+        "guide_pub_col_platform": "Nền tảng",
+        "guide_pub_col_region": "Khu vực",
+        "guide_pub_col_status": "Trạng thái đa người thuê",
+        "guide_pub_meta": "10 nền tảng nội dung · khóa đa người thuê hoạt động trên mọi thiết bị (Telegraph tự động cấp khóa, không cần vault)",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> hợp nhất 10 nền tảng nội dung dưới <code>/api/publisher/&lt;platform&gt;/*</code>. \"Đa người thuê\" có nghĩa là <strong>mỗi thiết bị sử dụng khóa từ vault riêng</strong> khi gọi nền tảng — thay vì tất cả thiết bị dùng chung khóa env duy nhất của owner. Cả 9 nền tảng yêu cầu khóa (X, Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) đều chạy luồng vault-first đầy đủ: mỗi nền tảng có <code>resolve&lt;Platform&gt;Creds(deviceId)</code> riêng, đọc vault thiết bị trước rồi fallback về <code>process.env</code> khi thiếu. Telegraph là khóa tự động (lần gọi đầu tiên tự tạo tài khoản ẩn danh) nên không cần đường dẫn vault.",
+        "guide_pub_overview_h": "Tổng quan",
+        "guide_pub_roadmap_desc": "Hoàn thành 2026-04. Cả 9 nền tảng yêu cầu khóa đều chạy vault-first; Telegraph là khóa tự động và không cần đường dẫn vault. Luôn tương thích ngược: khóa vault thiếu sẽ fallback về <code>process.env</code>, các deployment env-only hiện có không bị ảnh hưởng. Danh sách dưới đây nhóm các nền tảng theo mẫu ký kèm PR phát hành cho từng nền tảng:",
+        "guide_pub_roadmap_h": "Hoàn thành: di chuyển đa người thuê đã phát hành trên mọi nền tảng ✅",
+        "guide_pub_roadmap_step1": "<strong>Nền tảng bearer 1 khóa</strong> (Hashnode / DEV.to / Qiita): một API token duy nhất — đơn giản nhất, phát hành đầu tiên.",
+        "guide_pub_roadmap_step2": "<strong>bearer 2 khóa + URN</strong> (LinkedIn): access_token + author URN, cả hai đều lấy từ vault.",
+        "guide_pub_roadmap_step3": "<strong>OAuth1a 4 khóa ký thời gian thực</strong> (X / Tumblr): cặp consumer + access, mỗi request ký nonce + timestamp bằng HMAC-SHA1.",
+        "guide_pub_roadmap_step4": "<strong>OAuth2 password grant 4 khóa + bộ nhớ đệm token theo người thuê</strong> (Reddit): username/password đổi lấy access_token; bộ nhớ đệm dùng <code>Map keyed by clientId+username</code> để tránh nhiễm chéo người thuê.",
+        "guide_pub_roadmap_step5": "<strong>OAuth2 authorization-code / app-credential + bộ nhớ đệm token theo người thuê</strong> (Blogger / WeChat): Blogger đi qua luồng đồng ý người dùng để lấy refresh_token (lưu mỗi thiết bị trong DB); WeChat dùng AppID/AppSecret để cấp access_token ~2 giờ, lưu cache bằng <code>Map keyed by appId</code>.",
+        "guide_pub_status_endpoint_desc": "Thay vì kiểm tra từng nền tảng riêng lẻ, <code>GET /api/publisher/platforms</code> trả về cờ <code>configured</code> cho mọi nền tảng trong một lần gọi:",
+        "guide_pub_status_endpoint_h": "Liệt kê các nền tảng đã được cấu hình",
+        "guide_pub_status_h": "Trạng thái nền tảng",
+        "guide_pub_status_legend": "<span class=\"pub-badge pub-badge-vault\">🔓 vault-first</span> Sẵn sàng đa người thuê (mỗi thiết bị khóa riêng) <span class=\"pub-badge pub-badge-env\">⚙️ env-only</span> Vẫn là một người thuê (env owner chung) <span class=\"pub-badge pub-badge-skip\">— retired</span> Đã gỡ bỏ",
+        "guide_pub_telegraph_note": "Không cần khóa (lần gọi đầu tiên tự tạo tài khoản ẩn danh)",
+        "guide_pub_test_desc": "Mọi nền tảng đều có endpoint <code>/me</code> hoặc tương đương \"tự kiểm tra an toàn\" gọi API nền tảng nhưng <strong>không bao giờ xuất bản</strong> — cách nhanh nhất để kiểm tra khóa:",
+        "guide_pub_test_h": "Tự kiểm tra xem khóa đã được kết nối đúng",
+        "guide_pub_title": "Publisher đa nền tảng"
     },
 
 
@@ -4515001,6 +4515097,30 @@ const TRANSLATIONS = {
 
 
 
+    
+        "guide_pub_col_auth": "Otentikasi",
+        "guide_pub_col_keys": "Kunci Vault / Env yang Diperlukan",
+        "guide_pub_col_platform": "Platform",
+        "guide_pub_col_region": "Wilayah",
+        "guide_pub_col_status": "Status multi-tenant",
+        "guide_pub_meta": "10 platform konten · kunci multi-tenant aktif untuk semua perangkat (Telegraph adalah kunci otomatis, tidak butuh vault)",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> menyatukan 10 platform konten di bawah <code>/api/publisher/&lt;platform&gt;/*</code>. \"Multi-tenant\" berarti <strong>setiap perangkat menggunakan kunci dari vault-nya sendiri</strong> saat memanggil platform — bukan semua perangkat berbagi satu env key milik owner. Ke-9 platform yang membutuhkan kunci (X, Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) menjalankan alur vault-first lengkap: setiap platform memiliki <code>resolve&lt;Platform&gt;Creds(deviceId)</code> sendiri yang membaca vault perangkat dahulu dan fallback ke <code>process.env</code> jika tidak ada. Telegraph adalah kunci otomatis (panggilan pertama otomatis membuat akun anonim) sehingga tidak butuh jalur vault.",
+        "guide_pub_overview_h": "Ikhtisar",
+        "guide_pub_roadmap_desc": "Selesai 2026-04. Ke-9 platform yang butuh kunci semuanya berjalan vault-first; Telegraph adalah kunci otomatis dan tidak butuh jalur vault. Selalu backward-compat: kunci vault yang hilang fallback ke <code>process.env</code>, deployment env-only yang ada tidak terpengaruh. Daftar di bawah mengelompokkan platform berdasarkan pola signing dengan PR rilis masing-masing:",
+        "guide_pub_roadmap_h": "Selesai: migrasi multi-tenant dirilis di setiap platform ✅",
+        "guide_pub_roadmap_step1": "<strong>Platform bearer 1-kunci</strong> (Hashnode / DEV.to / Qiita): satu API token — paling sederhana, dirilis pertama.",
+        "guide_pub_roadmap_step2": "<strong>bearer 2-kunci + URN</strong> (LinkedIn): access_token + author URN, keduanya diambil dari vault.",
+        "guide_pub_roadmap_step3": "<strong>OAuth1a 4-kunci signing real-time</strong> (X / Tumblr): pasangan consumer + access, setiap request menandatangani nonce + timestamp dengan HMAC-SHA1.",
+        "guide_pub_roadmap_step4": "<strong>OAuth2 password grant 4-kunci + cache token per-tenant</strong> (Reddit): username/password ditukar menjadi access_token; cache memakai <code>Map keyed by clientId+username</code> untuk mencegah pencemaran lintas tenant.",
+        "guide_pub_roadmap_step5": "<strong>OAuth2 authorization-code / app-credential + cache token per-tenant</strong> (Blogger / WeChat): Blogger melalui alur consent pengguna untuk refresh_token (disimpan per-perangkat di DB); WeChat menggunakan AppID/AppSecret untuk menerbitkan access_token ~2 jam, di-cache dengan <code>Map keyed by appId</code>.",
+        "guide_pub_status_endpoint_desc": "Daripada memeriksa setiap platform satu per satu, <code>GET /api/publisher/platforms</code> mengembalikan flag <code>configured</code> untuk semua platform dalam satu panggilan:",
+        "guide_pub_status_endpoint_h": "Mendaftar platform yang sudah dikonfigurasi",
+        "guide_pub_status_h": "Status Platform",
+        "guide_pub_status_legend": "<span class=\"pub-badge pub-badge-vault\">🔓 vault-first</span> Siap multi-tenant (setiap perangkat kunci sendiri) <span class=\"pub-badge pub-badge-env\">⚙️ env-only</span> Masih single-tenant (env owner bersama) <span class=\"pub-badge pub-badge-skip\">— retired</span> Dihapus",
+        "guide_pub_telegraph_note": "Tidak butuh kunci (panggilan pertama otomatis membuat akun anonim)",
+        "guide_pub_test_desc": "Setiap platform memiliki endpoint <code>/me</code> atau \"safe self-check\" setara yang memanggil API platform tetapi <strong>tidak pernah memublikasikan</strong> — cara tercepat untuk menguji kunci:",
+        "guide_pub_test_h": "Memeriksa sendiri apakah kunci terhubung dengan benar",
+        "guide_pub_title": "Publisher Multi-platform"
     },
 
 
@@ -5038649,6 +5038769,30 @@ const TRANSLATIONS = {
 
 
 
+    
+        "guide_pub_col_auth": "Authentification",
+        "guide_pub_col_keys": "Clés Vault / Env requises",
+        "guide_pub_col_platform": "Plateforme",
+        "guide_pub_col_region": "Région",
+        "guide_pub_col_status": "État multi-locataire",
+        "guide_pub_meta": "10 plateformes de contenu · clés multi-locataire actives sur tous les appareils (Telegraph est en clé automatique, aucun vault requis)",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> unifie 10 plateformes de contenu sous <code>/api/publisher/&lt;platform&gt;/*</code>. « Multi-locataire » signifie que <strong>chaque appareil utilise les clés de son propre vault</strong> lors de l'appel à la plateforme — au lieu que tous les appareils partagent l'unique clé env du propriétaire. Les 9 plateformes nécessitant des clés (X, Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) suivent toutes le flux vault-first complet : chaque plateforme possède son propre <code>resolve&lt;Platform&gt;Creds(deviceId)</code> qui lit d'abord le vault de l'appareil et bascule sur <code>process.env</code> en cas d'absence. Telegraph est en clé automatique (le premier appel crée un compte anonyme) et ne nécessite donc pas de chemin vault.",
+        "guide_pub_overview_h": "Aperçu",
+        "guide_pub_roadmap_desc": "Terminé 2026-04. Les 9 plateformes nécessitant des clés fonctionnent toutes en vault-first ; Telegraph est en clé automatique et ne nécessite aucun chemin vault. Toujours rétrocompatible : les clés vault manquantes basculent sur <code>process.env</code>, les déploiements env-only existants ne sont pas affectés. La liste ci-dessous regroupe les plateformes par schéma de signature avec la PR de livraison pour chacune :",
+        "guide_pub_roadmap_h": "Terminé : migration multi-locataire livrée sur chaque plateforme ✅",
+        "guide_pub_roadmap_step1": "<strong>Plateformes bearer à 1 clé</strong> (Hashnode / DEV.to / Qiita) : un seul jeton API — le plus simple, livré en premier.",
+        "guide_pub_roadmap_step2": "<strong>bearer 2 clés + URN</strong> (LinkedIn) : access_token + author URN, tous deux extraits du vault.",
+        "guide_pub_roadmap_step3": "<strong>OAuth1a 4 clés signature temps réel</strong> (X / Tumblr) : paires consumer + access, chaque requête signe nonce + timestamp avec HMAC-SHA1.",
+        "guide_pub_roadmap_step4": "<strong>OAuth2 password grant 4 clés + cache de jeton par locataire</strong> (Reddit) : username/password sont échangés contre un access_token ; le cache utilise <code>Map keyed by clientId+username</code> pour empêcher la contamination entre locataires.",
+        "guide_pub_roadmap_step5": "<strong>OAuth2 authorization-code / app-credential + cache de jeton par locataire</strong> (Blogger / WeChat) : Blogger passe par un flux de consentement utilisateur pour le refresh_token (stocké par appareil en DB) ; WeChat utilise AppID/AppSecret pour émettre des access_token d'environ 2 h, mis en cache avec <code>Map keyed by appId</code>.",
+        "guide_pub_status_endpoint_desc": "Plutôt que de sonder chaque plateforme individuellement, <code>GET /api/publisher/platforms</code> renvoie l'indicateur <code>configured</code> pour chaque plateforme en un seul appel :",
+        "guide_pub_status_endpoint_h": "Lister les plateformes configurées",
+        "guide_pub_status_h": "État de la plateforme",
+        "guide_pub_status_legend": "<span class=\"pub-badge pub-badge-vault\">🔓 vault-first</span> Prêt pour le multi-locataire (chaque appareil ses propres clés) <span class=\"pub-badge pub-badge-env\">⚙️ env-only</span> Toujours mono-locataire (env propriétaire partagé) <span class=\"pub-badge pub-badge-skip\">— retired</span> Retiré",
+        "guide_pub_telegraph_note": "Aucune clé requise (le premier appel crée un compte anonyme)",
+        "guide_pub_test_desc": "Chaque plateforme dispose d'un endpoint <code>/me</code> ou équivalent « auto-vérification sûre » qui appelle l'API de la plateforme mais <strong>ne publie jamais</strong> — le moyen le plus rapide de tester les clés :",
+        "guide_pub_test_h": "Auto-vérification du bon câblage des clés",
+        "guide_pub_title": "Publisher multi-plateforme"
     },
 
 
@@ -5554865,6 +5555009,30 @@ const TRANSLATIONS = {
 
 
 
+    
+        "guide_pub_col_auth": "Autenticación",
+        "guide_pub_col_keys": "Claves Vault / Env requeridas",
+        "guide_pub_col_platform": "Plataforma",
+        "guide_pub_col_region": "Región",
+        "guide_pub_col_status": "Estado multi-inquilino",
+        "guide_pub_meta": "10 plataformas de contenido · claves multi-inquilino activas en todos los dispositivos (Telegraph es de clave automática, no necesita vault)",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> unifica 10 plataformas de contenido bajo <code>/api/publisher/&lt;platform&gt;/*</code>. \"Multi-inquilino\" significa que <strong>cada dispositivo usa las claves de su propio vault</strong> al llamar a la plataforma — en lugar de que todos los dispositivos compartan la única clave env del propietario. Las 9 plataformas que requieren claves (X, Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) ejecutan el flujo vault-first completo: cada plataforma tiene su propio <code>resolve&lt;Platform&gt;Creds(deviceId)</code> que lee primero el vault del dispositivo y vuelve a <code>process.env</code> si falta. Telegraph es de clave automática (la primera llamada crea automáticamente una cuenta anónima) por lo que no necesita ruta de vault.",
+        "guide_pub_overview_h": "Resumen",
+        "guide_pub_roadmap_desc": "Completado 2026-04. Las 9 plataformas que requieren claves funcionan en vault-first; Telegraph es de clave automática y no necesita ruta de vault. Siempre retrocompatible: las claves vault faltantes vuelven a <code>process.env</code>, por lo que los despliegues solo-env existentes no se ven afectados. La lista siguiente agrupa las plataformas por patrón de firma con su PR de entrega:",
+        "guide_pub_roadmap_h": "Completado: migración multi-inquilino entregada en todas las plataformas ✅",
+        "guide_pub_roadmap_step1": "<strong>Plataformas bearer de 1 clave</strong> (Hashnode / DEV.to / Qiita): un único token API — el más simple, entregado primero.",
+        "guide_pub_roadmap_step2": "<strong>bearer 2 claves + URN</strong> (LinkedIn): access_token + author URN, ambos obtenidos del vault.",
+        "guide_pub_roadmap_step3": "<strong>OAuth1a 4 claves firma en tiempo real</strong> (X / Tumblr): pares consumer + access, cada solicitud firma nonce + timestamp con HMAC-SHA1.",
+        "guide_pub_roadmap_step4": "<strong>OAuth2 password grant 4 claves + caché de token por inquilino</strong> (Reddit): username/password se canjea por access_token; la caché usa <code>Map keyed by clientId+username</code> para evitar contaminación entre inquilinos.",
+        "guide_pub_roadmap_step5": "<strong>OAuth2 authorization-code / app-credential + caché de token por inquilino</strong> (Blogger / WeChat): Blogger pasa por un flujo de consentimiento del usuario para el refresh_token (almacenado por dispositivo en DB); WeChat usa AppID/AppSecret para emitir access_tokens de ~2 h, en caché con <code>Map keyed by appId</code>.",
+        "guide_pub_status_endpoint_desc": "En lugar de sondear cada plataforma individualmente, <code>GET /api/publisher/platforms</code> devuelve el indicador <code>configured</code> de cada plataforma en una sola llamada:",
+        "guide_pub_status_endpoint_h": "Listar las plataformas configuradas",
+        "guide_pub_status_h": "Estado de la plataforma",
+        "guide_pub_status_legend": "<span class=\"pub-badge pub-badge-vault\">🔓 vault-first</span> Listo para multi-inquilino (cada dispositivo sus claves) <span class=\"pub-badge pub-badge-env\">⚙️ env-only</span> Aún mono-inquilino (env propietario compartido) <span class=\"pub-badge pub-badge-skip\">— retired</span> Retirado",
+        "guide_pub_telegraph_note": "No se necesitan claves (la primera llamada crea automáticamente una cuenta anónima)",
+        "guide_pub_test_desc": "Cada plataforma tiene un endpoint <code>/me</code> o equivalente \"autocomprobación segura\" que llama a la API de la plataforma pero <strong>nunca publica</strong> — la forma más rápida de probar las claves:",
+        "guide_pub_test_h": "Autocomprobación del cableado correcto de las claves",
+        "guide_pub_title": "Publisher multi-plataforma"
     },
 
 
@@ -6090413,6 +6090581,30 @@ const TRANSLATIONS = {
 
 
 
+    
+        "guide_pub_col_auth": "Authentifizierung",
+        "guide_pub_col_keys": "Erforderliche Vault- / Env-Keys",
+        "guide_pub_col_platform": "Plattform",
+        "guide_pub_col_region": "Region",
+        "guide_pub_col_status": "Multi-Tenant-Status",
+        "guide_pub_meta": "10 Content-Plattformen · Multi-Tenant-Keys auf allen Geräten aktiv (Telegraph ist Auto-Key, kein Vault nötig)",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> vereinheitlicht 10 Content-Plattformen unter <code>/api/publisher/&lt;platform&gt;/*</code>. „Multi-Tenant\" bedeutet, dass <strong>jedes Gerät beim Aufruf der Plattform die Keys seines eigenen Vaults verwendet</strong> — statt dass alle Geräte den einzigen Env-Key des Owners teilen. Alle 9 Plattformen, die Keys benötigen (X, Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat), führen den vollständigen Vault-First-Ablauf aus: jede Plattform hat ihre eigene <code>resolve&lt;Platform&gt;Creds(deviceId)</code>, die zuerst den Geräte-Vault liest und bei Fehlen auf <code>process.env</code> zurückfällt. Telegraph ist Auto-Key (der erste Aufruf erstellt automatisch ein anonymes Konto) und benötigt daher keinen Vault-Pfad.",
+        "guide_pub_overview_h": "Übersicht",
+        "guide_pub_roadmap_desc": "Abgeschlossen 2026-04. Alle 9 Plattformen, die Keys benötigen, laufen Vault-First; Telegraph ist Auto-Key und benötigt keinen Vault-Pfad. Immer abwärtskompatibel: fehlende Vault-Keys fallen auf <code>process.env</code> zurück, sodass bestehende Env-only-Deployments nicht betroffen sind. Die Liste unten gruppiert Plattformen nach Signatur-Muster mit der jeweiligen Release-PR:",
+        "guide_pub_roadmap_h": "Abgeschlossen: Multi-Tenant-Migration auf jeder Plattform ausgeliefert ✅",
+        "guide_pub_roadmap_step1": "<strong>1-Key-Bearer-Plattformen</strong> (Hashnode / DEV.to / Qiita): ein einzelnes API-Token — am einfachsten, zuerst ausgeliefert.",
+        "guide_pub_roadmap_step2": "<strong>2-Key Bearer + URN</strong> (LinkedIn): access_token + author URN, beides aus dem Vault gelesen.",
+        "guide_pub_roadmap_step3": "<strong>4-Key OAuth1a Echtzeit-Signierung</strong> (X / Tumblr): consumer + access Paare, jede Anfrage signiert Nonce + Timestamp mit HMAC-SHA1.",
+        "guide_pub_roadmap_step4": "<strong>4-Key OAuth2 Password Grant + Token-Cache pro Tenant</strong> (Reddit): username/password werden gegen ein access_token getauscht; Cache verwendet <code>Map keyed by clientId+username</code>, um Cross-Tenant-Verunreinigung zu verhindern.",
+        "guide_pub_roadmap_step5": "<strong>OAuth2 Authorization-Code / App-Credential + Token-Cache pro Tenant</strong> (Blogger / WeChat): Blogger durchläuft einen User-Consent-Flow für refresh_token (pro Gerät in der DB gespeichert); WeChat verwendet AppID/AppSecret zum Ausstellen von ca. 2-h-access_tokens, gecacht mit <code>Map keyed by appId</code>.",
+        "guide_pub_status_endpoint_desc": "Anstatt jede Plattform einzeln zu prüfen, gibt <code>GET /api/publisher/platforms</code> die <code>configured</code>-Flag für jede Plattform in einem einzigen Aufruf zurück:",
+        "guide_pub_status_endpoint_h": "Konfigurierte Plattformen auflisten",
+        "guide_pub_status_h": "Plattformstatus",
+        "guide_pub_status_legend": "<span class=\"pub-badge pub-badge-vault\">🔓 vault-first</span> Multi-Tenant-bereit (jedes Gerät eigene Keys) <span class=\"pub-badge pub-badge-env\">⚙️ env-only</span> Weiterhin Single-Tenant (geteiltes Owner-Env) <span class=\"pub-badge pub-badge-skip\">— retired</span> Entfernt",
+        "guide_pub_telegraph_note": "Keine Keys erforderlich (der erste Aufruf erstellt automatisch ein anonymes Konto)",
+        "guide_pub_test_desc": "Jede Plattform hat einen <code>/me</code>- oder gleichwertigen „sicheren Self-Check\"-Endpoint, der die Plattform-API aufruft, aber <strong>niemals veröffentlicht</strong> — der schnellste Weg, Keys zu testen:",
+        "guide_pub_test_h": "Selbstprüfung, ob Keys korrekt verdrahtet sind",
+        "guide_pub_title": "Multi-Plattform Publisher"
     },
 
 
@@ -6756781,6 +6756973,30 @@ const TRANSLATIONS = {
 
 
 
+    
+        "guide_pub_col_auth": "Pengesahan",
+        "guide_pub_col_keys": "Kunci Vault / Env Diperlukan",
+        "guide_pub_col_platform": "Platform",
+        "guide_pub_col_region": "Wilayah",
+        "guide_pub_col_status": "Status berbilang penyewa",
+        "guide_pub_meta": "10 platform kandungan · kunci berbilang penyewa aktif untuk semua peranti (Telegraph ialah kunci auto, tiada vault diperlukan)",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> menyatukan 10 platform kandungan di bawah <code>/api/publisher/&lt;platform&gt;/*</code>. \"Berbilang penyewa\" bermaksud <strong>setiap peranti menggunakan kunci dari vault sendiri</strong> apabila memanggil platform — dan bukannya semua peranti berkongsi satu kunci env pemilik. Kesemua 9 platform yang memerlukan kunci (X, Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) menjalankan aliran vault-first penuh: setiap platform mempunyai <code>resolve&lt;Platform&gt;Creds(deviceId)</code> tersendiri yang membaca vault peranti dahulu dan fallback ke <code>process.env</code> apabila tiada. Telegraph ialah kunci auto (panggilan pertama mencipta akaun tanpa nama secara automatik) jadi ia tidak memerlukan laluan vault.",
+        "guide_pub_overview_h": "Gambaran keseluruhan",
+        "guide_pub_roadmap_desc": "Selesai 2026-04. Kesemua 9 platform yang memerlukan kunci berjalan vault-first; Telegraph ialah kunci auto dan tidak memerlukan laluan vault. Sentiasa serasi ke belakang: kunci vault yang hilang fallback ke <code>process.env</code>, jadi deployment env-only sedia ada tidak terjejas. Senarai di bawah mengumpulkan platform mengikut corak penandatanganan dengan PR keluaran masing-masing:",
+        "guide_pub_roadmap_h": "Selesai: migrasi berbilang penyewa dilancarkan di setiap platform ✅",
+        "guide_pub_roadmap_step1": "<strong>Platform bearer 1-kunci</strong> (Hashnode / DEV.to / Qiita): satu token API — paling mudah, dilancarkan dahulu.",
+        "guide_pub_roadmap_step2": "<strong>bearer 2-kunci + URN</strong> (LinkedIn): access_token + author URN, kedua-duanya diambil dari vault.",
+        "guide_pub_roadmap_step3": "<strong>OAuth1a 4-kunci penandatanganan masa nyata</strong> (X / Tumblr): pasangan consumer + access, setiap permintaan menandatangani nonce + timestamp dengan HMAC-SHA1.",
+        "guide_pub_roadmap_step4": "<strong>OAuth2 password grant 4-kunci + cache token setiap penyewa</strong> (Reddit): username/password ditukar untuk access_token; cache menggunakan <code>Map keyed by clientId+username</code> untuk mencegah pencemaran merentas penyewa.",
+        "guide_pub_roadmap_step5": "<strong>OAuth2 authorization-code / app-credential + cache token setiap penyewa</strong> (Blogger / WeChat): Blogger melalui aliran persetujuan pengguna untuk refresh_token (disimpan setiap peranti dalam DB); WeChat menggunakan AppID/AppSecret untuk mengeluarkan access_token ~2 jam, di-cache dengan <code>Map keyed by appId</code>.",
+        "guide_pub_status_endpoint_desc": "Daripada menguji setiap platform secara individu, <code>GET /api/publisher/platforms</code> mengembalikan bendera <code>configured</code> untuk setiap platform dalam satu panggilan:",
+        "guide_pub_status_endpoint_h": "Senaraikan platform yang telah dikonfigurasi",
+        "guide_pub_status_h": "Status Platform",
+        "guide_pub_status_legend": "<span class=\"pub-badge pub-badge-vault\">🔓 vault-first</span> Sedia berbilang penyewa (setiap peranti kunci sendiri) <span class=\"pub-badge pub-badge-env\">⚙️ env-only</span> Masih satu penyewa (env pemilik bersama) <span class=\"pub-badge pub-badge-skip\">— retired</span> Dialih keluar",
+        "guide_pub_telegraph_note": "Tiada kunci diperlukan (panggilan pertama mencipta akaun tanpa nama secara automatik)",
+        "guide_pub_test_desc": "Setiap platform mempunyai endpoint <code>/me</code> atau setara \"safe self-check\" yang memanggil API platform tetapi <strong>tidak pernah menerbitkan</strong> — cara terpantas untuk menguji kunci:",
+        "guide_pub_test_h": "Semakan diri sama ada kunci telah dipasang dengan betul",
+        "guide_pub_title": "Publisher Berbilang Platform"
     },
 
 
@@ -7455149,6 +7455365,30 @@ const TRANSLATIONS = {
 
 
 
+    
+        "guide_pub_col_auth": "प्रमाणीकरण",
+        "guide_pub_col_keys": "आवश्यक Vault / Env कुंजियाँ",
+        "guide_pub_col_platform": "प्लेटफ़ॉर्म",
+        "guide_pub_col_region": "क्षेत्र",
+        "guide_pub_col_status": "मल्टी-टेनेंट स्थिति",
+        "guide_pub_meta": "10 कंटेंट प्लेटफ़ॉर्म · सभी डिवाइसों के लिए मल्टी-टेनेंट कुंजियाँ सक्रिय (Telegraph ऑटो-कुंजी है, vault की आवश्यकता नहीं)",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> 10 कंटेंट प्लेटफ़ॉर्मों को <code>/api/publisher/&lt;platform&gt;/*</code> के अंतर्गत एकीकृत करता है। \"मल्टी-टेनेंट\" का अर्थ है कि <strong>प्रत्येक डिवाइस प्लेटफ़ॉर्म कॉल करते समय अपनी स्वयं की vault की कुंजियाँ उपयोग करता है</strong> — सभी डिवाइसों द्वारा owner की एकल env कुंजी साझा करने के बजाय। 9 कुंजी-आवश्यक प्लेटफ़ॉर्म (X, Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) सभी पूर्ण vault-first फ़्लो चलाते हैं: प्रत्येक प्लेटफ़ॉर्म का अपना <code>resolve&lt;Platform&gt;Creds(deviceId)</code> है जो पहले डिवाइस vault पढ़ता है और चूक होने पर <code>process.env</code> पर fallback होता है। Telegraph ऑटो-कुंजी है (पहली कॉल पर स्वचालित रूप से अनाम खाता बनता है) इसलिए इसे vault पथ की आवश्यकता नहीं है।",
+        "guide_pub_overview_h": "अवलोकन",
+        "guide_pub_roadmap_desc": "2026-04 में पूर्ण। 9 कुंजी-आवश्यक प्लेटफ़ॉर्म सभी vault-first चलते हैं; Telegraph ऑटो-कुंजी है और vault पथ की आवश्यकता नहीं। हमेशा backwards-compat: गुम vault कुंजियाँ <code>process.env</code> पर fallback होती हैं, इसलिए मौजूदा env-only deployment प्रभावित नहीं होते। नीचे दी गई सूची प्लेटफ़ॉर्मों को signing pattern के अनुसार समूहित करती है साथ ही प्रत्येक की रिलीज़ PR भी:",
+        "guide_pub_roadmap_h": "पूर्ण: मल्टी-टेनेंट माइग्रेशन हर प्लेटफ़ॉर्म पर रिलीज़ ✅",
+        "guide_pub_roadmap_step1": "<strong>1-कुंजी bearer प्लेटफ़ॉर्म</strong> (Hashnode / DEV.to / Qiita): एकल API token — सबसे सरल, पहले रिलीज़।",
+        "guide_pub_roadmap_step2": "<strong>2-कुंजी bearer + URN</strong> (LinkedIn): access_token + author URN, दोनों vault से प्राप्त।",
+        "guide_pub_roadmap_step3": "<strong>4-कुंजी OAuth1a real-time signing</strong> (X / Tumblr): consumer + access जोड़े, हर request HMAC-SHA1 से nonce + timestamp पर हस्ताक्षर करता है।",
+        "guide_pub_roadmap_step4": "<strong>4-कुंजी OAuth2 password grant + प्रति-tenant token cache</strong> (Reddit): username/password access_token के लिए विनिमय; cache <code>Map keyed by clientId+username</code> का उपयोग करके cross-tenant संदूषण रोकता है।",
+        "guide_pub_roadmap_step5": "<strong>OAuth2 authorization-code / app-credential + प्रति-tenant token cache</strong> (Blogger / WeChat): Blogger refresh_token के लिए user consent flow से गुजरता है (DB में प्रति-डिवाइस संग्रहीत); WeChat AppID/AppSecret से ~2 घंटे का access_token जारी करता है, <code>Map keyed by appId</code> द्वारा cached।",
+        "guide_pub_status_endpoint_desc": "प्रत्येक प्लेटफ़ॉर्म को अलग से जाँचने के बजाय, <code>GET /api/publisher/platforms</code> एक ही कॉल में हर प्लेटफ़ॉर्म का <code>configured</code> flag लौटाता है:",
+        "guide_pub_status_endpoint_h": "कॉन्फ़िगर किए गए प्लेटफ़ॉर्मों को सूचीबद्ध करना",
+        "guide_pub_status_h": "प्लेटफ़ॉर्म स्थिति",
+        "guide_pub_status_legend": "<span class=\"pub-badge pub-badge-vault\">🔓 vault-first</span> मल्टी-टेनेंट तैयार (प्रत्येक डिवाइस की अपनी कुंजियाँ) <span class=\"pub-badge pub-badge-env\">⚙️ env-only</span> अभी भी single-tenant (साझा owner env) <span class=\"pub-badge pub-badge-skip\">— retired</span> हटा दिया गया",
+        "guide_pub_telegraph_note": "किसी कुंजी की आवश्यकता नहीं (पहली कॉल पर स्वचालित रूप से अनाम खाता बनता है)",
+        "guide_pub_test_desc": "हर प्लेटफ़ॉर्म में <code>/me</code> या समकक्ष \"safe self-check\" endpoint है जो प्लेटफ़ॉर्म API पर हिट करता है लेकिन <strong>कभी प्रकाशित नहीं करता</strong> — कुंजियों का परीक्षण करने का सबसे तेज़ तरीका:",
+        "guide_pub_test_h": "स्वयं जाँचना कि कुंजियाँ सही ढंग से जुड़ी हैं",
+        "guide_pub_title": "मल्टी-प्लेटफ़ॉर्म Publisher"
     },
 
 
@@ -8002349,7 +8002589,31 @@ const TRANSLATIONS = {
 
 
 
-}
+
+        "guide_pub_col_auth": "المصادقة",
+        "guide_pub_col_keys": "مفاتيح Vault / Env المطلوبة",
+        "guide_pub_col_platform": "المنصة",
+        "guide_pub_col_region": "المنطقة",
+        "guide_pub_col_status": "حالة متعدد المستأجرين",
+        "guide_pub_meta": "10 منصات محتوى · مفاتيح متعددة المستأجرين تعمل لجميع الأجهزة (Telegraph ذاتي المفتاح، لا يحتاج vault)",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> يوحّد 10 منصات محتوى تحت <code>/api/publisher/&lt;platform&gt;/*</code>. \"متعدد المستأجرين\" يعني أن <strong>كل جهاز يستخدم مفاتيح من vault الخاص به</strong> عند استدعاء المنصة — بدلاً من أن تشترك جميع الأجهزة في مفتاح env الوحيد للمالك. جميع المنصات الـ9 التي تتطلب مفاتيح (X و Hashnode و DEV.to و Qiita و LinkedIn و Reddit و Tumblr و Blogger و WeChat) تعمل بتدفق vault-first الكامل: لكل منصة <code>resolve&lt;Platform&gt;Creds(deviceId)</code> الخاص بها يقرأ vault الجهاز أولاً ثم يعود إلى <code>process.env</code> عند الفقد. Telegraph ذاتي المفتاح (الاستدعاء الأول ينشئ حساباً مجهولاً تلقائياً) لذا لا يحتاج إلى مسار vault.",
+        "guide_pub_overview_h": "نظرة عامة",
+        "guide_pub_roadmap_desc": "اكتمل في 2026-04. جميع المنصات الـ9 التي تتطلب مفاتيح تعمل بـ vault-first؛ Telegraph ذاتي المفتاح ولا يحتاج إلى مسار vault. متوافق دائماً مع الإصدارات السابقة: مفاتيح vault المفقودة تعود إلى <code>process.env</code>، لذا لا تتأثر النشرات الحالية من نوع env-only. القائمة أدناه تُجمّع المنصات حسب نمط التوقيع مع PR الإصدار لكل منها:",
+        "guide_pub_roadmap_h": "اكتمل: ترحيل متعدد المستأجرين تم شحنه على كل منصة ✅",
+        "guide_pub_roadmap_step1": "<strong>منصات bearer بمفتاح واحد</strong> (Hashnode / DEV.to / Qiita): رمز API واحد — الأبسط، شُحن أولاً.",
+        "guide_pub_roadmap_step2": "<strong>bearer بمفتاحين + URN</strong> (LinkedIn): access_token + author URN، كلاهما من vault.",
+        "guide_pub_roadmap_step3": "<strong>OAuth1a بأربعة مفاتيح مع توقيع لحظي</strong> (X / Tumblr): زوجا consumer + access، كل طلب يوقّع nonce + timestamp بـ HMAC-SHA1.",
+        "guide_pub_roadmap_step4": "<strong>OAuth2 password grant بأربعة مفاتيح + ذاكرة token لكل مستأجر</strong> (Reddit): username/password يُستبدلان بـ access_token؛ الذاكرة تستخدم <code>Map keyed by clientId+username</code> لمنع التلوث بين المستأجرين.",
+        "guide_pub_roadmap_step5": "<strong>OAuth2 authorization-code / app-credential + ذاكرة token لكل مستأجر</strong> (Blogger / WeChat): Blogger يمر بتدفق موافقة المستخدم للحصول على refresh_token (مخزن لكل جهاز في DB)؛ WeChat يستخدم AppID/AppSecret لإصدار access_token لمدة ~2 ساعة، مخزّن في الذاكرة بـ <code>Map keyed by appId</code>.",
+        "guide_pub_status_endpoint_desc": "بدلاً من فحص كل منصة على حدة، يُعيد <code>GET /api/publisher/platforms</code> علم <code>configured</code> لكل منصة في استدعاء واحد:",
+        "guide_pub_status_endpoint_h": "سرد المنصات المُكوَّنة",
+        "guide_pub_status_h": "حالة المنصة",
+        "guide_pub_status_legend": "<span class=\"pub-badge pub-badge-vault\">🔓 vault-first</span> جاهز لمتعدد المستأجرين (لكل جهاز مفاتيحه) <span class=\"pub-badge pub-badge-env\">⚙️ env-only</span> ما زال أحادي المستأجر (env المالك المشترك) <span class=\"pub-badge pub-badge-skip\">— retired</span> مُزال",
+        "guide_pub_telegraph_note": "لا يحتاج مفاتيح (الاستدعاء الأول ينشئ حساباً مجهولاً تلقائياً)",
+        "guide_pub_test_desc": "كل منصة لها endpoint <code>/me</code> أو ما يعادله من \"فحص ذاتي آمن\" يصل إلى API المنصة لكنه <strong>لا ينشر أبداً</strong> — أسرع طريقة لاختبار المفاتيح:",
+        "guide_pub_test_h": "فحص ذاتي للتأكد من توصيل المفاتيح بشكل صحيح",
+        "guide_pub_title": "Publisher متعدد المنصات"
+    }
 
 
 
