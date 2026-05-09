@@ -572,6 +572,8 @@
         /* ══════════════ Dependency Chain Chips ══════════════ */
         .kb-dep-chips-container { display:contents; }
         .kb-dep-chips { display:flex; gap:4px; flex-wrap:wrap; align-items:center; }
+        .kb-detail-dep-chips { display:block; width:100%; margin-top:8px; padding-top:8px; border-top:1px solid var(--card-border, rgba(255,255,255,0.06)); }
+        .kb-detail-dep-chips:empty { display:none; }
         .kb-dep-chip { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:12px; font-size:10px; font-weight:500; cursor:pointer; transition:all 0.2s; text-decoration:none; border:1px solid transparent; max-width:120px; overflow:hidden; }
         .kb-dep-chip:hover { transform:translateY(-1px); }
 
@@ -1847,7 +1849,14 @@
                 <span class="meta-item">🕐 ${formatTime(card.createdAt || card.created_at)}</span>
                 ${scheduleInfo}
                 ${card.description ? '<div class="kb-detail-desc">'+renderSmartChips(card.description)+'</div>' : ''}
+                <div class="kb-dep-chips-container kb-detail-dep-chips" data-card-id="${cardId}"></div>
             `;
+            const detailDepContainer = meta.querySelector('.kb-detail-dep-chips');
+            if (detailDepContainer) {
+                fetchCardDependencies(cardId).then(({ dependencies, dependents }) => {
+                    detailDepContainer.innerHTML = renderDependencyChips(dependencies, dependents);
+                });
+            }
 
             // Move bar — shared assign + reviewer UI for all cards
             const moveBar = document.getElementById('moveBar');
