@@ -2916,6 +2916,107 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
         }
     }
 
+    // ============================================
+    // GET /card/:id/messages — List associated historical messages
+    // ============================================
+    router.get('/card/:id/messages', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId, entityId } = { ...req.query, ...req.body };
+        const cardId = req.params.id;
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
+        const offset = Math.max(0, parseInt(req.query.offset) || 0);
+
+        try {
+            // Verify card belongs to device
+            const cardCheck = await pool.query(
+                `SELECT id, title, created_at FROM kanban_cards WHERE id = $1 AND device_id = $2`,
+                [cardId, deviceId]
+            );
+            if (cardCheck.rows.length === 0) {
+                return res.status(404).json({ success: false, error: 'Card not found' });
+            }
+
+            const card = cardCheck.rows[0];
+            const cardCreatedAt = new Date(card.created_at);
+            const timeWindowStart = new Date(cardCreatedAt.getTime() - 30 * 60 * 1000); // 30 minutes before
+            const timeWindowEnd = new Date(cardCreatedAt.getTime() + 30 * 60 * 1000);   // 30 minutes after
+
+            const messages = [];
+
+            // 1. Get kanban comments for this card
+            const commentsResult = await pool.query(
+                `SELECT id, from_entity_id as entity_id, text, is_system, created_at, 'comment' as type
+                 FROM kanban_comments
+                 WHERE card_id = $1
+                 ORDER BY created_at DESC
+                 LIMIT $2 OFFSET $3`,
+                [cardId, limit, offset]
+            );
+            messages.push(...commentsResult.rows);
+
+            // 2. Get kanban notifications for this card
+            const notificationsResult = await pool.query(
+                `SELECT id, bot_entity_id as entity_id, msg as text, created_at, 'notification' as type
+                 FROM kanban_pending_notify
+                 WHERE card_id = $1 AND device_id = $2
+                 ORDER BY created_at DESC
+                 LIMIT $2`,
+                [cardId, deviceId, limit]
+            );
+            messages.push(...notificationsResult.rows);
+
+            // 3. Get chat messages that mention this card ID or are within time window
+            const chatResult = await pool.query(
+                `SELECT id, entity_id, text, source, is_from_user, is_from_bot, created_at, 'chat' as type
+                 FROM chat_messages
+                 WHERE device_id = $1
+                   AND (text LIKE $2 OR (created_at >= $3 AND created_at <= $4))
+                 ORDER BY created_at DESC
+                 LIMIT $5`,
+                [deviceId, `%${cardId}%`, timeWindowStart, timeWindowEnd, limit]
+            );
+            messages.push(...chatResult.rows);
+
+            // Sort all messages by creation time (newest first) and apply limit
+            const allMessages = messages
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                .slice(0, limit)
+                .map(msg => ({
+                    id: msg.id,
+                    type: msg.type,
+                    sender: {
+                        entityId: msg.entity_id || null,
+                        isUser: msg.is_from_user || false,
+                        isBot: msg.is_from_bot || false,
+                        isSystem: msg.is_system || false
+                    },
+                    content: msg.text || msg.msg,
+                    timestamp: new Date(msg.created_at).getTime(),
+                    source: msg.source || (msg.type === 'comment' ? 'kanban_comments' :
+                                          msg.type === 'notification' ? 'kanban_pending_notify' : 'chat_messages')
+                }));
+
+            const totalCount = allMessages.length;
+            const hasMore = totalCount >= limit;
+
+            res.json({
+                success: true,
+                cardId,
+                messages: allMessages,
+                totalCount,
+                hasMore,
+                timeWindow: {
+                    start: timeWindowStart.getTime(),
+                    end: timeWindowEnd.getTime(),
+                    cardCreated: cardCreatedAt.getTime()
+                }
+            });
+        } catch (err) {
+            console.error('[Kanban] Get card messages error:', err);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
     // Debug endpoint to trace screenshot review default logic
     router.get('/debug/screenshot-review-default', (req, res) => {
         const { title = "Sample Card", requiresScreenshotReview } = req.query;
