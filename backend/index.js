@@ -33,6 +33,7 @@ const sanitizeHtml = require('sanitize-html');
 const compression = require('compression');
 
 const safeEqual = require('./safe-equal');
+const { applyDependencyMigration } = require('./admin_migration_endpoint');
 
 // ============================================
 // ADMIN DEVICE GATE
@@ -3738,6 +3739,12 @@ app.get('/api/admin/ping', (req, res) => {
     if (!gate.ok) return res.status(gate.status).json({ success: false, error: gate.error });
     res.json({ success: true, admin: true, deviceId: gate.deviceId });
 });
+
+/**
+ * GET /api/admin/migrate-dependencies
+ * Admin endpoint to apply Task #42 dependency migration to production database
+ */
+app.get('/api/admin/migrate-dependencies', applyDependencyMigration);
 
 /**
  * GET /api/admin/minigame-submissions
