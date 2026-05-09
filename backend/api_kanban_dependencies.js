@@ -142,8 +142,7 @@ module.exports = function (devices, options = {}) {
             await client.query(
                 `INSERT INTO kanban_card_dependencies
                     (device_id, card_id, depends_on_card_id, dependency_type, created_by)
-                 VALUES ($1, $2, $3, $4, $5)
-                 ON CONFLICT (device_id, card_id, depends_on_card_id) DO NOTHING`,
+                 VALUES ($1, $2, $3, $4, $5)`,
                 [deviceId, cardId, dependsOnCardId, dependencyType, entityId || 0]
             );
 

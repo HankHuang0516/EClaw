@@ -101,6 +101,43 @@
         .kb-card.archived { opacity:0.78; border-style:dashed; }
         .kb-card-archived-badge { font-size:10px; padding:1px 6px; border-radius:4px; background:rgba(107,114,128,0.18); color:#6b7280; font-weight:600; }
 
+        /* ── Message indicators (task chip history) ── */
+        .kb-card-messages { position:absolute; top:6px; right:6px; display:flex; align-items:center; gap:2px; z-index:10; }
+        .kb-card.stale .kb-card-messages { right:24px; } /* Shift left when stale indicator present */
+        .kb-message-indicator { width:14px; height:14px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:600; cursor:pointer; transition:all 0.2s; position:relative; }
+        .kb-message-indicator.chat { background:#28a745; color:white; }
+        .kb-message-indicator.comment { background:#ffc107; color:#000; }
+        .kb-message-indicator.notification { background:#6c757d; color:white; }
+        .kb-message-indicator:hover { transform:scale(1.15); z-index:11; }
+        .kb-message-indicator.has-overflow { border:2px solid var(--card); }
+        .kb-message-overflow { width:14px; height:14px; border-radius:50%; background:var(--text-muted); color:white; display:flex; align-items:center; justify-content:center; font-size:8px; cursor:pointer; }
+
+        /* ── Message Modal ── */
+        .kb-message-modal { position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; }
+        .kb-message-modal-backdrop { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); }
+        .kb-message-modal-content { position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:90%; max-width:600px; max-height:80%; background:var(--card); border-radius:var(--radius); box-shadow:0 20px 40px rgba(0,0,0,0.3); display:flex; flex-direction:column; }
+        .kb-message-modal-header { padding:16px 24px; border-bottom:1px solid var(--card-border); display:flex; justify-content:space-between; align-items:center; }
+        .kb-message-modal-header h3 { margin:0; font-size:18px; font-weight:700; }
+        .kb-message-modal-close { background:none; border:none; font-size:24px; color:var(--text-secondary); cursor:pointer; padding:0; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:var(--radius-sm); }
+        .kb-message-modal-close:hover { background:var(--input-bg); color:var(--text); }
+        .kb-message-modal-body { flex:1; padding:16px 24px; overflow-y:auto; min-height:200px; max-height:400px; }
+        .kb-message-modal-footer { padding:16px 24px; border-top:1px solid var(--card-border); text-align:right; }
+        .kb-message-list { display:flex; flex-direction:column; gap:12px; }
+        .kb-message-item { padding:12px; background:var(--input-bg); border-radius:var(--radius-sm); border-left:4px solid var(--card-border); }
+        .kb-message-item.chat { border-left-color:#28a745; }
+        .kb-message-item.comment { border-left-color:#ffc107; }
+        .kb-message-item.notification { border-left-color:#6c757d; }
+        .kb-message-meta { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+        .kb-message-sender { font-weight:600; color:var(--text); font-size:12px; }
+        .kb-message-timestamp { font-size:10px; color:var(--text-muted); }
+        .kb-message-type-badge { font-size:10px; padding:2px 6px; border-radius:4px; font-weight:600; }
+        .kb-message-type-badge.chat { background:rgba(40, 167, 69, 0.15); color:#28a745; }
+        .kb-message-type-badge.comment { background:rgba(255, 193, 7, 0.15); color:#ffc107; }
+        .kb-message-type-badge.notification { background:rgba(108, 117, 125, 0.15); color:#6c757d; }
+        .kb-message-content { font-size:13px; line-height:1.4; color:var(--text-secondary); }
+        .kb-message-loading, .kb-message-error { text-align:center; padding:32px; color:var(--text-muted); }
+        .kb-message-empty { text-align:center; padding:32px; color:var(--text-muted); }
+
         /* Search-scope chip cluster (next to funnel search input) */
         .kb-search-scope { flex-wrap:wrap; }
         .kb-search-scope label.kb-scope-chip { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border:1px solid var(--card-border); border-radius:var(--radius-pill); font-size:12px; font-weight:500; color:var(--text-secondary); cursor:pointer; user-select:none; transition:all 0.2s; background:none; }
@@ -867,6 +904,25 @@
     <!-- Toast -->
     <div class="kb-toast" id="kbToast"></div>
 
+    <!-- Message Preview Modal -->
+    <div class="kb-message-modal" id="messageModal" style="display: none;">
+        <div class="kb-message-modal-backdrop" onclick="closeMessageModal()"></div>
+        <div class="kb-message-modal-content">
+            <div class="kb-message-modal-header">
+                <h3 id="messageModalTitle">Card Messages</h3>
+                <button class="kb-message-modal-close" onclick="closeMessageModal()">&times;</button>
+            </div>
+            <div class="kb-message-modal-body">
+                <div class="kb-message-list" id="messageList">
+                    <div class="kb-message-loading">Loading messages...</div>
+                </div>
+            </div>
+            <div class="kb-message-modal-footer">
+                <button class="btn btn-secondary" onclick="closeMessageModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     </main>
 
     <script src="shared/api.js"></script>
@@ -1107,6 +1163,10 @@
             return apiCall('GET', `/api/mission/card/${cardId}/files?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
         }
 
+        async function apiGetCardMessages(cardId, limit = 20) {
+            return apiCall('GET', `/api/mission/card/${cardId}/messages?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}&limit=${limit}`);
+        }
+
         // ── FLIP Animation Helper ──
         function snapshotCardPositions() {
             const positions = {};
@@ -1208,6 +1268,112 @@
             }).join('') + '</span>';
         }
 
+        // Render message indicators for task chip history
+        function renderMessageIndicators(card) {
+            // Use available data from card object
+            const messages = [];
+
+            // Add comment indicator if there are comments
+            if (card.comment_count > 0) {
+                messages.push({ type: 'comment', count: card.comment_count });
+            }
+
+            // For now, we'll add other indicators when backend data is available
+            // Future: call /api/mission/card/:id/messages to get actual counts
+            // messages.push({ type: 'chat', count: chatCount });
+            // messages.push({ type: 'notification', count: notificationCount });
+
+            if (messages.length === 0) return '';
+
+            const maxVisible = 3;
+            const visibleMessages = messages.slice(0, maxVisible);
+            const hasOverflow = messages.length > maxVisible;
+
+            let indicators = visibleMessages.map(msg =>
+                `<div class="kb-message-indicator ${msg.type}" data-type="${msg.type}" data-count="${msg.count}" onclick="event.stopPropagation(); openMessageModal('${card.id}')" title="${msg.count} ${msg.type} messages">
+                    ${msg.count > 9 ? '9+' : msg.count}
+                </div>`
+            ).join('');
+
+            if (hasOverflow) {
+                const overflowCount = messages.length - maxVisible;
+                indicators += `<div class="kb-message-overflow" onclick="event.stopPropagation(); openMessageModal('${card.id}')" title="${overflowCount} more">
+                    +${overflowCount}
+                </div>`;
+            }
+
+            return `<div class="kb-card-messages">${indicators}</div>`;
+        }
+
+        // Open message modal and load messages for a card
+        async function openMessageModal(cardId) {
+            const modal = document.getElementById('messageModal');
+            const titleEl = document.getElementById('messageModalTitle');
+            const listEl = document.getElementById('messageList');
+
+            // Find card title for modal header
+            const card = allCards.find(c => c.id === cardId);
+            const cardTitle = card ? card.title : 'Unknown Card';
+            titleEl.textContent = `Messages - ${cardTitle}`;
+
+            // Show modal with loading state
+            listEl.innerHTML = '<div class="kb-message-loading">Loading messages...</div>';
+            modal.style.display = 'block';
+
+            try {
+                // Load messages from backend API
+                const data = await apiGetCardMessages(cardId, 20);
+                renderMessageList(data.messages, data.timeWindow);
+            } catch (err) {
+                console.error('[Kanban] Load messages error:', err);
+                listEl.innerHTML = `<div class="kb-message-error">Failed to load messages: ${err.message}</div>`;
+            }
+        }
+
+        // Close message modal
+        function closeMessageModal() {
+            const modal = document.getElementById('messageModal');
+            modal.style.display = 'none';
+        }
+
+        // Render the list of messages in the modal
+        function renderMessageList(messages, timeWindow) {
+            const listEl = document.getElementById('messageList');
+
+            if (!messages || messages.length === 0) {
+                listEl.innerHTML = '<div class="kb-message-empty">No messages found for this card</div>';
+                return;
+            }
+
+            const messageHtml = messages.map(msg => {
+                const timestamp = new Date(msg.timestamp).toLocaleString();
+                const senderName = getSenderDisplayName(msg.sender);
+                return `
+                    <div class="kb-message-item ${msg.type}">
+                        <div class="kb-message-meta">
+                            <span class="kb-message-sender">${escapeHtml(senderName)}</span>
+                            <span class="kb-message-type-badge ${msg.type}">${msg.type}</span>
+                            <span class="kb-message-timestamp">${timestamp}</span>
+                        </div>
+                        <div class="kb-message-content">${escapeHtml(msg.content)}</div>
+                    </div>
+                `;
+            }).join('');
+
+            listEl.innerHTML = messageHtml;
+        }
+
+        // Helper to get display name for message sender
+        function getSenderDisplayName(sender) {
+            if (sender.isUser) return 'User';
+            if (sender.isSystem) return 'System';
+            if (sender.entityId) {
+                const name = typeof getEntityDisplayName === 'function' ? getEntityDisplayName(sender.entityId) : null;
+                return name || `Entity #${sender.entityId}`;
+            }
+            return 'Unknown';
+        }
+
         function renderCard(card) {
             console.log('[Kanban] renderCard:', card.id, card.title, 'assigned:', card.assignedBots);
             const isStale = card.is_stale ? ' stale' : '';
@@ -1219,9 +1385,11 @@
             const timeAgo = relativeTime(card.created_at);
             const autoBadge = card.isAutoGenerated ? '<span class="kb-auto-badge">⚡</span>' : '';
             const archivedBadge = card.archived ? '<span class="kb-card-archived-badge" data-i18n="kb_archived_badge">已歸檔</span>' : '';
+            const messageIndicators = renderMessageIndicators(card);
             return `<div class="kb-card${isStale}${isArchived}" data-id="${card.id}" data-priority="${card.priority}" draggable="${card.archived ? 'false' : 'true'}"
                          ondragstart="onDragStart(event)" onclick="openDetail('${card.id}')">
                 ${autoBadge}
+                ${messageIndicators}
                 <div class="kb-card-top">
                     <span class="kb-card-priority" data-p="${card.priority}">${card.priority}</span>
                     ${archivedBadge}
