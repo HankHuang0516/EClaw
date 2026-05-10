@@ -23,6 +23,7 @@
     <string name="expand">توسيع</string>
     <string name="copy">نسخ</string>
     <string name="broadcast_to_all">بث للجميع</string>
+    <string name="browse_companions">تصفح الرفقاء</string>
     <string name="set_live_wallpaper">تعيين خلفية متحركة</string>
     <string name="expires_in">ينتهي خلال %ds</string>
     <string name="command_copied">تم نسخ الأمر!</string>

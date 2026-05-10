@@ -122,6 +122,7 @@
     <string name="broadcast_settings_desc">กำหนดค่าการทำงานของข้อความแพร่ภาพ</string>
     <string name="broadcast_settings_title">การตั้งค่าการแพร่ภาพ</string>
     <string name="broadcast_to_all">ส่งถึงทุกคน</string>
+    <string name="browse_companions">เรียกดูเพื่อน</string>
     <string name="cancel">ยกเลิก</string>    <string name="card_holder_add_capability">เพิ่มความสามารถ</string>    <string name="card_holder_capabilities">ความสามารถ</string>    <string name="card_holder_protocols">โปรโตคอล</string>    <string name="card_holder_tags">แท็ก</string>
     <string name="card_holder_tags_hint">เพิ่มแท็ก…</string>    <string name="category_add">+ หมวดหมู่</string>
     <string name="category_add_title">เพิ่มหมวดหมู่</string>

@@ -122,6 +122,7 @@
     <string name="broadcast_settings_desc">방송 메시지 작동 방식 설정</string>
     <string name="broadcast_settings_title">방송 설정</string>
     <string name="broadcast_to_all">전체 브로드캐스트</string>
+    <string name="browse_companions">동료 탐색</string>
     <string name="cancel">취소</string>    <string name="card_holder_add_capability">기능 추가</string>    <string name="card_holder_capabilities">기능</string>    <string name="card_holder_protocols">프로토콜</string>    <string name="card_holder_tags">태그</string>
     <string name="card_holder_tags_hint">태그 추가…</string>    <string name="category_add">+ 카테고리</string>
     <string name="category_add_title">카테고리 추가</string>

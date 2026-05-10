@@ -122,6 +122,7 @@
     <string name="broadcast_settings_desc">ブロードキャストメッセージの動作を設定</string>
     <string name="broadcast_settings_title">ブロードキャスト設定</string>
     <string name="broadcast_to_all">全体にブロードキャスト</string>
+    <string name="browse_companions">伴侶を閲覧</string>
     <string name="cancel">キャンセル</string>    <string name="card_holder_add_capability">機能を追加</string>    <string name="card_holder_capabilities">機能</string>    <string name="card_holder_protocols">プロトコル</string>    <string name="card_holder_tags">タグ</string>
     <string name="card_holder_tags_hint">タグを追加…</string>    <string name="category_add">+ カテゴリ</string>
     <string name="category_add_title">カテゴリを追加</string>
