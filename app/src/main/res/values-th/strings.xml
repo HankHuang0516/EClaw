@@ -828,4 +828,6 @@ GPS：รับตามความต้องการเท่านั้�
     <string name="tool_status_reading">กำลังอ่านไฟล์…</string>
     <string name="tool_status_searching">กำลังค้นหาโค้ด…</string>
     <string name="tool_status_writing">กำลังเขียนไฟล์…</string>
+    <string name="custom_layout_enabled">เปิดใช้งานเลย์เอาต์กำหนดเอง</string>
+    <string name="custom_layout_using_preset">ใช้เลย์เอาต์ตั้งต้น</string>
 </resources>

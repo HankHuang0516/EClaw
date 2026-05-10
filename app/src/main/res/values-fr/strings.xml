@@ -933,4 +933,6 @@ Si vous avez des questions, contactez-nous via notre e-mail officiel.
     <string name="tool_status_reading">Lecture du fichier…</string>
     <string name="tool_status_searching">Recherche dans le code…</string>
     <string name="tool_status_writing">Écriture du fichier…</string>
+    <string name="custom_layout_enabled">Disposition personnalisée activée</string>
+    <string name="custom_layout_using_preset">Disposition par défaut</string>
 </resources>

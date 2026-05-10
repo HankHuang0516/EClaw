@@ -933,4 +933,6 @@ Jika anda mempunyai sebarang soalan, sila hubungi kami melalui e-mel rasmi kami.
     <string name="tool_status_reading">Membaca fail…</string>
     <string name="tool_status_searching">Mencari kod…</string>
     <string name="tool_status_writing">Menulis fail…</string>
+    <string name="custom_layout_enabled">Tata letak tersuai diaktifkan</string>
+    <string name="custom_layout_using_preset">Menggunakan tata letak lalai</string>
 </resources>

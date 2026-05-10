@@ -828,4 +828,6 @@ Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua
     <string name="tool_status_reading">Đang đọc tệp…</string>
     <string name="tool_status_searching">Đang tìm kiếm mã…</string>
     <string name="tool_status_writing">Đang ghi tệp…</string>
+    <string name="custom_layout_enabled">Đã bật bố cục tùy chỉnh</string>
+    <string name="custom_layout_using_preset">Đang dùng bố cục mặc định</string>
 </resources>
