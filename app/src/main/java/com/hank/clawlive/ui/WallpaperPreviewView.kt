@@ -13,7 +13,9 @@ import android.view.ScaleGestureDetector
 import android.view.View
 import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.R
+import com.hank.clawlive.data.model.CompanionDetail
 import com.hank.clawlive.data.model.EntityStatus
+import com.hank.clawlive.engine.ProceduralCreatureDrawer
 import kotlin.math.ceil
 import kotlin.math.sqrt
 import timber.log.Timber
@@ -36,6 +38,10 @@ class WallpaperPreviewView @JvmOverloads constructor(
 
     // Entities to display (only bound entities)
     private var entities: List<EntityStatus> = emptyList()
+
+    // Per-entity selected companion descriptor — drives renderer dispatch
+    // (cat/dog/fish via ProceduralCreatureDrawer; null falls back to legacy lobster).
+    private var companionsByEntity: Map<Int, CompanionDetail?> = emptyMap()
 
     // Custom positions (percentage 0.0-1.0)
     private val entityPositions = mutableMapOf<Int, Pair<Float, Float>>()
@@ -144,6 +150,15 @@ class WallpaperPreviewView @JvmOverloads constructor(
             entityScales[entity.entityId] = layoutPrefs.getEntityScale(entity.entityId)
         }
 
+        invalidate()
+    }
+
+    /**
+     * Set per-entity selected companion. Triggers re-render so creatures
+     * (cat / dog / fish / lobster variants) appear immediately.
+     */
+    fun setCompanions(map: Map<Int, CompanionDetail?>) {
+        companionsByEntity = map
         invalidate()
     }
 
@@ -415,48 +430,68 @@ class WallpaperPreviewView @JvmOverloads constructor(
         canvas.translate(cx - (60 * svgScale), cy - (60 * svgScale))
         canvas.scale(svgScale, svgScale)
 
-        // Body color based on entity ID
-        val bodyColor = when (entity.entityId) {
-            0 -> Color.parseColor("#FF7F50") // Coral
-            1 -> Color.parseColor("#4CAF50") // Green
-            2 -> Color.parseColor("#2196F3") // Blue
-            3 -> Color.parseColor("#FF9800") // Orange
+        val companion = companionsByEntity[entity.entityId]
+        val bodyColor = parseHexColor(companion?.color) ?: when (entity.entityId) {
+            0 -> Color.parseColor("#FF7F50")
+            1 -> Color.parseColor("#4CAF50")
+            2 -> Color.parseColor("#2196F3")
+            3 -> Color.parseColor("#FF9800")
             else -> Color.parseColor("#FF7F50")
         }
+        val darkColor = darken(bodyColor)
 
-        val bodyPaint = Paint().apply {
-            style = Paint.Style.FILL
-            color = bodyColor
-            isAntiAlias = true
+        // Spec §4.3 — cat/dog/fish dispatch. If renderer matches, the procedural
+        // drawer paints inside the same 120×120 viewport; otherwise fall through
+        // to the legacy lobster preview path so existing companions still render.
+        val rendererKey = companion?.proceduralRenderer()
+        val drewCreature = ProceduralCreatureDrawer.draw(
+            canvas, rendererKey, entity, companion, bodyColor, darkColor,
+            System.currentTimeMillis()
+        )
+
+        if (!drewCreature) {
+            val bodyPaint = Paint().apply {
+                style = Paint.Style.FILL
+                color = bodyColor
+                isAntiAlias = true
+            }
+            val bodyPath = android.graphics.Path().apply {
+                moveTo(60f, 10f)
+                cubicTo(30f, 10f, 15f, 35f, 15f, 55f)
+                cubicTo(15f, 75f, 30f, 95f, 45f, 100f)
+                lineTo(45f, 110f)
+                lineTo(55f, 110f)
+                lineTo(55f, 100f)
+                cubicTo(55f, 100f, 60f, 102f, 65f, 100f)
+                lineTo(65f, 110f)
+                lineTo(75f, 110f)
+                lineTo(75f, 100f)
+                cubicTo(90f, 95f, 105f, 75f, 105f, 55f)
+                cubicTo(105f, 35f, 90f, 10f, 60f, 10f)
+                close()
+            }
+            canvas.drawPath(bodyPath, bodyPaint)
+            val eyePaint = Paint().apply { color = Color.BLACK; style = Paint.Style.FILL; isAntiAlias = true }
+            val eyeGlowPaint = Paint().apply { color = Color.CYAN; style = Paint.Style.FILL; isAntiAlias = true }
+            canvas.drawCircle(45f, 35f, 6f, eyePaint)
+            canvas.drawCircle(46f, 34f, 2f, eyeGlowPaint)
+            canvas.drawCircle(75f, 35f, 6f, eyePaint)
+            canvas.drawCircle(76f, 34f, 2f, eyeGlowPaint)
         }
-
-        // Simple lobster body path
-        val bodyPath = android.graphics.Path().apply {
-            moveTo(60f, 10f)
-            cubicTo(30f, 10f, 15f, 35f, 15f, 55f)
-            cubicTo(15f, 75f, 30f, 95f, 45f, 100f)
-            lineTo(45f, 110f)
-            lineTo(55f, 110f)
-            lineTo(55f, 100f)
-            cubicTo(55f, 100f, 60f, 102f, 65f, 100f)
-            lineTo(65f, 110f)
-            lineTo(75f, 110f)
-            lineTo(75f, 100f)
-            cubicTo(90f, 95f, 105f, 75f, 105f, 55f)
-            cubicTo(105f, 35f, 90f, 10f, 60f, 10f)
-            close()
-        }
-        canvas.drawPath(bodyPath, bodyPaint)
-
-        // Eyes
-        val eyePaint = Paint().apply { color = Color.BLACK; style = Paint.Style.FILL; isAntiAlias = true }
-        val eyeGlowPaint = Paint().apply { color = Color.CYAN; style = Paint.Style.FILL; isAntiAlias = true }
-        canvas.drawCircle(45f, 35f, 6f, eyePaint)
-        canvas.drawCircle(46f, 34f, 2f, eyeGlowPaint)
-        canvas.drawCircle(75f, 35f, 6f, eyePaint)
-        canvas.drawCircle(76f, 34f, 2f, eyeGlowPaint)
 
         canvas.restore()
+    }
+
+    private fun parseHexColor(hex: String?): Int? {
+        if (hex.isNullOrBlank()) return null
+        return try { Color.parseColor(hex) } catch (_: IllegalArgumentException) { null }
+    }
+
+    private fun darken(c: Int, factor: Float = 0.7f): Int {
+        val r = (Color.red(c) * factor).toInt().coerceIn(0, 255)
+        val g = (Color.green(c) * factor).toInt().coerceIn(0, 255)
+        val b = (Color.blue(c) * factor).toInt().coerceIn(0, 255)
+        return Color.rgb(r, g, b)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {

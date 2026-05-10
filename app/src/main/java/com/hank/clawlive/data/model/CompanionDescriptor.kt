@@ -91,6 +91,15 @@ data class CompanionDetail(
         val asset = descriptor?.getAsJsonObject("asset") ?: return assetUrl
         return asset.get("sheetUrl")?.asString ?: assetUrl
     }
+
+    /**
+     * Procedural renderer key (e.g. "lobster-procedural", "cat-procedural").
+     * Spec §4.3 — drives ProceduralCreatureDrawer dispatch.
+     */
+    fun proceduralRenderer(): String? {
+        val asset = descriptor?.getAsJsonObject("asset") ?: return null
+        return asset.get("renderer")?.asString
+    }
 }
 
 data class StateAssetHint(
