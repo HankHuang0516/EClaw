@@ -32,12 +32,23 @@ const DEVICE = 'dev-test';
 const ENTITY = 7;
 const SECRET = 'good-secret';
 
-function makeApp({ authenticateBot } = {}) {
+const DEVICE_SECRET = 'good-device-secret';
+
+function makeApp({ authenticateBot, authenticateDeviceOrBot } = {}) {
     const app = express();
     app.use(express.json());
-    const auth = authenticateBot || ((d, e, s) =>
+    const authBot = authenticateBot || ((d, e, s) =>
         d === DEVICE && e === ENTITY && s === SECRET);
-    const mod = companionFactory({ authenticateBot: auth });
+    const authDevOrBot = authenticateDeviceOrBot || (({ deviceId, deviceSecret, botSecret, entityId }) => {
+        if (deviceId !== DEVICE) return false;
+        if (deviceSecret === DEVICE_SECRET) return true;
+        if (botSecret === SECRET && entityId === ENTITY) return true;
+        return false;
+    });
+    const mod = companionFactory({
+        authenticateBot: authBot,
+        authenticateDeviceOrBot: authDevOrBot,
+    });
     app.use('/api/companion', mod.router);
     return app;
 }
@@ -155,6 +166,58 @@ describe('companion-api: GET /list auth + validation', () => {
         expect(listCall[0]).toMatch(/author_entity_id = \$\d/);
         expect(listCall[0]).toMatch(/device_id = \$\d/);
         expect(listCall[1]).toEqual(expect.arrayContaining([ENTITY, DEVICE]));
+    });
+});
+
+describe('companion-api: deviceSecret auth path (portal pages)', () => {
+    beforeEach(() => __mockQuery.mockReset());
+
+    test('200 with deviceSecret only (no entityId) for default scope', async () => {
+        __mockQuery
+            .mockResolvedValueOnce({ rows: [] })
+            .mockResolvedValueOnce({ rows: [{ total: 0 }] });
+        const res = await request(makeApp())
+            .get('/api/companion/list')
+            .query({ deviceId: DEVICE, deviceSecret: DEVICE_SECRET });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+    });
+
+    test('400 when scope=mine requested with deviceSecret-only auth', async () => {
+        const res = await request(makeApp())
+            .get('/api/companion/list')
+            .query({ deviceId: DEVICE, deviceSecret: DEVICE_SECRET, scope: 'mine' });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('scope_mine_requires_entity');
+    });
+
+    test('401 on wrong deviceSecret', async () => {
+        const res = await request(makeApp())
+            .get('/api/companion/list')
+            .query({ deviceId: DEVICE, deviceSecret: 'wrong' });
+        expect(res.status).toBe(401);
+    });
+
+    test('detail accepts deviceSecret and returns published companion', async () => {
+        __mockQuery.mockResolvedValueOnce({
+            rowCount: 1,
+            rows: [{
+                id: 'petdx-pub', name: 'P', version: '1.0.0',
+                author_entity_id: null, device_id: null,
+                descriptor: {}, asset_type: 'procedural', asset_url: null,
+                avatar_url: null, thumbnail_url: null,
+                supported_states: ['IDLE'], scope: 'system', status: 'published',
+                license: 'EClaw-default', tags: [], i18n_data: null,
+                category: null, mood: null, color: null,
+                download_count: 0, favorite_count: 0, rating_avg: null,
+                rating_count: 0, comment_count: 0, published_at: 1778000000000,
+            }],
+        });
+        const res = await request(makeApp())
+            .get('/api/companion/petdx-pub')
+            .query({ deviceId: DEVICE, deviceSecret: DEVICE_SECRET });
+        expect(res.status).toBe(200);
+        expect(res.body.companion.id).toBe('petdx-pub');
     });
 });
 

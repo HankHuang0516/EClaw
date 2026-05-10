@@ -117,33 +117,53 @@ async function initCompanionDatabase(serverLog = console.log) {
     }
 }
 
-module.exports = function companionFactory({ authenticateBot, serverLog } = {}) {
+module.exports = function companionFactory({ authenticateBot, authenticateDeviceOrBot, serverLog } = {}) {
     if (typeof authenticateBot !== 'function') {
         throw new Error('companionFactory requires authenticateBot');
     }
     const log = serverLog || (() => {});
     const router = express.Router();
 
-    function authBot(req, res, next) {
+    // Read endpoints accept either device-owner (deviceSecret) or bot
+    // (botSecret+entityId) auth so portal pages with deviceSecret in
+    // localStorage can browse the catalog without holding per-bot secrets.
+    // `req.botAuth.entityId` may be null on device-only auth — `scope=mine`
+    // still requires botSecret because it filters by author entity.
+    function authReader(req, res, next) {
         const deviceId = req.query.deviceId || req.body?.deviceId;
+        const deviceSecret = req.query.deviceSecret || req.body?.deviceSecret;
         const botSecret = req.query.botSecret || req.body?.botSecret;
         const entityIdRaw = req.query.entityId || req.body?.entityId;
-        const entityId = parseInt(entityIdRaw, 10);
+        const entityId = entityIdRaw != null ? parseInt(entityIdRaw, 10) : null;
 
-        if (!deviceId || !botSecret || !Number.isFinite(entityId)) {
-            return res.status(400).json({ success: false, error: 'deviceId, botSecret, entityId required' });
+        if (!deviceId || (!deviceSecret && !botSecret)) {
+            return res.status(400).json({ success: false, error: 'deviceId + (deviceSecret | botSecret+entityId) required' });
         }
-        if (!authenticateBot(deviceId, entityId, botSecret)) {
+        let ok = false;
+        if (typeof authenticateDeviceOrBot === 'function') {
+            ok = authenticateDeviceOrBot({
+                deviceId, deviceSecret, botSecret,
+                entityId: Number.isFinite(entityId) ? entityId : undefined,
+            });
+        } else if (botSecret && Number.isFinite(entityId)) {
+            ok = authenticateBot(deviceId, entityId, botSecret);
+        }
+        if (!ok) {
             return res.status(401).json({ success: false, error: 'Invalid credentials' });
         }
-        req.botAuth = { deviceId, botSecret, entityId };
+        req.botAuth = {
+            deviceId,
+            botSecret: botSecret || null,
+            entityId: Number.isFinite(entityId) ? entityId : null,
+            authMode: deviceSecret ? 'device' : 'bot',
+        };
         next();
     }
 
     // ── GET /api/companion/list ───────────────────────────────────
     // Query: category, mood, color, q, tags, sort, scope, assetType,
     //        page, limit, author
-    router.get('/list', authBot, async (req, res) => {
+    router.get('/list', authReader, async (req, res) => {
         const { category, mood, color, q, sort, scope, assetType, author } = req.query;
         const tags = parseTags(req.query.tags);
         const page = parsePositiveInt(req.query.page, 1);
@@ -168,6 +188,9 @@ module.exports = function companionFactory({ authenticateBot, serverLog } = {}) 
         if (scopeKey === 'system')    conds.push("scope = 'system'");
         if (scopeKey === 'community') conds.push("scope = 'community'");
         if (scopeKey === 'mine') {
+            if (req.botAuth.entityId == null) {
+                return res.status(400).json({ success: false, error: 'scope_mine_requires_entity' });
+            }
             conds.push(`author_entity_id = ${bind(req.botAuth.entityId)}`);
             conds.push(`device_id = ${bind(req.botAuth.deviceId)}`);
         }
@@ -229,7 +252,7 @@ module.exports = function companionFactory({ authenticateBot, serverLog } = {}) 
     });
 
     // ── GET /api/companion/:id ────────────────────────────────────
-    router.get('/:id', authBot, async (req, res) => {
+    router.get('/:id', authReader, async (req, res) => {
         const { id } = req.params;
         if (!/^[a-z0-9-]{1,80}$/i.test(id)) {
             return res.status(400).json({ success: false, error: 'invalid_companion_id' });
@@ -249,8 +272,10 @@ module.exports = function companionFactory({ authenticateBot, serverLog } = {}) 
                 return res.status(404).json({ success: false, error: 'companion_not_found' });
             }
             const row = r.rows[0];
-            const isOwner = row.author_entity_id === req.botAuth.entityId
-                && row.device_id === req.botAuth.deviceId;
+            const isOwner = req.botAuth.authMode === 'device'
+                ? row.device_id === req.botAuth.deviceId
+                : (row.author_entity_id === req.botAuth.entityId
+                    && row.device_id === req.botAuth.deviceId);
             if (row.status !== 'published' && row.scope !== 'system' && !isOwner) {
                 return res.status(404).json({ success: false, error: 'companion_not_found' });
             }

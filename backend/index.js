@@ -2091,6 +2091,7 @@ app.use('/api/bot', botTools.router);
 // ============================================
 const companionModule = require('./companion-api')({
     authenticateBot,
+    authenticateDeviceOrBot,
     serverLog,
 });
 app.use('/api/companion', companionModule.router);
