@@ -1287,11 +1287,22 @@
     // Auto-switch to rental tab if URL hash is #rental OR a tour requests it
     const _tourParam = new URLSearchParams(location.search).get('tour');
     const _tourStep = parseInt(new URLSearchParams(location.search).get('step') || '0', 10);
+
+    // Auto-open detail modal when ?bot=<publicCode> is present (SSR per-bot CTA target)
+    const _focusBotCode = new URLSearchParams(location.search).get('bot');
+    function autoFocusBotFromQuery() {
+        if (!_focusBotCode) return;
+        if (!/^[a-z0-9]{4,12}$/i.test(_focusBotCode)) return;
+        openDetail(_focusBotCode);
+    }
+
     if (location.hash === '#rental' || _tourParam === 'track1' || _tourParam === 'track2') {
         const rentalChip = document.querySelector('.plaza-chip[data-filter="rental"]');
         if (rentalChip) { setFilter('rental', rentalChip); } else { loadBots(); }
+        autoFocusBotFromQuery();
     } else {
         loadBots();
+        autoFocusBotFromQuery();
     }
 
     /* ══════ Onboarding Tour (Track 1: Free/Official Bot Rental) ══════ */
