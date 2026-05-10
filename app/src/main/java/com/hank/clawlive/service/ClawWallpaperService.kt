@@ -60,6 +60,13 @@ class ClawWallpaperService : WallpaperService() {
         // Multi-entity status list (start empty - only show bound entities)
         private var currentEntities: List<EntityStatus> = emptyList()
 
+        // Tracks whether observeStatus has received its first response. Until
+        // then, draw() shows "Loading entities…" instead of the permanent
+        // "No entities connected" placeholder — prevents the Live Wallpaper
+        // chooser preview from flashing that message while the first network
+        // call is still in flight.
+        private var hasFirstResponse = false
+
         private val drawRunnable = Runnable { draw() }
 
         override fun onCreate(surfaceHolder: SurfaceHolder?) {
@@ -85,6 +92,7 @@ class ClawWallpaperService : WallpaperService() {
                                 Timber.d("First entity: id=${e.entityId}, name=${e.name}, state=${e.state}")
                             }
                             currentEntities = response.entities
+                            hasFirstResponse = true
                             ensureCompanionPollers(response.entities)
                             if (visible) draw()
                         }
@@ -198,7 +206,7 @@ class ClawWallpaperService : WallpaperService() {
                     if (drawCount <= 3) {
                     }
                     if (multiEntityMode) {
-                        renderer.drawMultiEntity(canvas, currentEntities)
+                        renderer.drawMultiEntity(canvas, currentEntities, loading = !hasFirstResponse)
                     } else {
                         renderer.draw(canvas, currentStatus)
                     }
