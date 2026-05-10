@@ -122,6 +122,7 @@
     <string name="broadcast_settings_desc">Konfigurasi cara kerja pesan siaran</string>
     <string name="broadcast_settings_title">Pengaturan Siaran</string>
     <string name="broadcast_to_all">Siarkan ke Semua</string>
+    <string name="browse_companions">Jelajahi Kawan</string>
     <string name="cancel">Batal</string>    <string name="card_holder_add_capability">Tambah kemampuan</string>    <string name="card_holder_capabilities">Kemampuan</string>    <string name="card_holder_protocols">Protokol</string>    <string name="card_holder_tags">Tag</string>
     <string name="card_holder_tags_hint">Tambah tag…</string>    <string name="category_add">+ Kategori</string>
     <string name="category_add_title">Tambah Kategori</string>

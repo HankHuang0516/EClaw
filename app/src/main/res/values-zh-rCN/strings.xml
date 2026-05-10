@@ -122,6 +122,7 @@
     <string name="broadcast_settings_desc">配置广播消息的工作方式</string>
     <string name="broadcast_settings_title">广播设置</string>
     <string name="broadcast_to_all">广播给全部</string>
+    <string name="browse_companions">浏览伙伴</string>
     <string name="cancel">取消</string>    <string name="card_holder_add_capability">添加能力</string>    <string name="card_holder_capabilities">功能</string>    <string name="card_holder_protocols">协议</string>    <string name="card_holder_tags">标签</string>
     <string name="card_holder_tags_hint">添加标签…</string>    <string name="category_add">+ 添加分类</string>
     <string name="category_add_title">添加分类</string>
