@@ -829,4 +829,6 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="tool_status_reading">ファイルを読み込み中…</string>
     <string name="tool_status_searching">コードを検索中…</string>
     <string name="tool_status_writing">ファイルを書き込む中…</string>
+    <string name="custom_layout_enabled">カスタムレイアウトを有効化</string>
+    <string name="custom_layout_using_preset">プリセットレイアウトを使用</string>
 </resources>

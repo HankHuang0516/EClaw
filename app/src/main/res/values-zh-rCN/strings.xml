@@ -831,4 +831,6 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="tool_status_reading">正在读取文件…</string>
     <string name="tool_status_searching">正在搜索代码…</string>
     <string name="tool_status_writing">正在写入文件…</string>
+    <string name="custom_layout_enabled">已启用自定义布局</string>
+    <string name="custom_layout_using_preset">使用预设布局</string>
 </resources>

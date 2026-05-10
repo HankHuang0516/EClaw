@@ -856,4 +856,6 @@ Tu suscripción permanece activa y puedes reenlazar en cualquier momento (sujeto
     <string name="tool_status_reading">Leyendo archivo…</string>
     <string name="tool_status_searching">Buscando en el código…</string>
     <string name="tool_status_writing">Escribiendo archivo…</string>
+    <string name="custom_layout_enabled">Diseño personalizado activado</string>
+    <string name="custom_layout_using_preset">Usando diseño predeterminado</string>
 </resources>

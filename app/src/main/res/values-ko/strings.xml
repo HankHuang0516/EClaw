@@ -829,4 +829,6 @@ GPS: 온디맨드만, 백그라운드 추적 없음, 서버 재시작 시 데이
     <string name="tool_status_reading">파일 읽는 중…</string>
     <string name="tool_status_searching">코드 검색 중…</string>
     <string name="tool_status_writing">파일 작성 중…</string>
+    <string name="custom_layout_enabled">사용자 지정 레이아웃 활성화</string>
+    <string name="custom_layout_using_preset">프리셋 레이아웃 사용</string>
 </resources>

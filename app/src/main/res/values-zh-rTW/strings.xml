@@ -830,4 +830,6 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="tool_status_reading">正在讀取檔案…</string>
     <string name="tool_status_searching">正在搜尋程式碼…</string>
     <string name="tool_status_writing">正在寫入檔案…</string>
+    <string name="custom_layout_enabled">已啟用自訂排版</string>
+    <string name="custom_layout_using_preset">使用預設配置</string>
 </resources>
