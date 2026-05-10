@@ -667,6 +667,7 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="sent">已發送！</string>
     <string name="set_live_wallpaper">設定動態桌布</string>
     <string name="set_wallpaper">設定桌布</string>
+    <string name="browse_companions">瀏覽伙伴</string>
     <string name="settings_entity_limit">實體上限：%1$d</string>
     <string name="settings_reset">設定已重置</string>
     <string name="settings_title">設定</string>

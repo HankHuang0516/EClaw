@@ -843,6 +843,18 @@ class ClawRenderer(
             isAntiAlias = true
         }
 
+        // Procedural creature dispatch — non-lobster renderers handled by
+        // ProceduralCreatureDrawer; default falls through to legacy lobster paths.
+        val rendererKey = companion?.proceduralRenderer()
+        val drewCreature = ProceduralCreatureDrawer.draw(
+            canvas, rendererKey, entity, companion, coralBright, coralDark,
+            System.currentTimeMillis() - startTime
+        )
+        if (drewCreature) {
+            canvas.restore()
+            return
+        }
+
         // Body
         val bodyPath = android.graphics.Path().apply {
             moveTo(60f, 10f)

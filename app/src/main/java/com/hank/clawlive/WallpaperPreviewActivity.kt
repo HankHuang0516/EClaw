@@ -20,6 +20,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.LayoutPreferences
+import com.hank.clawlive.data.model.CompanionDetail
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.service.ClawWallpaperService
 import com.hank.clawlive.ui.RecordingIndicatorHelper
@@ -244,6 +245,7 @@ class WallpaperPreviewActivity : AppCompatActivity() {
                 }
 
                 previewView.setEntities(boundEntities)
+                loadCompanions(boundEntities)
 
             } catch (e: Exception) {
                 Timber.e(e, "Failed to load entities")
@@ -253,6 +255,31 @@ class WallpaperPreviewActivity : AppCompatActivity() {
                     Toast.LENGTH_LONG
                 ).show()
             }
+        }
+    }
+
+    /**
+     * Fetch each entity's currently-selected companion in parallel and push
+     * the resulting map into the preview view so renderer dispatch (cat/dog/fish)
+     * runs in the preview as well as the live wallpaper. Spec §4.3.
+     */
+    private fun loadCompanions(entities: List<com.hank.clawlive.data.model.EntityStatus>) {
+        lifecycleScope.launch {
+            val map = mutableMapOf<Int, CompanionDetail?>()
+            for (entity in entities) {
+                val secret = entity.botSecret ?: continue
+                try {
+                    val resp = api.getCurrentCompanion(
+                        deviceId = deviceManager.deviceId,
+                        botSecret = secret,
+                        entityId = entity.entityId
+                    )
+                    map[entity.entityId] = resp.selection?.companion
+                } catch (e: Exception) {
+                    Timber.w(e, "Companion fetch failed for entity ${entity.entityId}")
+                }
+            }
+            previewView.setCompanions(map)
         }
     }
 }

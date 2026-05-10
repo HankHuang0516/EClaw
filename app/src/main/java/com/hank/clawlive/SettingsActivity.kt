@@ -329,6 +329,15 @@ class SettingsActivity : AppCompatActivity() {
             startActivity(Intent(this, WallpaperPreviewActivity::class.java))
         }
 
+        findViewById<MaterialButton>(R.id.btnBrowseCompanions).setOnClickListener {
+            TelemetryHelper.trackAction("settings_browse_companions")
+            WebViewActivity.launch(
+                this,
+                "https://eclawbot.com/portal/petdx-browser.html",
+                getString(R.string.browse_companions)
+            )
+        }
+
         findViewById<MaterialButton>(R.id.btnFileManager).setOnClickListener {
             startActivity(Intent(this, FileManagerActivity::class.java))
         }
