@@ -446,11 +446,16 @@
 
         const q = authQuery();
         let detail = null;
-        try {
-            const r = await fetch('/api/companion/' + encodeURIComponent(card.id) + '?' + q.toString());
-            const data = await r.json();
-            if (data.success) detail = data.companion;
-        } catch (e) { /* fall through */ }
+        // Re-pull /current alongside the descriptor so the favorite/select
+        // buttons reflect cross-device state (e.g. user starred on web,
+        // opened in-app a moment later). Boot-time refreshOwnerState()
+        // alone goes stale within seconds.
+        const [detailRes] = await Promise.all([
+            fetch('/api/companion/' + encodeURIComponent(card.id) + '?' + q.toString())
+                .then(r => r.json()).catch(() => null),
+            refreshOwnerState(),
+        ]);
+        if (detailRes && detailRes.success) detail = detailRes.companion;
 
         if (!detail) {
             body.innerHTML = '<h2>' + escapeHtml(card.name) + '</h2><p>無法載入詳細資訊。</p>';
