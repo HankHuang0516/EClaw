@@ -102,6 +102,52 @@ CREATE INDEX IF NOT EXISTS idx_companion_select_companion
     ON companion_select_log (companion_id);
 
 -- ============================================
+-- companion_ratings — single mutable row per (device, entity, companion)
+-- ============================================
+-- Stars are 1..5 ints. We store updated_at separately so the API can show
+-- "edited" without hiding the original review timestamp. companions.rating_avg
+-- and rating_count are recomputed on every upsert/delete (small enough table
+-- per companion that a SELECT AVG is fine).
+
+CREATE TABLE IF NOT EXISTS companion_ratings (
+    id            BIGSERIAL PRIMARY KEY,
+    device_id     TEXT NOT NULL,
+    entity_id     INTEGER,
+    companion_id  TEXT NOT NULL REFERENCES companions(id) ON DELETE CASCADE,
+    stars         INTEGER NOT NULL CHECK (stars BETWEEN 1 AND 5),
+    created_at    BIGINT NOT NULL,
+    updated_at    BIGINT NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_companion_ratings_unique
+    ON companion_ratings (device_id, COALESCE(entity_id, -1), companion_id);
+CREATE INDEX IF NOT EXISTS idx_companion_ratings_companion
+    ON companion_ratings (companion_id);
+
+-- ============================================
+-- companion_comments — append + soft-delete log
+-- ============================================
+-- text length capped at 500 (validated in API). deleted_at != NULL hides the
+-- row from list queries; companions.comment_count is decremented on delete
+-- but we keep the row for moderator audit. Author-only or companion-owner
+-- can delete (enforced in router).
+
+CREATE TABLE IF NOT EXISTS companion_comments (
+    id            BIGSERIAL PRIMARY KEY,
+    device_id     TEXT NOT NULL,
+    entity_id     INTEGER,
+    companion_id  TEXT NOT NULL REFERENCES companions(id) ON DELETE CASCADE,
+    text          TEXT NOT NULL,
+    created_at    BIGINT NOT NULL,
+    deleted_at    BIGINT
+);
+
+CREATE INDEX IF NOT EXISTS idx_companion_comments_companion_time
+    ON companion_comments (companion_id, created_at DESC) WHERE deleted_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_companion_comments_owner
+    ON companion_comments (device_id, entity_id);
+
+-- ============================================
 -- Seed: official system companions (built-in; idempotent)
 -- ============================================
 -- These are the procedural drawers shipped in public/shared/petdx-renderer.js.

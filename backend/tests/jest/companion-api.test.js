@@ -482,3 +482,200 @@ describe('companion-api: POST /:id/favorite', () => {
         expect(__mockQuery.mock.calls).toHaveLength(3);
     });
 });
+
+// ── Stage 3 ────────────────────────────────────────────────────────────
+// ratings + comments. Mocked query order matches the route order.
+
+describe('companion-api: GET /:id/rating', () => {
+    beforeEach(() => __mockQuery.mockReset());
+
+    test('200 stars=null when caller has no rating yet', async () => {
+        __mockQuery
+            .mockResolvedValueOnce({ rowCount: 1, rows: [{ '?column?': 1 }] })  // exists
+            .mockResolvedValueOnce({ rowCount: 0, rows: [] });
+        const res = await request(makeApp())
+            .get('/api/companion/petdx-pub/rating')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY });
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ companionId: 'petdx-pub', stars: null });
+    });
+
+    test('200 returns existing stars', async () => {
+        __mockQuery
+            .mockResolvedValueOnce({ rowCount: 1, rows: [{ '?column?': 1 }] })
+            .mockResolvedValueOnce({
+                rowCount: 1,
+                rows: [{ stars: 4, created_at: 1, updated_at: 2 }],
+            });
+        const res = await request(makeApp())
+            .get('/api/companion/petdx-pub/rating')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY });
+        expect(res.body.stars).toBe(4);
+    });
+});
+
+describe('companion-api: POST /:id/rating', () => {
+    beforeEach(() => __mockQuery.mockReset());
+
+    test('400 on stars out of range', async () => {
+        const res = await request(makeApp())
+            .post('/api/companion/petdx-pub/rating')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
+            .send({ stars: 7 });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('invalid_stars');
+    });
+
+    test('200 inserts when no prior row exists, recomputes avg+count', async () => {
+        const baseCompanion = {
+            id: 'petdx-pub', status: 'published', scope: 'system',
+            device_id: null, author_entity_id: null,
+        };
+        __mockQuery
+            .mockResolvedValueOnce({ rowCount: 1, rows: [baseCompanion] })       // companions lookup
+            .mockResolvedValueOnce({ rowCount: 0, rows: [] })                    // exists rating
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] })                    // INSERT
+            .mockResolvedValueOnce({ rowCount: 1, rows: [{ n: 3, avg: 4.33 }] }) // agg
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] });                   // UPDATE companions
+        const res = await request(makeApp())
+            .post('/api/companion/petdx-pub/rating')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
+            .send({ stars: 5 });
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({
+            stars: 5, ratingAvg: 4.33, ratingCount: 3,
+        });
+    });
+
+    test('200 updates existing rating without inserting a new row', async () => {
+        const baseCompanion = {
+            id: 'petdx-pub', status: 'published', scope: 'system',
+            device_id: null, author_entity_id: null,
+        };
+        __mockQuery
+            .mockResolvedValueOnce({ rowCount: 1, rows: [baseCompanion] })
+            .mockResolvedValueOnce({ rowCount: 1, rows: [{ id: 99 }] })          // existing
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] })                    // UPDATE rating
+            .mockResolvedValueOnce({ rowCount: 1, rows: [{ n: 1, avg: 2.0 }] })
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] });
+        const res = await request(makeApp())
+            .post('/api/companion/petdx-pub/rating')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
+            .send({ stars: 2 });
+        expect(res.status).toBe(200);
+        const updateCall = __mockQuery.mock.calls[2];
+        expect(updateCall[0]).toMatch(/UPDATE companion_ratings/);
+        expect(updateCall[1][0]).toBe(2);
+    });
+});
+
+describe('companion-api: comments list + create + delete', () => {
+    beforeEach(() => __mockQuery.mockReset());
+
+    test('200 GET /comments returns paginated soft-delete-filtered list', async () => {
+        __mockQuery
+            .mockResolvedValueOnce({ rowCount: 1, rows: [{ '?column?': 1 }] })   // exists
+            .mockResolvedValueOnce({                                             // list
+                rowCount: 1,
+                rows: [{ id: 7, entity_id: 12, text: 'hi', created_at: 1778100000000 }],
+            })
+            .mockResolvedValueOnce({ rowCount: 1, rows: [{ n: 1 }] });           // count
+        const res = await request(makeApp())
+            .get('/api/companion/petdx-pub/comments')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY });
+        expect(res.status).toBe(200);
+        expect(res.body.total).toBe(1);
+        expect(res.body.comments[0]).toEqual({
+            id: '7', author: { entityId: 12 }, text: 'hi', createdAt: 1778100000000,
+        });
+    });
+
+    test('400 on empty comment text', async () => {
+        const res = await request(makeApp())
+            .post('/api/companion/petdx-pub/comment')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
+            .send({ text: '   ' });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('invalid_comment_text');
+    });
+
+    test('400 on overlong comment text', async () => {
+        const res = await request(makeApp())
+            .post('/api/companion/petdx-pub/comment')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
+            .send({ text: 'x'.repeat(501) });
+        expect(res.status).toBe(400);
+    });
+
+    test('200 POST /comment inserts and bumps comment_count', async () => {
+        const baseCompanion = {
+            id: 'petdx-pub', status: 'published', scope: 'system',
+            device_id: null, author_entity_id: null,
+        };
+        __mockQuery
+            .mockResolvedValueOnce({ rowCount: 1, rows: [baseCompanion] })
+            .mockResolvedValueOnce({                                             // INSERT RETURNING
+                rowCount: 1,
+                rows: [{ id: 42, created_at: 1778200000000 }],
+            })
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] });                   // UPDATE count
+        const res = await request(makeApp())
+            .post('/api/companion/petdx-pub/comment')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
+            .send({ text: '好可愛!' });
+        expect(res.status).toBe(200);
+        expect(res.body.comment).toMatchObject({
+            id: '42', companionId: 'petdx-pub',
+            author: { entityId: ENTITY }, text: '好可愛!',
+        });
+    });
+
+    test('403 when neither author nor companion owner tries to delete', async () => {
+        __mockQuery.mockResolvedValueOnce({
+            rowCount: 1,
+            rows: [{
+                id: 5, companion_id: 'petdx-pub',
+                device_id: 'someone-else', entity_id: 999, deleted_at: null,
+                owner_device_id: 'other-dev', owner_entity_id: 1,
+            }],
+        });
+        const res = await request(makeApp())
+            .delete('/api/companion/comment/5')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY });
+        expect(res.status).toBe(403);
+    });
+
+    test('200 author can delete own comment, decrements count', async () => {
+        __mockQuery
+            .mockResolvedValueOnce({                                             // SELECT
+                rowCount: 1,
+                rows: [{
+                    id: 5, companion_id: 'petdx-pub',
+                    device_id: DEVICE, entity_id: ENTITY, deleted_at: null,
+                    owner_device_id: null, owner_entity_id: null,
+                }],
+            })
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] })                    // UPDATE deleted_at
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] });                   // UPDATE count
+        const res = await request(makeApp())
+            .delete('/api/companion/comment/5')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY });
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ success: true, commentId: '5' });
+    });
+
+    test('404 when comment already soft-deleted', async () => {
+        __mockQuery.mockResolvedValueOnce({
+            rowCount: 1,
+            rows: [{
+                id: 5, companion_id: 'petdx-pub',
+                device_id: DEVICE, entity_id: ENTITY, deleted_at: 1778000000000,
+                owner_device_id: null, owner_entity_id: null,
+            }],
+        });
+        const res = await request(makeApp())
+            .delete('/api/companion/comment/5')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY });
+        expect(res.status).toBe(404);
+    });
+});

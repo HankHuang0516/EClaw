@@ -5,8 +5,8 @@
  *
  * Spec: docs/specs/petdx-backend-api-spec.md (v0.2)
  * Stage 1: read endpoints — list + detail.
- * Stage 2 (this file): + favorites + select + current
- *   Stage 3: ratings + comments
+ * Stage 2: favorites + select + current
+ * Stage 3 (this file): + ratings + comments
  *   Stage 4: submit + draft + review (creator + device-owner gated)
  *
  * Auth: deviceId + botSecret + entityId — same triple as /api/bot/*.
@@ -447,6 +447,288 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
             });
         } catch (err) {
             log('error', 'companion', `[Companion] favorite failed: ${err.message}`);
+            res.status(500).json({ success: false, error: 'query_failed' });
+        }
+    });
+
+    // ── GET /api/companion/:id/rating ─────────────────────────────
+    // Caller's own rating (used to pre-fill the star UI). 200 + stars=null
+    // when caller hasn't rated yet — distinct from 404 (companion missing).
+    router.get('/:id/rating', authReader, async (req, res) => {
+        const { id } = req.params;
+        if (!/^[a-z0-9-]{1,80}$/i.test(id)) {
+            return res.status(400).json({ success: false, error: 'invalid_companion_id' });
+        }
+        try {
+            const exists = await pool.query(
+                `SELECT 1 FROM companions WHERE id = $1`,
+                [id]
+            );
+            if (exists.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'companion_not_found' });
+            }
+            const r = await pool.query(
+                `SELECT stars, created_at, updated_at
+                   FROM companion_ratings
+                  WHERE companion_id = $1
+                    AND device_id = $2
+                    AND entity_id IS NOT DISTINCT FROM $3`,
+                [id, req.botAuth.deviceId, req.botAuth.entityId]
+            );
+            res.json({
+                success: true,
+                companionId: id,
+                stars: r.rowCount > 0 ? r.rows[0].stars : null,
+                createdAt: r.rowCount > 0 ? Number(r.rows[0].created_at) : null,
+                updatedAt: r.rowCount > 0 ? Number(r.rows[0].updated_at) : null,
+            });
+        } catch (err) {
+            log('error', 'companion', `[Companion] rating get failed: ${err.message}`);
+            res.status(500).json({ success: false, error: 'query_failed' });
+        }
+    });
+
+    // ── POST /api/companion/:id/rating ────────────────────────────
+    // Body: { stars: 1..5 }. Upsert per (device, entity). Recompute
+    // companions.rating_avg + rating_count atomically (well, two queries —
+    // good enough for v1; trigger upgrade can come with comment moderation).
+    router.post('/:id/rating', authReader, async (req, res) => {
+        const { id } = req.params;
+        if (!/^[a-z0-9-]{1,80}$/i.test(id)) {
+            return res.status(400).json({ success: false, error: 'invalid_companion_id' });
+        }
+        const stars = parseInt(req.body?.stars, 10);
+        if (!Number.isFinite(stars) || stars < 1 || stars > 5) {
+            return res.status(400).json({ success: false, error: 'invalid_stars' });
+        }
+        try {
+            const cRes = await pool.query(
+                `SELECT id, status, scope, device_id, author_entity_id
+                   FROM companions WHERE id = $1`,
+                [id]
+            );
+            if (cRes.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'companion_not_found' });
+            }
+            const c = cRes.rows[0];
+            const isOwner = req.botAuth.authMode === 'device'
+                ? c.device_id === req.botAuth.deviceId
+                : (c.author_entity_id === req.botAuth.entityId
+                    && c.device_id === req.botAuth.deviceId);
+            if (c.status !== 'published' && c.scope !== 'system' && !isOwner) {
+                return res.status(404).json({ success: false, error: 'companion_not_found' });
+            }
+
+            const now = Date.now();
+            const existsRes = await pool.query(
+                `SELECT id FROM companion_ratings
+                  WHERE companion_id = $1
+                    AND device_id = $2
+                    AND entity_id IS NOT DISTINCT FROM $3`,
+                [id, req.botAuth.deviceId, req.botAuth.entityId]
+            );
+            if (existsRes.rowCount > 0) {
+                await pool.query(
+                    `UPDATE companion_ratings
+                        SET stars = $1, updated_at = $2
+                      WHERE id = $3`,
+                    [stars, now, existsRes.rows[0].id]
+                );
+            } else {
+                await pool.query(
+                    `INSERT INTO companion_ratings
+                        (device_id, entity_id, companion_id, stars, created_at, updated_at)
+                     VALUES ($1, $2, $3, $4, $5, $5)`,
+                    [req.botAuth.deviceId, req.botAuth.entityId, id, stars, now]
+                );
+            }
+
+            const aggRes = await pool.query(
+                `SELECT COUNT(*)::int AS n, AVG(stars)::real AS avg
+                   FROM companion_ratings WHERE companion_id = $1`,
+                [id]
+            );
+            const { n, avg } = aggRes.rows[0];
+            await pool.query(
+                `UPDATE companions
+                    SET rating_count = $1, rating_avg = $2
+                  WHERE id = $3`,
+                [n, avg, id]
+            );
+
+            res.json({
+                success: true,
+                companionId: id,
+                stars,
+                ratingAvg: avg,
+                ratingCount: n,
+            });
+        } catch (err) {
+            log('error', 'companion', `[Companion] rating post failed: ${err.message}`);
+            res.status(500).json({ success: false, error: 'query_failed' });
+        }
+    });
+
+    // ── GET /api/companion/:id/comments?page&limit ────────────────
+    // Public read (all callers see the same list). Excludes soft-deleted rows.
+    router.get('/:id/comments', authReader, async (req, res) => {
+        const { id } = req.params;
+        if (!/^[a-z0-9-]{1,80}$/i.test(id)) {
+            return res.status(400).json({ success: false, error: 'invalid_companion_id' });
+        }
+        const page = parsePositiveInt(req.query.page, 1);
+        const limit = parsePositiveInt(req.query.limit, 30, 100);
+        const offset = (page - 1) * limit;
+        try {
+            const exists = await pool.query(
+                `SELECT 1 FROM companions WHERE id = $1`,
+                [id]
+            );
+            if (exists.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'companion_not_found' });
+            }
+            const [listRes, countRes] = await Promise.all([
+                pool.query(
+                    `SELECT id, entity_id, text, created_at
+                       FROM companion_comments
+                      WHERE companion_id = $1 AND deleted_at IS NULL
+                   ORDER BY created_at DESC
+                      LIMIT $2 OFFSET $3`,
+                    [id, limit, offset]
+                ),
+                pool.query(
+                    `SELECT COUNT(*)::int AS n
+                       FROM companion_comments
+                      WHERE companion_id = $1 AND deleted_at IS NULL`,
+                    [id]
+                ),
+            ]);
+            res.json({
+                success: true,
+                page,
+                limit,
+                total: countRes.rows[0]?.n || 0,
+                comments: listRes.rows.map(r => ({
+                    id: String(r.id),
+                    author: r.entity_id != null ? { entityId: r.entity_id } : null,
+                    text: r.text,
+                    createdAt: Number(r.created_at),
+                })),
+            });
+        } catch (err) {
+            log('error', 'companion', `[Companion] comments list failed: ${err.message}`);
+            res.status(500).json({ success: false, error: 'query_failed' });
+        }
+    });
+
+    // ── POST /api/companion/:id/comment ───────────────────────────
+    // Body: { text }. 1-500 chars after trim. Bumps companions.comment_count.
+    router.post('/:id/comment', authReader, async (req, res) => {
+        const { id } = req.params;
+        if (!/^[a-z0-9-]{1,80}$/i.test(id)) {
+            return res.status(400).json({ success: false, error: 'invalid_companion_id' });
+        }
+        const text = String(req.body?.text || '').trim();
+        if (text.length < 1 || text.length > 500) {
+            return res.status(400).json({ success: false, error: 'invalid_comment_text' });
+        }
+        try {
+            const cRes = await pool.query(
+                `SELECT id, status, scope, device_id, author_entity_id
+                   FROM companions WHERE id = $1`,
+                [id]
+            );
+            if (cRes.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'companion_not_found' });
+            }
+            const c = cRes.rows[0];
+            const isOwner = req.botAuth.authMode === 'device'
+                ? c.device_id === req.botAuth.deviceId
+                : (c.author_entity_id === req.botAuth.entityId
+                    && c.device_id === req.botAuth.deviceId);
+            if (c.status !== 'published' && c.scope !== 'system' && !isOwner) {
+                return res.status(404).json({ success: false, error: 'companion_not_found' });
+            }
+
+            const ins = await pool.query(
+                `INSERT INTO companion_comments
+                    (device_id, entity_id, companion_id, text, created_at)
+                 VALUES ($1, $2, $3, $4, $5)
+                 RETURNING id, created_at`,
+                [req.botAuth.deviceId, req.botAuth.entityId, id, text, Date.now()]
+            );
+            await pool.query(
+                `UPDATE companions
+                    SET comment_count = comment_count + 1
+                  WHERE id = $1`,
+                [id]
+            );
+
+            const r = ins.rows[0];
+            res.json({
+                success: true,
+                comment: {
+                    id: String(r.id),
+                    companionId: id,
+                    author: req.botAuth.entityId != null
+                        ? { entityId: req.botAuth.entityId }
+                        : null,
+                    text,
+                    createdAt: Number(r.created_at),
+                },
+            });
+        } catch (err) {
+            log('error', 'companion', `[Companion] comment post failed: ${err.message}`);
+            res.status(500).json({ success: false, error: 'query_failed' });
+        }
+    });
+
+    // ── DELETE /api/companion/comment/:cid ────────────────────────
+    // Author or companion owner can soft-delete. We do NOT cascade through
+    // /:id because the comment id is globally unique and the path looks
+    // cleaner for portal UIs that already hold the comment id.
+    router.delete('/comment/:cid', authReader, async (req, res) => {
+        const cid = parseInt(req.params.cid, 10);
+        if (!Number.isFinite(cid) || cid < 1) {
+            return res.status(400).json({ success: false, error: 'invalid_comment_id' });
+        }
+        try {
+            const r = await pool.query(
+                `SELECT c.id, c.companion_id, c.device_id, c.entity_id, c.deleted_at,
+                        co.device_id AS owner_device_id, co.author_entity_id AS owner_entity_id
+                   FROM companion_comments c
+              LEFT JOIN companions co ON co.id = c.companion_id
+                  WHERE c.id = $1`,
+                [cid]
+            );
+            if (r.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'comment_not_found' });
+            }
+            const row = r.rows[0];
+            if (row.deleted_at != null) {
+                return res.status(404).json({ success: false, error: 'comment_not_found' });
+            }
+            const isAuthor = row.device_id === req.botAuth.deviceId
+                && (row.entity_id == null || row.entity_id === req.botAuth.entityId);
+            const isCompanionOwner = row.owner_device_id === req.botAuth.deviceId
+                && (req.botAuth.authMode === 'device'
+                    || row.owner_entity_id === req.botAuth.entityId);
+            if (!isAuthor && !isCompanionOwner) {
+                return res.status(403).json({ success: false, error: 'forbidden' });
+            }
+            await pool.query(
+                `UPDATE companion_comments SET deleted_at = $1 WHERE id = $2`,
+                [Date.now(), cid]
+            );
+            await pool.query(
+                `UPDATE companions
+                    SET comment_count = GREATEST(comment_count - 1, 0)
+                  WHERE id = $1`,
+                [row.companion_id]
+            );
+            res.json({ success: true, commentId: String(cid) });
+        } catch (err) {
+            log('error', 'companion', `[Companion] comment delete failed: ${err.message}`);
             res.status(500).json({ success: false, error: 'query_failed' });
         }
     });
