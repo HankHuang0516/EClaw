@@ -38,3 +38,4 @@ Allow: /api/docs
 Allow: /.well-known/agent.json
 
 Sitemap: https://eclawbot.com/sitemap.xml
+Sitemap: https://eclawbot.com/community/sitemap.xml
