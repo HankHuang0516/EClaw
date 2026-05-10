@@ -929,8 +929,10 @@ GPS: केवल अनुरोध पर, कोई बैकग्राउ�
 
     <string name="tool_status_analyzing">विश्लेषण चल रहा है…</string>
     <string name="tool_status_editing">फ़ाइल संपादित हो रही है…</string>
-    <string name="tool_status_finding">फ़ाइलें खोज रहा है…</string>
-    <string name="tool_status_reading">फ़ाइल पढ़ रहा है…</string>
+    <string name="tool_status_finding">फ़ाइलें खोज रही है…</string>
+    <string name="tool_status_reading">फ़ाइल पढ़ रही है…</string>
     <string name="tool_status_searching">कोड खोज रहा है…</string>
     <string name="tool_status_writing">फ़ाइल लिखी जा रही है…</string>
+    <string name="custom_layout_enabled">कस्टम लेआउट सक्षम</string>
+    <string name="custom_layout_using_preset">प्रीसेट लेआउट का उपयोग</string>
 </resources>

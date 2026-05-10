@@ -933,4 +933,6 @@ GPS: عند الطلب فقط، بلا تتبع في الخلفية، تُفقد
     <string name="tool_status_reading">جاري قراءة الملف…</string>
     <string name="tool_status_searching">جاري البحث في الشيفرة…</string>
     <string name="tool_status_writing">جاري كتابة الملف…</string>
+    <string name="custom_layout_enabled">تم تفعيل التخطيط المخصص</string>
+    <string name="custom_layout_using_preset">استخدام التخطيط الافتراضي</string>
 </resources>
