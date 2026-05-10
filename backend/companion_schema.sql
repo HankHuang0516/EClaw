@@ -58,6 +58,50 @@ CREATE INDEX IF NOT EXISTS idx_companions_asset_type    ON companions(asset_type
 CREATE INDEX IF NOT EXISTS idx_companions_tags          ON companions USING GIN (tags);
 
 -- ============================================
+-- companion_favorites — per (device, entity) favorite list
+-- ============================================
+-- (device_id, entity_id, companion_id) is the unique grain. entity_id may be
+-- NULL for device-only favoriting (deviceSecret auth path); the unique
+-- index COALESCEs entity_id to -1 so device-level rows still dedupe.
+
+CREATE TABLE IF NOT EXISTS companion_favorites (
+    id            BIGSERIAL PRIMARY KEY,
+    device_id     TEXT NOT NULL,
+    entity_id     INTEGER,
+    companion_id  TEXT NOT NULL REFERENCES companions(id) ON DELETE CASCADE,
+    created_at    BIGINT NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_companion_favorites_unique
+    ON companion_favorites (device_id, COALESCE(entity_id, -1), companion_id);
+CREATE INDEX IF NOT EXISTS idx_companion_favorites_companion
+    ON companion_favorites (companion_id);
+CREATE INDEX IF NOT EXISTS idx_companion_favorites_owner
+    ON companion_favorites (device_id, entity_id);
+
+-- ============================================
+-- companion_select_log — append-only history of "select pet" actions
+-- ============================================
+-- Latest row per (device_id, entity_id) is the current selection. We keep a
+-- history rather than a single mutable row so we can show recent activity
+-- and let users undo. entity_id NULL = device-level selection.
+
+CREATE TABLE IF NOT EXISTS companion_select_log (
+    id            BIGSERIAL PRIMARY KEY,
+    device_id     TEXT NOT NULL,
+    entity_id     INTEGER,
+    companion_id  TEXT NOT NULL REFERENCES companions(id) ON DELETE CASCADE,
+    selected_at   BIGINT NOT NULL,
+    source        TEXT NOT NULL DEFAULT 'portal'
+                  CHECK (source IN ('portal','app','api'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_companion_select_owner_time
+    ON companion_select_log (device_id, entity_id, selected_at DESC);
+CREATE INDEX IF NOT EXISTS idx_companion_select_companion
+    ON companion_select_log (companion_id);
+
+-- ============================================
 -- Seed: official system companions (built-in; idempotent)
 -- ============================================
 -- These are the procedural drawers shipped in public/shared/petdx-renderer.js.

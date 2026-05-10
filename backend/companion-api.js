@@ -4,8 +4,8 @@
  * Mounted at: /api/companion
  *
  * Spec: docs/specs/petdx-backend-api-spec.md (v0.2)
- * Stage 1 (this file): read endpoints only — list + detail.
- *   Stage 2: favorites + select + current
+ * Stage 1: read endpoints — list + detail.
+ * Stage 2 (this file): + favorites + select + current
  *   Stage 3: ratings + comments
  *   Stage 4: submit + draft + review (creator + device-owner gated)
  *
@@ -30,6 +30,7 @@ const ALLOWED_SORTS = new Set(['popular', 'recent', 'rating', 'favorites']);
 const ALLOWED_SCOPES = new Set(['all', 'system', 'community', 'mine']);
 const ALLOWED_ASSET_TYPES = new Set(['procedural', 'spritesheet', 'vector']);
 const ALLOWED_CATEGORIES = new Set(['animal', 'human', 'robot', 'mascot', 'custom']);
+const ALLOWED_SELECT_SOURCES = new Set(['portal', 'app', 'api']);
 
 function parsePositiveInt(value, fallback, max) {
     const n = parseInt(value, 10);
@@ -247,6 +248,205 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
             });
         } catch (err) {
             log('error', 'companion', `[Companion] list query failed: ${err.message}`);
+            res.status(500).json({ success: false, error: 'query_failed' });
+        }
+    });
+
+    // ── GET /api/companion/current ────────────────────────────────
+    // Returns the caller's current selected companion + favorite ids.
+    // Owner key: (deviceId, entityId|null) — so device-only auth gets the
+    // device-level selection bucket, and bot auth gets per-entity.
+    router.get('/current', authReader, async (req, res) => {
+        const ownerEntity = req.botAuth.entityId; // may be null
+        try {
+            // Latest select_log row for (device, entity) → joined to companions
+            // for the descriptor payload. LEFT JOIN so a deleted companion
+            // returns selection=null instead of erroring.
+            const selectSql = `
+                SELECT s.companion_id, s.selected_at, s.source,
+                       c.id, c.name, c.version, c.author_entity_id, c.descriptor,
+                       c.asset_type, c.asset_url, c.avatar_url, c.thumbnail_url,
+                       c.supported_states, c.scope, c.status, c.license,
+                       c.category, c.mood, c.color, c.tags, c.i18n_data,
+                       c.download_count, c.favorite_count, c.rating_avg,
+                       c.rating_count, c.comment_count, c.published_at
+                  FROM companion_select_log s
+             LEFT JOIN companions c ON c.id = s.companion_id
+                 WHERE s.device_id = $1
+                   AND s.entity_id IS NOT DISTINCT FROM $2
+              ORDER BY s.selected_at DESC
+                 LIMIT 1
+            `;
+            const favSql = `
+                SELECT companion_id, created_at
+                  FROM companion_favorites
+                 WHERE device_id = $1
+                   AND entity_id IS NOT DISTINCT FROM $2
+              ORDER BY created_at DESC
+                 LIMIT 200
+            `;
+            const [selRes, favRes] = await Promise.all([
+                pool.query(selectSql, [req.botAuth.deviceId, ownerEntity]),
+                pool.query(favSql,    [req.botAuth.deviceId, ownerEntity]),
+            ]);
+
+            let selection = null;
+            if (selRes.rowCount > 0 && selRes.rows[0].id) {
+                const r = selRes.rows[0];
+                selection = {
+                    selectedAt: Number(r.selected_at),
+                    source: r.source,
+                    companion: rowToCompanionDetail(r),
+                };
+            }
+            res.json({
+                success: true,
+                selection,
+                favorites: favRes.rows.map(r => ({
+                    companionId: r.companion_id,
+                    favoritedAt: Number(r.created_at),
+                })),
+            });
+        } catch (err) {
+            log('error', 'companion', `[Companion] current query failed: ${err.message}`);
+            res.status(500).json({ success: false, error: 'query_failed' });
+        }
+    });
+
+    // ── POST /api/companion/select ────────────────────────────────
+    // Body: { companionId, source? }
+    // Appends a row to companion_select_log; returns the newly-current selection.
+    router.post('/select', authReader, async (req, res) => {
+        const companionId = req.body?.companionId;
+        const source = req.body?.source || 'portal';
+        if (!companionId || !/^[a-z0-9-]{1,80}$/i.test(companionId)) {
+            return res.status(400).json({ success: false, error: 'invalid_companion_id' });
+        }
+        if (!ALLOWED_SELECT_SOURCES.has(source)) {
+            return res.status(400).json({ success: false, error: 'invalid_source' });
+        }
+        try {
+            const cRes = await pool.query(
+                `SELECT id, status, scope, device_id, author_entity_id
+                   FROM companions
+                  WHERE id = $1`,
+                [companionId]
+            );
+            if (cRes.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'companion_not_found' });
+            }
+            const c = cRes.rows[0];
+            const isOwner = req.botAuth.authMode === 'device'
+                ? c.device_id === req.botAuth.deviceId
+                : (c.author_entity_id === req.botAuth.entityId
+                    && c.device_id === req.botAuth.deviceId);
+            if (c.status !== 'published' && c.scope !== 'system' && !isOwner) {
+                return res.status(404).json({ success: false, error: 'companion_not_found' });
+            }
+
+            const now = Date.now();
+            await pool.query(
+                `INSERT INTO companion_select_log
+                    (device_id, entity_id, companion_id, selected_at, source)
+                 VALUES ($1, $2, $3, $4, $5)`,
+                [req.botAuth.deviceId, req.botAuth.entityId, companionId, now, source]
+            );
+            res.json({
+                success: true,
+                selection: {
+                    companionId,
+                    selectedAt: now,
+                    source,
+                },
+            });
+        } catch (err) {
+            log('error', 'companion', `[Companion] select failed: ${err.message}`);
+            res.status(500).json({ success: false, error: 'query_failed' });
+        }
+    });
+
+    // ── POST /api/companion/:id/favorite ──────────────────────────
+    // Body: { action: 'add' | 'remove' | 'toggle' (default) }
+    // Single row per (device, entity, companion). favorite_count on companions
+    // is kept in sync with INSERT/DELETE side-effects (best-effort, not a
+    // trigger — Stage 2 trades strict consistency for fewer DB primitives).
+    router.post('/:id/favorite', authReader, async (req, res) => {
+        const { id } = req.params;
+        if (!/^[a-z0-9-]{1,80}$/i.test(id)) {
+            return res.status(400).json({ success: false, error: 'invalid_companion_id' });
+        }
+        const action = req.body?.action || 'toggle';
+        if (!['add', 'remove', 'toggle'].includes(action)) {
+            return res.status(400).json({ success: false, error: 'invalid_action' });
+        }
+        try {
+            const cRes = await pool.query(
+                `SELECT id, status, scope, device_id, author_entity_id, favorite_count
+                   FROM companions WHERE id = $1`,
+                [id]
+            );
+            if (cRes.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'companion_not_found' });
+            }
+            const c = cRes.rows[0];
+            const isOwner = req.botAuth.authMode === 'device'
+                ? c.device_id === req.botAuth.deviceId
+                : (c.author_entity_id === req.botAuth.entityId
+                    && c.device_id === req.botAuth.deviceId);
+            if (c.status !== 'published' && c.scope !== 'system' && !isOwner) {
+                return res.status(404).json({ success: false, error: 'companion_not_found' });
+            }
+
+            const existsRes = await pool.query(
+                `SELECT 1 FROM companion_favorites
+                  WHERE device_id = $1
+                    AND entity_id IS NOT DISTINCT FROM $2
+                    AND companion_id = $3`,
+                [req.botAuth.deviceId, req.botAuth.entityId, id]
+            );
+            const already = existsRes.rowCount > 0;
+            const wantFavorited = action === 'toggle' ? !already : action === 'add';
+
+            if (wantFavorited && !already) {
+                await pool.query(
+                    `INSERT INTO companion_favorites
+                        (device_id, entity_id, companion_id, created_at)
+                     VALUES ($1, $2, $3, $4)`,
+                    [req.botAuth.deviceId, req.botAuth.entityId, id, Date.now()]
+                );
+                await pool.query(
+                    `UPDATE companions SET favorite_count = favorite_count + 1 WHERE id = $1`,
+                    [id]
+                );
+            } else if (!wantFavorited && already) {
+                await pool.query(
+                    `DELETE FROM companion_favorites
+                      WHERE device_id = $1
+                        AND entity_id IS NOT DISTINCT FROM $2
+                        AND companion_id = $3`,
+                    [req.botAuth.deviceId, req.botAuth.entityId, id]
+                );
+                await pool.query(
+                    `UPDATE companions
+                        SET favorite_count = GREATEST(favorite_count - 1, 0)
+                      WHERE id = $1`,
+                    [id]
+                );
+            }
+
+            // Re-read fresh count for accurate client state.
+            const fresh = await pool.query(
+                `SELECT favorite_count FROM companions WHERE id = $1`,
+                [id]
+            );
+            res.json({
+                success: true,
+                favorited: wantFavorited,
+                companionId: id,
+                favoriteCount: fresh.rows[0]?.favorite_count ?? c.favorite_count,
+            });
+        } catch (err) {
+            log('error', 'companion', `[Companion] favorite failed: ${err.message}`);
             res.status(500).json({ success: false, error: 'query_failed' });
         }
     });
