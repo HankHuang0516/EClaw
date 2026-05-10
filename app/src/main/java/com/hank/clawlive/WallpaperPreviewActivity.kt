@@ -183,7 +183,7 @@ class WallpaperPreviewActivity : AppCompatActivity() {
 
         switchCustomLayout.setOnCheckedChangeListener { _, isChecked ->
             layoutPrefs.useCustomLayout = isChecked
-            val message = if (isChecked) "Custom layout enabled" else "Using preset layout"
+            val message = getString(if (isChecked) R.string.custom_layout_enabled else R.string.custom_layout_using_preset)
             Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         }
 
