@@ -23,6 +23,7 @@
     <string name="expand">Erweitern</string>
     <string name="copy">Kopieren</string>
     <string name="broadcast_to_all">An alle senden</string>
+    <string name="browse_companions">Begleiter durchsuchen</string>
     <string name="set_live_wallpaper">Live-Hintergrund festlegen</string>
     <string name="expires_in">Läuft ab in %ds</string>
     <string name="command_copied">Befehl kopiert!</string>

@@ -23,6 +23,7 @@
     <string name="expand">Développer</string>
     <string name="copy">Copier</string>
     <string name="broadcast_to_all">Diffuser à tous</string>
+    <string name="browse_companions">Parcourir les Compagnons</string>
     <string name="set_live_wallpaper">Définir le fond d\'écran animé</string>
     <string name="expires_in">Expire dans %ds</string>
     <string name="command_copied">Commande copiée !</string>

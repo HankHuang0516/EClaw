@@ -122,6 +122,7 @@
     <string name="broadcast_settings_desc">Cấu hình cách hoạt động của tin nhắn phát sóng</string>
     <string name="broadcast_settings_title">Cài đặt phát sóng</string>
     <string name="broadcast_to_all">Phát tới tất cả</string>
+    <string name="browse_companions">Duyệt bạn đồng hành</string>
     <string name="cancel">Hủy</string>    <string name="card_holder_add_capability">Thêm khả năng</string>    <string name="card_holder_capabilities">Khả năng</string>    <string name="card_holder_protocols">Giao thức</string>    <string name="card_holder_tags">Thẻ</string>
     <string name="card_holder_tags_hint">Thêm thẻ…</string>    <string name="category_add">+ Danh mục</string>
     <string name="category_add_title">Thêm danh mục</string>

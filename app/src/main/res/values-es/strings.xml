@@ -124,6 +124,7 @@ Pregúntame lo que quieras sobre la plataforma.</string>
     <string name="broadcast_settings_desc">Configura cómo funcionan los mensajes broadcast</string>
     <string name="broadcast_settings_title">Configuración de Broadcast</string>
     <string name="broadcast_to_all">Broadcast a Todos</string>
+    <string name="browse_companions">Explorar Compañeros</string>
     <string name="cancel">Cancelar</string>
     <string name="card_holder">Tarjetero</string>    <string name="card_holder_add_capability">Agregar capacidad</string>    <string name="card_holder_capabilities">Capacidades</string>    <string name="card_holder_protocols">Protocolos</string>    <string name="card_holder_tags">Etiquetas</string>
     <string name="card_holder_tags_hint">Agregar etiqueta…</string>    <string name="category_add">+ Categoría</string>

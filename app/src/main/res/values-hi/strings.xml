@@ -23,6 +23,7 @@
     <string name="expand">विस्तार करें</string>
     <string name="copy">कॉपी करें</string>
     <string name="broadcast_to_all">सभी को प्रसारित करें</string>
+    <string name="browse_companions">साथी ब्राउज़ करें</string>
     <string name="set_live_wallpaper">लाइव वॉलपेपर सेट करें</string>
     <string name="expires_in">%ds में समाप्त होगा</string>
     <string name="command_copied">कमांड कॉपी हो गया!</string>
