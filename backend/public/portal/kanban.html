@@ -2192,6 +2192,7 @@
             const isOnce = sc.type === 'once';
             const cron = sc.cronExpression || sc.cron || '';
             const isEnabled = sc.enabled !== false;
+            const currentDispatchMode = card.dispatchMode === 'idle_only' ? 'idle_only' : 'immediate';
 
             const priorityOpts = ['P0','P1','P2','P3'].map(p =>
                 `<option value="${p}"${card.priority===p?' selected':''}>${p}</option>`
@@ -2244,6 +2245,14 @@
                     </label>
                 </div>
                 <div class="kb-form-group">
+                    <label class="kb-form-label">🚦 Dispatch Mode</label>
+                    <select class="kb-form-select" id="sp-dispatch-mode">
+                        <option value="immediate"${currentDispatchMode === 'immediate' ? ' selected' : ''}>Immediate</option>
+                        <option value="idle_only"${currentDispatchMode === 'idle_only' ? ' selected' : ''}>Idle only</option>
+                    </select>
+                    <div style="font-size:12px;color:var(--text-secondary);margin-top:6px">Idle only queues the next child card until one assigned bot is idle.</div>
+                </div>
+                <div class="kb-form-group">
                     <label class="kb-form-label">${t('kb_label_sched_type','Schedule Type')}</label>
                     <select class="kb-form-select" id="sp-type" onchange="spToggleSchedFields()">
                         <option value="recurring"${!isOnce?' selected':''}>${t('kb_sched_recurring','Recurring (Cron)')}</option>
@@ -2294,6 +2303,7 @@
             const type = document.getElementById('sp-type')?.value;
             const timezone = document.getElementById('sp-tz')?.value;
             const enabled = document.getElementById('sp-enabled')?.checked !== false;
+            const dispatchMode = document.getElementById('sp-dispatch-mode')?.value === 'idle_only' ? 'idle_only' : 'immediate';
 
             if (!title) { showToast(t('kb_err_title','Title is required'), true); return; }
 
@@ -2317,7 +2327,7 @@
             try {
                 await apiCall('PUT', `/api/mission/card/${cardId}`, {
                     deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret,
-                    title, description: desc, priority, assignedBots,
+                    title, description: desc, priority, assignedBots, dispatchMode,
                 });
                 await apiCall('PUT', `/api/mission/card/${cardId}/schedule`, schedBody);
                 showToast(t('kb_auto_edit_saved','Schedule updated'));
@@ -2658,6 +2668,7 @@
                     </div>
                     ${pausedBadge}
                     <div class="kb-auto-card-cron">↻ ${escapeHtml(cronDesc)}</div>
+                    <div class="kb-auto-card-cron">🚦 ${c.dispatchMode === 'idle_only' ? 'idle_only' : 'immediate'}</div>
                     <div class="kb-auto-card-next" data-i18n="kb_auto_next">Next: ${escapeHtml(nextRun)}</div>
                     ${lastResult ? '<div class="kb-auto-card-result '+resultClass+'">'+escapeHtml(lastResult)+'</div>' : ''}
                     ${activeChild}
@@ -2727,9 +2738,10 @@
             const nowPct = toPct(now);
 
             function buildCardHtml(card, leftPct, extraCls, timeLabel) {
+                const dispatchMode = card.dispatchMode === 'idle_only' ? 'idle_only' : 'immediate';
                 return `<div class="kb-tl-card${extraCls}" style="left:${leftPct}%" onclick="openDetail('${card.id}')" title="${escapeHtml(card.title)}">` +
                     `<span class="kb-tl-card-title">⚡ ${escapeHtml(card.title)}</span>` +
-                    `<span class="kb-tl-card-time">${timeLabel}</span></div>`;
+                    `<span class="kb-tl-card-time">${timeLabel} · 🚦 ${dispatchMode}</span></div>`;
             }
 
             function buildLane(labelHtml, cards, isUnassigned) {
