@@ -2087,6 +2087,18 @@ const botTools = require('./bot-tools');
 app.use('/api/bot', botTools.router);
 
 // ============================================
+// COMPANION (Petdx 伙伴瀏覽器 / 社群伙伴貢獻系統)
+// ============================================
+const companionModule = require('./companion-api')({
+    authenticateBot,
+    serverLog,
+});
+app.use('/api/companion', companionModule.router);
+if (process.env.NODE_ENV !== 'test') {
+    setTimeout(() => companionModule.initCompanionDatabase(), 2500);
+}
+
+// ============================================
 // FILE UPLOAD SYSTEM (Cloudflare R2)
 // ============================================
 const filesModule = require('./files')(devices);
