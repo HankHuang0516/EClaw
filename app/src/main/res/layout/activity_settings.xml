@@ -1016,9 +1016,25 @@
                 android:text="@string/set_wallpaper"
                 android:textColor="@color/text_white_80"
                 app:backgroundTint="@color/surface_input"
-                android:layout_marginBottom="24dp"
+                android:layout_marginBottom="8dp"
                 app:cornerRadius="12dp"
                 app:icon="@drawable/ic_wallpaper"
+                app:iconTint="@color/text_white_80"
+                app:strokeColor="@color/text_dark"
+                app:strokeWidth="1dp"
+                style="@style/Widget.Material3.Button.TonalButton"/>
+
+            <!-- Browse Companions Button (petdx catalog) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnBrowseCompanions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/browse_companions"
+                android:textColor="@color/text_white_80"
+                app:backgroundTint="@color/surface_input"
+                android:layout_marginBottom="24dp"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_pets"
                 app:iconTint="@color/text_white_80"
                 app:strokeColor="@color/text_dark"
                 app:strokeWidth="1dp"
