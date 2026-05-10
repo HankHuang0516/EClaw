@@ -188,6 +188,12 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── New hard-tier additions (daily pool update) ──
+    { file: null, description: 'A UML class diagram showing a base class Animal with two subclasses Dog and Cat connected by hollow-arrow inheritance lines; Dog has methods bark() and fetch(); Cat has methods meow() and purr(); both inherit the attributes name:String and age:int from Animal', keywords: ['UML', 'class', 'Animal', 'Dog', 'Cat', 'inheritance', 'two', 'subclasses'] },
+    { file: null, description: 'A Kubernetes cluster dashboard showing five nodes: two labeled Ready in green, two labeled SchedulingDisabled in yellow, and one labeled NotReady in red; a pod count panel shows 47 total pods, 3 of which are in CrashLoopBackOff state', keywords: ['kubernetes', 'five', 'nodes', 'green', 'yellow', 'red', 'NotReady', '47', 'CrashLoopBackOff'] },
+    { file: null, description: 'A terminal log panel with twenty lines of timestamped events: lines 3, 7, and 11 are highlighted red showing ERROR for disk-io-timeout, network-unreachable, and auth-service-down; lines 5 and 14 are highlighted yellow showing WARN for high-memory and slow-query; the remaining 15 lines are green INFO entries', keywords: ['terminal', 'twenty', 'three', 'error', 'two', 'warn', 'red', 'yellow', 'green'] },
+    { file: null, description: 'An AWS architecture diagram containing a VPC with two availability zones; each zone has one EC2 instance in a public subnet and two RDS read-replica instances in a private subnet; an Application Load Balancer sits in front; six database instances visible in total', keywords: ['AWS', 'VPC', 'two', 'availability', 'zones', 'EC2', 'RDS', 'six', 'load balancer'] },
+    { file: null, description: 'A color-coded heat map of a 10-by-10 grid: cells in the top-left 3×3 region are deep red (value ≥ 90), cells along the main diagonal are orange (value 60–89), cells in the bottom-right 4×4 corner are blue (value ≤ 30), and all remaining cells are light yellow (value 31–59)', keywords: ['heat map', 'ten', 'grid', 'red', 'orange', 'diagonal', 'blue', 'yellow'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +374,17 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── New medium/hard additions (daily pool update) ──
+    { title: 'Merge Intervals', description: 'Write `solve(intervals)` — given an array of intervals [start,end], merge all overlapping intervals and return them sorted.',
+      testCases: [{ input: '[[1,3],[2,6],[8,10],[15,18]]', expected: '[[1,6],[8,10],[15,18]]' },{ input: '[[1,4],[4,5]]', expected: '[[1,5]]' },{ input: '[[1,4],[2,3]]', expected: '[[1,4]]' },{ input: '[[1,2]]', expected: '[[1,2]]' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array of non-negative integers representing bar heights in an elevation map, compute how much water can be trapped after rain.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[3,0,3]', expected: '3' },{ input: '[1]', expected: '0' }] },
+    { title: 'Longest Common Subsequence', description: 'Write `solve(text1, text2)` — return the length of the longest common subsequence of the two strings (not necessarily contiguous).',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"AGGTAB", "GXTXAYB"', expected: '4' }] },
+    { title: 'Find All Duplicates', description: 'Write `solve(nums)` — given an array of integers between 1 and n (n=length), return all elements that appear exactly twice, in sorted order.',
+      testCases: [{ input: '[4,3,2,7,8,2,3,1]', expected: '[2,3]' },{ input: '[1,1,2]', expected: '[1]' },{ input: '[1]', expected: '[]' },{ input: '[2,2,2]', expected: '[]' }] },
+    { title: 'Rotate Array', description: 'Write `solve(nums, k)` — rotate the array to the right by k steps (in-place or return new array).',
+      testCases: [{ input: '[1,2,3,4,5,6,7], 3', expected: '[5,6,7,1,2,3,4]' },{ input: '[-1,-100,3,99], 2', expected: '[3,99,-1,-100]' },{ input: '[1,2], 3', expected: '[2,1]' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +434,14 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── New medium/hard additions (daily pool update) ──
+    { question: 'A principal of $1000 is invested at 10% annual compound interest. What is the total amount after 3 years, rounded to the nearest dollar?', expectedKeywords: ['1331'] },
+    { question: 'A bag contains 3 red balls and 2 blue balls. If you draw 2 balls without replacement, what is the probability that both balls are red? Express as a simplified fraction.', expectedKeywords: ['3/10'] },
+    { question: 'Alice can complete a task alone in 4 hours and Bob can complete the same task alone in 6 hours. How many hours does it take them working together? Give the answer as a fraction or decimal.', expectedKeywords: ['2.4', '12/5'] },
+    { question: 'In a survey of 100 people: 60 like tea, 50 like coffee, and 30 like both. How many people like neither tea nor coffee?', expectedKeywords: ['20'] },
+    { question: 'What is the 7th prime number?', expectedKeywords: ['17'] },
+    { question: 'If the area of a circle is 144π square centimetres, what is its diameter in centimetres?', expectedKeywords: ['24'] },
+    { question: 'A two-digit number is such that the sum of its digits is 9 and the number itself is 6 times the units digit. What is the number?', expectedKeywords: ['36'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +519,11 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── New hard-tier additions (daily pool update) ──
+    { text: 'Prescribe two hundred fifty milligrams of amoxicillin three times daily for seven days with zero refills', keywords: ['amoxicillin', '250', 'milligrams', 'three', 'seven', 'refills'] },
+    { text: 'Stock ticker NVDA closed at two hundred eighty-seven dollars and forty-three cents up three point six percent on volume of forty-two million shares', keywords: ['NVDA', '287', 'three', 'percent', '42', 'million'] },
+    { text: 'RFC 7231 defines the semantics of HTTP slash one point one including GET POST PUT DELETE PATCH HEAD OPTIONS and CONNECT methods', keywords: ['RFC', '7231', 'HTTP', 'GET', 'POST', 'DELETE', 'PATCH'] },
+    { text: 'The molecular formula for glucose is C six H twelve O six with a molar mass of approximately one hundred eighty grams per mole', keywords: ['glucose', 'C6', 'H12', 'O6', '180', 'molar'] },
 ];
 
 // ============================================
