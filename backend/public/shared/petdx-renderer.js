@@ -1,0 +1,299 @@
+/**
+ * Petdx Companion Renderer — Web Canvas reference implementation.
+ *
+ * Spec: docs/specs/petdx-uiux-spec.md (v0.2)
+ *
+ * Why Web first: Hank 2026-05-10 — wallpaper rendering is animation +
+ * descriptor logic, NOT inherently Android-Kotlin work. A Canvas PoC
+ * here doubles as the Android WebView wallpaper's render layer
+ * (WallpaperService becomes a thin shell around a WebView pointing at
+ * a render page that consumes the same descriptor).
+ *
+ * v0.2 MVP scope:
+ *   - assetType: 'procedural' (built-in drawers; this PR ships 'lobster-procedural')
+ *   - assetType: 'spritesheet' (planned, next PR — needs webp asset pipeline)
+ *   - assetType: 'vector' (rejected per spec §2.2)
+ *
+ * Public surface:
+ *   - createRenderer({ canvas, descriptor, state? }) → controller
+ *     Controller has setState(name), setDescriptor(d), start(), stop(), getState().
+ *   - registerProceduralDrawer(rendererKey, drawerFn)
+ *     drawerFn signature: ({ ctx, w, h, t, state, params }) → void
+ *     where t is elapsed seconds (state-local clock).
+ *
+ * Hot-paths intentionally allocation-free; descriptor hot-swap is the
+ * only place where state-clock resets.
+ */
+(function (root, factory) {
+    if (typeof module === 'object' && module.exports) {
+        module.exports = factory();
+    } else {
+        root.PetdxRenderer = factory();
+    }
+}(typeof self !== 'undefined' ? self : this, function () {
+    'use strict';
+
+    const DEFAULT_STATE = 'IDLE';
+    const DEFAULT_FPS = 4;
+    const DEFAULT_FALLBACK_POLICY = 'silent_to_idle';
+
+    // ── Drawer registry ──────────────────────────────────────────
+    const drawers = new Map();
+
+    function registerProceduralDrawer(rendererKey, fn) {
+        if (typeof rendererKey !== 'string' || !rendererKey) {
+            throw new Error('rendererKey must be non-empty string');
+        }
+        if (typeof fn !== 'function') {
+            throw new Error('drawer must be a function');
+        }
+        drawers.set(rendererKey, fn);
+    }
+
+    function getProceduralDrawer(rendererKey) {
+        return drawers.get(rendererKey) || null;
+    }
+
+    // ── Descriptor validation + state resolution ────────────────
+    function validateDescriptor(d) {
+        if (!d || typeof d !== 'object') return 'descriptor_required';
+        if (!d.id || typeof d.id !== 'string') return 'descriptor_missing_id';
+        if (!d.assetType) return 'descriptor_missing_asset_type';
+        if (!Array.isArray(d.supportedStates) || d.supportedStates.length === 0) {
+            return 'descriptor_missing_supported_states';
+        }
+        if (!d.supportedStates.includes(DEFAULT_STATE)) {
+            return 'descriptor_must_support_idle';
+        }
+        return null;
+    }
+
+    /**
+     * Resolves a requested state against descriptor.supportedStates per
+     * spec §2.3: silent fallback to IDLE if not supported.
+     * Returns { resolved, didFallback }.
+     */
+    function resolveState(descriptor, requested, policy) {
+        const fallback = policy || DEFAULT_FALLBACK_POLICY;
+        const supported = descriptor && descriptor.supportedStates;
+        if (!supported || !supported.includes(requested)) {
+            return { resolved: DEFAULT_STATE, didFallback: true, policy: fallback };
+        }
+        return { resolved: requested, didFallback: false, policy: fallback };
+    }
+
+    function getStateFps(descriptor, stateName) {
+        const sa = descriptor && descriptor.stateAssets && descriptor.stateAssets[stateName];
+        const fps = sa && Number(sa.fps);
+        return Number.isFinite(fps) && fps > 0 ? fps : DEFAULT_FPS;
+    }
+
+    function getStateLoop(descriptor, stateName) {
+        const sa = descriptor && descriptor.stateAssets && descriptor.stateAssets[stateName];
+        if (!sa || sa.loop === undefined) return true;
+        return !!sa.loop;
+    }
+
+    // ── Canvas runner ───────────────────────────────────────────
+    /**
+     * createRenderer({ canvas, descriptor, state?, onError? }) → controller
+     * Throws on first-validation failure; runtime drawer errors are
+     * swallowed and forwarded to onError (if provided) so animation
+     * doesn't die on a single bad frame.
+     */
+    function createRenderer(opts) {
+        const { canvas, descriptor, state, onError } = opts || {};
+        if (!canvas || typeof canvas.getContext !== 'function') {
+            throw new Error('canvas required');
+        }
+        const validationErr = validateDescriptor(descriptor);
+        if (validationErr) throw new Error(validationErr);
+
+        const ctx = canvas.getContext('2d');
+        let currentDescriptor = descriptor;
+        let currentState = resolveState(descriptor, state || DEFAULT_STATE).resolved;
+        let stateClockStart = 0;
+        let rafId = 0;
+        let running = false;
+        let lastFrameTime = 0;
+
+        function tick(now) {
+            if (!running) return;
+            rafId = requestAnimationFrame(tick);
+
+            const fps = getStateFps(currentDescriptor, currentState);
+            const minFrameMs = 1000 / fps;
+            if (now - lastFrameTime < minFrameMs) return;
+            lastFrameTime = now;
+
+            const w = canvas.width;
+            const h = canvas.height;
+            const t = (now - stateClockStart) / 1000;
+
+            try {
+                ctx.clearRect(0, 0, w, h);
+                if (currentDescriptor.assetType === 'procedural') {
+                    const rendererKey = currentDescriptor.asset && currentDescriptor.asset.renderer;
+                    const drawer = getProceduralDrawer(rendererKey) || getProceduralDrawer('fallback-blob');
+                    if (drawer) {
+                        drawer({
+                            ctx, w, h, t,
+                            state: currentState,
+                            params: (currentDescriptor.asset && currentDescriptor.asset.params) || {},
+                        });
+                    }
+                } else if (currentDescriptor.assetType === 'spritesheet') {
+                    // Planned next PR; for now draw a placeholder stripe so
+                    // the preview page makes the gap visible instead of
+                    // failing silently.
+                    drawSpritesheetPlaceholder(ctx, w, h, currentState);
+                }
+            } catch (err) {
+                if (onError) onError(err);
+            }
+        }
+
+        function drawSpritesheetPlaceholder(ctx, w, h, state) {
+            ctx.save();
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, w, h);
+            ctx.fillStyle = '#888';
+            ctx.font = '14px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('spritesheet renderer — next PR', w / 2, h / 2);
+            ctx.fillText(`state: ${state}`, w / 2, h / 2 + 20);
+            ctx.restore();
+        }
+
+        return {
+            start() {
+                if (running) return;
+                running = true;
+                stateClockStart = performance.now();
+                lastFrameTime = 0;
+                rafId = requestAnimationFrame(tick);
+            },
+            stop() {
+                running = false;
+                if (rafId) cancelAnimationFrame(rafId);
+                rafId = 0;
+            },
+            setState(name) {
+                const { resolved, didFallback } = resolveState(currentDescriptor, name);
+                currentState = resolved;
+                stateClockStart = performance.now();
+                return { resolved, didFallback };
+            },
+            setDescriptor(d) {
+                const err = validateDescriptor(d);
+                if (err) throw new Error(err);
+                currentDescriptor = d;
+                const { resolved } = resolveState(d, currentState);
+                currentState = resolved;
+                stateClockStart = performance.now();
+            },
+            getState() { return currentState; },
+            getDescriptor() { return currentDescriptor; },
+            isRunning() { return running; },
+        };
+    }
+
+    // ── Built-in lobster procedural drawer ──────────────────────
+    // Reference matches the Android engine's existing lobster renderer
+    // (kept simple — antenna sway + claw bob + body breathing).
+    // params: { bodyColor, eyeStyle, antennaStyle }
+    registerProceduralDrawer('lobster-procedural', function lobsterDraw(args) {
+        const { ctx, w, h, t, state, params } = args;
+        const cx = w / 2;
+        const cy = h / 2;
+        const baseR = Math.min(w, h) * 0.28;
+
+        const breathe = state === 'SLEEPING' ? 0.96 + Math.sin(t * 0.8) * 0.02
+                       : state === 'EXCITED'  ? 1.00 + Math.sin(t * 12) * 0.06
+                       : state === 'BUSY'     ? 1.00 + Math.sin(t * 6) * 0.03
+                                              : 1.00 + Math.sin(t * 2.5) * 0.02;
+        const r = baseR * breathe;
+
+        // Body
+        ctx.fillStyle = params.bodyColor || '#e63946';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, r * 1.1, r * 0.85, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Antenna sway
+        const antSway = Math.sin(t * (state === 'EXCITED' ? 10 : 3)) * 0.18;
+        ctx.strokeStyle = params.bodyColor || '#e63946';
+        ctx.lineWidth = Math.max(2, r * 0.06);
+        ctx.lineCap = 'round';
+        for (const sign of [-1, 1]) {
+            ctx.beginPath();
+            ctx.moveTo(cx + sign * r * 0.35, cy - r * 0.7);
+            ctx.quadraticCurveTo(
+                cx + sign * (r * 0.55 + antSway * 30),
+                cy - r * 1.3,
+                cx + sign * r * 0.6 + sign * antSway * 50,
+                cy - r * 1.5
+            );
+            ctx.stroke();
+        }
+
+        // Eyes — bead style
+        const eyeR = Math.max(2, r * 0.08);
+        const eyeY = cy - r * 0.25;
+        const eyeSpacing = r * 0.30;
+        const blinkClose = (state === 'SLEEPING') ||
+                          (Math.floor(t * 1.3) % 7 === 0 && (t % 1) < 0.12);
+        ctx.fillStyle = '#1a1a1a';
+        for (const sign of [-1, 1]) {
+            if (blinkClose) {
+                ctx.fillRect(cx + sign * eyeSpacing - eyeR, eyeY - 1, eyeR * 2, 2);
+            } else {
+                ctx.beginPath();
+                ctx.arc(cx + sign * eyeSpacing, eyeY, eyeR, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Claws bob
+        const clawBob = Math.sin(t * (state === 'BUSY' ? 6 : 2)) * r * 0.08;
+        ctx.fillStyle = params.bodyColor || '#e63946';
+        for (const sign of [-1, 1]) {
+            ctx.beginPath();
+            ctx.ellipse(
+                cx + sign * r * 1.2,
+                cy + r * 0.1 + clawBob * sign,
+                r * 0.35, r * 0.22, sign * 0.3, 0, Math.PI * 2
+            );
+            ctx.fill();
+        }
+    });
+
+    // Fallback placeholder for unknown renderer keys — keeps preview
+    // page functional even when descriptor names a drawer we haven't
+    // registered yet. Color from descriptor.metadata.color or grey.
+    registerProceduralDrawer('fallback-blob', function fallbackDraw(args) {
+        const { ctx, w, h, t, state, params } = args;
+        const cx = w / 2, cy = h / 2;
+        const r = Math.min(w, h) * 0.3 * (1 + Math.sin(t * 2) * 0.05);
+        ctx.fillStyle = (params && params.color) || '#7d7d7d';
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('?', cx, cy + 4);
+        ctx.fillText(state, cx, cy + r + 16);
+    });
+
+    return {
+        createRenderer,
+        registerProceduralDrawer,
+        getProceduralDrawer,
+        validateDescriptor,
+        resolveState,
+        getStateFps,
+        getStateLoop,
+        DEFAULT_STATE,
+    };
+}));

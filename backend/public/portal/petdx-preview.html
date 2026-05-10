@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Petdx 伙伴渲染預覽 / Companion Renderer Preview</title>
+<style>
+    :root {
+        --bg: #0d0d10;
+        --panel: #1a1a20;
+        --text: #e8e8e8;
+        --muted: #888;
+        --accent: #e63946;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+        margin: 0; padding: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", sans-serif;
+        min-height: 100vh;
+    }
+    .wrap {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 24px 16px 64px;
+    }
+    h1 { font-size: 20px; margin: 0 0 4px; }
+    .sub { color: var(--muted); margin-bottom: 24px; }
+    .stage {
+        display: grid;
+        grid-template-columns: minmax(280px, 360px) 1fr;
+        gap: 24px;
+    }
+    @media (max-width: 720px) {
+        .stage { grid-template-columns: 1fr; }
+    }
+    .canvas-card {
+        background: var(--panel);
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+    }
+    canvas {
+        background: #000;
+        border-radius: 8px;
+        max-width: 100%;
+        aspect-ratio: 1 / 1;
+        width: 320px;
+        height: 320px;
+    }
+    .controls h3 {
+        font-size: 13px; color: var(--muted);
+        text-transform: uppercase; letter-spacing: 0.05em;
+        margin: 16px 0 8px;
+    }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; }
+    button, select {
+        background: var(--panel);
+        border: 1px solid #2a2a30;
+        color: var(--text);
+        padding: 8px 12px;
+        border-radius: 6px;
+        font: inherit;
+        cursor: pointer;
+    }
+    button:hover { border-color: var(--accent); }
+    button.active { background: var(--accent); border-color: var(--accent); }
+    pre {
+        background: var(--panel);
+        border-radius: 8px;
+        padding: 12px;
+        overflow: auto;
+        max-height: 360px;
+        font-size: 12px;
+        margin: 0;
+    }
+    .hint { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .status {
+        display: inline-block;
+        padding: 2px 8px;
+        background: #2a2a30;
+        border-radius: 4px;
+        font-size: 11px;
+        color: var(--muted);
+    }
+    .status.warn { background: #5a3000; color: #ffb04a; }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <h1>Petdx 伙伴渲染預覽 — v0.2 PoC</h1>
+    <div class="sub">CompanionDescriptor → Canvas 渲染。同一份 descriptor 將來會被 Android WebView 桌布服務直接消費。</div>
+
+    <div class="stage">
+        <div>
+            <div class="canvas-card">
+                <canvas id="petdx-canvas" width="320" height="320"></canvas>
+                <div class="hint">當前狀態：<span id="state-label" class="status">IDLE</span></div>
+            </div>
+
+            <div class="controls">
+                <h3>伙伴 / Companion</h3>
+                <div class="row">
+                    <select id="descriptor-picker"></select>
+                </div>
+
+                <h3>狀態 / State</h3>
+                <div class="row" id="state-buttons"></div>
+
+                <h3>引擎 / Engine</h3>
+                <div class="row">
+                    <button id="btn-start">▶ Start</button>
+                    <button id="btn-stop">■ Stop</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <h3>Descriptor (JSON)</h3>
+            <pre id="descriptor-json"></pre>
+            <div class="hint">Schema: <code>docs/specs/petdx-uiux-spec.md §2.1</code></div>
+        </div>
+    </div>
+</div>
+
+<script src="/shared/petdx-renderer.js"></script>
+<script>
+(function () {
+    'use strict';
+
+    const SAMPLES = [
+        {
+            id: 'petdx-lobster-default',
+            name: 'Lobster (預設)',
+            version: '1.0.0',
+            author: { entityId: 0, publicCode: 'system', displayName: 'EClaw' },
+            assetType: 'procedural',
+            asset: {
+                renderer: 'lobster-procedural',
+                params: { bodyColor: '#e63946', eyeStyle: 'bead', antennaStyle: 'double-curl' }
+            },
+            supportedStates: ['IDLE', 'BUSY', 'EATING', 'SLEEPING', 'EXCITED'],
+            stateAssets: {
+                IDLE:     { loop: true,  fps: 4,  hint: 'default rest' },
+                BUSY:     { loop: true,  fps: 6,  hint: 'working' },
+                EATING:   { loop: true,  fps: 6,  hint: 'xp gain' },
+                SLEEPING: { loop: true,  fps: 2,  hint: 'long idle' },
+                EXCITED:  { loop: false, fps: 12, hint: 'card done / level up' }
+            },
+            metadata: { tags: ['mascot', 'default'], color: '#e63946', category: 'mascot' },
+            license: 'EClaw-default'
+        },
+        {
+            id: 'petdx-lobster-blue',
+            name: 'Lobster (海洋變體)',
+            version: '1.0.0',
+            author: { entityId: 0, publicCode: 'system', displayName: 'EClaw' },
+            assetType: 'procedural',
+            asset: { renderer: 'lobster-procedural', params: { bodyColor: '#0d6efd' } },
+            supportedStates: ['IDLE', 'BUSY', 'SLEEPING', 'EXCITED'],
+            stateAssets: {
+                IDLE:     { loop: true, fps: 4 },
+                BUSY:     { loop: true, fps: 6 },
+                SLEEPING: { loop: true, fps: 2 },
+                EXCITED:  { loop: false, fps: 12 }
+            },
+            metadata: { color: '#0d6efd', category: 'mascot' },
+            license: 'EClaw-default'
+        },
+        {
+            id: 'petdx-mystery-blob',
+            name: 'Mystery Blob (未知 renderer fallback 範例)',
+            version: '0.1.0',
+            author: { entityId: 0, publicCode: 'system', displayName: 'EClaw' },
+            assetType: 'procedural',
+            asset: { renderer: 'cat-procedural', params: { color: '#34c759' } },
+            supportedStates: ['IDLE', 'PLAYING'],
+            stateAssets: { IDLE: { loop: true, fps: 4 }, PLAYING: { loop: true, fps: 8 } },
+            metadata: { color: '#34c759', category: 'animal' }
+        },
+        {
+            id: 'petdx-spritesheet-stub',
+            name: 'Spritesheet PoC (placeholder)',
+            version: '0.1.0',
+            author: { entityId: 0, publicCode: 'system', displayName: 'EClaw' },
+            assetType: 'spritesheet',
+            asset: { url: '/static/companions/petdx-spritesheet-stub/sheet.webp', frameW: 64, frameH: 64 },
+            supportedStates: ['IDLE'],
+            stateAssets: { IDLE: { loop: true, fps: 4, row: 0, frames: 4 } },
+            metadata: { category: 'custom' }
+        }
+    ];
+
+    const canvas = document.getElementById('petdx-canvas');
+    const picker = document.getElementById('descriptor-picker');
+    const stateButtons = document.getElementById('state-buttons');
+    const stateLabel = document.getElementById('state-label');
+    const descriptorJson = document.getElementById('descriptor-json');
+    const btnStart = document.getElementById('btn-start');
+    const btnStop = document.getElementById('btn-stop');
+
+    SAMPLES.forEach((d, i) => {
+        const opt = document.createElement('option');
+        opt.value = String(i);
+        opt.textContent = d.name + ' — ' + d.id;
+        picker.appendChild(opt);
+    });
+
+    let renderer = PetdxRenderer.createRenderer({
+        canvas,
+        descriptor: SAMPLES[0],
+        onError: (err) => console.warn('[Petdx] render error:', err)
+    });
+    renderer.start();
+
+    function refreshDescriptor(d) {
+        renderer.setDescriptor(d);
+        descriptorJson.textContent = JSON.stringify(d, null, 2);
+        renderStateButtons(d);
+        updateStateLabel();
+    }
+
+    function renderStateButtons(d) {
+        stateButtons.innerHTML = '';
+        d.supportedStates.forEach(state => {
+            const b = document.createElement('button');
+            b.textContent = state;
+            b.dataset.state = state;
+            if (state === renderer.getState()) b.classList.add('active');
+            b.addEventListener('click', () => {
+                const { resolved, didFallback } = renderer.setState(state);
+                stateLabel.textContent = resolved + (didFallback ? ' (fallback)' : '');
+                stateLabel.classList.toggle('warn', didFallback);
+                Array.from(stateButtons.children).forEach(c => c.classList.remove('active'));
+                b.classList.add('active');
+            });
+            stateButtons.appendChild(b);
+        });
+    }
+
+    function updateStateLabel() {
+        stateLabel.textContent = renderer.getState();
+        stateLabel.classList.remove('warn');
+    }
+
+    picker.addEventListener('change', () => {
+        refreshDescriptor(SAMPLES[Number(picker.value)]);
+    });
+    btnStart.addEventListener('click', () => renderer.start());
+    btnStop.addEventListener('click', () => renderer.stop());
+
+    refreshDescriptor(SAMPLES[0]);
+}());
+</script>
+</body>
+</html>
