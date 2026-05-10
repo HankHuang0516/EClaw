@@ -2081,6 +2081,8 @@ const EN_TRANSLATIONS = {
         "notif_pref_feedback": "Feedback Updates",
         "notif_pref_todo": "TODO Completed",
         "notif_pref_scheduled": "Scheduled Messages",
+        "notif_pref_kanban_done": "Kanban Card Done",
+        "notif_pref_kanban_done_auto": "Kanban Auto/Cron Card Done",
         "developer_section_title": "Developer",
         "broadcast_settings_title": "Broadcast Settings",
         "broadcast_settings_desc": "Configure how broadcast messages work",

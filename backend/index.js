@@ -1663,6 +1663,7 @@ try {
         getMissionApiHints,
         pushToBot,
         orgChart: orgChartModule,
+        notifyDevice,
     });
     app.use('/api/mission', kanbanModule.router);
     console.log('[Kanban] Module loaded successfully');

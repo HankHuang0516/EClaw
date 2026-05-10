@@ -11,7 +11,9 @@ const DEFAULT_PREFS = {
     feedback_reply: true,
     todo_done: true,
     scheduled: true,
-    platform_command: true
+    platform_command: true,
+    kanban_done: true,
+    kanban_done_auto: true
 };
 
 let pool = null;
