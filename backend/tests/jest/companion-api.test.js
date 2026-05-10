@@ -679,3 +679,369 @@ describe('companion-api: comments list + create + delete', () => {
         expect(res.status).toBe(404);
     });
 });
+
+// ── Stage 4 ────────────────────────────────────────────────────────────
+// submit / pending / review / delete. submit is bot-auth (needs entityId);
+// pending + review are deviceSecret-only; delete accepts both creator (bot)
+// and device owner (deviceSecret).
+
+describe('companion-api: validateSubmittedDescriptor', () => {
+    const { validateSubmittedDescriptor } = companionFactory._test;
+    const minimal = () => ({
+        id: 'petdx-test', name: 'Test Pet', version: '1.0.0',
+        descriptor: { id: 'petdx-test' }, assetType: 'procedural',
+        supportedStates: ['IDLE'], license: 'EClaw-default',
+    });
+
+    test('null on minimal valid body', () => {
+        expect(validateSubmittedDescriptor(minimal())).toBeNull();
+    });
+
+    test('rejects bad id', () => {
+        const b = { ...minimal(), id: 'BadID!' };
+        expect(validateSubmittedDescriptor(b)).toBe('invalid_companion_id');
+    });
+
+    test('rejects empty name', () => {
+        const b = { ...minimal(), name: '   ' };
+        expect(validateSubmittedDescriptor(b)).toBe('invalid_name');
+    });
+
+    test('rejects 41-char name', () => {
+        const b = { ...minimal(), name: 'x'.repeat(41) };
+        expect(validateSubmittedDescriptor(b)).toBe('invalid_name');
+    });
+
+    test('rejects bad semver', () => {
+        const b = { ...minimal(), version: '1.0' };
+        expect(validateSubmittedDescriptor(b)).toBe('invalid_version');
+    });
+
+    test('rejects descriptor.id mismatch', () => {
+        const b = { ...minimal(), descriptor: { id: 'petdx-other' } };
+        expect(validateSubmittedDescriptor(b)).toBe('descriptor_id_mismatch');
+    });
+
+    test('rejects unknown asset_type', () => {
+        const b = { ...minimal(), assetType: 'rainbow' };
+        expect(validateSubmittedDescriptor(b)).toBe('invalid_asset_type');
+    });
+
+    test('rejects bad supported_states', () => {
+        const b = { ...minimal(), supportedStates: ['idle'] };
+        expect(validateSubmittedDescriptor(b)).toBe('invalid_supported_states');
+    });
+
+    test('rejects unknown license', () => {
+        const b = { ...minimal(), license: 'GPL-3.0' };
+        expect(validateSubmittedDescriptor(b)).toBe('invalid_license');
+    });
+
+    test('rejects unknown category', () => {
+        const b = { ...minimal(), category: 'plant' };
+        expect(validateSubmittedDescriptor(b)).toBe('invalid_category');
+    });
+
+    test('rejects > 10 tags', () => {
+        const b = { ...minimal(), tags: Array(11).fill('cute') };
+        expect(validateSubmittedDescriptor(b)).toBe('invalid_tags');
+    });
+
+    test('rejects profanity in name', () => {
+        const b = { ...minimal(), name: 'Hello fuck' };
+        expect(validateSubmittedDescriptor(b)).toBe('profanity_detected');
+    });
+});
+
+describe('companion-api: POST /submit', () => {
+    beforeEach(() => __mockQuery.mockReset());
+    const validBody = () => ({
+        id: 'petdx-mybot', name: 'My Bot', version: '1.0.0',
+        descriptor: { id: 'petdx-mybot', description: 'a friendly bot' },
+        assetType: 'procedural', supportedStates: ['IDLE', 'BUSY'],
+        license: 'CC0', category: 'mascot', tags: ['friendly'],
+    });
+
+    test('400 when caller has no entityId (deviceSecret-only)', async () => {
+        const res = await request(makeApp())
+            .post('/api/companion/submit')
+            .query({ deviceId: DEVICE, deviceSecret: DEVICE_SECRET })
+            .send(validBody());
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('submit_requires_entity');
+    });
+
+    test('400 on validation failure', async () => {
+        const res = await request(makeApp())
+            .post('/api/companion/submit')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
+            .send({ ...validBody(), assetType: 'rainbow' });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('invalid_asset_type');
+    });
+
+    test('409 on duplicate id', async () => {
+        __mockQuery.mockResolvedValueOnce({ rowCount: 1, rows: [{}] });
+        const res = await request(makeApp())
+            .post('/api/companion/submit')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
+            .send(validBody());
+        expect(res.status).toBe(409);
+        expect(res.body.error).toBe('companion_id_exists');
+    });
+
+    test('201 happy path inserts pending_review row', async () => {
+        __mockQuery
+            .mockResolvedValueOnce({ rowCount: 0, rows: [] })  // exists check
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] }); // INSERT
+        const res = await request(makeApp())
+            .post('/api/companion/submit')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
+            .send(validBody());
+        expect(res.status).toBe(201);
+        expect(res.body.companion).toMatchObject({
+            id: 'petdx-mybot', status: 'pending_review',
+            scope: 'community', author: { entityId: ENTITY },
+        });
+        const insertCall = __mockQuery.mock.calls[1];
+        expect(insertCall[0]).toMatch(/INSERT INTO companions/);
+        expect(insertCall[0]).toMatch(/'pending_review'/);
+        expect(insertCall[1]).toEqual(expect.arrayContaining([
+            'petdx-mybot', 'My Bot', '1.0.0', ENTITY, DEVICE,
+        ]));
+    });
+
+    test('429 on rate-limit (6th submit in window)', async () => {
+        // Each submit calls exists check + INSERT — 2 mocks per attempt
+        for (let i = 0; i < 5; i++) {
+            __mockQuery
+                .mockResolvedValueOnce({ rowCount: 0, rows: [] })
+                .mockResolvedValueOnce({ rowCount: 1, rows: [] });
+        }
+        const app = makeApp();
+        const body = validBody();
+        for (let i = 0; i < 5; i++) {
+            const r = await request(app)
+                .post('/api/companion/submit')
+                .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
+                .send({ ...body, id: `petdx-mybot-${i}`, descriptor: { id: `petdx-mybot-${i}` } });
+            expect(r.status).toBe(201);
+        }
+        // 6th should hit rate limit BEFORE any pg call (no extra mock needed)
+        const r6 = await request(app)
+            .post('/api/companion/submit')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
+            .send({ ...body, id: 'petdx-mybot-extra', descriptor: { id: 'petdx-mybot-extra' } });
+        expect(r6.status).toBe(429);
+        expect(r6.body.error).toBe('rate_limit_exceeded');
+    });
+});
+
+describe('companion-api: GET /pending', () => {
+    beforeEach(() => __mockQuery.mockReset());
+
+    test('403 when called with bot auth (no deviceSecret)', async () => {
+        const res = await request(makeApp())
+            .get('/api/companion/pending')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY });
+        expect(res.status).toBe(403);
+        expect(res.body.error).toBe('device_owner_only');
+    });
+
+    test('200 returns pending_review companions on this device', async () => {
+        __mockQuery
+            .mockResolvedValueOnce({
+                rowCount: 1,
+                rows: [{
+                    id: 'petdx-pending', name: 'P', version: '1.0.0',
+                    author_entity_id: ENTITY, device_id: DEVICE,
+                    descriptor: { id: 'petdx-pending' }, asset_type: 'procedural',
+                    asset_url: null, avatar_url: null, thumbnail_url: null,
+                    supported_states: ['IDLE'], scope: 'community', status: 'pending_review',
+                    license: 'CC0', tags: [], i18n_data: null,
+                    category: null, mood: null, color: null,
+                    download_count: 0, favorite_count: 0, rating_avg: null,
+                    rating_count: 0, comment_count: 0, published_at: null,
+                    created_at: 1778100000000,
+                }],
+            })
+            .mockResolvedValueOnce({ rowCount: 1, rows: [{ n: 1 }] });
+        const res = await request(makeApp())
+            .get('/api/companion/pending')
+            .query({ deviceId: DEVICE, deviceSecret: DEVICE_SECRET });
+        expect(res.status).toBe(200);
+        expect(res.body.total).toBe(1);
+        expect(res.body.companions[0]).toMatchObject({
+            id: 'petdx-pending', status: 'pending_review',
+        });
+    });
+});
+
+describe('companion-api: POST /:id/review', () => {
+    beforeEach(() => __mockQuery.mockReset());
+
+    test('403 when bot auth tries to review', async () => {
+        const res = await request(makeApp())
+            .post('/api/companion/petdx-x/review')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
+            .send({ decision: 'approve' });
+        expect(res.status).toBe(403);
+        expect(res.body.error).toBe('device_owner_only');
+    });
+
+    test('400 on invalid decision', async () => {
+        const res = await request(makeApp())
+            .post('/api/companion/petdx-x/review')
+            .query({ deviceId: DEVICE, deviceSecret: DEVICE_SECRET })
+            .send({ decision: 'maybe' });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('invalid_decision');
+    });
+
+    test('404 when companion missing', async () => {
+        __mockQuery.mockResolvedValueOnce({ rowCount: 0, rows: [] });
+        const res = await request(makeApp())
+            .post('/api/companion/petdx-missing/review')
+            .query({ deviceId: DEVICE, deviceSecret: DEVICE_SECRET })
+            .send({ decision: 'approve' });
+        expect(res.status).toBe(404);
+    });
+
+    test('403 when reviewing companion from another device', async () => {
+        __mockQuery.mockResolvedValueOnce({
+            rowCount: 1,
+            rows: [{ id: 'petdx-x', status: 'pending_review', device_id: 'other-dev' }],
+        });
+        const res = await request(makeApp())
+            .post('/api/companion/petdx-x/review')
+            .query({ deviceId: DEVICE, deviceSecret: DEVICE_SECRET })
+            .send({ decision: 'approve' });
+        expect(res.status).toBe(403);
+    });
+
+    test('409 when companion is already published', async () => {
+        __mockQuery.mockResolvedValueOnce({
+            rowCount: 1,
+            rows: [{ id: 'petdx-x', status: 'published', device_id: DEVICE }],
+        });
+        const res = await request(makeApp())
+            .post('/api/companion/petdx-x/review')
+            .query({ deviceId: DEVICE, deviceSecret: DEVICE_SECRET })
+            .send({ decision: 'approve' });
+        expect(res.status).toBe(409);
+        expect(res.body.error).toBe('not_pending_review');
+    });
+
+    test('200 approve flips status to published', async () => {
+        __mockQuery
+            .mockResolvedValueOnce({
+                rowCount: 1,
+                rows: [{ id: 'petdx-x', status: 'pending_review', device_id: DEVICE }],
+            })
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] });
+        const res = await request(makeApp())
+            .post('/api/companion/petdx-x/review')
+            .query({ deviceId: DEVICE, deviceSecret: DEVICE_SECRET })
+            .send({ decision: 'approve' });
+        expect(res.status).toBe(200);
+        expect(res.body.companion).toMatchObject({ id: 'petdx-x', status: 'published' });
+        const updateCall = __mockQuery.mock.calls[1];
+        expect(updateCall[0]).toMatch(/SET status = 'published'/);
+    });
+
+    test('200 reject stores reason', async () => {
+        __mockQuery
+            .mockResolvedValueOnce({
+                rowCount: 1,
+                rows: [{ id: 'petdx-x', status: 'pending_review', device_id: DEVICE }],
+            })
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] });
+        const res = await request(makeApp())
+            .post('/api/companion/petdx-x/review')
+            .query({ deviceId: DEVICE, deviceSecret: DEVICE_SECRET })
+            .send({ decision: 'reject', reason: 'Sprite too low-res' });
+        expect(res.status).toBe(200);
+        expect(res.body.companion).toMatchObject({
+            id: 'petdx-x', status: 'rejected', rejectReason: 'Sprite too low-res',
+        });
+    });
+});
+
+describe('companion-api: DELETE /:id', () => {
+    beforeEach(() => __mockQuery.mockReset());
+
+    test('400 on invalid id shape', async () => {
+        const res = await request(makeApp())
+            .delete('/api/companion/Bad ID')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('invalid_companion_id');
+    });
+
+    test('404 when companion missing', async () => {
+        __mockQuery.mockResolvedValueOnce({ rowCount: 0, rows: [] });
+        const res = await request(makeApp())
+            .delete('/api/companion/petdx-missing')
+            .query({ deviceId: DEVICE, deviceSecret: DEVICE_SECRET });
+        expect(res.status).toBe(404);
+    });
+
+    test('409 when companion is already published', async () => {
+        __mockQuery.mockResolvedValueOnce({
+            rowCount: 1,
+            rows: [{ id: 'petdx-x', status: 'published', device_id: DEVICE, author_entity_id: ENTITY }],
+        });
+        const res = await request(makeApp())
+            .delete('/api/companion/petdx-x')
+            .query({ deviceId: DEVICE, deviceSecret: DEVICE_SECRET });
+        expect(res.status).toBe(409);
+        expect(res.body.error).toBe('not_pending_review');
+    });
+
+    test('403 when outsider tries to delete', async () => {
+        __mockQuery.mockResolvedValueOnce({
+            rowCount: 1,
+            rows: [{
+                id: 'petdx-x', status: 'pending_review',
+                device_id: DEVICE, author_entity_id: 999, // not us
+            }],
+        });
+        const res = await request(makeApp())
+            .delete('/api/companion/petdx-x')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY });
+        expect(res.status).toBe(403);
+    });
+
+    test('200 creator deletes own pending_review', async () => {
+        __mockQuery
+            .mockResolvedValueOnce({
+                rowCount: 1,
+                rows: [{
+                    id: 'petdx-x', status: 'pending_review',
+                    device_id: DEVICE, author_entity_id: ENTITY,
+                }],
+            })
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] });
+        const res = await request(makeApp())
+            .delete('/api/companion/petdx-x')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY });
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ success: true, companionId: 'petdx-x' });
+    });
+
+    test('200 device owner deletes any pending_review on their device', async () => {
+        __mockQuery
+            .mockResolvedValueOnce({
+                rowCount: 1,
+                rows: [{
+                    id: 'petdx-x', status: 'pending_review',
+                    device_id: DEVICE, author_entity_id: 999,
+                }],
+            })
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] });
+        const res = await request(makeApp())
+            .delete('/api/companion/petdx-x')
+            .query({ deviceId: DEVICE, deviceSecret: DEVICE_SECRET });
+        expect(res.status).toBe(200);
+    });
+});
