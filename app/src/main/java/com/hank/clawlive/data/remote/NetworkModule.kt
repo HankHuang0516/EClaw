@@ -57,7 +57,7 @@ object NetworkModule {
 
     private val telemetryInterceptor = TelemetryInterceptor()
 
-    private val okHttpClient: OkHttpClient = if (BuildConfig.DEBUG) {
+    val okHttpClient: OkHttpClient = if (BuildConfig.DEBUG) {
         // Emulator may have outdated CA store; trust-all in debug only
         buildDebugOkHttpClient(readTimeoutSec = 60).newBuilder()
             .addInterceptor(telemetryInterceptor)

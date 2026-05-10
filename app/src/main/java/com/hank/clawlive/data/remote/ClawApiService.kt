@@ -540,6 +540,16 @@ interface ClawApiService {
 
     @POST("api/wallet/topup/verify-google")
     suspend fun verifyGoogleTopup(@Body body: Map<String, @JvmSuppressWildcards Any>): GenericResponse
+
+    // ============ Petdx Companion ============
+    // Per-entity current companion (latest companion_select_log row joined to
+    // companion descriptor). botSecret auth → entityId resolved server-side.
+    @GET("api/companion/current")
+    suspend fun getCurrentCompanion(
+        @Query("deviceId") deviceId: String,
+        @Query("botSecret") botSecret: String,
+        @Query("entityId") entityId: Int
+    ): com.hank.clawlive.data.model.CompanionCurrentResponse
 }
 
 // ============ Skill Templates Models ============
