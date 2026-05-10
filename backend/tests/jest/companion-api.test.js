@@ -282,3 +282,203 @@ describe('companion-api: GET /:id', () => {
         expect(res.body.companion.scope).toBe('system');
     });
 });
+
+// ── Stage 2 ────────────────────────────────────────────────────────────
+// favorites / select / current. We mock pg query side-effects in sequence,
+// so the order of mockResolvedValueOnce calls matches the route's query
+// order. Tests only assert on shape + bind args, not transactional safety.
+
+describe('companion-api: GET /current', () => {
+    beforeEach(() => __mockQuery.mockReset());
+
+    test('200 returns null selection + empty favorites for fresh user', async () => {
+        __mockQuery
+            .mockResolvedValueOnce({ rowCount: 0, rows: [] })   // select_log lookup
+            .mockResolvedValueOnce({ rowCount: 0, rows: [] });  // favorites
+        const res = await request(makeApp())
+            .get('/api/companion/current')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY });
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({ success: true, selection: null, favorites: [] });
+    });
+
+    test('200 returns full descriptor + favorite list when populated', async () => {
+        __mockQuery
+            .mockResolvedValueOnce({
+                rowCount: 1,
+                rows: [{
+                    companion_id: 'petdx-pub', selected_at: 1778100000000, source: 'portal',
+                    id: 'petdx-pub', name: 'Pub', version: '1.0.0', author_entity_id: null,
+                    descriptor: { description: 'p' }, asset_type: 'procedural',
+                    asset_url: null, avatar_url: null, thumbnail_url: null,
+                    supported_states: ['IDLE'], scope: 'system', status: 'published',
+                    license: 'EClaw-default', tags: [], i18n_data: null,
+                    category: null, mood: null, color: null,
+                    download_count: 0, favorite_count: 0, rating_avg: null,
+                    rating_count: 0, comment_count: 0, published_at: 1778000000000,
+                }],
+            })
+            .mockResolvedValueOnce({
+                rowCount: 1,
+                rows: [{ companion_id: 'petdx-fav', created_at: 1778090000000 }],
+            });
+        const res = await request(makeApp())
+            .get('/api/companion/current')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY });
+        expect(res.status).toBe(200);
+        expect(res.body.selection.companion.id).toBe('petdx-pub');
+        expect(res.body.selection.selectedAt).toBe(1778100000000);
+        expect(res.body.favorites).toEqual([
+            { companionId: 'petdx-fav', favoritedAt: 1778090000000 },
+        ]);
+    });
+
+    test('binds entityId IS NOT DISTINCT FROM null on device-only auth', async () => {
+        __mockQuery
+            .mockResolvedValueOnce({ rowCount: 0, rows: [] })
+            .mockResolvedValueOnce({ rowCount: 0, rows: [] });
+        await request(makeApp())
+            .get('/api/companion/current')
+            .query({ deviceId: DEVICE, deviceSecret: DEVICE_SECRET });
+        const selectCall = __mockQuery.mock.calls[0];
+        expect(selectCall[0]).toMatch(/IS NOT DISTINCT FROM/);
+        expect(selectCall[1]).toEqual([DEVICE, null]);
+    });
+});
+
+describe('companion-api: POST /select', () => {
+    beforeEach(() => __mockQuery.mockReset());
+
+    test('400 on missing companionId', async () => {
+        const res = await request(makeApp())
+            .post('/api/companion/select')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
+            .send({});
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('invalid_companion_id');
+    });
+
+    test('400 on bad source', async () => {
+        const res = await request(makeApp())
+            .post('/api/companion/select')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
+            .send({ companionId: 'petdx-x', source: 'cron' });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('invalid_source');
+    });
+
+    test('404 when companion missing', async () => {
+        __mockQuery.mockResolvedValueOnce({ rowCount: 0, rows: [] });
+        const res = await request(makeApp())
+            .post('/api/companion/select')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
+            .send({ companionId: 'petdx-nope' });
+        expect(res.status).toBe(404);
+        expect(res.body.error).toBe('companion_not_found');
+    });
+
+    test('200 inserts log row and echoes selection', async () => {
+        __mockQuery
+            .mockResolvedValueOnce({                            // companions lookup
+                rowCount: 1,
+                rows: [{
+                    id: 'petdx-pub', status: 'published', scope: 'system',
+                    device_id: null, author_entity_id: null,
+                }],
+            })
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] });  // INSERT
+        const res = await request(makeApp())
+            .post('/api/companion/select')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
+            .send({ companionId: 'petdx-pub', source: 'app' });
+        expect(res.status).toBe(200);
+        expect(res.body.selection.companionId).toBe('petdx-pub');
+        expect(res.body.selection.source).toBe('app');
+        const insertCall = __mockQuery.mock.calls[1];
+        expect(insertCall[0]).toMatch(/INSERT INTO companion_select_log/);
+        expect(insertCall[1].slice(0, 3)).toEqual([DEVICE, ENTITY, 'petdx-pub']);
+        expect(insertCall[1][4]).toBe('app');
+    });
+});
+
+describe('companion-api: POST /:id/favorite', () => {
+    beforeEach(() => __mockQuery.mockReset());
+
+    test('400 on bad action', async () => {
+        const res = await request(makeApp())
+            .post('/api/companion/petdx-x/favorite')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
+            .send({ action: 'star' });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('invalid_action');
+    });
+
+    test('404 when companion missing', async () => {
+        __mockQuery.mockResolvedValueOnce({ rowCount: 0, rows: [] });
+        const res = await request(makeApp())
+            .post('/api/companion/petdx-nope/favorite')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
+            .send({ action: 'add' });
+        expect(res.status).toBe(404);
+    });
+
+    test('toggle on a non-favorite companion adds + bumps count', async () => {
+        const baseCompanion = {
+            id: 'petdx-pub', status: 'published', scope: 'system',
+            device_id: null, author_entity_id: null, favorite_count: 4,
+        };
+        __mockQuery
+            .mockResolvedValueOnce({ rowCount: 1, rows: [baseCompanion] })       // lookup
+            .mockResolvedValueOnce({ rowCount: 0, rows: [] })                    // exists?
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] })                    // INSERT fav
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] })                    // UPDATE count
+            .mockResolvedValueOnce({ rowCount: 1, rows: [{ favorite_count: 5 }] }); // re-read
+        const res = await request(makeApp())
+            .post('/api/companion/petdx-pub/favorite')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
+            .send({});
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({
+            success: true, favorited: true, companionId: 'petdx-pub', favoriteCount: 5,
+        });
+    });
+
+    test('toggle on an existing favorite removes + decrements count', async () => {
+        const baseCompanion = {
+            id: 'petdx-pub', status: 'published', scope: 'system',
+            device_id: null, author_entity_id: null, favorite_count: 5,
+        };
+        __mockQuery
+            .mockResolvedValueOnce({ rowCount: 1, rows: [baseCompanion] })
+            .mockResolvedValueOnce({ rowCount: 1, rows: [{ '?column?': 1 }] })   // exists
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] })                    // DELETE
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] })                    // UPDATE
+            .mockResolvedValueOnce({ rowCount: 1, rows: [{ favorite_count: 4 }] });
+        const res = await request(makeApp())
+            .post('/api/companion/petdx-pub/favorite')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
+            .send({ action: 'toggle' });
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ favorited: false, favoriteCount: 4 });
+    });
+
+    test('add on already-favorite is a no-op (count unchanged)', async () => {
+        const baseCompanion = {
+            id: 'petdx-pub', status: 'published', scope: 'system',
+            device_id: null, author_entity_id: null, favorite_count: 5,
+        };
+        __mockQuery
+            .mockResolvedValueOnce({ rowCount: 1, rows: [baseCompanion] })
+            .mockResolvedValueOnce({ rowCount: 1, rows: [{ '?column?': 1 }] })   // exists
+            .mockResolvedValueOnce({ rowCount: 1, rows: [{ favorite_count: 5 }] }); // re-read only
+        const res = await request(makeApp())
+            .post('/api/companion/petdx-pub/favorite')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY })
+            .send({ action: 'add' });
+        expect(res.status).toBe(200);
+        expect(res.body.favorited).toBe(true);
+        expect(res.body.favoriteCount).toBe(5);
+        // Only 3 queries: lookup + exists + re-read. No INSERT/UPDATE.
+        expect(__mockQuery.mock.calls).toHaveLength(3);
+    });
+});

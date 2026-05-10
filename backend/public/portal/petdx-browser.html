@@ -524,11 +524,12 @@
         actions.className = 'modal-actions';
         const selectBtn = document.createElement('button');
         selectBtn.className = 'primary';
-        selectBtn.textContent = '一鍵切換 / Select';
+        selectBtn.textContent = currentSelectionId === detail.id
+            ? '✓ 目前選用' : '一鍵切換 / Select';
         selectBtn.addEventListener('click', () => onSelect(detail));
         const favBtn = document.createElement('button');
-        favBtn.textContent = '☆ 收藏 / Favorite';
-        favBtn.addEventListener('click', () => onFavorite(detail));
+        favBtn.textContent = favoriteIds.has(detail.id) ? '★ 已收藏' : '☆ 收藏';
+        favBtn.addEventListener('click', () => onFavorite(detail, favBtn));
         actions.appendChild(selectBtn);
         actions.appendChild(favBtn);
         body.appendChild(actions);
@@ -540,22 +541,36 @@
         }
     }
 
+    // Local cache populated from /current on load + every favorite toggle.
+    // Used to label the modal favorite button correctly (add vs remove).
+    const favoriteIds = new Set();
+    let currentSelectionId = null;
+
+    async function refreshOwnerState() {
+        const q = authQuery();
+        try {
+            const r = await fetch('/api/companion/current?' + q.toString());
+            if (!r.ok) return;
+            const data = await r.json();
+            favoriteIds.clear();
+            (data.favorites || []).forEach(f => favoriteIds.add(f.companionId));
+            currentSelectionId = data.selection?.companion?.id || null;
+        } catch (_) {
+            // Non-fatal: portal still works without state echo.
+        }
+    }
+
     async function onSelect(detail) {
-        // Stage 2 endpoint: POST /api/companion/select
-        // Returns 404 today; show informative message.
         const q = authQuery();
         try {
             const r = await fetch('/api/companion/select?' + q.toString(), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ companionId: detail.id, ...Object.fromEntries(q.entries()) }),
+                body: JSON.stringify({ companionId: detail.id, source: 'portal' }),
             });
-            if (r.status === 404) {
-                alert('「一鍵切換」端點 (Stage 2) 尚未上線；切換功能即將推出。');
-                return;
-            }
-            const data = await r.json();
-            if (data.success) {
+            const data = await r.json().catch(() => ({}));
+            if (r.ok && data.success) {
+                currentSelectionId = detail.id;
                 alert('已切換為 ' + detail.name);
             } else {
                 alert('切換失敗：' + (data.error || r.status));
@@ -565,18 +580,22 @@
         }
     }
 
-    async function onFavorite(detail) {
+    async function onFavorite(detail, btn) {
         const q = authQuery();
         try {
             const r = await fetch('/api/companion/' + encodeURIComponent(detail.id) + '/favorite?' + q.toString(), {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'toggle' }),
             });
-            if (r.status === 404) {
-                alert('「收藏」端點 (Stage 2) 尚未上線；收藏功能即將推出。');
-                return;
+            const data = await r.json().catch(() => ({}));
+            if (r.ok && data.success) {
+                if (data.favorited) favoriteIds.add(detail.id);
+                else favoriteIds.delete(detail.id);
+                if (btn) btn.textContent = data.favorited ? '★ 已收藏' : '☆ 收藏';
+            } else {
+                alert('收藏失敗：' + (data.error || r.status));
             }
-            const data = await r.json();
-            alert(data.success ? '已加入收藏' : '收藏失敗：' + (data.error || r.status));
         } catch (err) {
             alert('網路錯誤：' + err.message);
         }
@@ -611,6 +630,7 @@
     // ── Boot ─────────────────────────────────────────────────────
     renderFilters();
     loadList();
+    refreshOwnerState();
 }());
 </script>
 </body>
