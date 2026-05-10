@@ -16,6 +16,7 @@ const telemetry = require('./device-telemetry');
 const sitePageviews = require('./site-pageviews');
 const feedbackModule = require('./device-feedback');
 const chatIntegrity = require('./chat-integrity');
+const communitySsr = require('./community-ssr');
 // JWT secret: fail-safe random per process if env var is missing (tokens signed in one process won't verify in another)
 const JWT_SECRET_FALLBACK = process.env.JWT_SECRET || require('crypto').randomBytes(32).toString('hex');
 
@@ -251,6 +252,31 @@ app.get('/sitemap.xml', (req, res) => {
 });
 app.get('/llms.txt', (req, res) => {
     res.type('text/plain').sendFile(path.join(__dirname, 'public/llms.txt'));
+});
+
+// SEO: per-bot SSR landing pages for individual public bots.
+// Crawlers get a fully rendered HTML page with title/meta/OG/JSON-LD; humans
+// follow the "Open in Plaza" CTA into the JS plaza for full interactivity.
+app.get('/community/:publicCode', async (req, res) => {
+    const { publicCode } = req.params;
+    if (!communitySsr.isValidPublicCode(publicCode)) {
+        return res.status(404).type('text/html').send(communitySsr.renderNotFoundHtml(publicCode));
+    }
+    const card = await db.getPublicCardDetail(publicCode);
+    if (!card) {
+        return res.status(404).type('text/html').send(communitySsr.renderNotFoundHtml(publicCode));
+    }
+    res.set('Cache-Control', 'public, max-age=300');
+    res.type('text/html').send(communitySsr.renderBotPageHtml(card));
+});
+
+// SEO: dynamic sitemap of every public bot, regenerated per request.
+// Cheap (single SELECT, capped at 500 rows) and lets crawlers discover bots
+// the moment they go public, without a build step.
+app.get('/community/sitemap.xml', async (req, res) => {
+    const bots = await db.searchPublicCards({ limit: 500, offset: 0, sort: 'newest' });
+    res.set('Cache-Control', 'public, max-age=600');
+    res.type('application/xml').send(communitySsr.renderCommunitySitemapXml(bots));
 });
 // Serve public assets (OG image, etc.) — cache aggressively to reduce egress
 app.use('/assets', express.static(path.join(__dirname, 'public/assets'), {
