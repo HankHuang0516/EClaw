@@ -397,9 +397,15 @@ class ClawRenderer(
 
     /**
      * Draw multiple entities on the canvas.
+     *
+     * @param loading when true, the engine has not yet received its first
+     *   getMultiEntityStatusFlow response — render a transient "Loading…"
+     *   placeholder instead of the permanent "No entities connected" message.
+     *   Prevents the Live Wallpaper chooser preview from flashing the empty
+     *   message while the first network call is still in flight.
      */
     private var multiDrawCount = 0
-    fun drawMultiEntity(canvas: Canvas, entities: List<EntityStatus>) {
+    fun drawMultiEntity(canvas: Canvas, entities: List<EntityStatus>, loading: Boolean = false) {
         multiDrawCount++
         val width = canvas.width.toFloat()
         val height = canvas.height.toFloat()
@@ -420,6 +426,12 @@ class ClawRenderer(
         }
 
         if (entities.isEmpty()) {
+            if (loading) {
+                textPaint.textSize = 32f
+                textPaint.color = Color.WHITE
+                canvas.drawText("Loading entities…", width / 2f, height / 2f, textPaint)
+                return
+            }
             // Draw "No entities" message with instructions
             textPaint.textSize = 36f
             textPaint.color = Color.WHITE
