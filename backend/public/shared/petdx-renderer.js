@@ -268,6 +268,189 @@
         }
     });
 
+    // ── Dog procedural drawer ───────────────────────────────────
+    // Oval body + droopy ears + snout + tail wag.
+    // params: { bodyColor, eyeStyle }
+    registerProceduralDrawer('dog-procedural', function dogDraw(args) {
+        const { ctx, w, h, t, state, params } = args;
+        const cx = w / 2, cy = h / 2;
+        const baseR = Math.min(w, h) * 0.26;
+        const body = (params && params.bodyColor) || '#e9c46a';
+        const dark = shade(body, -0.35);
+
+        const breathe = state === 'SLEEPING' ? 0.96 + Math.sin(t * 0.8) * 0.02
+                       : state === 'EXCITED'  ? 1.00 + Math.sin(t * 12) * 0.05
+                                              : 1.00 + Math.sin(t * 2.5) * 0.02;
+        const r = baseR * breathe;
+        const headBob = state === 'EATING' ? Math.abs(Math.sin(t * 4)) * r * 0.18
+                      : state === 'EXCITED' ? Math.sin(t * 14) * r * 0.08 : 0;
+
+        // Tail wag — fast in BUSY/EXCITED, twitch in IDLE, still in SLEEPING
+        const wagSpeed = state === 'EXCITED' ? 16 : state === 'BUSY' ? 8 : state === 'SLEEPING' ? 0 : 2.5;
+        const wag = Math.sin(t * wagSpeed) * 0.6;
+        ctx.strokeStyle = body;
+        ctx.lineWidth = Math.max(2, r * 0.18);
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cx + r * 1.05, cy - r * 0.25);
+        ctx.quadraticCurveTo(cx + r * 1.5, cy - r * 0.5 - wag * r * 0.4, cx + r * 1.7, cy - r * (0.3 + wag * 0.3));
+        ctx.stroke();
+
+        // Body
+        ctx.fillStyle = body;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + headBob * 0.4, r * 1.1, r * 0.78, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Snout (lighter oval at front-bottom)
+        ctx.fillStyle = shade(body, 0.25);
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + r * 0.18 + headBob, r * 0.42, r * 0.28, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Nose
+        ctx.fillStyle = '#1a1a1a';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy + r * 0.05 + headBob, r * 0.10, r * 0.07, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Droopy ears
+        ctx.fillStyle = dark;
+        for (const sign of [-1, 1]) {
+            ctx.beginPath();
+            ctx.ellipse(cx + sign * r * 0.85, cy - r * 0.3 + headBob * 0.5, r * 0.28, r * 0.55, sign * 0.25, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Eyes
+        const eyeR = Math.max(2, r * 0.07);
+        const eyeY = cy - r * 0.18 + headBob;
+        const blinkClose = state === 'SLEEPING' ||
+                          (Math.floor(t * 1.3) % 7 === 0 && (t % 1) < 0.12);
+        ctx.fillStyle = '#1a1a1a';
+        for (const sign of [-1, 1]) {
+            const ex = cx + sign * r * 0.28;
+            if (blinkClose) {
+                ctx.fillRect(ex - eyeR, eyeY - 1, eyeR * 2, 2);
+            } else {
+                ctx.beginPath(); ctx.arc(ex, eyeY, eyeR, 0, Math.PI * 2); ctx.fill();
+            }
+        }
+
+        // Tongue when EATING
+        if (state === 'EATING' && (Math.sin(t * 4) > 0)) {
+            ctx.fillStyle = '#ee5a7a';
+            ctx.beginPath();
+            ctx.ellipse(cx, cy + r * 0.30 + headBob, r * 0.10, r * 0.16, 0, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    });
+
+    // ── Cat procedural drawer ───────────────────────────────────
+    // Rounder body + pointy ears + curled tail + tabby stripes.
+    // params: { bodyColor, eyeStyle, stripeColor }
+    registerProceduralDrawer('cat-procedural', function catDraw(args) {
+        const { ctx, w, h, t, state, params } = args;
+        const cx = w / 2, cy = h / 2;
+        const baseR = Math.min(w, h) * 0.27;
+        const body = (params && params.bodyColor) || '#f4a261';
+        const stripe = (params && params.stripeColor) || shade(body, -0.30);
+
+        const arch = state === 'EXCITED' ? Math.abs(Math.sin(t * 6)) * baseR * 0.10 : 0;
+        const breathe = state === 'SLEEPING' ? 0.96 + Math.sin(t * 0.7) * 0.02
+                                              : 1.00 + Math.sin(t * 2.3) * 0.02;
+        const r = baseR * breathe;
+
+        // Tail — curled S, swishes side-to-side
+        const swishSpeed = state === 'EXCITED' ? 12 : state === 'BUSY' ? 6 : 2;
+        const swish = Math.sin(t * swishSpeed) * 0.45;
+        ctx.strokeStyle = body;
+        ctx.lineWidth = Math.max(2, r * 0.16);
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cx + r * 1.0, cy + r * 0.15);
+        ctx.bezierCurveTo(
+            cx + r * 1.5, cy + r * (0.0 - swish * 0.3),
+            cx + r * 1.7, cy - r * (0.5 + swish * 0.4),
+            cx + r * 1.4 + swish * r * 0.4, cy - r * (0.7 - arch * 4)
+        );
+        ctx.stroke();
+
+        // Body
+        ctx.fillStyle = body;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy - arch, r * 0.95, r * 0.85, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Tabby stripes
+        ctx.strokeStyle = stripe;
+        ctx.lineWidth = Math.max(1, r * 0.04);
+        for (let i = -1; i <= 1; i++) {
+            ctx.beginPath();
+            ctx.moveTo(cx - r * 0.6, cy + i * r * 0.25 - arch);
+            ctx.quadraticCurveTo(cx, cy + i * r * 0.32 - r * 0.05 - arch, cx + r * 0.6, cy + i * r * 0.25 - arch);
+            ctx.stroke();
+        }
+
+        // Pointy ears (triangles)
+        ctx.fillStyle = body;
+        for (const sign of [-1, 1]) {
+            ctx.beginPath();
+            ctx.moveTo(cx + sign * r * 0.55, cy - r * 0.55 - arch);
+            ctx.lineTo(cx + sign * r * 0.30, cy - r * 1.10 - arch);
+            ctx.lineTo(cx + sign * r * 0.85, cy - r * 0.85 - arch);
+            ctx.closePath();
+            ctx.fill();
+            // Inner ear
+            ctx.fillStyle = shade(body, 0.30);
+            ctx.beginPath();
+            ctx.moveTo(cx + sign * r * 0.55, cy - r * 0.62 - arch);
+            ctx.lineTo(cx + sign * r * 0.42, cy - r * 0.95 - arch);
+            ctx.lineTo(cx + sign * r * 0.72, cy - r * 0.82 - arch);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = body;
+        }
+
+        // Eyes — almond shape
+        const eyeY = cy - r * 0.20 - arch;
+        const eyeRX = Math.max(2, r * 0.10);
+        const eyeRY = state === 'SLEEPING' ? 1 : Math.max(2, r * 0.07);
+        const blinkClose = state === 'SLEEPING' ||
+                          (Math.floor(t * 1.3) % 7 === 0 && (t % 1) < 0.12);
+        ctx.fillStyle = '#1a1a1a';
+        for (const sign of [-1, 1]) {
+            const ex = cx + sign * r * 0.30;
+            if (blinkClose) {
+                ctx.fillRect(ex - eyeRX, eyeY - 1, eyeRX * 2, 2);
+            } else {
+                ctx.beginPath();
+                ctx.ellipse(ex, eyeY, eyeRX, eyeRY, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Pink nose triangle
+        ctx.fillStyle = '#e88a96';
+        ctx.beginPath();
+        ctx.moveTo(cx, cy + r * 0.02 - arch);
+        ctx.lineTo(cx - r * 0.07, cy - r * 0.05 - arch);
+        ctx.lineTo(cx + r * 0.07, cy - r * 0.05 - arch);
+        ctx.closePath();
+        ctx.fill();
+    });
+
+    // Tint helper: amt in [-1,1]; +brighten, -darken. Accepts #rgb or #rrggbb.
+    function shade(hex, amt) {
+        let h = String(hex || '').replace('#', '');
+        if (h.length === 3) h = h.split('').map(c => c + c).join('');
+        if (h.length !== 6) return hex;
+        const n = parseInt(h, 16);
+        let r = (n >> 16) & 0xff, g = (n >> 8) & 0xff, b = n & 0xff;
+        const adj = (c) => Math.max(0, Math.min(255, Math.round(amt >= 0 ? c + (255 - c) * amt : c * (1 + amt))));
+        r = adj(r); g = adj(g); b = adj(b);
+        return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+    }
+
     // Fallback placeholder for unknown renderer keys — keeps preview
     // page functional even when descriptor names a drawer we haven't
     // registered yet. Color from descriptor.metadata.color or grey.
