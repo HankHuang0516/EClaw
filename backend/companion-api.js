@@ -6,8 +6,8 @@
  * Spec: docs/specs/petdx-backend-api-spec.md (v0.2)
  * Stage 1: read endpoints — list + detail.
  * Stage 2: favorites + select + current
- * Stage 3 (this file): + ratings + comments
- *   Stage 4: submit + draft + review (creator + device-owner gated)
+ * Stage 3: ratings + comments
+ * Stage 4 (this file): + submit + pending + review + delete (creator/owner gated)
  *
  * Auth: deviceId + botSecret + entityId — same triple as /api/bot/*.
  * The factory caller injects `authenticateBot(deviceId, entityId, botSecret)`
@@ -31,6 +31,20 @@ const ALLOWED_SCOPES = new Set(['all', 'system', 'community', 'mine']);
 const ALLOWED_ASSET_TYPES = new Set(['procedural', 'spritesheet', 'vector']);
 const ALLOWED_CATEGORIES = new Set(['animal', 'human', 'robot', 'mascot', 'custom']);
 const ALLOWED_SELECT_SOURCES = new Set(['portal', 'app', 'api']);
+const ALLOWED_LICENSES = new Set([
+    'EClaw-default', 'CC0', 'CC-BY-4.0', 'CC-BY-SA-4.0', 'MIT',
+]);
+// Ten lowercase substrings — enough to block accidental copy-paste of slurs in
+// public companion names/tags. Real moderation is the device-owner review step.
+const PROFANITY_BLOCKLIST = [
+    'fuck', 'shit', 'bitch', 'asshole', 'retard',
+    '幹你', '幹妳', '操你', '操妳', '操他媽',
+];
+const SUBMIT_RATE_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000;
+const SUBMIT_RATE_LIMIT_MAX = 5;
+const SEMVER_RE = /^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$/;
+const STATE_RE = /^[A-Z][A-Z0-9_]{1,15}$/;
+const ID_RE = /^[a-z0-9][a-z0-9-]{0,79}$/;
 
 function parsePositiveInt(value, fallback, max) {
     const n = parseInt(value, 10);
@@ -42,6 +56,48 @@ function parseTags(raw) {
     if (!raw) return [];
     if (Array.isArray(raw)) return raw.map(String).filter(Boolean);
     return String(raw).split(',').map(s => s.trim()).filter(Boolean).slice(0, 10);
+}
+
+// Returns null on success or a string error code on rejection. Used by
+// POST /submit. Order matches the user-facing error precedence: id → name →
+// version → assetType → states → license → category → tags → profanity.
+function validateSubmittedDescriptor(body) {
+    if (!body || typeof body !== 'object') return 'invalid_body';
+    const id = body.id;
+    if (typeof id !== 'string' || !ID_RE.test(id)) return 'invalid_companion_id';
+    const name = typeof body.name === 'string' ? body.name.trim() : '';
+    if (name.length < 1 || name.length > 40) return 'invalid_name';
+    const version = body.version || '1.0.0';
+    if (typeof version !== 'string' || !SEMVER_RE.test(version)) return 'invalid_version';
+    if (!body.descriptor || typeof body.descriptor !== 'object' || Array.isArray(body.descriptor)) {
+        return 'invalid_descriptor';
+    }
+    if (typeof body.descriptor.id === 'string' && body.descriptor.id !== id) {
+        return 'descriptor_id_mismatch';
+    }
+    if (!ALLOWED_ASSET_TYPES.has(body.assetType)) return 'invalid_asset_type';
+    const states = Array.isArray(body.supportedStates) ? body.supportedStates : null;
+    if (!states || states.length < 1 || states.length > 12) return 'invalid_supported_states';
+    for (const s of states) {
+        if (typeof s !== 'string' || !STATE_RE.test(s)) return 'invalid_supported_states';
+    }
+    const license = body.license || 'EClaw-default';
+    if (!ALLOWED_LICENSES.has(license)) return 'invalid_license';
+    if (body.category != null && !ALLOWED_CATEGORIES.has(body.category)) return 'invalid_category';
+    if (body.tags != null) {
+        if (!Array.isArray(body.tags) || body.tags.length > 10) return 'invalid_tags';
+        for (const t of body.tags) {
+            if (typeof t !== 'string' || t.length < 1 || t.length > 30) return 'invalid_tags';
+        }
+    }
+    // Profanity scan: name + tags + descriptor.description.
+    const haystacks = [name, ...(body.tags || [])];
+    if (typeof body.descriptor.description === 'string') haystacks.push(body.descriptor.description);
+    const lower = haystacks.join(' ').toLowerCase();
+    for (const bad of PROFANITY_BLOCKLIST) {
+        if (lower.includes(bad)) return 'profanity_detected';
+    }
+    return null;
 }
 
 function rowToCompanionCard(row) {
@@ -124,6 +180,20 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
     }
     const log = serverLog || (() => {});
     const router = express.Router();
+
+    // Submit rate-limit: per-entity sliding window, factory-scoped so unit
+    // tests automatically get a fresh limiter per `companionFactory(...)` call.
+    // Map<entityId, number[]> — values are timestamps within the window.
+    const submitLog = new Map();
+    function checkSubmitRateLimit(entityId) {
+        const now = Date.now();
+        const cutoff = now - SUBMIT_RATE_LIMIT_WINDOW_MS;
+        const arr = (submitLog.get(entityId) || []).filter(t => t > cutoff);
+        if (arr.length >= SUBMIT_RATE_LIMIT_MAX) return false;
+        arr.push(now);
+        submitLog.set(entityId, arr);
+        return true;
+    }
 
     // Read endpoints accept either device-owner (deviceSecret) or bot
     // (botSecret+entityId) auth so portal pages with deviceSecret in
@@ -733,6 +803,228 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
         }
     });
 
+    // ── POST /api/companion/submit ────────────────────────────────
+    // Body: full descriptor payload (see validateSubmittedDescriptor). Inserts
+    // a row with status='pending_review' + scope='community' attributed to the
+    // caller's (deviceId, entityId). Pure bot auth — deviceSecret-only callers
+    // have no authoring entity, so they're rejected with 400.
+    router.post('/submit', authReader, async (req, res) => {
+        if (req.botAuth.entityId == null) {
+            return res.status(400).json({ success: false, error: 'submit_requires_entity' });
+        }
+        const err = validateSubmittedDescriptor(req.body);
+        if (err) return res.status(400).json({ success: false, error: err });
+
+        if (!checkSubmitRateLimit(req.botAuth.entityId)) {
+            return res.status(429).json({ success: false, error: 'rate_limit_exceeded' });
+        }
+
+        const body = req.body;
+        const id = body.id;
+        const name = body.name.trim();
+        const version = body.version || '1.0.0';
+        const license = body.license || 'EClaw-default';
+        const supportedStates = body.supportedStates;
+        const tags = body.tags || [];
+        try {
+            const exists = await pool.query(
+                `SELECT 1 FROM companions WHERE id = $1`, [id]
+            );
+            if (exists.rowCount > 0) {
+                return res.status(409).json({ success: false, error: 'companion_id_exists' });
+            }
+            const now = Date.now();
+            await pool.query(
+                `INSERT INTO companions
+                    (id, name, version, author_entity_id, device_id, descriptor,
+                     asset_type, asset_url, avatar_url, thumbnail_url,
+                     supported_states, scope, status, license,
+                     category, mood, color, tags, i18n_data,
+                     created_at, updated_at)
+                 VALUES ($1, $2, $3, $4, $5, $6,
+                         $7, $8, $9, $10,
+                         $11::jsonb, 'community', 'pending_review', $12,
+                         $13, $14, $15, $16::jsonb, $17,
+                         $18, $18)`,
+                [
+                    id, name, version, req.botAuth.entityId, req.botAuth.deviceId,
+                    body.descriptor,
+                    body.assetType, body.assetUrl || null, body.avatarUrl || null, body.thumbnailUrl || null,
+                    JSON.stringify(supportedStates), license,
+                    body.category || null, body.mood || null, body.color || null,
+                    JSON.stringify(tags), body.i18nData || null,
+                    now,
+                ]
+            );
+            res.status(201).json({
+                success: true,
+                companion: {
+                    id, name, version, status: 'pending_review',
+                    scope: 'community', author: { entityId: req.botAuth.entityId },
+                    createdAt: now,
+                },
+            });
+        } catch (e) {
+            log('error', 'companion', `[Companion] submit failed: ${e.message}`);
+            res.status(500).json({ success: false, error: 'query_failed' });
+        }
+    });
+
+    // ── GET /api/companion/pending ────────────────────────────────
+    // Device-owner-only review queue. Lists pending_review companions on
+    // this device (creator's deviceId == caller's deviceId). Bot auth is
+    // explicitly rejected because the review action mutates global state
+    // and we don't want sub-bots auto-publishing each other's submissions.
+    router.get('/pending', authReader, async (req, res) => {
+        if (req.botAuth.authMode !== 'device') {
+            return res.status(403).json({ success: false, error: 'device_owner_only' });
+        }
+        const page = parsePositiveInt(req.query.page, 1);
+        const limit = parsePositiveInt(req.query.limit, DEFAULT_LIMIT, MAX_LIMIT);
+        const offset = (page - 1) * limit;
+        try {
+            const [listRes, countRes] = await Promise.all([
+                pool.query(
+                    `SELECT id, name, version, author_entity_id, device_id, descriptor,
+                            asset_type, asset_url, avatar_url, thumbnail_url,
+                            supported_states, scope, status, license,
+                            category, mood, color, tags, i18n_data,
+                            download_count, favorite_count, rating_avg, rating_count,
+                            comment_count, published_at, created_at
+                       FROM companions
+                      WHERE status = 'pending_review' AND device_id = $1
+                   ORDER BY created_at DESC
+                      LIMIT $2 OFFSET $3`,
+                    [req.botAuth.deviceId, limit, offset]
+                ),
+                pool.query(
+                    `SELECT COUNT(*)::int AS n FROM companions
+                      WHERE status = 'pending_review' AND device_id = $1`,
+                    [req.botAuth.deviceId]
+                ),
+            ]);
+            res.json({
+                success: true,
+                page, limit,
+                total: countRes.rows[0]?.n || 0,
+                companions: listRes.rows.map(rowToCompanionDetail),
+            });
+        } catch (e) {
+            log('error', 'companion', `[Companion] pending list failed: ${e.message}`);
+            res.status(500).json({ success: false, error: 'query_failed' });
+        }
+    });
+
+    // ── POST /api/companion/:id/review ────────────────────────────
+    // Body: { decision: 'approve'|'reject', reason? }. Device-owner-only.
+    // Approve flips status→published + sets published_at. Reject stores
+    // reject_reason (truncated to 500). Only pending_review rows are
+    // reviewable; published / rejected / hidden return 409.
+    router.post('/:id/review', authReader, async (req, res) => {
+        if (req.botAuth.authMode !== 'device') {
+            return res.status(403).json({ success: false, error: 'device_owner_only' });
+        }
+        const { id } = req.params;
+        if (!ID_RE.test(id)) {
+            return res.status(400).json({ success: false, error: 'invalid_companion_id' });
+        }
+        const decision = req.body?.decision;
+        if (decision !== 'approve' && decision !== 'reject') {
+            return res.status(400).json({ success: false, error: 'invalid_decision' });
+        }
+        const reason = decision === 'reject'
+            ? String(req.body?.reason || '').slice(0, 500) || null
+            : null;
+        try {
+            const cRes = await pool.query(
+                `SELECT id, status, device_id FROM companions WHERE id = $1`, [id]
+            );
+            if (cRes.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'companion_not_found' });
+            }
+            const c = cRes.rows[0];
+            if (c.device_id !== req.botAuth.deviceId) {
+                return res.status(403).json({ success: false, error: 'forbidden' });
+            }
+            if (c.status !== 'pending_review') {
+                return res.status(409).json({ success: false, error: 'not_pending_review' });
+            }
+            const now = Date.now();
+            if (decision === 'approve') {
+                await pool.query(
+                    `UPDATE companions
+                        SET status = 'published',
+                            published_at = $1,
+                            updated_at = $1,
+                            rejected_at = NULL,
+                            reject_reason = NULL
+                      WHERE id = $2`,
+                    [now, id]
+                );
+                res.json({
+                    success: true,
+                    companion: { id, status: 'published', publishedAt: now },
+                });
+            } else {
+                await pool.query(
+                    `UPDATE companions
+                        SET status = 'rejected',
+                            rejected_at = $1,
+                            updated_at = $1,
+                            reject_reason = $2
+                      WHERE id = $3`,
+                    [now, reason, id]
+                );
+                res.json({
+                    success: true,
+                    companion: { id, status: 'rejected', rejectedAt: now, rejectReason: reason },
+                });
+            }
+        } catch (e) {
+            log('error', 'companion', `[Companion] review failed: ${e.message}`);
+            res.status(500).json({ success: false, error: 'query_failed' });
+        }
+    });
+
+    // ── DELETE /api/companion/:id ─────────────────────────────────
+    // Hard delete pending_review rows only. Authorized for: (a) creator —
+    // (deviceId, entityId) match the row's; (b) device owner — deviceSecret
+    // auth on the row's device. Published rows are hidden via review path,
+    // not deleted, so their stats history survives.
+    router.delete('/:id', authReader, async (req, res) => {
+        const { id } = req.params;
+        if (!ID_RE.test(id)) {
+            return res.status(400).json({ success: false, error: 'invalid_companion_id' });
+        }
+        try {
+            const cRes = await pool.query(
+                `SELECT id, status, device_id, author_entity_id
+                   FROM companions WHERE id = $1`,
+                [id]
+            );
+            if (cRes.rowCount === 0) {
+                return res.status(404).json({ success: false, error: 'companion_not_found' });
+            }
+            const c = cRes.rows[0];
+            if (c.status !== 'pending_review') {
+                return res.status(409).json({ success: false, error: 'not_pending_review' });
+            }
+            const isOwner = req.botAuth.authMode === 'device'
+                && c.device_id === req.botAuth.deviceId;
+            const isCreator = req.botAuth.authMode === 'bot'
+                && c.device_id === req.botAuth.deviceId
+                && c.author_entity_id === req.botAuth.entityId;
+            if (!isOwner && !isCreator) {
+                return res.status(403).json({ success: false, error: 'forbidden' });
+            }
+            await pool.query(`DELETE FROM companions WHERE id = $1`, [id]);
+            res.json({ success: true, companionId: id });
+        } catch (e) {
+            log('error', 'companion', `[Companion] delete failed: ${e.message}`);
+            res.status(500).json({ success: false, error: 'query_failed' });
+        }
+    });
+
     // ── GET /api/companion/:id ────────────────────────────────────
     router.get('/:id', authReader, async (req, res) => {
         const { id } = req.params;
@@ -772,4 +1064,7 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
 };
 
 module.exports.initCompanionDatabase = initCompanionDatabase;
-module.exports._test = { parseTags, parsePositiveInt, rowToCompanionCard, rowToCompanionDetail };
+module.exports._test = {
+    parseTags, parsePositiveInt, rowToCompanionCard, rowToCompanionDetail,
+    validateSubmittedDescriptor,
+};
