@@ -945,5 +945,7 @@ If you have any questions, please contact us via our official email.
     <string name="tool_status_analyzing">Running analysis…</string>
     <string name="tool_status_editing">Editing file…</string>
     <string name="tool_status_writing">Writing file…</string>
+    <string name="custom_layout_enabled">Custom layout enabled</string>
+    <string name="custom_layout_using_preset">Using preset layout</string>
 </resources>
 
