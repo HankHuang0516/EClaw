@@ -177,7 +177,7 @@ async function initKanbanDatabase() {
 /**
  * Factory: receives in-memory devices object from index.js
  */
-module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pushToChannelCallback, saveChatMessage, getMissionApiHints, pushToBot, orgChart } = {}) {
+module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pushToChannelCallback, saveChatMessage, getMissionApiHints, pushToBot, orgChart, notifyDevice } = {}) {
     const router = express.Router();
 
     // Health check
@@ -1591,6 +1591,22 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 }
             }
 
+            // Device-level push: surface card-done events to the owner's web/FCM
+            // push channel so completions don't only land in assigned-bot inboxes.
+            // `kanban_done_auto` is a separate prefs key so users can mute the
+            // chatty cron/auto-generated children without losing manual closures.
+            if (newStatus === 'done' && typeof notifyDevice === 'function') {
+                const isAuto = !!card.is_auto_generated;
+                notifyDevice(deviceId, {
+                    type: 'kanban',
+                    category: isAuto ? 'kanban_done_auto' : 'kanban_done',
+                    title: isAuto ? '✅ 自動任務完成' : '✅ 任務完成',
+                    body: card.title,
+                    link: `/portal/kanban.html?card=${cardId}`,
+                    metadata: { cardId, isAuto, fromStatus: oldStatus }
+                }).catch(() => {});
+            }
+
             // If this is an auto-generated child card moving to Done → update parent
             if (newStatus === 'done' && card.is_auto_generated && card.parent_card_id) {
                 console.log(`[Kanban] Child card ${cardId} done, updating parent ${card.parent_card_id}`);
@@ -2904,6 +2920,20 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                     `✅ Bot #${entityId} 已回報完成，自動結案${msgPreview}`);
 
                 console.log(`[Kanban] Auto-done: child card ${card.id} (${card.title}) marked done by entity ${entityId}${reviewerId != null ? `, reviewer: #${reviewerId}` : ''}`);
+
+                // Auto-close bypasses /move, so notifyDevice fires here too.
+                // Always classified as kanban_done_auto since this branch only
+                // runs for bot-reported IDLE auto-completions.
+                if (typeof notifyDevice === 'function') {
+                    notifyDevice(deviceId, {
+                        type: 'kanban',
+                        category: 'kanban_done_auto',
+                        title: '✅ 自動任務完成',
+                        body: card.title,
+                        link: `/portal/kanban.html?card=${card.id}`,
+                        metadata: { cardId: card.id, isAuto: true, autoClosedBy: entityId }
+                    }).catch(() => {});
+                }
 
                 // Award XP for completing task
                 if (awardEntityXP) {
