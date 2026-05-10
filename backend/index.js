@@ -254,6 +254,18 @@ app.get('/llms.txt', (req, res) => {
     res.type('text/plain').sendFile(path.join(__dirname, 'public/llms.txt'));
 });
 
+// SEO: dynamic sitemap of every public bot, regenerated per request.
+// Cheap (single SELECT, capped at 500 rows) and lets crawlers discover bots
+// the moment they go public, without a build step.
+// MUST be declared BEFORE /community/:publicCode — Express matches in
+// declaration order and `sitemap.xml` would otherwise be captured as a
+// (malformed) publicCode and 404 with the not-found page.
+app.get('/community/sitemap.xml', async (req, res) => {
+    const bots = await db.searchPublicCards({ limit: 500, offset: 0, sort: 'newest' });
+    res.set('Cache-Control', 'public, max-age=600');
+    res.type('application/xml').send(communitySsr.renderCommunitySitemapXml(bots));
+});
+
 // SEO: per-bot SSR landing pages for individual public bots.
 // Crawlers get a fully rendered HTML page with title/meta/OG/JSON-LD; humans
 // follow the "Open in Plaza" CTA into the JS plaza for full interactivity.
@@ -268,15 +280,6 @@ app.get('/community/:publicCode', async (req, res) => {
     }
     res.set('Cache-Control', 'public, max-age=300');
     res.type('text/html').send(communitySsr.renderBotPageHtml(card));
-});
-
-// SEO: dynamic sitemap of every public bot, regenerated per request.
-// Cheap (single SELECT, capped at 500 rows) and lets crawlers discover bots
-// the moment they go public, without a build step.
-app.get('/community/sitemap.xml', async (req, res) => {
-    const bots = await db.searchPublicCards({ limit: 500, offset: 0, sort: 'newest' });
-    res.set('Cache-Control', 'public, max-age=600');
-    res.type('application/xml').send(communitySsr.renderCommunitySitemapXml(bots));
 });
 // Serve public assets (OG image, etc.) — cache aggressively to reduce egress
 app.use('/assets', express.static(path.join(__dirname, 'public/assets'), {
