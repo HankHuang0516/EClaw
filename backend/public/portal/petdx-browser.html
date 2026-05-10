@@ -422,15 +422,18 @@
     }
 
     function rendererKeyFromCard(card) {
-        // descriptor.asset.renderer isn't surfaced on the list payload.
-        // Best-effort guess from name/tags so the grid doesn't render
-        // every non-lobster as a lobster. Unknown -> fallback-blob, which
-        // is registered in petdx-renderer.js and shows a generic preview.
+        // descriptor.asset.renderer isn't surfaced on the list payload, so
+        // we keyword-guess from id/name/tags. Detail dialogs use the real
+        // descriptor.asset.renderer from /api/companion/:id and bypass this.
+        // Unknown → fallback-blob (registered in petdx-renderer.js).
+        if (card.renderer) return card.renderer;
+        const id = (card.id || '').toLowerCase();
         const name = (card.name || '').toLowerCase();
         const tags = (card.tags || []).map(t => String(t).toLowerCase());
-        if (name.includes('lobster') || name.includes('龍蝦') || tags.includes('lobster')) {
-            return 'lobster-procedural';
-        }
+        const haystack = id + ' ' + name + ' ' + tags.join(' ');
+        if (haystack.includes('lobster') || haystack.includes('龍蝦')) return 'lobster-procedural';
+        if (haystack.includes('dog') || haystack.includes('獵犬') || haystack.includes('狗')) return 'dog-procedural';
+        if (haystack.includes('cat') || haystack.includes('貓')) return 'cat-procedural';
         return 'fallback-blob';
     }
 
