@@ -34,7 +34,11 @@ class ClawWallpaperService : WallpaperService() {
 
         private val handler = Handler(Looper.getMainLooper())
         private var visible = false
-        private val renderer = ClawRenderer(this@ClawWallpaperService)
+        private val companionRepository = com.hank.clawlive.data.repository.CompanionRepository(
+            com.hank.clawlive.data.remote.NetworkModule.api,
+            this@ClawWallpaperService
+        )
+        private val renderer = ClawRenderer(this@ClawWallpaperService, companionRepository)
         private val repository = com.hank.clawlive.data.repository.StateRepository(
             com.hank.clawlive.data.remote.NetworkModule.api,
             this@ClawWallpaperService
@@ -65,6 +69,10 @@ class ClawWallpaperService : WallpaperService() {
             observeStatus()
         }
 
+        // Tracks which entityIds already have a companion-poller flow running so
+        // we don't spawn duplicate jobs each time getMultiEntityStatusFlow emits.
+        private val companionJobs = mutableMapOf<Int, kotlinx.coroutines.Job>()
+
         private fun observeStatus() {
             engineScope.launch {
                 if (multiEntityMode) {
@@ -77,6 +85,7 @@ class ClawWallpaperService : WallpaperService() {
                                 Timber.d("First entity: id=${e.entityId}, name=${e.name}, state=${e.state}")
                             }
                             currentEntities = response.entities
+                            ensureCompanionPollers(response.entities)
                             if (visible) draw()
                         }
                 } else {
@@ -87,6 +96,28 @@ class ClawWallpaperService : WallpaperService() {
                             currentStatus = newStatus
                             if (visible) draw()
                         }
+                }
+            }
+        }
+
+        private fun ensureCompanionPollers(entities: List<EntityStatus>) {
+            // Start a flow per entity that has a botSecret; cancel any pollers
+            // for entities that have disappeared since last emission.
+            val active = entities.mapNotNull { e ->
+                e.botSecret?.let { secret -> e.entityId to secret }
+            }
+            val activeIds = active.map { it.first }.toSet()
+            companionJobs.keys.toList().forEach { id ->
+                if (id !in activeIds) {
+                    companionJobs.remove(id)?.cancel()
+                }
+            }
+            for ((id, secret) in active) {
+                if (companionJobs[id]?.isActive == true) continue
+                companionJobs[id] = engineScope.launch {
+                    companionRepository.getCompanionFlow(id, secret).collect {
+                        if (visible) draw()
+                    }
                 }
             }
         }
@@ -145,8 +176,11 @@ class ClawWallpaperService : WallpaperService() {
             super.onSurfaceDestroyed(holder)
             visible = false
             handler.removeCallbacks(drawRunnable)
+            companionJobs.values.forEach { it.cancel() }
+            companionJobs.clear()
             engineScope.cancel()
             renderer.release()
+            companionRepository.release()
             Timber.d("onSurfaceDestroyed")
         }
 

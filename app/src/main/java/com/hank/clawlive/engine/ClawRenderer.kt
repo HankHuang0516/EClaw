@@ -13,15 +13,21 @@ import com.hank.clawlive.data.local.EntityLayout
 import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.model.AgentStatus
 import com.hank.clawlive.data.model.CharacterState
+import com.hank.clawlive.data.model.CompanionDetail
 import com.hank.clawlive.data.model.EntityStatus
+import com.hank.clawlive.data.repository.CompanionRepository
 import timber.log.Timber
 import kotlin.math.ceil
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-class ClawRenderer(private val context: Context) {
+class ClawRenderer(
+    private val context: Context,
+    private val companionRepository: CompanionRepository? = null
+) {
 
     private val layoutPrefs = LayoutPreferences.getInstance(context)
+    private val spritesheetDrawer = companionRepository?.let { SpritesheetCompanionDrawer(it) }
 
     // Background image cache
     private var cachedBackgroundBitmap: Bitmap? = null
@@ -463,9 +469,20 @@ class ClawRenderer(private val context: Context) {
         val charY = centerY + bobOffset
         val radius = 150f * scale
 
-        // Draw entity based on type (LOBSTER only now)
-        // The lobster SVG drawing creates its own body shape, no need for base circle
-        drawLobsterAtPosition(canvas, centerX, charY, entity, scale)
+        // Petdx companion routing — if the entity has a current companion and
+        // it's a spritesheet asset, render that; procedural assets (and missing
+        // descriptors) fall through to the legacy lobster drawer with optional
+        // body-color override pulled from the descriptor.
+        val companion = companionRepository?.cached(entity.entityId)
+        val drewSpritesheet = if (companion != null && companion.assetType == "spritesheet") {
+            spritesheetDrawer?.draw(
+                canvas, companion, entity.entityId, entity.state.toString(), centerX, charY, scale
+            ) ?: false
+        } else false
+
+        if (!drewSpritesheet) {
+            drawLobsterAtPosition(canvas, centerX, charY, entity, scale, companion)
+        }
 
         // Draw message bubble (ABOVE the entity)
         // Anchor point is top of the character + margin
@@ -739,13 +756,19 @@ class ClawRenderer(private val context: Context) {
 
     /**
      * Draw lobster at specific position with scale.
+     *
+     * Color priority (highest first):
+     *   1. entity.parts["COLOR"]   — live state override from /api/transform
+     *   2. companion descriptor `asset.params.bodyColor` — companion-level config
+     *   3. character-name fallback (golden/diamond)
      */
     private fun drawLobsterAtPosition(
         canvas: Canvas,
         cx: Float,
         cy: Float,
         entity: EntityStatus,
-        scale: Float
+        scale: Float,
+        companion: CompanionDetail? = null
     ) {
         // SVG scale (original is 4x, now multiply by entity scale)
         val svgScale = 4f * scale
@@ -758,7 +781,9 @@ class ClawRenderer(private val context: Context) {
         // Dynamic color
         val charString = entity.character.uppercase(java.util.Locale.ROOT)
         // Check for overrides in parts
-        val customColor = (entity.parts?.get("COLOR") as? Double)?.toInt()
+        val partsColor = (entity.parts?.get("COLOR") as? Double)?.toInt()
+        val descriptorColor = proceduralBodyColorOverride(companion)
+        val customColor = partsColor ?: descriptorColor
         val metallic = (entity.parts?.get("METALLIC") as? Double)?.toFloat() ?: 0f
         val gloss = (entity.parts?.get("GLOSS") as? Double)?.toFloat() ?: 0f
 

@@ -8,6 +8,7 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.View
+import com.hank.clawlive.R
 import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.model.EntityStatus
 import kotlin.math.ceil
@@ -183,7 +184,7 @@ class LayoutEditorView @JvmOverloads constructor(
             // Draw empty message
             labelPaint.textSize = 36f
             labelPaint.color = Color.GRAY
-            canvas.drawText(getString(R.string.no_bound_entities), width / 2f, height / 2f, labelPaint)
+            canvas.drawText(context.getString(R.string.no_bound_entities), width / 2f, height / 2f, labelPaint)
             return
         }
 
