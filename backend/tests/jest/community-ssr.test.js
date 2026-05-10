@@ -37,6 +37,26 @@ describe('community-ssr.isValidPublicCode', () => {
         expect(ssr.isValidPublicCode('drop;table')).toBe(false);
         expect(ssr.isValidPublicCode(null)).toBe(false);
         expect(ssr.isValidPublicCode(undefined)).toBe(false);
+        // Anything with a dot is rejected — also why the sitemap.xml route
+        // must be declared BEFORE /community/:publicCode in index.js.
+        expect(ssr.isValidPublicCode('sitemap.xml')).toBe(false);
+        expect(ssr.isValidPublicCode('robots.txt')).toBe(false);
+    });
+});
+
+describe('community-ssr route ordering (index.js)', () => {
+    it('declares /community/sitemap.xml before /community/:publicCode', () => {
+        // Regression: the original PR had the routes in the opposite order so
+        // GET /community/sitemap.xml fell into the publicCode handler and
+        // returned a 404 not-found page instead of the XML sitemap.
+        const fs = require('fs');
+        const path = require('path');
+        const src = fs.readFileSync(path.join(__dirname, '../../index.js'), 'utf8');
+        const sitemapIdx = src.indexOf("app.get('/community/sitemap.xml'");
+        const publicCodeIdx = src.indexOf("app.get('/community/:publicCode'");
+        expect(sitemapIdx).toBeGreaterThan(0);
+        expect(publicCodeIdx).toBeGreaterThan(0);
+        expect(sitemapIdx).toBeLessThan(publicCodeIdx);
     });
 });
 
