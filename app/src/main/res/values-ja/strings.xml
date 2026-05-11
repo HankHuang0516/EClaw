@@ -269,7 +269,7 @@
     <string name="feedback_photo_uploaded">%d枚の写真をアップロードしました</string>
     <string name="feedback_photo_uploading">写真をアップロード中…</string>
     <string name="feedback_result_issue">GitHub Issue #%d を表示</string>
-    <string name="feedback_result_logs">キャプチャ: APIコール %d件、サーバーログ %d件</string>
+    <string name="feedback_result_logs">キャプチャ: APIコール %1$d件、サーバーログ %2$d件</string>
     <string name="feedback_result_severity">重要度: %s</string>
     <string name="feedback_result_title">フィードバック #%d を受信しました</string>
     <string name="feedback_sending">送信中…</string>
