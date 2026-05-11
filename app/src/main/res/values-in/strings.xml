@@ -269,7 +269,7 @@
     <string name="feedback_photo_uploaded">%d foto diunggah</string>
     <string name="feedback_photo_uploading">Mengunggah foto…</string>
     <string name="feedback_result_issue">Lihat GitHub Issue #%d</string>
-    <string name="feedback_result_logs">Diambil: %d panggilan API, %d log server</string>
+    <string name="feedback_result_logs">Diambil: %1$d panggilan API, %2$d log server</string>
     <string name="feedback_result_severity">Tingkat keparahan: %s</string>
     <string name="feedback_result_title">Umpan balik #%d diterima</string>
     <string name="feedback_sending">Mengirim…</string>

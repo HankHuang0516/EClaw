@@ -269,7 +269,7 @@
     <string name="feedback_photo_uploaded">อัปโหลด %d รูปแล้ว</string>
     <string name="feedback_photo_uploading">กำลังอัปโหลดรูปภาพ…</string>
     <string name="feedback_result_issue">ดู GitHub Issue #%d</string>
-    <string name="feedback_result_logs">บันทึกที่จับได้: %d การเรียก API, %d บันทึกเซิร์ฟเวอร์</string>
+    <string name="feedback_result_logs">บันทึกที่จับได้: %1$d การเรียก API, %2$d บันทึกเซิร์ฟเวอร์</string>
     <string name="feedback_result_severity">ความรุนแรง: %s</string>
     <string name="feedback_result_title">ได้รับความคิดเห็น #%d แล้ว</string>
     <string name="feedback_sending">กำลังส่ง…</string>
