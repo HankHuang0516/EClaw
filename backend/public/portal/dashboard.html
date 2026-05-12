@@ -545,14 +545,57 @@
         .channel-step-code:hover .channel-step-copy {
             opacity: 0.6;
         }
+        .channel-promo-grid {
+            display: grid;
+            gap: 10px;
+        }
+        .channel-guide-card {
+            border: 1px solid var(--border, rgba(255,255,255,0.12));
+            border-radius: 12px;
+            background: rgba(255,255,255,0.035);
+            padding: 10px;
+        }
+        .channel-guide-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-primary, #f3f4f6);
+            margin-bottom: 6px;
+        }
+        .channel-guide-desc {
+            font-size: 11px;
+            line-height: 1.45;
+            color: var(--text-secondary, #9ca3af);
+            margin-bottom: 8px;
+        }
+        .channel-guide-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 999px;
+            background: rgba(124,58,237,0.18);
+            color: var(--primary, #a78bfa);
+            white-space: nowrap;
+        }
+        .channel-guide-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
         .channel-promo-link {
-            display: block;
-            text-align: right;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
             font-size: 11px;
             color: var(--primary);
             text-decoration: none;
-            margin-top: 8px;
-            opacity: 0.7;
+            opacity: 0.82;
             transition: opacity 0.15s;
         }
         .channel-promo-link:hover {
@@ -1751,24 +1794,90 @@
                         <span class="channel-promo-arrow" id="channelPromoArrow">›</span>
                     </div>
                     <div class="channel-promo-steps" id="channelPromoSteps" style="display:none;">
-                        <div class="channel-step" data-i18n="dash_channel_step_intro">In OpenClaw terminal:</div>
-                        <div class="channel-step-code" onclick="copyText('openclaw plugins install @eclaw/openclaw-channel', this)">
-                            <span class="channel-step-num">1</span>
-                            <code>openclaw plugins install @eclaw/openclaw-channel</code>
-                            <span class="channel-step-copy">⧉</span>
+                        <div class="channel-promo-grid">
+                            <div class="channel-guide-card">
+                                <div class="channel-guide-title">
+                                    <span>OpenClaw Channel</span>
+                                    <span class="channel-guide-badge">Stable</span>
+                                </div>
+                                <div class="channel-guide-desc">Official OpenClaw plugin path — best for hosted OpenClaw bots and production API-key setups.</div>
+                                <div class="channel-step" data-i18n="dash_channel_step_intro">In OpenClaw terminal:</div>
+                                <div class="channel-step-code" onclick="copyText('openclaw plugins install @eclaw/openclaw-channel', this)">
+                                    <span class="channel-step-num">1</span>
+                                    <code>openclaw plugins install @eclaw/openclaw-channel</code>
+                                    <span class="channel-step-copy">⧉</span>
+                                </div>
+                                <div class="channel-step-code" onclick="copyText('openclaw configure', this)">
+                                    <span class="channel-step-num">2</span>
+                                    <code>openclaw configure</code>
+                                    <span class="channel-step-copy">⧉</span>
+                                </div>
+                                <div class="channel-step-code">
+                                    <span class="channel-step-num">3</span>
+                                    <code data-i18n="dash_channel_step3">Select "EClaw"</code>
+                                </div>
+                                <div class="channel-guide-actions">
+                                    <a class="channel-promo-link" href="info.html#channel-plugins/openclaw-channel">
+                                        <span data-i18n="dash_channel_learn_more">Learn more</span> →
+                                    </a>
+                                    <a class="channel-promo-link" href="https://www.npmjs.com/package/@eclaw/openclaw-channel" target="_blank" rel="noopener">npm →</a>
+                                </div>
+                            </div>
+
+                            <div class="channel-guide-card">
+                                <div class="channel-guide-title">
+                                    <span>Claude Code Channel</span>
+                                    <span class="channel-guide-badge">Subscription</span>
+                                </div>
+                                <div class="channel-guide-desc">Connect an EClaw entity to a Claude Code session via fakechat WebSocket. Good when you want to use claude.ai subscription quota instead of API-token billing.</div>
+                                <div class="channel-step-code" onclick="copyText('git clone https://github.com/HankHuang0516/claude-code-eclaw-channel.git && cd claude-code-eclaw-channel && bun install', this)">
+                                    <span class="channel-step-num">1</span>
+                                    <code>git clone .../claude-code-eclaw-channel && bun install</code>
+                                    <span class="channel-step-copy">⧉</span>
+                                </div>
+                                <div class="channel-step-code" onclick="copyText('/plugin install fakechat@claude-plugins-official', this)">
+                                    <span class="channel-step-num">2</span>
+                                    <code>/plugin install fakechat@claude-plugins-official</code>
+                                    <span class="channel-step-copy">⧉</span>
+                                </div>
+                                <div class="channel-step-code" onclick="copyText('curl http://localhost:18800/health', this)">
+                                    <span class="channel-step-num">3</span>
+                                    <code>curl http://localhost:18800/health</code>
+                                    <span class="channel-step-copy">⧉</span>
+                                </div>
+                                <div class="channel-guide-actions">
+                                    <a class="channel-promo-link" href="info.html#channel-plugins/claude-code-channel">Claude guide →</a>
+                                    <a class="channel-promo-link" href="https://github.com/HankHuang0516/claude-code-eclaw-channel" target="_blank" rel="noopener">GitHub →</a>
+                                </div>
+                            </div>
+
+                            <div class="channel-guide-card">
+                                <div class="channel-guide-title">
+                                    <span>Codex Channel</span>
+                                    <span class="channel-guide-badge">CLI bridge</span>
+                                </div>
+                                <div class="channel-guide-desc">Connect an EClaw entity to OpenAI Codex CLI via <code>codex app-server</code>. Good for remote repo work from EClaw chat.</div>
+                                <div class="channel-step-code" onclick="copyText('git clone https://github.com/HankHuang0516/codex-eclaw-bridge.git && cd codex-eclaw-bridge && npm install && cp .env.example .env', this)">
+                                    <span class="channel-step-num">1</span>
+                                    <code>git clone .../codex-eclaw-bridge && npm install</code>
+                                    <span class="channel-step-copy">⧉</span>
+                                </div>
+                                <div class="channel-step-code" onclick="copyText('ECLAW_API_KEY=eck_your_key\nECLAW_WEBHOOK_URL=https://your-public-url.example.com\nCODEX_WORKSPACE=/absolute/path/to/your/repo\nCODEX_MODEL=gpt-5.4-mini', this)">
+                                    <span class="channel-step-num">2</span>
+                                    <code>fill .env: ECLAW_API_KEY, WEBHOOK_URL, CODEX_WORKSPACE</code>
+                                    <span class="channel-step-copy">⧉</span>
+                                </div>
+                                <div class="channel-step-code" onclick="copyText('npm run build && npm start', this)">
+                                    <span class="channel-step-num">3</span>
+                                    <code>npm run build && npm start</code>
+                                    <span class="channel-step-copy">⧉</span>
+                                </div>
+                                <div class="channel-guide-actions">
+                                    <a class="channel-promo-link" href="info.html#channel-plugins/codex-channel">Codex guide →</a>
+                                    <a class="channel-promo-link" href="https://github.com/HankHuang0516/codex-eclaw-bridge" target="_blank" rel="noopener">GitHub →</a>
+                                </div>
+                            </div>
                         </div>
-                        <div class="channel-step-code" onclick="copyText('openclaw configure', this)">
-                            <span class="channel-step-num">2</span>
-                            <code>openclaw configure</code>
-                            <span class="channel-step-copy">⧉</span>
-                        </div>
-                        <div class="channel-step-code">
-                            <span class="channel-step-num">3</span>
-                            <code data-i18n="dash_channel_step3">Select "EClaw"</code>
-                        </div>
-                        <a class="channel-promo-link" href="https://www.npmjs.com/package/@eclaw/openclaw-channel" target="_blank" rel="noopener">
-                            <span data-i18n="dash_channel_learn_more">Learn more</span> →
-                        </a>
                     </div>
                 </div>
             </div>
