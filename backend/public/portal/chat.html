@@ -2967,6 +2967,8 @@
     <script src="shared/api.js"></script>
     <script src="shared/nav.js"></script>
     <script src="shared/auth.js"></script>
+    <script src="../shared/petdx-renderer.js"></script>
+    <script src="../shared/avatar-petdx.js"></script>
     <script src="shared/entity-utils.js"></script>
     <script src="shared/mention-autocomplete.js"></script>
     <script src="shared/mention-resolver.js"></script>
@@ -3478,6 +3480,21 @@
                 if (boundEntities.length === 0) boundEntities = allEntities;
                 boundEntityIds = new Set(boundEntities.map(e => e.entityId));
                 updateEntityMaps(boundEntities);
+                // Preload petdx companion descriptors so subsequent renderAvatarHtml
+                // calls (chat bubbles, target bar, entity chips) can emit canvas
+                // placeholders instead of static <img>. Best-effort: failures fall
+                // back to icon_url silently. Auto-mount wires a MutationObserver
+                // that animates canvases as the chat list re-renders.
+                if (window.AvatarPetdx && currentUser.deviceSecret) {
+                    window.AvatarPetdx.preload({
+                        deviceId: currentUser.deviceId,
+                        deviceSecret: currentUser.deviceSecret,
+                        entityIds: boundEntities.map(e => e.entityId)
+                    }).then(() => {
+                        window.AvatarPetdx.autoMount();
+                        renderTargetBar();
+                    });
+                }
                 boundEntities.forEach(e => {
                     recordEntityRuntimeStatus({
                         entityId: e.entityId,
@@ -3561,7 +3578,7 @@
                 label.dataset.entityId = e.entityId;
                 const e2eeBadge = e.encryptionStatus === 'e2ee' ? ' 🔒' : '';
                 label.innerHTML = `<input type="checkbox" data-entity="${e.entityId}" ${isChecked ? 'checked' : ''} onchange="updateTargetAll()">
-                    <span class="target-label-main">${renderAvatarHtml(avatar, 20)} ${escapeHtml(name)} (#${e.entityId})${e2eeBadge}<span class="entity-status-slot">${renderEntityStatusBadge(e.entityId)}</span></span>`;
+                    <span class="target-label-main">${renderAvatarHtml(avatar, 20, e.entityId)} ${escapeHtml(name)} (#${e.entityId})${e2eeBadge}<span class="entity-status-slot">${renderEntityStatusBadge(e.entityId)}</span></span>`;
                 allItems.push({ el: label, type: 'entity' });
             });
 
@@ -3960,7 +3977,7 @@
                 const avatar = getAvatarForEntity(id);
                 const existing = group.querySelector(`[data-filter="entity-${id}"]`);
                 if (existing) {
-                    existing.innerHTML = `${renderAvatarHtml(avatar, 18)} ${getEntityDisplayName(id)} (#${id})`;
+                    existing.innerHTML = `${renderAvatarHtml(avatar, 18, id)} ${getEntityDisplayName(id)} (#${id})`;
                     return;
                 }
 
@@ -3968,7 +3985,7 @@
                 chip.className = `filter-chip filter-chip-entity${currentFilter === 'entity-' + id ? ' active' : ''}`;
                 chip.dataset.filter = `entity-${id}`;
                 chip.onclick = () => setFilter(`entity-${id}`);
-                chip.innerHTML = `${renderAvatarHtml(avatar, 18)} ${getEntityDisplayName(id)} (#${id})`;
+                chip.innerHTML = `${renderAvatarHtml(avatar, 18, id)} ${getEntityDisplayName(id)} (#${id})`;
                 group.insertBefore(chip, myChip);
             });
 
