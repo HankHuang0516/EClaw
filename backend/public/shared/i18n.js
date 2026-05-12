@@ -380452,6 +380452,7 @@ const TRANSLATIONS = {
 
 
         "cardholder_refreshed_ok": "Card refreshed",
+        "quote_to_chat": "Quote to Chat",
 
 
 
@@ -1004350,6 +1004351,7 @@ const TRANSLATIONS = {
 
 
         "cardholder_refreshed_ok": "名片已更新",
+        "quote_to_chat": "引用到聊天",
 
 
 
@@ -1284694,6 +1284696,7 @@ const TRANSLATIONS = {
 
 
         "cardholder_refreshed_ok": "名片已更新",
+        "quote_to_chat": "引用到聊天",
 
 
 
@@ -2172632,6 +2172635,7 @@ const TRANSLATIONS = {
 
 
         "cardholder_refreshed_ok": "カードを更新しました",
+        "quote_to_chat": "チャットに引用",
 
 
 
@@ -2412632,6 +2412636,9 @@ const TRANSLATIONS = {
 
 
         "mm_card_hint": "칸반 카드를 지도로 연결: 작업, 서브카드, 채팅 앵커. 펼쳐서 탐색하세요.",
+        "mm_empty_title": "마인드 맵에 노드가 아직 없습니다",
+        "mm_empty_hint": "칸반 카드를 만들면 이 뷰가 작업, 하위 카드 및 채팅 앵커를 자동으로 그래프로 연결합니다.",
+        "mm_empty_cta": "칸반을 열어 첫 번째 카드를 만드세요",
 
 
 
@@ -2734552,6 +2734559,7 @@ const TRANSLATIONS = {
 
 
         "cardholder_refreshed_ok": "카드가 업데이트되었습니다",
+        "quote_to_chat": "채팅에 인용",
 
 
 
@@ -2943216,6 +2943224,9 @@ const TRANSLATIONS = {
 
 
         "mm_card_hint": "เชื่อมโยงการ์ดคันบังเป็นแผนที่: งาน, การ์ดย่อย, จุดเชื่อมแชต — ขยายเพื่อสำรวจ",
+        "mm_empty_title": "แผนผังยังไม่มีโหนด",
+        "mm_empty_hint": "เมื่อคุณสร้างการ์ดคัมบัง มุมมองนี้จะเชื่อมต่องาน การ์ดย่อย และจุดยึดแชทเป็นกราฟโดยอัตโนมัติ",
+        "mm_empty_cta": "เปิดคัมบังเพื่อสร้างการ์ดแรก",
 
 
 
@@ -3255280,6 +3255291,7 @@ const TRANSLATIONS = {
 
 
         "cardholder_refreshed_ok": "รีเฟรชนามบัตรแล้ว",
+        "quote_to_chat": "อ้างอิงไปที่แชท",
 
 
 
@@ -3471880,6 +3471892,9 @@ const TRANSLATIONS = {
 
 
         "mm_card_hint": "Kết nối thẻ kanban thành đồ thị: nhiệm vụ, thẻ con, mỏ neo trò chuyện. Mở rộng để khám phá.",
+        "mm_empty_title": "Bản đồ tư duy chưa có nút nào",
+        "mm_empty_hint": "Khi bạn tạo thẻ kanban, chế độ xem này sẽ tự động kết nối các nhiệm vụ, thẻ con và neo trò chuyện thành đồ thị.",
+        "mm_empty_cta": "Mở kanban để tạo thẻ đầu tiên",
 
 
 
@@ -3783944,6 +3783959,7 @@ const TRANSLATIONS = {
 
 
         "cardholder_refreshed_ok": "Đã làm mới danh thiếp",
+        "quote_to_chat": "Trích dẫn vào trò chuyện",
 
 
 
@@ -3997216,6 +3997232,9 @@ const TRANSLATIONS = {
 
 
         "mm_card_hint": "Menghubungkan kartu kanban menjadi peta: tugas, sub-kartu, dan jangkar obrolan. Perluas untuk menjelajah.",
+        "mm_empty_title": "Peta pikiran belum memiliki simpul",
+        "mm_empty_hint": "Setelah Anda membuat kartu kanban, tampilan ini akan menghubungkan tugas, sub-kartu, dan jangkar obrolan menjadi grafik secara otomatis.",
+        "mm_empty_cta": "Buka kanban untuk membuat kartu pertama",
 
 
 
@@ -4309152,6 +4309171,7 @@ const TRANSLATIONS = {
 
 
         "cardholder_refreshed_ok": "Kartu diperbarui",
+        "quote_to_chat": "Kutip ke obrolan",
 
 
 
@@ -4522168,6 +4522188,9 @@ const TRANSLATIONS = {
 
 
         "mm_card_hint": "Vos fiches kanban en graphe : tâches, sous-fiches et ancrages de chat reliés. Dépliez pour explorer.",
+        "mm_empty_title": "La carte mentale n'a pas encore de nœuds",
+        "mm_empty_hint": "Lorsque vous créez des cartes kanban, cette vue connectera automatiquement les tâches, sous-cartes et ancres de chat en graphique.",
+        "mm_empty_cta": "Ouvrir le kanban pour créer votre première carte",
 
 
 
@@ -4845496,6 +4845519,7 @@ const TRANSLATIONS = {
 
 
         "cardholder_refreshed_ok": "Carte actualisée",
+        "quote_to_chat": "Citer dans le chat",
 
 
 
@@ -5045840,6 +5045864,9 @@ const TRANSLATIONS = {
 
 
         "mm_card_hint": "Conecta las tarjetas del kanban en un grafo: tareas, sub-tarjetas y anclas de chat. Expande para explorar.",
+        "mm_empty_title": "El mapa mental aún no tiene nodos",
+        "mm_empty_hint": "Cuando crees tarjetas kanban, esta vista conectará automáticamente tareas, subtarjetas y anclas de chat en un gráfico.",
+        "mm_empty_cta": "Abrir kanban para crear tu primera tarjeta",
 
 
 
@@ -5366037,6 +5366064,7 @@ const TRANSLATIONS = {
 
 
         "cardholder_refreshed_ok": "Tarjeta actualizada...",
+        "quote_to_chat": "Citar en el chat",
 
 
 
@@ -5562080,6 +5562108,9 @@ const TRANSLATIONS = {
 
 
         "mm_card_hint": "Verknüpft Ihre Kanban-Karten zu einer Karte: Aufgaben, Unterkarten und Chat-Anker. Aufklappen zum Erkunden.",
+        "mm_empty_title": "Die Mindmap hat noch keine Knoten",
+        "mm_empty_hint": "Wenn Sie Kanban-Karten erstellen, verbindet diese Ansicht automatisch Aufgaben, Unterkarten und Chat-Anker zu einem Graphen.",
+        "mm_empty_cta": "Kanban öffnen, um Ihre erste Karte zu erstellen",
 
 
 
@@ -5882956,6 +5882987,7 @@ const TRANSLATIONS = {
 
 
         "cardholder_refreshed_ok": "Karte aktualisiert",
+        "quote_to_chat": "Im Chat zitieren",
 
 
 
@@ -6097652,6 +6097684,9 @@ const TRANSLATIONS = {
 
 
         "mm_card_hint": "Menghubungkan kad kanban menjadi peta: tugas, sub-kad, dan jangkar sembang. Buka untuk meneroka.",
+        "mm_empty_title": "Peta minda belum mempunyai nod",
+        "mm_empty_hint": "Setelah anda mencipta kad kanban, paparan ini akan menyambungkan tugas, sub-kad dan sauh sembang menjadi graf secara automatik.",
+        "mm_empty_cta": "Buka kanban untuk mencipta kad pertama",
 
 
 
@@ -6364788,6 +6364823,7 @@ const TRANSLATIONS = {
 
 
         "cardholder_refreshed_ok": "Kad dimuat semula",
+        "quote_to_chat": "Petik ke sembang",
 
 
 
@@ -6773644,6 +6773680,9 @@ const TRANSLATIONS = {
 
 
         "mm_card_hint": "कानबन कार्ड्स का मैप: कार्य, उप-कार्ड और चैट एंकर जुड़े। एक्सप्लोर करने के लिए विस्तार करें।",
+        "mm_empty_title": "माइंड मैप में अभी तक कोई नोड नहीं है",
+        "mm_empty_hint": "जब आप कानबन कार्ड बनाएंगे, तो यह दृश्य स्वचालित रूप से कार्यों, उप-कार्डों और चैट एंकरों को ग्राफ़ में जोड़ देगा।",
+        "mm_empty_cta": "अपना पहला कार्ड बनाने के लिए कानबन खोलें",
 
 
 
@@ -6860044,6 +6860083,7 @@ const TRANSLATIONS = {
 
 
         "cardholder_refreshed_ok": "कार्ड ताज़ा किया गया",
+        "quote_to_chat": "चैट में उद्धृत करें",
 
 
 
@@ -7462436,6 +7462476,9 @@ const TRANSLATIONS = {
 
 
         "mm_card_hint": "يربط بطاقات كانبان كرسم بياني: المهام والبطاقات الفرعية ومرابط الدردشة. وسّع للاستكشاف.",
+        "mm_empty_title": "الخريطة الذهنية لا تحتوي على عقد بعد",
+        "mm_empty_hint": "عند إنشاء بطاقات كانبان، ستقوم هذه العرض بربط المهام والبطاقات الفرعية ومراسي الدردشة في رسم بياني تلقائيًا.",
+        "mm_empty_cta": "افتح كانبان لإنشاء بطاقتك الأولى",
 
 
 
@@ -7729700,6 +7729743,7 @@ const TRANSLATIONS = {
 
 
         "cardholder_refreshed_ok": "تم تحديث البطاقات",
+        "quote_to_chat": "اقتبس إلى الدردشة",
 
 
 

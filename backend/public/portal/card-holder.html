@@ -1272,7 +1272,7 @@
                 </div>
 
                 <div class="modal-actions">
-                    <button class="btn btn-outline btn-sm" onclick="quoteCardToChat('${escapeAttr(card.publicCode)}', '${escapeAttr(card.name || card.publicCode)}', '${escapeAttr(card.agentCard?.description || '')}')">📌 引用到聊天</button>
+                    <button class="btn btn-outline btn-sm" onclick="quoteCardToChat('${escapeAttr(card.publicCode)}', '${escapeAttr(card.name || card.publicCode)}', '${escapeAttr(card.agentCard?.description || '')}')">📌 ${t('quote_to_chat', 'Quote to Chat')}</button>
                     ${card.isFriend
                         ? `<button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger);" onclick="unfriend('${escapeAttr(card.publicCode)}')">${t('cardholder_unfriend', 'Unfriend')}</button>`
                         : `<button class="btn btn-outline btn-sm" style="color:#4caf50;border-color:#4caf50;" onclick="sendFriendRequest('${escapeAttr(card.publicCode)}', '${escapeAttr(card.name || card.publicCode)}')">\u{1F91D} ${t('cardholder_add_friend', 'Add Friend')}</button>`

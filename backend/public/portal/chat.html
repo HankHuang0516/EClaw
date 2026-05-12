@@ -6034,12 +6034,21 @@
 
             // Sync from server so WebView / new sessions pick up vars set elsewhere
             try {
-                const data = await apiCall('POST', '/api/device-vars', {
-                    deviceId, deviceSecret, vars, source: 'web'
-                });
-                if (data && data.mergedVars) {
-                    vars = data.mergedVars;
-                    localStorage.setItem(storageKey, JSON.stringify(vars));
+                if (Object.keys(vars).length > 0) {
+                    const data = await apiCall('POST', '/api/device-vars', {
+                        deviceId, deviceSecret, vars, source: 'web'
+                    });
+                    if (data && data.mergedVars) {
+                        vars = data.mergedVars;
+                        localStorage.setItem(storageKey, JSON.stringify(vars));
+                    }
+                } else {
+                    // Fresh session — fetch server-side vars instead of POSTing empty
+                    const data = await apiCall('GET', `/api/device-vars?deviceId=${deviceId}&deviceSecret=${deviceSecret}`);
+                    if (data && data.vars) {
+                        vars = data.vars;
+                        localStorage.setItem(storageKey, JSON.stringify(vars));
+                    }
                 }
             } catch { /* non-critical — fall back to local */ }
 

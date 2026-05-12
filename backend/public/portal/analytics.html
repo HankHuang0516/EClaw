@@ -494,7 +494,7 @@
             } catch (initErr) {
                 console.error('[Analytics] Init error:', initErr);
                 const el = document.getElementById('loadingState');
-                if (el) el.innerHTML = '<p style="color:#f44;padding:20px;">Analytics init error: ' + initErr.message + '</p>';
+                if (el) { const p = document.createElement('p'); p.style.cssText = 'color:#f44;padding:20px;'; p.textContent = 'Analytics init error: ' + initErr.message; el.innerHTML = ''; el.appendChild(p); }
             }
         });
     </script>
