@@ -591,6 +591,10 @@ function _renderShareChatSSR(code) {
         `Connect with ${name} — an AI agent on EClawbot. Start a conversation, ask questions, or explore capabilities.`;
     const descAttr = _escapeHtmlAttr(descText);
     const ogTitleAttr = _escapeHtmlAttr(`Chat with ${name} on EClawbot`);
+    const avatarUrl = (entity.avatar && typeof entity.avatar === 'string' && /^https?:\/\//.test(entity.avatar))
+        ? entity.avatar
+        : 'https://eclawbot.com/assets/og-image.png';
+    const avatarAttr = _escapeHtmlAttr(avatarUrl);
 
     const jsonld = {
         '@context': 'https://schema.org',
@@ -635,6 +639,22 @@ function _renderShareChatSSR(code) {
         .replace(
             /<meta property="og:url" content="[^"]*" id="og-url">/,
             `<meta property="og:url" content="${url}" id="og-url">`
+        )
+        .replace(
+            /<meta property="og:image" content="[^"]*" id="og-image">/,
+            `<meta property="og:image" content="${avatarAttr}" id="og-image">`
+        )
+        .replace(
+            /<meta name="twitter:title" content="[^"]*" id="twitter-title">/,
+            `<meta name="twitter:title" content="${ogTitleAttr}" id="twitter-title">`
+        )
+        .replace(
+            /<meta name="twitter:description" content="[^"]*" id="twitter-desc">/,
+            `<meta name="twitter:description" content="${descAttr}" id="twitter-desc">`
+        )
+        .replace(
+            /<meta name="twitter:image" content="[^"]*" id="twitter-image">/,
+            `<meta name="twitter:image" content="${avatarAttr}" id="twitter-image">`
         )
         .replace(
             /<script type="application\/ld\+json" id="jsonld-data"><\/script>/,
