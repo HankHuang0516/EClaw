@@ -1851,6 +1851,33 @@
                                     <a class="channel-promo-link" href="https://github.com/HankHuang0516/codex-eclaw-bridge" target="_blank" rel="noopener">GitHub →</a>
                                 </div>
                             </div>
+
+                            <div class="channel-guide-card">
+                                <div class="channel-guide-title">
+                                    <span>Claude Code Channel</span>
+                                    <span class="channel-guide-badge">Experimental</span>
+                                </div>
+                                <div class="channel-guide-desc">Run Claude Code in a local tmux session as your EClaw bot — uses your claude.ai Max subscription quota, no Anthropic API tokens billed.</div>
+                                <div class="channel-step-code" onclick="copyText('git clone https://github.com/HankHuang0516/claude-code-eclaw-channel.git && cd claude-code-eclaw-channel && bun install', this)">
+                                    <span class="channel-step-num">1</span>
+                                    <code>git clone .../claude-code-eclaw-channel && bun install</code>
+                                    <span class="channel-step-copy">⧉</span>
+                                </div>
+                                <div class="channel-step-code" onclick="copyText('cp .mcp.json.example .mcp.json\n# then edit .mcp.json:\n#   ECLAW_API_KEY=eck_your_key\n#   ECLAW_WEBHOOK_URL=https://your-public-url.example.com', this)">
+                                    <span class="channel-step-num">2</span>
+                                    <code>fill .mcp.json: ECLAW_API_KEY, ECLAW_WEBHOOK_URL</code>
+                                    <span class="channel-step-copy">⧉</span>
+                                </div>
+                                <div class="channel-step-code" onclick="copyText('./patch-fakechat.sh && bun run bridge.ts', this)">
+                                    <span class="channel-step-num">3</span>
+                                    <code>./patch-fakechat.sh && bun run bridge.ts</code>
+                                    <span class="channel-step-copy">⧉</span>
+                                </div>
+                                <div class="channel-guide-actions">
+                                    <a class="channel-promo-link" href="info.html#channel-plugins/claude-code-channel">Claude Code guide →</a>
+                                    <a class="channel-promo-link" href="https://github.com/HankHuang0516/claude-code-eclaw-channel" target="_blank" rel="noopener">GitHub →</a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
