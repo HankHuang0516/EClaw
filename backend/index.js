@@ -2424,6 +2424,112 @@ app.get('/api/debug/chat-render-load-order', async (req, res) => {
     }
 });
 
+// Temporary diagnostic endpoint for the 2026-05-12 mention autocomplete avatar
+// bug: chat @mention suggestions must use the shared avatar renderer so local
+// entities with selected Petdx companions show the same partner-system look as
+// the target bar/chat chips. Keep auth strict and content-safe: no secrets, no
+// chat text, no raw companion descriptors.
+app.get('/api/debug/mention-autocomplete-avatar', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query || {};
+    const timestamp = new Date().toISOString();
+    try {
+        if (!deviceId || !deviceSecret) {
+            return res.status(401).json({ success: false, bug: 'mention-autocomplete-avatar', error: 'deviceId and deviceSecret required', timestamp });
+        }
+
+        const memDevice = devices[deviceId];
+        const pool = db._getPool ? db._getPool() : authModule.pool;
+        const dbDevice = pool
+            ? await pool.query('SELECT device_secret FROM devices WHERE device_id = $1', [deviceId])
+            : { rows: [] };
+        const dbDeviceRow = dbDevice.rows[0] || null;
+        const memSecretOk = !!(memDevice && memDevice.deviceSecret && safeEqual(memDevice.deviceSecret, deviceSecret));
+        const dbSecretOk = !!(dbDeviceRow && dbDeviceRow.device_secret && safeEqual(dbDeviceRow.device_secret, deviceSecret));
+        if (!memSecretOk && !dbSecretOk) {
+            return res.status(403).json({ success: false, bug: 'mention-autocomplete-avatar', error: 'Invalid credentials', timestamp });
+        }
+
+        const autocompletePath = path.join(__dirname, 'public', 'portal', 'shared', 'mention-autocomplete.js');
+        const entityUtilsPath = path.join(__dirname, 'public', 'portal', 'shared', 'entity-utils.js');
+        const chatHtmlPath = path.join(__dirname, 'public', 'portal', 'chat.html');
+        const autocompleteJs = fs.readFileSync(autocompletePath, 'utf8');
+        const entityUtilsJs = fs.readFileSync(entityUtilsPath, 'utf8');
+        const chatHtml = fs.readFileSync(chatHtmlPath, 'utf8');
+
+        const entityRows = pool ? await pool.query(
+            `SELECT e.entity_id,
+                    e.is_bound,
+                    e.public_code IS NOT NULL AS has_public_code,
+                    e.avatar IS NOT NULL AS has_avatar,
+                    latest.companion_id AS selected_companion_id
+               FROM entities e
+          LEFT JOIN LATERAL (
+                    SELECT companion_id
+                      FROM companion_select_log s
+                     WHERE s.device_id = e.device_id
+                       AND s.entity_id = e.entity_id
+                  ORDER BY s.selected_at DESC
+                     LIMIT 1
+               ) latest ON true
+              WHERE e.device_id = $1
+           ORDER BY e.entity_id ASC`,
+            [deviceId]
+        ).catch((err) => ({ rows: [], _error: err.message })) : { rows: [] };
+
+        const entities = entityRows.rows || [];
+        res.json({
+            success: true,
+            bug: 'mention-autocomplete-avatar',
+            diagnostics: {
+                server: {
+                    build: SERVER_BUILD_TAG,
+                    startedAt: SERVER_STARTED_AT.toISOString(),
+                    uptimeSec: Math.round(process.uptime()),
+                },
+                auth: {
+                    memSecretOk,
+                    dbSecretOk,
+                    requestUserDeviceId: req.user?.deviceId || null,
+                    requestUserId: req.user?.userId || null,
+                },
+                staticWiring: {
+                    chatLoadsEntityUtilsBeforeMentionAutocomplete:
+                        chatHtml.indexOf('shared/entity-utils.js') >= 0
+                        && chatHtml.indexOf('shared/mention-autocomplete.js') >= 0
+                        && chatHtml.indexOf('shared/entity-utils.js') < chatHtml.indexOf('shared/mention-autocomplete.js'),
+                    entityUtilsHasPetdxRenderPath:
+                        entityUtilsJs.includes('window.AvatarPetdx')
+                        && entityUtilsJs.includes('data-petdx-entity-id'),
+                    autocompleteUsesSharedAvatarRenderer:
+                        autocompleteJs.includes('renderMentionAvatar')
+                        && autocompleteJs.includes('global.renderAvatarHtml')
+                        && autocompleteJs.includes('global.AvatarPetdx.mount(dropdown)'),
+                    autocompleteLegacyInlineOnlyRendererPresent:
+                        /const\s+avatar\s*=\s*it\.avatar\s*&&\s*\/\^https/.test(autocompleteJs),
+                },
+                entitySummary: {
+                    total: entities.length,
+                    bound: entities.filter(e => e.is_bound).length,
+                    mentionEligible: entities.filter(e => e.has_public_code).length,
+                    withAvatar: entities.filter(e => e.has_avatar).length,
+                    withSelectedCompanion: entities.filter(e => e.selected_companion_id).length,
+                    queryError: entityRows._error || null,
+                },
+                expectedClientFlow: {
+                    preloadCompanionsBeforeMentionUse: true,
+                    localMentionEntriesCarryEntityId: true,
+                    suggestionAvatarShouldCallRenderAvatarHtml: true,
+                    avatarPetdxMountCalledAfterDropdownRender: true,
+                },
+            },
+            timestamp,
+        });
+    } catch (err) {
+        console.error('[Debug mention-autocomplete-avatar] failed:', err);
+        res.status(500).json({ success: false, bug: 'mention-autocomplete-avatar', error: err.message, timestamp });
+    }
+});
+
 // Temporary diagnostic endpoint for public Info-page regressions:
 // - roadmap.html must not redirect unauthenticated visitors to index.html
 // - release notes must render Markdown links instead of raw `(https://...)`
