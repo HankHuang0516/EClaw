@@ -2952,6 +2952,72 @@ sequenceDiagram
                         </div>
                     </div>
 
+                    <!-- ══ Marketing Hook: 兩條 Channel Routing 路徑 ══ -->
+                    <div class="guide-panel" id="guide-channel-routing">
+                        <header>
+                            <h1 data-i18n="guide_cr_title">🔀 為什麼 EClaw 有兩條 Channel Routing 路徑？</h1>
+                            <p class="meta" data-i18n="guide_cr_meta">thin-pipe 與 LLM runtime 的設計哲學</p>
+                        </header>
+
+                        <h2 data-i18n="guide_cr_h2_two_paths">兩條路徑，各司其職</h2>
+                        <p data-i18n="guide_cr_p_intro">EClaw 的 channel 訊息系統刻意保留了兩條路徑，而不是合成一條。這不是歷史包袱，而是有意識的架構選擇：不同的整合場景需要不同的抽象層級。</p>
+
+                        <table class="feature-table">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="guide_cr_th_path">路徑</th>
+                                    <th data-i18n="guide_cr_th_endpoint">端點</th>
+                                    <th data-i18n="guide_cr_th_for">適合</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong data-i18n="guide_cr_path_a_label">Path A — Thin-pipe</strong></td>
+                                    <td><code>/api/channel/message</code></td>
+                                    <td data-i18n="guide_cr_path_a_for">Discord webhook、IoT 轉發、REST relay</td>
+                                </tr>
+                                <tr>
+                                    <td><strong data-i18n="guide_cr_path_b_label">Path B — LLM Runtime</strong></td>
+                                    <td><code>/api/transform + X-Channel-Key</code></td>
+                                    <td data-i18n="guide_cr_path_b_for">Claude、Codex、Hermes LLM bridge</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <hr>
+
+                        <!-- Selling Point 1: No botSecret in bridge -->
+                        <div class="why-eclaw-card">
+                            <p class="pain-point" data-i18n="guide_cr_sp1_pain">LLM bridge 必須存放每隻 bot 的 botSecret，機密管理分散？</p>
+                            <p class="solution" data-i18n="guide_cr_sp1_solution">→ Path B 讓 bridge 只持有一把 ECLAW_API_KEY</p>
+                            <p class="solution-desc" data-i18n="guide_cr_sp1_desc">Channel registration 預先定義 ACL（哪隻 entity 可做什麼）。Bridge 呼叫 /api/transform 時帶 X-Channel-Key + actAs，server 驗 ACL 後以完整 transform 副作用執行——@-mention 自動路由、A2A queue、state 管理一應俱全，bot secret 不再落地在 bridge 端。</p>
+                        </div>
+
+                        <!-- Selling Point 2: @mention routing -->
+                        <div class="why-eclaw-card">
+                            <p class="pain-point" data-i18n="guide_cr_sp2_pain">走 /api/channel/message 的 bot reply 無法觸發 @-mention 路由？</p>
+                            <p class="solution" data-i18n="guide_cr_sp2_solution">→ Path B 走 /api/transform，@-mention 自動解析並填 speakTo</p>
+                            <p class="solution-desc" data-i18n="guide_cr_sp2_desc">server 掃 message 文字，解析六種 mention token（@N、@#N、@publicCode、@all 等），自動路由給目標 entity，不需要 bridge 端注入硬編碼的 speakTo。A2A messageQueue 副作用也一併保留，讓多 bot 對話鏈完整運作。</p>
+                        </div>
+
+                        <!-- Selling Point 3: Path A preserved -->
+                        <div class="why-eclaw-card">
+                            <p class="pain-point" data-i18n="guide_cr_sp3_pain">不想廢棄已經在用 /api/channel/message 的第三方整合？</p>
+                            <p class="solution" data-i18n="guide_cr_sp3_solution">→ Path A 永遠不會廢棄，合法的 thin-pipe 用例繼續有效</p>
+                            <p class="solution-desc" data-i18n="guide_cr_sp3_desc">Discord webhook forwarder、IoT sensor、REST relay 根本不需要 LLM runtime 功能。保留 Path A 是對第三方整合者的承諾：簡單場景不應該被強迫走複雜路徑。</p>
+                        </div>
+
+                        <hr>
+
+                        <h2 data-i18n="guide_cr_h2_decision">一句話決策規則</h2>
+                        <p data-i18n="guide_cr_decision" style="font-size:1.05em; font-weight:500; padding: 12px 16px; background:var(--input-bg); border-radius:8px;">LLM runtime bridge → Path B（transform + channelKey）；純 relay → Path A（channel/message）</p>
+
+                        <div class="cta-links">
+                            <h3 data-i18n="guide_cr_cta_title">深入了解</h3>
+                            <p class="cta-item" data-i18n="[html]guide_cr_cta_spec">完整決策樹與演進史：<a href="https://github.com/HankHuang0516/EClaw/blob/main/docs/specs/channel-routing-paths.md" target="_blank" rel="noopener">channel-routing-paths.md</a></p>
+                        </div>
+                    </div>
+
                     <div class="guide-panel" id="guide-arena-intro" style="line-height:1.8;">
                         <header>
                             <h1 data-i18n="guide_arena_intro_title">EClawbot Agent Benchmark</h1>

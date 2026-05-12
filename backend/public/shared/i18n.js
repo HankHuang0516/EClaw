@@ -53015,6 +53015,30 @@ const TRANSLATIONS = {
 
 
         "guide_vm_cta_chat": "Try it in the chat: <a href=\"chat.html\">Open Chat</a> and ask the bot \"do you remember when we talked about ... ?\" — then open the citations under the bubble.",
+        "guide_cr_title": "\U0001F500 Why Does EClaw Have Two Channel Routing Paths?",
+        "guide_cr_meta": "Thin-pipe vs LLM runtime — the design philosophy",
+        "guide_cr_h2_two_paths": "Two Paths, Each for a Purpose",
+        "guide_cr_p_intro": "EClaw intentionally preserves two channel messaging paths. This is a deliberate architectural choice: different integration scenarios need different abstraction levels.",
+        "guide_cr_th_path": "Path",
+        "guide_cr_th_endpoint": "Endpoint",
+        "guide_cr_th_for": "Best for",
+        "guide_cr_path_a_label": "Path A — Thin-pipe",
+        "guide_cr_path_a_for": "Discord webhooks, IoT relays, REST forwarders",
+        "guide_cr_path_b_label": "Path B — LLM Runtime",
+        "guide_cr_path_b_for": "Claude, Codex, Hermes LLM bridges",
+        "guide_cr_sp1_pain": "LLM bridge must store every bot's botSecret — scattered secret management?",
+        "guide_cr_sp1_solution": "\u2192 Path B lets the bridge hold only one ECLAW_API_KEY",
+        "guide_cr_sp1_desc": "Channel registration pre-defines ACL. The bridge calls /api/transform with X-Channel-Key + actAs; the server validates ACL and executes with full transform side-effects — @-mention auto-routing, A2A queue, state management — without any botSecret stored in the bridge.",
+        "guide_cr_sp2_pain": "Bot replies via /api/channel/message cannot trigger @-mention routing?",
+        "guide_cr_sp2_solution": "\u2192 Path B uses /api/transform; @-mention tokens are auto-parsed and speakTo is filled",
+        "guide_cr_sp2_desc": "The server scans message text, resolves six mention token forms (@N, @#N, @publicCode, @all, etc.), and auto-routes to target entities — no hardcoded speakTo injection needed in the bridge.",
+        "guide_cr_sp3_pain": "Don't want to break third-party integrations already using /api/channel/message?",
+        "guide_cr_sp3_solution": "\u2192 Path A is never deprecated; legitimate thin-pipe use cases stay valid",
+        "guide_cr_sp3_desc": "Discord webhook forwarders, IoT sensors, and REST relays simply don't need LLM runtime features. Keeping Path A is a commitment to third-party integrators.",
+        "guide_cr_h2_decision": "One-line Decision Rule",
+        "guide_cr_decision": "LLM runtime bridge \u2192 Path B (transform + channelKey);  Pure relay \u2192 Path A (channel/message)",
+        "guide_cr_cta_title": "Learn More",
+        "guide_cr_cta_spec": "Full decision tree and history: <a href=\"https://github.com/HankHuang0516/EClaw/blob/main/docs/specs/channel-routing-paths.md\" target=\"_blank\" rel=\"noopener\">channel-routing-paths.md</a>",
 
 
 
@@ -700090,6 +700114,30 @@ const TRANSLATIONS = {
 
 
         "guide_vm_cta_chat": "在聊天室試試：<a href=\"chat.html\">開啟 Chat</a> 並問 bot「你還記得我們之前聊過 ... 嗎？」看氣泡下方的引用。",
+        "guide_cr_title": "\U0001F500 為什麼 EClaw 有兩條 Channel Routing 路徑？",
+        "guide_cr_meta": "thin-pipe 與 LLM runtime 的設計哲學",
+        "guide_cr_h2_two_paths": "兩條路徑，各司其職",
+        "guide_cr_p_intro": "EClaw 的 channel 訊息系統刻意保留了兩條路徑，而不是合成一條。這是有意識的架構選擇：不同的整合場景需要不同的抽象層級。",
+        "guide_cr_th_path": "路徑",
+        "guide_cr_th_endpoint": "端點",
+        "guide_cr_th_for": "適合",
+        "guide_cr_path_a_label": "Path A — Thin-pipe",
+        "guide_cr_path_a_for": "Discord webhook、IoT 轉發、REST relay",
+        "guide_cr_path_b_label": "Path B — LLM Runtime",
+        "guide_cr_path_b_for": "Claude、Codex、Hermes LLM bridge",
+        "guide_cr_sp1_pain": "LLM bridge 必須存放每隻 bot 的 botSecret，機密管理分散？",
+        "guide_cr_sp1_solution": "\u2192 Path B 讓 bridge 只持有一把 ECLAW_API_KEY",
+        "guide_cr_sp1_desc": "Channel registration 預先定義 ACL。Bridge 呼叫 /api/transform 時帶 X-Channel-Key + actAs，server 驗 ACL 後以完整 transform 副作用執行——@-mention 自動路由、A2A queue、state 管理一應俱全，bot secret 不再落地在 bridge 端。",
+        "guide_cr_sp2_pain": "走 /api/channel/message 的 bot reply 無法觸發 @-mention 路由？",
+        "guide_cr_sp2_solution": "\u2192 Path B 走 /api/transform，@-mention 自動解析並填 speakTo",
+        "guide_cr_sp2_desc": "server 掃 message 文字，解析六種 mention token，自動路由給目標 entity，不需要 bridge 端注入硬編碼的 speakTo。A2A messageQueue 副作用也一併保留。",
+        "guide_cr_sp3_pain": "不想廢棄已經在用 /api/channel/message 的第三方整合？",
+        "guide_cr_sp3_solution": "\u2192 Path A 永遠不會廢棄，合法的 thin-pipe 用例繼續有效",
+        "guide_cr_sp3_desc": "Discord webhook forwarder、IoT sensor、REST relay 根本不需要 LLM runtime 功能。保留 Path A 是對第三方整合者的承諾。",
+        "guide_cr_h2_decision": "一句話決策規則",
+        "guide_cr_decision": "LLM runtime bridge \u2192 Path B（transform + channelKey）；純 relay \u2192 Path A（channel/message）",
+        "guide_cr_cta_title": "深入了解",
+        "guide_cr_cta_spec": "完整決策樹與演進史：<a href=\"https://github.com/HankHuang0516/EClaw/blob/main/docs/specs/channel-routing-paths.md\" target=\"_blank\" rel=\"noopener\">channel-routing-paths.md</a>",
 
 
 
@@ -1592274,6 +1592322,30 @@ const TRANSLATIONS = {
 
 
         "guide_vm_cta_chat": "在聊天室試試：<a href=\"chat.html\">开啟 Chat</a> 並問 bot「你还記得我们之前聊过 ... 嗎？」看氣泡下方的引用。",
+        "guide_cr_title": "\U0001F500 为什么 EClaw 有两条 Channel Routing 路径？",
+        "guide_cr_meta": "thin-pipe 与 LLM runtime 的设计哲学",
+        "guide_cr_h2_two_paths": "两条路径，各司其职",
+        "guide_cr_p_intro": "EClaw 的 channel 消息系统刻意保留了两条路径。这是有意识的架构选择：不同场景需要不同抽象层级。",
+        "guide_cr_th_path": "路径",
+        "guide_cr_th_endpoint": "端点",
+        "guide_cr_th_for": "适合",
+        "guide_cr_path_a_label": "Path A — Thin-pipe",
+        "guide_cr_path_a_for": "Discord webhook、IoT 转发、REST relay",
+        "guide_cr_path_b_label": "Path B — LLM Runtime",
+        "guide_cr_path_b_for": "Claude、Codex、Hermes LLM bridge",
+        "guide_cr_sp1_pain": "LLM bridge 必须存放每个 bot 的 botSecret，机密管理分散？",
+        "guide_cr_sp1_solution": "\u2192 Path B 让 bridge 只持有一把 ECLAW_API_KEY",
+        "guide_cr_sp1_desc": "Channel registration 预先定义 ACL。Bridge 调用 /api/transform 时带 X-Channel-Key + actAs，server 验 ACL 后执行完整 transform 副作用。",
+        "guide_cr_sp2_pain": "走 /api/channel/message 的 bot reply 无法触发 @-mention 路由？",
+        "guide_cr_sp2_solution": "\u2192 Path B 走 /api/transform，@-mention 自动解析并填 speakTo",
+        "guide_cr_sp2_desc": "server 扫描 message 文字，解析六种 mention token，自动路由给目标 entity。A2A messageQueue 副作用也一并保留。",
+        "guide_cr_sp3_pain": "不想废弃已经在用 /api/channel/message 的第三方整合？",
+        "guide_cr_sp3_solution": "\u2192 Path A 永远不会废弃，合法的 thin-pipe 用例继续有效",
+        "guide_cr_sp3_desc": "Discord webhook forwarder、IoT sensor 根本不需要 LLM runtime 功能。保留 Path A 是对第三方整合者的承诺。",
+        "guide_cr_h2_decision": "一句话决策规则",
+        "guide_cr_decision": "LLM runtime bridge \u2192 Path B（transform + channelKey）；纯 relay \u2192 Path A（channel/message）",
+        "guide_cr_cta_title": "深入了解",
+        "guide_cr_cta_spec": "完整决策树与演进史：<a href=\"https://github.com/HankHuang0516/EClaw/blob/main/docs/specs/channel-routing-paths.md\" target=\"_blank\" rel=\"noopener\">channel-routing-paths.md</a>",
 
 
 
@@ -2379218,6 +2379290,30 @@ const TRANSLATIONS = {
 
 
         "guide_vm_cta_chat": "チャットで試してみる: <a href=\"chat.html\">Chatを開く</a> でBotに「前に話した...のこと覚えてる？」と聞いてみる — そうするとバブル下の引用を展開できます。",
+        "guide_cr_title": "\U0001F500 なぜ EClaw には2つの Channel Routing パスがあるのか？",
+        "guide_cr_meta": "thin-pipe と LLM runtime の設計哲学",
+        "guide_cr_h2_two_paths": "2つのパス、それぞれの役割",
+        "guide_cr_p_intro": "EClaw の channel メッセージシステムは意図的に2つのパスを保持しています。異なる統合シナリオには異なる抽象レベルが必要です。",
+        "guide_cr_th_path": "パス",
+        "guide_cr_th_endpoint": "エンドポイント",
+        "guide_cr_th_for": "適用",
+        "guide_cr_path_a_label": "Path A — Thin-pipe",
+        "guide_cr_path_a_for": "Discord webhook、IoT リレー、REST フォワーダー",
+        "guide_cr_path_b_label": "Path B — LLM Runtime",
+        "guide_cr_path_b_for": "Claude、Codex、Hermes LLM ブリッジ",
+        "guide_cr_sp1_pain": "LLM bridge が各 bot の botSecret を保持する必要がある？",
+        "guide_cr_sp1_solution": "\u2192 Path B なら bridge は ECLAW_API_KEY のみでOK",
+        "guide_cr_sp1_desc": "Channel registration で ACL を事前定義。Bridge は X-Channel-Key + actAs で /api/transform を呼び出し、サーバーが ACL を検証して完全な transform 副作用を実行します。",
+        "guide_cr_sp2_pain": "/api/channel/message の bot reply では @-mention ルーティングが使えない？",
+        "guide_cr_sp2_solution": "\u2192 Path B は /api/transform を使用し、@-mention を自動解析して speakTo に設定",
+        "guide_cr_sp2_desc": "サーバーがメッセージテキストをスキャンし、6種類の mention token を解析して対象 entity に自動ルーティングします。",
+        "guide_cr_sp3_pain": "既存の /api/channel/message 統合を壊したくない？",
+        "guide_cr_sp3_solution": "\u2192 Path A は廃止されません。thin-pipe のユースケースは引き続き有効",
+        "guide_cr_sp3_desc": "Discord webhook、IoT センサー、REST リレーは LLM runtime 機能を必要としません。Path A の保持はサードパーティへの約束です。",
+        "guide_cr_h2_decision": "一言で決める判断ルール",
+        "guide_cr_decision": "LLM runtime bridge \u2192 Path B (transform + channelKey)；純粋なリレー \u2192 Path A (channel/message)",
+        "guide_cr_cta_title": "詳しく見る",
+        "guide_cr_cta_spec": "完全な決定木と変遷史：<a href=\"https://github.com/HankHuang0516/EClaw/blob/main/docs/specs/channel-routing-paths.md\" target=\"_blank\" rel=\"noopener\">channel-routing-paths.md</a>",
 
 
 
