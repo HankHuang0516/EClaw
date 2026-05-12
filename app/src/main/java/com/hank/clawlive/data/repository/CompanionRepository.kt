@@ -7,9 +7,15 @@ import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.model.CompanionDetail
 import com.hank.clawlive.data.remote.ClawApiService
 import com.hank.clawlive.data.remote.NetworkModule
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.Request
 import timber.log.Timber
 import java.util.concurrent.ConcurrentHashMap
@@ -30,13 +36,24 @@ class CompanionRepository(
     private val deviceManager = DeviceManager.getInstance(context)
     private val descriptorCache = ConcurrentHashMap<Int, CompanionDetail>()
     private val sheetCache = SheetBitmapCache(maxEntries = 3)
+    private val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     /** Returns the cached companion for an entity, or null until a fetch lands. */
     fun cached(entityId: Int): CompanionDetail? = descriptorCache[entityId]
 
-    /** Returns a decoded spritesheet bitmap, loading on first access. */
+    /**
+     * Returns a decoded spritesheet bitmap. The wallpaper draw loop runs on
+     * the Main thread, so we never block here: a cache miss schedules an
+     * async fetch on the IO scope and returns null this frame. The next draw
+     * tick (33ms later) will find the bitmap and paint it.
+     */
     fun getSheet(url: String?): Bitmap? {
         if (url.isNullOrBlank()) return null
+        sheetCache.peek(url)?.let { return it }
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            ioScope.launch { sheetCache.getOrLoad(url) { fetchBitmap(url) } }
+            return null
+        }
         return sheetCache.getOrLoad(url) { fetchBitmap(url) }
     }
 
@@ -62,8 +79,14 @@ class CompanionRepository(
                     descriptorCache[entityId] = companion
                     Timber.d("Companion fetched for entity $entityId: ${companion.id} (${companion.assetType})")
                     // Pre-warm spritesheet decode so first paint is smooth.
+                    // The flow itself runs on the engine's Main scope, so the
+                    // OkHttp call has to be marshalled to IO.
                     if (companion.assetType == "spritesheet") {
-                        getSheet(companion.spritesheetUrl())
+                        withContext(Dispatchers.IO) {
+                            sheetCache.getOrLoad(companion.spritesheetUrl() ?: "") {
+                                companion.spritesheetUrl()?.let { fetchBitmap(it) }
+                            }
+                        }
                     }
                 }
                 emit(companion)
@@ -76,6 +99,7 @@ class CompanionRepository(
 
     /** Drop caches when the wallpaper engine tears down. */
     fun release() {
+        ioScope.cancel()
         descriptorCache.clear()
         sheetCache.clear()
     }
@@ -106,24 +130,35 @@ class CompanionRepository(
      * runs on the main thread but loads happen on the IO scope.
      */
     private class SheetBitmapCache(private val maxEntries: Int) {
+        private val lock = Any()
         private val map = LinkedHashMap<String, Bitmap>(maxEntries, 0.75f, true)
 
-        @Synchronized
+        /** Non-blocking lookup — used from the Main draw thread. */
+        fun peek(url: String): Bitmap? = synchronized(lock) { map[url] }
+
         fun getOrLoad(url: String, loader: () -> Bitmap?): Bitmap? {
-            map[url]?.let { return it }
+            synchronized(lock) { map[url]?.let { return it } }
             val bmp = loader() ?: return null
-            map[url] = bmp
-            while (map.size > maxEntries) {
-                val evict = map.entries.iterator().next()
-                map.remove(evict.key)?.recycle()
+            synchronized(lock) {
+                map[url]?.let {
+                    // Another caller won the race; drop ours, return theirs.
+                    bmp.recycle()
+                    return it
+                }
+                map[url] = bmp
+                while (map.size > maxEntries) {
+                    val evict = map.entries.iterator().next()
+                    map.remove(evict.key)?.recycle()
+                }
             }
             return bmp
         }
 
-        @Synchronized
         fun clear() {
-            map.values.forEach { runCatching { it.recycle() } }
-            map.clear()
+            synchronized(lock) {
+                map.values.forEach { runCatching { it.recycle() } }
+                map.clear()
+            }
         }
     }
 }
