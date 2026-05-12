@@ -51,6 +51,30 @@
         return div.innerHTML;
     }
 
+    function renderMentionAvatar(entry) {
+        if (entry.isAll) {
+            return '<span class="mention-avatar">📢</span>';
+        }
+
+        const avatar = entry.avatar || '🤖';
+        const entityId = entry.entityId != null ? entry.entityId : undefined;
+
+        // Keep @mention suggestions visually aligned with the rest of Chat.
+        // The shared renderer emits AvatarPetdx canvas placeholders for local
+        // entities that have a selected companion, and falls back to image/emoji
+        // avatars for older pages or cross-device contacts.
+        if (typeof global.renderAvatarHtml === 'function') {
+            return '<span class="mention-avatar mention-avatar-shared">'
+                + global.renderAvatarHtml(avatar, 20, entityId)
+                + '</span>';
+        }
+
+        if (avatar && /^https?:/.test(avatar)) {
+            return `<img class="mention-avatar mention-avatar-img" src="${escapeHtml(avatar)}" alt="">`;
+        }
+        return `<span class="mention-avatar">${escapeHtml(avatar)}</span>`;
+    }
+
     /**
      * Attach autocomplete to a textarea.
      * @param {HTMLTextAreaElement} textarea
@@ -107,14 +131,12 @@
             const html = state.items.map((it, idx) => {
                 if (it.isAll) {
                     return `<div class="mention-item mention-all ${idx === state.activeIndex ? 'active' : ''}" data-idx="${idx}" role="option">
-                        <span class="mention-avatar">📢</span>
+                        ${renderMentionAvatar(it)}
                         <span class="mention-name">${escapeHtml(i18n.allLabel || 'Broadcast to all')}</span>
                         <span class="mention-badge mention-warn">${escapeHtml(i18n.allWarning || '@all')}</span>
                     </div>`;
                 }
-                const avatar = it.avatar && /^https?:/.test(it.avatar)
-                    ? `<img class="mention-avatar mention-avatar-img" src="${escapeHtml(it.avatar)}" alt="">`
-                    : `<span class="mention-avatar">${escapeHtml(it.avatar || '🤖')}</span>`;
+                const avatar = renderMentionAvatar(it);
                 const crossBadge = it.isCrossDevice ? '<span class="mention-badge">🔗</span>' : '';
                 return `<div class="mention-item ${idx === state.activeIndex ? 'active' : ''}" data-idx="${idx}" role="option">
                     ${avatar}
@@ -124,6 +146,9 @@
                 </div>`;
             }).join('');
             dropdown.innerHTML = html;
+            if (global.AvatarPetdx && typeof global.AvatarPetdx.mount === 'function') {
+                global.AvatarPetdx.mount(dropdown);
+            }
             // Wire click handlers
             dropdown.querySelectorAll('.mention-item').forEach(el => {
                 el.addEventListener('mousedown', (e) => {

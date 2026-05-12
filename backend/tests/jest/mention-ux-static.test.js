@@ -17,6 +17,7 @@ const chatHtml = fs.readFileSync(path.join(ROOT, 'public', 'portal', 'chat.html'
 const i18nJs = fs.readFileSync(path.join(ROOT, 'public', 'shared', 'i18n.js'), 'utf8');
 const indexJs = fs.readFileSync(path.join(ROOT, 'index.js'), 'utf8');
 const sharedRenderJs = fs.readFileSync(path.join(ROOT, 'public', 'shared', 'chat-message-render.js'), 'utf8');
+const mentionAutocompleteJs = fs.readFileSync(path.join(ROOT, 'public', 'portal', 'shared', 'mention-autocomplete.js'), 'utf8');
 
 describe('Mention feature — static wiring', () => {
     test('mention-autocomplete.js and mention-render.js are present in portal/shared', () => {
@@ -75,6 +76,26 @@ describe('Mention feature — static wiring', () => {
         expect(sendMsgBody).not.toMatch(/targets\.local\s*=\s*\(boundEntities\s*\|\|\s*\[\]\)\.map/);
         // Auto-add path: mention resolver result must be merged into targets via push()
         expect(sendMsgBody).toMatch(/targets\.local\.push\(/);
+    });
+
+    test('mention autocomplete uses shared avatar renderer for Petdx partner avatars', () => {
+        // Regression: the @mention dropdown hand-rendered an old emoji/img
+        // avatar, so entities with selected companions did not match the
+        // partner-system look used elsewhere in Chat.
+        expect(mentionAutocompleteJs).toContain('function renderMentionAvatar');
+        expect(mentionAutocompleteJs).toContain('global.renderAvatarHtml(avatar, 20, entityId)');
+        expect(mentionAutocompleteJs).toContain('global.AvatarPetdx.mount(dropdown)');
+        expect(mentionAutocompleteJs).not.toMatch(/const\s+avatar\s*=\s*it\.avatar\s*&&\s*\/\^https/);
+
+        const attachIdx = chatHtml.indexOf('MentionAutocomplete.attach');
+        const attachSnippet = chatHtml.slice(attachIdx, attachIdx + 1600);
+        expect(attachSnippet).toContain('entityId: e.entityId');
+    });
+
+    test('mention autocomplete avatar debug endpoint is registered', () => {
+        expect(indexJs).toContain("/api/debug/mention-autocomplete-avatar");
+        expect(indexJs).toContain("bug: 'mention-autocomplete-avatar'");
+        expect(indexJs).toContain('autocompleteUsesSharedAvatarRenderer');
     });
 });
 
