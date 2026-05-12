@@ -1848,7 +1848,12 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
             // the listing was created (silent identity drift). Owner still sees
             // them in /my-rentals so they can re-publish or delist explicitly.
             const filtered = filterDriftedListings(listings, _interviewDeps?.devices);
-            res.json({ success: true, listings: filtered });
+            const devicesMap = _interviewDeps?.devices;
+            const enriched = filtered.map((l) => {
+                const ent = devicesMap?.[l.owner_device_id]?.entities?.[l.owner_entity_id];
+                return ent?.publicCode ? { ...l, owner_public_code: ent.publicCode } : l;
+            });
+            res.json({ success: true, listings: enriched });
         } catch (err) {
             console.error('[Rental] /marketplace error:', err);
             res.status(500).json({ success: false, error: 'internal_error' });
