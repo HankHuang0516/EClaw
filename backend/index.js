@@ -6480,11 +6480,16 @@ app.get('/api/entities', async (req, res) => {
         if (deviceId !== authedDeviceId) continue;
 
         const device = devices[deviceId];
+        // Owner-level callers (deviceSecret or JWT cookie for this device) get each
+        // entity's botSecret so the Android wallpaper service can spawn per-entity
+        // companion pollers. botSecret-auth callers (peer bots) never see other
+        // entities' secrets.
+        const includeBotSecret = deviceAuthed || (jwtDeviceId && jwtDeviceId === authedDeviceId);
         for (const i of Object.keys(device.entities).map(Number)) {
             const entity = device.entities[i];
             if (!entity) continue;
             if (entity.isBound) {
-                entities.push({
+                const payload = {
                     deviceId: deviceId,
                     entityId: entity.entityId,
                     name: entity.name,
@@ -6516,7 +6521,11 @@ app.get('/api/entities', async (req, res) => {
                         read: m.read || false,
                         delivered: m.delivered || false
                     }))
-                });
+                };
+                if (includeBotSecret && entity.botSecret) {
+                    payload.botSecret = entity.botSecret;
+                }
+                entities.push(payload);
             }
         }
     }
