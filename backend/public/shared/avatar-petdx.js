@@ -147,9 +147,24 @@
         observer = new MutationObserver((mutations) => {
             let needsScan = false;
             for (const m of mutations) {
+                if (m.removedNodes && m.removedNodes.length) {
+                    // Stop any running controller whose canvas just left the
+                    // DOM — PetdxRenderer's rAF loop holds a strong ref to its
+                    // controller so without this the WeakMap can't reclaim it
+                    // and the rAF tick keeps firing on a detached canvas.
+                    for (const n of m.removedNodes) {
+                        if (!n || n.nodeType !== 1) continue;
+                        if (n.matches && n.matches('canvas[data-petdx-entity-id]')) {
+                            unmount(n);
+                        }
+                        if (n.querySelectorAll) {
+                            n.querySelectorAll('canvas[data-petdx-entity-id]')
+                                .forEach(unmount);
+                        }
+                    }
+                }
                 if (m.addedNodes && m.addedNodes.length) {
                     needsScan = true;
-                    break;
                 }
             }
             if (needsScan) mount(document);
