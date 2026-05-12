@@ -37,17 +37,22 @@
   // Source authority: Hank — palette locked 2026-04-25 with the chip+📌
   // redesign; do not recolor without his approval (palette is reused in
   // info.html and roadmap.html previews).
+  // SYS.label values are ENGLISH fallbacks used when window.i18n is unavailable
+  // or the locale lacks `mm_sys_<key>`. Localized labels come from sysLabel().
   const SYS = {
-    invite:     { color: '#f43f5e', label: '邀請成長' },
-    device:     { color: '#06b6d4', label: '裝置' },
+    invite:     { color: '#f43f5e', label: 'Invite & growth' },
+    device:     { color: '#06b6d4', label: 'Device' },
     i18n:       { color: '#a855f7', label: 'i18n' },
-    kanban:     { color: '#22c55e', label: '看板' },
-    chat:       { color: '#3b82f6', label: '聊天' },
-    payment:    { color: '#eab308', label: '支付' },
-    broadcast:  { color: '#f97316', label: '廣播' },
-    bridge:     { color: '#ec4899', label: '橋接' },
-    automation: { color: '#64748b', label: '自動化' },
+    kanban:     { color: '#22c55e', label: 'Kanban' },
+    chat:       { color: '#3b82f6', label: 'Chat' },
+    payment:    { color: '#eab308', label: 'Payment' },
+    broadcast:  { color: '#f97316', label: 'Broadcast' },
+    bridge:     { color: '#ec4899', label: 'Bridge' },
+    automation: { color: '#64748b', label: 'Automation' },
   };
+
+  const t = (key, fallback) => (window.i18n && window.i18n.t && window.i18n.t(key)) || fallback;
+  const sysLabel = (key) => t('mm_sys_' + key, SYS[key]?.label || key);
 
 
   const STYLE_ID = 'mission-mindmap-style';
@@ -422,68 +427,91 @@
       const c = counts[key] || 0;
       return `<div class="sys-row" data-sys="${key}">
         <span class="swatch" style="background:${s.color}"></span>
-        <span class="name">${s.label}</span>
+        <span class="name">${sysLabel(key)}</span>
         <span class="count">${c}</span>
       </div>`;
     }).join('');
 
     const crossCount = edges.filter(e => e.length === 3).length;
 
+    const searchPlaceholder = t('mm_search_placeholder', '🔍 Search nodes…');
+    const searchAria = t('mm_search_aria', 'Search nodes');
+    const addNodeBtn = t('mm_add_node', '+ New node');
+    const subsystemsHeading = t('mm_subsystems', 'Subsystems');
+    const statusHeading = t('mm_node_status', 'Node status');
+    const statusActive = t('mm_status_active', 'Active');
+    const statusBlocked = t('mm_status_blocked', 'Blocked');
+    const statusDone = t('mm_status_done', 'Done');
+    const labelNodes = t('mm_label_nodes', 'nodes');
+    const labelEdges = t('mm_label_edges', 'edges');
+    const labelCross = t('mm_label_cross', 'cross-system dependencies');
+    const modalTitle = t('mm_modal_title', 'Add node');
+    const modalLabel = t('mm_modal_label', 'Label');
+    const modalLabelPlaceholder = t('mm_modal_label_placeholder', 'e.g. new feature name');
+    const modalSys = t('mm_modal_sys', 'Subsystem');
+    const modalTier = t('mm_modal_tier', 'Tier');
+    const modalStatus = t('mm_modal_status', 'Status');
+    const btnCancel = t('mm_btn_cancel', 'Cancel');
+    const btnAdd = t('mm_btn_add', 'Add');
+    const titleFit = t('mm_title_fit', 'Fit');
+    const titleReset = t('mm_title_reset', 'Reset layout');
+    const titleFullscreen = t('mm_title_fullscreen', 'Fullscreen');
+
     rootEl.innerHTML = `
       <aside class="sys-rail">
         <div class="mm-rail-toolbar">
-          <input type="text" class="mm-search" placeholder="🔍 搜尋節點..." aria-label="搜尋節點">
-          <button class="mm-add-btn" data-act="add-node">+ 新節點</button>
+          <input type="text" class="mm-search" placeholder="${escapeHtml(searchPlaceholder)}" aria-label="${escapeHtml(searchAria)}">
+          <button class="mm-add-btn" data-act="add-node">${escapeHtml(addNodeBtn)}</button>
         </div>
         <div class="mm-sep"></div>
-        <h3>子系統</h3>
+        <h3>${escapeHtml(subsystemsHeading)}</h3>
         ${railRows}
         <div class="mm-sep"></div>
         <div class="legend-block">
-          <h3>節點狀態</h3>
-          <div class="legend-row"><span class="status-ring active"></span>進行中</div>
-          <div class="legend-row"><span class="status-ring blocked"></span>阻塞</div>
-          <div class="legend-row"><span class="status-ring done"></span>完成</div>
+          <h3>${escapeHtml(statusHeading)}</h3>
+          <div class="legend-row"><span class="status-ring active"></span>${escapeHtml(statusActive)}</div>
+          <div class="legend-row"><span class="status-ring blocked"></span>${escapeHtml(statusBlocked)}</div>
+          <div class="legend-row"><span class="status-ring done"></span>${escapeHtml(statusDone)}</div>
         </div>
         <div class="mm-sep"></div>
         <div class="summary-block">
-          <span class="num">${nodes.length}</span> 節點 ·
-          <span class="num">${edges.length}</span> 連線<br>
-          <span class="num">${crossCount}</span> 跨系統依賴
+          <span class="num">${nodes.length}</span> ${escapeHtml(labelNodes)} ·
+          <span class="num">${edges.length}</span> ${escapeHtml(labelEdges)}<br>
+          <span class="num">${crossCount}</span> ${escapeHtml(labelCross)}
         </div>
       </aside>
       <div class="mm-modal-bg" data-modal>
         <div class="mm-modal">
-          <h3>新增節點</h3>
-          <label>標籤 (label)</label>
-          <input type="text" data-modal-label placeholder="例：新功能名稱">
-          <label>子系統</label>
+          <h3>${escapeHtml(modalTitle)}</h3>
+          <label>${escapeHtml(modalLabel)}</label>
+          <input type="text" data-modal-label placeholder="${escapeHtml(modalLabelPlaceholder)}">
+          <label>${escapeHtml(modalSys)}</label>
           <select data-modal-sys>
-            ${Object.entries(SYS).map(([k, s]) => `<option value="${k}">${s.label}</option>`).join('')}
+            ${Object.entries(SYS).map(([k]) => `<option value="${k}">${escapeHtml(sysLabel(k))}</option>`).join('')}
           </select>
-          <label>層級 (tier)</label>
+          <label>${escapeHtml(modalTier)}</label>
           <select data-modal-tier>
             <option value="domain">domain</option>
             <option value="topic" selected>topic</option>
             <option value="leaf">leaf</option>
           </select>
-          <label>狀態</label>
+          <label>${escapeHtml(modalStatus)}</label>
           <select data-modal-status>
             <option value="active" selected>active</option>
             <option value="blocked">blocked</option>
             <option value="done">done</option>
           </select>
           <div class="mm-modal-actions">
-            <button class="mm-modal-cancel" data-modal-cancel>取消</button>
-            <button class="mm-modal-submit" data-modal-submit>新增</button>
+            <button class="mm-modal-cancel" data-modal-cancel>${escapeHtml(btnCancel)}</button>
+            <button class="mm-modal-submit" data-modal-submit>${escapeHtml(btnAdd)}</button>
           </div>
         </div>
       </div>
       <div class="mind-canvas-wrap">
         <div class="mm-toolbar">
-          <button data-act="fit" title="Fit">🎯</button>
-          <button data-act="reset" title="重整">🔄</button>
-          <button data-act="fullscreen" title="全螢幕" aria-label="全螢幕">⛶</button>
+          <button data-act="fit" title="${escapeHtml(titleFit)}">🎯</button>
+          <button data-act="reset" title="${escapeHtml(titleReset)}">🔄</button>
+          <button data-act="fullscreen" title="${escapeHtml(titleFullscreen)}" aria-label="${escapeHtml(titleFullscreen)}">⛶</button>
         </div>
         <div class="mm-pin-tray" data-pin-tray></div>
         <div class="mm-tier">L1 · <strong>Topics</strong></div>
@@ -615,7 +643,7 @@
           label: nd.label,
           sys: nd.sys,
           sysColor: SYS[nd.sys].color,
-          sysLabel: SYS[nd.sys].label,
+          sysLabel: sysLabel(nd.sys),
         });
       });
       return rows;
@@ -626,7 +654,9 @@
       // Pin = local bookmark to top-tray of this page (no deep-link, no API).
       // Distinct from cite (📌, deep-links into chat) — different icons to
       // avoid the 📌 collision now that cite uses the canonical 引用 emoji.
-      const pinTitle = isPinned ? '取消釘選' : '釘選到頂部列 (僅當前頁面)';
+      const pinTitle = isPinned
+        ? t('mm_pin_remove', 'Unpin')
+        : t('mm_pin_add', 'Pin to top tray (this page only)');
       const pinIcon = isPinned ? '📍' : '🔖';
       const pinClass = isPinned ? 'pin-btn pinned' : 'pin-btn';
       // Citable IDs: real mindmap UUIDs (mindmap_xxxx) or kanban card prefix IDs
@@ -637,12 +667,14 @@
       const isVirtualHub = String(d.id).startsWith('sys:');
       const canCite = isUuid || isCardId;
       const citeTitle = canCite
-        ? '引用到聊天 — 跳到聊天頁,訊息框已預填 chip token,按送出即可'
+        ? t('mm_cite_enabled', 'Quote into chat — jumps to chat with the chip token pre-filled')
         : isVirtualHub
-          ? '子系統 hub 為彙總節點,無法引用'
-          : '示範資料無法引用 — 需先在心智圖新增實際節點';
+          ? t('mm_cite_hub_blocked', 'Subsystem hub is an aggregate node and cannot be cited')
+          : t('mm_cite_demo_blocked', 'Demo data is not citable — add a real mindmap node first');
       const citeClass = canCite ? 'cite-btn' : 'cite-btn is-disabled';
-      const summary = d.summary || `${sysMeta.label} 子系統 · ${d.tier}`;
+      const summary = d.summary || t('mm_summary_default', '{sys} subsystem · {tier}')
+        .replace('{sys}', sysLabel(d.sys))
+        .replace('{tier}', d.tier);
       const relatedHtml = related.length
         ? related.map(r => `
             <div class="mm-chip-pop-related-row" data-related-id="${escapeHtml(r.id)}">
@@ -650,14 +682,16 @@
               <span class="relname">${escapeHtml(r.label)}</span>
               <span class="relsys">${escapeHtml(r.sysLabel)}</span>
             </div>`).join('')
-        : '<div class="mm-chip-pop-empty">沒有跨系統依賴</div>';
+        : `<div class="mm-chip-pop-empty">${escapeHtml(t('mm_no_cross_deps', 'No cross-system dependencies'))}</div>`;
 
       // 建卡 — Phase 4 write-side: stash node canvas coord (x,y) into
       // localStorage and hand off to kanban.html, which auto-opens the
       // new-card dialog with title pre-filled and chatAnchorCoord wired
       // through to POST /api/mission/card. Available on every node
       // (including demo seeds) — the coord is the value, not the node ID.
-      const cardTitle = '從這個節點建立看板卡片 — 自動錨定心智圖座標';
+      const cardTitle = t('mm_card_from_node', 'Create kanban card from this node — auto-anchors mindmap coordinate');
+      const closeTitle = t('mm_close', 'Close');
+      const relatedHeading = t('mm_related_heading', 'Cross-system related nodes');
       return `
         <div class="mm-chip-pop-header">
           <span class="swatch" style="background:${sysMeta.color}"></span>
@@ -666,12 +700,12 @@
           <button class="mm-chip-pop-btn ${citeClass}" data-pop-act="cite" title="${escapeHtml(citeTitle)}">📌</button>
           <button class="mm-chip-pop-btn card-btn" data-pop-act="card" title="${escapeHtml(cardTitle)}">➕</button>
           <button class="mm-chip-pop-btn ${pinClass}" data-pop-act="pin" title="${escapeHtml(pinTitle)}">${pinIcon}</button>
-          <button class="mm-chip-pop-btn" data-pop-act="close" title="關閉">✖</button>
+          <button class="mm-chip-pop-btn" data-pop-act="close" title="${escapeHtml(closeTitle)}">✖</button>
         </div>
         <div class="mm-chip-pop-body">
           <div class="mm-chip-pop-summary">${escapeHtml(summary)}</div>
           <div class="mm-chip-pop-section">
-            <h5>跨系統相關節點</h5>
+            <h5>${escapeHtml(relatedHeading)}</h5>
             <div class="mm-chip-pop-related">${relatedHtml}</div>
           </div>
         </div>
@@ -760,15 +794,17 @@
         if (act === 'cite') {
           if (btn.classList.contains('is-disabled')) {
             showToast(String(nodeId).startsWith('sys:')
-              ? '子系統 hub 為彙總節點,請點下層節點再引用'
-              : '示範資料無法引用,需先在心智圖新增實際節點');
+              ? t('mm_toast_hub_cite_blocked', 'Subsystem hub is an aggregate — pick a child node to cite')
+              : t('mm_toast_demo_cite_blocked', 'Demo data is not citable — add a real mindmap node first'));
             return;
           }
           // card_<hex> nodes are kanban cards — chat's entity-link-render auto-detects
           // the prefix and renders a card chip. UUID nodes use the legacy mindmap_ token.
           const isCard = /^card_[a-f0-9]{8}/i.test(nodeId);
           const token = isCard ? nodeId : 'mindmap_' + nodeId;
-          const kind = isCard ? '卡片' : '心智圖節點';
+          const kind = isCard
+            ? t('mm_kind_card', 'card')
+            : t('mm_kind_node', 'mindmap node');
           // Unified 引用到聊天 UX — same path as card-holder/files/mission
           // dialog 📌 buttons. Hands the token to chat as quote context +
           // pre-fills the message input so the user just hits send. The
@@ -776,7 +812,7 @@
           // optional prefillInput. Falls back to clipboard copy if neither
           // postMessage nor localStorage path is available (offline / no
           // chat page mounted).
-          const quoteSource = '心智圖';
+          const quoteSource = t('mm_quote_source', 'Mind map');
           const quoteTitle = d.label || token;
           const quoteExcerpt = token;
           try {
@@ -800,13 +836,18 @@
               }));
               global.location.href = '/portal/chat.html';
             }
-            showToast(`引用 ${kind}「${quoteTitle.slice(0, 18)}」到聊天 — 訊息框已預填,按送出即可`);
+            showToast(t('mm_toast_cite_ok', 'Quoted {kind} "{title}" to chat — message box pre-filled, just hit send')
+              .replace('{kind}', kind)
+              .replace('{title}', quoteTitle.slice(0, 18)));
           } catch (err) {
             // Last resort — clipboard copy + manual paste hint
             copyToClipboard(token).then(ok => {
               showToast(ok
-                ? `引用直送失敗,已複製 token 請手動貼上聊天: ${token.slice(0, 22)}…`
-                : `引用失敗 (${err && err.message || 'unknown'}): ${token}`);
+                ? t('mm_toast_cite_fallback', 'Direct quote failed — token copied, paste it into chat: {token}…')
+                    .replace('{token}', token.slice(0, 22))
+                : t('mm_toast_cite_failed', 'Quote failed ({err}): {token}')
+                    .replace('{err}', (err && err.message) || 'unknown')
+                    .replace('{token}', token));
             });
           }
         }
@@ -821,7 +862,7 @@
             const node = cy.getElementById(nodeId);
             const pos = node && node.length ? node.position() : null;
             if (!pos || !Number.isFinite(pos.x) || !Number.isFinite(pos.y)) {
-              showToast('座標讀取失敗,無法建立錨定卡片');
+              showToast(t('mm_toast_coord_failed', 'Could not read coordinate — cannot anchor card'));
               return;
             }
             const payload = {
@@ -833,10 +874,13 @@
               ts: Date.now(),
             };
             global.localStorage.setItem('eclaw_pending_mindmap_card', JSON.stringify(payload));
-            showToast(`建立卡片中… 座標已錨定 (${Math.round(pos.x)}, ${Math.round(pos.y)})`);
+            showToast(t('mm_toast_card_pending', 'Creating card… coordinate anchored ({x}, {y})')
+              .replace('{x}', Math.round(pos.x))
+              .replace('{y}', Math.round(pos.y)));
             global.location.href = '/portal/kanban.html';
           } catch (err) {
-            showToast(`建卡失敗: ${err && err.message || 'unknown'}`);
+            showToast(t('mm_toast_card_failed', 'Card creation failed: {err}')
+              .replace('{err}', (err && err.message) || 'unknown'));
           }
         }
       });
@@ -981,7 +1025,9 @@
     function updateFsBtn() {
       if (!fsBtn) return;
       const active = isFsActive();
-      fsBtn.title = active ? '退出全螢幕' : '全螢幕';
+      fsBtn.title = active
+        ? t('mm_title_exit_fullscreen', 'Exit fullscreen')
+        : t('mm_title_fullscreen', 'Fullscreen');
       fsBtn.setAttribute('aria-label', fsBtn.title);
       fsBtn.textContent = active ? '⛶✕' : '⛶';
     }
@@ -1090,10 +1136,9 @@
     rootEl.classList.add('mm-root');
     rootEl.classList.add('mm-empty');
     if (rootEl.style.display === 'block') rootEl.style.display = '';
-    const t = (key, fallback) => (window.i18n && window.i18n.t && window.i18n.t(key)) || fallback;
-    const title = t('mm_empty_title', '心智圖還沒有節點');
-    const hint = t('mm_empty_hint', '建立看板卡片後，這裡會自動把任務、子卡與聊天錨點連成圖。');
-    const cta = t('mm_empty_cta', '前往看板新增第一張卡');
+    const title = t('mm_empty_title', 'Mind-map has no nodes yet');
+    const hint = t('mm_empty_hint', 'Create a kanban card and this view will automatically connect tasks, sub-cards and chat anchors into a graph.');
+    const cta = t('mm_empty_cta', 'Open kanban — add your first card');
     rootEl.innerHTML = `
       <div class="mm-empty-card">
         <div class="mm-empty-emoji">🧠</div>
