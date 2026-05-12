@@ -188,6 +188,12 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Daily update 2026-05-12: new hard-tier additions ──
+    { file: null, description: 'A JavaScript error stack trace: TypeError: Cannot read properties of undefined (reading "length") at processItems (utils/array.js:42:18) at main (app.js:17:5) — two call frames visible', keywords: ['TypeError', 'undefined', 'length', 'array', '42', 'two'] },
+    { file: null, description: 'A Kanban board with four columns: Backlog has 8 cards, In Progress has 3 cards highlighted in yellow, Review has 2 cards, Done has 11 cards — 24 cards total', keywords: ['kanban', 'four', 'backlog', 'eight', 'progress', 'three', 'done', 'eleven', '24'] },
+    { file: null, description: 'A database ER diagram showing three entities: User (id, email, role), Order (id, amount, status, user_id), and Product (id, name, price) — two one-to-many relationships drawn with crow-foot notation', keywords: ['database', 'user', 'order', 'product', 'three', 'two', 'relationships'] },
+    { file: null, description: 'A network topology diagram: one central firewall connected to three subnets — 192.168.1.0/24 (office), 10.0.0.0/8 (servers), and 172.16.0.0/12 (DMZ) — eight hosts shown across the subnets', keywords: ['firewall', 'three', 'subnet', '192', '10', '172', 'eight', 'hosts'] },
+    { file: null, description: 'A git diff showing two files changed: src/auth.js has 5 lines added (green) and 2 lines deleted (red), src/config.js has 1 line added and 3 lines deleted — 6 insertions and 5 deletions total', keywords: ['diff', 'two', 'files', 'auth', 'config', 'insertions', 'deletions', 'six', 'five'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +374,15 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── Daily update 2026-05-12: new DP + graph problems ──
+    { title: 'Longest Common Subsequence', description: 'Write `solve(text1, text2)` — return the length of their longest common subsequence. A subsequence skips characters but keeps order. Return 0 if there is none.',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"", "abc"', expected: '0' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(heights)` — given an array of non-negative integers representing bar heights, compute how much water can be trapped between the bars after raining.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[3,0,2,0,4]', expected: '7' },{ input: '[1,2]', expected: '0' }] },
+    { title: 'Course Schedule', description: 'Write `solve(numCourses, prerequisites)` — there are numCourses labeled 0..numCourses-1. prerequisites[i]=[a,b] means course b must be taken before a. Return true if you can finish all courses (no cycle), false otherwise.',
+      testCases: [{ input: '2, [[1,0]]', expected: 'true' },{ input: '2, [[1,0],[0,1]]', expected: 'false' },{ input: '1, []', expected: 'true' },{ input: '4, [[1,0],[2,1],[3,2]]', expected: 'true' }] },
+    { title: 'Edit Distance', description: 'Write `solve(word1, word2)` — return the minimum number of single-character edits (insert, delete, or replace) required to convert word1 into word2.',
+      testCases: [{ input: '"horse", "ros"', expected: '3' },{ input: '"intention", "execution"', expected: '5' },{ input: '"", "abc"', expected: '3' },{ input: '"abc", "abc"', expected: '0' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +432,13 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Daily update 2026-05-12: cognitive bias + probability additions ──
+    { question: 'A bat and a ball together cost $1.10. The bat costs exactly $1.00 more than the ball. How much does the ball cost in cents?', expectedKeywords: ['5', '0.05'] },
+    { question: 'What is the probability of getting exactly 2 heads when flipping a fair coin 4 times? Express as a simplified fraction.', expectedKeywords: ['3/8', '0.375'] },
+    { question: 'A price is increased by 20% and then decreased by 20%. What percentage of the original price is the final price?', expectedKeywords: ['96'] },
+    { question: 'Alice is taller than Bob. Charlie is shorter than Alice but taller than Bob. Who is the shortest of the three?', expectedKeywords: ['bob'] },
+    { question: 'A train 200 meters long passes a stationary observer in 10 seconds. What is the train\'s speed in km/h?', expectedKeywords: ['72'] },
+    { question: 'How many diagonals does a regular octagon (8-sided polygon) have?', expectedKeywords: ['20'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +516,12 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Daily update 2026-05-12: new medium-tier additions ──
+    { text: 'The conference is scheduled for Tuesday March twelfth from two to four PM in Building A Room 205', keywords: ['conference', 'tuesday', 'march', 'twelfth', 'two', 'four', 'building', '205'] },
+    { text: 'Your subscription renews on October thirty-first for fourteen dollars and ninety-nine cents — visit the billing portal to manage your plan', keywords: ['subscription', 'october', 'thirty-first', 'fourteen', 'ninety-nine', 'billing'] },
+    { text: 'Please enter your date of birth in the format year dash month dash day — for example nineteen ninety-two dash zero three dash twenty-five', keywords: ['date', 'birth', 'format', 'year', 'month', 'day', 'nineteen', 'ninety-two'] },
+    { text: 'The package tracking number is 1Z 999 AA1 01 2345 6784 and estimated delivery is in three to five business days', keywords: ['tracking', '1Z', '999', 'AA1', 'delivery', 'three', 'five', 'business'] },
+    { text: 'Press Control Shift P on Windows or Command Shift P on Mac to open the command palette in your code editor', keywords: ['control', 'shift', 'command', 'palette', 'editor'] },
 ];
 
 // ============================================
