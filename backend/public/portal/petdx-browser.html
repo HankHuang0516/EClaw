@@ -599,6 +599,8 @@
     let currentSelectionId = null;
 
     async function refreshOwnerState() {
+        const creds = getCreds();
+        if (!creds.deviceId || (!creds.deviceSecret && !creds.botSecret)) return;
         const q = authQuery();
         try {
             const r = await fetch('/api/companion/current?' + q.toString());

@@ -781,6 +781,12 @@
         let feedbackCategory = 'bug';
         // currentUser is declared in shared/auth.js
         let selectedPhotos = []; // File objects selected for upload
+        let feedbackPhotoObserver = null;
+        const feedbackPhotoQueue = [];
+        const queuedFeedbackPhotoIds = new Set();
+        let activeFeedbackPhotoLoads = 0;
+        const MAX_FEEDBACK_PHOTO_LOADS = 3;
+        let feedbackPhotoGeneration = 0;
 
         window.addEventListener('DOMContentLoaded', async () => {
             renderNav('settings');
@@ -1056,6 +1062,7 @@
         function renderFeedback() {
             const listEl = document.getElementById('feedbackList');
             const emptyEl = document.getElementById('emptyState');
+            resetFeedbackPhotoLoader();
             listEl.innerHTML = '';
 
             const filtered = currentFilter === 'all'
@@ -1130,10 +1137,62 @@
 
             card.innerHTML = html;
 
-            // Load photos asynchronously
-            loadFeedbackPhotos(card, item.id);
+            // Load photos lazily. Feedback history can contain many cards; firing
+            // one /photos request per card on render can self-trigger rate limits.
+            scheduleFeedbackPhotoLoad(card, item.id);
 
             return card;
+        }
+
+        function resetFeedbackPhotoLoader() {
+            if (feedbackPhotoObserver) feedbackPhotoObserver.disconnect();
+            feedbackPhotoObserver = null;
+            feedbackPhotoQueue.length = 0;
+            queuedFeedbackPhotoIds.clear();
+            activeFeedbackPhotoLoads = 0;
+            feedbackPhotoGeneration++;
+
+            if ('IntersectionObserver' in window) {
+                feedbackPhotoObserver = new IntersectionObserver(entries => {
+                    entries.forEach(entry => {
+                        if (!entry.isIntersecting) return;
+                        feedbackPhotoObserver.unobserve(entry.target);
+                        enqueueFeedbackPhotoLoad(entry.target, entry.target.dataset.feedbackId, Number(entry.target.dataset.feedbackPhotoGeneration));
+                    });
+                }, { rootMargin: '250px 0px' });
+            }
+        }
+
+        function scheduleFeedbackPhotoLoad(cardEl, feedbackId) {
+            if (!currentUser?.deviceId || !currentUser?.deviceSecret) return;
+            cardEl.dataset.feedbackId = feedbackId;
+            cardEl.dataset.feedbackPhotoGeneration = String(feedbackPhotoGeneration);
+            if (feedbackPhotoObserver) {
+                feedbackPhotoObserver.observe(cardEl);
+            } else {
+                enqueueFeedbackPhotoLoad(cardEl, feedbackId, feedbackPhotoGeneration);
+            }
+        }
+
+        function enqueueFeedbackPhotoLoad(cardEl, feedbackId, generation = feedbackPhotoGeneration) {
+            if (!cardEl || !feedbackId || generation !== feedbackPhotoGeneration || queuedFeedbackPhotoIds.has(String(feedbackId))) return;
+            queuedFeedbackPhotoIds.add(String(feedbackId));
+            feedbackPhotoQueue.push({ cardEl, feedbackId, generation });
+            drainFeedbackPhotoQueue();
+        }
+
+        function drainFeedbackPhotoQueue() {
+            while (activeFeedbackPhotoLoads < MAX_FEEDBACK_PHOTO_LOADS && feedbackPhotoQueue.length > 0) {
+                const job = feedbackPhotoQueue.shift();
+                if (job.generation !== feedbackPhotoGeneration) continue;
+                activeFeedbackPhotoLoads++;
+                loadFeedbackPhotos(job.cardEl, job.feedbackId)
+                    .finally(() => {
+                        if (job.generation !== feedbackPhotoGeneration) return;
+                        activeFeedbackPhotoLoads--;
+                        drainFeedbackPhotoQueue();
+                    });
+            }
         }
 
         async function loadFeedbackPhotos(cardEl, feedbackId) {

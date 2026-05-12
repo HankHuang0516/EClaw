@@ -417,10 +417,13 @@
     (async function init() {
         dbg('info', 'Init started', { url: window.location.href, origin: API_BASE });
 
-        // Extract code from URL path: /c/<code>
-        const parts = window.location.pathname.split('/');
-        targetCode = parts[parts.length - 1] || '';
-        dbg('info', `Target code extracted: "${targetCode}"`, { pathParts: parts });
+        // Extract code from supported share routes: /c/<code> or ?code=<code>.
+        // Do not treat the direct page filename (/portal/share-chat.html) as a bot code.
+        const parts = window.location.pathname.split('/').filter(Boolean);
+        const cIndex = parts.indexOf('c');
+        const urlCode = new URLSearchParams(window.location.search).get('code') || '';
+        targetCode = (cIndex >= 0 && parts[cIndex + 1]) ? parts[cIndex + 1] : urlCode;
+        dbg('info', `Target code extracted: "${targetCode}"`, { pathParts: parts, urlCode });
 
         if (!targetCode || targetCode.length < 4) {
             dbg('error', 'Invalid target code — too short or empty');
