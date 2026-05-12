@@ -4188,6 +4188,8 @@ tmux send-keys -t eclaw-bridge 'cd /path/to/claude-code-eclaw-channel && \
                                     <tr><td><code>ECLAW_REPLY_TIMEOUT_S</code></td><td></td><td><code>120</code></td><td data-i18n="guide_cc_channel_envvars_row_reply_timeout">Claude 收訊後未呼叫 reply tool 的提醒秒數</td></tr>
                                     <tr><td><code>ECLAW_AUTO_WAKE_ENABLED</code></td><td></td><td><code>true</code></td><td data-i18n="guide_cc_channel_envvars_row_auto_wake_enabled">idle session 自動喚醒（<code>/clear</code> 後或新 session 必備）</td></tr>
                                     <tr><td><code>ECLAW_AUTO_WAKE_DELAY_S</code></td><td></td><td><code>10</code></td><td data-i18n="guide_cc_channel_envvars_row_auto_wake_delay">轉發後多少秒檢查 idle 並喚醒</td></tr>
+                                    <tr><td><code>ECLAW_AUTO_WAKE_POLL_S</code></td><td></td><td><code>5</code></td><td data-i18n="guide_cc_channel_envvars_row_auto_wake_poll">Claude 仍 busy 時的重新檢查間隔（秒）</td></tr>
+                                    <tr><td><code>ECLAW_AUTO_WAKE_MAX_WAIT_S</code></td><td></td><td><code>300</code></td><td data-i18n="guide_cc_channel_envvars_row_auto_wake_max_wait">總共最多等多久才放棄喚醒（秒）</td></tr>
                                     <tr><td><code>ECLAW_AUTO_WAKE_COOLDOWN_S</code></td><td></td><td><code>60</code></td><td data-i18n="guide_cc_channel_envvars_row_auto_wake_cooldown">連續喚醒的冷卻時間</td></tr>
                                 </tbody>
                             </table>
