@@ -24,10 +24,16 @@ import java.util.concurrent.ConcurrentHashMap
  * Fetches the per-entity current companion (Petdx) and decodes spritesheet
  * bitmaps for the renderer. Two caches:
  *
- *  - `descriptorCache`: per-entity CompanionDetail, refreshed on poll.
- *  - `sheetCache`: LRU bitmap cache keyed by spritesheet URL, capped at 3
- *    entries (per spec §4.6 memory budget) so the wallpaper service stays
- *    well under 80 MB even with multiple bound bots.
+ *  - `descriptorCache`: per-entity CompanionDetail, refreshed on poll. Only
+ *    written AFTER the matching spritesheet (if any) has been preloaded into
+ *    `sheetCache` — atomic swap so the wallpaper draw loop never observes
+ *    "new descriptor, sheet still decoding" (the trigger for the default-
+ *    lobster flash fixed in card_9e52c7b405d0fdd3aad0d2e3).
+ *  - `sheetCache`: LRU bitmap cache keyed by spritesheet URL. Sized at 8 so
+ *    devices with 5–7 bound entities don't churn each other's sheets on
+ *    every poll round (the old cap of 3 caused continuous re-eviction →
+ *    recurring flicker even outside companion-change moments). 8 sheets ×
+ *    ~1 MB each still well under the spec §4.6 80 MB memory budget.
  */
 class CompanionRepository(
     private val api: ClawApiService,
@@ -35,7 +41,7 @@ class CompanionRepository(
 ) {
     private val deviceManager = DeviceManager.getInstance(context)
     private val descriptorCache = ConcurrentHashMap<Int, CompanionDetail>()
-    private val sheetCache = SheetBitmapCache(maxEntries = 3)
+    private val sheetCache = SheetBitmapCache(maxEntries = 8)
     private val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     /** Returns the cached companion for an entity, or null until a fetch lands. */
@@ -76,17 +82,30 @@ class CompanionRepository(
                 )
                 val companion = resp.selection?.companion
                 if (companion != null) {
-                    descriptorCache[entityId] = companion
-                    Timber.d("Companion fetched for entity $entityId: ${companion.id} (${companion.assetType})")
-                    // Pre-warm spritesheet decode so first paint is smooth.
-                    // The flow itself runs on the engine's Main scope, so the
-                    // OkHttp call has to be marshalled to IO.
-                    if (companion.assetType == "spritesheet") {
-                        withContext(Dispatchers.IO) {
-                            sheetCache.getOrLoad(companion.spritesheetUrl() ?: "") {
-                                companion.spritesheetUrl()?.let { fetchBitmap(it) }
+                    // Preload the spritesheet BEFORE swapping the descriptor.
+                    // The wallpaper draw loop reads `cached(entityId)` and
+                    // `getSheet(url)` independently; if we publish the new
+                    // descriptor first, the loop will see "new companion + no
+                    // sheet" for the ~1 s window the OkHttp+decode takes —
+                    // and the old renderer fell back to procedural lobster
+                    // for that whole window, producing the visible flicker.
+                    val sheetReady = if (companion.assetType == "spritesheet") {
+                        val sheetUrl = companion.spritesheetUrl()
+                        if (sheetUrl.isNullOrBlank()) {
+                            true // descriptor is malformed; let renderer's UNSUPPORTED path handle it
+                        } else {
+                            withContext(Dispatchers.IO) {
+                                sheetCache.getOrLoad(sheetUrl) { fetchBitmap(sheetUrl) } != null
                             }
                         }
+                    } else {
+                        true // non-spritesheet (procedural) — no preload needed
+                    }
+                    if (sheetReady) {
+                        descriptorCache[entityId] = companion
+                        Timber.d("Companion fetched for entity $entityId: ${companion.id} (${companion.assetType})")
+                    } else {
+                        Timber.w("Spritesheet preload failed for entity $entityId (${companion.spritesheetUrl()}); keeping previous companion to avoid default-lobster flicker")
                     }
                 }
                 emit(companion)
