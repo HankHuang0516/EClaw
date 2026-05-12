@@ -514,6 +514,7 @@
             if (!currentUser) return;
             const locked = isLocked();
             const vars = loadLocalVars();
+            if (Object.keys(vars).length === 0) return;
             try {
                 const result = await apiCall('POST', '/api/device-vars', {
                     deviceId: currentUser.deviceId,

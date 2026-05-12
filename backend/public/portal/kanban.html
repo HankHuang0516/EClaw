@@ -1360,7 +1360,7 @@
                 renderMessageList(data.messages, data.timeWindow);
             } catch (err) {
                 console.error('[Kanban] Load messages error:', err);
-                listEl.innerHTML = `<div class="kb-message-error">Failed to load messages: ${err.message}</div>`;
+                listEl.innerHTML = `<div class="kb-message-error">Failed to load messages: ${escapeHtml(err.message)}</div>`;
             }
         }
 
@@ -1532,7 +1532,7 @@
         }
 
         async function loadDependencyContainer(container) {
-            const cardId = container.dataset.cardId;
+            const cardId = container.dataset.depCardId;
             if (!cardId || container.dataset.depLoading === '1' || container.dataset.depLoaded === '1') return;
             container.dataset.depLoading = '1';
 
@@ -1555,7 +1555,7 @@
             const containers = document.querySelectorAll('.kb-dep-chips-container');
 
             for (const container of containers) {
-                const cardId = container.dataset.cardId;
+                const cardId = container.dataset.depCardId;
                 if (!cardId || container.dataset.depLoaded === '1' || container.dataset.depLoading === '1') continue;
                 if (dependencyCache.has(cardId)) {
                     const { dependencies, dependents } = dependencyCache.get(cardId);
@@ -1595,7 +1595,7 @@
                     ${noteCount ? '<span>📝 '+noteCount+'</span>' : ''}
                     ${fileCount ? '<span>📎 '+fileCount+'</span>' : ''}
                     ${countdown}
-                    <div class="kb-dep-chips-container" data-card-id="${card.id}"></div>
+                    <div class="kb-dep-chips-container" data-dep-card-id="${card.id}"></div>
                     ${timeAgo ? '<span class="kb-card-time">' + timeAgo + '</span>' : ''}
                 </div>
             </div>`;
@@ -1916,7 +1916,7 @@
                 <span class="meta-item">🕐 ${formatTime(card.createdAt || card.created_at)}</span>
                 ${scheduleInfo}
                 ${card.description ? '<div class="kb-detail-desc">'+renderSmartChips(card.description)+'</div>' : ''}
-                <div class="kb-dep-chips-container kb-detail-dep-chips" data-card-id="${cardId}"></div>
+                <div class="kb-dep-chips-container kb-detail-dep-chips" data-dep-card-id="${cardId}"></div>
             `;
             const detailDepContainer = meta.querySelector('.kb-detail-dep-chips');
             if (detailDepContainer) {

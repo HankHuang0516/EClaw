@@ -987,7 +987,11 @@
                     await window.MissionMindmap.init({ rootEl: container, data: liveData });
                 } catch (err) {
                     console.error('mindmap init failed:', err);
-                    container.innerHTML = '<div style="padding:14px;color:var(--text-secondary);font-size:12px;">載入失敗：' + (err.message || err) + '</div>';
+                    const errDiv = document.createElement('div');
+                    errDiv.style.cssText = 'padding:14px;color:var(--text-secondary);font-size:12px;';
+                    errDiv.textContent = '載入失敗：' + String(err.message || err);
+                    container.innerHTML = '';
+                    container.appendChild(errDiv);
                 }
             }
         }
@@ -1218,7 +1222,7 @@
             } catch (initErr) {
                 console.error('[Mission] Init error:', initErr);
                 const el = document.getElementById('loadingState');
-                if (el) el.innerHTML = '<p style="color:#f44;padding:20px;">Mission init error: ' + initErr.message + '</p>';
+                if (el) { const p = document.createElement('p'); p.style.cssText = 'color:#f44;padding:20px;'; p.textContent = 'Mission init error: ' + initErr.message; el.innerHTML = ''; el.appendChild(p); }
             }
         });
 
@@ -3321,6 +3325,7 @@
             if (!currentUser) return;
             const locked = localStorage.getItem(`eclawVarsLocked_${currentUser.deviceId}`) === 'true';
             const vars = loadLocalVars();
+            if (Object.keys(vars).length === 0) return;
             try {
                 const result = await apiCall('POST', '/api/device-vars', {
                     deviceId: currentUser.deviceId,

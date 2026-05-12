@@ -1043,7 +1043,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 
 ## Test Coverage Summary
 
-**~460 total API routes** across all modules (410 excluding Article Publisher), **~84% covered** by Jest + integration tests (~2693 test cases across 184 Jest files + 59 integration tests).
+**~460 total API routes** across all modules (410 excluding Article Publisher), **~84% covered** by Jest + integration tests (~2895 test cases across 198 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|

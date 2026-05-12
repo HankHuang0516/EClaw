@@ -407,17 +407,19 @@
             <option value="id">Indonesia</option>
         </select>
     </div>
-    <script>
-        // Set dropdown to current language
-        document.addEventListener('DOMContentLoaded', () => {
-            const sel = document.querySelector('select');
-            if (sel) sel.value = (localStorage.getItem('eclaw-language') || 'en');
-        });
-    </script>
-
     <script src="shared/api.js"></script>
     <!-- IMPORTANT: Check path for i18n.js relative to portal/index.html. it is in ../shared/i18n.js since index.html is in portal/ -->
     <script src="../shared/i18n.js"></script>
+    <script>
+        // Sync dropdown + html lang with i18n auto-detected locale (after i18n.js loads)
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof i18n === 'undefined') return;
+            const sel = document.querySelector('select[onchange*="setLanguage"]');
+            if (sel) sel.value = i18n.lang || 'en';
+            const langMap = { zh: 'zh-Hant', 'zh-CN': 'zh-Hans' };
+            document.documentElement.lang = langMap[i18n.lang] || i18n.lang || 'en';
+        });
+    </script>
     <script src="shared/footer.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="/js/growth-tracking.js"></script>
