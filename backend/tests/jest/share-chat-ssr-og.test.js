@@ -16,13 +16,13 @@ const fs = require('fs');
 const src = fs.readFileSync(require.resolve('../../index'), 'utf8');
 
 describe('share-chat SSR helper', () => {
-    function slice(anchor, span = 4500) {
+    function slice(anchor, span = 5500) {
         const i = src.indexOf(anchor);
         expect(i).toBeGreaterThan(-1);
         return src.slice(i, i + span);
     }
 
-    const helperBlock = slice('function _renderShareChatSSR(', 3500);
+    const helperBlock = slice('function _renderShareChatSSR(', 5500);
     const routeBlock = slice("app.get('/c/:code',", 800);
 
     it('helper is defined', () => {
@@ -48,6 +48,24 @@ describe('share-chat SSR helper', () => {
         expect(helperBlock).toContain('id="og-title"');
         expect(helperBlock).toContain('id="og-desc"');
         expect(helperBlock).toContain('id="og-url"');
+    });
+
+    it('personalises og:image with entity avatar (fallback default)', () => {
+        expect(helperBlock).toContain('id="og-image"');
+        expect(helperBlock).toMatch(/og:image"\s+content="\$\{avatarAttr\}"/);
+    });
+
+    it('personalises twitter:title / twitter:description / twitter:image', () => {
+        expect(helperBlock).toContain('id="twitter-title"');
+        expect(helperBlock).toContain('id="twitter-desc"');
+        expect(helperBlock).toContain('id="twitter-image"');
+        expect(helperBlock).toMatch(/twitter:title"\s+content="\$\{ogTitleAttr\}"/);
+        expect(helperBlock).toMatch(/twitter:description"\s+content="\$\{descAttr\}"/);
+        expect(helperBlock).toMatch(/twitter:image"\s+content="\$\{avatarAttr\}"/);
+    });
+
+    it('avatar URL falls back to default when not absolute http(s)', () => {
+        expect(helperBlock).toMatch(/avatarUrl = .*\^https\?:\\\/\\\/.*entity\.avatar.*og-image\.png/s);
     });
 
     it('personalises canonical link', () => {
