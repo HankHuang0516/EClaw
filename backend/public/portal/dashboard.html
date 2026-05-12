@@ -547,6 +547,7 @@
         }
         .channel-promo-grid {
             display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 10px;
         }
         .channel-guide-card {
@@ -1826,33 +1827,6 @@
 
                             <div class="channel-guide-card">
                                 <div class="channel-guide-title">
-                                    <span>Claude Code Channel</span>
-                                    <span class="channel-guide-badge">Subscription</span>
-                                </div>
-                                <div class="channel-guide-desc">Connect an EClaw entity to a Claude Code session via fakechat WebSocket. Good when you want to use claude.ai subscription quota instead of API-token billing.</div>
-                                <div class="channel-step-code" onclick="copyText('git clone https://github.com/HankHuang0516/claude-code-eclaw-channel.git && cd claude-code-eclaw-channel && bun install', this)">
-                                    <span class="channel-step-num">1</span>
-                                    <code>git clone .../claude-code-eclaw-channel && bun install</code>
-                                    <span class="channel-step-copy">⧉</span>
-                                </div>
-                                <div class="channel-step-code" onclick="copyText('/plugin install fakechat@claude-plugins-official', this)">
-                                    <span class="channel-step-num">2</span>
-                                    <code>/plugin install fakechat@claude-plugins-official</code>
-                                    <span class="channel-step-copy">⧉</span>
-                                </div>
-                                <div class="channel-step-code" onclick="copyText('curl http://localhost:18800/health', this)">
-                                    <span class="channel-step-num">3</span>
-                                    <code>curl http://localhost:18800/health</code>
-                                    <span class="channel-step-copy">⧉</span>
-                                </div>
-                                <div class="channel-guide-actions">
-                                    <a class="channel-promo-link" href="info.html#channel-plugins/claude-code-channel">Claude guide →</a>
-                                    <a class="channel-promo-link" href="https://github.com/HankHuang0516/claude-code-eclaw-channel" target="_blank" rel="noopener">GitHub →</a>
-                                </div>
-                            </div>
-
-                            <div class="channel-guide-card">
-                                <div class="channel-guide-title">
                                     <span>Codex Channel</span>
                                     <span class="channel-guide-badge">CLI bridge</span>
                                 </div>
@@ -1862,7 +1836,7 @@
                                     <code>git clone .../codex-eclaw-bridge && npm install</code>
                                     <span class="channel-step-copy">⧉</span>
                                 </div>
-                                <div class="channel-step-code" onclick="copyText('ECLAW_API_KEY=eck_your_key\nECLAW_WEBHOOK_URL=https://your-public-url.example.com\nCODEX_WORKSPACE=/absolute/path/to/your/repo\nCODEX_MODEL=gpt-5.4-mini', this)">
+                                <div class="channel-step-code" onclick="copyText('ECLAW_API_KEY=eck_your_key\nECLAW_WEBHOOK_URL=https://your-public-url.example.com\nCODEX_WORKSPACE=/absolute/path/to/your/repo', this)">
                                     <span class="channel-step-num">2</span>
                                     <code>fill .env: ECLAW_API_KEY, WEBHOOK_URL, CODEX_WORKSPACE</code>
                                     <span class="channel-step-copy">⧉</span>
