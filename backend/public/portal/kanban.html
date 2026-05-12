@@ -1410,20 +1410,37 @@
 
         // ── Dependency Chain Functions ──
         const dependencyCache = new Map();
+        const dependencyInflight = new Map();
+        let dependencyObserver = null;
+
+        function dependencyAuthQuery() {
+            return `deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`;
+        }
+
+        async function fetchJsonOrThrow(url) {
+            const response = await fetch(url);
+            if (!response.ok) {
+                const retryAfter = response.headers.get('Retry-After');
+                const suffix = retryAfter ? ` (retry after ${retryAfter}s)` : '';
+                throw new Error(`HTTP ${response.status}${suffix}: ${url}`);
+            }
+            return response.json();
+        }
 
         async function fetchCardDependencies(cardId) {
             if (dependencyCache.has(cardId)) {
                 return dependencyCache.get(cardId);
             }
+            if (dependencyInflight.has(cardId)) {
+                return dependencyInflight.get(cardId);
+            }
 
-            try {
-                const [depsResponse, dependentsResponse] = await Promise.all([
-                    fetch(`/api/mission/card/${cardId}/dependencies?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`),
-                    fetch(`/api/mission/card/${cardId}/dependents?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`)
+            const promise = (async () => {
+                const auth = dependencyAuthQuery();
+                const [depsData, dependentsData] = await Promise.all([
+                    fetchJsonOrThrow(`/api/mission/card/${cardId}/dependencies?${auth}`),
+                    fetchJsonOrThrow(`/api/mission/card/${cardId}/dependents?${auth}`)
                 ]);
-
-                const depsData = depsResponse.ok ? await depsResponse.json() : { dependencies: [] };
-                const dependentsData = dependentsResponse.ok ? await dependentsResponse.json() : { dependents: [] };
 
                 const result = {
                     dependencies: depsData.dependencies || [],
@@ -1432,9 +1449,16 @@
 
                 dependencyCache.set(cardId, result);
                 return result;
+            })();
+
+            dependencyInflight.set(cardId, promise);
+            try {
+                return await promise;
             } catch (error) {
                 console.warn('[Dependency] Failed to fetch for card:', cardId, error);
                 return { dependencies: [], dependents: [] };
+            } finally {
+                dependencyInflight.delete(cardId);
             }
         }
 
@@ -1495,21 +1519,51 @@
             }
         }
 
-        async function loadDependenciesForVisibleCards() {
-            // Find all dependency chip containers in the current view
+        function ensureDependencyObserver() {
+            if (dependencyObserver) return dependencyObserver;
+            dependencyObserver = new IntersectionObserver((entries) => {
+                for (const entry of entries) {
+                    if (!entry.isIntersecting) continue;
+                    dependencyObserver.unobserve(entry.target);
+                    loadDependencyContainer(entry.target);
+                }
+            }, { root: null, rootMargin: '300px 0px', threshold: 0.01 });
+            return dependencyObserver;
+        }
+
+        async function loadDependencyContainer(container) {
+            const cardId = container.dataset.cardId;
+            if (!cardId || container.dataset.depLoading === '1' || container.dataset.depLoaded === '1') return;
+            container.dataset.depLoading = '1';
+
+            try {
+                const { dependencies, dependents } = await fetchCardDependencies(cardId);
+                container.innerHTML = renderDependencyChips(dependencies, dependents);
+                container.dataset.depLoaded = '1';
+            } catch (error) {
+                console.warn('[Dependency] Failed to load for card:', cardId, error);
+            } finally {
+                delete container.dataset.depLoading;
+            }
+        }
+
+        function loadDependenciesForVisibleCards() {
+            // Lazily hydrate dependency chips. Loading every rendered card at once can
+            // issue hundreds of dependency/dependent requests on large boards and trip
+            // production rate limits before the user scrolls to those cards.
+            const observer = ensureDependencyObserver();
             const containers = document.querySelectorAll('.kb-dep-chips-container');
 
             for (const container of containers) {
                 const cardId = container.dataset.cardId;
-                if (!cardId) continue;
-
-                try {
-                    const { dependencies, dependents } = await fetchCardDependencies(cardId);
-                    const chipsHtml = renderDependencyChips(dependencies, dependents);
-                    container.innerHTML = chipsHtml;
-                } catch (error) {
-                    console.warn('[Dependency] Failed to load for card:', cardId, error);
+                if (!cardId || container.dataset.depLoaded === '1' || container.dataset.depLoading === '1') continue;
+                if (dependencyCache.has(cardId)) {
+                    const { dependencies, dependents } = dependencyCache.get(cardId);
+                    container.innerHTML = renderDependencyChips(dependencies, dependents);
+                    container.dataset.depLoaded = '1';
+                    continue;
                 }
+                observer.observe(container);
             }
         }
 
