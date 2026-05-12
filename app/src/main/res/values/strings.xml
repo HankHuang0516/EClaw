@@ -673,8 +673,8 @@ If you have any questions, please contact us via our official email.
     <string name="notif_pref_speak_to">Entity Messages</string>
     <string name="notif_pref_feedback">Feedback Updates</string>
     <string name="notif_pref_todo">TODO Completed</string>
-    <string name="notif_pref_kanban_done">Kanban Card Done</string>
-    <string name="notif_pref_kanban_done_auto">Kanban Auto Card Done</string>
+    <string name="notif_pref_kanban_done">Kanban Card Completed</string>
+    <string name="notif_pref_kanban_done_auto">Kanban Automation Completed</string>
     <string name="notif_pref_scheduled">Scheduled Messages</string>
     <string name="notif_prefs_loading">Loading preferences…</string>
     <string name="notif_prefs_error">Failed to load notification preferences</string>
