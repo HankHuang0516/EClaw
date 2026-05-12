@@ -1927,6 +1927,8 @@
     <script src="shared/nav.js"></script>
     <script src="shared/auth.js"></script>
     <script src="shared/entity-utils.js"></script>
+    <script src="../shared/petdx-renderer.js"></script>
+    <script src="../shared/avatar-petdx.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
     <script src="/socket.io/socket.io.js"></script>
@@ -2302,6 +2304,18 @@
                 entities = newEntities;
                 updateEntityMaps(entities);
 
+                if (window.AvatarPetdx && currentUser && currentUser.deviceSecret) {
+                    const entityIds = entities.map(e => e.entityId).filter(Boolean);
+                    if (entityIds.length) {
+                        await window.AvatarPetdx.preload({
+                            deviceId: currentUser.deviceId,
+                            deviceSecret: currentUser.deviceSecret,
+                            entityIds
+                        });
+                        window.AvatarPetdx.autoMount();
+                    }
+                }
+
                 // Update slot info from server
                 const serverTotal = data.totalSlots || data.maxEntitiesPerDevice || 4;
                 const serverEntityIds = data.entityIds || [];
@@ -2449,7 +2463,7 @@
                 return '<div class="entity-card card" data-entity-id="' + entity.entityId + '"' + (isEditMode ? ' draggable="true"' : '') + '>' +
                     '<div class="entity-card-body">' +
                     '<div class="drag-handle" title="' + i18n.t('dash_drag_to_reorder') + '">&#9776;</div>' +
-                    '<div class="entity-avatar" onclick="openAvatarPicker(' + entity.entityId + ')">' + renderAvatarHtml(avatar) + '</div>' +
+                    '<div class="entity-avatar" onclick="openAvatarPicker(' + entity.entityId + ')">' + renderAvatarHtml(avatar, 48, entity.entityId) + '</div>' +
                     '<div class="entity-info">' +
                     '<div class="entity-name" onclick="openRenamePicker(' + entity.entityId + ', \'' + escapedName + '\')" title="' + i18n.t('dash_rename_title') + '">' + escapeHtml(displayName) + '</div>' +
                     '<div class="entity-badges">' +
@@ -3550,7 +3564,7 @@
 
                 const avatar = getAvatarForEntity(entityId);
                 const name = getEntityDisplayName(entityId);
-                node.innerHTML = '<div class="org-avatar">' + renderAvatarHtml(avatar, 36) + '</div>' +
+                node.innerHTML = '<div class="org-avatar">' + renderAvatarHtml(avatar, 36, entityId) + '</div>' +
                     '<div class="org-name" title="' + name + '">' + name + '</div>';
 
                 // Drag events
@@ -4342,7 +4356,7 @@
 
                 return '<div class="binding-item">' +
                     '<div class="binding-info">' +
-                    '<span class="binding-emoji">' + renderAvatarHtml(avatar, 32) + '</span>' +
+                    '<span class="binding-emoji">' + renderAvatarHtml(avatar, 32, b.entityId) + '</span>' +
                     '<div class="binding-details">' +
                     '<span class="binding-entity-name">Entity ' + b.entityId + '</span>' +
                     '<span class="binding-type"><span class="badge ' + typeBadgeClass + '">' + typeText + '</span></span>' +
