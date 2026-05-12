@@ -74647,6 +74647,8 @@ const TRANSLATIONS = {
 
 
         "guide_cc_channel_envvars_row_auto_wake_delay": "Seconds after forwarding to check for idle and wake",
+        "guide_cc_channel_envvars_row_auto_wake_poll": "Re-check interval (seconds) while Claude is still busy",
+        "guide_cc_channel_envvars_row_auto_wake_max_wait": "Max total wait before giving up on auto-wake (seconds)",
 
 
 
@@ -720954,6 +720956,8 @@ const TRANSLATIONS = {
 
 
         "guide_cc_channel_envvars_row_auto_wake_delay": "轉發後多少秒檢查 idle 並喚醒",
+        "guide_cc_channel_envvars_row_auto_wake_poll": "Claude 仍 busy 時的重新檢查間隔（秒）",
+        "guide_cc_channel_envvars_row_auto_wake_max_wait": "總共最多等多久才放棄喚醒（秒）",
 
 
 
@@ -1392850,6 +1392854,8 @@ const TRANSLATIONS = {
 
 
         "guide_cc_channel_envvars_row_auto_wake_delay": "轉发后多少秒檢查 idle 並喚醒",
+        "guide_cc_channel_envvars_row_auto_wake_poll": "Claude 仍 busy 时的重新检查间隔（秒）",
+        "guide_cc_channel_envvars_row_auto_wake_max_wait": "总共最多等多久才放弃唤醒（秒）",
 
 
 
