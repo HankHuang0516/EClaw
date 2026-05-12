@@ -263,7 +263,8 @@ class MainActivity : AppCompatActivity() {
         val deviceId = deviceManager.deviceId
         val deviceSecret = deviceManager.deviceSecret
         val baseUrl = "https://eclawbot.com/portal/dashboard.html"
-        wv.loadUrl("$baseUrl?embed=1&deviceId=$deviceId&deviceSecret=$deviceSecret")
+        val url = "$baseUrl?embed=1&deviceId=$deviceId&deviceSecret=$deviceSecret"
+        wv.loadUrl(com.hank.clawlive.util.PortalUrlHelper.withAppLang(this, url))
     }
 
     private fun injectCredentials(webView: WebView?) {

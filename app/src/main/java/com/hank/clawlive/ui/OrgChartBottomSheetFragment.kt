@@ -86,7 +86,7 @@ class OrgChartBottomSheetFragment : BottomSheetDialogFragment() {
                 append(dm.deviceSecret)
             }
         }
-        wv.loadUrl(url)
+        wv.loadUrl(com.hank.clawlive.util.PortalUrlHelper.withAppLang(requireContext(), url))
     }
 
     override fun onDestroyView() {

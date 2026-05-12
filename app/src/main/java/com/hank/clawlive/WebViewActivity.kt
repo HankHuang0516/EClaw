@@ -146,10 +146,10 @@ class WebViewActivity : AppCompatActivity() {
         val deviceId = deviceManager.deviceId
         val deviceSecret = deviceManager.deviceSecret
         val sep = if (baseUrl.contains("?")) "&" else "?"
-        val url = if (deviceId != null && deviceSecret != null)
+        val withCreds = if (deviceId != null && deviceSecret != null)
             "$baseUrl${sep}deviceId=$deviceId&deviceSecret=$deviceSecret&embed=1"
         else "$baseUrl${sep}embed=1"
-        wv.loadUrl(url)
+        wv.loadUrl(com.hank.clawlive.util.PortalUrlHelper.withAppLang(this, withCreds))
     }
 
     private fun injectCredentials(webView: WebView?) {
