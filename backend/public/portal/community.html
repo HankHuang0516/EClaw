@@ -867,7 +867,7 @@
                     rentalBots = (data.listings || []).map(l => {
                         const caps = l.capabilities ? Object.keys(l.capabilities).filter(k => l.capabilities[k]?.supported) : [];
                         return {
-                            publicCode: l.id, name: l.title || 'Rental Bot', avatar: l.avatar_url || '🤖',
+                            publicCode: l.owner_public_code || null, name: l.title || 'Rental Bot', avatar: l.avatar_url || '🤖',
                             desc: l.description || (l.model_detected || ''),
                             tags: caps, caps: caps, _capsObj: l.capabilities || {},
                             stars: l.avg_rating || 0, reviews: l.total_rentals || 0,
@@ -976,6 +976,9 @@
                 </div>
             </div>
             ${statusBadge}
+            ${(!isRented && bot.publicCode) ? `<div class="bot-card-action">
+                <button class="bot-card-quick-chat" onclick="event.stopPropagation();window.open('/c/${bot.publicCode}?utm_source=plaza&utm_medium=rental_card','_blank')" title="${tt('mp_chat_cta','\u958b\u59cb\u5c0d\u8a71')}">${tt('mp_chat_cta','\u958b\u59cb\u5c0d\u8a71')} \u2192</button>
+            </div>` : ''}
         </div>`;
     }
 
