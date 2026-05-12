@@ -658,6 +658,8 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="sent">送信しました！</string>
     <string name="set_live_wallpaper">ライブ壁紙に設定</string>
     <string name="set_wallpaper">壁紙に設定</string>
+    <string name="notif_pref_kanban_done">NOTIF_KANBAN_DONE_PLACEHOLDER</string>
+    <string name="notif_pref_kanban_done_auto">NOTIF_KANBAN_AUTO_PLACEHOLDER</string>
     <string name="settings_entity_limit">エンティティ上限：%1$d</string>
     <string name="settings_reset">設定をリセットしました</string>
     <string name="settings_title">設定</string>

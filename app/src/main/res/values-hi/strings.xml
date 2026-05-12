@@ -660,6 +660,8 @@ GPS: केवल अनुरोध पर, कोई बैकग्राउ�
     <string name="notif_pref_scheduled">शेड्यूल किए गए संदेश</string>
     <string name="notif_prefs_loading">प्राथमिकताएं लोड हो रही हैं…</string>
     <string name="notif_prefs_error">सूचना प्राथमिकताएं लोड करने में विफल</string>
+    <string name="notif_pref_kanban_done">NOTIF_KANBAN_DONE_PLACEHOLDER</string>
+    <string name="notif_pref_kanban_done_auto">NOTIF_KANBAN_AUTO_PLACEHOLDER</string>
 
     <!-- Broadcast Settings -->
     <string name="broadcast_settings_title">प्रसारण सेटिंग्स</string>

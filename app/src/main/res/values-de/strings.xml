@@ -661,6 +661,8 @@ Bei Fragen kontaktieren Sie uns über unsere offizielle E-Mail.
     <string name="notif_prefs_loading">Einstellungen werden geladen…</string>
     <string name="notif_prefs_error">Benachrichtigungseinstellungen konnten nicht geladen werden</string>
 
+    <string name="notif_pref_kanban_done">NOTIF_KANBAN_DONE_PLACEHOLDER</string>
+    <string name="notif_pref_kanban_done_auto">NOTIF_KANBAN_AUTO_PLACEHOLDER</string>
     <!-- Broadcast Settings -->
     <string name="broadcast_settings_title">Broadcast-Einstellungen</string>
     <string name="broadcast_settings_desc">Konfigurieren Sie, wie Broadcast-Nachrichten funktionieren</string>

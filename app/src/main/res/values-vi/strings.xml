@@ -658,6 +658,8 @@ Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua
     <string name="sent">Đã gửi!</string>
     <string name="set_live_wallpaper">Đặt hình nền động</string>
     <string name="set_wallpaper">Đặt hình nền</string>
+    <string name="notif_pref_kanban_done">NOTIF_KANBAN_DONE_PLACEHOLDER</string>
+    <string name="notif_pref_kanban_done_auto">NOTIF_KANBAN_AUTO_PLACEHOLDER</string>
     <string name="settings_entity_limit">Entity Limit: %1$d</string>
     <string name="settings_reset">Đã đặt lại cài đặt</string>
     <string name="settings_title">Cài đặt</string>
