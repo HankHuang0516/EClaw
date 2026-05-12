@@ -84,8 +84,36 @@ class MainActivity : AppCompatActivity() {
         BottomNavHelper.setup(this, NavItem.HOME)
         AiChatFabHelper.setup(this, "home")
         setupWindowInsets()
-        setupWebView()
+        registerDeviceThenLoadWebView()
         checkForAppUpdate()
+    }
+
+    private fun registerDeviceThenLoadWebView() {
+        // Fresh installs auto-generate deviceId/deviceSecret in DeviceManager, but those UUIDs
+        // are NOT yet known to the backend's devices[] map. dashboard.html's checkAuth() calls
+        // /api/auth/device-login, which 401s on unrecognized credentials and redirects the
+        // WebView to portal/index.html (the public login page). Calling /api/device/register
+        // up-front inserts the auto-generated UUID into devices[] so device-login succeeds and
+        // the user lands on the entity grid. No-op on devices already registered.
+        lifecycleScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    NetworkModule.api.registerDevice(
+                        com.hank.clawlive.data.model.RegisterRequest(
+                            entityId = 0,
+                            deviceId = deviceManager.deviceId,
+                            deviceSecret = deviceManager.deviceSecret,
+                            appVersion = deviceManager.appVersion
+                        )
+                    )
+                }
+                Timber.d("[Home] Device registered with backend (or already known)")
+            } catch (e: Exception) {
+                // Already-registered devices may return non-2xx; non-fatal. WebView still loads.
+                Timber.d(e, "[Home] registerDevice non-critical error (likely already registered)")
+            }
+            setupWebView()
+        }
     }
 
     override fun onResume() {
@@ -229,15 +257,13 @@ class MainActivity : AppCompatActivity() {
         container.addView(wv)
         webView = wv
 
+        // DeviceManager auto-generates these on first access — they are never null.
+        // registerDeviceThenLoadWebView() already inserted them into the backend's
+        // devices[] map so dashboard.html's /api/auth/device-login can succeed.
         val deviceId = deviceManager.deviceId
         val deviceSecret = deviceManager.deviceSecret
         val baseUrl = "https://eclawbot.com/portal/dashboard.html"
-        val url = if (deviceId != null && deviceSecret != null) {
-            "$baseUrl?embed=1&deviceId=$deviceId&deviceSecret=$deviceSecret"
-        } else {
-            "$baseUrl?embed=1"
-        }
-        wv.loadUrl(url)
+        wv.loadUrl("$baseUrl?embed=1&deviceId=$deviceId&deviceSecret=$deviceSecret")
     }
 
     private fun injectCredentials(webView: WebView?) {

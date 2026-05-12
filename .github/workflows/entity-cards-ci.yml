@@ -34,36 +34,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check Android empty-response guard
+      - name: Check Android home hosts dashboard WebView
         run: |
-          echo "── Checking Android loadBoundEntities guard ──"
-          if grep -q "entity_poll_empty_skipped" app/src/main/java/com/hank/clawlive/MainActivity.kt; then
-            echo "✅ Android: empty-response guard present"
+          echo "── Android home WebView host check ──"
+          # Android home embeds portal/dashboard.html in a WebView instead of rendering a
+          # native entity grid. The empty-response / serverReady / persisted-entity guards
+          # now live exclusively in dashboard.html and protect BOTH the web portal and the
+          # Android home (same code path). Android-side native-grid guards are intentionally
+          # omitted; do not re-add them unless the native entity grid is restored.
+          if grep -q "portal/dashboard.html" app/src/main/java/com/hank/clawlive/MainActivity.kt; then
+            echo "✅ Android: MainActivity loads dashboard.html in WebView"
           else
-            echo "❌ Android: missing empty-response guard in loadBoundEntities()"
-            echo "  Entity cards will disappear on transient empty API responses."
-            echo "  See: https://github.com/HankHuang0516/realbot/issues/16"
-            exit 1
-          fi
-
-      - name: Check Android serverReady guard
-        run: |
-          echo "── Checking Android serverReady guard ──"
-          if grep -q "serverReady" app/src/main/java/com/hank/clawlive/MainActivity.kt; then
-            echo "✅ Android: serverReady guard present"
-          else
-            echo "❌ Android: missing serverReady guard in loadBoundEntities()"
-            exit 1
-          fi
-
-      - name: Check Android persisted entity guard
-        run: |
-          echo "── Checking Android persisted entity guard ──"
-          if grep -q "getRegisteredEntityIds" app/src/main/java/com/hank/clawlive/MainActivity.kt; then
-            echo "✅ Android: persisted entity IDs guard present (survives app restart)"
-          else
-            echo "❌ Android: missing persisted entity guard (cards vanish after app update)"
-            echo "  See: https://github.com/HankHuang0516/realbot/issues/29"
+            echo "❌ Android: MainActivity no longer embeds dashboard.html — re-evaluate guards."
+            echo "  If the native entity grid is being restored, reinstate the Android-side"
+            echo "  entity_poll_empty_skipped / serverReady / getRegisteredEntityIds checks."
             exit 1
           fi
 
@@ -110,16 +94,9 @@ jobs:
             exit 1
           fi
 
-      - name: Check edit mode guard (Android)
-        run: |
-          echo "── Checking Android edit mode guard ──"
-          # Match both single-line "if (isEditMode) return" and multi-line block with return
-          if grep -A2 "if (isEditMode)" app/src/main/java/com/hank/clawlive/MainActivity.kt | grep -q "return"; then
-            echo "✅ Android: edit mode guard present in updateAgentCards()"
-          else
-            echo "❌ Android: missing edit mode guard — cards will disappear during edit"
-            exit 1
-          fi
+      # Edit-mode guard now lives in dashboard.html (Android home embeds the same web page),
+      # so the previous Android-side `if (isEditMode) return` check is intentionally dropped.
+      # If reinstating native entity rendering, re-add the Android edit-mode guard check here.
 
   # ── Integration Test: Run entity cards stability test against live API ──
   entity-cards-integration:
@@ -158,7 +135,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify entity guard parity
+      - name: Verify entity guard parity (single SOR = dashboard.html)
         run: |
           echo "── Feature Parity: Entity Cards Guards ──"
           echo ""
@@ -166,7 +143,10 @@ jobs:
           ANDROID_FILE="app/src/main/java/com/hank/clawlive/MainActivity.kt"
           WEB_FILE="backend/public/portal/dashboard.html"
 
-          # List of guard patterns that must exist in BOTH platforms
+          # Android home now embeds portal/dashboard.html in a WebView, so dashboard.html is
+          # the single source of record for the entity grid on BOTH platforms. The guards
+          # must therefore live in dashboard.html. The Android side just needs to keep
+          # hosting that WebView; we verify that separately above.
           GUARDS=(
             "entity_poll_empty_skipped"
             "serverReady"
@@ -174,22 +154,21 @@ jobs:
 
           FAILED=0
           for guard in "${GUARDS[@]}"; do
-            ANDROID_HAS=$(grep -c "$guard" "$ANDROID_FILE" 2>/dev/null || echo 0)
             WEB_HAS=$(grep -c "$guard" "$WEB_FILE" 2>/dev/null || echo 0)
-
-            if [ "$ANDROID_HAS" -gt 0 ] && [ "$WEB_HAS" -gt 0 ]; then
-              echo "✅ Both platforms have: $guard"
-            elif [ "$ANDROID_HAS" -gt 0 ] && [ "$WEB_HAS" -eq 0 ]; then
-              echo "❌ PARITY VIOLATION: '$guard' exists in Android but missing from Web Portal"
-              FAILED=1
-            elif [ "$ANDROID_HAS" -eq 0 ] && [ "$WEB_HAS" -gt 0 ]; then
-              echo "❌ PARITY VIOLATION: '$guard' exists in Web Portal but missing from Android"
-              FAILED=1
+            if [ "$WEB_HAS" -gt 0 ]; then
+              echo "✅ Web Portal (Android home host) has: $guard"
             else
-              echo "⚠️  Neither platform has: $guard"
+              echo "❌ Web Portal missing guard '$guard' — Android home embeds this page, so the guard must live here."
               FAILED=1
             fi
           done
+
+          if ! grep -q "portal/dashboard.html" "$ANDROID_FILE"; then
+            echo "❌ Android MainActivity no longer embeds dashboard.html — parity assumption broken."
+            FAILED=1
+          else
+            echo "✅ Android MainActivity embeds dashboard.html (parity via shared WebView)"
+          fi
 
           echo ""
           if [ "$FAILED" -eq 1 ]; then
