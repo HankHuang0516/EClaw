@@ -1847131,6 +1847131,8 @@ const TRANSLATIONS = {
 
 
     ja: {
+        "guide_cc_channel_envvars_row_auto_wake_poll": "Claude がまだ busy のときの再チェック間隔（秒）",
+        "guide_cc_channel_envvars_row_auto_wake_max_wait": "自動起動を諦めるまでの最大合計待ち時間（秒）",
 
 
 
@@ -2409180,6 +2409182,8 @@ const TRANSLATIONS = {
 
 
     ko: {
+        "guide_cc_channel_envvars_row_auto_wake_poll": "Claude가 아직 busy일 때 재확인 간격(초)",
+        "guide_cc_channel_envvars_row_auto_wake_max_wait": "자동 깨우기를 포기하기 전 최대 누적 대기 시간(초)",
 
 
 
@@ -2939768,6 +2939772,8 @@ const TRANSLATIONS = {
 
 
     th: {
+        "guide_cc_channel_envvars_row_auto_wake_poll": "ช่วงเวลาตรวจสอบซ้ำ (วินาที) ขณะที่ Claude ยังยุ่งอยู่",
+        "guide_cc_channel_envvars_row_auto_wake_max_wait": "เวลารอรวมสูงสุดก่อนยกเลิกการปลุกอัตโนมัติ (วินาที)",
 
 
 
@@ -3465108,6 +3465114,8 @@ const TRANSLATIONS = {
 
 
     vi: {
+        "guide_cc_channel_envvars_row_auto_wake_poll": "Khoảng kiểm tra lại (giây) khi Claude vẫn busy",
+        "guide_cc_channel_envvars_row_auto_wake_max_wait": "Tổng thời gian chờ tối đa trước khi bỏ qua tự đánh thức (giây)",
 
 
 
@@ -3990448,6 +3990456,8 @@ const TRANSLATIONS = {
 
 
     id: {
+        "guide_cc_channel_envvars_row_auto_wake_poll": "Interval pemeriksaan ulang (detik) saat Claude masih sibuk",
+        "guide_cc_channel_envvars_row_auto_wake_max_wait": "Total waktu tunggu maksimum sebelum menyerah membangunkan otomatis (detik)",
 
 
 
@@ -4515404,6 +4515414,8 @@ const TRANSLATIONS = {
 
 
     fr: {
+        "guide_cc_channel_envvars_row_auto_wake_poll": "Intervalle de re-vérification (secondes) tant que Claude est occupé",
+        "guide_cc_channel_envvars_row_auto_wake_max_wait": "Attente totale maximale avant d'abandonner le réveil auto (secondes)",
 
 
 
@@ -5039080,6 +5039092,8 @@ const TRANSLATIONS = {
 
 
     es: {
+        "guide_cc_channel_envvars_row_auto_wake_poll": "Intervalo de re-comprobación (segundos) mientras Claude sigue ocupado",
+        "guide_cc_channel_envvars_row_auto_wake_max_wait": "Espera total máxima antes de abandonar el auto-despertar (segundos)",
 
 
 
@@ -5555324,6 +5555338,8 @@ const TRANSLATIONS = {
 
 
     de: {
+        "guide_cc_channel_envvars_row_auto_wake_poll": "Wiederprüf-Intervall (Sekunden), solange Claude noch beschäftigt ist",
+        "guide_cc_channel_envvars_row_auto_wake_max_wait": "Max. Gesamtwartezeit, bevor Auto-Wake aufgegeben wird (Sekunden)",
 
 
 
@@ -6090900,6 +6090916,8 @@ const TRANSLATIONS = {
 
 
     ms: {
+        "guide_cc_channel_envvars_row_auto_wake_poll": "Selang semakan semula (saat) semasa Claude masih sibuk",
+        "guide_cc_channel_envvars_row_auto_wake_max_wait": "Jumlah masa menunggu maksimum sebelum berhenti auto-wake (saat)",
 
 
 
@@ -6757296,6 +6757314,8 @@ const TRANSLATIONS = {
 
 
     hi: {
+        "guide_cc_channel_envvars_row_auto_wake_poll": "Claude अभी भी busy होने पर पुनः जाँच अंतराल (सेकंड)",
+        "guide_cc_channel_envvars_row_auto_wake_max_wait": "ऑटो-वेक छोड़ने से पहले अधिकतम कुल प्रतीक्षा समय (सेकंड)",
 
 
 
@@ -7455692,6 +7455712,8 @@ const TRANSLATIONS = {
 
 
     ar: {
+        "guide_cc_channel_envvars_row_auto_wake_poll": "فاصل إعادة الفحص (بالثواني) أثناء انشغال Claude",
+        "guide_cc_channel_envvars_row_auto_wake_max_wait": "أقصى زمن انتظار إجمالي قبل التخلي عن الإيقاظ التلقائي (بالثواني)",
 
 
 
