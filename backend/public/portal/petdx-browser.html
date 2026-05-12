@@ -387,20 +387,37 @@
         // so we can preview without a second API call. The full
         // descriptor with params lives behind GET /:id which the modal
         // uses for the bigger preview.
-        const rendererKey = rendererKeyFromCard(card);
-        const descriptor = {
-            id: card.id,
-            name: card.name,
-            assetType: card.assetType || 'procedural',
-            asset: {
-                renderer: rendererKey,
-                params: { bodyColor: card.color, color: card.color },
-            },
-            supportedStates: card.supportedStates && card.supportedStates.length
-                ? card.supportedStates
-                : ['IDLE'],
-            stateAssets: { IDLE: { fps: 4, loop: true } },
-        };
+        const assetType = card.assetType || 'procedural';
+        let descriptor;
+        if (assetType === 'spritesheet' && card.asset && card.asset.url) {
+            // Spritesheet cards (Petdex bridge) carry asset metadata + state→
+            // animation map on the list payload — pass them through.
+            descriptor = {
+                id: card.id,
+                name: card.name,
+                assetType: 'spritesheet',
+                asset: card.asset,
+                supportedStates: card.supportedStates && card.supportedStates.length
+                    ? card.supportedStates
+                    : ['IDLE'],
+                stateAssets: card.stateAssets || { IDLE: { animation: 'idle', loop: true } },
+            };
+        } else {
+            const rendererKey = rendererKeyFromCard(card);
+            descriptor = {
+                id: card.id,
+                name: card.name,
+                assetType,
+                asset: {
+                    renderer: rendererKey,
+                    params: { bodyColor: card.color, color: card.color },
+                },
+                supportedStates: card.supportedStates && card.supportedStates.length
+                    ? card.supportedStates
+                    : ['IDLE'],
+                stateAssets: { IDLE: { fps: 4, loop: true } },
+            };
+        }
 
         try {
             const r = PetdxRenderer.createRenderer({

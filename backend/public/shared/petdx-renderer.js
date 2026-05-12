@@ -9,9 +9,11 @@
  * (WallpaperService becomes a thin shell around a WebView pointing at
  * a render page that consumes the same descriptor).
  *
- * v0.2 MVP scope:
- *   - assetType: 'procedural' (built-in drawers; this PR ships 'lobster-procedural')
- *   - assetType: 'spritesheet' (planned, next PR — needs webp asset pipeline)
+ * v0.3 scope (Petdex bridge):
+ *   - assetType: 'procedural' (built-in drawers; ships lobster/dog/cat)
+ *   - assetType: 'spritesheet' (Petdx mirror — 8×9 grid, 192×208 per frame;
+ *     descriptor.asset = { url, cols, rows, frameWidth, frameHeight, animations },
+ *     descriptor.stateAssets[STATE] = { animation: 'idle'|..., loop })
  *   - assetType: 'vector' (rejected per spec §2.2)
  *
  * Public surface:
@@ -36,6 +38,27 @@
     const DEFAULT_STATE = 'IDLE';
     const DEFAULT_FPS = 4;
     const DEFAULT_FALLBACK_POLICY = 'silent_to_idle';
+
+    // ── Spritesheet image cache ─────────────────────────────────
+    // Multiple renderer instances on the same page (the grid is 1 canvas
+    // per card) hit the same R2 URLs; cache by URL so the browser only
+    // decodes once and frames share an HTMLImageElement.
+    const spriteImageCache = new Map(); // url → { img, ready, error }
+
+    function loadSpritesheet(url) {
+        if (!url) return null;
+        let entry = spriteImageCache.get(url);
+        if (entry) return entry;
+        entry = { img: new Image(), ready: false, error: false };
+        // No crossOrigin: Petdex R2 doesn't send ACAO, and we only drawImage
+        // (never read pixels back). The canvas becomes "tainted" which blocks
+        // toDataURL/getImageData — neither of which the wallpaper renderer needs.
+        entry.img.onload = () => { entry.ready = true; };
+        entry.img.onerror = () => { entry.error = true; };
+        entry.img.src = url;
+        spriteImageCache.set(url, entry);
+        return entry;
+    }
 
     // ── Drawer registry ──────────────────────────────────────────
     const drawers = new Map();
@@ -94,6 +117,46 @@
         return !!sa.loop;
     }
 
+    // For spritesheet descriptors: resolve the animation row to use from a
+    // requested state. stateAssets[STATE].animation names a row in
+    // descriptor.asset.animations; if missing we fall back to the 'idle'
+    // animation which every Petdex sheet has (row 0).
+    function pickAnimationName(descriptor, stateName) {
+        const sa = descriptor && descriptor.stateAssets && descriptor.stateAssets[stateName];
+        if (sa && typeof sa.animation === 'string') return sa.animation;
+        return 'idle';
+    }
+
+    // Given an animation entry (`{ row, frames: [durMs,...] }` for idle, or
+    // `{ row, count, dur, last? }` for uniform animations) compute the frame
+    // column to display at `elapsedMs` into the animation. Non-looping
+    // animations clamp to the last frame.
+    function computeFrameIndex(anim, elapsedMs, looping) {
+        let frameDurations;
+        if (Array.isArray(anim.frames)) {
+            frameDurations = anim.frames;
+        } else if (typeof anim.count === 'number' && anim.count > 0) {
+            frameDurations = new Array(anim.count).fill(anim.dur || 120);
+            if (anim.last != null) frameDurations[anim.count - 1] = anim.last;
+        } else {
+            return 0;
+        }
+        const total = frameDurations.reduce((a, b) => a + b, 0);
+        if (total <= 0) return 0;
+        let t = elapsedMs;
+        if (looping !== false) {
+            t = ((t % total) + total) % total;
+        } else if (t >= total) {
+            return frameDurations.length - 1;
+        }
+        let acc = 0;
+        for (let i = 0; i < frameDurations.length; i++) {
+            acc += frameDurations[i];
+            if (t < acc) return i;
+        }
+        return frameDurations.length - 1;
+    }
+
     // ── Canvas runner ───────────────────────────────────────────
     /**
      * createRenderer({ canvas, descriptor, state?, onError? }) → controller
@@ -121,10 +184,15 @@
             if (!running) return;
             rafId = requestAnimationFrame(tick);
 
-            const fps = getStateFps(currentDescriptor, currentState);
-            const minFrameMs = 1000 / fps;
-            if (now - lastFrameTime < minFrameMs) return;
-            lastFrameTime = now;
+            // Spritesheets use the anim table's per-frame durations directly,
+            // so we don't throttle here — let rAF drive resolution.
+            // Procedural drawers honour their descriptor.stateAssets.*.fps.
+            if (currentDescriptor.assetType !== 'spritesheet') {
+                const fps = getStateFps(currentDescriptor, currentState);
+                const minFrameMs = 1000 / fps;
+                if (now - lastFrameTime < minFrameMs) return;
+                lastFrameTime = now;
+            }
 
             const w = canvas.width;
             const h = canvas.height;
@@ -143,25 +211,57 @@
                         });
                     }
                 } else if (currentDescriptor.assetType === 'spritesheet') {
-                    // Planned next PR; for now draw a placeholder stripe so
-                    // the preview page makes the gap visible instead of
-                    // failing silently.
-                    drawSpritesheetPlaceholder(ctx, w, h, currentState);
+                    drawSpritesheetFrame(ctx, w, h, currentDescriptor, currentState, now - stateClockStart);
                 }
             } catch (err) {
                 if (onError) onError(err);
             }
         }
 
-        function drawSpritesheetPlaceholder(ctx, w, h, state) {
+        function drawSpritesheetFrame(ctx, w, h, descriptor, state, elapsedMs) {
+            const asset = descriptor.asset || {};
+            const sheet = loadSpritesheet(asset.url);
+            if (!sheet || sheet.error) {
+                drawSpritesheetMessage(ctx, w, h, state, sheet && sheet.error ? '⚠︎ sheet load failed' : 'no sprite url');
+                return;
+            }
+            if (!sheet.ready) {
+                drawSpritesheetMessage(ctx, w, h, state, '…');
+                return;
+            }
+
+            const animName = pickAnimationName(descriptor, state);
+            const animations = asset.animations || {};
+            const anim = animations[animName] || animations.idle;
+            if (!anim) {
+                drawSpritesheetMessage(ctx, w, h, state, animName + '?');
+                return;
+            }
+
+            const frameIndex = computeFrameIndex(anim, elapsedMs, descriptor.stateAssets && descriptor.stateAssets[state] && descriptor.stateAssets[state].loop !== false);
+            const fw = asset.frameWidth || 192;
+            const fh = asset.frameHeight || 208;
+            const sx = frameIndex * fw;
+            const sy = (anim.row || 0) * fh;
+
+            const scale = Math.min(w / fw, h / fh);
+            const dw = fw * scale;
+            const dh = fh * scale;
+            const dx = (w - dw) / 2;
+            const dy = (h - dh) / 2;
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(sheet.img, sx, sy, fw, fh, dx, dy, dw, dh);
+        }
+
+        function drawSpritesheetMessage(ctx, w, h, state, msg) {
             ctx.save();
             ctx.fillStyle = '#1a1a1a';
             ctx.fillRect(0, 0, w, h);
             ctx.fillStyle = '#888';
-            ctx.font = '14px sans-serif';
+            ctx.font = '12px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText('spritesheet renderer — next PR', w / 2, h / 2);
-            ctx.fillText(`state: ${state}`, w / 2, h / 2 + 20);
+            ctx.fillText(msg, w / 2, h / 2);
+            ctx.fillText(state, w / 2, h / 2 + 14);
             ctx.restore();
         }
 
@@ -477,6 +577,8 @@
         resolveState,
         getStateFps,
         getStateLoop,
+        pickAnimationName,
+        computeFrameIndex,
         DEFAULT_STATE,
     };
 }));

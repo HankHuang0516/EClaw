@@ -18,6 +18,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
+const { syncPetdexCatalog } = require('./petdex-bridge');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
@@ -101,7 +102,7 @@ function validateSubmittedDescriptor(body) {
 }
 
 function rowToCompanionCard(row) {
-    return {
+    const card = {
         id: row.id,
         name: row.name,
         version: row.version,
@@ -125,6 +126,16 @@ function rowToCompanionCard(row) {
         },
         scope: row.scope,
     };
+    // Spritesheet companions need the asset URL + frame metadata on the grid
+    // so cards can animate without a follow-up /:id fetch per tile. Procedural
+    // cards already work off the renderer-key heuristic in petdx-browser.html.
+    if (row.asset_type === 'spritesheet') {
+        card.assetUrl = row.asset_url;
+        const d = row.descriptor || {};
+        if (d.asset) card.asset = d.asset;
+        if (d.stateAssets) card.stateAssets = d.stateAssets;
+    }
+    return card;
 }
 
 function rowToCompanionDetail(row) {
@@ -169,6 +180,14 @@ async function initCompanionDatabase(serverLog = console.log) {
             }
         }
         serverLog('info', 'companion', '[Companion] Schema initialized');
+
+        // Petdex 公開 gallery mirror — fire-and-forget so a network blip
+        // can't block server startup. Re-runs on every init are upserts.
+        if (process.env.PETDEX_SYNC_ON_BOOT !== '0') {
+            syncPetdexCatalog(pool, serverLog).catch((err) => {
+                serverLog('warn', 'petdex-bridge', `[Petdex] background sync failed: ${err.message}`);
+            });
+        }
     } catch (err) {
         serverLog('error', 'companion', `[Companion] Schema init failed: ${err.message}`);
     }
@@ -1057,6 +1076,23 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
         } catch (err) {
             log('error', 'companion', `[Companion] detail query failed: ${err.message}`);
             res.status(500).json({ success: false, error: 'query_failed' });
+        }
+    });
+
+    // ── POST /petdex-sync — manual Petdex catalog refresh ──────────
+    // deviceSecret-auth (owner-only) on top of authReader's `deviceSecret`
+    // branch; runs the same upsert as boot-time init. Cheap to retry, the
+    // bridge is idempotent.
+    router.post('/petdex-sync', authReader, async (req, res) => {
+        if (req.botAuth.authMode !== 'device') {
+            return res.status(403).json({ success: false, error: 'deviceSecret_required' });
+        }
+        try {
+            const result = await syncPetdexCatalog(pool, log);
+            res.json({ success: true, ...result });
+        } catch (err) {
+            log('error', 'companion', `[Companion] petdex-sync failed: ${err.message}`);
+            res.status(500).json({ success: false, error: 'sync_failed' });
         }
     });
 
