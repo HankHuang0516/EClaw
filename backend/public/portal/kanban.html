@@ -946,6 +946,8 @@
     <script src="shared/api.js"></script>
     <script src="shared/nav.js"></script>
     <script src="shared/auth.js"></script>
+    <script src="../shared/petdx-renderer.js"></script>
+    <script src="../shared/avatar-petdx.js"></script>
     <script src="shared/entity-utils.js"></script>
     <script src="shared/entity-link-render.js"></script>
     <script src="shared/note-link-render.js"></script>
@@ -1066,6 +1068,17 @@
                 if (data.entities) {
                     boundEntities = data.entities;
                     if (typeof updateEntityMaps === 'function') updateEntityMaps(boundEntities);
+                    if (window.AvatarPetdx && currentUser && currentUser.deviceSecret) {
+                        const entityIds = boundEntities.map(e => e.entityId).filter(Boolean);
+                        if (entityIds.length) {
+                            await window.AvatarPetdx.preload({
+                                deviceId: currentUser.deviceId,
+                                deviceSecret: currentUser.deviceSecret,
+                                entityIds
+                            });
+                            window.AvatarPetdx.autoMount();
+                        }
+                    }
                 }
             } catch(e) {}
             populateFunnelEntities();
@@ -1890,7 +1903,7 @@
                     boundEntities.filter(e => e.isBound).map(e => {
                         const checked = currentBots.includes(e.entityId) ? ' checked' : '';
                         const label = getEntityDisplayName(e.entityId);
-                        const avatarEl = typeof renderAvatarHtml === 'function' ? renderAvatarHtml(e.avatar, 16) : (e.avatar || '🦞');
+                        const avatarEl = typeof renderAvatarHtml === 'function' ? renderAvatarHtml(e.avatar, 16, e.entityId) : (e.avatar || '🦞');
                         return `<label class="kb-assign-chip${checked ? ' active' : ''}" title="${escapeHtml(label)}">` +
                             `<input type="checkbox" value="${e.entityId}"${checked} onchange="updateAutoAssign('${cardId}')">` +
                             avatarEl + `<span>${escapeHtml(label)}</span></label>`;
@@ -2201,7 +2214,7 @@
             const assignChips = boundEntities.filter(e => e.isBound).map(e => {
                 const checked = currentBots.includes(e.entityId) ? ' checked' : '';
                 const label = getEntityDisplayName(e.entityId);
-                const avatarEl = typeof renderAvatarHtml === 'function' ? renderAvatarHtml(e.avatar, 16) : (e.avatar || '🦞');
+                const avatarEl = typeof renderAvatarHtml === 'function' ? renderAvatarHtml(e.avatar, 16, e.entityId) : (e.avatar || '🦞');
                 return `<label class="kb-assign-chip${checked ? ' active' : ''}" title="${escapeHtml(label)}">` +
                     `<input type="checkbox" value="${e.entityId}"${checked} onchange="spUpdateAssign(this)">` +
                     avatarEl + `<span>${escapeHtml(label)}</span></label>`;
@@ -2376,7 +2389,7 @@
                     const isSent = fromId != null && myEntityIds.has(fromId);
                     const avatar = typeof getAvatarForEntity === 'function' ? getAvatarForEntity(fromId) : '🦞';
                     const name = typeof getEntityDisplayName === 'function' ? getEntityDisplayName(fromId) : '#'+(fromId??'?');
-                    const avatarHtml = typeof renderAvatarHtml === 'function' ? renderAvatarHtml(avatar, 16) : avatar;
+                    const avatarHtml = typeof renderAvatarHtml === 'function' ? renderAvatarHtml(avatar, 16, fromId) : avatar;
                     const cardTitle = (findCard(openCardId) || {}).title || '';
                     const pinPayload = JSON.stringify({ src: '留言 · ' + cardTitle, sender: name, text: c.text || '' })
                         .replace(/'/g, '&#39;');
