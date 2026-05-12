@@ -1847133,9 +1847133,9 @@ const TRANSLATIONS = {
     ja: {
         "guide_cc_channel_envvars_row_auto_wake_poll": "Claude がまだ busy のときの再チェック間隔（秒）",
         "guide_cc_channel_envvars_row_auto_wake_max_wait": "自動起動を諦めるまでの最大合計待ち時間（秒）",
-
-
-
+        "guide_cc_channel_envvars_row_auto_wake_enabled": "アイドルセッションを自動的に起こす（<code>/clear</code> 後または新しいセッションで必須）",
+        "guide_cc_channel_envvars_row_auto_wake_delay": "転送後にアイドル確認と起動を行うまでの秒数",
+        "guide_cc_channel_envvars_row_auto_wake_cooldown": "連続した起動の間のクールダウン時間",
 
 
 
@@ -2409184,9 +2409184,9 @@ const TRANSLATIONS = {
     ko: {
         "guide_cc_channel_envvars_row_auto_wake_poll": "Claude가 아직 busy일 때 재확인 간격(초)",
         "guide_cc_channel_envvars_row_auto_wake_max_wait": "자동 깨우기를 포기하기 전 최대 누적 대기 시간(초)",
-
-
-
+        "guide_cc_channel_envvars_row_auto_wake_enabled": "유휴 세션 자동 깨우기 (<code>/clear</code> 후 또는 새 세션에서 필수)",
+        "guide_cc_channel_envvars_row_auto_wake_delay": "전달 후 유휴 확인 및 깨우기까지의 시간(초)",
+        "guide_cc_channel_envvars_row_auto_wake_cooldown": "연속 깨우기 사이의 쿨다운 시간",
 
 
 
@@ -2938236,11 +2938236,11 @@ const TRANSLATIONS = {
 
 
     "zh-TW": {
-
-
-
-
-
+        "guide_cc_channel_envvars_row_auto_wake_enabled": "idle session 自動喚醒（<code>/clear</code> 後或新 session 必備）",
+        "guide_cc_channel_envvars_row_auto_wake_delay": "轉發後多少秒檢查 idle 並喚醒",
+        "guide_cc_channel_envvars_row_auto_wake_poll": "Claude 仍 busy 時的重新檢查間隔（秒）",
+        "guide_cc_channel_envvars_row_auto_wake_max_wait": "總共最多等多久才放棄喚醒（秒）",
+        "guide_cc_channel_envvars_row_auto_wake_cooldown": "連續喚醒的冷卻時間",
 
 
 
@@ -2939774,9 +2939774,9 @@ const TRANSLATIONS = {
     th: {
         "guide_cc_channel_envvars_row_auto_wake_poll": "ช่วงเวลาตรวจสอบซ้ำ (วินาที) ขณะที่ Claude ยังยุ่งอยู่",
         "guide_cc_channel_envvars_row_auto_wake_max_wait": "เวลารอรวมสูงสุดก่อนยกเลิกการปลุกอัตโนมัติ (วินาที)",
-
-
-
+        "guide_cc_channel_envvars_row_auto_wake_enabled": "ปลุกเซสชันที่ว่างโดยอัตโนมัติ (จำเป็นหลังใช้ <code>/clear</code> หรือเซสชันใหม่)",
+        "guide_cc_channel_envvars_row_auto_wake_delay": "จำนวนวินาทีหลังการส่งต่อก่อนที่จะตรวจสอบและปลุก",
+        "guide_cc_channel_envvars_row_auto_wake_cooldown": "ระยะเวลาคูลดาวน์ระหว่างการปลุกแต่ละครั้ง",
 
 
 
@@ -3465116,9 +3465116,9 @@ const TRANSLATIONS = {
     vi: {
         "guide_cc_channel_envvars_row_auto_wake_poll": "Khoảng kiểm tra lại (giây) khi Claude vẫn busy",
         "guide_cc_channel_envvars_row_auto_wake_max_wait": "Tổng thời gian chờ tối đa trước khi bỏ qua tự đánh thức (giây)",
-
-
-
+        "guide_cc_channel_envvars_row_auto_wake_enabled": "Tự động đánh thức phiên rảnh (bắt buộc sau <code>/clear</code> hoặc khi phiên mới)",
+        "guide_cc_channel_envvars_row_auto_wake_delay": "Số giây sau khi chuyển tiếp để kiểm tra rảnh và đánh thức",
+        "guide_cc_channel_envvars_row_auto_wake_cooldown": "Thời gian chờ giữa các lần đánh thức liên tiếp",
 
 
 
@@ -3990458,9 +3990458,9 @@ const TRANSLATIONS = {
     id: {
         "guide_cc_channel_envvars_row_auto_wake_poll": "Interval pemeriksaan ulang (detik) saat Claude masih sibuk",
         "guide_cc_channel_envvars_row_auto_wake_max_wait": "Total waktu tunggu maksimum sebelum menyerah membangunkan otomatis (detik)",
-
-
-
+        "guide_cc_channel_envvars_row_auto_wake_enabled": "Bangunkan sesi idle secara otomatis (wajib setelah <code>/clear</code> atau pada sesi baru)",
+        "guide_cc_channel_envvars_row_auto_wake_delay": "Detik setelah forwarding untuk memeriksa idle dan membangunkan",
+        "guide_cc_channel_envvars_row_auto_wake_cooldown": "Cooldown antara pembangunan beruntun",
 
 
 
@@ -4515416,9 +4515416,9 @@ const TRANSLATIONS = {
     fr: {
         "guide_cc_channel_envvars_row_auto_wake_poll": "Intervalle de re-vérification (secondes) tant que Claude est occupé",
         "guide_cc_channel_envvars_row_auto_wake_max_wait": "Attente totale maximale avant d'abandonner le réveil auto (secondes)",
-
-
-
+        "guide_cc_channel_envvars_row_auto_wake_enabled": "Réveil automatique des sessions inactives (requis après <code>/clear</code> ou sur une nouvelle session)",
+        "guide_cc_channel_envvars_row_auto_wake_delay": "Secondes après le transfert avant de vérifier l'inactivité et réveiller",
+        "guide_cc_channel_envvars_row_auto_wake_cooldown": "Temps de pause entre deux réveils consécutifs",
 
 
 
@@ -5039094,9 +5039094,9 @@ const TRANSLATIONS = {
     es: {
         "guide_cc_channel_envvars_row_auto_wake_poll": "Intervalo de re-comprobación (segundos) mientras Claude sigue ocupado",
         "guide_cc_channel_envvars_row_auto_wake_max_wait": "Espera total máxima antes de abandonar el auto-despertar (segundos)",
-
-
-
+        "guide_cc_channel_envvars_row_auto_wake_enabled": "Reactivar automáticamente sesiones inactivas (obligatorio tras <code>/clear</code> o en sesiones nuevas)",
+        "guide_cc_channel_envvars_row_auto_wake_delay": "Segundos tras el reenvío antes de comprobar inactividad y reactivar",
+        "guide_cc_channel_envvars_row_auto_wake_cooldown": "Tiempo de espera entre reactivaciones consecutivas",
 
 
 
@@ -5555340,9 +5555340,9 @@ const TRANSLATIONS = {
     de: {
         "guide_cc_channel_envvars_row_auto_wake_poll": "Wiederprüf-Intervall (Sekunden), solange Claude noch beschäftigt ist",
         "guide_cc_channel_envvars_row_auto_wake_max_wait": "Max. Gesamtwartezeit, bevor Auto-Wake aufgegeben wird (Sekunden)",
-
-
-
+        "guide_cc_channel_envvars_row_auto_wake_enabled": "Inaktive Sitzungen automatisch aufwecken (erforderlich nach <code>/clear</code> oder bei neuen Sitzungen)",
+        "guide_cc_channel_envvars_row_auto_wake_delay": "Sekunden nach dem Weiterleiten, bevor auf Inaktivität geprüft und aufgeweckt wird",
+        "guide_cc_channel_envvars_row_auto_wake_cooldown": "Wartezeit zwischen aufeinanderfolgenden Aufweckvorgängen",
 
 
 
@@ -6090918,9 +6090918,9 @@ const TRANSLATIONS = {
     ms: {
         "guide_cc_channel_envvars_row_auto_wake_poll": "Selang semakan semula (saat) semasa Claude masih sibuk",
         "guide_cc_channel_envvars_row_auto_wake_max_wait": "Jumlah masa menunggu maksimum sebelum berhenti auto-wake (saat)",
-
-
-
+        "guide_cc_channel_envvars_row_auto_wake_enabled": "Bangunkan sesi melahu secara automatik (perlu selepas <code>/clear</code> atau pada sesi baharu)",
+        "guide_cc_channel_envvars_row_auto_wake_delay": "Saat selepas pemajuan untuk memeriksa kemelahuan dan membangunkan",
+        "guide_cc_channel_envvars_row_auto_wake_cooldown": "Tempoh pendinginan antara pembangunan berturut-turut",
 
 
 
@@ -6757316,9 +6757316,9 @@ const TRANSLATIONS = {
     hi: {
         "guide_cc_channel_envvars_row_auto_wake_poll": "Claude अभी भी busy होने पर पुनः जाँच अंतराल (सेकंड)",
         "guide_cc_channel_envvars_row_auto_wake_max_wait": "ऑटो-वेक छोड़ने से पहले अधिकतम कुल प्रतीक्षा समय (सेकंड)",
-
-
-
+        "guide_cc_channel_envvars_row_auto_wake_enabled": "निष्क्रिय सेशन को स्वतः जगाएँ (<code>/clear</code> के बाद या नए सेशन में आवश्यक)",
+        "guide_cc_channel_envvars_row_auto_wake_delay": "फॉरवर्ड के बाद निष्क्रियता जाँचने और जगाने तक के सेकंड",
+        "guide_cc_channel_envvars_row_auto_wake_cooldown": "लगातार जगाने के बीच का कूलडाउन समय",
 
 
 
@@ -7455714,9 +7455714,9 @@ const TRANSLATIONS = {
     ar: {
         "guide_cc_channel_envvars_row_auto_wake_poll": "فاصل إعادة الفحص (بالثواني) أثناء انشغال Claude",
         "guide_cc_channel_envvars_row_auto_wake_max_wait": "أقصى زمن انتظار إجمالي قبل التخلي عن الإيقاظ التلقائي (بالثواني)",
-
-
-
+        "guide_cc_channel_envvars_row_auto_wake_enabled": "تنبيه الجلسات الخاملة تلقائياً (مطلوب بعد <code>/clear</code> أو في الجلسات الجديدة)",
+        "guide_cc_channel_envvars_row_auto_wake_delay": "الثواني بعد التحويل قبل التحقق من الخمول والتنبيه",
+        "guide_cc_channel_envvars_row_auto_wake_cooldown": "فترة التهدئة بين عمليات التنبيه المتتالية",
 
 
 
