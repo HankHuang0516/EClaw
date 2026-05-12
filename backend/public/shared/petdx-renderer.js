@@ -226,7 +226,9 @@
                 return;
             }
             if (!sheet.ready) {
-                drawSpritesheetMessage(ctx, w, h, state, '…');
+                // Hold the canvas transparent until the sprite decodes.
+                // Painting a dark-grey "…" placeholder here is what users
+                // see as the avatar "flicker" on cold-cache loads.
                 return;
             }
 
@@ -254,6 +256,10 @@
         }
 
         function drawSpritesheetMessage(ctx, w, h, state, msg) {
+            // Only render the diagnostic box on hard errors (sheet.error).
+            // The transient pre-load case is handled by an early return so
+            // the canvas stays transparent and the underlying avatar slot
+            // doesn't visibly flash.
             ctx.save();
             ctx.fillStyle = '#1a1a1a';
             ctx.fillRect(0, 0, w, h);
@@ -579,6 +585,10 @@
         getStateLoop,
         pickAnimationName,
         computeFrameIndex,
+        // Exposed so callers (e.g. AvatarPetdx.preload) can warm the
+        // spritesheet cache during the descriptor fetch instead of waiting
+        // for the first rAF tick to start the WEBP download.
+        prefetchSpritesheet: loadSpritesheet,
         DEFAULT_STATE,
     };
 }));

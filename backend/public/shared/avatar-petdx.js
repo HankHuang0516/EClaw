@@ -45,6 +45,21 @@
         return descriptorByEntityId.get(Number(entityId)) || null;
     }
 
+    // Kick off the spritesheet image download as soon as we have its
+    // descriptor. Without this, the first canvas tick triggers the WEBP
+    // request, and `drawSpritesheetFrame` paints an empty canvas (or, on
+    // older builds, a dark-grey placeholder) until the image decodes — a
+    // visible flicker on cold-cache page loads, including the first launch
+    // after Hank reinstalls the APP.
+    function warmSpritesheet(descriptor) {
+        if (!descriptor || descriptor.assetType !== 'spritesheet') return;
+        const url = descriptor.asset && descriptor.asset.url;
+        if (!url) return;
+        if (typeof window === 'undefined' || !window.PetdxRenderer) return;
+        if (typeof window.PetdxRenderer.prefetchSpritesheet !== 'function') return;
+        try { window.PetdxRenderer.prefetchSpritesheet(url); } catch (_) { /* swallow */ }
+    }
+
     async function fetchOne({ deviceId, deviceSecret, botSecret, entityId }) {
         const eid = Number(entityId);
         if (inflightByEntityId.has(eid)) return inflightByEntityId.get(eid);
@@ -66,6 +81,7 @@
             const data = await r.json();
             const companion = data && data.selection && data.selection.companion;
             descriptorByEntityId.set(eid, companion || null);
+            warmSpritesheet(companion);
             return companion || null;
         }).catch(() => {
             return descriptorByEntityId.get(eid) || null;
@@ -134,6 +150,7 @@
     /** Test seam — lets unit tests inject a descriptor without hitting the API. */
     function _setDescriptor(entityId, descriptor) {
         descriptorByEntityId.set(Number(entityId), descriptor || null);
+        warmSpritesheet(descriptor);
     }
 
     let observer = null;
