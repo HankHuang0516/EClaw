@@ -482,18 +482,26 @@ class ClawRenderer(
         val radius = 150f * scale
 
         // Petdx companion routing — if the entity has a current companion and
-        // it's a spritesheet asset, render that; procedural assets (and missing
-        // descriptors) fall through to the legacy lobster drawer with optional
-        // body-color override pulled from the descriptor.
+        // it's a spritesheet asset, render that. Procedural assets and missing
+        // descriptors go to the legacy lobster drawer with optional body-color
+        // override. LOADING (sheet decode in flight) deliberately paints
+        // nothing this frame: falling back to procedural lobster here is what
+        // produced the "switch companion → flash to default lobster" bug
+        // (card_9e52c7b405d0fdd3aad0d2e3). A blank gap for one 33 ms tick is
+        // invisible; a wrong-character flash is not.
         val companion = companionRepository?.cached(entity.entityId)
-        val drewSpritesheet = if (companion != null && companion.assetType == "spritesheet") {
+        val drawResult = if (companion != null && companion.assetType == "spritesheet") {
             spritesheetDrawer?.draw(
                 canvas, companion, entity.entityId, entity.state.toString(), centerX, charY, scale
-            ) ?: false
-        } else false
+            ) ?: SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED
+        } else SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED
 
-        if (!drewSpritesheet) {
-            drawLobsterAtPosition(canvas, centerX, charY, entity, scale, companion)
+        when (drawResult) {
+            SpritesheetCompanionDrawer.DrawResult.DRAWN,
+            SpritesheetCompanionDrawer.DrawResult.LOADING -> Unit
+            SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED,
+            SpritesheetCompanionDrawer.DrawResult.ERROR ->
+                drawLobsterAtPosition(canvas, centerX, charY, entity, scale, companion)
         }
 
         // Draw message bubble (ABOVE the entity)
