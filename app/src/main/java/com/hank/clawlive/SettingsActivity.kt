@@ -1038,6 +1038,8 @@ class SettingsActivity : AppCompatActivity() {
         NotifPrefCategory("speak_to", R.string.notif_pref_speak_to),
         NotifPrefCategory("feedback_resolved", R.string.notif_pref_feedback),
         NotifPrefCategory("todo_done", R.string.notif_pref_todo),
+        NotifPrefCategory("kanban_done", R.string.notif_pref_kanban_done),
+        NotifPrefCategory("kanban_done_auto", R.string.notif_pref_kanban_done_auto),
         NotifPrefCategory("scheduled", R.string.notif_pref_scheduled)
     )
 
