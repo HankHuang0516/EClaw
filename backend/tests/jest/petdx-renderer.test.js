@@ -201,3 +201,67 @@ describe('createRenderer factory contract', () => {
         expect(r.getState()).toBe('IDLE');
     });
 });
+
+describe('spritesheet helpers (Petdex bridge)', () => {
+    const SPRITESHEET_DESCRIPTOR = Object.freeze({
+        id: 'petdex-boba',
+        name: 'Boba',
+        assetType: 'spritesheet',
+        asset: {
+            url: 'https://example/boba.webp',
+            cols: 8, rows: 9, frameWidth: 192, frameHeight: 208,
+            animations: {
+                idle: { row: 0, frames: [280, 110, 110, 140, 140, 320] },
+                running: { row: 7, count: 6, dur: 120, last: 220 },
+                waving: { row: 3, count: 4, dur: 140, last: 280 },
+            },
+        },
+        supportedStates: ['IDLE', 'BUSY', 'HAPPY'],
+        stateAssets: {
+            IDLE: { animation: 'idle', loop: true },
+            BUSY: { animation: 'running', loop: true },
+            HAPPY: { animation: 'waving', loop: false },
+        },
+    });
+
+    test('pickAnimationName routes state to animation name, fallback to idle', () => {
+        expect(PetdxRenderer.pickAnimationName(SPRITESHEET_DESCRIPTOR, 'IDLE')).toBe('idle');
+        expect(PetdxRenderer.pickAnimationName(SPRITESHEET_DESCRIPTOR, 'BUSY')).toBe('running');
+        expect(PetdxRenderer.pickAnimationName(SPRITESHEET_DESCRIPTOR, 'NOPE')).toBe('idle');
+        expect(PetdxRenderer.pickAnimationName({}, 'IDLE')).toBe('idle');
+    });
+
+    test('computeFrameIndex over a frames[] table walks per-frame durations', () => {
+        const idle = SPRITESHEET_DESCRIPTOR.asset.animations.idle;
+        // frames: [280, 110, 110, 140, 140, 320] — cumulative 280/390/500/640/780/1100
+        expect(PetdxRenderer.computeFrameIndex(idle, 0, true)).toBe(0);
+        expect(PetdxRenderer.computeFrameIndex(idle, 279, true)).toBe(0);
+        expect(PetdxRenderer.computeFrameIndex(idle, 280, true)).toBe(1);
+        expect(PetdxRenderer.computeFrameIndex(idle, 399, true)).toBe(2);
+        expect(PetdxRenderer.computeFrameIndex(idle, 781, true)).toBe(5);
+        // looping wraps at total=1100
+        expect(PetdxRenderer.computeFrameIndex(idle, 1100, true)).toBe(0);
+        expect(PetdxRenderer.computeFrameIndex(idle, 1100 + 281, true)).toBe(1);
+    });
+
+    test('computeFrameIndex over a uniform count/dur table honours last-frame override', () => {
+        const running = SPRITESHEET_DESCRIPTOR.asset.animations.running;
+        // 6 frames; first 5 are 120ms, last is 220ms → cumulative 120/240/360/480/600/820
+        expect(PetdxRenderer.computeFrameIndex(running, 0, true)).toBe(0);
+        expect(PetdxRenderer.computeFrameIndex(running, 119, true)).toBe(0);
+        expect(PetdxRenderer.computeFrameIndex(running, 120, true)).toBe(1);
+        expect(PetdxRenderer.computeFrameIndex(running, 599, true)).toBe(4);
+        expect(PetdxRenderer.computeFrameIndex(running, 600, true)).toBe(5);
+        expect(PetdxRenderer.computeFrameIndex(running, 819, true)).toBe(5);
+        // wraps at 820
+        expect(PetdxRenderer.computeFrameIndex(running, 820, true)).toBe(0);
+    });
+
+    test('computeFrameIndex non-looping clamps to last frame past total', () => {
+        const waving = SPRITESHEET_DESCRIPTOR.asset.animations.waving;
+        // count=4, dur=140, last=280 → 140/280/420/700
+        expect(PetdxRenderer.computeFrameIndex(waving, 700, false)).toBe(3);
+        expect(PetdxRenderer.computeFrameIndex(waving, 9999, false)).toBe(3);
+        expect(PetdxRenderer.computeFrameIndex(waving, 140, false)).toBe(1);
+    });
+});
