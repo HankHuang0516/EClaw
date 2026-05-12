@@ -658,6 +658,8 @@ Jika anda mempunyai sebarang soalan, sila hubungi kami melalui e-mel rasmi kami.
     <string name="notif_pref_feedback">Kemas Kini Maklum Balas</string>
     <string name="notif_pref_todo">TODO Selesai</string>
     <string name="notif_pref_scheduled">Mesej Berjadual</string>
+    <string name="notif_pref_kanban_done">Kad Kanban Selesai</string>
+    <string name="notif_pref_kanban_done_auto">Automasi Kanban Selesai</string>
     <string name="notif_prefs_loading">Memuat keutamaan…</string>
     <string name="notif_prefs_error">Gagal memuat keutamaan pemberitahuan</string>
 

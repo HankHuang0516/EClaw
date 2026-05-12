@@ -658,6 +658,8 @@ Si vous avez des questions, contactez-nous via notre e-mail officiel.
     <string name="notif_pref_feedback">Mises à jour des retours</string>
     <string name="notif_pref_todo">TODO terminé</string>
     <string name="notif_pref_scheduled">Messages planifiés</string>
+    <string name="notif_pref_kanban_done">Carte Kanban terminée</string>
+    <string name="notif_pref_kanban_done_auto">Automatisation Kanban terminée</string>
     <string name="notif_prefs_loading">Chargement des préférences…</string>
     <string name="notif_prefs_error">Échec du chargement des préférences de notification</string>
 
