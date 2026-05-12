@@ -1989,8 +1989,13 @@
         // --- Init ---
         window.addEventListener('DOMContentLoaded', async () => {
             const __fromCommunity = /\/portal\/community\.html(?:$|[?#])/.test(document.referrer || '');
-            const __isAndroidApp = /EClawAndroid/.test(navigator.userAgent || '');
-            const __embeddedOrg = new URLSearchParams(window.location.search).get('view') === 'orgchart' || __fromCommunity || __isAndroidApp;
+            // Embedded-orgchart mode previously triggered for ANY Android-app WebView,
+            // because the only in-app embed of this page used to be the org-chart
+            // bottom sheet. With the app home now also embedding this page
+            // (full dashboard), the UA-based trigger would wrongly hide the entity
+            // grid. Require an explicit ?view=orgchart for that mode instead;
+            // OrgChartBottomSheetFragment already passes it.
+            const __embeddedOrg = new URLSearchParams(window.location.search).get('view') === 'orgchart' || __fromCommunity;
             if (__embeddedOrg) {
                 document.body.classList.add('embedded-orgchart');
                 document.getElementById('dashTabs')?.remove();
