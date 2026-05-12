@@ -23,6 +23,16 @@ import timber.log.Timber
 class SpritesheetCompanionDrawer(
     private val repository: CompanionRepository
 ) {
+    /**
+     * Distinct outcomes for one draw call. The renderer uses these to decide
+     * whether to fall back to the procedural lobster — only UNSUPPORTED and
+     * ERROR do; LOADING means "sheet is being fetched on the IO scope, just
+     * skip this paint and the next 33 ms tick will pick it up". Mixing
+     * LOADING with the lobster fallback is what produced the post-companion-
+     * change flicker reported on 2026-05-12.
+     */
+    enum class DrawResult { DRAWN, LOADING, UNSUPPORTED, ERROR }
+
     private val paint = Paint().apply {
         isFilterBitmap = true
         isAntiAlias = true
@@ -32,9 +42,8 @@ class SpritesheetCompanionDrawer(
     private val stateStartByEntity = mutableMapOf<Int, Pair<String, Long>>()
 
     /**
-     * Returns true if this entity has a usable spritesheet companion and
-     * something was drawn. Returning false lets the renderer fall back to
-     * the procedural lobster drawer.
+     * Renders one spritesheet frame for the entity. Return value tells the
+     * renderer how to handle the outcome — see [DrawResult].
      */
     fun draw(
         canvas: Canvas,
@@ -44,14 +53,19 @@ class SpritesheetCompanionDrawer(
         centerX: Float,
         centerY: Float,
         scale: Float
-    ): Boolean {
-        val sheet = repository.getSheet(companion.spritesheetUrl()) ?: return false
+    ): DrawResult {
+        val sheetUrl = companion.spritesheetUrl()
+        if (sheetUrl.isNullOrBlank()) return DrawResult.UNSUPPORTED
+        // Cache miss on the main thread schedules an async load and returns
+        // null this frame. That's LOADING, not failure — falling back to
+        // lobster here is the flicker bug.
+        val sheet = repository.getSheet(sheetUrl) ?: return DrawResult.LOADING
         val (frameW, frameH) = companion.spritesheetFrameSize()
-        if (frameW <= 0 || frameH <= 0) return false
+        if (frameW <= 0 || frameH <= 0) return DrawResult.UNSUPPORTED
 
         val supported = companion.supportedStates
         val effectiveState = if (currentState in supported) currentState else "IDLE"
-        val hint = companion.stateAsset(effectiveState) ?: return false
+        val hint = companion.stateAsset(effectiveState) ?: return DrawResult.UNSUPPORTED
 
         // Row defaults to position in supportedStates if descriptor doesn't pin one.
         val row = if (hint.row > 0) hint.row else supported.indexOf(effectiveState).coerceAtLeast(0)
@@ -74,7 +88,7 @@ class SpritesheetCompanionDrawer(
 
         if (srcX + frameW > sheet.width || srcY + frameH > sheet.height) {
             Timber.w("Spritesheet OOB: sheet=${sheet.width}x${sheet.height} src=($srcX,$srcY)+$frameW x $frameH")
-            return false
+            return DrawResult.ERROR
         }
 
         // Render at 300×300 px base scaled by `scale` (matches procedural lobster footprint).
@@ -87,7 +101,7 @@ class SpritesheetCompanionDrawer(
             centerY + renderSize / 2f
         )
         canvas.drawBitmap(sheet, src, dst, paint)
-        return true
+        return DrawResult.DRAWN
     }
 }
 

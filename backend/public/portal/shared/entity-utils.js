@@ -60,11 +60,32 @@ function isAvatarUrl(avatar) {
 
 /**
  * Render an avatar as HTML. Returns an <img> tag for URLs, or emoji text for emoji avatars.
+ *
+ * If `entityId` is provided AND `window.AvatarPetdx` has a cached
+ * companion descriptor for that entity, emits a placeholder canvas
+ * instead so AvatarPetdx.mount() can animate it. Pages should call
+ * AvatarPetdx.preload(...) once on init, then AvatarPetdx.mount(root)
+ * after each batch of markup that contains these placeholders.
+ *
  * @param {string} avatar - emoji string or image URL
  * @param {number} [size=48] - size in px (for image avatars)
+ * @param {number} [entityId] - optional entityId to consider for petdx render
  */
-function renderAvatarHtml(avatar, size) {
+function renderAvatarHtml(avatar, size, entityId) {
     size = size || 48;
+    if (entityId != null
+        && typeof window !== 'undefined'
+        && window.AvatarPetdx
+        && window.AvatarPetdx.hasDescriptor(entityId)) {
+        // imageRendering keeps the spritesheet pixel-art crisp at small sizes;
+        // matches PetdxRenderer's ctx.imageSmoothingEnabled = false.
+        return '<canvas class="entity-avatar-canvas" '
+            + 'data-petdx-entity-id="' + Number(entityId) + '" '
+            + 'width="' + size + '" height="' + size + '" '
+            + 'style="width:' + size + 'px;height:' + size + 'px;'
+            + 'image-rendering:pixelated;border-radius:50%;vertical-align:middle;" '
+            + 'aria-label="entity avatar"></canvas>';
+    }
     if (isAvatarUrl(avatar)) {
         return '<img src="' + avatar + '" class="entity-avatar-img" ' +
             'style="width:' + size + 'px;height:' + size + 'px;" alt="avatar" loading="lazy">';
@@ -98,7 +119,7 @@ function getEntityLabel(entityId) {
     const escapeFn = typeof escapeHtml === 'function' ? escapeHtml
         : typeof esc === 'function' ? esc
         : (s) => s;
-    return `${renderAvatarHtml(avatar, 20)} ${escapeFn(name)} (#${entityId})`;
+    return `${renderAvatarHtml(avatar, 20, entityId)} ${escapeFn(name)} (#${entityId})`;
 }
 
 /**

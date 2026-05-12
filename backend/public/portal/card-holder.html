@@ -709,6 +709,8 @@
     <script src="shared/api.js"></script>
     <script src="shared/nav.js"></script>
     <script src="shared/auth.js"></script>
+    <script src="../shared/petdx-renderer.js"></script>
+    <script src="../shared/avatar-petdx.js"></script>
     <script src="shared/entity-utils.js"></script>
     <script>if(typeof renderAvatarHtml==='undefined'){window.renderAvatarHtml=function(a){return a||'\u{1F99E}'};window.isAvatarUrl=function(){return false}}</script>
     <script src="../shared/telemetry.js"></script>
@@ -768,6 +770,20 @@
         // ── Data loading ──
         async function loadAllData() {
             await Promise.all([loadMyCards(), loadRecent(), loadCollected(), loadFriendRequests()]);
+            // Preload petdx companion descriptors for my own cards so the
+            // avatar canvases mount on first paint. Other-bot cards don't
+            // have a local entityId, so they keep the legacy emoji/img path.
+            if (window.AvatarPetdx && currentUser && currentUser.deviceSecret) {
+                const myEntityIds = myCards.map(c => c.entityId).filter(Boolean);
+                if (myEntityIds.length) {
+                    await window.AvatarPetdx.preload({
+                        deviceId: currentUser.deviceId,
+                        deviceSecret: currentUser.deviceSecret,
+                        entityIds: myEntityIds
+                    });
+                    window.AvatarPetdx.autoMount();
+                }
+            }
             rebuildContent();
         }
 
@@ -903,7 +919,7 @@
             const ac = c.agentCard || {};
             let html = `<div class="card-item" onclick="showMyCardDetail('${escapeAttr(c.publicCode)}')">
                 <div class="card-row">
-                    <span class="agent-avatar">${renderAvatarHtml(avatar, 48)}</span>
+                    <span class="agent-avatar">${renderAvatarHtml(avatar, 48, c.entityId)}</span>
                     <div class="agent-meta">
                         <div class="agent-name">${escapeHtml(c.name || c.publicCode)}</div>
                         <span class="agent-code" onclick="event.stopPropagation(); copyCode('${escapeAttr(c.publicCode)}')" title="Click to copy">${escapeHtml(c.publicCode)}</span>
@@ -1072,7 +1088,7 @@
             const content = document.getElementById('detailContent');
             content.innerHTML = `
                 <div class="modal-header">
-                    <span class="agent-avatar">${renderAvatarHtml(avatar, 48)}</span>
+                    <span class="agent-avatar">${renderAvatarHtml(avatar, 48, card.entityId)}</span>
                     <div class="modal-header-info">
                         <h3>${escapeHtml(card.name || card.publicCode)}</h3>
                         <span class="agent-code" onclick="copyCode('${escapeAttr(card.publicCode)}')">${escapeHtml(card.publicCode)}</span>

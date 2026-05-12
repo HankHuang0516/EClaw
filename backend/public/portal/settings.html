@@ -1319,6 +1319,8 @@
     <script src="../shared/i18n.js"></script>
     <script src="../shared/settings-deep-link.js"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="../shared/petdx-renderer.js"></script>
+    <script src="../shared/avatar-petdx.js"></script>
     <script src="shared/entity-utils.js"></script>
     <script src="shared/socket.js"></script>
     <script src="shared/footer.js"></script>
@@ -1613,8 +1615,25 @@
         // ============================================
 
         // Render the list of channel accounts from user.channelAccounts[]
-        function populateChannelApi(user) {
-            renderChannelAccounts(user.channelAccounts || []);
+        async function populateChannelApi(user) {
+            const accounts = user.channelAccounts || [];
+            if (window.AvatarPetdx && user.deviceId && user.deviceSecret) {
+                const entityIds = [];
+                for (const a of accounts) {
+                    for (const e of (a.boundEntities || [])) {
+                        if (e && e.entityId != null) entityIds.push(e.entityId);
+                    }
+                }
+                if (entityIds.length) {
+                    await window.AvatarPetdx.preload({
+                        deviceId: user.deviceId,
+                        deviceSecret: user.deviceSecret,
+                        entityIds
+                    });
+                    window.AvatarPetdx.autoMount();
+                }
+            }
+            renderChannelAccounts(accounts);
         }
 
         function renderChannelAccounts(accounts) {
@@ -1640,7 +1659,7 @@
                 if (a.boundEntities && a.boundEntities.length > 0) {
                     const chips = a.boundEntities.map(e => {
                         const avatarHtml = typeof renderAvatarHtml === 'function'
-                            ? renderAvatarHtml(e.avatar, 18)
+                            ? renderAvatarHtml(e.avatar, 18, e.entityId)
                             : '<span style="font-size:14px;">' + (e.avatar || '🦞') + '</span>';
                         const name = e.name ? escapeHtml(e.name) : '#' + e.entityId;
                         return '<span style="display:inline-flex;align-items:center;gap:4px;background:var(--bg-secondary, #2a2a3a);padding:2px 8px;border-radius:12px;font-size:12px;">' +

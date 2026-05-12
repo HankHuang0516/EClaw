@@ -939,6 +939,8 @@
     <script src="shared/nav.js"></script>
     <script src="shared/auth.js"></script>
     <script src="shared/entity-utils.js"></script>
+    <script src="../shared/petdx-renderer.js"></script>
+    <script src="../shared/avatar-petdx.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
     <script src="shared/mission-mindmap.js" defer></script>
@@ -1128,6 +1130,18 @@
                 const data = await apiCall('GET', `/api/entities?deviceId=${currentUser.deviceId}`);
                 boundEntities = (data.entities || []).filter(e => e.isBound);
                 updateEntityMaps(boundEntities);
+
+                if (window.AvatarPetdx && currentUser && currentUser.deviceSecret) {
+                    const entityIds = boundEntities.map(e => e.entityId).filter(Boolean);
+                    if (entityIds.length) {
+                        await window.AvatarPetdx.preload({
+                            deviceId: currentUser.deviceId,
+                            deviceSecret: currentUser.deviceSecret,
+                            entityIds
+                        });
+                        window.AvatarPetdx.autoMount();
+                    }
+                }
             } catch (e) {
                 console.warn('Failed to load entities:', e.message);
             }
@@ -1138,7 +1152,7 @@
             boundEntities.forEach(e => {
                 const avatar = getAvatarForEntity(e.entityId);
                 const name = getEntityDisplayName(e.entityId);
-                opts.push({ value: String(e.entityId), label: `${renderAvatarHtml(avatar, 18)} ${name} (#${e.entityId})` });
+                opts.push({ value: String(e.entityId), label: `${renderAvatarHtml(avatar, 18, e.entityId)} ${name} (#${e.entityId})` });
             });
             return opts;
         }
@@ -3056,7 +3070,7 @@
                 const checked = isEdit && (skill.assignedEntities || []).includes(String(e.entityId)) ? 'checked' : '';
                 return `<label>
                     <input type="checkbox" class="skill-entity-cb" value="${e.entityId}" ${checked}>
-                    ${renderAvatarHtml(avatar, 18)} ${esc(name)} (#${e.entityId})
+                    ${renderAvatarHtml(avatar, 18, e.entityId)} ${esc(name)} (#${e.entityId})
                 </label>`;
             }).join('');
 
@@ -3187,7 +3201,7 @@
                 const checked = isEdit && (rule.assignedEntities || []).includes(String(e.entityId)) ? 'checked' : '';
                 return `<label>
                     <input type="checkbox" class="rule-entity-cb" value="${e.entityId}" ${checked}>
-                    ${renderAvatarHtml(avatar, 18)} ${esc(name)} (#${e.entityId})
+                    ${renderAvatarHtml(avatar, 18, e.entityId)} ${esc(name)} (#${e.entityId})
                 </label>`;
             }).join('');
 
@@ -3384,7 +3398,7 @@
                 const checked = isEdit && (soul.assignedEntities || []).includes(String(e.entityId)) ? 'checked' : '';
                 return `<label>
                     <input type="checkbox" class="soul-entity-cb" value="${e.entityId}" ${checked}>
-                    ${renderAvatarHtml(avatar, 18)} ${esc(name)} (#${e.entityId})
+                    ${renderAvatarHtml(avatar, 18, e.entityId)} ${esc(name)} (#${e.entityId})
                 </label>`;
             }).join('');
 
