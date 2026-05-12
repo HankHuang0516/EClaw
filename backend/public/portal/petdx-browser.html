@@ -45,6 +45,14 @@
         font: inherit;
     }
     .search:focus { outline: none; border-color: var(--accent); }
+    .entity-selector {
+        flex: 0 0 auto;
+        background: var(--panel); border: 1px solid var(--border);
+        color: var(--text); padding: 8px 10px; border-radius: 6px;
+        font: inherit; cursor: pointer; min-width: 180px;
+    }
+    .entity-selector:focus { outline: none; border-color: var(--accent); }
+    .entity-selector:disabled { opacity: 0.6; cursor: not-allowed; }
     .filters {
         max-width: 1280px; margin: 0 auto;
         display: flex; flex-wrap: wrap; gap: 6px; padding-top: 8px;
@@ -171,6 +179,9 @@
     <div class="topbar-row">
         <h1>Petdx 伙伴瀏覽器</h1>
         <span class="sub">Companion Browser · v0.2</span>
+        <select id="entity-selector" class="entity-selector" title="切換要更換伙伴的對象 / Switch which entity's companion you're changing">
+            <option value="">🖥️ 全裝置 / Device-wide</option>
+        </select>
         <input id="search" class="search" type="search" placeholder="搜尋伙伴名稱或描述 / Search…" autocomplete="off">
     </div>
     <div class="filters" id="filters"></div>
@@ -204,6 +215,14 @@
     'use strict';
 
     // ── Auth ──────────────────────────────────────────────────────
+    // activeEntityId is the user's in-UI pick:
+    //   '' → device-wide (no entityId on requests)
+    //   '<n>' → write/read companion selection for entity N
+    // It's seeded from URL (?entityId=N) or localStorage, persisted across
+    // reloads, and overridden by the selector dropdown.
+    const ACTIVE_ENTITY_KEY = 'eclaw_petdex_active_entity_id';
+    let activeEntityId = '';
+
     function getCreds() {
         const url = new URLSearchParams(location.search);
         const deviceId = url.get('deviceId') || localStorage.getItem('eclaw_device_id') || '';
@@ -218,8 +237,16 @@
         const p = new URLSearchParams();
         if (c.deviceId) p.set('deviceId', c.deviceId);
         if (c.deviceSecret) p.set('deviceSecret', c.deviceSecret);
-        if (c.entityId) p.set('entityId', c.entityId);
         if (c.botSecret) p.set('botSecret', c.botSecret);
+        // Bot-auth callers must use their bound entityId; device-auth callers
+        // can switch freely via the selector. When both creds are present we
+        // prefer the selector pick (lets owners with a stray ?botSecret= URL
+        // still switch entities).
+        if (c.deviceSecret) {
+            if (activeEntityId) p.set('entityId', activeEntityId);
+        } else if (c.entityId) {
+            p.set('entityId', c.entityId);
+        }
         return p;
     }
 
@@ -645,6 +672,58 @@
         searchTimer = setTimeout(loadList, 250);
     });
 
+    // ── Entity selector ──────────────────────────────────────────
+    // Owner can pick *which* entity's companion they're swapping. The list
+    // comes from /api/entities; same-device entities only, since cross-device
+    // selection requires that device's secret. Bot-auth (botSecret only)
+    // callers are locked to their bound entity — the dropdown is disabled.
+    async function loadEntities() {
+        const sel = document.getElementById('entity-selector');
+        const creds = getCreds();
+        if (creds.botSecret && !creds.deviceSecret) {
+            // Bot auth: locked to bound entity, can't switch
+            sel.innerHTML = '<option value="' + escapeHtml(creds.entityId) + '">🔒 Entity #' + escapeHtml(creds.entityId) + ' (bot 綁定)</option>';
+            sel.disabled = true;
+            return;
+        }
+        try {
+            const q = new URLSearchParams();
+            q.set('deviceId', creds.deviceId);
+            if (creds.deviceSecret) q.set('deviceSecret', creds.deviceSecret);
+            const r = await fetch('/api/entities?' + q.toString());
+            const data = await r.json();
+            const list = Array.isArray(data) ? data : (data.entities || []);
+            // Keep the default "device-wide" option, then append every entity
+            sel.innerHTML = '<option value="">🖥️ 全裝置 / Device-wide</option>';
+            list.forEach(e => {
+                const id = e.entityId != null ? e.entityId : e.id;
+                if (id == null) return;
+                const name = e.name || ('Entity #' + id);
+                const code = e.publicCode ? ' · ' + e.publicCode : '';
+                const opt = document.createElement('option');
+                opt.value = String(id);
+                opt.textContent = '#' + id + ' ' + name + code;
+                sel.appendChild(opt);
+            });
+            sel.value = activeEntityId || '';
+        } catch (err) {
+            // Non-fatal: leave the default device-wide option in place.
+        }
+    }
+
+    document.getElementById('entity-selector').addEventListener('change', (e) => {
+        activeEntityId = e.target.value || '';
+        if (activeEntityId) {
+            localStorage.setItem(ACTIVE_ENTITY_KEY, activeEntityId);
+        } else {
+            localStorage.removeItem(ACTIVE_ENTITY_KEY);
+        }
+        // mine-scope filtering is tied to entityId — re-apply both list and
+        // owner-state so the "✓ 目前選用" badge tracks the new scope.
+        loadList();
+        refreshOwnerState();
+    });
+
     // ── Helpers ──────────────────────────────────────────────────
     function escapeHtml(s) {
         return String(s).replace(/[&<>"']/g, c => ({
@@ -653,7 +732,17 @@
     }
 
     // ── Boot ─────────────────────────────────────────────────────
+    // Seed activeEntityId from URL (?entityId=) then localStorage. URL wins
+    // so a deep-link like ".../petdx-browser.html?entityId=3" lands you on
+    // that entity's scope without needing the dropdown.
+    (function seedActiveEntity() {
+        const c = getCreds();
+        const stored = localStorage.getItem(ACTIVE_ENTITY_KEY) || '';
+        activeEntityId = c.entityId || stored || '';
+    })();
+
     renderFilters();
+    loadEntities();
     loadList();
     refreshOwnerState();
 }());
