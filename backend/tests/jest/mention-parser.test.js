@@ -218,6 +218,151 @@ describe('mention-parser.parseMentions', () => {
         expect(r.mentions[0].publicCode).toBe('q0ue2k');
         expect(r.mentions[0].entityId).toBe(6);
     });
+
+    // ── Markdown code-span guard (2026-05-12 fan-out incident) ──
+    // Inline-code examples in docs ( `@code ...` ) and fenced blocks must not
+    // route. Caused #2→#1 reply to also fan out to #5 because the body
+    // contained example tokens. Regression: prove docs don't cause routes,
+    // real leading @-mentions still do.
+    describe('markdown code spans (fan-out guard)', () => {
+        test('inline-code @publicCode is NOT routed', () => {
+            const ctx = makeCtx();
+            const r = mp.parseMentions('Example token form: `@aaaaaa ...`', ctx);
+            expect(r.mentions).toEqual([]);
+            expect(r.unresolved).toEqual([]);
+            expect(r.hasAll).toBe(false);
+        });
+
+        test('inline-code @#N is NOT routed', () => {
+            const ctx = makeCtx();
+            const r = mp.parseMentions('Use `@#1` for same-device entity tag', ctx);
+            expect(r.mentions).toEqual([]);
+        });
+
+        test('inline-code @all is NOT broadcast', () => {
+            const ctx = makeCtx();
+            const r = mp.parseMentions('Broadcast keyword is `@all` (case-insensitive)', ctx);
+            expect(r.hasAll).toBe(false);
+        });
+
+        test('inline-code <@xxxxxx> is NOT routed', () => {
+            const ctx = makeCtx();
+            const r = mp.parseMentions('Canonical form is `<@aaaaaa>` from UI', ctx);
+            expect(r.mentions).toEqual([]);
+        });
+
+        test('mixed: real leading @code routes, in-code example does NOT', () => {
+            const ctx = makeCtx();
+            const r = mp.parseMentions('@bbbbbb see example `@aaaaaa ...` below', ctx);
+            expect(r.mentions).toHaveLength(1);
+            expect(r.mentions[0].publicCode).toBe('bbbbbb');
+            // Production repro: prior to this fix, both bbbbbb AND aaaaaa
+            // would resolve, causing the @aaaaaa example to fan out.
+            expect(r.mentions.find(m => m.publicCode === 'aaaaaa')).toBeUndefined();
+        });
+
+        test('fenced code block tokens are NOT routed', () => {
+            const ctx = makeCtx();
+            const r = mp.parseMentions(
+                'See routing examples:\n```\n@aaaaaa hi\n@#1 same device\n@all broadcast\n```\nDone.',
+                ctx
+            );
+            expect(r.mentions).toEqual([]);
+            expect(r.hasAll).toBe(false);
+        });
+
+        test('fenced code block does not swallow tokens outside the fence', () => {
+            const ctx = makeCtx();
+            const r = mp.parseMentions(
+                'Heads up @bbbbbb:\n```\n@aaaaaa example\n```\nplease review.',
+                ctx
+            );
+            expect(r.mentions).toHaveLength(1);
+            expect(r.mentions[0].publicCode).toBe('bbbbbb');
+        });
+
+        test('multiple inline-code spans on one line — none route, real one still does', () => {
+            const ctx = makeCtx();
+            const r = mp.parseMentions(
+                '@bbbbbb forms: `@aaaaaa`, `@#1`, `@all` — pick one',
+                ctx
+            );
+            expect(r.mentions).toHaveLength(1);
+            expect(r.mentions[0].publicCode).toBe('bbbbbb');
+            expect(r.hasAll).toBe(false);
+        });
+
+        test('displayText leaves in-code tokens untouched (docs render as-written)', () => {
+            const ctx = makeCtx();
+            const r = mp.parseMentions('Example: `@aaaaaa hi`', ctx);
+            // No resolution → replaceWithName skips unresolved → original text
+            // around backticks preserved.
+            expect(r.displayText).toBe('Example: `@aaaaaa hi`');
+        });
+
+        test('cleanText preserves code-span content (Gatekeeper sees example tokens)', () => {
+            // Mac_F PR #2643 review point #2: routing should ignore code spans,
+            // but Gatekeeper must not lose non-mention code content. Preserving
+            // in-code tokens in cleanText keeps the full code-span string
+            // available for sensitive-word detection; only tokens OUTSIDE
+            // code spans are stripped.
+            const ctx = makeCtx();
+            const r = mp.parseMentions('Example: `@aaaaaa hi`', ctx);
+            expect(r.cleanText).toContain('@aaaaaa hi');
+        });
+
+        test('cleanText still strips OUTSIDE-code tokens (gatekeeper)', () => {
+            const ctx = makeCtx();
+            const r = mp.parseMentions(
+                'Hi @aaaaaa, please see `@bbbbbb` for context.',
+                ctx
+            );
+            // Outside-code @aaaaaa stripped (resolved); in-code @bbbbbb kept.
+            expect(r.cleanText).not.toMatch(/@aaaaaa/);
+            expect(r.cleanText).toContain('@bbbbbb');
+        });
+
+        test('displayText preserves code-span token even when same target is mentioned outside', () => {
+            // Mac_F PR #2643 review point #3: if @bbbbbb appears BOTH outside
+            // (real mention) and inside backticks (doc example), only the
+            // outside occurrence should be rewritten to @Bob; the in-code
+            // example must remain literal.
+            const ctx = makeCtx();
+            const r = mp.parseMentions(
+                'Tag @bbbbbb like this: `@bbbbbb hello`',
+                ctx
+            );
+            expect(r.displayText).toBe('Tag @Bob like this: `@bbbbbb hello`');
+        });
+
+        test('production repro — #2 doc-example message to #1 does NOT also route to #5', () => {
+            // Mirrors the 2026-05-12 m=f4750a2e incident. #2 (LOBSTER, pc=wjkzxz)
+            // sent a reply to #1 (Mac_F, pc=31tlkr) explaining routing forms;
+            // backend mis-parsed `@00vt9i` inside backticks and ALSO routed
+            // to #5 (Hermes, pc=00vt9i).
+            const devices = {
+                'd1': {
+                    entities: {
+                        1: { isBound: true, name: 'Mac_F', publicCode: '31tlkr' },
+                        2: { isBound: true, name: 'LOBSTER', publicCode: 'wjkzxz' },
+                        5: { isBound: true, name: 'Hermes', publicCode: '00vt9i' }
+                    }
+                }
+            };
+            const publicCodeIndex = {
+                '31tlkr': { deviceId: 'd1', entityId: 1 },
+                'wjkzxz': { deviceId: 'd1', entityId: 2 },
+                '00vt9i': { deviceId: 'd1', entityId: 5 }
+            };
+            const ctx = { senderDeviceId: 'd1', devices, publicCodeIndex };
+            const msg = '@31tlkr Token formats: `@#5` ← entityId, `@00vt9i` ← publicCode, `@all` ← broadcast.';
+            const r = mp.parseMentions(msg, ctx);
+            const routed = r.mentions.map(m => m.publicCode);
+            expect(routed).toEqual(['31tlkr']);
+            expect(routed).not.toContain('00vt9i');
+            expect(r.hasAll).toBe(false);
+        });
+    });
 });
 
 describe('mention-parser.decideRouting', () => {

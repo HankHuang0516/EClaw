@@ -62,6 +62,17 @@ const ALL_TOKEN_RE = /(^|\s)@all(?=\s|$|[^\w])/i;
 // Global form for stripping @all (sequential .replace() needs the /g flag).
 const ALL_TOKEN_GLOBAL_RE = /(^|\s)@all(?=\s|$|[^\w])/gi;
 
+// Markdown code spans — examples / docs inside backticks must NOT route.
+// Replace each code-span region with same-length whitespace so character
+// indices stay aligned (in case any caller relies on them later) but no
+// @-token inside survives the regex passes. Fenced blocks first so the
+// inline single-backtick pass doesn't gobble triple-backtick fences.
+function maskCodeSpansForRouting(text) {
+    return text
+        .replace(/```[\s\S]*?```/g, (m) => ' '.repeat(m.length))
+        .replace(/`[^`\n]+`/g, (m) => ' '.repeat(m.length));
+}
+
 /**
  * Parse mention tokens from raw text and resolve them against the in-memory
  * device map / publicCodeIndex.
@@ -100,8 +111,14 @@ function parseMentions(text, ctx) {
     const devices = (ctx && ctx.devices) || {};
     const publicCodeIndex = (ctx && ctx.publicCodeIndex) || {};
 
+    // Mask code spans so example tokens in backticks don't route. Routing
+    // detection runs against `routedText`; displayText/cleanText continue
+    // to operate on the original `text` (display untouched, cleanText
+    // still strips token characters for Gatekeeper).
+    const routedText = maskCodeSpansForRouting(text);
+
     // @all literal
-    if (ALL_TOKEN_RE.test(text)) result.hasAll = true;
+    if (ALL_TOKEN_RE.test(routedText)) result.hasAll = true;
 
     const seenPublicCodes = new Set();
 
@@ -162,12 +179,12 @@ function parseMentions(text, ctx) {
     };
 
     PUBLIC_CODE_TOKEN_RE.lastIndex = 0;
-    while ((m = PUBLIC_CODE_TOKEN_RE.exec(text)) !== null) {
+    while ((m = PUBLIC_CODE_TOKEN_RE.exec(routedText)) !== null) {
         resolvePublicCodeToken(m[1]);
     }
 
     PUBLIC_CODE_BARE_RE.lastIndex = 0;
-    while ((m = PUBLIC_CODE_BARE_RE.exec(text)) !== null) {
+    while ((m = PUBLIC_CODE_BARE_RE.exec(routedText)) !== null) {
         resolvePublicCodeToken(m[1]);
     }
 
@@ -175,40 +192,72 @@ function parseMentions(text, ctx) {
     //    add new entityIds since resolveEntityId dedupes by publicCode).
     for (const re of [ENTITY_ID_BRACKET_RE, ENTITY_ID_HASH_RE, ENTITY_ID_BARE_RE]) {
         re.lastIndex = 0;
-        while ((m = re.exec(text)) !== null) {
+        while ((m = re.exec(routedText)) !== null) {
             resolveEntityId(parseInt(m[1], 10));
         }
     }
 
-    // 3. displayText: replace each recognised token form with @name.
-    //    Order matches resolution order so a `<@123456>` (resolved as
-    //    publicCode) is replaced before the bracketed-digit pass sees it.
-    const replaceWithName = (regex, lookup) => {
-        result.displayText = result.displayText.replace(regex, (match, captured) => {
-            const hit = lookup(captured);
-            return hit ? `@${hit.name}` : match;
-        });
-    };
-    replaceWithName(PUBLIC_CODE_TOKEN_RE, (code) =>
-        result.mentions.find(x => x.publicCode === code));
-    replaceWithName(PUBLIC_CODE_BARE_RE, (code) =>
-        result.mentions.find(x => x.publicCode === code));
+    // 3+4. Build displayText and cleanText by scanning routedText (code spans
+    //      masked) and splicing replacements into the ORIGINAL text. This way
+    //      backtick-wrapped tokens are preserved as-is in both outputs:
+    //      display keeps the literal backticks visible, and Gatekeeper sees
+    //      the full code-span content (only tokens outside backticks vanish).
     const findByEntityId = (id) => {
         const eid = parseInt(id, 10);
         return result.mentions.find(x => !x.isCrossDevice && x.entityId === eid);
     };
-    replaceWithName(ENTITY_ID_BRACKET_RE, findByEntityId);
-    replaceWithName(ENTITY_ID_HASH_RE, findByEntityId);
-    replaceWithName(ENTITY_ID_BARE_RE, findByEntityId);
+    const findByPublicCode = (code) =>
+        result.mentions.find(x => x.publicCode === code);
 
-    // 4. cleanText: strip every token form + @all; collapse whitespace.
-    //    PUBLIC_CODE_TOKEN_RE first (eats `<@xxxxxx>` whole), then bare form.
-    result.cleanText = text
-        .replace(PUBLIC_CODE_TOKEN_RE, '')
-        .replace(PUBLIC_CODE_BARE_RE, '')
-        .replace(ENTITY_ID_BRACKET_RE, '')
-        .replace(ENTITY_ID_HASH_RE, '')
-        .replace(ENTITY_ID_BARE_RE, '')
+    // Order matches resolution order: PUBLIC_CODE_TOKEN_RE first claims
+    // <@xxxxxx> ranges so ENTITY_ID_BRACKET_RE can't reinterpret <@123456>.
+    const passes = [
+        { re: PUBLIC_CODE_TOKEN_RE, lookup: findByPublicCode },
+        { re: PUBLIC_CODE_BARE_RE,  lookup: findByPublicCode },
+        { re: ENTITY_ID_BRACKET_RE, lookup: findByEntityId },
+        { re: ENTITY_ID_HASH_RE,    lookup: findByEntityId },
+        { re: ENTITY_ID_BARE_RE,    lookup: findByEntityId },
+    ];
+    const spans = [];
+    for (const { re, lookup } of passes) {
+        re.lastIndex = 0;
+        let mm;
+        while ((mm = re.exec(routedText)) !== null) {
+            spans.push({
+                start: mm.index,
+                end: mm.index + mm[0].length,
+                hit: lookup(mm[1]),
+                literal: mm[0],
+            });
+        }
+    }
+    // Sort by start; first occurrence at a position wins (later passes drop).
+    spans.sort((a, b) => a.start - b.start);
+    const filteredSpans = [];
+    let lastEnd = -1;
+    for (const s of spans) {
+        if (s.start < lastEnd) continue; // overlapping later match — skip
+        filteredSpans.push(s);
+        lastEnd = s.end;
+    }
+
+    const sliceWith = (replacer) => {
+        let out = '';
+        let cursor = 0;
+        for (const s of filteredSpans) {
+            out += text.substring(cursor, s.start);
+            out += replacer(s);
+            cursor = s.end;
+        }
+        out += text.substring(cursor);
+        return out;
+    };
+    result.displayText = sliceWith((s) => s.hit ? `@${s.hit.name}` : s.literal);
+
+    // cleanText: strip recognised tokens (outside code spans) + @all,
+    // collapse whitespace. Tokens inside code spans are left intact so
+    // Gatekeeper still sees the full code-span content.
+    result.cleanText = sliceWith(() => '')
         .replace(ALL_TOKEN_GLOBAL_RE, '$1')
         .replace(/\s+/g, ' ')
         .trim();
