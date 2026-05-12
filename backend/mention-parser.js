@@ -57,8 +57,21 @@ const ENTITY_ID_HASH_RE = /(?<![\w@])@#(\d{1,3})(?![\w])/g;
 // entityId — bare: @N. Same boundary rules as @#N.
 const ENTITY_ID_BARE_RE = /(?<![\w@])@(\d{1,3})(?![\w])/g;
 
+// ── Markdown code-span stripping ─────────────────────────────────────────────
+// Markdown renders @tokens inside code spans as literal text, not routing
+// targets.  Strip them before running mention regexes so a example like
+// "use `@00vt9i` as shown" is not mis-routed.
+//
+// Strategy: fenced code blocks first (```…```), then inline code (`…`).
+// We replace with a placeholder that contains no `@` so subsequent regexes
+// provably cannot re-emit it.
+const MARKDOWN_FENCED_CODE_RE = /```[\s\S]*?```/g;
+const MARKDOWN_INLINE_CODE_RE = /`[^`\n]+`/g;
+const _CODE_PLACEHOLDER = '\x00CODE\x00';
+const _CODE_PLACEHOLDER_RE = /\x00CODE\x00/g;
+
 // @all literal — must be a standalone word.
-const ALL_TOKEN_RE = /(^|\s)@all(?=\s|$|[^\w])/i;
+const ALL_TOKEN_RE=/(^|\s)@all/i;
 // Global form for stripping @all (sequential .replace() needs the /g flag).
 const ALL_TOKEN_GLOBAL_RE = /(^|\s)@all(?=\s|$|[^\w])/gi;
 
@@ -100,8 +113,17 @@ function parseMentions(text, ctx) {
     const devices = (ctx && ctx.devices) || {};
     const publicCodeIndex = (ctx && ctx.publicCodeIndex) || {};
 
-    // @all literal
-    if (ALL_TOKEN_RE.test(text)) result.hasAll = true;
+    // Strip markdown code spans (inline `code` and fenced ```code```) before
+    // parsing.  Markdown renders tokens inside code spans as literal text, not
+    // routing targets; stripping prevents e.g. "use `@00vt9i` as shown" from
+    // being mis-routed.
+    const stripped = text
+        .replace(MARKDOWN_FENCED_CODE_RE, _CODE_PLACEHOLDER)
+        .replace(MARKDOWN_INLINE_CODE_RE, _CODE_PLACEHOLDER);
+
+    // @all literal — test on markdown-stripped text so `@all` inside a code
+    // block is not treated as a broadcast trigger.
+    if (ALL_TOKEN_RE.test(stripped)) result.hasAll = true;
 
     const seenPublicCodes = new Set();
 
@@ -162,12 +184,12 @@ function parseMentions(text, ctx) {
     };
 
     PUBLIC_CODE_TOKEN_RE.lastIndex = 0;
-    while ((m = PUBLIC_CODE_TOKEN_RE.exec(text)) !== null) {
+    while ((m = PUBLIC_CODE_TOKEN_RE.exec(stripped)) !== null) {
         resolvePublicCodeToken(m[1]);
     }
 
     PUBLIC_CODE_BARE_RE.lastIndex = 0;
-    while ((m = PUBLIC_CODE_BARE_RE.exec(text)) !== null) {
+    while ((m = PUBLIC_CODE_BARE_RE.exec(stripped)) !== null) {
         resolvePublicCodeToken(m[1]);
     }
 
@@ -175,7 +197,7 @@ function parseMentions(text, ctx) {
     //    add new entityIds since resolveEntityId dedupes by publicCode).
     for (const re of [ENTITY_ID_BRACKET_RE, ENTITY_ID_HASH_RE, ENTITY_ID_BARE_RE]) {
         re.lastIndex = 0;
-        while ((m = re.exec(text)) !== null) {
+        while ((m = re.exec(stripped)) !== null) {
             resolveEntityId(parseInt(m[1], 10));
         }
     }
@@ -201,15 +223,16 @@ function parseMentions(text, ctx) {
     replaceWithName(ENTITY_ID_HASH_RE, findByEntityId);
     replaceWithName(ENTITY_ID_BARE_RE, findByEntityId);
 
-    // 4. cleanText: strip every token form + @all; collapse whitespace.
-    //    PUBLIC_CODE_TOKEN_RE first (eats `<@xxxxxx>` whole), then bare form.
-    result.cleanText = text
+    // 4. cleanText: strip every token form + @all + code placeholders; collapse whitespace.
+    //    Uses `stripped` (markdown removed) so code-span tokens are not re-stripped.
+    result.cleanText = stripped
         .replace(PUBLIC_CODE_TOKEN_RE, '')
         .replace(PUBLIC_CODE_BARE_RE, '')
         .replace(ENTITY_ID_BRACKET_RE, '')
         .replace(ENTITY_ID_HASH_RE, '')
         .replace(ENTITY_ID_BARE_RE, '')
         .replace(ALL_TOKEN_GLOBAL_RE, '$1')
+        .replace(_CODE_PLACEHOLDER_RE, '')
         .replace(/\s+/g, ' ')
         .trim();
 
@@ -235,18 +258,23 @@ function decideRouting(parseResult) {
 }
 
 /**
- * Strip every recognised mention token form + @all literal from text.
- * Used by Gatekeeper so token syntax never reaches sensitive-word detection.
+ * Strip every recognised mention token form + @all literal + markdown code
+ * spans from text.  Used by Gatekeeper so token syntax never reaches
+ * sensitive-word detection.
  */
 function stripMentionTokens(text) {
     if (!text || typeof text !== 'string') return text;
     return text
+        // Strip markdown code spans first so tokens inside them are removed.
+        .replace(MARKDOWN_FENCED_CODE_RE, _CODE_PLACEHOLDER)
+        .replace(MARKDOWN_INLINE_CODE_RE, _CODE_PLACEHOLDER)
         .replace(PUBLIC_CODE_TOKEN_RE, '')
         .replace(PUBLIC_CODE_BARE_RE, '')
         .replace(ENTITY_ID_BRACKET_RE, '')
         .replace(ENTITY_ID_HASH_RE, '')
         .replace(ENTITY_ID_BARE_RE, '')
         .replace(ALL_TOKEN_GLOBAL_RE, '$1')
+        .replace(_CODE_PLACEHOLDER_RE, '')
         .replace(/\s+/g, ' ')
         .trim();
 }

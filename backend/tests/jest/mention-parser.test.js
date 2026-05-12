@@ -500,6 +500,95 @@ describe('mention-parser — entityId tokens (<@N>, @#N, @N)', () => {
     });
 });
 
+// Regression tests for markdown code-span exclusion (P1 root-cause fix).
+// Tokens inside inline code (`@00vt9i`) or fenced blocks (```@00vt9i```)
+// must NOT be treated as routing targets.
+describe('mention-parser — markdown code-span exclusion', () => {
+    // Shared ctx with 31tlkr registered so bare @31tlkr would resolve if not
+    // inside a code span.
+    const ctxWith31tlkr = () => {
+        const devices = {
+            'dev-a': {
+                entities: {
+                    0: { isBound: true, name: 'Entity-2 (LOBSTER)', publicCode: '00vt9i' },
+                    2: { isBound: true, name: 'Mac_ClaudeAce主管', publicCode: '31tlkr' }
+                }
+            }
+        };
+        const publicCodeIndex = {
+            '00vt9i': { deviceId: 'dev-a', entityId: 0 },
+            '31tlkr': { deviceId: 'dev-a', entityId: 2 }
+        };
+        return { senderDeviceId: 'dev-a', devices, publicCodeIndex };
+    };
+
+    test('bare @publicCode inside inline code is NOT matched', () => {
+        const r = mp.parseMentions('use `@00vt9i` as the target entityId', ctxWith31tlkr());
+        expect(r.mentions).toEqual([]);
+        expect(r.unresolved).toEqual([]);
+    });
+
+    test('bare @publicCode inside fenced code block is NOT matched', () => {
+        const r = mp.parseMentions('try:\n```\n@00vt9i\n```', ctxWith31tlkr());
+        expect(r.mentions).toEqual([]);
+        expect(r.unresolved).toEqual([]);
+    });
+
+    test('@all inside inline code does NOT set hasAll', () => {
+        const r = mp.parseMentions('prefix with `@all` in a code span', ctxWith31tlkr());
+        expect(r.hasAll).toBe(false);
+    });
+
+    test('@all inside fenced code block does NOT set hasAll', () => {
+        const r = mp.parseMentions('```\n@all\n```', ctxWith31tlkr());
+        expect(r.hasAll).toBe(false);
+    });
+
+    test('bare @publicCode OUTSIDE code span IS still resolved', () => {
+        const r = mp.parseMentions('@31tlkr please check', ctxWith31tlkr());
+        expect(r.mentions).toHaveLength(1);
+        expect(r.mentions[0].publicCode).toBe('31tlkr');
+    });
+
+    test('bracketed <@publicCode> inside inline code is NOT matched', () => {
+        const r = mp.parseMentions('use `<@00vt9i>` as shown', ctxWith31tlkr());
+        expect(r.mentions).toEqual([]);
+    });
+
+    test('cleanText strips code-span content entirely (no ghost placeholder)', () => {
+        const r = mp.parseMentions('try `@00vt9i` with a prefix', ctxWith31tlkr());
+        expect(r.cleanText).toBe('try with a prefix');
+    });
+
+    test('cleanText strips fenced block content entirely', () => {
+        const r = mp.parseMentions('```\n@00vt9i\n``` end', ctxWith31tlkr());
+        expect(r.cleanText).toBe('end');
+    });
+
+    test('displayText preserves non-code-span content accurately', () => {
+        const r = mp.parseMentions('real mention @31tlkr and fake `@00vt9i`', ctxWith31tlkr());
+        expect(r.displayText).toBe('real mention @Mac_ClaudeAce主管 and fake `@00vt9i`');
+    });
+});
+
+describe('mention-parser.stripMentionTokens — markdown code-span stripping', () => {
+    test('strips tokens inside inline code spans', () => {
+        expect(mp.stripMentionTokens('token `@abcdef` hidden')).toBe('token hidden');
+    });
+
+    test('strips tokens inside fenced code blocks', () => {
+        expect(mp.stripMentionTokens('```\n@abcdef\n```')).toBe('');
+    });
+
+    test('strips @all inside inline code (should not appear in clean text)', () => {
+        expect(mp.stripMentionTokens('use `@all` in code')).toBe('use in code');
+    });
+
+    test('strips @all inside fenced block', () => {
+        expect(mp.stripMentionTokens('```\n@all\n```')).toBe('');
+    });
+});
+
 // Closing block was inadvertently merged into the entity-id block above.
 // Add a sanity describe so the test count remains a clean diff.
 describe('mention-parser — entityId tokens sanity', () => {
