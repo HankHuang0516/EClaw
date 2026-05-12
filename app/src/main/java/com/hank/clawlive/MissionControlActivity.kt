@@ -105,7 +105,7 @@ class MissionControlActivity : AppCompatActivity() {
         val url = if (deviceId != null && deviceSecret != null)
             "$baseUrl?deviceId=$deviceId&deviceSecret=$deviceSecret"
         else baseUrl
-        wv.loadUrl(url)
+        wv.loadUrl(com.hank.clawlive.util.PortalUrlHelper.withAppLang(this, url))
     }
 
     private fun injectCredentials(webView: WebView?) {

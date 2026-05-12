@@ -71,7 +71,11 @@ class ChatWebViewManager(
         offlineView.visibility = View.GONE
         loadingIndicator.visibility = View.VISIBLE
         webView.visibility = View.VISIBLE
-        webView.loadUrl("$baseUrl/portal/chat.html")
+        webView.loadUrl(
+            com.hank.clawlive.util.PortalUrlHelper.withAppLang(
+                webView.context, "$baseUrl/portal/chat.html"
+            )
+        )
     }
 
     fun canGoBack(): Boolean = webView.canGoBack()
