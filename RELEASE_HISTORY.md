@@ -5,7 +5,7 @@ Track git commits for each release to enable changelog generation via `git diff`
 ---
 
 ## Latest
-v1.0.83 | f4327f28 | 2026-05-12 | versionCode 91 | Internal 🚧 | Android Settings 新增「Kanban Card Completed」「Kanban Automation Completed」兩個通知開關 — 後端 DEFAULT_PREFS / Web Portal 早就有 key，只是 SettingsActivity.notifCategories 漏掉 (#2636) + RELEASE_HISTORY ## Recent 重複標題收成單一區塊 (#2637)
+v1.0.83 | f4327f28 | 2026-05-12 | versionCode 91 | Internal ✅ + Production ✅ (submitted for review 2026-05-13 07:38 TW) | Android Settings 新增「Kanban Card Completed」「Kanban Automation Completed」兩個通知開關 — 後端 DEFAULT_PREFS / Web Portal 早就有 key，只是 SettingsActivity.notifCategories 漏掉 (#2636) + RELEASE_HISTORY ## Recent 重複標題收成單一區塊 (#2637)
 
 ## Recent
 v1.0.82 | e69ea816 | 2026-05-12 | versionCode 90 | Internal 🚧 | APP 首頁改用 WebView 載入 portal/dashboard.html — Web/App 共用同一份 entity grid / Add Entity / Borrow / channel promo / edit-mode reorder (1131 LOC native Home 拆除) + fresh-install registerDevice 修跳轉登入頁 bug + dashboard.html 移除 __isAndroidApp orgchart-collapse + Chat @-mention avatar 走 companion renderer (#2633) + Kanban dependency chips IntersectionObserver 懶載入 (#2632) (#2634)
