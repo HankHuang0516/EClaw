@@ -658,8 +658,8 @@ GPS: 온디맨드만, 백그라운드 추적 없음, 서버 재시작 시 데이
     <string name="sent">전송 완료!</string>
     <string name="set_live_wallpaper">라이브 배경화면 설정</string>
     <string name="set_wallpaper">배경화면 설정</string>
-    <string name="notif_pref_kanban_done">NOTIF_KANBAN_DONE_PLACEHOLDER</string>
-    <string name="notif_pref_kanban_done_auto">NOTIF_KANBAN_AUTO_PLACEHOLDER</string>
+    <string name="notif_pref_kanban_done">칸반 카드 완료</string>
+    <string name="notif_pref_kanban_done_auto">칸반 자동화 완료</string>
     <string name="settings_entity_limit">엔티티 제한: %1$d</string>
     <string name="settings_reset">설정이 초기화되었습니다</string>
     <string name="settings_title">설정</string>

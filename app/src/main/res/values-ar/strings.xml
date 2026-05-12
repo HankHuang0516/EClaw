@@ -658,8 +658,8 @@ GPS: عند الطلب فقط، بلا تتبع في الخلفية، تُفقد
     <string name="notif_pref_feedback">تحديثات الملاحظات</string>
     <string name="notif_pref_todo">المهام المكتملة</string>
     <string name="notif_pref_scheduled">الرسائل المجدولة</string>
-    <string name="notif_pref_kanban_done">NOTIF_KANBAN_DONE_PLACEHOLDER</string>
-    <string name="notif_pref_kanban_done_auto">NOTIF_KANBAN_AUTO_PLACEHOLDER</string>
+    <string name="notif_pref_kanban_done">اكتمال بطاقة كانبان</string>
+    <string name="notif_pref_kanban_done_auto">اكتمال أتمتة كانبان</string>
     <string name="notif_prefs_loading">جارٍ تحميل التفضيلات…</string>
     <string name="notif_prefs_error">فشل تحميل تفضيلات الإشعارات</string>
 

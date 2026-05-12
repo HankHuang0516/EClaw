@@ -658,8 +658,8 @@ GPS：รับตามความต้องการเท่านั้�
     <string name="sent">ส่งแล้ว!</string>
     <string name="set_live_wallpaper">ตั้งวอลเปเปอร์สด</string>
     <string name="set_wallpaper">ตั้งวอลเปเปอร์</string>
-    <string name="notif_pref_kanban_done">NOTIF_KANBAN_DONE_PLACEHOLDER</string>
-    <string name="notif_pref_kanban_done_auto">NOTIF_KANBAN_AUTO_PLACEHOLDER</string>
+    <string name="notif_pref_kanban_done">การ์ดคันบังเสร็จสิ้น</string>
+    <string name="notif_pref_kanban_done_auto">ระบบอัตโนมัติคันบังเสร็จสิ้น</string>
     <string name="settings_entity_limit">Entity Limit: %1$d</string>
     <string name="settings_reset">รีเซ็ตการตั้งค่าแล้ว</string>
     <string name="settings_title">ตั้งค่า</string>

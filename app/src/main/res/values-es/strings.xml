@@ -658,8 +658,8 @@ Puedes enviar una solicitud de demanda de alquiler y te notificaremos cuando est
     <string name="schedule_upcoming">Próximos y Activos</string>
     <string name="schedule_updated">¡Horario actualizado!</string>
     <string name="search_hint">Buscar…</string>
-    <string name="notif_pref_kanban_done">NOTIF_KANBAN_DONE_PLACEHOLDER</string>
-    <string name="notif_pref_kanban_done_auto">NOTIF_KANBAN_AUTO_PLACEHOLDER</string>
+    <string name="notif_pref_kanban_done">Tarjeta Kanban completada</string>
+    <string name="notif_pref_kanban_done_auto">Automatización Kanban completada</string>
     <string name="select">Seleccionar</string>
     <string name="select_bot">Selecciona un bot:</string>
     <string name="select_entity_slot">Seleccionar ranura de entidad</string>
