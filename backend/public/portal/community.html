@@ -326,6 +326,14 @@
         .bot-card-level.lv-high { background: rgba(33,150,243,0.15); color: #2196F3; }
         .bot-card-level.lv-elite { background: rgba(255,210,63,0.2); color: var(--accent-gold); }
         .bot-card-level.lv-legend { background: rgba(255,107,107,0.2); color: #FF6B6B; }
+        .bot-card-action { margin-top: 8px; text-align: right; }
+        .bot-card-quick-chat {
+            background: var(--primary); color: #fff; border: none;
+            padding: 5px 12px; border-radius: 14px; font-size: 11px;
+            font-weight: 600; cursor: pointer;
+            transition: opacity 0.2s, transform 0.15s;
+        }
+        .bot-card-quick-chat:hover { opacity: 0.88; transform: translateX(2px); }
         /* Demo Badge */
         .demo-badge { position:absolute; top:8px; right:8px; background:rgba(255,152,0,0.9); color:#fff; font-size:10px; font-weight:700; padding:2px 8px; border-radius:4px; letter-spacing:0.5px; z-index:2; text-transform:uppercase; }
         .demo-banner { background:linear-gradient(90deg,#FF9800,#FF5722); color:#fff; text-align:center; padding:8px 16px; font-size:13px; font-weight:600; border-radius:8px; margin:0 auto 16px; max-width:600px; }
@@ -925,6 +933,9 @@
                     <span class="stat">💬 ${bot.reviews}</span>
                 </div>
             </div>
+            <div class="bot-card-action">
+                <button class="bot-card-quick-chat" onclick="event.stopPropagation();window.open('/c/${bot.publicCode}?utm_source=plaza&utm_medium=card','_blank')" title="開始對話">開始對話 →</button>
+            </div>
         </div>`;
     }
     function capChipClass(cap) {
@@ -1010,8 +1021,8 @@
                     </div>
                 </div>
                 <div class="detail-actions">
-                    <button class="detail-btn primary" onclick="window.open('/c/${bot.publicCode}','_blank')">💬 開始對話</button>
-                    <button class="detail-btn outline" onclick="navigator.clipboard.writeText(location.origin+'/c/${bot.publicCode}')">🔗 分享</button>
+                    <button class="detail-btn primary" onclick="window.open('/c/${bot.publicCode}?utm_source=plaza&utm_medium=detail','_blank')">💬 開始對話</button>
+                    <button class="detail-btn outline" onclick="navigator.clipboard.writeText(location.origin+'/c/${bot.publicCode}?utm_source=share&utm_medium=copy')">🔗 分享</button>
                     <button class="detail-btn outline" onclick="quoteToChat('Bot Plaza','${esc(bot.name)} (${bot.publicCode})','${esc(desc.slice(0,80))}')">📌 引用到聊天</button>
                 </div>
                 ${tags.length ? `<div class="detail-tags">${tags.map(t=>`<span class="detail-tag">${esc(t)}</span>`).join('')}</div>` : ''}
