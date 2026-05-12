@@ -56,16 +56,19 @@
             credentials: 'same-origin'
         }).then(async (r) => {
             if (!r.ok) {
-                descriptorByEntityId.set(eid, null);
-                return null;
+                // Preserve last good descriptor across transient API failures
+                // (5xx, auth-token expiry blip, WebView network hiccup).
+                // Clobbering with null causes renderAvatarHtml to fall back
+                // to the entity's emoji avatar mid-session, producing a
+                // visible flicker on the next successful poll.
+                return descriptorByEntityId.get(eid) || null;
             }
             const data = await r.json();
             const companion = data && data.selection && data.selection.companion;
             descriptorByEntityId.set(eid, companion || null);
             return companion || null;
         }).catch(() => {
-            descriptorByEntityId.set(eid, null);
-            return null;
+            return descriptorByEntityId.get(eid) || null;
         }).finally(() => {
             inflightByEntityId.delete(eid);
         });
