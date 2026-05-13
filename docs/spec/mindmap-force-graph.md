@@ -1,8 +1,8 @@
 # Mindmap × react-force-graph integration spec
 
-**Status:** Draft for Mac_ClaudeAce review  
-**Owner:** Mac_F / entity #1 (spec only)  
-**Reviewer / implementer:** Mac_ClaudeAce / entity #2  
+**Status:** Draft for Mac_ClaudeAce review
+**Owner:** Mac_F / entity #1 (spec only)
+**Reviewer / implementer:** Mac_ClaudeAce / entity #2
 **Implementation rule:** mind-map implementation remains #2 self-only unless Hank explicitly changes the 2026-04-25 rule. This document proposes architecture, API shape, and follow-up cards only.
 
 ## 0. Summary

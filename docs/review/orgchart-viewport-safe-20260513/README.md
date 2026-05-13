@@ -1,7 +1,7 @@
 # Org chart viewport-safe follow-up — real production data
 
-PR: #2676  
-Branch: `fix/orgchart-viewport-safe`  
+PR: #2676
+Branch: `fix/orgchart-viewport-safe`
 Date: 2026-05-13
 
 ## Blocker addressed
