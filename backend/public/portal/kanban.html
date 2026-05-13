@@ -1128,10 +1128,13 @@
         function parseDeepLinkHash() {
             // Accept either single-hash (#card_X[?#comment-Y]) or double-hash
             // (#card_X#comment-Y). location.hash normalises to one leading '#'.
+            // Also accept ?card=card_X, used by chat/mindmap fallbacks where
+            // WebViews may strip or rewrite hash-only navigation.
+            const params = new URLSearchParams(window.location.search || '');
+            const queryCard = params.get('card') || params.get('cardId');
             const raw = (window.location.hash || '').replace(/^#/, '');
-            if (!raw) return null;
-            const parts = raw.split('#');
-            const head = parts[0] || '';
+            const parts = raw ? raw.split('#') : [];
+            const head = queryCard || parts[0] || '';
             const cardMatch = /^card_[a-f0-9]{8,}$/i.exec(head);
             if (!cardMatch) return null;
             let commentAnchor = null;
@@ -1146,7 +1149,11 @@
             const target = parseDeepLinkHash();
             if (!target) return;
             const card = findCard(target.cardId);
-            if (!card) return; // card not loaded yet — loadCards finished, but it's gone
+            if (!card) {
+                const msg = (t('toast_not_found', 'Not found') || 'Not found') + ': ' + target.cardId;
+                showToast(msg, true);
+                return;
+            }
             pendingCommentAnchor = target.commentAnchor || null;
             if (openCardId !== target.cardId) {
                 openDetail(target.cardId);
