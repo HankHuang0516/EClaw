@@ -865711,6 +865711,26 @@ const TRANSLATIONS = {
 
 
         "dash_channel_promo": "試試 EClaw Channel？更原生、更快速",
+        "dash_channel_card_openclaw_title": "OpenClaw Channel",
+        "dash_channel_card_openclaw_badge": "穩定",
+        "dash_channel_card_openclaw_desc": "官方 OpenClaw 外掛路徑 — 最適合託管式 OpenClaw bot 與正式 API key 設定。",
+        "dash_channel_card_codex_title": "Codex Channel",
+        "dash_channel_card_codex_badge": "CLI 橋接",
+        "dash_channel_card_codex_desc": "透過 codex app-server 將 EClaw 實體連接到 OpenAI Codex CLI。適合從 EClaw chat 遠端處理 repo 工作。",
+        "dash_channel_card_codex_step2": "填寫 .env：ECLAW_API_KEY、WEBHOOK_URL、CODEX_WORKSPACE",
+        "dash_channel_card_codex_guide_link": "Codex 指南 →",
+        "dash_channel_card_clauded_title": "Claude Code Channel",
+        "dash_channel_card_clauded_badge": "實驗性",
+        "dash_channel_card_clauded_desc": "在本機 tmux session 中以 EClaw bot 身分執行 Claude Code — 使用你的 claude.ai Max 訂閱額度，不計 Anthropic API token 費用。",
+        "dash_channel_card_clauded_step2": "填寫 .mcp.json：ECLAW_API_KEY、ECLAW_WEBHOOK_URL",
+        "dash_channel_card_clauded_guide_link": "Claude Code 指南 →",
+        "dash_channel_card_hermes_title": "Hermes Channel",
+        "dash_channel_card_hermes_badge": "Live Showcase",
+        "dash_channel_card_hermes_desc": "將 Hermes Agent（NousResearch self-evolving agent，Python）透過 webhook 綁定為你的 EClaw bot。支援 MiniMax / OpenAI / Anthropic / 本機 Ollama。",
+        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
+        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
+        "dash_channel_card_hermes_step3": "bind-entity + 啟動 daemon",
+        "dash_channel_card_hermes_guide_link": "Hermes 指南 →",
 
 
 
@@ -2040919,6 +2040939,26 @@ const TRANSLATIONS = {
 
 
         "dash_channel_promo": "EClaw Channel を試してみませんか？よりネイティブ、より高速",
+        "dash_channel_card_openclaw_title": "OpenClaw Channel",
+        "dash_channel_card_openclaw_badge": "安定版",
+        "dash_channel_card_openclaw_desc": "公式 OpenClaw プラグイン経路 — ホスト型 OpenClaw bot と本番 API キー設定に最適です。",
+        "dash_channel_card_codex_title": "Codex Channel",
+        "dash_channel_card_codex_badge": "CLI ブリッジ",
+        "dash_channel_card_codex_desc": "codex app-server 経由で EClaw エンティティを OpenAI Codex CLI に接続します。EClaw chat からリモート repo 作業を行うのに適しています。",
+        "dash_channel_card_codex_step2": ".env を設定: ECLAW_API_KEY, WEBHOOK_URL, CODEX_WORKSPACE",
+        "dash_channel_card_codex_guide_link": "Codex ガイド →",
+        "dash_channel_card_clauded_title": "Claude Code Channel",
+        "dash_channel_card_clauded_badge": "実験版",
+        "dash_channel_card_clauded_desc": "ローカル tmux セッションで Claude Code を EClaw bot として実行します — claude.ai Max サブスク枠を使用し、Anthropic API トークン課金はありません。",
+        "dash_channel_card_clauded_step2": ".mcp.json を設定: ECLAW_API_KEY, ECLAW_WEBHOOK_URL",
+        "dash_channel_card_clauded_guide_link": "Claude Code ガイド →",
+        "dash_channel_card_hermes_title": "Hermes Channel",
+        "dash_channel_card_hermes_badge": "ライブショーケース",
+        "dash_channel_card_hermes_desc": "Hermes Agent（NousResearch の自己進化型エージェント、Python）を webhook 経由で EClaw bot としてバインドします。MiniMax / OpenAI / Anthropic / ローカル Ollama に対応。",
+        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
+        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
+        "dash_channel_card_hermes_step3": "bind-entity + daemon 起動",
+        "dash_channel_card_hermes_guide_link": "Hermes ガイド →",
 
 
 
@@ -2603062,6 +2603102,26 @@ const TRANSLATIONS = {
 
 
         "dash_channel_promo": "EClaw Channel을 사용해 보세요! 더 네이티브하고 더 빠릅니다",
+        "dash_channel_card_openclaw_title": "OpenClaw Channel",
+        "dash_channel_card_openclaw_badge": "안정",
+        "dash_channel_card_openclaw_desc": "공식 OpenClaw 플러그인 경로 — 호스팅 OpenClaw 봇과 프로덕션 API 키 설정에 가장 적합합니다.",
+        "dash_channel_card_codex_title": "Codex Channel",
+        "dash_channel_card_codex_badge": "CLI 브리지",
+        "dash_channel_card_codex_desc": "codex app-server를 통해 EClaw 엔티티를 OpenAI Codex CLI에 연결합니다. EClaw chat에서 원격 repo 작업을 하기에 좋습니다.",
+        "dash_channel_card_codex_step2": ".env 채우기: ECLAW_API_KEY, WEBHOOK_URL, CODEX_WORKSPACE",
+        "dash_channel_card_codex_guide_link": "Codex 가이드 →",
+        "dash_channel_card_clauded_title": "Claude Code Channel",
+        "dash_channel_card_clauded_badge": "실험적",
+        "dash_channel_card_clauded_desc": "로컬 tmux 세션에서 Claude Code를 EClaw bot으로 실행합니다 — claude.ai Max 구독 할당량을 사용하며 Anthropic API 토큰 비용은 청구되지 않습니다.",
+        "dash_channel_card_clauded_step2": ".mcp.json 채우기: ECLAW_API_KEY, ECLAW_WEBHOOK_URL",
+        "dash_channel_card_clauded_guide_link": "Claude Code 가이드 →",
+        "dash_channel_card_hermes_title": "Hermes Channel",
+        "dash_channel_card_hermes_badge": "라이브 쇼케이스",
+        "dash_channel_card_hermes_desc": "Hermes Agent(NousResearch self-evolving agent, Python)를 webhook으로 EClaw bot에 바인딩합니다. MiniMax / OpenAI / Anthropic / 로컬 Ollama를 지원합니다.",
+        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
+        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
+        "dash_channel_card_hermes_step3": "bind-entity + daemon 시작",
+        "dash_channel_card_hermes_guide_link": "Hermes 가이드 →",
 
 
 
@@ -3133822,6 +3133882,26 @@ const TRANSLATIONS = {
 
 
         "dash_channel_promo": "ลอง EClaw Channel? เนทีฟกว่า เร็วกว่า",
+        "dash_channel_card_openclaw_title": "OpenClaw Channel",
+        "dash_channel_card_openclaw_badge": "เสถียร",
+        "dash_channel_card_openclaw_desc": "เส้นทางปลั๊กอิน OpenClaw อย่างเป็นทางการ — เหมาะที่สุดสำหรับบอต OpenClaw แบบ hosted และการตั้งค่า API key สำหรับ production.",
+        "dash_channel_card_codex_title": "Codex Channel",
+        "dash_channel_card_codex_badge": "สะพาน CLI",
+        "dash_channel_card_codex_desc": "เชื่อมต่อเอนทิตี EClaw กับ OpenAI Codex CLI ผ่าน codex app-server เหมาะสำหรับงาน repo ระยะไกลจาก EClaw chat.",
+        "dash_channel_card_codex_step2": "กรอก .env: ECLAW_API_KEY, WEBHOOK_URL, CODEX_WORKSPACE",
+        "dash_channel_card_codex_guide_link": "คู่มือ Codex →",
+        "dash_channel_card_clauded_title": "Claude Code Channel",
+        "dash_channel_card_clauded_badge": "ทดลอง",
+        "dash_channel_card_clauded_desc": "รัน Claude Code ใน tmux session ภายในเครื่องเป็นบอต EClaw ของคุณ — ใช้โควตา claude.ai Max subscription และไม่คิดค่า Anthropic API token.",
+        "dash_channel_card_clauded_step2": "กรอก .mcp.json: ECLAW_API_KEY, ECLAW_WEBHOOK_URL",
+        "dash_channel_card_clauded_guide_link": "คู่มือ Claude Code →",
+        "dash_channel_card_hermes_title": "Hermes Channel",
+        "dash_channel_card_hermes_badge": "Live Showcase",
+        "dash_channel_card_hermes_desc": "ผูก Hermes Agent (NousResearch self-evolving agent, Python) เป็นบอต EClaw ผ่าน webhook รองรับ MiniMax / OpenAI / Anthropic / Ollama ในเครื่อง.",
+        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
+        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
+        "dash_channel_card_hermes_step3": "bind-entity + เริ่ม daemon",
+        "dash_channel_card_hermes_guide_link": "คู่มือ Hermes →",
 
 
 
@@ -3662534,6 +3662614,26 @@ const TRANSLATIONS = {
 
 
         "dash_channel_promo": "Thử EClaw Channel? Tích hợp gốc hơn, nhanh hơn",
+        "dash_channel_card_openclaw_title": "OpenClaw Channel",
+        "dash_channel_card_openclaw_badge": "Ổn định",
+        "dash_channel_card_openclaw_desc": "Đường dẫn plugin OpenClaw chính thức — phù hợp nhất cho bot OpenClaw hosted và cấu hình API key production.",
+        "dash_channel_card_codex_title": "Codex Channel",
+        "dash_channel_card_codex_badge": "Cầu nối CLI",
+        "dash_channel_card_codex_desc": "Kết nối một thực thể EClaw với OpenAI Codex CLI qua codex app-server. Phù hợp làm việc repo từ xa trong EClaw chat.",
+        "dash_channel_card_codex_step2": "điền .env: ECLAW_API_KEY, WEBHOOK_URL, CODEX_WORKSPACE",
+        "dash_channel_card_codex_guide_link": "Hướng dẫn Codex →",
+        "dash_channel_card_clauded_title": "Claude Code Channel",
+        "dash_channel_card_clauded_badge": "Thử nghiệm",
+        "dash_channel_card_clauded_desc": "Chạy Claude Code trong phiên tmux cục bộ như bot EClaw của bạn — dùng hạn mức thuê bao claude.ai Max, không tính phí token Anthropic API.",
+        "dash_channel_card_clauded_step2": "điền .mcp.json: ECLAW_API_KEY, ECLAW_WEBHOOK_URL",
+        "dash_channel_card_clauded_guide_link": "Hướng dẫn Claude Code →",
+        "dash_channel_card_hermes_title": "Hermes Channel",
+        "dash_channel_card_hermes_badge": "Showcase trực tiếp",
+        "dash_channel_card_hermes_desc": "Gắn Hermes Agent (agent tự tiến hóa của NousResearch, Python) làm bot EClaw qua webhook. Hỗ trợ MiniMax / OpenAI / Anthropic / Ollama cục bộ.",
+        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
+        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
+        "dash_channel_card_hermes_step3": "bind-entity + khởi động daemon",
+        "dash_channel_card_hermes_guide_link": "Hướng dẫn Hermes →",
 
 
 
@@ -4187790,6 +4187890,26 @@ const TRANSLATIONS = {
 
 
         "dash_channel_promo": "Coba EClaw Channel? Lebih native, lebih cepat",
+        "dash_channel_card_openclaw_title": "OpenClaw Channel",
+        "dash_channel_card_openclaw_badge": "Stabil",
+        "dash_channel_card_openclaw_desc": "Jalur plugin OpenClaw resmi — paling cocok untuk bot OpenClaw hosted dan setup API key produksi.",
+        "dash_channel_card_codex_title": "Codex Channel",
+        "dash_channel_card_codex_badge": "Bridge CLI",
+        "dash_channel_card_codex_desc": "Hubungkan entitas EClaw ke OpenAI Codex CLI melalui codex app-server. Cocok untuk kerja repo jarak jauh dari EClaw chat.",
+        "dash_channel_card_codex_step2": "isi .env: ECLAW_API_KEY, WEBHOOK_URL, CODEX_WORKSPACE",
+        "dash_channel_card_codex_guide_link": "Panduan Codex →",
+        "dash_channel_card_clauded_title": "Claude Code Channel",
+        "dash_channel_card_clauded_badge": "Eksperimental",
+        "dash_channel_card_clauded_desc": "Jalankan Claude Code di sesi tmux lokal sebagai bot EClaw — memakai kuota langganan claude.ai Max, tanpa biaya token API Anthropic.",
+        "dash_channel_card_clauded_step2": "isi .mcp.json: ECLAW_API_KEY, ECLAW_WEBHOOK_URL",
+        "dash_channel_card_clauded_guide_link": "Panduan Claude Code →",
+        "dash_channel_card_hermes_title": "Hermes Channel",
+        "dash_channel_card_hermes_badge": "Showcase live",
+        "dash_channel_card_hermes_desc": "Bind Hermes Agent (agent self-evolving NousResearch, Python) sebagai bot EClaw via webhook. Mendukung MiniMax / OpenAI / Anthropic / Ollama lokal.",
+        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
+        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
+        "dash_channel_card_hermes_step3": "bind-entity + mulai daemon",
+        "dash_channel_card_hermes_guide_link": "Panduan Hermes →",
 
 
 
@@ -4712790,6 +4712910,26 @@ const TRANSLATIONS = {
 
 
         "dash_channel_promo": "Essayer EClaw Channel ? Plus natif, plus rapide",
+        "dash_channel_card_openclaw_title": "OpenClaw Channel",
+        "dash_channel_card_openclaw_badge": "Stable",
+        "dash_channel_card_openclaw_desc": "Chemin officiel du plugin OpenClaw — idéal pour les bots OpenClaw hébergés et les configurations de production avec clé API.",
+        "dash_channel_card_codex_title": "Codex Channel",
+        "dash_channel_card_codex_badge": "Pont CLI",
+        "dash_channel_card_codex_desc": "Connecte une entité EClaw à OpenAI Codex CLI via codex app-server. Pratique pour travailler sur des repos distants depuis EClaw chat.",
+        "dash_channel_card_codex_step2": "remplir .env : ECLAW_API_KEY, WEBHOOK_URL, CODEX_WORKSPACE",
+        "dash_channel_card_codex_guide_link": "Guide Codex →",
+        "dash_channel_card_clauded_title": "Claude Code Channel",
+        "dash_channel_card_clauded_badge": "Expérimental",
+        "dash_channel_card_clauded_desc": "Exécute Claude Code dans une session tmux locale comme bot EClaw — utilise le quota de ton abonnement claude.ai Max, sans facturation de tokens API Anthropic.",
+        "dash_channel_card_clauded_step2": "remplir .mcp.json : ECLAW_API_KEY, ECLAW_WEBHOOK_URL",
+        "dash_channel_card_clauded_guide_link": "Guide Claude Code →",
+        "dash_channel_card_hermes_title": "Hermes Channel",
+        "dash_channel_card_hermes_badge": "Démo live",
+        "dash_channel_card_hermes_desc": "Associe un Hermes Agent (agent auto-évolutif NousResearch, Python) comme bot EClaw via webhook. Prend en charge MiniMax / OpenAI / Anthropic / Ollama local.",
+        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
+        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
+        "dash_channel_card_hermes_step3": "bind-entity + démarrer le daemon",
+        "dash_channel_card_hermes_guide_link": "Guide Hermes →",
 
 
 
@@ -5235114,6 +5235254,26 @@ const TRANSLATIONS = {
 
 
         "dash_channel_promo": "¿Probar EClaw Channel? Más nativo, más rápido...",
+        "dash_channel_card_openclaw_title": "OpenClaw Channel",
+        "dash_channel_card_openclaw_badge": "Estable",
+        "dash_channel_card_openclaw_desc": "Ruta oficial del plugin de OpenClaw — ideal para bots OpenClaw alojados y configuraciones de producción con API key.",
+        "dash_channel_card_codex_title": "Codex Channel",
+        "dash_channel_card_codex_badge": "Puente CLI",
+        "dash_channel_card_codex_desc": "Conecta una entidad de EClaw a OpenAI Codex CLI mediante codex app-server. Útil para trabajo remoto en repos desde EClaw chat.",
+        "dash_channel_card_codex_step2": "rellena .env: ECLAW_API_KEY, WEBHOOK_URL, CODEX_WORKSPACE",
+        "dash_channel_card_codex_guide_link": "Guía de Codex →",
+        "dash_channel_card_clauded_title": "Claude Code Channel",
+        "dash_channel_card_clauded_badge": "Experimental",
+        "dash_channel_card_clauded_desc": "Ejecuta Claude Code en una sesión tmux local como tu bot de EClaw — usa tu cuota de suscripción claude.ai Max, sin cargos de tokens de la API de Anthropic.",
+        "dash_channel_card_clauded_step2": "rellena .mcp.json: ECLAW_API_KEY, ECLAW_WEBHOOK_URL",
+        "dash_channel_card_clauded_guide_link": "Guía de Claude Code →",
+        "dash_channel_card_hermes_title": "Hermes Channel",
+        "dash_channel_card_hermes_badge": "Showcase en vivo",
+        "dash_channel_card_hermes_desc": "Vincula un Hermes Agent (agente autoevolutivo de NousResearch, Python) como tu bot de EClaw mediante webhook. Compatible con MiniMax / OpenAI / Anthropic / Ollama local.",
+        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
+        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
+        "dash_channel_card_hermes_step3": "bind-entity + iniciar daemon",
+        "dash_channel_card_hermes_guide_link": "Guía de Hermes →",
 
 
 
@@ -5752286,6 +5752446,26 @@ const TRANSLATIONS = {
 
 
         "dash_channel_promo": "EClaw Channel ausprobieren? Nativer, schneller",
+        "dash_channel_card_openclaw_title": "OpenClaw Channel",
+        "dash_channel_card_openclaw_badge": "Stabil",
+        "dash_channel_card_openclaw_desc": "Offizieller OpenClaw-Plugin-Pfad — ideal für gehostete OpenClaw-Bots und produktive API-Key-Setups.",
+        "dash_channel_card_codex_title": "Codex Channel",
+        "dash_channel_card_codex_badge": "CLI-Bridge",
+        "dash_channel_card_codex_desc": "Verbindet eine EClaw-Entität über codex app-server mit OpenAI Codex CLI. Gut für Remote-Repo-Arbeit aus dem EClaw chat.",
+        "dash_channel_card_codex_step2": ".env ausfüllen: ECLAW_API_KEY, WEBHOOK_URL, CODEX_WORKSPACE",
+        "dash_channel_card_codex_guide_link": "Codex-Anleitung →",
+        "dash_channel_card_clauded_title": "Claude Code Channel",
+        "dash_channel_card_clauded_badge": "Experimentell",
+        "dash_channel_card_clauded_desc": "Führe Claude Code in einer lokalen tmux-Sitzung als deinen EClaw-Bot aus — nutzt dein claude.ai Max-Abo-Kontingent, ohne Anthropic-API-Token-Kosten.",
+        "dash_channel_card_clauded_step2": ".mcp.json ausfüllen: ECLAW_API_KEY, ECLAW_WEBHOOK_URL",
+        "dash_channel_card_clauded_guide_link": "Claude-Code-Anleitung →",
+        "dash_channel_card_hermes_title": "Hermes Channel",
+        "dash_channel_card_hermes_badge": "Live-Showcase",
+        "dash_channel_card_hermes_desc": "Binde einen Hermes Agent (selbstentwickelnder NousResearch-Agent, Python) per Webhook als deinen EClaw-Bot ein. Unterstützt MiniMax / OpenAI / Anthropic / lokales Ollama.",
+        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
+        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
+        "dash_channel_card_hermes_step3": "bind-entity + Daemon starten",
+        "dash_channel_card_hermes_guide_link": "Hermes-Anleitung →",
 
 
 
@@ -6285346,6 +6285526,26 @@ const TRANSLATIONS = {
 
 
         "dash_channel_promo": "Cuba Saluran EClaw? Lebih asli, lebih laju",
+        "dash_channel_card_openclaw_title": "OpenClaw Channel",
+        "dash_channel_card_openclaw_badge": "Stabil",
+        "dash_channel_card_openclaw_desc": "Laluan plugin OpenClaw rasmi — terbaik untuk bot OpenClaw hosted dan tetapan API key produksi.",
+        "dash_channel_card_codex_title": "Codex Channel",
+        "dash_channel_card_codex_badge": "Jambatan CLI",
+        "dash_channel_card_codex_desc": "Sambungkan entiti EClaw kepada OpenAI Codex CLI melalui codex app-server. Sesuai untuk kerja repo jauh dari EClaw chat.",
+        "dash_channel_card_codex_step2": "isi .env: ECLAW_API_KEY, WEBHOOK_URL, CODEX_WORKSPACE",
+        "dash_channel_card_codex_guide_link": "Panduan Codex →",
+        "dash_channel_card_clauded_title": "Claude Code Channel",
+        "dash_channel_card_clauded_badge": "Eksperimen",
+        "dash_channel_card_clauded_desc": "Jalankan Claude Code dalam sesi tmux tempatan sebagai bot EClaw anda — menggunakan kuota langganan claude.ai Max, tanpa caj token API Anthropic.",
+        "dash_channel_card_clauded_step2": "isi .mcp.json: ECLAW_API_KEY, ECLAW_WEBHOOK_URL",
+        "dash_channel_card_clauded_guide_link": "Panduan Claude Code →",
+        "dash_channel_card_hermes_title": "Hermes Channel",
+        "dash_channel_card_hermes_badge": "Showcase langsung",
+        "dash_channel_card_hermes_desc": "Ikat Hermes Agent (agent self-evolving NousResearch, Python) sebagai bot EClaw melalui webhook. Menyokong MiniMax / OpenAI / Anthropic / Ollama tempatan.",
+        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
+        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
+        "dash_channel_card_hermes_step3": "bind-entity + mula daemon",
+        "dash_channel_card_hermes_guide_link": "Panduan Hermes →",
 
 
 
@@ -6892396,6 +6892596,26 @@ const TRANSLATIONS = {
 
 
         "dash_channel_promo": "ईसीएलॉ चैनल आज़माएं? ",
+        "dash_channel_card_openclaw_title": "OpenClaw Channel",
+        "dash_channel_card_openclaw_badge": "स्थिर",
+        "dash_channel_card_openclaw_desc": "आधिकारिक OpenClaw plugin path — hosted OpenClaw bots और production API-key setups के लिए सबसे अच्छा।",
+        "dash_channel_card_codex_title": "Codex Channel",
+        "dash_channel_card_codex_badge": "CLI bridge",
+        "dash_channel_card_codex_desc": "codex app-server के जरिए EClaw entity को OpenAI Codex CLI से जोड़ें। EClaw chat से remote repo work के लिए उपयोगी।",
+        "dash_channel_card_codex_step2": ".env भरें: ECLAW_API_KEY, WEBHOOK_URL, CODEX_WORKSPACE",
+        "dash_channel_card_codex_guide_link": "Codex guide →",
+        "dash_channel_card_clauded_title": "Claude Code Channel",
+        "dash_channel_card_clauded_badge": "प्रायोगिक",
+        "dash_channel_card_clauded_desc": "स्थानीय tmux session में Claude Code को अपने EClaw bot की तरह चलाएँ — आपके claude.ai Max subscription quota का उपयोग करता है, Anthropic API tokens का शुल्क नहीं लगता।",
+        "dash_channel_card_clauded_step2": ".mcp.json भरें: ECLAW_API_KEY, ECLAW_WEBHOOK_URL",
+        "dash_channel_card_clauded_guide_link": "Claude Code guide →",
+        "dash_channel_card_hermes_title": "Hermes Channel",
+        "dash_channel_card_hermes_badge": "Live Showcase",
+        "dash_channel_card_hermes_desc": "Hermes Agent (NousResearch self-evolving agent, Python) को webhook के जरिए अपने EClaw bot के रूप में bind करें। MiniMax / OpenAI / Anthropic / local Ollama समर्थित।",
+        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
+        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
+        "dash_channel_card_hermes_step3": "bind-entity + daemon शुरू करें",
+        "dash_channel_card_hermes_guide_link": "Hermes guide →",
 
 
 
@@ -7650226,6 +7650446,26 @@ const TRANSLATIONS = {
 
 
         "dash_channel_promo": "تجربة قناة EClaw؟ أكثر أصالة وأسرع",
+        "dash_channel_card_openclaw_title": "OpenClaw Channel",
+        "dash_channel_card_openclaw_badge": "مستقر",
+        "dash_channel_card_openclaw_desc": "مسار إضافة OpenClaw الرسمي — الأفضل لبوتات OpenClaw المستضافة وإعدادات مفاتيح API للإنتاج.",
+        "dash_channel_card_codex_title": "Codex Channel",
+        "dash_channel_card_codex_badge": "جسر CLI",
+        "dash_channel_card_codex_desc": "اربط كيان EClaw مع OpenAI Codex CLI عبر codex app-server. مناسب للعمل على المستودعات عن بُعد من EClaw chat.",
+        "dash_channel_card_codex_step2": "املأ .env: ECLAW_API_KEY, WEBHOOK_URL, CODEX_WORKSPACE",
+        "dash_channel_card_codex_guide_link": "دليل Codex →",
+        "dash_channel_card_clauded_title": "Claude Code Channel",
+        "dash_channel_card_clauded_badge": "تجريبي",
+        "dash_channel_card_clauded_desc": "شغّل Claude Code في جلسة tmux محلية كبوت EClaw — يستخدم حصة اشتراك claude.ai Max ولا يفرض رسوم رموز Anthropic API.",
+        "dash_channel_card_clauded_step2": "املأ .mcp.json: ECLAW_API_KEY, ECLAW_WEBHOOK_URL",
+        "dash_channel_card_clauded_guide_link": "دليل Claude Code →",
+        "dash_channel_card_hermes_title": "Hermes Channel",
+        "dash_channel_card_hermes_badge": "عرض حي",
+        "dash_channel_card_hermes_desc": "اربط Hermes Agent (وكيل NousResearch ذاتي التطور، Python) كبوت EClaw عبر webhook. يدعم MiniMax / OpenAI / Anthropic / Ollama المحلي.",
+        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
+        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
+        "dash_channel_card_hermes_step3": "bind-entity + تشغيل daemon",
+        "dash_channel_card_hermes_guide_link": "دليل Hermes →",
 
 
 
