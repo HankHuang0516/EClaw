@@ -188,6 +188,17 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Daily pool update 2026-05-13 additions ──
+    // Easy tier
+    { file: null, description: 'A blue warning triangle road sign with an exclamation mark in the center', keywords: ['triangle', 'warning', 'blue', 'exclamation'] },
+    { file: null, description: 'A green play button centered on a dark gray background', keywords: ['play', 'button', 'green', 'circle'] },
+    // Medium tier
+    { file: null, description: 'A terminal window showing five git log entries, the most recent commit reading "feat: add user authentication" by alice, timestamped 2 hours ago', keywords: ['git', 'commit', 'five', 'authentication', 'alice'] },
+    { file: null, description: 'A mobile app onboarding screen with three feature cards labeled Sync Anywhere, Offline Mode, and Team Sharing — each card has a colored icon and a Learn More button', keywords: ['onboarding', 'three', 'sync', 'offline', 'sharing'] },
+    { file: null, description: 'A 3×3 grid of app icons on a phone home screen: top row shows Camera, Maps, Calendar; middle row shows Messages, Settings, Music; bottom row shows Notes, Photos, and a blank slot', keywords: ['grid', 'three', 'camera', 'maps', 'calendar', 'blank'] },
+    // Hard tier
+    { file: null, description: 'A database entity-relationship diagram with four tables: users, orders, products, and order_items — foreign key arrows connect orders.user_id to users.id and order_items.order_id to orders.id', keywords: ['database', 'diagram', 'four', 'tables', 'foreign', 'key', 'users', 'orders'] },
+    { file: null, description: 'A city block heat map grid with 8 rows and 10 columns — cells shade from dark blue (low activity) to bright red (high activity); a cluster of six adjacent red cells in the top-right corner indicates a hotspot', keywords: ['heat', 'map', 'grid', 'eight', 'ten', 'red', 'blue', 'six', 'hotspot'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -204,12 +215,12 @@ function generateButtonClickChallenge() {
     return { correctIndex, correctLabel, buttonCount, seed: Math.floor(Math.random() * 1e9) };
 }
 
-const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Wei Zhang','Amara Osei','Ravi Kapoor','Isabella Rossi','Dmitri Volkov'];
-const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se','wei@demo.cn','amara@test.gh','ravi@sample.in','isabella@demo.it','dmitri@test.ru'];
-const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','China','Ghana','Italy','Russia','Netherlands'];
+const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Wei Zhang','Amara Osei','Ravi Kapoor','Isabella Rossi','Dmitri Volkov','Chiara Bianchi','Arjun Mehta','Natalie Johansson','Kwame Asante','Elena Popescu'];
+const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se','wei@demo.cn','amara@test.gh','ravi@sample.in','isabella@demo.it','dmitri@test.ru','chiara@demo.it','arjun@test.in','natalie@sample.se','kwame@test.gh','elena@demo.ro'];
+const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','China','Ghana','Italy','Russia','Netherlands','Turkey','Argentina','Thailand','Poland','Nigeria'];
 const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123','+46-70-123-4567','+65-9123-4567','+52-55-1234-5678','+353-87-123-4567'];
 const FORM_DATES = ['1990-06-15','1985-03-22','1992-11-08','1988-01-30','1995-07-14','1983-09-25','1991-12-01','1987-04-17','1993-08-09','1986-02-14','1994-10-31','1989-05-20'];
-const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund'];
+const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund','Report a bug','Partnership inquiry','Technical support request','Billing question','Product feature suggestion'];
 
 function generateFormFillChallenge() {
     const nameIdx = Math.floor(Math.random() * FORM_NAMES.length);
@@ -368,6 +379,16 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── Daily pool update 2026-05-13 additions ──
+    // Easy tier — reliable baseline for most agents
+    { title: 'Reverse String', description: 'Write `solve(s)` — return the string reversed.',
+      testCases: [{ input: '"hello"', expected: '"olleh"' },{ input: '"abcde"', expected: '"edcba"' },{ input: '""', expected: '""' },{ input: '"a"', expected: '"a"' }] },
+    // Medium tier — sliding window
+    { title: 'Longest Common Prefix', description: 'Write `solve(strs)` — find the longest common prefix string among all strings in the array. Return an empty string if there is no common prefix.',
+      testCases: [{ input: '["flower","flow","flight"]', expected: '"fl"' },{ input: '["dog","racecar","car"]', expected: '""' },{ input: '["prefix","preschool","prevent"]', expected: '"pre"' },{ input: '["single"]', expected: '"single"' }] },
+    // Hard tier — graph / topological sort
+    { title: 'Course Schedule', description: 'Write `solve(numCourses, prerequisites)` — return true if you can finish all courses. prerequisites[i] = [a, b] means you must take course b before course a. Return false if a cycle exists.',
+      testCases: [{ input: '2, [[1,0]]', expected: 'true' },{ input: '2, [[1,0],[0,1]]', expected: 'false' },{ input: '4, [[1,0],[2,0],[3,1],[3,2]]', expected: 'true' },{ input: '1, []', expected: 'true' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +438,16 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Daily pool update 2026-05-13 additions ──
+    // Easy tier
+    { question: 'What is 7 × 8?', expectedKeywords: ['56'] },
+    { question: 'How many degrees are in a right angle?', expectedKeywords: ['90'] },
+    // Medium tier
+    { question: 'A recipe needs 1.5 cups of sugar per cake. How many cups are needed for 6 cakes?', expectedKeywords: ['9'] },
+    { question: 'A circle has a radius of 7 cm. What is its circumference to the nearest whole number? (Use π ≈ 3.14159)', expectedKeywords: ['44'] },
+    // Hard tier
+    { question: 'In a group of 100 people, 60 speak English, 40 speak French, and 20 speak both. How many people speak neither language?', expectedKeywords: ['20'] },
+    { question: 'A car depreciates by 15% per year. If it is worth $20,000 today, what will it be worth after 2 years? Round to the nearest dollar.', expectedKeywords: ['14450'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +525,16 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Daily pool update 2026-05-13 additions ──
+    // Easy tier
+    { text: 'Turn left at the next intersection and continue straight for two blocks', keywords: ['left', 'intersection', 'two', 'blocks'] },
+    { text: 'Please close all open windows before shutting down the computer', keywords: ['close', 'windows', 'shutting', 'computer'] },
+    // Medium tier
+    { text: 'Your order number B-7429 will be ready for pickup at Counter 3 by 2:00 PM', keywords: ['order', '7429', 'counter', 'PM'] },
+    { text: 'Flight AA-1193 is now boarding at Gate D22 — passengers in Zone 3 please proceed to the gate', keywords: ['flight', '1193', 'gate', 'D22', 'zone', '3'] },
+    // Hard tier
+    { text: 'The recommended daily allowance of vitamin D is 600 international units for adults aged 19 to 70', keywords: ['vitamin', 'D', '600', 'international', 'units', '19', '70'] },
+    { text: 'The patient has a penicillin allergy — please substitute with azithromycin 500 milligrams once daily for five days', keywords: ['penicillin', 'allergy', 'azithromycin', '500', 'five', 'days'] },
 ];
 
 // ============================================
