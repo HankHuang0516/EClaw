@@ -7038,7 +7038,14 @@
             const assigned = (c.assignedBots || []).map(b => `#${b}`).join(', ') || 'None';
             const created = c.createdAt ? new Date(c.createdAt).toLocaleString() : '-';
             const updated = c.updatedAt ? new Date(c.updatedAt).toLocaleString() : '-';
-            const commentsList = (commentsResp && Array.isArray(commentsResp.comments)) ? commentsResp.comments : [];
+            // Prefer the comments endpoint when it succeeds, but fall back to the
+            // inline card detail payload. The smart-chip modal already shows
+            // c.commentCount from /api/mission/card/:id; if the parallel
+            // /comments request is transiently blocked/failed, rendering [] makes
+            // populated cards incorrectly say "No comments yet".
+            const commentsList = (commentsResp && Array.isArray(commentsResp.comments))
+                ? commentsResp.comments
+                : (Array.isArray(c.comments) ? c.comments : []);
             const commentsLabel = i18n.t('chat_card_modal_comments') || 'Comments';
             const commentsEmpty = i18n.t('chat_card_modal_comments_empty') || 'No comments yet';
 
