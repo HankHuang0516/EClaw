@@ -12,7 +12,7 @@
  *   parent          — kanban_cards.parent_card_id
  *   blocks          — kanban_card_dependencies.dependency_type='blocks'
  *   owner           — assigned_bots / mission_notes.created_by
- *   note_on_card    — mindmap_node_anchors cross-correlation (note + kanban_card)
+ *   note_on_card    — mission_note_card_links + mindmap_node_anchors cross-correlation (note + kanban_card)
  *   chat_anchor     — kanban_cards.chat_anchor_message_id + anchor cross-correlation
  *                     (amendment A from PR #2679 review)
  *   related/references/duplicates/causes/supports/contradicts
@@ -241,6 +241,7 @@ function projectGraph({
     initialCardIds,
     depRows,
     cardLinkRows = [],
+    noteCardLinkRows = [],
     commentCounts,
     noteCounts,
     notes,
@@ -432,8 +433,25 @@ function projectGraph({
         }
     }
 
-    // 5. note_on_card edges via mindmap_node_anchors cross-correlation
+    // 4. note_on_card edges via first-class mission_note_card_links
     const seenNoteCard = new Set();
+    for (const l of noteCardLinkRows) {
+        if (!noteIds.has(l.note_id) || !cardIds.has(l.card_id)) continue;
+        const key = `${l.note_id}->${l.card_id}`;
+        if (seenNoteCard.has(key)) continue;
+        seenNoteCard.add(key);
+        links.push(buildLink({
+            id: `note_card_link:${l.note_id}:${l.card_id}`,
+            source: `note:${l.note_id}`,
+            target: `task:${l.card_id}`,
+            type: 'note_on_card',
+            weight: 2.2,
+            evidence: 'mission_note_card_links',
+        }));
+        edgeCounts.note_on_card++;
+    }
+
+    // 5. note_on_card edges via mindmap_node_anchors cross-correlation
     for (const [, anchors] of anchorsByNode) {
         const cardAnchors = anchors.filter(a => a.anchor_type === 'kanban_card');
         const noteAnchors = anchors.filter(a => a.anchor_type === 'note');

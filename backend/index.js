@@ -324,6 +324,18 @@ app.get('/promo-meta.html', (req, res) => {
     res.set('Cache-Control', 'public, max-age=3600');
     res.sendFile(path.join(__dirname, 'public/promo-meta.html'));
 });
+// Chat avatar size feature promo (1.0.83) — self-hosted MP4 + per-feature landing
+app.get(['/promo-chat-avatar', '/promo-chat-avatar.html'], (req, res) => {
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.join(__dirname, 'public/promo-chat-avatar.html'));
+});
+app.use('/promo-videos', express.static(path.join(__dirname, 'public/promo-videos'), {
+    maxAge: '7d',
+    immutable: true,
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('.mp4')) res.set('Content-Type', 'video/mp4');
+    }
+}));
 // Info Hub page — redirect to /portal/info.html so relative asset paths resolve correctly
 app.get('/info', (req, res) => {
     res.redirect(301, '/portal/info.html');

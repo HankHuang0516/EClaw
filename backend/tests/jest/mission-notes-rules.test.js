@@ -31,8 +31,8 @@ jest.mock('pg', () => {
     globalThis.__missionState = state;
 
     function runQuery(sql, params = []) {
-        state.lastQuery = { sql, params };
         const norm = sql.replace(/\s+/g, ' ').trim();
+        if (!/mission_note_card_links/i.test(norm)) state.lastQuery = { sql, params };
 
         // This is the regression guard: if the handler ever queries the
         // legacy tables again, bail loudly.
@@ -50,6 +50,9 @@ jest.mock('pg', () => {
         if (/SELECT rules FROM mission_dashboard/i.test(norm)) {
             const row = state.dashboard[params[0]];
             return { rows: row ? [{ rules: row.rules }] : [], rowCount: row ? 1 : 0 };
+        }
+        if (/FROM mission_note_card_links/i.test(norm)) {
+            return { rows: [], rowCount: 0 };
         }
         return { rows: [], rowCount: 0 };
     }

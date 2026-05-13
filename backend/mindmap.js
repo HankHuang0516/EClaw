@@ -971,27 +971,50 @@ function createMindmapModule(devices) {
                     ),
                 ]);
 
-            // 4) Mission notes
+            // 4) Mission notes — canonical source is mission_dashboard.notes JSONB.
             let notes = [];
             if (options.includeNotes) {
-                const noteWhere = ['device_id = $1'];
+                const noteWhere = ['md.device_id = $1'];
                 const noteArgs = [deviceId];
                 let np = 2;
                 if (options.scope === 'entity') {
-                    noteWhere.push(`created_by = $${np}`);
-                    noteArgs.push(String(options.callerEntityId));
+                    noteWhere.push(`note->>'createdBy' = $${np}`);
+                    noteArgs.push(`entity_${options.callerEntityId}`);
                     np++;
                 }
                 const noteSql = `
-                    SELECT id, title, content, category, created_by, updated_at
-                    FROM mission_notes
+                    SELECT
+                        note->>'id' AS id,
+                        COALESCE(note->>'title', '') AS title,
+                        COALESCE(note->>'content', '') AS content,
+                        COALESCE(note->>'category', 'general') AS category,
+                        CASE
+                            WHEN note->>'createdBy' LIKE 'entity_%' THEN substring(note->>'createdBy' FROM 8)
+                            ELSE note->>'createdBy'
+                        END AS created_by,
+                        CASE
+                            WHEN (note->>'updatedAt') ~ '^[0-9]+$' THEN to_timestamp((note->>'updatedAt')::double precision / 1000)
+                            ELSE NULL
+                        END AS updated_at
+                    FROM mission_dashboard md
+                    CROSS JOIN LATERAL jsonb_array_elements(COALESCE(md.notes, '[]'::jsonb)) AS n(note)
                     WHERE ${noteWhere.join(' AND ')}
-                    ORDER BY updated_at DESC NULLS LAST
+                      AND COALESCE(note->>'id', '') <> ''
+                    ORDER BY CASE WHEN (note->>'updatedAt') ~ '^[0-9]+$' THEN (note->>'updatedAt')::bigint ELSE 0 END DESC
                     LIMIT ${hardCardCap}
                 `;
                 const notesResult = await pool.query(noteSql, noteArgs);
                 notes = notesResult.rows;
             }
+
+            const noteIds = [...new Set(notes.map(n => n.id).filter(Boolean))];
+            const noteCardLinksResult = (noteIds.length === 0 && allCardIds.length === 0) ? { rows: [] } : await pool.query(
+                `SELECT note_id, card_id
+                 FROM mission_note_card_links
+                 WHERE device_id = $1
+                   AND (note_id = ANY($2::varchar[]) OR card_id = ANY($3::varchar[]))`,
+                [deviceId, noteIds, allCardIds]
+            );
 
             // 5) Mindmap anchors (cross-correlation: note↔card, note↔chat, card↔chat)
             const anchorsResult = await pool.query(
@@ -1009,6 +1032,7 @@ function createMindmapModule(devices) {
                 initialCardIds,
                 depRows: depsResult.rows,
                 cardLinkRows: cardLinksResult.rows,
+                noteCardLinkRows: noteCardLinksResult.rows,
                 commentCounts: commentCounts.rows,
                 noteCounts: noteCounts.rows,
                 notes,
