@@ -220,6 +220,73 @@ describe('mindmap-graph-projection — pure helpers', () => {
         expect(result.stats.edgeCounts.owner).toBeGreaterThanOrEqual(2);
     });
 
+    test('projectGraph emits explicit card link edges', () => {
+        const cards = [
+            { id: 'card_a', title: 'A', description: '', priority: 'P1', status: 'todo', parent_card_id: null, is_automation: false, assigned_bots: [], created_by: 0, reviewer_entity_id: null, chat_anchor_message_id: null, archived: false, updated_at: null },
+            { id: 'card_b', title: 'B', description: '', priority: 'P1', status: 'todo', parent_card_id: null, is_automation: false, assigned_bots: [], created_by: 0, reviewer_entity_id: null, chat_anchor_message_id: null, archived: false, updated_at: null },
+            { id: 'card_c', title: 'C', description: '', priority: 'P1', status: 'todo', parent_card_id: null, is_automation: false, assigned_bots: [], created_by: 0, reviewer_entity_id: null, chat_anchor_message_id: null, archived: false, updated_at: null },
+        ];
+        const result = projection.projectGraph({
+            cards,
+            initialCardIds: new Set(cards.map(c => c.id)),
+            depRows: [],
+            cardLinkRows: [
+                { source_card_id: 'card_a', target_card_id: 'card_b', relation_type: 'references' },
+                { source_card_id: 'card_b', target_card_id: 'card_c', relation_type: 'duplicates' },
+            ],
+            commentCounts: [],
+            noteCounts: [],
+            notes: [],
+            anchorRows: [],
+            entityMap: {},
+            options: projection.parseGraphOptions({ includeOwners: 'none' }, { isDeviceAuth: true, callerEntityId: null }),
+        });
+
+        const references = result.links.find(l => l.type === 'references');
+        expect(references).toMatchObject({
+            source: 'task:card_a',
+            target: 'task:card_b',
+            evidence: 'kanban_card_links',
+            directional: true,
+        });
+        const duplicate = result.links.find(l => l.type === 'duplicates');
+        expect(duplicate).toMatchObject({
+            source: 'task:card_b',
+            target: 'task:card_c',
+            evidence: 'kanban_card_links',
+            directional: false,
+        });
+        expect(result.stats.edgeCounts.references).toBe(1);
+        expect(result.stats.edgeCounts.duplicates).toBe(1);
+    });
+
+    test('projectGraph emits note_on_card edges from explicit mission_note_card_links', () => {
+        const result = projection.projectGraph({
+            cards: [
+                { id: 'card_a', title: 'A', description: '', priority: 'P1', status: 'todo', parent_card_id: null, is_automation: false, assigned_bots: [], created_by: 0, reviewer_entity_id: null, chat_anchor_message_id: null, archived: false, updated_at: null },
+            ],
+            initialCardIds: new Set(['card_a']),
+            depRows: [],
+            noteCardLinkRows: [{ note_id: 'note_a', card_id: 'card_a' }],
+            commentCounts: [],
+            noteCounts: [],
+            notes: [{ id: 'note_a', title: 'linked note', content: '', category: 'general', created_by: '2', updated_at: null }],
+            anchorRows: [],
+            entityMap: {},
+            options: projection.parseGraphOptions(
+                { includeNotes: 'true', includeOwners: 'none' },
+                { isDeviceAuth: true, callerEntityId: null }
+            ),
+        });
+        const edge = result.links.find(l => l.type === 'note_on_card');
+        expect(edge).toMatchObject({
+            source: 'note:note_a',
+            target: 'task:card_a',
+            evidence: 'mission_note_card_links',
+        });
+        expect(result.stats.edgeCounts.note_on_card).toBe(1);
+    });
+
     test('projectGraph emits chat_anchor edges (amendment A)', () => {
         const cards = [
             { id: 'card_a', title: 'pinned to chat', description: '', priority: 'P1', status: 'todo', parent_card_id: null, is_automation: false, assigned_bots: [2], created_by: 1, reviewer_entity_id: null, chat_anchor_message_id: 'msg-pinned', archived: false, updated_at: null },
@@ -374,13 +441,17 @@ describe('GET /api/mindmap/graph — HTTP', () => {
             .mockResolvedValueOnce({
                 rows: [{ card_id: 'card_c', depends_on_card_id: 'card_p', dependency_type: 'blocks' }],
             })
-            // 3a) comment counts
+            // 3) explicit card links
+            .mockResolvedValueOnce({ rows: [] })
+            // 4a) comment counts
             .mockResolvedValueOnce({ rows: [{ card_id: 'card_p', cnt: 2 }] })
-            // 3b) note counts
+            // 4b) note counts
             .mockResolvedValueOnce({ rows: [] })
-            // 4) mission_notes
+            // 5) mission_notes
             .mockResolvedValueOnce({ rows: [] })
-            // 5) mindmap_node_anchors
+            // 5b) explicit note/card links
+            .mockResolvedValueOnce({ rows: [] })
+            // 6) mindmap_node_anchors
             .mockResolvedValueOnce({ rows: [] });
 
         const res = await request(app).get('/api/mindmap/graph' + AUTH);
@@ -434,9 +505,11 @@ describe('GET /api/mindmap/graph — HTTP', () => {
                 }],
             })
             .mockResolvedValueOnce({ rows: [] }) // deps
+            .mockResolvedValueOnce({ rows: [] }) // explicit card links
             .mockResolvedValueOnce({ rows: [] }) // comment counts
             .mockResolvedValueOnce({ rows: [] }) // note counts
             .mockResolvedValueOnce({ rows: [] }) // mission notes
+            .mockResolvedValueOnce({ rows: [] }) // explicit note/card links
             .mockResolvedValueOnce({ rows: [] }); // anchors
 
         const res = await request(app).get('/api/mindmap/graph' + AUTH);
@@ -448,6 +521,65 @@ describe('GET /api/mindmap/graph — HTTP', () => {
         expect(chatEdge.source).toBe('task:card_a');
         expect(chatEdge.target).toBe('chat:msg-xyz');
         expect(chatEdge.evidence).toBe('kanban_cards.chat_anchor_message_id');
+    });
+
+    test('explicit card links are projected into force-graph edges', async () => {
+        mockQuery.mockReset();
+        mockQuery
+            .mockResolvedValueOnce({
+                rows: [
+                    { id: 'card_a', title: 'A', description: '', priority: 'P1', status: 'todo', parent_card_id: null, is_automation: false, assigned_bots: [], created_by: 0, reviewer_entity_id: null, chat_anchor_message_id: null, archived: false, updated_at: null },
+                    { id: 'card_b', title: 'B', description: '', priority: 'P1', status: 'todo', parent_card_id: null, is_automation: false, assigned_bots: [], created_by: 0, reviewer_entity_id: null, chat_anchor_message_id: null, archived: false, updated_at: null },
+                ],
+            })
+            .mockResolvedValueOnce({ rows: [] }) // deps
+            .mockResolvedValueOnce({ rows: [{ source_card_id: 'card_a', target_card_id: 'card_b', relation_type: 'references' }] }) // explicit card links
+            .mockResolvedValueOnce({ rows: [] }) // comment counts
+            .mockResolvedValueOnce({ rows: [] }) // note counts
+            .mockResolvedValueOnce({ rows: [] }) // mission notes
+            .mockResolvedValueOnce({ rows: [] }) // explicit note/card links
+            .mockResolvedValueOnce({ rows: [] }); // anchors
+
+        const res = await request(app).get('/api/mindmap/graph' + AUTH);
+        expect(res.status).toBe(200);
+        const edge = res.body.graph.links.find(l => l.type === 'references');
+        expect(edge).toMatchObject({
+            source: 'task:card_a',
+            target: 'task:card_b',
+            evidence: 'kanban_card_links',
+            directional: true,
+        });
+        expect(res.body.stats.edgeCounts.references).toBe(1);
+    });
+
+    test('explicit note/card links are projected into graph output', async () => {
+        mockQuery.mockReset();
+        mockQuery
+            .mockResolvedValueOnce({
+                rows: [{
+                    id: 'card_a', title: 'A', description: '', priority: 'P1', status: 'todo',
+                    parent_card_id: null, is_automation: false,
+                    assigned_bots: [], created_by: 0, reviewer_entity_id: null,
+                    chat_anchor_message_id: null, archived: false, updated_at: null,
+                }],
+            })
+            .mockResolvedValueOnce({ rows: [] }) // deps
+            .mockResolvedValueOnce({ rows: [] }) // explicit card links
+            .mockResolvedValueOnce({ rows: [] }) // comment counts
+            .mockResolvedValueOnce({ rows: [] }) // note counts
+            .mockResolvedValueOnce({ rows: [{ id: 'note_a', title: 'N', content: '', category: 'general', created_by: '2', updated_at: null }] }) // mission notes
+            .mockResolvedValueOnce({ rows: [{ note_id: 'note_a', card_id: 'card_a' }] }) // explicit note/card links
+            .mockResolvedValueOnce({ rows: [] }); // anchors
+
+        const res = await request(app).get('/api/mindmap/graph' + AUTH);
+        expect(res.status).toBe(200);
+        const edge = res.body.graph.links.find(l => l.type === 'note_on_card');
+        expect(edge).toMatchObject({
+            source: 'note:note_a',
+            target: 'task:card_a',
+            evidence: 'mission_note_card_links',
+        });
+        expect(res.body.stats.edgeCounts.note_on_card).toBe(1);
     });
 
     test('503 when pool unset (initMindmapTables not run)', async () => {

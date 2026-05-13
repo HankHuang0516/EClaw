@@ -1295,6 +1295,36 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 updatedAt: new Date(r.updated_at).getTime()
             }));
 
+            // Fetch first-class Mission notes linked to this Kanban card.
+            // Notes live in mission_dashboard.notes JSONB; the join table is
+            // explicit/device-scoped and supplies reliable force-graph edges.
+            try {
+                const linkedNotesResult = await pool.query(
+                    `SELECT l.note_id, l.created_at AS linked_at, note AS note_json
+                     FROM mission_note_card_links l
+                     JOIN mission_dashboard md ON md.device_id = l.device_id
+                     CROSS JOIN LATERAL jsonb_array_elements(COALESCE(md.notes, '[]'::jsonb)) AS n(note)
+                     WHERE l.device_id = $1
+                       AND l.card_id = $2
+                       AND note->>'id' = l.note_id
+                     ORDER BY l.created_at DESC`,
+                    [deviceId, cardId]
+                );
+                card.linkedMissionNotes = linkedNotesResult.rows.map(r => ({
+                    id: r.note_id,
+                    title: r.note_json.title || '(untitled note)',
+                    category: r.note_json.category || 'general',
+                    excerpt: String(r.note_json.content || '').slice(0, 160),
+                    linkedAt: new Date(r.linked_at).getTime(),
+                }));
+                card.linkedMissionNoteCount = card.linkedMissionNotes.length;
+            } catch (linkedErr) {
+                // Backward-compatible: a missing migration should not break card detail.
+                console.warn('[Kanban] Linked mission notes query skipped:', linkedErr.message);
+                card.linkedMissionNotes = [];
+                card.linkedMissionNoteCount = 0;
+            }
+
             // Fetch files — regenerate fresh R2 signed URLs for rows that were
             // stored as fileId refs (stored url in DB is just a legacy cache).
             const filesResult = await pool.query(

@@ -38,6 +38,22 @@ const MINIMAL_SCHEMA = `
     CREATE INDEX idx_kanban_dependencies_card ON kanban_card_dependencies(device_id, card_id);
     CREATE INDEX idx_kanban_dependencies_depends_on ON kanban_card_dependencies(device_id, depends_on_card_id);
     CREATE INDEX idx_kanban_dependencies_type ON kanban_card_dependencies(device_id, dependency_type);
+
+    CREATE TABLE kanban_card_links (
+        id BIGSERIAL PRIMARY KEY,
+        device_id VARCHAR(64) NOT NULL,
+        source_card_id VARCHAR(48) NOT NULL REFERENCES kanban_cards(id) ON DELETE CASCADE,
+        target_card_id VARCHAR(48) NOT NULL REFERENCES kanban_cards(id) ON DELETE CASCADE,
+        relation_type VARCHAR(24) NOT NULL DEFAULT 'related',
+        created_by INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(device_id, source_card_id, target_card_id, relation_type),
+        CHECK (source_card_id <> target_card_id)
+    );
+
+    CREATE INDEX idx_kanban_card_links_source ON kanban_card_links(device_id, source_card_id);
+    CREATE INDEX idx_kanban_card_links_target ON kanban_card_links(device_id, target_card_id);
+    CREATE INDEX idx_kanban_card_links_relation ON kanban_card_links(device_id, relation_type);
 `;
 
 async function bootstrap() {
@@ -89,9 +105,19 @@ async function insertEdge(pool, deviceId, from, to) {
     );
 }
 
+async function insertLink(pool, deviceId, source, target, relationType = 'related') {
+    await pool.query(
+        `INSERT INTO kanban_card_links (device_id, source_card_id, target_card_id, relation_type)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (device_id, source_card_id, target_card_id, relation_type) DO NOTHING`,
+        [deviceId, source, target, relationType]
+    );
+}
+
 async function reset(pool) {
+    await pool.query('DELETE FROM kanban_card_links');
     await pool.query('DELETE FROM kanban_card_dependencies');
     await pool.query('DELETE FROM kanban_cards');
 }
 
-module.exports = { MINIMAL_SCHEMA, bootstrap, insertCard, insertEdge, reset };
+module.exports = { MINIMAL_SCHEMA, bootstrap, insertCard, insertEdge, insertLink, reset };
