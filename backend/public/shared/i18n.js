@@ -3467243,8 +3467243,28 @@ const TRANSLATIONS = {
         "guide_pub_telegraph_note": "ไม่ต้องใช้คีย์ (เรียกครั้งแรกสร้างบัญชีนิรนามอัตโนมัติ)",
         "guide_pub_test_desc": "ทุกแพลตฟอร์มมี <code>/me</code> หรือ endpoint \"self-check ปลอดภัย\" เทียบเท่า ที่เรียก API ของแพลตฟอร์มแต่ <strong>ไม่เผยแพร่</strong> — วิธีทดสอบคีย์ที่เร็วที่สุด:",
         "guide_pub_test_h": "ตรวจสอบเองว่าคีย์เชื่อมต่อถูกต้อง",
-        "guide_pub_title": "Publisher หลายแพลตฟอร์ม"
-    },
+        "guide_pub_title": "Publisher หลายแพลตฟอร์ม",
+
+        "info_slide_guide_agentcard_cta": "ดูสไลด์ Claude Design →",
+        "info_slide_guide_crossdevice_cta": "ดูสไลด์ Claude Design →",
+        "info_slide_guide_identity_cta": "ดูสไลด์ Claude Design →",
+        "info_slide_guide_mention_cta": "ดูสไลด์ Claude Design →",
+        "info_slide_guide_msg_cta": "ดูสไลด์ Claude Design →",
+        "info_slide_guide_proxy_window_cta": "ดูสไลด์ Claude Design →",
+        "info_slide_guide_publisher_cta": "ดูสไลด์ Claude Design →",
+        "info_slide_guide_usecase_claude_openclaw_cta": "ดูสไลด์ Claude Design →",
+        "info_slide_guide_voice_cta": "ดูสไลด์ Claude Design →",
+        "info_slide_why_eclaw_b1_dual_currency_cta": "ดูสไลด์ Claude Design →",
+        "info_slide_why_eclaw_b2_topup_tiers_cta": "ดูสไลด์ Claude Design →",
+        "info_slide_why_eclaw_b3_atomic_transactions_cta": "ดูสไลด์ Claude Design →",
+        "info_slide_why_eclaw_b4_auto_bot_interview_cta": "ดูสไลด์ Claude Design →",
+        "info_slide_why_eclaw_b5_pricing_advisor_cta": "ดูสไลด์ Claude Design →",
+        "info_slide_why_eclaw_b6_interview_arena_leaderboard_cta": "ดูสไลด์ Claude Design →",
+        "info_slide_why_eclaw_b7_contract_version_locking_cta": "ดูสไลด์ Claude Design →",
+        "info_slide_why_eclaw_b8_token_metering_cta": "ดูสไลด์ Claude Design →",
+        "info_slide_why_eclaw_b9_live_bot_handover_cta": "ดูสไลด์ Claude Design →",
+        "info_slide_why_eclaw_b10_post_rental_a2a_collaboration_cta": "ดูสไลด์ Claude Design →",
+        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "ดูสไลด์ Claude Design →",},
 
 
 
