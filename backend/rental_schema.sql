@@ -86,7 +86,8 @@ CREATE INDEX IF NOT EXISTS idx_interviews_listing ON bot_interviews(listing_id, 
 -- status lifecycle:
 --   reserved → active → suspended_insufficient_funds → active OR
 --   reserved → active → ended_normal / ended_early_by_renter /
---              ended_zero_balance / ended_disputed / ended_violation / ended_admin
+--              ended_zero_balance / ended_disputed / ended_violation / ended_admin /
+--              terminated_by_rebind
 CREATE TABLE IF NOT EXISTS rental_contracts (
     id VARCHAR(48) PRIMARY KEY DEFAULT ('contract_' || encode(gen_random_bytes(12), 'hex')),
     listing_id VARCHAR(48) NOT NULL,
@@ -99,6 +100,9 @@ CREATE TABLE IF NOT EXISTS rental_contracts (
     deposit_mli BIGINT NOT NULL CHECK (deposit_mli >= 0),
     -- Time window
     planned_duration_min INTEGER NOT NULL,
+    -- Stable denominator for per-second rebind refunds. Backfilled from
+    -- planned_duration_min on existing deployments; new startRental writes it.
+    total_duration_sec INTEGER CHECK (total_duration_sec IS NULL OR total_duration_sec >= 0),
     started_at TIMESTAMP WITH TIME ZONE,
     ends_at TIMESTAMP WITH TIME ZONE,
     actual_ended_at TIMESTAMP WITH TIME ZONE,
@@ -169,6 +173,41 @@ CREATE TABLE IF NOT EXISTS rental_usage_events (
 CREATE INDEX IF NOT EXISTS idx_usage_contract ON rental_usage_events(contract_id, created_at DESC);
 
 -- ============================================
+-- rental_rebind_audit_log — rental-side audit trail for strict rebind refunds
+-- ============================================
+-- Wallet movements are audited in wallet_ledger via idempotency keys. This
+-- table records the rental-domain decision: which active contract was
+-- terminated, how remaining seconds were computed, and which ledger keys were
+-- used for the deposit release / owner-paid refund.
+CREATE TABLE IF NOT EXISTS rental_rebind_audit_log (
+    id BIGSERIAL PRIMARY KEY,
+    contract_id VARCHAR(48) NOT NULL UNIQUE,
+    listing_id VARCHAR(48) NOT NULL,
+    owner_device_id TEXT NOT NULL,
+    owner_entity_id INTEGER NOT NULL,
+    owner_user_id UUID NOT NULL,
+    renter_user_id UUID NOT NULL,
+    status_from VARCHAR(40) NOT NULL,
+    status_to VARCHAR(40) NOT NULL DEFAULT 'terminated_by_rebind',
+    deposit_mli BIGINT NOT NULL DEFAULT 0 CHECK (deposit_mli >= 0),
+    deposit_release_mli BIGINT NOT NULL DEFAULT 0 CHECK (deposit_release_mli >= 0),
+    refund_mli BIGINT NOT NULL DEFAULT 0 CHECK (refund_mli >= 0),
+    remaining_sec INTEGER NOT NULL DEFAULT 0 CHECK (remaining_sec >= 0),
+    total_duration_sec INTEGER NOT NULL DEFAULT 0 CHECK (total_duration_sec >= 0),
+    wallet_release_idempotency_key TEXT,
+    wallet_debit_idempotency_key TEXT,
+    wallet_credit_idempotency_key TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    CONSTRAINT fk_rebind_audit_contract FOREIGN KEY (contract_id)
+        REFERENCES rental_contracts(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_rebind_audit_owner_time
+    ON rental_rebind_audit_log(owner_user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_rebind_audit_slot_time
+    ON rental_rebind_audit_log(owner_device_id, owner_entity_id, created_at DESC);
+
+-- ============================================
 -- pricing_market_snapshots — hourly aggregated market stats
 -- ============================================
 -- Populated by a cron that re-aggregates `bot_listings` where
@@ -233,3 +272,14 @@ ALTER TABLE disputes ADD CONSTRAINT fk_dispute_contract FOREIGN KEY (contract_id
 -- (P0 entity-rebind cascade — Phase 1)
 -- ============================================
 ALTER TABLE bot_listings ADD COLUMN IF NOT EXISTS bound_rebind_count INTEGER NOT NULL DEFAULT 0;
+
+
+-- ============================================
+-- Idempotent migration: add total_duration_sec to existing contracts
+-- (P0 entity-rebind cascade — Phase 4 strict per-second refunds)
+-- ============================================
+ALTER TABLE rental_contracts ADD COLUMN IF NOT EXISTS total_duration_sec INTEGER;
+UPDATE rental_contracts
+   SET total_duration_sec = GREATEST(0, planned_duration_min * 60)
+ WHERE total_duration_sec IS NULL
+   AND planned_duration_min IS NOT NULL;
