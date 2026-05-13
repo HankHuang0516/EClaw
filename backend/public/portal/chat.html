@@ -4302,10 +4302,120 @@
             clearTimeout(typingTimeout);
         }
 
+        // ── Chat scroll anchor lock ───────────────────────────────
+        // Regression #3 guard: while the user is reading history, new
+        // messages/system notifications/link previews must preserve the same
+        // visible message anchor instead of relying on fragile scrollTop alone.
+        const CHAT_BOTTOM_TOLERANCE_PX = 50;
+        function isChatAtBottom(container, tolerance = CHAT_BOTTOM_TOLERANCE_PX) {
+            if (!container) return true;
+            return container.scrollTop + container.clientHeight >= container.scrollHeight - tolerance;
+        }
+        function captureChatScrollAnchor(container) {
+            if (!container) return null;
+            const wasAtBottom = isChatAtBottom(container);
+            const lock = {
+                wasAtBottom,
+                scrollTop: container.scrollTop,
+                scrollHeight: container.scrollHeight,
+                clientHeight: container.clientHeight,
+                id: null,
+                top: 0,
+            };
+            if (wasAtBottom) return lock;
+            const cRect = container.getBoundingClientRect();
+            const nodes = Array.from(container.querySelectorAll('.chat-msg[data-message-id]'));
+            for (const el of nodes) {
+                const id = el.dataset.messageId;
+                if (!id) continue;
+                const rect = el.getBoundingClientRect();
+                if (rect.bottom > cRect.top + 1 && rect.top < cRect.bottom - 1) {
+                    lock.id = id;
+                    lock.top = rect.top - cRect.top;
+                    break;
+                }
+            }
+            return lock;
+        }
+        function restoreChatScrollAnchor(container, lock, { settle = false, forceBottom = false } = {}) {
+            if (!container || !lock) return;
+            if (forceBottom || lock.wasAtBottom) {
+                container.scrollTop = container.scrollHeight;
+                updateScrollToBottomBtn();
+                return;
+            }
+            if (lock.id) {
+                const cRect = container.getBoundingClientRect();
+                const anchor = Array.from(container.querySelectorAll('.chat-msg[data-message-id]'))
+                    .find(el => el.dataset.messageId === lock.id);
+                if (anchor) {
+                    const newTop = anchor.getBoundingClientRect().top - cRect.top;
+                    container.scrollTop += newTop - lock.top;
+                } else {
+                    container.scrollTop = lock.scrollTop;
+                }
+            } else {
+                container.scrollTop = lock.scrollTop;
+            }
+            const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight);
+            if (container.scrollTop > maxScroll) container.scrollTop = maxScroll;
+            if (container.scrollTop < 0) container.scrollTop = 0;
+            updateScrollToBottomBtn();
+            if (settle) {
+                requestAnimationFrame(() => restoreChatScrollAnchor(container, lock, { settle: false }));
+                setTimeout(() => restoreChatScrollAnchor(container, lock, { settle: false }), 80);
+            }
+        }
+        function preserveChatScrollDuring(mutator, options = {}) {
+            const container = options.container || document.getElementById('chatMessages');
+            const lock = captureChatScrollAnchor(container);
+            const result = mutator(lock, container);
+            restoreChatScrollAnchor(container, lock, options);
+            refreshChatActiveScrollLock(container);
+            return result;
+        }
+        let _chatActiveScrollLock = null;
+        let _chatResizeObserver = null;
+        let _chatResizeRestoreScheduled = false;
+        function refreshChatActiveScrollLock(container) {
+            if (!container || isChatAtBottom(container)) {
+                _chatActiveScrollLock = null;
+                return;
+            }
+            _chatActiveScrollLock = captureChatScrollAnchor(container);
+        }
+        function scheduleChatAsyncAnchorRestore(container) {
+            if (!_chatActiveScrollLock || _chatResizeRestoreScheduled) return;
+            _chatResizeRestoreScheduled = true;
+            requestAnimationFrame(() => {
+                _chatResizeRestoreScheduled = false;
+                if (!_chatActiveScrollLock || isChatAtBottom(container)) return;
+                restoreChatScrollAnchor(container, _chatActiveScrollLock, { settle: false });
+                refreshChatActiveScrollLock(container);
+            });
+        }
+        function wireChatAsyncScrollGuards(container) {
+            if (!container || typeof ResizeObserver !== 'function') return;
+            if (!_chatResizeObserver) {
+                _chatResizeObserver = new ResizeObserver(() => scheduleChatAsyncAnchorRestore(container));
+            }
+            try { _chatResizeObserver.disconnect(); } catch (_) {}
+            container.querySelectorAll('.chat-msg[data-message-id]').forEach(el => _chatResizeObserver.observe(el));
+        }
+        window.__eclawChatScrollAnchorLock = {
+            isChatAtBottom,
+            captureChatScrollAnchor,
+            restoreChatScrollAnchor,
+            preserveChatScrollDuring,
+            refreshChatActiveScrollLock,
+            wireChatAsyncScrollGuards,
+        };
+
         function renderMessages(hasNewMessages) {
             _renderVersion++;
             const container = document.getElementById('chatMessages');
-            const wasAtBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 50;
+            const scrollLock = captureChatScrollAnchor(container);
+            const shouldFollowBottom = isFirstLoad || (scrollLock && scrollLock.wasAtBottom);
             const filtered = getFilteredMessages();
 
             if (filtered.length === 0) {
@@ -4315,6 +4425,7 @@
                         <div class="chat-empty-title" data-i18n="chat_empty">${escapeHtml(i18n.t('chat_empty') || 'No messages yet')}</div>
                         <div class="chat-empty-hint" data-i18n="chat_empty_hint">${escapeHtml(i18n.t('chat_empty_hint') || 'Send a message to start a conversation with your AI agents. Try saying hello! 👋')}</div>
                     </div>`;
+                restoreChatScrollAnchor(container, scrollLock, { forceBottom: shouldFollowBottom });
                 return;
             }
 
@@ -4644,15 +4755,16 @@
                     </div>`;
             }).join('');
 
-            // Auto-scroll only on first load or when the user was already at the bottom.
-            // If the user has scrolled up to read history, leave their position alone —
-            // the floating jump-to-latest button (#scrollToBottomBtn) gives them an
-            // explicit way to return to the newest message. Same rule applies in
-            // smart-filter mode so the behavior is consistent across views.
-            if (isFirstLoad || wasAtBottom) {
-                container.scrollTop = container.scrollHeight;
-            }
-            updateScrollToBottomBtn();
+            // Auto-follow only on first load or when the user was already at
+            // the bottom. Otherwise preserve the same visible message anchor;
+            // this protects history reading from new messages, kanban/system
+            // notifications, virtual system rows, and full DOM replacement.
+            restoreChatScrollAnchor(container, scrollLock, {
+                forceBottom: shouldFollowBottom,
+                settle: !shouldFollowBottom,
+            });
+            refreshChatActiveScrollLock(container);
+            wireChatAsyncScrollGuards(container);
 
             // Fetch link previews for visible messages
             container.querySelectorAll('.link-preview-slot[data-url]').forEach(slot => {
@@ -4882,7 +4994,7 @@
                     const res = await fetch(`/api/files/${encodeURIComponent(fileId)}?${params}`);
                     const data = await res.json();
                     if (data && data.success && data.url) {
-                        el.src = data.url;
+                        preserveChatScrollDuring(() => { el.src = data.url; }, { settle: true });
                     } else {
                         el.dataset.mediaLoaded = '';
                     }
@@ -5989,7 +6101,9 @@
         async function fetchLinkPreview(url, container) {
             if (linkPreviewClientCache[url] === 'none') return;
             if (linkPreviewClientCache[url]) {
-                container.innerHTML = linkPreviewClientCache[url];
+                preserveChatScrollDuring(() => {
+                    container.innerHTML = linkPreviewClientCache[url];
+                }, { settle: true });
                 return;
             }
             try {
@@ -6014,7 +6128,9 @@
                 </a>`;
 
                 linkPreviewClientCache[url] = cardHtml;
-                container.innerHTML = cardHtml;
+                preserveChatScrollDuring(() => {
+                    container.innerHTML = cardHtml;
+                }, { settle: true });
             } catch {
                 linkPreviewClientCache[url] = 'none';
             }
@@ -7248,7 +7364,10 @@
             const container = document.getElementById('chatMessages');
             const btn = document.getElementById('scrollToBottomBtn');
             if (!container || !btn) return;
-            container.addEventListener('scroll', updateScrollToBottomBtn, { passive: true });
+            container.addEventListener('scroll', () => {
+                updateScrollToBottomBtn();
+                refreshChatActiveScrollLock(container);
+            }, { passive: true });
             btn.addEventListener('click', () => {
                 const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
                 container.scrollTo({
