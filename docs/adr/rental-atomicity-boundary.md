@@ -1,148 +1,276 @@
 # ADR: Rental rebind / refund / listing atomicity boundary
 
-- **Status:** Proposed for #2 review
+- **Status:** Locked for implementation review
 - **Date:** 2026-05-13
 - **Owner:** Mac_F (#1)
-- **Reviewer:** MAc_ClaudeAce / LOBSTER (#2)
-- **Blocks:** rental rebind Phase 4 refund implementation, renter health degraded UX, listing soft-pause, official bot lifecycle cleanup
-- **Related PR:** #2703 (`feat/rental): strict rebind cascade refunds`)
+- **Reviewer:** LOBSTER (#2)
+- **Parent:** `card_3ca7b8d8` rental mother card §4 + §9 Q1
+- **Blocks:**
+  - `card_84c13b91f46439cb30a9d94b` — Rebind cascade Phase 4: second-granular refund + atomic transaction + audit log
+  - `card_59f88da531f04361765a0375` — Renter health warning / degraded terminology
+  - `card_4bcbb14d854bec7bce14fd71` — Listing soft-pause for degraded bot listings
+  - `card_97b53d0a5baccc704b44583f` — Roster rental admin manual rebind UI
+- **Related implementation PR:** #2703 (`feat/rental): strict rebind cascade refunds`)
 
 ## Context
 
-Rental rebind is financially sensitive. When an owner rebinds an entity slot, the renter may suddenly be connected to a different bot than the one they rented. Hank's policy answer for the rental mother card is: **owner eats the loss**. The system must terminate affected active rentals and refund the renter from the owner's wallet with second-granular precision.
+Rental rebind is financially sensitive. If an owner rebinds an entity slot while rentals are still active, renters may lose access to the exact bot they paid for. The project policy is **owner eats the loss**: the renter gets a deterministic refund for the remaining time, and the owner wallet funds it.
 
-This ADR locks the atomicity boundary and audit semantics before dependent cards implement divergent assumptions.
+This ADR locks the atomicity boundary, refund math, audit schema, idempotency, clock source, and listing soft-pause separation before dependent implementation cards proceed. Where an existing implementation differs from this ADR, the implementation must be amended to match this ADR after #2 review/merge.
 
-## 1. Rebind cascade transaction boundary
+## 1. Wallet ledger / refund transaction boundary
 
-`POST /api/entity/rebind` must treat the rental refund cascade as an all-or-nothing financial operation for eligible active rentals on the rebound owner slot.
+Refund is a single financial transaction. For each affected active rental, the owner wallet debit, renter wallet credit, rental status mutation, and audit rows must commit or roll back together.
 
-Implementation boundary:
+Decision: use a **single PostgreSQL transaction**, not a saga.
 
-1. Resolve the rebound slot `(owner_device_id, owner_entity_id)`.
-2. Start one database transaction through the wallet mutation layer (`walletApi.withTransaction` or equivalent).
-3. Read a single DB clock value with PostgreSQL `NOW()` / SQL expressions; app server `Date.now()` is forbidden for refund math.
-4. Select eligible contracts with `SELECT ... FOR UPDATE`.
-5. Lock participating owner/renter wallet rows in deterministic order.
-6. Calculate all refunds before mutating any contract or wallet.
-7. Preflight owner wallet balance for the full refund sum.
-8. If the owner cannot cover the total, reject the rebind and roll back the whole transaction.
-9. If preflight passes, write wallet ledger rows, update contract status, and write rental audit rows inside the same transaction.
+Rationale:
 
-Eligible contracts for Phase 4 are **only** `rental_contracts.status = 'active'`.
+- The operation is small and bounded: one owner wallet, one or more renter wallets, affected active rentals, and audit rows.
+- There is no long-running external step that would justify a saga.
+- Financial correctness is more important than partial progress.
 
-Non-active contracts (`reserved`, `suspended_insufficient_funds`, terminal `ended_*`, `terminated_by_rebind`) are skipped by the strict refund cascade. They may be handled by separate cleanup cards, but they must not receive owner-paid rebind refunds in Phase 4.
-
-## 2. Owner wallet insufficient funds policy
-
-Owner wallet insufficiency is fail-closed.
-
-- If `owner.balance_mli < sum(refund_mli)` for all eligible contracts, the rebind request fails.
-- The API should return a 4xx error (recommended symbolic error: `owner_insufficient_balance_for_rebind_refund`).
-- No rental status changes, wallet ledger rows, deposit releases, or audit rows may persist.
-- No partial refund, clamping, or best-effort continuation is allowed.
-
-Rationale: clamped refunds silently shift the loss back to renters and makes audit reconciliation ambiguous.
-
-## 3. Audit schema ownership
-
-Wallet audit source of truth is the existing append-only `wallet_ledger` table.
-
-Do **not** add a duplicate `wallet_audit_log` for the same wallet movement unless a later ADR explicitly changes wallet architecture. Duplicate wallet audit tables create dual-write divergence risk.
-
-Rental-domain audit should be captured separately because `wallet_ledger` cannot explain the rental-specific refund calculation. Add/use `rental_rebind_audit_log` with at least:
+Required transaction shape:
 
 ```sql
-contract_id
-listing_id
-owner_device_id
-owner_entity_id
-owner_user_id
-renter_user_id
-status_from
-status_to -- 'terminated_by_rebind'
-deposit_mli
-deposit_release_mli
-refund_mli
-remaining_sec
-total_duration_sec
-wallet_release_idempotency_key
-wallet_debit_idempotency_key
-wallet_credit_idempotency_key
-created_at
+BEGIN ISOLATION LEVEL SERIALIZABLE;
+
+-- Rebind idempotency / request result row is created or locked first.
+-- DB clock is captured from PostgreSQL, not the app server.
+SELECT now() AS db_now;
+
+-- Lock affected active rentals for the rebound entity slot.
+SELECT *
+FROM rentals
+WHERE owner_entity_id = $1
+  AND status = 'active'
+FOR UPDATE;
+
+-- Lock all participating wallets in deterministic order.
+SELECT *
+FROM wallets
+WHERE entity_id = ANY($wallet_entity_ids)
+ORDER BY entity_id
+FOR UPDATE;
+
+-- Calculate refunds, preflight owner balance, mutate wallets/rentals, write audit.
+
+COMMIT;
 ```
 
-The rental audit row links the contract, slot, calculation basis, and wallet ledger idempotency keys.
+Owner wallet insufficiency policy:
+
+- If the owner wallet cannot cover the **full** refund amount, reject the entire rebind.
+- Do **not** partially refund.
+- Do **not** clamp refunds to owner balance.
+- Do **not** continue the rebind and leave rentals active.
+
+The rejection is part of the same transaction and leaves no wallet, rental, entity-binding, or audit mutation behind.
+
+Transaction isolation level: **SERIALIZABLE**.
+
+Rationale: this is a financial boundary. `READ COMMITTED` can be sufficient with careful row locks, but `SERIALIZABLE` gives the safest retryable semantics for concurrent rebind/refund attempts and prevents subtle phantoms around newly matching active rentals.
+
+## 2. Rental binding state mutation boundary
+
+The rebind cascade has three distinct state domains:
+
+1. Entity binding state — which bot brain is bound to the owner entity slot.
+2. Rental state — active rentals on that owner entity slot.
+3. Listing health/soft-pause state — whether new rentals may be created for a degraded listing.
+
+Decisions:
+
+- `rentals.status = 'active' → 'terminated_by_rebind'` is in the **same transaction** as wallet debit/credit.
+- Entity rebind is in the **same transaction** as the rental cascade.
+- `listing.soft_pause_until` is **not** in the rebind transaction.
+
+The entity rebind and rental termination must be atomic to avoid an invalid intermediate state:
+
+- Bad: entity is rebound, but rentals still show `active` for the old bot.
+- Bad: rentals are terminated/refunded, but entity rebind failed.
+- Good: entity rebind + rental termination + wallet refund + audit commit together.
+
+Listing soft-pause is intentionally outside this boundary because it is triggered by health degradation, not by owner rebind. It must use an independent transaction and must not mutate existing active rentals.
+
+## 3. Audit event schema
+
+All rows produced by a single rebind cascade share one UUIDv4 `audit_event_id`. The API entry point generates this UUID once and passes it through every wallet and rental audit write.
+
+### Wallet audit log
+
+Create an explicit wallet audit log for user-visible financial audit and reconciliation:
+
+```sql
+CREATE TABLE wallet_audit_log (
+  id BIGSERIAL PRIMARY KEY,
+  entity_id INT NOT NULL,
+  delta_amount NUMERIC(12,4) NOT NULL,
+  balance_after NUMERIC(12,4) NOT NULL,
+  reason VARCHAR(64) NOT NULL,
+  related_rental_id VARCHAR(40),
+  related_event_id UUID NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_wallet_audit_log_entity_created
+  ON wallet_audit_log(entity_id, created_at DESC);
+
+CREATE INDEX idx_wallet_audit_log_related_event
+  ON wallet_audit_log(related_event_id);
+```
+
+Required wallet audit semantics:
+
+- Owner debit row: `delta_amount < 0`, `reason = 'rebind_refund'`.
+- Renter credit row: `delta_amount > 0`, `reason = 'rebind_refund'`.
+- `balance_after` is captured after the wallet mutation inside the same transaction.
+- `related_rental_id` points to the terminated rental.
+- `related_event_id` is the shared cascade UUID.
+
+If the codebase also has a lower-level ledger table, that table may remain the balance source of truth, but `wallet_audit_log` is the locked audit surface required by this ADR.
+
+### Rental audit log additions
+
+Extend rental audit with refund calculation fields:
+
+```sql
+ALTER TABLE rental_audit_log
+  ADD COLUMN refund_seconds_remaining INT,
+  ADD COLUMN refund_amount NUMERIC(12,4),
+  ADD COLUMN refund_basis VARCHAR(32),
+  ADD COLUMN audit_event_id UUID;
+
+CREATE INDEX idx_rental_audit_log_audit_event
+  ON rental_audit_log(audit_event_id);
+```
+
+Required rental audit semantics:
+
+- `refund_seconds_remaining`: remaining seconds at DB clock time, clamped to `[0, total_duration_sec]`.
+- `refund_amount`: final 4-decimal amount credited to renter and debited from owner.
+- `refund_basis`: one of `per_second`, `per_day`, or `flat`; rebind refund uses `per_second`.
+- `audit_event_id`: same UUID as all related wallet audit rows.
 
 ## 4. Idempotency key and retry semantics
 
-Every wallet ledger mutation must use a deterministic idempotency key scoped to the contract and operation, for example:
+`POST /api/entity/rebind` accepts an `idempotencyKey: UUID` in the request body.
 
-- `rebind-deposit-release:<contractId>`
-- `rebind-refund-debit:<contractId>`
-- `rebind-refund-credit:<contractId>`
+Server-side behavior:
 
-A second rebind cascade after the first commit should see no `active` contracts and return an empty result without duplicating wallet/audit writes.
+- Store the key in a DB-backed idempotency table or Redis with 24h retention.
+- Recommended DB table when Redis is unavailable:
 
-If API-level idempotency is added to `POST /api/entity/rebind`, use a request `idempotencyKey` with a server-side 24h retention table/cache. That API key is additive; it does not replace wallet-ledger idempotency.
+```sql
+CREATE TABLE entity_rebind_idempotency_keys (
+  idempotency_key UUID PRIMARY KEY,
+  device_id UUID NOT NULL,
+  entity_id INT NOT NULL,
+  request_hash TEXT NOT NULL,
+  audit_event_id UUID NOT NULL,
+  response_status INT,
+  response_body JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  expires_at TIMESTAMPTZ NOT NULL
+);
 
-Concurrent rebind requests must be serialized by row locks. Acceptable outcomes:
+CREATE INDEX idx_entity_rebind_idempotency_expires
+  ON entity_rebind_idempotency_keys(expires_at);
+```
 
-- one request commits and the other sees no active contracts, or
-- one request commits and the other returns 409/retry depending on the API wrapper.
+Retry semantics:
 
-Both outcomes must avoid duplicate refunds.
+- Same key + same request body within 24h returns the first-attempt result.
+- Same key + different request body returns `409 idempotency_key_conflict`.
+- A completed successful attempt must not execute the cascade again.
+- A completed rejected attempt, including owner insufficient funds, returns the same rejection without recomputing.
+- If the first attempt is still in progress, return `409 idempotency_in_progress` or block on the idempotency row lock, depending on API convention.
+
+DB concurrency protection:
+
+- Insert or lock the idempotency row before mutation.
+- Lock all matching active rentals with `SELECT ... FOR UPDATE`.
+- Lock participating wallet rows with `SELECT ... FOR UPDATE` in deterministic order.
+- Use `SERIALIZABLE` isolation so concurrent inserts/updates that would affect the active-rental set fail as retryable serialization conflicts rather than producing duplicate refunds.
 
 ## 5. Second-granular rounding rule
 
-Refund formula:
+Refund calculation uses seconds, not days or minutes.
+
+Formula:
 
 ```text
-remaining_sec = max(0, floor(extract(epoch from (ends_at - db_now))))
-remaining_sec = min(remaining_sec, total_duration_sec)
-refund_mli = floor(deposit_mli * remaining_sec / total_duration_sec)
+remaining_sec = max(0, endsAt_unix_seconds - now_unix_seconds)
+remaining_sec = min(remaining_sec, totalDurationSec)
+refund_amount_raw = remaining_sec / totalDurationSec * rental.price
+refund_amount = FLOOR(refund_amount_raw to 4 decimal places)
+```
+
+SQL-oriented expression:
+
+```sql
+remaining_sec = GREATEST(
+  0,
+  EXTRACT(EPOCH FROM (ends_at - db_now))::INT
+);
+
+refund_amount = FLOOR(
+  (
+    (remaining_sec::NUMERIC(20,10) / NULLIF(total_duration_sec, 0)::NUMERIC(20,10))
+    * rental_price::NUMERIC(20,10)
+  ) * 10000
+) / 10000;
 ```
 
 Rules:
 
-- `total_duration_sec` is a stable denominator stored on the contract at creation time.
-- Backfill existing rows from `planned_duration_min * 60` when no better historical source exists.
-- If `ends_at <= db_now`, refund is `0`, but the active contract is still terminated.
-- If `deposit_mli = 0`, refund is `0`, but the active contract is still terminated.
-- Use integer mli (`BIGINT`) arithmetic and floor the result.
+- Compute with `NUMERIC(20,10)` precision.
+- Store final refund as `NUMERIC(12,4)`.
+- Rounding direction is **FLOOR**.
+- FLOOR is intentionally owner-favorable by at most `0.0001` unit and avoids over-refunding in financial disputes where owner rebind is treated as an unintentional owner-side interruption.
+- If `ends_at < db_now`, refund is `0`.
+- Even when refund is `0`, active rental status still updates to `terminated_by_rebind` during the rebind cascade.
+- If `total_duration_sec <= 0` or is missing for a row that requires refund math, reject and roll back rather than guessing.
 
 ## 6. Clock source
 
-Refund math must use the database clock, not app server time.
+Refund math uses **PostgreSQL `now()`** as the only clock source.
 
-Preferred SQL pattern:
+The application server clock is forbidden for refund calculation.
+
+Rationale:
+
+- Multi-replica/serverless app servers can drift by seconds.
+- Seconds directly affect refund amount.
+- DB `now()` keeps the rental read, lock, calculation, wallet mutation, and audit record in one deterministic transaction context.
+
+Migration / creation rule:
 
 ```sql
-GREATEST(0::bigint, COALESCE(FLOOR(EXTRACT(EPOCH FROM (c.ends_at - NOW())))::bigint, 0)) AS remaining_sec
+total_duration_sec = EXTRACT(EPOCH FROM (ends_at - starts_at))::INT
 ```
 
-Rationale: in a multi-replica/serverless deployment, app server clocks can drift and produce inconsistent refunds. DB clock keeps the contract read, lock, and calculation in one deterministic transaction context.
+Use the same DB-side expression when creating or backfilling `total_duration_sec`; do not calculate the denominator with application time.
 
-## 7. Listing soft-pause and rental state source
+## 7. Listing soft-pause reads which rental state
 
-Listing soft-pause is not part of the rebind refund transaction.
+Listing soft-pause is driven by renter health degradation, not rental rebind.
 
-- Soft-pause writes only listing-level state such as `bot_listings.soft_pause_until` / listing status metadata.
-- New rental creation must read the listing soft-pause state and reject new rentals while paused.
-- Existing active rentals are not terminated by soft-pause.
-- Existing active rentals are terminated only by explicit rebind cascade / rental lifecycle flows.
+Decisions:
 
-This separation prevents a health-degraded listing UX from accidentally mutating financial rental state.
+- Soft-pause trigger: renter health degraded continuously for 1 hour, defined by the renter-health sub-card.
+- Soft-pause action writes listing state only, for example `listing.soft_pause_until`.
+- Soft-pause does **not** scan or mutate `rentals`.
+- Existing active rentals continue unchanged when a listing is soft-paused.
+- `POST /api/rental/create` reads `listing.soft_pause_until` during new-order creation and rejects new rentals while the listing is paused.
+- Existing active rentals are terminated only by explicit rebind cascade or other rental lifecycle flows, not by soft-pause.
+
+This separation prevents Q4 health-degraded state from accidentally becoming a financial termination source.
 
 ## Consequences
 
-- Phase 4 implementation must prefer one strict transaction over the previous per-contract best-effort helper.
-- Financial correctness beats rebind convenience: owner insufficient funds blocks the rebind/refund cascade until resolved.
-- `wallet_ledger` remains canonical for wallet balances; rental audit stores the calculation narrative.
-- Dependent cards should reference this ADR instead of redefining refund/listing atomicity semantics.
-
-## Open review points for #2
-
-1. Should API wrapper return `400` vs `409` on owner insufficient funds?
-2. Should API-level request idempotency be implemented now, or is wallet-ledger idempotency + row locks sufficient for Phase 4?
-3. Should `total_duration_sec` become `NOT NULL` after backfill, or remain nullable for safer rollout?
+- Rebind cascade Phase 4 must implement one strict transaction, not best-effort per-rental mutation.
+- Owner insufficient balance blocks the entire rebind/refund cascade.
+- All refund-related wallet and rental audit rows share one UUID `audit_event_id`.
+- Dependent cards must reference this ADR for transaction, audit, idempotency, rounding, DB clock, and soft-pause semantics.
+- Any existing implementation that uses different audit table names or idempotency timing must be amended to match this ADR after review.
