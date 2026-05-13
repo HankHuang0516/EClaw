@@ -1701,6 +1701,16 @@ try {
     console.error('[KanbanDeps] Failed to load module:', err.message);
 }
 
+
+// Explicit non-hierarchical Kanban card links — mounted on same /api/mission path
+try {
+    const kanbanLinksModule = require('./api_kanban_card_links')(devices);
+    app.use('/api/mission', kanbanLinksModule.router);
+    console.log('[KanbanLinks] Module loaded successfully');
+} catch (err) {
+    console.error('[KanbanLinks] Failed to load module:', err.message);
+}
+
 // Idle Dispatch System — smart bot availability-based card dispatch
 try {
     const idleDispatchRouter = require('./api_idle_dispatch');

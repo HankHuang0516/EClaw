@@ -15,8 +15,8 @@
  *   note_on_card    — mindmap_node_anchors cross-correlation (note + kanban_card)
  *   chat_anchor     — kanban_cards.chat_anchor_message_id + anchor cross-correlation
  *                     (amendment A from PR #2679 review)
- *
- * Edge types reserved for follow-up cards: references, related, tag.
+ *   related/references/duplicates/causes/supports/contradicts
+ *                   — kanban_card_links explicit non-hierarchical edges
  */
 
 'use strict';
@@ -240,6 +240,7 @@ function projectGraph({
     cards,
     initialCardIds,
     depRows,
+    cardLinkRows = [],
     commentCounts,
     noteCounts,
     notes,
@@ -335,7 +336,19 @@ function projectGraph({
     }
 
     // ── Edges ──
-    const edgeCounts = { parent: 0, blocks: 0, owner: 0, note_on_card: 0, chat_anchor: 0 };
+    const edgeCounts = {
+        parent: 0,
+        blocks: 0,
+        owner: 0,
+        note_on_card: 0,
+        chat_anchor: 0,
+        related: 0,
+        references: 0,
+        duplicates: 0,
+        causes: 0,
+        supports: 0,
+        contradicts: 0,
+    };
 
     // 1. Parent edges (only when both endpoints in result set)
     for (const c of cards) {
@@ -368,7 +381,24 @@ function projectGraph({
         edgeCounts.blocks++;
     }
 
-    // 3. Owner edges
+    // 3. Explicit non-hierarchical card links (kanban_card_links)
+    for (const l of cardLinkRows) {
+        if (!cardIds.has(l.source_card_id) || !cardIds.has(l.target_card_id)) continue;
+        const relationType = String(l.relation_type || 'related').toLowerCase();
+        const directional = ['references', 'causes', 'supports', 'contradicts'].includes(relationType);
+        links.push(buildLink({
+            id: `card_link:${relationType}:${l.source_card_id}:${l.target_card_id}`,
+            source: `task:${l.source_card_id}`,
+            target: `task:${l.target_card_id}`,
+            type: relationType,
+            weight: relationType === 'duplicates' ? 2 : 1.5,
+            evidence: 'kanban_card_links',
+            directional,
+        }));
+        edgeCounts[relationType] = (edgeCounts[relationType] || 0) + 1;
+    }
+
+    // 4. Owner edges
     if (options.includeOwners !== 'none') {
         for (const c of cards) {
             const bots = Array.isArray(c.assigned_bots) ? c.assigned_bots : [];
@@ -402,7 +432,7 @@ function projectGraph({
         }
     }
 
-    // 4. note_on_card edges via mindmap_node_anchors cross-correlation
+    // 5. note_on_card edges via mindmap_node_anchors cross-correlation
     const seenNoteCard = new Set();
     for (const [, anchors] of anchorsByNode) {
         const cardAnchors = anchors.filter(a => a.anchor_type === 'kanban_card');
@@ -429,8 +459,8 @@ function projectGraph({
         }
     }
 
-    // 5. chat_anchor edges — amendment A
-    //    5a) kanban_cards.chat_anchor_message_id direct field
+    // 6. chat_anchor edges — amendment A
+    //    6a) kanban_cards.chat_anchor_message_id direct field
     for (const c of cards) {
         const mid = c.chat_anchor_message_id;
         if (!mid || !nodeIdSet.has(`chat:${mid}`)) continue;
@@ -445,7 +475,7 @@ function projectGraph({
         }));
         edgeCounts.chat_anchor++;
     }
-    //    5b) mindmap_node_anchors cross-correlation (note↔chat / card↔chat)
+    //    6b) mindmap_node_anchors cross-correlation (note↔chat / card↔chat)
     const seenChat = new Set();
     for (const [, anchors] of anchorsByNode) {
         const chatAnchors = anchors.filter(a => a.anchor_type === 'chat_message');
@@ -502,9 +532,12 @@ function projectGraph({
     for (const n of nodes) {
         if (finalSourceCounts[n.type] !== undefined) finalSourceCounts[n.type]++;
     }
-    const finalEdgeCounts = { parent: 0, blocks: 0, owner: 0, note_on_card: 0, chat_anchor: 0 };
+    const finalEdgeCounts = {};
     for (const l of links) {
-        if (finalEdgeCounts[l.type] !== undefined) finalEdgeCounts[l.type]++;
+        finalEdgeCounts[l.type] = (finalEdgeCounts[l.type] || 0) + 1;
+    }
+    for (const key of Object.keys(edgeCounts)) {
+        if (finalEdgeCounts[key] === undefined) finalEdgeCounts[key] = 0;
     }
 
     return {

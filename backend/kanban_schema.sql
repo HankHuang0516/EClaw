@@ -214,3 +214,24 @@ CREATE INDEX IF NOT EXISTS idx_kanban_dependencies_type ON kanban_card_dependenc
 
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS has_dependencies BOOLEAN DEFAULT FALSE;
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS dependency_status VARCHAR(16) DEFAULT 'ready';
+
+-- ============================================
+-- Migration: Explicit non-hierarchical card links
+-- Separate from parent/automation and dependency/blocking edges.
+-- ============================================
+CREATE TABLE IF NOT EXISTS kanban_card_links (
+    id BIGSERIAL PRIMARY KEY,
+    device_id VARCHAR(64) NOT NULL,
+    source_card_id VARCHAR(48) NOT NULL REFERENCES kanban_cards(id) ON DELETE CASCADE,
+    target_card_id VARCHAR(48) NOT NULL REFERENCES kanban_cards(id) ON DELETE CASCADE,
+    relation_type VARCHAR(24) NOT NULL DEFAULT 'related',
+    created_by INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(device_id, source_card_id, target_card_id, relation_type),
+    CHECK (source_card_id <> target_card_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_kanban_card_links_source ON kanban_card_links(device_id, source_card_id);
+CREATE INDEX IF NOT EXISTS idx_kanban_card_links_target ON kanban_card_links(device_id, target_card_id);
+CREATE INDEX IF NOT EXISTS idx_kanban_card_links_relation ON kanban_card_links(device_id, relation_type);
+
