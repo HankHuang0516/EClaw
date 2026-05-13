@@ -3608,6 +3608,7 @@ const EN_TRANSLATIONS = {
         "kb_sort_oldest": "Oldest First",
         "kb_sort_priority": "High Priority First",
         "kb_sort_recently_updated": "Recently Updated",
+        "kb_sort_oldest_updated": "Oldest Updated",
         "kb_funnel_label": "Filter",
         "kb_funnel_toggle": "Toggle filters",
         "kb_history_btn": "Archived cards",
