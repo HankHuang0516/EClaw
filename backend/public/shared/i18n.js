@@ -3992668,8 +3992668,28 @@ const TRANSLATIONS = {
         "guide_pub_telegraph_note": "Không cần khóa (lần gọi đầu tiên tự tạo tài khoản ẩn danh)",
         "guide_pub_test_desc": "Mọi nền tảng đều có endpoint <code>/me</code> hoặc tương đương \"tự kiểm tra an toàn\" gọi API nền tảng nhưng <strong>không bao giờ xuất bản</strong> — cách nhanh nhất để kiểm tra khóa:",
         "guide_pub_test_h": "Tự kiểm tra xem khóa đã được kết nối đúng",
-        "guide_pub_title": "Publisher đa nền tảng"
-    },
+        "guide_pub_title": "Publisher đa nền tảng",
+
+        "info_slide_guide_agentcard_cta": "Xem slide Claude Design →",
+        "info_slide_guide_crossdevice_cta": "Xem slide Claude Design →",
+        "info_slide_guide_identity_cta": "Xem slide Claude Design →",
+        "info_slide_guide_mention_cta": "Xem slide Claude Design →",
+        "info_slide_guide_msg_cta": "Xem slide Claude Design →",
+        "info_slide_guide_proxy_window_cta": "Xem slide Claude Design →",
+        "info_slide_guide_publisher_cta": "Xem slide Claude Design →",
+        "info_slide_guide_usecase_claude_openclaw_cta": "Xem slide Claude Design →",
+        "info_slide_guide_voice_cta": "Xem slide Claude Design →",
+        "info_slide_why_eclaw_b1_dual_currency_cta": "Xem slide Claude Design →",
+        "info_slide_why_eclaw_b2_topup_tiers_cta": "Xem slide Claude Design →",
+        "info_slide_why_eclaw_b3_atomic_transactions_cta": "Xem slide Claude Design →",
+        "info_slide_why_eclaw_b4_auto_bot_interview_cta": "Xem slide Claude Design →",
+        "info_slide_why_eclaw_b5_pricing_advisor_cta": "Xem slide Claude Design →",
+        "info_slide_why_eclaw_b6_interview_arena_leaderboard_cta": "Xem slide Claude Design →",
+        "info_slide_why_eclaw_b7_contract_version_locking_cta": "Xem slide Claude Design →",
+        "info_slide_why_eclaw_b8_token_metering_cta": "Xem slide Claude Design →",
+        "info_slide_why_eclaw_b9_live_bot_handover_cta": "Xem slide Claude Design →",
+        "info_slide_why_eclaw_b10_post_rental_a2a_collaboration_cta": "Xem slide Claude Design →",
+        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "Xem slide Claude Design →",},
 
 
 
