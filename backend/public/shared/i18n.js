@@ -261293,6 +261293,12 @@ const TRANSLATIONS = {
 
 
 
+        "settings_chat_preferences": "Chat Preferences",
+        "settings_chat_avatar_size": "Avatar Size",
+        "settings_chat_avatar_size_desc": "Applies to chat list, chat header, and message avatars",
+        "settings_chat_avatar_size_small": "Small",
+        "settings_chat_avatar_size_medium": "Medium",
+        "settings_chat_avatar_size_large": "Large",
         "settings_display": "Display",
 
 
@@ -898726,6 +898732,12 @@ const TRANSLATIONS = {
 
 
         "settings_view_split": "雙頁模式",
+        "settings_chat_preferences": "聊天偏好設定",
+        "settings_chat_avatar_size": "聊天大頭貼大小",
+        "settings_chat_avatar_size_desc": "只影響聊天清單、聊天標題列與訊息大頭貼",
+        "settings_chat_avatar_size_small": "小",
+        "settings_chat_avatar_size_medium": "中",
+        "settings_chat_avatar_size_large": "大",
 
 
 
@@ -2073925,6 +2073937,12 @@ const TRANSLATIONS = {
 
 
         "settings_view_split": "分割表示",
+        "settings_chat_preferences": "チャット設定",
+        "settings_chat_avatar_size": "チャットのアバターサイズ",
+        "settings_chat_avatar_size_desc": "チャット一覧、チャットヘッダー、メッセージのアバターにのみ適用",
+        "settings_chat_avatar_size_small": "小",
+        "settings_chat_avatar_size_medium": "中",
+        "settings_chat_avatar_size_large": "大",
 
 
 
