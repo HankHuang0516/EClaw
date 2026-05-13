@@ -5202,7 +5202,7 @@
 
             // Fetch link previews for visible messages
             container.querySelectorAll('.link-preview-slot[data-url]').forEach(slot => {
-                if (slot.children.length > 0) return; // already loaded
+                if (slot.children.length > 0 || slot.dataset.previewLoading === '1') return; // already loaded/in flight
                 fetchLinkPreview(slot.dataset.url, slot);
             });
 
@@ -6536,44 +6536,74 @@
             } catch { return false; }
         }
 
-        // Link preview cache (client-side)
+        // Link preview cache (client-side). Values are rendered HTML, 'none', or
+        // 'backoff'. Keep a separate in-flight map so chat history rerenders do not
+        // fan out duplicate requests for the same URL.
         const linkPreviewClientCache = {};
+        const linkPreviewInFlight = {};
+        let linkPreviewBackoffUntil = 0;
+
+        function normalizePreviewUrl(url) {
+            try {
+                const parsed = new URL(String(url || '').trim(), window.location.href);
+                if (!['http:', 'https:'].includes(parsed.protocol)) return null;
+                if (!parsed.hostname || parsed.hostname === window.location.hostname) return null;
+                return parsed.href;
+            } catch {
+                return null;
+            }
+        }
 
         async function fetchLinkPreview(url, container) {
-            if (linkPreviewClientCache[url] === 'none') return;
-            if (linkPreviewClientCache[url]) {
+            const normalizedUrl = normalizePreviewUrl(url);
+            if (!normalizedUrl) { linkPreviewClientCache[url] = 'none'; return; }
+            if (Date.now() < linkPreviewBackoffUntil) { linkPreviewClientCache[normalizedUrl] = 'backoff'; return; }
+            if (linkPreviewClientCache[normalizedUrl] === 'none' || linkPreviewClientCache[normalizedUrl] === 'backoff') return;
+            if (linkPreviewClientCache[normalizedUrl]) {
                 preserveChatScrollDuring(() => {
-                    container.innerHTML = linkPreviewClientCache[url];
+                    container.innerHTML = linkPreviewClientCache[normalizedUrl];
                 }, { settle: true });
                 return;
             }
+            if (linkPreviewInFlight[normalizedUrl]) return;
+
+            container.dataset.previewLoading = '1';
+            linkPreviewInFlight[normalizedUrl] = true;
             try {
-                const res = await fetch(`/api/link-preview?url=${encodeURIComponent(url)}`);
-                if (!res.ok) { linkPreviewClientCache[url] = 'none'; return; }
+                const res = await fetch(`/api/link-preview?url=${encodeURIComponent(normalizedUrl)}`);
+                if (res.status === 429) {
+                    linkPreviewBackoffUntil = Date.now() + 60000;
+                    linkPreviewClientCache[normalizedUrl] = 'backoff';
+                    return;
+                }
+                if (!res.ok) { linkPreviewClientCache[normalizedUrl] = 'none'; return; }
                 const data = await res.json();
-                if (!data.title && !data.description) { linkPreviewClientCache[url] = 'none'; return; }
+                if (!data.title && !data.description) { linkPreviewClientCache[normalizedUrl] = 'none'; return; }
 
                 let domain = '';
-                try { domain = new URL(url).hostname; } catch {}
+                try { domain = new URL(normalizedUrl).hostname; } catch {}
 
                 const imgHtml = data.image
                     ? `<img class="link-preview-img" src="${escapeHtml(data.image)}" alt="" onerror="this.style.display='none'">`
                     : '';
-                const cardHtml = `<a class="link-preview" href="${escapeHtml(url)}" target="_blank" rel="noopener">
+                const cardHtml = `<a class="link-preview" href="${escapeHtml(normalizedUrl)}" target="_blank" rel="noopener">
                     ${imgHtml}
                     <div class="link-preview-body">
-                        <div class="link-preview-title">${escapeHtml(data.title)}</div>
+                        <div class="link-preview-title">${escapeHtml(data.title || domain)}</div>
                         ${data.description ? `<div class="link-preview-desc">${escapeHtml(data.description)}</div>` : ''}
                         <div class="link-preview-domain">${escapeHtml(domain)}</div>
                     </div>
                 </a>`;
 
-                linkPreviewClientCache[url] = cardHtml;
+                linkPreviewClientCache[normalizedUrl] = cardHtml;
                 preserveChatScrollDuring(() => {
                     container.innerHTML = cardHtml;
                 }, { settle: true });
             } catch {
-                linkPreviewClientCache[url] = 'none';
+                linkPreviewClientCache[normalizedUrl] = 'none';
+            } finally {
+                delete linkPreviewInFlight[normalizedUrl];
+                if (container) delete container.dataset.previewLoading;
             }
         }
 

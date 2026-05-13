@@ -2569,6 +2569,18 @@
             const ownerEntityId = ownerRosterId(user);
             const note = document.getElementById('rosterStatusNote');
             if (note) note.textContent = rosterT('settings_roster_loading', 'Loading roster…');
+
+            // The owner-roster UI is currently a preview surface. Production does not
+            // expose /api/owner/roster/* routes yet, so calling them on every settings
+            // load creates user-visible 404 noise in Network/console. Keep the panel
+            // useful with preview data until the backend explicitly opts in.
+            if (!window.__ownerRosterApiEnabled) {
+                ownerRosterState = rosterMockData();
+                if (note) note.textContent = rosterT('settings_roster_mock_note', 'Preview mode: backend roster endpoints are not available yet; showing mock data.');
+                renderOwnerRoster();
+                return;
+            }
+
             try {
                 const [listingsResp, rentalsResp, historyResp] = await Promise.all([
                     apiCall('GET', `/api/owner/roster/listings?ownerEntityId=${encodeURIComponent(ownerEntityId)}`).catch(e => ({ error:e })),
