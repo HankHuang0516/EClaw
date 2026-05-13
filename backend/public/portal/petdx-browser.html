@@ -734,19 +734,43 @@
     }
 
     // ── Boot ─────────────────────────────────────────────────────
-    // Seed activeEntityId from URL (?entityId=) then localStorage. URL wins
-    // so a deep-link like ".../petdx-browser.html?entityId=3" lands you on
-    // that entity's scope without needing the dropdown.
-    (function seedActiveEntity() {
+    // Cookie-session fallback: other portal pages (dashboard/chat/mission)
+    // trust the device-login cookie. Petdx historically only read URL or
+    // localStorage, so a freshly logged-in user (no localStorage seed) saw
+    // "尚未登入". Ask /api/auth/me once and persist creds to localStorage so
+    // the existing sync getCreds() path keeps working.
+    async function bootstrapCookieSession() {
+        const url = new URLSearchParams(location.search);
+        const hasUrl = !!url.get('deviceId') && (!!url.get('deviceSecret') || !!url.get('botSecret'));
+        const hasLocal = !!localStorage.getItem('eclaw_device_id')
+            && !!localStorage.getItem('eclaw_device_secret');
+        if (hasUrl || hasLocal) return;
+        try {
+            const r = await fetch('/api/auth/me', { credentials: 'include' });
+            if (!r.ok) return;
+            const j = await r.json();
+            if (j && j.success && j.user && j.user.deviceId && j.user.deviceSecret) {
+                localStorage.setItem('eclaw_device_id', j.user.deviceId);
+                localStorage.setItem('eclaw_device_secret', j.user.deviceSecret);
+            }
+        } catch (e) { /* swallow — login warn surfaces if creds still absent */ }
+    }
+
+    (async function init() {
+        await bootstrapCookieSession();
+
+        // Seed activeEntityId from URL (?entityId=) then localStorage. URL wins
+        // so a deep-link like ".../petdx-browser.html?entityId=3" lands you on
+        // that entity's scope without needing the dropdown.
         const c = getCreds();
         const stored = localStorage.getItem(ACTIVE_ENTITY_KEY) || '';
         activeEntityId = c.entityId || stored || '';
-    })();
 
-    renderFilters();
-    loadEntities();
-    loadList();
-    refreshOwnerState();
+        renderFilters();
+        loadEntities();
+        loadList();
+        refreshOwnerState();
+    })();
 }());
 </script>
 </body>
