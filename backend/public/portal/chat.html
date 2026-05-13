@@ -751,6 +751,58 @@
             border: 1px solid transparent;
         }
 
+
+
+        .renter-health-avatar-wrap {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            line-height: 1;
+        }
+
+        .renter-health-dot {
+            position: absolute;
+            right: -1px;
+            bottom: -1px;
+            width: 25%;
+            height: 25%;
+            min-width: 5px;
+            min-height: 5px;
+            border-radius: 999px;
+            background: #F5A623;
+            border: 2px solid var(--card-bg, #fff);
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.08), 0 2px 6px rgba(245,166,35,0.45);
+            pointer-events: none;
+        }
+
+        .renter-health-dot.down {
+            background: #F97316;
+        }
+
+        .chat-msg.renter-health-system {
+            align-items: center;
+            max-width: 100%;
+        }
+
+        .chat-msg.renter-health-system .chat-source,
+        .chat-msg.renter-health-system .chat-meta {
+            display: none;
+        }
+
+        .chat-msg.renter-health-system .chat-bubble {
+            background: var(--bg-secondary, #f3f4f6);
+            color: var(--text-secondary, #4b5563);
+            border: 1px solid var(--card-border, #e5e7eb);
+            border-radius: 999px;
+            font-size: 13px;
+            max-width: min(92%, 680px);
+            margin: 6px auto;
+            padding: 8px 12px;
+            box-shadow: none;
+        }
+
         .entity-status-badge.working {
             color: #065f46;
             background: #d1fae5;
@@ -3008,6 +3060,9 @@
         const ENTITY_NO_PROGRESS_MS = 10 * 60 * 1000;
         const entityRuntimeStatus = new Map();
 
+        const rentalHealthByEntity = new Map();
+        let _rentalHealthPollTimer = null;
+
         // ── Chat Integrity Validator ──
         const ChatIntegrityValidator = (() => {
             const _reportedTs = {};
@@ -3279,6 +3334,8 @@
             updateUsageBadge();
             console.log('[CHAT_DEBUG] loadBoundEntities starting...');
             await loadBoundEntities();
+            await loadRentalHealthStatus();
+            if (!_rentalHealthPollTimer) _rentalHealthPollTimer = setInterval(loadRentalHealthStatus, 60000);
             console.log('[CHAT_DEBUG] loadBoundEntities done, loading messages...');
             await loadMessages();
             console.log('[CHAT_DEBUG] loadMessages done, count:', allMessages.length);
@@ -3547,6 +3604,104 @@
             }
         }
 
+
+
+
+        function tOrFallback(key, fallback) {
+            const value = (i18n && i18n.t) ? i18n.t(key) : '';
+            return (!value || value === key) ? fallback : value;
+        }
+
+        function getRentalHealthForEntity(entityId) {
+            return rentalHealthByEntity.get(Number(entityId)) || null;
+        }
+
+        function rentalHealthText(health) {
+            if (!health) return '';
+            const name = health.renterName || health.name || `#${health.renterEntityId || health.ownerEntityId || ''}`;
+            const event = Array.isArray(health.recentEvents) && health.recentEvents[0] ? health.recentEvents[0] : {};
+            if (health.status === 'ok') {
+                const tpl = tOrFallback('chat_sys_msg_renter_health_recovered', '✅ {name} health recovered');
+                return tpl.replace('{name}', name).replace('{reason}', event.msg || 'OK');
+            }
+            const tpl = tOrFallback('chat_sys_msg_renter_health_degraded', '⚠️ {name} health {status} — {reason}. Suggested: 1) /reset queue 2) wait 5min auto-recovery 3) contact platform');
+            return tpl.replace('{name}', name)
+                .replace('{status}', health.status || 'degraded')
+                .replace('{reason}', event.msg || 'recent probe failed');
+        }
+
+        function renterHealthA11y(health) {
+            if (!health || health.status === 'ok') return '';
+            const label = tOrFallback(health.status === 'down' ? 'renter_health_down_label' : 'renter_health_degraded_label', `Health ${health.status}: {reason}`);
+            const event = Array.isArray(health.recentEvents) && health.recentEvents[0] ? health.recentEvents[0] : {};
+            return label.replace('{reason}', event.msg || health.status).replace('{name}', health.renterName || 'Renter');
+        }
+
+        function renderAvatarWithRentalHealth(avatar, size, entityId) {
+            const health = getRentalHealthForEntity(entityId);
+            const avatarHtml = renderAvatarHtml(avatar, size, entityId);
+            if (!health || health.status === 'ok') return avatarHtml;
+            const label = escapeHtml(renterHealthA11y(health));
+            const statusClass = health.status === 'down' ? ' down' : '';
+            return `<span class="renter-health-avatar-wrap" aria-label="${label}" title="${label}">${avatarHtml}<span class="renter-health-dot${statusClass}"></span></span>`;
+        }
+
+        function withRentalHealthSystemMessages(messages) {
+            const list = Array.isArray(messages) ? messages.slice() : [];
+            const healthItems = [];
+            if (currentFilter && currentFilter.startsWith('entity-')) {
+                const entityId = parseInt(currentFilter.split('-')[1], 10);
+                const h = getRentalHealthForEntity(entityId);
+                if (h) healthItems.push(h);
+            } else if (currentFilter === 'all') {
+                rentalHealthByEntity.forEach((h) => { if (h) healthItems.push(h); });
+            }
+            healthItems.forEach((h) => {
+                if (!h) return;
+                const entityId = h.ownerEntityId ?? h.renterEntityId;
+                const event = Array.isArray(h.recentEvents) && h.recentEvents[0] ? h.recentEvents[0] : {};
+                if (h.status === 'ok' && event.kind !== 'recovered') return;
+                const eventId = event.eventId || `${h.rentalId || entityId}:${h.status}:${event.ts || h.lastProbeAt || ''}`;
+                list.push({
+                    id: `rental-health-${eventId}`,
+                    entity_id: entityId,
+                    is_from_user: false,
+                    is_from_bot: false,
+                    is_system: true,
+                    source: 'rental_health_system',
+                    text: rentalHealthText(h),
+                    created_at: event.ts || h.lastProbeAt || new Date().toISOString(),
+                    read_at: new Date().toISOString(),
+                });
+            });
+            return list.sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+        }
+
+        async function loadRentalHealthStatus() {
+            if (!currentUser || !currentUser.deviceId) return;
+            try {
+                const mock = localStorage.getItem('eclaw_rental_health_mock') || new URLSearchParams(location.search).get('rentalHealthMock') || '';
+                const ownerEntityId = boundEntities[0]?.entityId;
+                const qs = new URLSearchParams({ t: String(Date.now()) });
+                if (mock) qs.set('mockStatus', mock);
+                if (mock && ownerEntityId !== undefined && ownerEntityId !== null) qs.set('ownerEntityId', String(ownerEntityId));
+                const data = await apiCall('GET', `/api/rental/health-status?${qs.toString()}`);
+                rentalHealthByEntity.clear();
+                if (data && data.success && Array.isArray(data.statuses)) {
+                    data.statuses.forEach(h => {
+                        const key = h.ownerEntityId ?? h.renterEntityId;
+                        if (key === null || key === undefined) return;
+                        rentalHealthByEntity.set(Number(key), h);
+                    });
+                }
+                renderTargetBar();
+                renderFilterChips();
+                renderMessages(false);
+            } catch (e) {
+                console.warn('Failed to load rental health status:', e.message || e);
+            }
+        }
+
         function renderTargetBar() {
             const row = document.getElementById('targetBarRow');
             const overflow = document.getElementById('targetBarOverflow');
@@ -3578,7 +3733,7 @@
                 label.dataset.entityId = e.entityId;
                 const e2eeBadge = e.encryptionStatus === 'e2ee' ? ' 🔒' : '';
                 label.innerHTML = `<input type="checkbox" data-entity="${e.entityId}" ${isChecked ? 'checked' : ''} onchange="updateTargetAll()">
-                    <span class="target-label-main">${renderAvatarHtml(avatar, 20, e.entityId)} ${escapeHtml(name)} (#${e.entityId})${e2eeBadge}<span class="entity-status-slot">${renderEntityStatusBadge(e.entityId)}</span></span>`;
+                    <span class="target-label-main">${renderAvatarWithRentalHealth(avatar, 20, e.entityId)} ${escapeHtml(name)} (#${e.entityId})${e2eeBadge}<span class="entity-status-slot">${renderEntityStatusBadge(e.entityId)}</span></span>`;
                 allItems.push({ el: label, type: 'entity' });
             });
 
@@ -3977,7 +4132,7 @@
                 const avatar = getAvatarForEntity(id);
                 const existing = group.querySelector(`[data-filter="entity-${id}"]`);
                 if (existing) {
-                    existing.innerHTML = `${renderAvatarHtml(avatar, 18, id)} ${getEntityDisplayName(id)} (#${id})`;
+                    existing.innerHTML = `${renderAvatarWithRentalHealth(avatar, 18, id)} ${getEntityDisplayName(id)} (#${id})`;
                     return;
                 }
 
@@ -3985,7 +4140,7 @@
                 chip.className = `filter-chip filter-chip-entity${currentFilter === 'entity-' + id ? ' active' : ''}`;
                 chip.dataset.filter = `entity-${id}`;
                 chip.onclick = () => setFilter(`entity-${id}`);
-                chip.innerHTML = `${renderAvatarHtml(avatar, 18, id)} ${getEntityDisplayName(id)} (#${id})`;
+                chip.innerHTML = `${renderAvatarWithRentalHealth(avatar, 18, id)} ${getEntityDisplayName(id)} (#${id})`;
                 group.insertBefore(chip, myChip);
             });
 
@@ -4306,7 +4461,7 @@
             _renderVersion++;
             const container = document.getElementById('chatMessages');
             const wasAtBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 50;
-            const filtered = getFilteredMessages();
+            const filtered = withRentalHealthSystemMessages(getFilteredMessages());
 
             if (filtered.length === 0) {
                 container.innerHTML = `
@@ -4376,8 +4531,9 @@
 
                 // Received cross-device messages align left despite is_from_user=true
                 const isSent = msg.is_from_user && !isIncomingCrossDevice(msg);
-                const isPlatform = !msg.is_from_user && !msg.is_from_bot && msg.source === 'platform';
-                const msgClass = isSent ? 'sent' : isPlatform ? 'platform' : 'received';
+                const isSystem = msg.is_system || msg.source === 'rental_health_system';
+                const isPlatform = !msg.is_from_user && !msg.is_from_bot && (msg.source === 'platform' || isSystem);
+                const msgClass = isSystem ? 'platform renter-health-system' : (isSent ? 'sent' : isPlatform ? 'platform' : 'received');
                 const time = formatTime(msg.created_at);
                 const sourceLabel = buildSourceLabel(msg);
 
@@ -4630,7 +4786,7 @@
 
                 const replySnippet = stripReplyQuotePrefix(rawText || '').replace(/\n/g, ' ').slice(0, 120);
                 const replySenderName = isSent ? (i18n.t('chat_reply_you') || 'You') : isPlatform ? 'Platform' : (getEntityLabel(msg.entity_id) || '');
-                const replyBtnHtml = msg.id ? `<button class="chat-reply-btn" data-msg-id="${escapeHtml(msg.id)}" data-sender="${escapeHtml(replySenderName)}" data-text="${escapeHtml(replySnippet)}" onclick="handleReplyBtn(this);event.stopPropagation()" data-i18n-title="chat_reply_btn" title="Quote">📌</button>` : '';
+                const replyBtnHtml = (!isSystem && msg.id) ? `<button class="chat-reply-btn" data-msg-id="${escapeHtml(msg.id)}" data-sender="${escapeHtml(replySenderName)}" data-text="${escapeHtml(replySnippet)}" onclick="handleReplyBtn(this);event.stopPropagation()" data-i18n-title="chat_reply_btn" title="Quote">📌</button>` : '';
 
                 return `${dateSep}${unreadSep}
                     <div class="chat-msg ${msgClass}${isGrouped ? ' grouped' : ''}" data-message-id="${escapeHtml(msg.id || '')}" style="position:relative">
@@ -4720,6 +4876,7 @@
         }
 
         function buildSourceLabel(msg) {
+            if (msg.source === 'rental_health_system') return '⚠️ Health';
             const entityId = msg.entity_id;
             const entityHtml = `<span class="entity-label" data-entity="${entityId}">${getEntityLabel(entityId)}</span>`;
 

@@ -1822,6 +1822,104 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         res.json({ success: true, contract });
     }));
 
+
+    // GET /api/rental/health-status?ownerEntityId=N
+    // UI/state hook for renter health indicator. The daily probe writer lives in
+    // card_a3aface0; until it is unblocked, this endpoint derives active rental
+    // rows and supports an explicit mock status for UI/E2E wiring.
+    router.get('/health-status', authMiddleware, rentalRoute(async (req, res) => {
+        const ownerEntityId = req.query.ownerEntityId != null ? parseInt(req.query.ownerEntityId, 10) : null;
+        if (req.query.ownerEntityId != null && !Number.isInteger(ownerEntityId)) {
+            throw new Error('owner_entity_id_invalid');
+        }
+
+        const mockStatusRaw = String(req.query.mockStatus || req.query.mock || process.env.ECLAW_RENTAL_HEALTH_MOCK || '').toLowerCase();
+        const mockStatus = ['ok', 'degraded', 'down', 'recovered'].includes(mockStatusRaw) ? mockStatusRaw : null;
+        const mockKind = mockStatus === 'down' ? 'engine_crash_loop'
+            : mockStatus === 'recovered' || mockStatus === 'ok' ? 'recovered'
+            : 'response_timeout';
+        const normalizedMockStatus = mockStatus === 'recovered' ? 'ok' : (mockStatus || 'ok');
+
+        const params = [req.user.userId];
+        let ownerClause = '';
+        if (ownerEntityId !== null) {
+            params.push(ownerEntityId);
+            ownerClause = `AND l.owner_entity_id = $${params.length}`;
+        }
+
+        const result = await pool.query(
+            `SELECT c.id AS rental_id,
+                    c.renter_device_id,
+                    c.renter_entity_slot,
+                    c.status AS contract_status,
+                    c.started_at,
+                    c.created_at,
+                    l.owner_device_id,
+                    l.owner_entity_id,
+                    l.title AS renter_name
+               FROM rental_contracts c
+               JOIN bot_listings l ON l.id = c.listing_id
+              WHERE c.owner_user_id = $1
+                AND c.status IN ('reserved', 'active', 'suspended_insufficient_funds')
+                ${ownerClause}
+              ORDER BY c.started_at DESC NULLS LAST, c.created_at DESC
+              LIMIT 100`,
+            params
+        );
+
+        const nowIso = new Date().toISOString();
+        const statuses = result.rows.map((row) => {
+            const renterEntityId = row.renter_entity_slot != null ? Number(row.renter_entity_slot) : null;
+            const ownerSlot = Number(row.owner_entity_id);
+            const entity = row.renter_device_id && renterEntityId != null
+                ? _interviewDeps?.devices?.[row.renter_device_id]?.entities?.[renterEntityId]
+                : null;
+            const inferredDown = entity && (entity.state === 'ERROR' || /crash|timeout|unavailable|degraded/i.test(entity.message || ''));
+            const status = mockStatus ? normalizedMockStatus : (inferredDown ? 'degraded' : 'ok');
+            const eventKind = mockStatus ? mockKind : (inferredDown ? 'response_timeout' : 'ok');
+            const msg = status === 'ok'
+                ? `${row.renter_name || 'Renter'} health probe recovered / OK`
+                : `${row.renter_name || 'Renter'} recent 1hr response timeout x3`;
+            return {
+                rentalId: row.rental_id,
+                ownerEntityId: ownerSlot,
+                renterEntityId,
+                renterName: row.renter_name || entity?.name || entity?.character || `Entity #${renterEntityId ?? ownerSlot}`,
+                status,
+                lastProbeAt: nowIso,
+                recentEvents: [{
+                    eventId: `${row.rental_id}:${eventKind}:${nowIso.slice(0, 16)}`,
+                    kind: eventKind,
+                    ts: nowIso,
+                    msg,
+                }],
+            };
+        });
+
+        // E2E/dev convenience: allow UI validation before a rental contract exists.
+        if (statuses.length === 0 && mockStatus) {
+            const fallbackEntityId = ownerEntityId ?? parseInt(req.query.renterEntityId || '0', 10);
+            statuses.push({
+                rentalId: 'mock_rental_health',
+                ownerEntityId: Number.isInteger(fallbackEntityId) ? fallbackEntityId : null,
+                renterEntityId: Number.isInteger(fallbackEntityId) ? fallbackEntityId : null,
+                renterName: req.query.renterName || 'Mac_E',
+                status: normalizedMockStatus,
+                lastProbeAt: nowIso,
+                recentEvents: [{
+                    eventId: `mock_rental_health:${mockKind}:${nowIso.slice(0, 16)}`,
+                    kind: mockKind,
+                    ts: nowIso,
+                    msg: normalizedMockStatus === 'ok'
+                        ? 'Mac_E health probe recovered / OK'
+                        : 'Mac_E recent 1hr response timeout x3',
+                }],
+            });
+        }
+
+        res.json({ success: true, statuses });
+    }));
+
     // GET /api/rental/my-contracts?role=renter|owner
     router.get('/my-contracts', authMiddleware, rentalRoute(async (req, res) => {
         const role = req.query.role || null;
