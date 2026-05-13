@@ -879,6 +879,24 @@
             </div>
         </div>
 
+        <!-- Chat Preferences Card -->
+        <div class="card" id="chatPreferencesCard">
+            <div class="card-title">
+                <span>💬 <span data-i18n="settings_chat_preferences">Chat Preferences</span></span>
+            </div>
+            <div class="setting-row">
+                <div class="setting-row-label">
+                    <span data-i18n="settings_chat_avatar_size">Avatar Size</span>
+                    <small style="color:var(--text-muted);font-size:11px;" data-i18n="settings_chat_avatar_size_desc">Applies to chat list, chat header, and message avatars</small>
+                </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;">
+                    <button class="chip" id="chatAvatarSizeSmall" onclick="setChatAvatarSize('small')" data-i18n="settings_chat_avatar_size_small">Small</button>
+                    <button class="chip" id="chatAvatarSizeMedium" onclick="setChatAvatarSize('medium')" data-i18n="settings_chat_avatar_size_medium">Medium</button>
+                    <button class="chip" id="chatAvatarSizeLarge" onclick="setChatAvatarSize('large')" data-i18n="settings_chat_avatar_size_large">Large</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Notifications Card -->
         <div class="card">
             <div class="notif-header" onclick="toggleNotifSection()">
@@ -2219,6 +2237,7 @@
                 const prefs = data.prefs || {};
                 const toggle = document.getElementById('toggleBroadcastRecipientInfo');
                 if (toggle) toggle.checked = prefs.broadcast_recipient_info !== false;
+                applyChatAvatarSizePref(prefs);
                 applyKanbanNudgePrefs(prefs);
             } catch (e) {
                 console.error('Failed to load device preferences:', e);
@@ -2232,6 +2251,31 @@
                 await apiCall('PUT', '/api/device-preferences', { prefs });
             } catch (e) {
                 showToast(i18n.t('toast_preference_update_failed'), 'error');
+            }
+        }
+
+        const CHAT_AVATAR_SIZE_VALUES = ['small', 'medium', 'large'];
+
+        function normalizeChatAvatarSize(value) {
+            return CHAT_AVATAR_SIZE_VALUES.includes(value) ? value : 'medium';
+        }
+
+        function applyChatAvatarSizePref(prefs = {}) {
+            const size = normalizeChatAvatarSize(prefs.chat_avatar_size || localStorage.getItem('eclaw_chat_avatar_size'));
+            try { localStorage.setItem('eclaw_chat_avatar_size', size); } catch (e) {}
+            document.getElementById('chatAvatarSizeSmall')?.classList.toggle('active', size === 'small');
+            document.getElementById('chatAvatarSizeMedium')?.classList.toggle('active', size === 'medium');
+            document.getElementById('chatAvatarSizeLarge')?.classList.toggle('active', size === 'large');
+        }
+
+        async function setChatAvatarSize(size) {
+            const normalized = normalizeChatAvatarSize(size);
+            applyChatAvatarSizePref({ chat_avatar_size: normalized });
+            try {
+                await apiCall('PUT', '/api/device-preferences', { prefs: { chat_avatar_size: normalized } });
+            } catch (e) {
+                showToast(i18n.t('toast_preference_update_failed'), 'error');
+                loadDevicePreferences();
             }
         }
 

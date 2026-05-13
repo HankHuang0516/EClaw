@@ -10,6 +10,46 @@
     <link rel="icon" type="image/png" href="assets/favicon-32.png">
     <link rel="stylesheet" href="shared/style.css">
     <style>
+        :root {
+            --chat-avatar-size: 48px;
+        }
+        body.chat-avatar-small { --chat-avatar-size: 32px; }
+        body.chat-avatar-medium { --chat-avatar-size: 48px; }
+        body.chat-avatar-large { --chat-avatar-size: 64px; }
+
+        .chat-avatar {
+            width: var(--chat-avatar-size);
+            height: var(--chat-avatar-size);
+            min-width: var(--chat-avatar-size);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            overflow: hidden;
+            vertical-align: middle;
+            font-size: calc(var(--chat-avatar-size) * 0.72);
+            line-height: 1;
+        }
+        .chat-avatar .entity-avatar-img,
+        .chat-avatar .entity-avatar-canvas,
+        .chat-avatar .entity-avatar-emoji {
+            width: 100% !important;
+            height: 100% !important;
+            font-size: 100% !important;
+            line-height: 1 !important;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .chat-entity-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+        }
+        .chat-entity-label-text {
+            min-width: 0;
+        }
+
         /* ── Chat Layout ── */
         .chat-messages-wrapper {
             position: relative;
@@ -2669,8 +2709,8 @@
 
 <body>
     <script>
-        // Apply chat density class before paint (avoid FOUC).
-        // Default: mobile WebView/touch → compact; desktop → normal.
+        // Apply chat density and avatar-size classes before paint (avoid FOUC).
+        // Default density: mobile WebView/touch → compact; desktop → normal.
         (function () {
             try {
                 var saved = localStorage.getItem('eclaw_chat_density');
@@ -2683,6 +2723,12 @@
                     document.body.classList.add('density-' + saved);
                 }
                 window.__eclawChatDensity = saved;
+
+                var avatarSize = localStorage.getItem('eclaw_chat_avatar_size') || 'medium';
+                if (avatarSize === 'small' || avatarSize === 'large') {
+                    document.body.classList.add('chat-avatar-' + avatarSize);
+                }
+                window.__eclawChatAvatarSize = avatarSize;
             } catch (e) { /* localStorage may be blocked in private mode */ }
         })();
     </script>
@@ -3007,6 +3053,44 @@
         const xdeviceLookupMissCache = new Set();
         const ENTITY_NO_PROGRESS_MS = 10 * 60 * 1000;
         const entityRuntimeStatus = new Map();
+        const CHAT_AVATAR_SIZE_PX = { small: 32, medium: 48, large: 64 };
+        let chatAvatarSize = 'medium';
+
+        function normalizeChatAvatarSize(value) {
+            return CHAT_AVATAR_SIZE_PX[value] ? value : 'medium';
+        }
+
+        function applyChatAvatarSize(value) {
+            chatAvatarSize = normalizeChatAvatarSize(value);
+            document.body.classList.remove('chat-avatar-small', 'chat-avatar-medium', 'chat-avatar-large');
+            document.body.classList.add(`chat-avatar-${chatAvatarSize}`);
+            try { localStorage.setItem('eclaw_chat_avatar_size', chatAvatarSize); } catch (_) {}
+        }
+
+        async function loadChatAvatarSizePreference() {
+            applyChatAvatarSize(localStorage.getItem('eclaw_chat_avatar_size') || 'medium');
+            if (!currentUser?.deviceId || !currentUser?.deviceSecret) return;
+            try {
+                const data = await apiCall('GET', `/api/device-preferences?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+                applyChatAvatarSize(data?.prefs?.chat_avatar_size || chatAvatarSize);
+            } catch (_) {
+                // Keep local/default size; avatar size must never block chat load.
+            }
+        }
+
+        function getChatAvatarPx() {
+            return CHAT_AVATAR_SIZE_PX[chatAvatarSize] || CHAT_AVATAR_SIZE_PX.medium;
+        }
+
+        function getChatEntityLabel(entityId) {
+            const id = Number(entityId);
+            const avatar = getAvatarForEntity(id);
+            const avatarHtml = renderAvatarHtml(avatar, getChatAvatarPx(), id);
+            return `<span class="chat-entity-label entity-label" data-entity="${id}">`
+                + `<span class="chat-avatar">${avatarHtml}</span>`
+                + `<span class="chat-entity-label-text">${escapeHtml(getEntityDisplayName(id))} (#${id})</span>`
+                + `</span>`;
+        }
 
         // ── Chat Integrity Validator ──
         const ChatIntegrityValidator = (() => {
@@ -3227,6 +3311,7 @@
 
             // Highlight current density button (value already applied pre-paint)
             highlightDensityButton(window.__eclawChatDensity || 'normal');
+            applyChatAvatarSize(window.__eclawChatAvatarSize || 'medium');
 
             if (isAndroidWebView) {
                 // Hide web nav/footer — Android has its own bottom navigation
@@ -3250,6 +3335,7 @@
             if (!user) return;
             initPortalSocket();
             initEnvVarBtn(user.deviceId, user.deviceSecret);
+            await loadChatAvatarSizePreference();
 
             // Hide slash suggestions on blur
             document.getElementById('messageInput').addEventListener('blur', () => {
@@ -3578,7 +3664,7 @@
                 label.dataset.entityId = e.entityId;
                 const e2eeBadge = e.encryptionStatus === 'e2ee' ? ' 🔒' : '';
                 label.innerHTML = `<input type="checkbox" data-entity="${e.entityId}" ${isChecked ? 'checked' : ''} onchange="updateTargetAll()">
-                    <span class="target-label-main">${renderAvatarHtml(avatar, 20, e.entityId)} ${escapeHtml(name)} (#${e.entityId})${e2eeBadge}<span class="entity-status-slot">${renderEntityStatusBadge(e.entityId)}</span></span>`;
+                    <span class="target-label-main">${getChatEntityLabel(e.entityId)}${e2eeBadge}<span class="entity-status-slot">${renderEntityStatusBadge(e.entityId)}</span></span>`;
                 allItems.push({ el: label, type: 'entity' });
             });
 
@@ -3977,7 +4063,7 @@
                 const avatar = getAvatarForEntity(id);
                 const existing = group.querySelector(`[data-filter="entity-${id}"]`);
                 if (existing) {
-                    existing.innerHTML = `${renderAvatarHtml(avatar, 18, id)} ${getEntityDisplayName(id)} (#${id})`;
+                    existing.innerHTML = getChatEntityLabel(id);
                     return;
                 }
 
@@ -3985,7 +4071,7 @@
                 chip.className = `filter-chip filter-chip-entity${currentFilter === 'entity-' + id ? ' active' : ''}`;
                 chip.dataset.filter = `entity-${id}`;
                 chip.onclick = () => setFilter(`entity-${id}`);
-                chip.innerHTML = `${renderAvatarHtml(avatar, 18, id)} ${getEntityDisplayName(id)} (#${id})`;
+                chip.innerHTML = getChatEntityLabel(id);
                 group.insertBefore(chip, myChip);
             });
 
@@ -4833,7 +4919,7 @@
 
         function buildSourceLabel(msg) {
             const entityId = msg.entity_id;
-            const entityHtml = `<span class="entity-label" data-entity="${entityId}">${getEntityLabel(entityId)}</span>`;
+            const entityHtml = getChatEntityLabel(entityId);
 
             if (msg.is_from_user) {
                 const parsed = parseEntitySource(msg.source);
@@ -4869,9 +4955,7 @@
 
                 // Grouped broadcast: show all target entities in one label
                 if (msg._groupedEntityIds && msg._groupedEntityIds.length > 1) {
-                    const entitiesHtml = msg._groupedEntityIds.map(eid =>
-                        `<span class="entity-label" data-entity="${eid}">${getEntityLabel(eid)}</span>`
-                    ).join('&ensp;');
+                    const entitiesHtml = msg._groupedEntityIds.map(eid => getChatEntityLabel(eid)).join('&ensp;');
                     return `You &rarr; ${entitiesHtml} &middot; ${escapeHtml(sourceTag)}`;
                 }
 
@@ -4891,7 +4975,7 @@
                         return crossDeviceLabel(senderHtml, targetHtml);
                     }
 
-                    const senderHtml = `<span class="entity-label" data-entity="${parsed.fromEntityId}">${getEntityLabel(parsed.fromEntityId)}</span>`;
+                    const senderHtml = getChatEntityLabel(parsed.fromEntityId);
 
                     // Broadcast message — show sender → Broadcast
                     if (parsed.isBroadcast) {
@@ -4904,7 +4988,7 @@
                         : new Set();
 
                     const targetLabels = parsed.targets.map(tid => {
-                        const label = getEntityLabel(tid);
+                        const label = getChatEntityLabel(tid);
                         return deliveredIds.has(tid) ? `${label} ${i18n.t('chat_read_label')}` : label;
                     });
 
