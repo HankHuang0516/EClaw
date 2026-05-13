@@ -649400,7 +649400,7 @@ const TRANSLATIONS = {
         "mm_node_owner": "Owner",
         "mm_node_chat": "Chat",
         "mm_loading": "Loading graph…",
-        "mm_empty_title": "No graph data yet",
+        "mm_state_empty_title": "No graph data yet",
         "mm_empty_body": "Once tasks, notes, or chat anchors exist, they'll appear here.",
         "mm_error_title": "Couldn't load the graph",
         "mm_error_retry": "Try again",
