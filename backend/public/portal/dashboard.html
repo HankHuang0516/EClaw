@@ -1441,6 +1441,33 @@
         body.embedded-orgchart #addEntityCard,
         body.embedded-orgchart #borrowCard { display: none !important; }
         body.embedded-orgchart .org-chart-container { display: block !important; }
+        body.embedded-orgchart .org-tree {
+            /* Native bottom sheets are narrow; scale the tree to the visible
+               sheet width instead of rendering a half-clipped org row. */
+            padding-left: 8px;
+            padding-right: 8px;
+            overflow-x: hidden;
+        }
+        body.embedded-orgchart .org-tree > .org-level {
+            transform-origin: top center;
+            will-change: transform;
+        }
+        body.embedded-orgchart .org-level { gap: clamp(12px, 4vw, 32px); }
+        @media (max-width: 480px) {
+            body.embedded-orgchart .org-node {
+                min-width: 64px;
+                padding: 8px 10px;
+            }
+            body.embedded-orgchart .org-node .org-avatar {
+                width: 30px;
+                height: 30px;
+                font-size: 18px;
+            }
+            body.embedded-orgchart .org-node .org-name {
+                max-width: 72px;
+                font-size: 11px;
+            }
+        }
 
         .invite-banner {
             display: none;
@@ -3749,8 +3776,76 @@
             const root = buildLevel('USER', 0);
             if (root) tree.appendChild(root);
 
-            // Draw SVG connectors
-            requestAnimationFrame(() => drawConnectors(tree, nodeEls));
+            ensureOrgChartResizeHandler();
+
+            // Fit narrow embedded sheets before drawing SVG connectors, so the
+            // connectors use the same visual coordinates as the scaled nodes.
+            requestAnimationFrame(() => {
+                fitOrgTreeToViewport(tree, root);
+                drawConnectors(tree, nodeEls);
+            });
+        }
+
+        function isEmbeddedOrgChartMode() {
+            return document.body && document.body.classList.contains('embedded-orgchart');
+        }
+
+        function fitOrgTreeToViewport(tree, root) {
+            if (!tree || !root) return 1;
+
+            root.style.transform = '';
+            root.style.width = '';
+            root.style.alignSelf = '';
+            root.style.marginLeft = 'auto';
+            root.style.marginRight = 'auto';
+            root.style.transformOrigin = 'top left';
+
+            if (!isEmbeddedOrgChartMode()) {
+                tree.dataset.orgFitScale = '1';
+                return 1;
+            }
+
+            const treeStyle = window.getComputedStyle(tree);
+            const horizontalPadding = (parseFloat(treeStyle.paddingLeft) || 0) + (parseFloat(treeStyle.paddingRight) || 0);
+            const available = Math.max(1, tree.clientWidth - horizontalPadding);
+            const contentWidth = Math.ceil(Math.max(root.scrollWidth || 0, root.getBoundingClientRect().width || 0));
+            const scale = contentWidth > available
+                ? Math.max(0.5, Math.min(1, available / contentWidth))
+                : 1;
+            const visualWidth = contentWidth * scale;
+            const marginLeft = Math.max(0, (available - visualWidth) / 2);
+
+            // Use flex-start + explicit width/margin instead of centered transform.
+            // Centered transforms keep the large unscaled layout box centered, which
+            // can still leave the visual tree shifted beyond the right edge.
+            root.style.alignSelf = 'flex-start';
+            root.style.width = contentWidth + 'px';
+            root.style.marginLeft = marginLeft + 'px';
+            root.style.marginRight = '0';
+            if (scale < 0.999) {
+                root.style.transform = `scale(${scale})`;
+            }
+            tree.dataset.orgFitScale = String(Math.round(scale * 1000) / 1000);
+            return scale;
+        }
+
+        function ensureOrgChartResizeHandler() {
+            if (window.__orgChartResizeHandlerBound) return;
+            window.__orgChartResizeHandlerBound = true;
+            let resizeTimer = null;
+            window.addEventListener('resize', () => {
+                if (!orgChartLoaded) return;
+                if (resizeTimer) clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    const tree = document.getElementById('orgTree');
+                    if (!tree) return;
+                    const root = tree.firstElementChild;
+                    const nodeEls = {};
+                    tree.querySelectorAll('.org-node').forEach(n => { nodeEls[n.dataset.nodeId] = n; });
+                    fitOrgTreeToViewport(tree, root);
+                    drawConnectors(tree, nodeEls);
+                }, 80);
+            }, { passive: true });
         }
 
         function setupDropTarget(node, targetId) {
