@@ -582,6 +582,8 @@
         .kb-dep-chips { display:flex; gap:4px; flex-wrap:wrap; align-items:center; }
         .kb-detail-dep-chips { display:block; width:100%; margin-top:8px; padding-top:8px; border-top:1px solid var(--card-border, rgba(255,255,255,0.06)); }
         .kb-detail-dep-chips:empty { display:none; }
+        .kb-card-link-panel { width:100%; margin-top:10px; padding:10px; border:1px solid var(--card-border, rgba(255,255,255,0.06)); border-radius:8px; background:rgba(255,255,255,0.03); }
+        .kb-muted { color:var(--text-muted, rgba(255,255,255,0.55)); font-size:12px; }
         .kb-dep-chip { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:12px; font-size:10px; font-weight:500; cursor:pointer; transition:all 0.2s; text-decoration:none; border:1px solid transparent; max-width:120px; overflow:hidden; }
         .kb-dep-chip:hover { transform:translateY(-1px); }
 
@@ -1204,6 +1206,27 @@
 
         async function apiGetCardMessages(cardId, limit = 20) {
             return apiCall('GET', `/api/mission/card/${cardId}/messages?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}&limit=${limit}`);
+        }
+
+
+        async function apiGetCardLinks(cardId) {
+            return apiCall('GET', `/api/mission/card/${cardId}/links?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+        }
+
+        async function apiAddCardLink(cardId, targetCardId, relationType) {
+            return apiCall('POST', `/api/mission/card/${cardId}/link`, {
+                deviceId: currentUser.deviceId,
+                deviceSecret: currentUser.deviceSecret,
+                targetCardId,
+                relationType,
+            });
+        }
+
+        async function apiDeleteCardLink(cardId, targetCardId, relationType) {
+            return apiCall('DELETE', `/api/mission/card/${cardId}/link/${encodeURIComponent(targetCardId)}?relationType=${encodeURIComponent(relationType || 'related')}`, {
+                deviceId: currentUser.deviceId,
+                deviceSecret: currentUser.deviceSecret,
+            });
         }
 
         // ── FLIP Animation Helper ──
@@ -1925,6 +1948,10 @@
                 ${scheduleInfo}
                 ${card.description ? '<div class="kb-detail-desc">'+renderSmartChips(card.description)+'</div>' : ''}
                 <div class="kb-dep-chips-container kb-detail-dep-chips" data-dep-card-id="${cardId}"></div>
+                <div id="detailCardLinks" class="kb-card-link-panel" style="width:100%;margin-top:10px;padding:10px;border:1px solid var(--border-color,#333);border-radius:8px;background:rgba(255,255,255,.03)">
+                    <div style="font-weight:600;margin-bottom:8px">🔗 Card links</div>
+                    <div class="kb-muted">Loading links…</div>
+                </div>
             `;
             const detailDepContainer = meta.querySelector('.kb-detail-dep-chips');
             if (detailDepContainer) {
@@ -1932,6 +1959,7 @@
                     detailDepContainer.innerHTML = renderDependencyChips(dependencies, dependents);
                 });
             }
+            loadCardLinksForDetail(cardId);
 
             // Move bar — shared assign + reviewer UI for all cards
             const moveBar = document.getElementById('moveBar');
@@ -2006,6 +2034,90 @@
             // Load first tab
             switchDetailTab('comments', document.querySelector('.kb-modal-tab'));
             document.getElementById('detailModal').classList.add('show');
+        }
+
+
+        function escapeJs(value) {
+            return String(value == null ? '' : value)
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
+                .replace(/\n/g, '\\n')
+                .replace(/\r/g, '');
+        }
+
+        function renderCardLinkRows(cardId, title, rows, direction) {
+            if (!rows || rows.length === 0) return `<div class="kb-muted" style="font-size:12px">No ${title.toLowerCase()} links</div>`;
+            return `<div style="margin-top:6px"><div style="font-size:12px;font-weight:600;color:var(--text-secondary)">${title}</div>` +
+                rows.map(link => {
+                    const otherId = direction === 'outgoing' ? link.targetCardId : link.sourceCardId;
+                    const otherTitle = direction === 'outgoing' ? link.targetTitle : link.sourceTitle;
+                    const arrow = direction === 'outgoing' ? '→' : '←';
+                    const remove = direction === 'outgoing'
+                        ? `<button class="kb-move-btn" style="padding:2px 6px" onclick="removeCardLink('${cardId}','${escapeJs(otherId)}','${escapeJs(link.relationType)}')">Remove</button>`
+                        : '';
+                    return `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px;font-size:12px">` +
+                        `<code>${escapeHtml(link.relationType)}</code><span>${arrow}</span>` +
+                        `<button class="kb-move-btn" style="padding:2px 6px" onclick="openDetail('${escapeJs(otherId)}')">${escapeHtml(otherTitle || otherId)}</button>` +
+                        remove +
+                    `</div>`;
+                }).join('') + `</div>`;
+        }
+
+        async function loadCardLinksForDetail(cardId) {
+            const panel = document.getElementById('detailCardLinks');
+            if (!panel) return;
+            try {
+                const data = await apiGetCardLinks(cardId);
+                const outgoing = data.outgoing || [];
+                const incoming = data.incoming || [];
+                panel.innerHTML = `
+                    <div style="font-weight:600;margin-bottom:8px">🔗 Card links</div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+                        <select id="cardLinkRelation" style="max-width:130px">
+                            <option value="related">related</option>
+                            <option value="references">references</option>
+                            <option value="duplicates">duplicates</option>
+                            <option value="causes">causes</option>
+                            <option value="supports">supports</option>
+                            <option value="contradicts">contradicts</option>
+                        </select>
+                        <input id="cardLinkTarget" placeholder="target card id" style="min-width:180px;flex:1">
+                        <button class="kb-move-btn" onclick="addCardLink('${cardId}')">Add link</button>
+                    </div>
+                    ${renderCardLinkRows(cardId, 'Outgoing', outgoing, 'outgoing')}
+                    ${renderCardLinkRows(cardId, 'Incoming', incoming, 'incoming')}
+                `;
+            } catch (e) {
+                panel.innerHTML = `<div style="font-weight:600;margin-bottom:8px">🔗 Card links</div><div class="kb-muted">Failed to load links: ${escapeHtml(e.message || e)}</div>`;
+            }
+        }
+
+        async function addCardLink(cardId) {
+            const targetInput = document.getElementById('cardLinkTarget');
+            const relationSelect = document.getElementById('cardLinkRelation');
+            const targetCardId = (targetInput?.value || '').trim();
+            const relationType = relationSelect?.value || 'related';
+            if (!targetCardId) {
+                showToast('Target card id is required', true);
+                return;
+            }
+            try {
+                await apiAddCardLink(cardId, targetCardId, relationType);
+                showToast('Card link saved');
+                await loadCardLinksForDetail(cardId);
+            } catch (e) {
+                showToast(e.message || 'Failed to add card link', true);
+            }
+        }
+
+        async function removeCardLink(cardId, targetCardId, relationType) {
+            try {
+                await apiDeleteCardLink(cardId, targetCardId, relationType);
+                showToast('Card link removed');
+                await loadCardLinksForDetail(cardId);
+            } catch (e) {
+                showToast(e.message || 'Failed to remove card link', true);
+            }
         }
 
         // Shared helper: run automation action with loading state + error handling

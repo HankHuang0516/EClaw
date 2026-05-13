@@ -914,7 +914,7 @@ function createMindmapModule(devices) {
                 }
             }
 
-            // 2) Dependencies (also seeds neighborIds)
+            // 2) Dependencies + explicit card links (also seeds neighborIds)
             const depsResult = cards.length === 0 ? { rows: [] } : await pool.query(
                 `SELECT card_id, depends_on_card_id, dependency_type
                  FROM kanban_card_dependencies
@@ -922,10 +922,21 @@ function createMindmapModule(devices) {
                    AND (card_id = ANY($2::varchar[]) OR depends_on_card_id = ANY($2::varchar[]))`,
                 [deviceId, [...initialCardIds]]
             );
+            const cardLinksResult = cards.length === 0 ? { rows: [] } : await pool.query(
+                `SELECT source_card_id, target_card_id, relation_type
+                 FROM kanban_card_links
+                 WHERE device_id = $1
+                   AND (source_card_id = ANY($2::varchar[]) OR target_card_id = ANY($2::varchar[]))`,
+                [deviceId, [...initialCardIds]]
+            );
             if (options.includeNeighbors) {
                 for (const d of depsResult.rows) {
                     if (!initialCardIds.has(d.card_id)) neighborIds.add(d.card_id);
                     if (!initialCardIds.has(d.depends_on_card_id)) neighborIds.add(d.depends_on_card_id);
+                }
+                for (const l of cardLinksResult.rows) {
+                    if (!initialCardIds.has(l.source_card_id)) neighborIds.add(l.source_card_id);
+                    if (!initialCardIds.has(l.target_card_id)) neighborIds.add(l.target_card_id);
                 }
             }
 
@@ -1020,6 +1031,7 @@ function createMindmapModule(devices) {
                 cards,
                 initialCardIds,
                 depRows: depsResult.rows,
+                cardLinkRows: cardLinksResult.rows,
                 noteCardLinkRows: noteCardLinksResult.rows,
                 commentCounts: commentCounts.rows,
                 noteCounts: noteCounts.rows,
