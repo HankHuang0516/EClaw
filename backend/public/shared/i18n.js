@@ -653051,6 +653051,7 @@ const TRANSLATIONS = {
 
 
         "mm_card_expand": "展开",
+        "mm_card_open_full": "完整思维导图 →",
 
 
 
@@ -1850435,6 +1850436,7 @@ const TRANSLATIONS = {
 
 
         "mm_card_expand": "展開",
+        "mm_card_open_full": "完全なマインドマップ →",
 
 
 
@@ -2412526,6 +2412528,7 @@ const TRANSLATIONS = {
 
 
         "mm_card_expand": "펼치기",
+        "mm_card_open_full": "전체 마인드맵 →",
 
 
 
@@ -2943156,6 +2943159,7 @@ const TRANSLATIONS = {
 
 
         "mm_card_expand": "ขยาย",
+        "mm_card_open_full": "แผนที่ความคิดเต็ม →",
 
 
 
@@ -3471866,6 +3471870,7 @@ const TRANSLATIONS = {
 
 
         "mm_card_expand": "Mở rộng",
+        "mm_card_open_full": "Bản đồ tư duy đầy đủ →",
 
 
 
@@ -3997248,6 +3997253,7 @@ const TRANSLATIONS = {
 
 
         "mm_card_expand": "Perluas",
+        "mm_card_open_full": "Peta pikiran penuh →",
 
 
 
@@ -4522246,6 +4522252,7 @@ const TRANSLATIONS = {
 
 
         "mm_card_expand": "Déplier",
+        "mm_card_open_full": "Carte mentale complète →",
 
 
 
@@ -5045964,6 +5045971,7 @@ const TRANSLATIONS = {
 
 
         "mm_card_expand": "Expandir",
+        "mm_card_open_full": "Mapa mental completo →",
 
 
 
@@ -5562250,6 +5562258,7 @@ const TRANSLATIONS = {
 
 
         "mm_card_expand": "Aufklappen",
+        "mm_card_open_full": "Vollständige Mindmap →",
 
 
 
@@ -6097868,6 +6097877,7 @@ const TRANSLATIONS = {
 
 
         "mm_card_expand": "Buka",
+        "mm_card_open_full": "Peta minda penuh →",
 
 
 
@@ -6773906,6 +6773916,7 @@ const TRANSLATIONS = {
 
 
         "mm_card_expand": "विस्तार करें",
+        "mm_card_open_full": "पूर्ण माइंडमैप →",
 
 
 
@@ -7462744,6 +7462755,7 @@ const TRANSLATIONS = {
 
 
         "mm_card_expand": "توسيع",
+        "mm_card_open_full": "خريطة ذهنية كاملة →",
 
 
 
