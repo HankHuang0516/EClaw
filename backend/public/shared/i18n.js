@@ -2950718,6 +2950718,7 @@ const TRANSLATIONS = {
 
 
         "mc_dlg_category": "หมวดหมู่",
+        "mc_dlg_linked_cards": "การ์ดคันบังที่เชื่อมโยง",
 
 
 
@@ -3479450,6 +3479451,7 @@ const TRANSLATIONS = {
 
 
         "mc_dlg_category": "Danh mục",
+        "mc_dlg_linked_cards": "Thẻ Kanban đã liên kết",
 
 
 
@@ -4004854,6 +4004856,7 @@ const TRANSLATIONS = {
 
 
         "mc_dlg_category": "Kategori",
+        "mc_dlg_linked_cards": "Kartu Kanban tertaut",
 
 
 
@@ -4529874,6 +4529877,7 @@ const TRANSLATIONS = {
 
 
         "mc_dlg_category": "Catégorie...",
+        "mc_dlg_linked_cards": "Cartes Kanban liées",
 
 
 
@@ -6784105,6 +6784109,7 @@ const TRANSLATIONS = {
 
 
         "mc_dlg_category": "श्रेणी",
+        "mc_dlg_linked_cards": "लिंक की गई कानबन कार्ड",
 
 
 
@@ -7473093,6 +7473098,7 @@ const TRANSLATIONS = {
 
 
         "mc_dlg_category": "الفئة",
+        "mc_dlg_linked_cards": "بطاقات كانبان المرتبطة",
 
 
 
