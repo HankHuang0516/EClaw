@@ -72,6 +72,118 @@ function substituteEnvVars(text, vars) {
     );
 }
 
+
+function normalizeLinkedCardIds(raw) {
+    if (raw === undefined) return undefined;
+    if (raw === null || raw === '') return [];
+    const arr = Array.isArray(raw) ? raw : String(raw).split(',');
+    const seen = new Set();
+    const out = [];
+    for (const v of arr) {
+        const id = String(v && typeof v === 'object' ? (v.id || v.cardId || v.value || '') : v || '').trim();
+        if (!id || seen.has(id)) continue;
+        seen.add(id);
+        out.push(id);
+    }
+    return out;
+}
+
+function getLinkedCardIdsFromNote(note) {
+    const explicit = normalizeLinkedCardIds(note && note.linkedCardIds);
+    if (explicit !== undefined) return explicit;
+    // Compatibility bridge: old note.anchor={type:'kanban_card',refId} remains
+    // useful as a one-card link until users explicitly edit linkedCardIds.
+    const anchor = note && mindmapMirror.normalizeAnchor(note.anchor);
+    return anchor && anchor.type === 'kanban_card' ? [anchor.refId] : [];
+}
+
+async function assertCardsBelongToDevice(queryable, deviceId, cardIds) {
+    const ids = normalizeLinkedCardIds(cardIds) || [];
+    if (ids.length === 0) return ids;
+    const result = await queryable.query(
+        `SELECT id FROM kanban_cards WHERE device_id = $1 AND id = ANY($2::varchar[])`,
+        [deviceId, ids]
+    );
+    const found = new Set(result.rows.map(r => r.id));
+    const missing = ids.filter(id => !found.has(id));
+    if (missing.length > 0) {
+        const err = new Error(`Invalid linkedCardIds for this device: ${missing.join(', ')}`);
+        err.statusCode = 400;
+        throw err;
+    }
+    return ids;
+}
+
+async function replaceNoteCardLinks(queryable, deviceId, noteId, cardIds, entityId) {
+    const ids = await assertCardsBelongToDevice(queryable, deviceId, cardIds);
+    await queryable.query(
+        `DELETE FROM mission_note_card_links WHERE device_id = $1 AND note_id = $2`,
+        [deviceId, noteId]
+    );
+    for (const cardId of ids) {
+        await queryable.query(
+            `INSERT INTO mission_note_card_links (device_id, note_id, card_id, created_by)
+             VALUES ($1, $2, $3, $4)
+             ON CONFLICT (device_id, note_id, card_id) DO NOTHING`,
+            [deviceId, noteId, cardId, entityId == null ? 0 : Number(entityId) || 0]
+        );
+    }
+    return ids;
+}
+
+async function hydrateNoteCardLinks(queryable, deviceId, notes) {
+    if (!Array.isArray(notes) || notes.length === 0) return notes || [];
+    const ids = notes.map(n => n && n.id).filter(Boolean);
+    if (ids.length === 0) return notes;
+    const result = await queryable.query(
+        `SELECT note_id, card_id
+         FROM mission_note_card_links
+         WHERE device_id = $1 AND note_id = ANY($2::varchar[])
+         ORDER BY created_at, card_id`,
+        [deviceId, ids]
+    );
+    const byNote = new Map();
+    for (const row of result.rows) {
+        if (!byNote.has(row.note_id)) byNote.set(row.note_id, []);
+        byNote.get(row.note_id).push(row.card_id);
+    }
+    return notes.map(note => ({
+        ...note,
+        linkedCardIds: byNote.has(note.id) ? byNote.get(note.id) : getLinkedCardIdsFromNote(note),
+    }));
+}
+
+function findNoteById(notes, noteId) {
+    return (notes || []).find(n => n && n.id === noteId) || null;
+}
+
+async function replaceLinkedCardsInDashboard(queryable, deviceId, noteId, cardIds) {
+    const result = await queryable.query(
+        'SELECT notes FROM mission_dashboard WHERE device_id = $1 FOR UPDATE',
+        [deviceId]
+    );
+    if (result.rows.length === 0) {
+        const err = new Error('Dashboard not found');
+        err.statusCode = 404;
+        throw err;
+    }
+    const notes = result.rows[0].notes || [];
+    const note = findNoteById(notes, noteId);
+    if (!note) {
+        const err = new Error(`Note not found: "${noteId}"`);
+        err.statusCode = 404;
+        throw err;
+    }
+    note.linkedCardIds = cardIds;
+    note.updatedAt = Date.now();
+    const updateResult = await queryable.query(
+        `UPDATE mission_dashboard SET notes = $2, last_synced_at = NOW()
+         WHERE device_id = $1 RETURNING version`,
+        [deviceId, JSON.stringify(notes)]
+    );
+    return { note, version: updateResult.rows[0] && updateResult.rows[0].version };
+}
+
 function applyVarSubstitution(dashboard, dvRow) {
     // Skip decryption if no {{KEY}} references exist anywhere
     const hasRefs =
@@ -376,7 +488,7 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
                 todoList: row.todo_list,
                 missionList: row.mission_list,
                 doneList: row.done_list,
-                notes: row.notes,
+                notes: await hydrateNoteCardLinks(pool, deviceId, row.notes || []),
                 rules: row.rules,
                 skills: skills,
                 souls: row.souls || [],
@@ -450,6 +562,14 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
                 uploadedSkills = [...systemSkills, ...uploadedSkills];
             }
 
+            const uploadedNotes = dashboard.notes || [];
+            for (const note of uploadedNotes) {
+                const linked = normalizeLinkedCardIds(note && note.linkedCardIds);
+                if (linked !== undefined) {
+                    note.linkedCardIds = await assertCardsBelongToDevice(client, deviceId, linked);
+                }
+            }
+
             // Update dashboard (Trigger will auto-increment version)
             const result = await client.query(
                 `UPDATE mission_dashboard
@@ -469,6 +589,22 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
                 ]
             );
 
+            const existingNoteIds = new Set(existingNotes.map(n => n && n.id).filter(Boolean));
+            const uploadedNoteIds = new Set(uploadedNotes.map(n => n && n.id).filter(Boolean));
+            const deletedNoteIds = [...existingNoteIds].filter(id => !uploadedNoteIds.has(id));
+            if (deletedNoteIds.length > 0) {
+                await client.query(
+                    `DELETE FROM mission_note_card_links
+                     WHERE device_id = $1 AND note_id = ANY($2::varchar[])`,
+                    [deviceId, deletedNoteIds]
+                );
+            }
+            for (const note of uploadedNotes) {
+                if (!note || !note.id || !Object.prototype.hasOwnProperty.call(note, 'linkedCardIds')) continue;
+                const ids = await replaceNoteCardLinks(client, deviceId, note.id, note.linkedCardIds, entityId);
+                note.linkedCardIds = ids;
+            }
+
             // Log sync action
             await client.query(
                 'SELECT record_sync_action($1, $2, $3, $4, $5, $6, $7)',
@@ -482,7 +618,6 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
             // dashboard commit; failures are logged + swallowed because the
             // mirror is a derived read model.
             try {
-                const uploadedNotes = dashboard.notes || [];
                 const existingById = new Map(existingNotes.map(n => [n.id, n]));
                 const uploadedById = new Map(uploadedNotes.map(n => [n.id, n]));
                 for (const note of uploadedNotes) {
@@ -494,7 +629,8 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
                         before.title !== note.title ||
                         before.content !== note.content ||
                         before.category !== note.category ||
-                        JSON.stringify(before.anchor || null) !== JSON.stringify(note.anchor || null)
+                        JSON.stringify(before.anchor || null) !== JSON.stringify(note.anchor || null) ||
+                        JSON.stringify(getLinkedCardIdsFromNote(before)) !== JSON.stringify(getLinkedCardIdsFromNote(note))
                     ) {
                         fireMirror(mindmapMirror.mirrorNoteUpdate, [pool, deviceId, entityId, note]);
                     }
@@ -518,7 +654,7 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
         } catch (error) {
             await client.query('ROLLBACK');
             console.error('[Mission] Error updating dashboard:', error);
-            res.status(500).json({ success: false, error: error.message });
+            res.status(error.statusCode || 500).json({ success: false, error: error.message });
         } finally {
             client.release();
         }
@@ -712,6 +848,7 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
                 [deviceId]
             );
             let notes = result.rows.length > 0 ? (result.rows[0].notes || []) : [];
+            notes = await hydrateNoteCardLinks(pool, deviceId, notes);
             if (category) {
                 notes = notes.filter(n => (n.category || 'general') === category);
             }
@@ -731,6 +868,7 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
     router.post('/note/add', async (req, res) => {
         if (!authenticate(req, res)) return;
         const { deviceId, entityId, title, content, category, anchor } = req.body;
+        const linkedCardIdsInput = normalizeLinkedCardIds(req.body.linkedCardIds);
 
         if (!title) {
             return res.status(400).json({ success: false, error: 'Missing title' });
@@ -751,6 +889,9 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
                 'SELECT notes FROM mission_dashboard WHERE device_id = $1 FOR UPDATE', [deviceId]
             );
             const notes = (result.rows[0] && result.rows[0].notes) || [];
+            const linkedCardIds = linkedCardIdsInput !== undefined
+                ? await assertCardsBelongToDevice(client, deviceId, linkedCardIdsInput)
+                : [];
             const newNote = {
                 id: noteId,
                 title: title.trim(),
@@ -759,9 +900,13 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
                 createdAt: Date.now(),
                 updatedAt: Date.now(),
                 createdBy: entityId != null ? `entity_${entityId}` : 'bot',
-                ...(normAnchor ? { anchor: normAnchor } : {})
+                ...(normAnchor ? { anchor: normAnchor } : {}),
+                ...(linkedCardIdsInput !== undefined ? { linkedCardIds } : {})
             };
             notes.push(newNote);
+            if (linkedCardIdsInput !== undefined) {
+                await replaceNoteCardLinks(client, deviceId, noteId, linkedCardIds, entityId);
+            }
             const updateResult = await client.query(
                 'UPDATE mission_dashboard SET notes = $2, last_synced_at = NOW() WHERE device_id = $1 RETURNING version',
                 [deviceId, JSON.stringify(notes)]
@@ -782,7 +927,7 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
         } catch (error) {
             await client.query('ROLLBACK');
             console.error('[Mission] Error adding note:', error);
-            res.status(500).json({ success: false, error: error.message });
+            res.status(error.statusCode || 500).json({ success: false, error: error.message });
         } finally {
             client.release();
         }
@@ -805,6 +950,8 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
         const newAnchor = anchorTouched
             ? (req.body.anchor === null ? null : mindmapMirror.normalizeAnchor(req.body.anchor))
             : undefined;
+        const linkedCardIdsTouched = Object.prototype.hasOwnProperty.call(req.body, 'linkedCardIds');
+        const linkedCardIdsInput = linkedCardIdsTouched ? normalizeLinkedCardIds(req.body.linkedCardIds) : undefined;
 
         if (!title) {
             return res.status(400).json({ success: false, error: 'Missing title' });
@@ -839,6 +986,13 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
                 if (newAnchor) note.anchor = newAnchor;
                 else delete note.anchor;
             }
+            if (linkedCardIdsTouched) {
+                if (!note.id) {
+                    await client.query('ROLLBACK');
+                    return res.status(400).json({ success: false, error: 'Cannot link cards: note is missing id' });
+                }
+                note.linkedCardIds = await replaceNoteCardLinks(client, deviceId, note.id, linkedCardIdsInput, entityId);
+            }
             note.updatedAt = Date.now();
 
             const updateResult = await client.query(
@@ -860,6 +1014,7 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
                 // mirror treats `undefined` as "leave parent alone" and
                 // `null` as "clear anchor → fall back to category".
                 ...(anchorTouched ? { anchor: newAnchor } : {}),
+                ...(linkedCardIdsTouched ? { linkedCardIds: note.linkedCardIds } : {}),
             };
             fireMirror(mindmapMirror.mirrorNoteUpdate, [pool, deviceId, entityId, mirrorNote]);
 
@@ -867,7 +1022,7 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
         } catch (error) {
             await client.query('ROLLBACK');
             console.error('[Mission] Error updating note:', error);
-            res.status(500).json({ success: false, error: error.message });
+            res.status(error.statusCode || 500).json({ success: false, error: error.message });
         } finally {
             client.release();
         }
@@ -909,6 +1064,9 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
 
             const deletedNote = notes[foundIdx];
             notes.splice(foundIdx, 1);
+            if (deletedNote && deletedNote.id) {
+                await client.query('DELETE FROM mission_note_card_links WHERE device_id = $1 AND note_id = $2', [deviceId, deletedNote.id]);
+            }
 
             const updateResult = await client.query(
                 `UPDATE mission_dashboard SET notes = $2, last_synced_at = NOW()
@@ -929,6 +1087,123 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
             await client.query('ROLLBACK');
             console.error('[Mission] Error deleting note:', error);
             res.status(500).json({ success: false, error: error.message });
+        } finally {
+            client.release();
+        }
+    });
+
+
+    // ============================================
+    // Mission note ↔ Kanban card explicit link API
+    // ============================================
+    router.get('/note/:noteId/cards', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const deviceId = req.query.deviceId || req.body.deviceId;
+        const { noteId } = req.params;
+        try {
+            const notesRow = await pool.query('SELECT notes FROM mission_dashboard WHERE device_id = $1', [deviceId]);
+            const note = findNoteById(notesRow.rows[0] && notesRow.rows[0].notes, noteId);
+            if (!note) return res.status(404).json({ success: false, error: `Note not found: "${noteId}"` });
+            const links = await pool.query(
+                `SELECT l.card_id, l.created_at, c.title, c.status, c.priority
+                 FROM mission_note_card_links l
+                 JOIN kanban_cards c ON c.id = l.card_id AND c.device_id = l.device_id
+                 WHERE l.device_id = $1 AND l.note_id = $2
+                 ORDER BY l.created_at, l.card_id`,
+                [deviceId, noteId]
+            );
+            res.json({
+                success: true,
+                noteId,
+                linkedCardIds: links.rows.map(r => r.card_id),
+                cards: links.rows.map(r => ({
+                    id: r.card_id,
+                    title: r.title,
+                    status: r.status,
+                    priority: r.priority,
+                    linkedAt: new Date(r.created_at).getTime(),
+                })),
+            });
+        } catch (error) {
+            console.error('[Mission] Error listing note/card links:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    });
+
+    router.put('/note/:noteId/cards', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const params = { ...req.query, ...req.body };
+        const { deviceId, entityId } = params;
+        const { noteId } = req.params;
+        const linkedCardIds = normalizeLinkedCardIds(params.linkedCardIds !== undefined ? params.linkedCardIds : params.cardIds);
+        if (linkedCardIds === undefined) return res.status(400).json({ success: false, error: 'Missing linkedCardIds' });
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            const ids = await replaceNoteCardLinks(client, deviceId, noteId, linkedCardIds, entityId);
+            const { note, version } = await replaceLinkedCardsInDashboard(client, deviceId, noteId, ids);
+            await client.query('COMMIT');
+            fireMirror(mindmapMirror.mirrorNoteUpdate, [pool, deviceId, entityId, { ...note, linkedCardIds: ids }]);
+            res.json({ success: true, noteId, linkedCardIds: ids, item: note, version });
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('[Mission] Error replacing note/card links:', error);
+            res.status(error.statusCode || 500).json({ success: false, error: error.message });
+        } finally {
+            client.release();
+        }
+    });
+
+    router.post('/note/:noteId/card', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const params = { ...req.query, ...req.body };
+        const { deviceId, entityId, cardId } = params;
+        const { noteId } = req.params;
+        if (!cardId) return res.status(400).json({ success: false, error: 'Missing cardId' });
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            const current = await client.query(
+                `SELECT card_id FROM mission_note_card_links WHERE device_id = $1 AND note_id = $2 ORDER BY created_at, card_id`,
+                [deviceId, noteId]
+            );
+            const ids = normalizeLinkedCardIds([...current.rows.map(r => r.card_id), cardId]);
+            const validated = await replaceNoteCardLinks(client, deviceId, noteId, ids, entityId);
+            const { note, version } = await replaceLinkedCardsInDashboard(client, deviceId, noteId, validated);
+            await client.query('COMMIT');
+            fireMirror(mindmapMirror.mirrorNoteUpdate, [pool, deviceId, entityId, { ...note, linkedCardIds: validated }]);
+            res.json({ success: true, noteId, linkedCardIds: validated, item: note, version });
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('[Mission] Error adding note/card link:', error);
+            res.status(error.statusCode || 500).json({ success: false, error: error.message });
+        } finally {
+            client.release();
+        }
+    });
+
+    router.delete('/note/:noteId/card/:cardId', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const deviceId = req.body.deviceId || req.query.deviceId;
+        const entityId = req.body.entityId || req.query.entityId;
+        const { noteId, cardId } = req.params;
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+            const current = await client.query(
+                `SELECT card_id FROM mission_note_card_links WHERE device_id = $1 AND note_id = $2 ORDER BY created_at, card_id`,
+                [deviceId, noteId]
+            );
+            const ids = current.rows.map(r => r.card_id).filter(id => id !== cardId);
+            await replaceNoteCardLinks(client, deviceId, noteId, ids, entityId);
+            const { note, version } = await replaceLinkedCardsInDashboard(client, deviceId, noteId, ids);
+            await client.query('COMMIT');
+            fireMirror(mindmapMirror.mirrorNoteUpdate, [pool, deviceId, entityId, { ...note, linkedCardIds: ids }]);
+            res.json({ success: true, noteId, linkedCardIds: ids, deleted: current.rows.some(r => r.card_id === cardId) ? 1 : 0, version });
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('[Mission] Error deleting note/card link:', error);
+            res.status(error.statusCode || 500).json({ success: false, error: error.message });
         } finally {
             client.release();
         }
@@ -2459,7 +2734,8 @@ async function submitPayment() {
                 [deviceId, JSON.stringify(notes)]
             );
             
-            // Delete associated note page if exists
+            // Delete associated note/card links and note page if exists
+            await client.query('DELETE FROM mission_note_card_links WHERE device_id = $1 AND note_id = $2', [deviceId, id]);
             await client.query('DELETE FROM note_pages WHERE device_id = $1 AND note_id = $2', [deviceId, id]);
 
             await client.query('COMMIT');

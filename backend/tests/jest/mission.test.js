@@ -9,10 +9,11 @@
 // Exposed so deeper tests can seed SELECT/UPDATE responses per-case.
 // Keep the `mock` prefix — Jest allows only mock* identifiers in jest.mock factories.
 const mockClientQuery = jest.fn().mockResolvedValue({ rows: [] });
+const mockPoolQuery = jest.fn().mockResolvedValue({ rows: [], rowCount: 0 });
 
 jest.mock('pg', () => ({
     Pool: jest.fn().mockImplementation(() => ({
-        query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+        query: mockPoolQuery,
         connect: jest.fn().mockImplementation(() => Promise.resolve({
             query: mockClientQuery,
             release: jest.fn(),
@@ -316,21 +317,31 @@ describe('Deep persistence assertions in update endpoints', () => {
         capturedWrites = [];
         dashboardRow = { notes: [], rules: [], skills: [], souls: [] };
 
-        mockClientQuery.mockImplementation(async (sql, params) => {
+        const queryImpl = async (sql, params) => {
             const s = typeof sql === 'string' ? sql.trim() : '';
             if (/^(BEGIN|COMMIT|ROLLBACK)/i.test(s)) return { rows: [] };
+            if (/FROM kanban_cards/i.test(s)) {
+                const wanted = Array.isArray(params && params[1]) ? new Set(params[1]) : new Set();
+                const rows = ['card_a', 'card_b'].filter(id => wanted.has(id)).map(id => ({ id }));
+                return { rows };
+            }
+            if (/^(DELETE|INSERT)/i.test(s)) return { rows: [], rowCount: 1 };
             if (/^SELECT/i.test(s)) return { rows: [dashboardRow] };
             if (/^UPDATE/i.test(s)) {
                 capturedWrites.push({ sql: s, params });
                 return { rows: [{ version: 42 }] };
             }
             return { rows: [] };
-        });
+        };
+        mockClientQuery.mockImplementation(queryImpl);
+        mockPoolQuery.mockResolvedValue({ rows: [], rowCount: 0 });
     });
 
     afterEach(() => {
         mockClientQuery.mockReset();
         mockClientQuery.mockResolvedValue({ rows: [] });
+        mockPoolQuery.mockReset();
+        mockPoolQuery.mockResolvedValue({ rows: [], rowCount: 0 });
     });
 
     const writeFor = (column) => capturedWrites.find(w => w.sql.includes(`SET ${column}`));
@@ -435,6 +446,99 @@ describe('Deep persistence assertions in update endpoints', () => {
             .send({ ...auth, title: 'N1', content: 'just a body change' });
         expect(res.status).toBe(200);
         expect(persisted('notes')[0].anchor).toEqual(original);
+    });
+    it('note/update — linkedCardIds replaces explicit note/card links and persists note JSON', async () => {
+        dashboardRow.notes = [{ id: 'note_a', title: 'N1', content: 'body' }];
+        const res = await post('/api/mission/note/update')
+            .send({ ...auth, title: 'N1', entityId: 0, linkedCardIds: ['card_a', 'card_b', 'card_a'] });
+        expect(res.status).toBe(200);
+        expect(persisted('notes')[0].linkedCardIds).toEqual(['card_a', 'card_b']);
+        const sql = capturedWrites.map(w => w.sql).join('\n');
+        expect(sql).toMatch(/mission_dashboard SET notes/);
+    });
+
+    it('note/update — invalid linkedCardIds returns 400 before persisting', async () => {
+        dashboardRow.notes = [{ id: 'note_a', title: 'N1', content: 'body' }];
+        const res = await post('/api/mission/note/update')
+            .send({ ...auth, title: 'N1', linkedCardIds: ['missing_card'] });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toMatch(/Invalid linkedCardIds/);
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
+// Mission note ↔ Kanban card explicit link CRUD
+// ════════════════════════════════════════════════════════════════
+describe('Mission note/card link CRUD', () => {
+    const auth = { deviceId: 'test-dev', deviceSecret: 'test-secret', entityId: 0 };
+    let dashboardRow;
+    let cardRows;
+    let linkRows;
+
+    beforeEach(() => {
+        dashboardRow = { notes: [{ id: 'note_a', title: 'N1', content: 'body' }] };
+        cardRows = [
+            { id: 'card_a', title: 'Card A', status: 'todo', priority: 'P1' },
+            { id: 'card_b', title: 'Card B', status: 'review', priority: 'P2' },
+        ];
+        linkRows = [{ note_id: 'note_a', card_id: 'card_a', title: 'Card A', status: 'todo', priority: 'P1', created_at: new Date('2026-05-13T00:00:00Z') }];
+        const queryImpl = async (sql, params) => {
+            const s = typeof sql === 'string' ? sql.trim() : '';
+            if (/^(BEGIN|COMMIT|ROLLBACK)/i.test(s)) return { rows: [] };
+            if (/FROM kanban_cards/i.test(s)) {
+                const wanted = Array.isArray(params && params[1]) ? new Set(params[1]) : new Set(cardRows.map(c => c.id));
+                return { rows: cardRows.filter(c => wanted.has(c.id)) };
+            }
+            if (/FROM mission_dashboard/i.test(s)) return { rows: [dashboardRow] };
+            if (/FROM mission_note_card_links/i.test(s)) return { rows: linkRows };
+            if (/^UPDATE/i.test(s)) {
+                if (/SET notes/.test(s)) dashboardRow.notes = JSON.parse(params[1]);
+                return { rows: [{ version: 7 }] };
+            }
+            if (/^(DELETE|INSERT)/i.test(s)) return { rows: [], rowCount: 1 };
+            return { rows: [] };
+        };
+        mockClientQuery.mockImplementation(queryImpl);
+        mockPoolQuery.mockImplementation(queryImpl);
+    });
+
+    afterEach(() => {
+        mockClientQuery.mockReset();
+        mockClientQuery.mockResolvedValue({ rows: [] });
+        mockPoolQuery.mockReset();
+        mockPoolQuery.mockResolvedValue({ rows: [], rowCount: 0 });
+    });
+
+    it('GET /note/:noteId/cards lists device-scoped linked cards', async () => {
+        const res = await get('/api/mission/note/note_a/cards').query(auth);
+        expect(res.status).toBe(200);
+        expect(res.body.linkedCardIds).toEqual(['card_a']);
+        expect(res.body.cards[0]).toMatchObject({ id: 'card_a', title: 'Card A' });
+    });
+
+    it('PUT /note/:noteId/cards replaces links and mirrors note JSON', async () => {
+        const res = await request(missionApp)
+            .put('/api/mission/note/note_a/cards')
+            .send({ ...auth, linkedCardIds: ['card_a', 'card_b'] });
+        expect(res.status).toBe(200);
+        expect(res.body.linkedCardIds).toEqual(['card_a', 'card_b']);
+        expect(dashboardRow.notes[0].linkedCardIds).toEqual(['card_a', 'card_b']);
+    });
+
+    it('PUT /note/:noteId/cards rejects invalid card ids for device isolation', async () => {
+        const res = await request(missionApp)
+            .put('/api/mission/note/note_a/cards')
+            .send({ ...auth, linkedCardIds: ['card_a', 'card_elsewhere'] });
+        expect(res.status).toBe(400);
+    });
+
+    it('DELETE /note/:noteId/card/:cardId clears one link', async () => {
+        const res = await request(missionApp)
+            .delete('/api/mission/note/note_a/card/card_a')
+            .send(auth);
+        expect(res.status).toBe(200);
+        expect(res.body.linkedCardIds).toEqual([]);
+        expect(dashboardRow.notes[0].linkedCardIds).toEqual([]);
     });
 });
 
