@@ -185,16 +185,18 @@
     <script src="shared/nav.js"></script>
     <script src="shared/auth.js"></script>
     <script src="shared/footer.js"></script>
-    <script src="https://unpkg.com/force-graph@1.43.4/dist/force-graph.min.js"></script>
+    <!-- jsdelivr (not unpkg) — prod CSP allowlists jsdelivr only -->
+    <script src="https://cdn.jsdelivr.net/npm/force-graph@1.43.4/dist/force-graph.min.js"></script>
 
     <script>
     (function () {
         'use strict';
 
-        // ── Mode detection: accept both ?embed=1 (existing convention) and
-        //    ?embedded=1 (named in spec amendment C). Either suppresses nav/footer.
+        // ── Mode detection: use portal-wide ?embed=1 (matches nav.js/footer.js).
+        //    Spec amendment C asks for ?embedded=1 but the existing convention is
+        //    ?embed=1, and mission.html will pass that — staying consistent.
         const _qp = new URLSearchParams(window.location.search);
-        const IS_EMBEDDED = _qp.get('embed') === '1' || _qp.get('embedded') === '1';
+        const IS_EMBEDDED = _qp.get('embed') === '1';
         if (IS_EMBEDDED) document.body.classList.add('mm-embedded');
 
         // ── i18n: localize chrome before first paint, then again after data loads.
