@@ -5042295,8 +5042295,28 @@ const TRANSLATIONS = {
         "guide_pub_telegraph_note": "Aucune clé requise (le premier appel crée un compte anonyme)",
         "guide_pub_test_desc": "Chaque plateforme dispose d'un endpoint <code>/me</code> ou équivalent « auto-vérification sûre » qui appelle l'API de la plateforme mais <strong>ne publie jamais</strong> — le moyen le plus rapide de tester les clés :",
         "guide_pub_test_h": "Auto-vérification du bon câblage des clés",
-        "guide_pub_title": "Publisher multi-plateforme"
-    },
+        "guide_pub_title": "Publisher multi-plateforme",
+
+        "info_slide_guide_agentcard_cta": "Voir la diapositive Claude Design →",
+        "info_slide_guide_crossdevice_cta": "Voir la diapositive Claude Design →",
+        "info_slide_guide_identity_cta": "Voir la diapositive Claude Design →",
+        "info_slide_guide_mention_cta": "Voir la diapositive Claude Design →",
+        "info_slide_guide_msg_cta": "Voir la diapositive Claude Design →",
+        "info_slide_guide_proxy_window_cta": "Voir la diapositive Claude Design →",
+        "info_slide_guide_publisher_cta": "Voir la diapositive Claude Design →",
+        "info_slide_guide_usecase_claude_openclaw_cta": "Voir la diapositive Claude Design →",
+        "info_slide_guide_voice_cta": "Voir la diapositive Claude Design →",
+        "info_slide_why_eclaw_b1_dual_currency_cta": "Voir la diapositive Claude Design →",
+        "info_slide_why_eclaw_b2_topup_tiers_cta": "Voir la diapositive Claude Design →",
+        "info_slide_why_eclaw_b3_atomic_transactions_cta": "Voir la diapositive Claude Design →",
+        "info_slide_why_eclaw_b4_auto_bot_interview_cta": "Voir la diapositive Claude Design →",
+        "info_slide_why_eclaw_b5_pricing_advisor_cta": "Voir la diapositive Claude Design →",
+        "info_slide_why_eclaw_b6_interview_arena_leaderboard_cta": "Voir la diapositive Claude Design →",
+        "info_slide_why_eclaw_b7_contract_version_locking_cta": "Voir la diapositive Claude Design →",
+        "info_slide_why_eclaw_b8_token_metering_cta": "Voir la diapositive Claude Design →",
+        "info_slide_why_eclaw_b9_live_bot_handover_cta": "Voir la diapositive Claude Design →",
+        "info_slide_why_eclaw_b10_post_rental_a2a_collaboration_cta": "Voir la diapositive Claude Design →",
+        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "Voir la diapositive Claude Design →",},
 
 
 
