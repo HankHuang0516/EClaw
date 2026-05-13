@@ -3,611 +3,1024 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<meta name="theme-color" content="#f8f5ef" />
-<meta name="description" content="名古屋自由行 5天4夜行程攻略 — 樂高樂園、吉卜力公園、港水族館、大須商店街、榮商圈、招財貓通、伴手禮選購全攻略 (2026/5/15–5/19)" />
-<meta property="og:title" content="名古屋自由行 5天4夜行程攻略" />
-<meta property="og:description" content="樂高樂園・吉卜力公園・港水族館・大須・榮・招財貓通・JAL City Nishiki & J Hotel Rinku 全攻略" />
+<meta name="theme-color" content="#1f4030" />
+<meta name="description" content="名古屋 5 天 4 夜深度行程 — 樂高樂園、吉卜力公園、港水族館、大須、榮、招財貓通、Hotel JAL City Nishiki & J Hotel Rinku 專業行程攻略 (2026/5/15–5/19)" />
+<meta property="og:title" content="名古屋 5 天 4 夜深度行程・專業攻略" />
+<meta property="og:description" content="樂高樂園・吉卜力公園・港水族館・大須・榮・招財貓通 全日程規劃" />
 <meta property="og:image" content="https://live.staticflickr.com/65535/55266610541_92152cb44d_b.jpg" />
-<title>名古屋自由行 5天4夜 ・ 行程攻略</title>
+<title>名古屋 5 天 4 夜深度行程 ・ 專業攻略</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@500;700;900&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --bg: #f8f5ef;
-    --bg-card: #ffffff;
-    --bg-soft: #f1ece1;
-    --ink: #2c2a26;
-    --ink-soft: #6f6a60;
-    --accent: #6b8e5a;       /* sage green from illustrations */
-    --accent-deep: #4b6b3e;
-    --accent-soft: #d8e3ce;
-    --highlight: #d49a4e;    /* warm amber */
-    --rose: #d97a7a;
-    --sky: #6fa8c4;
-    --border: #e6dfd0;
-    --shadow: 0 2px 14px rgba(80, 70, 50, 0.07);
-    --radius: 14px;
-    --radius-lg: 22px;
-    --font: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --forest: #1f4030;          /* deep forest green — primary */
+    --forest-deep: #122a1f;
+    --forest-soft: #325044;
+    --gold: #b8842d;            /* warm gold accent */
+    --gold-deep: #8e6418;
+    --gold-soft: #e8d6a8;
+    --cream: #faf6ec;           /* canvas */
+    --cream-deep: #f1ebd8;
+    --ink: #2a2a2a;
+    --ink-soft: #5a5a5a;
+    --ink-faint: #8b8579;
+    --line: #d8cfb6;
+    --line-light: #ebe4cf;
+    --rose: #a4513e;
+    --shadow-sm: 0 1px 4px rgba(31, 64, 48, 0.08);
+    --shadow: 0 4px 18px rgba(31, 64, 48, 0.10);
+    --radius: 4px;
+    --radius-lg: 8px;
+    --serif: "Noto Serif TC", "Songti TC", "STSong", "PingFang TC", serif;
+    --sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
   }
   *, *::before, *::after { box-sizing: border-box; }
   html { scroll-behavior: smooth; scroll-padding-top: 80px; }
   body {
     margin: 0;
-    font-family: var(--font);
-    background: var(--bg);
+    font-family: var(--sans);
+    background: var(--cream);
     color: var(--ink);
-    line-height: 1.65;
+    line-height: 1.75;
     -webkit-font-smoothing: antialiased;
   }
-  a { color: var(--accent-deep); text-decoration: none; }
-  a:hover { text-decoration: underline; }
+  a { color: var(--forest); }
   img { max-width: 100%; height: auto; display: block; }
 
-  /* ---------- Top nav ---------- */
+  /* ===== Top bar ===== */
   header.topbar {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    background: rgba(248, 245, 239, 0.92);
-    backdrop-filter: saturate(160%) blur(10px);
-    -webkit-backdrop-filter: saturate(160%) blur(10px);
-    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 60;
+    background: var(--forest);
+    color: var(--cream);
+    border-bottom: 3px solid var(--gold);
   }
   .topbar-inner {
-    max-width: 1180px;
-    margin: 0 auto;
-    padding: 12px 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    max-width: 1200px; margin: 0 auto;
+    padding: 12px 24px;
+    display: flex; align-items: center; gap: 16px;
   }
   .brand {
+    font-family: var(--serif);
     font-weight: 700;
-    color: var(--accent-deep);
-    font-size: 17px;
-    letter-spacing: 0.02em;
+    font-size: 18px;
+    letter-spacing: 0.06em;
   }
-  .brand .accent { color: var(--highlight); }
-  .topnav {
-    margin-left: auto;
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
-  }
+  .brand .accent { color: var(--gold-soft); }
+  .topnav { margin-left: auto; display: flex; gap: 2px; flex-wrap: wrap; }
   .topnav a {
-    padding: 6px 12px;
-    border-radius: 999px;
-    font-size: 14px;
-    color: var(--ink-soft);
-  }
-  .topnav a:hover {
-    background: var(--accent-soft);
-    color: var(--accent-deep);
+    color: var(--cream);
     text-decoration: none;
-  }
-
-  /* ---------- Page layout ---------- */
-  main {
-    max-width: 1180px;
-    margin: 0 auto;
-    padding: 28px 20px 80px;
-    display: grid;
-    grid-template-columns: 220px 1fr;
-    gap: 28px;
-  }
-  aside.toc {
-    position: sticky;
-    top: 76px;
-    align-self: start;
-    max-height: calc(100vh - 100px);
-    overflow-y: auto;
-    padding: 18px 16px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
+    padding: 7px 13px;
+    font-size: 13.5px;
+    letter-spacing: 0.04em;
     border-radius: var(--radius);
-    box-shadow: var(--shadow);
+    transition: background .15s;
   }
-  aside.toc h3 {
-    margin: 0 0 10px;
-    font-size: 13px;
-    letter-spacing: 0.16em;
-    color: var(--ink-soft);
-    text-transform: uppercase;
-  }
-  aside.toc ol { list-style: none; padding: 0; margin: 0; }
-  aside.toc li { margin: 0; }
-  aside.toc a {
-    display: block;
-    padding: 7px 10px;
-    border-radius: 8px;
-    font-size: 14px;
-    color: var(--ink);
-  }
-  aside.toc a:hover {
-    background: var(--accent-soft);
-    color: var(--accent-deep);
-    text-decoration: none;
-  }
-  aside.toc .day-tag {
-    display: inline-block;
-    background: var(--accent);
-    color: #fff;
-    border-radius: 4px;
-    font-size: 11px;
-    padding: 1px 5px;
-    margin-right: 6px;
-    vertical-align: 1px;
-  }
+  .topnav a:hover { background: var(--forest-soft); }
 
-  .content { min-width: 0; }
-
-  /* ---------- Hero ---------- */
+  /* ===== Hero banner ===== */
   .hero {
     position: relative;
-    border-radius: var(--radius-lg);
+    background: linear-gradient(180deg, var(--forest-deep) 0%, var(--forest) 100%);
+    color: var(--cream);
+    padding: 0;
     overflow: hidden;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow);
-    margin-bottom: 28px;
   }
-  .hero img { width: 100%; display: block; }
-  .hero-meta {
-    padding: 18px 22px 22px;
-    border-top: 1px solid var(--border);
-    background: var(--bg-card);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 14px 28px;
-    align-items: baseline;
-  }
-  .hero-meta .pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 12px;
-    background: var(--accent-soft);
-    color: var(--accent-deep);
-    border-radius: 999px;
-    font-size: 13px;
-    font-weight: 600;
-  }
-  .hero-meta .meta-line {
-    color: var(--ink-soft);
-    font-size: 14px;
-  }
-
-  /* ---------- Section ---------- */
-  section.block {
-    margin-bottom: 36px;
-    scroll-margin-top: 80px;
-  }
-  section.block h2 {
-    margin: 0 0 14px;
-    font-size: 22px;
-    color: var(--accent-deep);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  section.block h2 .num {
-    display: inline-flex;
-    width: 30px;
-    height: 30px;
-    align-items: center;
-    justify-content: center;
-    background: var(--accent);
-    color: #fff;
-    border-radius: 50%;
-    font-size: 14px;
-    font-weight: 700;
-  }
-  section.block .subtle {
-    color: var(--ink-soft);
-    font-size: 14px;
-    margin: -8px 0 14px;
-  }
-  .card-frame {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    box-shadow: var(--shadow);
-  }
-  .card-frame img { display: block; width: 100%; }
-  .card-body {
-    padding: 16px 18px 18px;
-    border-top: 1px solid var(--border);
-  }
-
-  /* ---------- Cross-ref chips ---------- */
-  .xref {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 10px;
-  }
-  .xref::before {
-    content: "相關章節";
-    color: var(--ink-soft);
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    margin-right: 6px;
-    align-self: center;
-  }
-  .chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
-    background: var(--bg-soft);
-    color: var(--accent-deep);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    font-size: 12.5px;
-    transition: background .15s, transform .15s;
-  }
-  .chip:hover {
-    background: var(--accent-soft);
-    text-decoration: none;
-    transform: translateY(-1px);
-  }
-  .chip[data-tag="day1"]::before { content: "D1"; color: var(--highlight); font-weight: 700; margin-right: 2px; }
-  .chip[data-tag="day2"]::before { content: "D2"; color: var(--highlight); font-weight: 700; margin-right: 2px; }
-  .chip[data-tag="day3"]::before { content: "D3"; color: var(--highlight); font-weight: 700; margin-right: 2px; }
-  .chip[data-tag="day4"]::before { content: "D4"; color: var(--highlight); font-weight: 700; margin-right: 2px; }
-  .chip[data-tag="day5"]::before { content: "D5"; color: var(--highlight); font-weight: 700; margin-right: 2px; }
-
-  /* ---------- Day grid (Days) ---------- */
-  .day-grid {
+  .hero-grid {
+    max-width: 1200px; margin: 0 auto;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-    gap: 20px;
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+    min-height: 380px;
   }
-  .day-card {
+  .hero-text {
+    padding: 56px 32px 48px 56px;
     display: flex;
     flex-direction: column;
+    justify-content: center;
   }
-  .day-card .card-body h3 {
-    margin: 0 0 4px;
-    font-size: 17px;
-    color: var(--accent-deep);
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--gold-soft);
+    font-size: 13px;
+    letter-spacing: 0.24em;
+    margin-bottom: 14px;
+    text-transform: uppercase;
   }
-  .day-card .card-body p {
-    margin: 0 0 6px;
-    color: var(--ink-soft);
-    font-size: 14px;
+  .hero-eyebrow::before, .hero-eyebrow::after {
+    content: "";
+    width: 28px; height: 1px;
+    background: var(--gold);
+  }
+  .hero-title {
+    font-family: var(--serif);
+    font-weight: 900;
+    font-size: 48px;
+    line-height: 1.18;
+    margin: 0 0 10px;
+    color: var(--cream);
+  }
+  .hero-sub {
+    font-family: var(--serif);
+    font-size: 18px;
+    color: var(--gold-soft);
+    margin: 0 0 22px;
+    letter-spacing: 0.04em;
+  }
+  .hero-pills {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    margin-bottom: 16px;
+  }
+  .hero-pill {
+    border: 1px solid var(--gold);
+    color: var(--gold-soft);
+    padding: 5px 14px;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    border-radius: 999px;
+  }
+  .hero-blurb {
+    color: rgba(250, 246, 236, 0.85);
+    font-size: 14.5px;
+    max-width: 460px;
+  }
+  .hero-img {
+    overflow: hidden;
+    position: relative;
+  }
+  .hero-img img {
+    width: 100%; height: 100%;
+    object-fit: cover;
   }
 
-  /* ---------- Spot grid (highlight 5) ---------- */
-  .spot-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px;
-    margin-top: 14px;
-  }
-  .spot {
-    padding: 12px 12px 14px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
+  /* ===== Section base ===== */
+  main { max-width: 1200px; margin: 0 auto; padding: 64px 24px 72px; }
+  section.sec { margin-bottom: 72px; scroll-margin-top: 80px; }
+  .sec-head {
     text-align: center;
-    transition: transform .15s, box-shadow .15s;
+    margin-bottom: 36px;
   }
-  .spot:hover { transform: translateY(-2px); box-shadow: var(--shadow); text-decoration: none; }
-  .spot .n {
-    display: inline-block;
-    background: var(--highlight);
-    color: #fff;
-    border-radius: 50%;
-    width: 26px; height: 26px;
-    line-height: 26px;
-    font-size: 13px;
+  .sec-eyebrow {
+    color: var(--gold-deep);
+    letter-spacing: 0.32em;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .sec-title {
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 30px;
+    color: var(--forest);
+    margin: 0 0 8px;
+    letter-spacing: 0.02em;
+  }
+  .sec-title::after {
+    content: ""; display: block;
+    width: 48px; height: 2px;
+    background: var(--gold);
+    margin: 14px auto 0;
+  }
+  .sec-lead {
+    color: var(--ink-soft);
+    max-width: 720px;
+    margin: 0 auto;
+    font-size: 15px;
+  }
+
+  /* ===== 本團特色 (highlights) ===== */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+  }
+  .feature {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--gold);
+    border-radius: var(--radius-lg);
+    padding: 22px 20px 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .feature .icon {
+    font-family: var(--serif);
+    color: var(--gold-deep);
+    font-size: 22px;
     font-weight: 700;
     margin-bottom: 6px;
   }
-  .spot .ttl {
-    color: var(--ink);
-    font-weight: 600;
-    font-size: 15px;
-    display: block;
+  .feature h3 {
+    font-family: var(--serif);
+    font-size: 17px;
+    margin: 0 0 6px;
+    color: var(--forest-deep);
   }
-  .spot .sub {
+  .feature p {
+    margin: 0;
     color: var(--ink-soft);
-    font-size: 12.5px;
-    margin-top: 2px;
-    display: block;
+    font-size: 13.5px;
+    line-height: 1.7;
   }
 
-  /* ---------- Hotel / souvenir highlight rows ---------- */
-  .row-two {
+  /* ===== 行程一覽表 (overview timeline) ===== */
+  .overview {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .overview table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.5px;
+  }
+  .overview th, .overview td {
+    padding: 14px 18px;
+    text-align: left;
+    border-bottom: 1px solid var(--line-light);
+    vertical-align: top;
+  }
+  .overview th {
+    background: var(--forest);
+    color: var(--cream);
+    font-family: var(--serif);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    font-size: 13.5px;
+  }
+  .overview tr:last-child td { border-bottom: none; }
+  .overview tr:nth-child(even) td { background: var(--cream); }
+  .overview .day-cell {
+    font-family: var(--serif);
+    color: var(--gold-deep);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .overview .day-cell .num { font-size: 18px; }
+  .overview .meal { color: var(--ink-faint); font-size: 12.5px; }
+  .overview td a { color: var(--forest); font-weight: 500; }
+
+  /* ===== Day blocks ===== */
+  .day-block {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    margin-bottom: 28px;
+  }
+  .day-banner {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 380px) 1fr;
+    align-items: stretch;
+    background: var(--forest);
+    color: var(--cream);
+  }
+  .day-banner img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    min-height: 220px;
+  }
+  .day-meta {
+    padding: 28px 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .day-meta .day-tag {
+    display: inline-flex;
+    width: fit-content;
+    padding: 4px 14px;
+    background: var(--gold);
+    color: var(--forest-deep);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    margin-bottom: 10px;
+  }
+  .day-meta h3 {
+    font-family: var(--serif);
+    font-size: 24px;
+    margin: 0 0 6px;
+    color: var(--cream);
+    letter-spacing: 0.02em;
+  }
+  .day-meta .day-date {
+    color: var(--gold-soft);
+    font-size: 14px;
+    font-family: var(--serif);
+    margin-bottom: 8px;
+  }
+  .day-meta .day-summary {
+    color: rgba(250, 246, 236, 0.86);
+    font-size: 14px;
+  }
+  .day-body {
+    padding: 28px 32px 24px;
+  }
+  .schedule {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .schedule td {
+    padding: 13px 0;
+    border-bottom: 1px dashed var(--line-light);
+    vertical-align: top;
+    font-size: 14.5px;
+  }
+  .schedule tr:last-child td { border-bottom: none; }
+  .schedule .time {
+    width: 110px;
+    color: var(--gold-deep);
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 14px;
+    white-space: nowrap;
+    padding-right: 18px;
+  }
+  .schedule .item .place {
+    font-weight: 700;
+    color: var(--forest-deep);
+    margin-bottom: 2px;
+    font-size: 15px;
+  }
+  .schedule .item .desc {
+    color: var(--ink-soft);
+    font-size: 13.5px;
+  }
+  .schedule .item .tags {
+    margin-top: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .schedule .item .tags span {
+    font-size: 11.5px;
+    color: var(--forest);
+    background: var(--cream-deep);
+    border: 1px solid var(--line);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+  .schedule .item .tags .meal { color: var(--rose); }
+  .schedule .item .tags .transit { color: var(--gold-deep); }
+  .schedule .item .tags .lodging { color: var(--forest); }
+  .day-tips {
+    margin-top: 18px;
+    padding: 16px 18px;
+    background: var(--cream);
+    border-left: 3px solid var(--gold);
+    border-radius: var(--radius);
+  }
+  .day-tips h4 {
+    margin: 0 0 6px;
+    font-family: var(--serif);
+    color: var(--forest-deep);
+    font-size: 15px;
+  }
+  .day-tips ul {
+    margin: 0; padding-left: 18px;
+    color: var(--ink-soft);
+    font-size: 13.5px;
+  }
+  .day-tips li { margin-bottom: 3px; }
+
+  /* ===== 住宿規格 ===== */
+  .lodging-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 22px;
+  }
+  .lodging-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .lodging-card img { aspect-ratio: 16/9; object-fit: cover; }
+  .lodging-card .body { padding: 22px 24px 24px; }
+  .lodging-card h3 {
+    font-family: var(--serif);
+    font-size: 19px;
+    margin: 0 0 4px;
+    color: var(--forest-deep);
+  }
+  .lodging-card .ja {
+    color: var(--ink-faint);
+    font-size: 12.5px;
+    margin-bottom: 12px;
+    letter-spacing: 0.04em;
+  }
+  .lodging-card .meta {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 13.5px;
+  }
+  .lodging-card .meta div {
+    padding: 6px 0;
+    border-bottom: 1px solid var(--line-light);
+    display: flex; gap: 12px;
+  }
+  .lodging-card .meta div:last-child { border-bottom: none; }
+  .lodging-card .meta .k {
+    color: var(--gold-deep);
+    font-weight: 700;
+    flex: 0 0 80px;
+  }
+  .lodging-card .amenities {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-top: 14px;
+  }
+  .lodging-card .amenities span {
+    font-size: 12px;
+    color: var(--forest);
+    border: 1px solid var(--line);
+    padding: 3px 9px;
+    border-radius: 999px;
+  }
+
+  /* ===== 5 大景點亮點 ===== */
+  .highlight-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 18px;
   }
-  @media (max-width: 720px) {
-    .row-two { grid-template-columns: 1fr; }
+  .highlight-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 22px 20px;
+    text-align: center;
+    text-decoration: none;
+    transition: transform .15s, box-shadow .15s;
+    color: var(--ink);
+  }
+  .highlight-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+  .highlight-card .num {
+    display: inline-block;
+    font-family: var(--serif);
+    color: var(--gold);
+    font-size: 32px;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .highlight-card h3 {
+    font-family: var(--serif);
+    font-size: 17px;
+    margin: 0 0 4px;
+    color: var(--forest-deep);
+  }
+  .highlight-card p {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 12.5px;
   }
 
-  /* ---------- Mobile ---------- */
-  @media (max-width: 900px) {
-    main {
-      grid-template-columns: 1fr;
-      padding: 18px 14px 60px;
-    }
-    aside.toc {
-      position: static;
-      max-height: none;
-      overflow: visible;
-    }
-    aside.toc ol {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    aside.toc li { flex: 0 0 auto; }
-    aside.toc a { padding: 6px 10px; }
-    section.block h2 { font-size: 19px; }
-    .topbar-inner { padding: 10px 14px; }
-    .topnav { display: none; }
+  /* ===== 伴手禮 ===== */
+  .souvenir-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
   }
+  .souvenir-wrap > img { width: 100%; height: 100%; object-fit: cover; min-height: 320px; }
+  .souvenir-text { padding: 30px 32px 30px 0; }
+  .souvenir-text h3 {
+    font-family: var(--serif);
+    color: var(--forest-deep);
+    font-size: 18px;
+    margin: 18px 0 8px;
+  }
+  .souvenir-text h3:first-child { margin-top: 0; }
+  .souvenir-text ul {
+    margin: 0; padding-left: 18px;
+    color: var(--ink-soft);
+    font-size: 14px;
+  }
+  .souvenir-text li { margin-bottom: 3px; }
 
-  footer.footer {
-    max-width: 1180px;
-    margin: 0 auto;
-    padding: 24px 20px 60px;
-    border-top: 1px solid var(--border);
+  /* ===== 地圖 + 行李 ===== */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+  }
+  .img-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .img-card img { width: 100%; display: block; }
+  .img-card .cap {
+    padding: 14px 18px;
     color: var(--ink-soft);
     font-size: 13px;
+    border-top: 1px solid var(--line-light);
+  }
+
+  /* ===== Footer ===== */
+  footer.footer {
+    background: var(--forest-deep);
+    color: var(--cream);
+    padding: 32px 24px 28px;
     text-align: center;
   }
-  footer .small { font-size: 12px; opacity: 0.8; }
+  footer .brand {
+    font-family: var(--serif);
+    font-size: 16px;
+    color: var(--gold-soft);
+    margin-bottom: 4px;
+  }
+  footer .small {
+    font-size: 12.5px;
+    color: rgba(250, 246, 236, 0.65);
+    letter-spacing: 0.04em;
+  }
+
+  /* ===== Mobile ===== */
+  @media (max-width: 900px) {
+    .topbar-inner { padding: 10px 16px; }
+    .topnav { display: none; }
+    .hero-grid { grid-template-columns: 1fr; min-height: auto; }
+    .hero-text { padding: 36px 22px 28px; }
+    .hero-title { font-size: 32px; }
+    .hero-sub { font-size: 15px; }
+    .hero-img { order: -1; aspect-ratio: 4/3; }
+    main { padding: 40px 16px 56px; }
+    section.sec { margin-bottom: 56px; }
+    .sec-title { font-size: 24px; }
+    .day-banner { grid-template-columns: 1fr; }
+    .day-banner img { min-height: 180px; aspect-ratio: 16/9; }
+    .day-meta { padding: 22px 22px; }
+    .day-meta h3 { font-size: 20px; }
+    .day-body { padding: 22px 22px; }
+    .schedule .time { width: 78px; padding-right: 12px; font-size: 13px; }
+    .souvenir-wrap { grid-template-columns: 1fr; }
+    .souvenir-wrap > img { min-height: 220px; }
+    .souvenir-text { padding: 24px 22px 28px; }
+    .two-col { grid-template-columns: 1fr; }
+    .overview { font-size: 13px; overflow-x: auto; }
+    .overview th, .overview td { padding: 10px 12px; }
+  }
 </style>
 </head>
 <body>
 
 <header class="topbar">
   <div class="topbar-inner">
-    <div class="brand">名古屋自由行 <span class="accent">5天4夜</span></div>
+    <div class="brand">名古屋深度行 <span class="accent">5天4夜</span></div>
     <nav class="topnav">
-      <a href="#prep">行前準備</a>
-      <a href="#map">地圖</a>
-      <a href="#highlights">行程重點</a>
+      <a href="#features">本團特色</a>
+      <a href="#overview">行程總覽</a>
       <a href="#day1">Day 1</a>
       <a href="#day2">Day 2</a>
       <a href="#day3">Day 3</a>
       <a href="#day4">Day 4</a>
       <a href="#day5">Day 5</a>
-      <a href="#stay">住宿</a>
+      <a href="#lodging">住宿</a>
+      <a href="#highlights">景點亮點</a>
       <a href="#souvenir">伴手禮</a>
+      <a href="#info">行前資訊</a>
     </nav>
   </div>
 </header>
 
-<main>
-  <aside class="toc" aria-label="目錄">
-    <h3>目錄</h3>
-    <ol>
-      <li><a href="#cover">封面</a></li>
-      <li><a href="#prep">行前準備</a></li>
-      <li><a href="#map">名古屋地圖</a></li>
-      <li><a href="#highlights">行程重點 (5 大景點)</a></li>
-      <li><a href="#day1"><span class="day-tag">D1</span>5/15 抵達 + 招財貓通</a></li>
-      <li><a href="#day2"><span class="day-tag">D2</span>5/16 港水族館 + 大須</a></li>
-      <li><a href="#day3"><span class="day-tag">D3</span>5/17 吉卜力公園</a></li>
-      <li><a href="#day4"><span class="day-tag">D4</span>5/18 樂高樂園 + SEA LIFE</a></li>
-      <li><a href="#day5"><span class="day-tag">D5</span>5/19 退房返台</a></li>
-      <li><a href="#stay">住宿資訊</a></li>
-      <li><a href="#souvenir">伴手禮精選</a></li>
-    </ol>
-  </aside>
-
-  <div class="content">
-
-    <!-- ---------- COVER ---------- -->
-    <section class="block" id="cover">
-      <div class="hero">
-        <img src="https://live.staticflickr.com/65535/55266610541_92152cb44d_b.jpg" alt="名古屋自由行 5天4夜行程攻略 封面" />
-        <div class="hero-meta">
-          <span class="pill">5/15 (五) – 5/19 (二)</span>
-          <span class="pill">5 天 4 夜</span>
-          <span class="meta-line">LEGOLAND ・ 吉卜力公園 ・ 大須商店街 ・ 榮商圈 ・ 招財貓通</span>
-        </div>
+<!-- ====================== HERO ====================== -->
+<div class="hero">
+  <div class="hero-grid">
+    <div class="hero-text">
+      <div class="hero-eyebrow">Nagoya Premium Itinerary</div>
+      <h1 class="hero-title">名古屋深度行<br />5 天 4 夜</h1>
+      <div class="hero-sub">中部國際 ・ LEGOLAND ・ 吉卜力公園 ・ 港水族館</div>
+      <div class="hero-pills">
+        <span class="hero-pill">2026 / 5 / 15 – 5 / 19</span>
+        <span class="hero-pill">5 日 4 夜</span>
+        <span class="hero-pill">自駕</span>
+        <span class="hero-pill">親子適合</span>
       </div>
-    </section>
-
-    <!-- ---------- 行前準備 ---------- -->
-    <section class="block" id="prep">
-      <h2><span class="num">1</span>行前準備清單</h2>
-      <p class="subtle">出發前再檢查一次，旅途更安心。衣物 / 盥洗 / 藥品 / 3C / 文件 / 親子用品 6 大類。</p>
-      <div class="card-frame">
-        <img src="https://live.staticflickr.com/65535/55265702052_f5871a5f34_b.jpg" alt="行李準備清單" />
-        <div class="card-body">
-          <div class="xref">
-            <a class="chip" data-tag="day1" href="#day1">Day 1 出發</a>
-            <a class="chip" href="#stay">飯店行李寄放</a>
-            <a class="chip" data-tag="day5" href="#day5">Day 5 返程</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ---------- MAP ---------- -->
-    <section class="block" id="map">
-      <h2><span class="num">2</span>名古屋地圖</h2>
-      <p class="subtle">點選地圖編號可跳至對應行程：1 名古屋城 · 2 榮商圈 · 3 大須商店街 · 4 港水族館 · 5 樂高樂園 · 6 J Hotel Rinku。</p>
-      <div class="card-frame">
-        <img src="https://live.staticflickr.com/65535/55266610571_24c3311c56_b.jpg" alt="名古屋地圖" />
-        <div class="card-body">
-          <div class="xref">
-            <a class="chip" href="#highlights">行程重點</a>
-            <a class="chip" data-tag="day2" href="#day2">大須商店街 (D2)</a>
-            <a class="chip" data-tag="day2" href="#day2">港水族館 (D2)</a>
-            <a class="chip" data-tag="day3" href="#day3">榮商圈 (D3)</a>
-            <a class="chip" data-tag="day4" href="#day4">樂高樂園 (D4)</a>
-            <a class="chip" href="#stay">J Hotel Rinku</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ---------- 行程重點 ---------- -->
-    <section class="block" id="highlights">
-      <h2><span class="num">3</span>行程重點・5 大景點</h2>
-      <p class="subtle">5 天行程中的必訪亮點，皆有專屬日程介紹。</p>
-      <div class="card-frame">
-        <img src="https://live.staticflickr.com/65535/55266610586_df1d0e3b24_b.jpg" alt="行程重點 5 大景點" />
-        <div class="card-body">
-          <div class="spot-grid">
-            <a class="spot" href="#day2"><span class="n">1</span><span class="ttl">名古屋港水族館</span><span class="sub">Day 2 上午 ・ 海豚虎鯨</span></a>
-            <a class="spot" href="#day3"><span class="n">2</span><span class="ttl">吉卜力公園</span><span class="sub">Day 3 全日 ・ 魔法之里</span></a>
-            <a class="spot" href="#day4"><span class="n">3</span><span class="ttl">樂高樂園 Japan</span><span class="sub">Day 4 全日 ・ + SEA LIFE</span></a>
-            <a class="spot" href="#day2"><span class="n">4</span><span class="ttl">大須商店街</span><span class="sub">Day 2 下午 ・ 美食古著</span></a>
-            <a class="spot" href="#day3"><span class="n">5</span><span class="ttl">榮商圈</span><span class="sub">Day 3 / Day 4 晚間</span></a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ---------- DAY 1 ---------- -->
-    <section class="block" id="day1">
-      <h2><span class="num">D1</span>5/15 (五) ・ 抵達 → 招財貓通 → AEON Mall 常滑</h2>
-      <p class="subtle">桃園機場 → 中部國際機場 → RDZ 租車 → ni:no 午餐 → 招財貓通 (常滑燒) → AEON Mall Tokoname → 入住 Hotel JAL City Nagoya Nishiki。</p>
-      <div class="card-frame">
-        <img src="https://live.staticflickr.com/65535/55266610576_560b39c1b5_b.jpg" alt="Day 1 行程" />
-        <div class="card-body">
-          <div class="xref">
-            <a class="chip" href="#prep">行前準備</a>
-            <a class="chip" href="#stay">Hotel JAL City Nishiki</a>
-            <a class="chip" href="#souvenir">AEON Mall 採購</a>
-            <a class="chip" href="#map">地圖位置</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ---------- DAY 2 ---------- -->
-    <section class="block" id="day2">
-      <h2><span class="num">D2</span>5/16 (六) ・ 港水族館 → 大須商店街 → 釣船茶屋</h2>
-      <p class="subtle">FUSE COFFEE 早餐 → 名古屋港水族館 (海豚 / 虎鯨 / 企鵝) → JETTY 美食廣場午餐 → 大須商店街 → double tall café → 釣船茶屋 Zauo Hoshizaki 晚餐。</p>
-      <div class="card-frame">
-        <img src="https://live.staticflickr.com/65535/55267004865_7a67a8b5d0_b.jpg" alt="Day 2 行程" />
-        <div class="card-body">
-          <div class="xref">
-            <a class="chip" href="#highlights">行程重點 ①④</a>
-            <a class="chip" href="#souvenir">大須 ・ 伴手禮</a>
-            <a class="chip" href="#stay">Hotel JAL City Nishiki</a>
-            <a class="chip" href="#map">地圖 ③④</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ---------- DAY 3 ---------- -->
-    <section class="block" id="day3">
-      <h2><span class="num">D3</span>5/17 (日) ・ 吉卜力公園 → 拉麵 → 榮商圈 (SakaeChika 地下街)</h2>
-      <p class="subtle">飯店早餐 → 吉卜力公園 (霍爾的移動城堡 / 魔女宅急便 / 魔法之里) → Hot Tin Roof 熱狗攤 → 吉卜力大倉庫 → 麵家獅子丸 → SakaeChika 地下街 / 矢場町 (Apple Store / Cocokarafine)。</p>
-      <div class="card-frame">
-        <img src="https://live.staticflickr.com/65535/55265702067_97db035882_b.jpg" alt="Day 3 行程" />
-        <div class="card-body">
-          <div class="xref">
-            <a class="chip" href="#highlights">行程重點 ②⑤</a>
-            <a class="chip" href="#souvenir">榮商圈 ・ Cocokarafine 藥妝</a>
-            <a class="chip" href="#stay">Hotel JAL City Nishiki</a>
-            <a class="chip" href="#map">地圖 ②</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ---------- DAY 4 ---------- -->
-    <section class="block" id="day4">
-      <h2><span class="num">D4</span>5/18 (一) ・ 樂高樂園 → SEA LIFE → 夜逛榮商圈 → 入住 J Hotel Rinku</h2>
-      <p class="subtle">LEGOLAND Japan (駕駛學校 / Ninjago / 小火車) → 積木屋漢堡餐廳午餐 → 繼續園區 (樂高模型城市 / 潛艇冒險 / 紀念品) → SEA LIFE 海洋探索中心 → 德兵衛迴轉壽司 Oasis21 晚餐 → 入住機場旁 J Hotel Rinku。</p>
-      <div class="card-frame">
-        <img src="https://live.staticflickr.com/65535/55266743803_9e12f24aa5_b.jpg" alt="Day 4 行程" />
-        <div class="card-body">
-          <div class="xref">
-            <a class="chip" href="#highlights">行程重點 ③⑤</a>
-            <a class="chip" href="#stay">J Hotel Rinku</a>
-            <a class="chip" href="#souvenir">榮商圈 驚安殿堂</a>
-            <a class="chip" href="#map">地圖 ⑤⑥</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ---------- DAY 5 ---------- -->
-    <section class="block" id="day5">
-      <h2><span class="num">D5</span>5/19 (二) ・ 退房 → 還車 → 機場 → 搭機回台</h2>
-      <p class="subtle">飯店早餐 → 退房 → 從飯店出發還車 (約 4 分鐘車程，免費機場接駁) → 中部國際機場 (建議提前 3 小時抵達) → 12:20 班機回台。</p>
-      <div class="card-frame">
-        <img src="https://live.staticflickr.com/65535/55267004850_4ff2b4b26d_b.jpg" alt="Day 5 行程" />
-        <div class="card-body">
-          <div class="xref">
-            <a class="chip" href="#prep">行李整理</a>
-            <a class="chip" href="#stay">J Hotel Rinku 退房</a>
-            <a class="chip" href="#souvenir">伴手禮免稅手提</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ---------- STAY ---------- -->
-    <section class="block" id="stay">
-      <h2><span class="num">4</span>住宿資訊</h2>
-      <p class="subtle">5/15–5/17 名古屋市中心 (錦商圈) ・ 5/18 中部機場旁 Rinku。</p>
-      <div class="card-frame">
-        <img src="https://live.staticflickr.com/65535/55266841314_8cb278c708_b.jpg" alt="住宿資訊 Hotel JAL City Nagoya Nishiki + J Hotel Rinku" />
-        <div class="card-body">
-          <div class="row-two">
-            <div>
-              <h3 style="margin:0 0 4px;color:var(--accent-deep);">Hotel JAL City Nagoya Nishiki</h3>
-              <p style="margin:0;color:var(--ink-soft);font-size:14px;">5/15 – 5/17 ・ 名古屋市中心 ・ 錦商圈 ・ 久屋大通站步行 5 分鐘</p>
-              <div class="xref" style="margin-top:8px;">
-                <a class="chip" data-tag="day1" href="#day1">Day 1 入住</a>
-                <a class="chip" data-tag="day2" href="#day2">Day 2</a>
-                <a class="chip" data-tag="day3" href="#day3">Day 3</a>
-              </div>
-            </div>
-            <div>
-              <h3 style="margin:0 0 4px;color:var(--accent-deep);">J Hotel Rinku</h3>
-              <p style="margin:0;color:var(--ink-soft);font-size:14px;">5/18 ・ 距中部國際機場 5 分鐘 ・ 免費接駁 (約 15 分鐘一班)</p>
-              <div class="xref" style="margin-top:8px;">
-                <a class="chip" data-tag="day4" href="#day4">Day 4 入住</a>
-                <a class="chip" data-tag="day5" href="#day5">Day 5 退房</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ---------- SOUVENIR ---------- -->
-    <section class="block" id="souvenir">
-      <h2><span class="num">5</span>伴手禮精選</h2>
-      <p class="subtle">5 大類別：必吃伴手禮 / 特色名物 / 藥妝日用品 / 限定商品 / 可愛雜貨。</p>
-      <div class="card-frame">
-        <img src="https://live.staticflickr.com/65535/55267004840_fc30e1b11e_b.jpg" alt="名古屋伴手禮精選" />
-        <div class="card-body">
-          <p style="margin:0 0 6px;font-size:14px;color:var(--ink-soft);">
-            重點品牌：青蛙饅頭 ・ 坂角總本舗蝦餅 ・ 小倉紅豆吐司 ・ 赤福 ・ 世界のしゃちほこ 手羽先 ・ 八丁味噌 ・ Sugakiya ・ CoCo壱番屋 ・ Cocokarafine ・ 休足時間 ・ 合利他命 EX PLUS ・ 名古屋限定 KitKat ・ Chiikawa Land (PARCO 3F) ・ 橡子共和國 (PARCO B1)。
-          </p>
-          <div class="xref">
-            <a class="chip" data-tag="day2" href="#day2">大須商店街採購</a>
-            <a class="chip" data-tag="day3" href="#day3">榮商圈 / SakaeChika</a>
-            <a class="chip" data-tag="day1" href="#day1">AEON Mall 常滑</a>
-            <a class="chip" data-tag="day4" href="#day4">驚安殿堂 ドンキ</a>
-          </div>
-        </div>
-      </div>
-    </section>
-
+      <p class="hero-blurb">
+        從中部國際機場啟程，串連名古屋港水族館、世界文化遺產等級的吉卜力公園、樂高樂園 Japan，
+        以及大須與榮兩大商圈，搭配市中心與機場兩段精選住宿，動靜皆宜的完整行程。
+      </p>
+    </div>
+    <div class="hero-img">
+      <img src="https://live.staticflickr.com/65535/55266610541_92152cb44d_b.jpg" alt="名古屋自由行封面" />
+    </div>
   </div>
+</div>
+
+<main>
+
+  <!-- ====================== 本團特色 ====================== -->
+  <section class="sec" id="features">
+    <div class="sec-head">
+      <div class="sec-eyebrow">Tour Highlights</div>
+      <h2 class="sec-title">本團特色</h2>
+      <p class="sec-lead">5 天行程嚴選名古屋必訪據點，搭配市區交通便利的飯店與機場接駁住宿，輕鬆覆蓋主題樂園、動物親水、購物美食三大主軸。</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <div class="icon">01</div>
+        <h3>樂高樂園 + SEA LIFE 雙樂園</h3>
+        <p>Day 4 一票暢遊樂高樂園 Japan，下午直達相鄰的 SEA LIFE 海洋探索中心，親子同行最划算。</p>
+      </div>
+      <div class="feature">
+        <div class="icon">02</div>
+        <h3>吉卜力公園 ・ 魔之谷與魔法之里</h3>
+        <p>Day 3 全日浸潤宮崎駿的世界，霍爾的移動城堡、魔女宅急便、吉卜力大倉庫一次走完。</p>
+      </div>
+      <div class="feature">
+        <div class="icon">03</div>
+        <h3>名古屋港水族館 ・ 海豚虎鯨</h3>
+        <p>Day 2 上午直擊日本最大級水族館，企鵝大水槽、虎鯨表演、海豚秀皆為招牌。</p>
+      </div>
+      <div class="feature">
+        <div class="icon">04</div>
+        <h3>大須 × 榮 ・ 雙商圈深逛</h3>
+        <p>大須商店街美食古著古道具，榮商圈 SakaeChika 地下街與矢場町品牌齊全。</p>
+      </div>
+      <div class="feature">
+        <div class="icon">05</div>
+        <h3>常滑招財貓通 ・ Ai 巨型招財貓</h3>
+        <p>Day 1 自機場前往，散步常滑燒製陶藝小鎮，必拍世界最大級招財貓並體驗陶器工藝。</p>
+      </div>
+      <div class="feature">
+        <div class="icon">06</div>
+        <h3>市區 + 機場兩段住宿</h3>
+        <p>5/15–5/17 入住榮商圈 Hotel JAL City Nishiki，5/18 移至中部機場旁 J Hotel Rinku 便於返程。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== 行程總覽 ====================== -->
+  <section class="sec" id="overview">
+    <div class="sec-head">
+      <div class="sec-eyebrow">Itinerary at a Glance</div>
+      <h2 class="sec-title">行程總覽</h2>
+      <p class="sec-lead">5 天行程一覽表，含每日主要走訪據點、餐食、住宿。詳細時刻表請見下方分日內容。</p>
+    </div>
+    <div class="overview">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:14%">日期</th>
+            <th>主要行程</th>
+            <th style="width:24%">餐食</th>
+            <th style="width:22%">住宿</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="day-cell">Day <span class="num">1</span><br />5/15 (五)</td>
+            <td>桃園 → 中部國際機場 → ni:no 午餐 → 招財貓通 → AEON Mall 常滑 → 入住<br /><a href="#day1">詳細時刻表</a></td>
+            <td><span class="meal">早：機上輕食</span><br /><span class="meal">午：ni:no 懷舊咖哩</span><br /><span class="meal">晚：AEON Mall 美食街</span></td>
+            <td><a href="#lodging">Hotel JAL City<br />Nagoya Nishiki</a></td>
+          </tr>
+          <tr>
+            <td class="day-cell">Day <span class="num">2</span><br />5/16 (六)</td>
+            <td>FUSE COFFEE → 名古屋港水族館 → JETTY 午餐 → 大須商店街 → double tall café → 釣船茶屋 Zauo<br /><a href="#day2">詳細時刻表</a></td>
+            <td><span class="meal">早：FUSE COFFEE</span><br /><span class="meal">午：JETTY 美食廣場</span><br /><span class="meal">晚：釣船茶屋 Hoshizaki</span></td>
+            <td><a href="#lodging">Hotel JAL City<br />Nagoya Nishiki</a></td>
+          </tr>
+          <tr>
+            <td class="day-cell">Day <span class="num">3</span><br />5/17 (日)</td>
+            <td>飯店早餐 → 吉卜力公園 (魔之谷 / 魔法之里) → Hot Tin Roof → 吉卜力大倉庫 → 麵家獅子丸 → 榮商圈 SakaeChika<br /><a href="#day3">詳細時刻表</a></td>
+            <td><span class="meal">早：飯店自助</span><br /><span class="meal">午：Hot Tin Roof</span><br /><span class="meal">晚：麵家獅子丸</span></td>
+            <td><a href="#lodging">Hotel JAL City<br />Nagoya Nishiki</a></td>
+          </tr>
+          <tr>
+            <td class="day-cell">Day <span class="num">4</span><br />5/18 (一)</td>
+            <td>LEGOLAND Japan → 積木屋漢堡午餐 → SEA LIFE → 德兵衛迴轉壽司 Oasis21 → 自由活動 → 機場區飯店<br /><a href="#day4">詳細時刻表</a></td>
+            <td><span class="meal">早：飯店自助</span><br /><span class="meal">午：積木屋漢堡餐廳</span><br /><span class="meal">晚：德兵衛迴轉壽司</span></td>
+            <td><a href="#lodging">J Hotel Rinku</a></td>
+          </tr>
+          <tr>
+            <td class="day-cell">Day <span class="num">5</span><br />5/19 (二)</td>
+            <td>飯店早餐 → 退房 → 還車 → 中部國際機場 → 12:20 班機回台<br /><a href="#day5">詳細時刻表</a></td>
+            <td><span class="meal">早：飯店自助</span><br /><span class="meal">午：機艙餐</span></td>
+            <td>-</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ====================== Day 1 ====================== -->
+  <section class="sec" id="day1">
+    <div class="day-block">
+      <div class="day-banner">
+        <img src="https://live.staticflickr.com/65535/55266610576_560b39c1b5_b.jpg" alt="Day 1 行程" />
+        <div class="day-meta">
+          <span class="day-tag">DAY 01</span>
+          <h3>抵達 ・ 招財貓通 ・ AEON Mall 常滑</h3>
+          <div class="day-date">2026 / 5 / 15 ・ 星期五</div>
+          <div class="day-summary">早班抵達中部機場，租車後沿著伊勢灣前往招財貓通常滑燒小鎮，下午轉至 AEON Mall Tokoname 享受 GU / UNIQLO / R.O.U 採購與美食街晚餐。</div>
+        </div>
+      </div>
+      <div class="day-body">
+        <table class="schedule">
+          <tr><td class="time">05:30 – 06:00</td><td class="item"><div class="place">抵達桃園機場</div><div class="desc">建議提前 2 小時辦理登機手續。</div><div class="tags"><span class="transit">✈ 航班</span></div></td></tr>
+          <tr><td class="time">11:20</td><td class="item"><div class="place">抵達中部國際機場 Centrair</div><div class="desc">入境後步行至一樓接駁區與 RDZ Rentacar 集合。</div><div class="tags"><span class="transit">✈ 入境</span></div></td></tr>
+          <tr><td class="time">12:30</td><td class="item"><div class="place">RDZ Rentacar 接駁辦理</div><div class="desc">Klook 訂單編號 JVN305536，集合於航廈一樓機場接駁區。</div><div class="tags"><span class="transit">🚗 取車</span></div></td></tr>
+          <tr><td class="time">13:00</td><td class="item"><div class="place">辦理租車手續</div><div class="desc">租車約 4 分鐘車程內完成。</div></td></tr>
+          <tr><td class="time">13:40 – 14:40</td><td class="item"><div class="place">午餐 ・ ni:no (ニーノ)</div><div class="desc">在地懷舊洋食小店，推薦咖哩飯與桃子刨冰。已訂位。</div><div class="tags"><span class="meal">🍽 午餐</span></div></td></tr>
+          <tr><td class="time">14:50 – 15:30</td><td class="item"><div class="place">常滑招財貓通</div><div class="desc">沿著陶藝步道散策，必拍世界最大級招財貓「とこにゃん」。</div><div class="tags"><span>🐱 文化散步</span></div></td></tr>
+          <tr><td class="time">15:40 – 17:00</td><td class="item"><div class="place">AEON Mall Tokoname (常滑)</div><div class="desc">1F GU / UNIQLO / H&amp;M / R.O.U 採購；3F 海洋寶迷 / Wonder Sky / MAGO 之湯 / Food Forest 美食街。</div><div class="tags"><span>🛍 採購</span><span>🎡 親子設施</span></div></td></tr>
+          <tr><td class="time">17:30 – 18:30</td><td class="item"><div class="place">晚餐 ・ AEON Mall 美食街</div><div class="desc">2F Food Forest 多店選擇。</div><div class="tags"><span class="meal">🍽 晚餐</span></div></td></tr>
+          <tr><td class="time">18:30</td><td class="item"><div class="place">入住 Hotel JAL City Nagoya Nishiki</div><div class="desc">附 35 個免費停車位（1800 日圓 / 晚）。</div><div class="tags"><span class="lodging">🏨 住宿</span></div></td></tr>
+        </table>
+        <div class="day-tips">
+          <h4>導遊小提醒</h4>
+          <ul>
+            <li>名古屋市區景點周邊多為付費停車場，建議消費時索取折扣保留收據。</li>
+            <li>高速公路採 ETC 通行，建議租車時一併確認。</li>
+            <li>出發前先設定導航，輕鬆抵達 5 大景點。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== Day 2 ====================== -->
+  <section class="sec" id="day2">
+    <div class="day-block">
+      <div class="day-banner">
+        <img src="https://live.staticflickr.com/65535/55267004865_7a67a8b5d0_b.jpg" alt="Day 2 行程" />
+        <div class="day-meta">
+          <span class="day-tag">DAY 02</span>
+          <h3>港水族館 ・ 大須商店街 ・ 釣船茶屋</h3>
+          <div class="day-date">2026 / 5 / 16 ・ 星期六 ・ 慶生</div>
+          <div class="day-summary">上午直闖名古屋港水族館看海豚虎鯨秀，午餐 JETTY 美食廣場，下午轉戰大須商店街美食古著巡禮，晚餐釣船茶屋體驗自釣自吃。</div>
+        </div>
+      </div>
+      <div class="day-body">
+        <table class="schedule">
+          <tr><td class="time">08:00 – 09:15</td><td class="item"><div class="place">早餐 ・ FUSE COFFEE nagoya</div><div class="desc">車程 6 分鐘，咖啡早餐補充體力。</div><div class="tags"><span class="meal">🍽 早餐</span></div></td></tr>
+          <tr><td class="time">09:20</td><td class="item"><div class="place">出發前往名古屋港水族館</div><div class="desc">車程約 23 分鐘。</div><div class="tags"><span class="transit">🚗 移動</span></div></td></tr>
+          <tr><td class="time">09:40 – 12:00</td><td class="item"><div class="place">名古屋港水族館</div><div class="desc">海豚 / 虎鯨 / 企鵝 / 黑潮大水槽。推薦美食：名古屋造飯糰（炸蝦/天婦羅）、海軍蛋飯、鯊魚小丸子、企鵝造型冰淇淋。</div><div class="tags"><span>🐧 親子景點</span></div></td></tr>
+          <tr><td class="time">12:10 – 13:30</td><td class="item"><div class="place">午餐 ・ JETTY 美食廣場</div><div class="desc">水族館旁海景餐廳。推薦 Sugakiya 拉麵、炸雞飯、味噌烏龍麵；PLUS WEST 一樓商店街 ガチャミュージアム 扭蛋博物館。</div><div class="tags"><span class="meal">🍽 午餐</span></div></td></tr>
+          <tr><td class="time">14:00</td><td class="item"><div class="place">前往大須商店街</div><div class="desc">車程 17 分鐘，停車推薦萬松寺停車場 Banshoji Chushajo。大須自由活動 14:10–15:45（主題咖啡、玩具店、特色小吃、超商和服體驗）。</div><div class="tags"><span class="transit">🚗 移動</span><span>🛍 採購</span></div></td></tr>
+          <tr><td class="time">16:00 – 17:00</td><td class="item"><div class="place">逛累 ・ double tall café 品鍋慶生</div><div class="desc">手沖咖啡與生乳酪蛋糕。</div><div class="tags"><span class="meal">☕ 下午茶</span></div></td></tr>
+          <tr><td class="time">17:30</td><td class="item"><div class="place">晚餐 ・ 釣船茶屋 Zauo Hoshizaki</div><div class="desc">車程 17 分鐘，預約 17:30。建議穿不怕弄濕的衣物，需現場候位（已訂位）。</div><div class="tags"><span class="meal">🐟 慶生晚餐</span></div></td></tr>
+          <tr><td class="time">19:30</td><td class="item"><div class="place">回飯店休息，整理行李</div><div class="desc">隔日繼續出發！</div><div class="tags"><span class="lodging">🏨 住宿</span></div></td></tr>
+        </table>
+        <div class="day-tips">
+          <h4>導遊小提醒</h4>
+          <ul>
+            <li>港水族館停車場 100 日圓/小時，建議停 Garden Futo West Parking 上限 1000 日圓。</li>
+            <li>大須商店街可走的點多，建議排 14:10–15:45 一段純逛街時間。</li>
+            <li>釣船茶屋場地會濕，最好穿可弄髒的鞋子。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== Day 3 ====================== -->
+  <section class="sec" id="day3">
+    <div class="day-block">
+      <div class="day-banner">
+        <img src="https://live.staticflickr.com/65535/55265702067_97db035882_b.jpg" alt="Day 3 行程" />
+        <div class="day-meta">
+          <span class="day-tag">DAY 03</span>
+          <h3>吉卜力公園 ・ 拉麵 ・ 榮商圈夜遊</h3>
+          <div class="day-date">2026 / 5 / 17 ・ 星期日</div>
+          <div class="day-summary">全日浸潤宮崎駿的世界，霍爾的移動城堡 / 魔女宅急便 / 安雅與魔女主題園區，午後園區午餐並走訪魔法之里、吉卜力大倉庫，晚餐拉麵後榮商圈夜遊。</div>
+        </div>
+      </div>
+      <div class="day-body">
+        <table class="schedule">
+          <tr><td class="time">07:30 – 08:40</td><td class="item"><div class="place">早餐 ・ 飯店自助</div><div class="desc">補充體力，準備展開吉卜力之旅。</div><div class="tags"><span class="meal">🍽 早餐</span></div></td></tr>
+          <tr><td class="time">09:00</td><td class="item"><div class="place">開車前往吉卜力公園</div><div class="desc">車程約 30 分鐘。停車推薦愛・地球博紀念公園免費停車場（北口最近 P1）。</div><div class="tags"><span class="transit">🚗 移動</span></div></td></tr>
+          <tr><td class="time">10:00</td><td class="item"><div class="place">魔之谷</div><div class="desc">以霍爾的移動城堡、魔女宅急便、安雅與魔女為主題。</div><div class="tags"><span>🎬 主題園區</span></div></td></tr>
+          <tr><td class="time">11:30</td><td class="item"><div class="place">午餐簡單吃 ・ Hot Tin Roof (魔之谷)</div><div class="desc">熱狗 + 牛奶小站 Siberi 8 An (大倉庫)；大蛟橡薯飛行咖啡廳、三明治、披薩 (大倉庫)。</div><div class="tags"><span class="meal">🍽 午餐</span></div></td></tr>
+          <tr><td class="time">13:00</td><td class="item"><div class="place">魔法之里</div><div class="desc">以《魔法公主》為靈感，中日式里山村落為設計。</div><div class="tags"><span>🎬 主題園區</span></div></td></tr>
+          <tr><td class="time">14:00 – 16:30</td><td class="item"><div class="place">吉卜力大倉庫</div><div class="desc">宮崎駿經典電影場景、電影院、兒童遊戲室、企劃展。</div><div class="tags"><span>🎬 主題園區</span></div></td></tr>
+          <tr><td class="time">17:30 – 18:30</td><td class="item"><div class="place">晚餐 ・ 麵家獅子丸</div><div class="desc">推薦招牌濃厚自湯拉麵、伊勢龍蝦拉麵、現場候位。附近有 Karamiso Ramen Fukurou。</div><div class="tags"><span class="meal">🍜 晚餐</span></div></td></tr>
+          <tr><td class="time">18:30 – 20:00</td><td class="item"><div class="place">自由活動 ・ 榮商圈 SakaeChika 地下街</div><div class="desc">榮商圈北區「榮」車站週邊 SakaeChika 地下街 / 廣百詞語/旗艦店。南區「矢場町」站週邊 Apple Store / 大型藥妝連鎖 Cocokarafine。</div><div class="tags"><span>🛍 採購</span></div></td></tr>
+          <tr><td class="time">20:30</td><td class="item"><div class="place">回飯店休息，整理行李</div><div class="desc">好好休息，明天繼續出發！</div><div class="tags"><span class="lodging">🏨 住宿</span></div></td></tr>
+        </table>
+        <div class="day-tips">
+          <h4>導遊小提醒</h4>
+          <ul>
+            <li>建議提早入園，可玩得更輕鬆；園區很大，穿好走鞋。</li>
+            <li>館內多處可拍照，記得帶相機/手機。</li>
+            <li>園內免費園巴士：五大園區皆停車，約 17 分一班（路線圖可於官網查詢）。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== Day 4 ====================== -->
+  <section class="sec" id="day4">
+    <div class="day-block">
+      <div class="day-banner">
+        <img src="https://live.staticflickr.com/65535/55266743803_9e12f24aa5_b.jpg" alt="Day 4 行程" />
+        <div class="day-meta">
+          <span class="day-tag">DAY 04</span>
+          <h3>樂高樂園 ・ SEA LIFE ・ 榮商圈夜逛</h3>
+          <div class="day-date">2026 / 5 / 18 ・ 星期一</div>
+          <div class="day-summary">上午直奔樂高樂園 Japan 體驗駕駛學校與 Ninjago，園內午餐後繼續逛樂高城市，下午轉至相鄰的 SEA LIFE 海洋探索中心，晚餐 Oasis21 迴轉壽司後夜逛榮商圈，回機場區飯店休息。</div>
+        </div>
+      </div>
+      <div class="day-body">
+        <table class="schedule">
+          <tr><td class="time">09:30</td><td class="item"><div class="place">前往 LEGOLAND Japan</div><div class="desc">車程約 24 分鐘。</div><div class="tags"><span class="transit">🚗 移動</span></div></td></tr>
+          <tr><td class="time">10:00 – 12:00</td><td class="item"><div class="place">樂高熱門設施</div><div class="desc">推薦：駕駛學校 / Ninjago / 小火車。</div><div class="tags"><span>🎢 主題樂園</span></div></td></tr>
+          <tr><td class="time">12:10 – 13:00</td><td class="item"><div class="place">園內午餐 ・ 積木屋漢堡餐廳</div><div class="desc">共有兩種樣，一樣空中位置好，有免費積木遊戲區；二樓座位數最多，記得優先來。</div><div class="tags"><span class="meal">🍔 午餐</span></div></td></tr>
+          <tr><td class="time">13:10 – 15:00</td><td class="item"><div class="place">繼續逛園區</div><div class="desc">樂高模型城市、潛艇冒險、紀念品商店。</div><div class="tags"><span>🎢 主題樂園</span></div></td></tr>
+          <tr><td class="time">15:00 – 16:00</td><td class="item"><div class="place">SEA LIFE 海洋探索中心</div><div class="desc">就在旁邊，輕鬆逛。</div><div class="tags"><span>🐠 親子景點</span></div></td></tr>
+          <tr><td class="time">18:00 – 19:30</td><td class="item"><div class="place">晚餐 ・ 德兵衛迴轉壽司 Oasis 21 店</div><div class="desc">現場候位、提早到。</div><div class="tags"><span class="meal">🍣 晚餐</span></div></td></tr>
+          <tr><td class="time">19:40 – 20:40</td><td class="item"><div class="place">自由活動 ・ 榮商圈逛街</div><div class="desc">榮商圈北區「榮」車站週邊：SakaeChika 地下街、廣百詞語、旗艦店、SKYLE 大型商場。南區「矢場町」站週邊：Apple Store、大型藥妝連鎖 Cocokarafine、驚安殿堂 ドンキ。</div><div class="tags"><span>🛍 採購</span></div></td></tr>
+          <tr><td class="time">21:00</td><td class="item"><div class="place">回飯店休息，整理行李</div><div class="desc">車程約 5 分鐘。</div><div class="tags"><span class="lodging">🏨 住宿</span></div></td></tr>
+        </table>
+        <div class="day-tips">
+          <h4>導遊小提醒</h4>
+          <ul>
+            <li>好好休息，明天輕鬆出發！</li>
+            <li>整理行李，準備下一站。</li>
+            <li>樂高樂園與 SEA LIFE 可購買聯票更省。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== Day 5 ====================== -->
+  <section class="sec" id="day5">
+    <div class="day-block">
+      <div class="day-banner">
+        <img src="https://live.staticflickr.com/65535/55267004850_4ff2b4b26d_b.jpg" alt="Day 5 行程" />
+        <div class="day-meta">
+          <span class="day-tag">DAY 05</span>
+          <h3>退房 ・ 還車 ・ 機場 ・ 搭機回台</h3>
+          <div class="day-date">2026 / 5 / 19 ・ 星期二</div>
+          <div class="day-summary">最後一日好好吃頓飯店早餐，整理行李退房後沿著機場接駁路線還車，提前 3 小時抵達中部國際機場，12:20 班機準時返台。</div>
+        </div>
+      </div>
+      <div class="day-body">
+        <table class="schedule">
+          <tr><td class="time">08:00 – 09:30</td><td class="item"><div class="place">享用飯店早餐</div><div class="desc">補充體力，準備返程。</div><div class="tags"><span class="meal">🍽 早餐</span></div></td></tr>
+          <tr><td class="time">09:40</td><td class="item"><div class="place">退房</div><div class="desc">整理行李，準備出發。</div><div class="tags"><span class="lodging">🏨 退房</span></div></td></tr>
+          <tr><td class="time">10:00</td><td class="item"><div class="place">從飯店出發還車</div><div class="desc">車程約 4 分鐘，免費機場接駁服務。</div><div class="tags"><span class="transit">🚗 還車</span></div></td></tr>
+          <tr><td class="time">10:30</td><td class="item"><div class="place">抵達中部國際機場</div><div class="desc">車程約 30 分鐘，提早報到，輕鬆辦理手續。</div><div class="tags"><span class="transit">✈ 機場</span></div></td></tr>
+          <tr><td class="time">12:20</td><td class="item"><div class="place">班機回台</div><div class="desc">帶著滿滿的回憶，開心回家！</div><div class="tags"><span class="transit">✈ 返航</span><span class="meal">🍽 機艙餐</span></div></td></tr>
+        </table>
+        <div class="day-tips">
+          <h4>導遊小提醒</h4>
+          <ul>
+            <li>吃飽喝足再出發。</li>
+            <li>建議預留時間慢慢整理行李。</li>
+            <li>還車前加滿油、檢查車內物品、保留還車收據。</li>
+            <li>建議提前 3 小時抵達，預留時間退飯店、確認登機門資訊。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== 住宿規格 ====================== -->
+  <section class="sec" id="lodging">
+    <div class="sec-head">
+      <div class="sec-eyebrow">Accommodation</div>
+      <h2 class="sec-title">住宿規格</h2>
+      <p class="sec-lead">市區與機場兩段住宿，分別兼顧逛街便利與返程順暢。</p>
+    </div>
+    <div class="lodging-grid">
+      <div class="lodging-card">
+        <img src="https://live.staticflickr.com/65535/55266841314_8cb278c708_b.jpg" alt="Hotel JAL City Nagoya Nishiki" />
+        <div class="body">
+          <h3>Hotel JAL City Nagoya Nishiki</h3>
+          <div class="ja">名古屋錦日航都市飯店 ・ ホテル JAL シティ名古屋錦</div>
+          <div class="meta">
+            <div><span class="k">入住期間</span><span>5 / 15 – 5 / 17（3 晚）</span></div>
+            <div><span class="k">地點</span><span>名古屋市中心 ・ 錦商圈 ・ 逛街、餐廳、便利商店超方便</span></div>
+            <div><span class="k">交通</span><span>地下鐵榮站、久屋大通站 步行約 5 分鐘</span></div>
+            <div><span class="k">房型</span><span>雙人房 / 三人房</span></div>
+            <div><span class="k">停車</span><span>附 35 個免費停車位（1800 日圓 / 晚）</span></div>
+          </div>
+          <div class="amenities">
+            <span>舒適客房</span><span>免費 Wi-Fi</span><span>餐廳</span><span>投幣洗衣機</span><span>行李寄放</span>
+          </div>
+        </div>
+      </div>
+      <div class="lodging-card">
+        <img src="https://live.staticflickr.com/65535/55266841314_8cb278c708_b.jpg" alt="J Hotel Rinku" />
+        <div class="body">
+          <h3>J Hotel Rinku</h3>
+          <div class="ja">ジェイホテル りんくう</div>
+          <div class="meta">
+            <div><span class="k">入住期間</span><span>5 / 18（1 晚）</span></div>
+            <div><span class="k">地點</span><span>距中部國際機場 5 分鐘車程</span></div>
+            <div><span class="k">交通</span><span>免費機場接駁來回，約 15 分鐘一班</span></div>
+            <div><span class="k">房型</span><span>雙人房 / 三人房 / 家庭房</span></div>
+            <div><span class="k">設施</span><span>機場接駁、大浴場、行李寄放</span></div>
+          </div>
+          <div class="amenities">
+            <span>舒適客房</span><span>免費 Wi-Fi</span><span>機場接駁</span><span>大浴場</span><span>行李寄放</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p style="text-align:center;margin-top:20px;color:var(--ink-faint);font-size:13px;letter-spacing:0.04em;">
+      入住時間 15:00 後 ・ 退房時間 10:00 前 ・ 如需加床、嬰兒床請提前告知飯店
+    </p>
+  </section>
+
+  <!-- ====================== 5 大景點 ====================== -->
+  <section class="sec" id="highlights">
+    <div class="sec-head">
+      <div class="sec-eyebrow">Top Attractions</div>
+      <h2 class="sec-title">5 大景點亮點</h2>
+      <p class="sec-lead">5 天行程精選五個招牌據點，點選可直接跳轉對應日程。</p>
+    </div>
+    <div class="highlight-grid">
+      <a class="highlight-card" href="#day2"><span class="num">01</span><h3>名古屋港水族館</h3><p>Day 2 ・ 海豚虎鯨大水槽</p></a>
+      <a class="highlight-card" href="#day3"><span class="num">02</span><h3>吉卜力公園</h3><p>Day 3 ・ 魔之谷 + 魔法之里</p></a>
+      <a class="highlight-card" href="#day4"><span class="num">03</span><h3>樂高樂園 Japan</h3><p>Day 4 ・ + SEA LIFE 雙樂園</p></a>
+      <a class="highlight-card" href="#day2"><span class="num">04</span><h3>大須商店街</h3><p>Day 2 ・ 美食古著</p></a>
+      <a class="highlight-card" href="#day3"><span class="num">05</span><h3>榮商圈</h3><p>Day 3 / Day 4 夜遊</p></a>
+    </div>
+  </section>
+
+  <!-- ====================== 伴手禮 ====================== -->
+  <section class="sec" id="souvenir">
+    <div class="sec-head">
+      <div class="sec-eyebrow">Souvenir Guide</div>
+      <h2 class="sec-title">伴手禮選購攻略</h2>
+      <p class="sec-lead">5 大類別精選必買清單，搭配大須、榮、AEON Mall、驚安殿堂等採購點。</p>
+    </div>
+    <div class="souvenir-wrap">
+      <img src="https://live.staticflickr.com/65535/55267004840_fc30e1b11e_b.jpg" alt="名古屋伴手禮精選" />
+      <div class="souvenir-text">
+        <h3>必吃伴手禮</h3>
+        <ul>
+          <li>青蛙饅頭 ・ 坂角總本舗 蝦餅 ・ 小倉紅豆吐司 ・ 赤福</li>
+        </ul>
+        <h3>特色名物</h3>
+        <ul>
+          <li>世界のしゃちほこ 手羽先 ・ 八丁味噌 ・ Sugakiya ・ CoCo壱番屋</li>
+        </ul>
+        <h3>藥妝日用品</h3>
+        <ul>
+          <li>Cocokarafine ・ 休足時間 ・ 合利他命 EX PLUS</li>
+        </ul>
+        <h3>限定商品</h3>
+        <ul>
+          <li>名古屋限定 KitKat ・ Chiikawa Land (PARCO 3F) ・ 橡子共和國 (PARCO B1)</li>
+        </ul>
+        <h3>採購建議</h3>
+        <ul>
+          <li>Day 1：AEON Mall 常滑（一站式量販）</li>
+          <li>Day 2：大須商店街（藥妝、雜貨）</li>
+          <li>Day 3–4：榮商圈 SakaeChika、驚安殿堂 ドンキ（24 小時）</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== 行前資訊：地圖 + 行李 ====================== -->
+  <section class="sec" id="info">
+    <div class="sec-head">
+      <div class="sec-eyebrow">Pre-trip Information</div>
+      <h2 class="sec-title">行前資訊</h2>
+      <p class="sec-lead">名古屋市區地圖與行李準備清單，出發前最後檢查。</p>
+    </div>
+    <div class="two-col">
+      <div class="img-card">
+        <img src="https://live.staticflickr.com/65535/55266610571_24c3311c56_b.jpg" alt="名古屋地圖" />
+        <div class="cap">六大據點 ・ 名古屋城 ・ 榮商圈 ・ 大須商店街 ・ 港水族館 ・ 樂高樂園 ・ J Hotel Rinku</div>
+      </div>
+      <div class="img-card">
+        <img src="https://live.staticflickr.com/65535/55265702052_f5871a5f34_b.jpg" alt="行李準備清單" />
+        <div class="cap">衣物 ・ 盥洗保養 ・ 藥品 ・ 3C 與重要物品 ・ 文件 ・ 親子用品 六大類完整清單</div>
+      </div>
+    </div>
+  </section>
+
 </main>
 
 <footer class="footer">
-  名古屋自由行 5天4夜 ・ 2026 / 5 / 15 – 5 / 19<br />
-  <span class="small">圖片版權屬原作者所有 ・ Hosted on eclawbot.com</span>
+  <div class="brand">名古屋深度行 5 天 4 夜</div>
+  <div class="small">2026 / 5 / 15 – 5 / 19 ・ Hosted on eclawbot.com ・ 圖片版權屬原作者所有</div>
 </footer>
 
 </body>
