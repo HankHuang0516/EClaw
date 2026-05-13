@@ -1588,6 +1588,18 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 notifyEntities(deviceId, bots, msg, { description: card.description, cardId });
             }
 
+            // Notify reviewer on /move → review (card_dfb65748c14680560c7bb873).
+            // Auto-done speakTo path notifies reviewer separately via reviewerNotify;
+            // manual /move had no reviewer ping, leaving cards in review until 6h escalation.
+            if (newStatus === 'review' && updatedCard.reviewerEntityId != null && !bots.includes(updatedCard.reviewerEntityId)) {
+                const lang = await getDeviceLanguage(deviceId);
+                const reviewerMsg = tKanban(lang, 'reviewerMovedToReview', {
+                    title: card.title,
+                    from: statusLabel(lang, oldStatus)
+                });
+                notifyEntities(deviceId, [updatedCard.reviewerEntityId], reviewerMsg, { description: card.description, cardId, role: 'reviewer' });
+            }
+
             await bumpVersion(deviceId);
 
             // Idle-dispatch hook (PR-B). emit() is a no-op when
