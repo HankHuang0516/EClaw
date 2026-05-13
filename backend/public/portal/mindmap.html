@@ -199,6 +199,24 @@
         const IS_EMBEDDED = _qp.get('embed') === '1';
         if (IS_EMBEDDED) document.body.classList.add('mm-embedded');
 
+        // ── Perf hardening knobs ─────────────────────────────────────────────
+        // ?perfFixture=N — replace fetch with synthetic N-node / 2N-link graph
+        //   for harness runs (no backend round-trip, deterministic seed).
+        // ?perfHUD=1 — show median-FPS overlay so manual eyeballing has a number.
+        const PERF_FIXTURE_N = (() => {
+            const v = _qp.get('perfFixture');
+            if (v == null) return 0;
+            const n = parseInt(v, 10);
+            if (!Number.isFinite(n) || n <= 0) return 1000;
+            return Math.min(n, 5000);
+        })();
+        const PERF_HUD = _qp.get('perfHUD') === '1' || PERF_FIXTURE_N > 0;
+        // Big graphs: drop labels even at higher zoom unless user has zoomed far
+        // enough to see a handful at a time. Avoids text-shaping bottleneck.
+        const LABEL_ZOOM_GATE_SMALL = 1.25;
+        const LABEL_ZOOM_GATE_LARGE = 3.0;
+        const LABEL_LARGE_GRAPH_THRESHOLD = 250;
+
         // ── i18n: localize chrome before first paint, then again after data loads.
         if (typeof i18n !== 'undefined' && i18n.apply) {
             try { i18n.apply(); } catch (_) {}
@@ -286,8 +304,91 @@
             for (const n of GRAPH.nodes) { n.fx = undefined; n.fy = undefined; }
         }
 
+        // ── Synthetic perf fixture (?perfFixture=N) ──────────────────────────
+        // Deterministic 1000-node / 2000-link generator. Each task has a
+        // parent (chain) and a random secondary link to thicken the edge set
+        // to ~2N. 4 owner nodes, distributed P0..P3 priorities + 6 statuses.
+        function buildPerfFixture(N) {
+            const nodes = [];
+            const links = [];
+            const OWNERS = 4;
+            const STATUSES = ['backlog', 'todo', 'in_progress', 'review', 'blocked', 'done'];
+            const PRIORITIES = ['P0', 'P1', 'P2', 'P3'];
+            for (let i = 1; i <= OWNERS; i++) {
+                nodes.push({
+                    id: 'owner:' + i, sourceId: String(i), label: 'Owner #' + i,
+                    type: 'owner', ownerEntityId: i
+                });
+            }
+            // Use mulberry32 PRNG so harness runs are reproducible.
+            let _seed = 0xdeadbeef;
+            const rnd = () => {
+                _seed = (_seed + 0x6D2B79F5) | 0;
+                let t = _seed;
+                t = Math.imul(t ^ t >>> 15, t | 1);
+                t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+                return ((t ^ t >>> 14) >>> 0) / 4294967296;
+            };
+            for (let i = 0; i < N; i++) {
+                const owner = (i % OWNERS) + 1;
+                nodes.push({
+                    id: 'task:perf' + i,
+                    sourceId: 'perf' + i,
+                    label: 'Perf task ' + i,
+                    fullTitle: 'Synthetic perf-fixture task #' + i,
+                    type: 'task',
+                    status: STATUSES[(i * 7) % STATUSES.length],
+                    priority: PRIORITIES[(i * 3) % PRIORITIES.length],
+                    ownerEntityId: owner,
+                    updatedAt: new Date(Date.now() - i * 60000).toISOString()
+                });
+                links.push({ source: 'owner:' + owner, target: 'task:perf' + i, type: 'owner' });
+                // Parent chain (every 8th task starts a new chain root).
+                if (i % 8 !== 0) {
+                    links.push({ source: 'task:perf' + i, target: 'task:perf' + (i - 1), type: 'parent' });
+                }
+            }
+            // Pad to ~2N links with random cross-references / blocks edges.
+            const targetLinks = 2 * N;
+            let safety = 0;
+            while (links.length < targetLinks && safety++ < targetLinks * 3) {
+                const a = Math.floor(rnd() * N);
+                const b = Math.floor(rnd() * N);
+                if (a === b) continue;
+                const type = rnd() < 0.3 ? 'blocks' : 'references';
+                links.push({
+                    source: 'task:perf' + a, target: 'task:perf' + b, type,
+                    directional: type === 'blocks'
+                });
+            }
+            return {
+                success: true,
+                graph: { nodes, links },
+                stats: {
+                    nodeCount: nodes.length,
+                    linkCount: links.length,
+                    truncated: false,
+                    sourceCounts: { task: N, note: 0, owner: OWNERS, chat: 0 }
+                },
+                meta: {
+                    scope: 'perf',
+                    schemaVersion: 1,
+                    layoutStorageKey: 'mindmap:force-layout:v1:perf:fixture:' + N
+                }
+            };
+        }
+
         // ── Fetch graph ──────────────────────────────────────────────────────
         async function fetchGraph() {
+            // Perf-fixture path skips backend entirely.
+            if (PERF_FIXTURE_N > 0) {
+                showState('loading');
+                // Async tick to let the loading state paint before the heavy
+                // simulation kicks in — gives an honest "first frame" reading.
+                await new Promise(r => setTimeout(r, 30));
+                applyGraph(buildPerfFixture(PERF_FIXTURE_N));
+                return;
+            }
             if (!MM_USER) return;
             const scope = document.getElementById('mmScope').value;
             const params = new URLSearchParams({
@@ -366,6 +467,11 @@
         function ensureForceGraph() {
             if (fg) return;
             const el = document.getElementById('mmGraph');
+            // Large-graph perf gates: drop per-frame particle animation + arrow
+            // heads above LABEL_LARGE_GRAPH_THRESHOLD. Particles redraw every
+            // rAF tick even after simulation cools, so they dominate frame cost
+            // on 1000+ node graphs.
+            const isLargeGraph = () => GRAPH.nodes.length >= LABEL_LARGE_GRAPH_THRESHOLD;
             // eslint-disable-next-line no-undef
             fg = ForceGraph()(el)
                 .backgroundColor('#0e0e1a')
@@ -376,9 +482,9 @@
                 .nodeCanvasObjectMode(() => 'replace')
                 .linkColor(l => EDGE_COLOR[l.type] || 'rgba(180,180,180,0.4)')
                 .linkWidth(l => Math.max(0.5, Number(l.weight) || 1))
-                .linkDirectionalArrowLength(l => l.directional ? 3 : 0)
+                .linkDirectionalArrowLength(l => (l.directional && !isLargeGraph()) ? 3 : 0)
                 .linkDirectionalArrowRelPos(0.9)
-                .linkDirectionalParticles(l => l.type === 'blocks' ? 2 : 0)
+                .linkDirectionalParticles(l => (!isLargeGraph() && l.type === 'blocks') ? 2 : 0)
                 .linkDirectionalParticleWidth(2)
                 .linkDirectionalParticleSpeed(0.006)
                 .onNodeClick(handleNodeClick)
@@ -388,6 +494,37 @@
                     node.fy = node.y;
                     saveLayout(GRAPH.meta);
                 });
+            window.__mmFG = fg;
+
+            // ── Perf gates ───────────────────────────────────────────────
+            // cooldownTime caps simulation wall-clock; cooldownTicks caps ticks
+            // when the system is fast. Either gate stops the alpha decay loop
+            // and frees the CPU. force-graph still redraws on user interaction
+            // (drag / zoom / hover), so the page stays interactive.
+            fg.cooldownTime(4000).cooldownTicks(120);
+            // d3Force tuning: stiffer charge falloff + slightly longer links
+            // keeps 1000-node clusters from collapsing into hairballs.
+            try {
+                if (typeof fg.d3Force === 'function') {
+                    const charge = fg.d3Force('charge');
+                    if (charge && charge.strength) charge.strength(-40).distanceMax(180);
+                    const link = fg.d3Force('link');
+                    if (link && link.distance) link.distance(28);
+                }
+                if (typeof fg.d3AlphaDecay === 'function') fg.d3AlphaDecay(0.05);
+                if (typeof fg.d3VelocityDecay === 'function') fg.d3VelocityDecay(0.35);
+            } catch (_) { /* engine missing — older force-graph build */ }
+
+            // Pause animation when tab is hidden so background graphs don't
+            // burn CPU. force-graph exposes pauseAnimation/resumeAnimation.
+            const handleVisibility = () => {
+                if (!fg) return;
+                try {
+                    if (document.hidden) fg.pauseAnimation();
+                    else fg.resumeAnimation();
+                } catch (_) {}
+            };
+            document.addEventListener('visibilitychange', handleVisibility, { passive: true });
 
             // Size to wrap
             const wrap = el.parentElement;
@@ -398,6 +535,43 @@
             resize();
             window.addEventListener('resize', resize, { passive: true });
             window.addEventListener('orientationchange', () => setTimeout(resize, 200));
+
+            // Perf HUD: only when ?perfHUD=1 or ?perfFixture=N
+            if (PERF_HUD) attachPerfHud();
+        }
+
+        // ── Perf HUD: 10-sample rolling FPS using requestAnimationFrame ──────
+        let _perfHud = { el: null, last: 0, samples: [], median: 0, raf: 0 };
+        function attachPerfHud() {
+            if (_perfHud.el) return;
+            const el = document.createElement('div');
+            el.className = 'mm-perf-hud';
+            el.style.cssText = 'position:absolute;right:8px;top:8px;z-index:7;'
+                + 'padding:4px 8px;border-radius:6px;background:rgba(0,0,0,0.6);'
+                + 'color:#34d399;font:11px/1.4 monospace;backdrop-filter:blur(4px);';
+            document.querySelector('.mm-canvas-wrap').appendChild(el);
+            _perfHud.el = el;
+            const tick = (ts) => {
+                if (_perfHud.last) {
+                    const dt = ts - _perfHud.last;
+                    if (dt > 0 && dt < 1000) {
+                        const fps = 1000 / dt;
+                        _perfHud.samples.push(fps);
+                        if (_perfHud.samples.length > 60) _perfHud.samples.shift();
+                        if (_perfHud.samples.length >= 10) {
+                            const sorted = [..._perfHud.samples].sort((a, b) => a - b);
+                            _perfHud.median = sorted[Math.floor(sorted.length / 2)];
+                        }
+                    }
+                }
+                _perfHud.last = ts;
+                el.textContent = 'fps ' + _perfHud.median.toFixed(1)
+                    + ' · ' + GRAPH.nodes.length + 'n / ' + GRAPH.links.length + 'l';
+                _perfHud.raf = requestAnimationFrame(tick);
+            };
+            _perfHud.raf = requestAnimationFrame(tick);
+            // Expose for Playwright harness scraping.
+            window.__mmPerf = _perfHud;
         }
 
         function safeFit() {
@@ -459,8 +633,12 @@
             }
             ctx.globalAlpha = 1;
 
-            // Label only when zoomed in enough
-            if (scale > 1.25 && node.label) {
+            // Label only when zoomed in enough.
+            // Large graphs (>250 nodes): require deeper zoom so text-shaping
+            // doesn't dominate the frame budget on WebView-class GPUs.
+            const labelGate = GRAPH.nodes.length > LABEL_LARGE_GRAPH_THRESHOLD
+                ? LABEL_ZOOM_GATE_LARGE : LABEL_ZOOM_GATE_SMALL;
+            if (scale > labelGate && node.label) {
                 ctx.font = (11 / scale) + 'px sans-serif';
                 ctx.fillStyle = 'rgba(255,255,255,0.85)';
                 ctx.textAlign = 'center';
