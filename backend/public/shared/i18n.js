@@ -2408033,7 +2408033,7 @@ const TRANSLATIONS = {
         "mm_preview_open_chat": "チャットで開く",
         "mm_preview_open_owner": "オーナーでフィルター",
         "mm_preview_action_disabled_note_deeplink": "ノートのディープリンクはフォローアップカードです今はmission.htmlを開きます。",
-        "mm_preview_action_disabled_chat_deeplink": "チャットのディープリンクはフォローアップカードです。 아직利用できません。",
+        "mm_preview_action_disabled_chat_deeplink": "チャットのディープリンクはフォローアップカードです。まだ利用できません。",
         "mm_meta_type": "タイプ",
         "mm_meta_status": "ステータス",
         "mm_meta_priority": "優先度",
