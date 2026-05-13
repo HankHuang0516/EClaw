@@ -457283,6 +457283,7 @@ const TRANSLATIONS = {
 
 
         "kb_sort_recently_updated": "Recently Updated",
+        "kb_sort_oldest_updated": "Oldest Updated",
 
 
 
