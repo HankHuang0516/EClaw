@@ -1,0 +1,74 @@
+[
+  {
+    "tag": "viewport-360",
+    "viewport": "360x720",
+    "commentCount": 13,
+    "listTop": 437,
+    "listBottom": 459,
+    "listHeight": 22,
+    "inputTop": 459,
+    "inputBottom": 520,
+    "inputHeight": 61,
+    "lastTop": 269.890625,
+    "lastBottom": 441.3125,
+    "lastVisible": true,
+    "inputZIndex": "3",
+    "inputBackground": "rgb(26, 26, 46)",
+    "inputPosition": "relative",
+    "listOverflowY": "auto",
+    "screenshot": "/tmp/kanban-comments-overlap-shots/kanban-overlap-360.png",
+    "selectionScreenshot": "/tmp/kanban-comments-overlap-shots/kanban-overlap-360-selected.png",
+    "selectionTestPass": true,
+    "consoleErrs": [
+      "[error] Failed to load resource: the server responded with a status of 401 ()"
+    ]
+  },
+  {
+    "tag": "viewport-412",
+    "viewport": "412x800",
+    "commentCount": 13,
+    "listTop": 433,
+    "listBottom": 497,
+    "listHeight": 64,
+    "inputTop": 497,
+    "inputBottom": 558,
+    "inputHeight": 61,
+    "lastTop": 308.046875,
+    "lastBottom": 479.46875,
+    "lastVisible": true,
+    "inputZIndex": "3",
+    "inputBackground": "rgb(26, 26, 46)",
+    "inputPosition": "relative",
+    "listOverflowY": "auto",
+    "screenshot": "/tmp/kanban-comments-overlap-shots/kanban-overlap-412.png",
+    "selectionScreenshot": "/tmp/kanban-comments-overlap-shots/kanban-overlap-412-selected.png",
+    "selectionTestPass": true,
+    "consoleErrs": [
+      "[error] Failed to load resource: the server responded with a status of 401 ()"
+    ]
+  },
+  {
+    "tag": "viewport-768",
+    "viewport": "768x1024",
+    "commentCount": 13,
+    "listTop": 436,
+    "listBottom": 849,
+    "listHeight": 413,
+    "inputTop": 849,
+    "inputBottom": 910,
+    "inputHeight": 61,
+    "lastTop": 720.453125,
+    "lastBottom": 831.453125,
+    "lastVisible": true,
+    "inputZIndex": "3",
+    "inputBackground": "rgb(26, 26, 46)",
+    "inputPosition": "relative",
+    "listOverflowY": "auto",
+    "screenshot": "/tmp/kanban-comments-overlap-shots/kanban-overlap-768.png",
+    "selectionScreenshot": "/tmp/kanban-comments-overlap-shots/kanban-overlap-768-selected.png",
+    "selectionTestPass": true,
+    "consoleErrs": [
+      "[error] Failed to load resource: the server responded with a status of 401 ()"
+    ]
+  }
+]
