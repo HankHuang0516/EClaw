@@ -637,6 +637,34 @@
             opacity: 1;
         }
 
+        /* ── Owner rental roster ── */
+        .roster-tabs { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 12px; }
+        .roster-tab { border:1px solid var(--card-border); background:var(--bg-secondary); color:var(--text-secondary); border-radius:999px; padding:7px 12px; font-size:13px; cursor:pointer; }
+        .roster-tab.active { border-color:var(--primary); color:var(--primary); background:rgba(74,158,255,0.12); }
+        .roster-panel { display:none; }
+        .roster-panel.active { display:block; }
+        .roster-table-wrap { overflow-x:auto; border:1px solid var(--card-border); border-radius:10px; background:rgba(255,255,255,0.02); }
+        .roster-table { width:100%; border-collapse:collapse; min-width:720px; font-size:13px; }
+        .roster-table th, .roster-table td { padding:9px 10px; border-bottom:1px solid var(--card-border); text-align:left; vertical-align:middle; }
+        .roster-table th { color:var(--text-secondary); font-size:11px; text-transform:uppercase; letter-spacing:.04em; background:rgba(255,255,255,0.03); }
+        .roster-table tr:last-child td { border-bottom:none; }
+        .roster-status { display:inline-flex; align-items:center; gap:5px; border-radius:999px; padding:3px 8px; font-size:12px; font-weight:700; }
+        .roster-status.active, .roster-status.ok { color:#22c55e; background:rgba(34,197,94,.12); }
+        .roster-status.soft_paused, .roster-status.degraded { color:#f59e0b; background:rgba(245,158,11,.14); }
+        .roster-status.archived, .roster-status.terminated, .roster-status.down { color:#ef4444; background:rgba(239,68,68,.13); }
+        .roster-action { max-width:190px; padding:7px 9px; border:1px solid var(--card-border); border-radius:8px; background:var(--bg); color:var(--text); font-size:13px; }
+        .roster-empty { padding:18px 12px; color:var(--text-secondary); font-size:13px; text-align:center; }
+        .roster-note { margin-top:8px; color:var(--text-muted); font-size:12px; line-height:1.45; }
+        @media (max-width:640px) {
+            .roster-table-wrap { border:none; background:transparent; }
+            .roster-table, .roster-table thead, .roster-table tbody, .roster-table tr, .roster-table th, .roster-table td { display:block; min-width:0; width:100%; box-sizing:border-box; }
+            .roster-table thead { display:none; }
+            .roster-table tr { margin-bottom:10px; border:1px solid var(--card-border); border-radius:10px; background:rgba(255,255,255,0.03); overflow:hidden; }
+            .roster-table td { display:flex; justify-content:space-between; gap:12px; border-bottom:1px solid var(--card-border); }
+            .roster-table td::before { content:attr(data-label); color:var(--text-secondary); font-size:11px; text-transform:uppercase; letter-spacing:.04em; flex:0 0 38%; }
+            .roster-action { width:100%; max-width:none; }
+        }
+
         /* ── Logout / footer area ── */
         .logout-btn {
             width: 100%;
@@ -895,6 +923,24 @@
                     <button class="chip" id="chatAvatarSizeLarge" onclick="setChatAvatarSize('large')" data-i18n="settings_chat_avatar_size_large">Large</button>
                 </div>
             </div>
+        </div>
+
+        <!-- Owner Rental Roster Card -->
+        <div class="card" id="ownerRosterCard">
+            <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                <span>🧑‍💼 <span data-i18n="settings_roster_section_title">Rental Management — my listings and rentals</span></span>
+                <button class="btn btn-outline btn-sm" onclick="loadOwnerRoster()" data-i18n="common_refresh">Refresh</button>
+            </div>
+            <p class="section-desc" data-i18n="settings_roster_section_desc">Manual owner controls for listing pause/resume, rebind, and rental history. Backend actions are enabled as rental subsystem endpoints land.</p>
+            <div class="roster-tabs" role="tablist">
+                <button class="roster-tab active" id="rosterTabListings" onclick="switchRosterTab('listings')" data-i18n="settings_roster_tab_my_listings">My listings</button>
+                <button class="roster-tab" id="rosterTabRentals" onclick="switchRosterTab('rentals')" data-i18n="settings_roster_tab_rented_bots">Rented bots</button>
+                <button class="roster-tab" id="rosterTabHistory" onclick="switchRosterTab('history')" data-i18n="settings_roster_tab_history">Affected history</button>
+            </div>
+            <div class="roster-panel active" id="rosterPanelListings"></div>
+            <div class="roster-panel" id="rosterPanelRentals"></div>
+            <div class="roster-panel" id="rosterPanelHistory"></div>
+            <div class="roster-note" id="rosterStatusNote"></div>
         </div>
 
         <!-- Notifications Card -->
@@ -1374,6 +1420,7 @@
             loadViewModePreference();
             loadNotifPreferences();
             loadDevicePreferences();
+            loadOwnerRoster(user).catch(e => console.warn('[Roster] initial load failed:', e));
             loadPromptPolicy(user);
             initKanbanNudgeCollapse();
             updatePushToggle();
@@ -2460,6 +2507,148 @@
                 if (preview) preview.textContent = data.policy?.compiledPrompt || '(empty policy)';
             } catch (e) {
                 if (preview) preview.textContent = e.message || 'Preview failed';
+            }
+        }
+
+        // ── Owner rental roster ──
+        let ownerRosterState = { listings: [], rentals: [], history: [], mock: false };
+
+        function rosterT(key, fallback, params) {
+            if (typeof i18n === 'undefined' || !i18n.t) return fallback || key;
+            const val = i18n.t(key, params || {});
+            return (!val || val === key) ? (fallback || key) : val;
+        }
+
+        function escapeHtml(value) {
+            const div = document.createElement('div');
+            div.textContent = String(value == null ? '' : value);
+            return div.innerHTML;
+        }
+
+        function rosterJsArg(value) {
+            return JSON.stringify(String(value == null ? '' : value));
+        }
+
+        function ownerRosterId(user = currentUser) {
+            return user && (user.entityId || user.entity_id || user.defaultEntityId || user.chatEntityId || 1);
+        }
+
+        function switchRosterTab(tab) {
+            ['listings','rentals','history'].forEach(name => {
+                document.getElementById('rosterTab' + (name === 'listings' ? 'Listings' : name === 'rentals' ? 'Rentals' : 'History'))?.classList.toggle('active', name === tab);
+                document.getElementById('rosterPanel' + (name === 'listings' ? 'Listings' : name === 'rentals' ? 'Rentals' : 'History'))?.classList.toggle('active', name === tab);
+            });
+        }
+
+        function rosterStatusPill(value) {
+            const raw = String(value || 'unknown');
+            return `<span class="roster-status ${raw}">● ${escapeHtml(raw)}</span>`;
+        }
+
+        function rosterMockData() {
+            return {
+                mock: true,
+                listings: [
+                    { listingId:'mock_listing_active', botName:'Support Bot', status:'active', health:'ok', activeRentals:2 },
+                    { listingId:'mock_listing_paused', botName:'Research Bot', status:'soft_paused', health:'degraded', activeRentals:3 },
+                    { listingId:'mock_listing_archived', botName:'Legacy Bot', status:'archived', health:'down', activeRentals:0 },
+                ],
+                rentals: [
+                    { rentalId:'mock_rental_1', botName:'Designer Bot', status:'active', remaining:'3h 20m', health:'ok' },
+                    { rentalId:'mock_rental_2', botName:'Coder Bot', status:'degraded', remaining:'51m', health:'degraded' },
+                ],
+                history: [
+                    { ts:Date.now() - 3600000, kind:'soft_pause', listing:'Research Bot', refund:'0 mli', detail:'health degraded' },
+                    { ts:Date.now() - 7200000, kind:'resume', listing:'Support Bot', refund:'0 mli', detail:'manual owner override' },
+                    { ts:Date.now() - 10800000, kind:'refund_terminate', listing:'Legacy Bot', refund:'18.4 mli', detail:'rebind cascade' },
+                ]
+            };
+        }
+
+        async function loadOwnerRoster(user = currentUser) {
+            const ownerEntityId = ownerRosterId(user);
+            const note = document.getElementById('rosterStatusNote');
+            if (note) note.textContent = rosterT('settings_roster_loading', 'Loading roster…');
+            try {
+                const [listingsResp, rentalsResp, historyResp] = await Promise.all([
+                    apiCall('GET', `/api/owner/roster/listings?ownerEntityId=${encodeURIComponent(ownerEntityId)}`).catch(e => ({ error:e })),
+                    apiCall('GET', `/api/owner/roster/rentals?ownerEntityId=${encodeURIComponent(ownerEntityId)}`).catch(e => ({ error:e })),
+                    apiCall('GET', `/api/owner/roster/history?ownerEntityId=${encodeURIComponent(ownerEntityId)}&limit=50`).catch(e => ({ error:e })),
+                ]);
+                if (listingsResp.error && rentalsResp.error && historyResp.error) throw listingsResp.error;
+                ownerRosterState = {
+                    mock: false,
+                    listings: listingsResp.listings || listingsResp.data || [],
+                    rentals: rentalsResp.rentals || rentalsResp.data || [],
+                    history: historyResp.history || historyResp.events || historyResp.data || [],
+                };
+            } catch (e) {
+                ownerRosterState = rosterMockData();
+                if (note) note.textContent = rosterT('settings_roster_mock_note', 'Preview mode: backend roster endpoints are not available yet; showing mock data.');
+                renderOwnerRoster();
+                return;
+            }
+            if (note) note.textContent = ownerRosterState.mock ? rosterT('settings_roster_mock_note', 'Preview mode: backend roster endpoints are not available yet; showing mock data.') : '';
+            renderOwnerRoster();
+        }
+
+        function renderOwnerRoster() {
+            renderRosterListings();
+            renderRosterRentals();
+            renderRosterHistory();
+        }
+
+        function renderRosterListings() {
+            const rows = ownerRosterState.listings || [];
+            const el = document.getElementById('rosterPanelListings');
+            if (!el) return;
+            if (!rows.length) { el.innerHTML = `<div class="roster-empty">${escapeHtml(rosterT('settings_roster_empty_state_listings', 'No listings yet.'))}</div>`; return; }
+            el.innerHTML = `<div class="roster-table-wrap"><table class="roster-table"><thead><tr><th>${rosterT('settings_roster_col_bot','Bot')}</th><th>${rosterT('settings_roster_col_status','Status')}</th><th>${rosterT('settings_roster_col_health','Health')}</th><th>${rosterT('settings_roster_col_active_rentals','Active rentals')}</th><th>${rosterT('settings_roster_col_action','Action')}</th></tr></thead><tbody>` + rows.map(item => {
+                const id = item.listingId || item.id;
+                const activeCount = item.activeRentals ?? item.active_rentals ?? item.rentalCount ?? 0;
+                return `<tr><td data-label="${rosterT('settings_roster_col_bot','Bot')}">${escapeHtml(item.botName || item.bot_name || item.title || id || '-')}</td><td data-label="${rosterT('settings_roster_col_status','Status')}">${rosterStatusPill(item.status)}</td><td data-label="${rosterT('settings_roster_col_health','Health')}">${rosterStatusPill(item.health || item.healthStatus || 'unknown')}</td><td data-label="${rosterT('settings_roster_col_active_rentals','Active rentals')}">${activeCount}</td><td data-label="${rosterT('settings_roster_col_action','Action')}"><select class="roster-action" onchange="onRosterAction(this, 'listing', ${rosterJsArg(id)}, ${Number(activeCount)||0})"><option value="">${rosterT('settings_roster_action_choose','Choose action')}</option><option value="soft_pause">${rosterT('settings_roster_action_soft_pause','Manual soft-pause')}</option><option value="resume">${rosterT('settings_roster_action_resume','Resume now')}</option><option value="archive">${rosterT('settings_roster_action_archive','Archive listing')}</option><option value="manual_rebind">${rosterT('settings_roster_action_manual_rebind','Rebind and terminate rentals')}</option></select></td></tr>`;
+            }).join('') + `</tbody></table></div>`;
+        }
+
+        function renderRosterRentals() {
+            const rows = ownerRosterState.rentals || [];
+            const el = document.getElementById('rosterPanelRentals');
+            if (!el) return;
+            if (!rows.length) { el.innerHTML = `<div class="roster-empty">${escapeHtml(rosterT('settings_roster_empty_state_rentals', 'No rented bots yet.'))}</div>`; return; }
+            el.innerHTML = `<div class="roster-table-wrap"><table class="roster-table"><thead><tr><th>${rosterT('settings_roster_col_bot','Bot')}</th><th>${rosterT('settings_roster_col_rental_status','Rental status')}</th><th>${rosterT('settings_roster_col_remaining','Remaining')}</th><th>${rosterT('settings_roster_col_health','Health')}</th><th>${rosterT('settings_roster_col_action','Action')}</th></tr></thead><tbody>` + rows.map(item => {
+                const id = item.rentalId || item.id;
+                return `<tr><td data-label="${rosterT('settings_roster_col_bot','Bot')}">${escapeHtml(item.botName || item.bot_name || item.title || id || '-')}</td><td data-label="${rosterT('settings_roster_col_rental_status','Rental status')}">${rosterStatusPill(item.status)}</td><td data-label="${rosterT('settings_roster_col_remaining','Remaining')}">${escapeHtml(String(item.remaining || item.remainingTime || '-'))}</td><td data-label="${rosterT('settings_roster_col_health','Health')}">${rosterStatusPill(item.health || item.healthStatus || 'unknown')}</td><td data-label="${rosterT('settings_roster_col_action','Action')}"><select class="roster-action" onchange="onRosterAction(this, 'rental', ${rosterJsArg(id)}, 0)"><option value="">${rosterT('settings_roster_action_choose','Choose action')}</option><option value="details">${rosterT('settings_roster_action_view_details','View rental details')}</option><option value="report_issue">${rosterT('settings_roster_action_report_issue','Report issue')}</option></select></td></tr>`;
+            }).join('') + `</tbody></table></div>`;
+        }
+
+        function renderRosterHistory() {
+            const rows = ownerRosterState.history || [];
+            const el = document.getElementById('rosterPanelHistory');
+            if (!el) return;
+            if (!rows.length) { el.innerHTML = `<div class="roster-empty">${escapeHtml(rosterT('settings_roster_empty_state_history', 'No rental events yet.'))}</div>`; return; }
+            el.innerHTML = `<div class="roster-table-wrap"><table class="roster-table"><thead><tr><th>${rosterT('settings_roster_col_time','Time')}</th><th>${rosterT('settings_roster_col_event','Event')}</th><th>${rosterT('settings_roster_col_listing','Listing')}</th><th>${rosterT('settings_roster_col_refund','Refund')}</th><th>${rosterT('settings_roster_col_details','Details')}</th></tr></thead><tbody>` + rows.map(item => `<tr><td data-label="${rosterT('settings_roster_col_time','Time')}">${escapeHtml(new Date(item.ts || item.createdAt || Date.now()).toLocaleString())}</td><td data-label="${rosterT('settings_roster_col_event','Event')}">${escapeHtml(item.kind || item.type || '-')}</td><td data-label="${rosterT('settings_roster_col_listing','Listing')}">${escapeHtml(item.listing || item.listingTitle || item.listingId || '-')}</td><td data-label="${rosterT('settings_roster_col_refund','Refund')}">${escapeHtml(String(item.refund || item.refundAmount || '0'))}</td><td data-label="${rosterT('settings_roster_col_details','Details')}">${escapeHtml(item.detail || item.details || '')}</td></tr>`).join('') + `</tbody></table></div>`;
+        }
+
+        async function onRosterAction(selectEl, targetType, targetId, activeCount) {
+            const action = selectEl.value;
+            selectEl.value = '';
+            if (!action || !targetId) return;
+            if (action === 'details') { window.location.href = `my-rentals.html?rentalId=${encodeURIComponent(targetId)}`; return; }
+            const confirmKey = action === 'manual_rebind' ? 'settings_roster_confirm_manual_rebind'
+                : action === 'resume' ? 'settings_roster_confirm_resume'
+                : 'settings_roster_confirm_generic';
+            const msg = rosterT(confirmKey, action === 'manual_rebind'
+                ? `This will terminate ${activeCount} active rentals and issue refunds from your wallet. Continue?`
+                : 'Apply this manual owner action?');
+            const ok = await showConfirm({ title: rosterT('settings_roster_confirm_title', 'Confirm roster action'), message: msg, danger: ['archive','manual_rebind'].includes(action) });
+            if (!ok) return;
+            try {
+                if (ownerRosterState.mock) throw new Error('mock-mode');
+                await apiCall('POST', '/api/owner/roster/manual-action', { action, reason: 'owner_manual_settings', [targetType === 'listing' ? 'listingId' : 'rentalId']: targetId });
+                showToast(rosterT('settings_roster_action_success', 'Action queued'), 'success');
+                loadOwnerRoster();
+            } catch (e) {
+                showToast(ownerRosterState.mock ? rosterT('settings_roster_mock_action', 'Preview only — backend action not available yet.') : (e.message || 'Action failed'), ownerRosterState.mock ? 'info' : 'error');
             }
         }
 
