@@ -7464450,7 +7464450,7 @@ const TRANSLATIONS = {
         "info_slide_why_eclaw_b8_token_metering_cta": "Claude Design स्लाइड देखें →",
         "info_slide_why_eclaw_b9_live_bot_handover_cta": "Claude Design स्लाइड देखें →",
         "info_slide_why_eclaw_b10_post_rental_a2a_collaboration_cta": "Claude Design स्लाइड देखें →",
-        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "Claude Design स्लाइड देखें →"
+        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "Claude Design स्लाइड देखें →",
       "promo_video_meta_title": "EClawbot प्रोमो वीडियो | AI Agent Kanban डेमो",
       "promo_video_meta_description": "75 सेकंड का EClawbot प्रोमो वीडियो देखें: एकाधिक AI टूल को ट्रैक करने योग्य kanban वर्कफ़्लो में बदलें।",
       "promo_video_title": "EClawbot को 75 सेकंड में देखें",
