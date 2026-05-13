@@ -4492,7 +4492,7 @@
                 });
                 list.appendChild(item);
             });
-            if (typeof i18n !== 'undefined') i18n.applyPage();
+            if (typeof i18n !== 'undefined' && typeof i18n.apply === 'function') i18n.apply();
         }
 
         function updateBorrowButtons() {
