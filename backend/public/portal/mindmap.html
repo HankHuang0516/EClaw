@@ -390,7 +390,12 @@
                 return;
             }
             if (!MM_USER) return;
-            const scope = document.getElementById('mmScope').value;
+            const scopeSelect = document.getElementById('mmScope');
+            let scope = scopeSelect.value;
+            if (scope === 'entity' && MM_USER.entityId == null) {
+                scope = 'device';
+                scopeSelect.value = 'device';
+            }
             const params = new URLSearchParams({
                 deviceId: MM_USER.deviceId || '',
                 scope
