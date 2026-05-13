@@ -1835,6 +1835,20 @@
             el.innerHTML = html;
         }
 
+        function noteLinkedCardIds(note) {
+            return Array.isArray(note && note.linkedCardIds)
+                ? note.linkedCardIds.filter(Boolean)
+                : [];
+        }
+
+        function linkedCardBadgeHtml(note) {
+            const ids = noteLinkedCardIds(note);
+            if (!ids.length) return '';
+            const cardById = new Map((_kanbanCardsCache || []).map(c => [c.id, c]));
+            const titles = ids.map(id => (cardById.get(id)?.title || id).slice(0, 60)).join('\n');
+            return `<span class="item-badge" title="${esc(titles)}">🔗 ${ids.length}</span>`;
+        }
+
         function renderNoteItemHtml(n) {
             const hasPage = notePageIds.has(n.id);
             return `
@@ -1843,6 +1857,7 @@
                  onclick="showEditNote('${n.id}')" oncontextmenu="showNoteMenu(event,'${n.id}')">
                 <div class="item-row">
                     <span class="item-title">${esc(n.title)}</span>
+                    ${linkedCardBadgeHtml(n)}
                     ${hasPage ? `<span class="${notePagePublic[n.id] ? 'note-public-tag' : 'note-private-tag'}">${notePagePublic[n.id] ? '🌐 ' + (i18n.t('mc_note_public_label') || 'Public') : '🔒 ' + (i18n.t('mc_note_private_label') || 'Private')}</span><button class="note-page-btn" onclick="event.stopPropagation();openPageViewer('${n.id}')" title="${i18n.t('mc_note_open_page')}">🌐</button>` : ''}
                     <button class="item-delete" onclick="event.stopPropagation();deleteNote('${n.id}')" title="${i18n.t('common_delete')}">&times;</button>
                 </div>
@@ -2019,12 +2034,29 @@
             return opts;
         }
 
+        function getLinkedCardOptions(cards, currentIds) {
+            const selected = new Set((currentIds || []).map(String));
+            const opts = cards.map(c => ({
+                value: c.id,
+                label: `🔗 ${(c.title || c.id).slice(0, 60)}`
+            }));
+            for (const id of selected) {
+                if (id && !opts.some(o => o.value === id)) opts.push({ value: id, label: `🔗 ${id}` });
+            }
+            return opts;
+        }
+
+        function parseLinkedCardIdsFromDialogValue(value) {
+            return String(value || '').split(',').map(s => s.trim()).filter(Boolean);
+        }
+
         async function showAddNote() {
             const cards = await getKanbanCardsForAnchor();
             showDialog(i18n.t('mc_dlg_add_note'), [
                 { key: 'title', label: i18n.t('mc_dlg_title'), value: '' },
                 { key: 'content', label: i18n.t('mc_dlg_content'), type: 'textarea', value: '' },
                 { key: 'category', label: i18n.t('mc_dlg_category'), type: 'select', value: '', options: getCategoryOptions('notes') },
+                { key: 'linkedCardIds', label: i18n.t('mc_dlg_linked_cards') || 'Linked Kanban cards', type: 'multiselect', value: '', options: getLinkedCardOptions(cards, []) },
                 { key: 'anchor', label: i18n.t('mc_dlg_anchor') || '釘到看板卡片', type: 'select', value: '', options: getAnchorOptions(cards, null) }
             ], vals => {
                 if (!vals.title.trim()) return;
@@ -2037,6 +2069,7 @@
                     createdAt: Date.now(),
                     updatedAt: Date.now(),
                     createdBy: 'user',
+                    linkedCardIds: parseLinkedCardIdsFromDialogValue(vals.linkedCardIds),
                     ...(anchor ? { anchor } : {})
                 });
                 markChanged();
@@ -2053,12 +2086,14 @@
                 { key: 'title', label: i18n.t('mc_dlg_title'), value: note.title },
                 { key: 'content', label: i18n.t('mc_dlg_content'), type: 'textarea', value: note.content },
                 { key: 'category', label: i18n.t('mc_dlg_category'), type: 'select', value: note.category || '', options: getCategoryOptions('notes') },
+                { key: 'linkedCardIds', label: i18n.t('mc_dlg_linked_cards') || 'Linked Kanban cards', type: 'multiselect', value: noteLinkedCardIds(note).join(','), options: getLinkedCardOptions(cards, noteLinkedCardIds(note)) },
                 { key: 'anchor', label: i18n.t('mc_dlg_anchor') || '釘到看板卡片', type: 'select', value: pickerValueFromAnchor(note.anchor), options: getAnchorOptions(cards, note.anchor) }
             ], vals => {
                 if (!vals.title.trim()) return;
                 note.title = vals.title.trim();
                 note.content = vals.content.trim();
                 note.category = vals.category || null;
+                note.linkedCardIds = parseLinkedCardIdsFromDialogValue(vals.linkedCardIds);
                 const newAnchor = anchorFromPickerValue(vals.anchor);
                 if (newAnchor) note.anchor = newAnchor;
                 else delete note.anchor;

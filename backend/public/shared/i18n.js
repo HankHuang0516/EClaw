@@ -9368,6 +9368,7 @@ const TRANSLATIONS = {
 
 
         "mc_dlg_anchor": "Pin to kanban card",
+        "mc_dlg_linked_cards": "Linked Kanban cards",
 
 
 
@@ -1823822,6 +1823823,7 @@ const TRANSLATIONS = {
 
 
         "mc_dlg_anchor": "釘選至 kanban 卡片",
+        "mc_dlg_linked_cards": "連結的 Kanban 卡片",
 
 
 
@@ -2408192,6 +2408194,7 @@ const TRANSLATIONS = {
 
 
         "mc_dlg_anchor": "カンバンカードにピン留め",
+        "mc_dlg_linked_cards": "リンクされたカンバンカード",
 
 
 

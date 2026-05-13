@@ -333,3 +333,26 @@ ALTER TABLE mission_rules ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE mission_rules ALTER COLUMN id TYPE VARCHAR(48) USING id::text;
 ALTER TABLE mission_rules ALTER COLUMN id SET DEFAULT ('rule_' || encode(gen_random_bytes(12), 'hex'));
 ALTER TABLE mission_sync_log ALTER COLUMN item_id TYPE VARCHAR(48) USING item_id::text;
+
+-- ============================================
+-- Mission note ↔ Kanban card explicit links
+-- Source of truth for first-class note_on_card graph edges.
+-- Notes live in mission_dashboard.notes JSONB, so note_id is validated in
+-- route code and cannot use a database FK. Cards are validated device-scoped
+-- before insert/update.
+-- ============================================
+CREATE TABLE IF NOT EXISTS mission_note_card_links (
+    id BIGSERIAL PRIMARY KEY,
+    device_id VARCHAR(64) NOT NULL REFERENCES mission_dashboard(device_id) ON DELETE CASCADE,
+    note_id VARCHAR(48) NOT NULL,
+    card_id VARCHAR(48) NOT NULL,
+    created_by INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(device_id, note_id, card_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_mission_note_card_links_note
+ON mission_note_card_links(device_id, note_id);
+
+CREATE INDEX IF NOT EXISTS idx_mission_note_card_links_card
+ON mission_note_card_links(device_id, card_id);
