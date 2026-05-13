@@ -13,6 +13,7 @@ const TRANSLATIONS = {
         scheduleRecurring: '🗓️ Schedule triggered: [{title}]\nPlease continue this task',
         scheduleRecurringWithStatus: '🗓️ Schedule triggered: [{title}]\nStatus: {from} → {to}, please continue this task',
         reviewerNotify: '🔍 Task completed, awaiting review: [{title}]\nBot #{entityId} reported: {reply}\nIf there are issues, please create a new card.',
+        reviewerMovedToReview: '🔍 Pending review: [{title}]\nMoved from {from} to Review. Please review.',
         reviewerNoReply: '(no reply content)'
     },
     zh: {
@@ -25,6 +26,7 @@ const TRANSLATIONS = {
         scheduleRecurring: '🗓️ 排程觸發：[{title}]\n請繼續推進此任務',
         scheduleRecurringWithStatus: '🗓️ 排程觸發：[{title}]\n狀態: {from} → {to}，請繼續推進此任務',
         reviewerNotify: '🔍 任務完成待審：[{title}]\nBot #{entityId} 已完成並回報：{reply}\n如有問題請重新建卡指派。',
+        reviewerMovedToReview: '🔍 待審：[{title}]\n已從 {from} 移到審查階段，請審。',
         reviewerNoReply: '（無回覆內容）'
     },
     'zh-CN': {
@@ -37,6 +39,7 @@ const TRANSLATIONS = {
         scheduleRecurring: '🗓️ 排程触发：[{title}]\n请继续推进此任务',
         scheduleRecurringWithStatus: '🗓️ 排程触发：[{title}]\n状态: {from} → {to}，请继续推进此任务',
         reviewerNotify: '🔍 任务完成待审：[{title}]\nBot #{entityId} 已完成并回报：{reply}\n如有问题请重新建卡指派。',
+        reviewerMovedToReview: '🔍 待审：[{title}]\n已从 {from} 移到审查阶段，请审。',
         reviewerNoReply: '（无回复内容）'
     },
     ja: {
@@ -49,6 +52,7 @@ const TRANSLATIONS = {
         scheduleRecurring: '🗓️ スケジュール起動：[{title}]\nこのタスクを進めてください',
         scheduleRecurringWithStatus: '🗓️ スケジュール起動：[{title}]\nステータス: {from} → {to}、このタスクを進めてください',
         reviewerNotify: '🔍 タスク完了、レビュー待ち：[{title}]\nBot #{entityId} の報告：{reply}\n問題がある場合は新しいカードを作成してください。',
+        reviewerMovedToReview: '🔍 レビュー待ち：[{title}]\n{from} からレビューへ移動しました。確認してください。',
         reviewerNoReply: '（返信内容なし）'
     },
     ko: {
@@ -61,6 +65,7 @@ const TRANSLATIONS = {
         scheduleRecurring: '🗓️ 일정 트리거: [{title}]\n이 작업을 계속 진행하세요',
         scheduleRecurringWithStatus: '🗓️ 일정 트리거: [{title}]\n상태: {from} → {to}, 이 작업을 계속 진행하세요',
         reviewerNotify: '🔍 작업 완료, 검토 대기 중: [{title}]\nBot #{entityId} 보고: {reply}\n문제가 있으면 새 카드를 만들어주세요.',
+        reviewerMovedToReview: '🔍 검토 대기: [{title}]\n{from}에서 검토로 이동되었습니다. 검토해주세요.',
         reviewerNoReply: '(회신 내용 없음)'
     },
     th: {
@@ -73,6 +78,7 @@ const TRANSLATIONS = {
         scheduleRecurring: '🗓️ กำหนดเวลาเริ่มทำงาน: [{title}]\nโปรดดำเนินงานนี้ต่อ',
         scheduleRecurringWithStatus: '🗓️ กำหนดเวลาเริ่มทำงาน: [{title}]\nสถานะ: {from} → {to}, โปรดดำเนินงานนี้ต่อ',
         reviewerNotify: '🔍 งานเสร็จสิ้น รอการตรวจสอบ: [{title}]\nBot #{entityId} รายงาน: {reply}\nหากมีปัญหา กรุณาสร้างการ์ดใหม่',
+        reviewerMovedToReview: '🔍 รอตรวจสอบ: [{title}]\nย้ายจาก {from} ไปยังตรวจสอบ โปรดตรวจสอบ',
         reviewerNoReply: '(ไม่มีเนื้อหาตอบกลับ)'
     },
     vi: {
@@ -85,6 +91,7 @@ const TRANSLATIONS = {
         scheduleRecurring: '🗓️ Lịch trình kích hoạt: [{title}]\nVui lòng tiếp tục nhiệm vụ này',
         scheduleRecurringWithStatus: '🗓️ Lịch trình kích hoạt: [{title}]\nTrạng thái: {from} → {to}, vui lòng tiếp tục nhiệm vụ này',
         reviewerNotify: '🔍 Nhiệm vụ hoàn thành, chờ đánh giá: [{title}]\nBot #{entityId} báo cáo: {reply}\nNếu có vấn đề, vui lòng tạo thẻ mới.',
+        reviewerMovedToReview: '🔍 Chờ đánh giá: [{title}]\nĐã chuyển từ {from} sang Đánh giá. Vui lòng đánh giá.',
         reviewerNoReply: '(không có nội dung phản hồi)'
     },
     id: {
@@ -97,6 +104,7 @@ const TRANSLATIONS = {
         scheduleRecurring: '🗓️ Jadwal terpicu: [{title}]\nMohon lanjutkan tugas ini',
         scheduleRecurringWithStatus: '🗓️ Jadwal terpicu: [{title}]\nStatus: {from} → {to}, mohon lanjutkan tugas ini',
         reviewerNotify: '🔍 Tugas selesai, menunggu tinjauan: [{title}]\nBot #{entityId} melaporkan: {reply}\nJika ada masalah, mohon buat kartu baru.',
+        reviewerMovedToReview: '🔍 Menunggu tinjauan: [{title}]\nDipindahkan dari {from} ke Tinjauan. Mohon tinjau.',
         reviewerNoReply: '(tidak ada konten balasan)'
     },
     hi: {
@@ -109,6 +117,7 @@ const TRANSLATIONS = {
         scheduleRecurring: '🗓️ शेड्यूल ट्रिगर: [{title}]\nकृपया यह कार्य जारी रखें',
         scheduleRecurringWithStatus: '🗓️ शेड्यूल ट्रिगर: [{title}]\nस्थिति: {from} → {to}, कृपया यह कार्य जारी रखें',
         reviewerNotify: '🔍 कार्य पूर्ण, समीक्षा प्रतीक्षित: [{title}]\nBot #{entityId} रिपोर्ट: {reply}\nयदि कोई समस्या हो, तो कृपया नया कार्ड बनाएं।',
+        reviewerMovedToReview: '🔍 समीक्षा प्रतीक्षित: [{title}]\n{from} से समीक्षा में स्थानांतरित किया गया। कृपया समीक्षा करें।',
         reviewerNoReply: '(कोई उत्तर सामग्री नहीं)'
     },
     es: {
@@ -121,6 +130,7 @@ const TRANSLATIONS = {
         scheduleRecurring: '🗓️ Horario activado: [{title}]\nPor favor continúa esta tarea',
         scheduleRecurringWithStatus: '🗓️ Horario activado: [{title}]\nEstado: {from} → {to}, por favor continúa esta tarea',
         reviewerNotify: '🔍 Tarea completada, esperando revisión: [{title}]\nBot #{entityId} informó: {reply}\nSi hay problemas, por favor crea una nueva tarjeta.',
+        reviewerMovedToReview: '🔍 Pendiente de revisión: [{title}]\nMovido de {from} a Revisión. Por favor revisa.',
         reviewerNoReply: '(sin contenido de respuesta)'
     },
     fr: {
@@ -133,6 +143,7 @@ const TRANSLATIONS = {
         scheduleRecurring: '🗓️ Planification déclenchée: [{title}]\nVeuillez continuer cette tâche',
         scheduleRecurringWithStatus: '🗓️ Planification déclenchée: [{title}]\nStatut: {from} → {to}, veuillez continuer cette tâche',
         reviewerNotify: '🔍 Tâche terminée, en attente de révision: [{title}]\nBot #{entityId} a rapporté: {reply}\nEn cas de problème, veuillez créer une nouvelle carte.',
+        reviewerMovedToReview: '🔍 En attente de révision: [{title}]\nDéplacé de {from} à Révision. Veuillez réviser.',
         reviewerNoReply: '(aucun contenu de réponse)'
     },
     ms: {
@@ -145,6 +156,7 @@ const TRANSLATIONS = {
         scheduleRecurring: '🗓️ Jadual dicetuskan: [{title}]\nSila teruskan tugas ini',
         scheduleRecurringWithStatus: '🗓️ Jadual dicetuskan: [{title}]\nStatus: {from} → {to}, sila teruskan tugas ini',
         reviewerNotify: '🔍 Tugas selesai, menunggu semakan: [{title}]\nBot #{entityId} melaporkan: {reply}\nJika ada masalah, sila cipta kad baharu.',
+        reviewerMovedToReview: '🔍 Menunggu semakan: [{title}]\nDipindahkan dari {from} ke Semakan. Sila semak.',
         reviewerNoReply: '(tiada kandungan balasan)'
     },
     ar: {
@@ -157,6 +169,7 @@ const TRANSLATIONS = {
         scheduleRecurring: '🗓️ تم تشغيل الجدول: [{title}]\nيرجى متابعة هذه المهمة',
         scheduleRecurringWithStatus: '🗓️ تم تشغيل الجدول: [{title}]\nالحالة: {from} → {to}, يرجى متابعة هذه المهمة',
         reviewerNotify: '🔍 المهمة مكتملة، بانتظار المراجعة: [{title}]\nBot #{entityId} أبلغ: {reply}\nإذا كانت هناك مشكلات، يرجى إنشاء بطاقة جديدة.',
+        reviewerMovedToReview: '🔍 بانتظار المراجعة: [{title}]\nتم النقل من {from} إلى المراجعة. يرجى المراجعة.',
         reviewerNoReply: '(لا يوجد محتوى رد)'
     },
     de: {
@@ -169,6 +182,7 @@ const TRANSLATIONS = {
         scheduleRecurring: '🗓️ Zeitplan ausgelöst: [{title}]\nBitte diese Aufgabe fortführen',
         scheduleRecurringWithStatus: '🗓️ Zeitplan ausgelöst: [{title}]\nStatus: {from} → {to}, bitte diese Aufgabe fortführen',
         reviewerNotify: '🔍 Aufgabe erledigt, wartet auf Überprüfung: [{title}]\nBot #{entityId} berichtet: {reply}\nBei Problemen bitte neue Karte erstellen.',
+        reviewerMovedToReview: '🔍 Wartet auf Überprüfung: [{title}]\nVon {from} zu Überprüfung verschoben. Bitte überprüfen.',
         reviewerNoReply: '(keine Antwortinhalte)'
     }
 };
