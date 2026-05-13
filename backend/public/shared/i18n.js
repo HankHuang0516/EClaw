@@ -3467264,7 +3467264,7 @@ const TRANSLATIONS = {
         "info_slide_why_eclaw_b8_token_metering_cta": "ดูสไลด์ Claude Design →",
         "info_slide_why_eclaw_b9_live_bot_handover_cta": "ดูสไลด์ Claude Design →",
         "info_slide_why_eclaw_b10_post_rental_a2a_collaboration_cta": "ดูสไลด์ Claude Design →",
-        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "ดูสไลด์ Claude Design →",},
+        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "ดูสไลด์ Claude Design →"},
 
 
 
@@ -4519460,7 +4519460,7 @@ const TRANSLATIONS = {
         "wizard_target_track4_title": "Track 4 — penautan channel Claude",
         "wizard_target_track6_desc": "Kami akan membuka Arena dan memandu Anda melalui benchmark 12 dimensi.",
         "wizard_target_track6_title": "Track 6 — arena evaluasi agen",
-        "wizard_title": "EClawbot — Wizard Onboarding",},
+        "wizard_title": "EClawbot — Wizard Onboarding"},
 
 
 
@@ -5043221,7 +5043221,7 @@ const TRANSLATIONS = {
         "info_slide_why_eclaw_b8_token_metering_cta": "Voir la diapositive Claude Design →",
         "info_slide_why_eclaw_b9_live_bot_handover_cta": "Voir la diapositive Claude Design →",
         "info_slide_why_eclaw_b10_post_rental_a2a_collaboration_cta": "Voir la diapositive Claude Design →",
-        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "Voir la diapositive Claude Design →",},
+        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "Voir la diapositive Claude Design →"},
 
 
 
@@ -6764240,7 +6764240,7 @@ const TRANSLATIONS = {
         "wizard_target_track4_title": "Trek 4 — pautan saluran Claude",
         "wizard_target_track6_desc": "Kami akan membuka Arena dan membimbing anda melalui penanda aras 12 dimensi.",
         "wizard_target_track6_title": "Trek 6 — arena penilaian ejen",
-        "wizard_title": "EClawbot — Wizard Pengenalan",},
+        "wizard_title": "EClawbot — Wizard Pengenalan"},
 
 
 
@@ -7462721,7 +7462721,7 @@ const TRANSLATIONS = {
         "info_slide_why_eclaw_b8_token_metering_cta": "Claude Design स्लाइड देखें →",
         "info_slide_why_eclaw_b9_live_bot_handover_cta": "Claude Design स्लाइड देखें →",
         "info_slide_why_eclaw_b10_post_rental_a2a_collaboration_cta": "Claude Design स्लाइड देखें →",
-        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "Claude Design स्लाइड देखें →",},
+        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "Claude Design स्लाइड देखें →"},
 
 
 
@@ -8010034,7 +8010034,7 @@ const TRANSLATIONS = {
         "info_slide_why_eclaw_b8_token_metering_cta": "عرض شريحة Claude Design ←",
         "info_slide_why_eclaw_b9_live_bot_handover_cta": "عرض شريحة Claude Design ←",
         "info_slide_why_eclaw_b10_post_rental_a2a_collaboration_cta": "عرض شريحة Claude Design ←",
-        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "عرض شريحة Claude Design ←",}
+        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "عرض شريحة Claude Design ←"}
 
 
 
