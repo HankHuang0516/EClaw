@@ -2685,6 +2685,29 @@
             max-height: 300px;
             overflow-y: auto;
         }
+        #entityPreviewModal .entity-card-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        #entityPreviewModal .entity-open-kanban {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(74, 158, 255, 0.45);
+            background: rgba(74, 158, 255, 0.14);
+            color: var(--primary, #4a9eff);
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        #entityPreviewModal .entity-open-kanban:hover {
+            background: rgba(74, 158, 255, 0.22);
+            border-color: rgba(74, 158, 255, 0.75);
+        }
         #entityPreviewModal .entity-comments {
             margin-top: 12px;
             padding: 12px;
@@ -6433,6 +6456,14 @@
             return div.innerHTML;
         }
 
+        function escapeJs(str) {
+            return String(str || '')
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
+                .replace(/\n/g, '\\n')
+                .replace(/\r/g, '\\r');
+        }
+
         // Peel off the "↩ <sender>: \"<quoted excerpt>\"\n\n" header that sendMessage
         // prepends to replies, so downstream previews/snippets show the real body
         // instead of nesting quote-inside-quote when users reply to a reply.
@@ -7550,6 +7581,19 @@
             }
         }
 
+        function getKanbanCardUrl(cardId) {
+            const id = String(cardId || '').trim();
+            if (!id) return 'kanban.html';
+            return `kanban.html?card=${encodeURIComponent(id)}#${encodeURIComponent(id)}`;
+        }
+
+        function openKanbanCard(cardId, event) {
+            if (event && typeof event.preventDefault === 'function') event.preventDefault();
+            const url = getKanbanCardUrl(cardId);
+            const opened = window.open(url, '_blank', 'noopener');
+            if (!opened) window.location.href = url;
+        }
+
         async function fetchCardData(auth, cardId) {
             const [resp, commentsResp, filesResp] = await Promise.all([
                 apiCall('GET', `/api/mission/card/${cardId}?${auth}`),
@@ -7575,7 +7619,14 @@
             const commentsLabel = i18n.t('chat_card_modal_comments') || 'Comments';
             const commentsEmpty = i18n.t('chat_card_modal_comments_empty') || 'No comments yet';
 
-            let html = `<div class="entity-meta">
+            const openKanbanLabel = i18n.t('mm_preview_open_task') || 'Open in Kanban';
+            const kanbanUrl = getKanbanCardUrl(c.id || cardId);
+
+            let html = `<div class="entity-card-actions">
+                <a class="entity-open-kanban" href="${escapeHtml(kanbanUrl)}" target="_blank" rel="noopener" onclick="openKanbanCard('${escapeJs(c.id || cardId)}', event)">📋 ${escapeHtml(openKanbanLabel)}</a>
+            </div>`;
+
+            html += `<div class="entity-meta">
                 <div class="entity-meta-item"><div class="entity-meta-label">Status</div><div class="entity-meta-value">${emoji} ${status}</div></div>
                 <div class="entity-meta-item"><div class="entity-meta-label">Priority</div><div class="entity-meta-value">${escapeHtml(priority)}</div></div>
                 <div class="entity-meta-item"><div class="entity-meta-label">Assigned</div><div class="entity-meta-value">${escapeHtml(assigned)}</div></div>
