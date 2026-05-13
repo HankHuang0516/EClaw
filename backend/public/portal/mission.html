@@ -86,6 +86,27 @@
             background: #2E2E50;
         }
 
+        .mc-item.note-deeplink-highlight {
+            outline: 2px solid var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18);
+            animation: noteDeepLinkPulse 1.2s ease-in-out 2;
+        }
+
+        @keyframes noteDeepLinkPulse {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-2px); }
+        }
+
+        .note-deeplink-missing {
+            margin-bottom: 10px;
+            padding: 10px 12px;
+            border: 1px solid rgba(244, 67, 54, 0.45);
+            border-radius: var(--radius-sm);
+            background: rgba(244, 67, 54, 0.08);
+            color: var(--danger);
+            font-size: 13px;
+        }
+
         .item-row {
             display: flex;
             align-items: center;
@@ -1008,6 +1029,8 @@
         let refreshTimer = null;
         let boundEntities = [];
         let notePageIds = new Set(); // noteIds that have webview pages
+        let activeNoteDeepLinkId = null;
+        let activeNoteDeepLinkMissingId = null;
 
         // ENTITY_CHARS_DEFAULT, getAvatarForEntity, getEntityDisplayName, getEntityLabel
         // are provided by shared/entity-utils.js
@@ -1189,11 +1212,12 @@
             loadSoulTemplates();
             loadRuleTemplates();
             await downloadDashboard();
-            loadNotePages(); // load which notes have webview pages (async, non-blocking)
+            await loadNotePages(); // load which notes have webview pages before deep-link highlighting
             syncVarsToServer(); // auto-sync local vars to server in-memory on load
 
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('dashboardContent').style.display = '';
+            await handleMissionNoteDeepLink();
 
             if (_mmDisplayMode && !mmExpanded) {
                 toggleMindmap();
@@ -1219,6 +1243,7 @@
             // Re-render on language change
             i18n.onLanguageChange(() => {
                 renderAll();
+                if (activeNoteDeepLinkId) requestAnimationFrame(() => highlightNoteDeepLinkItem(activeNoteDeepLinkId));
             });
             } catch (initErr) {
                 console.error('[Mission] Init error:', initErr);
@@ -1422,6 +1447,78 @@
         function updateNotifiedSnapshot() {
             lastNotifiedDashboard = JSON.parse(JSON.stringify(dashboard));
         }
+
+        function getNoteIdFromLocation() {
+            try {
+                return new URLSearchParams(window.location.search).get('note') || '';
+            } catch (_) {
+                return '';
+            }
+        }
+
+        function escapeCssIdent(value) {
+            if (window.CSS && typeof CSS.escape === 'function') return CSS.escape(value);
+            return String(value).replace(/[^a-zA-Z0-9_-]/g, '\\$&');
+        }
+
+        function highlightNoteDeepLinkItem(noteId) {
+            document.querySelectorAll('.mc-item.note-deeplink-highlight').forEach(el => el.classList.remove('note-deeplink-highlight'));
+            if (!noteId) return;
+            const el = document.querySelector(`.mc-item[data-item-id="${escapeCssIdent(noteId)}"]`);
+            if (!el) return;
+            el.classList.add('note-deeplink-highlight');
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function expandCategoryForNote(note) {
+            if (!note || !note.category) return;
+            _categoryState[`notes:${note.category}`] = true;
+            saveCategoryState(_categoryState);
+        }
+
+        function renderNoteDeepLinkMissing() {
+            if (!activeNoteDeepLinkMissingId) return '';
+            const tpl = i18n.t('mc_note_deeplink_not_found') || 'Note not found: {id}';
+            return `<div class="note-deeplink-missing">${esc(tpl.replace('{id}', activeNoteDeepLinkMissingId))}</div>`;
+        }
+
+        async function handleMissionNoteDeepLink() {
+            const noteId = getNoteIdFromLocation();
+            if (!noteId) {
+                activeNoteDeepLinkId = null;
+                activeNoteDeepLinkMissingId = null;
+                return;
+            }
+
+            const note = dashboard.notes.find(n => String(n.id) === String(noteId));
+            if (!note) {
+                activeNoteDeepLinkId = null;
+                activeNoteDeepLinkMissingId = noteId;
+                renderNotes();
+                const tpl = i18n.t('mc_note_deeplink_not_found') || 'Note not found: {id}';
+                showToast(tpl.replace('{id}', noteId), 'error');
+                return;
+            }
+
+            activeNoteDeepLinkMissingId = null;
+            activeNoteDeepLinkId = noteId;
+            expandCategoryForNote(note);
+            renderNotes();
+            requestAnimationFrame(() => highlightNoteDeepLinkItem(noteId));
+            await showEditNote(noteId);
+        }
+
+        window.addEventListener('popstate', () => {
+            const noteId = getNoteIdFromLocation();
+            if (!noteId) {
+                activeNoteDeepLinkId = null;
+                activeNoteDeepLinkMissingId = null;
+                renderNotes();
+                closeDialog();
+                return;
+            }
+            handleMissionNoteDeepLink();
+        });
 
         function applyDashboard(d) {
             dashboard = {
@@ -1852,7 +1949,7 @@
         function renderNoteItemHtml(n) {
             const hasPage = notePageIds.has(n.id);
             return `
-            <div class="mc-item" draggable="true" data-item-id="${n.id}"
+            <div class="mc-item ${activeNoteDeepLinkId === n.id ? 'note-deeplink-highlight' : ''}" draggable="true" data-item-id="${n.id}"
                  ondragstart="onItemDragStart(event,'${n.id}','notes')" ondragend="onItemDragEnd(event)"
                  onclick="showEditNote('${n.id}')" oncontextmenu="showNoteMenu(event,'${n.id}')">
                 <div class="item-row">
@@ -1868,6 +1965,9 @@
         function renderNotes() {
             const el = document.getElementById('notesList');
             renderCategorizedList(el, dashboard.notes, 'notes', 'notes', renderNoteItemHtml, 'mc_empty_notes');
+            const missingHtml = renderNoteDeepLinkMissing();
+            if (missingHtml) el.insertAdjacentHTML('afterbegin', missingHtml);
+            if (activeNoteDeepLinkId) requestAnimationFrame(() => highlightNoteDeepLinkItem(activeNoteDeepLinkId));
         }
 
         function renderRuleItemHtml(r) {

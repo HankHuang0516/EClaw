@@ -5399,6 +5399,7 @@ const TRANSLATIONS = {
 
 
 
+        "mc_note_deeplink_not_found": "Note not found: {id}",
         "mc_empty_notes": "No notes",
 
 
