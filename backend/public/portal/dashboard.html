@@ -3810,7 +3810,11 @@
             const available = Math.max(1, tree.clientWidth - horizontalPadding);
             const contentWidth = Math.ceil(Math.max(root.scrollWidth || 0, root.getBoundingClientRect().width || 0));
             const scale = contentWidth > available
-                ? Math.max(0.5, Math.min(1, available / contentWidth))
+                // Do not hard-floor at 0.5: real production orgs can have a wide
+                // sibling row (for example TestPluginB nodes) that needs a slightly
+                // smaller scale on 360/412px WebViews. Add a small safety gutter so
+                // transformed right edges do not clip on fractional device pixels.
+                ? Math.min(1, available / (contentWidth + 8))
                 : 1;
             const visualWidth = contentWidth * scale;
             const marginLeft = Math.max(0, (available - visualWidth) / 2);
