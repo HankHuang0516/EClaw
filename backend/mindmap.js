@@ -33,6 +33,7 @@ const express = require('express');
 const safeEqual = require('./safe-equal');
 const { callAnthropic } = require('./anthropic-client');
 const mindmapMirror = require('./mindmap-mirror');
+const graphProjection = require('./mindmap-graph-projection');
 
 const NODE_TYPES = new Set(['domain', 'topic', 'leaf', 'concept']);
 const EDGE_TYPES = new Set(['relates_to', 'causes', 'extends', 'opposes', 'parent_of']);
@@ -845,11 +846,189 @@ function createMindmapModule(devices) {
         }
     });
 
+    // ─── GET /graph ─────────────────────────────────────────────────────────
+    // Force-graph projection (react-force-graph-2d native shape).
+    // Spec: docs/spec/mindmap-force-graph.md (PR #2679).
+    //
+    // Returns {success, graph:{nodes, links}, stats, meta}.
+    // Composes data across kanban_cards + kanban_card_dependencies +
+    // kanban_comments/notes + mission_notes + mindmap_node_anchors so the
+    // frontend gets a single payload usable by ForceGraph2D directly.
+    router.get('/graph', async (req, res) => {
+        const deviceId = authenticate(req, res);
+        if (!deviceId) return;
+        if (!requirePool(res)) return;
+
+        const callerEntityId = getEntityId(req);
+        const isDeviceAuth = !!req.query.deviceSecret;
+        const options = graphProjection.parseGraphOptions(req.query, { isDeviceAuth, callerEntityId });
+        if (options.scope === 'entity' && options.callerEntityId == null) {
+            return res.status(400).json({
+                success: false,
+                error: 'scope=entity requires entityId',
+            });
+        }
+
+        try {
+            // 1) Cards in scope. We over-fetch by 2× node limit so the
+            //    deterministic sort+truncate happens in projectGraph rather
+            //    than at the SQL boundary (keeps test fixtures simpler).
+            const cardWhere = ['device_id = $1'];
+            const cardArgs = [deviceId];
+            let p = 2;
+            if (!options.includeArchived) cardWhere.push('archived = FALSE');
+            if (!options.includeDone) cardWhere.push("status <> 'done'");
+            if (options.scope === 'entity') {
+                cardWhere.push(
+                    `(assigned_bots @> $${p}::jsonb OR created_by = $${p + 1} OR reviewer_entity_id = $${p + 1})`
+                );
+                cardArgs.push(JSON.stringify([options.callerEntityId]), options.callerEntityId);
+                p += 2;
+            }
+            const hardCardCap = Math.min(options.limitNodes * 2, graphProjection.NODE_LIMIT_HARD * 2);
+            const cardSql = `
+                SELECT id, title, description, priority, status, parent_card_id, is_automation,
+                       assigned_bots, created_by, reviewer_entity_id, chat_anchor_message_id,
+                       archived, updated_at
+                FROM kanban_cards
+                WHERE ${cardWhere.join(' AND ')}
+                ORDER BY
+                    CASE WHEN archived THEN 1 ELSE 0 END,
+                    CASE WHEN status = 'done' THEN 1 ELSE 0 END,
+                    CASE priority WHEN 'P0' THEN 0 WHEN 'P1' THEN 1 WHEN 'P2' THEN 2 WHEN 'P3' THEN 3 ELSE 4 END,
+                    updated_at DESC NULLS LAST
+                LIMIT ${hardCardCap}
+            `;
+            const cardsResult = await pool.query(cardSql, cardArgs);
+            let cards = cardsResult.rows;
+            const initialCardIds = new Set(cards.map(c => c.id));
+
+            // 1a) Neighbor expansion (entity scope): pull parent + dep
+            //     neighbors that aren't already in scope so cross-edges resolve.
+            let neighborIds = new Set();
+            if (options.includeNeighbors && cards.length > 0) {
+                for (const c of cards) {
+                    if (c.parent_card_id && !initialCardIds.has(c.parent_card_id)) {
+                        neighborIds.add(c.parent_card_id);
+                    }
+                }
+            }
+
+            // 2) Dependencies (also seeds neighborIds)
+            const depsResult = cards.length === 0 ? { rows: [] } : await pool.query(
+                `SELECT card_id, depends_on_card_id, dependency_type
+                 FROM kanban_card_dependencies
+                 WHERE device_id = $1
+                   AND (card_id = ANY($2::varchar[]) OR depends_on_card_id = ANY($2::varchar[]))`,
+                [deviceId, [...initialCardIds]]
+            );
+            if (options.includeNeighbors) {
+                for (const d of depsResult.rows) {
+                    if (!initialCardIds.has(d.card_id)) neighborIds.add(d.card_id);
+                    if (!initialCardIds.has(d.depends_on_card_id)) neighborIds.add(d.depends_on_card_id);
+                }
+            }
+
+            // 1b) Fetch neighbor card rows
+            if (neighborIds.size > 0) {
+                const neighborRows = await pool.query(
+                    `SELECT id, title, description, priority, status, parent_card_id, is_automation,
+                            assigned_bots, created_by, reviewer_entity_id, chat_anchor_message_id,
+                            archived, updated_at
+                     FROM kanban_cards
+                     WHERE device_id = $1 AND id = ANY($2::varchar[])`,
+                    [deviceId, [...neighborIds]]
+                );
+                cards = cards.concat(neighborRows.rows);
+            }
+
+            const allCardIds = [...new Set(cards.map(c => c.id))];
+
+            // 3) Aggregate counts
+            const [commentCounts, noteCounts] = allCardIds.length === 0
+                ? [{ rows: [] }, { rows: [] }]
+                : await Promise.all([
+                    pool.query(
+                        `SELECT card_id, COUNT(*)::int AS cnt FROM kanban_comments
+                         WHERE device_id = $1 AND card_id = ANY($2::varchar[]) GROUP BY card_id`,
+                        [deviceId, allCardIds]
+                    ),
+                    pool.query(
+                        `SELECT card_id, COUNT(*)::int AS cnt FROM kanban_notes
+                         WHERE device_id = $1 AND card_id = ANY($2::varchar[]) GROUP BY card_id`,
+                        [deviceId, allCardIds]
+                    ),
+                ]);
+
+            // 4) Mission notes
+            let notes = [];
+            if (options.includeNotes) {
+                const noteWhere = ['device_id = $1'];
+                const noteArgs = [deviceId];
+                let np = 2;
+                if (options.scope === 'entity') {
+                    noteWhere.push(`created_by = $${np}`);
+                    noteArgs.push(String(options.callerEntityId));
+                    np++;
+                }
+                const noteSql = `
+                    SELECT id, title, content, category, created_by, updated_at
+                    FROM mission_notes
+                    WHERE ${noteWhere.join(' AND ')}
+                    ORDER BY updated_at DESC NULLS LAST
+                    LIMIT ${hardCardCap}
+                `;
+                const notesResult = await pool.query(noteSql, noteArgs);
+                notes = notesResult.rows;
+            }
+
+            // 5) Mindmap anchors (cross-correlation: note↔card, note↔chat, card↔chat)
+            const anchorsResult = await pool.query(
+                `SELECT node_id, anchor_type, anchor_ref, display_label
+                 FROM mindmap_node_anchors
+                 WHERE device_id = $1 AND anchor_type IN ('kanban_card','note','chat_message')`,
+                [deviceId]
+            );
+
+            // Sort cards before projection so cap-truncation prefers active P0 work.
+            graphProjection.sortCardsForCap(cards);
+
+            const projection = graphProjection.projectGraph({
+                cards,
+                initialCardIds,
+                depRows: depsResult.rows,
+                commentCounts: commentCounts.rows,
+                noteCounts: noteCounts.rows,
+                notes,
+                anchorRows: anchorsResult.rows,
+                entityMap: (devices && devices[deviceId] && devices[deviceId].entities) || {},
+                options,
+            });
+
+            res.json({
+                success: true,
+                graph: { nodes: projection.nodes, links: projection.links },
+                stats: projection.stats,
+                meta: {
+                    generatedAt: new Date().toISOString(),
+                    deviceId,
+                    scope: options.scope,
+                    entityId: options.scope === 'entity' ? options.callerEntityId : null,
+                    schemaVersion: graphProjection.SCHEMA_VERSION,
+                    layoutStorageKey: `mindmap:force-layout:v1:${deviceId}:${options.scope}:${options.scope === 'entity' ? options.callerEntityId : 'owner'}`,
+                },
+            });
+        } catch (err) {
+            console.error('[Mindmap] GET /graph failed:', err.message);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
     return {
         router,
         initMindmapTables,
         // Exported for unit tests:
-        _internal: { isUuid, clampStr, NODE_TYPES, EDGE_TYPES, ANCHOR_TYPES, MAX_TRAVERSE_DEPTH, MAX_TRAVERSE_NODES },
+        _internal: { isUuid, clampStr, NODE_TYPES, EDGE_TYPES, ANCHOR_TYPES, MAX_TRAVERSE_DEPTH, MAX_TRAVERSE_NODES, graphProjection },
     };
 }
 
