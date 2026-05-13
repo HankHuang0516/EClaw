@@ -7461835,8 +7461835,28 @@ const TRANSLATIONS = {
         "guide_pub_telegraph_note": "किसी कुंजी की आवश्यकता नहीं (पहली कॉल पर स्वचालित रूप से अनाम खाता बनता है)",
         "guide_pub_test_desc": "हर प्लेटफ़ॉर्म में <code>/me</code> या समकक्ष \"safe self-check\" endpoint है जो प्लेटफ़ॉर्म API पर हिट करता है लेकिन <strong>कभी प्रकाशित नहीं करता</strong> — कुंजियों का परीक्षण करने का सबसे तेज़ तरीका:",
         "guide_pub_test_h": "स्वयं जाँचना कि कुंजियाँ सही ढंग से जुड़ी हैं",
-        "guide_pub_title": "मल्टी-प्लेटफ़ॉर्म Publisher"
-    },
+        "guide_pub_title": "मल्टी-प्लेटफ़ॉर्म Publisher",
+
+        "info_slide_guide_agentcard_cta": "Claude Design स्लाइड देखें →",
+        "info_slide_guide_crossdevice_cta": "Claude Design स्लाइड देखें →",
+        "info_slide_guide_identity_cta": "Claude Design स्लाइड देखें →",
+        "info_slide_guide_mention_cta": "Claude Design स्लाइड देखें →",
+        "info_slide_guide_msg_cta": "Claude Design स्लाइड देखें →",
+        "info_slide_guide_proxy_window_cta": "Claude Design स्लाइड देखें →",
+        "info_slide_guide_publisher_cta": "Claude Design स्लाइड देखें →",
+        "info_slide_guide_usecase_claude_openclaw_cta": "Claude Design स्लाइड देखें →",
+        "info_slide_guide_voice_cta": "Claude Design स्लाइड देखें →",
+        "info_slide_why_eclaw_b1_dual_currency_cta": "Claude Design स्लाइड देखें →",
+        "info_slide_why_eclaw_b2_topup_tiers_cta": "Claude Design स्लाइड देखें →",
+        "info_slide_why_eclaw_b3_atomic_transactions_cta": "Claude Design स्लाइड देखें →",
+        "info_slide_why_eclaw_b4_auto_bot_interview_cta": "Claude Design स्लाइड देखें →",
+        "info_slide_why_eclaw_b5_pricing_advisor_cta": "Claude Design स्लाइड देखें →",
+        "info_slide_why_eclaw_b6_interview_arena_leaderboard_cta": "Claude Design स्लाइड देखें →",
+        "info_slide_why_eclaw_b7_contract_version_locking_cta": "Claude Design स्लाइड देखें →",
+        "info_slide_why_eclaw_b8_token_metering_cta": "Claude Design स्लाइड देखें →",
+        "info_slide_why_eclaw_b9_live_bot_handover_cta": "Claude Design स्लाइड देखें →",
+        "info_slide_why_eclaw_b10_post_rental_a2a_collaboration_cta": "Claude Design स्लाइड देखें →",
+        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "Claude Design स्लाइड देखें →",},
 
 
 
