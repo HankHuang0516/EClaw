@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="robots" content="noindex, nofollow">
+    <title data-i18n="mm_title">EClawbot - Mindmap</title>
+    <link rel="icon" type="image/png" href="assets/favicon-32.png">
+    <link rel="stylesheet" href="shared/style.css">
+    <style>
+        /* ══════════════ Layout ══════════════ */
+        body { margin: 0; overflow: hidden; }
+        main { display: flex; flex-direction: column; }
+        body.mm-embedded { padding: 0 !important; }
+        body.mm-embedded main { height: 100vh; }
+        body:not(.mm-embedded) main { min-height: calc(100vh - 56px); }
+
+        .mm-container { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+
+        /* ══════════════ Sub-tabs (same as mission/kanban) ══════════════ */
+        .mm-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--card-border); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 0 16px; }
+        .mm-tabs::-webkit-scrollbar { display: none; }
+        .mm-tab { padding: 10px 18px; color: var(--text-secondary); text-decoration: none; font-size: 14px; font-weight: 600; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
+        .mm-tab:hover { color: var(--text); }
+        .mm-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        body.mm-embedded .mm-tabs { display: none; }
+
+        /* ══════════════ Toolbar ══════════════ */
+        .mm-toolbar { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--card-border); background: var(--input-bg, rgba(0, 0, 0, 0.02)); font-size: 13px; }
+        body.mm-embedded .mm-toolbar { padding: 6px 8px; gap: 6px; font-size: 12px; }
+        .mm-toolbar h2 { font-size: 18px; font-weight: 700; margin: 0; flex-shrink: 0; }
+        body.mm-embedded .mm-toolbar h2 { display: none; }
+        .mm-toolbar-group { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .mm-toolbar select { background: var(--input-bg); border: 1px solid var(--card-border); border-radius: var(--radius-sm, 6px); color: var(--text); font-size: 12px; padding: 5px 8px; cursor: pointer; }
+        .mm-toolbar label { font-size: 12px; color: var(--text-secondary, #888); cursor: pointer; display: inline-flex; gap: 4px; align-items: center; }
+        .mm-toolbar button { background: var(--input-bg); border: 1px solid var(--card-border); border-radius: var(--radius-sm, 6px); padding: 5px 10px; font-size: 12px; color: var(--text); cursor: pointer; transition: border-color 0.15s; white-space: nowrap; }
+        .mm-toolbar button:hover { border-color: var(--primary, #6c63ff); }
+        .mm-toolbar button.mm-btn-primary { background: var(--primary, #6c63ff); border-color: var(--primary, #6c63ff); color: #fff; }
+        .mm-spacer { flex: 1; }
+        .mm-stats { color: var(--text-muted, #888); font-size: 11px; white-space: nowrap; }
+
+        /* ══════════════ Canvas wrapper ══════════════ */
+        .mm-canvas-wrap { position: relative; flex: 1; min-height: 320px; background: var(--bg, #0e0e1a); overflow: hidden; }
+        body.mm-embedded .mm-canvas-wrap { min-height: 0; }
+        #mmGraph { width: 100%; height: 100%; display: block; touch-action: none; }
+        #mmGraph canvas { display: block; }
+
+        /* ══════════════ States ══════════════ */
+        .mm-state { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; pointer-events: none; color: var(--text-secondary, #888); padding: 20px; text-align: center; }
+        .mm-state[hidden] { display: none; }
+        .mm-state .mm-state-icon { font-size: 32px; opacity: 0.7; }
+        .mm-state .mm-state-title { font-size: 16px; font-weight: 600; color: var(--text, #ddd); }
+        .mm-state .mm-state-body { font-size: 13px; max-width: 360px; line-height: 1.5; }
+        .mm-state button { pointer-events: auto; margin-top: 8px; }
+
+        /* ══════════════ Preview panel ══════════════ */
+        .mm-preview { position: absolute; right: 0; top: 0; bottom: 0; width: min(340px, 100%); background: var(--card, #1a1a2e); border-left: 1px solid var(--card-border); display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.2s ease; box-shadow: -2px 0 12px rgba(0, 0, 0, 0.3); z-index: 10; }
+        .mm-preview.open { transform: translateX(0); }
+        .mm-preview-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--card-border); gap: 8px; }
+        .mm-preview-title { font-size: 15px; font-weight: 700; flex: 1; word-break: break-word; line-height: 1.3; }
+        .mm-preview-close { background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px 8px; color: var(--text-muted, #888); border-radius: 4px; }
+        .mm-preview-close:hover { background: rgba(255, 255, 255, 0.06); color: var(--text); }
+        .mm-preview-body { flex: 1; overflow-y: auto; padding: 12px 14px; font-size: 13px; line-height: 1.5; }
+        .mm-preview-row { display: flex; gap: 8px; padding: 6px 0; border-bottom: 1px dashed rgba(255, 255, 255, 0.05); font-size: 12px; }
+        .mm-preview-row:last-child { border-bottom: none; }
+        .mm-preview-row .mm-preview-key { color: var(--text-muted, #888); flex-shrink: 0; min-width: 80px; }
+        .mm-preview-row .mm-preview-val { color: var(--text); word-break: break-word; }
+        .mm-preview-summary { margin: 10px 0 0; padding: 8px 10px; background: rgba(255, 255, 255, 0.03); border-radius: 6px; font-size: 12px; color: var(--text-secondary, #aaa); line-height: 1.5; }
+        .mm-preview-actions { padding: 10px 14px; border-top: 1px solid var(--card-border); display: flex; gap: 8px; flex-wrap: wrap; }
+        .mm-preview-actions button, .mm-preview-actions a { flex: 1; min-width: 0; padding: 7px 10px; font-size: 12px; border-radius: 6px; border: 1px solid var(--card-border); background: var(--input-bg); color: var(--text); text-align: center; text-decoration: none; cursor: pointer; }
+        .mm-preview-actions button.mm-btn-primary, .mm-preview-actions a.mm-btn-primary { background: var(--primary, #6c63ff); border-color: var(--primary, #6c63ff); color: #fff; }
+        .mm-preview-actions button[disabled], .mm-preview-actions a[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+
+        /* ══════════════ Legend (compact) ══════════════ */
+        .mm-legend { position: absolute; left: 8px; bottom: 8px; display: flex; flex-wrap: wrap; gap: 4px 8px; padding: 6px 10px; background: rgba(0, 0, 0, 0.55); border-radius: 6px; font-size: 11px; color: #eee; backdrop-filter: blur(4px); pointer-events: none; max-width: calc(100% - 16px); z-index: 5; }
+        .mm-legend-item { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+        .mm-legend-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+        .mm-legend-dot.mm-task { background: #60a5fa; }
+        .mm-legend-dot.mm-note { background: #a78bfa; }
+        .mm-legend-dot.mm-owner { background: #fbbf24; border-radius: 2px; }
+        .mm-legend-dot.mm-chat { background: #34d399; border-radius: 0; transform: rotate(45deg); }
+
+        /* ══════════════ Truncation banner ══════════════ */
+        .mm-trunc-banner { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); padding: 6px 12px; background: rgba(251, 191, 36, 0.18); border: 1px solid rgba(251, 191, 36, 0.4); border-radius: 6px; font-size: 11px; color: #fbbf24; z-index: 6; max-width: calc(100% - 16px); }
+        .mm-trunc-banner[hidden] { display: none; }
+
+        /* ══════════════ Mobile ══════════════ */
+        @media (max-width: 480px) {
+            .mm-toolbar { padding: 8px 10px; font-size: 12px; }
+            .mm-toolbar h2 { font-size: 16px; }
+            .mm-preview { width: 100%; }
+            .mm-legend { font-size: 10px; padding: 5px 8px; }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="mm-container">
+            <div class="mm-tabs">
+                <a class="mm-tab" href="mission.html">🚀 <span data-i18n="nav_mission">Mission</span></a>
+                <a class="mm-tab" href="kanban.html">📋 <span data-i18n="nav_kanban">Kanban</span></a>
+                <a class="mm-tab active" href="mindmap.html">🧠 <span data-i18n="mm_tab">Mindmap</span></a>
+            </div>
+
+            <div class="mm-toolbar">
+                <h2 data-i18n="mm_heading">🧠 Mindmap</h2>
+                <div class="mm-toolbar-group">
+                    <label>
+                        <span data-i18n="mm_scope_label">Scope</span>
+                        <select id="mmScope">
+                            <option value="entity" data-i18n="mm_scope_entity">My work</option>
+                            <option value="device" data-i18n="mm_scope_device">All on device</option>
+                        </select>
+                    </label>
+                    <label>
+                        <input type="checkbox" id="mmIncludeArchived">
+                        <span data-i18n="mm_filter_archived">Archived</span>
+                    </label>
+                    <label>
+                        <input type="checkbox" id="mmIncludeDone">
+                        <span data-i18n="mm_filter_done">Done</span>
+                    </label>
+                    <label>
+                        <input type="checkbox" id="mmIncludeNotes" checked>
+                        <span data-i18n="mm_filter_notes">Notes</span>
+                    </label>
+                    <label>
+                        <input type="checkbox" id="mmIncludeOwners" checked>
+                        <span data-i18n="mm_filter_owners">Owners</span>
+                    </label>
+                </div>
+                <span class="mm-spacer"></span>
+                <span class="mm-stats" id="mmStats"></span>
+                <div class="mm-toolbar-group">
+                    <button id="mmBtnRefresh" data-i18n="mm_btn_refresh" title="Refresh" data-i18n-title="mm_btn_refresh">Refresh</button>
+                    <button id="mmBtnReset" data-i18n="mm_btn_reset_layout" title="Reset layout" data-i18n-title="mm_btn_reset_layout">Reset layout</button>
+                    <button id="mmBtnRelease" data-i18n="mm_btn_release" title="Release pinned nodes" data-i18n-title="mm_btn_release">Release pinned</button>
+                </div>
+            </div>
+
+            <div class="mm-canvas-wrap">
+                <div id="mmGraph"></div>
+
+                <div class="mm-trunc-banner" id="mmTruncBanner" hidden></div>
+
+                <div class="mm-legend" id="mmLegend">
+                    <span class="mm-legend-item"><span class="mm-legend-dot mm-task"></span><span data-i18n="mm_node_task">Task</span></span>
+                    <span class="mm-legend-item"><span class="mm-legend-dot mm-note"></span><span data-i18n="mm_node_note">Note</span></span>
+                    <span class="mm-legend-item"><span class="mm-legend-dot mm-owner"></span><span data-i18n="mm_node_owner">Owner</span></span>
+                    <span class="mm-legend-item"><span class="mm-legend-dot mm-chat"></span><span data-i18n="mm_node_chat">Chat</span></span>
+                </div>
+
+                <div class="mm-state" id="mmStateLoading">
+                    <div class="mm-state-icon">⏳</div>
+                    <div class="mm-state-title" data-i18n="mm_loading">Loading graph…</div>
+                </div>
+
+                <div class="mm-state" id="mmStateEmpty" hidden>
+                    <div class="mm-state-icon">🌱</div>
+                    <div class="mm-state-title" data-i18n="mm_empty_title">No graph data yet</div>
+                    <div class="mm-state-body" data-i18n="mm_empty_body">Once tasks, notes, or chat anchors exist, they'll appear here.</div>
+                </div>
+
+                <div class="mm-state" id="mmStateError" hidden>
+                    <div class="mm-state-icon">⚠️</div>
+                    <div class="mm-state-title" data-i18n="mm_error_title">Couldn't load the graph</div>
+                    <div class="mm-state-body" id="mmStateErrorBody"></div>
+                    <button class="mm-btn-primary" id="mmBtnRetry" data-i18n="mm_error_retry">Try again</button>
+                </div>
+
+                <aside class="mm-preview" id="mmPreview" aria-hidden="true">
+                    <div class="mm-preview-head">
+                        <div class="mm-preview-title" id="mmPreviewTitle"></div>
+                        <button class="mm-preview-close" id="mmPreviewClose" data-i18n-title="mm_preview_close" title="Close" aria-label="Close">✕</button>
+                    </div>
+                    <div class="mm-preview-body" id="mmPreviewBody"></div>
+                    <div class="mm-preview-actions" id="mmPreviewActions"></div>
+                </aside>
+            </div>
+        </div>
+    </main>
+
+    <script src="../shared/i18n.js"></script>
+    <script src="shared/api.js"></script>
+    <script src="shared/nav.js"></script>
+    <script src="shared/auth.js"></script>
+    <script src="shared/footer.js"></script>
+    <script src="https://unpkg.com/force-graph@1.43.4/dist/force-graph.min.js"></script>
+
+    <script>
+    (function () {
+        'use strict';
+
+        // ── Mode detection: accept both ?embed=1 (existing convention) and
+        //    ?embedded=1 (named in spec amendment C). Either suppresses nav/footer.
+        const _qp = new URLSearchParams(window.location.search);
+        const IS_EMBEDDED = _qp.get('embed') === '1' || _qp.get('embedded') === '1';
+        if (IS_EMBEDDED) document.body.classList.add('mm-embedded');
+
+        // ── i18n: localize chrome before first paint, then again after data loads.
+        if (typeof i18n !== 'undefined' && i18n.apply) {
+            try { i18n.apply(); } catch (_) {}
+        }
+
+        // ── Auth + nav
+        let MM_USER = null;
+        const GRAPH = { nodes: [], links: [], meta: null, stats: null };
+        let fg = null;
+
+        // Selected node state
+        let selectedId = null;
+
+        // Color tables
+        const STATUS_COLOR = {
+            backlog: '#9ca3af',
+            todo: '#60a5fa',
+            in_progress: '#fbbf24',
+            review: '#fb923c',
+            blocked: '#f87171',
+            done: '#4ade80'
+        };
+        const NOTE_COLOR = {
+            general: '#a78bfa',
+            idea: '#c084fc',
+            decision: '#f0abfc',
+            risk: '#fb7185',
+            followup: '#7dd3fc'
+        };
+        const OWNER_COLOR = '#fbbf24';
+        const CHAT_COLOR = '#34d399';
+
+        const EDGE_COLOR = {
+            parent: 'rgba(160, 174, 192, 0.55)',
+            blocks: 'rgba(248, 113, 113, 0.75)',
+            owner: 'rgba(251, 191, 36, 0.35)',
+            note_on_card: 'rgba(167, 139, 250, 0.7)',
+            chat_anchor: 'rgba(52, 211, 153, 0.7)',
+            references: 'rgba(96, 165, 250, 0.55)',
+            related: 'rgba(120, 120, 200, 0.4)',
+            tag: 'rgba(200, 200, 200, 0.35)'
+        };
+
+        function t(key, fallback) {
+            if (typeof i18n !== 'undefined' && typeof i18n.t === 'function') {
+                const v = i18n.t(key);
+                if (v && v !== key) return v;
+            }
+            return fallback != null ? fallback : key;
+        }
+
+        // ── Layout persistence ───────────────────────────────────────────────
+        function layoutKey(meta) {
+            if (meta && meta.layoutStorageKey) return meta.layoutStorageKey;
+            const u = MM_USER || {};
+            const scope = document.getElementById('mmScope').value;
+            const tail = scope === 'entity' ? (u.entityId || 'owner') : 'owner';
+            return 'mindmap:force-layout:v1:' + (u.deviceId || 'unknown') + ':' + scope + ':' + tail;
+        }
+        function loadLayout(meta) {
+            try {
+                const raw = localStorage.getItem(layoutKey(meta));
+                if (!raw) return null;
+                const obj = JSON.parse(raw);
+                return obj && typeof obj.nodes === 'object' ? obj : null;
+            } catch (_) { return null; }
+        }
+        function saveLayout(meta) {
+            try {
+                const entries = {};
+                let count = 0;
+                for (const n of GRAPH.nodes) {
+                    if (count >= 1000) break;
+                    if (n.fx != null && n.fy != null) {
+                        entries[n.id] = { x: n.x, y: n.y, fx: n.fx, fy: n.fy };
+                        count++;
+                    }
+                }
+                const payload = { updatedAt: new Date().toISOString(), nodes: entries };
+                localStorage.setItem(layoutKey(meta), JSON.stringify(payload));
+            } catch (_) {}
+        }
+        function clearLayout(meta) {
+            try { localStorage.removeItem(layoutKey(meta)); } catch (_) {}
+            for (const n of GRAPH.nodes) { n.fx = undefined; n.fy = undefined; }
+        }
+
+        // ── Fetch graph ──────────────────────────────────────────────────────
+        async function fetchGraph() {
+            if (!MM_USER) return;
+            const scope = document.getElementById('mmScope').value;
+            const params = new URLSearchParams({
+                deviceId: MM_USER.deviceId || '',
+                scope
+            });
+            if (MM_USER.deviceSecret) params.set('deviceSecret', MM_USER.deviceSecret);
+            if (scope === 'entity' && MM_USER.entityId != null) {
+                params.set('entityId', String(MM_USER.entityId));
+            }
+            if (document.getElementById('mmIncludeArchived').checked) params.set('includeArchived', '1');
+            if (document.getElementById('mmIncludeDone').checked) params.set('includeDone', '1');
+            if (!document.getElementById('mmIncludeNotes').checked) params.set('includeNotes', '0');
+            if (!document.getElementById('mmIncludeOwners').checked) params.set('includeOwners', 'none');
+
+            showState('loading');
+            try {
+                const res = await fetch('/api/mindmap/graph?' + params.toString(), {
+                    credentials: 'include',
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await res.json();
+                if (!res.ok || !data.success) {
+                    throw new Error((data && data.error) || ('HTTP ' + res.status));
+                }
+                applyGraph(data);
+            } catch (err) {
+                console.error('[Mindmap] fetch failed:', err);
+                showError(err.message || String(err));
+            }
+        }
+
+        function applyGraph(payload) {
+            const graph = payload.graph || { nodes: [], links: [] };
+            GRAPH.meta = payload.meta || null;
+            GRAPH.stats = payload.stats || null;
+
+            // Stitch persisted layout
+            const saved = loadLayout(GRAPH.meta);
+            const savedNodes = (saved && saved.nodes) || {};
+            for (const n of graph.nodes) {
+                const s = savedNodes[n.id];
+                if (s) {
+                    n.x = s.x; n.y = s.y;
+                    if (s.fx != null) n.fx = s.fx;
+                    if (s.fy != null) n.fy = s.fy;
+                }
+            }
+
+            GRAPH.nodes = graph.nodes;
+            // force-graph mutates link.source/target into node references; clone strings.
+            GRAPH.links = (graph.links || []).map(l => ({
+                source: l.source, target: l.target,
+                type: l.type, label: l.label, weight: l.weight,
+                directional: l.directional, colorKey: l.colorKey,
+                evidence: l.evidence, id: l.id
+            }));
+
+            renderStats();
+            renderTruncBanner();
+
+            if (GRAPH.nodes.length === 0) {
+                showState('empty');
+                if (fg) fg.graphData({ nodes: [], links: [] });
+                return;
+            }
+
+            ensureForceGraph();
+            fg.graphData({ nodes: GRAPH.nodes, links: GRAPH.links });
+            showState(null);
+            // Centre/fit after layout settles.
+            setTimeout(() => safeFit(), 250);
+        }
+
+        // ── Force-graph init ─────────────────────────────────────────────────
+        function ensureForceGraph() {
+            if (fg) return;
+            const el = document.getElementById('mmGraph');
+            // eslint-disable-next-line no-undef
+            fg = ForceGraph()(el)
+                .backgroundColor('#0e0e1a')
+                .nodeRelSize(5)
+                .nodeVal(n => Math.max(2, Number(n.val) || 4))
+                .nodeLabel(n => escapeHtml(n.fullTitle || n.label || n.id))
+                .nodeCanvasObject(drawNode)
+                .nodeCanvasObjectMode(() => 'replace')
+                .linkColor(l => EDGE_COLOR[l.type] || 'rgba(180,180,180,0.4)')
+                .linkWidth(l => Math.max(0.5, Number(l.weight) || 1))
+                .linkDirectionalArrowLength(l => l.directional ? 3 : 0)
+                .linkDirectionalArrowRelPos(0.9)
+                .linkDirectionalParticles(l => l.type === 'blocks' ? 2 : 0)
+                .linkDirectionalParticleWidth(2)
+                .linkDirectionalParticleSpeed(0.006)
+                .onNodeClick(handleNodeClick)
+                .onBackgroundClick(closePreview)
+                .onNodeDragEnd((node) => {
+                    node.fx = node.x;
+                    node.fy = node.y;
+                    saveLayout(GRAPH.meta);
+                });
+
+            // Size to wrap
+            const wrap = el.parentElement;
+            const resize = () => {
+                fg.width(wrap.clientWidth);
+                fg.height(wrap.clientHeight);
+            };
+            resize();
+            window.addEventListener('resize', resize, { passive: true });
+            window.addEventListener('orientationchange', () => setTimeout(resize, 200));
+        }
+
+        function safeFit() {
+            if (!fg || GRAPH.nodes.length === 0) return;
+            try {
+                // Spec amendment C: 8px padding on small viewports.
+                const pad = window.innerWidth <= 412 ? 8 : 32;
+                fg.zoomToFit(400, pad);
+            } catch (_) {}
+        }
+
+        // ── Node rendering ───────────────────────────────────────────────────
+        function nodeColor(n) {
+            if (n.type === 'task') return STATUS_COLOR[n.status] || '#60a5fa';
+            if (n.type === 'note') return NOTE_COLOR[n.category] || '#a78bfa';
+            if (n.type === 'owner') return OWNER_COLOR;
+            if (n.type === 'chat') return CHAT_COLOR;
+            return '#888';
+        }
+
+        function drawNode(node, ctx, scale) {
+            const r = Math.max(3, Math.sqrt(Number(node.val) || 4) * 2.2);
+            const isSel = node.id === selectedId;
+            ctx.beginPath();
+            if (node.type === 'owner') {
+                // Owner: square
+                ctx.rect(node.x - r, node.y - r, r * 2, r * 2);
+            } else if (node.type === 'chat') {
+                // Chat: diamond
+                ctx.moveTo(node.x, node.y - r);
+                ctx.lineTo(node.x + r, node.y);
+                ctx.lineTo(node.x, node.y + r);
+                ctx.lineTo(node.x - r, node.y);
+                ctx.closePath();
+            } else if (node.type === 'note') {
+                // Note: rounded square
+                const rr = r * 0.4;
+                ctx.moveTo(node.x - r + rr, node.y - r);
+                ctx.arcTo(node.x + r, node.y - r, node.x + r, node.y + r, rr);
+                ctx.arcTo(node.x + r, node.y + r, node.x - r, node.y + r, rr);
+                ctx.arcTo(node.x - r, node.y + r, node.x - r, node.y - r, rr);
+                ctx.arcTo(node.x - r, node.y - r, node.x + r, node.y - r, rr);
+                ctx.closePath();
+            } else {
+                // Task: circle
+                ctx.arc(node.x, node.y, r, 0, Math.PI * 2, false);
+            }
+            ctx.fillStyle = nodeColor(node);
+            ctx.globalAlpha = node.archived ? 0.45 : 1;
+            ctx.fill();
+            if (isSel) {
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1.6 / scale;
+                ctx.stroke();
+            } else if (node.type === 'task' && node.priority === 'P0') {
+                ctx.strokeStyle = '#ef4444';
+                ctx.lineWidth = 1.2 / scale;
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+
+            // Label only when zoomed in enough
+            if (scale > 1.25 && node.label) {
+                ctx.font = (11 / scale) + 'px sans-serif';
+                ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                const label = node.label.length > 28 ? node.label.slice(0, 27) + '…' : node.label;
+                ctx.fillText(label, node.x, node.y + r + 2);
+            }
+        }
+
+        // ── Click → preview ──────────────────────────────────────────────────
+        function handleNodeClick(node) {
+            selectedId = node.id;
+            openPreview(node);
+            if (fg) {
+                // Soft pan toward the node without rebuilding the graph.
+                try { fg.centerAt(node.x, node.y, 350); } catch (_) {}
+            }
+        }
+
+        function openPreview(node) {
+            const panel = document.getElementById('mmPreview');
+            const titleEl = document.getElementById('mmPreviewTitle');
+            const bodyEl = document.getElementById('mmPreviewBody');
+            const actsEl = document.getElementById('mmPreviewActions');
+            titleEl.textContent = node.fullTitle || node.label || node.id;
+
+            const rows = [];
+            const addRow = (k, v) => { if (v != null && v !== '') rows.push([k, String(v)]); };
+            addRow(t('mm_meta_type', 'Type'), t('mm_node_' + node.type, node.type));
+            if (node.type === 'task') {
+                addRow(t('mm_meta_status', 'Status'), node.status);
+                addRow(t('mm_meta_priority', 'Priority'), node.priority);
+                addRow(t('mm_meta_owner', 'Owner'), node.ownerEntityId != null ? '#' + node.ownerEntityId : null);
+                addRow(t('mm_meta_comments', 'Comments'), node.commentCount || 0);
+                addRow(t('mm_meta_notes', 'Notes'), node.noteCount || 0);
+                if (node.archived) addRow(t('mm_meta_archived', 'Archived'), '✓');
+            } else if (node.type === 'note') {
+                addRow(t('mm_meta_category', 'Category'), node.category);
+                addRow(t('mm_meta_owner', 'Owner'), node.ownerEntityId != null ? '#' + node.ownerEntityId : null);
+            } else if (node.type === 'owner') {
+                addRow(t('mm_meta_owner', 'Entity'), '#' + node.ownerEntityId);
+            }
+            if (node.updatedAt) addRow(t('mm_meta_updated', 'Updated'), new Date(node.updatedAt).toLocaleString());
+
+            bodyEl.innerHTML = '';
+            for (const [k, v] of rows) {
+                const row = document.createElement('div');
+                row.className = 'mm-preview-row';
+                const ke = document.createElement('span'); ke.className = 'mm-preview-key'; ke.textContent = k;
+                const ve = document.createElement('span'); ve.className = 'mm-preview-val'; ve.textContent = v;
+                row.appendChild(ke); row.appendChild(ve);
+                bodyEl.appendChild(row);
+            }
+            if (node.summary) {
+                const sum = document.createElement('div');
+                sum.className = 'mm-preview-summary';
+                sum.textContent = node.summary;
+                bodyEl.appendChild(sum);
+            }
+
+            actsEl.innerHTML = '';
+            buildActions(actsEl, node);
+
+            panel.classList.add('open');
+            panel.setAttribute('aria-hidden', 'false');
+        }
+
+        function buildActions(actsEl, node) {
+            if (node.type === 'task' && node.sourceId) {
+                const a = document.createElement('a');
+                a.className = 'mm-btn-primary';
+                a.href = '/portal/kanban.html?card=' + encodeURIComponent(node.sourceId);
+                a.target = IS_EMBEDDED ? '_top' : '_self';
+                a.textContent = t('mm_preview_open_task', 'Open in Kanban');
+                actsEl.appendChild(a);
+            } else if (node.type === 'note' && node.sourceId) {
+                // mission.html doesn't yet accept ?note= deep-link (follow-up card 458c0f9c).
+                // Honor the link if present, but show a disabled button if mission.html
+                // doesn't recognize the param — for now we link with a warning tooltip.
+                const a = document.createElement('a');
+                a.className = 'mm-btn-primary';
+                a.href = '/portal/mission.html?note=' + encodeURIComponent(node.sourceId);
+                a.target = IS_EMBEDDED ? '_top' : '_self';
+                a.textContent = t('mm_preview_open_note', 'Open in Mission');
+                a.title = t('mm_preview_action_disabled_note_deeplink', 'Note deep-link is a follow-up card; for now this opens mission.html.');
+                actsEl.appendChild(a);
+            } else if (node.type === 'chat' && node.sourceId) {
+                // chat.html doesn't yet accept ?msg= deep-link (follow-up card 18e2e941).
+                const btn = document.createElement('button');
+                btn.disabled = true;
+                btn.textContent = t('mm_preview_open_chat', 'Open in Chat');
+                btn.title = t('mm_preview_action_disabled_chat_deeplink', 'Chat deep-link is a follow-up card; not yet available.');
+                actsEl.appendChild(btn);
+            } else if (node.type === 'owner') {
+                // No deep-link target; future: filter graph by this owner.
+                const btn = document.createElement('button');
+                btn.disabled = true;
+                btn.textContent = t('mm_preview_open_owner', 'Filter by owner');
+                actsEl.appendChild(btn);
+            }
+        }
+
+        function closePreview() {
+            const panel = document.getElementById('mmPreview');
+            panel.classList.remove('open');
+            panel.setAttribute('aria-hidden', 'true');
+            selectedId = null;
+        }
+
+        // ── States ───────────────────────────────────────────────────────────
+        function showState(which) {
+            document.getElementById('mmStateLoading').hidden = which !== 'loading';
+            document.getElementById('mmStateEmpty').hidden = which !== 'empty';
+            document.getElementById('mmStateError').hidden = which !== 'error';
+        }
+        function showError(msg) {
+            document.getElementById('mmStateErrorBody').textContent = msg;
+            showState('error');
+        }
+        function renderStats() {
+            const s = GRAPH.stats;
+            const el = document.getElementById('mmStats');
+            if (!s) { el.textContent = ''; return; }
+            el.textContent = (s.nodeCount || 0) + ' / ' + (s.linkCount || 0);
+        }
+        function renderTruncBanner() {
+            const banner = document.getElementById('mmTruncBanner');
+            const s = GRAPH.stats;
+            if (!s || !s.truncated) { banner.hidden = true; return; }
+            banner.hidden = false;
+            const tpl = t('mm_truncated_warning', 'Graph truncated: showing {nodes} nodes / {links} links.');
+            banner.textContent = tpl
+                .replace('{nodes}', String(s.nodeCount || 0))
+                .replace('{links}', String(s.linkCount || 0));
+        }
+
+        // ── Utilities ────────────────────────────────────────────────────────
+        function escapeHtml(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        // ── Wire up ──────────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', async () => {
+            try { if (typeof renderNav === 'function') renderNav('mindmap'); } catch (_) {}
+            try { if (typeof renderFooter === 'function') renderFooter(); } catch (_) {}
+
+            // checkAuth resolves session and populates window.currentUser.
+            try {
+                MM_USER = await checkAuth();
+            } catch (err) {
+                console.error('[Mindmap] auth failed:', err);
+                showError(t('mm_error_auth', 'Authentication failed.'));
+                return;
+            }
+            if (!MM_USER) return; // auth.js already redirected
+
+            document.getElementById('mmBtnRefresh').addEventListener('click', () => fetchGraph());
+            document.getElementById('mmBtnReset').addEventListener('click', () => {
+                clearLayout(GRAPH.meta);
+                if (fg) {
+                    fg.graphData({ nodes: GRAPH.nodes, links: GRAPH.links });
+                    setTimeout(() => { fg.d3ReheatSimulation(); safeFit(); }, 50);
+                }
+            });
+            document.getElementById('mmBtnRelease').addEventListener('click', () => {
+                for (const n of GRAPH.nodes) { n.fx = undefined; n.fy = undefined; }
+                saveLayout(GRAPH.meta);
+                if (fg) { fg.d3ReheatSimulation(); }
+            });
+            document.getElementById('mmBtnRetry').addEventListener('click', () => fetchGraph());
+            document.getElementById('mmPreviewClose').addEventListener('click', closePreview);
+            for (const id of ['mmScope', 'mmIncludeArchived', 'mmIncludeDone', 'mmIncludeNotes', 'mmIncludeOwners']) {
+                document.getElementById(id).addEventListener('change', () => fetchGraph());
+            }
+
+            await fetchGraph();
+            // Reapply translations after dynamic content lands.
+            if (typeof i18n !== 'undefined' && i18n.apply) {
+                try { i18n.apply(); } catch (_) {}
+            }
+        });
+    })();
+    </script>
+</body>
+</html>
