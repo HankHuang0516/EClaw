@@ -3159,7 +3159,7 @@
         function getChatEntityLabel(entityId) {
             const id = Number(entityId);
             const avatar = getAvatarForEntity(id);
-            const avatarHtml = renderAvatarHtml(avatar, getChatAvatarPx(), id);
+            const avatarHtml = renderAvatarWithRentalHealth(avatar, getChatAvatarPx(), id);
             return `<span class="chat-entity-label entity-label" data-entity="${id}">`
                 + `<span class="chat-avatar">${avatarHtml}</span>`
                 + `<span class="chat-entity-label-text">${escapeHtml(getEntityDisplayName(id))} (#${id})</span>`
