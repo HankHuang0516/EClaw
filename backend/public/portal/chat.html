@@ -2355,6 +2355,26 @@
         .chat-msg.his-flash > .chat-bubble {
             animation: his-flash 1.4s ease-out;
         }
+        .chat-msg.chat-msg-deeplink > .chat-bubble {
+            outline: 2px solid #60a5fa;
+            box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.22);
+            animation: his-flash 1.4s ease-out;
+        }
+        .chat-deeplink-missing {
+            align-self: stretch;
+            margin: 0 0 10px;
+            padding: 10px 12px;
+            border: 1px solid rgba(244, 67, 54, 0.45);
+            border-radius: 12px;
+            background: rgba(244, 67, 54, 0.08);
+            color: var(--danger);
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .chat-deeplink-missing:focus {
+            outline: 2px solid rgba(244, 67, 54, 0.75);
+            outline-offset: 2px;
+        }
 
         /* ── Note Preview Modal ── */
         #notePreviewModal .modal-box {
@@ -3053,6 +3073,8 @@
         const xdeviceLookupMissCache = new Set();
         const ENTITY_NO_PROGRESS_MS = 10 * 60 * 1000;
         const entityRuntimeStatus = new Map();
+        let activeChatMessageDeepLinkId = null;
+        let activeChatMessageDeepLinkMissingId = null;
         const CHAT_AVATAR_SIZE_PX = { small: 32, medium: 48, large: 64 };
         let chatAvatarSize = 'medium';
 
@@ -3367,6 +3389,7 @@
             await loadBoundEntities();
             console.log('[CHAT_DEBUG] loadBoundEntities done, loading messages...');
             await loadMessages();
+            await handleChatMessageDeepLink({ showMissingToast: true, scroll: true });
             console.log('[CHAT_DEBUG] loadMessages done, count:', allMessages.length);
             isFirstLoad = false;
 
@@ -4009,6 +4032,9 @@
                     _sourceParseCache.clear();
                     renderFilterChips();
                     renderMessages(prevCount < allMessages.length);
+                    if (!isFirstLoad && getChatMessageDeepLinkId()) {
+                        await handleChatMessageDeepLink({ showMissingToast: false, scroll: false });
+                    }
                     refreshXDeviceLabelsInBackground(allMessages);
                     ChatIntegrityValidator.validateDataLayer(data.messages);
                     await syncCodexAutoApproveTargetsFromServer();
@@ -4155,15 +4181,153 @@
 
         function setFilter(filter) {
             currentFilter = filter;
-
-            document.querySelectorAll('#filterChips .filter-chip').forEach(chip => {
-                chip.classList.toggle('active', chip.dataset.filter === filter);
-            });
-
+            updateActiveFilterChip();
             ensureActiveChipVisible();
-
             renderMessages(false);
         }
+
+        function updateActiveFilterChip() {
+            document.querySelectorAll('#filterChips .filter-chip').forEach(chip => {
+                chip.classList.toggle('active', chip.dataset.filter === currentFilter);
+            });
+        }
+
+        const CHAT_MESSAGE_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+        function normalizeChatMessageId(value) {
+            const id = String(value || '').trim().toLowerCase();
+            return CHAT_MESSAGE_ID_RE.test(id) ? id : '';
+        }
+
+        function getChatMessageDeepLinkId() {
+            try {
+                return normalizeChatMessageId(new URLSearchParams(window.location.search).get('msg'));
+            } catch (_) {
+                return '';
+            }
+        }
+
+        function escapeCssIdent(value) {
+            if (window.CSS && typeof CSS.escape === 'function') return CSS.escape(value);
+            return String(value).replace(/[^a-zA-Z0-9_-]/g, '\\$&');
+        }
+
+        function findChatMessageById(messageId) {
+            const id = normalizeChatMessageId(messageId);
+            if (!id) return null;
+            return Array.isArray(allMessages)
+                ? allMessages.find(m => normalizeChatMessageId(m && m.id) === id) || null
+                : null;
+        }
+
+        function getRenderedMessageIds(msg) {
+            const ids = [];
+            const add = (id) => {
+                const normalized = normalizeChatMessageId(id);
+                if (normalized && !ids.includes(normalized)) ids.push(normalized);
+            };
+            add(msg && msg.id);
+            if (Array.isArray(msg && msg._groupedMessages)) msg._groupedMessages.forEach(m => add(m && m.id));
+            if (Array.isArray(msg && msg._photoGroupMessageIds)) msg._photoGroupMessageIds.forEach(add);
+            return ids;
+        }
+
+        function chatMessageDeepLinkSelector(messageId) {
+            const id = escapeCssIdent(normalizeChatMessageId(messageId));
+            if (!id) return '';
+            return `.chat-msg[data-message-id="${id}"], .chat-msg[data-message-ids~="${id}"]`;
+        }
+
+        function renderChatMessageDeepLinkMissing() {
+            if (!activeChatMessageDeepLinkMissingId) return '';
+            const tpl = i18n.t('chat_msg_deeplink_not_found') || 'Message not found or not accessible: {id}';
+            return `<div class="chat-deeplink-missing" role="alert" tabindex="-1">${escapeHtml(tpl.replace('{id}', activeChatMessageDeepLinkMissingId))}</div>`;
+        }
+
+        function filterForChatMessage(msg) {
+            const parsed = parseEntitySource(msg && msg.source);
+            if (parsed && parsed.crossDevice) {
+                if (parsed.fromPublicCode && !myPublicCodeMap[parsed.fromPublicCode]) return `xdevice-${parsed.fromPublicCode}`;
+                const target = (parsed.targets || []).find(code => !myPublicCodeMap[code]) || parsed.targets?.[0];
+                if (target) return `xdevice-${target}`;
+            }
+            if (msg && msg.entity_id !== null && msg.entity_id !== undefined && !Number.isNaN(Number(msg.entity_id))) {
+                return `entity-${Number(msg.entity_id)}`;
+            }
+            return 'all';
+        }
+
+        function applyFilterForChatMessage(msg) {
+            const nextFilter = filterForChatMessage(msg);
+            if (currentFilter !== nextFilter) {
+                currentFilter = nextFilter;
+                updateActiveFilterChip();
+                ensureActiveChipVisible();
+            }
+            renderMessages(false);
+        }
+
+        function highlightChatMessageDeepLink(messageId, { scroll = false } = {}) {
+            const id = normalizeChatMessageId(messageId);
+            if (!id) return false;
+            document.querySelectorAll('.chat-msg.chat-msg-deeplink').forEach(el => el.classList.remove('chat-msg-deeplink'));
+            const selector = chatMessageDeepLinkSelector(id);
+            const el = selector ? document.querySelector(selector) : null;
+            if (!el) return false;
+            el.classList.add('chat-msg-deeplink');
+            if (scroll) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                try {
+                    el.setAttribute('tabindex', '-1');
+                    el.focus({ preventScroll: true });
+                } catch (_) {}
+                setTimeout(() => el.classList.remove('chat-msg-deeplink'), 5000);
+            }
+            return true;
+        }
+
+        async function handleChatMessageDeepLink({ showMissingToast = false, scroll = false } = {}) {
+            const id = getChatMessageDeepLinkId();
+            if (!id) {
+                activeChatMessageDeepLinkId = null;
+                activeChatMessageDeepLinkMissingId = null;
+                document.querySelectorAll('.chat-msg.chat-msg-deeplink').forEach(el => el.classList.remove('chat-msg-deeplink'));
+                return;
+            }
+
+            const msg = findChatMessageById(id);
+            if (!msg) {
+                activeChatMessageDeepLinkId = null;
+                activeChatMessageDeepLinkMissingId = id;
+                renderMessages(false);
+                if (showMissingToast && typeof showToast === 'function') {
+                    const tpl = i18n.t('chat_msg_deeplink_not_found') || 'Message not found or not accessible: {id}';
+                    showToast(tpl.replace('{id}', id), 'error');
+                }
+                return;
+            }
+
+            activeChatMessageDeepLinkMissingId = null;
+            activeChatMessageDeepLinkId = id;
+            applyFilterForChatMessage(msg);
+            requestAnimationFrame(() => {
+                if (highlightChatMessageDeepLink(id, { scroll })) return;
+                if (currentFilter !== 'all') {
+                    currentFilter = 'all';
+                    updateActiveFilterChip();
+                    renderMessages(false);
+                    requestAnimationFrame(() => {
+                        if (!highlightChatMessageDeepLink(id, { scroll }) && showMissingToast && typeof showToast === 'function') {
+                            showToast(i18n.t('chat_his_not_rendered_preview') || 'Message is loaded but not currently rendered.');
+                        }
+                    });
+                }
+            });
+        }
+
+        window.addEventListener('popstate', () => {
+            handleChatMessageDeepLink({ showMissingToast: true, scroll: true });
+        });
 
         // ── Chat Density (Compact / Normal / Comfortable) ──
         function setChatDensity(value) {
@@ -4299,6 +4463,7 @@
                     // Mark all but the last as skipped; attach grid to the last.
                     for (let k = 0; k < run.length - 1; k++) run[k]._photoGroupSkip = true;
                     run[run.length - 1]._photoGroupUrls = urls;
+                    run[run.length - 1]._photoGroupMessageIds = run.map(m => m.id).filter(Boolean);
                 }
                 i = j - 1; // skip past the run
             }
@@ -4504,8 +4669,10 @@
             const shouldFollowBottom = isFirstLoad || (scrollLock && scrollLock.wasAtBottom);
             const filtered = getFilteredMessages();
 
+            const deepLinkMissingHtml = renderChatMessageDeepLinkMissing();
+
             if (filtered.length === 0) {
-                container.innerHTML = `
+                container.innerHTML = deepLinkMissingHtml + `
                     <div class="chat-empty">
                         <div class="chat-empty-icon">💬</div>
                         <div class="chat-empty-title" data-i18n="chat_empty">${escapeHtml(i18n.t('chat_empty') || 'No messages yet')}</div>
@@ -4548,7 +4715,7 @@
                 return d.toLocaleDateString([], { month: 'numeric', day: 'numeric' });
             }
 
-            container.innerHTML = displayMessages.map((msg, idx) => {
+            container.innerHTML = deepLinkMissingHtml + displayMessages.map((msg, idx) => {
                 // Skip earlier messages in a photo run — the last one renders the grid.
                 if (msg._photoGroupSkip) return '';
                 // Walk back over skipped photo-run entries so date separators
@@ -4828,9 +4995,11 @@
                 const replySnippet = stripReplyQuotePrefix(rawText || '').replace(/\n/g, ' ').slice(0, 120);
                 const replySenderName = isSent ? (i18n.t('chat_reply_you') || 'You') : isPlatform ? 'Platform' : (getEntityLabel(msg.entity_id) || '');
                 const replyBtnHtml = msg.id ? `<button class="chat-reply-btn" data-msg-id="${escapeHtml(msg.id)}" data-sender="${escapeHtml(replySenderName)}" data-text="${escapeHtml(replySnippet)}" onclick="handleReplyBtn(this);event.stopPropagation()" data-i18n-title="chat_reply_btn" title="Quote">📌</button>` : '';
+                const renderedMessageIds = getRenderedMessageIds(msg);
+                const renderedIdsAttr = escapeHtml(renderedMessageIds.join(' '));
 
                 return `${dateSep}${unreadSep}
-                    <div class="chat-msg ${msgClass}${isGrouped ? ' grouped' : ''}" data-message-id="${escapeHtml(msg.id || '')}" style="position:relative">
+                    <div class="chat-msg ${msgClass}${isGrouped ? ' grouped' : ''}" data-message-id="${escapeHtml(normalizeChatMessageId(msg.id) || msg.id || '')}" data-message-ids="${renderedIdsAttr}" style="position:relative">
                         <div class="chat-source">${sourceLabel}</div>
                         <div class="chat-bubble${isMdRendered ? ' md-rendered' : ''}" data-full-time="${escapeHtml(fullTime)}">${textHtml}${mediaHtml}${inlineImgHtml}${cardHtml}${cardRefHtml}${attachmentsHtml}</div>
                         ${replyBtnHtml}
