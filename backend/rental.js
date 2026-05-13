@@ -75,6 +75,7 @@ const CONTRACT_STATUSES = Object.freeze({
     ENDED_DISPUTED: 'ended_disputed',
     ENDED_VIOLATION: 'ended_violation',
     ENDED_ADMIN: 'ended_admin',
+    TERMINATED_BY_REBIND: 'terminated_by_rebind',
 });
 
 // ============================================
@@ -107,6 +108,31 @@ function assertRateMli(value) {
     if (!Number.isInteger(value) || value <= 0 || value > 1_000_000_000) {
         throw new Error('rate_mli_per_ktoken_invalid');
     }
+}
+
+function nonNegativeBigInt(value, fallback = 0n) {
+    if (value === null || value === undefined) return fallback;
+    try {
+        const parsed = BigInt(value);
+        return parsed > 0n ? parsed : 0n;
+    } catch (_) {
+        return fallback;
+    }
+}
+
+function safeMliNumber(value, name) {
+    const max = BigInt(Number.MAX_SAFE_INTEGER);
+    if (value > max) throw new Error(`${name}_too_large`);
+    return Number(value);
+}
+
+function computeRebindRefundMli({ depositMli, remainingSec, totalDurationSec }) {
+    const deposit = nonNegativeBigInt(depositMli);
+    const total = nonNegativeBigInt(totalDurationSec);
+    if (deposit === 0n || total === 0n) return 0;
+    let remaining = nonNegativeBigInt(remainingSec);
+    if (remaining > total) remaining = total;
+    return safeMliNumber((deposit * remaining) / total, 'rebind_refund_mli');
 }
 
 // ============================================
@@ -360,130 +386,214 @@ async function pauseListingsOnRebind(deviceId, entityId) {
 /**
  * P0 Phase 4: when an entity slot is rebound, every active rental contract
  * pointing at that slot is now serving a different bot from what the renter
- * agreed to. Terminate them all and make the renter whole.
+ * agreed to. Terminate active contracts in one strict wallet transaction and
+ * make the renter whole with a per-second owner-paid rebind refund.
  *
- * Per Hank's policy decision (2026-04-25, "B 重綁屬於 owner 問題 所以虧要 owner 吃"):
- *   1. End each contract with `ended_admin` — releases 100% of the renter's
- *      remaining deposit (existing endRental behavior).
- *   2. Additionally, owner pays the renter a pro-rata penalty equal to
- *      `deposit_mli × remaining_time / planned_time` as compensation for
- *      the disrupted rental. Penalty is clamped to the owner's available
- *      balance — applyLedgerEntry rejects negative balances, so owner
- *      cannot be debited past 0. Any shortfall is logged but not pursued.
- *
- * Statuses we touch: 'reserved', 'active', 'suspended_insufficient_funds'.
- * Statuses we leave alone: any 'ended_*' (terminal).
- *
- * Returns per-contract outcome rows for caller logging. Errors on a single
- * contract are caught and logged — one bad row must not block the rest of
- * the rebind cascade.
+ * Strict Phase 4 rules:
+ *   1. Only `status = 'active'` is eligible. Reserved/suspended/terminal rows
+ *      are skipped so stale non-active rows cannot receive money.
+ *   2. The whole cascade runs inside one walletApi.withTransaction callback.
+ *      Contract rows and participating wallet rows are locked with
+ *      SELECT ... FOR UPDATE, and DB NOW() is used for remaining time.
+ *   3. Refund = floor(deposit_mli × remaining_sec / total_duration_sec).
+ *      If the owner cannot cover all refunds, the function rejects and the
+ *      transaction rolls back (no partial contract status or wallet changes).
+ *   4. The renter's currently held deposit (up to deposit_mli) is released,
+ *      the owner-paid refund is recorded in wallet_ledger, the contract status
+ *      becomes `terminated_by_rebind`, and rental_rebind_audit_log records the
+ *      rental-side audit trail.
  */
 async function terminateActiveContractsOnRebind(deviceId, entityId, walletApi) {
     if (!deviceId || !Number.isInteger(entityId)) return [];
-    if (!walletApi || typeof walletApi.withTransaction !== 'function') return [];
+    if (!walletApi || typeof walletApi.withTransaction !== 'function' ||
+        typeof walletApi.applyLedgerEntry !== 'function') return [];
 
-    let contracts;
-    try {
-        const res = await pool.query(
+    return walletApi.withTransaction(async (client) => {
+        const res = await client.query(
             `SELECT c.id, c.listing_id, c.owner_user_id, c.renter_user_id,
-                    c.deposit_mli, c.planned_duration_min, c.started_at, c.ends_at,
-                    c.status
+                    c.deposit_mli, c.planned_duration_min,
+                    COALESCE(
+                        c.total_duration_sec,
+                        GREATEST(0::bigint, COALESCE(FLOOR(EXTRACT(EPOCH FROM (c.ends_at - c.started_at)))::bigint, 0)),
+                        (c.planned_duration_min::bigint * 60)
+                    ) AS total_duration_sec,
+                    GREATEST(0::bigint, COALESCE(FLOOR(EXTRACT(EPOCH FROM (c.ends_at - NOW())))::bigint, 0)) AS remaining_sec,
+                    c.started_at, c.ends_at, c.status, NOW() AS terminated_at
                FROM rental_contracts c
                JOIN bot_listings l ON l.id = c.listing_id
               WHERE l.owner_device_id = $1
                 AND l.owner_entity_id = $2
-                AND c.status IN ('reserved', 'active', 'suspended_insufficient_funds')`,
+                AND c.status = 'active'
+              ORDER BY c.id
+              FOR UPDATE OF c`,
             [deviceId, entityId]
         );
-        contracts = res.rows;
-    } catch (err) {
-        console.error('[Rental] terminateActiveContractsOnRebind query error:', err.message);
-        return [];
-    }
+        const contracts = res.rows;
+        if (contracts.length === 0) return [];
 
-    const outcomes = [];
-    for (const c of contracts) {
-        try {
-            const depositMli = Number(c.deposit_mli);
-            // Pro-rata penalty: deposit × (remaining_ms / planned_ms).
-            // Reserved contracts (never started) have remaining_ratio = 1.
-            let penaltyMli = 0;
-            const plannedMs = Number(c.planned_duration_min) * 60 * 1000;
-            if (c.status === 'reserved' || !c.started_at || !c.ends_at) {
-                penaltyMli = depositMli;
-            } else if (plannedMs > 0) {
-                const endsAtMs = new Date(c.ends_at).getTime();
-                const remainingMs = Math.max(0, endsAtMs - Date.now());
-                const ratio = Math.min(1, remainingMs / plannedMs);
-                penaltyMli = Math.floor(depositMli * ratio);
-            }
+        const planned = contracts.map((c) => {
+            const depositBi = nonNegativeBigInt(c.deposit_mli);
+            const totalSecBi = nonNegativeBigInt(c.total_duration_sec);
+            let remainingSecBi = nonNegativeBigInt(c.remaining_sec);
+            if (totalSecBi > 0n && remainingSecBi > totalSecBi) remainingSecBi = totalSecBi;
+            const refundMli = computeRebindRefundMli({
+                depositMli: depositBi,
+                remainingSec: remainingSecBi,
+                totalDurationSec: totalSecBi,
+            });
+            return {
+                contract: c,
+                depositMli: safeMliNumber(depositBi, 'deposit_mli'),
+                totalDurationSec: safeMliNumber(totalSecBi, 'total_duration_sec'),
+                remainingSec: safeMliNumber(remainingSecBi, 'remaining_sec'),
+                refundMli,
+                releaseMli: 0,
+            };
+        });
 
-            // Step 1: end the contract with ended_admin → renter gets 100% of
-            // remaining held deposit. requesterUserId = owner so the auth check
-            // passes; the cascade itself is admin-initiated upstream.
-            await endRental(
-                {
-                    contractId: c.id,
-                    endReason: 'ended_admin',
-                    requesterUserId: c.owner_user_id,
-                },
-                walletApi
+        // Lock every wallet in a stable order before deciding whether the
+        // cascade can proceed. Missing wallets are treated as zero balance/held.
+        const userIds = [...new Set(planned.flatMap((p) => [
+            p.contract.owner_user_id,
+            p.contract.renter_user_id,
+        ]))].sort();
+        const wallets = new Map(userIds.map((id) => [id, { balance_mli: 0, held_mli: 0 }]));
+        if (userIds.length > 0) {
+            const walletRes = await client.query(
+                `SELECT user_id, balance_mli, held_mli
+                   FROM wallets
+                  WHERE user_id = ANY($1::uuid[])
+                  ORDER BY user_id
+                  FOR UPDATE`,
+                [userIds]
             );
-
-            // Step 2: owner pays renter pro-rata penalty (clamped to owner balance).
-            let actualPenaltyMli = 0;
-            let shortfallMli = 0;
-            if (penaltyMli > 0) {
-                await walletApi.withTransaction(async (client) => {
-                    const w = await client.query(
-                        'SELECT balance_mli, held_mli FROM wallets WHERE user_id = $1 FOR UPDATE',
-                        [c.owner_user_id]
-                    );
-                    const ownerBalance = w.rowCount > 0 ? Number(w.rows[0].balance_mli) : 0;
-                    actualPenaltyMli = Math.min(penaltyMli, ownerBalance);
-                    shortfallMli = penaltyMli - actualPenaltyMli;
-
-                    if (actualPenaltyMli > 0) {
-                        await walletApi.applyLedgerEntry(client, {
-                            userId: c.owner_user_id,
-                            balanceDelta: -actualPenaltyMli,
-                            heldDelta: 0,
-                            type: walletApi.LEDGER_TYPES.REFUND,
-                            refType: 'rental_contract',
-                            refId: c.id,
-                            counterpartyUserId: c.renter_user_id,
-                            note: `rebind penalty (owner pays): ${c.id}`,
-                            idempotencyKey: `rebind-refund-debit:${c.id}`,
-                        });
-                        await walletApi.applyLedgerEntry(client, {
-                            userId: c.renter_user_id,
-                            balanceDelta: actualPenaltyMli,
-                            heldDelta: 0,
-                            type: walletApi.LEDGER_TYPES.REFUND,
-                            refType: 'rental_contract',
-                            refId: c.id,
-                            counterpartyUserId: c.owner_user_id,
-                            note: `rebind penalty (renter receives): ${c.id}`,
-                            idempotencyKey: `rebind-refund-credit:${c.id}`,
-                        });
-                    }
+            for (const row of walletRes.rows) {
+                wallets.set(String(row.user_id), {
+                    balance_mli: safeMliNumber(nonNegativeBigInt(row.balance_mli), 'wallet_balance_mli'),
+                    held_mli: safeMliNumber(nonNegativeBigInt(row.held_mli), 'wallet_held_mli'),
                 });
             }
+        }
+
+        const requiredRefundByOwner = new Map();
+        for (const p of planned) {
+            const ownerId = p.contract.owner_user_id;
+            requiredRefundByOwner.set(ownerId, (requiredRefundByOwner.get(ownerId) || 0) + p.refundMli);
+
+            const renterWallet = wallets.get(p.contract.renter_user_id) || { balance_mli: 0, held_mli: 0 };
+            p.releaseMli = Math.min(renterWallet.held_mli, p.depositMli);
+            renterWallet.held_mli -= p.releaseMli;
+            wallets.set(p.contract.renter_user_id, renterWallet);
+        }
+
+        for (const [ownerId, requiredMli] of requiredRefundByOwner.entries()) {
+            const ownerWallet = wallets.get(ownerId) || { balance_mli: 0, held_mli: 0 };
+            if (ownerWallet.balance_mli < requiredMli) {
+                const err = new Error('owner_insufficient_balance_for_rebind_refund');
+                err.details = {
+                    owner_user_id: ownerId,
+                    required_mli: String(requiredMli),
+                    current_mli: String(ownerWallet.balance_mli),
+                };
+                throw err;
+            }
+        }
+
+        const outcomes = [];
+        for (const p of planned) {
+            const c = p.contract;
+            const releaseKey = `rebind-deposit-release:${c.id}`;
+            const debitKey = `rebind-refund-debit:${c.id}`;
+            const creditKey = `rebind-refund-credit:${c.id}`;
+
+            if (p.releaseMli > 0) {
+                await walletApi.applyLedgerEntry(client, {
+                    userId: c.renter_user_id,
+                    balanceDelta: p.releaseMli,
+                    heldDelta: -p.releaseMli,
+                    type: walletApi.LEDGER_TYPES.DEPOSIT_RELEASE,
+                    refType: 'rental_contract',
+                    refId: c.id,
+                    counterpartyUserId: c.owner_user_id,
+                    note: `rebind termination deposit release: ${c.id}`,
+                    idempotencyKey: releaseKey,
+                });
+            }
+
+            if (p.refundMli > 0) {
+                await walletApi.applyLedgerEntry(client, {
+                    userId: c.owner_user_id,
+                    balanceDelta: -p.refundMli,
+                    heldDelta: 0,
+                    type: walletApi.LEDGER_TYPES.REFUND,
+                    refType: 'rental_contract',
+                    refId: c.id,
+                    counterpartyUserId: c.renter_user_id,
+                    note: `rebind refund debit: ${c.id}`,
+                    idempotencyKey: debitKey,
+                });
+                await walletApi.applyLedgerEntry(client, {
+                    userId: c.renter_user_id,
+                    balanceDelta: p.refundMli,
+                    heldDelta: 0,
+                    type: walletApi.LEDGER_TYPES.REFUND,
+                    refType: 'rental_contract',
+                    refId: c.id,
+                    counterpartyUserId: c.owner_user_id,
+                    note: `rebind refund credit: ${c.id}`,
+                    idempotencyKey: creditKey,
+                });
+            }
+
+            const updated = await client.query(
+                `UPDATE rental_contracts
+                    SET status = $2,
+                        end_reason = $2,
+                        actual_ended_at = NOW()
+                  WHERE id = $1
+                    AND status = 'active'
+                  RETURNING id, status, end_reason, actual_ended_at`,
+                [c.id, CONTRACT_STATUSES.TERMINATED_BY_REBIND]
+            );
+            if (updated.rowCount === 0) throw new Error('contract_not_active');
+
+            await client.query(
+                `INSERT INTO rental_rebind_audit_log
+                    (contract_id, listing_id, owner_device_id, owner_entity_id,
+                     owner_user_id, renter_user_id, status_from, status_to,
+                     deposit_mli, deposit_release_mli, refund_mli,
+                     remaining_sec, total_duration_sec,
+                     wallet_release_idempotency_key, wallet_debit_idempotency_key,
+                     wallet_credit_idempotency_key)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8,
+                         $9, $10, $11, $12, $13, $14, $15, $16)
+                 ON CONFLICT (contract_id) DO NOTHING`,
+                [
+                    c.id, c.listing_id, deviceId, entityId,
+                    c.owner_user_id, c.renter_user_id, c.status,
+                    CONTRACT_STATUSES.TERMINATED_BY_REBIND,
+                    p.depositMli, p.releaseMli, p.refundMli,
+                    p.remainingSec, p.totalDurationSec,
+                    p.releaseMli > 0 ? releaseKey : null,
+                    p.refundMli > 0 ? debitKey : null,
+                    p.refundMli > 0 ? creditKey : null,
+                ]
+            );
 
             outcomes.push({
                 contractId: c.id,
                 renterUserId: c.renter_user_id,
                 ownerUserId: c.owner_user_id,
-                penaltyMli,
-                actualPenaltyMli,
-                shortfallMli,
+                releasedDepositMli: p.releaseMli,
+                refundMli: p.refundMli,
+                remainingSec: p.remainingSec,
+                totalDurationSec: p.totalDurationSec,
+                status: updated.rows[0].status,
+                actualEndedAt: updated.rows[0].actual_ended_at,
             });
-        } catch (err) {
-            console.error(`[Rental] terminateActiveContractsOnRebind contract ${c.id} error:`, err.message);
-            outcomes.push({ contractId: c.id, error: err.message });
         }
-    }
-    return outcomes;
+        return outcomes;
+    });
 }
 
 async function getListing(listingId) {
@@ -712,11 +822,11 @@ async function startRental({
             `INSERT INTO rental_contracts
                 (id, listing_id, owner_user_id, renter_user_id, renter_device_id,
                  rate_mli_per_ktoken_snapshot, deposit_mli,
-                 planned_duration_min, started_at, ends_at, status)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW() + make_interval(mins => $8), 'active')
-             RETURNING id, status, started_at, ends_at, deposit_mli`,
+                 planned_duration_min, total_duration_sec, started_at, ends_at, status)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW() + make_interval(mins => $8), 'active')
+             RETURNING id, status, started_at, ends_at, deposit_mli, total_duration_sec`,
             [contractId, listingId, listing.owner_user_id, renterUserId, renterDeviceId,
-             rateSnapshot, depositMli, durationMinutes]
+             rateSnapshot, depositMli, durationMinutes, durationMinutes * 60]
         );
         const contract = contractRes.rows[0];
 
@@ -1526,11 +1636,11 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
                     `INSERT INTO rental_contracts
                         (id, listing_id, owner_user_id, renter_user_id, renter_device_id,
                          rate_mli_per_ktoken_snapshot, deposit_mli,
-                         planned_duration_min, started_at, ends_at, status)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW() + make_interval(mins => $8), 'active')
-                     RETURNING id, status, started_at, ends_at, deposit_mli`,
+                         planned_duration_min, total_duration_sec, started_at, ends_at, status)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW() + make_interval(mins => $8), 'active')
+                     RETURNING id, status, started_at, ends_at, deposit_mli, total_duration_sec`,
                     [contractId, listingId, listing.owner_user_id, renterUserId, renterDeviceId,
-                     rateSnapshot, depositMli, durationMinutes]
+                     rateSnapshot, depositMli, durationMinutes, durationMinutes * 60]
                 );
                 return contractRes.rows[0];
             });
