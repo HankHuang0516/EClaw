@@ -205,6 +205,12 @@
         .kb-modal-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
         .kb-modal-panel { display:none; padding:16px 24px; }
         .kb-modal-panel.active { display:block; }
+
+        .kb-tag-row { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:8px; }
+        .kb-tag-chip { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:999px; background:rgba(99,102,241,.14); color:var(--primary,#6366f1); font-size:12px; font-weight:600; border:1px solid rgba(99,102,241,.24); }
+        .kb-tag-chip button { border:0; background:transparent; color:inherit; cursor:pointer; padding:0; font-size:12px; }
+        .kb-tag-form { display:flex; gap:6px; align-items:center; margin-top:8px; width:100%; }
+        .kb-tag-form input { min-width:120px; flex:1; padding:6px 8px; border:1px solid var(--card-border,#ccc); border-radius:6px; background:var(--input-bg,#fff); color:var(--text,#111); }
         #panel-comments.active {
             display:flex;
             flex-direction:column;
@@ -681,6 +687,8 @@
             <select id="funnelEntity" onchange="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px;">
                 <option value="" data-i18n="kb_funnel_entity_all">All entities</option>
             </select>
+            <input type="text" id="funnelTag" placeholder="Tag…" data-i18n-placeholder="kb_funnel_tag"
+                   oninput="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px; min-width:120px;">
             <label style="font-size:13px; color:#666;">
                 <span data-i18n="kb_funnel_since">Since</span>:
                 <input type="date" id="funnelSince" onchange="onFunnelChange()" style="padding:4px 6px; border:1px solid #ccc; border-radius:6px;">
@@ -1043,7 +1051,7 @@
         let allCards = [];
         let currentFilter = 'all';
         let currentSort = 'updated_desc';
-        let funnelState = { q: '', status: '', priority: '', assignedBot: '', since: '', until: '', includeComments: false, includeSubcards: false };
+        let funnelState = { q: '', status: '', priority: '', assignedBot: '', tag: '', since: '', until: '', includeComments: false, includeSubcards: false };
         let funnelDebounce = null;
         let historyPage = 1;
         let mobileTab = 'backlog';
@@ -1217,6 +1225,26 @@
             return apiCall('GET', `/api/mission/card/${cardId}/messages?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}&limit=${limit}`);
         }
 
+
+
+        async function apiGetCardTags(cardId) {
+            return apiCall('GET', `/api/mission/card/${cardId}/tags?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+        }
+
+        async function apiAddCardTag(cardId, tag) {
+            return apiCall('POST', `/api/mission/card/${cardId}/tag`, {
+                deviceId: currentUser.deviceId,
+                deviceSecret: currentUser.deviceSecret,
+                tag,
+            });
+        }
+
+        async function apiRemoveCardTag(cardId, slug) {
+            return apiCall('DELETE', `/api/mission/card/${cardId}/tag/${encodeURIComponent(slug)}`, {
+                deviceId: currentUser.deviceId,
+                deviceSecret: currentUser.deviceSecret,
+            });
+        }
 
         async function apiGetCardLinks(cardId) {
             return apiCall('GET', `/api/mission/card/${cardId}/links?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
@@ -1607,6 +1635,18 @@
             }
         }
 
+
+        function renderTags(tags, opts = {}) {
+            if (!Array.isArray(tags) || !tags.length) return '';
+            const removable = !!opts.removable;
+            return `<div class="kb-tag-row">` + tags.map(tag => {
+                const slug = tag && tag.slug ? String(tag.slug) : '';
+                const label = tag && tag.label ? String(tag.label) : slug;
+                const removeBtn = removable ? `<button type="button" title="Remove tag" onclick="event.stopPropagation(); removeCardTag('${escapeJs(openCardId || '')}','${escapeJs(slug)}')">×</button>` : '';
+                return `<span class="kb-tag-chip" title="tag:${escapeHtml(slug)}">#${escapeHtml(label)}${removeBtn}</span>`;
+            }).join('') + `</div>`;
+        }
+
         function renderCard(card) {
             console.log('[Kanban] renderCard:', card.id, card.title, 'assigned:', card.assignedBots);
             const isStale = card.is_stale ? ' stale' : '';
@@ -1629,6 +1669,7 @@
                     <span class="kb-card-assigned">${renderAssignedAvatars(card.assignedBots)}</span>
                 </div>
                 <div class="kb-card-title">${escapeHtml(card.title)}</div>
+                ${renderTags(card.tags)}
                 ${card.description ? '<div class="kb-card-desc">'+renderSmartChips(card.description)+'</div>' : ''}
                 <div class="kb-card-footer">
                     ${commentCount ? '<span>💬 '+commentCount+'</span>' : ''}
@@ -1700,6 +1741,7 @@
                 status: document.getElementById('funnelStatus').value,
                 priority: document.getElementById('funnelPriority').value,
                 assignedBot: document.getElementById('funnelEntity').value,
+                tag: document.getElementById('funnelTag').value.trim(),
                 since: document.getElementById('funnelSince').value,
                 until: document.getElementById('funnelUntil').value,
                 includeComments: checks.some(c => c.value === 'comments' && c.checked),
@@ -1722,7 +1764,7 @@
         }
 
         function resetFunnel() {
-            ['funnelSearch','funnelStatus','funnelPriority','funnelEntity','funnelSince','funnelUntil'].forEach(id => {
+            ['funnelSearch','funnelStatus','funnelPriority','funnelEntity','funnelTag','funnelSince','funnelUntil'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.value = '';
             });
@@ -1735,7 +1777,7 @@
                     lab.classList.toggle('active', lab.dataset.scope === 'title');
                 });
             }
-            funnelState = { q: '', status: '', priority: '', assignedBot: '', since: '', until: '', includeComments: false, includeSubcards: false };
+            funnelState = { q: '', status: '', priority: '', assignedBot: '', tag: '', since: '', until: '', includeComments: false, includeSubcards: false };
             syncFunnelUrl();
             loadCards();
         }
@@ -1750,6 +1792,7 @@
             if (funnelState.status) p.push('status=' + encodeURIComponent(funnelState.status));
             if (funnelState.priority) p.push('priority=' + encodeURIComponent(funnelState.priority));
             if (funnelState.assignedBot) p.push('assignedBot=' + encodeURIComponent(funnelState.assignedBot));
+            if (funnelState.tag) p.push('tag=' + encodeURIComponent(funnelState.tag));
             if (funnelState.since) p.push('since=' + encodeURIComponent(new Date(funnelState.since).toISOString()));
             if (funnelState.until) {
                 const untilEnd = new Date(funnelState.until);
@@ -1944,6 +1987,7 @@
                 ${scheduleInfo}
                 ${card.description ? '<div class="kb-detail-desc">'+renderSmartChips(card.description)+'</div>' : ''}
                 <div class="kb-dep-chips-container kb-detail-dep-chips" data-dep-card-id="${cardId}"></div>
+                <div id="detailTagsPanel" style="width:100%;margin-top:10px;padding:10px;border:1px solid var(--border-color,#333);border-radius:8px;background:rgba(255,255,255,.03)"></div>
                 <div id="detailCardLinks" class="kb-card-link-panel" style="width:100%;margin-top:10px;padding:10px;border:1px solid var(--border-color,#333);border-radius:8px;background:rgba(255,255,255,.03)">
                     <div style="font-weight:600;margin-bottom:8px">🔗 Card links</div>
                     <div class="kb-muted">Loading links…</div>
@@ -1955,6 +1999,8 @@
                     detailDepContainer.innerHTML = renderDependencyChips(dependencies, dependents);
                 });
             }
+            renderDetailTags(card.tags || []);
+            refreshDetailTags(cardId);
             loadCardLinksForDetail(cardId);
 
             // Move bar — shared assign + reviewer UI for all cards
@@ -2032,6 +2078,61 @@
             document.getElementById('detailModal').classList.add('show');
         }
 
+
+
+        function renderDetailTags(tags) {
+            const panel = document.getElementById('detailTagsPanel');
+            if (!panel) return;
+            panel.innerHTML = `
+                <div style="font-weight:600;margin-bottom:8px">🏷 Tags</div>
+                ${renderTags(tags || [], { removable: true }) || '<div class="kb-muted" style="font-size:12px">No tags</div>'}
+                <div class="kb-tag-form">
+                    <input id="detailTagInput" placeholder="Add tag…" onkeydown="if(event.key==='Enter')addCardTag('${escapeJs(openCardId || '')}')">
+                    <button class="kb-move-btn" type="button" onclick="addCardTag('${escapeJs(openCardId || '')}')">Add</button>
+                </div>`;
+        }
+
+        async function refreshDetailTags(cardId) {
+            try {
+                const data = await apiGetCardTags(cardId);
+                const card = findCard(cardId);
+                if (card) card.tags = data.tags || [];
+                renderDetailTags(data.tags || []);
+            } catch (err) {
+                console.warn('[Kanban] refresh tags failed:', err.message);
+            }
+        }
+
+        async function addCardTag(cardId) {
+            const input = document.getElementById('detailTagInput');
+            const raw = input ? input.value : '';
+            if (!cardId || !raw.trim()) return;
+            try {
+                const data = await apiAddCardTag(cardId, raw);
+                if (input) input.value = '';
+                const card = findCard(cardId);
+                if (card) card.tags = data.tags || [];
+                renderDetailTags(data.tags || []);
+                renderBoard(true);
+                showToast('Tag added');
+            } catch (err) {
+                showToast('Add tag failed: ' + (err.message || err), true);
+            }
+        }
+
+        async function removeCardTag(cardId, slug) {
+            if (!cardId || !slug) return;
+            try {
+                const data = await apiRemoveCardTag(cardId, slug);
+                const card = findCard(cardId);
+                if (card) card.tags = data.tags || [];
+                renderDetailTags(data.tags || []);
+                renderBoard(true);
+                showToast('Tag removed');
+            } catch (err) {
+                showToast('Remove tag failed: ' + (err.message || err), true);
+            }
+        }
 
         function escapeJs(value) {
             return String(value == null ? '' : value)

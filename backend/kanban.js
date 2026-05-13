@@ -614,6 +614,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             commentCount: parseInt(row.comment_count) || 0,
             noteCount: parseInt(row.note_count) || 0,
             fileCount: parseInt(row.file_count) || 0,
+            tags: Array.isArray(row.tags) ? row.tags : [],
         };
 
         // Schedule fields — always include if schedule was ever configured
@@ -646,6 +647,36 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         card.chatAnchorCoord = row.chat_anchor_coord || null;
 
         return card;
+    }
+
+
+    async function attachTagsToCards(deviceId, cards) {
+        if (!Array.isArray(cards) || cards.length === 0) return cards;
+        const ids = [...new Set(cards.map(c => c.id).filter(Boolean))];
+        if (ids.length === 0) return cards;
+        try {
+            const idPlaceholders = ids.map((_, i) => `$${i + 2}`).join(',');
+            const result = await pool.query(
+                `SELECT ct.card_id, t.slug, t.label
+                 FROM kanban_card_tags ct
+                 JOIN kanban_tags t ON t.id = ct.tag_id AND t.device_id = ct.device_id
+                 WHERE ct.device_id = $1 AND ct.card_id IN (${idPlaceholders})
+                 ORDER BY t.slug`,
+                [deviceId, ...ids]
+            );
+            const byCard = new Map();
+            for (const row of result.rows) {
+                if (!byCard.has(row.card_id)) byCard.set(row.card_id, []);
+                byCard.get(row.card_id).push({ slug: row.slug, label: row.label || row.slug });
+            }
+            for (const card of cards) card.tags = byCard.get(card.id) || [];
+        } catch (err) {
+            // Backward-compatible during rolling deploy/migration: missing tag
+            // tables should not break core board/card reads.
+            console.warn('[Kanban] attachTagsToCards skipped:', err.message);
+            for (const card of cards) if (!Array.isArray(card.tags)) card.tags = [];
+        }
+        return cards;
     }
 
     // ============================================
@@ -825,7 +856,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
     router.get('/cards', async (req, res) => {
         if (!authenticate(req, res)) return;
         const { deviceId } = { ...req.query, ...req.body };
-        const { status: filterStatus, assignedBot, priority: filterPriority, automation, q: searchQuery, since, until, includeComments, includeSubcards, includeArchived } = req.query;
+        const { status: filterStatus, assignedBot, priority: filterPriority, automation, q: searchQuery, since, until, includeComments, includeSubcards, includeArchived, tag: filterTag } = req.query;
 
         const hasSearch = !!(searchQuery && typeof searchQuery === 'string' && searchQuery.trim());
         // Search auto-includes archived cards (Hank 2026-04-28: 歸檔卡找不回來 = 知識斷掉);
@@ -875,6 +906,16 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 params.push(filterPriority);
             }
 
+            if (filterTag && String(filterTag).trim()) {
+                const tagSlug = String(filterTag).trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9._:-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 80);
+                query += ` AND c.id IN (
+                    SELECT fct.card_id FROM kanban_card_tags fct
+                    JOIN kanban_tags ft ON ft.id = fct.tag_id AND ft.device_id = fct.device_id
+                    WHERE fct.device_id = $1 AND ft.slug = $${paramIdx++}
+                )`;
+                params.push(tagSlug);
+            }
+
             // Funnel filters added 2026-04-23:
             // ?q=text  → ILIKE match on title (simple text search)
             //   2026-04-28: ?includeComments=true expands to kanban_comments.text;
@@ -921,6 +962,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
 
             const result = await pool.query(query, params);
             const cards = result.rows.map(serializeCard);
+            await attachTagsToCards(deviceId, cards);
 
             // Group by status for kanban view
             const board = {};
@@ -1291,7 +1333,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
 
             res.json({
                 success: true,
-                cards: result.rows.map(serializeCard),
+                cards: await attachTagsToCards(deviceId, result.rows.map(serializeCard)),
                 total,
                 page,
                 pages: Math.ceil(total / limit)
@@ -1352,6 +1394,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             }
 
             const card = serializeCard(cardResult.rows[0]);
+            await attachTagsToCards(deviceId, [card]);
 
             // Fetch comments (latest 50)
             const commentsResult = await pool.query(
@@ -1553,6 +1596,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         }
     });
 
+
     // ============================================
     // POST /card/:id/restore — Un-archive a card (bring it back to the board)
     // ============================================
@@ -1585,6 +1629,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             res.status(500).json({ success: false, error: err.message });
         }
     });
+
 
     // ============================================
     // POST /card/:id/move — Move card status
@@ -1805,6 +1850,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         }
     });
 
+
     // ============================================
     // POST /card/:id/comment — Add comment
     // ============================================
@@ -1896,6 +1942,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         }
     });
 
+
     // ============================================
     // POST /card/:id/note — Add note
     // ============================================
@@ -1979,6 +2026,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             res.status(500).json({ success: false, error: err.message });
         }
     });
+
 
     // ============================================
     // POST /card/:id/file — Add file (URL-based)

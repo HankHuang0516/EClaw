@@ -19,9 +19,64 @@ const MINIMAL_SCHEMA = `
         id VARCHAR(48) PRIMARY KEY,
         device_id VARCHAR(64) NOT NULL,
         title VARCHAR(255) NOT NULL,
+        description TEXT DEFAULT '',
+        priority VARCHAR(8) DEFAULT 'P2',
+        assigned_bots JSONB DEFAULT '[]'::jsonb,
+        created_by INTEGER DEFAULT 0,
+        reviewer_entity_id INTEGER DEFAULT NULL,
+        status_changed_at TIMESTAMPTZ DEFAULT NOW(),
+        stale_threshold_ms BIGINT DEFAULT 10800000,
+        done_retention_ms BIGINT DEFAULT 604800000,
+        archived BOOLEAN DEFAULT FALSE,
+        is_automation BOOLEAN DEFAULT FALSE,
+        parent_card_id VARCHAR(48) DEFAULT NULL,
+        is_auto_generated BOOLEAN DEFAULT FALSE,
+        dispatch_mode VARCHAR(20) DEFAULT 'immediate',
+        pending_dispatch BOOLEAN DEFAULT FALSE,
+        chat_anchor_message_id TEXT DEFAULT NULL,
+        chat_anchor_coord JSONB DEFAULT NULL,
+        requires_screenshot_review BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
         has_dependencies BOOLEAN DEFAULT FALSE,
         dependency_status VARCHAR(16) DEFAULT 'ready',
         status VARCHAR(16) DEFAULT 'todo'
+    );
+
+
+
+    CREATE TABLE kanban_comments (
+        id UUID PRIMARY KEY,
+        card_id VARCHAR(48) NOT NULL REFERENCES kanban_cards(id) ON DELETE CASCADE,
+        device_id VARCHAR(64) NOT NULL,
+        from_entity_id INTEGER NOT NULL DEFAULT 0,
+        text TEXT NOT NULL DEFAULT '',
+        is_system BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    CREATE TABLE kanban_notes (
+        id UUID PRIMARY KEY,
+        card_id VARCHAR(48) NOT NULL REFERENCES kanban_cards(id) ON DELETE CASCADE,
+        device_id VARCHAR(64) NOT NULL,
+        title VARCHAR(255) NOT NULL DEFAULT '',
+        content TEXT NOT NULL DEFAULT '',
+        from_entity_id INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    CREATE TABLE kanban_files (
+        id UUID PRIMARY KEY,
+        card_id VARCHAR(48) NOT NULL REFERENCES kanban_cards(id) ON DELETE CASCADE,
+        device_id VARCHAR(64) NOT NULL,
+        filename VARCHAR(255) NOT NULL DEFAULT '',
+        url TEXT NOT NULL DEFAULT '',
+        mime_type VARCHAR(128) DEFAULT NULL,
+        file_size BIGINT DEFAULT NULL,
+        uploaded_by INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        file_id TEXT DEFAULT NULL
     );
 
     CREATE TABLE kanban_card_dependencies (
@@ -54,6 +109,30 @@ const MINIMAL_SCHEMA = `
     CREATE INDEX idx_kanban_card_links_source ON kanban_card_links(device_id, source_card_id);
     CREATE INDEX idx_kanban_card_links_target ON kanban_card_links(device_id, target_card_id);
     CREATE INDEX idx_kanban_card_links_relation ON kanban_card_links(device_id, relation_type);
+
+
+    CREATE TABLE kanban_tags (
+        id BIGSERIAL PRIMARY KEY,
+        device_id VARCHAR(64) NOT NULL,
+        slug VARCHAR(80) NOT NULL,
+        label VARCHAR(120) NOT NULL,
+        created_by INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(device_id, slug)
+    );
+
+    CREATE TABLE kanban_card_tags (
+        device_id VARCHAR(64) NOT NULL,
+        card_id VARCHAR(48) NOT NULL REFERENCES kanban_cards(id) ON DELETE CASCADE,
+        tag_id BIGINT NOT NULL REFERENCES kanban_tags(id) ON DELETE CASCADE,
+        created_by INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        PRIMARY KEY(device_id, card_id, tag_id)
+    );
+
+    CREATE INDEX idx_kanban_tags_device_slug ON kanban_tags(device_id, slug);
+    CREATE INDEX idx_kanban_card_tags_card ON kanban_card_tags(device_id, card_id);
+    CREATE INDEX idx_kanban_card_tags_tag ON kanban_card_tags(device_id, tag_id);
 `;
 
 async function bootstrap() {
@@ -114,10 +193,30 @@ async function insertLink(pool, deviceId, source, target, relationType = 'relate
     );
 }
 
+
+async function insertTag(pool, deviceId, cardId, rawSlug, label) {
+    const slug = String(rawSlug).trim().toLowerCase();
+    const tag = await pool.query(
+        `INSERT INTO kanban_tags (device_id, slug, label)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (device_id, slug) DO UPDATE SET label = EXCLUDED.label
+         RETURNING id`,
+        [deviceId, slug, label || slug]
+    );
+    await pool.query(
+        `INSERT INTO kanban_card_tags (device_id, card_id, tag_id)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (device_id, card_id, tag_id) DO NOTHING`,
+        [deviceId, cardId, tag.rows[0].id]
+    );
+}
+
 async function reset(pool) {
+    await pool.query('DELETE FROM kanban_card_tags');
+    await pool.query('DELETE FROM kanban_tags');
     await pool.query('DELETE FROM kanban_card_links');
     await pool.query('DELETE FROM kanban_card_dependencies');
     await pool.query('DELETE FROM kanban_cards');
 }
 
-module.exports = { MINIMAL_SCHEMA, bootstrap, insertCard, insertEdge, insertLink, reset };
+module.exports = { MINIMAL_SCHEMA, bootstrap, insertCard, insertEdge, insertLink, insertTag, reset };

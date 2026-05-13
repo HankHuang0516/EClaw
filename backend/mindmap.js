@@ -955,6 +955,16 @@ function createMindmapModule(devices) {
 
             const allCardIds = [...new Set(cards.map(c => c.id))];
 
+            // 2b) Tags (optional explicit clustering hubs)
+            const tagRowsResult = (!options.includeTags || allCardIds.length === 0) ? { rows: [] } : await pool.query(
+                `SELECT ct.card_id, t.slug, t.label
+                 FROM kanban_card_tags ct
+                 JOIN kanban_tags t ON t.id = ct.tag_id AND t.device_id = ct.device_id
+                 WHERE ct.device_id = $1 AND ct.card_id = ANY($2::varchar[])
+                 ORDER BY t.slug, ct.card_id`,
+                [deviceId, allCardIds]
+            );
+
             // 3) Aggregate counts
             const [commentCounts, noteCounts] = allCardIds.length === 0
                 ? [{ rows: [] }, { rows: [] }]
@@ -1032,6 +1042,7 @@ function createMindmapModule(devices) {
                 initialCardIds,
                 depRows: depsResult.rows,
                 cardLinkRows: cardLinksResult.rows,
+                tagRows: tagRowsResult.rows,
                 noteCardLinkRows: noteCardLinksResult.rows,
                 commentCounts: commentCounts.rows,
                 noteCounts: noteCounts.rows,

@@ -156,6 +156,7 @@ describe('mindmap-graph-projection — pure helpers', () => {
         expect(dev.scope).toBe('device');
         expect(dev.includeNeighbors).toBe(false);
         expect(dev.includeNotes).toBe(true);
+        expect(dev.includeTags).toBe(false);
 
         const ent = projection.parseGraphOptions({}, { isDeviceAuth: false, callerEntityId: 2 });
         expect(ent.scope).toBe('entity');
@@ -218,6 +219,52 @@ describe('mindmap-graph-projection — pure helpers', () => {
         expect(result.stats.edgeCounts.parent).toBe(1);
         expect(result.stats.edgeCounts.blocks).toBe(1);
         expect(result.stats.edgeCounts.owner).toBeGreaterThanOrEqual(2);
+    });
+
+    test('projectGraph emits tag nodes and tag edges only when requested', () => {
+        const cards = [
+            { id: 'card_a', title: 'A', description: '', priority: 'P1', status: 'todo', parent_card_id: null, is_automation: false, assigned_bots: [], created_by: 0, reviewer_entity_id: null, chat_anchor_message_id: null, archived: false, updated_at: null },
+            { id: 'card_b', title: 'B', description: '', priority: 'P1', status: 'todo', parent_card_id: null, is_automation: false, assigned_bots: [], created_by: 0, reviewer_entity_id: null, chat_anchor_message_id: null, archived: false, updated_at: null },
+        ];
+        const base = {
+            cards,
+            initialCardIds: new Set(cards.map(c => c.id)),
+            depRows: [],
+            cardLinkRows: [],
+            tagRows: [
+                { card_id: 'card_a', slug: 'ui', label: 'UI' },
+                { card_id: 'card_b', slug: 'ui', label: 'UI' },
+                { card_id: 'card_b', slug: 'backend', label: 'Backend' },
+            ],
+            commentCounts: [],
+            noteCounts: [],
+            notes: [],
+            anchorRows: [],
+            entityMap: {},
+        };
+
+        const off = projection.projectGraph({
+            ...base,
+            options: projection.parseGraphOptions({ includeOwners: 'none' }, { isDeviceAuth: true, callerEntityId: null }),
+        });
+        expect(off.nodes.some(n => n.type === 'tag')).toBe(false);
+        expect(off.links.some(l => l.type === 'tag')).toBe(false);
+
+        const on = projection.projectGraph({
+            ...base,
+            options: projection.parseGraphOptions({ includeOwners: 'none', includeTags: 'true' }, { isDeviceAuth: true, callerEntityId: null }),
+        });
+        expect(on.nodes).toEqual(expect.arrayContaining([
+            expect.objectContaining({ id: 'tag:ui', type: 'tag', slug: 'ui' }),
+            expect.objectContaining({ id: 'tag:backend', type: 'tag', slug: 'backend' }),
+        ]));
+        expect(on.links).toEqual(expect.arrayContaining([
+            expect.objectContaining({ source: 'tag:ui', target: 'task:card_a', type: 'tag', evidence: 'kanban_card_tags' }),
+            expect.objectContaining({ source: 'tag:ui', target: 'task:card_b', type: 'tag', evidence: 'kanban_card_tags' }),
+            expect.objectContaining({ source: 'tag:backend', target: 'task:card_b', type: 'tag', evidence: 'kanban_card_tags' }),
+        ]));
+        expect(on.stats.sourceCounts.tag).toBe(2);
+        expect(on.stats.edgeCounts.tag).toBe(3);
     });
 
     test('projectGraph emits explicit card link edges', () => {
@@ -457,7 +504,7 @@ describe('GET /api/mindmap/graph — HTTP', () => {
         const res = await request(app).get('/api/mindmap/graph' + AUTH);
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
-        expect(res.body.meta.schemaVersion).toBe(1);
+        expect(res.body.meta.schemaVersion).toBe(2);
         expect(res.body.meta.scope).toBe('device');
         expect(res.body.meta.layoutStorageKey).toBe('mindmap:force-layout:v1:dev-1:device:owner');
 
