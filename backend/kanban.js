@@ -1051,6 +1051,11 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
         if (kanbanStatus === 'backlog') return 'blocked';
         return 'active';
     }
+    // DEPRECATED: GET /api/mission/mindmap (PR-A static-mockup feed)
+    // Replaced by GET /api/mindmap/graph (PR #2680 force-graph projection;
+    // see /portal/mindmap.html). Kept for the legacy dashboard-teaser on
+    // mission.html until the teaser is migrated to call /api/mindmap/graph
+    // directly. Do not extend; new mindmap consumers must use /api/mindmap/graph.
     router.get('/mindmap', async (req, res) => {
         if (!authenticate(req, res)) return;
         const { deviceId } = { ...req.query, ...req.body };

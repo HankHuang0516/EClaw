@@ -3479,6 +3479,7 @@ const TRANSLATIONS = {
 
 
         "mm_card_expand": "Expand",
+        "mm_card_open_full": "Full mindmap →",
 
 
 
