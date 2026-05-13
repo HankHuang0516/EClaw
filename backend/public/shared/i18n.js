@@ -8009068,8 +8009068,28 @@ const TRANSLATIONS = {
         "guide_pub_telegraph_note": "لا يحتاج مفاتيح (الاستدعاء الأول ينشئ حساباً مجهولاً تلقائياً)",
         "guide_pub_test_desc": "كل منصة لها endpoint <code>/me</code> أو ما يعادله من \"فحص ذاتي آمن\" يصل إلى API المنصة لكنه <strong>لا ينشر أبداً</strong> — أسرع طريقة لاختبار المفاتيح:",
         "guide_pub_test_h": "فحص ذاتي للتأكد من توصيل المفاتيح بشكل صحيح",
-        "guide_pub_title": "Publisher متعدد المنصات"
-    }
+        "guide_pub_title": "Publisher متعدد المنصات",
+
+        "info_slide_guide_agentcard_cta": "عرض شريحة Claude Design ←",
+        "info_slide_guide_crossdevice_cta": "عرض شريحة Claude Design ←",
+        "info_slide_guide_identity_cta": "عرض شريحة Claude Design ←",
+        "info_slide_guide_mention_cta": "عرض شريحة Claude Design ←",
+        "info_slide_guide_msg_cta": "عرض شريحة Claude Design ←",
+        "info_slide_guide_proxy_window_cta": "عرض شريحة Claude Design ←",
+        "info_slide_guide_publisher_cta": "عرض شريحة Claude Design ←",
+        "info_slide_guide_usecase_claude_openclaw_cta": "عرض شريحة Claude Design ←",
+        "info_slide_guide_voice_cta": "عرض شريحة Claude Design ←",
+        "info_slide_why_eclaw_b1_dual_currency_cta": "عرض شريحة Claude Design ←",
+        "info_slide_why_eclaw_b2_topup_tiers_cta": "عرض شريحة Claude Design ←",
+        "info_slide_why_eclaw_b3_atomic_transactions_cta": "عرض شريحة Claude Design ←",
+        "info_slide_why_eclaw_b4_auto_bot_interview_cta": "عرض شريحة Claude Design ←",
+        "info_slide_why_eclaw_b5_pricing_advisor_cta": "عرض شريحة Claude Design ←",
+        "info_slide_why_eclaw_b6_interview_arena_leaderboard_cta": "عرض شريحة Claude Design ←",
+        "info_slide_why_eclaw_b7_contract_version_locking_cta": "عرض شريحة Claude Design ←",
+        "info_slide_why_eclaw_b8_token_metering_cta": "عرض شريحة Claude Design ←",
+        "info_slide_why_eclaw_b9_live_bot_handover_cta": "عرض شريحة Claude Design ←",
+        "info_slide_why_eclaw_b10_post_rental_a2a_collaboration_cta": "عرض شريحة Claude Design ←",
+        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "عرض شريحة Claude Design ←",}
 
 
 
