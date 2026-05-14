@@ -407,10 +407,10 @@
                 <div class="rm-phase-desc" data-i18n="rm_h1_desc">Fix message delivery gaps, spurious disconnects, and session resumption failures. Targets: ≤2% delivery failure, ≤30s resume.</div>
                 <ul class="rm-tasks">
                     <li class="done" data-i18n="rm_h1_t1">Queue back-pressure: cap messageQueue depth at 200; oldest messages moved to dead-letter when cap exceeded (prevents pure-translation fallback)</li>
-                    <li class="todo" data-i18n="rm_h1_t2">Heartbeat/ping-pong on webhook channel — Hermes must respond within 10s or EClaw marks delivery as failed and retries</li>
+                    <li class="done" data-i18n="rm_h1_t2">Heartbeat/ping-pong on webhook channel — Hermes must respond within 10s or EClaw marks delivery as failed and retries</li>
                     <li class="todo" data-i18n="rm_h1_t3">Session cache key includes org_id + entity_id — fixes "repo not found" from stale session cache</li>
                     <li class="partial" data-i18n="rm_h1_t4">EClaw channel logs delivery receipts; alert on &gt;3 consecutive failures → commander notified</li>
-                    <li class="partial" data-i18n="rm_h1_t5">Docker health-check: Railway health endpoint returns 200 only when Hermes message loop is responsive; auto-restart if /health returns 503 for &gt;60s</li>
+                    <li class="done" data-i18n="rm_h1_t5">Docker health-check: Railway health endpoint returns 200 only when Hermes message loop is responsive; auto-restart if /health returns 503 for &gt;60s</li>
                     <li class="todo" data-i18n="rm_h1_t6">Rate-limit guard: Hermes respects 30 req/min from EClaw; back-pressure handled via exponential backoff</li>
                 </ul>
             </div>
@@ -422,7 +422,7 @@
                     <li class="partial" data-i18n="rm_h2_t1">Hermes accepts i18n batch cards via speakTo and delivers PRs on time</li>
                     <li class="todo" data-i18n="rm_h2_t2">Hermes health-check cron: git push test every 6h; alert commander on 3 consecutive failures</li>
                     <li class="todo" data-i18n="rm_h2_t3">Hermes uses Linear API to update card status after PR merge (closed/labelled)</li>
-                    <li class="partial" data-i18n="rm_h2_t4">Railway restart policy set to always; OOM or stuck loop triggers immediate restart with commander notification</li>
+                    <li class="done" data-i18n="rm_h2_t4">Railway restart policy set to always; OOM or stuck loop triggers immediate restart with commander notification</li>
                     <li data-i18n="rm_h2_t5">Hermes memory persists between sessions via hermes_state.db (already configured)</li>
                     <li class="todo" data-i18n="rm_h2_t6">Structured log pipeline: Hermes emits JSON logs → Railway log drain → Grafana dashboard; P95 response time tracked</li>
                 </ul>
@@ -443,7 +443,7 @@
                 <div class="rm-phase-desc" data-i18n="rm_h4_desc">Hermes Channel page on EClaw portal demonstrating live co-working with other agents as public proof of EClaw's cross-platform A2A.</div>
                 <ul class="rm-tasks">
                     <li class="done" data-i18n="rm_h4_t1">Public Hermes Channel guide page on portal (info.html already exists; content to be expanded)</li>
-                    <li class="partial" data-i18n="rm_h4_t2">Hermes i18n contributions visible as merged PRs — use as proof of cross-platform A2A</li>
+                    <li class="done" data-i18n="rm_h4_t2">Hermes i18n contributions visible as merged PRs — use as proof of cross-platform A2A</li>
                     <li class="todo" data-i18n="rm_h4_t3">Live demo: commander assigns a card, Hermes delivers PR, commander merges — screenshot in portal</li>
                     <li class="todo" data-i18n="rm_h4_t4">Add Hermes to EClaw's agent roster page (agent cards with capability tags)</li>
                 </ul>
