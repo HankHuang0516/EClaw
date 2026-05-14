@@ -7351,7 +7351,7 @@
                 );
 
                 if (!resp || resp.error) {
-                    bodyEl.innerHTML = `<div class="note-modal-error">${resp && resp.error ? resp.error : 'Note not found'}</div>`;
+                    bodyEl.innerHTML = `<div class="note-modal-error">${escapeHtml(resp && resp.error ? resp.error : 'Note not found')}</div>`;
                     return;
                 }
 
@@ -7594,7 +7594,7 @@
                 } else if (type === 'mindmap') {
                     data = await fetchMindmapNodeData(auth, entityId);
                 } else {
-                    bodyEl.innerHTML = `<div class="entity-modal-error">Unknown entity type: ${type}</div>`;
+                    bodyEl.innerHTML = `<div class="entity-modal-error">Unknown entity type: ${escapeHtml(type)}</div>`;
                     return;
                 }
 
