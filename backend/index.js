@@ -1723,6 +1723,15 @@ try {
     console.error('[KanbanLinks] Failed to load module:', err.message);
 }
 
+// Device-scoped Kanban tags — mounted on same /api/mission path
+try {
+    const kanbanTagsModule = require('./api_kanban_tags')(devices);
+    app.use('/api/mission', kanbanTagsModule.router);
+    console.log('[KanbanTags] Module loaded successfully');
+} catch (err) {
+    console.error('[KanbanTags] Failed to load module:', err.message);
+}
+
 // Idle Dispatch System — smart bot availability-based card dispatch
 try {
     const idleDispatchRouter = require('./api_idle_dispatch');

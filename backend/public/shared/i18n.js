@@ -457833,6 +457833,7 @@ const TRANSLATIONS = {
 
 
         "kb_funnel_search": "Search…",
+        "kb_funnel_tag": "Tag…",
 
 
 

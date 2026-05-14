@@ -17,11 +17,12 @@
  *                     (amendment A from PR #2679 review)
  *   related/references/duplicates/causes/supports/contradicts
  *                   — kanban_card_links explicit non-hierarchical edges
+ *   tag             — kanban_card_tags explicit tag membership, when includeTags=true
  */
 
 'use strict';
 
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 const LABEL_MAX = 80;
 const TITLE_MAX = 200;
 const SUMMARY_MAX = 240;
@@ -132,6 +133,20 @@ function buildOwnerNode(entityId, entityRecord) {
     };
 }
 
+
+function buildTagNode(tag) {
+    return {
+        id: `tag:${tag.slug}`,
+        sourceId: tag.slug,
+        label: clip(tag.label || tag.slug, LABEL_MAX),
+        fullTitle: clip(tag.label || tag.slug, TITLE_MAX),
+        type: 'tag',
+        slug: tag.slug,
+        colorKey: 'tag',
+        val: Math.max(3, Math.min(10, Number(tag.card_count) || 3)),
+    };
+}
+
 function buildChatNode(messageId, displayLabel) {
     const label = displayLabel || `chat #${String(messageId).slice(0, 8)}`;
     return {
@@ -225,6 +240,7 @@ function parseGraphOptions(query, { isDeviceAuth, callerEntityId }) {
         includeOwners,
         includeNeighbors: parseBoolFlag(query.includeNeighbors, scope === 'entity'),
         includeTextFallbackRefs: parseBoolFlag(query.includeTextFallbackRefs, false),
+        includeTags: parseBoolFlag(query.includeTags, false),
         limitNodes: clampInt(query.limitNodes, NODE_LIMIT_DEFAULT, 1, NODE_LIMIT_HARD),
         limitEdges: clampInt(query.limitEdges, EDGE_LIMIT_DEFAULT, 1, EDGE_LIMIT_HARD),
     };
@@ -241,6 +257,7 @@ function projectGraph({
     initialCardIds,
     depRows,
     cardLinkRows = [],
+    tagRows = [],
     noteCardLinkRows = [],
     commentCounts,
     noteCounts,
@@ -266,7 +283,7 @@ function projectGraph({
     const links = [];
     const nodeIdSet = new Set();
     const ownerNeed = new Set();
-    const sourceCounts = { task: 0, note: 0, owner: 0, chat: 0 };
+    const sourceCounts = { task: 0, note: 0, owner: 0, chat: 0, tag: 0 };
 
     // ── Task nodes ──
     for (const c of cards) {
@@ -310,6 +327,25 @@ function projectGraph({
         }
     }
 
+    // ── Tag nodes ──
+    if (options.includeTags) {
+        const bySlug = new Map();
+        for (const r of tagRows || []) {
+            if (!cardIds.has(r.card_id) || !r.slug) continue;
+            if (!bySlug.has(r.slug)) {
+                bySlug.set(r.slug, { slug: r.slug, label: r.label || r.slug, card_count: 0 });
+            }
+            bySlug.get(r.slug).card_count += 1;
+        }
+        for (const tag of [...bySlug.values()].sort((a, b) => a.slug.localeCompare(b.slug))) {
+            const id = `tag:${tag.slug}`;
+            if (nodeIdSet.has(id)) continue;
+            nodes.push(buildTagNode(tag));
+            nodeIdSet.add(id);
+            sourceCounts.tag++;
+        }
+    }
+
     // ── Chat nodes ── (amendment A: chat_message becomes a first-class graph node)
     // Source 1: kanban_cards.chat_anchor_message_id pinned at file-time.
     // Source 2: mindmap_node_anchors cross-correlation (a mindmap_node bridges
@@ -343,6 +379,7 @@ function projectGraph({
         owner: 0,
         note_on_card: 0,
         chat_anchor: 0,
+        tag: 0,
         related: 0,
         references: 0,
         duplicates: 0,
@@ -397,6 +434,29 @@ function projectGraph({
             directional,
         }));
         edgeCounts[relationType] = (edgeCounts[relationType] || 0) + 1;
+    }
+
+    // 4. Tag edges (optional explicit clustering hubs)
+    if (options.includeTags) {
+        const seenTagLinks = new Set();
+        for (const r of tagRows || []) {
+            if (!cardIds.has(r.card_id) || !r.slug) continue;
+            const src = `tag:${r.slug}`;
+            const target = `task:${r.card_id}`;
+            const key = `${src}|${target}`;
+            if (!nodeIdSet.has(src) || seenTagLinks.has(key)) continue;
+            seenTagLinks.add(key);
+            links.push(buildLink({
+                id: `tag:${r.slug}:${r.card_id}`,
+                source: src,
+                target,
+                type: 'tag',
+                weight: 1.8,
+                evidence: 'kanban_card_tags',
+                directional: false,
+            }));
+            edgeCounts.tag++;
+        }
     }
 
     // 4. Owner edges
@@ -546,7 +606,7 @@ function projectGraph({
     );
 
     // After truncation, re-tally source counts so they match `nodes`.
-    const finalSourceCounts = { task: 0, note: 0, owner: 0, chat: 0 };
+    const finalSourceCounts = { task: 0, note: 0, owner: 0, chat: 0, tag: 0 };
     for (const n of nodes) {
         if (finalSourceCounts[n.type] !== undefined) finalSourceCounts[n.type]++;
     }
@@ -592,6 +652,7 @@ module.exports = {
     buildTaskNode,
     buildNoteNode,
     buildOwnerNode,
+    buildTagNode,
     buildChatNode,
     buildLink,
     applyCaps,
