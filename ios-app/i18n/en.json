@@ -256,7 +256,9 @@
     "app_version": "Version {{version}}",
     "entity_slot": "Entity Slot {{index}}",
     "file_manager": "Files",
-    "card_holder": "Card Holder"
+    "card_holder": "Card Holder",
+    "intro_guide": "Tutorial & Intro",
+    "intro_guide_desc": "Watch the 75s demo + Quick Start walkthrough"
   },
   "entity": {
     "rename": "Rename Entity",

@@ -256,7 +256,9 @@
     "app_version": "バージョン {{version}}",
     "entity_slot": "エンティティスロット {{index}}",
     "file_manager": "ファイル",
-    "card_holder": "カードホルダー"
+    "card_holder": "カードホルダー",
+    "intro_guide": "チュートリアル & 紹介",
+    "intro_guide_desc": "75秒の紹介動画とクイックスタートを見る"
   },
   "entity": {
     "rename": "エンティティの名前を変更",

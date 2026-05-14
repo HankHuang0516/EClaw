@@ -256,7 +256,9 @@
     "app_version": "版本 {{version}}",
     "entity_slot": "实体槽 {{index}}",
     "file_manager": "文件",
-    "card_holder": "名片夹"
+    "card_holder": "名片夹",
+    "intro_guide": "教学与简介",
+    "intro_guide_desc": "观看 75 秒简介影片与快速上手导览"
   },
   "entity": {
     "rename": "重命名实体",
