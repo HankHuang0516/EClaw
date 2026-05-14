@@ -122,6 +122,14 @@
     <string name="ai_chat_image_unavailable">Muat naik gambar tidak tersedia buat sementara waktu.</string>
     <string name="ai_chat_view_feedback">Lihat Sejarah Maklum Balas →</string>
 
+    <string name="ai_chat_tool_status_bash">Menjalankan analisis</string>
+    <string name="ai_chat_tool_status_edit">Mengedit fail</string>
+    <string name="ai_chat_tool_status_glob">Mencari fail</string>
+    <string name="ai_chat_tool_status_grep">Mencari kod</string>
+    <string name="ai_chat_tool_status_read">Membaca fail</string>
+    <string name="ai_chat_tool_status_write">Menulis fail</string>
+
+
     <!-- Chat -->
     <string name="chat_history">Sembang</string>
     <string name="chat_offline_message">Tidak dapat menyambung. Sila semak sambungan internet anda.</string>

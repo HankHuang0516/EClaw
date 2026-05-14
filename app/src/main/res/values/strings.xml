@@ -126,6 +126,13 @@
     <string name="ai_chat_image_unavailable">Image upload is temporarily unavailable.</string>
     <string name="ai_chat_view_feedback">View Feedback History →</string>
 
+    <string name="ai_chat_tool_status_bash">Running analysis</string>
+    <string name="ai_chat_tool_status_edit">Editing file</string>
+    <string name="ai_chat_tool_status_glob">Finding files</string>
+    <string name="ai_chat_tool_status_grep">Searching code</string>
+    <string name="ai_chat_tool_status_read">Reading file</string>
+    <string name="ai_chat_tool_status_write">Writing file</string>
+
     <!-- Chat -->
     <string name="chat_history">Chat</string>
     <string name="chat_offline_message">Unable to connect. Please check your internet connection.</string>

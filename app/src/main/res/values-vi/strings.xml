@@ -59,6 +59,14 @@
     <string name="ai_chat_title">Trợ lý AI</string>
     <string name="ai_chat_uploading">Đang tải hình ảnh lên…</string>
     <string name="ai_chat_view_feedback">Xem lịch sử phản hồi →</string>
+
+    <string name="ai_chat_tool_status_bash">Đang chạy phân tích</string>
+    <string name="ai_chat_tool_status_edit">Đang chỉnh sửa tệp</string>
+    <string name="ai_chat_tool_status_glob">Đang tìm tệp</string>
+    <string name="ai_chat_tool_status_grep">Đang tìm kiếm mã</string>
+    <string name="ai_chat_tool_status_read">Đang đọc tệp</string>
+    <string name="ai_chat_tool_status_write">Đang ghi tệp</string>
+
     <string name="ai_chat_welcome">Xin chào! Tôi là E-Claw AI.\nHỏi tôi bất cứ điều gì về nền tảng này.</string>
     <string name="already_bound_free">Đã liên kết (Miễn phí)</string>
     <string name="already_bound_personal">Đã liên kết (Tháng)</string>
