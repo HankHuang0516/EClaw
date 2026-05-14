@@ -327,7 +327,7 @@ EClaw/
 | `/api/link-preview` | index.js | URL link preview extraction (Open Graph/Twitter meta) |
 | `/api/gatekeeper/stats` | index.js | Gatekeeper aggregate interception statistics |
 | `/api/gps/recommendations` | gps-recommendations.js | GPS-based entity recommendations (demo) |
-| `/api/device/org-chart` | org-chart.js + index.js | Organization hierarchy chart (GET/PUT hierarchy + behavior options) |
+| `/api/device/org-chart` | org-chart.js + index.js | Organization hierarchy chart (GET/PUT hierarchy + behavior options). PUT emits Socket.IO `org-chart:updated` to the device room and pushes a `{type:'org_chart_changed'}` message to each affected entity's messageQueue so polling bots learn of the change. |
 | `/api/kanban/cards/summary` | index.js | Kanban card summary endpoint |
 | `/api/mindmap/*` | mindmap.js + mindmap-mirror.js | Mind map CRUD (nodes, edges, anchors, comments), AI traverse, note-mirror backfill |
 | `/api/analytics/*` | site-pageviews.js | Site pageview analytics aggregation |

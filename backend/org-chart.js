@@ -353,6 +353,39 @@ function invalidateCache(deviceId) {
     cache.delete(deviceId);
 }
 
+/**
+ * Diff two hierarchy snapshots and return the set of entity IDs whose
+ * position in the chart changed: either their superior moved, or their
+ * direct subordinate set changed. The USER root sentinel is never
+ * included (it's not an entity). Used to decide which polling bots
+ * need an `org_chart_changed` queue message after a PUT.
+ */
+function computeAffectedEntities(oldH, newH) {
+    const childToParent = (h) => {
+        const m = {};
+        for (const [p, kids] of Object.entries(h || {})) {
+            if (!Array.isArray(kids)) continue;
+            for (const k of kids) m[String(k)] = p;
+        }
+        return m;
+    };
+    const oldSup = childToParent(oldH);
+    const newSup = childToParent(newH);
+    const affected = new Set();
+    const allKids = new Set([...Object.keys(oldSup), ...Object.keys(newSup)]);
+    for (const childKey of allKids) {
+        if (oldSup[childKey] === newSup[childKey]) continue;
+        const childId = parseInt(childKey, 10);
+        if (!isNaN(childId)) affected.add(childId);
+        for (const parentKey of [oldSup[childKey], newSup[childKey]]) {
+            if (!parentKey || parentKey === 'USER') continue;
+            const parentId = parseInt(parentKey, 10);
+            if (!isNaN(parentId)) affected.add(parentId);
+        }
+    }
+    return affected;
+}
+
 module.exports = {
     DEFAULT_OPTIONS,
     initTable,
@@ -365,5 +398,6 @@ module.exports = {
     validateHierarchy,
     validateOptions,
     onEntityDeleted,
-    invalidateCache
+    invalidateCache,
+    computeAffectedEntities
 };
