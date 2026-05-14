@@ -192801,6 +192801,7 @@ const TRANSLATIONS = {
 
 
         "footer_info": "Info",
+        "footer_promo_video": "▶ Watch Intro Video",
 
 
 
@@ -834146,6 +834147,7 @@ const TRANSLATIONS = {
 
 
         "footer_info": "資訊",
+        "footer_promo_video": "▶ 觀看簡介影片",
 
 
 
@@ -1370706,6 +1370708,7 @@ const TRANSLATIONS = {
 
 
         "footer_info": "资訊",
+        "footer_promo_video": "▶ 观看简介视频",
 
 
 
@@ -2009822,6 +2009825,7 @@ const TRANSLATIONS = {
 
 
         "footer_info": "情報",
+        "footer_promo_video": "▶ 紹介動画を見る",
 
 
 
