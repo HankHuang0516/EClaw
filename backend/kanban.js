@@ -466,6 +466,23 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         return r.rows.length > 0;
     }
 
+    // Lane backpressure — count active workload (todo/in_progress/review) for a
+    // bot to decide whether an incoming cron-spawned notify should be downgraded
+    // from immediate push to the smart queue. See spawnAutomationChild dispatch
+    // block for the threshold and the Layer-1 jitter that pairs with this check.
+    async function botActiveWorkload(deviceId, botId) {
+        const r = await pool.query(
+            `SELECT COUNT(*)::int AS n
+               FROM kanban_cards
+              WHERE device_id = $1
+                AND $2 = ANY(assigned_bots::integer[])
+                AND archived = false
+                AND status IN ('todo','in_progress','review')`,
+            [deviceId, Number(botId)]
+        );
+        return r.rows[0]?.n || 0;
+    }
+
     async function enqueuePendingNotify(deviceId, botId, cardId, message, payload) {
         await pool.query(
             `INSERT INTO kanban_pending_notify (device_id, bot_entity_id, card_id, msg, payload)
@@ -2814,21 +2831,41 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     // wakeup chain. Spec: docs/mission-v2-kanban-spec.md §十一
                     // "通知 gates（smart per-bot queue）".
                     if (bots.length > 0) {
+                        // Layer 1 — Cron-spawn jitter (0–CRON_NOTIFY_JITTER_MS, default 30s).
+                        // Same-minute mom crons used to push 5+ notifies into one bot lane
+                        // in ≤7s, wedging the chat queue (card_a19dc866). Random delay
+                        // before notify, combined with the serial-await spawn loop,
+                        // staggers same-tick siblings naturally without delaying the
+                        // child card INSERT or the user-visible nextRunAt.
+                        const jitterMaxMs = Number(process.env.CRON_NOTIFY_JITTER_MS) || 30000;
+                        const jitterMs = jitterMaxMs > 0 ? Math.floor(Math.random() * jitterMaxMs) : 0;
+                        if (jitterMs > 0) {
+                            console.log(`[Kanban] Automation child ${childCard.id}: jitter ${jitterMs}ms before notify`);
+                            await new Promise(r => setTimeout(r, jitterMs));
+                        }
+
                         const lang = await getDeviceLanguage(card.device_id);
                         const msg = tKanban(lang, 'automationTrigger', {
                             title: card.title,
                             childTitle
                         });
                         const payload = { description: card.description, cardId: childCard.id };
+                        const backpressureThreshold = Number(process.env.CRON_NOTIFY_BACKPRESSURE_THRESHOLD) || 5;
                         for (const botId of bots) {
                             try {
                                 const hasPending = await botHasPendingNotify(card.device_id, botId);
-                                if (hasPending) {
+                                // Layer 2 — Lane backpressure (card_a19dc866). When the bot's
+                                // active workload (todo/in_progress/review) crosses threshold,
+                                // downgrade immediate push to the smart queue so the bot drains
+                                // one task at a time instead of receiving N concurrent chats.
+                                const workload = await botActiveWorkload(card.device_id, botId);
+                                const backpressure = workload >= backpressureThreshold;
+                                if (hasPending || backpressure) {
                                     await enqueuePendingNotify(card.device_id, botId, childCard.id, msg, payload);
-                                    console.log(`[Kanban] Smart-queue: enqueued notify for bot #${botId} card ${childCard.id} (bot has pending notify)`);
+                                    console.log(`[Kanban] Smart-queue: enqueued notify for bot #${botId} card ${childCard.id} (hasPending=${hasPending}, workload=${workload}, backpressure=${backpressure})`);
                                 } else {
                                     await notifyEntities(card.device_id, [botId], msg, payload);
-                                    console.log(`[Kanban] Smart-queue: pushed immediate notify for bot #${botId} card ${childCard.id} (queue empty)`);
+                                    console.log(`[Kanban] Smart-queue: pushed immediate notify for bot #${botId} card ${childCard.id} (workload=${workload})`);
                                 }
                             } catch (notifyErr) {
                                 console.error(`[Kanban] Smart-queue notify failed for bot #${botId}:`, notifyErr.message);
