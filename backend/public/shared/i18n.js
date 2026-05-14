@@ -2940677,6 +2940677,14 @@ const TRANSLATIONS = {
         "guide_cc_channel_envvars_row_auto_wake_poll": "Claude 仍 busy 時的重新檢查間隔（秒）",
         "guide_cc_channel_envvars_row_auto_wake_max_wait": "總共最多等多久才放棄喚醒（秒）",
         "guide_cc_channel_envvars_row_auto_wake_cooldown": "連續喚醒的冷卻時間",
+        "listing_soft_paused_owner_banner": "此上架項目因健康檢查異常而進入 soft-pause。它仍維持上架，但在恢復前會阻擋新的租借。",
+        "listing_soft_paused_visitor_banner": "這個 Bot 暫時無法租借，擁有者正在修復健康檢查問題。頁面仍可查看，但目前不能租借。",
+        "listing_soft_paused_resume_btn": "恢復上架",
+        "rental_create_rejected_soft_paused": "此上架項目因健康檢查異常而暫時無法租借。",
+        "mp_chat_cta": "開始對話",
+        "invite_unlimited_label": "已送出（無限制）",
+        "wallet_topup_success": "儲值成功！",
+        "wallet_topup_failed": "儲值失敗，請再試一次。",
 
 
 
