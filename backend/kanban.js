@@ -12,6 +12,7 @@
  *
  * Status transition:
  *   POST   /card/:id/move  — Move card to new status + reassign
+ *   POST   /card/:id/reopen — Explicitly reopen Done card with reason + audit
  *
  * Comments (留言板):
  *   GET    /card/:id/comments
@@ -229,6 +230,10 @@ const STATUSES = KanbanStatus.STATUSES;
 const STATUS_LABELS = KanbanStatus.STATUS_LABELS_EN;
 const PRIORITIES = ['P0', 'P1', 'P2', 'P3'];
 const PRIORITY_COLORS = { P0: '🔴', P1: '🟠', P2: '🔵', P3: '⚪' };
+// Supervisors can reopen false-Done cards via the explicit /reopen endpoint.
+// This is intentionally narrow and separate from assignedBots: collaborators
+// should ask a supervisor/reviewer/creator to reopen rather than drag Done cards.
+const REOPEN_SUPERVISOR_ENTITY_IDS = new Set([1, 2]);
 
 // ── Schema init ──
 async function initKanbanDatabase() {
@@ -627,6 +632,11 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : null,
             reviewerEntityId: row.reviewer_entity_id != null ? parseInt(row.reviewer_entity_id) : null,
             requiresScreenshotReview: row.requires_screenshot_review !== false,
+            reopenedAt: row.reopened_at ? new Date(row.reopened_at).getTime() : null,
+            reopenedBy: row.reopened_by != null ? parseInt(row.reopened_by) : null,
+            reopenReason: row.reopen_reason || null,
+            requiresPrRework: !!row.requires_pr_rework,
+            reworkPrNumber: row.rework_pr_number || null,
             // Aggregated counts (if present from JOIN)
             commentCount: parseInt(row.comment_count) || 0,
             noteCount: parseInt(row.note_count) || 0,
@@ -1491,7 +1501,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
     router.put('/card/:id', async (req, res) => {
         if (!authenticate(req, res)) return;
         const _p = { ...req.query, ...req.body }; console.log('[Kanban] PUT /card/:id called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
-        const { deviceId, title, description, priority, assignedBots, reviewerEntityId, requiresScreenshotReview, dispatchMode } = req.body;
+        const { deviceId, title, description, priority, assignedBots, reviewerEntityId, requiresScreenshotReview, dispatchMode, requiresPrRework, reworkPrNumber } = req.body;
         const cardId = req.params.id;
 
         try {
@@ -1556,6 +1566,19 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 // automation parents do not remain invisible to the scheduler.
                 if (normalizedDispatchMode === 'immediate') {
                     updates.push(`pending_dispatch = FALSE`);
+                }
+            }
+            if (requiresPrRework !== undefined) {
+                const normalizedRequiresPrRework = requiresPrRework === true || requiresPrRework === 'true' || requiresPrRework === '1';
+                updates.push(`requires_pr_rework = $${paramIdx++}`);
+                params.push(normalizedRequiresPrRework);
+            }
+            if (reworkPrNumber !== undefined) {
+                const normalizedPr = String(reworkPrNumber || '').trim();
+                updates.push(`rework_pr_number = $${paramIdx++}`);
+                params.push(normalizedPr || null);
+                if (normalizedPr) {
+                    updates.push(`requires_pr_rework = TRUE`);
                 }
             }
 
@@ -1686,6 +1709,17 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             const bots = Array.isArray(assignedBots) ? assignedBots.map(Number) : (card.assigned_bots || []);
             if (bots.length === 0) {
                 return res.status(400).json({ success: false, error: 'At least one entity must be assigned' });
+            }
+
+            // Reopened PR-linked cards that require PR rework must record the follow-up PR
+            // before they can be closed again. Evidence-only reopens should leave
+            // requires_pr_rework=false.
+            if (newStatus === 'done' && card.requires_pr_rework && !card.rework_pr_number) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Rework PR number required before moving this reopened card to Done',
+                    code: 'REWORK_PR_REQUIRED'
+                });
             }
 
             // Screenshot-review gate: block review/done transitions if no image attached.
@@ -1823,6 +1857,112 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             res.json({ success: true, card: updatedCard, transition: { from: oldStatus, to: newStatus } });
         } catch (err) {
             console.error('[Kanban] Move card error:', err);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+
+    // ============================================
+    // POST /card/:id/reopen — Explicit Done-card reopen with reason + audit
+    // ============================================
+    router.post('/card/:id/reopen', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const params = { ...req.query, ...req.body };
+        console.log('[Kanban] POST /card/:id/reopen called', { deviceId: params.deviceId, entityId: params.entityId, cardId: req.params?.id });
+        const { deviceId, newStatus, reason, requiresPrRework, prNumber, reworkPrNumber } = params;
+        const cardId = req.params.id;
+        const actorEntityId = Number.parseInt(params.entityId || 0, 10) || 0;
+        const hasDeviceSecretAuth = !!params.deviceSecret;
+        const targetStatus = String(newStatus || '').trim();
+        const reopenReason = String(reason || '').trim();
+        const prValue = String(prNumber || reworkPrNumber || '').trim();
+        const allowedTargets = STATUSES.filter(s => s !== 'done' && s !== 'backlog');
+
+        if (!allowedTargets.includes(targetStatus)) {
+            return res.status(400).json({ success: false, error: `Invalid reopen target. Must be one of: ${allowedTargets.join(', ')}` });
+        }
+        if (!reopenReason) {
+            return res.status(400).json({ success: false, error: 'Reopen reason is required', code: 'REOPEN_REASON_REQUIRED' });
+        }
+
+        try {
+            const existing = await pool.query(
+                `SELECT * FROM kanban_cards WHERE id = $1 AND device_id = $2 AND archived = false`,
+                [cardId, deviceId]
+            );
+            if (existing.rows.length === 0) {
+                return res.status(404).json({ success: false, error: 'Card not found or archived' });
+            }
+
+            const card = existing.rows[0];
+            if (card.status !== 'done') {
+                return res.status(400).json({ success: false, error: 'Only Done cards can be reopened', code: 'REOPEN_SOURCE_NOT_DONE' });
+            }
+
+            const isSupervisor = REOPEN_SUPERVISOR_ENTITY_IDS.has(actorEntityId);
+            const isCreator = actorEntityId && Number(card.created_by) === actorEntityId;
+            const isReviewer = actorEntityId && card.reviewer_entity_id != null && Number(card.reviewer_entity_id) === actorEntityId;
+            const isDeviceOwner = hasDeviceSecretAuth && actorEntityId === 0;
+            const requestedRequiresPrRework = requiresPrRework === true || requiresPrRework === 'true' || requiresPrRework === '1';
+            const p0OrPrRework = card.priority === 'P0' || !!card.requires_pr_rework || requestedRequiresPrRework || !!prValue;
+            const allowedByRole = isDeviceOwner || isSupervisor || isCreator || isReviewer;
+            const allowedForStrictCard = isDeviceOwner || isSupervisor || isReviewer;
+            if (!allowedByRole || (p0OrPrRework && !allowedForStrictCard)) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Not authorized to reopen this Done card',
+                    code: 'REOPEN_FORBIDDEN'
+                });
+            }
+
+            const shouldRequirePrRework = requestedRequiresPrRework;
+            const result = await pool.query(
+                `UPDATE kanban_cards
+                 SET status = $1,
+                     status_changed_at = NOW(),
+                     last_stale_nudge_at = NULL,
+                     reopened_at = NOW(),
+                     reopened_by = $2,
+                     reopen_reason = $3,
+                     requires_pr_rework = $4,
+                     rework_pr_number = $5,
+                     updated_at = NOW()
+                 WHERE id = $6 AND device_id = $7
+                 RETURNING *`,
+                [targetStatus, actorEntityId || null, reopenReason, shouldRequirePrRework, prValue || null, cardId, deviceId]
+            );
+            const updatedCard = serializeCard(result.rows[0]);
+
+            const actorLabel = actorEntityId ? `#${actorEntityId}` : 'device owner';
+            const prText = shouldRequirePrRework
+                ? (prValue ? `, requires_pr_rework=true, pr=${prValue}` : ', requires_pr_rework=true')
+                : '';
+            await addSystemComment(cardId, deviceId,
+                `♻️ REOPENED from Done -> ${STATUS_LABELS[targetStatus] || targetStatus} by ${actorLabel}, reason: ${reopenReason}${prText}`);
+
+            const bots = Array.isArray(card.assigned_bots) ? card.assigned_bots : [];
+            if (bots.length > 0) {
+                notifyEntities(deviceId, bots, `♻️ Card reopened: ${card.title}\nDone → ${STATUS_LABELS[targetStatus] || targetStatus}\nReason: ${reopenReason}`, { description: card.description, cardId });
+            }
+            if (updatedCard.reviewerEntityId != null && !bots.includes(updatedCard.reviewerEntityId)) {
+                notifyEntities(deviceId, [updatedCard.reviewerEntityId], `♻️ Card reopened for review: ${card.title}\nReason: ${reopenReason}`, { description: card.description, cardId, role: 'reviewer' });
+            }
+
+            await bumpVersion(deviceId);
+            emitKanbanEvent('card_status_changed', {
+                cardId,
+                fromStatus: 'done',
+                toStatus: targetStatus,
+                deviceId,
+                entityId: actorEntityId,
+                ts: new Date().toISOString(),
+                reason: reopenReason,
+                source: 'reopen'
+            });
+
+            res.json({ success: true, card: updatedCard, transition: { from: 'done', to: targetStatus }, reopened: true });
+        } catch (err) {
+            console.error('[Kanban] Reopen card error:', err);
             res.status(500).json({ success: false, error: err.message });
         }
     });

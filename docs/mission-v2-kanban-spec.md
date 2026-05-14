@@ -91,6 +91,36 @@ moveCard(cardId, newStatus, newAssignedBots[])
 - **總指揮 #2**（可以推進任何卡片）
 - **老闆**（最高權限）
 
+### 4.4 Done 卡重新打開（Explicit Reopen Flow）
+
+Done 卡代表已驗收，但若後續發現同一議題仍需修正，系統允許在**同一張卡**上重新打開，避免建立 redo/follow-up 卡造成上下文分裂與心智圖膨脹。
+
+核心規則：
+
+- **不設時間鎖**：Done 不因超過 7 天、保留期或任何時間條件而禁止 reopen。真正的閘門是權限、理由與 audit trail。
+- **必須走獨立 API**：`POST /api/mission/card/:id/reopen`。一般 `/move` 仍禁止 `done -> non-done`，前端拖拉也不得觸發 reopen。
+- **來源限制**：只能從 `done` reopen；`archived = true` 的卡不適用，仍走 restore / follow-up lifecycle。
+- **目標狀態**：只能 reopen 到 `todo` / `in_progress` / `review` / `blocked`，不可 reopen 到 `backlog` 或 `done`。
+- **必填理由**：`reason` 需為非空字串；成功時自動寫入系統 audit comment：`REOPENED from Done -> {target} by #{entityId}, reason: ...`。
+- **權限**：只允許 supervisor（#1/#2）、卡片建立者、reviewer 或 device owner；不預設開放給任意 `assignedBots`。
+- **P0 / PR-linked 或 PR-rework 卡**：限 supervisor / reviewer / device owner reopen；一般 creator 不能單獨 reopen。
+- **PR 已合併不會被拆回**：reopen 只表示該議題需要 rework 或補 evidence。若 `requiresPrRework = true`，回到 Done 前必須補 `reworkPrNumber`（新 PR number 或 URL）。
+
+API：
+
+```
+POST /api/mission/card/:id/reopen
+Body: {
+  deviceId,
+  entityId?,
+  botSecret? | deviceSecret?,
+  newStatus: "todo" | "in_progress" | "review" | "blocked",
+  reason: string,
+  requiresPrRework?: boolean,
+  prNumber?: string
+}
+```
+
 ## 五、自動化機制
 
 ### 5.1 卡住催促（Stale Card Detection）

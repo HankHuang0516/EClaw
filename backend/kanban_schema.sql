@@ -216,6 +216,13 @@ CREATE INDEX IF NOT EXISTS idx_kanban_pending_notify_bot ON kanban_pending_notif
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS dispatch_mode VARCHAR(20) DEFAULT 'immediate';
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS pending_dispatch BOOLEAN DEFAULT FALSE;
 
+-- Done-card reopen audit/rework fields (explicit /reopen flow)
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS reopened_at TIMESTAMPTZ DEFAULT NULL;
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS reopened_by INTEGER DEFAULT NULL;
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS reopen_reason TEXT DEFAULT NULL;
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS requires_pr_rework BOOLEAN DEFAULT FALSE;
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS rework_pr_number VARCHAR(64) DEFAULT NULL;
+
 CREATE INDEX IF NOT EXISTS idx_kanban_cards_pending_dispatch ON kanban_cards(device_id, pending_dispatch, dispatch_mode)
     WHERE pending_dispatch = TRUE;
 
