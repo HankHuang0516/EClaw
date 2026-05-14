@@ -25884,6 +25884,7 @@ const TRANSLATIONS = {
 
 
         "landing_get_started": "Get Started",
+        "landing_watch_full_demo": "▶ Watch Full Demo + Walkthrough",
 
 
 
@@ -674782,6 +674783,7 @@ const TRANSLATIONS = {
 
 
         "landing_get_started": "立即開始",
+        "landing_watch_full_demo": "▶ 觀看完整示範與導覽",
 
 
 
@@ -1649239,6 +1649241,7 @@ const TRANSLATIONS = {
 
 
         "landing_get_started": "立即开始",
+        "landing_watch_full_demo": "▶ 观看完整演示与导览",
 
 
 
@@ -1871584,6 +1871587,7 @@ const TRANSLATIONS = {
 
 
         "landing_get_started": "始める",
+        "landing_watch_full_demo": "▶ フルデモ + ウォークスルーを見る",
 
 
 
