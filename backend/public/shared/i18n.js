@@ -7464746,7 +7464746,7 @@ const TRANSLATIONS = {
       "promo_video_secondary_cta": "मुखपृष्ठ पर वापस",
       "promo_video_note": "EClaw रेपो के बाहर निर्मित HyperFrames रचना से प्रकाशित।",
         "daily_video_section_title": "दैनिक उत्पाद अपडेट",
-        "daily_video_section_caption": "EClawbot पर रोज़ रिलीज़ हुई चीज़ों की एक छोटी सी झलक। हर नया बिल्ड आने पर अपडेट होती है।",,
+        "daily_video_section_caption": "EClawbot पर रोज़ रिलीज़ हुई चीज़ों की एक छोटी सी झलक। हर नया बिल्ड आने पर अपडेट होती है।",
         "admin_hub_badge": "व्यवस्थापक",
         "admin_hub_card_admin_users": "व्यवस्थापक उपयोगकर्ता प्रबंधन",
         "admin_hub_card_admin_users_desc": "ADMIN_DEVICE_IDS में प्रविष्टियों का निरीक्षण करें + घुमाएँ।",
