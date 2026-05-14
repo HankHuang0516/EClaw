@@ -252,7 +252,7 @@ export default function SettingsScreen() {
             description={t('settings.intro_guide_desc', 'Watch the 75s demo + Quick Start walkthrough')}
             left={(props) => <List.Icon {...props} icon="play-circle-outline" />}
             right={(props) => <List.Icon {...props} icon="open-in-new" />}
-            onPress={() => Linking.openURL('https://eclawbot.com/info.html#guide').catch(() => {})}
+            onPress={() => Linking.openURL('https://eclawbot.com/portal/info.html').catch(() => {})}
           />
           <List.Item
             title={t('settings.file_manager', 'Files')}
