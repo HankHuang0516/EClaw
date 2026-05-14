@@ -273,3 +273,60 @@ describe('Portal static cache headers', () => {
         expect(res.headers['cache-control']).toMatch(/no-cache/);
     });
 });
+
+// ════════════════════════════════════════════════════════════════
+// /api/platform-stats — Regression #2809
+// ════════════════════════════════════════════════════════════════
+describe('GET /api/platform-stats', () => {
+    it('requires deviceId and deviceSecret', async () => {
+        const res = await request(app).get('/api/platform-stats');
+        expect(res.status).toBe(400);
+    });
+
+    it('rejects invalid credentials', async () => {
+        const res = await request(app)
+            .get('/api/platform-stats?deviceId=fake&deviceSecret=fake');
+        expect(res.status).toBe(401);
+    });
+
+    it('does not 500 when called with valid device (template counts from in-memory)', async () => {
+        // Register a device so it exists in the in-memory map
+        const did = 'platform-stats-test-device';
+        const dsec = 'platform-stats-test-secret';
+        await request(app).post('/api/device/register').send({
+            deviceId: did, deviceSecret: dsec, entityId: 0,
+        });
+
+        const res = await request(app)
+            .get(`/api/platform-stats?deviceId=${did}&deviceSecret=${dsec}`);
+        // Must not be 500 (the bug was querying non-existent DB tables)
+        expect(res.status).not.toBe(500);
+        if (res.status === 200) {
+            expect(res.body.success).toBe(true);
+            expect(typeof res.body.templates.soul).toBe('number');
+            expect(typeof res.body.templates.rule).toBe('number');
+            expect(typeof res.body.templates.skill).toBe('number');
+        }
+    });
+});
+
+// ════════════════════════════════════════════════════════════════
+// /api/entity/lookup — Regression #2810
+// ════════════════════════════════════════════════════════════════
+describe('GET /api/entity/lookup', () => {
+    it('requires code query parameter', async () => {
+        const res = await request(app).get('/api/entity/lookup');
+        expect(res.status).toBe(400);
+    });
+
+    it('accepts publicCode as alias for code (#2810)', async () => {
+        const res = await request(app).get('/api/entity/lookup?publicCode=nonexistent');
+        // Should be 404 (not found) not 400 (missing param)
+        expect(res.status).toBe(404);
+    });
+
+    it('accepts code parameter', async () => {
+        const res = await request(app).get('/api/entity/lookup?code=nonexistent');
+        expect(res.status).toBe(404);
+    });
+});

@@ -4335,12 +4335,16 @@ app.get('/api/platform-stats', async (req, res) => {
         const pg = authModule.pool;
 
         // User count
-        const userCount = await pg.query('SELECT COUNT(*) as total FROM user_accounts');
+        let userTotal = 0;
+        try {
+            const userCount = await pg.query('SELECT COUNT(*) as total FROM user_accounts');
+            userTotal = parseInt(userCount.rows[0].total);
+        } catch (_) { /* table may not exist */ }
 
-        // Template counts
-        const soulCount = await pg.query('SELECT COUNT(*) as total FROM soul_templates');
-        const ruleCount = await pg.query('SELECT COUNT(*) as total FROM rule_templates');
-        const skillCount = await pg.query('SELECT COUNT(*) as total FROM skill_templates');
+        // Template counts (from in-memory arrays loaded from JSON files)
+        const soulTotal = soulTemplatesData.length;
+        const ruleTotal = ruleTemplatesData.length;
+        const skillTotal = skillTemplatesData.length;
 
         // Bound entities (in-memory, excluding test devices)
         let boundEntities = 0;
@@ -4358,13 +4362,13 @@ app.get('/api/platform-stats', async (req, res) => {
 
         res.json({
             success: true,
-            users: parseInt(userCount.rows[0].total),
+            users: userTotal,
             boundEntities,
             activeDevices,
             templates: {
-                soul: parseInt(soulCount.rows[0].total),
-                rule: parseInt(ruleCount.rows[0].total),
-                skill: parseInt(skillCount.rows[0].total)
+                soul: soulTotal,
+                rule: ruleTotal,
+                skill: skillTotal
             }
         });
     } catch (err) {
@@ -10547,10 +10551,10 @@ app.post('/api/entity/cross-speak', async (req, res) => {
 /**
  * GET /api/entity/lookup
  * Look up entity info by public code (non-sensitive data only).
- * Query: ?code=abc123
+ * Query: ?code=abc123  (also accepts ?publicCode=abc123)
  */
 app.get('/api/entity/lookup', (req, res) => {
-    const code = req.query.code;
+    const code = req.query.code || req.query.publicCode;
     if (!code) {
         return res.status(400).json({ success: false, message: "code query parameter required" });
     }
