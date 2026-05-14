@@ -49,6 +49,8 @@ State/tab checks:
 - Files tab reachable: `after-412x892-files.png`
 - Screenshots tab reachable: `after-412x892-screenshots.png`
 
+Contact sheet: `kanban-comments-flex-matrix.png`.
+
 Raw numeric evidence: `matrix-results.json`.
 
 ## Local validation commands
