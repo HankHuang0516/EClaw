@@ -579,6 +579,62 @@
     .overview { font-size: 13px; overflow-x: auto; }
     .overview th, .overview td { padding: 10px 12px; }
   }
+
+  /* === Lightbox overlay (click image to enlarge) === */
+  main img, footer img { cursor: zoom-in; }
+  .lightbox-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(15, 30, 25, 0.92);
+    z-index: 9999;
+    align-items: center; justify-content: center;
+    cursor: zoom-out;
+    padding: 4vh 4vw;
+  }
+  .lightbox-overlay.open { display: flex; }
+  .lightbox-overlay .lightbox-img {
+    max-width: 96vw; max-height: 92vh;
+    width: auto; height: auto;
+    border-radius: 6px;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.55);
+    background: #fff;
+    cursor: default;
+  }
+  .lightbox-close {
+    position: absolute; top: 16px; right: 20px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 0; color: #fff;
+    font-size: 28px; line-height: 1;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .lightbox-close:hover { background: rgba(255, 255, 255, 0.25); }
+
+  /* === Google Maps clickable venue links === */
+  .gmap-link {
+    color: inherit !important;
+    text-decoration: none;
+    border-bottom: 1px dashed var(--gold);
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .gmap-link:hover {
+    color: var(--gold-deep) !important;
+    border-bottom-color: var(--gold-deep);
+  }
+  .gmap-link:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+  .gmap-icon {
+    font-size: 0.85em;
+    margin-left: 3px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+  .gmap-link:hover .gmap-icon { opacity: 1; }
+  .lodging-card h3 .gmap-link { display: inline-block; }
 </style>
 </head>
 <body>
@@ -1022,6 +1078,145 @@
   <div class="brand">名古屋深度行 5 天 4 夜</div>
   <div class="small">2026 / 5 / 15 – 5 / 19 ・ Hosted on eclawbot.com ・ 圖片版權屬原作者所有</div>
 </footer>
+
+<script>
+(function(){
+  // Pre-cleaned venue text → optimized Google Maps search query (JA where it helps)
+  const OVERRIDES = {
+    '抵達桃園機場': '桃園國際機場 Terminal',
+    '桃園機場': '桃園國際機場 Terminal',
+    '抵達中部國際機場 Centrair': '中部国際空港セントレア',
+    '中部國際機場 Centrair': '中部国際空港セントレア',
+    '中部國際機場': '中部国際空港セントレア',
+    '抵達中部國際機場': '中部国際空港セントレア',
+    'RDZ Rentacar 接駁辦理': 'RDZレンタカー 中部国際空港',
+    'ni:no (ニーノ)': 'ni:no ニーノ 常滑',
+    '常滑招財貓通': '常滑 招き猫通り',
+    'AEON Mall Tokoname (常滑)': 'イオンモール常滑',
+    'AEON Mall 美食街': 'イオンモール常滑',
+    'Hotel JAL City Nagoya Nishiki': 'ホテルJALシティ名古屋錦',
+    'Hotel JAL City Nagoya Nishiki': 'ホテルJALシティ名古屋錦',
+    'FUSE COFFEE nagoya': 'FUSE COFFEE 名古屋',
+    '名古屋港水族館': '名古屋港水族館',
+    'JETTY 美食廣場': 'JETTY 名古屋港',
+    '大須商店街': '大須商店街 名古屋',
+    'double tall café 品鍋慶生': 'double tall café 名古屋',
+    '釣船茶屋 Zauo Hoshizaki': '釣船茶屋ざうお 星崎店',
+    '吉卜力公園': 'ジブリパーク',
+    '魔之谷': 'ジブリパーク 魔女の谷',
+    'Hot Tin Roof (魔之谷)': 'Hot Tin Roof ジブリパーク',
+    '魔法之里': 'ジブリパーク もののけの里',
+    '吉卜力大倉庫': 'ジブリパーク ジブリの大倉庫',
+    '麵家獅子丸': '麺家獅子丸 名古屋',
+    '榮商圈 SakaeChika 地下街': 'サカエチカ 名古屋',
+    'LEGOLAND Japan': 'レゴランド・ジャパン',
+    '積木屋漢堡餐廳': 'BRICKHOUSE BURGER レゴランド',
+    'SEA LIFE 海洋探索中心': 'シーライフ名古屋',
+    '德兵衛迴轉壽司 Oasis 21 店': 'スシロー オアシス21',
+    '榮商圈逛街': '名古屋 栄',
+    'J Hotel Rinku': 'J Hotel Rinku 常滑'
+  };
+  // Generic non-venue or repeated placeholders — leave as plain text
+  const SKIP = new Set([
+    '辦理租車手續',
+    '回飯店休息，整理行李',
+    '回飯店休息',
+    '飯店自助',
+    '享用飯店早餐',
+    '退房',
+    '從飯店出發還車',
+    '班機回台',
+    '樂高熱門設施',
+    '繼續逛園區'
+  ]);
+  // Prefixes to strip before lookup (longest-first ordering matters)
+  const PREFIX = [
+    '午餐簡單吃 ・ ', '園內午餐 ・ ', '自由活動 ・ ',
+    '出發前往', '開車前往',
+    '逛累 ・ ', '早餐 ・ ', '午餐 ・ ', '晚餐 ・ ',
+    '入住 ', '前往 ', '前往', '抵達 ', '抵達'
+  ];
+  function cleanText(raw){
+    let t = (raw || '').trim();
+    for (const p of PREFIX){
+      if (t.startsWith(p)) return t.slice(p.length).trim();
+    }
+    return t;
+  }
+  function mapsUrl(q){
+    return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q);
+  }
+
+  // --- Lightbox ---
+  function buildLightbox(){
+    let overlay = document.getElementById('lightbox-overlay');
+    if (overlay) return overlay;
+    overlay = document.createElement('div');
+    overlay.id = 'lightbox-overlay';
+    overlay.className = 'lightbox-overlay';
+    overlay.innerHTML = '<button class="lightbox-close" aria-label="關閉">×</button><img class="lightbox-img" alt="" />';
+    document.body.appendChild(overlay);
+    const close = ()=> overlay.classList.remove('open');
+    overlay.addEventListener('click', e=>{
+      if (!e.target.classList.contains('lightbox-img')) close();
+    });
+    document.addEventListener('keydown', e=>{
+      if (e.key === 'Escape') close();
+    });
+    return overlay;
+  }
+  function attachLightbox(){
+    const overlay = buildLightbox();
+    const img = overlay.querySelector('.lightbox-img');
+    document.querySelectorAll('main img').forEach(el=>{
+      el.style.cursor = 'zoom-in';
+      el.addEventListener('click', ()=>{
+        img.src = el.currentSrc || el.src;
+        img.alt = el.alt || '';
+        overlay.classList.add('open');
+      });
+    });
+  }
+
+  // --- Google Maps venue links ---
+  function wrapWithMapsLink(el, query){
+    if (!query || el.querySelector('a.gmap-link')) return;
+    const a = document.createElement('a');
+    a.href = mapsUrl(query);
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.className = 'gmap-link';
+    a.title = '在 Google Maps 中查看：' + query;
+    while (el.firstChild) a.appendChild(el.firstChild);
+    a.insertAdjacentHTML('beforeend', ' <span class="gmap-icon" aria-hidden="true">📍</span>');
+    el.appendChild(a);
+  }
+  function attachGmapLinks(){
+    document.querySelectorAll('.day .place').forEach(el=>{
+      const raw = el.textContent.trim();
+      const cleaned = cleanText(raw);
+      if (SKIP.has(cleaned) || SKIP.has(raw)) return;
+      const q = OVERRIDES[cleaned] || OVERRIDES[raw] || cleaned;
+      wrapWithMapsLink(el, q);
+    });
+    document.querySelectorAll('.lodging-card h3').forEach(el=>{
+      const t = el.textContent.trim();
+      const q = OVERRIDES[t] || t;
+      wrapWithMapsLink(el, q);
+    });
+  }
+
+  function init(){
+    try { attachLightbox(); } catch(e){ console.warn('lightbox init failed', e); }
+    try { attachGmapLinks(); } catch(e){ console.warn('gmap links init failed', e); }
+  }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
 
 </body>
 </html>
