@@ -72,6 +72,98 @@ try {
     CronExpressionParser = null;
 }
 
+
+const SCHEDULE_LATE_FIRE_GRACE_MS = 5 * 60 * 1000;
+const SCHEDULE_STALE_EPSILON_MS = 1000;
+
+function asValidDate(value) {
+    const date = value instanceof Date ? value : new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function computeCronNextRun(cronExpression, timezone, currentDate = new Date()) {
+    try {
+        if (!CronExpressionParser || !cronExpression) return null;
+        const expr = CronExpressionParser.parse(cronExpression, {
+            tz: timezone || 'Asia/Taipei',
+            currentDate,
+        });
+        return expr.next().toDate();
+    } catch (e) {
+        console.warn('[Kanban] Invalid cron expression:', cronExpression, e.message);
+        return null;
+    }
+}
+
+function computeCronPreviousRun(cronExpression, timezone, currentDate = new Date()) {
+    try {
+        if (!CronExpressionParser || !cronExpression) return null;
+        const expr = CronExpressionParser.parse(cronExpression, {
+            tz: timezone || 'Asia/Taipei',
+            currentDate,
+        });
+        return expr.prev().toDate();
+    } catch (e) {
+        console.warn('[Kanban] Invalid cron expression:', cronExpression, e.message);
+        return null;
+    }
+}
+
+function getRecurringScheduleFireDecision(card, now = new Date(), graceMs = SCHEDULE_LATE_FIRE_GRACE_MS) {
+    const timezone = card.schedule_timezone || 'Asia/Taipei';
+    const cronExpression = card.schedule_cron;
+    const scheduledFor = asValidDate(card.schedule_next_run_at);
+    const nextRun = computeCronNextRun(cronExpression, timezone, now);
+    const previousRun = computeCronPreviousRun(cronExpression, timezone, now);
+
+    if (!scheduledFor) {
+        return {
+            shouldFire: false,
+            realignTo: nextRun,
+            reason: 'invalid_next_run_at',
+        };
+    }
+
+    if (scheduledFor.getTime() > now.getTime()) {
+        return {
+            shouldFire: false,
+            realignTo: scheduledFor,
+            reason: 'not_due',
+        };
+    }
+
+    // If the stored next_run_at is from an older cron slot, do not replay it.
+    // Replaying old slots collapses intentionally-staggered automations into a
+    // single notification burst after a scheduler outage/restart.
+    if (previousRun && scheduledFor.getTime() < previousRun.getTime() - SCHEDULE_STALE_EPSILON_MS) {
+        return {
+            shouldFire: false,
+            realignTo: nextRun,
+            reason: 'stale_missed_slot',
+            previousRun,
+        };
+    }
+
+    // Fire only the current cron slot within a small late window. This preserves
+    // legitimate worker lag (e.g. 12:00 firing at 12:02) while preventing a 10:05
+    // stale slot from firing at 12:02, before the intended 12:05 run.
+    if (now.getTime() - scheduledFor.getTime() > graceMs) {
+        return {
+            shouldFire: false,
+            realignTo: nextRun,
+            reason: 'missed_grace_window',
+            previousRun,
+        };
+    }
+
+    return {
+        shouldFire: true,
+        realignTo: null,
+        reason: 'due',
+        previousRun,
+    };
+}
+
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
 });
@@ -177,7 +269,7 @@ async function initKanbanDatabase() {
 /**
  * Factory: receives in-memory devices object from index.js
  */
-module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pushToChannelCallback, saveChatMessage, getMissionApiHints, pushToBot, orgChart, notifyDevice } = {}) {
+function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, pushToChannelCallback, saveChatMessage, getMissionApiHints, pushToBot, orgChart, notifyDevice } = {}) {
     const router = express.Router();
 
     // Health check
@@ -496,15 +588,8 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     });
 
     // ── Helper: compute next cron run time ──
-    function computeNextRun(cronExpression, timezone) {
-        try {
-            if (!CronExpressionParser) return null;
-            const expr = CronExpressionParser.parse(cronExpression, { tz: timezone || 'Asia/Taipei' });
-            return expr.next().toDate();
-        } catch (e) {
-            console.warn('[Kanban] Invalid cron expression:', cronExpression, e.message);
-            return null;
-        }
+    function computeNextRun(cronExpression, timezone, currentDate = new Date()) {
+        return computeCronNextRun(cronExpression, timezone, currentDate);
     }
 
     // ── Helper: serialize card row to API response ──
@@ -2496,6 +2581,20 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
                 const bots = card.assigned_bots || [];
                 const schedType = card.schedule_type;
 
+                if (schedType === 'recurring') {
+                    const fireDecision = getRecurringScheduleFireDecision(card);
+                    if (!fireDecision.shouldFire) {
+                        if (fireDecision.realignTo) {
+                            await pool.query(
+                                `UPDATE kanban_cards SET schedule_next_run_at = $1, updated_at = NOW() WHERE id = $2`,
+                                [fireDecision.realignTo, card.id]
+                            );
+                        }
+                        console.log(`[Kanban] Schedule realign: ${card.id} (${card.title}) skipped (${fireDecision.reason}), next: ${fireDecision.realignTo?.toISOString?.() || 'unchanged'}`);
+                        continue;
+                    }
+                }
+
                 if (schedType === 'once') {
                     // One-time: move to in_progress if in backlog/todo, notify, disable schedule
                     let newStatus = card.status;
@@ -3138,4 +3237,12 @@ module.exports = function (devices, { awardEntityXP, serverLog, pushToEntity, pu
     });
 
     return { router, initKanbanDatabase, startBackgroundTimers, stopBackgroundTimers, autoReviewOnTransform };
+}
+
+module.exports = createKanbanModule;
+module.exports._private = {
+    computeCronNextRun,
+    computeCronPreviousRun,
+    getRecurringScheduleFireDecision,
+    SCHEDULE_LATE_FIRE_GRACE_MS,
 };
