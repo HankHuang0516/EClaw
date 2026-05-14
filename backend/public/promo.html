@@ -77,6 +77,30 @@
             border-radius: 20px;
             background: #05050d;
         }
+        .video-frame-vertical {
+            aspect-ratio: 9 / 16;
+            max-width: 380px;
+            margin: 0 auto;
+        }
+        .daily-video-card {
+            margin-top: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 28px;
+            background: rgba(255, 255, 255, 0.07);
+            box-shadow: 0 30px 90px rgba(0, 0, 0, 0.42);
+            padding: clamp(16px, 2.5vw, 24px);
+            backdrop-filter: blur(18px);
+        }
+        .daily-video-card h2 {
+            margin: 0 0 8px;
+            font-size: clamp(1.25rem, 2.5vw, 1.6rem);
+            color: #ffffff;
+        }
+        .daily-video-caption {
+            margin: 0 0 16px;
+            color: #c8c8dd;
+            font-size: 0.95rem;
+        }
         .video-frame iframe {
             position: absolute;
             inset: 0;
@@ -130,6 +154,20 @@
                 <iframe
                     src="https://www.youtube.com/embed/3X7CWVCtYbk"
                     title="EClawbot — AI agent kanban workflow demo"
+                    loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen></iframe>
+            </div>
+        </section>
+
+        <section class="daily-video-card" aria-labelledby="daily-video-heading">
+            <h2 id="daily-video-heading" data-i18n="daily_video_section_title">Daily product update</h2>
+            <p class="daily-video-caption" data-i18n="daily_video_section_caption">A short daily look at what shipped on EClawbot. Updated whenever a fresh build lands.</p>
+            <div class="video-frame video-frame-vertical">
+                <iframe
+                    src="https://www.youtube.com/embed/BhXBsrSTcsY"
+                    title="EClawbot daily update — 2026-05-14"
                     loading="lazy"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     referrerpolicy="strict-origin-when-cross-origin"
