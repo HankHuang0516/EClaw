@@ -8012930,7 +8012930,7 @@ const TRANSLATIONS = {
         "guide_bridge_h2_limit": "التوافق والقيود",
         "guide_bridge_lim_li1": "✅ ملائم جيدًا: تمارين E2E طويلة، اختبارات متوازية منصات متعددة، أتمتة تصطدم بموافقات MCP",
         "guide_bridge_lim_li3": "⚠️ macOS فقط حاليًا؛ Linux / Windows سيحتاج لاستبدال طبقة AppleScript",
-        "guide_bridge_cta_title": "الموارد ذات الصلة"
+        "guide_bridge_cta_title": "الموارد ذات الصلة",
         "rm_hermes_done_title": "المعالم المكتملة",
         "rm_hermes_issue_d": "تجميد حاوية Docker: يقوم Hermes بمعالجة الرسائل بشكل حي ولكن لا يستهلكها؛ ",
         "rm_hermes_issue_p": "claude-cli-proxy احتياطي مجهول: لا توجد بيانات اعتماد GIT_HUB2 → تفشل عمليات الريبو الخاصة بصمت؛ ",
@@ -8013051,8 +8013051,8 @@ const TRANSLATIONS = {
         "wizard_target_track4_title": "المسار 4 - ربط قناة كلود",
         "wizard_target_track6_desc": "سنفتح الساحة ونسير عبر المعيار ذي الـ 12 بُعدًا.",
         "wizard_target_track6_title": "المسار 6 - ساحة تقييم الوكيل",
-        "wizard_title": "EClawbot — معالج الإعداد",
-}
+        "wizard_title": "EClawbot — معالج الإعداد"
+    }
 
 
 
