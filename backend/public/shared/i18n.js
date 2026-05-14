@@ -312422,6 +312422,10 @@ const TRANSLATIONS = {
 
 
         "rental_error_not_available": "This listing is no longer available.",
+        "listing_soft_paused_owner_banner": "This listing is soft-paused because health checks are degraded. It remains listed, but new rentals are blocked until recovery.",
+        "listing_soft_paused_visitor_banner": "This bot is temporarily unavailable while the owner fixes health checks. The page remains available, but renting is disabled for now.",
+        "listing_soft_paused_resume_btn": "Resume listing",
+        "rental_create_rejected_soft_paused": "This listing is temporarily unavailable due to degraded health checks.",
 
 
 
@@ -940565,6 +940569,10 @@ const TRANSLATIONS = {
 
 
         "rental_error_not_available": "此上架項目已無法使用。",
+        "listing_soft_paused_owner_banner": "此上架項目因健康檢查異常而進入 soft-pause。它仍維持上架，但在恢復前會阻擋新的租借。",
+        "listing_soft_paused_visitor_banner": "這個 Bot 暫時無法租借，擁有者正在修復健康檢查問題。頁面仍可查看，但目前不能租借。",
+        "listing_soft_paused_resume_btn": "恢復上架",
+        "rental_create_rejected_soft_paused": "此上架項目因健康檢查異常而暫時無法租借。",
 
 
 
@@ -1711430,6 +1711438,10 @@ const TRANSLATIONS = {
 
 
         "rental_error_not_available": "此上架項目已无法使用。",
+        "listing_soft_paused_owner_banner": "此上架项目因健康检查异常而进入 soft-pause。它仍保持上架，但在恢复前会阻挡新的租借。",
+        "listing_soft_paused_visitor_banner": "这个 Bot 暂时无法租借，拥有者正在修复健康检查问题。页面仍可查看，但目前不能租借。",
+        "listing_soft_paused_resume_btn": "恢复上架",
+        "rental_create_rejected_soft_paused": "此上架项目因健康检查异常而暂时无法租借。",
 
 
 
@@ -2114695,6 +2114707,10 @@ const TRANSLATIONS = {
 
 
         "rental_error_not_available": "このリスティングは利用できなくなりました。",
+        "listing_soft_paused_owner_banner": "このリスティングはヘルスチェック低下のため soft-pause 中です。掲載状態は維持されますが、回復するまで新規レンタルはブロックされます。",
+        "listing_soft_paused_visitor_banner": "この Bot はオーナーがヘルスチェック問題を修正している間、一時的に利用できません。ページは閲覧できますが、現在レンタルは無効です。",
+        "listing_soft_paused_resume_btn": "掲載を再開",
+        "rental_create_rejected_soft_paused": "このリスティングはヘルスチェック低下のため一時的にレンタルできません。",
 
 
 

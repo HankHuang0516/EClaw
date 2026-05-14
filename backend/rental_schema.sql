@@ -43,6 +43,10 @@ CREATE TABLE IF NOT EXISTS bot_listings (
     uptime_pct NUMERIC(5,2) DEFAULT 100,
     -- Lifecycle
     status VARCHAR(32) NOT NULL DEFAULT 'draft',
+    -- Soft-pause: derived availability overlay for health degradation. Keep
+    -- status='listed' and hide/reject only while soft_pause_until > NOW().
+    soft_pause_until TIMESTAMP WITH TIME ZONE,
+    soft_pause_reason VARCHAR(64),
     -- Identity-drift detection (P0: silent rebind cascade)
     -- Snapshot of entities[owner_entity_id].rebindCount at listing creation.
     -- If the live entity rebindCount drifts past this value, the listing now
@@ -60,6 +64,8 @@ CREATE INDEX IF NOT EXISTS idx_listings_rate ON bot_listings(rate_mli_per_ktoken
     WHERE status = 'listed';
 CREATE INDEX IF NOT EXISTS idx_listings_rating ON bot_listings(avg_rating DESC)
     WHERE status = 'listed';
+CREATE INDEX IF NOT EXISTS idx_listings_soft_pause_active ON bot_listings(soft_pause_until)
+    WHERE status = 'listed' AND soft_pause_until IS NOT NULL;
 
 -- ============================================
 -- bot_interviews — one row per interview attempt
