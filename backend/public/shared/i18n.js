@@ -2433305,6 +2433305,41 @@ const TRANSLATIONS = {
 
 
         "settings_rentals_desc": "View contracts, submit reviews, file disputes",
+        "settings_roster_action_archive": "보관",
+        "settings_roster_action_choose": "작업 선택",
+        "settings_roster_action_manual_rebind": "연결 해제 및 종료",
+        "settings_roster_action_report_issue": "문제 신고",
+        "settings_roster_action_resume": "재개",
+        "settings_roster_action_soft_pause": "일시 중지",
+        "settings_roster_action_success": "작업이 완료되었습니다",
+        "settings_roster_action_view_details": "상세 보기",
+        "settings_roster_col_action": "작업",
+        "settings_roster_col_active_rentals": "활성 대여",
+        "settings_roster_col_bot": "봇",
+        "settings_roster_col_details": "상세",
+        "settings_roster_col_event": "이벤트",
+        "settings_roster_col_health": "상태",
+        "settings_roster_col_listing": "목록",
+        "settings_roster_col_refund": "환불",
+        "settings_roster_col_remaining": "남은 시간",
+        "settings_roster_col_rental_status": "대여 상태",
+        "settings_roster_col_status": "상태",
+        "settings_roster_col_time": "시간",
+        "settings_roster_confirm_generic": "이 작업을 진행하시겠습니까?",
+        "settings_roster_confirm_manual_rebind": "이 봇의 연결을 해제하고 모든 대여를 종료하시겠습니까?",
+        "settings_roster_confirm_resume": "이 봇의 대여를 재개하시겠습니까?",
+        "settings_roster_confirm_title": "확인",
+        "settings_roster_empty_state_history": "아직 기록이 없습니다",
+        "settings_roster_empty_state_listings": "아직 등록된 목록이 없습니다",
+        "settings_roster_empty_state_rentals": "대여 중인 봇이 없습니다",
+        "settings_roster_loading": "로딩 중...",
+        "settings_roster_mock_action": "테스트 작업",
+        "settings_roster_mock_note": "테스트 노트",
+        "settings_roster_section_desc": "나의 봇 목록과 대여 현황을 확인하고 관리하세요",
+        "settings_roster_section_title": "목록 관리",
+        "settings_roster_tab_history": "기록",
+        "settings_roster_tab_my_listings": "내 목록",
+        "settings_roster_tab_rented_bots": "대여 중인 봇",
 
 
 
@@ -2806831,6 +2806866,7 @@ const TRANSLATIONS = {
 
 
         "kb_sort_oldest": "오래된순",
+        "kb_sort_oldest_updated": "오래전에 업데이트됨",
 
 
 
@@ -5071255,6 +5071291,41 @@ const TRANSLATIONS = {
 
 
         "settings_rentals_desc": "View contracts, submit reviews, file disputes",
+        "settings_roster_action_archive": "Archivar",
+        "settings_roster_action_choose": "Elegir acción",
+        "settings_roster_action_manual_rebind": "Desvincular y finalizar",
+        "settings_roster_action_report_issue": "Reportar problema",
+        "settings_roster_action_resume": "Reanudar",
+        "settings_roster_action_soft_pause": "Pausar",
+        "settings_roster_action_success": "Acción completada",
+        "settings_roster_action_view_details": "Ver detalles",
+        "settings_roster_col_action": "Acción",
+        "settings_roster_col_active_rentals": "Alquileres activos",
+        "settings_roster_col_bot": "Bot",
+        "settings_roster_col_details": "Detalles",
+        "settings_roster_col_event": "Evento",
+        "settings_roster_col_health": "Salud",
+        "settings_roster_col_listing": "Listado",
+        "settings_roster_col_refund": "Reembolso",
+        "settings_roster_col_remaining": "Restante",
+        "settings_roster_col_rental_status": "Estado del alquiler",
+        "settings_roster_col_status": "Estado",
+        "settings_roster_col_time": "Hora",
+        "settings_roster_confirm_generic": "¿Está seguro de realizar esta acción?",
+        "settings_roster_confirm_manual_rebind": "¿Desvincular este bot y finalizar todos los alquileres?",
+        "settings_roster_confirm_resume": "¿Reanudar el alquiler de este bot?",
+        "settings_roster_confirm_title": "Confirmar",
+        "settings_roster_empty_state_history": "No hay historial",
+        "settings_roster_empty_state_listings": "No hay listados registrados",
+        "settings_roster_empty_state_rentals": "No hay bots alquilados",
+        "settings_roster_loading": "Cargando...",
+        "settings_roster_mock_action": "Acción de prueba",
+        "settings_roster_mock_note": "Nota de prueba",
+        "settings_roster_section_desc": "Consulta y gestiona tus listados de bots y alquileres",
+        "settings_roster_section_title": "Gestión de listados",
+        "settings_roster_tab_history": "Historial",
+        "settings_roster_tab_my_listings": "Mis listados",
+        "settings_roster_tab_rented_bots": "Bots alquilados",
 
 
 
@@ -5561675,6 +5561746,7 @@ const TRANSLATIONS = {
         "kb_sort_default": "Orden predeterminado",
         "kb_sort_newest": "Más recientes primero",
         "kb_sort_oldest": "Más antiguos primero",
+        "kb_sort_oldest_updated": "Actualizado más antiguo",
         "kb_sort_priority": "Prioridad alta primero",
         "kb_sort_recently_updated": "Actualizados recientemente",
         "kb_funnel_label": "Filtro",
@@ -5588467,6 +5588539,41 @@ const TRANSLATIONS = {
 
 
         "settings_rentals_desc": "View contracts, submit reviews, file disputes",
+        "settings_roster_action_archive": "Archivieren",
+        "settings_roster_action_choose": "Aktion auswählen",
+        "settings_roster_action_manual_rebind": "Auflösen und beenden",
+        "settings_roster_action_report_issue": "Problem melden",
+        "settings_roster_action_resume": "Fortsetzen",
+        "settings_roster_action_soft_pause": "Pausieren",
+        "settings_roster_action_success": "Aktion abgeschlossen",
+        "settings_roster_action_view_details": "Details anzeigen",
+        "settings_roster_col_action": "Aktion",
+        "settings_roster_col_active_rentals": "Aktive Mieten",
+        "settings_roster_col_bot": "Bot",
+        "settings_roster_col_details": "Details",
+        "settings_roster_col_event": "Ereignis",
+        "settings_roster_col_health": "Zustand",
+        "settings_roster_col_listing": "Listing",
+        "settings_roster_col_refund": "Rückerstattung",
+        "settings_roster_col_remaining": "Verbleibend",
+        "settings_roster_col_rental_status": "Mietstatus",
+        "settings_roster_col_status": "Status",
+        "settings_roster_col_time": "Zeit",
+        "settings_roster_confirm_generic": "Möchten Sie diese Aktion wirklich ausführen?",
+        "settings_roster_confirm_manual_rebind": "Diesen Bot auflösen und alle Mietverhältnisse beenden?",
+        "settings_roster_confirm_resume": "Miete dieses Bots fortsetzen?",
+        "settings_roster_confirm_title": "Bestätigen",
+        "settings_roster_empty_state_history": "Kein Verlauf vorhanden",
+        "settings_roster_empty_state_listings": "Keine Listings vorhanden",
+        "settings_roster_empty_state_rentals": "Keine gemieteten Bots",
+        "settings_roster_loading": "Laden...",
+        "settings_roster_mock_action": "Testaktion",
+        "settings_roster_mock_note": "Testnotiz",
+        "settings_roster_section_desc": "Liste deine Bot-Listings und Mietstatus ein",
+        "settings_roster_section_title": "Listing-Verwaltung",
+        "settings_roster_tab_history": "Verlauf",
+        "settings_roster_tab_my_listings": "Meine Listings",
+        "settings_roster_tab_rented_bots": "Gemietete Bots",
 
 
 
@@ -5960291,6 +5960398,7 @@ const TRANSLATIONS = {
 
 
         "kb_sort_oldest": "Älteste zuerst",
+        "kb_sort_oldest_updated": "Älteste Aktualisierung",
 
 
 
