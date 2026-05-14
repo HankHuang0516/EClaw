@@ -19,6 +19,10 @@ const checks = [
     re: /\.kb-modal\.kb-modal-comments-active\s*\{[^}]*height:min\(85dvh,\s*760px\);[^}]*\}/s,
   },
   {
+    name: 'comments tab hides long detail description/link panels so card body cannot shrink comments',
+    re: /\.kb-modal\.kb-modal-comments-active \.kb-detail-desc,[\s\S]*?#detailCardLinks\s*\{\s*display:none !important;\s*\}/s,
+  },
+  {
     name: 'comments panel flexes to fill available space',
     re: /#panel-comments\.active\s*\{[^}]*display:flex;[^}]*flex:1\s+1\s+auto;[^}]*overflow:hidden;[^}]*\}/s,
   },
@@ -31,8 +35,16 @@ const checks = [
     re: /@media \(max-width: 768px\)[\s\S]*?\.kb-modal\s*\{[^}]*height:100dvh;[^}]*overflow:hidden;[^}]*\}/s,
   },
   {
+    name: 'mobile comments-active override keeps the modal full height',
+    re: /@media \(max-width: 768px\)[\s\S]*?\.kb-modal\.kb-modal-comments-active\s*\{[^}]*height:100dvh;[^}]*\}/s,
+  },
+  {
     name: 'webview modal does not scroll the whole dialog behind composer',
     re: /body\.app-webview \.kb-modal\s*\{[^}]*height:100dvh;[^}]*overflow:hidden;[^}]*\}/s,
+  },
+  {
+    name: 'webview comments-active override keeps the modal full height',
+    re: /body\.app-webview \.kb-modal\.kb-modal-comments-active\s*\{[^}]*height:100dvh;[^}]*\}/s,
   },
 ];
 

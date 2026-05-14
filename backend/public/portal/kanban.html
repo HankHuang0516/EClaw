@@ -156,7 +156,11 @@
         .kb-modal-overlay.show { display:flex; }
         .kb-modal { background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius); width:100%; max-width:640px; max-height:85vh; display:flex; flex-direction:column; overflow:hidden; }
         .kb-modal.kb-modal-comments-active { height:min(85dvh, 760px); }
-        .kb-modal.kb-modal-comments-active .kb-modal-meta { max-height:min(32dvh, 260px); overflow-y:auto; overscroll-behavior:contain; }
+        .kb-modal.kb-modal-comments-active .kb-modal-meta { max-height:none; overflow:visible; overscroll-behavior:contain; }
+        .kb-modal.kb-modal-comments-active .kb-detail-desc,
+        .kb-modal.kb-modal-comments-active .kb-detail-dep-chips,
+        .kb-modal.kb-modal-comments-active #detailTagsPanel,
+        .kb-modal.kb-modal-comments-active #detailCardLinks { display:none !important; }
         .kb-modal-header { padding:20px 24px 16px; border-bottom:1px solid var(--card-border); display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
         .kb-modal-header h3 { font-size:18px; font-weight:700; flex:1; }
         .kb-modal-close { background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; padding:4px; }
@@ -474,7 +478,8 @@
         /* App WebView detail modal: always mobile-optimized */
         body.app-webview .kb-modal-overlay { padding:0; align-items:stretch; }
         body.app-webview .kb-modal { max-width:100%; height:100dvh; max-height:100dvh; border-radius:0; display:flex; flex-direction:column; overflow:hidden; }
-        body.app-webview .kb-modal.kb-modal-comments-active .kb-modal-meta { max-height:28dvh; overflow-y:auto; }
+        body.app-webview .kb-modal.kb-modal-comments-active { height:100dvh; }
+        body.app-webview .kb-modal.kb-modal-comments-active .kb-modal-meta { max-height:none; overflow:visible; }
         body.app-webview .kb-modal-header { padding:16px; }
         body.app-webview .kb-modal-header h3 { font-size:16px; }
         body.app-webview .kb-modal-meta { padding:10px 16px; flex-wrap:wrap; gap:8px; max-height:22dvh; overflow-y:auto; }
@@ -557,7 +562,8 @@
             /* Modal: near full-screen */
             .kb-modal-overlay { padding:0; align-items:stretch; }
             .kb-modal { max-width:100%; height:100dvh; max-height:100dvh; border-radius:0; display:flex; flex-direction:column; overflow:hidden; }
-            .kb-modal.kb-modal-comments-active .kb-modal-meta { max-height:28dvh; overflow-y:auto; }
+            .kb-modal.kb-modal-comments-active { height:100dvh; }
+            .kb-modal.kb-modal-comments-active .kb-modal-meta { max-height:none; overflow:visible; }
             .kb-modal-header { padding:16px; }
             .kb-modal-header h3 { font-size:16px; }
             .kb-modal-meta { padding:10px 16px; flex-wrap:wrap; gap:8px; max-height:22dvh; overflow-y:auto; }
