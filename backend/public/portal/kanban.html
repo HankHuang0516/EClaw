@@ -271,7 +271,7 @@
         .kb-lightbox-hint { color:#888; font-size:12px; margin:6px 0 12px; padding:0 16px; text-align:center; }
 
         /* Move actions */
-        .kb-move-bar { padding:12px 24px; border-top:1px solid var(--card-border); display:flex; gap:8px; flex-wrap:wrap; }
+        .kb-move-bar { padding:12px 24px; border-top:1px solid var(--card-border); display:flex; gap:8px; flex-wrap:wrap; flex-shrink:0; }
         .kb-move-btn { padding:6px 14px; border-radius:var(--radius-sm); font-size:12px; font-weight:600; cursor:pointer; border:1px solid var(--card-border); background:none; color:var(--text-secondary); transition:all 0.2s; }
         .kb-move-btn:hover { border-color:var(--primary); color:var(--text); }
         .kb-move-btn.current { background:var(--primary); color:#fff; border-color:var(--primary); cursor:default; }
@@ -464,17 +464,17 @@
 
         /* App WebView detail modal: always mobile-optimized */
         body.app-webview .kb-modal-overlay { padding:0; align-items:stretch; }
-        body.app-webview .kb-modal { max-width:100%; max-height:100vh; border-radius:0; display:flex; flex-direction:column; }
+        body.app-webview .kb-modal { max-width:100%; height:100dvh; max-height:100dvh; border-radius:0; display:flex; flex-direction:column; overflow-y:auto; }
         body.app-webview .kb-modal-header { padding:16px; }
         body.app-webview .kb-modal-header h3 { font-size:16px; }
         body.app-webview .kb-modal-meta { padding:10px 16px; flex-wrap:wrap; gap:8px; }
         body.app-webview .kb-modal-tabs { padding:0 12px; }
         body.app-webview .kb-modal-tab { padding:8px 12px; font-size:12px; }
-        body.app-webview .kb-modal-panel { padding:12px 16px; flex:1; overflow-y:auto; }
-        body.app-webview #panel-comments.active { overflow:hidden; }
-        body.app-webview .kb-comments-list { max-height:none; flex:1; padding-bottom:18px; }
+        body.app-webview .kb-modal-panel { padding:12px 16px; flex:1 1 auto; min-height:0; overflow-y:auto; }
+        body.app-webview #panel-comments.active { overflow:hidden; flex:1 1 auto; min-height:clamp(240px, 35dvh, 380px); }
+        body.app-webview .kb-comments-list { max-height:none; flex:1 1 auto; min-height:0; overflow-y:auto; padding-bottom:18px; -webkit-overflow-scrolling:touch; touch-action:pan-y; }
         body.app-webview .kb-comment { max-width:90%; }
-        body.app-webview .kb-comment-input { position:relative; bottom:auto; margin-top:0; padding:10px 0 0; }
+        body.app-webview .kb-comment-input { position:relative; bottom:auto; margin-top:0; padding:10px 0 0; flex-shrink:0; }
         body.app-webview .kb-move-bar { padding:10px 16px; flex-wrap:wrap; gap:6px; }
         body.app-webview .kb-move-btn { padding:6px 10px; font-size:11px; flex:1 1 auto; text-align:center; min-width:0; }
 
@@ -546,19 +546,19 @@
 
             /* Modal: near full-screen */
             .kb-modal-overlay { padding:0; align-items:stretch; }
-            .kb-modal { max-width:100%; max-height:100vh; border-radius:0; display:flex; flex-direction:column; }
+            .kb-modal { max-width:100%; height:100dvh; max-height:100dvh; border-radius:0; display:flex; flex-direction:column; overflow-y:auto; }
             .kb-modal-header { padding:16px; }
             .kb-modal-header h3 { font-size:16px; }
             .kb-modal-meta { padding:10px 16px; flex-wrap:wrap; gap:8px; }
             .kb-modal-tabs { padding:0 12px; }
             .kb-modal-tab { padding:8px 12px; font-size:12px; }
-            .kb-modal-panel { padding:12px 16px; flex:1; overflow-y:auto; }
-            #panel-comments.active { overflow:hidden; }
+            .kb-modal-panel { padding:12px 16px; flex:1 1 auto; min-height:0; overflow-y:auto; }
+            #panel-comments.active { overflow:hidden; flex:1 1 auto; min-height:clamp(240px, 35dvh, 380px); }
 
             /* Comments: adaptive bubble width + non-overlapping input footer */
-            .kb-comments-list { max-height:none; flex:1; padding-bottom:18px; }
+            .kb-comments-list { max-height:none; flex:1 1 auto; min-height:0; overflow-y:auto; padding-bottom:18px; -webkit-overflow-scrolling:touch; touch-action:pan-y; }
             .kb-comment { max-width:90%; }
-            .kb-comment-input { position:relative; bottom:auto; margin-top:0; padding:10px 0 0; }
+            .kb-comment-input { position:relative; bottom:auto; margin-top:0; padding:10px 0 0; flex-shrink:0; }
             .kb-comment-input textarea { min-height:44px; }
 
             /* Move bar: wrap */
