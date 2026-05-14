@@ -1423,9 +1423,11 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             const card = serializeCard(cardResult.rows[0]);
             await attachTagsToCards(deviceId, [card]);
 
-            // Fetch comments (latest 50)
+            // Fetch latest 50 comments (was: oldest 50 — invisible new comments on long cards)
             const commentsResult = await pool.query(
-                `SELECT * FROM kanban_comments WHERE card_id = $1 ORDER BY created_at ASC LIMIT 50`,
+                `SELECT * FROM (
+                    SELECT * FROM kanban_comments WHERE card_id = $1 ORDER BY created_at DESC LIMIT 50
+                ) sub ORDER BY created_at ASC`,
                 [cardId]
             );
             card.comments = commentsResult.rows.map(r => ({
@@ -1974,7 +1976,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         if (!authenticate(req, res)) return;
         const { deviceId } = { ...req.query, ...req.body };
         const cardId = req.params.id;
-        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
+        const limit = Math.min(500, Math.max(1, parseInt(req.query.limit) || 50));
         const offset = Math.max(0, parseInt(req.query.offset) || 0);
 
         try {
@@ -1986,6 +1988,12 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             if (cardCheck.rows.length === 0) {
                 return res.status(404).json({ success: false, error: 'Card not found' });
             }
+
+            const totalResult = await pool.query(
+                `SELECT COUNT(*)::int AS total FROM kanban_comments WHERE card_id = $1`,
+                [cardId]
+            );
+            const total = totalResult.rows[0]?.total ?? 0;
 
             const result = await pool.query(
                 `SELECT * FROM kanban_comments WHERE card_id = $1 ORDER BY created_at ASC LIMIT $2 OFFSET $3`,
@@ -2000,7 +2008,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 createdAt: new Date(r.created_at).getTime()
             }));
 
-            res.json({ success: true, comments, total: comments.length });
+            res.json({ success: true, comments, total, limit, offset });
         } catch (err) {
             console.error('[Kanban] List comments error:', err);
             res.status(500).json({ success: false, error: err.message });
