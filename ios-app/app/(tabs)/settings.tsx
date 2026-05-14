@@ -248,6 +248,13 @@ export default function SettingsScreen() {
         {/* More */}
         <List.Section>
           <List.Item
+            title={t('settings.intro_guide', 'Tutorial & Intro')}
+            description={t('settings.intro_guide_desc', 'Watch the 75s demo + Quick Start walkthrough')}
+            left={(props) => <List.Icon {...props} icon="play-circle-outline" />}
+            right={(props) => <List.Icon {...props} icon="open-in-new" />}
+            onPress={() => Linking.openURL('https://eclawbot.com/info.html#guide').catch(() => {})}
+          />
+          <List.Item
             title={t('settings.file_manager', 'Files')}
             left={(props) => <List.Icon {...props} icon="folder" />}
             right={(props) => <List.Icon {...props} icon="chevron-right" />}
