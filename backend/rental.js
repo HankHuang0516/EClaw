@@ -54,6 +54,12 @@ const INTERVIEW_PASS_SCORE = 60;
 /** 24-hour cooldown between successive rentals of the same listing by the same renter. */
 const COOLDOWN_HOURS = 24;
 
+/** Listing soft-pause defaults: degraded health pauses new rentals without changing status='listed'. */
+const LISTING_SOFT_PAUSE_REASON_HEALTH_DEGRADED = 'health_degraded';
+const LISTING_SOFT_PAUSE_DEFAULT_MINUTES = 60;
+const LISTING_HEALTH_DEGRADED_THRESHOLD_MS = 60 * 60 * 1000;
+const LISTING_HEALTH_OK_RECOVERY_STREAK = 5;
+
 /** Interview rate limit: 3 attempts per listing per 7 days. */
 const INTERVIEW_RATE_LIMIT = 3;
 
@@ -135,6 +141,45 @@ function computeRebindRefundMli({ depositMli, remainingSec, totalDurationSec }) 
     return safeMliNumber((deposit * remaining) / total, 'rebind_refund_mli');
 }
 
+function isListingSoftPaused(listing, now = new Date()) {
+    if (!listing || !listing.soft_pause_until) return false;
+    const until = listing.soft_pause_until instanceof Date
+        ? listing.soft_pause_until
+        : new Date(listing.soft_pause_until);
+    return Number.isFinite(until.getTime()) && until.getTime() > now.getTime();
+}
+
+function serializeSoftPauseFields(listing, now = new Date()) {
+    if (!listing) return listing;
+    const active = isListingSoftPaused(listing, now);
+    listing.is_soft_paused = active;
+    if (listing.soft_pause_until instanceof Date) {
+        listing.soft_pause_until = listing.soft_pause_until.toISOString();
+    }
+    return listing;
+}
+
+function buildListingSoftPausedError(listing) {
+    const err = new Error('listing_soft_paused');
+    err.code = 'LISTING_SOFT_PAUSED';
+    err.httpStatus = 503;
+    err.resumeEta = listing?.soft_pause_until || null;
+    err.reason = listing?.soft_pause_reason || LISTING_SOFT_PAUSE_REASON_HEALTH_DEGRADED;
+    return err;
+}
+
+function normalizeSoftPauseReason(reason) {
+    const raw = String(reason || LISTING_SOFT_PAUSE_REASON_HEALTH_DEGRADED).trim();
+    const safe = raw.replace(/[^a-zA-Z0-9_.:-]/g, '_').slice(0, 64);
+    return safe || LISTING_SOFT_PAUSE_REASON_HEALTH_DEGRADED;
+}
+
+function toDateOrNull(value) {
+    if (!value) return null;
+    const d = value instanceof Date ? value : new Date(value);
+    return Number.isFinite(d.getTime()) ? d : null;
+}
+
 // ============================================
 // Schema init (mirrors auth.js / wallet.js pattern)
 // ============================================
@@ -169,10 +214,15 @@ async function initRentalDatabase() {
                 }
             }
         }
-        // Add avatar_url column if missing (BUG-M1: display real bot avatar)
+        // Add newer listing columns if missing (startup compatibility for older deployments).
         try {
             await pool.query(`ALTER TABLE bot_listings ADD COLUMN IF NOT EXISTS avatar_url TEXT`);
-        } catch (_) { /* column may already exist */ }
+            await pool.query(`ALTER TABLE bot_listings ADD COLUMN IF NOT EXISTS soft_pause_until TIMESTAMPTZ NULL`);
+            await pool.query(`ALTER TABLE bot_listings ADD COLUMN IF NOT EXISTS soft_pause_reason VARCHAR(64) NULL`);
+            await pool.query(`CREATE INDEX IF NOT EXISTS idx_listings_soft_pause_active
+                ON bot_listings(soft_pause_until)
+                WHERE status = 'listed' AND soft_pause_until IS NOT NULL`);
+        } catch (_) { /* column/index may already exist */ }
         try {
             await pool.query(`ALTER TABLE rental_contracts ALTER COLUMN id SET DEFAULT ('contract_' || encode(gen_random_bytes(12), 'hex'))`);
         } catch (err) {
@@ -603,23 +653,105 @@ async function getListing(listingId) {
                 min_rental_minutes, max_rental_minutes, availability_windows,
                 model_detected, capabilities, benchmark_score, interview_passed,
                 last_interview_at, avg_rating, total_rentals, uptime_pct, status,
+                soft_pause_until, soft_pause_reason,
                 created_at, updated_at
          FROM bot_listings WHERE id = $1`,
         [listingId]
     );
-    return res.rows[0] || null;
+    return serializeSoftPauseFields(res.rows[0] || null);
 }
 
 async function listMyListings(ownerUserId) {
     assertString('owner_user_id', ownerUserId, { max: 64 });
     const res = await pool.query(
         `SELECT id, owner_device_id, owner_entity_id, title, rate_mli_per_ktoken,
-                status, interview_passed, avg_rating, total_rentals, created_at
+                status, interview_passed, avg_rating, total_rentals,
+                soft_pause_until, soft_pause_reason, created_at
          FROM bot_listings WHERE owner_user_id = $1
          ORDER BY created_at DESC`,
         [ownerUserId]
     );
-    return res.rows;
+    return res.rows.map((row) => serializeSoftPauseFields(row));
+}
+
+async function softPauseListing(listingId, {
+    reason = LISTING_SOFT_PAUSE_REASON_HEALTH_DEGRADED,
+    resumeAt = null,
+    resumeMinutes = LISTING_SOFT_PAUSE_DEFAULT_MINUTES,
+    client = pool,
+} = {}) {
+    assertString('listing_id', listingId, { max: 64 });
+    const until = resumeAt ? toDateOrNull(resumeAt) : new Date(Date.now() + Math.max(1, parseInt(resumeMinutes, 10) || LISTING_SOFT_PAUSE_DEFAULT_MINUTES) * 60 * 1000);
+    if (!until) throw new Error('soft_pause_until_invalid');
+    const res = await client.query(
+        `UPDATE bot_listings
+            SET soft_pause_until = $2,
+                soft_pause_reason = $3,
+                updated_at = NOW()
+          WHERE id = $1 AND status = 'listed'
+          RETURNING id, status, soft_pause_until, soft_pause_reason`,
+        [listingId, until.toISOString(), normalizeSoftPauseReason(reason)]
+    );
+    if (res.rowCount === 0) throw new Error('listing_not_found_or_not_listed');
+    return serializeSoftPauseFields(res.rows[0]);
+}
+
+async function clearListingSoftPause(listingId, { ownerUserId = null, client = pool } = {}) {
+    assertString('listing_id', listingId, { max: 64 });
+    const params = [listingId];
+    let ownerClause = '';
+    if (ownerUserId) {
+        assertString('owner_user_id', ownerUserId, { max: 64 });
+        params.push(ownerUserId);
+        ownerClause = ` AND owner_user_id = $${params.length}`;
+    }
+    const res = await client.query(
+        `UPDATE bot_listings
+            SET soft_pause_until = NULL,
+                soft_pause_reason = NULL,
+                updated_at = NOW()
+          WHERE id = $1${ownerClause}
+          RETURNING id, status, soft_pause_until, soft_pause_reason`,
+        params
+    );
+    if (res.rowCount === 0) throw new Error(ownerUserId ? 'listing_not_found_or_forbidden' : 'listing_not_found');
+    return serializeSoftPauseFields(res.rows[0]);
+}
+
+async function recordListingHealthSample({
+    listingId,
+    status,
+    reason = LISTING_SOFT_PAUSE_REASON_HEALTH_DEGRADED,
+    degradedSince = null,
+    okStreak = 0,
+    now = new Date(),
+    resumeMinutes = LISTING_SOFT_PAUSE_DEFAULT_MINUTES,
+    client = pool,
+} = {}) {
+    assertString('listing_id', listingId, { max: 64 });
+    const normalizedStatus = String(status || '').toLowerCase();
+    const nowDate = toDateOrNull(now) || new Date();
+    if (['degraded', 'down'].includes(normalizedStatus)) {
+        const since = toDateOrNull(degradedSince);
+        const degradedMs = since ? nowDate.getTime() - since.getTime() : 0;
+        if (degradedMs >= LISTING_HEALTH_DEGRADED_THRESHOLD_MS) {
+            const listing = await softPauseListing(listingId, {
+                reason,
+                resumeAt: new Date(nowDate.getTime() + Math.max(1, parseInt(resumeMinutes, 10) || LISTING_SOFT_PAUSE_DEFAULT_MINUTES) * 60 * 1000),
+                client,
+            });
+            return { changed: true, action: 'soft_paused', listing };
+        }
+        return { changed: false, action: 'degraded_observed', degradedMs };
+    }
+    if (['ok', 'recovered'].includes(normalizedStatus)) {
+        if ((parseInt(okStreak, 10) || 0) >= LISTING_HEALTH_OK_RECOVERY_STREAK) {
+            const listing = await clearListingSoftPause(listingId, { client });
+            return { changed: true, action: 'soft_pause_cleared', listing };
+        }
+        return { changed: false, action: 'ok_observed', okStreak: parseInt(okStreak, 10) || 0 };
+    }
+    throw new Error('health_status_invalid');
 }
 
 /**
@@ -635,7 +767,7 @@ async function searchMarketplace({
     const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100);
     const safeOffset = Math.max(parseInt(offset, 10) || 0, 0);
     const params = [];
-    const where = [`bl.status = 'listed'`, `bl.interview_passed = TRUE`];
+    const where = [`bl.status = 'listed'`, `bl.interview_passed = TRUE`, `(bl.soft_pause_until IS NULL OR bl.soft_pause_until <= NOW())`];
 
     if (minRateMli != null) {
         params.push(minRateMli);
@@ -675,6 +807,7 @@ async function searchMarketplace({
                 bl.owner_device_id, bl.owner_entity_id,
                 bl.avatar_url,
                 bl.bound_rebind_count,
+                bl.soft_pause_until, bl.soft_pause_reason,
                 bl.created_at AS bl_created_at,
                 EXISTS (
                     SELECT 1 FROM rental_contracts ac
@@ -752,7 +885,7 @@ async function startRental({
         const listingRes = await client.query(
             `SELECT id, owner_user_id, rate_mli_per_ktoken,
                     min_rental_minutes, max_rental_minutes,
-                    status, interview_passed
+                    status, interview_passed, soft_pause_until, soft_pause_reason
              FROM bot_listings WHERE id = $1 FOR UPDATE`,
             [listingId]
         );
@@ -760,6 +893,7 @@ async function startRental({
         const listing = listingRes.rows[0];
         if (listing.status !== 'listed') throw new Error('listing_not_available');
         if (!listing.interview_passed) throw new Error('interview_not_passed');
+        if (isListingSoftPaused(listing)) throw buildListingSoftPausedError(listing);
         if (listing.owner_user_id === renterUserId) throw new Error('self_rental_forbidden');
         if (durationMinutes < listing.min_rental_minutes) {
             throw new Error('duration_below_listing_min');
@@ -1516,7 +1650,7 @@ function createDefaultRentalEntity(entityId) {
 // Express factory
 // ============================================
 
-module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walletModule, serverLog } = {}) {
+module.exports = function rentalFactory({ authMiddleware, softAuthMiddleware, adminMiddleware, walletModule, serverLog } = {}) {
     if (typeof authMiddleware !== 'function') {
         throw new Error('rental: authMiddleware is required');
     }
@@ -1525,6 +1659,9 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
     }
     const router = express.Router();
     const audit = serverLog || (() => {});
+    const optionalAuthMiddleware = typeof softAuthMiddleware === 'function'
+        ? softAuthMiddleware
+        : (_req, _res, next) => next();
 
     const INPUT_ERROR_RE = /^(?:[a-z][a-z0-9_]*_(?:invalid|required|forbidden|not_found)|publish_failed|interview_not_passed|no_fields_to_update|duration_too_(?:short|long)|duration_(?:below|above)_listing_(?:min|max)|listing_not_available|listing_already_rented|self_rental_forbidden|insufficient_balance_for_rental|contract_already_ended|contract_end_forbidden|interview_rate_limited|interview_already_running|owner_device_not_found|owner_entity_not_bound|owner_entity_no_webhook|listing_status_invalid_for_interview|cooldown_active|duplicate_listing)$/;
 
@@ -1536,6 +1673,15 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
                 }
                 await fn(req, res);
             } catch (err) {
+                if (err.message === 'listing_soft_paused' || err.code === 'LISTING_SOFT_PAUSED') {
+                    return res.status(503).json({
+                        success: false,
+                        error: 'listing_soft_paused',
+                        code: 'LISTING_SOFT_PAUSED',
+                        resumeEta: err.resumeEta || null,
+                        reason: err.reason || LISTING_SOFT_PAUSE_REASON_HEALTH_DEGRADED,
+                    });
+                }
                 if (INPUT_ERROR_RE.test(err.message)) {
                     const code = /forbidden/.test(err.message) ? 403
                                : /not_found/.test(err.message) ? 404
@@ -1572,7 +1718,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
                 const listingRes = await client.query(
                     `SELECT id, owner_user_id, rate_mli_per_ktoken,
                             min_rental_minutes, max_rental_minutes,
-                            status, interview_passed
+                            status, interview_passed, soft_pause_until, soft_pause_reason
                        FROM bot_listings WHERE id = $1 FOR UPDATE`,
                     [listingId]
                 );
@@ -1583,6 +1729,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
             await step('validate_listing', async () => {
                 if (listing.status !== 'listed') throw new Error('listing_not_available');
                 if (!listing.interview_passed) throw new Error('interview_not_passed');
+                if (isListingSoftPaused(listing)) throw buildListingSoftPausedError(listing);
                 if (listing.owner_user_id === renterUserId) throw new Error('self_rental_forbidden');
                 if (durationMinutes < listing.min_rental_minutes) throw new Error('duration_below_listing_min');
                 if (durationMinutes > listing.max_rental_minutes) throw new Error('duration_above_listing_max');
@@ -1740,43 +1887,58 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         res.json({ success: true, listing });
     }));
 
+    // POST /api/rental/listing/:id/resume — owner-only manual soft-pause clear.
+    router.post('/listing/:id/resume', authMiddleware, rentalRoute(async (req, res) => {
+        const listing = await clearListingSoftPause(req.params.id, { ownerUserId: req.user.userId });
+        audit('info', 'rental', `listing soft-pause resumed ${listing.id}`, {
+            userId: req.user.userId, action: 'listing_resume', resource: listing.id,
+        });
+        res.json({ success: true, listing });
+    }));
+
     // DELETE /api/rental/listing/:id — delist
     router.delete('/listing/:id', authMiddleware, rentalRoute(async (req, res) => {
         const listing = await delistListing(req.params.id, req.user.userId);
         res.json({ success: true, listing });
     }));
 
-    // GET /api/rental/listing/:id — public view
-    router.get('/listing/:id', rentalRoute(async (req, res) => {
-        const listing = await getListing(req.params.id);
-        if (!listing) throw new Error('listing_not_found');
-        // BUG-M8: Match by userId OR deviceId (Device-login has userId=null)
-        const isOwner = req.user && (
-            (req.user.userId && listing.owner_user_id === req.user.userId) ||
-            (req.user.deviceId && listing.owner_device_id === req.user.deviceId)
-        );
-        if (!isOwner) {
-            delete listing.owner_user_id;
+    // GET /api/rental/listing/:id — public view; owner fields are included only for the owner.
+    router.get('/listing/:id', optionalAuthMiddleware, async (req, res) => {
+        try {
+            const listing = await getListing(req.params.id);
+            if (!listing) return res.status(404).json({ success: false, error: 'listing_not_found' });
+            serializeSoftPauseFields(listing);
+            // BUG-M8: Match by userId OR deviceId (Device-login has userId=null)
+            const isOwner = req.user && (
+                (req.user.userId && listing.owner_user_id === req.user.userId) ||
+                (req.user.deviceId && listing.owner_device_id === req.user.deviceId)
+            );
+            if (!isOwner) {
+                delete listing.owner_user_id;
+            }
+            // Availability: check for active contract
+            const acRes = await pool.query(
+                `SELECT id FROM rental_contracts WHERE listing_id = $1 AND status LIKE 'active%' LIMIT 1`,
+                [listing.id]
+            );
+            listing.has_active_contract = acRes.rows.length > 0;
+            // Interview score from latest completed exam
+            const ivRes = await pool.query(
+                `SELECT total_score, max_score FROM arena_exams
+                 WHERE listing_id = $1 AND status = 'completed'
+                 ORDER BY created_at DESC LIMIT 1`,
+                [listing.id]
+            );
+            if (ivRes.rows.length > 0) {
+                listing.interview_score = parseInt(ivRes.rows[0].total_score, 10) || 0;
+                listing.interview_max_score = parseInt(ivRes.rows[0].max_score, 10) || 0;
+            }
+            res.json({ success: true, listing });
+        } catch (err) {
+            console.error('[Rental] /listing/:id error:', err);
+            res.status(500).json({ success: false, error: 'internal_error' });
         }
-        // Availability: check for active contract
-        const acRes = await pool.query(
-            `SELECT id FROM rental_contracts WHERE listing_id = $1 AND status LIKE 'active%' LIMIT 1`,
-            [listing.id]
-        );
-        listing.has_active_contract = acRes.rows.length > 0;
-        // Interview score from latest completed exam
-        const ivRes = await pool.query(
-            `SELECT total_score, max_score FROM arena_exams
-             WHERE listing_id = $1 AND status = 'completed'
-             ORDER BY created_at DESC LIMIT 1`,
-            [listing.id]
-        );
-        if (ivRes.rows.length > 0) {
-            listing.interview_score = parseInt(ivRes.rows[0].total_score, 10) || 0;
-            listing.interview_max_score = parseInt(ivRes.rows[0].max_score, 10) || 0;
-        }
-        res.json({ success: true, listing });
-    }));
+    });
 
     // GET /api/rental/my-listings — owner's own listings
     router.get('/my-listings', authMiddleware, rentalRoute(async (req, res) => {
@@ -1799,8 +1961,8 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         res.json({ success: true, listings });
     }));
 
-    // POST /api/rental/contract — start a new rental (atomic: deposit + contract + snapshot)
-    router.post('/contract', authMiddleware, rentalRoute(async (req, res) => {
+    // POST /api/rental/contract (and legacy alias /create) — start a new rental.
+    async function createRentalContractHandler(req, res) {
         const { listingId, renterDeviceId, durationMinutes } = req.body || {};
         const contract = await startRental({
             listingId,
@@ -1864,7 +2026,9 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
             userId: req.user.userId, action: 'contract_start', resource: contract.id,
         });
         res.json({ success: true, contract });
-    }));
+    }
+    router.post('/contract', authMiddleware, rentalRoute(createRentalContractHandler));
+    router.post('/create', authMiddleware, rentalRoute(createRentalContractHandler));
 
     // Shared post-endRental cleanup: removes renter entity + clears owner
     // leased_out status + persists both. Called by both the HTTP handler and
@@ -1959,6 +2123,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
 
         const result = await pool.query(
             `SELECT c.id AS rental_id,
+                    c.listing_id,
                     c.renter_device_id,
                     c.renter_entity_slot,
                     c.status AS contract_status,
@@ -1978,7 +2143,8 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         );
 
         const nowIso = new Date().toISOString();
-        const statuses = result.rows.map((row) => {
+        const shouldApplySoftPause = ['1', 'true', 'yes'].includes(String(req.query.applySoftPause || req.query.softPause || '').toLowerCase());
+        const statuses = await Promise.all(result.rows.map(async (row) => {
             const renterEntityId = row.renter_entity_slot != null ? Number(row.renter_entity_slot) : null;
             const ownerSlot = Number(row.owner_entity_id);
             const entity = row.renter_device_id && renterEntityId != null
@@ -1990,13 +2156,31 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
             const msg = status === 'ok'
                 ? `${row.renter_name || 'Renter'} health probe recovered / OK`
                 : `${row.renter_name || 'Renter'} recent 1hr response timeout x3`;
+            let listingSoftPause = null;
+            if (shouldApplySoftPause && row.listing_id) {
+                try {
+                    const degradedSince = req.query.degradedSince
+                        || (req.query.degradedMinutes ? new Date(Date.now() - (parseInt(req.query.degradedMinutes, 10) || 0) * 60 * 1000).toISOString() : null);
+                    listingSoftPause = await recordListingHealthSample({
+                        listingId: row.listing_id,
+                        status,
+                        reason: req.query.reason || LISTING_SOFT_PAUSE_REASON_HEALTH_DEGRADED,
+                        degradedSince,
+                        okStreak: parseInt(req.query.okStreak || '0', 10) || 0,
+                    });
+                } catch (err) {
+                    listingSoftPause = { changed: false, action: 'error', error: err.message };
+                }
+            }
             return {
                 rentalId: row.rental_id,
+                listingId: row.listing_id,
                 ownerEntityId: ownerSlot,
                 renterEntityId,
                 renterName: row.renter_name || entity?.name || entity?.character || `Entity #${renterEntityId ?? ownerSlot}`,
                 status,
                 lastProbeAt: nowIso,
+                listingSoftPause,
                 recentEvents: [{
                     eventId: `${row.rental_id}:${eventKind}:${nowIso.slice(0, 16)}`,
                     kind: eventKind,
@@ -2004,7 +2188,7 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
                     msg,
                 }],
             };
-        });
+        }));
 
         // E2E/dev convenience: allow UI validation before a rental contract exists.
         if (statuses.length === 0 && mockStatus) {
@@ -2666,12 +2850,21 @@ module.exports = function rentalFactory({ authMiddleware, adminMiddleware, walle
         // Interview dispatch (late-bound)
         setInterviewDeps: (deps) => { _interviewDeps = deps; },
         // Helpers + constants
+        isListingSoftPaused,
+        serializeSoftPauseFields,
+        softPauseListing,
+        clearListingSoftPause,
+        recordListingHealthSample,
         computeDepositMli,
         DEPOSIT_TOKEN_MULTIPLIER,
         MIN_RENTAL_MINUTES,
         MAX_RENTAL_MINUTES,
         INTERVIEW_PASS_SCORE,
         INTERVIEW_RATE_LIMIT,
+        LISTING_SOFT_PAUSE_REASON_HEALTH_DEGRADED,
+        LISTING_SOFT_PAUSE_DEFAULT_MINUTES,
+        LISTING_HEALTH_DEGRADED_THRESHOLD_MS,
+        LISTING_HEALTH_OK_RECOVERY_STREAK,
         LISTING_STATUSES,
         CONTRACT_STATUSES,
         ECOIN_TO_MLI,
@@ -2684,3 +2877,7 @@ module.exports.CONTRACT_STATUSES = CONTRACT_STATUSES;
 module.exports.computeDepositMli = computeDepositMli;
 module.exports.DEPOSIT_TOKEN_MULTIPLIER = DEPOSIT_TOKEN_MULTIPLIER;
 module.exports.INTERVIEW_PASS_SCORE = INTERVIEW_PASS_SCORE;
+
+module.exports.isListingSoftPaused = isListingSoftPaused;
+module.exports.LISTING_SOFT_PAUSE_REASON_HEALTH_DEGRADED = LISTING_SOFT_PAUSE_REASON_HEALTH_DEGRADED;
+module.exports.LISTING_HEALTH_OK_RECOVERY_STREAK = LISTING_HEALTH_OK_RECOVERY_STREAK;

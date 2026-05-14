@@ -3090,6 +3090,7 @@ if (process.env.NODE_ENV !== 'test') {
 // ============================================
 const rentalModule = require('./rental')({
     authMiddleware: authModule.authMiddleware,
+    softAuthMiddleware: authModule.softAuthMiddleware,
     adminMiddleware: authModule.adminMiddleware,
     walletModule,
     serverLog,

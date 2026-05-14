@@ -75,7 +75,7 @@ jest.mock('pg', () => {
         }
 
         // SELECT listing FOR UPDATE (used by startRental)
-        if (/^SELECT id, owner_user_id, rate_mli_per_ktoken,\s*min_rental_minutes, max_rental_minutes,\s*status, interview_passed\s*FROM bot_listings WHERE id = \$1 FOR UPDATE$/i.test(norm)) {
+        if (/^SELECT id, owner_user_id, rate_mli_per_ktoken,\s*min_rental_minutes, max_rental_minutes,\s*status, interview_passed(?:, soft_pause_until, soft_pause_reason)?\s*FROM bot_listings WHERE id = \$1 FOR UPDATE$/i.test(norm)) {
             const row = state.listings.find(l => l.id === params[0]);
             if (!row) return { rows: [], rowCount: 0 };
             return { rows: [{
@@ -84,6 +84,8 @@ jest.mock('pg', () => {
                 min_rental_minutes: row.min_rental_minutes,
                 max_rental_minutes: row.max_rental_minutes,
                 status: row.status, interview_passed: row.interview_passed,
+                soft_pause_until: row.soft_pause_until || null,
+                soft_pause_reason: row.soft_pause_reason || null,
             }], rowCount: 1 };
         }
 

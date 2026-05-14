@@ -1131,6 +1131,8 @@
             const maxH = (l.max_rental_minutes / 60).toFixed(1);
             const defaultH = Math.max(parseFloat(minH), 1);
             const isRented = !!l.has_active_contract;
+            const isSoftPaused = !!l.is_soft_paused;
+            const softPauseEta = l.soft_pause_until ? new Date(l.soft_pause_until).toLocaleString() : '';
             const isSelfOwned = !!(meData?.user && (
                 (l.owner_user_id && l.owner_user_id === meData.user.userId) ||
                 (l.owner_device_id && l.owner_device_id === (meData.user.deviceId || meData.user.device_id))
@@ -1150,6 +1152,11 @@
                 const sup = l.capabilities[c]?.supported;
                 return `<span class="detail-tag cap-chip ${capChipClass(c)}">${esc(c)}${sup ? ' \u2713' : ' \u2717'}</span>`;
             }).join('')}</div>` : '';
+            const softPauseBanner = isSoftPaused
+                ? (isSelfOwned
+                    ? `<div style="margin:12px 20px 0;padding:12px;border-radius:12px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412;font-size:13px;line-height:1.45;"><strong>⚠️ ${ttt('listing_soft_paused_owner_banner','This listing is soft-paused because health checks are degraded. It remains listed but new rentals are blocked until recovery.')}</strong>${softPauseEta ? `<div>${ttt('mp_est_total','Estimated')}: ${esc(softPauseEta)}</div>` : ''}<div style="margin-top:8px;"><button class="detail-btn outline" style="padding:8px 10px;font-size:12px;" onclick="resumeSoftPausedListing('${l.id}')">${ttt('listing_soft_paused_resume_btn','Resume listing')}</button></div></div>`
+                    : `<div style="margin:12px 20px 0;padding:12px;border-radius:12px;background:#f3f4f6;border:1px solid #d1d5db;color:#4b5563;font-size:13px;line-height:1.45;">⏸ ${ttt('listing_soft_paused_visitor_banner','This bot is temporarily unavailable while the owner fixes health checks. The page remains available, but renting is disabled for now.')}${softPauseEta ? `<div>${ttt('mp_est_total','Estimated')}: ${esc(softPauseEta)}</div>` : ''}</div>`)
+                : '';
             content.innerHTML = `
                 <button class="modal-close" onclick="closeDetail()">\u2715</button>
                 <div class="detail-header">
@@ -1160,6 +1167,7 @@
                     ${interviewHtml}
                     <div class="detail-desc">${esc(l.description || '')}</div>
                 </div>
+                ${softPauseBanner}
                 ${capsHtml}
                 <div style="margin:0 20px;border-top:1px solid var(--card-border);padding:12px 0;">
                     <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-secondary);">${ttt('mp_d_rate','Rate')}</span><span style="font-weight:700;color:#10b981;">${rateEcoin} e\u5e63/1K tokens</span></div>
@@ -1168,7 +1176,7 @@
                     <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-secondary);">${ttt('mp_d_rating','Rating')}</span><span style="color:#f59e0b;">${stars} (${l.total_rentals || 0} ${ttt('mp_d_rentals','rentals')})</span></div>
                     <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;"><span style="color:var(--text-secondary);">${ttt('mp_d_uptime','Uptime')}</span><span>${l.uptime_pct || 100}%</span></div>
                 </div>
-                ${isSelfOwned ? '' : `<div style="margin:0 20px;">
+                ${isSelfOwned || isSoftPaused ? '' : `<div style="margin:0 20px;">
                     <label style="font-size:12px;color:var(--text-secondary);font-weight:600;">\u23f1\ufe0f ${ttt('mp_d_rent_duration_hours','Duration (hours)')}</label>
                     <input type="number" id="rentalDurationHours" value="${defaultH}" min="${minH}" max="${maxH}" step="0.5" style="width:100%;margin-top:4px;padding:10px;border:1px solid var(--card-border);border-radius:var(--radius-sm);background:var(--input-bg);color:var(--text);font-size:14px;" oninput="updateRentalEstimate(${rateMli},${depositEcoin})">
                     <div class="rental-cost-box" id="rentalCostBox"></div>
@@ -1181,10 +1189,11 @@
                 <div style="margin:12px 20px 20px;">
                     ${isSelfOwned
                         ? `<button class="detail-btn primary" style="width:100%;padding:12px;font-size:14px;opacity:0.5;cursor:not-allowed;" disabled>\ud83d\udeab ${ttt('rental_error_self_rent','Cannot rent your own bot')}</button>`
+                        : isSoftPaused
+                        ? `<button class="detail-btn primary" style="width:100%;padding:12px;font-size:14px;opacity:0.5;cursor:not-allowed;" disabled>⏸ ${ttt('rental_create_rejected_soft_paused','This listing is temporarily unavailable due to degraded health checks.')}</button>`
                         : isRented
                         ? `<button class="detail-btn primary" style="width:100%;padding:12px;font-size:14px;opacity:0.5;cursor:not-allowed;" disabled>\ud83d\udd34 ${ttt('mp_status_rented','Rented')}</button>`
-                        : `<button class="detail-btn primary" style="width:100%;padding:12px;font-size:14px;" id="rentalConfirmBtn" disabled onclick="doRentalFromPlaza('${l.id}',${rateMli})">\ud83d\udd12 ${ttt('mp_rent_now','Rent Now')}</button>`}
-                </div>`;
+                        : `<button class="detail-btn primary" style="width:100%;padding:12px;font-size:14px;" id="rentalConfirmBtn" disabled onclick="doRentalFromPlaza('${l.id}',${rateMli})">\ud83d\udd12 ${ttt('mp_rent_now','Rent Now')}</button>`}                </div>`;
             updateRentalEstimate(rateMli, depositEcoin);
         } catch (e) {
             content.innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">\u8f09\u5165\u5931\u6557</div>';
@@ -1199,6 +1208,8 @@
             'listing_already_rented': 'rental_error_already_rented',
             'insufficient_balance_for_rental': 'rental_error_insufficient',
             'listing_not_available': 'rental_error_not_available',
+            'listing_soft_paused': 'rental_create_rejected_soft_paused',
+            'LISTING_SOFT_PAUSED': 'rental_create_rejected_soft_paused',
         }[code];
         if (!i18nKey) return null;
         const translated = typeof i18n !== 'undefined' ? i18n.t(i18nKey) : null;
@@ -1210,6 +1221,7 @@
             'rental_error_already_rented': 'This bot is already rented by someone else.',
             'rental_error_insufficient': 'Insufficient e-coin balance for this rental.',
             'rental_error_not_available': 'This listing is no longer available.',
+            'rental_create_rejected_soft_paused': 'This listing is temporarily unavailable due to degraded health checks.',
         };
         return fallbacks[i18nKey];
     }
@@ -1242,7 +1254,7 @@
                 }
                 setTimeout(() => { closeDetail(); loadBots(); }, 3000);
             } else {
-                const errCode = data?.error || '';
+                const errCode = data?.code || data?.error || '';
                 showToast(translateRentalError(errCode) || errCode || 'Failed', 'error');
                 if (btn) { btn.disabled = false; btn.textContent = btnLabel; }
             }
@@ -1251,6 +1263,20 @@
             showToast(translateRentalError(errCode) || errCode || 'Rental failed', 'error');
             if (btn) { btn.disabled = false; btn.textContent = btnLabel; }
         }
+    }
+
+    async function resumeSoftPausedListing(listingId) {
+        const ttt = (k, fb) => (typeof i18n !== 'undefined' ? i18n.t(k) : null) || fb;
+        try {
+            const data = await apiPost('/api/rental/listing/' + listingId + '/resume', {});
+            if (data?.success) {
+                showToast(ttt('listing_soft_paused_resume_btn','Resume listing'), 'success');
+                await openRentalDetail(listingId);
+                loadBots();
+            } else {
+                showToast(data?.error || 'Resume failed', 'error');
+            }
+        } catch (e) { showToast('Resume failed', 'error'); }
     }
 
     function quoteToChat(source, title, excerpt) {

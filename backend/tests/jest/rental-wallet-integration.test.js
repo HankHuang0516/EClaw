@@ -54,10 +54,10 @@ jest.mock('pg', () => {
             });
             return { rows: [{ id, status: 'listed', created_at: new Date() }], rowCount: 1 };
         }
-        if (/^SELECT id, owner_user_id, rate_mli_per_ktoken,\s*min_rental_minutes, max_rental_minutes,\s*status, interview_passed\s*FROM bot_listings WHERE id = \$1 FOR UPDATE$/i.test(norm)) {
+        if (/^SELECT id, owner_user_id, rate_mli_per_ktoken,\s*min_rental_minutes, max_rental_minutes,\s*status, interview_passed(?:, soft_pause_until, soft_pause_reason)?\s*FROM bot_listings WHERE id = \$1 FOR UPDATE$/i.test(norm)) {
             const row = state.listings.find(l => l.id === params[0]);
             if (!row) return { rows: [], rowCount: 0 };
-            return { rows: [{ id: row.id, owner_user_id: row.owner_user_id, rate_mli_per_ktoken: row.rate_mli_per_ktoken, min_rental_minutes: row.min_rental_minutes, max_rental_minutes: row.max_rental_minutes, status: row.status, interview_passed: row.interview_passed }], rowCount: 1 };
+            return { rows: [{ id: row.id, owner_user_id: row.owner_user_id, rate_mli_per_ktoken: row.rate_mli_per_ktoken, min_rental_minutes: row.min_rental_minutes, max_rental_minutes: row.max_rental_minutes, status: row.status, interview_passed: row.interview_passed, soft_pause_until: row.soft_pause_until || null, soft_pause_reason: row.soft_pause_reason || null }], rowCount: 1 };
         }
 
         // rental_contracts exclusivity
