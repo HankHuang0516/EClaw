@@ -122,6 +122,14 @@
     <string name="ai_chat_image_unavailable">इमेज अपलोड अस्थायी रूप से अनुपलब्ध है।</string>
     <string name="ai_chat_view_feedback">फीडबैक इतिहास देखें →</string>
 
+    <string name="ai_chat_tool_status_bash">विश्लेषण चला रहा है</string>
+    <string name="ai_chat_tool_status_edit">फ़ाइल संपादित कर रहा है</string>
+    <string name="ai_chat_tool_status_glob">फ़ाइलें खोज रहा है</string>
+    <string name="ai_chat_tool_status_grep">कोड खोज रहा है</string>
+    <string name="ai_chat_tool_status_read">फ़ाइल पढ़ रहा है</string>
+    <string name="ai_chat_tool_status_write">फ़ाइल लिख रहा है</string>
+
+
     <!-- Chat -->
     <string name="chat_history">चैट</string>
     <string name="chat_offline_message">कनेक्ट नहीं हो पा रहा। कृपया अपना इंटरनेट कनेक्शन जांचें।</string>

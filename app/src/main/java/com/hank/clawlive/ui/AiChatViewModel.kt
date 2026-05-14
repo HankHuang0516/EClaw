@@ -364,12 +364,12 @@ class AiChatViewModel(application: Application) : AndroidViewModel(application) 
             "tool_use" -> {
                 val tool = progress["tool"] as? String ?: "Processing"
                 val label = when (tool) {
-                    "Read" -> "Reading file"
-                    "Grep" -> "Searching code"
-                    "Glob" -> "Finding files"
-                    "Bash" -> "Running analysis"
-                    "Edit" -> "Editing file"
-                    "Write" -> "Writing file"
+                    "Read" -> getString(R.string.ai_chat_tool_status_read)
+                    "Grep" -> getString(R.string.ai_chat_tool_status_grep)
+                    "Glob" -> getString(R.string.ai_chat_tool_status_glob)
+                    "Bash" -> getString(R.string.ai_chat_tool_status_bash)
+                    "Edit" -> getString(R.string.ai_chat_tool_status_edit)
+                    "Write" -> getString(R.string.ai_chat_tool_status_write)
                     else -> tool
                 }
                 "$label…$suffix"

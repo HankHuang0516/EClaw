@@ -59,6 +59,14 @@
     <string name="ai_chat_title">ผู้ช่วย AI</string>
     <string name="ai_chat_uploading">กำลังอัปโหลดรูปภาพ…</string>
     <string name="ai_chat_view_feedback">ดูประวัติความคิดเห็น →</string>
+
+    <string name="ai_chat_tool_status_bash">กำลังรันการวิเคราะห์</string>
+    <string name="ai_chat_tool_status_edit">กำลังแก้ไขไฟล์</string>
+    <string name="ai_chat_tool_status_glob">กำลังค้นหาไฟล์</string>
+    <string name="ai_chat_tool_status_grep">กำลังค้นหาโค้ด</string>
+    <string name="ai_chat_tool_status_read">กำลังอ่านไฟล์</string>
+    <string name="ai_chat_tool_status_write">กำลังเขียนไฟล์</string>
+
     <string name="ai_chat_welcome">สวัสดี! ฉันคือ E-Claw AI\nถามอะไรเกี่ยวกับแพลตฟอร์มได้เลย</string>
     <string name="already_bound_free">ผูกแล้ว (ฟรี)</string>
     <string name="already_bound_personal">ผูกแล้ว (รายเดือน)</string>

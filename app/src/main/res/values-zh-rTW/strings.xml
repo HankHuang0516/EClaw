@@ -59,6 +59,14 @@
     <string name="ai_chat_title">AI 對話</string>
     <string name="ai_chat_uploading">正在上傳…</string>
     <string name="ai_chat_view_feedback">查看回饋</string>
+
+    <string name="ai_chat_tool_status_bash">正在執行分析</string>
+    <string name="ai_chat_tool_status_edit">正在編輯檔案</string>
+    <string name="ai_chat_tool_status_glob">正在尋找檔案</string>
+    <string name="ai_chat_tool_status_grep">正在搜尋程式碼</string>
+    <string name="ai_chat_tool_status_read">正在讀取檔案</string>
+    <string name="ai_chat_tool_status_write">正在寫入檔案</string>
+
     <string name="ai_chat_welcome">你好！有什麼我可以幫你的？</string>
     <string name="already_bound_free">已綁定 (免費版)</string>
     <string name="already_bound_personal">已綁定 (月租版)</string>

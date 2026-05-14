@@ -59,6 +59,14 @@
     <string name="ai_chat_title">Asisten AI</string>
     <string name="ai_chat_uploading">Mengunggah gambar…</string>
     <string name="ai_chat_view_feedback">Lihat Riwayat Umpan Balik →</string>
+
+    <string name="ai_chat_tool_status_bash">Menjalankan analisis</string>
+    <string name="ai_chat_tool_status_edit">Mengedit file</string>
+    <string name="ai_chat_tool_status_glob">Mencari file</string>
+    <string name="ai_chat_tool_status_grep">Mencari kode</string>
+    <string name="ai_chat_tool_status_read">Membaca file</string>
+    <string name="ai_chat_tool_status_write">Menulis file</string>
+
     <string name="ai_chat_welcome">Halo! Saya AI E-Claw.\nTanyakan apa saja tentang platform ini.</string>
     <string name="already_bound_free">Terikat (Gratis)</string>
     <string name="already_bound_personal">Terikat (Bulanan)</string>

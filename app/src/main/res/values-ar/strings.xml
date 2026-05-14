@@ -122,6 +122,15 @@
     <string name="ai_chat_image_unavailable">رفع الصور غير متاح مؤقتًا.</string>
     <string name="ai_chat_view_feedback">عرض سجل الملاحظات →</string>
 
+    <string name="ai_chat_tool_status_bash">جاري تشغيل التحليل</string>
+    <string name="ai_chat_tool_status_edit">جاري تعديل الملف</string>
+    <string name="ai_chat_tool_status_glob">جاري البحث عن الملفات</string>
+    <string name="ai_chat_tool_status_grep">جاري البحث في الكود</string>
+    <string name="ai_chat_tool_status_read">جاري قراءة الملف</string>
+    <string name="ai_chat_tool_status_write">جاري كتابة الملف</string>
+
+
+
     <!-- Chat -->
     <string name="chat_history">الدردشة</string>
     <string name="chat_offline_message">تعذر الاتصال. يرجى التحقق من اتصال الإنترنت.</string>

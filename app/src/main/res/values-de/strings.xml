@@ -122,6 +122,14 @@
     <string name="ai_chat_image_unavailable">Bild-Upload ist vorübergehend nicht verfügbar.</string>
     <string name="ai_chat_view_feedback">Feedback-Verlauf anzeigen →</string>
 
+    <string name="ai_chat_tool_status_bash">Analyse wird ausgeführt</string>
+    <string name="ai_chat_tool_status_edit">Datei wird bearbeitet</string>
+    <string name="ai_chat_tool_status_glob">Dateien werden gesucht</string>
+    <string name="ai_chat_tool_status_grep">Code wird durchsucht</string>
+    <string name="ai_chat_tool_status_read">Datei wird gelesen</string>
+    <string name="ai_chat_tool_status_write">Datei wird geschrieben</string>
+
+
     <!-- Chat -->
     <string name="chat_history">Chat</string>
     <string name="chat_offline_message">Verbindung nicht möglich. Bitte überprüfen Sie Ihre Internetverbindung.</string>

@@ -122,6 +122,14 @@
     <string name="ai_chat_image_unavailable">Le téléversement d\'images est temporairement indisponible.</string>
     <string name="ai_chat_view_feedback">Voir l\'historique des retours →</string>
 
+    <string name="ai_chat_tool_status_bash">Analyse en cours</string>
+    <string name="ai_chat_tool_status_edit">Modification du fichier</string>
+    <string name="ai_chat_tool_status_glob">Recherche de fichiers</string>
+    <string name="ai_chat_tool_status_grep">Recherche dans le code</string>
+    <string name="ai_chat_tool_status_read">Lecture du fichier</string>
+    <string name="ai_chat_tool_status_write">Écriture du fichier</string>
+
+
     <!-- Chat -->
     <string name="chat_history">Chat</string>
     <string name="chat_offline_message">Connexion impossible. Vérifiez votre connexion Internet.</string>

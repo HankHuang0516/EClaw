@@ -59,6 +59,14 @@ La app se reiniciará para cargar tus datos.</string>
     <string name="ai_chat_title">Asistente AI</string>
     <string name="ai_chat_uploading">Subiendo imagen(es)…</string>
     <string name="ai_chat_view_feedback">Ver Historial de Comentarios →</string>
+
+    <string name="ai_chat_tool_status_bash">Ejecutando análisis</string>
+    <string name="ai_chat_tool_status_edit">Editando archivo</string>
+    <string name="ai_chat_tool_status_glob">Buscando archivos</string>
+    <string name="ai_chat_tool_status_grep">Buscando código</string>
+    <string name="ai_chat_tool_status_read">Leyendo archivo</string>
+    <string name="ai_chat_tool_status_write">Escribiendo archivo</string>
+
     <string name="ai_chat_welcome">¡Hola! Soy E-Claw AI.
 Pregúntame lo que quieras sobre la plataforma.</string>
     <string name="already_bound_free">Enlazado (Gratis)</string>
