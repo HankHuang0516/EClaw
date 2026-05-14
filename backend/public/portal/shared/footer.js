@@ -21,6 +21,7 @@ function renderFooter() {
                 </div>
                 <div class="footer-col">
                     <div class="footer-col-title" data-i18n="footer_info">${t('footer_info', 'Info')}</div>
+                    <a href="info.html#guide" class="footer-link" data-i18n="footer_promo_video">${t('footer_promo_video', '▶ Watch Intro Video')}</a>
                     <a href="info.html#guide" class="footer-link" data-i18n="info_tab_guide">${t('info_tab_guide', 'User Guide')}</a>
                     <a href="info.html#faq" class="footer-link" data-i18n="info_tab_faq">${t('info_tab_faq', 'FAQ')}</a>
                     <a href="info.html#release-notes" class="footer-link" data-i18n="info_tab_release_notes">${t('info_tab_release_notes', 'Release Notes')}</a>
