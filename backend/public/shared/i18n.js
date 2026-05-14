@@ -2628069,6 +2628069,10 @@ const TRANSLATIONS = {
 
 
         "borrow_rental_demand_fail": "제출 실패. 다시 시도해 주세요.",
+        "listing_soft_paused_owner_banner": "이 목록은 헬스 체크가 저하되어 일시 정지됩니다. 새로운 대여는 복구될 때까지 차단됩니다.",
+        "listing_soft_paused_visitor_banner": "소유주가 헬스 체크를 수정하는 동안 이 Bot은 일시 사용할 수 없습니다. 페이지는 사용 가능하지만 현재 대여는 비활성화됩니다.",
+        "listing_soft_paused_resume_btn": "목록 다시 시작",
+        "rental_create_rejected_soft_paused": "헬스 체크 저하로 인해 이 목록은 일시 사용할 수 없습니다.",
 
 
 
@@ -3160610,6 +3160614,10 @@ const TRANSLATIONS = {
 
 
         "borrow_rental_demand_fail": "ส่งไม่สำเร็จ กรุณาลองอีกครั้ง",
+        "listing_soft_paused_owner_banner": "รายการนี้หยุดชั่วคราวเนื่องจากการตรวจสอบสถานะ รายการจะยังคงแสดง แต่การเช่าใหม่จะถูกบล็อกจนกว่าจะฟื้นตัว",
+        "listing_soft_paused_visitor_banner": "Bot นี้ไม่พร้อมใช้งานชั่วคราวในขณะที่เจ้าของแก้ไขการตรวจสอบสถานะ หน้ายังพร้อใช้งาน แต่การเช่าจะถูกปิดในขณะนี้",
+        "listing_soft_paused_resume_btn": "เปิดใช้งานรายการอีกครั้ง",
+        "rental_create_rejected_soft_paused": "รายการนี้ไม่พร้อมใช้งานชั่วคราวเนื่องจากการตรวจสอบสถานะ",
 
 
 
@@ -3689370,6 +3689378,10 @@ const TRANSLATIONS = {
 
 
         "borrow_rental_demand_fail": "Gửi thất bại. Vui lòng thử lại.",
+        "listing_soft_paused_owner_banner": "Danh sách này tạm dừng do kiểm tra sức khỏe bị suy giảm. Nó vẫn được liệt kê nhưng cho thuê mới sẽ bị chặn cho đến khi phục hồi.",
+        "listing_soft_paused_visitor_banner": "Bot này tạm không khả dụng trong khi chủ sở hữu sửa kiểm tra sức khỏe. Trang vẫn khả dụng nhưng cho thuê bị vô hiệu hóa bây giờ.",
+        "listing_soft_paused_resume_btn": "Tiếp tục danh sách",
+        "rental_create_rejected_soft_paused": "Danh sách này tạm không khả dụng do kiểm tra sức khỏe bị suy giảm.",
 
 
 
@@ -4215541,6 +4215553,10 @@ const TRANSLATIONS = {
 
 
         "borrow_rental_demand_fail": "Gagal mengirim. Silakan coba lagi.",
+        "listing_soft_paused_owner_banner": "Daftar ini dijeda sementara karena pemeriksaan kesehatan turun. Tetap tercantum tetapi sewa baru diblokir hingga pulih.",
+        "listing_soft_paused_visitor_banner": "Bot ini sementara tidak tersedia sementara pemilik memperbaiki pemeriksaan kesehatan. Halaman tetap tersedia tetapi sewa dinonaktifkan untuk saat ini.",
+        "listing_soft_paused_resume_btn": "Lanjutkan daftar",
+        "rental_create_rejected_soft_paused": "Daftar ini sementara tidak tersedia karena pemeriksaan kesehatan turun.",
 
 
 
@@ -4741456,6 +4741472,10 @@ const TRANSLATIONS = {
 
 
         "borrow_rental_demand_fail": "Échec de la soumission. Veuillez réessayer.",
+        "listing_soft_paused_owner_banner": "Cette annonce est en pause car les vérifications de santé sont dégradées. Elle reste listée mais les nouvelles locations sont bloquées jusqu'à récupération.",
+        "listing_soft_paused_visitor_banner": "Ce bot est temporairement indisponible pendant que le propriétaire corrige les vérifications de santé. La page reste disponible mais la location est désactivée pour le moment.",
+        "listing_soft_paused_resume_btn": "Reprendre l'annonce",
+        "rental_create_rejected_soft_paused": "Cette offre n'est pas disponible temporairement en raison de vérifications de santé dégradées.",
 
 
 
@@ -5264690,6 +5264710,10 @@ const TRANSLATIONS = {
 
 
         "borrow_rental_demand_fail": "Error al enviar solicitud. Por favor intenta de nuevo...",
+        "listing_soft_paused_owner_banner": "Esta lista está en pausa porque las verificaciónes de salud están degradadas. Permanece listada, pero los nuevos alquileres están bloqueados hasta la recuperación.",
+        "listing_soft_paused_visitor_banner": "Este bot está temporalmente no disponible mientras el propietario corrige las verificaciónes de salud. La página permanece disponible, pero el alquiler está desactivado por ahora.",
+        "listing_soft_paused_resume_btn": "Reanudar lista",
+        "rental_create_rejected_soft_paused": "Esta oferta está temporalmente no disponible debido a verificaciónes de salud degradadas.",
 
 
 
@@ -5782831,6 +5782855,10 @@ const TRANSLATIONS = {
 
 
         "borrow_rental_demand_fail": "Anfrage konnte nicht eingereicht werden. Bitte versuchen Sie es erneut.",
+        "listing_soft_paused_owner_banner": "Diese Liste ist pausiert, weil die Gesundheitsprüfungen beeinträchtigt sind. Sie bleibt gelistet, aber neue Vermietungen sind bis zur Wiederherstellung blockiert.",
+        "listing_soft_paused_visitor_banner": "Dieser Bot ist vorübergehend nicht verfügbar, während der Eigentümer die Gesundheitsprüfungen korrigiert. Die Seite bleibt verfügbar, aber das Mieten ist jetzt deaktiviert.",
+        "listing_soft_paused_resume_btn": "Liste fortsetzen",
+        "rental_create_rejected_soft_paused": "Dieses Angebot ist vorübergehend nicht verfügbar wegen beeinträchtigter Gesundheitsprüfungen.",
 
 
 
@@ -6314014,6 +6314042,10 @@ const TRANSLATIONS = {
 
 
         "borrow_rental_demand_fail": "Gagal menghantar permintaan. Sila cuba lagi.",
+        "listing_soft_paused_owner_banner": "Senarai ini dijeda lembut kerana pemeriksaan kesihatan merosot. Ia kekal disenaraikan tetapi sewa baru disekat sehingga pulih.",
+        "listing_soft_paused_visitor_banner": "Bot ini tidak tersedia buat sementara sambil pemilik membaiki pemeriksaan kesihatan. Halaman kekal tersedia tetapi sewa dinyahaktifkan buat masa ini.",
+        "listing_soft_paused_resume_btn": "Sambung senarai",
+        "rental_create_rejected_soft_paused": "Senarai ini tidak tersedia buat sementara kerana pemeriksaan kesihatan merosot.",
 
 
 
@@ -7179851,6 +7179883,10 @@ const TRANSLATIONS = {
 
 
         "borrow_rental_demand_fail": "अनुरोध भेजने में विफल। कृपया पुनः प्रयास करें।",
+        "listing_soft_paused_owner_banner": "यह सूची स्वास्थ्य जांच में गिरावट के कारण अस्थायी रूप से रोकी गई है। यह सूचीबद्ध रहती है, लेकिन पुनर्प्राप्ति तक नए किराये अवरुद्ध हैं।",
+        "listing_soft_paused_visitor_banner": "यह बॉट मालिक द्वारा स्वास्थ्य जांच सुधारने के दौरान अस्थायी रूप से अनुपलब्ध है। पृष्ठ उपलब्ध रहता है, लेकिन किराया अभी के लिए अक्षम है।",
+        "listing_soft_paused_resume_btn": "सूची पुनः आरंभ करें",
+        "rental_create_rejected_soft_paused": "स्वास्थ्य जांच में गिरावट के कारण यह प्रस्ताव अस्थायी रूप से अनुपलब्ध है।",
 
 
 
@@ -7680196,6 +7680232,10 @@ const TRANSLATIONS = {
 
 
         "borrow_rental_demand_fail": "فشل إرسال الطلب. يرجى المحاولة مرة أخرى.",
+        "listing_soft_paused_owner_banner": "هذا القائمة معلقة مؤقتاً لأن فحوصات الصحة متدهورة. تظل مدرجة لكن الإيجارات الجديدة محظورة حتى الاستعادة.",
+        "listing_soft_paused_visitor_banner": "هذا البوت غير متاح مؤقتاً بينما المالك يصلح فحوصات الصحة. الصفحة تظل متاحة لكن الإيجار معطل حالياً.",
+        "listing_soft_paused_resume_btn": "استئناف القائمة",
+        "rental_create_rejected_soft_paused": "هذا العرض غير متاح مؤقتاً بسبب فحوصات الصحة المتدهورة.",
 
 
 
