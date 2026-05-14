@@ -41244,6 +41244,7 @@ const TRANSLATIONS = {
 
 
         "qs_hero_title": "What do you want to do?",
+        "qs_promo_full_page_link": "📺 Open full video page",
 
 
 
@@ -688732,6 +688733,7 @@ const TRANSLATIONS = {
 
 
         "qs_hero_title": "你想做什麼？",
+        "qs_promo_full_page_link": "📺 開啟完整影片頁",
 
 
 
@@ -1709266,6 +1709268,7 @@ const TRANSLATIONS = {
 
 
         "qs_hero_title": "你想做什麼？",
+        "qs_promo_full_page_link": "📺 開啟完整影片頁",
 
 
 
@@ -1885530,6 +1885533,7 @@ const TRANSLATIONS = {
 
 
         "qs_hero_title": "何をしたいですか？",
+        "qs_promo_full_page_link": "📺 フル動画ページを開く",
 
 
 
@@ -2448436,6 +2448440,7 @@ const TRANSLATIONS = {
 
 
         "qs_hero_title": "무엇을 하고 싶으신가요?",
+        "qs_promo_full_page_link": "📺 전체 동영상 페이지 열기",
 
 
 
@@ -2980844,6 +2980849,7 @@ const TRANSLATIONS = {
 
 
         "qs_hero_title": "คุณต้องการทำอะไร?",
+        "qs_promo_full_page_link": "📺 เปิดหน้าวิดีโอเต็ม",
 
 
 
@@ -3509599,6 +3509605,7 @@ const TRANSLATIONS = {
 
 
         "qs_hero_title": "Bạn muốn làm gì?",
+        "qs_promo_full_page_link": "📺 Mở trang video đầy đủ",
 
 
 
@@ -4035893,6 +4035900,7 @@ const TRANSLATIONS = {
 
 
         "qs_hero_title": "Apa yang ingin Anda lakukan?",
+        "qs_promo_full_page_link": "📺 Buka halaman video lengkap",
 
 
 
@@ -4561803,6 +4561811,7 @@ const TRANSLATIONS = {
 
 
         "qs_hero_title": "Que voulez-vous faire ?",
+        "qs_promo_full_page_link": "📺 Ouvrir la page vidéo complète",
 
 
 
@@ -5086140,6 +5086149,7 @@ const TRANSLATIONS = {
 
 
         "qs_hero_title": "¿Qué quieres hacer?...",
+        "qs_promo_full_page_link": "📺 Abrir la página de vídeo completa",
 
 
 
@@ -5603554,6 +5603564,7 @@ const TRANSLATIONS = {
 
 
         "qs_hero_title": "Was möchten Sie tun?",
+        "qs_promo_full_page_link": "📺 Vollständige Videoseite öffnen",
 
 
 
@@ -6138954,6 +6138965,7 @@ const TRANSLATIONS = {
 
 
         "qs_hero_title": "Apa awak mahu buat?",
+        "qs_promo_full_page_link": "📺 Buka halaman video penuh",
 
 
 
@@ -6815728,6 +6815740,7 @@ const TRANSLATIONS = {
 
 
         "qs_hero_title": "आप क्या करना चाहते हैं?",
+        "qs_promo_full_page_link": "📺 पूर्ण वीडियो पृष्ठ खोलें",
 
 
 
@@ -7505126,6 +7505139,7 @@ const TRANSLATIONS = {
 
 
         "qs_hero_title": "ماذا تريد أن تفعل؟",
+        "qs_promo_full_page_link": "📺 افتح صفحة الفيديو الكاملة",
 
 
 
