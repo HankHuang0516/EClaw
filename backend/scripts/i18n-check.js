@@ -96,15 +96,28 @@ function extractKeysFromHtml(filePath, text) {
 // runtime prefix, not a real dictionary key.
 const T_CALL_RE = /\bi18n\.t\s*\(\s*(?:"([a-zA-Z0-9_.-]+)"|'([a-zA-Z0-9_.-]+)')\s*[,)]/g;
 
-function extractKeysFromJs(filePath, text) {
+// Matches local convenience wrappers used in inline page scripts, e.g.
+// `tt('mp_chat_cta', 'Start chat')` and `ttt("settings_title", fallback)`.
+// These wrappers call i18n.t() internally, so missing dictionary keys render as
+// raw key text when i18n.t() returns the input key instead of null.
+const LOCAL_T_CALL_RE = /\bttt?\s*\(\s*(?:"([a-zA-Z0-9_.-]+)"|'([a-zA-Z0-9_.-]+)')\s*[,)]/g;
+
+function extractKeysWithRegex(filePath, text, re) {
     const hits = [];
     let m;
-    T_CALL_RE.lastIndex = 0;
-    while ((m = T_CALL_RE.exec(text)) !== null) {
+    re.lastIndex = 0;
+    while ((m = re.exec(text)) !== null) {
         const key = m[1] || m[2];
         if (key) hits.push({ key, file: filePath });
     }
     return hits;
+}
+
+function extractKeysFromJs(filePath, text) {
+    return [
+        ...extractKeysWithRegex(filePath, text, T_CALL_RE),
+        ...extractKeysWithRegex(filePath, text, LOCAL_T_CALL_RE),
+    ];
 }
 
 function findOrphanKeys(translations) {

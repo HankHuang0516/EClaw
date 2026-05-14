@@ -277600,6 +277600,8 @@ const TRANSLATIONS = {
 
 
         "wallet_topup": "Top up e-coin",
+        "wallet_topup_success": "Top-up successful!",
+        "wallet_topup_failed": "Top-up failed. Please try again.",
 
 
 
@@ -314991,6 +314993,7 @@ const TRANSLATIONS = {
 
 
         "mp_start_chat": "Start Chat",
+        "mp_chat_cta": "Start chat",
 
 
 
@@ -330607,6 +330610,7 @@ const TRANSLATIONS = {
 
 
         "invite_stats_kpi_today_used": "Today Used",
+        "invite_unlimited_label": "sent (unlimited)",
 
 
 
@@ -913059,6 +913063,8 @@ const TRANSLATIONS = {
 
 
         "wallet_topup": "儲值 e幣",
+        "wallet_topup_success": "儲值成功！",
+        "wallet_topup_failed": "儲值失敗，請再試一次。",
 
 
 
@@ -943143,6 +943149,7 @@ const TRANSLATIONS = {
 
 
         "mp_start_chat": "開始聊天",
+        "mp_chat_cta": "開始對話",
 
 
 
@@ -955687,6 +955694,7 @@ const TRANSLATIONS = {
 
 
         "invite_stats_kpi_today_used": "今日已用",
+        "invite_unlimited_label": "已送出（無限制）",
 
 
 
@@ -1629529,6 +1629537,7 @@ const TRANSLATIONS = {
 
 
         "invite_stats_kpi_today_used": "今日已用",
+        "invite_unlimited_label": "已送出（無限制）",
 
 
 
@@ -1678298,6 +1678307,7 @@ const TRANSLATIONS = {
 
 
         "mp_start_chat": "开始聊天",
+        "mp_chat_cta": "开始对话",
 
 
 
@@ -1797983,6 +1797993,8 @@ const TRANSLATIONS = {
 
 
         "wallet_topup": "儲值 e幣",
+        "wallet_topup_success": "儲值成功！",
+        "wallet_topup_failed": "儲值失敗，請再試一次。",
 
 
 
@@ -2087459,6 +2087471,8 @@ const TRANSLATIONS = {
 
 
         "wallet_topup": "Top up e-coin",
+        "wallet_topup_success": "チャージに成功しました！",
+        "wallet_topup_failed": "チャージに失敗しました。もう一度お試しください。",
 
 
 
@@ -2117287,6 +2117301,7 @@ const TRANSLATIONS = {
 
 
         "mp_start_chat": "チャット開始",
+        "mp_chat_cta": "チャットを開始",
 
 
 
@@ -2128679,6 +2128694,7 @@ const TRANSLATIONS = {
 
 
         "invite_stats_kpi_today_used": "本日使用",
+        "invite_unlimited_label": "送信済み（無制限）",
 
 
 
@@ -2650197,6 +2650213,8 @@ const TRANSLATIONS = {
 
 
         "wallet_topup": "Top up e-coin",
+        "wallet_topup_success": "충전이 완료되었습니다!",
+        "wallet_topup_failed": "충전에 실패했습니다. 다시 시도해 주세요.",
 
 
 
@@ -2680021,6 +2680039,7 @@ const TRANSLATIONS = {
 
 
         "mp_start_chat": "채팅 시작",
+        "mp_chat_cta": "채팅 시작",
 
 
 
@@ -2691413,6 +2691432,7 @@ const TRANSLATIONS = {
 
 
         "invite_stats_kpi_today_used": "오늘 사용",
+        "invite_unlimited_label": "전송됨 (무제한)",
 
 
 
@@ -3182734,6 +3182754,8 @@ const TRANSLATIONS = {
 
 
         "wallet_topup": "Top up e-coin",
+        "wallet_topup_success": "เติมเงินสำเร็จ!",
+        "wallet_topup_failed": "เติมเงินไม่สำเร็จ โปรดลองอีกครั้ง",
 
 
 
@@ -3213966,6 +3213988,7 @@ const TRANSLATIONS = {
 
 
         "invite_stats_kpi_today_used": "ใช้ไปวันนี้",
+        "invite_unlimited_label": "ส่งแล้ว (ไม่จำกัด)",
 
 
 
@@ -3438224,6 +3438247,7 @@ const TRANSLATIONS = {
 
 
         "mp_start_chat": "เริ่มแชท",
+        "mp_chat_cta": "เริ่มแชท",
 
 
 
@@ -3711490,6 +3711514,8 @@ const TRANSLATIONS = {
 
 
         "wallet_topup": "Top up e-coin",
+        "wallet_topup_success": "Nạp tiền thành công!",
+        "wallet_topup_failed": "Nạp tiền thất bại. Vui lòng thử lại.",
 
 
 
@@ -3742722,6 +3742748,7 @@ const TRANSLATIONS = {
 
 
         "invite_stats_kpi_today_used": "Hôm nay đã dùng",
+        "invite_unlimited_label": "đã gửi (không giới hạn)",
 
 
 
@@ -3966980,6 +3967007,7 @@ const TRANSLATIONS = {
 
 
         "mp_start_chat": "Bắt đầu trò chuyện",
+        "mp_chat_cta": "Bắt đầu trò chuyện",
 
 
 
@@ -4237657,6 +4237685,8 @@ const TRANSLATIONS = {
 
 
         "wallet_topup": "Top up e-coin",
+        "wallet_topup_success": "Top up berhasil!",
+        "wallet_topup_failed": "Top up gagal. Silakan coba lagi.",
 
 
 
@@ -4268889,6 +4268919,7 @@ const TRANSLATIONS = {
 
 
         "invite_stats_kpi_today_used": "Dipakai Hari Ini",
+        "invite_unlimited_label": "terkirim (tanpa batas)",
 
 
 
@@ -4494043,6 +4494074,7 @@ const TRANSLATIONS = {
 
 
         "mp_start_chat": "Mulai Chat",
+        "mp_chat_cta": "Mulai chat",
 
 
 
@@ -4763568,6 +4763600,8 @@ const TRANSLATIONS = {
 
 
         "wallet_topup": "Top up e-coin",
+        "wallet_topup_success": "Recharge réussie !",
+        "wallet_topup_failed": "Échec de la recharge. Veuillez réessayer.",
 
 
 
@@ -4793648,6 +4793682,7 @@ const TRANSLATIONS = {
 
 
         "mp_start_chat": "Démarrer le chat",
+        "mp_chat_cta": "Démarrer le chat",
 
 
 
@@ -4806192,6 +4806227,7 @@ const TRANSLATIONS = {
 
 
         "invite_stats_kpi_today_used": "Utilisé aujourd'hui",
+        "invite_unlimited_label": "envoyés (illimité)",
 
 
 
@@ -5286790,6 +5286826,8 @@ const TRANSLATIONS = {
 
 
         "wallet_topup": "Top up e-coin",
+        "wallet_topup_success": "Recarga correcta.",
+        "wallet_topup_failed": "No se pudo recargar. Inténtalo de nuevo.",
 
 
 
@@ -5316614,6 +5316652,7 @@ const TRANSLATIONS = {
 
 
         "mp_start_chat": "Iniciar chat",
+        "mp_chat_cta": "Iniciar chat",
 
 
 
@@ -5328006,6 +5328045,7 @@ const TRANSLATIONS = {
 
 
         "invite_stats_kpi_today_used": "Usado hoy",
+        "invite_unlimited_label": "enviados (ilimitado)",
 
 
 
@@ -5804933,6 +5804973,8 @@ const TRANSLATIONS = {
 
 
         "wallet_topup": "Top up e-coin",
+        "wallet_topup_success": "Aufladung erfolgreich!",
+        "wallet_topup_failed": "Aufladung fehlgeschlagen. Bitte versuche es erneut.",
 
 
 
@@ -5835013,6 +5835055,7 @@ const TRANSLATIONS = {
 
 
         "mp_start_chat": "Chat starten",
+        "mp_chat_cta": "Chat starten",
 
 
 
@@ -5847557,6 +5847600,7 @@ const TRANSLATIONS = {
 
 
         "invite_stats_kpi_today_used": "Heute verwendet",
+        "invite_unlimited_label": "gesendet (unbegrenzt)",
 
 
 
@@ -6695668,6 +6695712,7 @@ const TRANSLATIONS = {
 
 
         "invite_stats_kpi_today_used": "Guna Hari Ini",
+        "invite_unlimited_label": "dihantar (tanpa had)",
 
 
 
@@ -6704756,6 +6704801,7 @@ const TRANSLATIONS = {
 
 
         "mp_start_chat": "Mula Cherita",
+        "mp_chat_cta": "Mula chat",
 
 
 
@@ -6748660,6 +6748706,8 @@ const TRANSLATIONS = {
 
 
         "wallet_topup": "Top up e-coin",
+        "wallet_topup_success": "Tambah nilai berjaya!",
+        "wallet_topup_failed": "Tambah nilai gagal. Sila cuba lagi.",
 
 
 
@@ -7401371,6 +7401419,7 @@ const TRANSLATIONS = {
 
 
         "invite_stats_kpi_today_used": "आज उपयोग",
+        "invite_unlimited_label": "भेजे गए (असीमित)",
 
 
 
@@ -7408667,6 +7408716,7 @@ const TRANSLATIONS = {
 
 
         "mp_start_chat": "चैट शुरू करें",
+        "mp_chat_cta": "चैट शुरू करें",
 
 
 
@@ -7444763,6 +7444813,8 @@ const TRANSLATIONS = {
 
 
         "wallet_topup": "e-coin रिचार्ज करें",
+        "wallet_topup_success": "रिचार्ज सफल!",
+        "wallet_topup_failed": "रिचार्ज विफल। कृपया फिर से प्रयास करें।",
 
 
 
@@ -7924626,6 +7924678,7 @@ const TRANSLATIONS = {
 
 
         "invite_stats_kpi_today_used": "استُخدم اليوم",
+        "invite_unlimited_label": "تم الإرسال (غير محدود)",
 
 
 
@@ -7933586,6 +7933639,7 @@ const TRANSLATIONS = {
 
 
         "mp_start_chat": "بدء الدردشة",
+        "mp_chat_cta": "بدء الدردشة",
 
 
 
@@ -7969426,6 +7969480,8 @@ const TRANSLATIONS = {
 
 
         "wallet_topup": "شحن e-coin",
+        "wallet_topup_success": "تم الشحن بنجاح!",
+        "wallet_topup_failed": "فشل الشحن. يُرجى المحاولة مرة أخرى.",
 
 
 
