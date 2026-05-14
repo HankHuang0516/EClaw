@@ -1234107,6 +1234107,8 @@ const TRANSLATIONS = {
 
 
 
+        "daily_video_section_title": "每日产品更新",
+        "daily_video_section_caption": "EClawbot 每日发布的简短记录，新版本上线时更新。",
         "admin_access_denied": "拒绝访问",
 
 
@@ -2939468,6 +2939470,8 @@ const TRANSLATIONS = {
         "promo_video_primary_cta": "EClawbot 포털 열기",
         "promo_video_secondary_cta": "홈페이지로 돌아가기",
         "promo_video_note": "EClaw repo 외부에서 만든 HyperFrames 컴포지션에서 게시되었습니다.",
+        "daily_video_section_title": "매일 제품 업데이트",
+        "daily_video_section_caption": "EClawbot에서 매일 출시된 내용을 짧게 살펴봅니다. 새로운 빌드가 올라올 때마다 업데이트됩니다.",
         "promo_meta_meta_title": "EClawbot Concept A | 메타 재귀 다큐멘터리",
         "promo_meta_meta_description": "Concept A를 시청하세요. 제작 이면의 AI 워크플로 자체가 제품 데모가 되는 다큐멘터리 리얼리즘 스타일의 EClawbot 프로모션입니다.",
         "promo_meta_eyebrow": "Concept A · 메타 재귀 다큐멘터리",
@@ -2942110,6 +2942114,8 @@ const TRANSLATIONS = {
         "promo_video_primary_cta": "เปิด EClawbot พอร์ทัล",
         "promo_video_secondary_cta": "กลับสู่หน้าแรก",
         "promo_video_note": "เผยแพร่จากองค์ประกอบ HyperFrames ที่สร้างขึ้นภายนอก repo EClaw",
+        "daily_video_section_title": "อัปเดตผลิตภัณฑ์ประจำวัน",
+        "daily_video_section_caption": "ภาพรวมสั้น ๆ รายวันของสิ่งที่เพิ่งเปิดตัวบน EClawbot อัปเดตทุกครั้งที่มีบิลด์ใหม่",
         "promo_meta_meta_title": "EClawbot แนวคิด ก | สารคดี Meta-recursion",
         "promo_meta_meta_description": "ดู Concept A: การโปรโมตเชิงสารคดี EClawbot ที่เบื้องหลังการทำงาน AI กลายเป็นการสาธิตผลิตภัณฑ์",
         "promo_meta_eyebrow": "แนวคิด A ·สารคดีการเรียกซ้ำเมตาดาต้า",
@@ -3994173,6 +3994179,8 @@ const TRANSLATIONS = {
         "promo_video_meta_description": "Xem video quảng bá EClawbot dài 75 giây: biến nhiều công cụ AI thành một quy trình kanban có thể theo dõi.",
         "promo_video_meta_title": "Video quảng bá EClawbot | Demo Kanban tác nhân AI",
         "promo_video_note": "Được xuất bản từ một bản dựng HyperFrames tạo bên ngoài repo EClaw.",
+        "daily_video_section_title": "Cập nhật sản phẩm hàng ngày",
+        "daily_video_section_caption": "Một cái nhìn ngắn gọn hàng ngày về những gì vừa được phát hành trên EClawbot. Cập nhật mỗi khi có bản dựng mới.",
         "promo_video_primary_cta": "Mở Cổng EClawbot",
         "promo_video_secondary_cta": "Quay lại trang chủ",
         "promo_video_title": "Xem EClawbot trong 75 giây",
@@ -4520080,6 +4520088,8 @@ const TRANSLATIONS = {
         "promo_video_meta_description": "Tonton video promo EClawbot 75 detik: ubah beberapa tool AI menjadi alur kerja kanban yang dapat dilacak.",
         "promo_video_meta_title": "Video Promo EClawbot | Demo Kanban Agen AI",
         "promo_video_note": "Dipublikasikan dari komposisi HyperFrames yang dibuat di luar repo EClaw.",
+        "daily_video_section_title": "Pembaruan produk harian",
+        "daily_video_section_caption": "Tinjauan singkat harian tentang apa yang baru saja diluncurkan di EClawbot. Diperbarui setiap kali ada build baru.",
         "promo_video_primary_cta": "Buka Portal EClawbot",
         "promo_video_secondary_cta": "Kembali ke beranda",
         "promo_video_title": "Lihat EClawbot dalam 75 detik",
@@ -5044100,6 +5044110,8 @@ const TRANSLATIONS = {
         "promo_video_primary_cta": "Ouvrir le portail EClawbot",
         "promo_video_secondary_cta": "Retour à la page d'accueil",
         "promo_video_note": "Publié à partir d'une composition HyperFrames construite en dehors du dépôt EClaw.",
+        "daily_video_section_title": "Mise à jour quotidienne du produit",
+        "daily_video_section_caption": "Un bref aperçu quotidien de ce qui vient d'être livré sur EClawbot. Mis à jour à chaque nouvelle version.",
         "promo_meta_meta_title": "EClawbot Concept A | Documentaire méta-récursion",
         "promo_meta_meta_description": "Regardez Concept A : une promotion EClawbot de réalisme documentaire où le flux de travail de l'IA en coulisses devient la démonstration du produit.",
         "promo_meta_eyebrow": "Concept A · documentaire méta-récursion",
@@ -5561272,6 +5561284,8 @@ const TRANSLATIONS = {
         "promo_video_primary_cta": "Abrir el portal de EClawbot",
         "promo_video_secondary_cta": "Volver a la página de inicio",
         "promo_video_note": "Publicado desde una composición de HyperFrames creada fuera del repositorio de EClaw.",
+        "daily_video_section_title": "Actualización diaria del producto",
+        "daily_video_section_caption": "Una breve mirada diaria a lo que se acaba de lanzar en EClawbot. Se actualiza cada vez que llega una nueva compilación.",
         "promo_meta_meta_title": "Concepto A de EClawbot | Documental de metarrecursión",
         "promo_meta_meta_description": "Mira el Concepto A: una promoción de EClawbot con realismo documental, donde el flujo de IA detrás de escena se convierte en la demo del producto.",
         "promo_meta_eyebrow": "Concepto A · documental de metarrecursión",
@@ -6097814,6 +6097828,8 @@ const TRANSLATIONS = {
         "promo_video_primary_cta": "EClawbot-Portal öffnen",
         "promo_video_secondary_cta": "Zurück zur Startseite",
         "promo_video_note": "Veröffentlicht aus einer HyperFrames-Komposition, die außerhalb des EClaw-Repos erstellt wurde.",
+        "daily_video_section_title": "Tägliches Produkt-Update",
+        "daily_video_section_caption": "Ein kurzer täglicher Blick darauf, was gerade auf EClawbot veröffentlicht wurde. Wird bei jedem neuen Build aktualisiert.",
         "promo_meta_meta_title": "EClawbot Konzept A | Meta-Rekursions-Dokumentation",
         "promo_meta_meta_description": "Sieh dir Konzept A an: ein EClawbot-Promovideo im dokumentarischen Realismus, bei dem der KI-Workflow hinter den Kulissen zur Produktdemo wird.",
         "promo_meta_eyebrow": "Konzept A · Meta-Rekursions-Dokumentation",
@@ -6765723,6 +6765739,8 @@ const TRANSLATIONS = {
         "promo_video_meta_description": "Tonton video promo EClawbot selama 75 saat: tukar pelbagai alat AI menjadi aliran kerja kanban yang boleh dijejaki.",
         "promo_video_meta_title": "Video Promo EClawbot | Demo Kanban Ejen AI",
         "promo_video_note": "Diterbitkan daripada komposisi HyperFrames yang dibina di luar repo EClaw.",
+        "daily_video_section_title": "Kemas kini produk harian",
+        "daily_video_section_caption": "Tinjauan ringkas harian tentang apa yang baru sahaja dilancarkan di EClawbot. Dikemas kini setiap kali build baharu tiba.",
         "promo_video_primary_cta": "Buka Portal EClawbot",
         "promo_video_secondary_cta": "Kembali ke laman utama",
         "promo_video_title": "Lihat EClawbot dalam 75 saat",
@@ -7464465,6 +7464483,8 @@ const TRANSLATIONS = {
       "promo_video_primary_cta": "EClawbot Portal खोलें",
       "promo_video_secondary_cta": "मुखपृष्ठ पर वापस",
       "promo_video_note": "EClaw रेपो के बाहर निर्मित HyperFrames रचना से प्रकाशित।",
+        "daily_video_section_title": "दैनिक उत्पाद अपडेट",
+        "daily_video_section_caption": "EClawbot पर रोज़ रिलीज़ हुई चीज़ों की एक छोटी सी झलक। हर नया बिल्ड आने पर अपडेट होती है।",
       "promo_meta_meta_title": "EClawbot कॉन्सेप्ट A | मेटा-रिकर्शन डॉक्यूमेंटरी",
       "promo_meta_meta_description": "कॉन्सेप्ट A देखें: एक डॉक्यूमेंटरी-रियलिज़्म EClawbot प्रोमो, जहाँ पर्दे के पीछे का AI वर्कफ़्लो ही उत्पाद डेमो बन जाता है।",
       "promo_meta_eyebrow": "कॉन्सेप्ट A · मेटा-रिकर्शन डॉक्यूमेंटरी",
@@ -7464968,6 +7464988,8 @@ const TRANSLATIONS = {
 
 
     ar: {
+        "daily_video_section_title": "تحديث المنتج اليومي",
+        "daily_video_section_caption": "نظرة يومية موجزة على ما تم إطلاقه للتو على EClawbot. يتم التحديث في كل مرة يصل فيها إصدار جديد.",
         "guide_cc_channel_envvars_row_auto_wake_poll": "فاصل إعادة الفحص (بالثواني) أثناء انشغال Claude",
         "guide_cc_channel_envvars_row_auto_wake_max_wait": "أقصى زمن انتظار إجمالي قبل التخلي عن الإيقاظ التلقائي (بالثواني)",
         "guide_cc_channel_envvars_row_auto_wake_enabled": "تنبيه الجلسات الخاملة تلقائياً (مطلوب بعد <code>/clear</code> أو في الجلسات الجديدة)",
