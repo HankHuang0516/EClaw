@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EClaw — Soul 靈魂模板</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root{--ink:#0f172a;--muted:#64748b;--violet:#7c3aed;--blue:#2563eb;--cyan:#0891b2;--green:#10b981;--amber:#f59e0b;--rose:#e11d48;--pink:#ec4899;--card:rgba(255,255,255,.92)}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:'Noto Sans TC',Inter,sans-serif;color:var(--ink);background:radial-gradient(circle at 12% 18%,rgba(236,72,153,.20),transparent 30%),radial-gradient(circle at 78% 12%,rgba(37,99,235,.18),transparent 28%),radial-gradient(circle at 88% 82%,rgba(16,185,129,.16),transparent 32%),linear-gradient(135deg,#fff5fa 0%,#f1f5ff 47%,#f7fff8 100%);overflow-x:hidden}
+    body:before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(236,72,153,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(37,99,235,.06) 1px,transparent 1px);background-size:34px 34px;mask-image:radial-gradient(circle at center,#000 0,#000 68%,transparent 100%);pointer-events:none}.slide{max-width:1180px;min-height:100vh;margin:0 auto;padding:18px 42px;display:grid;grid-template-columns:.94fr 1.1fr;gap:28px;align-items:center}.eyebrow{display:inline-flex;align-items:center;gap:10px;padding:9px 14px;border-radius:999px;background:rgba(255,255,255,.88);border:1px solid rgba(236,72,153,.28);box-shadow:0 14px 36px rgba(236,72,153,.13);font:900 13px Inter,sans-serif;letter-spacing:.08em;color:#9d174d;text-transform:uppercase}h1{font-size:clamp(38px,4.45vw,60px);line-height:1.02;letter-spacing:-.055em;margin:18px 0 14px;font-weight:900}.accent{background:linear-gradient(90deg,var(--pink),var(--violet),var(--blue));-webkit-background-clip:text;background-clip:text;color:transparent}.lead{font-size:19px;line-height:1.52;color:#334155;margin:0 0 18px}.lead strong{color:#9d174d}.badges{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.pill{display:inline-flex;align-items:center;gap:7px;padding:9px 12px;border-radius:999px;background:linear-gradient(135deg,#fdf2f8,#eff6ff);border:1px solid rgba(236,72,153,.20);font-weight:900;color:#9d174d}.bullets{display:grid;gap:10px}.bullets div{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid rgba(15,32,51,.08);border-radius:18px;padding:10px 13px;box-shadow:0 16px 44px rgba(16,32,51,.08)}.bullets b{font-size:24px;line-height:1}.bullets span{font-size:15px;line-height:1.55;color:#475569;min-width:0}.panel{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,255,255,.84));border:1px solid rgba(236,72,153,.22);border-radius:34px;padding:16px;box-shadow:0 28px 90px rgba(16,32,51,.16);overflow:hidden}.panel:before{content:'SOUL';position:absolute;right:-20px;top:-13px;font:900 96px Inter,sans-serif;color:rgba(236,72,153,.08);letter-spacing:-.08em}.top{position:relative;z-index:1;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start}.top h2{margin:0;font-size:28px;line-height:1.08;letter-spacing:-.036em}.top p{margin:8px 0 0;color:#475569;line-height:1.48;font-size:15px}.badge{min-width:132px;text-align:center;border-radius:24px;padding:14px;background:linear-gradient(135deg,#fdf2f8,#eff6ff);border:1px solid rgba(236,72,153,.22);box-shadow:0 18px 42px rgba(236,72,153,.13)}.badge strong{display:block;font:900 31px Inter,sans-serif;color:#9d174d}.badge span{display:block;margin-top:3px;font:900 11px Inter,sans-serif;color:#64748b;letter-spacing:.08em}.mock{position:relative;z-index:1;margin-top:14px;border-radius:26px;padding:16px;background:#fff;border:1px solid rgba(15,32,51,.08);box-shadow:0 18px 44px rgba(15,32,51,.10)}.bar{display:flex;gap:8px;align-items:center;margin-bottom:12px}.dot{width:11px;height:11px;border-radius:50%;background:var(--rose);box-shadow:18px 0 0 var(--amber),36px 0 0 var(--green)}.bar span{margin-left:42px;font:900 12px Inter,sans-serif;color:#64748b;letter-spacing:.08em;text-transform:uppercase}.profile{display:grid;grid-template-columns:64px 1fr;gap:14px;align-items:center}.avatar{display:grid;place-items:center;width:64px;height:64px;border-radius:22px;background:linear-gradient(135deg,var(--pink),var(--violet));color:#fff;font-size:30px;box-shadow:0 14px 28px rgba(236,72,153,.20)}.role{font-size:25px;font-weight:900;letter-spacing:-.04em}.tone{margin-top:3px;color:#64748b;font-weight:700}.fields{margin-top:14px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.field{border-radius:18px;padding:11px;background:linear-gradient(180deg,#fdf8fc,#fff);border:1px solid #fce7f3}.field b{display:block;color:#9d174d;font-size:12px;text-transform:uppercase;letter-spacing:.08em}.field span{display:block;margin-top:5px;font-size:13px;line-height:1.38;color:#475569}.flow{margin-top:12px;border-radius:22px;padding:12px;background:linear-gradient(135deg,#111827,#9d174d);color:#fff;box-shadow:0 22px 48px rgba(157,23,77,.22)}.flow small{display:block;text-transform:uppercase;letter-spacing:.12em;font:900 12px Inter,sans-serif;color:#fbcfe8}.flow strong{display:block;margin-top:6px;font:900 clamp(23px,2.55vw,31px) Inter,sans-serif;letter-spacing:-.045em}.flow span{display:block;margin-top:5px;color:#fbcfe8;line-height:1.38}.checks{margin-top:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.checks div{border-radius:18px;padding:9px;background:linear-gradient(180deg,#fdf8fc,#fff);border:1px solid #fce7f3}.checks b{display:block;color:#9d174d;margin-bottom:5px}.checks span{font-size:12px;line-height:1.36;color:#64748b}.done{margin-top:10px;border-radius:18px;padding:9px 12px;background:linear-gradient(90deg,rgba(236,72,153,.13),rgba(124,58,237,.11));font-weight:900;color:#9d174d;line-height:1.45}
+    @media(min-width:761px){.slide{padding:10px 42px;gap:24px}.panel{padding:13px}.top h2{font-size:26px}.top p{font-size:14px}.badge{padding:11px;min-width:122px}.badge strong{font-size:29px}h1{margin:14px 0 10px}.lead{font-size:18px;margin-bottom:14px}.bullets{gap:8px}.bullets div{padding:9px 12px}.mock{margin-top:10px;padding:12px;border-radius:24px}.profile{grid-template-columns:56px 1fr}.avatar{width:56px;height:56px}.role{font-size:23px}.fields{margin-top:10px;gap:8px}.field{padding:9px}.field span{font-size:12.5px}.flow{margin-top:9px;padding:10px}.flow strong{font-size:25px}.checks{margin-top:9px;gap:8px}.checks div{padding:8px}.done{margin-top:7px;padding:8px 10px;font-size:14px}}
+    @media(max-width:760px){body{overflow-x:hidden}.slide{grid-template-columns:1fr;padding:34px 36px 34px 20px;gap:24px;width:min(390px,100%);max-width:390px;overflow:hidden;margin:0}h1{font-size:34px;letter-spacing:-.045em;overflow-wrap:anywhere}.accent{display:block}.lead{font-size:17px;overflow-wrap:anywhere;word-break:break-all}.bullets div{max-width:100%;min-width:0}.bullets b{flex:0 0 auto}.bullets span,.top p,.field span,.flow span,.checks span{overflow-wrap:anywhere;word-break:break-all}.panel{padding:20px;border-radius:26px;max-width:100%;overflow:hidden}.top{grid-template-columns:1fr}.badge{width:100%;min-width:0}.top h2{font-size:27px;overflow-wrap:anywhere}.fields,.checks{grid-template-columns:1fr}.profile{grid-template-columns:56px 1fr}.role{font-size:23px}.avatar{width:56px;height:56px}.bar span{font-size:11px}}
+  </style>
+</head>
+<body>
+  <main class="slide">
+    <section>
+      <div class="eyebrow">🪞 Guide / Soul</div>
+      <h1>Soul：<span class="accent">一鍵套上預設人格</span></h1>
+      <p class="lead">Soul Template 是代理的<strong>個性藍本</strong>：語氣、思考方式、情緒風格一次到位，免去從零調教 AI 的過程。</p>
+      <div class="badges"><span class="pill">helpful-assistant</span><span class="pill">cheerful-host</span><span class="pill">strict-coach</span><span class="pill">wise-mentor</span></div>
+      <div class="bullets">
+        <div><b>🎭</b><span>選一個現成靈魂套用，立刻得到語氣、思維、情緒一致的代理。</span></div>
+        <div><b>🧬</b><span>Soul 與 Identity 並行：靈魂決定「怎麼說」，Identity 決定「說什麼」。</span></div>
+        <div><b>🧪</b><span>可自訂欄位覆蓋模板預設值，做出獨家品牌人格而不重蓋整份設定。</span></div>
+      </div>
+    </section>
+    <section class="panel" aria-label="soul slide">
+      <div class="top">
+        <div>
+          <h2>選個靈魂，代理就有「人味」</h2>
+          <p>Soul Template 是讓 AI 不再像 AI 的關鍵：相同 Identity 配不同 Soul，會說出完全不同氣質的話。</p>
+        </div>
+        <div class="badge"><strong>10+</strong><span>SOUL TEMPLATES</span></div>
+      </div>
+      <div class="mock">
+        <div class="bar"><div class="dot"></div><span>Soul Library</span></div>
+        <div class="profile"><div class="avatar">🌸</div><div><div class="role">親切助理 (helpful-assistant)</div><div class="tone">耐心、溫和、優先解決問題</div></div></div>
+        <div class="fields">
+          <div class="field"><b>語氣</b><span>正式但不冷漠，遇到挫折時會主動安撫情緒。</span></div>
+          <div class="field"><b>特質</b><span>邏輯清晰、條列分明，喜歡用例子說明複雜概念。</span></div>
+          <div class="field"><b>觀點</b><span>樂於承認侷限，不會硬掰答案，遇到不懂直接說。</span></div>
+          <div class="field"><b>情緒</b><span>面對抱怨時先共感再解題，不會跳過情緒直奔結論。</span></div>
+        </div>
+      </div>
+      <div class="flow">
+        <small>Setup path</small>
+        <strong>Mission → Soul → 套用至 Identity → 即刻換靈魂</strong>
+        <span>切換 Soul 不影響 Role / Instructions / Boundaries，只重塑語氣、思維與情緒，幾秒鐘讓代理改頭換面。</span>
+      </div>
+      <div class="checks">
+        <div><b>即套即用</b><span>不必逐欄位寫人格，挑現成靈魂就能上線。</span></div>
+        <div><b>並行設定</b><span>與 Identity / Rules 共存，互不覆蓋。</span></div>
+        <div><b>自訂覆蓋</b><span>留下喜歡的語氣，改寫不適合的部分。</span></div>
+      </div>
+      <div class="done">Soul 讓相同職位的代理長出不同個性，是品牌差異化最快的開關。</div>
+    </section>
+  </main>
+</body>
+</html>

@@ -165278,6 +165278,8 @@ const TRANSLATIONS = {
 
 
         "info_slide_guide_identity_cta": "View Claude Design slide →",
+        "info_slide_guide_soul_cta": "View Soul Template slide →",
+        "info_slide_guide_rules_cta": "View Rules Template slide →",
 
 
 
@@ -807644,6 +807646,8 @@ const TRANSLATIONS = {
 
 
         "info_slide_guide_identity_cta": "查看 Claude Design 簡報 →",
+        "info_slide_guide_soul_cta": "查看 Soul 靈魂模板簡報 →",
+        "info_slide_guide_rules_cta": "查看 Rules 規則模板簡報 →",
 
 
 

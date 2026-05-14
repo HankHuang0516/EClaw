@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EClaw — Rules 規則模板</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Inter:wght@500;700;900&display=swap" rel="stylesheet">
+  <style>
+    :root{--ink:#0f172a;--muted:#64748b;--violet:#7c3aed;--blue:#2563eb;--cyan:#0891b2;--green:#10b981;--amber:#f59e0b;--rose:#e11d48;--card:rgba(255,255,255,.92)}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:'Noto Sans TC',Inter,sans-serif;color:var(--ink);background:radial-gradient(circle at 12% 18%,rgba(225,29,72,.20),transparent 30%),radial-gradient(circle at 78% 12%,rgba(245,158,11,.18),transparent 28%),radial-gradient(circle at 88% 82%,rgba(124,58,237,.16),transparent 32%),linear-gradient(135deg,#fff7f7 0%,#fff8ed 47%,#f8f5ff 100%);overflow-x:hidden}
+    body:before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(225,29,72,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(245,158,11,.06) 1px,transparent 1px);background-size:34px 34px;mask-image:radial-gradient(circle at center,#000 0,#000 68%,transparent 100%);pointer-events:none}.slide{max-width:1180px;min-height:100vh;margin:0 auto;padding:18px 42px;display:grid;grid-template-columns:.94fr 1.1fr;gap:28px;align-items:center}.eyebrow{display:inline-flex;align-items:center;gap:10px;padding:9px 14px;border-radius:999px;background:rgba(255,255,255,.88);border:1px solid rgba(225,29,72,.28);box-shadow:0 14px 36px rgba(225,29,72,.13);font:900 13px Inter,sans-serif;letter-spacing:.08em;color:#9f1239;text-transform:uppercase}h1{font-size:clamp(38px,4.45vw,60px);line-height:1.02;letter-spacing:-.055em;margin:18px 0 14px;font-weight:900}.accent{background:linear-gradient(90deg,var(--rose),var(--amber),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}.lead{font-size:19px;line-height:1.52;color:#334155;margin:0 0 18px}.lead strong{color:#9f1239}.badges{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.pill{display:inline-flex;align-items:center;gap:7px;padding:9px 12px;border-radius:999px;background:linear-gradient(135deg,#fff1f2,#fff7ed);border:1px solid rgba(225,29,72,.20);font-weight:900;color:#9f1239}.bullets{display:grid;gap:10px}.bullets div{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid rgba(15,32,51,.08);border-radius:18px;padding:10px 13px;box-shadow:0 16px 44px rgba(16,32,51,.08)}.bullets b{font-size:24px;line-height:1}.bullets span{font-size:15px;line-height:1.55;color:#475569;min-width:0}.panel{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(255,255,255,.84));border:1px solid rgba(225,29,72,.22);border-radius:34px;padding:16px;box-shadow:0 28px 90px rgba(16,32,51,.16);overflow:hidden}.panel:before{content:'RULES';position:absolute;right:-20px;top:-13px;font:900 88px Inter,sans-serif;color:rgba(225,29,72,.08);letter-spacing:-.08em}.top{position:relative;z-index:1;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start}.top h2{margin:0;font-size:28px;line-height:1.08;letter-spacing:-.036em}.top p{margin:8px 0 0;color:#475569;line-height:1.48;font-size:15px}.badge{min-width:132px;text-align:center;border-radius:24px;padding:14px;background:linear-gradient(135deg,#fff1f2,#fff7ed);border:1px solid rgba(225,29,72,.22);box-shadow:0 18px 42px rgba(225,29,72,.13)}.badge strong{display:block;font:900 31px Inter,sans-serif;color:#9f1239}.badge span{display:block;margin-top:3px;font:900 11px Inter,sans-serif;color:#64748b;letter-spacing:.08em}.mock{position:relative;z-index:1;margin-top:14px;border-radius:26px;padding:16px;background:#fff;border:1px solid rgba(15,32,51,.08);box-shadow:0 18px 44px rgba(15,32,51,.10)}.bar{display:flex;gap:8px;align-items:center;margin-bottom:12px}.dot{width:11px;height:11px;border-radius:50%;background:var(--rose);box-shadow:18px 0 0 var(--amber),36px 0 0 var(--green)}.bar span{margin-left:42px;font:900 12px Inter,sans-serif;color:#64748b;letter-spacing:.08em;text-transform:uppercase}.profile{display:grid;grid-template-columns:64px 1fr;gap:14px;align-items:center}.avatar{display:grid;place-items:center;width:64px;height:64px;border-radius:22px;background:linear-gradient(135deg,var(--rose),var(--amber));color:#fff;font-size:30px;box-shadow:0 14px 28px rgba(225,29,72,.20)}.role{font-size:25px;font-weight:900;letter-spacing:-.04em}.tone{margin-top:3px;color:#64748b;font-weight:700}.fields{margin-top:14px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.field{border-radius:18px;padding:11px;background:linear-gradient(180deg,#fff8f8,#fff);border:1px solid #fee2e2}.field b{display:block;color:#9f1239;font-size:12px;text-transform:uppercase;letter-spacing:.08em}.field span{display:block;margin-top:5px;font-size:13px;line-height:1.38;color:#475569}.flow{margin-top:12px;border-radius:22px;padding:12px;background:linear-gradient(135deg,#111827,#9f1239);color:#fff;box-shadow:0 22px 48px rgba(159,18,57,.22)}.flow small{display:block;text-transform:uppercase;letter-spacing:.12em;font:900 12px Inter,sans-serif;color:#fecdd3}.flow strong{display:block;margin-top:6px;font:900 clamp(23px,2.55vw,31px) Inter,sans-serif;letter-spacing:-.045em}.flow span{display:block;margin-top:5px;color:#fed7d7;line-height:1.38}.checks{margin-top:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.checks div{border-radius:18px;padding:9px;background:linear-gradient(180deg,#fff8f8,#fff);border:1px solid #fee2e2}.checks b{display:block;color:#9f1239;margin-bottom:5px}.checks span{font-size:12px;line-height:1.36;color:#64748b}.done{margin-top:10px;border-radius:18px;padding:9px 12px;background:linear-gradient(90deg,rgba(225,29,72,.13),rgba(245,158,11,.11));font-weight:900;color:#9f1239;line-height:1.45}
+    @media(min-width:761px){.slide{padding:10px 42px;gap:24px}.panel{padding:13px}.top h2{font-size:26px}.top p{font-size:14px}.badge{padding:11px;min-width:122px}.badge strong{font-size:29px}h1{margin:14px 0 10px}.lead{font-size:18px;margin-bottom:14px}.bullets{gap:8px}.bullets div{padding:9px 12px}.mock{margin-top:10px;padding:12px;border-radius:24px}.profile{grid-template-columns:56px 1fr}.avatar{width:56px;height:56px}.role{font-size:23px}.fields{margin-top:10px;gap:8px}.field{padding:9px}.field span{font-size:12.5px}.flow{margin-top:9px;padding:10px}.flow strong{font-size:25px}.checks{margin-top:9px;gap:8px}.checks div{padding:8px}.done{margin-top:7px;padding:8px 10px;font-size:14px}}
+    @media(max-width:760px){body{overflow-x:hidden}.slide{grid-template-columns:1fr;padding:34px 36px 34px 20px;gap:24px;width:min(390px,100%);max-width:390px;overflow:hidden;margin:0}h1{font-size:34px;letter-spacing:-.045em;overflow-wrap:anywhere}.accent{display:block}.lead{font-size:17px;overflow-wrap:anywhere;word-break:break-all}.bullets div{max-width:100%;min-width:0}.bullets b{flex:0 0 auto}.bullets span,.top p,.field span,.flow span,.checks span{overflow-wrap:anywhere;word-break:break-all}.panel{padding:20px;border-radius:26px;max-width:100%;overflow:hidden}.top{grid-template-columns:1fr}.badge{width:100%;min-width:0}.top h2{font-size:27px;overflow-wrap:anywhere}.fields,.checks{grid-template-columns:1fr}.profile{grid-template-columns:56px 1fr}.role{font-size:23px}.avatar{width:56px;height:56px}.bar span{font-size:11px}}
+  </style>
+</head>
+<body>
+  <main class="slide">
+    <section>
+      <div class="eyebrow">📜 Guide / Rules</div>
+      <h1>Rules：<span class="accent">幫 Bot 畫出安全紅線</span></h1>
+      <p class="lead">Rule Template 是代理的<strong>禁區清單</strong>：哪些話題不碰、哪些承諾不能給、遇到敏感請求怎麼婉拒，一次設好。</p>
+      <div class="badges"><span class="pill">no-politics</span><span class="pill">safe-content</span><span class="pill">no-medical</span><span class="pill">no-financial</span></div>
+      <div class="bullets">
+        <div><b>🚫</b><span>明確列出代理「不做的事」，比寫「要小心」更能讓 AI 守住邊界。</span></div>
+        <div><b>🧩</b><span>多份規則模板可以疊加，組合出符合產業合規的安全策略。</span></div>
+        <div><b>🛟</b><span>觸發紅線時，Bot 會自動婉拒並解釋原因，不會硬擠出回應。</span></div>
+      </div>
+    </section>
+    <section class="panel" aria-label="rules slide">
+      <div class="top">
+        <div>
+          <h2>把禁區寫清楚，代理就不會越線</h2>
+          <p>Rules 是 Identity 的安全護欄，當客戶問題踩到紅線時，AI 會優雅地拒絕並引導到正確窗口。</p>
+        </div>
+        <div class="badge"><strong>4+</strong><span>RULE TEMPLATES</span></div>
+      </div>
+      <div class="mock">
+        <div class="bar"><div class="dot"></div><span>Rules Editor</span></div>
+        <div class="profile"><div class="avatar">🛡️</div><div><div class="role">電商客服安全護欄</div><div class="tone">嚴守邊界、禮貌轉介、不越權承諾</div></div></div>
+        <div class="fields">
+          <div class="field"><b>政治話題</b><span>遇到政治、選舉相關問題一律婉拒並結束話題。</span></div>
+          <div class="field"><b>醫療建議</b><span>不提供任何診斷或用藥建議，直接請客戶諮詢專業醫師。</span></div>
+          <div class="field"><b>投資建議</b><span>不評論市場或推薦標的，只引導到合規理財資訊。</span></div>
+          <div class="field"><b>敏感內容</b><span>不討論暴力、仇恨、成人內容，遇到立刻轉到安全話題。</span></div>
+        </div>
+      </div>
+      <div class="flow">
+        <small>Setup path</small>
+        <strong>Mission → Rules → 套用至 Identity → 自動生效</strong>
+        <span>規則模板會綁進 Identity 的 ruleTemplateIds 欄位，每次代理回覆前都會先過一次紅線檢查。</span>
+      </div>
+      <div class="checks">
+        <div><b>列出禁區</b><span>寫「不做什麼」比寫「要小心」更有效。</span></div>
+        <div><b>可組合</b><span>多份模板疊加，覆蓋產業合規需求。</span></div>
+        <div><b>可調整</b><span>規則更新後，套用的代理同步生效。</span></div>
+      </div>
+      <div class="done">Rules 讓代理「會拒絕」也「會引導」，是企業導入 AI 客服的合規底線。</div>
+    </section>
+  </main>
+</body>
+</html>
