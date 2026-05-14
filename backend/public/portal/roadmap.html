@@ -391,14 +391,14 @@
                 </div>
             </div>
 
-            <div class="rm-phase partial">
-                <h3>Phase H0 — <span data-i18n="rm_h0_name">Infrastructure Readiness</span> <span class="rm-status-badge partial" data-i18n="rm_in_progress">In Progress</span></h3>
+            <div class="rm-phase done">
+                <h3>Phase H0 — <span data-i18n="rm_h0_name">Infrastructure Readiness</span> <span class="rm-status-badge done" data-i18n="rm_complete">Complete</span></h3>
                 <div class="rm-phase-desc" data-i18n="rm_h0_desc">Resolve basic connectivity: git clone/write access, credential injection, channel authentication.</div>
                 <ul class="rm-tasks">
-                    <li data-i18n="rm_h0_t1">GITHUB_TOKEN injected into claude-cli-proxy via Railway env var (vault → Railway)</li>
+                    <li class="done" data-i18n="rm_h0_t1">GITHUB_TOKEN injected into claude-cli-proxy via Railway env var (vault → Railway)</li>
                     <li class="done" data-i18n="rm_h0_t2">Redeploy proxy; verify Hermes can git clone/push HankHuang0516/EClaw</li>
-                    <li data-i18n="rm_h0_t3">Webhook secret validation on EClaw side matches Hermes egress</li>
-                    <li data-i18n="rm_h0_t4">Hermes speakTo back to Entity 2 (commander) confirms bidirectional A2A</li>
+                    <li class="done" data-i18n="rm_h0_t3">Webhook secret validation on EClaw side matches Hermes egress</li>
+                    <li class="done" data-i18n="rm_h0_t4">Hermes speakTo back to Entity 2 (commander) confirms bidirectional A2A</li>
                 </ul>
             </div>
 
