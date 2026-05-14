@@ -1,4 +1,4 @@
-# Rental subsystem — cross-subsystem contract (v0.1)
+# Rental subsystem — cross-subsystem contract (v0.2)
 
 **Layer:** This doc covers the contract *between* subsystems — health-probe → rebind cascade → wallet refund → alert routing — that no single `specs/<subsystem>.md` owns end-to-end.
 
@@ -8,7 +8,9 @@
 - [`backend/docs/specs/wallet.md`](./specs/wallet.md) — ledger types, idempotency-key registry, special pool UUIDs.
 - [`backend/docs/specs/channel-bridge.md`](./specs/channel-bridge.md) — `/api/transform` + `senderHint` routing used by alert payloads.
 
-**v0.1 scope.** This is the cross-subsystem *contract* layer — health probe triggers, refund-flow ownership, official-vs-rental lifecycle differences, alert routing. Endpoint shapes, DB schema, and cron table changes are **not** in this PR (see §6 Out of scope).
+**Scope.** This is the cross-subsystem *contract* layer — health probe triggers, refund-flow ownership, official-vs-rental lifecycle differences, alert routing. Endpoint shapes, DB schema, and cron table changes for *unshipped* surfaces are still out of scope (see §6); §7 tracks open contract questions per version.
+
+**v0.2 deltas.** Q1 (listing soft-pause on `yellow_sustained`) and Q3 (cross-device rebind cascade uniformity) are now settled by shipped code — folded into §1.4 and §2 respectively. Q2 (force-active audit trail) and Q4 (`promoted` × `degraded` orthogonality) carry forward; both still depend on code that hasn't been written. See §7.
 
 **Policy anchor.** Hank 2026-04-25 1on1 Q1 — "B 重綁屬於 owner 問題 所以虧要 owner 吃". Health-probe-triggered rebind keeps that ruling: the refund flow charges the owner, not platform or renter. The probe is detection; the cascade is the resolution; this doc binds the two together.
 
@@ -70,10 +72,25 @@ Probe retry within a single sample uses exponential backoff:
 | 1st `red` sample (debounce not yet satisfied) | alert owner via §4 channel; no cascade; reason code `probe_red_provisional` |
 | 2nd consecutive `red` sample (debounce satisfied) on **rental** bot | trigger rebind cascade §2; reason code `probe_red_confirmed` |
 | 2nd consecutive `red` sample on **official** bot | escalate ops alert (§3 + §4); **no cascade** — no owner to settle against |
-| Sustained `yellow` ≥ `YELLOW_SUSTAIN_SAMPLES` (default 4 = 1hr at 15min cadence) | warn owner; trigger listing soft-pause (existing card_4bcbb14d854bec7bce14 work; not blocking this spec) |
+| Sustained `yellow` ≥ `YELLOW_SUSTAIN_SAMPLES` (default 4 = 1hr at 15min cadence) | warn owner; auto-set `bot_listings.soft_pause_until` + `soft_pause_reason='response_timeout'` (shipped — see §1.5 below) |
 | `red → green` debounce completed | clear owner red flag; no positive event emitted to renter (avoid alert-fatigue noise) |
 
 The yellow-sustain path deliberately does NOT cascade — soft-pause keeps the listing taking no new reservations while existing contracts continue; the bot is *degraded* not *broken*. Only confirmed-red triggers the cascade.
+
+### 1.5 Listing soft-pause (Q1 resolved in v0.2)
+
+The soft-pause leg of §1.4 is now an automatic state transition, not just an alert. Authoritative implementation behavior, sourced from `backend/tests/jest/rental-soft-pause.test.js` and the `bot_listings.soft_pause_until` / `soft_pause_reason` columns:
+
+| Aspect | Contract |
+|--------|----------|
+| Enter | `recordListingHealthSample` with `status='degraded'` AND `degradedSince` ≥ 60min → sets `soft_pause_until` (forward window) + `soft_pause_reason`; emits `action: 'soft_paused'`. |
+| Clear (auto) | 5 consecutive `status='ok'` samples → `soft_pause_until = NULL`; emits `action: 'soft_pause_cleared'`. |
+| Clear (manual) | `POST /api/rental/listing/:id/resume` (owner-only) → same NULL-out, audit-logged as operator override. |
+| Reject behavior | `POST /api/rental/create` against a soft-paused listing → **HTTP 503** + `{ code: 'LISTING_SOFT_PAUSED', resumeEta, reason }`. |
+| Existing-contract behavior | active rentals **remain visible to contract queries** and continue billing; only *new* reservations are blocked. This is the §2 cascade's job, not §1's. |
+| Visibility to non-owner | `GET /api/rental/listing/:id` returns `is_soft_paused: true` + `soft_pause_reason` but **omits** `owner_user_id` for non-owners. Plaza search filters soft-paused listings unless `caller=owner`. |
+
+Soft-pause sits *between* `yellow` (alert-only) and `red-confirmed` (cascade). It is recoverable without owner intervention and does not invoke the wallet refund flow.
 
 ---
 
@@ -258,14 +275,14 @@ Manual-intervention escalation thresholds (6h / 24h) are wall-clock from event c
 
 ---
 
-## 7. Open questions for v0.2
+## 7. Open questions
 
-Tracking inline so the next iteration knows what to settle:
+Tracking inline so the next iteration knows what to settle. Resolved questions stay in this list (marked **RESOLVED in v0.X**) for two cycles so reviewers see the answer in-line; older resolutions move to §9 changelog.
 
-- **Q1.** Should `yellow_sustained` (§1.4) auto-soft-pause listings, or only alert owner? Currently this doc says soft-pause is its own card (card_4bcbb14d854bec7bce14, blocked). Once that lands, restate the contract here.
-- **Q2.** Should `force-active` (§4.2) require a kanban card audit trail in addition to the audit log, given it bypasses the debouncer?
-- **Q3.** Cross-device rebind (Phase 4 callsite `index.js:14494`) — does the cascade's pro-rata penalty respect the destination device's owner, or only the source? `specs/rental-rebind-cascade.md` §3 lists the callsite; this doc currently treats all 8 callsites uniformly. If they need to diverge, that's a v0.2 split.
-- **Q4.** Official-bot `promoted` state (§3.3) — is `promoted` orthogonal to `degraded` (a `promoted` bot can be `degraded`), or mutually exclusive? Currently treated as orthogonal in this doc.
+- **Q1. RESOLVED in v0.2.** Should `yellow_sustained` (§1.4) auto-soft-pause listings, or only alert owner? — **Auto-soft-pause** (degraded > 60min triggers it, owner gets warned, no cascade). Now contractualized in §1.5; sourced from `backend/tests/jest/rental-soft-pause.test.js` and the shipped `soft_pause_until` / `soft_pause_reason` columns.
+- **Q2.** Should `force-active` (§4.2) require a kanban card audit trail in addition to the audit log, given it bypasses the debouncer? — **Open**. `POST /api/rental/bot/{entityId}/force-active` is still proposed-only (zero grep hits in `backend/index.js` as of v0.2). When the implementation card opens, the contract recommendation is **dual audit**: an immutable audit-log row *and* a kanban card carrying operator entityId, reason, and probe-state snapshot at the moment of override. Rationale: force-active bypasses the §1 debouncer (which exists precisely so transient redness doesn't cascade) — losing both the debouncer and forensic kanban discoverability would make over-rides invisible to ops review. Settled at impl time, not now.
+- **Q3. RESOLVED in v0.2.** Cross-device rebind (Phase 4 callsite `index.js:14494`) — does the cascade's pro-rata penalty respect the destination device's owner, or only the source? — **Uniform across all 8 callsites.** Per `specs/rental-rebind-cascade.md` §3 the cross-device callsite uses the same `pauseRentalListingsOnRebind` + `terminateRentalContractsOnRebind` wrappers as same-device rebinds. The owner-eats-loss policy anchors at the **source** owner (the slot that just rebound), independent of where the destination bot lives. No divergence needed; no §2 split shipped.
+- **Q4.** Official-bot `promoted` state (§3.3) — is `promoted` orthogonal to `degraded` (a `promoted` bot can be `degraded`), or mutually exclusive? — **Designed orthogonal; not yet exercised in code.** No `promoted` literal exists in `backend/` (v0.2 grep). When the official-bot roster maintenance card lands, `promoted` should be implemented as a separate boolean / metadata flag from health severity (`degraded` / `down`), because they answer different questions: `promoted` = "should this surface in featured slots?" vs `degraded` = "is this bot still serving traffic correctly?". A `promoted` bot transitioning to `degraded` should *demote from featured surfaces* but keep the `promoted` intent flag, so it auto-refeatures on recovery. Restate contract once the roster card ships.
 
 ---
 
@@ -274,3 +291,10 @@ Tracking inline so the next iteration knows what to settle:
 - This doc is the source of truth for **inter-subsystem contracts**. When a probe trigger changes, when a refund-flow ownership changes, when an alert channel changes — update here, in the same PR as the implementation.
 - When a per-subsystem detail moves (e.g. `INTERVIEW_PASS_SCORE` changes) — update the relevant `specs/*.md` only; this doc references by name, not by value.
 - v0.x versioning is informal. Cut a v1.0 when §7's open questions are all answered and the implementation is shipped.
+
+---
+
+## 9. Changelog
+
+- **v0.2** (2026-05-15) — Q1 resolved (auto-soft-pause shipped; new §1.5). Q3 resolved (rebind cascade uniform per `specs/rental-rebind-cascade.md` §3). Q2 + Q4 still open; recommendations recorded inline for the impl card to consume.
+- **v0.1** (2026-05-14, PR #2772) — Initial cut: §1 health probe, §2 rebind cascade, §3 official-vs-rental lifecycle, §4 alert routing, §6 out-of-scope fence, §7 open questions.
