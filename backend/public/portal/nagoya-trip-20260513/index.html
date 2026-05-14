@@ -554,6 +554,82 @@
     letter-spacing: 0.04em;
   }
 
+  /* ===== Clickable maps + image lightbox ===== */
+  .map-link {
+    color: var(--forest);
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+  .map-link::after {
+    content: "↗";
+    font-size: 0.78em;
+    margin-left: 0.18em;
+    color: var(--gold-deep);
+  }
+  .map-link:hover { color: var(--gold-deep); }
+  img.zoomable-img {
+    cursor: zoom-in;
+    transition: filter .16s ease, transform .16s ease;
+  }
+  img.zoomable-img:hover { filter: brightness(1.04); }
+  .img-zoom-hint { position: relative; }
+  .img-zoom-hint::after {
+    content: "點圖放大";
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(18, 42, 31, .72);
+    color: #fff;
+    font-size: 11px;
+    letter-spacing: .04em;
+    pointer-events: none;
+  }
+  .lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(18, 42, 31, .88);
+  }
+  .lightbox.is-open { display: flex; }
+  .lightbox img {
+    max-width: min(96vw, 1280px);
+    max-height: 88vh;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 18px 60px rgba(0, 0, 0, .36);
+    background: #fff;
+  }
+  .lightbox .close {
+    position: fixed;
+    top: 14px;
+    right: 18px;
+    border: 1px solid rgba(255,255,255,.42);
+    background: rgba(0,0,0,.28);
+    color: #fff;
+    border-radius: 999px;
+    width: 42px;
+    height: 42px;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .lightbox .caption {
+    position: fixed;
+    left: 24px;
+    right: 24px;
+    bottom: 14px;
+    color: rgba(255,255,255,.86);
+    text-align: center;
+    font-size: 13px;
+  }
+
   /* ===== Mobile ===== */
   @media (max-width: 900px) {
     .topbar-inner { padding: 10px 16px; }
@@ -953,11 +1029,11 @@
       <p class="sec-lead">5 天行程精選五個招牌據點，點選可直接跳轉對應日程。</p>
     </div>
     <div class="highlight-grid">
-      <a class="highlight-card" href="#day2"><span class="num">01</span><h3>名古屋港水族館</h3><p>Day 2 ・ 海豚虎鯨大水槽</p></a>
-      <a class="highlight-card" href="#day3"><span class="num">02</span><h3>吉卜力公園</h3><p>Day 3 ・ 魔之谷 + 魔法之里</p></a>
-      <a class="highlight-card" href="#day4"><span class="num">03</span><h3>樂高樂園 Japan</h3><p>Day 4 ・ + SEA LIFE 雙樂園</p></a>
-      <a class="highlight-card" href="#day2"><span class="num">04</span><h3>大須商店街</h3><p>Day 2 ・ 美食古著</p></a>
-      <a class="highlight-card" href="#day3"><span class="num">05</span><h3>榮商圈</h3><p>Day 3 / Day 4 夜遊</p></a>
+      <a class="highlight-card" href="https://www.google.com/maps/search/?api=1&query=%E5%90%8D%E5%8F%A4%E5%B1%8B%E6%B8%AF%E6%B0%B4%E6%97%8F%E9%A4%A8%203-1%20Minatomachi%20Minato-ku%20Nagoya" target="_blank" rel="noopener"><span class="num">01</span><h3>名古屋港水族館</h3><p>Day 2 ・ 海豚虎鯨大水槽</p></a>
+      <a class="highlight-card" href="https://www.google.com/maps/search/?api=1&query=Ghibli%20Park%20Aichi%20Expo%20Memorial%20Park" target="_blank" rel="noopener"><span class="num">02</span><h3>吉卜力公園</h3><p>Day 3 ・ 魔之谷 + 魔法之里</p></a>
+      <a class="highlight-card" href="https://www.google.com/maps/search/?api=1&query=LEGOLAND%20Japan%202-2-1%20Kinjofuto%20Minato-ku%20Nagoya" target="_blank" rel="noopener"><span class="num">03</span><h3>樂高樂園 Japan</h3><p>Day 4 ・ + SEA LIFE 雙樂園</p></a>
+      <a class="highlight-card" href="https://www.google.com/maps/search/?api=1&query=%E5%A4%A7%E9%A0%88%E5%95%86%E5%BA%97%E8%A1%97%20Osu%20Shopping%20District%20Nagoya" target="_blank" rel="noopener"><span class="num">04</span><h3>大須商店街</h3><p>Day 2 ・ 美食古著</p></a>
+      <a class="highlight-card" href="https://www.google.com/maps/search/?api=1&query=Sakae%20Nagoya%20Shopping%20District" target="_blank" rel="noopener"><span class="num">05</span><h3>榮商圈</h3><p>Day 3 / Day 4 夜遊</p></a>
     </div>
   </section>
 
@@ -1022,6 +1098,156 @@
   <div class="brand">名古屋深度行 5 天 4 夜</div>
   <div class="small">2026 / 5 / 15 – 5 / 19 ・ Hosted on eclawbot.com ・ 圖片版權屬原作者所有</div>
 </footer>
+
+<div class="lightbox" id="image-lightbox" aria-hidden="true" role="dialog" aria-label="圖片放大檢視">
+  <button class="close" type="button" aria-label="關閉圖片">×</button>
+  <img alt="" />
+  <div class="caption"></div>
+</div>
+<script>
+(function () {
+  const mapTargets = [
+    ["Hotel JAL City Nagoya Nishiki", "Hotel JAL City Nagoya Nishiki 1-16-36 Nishiki Naka-ku Nagoya Aichi"],
+    ["名古屋錦日航都市飯店", "Hotel JAL City Nagoya Nishiki 1-16-36 Nishiki Naka-ku Nagoya Aichi"],
+    ["J Hotel Rinku", "J Hotel Rinku 3-2-1 Rinku-cho Tokoname Aichi"],
+    ["ジェイホテル りんくう", "J Hotel Rinku 3-2-1 Rinku-cho Tokoname Aichi"],
+    ["中部國際機場 Centrair", "Chubu Centrair International Airport 1-1 Centrair Tokoname Aichi"],
+    ["中部國際機場", "Chubu Centrair International Airport 1-1 Centrair Tokoname Aichi"],
+    ["RDZ Rentacar", "RDZレンタカー 中部国際空港"],
+    ["RDZレンタカー", "RDZレンタカー 中部国際空港"],
+    ["ni:no (ニーノ)", "ni:no ニーノ 〒479-0835 愛知県常滑市陶郷町1-1"],
+    ["ni:no", "ni:no ニーノ 〒479-0835 愛知県常滑市陶郷町1-1"],
+    ["常滑まねき猫通", "常滑まねき猫通り 愛知県常滑市栄町"],
+    ["常滑招財貓通", "常滑まねき猫通り 愛知県常滑市栄町"],
+    ["とこにゃん", "とこにゃん 常滑市栄町 愛知県"],
+    ["AEON Mall Tokoname (常滑)", "イオンモール常滑 2-20-3 Rinku-cho Tokoname Aichi"],
+    ["AEON Mall Tokoname", "イオンモール常滑 2-20-3 Rinku-cho Tokoname Aichi"],
+    ["AEON Mall 常滑", "イオンモール常滑 2-20-3 Rinku-cho Tokoname Aichi"],
+    ["FUSE COFFEE nagoya", "FUSE COFFEE nagoya 〒460-0003 愛知県名古屋市中区錦2-8-28"],
+    ["Masago", "Masago 名古屋 朝食"],
+    ["名古屋港水族館", "名古屋港水族館 3-1 Minatomachi Minato-ku Nagoya Aichi"],
+    ["JETTY 美食廣場", "JETTY 名古屋港 ガーデンふ頭 愛知県名古屋市港区港町"],
+    ["Arribada", "レストラン アリバダ 名古屋港水族館"],
+    ["大須商店街", "大須商店街 Osu Shopping District Nagoya Aichi"],
+    ["萬松寺停車場 Banshoji Chushajo", "萬松寺駐車場 名古屋市中区大須"],
+    ["double tall café", "double tall cafe nagoya 大須 名古屋"],
+    ["釣船茶屋 Zauo Hoshizaki", "釣船茶屋ざうお 星崎店 名古屋市南区星崎"],
+    ["釣船茶屋Zauo Hoshizaki", "釣船茶屋ざうお 星崎店 名古屋市南区星崎"],
+    ["吉卜力公園", "Ghibli Park Aichi Expo Memorial Park Nagakute Aichi"],
+    ["愛・地球博紀念公園", "愛・地球博記念公園 モリコロパーク 長久手市 愛知県"],
+    ["魔之谷", "ジブリパーク 魔女の谷 愛・地球博記念公園"],
+    ["魔女之谷", "ジブリパーク 魔女の谷 愛・地球博記念公園"],
+    ["魔法之里", "ジブリパーク もののけの里 愛・地球博記念公園"],
+    ["吉卜力大倉庫", "ジブリの大倉庫 ジブリパーク 愛・地球博記念公園"],
+    ["Hot Tin Roof", "Hot Tin Roof Ghibli Park Valley of Witches"],
+    ["麵家獅子丸", "麺家 獅子丸 名古屋市中村区亀島"],
+    ["Karamiso Ramen Fukurou", "からみそラーメンふくろう 名古屋"],
+    ["榮商圈 SakaeChika 地下街", "SakaeChika 栄地下街 名古屋"],
+    ["榮商圈", "Sakae Nagoya Shopping District"],
+    ["SakaeChika", "SakaeChika 栄地下街 名古屋"],
+    ["矢場町", "Yabacho Station Nagoya"],
+    ["Apple Store", "Apple Nagoya Sakae"],
+    ["Cocokarafine", "ココカラファイン 名古屋 栄"],
+    ["LEGOLAND Japan", "LEGOLAND Japan 2-2-1 Kinjofuto Minato-ku Nagoya Aichi"],
+    ["樂高樂園 Japan", "LEGOLAND Japan 2-2-1 Kinjofuto Minato-ku Nagoya Aichi"],
+    ["樂高樂園", "LEGOLAND Japan 2-2-1 Kinjofuto Minato-ku Nagoya Aichi"],
+    ["積木屋漢堡餐廳", "Brick House Burgers LEGOLAND Japan"],
+    ["SEA LIFE 海洋探索中心", "SEA LIFE Nagoya 2-7-1 Kinjofuto Minato-ku Nagoya"],
+    ["德兵衛迴轉壽司 Oasis 21 店", "にぎりの徳兵衛 オアシス21店 名古屋市東区東桜1-11-1"],
+    ["德兵衛回転寿司 Oasis21店", "にぎりの徳兵衛 オアシス21店 名古屋市東区東桜1-11-1"],
+    ["德兵衛迴轉壽司", "にぎりの徳兵衛 オアシス21店 名古屋市東区東桜1-11-1"],
+    ["Oasis 21", "Oasis 21 Nagoya Sakae"],
+    ["Oasis21", "Oasis 21 Nagoya Sakae"],
+    ["橡子共和國", "どんぐり共和国 名古屋 栄"],
+    ["寶可夢中心", "Pokémon Center Nagoya"],
+    ["松本清", "マツモトキヨシ 名古屋 栄"],
+    ["驚安殿堂 ドンキ", "ドン・キホーテ 栄本店 名古屋"],
+    ["PARCO", "名古屋PARCO"],
+    ["Early Birds", "EARLY BIRDS BREAKFAST 名古屋"],
+    ["J Hotel Rinku", "J Hotel Rinku 3-2-1 Rinku-cho Tokoname Aichi"]
+  ];
+  const mapUrl = (query) => "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(query);
+  const sortedTargets = mapTargets
+    .map(([label, query]) => ({ label, query }))
+    .sort((a, b) => b.label.length - a.label.length);
+  const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(sortedTargets.map(t => esc(t.label)).join("|"), "g");
+  const lookup = new Map(sortedTargets.map(t => [t.label, t]));
+  const roots = document.querySelectorAll(".hero-text, main, footer.footer");
+  roots.forEach(root => {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        const parent = node.parentElement;
+        if (!parent || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        if (parent.closest("a, button, script, style, textarea, .lightbox")) return NodeFilter.FILTER_REJECT;
+        pattern.lastIndex = 0;
+        return pattern.test(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(node => {
+      pattern.lastIndex = 0;
+      const text = node.nodeValue;
+      const frag = document.createDocumentFragment();
+      let last = 0;
+      text.replace(pattern, (match, offset) => {
+        if (offset > last) frag.appendChild(document.createTextNode(text.slice(last, offset)));
+        const target = lookup.get(match);
+        const a = document.createElement("a");
+        a.className = "map-link";
+        a.href = mapUrl(target.query);
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.title = "在 Google 地圖開啟：" + target.query;
+        a.textContent = match;
+        frag.appendChild(a);
+        last = offset + match.length;
+      });
+      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+    });
+  });
+
+  const lightbox = document.getElementById("image-lightbox");
+  const lightboxImg = lightbox.querySelector("img");
+  const caption = lightbox.querySelector(".caption");
+  const close = () => {
+    lightbox.classList.remove("is-open");
+    lightbox.setAttribute("aria-hidden", "true");
+    lightboxImg.removeAttribute("src");
+    document.body.style.overflow = "";
+  };
+  const open = (img) => {
+    lightboxImg.src = img.currentSrc || img.src;
+    lightboxImg.alt = img.alt || "行程圖片";
+    caption.textContent = img.alt || "點擊背景或按 Esc 關閉";
+    lightbox.classList.add("is-open");
+    lightbox.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  };
+  document.querySelectorAll("img").forEach(img => {
+    if (img.closest("#image-lightbox")) return;
+    img.classList.add("zoomable-img");
+    img.setAttribute("tabindex", "0");
+    img.setAttribute("role", "button");
+    img.setAttribute("aria-label", (img.alt || "圖片") + "，點擊放大");
+    img.addEventListener("click", () => open(img));
+    img.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        open(img);
+      }
+    });
+  });
+  lightbox.addEventListener("click", (event) => {
+    if (event.target === lightbox || event.target.classList.contains("close")) close();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && lightbox.classList.contains("is-open")) close();
+  });
+})();
+</script>
 
 </body>
 </html>
