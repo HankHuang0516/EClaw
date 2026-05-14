@@ -37,7 +37,15 @@ describe('cron-spawn jitter — Layer 1', () => {
     });
 
     test('jitter ceiling is configurable via CRON_NOTIFY_JITTER_MS env, default 30s', () => {
-        expect(kanbanSrc).toMatch(/Number\(process\.env\.CRON_NOTIFY_JITTER_MS\)\s*\|\|\s*30000/);
+        expect(kanbanSrc).toMatch(/Number\(process\.env\.CRON_NOTIFY_JITTER_MS\)/);
+        expect(kanbanSrc).toMatch(/Number\.isFinite\(jitterMaxRaw\)[\s\S]{0,80}\?\s*jitterMaxRaw\s*:\s*30000/);
+    });
+
+    test('explicit CRON_NOTIFY_JITTER_MS=0 is preserved (not coerced to default)', () => {
+        // Critical: `Number("0") || 30000` evaluates to 30000 — that bug must
+        // not return. Parse must use Number.isFinite, not ||. Flagged by
+        // #1 cross-review on PR #2791.
+        expect(kanbanSrc).not.toMatch(/Number\(process\.env\.CRON_NOTIFY_JITTER_MS\)\s*\|\|/);
     });
 
     test('jitter is random within [0, max), not fixed', () => {
@@ -72,8 +80,26 @@ describe('lane backpressure — Layer 2', () => {
         expect(helper[0]).toMatch(/status IN \('todo','in_progress','review'\)/);
     });
 
+    test('botActiveWorkload uses JSONB membership (not invalid integer[] cast)', () => {
+        // assigned_bots is JSONB; integer[] cast fails at runtime. Flagged by
+        // #1 cross-review on PR #2791. Must use @> with JSON.stringify param,
+        // matching the existing pattern at L917.
+        const helper = kanbanSrc.match(/async function botActiveWorkload[\s\S]*?\n    \}/);
+        expect(helper).not.toBeNull();
+        expect(helper[0]).toMatch(/assigned_bots @> \$2::jsonb/);
+        expect(helper[0]).toMatch(/JSON\.stringify\(\[Number\(botId\)\]\)/);
+        expect(helper[0]).not.toMatch(/assigned_bots::integer\[\]/);
+    });
+
     test('backpressure threshold is configurable via env, default 5', () => {
-        expect(kanbanSrc).toMatch(/Number\(process\.env\.CRON_NOTIFY_BACKPRESSURE_THRESHOLD\)\s*\|\|\s*5/);
+        expect(kanbanSrc).toMatch(/Number\(process\.env\.CRON_NOTIFY_BACKPRESSURE_THRESHOLD\)/);
+        expect(kanbanSrc).toMatch(/Number\.isFinite\(backpressureRaw\)[\s\S]{0,80}\?\s*backpressureRaw\s*:\s*5/);
+    });
+
+    test('explicit CRON_NOTIFY_BACKPRESSURE_THRESHOLD=0 is preserved (escape hatch)', () => {
+        // 0 means "always treat lane as backpressured" — used in tests/staging
+        // to force the smart-queue path. Must not coerce back to 5.
+        expect(kanbanSrc).not.toMatch(/Number\(process\.env\.CRON_NOTIFY_BACKPRESSURE_THRESHOLD\)\s*\|\|/);
     });
 
     test('notify decision uses (hasPending || backpressure) to choose enqueue path', () => {

@@ -475,10 +475,10 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             `SELECT COUNT(*)::int AS n
                FROM kanban_cards
               WHERE device_id = $1
-                AND $2 = ANY(assigned_bots::integer[])
+                AND assigned_bots @> $2::jsonb
                 AND archived = false
                 AND status IN ('todo','in_progress','review')`,
-            [deviceId, Number(botId)]
+            [deviceId, JSON.stringify([Number(botId)])]
         );
         return r.rows[0]?.n || 0;
     }
@@ -2837,7 +2837,10 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                         // before notify, combined with the serial-await spawn loop,
                         // staggers same-tick siblings naturally without delaying the
                         // child card INSERT or the user-visible nextRunAt.
-                        const jitterMaxMs = Number(process.env.CRON_NOTIFY_JITTER_MS) || 30000;
+                        // Parse with Number.isFinite guard so explicit 0 stays 0 (`|| 30000`
+                        // would coerce 0 back to default — flagged by #1 cross-review).
+                        const jitterMaxRaw = Number(process.env.CRON_NOTIFY_JITTER_MS);
+                        const jitterMaxMs = Number.isFinite(jitterMaxRaw) && jitterMaxRaw >= 0 ? jitterMaxRaw : 30000;
                         const jitterMs = jitterMaxMs > 0 ? Math.floor(Math.random() * jitterMaxMs) : 0;
                         if (jitterMs > 0) {
                             console.log(`[Kanban] Automation child ${childCard.id}: jitter ${jitterMs}ms before notify`);
@@ -2850,7 +2853,10 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                             childTitle
                         });
                         const payload = { description: card.description, cardId: childCard.id };
-                        const backpressureThreshold = Number(process.env.CRON_NOTIFY_BACKPRESSURE_THRESHOLD) || 5;
+                        // Same Number.isFinite guard so threshold=0 (= always backpressure)
+                        // is a valid escape hatch and doesn't silently coerce to 5.
+                        const backpressureRaw = Number(process.env.CRON_NOTIFY_BACKPRESSURE_THRESHOLD);
+                        const backpressureThreshold = Number.isFinite(backpressureRaw) && backpressureRaw >= 0 ? backpressureRaw : 5;
                         for (const botId of bots) {
                             try {
                                 const hasPending = await botHasPendingNotify(card.device_id, botId);
