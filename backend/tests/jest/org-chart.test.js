@@ -438,3 +438,58 @@ describe('PUT /api/device/org-chart', () => {
         expect(res.status).toBeGreaterThanOrEqual(400);
     });
 });
+
+// ════════════════════════════════════════════════════════════════
+// computeAffectedEntities — used to decide which polling bots
+// need an `org_chart_changed` queue message after a PUT.
+// ════════════════════════════════════════════════════════════════
+describe('computeAffectedEntities()', () => {
+    it('returns empty set when hierarchy unchanged', () => {
+        const h = { USER: [1, 2, 3] };
+        const r = orgChart.computeAffectedEntities(h, h);
+        expect(r.size).toBe(0);
+    });
+
+    it('flags the moved entity and its new superior when nesting under a bot', () => {
+        const before = { USER: [1, 2, 3] };
+        const after = { USER: [1, 2], '1': [3] };
+        const r = orgChart.computeAffectedEntities(before, after);
+        expect([...r].sort()).toEqual([1, 3]);
+    });
+
+    it('flags reparented entity plus both old and new superior on cross-parent moves', () => {
+        const before = { USER: [1, 2, 3, 4], '3': [5] };
+        const after = { USER: [1, 2, 3, 4], '4': [5] };
+        const r = orgChart.computeAffectedEntities(before, after);
+        expect([...r].sort((a, b) => a - b)).toEqual([3, 4, 5]);
+    });
+
+    it('flags only the new entity when one is added under USER', () => {
+        const before = { USER: [1, 2] };
+        const after = { USER: [1, 2, 99] };
+        const r = orgChart.computeAffectedEntities(before, after);
+        expect([...r]).toEqual([99]);
+    });
+
+    it('handles empty/missing old hierarchy (fresh chart)', () => {
+        const r = orgChart.computeAffectedEntities({}, { USER: [1] });
+        expect([...r]).toEqual([1]);
+    });
+
+    it('excludes the USER root sentinel from the affected set', () => {
+        const before = { USER: [1] };
+        const after = { USER: [], '1': [] };
+        const r = orgChart.computeAffectedEntities(before, after);
+        // #1 left USER → only #1 is an affected entity; USER itself is not an entity.
+        for (const id of r) expect(typeof id).toBe('number');
+        expect([...r]).toEqual([1]);
+    });
+
+    it('flags entity removed from one superior even if not re-attached', () => {
+        const before = { USER: [1, 2], '1': [3] };
+        const after = { USER: [1, 2] };
+        const r = orgChart.computeAffectedEntities(before, after);
+        // #3's old superior was #1; both #1 and #3 are affected.
+        expect([...r].sort((a, b) => a - b)).toEqual([1, 3]);
+    });
+});

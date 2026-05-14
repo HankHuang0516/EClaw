@@ -17150,6 +17150,10 @@ app.put('/api/device/org-chart', async (req, res) => {
         return res.status(400).json({ success: false, error: 'hierarchy or options required' });
     }
 
+    // Snapshot pre-update hierarchy so we can diff affected entities after the write.
+    const beforeChart = await orgChartModule.getOrgChart(deviceId);
+    const oldHierarchy = (beforeChart && beforeChart.hierarchy) || {};
+
     const updates = {};
     if (hierarchy !== undefined) updates.hierarchy = hierarchy;
     if (options !== undefined) updates.options = options;
@@ -17159,8 +17163,48 @@ app.put('/api/device/org-chart', async (req, res) => {
         return res.status(400).json({ success: false, error: result.error });
     }
 
-    // Notify connected clients
+    // Notify connected clients (device-owner portal via Socket.IO room)
     io.to(deviceId).emit('org-chart:updated', result.orgChart);
+
+    // Notify affected bots via per-entity messageQueue. Socket.IO only reaches the
+    // device-room subscribers (portal), not the bot polling clients — so without
+    // this hook, bots whose superior or subordinate set just changed keep operating
+    // on stale hierarchy until their next cache TTL elapses or they restart.
+    if (hierarchy !== undefined) {
+        try {
+            const newHierarchy = (result.orgChart && result.orgChart.hierarchy) || {};
+            const affected = orgChartModule.computeAffectedEntities(oldHierarchy, newHierarchy);
+            const device = devices[deviceId];
+            if (affected.size > 0 && device && device.entities) {
+                const changedAt = Date.now();
+                for (const eId of affected) {
+                    const toEntity = device.entities[eId];
+                    if (!toEntity || !toEntity.isBound) continue;
+                    const oldSuperior = orgChartModule.getSuperior(oldHierarchy, eId);
+                    const newSuperior = orgChartModule.getSuperior(newHierarchy, eId);
+                    const oldSubs = orgChartModule.getSubordinates(oldHierarchy, eId);
+                    const newSubs = orgChartModule.getSubordinates(newHierarchy, eId);
+                    enqueueMessage(toEntity, {
+                        type: 'org_chart_changed',
+                        text: `[system] org-chart updated — superior: ${oldSuperior} → ${newSuperior}`,
+                        deviceId,
+                        entityId: eId,
+                        oldSuperior,
+                        newSuperior,
+                        oldSubordinates: oldSubs,
+                        newSubordinates: newSubs,
+                        changedAt,
+                        timestamp: changedAt,
+                        from: 'system:org_chart',
+                        fromEntityId: 0,
+                        read: false
+                    }, 'org_chart_change');
+                }
+            }
+        } catch (err) {
+            console.warn('[OrgChart] notify affected bots failed:', err && err.message);
+        }
+    }
 
     res.json({ success: true, orgChart: result.orgChart });
 });
