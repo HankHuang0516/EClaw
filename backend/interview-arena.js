@@ -188,6 +188,10 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Daily pool update — additional hard-tier vision items ──
+    { file: null, description: 'A database entity-relationship diagram with five entities (Users, Orders, Products, Categories, Reviews) connected by labeled relationship lines — Products and Categories are connected by a double-headed arrow indicating many-to-many', keywords: ['database', 'five', 'entities', 'users', 'orders', 'products', 'categories', 'reviews', 'many'] },
+    { file: null, description: 'A stock candlestick chart showing five trading days: Day 1 green candle opens $142 closes $148, Day 2 red candle opens $148 closes $145, Day 3 green candle opens $145 closes $152, Day 4 doji candle opens and closes at $150, Day 5 green candle opens $150 closes $158 — net uptrend with one pullback', keywords: ['candlestick', 'five', 'days', 'red', '145', 'doji', '$150', 'uptrend'] },
+    { file: null, description: 'An infrared thermal image of a standing person: bright yellow-white forehead at 37.4°C, orange cheeks at 36.1°C, green neck at 34.8°C, and dark blue background at 22°C — temperature scale bar on the right shows gradient from 20°C to 38°C', keywords: ['thermal', 'infrared', '37', 'forehead', 'temperature', 'scale', 'blue', 'background'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +372,11 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── Daily pool update — additional coding problems ──
+    { title: 'Jump Game', description: 'Write `solve(nums)` — each element is the max jump length from that position. Return true if you can reach the last index, false otherwise.',
+      testCases: [{ input: '[2,3,1,1,4]', expected: 'true' },{ input: '[3,2,1,0,4]', expected: 'false' },{ input: '[0]', expected: 'true' },{ input: '[1,0,2]', expected: 'false' }] },
+    { title: 'Longest Common Subsequence', description: 'Write `solve(s1, s2)` — return the length of the longest common subsequence (not necessarily contiguous).',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"bl", "ybyb"', expected: '1' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -378,7 +387,7 @@ function generateCodingChallenge(weights) {
 
 let RESPONSE_QUESTIONS = [
     // ── Easy tier (20%) — basic facts ──
-    { question: 'What is the capital of France?', expectedKeywords: ['paris'] },
+    // 'What is the capital of France?' retired (pass rate 100%)
     { question: 'What is 17 × 23?', expectedKeywords: ['391'] },
     { question: 'Name the largest planet in our solar system.', expectedKeywords: ['jupiter'] },
     { question: 'What is 13 × 17?', expectedKeywords: ['221'] },
@@ -413,10 +422,14 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many squares of all sizes (1×1, 2×2, up to 8×8) are there on a standard 8×8 chessboard?', expectedKeywords: ['204'] },
     { question: 'A plane travels 2000 km at an effective speed of 1000 km/h (900 km/h airspeed plus 100 km/h tailwind). How many hours does the journey take?', expectedKeywords: ['2'] },
     { question: 'A worker paints 1/3 of a fence on day 1 and 1/4 of the remaining unpainted fence on day 2. What fraction of the fence is still unpainted after day 2?', expectedKeywords: ['1/2', '0.5', 'half'] },
-    // ── New additions to fill easy + medium-hard tiers ──
-    { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
+    // 'How many sides does a regular hexagon have?' retired (trivially easy)
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Daily pool update additions — target difficulty 70/100 ──
+    { question: 'The product of two consecutive positive integers is 182. What is the larger integer?', expectedKeywords: ['14'] },
+    { question: 'A rectangle and a square have the same perimeter of 40 cm. The rectangle is 3 times as long as it is wide. What is the area of the square in cm²?', expectedKeywords: ['100'] },
+    { question: 'If log base 2 of 8 plus log base 2 of 4 equals log base 2 of x, what is x?', expectedKeywords: ['32'] },
+    { question: 'A bag contains red and blue marbles in a ratio of 3:2. If there are 15 marbles in total, how many are red?', expectedKeywords: ['9'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +507,10 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Daily pool update — additional medium/hard TTS phrases ──
+    { text: 'The conference call dial-in number is plus one eight hundred five five five zero one two three and the passcode is 7 8 3 2 6', keywords: ['conference', 'passcode', '78326', 'dial', 'eight', 'hundred'] },
+    { text: 'Photosynthesis converts carbon dioxide and water using sunlight into glucose and oxygen — the net equation is 6 CO2 plus 6 H2O yields C6H12O6 plus 6 O2', keywords: ['photosynthesis', 'carbon', 'dioxide', 'glucose', 'oxygen', 'CO2', 'H2O'] },
+    { text: 'The European Central Bank raised its benchmark interest rate by twenty-five basis points to four point five percent at its Thursday policy meeting', keywords: ['European', 'Central', 'Bank', 'twenty-five', 'basis', 'four', 'five', 'percent'] },
 ];
 
 // ============================================
