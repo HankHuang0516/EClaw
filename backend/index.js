@@ -1047,7 +1047,7 @@ function ensureOneEmptySlot(device) {
 
 // Latest app version - update this with each release
 // Bot will warn users if their app version is older than this
-const LATEST_APP_VERSION = "1.0.83";
+const LATEST_APP_VERSION = "1.0.84";
 const FORCE_UPDATE_BELOW = null; // Set to version string (e.g. "1.0.30") to force-update anything below
 const APP_RELEASE_NOTES = process.env.APP_RELEASE_NOTES || null;
 
