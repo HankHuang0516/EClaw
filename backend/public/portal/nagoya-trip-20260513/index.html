@@ -569,6 +569,36 @@
     color: var(--gold-deep);
   }
   .map-link:hover { color: var(--gold-deep); }
+
+  /* ===== Parking shortcut button (next to each place name) ===== */
+  .parking-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-left: 8px;
+    padding: 1px 9px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--cream);
+    background: var(--forest);
+    border-radius: var(--radius);
+    text-decoration: none;
+    white-space: nowrap;
+    vertical-align: 1px;
+    transition: background .15s, transform .12s, color .15s;
+    line-height: 1.5;
+  }
+  .parking-btn::after { content: none; }
+  .parking-btn:hover {
+    background: var(--gold);
+    color: var(--forest-deep);
+    transform: translateY(-1px);
+  }
+  .parking-btn:active { transform: translateY(0); }
+  @media (max-width: 720px) {
+    .parking-btn { font-size: 11px; padding: 1px 7px; margin-left: 6px; }
+  }
+
   img.zoomable-img {
     cursor: zoom-in;
     transition: filter .16s ease, transform .16s ease;
@@ -1123,6 +1153,7 @@
     ["AEON Mall Tokoname (常滑)", "イオンモール常滑 2-20-3 Rinku-cho Tokoname Aichi"],
     ["AEON Mall Tokoname", "イオンモール常滑 2-20-3 Rinku-cho Tokoname Aichi"],
     ["AEON Mall 常滑", "イオンモール常滑 2-20-3 Rinku-cho Tokoname Aichi"],
+    ["AEON Mall", "イオンモール常滑 2-20-3 Rinku-cho Tokoname Aichi"],
     ["FUSE COFFEE nagoya", "FUSE COFFEE nagoya 〒460-0003 愛知県名古屋市中区錦2-8-28"],
     ["Masago", "Masago 名古屋 朝食"],
     ["名古屋港水族館", "名古屋港水族館 3-1 Minatomachi Minato-ku Nagoya Aichi"],
@@ -1173,6 +1204,26 @@
   const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const pattern = new RegExp(sortedTargets.map(t => esc(t.label)).join("|"), "g");
   const lookup = new Map(sortedTargets.map(t => [t.label, t]));
+
+  // Inject 🅿️ parking shortcut next to each itinerary place name.
+  // Matches the longest label from mapTargets so transit/airport/check-in rows
+  // (which aren't in mapTargets) automatically get no button.
+  document.querySelectorAll(".schedule .item .place").forEach(placeEl => {
+    if (placeEl.querySelector(".parking-btn")) return;
+    const text = placeEl.textContent;
+    const matched = sortedTargets.find(t => text.indexOf(t.label) !== -1);
+    if (!matched) return;
+    const btn = document.createElement("a");
+    btn.className = "parking-btn";
+    btn.href = mapUrl(matched.query + " 駐車場");
+    btn.target = "_blank";
+    btn.rel = "noopener";
+    btn.title = "找 " + matched.label + " 附近的停車場";
+    btn.setAttribute("aria-label", "在 Google 地圖搜尋 " + matched.label + " 附近的停車場");
+    btn.textContent = "🅿️ 停車";
+    placeEl.appendChild(btn);
+  });
+
   const roots = document.querySelectorAll(".hero-text, main, footer.footer");
   roots.forEach(root => {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
