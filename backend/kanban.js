@@ -637,6 +637,8 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             reopenReason: row.reopen_reason || null,
             requiresPrRework: !!row.requires_pr_rework,
             reworkPrNumber: row.rework_pr_number || null,
+            linkedPrevCardId: row.linked_prev_card_id || null,
+            linkedNextCardId: row.linked_next_card_id || null,
             // Aggregated counts (if present from JOIN)
             commentCount: parseInt(row.comment_count) || 0,
             noteCount: parseInt(row.note_count) || 0,
@@ -1503,7 +1505,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
     router.put('/card/:id', async (req, res) => {
         if (!authenticate(req, res)) return;
         const _p = { ...req.query, ...req.body }; console.log('[Kanban] PUT /card/:id called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
-        const { deviceId, title, description, priority, assignedBots, reviewerEntityId, requiresScreenshotReview, dispatchMode, requiresPrRework, reworkPrNumber } = req.body;
+        const { deviceId, title, description, priority, assignedBots, reviewerEntityId, requiresScreenshotReview, dispatchMode, requiresPrRework, reworkPrNumber, linkedPrevCardId, linkedNextCardId } = req.body;
         const cardId = req.params.id;
 
         try {
@@ -1514,6 +1516,27 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             );
             if (existing.rows.length === 0) {
                 return res.status(404).json({ success: false, error: 'Card not found' });
+            }
+
+            async function normalizeLinkedCardId(raw, fieldName) {
+                if (raw === undefined) return undefined;
+                const value = raw == null ? '' : String(raw).trim();
+                if (!value) return null;
+                if (value === cardId) {
+                    const err = new Error(`${fieldName} cannot point to the same card`);
+                    err.status = 400;
+                    throw err;
+                }
+                const linked = await pool.query(
+                    `SELECT id FROM kanban_cards WHERE id = $1 AND device_id = $2 LIMIT 1`,
+                    [value, deviceId]
+                );
+                if (linked.rows.length === 0) {
+                    const err = new Error(`${fieldName} target card not found`);
+                    err.status = 400;
+                    throw err;
+                }
+                return value;
             }
 
             const updates = [];
@@ -1583,6 +1606,16 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     updates.push(`requires_pr_rework = TRUE`);
                 }
             }
+            if (linkedPrevCardId !== undefined) {
+                const normalizedPrev = await normalizeLinkedCardId(linkedPrevCardId, 'linkedPrevCardId');
+                updates.push(`linked_prev_card_id = $${paramIdx++}`);
+                params.push(normalizedPrev);
+            }
+            if (linkedNextCardId !== undefined) {
+                const normalizedNext = await normalizeLinkedCardId(linkedNextCardId, 'linkedNextCardId');
+                updates.push(`linked_next_card_id = $${paramIdx++}`);
+                params.push(normalizedNext);
+            }
 
             if (updates.length === 0) {
                 return res.status(400).json({ success: false, error: 'Nothing to update' });
@@ -1603,7 +1636,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             res.json({ success: true, card: serializeCard(result.rows[0]) });
         } catch (err) {
             console.error('[Kanban] Update card error:', err);
-            res.status(500).json({ success: false, error: err.message });
+            res.status(err.status || 500).json({ success: false, error: err.message });
         }
     });
 

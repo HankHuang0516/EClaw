@@ -1,11 +1,13 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator, BackHandler } from 'react-native';
 import { WebView } from 'react-native-webview';
 import * as Linking from 'expo-linking';
+import { router } from 'expo-router';
 import { useAuthStore } from '../store/authStore';
 
 interface WebViewScreenProps {
   url: string;
+  tabId?: 'chat' | 'mission' | 'home' | 'cards' | 'settings';
 }
 
 // Short-term chrome-hide for #1770 — the full native rewrite is a separate
@@ -36,7 +38,8 @@ const CHROME_HIDE_CSS = `
   }
 `;
 
-const INJECTED_JS = `
+function buildInjectedJs(tabId?: string) {
+  return `
 (function() {
   try {
     // Block AI chat widget in app WebView (same as Android EClawAndroid UA check)
@@ -71,14 +74,104 @@ const INJECTED_JS = `
       window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'auth-diag-error', err: String(e) }));
     }
   }
+  try {
+    window.EClawNativeNav = {
+      navigate: function(intent) {
+        if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'eclaw:navigate-tab', intent: intent || {} }));
+          return true;
+        }
+        return false;
+      }
+    };
+    if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'eclaw:webview-ready', tabId: ${JSON.stringify(tabId || null)}, href: String(window.location.href || '') }));
+    }
+  } catch (_) {}
 })();
 true;
 `;
+}
 
-export default function WebViewScreen({ url }: WebViewScreenProps) {
+type NativeNavIntent = {
+  targetTab?: 'chat' | 'mission';
+  target?: 'thread' | 'message' | 'card' | 'quote';
+  threadId?: string;
+  messageId?: string;
+  cardId?: string;
+  quote?: { source?: string; title?: string; excerpt?: string };
+};
+
+type RegisteredWebView = { ref: React.RefObject<WebView | null>; ready: boolean };
+
+const registeredWebViews: Partial<Record<string, RegisteredWebView>> = {};
+let pendingIntent: NativeNavIntent | null = null;
+let pendingIntentTimer: ReturnType<typeof setTimeout> | null = null;
+
+function routeForTab(tab: string) {
+  return tab === 'chat' ? '/(tabs)/chat' : tab === 'mission' ? '/(tabs)/mission' : '/(tabs)';
+}
+
+function intentScript(intent: NativeNavIntent) {
+  return `
+    (function(){
+      try {
+        var intent = ${JSON.stringify(intent)};
+        if (typeof window.eclawHandleNativeNavigateIntent === 'function') {
+          window.eclawHandleNativeNavigateIntent(intent);
+        } else if (intent.targetTab === 'chat' && intent.messageId) {
+          window.location.href = '/portal/chat.html?msg=' + encodeURIComponent(intent.messageId);
+        } else if (intent.targetTab === 'mission' && intent.cardId) {
+          window.location.href = '/portal/kanban.html?card=' + encodeURIComponent(intent.cardId) + '#' + encodeURIComponent(intent.cardId);
+        }
+      } catch (e) { console.warn('[EClawNativeNav] consume failed', e); }
+    })();
+    true;
+  `;
+}
+
+function deliverIntent(intent: NativeNavIntent) {
+  const targetTab = intent.targetTab;
+  if (!targetTab) return false;
+  const entry = registeredWebViews[targetTab];
+  if (!entry || !entry.ready || !entry.ref.current) return false;
+  entry.ref.current.injectJavaScript(intentScript(intent));
+  return true;
+}
+
+function queueIntent(intent: NativeNavIntent) {
+  pendingIntent = intent; // last navigation wins; avoids stale multi-tap races
+  if (pendingIntentTimer) clearTimeout(pendingIntentTimer);
+  pendingIntentTimer = setTimeout(() => { pendingIntent = null; pendingIntentTimer = null; }, 15000);
+}
+
+function consumePendingIntent(tabId?: string) {
+  if (!tabId || !pendingIntent || pendingIntent.targetTab !== tabId) return;
+  if (deliverIntent(pendingIntent)) {
+    pendingIntent = null;
+    if (pendingIntentTimer) { clearTimeout(pendingIntentTimer); pendingIntentTimer = null; }
+  }
+}
+
+function handleNativeNavigate(intent: NativeNavIntent) {
+  if (!intent || !intent.targetTab) return;
+  queueIntent(intent);
+  router.navigate(routeForTab(intent.targetTab) as never);
+  setTimeout(() => consumePendingIntent(intent.targetTab), 80);
+}
+
+export default function WebViewScreen({ url, tabId }: WebViewScreenProps) {
   const { deviceId, deviceSecret, authToken } = useAuthStore();
   const webViewRef = useRef<WebView>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!tabId) return;
+    registeredWebViews[tabId] = { ref: webViewRef, ready: false };
+    return () => {
+      if (registeredWebViews[tabId]?.ref === webViewRef) delete registeredWebViews[tabId];
+    };
+  }, [tabId]);
 
   const sep = url.includes('?') ? '&' : '?';
   const qs: string[] = ['embed=1', 'hideChrome=1'];
@@ -93,18 +186,31 @@ export default function WebViewScreen({ url }: WebViewScreenProps) {
         ref={webViewRef}
         source={{ uri: fullUrl }}
         style={styles.webview}
-        injectedJavaScript={INJECTED_JS}
+        injectedJavaScript={buildInjectedJs(tabId)}
         javaScriptEnabled
         domStorageEnabled
         startInLoadingState
         allowsBackForwardNavigationGestures
         webviewDebuggingEnabled={__DEV__}
-        onLoadEnd={() => setLoading(false)}
+        onLoadEnd={() => {
+          setLoading(false);
+          if (tabId && registeredWebViews[tabId]) {
+            registeredWebViews[tabId]!.ready = true;
+            setTimeout(() => consumePendingIntent(tabId), 30);
+          }
+        }}
         onMessage={(event) => {
           // Bridge console.log from WebView to RN logs (visible via Expo Go / Metro)
           try {
             const data = JSON.parse(event.nativeEvent.data);
             console.log('[WebView]', data);
+            if (data && data.type === 'eclaw:webview-ready' && tabId && registeredWebViews[tabId]) {
+              // Handshake observed. The intent is consumed after onLoadEnd so
+              // portal handlers (e.g. eclawHandleNativeNavigateIntent) are installed.
+            }
+            if (data && data.type === 'eclaw:navigate-tab') {
+              handleNativeNavigate(data.intent || {});
+            }
           } catch { /* ignore */ }
         }}
         userAgent="Mozilla/5.0 EClawIOS"
