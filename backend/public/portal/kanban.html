@@ -283,11 +283,32 @@
         .kb-lightbox-caption { margin-top:12px; color:#eee; font-size:13px; text-align:center; max-width:90vw; padding:0 16px; }
         .kb-lightbox-hint { color:#888; font-size:12px; margin:6px 0 12px; padding:0 16px; text-align:center; }
 
-        /* Move actions */
-        .kb-move-bar { padding:12px 24px; border-top:1px solid var(--card-border); display:flex; gap:8px; flex-wrap:wrap; flex-shrink:0; }
+        /* Move/actions: one primary + one horizontal secondary row + overflow */
+        .kb-move-bar { padding:12px 24px; border-top:1px solid var(--card-border); display:block; flex-shrink:0; min-width:0; }
         .kb-move-btn { padding:6px 14px; border-radius:var(--radius-sm); font-size:12px; font-weight:600; cursor:pointer; border:1px solid var(--card-border); background:none; color:var(--text-secondary); transition:all 0.2s; }
         .kb-move-btn:hover { border-color:var(--primary); color:var(--text); }
         .kb-move-btn.current { background:var(--primary); color:#fff; border-color:var(--primary); cursor:default; }
+        .kb-task-action-shell { display:flex; align-items:center; gap:10px; width:100%; min-width:0; }
+        .kb-task-primary-btn { flex:0 0 auto; padding:9px 16px; border:none; border-radius:999px; background:var(--primary); color:#fff; font-size:12px; font-weight:800; cursor:pointer; box-shadow:0 6px 18px rgba(99,102,241,0.28); white-space:nowrap; }
+        .kb-task-primary-btn:hover { filter:brightness(1.08); transform:translateY(-1px); }
+        .kb-task-primary-btn.danger { background:#ef4444; box-shadow:0 6px 18px rgba(239,68,68,0.22); }
+        .kb-task-secondary-row { flex:1 1 auto; min-width:0; display:flex; gap:6px; align-items:center; overflow-x:auto; overflow-y:hidden; flex-wrap:nowrap; padding:2px 2px 4px; scrollbar-width:thin; -webkit-overflow-scrolling:touch; }
+        .kb-task-chip { flex:0 0 auto; display:inline-flex; align-items:center; gap:5px; max-width:180px; padding:6px 10px; border-radius:999px; border:1px solid var(--card-border); background:var(--input-bg); color:var(--text-secondary); font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .kb-task-chip:hover { color:var(--text); border-color:var(--primary); transform:translateY(-1px); }
+        .kb-task-chip.parent { background:rgba(99,102,241,0.12); border-color:rgba(99,102,241,0.32); }
+        .kb-task-chip.prev,.kb-task-chip.next { background:rgba(59,130,246,0.10); border-color:rgba(59,130,246,0.28); }
+        .kb-task-chip.pr { background:rgba(34,197,94,0.10); border-color:rgba(34,197,94,0.28); }
+        .kb-task-chip.chat { background:rgba(251,191,36,0.10); border-color:rgba(251,191,36,0.30); }
+        .kb-task-chip span { overflow:hidden; text-overflow:ellipsis; }
+        .kb-task-overflow { flex:0 0 auto; position:relative; }
+        .kb-task-overflow-btn { padding:8px 10px; border-radius:999px; border:1px solid var(--card-border); background:var(--input-bg); color:var(--text-secondary); cursor:pointer; font-weight:800; }
+        .kb-task-overflow-btn:hover { border-color:var(--primary); color:var(--text); }
+        .kb-task-overflow-panel { display:none; position:absolute; right:0; bottom:calc(100% + 8px); width:min(420px, calc(100vw - 32px)); max-height:58vh; overflow:auto; z-index:50; padding:12px; border:1px solid var(--card-border); border-radius:12px; background:var(--card); box-shadow:0 18px 50px rgba(0,0,0,0.36); }
+        .kb-task-overflow.open .kb-task-overflow-panel { display:flex; flex-direction:column; gap:10px; }
+        .kb-task-overflow-section { display:flex; flex-direction:column; gap:6px; }
+        .kb-task-overflow-title { font-size:11px; font-weight:800; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em; }
+        .kb-task-overflow-actions { display:flex; flex-wrap:wrap; gap:6px; }
+        .kb-parent-archived-banner { width:100%; margin-top:10px; padding:9px 11px; border-radius:10px; border:1px solid rgba(251,191,36,0.38); background:rgba(251,191,36,0.12); color:#fbbf24; font-size:12px; font-weight:700; }
 
         /* ══════════════ New Card Form ══════════════ */
         .kb-new-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:100; }
@@ -490,8 +511,12 @@
         body.app-webview .kb-comments-list { max-height:none; flex:1 1 auto; min-height:0; overflow-y:auto; padding-bottom:18px; -webkit-overflow-scrolling:touch; touch-action:pan-y; }
         body.app-webview .kb-comment { max-width:90%; }
         body.app-webview .kb-comment-input { position:relative; bottom:auto; margin-top:0; padding:10px 0 0; flex-shrink:0; }
-        body.app-webview .kb-move-bar { padding:10px 16px; flex-wrap:wrap; gap:6px; }
-        body.app-webview .kb-move-btn { padding:6px 10px; font-size:11px; flex:1 1 auto; text-align:center; min-width:0; }
+        body.app-webview .kb-move-bar { padding:10px 16px; }
+        body.app-webview .kb-task-action-shell { gap:6px; flex-wrap:nowrap; }
+        body.app-webview .kb-task-primary-btn { padding:8px 12px; font-size:11px; }
+        body.app-webview .kb-task-secondary-row { flex-wrap:nowrap; overflow-x:auto; }
+        body.app-webview .kb-task-chip { max-width:132px; padding:6px 9px; font-size:11px; }
+        body.app-webview .kb-move-btn { padding:6px 10px; font-size:11px; }
 
         /* App WebView: hide redundant heading (sub-tabs already indicate page) */
         body.app-webview .kb-toolbar h2 { display:none; }
@@ -578,9 +603,13 @@
             .kb-comment-input { position:relative; bottom:auto; margin-top:0; padding:10px 0 0; flex-shrink:0; }
             .kb-comment-input textarea { min-height:44px; }
 
-            /* Move bar: wrap */
-            .kb-move-bar { padding:10px 16px; flex-wrap:wrap; gap:6px; }
-            .kb-move-btn { padding:6px 10px; font-size:11px; flex:1 1 auto; text-align:center; min-width:0; }
+            /* Move/action shell: primary stays visible; secondary chips scroll in one row */
+            .kb-move-bar { padding:10px 16px; }
+            .kb-task-action-shell { gap:6px; flex-wrap:nowrap; }
+            .kb-task-primary-btn { padding:8px 12px; font-size:11px; }
+            .kb-task-secondary-row { flex-wrap:nowrap; overflow-x:auto; }
+            .kb-task-chip { max-width:132px; padding:6px 9px; font-size:11px; }
+            .kb-move-btn { padding:6px 10px; font-size:11px; }
 
             /* Toolbar compact */
             .kb-toolbar { flex-direction:column; align-items:stretch; }
@@ -1283,6 +1312,10 @@
             return apiCall('GET', `/api/mission/card/${cardId}/messages?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}&limit=${limit}`);
         }
 
+        async function apiGetCardDetail(cardId) {
+            return apiCall('GET', `/api/mission/card/${encodeURIComponent(cardId)}?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+        }
+
 
 
         async function apiGetCardTags(cardId) {
@@ -1916,6 +1949,7 @@
             const list = document.getElementById('kbHistoryList');
             const totalEl = document.getElementById('kbHistoryTotal');
             const pagerEl = document.getElementById('kbHistoryPager');
+            if (!list || !totalEl || !pagerEl) return;
             list.innerHTML = '<div style="color:#888;">' + t('kb_history_loading', 'Loading…') + '</div>';
             try {
                 const data = await apiCall('GET', `/api/mission/cards/archived?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}&page=${historyPage}&limit=20`);
@@ -1957,6 +1991,7 @@
                 showToast(t('kb_history_restored', 'Card restored to Backlog'));
                 await loadHistoryPage();
                 await loadCards();
+                if (openCardId === cardId) closeDetail();
             } catch (err) {
                 showToast((err.message || err), true);
             }
@@ -1996,6 +2031,275 @@
         // ── Helper: find card in both allCards and automationCards ──
         function findCard(cardId) {
             return allCards.find(c => c.id === cardId) || automationCards.find(c => c.id === cardId) || null;
+        }
+
+        async function fetchDetailCard(cardId) {
+            if (!cardId) return null;
+            let card = findCard(cardId);
+            if (card) return card;
+            const data = await apiCall('GET', `/api/mission/card/${encodeURIComponent(cardId)}?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+            if (data && data.success && data.card) {
+                card = data.card;
+                if (!findCard(card.id)) {
+                    if (card.isAutomation) automationCards.push(card);
+                    else allCards.push(card);
+                }
+                return card;
+            }
+            return null;
+        }
+
+        function getPrimaryTargetStatus(card) {
+            if (!card || card.status === 'done') return null;
+            if (card.status === 'blocked') return 'in_progress';
+            const order = STATUSES.filter(s => s !== 'blocked');
+            const idx = order.indexOf(card.status);
+            return idx >= 0 && idx < order.length - 1 ? order[idx + 1] : 'done';
+        }
+
+        function renderTaskPrimaryAction(card) {
+            const cardId = escapeJs(card.id);
+            if (card.archived) return `<button class="kb-task-primary-btn" onclick="restoreCard('${cardId}')">↩︎ ${t('kb_history_restore','Restore')}</button>`;
+            if (card.isAutomation) {
+                const enabled = card.schedule?.enabled !== false;
+                return `<button class="kb-task-primary-btn${enabled ? '' : ' danger'}" onclick="toggleAutoSchedule('${cardId}',${!enabled})">${enabled ? '⏸ ' + t('kb_auto_pause','Pause') : '▶ ' + t('kb_auto_resume','Resume')}</button>`;
+            }
+            if (card.status === 'done') return `<button class="kb-task-primary-btn" onclick="openReopenDialog('${cardId}')">♻️ Reopen</button>`;
+            const next = getPrimaryTargetStatus(card);
+            return `<button class="kb-task-primary-btn" onclick="moveCardTo('${cardId}','${escapeJs(next)}')">${next === 'done' ? '✅ Done' : '→ ' + escapeHtml(STATUS_LABELS[next] || next)}</button>`;
+        }
+
+        function getTaskPrUrl(card) {
+            const raw = String(card?.reworkPrNumber || '').trim();
+            if (/^https?:\/\//i.test(raw)) return raw;
+            const numeric = raw.match(/#?(\d+)/);
+            if (numeric) return `https://github.com/HankHuang0516/EClaw/pull/${numeric[1]}`;
+            const haystack = String(card?.description || '');
+            const url = haystack.match(/https:\/\/github\.com\/[^\s)]+\/pull\/\d+/i);
+            return url ? url[0] : '';
+        }
+
+        function openTaskPr(cardId) {
+            const url = getTaskPrUrl(findCard(cardId));
+            if (!url) { showToast('No PR link on this card', true); return; }
+            const opened = window.open(url, '_blank', 'noopener');
+            if (!opened) window.location.href = url;
+        }
+
+        function renderTaskSecondaryActions(card) {
+            const actions = [];
+            const add = (cls, icon, label, onclick, title) => actions.push(`<button class="kb-task-chip ${cls}" onclick="${onclick}" title="${escapeHtml(title || label)}">${icon}<span>${escapeHtml(label)}</span></button>`);
+            if (card.parentCardId) add('parent', '↟', t('chip_parent','Parent'), `openDetail('${escapeJs(card.parentCardId)}')`, card.parentCardId);
+            if (card.linkedPrevCardId) add('prev', '←', t('chip_prev','Prev'), `openDetail('${escapeJs(card.linkedPrevCardId)}')`, card.linkedPrevCardId);
+            if (card.linkedNextCardId) add('next', '→', t('chip_next','Next'), `openDetail('${escapeJs(card.linkedNextCardId)}')`, card.linkedNextCardId);
+            if (getTaskPrUrl(card)) add('pr', '⑂', 'PR', `openTaskPr('${escapeJs(card.id)}')`, getTaskPrUrl(card));
+            add('chat', '💬', t('chip_chat','Chat'), `quoteKanbanCardToChat()`, 'Quote this card to Chat');
+            return actions.slice(0, 5).join('');
+        }
+
+        function toggleTaskOverflow(event) {
+            event.stopPropagation();
+            const root = event.currentTarget.closest('.kb-task-overflow');
+            document.querySelectorAll('.kb-task-overflow.open').forEach(el => { if (el !== root) el.classList.remove('open'); });
+            if (root) root.classList.toggle('open');
+        }
+
+        document.addEventListener('click', (event) => {
+            if (!event.target.closest || !event.target.closest('.kb-task-overflow')) {
+                document.querySelectorAll('.kb-task-overflow.open').forEach(el => el.classList.remove('open'));
+            }
+        });
+
+        function renderTaskOverflowActions(card, assignHtml, reviewerHtml, dispatchHtml) {
+            const cardId = escapeJs(card.id);
+            const adminButtons = card.isAutomation
+                ? `<button class="kb-move-btn" onclick="editAutoSchedule('${cardId}')">✏️ ${t('kb_auto_edit','Edit')}</button><button class="kb-move-btn" onclick="deleteAutomation('${cardId}')">🗑 ${t('kb_auto_delete','Delete')}</button>`
+                : `<button class="kb-move-btn" onclick="editCard('${cardId}')">✏️ ${t('kb_auto_edit','Edit')}</button><button class="kb-move-btn" onclick="archiveTaskCard('${cardId}')">🗄 Archive</button>`;
+            return `<div class="kb-task-overflow">` +
+                `<button class="kb-task-overflow-btn" onclick="toggleTaskOverflow(event)" aria-label="${t('chip_more','More')}">⋮ ${t('chip_more','More')}</button>` +
+                `<div class="kb-task-overflow-panel" onclick="event.stopPropagation()">` +
+                    `<div class="kb-task-overflow-section"><div class="kb-task-overflow-title">Assignment</div>${assignHtml}</div>` +
+                    `<div class="kb-task-overflow-section"><div class="kb-task-overflow-title">Review</div>${reviewerHtml}</div>` +
+                    (card.isAutomation ? `<div class="kb-task-overflow-section"><div class="kb-task-overflow-title">Schedule</div>${dispatchHtml}</div>` : '') +
+                    `<div class="kb-task-overflow-section"><div class="kb-task-overflow-title">Admin</div><div class="kb-task-overflow-actions">${adminButtons}</div></div>` +
+                `</div></div>`;
+        }
+
+        function renderTaskActionShell(card, assignHtml, reviewerHtml, dispatchHtml) {
+            return `<div class="kb-task-action-shell">` +
+                renderTaskPrimaryAction(card) +
+                `<div class="kb-task-secondary-row" aria-label="Task actions">${renderTaskSecondaryActions(card)}</div>` +
+                renderTaskOverflowActions(card, assignHtml, reviewerHtml, dispatchHtml) +
+            `</div>`;
+        }
+
+        async function refreshTaskRelationBanner(card) {
+            const el = document.getElementById('detailTaskRelationBanner');
+            if (!el) return;
+            el.innerHTML = '';
+            if (card.archived) {
+                el.innerHTML = `<div class="kb-parent-archived-banner">🗄 ${t('kb_archived_badge','Archived')} — ${t('kb_history_restore','Restore')} is available from the primary action.</div>`;
+                return;
+            }
+            if (!card.parentCardId) return;
+            try {
+                const parent = await fetchDetailCard(card.parentCardId);
+                if (parent && parent.archived) {
+                    el.innerHTML = `<div class="kb-parent-archived-banner">⚠️ ${t('chip_parent','Parent')} archived: ${escapeHtml(parent.title || parent.id)}</div>`;
+                }
+            } catch (err) {
+                console.warn('[Kanban] parent archived banner lookup failed:', err.message || err);
+            }
+        }
+
+        async function archiveTaskCard(cardId) {
+            const card = findCard(cardId);
+            if (!card) return;
+            if (!await showConfirm({ message: `Archive "${card.title || card.id}"?`, danger: true })) return;
+            try {
+                await apiCall('DELETE', `/api/mission/card/${cardId}?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+                showToast('Archived');
+                closeDetail();
+                await loadCards();
+            } catch (err) {
+                showToast('Archive failed: ' + (err.message || err), true);
+            }
+        }
+
+
+        function rememberFetchedCard(card) {
+            if (!card || !card.id) return card;
+            const bucket = card.isAutomation ? automationCards : allCards;
+            const idx = bucket.findIndex(c => c.id === card.id);
+            if (idx >= 0) bucket[idx] = { ...bucket[idx], ...card };
+            else bucket.push(card);
+            return card;
+        }
+
+        async function ensureCardLoaded(cardId) {
+            const id = String(cardId || '').trim();
+            if (!id) return null;
+            const loaded = findCard(id);
+            if (loaded) return loaded;
+            try {
+                const data = await apiGetCardDetail(id);
+                if (data && data.success && data.card) return rememberFetchedCard(data.card);
+            } catch (err) {
+                console.warn('[Kanban] ensureCardLoaded failed:', id, err.message || err);
+            }
+            return null;
+        }
+
+        function getCardPrUrl(card) {
+            const raw = String(card?.reworkPrNumber || '').trim();
+            if (!raw) return '';
+            if (/^https?:\/\//i.test(raw)) return raw;
+            const match = raw.match(/(?:^|#|\/pull\/)(\d+)$/);
+            return match ? `https://github.com/HankHuang0516/EClaw/pull/${match[1]}` : '';
+        }
+
+        function getPrimaryAction(card) {
+            if (card.archived) return { label: '↩ Restore', kind: 'restore', value: '' };
+            if (card.isAutomation) {
+                const enabled = card.schedule?.enabled !== false;
+                return { label: enabled ? '⏸ Pause' : '▶ Resume', kind: 'toggleSchedule', value: enabled ? 'false' : 'true' };
+            }
+            if (card.status === 'done') return { label: '♻️ Reopen', kind: 'reopen', value: '' };
+            if (card.status === 'review') return { label: '✅ Done', kind: 'move', value: 'done' };
+            if (card.status === 'in_progress') return { label: '👀 Review', kind: 'move', value: 'review' };
+            if (card.status === 'blocked') return { label: '▶ Resume', kind: 'move', value: 'in_progress' };
+            return { label: '▶ Start', kind: 'move', value: 'in_progress' };
+        }
+
+        function taskChip(kind, label, title, onClick) {
+            return `<button type="button" class="kb-task-chip ${kind}" title="${escapeHtml(title || label)}" onclick="${onClick}">${label}</button>`;
+        }
+
+        function renderParentArchivedBanner(parentCard) {
+            if (!parentCard || !parentCard.archived) return '';
+            return `<div class="kb-parent-archived-banner">⚠️ ${t('kb_parent_archived_banner', '此母卡已封存 / Parent card is archived')}：${escapeHtml(parentCard.title || parentCard.id)}</div>`;
+        }
+
+        function renderTaskSecondaryChips(card, related) {
+            const chips = [];
+            const parentId = card.parentCardId || card.parent_card_id || '';
+            if (parentId) {
+                const parent = related?.parentCard || null;
+                chips.push(taskChip('parent', `↖ <span>${t('kb_chip_parent','母卡')}</span>`, parent ? parent.title : parentId, `openDetail('${escapeJs(parentId)}')`));
+            }
+            if (card.linkedPrevCardId) {
+                const prev = related?.prevCard || null;
+                chips.push(taskChip('prev', `← <span>${t('kb_chip_prev','上一張')}</span>`, prev ? prev.title : card.linkedPrevCardId, `openDetail('${escapeJs(card.linkedPrevCardId)}')`));
+            }
+            if (card.linkedNextCardId) {
+                const next = related?.nextCard || null;
+                chips.push(taskChip('next', `<span>${t('kb_chip_next','下一張')}</span> →`, next ? next.title : card.linkedNextCardId, `openDetail('${escapeJs(card.linkedNextCardId)}')`));
+            }
+            const prUrl = getCardPrUrl(card);
+            if (prUrl) chips.push(taskChip('pr', `🔗 <span>PR</span>`, prUrl, `openCardPr('${escapeJs(card.id)}')`));
+            chips.push(taskChip('chat', `💬 <span>${t('kb_chip_chat','聊天')}</span>`, t('kb_chip_chat_tip','Quote/open this card in chat'), `quoteKanbanCardToChat()`));
+            return chips.slice(0, 5).join('');
+        }
+
+        function renderStatusOverflow(cardId, currentStatus) {
+            if (currentStatus === 'done') return '';
+            return `<div class="kb-task-overflow-section"><div class="kb-task-overflow-title">Status</div><div class="kb-task-overflow-actions">` +
+                STATUSES.map(s => `<button class="kb-move-btn${s===currentStatus?' current':''}" onclick="moveCardTo('${escapeJs(cardId)}','${s}')"${s===currentStatus?' disabled':''}>${STATUS_LABELS[s]}</button>`).join('') +
+                `</div></div>`;
+        }
+
+        function renderTaskActionBar(card, related, assignHtml, reviewerHtml, dispatchHtml) {
+            const action = getPrimaryAction(card);
+            const primary = `<button type="button" class="kb-task-primary-btn${action.kind === 'reopen' ? ' danger' : ''}" onclick="runPrimaryCardAction('${escapeJs(card.id)}','${escapeJs(action.kind)}','${escapeJs(action.value)}')">${escapeHtml(action.label)}</button>`;
+            const secondary = `<div class="kb-task-secondary-row" aria-label="Task secondary actions">${renderTaskSecondaryChips(card, related)}</div>`;
+            const adminActions = card.isAutomation
+                ? `<button class="kb-auto-action-btn edit" onclick="editAutoSchedule('${escapeJs(card.id)}')">✏️ ${t('kb_auto_edit','Edit')}</button>` +
+                  `<button class="kb-auto-action-btn delete" onclick="deleteAutomation('${escapeJs(card.id)}')">🗑 ${t('kb_auto_delete','Delete')}</button>`
+                : `<button class="kb-auto-action-btn edit" onclick="editCard('${escapeJs(card.id)}')">✏️ ${t('kb_auto_edit','Edit')}</button>` +
+                  `<button class="kb-auto-action-btn delete" onclick="archiveCardFromDetail('${escapeJs(card.id)}')">🗑 ${t('kb_archive','Archive')}</button>`;
+            const overflow = `<div class="kb-task-overflow" id="taskOverflow-${escapeHtml(card.id)}">` +
+                `<button type="button" class="kb-task-overflow-btn" aria-label="${t('kb_more','More')}" onclick="toggleTaskOverflow('${escapeJs(card.id)}', event)">⋮</button>` +
+                `<div class="kb-task-overflow-panel" onclick="event.stopPropagation()">` +
+                    `<div class="kb-task-overflow-section"><div class="kb-task-overflow-title">${t('kb_more','More')}</div><div class="kb-task-overflow-actions">${adminActions}</div></div>` +
+                    (assignHtml ? `<div class="kb-task-overflow-section"><div class="kb-task-overflow-title">${t('kb_auto_assigned','Assigned')}</div>${assignHtml}</div>` : '') +
+                    (reviewerHtml ? `<div class="kb-task-overflow-section"><div class="kb-task-overflow-title">${t('kb_auto_reviewer','Reviewer')}</div>${reviewerHtml}</div>` : '') +
+                    (dispatchHtml ? `<div class="kb-task-overflow-section"><div class="kb-task-overflow-title">Dispatch</div>${dispatchHtml}</div>` : '') +
+                    (!card.isAutomation && !card.archived ? renderStatusOverflow(card.id, card.status) : '') +
+                `</div></div>`;
+            return `<div class="kb-task-action-shell">${primary}${secondary}${overflow}</div>`;
+        }
+
+        async function runPrimaryCardAction(cardId, kind, value) {
+            if (kind === 'move') return moveCardTo(cardId, value);
+            if (kind === 'reopen') return openReopenDialog(cardId);
+            if (kind === 'toggleSchedule') return toggleAutoSchedule(cardId, value === 'true');
+            if (kind === 'restore') return restoreCard(cardId);
+        }
+
+        function toggleTaskOverflow(cardId, event) {
+            if (event) event.stopPropagation();
+            document.querySelectorAll('.kb-task-overflow.open').forEach(el => {
+                if (el.id !== 'taskOverflow-' + cardId) el.classList.remove('open');
+            });
+            const el = document.getElementById('taskOverflow-' + cardId);
+            if (el) el.classList.toggle('open');
+        }
+
+        function openCardPr(cardId) {
+            const card = findCard(cardId);
+            const url = getCardPrUrl(card);
+            if (!url) return showToast('No PR link', true);
+            const opened = window.open(url, '_blank', 'noopener');
+            if (!opened) window.location.href = url;
+        }
+
+        async function archiveCardFromDetail(cardId) {
+            const card = findCard(cardId);
+            if (!card) return;
+            if (!await showConfirm({ message: `Archive "${card.title || card.id}"?`, danger: true })) return;
+            await withAutoAction(null, () => apiCall('DELETE', `/api/mission/card/${cardId}?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`), {
+                closeOnDone: true, successMsg: '🗑 ' + t('kb_archive', 'Archive'),
+            });
         }
 
         async function openDetail(cardId) {
@@ -2044,6 +2348,7 @@
                 <span class="meta-item">🕐 ${formatTime(card.createdAt || card.created_at)}</span>
                 ${scheduleInfo}
                 ${card.description ? '<div class="kb-detail-desc">'+renderSmartChips(card.description)+'</div>' : ''}
+                <div id="detailTaskRelationBanner" style="width:100%"></div>
                 <div class="kb-dep-chips-container kb-detail-dep-chips" data-dep-card-id="${cardId}"></div>
                 <div id="detailTagsPanel" style="width:100%;margin-top:10px;padding:10px;border:1px solid var(--border-color,#333);border-radius:8px;background:rgba(255,255,255,.03)"></div>
                 <div id="detailCardLinks" class="kb-card-link-panel" style="width:100%;margin-top:10px;padding:10px;border:1px solid var(--border-color,#333);border-radius:8px;background:rgba(255,255,255,.03)">
@@ -2060,8 +2365,9 @@
             renderDetailTags(card.tags || []);
             refreshDetailTags(cardId);
             loadCardLinksForDetail(cardId);
+            refreshTaskRelationBanner(card);
 
-            // Move bar — shared assign + reviewer UI for all cards
+            // Move bar — primary action + secondary chips + overflow admin UI
             const moveBar = document.getElementById('moveBar');
             const currentReviewer = card.reviewerEntityId;
             const reviewerOpts = boundEntities.filter(e => e.isBound).map(e => {
@@ -2100,34 +2406,7 @@
                     }).join('') +
                     `</div>` +
                 `</div>`;
-            if (card.isAutomation) {
-                const isEnabled = card.schedule?.enabled !== false;
-                const pauseLabel = isEnabled ? `⏸ ${t('kb_auto_pause','Pause')}` : `▶ ${t('kb_auto_resume','Resume')}`;
-                const pauseCls = isEnabled ? 'kb-auto-action-btn pause' : 'kb-auto-action-btn resume';
-                moveBar.innerHTML =
-                    assignHtml +
-                    reviewerHtml +
-                    dispatchHtml +
-                    `<div class="kb-auto-actions">` +
-                        `<button class="kb-auto-action-btn edit" onclick="editAutoSchedule('${cardId}')" title="${t('kb_auto_edit_tip','Edit schedule')}">✏️ ${t('kb_auto_edit','Edit')}</button>` +
-                        `<button class="${pauseCls}" onclick="toggleAutoSchedule('${cardId}',${!isEnabled})">${pauseLabel}</button>` +
-                        `<button class="kb-auto-action-btn delete" onclick="deleteAutomation('${cardId}')" title="${t('kb_auto_delete_tip','Archive this automation')}">🗑 ${t('kb_auto_delete','Delete')}</button>` +
-                    `</div>`;
-            } else {
-                moveBar.innerHTML =
-                    assignHtml +
-                    reviewerHtml +
-                    `<div class="kb-auto-actions">` +
-                        `<button class="kb-auto-action-btn edit" onclick="editCard('${cardId}')" title="${t('kb_auto_edit_tip','Edit card')}">✏️ ${t('kb_auto_edit','Edit')}</button>` +
-                    `</div>` +
-                    `<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px">` +
-                    (card.status === 'done'
-                        ? `<button class="kb-move-btn" onclick="openReopenDialog('${cardId}')">♻️ Reopen</button>`
-                        : STATUSES.map(s =>
-                            `<button class="kb-move-btn${s===card.status?' current':''}" onclick="moveCardTo('${cardId}','${s}')"${s===card.status?' disabled':''}>${STATUS_LABELS[s]}</button>`
-                        ).join('')) +
-                    `</div>`;
-            }
+            moveBar.innerHTML = renderTaskActionShell(card, assignHtml, reviewerHtml, dispatchHtml);
 
             // Show/hide schedule tab for automation cards; reset panel so it re-renders for new card
             document.getElementById('scheduleTab').style.display = card.isAutomation ? '' : 'none';
