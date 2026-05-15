@@ -485,7 +485,7 @@
 
             let detailRows = '';
             const REFS = ['OSWorld','WebArena','WebVoyager','OSWorld','WebArena','WorkArena','ST-WebAgentBench','HumanEval Pro','—','Context-Bench','—','Web Speech API'];
-            const examModel = data?.exam?.model || '—';
+            const examModel = esc(data?.exam?.model || '—');
             NAMES.forEach((name, i) => {
                 const s = data.sessions ? data.sessions.find(x => x.test_index === i) : null;
                 const sc = s ? (s.score || 0) : (scores[i] || 0);
