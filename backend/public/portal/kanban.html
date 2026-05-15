@@ -1017,6 +1017,15 @@
     <script src="shared/ai-chat.js"></script>
     <script>if(typeof renderAvatarHtml==='undefined'){window.renderAvatarHtml=function(a){return a||'🦞'};window.isAvatarUrl=function(){return false}}</script>
     <script>
+        function eclawNavigateChat(intent) {
+            try {
+                if (window.EClawNativeNav && typeof window.EClawNativeNav.navigate === 'function') {
+                    return window.EClawNativeNav.navigate(Object.assign({ targetTab: 'chat', sourceTab: 'mission' }, intent || {}));
+                }
+            } catch (_) {}
+            return false;
+        }
+
         // Mention chips and his_ chips rendered by shared MentionRender /
         // HisLinkRender call openMentionProfile() / openHistoryMessage() which
         // live in chat.html. Stub them here so kanban-side clicks don't throw —
@@ -1030,7 +1039,8 @@
         if (typeof window.openHistoryMessage !== 'function') {
             window.openHistoryMessage = function (msgId) {
                 if (!msgId) return;
-                window.location.href = '/portal/chat.html?his=' + encodeURIComponent(msgId);
+                if (eclawNavigateChat({ target: 'message', messageId: msgId })) return;
+                window.location.href = '/portal/chat.html?msg=' + encodeURIComponent(msgId);
             };
         }
         // 智慧引用 render chain — delegates to shared ChatMessageRender so chat
@@ -1190,6 +1200,28 @@
                 loadComments();
             }
         }
+
+        window.eclawHandleNativeNavigateIntent = async function(intent) {
+            if (!intent || intent.targetTab !== 'mission') return false;
+            const cardId = String(intent.cardId || '').trim();
+            if (!cardId) return false;
+            try {
+                const url = new URL(window.location.href);
+                url.searchParams.set('card', cardId);
+                window.history.replaceState({}, '', url.toString().split('#')[0] + '#' + encodeURIComponent(cardId));
+                const card = findCard(cardId);
+                if (card) {
+                    openDetail(cardId);
+                } else {
+                    await loadCards();
+                    handleHashDeepLink();
+                }
+                return true;
+            } catch (e) {
+                console.warn('[Kanban] native navigate intent failed:', e);
+                return false;
+            }
+        };
 
         let automationCards = [];
         let cardProjections = {};
@@ -2491,8 +2523,10 @@
                 window.parent.postMessage({ type: 'eclaw_quote', source, title, excerpt: excerpt || '' }, window.location.origin);
                 eclawShowFloatToast(toastMsg);
             } else {
-                // Standalone: no chat pane reachable → fall back to navigation as before.
-                localStorage.setItem('eclaw_pending_quote', JSON.stringify({ source, title, excerpt: excerpt || '', ts: Date.now() }));
+                // Standalone/App WebView: prefer native bottom-tab switch when available.
+                const quote = { source, title, excerpt: excerpt || '' };
+                localStorage.setItem('eclaw_pending_quote', JSON.stringify({ ...quote, ts: Date.now() }));
+                if (eclawNavigateChat({ target: 'quote', quote })) return;
                 window.location.href = '/portal/chat.html';
             }
         }

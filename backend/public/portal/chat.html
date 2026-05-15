@@ -4379,7 +4379,8 @@
 
         function getChatMessageDeepLinkId() {
             try {
-                return normalizeChatMessageId(new URLSearchParams(window.location.search).get('msg'));
+                const params = new URLSearchParams(window.location.search);
+                return normalizeChatMessageId(params.get('msg') || params.get('his'));
             } catch (_) {
                 return '';
             }
@@ -7611,6 +7612,39 @@
             }
         }
 
+        function eclawNavigateMissionCard(cardId) {
+            const id = String(cardId || '').trim();
+            if (!id) return false;
+            try {
+                if (window.EClawNativeNav && typeof window.EClawNativeNav.navigate === 'function') {
+                    return window.EClawNativeNav.navigate({ targetTab: 'mission', target: 'card', cardId: id, sourceTab: 'chat' });
+                }
+            } catch (_) {}
+            return false;
+        }
+
+        window.eclawHandleNativeNavigateIntent = async function(intent) {
+            if (!intent || intent.targetTab !== 'chat') return false;
+            try {
+                if (intent.quote && (intent.quote.title || intent.quote.excerpt)) {
+                    quoteToChat(intent.quote.source || '引用', intent.quote.title || '', intent.quote.excerpt || '');
+                    return true;
+                }
+                const msgId = intent.messageId || (intent.target === 'message' ? intent.threadId : '');
+                if (msgId) {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('msg', msgId);
+                    url.searchParams.delete('his');
+                    window.history.replaceState({}, '', url.toString());
+                    await handleChatMessageDeepLink({ showMissingToast: true, scroll: true });
+                    return true;
+                }
+            } catch (e) {
+                console.warn('[Chat] native navigate intent failed:', e);
+            }
+            return false;
+        };
+
         function getKanbanCardUrl(cardId) {
             const id = String(cardId || '').trim();
             if (!id) return 'kanban.html';
@@ -7619,6 +7653,7 @@
 
         function openKanbanCard(cardId, event) {
             if (event && typeof event.preventDefault === 'function') event.preventDefault();
+            if (eclawNavigateMissionCard(cardId)) return;
             const url = getKanbanCardUrl(cardId);
             const opened = window.open(url, '_blank', 'noopener');
             if (!opened) window.location.href = url;

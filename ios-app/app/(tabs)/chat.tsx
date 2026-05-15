@@ -6,7 +6,7 @@ import WebViewScreen from '../../components/WebViewScreen';
 export default function ChatScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <WebViewScreen url="https://eclawbot.com/portal/chat.html" />
+      <WebViewScreen url="https://eclawbot.com/portal/chat.html" tabId="chat" />
     </SafeAreaView>
   );
 }

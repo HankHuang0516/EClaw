@@ -223,6 +223,10 @@ ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS reopen_reason TEXT DEFAULT NUL
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS requires_pr_rework BOOLEAN DEFAULT FALSE;
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS rework_pr_number VARCHAR(64) DEFAULT NULL;
 
+-- Explicit ordered linked-task navigation (chip UX PR A)
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS linked_prev_card_id VARCHAR(48) DEFAULT NULL;
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS linked_next_card_id VARCHAR(48) DEFAULT NULL;
+
 CREATE INDEX IF NOT EXISTS idx_kanban_cards_pending_dispatch ON kanban_cards(device_id, pending_dispatch, dispatch_mode)
     WHERE pending_dispatch = TRUE;
 
