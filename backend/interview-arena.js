@@ -188,6 +188,11 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── 2026-05-15 daily pool update — new hard-tier additions ──
+    { file: null, description: 'A Kanban board with four columns — Backlog 7 cards, In Progress 3 cards, Review 4 cards, Done 12 cards — with one In Progress card highlighted in red labeled OVERDUE DESIGN-007', keywords: ['kanban', 'four', 'backlog', 'seven', 'overdue', 'review'] },
+    { file: null, description: 'An electrical circuit schematic: a 9V battery connected to a 220-ohm resistor and a 470-ohm resistor in series, with a green LED bridging across the 470-ohm resistor in parallel — current flows left to right', keywords: ['circuit', 'battery', '9V', '220', '470', 'LED', 'parallel'] },
+    { file: null, description: 'A server response-time heatmap across 24 hours (x-axis) and 7 days (y-axis): weekday afternoons 2pm–5pm are dark red indicating 800ms+ latency, nights and weekends are green under 100ms, with Wednesday 3pm the single darkest cell', keywords: ['heatmap', 'server', 'latency', '800', 'red', 'green', 'wednesday'] },
+    { file: null, description: 'A UML sequence diagram with four lifelines: Client, API Gateway, Auth Service, and Database — arrows show: Client sends POST login to API Gateway, API Gateway forwards credentials to Auth Service, Auth Service queries Database, Database returns user record, Auth Service returns JWT token, API Gateway returns 200 OK with token', keywords: ['UML', 'sequence', 'four', 'client', 'gateway', 'auth', 'JWT', 'database'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +373,15 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── 2026-05-15 daily pool update — new medium-hard additions ──
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array of non-negative integers representing elevation map bar heights (width 1 each), return the total units of water that can be trapped.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[3,0,2,0,4]', expected: '7' },{ input: '[1,0,1]', expected: '1' }] },
+    { title: 'Longest Common Subsequence', description: 'Write `solve(text1, text2)` — return the length of the longest common subsequence of the two strings (not necessarily contiguous).',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"oxcpqrsvwf", "shmtulqrypy"', expected: '2' }] },
+    { title: 'Rotate Array', description: 'Write `solve(nums, k)` — rotate the array to the right by k steps and return the resulting array. k may be larger than the array length.',
+      testCases: [{ input: '[1,2,3,4,5,6,7], 3', expected: '[5,6,7,1,2,3,4]' },{ input: '[-1,-100,3,99], 2', expected: '[3,99,-1,-100]' },{ input: '[1,2], 3', expected: '[2,1]' },{ input: '[1], 0', expected: '[1]' }] },
+    { title: 'Minimum Window Substring', description: 'Write `solve(s, t)` — return the minimum window substring of s that contains all characters of t (including duplicates). Return empty string if no such window exists.',
+      testCases: [{ input: '"ADOBECODEBANC", "ABC"', expected: '"BANC"' },{ input: '"a", "a"', expected: '"a"' },{ input: '"a", "aa"', expected: '""' },{ input: '"aa", "aa"', expected: '"aa"' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +431,13 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── 2026-05-15 daily pool update — new medium-hard additions ──
+    { question: 'Pipe A can fill a tank in 4 hours; Pipe B drains it in 6 hours. Both pipes are opened simultaneously on an empty tank. How many hours does it take to fill the tank?', expectedKeywords: ['12'] },
+    { question: 'What is the least common multiple (LCM) of 12 and 18?', expectedKeywords: ['36'] },
+    { question: 'A sequence starts with 3 and 5. Each subsequent term is the sum of the two preceding terms. What is the 7th term in this sequence?', expectedKeywords: ['55'] },
+    { question: 'How many diagonals does a regular octagon (8-sided polygon) have?', expectedKeywords: ['20'] },
+    { question: 'A train 200 meters long travels at 80 km/h. How many seconds does it take to completely pass a stationary train 300 meters long? Give your answer to one decimal place.', expectedKeywords: ['22.5'] },
+    { question: 'A jar contains 4 red marbles and 6 blue marbles. Two marbles are drawn without replacement. What is the probability that both are red? Express as a simplified fraction.', expectedKeywords: ['2/15'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +515,11 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── 2026-05-15 daily pool update — new hard-tier additions ──
+    { text: 'The patient should take two point five milligrams of metformin twice daily with meals and avoid grapefruit products for thirty days', keywords: ['patient', 'metformin', 'grapefruit', 'twice', 'thirty'] },
+    { text: 'Item code SKU dash 8 8 2 4 1 F is temporarily out of stock with an estimated restock date of the seventeenth of June two thousand and twenty six', keywords: ['SKU', '88241', 'stock', 'seventeenth', 'june'] },
+    { text: 'The merger agreement values the target company at three billion four hundred twenty-two million dollars representing a forty-three percent premium over the thirty-day average closing price', keywords: ['merger', 'billion', '422', 'forty-three', 'premium', 'thirty'] },
+    { text: 'To reset your password navigate to Settings then Security then Change Password enter your current password once and your new password twice then click Confirm', keywords: ['settings', 'security', 'password', 'current', 'twice', 'confirm'] },
 ];
 
 // ============================================
