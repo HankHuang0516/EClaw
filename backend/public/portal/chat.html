@@ -3687,7 +3687,7 @@
                         entityIds: boundEntities.map(e => e.entityId)
                     }).then(() => {
                         window.AvatarPetdx.autoMount();
-                        renderTargetBar();
+                        if (contactsLoaded) renderTargetBar();
                     });
                 }
                 boundEntities.forEach(e => {
@@ -3710,10 +3710,11 @@
                 if (currentUser.deviceId) {
                     myPublicCodeMap[currentUser.deviceId] = { entityId: -1, label: 'You' };
                 }
-                renderTargetBar();
                 loadContacts();
             } catch (e) {
                 console.warn('Failed to load entities:', e.message);
+                contactsLoaded = true;
+                renderTargetBar();
             }
         }
 
@@ -3739,6 +3740,8 @@
                 renderTargetBar();
             } catch (e) {
                 console.warn('Failed to load contacts:', e.message);
+                contactsLoaded = true;
+                renderTargetBar();
             }
         }
 
