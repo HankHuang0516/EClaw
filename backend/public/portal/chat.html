@@ -46,6 +46,10 @@
             gap: 6px;
             min-width: 0;
         }
+        .chat-entity-label.compact {
+            --chat-avatar-size: 20px;
+            gap: 4px;
+        }
         .chat-entity-label-text {
             min-width: 0;
         }
@@ -3179,11 +3183,13 @@
             return CHAT_AVATAR_SIZE_PX[chatAvatarSize] || CHAT_AVATAR_SIZE_PX.medium;
         }
 
-        function getChatEntityLabel(entityId) {
+        function getChatEntityLabel(entityId, opts) {
             const id = Number(entityId);
             const avatar = getAvatarForEntity(id);
-            const avatarHtml = renderAvatarWithRentalHealth(avatar, getChatAvatarPx(), id);
-            return `<span class="chat-entity-label entity-label" data-entity="${id}">`
+            const compact = !!(opts && opts.compact);
+            const px = compact ? 20 : getChatAvatarPx();
+            const avatarHtml = renderAvatarWithRentalHealth(avatar, px, id);
+            return `<span class="chat-entity-label entity-label${compact ? ' compact' : ''}" data-entity="${id}">`
                 + `<span class="chat-avatar">${avatarHtml}</span>`
                 + `<span class="chat-entity-label-text">${escapeHtml(getEntityDisplayName(id))} (#${id})</span>`
                 + `</span>`;
@@ -3681,7 +3687,7 @@
                         entityIds: boundEntities.map(e => e.entityId)
                     }).then(() => {
                         window.AvatarPetdx.autoMount();
-                        renderTargetBar();
+                        if (contactsLoaded) renderTargetBar();
                     });
                 }
                 boundEntities.forEach(e => {
@@ -3704,10 +3710,11 @@
                 if (currentUser.deviceId) {
                     myPublicCodeMap[currentUser.deviceId] = { entityId: -1, label: 'You' };
                 }
-                renderTargetBar();
                 loadContacts();
             } catch (e) {
                 console.warn('Failed to load entities:', e.message);
+                contactsLoaded = true;
+                renderTargetBar();
             }
         }
 
@@ -3733,6 +3740,8 @@
                 renderTargetBar();
             } catch (e) {
                 console.warn('Failed to load contacts:', e.message);
+                contactsLoaded = true;
+                renderTargetBar();
             }
         }
 
@@ -3865,7 +3874,7 @@
                 label.dataset.entityId = e.entityId;
                 const e2eeBadge = e.encryptionStatus === 'e2ee' ? ' 🔒' : '';
                 label.innerHTML = `<input type="checkbox" data-entity="${e.entityId}" ${isChecked ? 'checked' : ''} onchange="updateTargetAll()">
-                    <span class="target-label-main">${getChatEntityLabel(e.entityId)}${e2eeBadge}<span class="entity-status-slot">${renderEntityStatusBadge(e.entityId)}</span></span>`;
+                    <span class="target-label-main">${getChatEntityLabel(e.entityId, { compact: true })}${e2eeBadge}<span class="entity-status-slot">${renderEntityStatusBadge(e.entityId)}</span></span>`;
                 allItems.push({ el: label, type: 'entity' });
             });
 
