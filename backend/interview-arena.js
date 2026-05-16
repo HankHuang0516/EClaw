@@ -188,6 +188,10 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Daily update additions: hard tier ──
+    { file: null, description: 'A terminal window showing the output of `git log --oneline`: 8 commits listed, the most recent is `a3f9c2e feat: add OAuth support` and the oldest is `1b2d4f0 init: project setup`', keywords: ['git', 'log', 'eight', 'oauth', 'init', 'a3f9c2e'] },
+    { file: null, description: 'A browser developer-tools response panel showing a JSON body: status "error", code 429, message "Rate limit exceeded", retry_after 60, remaining_requests 0', keywords: ['json', '429', 'rate', 'limit', 'retry', 'sixty', 'zero'] },
+    { file: null, description: 'A GitHub pull request page: 3 commits, 12 files changed, 247 additions shown in green and 89 deletions in red, 2 reviewer approvals and 1 reviewer requesting changes', keywords: ['pull', 'request', 'three', 'twelve', '247', 'additions', 'two', 'approvals'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +372,11 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── Daily update additions ──
+    { title: 'Jump Game', description: 'Write `solve(nums)` — each element is the max jump length from that position. Return true if you can reach the last index from index 0, false otherwise.',
+      testCases: [{ input: '[2,3,1,1,4]', expected: 'true' },{ input: '[3,2,1,0,4]', expected: 'false' },{ input: '[1]', expected: 'true' },{ input: '[0,1]', expected: 'false' },{ input: '[2,0,0]', expected: 'true' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an elevation map where each element is the height of a bar of width 1, return the total amount of rain water that can be trapped.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[1,1]', expected: '0' },{ input: '[3,0,0,3]', expected: '6' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -413,10 +422,16 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many squares of all sizes (1×1, 2×2, up to 8×8) are there on a standard 8×8 chessboard?', expectedKeywords: ['204'] },
     { question: 'A plane travels 2000 km at an effective speed of 1000 km/h (900 km/h airspeed plus 100 km/h tailwind). How many hours does the journey take?', expectedKeywords: ['2'] },
     { question: 'A worker paints 1/3 of a fence on day 1 and 1/4 of the remaining unpainted fence on day 2. What fraction of the fence is still unpainted after day 2?', expectedKeywords: ['1/2', '0.5', 'half'] },
-    // ── New additions to fill easy + medium-hard tiers ──
-    { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
+    // ── New additions: medium tier ──
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    { question: 'The perimeter of a rectangle is 48 cm. The length is twice the width. What is the area of the rectangle in cm²?', expectedKeywords: ['128'] },
+    { question: 'A coin is flipped 3 times. What is the probability of getting exactly 2 heads? Express as a simplified fraction.', expectedKeywords: ['3/8'] },
+    // ── New additions: hard tier ──
+    { question: 'In a round-robin tournament, each team plays every other team exactly once. If there are 8 teams, how many games are played in total?', expectedKeywords: ['28'] },
+    { question: 'Two concentric circles have radii 5 cm and 3 cm. What is the area of the ring between them in cm²? Express your answer as a multiple of π (e.g. "16π").', expectedKeywords: ['16'] },
+    { question: 'A pipe fills a cistern in 4 hours and another fills it in 6 hours. A drain empties it in 12 hours. If all three are open simultaneously, how many hours does it take to fill the cistern?', expectedKeywords: ['3'] },
+    { question: 'A sequence starts: 1, 1, 2, 3, 5, 8, 13, 21, 34, 55. What is the sum of the first 10 terms?', expectedKeywords: ['143'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +509,9 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Daily update additions ──
+    { text: 'The annual percentage rate is 7.35 percent compounded quarterly on a principal of twelve thousand five hundred dollars', keywords: ['annual', 'percentage', 'rate', '7.35', 'compounded', 'quarterly', 'twelve', 'thousand'] },
+    { text: 'Flight CX888 from Hong Kong to Los Angeles departs at 23:55 local time and arrives at 21:10 the same calendar day after a fourteen-hour flight', keywords: ['flight', 'Hong Kong', 'Los Angeles', '23', '55', '21', 'fourteen'] },
 ];
 
 // ============================================
