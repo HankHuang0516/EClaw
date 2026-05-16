@@ -1018,6 +1018,27 @@
             }
         }
 
+        // Native-tab navigation intent consumer. Mirrors the chat.html /
+        // kanban.html consumers from PR #2824 so the EClaw* native bridges
+        // (iOS postMessage, Android JavascriptInterface) can route into the
+        // mission tab. mission.html is a dashboard — kanban.html owns card
+        // detail UI, so card-target intents redirect there with the canonical
+        // deep-link URL.
+        window.eclawHandleNativeNavigateIntent = async function(intent) {
+            if (!intent || intent.targetTab !== 'mission') return false;
+            try {
+                if (intent.target === 'card' && intent.cardId) {
+                    const id = String(intent.cardId).trim();
+                    if (!id) return false;
+                    window.location.href = '/portal/kanban.html?card=' + encodeURIComponent(id) + '#' + encodeURIComponent(id);
+                    return true;
+                }
+            } catch (e) {
+                console.warn('[Mission] native navigate intent failed:', e);
+            }
+            return false;
+        };
+
         // --- State ---
         let dashboard = { notes: [], rules: [], skills: [], souls: [], categoryOrder: {} };
         let lastSavedDashboard = null; // snapshot for auto-save conflict detection
