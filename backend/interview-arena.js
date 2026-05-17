@@ -188,6 +188,11 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Daily update additions (2026-05-17) — hard-tier OCR/spatial/multi-step ──
+    { file: null, description: 'A database entity-relationship diagram with four tables: Users (id, name, email, created_at, role), Orders (id, user_id, total, status, date), Products (id, name, price, stock, category), and OrderItems (id, order_id, product_id, quantity); foreign key lines connect Orders.user_id to Users.id, OrderItems.order_id to Orders.id, and OrderItems.product_id to Products.id', keywords: ['four', 'tables', 'users', 'orders', 'foreign', 'products'] },
+    { file: null, description: 'A mobile app analytics dashboard: DAU chart showing 12,450 users on Monday dropping to 9,200 on Tuesday then spiking to 18,730 on Friday; retention rate 43%; average session 4 minutes 17 seconds; top country USA at 34%, Brazil at 22%, India at 18%', keywords: ['dashboard', 'analytics', '12450', '18730', 'retention', 'USA', 'Brazil'] },
+    { file: null, description: 'A code diff screenshot showing a Python function: three deleted lines highlighted in red (the old loop using for i in range len arr) and four added lines highlighted in green (the new vectorized numpy implementation using np.sum and np.where)', keywords: ['diff', 'python', 'three', 'deleted', 'four', 'added', 'numpy'] },
+    { file: null, description: 'A monitoring alert panel: five services listed — API Gateway green 99.9%, Auth Service yellow 98.2%, Database red 0% DOWN, Cache orange 87.3%, CDN green 100% — three incidents open, last incident started 14 minutes ago', keywords: ['five', 'services', 'database', 'red', 'down', 'three', 'incidents'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +373,17 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── Daily update additions (2026-05-17) — medium/hard greedy + DP ──
+    { title: 'Merge Intervals', description: 'Write `solve(intervals)` — given an array of [start, end] intervals, merge all overlapping intervals and return the result sorted by start time.',
+      testCases: [{ input: '[[1,3],[2,6],[8,10],[15,18]]', expected: '[[1,6],[8,10],[15,18]]' },{ input: '[[1,4],[4,5]]', expected: '[[1,5]]' },{ input: '[[1,4],[2,3]]', expected: '[[1,4]]' },{ input: '[[1,2]]', expected: '[[1,2]]' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array of bar heights representing a histogram, compute how many units of rain water are trapped between the bars.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[3,0,2,0,4]', expected: '7' },{ input: '[1,0,1]', expected: '1' }] },
+    { title: 'Unique Paths', description: 'Write `solve(m, n)` — a robot starts at the top-left of an m×n grid and can only move right or down. Return the number of unique paths to the bottom-right corner.',
+      testCases: [{ input: '3, 7', expected: '28' },{ input: '3, 2', expected: '3' },{ input: '1, 1', expected: '1' },{ input: '2, 3', expected: '3' }] },
+    { title: 'Rotate Array', description: 'Write `solve(nums, k)` — rotate the array to the right by k steps and return the resulting array.',
+      testCases: [{ input: '[1,2,3,4,5,6,7], 3', expected: '[5,6,7,1,2,3,4]' },{ input: '[-1,-100,3,99], 2', expected: '[3,99,-1,-100]' },{ input: '[1,2], 3', expected: '[2,1]' },{ input: '[1], 0', expected: '[1]' }] },
+    { title: 'Longest Common Subsequence', description: 'Write `solve(text1, text2)` — return the length of their longest common subsequence (not necessarily contiguous).',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"oxcpqrsvwf", "shmtulqrypy"', expected: '2' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +433,13 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Daily update additions (2026-05-17) — medium/hard reasoning ──
+    { question: 'Two cyclists start from the same point and ride in opposite directions at 15 km/h and 20 km/h respectively. How many kilometers apart will they be after 3 hours?', expectedKeywords: ['105'] },
+    { question: 'What is the 8th triangular number? (The nth triangular number equals n×(n+1)/2.)', expectedKeywords: ['36'] },
+    { question: 'Compound interest at 10% per year: what is the amount after 3 years on a principal of $1000? (Round to the nearest dollar.)', expectedKeywords: ['1331'] },
+    { question: 'A bag has 5 red balls and 3 blue balls. Two balls are drawn without replacement. What is the probability both are red? Express as a simplified fraction.', expectedKeywords: ['5/14'] },
+    { question: 'A number leaves remainder 2 when divided by 3, and remainder 3 when divided by 5. What is the smallest positive integer satisfying both conditions?', expectedKeywords: ['8'] },
+    { question: 'How many 3-digit palindrome numbers are there? (A palindrome reads the same forwards and backwards, e.g., 121.)', expectedKeywords: ['90'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +517,11 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Daily update additions (2026-05-17) — hard-tier medical/technical phrases ──
+    { text: 'The orthopedic surgeon will perform a bilateral knee arthroplasty in Operating Room 4 at seven thirty AM on Thursday', keywords: ['orthopedic', 'bilateral', 'arthroplasty', 'room', 'thursday'] },
+    { text: 'The algorithm achieved 94.7 percent accuracy on the validation set after 128 training epochs with a learning rate of 0.001', keywords: ['algorithm', '94.7', 'validation', '128', 'epochs', '0.001'] },
+    { text: 'The peer-reviewed article with DOI 10.1038 slash s41586 dash 2024 dash 07268 dash 9 was accepted by Nature in the field of quantum biology', keywords: ['DOI', '10.1038', 'Nature', 'quantum', 'biology'] },
+    { text: 'Account number four eight nine two dash three seven one zero dash six six five four dash two two zero one expires zero nine slash twenty-eight CVV seven three one', keywords: ['account', '4892', 'expires', 'CVV', '731'] },
 ];
 
 // ============================================
