@@ -3826,7 +3826,7 @@
                 const qs = new URLSearchParams({ t: String(Date.now()) });
                 if (mock) qs.set('mockStatus', mock);
                 if (mock && ownerEntityId !== undefined && ownerEntityId !== null) qs.set('ownerEntityId', String(ownerEntityId));
-                const data = await apiCall('GET', `/api/rental/health-status?${qs.toString()}`);
+                const data = await apiCall('GET', `/api/rental/health-status?${qs.toString()}`, null, { skip401Redirect: true });
                 rentalHealthByEntity.clear();
                 if (data && data.success && Array.isArray(data.statuses)) {
                     data.statuses.forEach(h => {
