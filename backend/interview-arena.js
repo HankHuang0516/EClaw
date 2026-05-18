@@ -188,6 +188,11 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Daily pool update 2026-05-18 — new hard-tier additions ──
+    { file: null, description: 'A Docker Compose file with four services: postgres on port 5432, redis on port 6379, api on port 8080 forwarded to 3000, and nginx as reverse proxy on port 80', keywords: ['docker', 'four', 'postgres', '5432', 'redis', 'nginx', 'port'] },
+    { file: null, description: 'A Kubernetes pod status table showing five pods: three in Running state with green dots, one in CrashLoopBackOff shown in red, and one in Pending state shown in yellow — the crashing pod is labeled analytics-worker-2', keywords: ['kubernetes', 'five', 'three', 'running', 'crashloopbackoff', 'analytics'] },
+    { file: null, description: 'A UML sequence diagram with four lifelines: Client, API Gateway, Auth Service, and Database — Client sends login credentials to API Gateway, which forwards to Auth Service; Auth Service queries Database and returns a JWT token; API Gateway responds 200 OK to Client', keywords: ['uml', 'sequence', 'four', 'client', 'database', 'jwt', '200'] },
+    { file: null, description: 'A Terraform plan output showing three resources to add (vpc, subnet, security_group in green), one resource to change (ec2_instance in yellow), and two resources to destroy (old_bucket, legacy_role in red) — six total changes', keywords: ['terraform', 'three', 'add', 'vpc', 'one', 'change', 'two', 'destroy'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +373,15 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── Daily pool update 2026-05-18 — new medium/hard coding additions ──
+    { title: 'Merge Intervals', description: 'Write `solve(intervals)` — given a list of intervals [start, end], merge all overlapping intervals and return sorted non-overlapping intervals.',
+      testCases: [{ input: '[[1,3],[2,6],[8,10],[15,18]]', expected: '[[1,6],[8,10],[15,18]]' },{ input: '[[1,4],[4,5]]', expected: '[[1,5]]' },{ input: '[[1,4],[2,3]]', expected: '[[1,4]]' },{ input: '[[1,4]]', expected: '[[1,4]]' }] },
+    { title: 'Course Schedule', description: 'Write `solve(numCourses, prerequisites)` — given numCourses (labeled 0 to numCourses-1) and prerequisite pairs [a,b] meaning course b must be taken before a, return true if you can finish all courses (i.e., no circular dependency).',
+      testCases: [{ input: '2, [[1,0]]', expected: 'true' },{ input: '2, [[1,0],[0,1]]', expected: 'false' },{ input: '4, [[1,0],[2,0],[3,1],[3,2]]', expected: 'true' },{ input: '1, []', expected: 'true' }] },
+    { title: 'Longest Common Subsequence', description: 'Write `solve(text1, text2)` — return the length of their longest common subsequence (a subsequence is derived by deleting some characters without changing relative order).',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"bl", "yby"', expected: '1' }] },
+    { title: 'Subsets', description: 'Write `solve(nums)` — return all possible subsets (power set) of nums. Sort each subset, then sort all subsets lexicographically. No duplicates.',
+      testCases: [{ input: '[1,2,3]', expected: '[[],[1],[1,2],[1,2,3],[1,3],[2],[2,3],[3]]' },{ input: '[0]', expected: '[[],[0]]' },{ input: '[]', expected: '[[]]' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +431,11 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Daily pool update 2026-05-18 — new medium/hard questions ──
+    { question: 'Two trains start from cities that are 600 km apart, traveling toward each other. Train A travels at 80 km/h and Train B at 120 km/h. How many hours until they meet?', expectedKeywords: ['3'] },
+    { question: 'How many trailing zeros does 100! (100 factorial) end with?', expectedKeywords: ['24'] },
+    { question: 'A cylindrical tank has a radius of 3 meters and a height of 4 meters. What is its volume in cubic meters? Use π ≈ 3.14 and round to the nearest whole number.', expectedKeywords: ['113'] },
+    { question: 'A bag contains 3 red, 4 blue, and 5 green marbles. Two marbles are drawn at random without replacement. What is the probability that both marbles are the same color? Express as a simplified fraction.', expectedKeywords: ['19/66'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +513,10 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Daily pool update 2026-05-18 — new hard TTS additions ──
+    { text: 'The quarterly earnings call reported total revenue of four hundred twelve million dollars with net income up seven point eight percent compared to last year', keywords: ['quarterly', 'earnings', 'revenue', 'seven', 'percent', 'year'] },
+    { text: 'Effective Monday April fourteenth all employees must use two-factor authentication when accessing the corporate VPN from outside the office', keywords: ['monday', 'april', 'fourteenth', 'authentication', 'VPN', 'office'] },
+    { text: 'The software update version three point seven patches seventeen security vulnerabilities and introduces two new API endpoints for token refresh and audit logging', keywords: ['software', 'update', 'seventeen', 'security', 'two', 'audit'] },
 ];
 
 // ============================================
