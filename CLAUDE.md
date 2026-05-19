@@ -1039,6 +1039,17 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Growth Tracking (v1.1168)**: `growth.js` module for admin bot growth metrics; static serving fix
 - **UIUX Audit Script Alignment (v1.1172)**: QA/UIUX audit test scripts aligned with current portal contracts
 
+### Recent Fixes (v1.1172.x+, 2026-05-14 – 2026-05-17)
+
+- **Chat 401 Redirect Fix (PR #2833)**: `loadRentalHealthStatus()` in chat.html now uses silent fetch instead of `apiCall()` to prevent 401 redirects bouncing device-only sessions to dashboard
+- **Chat Target Bar Atomic Load (PR #2831)**: Await contacts before first render to prevent partial target bar display
+- **Chat Compact Avatar (PR #2830)**: 20px avatar in target bar for App WebView (only shows entity #1 #2)
+- **Security: sanitize-html XSS + protobufjs + exam.html (PR #2829)**: P0 sanitize-html XSS patch, P1 protobufjs prototype pollution, exam.html innerHTML escape
+- **Kanban Comments Pagination (PR #2816)**: GET card returns latest 50 comments; comments endpoint exposes `total` count
+- **Platform Stats Fix (PR #2818)**: Fix platform-stats 500 error; entity/lookup publicCode alias support
+- **Task Chip UX (PR #2825)**: Group task chip actions in portal
+- **App Chat-Mission Navigation (PR #2824)**: Route chat mission jumps through native Android tabs
+
 ---
 
 ## Test Coverage Summary
