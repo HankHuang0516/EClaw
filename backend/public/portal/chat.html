@@ -4389,7 +4389,7 @@
         function getChatMessageDeepLinkId() {
             try {
                 const params = new URLSearchParams(window.location.search);
-                return normalizeChatMessageId(params.get('msg') || params.get('his'));
+                return normalizeChatMessageId(params.get('msg') || params.get('his') || params.get('messageId'));
             } catch (_) {
                 return '';
             }
