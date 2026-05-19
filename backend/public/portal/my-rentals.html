@@ -198,13 +198,13 @@
             wrap.innerHTML = `<div class="mr-empty">${tt('mr_loading', 'Loading...')}</div>`;
             try {
                 if (currentTab === 'disputes') {
-                    const data = await apiCall('GET', '/api/rental/my-disputes?limit=50');
+                    const data = await apiCall('GET', '/api/rental/my-disputes?limit=50', null, { skip401Redirect: true });
                     renderDisputes(data?.disputes || []);
                 } else if (currentTab === 'listings') {
-                    const data = await apiCall('GET', '/api/rental/my-listings');
+                    const data = await apiCall('GET', '/api/rental/my-listings', null, { skip401Redirect: true });
                     renderListings(data?.listings || []);
                 } else {
-                    const data = await apiCall('GET', `/api/rental/my-contracts?role=${currentTab}&limit=50`);
+                    const data = await apiCall('GET', `/api/rental/my-contracts?role=${currentTab}&limit=50`, null, { skip401Redirect: true });
                     renderContracts(data?.contracts || []);
                 }
             } catch (err) {
