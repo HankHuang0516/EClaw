@@ -280,6 +280,69 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
     // Health check
     router.get("/kanban-health", (req, res) => res.json({ ok: true, module: "kanban", cron: !!CronExpressionParser }));
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // Per-entity nudge preference overrides — spec docs/specs/kanban-nudge-spec.md §6
+    //
+    //   GET  /api/mission/nudge-prefs?deviceId&{botSecret|deviceSecret}[&entityId=N]
+    //     → returns {prefs, defaults, effective, overrideKeys}
+    //       - prefs:      raw device-level prefs (includes kanban_nudge_per_entity_overrides)
+    //       - effective:  merged prefs for `entityId` (or device base if omitted)
+    //       - overrideKeys: which keys may be overridden per-entity
+    //
+    //   PUT  /api/mission/nudge-prefs  body {deviceId, {botSecret|deviceSecret}, entityId, overrides}
+    //     → upserts `kanban_nudge_per_entity_overrides[entityId] = overrides`.
+    //       Passing null / empty object removes the entity entry.
+    // ─────────────────────────────────────────────────────────────────────────
+    router.get('/nudge-prefs', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId, entityId } = { ...req.query, ...req.body };
+        try {
+            const prefs = await devicePrefs.getPrefs(deviceId);
+            const effective = entityId != null
+                ? devicePrefs.mergeEntityOverride(prefs, Number(entityId))
+                : prefs;
+            res.json({
+                success: true,
+                prefs,
+                defaults: devicePrefs.DEFAULTS,
+                effective,
+                overrideKeys: devicePrefs.NUDGE_ENTITY_OVERRIDE_KEYS,
+            });
+        } catch (err) {
+            console.error('[Kanban] GET /nudge-prefs error:', err.message);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    router.put('/nudge-prefs', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId, entityId, overrides } = { ...req.query, ...req.body };
+        if (entityId == null || !Number.isFinite(Number(entityId))) {
+            return res.status(400).json({ success: false, error: 'entityId required' });
+        }
+        try {
+            const current = await devicePrefs.getPrefs(deviceId);
+            const map = { ...(current.kanban_nudge_per_entity_overrides || {}) };
+            const key = String(Number(entityId));
+            const isEmpty = !overrides
+                || (typeof overrides === 'object' && !Array.isArray(overrides) && Object.keys(overrides).length === 0);
+            if (isEmpty) {
+                delete map[key];
+            } else if (typeof overrides === 'object' && !Array.isArray(overrides)) {
+                map[key] = overrides;
+            } else {
+                return res.status(400).json({ success: false, error: 'overrides must be an object or null' });
+            }
+            await devicePrefs.updatePrefs(deviceId, { kanban_nudge_per_entity_overrides: map });
+            const updated = await devicePrefs.getPrefs(deviceId);
+            const effective = devicePrefs.mergeEntityOverride(updated, Number(entityId));
+            res.json({ success: true, prefs: updated, effective });
+        } catch (err) {
+            console.error('[Kanban] PUT /nudge-prefs error:', err.message);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
     // ── Auth helpers (same as mission.js) ──
     function findEntityByCredentials(deviceId, entityId, botSecret) {
         const device = devices[deviceId];
@@ -2576,31 +2639,85 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
     }
 
     async function processDeviceStaleCards(deviceId, cards) {
-        const prefs = await devicePrefs.getPrefs(deviceId).catch(() => ({}));
-        const intervalMs = Math.max(5, Number(prefs.kanban_nudge_interval_minutes) || 180) * 60 * 1000;
-        const batchSize = Math.max(1, Math.min(20, Number(prefs.kanban_nudge_batch_size) || 1));
-        const priorityMode = prefs.kanban_nudge_priority_mode || 'priority_first';
-        const perEntityThrottle = prefs.kanban_nudge_per_entity_throttle !== false;
-        const allowedStatuses = new Set(
-            Array.isArray(prefs.kanban_nudge_statuses) && prefs.kanban_nudge_statuses.length
-                ? prefs.kanban_nudge_statuses
+        const basePrefs = await devicePrefs.getPrefs(deviceId).catch(() => ({}));
+        // Device-wide-only settings (NOT per-entity overridable): batch size + priority sort.
+        const batchSize = Math.max(1, Math.min(20, Number(basePrefs.kanban_nudge_batch_size) || 1));
+        const priorityMode = basePrefs.kanban_nudge_priority_mode || 'priority_first';
+        const baseIntervalMs = Math.max(5, Number(basePrefs.kanban_nudge_interval_minutes) || 180) * 60 * 1000;
+        const basePerEntityThrottle = basePrefs.kanban_nudge_per_entity_throttle !== false;
+        const baseStatuses = new Set(
+            Array.isArray(basePrefs.kanban_nudge_statuses) && basePrefs.kanban_nudge_statuses.length
+                ? basePrefs.kanban_nudge_statuses
                 : KanbanStatus.NUDGE_DEFAULT_STATUSES
         );
 
-        // Status filter applies to ALL levels — if user opts backlog out, no auto-escalation there either.
-        const eligible = cards.filter(c => allowedStatuses.has(c.status));
+        // Phase 2 (kanban-nudge-spec.md §6): per-entity overrides.
+        // Cached resolution keyed on entityId, computed once per tick.
+        const entityPrefsCache = new Map();
+        function effectiveFor(entityId) {
+            const bid = Number(entityId);
+            if (entityPrefsCache.has(bid)) return entityPrefsCache.get(bid);
+            const merged = devicePrefs.mergeEntityOverride(basePrefs, bid);
+            const ep = {
+                intervalMs: Math.max(5, Number(merged.kanban_nudge_interval_minutes) || 180) * 60 * 1000,
+                statuses: new Set(
+                    Array.isArray(merged.kanban_nudge_statuses) && merged.kanban_nudge_statuses.length
+                        ? merged.kanban_nudge_statuses
+                        : KanbanStatus.NUDGE_DEFAULT_STATUSES
+                ),
+                perEntityThrottle: merged.kanban_nudge_per_entity_throttle !== false,
+            };
+            entityPrefsCache.set(bid, ep);
+            return ep;
+        }
+
+        // Per-card: merge across assigned bots.
+        //   intervalMs   = MIN (fastest cadence wins — any bot wanting sooner pulls the card forward)
+        //   statuses     = UNION (card eligible if any assigned bot cares about this status)
+        //   perEntityThrottle = OR (if any bot wants throttle, throttle to avoid dup pushes)
+        // Cards with no assigned_bots fall back to device base.
+        function cardEffective(card) {
+            const bots = (card.assigned_bots || []).map(Number).filter(Number.isFinite);
+            if (bots.length === 0) {
+                return {
+                    intervalMs: baseIntervalMs,
+                    statusEligible: baseStatuses.has(card.status),
+                    perEntityThrottle: basePerEntityThrottle,
+                };
+            }
+            let minInterval = Infinity;
+            let statusEligible = false;
+            let anyThrottle = false;
+            for (const bid of bots) {
+                const ep = effectiveFor(bid);
+                if (ep.intervalMs < minInterval) minInterval = ep.intervalMs;
+                if (ep.statuses.has(card.status)) statusEligible = true;
+                if (ep.perEntityThrottle) anyThrottle = true;
+            }
+            return {
+                intervalMs: Number.isFinite(minInterval) ? minInterval : baseIntervalMs,
+                statusEligible,
+                perEntityThrottle: anyThrottle,
+            };
+        }
+
+        // Status filter applies to ALL levels — if status falls outside every recipient's
+        // allowed_statuses (after overrides), no auto-escalation happens either.
+        const eligible = cards.filter(c => cardEffective(c).statusEligible);
         if (eligible.length === 0) return;
 
         // Split: cards ready for Level 2/3 (time-based) fire regardless of batch size.
         const level1Pending = [];
         for (const card of eligible) {
+            const ce = cardEffective(card);
+            const intervalMs = ce.intervalMs;
             const elapsedMs = Date.now() - new Date(card.status_changed_at).getTime();
             const config = card.config || {};
             const esc = config.escalationPolicy || {};
             const escalateAfterMs = esc.escalateAfterMs || DEFAULT_ESCALATE_MS;
             const blockAfterMs = esc.blockAfterMs || DEFAULT_BLOCK_MS;
 
-            // Level 2/3 still honor intervalMs to avoid re-firing on the same tick.
+            // Level 2/3 honor the per-card effective intervalMs to avoid re-firing on the same tick.
             const sinceLast = card.last_stale_nudge_at
                 ? Date.now() - new Date(card.last_stale_nudge_at).getTime()
                 : Infinity;
@@ -2620,25 +2737,26 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         if (level1Pending.length === 0) return;
 
         // Per-entity throttle: skip Level-1 cards whose recipient bots all got
-        // nudged within intervalMs (regardless of which card the prior nudge cited).
-        // Cards with no assigned_bots fall through unchanged — the system comment
-        // is still added but no entity gets a duplicate push.
-        const lastByEntity = perEntityThrottle ? await loadEntityNudgeLog(deviceId) : null;
+        // nudged within their effective intervalMs (using per-entity overrides).
+        const anyThrottleNeeded = level1Pending.some(c => cardEffective(c).perEntityThrottle);
+        const lastByEntity = anyThrottleNeeded ? await loadEntityNudgeLog(deviceId) : null;
         const sortedCandidates = sortCardsByNudgeMode(level1Pending, priorityMode);
         const picked = [];
         const willNudgeEntity = new Set();
         for (const card of sortedCandidates) {
             if (picked.length >= batchSize) break;
-            if (perEntityThrottle && !cardHasFreshRecipient(card, lastByEntity, willNudgeEntity, intervalMs)) {
+            const ce = cardEffective(card);
+            if (ce.perEntityThrottle && !cardHasFreshRecipient(card, lastByEntity, willNudgeEntity, effectiveFor, baseIntervalMs)) {
                 continue;
             }
             picked.push(card);
-            for (const bid of (card.assigned_bots || [])) willNudgeEntity.add(bid);
+            for (const bid of (card.assigned_bots || [])) willNudgeEntity.add(Number(bid));
         }
 
         if (picked.length === 0) return;
 
-        console.log(`[Kanban] Stale nudge for ${deviceId}: ${picked.length}/${level1Pending.length} (mode=${priorityMode}, batch=${batchSize}, interval=${intervalMs / 60000}m, perEntityThrottle=${perEntityThrottle})`);
+        const overrideCount = Object.keys(basePrefs.kanban_nudge_per_entity_overrides || {}).length;
+        console.log(`[Kanban] Stale nudge for ${deviceId}: ${picked.length}/${level1Pending.length} (mode=${priorityMode}, batch=${batchSize}, baseInterval=${baseIntervalMs / 60000}m, perEntityOverrides=${overrideCount})`);
 
         for (const card of picked) {
             await fireLevelOneNudge(card);
@@ -2661,13 +2779,21 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         return map;
     }
 
-    function cardHasFreshRecipient(card, lastByEntity, willNudgeEntity, intervalMs) {
+    // `effectiveForOrInterval` may be either:
+    //   - a function entityId → {intervalMs}     (per-entity overrides path)
+    //   - a number (legacy device-wide intervalMs fallback)
+    function cardHasFreshRecipient(card, lastByEntity, willNudgeEntity, effectiveForOrInterval, fallbackIntervalMs) {
         const bots = card.assigned_bots || [];
         if (bots.length === 0) return true;
+        const resolveInterval = typeof effectiveForOrInterval === 'function'
+            ? (bid) => effectiveForOrInterval(bid).intervalMs || fallbackIntervalMs
+            : () => effectiveForOrInterval;
         const now = Date.now();
         return bots.some(bid => {
-            if (willNudgeEntity.has(bid)) return false;
-            const last = lastByEntity.get(Number(bid));
+            const n = Number(bid);
+            if (willNudgeEntity.has(n) || willNudgeEntity.has(bid)) return false;
+            const last = lastByEntity ? lastByEntity.get(n) : null;
+            const intervalMs = resolveInterval(n);
             return !last || (now - last) > intervalMs;
         });
     }
