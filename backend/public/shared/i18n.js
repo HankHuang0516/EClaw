@@ -269280,6 +269280,15 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_per_entity_throttle_label": "🅰️ Stale-card: cap each entity at 1 nudge per interval",
+        "kanban_nudge_per_entity_section_label": "Per-entity overrides",
+        "kanban_nudge_per_entity_section_desc": "Customize interval / columns / throttle for one specific entity. Batch size + priority mode stay device-wide.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Pick an entity —",
+        "kanban_nudge_per_entity_clear": "Reset to device default",
+        "kanban_nudge_per_entity_hint_prefix": "Toggle a field to override the device default for this entity.",
+        "kanban_nudge_per_entity_override_interval": "Override interval",
+        "kanban_nudge_per_entity_override_statuses": "Override columns",
+        "kanban_nudge_per_entity_override_throttle": "Override throttle",
+        "kanban_nudge_per_entity_throttle_short": "Cap this entity at 1 nudge per interval",
 
 
 
