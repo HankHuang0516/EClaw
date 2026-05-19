@@ -234,3 +234,63 @@ describe('codex auto-approve preference', () => {
         expect(devicePrefsModule.DEFAULTS.codex_auto_approve_targets).toEqual({});
     });
 });
+
+// ════════════════════════════════════════════════════════════════
+// Per-entity nudge overrides — spec docs/specs/kanban-nudge-spec.md §6
+// ════════════════════════════════════════════════════════════════
+describe('kanban_nudge_per_entity_overrides', () => {
+    it('includes empty overrides map in DEFAULTS', () => {
+        expect(devicePrefsModule.DEFAULTS).toHaveProperty('kanban_nudge_per_entity_overrides');
+        expect(devicePrefsModule.DEFAULTS.kanban_nudge_per_entity_overrides).toEqual({});
+    });
+
+    it('exposes the restricted override key set', () => {
+        expect(devicePrefsModule.NUDGE_ENTITY_OVERRIDE_KEYS).toEqual([
+            'kanban_nudge_interval_minutes',
+            'kanban_nudge_statuses',
+            'kanban_nudge_per_entity_throttle',
+        ]);
+    });
+
+    describe('mergeEntityOverride', () => {
+        const base = {
+            ...devicePrefsModule.DEFAULTS,
+            kanban_nudge_interval_minutes: 180,
+            kanban_nudge_per_entity_throttle: true,
+            kanban_nudge_statuses: ['todo', 'in_progress', 'review'],
+            kanban_nudge_per_entity_overrides: {
+                '3': { kanban_nudge_interval_minutes: 60 },
+                '5': {
+                    kanban_nudge_interval_minutes: 360,
+                    kanban_nudge_per_entity_throttle: false,
+                },
+            },
+        };
+
+        it('returns base when entity has no override', () => {
+            const merged = devicePrefsModule.mergeEntityOverride(base, 99);
+            expect(merged.kanban_nudge_interval_minutes).toBe(180);
+            expect(merged.kanban_nudge_per_entity_throttle).toBe(true);
+        });
+
+        it('overrides interval for matched entity', () => {
+            const merged = devicePrefsModule.mergeEntityOverride(base, 3);
+            expect(merged.kanban_nudge_interval_minutes).toBe(60);
+            // unaffected fields keep base value
+            expect(merged.kanban_nudge_per_entity_throttle).toBe(true);
+            expect(merged.kanban_nudge_statuses).toEqual(['todo', 'in_progress', 'review']);
+        });
+
+        it('overrides multiple fields independently', () => {
+            const merged = devicePrefsModule.mergeEntityOverride(base, 5);
+            expect(merged.kanban_nudge_interval_minutes).toBe(360);
+            expect(merged.kanban_nudge_per_entity_throttle).toBe(false);
+        });
+
+        it('accepts numeric or string entityId', () => {
+            const m1 = devicePrefsModule.mergeEntityOverride(base, 3);
+            const m2 = devicePrefsModule.mergeEntityOverride(base, '3');
+            expect(m1.kanban_nudge_interval_minutes).toBe(m2.kanban_nudge_interval_minutes);
+        });
+    });
+});
