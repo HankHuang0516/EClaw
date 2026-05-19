@@ -1154,6 +1154,83 @@
                         <span data-i18n="kanban_cron_recurring_notify_label">🅱️ Cron母卡 self-recurring (no child): notify on each fire</span>
                     </label>
                 </div>
+
+                <!-- Per-entity override panel — spec §6 (card_e066cb6b) -->
+                <div class="setting-row" id="kanbanNudgePerEntitySection"
+                     style="flex-direction:column;align-items:stretch;gap:8px;border-top:1px solid var(--border);padding-top:12px;margin-top:4px;">
+                    <span class="setting-row-label" data-i18n="kanban_nudge_per_entity_section_label">
+                        Per-entity overrides
+                    </span>
+                    <p class="section-desc" style="margin:0;font-size:12px;" data-i18n="kanban_nudge_per_entity_section_desc">
+                        Customize interval / columns / throttle for one specific entity. Batch size + priority mode stay device-wide.
+                    </p>
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                        <select id="kanbanNudgeEntitySelect"
+                                style="flex:1;min-width:160px;padding:6px 8px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);"
+                                onchange="onKanbanNudgeEntityChange()">
+                            <option value="" data-i18n="kanban_nudge_per_entity_pick_placeholder">— Pick an entity —</option>
+                        </select>
+                        <button type="button" id="kanbanNudgeClearOverrideBtn" class="btn btn-sm btn-outline" style="display:none;"
+                                onclick="clearKanbanNudgeEntityOverride()" data-i18n="kanban_nudge_per_entity_clear">
+                            Reset to device default
+                        </button>
+                    </div>
+
+                    <div id="kanbanNudgeEntityPanel" style="display:none;background:var(--bg-secondary, rgba(255,255,255,0.03));border:1px solid var(--border);border-radius:8px;padding:10px 12px;flex-direction:column;gap:10px;">
+                        <p class="section-desc" id="kanbanNudgeEntityHint" style="margin:0;font-size:12px;">
+                            <span data-i18n="kanban_nudge_per_entity_hint_prefix">Toggle a field to override the device default for this entity.</span>
+                        </p>
+
+                        <!-- Override row: interval -->
+                        <div style="display:flex;flex-direction:column;gap:6px;">
+                            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="kanbanNudgeEntOverrideInterval"
+                                       onchange="onKanbanNudgeEntityOverrideToggle('kanban_nudge_interval_minutes', this.checked)">
+                                <span data-i18n="kanban_nudge_per_entity_override_interval">Override interval</span>
+                            </label>
+                            <span style="display:flex;align-items:center;gap:4px;padding-left:24px;">
+                                <input type="number" id="kanbanNudgeEntIntervalHours" min="0" max="24" step="1" disabled
+                                       style="width:56px;padding:6px 8px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);text-align:right;"
+                                       onchange="saveKanbanNudgeEntityInterval()">
+                                <span style="font-size:13px;" data-i18n="kanban_nudge_interval_hour">h</span>
+                                <input type="number" id="kanbanNudgeEntIntervalMinutes" min="0" max="59" step="1" disabled
+                                       style="width:56px;padding:6px 8px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);text-align:right;"
+                                       onchange="saveKanbanNudgeEntityInterval()">
+                                <span style="font-size:13px;" data-i18n="kanban_nudge_interval_min">m</span>
+                            </span>
+                        </div>
+
+                        <!-- Override row: statuses -->
+                        <div style="display:flex;flex-direction:column;gap:6px;">
+                            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="kanbanNudgeEntOverrideStatuses"
+                                       onchange="onKanbanNudgeEntityOverrideToggle('kanban_nudge_statuses', this.checked)">
+                                <span data-i18n="kanban_nudge_per_entity_override_statuses">Override columns</span>
+                            </label>
+                            <div id="kanbanNudgeEntStatusChips" style="display:flex;flex-wrap:wrap;gap:8px;padding-left:24px;opacity:0.5;">
+                                <label class="nudge-status-chip"><input type="checkbox" value="backlog" data-ent-status onchange="saveKanbanNudgeEntityStatuses()"><span data-i18n="kanban_status_backlog">Backlog</span></label>
+                                <label class="nudge-status-chip"><input type="checkbox" value="todo" data-ent-status onchange="saveKanbanNudgeEntityStatuses()"><span data-i18n="kanban_status_todo">Todo</span></label>
+                                <label class="nudge-status-chip"><input type="checkbox" value="in_progress" data-ent-status onchange="saveKanbanNudgeEntityStatuses()"><span data-i18n="kanban_status_in_progress">In Progress</span></label>
+                                <label class="nudge-status-chip"><input type="checkbox" value="review" data-ent-status onchange="saveKanbanNudgeEntityStatuses()"><span data-i18n="kanban_status_review">Review</span></label>
+                                <label class="nudge-status-chip"><input type="checkbox" value="blocked" data-ent-status onchange="saveKanbanNudgeEntityStatuses()"><span data-i18n="kanban_status_blocked">Blocked</span></label>
+                            </div>
+                        </div>
+
+                        <!-- Override row: throttle -->
+                        <div style="display:flex;flex-direction:column;gap:6px;">
+                            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+                                <input type="checkbox" id="kanbanNudgeEntOverrideThrottle"
+                                       onchange="onKanbanNudgeEntityOverrideToggle('kanban_nudge_per_entity_throttle', this.checked)">
+                                <span data-i18n="kanban_nudge_per_entity_override_throttle">Override throttle</span>
+                            </label>
+                            <label style="display:flex;align-items:center;gap:8px;font-size:13px;padding-left:24px;cursor:pointer;">
+                                <input type="checkbox" id="kanbanNudgeEntThrottleVal" disabled
+                                       onchange="saveKanbanNudgeEntityThrottle()">
+                                <span data-i18n="kanban_nudge_per_entity_throttle_short">Cap this entity at 1 nudge per interval</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1420,6 +1497,7 @@
             loadViewModePreference();
             loadNotifPreferences();
             loadDevicePreferences();
+            populateKanbanNudgeEntityPicker();
             loadOwnerRoster(user).catch(e => console.warn('[Roster] initial load failed:', e));
             loadPromptPolicy(user);
             initKanbanNudgeCollapse();
@@ -2691,6 +2769,10 @@
             if (throttleEl) throttleEl.checked = prefs.kanban_nudge_per_entity_throttle !== false;
             const recurringNotifyEl = document.getElementById('kanbanCronRecurringNotify');
             if (recurringNotifyEl) recurringNotifyEl.checked = prefs.kanban_cron_recurring_notify !== false;
+
+            // Phase 2: cache prefs for the per-entity panel + re-render if open.
+            kanbanNudgeEntityState.basePrefs = prefs;
+            renderKanbanNudgeEntityPanel();
         }
 
         async function saveKanbanNudgePref(key, value) {
@@ -2718,6 +2800,201 @@
             const mins = Math.max(0, Math.min(59, parseInt(document.getElementById('kanbanNudgeIntervalMinutes').value) || 0));
             const total = Math.max(5, Math.min(24 * 60, hours * 60 + mins));  // server clamps too; floor at 5 min
             await saveKanbanNudgePref('kanban_nudge_interval_minutes', total);
+        }
+
+        // ════════════════════════════════════════════════════════════════
+        // Per-entity nudge override panel — spec docs/specs/kanban-nudge-spec.md §6
+        // ════════════════════════════════════════════════════════════════
+        const kanbanNudgeEntityState = {
+            entities: [],          // [{entityId, name}]
+            basePrefs: null,       // last device-level prefs
+            currentEntityId: null, // selected entity, or null
+        };
+
+        function getKanbanNudgeOverrideForEntity(eid) {
+            const map = (kanbanNudgeEntityState.basePrefs?.kanban_nudge_per_entity_overrides) || {};
+            return map[String(eid)] || null;
+        }
+
+        async function populateKanbanNudgeEntityPicker() {
+            const sel = document.getElementById('kanbanNudgeEntitySelect');
+            if (!sel) return;
+            try {
+                const user = currentUser;
+                if (!user || !user.deviceId || !user.deviceSecret) return;
+                const data = await apiCall(
+                    'GET',
+                    `/api/entities?deviceId=${encodeURIComponent(user.deviceId)}&deviceSecret=${encodeURIComponent(user.deviceSecret)}`
+                );
+                const list = Array.isArray(data?.entities) ? data.entities : [];
+                kanbanNudgeEntityState.entities = list
+                    .filter(e => e && Number.isFinite(Number(e.entityId)))
+                    .map(e => ({ entityId: Number(e.entityId), name: e.name || `#${e.entityId}` }));
+                // Repaint options
+                const placeholder = sel.querySelector('option[value=""]');
+                sel.innerHTML = '';
+                if (placeholder) sel.appendChild(placeholder);
+                for (const e of kanbanNudgeEntityState.entities) {
+                    const opt = document.createElement('option');
+                    opt.value = String(e.entityId);
+                    opt.textContent = `#${e.entityId} — ${e.name}`;
+                    sel.appendChild(opt);
+                }
+            } catch (err) {
+                console.warn('[kanban-nudge] populate entities failed:', err.message);
+            }
+        }
+
+        function renderKanbanNudgeEntityPanel() {
+            const eid = kanbanNudgeEntityState.currentEntityId;
+            const panel = document.getElementById('kanbanNudgeEntityPanel');
+            const clearBtn = document.getElementById('kanbanNudgeClearOverrideBtn');
+            if (!panel) return;
+            if (eid == null) {
+                panel.style.display = 'none';
+                if (clearBtn) clearBtn.style.display = 'none';
+                return;
+            }
+            panel.style.display = 'flex';
+            const override = getKanbanNudgeOverrideForEntity(eid) || {};
+            if (clearBtn) clearBtn.style.display = Object.keys(override).length ? '' : 'none';
+
+            const base = kanbanNudgeEntityState.basePrefs || {};
+
+            // Interval row
+            const hasIntervalOverride = 'kanban_nudge_interval_minutes' in override;
+            const intervalToggle = document.getElementById('kanbanNudgeEntOverrideInterval');
+            const hoursEl = document.getElementById('kanbanNudgeEntIntervalHours');
+            const minsEl = document.getElementById('kanbanNudgeEntIntervalMinutes');
+            if (intervalToggle) intervalToggle.checked = hasIntervalOverride;
+            const intervalMin = hasIntervalOverride
+                ? override.kanban_nudge_interval_minutes
+                : (Number.isFinite(base.kanban_nudge_interval_minutes) ? base.kanban_nudge_interval_minutes : 180);
+            if (hoursEl) { hoursEl.value = Math.floor(intervalMin / 60); hoursEl.disabled = !hasIntervalOverride; }
+            if (minsEl) { minsEl.value = intervalMin % 60; minsEl.disabled = !hasIntervalOverride; }
+
+            // Statuses row
+            const hasStatusesOverride = 'kanban_nudge_statuses' in override;
+            const statusesToggle = document.getElementById('kanbanNudgeEntOverrideStatuses');
+            if (statusesToggle) statusesToggle.checked = hasStatusesOverride;
+            const statuses = hasStatusesOverride
+                ? override.kanban_nudge_statuses
+                : (Array.isArray(base.kanban_nudge_statuses) && base.kanban_nudge_statuses.length ? base.kanban_nudge_statuses : ['todo','in_progress','review']);
+            const chipsDiv = document.getElementById('kanbanNudgeEntStatusChips');
+            if (chipsDiv) {
+                chipsDiv.style.opacity = hasStatusesOverride ? '1' : '0.5';
+                chipsDiv.querySelectorAll('input[data-ent-status]').forEach(cb => {
+                    cb.checked = (statuses || []).includes(cb.value);
+                    cb.disabled = !hasStatusesOverride;
+                });
+            }
+
+            // Throttle row
+            const hasThrottleOverride = 'kanban_nudge_per_entity_throttle' in override;
+            const throttleToggle = document.getElementById('kanbanNudgeEntOverrideThrottle');
+            if (throttleToggle) throttleToggle.checked = hasThrottleOverride;
+            const throttleVal = hasThrottleOverride
+                ? !!override.kanban_nudge_per_entity_throttle
+                : (base.kanban_nudge_per_entity_throttle !== false);
+            const throttleEl = document.getElementById('kanbanNudgeEntThrottleVal');
+            if (throttleEl) { throttleEl.checked = throttleVal; throttleEl.disabled = !hasThrottleOverride; }
+        }
+
+        function onKanbanNudgeEntityChange() {
+            const sel = document.getElementById('kanbanNudgeEntitySelect');
+            const v = sel?.value;
+            kanbanNudgeEntityState.currentEntityId = (v && Number.isFinite(Number(v))) ? Number(v) : null;
+            renderKanbanNudgeEntityPanel();
+        }
+
+        async function putKanbanNudgeEntityOverride(overridePartial) {
+            const eid = kanbanNudgeEntityState.currentEntityId;
+            if (eid == null) return;
+            const user = currentUser;
+            if (!user?.deviceId || !user?.deviceSecret) return;
+            const existing = getKanbanNudgeOverrideForEntity(eid) || {};
+            const next = { ...existing, ...overridePartial };
+            // Strip keys explicitly set to undefined.
+            for (const k of Object.keys(next)) if (next[k] === undefined) delete next[k];
+            try {
+                const data = await apiCall('PUT', '/api/mission/nudge-prefs', {
+                    deviceId: user.deviceId,
+                    deviceSecret: user.deviceSecret,
+                    entityId: eid,
+                    overrides: next,
+                });
+                if (data && data.prefs) {
+                    kanbanNudgeEntityState.basePrefs = data.prefs;
+                }
+                renderKanbanNudgeEntityPanel();
+            } catch (err) {
+                showToast(i18n.t('toast_preference_update_failed') || 'Update failed', 'error');
+                loadDevicePreferences();
+            }
+        }
+
+        function onKanbanNudgeEntityOverrideToggle(field, enabled) {
+            const eid = kanbanNudgeEntityState.currentEntityId;
+            if (eid == null) return;
+            const existing = getKanbanNudgeOverrideForEntity(eid) || {};
+            const next = { ...existing };
+            if (enabled) {
+                // Seed from current device base when enabling.
+                const base = kanbanNudgeEntityState.basePrefs || {};
+                if (field === 'kanban_nudge_interval_minutes') {
+                    next[field] = Number.isFinite(base.kanban_nudge_interval_minutes) ? base.kanban_nudge_interval_minutes : 180;
+                } else if (field === 'kanban_nudge_statuses') {
+                    next[field] = Array.isArray(base.kanban_nudge_statuses) && base.kanban_nudge_statuses.length
+                        ? [...base.kanban_nudge_statuses]
+                        : ['todo','in_progress','review'];
+                } else if (field === 'kanban_nudge_per_entity_throttle') {
+                    next[field] = base.kanban_nudge_per_entity_throttle !== false;
+                }
+            } else {
+                delete next[field];
+            }
+            putKanbanNudgeEntityOverride(next);
+        }
+
+        async function saveKanbanNudgeEntityInterval() {
+            const hours = Math.max(0, Math.min(24, parseInt(document.getElementById('kanbanNudgeEntIntervalHours').value) || 0));
+            const mins = Math.max(0, Math.min(59, parseInt(document.getElementById('kanbanNudgeEntIntervalMinutes').value) || 0));
+            const total = Math.max(5, Math.min(24 * 60, hours * 60 + mins));
+            await putKanbanNudgeEntityOverride({ kanban_nudge_interval_minutes: total });
+        }
+
+        async function saveKanbanNudgeEntityStatuses() {
+            const checked = Array.from(document.querySelectorAll('input[data-ent-status]:checked')).map(cb => cb.value);
+            if (checked.length === 0) {
+                showToast(i18n.t('kanban_nudge_need_status') || 'Select at least one column', 'error');
+                renderKanbanNudgeEntityPanel();
+                return;
+            }
+            await putKanbanNudgeEntityOverride({ kanban_nudge_statuses: checked });
+        }
+
+        async function saveKanbanNudgeEntityThrottle() {
+            const val = !!document.getElementById('kanbanNudgeEntThrottleVal').checked;
+            await putKanbanNudgeEntityOverride({ kanban_nudge_per_entity_throttle: val });
+        }
+
+        async function clearKanbanNudgeEntityOverride() {
+            const eid = kanbanNudgeEntityState.currentEntityId;
+            if (eid == null) return;
+            const user = currentUser;
+            if (!user?.deviceId || !user?.deviceSecret) return;
+            try {
+                const data = await apiCall('PUT', '/api/mission/nudge-prefs', {
+                    deviceId: user.deviceId,
+                    deviceSecret: user.deviceSecret,
+                    entityId: eid,
+                    overrides: null,
+                });
+                if (data && data.prefs) kanbanNudgeEntityState.basePrefs = data.prefs;
+                renderKanbanNudgeEntityPanel();
+            } catch (err) {
+                showToast(i18n.t('toast_preference_update_failed') || 'Update failed', 'error');
+            }
         }
 
         // Web Push toggle
