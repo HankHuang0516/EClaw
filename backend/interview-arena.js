@@ -188,6 +188,12 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Daily update additions (2026-05-19) — medium/hard tier ──
+    { file: null, description: 'A kanban board with three columns: Todo has 4 cards, In Progress has 2 cards (one with a red P1 priority badge), Done has 7 cards — a search bar is visible at the top right', keywords: ['kanban', 'three', 'todo', '4', 'in progress', '2', 'P1', 'done', '7'] },
+    { file: null, description: 'A smartphone notification panel showing 5 notifications from 3 different apps (Gmail, Slack, Calendar) — battery indicator reads 23% in red, time shows 11:47', keywords: ['notifications', '5', 'three', 'apps', '23', 'battery', '11:47'] },
+    { file: null, description: 'A dark-themed code editor showing a Python function `def fibonacci(n)` — on line 7 there is a red squiggly underline under `return n` with a tooltip showing "Expected: return 1"', keywords: ['code', 'python', 'fibonacci', 'line 7', 'red', 'squiggly', 'return'] },
+    { file: null, description: 'A SQL query result table: three columns (user_id, revenue, region), eight rows of data, the highest revenue row highlighted in blue ($84,230 from APAC), total row at the bottom showing $412,650', keywords: ['SQL', 'table', 'three', 'eight', 'blue', '84230', 'total', '412650'] },
+    { file: null, description: 'A monitoring alert dashboard: four panels showing Uptime 99.2%, Error Rate 0.8%, P95 Latency 342ms, and Active Users 1,847 — the Error Rate panel has a red border and a flashing warning icon', keywords: ['monitoring', 'four', 'uptime', '99.2', 'error', '0.8', 'latency', '342', 'red', 'warning'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +374,17 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── Daily update additions (2026-05-19) — medium/hard tier ──
+    { title: 'Longest Common Subsequence', description: 'Write `solve(s1, s2)` — return the length of the longest common subsequence of two strings. A subsequence is a sequence that appears in the same relative order but not necessarily contiguous.',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"ABCBDAB", "BDCAB"', expected: '4' }] },
+    { title: 'Jump Game', description: 'Write `solve(nums)` — you are initially at the first position of the array. Each element represents your maximum jump length from that position. Return true if you can reach the last index.',
+      testCases: [{ input: '[2,3,1,1,4]', expected: 'true' },{ input: '[3,2,1,0,4]', expected: 'false' },{ input: '[0]', expected: 'true' },{ input: '[2,0,0]', expected: 'true' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array representing an elevation map, compute how much water it can trap after raining.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[1,0,1]', expected: '1' },{ input: '[3,0,2,0,4]', expected: '7' }] },
+    { title: 'Course Schedule', description: 'Write `solve(numCourses, prerequisites)` — there are numCourses courses (0 to numCourses-1). prerequisites[i]=[a,b] means course a requires course b first. Return true if it is possible to finish all courses (no circular dependency).',
+      testCases: [{ input: '2, [[1,0]]', expected: 'true' },{ input: '2, [[1,0],[0,1]]', expected: 'false' },{ input: '5, [[0,1],[0,2],[1,3],[3,4]]', expected: 'true' },{ input: '3, [[0,1],[1,2],[2,0]]', expected: 'false' }] },
+    { title: 'Partition Equal Subset Sum', description: 'Write `solve(nums)` — determine if the array can be partitioned into two subsets with equal sum.',
+      testCases: [{ input: '[1,5,11,5]', expected: 'true' },{ input: '[1,2,3,5]', expected: 'false' },{ input: '[2,2,3,5]', expected: 'false' },{ input: '[1,2,5]', expected: 'false' },{ input: '[3,3,3,4,5]', expected: 'true' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +434,15 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Daily update additions (2026-05-19) — medium/hard tier ──
+    { question: 'A jar contains 4 red marbles and 6 blue marbles. Two marbles are drawn without replacement. What is the probability that both are blue? Express as a simplified fraction.', expectedKeywords: ['1/3'] },
+    { question: 'A tower casts a shadow of 15 meters at the same time that a 2-meter pole casts a shadow of 3 meters. How tall is the tower in meters?', expectedKeywords: ['10'] },
+    { question: 'What is the next prime number after 97?', expectedKeywords: ['101'] },
+    { question: 'A sequence follows the Fibonacci rule (each term equals the sum of the two preceding terms) and starts with 3 and 7. What is the 6th term?', expectedKeywords: ['44'] },
+    { question: 'How many diagonals does a regular octagon have?', expectedKeywords: ['20'] },
+    { question: 'A city has a population of 500,000 growing at 4% per year. What is the population after 2 years, rounded to the nearest whole number?', expectedKeywords: ['540800'] },
+    { question: 'In a group of 60 people, 35 speak English, 28 speak French, and 12 speak neither. How many people speak both English and French?', expectedKeywords: ['15'] },
+    { question: 'If you invest $2,000 at an annual simple interest rate of 5%, how much interest will you earn after 3 years?', expectedKeywords: ['300'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +520,12 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Daily update additions (2026-05-19) — medium/hard tier ──
+    { text: 'Transfer reference T-2026-JKL-00492 for one thousand four hundred seventy-three dollars and twenty-two cents has been processed to account ending in 8734', keywords: ['transfer', 'T-2026', '00492', '1473', 'twenty-two', '8734'] },
+    { text: 'The molecular weight of glucose C6H12O6 is 180.16 grams per mole at standard temperature and pressure', keywords: ['molecular', 'glucose', 'C6H12O6', '180.16', 'mole'] },
+    { text: 'Ticker symbol AAPL closed at two hundred forty-three dollars and fifty cents down 1.7 percent on volume of 58 million shares', keywords: ['AAPL', 'two hundred', '243', '1.7', 'percent', '58', 'million'] },
+    { text: 'Administer 0.5 milligrams per kilogram of body weight every 8 hours not to exceed 40 milligrams per dose for patients over 12 years of age', keywords: ['0.5', 'milligrams', 'kilogram', 'every', '40', '12', 'years'] },
+    { text: 'The SHA-256 checksum of the downloaded file must match 3a7bd3e2 before installation — do not proceed if the values differ by even one character', keywords: ['SHA-256', 'checksum', '3a7bd3e2', 'installation', 'differ'] },
 ];
 
 // ============================================
