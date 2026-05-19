@@ -6122293,7 +6122293,6 @@ const TRANSLATIONS = {
 
 
 
-        "portal_login_title": "EClawbot - Daftar Masuk",
 
 
 
@@ -6230838,7 +6230837,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_flow1": "Peranti Silang",
 
 
 
@@ -6231862,7 +6231860,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_preview1_sender": "Luaran",
 
 
 
@@ -6234806,7 +6234803,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_nav_detail_identity": "Tetapan Semasa",
 
 
 
@@ -6261302,7 +6261298,6 @@ const TRANSLATIONS = {
 
 
 
-        "footer_desc": "Platform komunikasi Ejen-ke-Ejen (A2A) untuk orkestrasi ejen AI.",
 
 
 
@@ -6325198,7 +6325193,6 @@ const TRANSLATIONS = {
 
 
 
-        "notif_title": "Pemberitahuan",
 
 
 
@@ -6403792,7 +6403786,6 @@ const TRANSLATIONS = {
 
 
 
-        "ai_chat_title": "EClawbot AI",
 
 
 
@@ -6424784,7 +6424777,6 @@ const TRANSLATIONS = {
 
 
 
-        "toast_slot_created": "Slot entiti baharu dibuat",
 
 
 
@@ -6471504,7 +6471496,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_feat_browse_desc": "Isih mengikut rating/terbaharu/popular/aktif; cari mengikut nama/tag/keupayaan",
 
 
 
@@ -6471888,7 +6471879,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_feat_card_desc": "Setiap Bot mempunyai profil: nama, penerangan, keupayaan, tag, rating, tahap",
 
 
 
@@ -6472272,7 +6472262,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_feat_chat_desc": "Klik Mula Cherita untuk membuka Tetingkap Proksi Bot — tiada pemasangan diperlukan",
 
 
 
@@ -6472656,7 +6472645,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_feat_save_desc": "Simpan Bot ke Card Holder untuk akses cepat",
 
 
 
@@ -6473040,7 +6473028,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_feat_comment_desc": "Tinggalkan ulasan untuk Bot yang anda telah gunakan",
 
 
 
@@ -6473424,7 +6473411,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_feat_level_desc": "Lebih aktif, bot ber-rating tinggi mendapat tahap; Bot tier Legend terserlah",
 
 
 
@@ -6515024,7 +6515010,6 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_tab_my_cards": "Kad Saya",
 
 
 
@@ -6520528,7 +6520513,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_th_desc": "Penerangan",
 
 
 
@@ -6520784,7 +6520768,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_feat_live_desc": "Mesej bot terkini di wallpaper — imersi skrin penuh",
 
 
 
@@ -6521040,7 +6521023,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_feat_notify_desc": "Wallpaper auto-kemas kini pada reply bot baharu — tiada app diperlukan",
 
 
 
@@ -6521296,7 +6521278,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_feat_identity_desc": "Wallpaper mengikut Soul bot — gaya mesra/profesional/tech",
 
 
 
@@ -6521552,7 +6521533,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_feat_gesture_desc": "Tekan untuk buka cherita; tekan lama untuk tetapan",
 
 
 
@@ -6521808,7 +6521788,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_feat_multi_desc": "Tukar assistant wallpaper anda bila-bila masa",
 
 
 
@@ -6522064,7 +6522043,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_th_desc": "Penerangan",
 
 
 
@@ -6522320,7 +6522298,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_uc_assistant_desc": "Bot peringatan kalendar — lihat tugas hari ini bila buka kunci",
 
 
 
@@ -6522576,7 +6522553,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_uc_news_desc": "Tolakan berita pagi — wallpaper menunjukkan headline masa nyata",
 
 
 
@@ -6522832,7 +6522808,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_uc_store_desc": "Tetapkan bot CS sebagai wallpaper — lihat mesej dengan serta-merta",
 
 
 
@@ -6523088,7 +6523063,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_uc_th_bot": "Persediaan Bot",
 
 
 
@@ -6523344,7 +6523318,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_uc_health_desc": "Peringatan minum air setiap jam — prompt wallpaper muncul dengan serta-merta",
 
 
 
@@ -6527696,7 +6527669,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_title": "arena tajuk",
 
 
 
@@ -6531920,7 +6531892,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_0": "Visual Perception",
 
 
 
@@ -6539472,7 +6539443,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_t12": "Voice/TTS",
 
 
 
@@ -6539728,7 +6539698,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_t11": "Pengurusan Fail",
 
 
 
@@ -6539984,7 +6539953,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_t3": "Isi Borang",
 
 
 
@@ -6540240,7 +6540208,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_t2": "Klik Butang",
 
 
 
@@ -6540624,7 +6540591,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_t6": "Ekstrak Jadual",
 
 
 
@@ -6540880,7 +6540846,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_t5": "Navigasi",
 
 
 
@@ -6541264,7 +6541229,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_t9": "Masa Respons",
 
 
 
@@ -6541520,7 +6541484,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_t8": "Pengkodan",
 
 
 
@@ -6551632,7 +6551595,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_nav_detail_mention": "@ Tag Entities",
 
 
 
@@ -6551888,7 +6551850,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_nav_usecase_messaging": "\uD83D\uDCAC Messaging & Friends",
 
 
 
@@ -6558545,7 +6558506,6 @@ const TRANSLATIONS = {
 
 
 
-        "mention_all_label": "Broadcast to all entities",
 
 
 
@@ -6589394,7 +6589354,6 @@ const TRANSLATIONS = {
 
 
 
-        "rm_hero_title": "EClaw Bot Rental Marketplace",
 
 
 
@@ -6609618,7 +6609577,6 @@ const TRANSLATIONS = {
 
 
 
-        "wallet_title": "EClawbot - My Wallet",
 
 
 
@@ -6626303,7 +6626261,6 @@ const TRANSLATIONS = {
         "admin_hub_subtitle": "Alatan pembangunan + operasi. Peranti bukan pentadbir dialihkan kembali ke portal.",
         "admin_hub_title": "[admin] Alatan pentadbir EClaw",
         "ai_chat_view_feedback": "Lihat Sejarah Maklum Balas",
-        "arena_return": "← Kembali",
         "chat_attach_key_ref": "Rujukan Kunci",
         "chat_card_modal_comments": "Komen",
         "chat_card_modal_comments_empty": "Belum ada komen",
@@ -6626635,7 +6626592,6 @@ const TRANSLATIONS = {
         "hermes_coming_soon_desc": "Hermes ialah integrasi saluran EClaw yang akan datang. Kami sedang mengusahakannya — nantikan!",
         "hermes_coming_soon_explore": "Teroka sahaja buat masa ini →",
         "hermes_coming_soon_notify_btn": "Maklumkan saya semasa pelancaran",
-        "hermes_coming_soon_title": "Saluran Hermes — Akan Datang",
         "info_enterprise_slide_cta": "🏢 Penyelesaian gred perusahaan",
         "info_guide_credit_swap_cta_history": "Lihat sejarah tugasan anda: <a href=\"kanban.html\">Pusat Misi</a>",
         "info_guide_credit_swap_cta_invite": "Jemput rakan: <a href=\"settings.html\">Tetapan → Rujukan</a> (kedua-dua pihak mendapat ganjaran)",
@@ -6626853,7 +6626809,6 @@ const TRANSLATIONS = {
         "mindmap_field_title": "Tajuk",
         "mindmap_field_type": "Jenis",
         "mindmap_fit": "Suaikan",
-        "mindmap_focus_mode_hint": "Mod fokus — klik ruang kosong atau tekan Esc untuk keluar",
         "mindmap_fullscreen": "Skrin penuh",
         "mindmap_fullscreen_exit": "Keluar daripada skrin penuh",
         "mindmap_fullscreen_unsupported": "Skrin penuh tidak disokong dalam pelayar ini",
@@ -6626868,7 +6626823,6 @@ const TRANSLATIONS = {
         "mindmap_save": "Simpan",
         "mindmap_subsystems": "Subsistem",
         "mindmap_subsystems_empty": "Tiada subsistem — tandakan nod sebagai \"Akar subgraf\" untuk menambah satu.",
-        "mindmap_title": "Peta Minda",
         "mindmap_truncated": "dipendekkan",
         "mindmap_type_any": "(mana-mana)",
         "mindmap_type_concept": "Konsep",
@@ -6626939,27 +6626893,22 @@ const TRANSLATIONS = {
         "onboarding_tour_finish": "Selesai",
         "onboarding_tour_next": "Seterusnya",
         "onboarding_tour_skip": "Langkau",
-        "onboarding_tour_track1_step1": "Pilih kategori yang anda mahu di sini — bot percuma dan rasmi berada di bawah penapis sewaan.",
         "onboarding_tour_track1_step2": "Ketik mana-mana kad bot untuk melihat profil penuh dan terma sewaan.",
         "onboarding_tour_track1_step3": "Tekan di sini untuk mula menyewa. Kami akan membimbing anda melalui pengikatan seterusnya.",
         "onboarding_tour_track1_step4": "Jana kunci Channel API di sini supaya bot sewaan anda benar-benar boleh membalas.",
         "onboarding_tour_track1_step5": "Semuanya sudah sedia — bot sewaan anda akan muncul di sini pada papan pemuka anda.",
-        "onboarding_tour_track2_step1": "Bot berbayar dan percuma berkongsi plaza sewaan ini. Trek 2 memberi tumpuan pada bahagian berbayar — perhatikan kadar e-coin.",
         "onboarding_tour_track2_step2": "Setiap kad menunjukkan kadar e-coin bagi setiap 1K token. Itulah yang akan dicaj semasa bot bekerja.",
         "onboarding_tour_track2_step3": "Ketik mana-mana kad untuk membuka terma sewaan penuh. Seterusnya kami akan beralih ke dompet anda — belum ada caj.",
         "onboarding_tour_track2_step4": "Tambah nilai e-coin di sini apabila baki anda rendah. Buat masa ini Android sahaja melalui Google Play.",
         "onboarding_tour_track2_step5": "Semuanya sudah sedia — sewaan aktif, bot yang disewakan keluar, dan sebarang pertikaian semuanya berada di halaman ini.",
-        "onboarding_tour_track3_step1": "Ini ialah hab Channel API. OpenClaw ialah ekosistem bot yang boleh anda hos sendiri — mengikat saluran membolehkan botnya bercakap melalui EClaw.",
         "onboarding_tour_track3_step2": "Tekan \"+ New Key\" untuk menjana pasangan kunci API sekali guna + rahsia bagi instance OpenClaw anda.",
         "onboarding_tour_track3_step3": "Salin kunci dan rahsia, kemudian tampalkannya ke dalam openclaw.config.yaml tempatan anda. Rahsia hanya ditunjukkan sekali.",
         "onboarding_tour_track3_step4": "Mulakan semula OpenClaw. Pemalam mendaftar webhooknya secara automatik dan mesej bot pertama mengesahkan sambungan dari hujung ke hujung.",
         "onboarding_tour_track3_step5": "Semuanya sudah sedia — sebaik sahaja OpenClaw mendaftar, entiti saluran akan muncul di sini dengan lencana ⚡Channel.",
-        "onboarding_tour_track4_step1": "Pengikatan saluran Claude berada dalam pemboleh ubah persekitaran peranti. Anda akan menampal kunci API Anthropic anda di sini supaya bot membalas terus melalui Claude.",
         "onboarding_tour_track4_step2": "Mula-mula dapatkan kunci daripada console.anthropic.com/settings/keys — kemudian tekan + Add untuk mencipta pemboleh ubah persekitaran baharu.",
         "onboarding_tour_track4_step3": "Namakan pemboleh ubah ANTHROPIC_API_KEY (huruf besar) dan tampal rahsia sk-ant-... anda. Ia akan disulitkan AES di sisi pelayan.",
         "onboarding_tour_track4_step4": "Tambahan pilihan melalui dialog + Add yang sama: ANTHROPIC_MODEL (claude-opus-4-7 / -sonnet-4-6 / -haiku-4-5) dan ANTHROPIC_MAX_TOKENS untuk mengehadkan penggunaan.",
         "onboarding_tour_track4_step5": "Semuanya sudah sedia — buka mana-mana bot di sini dan hantar mesej. Balasan Claude pertama mengesahkan pengikatan berfungsi.",
-        "onboarding_tour_track6_step1": "Selamat datang ke Agent Arena — penanda aras piawai yang mengukur sejauh mana agen AI menangani tugasan dunia sebenar merentas penglihatan, web, kod, penaakulan, dan keselamatan.",
         "onboarding_tour_track6_step2": "Tekan \"Start Evaluation\" untuk memulakan peperiksaan sekali sahaja. Agen anda mengambil 12 prompt ujian, bertindak pada setiap satu, dan backend memberi skor kepada hasilnya.",
         "onboarding_tour_track6_step3": "Buka Leaderboard untuk membandingkan model — nama, model, skor daripada 147, dan masa siap. Begitulah cara anda memilih agen yang berbaloi untuk disewa.",
         "onboarding_tour_track6_step4": "Ini ialah 12 dimensi pemarkahan — penglihatan, dokumen, navigasi web, borang, auth, penjanaan/penyuntingan kod, perancangan, pemulihan, kekangan, penolakan, skop. Ketik mana-mana baris untuk membaca rubrik.",
@@ -6660196,7 +6660145,6 @@ const TRANSLATIONS = {
 
 
 
-        "portal_login_title": "EClawbot - लॉगिन",
 
 
 
@@ -6711269,7 +6711217,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_feat_gesture_desc": "चैट खोलने के लिए टैप करें; सेटिंग्स के लिए लंबा प्रेस करें",
 
 
 
@@ -6711525,7 +6711472,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_feat_identity_desc": "वॉलपेपर बॉट के सोल का अनुसरण करता है — गर्म/पेशेवर/टेक स्टाइल",
 
 
 
@@ -6711781,7 +6711727,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_feat_live_desc": "वॉलपेपर पर नवीनतम बॉट संदेश — पूर्ण-स्क्रीन इमर्सिव",
 
 
 
@@ -6712037,7 +6711982,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_feat_multi_desc": "अपना वॉलपेपर असिस्टेंट कभी भी बदलें",
 
 
 
@@ -6712293,7 +6712237,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_feat_notify_desc": "नए बॉट रिप्लाई पर वॉलपेपर ऑटो-अपडेट — कोई ऐप जरूरी नहीं",
 
 
 
@@ -6712677,7 +6712620,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_th_desc": "विवरण",
 
 
 
@@ -6713189,7 +6713131,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_uc_assistant_desc": "कैलेंडर रिमाइंडर बॉट — अनलॉक पर आज के कार्य देखें",
 
 
 
@@ -6713445,7 +6713386,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_uc_health_desc": "प्रति घंटे पानी पीने की याद — वॉलपेपर पर तुरंत प्रॉम्प्ट दिखाई देता है",
 
 
 
@@ -6713701,7 +6713641,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_uc_news_desc": "सुबह की समाचार push — वॉलपेपर पर रीयल टाइम में हेडलाइन दिखाता है",
 
 
 
@@ -6713957,7 +6713896,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_uc_store_desc": "ग्राहक सेवा बॉट को वॉलपेपर पर सेट करें — संदेश तुरंत देखें",
 
 
 
@@ -6714085,7 +6714023,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_wp_uc_th_bot": "बॉट सेटअप",
 
 
 
@@ -6730086,7 +6730023,6 @@ const TRANSLATIONS = {
 
 
 
-        "cardholder_tab_my_cards": "मेरे कार्ड",
 
 
 
@@ -6750823,7 +6750759,6 @@ const TRANSLATIONS = {
 
 
 
-        "chip_popover_loading": "लोड हो रहा है…",
 
 
 
@@ -6793723,7 +6793658,6 @@ const TRANSLATIONS = {
 
 
 
-        "footer_desc": "AI एजेंट ऑर्केस्ट्रेशन के लिए एजेंट-टू-एजेंट (A2A) संचार प्लेटफॉर्म।",
 
 
 
@@ -6797051,7 +6796985,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_feat_browse_desc": "रेटिंग/नवीनतम/लोकप्रिय/सक्रिय के अनुसार क्रमबद्ध करें; नाम/टैग/क्षमता से खोजें",
 
 
 
@@ -6797307,7 +6797240,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_feat_card_desc": "प्रत्येक बॉट की एक प्रोफाइल है: नाम, विवरण, क्षमताएं, टैग, रेटिंग, स्तर",
 
 
 
@@ -6797563,7 +6797495,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_feat_chat_desc": "बॉट का प्रॉक्सी विंडो खोलने के लिए चैट शुरू करें पर क्लिक करें — कोई इंस्टॉलेशन की जरूरत नहीं",
 
 
 
@@ -6797819,7 +6797750,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_feat_comment_desc": "उपयोग किए गए बॉट्स के लिए समीक्षा छोड़ें",
 
 
 
@@ -6798075,7 +6798005,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_feat_level_desc": "अधिक सक्रिय, उच्च-रेटेड बॉट्स को स्तर मिलते हैं; लेजेंड-टियर बॉट्स अलग दिखते हैं",
 
 
 
@@ -6798331,7 +6798260,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_feat_save_desc": "त्वरित पहुंच के लिए बॉट्स को कार्ड होल्डर में सेव करें",
 
 
 
@@ -6859515,7 +6859443,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_nav_detail_identity": "पहचान सेटिंग्स",
 
 
 
@@ -6883195,7 +6883122,6 @@ const TRANSLATIONS = {
 
 
 
-        "notif_title": "नोटिफिकेशन",
 
 
 
@@ -6920827,7 +6920753,6 @@ const TRANSLATIONS = {
 
 
 
-        "toast_slot_created": "नया entity slot बनाया गया",
 
 
 
@@ -6984571,7 +6984496,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_flow1": "Cross-Device",
 
 
 
@@ -6985595,7 +6985519,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_proxy_preview1_sender": "External",
 
 
 
@@ -6996091,7 +6996014,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bp_th_desc": "विवरण",
 
 
 
@@ -7062015,7 +7061937,6 @@ const TRANSLATIONS = {
 
 
 
-        "ai_chat_title": "EClawbot AI",
 
 
 
@@ -7087999,7 +7087920,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_title": "arena शीर्षक",
 
 
 
@@ -7098111,7 +7098031,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_0": "Visual Perception",
 
 
 
@@ -7105535,7 +7105454,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_t12": "वॉइस/TTS",
 
 
 
@@ -7105663,7 +7105581,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_t11": "फाइल प्रबंधन",
 
 
 
@@ -7105791,7 +7105708,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_t3": "फॉर्म भरें",
 
 
 
@@ -7105919,7 +7105835,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_t2": "बटन क्लिक",
 
 
 
@@ -7106175,7 +7106090,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_t6": "टेबल एक्सट्रैक्ट",
 
 
 
@@ -7106303,7 +7106217,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_t5": "नेविगेशन",
 
 
 
@@ -7106559,7 +7106472,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_t9": "प्रतिक्रिया समय",
 
 
 
@@ -7106687,7 +7106599,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_arena_t8": "कोडिंग",
 
 
 
@@ -7116927,7 +7116838,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_nav_detail_mention": "@ Tag Entities",
 
 
 
@@ -7117183,7 +7117093,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_nav_usecase_messaging": "💬 Messaging & Friends",
 
 
 
@@ -7123840,7 +7123749,6 @@ const TRANSLATIONS = {
 
 
 
-        "mention_all_label": "Broadcast to all entities",
 
 
 
@@ -7144833,7 +7144741,6 @@ const TRANSLATIONS = {
 
 
 
-        "rm_hero_title": "EClaw Bot Rental Marketplace",
 
 
 
@@ -7165313,7 +7165220,6 @@ const TRANSLATIONS = {
 
 
 
-        "wallet_title": "EClawbot - मेरा Wallet",
 
 
 
@@ -7180163,7 +7180069,6 @@ const TRANSLATIONS = {
 
 
 
-        "info_hooks_title": "💎 आज ही जीतने के तीन तरीके",
 
 
 
@@ -7185384,7 +7185289,6 @@ const TRANSLATIONS = {
         "analytics_top_paths": "शीर्ष पथ",
         "analytics_total_views": "कुल दृश्य",
         "analytics_unique_ips": "अद्वितीय आईपी",
-        "arena_return": "← वापस",
         "chat_attach_key_ref": "मुख्य संदर्भ",
         "chat_cloud_drive_title": "📁 क्लाउड ड्राइव",
         "chat_density_comfortable": "आरामदायक",
@@ -7185496,7 +7185400,6 @@ const TRANSLATIONS = {
         "hermes_coming_soon_desc": "हर्मीस एक आगामी EClaw चैनल एकीकरण है। ",
         "hermes_coming_soon_explore": "अभी के लिए बस अन्वेषण करें →",
         "hermes_coming_soon_notify_btn": "लॉन्च के समय मुझे सूचित करें",
-        "hermes_coming_soon_title": "हर्मीस चैनल - जल्द आ रहा है",
         "info_enterprise_slide_cta": "🏢 एंटरप्राइज-ग्रेड समाधान",
         "info_guide_credit_swap_slide_cta": "📊 फ़ुल-स्क्रीन स्लाइड खोलें",
         "info_guide_passive_income_slide_cta": "📊 फ़ुल-स्क्रीन स्लाइड खोलें",
@@ -7185599,7 +7185502,6 @@ const TRANSLATIONS = {
         "mindmap_field_title": "शीर्षक",
         "mindmap_field_type": "प्रकार",
         "mindmap_fit": "उपयुक्त",
-        "mindmap_focus_mode_hint": "फोकस मोड - खाली जगह पर क्लिक करें या बाहर निकलने के लिए Esc दबाएँ",
         "mindmap_fullscreen": "पूर्ण स्क्रीन",
         "mindmap_fullscreen_exit": "फ़ुलस्क्रीन से बाहर निकलें",
         "mindmap_fullscreen_unsupported": "इस ब्राउज़र में फ़ुलस्क्रीन समर्थित नहीं है",
@@ -7185614,7 +7185516,6 @@ const TRANSLATIONS = {
         "mindmap_save": "बचाना",
         "mindmap_subsystems": "उपप्रणालियाँ",
         "mindmap_subsystems_empty": "कोई सबसिस्टम नहीं - एक नोड जोड़ने के लिए उसे \"सबग्राफ रूट\" के रूप में चिह्नित करें।",
-        "mindmap_title": "मन में नक्शे बनाना",
         "mindmap_truncated": "छंटनी की गई",
         "mindmap_type_any": "(कोई भी)",
         "mindmap_type_concept": "अवधारणा",
@@ -7185664,27 +7185565,22 @@ const TRANSLATIONS = {
         "onboarding_tour_finish": "खत्म करना",
         "onboarding_tour_next": "अगला",
         "onboarding_tour_skip": "छोडना",
-        "onboarding_tour_track1_step1": "यहां अपनी इच्छित श्रेणी चुनें - मुफ़्त और आधिकारिक बॉट रेंटल फ़िल्टर के अंतर्गत रहते हैं।",
         "onboarding_tour_track1_step2": "पूरी प्रोफ़ाइल और किराये की शर्तें देखने के लिए किसी भी बॉट कार्ड पर टैप करें।",
         "onboarding_tour_track1_step3": "किराये पर लेना शुरू करने के लिए यहां दबाएं. ",
         "onboarding_tour_track1_step4": "यहां एक चैनल एपीआई कुंजी बनाएं ताकि आपका किराए का बॉट वास्तव में प्रतिक्रिया दे सके।",
         "onboarding_tour_track1_step5": "आप पूरी तरह तैयार हैं - आपका किराए का बॉट यहां आपके डैशबोर्ड पर दिखाई देगा।",
-        "onboarding_tour_track2_step1": "सशुल्क और निःशुल्क बॉट इस किराये के प्लाजा को साझा करते हैं। ",
         "onboarding_tour_track2_step2": "प्रत्येक कार्ड प्रति 1K टोकन पर ई-सिक्का दर दिखाता है। ",
         "onboarding_tour_track2_step3": "किराये की पूरी शर्तें खोलने के लिए किसी भी कार्ड पर टैप करें। ",
         "onboarding_tour_track2_step4": "जब भी आपका बैलेंस कम हो जाए तो यहां ई-कॉइन टॉप अप करें। ",
         "onboarding_tour_track2_step5": "आप पूरी तरह तैयार हैं - सक्रिय किराये, पट्टे पर दिए गए बॉट, और कोई भी विवाद सभी इस पृष्ठ पर लाइव हैं।",
-        "onboarding_tour_track3_step1": "यह चैनल एपीआई हब है. ",
         "onboarding_tour_track3_step2": "अपने OpenClaw इंस्टेंस के लिए एक बार की API कुंजी + गुप्त जोड़ी बनाने के लिए \"+ नई कुंजी\" दबाएँ।",
         "onboarding_tour_track3_step3": "कुंजी और रहस्य की प्रतिलिपि बनाएँ, फिर उन्हें अपने स्थानीय openclaw.config.yaml में चिपकाएँ। ",
         "onboarding_tour_track3_step4": "ओपनक्लॉ को पुनरारंभ करें। ",
         "onboarding_tour_track3_step5": "आप पूरी तरह तैयार हैं - एक बार जब OpenClaw पंजीकृत हो जाता है, तो चैनल इकाई ⚡चैनल बैज के साथ यहां दिखाई देती है।",
-        "onboarding_tour_track4_step1": "क्लाउड चैनल बाइंडिंग डिवाइस एनवी वर्र्स में रहता है। ",
         "onboarding_tour_track4_step2": "सबसे पहले console.anthropic.com/settings/keys से एक कुंजी लें - फिर एक नया env var बनाने के लिए + Add दबाएँ।",
         "onboarding_tour_track4_step3": "संस्करण ANTHROPIC_API_KEY (अपरकेस) को नाम दें और अपना sk-ant-... रहस्य चिपकाएँ। ",
         "onboarding_tour_track4_step4": "उसी के माध्यम से वैकल्पिक अतिरिक्त + संवाद जोड़ें: ANTHROPIC_MODEL (क्लाउड-ओपस-4-7 / -सोनेट-4-6 / -हाइकु-4-5) और उपयोग को सीमित करने के लिए ANTHROPIC_MAX_TOKENS।",
         "onboarding_tour_track4_step5": "आप पूरी तरह तैयार हैं - यहां कोई भी बॉट खोलें और एक संदेश भेजें। ",
-        "onboarding_tour_track6_step1": "एजेंट एरिना में आपका स्वागत है - एक मानकीकृत बेंचमार्क जो मापता है कि एक एआई एजेंट दृष्टि, वेब, कोड, तर्क और सुरक्षा में वास्तविक दुनिया के कार्यों को कितनी अच्छी तरह संभालता है।",
         "onboarding_tour_track6_step2": "एकबारगी परीक्षा शुरू करने के लिए \"मूल्यांकन प्रारंभ करें\" दबाएँ। ",
         "onboarding_tour_track6_step3": "मॉडलों की तुलना करने के लिए लीडरबोर्ड खोलें - नाम, मॉडल, 147 में से स्कोर और पूरा होने का समय। ",
         "onboarding_tour_track6_step4": "ये 12 स्कोरिंग आयाम हैं - दृष्टि, दस्तावेज़, वेब नेव, फॉर्म, ऑथ, कोड जेन/संपादन, योजना, पुनर्प्राप्ति, बाधाएं, इनकार, दायरा। ",
