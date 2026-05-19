@@ -1859,17 +1859,26 @@
 
             .chip-group {
                 gap: 4px;
-                max-height: 30px;
+                max-height: none;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;          /* Firefox */
+            }
+
+            .chip-group::-webkit-scrollbar {
+                display: none;                  /* Chrome/Safari */
+            }
+
+            /* Toggle not needed on mobile — all chips visible in scroll row */
+            .filter-chip-toggle {
+                display: none !important;
             }
 
             .filter-chip {
                 padding: 4px 10px;
                 font-size: 11px;
-            }
-
-            .filter-chip-toggle {
-                padding: 4px 8px;
-                font-size: 11px;
+                flex-shrink: 0;
             }
 
             .target-bar {
@@ -7793,7 +7802,7 @@
         }
 
         async function fetchListingData(auth, listingId) {
-            const resp = await apiCall('GET', `/api/rental/listing/${listingId}?${auth}`);
+            const resp = await apiCall('GET', `/api/rental/listing/${listingId}?${auth}`, null, { skip401Redirect: true });
             if (!resp || !resp.listing) return null;
             const l = resp.listing;
 
@@ -7812,7 +7821,7 @@
         }
 
         async function fetchExamData(auth, examId) {
-            const resp = await apiCall('GET', `/api/arena/exam/${examId}/results?${auth}`);
+            const resp = await apiCall('GET', `/api/arena/exam/${examId}/results?${auth}`, null, { skip401Redirect: true });
             if (!resp) return null;
 
             const exam = resp.exam || resp;
@@ -7827,7 +7836,7 @@
 
         async function fetchContractData(auth, contractId) {
             // Contracts endpoint returns list — filter by ID
-            const resp = await apiCall('GET', `/api/rental/my-contracts?${auth}`);
+            const resp = await apiCall('GET', `/api/rental/my-contracts?${auth}`, null, { skip401Redirect: true });
             if (!resp || !resp.contracts) return null;
             const c = resp.contracts.find(x => x.id === contractId || x.id.startsWith(contractId));
             if (!c) return null;

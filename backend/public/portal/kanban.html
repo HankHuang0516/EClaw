@@ -618,6 +618,10 @@
             /* Automation: stack on mobile */
             .kb-auto-grid { flex-wrap:nowrap; }
             .kb-auto-card { flex:0 0 180px; }
+
+            /* Card scanability: truncate description + hide dep chips on board cards */
+            .kb-card-desc { -webkit-line-clamp:3; max-height:calc(1.4em * 3); overflow:hidden; text-overflow:ellipsis; word-break:break-word; }
+            .kb-card .kb-dep-chips-container { display:none; }
         }
         @media (min-width: 769px) {
             .kb-mobile-list { display:none; }

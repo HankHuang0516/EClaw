@@ -255,7 +255,7 @@
 
         async function loadBalance() {
             try {
-                const data = await apiCall('GET', '/api/wallet/balance');
+                const data = await apiCall('GET', '/api/wallet/balance', null, { skip401Redirect: true });
                 if (!data || !data.success) return;
                 const w = data.wallet;
                 document.getElementById('balanceEcoin').textContent = w.balance_ecoin.toLocaleString();
@@ -272,7 +272,7 @@
 
         async function loadTiers() {
             try {
-                const data = await apiCall('GET', '/api/wallet/topup/tiers');
+                const data = await apiCall('GET', '/api/wallet/topup/tiers', null, { skip401Redirect: true });
                 if (!data || !data.success) return;
                 const grid = document.getElementById('tierGrid');
                 grid.innerHTML = '';
@@ -351,7 +351,7 @@
 
         async function loadHistory() {
             try {
-                const data = await apiCall('GET', '/api/wallet/history?limit=50');
+                const data = await apiCall('GET', '/api/wallet/history?limit=50', null, { skip401Redirect: true });
                 if (!data || !data.success) return;
                 const wrap = document.getElementById('ledgerWrap');
                 if (!data.entries || data.entries.length === 0) {

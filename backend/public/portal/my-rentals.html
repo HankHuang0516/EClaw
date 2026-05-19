@@ -198,13 +198,13 @@
             wrap.innerHTML = `<div class="mr-empty">${tt('mr_loading', 'Loading...')}</div>`;
             try {
                 if (currentTab === 'disputes') {
-                    const data = await apiCall('GET', '/api/rental/my-disputes?limit=50');
+                    const data = await apiCall('GET', '/api/rental/my-disputes?limit=50', null, { skip401Redirect: true });
                     renderDisputes(data?.disputes || []);
                 } else if (currentTab === 'listings') {
-                    const data = await apiCall('GET', '/api/rental/my-listings');
+                    const data = await apiCall('GET', '/api/rental/my-listings', null, { skip401Redirect: true });
                     renderListings(data?.listings || []);
                 } else {
-                    const data = await apiCall('GET', `/api/rental/my-contracts?role=${currentTab}&limit=50`);
+                    const data = await apiCall('GET', `/api/rental/my-contracts?role=${currentTab}&limit=50`, null, { skip401Redirect: true });
                     renderContracts(data?.contracts || []);
                 }
             } catch (err) {
@@ -394,7 +394,7 @@
         async function pauseListing(listingId, btn) {
             btn.disabled = true;
             try {
-                await apiCall('POST', `/api/rental/listing/${listingId}/pause`);
+                await apiCall('POST', `/api/rental/listing/${listingId}/pause`, null, { skip401Redirect: true });
                 showToast(tt('mr_listing_paused_toast', 'Listing paused'), 'success');
                 loadTab();
             } catch (err) {
@@ -407,7 +407,7 @@
             btn.disabled = true;
             try {
                 /* Resume = re-publish a paused listing */
-                await apiCall('POST', `/api/rental/listing/${listingId}/publish`);
+                await apiCall('POST', `/api/rental/listing/${listingId}/publish`, null, { skip401Redirect: true });
                 showToast(tt('mr_listing_resumed_toast', 'Listing live again'), 'success');
                 loadTab();
             } catch (err) {
@@ -436,7 +436,7 @@
             btn.disabled = true;
             btn.textContent = '...';
             try {
-                await apiCall('DELETE', `/api/rental/listing/${listingId}`);
+                await apiCall('DELETE', `/api/rental/listing/${listingId}`, null, { skip401Redirect: true });
                 const overlay = btn.closest('.mr-modal-overlay');
                 if (overlay) overlay.remove();
                 showToast(tt('mr_listing_delisted_toast', 'Listing delisted'), 'success');
@@ -485,7 +485,7 @@
             btn.disabled = true;
             btn.textContent = '...';
             try {
-                await apiCall('POST', `/api/rental/contract/${contractId}/end`, { endReason: 'ended_early_by_renter' });
+                await apiCall('POST', `/api/rental/contract/${contractId}/end`, { endReason: 'ended_early_by_renter' }, { skip401Redirect: true });
                 const overlay = btn.closest('.mr-modal-overlay');
                 if (overlay) overlay.remove();
                 loadTab();
@@ -534,7 +534,7 @@
             btn.disabled = true;
             btn.textContent = '...';
             try {
-                await apiCall('POST', `/api/rental/contract/${contractId}/dispute`, { type: selected.value, evidence });
+                await apiCall('POST', `/api/rental/contract/${contractId}/dispute`, { type: selected.value, evidence }, { skip401Redirect: true });
                 overlay.remove();
                 showToast(tt('mr_dispute_filed', 'Dispute filed!'), 'success');
                 switchTab('disputes');
@@ -572,7 +572,7 @@
             if (!rating) { showToast(tt('mr_select_rating', 'Please select a rating'), 'error'); return; }
             const comment = document.getElementById(`comment-${contractId}`).value;
             try {
-                await apiCall('POST', `/api/rental/contract/${contractId}/review`, { rating, comment });
+                await apiCall('POST', `/api/rental/contract/${contractId}/review`, { rating, comment }, { skip401Redirect: true });
                 showToast(tt('mr_review_submitted', 'Review submitted!'), 'success');
                 loadTab();
             } catch (err) { showToast(err.message || tt('mr_action_failed', 'Failed'), 'error'); }

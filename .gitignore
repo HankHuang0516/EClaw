@@ -54,6 +54,7 @@ app/build/
 .idea/
 .vscode/
 .claude/
+.codex/
 # .agent/ — tracked (contains release workflow)
 nul
 compile_log.txt
