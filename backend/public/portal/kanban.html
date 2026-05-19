@@ -1046,6 +1046,20 @@
     <script src="shared/ai-chat.js"></script>
     <script>if(typeof renderAvatarHtml==='undefined'){window.renderAvatarHtml=function(a){return a||'🦞'};window.isAvatarUrl=function(){return false}}</script>
     <script>
+        const CHAT_MESSAGE_TOKEN_RE = /\bhis_([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?![0-9a-f-])/i;
+
+        function normalizeChatMessageId(value) {
+            const id = String(value || '').trim().toLowerCase();
+            return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) ? id : '';
+        }
+
+        function extractChatMessageId(value) {
+            const direct = normalizeChatMessageId(value);
+            if (direct) return direct;
+            const match = String(value || '').match(CHAT_MESSAGE_TOKEN_RE);
+            return match ? normalizeChatMessageId(match[1]) : '';
+        }
+
         function eclawNavigateChat(intent) {
             try {
                 if (window.EClawNativeNav && typeof window.EClawNativeNav.navigate === 'function') {
@@ -1067,9 +1081,10 @@
         }
         if (typeof window.openHistoryMessage !== 'function') {
             window.openHistoryMessage = function (msgId) {
-                if (!msgId) return;
-                if (eclawNavigateChat({ target: 'message', messageId: msgId })) return;
-                window.location.href = '/portal/chat.html?msg=' + encodeURIComponent(msgId);
+                const normalized = extractChatMessageId(msgId);
+                if (!normalized) return;
+                if (eclawNavigateChat({ target: 'message', messageId: normalized })) return;
+                window.location.href = '/portal/chat.html?messageId=' + encodeURIComponent(normalized);
             };
         }
         // 智慧引用 render chain — delegates to shared ChatMessageRender so chat
@@ -2794,26 +2809,31 @@
             setTimeout(() => { tip.remove(); }, 2700);
         }
 
-        function quoteToChat(source, title, excerpt) {
+        function quoteToChat(source, title, excerpt, opts) {
             const toastMsg = (window.i18n && typeof window.i18n.t === 'function' && window.i18n.t('chip_popover_requoted')) || '已引用 ✓';
+            const messageId = normalizeChatMessageId(opts && opts.messageId);
             if (window.self !== window.top) {
                 // Workspace split-pane mode: deliver to chat sub-pane via parent relay,
                 // confirm with a source-page floating toast — no force jump.
-                window.parent.postMessage({ type: 'eclaw_quote', source, title, excerpt: excerpt || '' }, window.location.origin);
+                window.parent.postMessage({ type: 'eclaw_quote', source, title, excerpt: excerpt || '', messageId }, window.location.origin);
                 eclawShowFloatToast(toastMsg);
             } else {
                 // Standalone/App WebView: prefer native bottom-tab switch when available.
-                const quote = { source, title, excerpt: excerpt || '' };
+                const quote = { source, title, excerpt: excerpt || '', messageId };
                 localStorage.setItem('eclaw_pending_quote', JSON.stringify({ ...quote, ts: Date.now() }));
-                if (eclawNavigateChat({ target: 'quote', quote })) return;
-                window.location.href = '/portal/chat.html';
+                if (eclawNavigateChat({ target: 'quote', quote, messageId })) return;
+                const chatUrl = messageId
+                    ? '/portal/chat.html?messageId=' + encodeURIComponent(messageId)
+                    : '/portal/chat.html';
+                window.location.href = chatUrl;
             }
         }
 
         function quoteKanbanCardToChat() {
+            const card = findCard(openCardId);
             const title = document.getElementById('detailTitle').textContent.trim();
             const meta = document.getElementById('detailMeta').textContent.trim().replace(/\s+/g, ' ').slice(0, 80);
-            quoteToChat('看板卡片', title, meta);
+            quoteToChat('看板卡片', title, meta, { messageId: card && card.chatAnchorMessageId });
         }
 
         function quoteCommentToChat(payload) {
@@ -2821,7 +2841,7 @@
             const src = payload.src || '留言';
             const sender = payload.sender || '';
             const text = (payload.text || '').replace(/\s+/g, ' ').slice(0, 80);
-            quoteToChat(src, sender, text);
+            quoteToChat(src, sender, text, { messageId: payload.messageId });
         }
 
         // ── Inline Schedule Panel (detail modal tab) ──
@@ -3021,8 +3041,12 @@
                     const name = typeof getEntityDisplayName === 'function' ? getEntityDisplayName(fromId) : '#'+(fromId??'?');
                     const avatarHtml = typeof renderAvatarHtml === 'function' ? renderAvatarHtml(avatar, 16, fromId) : avatar;
                     const cardTitle = (findCard(openCardId) || {}).title || '';
-                    const pinPayload = JSON.stringify({ src: '留言 · ' + cardTitle, sender: name, text: c.text || '' })
-                        .replace(/'/g, '&#39;');
+                    const pinPayload = JSON.stringify({
+                        src: '留言 · ' + cardTitle,
+                        sender: name,
+                        text: c.text || '',
+                        messageId: extractChatMessageId(c.messageId || c.message_id || c.text || '')
+                    }).replace(/'/g, '&#39;');
                     return `<div class="kb-comment ${isSent ? 'sent' : 'received'}" data-comment-id="${escapeHtml(cid)}">
                         <div class="kb-comment-source"><span class="comment-avatar">${avatarHtml}</span> ${escapeHtml(name)}</div>
                         <div class="kb-comment-bubble">${renderSmartChips(c.text)}</div>

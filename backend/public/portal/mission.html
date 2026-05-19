@@ -2062,16 +2062,31 @@
             document.getElementById('dialogContainer').innerHTML = '';
         }
 
+        function eclawNavigateChat(intent) {
+            try {
+                if (window.EClawNativeNav && typeof window.EClawNativeNav.navigate === 'function') {
+                    return window.EClawNativeNav.navigate(Object.assign({ targetTab: 'chat', sourceTab: 'mission' }, intent || {}));
+                }
+            } catch (_) {}
+            return false;
+        }
+
         function quoteToChat(source, title, excerpt, opts) {
             // opts.prefillInput — optional string to pre-fill the message input
             // on the chat page (used by mind-map chip cite to deliver a chip
             // token straight into the input, so user just hits send).
             const prefillInput = opts && opts.prefillInput ? String(opts.prefillInput) : '';
+            const messageId = opts && opts.messageId ? String(opts.messageId).trim().toLowerCase() : '';
             if (window.self !== window.top) {
-                window.parent.postMessage({ type: 'eclaw_quote', source, title, excerpt: excerpt || '', prefillInput }, window.location.origin);
+                window.parent.postMessage({ type: 'eclaw_quote', source, title, excerpt: excerpt || '', prefillInput, messageId }, window.location.origin);
             } else {
-                localStorage.setItem('eclaw_pending_quote', JSON.stringify({ source, title, excerpt: excerpt || '', prefillInput, ts: Date.now() }));
-                window.location.href = '/portal/chat.html';
+                const quote = { source, title, excerpt: excerpt || '', prefillInput, messageId };
+                localStorage.setItem('eclaw_pending_quote', JSON.stringify({ ...quote, ts: Date.now() }));
+                if (eclawNavigateChat({ target: 'quote', quote, messageId })) return;
+                const chatUrl = messageId
+                    ? '/portal/chat.html?messageId=' + encodeURIComponent(messageId)
+                    : '/portal/chat.html';
+                window.location.href = chatUrl;
             }
         }
 

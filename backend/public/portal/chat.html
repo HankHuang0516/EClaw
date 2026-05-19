@@ -3484,7 +3484,7 @@
                 const pq = localStorage.getItem('eclaw_pending_quote');
                 if (pq) {
                     localStorage.removeItem('eclaw_pending_quote');
-                    const { source, title, excerpt, prefillInput, ts } = JSON.parse(pq);
+                    const { source, title, excerpt, prefillInput, messageId, ts } = JSON.parse(pq);
                     if (Date.now() - ts < 120000) { // within 2 minutes
                         quoteToChat(source, title, excerpt || '');
                         // prefillInput: drop a chip token (or any text) directly
@@ -3503,6 +3503,9 @@
                             // overwrite the prefill with a stale draft; the
                             // deep-link explicitly asked for prefill, so it wins.
                             localStorage.removeItem('chat_draft');
+                        }
+                        if (setChatMessageDeepLinkId(messageId)) {
+                            await handleChatMessageDeepLink({ showMissingToast: true, scroll: true });
                         }
                     }
                 }
@@ -3536,10 +3539,10 @@
             } catch(e) {}
 
             // Cross-iframe quote from workspace.html relay — only accepted from same origin
-            window.addEventListener('message', (e) => {
+            window.addEventListener('message', async (e) => {
                 if (e.origin !== window.location.origin) return;
                 if (!e.data || e.data.type !== 'eclaw_quote') return;
-                const { source, title, excerpt, prefillInput } = e.data;
+                const { source, title, excerpt, prefillInput, messageId } = e.data;
                 quoteToChat(source, title, excerpt || '');
                 if (prefillInput) {
                     const inp = document.getElementById('messageInput');
@@ -3548,6 +3551,9 @@
                         inp.focus();
                         try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch(e2) {}
                     }
+                }
+                if (setChatMessageDeepLinkId(messageId)) {
+                    await handleChatMessageDeepLink({ showMissingToast: true, scroll: true });
                 }
             });
 
@@ -4389,7 +4395,22 @@
         function getChatMessageDeepLinkId() {
             try {
                 const params = new URLSearchParams(window.location.search);
-                return normalizeChatMessageId(params.get('msg') || params.get('his') || params.get('messageId'));
+                return normalizeChatMessageId(params.get('messageId') || params.get('msg') || params.get('his'));
+            } catch (_) {
+                return '';
+            }
+        }
+
+        function setChatMessageDeepLinkId(messageId) {
+            try {
+                const url = new URL(window.location.href);
+                const id = normalizeChatMessageId(messageId);
+                url.searchParams.delete('msg');
+                url.searchParams.delete('his');
+                if (id) url.searchParams.set('messageId', id);
+                else url.searchParams.delete('messageId');
+                window.history.replaceState({}, '', url.toString());
+                return id;
             } catch (_) {
                 return '';
             }
@@ -7635,19 +7656,27 @@
         window.eclawHandleNativeNavigateIntent = async function(intent) {
             if (!intent || intent.targetTab !== 'chat') return false;
             try {
+                let handled = false;
                 if (intent.quote && (intent.quote.title || intent.quote.excerpt)) {
                     quoteToChat(intent.quote.source || '引用', intent.quote.title || '', intent.quote.excerpt || '');
-                    return true;
+                    const prefillInput = intent.quote.prefillInput ? String(intent.quote.prefillInput) : '';
+                    if (prefillInput) {
+                        const inp = document.getElementById('messageInput');
+                        if (inp) {
+                            inp.value = prefillInput;
+                            inp.focus();
+                            try { inp.setSelectionRange(prefillInput.length, prefillInput.length); } catch (e2) {}
+                        }
+                        localStorage.removeItem('chat_draft');
+                    }
+                    handled = true;
                 }
-                const msgId = intent.messageId || (intent.target === 'message' ? intent.threadId : '');
-                if (msgId) {
-                    const url = new URL(window.location.href);
-                    url.searchParams.set('msg', msgId);
-                    url.searchParams.delete('his');
-                    window.history.replaceState({}, '', url.toString());
+                const msgId = intent.messageId || (intent.quote && intent.quote.messageId) || (intent.target === 'message' ? intent.threadId : '');
+                if (setChatMessageDeepLinkId(msgId)) {
                     await handleChatMessageDeepLink({ showMissingToast: true, scroll: true });
-                    return true;
+                    handled = true;
                 }
+                return handled;
             } catch (e) {
                 console.warn('[Chat] native navigate intent failed:', e);
             }
