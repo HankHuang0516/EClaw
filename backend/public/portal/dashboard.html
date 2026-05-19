@@ -167,12 +167,12 @@
             margin-top: 8px;
             line-height: 1.4;
             display: -webkit-box;
-            -webkit-line-clamp: 2;
-            line-clamp: 2;
+            -webkit-line-clamp: 5;
+            line-clamp: 5;
             -webkit-box-orient: vertical;
             overflow: hidden;
             text-overflow: ellipsis;
-            min-height: 2.8em;
+            word-break: break-word;
         }
 
         .entity-xp {
@@ -947,6 +947,17 @@
         }
 
         /* Responsive */
+        @media (max-width: 768px) {
+            .entity-message {
+                -webkit-line-clamp: 2;
+                line-clamp: 2;
+                font-size: 12px;
+            }
+            .entity-card-body {
+                padding: 14px;
+                gap: 12px;
+            }
+        }
         @media (max-width: 640px) {
             .entity-grid {
                 grid-template-columns: 1fr;

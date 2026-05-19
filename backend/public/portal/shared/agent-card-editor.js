@@ -251,7 +251,7 @@ window.AgentCardEditor = (function() {
 
         try {
             // Ensure a listing exists for this entity
-            var listings = await apiCall('GET', '/api/rental/my-listings');
+            var listings = await apiCall('GET', '/api/rental/my-listings', null, { skip401Redirect: true });
             var existing = (listings.listings || []).find(function(l) {
                 return String(l.owner_entity_id) === String(this.entityId);
             }.bind(this));
@@ -303,7 +303,7 @@ window.AgentCardEditor = (function() {
 
     AgentCardEditor.prototype._openArena = async function() {
         try {
-            var listings = await apiCall('GET', '/api/rental/my-listings');
+            var listings = await apiCall('GET', '/api/rental/my-listings', null, { skip401Redirect: true });
             var existing = (listings.listings || []).find(function(l) {
                 return String(l.owner_entity_id) === String(this.entityId);
             }.bind(this));
@@ -325,7 +325,7 @@ window.AgentCardEditor = (function() {
 
     AgentCardEditor.prototype._listForRental = async function() {
         try {
-            var listings = await apiCall('GET', '/api/rental/my-listings');
+            var listings = await apiCall('GET', '/api/rental/my-listings', null, { skip401Redirect: true });
             var existing = (listings.listings || []).find(function(l) {
                 return String(l.owner_entity_id) === String(this.entityId);
             }.bind(this));

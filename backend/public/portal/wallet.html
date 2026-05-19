@@ -272,7 +272,7 @@
 
         async function loadTiers() {
             try {
-                const data = await apiCall('GET', '/api/wallet/topup/tiers');
+                const data = await apiCall('GET', '/api/wallet/topup/tiers', null, { skip401Redirect: true });
                 if (!data || !data.success) return;
                 const grid = document.getElementById('tierGrid');
                 grid.innerHTML = '';
