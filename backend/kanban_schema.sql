@@ -227,6 +227,12 @@ ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS rework_pr_number VARCHAR(64) D
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS linked_prev_card_id VARCHAR(48) DEFAULT NULL;
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS linked_next_card_id VARCHAR(48) DEFAULT NULL;
 
+-- Launch-gate suppression (2026-05-20): backlog cards explicitly waiting on
+-- an external launch / verification gate can opt out of L1 nudge + L2/L3
+-- escalation. Auto-clears whenever status leaves backlog so the flag cannot
+-- be carried into todo/in_progress and silently muffle stale-detection there.
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS launch_gated BOOLEAN DEFAULT FALSE;
+
 CREATE INDEX IF NOT EXISTS idx_kanban_cards_pending_dispatch ON kanban_cards(device_id, pending_dispatch, dispatch_mode)
     WHERE pending_dispatch = TRUE;
 

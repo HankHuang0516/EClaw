@@ -702,6 +702,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             reworkPrNumber: row.rework_pr_number || null,
             linkedPrevCardId: row.linked_prev_card_id || null,
             linkedNextCardId: row.linked_next_card_id || null,
+            launchGated: !!row.launch_gated,
             // Aggregated counts (if present from JOIN)
             commentCount: parseInt(row.comment_count) || 0,
             noteCount: parseInt(row.note_count) || 0,
@@ -1838,10 +1839,15 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 }
             }
 
+            // launch_gated only applies to backlog cards waiting on an external
+            // launch / verification gate. Any move out of backlog auto-clears it
+            // so stale-detection re-enables when the card enters real workflow.
             const result = await pool.query(
                 `UPDATE kanban_cards
                  SET status = $1, assigned_bots = $2::jsonb, status_changed_at = NOW(),
-                     last_stale_nudge_at = NULL, updated_at = NOW()
+                     last_stale_nudge_at = NULL,
+                     launch_gated = CASE WHEN $1 = 'backlog' THEN launch_gated ELSE FALSE END,
+                     updated_at = NOW()
                  WHERE id = $3 AND device_id = $4
                  RETURNING *`,
                 [newStatus, JSON.stringify(bots), cardId, deviceId]
@@ -2419,6 +2425,55 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
     });
 
     // ============================================
+    // PUT /card/:id/gate — Toggle launch-gate suppression (backlog only)
+    // Cards with launchGated=true are excluded from stale-card scan, so L1
+    // nudges + L2/L3 escalation cannot fire on them. Use only for backlog
+    // cards explicitly waiting on a launch / verification gate. Flag auto-
+    // clears on any /move out of backlog.
+    // ============================================
+    router.put('/card/:id/gate', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const _p = { ...req.query, ...req.body }; console.log('[Kanban] PUT /card/:id/gate called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
+        const { deviceId, enabled } = req.body;
+        const cardId = req.params.id;
+
+        if (typeof enabled !== 'boolean') {
+            return res.status(400).json({ success: false, error: 'enabled (boolean) required' });
+        }
+
+        try {
+            const existing = await pool.query(
+                `SELECT status FROM kanban_cards WHERE id = $1 AND device_id = $2 AND archived = false`,
+                [cardId, deviceId]
+            );
+            if (existing.rows.length === 0) {
+                return res.status(404).json({ success: false, error: 'Card not found' });
+            }
+            if (enabled && existing.rows[0].status !== 'backlog') {
+                return res.status(400).json({
+                    success: false,
+                    error: 'launch_gated can only be enabled on backlog cards',
+                    code: 'GATE_NOT_BACKLOG',
+                    hint: 'Move card to backlog first, then enable the gate.'
+                });
+            }
+
+            const result = await pool.query(
+                `UPDATE kanban_cards
+                 SET launch_gated = $1, updated_at = NOW()
+                 WHERE id = $2 AND device_id = $3
+                 RETURNING *`,
+                [enabled, cardId, deviceId]
+            );
+
+            res.json({ success: true, card: serializeCard(result.rows[0]) });
+        } catch (err) {
+            console.error('[Kanban] Gate card error:', err);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // ============================================
     // PUT /card/:id/schedule — Set schedule
     // ============================================
     router.put('/card/:id/schedule', async (req, res) => {
@@ -2616,6 +2671,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                   AND status IN ('backlog', 'todo', 'in_progress', 'review')
                   AND EXTRACT(EPOCH FROM (NOW() - status_changed_at)) * 1000 > stale_threshold_ms
                   AND (schedule_enabled = false OR schedule_type != 'recurring' OR schedule_enabled IS NULL)
+                  AND (launch_gated = FALSE OR launch_gated IS NULL)
             `);
 
             if (result.rows.length === 0) return;
