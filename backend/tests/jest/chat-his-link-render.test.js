@@ -66,10 +66,19 @@ describe('his_<uuid> chip — module behaviour', () => {
     // without spinning a browser.
     const sandbox = { window: {} };
     vm.runInNewContext(fs.readFileSync(hisRenderPath, 'utf8'), sandbox);
+    vm.runInNewContext(sharedRenderJs, sandbox);
     const HisLinkRender = sandbox.window.HisLinkRender;
+    const ChatMessageRender = sandbox.window.ChatMessageRender;
 
     test('exposes renderHisLinks on window', () => {
         expect(typeof HisLinkRender.renderHisLinks).toBe('function');
+    });
+
+    test('exposes normalize / extract helpers for downstream surfaces', () => {
+        expect(typeof HisLinkRender.normalizeMessageId).toBe('function');
+        expect(typeof HisLinkRender.extractFirstMessageId).toBe('function');
+        expect(typeof ChatMessageRender.normalizeHistoryMessageId).toBe('function');
+        expect(typeof ChatMessageRender.extractFirstHistoryMessageId).toBe('function');
     });
 
     test('transforms "his_<uuid>" into a clickable chip with data-msg-id', () => {
@@ -115,6 +124,17 @@ describe('his_<uuid> chip — module behaviour', () => {
         const out = HisLinkRender.renderHisLinks(`ref his_${upper}`);
         expect(out).toContain(`data-msg-id="${SAMPLE_UUID}"`);
         expect(out).toContain(`openHistoryMessage('${SAMPLE_UUID}')`);
+    });
+
+    test('extractFirstMessageId accepts direct UUID or embedded his_<uuid> token', () => {
+        expect(HisLinkRender.extractFirstMessageId(SAMPLE_UUID.toUpperCase())).toBe(SAMPLE_UUID);
+        expect(HisLinkRender.extractFirstMessageId(`before his_${SAMPLE_UUID} after`)).toBe(SAMPLE_UUID);
+        expect(HisLinkRender.extractFirstMessageId(`noise his_123`)).toBe('');
+    });
+
+    test('shared ChatMessageRender delegates history-id extraction to HisLinkRender', () => {
+        expect(ChatMessageRender.normalizeHistoryMessageId(SAMPLE_UUID.toUpperCase())).toBe(SAMPLE_UUID);
+        expect(ChatMessageRender.extractFirstHistoryMessageId(`context his_${SAMPLE_UUID_2}`)).toBe(SAMPLE_UUID_2);
     });
 });
 

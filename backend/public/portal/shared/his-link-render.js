@@ -20,16 +20,32 @@
     const HIS_RE = /\bhis_([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?![0-9a-f-])/gi;
     const UUID_GUARD = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+    function normalizeMessageId(value) {
+        const id = String(value || '').trim().toLowerCase();
+        return UUID_GUARD.test(id) ? id : '';
+    }
+
+    function extractFirstMessageId(value) {
+        const direct = normalizeMessageId(value);
+        if (direct) return direct;
+        const match = String(value || '').match(HIS_RE);
+        if (!match || !match.length) return '';
+        const token = String(match[0] || '').replace(/^his_/i, '');
+        return normalizeMessageId(token);
+    }
+
     function renderHisLinks(escapedHtml) {
         if (!escapedHtml) return escapedHtml;
         return escapedHtml.replace(HIS_RE, (match, id) => {
-            if (!UUID_GUARD.test(id)) return match;
-            return buildChipHtml(id);
+            const normalized = normalizeMessageId(id);
+            if (!normalized) return match;
+            return buildChipHtml(normalized);
         });
     }
 
     function buildChipHtml(msgId) {
-        const safeId = String(msgId).toLowerCase();
+        const safeId = normalizeMessageId(msgId);
+        if (!safeId) return '';
         return `<span class="his-link" data-msg-id="${safeId}" onclick="openHistoryMessage('${safeId}')" title="his_${safeId}">` +
                `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;margin-right:3px;">` +
                `<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>` +
@@ -38,6 +54,8 @@
 
     global.HisLinkRender = {
         renderHisLinks,
+        normalizeMessageId,
+        extractFirstMessageId,
         _re: HIS_RE
     };
 })(window);

@@ -1049,11 +1049,19 @@
         const CHAT_MESSAGE_TOKEN_RE = /\bhis_([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?![0-9a-f-])/i;
 
         function normalizeChatMessageId(value) {
-            const id = String(value || '').trim().toLowerCase();
-            return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) ? id : '';
+            if (window.ChatMessageRender && typeof window.ChatMessageRender.normalizeHistoryMessageId === 'function') {
+                const id = window.ChatMessageRender.normalizeHistoryMessageId(value);
+                if (id) return id;
+            }
+            const raw = String(value || '').trim().toLowerCase();
+            return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw) ? raw : '';
         }
 
         function extractChatMessageId(value) {
+            if (window.ChatMessageRender && typeof window.ChatMessageRender.extractFirstHistoryMessageId === 'function') {
+                const id = window.ChatMessageRender.extractFirstHistoryMessageId(value);
+                if (id) return id;
+            }
             const direct = normalizeChatMessageId(value);
             if (direct) return direct;
             const match = String(value || '').match(CHAT_MESSAGE_TOKEN_RE);

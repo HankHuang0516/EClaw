@@ -76,8 +76,24 @@
         return renderTextChips(div.innerHTML, opts);
     }
 
+    function normalizeHistoryMessageId(value) {
+        if (global.HisLinkRender && typeof global.HisLinkRender.normalizeMessageId === 'function') {
+            return global.HisLinkRender.normalizeMessageId(value);
+        }
+        return '';
+    }
+
+    function extractFirstHistoryMessageId(rawText) {
+        if (global.HisLinkRender && typeof global.HisLinkRender.extractFirstMessageId === 'function') {
+            return global.HisLinkRender.extractFirstMessageId(rawText);
+        }
+        return normalizeHistoryMessageId(rawText);
+    }
+
     global.ChatMessageRender = {
         renderTextChips,
-        renderTextChipsFromRaw
+        renderTextChipsFromRaw,
+        normalizeHistoryMessageId,
+        extractFirstHistoryMessageId
     };
 })(window);
