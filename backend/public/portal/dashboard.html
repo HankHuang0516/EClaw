@@ -172,7 +172,25 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
             text-overflow: ellipsis;
+            min-height: 2.8em;
+            white-space: normal;
             word-break: break-word;
+        }
+
+        @media (max-width: 640px) {
+            .entity-grid {
+                grid-template-columns: 1fr;
+            }
+            .entity-card-body {
+                gap: 12px;
+                padding: 16px;
+            }
+            .entity-message {
+                -webkit-line-clamp: 1;
+                line-clamp: 1;
+                min-height: 1.4em;
+                font-size: 12px;
+            }
         }
 
         .entity-xp {
@@ -2614,6 +2632,15 @@
             return { level: level, xpInLevel: xpInLevel, xpNeeded: xpNeeded, pct: pct };
         }
 
+        function compactEntityMessagePreview(raw) {
+            var text = String(raw || '').replace(/```[\s\S]*?```/g, ' ').replace(/`([^`]+)`/g, '$1');
+            text = text.replace(/\[(.*?)\]\((.*?)\)/g, '$1');
+            text = text.replace(/[*_~>#-]+/g, ' ');
+            text = text.replace(/\s+/g, ' ').trim();
+            if (!text) return 'No messages yet';
+            return text.length > 120 ? text.slice(0, 117).trimEnd() + '…' : text;
+        }
+
         // --- Rendering ---
         function renderEntities() {
             const grid = document.getElementById('entityGrid');
@@ -2636,7 +2663,7 @@
                 const avatar = getAvatarForEntity(entity.entityId);
                 const state = entity.state || 'idle';
                 const stateBadgeClass = getStateBadgeClass(state);
-                const lastMsg = entity.message || 'No messages yet';
+                const lastMsg = compactEntityMessagePreview(entity.message);
                 const time = formatTime(entity.lastUpdated);
                 const escapedName = escapeHtml(displayName).replace(/'/g, "\\'");
 

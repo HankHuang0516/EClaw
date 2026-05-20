@@ -706,6 +706,32 @@
             flex-shrink: 0;
             flex-wrap: wrap;
         }
+        @media (max-width: 640px) {
+            .wv-toolbar {
+                gap: 4px;
+                padding: 8px 10px;
+                align-items: flex-start;
+            }
+            .wv-toolbar-title {
+                width: 100%;
+                order: -1;
+            }
+            .wv-toolbar-sep {
+                display: none;
+            }
+            .wv-toolbar button {
+                padding: 5px 8px;
+                font-size: 12px;
+            }
+            #wvColor,
+            #wvSize,
+            #btnClearView,
+            #btnWvPrivacy,
+            #btnWvCopyLink,
+            #btnWvEditHtml {
+                display: none;
+            }
+        }
         .wv-toolbar button {
             border: none;
             background: var(--input-bg);
