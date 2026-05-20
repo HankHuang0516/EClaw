@@ -365,6 +365,65 @@ describe('mention-parser.parseMentions', () => {
     });
 });
 
+describe('mention-parser — same-device display-name mentions (CJK / mixed-script)', () => {
+    function makeNameCtx() {
+        const devices = {
+            'dev-sender': {
+                entities: {
+                    1: { isBound: true, name: '小傑富力士_本地蝦Codex5.4_F', publicCode: '31tlkr' },
+                    6: { isBound: true, name: '阿尼雅_Codex5.5', publicCode: 'q0ue2k' }
+                }
+            },
+            'dev-other': {
+                entities: {
+                    6: { isBound: true, name: '阿尼雅_Codex5.5', publicCode: 'zzzz66' }
+                }
+            }
+        };
+        const publicCodeIndex = {
+            '31tlkr': { deviceId: 'dev-sender', entityId: 1 },
+            'q0ue2k': { deviceId: 'dev-sender', entityId: 6 },
+            'zzzz66': { deviceId: 'dev-other', entityId: 6 }
+        };
+        return { senderDeviceId: 'dev-sender', devices, publicCodeIndex };
+    }
+
+    test('resolves a same-device CJK display-name mention', () => {
+        const r = mp.parseMentions('@阿尼雅_Codex5.5 你好', makeNameCtx());
+        expect(r.mentions).toHaveLength(1);
+        expect(r.mentions[0]).toMatchObject({
+            publicCode: 'q0ue2k',
+            entityId: 6,
+            name: '阿尼雅_Codex5.5',
+            isCrossDevice: false
+        });
+    });
+
+    test('production repro — `@阿尼雅_Codex5.5 #6` routes to same-device entity 6', () => {
+        const r = mp.parseMentions('@阿尼雅_Codex5.5 #6 — 我找到真正的 root cause 了', makeNameCtx());
+        expect(r.mentions).toHaveLength(1);
+        expect(r.mentions[0].entityId).toBe(6);
+        expect(r.cleanText).toBe('— 我找到真正的 root cause 了');
+    });
+
+    test('same-device display-name mention ignores identical cross-device names', () => {
+        const r = mp.parseMentions('@阿尼雅_Codex5.5 please check', makeNameCtx());
+        expect(r.mentions).toHaveLength(1);
+        expect(r.mentions[0].deviceId).toBe('dev-sender');
+        expect(r.mentions[0].publicCode).toBe('q0ue2k');
+    });
+
+    test('display-name mentions inside inline code do NOT route', () => {
+        const r = mp.parseMentions('Example token: `@阿尼雅_Codex5.5 #6`', makeNameCtx());
+        expect(r.mentions).toEqual([]);
+    });
+
+    test('glued text before @name does NOT route (boundary guard)', () => {
+        const r = mp.parseMentions('hello@阿尼雅_Codex5.5 world', makeNameCtx());
+        expect(r.mentions).toEqual([]);
+    });
+});
+
 describe('mention-parser.decideRouting', () => {
     test('returns none when no mentions', () => {
         const r = mp.decideRouting({ hasAll: false, mentions: [] });
