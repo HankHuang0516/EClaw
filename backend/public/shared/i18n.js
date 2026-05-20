@@ -1756296,6 +1756296,15 @@ const TRANSLATIONS = {
 
 
         "sc_email_verification_required": "需要电子郵件验證",
+        "sc_verify_email_title": "验证邮箱以开始聊天",
+        "sc_verify_email_body": "我们已发送验证链接至 <strong id=\"verifyEmailAddr\"></strong>。请点击收件箱中的链接开始聊天。您的消息将在验证成功后自动发送。",
+        "sc_close": "关闭",
+        "sc_resend_verification": "重新发送邮件",
+        "sc_send_verify_required_tip": "发送消息前请先验证邮箱",
+        "sc_resend_sending": "发送中…",
+        "sc_resend_failed": "发送失败，请稍后重试。",
+        "sc_resend_success": "验证邮件已发送，请查收。",
+        "sc_resend_no_email": "账户无邮箱",
 
 
 
@@ -4869571,6 +4869580,15 @@ const TRANSLATIONS = {
 
 
         "sc_email_verification_required": "Vérification de l'email requise",
+        "sc_verify_email_title": "Vérifiez votre e-mail pour discuter",
+        "sc_verify_email_body": "Nous avons envoyé un lien de vérification à <strong id=\"verifyEmailAddr\"></strong>. Cliquez sur le lien dans votre boîte de réception pour commencer à discuter. Vos messages seront mis en file d'attente et envoyés automatiquement après vérification.",
+        "sc_close": "Fermer",
+        "sc_resend_verification": "Renvoyer l'e-mail",
+        "sc_send_verify_required_tip": "Veuillez vérifier votre e-mail avant d'envoyer des messages",
+        "sc_resend_sending": "Envoi en cours…",
+        "sc_resend_failed": "Échec de l'envoi. Veuillez réessayer plus tard.",
+        "sc_resend_success": "E-mail de vérification envoyé. Consultez votre boîte de réception.",
+        "sc_resend_no_email": "Aucun e-mail enregistré",
 
 
 
@@ -5390823,6 +5390841,15 @@ const TRANSLATIONS = {
 
 
         "sc_email_verification_required": "Verificación de email requerida...",
+        "sc_verify_email_title": "Verifica tu correo para chatear",
+        "sc_verify_email_body": "Hemos enviado un enlace de verificación a <strong id=\"verifyEmailAddr\"></strong>. Haz clic en el enlace de tu bandeja de entrada para empezar a chatear. Tus mensajes están en cola y se enviarán automáticamente una vez verificados.",
+        "sc_close": "Cerrar",
+        "sc_resend_verification": "Reenviar correo",
+        "sc_send_verify_required_tip": "Por favor verifica tu correo antes de enviar mensajes",
+        "sc_resend_sending": "Enviando...",
+        "sc_resend_failed": "Error al enviar. Inténtalo de nuevo más tarde.",
+        "sc_resend_success": "Correo de verificación enviado. Revisa tu bandeja de entrada.",
+        "sc_resend_no_email": "No hay correo registrado",
 
 
 
@@ -5909014,6 +5909041,15 @@ const TRANSLATIONS = {
 
 
         "sc_email_verification_required": "Email verification required",
+        "sc_verify_email_title": "E-Mail verifizieren, um zu chatten",
+        "sc_verify_email_body": "Wir haben einen Bestätigungslink an <strong id=\"verifyEmailAddr\"></strong> gesendet. Klicken Sie auf den Link in Ihrem Posteingang, um mit dem Chatten zu beginnen. Ihre Nachrichten werden in die Warteschlange gestellt und nach der Verifizierung automatisch zugestellt.",
+        "sc_close": "Schließen",
+        "sc_resend_verification": "E-Mail erneut senden",
+        "sc_send_verify_required_tip": "Bitte verifizieren Sie Ihre E-Mail, bevor Sie Nachrichten senden",
+        "sc_resend_sending": "Wird gesendet…",
+        "sc_resend_failed": "Senden fehlgeschlagen. Bitte versuchen Sie es später erneut.",
+        "sc_resend_success": "Bestätigungs-E-Mail gesendet. Überprüfen Sie Ihren Posteingang.",
+        "sc_resend_no_email": "Keine E-Mail in der Akte",
 
 
 
@@ -7468322,6 +7468358,15 @@ const TRANSLATIONS = {
 
 
         "sc_email_verification_required": "البريد الإلكتروني يحتاج التحقق",
+        "sc_verify_email_title": "التحقق من بريدك الإلكتروني للدردشة",
+        "sc_verify_email_body": "أرسلنا رابط التحقق إلى <strong id=\"verifyEmailAddr\"></strong>. انقر على الرابط في صندوق البريد الإلكتروني الخاص بك لبدء الدردشة. سيتم وضع رسائلك في قائمة الانتظار وإرسالها تلقائيًا بمجرد التحقق.",
+        "sc_close": "إغلاق",
+        "sc_resend_verification": "إعادة إرسال البريد الإلكتروني",
+        "sc_send_verify_required_tip": "يرجى التحقق من بريدك الإلكتروني قبل إرسال الرسائل",
+        "sc_resend_sending": "جارٍ الإرسال...",
+        "sc_resend_failed": "فشل الإرسال. يرجى المحاولة مرة أخرى لاحقًا.",
+        "sc_resend_success": "تم إرسال بريد التحقق. تحقق من صندوق البريد الوارد.",
+        "sc_resend_no_email": "لا يوجد بريد إلكتروني مسجل",
 
 
 
