@@ -15561,24 +15561,36 @@ async function discoverSessions(url, token, authOpts = {}) {
 async function handshakeWithBot(url, token, preferredSessionKey, deviceId, entityId, botType, authOpts = {}) {
     const bindMsg = `[SYSTEM:BIND_HANDSHAKE] New binding: Device ${deviceId}, Entity ${entityId}, Type: ${botType}. Reply OK to confirm.`;
 
+    // Handshake gives bots up to 60s to reply. Per-message push keeps the 15s
+    // default because by then the session is cached and the bot only round-
+    // trips a single user message. Bind-handshake's [SYSTEM:BIND_HANDSHAKE] is
+    // a fresh sessions_send that for Claude-Code-backed bots (#1 Mac_F /
+    // #3 Mac_E via e/f.eclawbot.com) triggers a subprocess cold-start + full
+    // LLM round-trip and routinely exceeds 15s. (Investigated 2026-05-20.)
+    const HANDSHAKE_TIMEOUT = 60000;
+    const sendOpts = { timeout: HANDSHAKE_TIMEOUT };
+
     // Step 1: Try preferred session key
     console.log(`[Handshake] Trying preferred session key: ${preferredSessionKey}...`);
-    let result = await sendToSession(url, token, preferredSessionKey, bindMsg, authOpts);
+    let result = await sendToSession(url, token, preferredSessionKey, bindMsg, authOpts, sendOpts);
 
     if (result.success) {
         console.log(`[Handshake] ✓ Handshake OK with preferred key`);
         return { success: true, sessionKey: preferredSessionKey, botResponse: result.botResponse };
     }
 
-    // Step 2: If session not found, discover existing sessions
-    if (result.sessionNotFound) {
-        console.log(`[Handshake] Preferred session not found, discovering sessions...`);
+    // Step 2: If session not found OR the first send timed out, discover existing sessions
+    // and retry. Timeout often means the gateway accepted the call but the bot took too
+    // long to reply on the preferred key — a different session may be warm and faster.
+    if (result.sessionNotFound || result.timeout) {
+        console.log(`[Handshake] Preferred session ${result.timeout ? 'timed out' : 'not found'}, discovering sessions...`);
         const sessions = await discoverSessions(url, token, authOpts);
         console.log(`[Handshake] Discovered ${sessions.length} sessions: ${JSON.stringify(sessions)}`);
 
         for (const sk of sessions) {
+            if (sk === preferredSessionKey) continue;  // already tried
             console.log(`[Handshake] Trying discovered session: ${sk}...`);
-            result = await sendToSession(url, token, sk, bindMsg, authOpts);
+            result = await sendToSession(url, token, sk, bindMsg, authOpts, sendOpts);
             if (result.success) {
                 console.log(`[Handshake] ✓ Handshake OK with discovered key: ${sk}`);
                 return { success: true, sessionKey: sk, botResponse: result.botResponse };
@@ -15586,9 +15598,12 @@ async function handshakeWithBot(url, token, preferredSessionKey, deviceId, entit
         }
     }
 
-    console.error(`[Handshake] ✗ All session attempts failed. Bot gateway may not have active sessions.`);
-    serverLog('error', 'handshake', `All session attempts failed for Entity ${entityId}`, { deviceId, entityId, metadata: { url } });
-    logHandshakeFailure({ deviceId, entityId, webhookUrl: url, errorType: 'no_sessions', errorMessage: result.error || 'No working session found on gateway', source: 'bind_handshake' });
+    const finalErrorType = result.timeout ? 'timeout'
+        : result.sessionNotFound ? 'no_sessions'
+        : (result.httpStatus ? `http_${result.httpStatus}` : 'connection_failed');
+    console.error(`[Handshake] ✗ All session attempts failed (type=${finalErrorType}): ${result.error}`);
+    serverLog('error', 'handshake', `All session attempts failed for Entity ${entityId} (${finalErrorType})`, { deviceId, entityId, metadata: { url, errorType: finalErrorType } });
+    logHandshakeFailure({ deviceId, entityId, webhookUrl: url, errorType: finalErrorType, errorMessage: result.error || 'No working session found on gateway', source: 'bind_handshake' });
     return { success: false, error: result.error || 'No working session found on gateway' };
 }
 
@@ -15608,7 +15623,7 @@ async function sendToSession(url, token, sessionKey, message, authOpts = {}, opt
 
         if (!response.ok) {
             logHandshakeFailure({ webhookUrl: url, errorType: `http_${response.status}`, httpStatus: response.status, errorMessage: text, responseBody: text, source: 'send_session' });
-            return { success: false, error: `HTTP ${response.status}: ${text}` };
+            return { success: false, error: `HTTP ${response.status}: ${text}`, httpStatus: response.status };
         }
 
         // Check for "No session found" in response body (gateway returns 200 but with error)
@@ -15634,8 +15649,11 @@ async function sendToSession(url, token, sessionKey, message, authOpts = {}, opt
 
         return { success: true, botResponse };
     } catch (err) {
-        logHandshakeFailure({ webhookUrl: url, errorType: 'connection_failed', errorMessage: err.message, source: 'send_session' });
-        return { success: false, error: err.message };
+        const isAbort = err.name === 'AbortError' || err.name === 'TimeoutError'
+            || /aborted|timeout/i.test(err.message || '');
+        const errorType = isAbort ? 'timeout' : 'connection_failed';
+        logHandshakeFailure({ webhookUrl: url, errorType, errorMessage: err.message, source: 'send_session' });
+        return { success: false, error: err.message, timeout: isAbort };
     }
 }
 
