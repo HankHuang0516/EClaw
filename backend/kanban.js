@@ -695,6 +695,8 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : null,
             reviewerEntityId: row.reviewer_entity_id != null ? parseInt(row.reviewer_entity_id) : null,
             requiresScreenshotReview: row.requires_screenshot_review !== false,
+            gated: !!row.gated,
+            gateReason: row.gate_reason || null,
             reopenedAt: row.reopened_at ? new Date(row.reopened_at).getTime() : null,
             reopenedBy: row.reopened_by != null ? parseInt(row.reopened_by) : null,
             reopenReason: row.reopen_reason || null,
@@ -1838,16 +1840,25 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 }
             }
 
+            // gated launch-gate auto-resets when status leaves backlog (only meaningful in backlog).
+            const clearGate = oldStatus === 'backlog' && newStatus !== 'backlog' && card.gated === true;
+
             const result = await pool.query(
                 `UPDATE kanban_cards
                  SET status = $1, assigned_bots = $2::jsonb, status_changed_at = NOW(),
                      last_stale_nudge_at = NULL, updated_at = NOW()
+                     ${clearGate ? ', gated = FALSE, gate_reason = NULL' : ''}
                  WHERE id = $3 AND device_id = $4
                  RETURNING *`,
                 [newStatus, JSON.stringify(bots), cardId, deviceId]
             );
 
             const updatedCard = serializeCard(result.rows[0]);
+
+            if (clearGate) {
+                await addSystemComment(cardId, deviceId,
+                    `🔓 launch-gate 已自動關閉（離開 backlog → ${STATUS_LABELS[newStatus] || newStatus}）`);
+            }
 
             // System comment
             const botLabel = bots.map(b => `#${b}`).join(', ') || '未指派';
@@ -2515,6 +2526,68 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
     });
 
     // ============================================
+    // PUT /card/:id/gate — Toggle backlog launch-gate
+    // When gated=true, L1/L2/L3 staleness escalation skips this card.
+    // App auto-resets gated=false on any status change out of backlog (see /move).
+    // ============================================
+    router.put('/card/:id/gate', async (req, res) => {
+        if (!authenticate(req, res)) return;
+        const { deviceId, enabled, reason } = req.body;
+        const cardId = req.params.id;
+
+        try {
+            const existing = await pool.query(
+                `SELECT * FROM kanban_cards WHERE id = $1 AND device_id = $2`,
+                [cardId, deviceId]
+            );
+            if (existing.rows.length === 0) {
+                return res.status(404).json({ success: false, error: 'Card not found' });
+            }
+
+            const gateOn = enabled !== false;
+
+            // Launch-gate is backlog-only by design (suppresses L1/L2/L3 for cards
+            // pending launch). Allow enabled=false on any status (so a stale gate
+            // can always be cleared), but enabled=true only on backlog cards.
+            if (gateOn && existing.rows[0].status !== 'backlog') {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Launch-gate is only available for backlog cards',
+                    code: 'GATE_BACKLOG_ONLY',
+                    hint: `Current status: ${existing.rows[0].status}. Move the card to backlog before enabling the gate, or clear the gate (enabled=false) without status restriction.`
+                });
+            }
+
+            const gateReason = gateOn && typeof reason === 'string' && reason.trim()
+                ? reason.trim().slice(0, 255)
+                : null;
+
+            const result = await pool.query(
+                `UPDATE kanban_cards SET
+                    gated = $1,
+                    gate_reason = $2,
+                    updated_at = NOW()
+                 WHERE id = $3 AND device_id = $4
+                 RETURNING *`,
+                [gateOn, gateReason, cardId, deviceId]
+            );
+
+            const card = serializeCard(result.rows[0]);
+            await bumpVersion(deviceId);
+
+            await addSystemComment(cardId, deviceId,
+                gateOn
+                    ? `🔒 已啟用 launch-gate — L1/L2/L3 自動升級暫停${gateReason ? `（${gateReason}）` : ''}`
+                    : `🔓 已關閉 launch-gate — 恢復自動升級`);
+
+            res.json({ success: true, card });
+        } catch (err) {
+            console.error('[Kanban] Gate card error:', err);
+            res.status(500).json({ success: false, error: err.message });
+        }
+    });
+
+    // ============================================
     // GET /card/:id/children — List child cards (automation history)
     // ============================================
     router.get('/card/:id/children', async (req, res) => {
@@ -2610,12 +2683,17 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             // moves (cron creates child cards instead), so they would always look stale
             // and get escalated to P0 every staleThresholdMs window. Mirrors the same
             // filter used in checkDoneAutoArchive below.
+            // gated=true only suppresses L1/L2/L3 for backlog cards (launch-pending
+            // drafts). Active-status cards (todo/in_progress/review) keep escalating
+            // even if a stale gated flag is left over — defense-in-depth alongside
+            // the API guard + /move auto-reset.
             const result = await pool.query(`
                 SELECT * FROM kanban_cards
                 WHERE archived = false
                   AND status IN ('backlog', 'todo', 'in_progress', 'review')
                   AND EXTRACT(EPOCH FROM (NOW() - status_changed_at)) * 1000 > stale_threshold_ms
                   AND (schedule_enabled = false OR schedule_type != 'recurring' OR schedule_enabled IS NULL)
+                  AND (status != 'backlog' OR COALESCE(gated, false) = false)
             `);
 
             if (result.rows.length === 0) return;

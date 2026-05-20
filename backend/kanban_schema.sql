@@ -56,6 +56,13 @@ ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS reviewer_entity_id INTEGER DEF
 -- without at least one image/* file attached via POST /api/mission/card/:id/file.
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS requires_screenshot_review BOOLEAN DEFAULT TRUE;
 
+-- Backlog launch-gate (2026-05-20): when gated=true, L1/L2/L3 staleness escalation
+-- skips this card so launch-pending drafts don't auto-bounce backlog→blocked.
+-- App layer auto-resets gated=false on any status change out of backlog.
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS gated BOOLEAN DEFAULT FALSE;
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS gate_reason VARCHAR(255) DEFAULT NULL;
+CREATE INDEX IF NOT EXISTS idx_kanban_cards_gated ON kanban_cards(gated) WHERE gated = TRUE;
+
 -- Chat-anchor (2026-04-28): every human-filed card should pin the originating
 -- chat message + mind-map coord so the card has provenance back into 心智 / 對話.
 -- Auto-cards leave both NULL (rendered as N/A in UI).
