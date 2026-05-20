@@ -85,7 +85,7 @@
         .kb-card-avatar-name { color:var(--text-secondary); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60px; }
 
         .kb-card-title { font-size:13px; font-weight:600; color:var(--text); margin-bottom:4px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-        .kb-card-desc { font-size:11px; color:var(--text-secondary); line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin-bottom:8px; }
+        .kb-card-desc { font-size:11px; color:var(--text-secondary); line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin-bottom:8px; white-space:normal; word-break:break-word; }
         .kb-card-footer { display:flex; gap:8px; font-size:10px; color:var(--text-muted); flex-wrap:wrap; align-items:center; }
         .kb-card-footer span { display:flex; align-items:center; gap:2px; }
         .kb-card-countdown { font-weight:600; }
@@ -615,12 +615,18 @@
             .kb-toolbar { flex-direction:column; align-items:stretch; }
             .kb-toolbar-actions { justify-content:space-between; }
 
+            /* Compact list cards */
+            .kb-card-desc {
+                -webkit-line-clamp: 1;
+                line-clamp: 1;
+                margin-bottom: 6px;
+            }
+
             /* Automation: stack on mobile */
             .kb-auto-grid { flex-wrap:nowrap; }
             .kb-auto-card { flex:0 0 180px; }
 
-            /* Card scanability: truncate description + hide dep chips on board cards */
-            .kb-card-desc { -webkit-line-clamp:3; max-height:calc(1.4em * 3); overflow:hidden; text-overflow:ellipsis; word-break:break-word; }
+            /* Card scanability: hide dep chips on board cards */
             .kb-card .kb-dep-chips-container { display:none; }
         }
         @media (min-width: 769px) {
@@ -1765,7 +1771,7 @@
                 </div>
                 <div class="kb-card-title">${escapeHtml(card.title)}</div>
                 ${renderTags(card.tags)}
-                ${card.description ? '<div class="kb-card-desc">'+renderSmartChips(card.description)+'</div>' : ''}
+                ${card.description ? '<div class="kb-card-desc">'+escapeHtml(compactKanbanPreview(card.description))+'</div>' : ''}
                 <div class="kb-card-footer">
                     ${commentCount ? '<span>💬 '+commentCount+'</span>' : ''}
                     ${noteCount ? '<span>📝 '+noteCount+'</span>' : ''}
@@ -2213,6 +2219,15 @@
             if (card.status === 'in_progress') return { label: '👀 Review', kind: 'move', value: 'review' };
             if (card.status === 'blocked') return { label: '▶ Resume', kind: 'move', value: 'in_progress' };
             return { label: '▶ Start', kind: 'move', value: 'in_progress' };
+        }
+
+        function compactKanbanPreview(raw) {
+            let text = String(raw || '').replace(/```[\s\S]*?```/g, ' ').replace(/`([^`]+)`/g, '$1');
+            text = text.replace(/\[(.*?)\]\((.*?)\)/g, '$1');
+            text = text.replace(/[*_~>#-]+/g, ' ');
+            text = text.replace(/\s+/g, ' ').trim();
+            if (!text) return '';
+            return text.length > 110 ? text.slice(0, 107).trimEnd() + '…' : text;
         }
 
         function taskChip(kind, label, title, onClick) {

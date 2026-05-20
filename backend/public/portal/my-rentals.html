@@ -12,6 +12,24 @@
         .mr-tab { padding: 10px 18px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-secondary); font-size: 13px; font-weight: 600; cursor: pointer; }
         .mr-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
 
+        @media (max-width: 640px) {
+            .mr-tabs {
+                overflow-x: auto;
+                overflow-y: hidden;
+                flex-wrap: nowrap;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                padding-bottom: 2px;
+            }
+            .mr-tabs::-webkit-scrollbar { display: none; }
+            .mr-tab {
+                flex: 0 0 auto;
+                padding: 9px 14px;
+                font-size: 12px;
+                white-space: nowrap;
+            }
+        }
+
         .mr-section { background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 18px; margin-bottom: 14px; }
         .mr-contract { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         .mr-contract-info { flex: 1; min-width: 200px; }

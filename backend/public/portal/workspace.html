@@ -97,6 +97,29 @@
 
         /* Active tab highlights in nav */
         .nav-link.active-pane { border-bottom: 2px solid var(--accent, #7c6aef); }
+
+        @media (max-width: 768px) {
+            .pane-labels {
+                height: auto;
+                min-height: 38px;
+                padding: 6px 8px 4px;
+                gap: 6px;
+            }
+            .pane-label {
+                cursor: pointer;
+            }
+            .workspace-container {
+                height: calc(100vh - 94px);
+            }
+            .workspace-pane {
+                min-width: 100%;
+                width: 100% !important;
+            }
+            .workspace-divider,
+            .drag-overlay {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -128,8 +151,15 @@
 
     // ── State: ordered array of panes ──
     let panes = [];   // [{ id: 'chat', width: 0.5 }, ...]
+    let activePaneIdx = 0;
+    let _lastMobileMode = null;
 
     function t(key, fb) { return typeof i18n !== 'undefined' ? i18n.t(key) : fb; }
+    function isMobileWorkspace() { return window.matchMedia('(max-width: 768px)').matches; }
+    function clampActivePaneIdx() {
+        if (panes.length === 0) activePaneIdx = 0;
+        else activePaneIdx = Math.max(0, Math.min(activePaneIdx, panes.length - 1));
+    }
 
     function pageIdFromHref(href) {
         for (const [id, p] of Object.entries(PAGES)) { if (p.href === href) return id; }
@@ -157,6 +187,8 @@
         }
 
         if (panes.length === 0) panes = [{ id: 'dashboard', width: 1 }];
+        activePaneIdx = 0;
+        _lastMobileMode = isMobileWorkspace();
 
         // Restore widths from localStorage
         try {
@@ -184,6 +216,11 @@
         if (!PAGES[pageId]) return;
         const idx = panes.findIndex(p => p.id === pageId);
         if (idx >= 0) {
+            if (isMobileWorkspace()) {
+                activePaneIdx = idx;
+                render();
+                return;
+            }
             // Already open — close it (unless it's the only one)
             if (panes.length <= 1) return;
             panes.splice(idx, 1);
@@ -191,8 +228,10 @@
         } else {
             // Add new pane at the left
             panes.unshift({ id: pageId, width: 0 });
+            activePaneIdx = 0;
             normalizeWidths();
         }
+        clampActivePaneIdx();
         render();
     }
 
@@ -212,24 +251,29 @@
 
     function renderContainer() {
         bustChatPaneCache();
+        clampActivePaneIdx();
         const container = document.getElementById('workspaceContainer');
+        const mobileMode = isMobileWorkspace();
         container.innerHTML = '';
 
-        panes.forEach((pane, i) => {
-            // Iframe
+        const panesToRender = mobileMode
+            ? [{ pane: panes[activePaneIdx], paneIndex: activePaneIdx }]
+            : panes.map((pane, i) => ({ pane, paneIndex: i }));
+
+        panesToRender.forEach(({ pane, paneIndex }, renderIdx) => {
+            if (!pane) return;
             const iframe = document.createElement('iframe');
             iframe.className = 'workspace-pane';
-            iframe.id = 'pane-' + i;
-            iframe.style.width = (pane.width * 100).toFixed(2) + '%';
+            iframe.id = 'pane-' + paneIndex;
+            iframe.style.width = mobileMode ? '100%' : (pane.width * 100).toFixed(2) + '%';
             const pageInfo = PAGES[pane.id];
             if (pageInfo) iframe.src = pageInfo.href + '?embed=1';
             container.appendChild(iframe);
 
-            // Divider between panes
-            if (i < panes.length - 1) {
+            if (!mobileMode && renderIdx < panesToRender.length - 1) {
                 const div = document.createElement('div');
                 div.className = 'workspace-divider';
-                div.setAttribute('data-index', i);
+                div.setAttribute('data-index', paneIndex);
                 div.addEventListener('mousedown', startDividerDrag);
                 container.appendChild(div);
             }
@@ -240,6 +284,7 @@
     let dragIndex = -1;
 
     function startDividerDrag(e) {
+        if (isMobileWorkspace()) return;
         e.preventDefault();
         dragIndex = parseInt(e.target.getAttribute('data-index'));
         e.target.classList.add('dragging');
@@ -289,20 +334,28 @@
 
     function renderLabels() {
         const bar = document.getElementById('paneLabels');
+        const mobileMode = isMobileWorkspace();
+        clampActivePaneIdx();
         bar.innerHTML = '';
 
         panes.forEach((pane, i) => {
             const span = document.createElement('span');
-            span.className = 'pane-label' + (i === 0 ? ' active' : '');
+            span.className = 'pane-label' + ((mobileMode ? i === activePaneIdx : i === 0) ? ' active' : '');
             span.style.borderBottomColor = COLORS[i % COLORS.length];
             span.style.borderBottom = '2px solid ' + COLORS[i % COLORS.length];
-            span.setAttribute('draggable', 'true');
+            span.setAttribute('draggable', mobileMode ? 'false' : 'true');
             span.setAttribute('data-idx', i);
 
             const p = PAGES[pane.id];
             const icon = p ? p.icon : '';
             const label = p ? t(p.i18nKey, p.label) : pane.id;
             span.innerHTML = `${icon} ${label}`;
+
+            span.addEventListener('click', () => {
+                if (!mobileMode) return;
+                activePaneIdx = i;
+                render();
+            });
 
             // Close button (only if more than 1 pane)
             if (panes.length > 1) {
@@ -314,32 +367,33 @@
                 span.appendChild(close);
             }
 
-            // Drag to reorder
-            span.addEventListener('dragstart', (e) => {
-                dragLabelIdx = i;
-                e.dataTransfer.effectAllowed = 'move';
-                span.style.opacity = '0.5';
-            });
-            span.addEventListener('dragend', () => {
-                span.style.opacity = '';
-                dragLabelIdx = -1;
-                bar.querySelectorAll('.pane-label').forEach(el => el.classList.remove('drag-over'));
-            });
-            span.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
-                span.classList.add('drag-over');
-            });
-            span.addEventListener('dragleave', () => { span.classList.remove('drag-over'); });
-            span.addEventListener('drop', (e) => {
-                e.preventDefault();
-                span.classList.remove('drag-over');
-                if (dragLabelIdx < 0 || dragLabelIdx === i) return;
-                // Swap panes
-                const moved = panes.splice(dragLabelIdx, 1)[0];
-                panes.splice(i, 0, moved);
-                render();
-            });
+            if (!mobileMode) {
+                // Drag to reorder
+                span.addEventListener('dragstart', (e) => {
+                    dragLabelIdx = i;
+                    e.dataTransfer.effectAllowed = 'move';
+                    span.style.opacity = '0.5';
+                });
+                span.addEventListener('dragend', () => {
+                    span.style.opacity = '';
+                    dragLabelIdx = -1;
+                    bar.querySelectorAll('.pane-label').forEach(el => el.classList.remove('drag-over'));
+                });
+                span.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    span.classList.add('drag-over');
+                });
+                span.addEventListener('dragleave', () => { span.classList.remove('drag-over'); });
+                span.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    span.classList.remove('drag-over');
+                    if (dragLabelIdx < 0 || dragLabelIdx === i) return;
+                    const moved = panes.splice(dragLabelIdx, 1)[0];
+                    panes.splice(i, 0, moved);
+                    render();
+                });
+            }
 
             bar.appendChild(span);
         });
@@ -348,6 +402,8 @@
     function removePane(idx) {
         if (panes.length <= 1) return;
         panes.splice(idx, 1);
+        if (activePaneIdx >= panes.length) activePaneIdx = panes.length - 1;
+        clampActivePaneIdx();
         normalizeWidths();
         render();
     }
@@ -380,6 +436,15 @@
         if (e.key === 'eclaw-view-mode' && e.newValue === 'single') {
             window.location.href = (panes[0]?.id || 'dashboard') + '.html';
         }
+    });
+
+    window.addEventListener('resize', () => {
+        const mobileMode = isMobileWorkspace();
+        if (mobileMode === _lastMobileMode) return;
+        _lastMobileMode = mobileMode;
+        if (!mobileMode) activePaneIdx = 0;
+        clampActivePaneIdx();
+        render();
     });
 
     // ── Cross-pane quote routing ──

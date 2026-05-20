@@ -155,6 +155,66 @@
             background: var(--input-bg);
             border: 1px solid var(--card-border);
         }
+        .ledger-note-cell {
+            color: var(--text-secondary);
+            font-size: 12px;
+            word-break: break-word;
+        }
+        @media (max-width: 640px) {
+            .balance-row {
+                flex-direction: column;
+                gap: 12px;
+            }
+            .ledger-table {
+                border-collapse: separate;
+                border-spacing: 0 10px;
+            }
+            .ledger-table thead {
+                display: none;
+            }
+            .ledger-table,
+            .ledger-table tbody,
+            .ledger-table tr,
+            .ledger-table td {
+                display: block;
+                width: 100%;
+            }
+            .ledger-table tr {
+                background: var(--input-bg);
+                border: 1px solid var(--card-border);
+                border-radius: var(--radius-sm);
+                padding: 12px;
+            }
+            .ledger-table td {
+                border-bottom: none;
+                padding: 0;
+                margin-top: 10px;
+                text-align: left !important;
+            }
+            .ledger-table td:first-child {
+                margin-top: 0;
+            }
+            .ledger-table td::before {
+                content: attr(data-label);
+                display: block;
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: 0.04em;
+                text-transform: uppercase;
+                color: var(--text-muted);
+                margin-bottom: 4px;
+            }
+            .ledger-note-cell {
+                font-size: 13px;
+                line-height: 1.45;
+            }
+            .ledger-amount {
+                display: inline-flex;
+                align-items: baseline;
+                gap: 4px;
+                font-size: 15px;
+            }
+        }
         .empty-state {
             text-align: center;
             padding: 40px 20px;
@@ -251,6 +311,15 @@
         function tt(key, fallback) {
             const v = (typeof i18n !== 'undefined') ? i18n.t(key) : null;
             return (v && v !== key) ? v : fallback;
+        }
+
+        function escapeHtml(value) {
+            return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
         }
 
         async function loadBalance() {
@@ -377,10 +446,10 @@
                     const cls = delta >= 0 ? 'credit' : 'debit';
                     const sign = delta >= 0 ? '+' : '−';
                     html += `<tr>
-                        <td>${dateStr}</td>
-                        <td><span class="ledger-type">${ledgerTypeLabel(e.type)}</span></td>
-                        <td style="color:var(--text-secondary);font-size:12px;">${e.note || ''}</td>
-                        <td class="ledger-amount ${cls}" style="text-align:right;">${sign}${ecoin.toLocaleString()} ${ledgerUnit}</td>
+                        <td data-label="${escapeHtml(colTime)}">${dateStr}</td>
+                        <td data-label="${escapeHtml(colType)}"><span class="ledger-type">${escapeHtml(ledgerTypeLabel(e.type))}</span></td>
+                        <td data-label="${escapeHtml(colNote)}" class="ledger-note-cell">${escapeHtml(e.note || '')}</td>
+                        <td data-label="${escapeHtml(colAmount)}" class="ledger-amount ${cls}" style="text-align:right;">${sign}${ecoin.toLocaleString()} ${escapeHtml(ledgerUnit)}</td>
                     </tr>`;
                 }
                 html += '</tbody></table>';
