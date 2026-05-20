@@ -7219111,7 +7219111,7 @@ const TRANSLATIONS = {
 
 
 
-        "ent_feat_sso_desc": "تواصل مع مزود الهوية من خلال OIDC العام. تم دمج Google وFacebook OAuth. خادم OAuth 2.0 كامل لت票 administrativeCredentials وت票 managementTokens.",
+                "ent_feat_sso_desc": "اتصل بمزود الهوية عبر OIDC العام. مبنيّ Google وFacebook OAuth. خادم OAuth 2.0 كامل لبيانات الاعتماد وإدارة الرموز.",
 
 
 
@@ -7226920,7 +7226920,7 @@ const TRANSLATIONS = {
 
 
 
-        "qs_intent_biz_desc": "معالجة الطلبات والتوصيات产品和退货 24/7",
+                "qs_intent_biz_desc": "معالجة تلقائية للطلبات والتوصيات والإرجاعات على مدار الساعة",
 
 
 
@@ -7242024,7 +7242024,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_source": "وثائق API الكاملة وكود مصدر الإضافة: <a href=\\\"",
+                "guide_channel_p_source": "وثائق API الكاملة وكود مصدر الإضافة: <a href=\"https://github.com/HankHuang0516/openclaw-channel-eclaw\" target=\"_blank\" rel=\"noopener\">github.com/HankHuang0516/openclaw-channel-eclaw</a>",
 
 
 
@@ -7242152,7 +7242152,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_channel_p_success": "في حالة النجاح، سيعرض سجل OpenClaw رسالة مثل <code>[eclaw] تم ربط الكيان 0 كـ \\\"",
+                "guide_channel_p_success": "في حالة النجاح، يعرض سجل OpenClaw رسالة مثل <code>[eclaw] تم ربط الكيان 0 كـ \"My AI\"</code>.",
 
 
 
@@ -7248680,7 +7248680,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_envvars_meta": "مركز المهام &gt; متغيرات البيئة <span class=\\\"",
+                "guide_envvars_meta": "مركز المهام &gt; متغيرات البيئة <span class=\"mc-label\" style=\"background:rgba(255,152,0,0.15);color:#FF9800;\"> المستخدم يُصرِّح / البوت يقرأ</span>",
 
 
 
@@ -7255336,7 +7255336,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_cta_web": "بوابة الويب (موصى بها): <a href=\\\"",
+                "guide_features_cta_web": "بوابة الويب (موصى بها): <a href=\"dashboard.html\">فتح EClawbot</a>",
 
 
 
@@ -7255464,7 +7255464,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_features_cta_android": "تطبيق أندرويد: <a href=\\\"",
+                "guide_features_cta_android": "تطبيق أندرويد: <a href=\"https://play.google.com/store/apps/details?id=com.hank.clawlive\" target=\"_blank\" rel=\"noopener\">تنزيل من Google Play</a>",
 
 
 
@@ -7263400,7 +7263400,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mlist_meta": "مركز المهام &gt; قائمة المهام <span class=\\\"",
+                "guide_mlist_meta": "مركز المهام &gt; قائمة المهام <span class=\"mc-label mc-label-shared\">مشترك بين المستخدم والبوت</span>",
 
 
 
@@ -7267496,7 +7267496,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_nav_mission": "مركز المهام <span class=\\\"",
+                "guide_nav_mission": "مركز المهام <span class=\"expand-arrow\">&#9654;</span>",
 
 
 
@@ -7269800,7 +7269800,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_nav_usecases": "حالات الاستخدام <span class=\\\"",
+                "guide_nav_usecases": "حالات الاستخدام <span class=\"expand-arrow\">&#9654;</span>",
 
 
 
@@ -7270184,7 +7270184,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_notes_meta": "مركز المهام &gt; ملاحظات <span class=\\\"",
+                "guide_notes_meta": "مركز المهام &gt; الملاحظات <span class=\"mc-label mc-label-shared\">مشترك بين المستخدم والبوت</span>",
 
 
 
@@ -7273640,7 +7273640,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_quickstart_step_download": "قم بتنزيل أحدث <code>.aab</code> / <code>.apk</code> من <a href=\\\"",
+                "guide_quickstart_step_download": "قم بتنزيل أحدث <code>.aab</code> / <code>.apk</code> من <a href=\"https://github.com/HankHuang0516/EClaw/releases/latest\" target=\"_blank\" rel=\"noopener\">إصدارات GitHub</a>",
 
 
 
@@ -7274536,7 +7274536,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_remote_meta": "مركز المهام &gt; التحكم عن بُعد <span class=\\\"",
+                "guide_remote_meta": "مركز المهام &gt; التحكم عن بُعد <span class=\"mc-label\" style=\"background:rgba(244,67,54,0.15);color:#F44336;\">المستخدم يُفعِّل / البوت يُنفِّذ</span>",
 
 
 
@@ -7279016,7 +7279016,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_rules_meta": "مركز المهام &gt; القواعد <span class=\\\"",
+                "guide_rules_meta": "مركز المهام &gt; القواعد <span class=\"mc-label mc-label-user\">سلوك مُعرَّف من المستخدم</span>",
 
 
 
@@ -7281576,7 +7281576,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_schedule_meta": "مركز المهام &gt; الجدول <span class=\\\"",
+                "guide_schedule_meta": "مركز المهام &gt; الجدول <span class=\"mc-label mc-label-shared\">مشترك بين المستخدم والبوت</span>",
 
 
 
@@ -7286952,7 +7286952,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_setup_download_link": "تنزيل أندرويد: <a href=\\\"",
+                "guide_setup_download_link": "تنزيل أندرويد: <a href=\"https://play.google.com/store/apps/details?id=com.hank.clawlive\" target=\"_blank\" rel=\"noopener\">Google Play</a> | البوابة: <a href=\"index.html\">سجّل الآن</a>",
 
 
 
@@ -7298472,7 +7298472,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_testing_p_license": "<a href=\\\"",
+                "guide_testing_p_license": "<a href=\"https://github.com/HankHuang0516/EClaw/blob/main/LICENSE\" target=\"_blank\" rel=\"noopener\">رخصة MIT</a> © 2026 HankHuang0516",
 
 
 
@@ -7328296,7 +7328296,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_identity_note_back": "← <a href=\\\"",
+                "guide_identity_note_back": "← <a href=\"#guide/usecase-proxy-window\">العودة إلى دليل نافذة البروكسي</a>",
 
 
 
@@ -7334824,7 +7334824,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_agentcard_note_back": "← <a href=\\\"",
+                "guide_agentcard_note_back": "← <a href=\"#guide/usecase-proxy-window\">العودة إلى دليل نافذة البروكسي</a>",
 
 
 
@@ -7343400,7 +7343400,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_crossdevice_note_back": "← <a href=\\\"",
+                "guide_crossdevice_note_back": "← <a href=\"#guide/usecase-proxy-window\">العودة إلى دليل نافذة البروكسي</a>",
 
 
 
@@ -7348264,7 +7348264,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_voice_cta_api": "وثائق API: <a href=\\\"",
+                "guide_voice_cta_api": "وثائق API: <a href=\"https://eclawbot.com/api/skill-doc\" target=\"_blank\" rel=\"noopener\">دليل API الكامل</a>",
 
 
 
@@ -7348392,7 +7348392,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_voice_cta_app": "تطبيق أندرويد: <a href=\\\"",
+                "guide_voice_cta_app": "تطبيق أندرويد: <a href=\"https://play.google.com/store/apps/details?id=com.hank.clawlive\" target=\"_blank\" rel=\"noopener\">تنزيل من Google Play</a>",
 
 
 
@@ -7413824,7 +7413824,7 @@ const TRANSLATIONS = {
 
 
 
-        "notif_settings_desc": "اختر الإشعارات التي تريد接收ها.",
+                "notif_settings_desc": "اختر الإشعارات التي تريد استلامها.",
 
 
 
@@ -7420096,7 +7420096,7 @@ const TRANSLATIONS = {
 
 
 
-        "feedback_auto_log_hint": "سيتم自動的に التقاط سجلات من آخر 5 دقائق",
+                "feedback_auto_log_hint": "سيتم التقاط السجلات من آخر 5 دقائق تلقائيًا للمساعدة في تشخيص المشكلة.",
 
 
 
@@ -7432129,7 +7432129,7 @@ const TRANSLATIONS = {
 
 
 
-        "chat_webhook_doc_link": "الدليل الكامل: <a href=",
+                "chat_webhook_doc_link": "الدليل الكامل: <a href=\"/docs/webhook-troubleshooting.md\" target=\"_blank\" rel=\"noopener\" style=\"color:var(--primary);\">webhook-troubleshooting.md</a>",
 
 
 
@@ -7611586,7 +7611586,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_tips_li4": "<span style=\"...",
+                "guide_mention_tips_li4": "<span style=\"color:#86efac;\">أخضر 🔗</span> شارة في القائمة المنسدلة تشير إلى جهة اتصال متعددة الأجهزة",
 
 
 
@@ -7612866,7 +7612866,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_note_back": "← <a href=\"...",
+                "guide_mention_note_back": "← <a href=\"#guide/features\">العودة إلى نظرة عامة على الميزات</a>",
 
 
 
