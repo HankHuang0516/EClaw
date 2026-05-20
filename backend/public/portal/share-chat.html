@@ -1355,7 +1355,7 @@
         } else if (action.action === 'order' || action.action === 'buy') {
             showOrderDialog(block);
         } else if (action.action === 'send' && action.text) {
-            const input = document.getElementById('messageInput');
+            const input = document.getElementById('msgInput');
             if (input) {
                 input.value = action.text;
                 input.dispatchEvent(new Event('input'));
@@ -1418,7 +1418,7 @@
                 dialog.remove();
                 window.open(result.paymentUrl, '_blank');
                 // Also tell the bot
-                const input = document.getElementById('messageInput');
+                const input = document.getElementById('msgInput');
                 if (input) {
                     input.value = ((typeof i18n !== 'undefined' && i18n.t) ? i18n.t('sc_order_placed') : 'I ordered: ') + (product.name || ((typeof i18n !== 'undefined' && i18n.t) ? i18n.t('sc_order_product') : 'Product')) + ' (' + ((typeof i18n !== 'undefined' && i18n.t) ? i18n.t('sc_order_id_prefix') : 'Order ') + result.orderId + ')';
                     input.dispatchEvent(new Event('input'));
