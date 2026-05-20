@@ -1023429,6 +1023429,15 @@ const TRANSLATIONS = {
 
 
         "sc_email_verification_required": "需要電子郵件驗證",
+        "sc_verify_email_title": "驗證電子郵件才能聊天",
+        "sc_verify_email_body": "我們已傳送驗證連結至 <strong id=\"verifyEmailAddr\"></strong>。請至收件匣點擊連結開始聊天。您的訊息已排隊，驗證成功後將自動發送。",
+        "sc_close": "關閉",
+        "sc_resend_verification": "重新傳送電子郵件",
+        "sc_send_verify_required_tip": "傳送訊息前請先驗證電子郵件",
+        "sc_resend_sending": "傳送中…",
+        "sc_resend_failed": "傳送失敗，請稍後再試。",
+        "sc_resend_success": "驗證電子郵件已傳送，請查看收件匣。",
+        "sc_resend_no_email": "帳號無電子郵件",
 
 
 
@@ -2191695,6 +2191704,15 @@ const TRANSLATIONS = {
 
 
         "sc_email_verification_required": "メール認証が必要です",
+        "sc_verify_email_title": "チャットするにはメール認証が必要です",
+        "sc_verify_email_body": "<strong id=\"verifyEmailAddr\"></strong> に認証リンクを送信しました。受信トレイのリンクをクリックしてチャットを開始してください。メッセージはキューに入り、認証後に自動的に配信されます。",
+        "sc_close": "閉じる",
+        "sc_resend_verification": "メールを再送信",
+        "sc_send_verify_required_tip": "メッセージを送信するにはメール認証が必要です",
+        "sc_resend_sending": "送信中…",
+        "sc_resend_failed": "送信に失敗しました。後でもう一度お試しください。",
+        "sc_resend_success": "認証メールを送信しました。受信トレイをご確認ください。",
+        "sc_resend_no_email": "メールが登録されていません",
 
 
 
@@ -2754438,6 +2754456,15 @@ const TRANSLATIONS = {
 
 
         "sc_email_verification_required": "이메일 인증이 필요합니다",
+        "sc_verify_email_title": "채팅하려면 이메일 인증이 필요합니다",
+        "sc_verify_email_body": "<strong id=\"verifyEmailAddr\"></strong>(으)로 인증 링크를 보냈습니다. 받은편지함에서 링크를 클릭하여 대화를 시작하세요. 메시지는 대기열에 저장되며 인증 후 자동으로 전송됩니다.",
+        "sc_close": "닫기",
+        "sc_resend_verification": "이메일 다시 보내기",
+        "sc_send_verify_required_tip": "메시지를 보내려면 이메일 인증이 필요합니다",
+        "sc_resend_sending": "전송 중…",
+        "sc_resend_failed": "전송에 실패했습니다. 나중에 다시 시도해 주세요.",
+        "sc_resend_success": "인증 이메일을 보냈습니다. 받은편지함을 확인해 주세요.",
+        "sc_resend_no_email": "파일된 이메일이 없습니다",
 
 
 
@@ -3277007,6 +3277034,15 @@ const TRANSLATIONS = {
 
 
         "sc_email_verification_required": "ต้องยืนยันอีเมล",
+        "sc_verify_email_title": "ยืนยันอีเมลเพื่อแชท",
+        "sc_verify_email_body": "เราได้ส่งลิงก์ยืนยันไปที่ <strong id=\"verifyEmailAddr\"></strong>แล้ว คลิกลิงก์ในกล่องอีเมลเพื่อเริ่มแชท ข้อความของคุณถูกจัดคิวและจะส่งโดยอัตโนมัติเมื่อยืนยันแล้ว",
+        "sc_close": "ปิด",
+        "sc_resend_verification": "ส่งอีเมลอีกครั้ง",
+        "sc_send_verify_required_tip": "กรุณายืนยันอีเมลก่อนส่งข้อความ",
+        "sc_resend_sending": "กำลังส่ง...",
+        "sc_resend_failed": "ส่งไม่สำเร็จ ลองอีกครั้งภายหลัง",
+        "sc_resend_success": "ส่งอีเมลยืนยันแล้ว ตรวจสอบกล่องอีเมลของคุณ",
+        "sc_resend_no_email": "ไม่มีอีเมลในระบบ",
 
 
 
@@ -3805772,6 +3805808,15 @@ const TRANSLATIONS = {
 
 
         "sc_email_verification_required": "Cần xác minh email",
+        "sc_verify_email_title": "Xác minh email để chat",
+        "sc_verify_email_body": "Chúng tôi đã gửi liên kết xác minh đến <strong id=\"verifyEmailAddr\"></strong>. Nhấp vào liên kết trong hộp thư để bắt đầu trò chuyện. Tin nhắn của bạn đang được xếp hàng và sẽ được gửi tự động sau khi xác minh.",
+        "sc_close": "Đóng",
+        "sc_resend_verification": "Gửi lại email",
+        "sc_send_verify_required_tip": "Vui lòng xác minh email trước khi gửi tin nhắn",
+        "sc_resend_sending": "Đang gửi...",
+        "sc_resend_failed": "Gửi thất bại. Vui lòng thử lại sau.",
+        "sc_resend_success": "Email xác minh đã được gửi. Kiểm tra hộp thư của bạn.",
+        "sc_resend_no_email": "Không có email trong hồ sơ",
 
 
 
@@ -4331948,6 +4331993,15 @@ const TRANSLATIONS = {
 
 
         "sc_email_verification_required": "Verifikasi email diperlukan",
+        "sc_verify_email_title": "Verifikasi email Anda untuk mengobrol",
+        "sc_verify_email_body": "Kami telah mengirim tautan verifikasi ke <strong id=\"verifyEmailAddr\"></strong>. Klik tautan di kotak masuk Anda untuk mulai mengobrol. Pesan Anda antri dan akan dikirim secara otomatis setelah diverifikasi.",
+        "sc_close": "Tutup",
+        "sc_resend_verification": "Kirim ulang email",
+        "sc_send_verify_required_tip": "Harap verifikasi email Anda sebelum mengirim pesan",
+        "sc_resend_sending": "Mengirim...",
+        "sc_resend_failed": "Gagal mengirim. Silakan coba lagi nanti.",
+        "sc_resend_success": "Email verifikasi terkirim. Periksa kotak masuk Anda.",
+        "sc_resend_no_email": "Tidak ada email dalam catatan",
 
 
 
@@ -6381408,6 +6381462,15 @@ const TRANSLATIONS = {
 
 
         "sc_email_verification_required": "Pengesahan e-mel diperlukan",
+        "sc_verify_email_title": "Sahkan e-mel anda untuk berbual",
+        "sc_verify_email_body": "Kami telah menghantar pautan pengesahan ke <strong id=\"verifyEmailAddr\"></strong>. Klik pautan dalam peti masuk untuk mula berbual. Mesej anda dalam barisan dan akan dihantar secara automatik setelah disahkan.",
+        "sc_close": "Tutup",
+        "sc_resend_verification": "Hantar semula e-mel",
+        "sc_send_verify_required_tip": "Sila sahkan e-mel anda sebelum menghantar mesej",
+        "sc_resend_sending": "Menghantar...",
+        "sc_resend_failed": "Gagal menghantar. Sila cuba lagi nanti.",
+        "sc_resend_success": "E-mel pengesahan dihantar. Semak peti masuk anda.",
+        "sc_resend_no_email": "Tiada e-mel dalam fail",
 
 
 
@@ -6887369,6 +6887432,15 @@ const TRANSLATIONS = {
 
 
         "sc_email_verification_required": "ईमेल वेरिफिकेशन आवश्यक है",
+        "sc_verify_email_title": "चैट करने के लिए अपना ईमेल सत्यापित करें",
+        "sc_verify_email_body": "हमने <strong id=\"verifyEmailAddr\"></strong> पर सत्यापन लिंक भेजा है। चैट शुरू करने के लिए अपने इनबॉक्स में लिंक पर क्लिक करें। आपके संदेश कतार में हैं और सत्यापित होने के बाद स्वचालित रूप से भेज दिए जाएंगे।",
+        "sc_close": "बंद करें",
+        "sc_resend_verification": "ईमेल पुनः भेजें",
+        "sc_send_verify_required_tip": "संदेश भेजने से पहले कृपया अपना ईमेल सत्यापित करें",
+        "sc_resend_sending": "भेज रहे हैं...",
+        "sc_resend_failed": "भेजने में विफल। कृपया बाद में पुनः प्रयास करें।",
+        "sc_resend_success": "सत्यापन ईमेल भेज दिया गया। अपना इनबॉक्स देखें।",
+        "sc_resend_no_email": "फ़ाइल में कोई ईमेल नहीं",
 
 
 
