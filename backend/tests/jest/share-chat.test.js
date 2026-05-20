@@ -340,6 +340,11 @@ describe('share-chat registration flow (static analysis)', () => {
             expect(count).toBeGreaterThanOrEqual(langs.length);
         }
     });
+
+    it('rich-card actions target the visible #msgInput composer', () => {
+        expect(html).toContain("document.getElementById('msgInput')");
+        expect(html).not.toContain("document.getElementById('messageInput')");
+    });
 });
 
 // ════════════════════════════════════════════════════════════════
