@@ -16091,18 +16091,32 @@ async function pushToBot(entity, deviceId, eventType, payload, opts = {}) {
         console.error(`[Push] Full error:`, err);
         serverLog('error', 'push_error', `Entity ${entity.entityId} push exception: ${err.message}`, { deviceId, entityId: entity.entityId });
 
-        // Notify device about webhook failure via entity message
-        // BUT skip if bot already responded via /api/transform during the push (lastUpdated changed)
-        if (entity.lastUpdated && entity.lastUpdated > pushStartedAt) {
-            console.log(`[Push] Skipping WEBHOOK_ERROR — bot already responded via transform during push (Device ${deviceId} Entity ${entity.entityId})`);
+        // AbortError / TimeoutError: gateway didn't ack within 15s but the bot may
+        // still be processing and reply async via /api/transform. Don't pollute
+        // entity.message with diagnostic text (push_status carries the signal).
+        // Without this guard, a slow-but-successful round trip races: catch fires
+        // before transform writes the reply → entity.message = WEBHOOK_ERROR briefly →
+        // transform overwrites → user/client polling between the two sees noise.
+        const isAbort = err.name === 'AbortError' || err.name === 'TimeoutError'
+            || /aborted|timeout/i.test(err.message || '');
+
+        if (!isAbort) {
+            // Hard connection failure (ENOTFOUND / ECONNREFUSED / TLS / etc.) — surface to UI.
+            // Skip if bot already responded via /api/transform during the push (lastUpdated changed).
+            if (entity.lastUpdated && entity.lastUpdated > pushStartedAt) {
+                console.log(`[Push] Skipping WEBHOOK_ERROR — bot already responded via transform during push (Device ${deviceId} Entity ${entity.entityId})`);
+            } else {
+                entity.message = `[SYSTEM:WEBHOOK_ERROR] Push connection failed: ${err.message}`;
+                entity.lastUpdated = Date.now();
+                console.log(`[Push] Set WEBHOOK_ERROR system message for Device ${deviceId} Entity ${entity.entityId}`);
+            }
         } else {
-            entity.message = `[SYSTEM:WEBHOOK_ERROR] Push connection failed: ${err.message}`;
-            entity.lastUpdated = Date.now();
-            console.log(`[Push] Set WEBHOOK_ERROR system message for Device ${deviceId} Entity ${entity.entityId}`);
+            console.log(`[Push] Push gateway timeout (no ack in 15s) — bot may reply async via /api/transform. Not polluting entity.message. Device ${deviceId} Entity ${entity.entityId}`);
         }
 
-        entity.pushStatus = { ok: false, reason: err.message, at: Date.now() };
-        return { pushed: false, reason: err.message };
+        const reasonCode = isAbort ? 'push_timeout' : err.message;
+        entity.pushStatus = { ok: false, reason: reasonCode, at: Date.now() };
+        return { pushed: false, reason: reasonCode };
     }
 }
 
