@@ -1080381,6 +1080381,7 @@ const TRANSLATIONS = {
 
 
         "kb_label_requires_screenshot": "需截圖審查（完成時附截圖才可推進 review/done）",
+        "kb_label_gated": "Launch-gate（發布閘）——開啟時，L1/L2/L3 自動升級跳过此卡；卡片離開發布就緒後自動解除",
 
 
 
@@ -1645293,6 +1645294,7 @@ const TRANSLATIONS = {
 
 
         "kb_label_requires_screenshot": "需截圖審查（完成時附截圖才可推進 review/done）",
+        "kb_label_gated": "Launch-gate（发布闸）——开启时，L1/L2/L3 自动升级跳过此卡；卡片离开发布就绪后自动解除",
 
 
 
@@ -2258885,6 +2258887,7 @@ const TRANSLATIONS = {
 
 
         "kb_label_requires_screenshot": "スクリーンショットのレビューが必要です（レビュー/完了に移動する前に添付）",
+        "kb_label_gated": "Launch-gate（起動闸）——バックログで有効にするとL1/L2/L3自動エスカレーションがスキップ；カードがバックログを離れれば自動解除",
 
 
 
@@ -2810363,6 +2810366,7 @@ const TRANSLATIONS = {
 
 
         "kb_label_requires_screenshot": "스크린샷 검토 필요 (검토/완료로 이동하기 전에 스크린샷 첨부)",
+        "kb_label_gated": "Launch-gate（런치 게이트）——백로그에서 활성화 시 L1/L2/L3 자동 에스컬레이션 건너뛰기; 카드가 백로그를 벗어나면 자동 해제",
 
 
 
@@ -3330242,6 +3330246,7 @@ const TRANSLATIONS = {
 
 
         "kb_label_requires_screenshot": "Requires screenshot review (attach a screenshot before moving to review/done)",
+        "kb_label_gated": "Launch-gate（ประตูเปิดตัว）——เปิดในแบล็กล็อกจะข้าม L1/L2/L3 อัตโนมัติ; การ์ดออกจากแบล็กล็อกจะปิดเอง",
 
 
 
@@ -3859006,6 +3859011,7 @@ const TRANSLATIONS = {
 
 
         "kb_label_requires_screenshot": "Requires screenshot review (attach a screenshot before moving to review/done)",
+        "kb_label_gated": "Launch-gate（Cổng khởi động）——Khi bật trong backlog, L1/L2/L3 tự động bỏ qua thẻ này; Tự động tắt khi thẻ rời backlog",
 
 
 
@@ -4385181,6 +4385187,7 @@ const TRANSLATIONS = {
 
 
         "kb_label_requires_screenshot": "Requires screenshot review (attach a screenshot before moving to review/done)",
+        "kb_label_gated": "Launch-gate（Gerbang peluncuran）——Ketika aktif di backlog, L1/L2/L3 auto-escalation akan melewati kartu ini; Nonaktif otomatis saat kartu keluar dari backlog",
 
 
 
@@ -4922749,6 +4922756,7 @@ const TRANSLATIONS = {
 
 
         "kb_label_requires_screenshot": "Requires screenshot review (attach a screenshot before moving to review/done)",
+        "kb_label_gated": "Launch-gate（barrière de lancement）——Lorsqu'elle est active dans le backlog, L1/L2/L3 ignore cette carte automatiquement ; se désactive quand la carte quitte le backlog",
 
 
 
@@ -5442427,6 +5442435,7 @@ const TRANSLATIONS = {
 
 
         "kb_label_requires_screenshot": "Requiere revisión de capturas (adjuntar antes de pasar a review/done)",
+        "kb_label_gated": "Launch-gate（puerta de lanzamiento）——Si está activa en backlog, L1/L2/L3 omite esta tarjeta automáticamente; Se desactiva al salir del backlog",
 
 
 
@@ -5963969,6 +5963978,7 @@ const TRANSLATIONS = {
 
 
         "kb_label_requires_screenshot": "Screenshot-Prüfung erforderlich (Screenshot anhängen, bevor du zu Prüfung/Fertig wechselst)",
+        "kb_label_gated": "Launch-gate（Starttor）——Wenn im Backlog aktiviert, überspringen L1/L2/L3 diese Karte automatisch; Wird automatisch deaktiviert, wenn die Karte das Backlog verlässt",
 
 
 
@@ -6433995,6 +6434005,7 @@ const TRANSLATIONS = {
 
 
         "kb_label_requires_screenshot": "Requires screenshot review (attach a screenshot before moving to review/done)",
+        "kb_label_gated": "Launch-gate（pintu pelancaran）——Bila aktif dalam backlog, L1/L2/L3 auto-escalation akan langkau kad ini; Akan dinyahaktif automatik bila kad keluar dari backlog",
 
 
 
@@ -6873909,6 +6873920,7 @@ const TRANSLATIONS = {
 
 
         "kb_label_requires_screenshot": "स्क्रीनशॉट समीक्षा आवश्यक है (समीक्षा/पूर्ण में ले जाने से पहले स्क्रीनशॉट अटैच करें)",
+        "kb_label_gated": "Launch-gate（लॉन्च गेट）——बैकलॉग में सक्रिय होने पर L1/L2/L3 ऑटो-एस्केलेशन इस कार्ड को छोड़ देता है; कार्ड के बैकलॉग छोड़ने पर स्वचालित रूप से साफ़ हो जाता है",
 
 
 
@@ -7520325,6 +7520337,7 @@ const TRANSLATIONS = {
 
 
         "kb_label_requires_screenshot": "يتطلب مراجعة لقطة شاشة (أرفق قبل الانتقال إلى review/done)",
+        "kb_label_gated": "Launch-gate (بوابة الإطلاق) — عند التفعيل في backlog، يتخطى التصعيد التلقائي L1/L2/L3 هذه البطاقة؛ يُلغى تلقائياً عند خروج البطاقة من backlog",
 
 
 
