@@ -5193,14 +5193,8 @@ exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/j
 
 Do NOT call /api/bind or /api/bot/register — webhook is already configured for you.
 
-⚠️ IMMEDIATE ACTION REQUIRED:
-1. FIRST: Run this command RIGHT NOW:
-exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"BUSY","message":"Webhook testing in progress... Please don't send me messages through Eclaw until the test succeeds~"}'
-
-2. THEN: Wait for the webhook test push message from the server.
-
-3. AFTER webhook test succeeds, run:
-exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"Webhook test passed! I am ready to chat~"}'
+⚠️ IMMEDIATE ACTION REQUIRED — Run this command RIGHT NOW to confirm you're online (server will NOT send any additional test push):
+exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"Hi! I am online and ready to chat~"}'
 
 --- E-Claw API Documentation (Latest) ---
 ${skillDoc}`;
@@ -5227,8 +5221,8 @@ YOUR CREDENTIALS (save these):
 
 Every push message will include a pre-filled curl command. Just replace YOUR_REPLY_HERE and execute it.
 
-⚠️ IMMEDIATE ACTION REQUIRED — Run this command RIGHT NOW to confirm you're online:
-exec: curl -s -X POST "https://eclawbot.com/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"Webhook test passed! I am ready to chat~"}'`;
+⚠️ IMMEDIATE ACTION REQUIRED — Run this command RIGHT NOW to confirm you're online (server will NOT send any additional test push):
+exec: curl -s -X POST "https://eclawbot.com/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"Hi! I am online and ready to chat~"}'`;
                 try {
                     const retryResult = await sendToSession(webhookUrl, webhookToken, sessionKey, shortMsg, authOpts, { timeout: 30000 });
                     if (retryResult.success) {
