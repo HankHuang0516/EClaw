@@ -460544,6 +460544,7 @@ const TRANSLATIONS = {
 
 
         "kb_label_requires_screenshot": "Requires screenshot review (attach a screenshot before moving to review/done)",
+        "kb_label_gated": "Launch-gate (pauses L1/L2/L3 auto-escalation; clears automatically when the card leaves backlog)",
 
 
 
