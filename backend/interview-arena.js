@@ -188,6 +188,11 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Daily pool update — medium/hard additions ──
+    { file: null, description: 'A VS Code editor window showing a TypeScript file with three red-squiggle compiler errors: line 12 "Property \'id\' does not exist on type", line 24 "Type \'string\' is not assignable to type \'number\'", and line 41 "Cannot find name \'useState\'"', keywords: ['typescript', 'errors', 'three', 'property', 'string', 'number', 'usestate'] },
+    { file: null, description: 'A terminal showing git log with five commits: the top commit is "feat: add payment gateway" by alice, the third is "fix: null pointer in auth" by bob, and the oldest visible is "init: project setup" — two commits are tagged with yellow badge v1.0 and v1.1', keywords: ['git', 'five', 'commits', 'payment', 'auth', 'init', 'v1'] },
+    { file: null, description: 'An analytics dashboard: 12,450 weekly page views up 18% from last week; a pie chart with three segments (Direct 45%, Search 35%, Social 20%); a table showing the top 5 pages with /home ranked first', keywords: ['dashboard', '12450', 'pageviews', 'three', 'direct', 'search', 'social', 'five'] },
+    { file: null, description: 'A database schema diagram with five tables connected by foreign-key arrows: users → orders → order_items → products, and users → addresses; the products table has a red badge indicating 0 orphan rows', keywords: ['database', 'schema', 'five', 'tables', 'users', 'orders', 'products', 'foreign'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -204,9 +209,9 @@ function generateButtonClickChallenge() {
     return { correctIndex, correctLabel, buttonCount, seed: Math.floor(Math.random() * 1e9) };
 }
 
-const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Wei Zhang','Amara Osei','Ravi Kapoor','Isabella Rossi','Dmitri Volkov'];
-const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se','wei@demo.cn','amara@test.gh','ravi@sample.in','isabella@demo.it','dmitri@test.ru'];
-const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','China','Ghana','Italy','Russia','Netherlands'];
+const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Wei Zhang','Amara Osei','Ravi Kapoor','Isabella Rossi','Dmitri Volkov','Ngozi Adeyemi','Santiago López','Hyun-Ji Park','Ananya Patel','Lars Eriksson','Zainab Hussain','Kenji Watanabe','Elena Popescu'];
+const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se','wei@demo.cn','amara@test.gh','ravi@sample.in','isabella@demo.it','dmitri@test.ru','ngozi@demo.ng','santiago@test.mx','hyunji@sample.kr','ananya@demo.in','lars@test.se','zainab@example.pk','kenji@demo.jp','elena@test.ro'];
+const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','China','Ghana','Italy','Russia','Netherlands','Nigeria','Pakistan','Romania','Argentina','New Zealand','Turkey','Vietnam','Poland'];
 const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123','+46-70-123-4567','+65-9123-4567','+52-55-1234-5678','+353-87-123-4567'];
 const FORM_DATES = ['1990-06-15','1985-03-22','1992-11-08','1988-01-30','1995-07-14','1983-09-25','1991-12-01','1987-04-17','1993-08-09','1986-02-14','1994-10-31','1989-05-20'];
 const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund'];
@@ -368,6 +373,17 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── Daily pool update — medium/hard additions ──
+    { title: 'Best Time to Buy/Sell Stock', description: 'Write `solve(prices)` — given an array of daily stock prices, return the maximum profit from exactly one buy then one sell. Return 0 if no profit is possible.',
+      testCases: [{ input: '[7,1,5,3,6,4]', expected: '5' },{ input: '[7,6,4,3,1]', expected: '0' },{ input: '[2,4,1]', expected: '2' },{ input: '[1]', expected: '0' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array representing bar heights, return the total amount of rainwater that can be trapped between the bars.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[1,0,1]', expected: '1' },{ input: '[3,0,2,0,4]', expected: '7' }] },
+    { title: 'Merge Intervals', description: 'Write `solve(intervals)` — given an array of intervals [start, end], merge all overlapping intervals and return them sorted by start time.',
+      testCases: [{ input: '[[1,3],[2,6],[8,10],[15,18]]', expected: '[[1,6],[8,10],[15,18]]' },{ input: '[[1,4],[4,5]]', expected: '[[1,5]]' },{ input: '[[1,2],[3,4]]', expected: '[[1,2],[3,4]]' }] },
+    { title: 'Edit Distance', description: 'Write `solve(word1, word2)` — return the minimum number of single-character operations (insert, delete, replace) to convert word1 into word2.',
+      testCases: [{ input: '"horse", "ros"', expected: '3' },{ input: '"intention", "execution"', expected: '5' },{ input: '"", "abc"', expected: '3' },{ input: '"abc", "abc"', expected: '0' }] },
+    { title: 'Unique Paths', description: 'Write `solve(m, n)` — a robot starts at the top-left of an m×n grid and can only move right or down. Return the number of unique paths to the bottom-right corner.',
+      testCases: [{ input: '3, 7', expected: '28' },{ input: '3, 2', expected: '3' },{ input: '1, 1', expected: '1' },{ input: '2, 2', expected: '2' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +433,13 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Daily pool update — medium/hard additions ──
+    { question: 'The boiling point of water is 100°C. What is this temperature in Fahrenheit? (Formula: F = C × 9/5 + 32)', expectedKeywords: ['212'] },
+    { question: 'You invest $1000 at a 5% annual simple interest rate for 4 years. How much total interest do you earn in dollars?', expectedKeywords: ['200'] },
+    { question: 'A company gives a 20% salary raise, then later applies a 10% pay cut. What is the net percentage change in salary compared to the original? (positive = increase, negative = decrease)', expectedKeywords: ['8'] },
+    { question: 'A bag contains 3 red, 4 blue, and 5 green marbles. You draw two marbles without replacement. What is the probability that both are blue? Express as a simplified fraction.', expectedKeywords: ['1/11'] },
+    { question: 'What are the next two terms in the sequence: 1, 1, 2, 3, 5, 8, 13, ...?', expectedKeywords: ['21', '34'] },
+    { question: 'A ladder 10 metres long leans against a vertical wall. The bottom of the ladder is 6 metres from the base of the wall. How high up the wall does the ladder reach in metres?', expectedKeywords: ['8'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +517,11 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Daily pool update — medium/hard additions ──
+    { text: 'The weekly standup meeting is every Tuesday and Thursday at nine AM Pacific Standard Time via video conference', keywords: ['weekly', 'standup', 'tuesday', 'thursday', 'nine', 'pacific', 'standard', 'time'] },
+    { text: 'The REST API uses JSON Web Tokens for authentication CORS headers for cross-origin requests and gzip compression for response payloads', keywords: ['REST', 'API', 'JWT', 'authentication', 'CORS', 'gzip', 'compression'] },
+    { text: 'The quarterly earnings per share of three dollars and forty-seven cents exceeded analyst consensus of three dollars and twelve cents by eleven point two percent', keywords: ['quarterly', 'earnings', 'share', 'three', 'forty-seven', 'twelve', 'eleven', 'percent'] },
+    { text: 'The patient was prescribed 250 milligrams of amoxicillin three times daily for ten days and instructed to complete the full course', keywords: ['prescribed', '250', 'milligrams', 'amoxicillin', 'three', 'ten', 'days'] },
 ];
 
 // ============================================
