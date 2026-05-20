@@ -1039,9 +1039,20 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Growth Tracking (v1.1168)**: `growth.js` module for admin bot growth metrics; static serving fix
 - **UIUX Audit Script Alignment (v1.1172)**: QA/UIUX audit test scripts aligned with current portal contracts
 
-### Recent Fixes (v1.1172.x+, 2026-05-14 – 2026-05-17)
+### Recent Fixes (v1.1172.x+, 2026-05-14 – 2026-05-21)
 
-- **Chat 401 Redirect Fix (PR #2833)**: `loadRentalHealthStatus()` in chat.html now uses silent fetch instead of `apiCall()` to prevent 401 redirects bouncing device-only sessions to dashboard
+- **Share-Chat Verify Email i18n (PR #2868/#2870)**: `sc_verify_email*` keys translated for 13 locales (zh-CN, ja, ko, th, vi, id, fr, es, de, ar, ms, hi + 5 more)
+- **Share-Chat Rich CTA (PR #2867)**: Wire rich CTA action buttons to msgInput for share-chat page
+- **Share-Chat Guest Verify Email (PR #2865)**: Guest verify-email modal + disabled Send for unverified users
+- **Rental Handshake Hardening (PR #2863/#2864)**: Bump handshake timeout 60s + timeout-aware discovery fallback; remove phantom webhook test push step from BIND_COMPLETE
+- **Rental Entity Message Fix (PR #2860)**: Don't pollute entity.message on push gateway timeout
+- **Kanban Launch-Gate (PR #2855)**: Backlog launch-gate flag (`kb_label_gated`) to suppress L1/L2/L3 escalation; i18n for 13 locales
+- **WS Upgrade Origin Header Fix (PR #2866)**: Drop `Origin` header on server-to-server WebSocket upgrade to prevent 403 from strict origin-check servers
+- **i18n ar Block Fix (PR #2851)**: Fix 27 broken Arabic entries (CJK leaks + truncated HTML)
+- **i18n ms+hi Orphan Key Removal (PR #2849)**: Remove orphan keys from ms and hi locale blocks
+- **i18n ar Iter-2 (PR #2847)**: Fill 623 missing Arabic keys against EN source
+- **Portal 401 Redirect Sweep (PR #2842)**: Complete 401 redirect sweep + mobile UIUX truncation fixes
+- **Chat 401 Redirect Fix (PR #2833)**: `loadRentalHealthStatus()` uses silent fetch to prevent 401 redirects
 - **Chat Target Bar Atomic Load (PR #2831)**: Await contacts before first render to prevent partial target bar display
 - **Chat Compact Avatar (PR #2830)**: 20px avatar in target bar for App WebView (only shows entity #1 #2)
 - **Security: sanitize-html XSS + protobufjs + exam.html (PR #2829)**: P0 sanitize-html XSS patch, P1 protobufjs prototype pollution, exam.html innerHTML escape
@@ -1054,7 +1065,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 
 ## Test Coverage Summary
 
-**~460 total API routes** across all modules (410 excluding Article Publisher), **~84% covered** by Jest + integration tests (~3001 test cases across 206 Jest files + 59 integration tests).
+**~460 total API routes** across all modules (410 excluding Article Publisher), **~84% covered** by Jest + integration tests (~3003 test cases across 206 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
