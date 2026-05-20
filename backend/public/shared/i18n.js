@@ -399870,6 +399870,15 @@ const TRANSLATIONS = {
 
 
         "sc_email_verification_required": "Email verification required",
+        "sc_verify_email_title": "Verify your email to chat",
+        "sc_verify_email_body": "We sent a verification link to <strong id=\"verifyEmailAddr\"></strong>. Click the link in your inbox to start chatting. Your messages are queued and will deliver automatically once verified.",
+        "sc_close": "Close",
+        "sc_resend_verification": "Resend email",
+        "sc_send_verify_required_tip": "Please verify your email before sending messages",
+        "sc_resend_sending": "Sending...",
+        "sc_resend_failed": "Failed to send. Try again later.",
+        "sc_resend_success": "Verification email sent. Check your inbox.",
+        "sc_resend_no_email": "No email on file",
 
 
 
