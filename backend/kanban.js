@@ -2545,6 +2545,19 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             }
 
             const gateOn = enabled !== false;
+
+            // Launch-gate is backlog-only by design (suppresses L1/L2/L3 for cards
+            // pending launch). Allow enabled=false on any status (so a stale gate
+            // can always be cleared), but enabled=true only on backlog cards.
+            if (gateOn && existing.rows[0].status !== 'backlog') {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Launch-gate is only available for backlog cards',
+                    code: 'GATE_BACKLOG_ONLY',
+                    hint: `Current status: ${existing.rows[0].status}. Move the card to backlog before enabling the gate, or clear the gate (enabled=false) without status restriction.`
+                });
+            }
+
             const gateReason = gateOn && typeof reason === 'string' && reason.trim()
                 ? reason.trim().slice(0, 255)
                 : null;
@@ -2670,14 +2683,17 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             // moves (cron creates child cards instead), so they would always look stale
             // and get escalated to P0 every staleThresholdMs window. Mirrors the same
             // filter used in checkDoneAutoArchive below.
-            // gated=true cards are launch-pending drafts in backlog; suppress L1/L2/L3 here.
+            // gated=true only suppresses L1/L2/L3 for backlog cards (launch-pending
+            // drafts). Active-status cards (todo/in_progress/review) keep escalating
+            // even if a stale gated flag is left over — defense-in-depth alongside
+            // the API guard + /move auto-reset.
             const result = await pool.query(`
                 SELECT * FROM kanban_cards
                 WHERE archived = false
                   AND status IN ('backlog', 'todo', 'in_progress', 'review')
                   AND EXTRACT(EPOCH FROM (NOW() - status_changed_at)) * 1000 > stale_threshold_ms
                   AND (schedule_enabled = false OR schedule_type != 'recurring' OR schedule_enabled IS NULL)
-                  AND COALESCE(gated, false) = false
+                  AND (status != 'backlog' OR COALESCE(gated, false) = false)
             `);
 
             if (result.rows.length === 0) return;

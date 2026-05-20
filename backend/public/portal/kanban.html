@@ -875,7 +875,7 @@
             </div>
             <div class="kb-form-group">
                 <label class="kb-form-label" data-i18n="kb_label_status">Initial Status</label>
-                <select class="kb-form-select" id="newStatus">
+                <select class="kb-form-select" id="newStatus" onchange="applyNewGateState()">
                     <option value="backlog" data-i18n="kb_col_backlog">Backlog</option>
                     <option value="todo" selected data-i18n="kb_col_todo">TODO</option>
                     <option value="in_progress" data-i18n="kb_col_in_progress">In Progress</option>
@@ -895,6 +895,7 @@
                     <label class="kb-auto-toggle-label"><input type="checkbox" id="newGated" onchange="document.getElementById('newGateReason').style.display=this.checked?'block':'none'"> 🔒 <span data-i18n="kb_label_gated">Launch-gate（暫停 L1/L2/L3 自動升級；移出 backlog 時自動關閉）</span></label>
                 </div>
                 <input type="text" id="newGateReason" class="kb-form-input" placeholder="原因（選填，例：等發版）" maxlength="255" style="display:none;margin-top:6px;">
+                <div class="kb-gate-hint" data-i18n="kb_gate_backlog_only_hint" style="display:none;font-size:11px;color:#9ca3af;margin-top:4px;">Launch-gate 只在 backlog 卡可用</div>
             </div>
             <div class="kb-form-group">
                 <div class="kb-auto-toggle-row">
@@ -2678,10 +2679,7 @@
             document.getElementById('editCardTitle').value = card.title || '';
             document.getElementById('editCardDesc').value = card.description || '';
             document.getElementById('editRequiresScreenshot').checked = card.requiresScreenshotReview !== false;
-            const editGatedEl = document.getElementById('editGated');
-            if (editGatedEl) editGatedEl.checked = !!card.gated;
-            const editGateReasonEl = document.getElementById('editGateReason');
-            if (editGateReasonEl) editGateReasonEl.value = card.gateReason || '';
+            applyGateModalState(card);
             const editReworkGroup = document.getElementById('editReworkGroup');
             if (editReworkGroup) editReworkGroup.style.display = (card.requiresPrRework || card.reopenedAt) ? '' : 'none';
             const editRequiresPrRework = document.getElementById('editRequiresPrRework');
@@ -2696,6 +2694,28 @@
             document.getElementById('editSchedModal').classList.add('show');
         }
 
+        // Launch-gate is backlog-only. Toggle is enabled only when card.status === 'backlog';
+        // outside backlog we show the (possibly-stale) checkbox value but disable it + dim
+        // the row so the user can read the state but not toggle it on. Editing the reason
+        // is allowed only when the toggle is on.
+        function applyGateModalState(card) {
+            const el = document.getElementById('editGated');
+            const reasonEl = document.getElementById('editGateReason');
+            if (!el) return;
+            const isBacklog = card.status === 'backlog';
+            el.checked = !!card.gated;
+            el.disabled = !isBacklog;
+            const row = el.closest('.kb-auto-toggle-row') || el.parentElement;
+            if (row) row.style.opacity = isBacklog ? '' : '0.55';
+            const label = el.closest('label');
+            if (label) label.title = isBacklog ? '' : 'Launch-gate 只在 backlog 卡可用（current status: ' + card.status + '）';
+            if (reasonEl) {
+                reasonEl.value = card.gateReason || '';
+                reasonEl.disabled = !isBacklog || !el.checked;
+                reasonEl.style.display = (isBacklog && el.checked) ? '' : (isBacklog ? '' : 'none');
+            }
+        }
+
         // ── Edit Schedule ──
         function editAutoSchedule(cardId) {
             const card = findCard(cardId);
@@ -2705,10 +2725,7 @@
             document.getElementById('editCardTitle').value = card.title || '';
             document.getElementById('editCardDesc').value = card.description || '';
             document.getElementById('editRequiresScreenshot').checked = card.requiresScreenshotReview !== false;
-            const editGatedEl2 = document.getElementById('editGated');
-            if (editGatedEl2) editGatedEl2.checked = !!card.gated;
-            const editGateReasonEl2 = document.getElementById('editGateReason');
-            if (editGateReasonEl2) editGateReasonEl2.value = card.gateReason || '';
+            applyGateModalState(card);
             const editReworkGroup = document.getElementById('editReworkGroup');
             if (editReworkGroup) editReworkGroup.style.display = (card.requiresPrRework || card.reopenedAt) ? '' : 'none';
             const editRequiresPrRework = document.getElementById('editRequiresPrRework');
@@ -3660,7 +3677,28 @@
                 document.getElementById('newTitle').value = prefill.title;
             }
             renderMindmapCoordHint();
+            applyNewGateState();
             document.getElementById('newCardModal').classList.add('show');
+        }
+
+        // Launch-gate only valid on backlog cards. Mirror applyGateModalState() for new-card form.
+        function applyNewGateState() {
+            const statusEl = document.getElementById('newStatus');
+            const gateEl = document.getElementById('newGated');
+            const reasonEl = document.getElementById('newGateReason');
+            const hintEl = document.querySelector('.kb-gate-hint');
+            if (!statusEl || !gateEl) return;
+            const isBacklog = statusEl.value === 'backlog';
+            gateEl.disabled = !isBacklog;
+            if (!isBacklog) {
+                gateEl.checked = false;
+                if (reasonEl) { reasonEl.value = ''; reasonEl.style.display = 'none'; }
+            }
+            const row = gateEl.closest('.kb-auto-toggle-row') || gateEl.parentElement;
+            if (row) row.style.opacity = isBacklog ? '' : '0.55';
+            if (hintEl) hintEl.style.display = isBacklog ? 'none' : 'block';
+            const label = gateEl.closest('label');
+            if (label) label.title = isBacklog ? '' : 'Launch-gate 只在 backlog 卡可用';
         }
 
         function renderMindmapCoordHint() {
