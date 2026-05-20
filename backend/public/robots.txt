@@ -25,6 +25,21 @@ Disallow: /portal/screen-control.html
 Disallow: /portal/delete-account.html
 Disallow: /portal/card-holder.html
 Disallow: /portal/share-chat.html
+Disallow: /portal/workspace.html
+Disallow: /portal/mission.html
+Disallow: /portal/wallet.html
+Disallow: /portal/my-rentals.html
+Disallow: /portal/plaza.html
+Disallow: /portal/marketplace.html
+Disallow: /portal/onboarding.html
+Disallow: /portal/invite.html
+Disallow: /portal/invite-qr-generator.html
+Disallow: /portal/publisher.html
+Disallow: /portal/publisher-setup.html
+Disallow: /portal/analytics.html
+Disallow: /portal/schedule.html
+Disallow: /portal/compare.html
+Disallow: /portal/roadmap.html
 
 # API endpoints
 Disallow: /api/
