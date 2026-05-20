@@ -306,6 +306,19 @@
         </div>
     </div>
 
+    <!-- Verify Email Modal -->
+    <div class="modal-overlay hidden" id="verifyEmailModal">
+        <div class="modal">
+            <h3 data-i18n="sc_verify_email_title">Verify your email to chat</h3>
+            <p style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin:0 0 12px" data-i18n="sc_verify_email_body">We sent a verification link to <strong id="verifyEmailAddr"></strong>. Click the link in your inbox to start chatting. Your messages are queued and will deliver automatically once verified.</p>
+            <div class="error" id="verifyEmailError"></div>
+            <div class="btn-row">
+                <button class="btn-secondary" onclick="closeVerifyEmailModal()" data-i18n="sc_close">Close</button>
+                <button class="btn-primary" id="verifyResendBtn" onclick="doResendVerification()" data-i18n="sc_resend_verification">Resend email</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Terms & Privacy Dialog -->
     <div class="terms-overlay hidden" id="termsOverlay">
         <div class="terms-dialog">
@@ -493,6 +506,14 @@
         document.getElementById('msgInput').addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
         });
+
+        // First focus on input when logged-in-but-unverified → surface verify modal once,
+        // so the user doesn't type a message thinking it'll be delivered.
+        document.getElementById('msgInput').addEventListener('focus', () => {
+            if (currentUser && !emailVerified && !verifyModalShownOnce) {
+                showVerifyEmailModal();
+            }
+        });
     })();
 
     function renderEntityHeader(e) {
@@ -553,6 +574,7 @@
 
     function onAuthReady() {
         dbg('info', 'onAuthReady called', { emailVerified, hasUser: !!currentUser, deviceId: currentUser?.deviceId });
+        updateSendButtonState();
         // Show sender selector only for verified users
         if (emailVerified) {
             dbg('info', 'Email verified — loading entities, chat history, starting poll');
@@ -603,7 +625,7 @@
 
         input.value = '';
 
-        // Logged in but unverified -> queue as pending
+        // Logged in but unverified -> queue as pending + show verify modal
         if (!emailVerified) {
             dbg('warn', 'Email not verified — queuing as pending', { deviceId: currentUser.deviceId, targetCode, textLen: text.length });
             addLocalMessage(text, 'pending');
@@ -617,9 +639,7 @@
                 });
                 const pendData = await pendResp.json().catch(() => ({}));
                 dbg('info', `Pending queue response: ${pendResp.status}`, pendData);
-                if (pendResp.ok) {
-                    showToast(t('sc_message_queued', 'Message queued (email verification required)'), 'warn');
-                } else {
+                if (!pendResp.ok) {
                     dbg('error', 'Pending queue failed', pendData);
                     showToast(t('sc_queue_failed', 'Failed to queue message'), 'error');
                 }
@@ -629,6 +649,8 @@
             }
             // Ensure verification polling is running
             if (!verifyPollTimer) startVerificationPolling();
+            // Always surface the verify modal so user understands why their message is gray
+            showVerifyEmailModal();
             return;
         }
 
@@ -1084,6 +1106,7 @@
                 dbg('warn', 'Register succeeded but no user object in response — trying /api/auth/me');
                 await checkAuthSilent();
             }
+            updateSendButtonState();
 
             // Save pending message to DB so it survives page reload
             const saved = pendingText;
@@ -1162,6 +1185,64 @@
         }
     }
 
+    // ── Send button + verify-email modal ──
+    let verifyModalShownOnce = false;
+    function updateSendButtonState() {
+        const btn = document.getElementById('sendBtn');
+        if (!btn) return;
+        if (currentUser && !emailVerified) {
+            btn.disabled = true;
+            btn.title = t('sc_send_verify_required_tip', 'Please verify your email before sending messages');
+        } else {
+            btn.disabled = false;
+            btn.removeAttribute('title');
+        }
+    }
+    function showVerifyEmailModal() {
+        const addr = document.getElementById('verifyEmailAddr');
+        if (addr) addr.textContent = (currentUser && currentUser.email) || '';
+        const err = document.getElementById('verifyEmailError');
+        if (err) err.textContent = '';
+        const btn = document.getElementById('verifyResendBtn');
+        if (btn) { btn.disabled = false; btn.textContent = t('sc_resend_verification', 'Resend email'); }
+        document.getElementById('verifyEmailModal').classList.remove('hidden');
+        verifyModalShownOnce = true;
+    }
+    function closeVerifyEmailModal() {
+        document.getElementById('verifyEmailModal').classList.add('hidden');
+    }
+    async function doResendVerification() {
+        const btn = document.getElementById('verifyResendBtn');
+        const err = document.getElementById('verifyEmailError');
+        if (!currentUser || !currentUser.email) {
+            err.textContent = t('sc_resend_no_email', 'No email on file');
+            return;
+        }
+        btn.disabled = true;
+        btn.textContent = t('sc_resend_sending', 'Sending...');
+        try {
+            const resp = await fetch(`${API_BASE}/api/auth/resend-verification`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: currentUser.email })
+            });
+            const data = await resp.json().catch(() => ({}));
+            if (!resp.ok || !data.success) {
+                err.textContent = data.error || t('sc_resend_failed', 'Failed to send. Try again later.');
+                btn.disabled = false;
+                btn.textContent = t('sc_resend_verification', 'Resend email');
+                return;
+            }
+            showToast(t('sc_resend_success', 'Verification email sent. Check your inbox.'), 'success');
+            closeVerifyEmailModal();
+        } catch (e) {
+            err.textContent = t('sc_network_error', 'Network error');
+            btn.disabled = false;
+            btn.textContent = t('sc_resend_verification', 'Resend email');
+        }
+    }
+
     // ── Email verification polling ──
     let verifyPollTimer = null;
     function startVerificationPolling() {
@@ -1180,6 +1261,7 @@
                     verifyPollTimer = null;
                     emailVerified = true;
                     currentUser = data.user;
+                    closeVerifyEmailModal();
 
                     // Remove locally-added messages — onAuthReady→loadChatHistory
                     // will re-render them from DB to avoid duplicates
