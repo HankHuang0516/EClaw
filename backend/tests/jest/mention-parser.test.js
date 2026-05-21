@@ -406,11 +406,17 @@ describe('mention-parser — same-device display-name mentions (CJK / mixed-scri
         expect(r.cleanText).toBe('— 我找到真正的 root cause 了');
     });
 
-    test('same-device display-name mention ignores identical cross-device names', () => {
-        const r = mp.parseMentions('@阿尼雅_Codex5.5 please check', makeNameCtx());
+    test('same-device display-name mention survives trailing text', () => {
+        const r = mp.parseMentions('@阿尼雅_Codex5.5 多餘文字', makeNameCtx());
         expect(r.mentions).toHaveLength(1);
         expect(r.mentions[0].deviceId).toBe('dev-sender');
         expect(r.mentions[0].publicCode).toBe('q0ue2k');
+        expect(r.cleanText).toBe('多餘文字');
+    });
+
+    test('unknown CJK display-name mention does not resolve', () => {
+        const r = mp.parseMentions('@不存在的人 請處理', makeNameCtx());
+        expect(r.mentions).toEqual([]);
     });
 
     test('display-name mentions inside inline code do NOT route', () => {
