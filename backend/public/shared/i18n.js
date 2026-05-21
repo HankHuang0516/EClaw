@@ -865790,26 +865790,6 @@ const TRANSLATIONS = {
 
 
         "dash_channel_promo": "試試 EClaw Channel？更原生、更快速",
-        "dash_channel_card_openclaw_title": "OpenClaw Channel",
-        "dash_channel_card_openclaw_badge": "穩定",
-        "dash_channel_card_openclaw_desc": "官方 OpenClaw 外掛路徑 — 最適合託管式 OpenClaw bot 與正式 API key 設定。",
-        "dash_channel_card_codex_title": "Codex Channel",
-        "dash_channel_card_codex_badge": "CLI 橋接",
-        "dash_channel_card_codex_desc": "透過 codex app-server 將 EClaw 實體連接到 OpenAI Codex CLI。適合從 EClaw chat 遠端處理 repo 工作。",
-        "dash_channel_card_codex_step2": "填寫 .env：ECLAW_API_KEY、WEBHOOK_URL、CODEX_WORKSPACE",
-        "dash_channel_card_codex_guide_link": "Codex 指南 →",
-        "dash_channel_card_clauded_title": "Claude Code Channel",
-        "dash_channel_card_clauded_badge": "實驗性",
-        "dash_channel_card_clauded_desc": "在本機 tmux session 中以 EClaw bot 身分執行 Claude Code — 使用你的 claude.ai Max 訂閱額度，不計 Anthropic API token 費用。",
-        "dash_channel_card_clauded_step2": "填寫 .mcp.json：ECLAW_API_KEY、ECLAW_WEBHOOK_URL",
-        "dash_channel_card_clauded_guide_link": "Claude Code 指南 →",
-        "dash_channel_card_hermes_title": "Hermes Channel",
-        "dash_channel_card_hermes_badge": "Live Showcase",
-        "dash_channel_card_hermes_desc": "將 Hermes Agent（NousResearch self-evolving agent，Python）透過 webhook 綁定為你的 EClaw bot。支援 MiniMax / OpenAI / Anthropic / 本機 Ollama。",
-        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
-        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
-        "dash_channel_card_hermes_step3": "bind-entity + 啟動 daemon",
-        "dash_channel_card_hermes_guide_link": "Hermes 指南 →",
 
 
 
@@ -1253881,7 +1253861,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_avg_daily": "平均日造訪",
 
 
 
@@ -1254009,7 +1253988,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_by_campaign": "按 UTM 廣告活動",
 
 
 
@@ -1254137,7 +1254115,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_col_campaign": "廣告活動",
 
 
 
@@ -1254265,7 +1254242,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_col_path": "路徑",
 
 
 
@@ -1254393,7 +1254369,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_col_uniq": "獨立",
 
 
 
@@ -1254521,7 +1254496,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_col_views": "造訪",
 
 
 
@@ -1254649,7 +1254623,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_daily_chart": "每日造訪",
 
 
 
@@ -1254777,7 +1254750,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_days_30": "最近 30 天",
 
 
 
@@ -1254905,7 +1254877,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_days_7": "最近 7 天",
 
 
 
@@ -1255033,7 +1255004,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_days_90": "最近 90 天",
 
 
 
@@ -1255161,7 +1255131,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_days_label": "區間",
 
 
 
@@ -1255289,7 +1255258,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_err_fetch": "載入分析資料失敗",
 
 
 
@@ -1255417,7 +1255385,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_err_no_device": "無可用裝置憑證，僅限裝置擁有者存取。",
 
 
 
@@ -1255545,7 +1255512,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_legend_uniq": "獨立 IP",
 
 
 
@@ -1255673,7 +1255639,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_legend_views": "造訪",
 
 
 
@@ -1255801,7 +1255766,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_loading": "載入中…",
 
 
 
@@ -1255929,7 +1255893,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_no_campaigns": "區間內無標記廣告活動",
 
 
 
@@ -1256057,7 +1256020,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_no_data": "區間內無資料",
 
 
 
@@ -1256185,7 +1256147,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_path_filter_label": "路徑篩選",
 
 
 
@@ -1256313,7 +1256274,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_path_filter_placeholder": "例如 /landing* 或 /docs/*",
 
 
 
@@ -1256441,7 +1256401,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_refresh": "重新整理",
 
 
 
@@ -1256569,7 +1256528,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_subtitle": "公開頁面與行銷頁面的匿名造訪。入口頁面有各自獨立的裝置範圍遙測。",
 
 
 
@@ -1256697,7 +1256655,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_title": "網站分析",
 
 
 
@@ -1256825,7 +1256782,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_top_paths": "熱門路徑",
 
 
 
@@ -1256953,7 +1256909,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_total_views": "總造訪",
 
 
 
@@ -1257081,7 +1257036,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_unique_ips": "獨立 IP",
 
 
 
@@ -1261049,7 +1261003,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_0": "多模態理解 — 感知並描述網頁中的視覺內容。",
 
 
 
@@ -1261177,7 +1261130,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_1": "精確 UI 互動 — 在大量元素中定位並點擊特定項目。",
 
 
 
@@ -1261305,7 +1261257,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_10": "儲存工作流 — 透過雲端 API 下載、重新命名並上傳檔案。",
 
 
 
@@ -1261433,7 +1261384,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_11": "語音能力 — 轉錄口說內容或從文字合成語音。",
 
 
 
@@ -1261561,7 +1261511,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_2": "結構化輸入 — 理解表單語義並正確填寫欄位。",
 
 
 
@@ -1261689,7 +1261638,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_3": "精細動作控制 — 精確地將物件拖曳到指定位置。",
 
 
 
@@ -1261817,7 +1261765,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_4": "規劃能力 — 導航多層級頁面結構以找到目標資訊。",
 
 
 
@@ -1261945,7 +1261892,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_5": "表格推理 — 提取並計算結構化 HTML 表格資料。",
 
 
 
@@ -1262073,7 +1262019,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_6": "安全判斷 — 抵禦社交工程攻擊（假彈窗、偽裝按鈕）。",
 
 
 
@@ -1262201,7 +1262146,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_7": "演算法推理 — 解決程式設計問題並產生正確程式碼。",
 
 
 
@@ -1262329,7 +1262273,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_8": "速度 — 從題目顯示到正確答案提交的端對端時間。",
 
 
 
@@ -1262457,7 +1262400,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_9": "記憶 — 在連續步驟中維持並重用資訊。",
 
 
 
@@ -1262585,7 +1262527,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_0": "視覺感知",
 
 
 
@@ -1262713,7 +1262654,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_1": "元素定位",
 
 
 
@@ -1262841,7 +1262781,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_10": "檔案操作",
 
 
 
@@ -1262969,7 +1262908,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_11": "語音處理",
 
 
 
@@ -1263097,7 +1263035,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_2": "表單填寫",
 
 
 
@@ -1263225,7 +1263162,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_3": "空間控制",
 
 
 
@@ -1263353,7 +1263289,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_4": "多步導航",
 
 
 
@@ -1263481,7 +1263416,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_5": "資料提取",
 
 
 
@@ -1263609,7 +1263543,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_6": "干擾抵抗",
 
 
 
@@ -1263737,7 +1263670,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_7": "代碼生成",
 
 
 
@@ -1263865,7 +1263797,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_8": "回應延遲",
 
 
 
@@ -1263993,7 +1263924,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_9": "上下文記憶",
 
 
 
@@ -1296251,7 +1296181,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_btn": "找相关訊息",
 
 
 
@@ -1296379,7 +1296308,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_empty": "找不到相关訊息。",
 
 
 
@@ -1296507,7 +1296435,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_error": "载入相关訊息失败。",
 
 
 
@@ -1296635,7 +1296562,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_loading": "正在找相关訊息…",
 
 
 
@@ -1297019,7 +1296945,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_panel_title": "相关訊息",
 
 
 
@@ -1297147,7 +1297072,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_target_not_loaded": "訊息目前未载入",
 
 
 
@@ -1493118,7 +1493042,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_behavior_user": "純提示模式 — 不影響路由，只塞 <code>[MENTIONS]</code> 給接收 Bot",
 
 
 
@@ -1493246,7 +1493169,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case1_input_label": "你輸入的訊息",
 
 
 
@@ -1493374,7 +1493296,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case1_input_text": "幫我問今天的台積電走勢",
 
 
 
@@ -1493502,7 +1493423,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case1_outcome": "主助手會看到提示，自己決定要不要呼叫 transform 把訊息轉給股票分析師。",
 
 
 
@@ -1493630,7 +1493550,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case1_recv_label": "主助手收到的提示",
 
 
 
@@ -1493758,7 +1493677,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case2_input_label": "你輸入的訊息",
 
 
 
@@ -1493886,7 +1493804,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case2_input_text": "這個 feature 你們覺得怎麼做？",
 
 
 
@@ -1494014,7 +1493931,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case2_outcome": "會議主持可以選擇 parallel 平行轉發給三人，或先彙整再回覆。",
 
 
 
@@ -1494142,7 +1494058,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case2_recv_label": "會議主持收到的提示",
 
 
 
@@ -1494270,7 +1494185,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case3_input_label": "你輸入的訊息",
 
 
 
@@ -1494398,7 +1494312,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case3_input_text": "明天 9 點 all-hands 會議",
 
 
 
@@ -1494526,7 +1494439,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case3_outcome": "公告 Bot 看到 <code>@all</code> 提示後，可以呼叫 <code>/api/transform</code> 加上 <code>broadcast:true</code> 真正廣播給所有實體。",
 
 
 
@@ -1494654,7 +1494566,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case3_recv_label": "公告 Bot 收到的提示",
 
 
 
@@ -1494782,7 +1494693,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_dir_bot": "<strong>Bot @</strong>（在 transform message）",
 
 
 
@@ -1494910,7 +1494820,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_dir_user": "<strong>使用者 @</strong>（在 chat 輸入框）",
 
 
 
@@ -2041498,26 +2041407,6 @@ const TRANSLATIONS = {
 
 
         "dash_channel_promo": "EClaw Channel を試してみませんか？よりネイティブ、より高速",
-        "dash_channel_card_openclaw_title": "OpenClaw Channel",
-        "dash_channel_card_openclaw_badge": "安定版",
-        "dash_channel_card_openclaw_desc": "公式 OpenClaw プラグイン経路 — ホスト型 OpenClaw bot と本番 API キー設定に最適です。",
-        "dash_channel_card_codex_title": "Codex Channel",
-        "dash_channel_card_codex_badge": "CLI ブリッジ",
-        "dash_channel_card_codex_desc": "codex app-server 経由で EClaw エンティティを OpenAI Codex CLI に接続します。EClaw chat からリモート repo 作業を行うのに適しています。",
-        "dash_channel_card_codex_step2": ".env を設定: ECLAW_API_KEY, WEBHOOK_URL, CODEX_WORKSPACE",
-        "dash_channel_card_codex_guide_link": "Codex ガイド →",
-        "dash_channel_card_clauded_title": "Claude Code Channel",
-        "dash_channel_card_clauded_badge": "実験版",
-        "dash_channel_card_clauded_desc": "ローカル tmux セッションで Claude Code を EClaw bot として実行します — claude.ai Max サブスク枠を使用し、Anthropic API トークン課金はありません。",
-        "dash_channel_card_clauded_step2": ".mcp.json を設定: ECLAW_API_KEY, ECLAW_WEBHOOK_URL",
-        "dash_channel_card_clauded_guide_link": "Claude Code ガイド →",
-        "dash_channel_card_hermes_title": "Hermes Channel",
-        "dash_channel_card_hermes_badge": "ライブショーケース",
-        "dash_channel_card_hermes_desc": "Hermes Agent（NousResearch の自己進化型エージェント、Python）を webhook 経由で EClaw bot としてバインドします。MiniMax / OpenAI / Anthropic / ローカル Ollama に対応。",
-        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
-        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
-        "dash_channel_card_hermes_step3": "bind-entity + daemon 起動",
-        "dash_channel_card_hermes_guide_link": "Hermes ガイド →",
 
 
 
@@ -2228329,7 +2228218,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_badge": "管理者",
 
 
 
@@ -2228457,7 +2228345,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_admin_users": "管理者ユーザー管理",
 
 
 
@@ -2228585,7 +2228472,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_admin_users_desc": "ADMIN_DEVICE_IDS の確認とローテーション。",
 
 
 
@@ -2228713,7 +2228599,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_feature_flags": "機能フラグ",
 
 
 
@@ -2228841,7 +2228726,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_feature_flags_desc": "デバイスごと/グローバルに実験的機能を切り替え。",
 
 
 
@@ -2228969,7 +2228853,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_log_browser": "エラーログブラウザ",
 
 
 
@@ -2229097,7 +2228980,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_log_browser_desc": "カテゴリ、レベル、時間で server_logs をフィルタ。",
 
 
 
@@ -2229225,7 +2229107,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_rental_monitor": "レンタル健全性モニター",
 
 
 
@@ -2229353,7 +2229234,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_rental_monitor_desc": "DBレイテンシ、トストーン成長、Publisher統合状態、Fleet数。",
 
 
 
@@ -2229481,7 +2229361,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_soon": "近日公開",
 
 
 
@@ -2229609,7 +2229488,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_sys_metrics": "システムメトリクス",
 
 
 
@@ -2229737,7 +2229615,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_sys_metrics_desc": "CPU / メモリ / ソケット数 / リクエストレート。",
 
 
 
@@ -2229865,7 +2229742,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_footnote": "管理者専用 — 非管理者のデバイスは読み込み時に403画面を表示し /portal/ にリダイレクト",
 
 
 
@@ -2229993,7 +2229869,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_section_future": "計画中",
 
 
 
@@ -2230121,7 +2229996,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_section_monitoring": "監視",
 
 
 
@@ -2230249,7 +2230123,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_subtitle": "開発 + Opsツール。非管理者のデバイスはポータルにリダイレクトされます。",
 
 
 
@@ -2230377,7 +2230250,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_title": "[admin] EClaw 管理ツール",
 
 
 
@@ -2230505,7 +2230377,6 @@ const TRANSLATIONS = {
 
 
 
-        "ai_chat_view_feedback": "フィードバック履歴を表示",
 
 
 
@@ -2230633,7 +2230504,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_return": "← 返回",
 
 
 
@@ -2230761,7 +2230631,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_attach_key_ref": "鍵の参照",
 
 
 
@@ -2230889,7 +2230758,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_card_modal_comments": "コメント",
 
 
 
@@ -2231017,7 +2230885,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_card_modal_comments_empty": "コメントはまだありません",
 
 
 
@@ -2231529,7 +2231396,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_kanban_view_card": "📋 カードを表示",
 
 
 
@@ -2231657,7 +2231523,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_loading": "読み込み中...",
 
 
 
@@ -2231785,7 +2231650,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mention_unresolved": "不明な @mention: {tokens}",
 
 
 
@@ -2231913,7 +2231777,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mic_denied": "マイクアクセスが拒否されました",
 
 
 
@@ -2232041,7 +2231904,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_demo_node": "このノードはデモデータまたは短いプレフィックスIDです — ページ間引用はサポートされていません。マインドマップページの📋ボタンを 사용하여フルトークンをコピーしてください。",
 
 
 
@@ -2232169,7 +2232031,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_empty": "—",
 
 
 
@@ -2232297,7 +2232158,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_anchors": "アンカー",
 
 
 
@@ -2232425,7 +2232285,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_comments": "コメント",
 
 
 
@@ -2232553,7 +2232412,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_summary": "要約",
 
 
 
@@ -2232681,7 +2232539,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_type": "種類",
 
 
 
@@ -2232809,7 +2232666,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mission_notify": "ミッション",
 
 
 
@@ -2232937,7 +2232793,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_playback_failed": "再生に失敗しました",
 
 
 
@@ -2233065,7 +2232920,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_btn": "関連チャット",
 
 
 
@@ -2233193,7 +2233047,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_empty": "関連するチャットが見つかりません",
 
 
 
@@ -2233321,7 +2233174,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_error": "関連するチャットの読み込みに失敗しました",
 
 
 
@@ -2233449,7 +2233301,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_loading": "関連するチャットを読み込み中...",
 
 
 
@@ -2233833,7 +2233684,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_panel_title": "関連するチャット",
 
 
 
@@ -2233961,7 +2233811,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_target_not_loaded": "ターゲットチャットが読み込まれていません",
 
 
 
@@ -2234089,7 +2233938,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_cancel": "キャンセル",
 
 
 
@@ -2234217,7 +2234065,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_cancelled": "キャンセル済み",
 
 
 
@@ -2234345,7 +2234192,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_close": "閉じる",
 
 
 
@@ -2234473,7 +2234319,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_delete": "削除",
 
 
 
@@ -2234601,7 +2234446,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_delete_confirm": "この予約メッセージをキャンセルしますか？",
 
 
 
@@ -2234729,7 +2234573,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_edit": "編集",
 
 
 
@@ -2234857,7 +2234700,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_empty_text": "(空欄 — 予約前にメッセージを入力してください)",
 
 
 
@@ -2234985,7 +2234827,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_empty": "まずメッセージを入力してください",
 
 
 
@@ -2235113,7 +2234954,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_in_past": "時間は未来である必要があります",
 
 
 
@@ -2235241,7 +2235081,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_invalid_time": "有効な時間を入力してください",
 
 
 
@@ -2235369,7 +2235208,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_no_target": "少なくとも1つのターゲットを選択してください",
 
 
 
@@ -2235497,7 +2235335,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_too_far": "7日先までしか予約できません",
 
 
 
@@ -2235625,7 +2235462,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_h": "時",
 
 
 
@@ -2235753,7 +2235589,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_loading": "読み込み中...",
 
 
 
@@ -2235881,7 +2235716,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_local_only": "(ローカルエンティティのみ)",
 
 
 
@@ -2236009,7 +2235843,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_m": "分",
 
 
 
@@ -2236137,7 +2235970,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_max_7days": "(最大7日)",
 
 
 
@@ -2236265,7 +2236097,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_message_label": "メッセージ",
 
 
 
@@ -2236393,7 +2236224,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_mode_countdown": "カウントダウン",
 
 
 
@@ -2236521,7 +2236351,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_mode_fixed": "固定時間",
 
 
 
@@ -2236649,7 +2236478,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_mode_label": "実行タイミング",
 
 
 
@@ -2236777,7 +2236605,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_no_pending": "保留中の予約メッセージはありません",
 
 
 
@@ -2236905,7 +2236732,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_ok": "予約済み",
 
 
 
@@ -2237033,7 +2236859,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_s": "秒",
 
 
 
@@ -2237161,7 +2236986,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_save": "保存",
 
 
 
@@ -2237289,7 +2237113,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_saved": "保存済み",
 
 
 
@@ -2237417,7 +2237240,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_submit": "予約",
 
 
 
@@ -2237545,7 +2237367,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_tab_create": "新規",
 
 
 
@@ -2237673,7 +2237494,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_tab_queue": "予約一覧",
 
 
 
@@ -2237801,7 +2237621,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_target_label": "送信先",
 
 
 
@@ -2237929,7 +2237748,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_title": "⏰ メッセージを予約",
 
 
 
@@ -2238057,7 +2237875,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_scheduled": "予約済み",
 
 
 
@@ -2238185,7 +2238002,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_scroll_to_latest": "最新メッセージにスクロール",
 
 
 
@@ -2238313,7 +2238129,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_unread_sep": "── 新しいメッセージ ──",
 
 
 
@@ -2238441,7 +2238256,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_voice_upload_failed": "音声アップロードに失敗しました",
 
 
 
@@ -2238569,7 +2238383,6 @@ const TRANSLATIONS = {
 
 
 
-        "chip_popover_requoted": "チャットに引用しました",
 
 
 
@@ -2238697,7 +2238510,6 @@ const TRANSLATIONS = {
 
 
 
-        "common_mark": "マーク",
 
 
 
@@ -2238825,7 +2238637,6 @@ const TRANSLATIONS = {
 
 
 
-        "common_new_key": "+ 新しい鍵",
 
 
 
@@ -2238953,7 +2238764,6 @@ const TRANSLATIONS = {
 
 
 
-        "common_open_editor": "エディタを開く",
 
 
 
@@ -2239209,7 +2239019,6 @@ const TRANSLATIONS = {
 
 
 
-        "community_cta_create_bot": "独自のBotをお持ちですか？無料で作成して今すぐリストに登録しましょう。",
 
 
 
@@ -2239337,7 +2239146,6 @@ const TRANSLATIONS = {
 
 
 
-        "compare_back": "← 情報ハブに戻る",
 
 
 
@@ -2239465,7 +2239273,6 @@ const TRANSLATIONS = {
 
 
 
-        "compare_page_title": "EClawbot vs Telegram — チャンネル比較",
 
 
 
@@ -2604419,26 +2604226,6 @@ const TRANSLATIONS = {
 
 
         "dash_channel_promo": "EClaw Channel을 사용해 보세요! 더 네이티브하고 더 빠릅니다",
-        "dash_channel_card_openclaw_title": "OpenClaw Channel",
-        "dash_channel_card_openclaw_badge": "안정",
-        "dash_channel_card_openclaw_desc": "공식 OpenClaw 플러그인 경로 — 호스팅 OpenClaw 봇과 프로덕션 API 키 설정에 가장 적합합니다.",
-        "dash_channel_card_codex_title": "Codex Channel",
-        "dash_channel_card_codex_badge": "CLI 브리지",
-        "dash_channel_card_codex_desc": "codex app-server를 통해 EClaw 엔티티를 OpenAI Codex CLI에 연결합니다. EClaw chat에서 원격 repo 작업을 하기에 좋습니다.",
-        "dash_channel_card_codex_step2": ".env 채우기: ECLAW_API_KEY, WEBHOOK_URL, CODEX_WORKSPACE",
-        "dash_channel_card_codex_guide_link": "Codex 가이드 →",
-        "dash_channel_card_clauded_title": "Claude Code Channel",
-        "dash_channel_card_clauded_badge": "실험적",
-        "dash_channel_card_clauded_desc": "로컬 tmux 세션에서 Claude Code를 EClaw bot으로 실행합니다 — claude.ai Max 구독 할당량을 사용하며 Anthropic API 토큰 비용은 청구되지 않습니다.",
-        "dash_channel_card_clauded_step2": ".mcp.json 채우기: ECLAW_API_KEY, ECLAW_WEBHOOK_URL",
-        "dash_channel_card_clauded_guide_link": "Claude Code 가이드 →",
-        "dash_channel_card_hermes_title": "Hermes Channel",
-        "dash_channel_card_hermes_badge": "라이브 쇼케이스",
-        "dash_channel_card_hermes_desc": "Hermes Agent(NousResearch self-evolving agent, Python)를 webhook으로 EClaw bot에 바인딩합니다. MiniMax / OpenAI / Anthropic / 로컬 Ollama를 지원합니다.",
-        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
-        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
-        "dash_channel_card_hermes_step3": "bind-entity + daemon 시작",
-        "dash_channel_card_hermes_guide_link": "Hermes 가이드 →",
 
 
 
@@ -7707456,7 +7707243,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_badge": "ADMIN",
 
 
 
@@ -7707584,7 +7707370,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_admin_users": "Gestión de usuarios administradores",
 
 
 
@@ -7707712,7 +7707497,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_admin_users_desc": "Inspeccionar + rotar entradas en ADMIN_DEVICE_IDS.",
 
 
 
@@ -7707840,7 +7707624,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_feature_flags": "Flags de características",
 
 
 
@@ -7707968,7 +7707751,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_feature_flags_desc": "Alternar funciones experimentales por dispositivo / globalmente.",
 
 
 
@@ -7708096,7 +7707878,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_log_browser": "Navegador de registros de errores",
 
 
 
@@ -7708224,7 +7708005,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_log_browser_desc": "Filtrar server_logs por categoría, nivel, ventana de tiempo.",
 
 
 
@@ -7708352,7 +7708132,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_rental_monitor": "Monitor de estado de alquiler",
 
 
 
@@ -7708480,7 +7708259,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_rental_monitor_desc": "Latencia BD, crecimiento de tumbas, estado de integración del publicador, conteos de flota.",
 
 
 
@@ -7708608,7 +7708386,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_soon": "Próximamente",
 
 
 
@@ -7708736,7 +7708513,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_sys_metrics": "Métricas del sistema",
 
 
 
@@ -7708864,7 +7708640,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_sys_metrics_desc": "CPU / memoria / conteo de sockets / tasa de solicitudes.",
 
 
 
@@ -7708992,7 +7708767,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_footnote": "Solo administrador — dispositivos no-admin ven una pantalla 403 al cargar y son redirigidos a /portal/",
 
 
 
@@ -7709120,7 +7708894,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_section_future": "Planificado",
 
 
 
@@ -7709248,7 +7709021,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_section_monitoring": "Monitoreo",
 
 
 
@@ -7709376,7 +7709148,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_subtitle": "Herramientas de desarrollo y ops. Dispositivos no-admin son redirigidos al portal.",
 
 
 
@@ -7709504,7 +7709275,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_title": "[admin] Herramientas de administración EClaw",
 
 
 
@@ -7709632,7 +7709402,6 @@ const TRANSLATIONS = {
 
 
 
-        "ai_chat_view_feedback": "Ver historial de comentarios",
 
 
 
@@ -7709760,7 +7709529,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_return": "← Volver",
 
 
 
@@ -7709888,7 +7709656,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_attach_key_ref": "Referencia de clave",
 
 
 
@@ -7710016,7 +7709783,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_card_modal_comments": "Comentarios",
 
 
 
@@ -7710144,7 +7709910,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_card_modal_comments_empty": "Sin comentarios aún",
 
 
 
@@ -7710272,7 +7710037,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_density_comfortable": "Cómodo",
 
 
 
@@ -7710400,7 +7710164,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_density_compact": "Compacto",
 
 
 
@@ -7710528,7 +7710291,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_density_normal": "Normal",
 
 
 
@@ -7710656,7 +7710418,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_kanban_view_card": "📋 Ver tarjeta",
 
 
 
@@ -7710784,7 +7710545,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_loading": "Cargando...",
 
 
 
@@ -7710912,7 +7710672,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mention_unresolved": "Mención @ desconectada: {tokens}",
 
 
 
@@ -7711040,7 +7710799,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mic_denied": "Acceso al micrófono denegado",
 
 
 
@@ -7711168,7 +7710926,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_demo_node": "Este nodo es dato demo o un ID de prefijo corto — no se soporta citación entre páginas. Usa el botón 📋 en la página del mapa mental para copiar el token completo.",
 
 
 
@@ -7711296,7 +7711053,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_empty": "—",
 
 
 
@@ -7711424,7 +7711180,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_anchors": "Anclas",
 
 
 
@@ -7711552,7 +7711307,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_comments": "Comentarios",
 
 
 
@@ -7711680,7 +7711434,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_summary": "Resumen",
 
 
 
@@ -7711808,7 +7711561,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_type": "Tipo",
 
 
 
@@ -7711936,7 +7711688,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mission_notify": "Misión",
 
 
 
@@ -7712064,7 +7711815,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_playback_failed": "Reproducción fallida",
 
 
 
@@ -7712192,7 +7711942,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_btn": "Chats relacionados",
 
 
 
@@ -7712320,7 +7712069,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_empty": "No se encontraron chats relacionados",
 
 
 
@@ -7712448,7 +7712196,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_error": "Error al cargar chats relacionados",
 
 
 
@@ -7712576,7 +7712323,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_loading": "Cargando chats relacionados...",
 
 
 
@@ -7712704,7 +7712450,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_panel_title": "Chats relacionados",
 
 
 
@@ -7712832,7 +7712577,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_target_not_loaded": "Chat objetivo no cargado",
 
 
 
@@ -7712960,7 +7712704,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_cancel": "Cancelar",
 
 
 
@@ -7713088,7 +7712831,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_cancelled": "Cancelado",
 
 
 
@@ -7713216,7 +7712958,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_close": "Cerrar",
 
 
 
@@ -7713344,7 +7713085,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_delete": "Eliminar",
 
 
 
@@ -7713472,7 +7713212,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_delete_confirm": "¿Cancelar este mensaje programado?",
 
 
 
@@ -7713600,7 +7713339,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_edit": "Editar",
 
 
 
@@ -7713728,7 +7713466,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_empty_text": "(vacío — escribe un mensaje antes de programar)",
 
 
 
@@ -7713856,7 +7713593,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_empty": "Primero escribe un mensaje",
 
 
 
@@ -7713984,7 +7713720,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_in_past": "El tiempo debe ser en el futuro",
 
 
 
@@ -7714112,7 +7713847,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_invalid_time": "Ingresa una hora válida",
 
 
 
@@ -7714240,7 +7713974,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_no_target": "Selecciona al menos un objetivo",
 
 
 
@@ -7714368,7 +7714101,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_too_far": "No se puede programar más de 7 días adelante",
 
 
 
@@ -7714496,7 +7714228,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_h": "h",
 
 
 
@@ -7714624,7 +7714355,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_loading": "Cargando…",
 
 
 
@@ -7714752,7 +7714482,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_local_only": "(solo entidades locales)",
 
 
 
@@ -7714880,7 +7714609,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_m": "m",
 
 
 
@@ -7715008,7 +7714736,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_max_7days": "(máx 7 días)",
 
 
 
@@ -7715136,7 +7714863,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_message_label": "Mensaje",
 
 
 
@@ -7715264,7 +7714990,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_mode_countdown": "Cuenta regresiva",
 
 
 
@@ -7715392,7 +7715117,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_mode_fixed": "Hora fija",
 
 
 
@@ -7715520,7 +7715244,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_mode_label": "Cuándo",
 
 
 
@@ -7715648,7 +7715371,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_no_pending": "Sin mensajes programados pendientes",
 
 
 
@@ -7715776,7 +7715498,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_ok": "Programado",
 
 
 
@@ -7715904,7 +7715625,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_s": "s",
 
 
 
@@ -7716032,7 +7715752,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_save": "Guardar",
 
 
 
@@ -7716160,7 +7715879,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_saved": "Guardado",
 
 
 
@@ -7716288,7 +7716006,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_submit": "Programar",
 
 
 
@@ -7716416,7 +7716133,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_tab_create": "Nuevo",
 
 
 
@@ -7716544,7 +7716260,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_tab_queue": "Programado",
 
 
 
@@ -7716672,7 +7716387,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_target_label": "Enviar a",
 
 
 
@@ -7716800,7 +7716514,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_title": "⏰ Programar mensaje",
 
 
 
@@ -7716928,7 +7716641,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_scheduled": "Programado",
 
 
 
@@ -7717056,7 +7716768,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_scroll_to_latest": "Desplazarse al mensaje más reciente",
 
 
 
@@ -7717184,7 +7716895,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_unread_sep": "── Mensajes nuevos ──",
 
 
 
@@ -7717312,7 +7717022,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_voice_upload_failed": "Carga de voz fallida",
 
 
 
@@ -7717440,7 +7717149,6 @@ const TRANSLATIONS = {
 
 
 
-        "chip_popover_requoted": "Citado en el chat",
 
 
 
@@ -7717568,7 +7717276,6 @@ const TRANSLATIONS = {
 
 
 
-        "common_mark": "Marcar",
 
 
 
@@ -7717696,7 +7717403,6 @@ const TRANSLATIONS = {
 
 
 
-        "common_new_key": "+ Nueva clave",
 
 
 
@@ -7717824,7 +7717530,6 @@ const TRANSLATIONS = {
 
 
 
-        "common_open_editor": "Abrir editor",
 
 
 
@@ -7717952,7 +7717657,6 @@ const TRANSLATIONS = {
 
 
 
-        "common_redeem": "Canjear",
 
 
 
@@ -7718080,7 +7717784,6 @@ const TRANSLATIONS = {
 
 
 
-        "community_cta_create_bot": "¿Quieres tu propio Bot? Crea uno gratis y publícalo instantáneamente.",
 
 
 
@@ -7718208,7 +7717911,6 @@ const TRANSLATIONS = {
 
 
 
-        "compare_back": "← Volver al centro de información",
 
 
 
@@ -7718336,7 +7718038,6 @@ const TRANSLATIONS = {
 
 
 
-        "compare_page_title": "EClawbot vs Telegram — Comparación de canales",
 
 
 
@@ -7718464,7 +7718165,6 @@ const TRANSLATIONS = {
 
 
 
-        "developer_section_title": "Desarrollador",
 
 
 
@@ -7718592,7 +7718292,6 @@ const TRANSLATIONS = {
 
 
 
-        "env_toggle_device_id": "Mostrar/Ocultar ID de dispositivo",
 
 
 
@@ -7718720,7 +7718419,6 @@ const TRANSLATIONS = {
 
 
 
-        "files_delete_confirm": "¿Estás seguro de que quieres eliminar este archivo?",
 
 
 
@@ -7718848,7 +7718546,6 @@ const TRANSLATIONS = {
 
 
 
-        "files_delete_failed": "Error al eliminar archivo",
 
 
 
@@ -7718976,7 +7718673,6 @@ const TRANSLATIONS = {
 
 
 
-        "files_deleted": "Archivo eliminado",
 
 
 
@@ -7719104,7 +7718800,6 @@ const TRANSLATIONS = {
 
 
 
-        "files_multi_select_attach": "Adjuntar al chat",
 
 
 
@@ -7719232,7 +7718927,6 @@ const TRANSLATIONS = {
 
 
 
-        "files_multi_select_cancel": "Cancelar",
 
 
 
@@ -7719360,7 +7719054,6 @@ const TRANSLATIONS = {
 
 
 
-        "files_multi_select_count": "Seleccionados",
 
 
 
@@ -7719488,7 +7719181,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_case_li1": "Claude principal envía sub (U12) para ejecutar una perforación de arrastrar/reiniciar organigrama en el emulador Android",
 
 
 
@@ -7719616,7 +7719308,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_case_li2": "Sub dispara MCP de computadora para tomar captura de pantalla, generando elicitación y bloqueando el TTY",
 
 
 
@@ -7719744,7 +7719435,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_case_li3": "Principal usa <code>eye</code> (herramienta de vista general de pantalla completa macOS) para ver el diálogo → osascript hace clic automático",
 
 
 
@@ -7719872,7 +7719562,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_case_li4": "Sub recibe allowAll → reanuda la perforación → descubre que BottomSheet solo se expande a ~20%",
 
 
 
@@ -7720000,7 +7719689,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_case_li5": "Principal analiza <code>OrgChartBottomSheetFragment</code> → aísla la peculiaridad de BottomSheetDialog que mide <code>match_parent</code> como <code>wrap_content</code>",
 
 
 
@@ -7720128,7 +7719816,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_case_li6": "Fix (PR #1854) → envía sub para verificar → confirma expansión del 90% → ciclo cerrado completo",
 
 
 
