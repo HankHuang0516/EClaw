@@ -188,6 +188,10 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── New hard-tier additions (daily pool update) ──
+    { file: null, description: 'A database entity-relationship diagram with three tables: Users (id, email, created_at), Orders (id, user_id, total, status), and Products (id, name, price, stock) — connected by two foreign key arrows with an index symbol on Users.email', keywords: ['database', 'three', 'tables', 'users', 'orders', 'products', 'foreign'] },
+    { file: null, description: 'A code coverage heatmap grid of 7 rows and 10 columns — cells range from dark red (0%) to bright green (100%), with the third column entirely dark red indicating untested code paths', keywords: ['heatmap', 'seven', 'ten', 'red', 'green', 'third', 'untested'] },
+    { file: null, description: 'An annotated satellite image of a river delta showing four diverging channels flowing toward the sea, three small islands between the channels, and a measurement arrow labeled 420 m across the widest channel', keywords: ['river', 'delta', 'four', 'channels', 'three', 'islands', '420'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -204,9 +208,9 @@ function generateButtonClickChallenge() {
     return { correctIndex, correctLabel, buttonCount, seed: Math.floor(Math.random() * 1e9) };
 }
 
-const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Wei Zhang','Amara Osei','Ravi Kapoor','Isabella Rossi','Dmitri Volkov'];
-const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se','wei@demo.cn','amara@test.gh','ravi@sample.in','isabella@demo.it','dmitri@test.ru'];
-const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','China','Ghana','Italy','Russia','Netherlands'];
+const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Wei Zhang','Amara Osei','Ravi Kapoor','Isabella Rossi','Dmitri Volkov','Chen Wei','Alejandro Gomez','Nadia Petersen','Yaw Asante','Giulia Ricci'];
+const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se','wei@demo.cn','amara@test.gh','ravi@sample.in','isabella@demo.it','dmitri@test.ru','chenw@example.tw','alejandro@demo.mx','nadia@test.dk','yaw@demo.gh','giulia@sample.it'];
+const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','China','Ghana','Italy','Russia','Netherlands','Taiwan','Denmark','Portugal','Argentina','Thailand'];
 const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123','+46-70-123-4567','+65-9123-4567','+52-55-1234-5678','+353-87-123-4567'];
 const FORM_DATES = ['1990-06-15','1985-03-22','1992-11-08','1988-01-30','1995-07-14','1983-09-25','1991-12-01','1987-04-17','1993-08-09','1986-02-14','1994-10-31','1989-05-20'];
 const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund'];
@@ -368,6 +372,13 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── New medium-hard additions (daily pool update) ──
+    { title: 'Jump Game', description: 'Write `solve(nums)` — given an array where each element is the max jump length from that position, return true if you can reach the last index from index 0.',
+      testCases: [{ input: '[2,3,1,1,4]', expected: 'true' },{ input: '[3,2,1,0,4]', expected: 'false' },{ input: '[0]', expected: 'true' },{ input: '[1,0]', expected: 'false' }] },
+    { title: 'Unique Paths', description: 'Write `solve(m, n)` — return the number of unique paths from the top-left to the bottom-right corner of an m×n grid (you can only move right or down).',
+      testCases: [{ input: '3, 7', expected: '28' },{ input: '3, 2', expected: '3' },{ input: '1, 1', expected: '1' },{ input: '2, 3', expected: '3' }] },
+    { title: 'Rotate Array', description: 'Write `solve(nums, k)` — rotate an array to the right by k steps (return the rotated array; k may be larger than the array length).',
+      testCases: [{ input: '[1,2,3,4,5,6,7], 3', expected: '[5,6,7,1,2,3,4]' },{ input: '[1,2], 3', expected: '[2,1]' },{ input: '[1], 1', expected: '[1]' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -378,10 +389,11 @@ function generateCodingChallenge(weights) {
 
 let RESPONSE_QUESTIONS = [
     // ── Easy tier (20%) — basic facts ──
-    { question: 'What is the capital of France?', expectedKeywords: ['paris'] },
+    // 'What is the capital of France?' retired (pass rate 100%) — replaced below
     { question: 'What is 17 × 23?', expectedKeywords: ['391'] },
     { question: 'Name the largest planet in our solar system.', expectedKeywords: ['jupiter'] },
     { question: 'What is 13 × 17?', expectedKeywords: ['221'] },
+    { question: 'How many sides does an octagon have?', expectedKeywords: ['8', 'eight'] },
     // ── Medium tier (50%) — multi-step math, applied reasoning ──
     { question: 'A pool fills in 3 hours with pipe A alone and 6 hours with pipe B alone. How many hours to fill it with both pipes open together?', expectedKeywords: ['2'] },
     { question: 'A train travels 240 km in 3 hours. What is its average speed in km/h?', expectedKeywords: ['80'] },
@@ -417,6 +429,12 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── New medium/hard additions (daily pool update) ──
+    { question: 'A store offers a 15% discount and then an additional 10% off the already-discounted price. What is the effective total discount percentage?', expectedKeywords: ['23.5'] },
+    { question: 'How many seconds are there in exactly one week?', expectedKeywords: ['604800'] },
+    { question: 'You flip a fair coin 5 times. What is the probability of getting exactly 3 heads? Express as a simplified fraction.', expectedKeywords: ['5/16'] },
+    { question: 'A snail climbs 3 meters up a wall each day and slides back 1.5 meters each night. The wall is 12 meters tall. On which day does the snail first reach the top?', expectedKeywords: ['7', 'seventh'] },
+    { question: 'If a clock loses 5 minutes every hour, and it is set correctly at noon, what time does it display after 12 real hours have passed?', expectedKeywords: ['11', '11:00'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +512,10 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── New medium-hard additions (daily pool update) ──
+    { text: 'Your lab results show a hemoglobin A1C of seven point two percent and a fasting glucose of one hundred twenty-six milligrams per deciliter — please schedule a follow-up within two weeks', keywords: ['hemoglobin', 'A1C', '7.2', 'glucose', '126', 'two'] },
+    { text: 'The seismic event registered six point four on the Richter scale at 03:17 local time with the epicenter forty-two kilometers northeast of Ankara Turkey', keywords: ['seismic', '6.4', 'Richter', '0317', '42', 'Ankara'] },
+    { text: 'The container image was built using Docker file version one point two and pushed to registry dot example dot io slash app colon v3 dot 1 dot 4', keywords: ['Docker', 'image', 'registry', 'v3', '1', '4'] },
 ];
 
 // ============================================
