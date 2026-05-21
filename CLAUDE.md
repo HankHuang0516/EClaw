@@ -1039,8 +1039,13 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Growth Tracking (v1.1168)**: `growth.js` module for admin bot growth metrics; static serving fix
 - **UIUX Audit Script Alignment (v1.1172)**: QA/UIUX audit test scripts aligned with current portal contracts
 
-### Recent Fixes (v1.1172.x+, 2026-05-14 – 2026-05-21)
+### Recent Fixes (v1.1172.x+, 2026-05-14 – 2026-05-22)
 
+- **Channel Binding Persistence Fix**: Await binding persistence to prevent race conditions on channel bind
+- **i18n es Dedup (PR #2876)**: Dedup 20 `dash_channel_card_*` keys in Spanish locale block
+- **WS Upgrade Origin Fix v2 (PR #2875)**: Drop Origin header on server-to-server WS upgrade in setup scripts
+- **Mention CJK Fix (PR #2874)**: Support same-device CJK display-name tags in @mention parsing
+- **WS Memory Disclosure Fix (PR #2872)**: Patch `ws` uninitialized memory disclosure (GHSA-58qx-3vcg-4xpx)
 - **Share-Chat Verify Email i18n (PR #2868/#2870)**: `sc_verify_email*` keys translated for 13 locales (zh-CN, ja, ko, th, vi, id, fr, es, de, ar, ms, hi + 5 more)
 - **Share-Chat Rich CTA (PR #2867)**: Wire rich CTA action buttons to msgInput for share-chat page
 - **Share-Chat Guest Verify Email (PR #2865)**: Guest verify-email modal + disabled Send for unverified users
@@ -1065,7 +1070,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 
 ## Test Coverage Summary
 
-**~460 total API routes** across all modules (410 excluding Article Publisher), **~84% covered** by Jest + integration tests (~3003 test cases across 206 Jest files + 59 integration tests).
+**~460 total API routes** across all modules (410 excluding Article Publisher), **~84% covered** by Jest + integration tests (~3007 test cases across 206 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
