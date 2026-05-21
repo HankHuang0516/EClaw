@@ -15186,10 +15186,13 @@ async function getWsConnection(httpUrl, token, setupUsername, setupPassword) {
     console.log(`[GatewayWS] Opening new connection to ${wsUrl}`);
 
     return new Promise((resolve, reject) => {
+        // No Origin header on server-to-server WS upgrade. openclaw gateway treats
+        // any non-empty Origin as browser-originated and enforces controlUi.allowedOrigins
+        // for ALL clients (resolveHandshakeBrowserSecurityContext), rejecting with
+        // CONTROL_UI_ORIGIN_NOT_ALLOWED + close 1008.
         const ws = new WebSocket(wsUrl, {
             headers: {
-                'Authorization': 'Basic ' + Buffer.from(`${setupUsername}:${setupPassword}`).toString('base64'),
-                'Origin': `https://${new URL(httpUrl).host}`
+                'Authorization': 'Basic ' + Buffer.from(`${setupUsername}:${setupPassword}`).toString('base64')
             }
         });
 
