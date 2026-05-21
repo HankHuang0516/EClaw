@@ -62,6 +62,52 @@ const ALL_TOKEN_RE = /(^|\s)@all(?=\s|$|[^\w])/i;
 // Global form for stripping @all (sequential .replace() needs the /g flag).
 const ALL_TOKEN_GLOBAL_RE = /(^|\s)@all(?=\s|$|[^\w])/gi;
 
+function isMentionBoundaryBefore(text, atIndex) {
+    if (atIndex <= 0) return true;
+    const ch = text[atIndex - 1];
+    return !(/[\p{L}\p{N}_@<]/u.test(ch));
+}
+
+function isMentionBoundaryAfter(text, endIndex) {
+    if (endIndex >= text.length) return true;
+    const ch = text[endIndex];
+    return !(/[\p{L}\p{N}_]/u.test(ch));
+}
+
+function buildSameDeviceNameCandidates(senderDeviceId, devices) {
+    const senderDevice = devices && devices[senderDeviceId];
+    const entities = senderDevice && senderDevice.entities;
+    if (!entities) return [];
+
+    const seen = new Set();
+    const out = [];
+    for (const [entityIdRaw, entity] of Object.entries(entities)) {
+        const entityId = parseInt(entityIdRaw, 10);
+        if (!entity || !entity.isBound || !entity.publicCode || !Number.isFinite(entityId)) continue;
+        const names = [entity.name, entity.character]
+            .filter(v => typeof v === 'string')
+            .map(v => v.trim())
+            .filter(Boolean);
+        for (const label of names) {
+            const key = `${label}::${entity.publicCode}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+            out.push({
+                label,
+                entityId,
+                publicCode: entity.publicCode,
+                deviceId: senderDeviceId,
+                name: entity.name || entity.character || `Entity ${entityId}`,
+                isCrossDevice: false,
+                isBound: true
+            });
+        }
+    }
+
+    out.sort((a, b) => b.label.length - a.label.length);
+    return out;
+}
+
 // Markdown code spans — examples / docs inside backticks must NOT route.
 // Replace each code-span region with same-length whitespace so character
 // indices stay aligned (in case any caller relies on them later) but no
@@ -154,6 +200,7 @@ function parseMentions(text, ctx) {
     //    The bare form is what LLMs naturally write and is parsed as a
     //    convenience so routing intent in `@codex hi` style still works.
     let m;
+    const namedMentionSpans = [];
     const resolvePublicCodeToken = (code) => {
         if (seenPublicCodes.has(code)) return;
         const target = publicCodeIndex[code];
@@ -197,7 +244,53 @@ function parseMentions(text, ctx) {
         }
     }
 
-    // 3+4. Build displayText and cleanText by scanning routedText (code spans
+    // 3. same-device display-name mentions — `@阿尼雅_Codex5.5` and the
+    //    common disambiguated form `@阿尼雅_Codex5.5 #6`. Historically the
+    //    system only supported ASCII-ish publicCode / entityId tokens, so
+    //    Chinese display-name mentions never routed. We intentionally keep
+    //    this same-device-only to avoid ambiguous cross-device name matches.
+    const sameDeviceNameCandidates = buildSameDeviceNameCandidates(senderDeviceId, devices);
+    for (let at = routedText.indexOf('@'); at !== -1; at = routedText.indexOf('@', at + 1)) {
+        if (!isMentionBoundaryBefore(routedText, at)) continue;
+        const tail = routedText.slice(at + 1);
+        for (const candidate of sameDeviceNameCandidates) {
+            if (!tail.startsWith(candidate.label)) continue;
+            const afterName = at + 1 + candidate.label.length;
+            let end = afterName;
+            const suffixMatch = routedText.slice(afterName).match(/^[\s　]*#(\d{1,3})(?![\p{L}\p{N}_])/u);
+            if (suffixMatch && parseInt(suffixMatch[1], 10) === candidate.entityId) {
+                end = afterName + suffixMatch[0].length;
+            }
+            if (!isMentionBoundaryAfter(routedText, end)) continue;
+            if (!seenPublicCodes.has(candidate.publicCode)) {
+                seenPublicCodes.add(candidate.publicCode);
+                result.mentions.push({
+                    publicCode: candidate.publicCode,
+                    deviceId: candidate.deviceId,
+                    entityId: candidate.entityId,
+                    name: candidate.name,
+                    isCrossDevice: false,
+                    isBound: true
+                });
+            }
+            namedMentionSpans.push({
+                start: at,
+                end,
+                hit: {
+                    publicCode: candidate.publicCode,
+                    deviceId: candidate.deviceId,
+                    entityId: candidate.entityId,
+                    name: candidate.name,
+                    isCrossDevice: false,
+                    isBound: true
+                },
+                literal: routedText.slice(at, end)
+            });
+            break;
+        }
+    }
+
+    // 4+5. Build displayText and cleanText by scanning routedText (code spans
     //      masked) and splicing replacements into the ORIGINAL text. This way
     //      backtick-wrapped tokens are preserved as-is in both outputs:
     //      display keeps the literal backticks visible, and Gatekeeper sees
@@ -218,7 +311,7 @@ function parseMentions(text, ctx) {
         { re: ENTITY_ID_HASH_RE,    lookup: findByEntityId },
         { re: ENTITY_ID_BARE_RE,    lookup: findByEntityId },
     ];
-    const spans = [];
+    const spans = namedMentionSpans.slice();
     for (const { re, lookup } of passes) {
         re.lastIndex = 0;
         let mm;
