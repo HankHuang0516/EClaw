@@ -32,10 +32,12 @@ async function testWsFlow() {
 
   // Test 1: Connect
   console.log('[Test 1] WebSocket connect + auth...');
+  // No Origin header on server-to-server WS upgrade — see PR #2869 for context.
+  // openclaw gateway treats any non-empty Origin as browser-originated and enforces
+  // controlUi.allowedOrigins for ALL clients, rejecting setup scripts with close 1008.
   const ws = new WebSocket(GATEWAY_URL, {
     headers: {
-      'Authorization': 'Basic ' + Buffer.from(`${SETUP_USERNAME}:${SETUP_PASSWORD}`).toString('base64'),
-      'Origin': `https://clawdbot-railway-template-production-e663.up.railway.app`
+      'Authorization': 'Basic ' + Buffer.from(`${SETUP_USERNAME}:${SETUP_PASSWORD}`).toString('base64')
     }
   });
 
