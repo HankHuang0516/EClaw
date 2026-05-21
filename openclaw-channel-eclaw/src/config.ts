@@ -1,5 +1,14 @@
 import type { EClawAccountConfig } from './types.js';
 
+function normalizeEntityId(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isInteger(value) && value >= 0) return value;
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    if (Number.isInteger(parsed) && parsed >= 0) return parsed;
+  }
+  return undefined;
+}
+
 /** Extract accounts map from full openclaw config or eclaw-specific config */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getAccounts(cfg: any): Record<string, any> {
@@ -30,6 +39,7 @@ export function resolveAccount(cfg: any, accountId?: string): EClawAccountConfig
     apiKey: account?.apiKey ?? '',
     apiSecret: account?.apiSecret,
     apiBase: (account?.apiBase ?? 'https://eclawbot.com').replace(/\/$/, ''),
+    entityId: normalizeEntityId(account?.entityId),
     botName: account?.botName,
     webhookUrl: account?.webhookUrl,
   };

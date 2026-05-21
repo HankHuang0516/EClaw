@@ -9,6 +9,15 @@ import { setClient } from './outbound.js';
 import { createWebhookHandler } from './webhook-handler.js';
 import { registerWebhookToken, unregisterWebhookToken } from './webhook-registry.js';
 
+function normalizeEntityId(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isInteger(value) && value >= 0) return value;
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    if (Number.isInteger(parsed) && parsed >= 0) return parsed;
+  }
+  return undefined;
+}
+
 /**
  * Resolve account from ctx.
  *
@@ -24,6 +33,7 @@ function resolveAccountFromCtx(ctx: any): EClawAccountConfig {
       apiKey: ctx.account.apiKey,
       apiSecret: ctx.account.apiSecret,
       apiBase: (ctx.account.apiBase ?? 'https://eclawbot.com').replace(/\/$/, ''),
+      entityId: normalizeEntityId(ctx.account.entityId),
       botName: ctx.account.botName,
       webhookUrl: ctx.account.webhookUrl,
     };
@@ -104,12 +114,10 @@ export async function startAccount(ctx: any): Promise<void> {
       console.log(`[E-Claw]   slot ${e.entityId}: ${e.character}${e.name ? ` "${e.name}"` : ''} bound=${e.isBound} bindingType=${e.bindingType ?? 'none'}`);
     }
 
-    // Bind entity via channel API (always auto-select — server picks first free slot).
-    // entityId is NOT stored in config because slots are dynamic.
-    // /api/channel/bind without entityId is idempotent:
-    //   - Not bound → binds fresh, returns new botSecret
-    //   - Already bound via this channel account → returns existing botSecret (reconnect)
-    const bindData = await client.bindEntity(undefined, account.botName);
+    // Bind entity via channel API. When account.entityId is configured, pin
+    // this account to that slot so reconnects cannot drift into the first
+    // free entity after a backend restart or device-state restore.
+    const bindData = await client.bindEntity(account.entityId, account.botName);
     const assignedEntityId = bindData.entityId;
     const entityInfo = regData.entities.find(e => e.entityId === assignedEntityId);
     const wasAlreadyBound = entityInfo?.isBound ?? false;
