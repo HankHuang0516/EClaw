@@ -30,10 +30,12 @@ const ECLAW_API = process.env.ECLAW_API_URL || 'https://eclawbot.com';
 
 async function wsConnect(url, username, password, gatewayToken, setupPassword) {
   return new Promise((resolve, reject) => {
+    // No Origin header on server-to-server WS upgrade — see PR #2869 for context.
+    // openclaw gateway treats any non-empty Origin as browser-originated and enforces
+    // controlUi.allowedOrigins for ALL clients, rejecting setup scripts with close 1008.
     const ws = new WebSocket(url, {
       headers: {
-        'Authorization': 'Basic ' + Buffer.from(username + ':' + password).toString('base64'),
-        'Origin': 'https://' + new URL(url.replace('wss://', 'https://')).host
+        'Authorization': 'Basic ' + Buffer.from(username + ':' + password).toString('base64')
       }
     });
     let reqCounter = 0;
