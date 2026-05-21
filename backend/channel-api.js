@@ -67,6 +67,13 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
     // Late-bound kanban auto-review hook (set after kanbanModule init)
     let kanbanAutoReview = null;
     function setKanbanAutoReview(fn) { kanbanAutoReview = fn; }
+    async function persistChannelState(deviceId, reason) {
+        const saved = await saveData();
+        if (!saved && serverLog) {
+            serverLog('error', 'db_save', `Channel state save failed after ${reason}`, { deviceId });
+        }
+        return saved;
+    }
 
     // Late-bound org chart forward hook (set after orgChartForward defined in index.js)
     let orgChartForwardFn = null;
@@ -221,7 +228,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                         serverLog('info', 'unbind', `Entity ${eid} unbound (channel account ${accountId} revoked)`, { deviceId, entityId: eid });
                     }
                 }
-                saveData();
+                await persistChannelState(deviceId, 'channel account revoke');
             }
 
             await db.deleteChannelAccount(accountId);
@@ -369,7 +376,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                             e.encryptionStatus = newStatus;
                         }
                     }
-                    saveData();
+                    await persistChannelState(account.device_id, 'channel callback register');
                 }
             }
 
@@ -566,7 +573,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 console.log(`[DynamicEntity] Channel auto-expand after bind: deviceId=${deviceId}, newSlotId=${newChannelSlot}, totalSlots=${Object.keys(device.entities).length}`);
             }
 
-            saveData();
+            await persistChannelState(deviceId, 'channel bind');
 
             if (newChannelSlot !== null) {
                 io.to(deviceId).emit('entityAdded', { entityId: newChannelSlot, totalSlots: Object.keys(device.entities).length });
