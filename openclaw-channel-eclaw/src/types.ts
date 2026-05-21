@@ -4,6 +4,7 @@ export interface EClawAccountConfig {
   apiKey: string;
   apiSecret?: string;
   apiBase: string;
+  entityId?: number;
   botName?: string;
   webhookUrl?: string;
 }

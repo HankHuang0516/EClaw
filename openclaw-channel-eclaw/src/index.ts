@@ -15,6 +15,7 @@ import { dispatchWebhook } from './webhook-registry.js';
  *         default:
  *           apiKey: "eck_..."
  *           apiBase: "https://eclawbot.com"
+ *           entityId: 1
  *           botName: "My Bot"
  *           webhookUrl: "https://your-openclaw-domain.com"
  *
@@ -67,7 +68,7 @@ const plugin = {
     // registers its own handler keyed by a random per-session Bearer token.
     api.registerHttpRoute({
       path: '/eclaw-webhook',
-      auth: 'none', // Plugin handles its own Bearer-token auth in dispatchWebhook()
+      auth: 'plugin', // Plugin handles its own Bearer-token auth in dispatchWebhook()
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       handler: async (req: any, res: any) => {
         await parseBody(req);
