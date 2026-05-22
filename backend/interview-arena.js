@@ -188,6 +188,10 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Daily pool update 2026-05-22: new hard-tier additions ──
+    { file: null, description: 'A terminal window showing docker ps output with four running containers: nginx on port 80, postgres on port 5432, redis on port 6379, and a custom app on port 3000 — all show "Up X hours" status except redis which shows "Up 2 minutes"', keywords: ['docker', 'four', 'nginx', 'postgres', 'redis', 'two', 'minutes'] },
+    { file: null, description: 'A GitHub pull request diff showing 3 files changed with 47 additions and 12 deletions — the primary change inserts a null check before property access, visible as red minus-sign lines replaced by green plus-sign lines', keywords: ['diff', 'three', 'files', '47', '12', 'null', 'check'] },
+    { file: null, description: 'A server monitoring dashboard with four panels: CPU usage graph peaking at 94% at 14:23, memory bar at 13.2 of 32 GB used, disk I/O heatmap with a red spike at 15:00, and an active alerts list showing two critical alerts and one warning', keywords: ['dashboard', 'CPU', '94', 'memory', '13.2', 'two', 'critical', 'warning'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +372,15 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── Daily pool update 2026-05-22: new medium-hard additions ──
+    { title: 'Longest Increasing Subsequence', description: 'Write `solve(nums)` — return the length of the longest strictly increasing subsequence.',
+      testCases: [{ input: '[10,9,2,5,3,7,101,18]', expected: '4' },{ input: '[0,1,0,3,2,3]', expected: '4' },{ input: '[7,7,7,7,7]', expected: '1' },{ input: '[1,2,3,4,5]', expected: '5' }] },
+    { title: 'Container With Most Water', description: 'Write `solve(height)` — given an array of bar heights, find two bars that together with the x-axis form a container holding the most water. Return the maximum water volume.',
+      testCases: [{ input: '[1,8,6,2,5,4,8,3,7]', expected: '49' },{ input: '[1,1]', expected: '1' },{ input: '[4,3,2,1,4]', expected: '16' },{ input: '[1,2,1]', expected: '2' }] },
+    { title: 'Course Schedule', description: 'Write `solve(numCourses, prerequisites)` — prerequisites is an array of [a,b] pairs meaning course b must be taken before course a. Return true if it is possible to finish all courses (no circular dependency).',
+      testCases: [{ input: '2, [[1,0]]', expected: 'true' },{ input: '2, [[1,0],[0,1]]', expected: 'false' },{ input: '4, [[1,0],[2,1],[3,2]]', expected: 'true' },{ input: '3, [[1,0],[2,1],[0,2]]', expected: 'false' }] },
+    { title: 'Generate Parentheses', description: 'Write `solve(n)` — return all combinations of n pairs of well-formed parentheses, sorted lexicographically.',
+      testCases: [{ input: '1', expected: '["()"]' },{ input: '2', expected: '["(())","()()"]' },{ input: '3', expected: '["((()))","(()())","(())()","()(())","()()()"]' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -413,10 +426,15 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many squares of all sizes (1×1, 2×2, up to 8×8) are there on a standard 8×8 chessboard?', expectedKeywords: ['204'] },
     { question: 'A plane travels 2000 km at an effective speed of 1000 km/h (900 km/h airspeed plus 100 km/h tailwind). How many hours does the journey take?', expectedKeywords: ['2'] },
     { question: 'A worker paints 1/3 of a fence on day 1 and 1/4 of the remaining unpainted fence on day 2. What fraction of the fence is still unpainted after day 2?', expectedKeywords: ['1/2', '0.5', 'half'] },
-    // ── New additions to fill easy + medium-hard tiers ──
-    { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
+    // ── New additions to fill medium-hard tiers ──
+    { question: 'A committee of 3 people is chosen from a group of 8. How many different committees are possible?', expectedKeywords: ['56'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Daily pool update 2026-05-22: new medium-hard additions ──
+    { question: 'Two trains start simultaneously from opposite ends of a 500 km track. Train A travels at 80 km/h and Train B at 70 km/h. How many km from Train A\'s starting point will they meet? Round to the nearest whole number.', expectedKeywords: ['267'] },
+    { question: 'If you roll two standard 6-sided dice, what is the probability that the sum is exactly 8? Express as a simplified fraction.', expectedKeywords: ['5/36'] },
+    { question: 'The sum of three consecutive odd integers is 69. What is the largest of the three?', expectedKeywords: ['25'] },
+    { question: 'A 4-digit code uses the digits 1 through 9 (no repeated digits). How many such codes have all four digits in strictly increasing order?', expectedKeywords: ['126'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +512,10 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Daily pool update 2026-05-22: new hard-tier additions ──
+    { text: 'The patient HbA1c level is 7.2 percent and systolic blood pressure is 138 millimeters of mercury — schedule a follow-up with Dr Fitzpatrick in six weeks', keywords: ['HbA1c', '7.2', 'systolic', '138', 'Fitzpatrick', 'six'] },
+    { text: 'Route I-495 northbound shows a 23-minute delay between exits 17A and 19B due to a stalled vehicle — estimated clearance at 16:40 Eastern Time', keywords: ['I-495', 'northbound', '23', '17A', '19B', 'Eastern'] },
+    { text: 'Your two-factor authentication backup code is Alpha Tango 7 2 November Foxtrot — this code expires in exactly fifteen minutes', keywords: ['two-factor', 'Alpha', 'Tango', '72', 'November', 'Foxtrot', 'fifteen'] },
 ];
 
 // ============================================
