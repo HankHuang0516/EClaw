@@ -67,6 +67,7 @@ EClaw/
 │   ├── site-pageviews.js     # Anonymous pageview tracking for marketing/public pages
 │   ├── arena-pool-updater.js # Daily auto-refresh of interview arena questions via Claude
 │   ├── arena-pool-validator.js # Validates arena question pool (static + live modes)
+│   ├── usage-api.js           # Usage snapshot API (Claude Code + Codex CLI token spend tracking)
 │   ├── arena-test-pages.js    # Visual test pages for interview arena challenges
 │   ├── ack-retry-sweep.js     # Google Play ack-retry sweep for revenue leak prevention
 │   ├── scheduled-messages.js  # Scheduled message system (Phase 1 — CRUD + poller)
@@ -327,6 +328,7 @@ EClaw/
 | `/api/mindmap/*` | mindmap.js + mindmap-mirror.js | Mind map CRUD (nodes, edges, anchors, comments), AI traverse, note-mirror backfill |
 | `/api/analytics/*` | site-pageviews.js | Site pageview analytics aggregation |
 | `/api/growth/*` | growth.js | Growth metrics for admin bots |
+| `/api/usage/*` | usage-api.js | Usage snapshot POST/GET + timeline (Claude Code / Codex CLI token tracking) |
 | `/api/chat/message/:id/related` | index.js + chat-embedding.js | Nearest-neighbor message lookup |
 | `/api/mission/card/:id/deps` | api_kanban_dependencies.js | Kanban card dependency chain (add/remove/list dependencies) |
 | `/api/idle-dispatch/*` | api_idle_dispatch.js | Idle dispatch API (queue status, manual drain) |
@@ -1039,6 +1041,13 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Growth Tracking (v1.1168)**: `growth.js` module for admin bot growth metrics; static serving fix
 - **UIUX Audit Script Alignment (v1.1172)**: QA/UIUX audit test scripts aligned with current portal contracts
 
+### Recent Features (v1.1172.x+, 2026-05-22 – 2026-05-24)
+
+- **Usage API + Dashboard Widget (PR #2889–#2896)**: `backend/usage-api.js` module with `POST /api/usage/snapshot` + `GET /api/usage/snapshot` + `GET /api/usage/timeline`; `usage_snapshots` table; macOS launchd daemon (`backend/tooling/eclaw-usage-daemon/`) polls Claude Code + Codex CLI usage → POST snapshots; Dashboard widget shows 5h gauges, session/weekly % bars, projects list; `live.rate_limits.{five_hour,seven_day}.used_percentage` fix; weekly bar reset countdown
+- **Nagoya Trip Interactive Map (PR #2888)**: Leaflet + OpenStreetMap interactive map page at `/portal/nagoya-trip.html` with trip itinerary, day banners, dark mode hero fix
+- **OpenClaw Channel Fix (PR #2886)**: Support OpenClaw 2026.5.20 protocol changes
+- **Android ClawRenderer i18n (PR #2899)**: Canvas empty-state 4 hardcoded EN strings → strings.xml (14 locales)
+
 ### Recent Fixes (v1.1172.x+, 2026-05-14 – 2026-05-22)
 
 - **Channel Binding Persistence Fix**: Await binding persistence to prevent race conditions on channel bind
@@ -1070,7 +1079,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 
 ## Test Coverage Summary
 
-**~460 total API routes** across all modules (410 excluding Article Publisher), **~84% covered** by Jest + integration tests (~3007 test cases across 206 Jest files + 59 integration tests).
+**~465 total API routes** across all modules (415 excluding Article Publisher), **~84% covered** by Jest + integration tests (~3008 test cases across 206 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
