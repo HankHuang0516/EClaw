@@ -293,6 +293,10 @@
     <string name="file_btn_download">Tải xuống</string>
     <string name="chat_load_image_failed">Tải hình ảnh thất bại</string>
     <string name="wallpaper_no_bound_entities">Không có thực thể được liên kết</string>
+    <string name="claw_renderer_loading_entities">Đang tải thực thể…</string>
+    <string name="claw_renderer_no_entities_connected">Không có thực thể kết nối</string>
+    <string name="claw_renderer_open_app_to_bind">Mở app E-Claw để liên kết</string>
+    <string name="claw_renderer_with_openclaw_bot">thực thể với bot OpenClaw</string>
     <string name="main_agent_card_deleted">Đã xóa Agent Card</string>
     <string name="main_agent_card_saved">Đã lưu Agent Card</string>
     <string name="main_delete_failed">Xóa thất bại</string>

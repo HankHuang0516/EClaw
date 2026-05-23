@@ -564,6 +564,10 @@ Jika anda mempunyai sebarang soalan, sila hubungi kami melalui e-mel rasmi kami.
     <string name="file_btn_download">Muat Turun</string>
     <string name="chat_load_image_failed">Gagal memuat imej</string>
     <string name="wallpaper_no_bound_entities">Tiada entiti terikat</string>
+    <string name="claw_renderer_loading_entities">Memuat entiti…</string>
+    <string name="claw_renderer_no_entities_connected">Tiada entiti bersambung</string>
+    <string name="claw_renderer_open_app_to_bind">Buka app E-Claw untuk mengikat</string>
+    <string name="claw_renderer_with_openclaw_bot">entiti dengan bot OpenClaw</string>
     <string name="main_agent_card_deleted">Kad Ejen dipadam</string>
     <string name="main_agent_card_saved">Kad Ejen disimpan</string>
     <string name="main_delete_failed">Pemadaman gagal</string>

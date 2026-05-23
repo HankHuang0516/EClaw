@@ -305,6 +305,10 @@ Tus comentarios enviados aparecerán aquí.</string>
     <string name="file_btn_download">Descargar</string>
     <string name="chat_load_image_failed">Error al cargar imagen</string>
     <string name="wallpaper_no_bound_entities">Sin entidades vinculadas</string>
+    <string name="claw_renderer_loading_entities">Cargando entidades…</string>
+    <string name="claw_renderer_no_entities_connected">No hay entidades conectadas</string>
+    <string name="claw_renderer_open_app_to_bind">Abre la app E-Claw para vincular</string>
+    <string name="claw_renderer_with_openclaw_bot">entidades con el bot OpenClaw</string>
     <string name="main_agent_card_deleted">Agent Card eliminado</string>
     <string name="main_agent_card_saved">Agent Card guardado</string>
     <string name="main_delete_failed">Error al eliminar</string>
