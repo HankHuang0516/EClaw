@@ -1,0 +1,318 @@
+<!-- 名古屋旅遊地圖嵌入版本 - 適用於 EClaw Portal 頁面
+     用法：把以下整段（含 <style>、<div>、<script>）貼進目標頁面即可。
+     如果頁面尚未載入 Leaflet，腳本會自動從 cdn.jsdelivr.net 動態載入一次。
+-->
+<style>
+.nagoya-map-widget {
+    max-width: 1200px;
+    margin: 30px auto;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.nagoya-header {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
+    color: white;
+    padding: 25px;
+    text-align: center;
+}
+
+.nagoya-header h2 {
+    font-size: 2.2em;
+    margin-bottom: 8px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.nagoya-header p { font-size: 1.1em; opacity: 0.9; margin: 0; }
+
+.nagoya-map-container {
+    position: relative;
+    height: 500px;
+    margin: 20px;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+#nagoya-map { width: 100%; height: 100%; }
+
+.nagoya-legend {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    text-align: center;
+}
+
+.nagoya-legend h3 { margin-bottom: 15px; font-size: 1.2em; }
+
+.nagoya-markers {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.nagoya-marker-item {
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,0.2);
+    padding: 8px 12px;
+    border-radius: 15px;
+    font-size: 0.85em;
+}
+
+.nagoya-marker-color {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.nagoya-itinerary {
+    padding: 25px;
+    background: #f8f9fa;
+    display: grid;
+    gap: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.nagoya-day {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border-left: 4px solid;
+    transition: transform 0.3s ease;
+}
+
+.nagoya-day:hover { transform: translateY(-2px); }
+
+.nagoya-day-1 { border-left-color: #ff6b6b; }
+.nagoya-day-2 { border-left-color: #4ecdc4; }
+.nagoya-day-3 { border-left-color: #45b7d1; }
+.nagoya-day-4 { border-left-color: #96ceb4; }
+.nagoya-day-5 { border-left-color: #ffeaa7; }
+
+.nagoya-day-title {
+    font-size: 1.3em;
+    font-weight: bold;
+    margin-bottom: 12px;
+    color: #2c3e50;
+}
+
+.nagoya-locations {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nagoya-locations li {
+    padding: 6px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 0.95em;
+    color: #555;
+    line-height: 1.4;
+}
+
+.nagoya-locations li:last-child { border-bottom: none; }
+.nagoya-locations li:before { content: "📍"; margin-right: 8px; }
+
+.nagoya-attribution {
+    text-align: center;
+    padding: 12px;
+    font-size: 0.8em;
+    color: #888;
+    background: #f8f9fa;
+    border-top: 1px solid #eee;
+}
+.nagoya-attribution a { color: #667eea; }
+
+@media (max-width: 768px) {
+    .nagoya-map-widget { margin: 15px 10px; border-radius: 15px; }
+    .nagoya-header h2 { font-size: 1.8em; }
+    .nagoya-map-container { height: 350px; margin: 15px; }
+    .nagoya-itinerary { padding: 20px 15px; grid-template-columns: 1fr; }
+    .nagoya-day { padding: 15px; }
+    .nagoya-markers { gap: 10px; }
+    .nagoya-marker-item { padding: 6px 10px; font-size: 0.8em; }
+}
+</style>
+
+<div class="nagoya-map-widget">
+    <div class="nagoya-header">
+        <h2>🌸 名古屋自由行 5天4夜 🌸</h2>
+        <p>完整景點地圖導覽 | 早去早回精華行程</p>
+    </div>
+
+    <div class="nagoya-map-container">
+        <div id="nagoya-map"></div>
+    </div>
+
+    <div class="nagoya-legend">
+        <h3>🗺️ 互動地圖說明</h3>
+        <p>點擊地圖上的標記可查看詳細資訊 • 不同顏色代表不同天數的行程</p>
+        <div class="nagoya-markers">
+            <div class="nagoya-marker-item"><div class="nagoya-marker-color" style="background: #ff6b6b;"></div>Day 1 - 抵達日</div>
+            <div class="nagoya-marker-item"><div class="nagoya-marker-color" style="background: #4ecdc4;"></div>Day 2 - 名古屋港</div>
+            <div class="nagoya-marker-item"><div class="nagoya-marker-color" style="background: #45b7d1;"></div>Day 3 - 吉卜力公園</div>
+            <div class="nagoya-marker-item"><div class="nagoya-marker-color" style="background: #96ceb4;"></div>Day 4 - 樂高樂園</div>
+            <div class="nagoya-marker-item"><div class="nagoya-marker-color" style="background: #ffeaa7;"></div>Day 5 - 返程日</div>
+        </div>
+    </div>
+
+    <div class="nagoya-itinerary">
+        <div class="nagoya-day nagoya-day-1">
+            <div class="nagoya-day-title">📅 Day 1 - 抵達中部國際機場</div>
+            <ul class="nagoya-locations">
+                <li>中部國際機場 (NGO) - 入境台灣旅客主要門戶</li>
+                <li>常滑招財貓通 - 日本最大招財貓集散地</li>
+                <li>AEON Mall 常滑 - 購物美食一站式體驗</li>
+            </ul>
+        </div>
+
+        <div class="nagoya-day nagoya-day-2">
+            <div class="nagoya-day-title">📅 Day 2 - 名古屋港區探索</div>
+            <ul class="nagoya-locations">
+                <li>名古屋港水族館 - 日本最大級海洋館</li>
+                <li>大須商店街 - 傳統與現代交融的購物天堂</li>
+                <li>釣船茶屋 - 道地名古屋料理體驗</li>
+            </ul>
+        </div>
+
+        <div class="nagoya-day nagoya-day-3">
+            <div class="nagoya-day-title">📅 Day 3 - 吉卜力公園 &amp; 榮商圈</div>
+            <ul class="nagoya-locations">
+                <li>愛・地球博記念公園 (吉卜力公園) - 宮崎駿世界實境體驗</li>
+                <li>榮商圈 (SakaeChika) - 地下購物迷宮探險</li>
+                <li>唐吉訶德榮店 - 24小時驚奇折扣店</li>
+            </ul>
+        </div>
+
+        <div class="nagoya-day nagoya-day-4">
+            <div class="nagoya-day-title">📅 Day 4 - 樂高樂園 &amp; 海洋探索</div>
+            <ul class="nagoya-locations">
+                <li>樂高樂園日本 - 親子同樂積木世界</li>
+                <li>SEA LIFE名古屋海洋探索中心 - 海底隧道奇幻之旅</li>
+                <li>Oasis21 - 未來感十足的立體公園</li>
+            </ul>
+        </div>
+
+        <div class="nagoya-day nagoya-day-5">
+            <div class="nagoya-day-title">📅 Day 5 - 還車返程</div>
+            <ul class="nagoya-locations">
+                <li>租車公司還車處 - 結束愉快的自駕之旅</li>
+                <li>中部國際機場 - 搭機返回台灣</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="nagoya-attribution">
+        地圖資料 © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> 貢獻者 ・
+        底圖 <a href="https://leafletjs.com/" target="_blank" rel="noopener">Leaflet</a>
+    </div>
+</div>
+
+<script>
+(function() {
+    const LEAFLET_CSS = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css';
+    const LEAFLET_JS  = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js';
+    const LEAFLET_CSS_INTEGRITY = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+    const LEAFLET_JS_INTEGRITY  = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+
+    const nagoyaLocations = [
+        { day: 1, name: "中部國際機場 (NGO)", lat: 34.8584, lng: 136.8097, color: "#ff6b6b", description: "名古屋主要國際機場，台灣直飛班機抵達點", category: "交通" },
+        { day: 1, name: "常滑招財貓通", lat: 34.8875, lng: 136.8364, color: "#ff6b6b", description: "日本最大的招財貓展示街道，超過39隻巨型招財貓", category: "觀光" },
+        { day: 1, name: "AEON Mall 常滑", lat: 34.8742, lng: 136.8453, color: "#ff6b6b", description: "大型購物中心，餐飲購物一應俱全", category: "購物" },
+        { day: 2, name: "名古屋港水族館", lat: 35.0911, lng: 136.8833, color: "#4ecdc4", description: "日本最大級海洋館，白鯨表演聞名", category: "觀光" },
+        { day: 2, name: "大須商店街", lat: 35.1583, lng: 136.8997, color: "#4ecdc4", description: "名古屋最著名傳統商店街，美食與文化並存", category: "購物" },
+        { day: 2, name: "釣船茶屋", lat: 35.1575, lng: 136.8989, color: "#4ecdc4", description: "道地名古屋料理餐廳，體驗在地美食文化", category: "美食" },
+        { day: 3, name: "愛・地球博記念公園 (吉卜力公園)", lat: 35.1942, lng: 137.0486, color: "#45b7d1", description: "宮崎駿動畫世界實境重現，必訪夢幻景點", category: "觀光" },
+        { day: 3, name: "榮商圈 (SakaeChika)", lat: 35.1681, lng: 136.9086, color: "#45b7d1", description: "名古屋最繁華商區，地下街購物天堂", category: "購物" },
+        { day: 3, name: "唐吉訶德榮店", lat: 35.1686, lng: 136.9092, color: "#45b7d1", description: "24小時營業驚奇折扣店，什麼都有什麼都賣", category: "購物" },
+        { day: 4, name: "樂高樂園日本", lat: 35.0364, lng: 136.8508, color: "#96ceb4", description: "亞洲首座樂高主題樂園，親子同樂首選", category: "觀光" },
+        { day: 4, name: "SEA LIFE名古屋", lat: 35.0361, lng: 136.8511, color: "#96ceb4", description: "海洋探索中心，360度海底隧道體驗", category: "觀光" },
+        { day: 4, name: "Oasis21", lat: 35.1703, lng: 136.9089, color: "#96ceb4", description: "未來感建築地標，夜間燈光秀絕美", category: "觀光" }
+    ];
+
+    function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    function dayIcon(loc) {
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">
+            <path d="M14 0C6.268 0 0 6.268 0 14c0 7.732 14 22 14 22s14-14.268 14-22C28 6.268 21.732 0 14 0z" fill="${loc.color}"/>
+            <circle cx="14" cy="14" r="7" fill="white"/>
+            <text x="14" y="18" text-anchor="middle" font-family="Arial" font-size="11" font-weight="bold" fill="${loc.color}">${loc.day}</text>
+        </svg>`;
+        return L.icon({
+            iconUrl: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+            iconSize: [28, 36],
+            iconAnchor: [14, 36],
+            popupAnchor: [0, -32]
+        });
+    }
+
+    function initNagoyaMap() {
+        const el = document.getElementById('nagoya-map');
+        if (!el || el.dataset.inited === '1') return;
+        el.dataset.inited = '1';
+
+        const map = L.map('nagoya-map', { scrollWheelZoom: false }).setView([35.1, 136.93], 10);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        const bounds = [];
+        nagoyaLocations.forEach(loc => {
+            const marker = L.marker([loc.lat, loc.lng], { icon: dayIcon(loc), title: loc.name }).addTo(map);
+            const html = `
+                <div style="padding:4px 2px;max-width:260px;font-family:inherit;line-height:1.5;">
+                    <h4 style="margin:0 0 6px 0;color:${loc.color};font-size:1em;">Day ${loc.day}: ${escapeHtml(loc.name)}</h4>
+                    <p style="margin:0 0 6px 0;font-size:0.9em;">${escapeHtml(loc.description)}</p>
+                    <span style="background:${loc.color};color:white;padding:3px 8px;border-radius:12px;font-size:0.78em;display:inline-block;">${escapeHtml(loc.category)}</span>
+                </div>`;
+            marker.bindPopup(html);
+            bounds.push([loc.lat, loc.lng]);
+        });
+        if (bounds.length > 1) map.fitBounds(bounds, { padding: [30, 30] });
+    }
+
+    function ensureLeaflet(cb) {
+        if (typeof L !== 'undefined') { cb(); return; }
+        if (!document.querySelector('link[data-nagoya-leaflet]')) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = LEAFLET_CSS;
+            link.integrity = LEAFLET_CSS_INTEGRITY;
+            link.crossOrigin = '';
+            link.setAttribute('data-nagoya-leaflet', '1');
+            document.head.appendChild(link);
+        }
+        let existing = document.querySelector('script[data-nagoya-leaflet]');
+        if (existing) {
+            existing.addEventListener('load', cb);
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = LEAFLET_JS;
+        script.integrity = LEAFLET_JS_INTEGRITY;
+        script.crossOrigin = '';
+        script.setAttribute('data-nagoya-leaflet', '1');
+        script.onload = cb;
+        document.head.appendChild(script);
+    }
+
+    function go() { ensureLeaflet(initNagoyaMap); }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', go);
+    } else {
+        go();
+    }
+})();
+</script>
