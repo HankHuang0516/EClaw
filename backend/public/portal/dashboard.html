@@ -5564,12 +5564,16 @@
             // Weekly (7d)
             let weekPct = 0;
             let weekIsEst = false;
+            let weekResetMs = null;
             const liveSeven = live && live.rate_limits && live.rate_limits.seven_day;
             const nestedWeekPct = liveSeven && Number.isFinite(liveSeven.used_percentage) ? liveSeven.used_percentage : null;
             if (live && Number.isFinite(live.seven_day_pct)) {
                 weekPct = live.seven_day_pct;
             } else if (nestedWeekPct !== null) {
                 weekPct = nestedWeekPct;
+                if (Number.isFinite(liveSeven.resets_at)) {
+                    weekResetMs = (liveSeven.resets_at * 1000) - Date.now();
+                }
             } else {
                 weekIsEst = true;
                 const cutoff = Date.now() - SEVEN_DAYS_MS;
@@ -5582,7 +5586,7 @@
                 weekPct = (tokens / CLAUDE_7D_LIMIT_TOKENS) * 100;
             }
             paintBar('claudeWeekFill', 'claudeWeekPct', 'claudeWeekReset',
-                Math.round(weekPct), weekIsEst, null, 'd',
+                Math.round(weekPct), weekIsEst, weekResetMs, 'd',
                 'dashboard_usage_widget_weekly_used');
         }
 
