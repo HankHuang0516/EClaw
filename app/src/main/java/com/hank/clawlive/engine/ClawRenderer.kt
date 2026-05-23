@@ -9,6 +9,7 @@ import android.graphics.Paint
 import android.graphics.RectF
 import android.net.Uri
 import android.text.TextPaint
+import com.hank.clawlive.R
 import com.hank.clawlive.data.local.EntityLayout
 import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.model.AgentStatus
