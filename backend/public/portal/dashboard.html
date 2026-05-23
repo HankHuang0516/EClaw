@@ -5529,8 +5529,15 @@
             let sessPct = 0;
             let sessIsEst = false;
             let sessResetMs = null;
+            const liveFive = live && live.rate_limits && live.rate_limits.five_hour;
+            const nestedSessPct = liveFive && Number.isFinite(liveFive.used_percentage) ? liveFive.used_percentage : null;
             if (live && Number.isFinite(live.five_hour_pct)) {
                 sessPct = live.five_hour_pct;
+            } else if (nestedSessPct !== null) {
+                sessPct = nestedSessPct;
+                if (Number.isFinite(liveFive.resets_at)) {
+                    sessResetMs = (liveFive.resets_at * 1000) - Date.now();
+                }
             } else {
                 sessIsEst = true;
                 const cutoff = Date.now() - FIVE_HOURS_MS;
@@ -5557,8 +5564,12 @@
             // Weekly (7d)
             let weekPct = 0;
             let weekIsEst = false;
+            const liveSeven = live && live.rate_limits && live.rate_limits.seven_day;
+            const nestedWeekPct = liveSeven && Number.isFinite(liveSeven.used_percentage) ? liveSeven.used_percentage : null;
             if (live && Number.isFinite(live.seven_day_pct)) {
                 weekPct = live.seven_day_pct;
+            } else if (nestedWeekPct !== null) {
+                weekPct = nestedWeekPct;
             } else {
                 weekIsEst = true;
                 const cutoff = Date.now() - SEVEN_DAYS_MS;
