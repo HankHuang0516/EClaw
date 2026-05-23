@@ -1475,7 +1475,8 @@ app.get('/api/help', (req, res) => {
         files:      ['file','檔案','upload','download','上傳','下載','ファイル','アップロード','保存','파일','업로드','저장','ไฟล์','อัปโหลด','บันทึก','tệp','tải lên','lưu','unggah','simpan','fichier','téléchargement','enregistrer','archivo','subir','guardar','fail','muat naik'],
         entities:   ['entity','實體','bind','綁定','status','lookup','查詢實體','エンティティ','バインディング','엔티티','연결','바인딩','เอนทิตี','การผูกมัด','thực thể','liên kết','kết nối','entitas','pengikatan','koneksi','entité','liaison','entidad','enlace','vínculo','entiti','sambungan'],
         vault:      ['vault','device-vars','devicevars','secret','api key','apikey','金鑰','密鑰','秘密','保險箱','audit','審計','variables','環境變數','환경 변수','보관소','감사','シークレット','金庫','監査','bí mật','kho','giám sát','rahasia','brankas','audit log'],
-        analytics:  ['analytics','growth','metrics','signup','retention','kpi','viral','k-value','成長','指標','留存','分析','회귀','분석','지표','メトリクス','分析','指標']
+        analytics:  ['analytics','growth','metrics','signup','retention','kpi','viral','k-value','成長','指標','留存','分析','회귀','분석','지표','メトリクス','分析','指標'],
+        usage:      ['usage','spend','token spend','token','claude usage','codex usage','snapshot','timeline','daemon','用量','花費','token 花費','token 用量','使用量','消費','コスト','使用量','사용량','비용']
     };
 
     const matched = Object.entries(INTENT_MAP).find(([category, kws]) =>
@@ -1545,6 +1546,12 @@ app.get('/api/help', (req, res) => {
         analytics: [
             { title: 'Daily growth snapshot (today, owner-admin only)', curl: `curl -s "${apiBase}/api/growth/daily?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
             { title: 'Daily growth snapshot for a specific date (YYYY-MM-DD)', curl: `curl -s "${apiBase}/api/growth/daily?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}&date=2026-04-17"` }
+        ],
+        usage: [
+            { title: 'POST Claude/Codex spend snapshot (daemon push)', curl: `curl -s -X POST "${apiBase}/api/usage/snapshot" -H "Content-Type: application/json" -d ${d},"captured_at":"2026-05-23T12:00:00Z","daemon_version":"0.1.0","claude":{"sessions":[]},"codex":{"sessions":[]},"pricing_source":"litellm"}'` },
+            { title: 'GET latest snapshot + today/7d/30d aggregates', curl: `curl -s "${apiBase}/api/usage/snapshot?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
+            { title: 'GET timeline (last 24h)', curl: `curl -s "${apiBase}/api/usage/timeline?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}&hours=24"` },
+            { title: 'GET timeline (last 7 days)', curl: `curl -s "${apiBase}/api/usage/timeline?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}&hours=168"` }
         ]
     };
 
@@ -1554,7 +1561,7 @@ app.get('/api/help', (req, res) => {
     res.json({
         intent,
         matched_category: matched,
-        tip: `Use ?intent=KEYWORD to discover APIs. Categories: messaging, kanban, schedule, notes, search, files, entities, vault`,
+        tip: `Use ?intent=KEYWORD to discover APIs. Categories: messaging, kanban, schedule, notes, search, files, entities, vault, analytics, usage`,
         curl_examples: curlBlock
     });
 });
@@ -1748,6 +1755,15 @@ try {
     console.log('[Growth] Module loaded successfully');
 } catch (err) {
     console.error('[Growth] Failed to load module:', err.message);
+}
+
+// Usage Snapshot API — Plan B Phase 1 (mac-daemon push of Claude/Codex spend)
+try {
+    const usageApiModule = require('./usage-api')(devices);
+    app.use('/api/usage', usageApiModule.router);
+    console.log('[UsageAPI] Module loaded successfully');
+} catch (err) {
+    console.error('[UsageAPI] Failed to load module:', err.message);
 }
 
 // Mindmap — multi-layer thinking graph (Card #19, Phase 1: schema + CRUD)
