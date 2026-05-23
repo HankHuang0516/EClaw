@@ -188,6 +188,11 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── 2026-05-23 additions: easy + medium + hard tier balance ──
+    { file: null, description: 'A traffic light on a pole showing three circles: red at top, yellow in middle, green at bottom — the green circle is illuminated', keywords: ['traffic', 'light', 'green', 'three'] },
+    { file: null, description: 'A Kanban board with three swimlane columns labeled To Do, In Progress, and Done — To Do has four blue sticky notes, In Progress has two yellow notes, Done has seven green notes', keywords: ['kanban', 'three', 'four', 'two', 'seven', 'done'] },
+    { file: null, description: 'A vertical bar chart comparing annual sales for four product lines: Product A $12K, Product B $8K, Product C $15K, Product D $5K — Product C is the tallest bar shaded in blue', keywords: ['bar', 'chart', 'four', 'product', '15', 'tallest'] },
+    { file: null, description: 'A UML class diagram with three classes: User has fields id, name, email; Order has fields orderId, userId, amount, status; Product has fields productId, name, price, stock — User has a one-to-many arrow to Order, Order has a many-to-many dashed line to Product', keywords: ['UML', 'three', 'classes', 'user', 'order', 'product', 'relationship'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -204,12 +209,12 @@ function generateButtonClickChallenge() {
     return { correctIndex, correctLabel, buttonCount, seed: Math.floor(Math.random() * 1e9) };
 }
 
-const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Wei Zhang','Amara Osei','Ravi Kapoor','Isabella Rossi','Dmitri Volkov'];
-const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se','wei@demo.cn','amara@test.gh','ravi@sample.in','isabella@demo.it','dmitri@test.ru'];
-const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','China','Ghana','Italy','Russia','Netherlands'];
-const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123','+46-70-123-4567','+65-9123-4567','+52-55-1234-5678','+353-87-123-4567'];
-const FORM_DATES = ['1990-06-15','1985-03-22','1992-11-08','1988-01-30','1995-07-14','1983-09-25','1991-12-01','1987-04-17','1993-08-09','1986-02-14','1994-10-31','1989-05-20'];
-const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund'];
+const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Wei Zhang','Amara Osei','Ravi Kapoor','Isabella Rossi','Dmitri Volkov','Nguyen Van Thanh','Zanele Mokoena','Hiroshi Nakamura'];
+const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se','wei@demo.cn','amara@test.gh','ravi@sample.in','isabella@demo.it','dmitri@test.ru','nguyen@example.vn','zanele@test.co.za','hiroshi@demo.jp'];
+const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','China','Ghana','Italy','Russia','Netherlands','Vietnam','South Africa','Norway','Argentina','Thailand'];
+const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123','+46-70-123-4567','+65-9123-4567','+52-55-1234-5678','+353-87-123-4567','+84-90-123-4567','+27-82-456-7890','+47-900-12345'];
+const FORM_DATES = ['1990-06-15','1985-03-22','1992-11-08','1988-01-30','1995-07-14','1983-09-25','1991-12-01','1987-04-17','1993-08-09','1986-02-14','1994-10-31','1989-05-20','1997-02-28','1982-11-03','1996-08-19'];
+const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund','Request urgent quote for enterprise license','Apply for early access program','Interested in partnership opportunities','Requesting technical support for integration'];
 
 function generateFormFillChallenge() {
     const nameIdx = Math.floor(Math.random() * FORM_NAMES.length);
@@ -255,39 +260,64 @@ function generateDragDropChallenge() {
 }
 
 function generateNavigationChallenge() {
-    const categories = ['Products', 'Services', 'Company', 'Support', 'Resources', 'Developers', 'Partners', 'Solutions'];
-    const subcategories = ['Electronics', 'Software', 'Hardware', 'Analytics', 'Cloud', 'Security', 'Networking', 'AI Tools'];
-    const sections = ['Documentation', 'Downloads', 'Tutorials', 'API Reference', 'Release Notes', 'FAQ', 'Pricing', 'Contact'];
+    const categories = ['Products', 'Services', 'Company', 'Support', 'Resources', 'Developers', 'Partners', 'Solutions', 'Industries', 'Platform'];
+    const subcategories = ['Electronics', 'Software', 'Hardware', 'Analytics', 'Cloud', 'Security', 'Networking', 'AI Tools', 'Mobile', 'Enterprise'];
+    const sections = ['Documentation', 'Downloads', 'Tutorials', 'API Reference', 'Release Notes', 'FAQ', 'Pricing', 'Contact', 'Case Studies', 'Quickstart'];
+    const subsections = ['Overview', 'Getting Started', 'Advanced', 'Examples', 'Changelog', 'Migration Guide', 'Best Practices', 'Troubleshooting', 'Reference', 'Glossary'];
     const items = ['Item #' + (100 + Math.floor(Math.random() * 900))];
+    const depth = 4 + Math.floor(Math.random() * 2); // 4 or 5
+    const linksPerLevel = 8 + Math.floor(Math.random() * 3); // 8, 9, or 10
     const correctPath = [
         categories[Math.floor(Math.random() * categories.length)],
         subcategories[Math.floor(Math.random() * subcategories.length)],
         sections[Math.floor(Math.random() * sections.length)],
+        ...(depth >= 5 ? [subsections[Math.floor(Math.random() * subsections.length)]] : []),
         items[0],
     ];
     const targetInfo = `Serial: ${generateToken(4).toUpperCase()}`;
-    return { correctPath, targetInfo, depth: 4, linksPerLevel: 8 };
+    return { correctPath, targetInfo, depth, linksPerLevel };
 }
 
 function generateTableExtractChallenge() {
     const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
-    const departments = ['Engineering', 'Marketing', 'Sales', 'Operations', 'HR', 'Finance', 'Legal', 'R&D', 'Customer Support', 'Product'];
+    const departments = ['Engineering', 'Marketing', 'Sales', 'Operations', 'HR', 'Finance', 'Legal', 'R&D', 'Customer Support', 'Product', 'Design', 'DevOps', 'Security', 'Analytics', 'Partnerships'];
+    // Use 10–15 rows per challenge for added complexity
+    const rowCount = 10 + Math.floor(Math.random() * 6);
+    const selectedDepts = [...departments].sort(() => Math.random() - 0.5).slice(0, rowCount);
     const tableData = [];
-    for (const dept of departments) {
+    for (const dept of selectedDepts) {
         const row = { department: dept };
         for (const q of quarters) {
             row[q] = Math.floor(Math.random() * 50000) + 10000;
         }
         tableData.push(row);
     }
-    // Pick a random question
+    // Multi-question pool: total, max dept, min dept, average
     const targetQ = quarters[Math.floor(Math.random() * quarters.length)];
-    const total = tableData.reduce((s, r) => s + r[targetQ], 0);
+    const questionType = Math.floor(Math.random() * 4);
+    let question, correctAnswer;
+    if (questionType === 0) {
+        const total = tableData.reduce((s, r) => s + r[targetQ], 0);
+        question = `What is the total revenue for ${targetQ}?`;
+        correctAnswer = String(total);
+    } else if (questionType === 1) {
+        const maxRow = tableData.reduce((a, b) => a[targetQ] > b[targetQ] ? a : b);
+        question = `Which department has the highest revenue in ${targetQ}?`;
+        correctAnswer = maxRow.department;
+    } else if (questionType === 2) {
+        const minRow = tableData.reduce((a, b) => a[targetQ] < b[targetQ] ? a : b);
+        question = `Which department has the lowest revenue in ${targetQ}?`;
+        correctAnswer = minRow.department;
+    } else {
+        const avg = Math.round(tableData.reduce((s, r) => s + r[targetQ], 0) / tableData.length);
+        question = `What is the average revenue per department for ${targetQ}? (round to nearest whole number)`;
+        correctAnswer = String(avg);
+    }
     return {
         tableData,
         columns: ['department', ...quarters],
-        question: `What is the total revenue for ${targetQ}?`,
-        correctAnswer: String(total),
+        question,
+        correctAnswer,
     };
 }
 
@@ -368,6 +398,15 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── 2026-05-23 additions: medium + hard tier ──
+    { title: 'Merge Intervals', description: 'Write `solve(intervals)` — given an array of [start, end] intervals sorted by start, merge all overlapping intervals and return the merged result.',
+      testCases: [{ input: '[[1,3],[2,6],[8,10],[15,18]]', expected: '[[1,6],[8,10],[15,18]]' },{ input: '[[1,4],[4,5]]', expected: '[[1,5]]' },{ input: '[[1,4]]', expected: '[[1,4]]' },{ input: '[]', expected: '[]' }] },
+    { title: 'Jump Game', description: 'Write `solve(nums)` — each element is the maximum jump length from that position. Return true if you can reach the last index starting from index 0.',
+      testCases: [{ input: '[2,3,1,1,4]', expected: 'true' },{ input: '[3,2,1,0,4]', expected: 'false' },{ input: '[0]', expected: 'true' },{ input: '[2,0,0]', expected: 'true' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(heights)` — given non-negative integers representing an elevation map where each bar has width 1, compute how much water it can trap after raining.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[1,0,1]', expected: '1' },{ input: '[3,0,0,2,0,4]', expected: '10' }] },
+    { title: 'Unique Paths', description: 'Write `solve(m, n)` — a robot starts at the top-left of an m×n grid and can only move right or down. Return the number of distinct paths to the bottom-right corner.',
+      testCases: [{ input: '3, 7', expected: '28' },{ input: '3, 2', expected: '3' },{ input: '1, 1', expected: '1' },{ input: '2, 3', expected: '3' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -414,9 +453,15 @@ let RESPONSE_QUESTIONS = [
     { question: 'A plane travels 2000 km at an effective speed of 1000 km/h (900 km/h airspeed plus 100 km/h tailwind). How many hours does the journey take?', expectedKeywords: ['2'] },
     { question: 'A worker paints 1/3 of a fence on day 1 and 1/4 of the remaining unpainted fence on day 2. What fraction of the fence is still unpainted after day 2?', expectedKeywords: ['1/2', '0.5', 'half'] },
     // ── New additions to fill easy + medium-hard tiers ──
-    { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── 2026-05-23 additions: medium + hard tier ──
+    { question: 'A factory produces 120 units per hour and operates 8 hours a day, 5 days a week. How many units does it produce in a 4-week month?', expectedKeywords: ['19200'] },
+    { question: 'What is the least common multiple (LCM) of 12 and 18?', expectedKeywords: ['36'] },
+    { question: 'A circle has a radius of 7 cm. What is its area in cm²? Use π ≈ 22/7.', expectedKeywords: ['154'] },
+    { question: 'How many ways can a committee of 3 people be chosen from a group of 8 where order does not matter?', expectedKeywords: ['56'] },
+    { question: 'What is the remainder when 7 to the power of 100 is divided by 5?', expectedKeywords: ['1'] },
+    { question: 'Pipe A fills a tank in 6 hours. Pipe B drains the same tank in 8 hours. If both are open simultaneously and the tank starts empty, after how many hours is the tank full?', expectedKeywords: ['24'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +539,14 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── 2026-05-23 additions: medium tier to balance distribution ──
+    { text: 'The office meeting is scheduled for Thursday at two thirty PM in the main conference room on the third floor', keywords: ['meeting', 'thursday', 'two', 'thirty', 'conference', 'third'] },
+    { text: 'Your delivery has been shipped with tracking number 1Z999AA10123456784 and will arrive in three to five business days', keywords: ['delivery', 'tracking', '1Z999', 'three', 'five', 'business'] },
+    { text: 'The patient is prescribed fifty milligrams of atorvastatin once daily with food before bedtime', keywords: ['prescribed', 'fifty', 'milligrams', 'atorvastatin', 'daily', 'bedtime'] },
+    { text: 'Record high temperatures reached one hundred eighteen degrees Fahrenheit in Phoenix Arizona on June fourteenth', keywords: ['temperature', '118', 'phoenix', 'arizona', 'june'] },
+    { text: 'Boarding for flight DL 4721 to Chicago will begin at gate B twenty-two in approximately thirty minutes', keywords: ['flight', '4721', 'chicago', 'gate', 'twenty', 'thirty'] },
+    { text: 'To complete your two-factor authentication please enter the six-digit code three nine seven four eight one', keywords: ['authentication', 'six', '397481', 'code'] },
+    { text: 'The Federal Reserve raised interest rates by twenty-five basis points to a target range of five point two five percent', keywords: ['federal', 'reserve', 'twenty', 'five', 'basis', 'points'] },
 ];
 
 // ============================================

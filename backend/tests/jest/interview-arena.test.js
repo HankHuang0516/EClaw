@@ -164,14 +164,17 @@ describe('interview-arena: challenge generators', () => {
 
     test('navigation challenge has correctPath and depth', () => {
         const c = CHALLENGE_GENERATORS.arena_navigation();
-        expect(c.correctPath.length).toBe(4);
-        expect(c.depth).toBe(4);
+        expect(c.correctPath.length).toBeGreaterThanOrEqual(4);
+        expect(c.depth).toBeGreaterThanOrEqual(4);
+        expect(c.depth).toBeLessThanOrEqual(5);
+        expect(c.linksPerLevel).toBeGreaterThanOrEqual(8);
     });
 
     test('table_extract challenge has tableData and question', () => {
         const c = CHALLENGE_GENERATORS.arena_table_extract();
-        expect(c.tableData.length).toBe(10);
-        expect(c.question).toContain('total revenue');
+        expect(c.tableData.length).toBeGreaterThanOrEqual(10);
+        expect(c.tableData.length).toBeLessThanOrEqual(15);
+        expect(c.question).toBeTruthy();
         expect(c.correctAnswer).toBeTruthy();
     });
 
