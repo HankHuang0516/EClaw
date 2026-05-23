@@ -1646,7 +1646,7 @@
             }
         }
 
-        /* ===== Usage Widget (Plan B Phase 3) ===== */
+        /* ===== Usage Widget v2 — Session/Weekly % bars + project breakdown ===== */
         .usage-widget { margin-bottom: 20px; }
         .usage-widget-header {
             display: flex;
@@ -1679,216 +1679,188 @@
             font-size: 13px;
         }
 
-        .usage-gauges {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-            margin-bottom: 14px;
-        }
-        .usage-gauge {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            padding: 12px;
+        /* Inner cards (Claude / Codex / Projects) */
+        .uw-card {
             background: rgba(0, 0, 0, 0.18);
             border: 1px solid var(--card-border);
-            border-radius: 10px;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
         }
-        .usage-gauge-ring {
-            position: relative;
-            width: 110px;
-            height: 110px;
-        }
-        .usage-gauge-ring svg {
-            width: 100%;
-            height: 100%;
-            transform: rotate(-90deg);
-        }
-        .usage-gauge-ring .ring-bg {
-            fill: none;
-            stroke: rgba(255, 255, 255, 0.08);
-            stroke-width: 8;
-        }
-        .usage-gauge-ring .ring-fg {
-            fill: none;
-            stroke-width: 8;
-            stroke-linecap: round;
-            stroke-dasharray: 263.9;
-            stroke-dashoffset: 263.9;
-            transition: stroke-dashoffset 600ms ease, stroke 200ms ease;
-        }
-        .usage-gauge-ring .ring-claude { stroke: var(--accent-cyan, #4FC3F7); }
-        .usage-gauge-ring .ring-codex  { stroke: var(--accent-gold, #FFD700); }
-        .usage-gauge-ring.ring-warn .ring-fg  { stroke: var(--warning, #FFD23F); }
-        .usage-gauge-ring.ring-danger .ring-fg { stroke: var(--danger, #F44336); }
-        .usage-gauge-label {
-            position: absolute;
-            inset: 0;
+        .uw-card-head {
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .uw-logo {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            text-align: center;
+            font-size: 16px;
+            color: #fff;
+            flex-shrink: 0;
+            line-height: 1;
         }
-        .usage-gauge-pct {
-            font-size: 22px;
-            font-weight: 700;
+        .uw-logo.claude  { background: linear-gradient(135deg, #ff8a5c, #ff6b3d); }
+        .uw-logo.codex   { background: linear-gradient(135deg, #5cdfff, #3aa6ff); }
+        .uw-logo.folder  { background: linear-gradient(135deg, #6fd17a, #4caf50); }
+        .uw-card-title {
+            font-size: 15px;
+            font-weight: 600;
             color: var(--text-primary, #f0f0f0);
-            line-height: 1.1;
+            flex: 1;
+            min-width: 0;
         }
-        .usage-gauge-name {
-            font-size: 11px;
-            color: var(--text-secondary);
-            margin-top: 2px;
+
+        /* Bar rows (Session / Weekly) */
+        .uw-bar-row { margin-top: 12px; }
+        .uw-bar-row:first-of-type { margin-top: 0; }
+        .uw-bar-line {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 6px;
         }
-        .usage-gauge-sub {
+        .uw-bar-label {
+            font-size: 13px;
+            color: var(--text-primary, #e6e6e6);
+            font-weight: 500;
+        }
+        .uw-bar-pct {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            font-variant-numeric: tabular-nums;
+        }
+        .uw-bar-pct.c-orange { color: #ff8a5c; }
+        .uw-bar-pct.c-gold   { color: #ffc857; }
+        .uw-bar-pct.c-cyan   { color: #5cdfff; }
+        .uw-bar-pct.c-lcyan  { color: #9eeaff; }
+        .uw-bar-pct .uw-est-mark {
+            font-size: 10px;
+            color: var(--text-muted, #888);
+            font-weight: 500;
+            margin-left: 4px;
+            letter-spacing: 0;
+        }
+        .uw-bar-track {
+            height: 8px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .uw-bar-fill {
+            height: 100%;
+            border-radius: 999px;
+            transition: width 600ms ease, background-color 200ms ease;
+            width: 0%;
+        }
+        .uw-bar-fill.c-orange { background: linear-gradient(90deg, #ff6b3d, #ff8a5c); }
+        .uw-bar-fill.c-gold   { background: linear-gradient(90deg, #ffaa3a, #ffc857); }
+        .uw-bar-fill.c-cyan   { background: linear-gradient(90deg, #3aa6ff, #5cdfff); }
+        .uw-bar-fill.c-lcyan  { background: linear-gradient(90deg, #7bd0ff, #9eeaff); }
+        .uw-bar-reset {
+            margin-top: 4px;
             font-size: 11px;
             color: var(--text-muted, #999);
-            text-align: center;
+            text-align: right;
             min-height: 14px;
         }
 
-        .usage-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+        /* Projects list */
+        .uw-projects-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .uw-project-row {
+            display: flex;
+            align-items: center;
             gap: 10px;
-            margin-bottom: 14px;
+            padding: 4px 0;
+            font-size: 13px;
         }
-        .usage-stat {
-            padding: 10px 12px;
-            background: rgba(0, 0, 0, 0.18);
-            border: 1px solid var(--card-border);
-            border-radius: 8px;
+        .uw-project-bullet {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--success, #6fd17a);
+            opacity: 0.75;
+            flex-shrink: 0;
         }
-        .usage-stat-label {
-            font-size: 11px;
-            color: var(--text-secondary);
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
+        .uw-project-name {
+            color: var(--text-primary, #e6e6e6);
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
-        .usage-stat-tokens {
-            font-size: 16px;
+        .uw-project-tokens {
+            color: #6fd17a;
             font-weight: 600;
-            color: var(--text-primary, #eee);
+            font-variant-numeric: tabular-nums;
+            flex-shrink: 0;
         }
-        .usage-stat-cost {
+        .uw-projects-empty {
+            padding: 8px 0;
+            color: var(--text-muted, #888);
             font-size: 12px;
-            color: var(--accent-cyan, #4FC3F7);
-            margin-top: 2px;
+            text-align: center;
         }
 
-        .usage-chart {
-            padding: 10px 12px 8px;
+        /* Status footer block */
+        .uw-status {
             background: rgba(0, 0, 0, 0.18);
             border: 1px solid var(--card-border);
-            border-radius: 8px;
+            border-radius: 12px;
+            padding: 12px 16px;
             margin-bottom: 12px;
-            position: relative;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 6px;
+            font-size: 13px;
         }
-        .usage-chart-title {
-            font-size: 11px;
-            color: var(--text-secondary);
-            margin-bottom: 6px;
+        .uw-status-row {
             display: flex;
+            align-items: center;
             justify-content: space-between;
             gap: 10px;
         }
-        .usage-chart-legend {
-            display: flex;
-            gap: 10px;
-            font-size: 11px;
+        .uw-status-row .uw-status-label {
             color: var(--text-muted, #999);
         }
-        .usage-chart-legend span::before {
-            content: '';
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 4px;
-            vertical-align: middle;
-        }
-        .usage-chart-legend .lg-claude::before { background: var(--accent-cyan, #4FC3F7); }
-        .usage-chart-legend .lg-codex::before  { background: var(--accent-gold, #FFD700); }
-        .usage-chart-svg {
-            width: 100%;
-            height: 80px;
-            display: block;
-            overflow: visible;
-        }
-        .usage-chart-svg .uc-line-claude {
-            fill: none;
-            stroke: var(--accent-cyan, #4FC3F7);
-            stroke-width: 1.5;
-        }
-        .usage-chart-svg .uc-line-codex {
-            fill: none;
-            stroke: var(--accent-gold, #FFD700);
-            stroke-width: 1.5;
-        }
-        .usage-chart-svg .uc-area-claude { fill: rgba(79, 195, 247, 0.18); stroke: none; }
-        .usage-chart-svg .uc-area-codex  { fill: rgba(255, 215, 0, 0.14);  stroke: none; }
-        .usage-chart-svg .uc-dot         { fill: var(--bg-primary, #0e0e1a); stroke-width: 1.5; }
-        .usage-chart-svg .uc-dot-claude  { stroke: var(--accent-cyan, #4FC3F7); }
-        .usage-chart-svg .uc-dot-codex   { stroke: var(--accent-gold, #FFD700); }
-        .usage-chart-svg .uc-hover-line  { stroke: rgba(255,255,255,0.25); stroke-width: 1; pointer-events: none; }
-        .usage-chart-tooltip {
-            position: absolute;
-            background: var(--card-bg, #1a1a2e);
-            border: 1px solid var(--card-border);
-            border-radius: 6px;
-            padding: 6px 8px;
-            font-size: 11px;
+        .uw-status-row .uw-status-value {
             color: var(--text-primary, #eee);
-            pointer-events: none;
-            white-space: nowrap;
-            z-index: 5;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
         }
-        .usage-chart-empty {
-            height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text-muted, #888);
-            font-size: 12px;
-        }
+        .uw-status-row .uw-status-value.rate-heavy  { color: #ff6b3d; }
+        .uw-status-row .uw-status-value.rate-normal { color: #ffc857; }
+        .uw-status-row .uw-status-value.rate-idle   { color: var(--text-muted, #888); }
+        .uw-status-row .uw-status-value.synced { color: var(--success, #6fd17a); }
+        .uw-status-row .uw-status-value.stale  { color: var(--danger, #ff6b6b); }
 
         .usage-widget-footer {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            font-size: 11px;
-            color: var(--text-secondary);
-            flex-wrap: wrap;
-        }
-        .usage-widget-health {
-            display: flex;
-            align-items: center;
+            justify-content: flex-end;
             gap: 6px;
-        }
-        .usage-health-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--success, #4CAF50);
-            box-shadow: 0 0 6px currentColor;
-            color: var(--success, #4CAF50);
-            transition: background-color 200ms ease;
-        }
-        .usage-health-dot.stale {
-            background: var(--danger, #F44336);
-            color: var(--danger, #F44336);
+            font-size: 11px;
+            color: var(--text-muted, #888);
+            flex-wrap: wrap;
         }
 
         @media (max-width: 600px) {
-            .usage-gauges { grid-template-columns: 1fr; }
-            .usage-stats { grid-template-columns: 1fr; }
-            .usage-gauge-ring { width: 96px; height: 96px; }
-            .usage-chart-svg { height: 60px; }
+            .uw-card { padding: 12px 13px; }
+            .uw-card-title { font-size: 14px; }
+            .uw-bar-label { font-size: 12px; }
+            .uw-bar-pct { font-size: 13px; }
         }
     </style>
     <link rel="canonical" href="https://eclawbot.com/portal/dashboard.html">
@@ -2046,70 +2018,84 @@
             </div>
 
             <div class="usage-widget-content" id="usageWidgetContent" style="display:none;">
-                <div class="usage-gauges">
-                    <div class="usage-gauge">
-                        <div class="usage-gauge-ring" id="claudeGaugeRing">
-                            <svg viewBox="0 0 100 100" aria-hidden="true">
-                                <circle class="ring-bg" cx="50" cy="50" r="42"></circle>
-                                <circle class="ring-fg ring-claude" cx="50" cy="50" r="42" id="claudeRing"></circle>
-                            </svg>
-                            <div class="usage-gauge-label">
-                                <div class="usage-gauge-pct" id="claudePct">--</div>
-                                <div class="usage-gauge-name" data-i18n="dashboard_usage_widget_claude_5h">Claude · 5h</div>
-                            </div>
-                        </div>
-                        <div class="usage-gauge-sub" id="claudeSub"></div>
+                <!-- Claude card -->
+                <div class="uw-card">
+                    <div class="uw-card-head">
+                        <span class="uw-logo claude" aria-hidden="true">✱</span>
+                        <div class="uw-card-title">Claude Code</div>
                     </div>
-                    <div class="usage-gauge">
-                        <div class="usage-gauge-ring" id="codexGaugeRing">
-                            <svg viewBox="0 0 100 100" aria-hidden="true">
-                                <circle class="ring-bg" cx="50" cy="50" r="42"></circle>
-                                <circle class="ring-fg ring-codex" cx="50" cy="50" r="42" id="codexRing"></circle>
-                            </svg>
-                            <div class="usage-gauge-label">
-                                <div class="usage-gauge-pct" id="codexPct">--</div>
-                                <div class="usage-gauge-name" data-i18n="dashboard_usage_widget_codex_5h">Codex · 5h</div>
-                            </div>
+                    <div class="uw-bar-row">
+                        <div class="uw-bar-line">
+                            <span class="uw-bar-label">Session</span>
+                            <span class="uw-bar-pct c-orange" id="claudeSessPct">--</span>
                         </div>
-                        <div class="usage-gauge-sub" id="codexSub"></div>
+                        <div class="uw-bar-track"><div class="uw-bar-fill c-orange" id="claudeSessFill"></div></div>
+                        <div class="uw-bar-reset" id="claudeSessReset">--</div>
+                    </div>
+                    <div class="uw-bar-row">
+                        <div class="uw-bar-line">
+                            <span class="uw-bar-label">Weekly</span>
+                            <span class="uw-bar-pct c-gold" id="claudeWeekPct">--</span>
+                        </div>
+                        <div class="uw-bar-track"><div class="uw-bar-fill c-gold" id="claudeWeekFill"></div></div>
+                        <div class="uw-bar-reset" id="claudeWeekReset">--</div>
                     </div>
                 </div>
 
-                <div class="usage-stats">
-                    <div class="usage-stat">
-                        <div class="usage-stat-label" data-i18n="dashboard_usage_widget_today_claude">Today · Claude</div>
-                        <div class="usage-stat-tokens" id="claudeTokensToday">--</div>
-                        <div class="usage-stat-cost" id="claudeCostToday">--</div>
+                <!-- Codex card -->
+                <div class="uw-card">
+                    <div class="uw-card-head">
+                        <span class="uw-logo codex" aria-hidden="true">◉</span>
+                        <div class="uw-card-title">Codex</div>
                     </div>
-                    <div class="usage-stat">
-                        <div class="usage-stat-label" data-i18n="dashboard_usage_widget_today_codex">Today · Codex</div>
-                        <div class="usage-stat-tokens" id="codexTokensToday">--</div>
-                        <div class="usage-stat-cost" id="codexCostToday">--</div>
+                    <div class="uw-bar-row">
+                        <div class="uw-bar-line">
+                            <span class="uw-bar-label">Session</span>
+                            <span class="uw-bar-pct c-cyan" id="codexSessPct">--</span>
+                        </div>
+                        <div class="uw-bar-track"><div class="uw-bar-fill c-cyan" id="codexSessFill"></div></div>
+                        <div class="uw-bar-reset" id="codexSessReset">--</div>
+                    </div>
+                    <div class="uw-bar-row">
+                        <div class="uw-bar-line">
+                            <span class="uw-bar-label">Weekly</span>
+                            <span class="uw-bar-pct c-lcyan" id="codexWeekPct">--</span>
+                        </div>
+                        <div class="uw-bar-track"><div class="uw-bar-fill c-lcyan" id="codexWeekFill"></div></div>
+                        <div class="uw-bar-reset" id="codexWeekReset">--</div>
                     </div>
                 </div>
 
-                <div class="usage-chart" id="usageChartWrap">
-                    <div class="usage-chart-title">
-                        <span data-i18n="dashboard_usage_widget_chart_title">Last 24h · total tokens</span>
-                        <span class="usage-chart-legend">
-                            <span class="lg-claude" data-i18n="dashboard_usage_widget_legend_claude">Claude</span>
-                            <span class="lg-codex" data-i18n="dashboard_usage_widget_legend_codex">Codex</span>
-                        </span>
+                <!-- Projects card -->
+                <div class="uw-card">
+                    <div class="uw-card-head">
+                        <span class="uw-logo folder" aria-hidden="true">📁</span>
+                        <div class="uw-card-title" data-i18n="dashboard_usage_widget_projects_today">Projects today</div>
                     </div>
-                    <svg class="usage-chart-svg" id="usageChartSvg" viewBox="0 0 320 80" preserveAspectRatio="none" aria-label="24h token timeline"></svg>
-                    <div class="usage-chart-empty" id="usageChartEmpty" style="display:none;" data-i18n="dashboard_usage_widget_chart_empty">No timeline data yet</div>
-                    <div class="usage-chart-tooltip" id="usageChartTooltip" style="display:none;"></div>
+                    <div class="uw-projects-list" id="usageProjectsList">
+                        <div class="uw-projects-empty" data-i18n="dashboard_usage_widget_projects_empty">No project activity today</div>
+                    </div>
+                </div>
+
+                <!-- Status footer -->
+                <div class="uw-status">
+                    <div class="uw-status-row">
+                        <span class="uw-status-label" data-i18n="dashboard_usage_widget_rate_label">Rate</span>
+                        <span class="uw-status-value" id="usageRateValue">--</span>
+                    </div>
+                    <div class="uw-status-row">
+                        <span class="uw-status-label" data-i18n="dashboard_usage_widget_status_label">Status</span>
+                        <span class="uw-status-value" id="usageStatusValue">--</span>
+                    </div>
+                    <div class="uw-status-row">
+                        <span class="uw-status-label" data-i18n="dashboard_usage_widget_today_total">Today</span>
+                        <span class="uw-status-value" id="usageTodayTotal">--</span>
+                    </div>
                 </div>
 
                 <div class="usage-widget-footer">
-                    <div class="usage-widget-health">
-                        <span class="usage-health-dot" id="usageHealthDot" aria-hidden="true"></span>
-                        <span id="usageHealthLabel" data-i18n="dashboard_usage_widget_health_ok">Daemon online</span>
-                    </div>
-                    <div class="usage-widget-updated">
-                        <span data-i18n="dashboard_usage_widget_last_update">Last update</span>
-                        <span id="usageLastUpdate">--</span>
-                    </div>
+                    <span data-i18n="dashboard_usage_widget_last_update">Last update</span>
+                    <span id="usageLastUpdate">--</span>
                 </div>
             </div>
 
@@ -5459,247 +5445,277 @@
         })();
     </script>
 
-    <!-- Usage Widget — Plan B Phase 3 -->
+    <!-- Usage Widget v2 — Session/Weekly % bars + project breakdown -->
     <script>
     (function () {
         'use strict';
         const STALE_MS = 5 * 60 * 1000;
-        const REFRESH_MS = 60 * 1000;
+        const REFRESH_MS = 30 * 1000;
         const FIVE_HOURS_MS = 5 * 60 * 60 * 1000;
+        const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+        const ONE_HOUR_MS = 60 * 60 * 1000;
+        // Max plan estimated limits — used only when daemon doesn't surface live.* pct.
+        const CLAUDE_5H_LIMIT_TOKENS = 88_000_000;
+        const CLAUDE_7D_LIMIT_TOKENS = 1_200_000_000;
+        // Rate thresholds (tokens in the last hour, Claude + Codex combined).
+        const RATE_HEAVY_PER_HOUR  = 10_000_000;
+        const RATE_NORMAL_PER_HOUR =  1_000_000;
         let pollTimer = null;
         let lastFetchOk = false;
 
-        function fmtTokens(n) {
-            if (!Number.isFinite(n) || n <= 0) return '0';
-            if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
-            if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
-            if (n >= 1e3) return (n / 1e3).toFixed(1) + 'k';
-            return String(Math.round(n));
+        function t(key, fallback) {
+            return (typeof i18n !== 'undefined' && typeof i18n.t === 'function') ? i18n.t(key) : fallback;
         }
-        function fmtCost(n) {
-            if (!Number.isFinite(n)) return '$0';
-            return '$' + n.toFixed(n < 10 ? 2 : 1);
+        function fmtTokens(n) {
+            n = Number(n);
+            if (!Number.isFinite(n) || n <= 0) return '0';
+            return Math.round(n).toLocaleString('en-US');
         }
         function fmtTimeAgo(iso) {
             if (!iso) return '--';
             const diff = Date.now() - new Date(iso).getTime();
             if (!Number.isFinite(diff) || diff < 0) return '--';
             const m = Math.floor(diff / 60000);
-            if (m < 1) return (typeof i18n !== 'undefined' ? i18n.t('dashboard_usage_widget_just_now') : 'just now');
+            if (m < 1) return t('dashboard_usage_widget_just_now', 'just now');
             if (m < 60) return m + 'm';
             const h = Math.floor(m / 60);
             if (h < 24) return h + 'h';
             return Math.floor(h / 24) + 'd';
         }
-
-        function setRingPct(ringEl, gaugeRingEl, pct) {
-            const circ = 2 * Math.PI * 42;
-            const clamped = Math.max(0, Math.min(100, pct));
-            const offset = circ * (1 - clamped / 100);
-            ringEl.setAttribute('stroke-dasharray', String(circ));
-            ringEl.setAttribute('stroke-dashoffset', String(offset));
-            gaugeRingEl.classList.remove('ring-warn', 'ring-danger');
-            if (clamped >= 90) gaugeRingEl.classList.add('ring-danger');
-            else if (clamped >= 70) gaugeRingEl.classList.add('ring-warn');
-        }
-
-        function estimateClaudeFiveHourCost(sessions) {
-            if (!Array.isArray(sessions)) return { cost: 0, count: 0, totalTokens: 0 };
-            const cutoff = Date.now() - FIVE_HOURS_MS;
-            let cost = 0, count = 0, tokens = 0;
-            for (const s of sessions) {
-                const lastSeen = s && s.last_seen ? Date.parse(s.last_seen) : NaN;
-                if (!Number.isFinite(lastSeen) || lastSeen < cutoff) continue;
-                count++;
-                cost += Number(s.cost_usd) || 0;
-                tokens += (Number(s.input_tokens) || 0) + (Number(s.output_tokens) || 0);
+        function fmtResetCountdown(ms, granularity) {
+            if (!Number.isFinite(ms) || ms <= 0) return '--';
+            const totalMin = Math.floor(ms / 60000);
+            if (granularity === 'd') {
+                const days = Math.floor(totalMin / (60 * 24));
+                const hours = Math.floor((totalMin % (60 * 24)) / 60);
+                return days + 'd ' + hours + 'h';
             }
-            return { cost, count, totalTokens: tokens };
+            const hours = Math.floor(totalMin / 60);
+            const mins = totalMin % 60;
+            return hours + 'h ' + mins + 'm';
         }
 
-        function renderClaude(latest) {
-            const ring = document.getElementById('claudeRing');
-            const gauge = document.getElementById('claudeGaugeRing');
-            const pctEl = document.getElementById('claudePct');
-            const subEl = document.getElementById('claudeSub');
-            const live = latest && latest.claude ? latest.claude.live : null;
+        function paintBar(fillId, pctId, resetId, pct, isEst, resetMs, granularity, usedKey) {
+            const fill = document.getElementById(fillId);
+            const pctEl = document.getElementById(pctId);
+            const resetEl = document.getElementById(resetId);
+            const clamped = Math.max(0, Math.min(100, Number(pct) || 0));
+            if (fill) fill.style.width = clamped + '%';
+            if (pctEl) {
+                while (pctEl.firstChild) pctEl.removeChild(pctEl.firstChild);
+                const usedWord = t(usedKey, 'used');
+                pctEl.appendChild(document.createTextNode(clamped + '% ' + usedWord));
+                if (isEst) {
+                    const mark = document.createElement('span');
+                    mark.className = 'uw-est-mark';
+                    mark.textContent = ' ' + t('dashboard_usage_widget_estimate_marker', '(est)');
+                    pctEl.appendChild(mark);
+                }
+            }
+            if (resetEl) {
+                if (resetMs != null && Number.isFinite(resetMs) && resetMs > 0) {
+                    resetEl.textContent = t('dashboard_usage_widget_reset_in', 'Reset in') + ' ' + fmtResetCountdown(resetMs, granularity);
+                } else {
+                    resetEl.textContent = '';
+                }
+            }
+        }
+
+        function renderClaudeBars(latest) {
+            const live = (latest && latest.claude && latest.claude.live) || null;
+            const sessions = (latest && latest.claude && Array.isArray(latest.claude.sessions)) ? latest.claude.sessions : [];
+
+            // Session (5h)
+            let sessPct = 0;
+            let sessIsEst = false;
+            let sessResetMs = null;
             if (live && Number.isFinite(live.five_hour_pct)) {
-                const pct = Math.round(live.five_hour_pct);
-                pctEl.textContent = pct + '%';
-                setRingPct(ring, gauge, pct);
-                subEl.textContent = (typeof i18n !== 'undefined' ? i18n.t('dashboard_usage_widget_live_source') : 'statusLine');
-                subEl.title = '';
+                sessPct = live.five_hour_pct;
             } else {
-                const est = estimateClaudeFiveHourCost(latest && latest.claude ? latest.claude.sessions : []);
-                pctEl.textContent = 'N/A';
-                setRingPct(ring, gauge, 0);
-                const sessionsLabel = (typeof i18n !== 'undefined' ? i18n.t('dashboard_usage_widget_sessions_label') : 'sessions');
-                subEl.textContent = est.count + ' ' + sessionsLabel + ' · ' + fmtCost(est.cost);
-                subEl.title = (typeof i18n !== 'undefined' ? i18n.t('dashboard_usage_widget_na_tooltip') : 'Needs Claude statusLine setup for live %');
+                sessIsEst = true;
+                const cutoff = Date.now() - FIVE_HOURS_MS;
+                let tokens = 0;
+                let oldestFirstSeen = null;
+                for (const s of sessions) {
+                    const lastSeen = s && s.last_seen ? Date.parse(s.last_seen) : NaN;
+                    if (!Number.isFinite(lastSeen) || lastSeen < cutoff) continue;
+                    tokens += (Number(s.input_tokens) || 0) + (Number(s.output_tokens) || 0);
+                    const fs = s && s.first_seen ? Date.parse(s.first_seen) : NaN;
+                    if (Number.isFinite(fs) && (oldestFirstSeen === null || fs < oldestFirstSeen)) {
+                        oldestFirstSeen = fs;
+                    }
+                }
+                sessPct = (tokens / CLAUDE_5H_LIMIT_TOKENS) * 100;
+                if (oldestFirstSeen !== null) {
+                    sessResetMs = (oldestFirstSeen + FIVE_HOURS_MS) - Date.now();
+                }
             }
+            paintBar('claudeSessFill', 'claudeSessPct', 'claudeSessReset',
+                Math.round(sessPct), sessIsEst, sessResetMs, 'h',
+                'dashboard_usage_widget_session_used');
+
+            // Weekly (7d)
+            let weekPct = 0;
+            let weekIsEst = false;
+            if (live && Number.isFinite(live.seven_day_pct)) {
+                weekPct = live.seven_day_pct;
+            } else {
+                weekIsEst = true;
+                const cutoff = Date.now() - SEVEN_DAYS_MS;
+                let tokens = 0;
+                for (const s of sessions) {
+                    const lastSeen = s && s.last_seen ? Date.parse(s.last_seen) : NaN;
+                    if (!Number.isFinite(lastSeen) || lastSeen < cutoff) continue;
+                    tokens += (Number(s.input_tokens) || 0) + (Number(s.output_tokens) || 0);
+                }
+                weekPct = (tokens / CLAUDE_7D_LIMIT_TOKENS) * 100;
+            }
+            paintBar('claudeWeekFill', 'claudeWeekPct', 'claudeWeekReset',
+                Math.round(weekPct), weekIsEst, null, 'd',
+                'dashboard_usage_widget_weekly_used');
         }
 
-        function renderCodex(latest) {
-            const ring = document.getElementById('codexRing');
-            const gauge = document.getElementById('codexGaugeRing');
-            const pctEl = document.getElementById('codexPct');
-            const subEl = document.getElementById('codexSub');
-            const rl = latest && latest.codex ? latest.codex.rate_limits : null;
+        function renderCodexBars(latest) {
+            const rl = (latest && latest.codex && latest.codex.rate_limits) || null;
+            // Session (5h)
             if (rl && Number.isFinite(rl.five_hour_pct)) {
-                const pct = Math.round(rl.five_hour_pct);
-                pctEl.textContent = pct + '%';
-                setRingPct(ring, gauge, pct);
-                const plan = rl.plan_type ? String(rl.plan_type) : '';
-                const sevenDay = Number.isFinite(rl.seven_day_pct) ? ' · 7d ' + Math.round(rl.seven_day_pct) + '%' : '';
-                subEl.textContent = plan ? plan + sevenDay : sevenDay.replace(/^ · /, '');
-                subEl.title = '';
+                const resetMs = Number.isFinite(rl.five_hour_resets_at)
+                    ? (rl.five_hour_resets_at * 1000) - Date.now()
+                    : null;
+                paintBar('codexSessFill', 'codexSessPct', 'codexSessReset',
+                    Math.round(rl.five_hour_pct), false, resetMs, 'h',
+                    'dashboard_usage_widget_session_used');
             } else {
-                pctEl.textContent = 'N/A';
-                setRingPct(ring, gauge, 0);
-                subEl.textContent = '';
-                subEl.title = '';
+                paintBar('codexSessFill', 'codexSessPct', 'codexSessReset',
+                    0, false, null, 'h',
+                    'dashboard_usage_widget_session_used');
+            }
+            // Weekly (7d)
+            if (rl && Number.isFinite(rl.seven_day_pct)) {
+                const resetMs = Number.isFinite(rl.seven_day_resets_at)
+                    ? (rl.seven_day_resets_at * 1000) - Date.now()
+                    : null;
+                paintBar('codexWeekFill', 'codexWeekPct', 'codexWeekReset',
+                    Math.round(rl.seven_day_pct), false, resetMs, 'd',
+                    'dashboard_usage_widget_weekly_used');
+            } else {
+                paintBar('codexWeekFill', 'codexWeekPct', 'codexWeekReset',
+                    0, false, null, 'd',
+                    'dashboard_usage_widget_weekly_used');
             }
         }
 
-        function renderToday(aggregates) {
-            const today = (aggregates && aggregates.today) || {};
-            const claude = today.claude || {};
-            const codex = today.codex || {};
-            document.getElementById('claudeTokensToday').textContent =
-                fmtTokens((claude.sum_input_tokens || 0) + (claude.sum_output_tokens || 0));
-            document.getElementById('claudeCostToday').textContent = fmtCost(claude.sum_cost_usd || 0);
-            document.getElementById('codexTokensToday').textContent =
-                fmtTokens((codex.sum_input_tokens || 0) + (codex.sum_output_tokens || 0));
-            document.getElementById('codexCostToday').textContent = fmtCost(codex.sum_cost_usd || 0);
+        function groupSessionsByProject(sessions, sinceMs) {
+            const groups = new Map();
+            for (const s of sessions || []) {
+                const lastSeen = s && s.last_seen ? Date.parse(s.last_seen) : NaN;
+                if (!Number.isFinite(lastSeen) || lastSeen < sinceMs) continue;
+                const tokens = (Number(s.input_tokens) || 0) + (Number(s.output_tokens) || 0);
+                let name = s && s.project_id ? String(s.project_id) : '';
+                if (!name && s && s.cwd) {
+                    const parts = String(s.cwd).split('/').filter(Boolean);
+                    name = parts.length ? parts[parts.length - 1] : String(s.cwd);
+                }
+                if (!name) name = 'unknown';
+                groups.set(name, (groups.get(name) || 0) + tokens);
+            }
+            return Array.from(groups.entries())
+                .map(function (e) { return { name: e[0], tokens: e[1] }; })
+                .filter(function (p) { return p.tokens > 0; })
+                .sort(function (a, b) { return b.tokens - a.tokens; });
         }
 
-        function renderChart(points) {
-            const svg = document.getElementById('usageChartSvg');
-            const empty = document.getElementById('usageChartEmpty');
-            const tooltip = document.getElementById('usageChartTooltip');
-            if (!svg) return;
-            while (svg.firstChild) svg.removeChild(svg.firstChild);
-            tooltip.style.display = 'none';
-
-            const pts = Array.isArray(points) ? points : [];
-            if (pts.length < 3) {
-                svg.style.display = 'none';
-                empty.style.display = 'flex';
+        function renderProjects(latest) {
+            const list = document.getElementById('usageProjectsList');
+            if (!list) return;
+            const todayStart = new Date();
+            todayStart.setHours(0, 0, 0, 0);
+            const sinceMs = todayStart.getTime();
+            const claudeSessions = (latest && latest.claude && latest.claude.sessions) || [];
+            const codexSessions  = (latest && latest.codex  && latest.codex.sessions)  || [];
+            const combined = groupSessionsByProject(claudeSessions.concat(codexSessions), sinceMs);
+            while (list.firstChild) list.removeChild(list.firstChild);
+            if (combined.length === 0) {
+                const div = document.createElement('div');
+                div.className = 'uw-projects-empty';
+                div.textContent = t('dashboard_usage_widget_projects_empty', 'No project activity today');
+                list.appendChild(div);
                 return;
             }
-            svg.style.display = 'block';
-            empty.style.display = 'none';
+            combined.slice(0, 5).forEach(function (p) {
+                const row = document.createElement('div');
+                row.className = 'uw-project-row';
+                const bullet = document.createElement('span');
+                bullet.className = 'uw-project-bullet';
+                const name = document.createElement('span');
+                name.className = 'uw-project-name';
+                name.textContent = p.name;
+                const tokensEl = document.createElement('span');
+                tokensEl.className = 'uw-project-tokens';
+                tokensEl.textContent = fmtTokens(p.tokens);
+                row.appendChild(bullet);
+                row.appendChild(name);
+                row.appendChild(tokensEl);
+                list.appendChild(row);
+            });
+        }
 
-            const W = 320, H = 80, PAD_X = 4, PAD_Y = 6;
-            const maxToken = Math.max(1, ...pts.map(p => Math.max(p.claude_total_tokens || 0, p.codex_total_tokens || 0)));
-            const minT = Date.parse(pts[0].captured_at);
-            const maxT = Date.parse(pts[pts.length - 1].captured_at);
-            const tRange = Math.max(1, maxT - minT);
-            const NS = 'http://www.w3.org/2000/svg';
-
-            function xOf(p) {
-                const t = Date.parse(p.captured_at);
-                return PAD_X + ((t - minT) / tRange) * (W - 2 * PAD_X);
+        function computeRate(latest) {
+            const cutoff = Date.now() - ONE_HOUR_MS;
+            const all = [].concat(
+                (latest && latest.claude && latest.claude.sessions) || [],
+                (latest && latest.codex  && latest.codex.sessions)  || []
+            );
+            let total = 0;
+            for (const s of all) {
+                const lastSeen = s && s.last_seen ? Date.parse(s.last_seen) : NaN;
+                if (!Number.isFinite(lastSeen) || lastSeen < cutoff) continue;
+                total += (Number(s.input_tokens) || 0) + (Number(s.output_tokens) || 0);
             }
-            function yOf(v) {
-                return H - PAD_Y - ((v || 0) / maxToken) * (H - 2 * PAD_Y);
+            if (total > RATE_HEAVY_PER_HOUR)  return 'heavy';
+            if (total > RATE_NORMAL_PER_HOUR) return 'normal';
+            return 'idle';
+        }
+
+        function renderStatusFooter(latest, aggregates) {
+            const rate = computeRate(latest);
+            const rateEl = document.getElementById('usageRateValue');
+            if (rateEl) {
+                rateEl.textContent = t('dashboard_usage_widget_rate_' + rate, rate);
+                rateEl.classList.remove('rate-heavy', 'rate-normal', 'rate-idle');
+                rateEl.classList.add('rate-' + rate);
             }
 
-            const claudePath = pts.map((p, i) => (i === 0 ? 'M' : 'L') + xOf(p).toFixed(1) + ',' + yOf(p.claude_total_tokens).toFixed(1)).join(' ');
-            const codexPath = pts.map((p, i) => (i === 0 ? 'M' : 'L') + xOf(p).toFixed(1) + ',' + yOf(p.codex_total_tokens).toFixed(1)).join(' ');
-            const claudeArea = claudePath + ' L' + xOf(pts[pts.length - 1]).toFixed(1) + ',' + (H - PAD_Y).toFixed(1) + ' L' + xOf(pts[0]).toFixed(1) + ',' + (H - PAD_Y).toFixed(1) + ' Z';
-            const codexArea = codexPath + ' L' + xOf(pts[pts.length - 1]).toFixed(1) + ',' + (H - PAD_Y).toFixed(1) + ' L' + xOf(pts[0]).toFixed(1) + ',' + (H - PAD_Y).toFixed(1) + ' Z';
-
-            const areaClaude = document.createElementNS(NS, 'path');
-            areaClaude.setAttribute('class', 'uc-area-claude');
-            areaClaude.setAttribute('d', claudeArea);
-            svg.appendChild(areaClaude);
-            const areaCodex = document.createElementNS(NS, 'path');
-            areaCodex.setAttribute('class', 'uc-area-codex');
-            areaCodex.setAttribute('d', codexArea);
-            svg.appendChild(areaCodex);
-            const lineClaude = document.createElementNS(NS, 'path');
-            lineClaude.setAttribute('class', 'uc-line-claude');
-            lineClaude.setAttribute('d', claudePath);
-            svg.appendChild(lineClaude);
-            const lineCodex = document.createElementNS(NS, 'path');
-            lineCodex.setAttribute('class', 'uc-line-codex');
-            lineCodex.setAttribute('d', codexPath);
-            svg.appendChild(lineCodex);
-
-            const hoverLine = document.createElementNS(NS, 'line');
-            hoverLine.setAttribute('class', 'uc-hover-line');
-            hoverLine.setAttribute('y1', String(PAD_Y));
-            hoverLine.setAttribute('y2', String(H - PAD_Y));
-            hoverLine.style.display = 'none';
-            svg.appendChild(hoverLine);
-
-            const overlay = document.createElementNS(NS, 'rect');
-            overlay.setAttribute('x', '0');
-            overlay.setAttribute('y', '0');
-            overlay.setAttribute('width', String(W));
-            overlay.setAttribute('height', String(H));
-            overlay.setAttribute('fill', 'transparent');
-            overlay.style.cursor = 'crosshair';
-            svg.appendChild(overlay);
-
-            const wrap = document.getElementById('usageChartWrap');
-            function onMove(evt) {
-                const rect = svg.getBoundingClientRect();
-                const px = ((evt.clientX - rect.left) / rect.width) * W;
-                let nearest = pts[0], best = Infinity;
-                for (const p of pts) {
-                    const d = Math.abs(xOf(p) - px);
-                    if (d < best) { best = d; nearest = p; }
-                }
-                hoverLine.style.display = '';
-                const x = xOf(nearest);
-                hoverLine.setAttribute('x1', String(x));
-                hoverLine.setAttribute('x2', String(x));
-                const ts = new Date(nearest.captured_at);
-                const hh = String(ts.getHours()).padStart(2, '0');
-                const mm = String(ts.getMinutes()).padStart(2, '0');
-                tooltip.innerHTML =
-                    '<div>' + hh + ':' + mm + '</div>' +
-                    '<div style="color:var(--accent-cyan)">Claude: ' + fmtTokens(nearest.claude_total_tokens) + '</div>' +
-                    '<div style="color:var(--accent-gold)">Codex: ' + fmtTokens(nearest.codex_total_tokens) + '</div>';
-                tooltip.style.display = 'block';
-                const wrapRect = wrap.getBoundingClientRect();
-                const tw = tooltip.offsetWidth;
-                let left = (evt.clientX - wrapRect.left) + 10;
-                if (left + tw > wrapRect.width - 4) left = wrapRect.width - tw - 4;
-                tooltip.style.left = left + 'px';
-                tooltip.style.top = '4px';
-            }
-            function onLeave() {
-                hoverLine.style.display = 'none';
-                tooltip.style.display = 'none';
-            }
-            overlay.addEventListener('mousemove', onMove);
-            overlay.addEventListener('mouseleave', onLeave);
-            overlay.addEventListener('touchmove', e => { if (e.touches[0]) onMove(e.touches[0]); }, { passive: true });
-            overlay.addEventListener('touchend', onLeave);
+            const today = (aggregates && aggregates.today) || {};
+            const claude = today.claude || {};
+            const codex  = today.codex  || {};
+            const totalTokens =
+                (Number(claude.sum_input_tokens) || 0) + (Number(claude.sum_output_tokens) || 0) +
+                (Number(codex.sum_input_tokens)  || 0) + (Number(codex.sum_output_tokens)  || 0);
+            const totalEl = document.getElementById('usageTodayTotal');
+            if (totalEl) totalEl.textContent = fmtTokens(totalTokens) + ' tokens';
         }
 
         function renderHealth(latest) {
-            const dot = document.getElementById('usageHealthDot');
-            const label = document.getElementById('usageHealthLabel');
+            const statusEl = document.getElementById('usageStatusValue');
             const updEl = document.getElementById('usageLastUpdate');
+            if (!statusEl) return;
+            statusEl.classList.remove('synced', 'stale');
             if (!latest || !latest.received_at) {
-                dot.classList.add('stale');
-                label.textContent = (typeof i18n !== 'undefined' ? i18n.t('dashboard_usage_widget_health_no_data') : 'No daemon data');
-                updEl.textContent = '--';
+                statusEl.textContent = t('dashboard_usage_widget_health_no_data', 'No daemon data');
+                statusEl.classList.add('stale');
+                if (updEl) updEl.textContent = '--';
                 return;
             }
             const age = Date.now() - new Date(latest.received_at).getTime();
             if (age > STALE_MS) {
-                dot.classList.add('stale');
-                label.textContent = (typeof i18n !== 'undefined' ? i18n.t('dashboard_usage_widget_health_stale') : 'Daemon offline?');
+                statusEl.textContent = '⚠ ' + t('dashboard_usage_widget_health_stale', 'Daemon offline?');
+                statusEl.classList.add('stale');
             } else {
-                dot.classList.remove('stale');
-                label.textContent = (typeof i18n !== 'undefined' ? i18n.t('dashboard_usage_widget_health_ok') : 'Daemon online');
+                statusEl.textContent = '✓ ' + t('dashboard_usage_widget_status_synced', 'Synced (usage)');
+                statusEl.classList.add('synced');
             }
-            updEl.textContent = fmtTimeAgo(latest.received_at);
+            if (updEl) updEl.textContent = fmtTimeAgo(latest.received_at);
         }
 
         function showError() {
@@ -5716,28 +5732,21 @@
 
         async function loadUsageWidget() {
             const user = window.currentUser;
-            if (!user || !user.deviceId || !user.deviceSecret) {
-                return;
-            }
+            if (!user || !user.deviceId || !user.deviceSecret) return;
             const qs = 'deviceId=' + encodeURIComponent(user.deviceId)
                 + '&deviceSecret=' + encodeURIComponent(user.deviceSecret);
             try {
-                const [snapRes, lineRes] = await Promise.all([
-                    fetch('/api/usage/snapshot?' + qs, { credentials: 'same-origin' }),
-                    fetch('/api/usage/timeline?hours=24&' + qs, { credentials: 'same-origin' })
-                ]);
-                if (!snapRes.ok || !lineRes.ok) throw new Error('http ' + snapRes.status + '/' + lineRes.status);
+                const snapRes = await fetch('/api/usage/snapshot?' + qs, { credentials: 'same-origin' });
+                if (!snapRes.ok) throw new Error('http ' + snapRes.status);
                 const snap = await snapRes.json();
-                const tl = await lineRes.json();
                 if (!snap.success) throw new Error(snap.error || 'snapshot failed');
-                if (!tl.success) throw new Error(tl.error || 'timeline failed');
 
                 lastFetchOk = true;
                 showContent();
-                renderClaude(snap.latest);
-                renderCodex(snap.latest);
-                renderToday(snap.aggregates);
-                renderChart(tl.points);
+                renderClaudeBars(snap.latest);
+                renderCodexBars(snap.latest);
+                renderProjects(snap.latest);
+                renderStatusFooter(snap.latest, snap.aggregates);
                 renderHealth(snap.latest);
             } catch (err) {
                 console.warn('[UsageWidget] load failed:', err && err.message);
@@ -5758,13 +5767,13 @@
                 startUsageWidgetPolling();
             } else {
                 let tries = 0;
-                const t = setInterval(() => {
+                const tk = setInterval(() => {
                     tries++;
                     if (window.currentUser && window.currentUser.deviceId && window.currentUser.deviceSecret) {
-                        clearInterval(t);
+                        clearInterval(tk);
                         startUsageWidgetPolling();
                     } else if (tries > 30) {
-                        clearInterval(t);
+                        clearInterval(tk);
                     }
                 }, 500);
             }
