@@ -1645,6 +1645,251 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* ===== Usage Widget (Plan B Phase 3) ===== */
+        .usage-widget { margin-bottom: 20px; }
+        .usage-widget-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .usage-widget-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary, #ddd);
+        }
+        .usage-widget-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 24px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        .usage-widget-error {
+            padding: 16px;
+            text-align: center;
+            color: var(--danger);
+            font-size: 13px;
+        }
+
+        .usage-gauges {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+        .usage-gauge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.18);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+        }
+        .usage-gauge-ring {
+            position: relative;
+            width: 110px;
+            height: 110px;
+        }
+        .usage-gauge-ring svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+        .usage-gauge-ring .ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.08);
+            stroke-width: 8;
+        }
+        .usage-gauge-ring .ring-fg {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-dasharray: 263.9;
+            stroke-dashoffset: 263.9;
+            transition: stroke-dashoffset 600ms ease, stroke 200ms ease;
+        }
+        .usage-gauge-ring .ring-claude { stroke: var(--accent-cyan, #4FC3F7); }
+        .usage-gauge-ring .ring-codex  { stroke: var(--accent-gold, #FFD700); }
+        .usage-gauge-ring.ring-warn .ring-fg  { stroke: var(--warning, #FFD23F); }
+        .usage-gauge-ring.ring-danger .ring-fg { stroke: var(--danger, #F44336); }
+        .usage-gauge-label {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .usage-gauge-pct {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary, #f0f0f0);
+            line-height: 1.1;
+        }
+        .usage-gauge-name {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+        .usage-gauge-sub {
+            font-size: 11px;
+            color: var(--text-muted, #999);
+            text-align: center;
+            min-height: 14px;
+        }
+
+        .usage-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .usage-stat {
+            padding: 10px 12px;
+            background: rgba(0, 0, 0, 0.18);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+        }
+        .usage-stat-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .usage-stat-tokens {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary, #eee);
+        }
+        .usage-stat-cost {
+            font-size: 12px;
+            color: var(--accent-cyan, #4FC3F7);
+            margin-top: 2px;
+        }
+
+        .usage-chart {
+            padding: 10px 12px 8px;
+            background: rgba(0, 0, 0, 0.18);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+        .usage-chart-title {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .usage-chart-legend {
+            display: flex;
+            gap: 10px;
+            font-size: 11px;
+            color: var(--text-muted, #999);
+        }
+        .usage-chart-legend span::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+        .usage-chart-legend .lg-claude::before { background: var(--accent-cyan, #4FC3F7); }
+        .usage-chart-legend .lg-codex::before  { background: var(--accent-gold, #FFD700); }
+        .usage-chart-svg {
+            width: 100%;
+            height: 80px;
+            display: block;
+            overflow: visible;
+        }
+        .usage-chart-svg .uc-line-claude {
+            fill: none;
+            stroke: var(--accent-cyan, #4FC3F7);
+            stroke-width: 1.5;
+        }
+        .usage-chart-svg .uc-line-codex {
+            fill: none;
+            stroke: var(--accent-gold, #FFD700);
+            stroke-width: 1.5;
+        }
+        .usage-chart-svg .uc-area-claude { fill: rgba(79, 195, 247, 0.18); stroke: none; }
+        .usage-chart-svg .uc-area-codex  { fill: rgba(255, 215, 0, 0.14);  stroke: none; }
+        .usage-chart-svg .uc-dot         { fill: var(--bg-primary, #0e0e1a); stroke-width: 1.5; }
+        .usage-chart-svg .uc-dot-claude  { stroke: var(--accent-cyan, #4FC3F7); }
+        .usage-chart-svg .uc-dot-codex   { stroke: var(--accent-gold, #FFD700); }
+        .usage-chart-svg .uc-hover-line  { stroke: rgba(255,255,255,0.25); stroke-width: 1; pointer-events: none; }
+        .usage-chart-tooltip {
+            position: absolute;
+            background: var(--card-bg, #1a1a2e);
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            padding: 6px 8px;
+            font-size: 11px;
+            color: var(--text-primary, #eee);
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 5;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        .usage-chart-empty {
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted, #888);
+            font-size: 12px;
+        }
+
+        .usage-widget-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            flex-wrap: wrap;
+        }
+        .usage-widget-health {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .usage-health-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success, #4CAF50);
+            box-shadow: 0 0 6px currentColor;
+            color: var(--success, #4CAF50);
+            transition: background-color 200ms ease;
+        }
+        .usage-health-dot.stale {
+            background: var(--danger, #F44336);
+            color: var(--danger, #F44336);
+        }
+
+        @media (max-width: 600px) {
+            .usage-gauges { grid-template-columns: 1fr; }
+            .usage-stats { grid-template-columns: 1fr; }
+            .usage-gauge-ring { width: 96px; height: 96px; }
+            .usage-chart-svg { height: 60px; }
+        }
     </style>
     <link rel="canonical" href="https://eclawbot.com/portal/dashboard.html">
 </head>
@@ -1784,6 +2029,94 @@
                 </div>
             </div>
         </div>
+
+        <!-- Usage Widget — Claude Code 5h + Codex CLI (Plan B Phase 3) -->
+        <section class="card usage-widget" id="usageWidget" aria-labelledby="usageWidgetTitle">
+            <div class="usage-widget-header">
+                <div class="usage-widget-title" id="usageWidgetTitle">
+                    <span aria-hidden="true">📊</span>
+                    <span data-i18n="dashboard_usage_widget_title">Claude Code / Codex usage</span>
+                </div>
+                <button class="btn btn-sm btn-outline" type="button" onclick="refreshUsageWidget()" data-i18n="dashboard_usage_widget_refresh">Refresh</button>
+            </div>
+
+            <div class="usage-widget-loading" id="usageWidgetLoading">
+                <span class="spinner" style="width:14px;height:14px;border-width:2px;"></span>
+                <span data-i18n="dashboard_usage_widget_loading">Loading usage data...</span>
+            </div>
+
+            <div class="usage-widget-content" id="usageWidgetContent" style="display:none;">
+                <div class="usage-gauges">
+                    <div class="usage-gauge">
+                        <div class="usage-gauge-ring" id="claudeGaugeRing">
+                            <svg viewBox="0 0 100 100" aria-hidden="true">
+                                <circle class="ring-bg" cx="50" cy="50" r="42"></circle>
+                                <circle class="ring-fg ring-claude" cx="50" cy="50" r="42" id="claudeRing"></circle>
+                            </svg>
+                            <div class="usage-gauge-label">
+                                <div class="usage-gauge-pct" id="claudePct">--</div>
+                                <div class="usage-gauge-name" data-i18n="dashboard_usage_widget_claude_5h">Claude · 5h</div>
+                            </div>
+                        </div>
+                        <div class="usage-gauge-sub" id="claudeSub"></div>
+                    </div>
+                    <div class="usage-gauge">
+                        <div class="usage-gauge-ring" id="codexGaugeRing">
+                            <svg viewBox="0 0 100 100" aria-hidden="true">
+                                <circle class="ring-bg" cx="50" cy="50" r="42"></circle>
+                                <circle class="ring-fg ring-codex" cx="50" cy="50" r="42" id="codexRing"></circle>
+                            </svg>
+                            <div class="usage-gauge-label">
+                                <div class="usage-gauge-pct" id="codexPct">--</div>
+                                <div class="usage-gauge-name" data-i18n="dashboard_usage_widget_codex_5h">Codex · 5h</div>
+                            </div>
+                        </div>
+                        <div class="usage-gauge-sub" id="codexSub"></div>
+                    </div>
+                </div>
+
+                <div class="usage-stats">
+                    <div class="usage-stat">
+                        <div class="usage-stat-label" data-i18n="dashboard_usage_widget_today_claude">Today · Claude</div>
+                        <div class="usage-stat-tokens" id="claudeTokensToday">--</div>
+                        <div class="usage-stat-cost" id="claudeCostToday">--</div>
+                    </div>
+                    <div class="usage-stat">
+                        <div class="usage-stat-label" data-i18n="dashboard_usage_widget_today_codex">Today · Codex</div>
+                        <div class="usage-stat-tokens" id="codexTokensToday">--</div>
+                        <div class="usage-stat-cost" id="codexCostToday">--</div>
+                    </div>
+                </div>
+
+                <div class="usage-chart" id="usageChartWrap">
+                    <div class="usage-chart-title">
+                        <span data-i18n="dashboard_usage_widget_chart_title">Last 24h · total tokens</span>
+                        <span class="usage-chart-legend">
+                            <span class="lg-claude" data-i18n="dashboard_usage_widget_legend_claude">Claude</span>
+                            <span class="lg-codex" data-i18n="dashboard_usage_widget_legend_codex">Codex</span>
+                        </span>
+                    </div>
+                    <svg class="usage-chart-svg" id="usageChartSvg" viewBox="0 0 320 80" preserveAspectRatio="none" aria-label="24h token timeline"></svg>
+                    <div class="usage-chart-empty" id="usageChartEmpty" style="display:none;" data-i18n="dashboard_usage_widget_chart_empty">No timeline data yet</div>
+                    <div class="usage-chart-tooltip" id="usageChartTooltip" style="display:none;"></div>
+                </div>
+
+                <div class="usage-widget-footer">
+                    <div class="usage-widget-health">
+                        <span class="usage-health-dot" id="usageHealthDot" aria-hidden="true"></span>
+                        <span id="usageHealthLabel" data-i18n="dashboard_usage_widget_health_ok">Daemon online</span>
+                    </div>
+                    <div class="usage-widget-updated">
+                        <span data-i18n="dashboard_usage_widget_last_update">Last update</span>
+                        <span id="usageLastUpdate">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="usage-widget-error" id="usageWidgetError" style="display:none;">
+                <span data-i18n="dashboard_usage_widget_error">Unable to load usage data</span>
+            </div>
+        </section>
 
         <!-- Invite Friends Banner (viral loop entry) -->
         <a class="invite-banner" href="/portal/invite.html" id="inviteFriendsBanner">
@@ -5124,6 +5457,324 @@
 
             setTimeout(() => ProductTour.goTo('track4', 0), 600);
         })();
+    </script>
+
+    <!-- Usage Widget — Plan B Phase 3 -->
+    <script>
+    (function () {
+        'use strict';
+        const STALE_MS = 5 * 60 * 1000;
+        const REFRESH_MS = 60 * 1000;
+        const FIVE_HOURS_MS = 5 * 60 * 60 * 1000;
+        let pollTimer = null;
+        let lastFetchOk = false;
+
+        function fmtTokens(n) {
+            if (!Number.isFinite(n) || n <= 0) return '0';
+            if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+            if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+            if (n >= 1e3) return (n / 1e3).toFixed(1) + 'k';
+            return String(Math.round(n));
+        }
+        function fmtCost(n) {
+            if (!Number.isFinite(n)) return '$0';
+            return '$' + n.toFixed(n < 10 ? 2 : 1);
+        }
+        function fmtTimeAgo(iso) {
+            if (!iso) return '--';
+            const diff = Date.now() - new Date(iso).getTime();
+            if (!Number.isFinite(diff) || diff < 0) return '--';
+            const m = Math.floor(diff / 60000);
+            if (m < 1) return (typeof i18n !== 'undefined' ? i18n.t('dashboard_usage_widget_just_now') : 'just now');
+            if (m < 60) return m + 'm';
+            const h = Math.floor(m / 60);
+            if (h < 24) return h + 'h';
+            return Math.floor(h / 24) + 'd';
+        }
+
+        function setRingPct(ringEl, gaugeRingEl, pct) {
+            const circ = 2 * Math.PI * 42;
+            const clamped = Math.max(0, Math.min(100, pct));
+            const offset = circ * (1 - clamped / 100);
+            ringEl.setAttribute('stroke-dasharray', String(circ));
+            ringEl.setAttribute('stroke-dashoffset', String(offset));
+            gaugeRingEl.classList.remove('ring-warn', 'ring-danger');
+            if (clamped >= 90) gaugeRingEl.classList.add('ring-danger');
+            else if (clamped >= 70) gaugeRingEl.classList.add('ring-warn');
+        }
+
+        function estimateClaudeFiveHourCost(sessions) {
+            if (!Array.isArray(sessions)) return { cost: 0, count: 0, totalTokens: 0 };
+            const cutoff = Date.now() - FIVE_HOURS_MS;
+            let cost = 0, count = 0, tokens = 0;
+            for (const s of sessions) {
+                const lastSeen = s && s.last_seen ? Date.parse(s.last_seen) : NaN;
+                if (!Number.isFinite(lastSeen) || lastSeen < cutoff) continue;
+                count++;
+                cost += Number(s.cost_usd) || 0;
+                tokens += (Number(s.input_tokens) || 0) + (Number(s.output_tokens) || 0);
+            }
+            return { cost, count, totalTokens: tokens };
+        }
+
+        function renderClaude(latest) {
+            const ring = document.getElementById('claudeRing');
+            const gauge = document.getElementById('claudeGaugeRing');
+            const pctEl = document.getElementById('claudePct');
+            const subEl = document.getElementById('claudeSub');
+            const live = latest && latest.claude ? latest.claude.live : null;
+            if (live && Number.isFinite(live.five_hour_pct)) {
+                const pct = Math.round(live.five_hour_pct);
+                pctEl.textContent = pct + '%';
+                setRingPct(ring, gauge, pct);
+                subEl.textContent = (typeof i18n !== 'undefined' ? i18n.t('dashboard_usage_widget_live_source') : 'statusLine');
+                subEl.title = '';
+            } else {
+                const est = estimateClaudeFiveHourCost(latest && latest.claude ? latest.claude.sessions : []);
+                pctEl.textContent = 'N/A';
+                setRingPct(ring, gauge, 0);
+                const sessionsLabel = (typeof i18n !== 'undefined' ? i18n.t('dashboard_usage_widget_sessions_label') : 'sessions');
+                subEl.textContent = est.count + ' ' + sessionsLabel + ' · ' + fmtCost(est.cost);
+                subEl.title = (typeof i18n !== 'undefined' ? i18n.t('dashboard_usage_widget_na_tooltip') : 'Needs Claude statusLine setup for live %');
+            }
+        }
+
+        function renderCodex(latest) {
+            const ring = document.getElementById('codexRing');
+            const gauge = document.getElementById('codexGaugeRing');
+            const pctEl = document.getElementById('codexPct');
+            const subEl = document.getElementById('codexSub');
+            const rl = latest && latest.codex ? latest.codex.rate_limits : null;
+            if (rl && Number.isFinite(rl.five_hour_pct)) {
+                const pct = Math.round(rl.five_hour_pct);
+                pctEl.textContent = pct + '%';
+                setRingPct(ring, gauge, pct);
+                const plan = rl.plan_type ? String(rl.plan_type) : '';
+                const sevenDay = Number.isFinite(rl.seven_day_pct) ? ' · 7d ' + Math.round(rl.seven_day_pct) + '%' : '';
+                subEl.textContent = plan ? plan + sevenDay : sevenDay.replace(/^ · /, '');
+                subEl.title = '';
+            } else {
+                pctEl.textContent = 'N/A';
+                setRingPct(ring, gauge, 0);
+                subEl.textContent = '';
+                subEl.title = '';
+            }
+        }
+
+        function renderToday(aggregates) {
+            const today = (aggregates && aggregates.today) || {};
+            const claude = today.claude || {};
+            const codex = today.codex || {};
+            document.getElementById('claudeTokensToday').textContent =
+                fmtTokens((claude.sum_input_tokens || 0) + (claude.sum_output_tokens || 0));
+            document.getElementById('claudeCostToday').textContent = fmtCost(claude.sum_cost_usd || 0);
+            document.getElementById('codexTokensToday').textContent =
+                fmtTokens((codex.sum_input_tokens || 0) + (codex.sum_output_tokens || 0));
+            document.getElementById('codexCostToday').textContent = fmtCost(codex.sum_cost_usd || 0);
+        }
+
+        function renderChart(points) {
+            const svg = document.getElementById('usageChartSvg');
+            const empty = document.getElementById('usageChartEmpty');
+            const tooltip = document.getElementById('usageChartTooltip');
+            if (!svg) return;
+            while (svg.firstChild) svg.removeChild(svg.firstChild);
+            tooltip.style.display = 'none';
+
+            const pts = Array.isArray(points) ? points : [];
+            if (pts.length < 3) {
+                svg.style.display = 'none';
+                empty.style.display = 'flex';
+                return;
+            }
+            svg.style.display = 'block';
+            empty.style.display = 'none';
+
+            const W = 320, H = 80, PAD_X = 4, PAD_Y = 6;
+            const maxToken = Math.max(1, ...pts.map(p => Math.max(p.claude_total_tokens || 0, p.codex_total_tokens || 0)));
+            const minT = Date.parse(pts[0].captured_at);
+            const maxT = Date.parse(pts[pts.length - 1].captured_at);
+            const tRange = Math.max(1, maxT - minT);
+            const NS = 'http://www.w3.org/2000/svg';
+
+            function xOf(p) {
+                const t = Date.parse(p.captured_at);
+                return PAD_X + ((t - minT) / tRange) * (W - 2 * PAD_X);
+            }
+            function yOf(v) {
+                return H - PAD_Y - ((v || 0) / maxToken) * (H - 2 * PAD_Y);
+            }
+
+            const claudePath = pts.map((p, i) => (i === 0 ? 'M' : 'L') + xOf(p).toFixed(1) + ',' + yOf(p.claude_total_tokens).toFixed(1)).join(' ');
+            const codexPath = pts.map((p, i) => (i === 0 ? 'M' : 'L') + xOf(p).toFixed(1) + ',' + yOf(p.codex_total_tokens).toFixed(1)).join(' ');
+            const claudeArea = claudePath + ' L' + xOf(pts[pts.length - 1]).toFixed(1) + ',' + (H - PAD_Y).toFixed(1) + ' L' + xOf(pts[0]).toFixed(1) + ',' + (H - PAD_Y).toFixed(1) + ' Z';
+            const codexArea = codexPath + ' L' + xOf(pts[pts.length - 1]).toFixed(1) + ',' + (H - PAD_Y).toFixed(1) + ' L' + xOf(pts[0]).toFixed(1) + ',' + (H - PAD_Y).toFixed(1) + ' Z';
+
+            const areaClaude = document.createElementNS(NS, 'path');
+            areaClaude.setAttribute('class', 'uc-area-claude');
+            areaClaude.setAttribute('d', claudeArea);
+            svg.appendChild(areaClaude);
+            const areaCodex = document.createElementNS(NS, 'path');
+            areaCodex.setAttribute('class', 'uc-area-codex');
+            areaCodex.setAttribute('d', codexArea);
+            svg.appendChild(areaCodex);
+            const lineClaude = document.createElementNS(NS, 'path');
+            lineClaude.setAttribute('class', 'uc-line-claude');
+            lineClaude.setAttribute('d', claudePath);
+            svg.appendChild(lineClaude);
+            const lineCodex = document.createElementNS(NS, 'path');
+            lineCodex.setAttribute('class', 'uc-line-codex');
+            lineCodex.setAttribute('d', codexPath);
+            svg.appendChild(lineCodex);
+
+            const hoverLine = document.createElementNS(NS, 'line');
+            hoverLine.setAttribute('class', 'uc-hover-line');
+            hoverLine.setAttribute('y1', String(PAD_Y));
+            hoverLine.setAttribute('y2', String(H - PAD_Y));
+            hoverLine.style.display = 'none';
+            svg.appendChild(hoverLine);
+
+            const overlay = document.createElementNS(NS, 'rect');
+            overlay.setAttribute('x', '0');
+            overlay.setAttribute('y', '0');
+            overlay.setAttribute('width', String(W));
+            overlay.setAttribute('height', String(H));
+            overlay.setAttribute('fill', 'transparent');
+            overlay.style.cursor = 'crosshair';
+            svg.appendChild(overlay);
+
+            const wrap = document.getElementById('usageChartWrap');
+            function onMove(evt) {
+                const rect = svg.getBoundingClientRect();
+                const px = ((evt.clientX - rect.left) / rect.width) * W;
+                let nearest = pts[0], best = Infinity;
+                for (const p of pts) {
+                    const d = Math.abs(xOf(p) - px);
+                    if (d < best) { best = d; nearest = p; }
+                }
+                hoverLine.style.display = '';
+                const x = xOf(nearest);
+                hoverLine.setAttribute('x1', String(x));
+                hoverLine.setAttribute('x2', String(x));
+                const ts = new Date(nearest.captured_at);
+                const hh = String(ts.getHours()).padStart(2, '0');
+                const mm = String(ts.getMinutes()).padStart(2, '0');
+                tooltip.innerHTML =
+                    '<div>' + hh + ':' + mm + '</div>' +
+                    '<div style="color:var(--accent-cyan)">Claude: ' + fmtTokens(nearest.claude_total_tokens) + '</div>' +
+                    '<div style="color:var(--accent-gold)">Codex: ' + fmtTokens(nearest.codex_total_tokens) + '</div>';
+                tooltip.style.display = 'block';
+                const wrapRect = wrap.getBoundingClientRect();
+                const tw = tooltip.offsetWidth;
+                let left = (evt.clientX - wrapRect.left) + 10;
+                if (left + tw > wrapRect.width - 4) left = wrapRect.width - tw - 4;
+                tooltip.style.left = left + 'px';
+                tooltip.style.top = '4px';
+            }
+            function onLeave() {
+                hoverLine.style.display = 'none';
+                tooltip.style.display = 'none';
+            }
+            overlay.addEventListener('mousemove', onMove);
+            overlay.addEventListener('mouseleave', onLeave);
+            overlay.addEventListener('touchmove', e => { if (e.touches[0]) onMove(e.touches[0]); }, { passive: true });
+            overlay.addEventListener('touchend', onLeave);
+        }
+
+        function renderHealth(latest) {
+            const dot = document.getElementById('usageHealthDot');
+            const label = document.getElementById('usageHealthLabel');
+            const updEl = document.getElementById('usageLastUpdate');
+            if (!latest || !latest.received_at) {
+                dot.classList.add('stale');
+                label.textContent = (typeof i18n !== 'undefined' ? i18n.t('dashboard_usage_widget_health_no_data') : 'No daemon data');
+                updEl.textContent = '--';
+                return;
+            }
+            const age = Date.now() - new Date(latest.received_at).getTime();
+            if (age > STALE_MS) {
+                dot.classList.add('stale');
+                label.textContent = (typeof i18n !== 'undefined' ? i18n.t('dashboard_usage_widget_health_stale') : 'Daemon offline?');
+            } else {
+                dot.classList.remove('stale');
+                label.textContent = (typeof i18n !== 'undefined' ? i18n.t('dashboard_usage_widget_health_ok') : 'Daemon online');
+            }
+            updEl.textContent = fmtTimeAgo(latest.received_at);
+        }
+
+        function showError() {
+            document.getElementById('usageWidgetLoading').style.display = 'none';
+            document.getElementById('usageWidgetContent').style.display = lastFetchOk ? '' : 'none';
+            document.getElementById('usageWidgetError').style.display = lastFetchOk ? 'none' : '';
+        }
+
+        function showContent() {
+            document.getElementById('usageWidgetLoading').style.display = 'none';
+            document.getElementById('usageWidgetError').style.display = 'none';
+            document.getElementById('usageWidgetContent').style.display = '';
+        }
+
+        async function loadUsageWidget() {
+            const user = window.currentUser;
+            if (!user || !user.deviceId || !user.deviceSecret) {
+                return;
+            }
+            const qs = 'deviceId=' + encodeURIComponent(user.deviceId)
+                + '&deviceSecret=' + encodeURIComponent(user.deviceSecret);
+            try {
+                const [snapRes, lineRes] = await Promise.all([
+                    fetch('/api/usage/snapshot?' + qs, { credentials: 'same-origin' }),
+                    fetch('/api/usage/timeline?hours=24&' + qs, { credentials: 'same-origin' })
+                ]);
+                if (!snapRes.ok || !lineRes.ok) throw new Error('http ' + snapRes.status + '/' + lineRes.status);
+                const snap = await snapRes.json();
+                const tl = await lineRes.json();
+                if (!snap.success) throw new Error(snap.error || 'snapshot failed');
+                if (!tl.success) throw new Error(tl.error || 'timeline failed');
+
+                lastFetchOk = true;
+                showContent();
+                renderClaude(snap.latest);
+                renderCodex(snap.latest);
+                renderToday(snap.aggregates);
+                renderChart(tl.points);
+                renderHealth(snap.latest);
+            } catch (err) {
+                console.warn('[UsageWidget] load failed:', err && err.message);
+                if (!lastFetchOk) showError();
+            }
+        }
+
+        window.refreshUsageWidget = function () { loadUsageWidget(); };
+
+        function startUsageWidgetPolling() {
+            loadUsageWidget();
+            if (pollTimer) clearInterval(pollTimer);
+            pollTimer = setInterval(loadUsageWidget, REFRESH_MS);
+        }
+
+        function init() {
+            if (window.currentUser && window.currentUser.deviceId && window.currentUser.deviceSecret) {
+                startUsageWidgetPolling();
+            } else {
+                let tries = 0;
+                const t = setInterval(() => {
+                    tries++;
+                    if (window.currentUser && window.currentUser.deviceId && window.currentUser.deviceSecret) {
+                        clearInterval(t);
+                        startUsageWidgetPolling();
+                    } else if (tries > 30) {
+                        clearInterval(t);
+                    }
+                }, 500);
+            }
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    })();
     </script>
     </main>
 </body>

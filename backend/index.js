@@ -1476,7 +1476,7 @@ app.get('/api/help', (req, res) => {
         entities:   ['entity','實體','bind','綁定','status','lookup','查詢實體','エンティティ','バインディング','엔티티','연결','바인딩','เอนทิตี','การผูกมัด','thực thể','liên kết','kết nối','entitas','pengikatan','koneksi','entité','liaison','entidad','enlace','vínculo','entiti','sambungan'],
         vault:      ['vault','device-vars','devicevars','secret','api key','apikey','金鑰','密鑰','秘密','保險箱','audit','審計','variables','環境變數','환경 변수','보관소','감사','シークレット','金庫','監査','bí mật','kho','giám sát','rahasia','brankas','audit log'],
         analytics:  ['analytics','growth','metrics','signup','retention','kpi','viral','k-value','成長','指標','留存','分析','회귀','분석','지표','メトリクス','分析','指標'],
-        usage:      ['usage','spend','token spend','token','claude usage','codex usage','snapshot','timeline','daemon','用量','花費','token 花費','token 用量','使用量','消費','コスト','使用量','사용량','비용']
+        usage:      ['usage','spend','token spend','token','claude usage','codex usage','snapshot','timeline','daemon','widget','usage widget','dashboard widget','dashboard usage widget','5h','5-hour','five hour','gauge','用量','花費','token 花費','token 用量','使用量','消費','儀表板用量','用量小工具','5小時','コスト','使用量','使用ウィジェット','사용량','비용','사용량 위젯']
     };
 
     const matched = Object.entries(INTENT_MAP).find(([category, kws]) =>
@@ -1551,7 +1551,8 @@ app.get('/api/help', (req, res) => {
             { title: 'POST Claude/Codex spend snapshot (daemon push)', curl: `curl -s -X POST "${apiBase}/api/usage/snapshot" -H "Content-Type: application/json" -d ${d},"captured_at":"2026-05-23T12:00:00Z","daemon_version":"0.1.0","claude":{"sessions":[]},"codex":{"sessions":[]},"pricing_source":"litellm"}'` },
             { title: 'GET latest snapshot + today/7d/30d aggregates', curl: `curl -s "${apiBase}/api/usage/snapshot?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}"` },
             { title: 'GET timeline (last 24h)', curl: `curl -s "${apiBase}/api/usage/timeline?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}&hours=24"` },
-            { title: 'GET timeline (last 7 days)', curl: `curl -s "${apiBase}/api/usage/timeline?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}&hours=168"` }
+            { title: 'GET timeline (last 7 days)', curl: `curl -s "${apiBase}/api/usage/timeline?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}&hours=168"` },
+            { title: 'Dashboard usage widget (web portal — 2 gauges + today stats + 24h chart)', curl: `# Visit dashboard:\n# https://${req.hostname}/portal/dashboard.html\n# Widget polls /api/usage/snapshot + /api/usage/timeline every 60s.\n# Gauge 1: Claude 5h % (live.five_hour_pct from statusLine when present, else N/A + estimated cost from sessions)\n# Gauge 2: Codex 5h % (codex.rate_limits.five_hour_pct)\n# Today stats: claude_total_tokens + codex_total_tokens + claude_total_cost_usd + codex_total_cost_usd\n# Chart: 24h timeline polyline (Claude cyan + Codex gold)\n# Health dot: green if latest.captured_at within 5 min, else gray (stale)` }
         ]
     };
 
