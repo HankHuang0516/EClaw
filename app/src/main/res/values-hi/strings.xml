@@ -564,6 +564,10 @@ GPS: केवल अनुरोध पर, कोई बैकग्राउ�
     <string name="file_btn_download">डाउनलोड</string>
     <string name="chat_load_image_failed">इमेज लोड करने में विफल</string>
     <string name="wallpaper_no_bound_entities">कोई बाउंड एंटिटी नहीं</string>
+    <string name="claw_renderer_loading_entities">एंटिटी लोड हो रही हैं…</string>
+    <string name="claw_renderer_no_entities_connected">कोई एंटिटी कनेक्ट नहीं</string>
+    <string name="claw_renderer_open_app_to_bind">बाइंड करने के लिए E-Claw ऐप खोलें</string>
+    <string name="claw_renderer_with_openclaw_bot">OpenClaw बॉट के साथ एंटिटी</string>
     <string name="main_agent_card_deleted">एजेंट कार्ड हटाया गया</string>
     <string name="main_agent_card_saved">एजेंट कार्ड सहेजा गया</string>
     <string name="main_delete_failed">हटाना विफल</string>

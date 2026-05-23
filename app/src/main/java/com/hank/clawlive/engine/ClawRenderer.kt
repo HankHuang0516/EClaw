@@ -429,18 +429,18 @@ class ClawRenderer(
             if (loading) {
                 textPaint.textSize = 32f
                 textPaint.color = Color.WHITE
-                canvas.drawText("Loading entities…", width / 2f, height / 2f, textPaint)
+                canvas.drawText(context.getString(R.string.claw_renderer_loading_entities), width / 2f, height / 2f, textPaint)
                 return
             }
             // Draw "No entities" message with instructions
             textPaint.textSize = 36f
             textPaint.color = Color.WHITE
-            canvas.drawText("No entities connected", width / 2f, height / 2f - 40f, textPaint)
+            canvas.drawText(context.getString(R.string.claw_renderer_no_entities_connected), width / 2f, height / 2f - 40f, textPaint)
             textPaint.textSize = 24f
             textPaint.color = Color.GRAY
-            canvas.drawText("Open E-Claw app to bind", width / 2f, height / 2f + 20f, textPaint)
+            canvas.drawText(context.getString(R.string.claw_renderer_open_app_to_bind), width / 2f, height / 2f + 20f, textPaint)
             textPaint.textSize = 20f
-            canvas.drawText("entities with OpenClaw bot", width / 2f, height / 2f + 60f, textPaint)
+            canvas.drawText(context.getString(R.string.claw_renderer_with_openclaw_bot), width / 2f, height / 2f + 60f, textPaint)
             return
         }
 

@@ -293,6 +293,10 @@
     <string name="file_btn_download">下载</string>
     <string name="chat_load_image_failed">载入图片失败</string>
     <string name="wallpaper_no_bound_entities">无已绑定实体</string>
+    <string name="claw_renderer_loading_entities">正在加载实体…</string>
+    <string name="claw_renderer_no_entities_connected">无已连接实体</string>
+    <string name="claw_renderer_open_app_to_bind">打开 E-Claw 应用进行绑定</string>
+    <string name="claw_renderer_with_openclaw_bot">OpenClaw 机器人的实体</string>
     <string name="main_agent_card_deleted">Agent Card 已删除</string>
     <string name="main_agent_card_saved">Agent Card 已储存</string>
     <string name="main_delete_failed">删除失败</string>

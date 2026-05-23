@@ -564,6 +564,10 @@ Si vous avez des questions, contactez-nous via notre e-mail officiel.
     <string name="file_btn_download">Télécharger</string>
     <string name="chat_load_image_failed">Échec du chargement de l\'image</string>
     <string name="wallpaper_no_bound_entities">Aucune entité liée</string>
+    <string name="claw_renderer_loading_entities">Chargement des entités…</string>
+    <string name="claw_renderer_no_entities_connected">Aucune entité connectée</string>
+    <string name="claw_renderer_open_app_to_bind">Ouvrir app E-Claw pour lier</string>
+    <string name="claw_renderer_with_openclaw_bot">entités avec le bot OpenClaw</string>
     <string name="main_agent_card_deleted">Carte d\'agent supprimée</string>
     <string name="main_agent_card_saved">Carte d\'agent enregistrée</string>
     <string name="main_delete_failed">Échec de la suppression</string>
