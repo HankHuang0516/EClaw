@@ -24,7 +24,7 @@
     --cream-deep: #f1ebd8;
     --ink: #2a2a2a;
     --ink-soft: #5a5a5a;
-    --ink-faint: #8b8579;
+    --ink-faint: #6e6859;
     --line: #d8cfb6;
     --line-light: #ebe4cf;
     --rose: #a4513e;
@@ -369,7 +369,7 @@
     border-radius: 999px;
   }
   .schedule .item .tags .meal { color: var(--rose); }
-  .schedule .item .tags .transit { color: var(--gold-deep); }
+  .schedule .item .tags .transit { color: #7a5614; }
   .schedule .item .tags .lodging { color: var(--forest); }
   .day-tips {
     margin-top: 18px;
@@ -569,6 +569,14 @@
     color: var(--gold-deep);
   }
   .map-link:hover { color: var(--gold-deep); }
+  /* On dark forest backgrounds, the default forest-green text overlaps the bg.
+     Lift map-links inside .hero / .day-banner to gold-soft so locations stay legible. */
+  .hero .map-link,
+  .day-banner .map-link { color: var(--gold-soft); }
+  .hero .map-link::after,
+  .day-banner .map-link::after { color: var(--gold-soft); }
+  .hero .map-link:hover,
+  .day-banner .map-link:hover { color: var(--cream); }
 
   /* ===== Parking shortcut button (next to each place name) ===== */
   .parking-btn {
