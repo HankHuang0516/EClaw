@@ -5611,7 +5611,9 @@
                 const lastSeen = s && s.last_seen ? Date.parse(s.last_seen) : NaN;
                 if (!Number.isFinite(lastSeen) || lastSeen < sinceMs) continue;
                 const tokens = (Number(s.input_tokens) || 0) + (Number(s.output_tokens) || 0);
-                let name = s && s.project_id ? String(s.project_id) : '';
+                let name = '';
+                if (s && s.project) name = String(s.project);
+                else if (s && s.project_id) name = String(s.project_id);
                 if (!name && s && s.cwd) {
                     const parts = String(s.cwd).split('/').filter(Boolean);
                     name = parts.length ? parts[parts.length - 1] : String(s.cwd);
