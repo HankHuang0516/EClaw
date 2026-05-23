@@ -1275580,6 +1275580,14 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_need_status": "至少要勾选一个栏位才能督促",
+        "kanban_nudge_per_entity_clear": "\u91cd\u8a2d\u70ba\u88dd\u7f6e\u9810\u8a2d\u503c",
+        "kanban_nudge_per_entity_hint_prefix": "\u5207\u63db\u6b04\u4f4d\u4ee5\u8986\u5beb\u6b64\u5be6\u9ad4\u7684\u88dd\u7f6e\u9810\u8a2d\u503c\u3002",
+        "kanban_nudge_per_entity_override_interval": "\u8986\u5beb\u9593\u9694",
+        "kanban_nudge_per_entity_override_statuses": "\u8986\u5beb\u6b04\u4f4d",
+        "kanban_nudge_per_entity_override_throttle": "\u8986\u5beb\u7bc0\u6d41\u95a5",
+        "kanban_nudge_per_entity_pick_placeholder": "\u2014 \u9078\u64c7\u5be6\u9ad4 \u2014",
+        "kanban_nudge_per_entity_section_desc": "\u81ea\u8a02\u55ae\u4e00\u5be6\u9ad4\u7684\u9593\u9694/\u6b04\u4f4d/\u7bc0\u6d41\u95a5\u503c\u3002\u6279\u91cf\u5927\u5c0f\u548c\u512a\u5148\u6a21\u5f0f\u4fdd\u6301\u70ba\u88dd\u7f6e\u7d1a\u5225\u3002",
+        "kanban_nudge_per_entity_section_label": "\u55ae\u4e00\u5be6\u9ad4\u8986\u5beb",
 
 
 
@@ -1276092,6 +1276100,7 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_per_entity_throttle_label": "🅰️ 内容督促：同一实体一个间隔最多 1 张",
+        "kanban_nudge_per_entity_throttle_short": "\u9650\u5236\u6b64\u5be6\u9ad4\u6bcf\u500b\u9593\u9694\u6700\u591a 1 \u6b21\u901a\u77e5",
 
 
 
@@ -1296829,7 +1296838,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_mode_keyword": "关鍵字",
 
 
 
@@ -1296957,7 +1296965,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_mode_semantic": "语意",
 
 
 
@@ -1643074,6 +1643081,7 @@ const TRANSLATIONS = {
 
 
         "kb_funnel_status_all": "所有状态",
+        "kb_funnel_tag": "\u6a19\u7c64\u2026",
 
 
 
@@ -1643586,6 +1643594,7 @@ const TRANSLATIONS = {
 
 
         "kb_funnel_until": "结束",
+        "kb_gate_backlog_only_hint": "\u767c\u5e03\u9598\u50c5\u5c0d\u5f85\u8fa6\u6e05\u55ae\u4e2d\u7684\u5361\u7247\u53ef\u7528",
 
 
 
@@ -1833429,7 +1833438,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmaph": "发布者路线图",
 
 
 
@@ -1833557,7 +1833565,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmapdesc": "了解如何让您的应用准备好发布。发布是一个5步流程：",
 
 
 
@@ -1833685,7 +1833692,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatush": "发布状态",
 
 
 
@@ -1833813,7 +1833819,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatuslegend": "状态图例",
 
 
 
@@ -1833941,7 +1833946,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointh": "每个端点的状态",
 
 
 
@@ -1834069,7 +1834073,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointdesc": "显示的状态基于您的发布者资料设置。",
 
 
 
@@ -1834197,7 +1834200,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubnavpublisher": "发布者",
 
 
 
@@ -1834325,7 +1834327,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubtitle": "发布者指南",
 
 
 
@@ -2081210,6 +2081211,14 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_need_status": "ナッジするカラムを少なくとも1つ選択してください",
+        "kanban_nudge_per_entity_clear": "\u30c7\u30d0\u30a4\u30b9\u306e\u30c7\u30d5\u30a9\u30eb\u30c8\u306b\u30ea\u30bb\u30c3\u30c8",
+        "kanban_nudge_per_entity_hint_prefix": "\u30d5\u30a3\u30fc\u30eb\u30c9\u3092\u5207\u308a\u66ff\u3048\u3066\u3053\u306e\u30a8\u30f3\u30c6\u30a3\u30c6\u30a3\u306e\u30c7\u30d0\u30a4\u30b9\u30c7\u30d5\u30a9\u30eb\u30c8\u3092\u30aa\u30fc\u30d0\u30fc\u30e9\u30a4\u30c9\u3057\u307e\u3059\u3002",
+        "kanban_nudge_per_entity_override_interval": "\u9593\u9694\u3092\u30aa\u30fc\u30d0\u30fc\u30e9\u30a4\u30c9",
+        "kanban_nudge_per_entity_override_statuses": "\u5217\u3092\u30aa\u30fc\u30d0\u30fc\u30e9\u30a4\u30c9",
+        "kanban_nudge_per_entity_override_throttle": "\u30b9\u30ed\u30c3\u30c8\u30eb\u3092\u30aa\u30fc\u30d0\u30fc\u30e9\u30a4\u30c9",
+        "kanban_nudge_per_entity_pick_placeholder": "\u2014 \u30a8\u30f3\u30c6\u30a3\u30c6\u30a3\u3092\u9078\u629e \u2014",
+        "kanban_nudge_per_entity_section_desc": "\u7279\u5b9a\u30a8\u30f3\u30c6\u30a3\u30c6\u30a3\u306e\u9593\u9694/\u5217/\u30b9\u30ed\u30c3\u30c8\u30eb\u3092\u30ab\u30b9\u30bf\u30de\u30a4\u30ba\u3002\u30d0\u30c3\u30c1\u30b5\u30a4\u30ba\u3068\u512a\u5148\u30e2\u30fc\u30c9\u306f\u30c7\u30d0\u30a4\u30b9\u5168\u4f53\u3067\u7dad\u6301\u3055\u308c\u307e\u3059\u3002",
+        "kanban_nudge_per_entity_section_label": "\u30a8\u30f3\u30c6\u30a3\u30c6\u30a3\u5358\u4f4d\u306e\u30aa\u30fc\u30d0\u30fc\u30e9\u30a4\u30c9",
 
 
 
@@ -2233676,7 +2233685,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_mode_keyword": "キーワード",
 
 
 
@@ -2233804,7 +2233812,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_mode_semantic": "semantic",
 
 
 
@@ -2257102,6 +2257109,7 @@ const TRANSLATIONS = {
 
 
         "kb_funnel_status_all": "すべてのステータス",
+        "kb_funnel_tag": "\u30bf\u30b0\u2026",
 
 
 
@@ -2257614,6 +2257622,7 @@ const TRANSLATIONS = {
 
 
         "kb_funnel_until": "終了日",
+        "kb_gate_backlog_only_hint": "\u8d77\u52d5\u30b2\u30fc\u30c8\u306f\u30d0\u30c3\u30af\u30ed\u30b0\u30ab\u30fc\u30c9\u306e\u307f\u5229\u7528\u53ef",
 
 
 
@@ -2394702,7 +2394711,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmaph": "出版者ロードマップ",
 
 
 
@@ -2394830,7 +2394838,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmapdesc": "アプリの公開準備方法を学びましょう。公開は5ステップのプロセスです：",
 
 
 
@@ -2394958,7 +2394965,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatush": "公開状況",
 
 
 
@@ -2395086,7 +2395092,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatuslegend": "ステータス凡例",
 
 
 
@@ -2395214,7 +2395219,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointh": "エンドポイントごとのステータス",
 
 
 
@@ -2395342,7 +2395346,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointdesc": "表示されるステータスは Publisher Profile の設定に基づいています。",
 
 
 
@@ -2395470,7 +2395473,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubnavpublisher": "パブリッシャー",
 
 
 
@@ -2395598,7 +2395600,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubtitle": "パブリッシャーガイド",
 
 
 
@@ -2409908,6 +2409909,7 @@ const TRANSLATIONS = {
         "kanban_nudge_advanced_label": "2 種類のナッジ制御",
         "kanban_nudge_advanced_desc": "🅰️ 古いカードのナッジ と 🅱️ cron スケジュールトリガー — スイッチを分離します。",
         "kanban_nudge_per_entity_throttle_label": "🅰️ 古いカード: 各エンティティにつき、1 間隔あたり最大 1 回のナッジに制限",
+        "kanban_nudge_per_entity_throttle_short": "\u3053\u306e\u30a8\u30f3\u30c6\u30a3\u30c6\u30a3\u3092\u9593\u9694\u3054\u3068\u306b1\u3064\u306e\u901a\u77e5\u306b\u5236\u9650",
         "kanban_cron_recurring_notify_label": "🅱️ cron 親カードの自己再発行（子カードなし）: 発火ごとに通知",
         "rm_hermes_title": "Hermes Channel — 安定運用ロードマップ",
         "rm_hermes_desc": "Hermes（#5）は、EClaw の webhook channel 経由で接続された NousResearch Hermes Agent です。EClaw のクロスプラットフォーム A2A 機能を示すライブデモとして、信頼性の高い稼働が求められます。以下は、安定した共同作業状態を実現し維持するためのロードマップです。",
@@ -2434438,6 +2434440,7 @@ const TRANSLATIONS = {
 
 
         "landing_hero_title": "EClawbot",
+        "landing_watch_full_demo": "\uc804\uccb4 \ub370\ubaa8 \ubcf4\uae30",
 
 
 
@@ -2573191,6 +2573194,7 @@ const TRANSLATIONS = {
 
 
         "footer_privacy": "개인정보 보호정책",
+        "footer_promo_video": "\ud64d\ubcf4 \uc601\uc0c1",
 
 
 
@@ -2643999,6 +2644003,14 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_need_status": "넛지할 열을 최소 하나 선택하세요",
+        "kanban_nudge_per_entity_clear": "\uae30\uae30 \uae30\ubcf8\uac12\uc73c\ub85c \uc7ac\uc124\uc815",
+        "kanban_nudge_per_entity_hint_prefix": "\ud544\ub4dc\ub97c \uc804\ud658\ud558\uc5ec \uc774 \uac1c\uccb4\uc758 \uae30\uae30 \uae30\ubcf8\uac12\uc744 \uc7ac\uc815\uc758\ud569\ub2c8\ub2e4.",
+        "kanban_nudge_per_entity_override_interval": "\uac04\uaca9 \uc7ac\uc815\uc758",
+        "kanban_nudge_per_entity_override_statuses": "\uc5f4 \uc7ac\uc815\uc758",
+        "kanban_nudge_per_entity_override_throttle": "\uc2a4rottling \uc7ac\uc815\uc758",
+        "kanban_nudge_per_entity_pick_placeholder": "\u2014 \uac1c\uccb4 \uc120\ud0dd \u2014",
+        "kanban_nudge_per_entity_section_desc": "\ud2b9\uc815 \uac1c\uccb4\uc758 \uac04\uaca9/\uc5f4/\uc2a4rottling \uc0ac\uc6a9\uc790 \uc9c0\uc815. \uc77c\uad04 \ucc98\ub9ac \ud06c\uae30 \ubc0f \uc6b0\uc120 \uc21c\uc704 \ubaa8\ub4dc\ub294 \uae30\uae30 \uc804\uccb4\uc5d0\uc11c \uc720\uc9c0\ub429\ub2c8\ub2e4.",
+        "kanban_nudge_per_entity_section_label": "\uac1c\uccb4\ub2f9Overrides",
 
 
 
@@ -2808623,6 +2808635,7 @@ const TRANSLATIONS = {
 
 
         "kb_funnel_status_all": "모든 상태",
+        "kb_funnel_tag": "\ud0dc\uadf8\u2026",
 
 
 
@@ -2809135,6 +2809148,7 @@ const TRANSLATIONS = {
 
 
         "kb_funnel_until": "종료일",
+        "kb_gate_backlog_only_hint": "\ub7f0\uce58 \uac8c\uc774\ud2b8\ub294 \ubc31\ub85c\uadf8 \uce74\ub4dc\uc5d0\uc11c\ub9cc \uc0ac\uc6a9 \uac00\ub2a5",
 
 
 
@@ -2938671,7 +2938685,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmaph": "게시자 로드맵",
 
 
 
@@ -2938799,7 +2938812,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmapdesc": "앱을 출판 준비하는 방법을 알아보세요. 출판은 5단계 프로세스입니다:",
 
 
 
@@ -2938927,7 +2938939,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatush": "게시 상태",
 
 
 
@@ -2939055,7 +2939066,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatuslegend": "상태 범례",
 
 
 
@@ -2939183,7 +2939193,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointh": "엔드포인트별 상태",
 
 
 
@@ -2939311,7 +2939320,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointdesc": "표시된 상태는 게시자 프로필 설정에 기반합니다.",
 
 
 
@@ -2939439,7 +2939447,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubnavpublisher": "게시자",
 
 
 
@@ -2939996,6 +2940003,7 @@ const TRANSLATIONS = {
         "kanban_nudge_advanced_label": "두 가지 넛지 제어",
         "kanban_nudge_advanced_desc": "🅰️ 오래된 카드 넛지와 🅱️ cron 일정 트리거를 별도 스위치로 제어합니다.",
         "kanban_nudge_per_entity_throttle_label": "🅰️ 오래된 카드: 각 엔티티는 간격당 넛지 1회로 제한",
+        "kanban_nudge_per_entity_throttle_short": "\uc774 \uac1c\uccb4\ub97c \uac04\uaca9\ub2f9 1\uac1c\uc758 \uc54c\ub9bc\uc73c\ub85c \uc81c\ud55c",
         "kanban_cron_recurring_notify_label": "🅱️ Cron 부모 카드 자체 반복(자식 없음): 실행될 때마다 알림",
         "chat_scheduled": "예약됨",
         "chat_mission_notify": "미션",
@@ -2941140,7 +2941148,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmaph": "發布者路線圖",
 
 
 
@@ -2941268,7 +2941275,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmapdesc": "瞭解如何讓您的應用程式准备好发布。發布是一個5步驟流程：",
 
 
 
@@ -2941396,7 +2941402,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatush": "發布狀態",
 
 
 
@@ -2941524,7 +2941529,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatuslegend": "狀態圖例",
 
 
 
@@ -2941652,7 +2941656,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointh": "每個端點的狀態",
 
 
 
@@ -2941780,7 +2941783,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointdesc": "顯示的狀態基於您的發布者資料設定。",
 
 
 
@@ -2941908,7 +2941910,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubnavpublisher": "發布者",
 
 
 
@@ -2942700,6 +2942701,7 @@ const TRANSLATIONS = {
         "kanban_nudge_advanced_label": "การควบคุมการสะกิดสองประเภท",
         "kanban_nudge_advanced_desc": "🅰️ เขยิบการ์ดเก่ากับ 🅱️ ทริกเกอร์ cron-schedule - สวิตช์แยกกัน",
         "kanban_nudge_per_entity_throttle_label": "🅰️ การ์ดเก่า: จำกัดแต่ละเอนทิตีที่ 1 สะกิดต่อช่วงเวลา",
+        "kanban_nudge_per_entity_throttle_short": "\u0e08\u0e33\u0e01\u0e31\u0e14\u0e40\u0e2d\u0e19\u0e17\u0e34\u0e15\u0e35\u0e19\u0e35\u0e49\u0e17\u0e35\u0e48 1 \u0e01\u0e32\u0e23\u0e41\u0e08\u0e49\u0e07\u0e40\u0e15\u0e37\u0e2d\u0e19\u0e15\u0e48\u0e2d\u0e0a\u0e48\u0e27\u0e07\u0e40\u0e27\u0e25\u0e32",
         "kanban_cron_recurring_notify_label": "🅱️ การ์ดผู้ปกครอง Cron เกิดขึ้นเอง (ไม่มีลูก): แจ้งเตือนแต่ละครั้งที่เกิดเพลิงไหม้",
         "chat_scheduled": "กำหนดเวลาแล้ว",
         "chat_mission_notify": "ภารกิจ",
@@ -2942850,10 +2942852,12 @@ const TRANSLATIONS = {
         "kb_search_scope_subcards": "การ์ดย่อย",
         "kb_archived_badge": "เก็บถาวร",
         "kb_funnel_status_all": "สถานะทั้งหมด",
+        "kb_funnel_tag": "\u0e41\u0e17\u0e47\u0e01\u2026",
         "kb_funnel_priority_all": "ลำดับความสำคัญทั้งหมด",
         "kb_funnel_entity_all": "เอนทิตีทั้งหมด",
         "kb_funnel_since": "เนื่องจาก",
         "kb_funnel_until": "จนกระทั่ง",
+        "kb_gate_backlog_only_hint": "Launch-Gate \u0e43\u0e0a\u0e49\u0e44\u0e14\u0e49\u0e40\u0e09\u0e1e\u0e32\u0e30\u0e01\u0e31\u0e1a\u0e01\u0e32\u0e23\u0e4c\u0e14\u0e43\u0e19\u0e41\u0e1a\u0e47\u0e04\u0e25\u0e47\u0e2d\u0e01\u0e40\u0e17\u0e48\u0e32\u0e19\u0e31\u0e49\u0e19",
         "kb_funnel_reset": "รีเซ็ต",
         "kb_history_label": "ประวัติศาสตร์",
         "kb_history_title": "การ์ดที่เก็บถาวร",
@@ -2966919,6 +2966923,7 @@ const TRANSLATIONS = {
 
 
         "landing_hero_title": "EClawbot",
+        "landing_watch_full_demo": "\u0e14\u0e39\u0e40\u0e14\ubaa8\u5b8c\u6574\u7684\u6f14\u793a",
 
 
 
@@ -3105800,6 +3105805,7 @@ const TRANSLATIONS = {
 
 
         "footer_privacy": "นโยบายความเป็นส่วนตัว",
+        "footer_promo_video": "\u0e27\u0e34\u0e14\u0e35\u0e42\u0e2d\u0e42\u0e1b\u0e23\u0e42\u0e21\u0e15",
 
 
 
@@ -3176608,6 +3176614,14 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_need_status": "เลือกอย่างน้อยหนึ่งคอลัมน์เพื่อตอกย้ำ",
+        "kanban_nudge_per_entity_clear": "\u0e23\u0e35\u0e40\u0e0b\u0e47\u0e15\u0e40\u0e1b\u0e47\u0e19\u0e04\u0e48\u0e32\u0e40\u0e23\u0e34\u0e48\u0e21\u0e15\u0e49\u0e19\u0e02\u0e2d\u0e07\u0e2d\u0e38\u0e1b\u0e01\u0e23\u0e13\u0e4c",
+        "kanban_nudge_per_entity_hint_prefix": "\u0e2a\u0e25\u0e31\u0e1a\u0e1f\u0e34\u0e25\u0e14\u0e4c\u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e41\u0e17\u0e19\u0e17\u0e35\u0e48\u0e04\u0e48\u0e32\u0e40\u0e23\u0e34\u0e48\u0e21\u0e15\u0e49\u0e19\u0e02\u0e2d\u0e07\u0e2d\u0e38\u0e1b\u0e01\u0e23\u0e13\u0e4c\u0e2a\u0e33\u0e2b\u0e23\u0e31\u0e1a\u0e40\u0e2d\u0e19\u0e17\u0e34\u0e15\u0e35\u0e19\u0e35\u0e49",
+        "kanban_nudge_per_entity_override_interval": "\u0e41\u0e17\u0e19\u0e17\u0e35\u0e48\u0e0a\u0e48\u0e27\u0e07\u0e40\u0e27\u0e25\u0e32",
+        "kanban_nudge_per_entity_override_statuses": "\u0e41\u0e17\u0e19\u0e17\u0e35\u0e48\u0e04\u0e2d\u0e25\u0e31\u0e21\u0e19\u0e4c",
+        "kanban_nudge_per_entity_override_throttle": "\u0e41\u0e17\u0e19\u0e17\u0e35\u0e48\u0e01\u0e32\u0e23\u0e08\u0e33\u0e01\u0e31\u0e14\u0e2d\u0e31\u0e15\u0e23\u0e32",
+        "kanban_nudge_per_entity_pick_placeholder": "\u2014 \u0e40\u0e25\u0e37\u0e2d\u0e01\u0e40\u0e2d\u0e19\u0e17\u0e34\u0e15\u0e35 \u2014",
+        "kanban_nudge_per_entity_section_desc": "\u0e1b\u0e23\u0e31\u0e1a\u0e41\u0e15\u0e48\u0e07\u0e0a\u0e48\u0e27\u0e07\u0e40\u0e27\u0e25\u0e32 / \u0e04\u0e2d\u0e25\u0e31\u0e21\u0e19\u0e4c / \u0e01\u0e32\u0e23\u0e08\u0e33\u0e01\u0e31\u0e14\u0e2d\u0e31\u0e15\u0e23\u0e32\u0e2a\u0e33\u0e2b\u0e23\u0e31\u0e1a\u0e40\u0e2d\u0e19\u0e17\u0e34\u0e15\u0e35\u0e40\u0e09\u0e1e\u0e32\u0e30 \u0e02\u0e19\u0e32\u0e14\u0e41\u0e1a\u0e17\u0e0a\u0e4c\u0e41\u0e25\u0e30\u0e42\u0e2b\u0e21\u0e14\u0e25\u0e33\u0e14\u0e31\u0e1a\u0e04\u0e27\u0e32\u0e21\u0e2a\u0e33\u0e04\u0e31\u0e0d\u0e22\u0e31\u0e07\u0e04\u0e07\u0e40\u0e1b\u0e47\u0e19\u0e04\u0e48\u0e32\u0e40\u0e23\u0e34\u0e48\u0e21\u0e15\u0e49\u0e19\u0e02\u0e2d\u0e07\u0e2d\u0e38\u0e1b\u0e01\u0e23\u0e13\u0e4c",
+        "kanban_nudge_per_entity_section_label": "\u0e01\u0e32\u0e23\u0e41\u0e17\u0e19\u0e17\u0e35\u0e48\u0e15\u0e48\u0e2d\u0e40\u0e2d\u0e19\u0e17\u0e34\u0e15\u0e35",
 
 
 
@@ -3495726,6 +3495740,7 @@ const TRANSLATIONS = {
 
 
         "landing_hero_title": "EClawbot",
+        "landing_watch_full_demo": "Xem demo \u0111\u1ea7y \u0111\u1ee7",
 
 
 
@@ -3634607,6 +3634622,7 @@ const TRANSLATIONS = {
 
 
         "footer_privacy": "Chính sách Bảo mật",
+        "footer_promo_video": "Video qu\u1ea3ng c\u00e1o",
 
 
 
@@ -3705415,6 +3705431,14 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_need_status": "Chọn ít nhất một cột để nhắc nhở",
+        "kanban_nudge_per_entity_clear": "\u0110\u1eb7t l\u1ea1i v\u1ec1 m\u1eb7c \u0111\u1ecbnh thi\u1ebft b\u1ecb",
+        "kanban_nudge_per_entity_hint_prefix": "B\u1eadt/t\u1eaft tr\u01b0\u1eddng \u0111\u1ec3 ghi \u0111\u00e8 m\u1eb7c \u0111\u1ecbnh thi\u1ebft b\u1ecb cho th\u1ef1c th\u1ec3 n\u00e0y.",
+        "kanban_nudge_per_entity_override_interval": "Ghi \u0111\u00e8 kho\u1ea3ng th\u1eddi gian",
+        "kanban_nudge_per_entity_override_statuses": "Ghi \u0111\u00e8 c\u1ed9t",
+        "kanban_nudge_per_entity_override_throttle": "Ghi \u0111\u00e8 \u0111i\u1ec1u ti\u1ebft",
+        "kanban_nudge_per_entity_pick_placeholder": "\u2014 Ch\u1ecdn m\u1ed9t th\u1ef1c th\u1ec3 \u2014",
+        "kanban_nudge_per_entity_section_desc": "T\u00f9y ch\u1ec9nh kho\u1ea3ng th\u1eddi gian / c\u1ed9t / \u0111i\u1ec1u ti\u1ebft cho m\u1ed9t th\u1ef1c th\u1ec3 c\u1ee5 th\u1ec3. K\u00edch th\u01b0\u1edbc l\u00f4 v\u00e0 ch\u1ebf \u0111\u1ed9 \u01b0u ti\u00ean v\u1eabn \u0111\u01b0\u1ee3c \u00e1p d\u1ee5ng tr\u00ean to\u00e0n thi\u1ebft b\u1ecb.",
+        "kanban_nudge_per_entity_section_label": "Ghi \u0111\u00e8 tr\u00ean m\u1ed7i th\u1ef1c th\u1ec3",
 
 
 
@@ -3994387,6 +3994411,7 @@ const TRANSLATIONS = {
         "kanban_nudge_advanced_desc": "🅰️ nhắc thẻ quá hạn vs 🅱️ kích hoạt lịch cron — các công tắc riêng biệt.",
         "kanban_nudge_advanced_label": "Điều khiển nhắc nhở hai loại",
         "kanban_nudge_per_entity_throttle_label": "🅰️ Thẻ quá hạn: giới hạn mỗi thực thể tối đa 1 nhắc nhở mỗi khoảng thời gian",
+        "kanban_nudge_per_entity_throttle_short": "Gi\u1edbi h\u1ea1n th\u1ef1c th\u1ec3 n\u00e0y \u1edf 1 th\u00f4ng b\u00e1o m\u1ed7i kho\u1ea3ng th\u1eddi gian",
         "kanban_status_blocked": "Bị chặn",
         "kb_archived_badge": "Đã lưu trữ",
         "kb_funnel_entity_all": "Tất cả thực thể",
@@ -3994396,8 +3994421,10 @@ const TRANSLATIONS = {
         "kb_funnel_search": "Tìm kiếm…",
         "kb_funnel_since": "Từ",
         "kb_funnel_status_all": "Tất cả trạng thái",
+        "kb_funnel_tag": "Nh\u00e3n\u2026",
         "kb_funnel_toggle": "Bật/tắt bộ lọc",
         "kb_funnel_until": "Đến",
+        "kb_gate_backlog_only_hint": "Launch-Gate ch\u1ec9 kh\u1ea3 d\u1ee5ng cho c\u00e1c th\u1ebb trong backlog",
         "kb_history_btn": "Thẻ đã lưu trữ",
         "kb_history_empty": "Không có thẻ đã lưu trữ",
         "kb_history_label": "Lịch sử",
@@ -4022072,6 +4022099,7 @@ const TRANSLATIONS = {
 
 
         "landing_hero_title": "EClawbot",
+        "landing_watch_full_demo": "Tonton demo lengkap",
 
 
 
@@ -4160825,6 +4160853,7 @@ const TRANSLATIONS = {
 
 
         "footer_privacy": "Kebijakan Privasi",
+        "footer_promo_video": "Video promosi",
 
 
 
@@ -4231633,6 +4231662,14 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_need_status": "Pilih setidaknya satu kolom untuk diingatkan",
+        "kanban_nudge_per_entity_clear": "Kembalikan ke default perangkat",
+        "kanban_nudge_per_entity_hint_prefix": "Alihkan kolom untuk mengesampingkan default perangkat untuk entitas ini.",
+        "kanban_nudge_per_entity_override_interval": "Ganti interval",
+        "kanban_nudge_per_entity_override_statuses": "Ganti kolom",
+        "kanban_nudge_per_entity_override_throttle": "Ganti throttling",
+        "kanban_nudge_per_entity_pick_placeholder": "\u2014 Pilih entitas \u2014",
+        "kanban_nudge_per_entity_section_desc": "Sesuaikan interval / kolom / throttling untuk satu entitas tertentu. Ukuran batch dan mode prioritas tetap berlaku untuk seluruh perangkat.",
+        "kanban_nudge_per_entity_section_label": "Penggantian per entitas",
 
 
 
@@ -4520350,6 +4520387,7 @@ const TRANSLATIONS = {
         "kanban_nudge_advanced_desc": "🅰️ pengingat kartu usang vs 🅱️ pemicu jadwal cron — sakelar terpisah.",
         "kanban_nudge_advanced_label": "Kontrol pengingat dua jenis",
         "kanban_nudge_per_entity_throttle_label": "🅰️ Kartu usang: batasi tiap entitas maksimal 1 pengingat per interval",
+        "kanban_nudge_per_entity_throttle_short": "Batasi entitas ini pada 1 notifikasi per interval",
         "kanban_status_blocked": "Terblokir",
         "kb_archived_badge": "Diarsipkan",
         "kb_funnel_entity_all": "Semua entitas",
@@ -4520359,8 +4520397,10 @@ const TRANSLATIONS = {
         "kb_funnel_search": "Cari…",
         "kb_funnel_since": "Sejak",
         "kb_funnel_status_all": "Semua status",
+        "kb_funnel_tag": "Tag\u2026",
         "kb_funnel_toggle": "Alihkan filter",
         "kb_funnel_until": "Sampai",
+        "kb_gate_backlog_only_hint": "Launch-Gate hanya tersedia untuk kartu backlog",
         "kb_history_btn": "Kartu yang diarsipkan",
         "kb_history_empty": "Tidak ada kartu yang diarsipkan",
         "kb_history_label": "Riwayat",
@@ -4548034,6 +4548074,7 @@ const TRANSLATIONS = {
 
 
         "landing_hero_title": "EClawbot",
+        "landing_watch_full_demo": "Regarder la d\u00e9mo compl\u00e8te",
 
 
 
@@ -4686787,6 +4686828,7 @@ const TRANSLATIONS = {
 
 
         "footer_privacy": "Politique de confidentialité",
+        "footer_promo_video": "Vid\u00e9o promotionnelle",
 
 
 
@@ -4757595,6 +4757637,14 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_need_status": "Sélectionnez au moins une colonne à rappeler",
+        "kanban_nudge_per_entity_clear": "R\u00e9initialiser aux valeurs par d\u00e9faut de l'appareil",
+        "kanban_nudge_per_entity_hint_prefix": "Basculez un champ pour remplacer la valeur par d\u00e9faut de l'appareil pour cette entit\u00e9.",
+        "kanban_nudge_per_entity_override_interval": "Remplacer l'intervalle",
+        "kanban_nudge_per_entity_override_statuses": "Remplacer les colonnes",
+        "kanban_nudge_per_entity_override_throttle": "Remplacer la limitation",
+        "kanban_nudge_per_entity_pick_placeholder": "\u2014 S\u00e9lectionner une entit\u00e9 \u2014",
+        "kanban_nudge_per_entity_section_desc": "Personnalisez l'intervalle / les colonnes / la limitation pour une entit\u00e9 sp\u00e9cifique. La taille du lot et le mode priorit\u00e9 restent valables pour tout l'appareil.",
+        "kanban_nudge_per_entity_section_label": "Remplacements par entit\u00e9",
 
 
 
@@ -5044880,6 +5044930,7 @@ const TRANSLATIONS = {
         "kanban_nudge_advanced_label": "Commandes de déplacement à deux types",
         "kanban_nudge_advanced_desc": "🅰️ nudge de carte obsolète vs 🅱️ déclencheur de planification cron – commutateurs séparés.",
         "kanban_nudge_per_entity_throttle_label": "🅰️ Carte périmée : plafonner chaque entité à 1 coup de pouce par intervalle",
+        "kanban_nudge_per_entity_throttle_short": "Limiter cette entit\u00e9 \u00e0 1 notification par intervalle",
         "kanban_cron_recurring_notify_label": "🅱️ Carte parent Cron auto-récurrente (pas d'enfant) : notifier à chaque incendie",
         "chat_scheduled": "Programmé",
         "chat_mission_notify": "Mission",
@@ -5045030,10 +5045081,12 @@ const TRANSLATIONS = {
         "kb_search_scope_subcards": "Sous-cartes",
         "kb_archived_badge": "Archivé",
         "kb_funnel_status_all": "Tous les statuts",
+        "kb_funnel_tag": "\u00c9tiquette\u2026",
         "kb_funnel_priority_all": "Toutes les priorités",
         "kb_funnel_entity_all": "Toutes les entités",
         "kb_funnel_since": "Depuis",
         "kb_funnel_until": "Jusqu'à",
+        "kb_gate_backlog_only_hint": "Launch-Gate est disponible uniquement pour les cartes du backlog",
         "kb_funnel_reset": "Réinitialiser",
         "kb_history_label": "Histoire",
         "kb_history_title": "Cartes archivées",
@@ -5072715,6 +5072768,7 @@ const TRANSLATIONS = {
 
 
         "landing_hero_title": "EClawbot",
+        "landing_watch_full_demo": "Ver demo completo",
 
 
 
@@ -5210072,6 +5210126,7 @@ const TRANSLATIONS = {
 
 
         "footer_privacy": "Política de Privacidad...",
+        "footer_promo_video": "V\u00eddeo promocional",
 
 
 
@@ -5280721,6 +5280776,14 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_need_status": "Seleccione al menos una columna para recordar",
+        "kanban_nudge_per_entity_clear": "Restablecer al valor predeterminado del dispositivo",
+        "kanban_nudge_per_entity_hint_prefix": "Alterna un campo para anular el valor predeterminado del dispositivo para esta entidad.",
+        "kanban_nudge_per_entity_override_interval": "Anular intervalo",
+        "kanban_nudge_per_entity_override_statuses": "Anular columnas",
+        "kanban_nudge_per_entity_override_throttle": "Anular limitaci\u00f3n",
+        "kanban_nudge_per_entity_pick_placeholder": "\u2014 Seleccionar una entidad \u2014",
+        "kanban_nudge_per_entity_section_desc": "Personaliza intervalo / columnas / limitaci\u00f3n para una entidad espec\u00edfica. El tama\u00f1o del lote y el modo prioridad permanecen en todo el dispositivo.",
+        "kanban_nudge_per_entity_section_label": "Anulaciones por entidad",
 
 
 
@@ -5561991,6 +5562054,7 @@ const TRANSLATIONS = {
         "kanban_nudge_advanced_label": "Controles de avisos de dos tipos",
         "kanban_nudge_advanced_desc": "🅰️ aviso por tarjeta inactiva vs 🅱️ disparador de programación cron — interruptores separados.",
         "kanban_nudge_per_entity_throttle_label": "🅰️ Tarjeta inactiva: limitar cada entidad a 1 aviso por intervalo",
+        "kanban_nudge_per_entity_throttle_short": "Limitar esta entidad a 1 notificaci\u00f3n por intervalo",
         "kanban_cron_recurring_notify_label": "🅱️ Tarjeta padre cron autorrecurrente (sin hija): notificar en cada ejecución",
         "chat_scheduled": "Programado",
         "chat_mission_notify": "Misión",
@@ -5562161,10 +5562225,12 @@ const TRANSLATIONS = {
         "kb_search_scope_subcards": "Subtarjetas",
         "kb_archived_badge": "Archivada",
         "kb_funnel_status_all": "Todos los estados",
+        "kb_funnel_tag": "Etiqueta\u2026",
         "kb_funnel_priority_all": "Todas las prioridades",
         "kb_funnel_entity_all": "Todas las entidades",
         "kb_funnel_since": "Desde",
         "kb_funnel_until": "Hasta",
+        "kb_gate_backlog_only_hint": "Launch-Gate solo est\u00e1 disponible para tarjetas en el backlog",
         "kb_funnel_reset": "Restablecer",
         "kb_history_label": "Historial",
         "kb_history_title": "Tarjetas archivadas",
@@ -5589870,6 +5589936,7 @@ const TRANSLATIONS = {
 
 
         "landing_hero_title": "EClawbot",
+        "landing_watch_full_demo": "Watch full demo",
 
 
 
@@ -5728111,6 +5728178,7 @@ const TRANSLATIONS = {
 
 
         "footer_privacy": "Datenschutzrichtlinie",
+        "footer_promo_video": "Video promo",
 
 
 
@@ -5798915,6 +5798983,14 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_need_status": "Wählen Sie mindestens eine Spalte zum Erinnern aus",
+        "kanban_nudge_per_entity_clear": "Auf Ger\u00e4testandard zur\u00fccksetzen",
+        "kanban_nudge_per_entity_hint_prefix": "Feld umschalten, um den Ger\u00e4testandard f\u00fcr diese Entit\u00e4t zu \u00fcberschreiben.",
+        "kanban_nudge_per_entity_override_interval": "Intervall \u00fcberschreiben",
+        "kanban_nudge_per_entity_override_statuses": "Spalten \u00fcberschreiben",
+        "kanban_nudge_per_entity_override_throttle": "Drosselung \u00fcberschreiben",
+        "kanban_nudge_per_entity_pick_placeholder": "\u2014 Entit\u00e4t ausw\u00e4hlen \u2014",
+        "kanban_nudge_per_entity_section_desc": "Intervall / Spalten / Drosselung f\u00fcr eine bestimmte Entit\u00e4t anpassen. Batch-Gr\u00f6\u00dfe und Priorit\u00e4tsmodus bleiben ger\u00e4teweit.",
+        "kanban_nudge_per_entity_section_label": "Entity-\u00dcberschreibungen",
 
 
 
@@ -5962353,6 +5962429,7 @@ const TRANSLATIONS = {
 
 
         "kb_funnel_status_all": "Alle Status",
+        "kb_funnel_tag": "Tag\u2026",
 
 
 
@@ -5962865,6 +5962942,7 @@ const TRANSLATIONS = {
 
 
         "kb_funnel_until": "Bis",
+        "kb_gate_backlog_only_hint": "Launch-Gate ist nur f\u00fcr Backlog-Karten verf\u00fcgbar",
 
 
 
@@ -6098602,6 +6098680,7 @@ const TRANSLATIONS = {
         "kanban_nudge_advanced_label": "Nudge-Steuerung mit zwei Typen",
         "kanban_nudge_advanced_desc": "🅰️ Nudge für veraltete Karten vs 🅱️ Cron-Zeitplan-Auslöser — separate Schalter.",
         "kanban_nudge_per_entity_throttle_label": "🅰️ Veraltete Karte: jede Entität auf 1 Nudge pro Intervall begrenzen",
+        "kanban_nudge_per_entity_throttle_short": "Diese Entit\u00e4t auf 1 Nudge pro Intervall begrenzen",
         "kanban_cron_recurring_notify_label": "🅱️ Cron-Elternkarte wiederholt sich selbst (kein Kind): bei jeder Ausführung benachrichtigen",
         "rm_hermes_title": "Hermes Channel — Roadmap für stabilen Betrieb",
         "rm_hermes_desc": "Hermes (#5) ist ein NousResearch Hermes Agent, der über Eclaws Webhook-Kanal verbunden ist. Als Live-Showcase für EClaws plattformübergreifende A2A-Fähigkeit muss er zuverlässig arbeiten. Unten findest du die Roadmap, um einen stabilen Co-Working-Status zu erreichen und aufrechtzuerhalten.",
@@ -7693434,7 +7693513,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_demo_text": "تحدث مع بوت العرض التوضيحي — mention @eclaw_support للحصول على استجابة فورية!",
 
 
 
@@ -7693562,7 +7693640,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_example": "مثال: @assistant تحقق من حالة الخادم",
 
 
 
@@ -7734260,6 +7734337,7 @@ const TRANSLATIONS = {
         "kb_funnel_tag": "وسم…",
         "kb_funnel_toggle": "تبديل المرشحات",
         "kb_funnel_until": "حتى",
+        "kb_gate_backlog_only_hint": "Launch-Gate \u0645\u062a\u0627\u062d \u0641\u0642\u0637 \u0644\u0628\u0637\u0627\u0642\u0627\u062a \u0627\u0644\u062e\u0644\u0641\u064a\u0629",
         "kb_history_btn": "البطاقات المؤرشفة",
         "kb_history_empty": "لا توجد بطاقات مؤرشفة",
         "kb_history_label": "السجل",
