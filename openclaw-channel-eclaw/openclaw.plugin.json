@@ -4,6 +4,39 @@
   "version": "1.0.0",
   "description": "E-Claw AI chat platform channel for OpenClaw",
   "channels": ["eclaw"],
+  "channelConfigs": {
+    "eclaw": {
+      "label": "E-Claw",
+      "description": "Connect OpenClaw to E-Claw live wallpaper entities.",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "accounts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "enabled": { "type": "boolean", "default": true },
+                "apiKey": { "type": "string", "description": "Channel API Key (eck_...)" },
+                "apiSecret": { "type": "string", "description": "Channel API Secret (ecs_...)" },
+                "apiBase": { "type": "string", "default": "https://eclawbot.com" },
+                "webhookUrl": { "type": "string", "description": "Public OpenClaw base URL; the plugin appends /eclaw-webhook." },
+                "entityId": { "type": "number", "minimum": 0, "maximum": 7, "description": "Optional: entity slot to use (0-7). If omitted, auto-assigned to first free slot." },
+                "botName": { "type": "string", "maxLength": 20 }
+              },
+              "required": ["apiKey"]
+            }
+          }
+        }
+      },
+      "commands": {
+        "nativeCommandsAutoEnabled": true,
+        "nativeSkillsAutoEnabled": true
+      }
+    }
+  },
   "configSchema": {
     "type": "object",
     "properties": {
@@ -16,10 +49,11 @@
             "apiKey": { "type": "string", "description": "Channel API Key (eck_...)" },
             "apiSecret": { "type": "string", "description": "Channel API Secret (ecs_...)" },
             "apiBase": { "type": "string", "default": "https://eclawbot.com" },
+            "webhookUrl": { "type": "string", "description": "Public OpenClaw base URL; the plugin appends /eclaw-webhook." },
             "entityId": { "type": "number", "minimum": 0, "maximum": 7, "description": "Optional: entity slot to use (0-7). If omitted, auto-assigned to first free slot." },
             "botName": { "type": "string", "maxLength": 20 }
           },
-          "required": ["apiKey", "apiSecret"]
+          "required": ["apiKey"]
         }
       }
     }

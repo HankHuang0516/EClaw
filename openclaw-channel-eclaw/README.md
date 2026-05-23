@@ -35,8 +35,19 @@ channels:
         apiKey: "eck_..."       # From E-Claw Portal → Settings → Channel API
         apiSecret: "ecs_..."    # From E-Claw Portal → Settings → Channel API
         apiBase: "https://eclawbot.com"
+        webhookUrl: "https://your-openclaw-domain.com"  # Base URL only; plugin appends /eclaw-webhook
         entityId: 0             # Entity slot (0-3 free tier, 0-7 premium). Omit to auto-assign.
         botName: "My Bot"       # Display name in E-Claw (max 20 chars)
+```
+
+For OpenClaw `2026.5.20+`, local or side-loaded channel plugins should also be
+explicitly trusted so cold-start validation can resolve the channel before
+runtime code finishes loading:
+
+```yaml
+plugins:
+  allow:
+    - openclaw-channel
 ```
 
 ## Getting API Credentials
@@ -242,6 +253,32 @@ After the script completes, do a **full service restart** from Zeabur Dashboard.
 ### In-process restart (`SIGUSR1`) doesn't apply channel config changes
 
 In-process restart validates the config before loading plugins, so `channels.eclaw` appears as an unknown channel and the restart fails. Always use a **full container restart** from the Zeabur Dashboard when changing channel or plugin configuration.
+
+---
+
+### OpenClaw `2026.5.20+`: local plugin trust and `channelConfigs`
+
+**Problem:**
+After upgrading OpenClaw to `2026.5.20`, OpenClaw warns when a side-loaded
+channel plugin declares `channels: ["eclaw"]` without manifest-owned
+`channelConfigs` metadata, and also warns when a local extension is loaded
+without an explicit `plugins.allow` trust pin. The bot can still start, but
+cold-path config validation, setup UI, and channel discovery may not know the
+shape of `channels.eclaw` before runtime loads.
+
+**Countermeasure:**
+- `openclaw.plugin.json` now mirrors the E-Claw account schema under
+  `channelConfigs.eclaw.schema`.
+- `apiSecret` remains optional for existing channel API-key deployments; do not
+  make it a required manifest field unless every deployed account has been
+  migrated.
+- Add `plugins.allow: ["openclaw-channel"]` to each OpenClaw config that
+  side-loads this extension.
+- Keep `channels.eclaw.accounts.<name>.webhookUrl` as the public base URL only
+  (for example `https://f.eclawbot.com`); the plugin appends
+  `/eclaw-webhook` and logs the full registered callback on startup.
+- After changing plugin trust or channel config, do a full service/container
+  restart and then verify with a browser-side E-Claw chat ACK.
 
 ---
 
