@@ -1,0 +1,7 @@
+# Local credentials and runtime artefacts must never enter git.
+credentials.json
+.env
+*.log
+__pycache__/
+.pytest_cache/
+*.pyc

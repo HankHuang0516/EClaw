@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+                       "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.eclaw.usage-daemon</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>__PYTHON_BIN__</string>
+        <string>__DAEMON_PATH__/daemon.py</string>
+        <string>--interval</string>
+        <string>60</string>
+        <string>--hours-back</string>
+        <string>24</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>__DAEMON_PATH__</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <!-- Cooldown between crash restarts; KeepAlive=true still applies. -->
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+
+    <key>StandardOutPath</key>
+    <string>__LOG_PATH__</string>
+    <key>StandardErrorPath</key>
+    <string>__LOG_PATH__</string>
+
+    <!-- ECLAW_API_URL can be overridden to a staging URL; secrets are
+         intentionally NOT embedded here — daemon reads them from
+         ~/.eclaw/credentials.json (chmod 600). -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>ECLAW_API_URL</key>
+        <string>https://eclawbot.com</string>
+        <key>PYTHONUNBUFFERED</key>
+        <string>1</string>
+    </dict>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>
