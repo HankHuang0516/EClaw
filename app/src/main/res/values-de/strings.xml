@@ -950,4 +950,12 @@ Bei Fragen kontaktieren Sie uns über unsere offizielle E-Mail.
     <string name="tool_status_writing">Datei wird geschrieben…</string>
     <string name="custom_layout_enabled">Benutzerdefiniertes Layout aktiviert</string>
     <string name="custom_layout_using_preset">Standard-Layout verwenden</string>
+
+    <!-- FCM Notification Channels -->
+    <string name="fcm_channel_chat_name">Chat-Nachrichten</string>
+    <string name="fcm_channel_chat_desc">Nachrichten von deinen Entitäten</string>
+    <string name="fcm_channel_system_name">System</string>
+    <string name="fcm_channel_system_desc">Systembenachrichtigungen</string>
+    <string name="fcm_channel_feedback_name">Feedback-Updates</string>
+    <string name="fcm_channel_feedback_desc">Feedback-Statusaktualisierungen</string>
 </resources>

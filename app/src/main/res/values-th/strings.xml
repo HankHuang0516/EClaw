@@ -845,4 +845,12 @@ GPS：รับตามความต้องการเท่านั้�
     <string name="tool_status_writing">กำลังเขียนไฟล์…</string>
     <string name="custom_layout_enabled">เปิดใช้งานเลย์เอาต์กำหนดเอง</string>
     <string name="custom_layout_using_preset">ใช้เลย์เอาต์ตั้งต้น</string>
+
+    <!-- FCM Notification Channels -->
+    <string name="fcm_channel_chat_name">ข้อความแชท</string>
+    <string name="fcm_channel_chat_desc">ข้อความจากเอนทิตีของคุณ</string>
+    <string name="fcm_channel_system_name">ระบบ</string>
+    <string name="fcm_channel_system_desc">การแจ้งเตือนระบบ</string>
+    <string name="fcm_channel_feedback_name">อัปเดตคำติชม</string>
+    <string name="fcm_channel_feedback_desc">อัปเดตสถานะคำติชม</string>
 </resources>

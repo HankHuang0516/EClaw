@@ -950,4 +950,12 @@ Jika anda mempunyai sebarang soalan, sila hubungi kami melalui e-mel rasmi kami.
     <string name="tool_status_writing">Menulis fail…</string>
     <string name="custom_layout_enabled">Tata letak tersuai diaktifkan</string>
     <string name="custom_layout_using_preset">Menggunakan tata letak lalai</string>
+
+    <!-- FCM Notification Channels -->
+    <string name="fcm_channel_chat_name">Mesej sembang</string>
+    <string name="fcm_channel_chat_desc">Mesej daripada entiti anda</string>
+    <string name="fcm_channel_system_name">Sistem</string>
+    <string name="fcm_channel_system_desc">Pemberitahuan sistem</string>
+    <string name="fcm_channel_feedback_name">Kemas kini maklum balas</string>
+    <string name="fcm_channel_feedback_desc">Kemas kini status maklum balas</string>
 </resources>

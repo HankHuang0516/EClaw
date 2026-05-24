@@ -951,4 +951,12 @@ GPS: عند الطلب فقط، بلا تتبع في الخلفية، تُفقد
     <string name="tool_status_writing">جاري كتابة الملف…</string>
     <string name="custom_layout_enabled">تم تفعيل التخطيط المخصص</string>
     <string name="custom_layout_using_preset">استخدام التخطيط الافتراضي</string>
+
+    <!-- FCM Notification Channels -->
+    <string name="fcm_channel_chat_name">محادثة</string>
+    <string name="fcm_channel_chat_desc">رسائل من جهاتك</string>
+    <string name="fcm_channel_system_name">النظام</string>
+    <string name="fcm_channel_system_desc">إشعارات النظام</string>
+    <string name="fcm_channel_feedback_name">تحديثات الملاحظات</string>
+    <string name="fcm_channel_feedback_desc">تحديثات حالة الملاحظات</string>
 </resources>

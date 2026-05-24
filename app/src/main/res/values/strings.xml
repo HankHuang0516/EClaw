@@ -690,6 +690,14 @@ If you have any questions, please contact us via our official email.
     <string name="notif_prefs_loading">Loading preferences…</string>
     <string name="notif_prefs_error">Failed to load notification preferences</string>
 
+    <!-- FCM Notification Channels (system-level channel labels shown in OS settings) -->
+    <string name="fcm_channel_chat_name">Chat Messages</string>
+    <string name="fcm_channel_chat_desc">Messages from your entities</string>
+    <string name="fcm_channel_system_name">System</string>
+    <string name="fcm_channel_system_desc">System notifications</string>
+    <string name="fcm_channel_feedback_name">Feedback Updates</string>
+    <string name="fcm_channel_feedback_desc">Feedback status updates</string>
+
     <!-- Broadcast Settings -->
     <string name="broadcast_settings_title">Broadcast Settings</string>
     <string name="broadcast_settings_desc">Configure how broadcast messages work</string>

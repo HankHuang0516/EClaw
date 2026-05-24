@@ -846,4 +846,12 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="tool_status_writing">正在寫入檔案…</string>
     <string name="custom_layout_enabled">已啟用自訂排版</string>
     <string name="custom_layout_using_preset">使用預設配置</string>
+
+    <!-- FCM Notification Channels -->
+    <string name="fcm_channel_chat_name">聊天訊息</string>
+    <string name="fcm_channel_chat_desc">來自實體的訊息</string>
+    <string name="fcm_channel_system_name">系統</string>
+    <string name="fcm_channel_system_desc">系統通知</string>
+    <string name="fcm_channel_feedback_name">回饋更新</string>
+    <string name="fcm_channel_feedback_desc">回饋狀態更新</string>
 </resources>
