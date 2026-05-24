@@ -188,6 +188,11 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── New hard-tier additions (2026-05-24 pool update) ──
+    { file: null, description: 'A Python script displayed on a dark IDE background: a recursive function with a syntax error on line 8 — unexpected indent after the return statement, highlighted in red', keywords: ['python', 'syntax', 'error', 'recursive', 'line', '8', 'indent'] },
+    { file: null, description: 'A UML class diagram with four classes: Animal (base), Dog and Cat (both extend Animal), and PetShop (composed of Animal with a filled diamond); each class box shows two sample methods', keywords: ['UML', 'class', 'four', 'inheritance', 'dog', 'cat', 'animal', 'composition', 'diamond'] },
+    { file: null, description: 'A real estate floor plan for a 3-bedroom apartment: master bedroom 25m² with ensuite, two standard bedrooms at 14m² each, main bathroom 8m², open-plan kitchen and living area 42m², and a 6m² balcony', keywords: ['floor', 'plan', 'three', 'bedroom', 'master', 'ensuite', 'bathroom', 'kitchen', 'living', 'balcony', '42'] },
+    { file: null, description: 'A Kubernetes pod status dashboard showing 8 running pods, 2 pending pods stuck in ContainerCreating state, and 1 pod in CrashLoopBackOff with a restart count of 47', keywords: ['kubernetes', 'pod', 'eight', 'running', 'two', 'pending', 'crashloopbackoff', 'restart', '47'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +373,13 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── New medium-hard additions (2026-05-24 pool update) ──
+    { title: 'Meeting Rooms II', description: 'Write `solve(intervals)` — given a list of meeting time intervals [start, end], return the minimum number of conference rooms required so all meetings can run without conflicts.',
+      testCases: [{ input: '[[0,30],[5,10],[15,20]]', expected: '2' },{ input: '[[7,10],[2,4]]', expected: '1' },{ input: '[[0,10],[10,20]]', expected: '1' },{ input: '[[1,5],[2,6],[3,7]]', expected: '3' }] },
+    { title: 'Minimum Window Substring', description: 'Write `solve(s, t)` — return the minimum window substring of s such that every character in t (including duplicates) appears in the window. Return "" if no valid window exists.',
+      testCases: [{ input: '"ADOBECODEBANC", "ABC"', expected: '"BANC"' },{ input: '"a", "a"', expected: '"a"' },{ input: '"a", "aa"', expected: '""' },{ input: '"aa", "aa"', expected: '"aa"' }] },
+    { title: 'Unique Paths', description: 'Write `solve(m, n)` — in an m × n grid, a robot starts at the top-left corner and can only move right or down. Return the number of unique paths to reach the bottom-right corner.',
+      testCases: [{ input: '3, 7', expected: '28' },{ input: '3, 2', expected: '3' },{ input: '1, 1', expected: '1' },{ input: '5, 5', expected: '70' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +429,12 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── New medium additions (2026-05-24 pool update) ──
+    { question: 'What is the least common multiple (LCM) of 12 and 18?', expectedKeywords: ['36'] },
+    { question: 'A store has 200 items. After selling 15% on Day 1 and 20% of the remaining items on Day 2, how many items remain after Day 2?', expectedKeywords: ['136'] },
+    { question: 'How many diagonals does a regular octagon have?', expectedKeywords: ['20'] },
+    { question: 'A cyclist rides 60 km at 20 km/h. On the way back, she rides the same 60 km at 30 km/h. What is her average speed for the entire round trip in km/h?', expectedKeywords: ['24'] },
+    { question: 'If a positive integer is divided by 7, the remainder is 4. What is the remainder when three times that integer is divided by 7?', expectedKeywords: ['5'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +512,11 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── New medium-hard additions (2026-05-24 pool update) ──
+    { text: 'The patient is prescribed metformin five hundred milligrams twice daily with meals and lisinopril ten milligrams once daily in the morning', keywords: ['metformin', '500', 'milligrams', 'lisinopril', 'ten', 'daily'] },
+    { text: 'The contract stipulates a thirty-day written notice period and a non-compete clause extending eighteen months post-termination within a fifty-kilometer radius', keywords: ['contract', 'thirty', 'notice', 'non-compete', 'eighteen', 'months', 'fifty', 'kilometer'] },
+    { text: 'CPU utilization peaked at ninety-four percent for three consecutive minutes triggering an auto-scaling event that spawned two additional EC2 t3-large instances in the us-east-1 region', keywords: ['CPU', '94', 'percent', 'auto-scaling', 'EC2', 'us-east-1', 'two'] },
+    { text: 'The shareholders approved a twelve-point-five percent dividend increase bringing the quarterly payout to one dollar and forty-two cents per share of record as of June thirtieth', keywords: ['shareholders', 'twelve', 'percent', 'dividend', 'quarterly', 'one', 'forty-two', 'cents', 'june'] },
 ];
 
 // ============================================
