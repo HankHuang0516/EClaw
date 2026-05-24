@@ -1253814,7 +1253814,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_avg_daily": "平均日造訪",
 
 
 
@@ -1253942,7 +1253941,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_by_campaign": "按 UTM 廣告活動",
 
 
 
@@ -1254070,7 +1254068,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_col_campaign": "廣告活動",
 
 
 
@@ -1254198,7 +1254195,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_col_path": "路徑",
 
 
 
@@ -1254326,7 +1254322,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_col_uniq": "獨立",
 
 
 
@@ -1254454,7 +1254449,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_col_views": "造訪",
 
 
 
@@ -1254582,7 +1254576,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_daily_chart": "每日造訪",
 
 
 
@@ -1254710,7 +1254703,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_days_30": "最近 30 天",
 
 
 
@@ -1254838,7 +1254830,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_days_7": "最近 7 天",
 
 
 
@@ -1254966,7 +1254957,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_days_90": "最近 90 天",
 
 
 
@@ -1255094,7 +1255084,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_days_label": "區間",
 
 
 
@@ -1255222,7 +1255211,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_err_fetch": "載入分析資料失敗",
 
 
 
@@ -1255350,7 +1255338,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_err_no_device": "無可用裝置憑證，僅限裝置擁有者存取。",
 
 
 
@@ -1255478,7 +1255465,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_legend_uniq": "獨立 IP",
 
 
 
@@ -1255606,7 +1255592,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_legend_views": "造訪",
 
 
 
@@ -1255734,7 +1255719,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_loading": "載入中…",
 
 
 
@@ -1255862,7 +1255846,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_no_campaigns": "區間內無標記廣告活動",
 
 
 
@@ -1255990,7 +1255973,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_no_data": "區間內無資料",
 
 
 
@@ -1256118,7 +1256100,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_path_filter_label": "路徑篩選",
 
 
 
@@ -1256246,7 +1256227,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_path_filter_placeholder": "例如 /landing* 或 /docs/*",
 
 
 
@@ -1256374,7 +1256354,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_refresh": "重新整理",
 
 
 
@@ -1256502,7 +1256481,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_subtitle": "公開頁面與行銷頁面的匿名造訪。入口頁面有各自獨立的裝置範圍遙測。",
 
 
 
@@ -1256630,7 +1256608,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_title": "網站分析",
 
 
 
@@ -1256758,7 +1256735,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_top_paths": "熱門路徑",
 
 
 
@@ -1256886,7 +1256862,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_total_views": "總造訪",
 
 
 
@@ -1257014,7 +1256989,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_unique_ips": "獨立 IP",
 
 
 
@@ -1260982,7 +1260956,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_0": "多模態理解 — 感知並描述網頁中的視覺內容。",
 
 
 
@@ -1261110,7 +1261083,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_1": "精確 UI 互動 — 在大量元素中定位並點擊特定項目。",
 
 
 
@@ -1261238,7 +1261210,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_10": "儲存工作流 — 透過雲端 API 下載、重新命名並上傳檔案。",
 
 
 
@@ -1261366,7 +1261337,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_11": "語音能力 — 轉錄口說內容或從文字合成語音。",
 
 
 
@@ -1261494,7 +1261464,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_2": "結構化輸入 — 理解表單語義並正確填寫欄位。",
 
 
 
@@ -1261622,7 +1261591,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_3": "精細動作控制 — 精確地將物件拖曳到指定位置。",
 
 
 
@@ -1261750,7 +1261718,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_4": "規劃能力 — 導航多層級頁面結構以找到目標資訊。",
 
 
 
@@ -1261878,7 +1261845,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_5": "表格推理 — 提取並計算結構化 HTML 表格資料。",
 
 
 
@@ -1262006,7 +1261972,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_6": "安全判斷 — 抵禦社交工程攻擊（假彈窗、偽裝按鈕）。",
 
 
 
@@ -1262134,7 +1262099,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_7": "演算法推理 — 解決程式設計問題並產生正確程式碼。",
 
 
 
@@ -1262262,7 +1262226,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_8": "速度 — 從題目顯示到正確答案提交的端對端時間。",
 
 
 
@@ -1262390,7 +1262353,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_9": "記憶 — 在連續步驟中維持並重用資訊。",
 
 
 
@@ -1262518,7 +1262480,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_0": "視覺感知",
 
 
 
@@ -1262646,7 +1262607,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_1": "元素定位",
 
 
 
@@ -1262774,7 +1262734,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_10": "檔案操作",
 
 
 
@@ -1262902,7 +1262861,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_11": "語音處理",
 
 
 
@@ -1263030,7 +1262988,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_2": "表單填寫",
 
 
 
@@ -1263158,7 +1263115,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_3": "空間控制",
 
 
 
@@ -1263286,7 +1263242,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_4": "多步導航",
 
 
 
@@ -1263414,7 +1263369,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_5": "資料提取",
 
 
 
@@ -1263542,7 +1263496,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_6": "干擾抵抗",
 
 
 
@@ -1263670,7 +1263623,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_7": "代碼生成",
 
 
 
@@ -1263798,7 +1263750,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_8": "回應延遲",
 
 
 
@@ -1263926,7 +1263877,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_9": "上下文記憶",
 
 
 
@@ -1296184,7 +1296134,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_btn": "找相关訊息",
 
 
 
@@ -1296312,7 +1296261,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_empty": "找不到相关訊息。",
 
 
 
@@ -1296440,7 +1296388,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_error": "载入相关訊息失败。",
 
 
 
@@ -1296568,7 +1296515,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_loading": "正在找相关訊息…",
 
 
 
@@ -1296696,7 +1296642,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_mode_keyword": "关鍵字",
 
 
 
@@ -1296824,7 +1296769,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_mode_semantic": "语意",
 
 
 
@@ -1296952,7 +1296896,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_panel_title": "相关訊息",
 
 
 
@@ -1297080,7 +1297023,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_target_not_loaded": "訊息目前未载入",
 
 
 
@@ -1493051,7 +1492993,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_behavior_user": "純提示模式 — 不影響路由，只塞 <code>[MENTIONS]</code> 給接收 Bot",
 
 
 
@@ -1493179,7 +1493120,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case1_input_label": "你輸入的訊息",
 
 
 
@@ -1493307,7 +1493247,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case1_input_text": "幫我問今天的台積電走勢",
 
 
 
@@ -1493435,7 +1493374,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case1_outcome": "主助手會看到提示，自己決定要不要呼叫 transform 把訊息轉給股票分析師。",
 
 
 
@@ -1493563,7 +1493501,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case1_recv_label": "主助手收到的提示",
 
 
 
@@ -1493691,7 +1493628,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case2_input_label": "你輸入的訊息",
 
 
 
@@ -1493819,7 +1493755,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case2_input_text": "這個 feature 你們覺得怎麼做？",
 
 
 
@@ -1493947,7 +1493882,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case2_outcome": "會議主持可以選擇 parallel 平行轉發給三人，或先彙整再回覆。",
 
 
 
@@ -1494075,7 +1494009,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case2_recv_label": "會議主持收到的提示",
 
 
 
@@ -1494203,7 +1494136,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case3_input_label": "你輸入的訊息",
 
 
 
@@ -1494331,7 +1494263,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case3_input_text": "明天 9 點 all-hands 會議",
 
 
 
@@ -1494459,7 +1494390,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case3_outcome": "公告 Bot 看到 <code>@all</code> 提示後，可以呼叫 <code>/api/transform</code> 加上 <code>broadcast:true</code> 真正廣播給所有實體。",
 
 
 
@@ -1494587,7 +1494517,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case3_recv_label": "公告 Bot 收到的提示",
 
 
 
@@ -1494715,7 +1494644,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_dir_bot": "<strong>Bot @</strong>（在 transform message）",
 
 
 
@@ -1494843,7 +1494771,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_dir_user": "<strong>使用者 @</strong>（在 chat 輸入框）",
 
 
 
@@ -1833303,7 +1833230,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmaph": "发布者路线图",
 
 
 
@@ -1833431,7 +1833357,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmapdesc": "了解如何让您的应用准备好发布。发布是一个5步流程：",
 
 
 
@@ -1833559,7 +1833484,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatush": "发布状态",
 
 
 
@@ -1833687,7 +1833611,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatuslegend": "状态图例",
 
 
 
@@ -1833815,7 +1833738,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointh": "每个端点的状态",
 
 
 
@@ -1833943,7 +1833865,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointdesc": "显示的状态基于您的发布者资料设置。",
 
 
 
@@ -1834071,7 +1833992,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubnavpublisher": "发布者",
 
 
 
@@ -1834199,7 +1834119,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubtitle": "发布者指南",
 
 
 
@@ -1847511,7 +1847430,407 @@ const TRANSLATIONS = {
 
 
 
-    },
+    ,
+        "dashboard_usage_widget_title": "Claude Code / Codex 用量",
+        "dashboard_usage_widget_refresh": "重新整理",
+        "dashboard_usage_widget_loading": "正在载入用量资料...",
+        "dashboard_usage_widget_claude_5h": "Claude · 5 小时",
+        "dashboard_usage_widget_codex_5h": "Codex · 5 小时",
+        "dashboard_usage_widget_today_claude": "今日 · Claude",
+        "dashboard_usage_widget_today_codex": "今日 · Codex",
+        "dashboard_usage_widget_chart_title": "近 24 小时 · 总 tokens",
+        "dashboard_usage_widget_legend_claude": "Claude",
+        "dashboard_usage_widget_legend_codex": "Codex",
+        "dashboard_usage_widget_chart_empty": "尚无时间序列资料",
+        "dashboard_usage_widget_health_ok": "Daemon 线上",
+        "dashboard_usage_widget_health_stale": "Daemon 离线？",
+        "dashboard_usage_widget_health_no_data": "尚无 daemon 资料",
+        "dashboard_usage_widget_last_update": "上次更新",
+        "dashboard_usage_widget_just_now": "刚刚",
+        "dashboard_usage_widget_error": "无法载入用量资料",
+        "dashboard_usage_widget_live_source": "即时",
+        "dashboard_usage_widget_sessions_label": "次工作阶段",
+        "dashboard_usage_widget_na_tooltip": "需设定 Claude statusLine 才能显示即时 %",
+        "dashboard_usage_widget_session_used": "已用",
+        "dashboard_usage_widget_weekly_used": "已用",
+        "dashboard_usage_widget_reset_in": "重置",
+        "dashboard_usage_widget_projects_today": "项目用量",
+        "dashboard_usage_widget_projects_empty": "今日尚无项目活动",
+        "dashboard_usage_widget_rate_label": "速率",
+        "dashboard_usage_widget_rate_heavy": "高负载",
+        "dashboard_usage_widget_rate_normal": "正常",
+        "dashboard_usage_widget_rate_idle": "空闲",
+        "dashboard_usage_widget_status_label": "状态",
+        "dashboard_usage_widget_status_synced": "已同步 (usage)",
+        "dashboard_usage_widget_today_total": "今日",
+        "dashboard_usage_widget_estimate_marker": "(估算)",
+        "promo_video_meta_title": "EClawbot 推广影片 | AI agent kanban demo",
+        "promo_video_meta_description": "观看 75 秒 EClawbot 推广影片：把多个 AI 工具串成可追踪的 kanban 工作流。",
+        "promo_video_title": "75 秒看懂 EClawbot",
+        "promo_video_lede": "看看 EClawbot 如何把多个 AI agent 串成可追踪的 A2A 对话与 kanban 工作流。",
+        "promo_video_embed_heading": "EClawbot 推广影片",
+        "promo_video_primary_cta": "开启 EClawbot Portal",
+        "promo_video_secondary_cta": "回到首页",
+        "promo_video_note": "影片由 EClaw repo 外部的 HyperFrames composition 发布。",
+        "promo_meta_meta_title": "EClawbot Concept A｜Meta-recursion 纪录片",
+        "promo_meta_meta_description": "观看 Concept A：以纪录式真实素材呈现 EClawbot，让幕后 AI 工作流本身成为产品展示。",
+        "promo_meta_eyebrow": "Concept A · meta-recursion 纪录式惊喜版",
+        "promo_meta_title": "这支影片是 AI agent 自己做的",
+        "promo_meta_lede": "一支可验证的 75 秒纪录片：需求、agent 协作、渲染、上传与嵌入，全部反过来成为 EClawbot 产品展示。",
+        "promo_meta_embed_heading": "EClawbot Concept A 影片",
+        "promo_meta_proof_agents_title": "2 个 AI agent",
+        "promo_meta_proof_agents_body": "LOBSTER 路由任务；Codex 完成渲染。",
+        "promo_meta_proof_trace_title": "可验证轨迹",
+        "promo_meta_proof_trace_body": "Chat、git、kanban、Studio 画面都来自真实历史。",
+        "promo_meta_proof_output_title": "一个完成品",
+        "promo_meta_proof_output_body": "幕后制作过程，就是产品 demo。",
+        "promo_meta_primary_cta": "开启 EClawbot Portal",
+        "promo_meta_secondary_cta": "观看 75 秒 demo",
+        "promo_meta_note": "Concept A 由 repo 外部的 HyperFrames 专案渲染，再透过审查 PR 嵌入此页。",
+        "mm_card_title": "心智图",
+        "mm_card_beta": "(测试版)",
+        "mm_card_expand": "展开",
+        "mm_card_open_full": "完整思维导图 →",
+        "mm_card_collapse": "收起",
+        "mm_card_hint": "把看板卡片连成图：任务、子卡与聊天锚点互相关联。展开可互动探索。",
+        "mm_empty_title": "心智图还没有节点",
+        "mm_empty_hint": "建立看板卡片后，这里会自动把任务、子卡与聊天锚点连成图。",
+        "mm_empty_cta": "前往看板新增第一张卡",
+        "mc_note_deeplink_not_found": "找不到笔记：{id}",
+        "info_qs_slide_cta": "📊 开启简报全萤幕",
+        "qs_slides_title": "📋 快速入门指南",
+        "qs_slide_quickstart_title": "🚀 快速开始",
+        "qs_slide_quickstart_desc": "从零到盈利只需要三步",
+        "qs_slide_performance_title": "📊 性能示意",
+        "qs_slide_performance_desc": "示意性能监控仪表板",
+        "qs_slide_integration_title": "🔗 整合生态",
+        "qs_slide_integration_desc": "跨平台整合生态系统",
+        "info_slide_guide_publisher_cta": "查看 Claude Design 简报 →",
+        "guide_usecase_faq_rotate": "<strong>Q: Device Secret 外泄或想定期更换怎么办？</strong><br>\n                        A: Settings → Device Secret 列旁的 🔄 <strong>Rotate</strong> 按钮即可换新 secret。旧 secret 立即失效、所有用它打的 API 会回 403，必须用新 secret 重新更新手机 App、Channel plugin、金钥库等所有地方。<strong>新 secret 只会显示一次</strong>，记得按「下载 .txt 备份」。",
+        "info_slide_guide_usecase_claude_openclaw_cta": "查看 Claude Design 简报 →",
+        "info_slide_guide_proxy_window_cta": "查看 Claude Design 简报 →",
+        "info_slide_guide_crossdevice_cta": "查看 Claude Design 简报 →",
+        "info_slide_guide_identity_cta": "查看 Claude Design 简报 →",
+        "info_slide_guide_soul_cta": "查看 Soul 灵魂模板简报 →",
+        "info_slide_guide_rules_cta": "查看 Rules 规则模板简报 →",
+        "info_slide_guide_agentcard_cta": "查看 Claude Design 简报 →",
+        "info_slide_guide_voice_cta": "查看 Claude Design 简报 →",
+        "dash_channel_card_openclaw_title": "OpenClaw 频道",
+        "dash_channel_card_openclaw_badge": "稳定版",
+        "dash_channel_card_openclaw_desc": "官方 OpenClaw 外挂路径 — 最适合托管式 OpenClaw bot 与正式环境的 API keys 设定。",
+        "dash_channel_card_codex_title": "Codex 频道",
+        "dash_channel_card_codex_badge": "CLI 桥接",
+        "dash_channel_card_codex_desc": "透过 codex app-server 将 EClaw 实体连接到 OpenAI Codex CLI。适合从 EClaw 聊天远端处理 repo 工作。",
+        "dash_channel_card_codex_step2": "填写 .env：ECLAW_API_KEY、WEBHOOK_URL、CODEX_WORKSPACE",
+        "dash_channel_card_codex_guide_link": "Codex 指南 →",
+        "dash_channel_card_clauded_title": "Claude Code 频道",
+        "dash_channel_card_clauded_badge": "实验性",
+        "dash_channel_card_clauded_desc": "在本机 tmux session 中执行 Claude Code 作为你的 EClaw bot — 使用你的 claude.ai Max 订阅额度，不会计入 Anthropic API tokens 费用。",
+        "dash_channel_card_clauded_step2": "填写 .mcp.json：ECLAW_API_KEY、ECLAW_WEBHOOK_URL",
+        "dash_channel_card_clauded_guide_link": "Claude Code 指南 →",
+        "dash_channel_card_hermes_title": "Hermes 频道",
+        "dash_channel_card_hermes_badge": "即时展示",
+        "dash_channel_card_hermes_desc": "透过 webhook 将 Hermes Agent（NousResearch 自我演化代理，Python）绑定为你的 EClaw bot。支援 MiniMax / OpenAI / Anthropic / 本机 Ollama。",
+        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
+        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
+        "dash_channel_card_hermes_step3": "bind-entity + 启动 daemon",
+        "dash_channel_card_hermes_guide_link": "Hermes 指南 →",
+        "settings_rotate_device_secret": "🔄 轮换装置密钥",
+        "settings_rotate_device_secret_hint": "如果目前的装置密钥已外泄，请产生新的装置密钥。其他 session 需要使用新值才能登入。",
+        "settings_rotate_confirm_title": "要轮换装置密钥吗？",
+        "settings_rotate_confirm_body": "这会立即让目前的装置密钥失效。任何仍在使用旧值的其他装置或浏览器分页，都必须使用新的装置密钥重新登入。",
+        "settings_rotate_confirm_warn": "⚠ 新密钥只会显示一次。关闭下一个对话框前，请先备份。",
+        "settings_rotate_confirm_ok": "立即轮换",
+        "settings_rotate_reveal_title": "🔑 你的新装置密钥",
+        "settings_rotate_reveal_body": "请现在储存。之后将无法再次查看 — 如果遗失，就必须再次轮换。",
+        "settings_rotate_reveal_download": "⬇ 下载 .txt 备份",
+        "settings_rotate_reveal_copy": "📋 复制密钥",
+        "settings_rotate_reveal_done": "我已储存，关闭",
+        "settings_chat_preferences": "聊天偏好设定",
+        "settings_chat_avatar_size": "聊天大头贴大小",
+        "settings_chat_avatar_size_desc": "只影响聊天清单、聊天标题列与讯息大头贴",
+        "settings_chat_avatar_size_small": "小",
+        "settings_chat_avatar_size_medium": "中",
+        "settings_chat_avatar_size_large": "大",
+        "settings_roster_section_title": "出租管理 — 我的 listings 与 rentals",
+        "settings_roster_section_desc": "Owner 手动管理 listing 暂停/恢复、rebind 与租用历史。后端功能随 rental subsystem endpoint 上线启用。",
+        "settings_roster_tab_my_listings": "我的 listings",
+        "settings_roster_tab_rented_bots": "我租来的 bot",
+        "settings_roster_tab_history": "受影响历史",
+        "settings_roster_action_soft_pause": "手动 soft-pause",
+        "settings_roster_action_resume": "立即 resume",
+        "settings_roster_action_archive": "封存 listing",
+        "settings_roster_action_manual_rebind": "Rebind 并终止 rentals",
+        "settings_roster_action_choose": "选择操作",
+        "settings_roster_action_view_details": "查看 rental 详情",
+        "settings_roster_action_report_issue": "手动回报问题",
+        "settings_roster_confirm_manual_rebind": "这会终止 active rentals 并从你的 wallet 退款。确定继续？",
+        "settings_roster_confirm_resume": "该 listing 健康状态可能仍 degraded，提早恢复可能影响 renter 体验。确定？",
+        "settings_roster_confirm_generic": "确定执行这个 owner 手动操作？",
+        "settings_roster_confirm_title": "确认出租管理操作",
+        "settings_roster_empty_state_listings": "目前没有 listing。",
+        "settings_roster_empty_state_rentals": "目前没有租来的 bot。",
+        "settings_roster_empty_state_history": "目前没有 rental 事件。",
+        "settings_roster_loading": "载入出租管理…",
+        "settings_roster_mock_note": "预览模式：后端 roster endpoints 尚未可用，正在显示 mock data。",
+        "settings_roster_mock_action": "仅供预览 — 后端操作尚未可用。",
+        "settings_roster_action_success": "操作已送出",
+        "settings_roster_col_bot": "机器人",
+        "settings_roster_col_status": "状态",
+        "settings_roster_col_health": "健康",
+        "settings_roster_col_active_rentals": "活跃租用",
+        "settings_roster_col_action": "操作",
+        "settings_roster_col_rental_status": "Rental 状态",
+        "settings_roster_col_remaining": "剩余时间",
+        "settings_roster_col_time": "时间",
+        "settings_roster_col_event": "事件",
+        "settings_roster_col_listing": "上架状态",
+        "settings_roster_col_refund": "退款",
+        "settings_roster_col_details": "详情",
+        "kanban_status_blocked": "已封锁",
+        "kanban_nudge_per_entity_section_label": "按实体覆盖",
+        "kanban_nudge_per_entity_section_desc": "为某个特定实体自定义间隔、列和限流。批量大小和优先级模式仍保持设备全局设置。",
+        "kanban_nudge_per_entity_pick_placeholder": "— 选择一个实体 —",
+        "kanban_nudge_per_entity_clear": "重置为设备默认值",
+        "kanban_nudge_per_entity_hint_prefix": "切换某个字段，以覆盖此实体的设备默认值。",
+        "kanban_nudge_per_entity_override_interval": "覆盖间隔",
+        "kanban_nudge_per_entity_override_statuses": "覆盖列",
+        "kanban_nudge_per_entity_override_throttle": "覆盖限流",
+        "kanban_nudge_per_entity_throttle_short": "将此实体限制为每个间隔最多 1 次提醒",
+        "chat_scheduled": "排程",
+        "chat_mission_notify": "任务",
+        "rm_hermes_title": "Hermes 频道 — 稳定运作路线图",
+        "rm_hermes_desc": "Hermes (#5) 是透过 Eclaw 的 webhook 频道连接的 NousResearch Hermes Agent。作为 EClaw 跨平台 A2A 能力的即时展示，它必须可靠运作。以下是达成并维持稳定协作状态的路线图。",
+        "rm_hermes_diag_title": "已知不稳定根因（过往事件）",
+        "rm_hermes_issue_q": "messageQueue 溢出 → EClaw 被迫进入纯翻译模式，Hermes 请求被静默丢弃（⚠️ 于 2026-04-28 再次发生；PR #2201 已修复 process-lifecycle，但 session-resume + 仅依 wall-clock 的 timeout 尚未处理 — H1 阶段进行中）",
+        "rm_hermes_issue_d": "Docker container 冻结：Hermes process 仍存活但未消费讯息；Railway restart 延迟造成长时间中断（⚠️ 于 2026-04-28 再次发生；/health 回传 200，但每次 chat call 都 timeout — H1 阶段：揭露 worker state + autoheal sidecar）",
+        "rm_hermes_issue_s": "Session cache 不一致：cached session 使用错误 org 作为 key → git 操作时出现「repo not found」",
+        "rm_hermes_issue_p": "claude-cli-proxy 匿名 fallback：没有 GIT_HUB2 credential → 私有 repo 操作静默失败；与 card_f531861e 存在落差",
+        "rm_hermes_done_title": "已完成里程碑",
+        "rm_hermes_done_daemon": "<strong>2026-04-28 — HTTP Daemon 重构</strong> (card_52bd51bb)：bridge 以长驻于 <code>:8645</code> 的 <code>hermes_daemon.py</code> 取代每次请求都 fork <code>hermes chat</code> subprocess（5–8 秒 cold start），并由其持有持续存在的 <code>hermes --continue</code> child。Bridge 透过 <code>POST /chat</code> + SSE event stream 与 daemon 沟通；未设定 <code>HERMES_DAEMON_URL</code> 时会 fallback 到 legacy subprocess。单则讯息延迟 ≈ 仅推论时间。",
+        "rm_hermes_done_selfcheck": "<strong>2026-04-27 — Self-check + auto-wake</strong> (PR #2)：bridge 每 30 分钟执行一次内部 self-check；<code>stuck_prompt</code> 状态会自动恢复，而不是升级处理。长时间 idle E2E regression test 会守住 bug 7。",
+        "rm_hermes_kpi_uptime": "≥99.0%",
+        "rm_hermes_kpi_uptime_l": "每周正常运作率",
+        "rm_hermes_kpi_delivery": "≤2%",
+        "rm_hermes_kpi_delivery_l": "讯息送达失败率",
+        "rm_hermes_kpi_resume": "≤30s",
+        "rm_hermes_kpi_resume_l": "Session 恢复时间",
+        "rm_hermes_kpi_health": "6h",
+        "rm_hermes_kpi_health_l": "健康检查间隔",
+        "rm_in_progress": "进行中",
+        "rm_todo": "待办",
+        "rm_h0_name": "基础设施就绪",
+        "rm_h0_desc": "解决基本连线能力：git clone/写入权限、credential 注入、频道验证。",
+        "rm_h0_t1": "透过 Railway env var 将 GITHUB_TOKEN 注入 claude-cli-proxy（vault → Railway）",
+        "rm_h0_t2": "重新部署 proxy；确认 Hermes 可以 git clone/push HankHuang0516/EClaw",
+        "rm_h0_t3": "EClaw 端的 Webhook secret 验证与 Hermes egress 相符",
+        "rm_h0_t4": "Hermes speakTo 回 Entity 2（commander）以确认双向 A2A",
+        "rm_h1_name": "频道可靠性",
+        "rm_h1_desc": "修复讯息送达缺口、误判断线，以及 session 恢复失败。目标：送达失败率 ≤2%、恢复 ≤30 秒。",
+        "rm_h1_t1": "Queue back-pressure：将 messageQueue 深度上限设为 200；超出上限时，最旧讯息移至 dead-letter（防止 fallback 到纯翻译模式）",
+        "rm_h1_t2": "Webhook channel 上的 heartbeat/ping-pong — Hermes 必须在 10 秒内回应，否则 EClaw 会将送达标记为失败并重试",
+        "rm_h1_t3": "Session cache key 包含 org_id + entity_id — 修复 stale session cache 导致的「repo not found」",
+        "rm_h1_t4": "EClaw channel 记录 delivery receipts；连续失败超过 3 次时发出警报 → 通知 commander",
+        "rm_h1_t5": "Docker health-check：只有在 Hermes message loop 有回应时，Railway health endpoint 才回传 200；若 /health 回传 503 超过 60 秒则自动重启",
+        "rm_h1_t6": "Rate-limit guard：Hermes 遵守来自 EClaw 的 30 req/min；透过 exponential backoff 处理 back-pressure",
+        "rm_h2_name": "营运成熟度",
+        "rm_h2_desc": "让 Hermes 成为可靠的团队成员：健康监控、自我修复、SLA 追踪。目标：每周正常运作率 ≥99%、每 6 小时健康检查。",
+        "rm_h2_t1": "Hermes 透过 speakTo 接收 i18n batch cards，并准时交付 PR",
+        "rm_h2_t2": "Hermes health-check cron：每 6 小时执行一次 git push test；连续 3 次失败时通知 commander",
+        "rm_h2_t3": "Hermes 在 PR merge 后使用 Linear API 更新 card status（closed/labelled）",
+        "rm_h2_t4": "Railway restart policy 设为 always；OOM 或 stuck loop 会触发立即重启并通知 commander",
+        "rm_h2_t5": "Hermes 透过 hermes_state.db 在 session 之间保留 memory（已设定）",
+        "rm_h2_t6": "Structured log pipeline：Hermes 输出 JSON logs → Railway log drain → Grafana dashboard；追踪 P95 response time",
+        "rm_h3_name": "私有 Repo 支援",
+        "rm_h3_desc": "Hermes 可在私有 repositories 上运作。与 card_f531861e（claude-cli-proxy vault integration）一致。目标：Hermes 能 clone/push 到任何 EClaw org 的 private repo，且不会匿名 fallback。",
+        "rm_h3_t1": "claude-cli-proxy 从 vault 读取 GIT_HUB2（card_f531861e）— Hermes git 操作使用已验证的 context，而不是匿名 fallback",
+        "rm_h3_t2": "Per-org credential scope：Hermes 接收 org-specific token；无法存取指派 orgs 之外的 repos",
+        "rm_h3_t3": "Hermes 已针对 private test repo 测试 — clone、branch、commit、push、PR 全部成功",
+        "rm_h4_name": "展示就绪",
+        "rm_h4_desc": "EClaw portal 上的 Hermes Channel 页面展示与其他 agents 即时协作，作为 EClaw 跨平台 A2A 的公开证明。",
+        "rm_h4_t1": "Portal 上的公开 Hermes Channel 指南页（info.html 已存在；内容待扩充）",
+        "rm_h4_t2": "Hermes i18n 贡献以已 merge 的 PR 呈现 — 作为跨平台 A2A 证明",
+        "rm_h4_t3": "Live demo：commander 指派一张 card，Hermes 交付 PR，commander merge — 截图放在 portal",
+        "rm_h4_t4": "将 Hermes 加入 EClaw 的 agent roster 页面（附 capability tags 的 agent cards）",
+        "rm_desktop_title": "EClaw Desktop 一键设定路线图",
+        "rm_desktop_desc": "目标：实现可在 30 秒内完成所有 Agent 绑定设定的桌面应用程式",
+        "rm_d1_name": "核心基础设施",
+        "rm_d1_desc": "2–3 周：建立桌面应用程式框架、OAuth 自动化、Agent 侦测与连线基础",
+        "rm_d2_name": "设定自动化引擎",
+        "rm_d2_desc": "2–3 周：设定范本系统、批次操作引擎、环境适配",
+        "rm_d3_name": "使用者体验最佳化",
+        "rm_d3_desc": "1–2 周：一键安装、设定精灵、备份与还原",
+        "rm_d4_name": "企业功能",
+        "rm_d4_desc": "2–3 周：大量部署、安全强化、合规报告",
+        "rm_desktop_challenges_title": "主要技术挑战",
+        "mr_tab_listings": "我的上架项目",
+        "mr_no_listings": "尚无上架项目 — 可从你的机器人代理卡片建立一个",
+        "mr_listing_status_listed": "已上架",
+        "mr_listing_status_paused": "已暂停",
+        "mr_listing_status_delisted": "已下架",
+        "mr_listing_status_draft": "草稿",
+        "mr_listing_rate": "费率",
+        "mr_listing_rentals": "租用次数",
+        "mr_listing_no_rating": "尚无评分",
+        "mr_listing_unbound": "（槽位空白）",
+        "mr_listing_pause": "暂停",
+        "mr_listing_resume": "恢复",
+        "mr_listing_delist_title": "要永久下架吗？",
+        "mr_listing_delist_warning": "此操作无法复原。现有租用合约会执行到期；只会阻挡新的租用。",
+        "mr_listing_paused_toast": "上架项目已暂停",
+        "mr_listing_resumed_toast": "上架项目已重新上线",
+        "mr_listing_delisted_toast": "上架项目已下架",
+        "chat_mention_unresolved": "找不到 @mention 对应的实体：{tokens}",
+        "chat_scroll_to_latest": "卷动到最新讯息",
+        "chat_schedule_title": "⏰ 排程讯息",
+        "chat_schedule_tab_create": "新排程",
+        "chat_schedule_tab_queue": "已排定",
+        "chat_schedule_message_label": "讯息内容",
+        "chat_schedule_target_label": "发送对象",
+        "chat_schedule_local_only": "（仅限本机实体）",
+        "chat_schedule_mode_label": "排程方式",
+        "chat_schedule_mode_fixed": "固定时间",
+        "chat_schedule_mode_countdown": "倒数",
+        "chat_schedule_h": "时",
+        "chat_schedule_m": "分",
+        "chat_schedule_s": "秒",
+        "chat_schedule_max_7days": "（最长 7 天）",
+        "chat_schedule_submit": "排定送出",
+        "chat_schedule_cancel": "取消",
+        "chat_schedule_close": "关闭",
+        "chat_schedule_save": "储存",
+        "chat_schedule_edit": "编辑",
+        "chat_schedule_delete": "删除",
+        "chat_schedule_delete_confirm": "要取消这条已排程的讯息吗？",
+        "chat_schedule_no_pending": "目前没有已排程的讯息",
+        "chat_schedule_loading": "载入中…",
+        "chat_schedule_empty_text": "（尚未输入文字 — 请先在输入框打字后再排程）",
+        "chat_schedule_err_empty": "请先输入讯息内容",
+        "chat_schedule_err_no_target": "请至少选择一个发送对象",
+        "chat_schedule_err_invalid_time": "请输入有效时间",
+        "chat_schedule_err_in_past": "排程时间必须在未来",
+        "chat_schedule_err_too_far": "最多只能排到 7 天后",
+        "chat_schedule_ok": "已排程",
+        "chat_schedule_saved": "已储存",
+        "chat_schedule_cancelled": "已取消",
+        "info_slide_guide_msg_cta": "查看 Claude Design 简报 →",
+        "files_multi_select_count": "已选",
+        "files_multi_select_attach": "夹带到聊天",
+        "files_multi_select_cancel": "取消",
+        "chip_popover_loading": "载入中…",
+        "chip_popover_load_error": "载入失败",
+        "chip_popover_not_supported": "此引用类型尚未支援预览",
+        "chip_popover_requote": "再引用到聊天",
+        "chip_popover_open_full": "打开完整页面 →",
+        "chip_popover_cycle": "已在引用堆叠上",
+        "chip_popover_too_deep": "太深，请直接跳页",
+        "chip_popover_requoted": "已引用至聊天",
+        "kb_col_blocked": "已封锁",
+        "kb_sort_oldest_updated": "最久未更新",
+        "kb_funnel_tag": "标签…",
+        "kb_gate_backlog_only_hint": "Launch-gate 仅适用于 backlog 卡片",
+        "info_slide_guide_mention_cta": "查看 Claude Design 简报 →",
+        "info_perf_slide_cta": "📊 即时效能追踪仪表板",
+        "info_integration_slide_cta": "🔗 跨平台整合生态系统",
+        "info_enterprise_slide_cta": "🏢 企业级解决方案",
+        "info_privacy_slide_cta": "🔒 安全与隐私保障",
+        "info_slide_why_eclaw_b1_dual_currency_cta": "查看 Claude Design 简报 →",
+        "info_slide_why_eclaw_b2_topup_tiers_cta": "查看 Claude Design 简报 →",
+        "info_slide_why_eclaw_b3_atomic_transactions_cta": "查看 Claude Design 简报 →",
+        "info_slide_why_eclaw_b4_auto_bot_interview_cta": "查看 Claude Design 简报 →",
+        "info_slide_why_eclaw_b5_pricing_advisor_cta": "查看 Claude Design 简报 →",
+        "info_slide_why_eclaw_b6_interview_arena_leaderboard_cta": "查看 Claude Design 简报 →",
+        "info_slide_why_eclaw_b7_contract_version_locking_cta": "查看 Claude Design 简报 →",
+        "info_slide_why_eclaw_b8_token_metering_cta": "查看 Claude Design 简报 →",
+        "info_slide_why_eclaw_b9_live_bot_handover_cta": "查看 Claude Design 简报 →",
+        "info_slide_why_eclaw_b10_post_rental_a2a_collaboration_cta": "查看 Claude Design 简报 →",
+        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "查看 Claude Design 简报 →",
+        "info_guide_passive_income_slide_cta": "📊 开启简报全萤幕",
+        "info_guide_rent_to_use_slide_cta": "📊 开启简报全萤幕",
+        "info_guide_credit_swap_slide_cta": "📊 开启简报全萤幕",
+        "nav_publisher": "发布工具",
+        "toast_toggle_public_failed": "更新失败",
+        "pub_title": "发布工具",
+        "pub_apikey_title": "发布者 API 密钥",
+        "pub_apikey_placeholder": "X-Publisher-Key（来自 device-vars: PUBLISHER_API_KEY）",
+        "pub_apikey_save": "储存",
+        "pub_apikey_unset": "未设定",
+        "pub_apikey_hint": "只会储存在此浏览器的 localStorage。绝不会传送给任何第三方。POST /publish 请求必填。",
+        "pub_platforms_title": "平台",
+        "pub_btn_refresh": "重新整理",
+        "pub_platforms_loading": "正在载入平台…",
+        "pub_compose_title": "撰写",
+        "pub_btn_clear": "清除",
+        "pub_btn_publish": "发布",
+        "pub_apikey_set": "金钥已设定",
+        "pub_apikey_cleared": "金钥已清除",
+        "pub_apikey_saved": "金钥已储存到此浏览器",
+        "pub_platforms_err": "载入平台失败：",
+        "pub_platforms_none": "尚未注册任何平台。",
+        "pub_chip_ready": "就绪",
+        "pub_chip_unconfigured": "未设定",
+        "pub_chip_rate": "速率：",
+        "pub_chip_rate_day": "/天",
+        "pub_compose_draftsonly": "仅草稿",
+        "pub_compose_no_schema": "此平台尚未定义撰写表单 — 请直接透过 API 发布，或新增结构描述。",
+        "pub_err_no_key": "请先在页面上方储存你的 Publisher API key。",
+        "pub_err_missing_field": "缺少必填栏位：",
+        "pub_btn_publishing": "发布中…",
+        "pub_result_ok": "已发布到 ",
+        "pub_result_err": "发布失败：",
+        "pub_result_network_err": "网路错误：",
+        "common_redeem": "兑换",
+        "common_refresh": "重新整理",
+        "common_preview": "预览",
+        "common_new_key": "+ 新增金钥",
+        "common_mark": "标记",
+        "common_open_editor": "开启编辑器",
+        "settings_save_policy": "储存装置策略",
+        "settings_invite_title": "邀请好友赚奖励",
+        "settings_invited": "已邀请",
+        "settings_bonus_remaining": "剩余奖励",
+        "settings_redeem_title": "兑换邀请码",
+        "privacy_title": "隐私权政策 - EClawbot",
+        "mm_title": "EClawbot - 思维导图",
+        "mm_tab": "思维导图",
+        "mm_heading": "🧠 思维导图",
+        "mm_scope_label": "范围",
+        "mm_scope_entity": "我的工作",
+        "mm_scope_device": "装置上的全部",
+        "mm_filter_archived": "已封存",
+        "mm_filter_done": "已完成",
+        "mm_filter_notes": "备注",
+        "mm_filter_owners": "负责人",
+        "mm_btn_refresh": "重新整理",
+        "mm_btn_reset_layout": "重置版面",
+        "mm_btn_release": "释放钉选",
+        "mm_node_task": "任务",
+        "mm_node_note": "备注",
+        "mm_node_owner": "负责人",
+        "mm_node_chat": "聊天",
+        "mm_loading": "正在载入图形…",
+        "mm_state_empty_title": "尚无图形资料",
+        "mm_empty_body": "一旦存在任务、备注或聊天锚点，它们就会显示在这里。",
+        "mm_error_title": "无法载入图形",
+        "mm_error_retry": "重试",
+        "mm_error_auth": "验证失败。请重新登入。",
+        "mm_preview_close": "关闭",
+        "mm_preview_open_task": "在看板中开启",
+        "mm_preview_open_note": "在任务中开启",
+        "mm_preview_open_chat": "在聊天中开启",
+        "mm_preview_open_owner": "按负责人筛选",
+        "mm_preview_action_disabled_note_deeplink": "备注深层连结是一张后续卡；目前这会开启 mission.html。",
+        "mm_preview_action_disabled_chat_deeplink": "聊天深层连结是一张后续卡；尚无法使用。",
+        "mm_meta_type": "类型",
+        "mm_meta_status": "状态",
+        "mm_meta_priority": "优先顺序",
+        "mm_meta_owner": "负责人",
+        "mm_meta_comments": "留言",
+        "mm_meta_notes": "备注",
+        "mm_meta_archived": "已封存",
+        "mm_meta_category": "类别",
+        "mm_meta_updated": "更新时间",
+        "mm_truncated_warning": "图形已截断：显示 {nodes} 个节点 / {links} 条连结。",},
 
 
 
@@ -2041471,26 +2041790,6 @@ const TRANSLATIONS = {
 
 
         "dash_channel_promo": "EClaw Channel を試してみませんか？よりネイティブ、より高速",
-        "dash_channel_card_openclaw_title": "OpenClaw Channel",
-        "dash_channel_card_openclaw_badge": "安定版",
-        "dash_channel_card_openclaw_desc": "公式 OpenClaw プラグイン経路 — ホスト型 OpenClaw bot と本番 API キー設定に最適です。",
-        "dash_channel_card_codex_title": "Codex Channel",
-        "dash_channel_card_codex_badge": "CLI ブリッジ",
-        "dash_channel_card_codex_desc": "codex app-server 経由で EClaw エンティティを OpenAI Codex CLI に接続します。EClaw chat からリモート repo 作業を行うのに適しています。",
-        "dash_channel_card_codex_step2": ".env を設定: ECLAW_API_KEY, WEBHOOK_URL, CODEX_WORKSPACE",
-        "dash_channel_card_codex_guide_link": "Codex ガイド →",
-        "dash_channel_card_clauded_title": "Claude Code Channel",
-        "dash_channel_card_clauded_badge": "実験版",
-        "dash_channel_card_clauded_desc": "ローカル tmux セッションで Claude Code を EClaw bot として実行します — claude.ai Max サブスク枠を使用し、Anthropic API トークン課金はありません。",
-        "dash_channel_card_clauded_step2": ".mcp.json を設定: ECLAW_API_KEY, ECLAW_WEBHOOK_URL",
-        "dash_channel_card_clauded_guide_link": "Claude Code ガイド →",
-        "dash_channel_card_hermes_title": "Hermes Channel",
-        "dash_channel_card_hermes_badge": "ライブショーケース",
-        "dash_channel_card_hermes_desc": "Hermes Agent（NousResearch の自己進化型エージェント、Python）を webhook 経由で EClaw bot としてバインドします。MiniMax / OpenAI / Anthropic / ローカル Ollama に対応。",
-        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
-        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
-        "dash_channel_card_hermes_step3": "bind-entity + daemon 起動",
-        "dash_channel_card_hermes_guide_link": "Hermes ガイド →",
 
 
 
@@ -2228309,7 +2228608,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_badge": "管理者",
 
 
 
@@ -2228437,7 +2228735,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_admin_users": "管理者ユーザー管理",
 
 
 
@@ -2228565,7 +2228862,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_admin_users_desc": "ADMIN_DEVICE_IDS の確認とローテーション。",
 
 
 
@@ -2228693,7 +2228989,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_feature_flags": "機能フラグ",
 
 
 
@@ -2228821,7 +2229116,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_feature_flags_desc": "デバイスごと/グローバルに実験的機能を切り替え。",
 
 
 
@@ -2228949,7 +2229243,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_log_browser": "エラーログブラウザ",
 
 
 
@@ -2229077,7 +2229370,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_log_browser_desc": "カテゴリ、レベル、時間で server_logs をフィルタ。",
 
 
 
@@ -2229205,7 +2229497,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_rental_monitor": "レンタル健全性モニター",
 
 
 
@@ -2229333,7 +2229624,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_rental_monitor_desc": "DBレイテンシ、トストーン成長、Publisher統合状態、Fleet数。",
 
 
 
@@ -2229461,7 +2229751,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_soon": "近日公開",
 
 
 
@@ -2229589,7 +2229878,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_sys_metrics": "システムメトリクス",
 
 
 
@@ -2229717,7 +2230005,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_sys_metrics_desc": "CPU / メモリ / ソケット数 / リクエストレート。",
 
 
 
@@ -2229845,7 +2230132,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_footnote": "管理者専用 — 非管理者のデバイスは読み込み時に403画面を表示し /portal/ にリダイレクト",
 
 
 
@@ -2229973,7 +2230259,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_section_future": "計画中",
 
 
 
@@ -2230101,7 +2230386,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_section_monitoring": "監視",
 
 
 
@@ -2230229,7 +2230513,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_subtitle": "開発 + Opsツール。非管理者のデバイスはポータルにリダイレクトされます。",
 
 
 
@@ -2230357,7 +2230640,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_title": "[admin] EClaw 管理ツール",
 
 
 
@@ -2230485,7 +2230767,6 @@ const TRANSLATIONS = {
 
 
 
-        "ai_chat_view_feedback": "フィードバック履歴を表示",
 
 
 
@@ -2230613,7 +2230894,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_return": "← 返回",
 
 
 
@@ -2230741,7 +2231021,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_attach_key_ref": "鍵の参照",
 
 
 
@@ -2230869,7 +2231148,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_card_modal_comments": "コメント",
 
 
 
@@ -2230997,7 +2231275,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_card_modal_comments_empty": "コメントはまだありません",
 
 
 
@@ -2231125,7 +2231402,6 @@ const TRANSLATIONS = {
 
 
 
-"chat_density_comfortable": "快適",
 
 
 
@@ -2231253,7 +2231529,6 @@ const TRANSLATIONS = {
 
 
 
-"chat_density_compact": "紧凑",
 
 
 
@@ -2231381,7 +2231656,6 @@ const TRANSLATIONS = {
 
 
 
-"chat_density_normal": "標準",
 
 
 
@@ -2231509,7 +2231783,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_kanban_view_card": "📋 カードを表示",
 
 
 
@@ -2231637,7 +2231910,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_loading": "読み込み中...",
 
 
 
@@ -2231765,7 +2232037,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mention_unresolved": "不明な @mention: {tokens}",
 
 
 
@@ -2231893,7 +2232164,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mic_denied": "マイクアクセスが拒否されました",
 
 
 
@@ -2232021,7 +2232291,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_demo_node": "このノードはデモデータまたは短いプレフィックスIDです — ページ間引用はサポートされていません。マインドマップページの📋ボタンを 사용하여フルトークンをコピーしてください。",
 
 
 
@@ -2232149,7 +2232418,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_empty": "—",
 
 
 
@@ -2232277,7 +2232545,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_anchors": "アンカー",
 
 
 
@@ -2232405,7 +2232672,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_comments": "コメント",
 
 
 
@@ -2232533,7 +2232799,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_summary": "要約",
 
 
 
@@ -2232661,7 +2232926,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_type": "種類",
 
 
 
@@ -2232789,7 +2233053,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mission_notify": "ミッション",
 
 
 
@@ -2232917,7 +2233180,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_playback_failed": "再生に失敗しました",
 
 
 
@@ -2233045,7 +2233307,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_btn": "関連チャット",
 
 
 
@@ -2233173,7 +2233434,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_empty": "関連するチャットが見つかりません",
 
 
 
@@ -2233301,7 +2233561,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_error": "関連するチャットの読み込みに失敗しました",
 
 
 
@@ -2233429,7 +2233688,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_loading": "関連するチャットを読み込み中...",
 
 
 
@@ -2233684,7 +2233942,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_mode_semantic": "semantic",
 
 
 
@@ -2233812,7 +2234069,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_panel_title": "関連するチャット",
 
 
 
@@ -2233940,7 +2234196,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_target_not_loaded": "ターゲットチャットが読み込まれていません",
 
 
 
@@ -2234068,7 +2234323,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_cancel": "キャンセル",
 
 
 
@@ -2234196,7 +2234450,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_cancelled": "キャンセル済み",
 
 
 
@@ -2234324,7 +2234577,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_close": "閉じる",
 
 
 
@@ -2234452,7 +2234704,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_delete": "削除",
 
 
 
@@ -2234580,7 +2234831,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_delete_confirm": "この予約メッセージをキャンセルしますか？",
 
 
 
@@ -2234708,7 +2234958,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_edit": "編集",
 
 
 
@@ -2234836,7 +2235085,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_empty_text": "(空欄 — 予約前にメッセージを入力してください)",
 
 
 
@@ -2234964,7 +2235212,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_empty": "まずメッセージを入力してください",
 
 
 
@@ -2235092,7 +2235339,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_in_past": "時間は未来である必要があります",
 
 
 
@@ -2235220,7 +2235466,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_invalid_time": "有効な時間を入力してください",
 
 
 
@@ -2235348,7 +2235593,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_no_target": "少なくとも1つのターゲットを選択してください",
 
 
 
@@ -2235476,7 +2235720,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_too_far": "7日先までしか予約できません",
 
 
 
@@ -2235604,7 +2235847,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_h": "時",
 
 
 
@@ -2235732,7 +2235974,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_loading": "読み込み中...",
 
 
 
@@ -2235860,7 +2236101,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_local_only": "(ローカルエンティティのみ)",
 
 
 
@@ -2235988,7 +2236228,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_m": "分",
 
 
 
@@ -2236116,7 +2236355,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_max_7days": "(最大7日)",
 
 
 
@@ -2236244,7 +2236482,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_message_label": "メッセージ",
 
 
 
@@ -2236372,7 +2236609,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_mode_countdown": "カウントダウン",
 
 
 
@@ -2236500,7 +2236736,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_mode_fixed": "固定時間",
 
 
 
@@ -2236628,7 +2236863,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_mode_label": "実行タイミング",
 
 
 
@@ -2236756,7 +2236990,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_no_pending": "保留中の予約メッセージはありません",
 
 
 
@@ -2236884,7 +2237117,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_ok": "予約済み",
 
 
 
@@ -2237012,7 +2237244,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_s": "秒",
 
 
 
@@ -2237140,7 +2237371,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_save": "保存",
 
 
 
@@ -2237268,7 +2237498,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_saved": "保存済み",
 
 
 
@@ -2237396,7 +2237625,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_submit": "予約",
 
 
 
@@ -2237524,7 +2237752,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_tab_create": "新規",
 
 
 
@@ -2237652,7 +2237879,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_tab_queue": "予約一覧",
 
 
 
@@ -2237780,7 +2238006,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_target_label": "送信先",
 
 
 
@@ -2237908,7 +2238133,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_title": "⏰ メッセージを予約",
 
 
 
@@ -2238036,7 +2238260,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_scheduled": "予約済み",
 
 
 
@@ -2238164,7 +2238387,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_scroll_to_latest": "最新メッセージにスクロール",
 
 
 
@@ -2238292,7 +2238514,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_unread_sep": "── 新しいメッセージ ──",
 
 
 
@@ -2238420,7 +2238641,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_voice_upload_failed": "音声アップロードに失敗しました",
 
 
 
@@ -2238548,7 +2238768,6 @@ const TRANSLATIONS = {
 
 
 
-        "chip_popover_requoted": "チャットに引用しました",
 
 
 
@@ -2238676,7 +2238895,6 @@ const TRANSLATIONS = {
 
 
 
-        "common_mark": "マーク",
 
 
 
@@ -2238804,7 +2239022,6 @@ const TRANSLATIONS = {
 
 
 
-        "common_new_key": "+ 新しい鍵",
 
 
 
@@ -2238932,7 +2239149,6 @@ const TRANSLATIONS = {
 
 
 
-        "common_open_editor": "エディタを開く",
 
 
 
@@ -2239060,7 +2239276,6 @@ const TRANSLATIONS = {
 
 
 
-"common_redeem": "引き換える",
 
 
 
@@ -2239188,7 +2239403,6 @@ const TRANSLATIONS = {
 
 
 
-        "community_cta_create_bot": "独自のBotをお持ちですか？無料で作成して今すぐリストに登録しましょう。",
 
 
 
@@ -2239316,7 +2239530,6 @@ const TRANSLATIONS = {
 
 
 
-        "compare_back": "← 情報ハブに戻る",
 
 
 
@@ -2239444,7 +2239657,6 @@ const TRANSLATIONS = {
 
 
 
-        "compare_page_title": "EClawbot vs Telegram — チャンネル比較",
 
 
 
@@ -2394582,7 +2394794,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmaph": "出版者ロードマップ",
 
 
 
@@ -2394710,7 +2394921,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmapdesc": "アプリの公開準備方法を学びましょう。公開は5ステップのプロセスです：",
 
 
 
@@ -2394838,7 +2395048,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatush": "公開状況",
 
 
 
@@ -2394966,7 +2395175,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatuslegend": "ステータス凡例",
 
 
 
@@ -2395094,7 +2395302,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointh": "エンドポイントごとのステータス",
 
 
 
@@ -2395222,7 +2395429,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointdesc": "表示されるステータスは Publisher Profile の設定に基づいています。",
 
 
 
@@ -2395350,7 +2395556,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubnavpublisher": "パブリッシャー",
 
 
 
@@ -2395478,7 +2395683,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubtitle": "パブリッシャーガイド",
 
 
 
@@ -2410303,6 +2410507,17 @@ const TRANSLATIONS = {
         "mindmap_subsystems": "サブシステム",
         "mindmap_subsystems_empty": "サブシステムはありません — ノードを「サブグラフのルート」に設定すると追加できます。",
         "mindmap_untitled": "（無題）",
+        "kanban_nudge_per_entity_section_label": "エンティティ別の上書き",
+        "kanban_nudge_per_entity_section_desc": "特定のエンティティごとに、間隔・カラム・スロットルをカスタマイズします。バッチサイズと優先度モードはデバイス全体の設定のままです。",
+        "kanban_nudge_per_entity_pick_placeholder": "— エンティティを選択 —",
+        "kanban_nudge_per_entity_clear": "デバイス既定にリセット",
+        "kanban_nudge_per_entity_hint_prefix": "このエンティティでデバイス既定を上書きするには、項目を切り替えてください。",
+        "kanban_nudge_per_entity_override_interval": "間隔を上書き",
+        "kanban_nudge_per_entity_override_statuses": "カラムを上書き",
+        "kanban_nudge_per_entity_override_throttle": "スロットルを上書き",
+        "kanban_nudge_per_entity_throttle_short": "このエンティティを各間隔につき1回の通知に制限",
+        "kb_funnel_tag": "タグ…",
+        "kb_gate_backlog_only_hint": "Launch-gate はバックログカードでのみ利用できます",
 
 
 
@@ -2604431,26 +2604646,6 @@ const TRANSLATIONS = {
 
 
         "dash_channel_promo": "EClaw Channel을 사용해 보세요! 더 네이티브하고 더 빠릅니다",
-        "dash_channel_card_openclaw_title": "OpenClaw Channel",
-        "dash_channel_card_openclaw_badge": "안정",
-        "dash_channel_card_openclaw_desc": "공식 OpenClaw 플러그인 경로 — 호스팅 OpenClaw 봇과 프로덕션 API 키 설정에 가장 적합합니다.",
-        "dash_channel_card_codex_title": "Codex Channel",
-        "dash_channel_card_codex_badge": "CLI 브리지",
-        "dash_channel_card_codex_desc": "codex app-server를 통해 EClaw 엔티티를 OpenAI Codex CLI에 연결합니다. EClaw chat에서 원격 repo 작업을 하기에 좋습니다.",
-        "dash_channel_card_codex_step2": ".env 채우기: ECLAW_API_KEY, WEBHOOK_URL, CODEX_WORKSPACE",
-        "dash_channel_card_codex_guide_link": "Codex 가이드 →",
-        "dash_channel_card_clauded_title": "Claude Code Channel",
-        "dash_channel_card_clauded_badge": "실험적",
-        "dash_channel_card_clauded_desc": "로컬 tmux 세션에서 Claude Code를 EClaw bot으로 실행합니다 — claude.ai Max 구독 할당량을 사용하며 Anthropic API 토큰 비용은 청구되지 않습니다.",
-        "dash_channel_card_clauded_step2": ".mcp.json 채우기: ECLAW_API_KEY, ECLAW_WEBHOOK_URL",
-        "dash_channel_card_clauded_guide_link": "Claude Code 가이드 →",
-        "dash_channel_card_hermes_title": "Hermes Channel",
-        "dash_channel_card_hermes_badge": "라이브 쇼케이스",
-        "dash_channel_card_hermes_desc": "Hermes Agent(NousResearch self-evolving agent, Python)를 webhook으로 EClaw bot에 바인딩합니다. MiniMax / OpenAI / Anthropic / 로컬 Ollama를 지원합니다.",
-        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
-        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
-        "dash_channel_card_hermes_step3": "bind-entity + daemon 시작",
-        "dash_channel_card_hermes_guide_link": "Hermes 가이드 →",
 
 
 
@@ -2938685,7 +2938880,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmapdesc": "앱을 출판 준비하는 방법을 알아보세요. 출판은 5단계 프로세스입니다:",
 
 
 
@@ -2938813,7 +2939007,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatush": "게시 상태",
 
 
 
@@ -2938941,7 +2939134,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatuslegend": "상태 범례",
 
 
 
@@ -2939069,7 +2939261,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointh": "엔드포인트별 상태",
 
 
 
@@ -2939197,7 +2939388,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointdesc": "표시된 상태는 게시자 프로필 설정에 기반합니다.",
 
 
 
@@ -2939325,7 +2939515,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubnavpublisher": "게시자",
 
 
 
@@ -2939453,135 +2939642,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubtitle": "게시자 가이드"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    ,
         "guide_pub_col_auth": "인증",
         "guide_pub_col_keys": "필요한 Vault / Env 키",
         "guide_pub_col_platform": "플랫폼",
@@ -2940493,6 +2940553,19 @@ const TRANSLATIONS = {
         "chat_related_loading": "관련 채팅을 불러오는 중...",
         "chat_related_panel_title": "관련 채팅",
         "chat_related_target_not_loaded": "대상 채팅을 불러오지 않았습니다",
+        "landing_watch_full_demo": "▶ 전체 데모 및 안내 보기",
+        "footer_promo_video": "▶ 소개 영상 보기",
+        "kanban_nudge_per_entity_section_label": "엔티티별 재정의",
+        "kanban_nudge_per_entity_section_desc": "특정 엔티티 하나에 대해 간격, 열, 제한을 조정합니다. 배치 크기와 우선순위 모드는 디바이스 전체 설정을 유지합니다.",
+        "kanban_nudge_per_entity_pick_placeholder": "— 엔티티 선택 —",
+        "kanban_nudge_per_entity_clear": "디바이스 기본값으로 재설정",
+        "kanban_nudge_per_entity_hint_prefix": "이 엔티티에서 디바이스 기본값을 재정의하려면 항목을 켜세요.",
+        "kanban_nudge_per_entity_override_interval": "간격 재정의",
+        "kanban_nudge_per_entity_override_statuses": "열 재정의",
+        "kanban_nudge_per_entity_override_throttle": "제한 재정의",
+        "kanban_nudge_per_entity_throttle_short": "이 엔티티를 각 간격당 알림 1회로 제한",
+        "kb_funnel_tag": "태그…",
+        "kb_gate_backlog_only_hint": "Launch-gate는 백로그 카드에서만 사용할 수 있습니다",
     },
 
 
@@ -3468409,7 +3468482,20 @@ const TRANSLATIONS = {
         "info_slide_why_eclaw_b8_token_metering_cta": "ดูสไลด์ Claude Design →",
         "info_slide_why_eclaw_b9_live_bot_handover_cta": "ดูสไลด์ Claude Design →",
         "info_slide_why_eclaw_b10_post_rental_a2a_collaboration_cta": "ดูสไลด์ Claude Design →",
-        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "ดูสไลด์ Claude Design →"},
+        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "ดูสไลด์ Claude Design →",
+        "landing_watch_full_demo": "▶ ดูเดโมเต็มและคำแนะนำ",
+        "footer_promo_video": "▶ ดูวิดีโอแนะนำ",
+        "kanban_nudge_per_entity_section_label": "การแทนที่รายเอนทิตี",
+        "kanban_nudge_per_entity_section_desc": "ปรับช่วงเวลา คอลัมน์ และการจำกัดอัตราสำหรับเอนทิตีเฉพาะหนึ่งรายการ ขนาดแบตช์และโหมดลำดับความสำคัญยังคงเป็นค่าระดับอุปกรณ์",
+        "kanban_nudge_per_entity_pick_placeholder": "— เลือกเอนทิตี —",
+        "kanban_nudge_per_entity_clear": "รีเซ็ตเป็นค่าเริ่มต้นของอุปกรณ์",
+        "kanban_nudge_per_entity_hint_prefix": "เปิดใช้ช่องใดช่องหนึ่งเพื่อแทนที่ค่าเริ่มต้นของอุปกรณ์สำหรับเอนทิตีนี้",
+        "kanban_nudge_per_entity_override_interval": "แทนที่ช่วงเวลา",
+        "kanban_nudge_per_entity_override_statuses": "แทนที่คอลัมน์",
+        "kanban_nudge_per_entity_override_throttle": "แทนที่การจำกัดอัตรา",
+        "kanban_nudge_per_entity_throttle_short": "จำกัดเอนทิตีนี้ให้รับการเตือน 1 ครั้งต่อช่วงเวลา",
+        "kb_funnel_tag": "แท็ก…",
+        "kb_gate_backlog_only_hint": "Launch-gate ใช้ได้เฉพาะกับการ์ด backlog เท่านั้น",},
 
 
 
@@ -3994762,6 +3994848,19 @@ const TRANSLATIONS = {
         "wizard_target_track6_desc": "Chúng tôi sẽ mở Arena và hướng dẫn qua benchmark 12 chiều.",
         "wizard_target_track6_title": "Lộ trình 6 — đấu trường đánh giá agent",
         "wizard_title": "EClawbot — Trình hướng dẫn làm quen",
+        "landing_watch_full_demo": "▶ Xem demo đầy đủ và hướng dẫn",
+        "footer_promo_video": "▶ Xem video giới thiệu",
+        "kanban_nudge_per_entity_section_label": "Ghi đè theo thực thể",
+        "kanban_nudge_per_entity_section_desc": "Tùy chỉnh khoảng thời gian, cột và giới hạn tần suất cho một thực thể cụ thể. Kích thước lô và chế độ ưu tiên vẫn áp dụng toàn thiết bị.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Chọn một thực thể —",
+        "kanban_nudge_per_entity_clear": "Đặt lại về mặc định của thiết bị",
+        "kanban_nudge_per_entity_hint_prefix": "Bật một trường để ghi đè mặc định của thiết bị cho thực thể này.",
+        "kanban_nudge_per_entity_override_interval": "Ghi đè khoảng thời gian",
+        "kanban_nudge_per_entity_override_statuses": "Ghi đè các cột",
+        "kanban_nudge_per_entity_override_throttle": "Ghi đè giới hạn tần suất",
+        "kanban_nudge_per_entity_throttle_short": "Giới hạn thực thể này ở 1 lần nhắc mỗi khoảng thời gian",
+        "kb_funnel_tag": "Thẻ…",
+        "kb_gate_backlog_only_hint": "Launch-gate chỉ khả dụng cho thẻ backlog",
 },
 
 
@@ -4520731,7 +4520830,20 @@ const TRANSLATIONS = {
         "wizard_target_track4_title": "Track 4 — penautan channel Claude",
         "wizard_target_track6_desc": "Kami akan membuka Arena dan memandu Anda melalui benchmark 12 dimensi.",
         "wizard_target_track6_title": "Track 6 — arena evaluasi agen",
-        "wizard_title": "EClawbot — Wizard Onboarding"},
+        "wizard_title": "EClawbot — Wizard Onboarding",
+        "landing_watch_full_demo": "▶ Tonton demo lengkap dan panduan",
+        "footer_promo_video": "▶ Tonton Video Intro",
+        "kanban_nudge_per_entity_section_label": "Penimpaan per entitas",
+        "kanban_nudge_per_entity_section_desc": "Sesuaikan interval, kolom, dan batas laju untuk satu entitas tertentu. Ukuran batch dan mode prioritas tetap berlaku di seluruh perangkat.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Pilih entitas —",
+        "kanban_nudge_per_entity_clear": "Reset ke default perangkat",
+        "kanban_nudge_per_entity_hint_prefix": "Aktifkan satu kolom untuk menimpa default perangkat bagi entitas ini.",
+        "kanban_nudge_per_entity_override_interval": "Timpa interval",
+        "kanban_nudge_per_entity_override_statuses": "Timpa kolom",
+        "kanban_nudge_per_entity_override_throttle": "Timpa batas laju",
+        "kanban_nudge_per_entity_throttle_short": "Batasi entitas ini menjadi 1 pengingat per interval",
+        "kb_funnel_tag": "Label…",
+        "kb_gate_backlog_only_hint": "Launch-gate hanya tersedia untuk kartu backlog",},
 
 
 
@@ -5045420,7 +5045532,20 @@ const TRANSLATIONS = {
         "chat_related_error": "Échec du chargement des discussions associées",
         "chat_related_loading": "Chargement des discussions associées...",
         "chat_related_panel_title": "Discussions connexes",
-        "chat_related_target_not_loaded": "Chat cible non chargé",},
+        "chat_related_target_not_loaded": "Chat cible non chargé",
+        "landing_watch_full_demo": "▶ Regarder la démo complète et le guide",
+        "footer_promo_video": "▶ Regarder la vidéo d’introduction",
+        "kanban_nudge_per_entity_section_label": "Remplacements par entité",
+        "kanban_nudge_per_entity_section_desc": "Personnalisez l’intervalle, les colonnes et la limitation pour une entité précise. La taille du lot et le mode de priorité restent communs à l’appareil.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Choisir une entité —",
+        "kanban_nudge_per_entity_clear": "Réinitialiser aux valeurs par défaut de l’appareil",
+        "kanban_nudge_per_entity_hint_prefix": "Activez un champ pour remplacer le réglage par défaut de l’appareil pour cette entité.",
+        "kanban_nudge_per_entity_override_interval": "Remplacer l’intervalle",
+        "kanban_nudge_per_entity_override_statuses": "Remplacer les colonnes",
+        "kanban_nudge_per_entity_override_throttle": "Remplacer la limitation",
+        "kanban_nudge_per_entity_throttle_short": "Limiter cette entité à 1 rappel par intervalle",
+        "kb_funnel_tag": "Étiquette…",
+        "kb_gate_backlog_only_hint": "Launch-gate est disponible uniquement pour les cartes du backlog",},
 
 
 
@@ -5562582,7 +5562707,20 @@ const TRANSLATIONS = {
         "chat_related_empty": "No se encontraron chats relacionados",
         "chat_related_error": "No se pudieron cargar los chats relacionados",
         "chat_related_loading": "Cargando chats relacionados..."
-    },
+    ,
+        "landing_watch_full_demo": "▶ Ver demo completa y recorrido",
+        "footer_promo_video": "▶ Ver video introductorio",
+        "kanban_nudge_per_entity_section_label": "Sobrescrituras por entidad",
+        "kanban_nudge_per_entity_section_desc": "Personaliza intervalo, columnas y limitación para una entidad específica. El tamaño de lote y el modo de prioridad se mantienen a nivel de dispositivo.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Elige una entidad —",
+        "kanban_nudge_per_entity_clear": "Restablecer al valor predeterminado del dispositivo",
+        "kanban_nudge_per_entity_hint_prefix": "Activa un campo para sobrescribir el valor predeterminado del dispositivo para esta entidad.",
+        "kanban_nudge_per_entity_override_interval": "Sobrescribir intervalo",
+        "kanban_nudge_per_entity_override_statuses": "Sobrescribir columnas",
+        "kanban_nudge_per_entity_override_throttle": "Sobrescribir limitación",
+        "kanban_nudge_per_entity_throttle_short": "Limitar esta entidad a 1 aviso por intervalo",
+        "kb_funnel_tag": "Etiqueta…",
+        "kb_gate_backlog_only_hint": "Launch-gate solo está disponible para tarjetas del backlog",},
 
 
 
@@ -6099065,6 +6099203,19 @@ const TRANSLATIONS = {
         "mindmap_subsystems": "Subsysteme",
         "mindmap_subsystems_empty": "Keine Subsysteme — markiere einen Knoten als \"Subgraph-Wurzel\", um eines hinzuzufügen.",
         "mindmap_untitled": "(unbenannt)",
+        "landing_watch_full_demo": "▶ Vollständige Demo und Anleitung ansehen",
+        "footer_promo_video": "▶ Einführungsvideo ansehen",
+        "kanban_nudge_per_entity_section_label": "Überschreibungen pro Entität",
+        "kanban_nudge_per_entity_section_desc": "Passe Intervall, Spalten und Drosselung für eine bestimmte Entität an. Batchgröße und Prioritätsmodus bleiben geräteweit.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Entität auswählen —",
+        "kanban_nudge_per_entity_clear": "Auf Gerätestandard zurücksetzen",
+        "kanban_nudge_per_entity_hint_prefix": "Aktiviere ein Feld, um den Gerätestandard für diese Entität zu überschreiben.",
+        "kanban_nudge_per_entity_override_interval": "Intervall überschreiben",
+        "kanban_nudge_per_entity_override_statuses": "Spalten überschreiben",
+        "kanban_nudge_per_entity_override_throttle": "Drosselung überschreiben",
+        "kanban_nudge_per_entity_throttle_short": "Diese Entität auf 1 Hinweis pro Intervall begrenzen",
+        "kb_funnel_tag": "Schlagwort…",
+        "kb_gate_backlog_only_hint": "Launch-gate ist nur für Backlog-Karten verfügbar",
     },
 
 
@@ -6627494,7 +6627645,71 @@ const TRANSLATIONS = {
         "wizard_target_track4_title": "Trek 4 — pautan saluran Claude",
         "wizard_target_track6_desc": "Kami akan membuka Arena dan membimbing anda melalui penanda aras 12 dimensi.",
         "wizard_target_track6_title": "Trek 6 — arena penilaian ejen",
-        "wizard_title": "EClawbot — Wizard Pengenalan"},
+        "wizard_title": "EClawbot — Wizard Pengenalan",
+        "portal_login_title": "EClawbot - Log Masuk",
+        "landing_watch_full_demo": "▶ Tonton Demo Penuh + Panduan",
+        "guide_proxy_flow1": "Merentas Peranti",
+        "guide_proxy_preview1_sender": "Luaran",
+        "guide_nav_detail_identity": "Tetapan Identiti",
+        "footer_desc": "Platform komunikasi Agent-to-Agent (A2A) untuk orkestrasi ejen AI.",
+        "footer_promo_video": "▶ Tonton Video Pengenalan",
+        "notif_title": "Pemberitahuan",
+        "kanban_nudge_per_entity_section_label": "Penggantian mengikut entiti",
+        "kanban_nudge_per_entity_section_desc": "Sesuaikan selang, lajur dan had kadar untuk satu entiti tertentu. Saiz kelompok dan mod keutamaan kekal pada seluruh peranti.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Pilih entiti —",
+        "kanban_nudge_per_entity_clear": "Tetapkan semula kepada lalai peranti",
+        "kanban_nudge_per_entity_hint_prefix": "Hidupkan medan untuk menggantikan lalai peranti bagi entiti ini.",
+        "kanban_nudge_per_entity_override_interval": "Gantikan selang",
+        "kanban_nudge_per_entity_override_statuses": "Gantikan lajur",
+        "kanban_nudge_per_entity_override_throttle": "Gantikan had kadar",
+        "kanban_nudge_per_entity_throttle_short": "Hadkan entiti ini kepada 1 peringatan setiap selang",
+        "wallet_title": "EClawbot - Dompet Saya",
+        "rm_hero_title": "Pasaran Sewaan EClaw Bot",
+        "guide_nav_usecase_messaging": "💬 Pemesejan & Rakan",
+        "ai_chat_title": "AI EClawbot",
+        "toast_slot_created": "Slot entiti baharu dicipta",
+        "kb_funnel_tag": "Teg…",
+        "kb_gate_backlog_only_hint": "Launch-gate hanya tersedia untuk kad backlog",
+        "guide_bp_th_desc": "Penerangan",
+        "guide_bp_feat_browse_desc": "Isih mengikut rating/terbaharu/popular/aktif; cari mengikut nama/tag/keupayaan",
+        "guide_bp_feat_card_desc": "Setiap Bot mempunyai profil: nama, penerangan, keupayaan, tag, rating, tahap",
+        "guide_bp_feat_chat_desc": "Klik Mula Chat untuk membuka Tetingkap Proksi Bot — tiada pemasangan diperlukan",
+        "guide_bp_feat_save_desc": "Simpan Bot ke Card Holder untuk akses pantas",
+        "guide_bp_feat_comment_desc": "Tinggalkan ulasan untuk Bot yang pernah anda gunakan",
+        "guide_bp_feat_level_desc": "Bot yang lebih aktif dan lebih tinggi ratingnya akan naik tahap; Bot tahap Legend lebih menyerlah",
+        "guide_wp_th_desc": "Penerangan",
+        "guide_wp_feat_live_desc": "Mesej Bot terkini pada wallpaper — imersif skrin penuh",
+        "guide_wp_feat_notify_desc": "Wallpaper dikemas kini automatik apabila ada balasan Bot baharu — tanpa perlu aplikasi",
+        "guide_wp_feat_identity_desc": "Wallpaper mengikut Soul Bot — gaya mesra/profesional/teknologi",
+        "guide_wp_feat_gesture_desc": "Ketik untuk membuka chat; tekan lama untuk tetapan",
+        "guide_wp_feat_multi_desc": "Tukar pembantu wallpaper anda pada bila-bila masa",
+        "guide_wp_uc_th_bot": "Tetapan Bot",
+        "guide_wp_uc_assistant_desc": "Bot peringatan kalendar — lihat tugas hari ini semasa membuka kunci",
+        "guide_wp_uc_news_desc": "Push berita pagi — wallpaper memaparkan tajuk utama secara masa nyata",
+        "guide_wp_uc_store_desc": "Tetapkan Bot khidmat pelanggan sebagai wallpaper — lihat mesej serta-merta",
+        "guide_wp_uc_health_desc": "Peringatan minum air setiap jam — prompt wallpaper muncul serta-merta",
+        "cardholder_tab_my_cards": "Kad Saya",
+        "mention_all_label": "Siar kepada semua entiti",
+        "guide_nav_detail_mention": "@ Tag Entiti",
+        "arena_title": "Penanda Aras Ejen EClawbot",
+        "guide_arena_t2": "Klik Butang",
+        "guide_arena_t3": "Isi Borang",
+        "guide_arena_t5": "Navigasi",
+        "guide_arena_t6": "Ekstrak Jadual",
+        "guide_arena_t8": "Pengekodan",
+        "guide_arena_t9": "Masa Respons",
+        "guide_arena_t11": "Pengurusan Fail",
+        "guide_arena_t12": "Suara/TTS",
+        "arena_test_name_0": "Persepsi Visual",
+        "onboarding_tour_track1_step1": "Pilih kategori yang anda mahu di sini — bot percuma dan rasmi berada di bawah penapis sewaan.",
+        "onboarding_tour_track2_step1": "Bot berbayar dan percuma berkongsi plaza sewaan ini. Trek 2 memfokuskan bahagian berbayar — perhatikan kadar e-coin.",
+        "onboarding_tour_track3_step1": "Ini ialah hab Channel API. OpenClaw ialah ekosistem bot yang boleh anda hos sendiri — mengikat saluran membolehkan botnya bercakap melalui EClaw.",
+        "onboarding_tour_track4_step1": "Ikatan saluran Claude berada dalam pemboleh ubah persekitaran peranti. Anda akan menampal kunci API Anthropic anda di sini supaya bot menjawab terus melalui Claude.",
+        "onboarding_tour_track6_step1": "Selamat datang ke Agent Arena — penanda aras piawai yang mengukur sejauh mana ejen AI mengendalikan tugas dunia sebenar merentas visi, web, kod, penaakulan dan keselamatan.",
+        "hermes_coming_soon_title": "Saluran Hermes — Akan Datang",
+        "arena_return": "← Kembali",
+        "mindmap_title": "Peta Minda",
+        "mindmap_focus_mode_hint": "Mod fokus — klik ruang kosong atau tekan Esc untuk keluar",},
 
 
 
@@ -7186380,6 +7186595,69 @@ const TRANSLATIONS = {
       "chat_card_modal_comments_empty": "अब तक कोई टिप्पणी नहीं",
       "chat_mindmap_demo_node": "यह नोड डेमो डेटा या लघु-उपसर्ग आईडी है - क्रॉस-पेज उद्धरण समर्थित नहीं है। पूर्ण टोकन की प्रतिलिपि बनाने के लिए माइंड-मैप पृष्ठ पर 📋 बटन का उपयोग करें।",
       "chat_mindmap_field_summary": "सारांश",
+        "portal_login_title": "EClawbot - लॉगिन",
+        "guide_proxy_flow1": "क्रॉस-डिवाइस",
+        "guide_proxy_preview1_sender": "बाहरी",
+        "guide_nav_detail_identity": "पहचान सेटिंग्स",
+        "footer_desc": "AI एजेंट ऑर्केस्ट्रेशन के लिए Agent-to-Agent (A2A) संचार प्लेटफ़ॉर्म।",
+        "notif_title": "सूचनाएँ",
+        "kanban_nudge_per_entity_section_label": "प्रति-एंटिटी ओवरराइड",
+        "kanban_nudge_per_entity_section_desc": "किसी एक विशिष्ट एंटिटी के लिए अंतराल, कॉलम और थ्रॉटल को अनुकूलित करें। बैच आकार और प्राथमिकता मोड पूरे डिवाइस पर लागू रहेंगे।",
+        "kanban_nudge_per_entity_pick_placeholder": "— एंटिटी चुनें —",
+        "kanban_nudge_per_entity_clear": "डिवाइस डिफ़ॉल्ट पर रीसेट करें",
+        "kanban_nudge_per_entity_hint_prefix": "इस एंटिटी के लिए डिवाइस डिफ़ॉल्ट को ओवरराइड करने हेतु कोई फ़ील्ड चालू करें।",
+        "kanban_nudge_per_entity_override_interval": "अंतराल ओवरराइड करें",
+        "kanban_nudge_per_entity_override_statuses": "कॉलम ओवरराइड करें",
+        "kanban_nudge_per_entity_override_throttle": "थ्रॉटल ओवरराइड करें",
+        "kanban_nudge_per_entity_throttle_short": "इस एंटिटी को प्रत्येक अंतराल में 1 नज तक सीमित करें",
+        "wallet_title": "EClawbot - मेरा वॉलेट",
+        "rm_hero_title": "EClaw बॉट किराया बाज़ार",
+        "guide_nav_usecase_messaging": "💬 मैसेजिंग और मित्र",
+        "chip_popover_loading": "लोड हो रहा है…",
+        "ai_chat_title": "EClawbot एआई",
+        "toast_slot_created": "नया एंटिटी स्लॉट बनाया गया",
+        "kb_gate_backlog_only_hint": "Launch-gate केवल backlog कार्डों के लिए उपलब्ध है",
+        "guide_bp_th_desc": "विवरण",
+        "guide_bp_feat_browse_desc": "रेटिंग/नवीनतम/लोकप्रिय/सक्रिय के अनुसार छाँटें; नाम/टैग/क्षमता से खोजें",
+        "guide_bp_feat_card_desc": "हर Bot की प्रोफ़ाइल होती है: नाम, विवरण, क्षमताएँ, टैग, रेटिंग, स्तर",
+        "guide_bp_feat_chat_desc": "Bot की Proxy Window खोलने के लिए Start Chat क्लिक करें — कोई इंस्टॉलेशन नहीं चाहिए",
+        "guide_bp_feat_save_desc": "तेज़ पहुँच के लिए Bots को Card Holder में सहेजें",
+        "guide_bp_feat_comment_desc": "जिन Bots का आपने उपयोग किया है, उनके लिए समीक्षा छोड़ें",
+        "guide_bp_feat_level_desc": "ज़्यादा सक्रिय और अधिक रेटिंग वाले Bots स्तर बढ़ाते हैं; Legend-tier Bots अलग दिखते हैं",
+        "guide_wp_th_desc": "विवरण",
+        "guide_wp_feat_live_desc": "Wallpaper पर नवीनतम Bot संदेश — पूर्ण-स्क्रीन इमर्सिव",
+        "guide_wp_feat_notify_desc": "नए Bot उत्तर पर wallpaper अपने-आप अपडेट होता है — ऐप की ज़रूरत नहीं",
+        "guide_wp_feat_identity_desc": "Wallpaper Bot की Soul का अनुसरण करता है — गर्मजोशी/पेशेवर/टेक शैली",
+        "guide_wp_feat_gesture_desc": "चैट खोलने के लिए टैप करें; सेटिंग्स के लिए लंबा दबाएँ",
+        "guide_wp_feat_multi_desc": "अपना wallpaper assistant कभी भी बदलें",
+        "guide_wp_uc_th_bot": "Bot सेटअप",
+        "guide_wp_uc_assistant_desc": "कैलेंडर रिमाइंडर Bot — अनलॉक करते समय आज के कार्य देखें",
+        "guide_wp_uc_news_desc": "सुबह की खबरें push — wallpaper रीयल टाइम में सुर्खियाँ दिखाता है",
+        "guide_wp_uc_store_desc": "ग्राहक सेवा Bot को wallpaper बनाएँ — संदेश तुरंत देखें",
+        "guide_wp_uc_health_desc": "हर घंटे पानी पीने की याद दिलाना — wallpaper prompt तुरंत दिखता है",
+        "cardholder_tab_my_cards": "मेरे कार्ड",
+        "mention_all_label": "सभी एंटिटीज़ को प्रसारित करें",
+        "guide_nav_detail_mention": "@ टैग एंटिटीज़",
+        "arena_title": "EClawbot एजेंट बेंचमार्क",
+        "guide_arena_t2": "बटन क्लिक",
+        "guide_arena_t3": "फ़ॉर्म भरना",
+        "guide_arena_t5": "नेविगेशन",
+        "guide_arena_t6": "तालिका निकालना",
+        "guide_arena_t8": "कोडिंग",
+        "guide_arena_t9": "प्रतिक्रिया समय",
+        "guide_arena_t11": "फ़ाइल प्रबंधन",
+        "guide_arena_t12": "वॉइस/TTS",
+        "arena_test_name_0": "दृश्य धारणा",
+        "info_hooks_title": "💎 आज जीतने के तीन तरीके",
+        "onboarding_tour_track1_step1": "यहाँ अपनी इच्छित श्रेणी चुनें — मुफ़्त और आधिकारिक bots rental फ़िल्टर के अंतर्गत मिलते हैं।",
+        "onboarding_tour_track2_step1": "Paid और free bots इसी rental plaza को साझा करते हैं। Track 2 paid हिस्से पर केंद्रित है — e-coin दर पर नज़र रखें।",
+        "onboarding_tour_track3_step1": "यह Channel API hub है। OpenClaw एक self-hostable bot ecosystem है — channel bind करने से उसके bots EClaw के ज़रिए बात कर सकते हैं।",
+        "onboarding_tour_track4_step1": "Claude channel binding device env vars में रहता है। आप यहाँ अपनी Anthropic API key paste करेंगे ताकि bots सीधे Claude से जवाब दें।",
+        "onboarding_tour_track6_step1": "Agent Arena में आपका स्वागत है — यह एक मानकीकृत benchmark है जो vision, web, code, reasoning और safety में वास्तविक दुनिया के कार्यों पर AI agent की क्षमता मापता है।",
+        "hermes_coming_soon_title": "Hermes चैनल — जल्द आ रहा है",
+        "arena_return": "← वापस",
+        "mindmap_title": "माइंड मैप",
+        "mindmap_focus_mode_hint": "फ़ोकस मोड — बाहर निकलने के लिए खाली जगह पर क्लिक करें या Esc दबाएँ",
 },
 
 
@@ -7707850,7 +7708128,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_badge": "ADMIN",
 
 
 
@@ -7707978,7 +7708255,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_admin_users": "Gestión de usuarios administradores",
 
 
 
@@ -7708106,7 +7708382,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_admin_users_desc": "Inspeccionar + rotar entradas en ADMIN_DEVICE_IDS.",
 
 
 
@@ -7708234,7 +7708509,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_feature_flags": "Flags de características",
 
 
 
@@ -7708362,7 +7708636,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_feature_flags_desc": "Alternar funciones experimentales por dispositivo / globalmente.",
 
 
 
@@ -7708490,7 +7708763,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_log_browser": "Navegador de registros de errores",
 
 
 
@@ -7708618,7 +7708890,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_log_browser_desc": "Filtrar server_logs por categoría, nivel, ventana de tiempo.",
 
 
 
@@ -7708746,7 +7709017,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_rental_monitor": "Monitor de estado de alquiler",
 
 
 
@@ -7708874,7 +7709144,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_rental_monitor_desc": "Latencia BD, crecimiento de tumbas, estado de integración del publicador, conteos de flota.",
 
 
 
@@ -7709002,7 +7709271,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_soon": "Próximamente",
 
 
 
@@ -7709130,7 +7709398,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_sys_metrics": "Métricas del sistema",
 
 
 
@@ -7709258,7 +7709525,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_sys_metrics_desc": "CPU / memoria / conteo de sockets / tasa de solicitudes.",
 
 
 
@@ -7709386,7 +7709652,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_footnote": "Solo administrador — dispositivos no-admin ven una pantalla 403 al cargar y son redirigidos a /portal/",
 
 
 
@@ -7709514,7 +7709779,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_section_future": "Planificado",
 
 
 
@@ -7709642,7 +7709906,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_section_monitoring": "Monitoreo",
 
 
 
@@ -7709770,7 +7710033,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_subtitle": "Herramientas de desarrollo y ops. Dispositivos no-admin son redirigidos al portal.",
 
 
 
@@ -7709898,7 +7710160,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_title": "[admin] Herramientas de administración EClaw",
 
 
 
@@ -7710026,7 +7710287,6 @@ const TRANSLATIONS = {
 
 
 
-        "ai_chat_view_feedback": "Ver historial de comentarios",
 
 
 
@@ -7710154,7 +7710414,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_return": "← Volver",
 
 
 
@@ -7710282,7 +7710541,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_attach_key_ref": "Referencia de clave",
 
 
 
@@ -7710410,7 +7710668,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_card_modal_comments": "Comentarios",
 
 
 
@@ -7710538,7 +7710795,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_card_modal_comments_empty": "Sin comentarios aún",
 
 
 
@@ -7710666,7 +7710922,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_density_comfortable": "Cómodo",
 
 
 
@@ -7710794,7 +7711049,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_density_compact": "Compacto",
 
 
 
@@ -7710922,7 +7711176,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_density_normal": "Normal",
 
 
 
@@ -7711050,7 +7711303,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_kanban_view_card": "📋 Ver tarjeta",
 
 
 
@@ -7711178,7 +7711430,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_loading": "Cargando...",
 
 
 
@@ -7711306,7 +7711557,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mention_unresolved": "Mención @ desconectada: {tokens}",
 
 
 
@@ -7711434,7 +7711684,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mic_denied": "Acceso al micrófono denegado",
 
 
 
@@ -7711562,7 +7711811,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_demo_node": "Este nodo es dato demo o un ID de prefijo corto — no se soporta citación entre páginas. Usa el botón 📋 en la página del mapa mental para copiar el token completo.",
 
 
 
@@ -7711690,7 +7711938,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_empty": "—",
 
 
 
@@ -7711818,7 +7712065,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_anchors": "Anclas",
 
 
 
@@ -7711946,7 +7712192,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_comments": "Comentarios",
 
 
 
@@ -7712074,7 +7712319,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_summary": "Resumen",
 
 
 
@@ -7712202,7 +7712446,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_type": "Tipo",
 
 
 
@@ -7712330,7 +7712573,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mission_notify": "Misión",
 
 
 
@@ -7712458,7 +7712700,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_playback_failed": "Reproducción fallida",
 
 
 
@@ -7712586,7 +7712827,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_btn": "Chats relacionados",
 
 
 
@@ -7712714,7 +7712954,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_empty": "No se encontraron chats relacionados",
 
 
 
@@ -7712842,7 +7713081,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_error": "Error al cargar chats relacionados",
 
 
 
@@ -7712970,7 +7713208,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_loading": "Cargando chats relacionados...",
 
 
 
@@ -7713098,7 +7713335,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_panel_title": "Chats relacionados",
 
 
 
@@ -7713226,7 +7713462,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_target_not_loaded": "Chat objetivo no cargado",
 
 
 
@@ -7713354,7 +7713589,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_cancel": "Cancelar",
 
 
 
@@ -7713482,7 +7713716,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_cancelled": "Cancelado",
 
 
 
@@ -7713610,7 +7713843,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_close": "Cerrar",
 
 
 
@@ -7713738,7 +7713970,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_delete": "Eliminar",
 
 
 
@@ -7713866,7 +7714097,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_delete_confirm": "¿Cancelar este mensaje programado?",
 
 
 
@@ -7713994,7 +7714224,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_edit": "Editar",
 
 
 
@@ -7714122,7 +7714351,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_empty_text": "(vacío — escribe un mensaje antes de programar)",
 
 
 
@@ -7714250,7 +7714478,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_empty": "Primero escribe un mensaje",
 
 
 
@@ -7714378,7 +7714605,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_in_past": "El tiempo debe ser en el futuro",
 
 
 
@@ -7714506,7 +7714732,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_invalid_time": "Ingresa una hora válida",
 
 
 
@@ -7714634,7 +7714859,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_no_target": "Selecciona al menos un objetivo",
 
 
 
@@ -7714762,7 +7714986,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_too_far": "No se puede programar más de 7 días adelante",
 
 
 
@@ -7714890,7 +7715113,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_h": "h",
 
 
 
@@ -7715018,7 +7715240,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_loading": "Cargando…",
 
 
 
@@ -7715146,7 +7715367,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_local_only": "(solo entidades locales)",
 
 
 
@@ -7715274,7 +7715494,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_m": "m",
 
 
 
@@ -7715402,7 +7715621,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_max_7days": "(máx 7 días)",
 
 
 
@@ -7715530,7 +7715748,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_message_label": "Mensaje",
 
 
 
@@ -7715658,7 +7715875,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_mode_countdown": "Cuenta regresiva",
 
 
 
@@ -7715786,7 +7716002,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_mode_fixed": "Hora fija",
 
 
 
@@ -7715914,7 +7716129,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_mode_label": "Cuándo",
 
 
 
@@ -7716042,7 +7716256,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_no_pending": "Sin mensajes programados pendientes",
 
 
 
@@ -7716170,7 +7716383,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_ok": "Programado",
 
 
 
@@ -7716298,7 +7716510,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_s": "s",
 
 
 
@@ -7716426,7 +7716637,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_save": "Guardar",
 
 
 
@@ -7716554,7 +7716764,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_saved": "Guardado",
 
 
 
@@ -7716682,7 +7716891,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_submit": "Programar",
 
 
 
@@ -7716810,7 +7717018,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_tab_create": "Nuevo",
 
 
 
@@ -7716938,7 +7717145,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_tab_queue": "Programado",
 
 
 
@@ -7717066,7 +7717272,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_target_label": "Enviar a",
 
 
 
@@ -7717194,7 +7717399,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_title": "⏰ Programar mensaje",
 
 
 
@@ -7717322,7 +7717526,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_scheduled": "Programado",
 
 
 
@@ -7717450,7 +7717653,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_scroll_to_latest": "Desplazarse al mensaje más reciente",
 
 
 
@@ -7717578,7 +7717780,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_unread_sep": "── Mensajes nuevos ──",
 
 
 
@@ -7717706,7 +7717907,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_voice_upload_failed": "Carga de voz fallida",
 
 
 
@@ -7717834,7 +7718034,6 @@ const TRANSLATIONS = {
 
 
 
-        "chip_popover_requoted": "Citado en el chat",
 
 
 
@@ -7717962,7 +7718161,6 @@ const TRANSLATIONS = {
 
 
 
-        "common_mark": "Marcar",
 
 
 
@@ -7718090,7 +7718288,6 @@ const TRANSLATIONS = {
 
 
 
-        "common_new_key": "+ Nueva clave",
 
 
 
@@ -7718218,7 +7718415,6 @@ const TRANSLATIONS = {
 
 
 
-        "common_open_editor": "Abrir editor",
 
 
 
@@ -7718346,7 +7718542,6 @@ const TRANSLATIONS = {
 
 
 
-        "common_redeem": "Canjear",
 
 
 
@@ -7718474,7 +7718669,6 @@ const TRANSLATIONS = {
 
 
 
-        "community_cta_create_bot": "¿Quieres tu propio Bot? Crea uno gratis y publícalo instantáneamente.",
 
 
 
@@ -7718602,7 +7718796,6 @@ const TRANSLATIONS = {
 
 
 
-        "compare_back": "← Volver al centro de información",
 
 
 
@@ -7718730,7 +7718923,6 @@ const TRANSLATIONS = {
 
 
 
-        "compare_page_title": "EClawbot vs Telegram — Comparación de canales",
 
 
 
@@ -7718858,7 +7719050,6 @@ const TRANSLATIONS = {
 
 
 
-        "developer_section_title": "Desarrollador",
 
 
 
@@ -7718986,7 +7719177,6 @@ const TRANSLATIONS = {
 
 
 
-        "env_toggle_device_id": "Mostrar/Ocultar ID de dispositivo",
 
 
 
@@ -7719114,7 +7719304,6 @@ const TRANSLATIONS = {
 
 
 
-        "files_delete_confirm": "¿Estás seguro de que quieres eliminar este archivo?",
 
 
 
@@ -7719242,7 +7719431,6 @@ const TRANSLATIONS = {
 
 
 
-        "files_delete_failed": "Error al eliminar archivo",
 
 
 
@@ -7719370,7 +7719558,6 @@ const TRANSLATIONS = {
 
 
 
-        "files_deleted": "Archivo eliminado",
 
 
 
@@ -7719498,7 +7719685,6 @@ const TRANSLATIONS = {
 
 
 
-        "files_multi_select_attach": "Adjuntar al chat",
 
 
 
@@ -7719626,7 +7719812,6 @@ const TRANSLATIONS = {
 
 
 
-        "files_multi_select_cancel": "Cancelar",
 
 
 
@@ -7719754,7 +7719939,6 @@ const TRANSLATIONS = {
 
 
 
-        "files_multi_select_count": "Seleccionados",
 
 
 
@@ -7719882,7 +7720066,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_case_li1": "Claude principal envía sub (U12) para ejecutar una perforación de arrastrar/reiniciar organigrama en el emulador Android",
 
 
 
@@ -7720010,7 +7720193,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_case_li2": "Sub dispara MCP de computadora para tomar captura de pantalla, generando elicitación y bloqueando el TTY",
 
 
 
@@ -7720138,7 +7720320,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_case_li3": "Principal usa <code>eye</code> (herramienta de vista general de pantalla completa macOS) para ver el diálogo → osascript hace clic automático",
 
 
 
@@ -7720266,7 +7720447,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_case_li4": "Sub recibe allowAll → reanuda la perforación → descubre que BottomSheet solo se expande a ~20%",
 
 
 
@@ -7720394,7 +7720574,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_case_li5": "Principal analiza <code>OrgChartBottomSheetFragment</code> → aísla la peculiaridad de BottomSheetDialog que mide <code>match_parent</code> como <code>wrap_content</code>",
 
 
 
@@ -7720522,7 +7720701,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_case_li6": "Fix (PR #1854) → envía sub para verificar → confirma expansión del 90% → ciclo cerrado completo",
 
 
 
@@ -7734554,7 +7734732,8 @@ const TRANSLATIONS = {
         "wizard_q3": "هل لديك بالفعل مفتاح API أو رمز؟"
 
 
-    }
+    ,
+        "kb_gate_backlog_only_hint": "يتوفر Launch-gate لبطاقات backlog فقط",}
 
 
 
