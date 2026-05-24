@@ -2781,15 +2781,39 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
 
         // Status filter applies to ALL levels — if status falls outside every recipient's
         // allowed_statuses (after overrides), no auto-escalation happens either.
-        const eligible = cards.filter(c => cardEffective(c).statusEligible);
+        let eligible = cards.filter(c => cardEffective(c).statusEligible);
         if (eligible.length === 0) return;
+
+        // Dependency gating (kanban_card_dependencies): skip cards whose `blocks`-type
+        // dependencies point at a blocker still pending (status NOT IN done/archived).
+        // Queried live — the dependency_status column's trigger only fires on edits to
+        // kanban_card_dependencies, so it goes stale when the blocker card itself moves.
+        // Suppresses L1/L2/L3 uniformly so a dependent card never gets nudged or
+        // auto-bumped/auto-blocked while its blocker is still in flight.
+        //
+        // For cards whose blockers are NOW resolved, also reset the effective stale
+        // clock to max(status_changed_at, latest blocker resolution time) so the card
+        // re-enters the L1 → L2 → L3 cadence from the moment it became actionable,
+        // not from the original creation time (#1 review on PR #2904: a card that
+        // waited >12h must not skip straight to L3 the moment its blocker finishes).
+        const depGating = await loadDependencyGating(deviceId, eligible.map(c => c.id));
+        if (depGating.blocked.size > 0) {
+            eligible = eligible.filter(c => !depGating.blocked.has(c.id));
+            if (eligible.length === 0) return;
+        }
+
+        function effectiveStaleSinceMs(card) {
+            const cardChangedMs = new Date(card.status_changed_at).getTime();
+            const unblockedAtMs = depGating.unblockedSince.get(card.id);
+            return unblockedAtMs && unblockedAtMs > cardChangedMs ? unblockedAtMs : cardChangedMs;
+        }
 
         // Split: cards ready for Level 2/3 (time-based) fire regardless of batch size.
         const level1Pending = [];
         for (const card of eligible) {
             const ce = cardEffective(card);
             const intervalMs = ce.intervalMs;
-            const elapsedMs = Date.now() - new Date(card.status_changed_at).getTime();
+            const elapsedMs = Date.now() - effectiveStaleSinceMs(card);
             const config = card.config || {};
             const esc = config.escalationPolicy || {};
             const escalateAfterMs = esc.escalateAfterMs || DEFAULT_ESCALATE_MS;
@@ -2855,6 +2879,50 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             console.error('[Kanban] loadEntityNudgeLog error:', err.message);
         }
         return map;
+    }
+
+    async function loadDependencyGating(deviceId, cardIds) {
+        // Returns { blocked: Set<cardId>, unblockedSince: Map<cardId, msTimestamp> }
+        //
+        // blocked          — cards with at least one `blocks` dep whose target is
+        //                    NOT IN ('done','archived'). Skip nudge entirely.
+        // unblockedSince   — for cards whose blockers ARE all resolved, the
+        //                    MAX(status_changed_at) of those resolved blockers.
+        //                    Used to reset the effective stale clock so a card
+        //                    that waited >12h doesn't skip straight to L3 the
+        //                    moment its blocker finishes (#1 review on PR #2904).
+        const result = { blocked: new Set(), unblockedSince: new Map() };
+        if (!Array.isArray(cardIds) || cardIds.length === 0) return result;
+        try {
+            const r = await pool.query(
+                `SELECT d.card_id,
+                        BOOL_OR(dep.status NOT IN ('done', 'archived')) AS has_pending,
+                        MAX(dep.status_changed_at) FILTER (WHERE dep.status IN ('done', 'archived')) AS latest_resolved_at
+                   FROM kanban_card_dependencies d
+                   JOIN kanban_cards dep
+                     ON dep.id = d.depends_on_card_id
+                    AND dep.device_id = d.device_id
+                  WHERE d.device_id = $1
+                    AND d.dependency_type = 'blocks'
+                    AND d.card_id = ANY($2::varchar[])
+                  GROUP BY d.card_id`,
+                [deviceId, cardIds]
+            );
+            for (const row of r.rows) {
+                if (row.has_pending) {
+                    result.blocked.add(row.card_id);
+                } else if (row.latest_resolved_at) {
+                    result.unblockedSince.set(row.card_id, new Date(row.latest_resolved_at).getTime());
+                }
+            }
+        } catch (err) {
+            // Table may not exist on older schemas — fail open (no gating) and log once.
+            if (!loadDependencyGating._warned) {
+                console.error('[Kanban] loadDependencyGating error (gating disabled):', err.message);
+                loadDependencyGating._warned = true;
+            }
+        }
+        return result;
     }
 
     // `effectiveForOrInterval` may be either:
