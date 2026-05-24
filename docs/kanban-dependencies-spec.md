@@ -31,6 +31,7 @@ The Kanban Card Dependencies system enables users to create bidirectional depend
 - **Visual Interface**: Drag-and-drop dependency creation with live validation
 - **Automatic Status Updates**: Card statuses update automatically based on dependency states
 - **Performance Optimized**: Multi-index database design for fast dependency queries
+- **Nudge gating**: Cards blocked by a still-pending `blocks` dependency are skipped by the kanban-nudge cron's L1 / L2 / L3 escalation. See [`specs/kanban-nudge-spec.md` §3.5](specs/kanban-nudge-spec.md#dependency-aware-nudge-gating).
 
 ### Terminology
 - **Source Card**: The card that depends on another
@@ -64,6 +65,13 @@ The Kanban Card Dependencies system enables users to create bidirectional depend
 ---
 
 ## 3. Database Schema
+
+> **Source of truth**: `kanban_card_dependencies` is the canonical record
+> of which card depends on which. Description text, comment threads, or
+> ad-hoc roadmap docs that say "H2 depends on H1" do NOT auto-register —
+> the dependent card stays nudge-eligible until an explicit row exists
+> (`POST /api/kanban/dependencies`). Other subsystems (nudge cron, status
+> rollups, UI badges) read this table; nothing parses prose.
 
 ### 3.1 Core Tables
 

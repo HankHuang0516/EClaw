@@ -2781,8 +2781,20 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
 
         // Status filter applies to ALL levels — if status falls outside every recipient's
         // allowed_statuses (after overrides), no auto-escalation happens either.
-        const eligible = cards.filter(c => cardEffective(c).statusEligible);
+        let eligible = cards.filter(c => cardEffective(c).statusEligible);
         if (eligible.length === 0) return;
+
+        // Dependency gating (kanban_card_dependencies): skip cards whose `blocks`-type
+        // dependencies point at a blocker still pending (status NOT IN done/archived).
+        // Queried live — the dependency_status column's trigger only fires on edits to
+        // kanban_card_dependencies, so it goes stale when the blocker card itself moves.
+        // Suppresses L1/L2/L3 uniformly so a dependent card never gets nudged or
+        // auto-bumped/auto-blocked while its blocker is still in flight.
+        const blockedByPending = await loadCardsBlockedByPending(deviceId, eligible.map(c => c.id));
+        if (blockedByPending.size > 0) {
+            eligible = eligible.filter(c => !blockedByPending.has(c.id));
+            if (eligible.length === 0) return;
+        }
 
         // Split: cards ready for Level 2/3 (time-based) fire regardless of batch size.
         const level1Pending = [];
@@ -2855,6 +2867,33 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             console.error('[Kanban] loadEntityNudgeLog error:', err.message);
         }
         return map;
+    }
+
+    async function loadCardsBlockedByPending(deviceId, cardIds) {
+        const blocked = new Set();
+        if (!Array.isArray(cardIds) || cardIds.length === 0) return blocked;
+        try {
+            const r = await pool.query(
+                `SELECT DISTINCT d.card_id
+                   FROM kanban_card_dependencies d
+                   JOIN kanban_cards dep
+                     ON dep.id = d.depends_on_card_id
+                    AND dep.device_id = d.device_id
+                  WHERE d.device_id = $1
+                    AND d.dependency_type = 'blocks'
+                    AND d.card_id = ANY($2::varchar[])
+                    AND dep.status NOT IN ('done', 'archived')`,
+                [deviceId, cardIds]
+            );
+            for (const row of r.rows) blocked.add(row.card_id);
+        } catch (err) {
+            // Table may not exist on older schemas — fail open (no gating) and log once.
+            if (!loadCardsBlockedByPending._warned) {
+                console.error('[Kanban] loadCardsBlockedByPending error (gating disabled):', err.message);
+                loadCardsBlockedByPending._warned = true;
+            }
+        }
+        return blocked;
     }
 
     // `effectiveForOrInterval` may be either:

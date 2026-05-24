@@ -131,6 +131,37 @@ AND `now - status_changed_at > stale_threshold_ms`:
 }
 ```
 
+### Dependency-aware nudge gating
+
+Cards with a `blocks`-type entry in `kanban_card_dependencies` are suppressed
+from L1 / L2 / L3 escalation while any of their blockers is still pending
+(`status NOT IN ('done', 'archived')`). Background: the kanban-nudge cron and
+the dependency-chain tracker used to be independent — symptom on 2026-05-24
+was H2 getting nudged → auto-bumped P3→P1 → auto-blocked while H1 was still
+`in_progress`. Hank pushback: 「規範書應該寫很清楚鍊結任務的督促順序」.
+
+- **Gate location**: `processDeviceStaleCards` filters `eligible` against a
+  blocked-by-pending set BEFORE the L1/L2/L3 branch — all three escalation
+  levels are suppressed uniformly. A dependent card cannot be auto-blocked
+  for staleness when the staleness is by design (waiting on its blocker).
+- **Query**: helper `loadCardsBlockedByPending(deviceId, cardIds)` issues a
+  single batched JOIN — `kanban_card_dependencies d JOIN kanban_cards dep
+  ON dep.id = d.depends_on_card_id` filtered to
+  `d.dependency_type = 'blocks' AND dep.status NOT IN ('done', 'archived')`.
+- **Source of truth**: the `kanban_card_dependencies` row is what counts.
+  Description-text deps (e.g. comments saying "depends on card_xxx") do NOT
+  auto-link — file an explicit `POST /api/kanban/dependencies` row.
+- **Live query, not column**: the `kanban_cards.dependency_status` column's
+  AFTER-trigger only fires on edits to `kanban_card_dependencies` itself, so
+  it goes stale when the blocker card moves status. The gate queries
+  `dep.status` live to avoid that drift.
+- **Fail-open**: if the dependencies table is missing (older schemas), the
+  helper logs once and returns an empty set — nudge cron keeps running.
+
+When a blocker moves to `done`, the dependent card becomes eligible again on
+the next cron tick (default 5 min). No explicit unblock signal is sent — the
+cron's standard L1 nudge is the next thing the dependent card's owner sees.
+
 ---
 
 ## 4. 內建排除 / Built-in exclusions
@@ -293,4 +324,4 @@ and `priority_mode` into the override set as well. Current scope kept minimal.
 
 - [看板狀態 SoT](kanban-status.md) — `NUDGEABLE_STATUSES` / `NUDGE_DEFAULT_STATUSES`.
 - [`mission-v2-kanban-spec.md`](../mission-v2-kanban-spec.md) §十一 — `pending_notify` smart per-bot queue (delivery layer the nudge feeds into).
-- [`kanban-dependencies-spec.md`](../kanban-dependencies-spec.md) — Card dependency model (orthogonal to nudge).
+- [`kanban-dependencies-spec.md`](../kanban-dependencies-spec.md) — Card dependency model. **Not orthogonal**: see §3.5 below — nudge cron consults `kanban_card_dependencies` and suppresses L1/L2/L3 on cards whose `blocks`-type dependency targets are still pending.
