@@ -3861,6 +3861,23 @@
             const allLabel = document.getElementById('targetAll');
             const targetBar = document.getElementById('targetBar');
 
+            // Snapshot user's current selection BEFORE we destroy the old DOM.
+            // localStorage is only written on send, so between sends the DOM is
+            // the only source of truth for in-progress toggles. Periodic refreshes
+            // (rental-health poll, contacts reload) re-call renderTargetBar mid-
+            // session; without this snapshot they revert checkboxes to the last
+            // persisted set and the user sends to the wrong recipient.
+            const inDomEntityChecks = new Set();
+            const inDomContactChecks = new Set();
+            targetBar.querySelectorAll('.target-entity-check input[type="checkbox"]').forEach(cb => {
+                if (cb.checked) inDomEntityChecks.add(Number(cb.dataset.entity));
+            });
+            targetBar.querySelectorAll('.target-contact-check input[type="checkbox"]').forEach(cb => {
+                if (cb.checked) inDomContactChecks.add(cb.dataset.contactCode);
+            });
+            const hasInDomEntityState = targetBar.querySelector('.target-entity-check input[type="checkbox"]') !== null;
+            const hasInDomContactState = targetBar.querySelector('.target-contact-check input[type="checkbox"]') !== null;
+
             // Remove old dynamic elements from row, overflow, and parent (toggle was moved to parent for mobile visibility)
             row.querySelectorAll('.target-entity-check, .target-loading-hint, .target-separator, .target-contact-check, .btn-add-contact, .contact-add-inline').forEach(el => el.remove());
             targetBar.querySelectorAll(':scope > .target-bar-toggle').forEach(el => el.remove());
@@ -3870,7 +3887,7 @@
             // Show "All" only if more than 1 entity
             allLabel.style.display = boundEntities.length > 1 ? '' : 'none';
 
-            // Restore last selected targets
+            // Restore last selected targets (first render only — later renders use DOM snapshot above)
             const saved = localStorage.getItem('chat_last_targets');
             const savedTargets = saved ? new Set(saved.split(',').map(Number)) : null;
 
@@ -3880,7 +3897,9 @@
             boundEntities.forEach(e => {
                 const avatar = getAvatarForEntity(e.entityId);
                 const name = getEntityDisplayName(e.entityId);
-                const isChecked = savedTargets ? savedTargets.has(e.entityId) : true;
+                const isChecked = hasInDomEntityState
+                    ? inDomEntityChecks.has(e.entityId)
+                    : (savedTargets ? savedTargets.has(e.entityId) : true);
                 const label = document.createElement('label');
                 label.className = 'target-check target-entity-check';
                 label.dataset.entityId = e.entityId;
@@ -3906,11 +3925,13 @@
                     const avatarHtml = renderAvatarHtml(avatar, 20);
                     const name = c.name || c.character || c.publicCode;
                     const isOffline = !c.online;
-                    const isChecked = savedContactSet.has(c.publicCode);
+                    const isChecked = hasInDomContactState
+                        ? inDomContactChecks.has(c.publicCode)
+                        : savedContactSet.has(c.publicCode);
 
                     const chip = document.createElement('label');
                     chip.className = `target-check target-contact-check contact-chip${isOffline ? ' offline' : ''}`;
-                    chip.innerHTML = `<input type="checkbox" data-contact-code="${escapeHtml(c.publicCode)}" ${isChecked ? 'checked' : ''}>
+                    chip.innerHTML = `<input type="checkbox" data-contact-code="${escapeHtml(c.publicCode)}" ${isChecked ? 'checked' : ''} onchange="persistTargetSelection()">
                         <span>${avatarHtml} ${escapeHtml(name)}</span>
                         ${isOffline ? `<span class="contact-offline-tag">${i18n.t('chat_contacts_offline')}</span>` : ''}
                         <button class="btn-remove-contact" onclick="removeContact('${escapeHtml(c.publicCode)}', event)" title="${i18n.t('common_remove')}">&#x2715;</button>`;
@@ -4033,6 +4054,7 @@
             document.querySelectorAll('.target-entity-check input[type="checkbox"]').forEach(cb => {
                 cb.checked = checked;
             });
+            persistTargetSelection();
         }
 
         function updateTargetAll() {
@@ -4041,6 +4063,16 @@
             if (entityCbs.length === 0) return;
             const allChecked = Array.from(entityCbs).every(cb => cb.checked);
             allCb.checked = allChecked;
+            persistTargetSelection();
+        }
+
+        // Persist current target selection to localStorage. Called on every toggle
+        // (entity, contact, or "All") so reloads/cross-tab views see the pending
+        // recipient set instead of the last-sent one.
+        function persistTargetSelection() {
+            const selected = getSelectedTargets();
+            localStorage.setItem('chat_last_targets', selected.local.join(','));
+            localStorage.setItem('chat_last_contact_targets', selected.contacts.join(','));
         }
 
         function getSelectedTargets() {
