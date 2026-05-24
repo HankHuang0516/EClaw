@@ -9,6 +9,8 @@
 jest.mock('pg', () => {
     const state = {
         listings: [],
+        contracts: [],
+        snapshots: [],
         nextId: 1,
     };
     globalThis.__rentalFakeState = state;
@@ -186,6 +188,42 @@ jest.mock('pg', () => {
             return { rows, rowCount: rows.length };
         }
 
+        // Market snapshot refresh: aggregate listed, interview-passed listings by model family.
+        if (/^SELECT bl\.id, bl\.model_detected, bl\.rate_mli_per_ktoken, COUNT\(c\.id\)::int AS started_contracts/i.test(norm)) {
+            const now = Date.now();
+            const rows = state.listings
+                .filter(l => l.status === 'listed' && l.interview_passed === true)
+                .filter(l => Number(l.rate_mli_per_ktoken) > 0)
+                .filter(l => !l.soft_pause_until || new Date(l.soft_pause_until).getTime() <= now)
+                .map((l) => {
+                    const contracts = state.contracts.filter(c => c.listing_id === l.id);
+                    return {
+                        id: l.id,
+                        model_detected: l.model_detected,
+                        rate_mli_per_ktoken: l.rate_mli_per_ktoken,
+                        started_contracts: contracts.length,
+                        successful_contracts: contracts.filter(c => c.status === 'ended_normal').length,
+                    };
+                });
+            return { rows, rowCount: rows.length };
+        }
+
+        if (/^INSERT INTO pricing_market_snapshots/i.test(norm)) {
+            const [snapshotAt, modelFamily, listingCount, rateP25Mli, rateP50Mli,
+                   rateP75Mli, rateP95Mli, rentalSuccessRate] = params;
+            state.snapshots.push({
+                snapshot_at: snapshotAt,
+                model_family: modelFamily,
+                listing_count: listingCount,
+                rate_p25_mli: rateP25Mli,
+                rate_p50_mli: rateP50Mli,
+                rate_p75_mli: rateP75Mli,
+                rate_p95_mli: rateP95Mli,
+                rental_success_rate: rentalSuccessRate,
+            });
+            return { rows: [], rowCount: 1 };
+        }
+
         // Marketplace search (handles bl. table alias prefix from LEFT JOIN query)
         if (/FROM bot_listings\b.*WHERE\b.*status\s*=\s*'listed'/i.test(norm)) {
             let rows = state.listings.filter(l => l.status === 'listed' && l.interview_passed);
@@ -253,6 +291,8 @@ const OTHER = '22222222-2222-2222-2222-222222222222';
 function resetState() {
     const state = globalThis.__rentalFakeState;
     state.listings.length = 0;
+    state.contracts.length = 0;
+    state.snapshots.length = 0;
     state.nextId = 1;
 }
 beforeEach(() => { resetState(); });
@@ -536,6 +576,83 @@ describe('rental: searchMarketplace', () => {
         }
         const results = await api.searchMarketplace({ limit: 2 });
         expect(results).toHaveLength(2);
+    });
+});
+
+describe('rental: refreshPricingMarketSnapshots', () => {
+    function seedMarketRow(row) {
+        globalThis.__rentalFakeState.listings.push({
+            id: row.id,
+            owner_user_id: row.ownerUserId || OWNER,
+            owner_device_id: row.ownerDeviceId || `device-${row.id}`,
+            owner_entity_id: row.ownerEntityId || 0,
+            title: row.title || row.id,
+            description: '',
+            rate_mli_per_ktoken: row.rateMli,
+            min_rental_minutes: 30,
+            max_rental_minutes: 1440,
+            model_detected: row.model,
+            capabilities: {},
+            benchmark_score: {},
+            interview_passed: row.interviewPassed !== false,
+            avg_rating: 0,
+            total_rentals: 0,
+            uptime_pct: 100,
+            status: row.status || 'listed',
+            soft_pause_until: row.softPauseUntil || null,
+            soft_pause_reason: null,
+            bound_rebind_count: 0,
+            created_at: new Date(),
+            updated_at: new Date(),
+        });
+    }
+
+    test('aggregates active listed rates by detected model family', async () => {
+        seedMarketRow({ id: 'sonnet-a', model: 'Claude Sonnet 4', rateMli: 5000 });
+        seedMarketRow({ id: 'sonnet-b', model: 'claude-3.5-sonnet', rateMli: 7000 });
+        seedMarketRow({ id: 'mini-a', model: 'gpt-4o-mini', rateMli: 2000 });
+        seedMarketRow({ id: 'draft-ignored', model: 'Claude Sonnet', rateMli: 9000, status: 'draft' });
+        seedMarketRow({ id: 'failed-ignored', model: 'Claude Sonnet', rateMli: 9000, interviewPassed: false });
+        seedMarketRow({ id: 'paused-ignored', model: 'Claude Sonnet', rateMli: 9000, softPauseUntil: '2999-01-01T00:00:00.000Z' });
+        globalThis.__rentalFakeState.contracts.push(
+            { id: 'c1', listing_id: 'sonnet-a', status: 'ended_normal' },
+            { id: 'c2', listing_id: 'sonnet-b', status: 'ended_normal' },
+            { id: 'c3', listing_id: 'sonnet-b', status: 'ended_early_by_renter' },
+        );
+
+        const result = await api.refreshPricingMarketSnapshots({
+            snapshotAt: '2026-05-24T00:00:00.000Z',
+        });
+
+        expect(result.familyCount).toBe(2);
+        expect(result.listingCount).toBe(3);
+        expect(result.rows).toEqual([
+            {
+                modelFamily: 'gpt-4o-mini',
+                listingCount: 1,
+                rateP25Mli: 2000,
+                rateP50Mli: 2000,
+                rateP75Mli: 2000,
+                rateP95Mli: 2000,
+                rentalSuccessRate: null,
+            },
+            {
+                modelFamily: 'sonnet',
+                listingCount: 2,
+                rateP25Mli: 5000,
+                rateP50Mli: 5000,
+                rateP75Mli: 7000,
+                rateP95Mli: 7000,
+                rentalSuccessRate: 0.667,
+            },
+        ]);
+        expect(globalThis.__rentalFakeState.snapshots).toHaveLength(2);
+        expect(globalThis.__rentalFakeState.snapshots[1]).toMatchObject({
+            model_family: 'sonnet',
+            listing_count: 2,
+            rate_p50_mli: 5000,
+            rental_success_rate: 0.667,
+        });
     });
 });
 

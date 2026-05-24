@@ -25,6 +25,10 @@ const CRITICAL_PAGES = [
         file: 'portal/info.html',
         anchors: ['id="panel-channel-plugins"', 'id="guide-codex-channel"', 'codex-eclaw-bridge'],
     },
+    {
+        file: 'portal/marketplace.html',
+        anchors: ['id="listingGrid"', 'id="detailModal"', '/api/rental/marketplace?', '/api/rental/contract'],
+    },
 ];
 
 function fail(errors, file, message) {

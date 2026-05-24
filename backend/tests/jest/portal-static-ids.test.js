@@ -34,11 +34,15 @@ describe('portal static HTML IDs', () => {
     expect(html).toContain("btn.setAttribute('aria-label', toggleLabel)");
   });
 
-  test('marketplace redirect shim keeps mobile viewport metadata', () => {
+  test('marketplace portal keeps mobile metadata and sends renter device id', () => {
     const marketplacePath = path.join(__dirname, '../../public/portal/marketplace.html');
     const html = fs.readFileSync(marketplacePath, 'utf8');
 
     expect(html).toMatch(/<meta\s+name=["']viewport["']\s+content=["']width=device-width,\s*initial-scale=1\.0["']>/);
+    expect(html).not.toContain("window.location.replace('community.html#rental')");
+    expect(html).toContain('/api/rental/marketplace?');
+    expect(html).toContain('/api/rental/contract');
+    expect(html).toContain('renterDeviceId');
   });
 
 });

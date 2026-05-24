@@ -3114,6 +3114,22 @@ const rentalModule = require('./rental')({
 });
 app.use('/api/rental', rentalModule.router);
 
+let rentalDatabaseReady = false;
+async function refreshRentalPricingMarketSnapshots(source = 'cron') {
+    if (!rentalDatabaseReady) return { skipped: 'rental_database_not_ready' };
+    if (typeof rentalModule?.refreshPricingMarketSnapshots !== 'function') {
+        return { skipped: 'snapshot_refresh_unavailable' };
+    }
+    try {
+        const result = await rentalModule.refreshPricingMarketSnapshots();
+        serverLog('info', 'rental', `[MarketSnapshot] ${source}: families=${result.familyCount} listings=${result.listingCount}`);
+        return result;
+    } catch (err) {
+        serverLog('error', 'rental', `[MarketSnapshot] ${source} failed: ${err.message}`);
+        return { error: err.message };
+    }
+}
+
 // P0 Phase 3: when an entity slot is rebound, every active listing pointing
 // at it now references a different bot. Auto-pause the listings so the
 // marketplace stops booking the slot. Owner can manually re-publish or delist.
@@ -3161,6 +3177,8 @@ async function terminateRentalContractsOnRebind(deviceId, entityId) {
 if (process.env.NODE_ENV !== 'test') {
     setTimeout(async () => {
         await rentalModule.initRentalDatabase();
+        rentalDatabaseReady = true;
+        await refreshRentalPricingMarketSnapshots('startup');
         // BUG-D3: Wait for persistence before reconciliation (685+ devices)
         const maxWait = 60;
         for (let i = 0; i < maxWait && !persistenceReady; i++) {
@@ -3185,6 +3203,13 @@ if (process.env.NODE_ENV !== 'test') {
             console.warn('[Rental] Skipped reconciliation — persistence not ready after 60s');
         }
     }, 2500);
+
+    // Hourly market pricing snapshot for the rental marketplace advisor.
+    nodeCron.schedule('11 * * * *', () => {
+        refreshRentalPricingMarketSnapshots('hourly').catch((err) => {
+            serverLog('error', 'rental', `[MarketSnapshot] cron dispatch failed: ${err.message}`);
+        });
+    });
 }
 
 // ============================================

@@ -1,10 +1,843 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redirecting to Bot Plaza...</title>
-    <script>window.location.replace('community.html#rental');</script>
+    <title data-i18n="mp_title">EClawbot - Bot Marketplace</title>
+    <meta name="description" content="Browse rentable EClawbot agents, compare rates, and start a bot rental contract.">
+    <link rel="icon" type="image/png" href="assets/favicon-32.png">
+    <link rel="canonical" href="https://eclawbot.com/portal/marketplace.html">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="EClawbot - Bot Marketplace">
+    <meta property="og:description" content="Browse rentable EClawbot agents, compare rates, and start a bot rental contract.">
+    <meta property="og:url" content="https://eclawbot.com/portal/marketplace.html">
+    <meta property="og:site_name" content="EClawbot">
+    <meta property="og:image" content="https://eclawbot.com/assets/og-image.png">
+    <link rel="stylesheet" href="shared/style.css">
+    <style>
+        :root {
+            --bg: #0D0D1A;
+            --card: #1A1A2E;
+            --card-border: #333355;
+            --input-bg: #252540;
+            --primary: #6C63FF;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text: #ffffff;
+            --text-secondary: #b8b8c7;
+            --text-muted: #85859a;
+            --radius-sm: 8px;
+            --radius-pill: 999px;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        .mp-container {
+            width: min(1180px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 24px 0 36px;
+        }
+
+        .mp-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 18px;
+        }
+
+        .mp-title {
+            margin: 0 0 6px;
+            font-size: 28px;
+            line-height: 1.15;
+            font-weight: 760;
+            letter-spacing: 0;
+        }
+
+        .mp-subtitle {
+            margin: 0;
+            max-width: 620px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .mp-header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .mp-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 40px;
+            padding: 0 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--card-border);
+            background: var(--input-bg);
+            color: var(--text);
+            font: inherit;
+            font-size: 13px;
+            font-weight: 650;
+            cursor: pointer;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .mp-btn.primary {
+            border-color: var(--success);
+            background: var(--success);
+            color: #06130f;
+        }
+
+        .mp-btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .mp-toolbar {
+            display: grid;
+            grid-template-columns: minmax(220px, 1fr) repeat(4, max-content);
+            gap: 10px;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            background: rgba(26, 26, 46, 0.78);
+            margin-bottom: 14px;
+        }
+
+        .mp-field,
+        .mp-select {
+            min-height: 40px;
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            background: var(--input-bg);
+            color: var(--text);
+            font: inherit;
+            font-size: 13px;
+            outline: none;
+        }
+
+        .mp-field {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0 12px;
+        }
+
+        .mp-select {
+            padding: 0 32px 0 12px;
+        }
+
+        .mp-rate-field {
+            width: 96px;
+        }
+
+        .mp-stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .mp-stat {
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            background: rgba(26, 26, 46, 0.6);
+        }
+
+        .mp-stat-value {
+            font-size: 20px;
+            font-weight: 760;
+            line-height: 1.2;
+        }
+
+        .mp-stat-label {
+            margin-top: 4px;
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .mp-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 12px;
+        }
+
+        .mp-card {
+            min-height: 246px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--card-border);
+            border-left: 3px solid var(--success);
+            border-radius: var(--radius-sm);
+            background: var(--card);
+            padding: 14px;
+            cursor: pointer;
+        }
+
+        .mp-card.rented {
+            border-left-color: var(--danger);
+        }
+
+        .mp-card-header {
+            display: grid;
+            grid-template-columns: 48px minmax(0, 1fr);
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .mp-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-sm);
+            display: grid;
+            place-items: center;
+            background: var(--input-bg);
+            color: var(--text-secondary);
+            font-weight: 760;
+            overflow: hidden;
+        }
+
+        .mp-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .mp-card-title {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-weight: 720;
+            font-size: 15px;
+        }
+
+        .mp-card-model {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--text-secondary);
+            font-size: 12px;
+            margin-top: 3px;
+        }
+
+        .mp-desc {
+            color: var(--text-secondary);
+            font-size: 13px;
+            line-height: 1.45;
+            min-height: 56px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .mp-card-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .mp-rate {
+            font-weight: 760;
+            color: var(--success);
+        }
+
+        .mp-muted {
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .mp-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            min-height: 24px;
+            margin-top: 12px;
+        }
+
+        .mp-tag {
+            max-width: 130px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding: 3px 8px;
+            border-radius: var(--radius-pill);
+            background: var(--input-bg);
+            color: var(--text-secondary);
+            font-size: 11px;
+        }
+
+        .mp-card-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: auto;
+            padding-top: 14px;
+        }
+
+        .mp-status {
+            display: inline-flex;
+            align-items: center;
+            min-height: 24px;
+            padding: 0 9px;
+            border-radius: var(--radius-pill);
+            background: rgba(16, 185, 129, 0.14);
+            color: #6ee7b7;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .mp-status.rented {
+            background: rgba(239, 68, 68, 0.14);
+            color: #fca5a5;
+        }
+
+        .mp-empty,
+        .mp-loading {
+            min-height: 240px;
+            display: grid;
+            place-items: center;
+            border: 1px dashed var(--card-border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            text-align: center;
+            padding: 24px;
+        }
+
+        .mp-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            background: rgba(0, 0, 0, 0.64);
+        }
+
+        .mp-modal.open {
+            display: flex;
+        }
+
+        .mp-dialog {
+            width: min(620px, 100%);
+            max-height: min(760px, 90vh);
+            overflow: auto;
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            background: var(--card);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+        }
+
+        .mp-dialog-head {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--card-border);
+            background: var(--card);
+        }
+
+        .mp-close {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--card-border);
+            background: var(--input-bg);
+            color: var(--text);
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .mp-dialog-body {
+            padding: 16px;
+        }
+
+        .mp-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin: 14px 0;
+        }
+
+        .mp-detail-cell {
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            background: rgba(37, 37, 64, 0.66);
+        }
+
+        .mp-detail-cell b {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .mp-consent {
+            display: grid;
+            grid-template-columns: 18px minmax(0, 1fr);
+            gap: 8px;
+            align-items: start;
+            margin: 12px 0;
+            color: var(--text-secondary);
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        @media (max-width: 820px) {
+            .mp-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .mp-header-actions {
+                justify-content: flex-start;
+            }
+
+            .mp-toolbar {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .mp-toolbar .mp-field:first-child {
+                grid-column: 1 / -1;
+            }
+
+            .mp-stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 520px) {
+            .mp-container {
+                width: min(100% - 20px, 1180px);
+                padding-top: 14px;
+            }
+
+            .mp-title {
+                font-size: 23px;
+            }
+
+            .mp-toolbar,
+            .mp-stats,
+            .mp-detail-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .mp-rate-field {
+                width: 100%;
+            }
+
+            .mp-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
-<body><p>Redirecting to <a href="community.html#rental">Bot Plaza</a>...</p></body>
+
+<body>
+    <script src="shared/nav.js"></script>
+    <script>
+        renderNav('marketplace');
+    </script>
+
+    <main class="mp-container">
+        <section class="mp-header" aria-label="Marketplace header">
+            <div>
+                <h1 class="mp-title" data-i18n="mp_heading">Bot Marketplace</h1>
+                <p class="mp-subtitle" data-i18n="mp_desc">Rent premium AI bots on-demand. Pay per token, no subscription required.</p>
+            </div>
+            <div class="mp-header-actions">
+                <a class="mp-btn" href="my-rentals.html" data-i18n="nav_my_rentals">My Rentals</a>
+                <a class="mp-btn primary" href="card-holder.html" data-i18n="dash_plaza_publish">Publish to Bot Plaza</a>
+            </div>
+        </section>
+
+        <section class="mp-toolbar" aria-label="Marketplace filters">
+            <input class="mp-field" id="searchInput" type="search" placeholder="Search bots..." data-i18n-placeholder="mp_search_placeholder" maxlength="100">
+            <select class="mp-select" id="sortSelect" aria-label="Sort listings">
+                <option value="rating" data-i18n="mp_sort_rating">Top Rated</option>
+                <option value="newest" data-i18n="mp_sort_newest">Newest</option>
+                <option value="rate_asc" data-i18n="mp_sort_cheap">Cheapest</option>
+                <option value="rate_desc" data-i18n="mp_sort_expensive">Most Expensive</option>
+            </select>
+            <select class="mp-select" id="capabilitySelect" aria-label="Capability filter">
+                <option value="" data-i18n="mp_cap_filter_label">Capabilities</option>
+                <option value="python_exec">Python</option>
+                <option value="web_browse">Web browse</option>
+                <option value="vision">Vision</option>
+                <option value="reasoning">Reasoning</option>
+                <option value="coding">Coding</option>
+            </select>
+            <input class="mp-field mp-rate-field" id="minRateInput" type="number" min="0" step="1" placeholder="Min e/1K" data-i18n-placeholder="mp_rate_min_placeholder" aria-label="Minimum e-coin per 1000 tokens">
+            <input class="mp-field mp-rate-field" id="maxRateInput" type="number" min="0" step="1" placeholder="Max e/1K" data-i18n-placeholder="mp_rate_max_placeholder" aria-label="Maximum e-coin per 1000 tokens">
+        </section>
+
+        <section class="mp-stats" aria-label="Marketplace statistics">
+            <div class="mp-stat">
+                <div class="mp-stat-value" id="statListings">0</div>
+                <div class="mp-stat-label" data-i18n="mp_stat_available_listings">Available listings</div>
+            </div>
+            <div class="mp-stat">
+                <div class="mp-stat-value" id="statMedian">-</div>
+                <div class="mp-stat-label" data-i18n="mp_stat_median_rate">Median e-coin / 1K</div>
+            </div>
+            <div class="mp-stat">
+                <div class="mp-stat-value" id="statCapabilities">0</div>
+                <div class="mp-stat-label" data-i18n="mp_stat_capability_tags">Capability tags</div>
+            </div>
+            <div class="mp-stat">
+                <div class="mp-stat-value" id="statRented">0</div>
+                <div class="mp-stat-label" data-i18n="mp_stat_currently_rented">Currently rented</div>
+            </div>
+        </section>
+
+        <section id="statePanel" class="mp-loading" data-i18n="mp_loading">Loading...</section>
+        <section class="mp-grid" id="listingGrid" aria-live="polite"></section>
+    </main>
+
+    <div class="mp-modal" id="detailModal" role="dialog" aria-modal="true" aria-labelledby="detailTitle" onclick="if (event.target === this) closeDetail()">
+        <div class="mp-dialog">
+            <div class="mp-dialog-head">
+                <strong id="detailTitle" data-i18n="cardholder_details">Details</strong>
+                <button class="mp-close" type="button" onclick="closeDetail()" aria-label="Close" data-i18n-aria-label="mc_note_page_close">x</button>
+            </div>
+            <div class="mp-dialog-body" id="detailBody"></div>
+        </div>
+    </div>
+
+    <script src="../shared/i18n.js"></script>
+    <script src="shared/auth.js"></script>
+    <script src="shared/footer.js"></script>
+    <script src="../shared/telemetry.js"></script>
+    <script>
+        const state = {
+            listings: [],
+            filtered: [],
+            loading: false,
+            debounce: null,
+            detail: null,
+        };
+
+        function tt(key, fallback) {
+            if (window.i18n && typeof window.i18n.t === 'function') {
+                const translated = window.i18n.t(key);
+                return translated === key ? fallback : translated;
+            }
+            return fallback;
+        }
+
+        function esc(value) {
+            return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function ecoin(mli, digits = 1) {
+            const n = Number(mli || 0) / 1000;
+            return Number.isFinite(n) ? n.toFixed(digits) : '0.0';
+        }
+
+        function supportedCaps(capabilities) {
+            if (!capabilities || typeof capabilities !== 'object') return [];
+            return Object.keys(capabilities).filter((key) => capabilities[key] && capabilities[key].supported === true);
+        }
+
+        async function fetchJson(path, options) {
+            const res = await fetch(location.origin + path, Object.assign({ credentials: 'include' }, options || {}));
+            let data = null;
+            try { data = await res.json(); } catch (_) { data = null; }
+            if (!res.ok || (data && data.success === false)) {
+                const err = new Error((data && data.error) || ('HTTP ' + res.status));
+                err.status = res.status;
+                err.data = data;
+                throw err;
+            }
+            return data || {};
+        }
+
+        async function getRentalUser() {
+            if (window.currentUser) return window.currentUser;
+            try {
+                const data = await fetchJson('/api/auth/me');
+                window.currentUser = data.user || null;
+            } catch (err) {
+                // WebView clients have no cookie session; swallow 401 so the
+                // localStorage deviceId fallback in rentListing can take over.
+                // Only redirect to login when /api/rental/contract itself 401s.
+                if (err.status !== 401) throw err;
+                window.currentUser = null;
+            }
+            return window.currentUser;
+        }
+
+        function buildQuery() {
+            const params = new URLSearchParams({
+                sort: document.getElementById('sortSelect').value || 'rating',
+                limit: '80',
+            });
+            const cap = document.getElementById('capabilitySelect').value;
+            const min = Number(document.getElementById('minRateInput').value || 0);
+            const max = Number(document.getElementById('maxRateInput').value || 0);
+            if (cap) params.set('capability', cap);
+            if (Number.isFinite(min) && min > 0) params.set('minRateMli', String(Math.round(min * 1000)));
+            if (Number.isFinite(max) && max > 0) params.set('maxRateMli', String(Math.round(max * 1000)));
+            return params;
+        }
+
+        async function loadMarketplace() {
+            state.loading = true;
+            renderState(tt('mp_loading', 'Loading...'));
+            try {
+                const data = await fetchJson('/api/rental/marketplace?' + buildQuery().toString());
+                state.listings = (data.listings || []).map((listing) => ({
+                    ...listing,
+                    caps: supportedCaps(listing.capabilities),
+                }));
+                filterLocal();
+            } catch (err) {
+                renderState(tt('mp_load_error', 'Failed to load'));
+                console.error('[Marketplace] load failed:', err);
+            } finally {
+                state.loading = false;
+            }
+        }
+
+        function filterLocal() {
+            const query = document.getElementById('searchInput').value.trim().toLowerCase();
+            state.filtered = state.listings.filter((listing) => {
+                if (!query) return true;
+                const haystack = [
+                    listing.title,
+                    listing.description,
+                    listing.model_detected,
+                    ...(listing.caps || []),
+                ].join(' ').toLowerCase();
+                return haystack.includes(query);
+            });
+            renderStats();
+            renderGrid();
+        }
+
+        function renderStats() {
+            const rates = state.filtered
+                .map((listing) => Number(listing.rate_mli_per_ktoken || 0))
+                .filter((rate) => Number.isFinite(rate) && rate > 0)
+                .sort((a, b) => a - b);
+            const median = rates.length ? rates[Math.floor((rates.length - 1) / 2)] : 0;
+            const caps = new Set(state.filtered.flatMap((listing) => listing.caps || []));
+            document.getElementById('statListings').textContent = String(state.filtered.length);
+            document.getElementById('statMedian').textContent = rates.length ? ecoin(median) : '-';
+            document.getElementById('statCapabilities').textContent = String(caps.size);
+            document.getElementById('statRented').textContent = String(state.filtered.filter((listing) => listing.has_active_contract).length);
+        }
+
+        function renderState(message) {
+            const panel = document.getElementById('statePanel');
+            const grid = document.getElementById('listingGrid');
+            panel.className = message && message === tt('mp_loading', 'Loading...') ? 'mp-loading' : 'mp-empty';
+            panel.textContent = message;
+            panel.style.display = message ? 'grid' : 'none';
+            grid.innerHTML = '';
+        }
+
+        function renderGrid() {
+            const panel = document.getElementById('statePanel');
+            const grid = document.getElementById('listingGrid');
+            if (!state.filtered.length) {
+                renderState(tt('mp_no_results', 'No bots available yet. Check back later!'));
+                return;
+            }
+            panel.style.display = 'none';
+            grid.innerHTML = state.filtered.map(renderCard).join('');
+        }
+
+        function renderAvatar(listing) {
+            const avatar = listing.avatar_url || '';
+            if (/^https?:\/\//.test(avatar)) {
+                return `<img src="${esc(avatar)}" alt="">`;
+            }
+            const title = String(listing.title || 'Bot').trim();
+            return esc(title.slice(0, 1).toUpperCase() || 'B');
+        }
+
+        function renderCard(listing) {
+            const isRented = !!listing.has_active_contract;
+            const caps = (listing.caps || []).slice(0, 4);
+            const rate = ecoin(listing.rate_mli_per_ktoken);
+            const deposit = ecoin(Number(listing.rate_mli_per_ktoken || 0) * 20, 0);
+            return `
+                <article class="mp-card ${isRented ? 'rented' : ''}" onclick="openDetail('${esc(listing.id)}')">
+                    <div class="mp-card-header">
+                        <div class="mp-avatar">${renderAvatar(listing)}</div>
+                        <div>
+                            <div class="mp-card-title">${esc(listing.title || 'Rental Bot')}</div>
+                            <div class="mp-card-model">${esc(listing.model_detected || 'Model pending')}</div>
+                        </div>
+                    </div>
+                    <div class="mp-desc">${esc(listing.description || 'No description provided yet.')}</div>
+                    <div class="mp-card-row">
+                        <span class="mp-rate">${rate} e / 1K</span>
+                        <span class="mp-muted">${tt('mp_d_deposit', 'Deposit')} ${deposit} e</span>
+                    </div>
+                    <div class="mp-card-row">
+                        <span class="mp-status ${isRented ? 'rented' : ''}">${isRented ? tt('mp_status_rented', 'Rented') : tt('mp_status_available', 'Available')}</span>
+                        <span class="mp-muted">${Number(listing.avg_rating || 0).toFixed(1)} ${tt('mp_d_rating', 'Rating')}</span>
+                    </div>
+                    <div class="mp-tags">${caps.map((cap) => `<span class="mp-tag">${esc(cap)}</span>`).join('')}</div>
+                    <div class="mp-card-actions">
+                        <button class="mp-btn" type="button" onclick="event.stopPropagation();openDetail('${esc(listing.id)}')">${tt('cardholder_details', 'Details')}</button>
+                        ${listing.owner_public_code ? `<a class="mp-btn" onclick="event.stopPropagation()" href="/c/${esc(listing.owner_public_code)}?utm_source=marketplace&utm_medium=card" target="_blank" rel="noopener">${tt('mp_chat_cta', 'Start chat')}</a>` : ''}
+                    </div>
+                </article>`;
+        }
+
+        async function openDetail(listingId) {
+            const modal = document.getElementById('detailModal');
+            const body = document.getElementById('detailBody');
+            const title = document.getElementById('detailTitle');
+            modal.classList.add('open');
+            body.innerHTML = `<div class="mp-loading">${tt('mp_loading', 'Loading...')}</div>`;
+            try {
+                const data = await fetchJson('/api/rental/listing/' + encodeURIComponent(listingId));
+                const listing = data.listing || data;
+                state.detail = listing;
+                title.textContent = listing.title || tt('cardholder_details', 'Details');
+                body.innerHTML = renderDetail(listing);
+                updateEstimate(Number(listing.rate_mli_per_ktoken || 0));
+            } catch (err) {
+                body.innerHTML = `<div class="mp-empty">${tt('mp_load_error', 'Failed to load')}</div>`;
+                console.error('[Marketplace] detail failed:', err);
+            }
+        }
+
+        function closeDetail() {
+            document.getElementById('detailModal').classList.remove('open');
+            state.detail = null;
+        }
+
+        function renderDetail(listing) {
+            const caps = supportedCaps(listing.capabilities);
+            const rateMli = Number(listing.rate_mli_per_ktoken || 0);
+            const minHours = Math.max(0.5, Number(listing.min_rental_minutes || 30) / 60);
+            const maxHours = Math.max(minHours, Number(listing.max_rental_minutes || 10080) / 60);
+            const defaultHours = Math.min(maxHours, Math.max(minHours, 1));
+            const isRented = !!listing.has_active_contract;
+            return `
+                <div class="mp-card-header">
+                    <div class="mp-avatar">${renderAvatar(listing)}</div>
+                    <div>
+                        <div class="mp-card-title">${esc(listing.title || 'Rental Bot')}</div>
+                        <div class="mp-card-model">${esc(listing.model_detected || 'Model pending')}</div>
+                    </div>
+                </div>
+                <p class="mp-subtitle">${esc(listing.description || 'No description provided yet.')}</p>
+                <div class="mp-detail-grid">
+                    <div class="mp-detail-cell"><b>${tt('mp_d_rate', 'Rate')}</b>${ecoin(rateMli)} e-coin / 1K tokens</div>
+                    <div class="mp-detail-cell"><b>${tt('mp_d_deposit', 'Deposit')}</b>${ecoin(rateMli * 20, 0)} e-coin</div>
+                    <div class="mp-detail-cell"><b>${tt('mp_d_duration', 'Duration')}</b>${Number(listing.min_rental_minutes || 30)}-${Number(listing.max_rental_minutes || 10080)} minutes</div>
+                    <div class="mp-detail-cell"><b>${tt('mp_d_rating', 'Rating')}</b>${Number(listing.avg_rating || 0).toFixed(1)} / ${Number(listing.total_rentals || 0)} ${tt('mp_d_rentals', 'rentals')}</div>
+                </div>
+                <div class="mp-tags">${caps.length ? caps.map((cap) => `<span class="mp-tag">${esc(cap)}</span>`).join('') : `<span class="mp-muted">${tt('mp_no_caps_reported', 'No supported capabilities reported')}</span>`}</div>
+                <label class="mp-muted" for="durationHours" style="display:block;margin-top:16px;">${tt('mp_d_rent_duration_hours', 'Rental duration (hours)')}</label>
+                <input class="mp-field" id="durationHours" type="number" min="${esc(minHours)}" max="${esc(maxHours)}" step="0.5" value="${esc(defaultHours)}" oninput="updateEstimate(${esc(rateMli)})">
+                <div class="mp-detail-cell" style="margin-top:10px;" id="estimateBox"></div>
+                <label class="mp-consent">
+                    <input id="rentalConsent" type="checkbox" onchange="updateRentButton()">
+                    <span>${tt('mp_privacy_agree', 'I understand and agree')}</span>
+                </label>
+                <button class="mp-btn primary" id="rentButton" type="button" onclick="rentListing('${esc(listing.id)}')" ${isRented ? 'disabled' : ''}>${isRented ? tt('mp_status_rented', 'Rented') : tt('mp_rent_now', 'Rent Now')}</button>
+                <div class="mp-muted" id="rentMessage" style="margin-top:10px;"></div>
+            `;
+        }
+
+        function updateEstimate(rateMli) {
+            const hours = Number(document.getElementById('durationHours')?.value || 1);
+            const estimate = Number.isFinite(hours) ? Math.max(0, hours * rateMli) : rateMli;
+            const box = document.getElementById('estimateBox');
+            if (box) box.innerHTML = `<b>${tt('mp_est_usage', 'Estimated usage')}</b>${ecoin(estimate)} e-coin`;
+            updateRentButton();
+        }
+
+        function updateRentButton() {
+            const btn = document.getElementById('rentButton');
+            const consent = document.getElementById('rentalConsent');
+            if (!btn || btn.textContent === tt('mp_status_rented', 'Rented')) return;
+            btn.disabled = !consent?.checked;
+        }
+
+        async function rentListing(listingId) {
+            const btn = document.getElementById('rentButton');
+            const msg = document.getElementById('rentMessage');
+            const hours = Number(document.getElementById('durationHours')?.value || 1);
+            const durationMinutes = Math.max(30, Math.round(hours * 60));
+            btn.disabled = true;
+            msg.textContent = tt('mp_renting', 'Processing...');
+            try {
+                const user = await getRentalUser();
+                const renterDeviceId = user?.deviceId || user?.device_id
+                    || localStorage.getItem('deviceId')
+                    || localStorage.getItem('eclaw_device_id');
+                if (!renterDeviceId) throw new Error('renter_device_id_missing');
+                await fetchJson('/api/rental/contract', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ listingId, renterDeviceId, durationMinutes }),
+                });
+                msg.textContent = tt('mp_rent_success', 'Rental started! Check My Rentals for details.');
+                setTimeout(() => { window.location.href = 'my-rentals.html'; }, 900);
+            } catch (err) {
+                if (err.status === 401) {
+                    window.location.href = 'index.html?next=marketplace.html';
+                    return;
+                }
+                msg.textContent = (err.data && err.data.error) || err.message || tt('mp_load_error', 'Failed to load');
+                btn.disabled = false;
+            }
+        }
+
+        function bindControls() {
+            ['sortSelect', 'capabilitySelect', 'minRateInput', 'maxRateInput'].forEach((id) => {
+                document.getElementById(id).addEventListener('change', loadMarketplace);
+            });
+            document.getElementById('searchInput').addEventListener('input', () => {
+                clearTimeout(state.debounce);
+                state.debounce = setTimeout(filterLocal, 150);
+            });
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') closeDetail();
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            bindControls();
+            loadMarketplace();
+            if (typeof renderFooter === 'function') renderFooter();
+            if (typeof i18n !== 'undefined') i18n.apply();
+        });
+    </script>
+</body>
+
 </html>
