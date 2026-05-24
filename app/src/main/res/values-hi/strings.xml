@@ -950,4 +950,12 @@ GPS: केवल अनुरोध पर, कोई बैकग्राउ�
     <string name="tool_status_writing">फ़ाइल लिखी जा रही है…</string>
     <string name="custom_layout_enabled">कस्टम लेआउट सक्षम</string>
     <string name="custom_layout_using_preset">प्रीसेट लेआउट का उपयोग</string>
+
+    <!-- FCM Notification Channels -->
+    <string name="fcm_channel_chat_name">चैट संदेश</string>
+    <string name="fcm_channel_chat_desc">आपकी एंटिटी से संदेश</string>
+    <string name="fcm_channel_system_name">सिस्टम</string>
+    <string name="fcm_channel_system_desc">सिस्टम सूचनाएं</string>
+    <string name="fcm_channel_feedback_name">फ़ीडबैक अपडेट</string>
+    <string name="fcm_channel_feedback_desc">फ़ीडबैक स्थिति अपडेट</string>
 </resources>

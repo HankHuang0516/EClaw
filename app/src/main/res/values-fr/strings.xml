@@ -950,4 +950,12 @@ Si vous avez des questions, contactez-nous via notre e-mail officiel.
     <string name="tool_status_writing">Écriture du fichier…</string>
     <string name="custom_layout_enabled">Disposition personnalisée activée</string>
     <string name="custom_layout_using_preset">Disposition par défaut</string>
+
+    <!-- FCM Notification Channels -->
+    <string name="fcm_channel_chat_name">Messages de chat</string>
+    <string name="fcm_channel_chat_desc">Messages de vos entités</string>
+    <string name="fcm_channel_system_name">Système</string>
+    <string name="fcm_channel_system_desc">Notifications système</string>
+    <string name="fcm_channel_feedback_name">Mises à jour des retours</string>
+    <string name="fcm_channel_feedback_desc">Mises à jour de l\'état des retours</string>
 </resources>

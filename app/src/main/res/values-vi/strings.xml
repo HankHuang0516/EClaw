@@ -845,4 +845,12 @@ Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua
     <string name="tool_status_writing">Đang ghi tệp…</string>
     <string name="custom_layout_enabled">Đã bật bố cục tùy chỉnh</string>
     <string name="custom_layout_using_preset">Đang dùng bố cục mặc định</string>
+
+    <!-- FCM Notification Channels -->
+    <string name="fcm_channel_chat_name">Tin nhắn trò chuyện</string>
+    <string name="fcm_channel_chat_desc">Tin nhắn từ các thực thể của bạn</string>
+    <string name="fcm_channel_system_name">Hệ thống</string>
+    <string name="fcm_channel_system_desc">Thông báo hệ thống</string>
+    <string name="fcm_channel_feedback_name">Cập nhật phản hồi</string>
+    <string name="fcm_channel_feedback_desc">Cập nhật trạng thái phản hồi</string>
 </resources>

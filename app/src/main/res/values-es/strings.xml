@@ -873,4 +873,12 @@ Tu suscripción permanece activa y puedes reenlazar en cualquier momento (sujeto
     <string name="tool_status_writing">Escribiendo archivo…</string>
     <string name="custom_layout_enabled">Diseño personalizado activado</string>
     <string name="custom_layout_using_preset">Usando diseño predeterminado</string>
+
+    <!-- FCM Notification Channels -->
+    <string name="fcm_channel_chat_name">Mensajes de chat</string>
+    <string name="fcm_channel_chat_desc">Mensajes de tus entidades</string>
+    <string name="fcm_channel_system_name">Sistema</string>
+    <string name="fcm_channel_system_desc">Notificaciones del sistema</string>
+    <string name="fcm_channel_feedback_name">Actualizaciones de comentarios</string>
+    <string name="fcm_channel_feedback_desc">Actualizaciones del estado de comentarios</string>
 </resources>

@@ -846,4 +846,12 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="tool_status_writing">ファイルを書き込む中…</string>
     <string name="custom_layout_enabled">カスタムレイアウトを有効化</string>
     <string name="custom_layout_using_preset">プリセットレイアウトを使用</string>
+
+    <!-- FCM Notification Channels -->
+    <string name="fcm_channel_chat_name">チャットメッセージ</string>
+    <string name="fcm_channel_chat_desc">エンティティからのメッセージ</string>
+    <string name="fcm_channel_system_name">システム</string>
+    <string name="fcm_channel_system_desc">システム通知</string>
+    <string name="fcm_channel_feedback_name">フィードバック更新</string>
+    <string name="fcm_channel_feedback_desc">フィードバック状態の更新</string>
 </resources>

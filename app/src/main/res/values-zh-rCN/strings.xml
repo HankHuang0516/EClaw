@@ -848,4 +848,12 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="tool_status_writing">正在写入文件…</string>
     <string name="custom_layout_enabled">已启用自定义布局</string>
     <string name="custom_layout_using_preset">使用预设布局</string>
+
+    <!-- FCM Notification Channels -->
+    <string name="fcm_channel_chat_name">聊天消息</string>
+    <string name="fcm_channel_chat_desc">来自实体的消息</string>
+    <string name="fcm_channel_system_name">系统</string>
+    <string name="fcm_channel_system_desc">系统通知</string>
+    <string name="fcm_channel_feedback_name">反馈更新</string>
+    <string name="fcm_channel_feedback_desc">反馈状态更新</string>
 </resources>

@@ -33,14 +33,14 @@ class ClawFcmService : FirebaseMessagingService() {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
             val nm = context.getSystemService(NotificationManager::class.java)
             nm.createNotificationChannel(NotificationChannel(
-                CHANNEL_CHAT, "Chat Messages", NotificationManager.IMPORTANCE_HIGH
-            ).apply { description = "Messages from your entities" })
+                CHANNEL_CHAT, context.getString(R.string.fcm_channel_chat_name), NotificationManager.IMPORTANCE_HIGH
+            ).apply { description = context.getString(R.string.fcm_channel_chat_desc) })
             nm.createNotificationChannel(NotificationChannel(
-                CHANNEL_SYSTEM, "System", NotificationManager.IMPORTANCE_DEFAULT
-            ).apply { description = "System notifications" })
+                CHANNEL_SYSTEM, context.getString(R.string.fcm_channel_system_name), NotificationManager.IMPORTANCE_DEFAULT
+            ).apply { description = context.getString(R.string.fcm_channel_system_desc) })
             nm.createNotificationChannel(NotificationChannel(
-                CHANNEL_FEEDBACK, "Feedback Updates", NotificationManager.IMPORTANCE_DEFAULT
-            ).apply { description = "Feedback status updates" })
+                CHANNEL_FEEDBACK, context.getString(R.string.fcm_channel_feedback_name), NotificationManager.IMPORTANCE_DEFAULT
+            ).apply { description = context.getString(R.string.fcm_channel_feedback_desc) })
         }
     }
 

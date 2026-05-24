@@ -845,4 +845,12 @@ Jika ada pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="tool_status_writing">Menulis file…</string>
     <string name="custom_layout_enabled">Tata letak kustom diaktifkan</string>
     <string name="custom_layout_using_preset">Menggunakan tata letak bawaan</string>
+
+    <!-- FCM Notification Channels -->
+    <string name="fcm_channel_chat_name">Pesan obrolan</string>
+    <string name="fcm_channel_chat_desc">Pesan dari entitas Anda</string>
+    <string name="fcm_channel_system_name">Sistem</string>
+    <string name="fcm_channel_system_desc">Notifikasi sistem</string>
+    <string name="fcm_channel_feedback_name">Pembaruan masukan</string>
+    <string name="fcm_channel_feedback_desc">Pembaruan status masukan</string>
 </resources>

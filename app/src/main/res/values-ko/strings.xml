@@ -846,4 +846,12 @@ GPS: 온디맨드만, 백그라운드 추적 없음, 서버 재시작 시 데이
     <string name="tool_status_writing">파일 작성 중…</string>
     <string name="custom_layout_enabled">사용자 지정 레이아웃 활성화</string>
     <string name="custom_layout_using_preset">프리셋 레이아웃 사용</string>
+
+    <!-- FCM Notification Channels -->
+    <string name="fcm_channel_chat_name">채팅 메시지</string>
+    <string name="fcm_channel_chat_desc">엔티티의 메시지</string>
+    <string name="fcm_channel_system_name">시스템</string>
+    <string name="fcm_channel_system_desc">시스템 알림</string>
+    <string name="fcm_channel_feedback_name">피드백 업데이트</string>
+    <string name="fcm_channel_feedback_desc">피드백 상태 업데이트</string>
 </resources>
