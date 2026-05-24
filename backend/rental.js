@@ -30,6 +30,7 @@ const path = require('path');
 const { runInterview, getProbeList } = require('./bot-interview');
 const safeEqual = require('./safe-equal');
 const { newContractId } = require('./entity-id');
+const { detectFamily } = require('./pricing-advisor');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
@@ -178,6 +179,94 @@ function toDateOrNull(value) {
     if (!value) return null;
     const d = value instanceof Date ? value : new Date(value);
     return Number.isFinite(d.getTime()) ? d : null;
+}
+
+function percentileDisc(sortedValues, fraction) {
+    if (!Array.isArray(sortedValues) || sortedValues.length === 0) return null;
+    const rank = Math.max(1, Math.ceil(sortedValues.length * fraction));
+    return sortedValues[Math.min(sortedValues.length - 1, rank - 1)];
+}
+
+function normalizeRateMli(value) {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+async function refreshPricingMarketSnapshots({
+    snapshotAt = new Date(),
+    client = pool,
+} = {}) {
+    const at = toDateOrNull(snapshotAt) || new Date();
+    const marketRows = await client.query(
+        `SELECT bl.id,
+                bl.model_detected,
+                bl.rate_mli_per_ktoken,
+                COUNT(c.id)::int AS started_contracts,
+                COUNT(c.id) FILTER (WHERE c.status = 'ended_normal')::int AS successful_contracts
+           FROM bot_listings bl
+           LEFT JOIN rental_contracts c ON c.listing_id = bl.id
+          WHERE bl.status = 'listed'
+            AND bl.interview_passed = TRUE
+            AND bl.rate_mli_per_ktoken > 0
+            AND (bl.soft_pause_until IS NULL OR bl.soft_pause_until <= NOW())
+          GROUP BY bl.id, bl.model_detected, bl.rate_mli_per_ktoken`
+    );
+
+    const byFamily = new Map();
+    for (const row of marketRows.rows || []) {
+        const rate = normalizeRateMli(row.rate_mli_per_ktoken);
+        if (rate == null) continue;
+        const family = detectFamily(row.model_detected);
+        if (!byFamily.has(family)) {
+            byFamily.set(family, { rates: [], started: 0, successful: 0 });
+        }
+        const bucket = byFamily.get(family);
+        bucket.rates.push(rate);
+        bucket.started += Number.parseInt(row.started_contracts, 10) || 0;
+        bucket.successful += Number.parseInt(row.successful_contracts, 10) || 0;
+    }
+
+    const rows = [];
+    for (const [family, bucket] of [...byFamily.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+        bucket.rates.sort((a, b) => a - b);
+        const rentalSuccessRate = bucket.started > 0
+            ? Number((bucket.successful / bucket.started).toFixed(3))
+            : null;
+        const snapshotRow = {
+            modelFamily: family,
+            listingCount: bucket.rates.length,
+            rateP25Mli: percentileDisc(bucket.rates, 0.25),
+            rateP50Mli: percentileDisc(bucket.rates, 0.50),
+            rateP75Mli: percentileDisc(bucket.rates, 0.75),
+            rateP95Mli: percentileDisc(bucket.rates, 0.95),
+            rentalSuccessRate,
+        };
+        await client.query(
+            `INSERT INTO pricing_market_snapshots
+                (snapshot_at, model_family, listing_count,
+                 rate_p25_mli, rate_p50_mli, rate_p75_mli, rate_p95_mli,
+                 rental_success_rate)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            [
+                at,
+                snapshotRow.modelFamily,
+                snapshotRow.listingCount,
+                snapshotRow.rateP25Mli,
+                snapshotRow.rateP50Mli,
+                snapshotRow.rateP75Mli,
+                snapshotRow.rateP95Mli,
+                snapshotRow.rentalSuccessRate,
+            ]
+        );
+        rows.push(snapshotRow);
+    }
+
+    return {
+        snapshotAt: at.toISOString(),
+        familyCount: rows.length,
+        listingCount: rows.reduce((sum, row) => sum + row.listingCount, 0),
+        rows,
+    };
 }
 
 // ============================================
@@ -2830,6 +2919,7 @@ module.exports = function rentalFactory({ authMiddleware, softAuthMiddleware, ad
         getListing,
         listMyListings,
         searchMarketplace,
+        refreshPricingMarketSnapshots,
         filterDriftedListings,
         startRental,
         endRental,
@@ -2879,5 +2969,6 @@ module.exports.DEPOSIT_TOKEN_MULTIPLIER = DEPOSIT_TOKEN_MULTIPLIER;
 module.exports.INTERVIEW_PASS_SCORE = INTERVIEW_PASS_SCORE;
 
 module.exports.isListingSoftPaused = isListingSoftPaused;
+module.exports.refreshPricingMarketSnapshots = refreshPricingMarketSnapshots;
 module.exports.LISTING_SOFT_PAUSE_REASON_HEALTH_DEGRADED = LISTING_SOFT_PAUSE_REASON_HEALTH_DEGRADED;
 module.exports.LISTING_HEALTH_OK_RECOVERY_STREAK = LISTING_HEALTH_OK_RECOVERY_STREAK;

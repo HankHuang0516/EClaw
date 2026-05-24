@@ -792,7 +792,7 @@ For `ended_zero_balance`: the token metering proxy (`chargeRentalUsage`) deducts
 | Schedule | Job | Status |
 |----------|-----|--------|
 | `23 4 * * *` (daily 04:23) | Wallet reconcile audit | ✅ |
-| (TBD) hourly | Pricing market snapshot aggregation | 🟡 P1 follow-up |
+| `11 * * * *` (hourly at :11) | Pricing market snapshot aggregation | ✅ |
 | (TBD) per-minute | Contract expiration sweep (active → ended_normal) | 🔴 P2-F |
 | (TBD) per-minute | Grace period expiration sweep | 🔴 P2-C |
 | (TBD) T+24h | Owner pending_income release sweep | 🔴 P2-C |
@@ -1014,7 +1014,7 @@ Rate limit: 30 req/min via `express-rate-limit` keyed on `rental_contract_id`.
 | Phase | Theme | Scope | Status | PR(s) |
 |-------|-------|-------|--------|-------|
 | **P0** | Wallet foundation | `wallets`, `wallet_ledger`, `topup_orders`, primitives, reconcile cron | ✅ Complete | #1656 commits `a5dd33ea`, `6938c92d`, `073a125b` |
-| **P1** | Listings + advisor | `bot_listings`, `bot_interviews`, listing CRUD, marketplace, interview scoring, pricing advisor | 🟡 Foundation done; Arena integration complete; market snapshot cron pending | #1656 commit `073a125b` |
+| **P1** | Listings + advisor | `bot_listings`, `bot_interviews`, listing CRUD, marketplace, interview scoring, pricing advisor | 🟡 Foundation done; Arena integration, market snapshot cron, and marketplace portal complete; listing editor/mobile parity pending | #1656 commit `073a125b` |
 | **P2** | Contract core | Contract state machine, atomic start/end, version lock, token metering proxy, grace period, entity handover, gatekeeper extension, A2A collab | 🟡 P2-A/B done (financial); P2-C/D/E/F pending | #1656 commit `267c09d7` |
 | **P3** | Trust layer | Reviews, disputes, credit score, fraud detection, admin workqueue | 🔴 Not started | — |
 | **P4** | Risk management | Insurance pool, blacklist, SLA display, notifications, audit hardening | 🔴 Not started | — |
@@ -1054,8 +1054,8 @@ Legend: ✅ done, 🟡 partial, 🔴 not started, 🔒 human-blocked
 - ✅ Arena integration — 12-challenge interactive evaluation via interview-arena.js
 - ✅ `arena_exams` + `arena_sessions` table writes (real-time)
 - 🔴 Interview rate limit enforcement (3/listing/7d)
-- 🔴 Market snapshot cron (hourly aggregation)
-- 🔴 Marketplace portal page (`marketplace.html`)
+- ✅ Market snapshot cron (hourly aggregation)
+- ✅ Marketplace portal page (`marketplace.html`)
 - 🔴 Listing editor portal page
 - 🔴 Interview runner UI
 - 🔒 Android `MarketplaceActivity.kt` (feature parity rule)
@@ -1521,7 +1521,7 @@ backend/
 ├── public/
 │   ├── portal/
 │   │   ├── wallet.html        # User wallet page (balance + tiers + history)
-│   │   └── marketplace.html   # [P1 follow-up] Marketplace search page
+│   │   └── marketplace.html   # Marketplace search page
 │   └── shared/
 │       └── i18n.js            # Added wallet_* keys (en + zh-TW so far)
 └── tests/jest/
@@ -1558,14 +1558,15 @@ backend/
 └── scripts/
     ├── wallet-reconcile.js    # Standalone reconcile script (cron-callable)
     ├── rental-grace-sweep.js  # P2-C: grace period expiration cron
-    ├── rental-expire-sweep.js # P2-C: contract auto-expiration cron
-    └── pricing-snapshot-cron.js # P1 follow-up: hourly market aggregation
+    └── rental-expire-sweep.js # P2-C: contract auto-expiration cron
 
 backend/public/portal/
 ├── rental-listing-edit.html   # P1: listing editor
 ├── rental-contract-detail.html # P2: contract viewing page
 └── admin-rental.html          # P3: admin dispute workqueue
 ```
+
+Pricing snapshot aggregation now runs from `backend/index.js` at `11 * * * *`.
 
 ---
 
@@ -2377,7 +2378,7 @@ CREATE UNIQUE INDEX idx_contracts_exclusive_active
 | 排程 | 作業 | 狀態 |
 |----------|-----|--------|
 | `23 4 * * *`（每日 04:23） | 錢包對帳審計 | ✅ |
-| （待定）每小時 | 定價市場快照聚合 | 🟡 P1 後續 |
+| `11 * * * *`（每小時 :11） | 定價市場快照聚合 | ✅ |
 | （待定）每分鐘 | 合約過期掃描（active → ended_normal） | 🔴 P2-F |
 | （待定）每分鐘 | 寬限期過期掃描 | 🔴 P2-C |
 | （待定）T+24h | 所有者 pending_income 釋放掃描 | 🔴 P2-C |
@@ -2602,7 +2603,7 @@ CREATE UNIQUE INDEX idx_contracts_exclusive_active
 | 階段 | 主題 | 範圍 | 狀態 | PR(s) |
 |-------|-------|-------|--------|-------|
 | **P0** | 錢包基礎 | `wallets`、`wallet_ledger`、`topup_orders`、原語、reconcile cron | ✅ 完成 | #1656 commits `a5dd33ea`、`6938c92d`、`073a125b` |
-| **P1** | 上架商品 + 顧問 | `bot_listings`、`bot_interviews`、上架商品 CRUD、市集、面試評分、定價顧問 | 🟡 基礎完成；HTTP 探針分發 + 市場快照 cron 待定 | #1656 commit `073a125b` |
+| **P1** | 上架商品 + 顧問 | `bot_listings`、`bot_interviews`、上架商品 CRUD、市集、面試評分、定價顧問 | 🟡 基礎完成；Arena 整合、市場快照 cron、市集入口頁完成；上架編輯器/行動端對等仍待補 | #1656 commit `073a125b` |
 | **P2** | 合約核心 | 合約狀態機、原子開始/結束、版本鎖、token 計量代理、寬限期、entity 交接、看門狗擴展、A2A 協作 | 🟡 P2-A/B 完成（財務）；P2-C/D/E/F 待定 | #1656 commit `267c09d7` |
 | **P3** | 信任層 | 評論、爭議、信用評分、欺詐檢測、管理員工作隊列 | 🔴 未開始 | — |
 
@@ -2643,8 +2644,8 @@ CREATE UNIQUE INDEX idx_contracts_exclusive_active
 - 🔴 HTTP 探針分發器 — POST 到所有者 webhook，透過 `/api/transform` 回調收集
 - 🔴 直播面試期間的 `bot_interviews` 表格寫入
 - 🔴 面試速率限制強制執行（每上架商品/7 天 3 次）
-- 🔴 市場快照 cron（每小時聚合）
-- 🔴 市集入口頁面（`marketplace.html`）
+- ✅ 市場快照 cron（每小時聚合）
+- ✅ 市集入口頁面（`marketplace.html`）
 - 🔴 上架商品編輯器入口頁面
 - 🔴 面試執行器 UI
 - 🔒 Android `MarketplaceActivity.kt`（功能對等規則）
@@ -3110,7 +3111,7 @@ backend/
 ├── public/
 │   ├── portal/
 │   │   ├── wallet.html        # User wallet page (balance + tiers + history)
-│   │   └── marketplace.html   # [P1 follow-up] Marketplace search page
+│   │   └── marketplace.html   # Marketplace search page
 │   └── shared/
 │       └── i18n.js            # Added wallet_* keys (en + zh-TW so far)
 └── tests/jest/
@@ -3147,14 +3148,15 @@ backend/
 └── scripts/
     ├── wallet-reconcile.js    # Standalone reconcile script (cron-callable)
     ├── rental-grace-sweep.js  # P2-C: grace period expiration cron
-    ├── rental-expire-sweep.js # P2-C: contract auto-expiration cron
-    └── pricing-snapshot-cron.js # P1 follow-up: hourly market aggregation
+    └── rental-expire-sweep.js # P2-C: contract auto-expiration cron
 
 backend/public/portal/
 ├── rental-listing-edit.html   # P1: listing editor
 ├── rental-contract-detail.html # P2: contract viewing page
 └── admin-rental.html          # P3: admin dispute workqueue
 ```
+
+定價市場快照聚合現在由 `backend/index.js` 以 `11 * * * *` 排程執行。
 
 ---
 

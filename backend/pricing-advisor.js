@@ -10,7 +10,7 @@
  *   - Market percentile from `pricing_market_snapshots`
  *
  * This module is pure: no DB writes, only reads. The snapshot table is
- * populated by a separate hourly cron (added in a follow-up PR).
+ * populated by the hourly rental market snapshot cron.
  */
 /* @brm-crossref: ⑤ Pricing Advisor
  * Design doc: docs/plans/2026-04-10-bot-rental-marketplace-design.md
