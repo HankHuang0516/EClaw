@@ -481,33 +481,33 @@
                 <option value="rate_desc" data-i18n="mp_sort_expensive">Most Expensive</option>
             </select>
             <select class="mp-select" id="capabilitySelect" aria-label="Capability filter">
-                <option value="">All capabilities</option>
+                <option value="" data-i18n="mp_cap_filter_label">Capabilities</option>
                 <option value="python_exec">Python</option>
                 <option value="web_browse">Web browse</option>
                 <option value="vision">Vision</option>
                 <option value="reasoning">Reasoning</option>
                 <option value="coding">Coding</option>
             </select>
-            <input class="mp-field mp-rate-field" id="minRateInput" type="number" min="0" step="1" placeholder="Min e/1K" aria-label="Minimum e-coin per 1000 tokens">
-            <input class="mp-field mp-rate-field" id="maxRateInput" type="number" min="0" step="1" placeholder="Max e/1K" aria-label="Maximum e-coin per 1000 tokens">
+            <input class="mp-field mp-rate-field" id="minRateInput" type="number" min="0" step="1" placeholder="Min e/1K" data-i18n-placeholder="mp_rate_min_placeholder" aria-label="Minimum e-coin per 1000 tokens">
+            <input class="mp-field mp-rate-field" id="maxRateInput" type="number" min="0" step="1" placeholder="Max e/1K" data-i18n-placeholder="mp_rate_max_placeholder" aria-label="Maximum e-coin per 1000 tokens">
         </section>
 
         <section class="mp-stats" aria-label="Marketplace statistics">
             <div class="mp-stat">
                 <div class="mp-stat-value" id="statListings">0</div>
-                <div class="mp-stat-label">Available listings</div>
+                <div class="mp-stat-label" data-i18n="mp_stat_available_listings">Available listings</div>
             </div>
             <div class="mp-stat">
                 <div class="mp-stat-value" id="statMedian">-</div>
-                <div class="mp-stat-label">Median e-coin / 1K</div>
+                <div class="mp-stat-label" data-i18n="mp_stat_median_rate">Median e-coin / 1K</div>
             </div>
             <div class="mp-stat">
                 <div class="mp-stat-value" id="statCapabilities">0</div>
-                <div class="mp-stat-label">Capability tags</div>
+                <div class="mp-stat-label" data-i18n="mp_stat_capability_tags">Capability tags</div>
             </div>
             <div class="mp-stat">
                 <div class="mp-stat-value" id="statRented">0</div>
-                <div class="mp-stat-label">Currently rented</div>
+                <div class="mp-stat-label" data-i18n="mp_stat_currently_rented">Currently rented</div>
             </div>
         </section>
 
@@ -760,7 +760,7 @@
                     <div class="mp-detail-cell"><b>${tt('mp_d_duration', 'Duration')}</b>${Number(listing.min_rental_minutes || 30)}-${Number(listing.max_rental_minutes || 10080)} minutes</div>
                     <div class="mp-detail-cell"><b>${tt('mp_d_rating', 'Rating')}</b>${Number(listing.avg_rating || 0).toFixed(1)} / ${Number(listing.total_rentals || 0)} ${tt('mp_d_rentals', 'rentals')}</div>
                 </div>
-                <div class="mp-tags">${caps.length ? caps.map((cap) => `<span class="mp-tag">${esc(cap)}</span>`).join('') : '<span class="mp-muted">No supported capabilities reported</span>'}</div>
+                <div class="mp-tags">${caps.length ? caps.map((cap) => `<span class="mp-tag">${esc(cap)}</span>`).join('') : `<span class="mp-muted">${tt('mp_no_caps_reported', 'No supported capabilities reported')}</span>`}</div>
                 <label class="mp-muted" for="durationHours" style="display:block;margin-top:16px;">${tt('mp_d_rent_duration_hours', 'Rental duration (hours)')}</label>
                 <input class="mp-field" id="durationHours" type="number" min="${esc(minHours)}" max="${esc(maxHours)}" step="0.5" value="${esc(defaultHours)}" oninput="updateEstimate(${esc(rateMli)})">
                 <div class="mp-detail-cell" style="margin-top:10px;" id="estimateBox"></div>

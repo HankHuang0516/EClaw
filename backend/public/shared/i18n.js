@@ -315548,6 +315548,13 @@ const TRANSLATIONS = {
 
 
         "mp_rate_unit": "e\u5e63/1K",
+        "mp_rate_min_placeholder": "Min e/1K",
+        "mp_rate_max_placeholder": "Max e/1K",
+        "mp_stat_available_listings": "Available listings",
+        "mp_stat_median_rate": "Median e-coin / 1K",
+        "mp_stat_capability_tags": "Capability tags",
+        "mp_stat_currently_rented": "Currently rented",
+        "mp_no_caps_reported": "No supported capabilities reported",
 
 
 
@@ -943748,6 +943755,13 @@ const TRANSLATIONS = {
 
 
         "mp_rate_unit": "e幣/1K",
+        "mp_rate_min_placeholder": "最低 e/1K",
+        "mp_rate_max_placeholder": "最高 e/1K",
+        "mp_stat_available_listings": "可租借列表",
+        "mp_stat_median_rate": "e 幣中位費率 / 1K",
+        "mp_stat_capability_tags": "能力標籤",
+        "mp_stat_currently_rented": "目前已出租",
+        "mp_no_caps_reported": "未回報支援能力",
 
 
 
@@ -1676868,6 +1676882,13 @@ const TRANSLATIONS = {
 
 
         "mp_rate_unit": "e幣/1K",
+        "mp_rate_min_placeholder": "最低 e/1K",
+        "mp_rate_max_placeholder": "最高 e/1K",
+        "mp_stat_available_listings": "可租借列表",
+        "mp_stat_median_rate": "e 币中位费率 / 1K",
+        "mp_stat_capability_tags": "能力标签",
+        "mp_stat_currently_rented": "当前已出租",
+        "mp_no_caps_reported": "未报告支持能力",
 
 
 
@@ -2117953,6 +2117974,13 @@ const TRANSLATIONS = {
 
 
         "mp_rate_unit": "eコイン/1K",
+        "mp_rate_min_placeholder": "最小 e/1K",
+        "mp_rate_max_placeholder": "最大 e/1K",
+        "mp_stat_available_listings": "利用可能な掲載",
+        "mp_stat_median_rate": "eコイン中央値 / 1K",
+        "mp_stat_capability_tags": "能力タグ",
+        "mp_stat_currently_rented": "現在レンタル中",
+        "mp_no_caps_reported": "対応機能の報告なし",
 
 
 
@@ -2680738,6 +2680766,13 @@ const TRANSLATIONS = {
 
 
         "mp_rate_unit": "e코인/1K",
+        "mp_rate_min_placeholder": "최소 e/1K",
+        "mp_rate_max_placeholder": "최대 e/1K",
+        "mp_stat_available_listings": "대여 가능 목록",
+        "mp_stat_median_rate": "e-coin 중앙값 / 1K",
+        "mp_stat_capability_tags": "기능 태그",
+        "mp_stat_currently_rented": "현재 대여 중",
+        "mp_no_caps_reported": "지원되는 기능 정보 없음",
 
 
 
@@ -2940887,6 +2940922,13 @@ const TRANSLATIONS = {
         "listing_soft_paused_resume_btn": "恢復上架",
         "rental_create_rejected_soft_paused": "此上架項目因健康檢查異常而暫時無法租借。",
         "mp_chat_cta": "開始對話",
+        "mp_rate_min_placeholder": "最低 e/1K",
+        "mp_rate_max_placeholder": "最高 e/1K",
+        "mp_stat_available_listings": "可租借列表",
+        "mp_stat_median_rate": "e 幣中位費率 / 1K",
+        "mp_stat_capability_tags": "能力標籤",
+        "mp_stat_currently_rented": "目前已出租",
+        "mp_no_caps_reported": "未回報支援能力",
         "invite_unlimited_label": "已送出（無限制）",
         "wallet_topup_success": "儲值成功！",
         "wallet_topup_failed": "儲值失敗，請再試一次。",
@@ -3439024,6 +3439066,13 @@ const TRANSLATIONS = {
 
 
         "mp_rate_unit": "e幣/1K",
+        "mp_rate_min_placeholder": "ต่ำสุด e/1K",
+        "mp_rate_max_placeholder": "สูงสุด e/1K",
+        "mp_stat_available_listings": "รายการที่พร้อมให้เช่า",
+        "mp_stat_median_rate": "ค่ามัธยฐาน e-coin / 1K",
+        "mp_stat_capability_tags": "แท็กความสามารถ",
+        "mp_stat_currently_rented": "กำลังเช่าอยู่",
+        "mp_no_caps_reported": "ไม่มีการรายงานความสามารถที่รองรับ",
 
 
 
@@ -3967831,6 +3967880,13 @@ const TRANSLATIONS = {
 
 
         "mp_rate_unit": "e幣/1K",
+        "mp_rate_min_placeholder": "Tối thiểu e/1K",
+        "mp_rate_max_placeholder": "Tối đa e/1K",
+        "mp_stat_available_listings": "Danh sách sẵn sàng thuê",
+        "mp_stat_median_rate": "Trung vị e-coin / 1K",
+        "mp_stat_capability_tags": "Thẻ năng lực",
+        "mp_stat_currently_rented": "Đang được thuê",
+        "mp_no_caps_reported": "Không có khả năng được hỗ trợ",
 
 
 
@@ -4494945,6 +4495001,13 @@ const TRANSLATIONS = {
 
 
         "mp_rate_unit": "e幣/1K",
+        "mp_rate_min_placeholder": "Min e/1K",
+        "mp_rate_max_placeholder": "Maks e/1K",
+        "mp_stat_available_listings": "Listing tersedia",
+        "mp_stat_median_rate": "Median e-coin / 1K",
+        "mp_stat_capability_tags": "Tag kemampuan",
+        "mp_stat_currently_rented": "Sedang disewa",
+        "mp_no_caps_reported": "Tidak ada kapabilitas yang dilaporkan",
 
 
 
@@ -4794590,6 +4794653,13 @@ const TRANSLATIONS = {
 
 
         "mp_rate_unit": "e-coins/1K",
+        "mp_rate_min_placeholder": "Min e/1K",
+        "mp_rate_max_placeholder": "Max e/1K",
+        "mp_stat_available_listings": "Annonces disponibles",
+        "mp_stat_median_rate": "Médiane e-coin / 1K",
+        "mp_stat_capability_tags": "Étiquettes de capacités",
+        "mp_stat_currently_rented": "Actuellement loués",
+        "mp_no_caps_reported": "Aucune capacité prise en charge signalée",
 
 
 
@@ -5317460,6 +5317530,13 @@ const TRANSLATIONS = {
 
 
         "mp_rate_unit": "e-monedas/1K",
+        "mp_rate_min_placeholder": "Mín e/1K",
+        "mp_rate_max_placeholder": "Máx e/1K",
+        "mp_stat_available_listings": "Anuncios disponibles",
+        "mp_stat_median_rate": "Mediana e-coin / 1K",
+        "mp_stat_capability_tags": "Etiquetas de capacidades",
+        "mp_stat_currently_rented": "Actualmente alquilados",
+        "mp_no_caps_reported": "Sin capacidades compatibles reportadas",
 
 
 
@@ -5835910,6 +5835987,13 @@ const TRANSLATIONS = {
 
 
         "mp_rate_unit": "e-Münzen/1K",
+        "mp_rate_min_placeholder": "Min. e/1K",
+        "mp_rate_max_placeholder": "Max. e/1K",
+        "mp_stat_available_listings": "Verfügbare Einträge",
+        "mp_stat_median_rate": "Median e-Coin / 1K",
+        "mp_stat_capability_tags": "Fähigkeits-Tags",
+        "mp_stat_currently_rented": "Derzeit gemietet",
+        "mp_no_caps_reported": "Keine unterstützten Fähigkeiten gemeldet",
 
 
 
@@ -6563720,6 +6563804,13 @@ const TRANSLATIONS = {
 
 
         "mp_rate_unit": "e-coin/1K",
+        "mp_rate_min_placeholder": "Min e/1K",
+        "mp_rate_max_placeholder": "Maks e/1K",
+        "mp_stat_available_listings": "Senarai tersedia",
+        "mp_stat_median_rate": "Median e-coin / 1K",
+        "mp_stat_capability_tags": "Tag keupayaan",
+        "mp_stat_currently_rented": "Sedang disewa",
+        "mp_no_caps_reported": "Tiada keupayaan disokong dilaporkan",
 
 
 
@@ -7128110,6 +7128201,13 @@ const TRANSLATIONS = {
 
 
         "mp_rate_unit": "e-coin/1K",
+        "mp_rate_min_placeholder": "न्यूनतम e/1K",
+        "mp_rate_max_placeholder": "अधिकतम e/1K",
+        "mp_stat_available_listings": "उपलब्ध लिस्टिंग",
+        "mp_stat_median_rate": "मध्य e-coin / 1K",
+        "mp_stat_capability_tags": "क्षमता टैग",
+        "mp_stat_currently_rented": "अभी किराए पर",
+        "mp_no_caps_reported": "कोई समर्थित क्षमता रिपोर्ट नहीं की गई",
 
 
 
@@ -7653624,6 +7653722,13 @@ const TRANSLATIONS = {
 
 
         "mp_rate_unit": "e-coin/1K",
+        "mp_rate_min_placeholder": "الحد الأدنى e/1K",
+        "mp_rate_max_placeholder": "الحد الأقصى e/1K",
+        "mp_stat_available_listings": "القوائم المتاحة",
+        "mp_stat_median_rate": "وسيط e-coin / 1K",
+        "mp_stat_capability_tags": "وسوم القدرات",
+        "mp_stat_currently_rented": "مؤجرة حالياً",
+        "mp_no_caps_reported": "لم يتم الإبلاغ عن قدرات مدعومة",
 
 
 
