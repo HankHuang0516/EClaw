@@ -14,7 +14,8 @@
     "test:persistence:check": "node test-persistence.js --check",
     "smoke:portal": "node scripts/portal-smoke-check.js",
     "lint": "eslint .",
-    "lint:i18n-dups": "node scripts/i18n-lint-dup-keys.js"
+    "lint:i18n-dups": "node scripts/i18n-lint-dup-keys.js",
+    "fix:i18n-dups": "node scripts/i18n-lint-dup-keys.js --fix"
   },
   "keywords": [
     "realbot",
@@ -58,6 +59,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.28.0",
+    "acorn": "^8.16.0",
     "eslint": "^9.28.0",
     "jest": "^29.7.0",
     "nodemon": "^3.1.0",
