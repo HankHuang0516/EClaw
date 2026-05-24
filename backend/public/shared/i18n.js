@@ -1233977,6 +1233977,17 @@ const TRANSLATIONS = {
         "chat_related_loading": "載入相關聊天中...",
         "chat_related_panel_title": "相關聊天",
         "chat_related_target_not_loaded": "目標聊天尚未載入",
+            "kanban_nudge_per_entity_section_label": "Per-entity overrides",
+        "kanban_nudge_per_entity_section_desc": "Customize interval / columns / throttle for one specific entity. Batch size + priority mode stay device-wide.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Pick an entity —",
+        "kanban_nudge_per_entity_clear": "Reset to device default",
+        "kanban_nudge_per_entity_hint_prefix": "Toggle a field to override the device default for this entity.",
+        "kanban_nudge_per_entity_override_interval": "Override interval",
+        "kanban_nudge_per_entity_override_statuses": "Override columns",
+        "kanban_nudge_per_entity_override_throttle": "Override throttle",
+        "kanban_nudge_per_entity_throttle_short": "Cap this entity at 1 nudge per interval",
+        "kb_funnel_tag": "Tag…",
+        "kb_gate_backlog_only_hint": "Launch-gate is only available for backlog cards",
     },
 
 
@@ -2233676,7 +2233687,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_mode_keyword": "キーワード",
 
 
 
@@ -2233804,7 +2233814,8 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_mode_semantic": "semantic",
+
+
 
 
 
@@ -2394702,7 +2394713,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmaph": "出版者ロードマップ",
 
 
 
@@ -2394830,7 +2394840,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmapdesc": "アプリの公開準備方法を学びましょう。公開は5ステップのプロセスです：",
 
 
 
@@ -2394958,7 +2394967,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatush": "公開状況",
 
 
 
@@ -2395086,7 +2395094,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatuslegend": "ステータス凡例",
 
 
 
@@ -2395214,7 +2395221,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointh": "エンドポイントごとのステータス",
 
 
 
@@ -2395342,7 +2395348,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointdesc": "表示されるステータスは Publisher Profile の設定に基づいています。",
 
 
 
@@ -2395470,7 +2395475,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubnavpublisher": "パブリッシャー",
 
 
 
@@ -2395598,7 +2395602,14 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubtitle": "パブリッシャーガイド",
+
+
+
+
+
+
+
+
 
 
 
@@ -2410550,6 +2410561,17 @@ const TRANSLATIONS = {
 
 
 
+            "kanban_nudge_per_entity_section_label": "Per-entity overrides",
+        "kanban_nudge_per_entity_section_desc": "Customize interval / columns / throttle for one specific entity. Batch size + priority mode stay device-wide.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Pick an entity —",
+        "kanban_nudge_per_entity_clear": "Reset to device default",
+        "kanban_nudge_per_entity_hint_prefix": "Toggle a field to override the device default for this entity.",
+        "kanban_nudge_per_entity_override_interval": "Override interval",
+        "kanban_nudge_per_entity_override_statuses": "Override columns",
+        "kanban_nudge_per_entity_override_throttle": "Override throttle",
+        "kanban_nudge_per_entity_throttle_short": "Cap this entity at 1 nudge per interval",
+        "kb_funnel_tag": "Tag…",
+        "kb_gate_backlog_only_hint": "Launch-gate is only available for backlog cards",
     },
 
 
@@ -2938671,7 +2938693,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmaph": "게시자 로드맵",
 
 
 
@@ -2938799,7 +2938820,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmapdesc": "앱을 출판 준비하는 방법을 알아보세요. 출판은 5단계 프로세스입니다:",
 
 
 
@@ -2938927,7 +2938947,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatush": "게시 상태",
 
 
 
@@ -2939055,7 +2939074,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatuslegend": "상태 범례",
 
 
 
@@ -2939183,7 +2939201,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointh": "엔드포인트별 상태",
 
 
 
@@ -2939311,7 +2939328,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointdesc": "표시된 상태는 게시자 프로필 설정에 기반합니다.",
 
 
 
@@ -2939439,7 +2939455,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubnavpublisher": "게시자",
 
 
 
@@ -2939567,7 +2939582,13 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubtitle": "게시자 가이드"
+
+
+
+
+
+
+
 
 
 
@@ -2940607,6 +2940628,19 @@ const TRANSLATIONS = {
         "chat_related_loading": "관련 채팅을 불러오는 중...",
         "chat_related_panel_title": "관련 채팅",
         "chat_related_target_not_loaded": "대상 채팅을 불러오지 않았습니다",
+            "landing_watch_full_demo": "▶ Watch Full Demo + Walkthrough",
+        "footer_promo_video": "▶ Watch Intro Video",
+        "kanban_nudge_per_entity_section_label": "Per-entity overrides",
+        "kanban_nudge_per_entity_section_desc": "Customize interval / columns / throttle for one specific entity. Batch size + priority mode stay device-wide.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Pick an entity —",
+        "kanban_nudge_per_entity_clear": "Reset to device default",
+        "kanban_nudge_per_entity_hint_prefix": "Toggle a field to override the device default for this entity.",
+        "kanban_nudge_per_entity_override_interval": "Override interval",
+        "kanban_nudge_per_entity_override_statuses": "Override columns",
+        "kanban_nudge_per_entity_override_throttle": "Override throttle",
+        "kanban_nudge_per_entity_throttle_short": "Cap this entity at 1 nudge per interval",
+        "kb_funnel_tag": "Tag…",
+        "kb_gate_backlog_only_hint": "Launch-gate is only available for backlog cards",
     },
 
 
@@ -3468509,7 +3468543,20 @@ const TRANSLATIONS = {
         "info_slide_why_eclaw_b8_token_metering_cta": "ดูสไลด์ Claude Design →",
         "info_slide_why_eclaw_b9_live_bot_handover_cta": "ดูสไลด์ Claude Design →",
         "info_slide_why_eclaw_b10_post_rental_a2a_collaboration_cta": "ดูสไลด์ Claude Design →",
-        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "ดูสไลด์ Claude Design →"},
+        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "ดูสไลด์ Claude Design →"        "landing_watch_full_demo": "▶ Watch Full Demo + Walkthrough",
+        "footer_promo_video": "▶ Watch Intro Video",
+        "kanban_nudge_per_entity_section_label": "Per-entity overrides",
+        "kanban_nudge_per_entity_section_desc": "Customize interval / columns / throttle for one specific entity. Batch size + priority mode stay device-wide.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Pick an entity —",
+        "kanban_nudge_per_entity_clear": "Reset to device default",
+        "kanban_nudge_per_entity_hint_prefix": "Toggle a field to override the device default for this entity.",
+        "kanban_nudge_per_entity_override_interval": "Override interval",
+        "kanban_nudge_per_entity_override_statuses": "Override columns",
+        "kanban_nudge_per_entity_override_throttle": "Override throttle",
+        "kanban_nudge_per_entity_throttle_short": "Cap this entity at 1 nudge per interval",
+        "kb_funnel_tag": "Tag…",
+        "kb_gate_backlog_only_hint": "Launch-gate is only available for backlog cards",
+    },
 
 
 
@@ -3994855,7 +3994902,20 @@ const TRANSLATIONS = {
         "wizard_target_track6_desc": "Chúng tôi sẽ mở Arena và hướng dẫn qua benchmark 12 chiều.",
         "wizard_target_track6_title": "Lộ trình 6 — đấu trường đánh giá agent",
         "wizard_title": "EClawbot — Trình hướng dẫn làm quen",
-},
+        "landing_watch_full_demo": "▶ Watch Full Demo + Walkthrough",
+        "footer_promo_video": "▶ Watch Intro Video",
+        "kanban_nudge_per_entity_section_label": "Per-entity overrides",
+        "kanban_nudge_per_entity_section_desc": "Customize interval / columns / throttle for one specific entity. Batch size + priority mode stay device-wide.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Pick an entity —",
+        "kanban_nudge_per_entity_clear": "Reset to device default",
+        "kanban_nudge_per_entity_hint_prefix": "Toggle a field to override the device default for this entity.",
+        "kanban_nudge_per_entity_override_interval": "Override interval",
+        "kanban_nudge_per_entity_override_statuses": "Override columns",
+        "kanban_nudge_per_entity_override_throttle": "Override throttle",
+        "kanban_nudge_per_entity_throttle_short": "Cap this entity at 1 nudge per interval",
+        "kb_funnel_tag": "Tag…",
+        "kb_gate_backlog_only_hint": "Launch-gate is only available for backlog cards",
+    },
 
 
 
@@ -4520817,7 +4520877,20 @@ const TRANSLATIONS = {
         "wizard_target_track4_title": "Track 4 — penautan channel Claude",
         "wizard_target_track6_desc": "Kami akan membuka Arena dan memandu Anda melalui benchmark 12 dimensi.",
         "wizard_target_track6_title": "Track 6 — arena evaluasi agen",
-        "wizard_title": "EClawbot — Wizard Onboarding"},
+        "wizard_title": "EClawbot — Wizard Onboarding"        "landing_watch_full_demo": "▶ Watch Full Demo + Walkthrough",
+        "footer_promo_video": "▶ Watch Intro Video",
+        "kanban_nudge_per_entity_section_label": "Per-entity overrides",
+        "kanban_nudge_per_entity_section_desc": "Customize interval / columns / throttle for one specific entity. Batch size + priority mode stay device-wide.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Pick an entity —",
+        "kanban_nudge_per_entity_clear": "Reset to device default",
+        "kanban_nudge_per_entity_hint_prefix": "Toggle a field to override the device default for this entity.",
+        "kanban_nudge_per_entity_override_interval": "Override interval",
+        "kanban_nudge_per_entity_override_statuses": "Override columns",
+        "kanban_nudge_per_entity_override_throttle": "Override throttle",
+        "kanban_nudge_per_entity_throttle_short": "Cap this entity at 1 nudge per interval",
+        "kb_funnel_tag": "Tag…",
+        "kb_gate_backlog_only_hint": "Launch-gate is only available for backlog cards",
+    },
 
 
 
@@ -5045499,7 +5045572,20 @@ const TRANSLATIONS = {
         "chat_related_error": "Échec du chargement des discussions associées",
         "chat_related_loading": "Chargement des discussions associées...",
         "chat_related_panel_title": "Discussions connexes",
-        "chat_related_target_not_loaded": "Chat cible non chargé",},
+        "chat_related_target_not_loaded": "Chat cible non chargé",        "landing_watch_full_demo": "▶ Watch Full Demo + Walkthrough",
+        "footer_promo_video": "▶ Watch Intro Video",
+        "kanban_nudge_per_entity_section_label": "Per-entity overrides",
+        "kanban_nudge_per_entity_section_desc": "Customize interval / columns / throttle for one specific entity. Batch size + priority mode stay device-wide.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Pick an entity —",
+        "kanban_nudge_per_entity_clear": "Reset to device default",
+        "kanban_nudge_per_entity_hint_prefix": "Toggle a field to override the device default for this entity.",
+        "kanban_nudge_per_entity_override_interval": "Override interval",
+        "kanban_nudge_per_entity_override_statuses": "Override columns",
+        "kanban_nudge_per_entity_override_throttle": "Override throttle",
+        "kanban_nudge_per_entity_throttle_short": "Cap this entity at 1 nudge per interval",
+        "kb_funnel_tag": "Tag…",
+        "kb_gate_backlog_only_hint": "Launch-gate is only available for backlog cards",
+    },
 
 
 
@@ -6099130,6 +6099216,19 @@ const TRANSLATIONS = {
         "mindmap_subsystems": "Subsysteme",
         "mindmap_subsystems_empty": "Keine Subsysteme — markiere einen Knoten als \"Subgraph-Wurzel\", um eines hinzuzufügen.",
         "mindmap_untitled": "(unbenannt)",
+            "landing_watch_full_demo": "▶ Watch Full Demo + Walkthrough",
+        "footer_promo_video": "▶ Watch Intro Video",
+        "kanban_nudge_per_entity_section_label": "Per-entity overrides",
+        "kanban_nudge_per_entity_section_desc": "Customize interval / columns / throttle for one specific entity. Batch size + priority mode stay device-wide.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Pick an entity —",
+        "kanban_nudge_per_entity_clear": "Reset to device default",
+        "kanban_nudge_per_entity_hint_prefix": "Toggle a field to override the device default for this entity.",
+        "kanban_nudge_per_entity_override_interval": "Override interval",
+        "kanban_nudge_per_entity_override_statuses": "Override columns",
+        "kanban_nudge_per_entity_override_throttle": "Override throttle",
+        "kanban_nudge_per_entity_throttle_short": "Cap this entity at 1 nudge per interval",
+        "kb_funnel_tag": "Tag…",
+        "kb_gate_backlog_only_hint": "Launch-gate is only available for backlog cards",
     },
 
 
@@ -6627552,7 +6627651,71 @@ const TRANSLATIONS = {
         "wizard_target_track4_title": "Trek 4 — pautan saluran Claude",
         "wizard_target_track6_desc": "Kami akan membuka Arena dan membimbing anda melalui penanda aras 12 dimensi.",
         "wizard_target_track6_title": "Trek 6 — arena penilaian ejen",
-        "wizard_title": "EClawbot — Wizard Pengenalan"},
+        "wizard_title": "EClawbot — Wizard Pengenalan"        "portal_login_title": "EClawbot - Login",
+        "landing_watch_full_demo": "▶ Watch Full Demo + Walkthrough",
+        "guide_proxy_flow1": "Cross-Device",
+        "guide_proxy_preview1_sender": "External",
+        "guide_nav_detail_identity": "Identity Settings",
+        "footer_desc": "Agent-to-Agent (A2A) communication platform for AI agent orchestration.",
+        "footer_promo_video": "▶ Watch Intro Video",
+        "notif_title": "Notifications",
+        "kanban_nudge_per_entity_section_label": "Per-entity overrides",
+        "kanban_nudge_per_entity_section_desc": "Customize interval / columns / throttle for one specific entity. Batch size + priority mode stay device-wide.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Pick an entity —",
+        "kanban_nudge_per_entity_clear": "Reset to device default",
+        "kanban_nudge_per_entity_hint_prefix": "Toggle a field to override the device default for this entity.",
+        "kanban_nudge_per_entity_override_interval": "Override interval",
+        "kanban_nudge_per_entity_override_statuses": "Override columns",
+        "kanban_nudge_per_entity_override_throttle": "Override throttle",
+        "kanban_nudge_per_entity_throttle_short": "Cap this entity at 1 nudge per interval",
+        "wallet_title": "EClawbot - My Wallet",
+        "rm_hero_title": "EClaw Bot Rental Marketplace",
+        "guide_nav_usecase_messaging": "\uD83D\uDCAC Messaging & Friends",
+        "ai_chat_title": "EClawbot AI",
+        "toast_slot_created": "New entity slot created",
+        "kb_funnel_tag": "Tag…",
+        "kb_gate_backlog_only_hint": "Launch-gate is only available for backlog cards",
+        "guide_bp_th_desc": "Description",
+        "guide_bp_feat_browse_desc": "Sort by rating/newest/popular/active; search by name/tag/capability",
+        "guide_bp_feat_card_desc": "Each Bot has a profile: name, description, capabilities, tags, rating, level",
+        "guide_bp_feat_chat_desc": "Click Start Chat to open the Bot\'s Proxy Window — no installation needed",
+        "guide_bp_feat_save_desc": "Save Bots to Card Holder for quick access",
+        "guide_bp_feat_comment_desc": "Leave reviews for Bots you\'ve used",
+        "guide_bp_feat_level_desc": "More active, higher-rated Bots gain levels; Legend-tier Bots stand out",
+        "guide_wp_th_desc": "Description",
+        "guide_wp_feat_live_desc": "Latest Bot messages on wallpaper — full-screen immersive",
+        "guide_wp_feat_notify_desc": "Wallpaper auto-updates on new Bot reply — no app needed",
+        "guide_wp_feat_identity_desc": "Wallpaper follows Bot\'s Soul — warm/professional/tech style",
+        "guide_wp_feat_gesture_desc": "Tap to open chat; long-press for settings",
+        "guide_wp_feat_multi_desc": "Switch your wallpaper assistant anytime",
+        "guide_wp_uc_th_bot": "Bot Setup",
+        "guide_wp_uc_assistant_desc": "Calendar reminder Bot — see today\'s tasks on unlock",
+        "guide_wp_uc_news_desc": "Morning news push — wallpaper shows headlines in real time",
+        "guide_wp_uc_store_desc": "Set customer service Bot as wallpaper — see messages instantly",
+        "guide_wp_uc_health_desc": "Hourly drink-water reminders — wallpaper prompt appears instantly",
+        "cardholder_tab_my_cards": "My Cards",
+        "mention_all_label": "Broadcast to all entities",
+        "guide_nav_detail_mention": "@ Tag Entities",
+        "arena_title": "EClawbot Agent Benchmark",
+        "guide_arena_t2": "Button Click",
+        "guide_arena_t3": "Form Fill",
+        "guide_arena_t5": "Navigation",
+        "guide_arena_t6": "Table Extract",
+        "guide_arena_t8": "Coding",
+        "guide_arena_t9": "Response Time",
+        "guide_arena_t11": "File Mgmt",
+        "guide_arena_t12": "Voice/TTS",
+        "arena_test_name_0": "Visual Perception",
+        "onboarding_tour_track1_step1": "Pick the category you want here — free and official bots live under the rental filter.",
+        "onboarding_tour_track2_step1": "Paid and free bots share this rental plaza. Track 2 focuses on the paid side — keep an eye on the e-coin rate.",
+        "onboarding_tour_track3_step1": "This is the Channel API hub. OpenClaw is a bot ecosystem you can self-host — binding a channel lets its bots talk through EClaw.",
+        "onboarding_tour_track4_step1": "Claude channel binding lives in device env vars. You'll paste your Anthropic API key here so bots answer via Claude directly.",
+        "onboarding_tour_track6_step1": "Welcome to the Agent Arena — a standardized benchmark that measures how well an AI agent handles real-world tasks across vision, web, code, reasoning, and safety.",
+        "hermes_coming_soon_title": "Hermes channel — Coming Soon",
+        "arena_return": "← Back",
+        "mindmap_title": "Mind Map",
+        "mindmap_focus_mode_hint": "Focus mode — click empty space or press Esc to exit",
+    },
 
 
 
@@ -7186431,7 +7186594,70 @@ const TRANSLATIONS = {
       "chat_card_modal_comments_empty": "अब तक कोई टिप्पणी नहीं",
       "chat_mindmap_demo_node": "यह नोड डेमो डेटा या लघु-उपसर्ग आईडी है - क्रॉस-पेज उद्धरण समर्थित नहीं है। पूर्ण टोकन की प्रतिलिपि बनाने के लिए माइंड-मैप पृष्ठ पर 📋 बटन का उपयोग करें।",
       "chat_mindmap_field_summary": "सारांश",
-},
+        "portal_login_title": "EClawbot - Login",
+        "guide_proxy_flow1": "Cross-Device",
+        "guide_proxy_preview1_sender": "External",
+        "guide_nav_detail_identity": "Identity Settings",
+        "footer_desc": "Agent-to-Agent (A2A) communication platform for AI agent orchestration.",
+        "notif_title": "Notifications",
+        "kanban_nudge_per_entity_section_label": "Per-entity overrides",
+        "kanban_nudge_per_entity_section_desc": "Customize interval / columns / throttle for one specific entity. Batch size + priority mode stay device-wide.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Pick an entity —",
+        "kanban_nudge_per_entity_clear": "Reset to device default",
+        "kanban_nudge_per_entity_hint_prefix": "Toggle a field to override the device default for this entity.",
+        "kanban_nudge_per_entity_override_interval": "Override interval",
+        "kanban_nudge_per_entity_override_statuses": "Override columns",
+        "kanban_nudge_per_entity_override_throttle": "Override throttle",
+        "kanban_nudge_per_entity_throttle_short": "Cap this entity at 1 nudge per interval",
+        "wallet_title": "EClawbot - My Wallet",
+        "rm_hero_title": "EClaw Bot Rental Marketplace",
+        "guide_nav_usecase_messaging": "\uD83D\uDCAC Messaging & Friends",
+        "chip_popover_loading": "Loading…",
+        "ai_chat_title": "EClawbot AI",
+        "toast_slot_created": "New entity slot created",
+        "kb_gate_backlog_only_hint": "Launch-gate is only available for backlog cards",
+        "guide_bp_th_desc": "Description",
+        "guide_bp_feat_browse_desc": "Sort by rating/newest/popular/active; search by name/tag/capability",
+        "guide_bp_feat_card_desc": "Each Bot has a profile: name, description, capabilities, tags, rating, level",
+        "guide_bp_feat_chat_desc": "Click Start Chat to open the Bot\'s Proxy Window — no installation needed",
+        "guide_bp_feat_save_desc": "Save Bots to Card Holder for quick access",
+        "guide_bp_feat_comment_desc": "Leave reviews for Bots you\'ve used",
+        "guide_bp_feat_level_desc": "More active, higher-rated Bots gain levels; Legend-tier Bots stand out",
+        "guide_wp_th_desc": "Description",
+        "guide_wp_feat_live_desc": "Latest Bot messages on wallpaper — full-screen immersive",
+        "guide_wp_feat_notify_desc": "Wallpaper auto-updates on new Bot reply — no app needed",
+        "guide_wp_feat_identity_desc": "Wallpaper follows Bot\'s Soul — warm/professional/tech style",
+        "guide_wp_feat_gesture_desc": "Tap to open chat; long-press for settings",
+        "guide_wp_feat_multi_desc": "Switch your wallpaper assistant anytime",
+        "guide_wp_uc_th_bot": "Bot Setup",
+        "guide_wp_uc_assistant_desc": "Calendar reminder Bot — see today\'s tasks on unlock",
+        "guide_wp_uc_news_desc": "Morning news push — wallpaper shows headlines in real time",
+        "guide_wp_uc_store_desc": "Set customer service Bot as wallpaper — see messages instantly",
+        "guide_wp_uc_health_desc": "Hourly drink-water reminders — wallpaper prompt appears instantly",
+        "cardholder_tab_my_cards": "My Cards",
+        "mention_all_label": "Broadcast to all entities",
+        "guide_nav_detail_mention": "@ Tag Entities",
+        "arena_title": "EClawbot Agent Benchmark",
+        "guide_arena_t2": "Button Click",
+        "guide_arena_t3": "Form Fill",
+        "guide_arena_t5": "Navigation",
+        "guide_arena_t6": "Table Extract",
+        "guide_arena_t8": "Coding",
+        "guide_arena_t9": "Response Time",
+        "guide_arena_t11": "File Mgmt",
+        "guide_arena_t12": "Voice/TTS",
+        "arena_test_name_0": "Visual Perception",
+        "info_hooks_title": "💎 Three ways to win, today",
+        "onboarding_tour_track1_step1": "Pick the category you want here — free and official bots live under the rental filter.",
+        "onboarding_tour_track2_step1": "Paid and free bots share this rental plaza. Track 2 focuses on the paid side — keep an eye on the e-coin rate.",
+        "onboarding_tour_track3_step1": "This is the Channel API hub. OpenClaw is a bot ecosystem you can self-host — binding a channel lets its bots talk through EClaw.",
+        "onboarding_tour_track4_step1": "Claude channel binding lives in device env vars. You'll paste your Anthropic API key here so bots answer via Claude directly.",
+        "onboarding_tour_track6_step1": "Welcome to the Agent Arena — a standardized benchmark that measures how well an AI agent handles real-world tasks across vision, web, code, reasoning, and safety.",
+        "hermes_coming_soon_title": "Hermes channel — Coming Soon",
+        "arena_return": "← Back",
+        "mindmap_title": "Mind Map",
+        "mindmap_focus_mode_hint": "Focus mode — click empty space or press Esc to exit",
+    },
 
 
 
@@ -7693434,7 +7693660,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_demo_text": "تحدث مع بوت العرض التوضيحي — mention @eclaw_support للحصول على استجابة فورية!",
 
 
 
@@ -7693562,7 +7693787,8 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_example": "مثال: @assistant تحقق من حالة الخادم",
+
+
 
 
 
@@ -7734602,6 +7734828,7 @@ const TRANSLATIONS = {
         "wizard_q3": "هل لديك بالفعل مفتاح API أو رمز؟"
 
 
+            "kb_gate_backlog_only_hint": "Launch-gate is only available for backlog cards",
     }
 
 
@@ -7734858,7 +7735085,8 @@ const TRANSLATIONS = {
 
 
 
-};
+        "kb_gate_backlog_only_hint": "Launch-gate is only available for backlog cards",
+    };
 
 
 
