@@ -17,6 +17,7 @@ const sitePageviews = require('./site-pageviews');
 const feedbackModule = require('./device-feedback');
 const chatIntegrity = require('./chat-integrity');
 const communitySsr = require('./community-ssr');
+const { buildOrgEntitySessionKey, isOrgEntitySessionKey } = require('./session-scope');
 // JWT secret: fail-safe random per process if env var is missing (tokens signed in one process won't verify in another)
 const JWT_SECRET_FALLBACK = process.env.JWT_SECRET || require('crypto').randomBytes(32).toString('hex');
 
@@ -13812,8 +13813,9 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
         return res.status(404).json({ success: false, error: 'No free bot available' });
     }
 
-    // Handshake with bot to discover a working session key and get welcome message
-    const preferredKey = freeBot.session_key_template || 'default';
+    // Handshake with an org/entity scoped session so a stale gateway session from
+    // another org cannot be reused and point the bot at the wrong repo context.
+    const preferredKey = buildOrgEntitySessionKey(freeBot.session_key_template || 'default', deviceId, eId);
     const freeBotAuthOpts = { setupUsername: freeBot.setup_username, setupPassword: freeBot.setup_password };
     const handshake = await handshakeWithBot(freeBot.webhook_url, freeBot.token, preferredKey, deviceId, eId, 'free', freeBotAuthOpts);
 
@@ -13979,8 +13981,9 @@ app.post('/api/official-borrow/bind-personal', async (req, res) => {
         return res.status(404).json({ success: false, error: 'sold_out', message: 'No personal bots available' });
     }
 
-    // Handshake with bot to discover a working session key and get welcome message
-    const preferredKey = personalBot.session_key_template || 'default';
+    // Handshake with an org/entity scoped session so a stale gateway session from
+    // another org cannot be reused and point the bot at the wrong repo context.
+    const preferredKey = buildOrgEntitySessionKey(personalBot.session_key_template || 'default', deviceId, eId);
     const personalBotAuthOpts = { setupUsername: personalBot.setup_username, setupPassword: personalBot.setup_password };
     const handshake = await handshakeWithBot(personalBot.webhook_url, personalBot.token, preferredKey, deviceId, eId, 'personal', personalBotAuthOpts);
 
@@ -14313,8 +14316,12 @@ app.post('/api/entity/refresh', async (req, res) => {
             return res.status(409).json({ success: false, error: 'Personal bot is no longer assigned to this device', webhookBroken: true });
         }
 
-        // Attempt handshake
-        const preferredKey = binding.session_key || bot.session_key_template || 'default';
+        // Attempt handshake. Keep an existing key only when it already matches
+        // this org/entity scope; otherwise mint the scoped key from the bot template.
+        const baseSessionKey = bot.session_key_template || 'default';
+        const preferredKey = isOrgEntitySessionKey(binding.session_key, baseSessionKey, deviceId, eId)
+            ? binding.session_key
+            : buildOrgEntitySessionKey(baseSessionKey, deviceId, eId);
         const botAuthOpts = { setupUsername: bot.setup_username, setupPassword: bot.setup_password };
         const handshake = await handshakeWithBot(bot.webhook_url, bot.token, preferredKey, deviceId, eId, bot.bot_type, botAuthOpts);
 
@@ -15592,9 +15599,10 @@ async function discoverSessions(url, token, authOpts = {}) {
 
 /**
  * Helper: Handshake with bot during binding.
- * 1. Try sessions_send with bot's configured session key
- * 2. If "No session found", discover existing sessions via sessions_list
- * 3. Use first available session, send binding notification
+ * 1. Try sessions_send with the org/entity scoped session key
+ * 2. If "No session found", discover sessions only for diagnostics
+ * 3. Never fall back to arbitrary discovered sessions because those can belong
+ *    to another org/entity and carry stale repo context
  * 4. Return working session key and bot's response
  */
 async function handshakeWithBot(url, token, preferredSessionKey, deviceId, entityId, botType, authOpts = {}) {
@@ -15619,22 +15627,13 @@ async function handshakeWithBot(url, token, preferredSessionKey, deviceId, entit
     }
 
     // Step 2: If session not found OR the first send timed out, discover existing sessions
-    // and retry. Timeout often means the gateway accepted the call but the bot took too
-    // long to reply on the preferred key — a different session may be warm and faster.
+    // only for diagnostics. Do not retry an arbitrary discovered key: stale gateway
+    // sessions can belong to another org/entity and produce "repo not found" in Hermes.
     if (result.sessionNotFound || result.timeout) {
-        console.log(`[Handshake] Preferred session ${result.timeout ? 'timed out' : 'not found'}, discovering sessions...`);
+        console.log(`[Handshake] Preferred org/entity session ${result.timeout ? 'timed out' : 'not found'}, discovering sessions for diagnostics...`);
         const sessions = await discoverSessions(url, token, authOpts);
         console.log(`[Handshake] Discovered ${sessions.length} sessions: ${JSON.stringify(sessions)}`);
-
-        for (const sk of sessions) {
-            if (sk === preferredSessionKey) continue;  // already tried
-            console.log(`[Handshake] Trying discovered session: ${sk}...`);
-            result = await sendToSession(url, token, sk, bindMsg, authOpts, sendOpts);
-            if (result.success) {
-                console.log(`[Handshake] ✓ Handshake OK with discovered key: ${sk}`);
-                return { success: true, sessionKey: sk, botResponse: result.botResponse };
-            }
-        }
+        console.warn(`[Handshake] No org/entity scoped session found for ${deviceId}:${entityId}; refusing fallback to unscoped sessions`);
     }
 
     const finalErrorType = result.timeout ? 'timeout'
