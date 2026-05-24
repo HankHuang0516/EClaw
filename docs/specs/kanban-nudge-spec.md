@@ -150,7 +150,8 @@ was H2 getting nudged → auto-bumped P3→P1 → auto-blocked while H1 was stil
   `d.dependency_type = 'blocks' AND dep.status NOT IN ('done', 'archived')`.
 - **Source of truth**: the `kanban_card_dependencies` row is what counts.
   Description-text deps (e.g. comments saying "depends on card_xxx") do NOT
-  auto-link — file an explicit `POST /api/kanban/dependencies` row.
+  auto-link — file an explicit `POST /api/mission/card/:cardId/dependency`
+  row (body `{dependsOnCardId, dependencyType:'blocks'}`).
 - **Live query, not column**: the `kanban_cards.dependency_status` column's
   AFTER-trigger only fires on edits to `kanban_card_dependencies` itself, so
   it goes stale when the blocker card moves status. The gate queries

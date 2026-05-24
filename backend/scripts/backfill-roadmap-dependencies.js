@@ -35,6 +35,12 @@ const { URL } = require('url');
 // Chains: each entry is [source-title-regex, target-title-regex], where
 // source DEPENDS ON target. Source becomes nudge-suppressed until target=done.
 // Card titles use the prefix `[Roadmap/<section>] <code> — ...`.
+//
+// Marketplace: card_fb2424's plan listed a Marketplace chain, but a prod scan
+// on 2026-05-24 (deviceId=480def4c...) found only ONE Marketplace card
+// (`[Roadmap/Marketplace] P1 cleanup — market snapshot cron + marketplace
+// portal page`). No M1→M2-style chain exists yet, so no edges to register.
+// When the chain card is split into stages, add the regex pair here.
 const CHAINS = [
     // Hermes roadmap: H1 -> H2 -> H3, H2 -> H4
     { source: /\[Roadmap\/Hermes\]\s*H2\b/i, target: /\[Roadmap\/Hermes\]\s*H1\b/i, note: 'Hermes H2 depends on H1' },

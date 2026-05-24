@@ -70,7 +70,7 @@ The Kanban Card Dependencies system enables users to create bidirectional depend
 > of which card depends on which. Description text, comment threads, or
 > ad-hoc roadmap docs that say "H2 depends on H1" do NOT auto-register —
 > the dependent card stays nudge-eligible until an explicit row exists
-> (`POST /api/kanban/dependencies`). Other subsystems (nudge cron, status
+> (`POST /api/mission/card/:cardId/dependency`). Other subsystems (nudge cron, status
 > rollups, UI badges) read this table; nothing parses prose.
 
 ### 3.1 Core Tables
