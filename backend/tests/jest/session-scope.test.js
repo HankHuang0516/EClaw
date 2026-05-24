@@ -25,11 +25,12 @@ describe('official bot org/entity session scope', () => {
         expect(sanitizeSessionScopePart('org/id:with spaces', 'unknown')).toBe('org_id_with_spaces');
     });
 
-    test('binding code uses scoped keys and does not retry arbitrary discovered sessions', () => {
+    test('binding code uses scoped keys with fallback to discovered sessions', () => {
         const source = fs.readFileSync(path.join(__dirname, '../../index.js'), 'utf8');
         expect(source).toContain("buildOrgEntitySessionKey(freeBot.session_key_template || 'default', deviceId, eId)");
         expect(source).toContain("buildOrgEntitySessionKey(personalBot.session_key_template || 'default', deviceId, eId)");
-        expect(source).toContain("No org/entity scoped session found");
-        expect(source).not.toMatch(/for \(const sk of sessions\)/);
+        // Fallback loop restored so bind-free works when gateway lacks scoped sessions
+        expect(source).toContain("Trying discovered session");
+        expect(source).toMatch(/for \(const sk of sessions\)/);
     });
 });
