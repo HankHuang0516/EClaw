@@ -144,10 +144,19 @@ was H2 getting nudged → auto-bumped P3→P1 → auto-blocked while H1 was stil
   blocked-by-pending set BEFORE the L1/L2/L3 branch — all three escalation
   levels are suppressed uniformly. A dependent card cannot be auto-blocked
   for staleness when the staleness is by design (waiting on its blocker).
-- **Query**: helper `loadCardsBlockedByPending(deviceId, cardIds)` issues a
+- **Query**: helper `loadDependencyGating(deviceId, cardIds)` issues a
   single batched JOIN — `kanban_card_dependencies d JOIN kanban_cards dep
   ON dep.id = d.depends_on_card_id` filtered to
-  `d.dependency_type = 'blocks' AND dep.status NOT IN ('done', 'archived')`.
+  `d.dependency_type = 'blocks'`, aggregated with
+  `BOOL_OR(dep.status NOT IN ('done','archived'))` (→ `blocked` set) and
+  `MAX(dep.status_changed_at) FILTER (WHERE dep.status IN ('done','archived'))`
+  (→ `unblockedSince` map, used by the post-resolve cadence below).
+- **Post-resolve cadence**: when all blockers are resolved, the dependent
+  card's effective stale clock is `max(card.status_changed_at, latest
+  blocker-resolve time)`. Without this, a 14h-old card whose blocker just
+  finished would skip L1+L2 and jump straight to L3 auto-block on the next
+  tick — the gate inverts cleanly so L1/L2/L3 cadence restarts from
+  unblock.
 - **Source of truth**: the `kanban_card_dependencies` row is what counts.
   Description-text deps (e.g. comments saying "depends on card_xxx") do NOT
   auto-link — file an explicit `POST /api/mission/card/:cardId/dependency`
