@@ -580,8 +580,16 @@
 
         async function getRentalUser() {
             if (window.currentUser) return window.currentUser;
-            const data = await fetchJson('/api/auth/me');
-            window.currentUser = data.user || null;
+            try {
+                const data = await fetchJson('/api/auth/me');
+                window.currentUser = data.user || null;
+            } catch (err) {
+                // WebView clients have no cookie session; swallow 401 so the
+                // localStorage deviceId fallback in rentListing can take over.
+                // Only redirect to login when /api/rental/contract itself 401s.
+                if (err.status !== 401) throw err;
+                window.currentUser = null;
+            }
             return window.currentUser;
         }
 
