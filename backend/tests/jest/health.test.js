@@ -308,6 +308,36 @@ describe('GET /api/platform-stats', () => {
             expect(typeof res.body.templates.skill).toBe('number');
         }
     });
+
+    // card_49b8190 — locks /api/skill-doc section 174 contract: device-auth
+    // required, aggregate-only response (users, boundEntities, activeDevices,
+    // templates {soul, rule, skill}); no device-private fields leak.
+    it('credentialed call returns the documented aggregate contract', async () => {
+        const did = 'platform-stats-contract-device';
+        const dsec = 'platform-stats-contract-secret';
+        await request(app).post('/api/device/register').send({
+            deviceId: did, deviceSecret: dsec, entityId: 0,
+        });
+
+        const res = await request(app)
+            .get(`/api/platform-stats?deviceId=${did}&deviceSecret=${dsec}`);
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(typeof res.body.users).toBe('number');
+        expect(typeof res.body.boundEntities).toBe('number');
+        expect(typeof res.body.activeDevices).toBe('number');
+        expect(res.body.templates).toEqual(expect.objectContaining({
+            soul: expect.any(Number),
+            rule: expect.any(Number),
+            skill: expect.any(Number),
+        }));
+        // No device-scoped fields must appear in the aggregate payload.
+        const forbidden = ['deviceId', 'deviceSecret', 'entities', 'entityId', 'botSecret', 'identity'];
+        for (const key of forbidden) {
+            expect(res.body[key]).toBeUndefined();
+        }
+    });
 });
 
 // ════════════════════════════════════════════════════════════════
