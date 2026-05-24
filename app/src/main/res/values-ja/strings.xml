@@ -293,6 +293,10 @@
     <string name="file_btn_download">ダウンロード</string>
     <string name="chat_load_image_failed">画像の読み込みに失敗しました</string>
     <string name="wallpaper_no_bound_entities">バインドされたエンティティがありません</string>
+    <string name="claw_renderer_loading_entities">エンティティを読み込み中…</string>
+    <string name="claw_renderer_no_entities_connected">接続されたエンティティがありません</string>
+    <string name="claw_renderer_open_app_to_bind">バインドするにはE-Clawアプリを開く</string>
+    <string name="claw_renderer_with_openclaw_bot">OpenClawボットのエンティティ</string>
     <string name="main_agent_card_deleted">Agent Card を削除しました</string>
     <string name="main_agent_card_saved">Agent Card を保存しました</string>
     <string name="main_delete_failed">削除に失敗しました</string>

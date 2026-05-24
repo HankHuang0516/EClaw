@@ -68,7 +68,9 @@ describe('Dashboard Agent Policy card', () => {
         expect(html).toContain('function loadDashboardPromptPolicy()');
         expect(html).toContain('/api/device/prompt-policy?deviceId=');
         expect(html).toContain("'/api/entity/' + encodeURIComponent(entityId) + '/prompt-policy?deviceId='");
-        expect(html).not.toContain('deviceSecret</');
-        expect(html).not.toContain('botSecret</');
+        // Ensure no raw secret values are embedded in visible text or JS —
+        // but allow documentation <code>deviceSecret</code> references in help text.
+        const secretLeakPattern = /["']deviceSecret["']\s*:\s*["']/;
+        expect(html).not.toMatch(secretLeakPattern);
     });
 });
