@@ -15626,14 +15626,26 @@ async function handshakeWithBot(url, token, preferredSessionKey, deviceId, entit
         return { success: true, sessionKey: preferredSessionKey, botResponse: result.botResponse };
     }
 
-    // Step 2: If session not found OR the first send timed out, discover existing sessions
-    // only for diagnostics. Do not retry an arbitrary discovered key: stale gateway
-    // sessions can belong to another org/entity and produce "repo not found" in Hermes.
-    if (result.sessionNotFound || result.timeout) {
-        console.log(`[Handshake] Preferred org/entity session ${result.timeout ? 'timed out' : 'not found'}, discovering sessions for diagnostics...`);
+    // Step 2: If session not found, discover existing sessions and try them as fallback.
+    // The scoped key may not exist yet on older gateways; falling back to discovered
+    // sessions keeps bind-free functional while gateways migrate to scoped sessions.
+    if (result.sessionNotFound) {
+        console.log(`[Handshake] Preferred org/entity session not found, discovering sessions for fallback...`);
         const sessions = await discoverSessions(url, token, authOpts);
         console.log(`[Handshake] Discovered ${sessions.length} sessions: ${JSON.stringify(sessions)}`);
-        console.warn(`[Handshake] No org/entity scoped session found for ${deviceId}:${entityId}; refusing fallback to unscoped sessions`);
+
+        for (const sk of sessions) {
+            if (sk === preferredSessionKey) continue; // already tried
+            console.log(`[Handshake] Trying discovered session: ${sk}...`);
+            const fallbackResult = await sendToSession(url, token, sk, bindMsg, authOpts, sendOpts);
+            if (fallbackResult.success) {
+                console.log(`[Handshake] ✓ Handshake OK with discovered session: ${sk}`);
+                return { success: true, sessionKey: sk, botResponse: fallbackResult.botResponse };
+            }
+        }
+        console.warn(`[Handshake] No discovered session responded successfully for ${deviceId}:${entityId}`);
+    } else if (result.timeout) {
+        console.warn(`[Handshake] Preferred session timed out for ${deviceId}:${entityId}`);
     }
 
     const finalErrorType = result.timeout ? 'timeout'
