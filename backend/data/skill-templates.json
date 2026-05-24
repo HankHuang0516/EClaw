@@ -28,6 +28,28 @@
         "steps": "Repo: https://github.com/ythx-101/x-tweet-fetcher\nFetch tweets, comments, timelines, and articles from X/Twitter without login or API keys.\nAlso supports WeChat article search, tweet discovery, and user profile analysis.\nUpdated: 2026-03-04\n\n== Prerequisites ==\npython3 3.7+\n\n== Step 1: Clone ==\n  git clone https://github.com/ythx-101/x-tweet-fetcher \\\n    ~/.openclaw/skills/x-tweet-fetcher\n\n== Step 2: (Optional) Install advanced deps ==\n  # Required only for: comments, timelines, @mention monitoring, Google search\n  openclaw plugins install @askjo/camofox-browser\n  # OR standalone:\n  git clone https://github.com/jo-inc/camofox-browser\n  cd camofox-browser && npm install && npm start  # Port 9377\n\n== Usage in bot ==\n  # All scripts output structured JSON\n\n  # Fetch a single tweet (no API key needed)\n  exec: python3 ~/.openclaw/skills/x-tweet-fetcher/scripts/fetch_tweet.py \\\n    --url \"https://x.com/user/status/123456\"\n\n  # Search WeChat articles (no API key needed)\n  exec: python3 ~/.openclaw/skills/x-tweet-fetcher/scripts/sogou_wechat.py \\\n    --keyword \"AI Agent\" --limit 10 --json\n\n  # Discover tweets by keyword (no API key needed)\n  exec: python3 ~/.openclaw/skills/x-tweet-fetcher/scripts/x_discover.py \\\n    --keywords \"AI Agent,LLM tools\" --limit 5 --json\n\n  # Fetch Chinese platforms (Weibo/Bilibili/CSDN/WeChat)\n  exec: python3 ~/.openclaw/skills/x-tweet-fetcher/scripts/fetch_china.py \\\n    --url \"https://mp.weixin.qq.com/s/...\"\n\n  # Monitor @mentions (cron-friendly: exit 0=nothing new, 1=new mentions)\n  exec: python3 ~/.openclaw/skills/x-tweet-fetcher/scripts/fetch_tweet.py \\\n    --monitor @username\n\n== No API key required for basic use ==\nAll scripts output structured JSON by default.\nExit codes: 0=nothing new, 1=new content found, 2=error\n\nUse at your own risk. Provided as-is, without warranty."
     },
     {
+        "id": "tweetclaw",
+        "label": "tweetclaw",
+        "icon": "🐦",
+        "title": "TweetClaw X/Twitter Automation",
+        "url": "https://github.com/Xquik-dev/tweetclaw",
+        "author": "Xquik",
+        "updatedAt": "2026-05-23",
+        "requiredVars": [
+            {
+                "key": "XQUIK_API_KEY",
+                "hint": "Create one at dashboard.xquik.com",
+                "description": "Xquik API key for account-backed X/Twitter automation"
+            },
+            {
+                "key": "MPP_SIGNING_KEY",
+                "hint": "Created by mppx account create",
+                "description": "(Optional) MPP signing key for read-only pay-per-use endpoints"
+            }
+        ],
+        "steps": "Repo: https://github.com/Xquik-dev/tweetclaw\nOpenClaw plugin for X/Twitter workflows: search tweets, search tweet replies, scrape tweets, post tweets, post tweet replies, export followers, user lookup, media upload, media download, direct messages, monitors, webhooks, and giveaway draws.\nUpdated: 2026-05-23\n\n== Prerequisites ==\nnode v22+, OpenClaw 2026.5.4+, npm, and an Xquik API key for account-backed live calls.\nTweetClaw can install before credentials are configured; the free explore catalog stays available without a key.\n\n== Step 1: Install the OpenClaw plugin ==\n  openclaw plugins install @xquik/tweetclaw\n\n== Step 2: Configure account-backed automation ==\n  # Store XQUIK_API_KEY in your local shell or secret manager first.\n  openclaw config set plugins.entries.tweetclaw.config.apiKey \"$XQUIK_API_KEY\"\n\n== Step 3: Optional read-only MPP mode ==\n  npm i mppx viem\n  # Create an MPP account with mppx account create, then store the signing key locally.\n  openclaw config set plugins.entries.tweetclaw.config.tempoSigningKey \"$MPP_SIGNING_KEY\"\n\n== Step 4: Allow the tools ==\n  openclaw config set tools.alsoAllow '[\"explore\", \"tweetclaw\"]'\n\n== Step 5: Verify runtime registration ==\n  openclaw plugins inspect tweetclaw --runtime\n  openclaw skills info tweetclaw\n\n== Usage in bot ==\n  Ask explore first to find the endpoint, parameters, and response shape. Then call tweetclaw only after reviewing the action.\n\n  Example prompts:\n    Search tweets about OpenClaw plugin releases from the last 7 days.\n    Search tweet replies for a launch tweet and summarize common objections.\n    Export followers for a connected account and group them by profile keywords.\n    Upload media, then draft a post tweet for approval.\n    Monitor tweets from selected accounts and send webhook alerts.\n    Run a giveaway draw from replies after filters are confirmed.\n\n== Safety ==\nOpenClaw injects credentials at runtime; the agent should not print API keys or signing keys.\nReview every write-like tweetclaw call before approving post, delete, follow, DM, monitor, webhook, extraction, profile, media, or giveaway actions.\n\nUse at your own risk. Provided as-is, without warranty."
+    },
+    {
         "id": "model-hierarchy",
         "label": "model-hierarchy",
         "icon": "⚡",
