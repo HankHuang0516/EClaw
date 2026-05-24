@@ -12,6 +12,7 @@ const DEFAULT_PREFS = {
     todo_done: true,
     scheduled: true,
     platform_command: true,
+    delivery_alert: true,
     kanban_done: true,
     kanban_done_auto: true
 };

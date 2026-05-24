@@ -30,6 +30,7 @@ const {
     reserveChannelPush,
     recordChannelPushResult
 } = require('./channel-backpressure');
+const { recordDeliveryReceipt } = require('./delivery-receipts');
 
 // ── SSRF protection: reject private/internal callback URLs ──
 function isPrivateIp(ip) {
@@ -1331,6 +1332,17 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             if (response.ok) {
                 recordChannelPushResult(backpressureTarget, { success: true });
                 serverLog('info', 'channel', `Callback push OK for Entity ${entityId}`, { deviceId, entityId });
+                recordDeliveryReceipt({
+                    serverLog,
+                    notifyDevice,
+                    deviceId,
+                    entityId,
+                    success: true,
+                    metadata: {
+                        status: response.status,
+                        channelAccountId: account.id
+                    }
+                });
                 return { pushed: true };
             } else {
                 const errText = await response.text().catch(() => '');
@@ -1344,6 +1356,21 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 });
                 const retryAfter = Math.ceil((backoff.backoffMs || 0) / 1000);
                 serverLog('warn', 'channel', `Callback push failed HTTP ${response.status}`, { deviceId, entityId, metadata: { status: response.status, error: errText.substring(0, 200), retryAfter, consecutiveFailures: backoff.consecutiveFailures } });
+                recordDeliveryReceipt({
+                    serverLog,
+                    notifyDevice,
+                    deviceId,
+                    entityId,
+                    success: false,
+                    reason: `http_${response.status}`,
+                    metadata: {
+                        status: response.status,
+                        error: errText.substring(0, 200),
+                        channelAccountId: account.id,
+                        retryAfter,
+                        consecutiveFailures: backoff.consecutiveFailures
+                    }
+                });
                 return { pushed: false, reason: `http_${response.status}`, retryAfter, backpressure: true };
             }
         } catch (err) {
@@ -1353,6 +1380,19 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             });
             const retryAfter = Math.ceil((backoff.backoffMs || 0) / 1000);
             serverLog('error', 'channel', `Callback push error: ${err.message}`, { deviceId, entityId, metadata: { retryAfter, consecutiveFailures: backoff.consecutiveFailures } });
+            recordDeliveryReceipt({
+                serverLog,
+                notifyDevice,
+                deviceId,
+                entityId,
+                success: false,
+                reason: err.message,
+                metadata: {
+                    channelAccountId: account.id,
+                    retryAfter,
+                    consecutiveFailures: backoff.consecutiveFailures
+                }
+            });
             return { pushed: false, reason: err.message, retryAfter, backpressure: true };
         }
     }
