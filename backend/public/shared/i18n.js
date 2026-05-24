@@ -2233704,7 +2233704,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_mode_keyword": "キーワード",
 
 
 
@@ -2938706,7 +2938705,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmaph": "게시자 로드맵",
 
 
 
@@ -7693539,7 +7693537,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_demo_text": "تحدث مع بوت العرض التوضيحي — mention @eclaw_support للحصول على استجابة فورية!",
 
 
 
@@ -7693665,9 +7693662,6 @@ const TRANSLATIONS = {
 
 
 
-
-
-        "guide_mention_example": "مثال: @assistant تحقق من حالة الخادم",
 
 
 
