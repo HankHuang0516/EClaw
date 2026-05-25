@@ -368,6 +368,17 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── Daily update additions — 2026-05-25 ──
+    { title: 'Two Sum II — Sorted Input', description: 'Write `solve(numbers, target)` — given a 1-indexed sorted array, return [i, j] (1-indexed) of two numbers summing to target. Use O(1) extra space (two-pointer approach).',
+      testCases: [{ input: '[2,7,11,15], 9', expected: '[1,2]' },{ input: '[2,3,4], 6', expected: '[1,3]' },{ input: '[-1,0], -1', expected: '[1,2]' },{ input: '[1,2,3,4,4,9,56,90], 8', expected: '[4,5]' }] },
+    { title: 'Product Except Self', description: 'Write `solve(nums)` — return an array where output[i] equals the product of all elements except nums[i]. Do not use division. Solve in O(n) time.',
+      testCases: [{ input: '[1,2,3,4]', expected: '[24,12,8,6]' },{ input: '[-1,1,0,-3,3]', expected: '[0,0,9,0,0]' },{ input: '[2,3]', expected: '[3,2]' },{ input: '[1,0]', expected: '[0,1]' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array of non-negative integers representing wall heights, compute how much rainwater can be trapped between the walls.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[3,0,3]', expected: '3' },{ input: '[1,0,1]', expected: '1' },{ input: '[1,2,3,4,5]', expected: '0' }] },
+    { title: 'Merge Intervals', description: 'Write `solve(intervals)` — merge all overlapping intervals and return the sorted result. intervals[i] = [start, end].',
+      testCases: [{ input: '[[1,3],[2,6],[8,10],[15,18]]', expected: '[[1,6],[8,10],[15,18]]' },{ input: '[[1,4],[4,5]]', expected: '[[1,5]]' },{ input: '[[1,2]]', expected: '[[1,2]]' },{ input: '[[1,4],[2,3]]', expected: '[[1,4]]' }] },
+    { title: 'Longest Common Subsequence', description: 'Write `solve(text1, text2)` — return the length of the longest common subsequence of two strings (characters do not need to be contiguous).',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"bl", "yby"', expected: '1' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +428,13 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Daily update additions — 2026-05-25 ──
+    { question: 'What is the square root of 144?', expectedKeywords: ['12'] },
+    { question: 'A box contains 4 red balls and 6 blue balls. One ball is drawn at random. What is the probability of drawing a red ball? Express as a decimal.', expectedKeywords: ['0.4'] },
+    { question: 'Two trains leave the same station simultaneously traveling in opposite directions. Train A travels at 60 km/h and Train B at 90 km/h. How many kilometers apart are they after 2 hours?', expectedKeywords: ['300'] },
+    { question: 'A square has a perimeter of 36 cm. What is its area in square centimeters?', expectedKeywords: ['81'] },
+    { question: 'In an arithmetic sequence, the first term is 3 and the common difference is 5. What is the 10th term?', expectedKeywords: ['48'] },
+    { question: 'A data center consumes 150 kWh per day at an electricity rate of $0.12 per kWh. What is the total electricity cost for 30 days?', expectedKeywords: ['540'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +512,11 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Daily update additions — 2026-05-25 ──
+    { text: 'To reset your password please visit the account portal and enter your employee ID followed by your current email address', keywords: ['reset', 'password', 'portal', 'employee', 'email'] },
+    { text: 'The project deliverable is due on the fifteenth and requires approval from both the engineering lead and the compliance officer', keywords: ['deliverable', 'fifteenth', 'approval', 'engineering', 'compliance'] },
+    { text: 'The satellite operates in geostationary orbit at an altitude of thirty-five thousand kilometers above the equator', keywords: ['satellite', 'geostationary', 'altitude', 'kilometers', 'equator'] },
+    { text: 'Incoming alert: an international wire transfer of fourteen thousand dollars requires two-factor authentication within the next thirty minutes', keywords: ['wire', 'transfer', 'fourteen', 'thousand', 'authentication', 'thirty'] },
 ];
 
 // ============================================
