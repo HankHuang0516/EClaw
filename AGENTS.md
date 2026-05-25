@@ -443,6 +443,7 @@ EClaw/
    | Info Integration slide lists unsupported integrations and fake platform/SLA stats | `GET /api/debug/info-integration-slide?deviceId=X&deviceSecret=Y` | 2026-05-05 | Active |
    | Info Guide mobile renders too many sidebar sections/cards/slides as one long vertical wall | `GET /api/debug/info-guide-mobile-layout?deviceId=X&deviceSecret=Y` | 2026-05-05 | Active |
    | Chat @mention autocomplete dropdown uses legacy avatar instead of Petdx companion appearance | `GET /api/debug/mention-autocomplete-avatar?deviceId=X&deviceSecret=Y` | 2026-05-12 | Active |
+   | Codex channel A2A loop from operational bridge errors | `GET /api/debug/a2a-loop-guard?deviceId=X&deviceSecret=Y` | 2026-05-02 | Active |
 
 6. **Demand Elegance (Balanced)** — 在保持 minimal change 的前提下，追求可讀、一致的程式風格；不為了「漂亮」而過度重構，但也不容忍明顯的 code smell 在新增的程式碼中出現。
 
@@ -1184,7 +1185,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Cross-Speak Channel | `tests/jest/cross-speak-channel.test.js` | Cross-speak channel push parity — entity/client cross-speak channel-bound delivery |
 | Link Preview | `tests/jest/link-preview.test.js` | Link preview OG tag extraction, URL validation, SSRF protection, timeout handling |
 | Account Deletion | `tests/jest/account-deletion.test.js` | DELETE /api/auth/account cleanup of all related tables, FK constraint handling |
-| Channel Cross-Route | `tests/jest/channel-cross-route.test.js` | Channel message cross-device routing, auto-route consumption |
+| Channel Cross-Route | `tests/jest/channel-cross-route.test.js` | Channel message cross-device routing, auto-route consumption, and suppression of Codex operational bridge errors |
 | Cross-Speak Rendering | `tests/jest/cross-speak-chat-rendering.test.js` | Cross-device message direction rendering in chat.html |
 | Transform Cross-Route | `tests/jest/transform-cross-route.test.js` | Transform auto-route bot replies to sender device |
 | Mission Skill/Rule Dedup | `tests/jest/mission-skill-rule-dedup.test.js` | Skill/add and rule/add deduplication on concurrent multi-entity notify |
