@@ -31,7 +31,8 @@ class ChatWebViewManager(
     private val webView: WebView,
     private val loadingIndicator: ProgressBar,
     private val offlineView: View,
-    private val onFileChooserRequest: (ValueCallback<Array<Uri>>) -> Unit
+    private val onFileChooserRequest: (ValueCallback<Array<Uri>>) -> Unit,
+    private val onPageFinishedListener: ((WebView?, String?) -> Unit)? = null
 ) {
 
     private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
@@ -123,6 +124,7 @@ class ChatWebViewManager(
             loadingIndicator.visibility = View.GONE
             hasLoadedSuccessfully = true
             offlineView.visibility = View.GONE
+            onPageFinishedListener?.invoke(view, url)
         }
 
         override fun onReceivedError(

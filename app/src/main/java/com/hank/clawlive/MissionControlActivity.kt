@@ -19,6 +19,7 @@ import com.hank.clawlive.ui.AiChatFabHelper
 import com.hank.clawlive.ui.BottomNavHelper
 import com.hank.clawlive.ui.NavItem
 import com.hank.clawlive.ui.RecordingIndicatorHelper
+import com.hank.clawlive.ui.nav.EClawNativeNavBridge
 import timber.log.Timber
 
 /**
@@ -31,16 +32,26 @@ class MissionControlActivity : AppCompatActivity() {
 
     private val deviceManager: DeviceManager by lazy { DeviceManager.getInstance(this) }
     private var webView: WebView? = null
+    private var pendingNavIntent: String? = null
+    private var pageReady: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_mission_control)
 
+        pendingNavIntent = intent?.getStringExtra(EClawNativeNavBridge.EXTRA_NAV_INTENT)
         BottomNavHelper.setup(this, NavItem.MISSION)
         AiChatFabHelper.setup(this, "mission")
         setupWindowInsets()
         setupWebView()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        val incoming = intent.getStringExtra(EClawNativeNavBridge.EXTRA_NAV_INTENT) ?: return
+        pendingNavIntent = incoming
+        if (pageReady) deliverPendingNavIntent()
     }
 
     override fun onResume() {
@@ -91,9 +102,16 @@ class MissionControlActivity : AppCompatActivity() {
                     super.onPageFinished(view, url)
                     Timber.d("[Mission] WebView page loaded: $url")
                     injectCredentials(view)
+                    view?.evaluateJavascript(EClawNativeNavBridge.JS_SHIM, null)
+                    pageReady = true
+                    deliverPendingNavIntent()
                 }
             }
             webChromeClient = WebChromeClient()
+            addJavascriptInterface(
+                EClawNativeNavBridge(this@MissionControlActivity),
+                EClawNativeNavBridge.BRIDGE_NAME
+            )
         }
 
         container.addView(wv)
@@ -106,6 +124,12 @@ class MissionControlActivity : AppCompatActivity() {
             "$baseUrl?deviceId=$deviceId&deviceSecret=$deviceSecret"
         else baseUrl
         wv.loadUrl(com.hank.clawlive.util.PortalUrlHelper.withAppLang(this, url))
+    }
+
+    private fun deliverPendingNavIntent() {
+        val nav = pendingNavIntent ?: return
+        pendingNavIntent = null
+        webView?.evaluateJavascript(EClawNativeNavBridge.buildIntentReplayJs(nav), null)
     }
 
     private fun injectCredentials(webView: WebView?) {

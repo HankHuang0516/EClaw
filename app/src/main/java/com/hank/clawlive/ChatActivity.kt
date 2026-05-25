@@ -26,6 +26,7 @@ import com.hank.clawlive.ui.NavItem
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import com.hank.clawlive.ui.chat.ChatJsBridge
 import com.hank.clawlive.ui.chat.ChatWebViewManager
+import com.hank.clawlive.ui.nav.EClawNativeNavBridge
 import timber.log.Timber
 
 class ChatActivity : AppCompatActivity() {
@@ -38,6 +39,8 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var offlineView: View
     private lateinit var webViewManager: ChatWebViewManager
     private var jsBridge: ChatJsBridge? = null
+    private var pendingNavIntent: String? = null
+    private var pageReady: Boolean = false
 
     companion object {
         private const val CHAT_URL = "https://eclawbot.com"
@@ -67,6 +70,7 @@ class ChatActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContentView(R.layout.activity_chat)
 
+        pendingNavIntent = intent?.getStringExtra(EClawNativeNavBridge.EXTRA_NAV_INTENT)
         initViews()
         setupEdgeToEdge()
         setupWebView()
@@ -75,6 +79,19 @@ class ChatActivity : AppCompatActivity() {
         AiChatFabHelper.setup(this, "chat")
 
         webViewManager.loadChatPage(CHAT_URL)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        val incoming = intent.getStringExtra(EClawNativeNavBridge.EXTRA_NAV_INTENT) ?: return
+        pendingNavIntent = incoming
+        if (pageReady) deliverPendingNavIntent()
+    }
+
+    private fun deliverPendingNavIntent() {
+        val nav = pendingNavIntent ?: return
+        pendingNavIntent = null
+        webView.evaluateJavascript(EClawNativeNavBridge.buildIntentReplayJs(nav), null)
     }
 
     override fun onResume() {
@@ -134,6 +151,11 @@ class ChatActivity : AppCompatActivity() {
             onFileChooserRequest = { callback ->
                 pendingFileCallback = callback
                 fileChooserLauncher.launch("*/*")
+            },
+            onPageFinishedListener = { view, _ ->
+                view?.evaluateJavascript(EClawNativeNavBridge.JS_SHIM, null)
+                pageReady = true
+                deliverPendingNavIntent()
             }
         )
         webViewManager.setup()
@@ -142,6 +164,10 @@ class ChatActivity : AppCompatActivity() {
         jsBridge = ChatJsBridge(this, deviceManager, chatPrefs)
         val bridge = jsBridge!!
         webView.addJavascriptInterface(bridge, ChatJsBridge.BRIDGE_NAME)
+        webView.addJavascriptInterface(
+            EClawNativeNavBridge(this),
+            EClawNativeNavBridge.BRIDGE_NAME
+        )
 
         // Request microphone permission proactively for voice recording
         val micPerm = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
