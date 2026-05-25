@@ -99,3 +99,25 @@ def token_from_vars(vars_map: Mapping[str, object], keys: Sequence[str]) -> tupl
         if isinstance(value, str) and value.strip():
             return value.strip(), key
     return None, None
+
+
+def build_git_auth_env(
+    base_env: Mapping[str, str],
+    token: Optional[str],
+    askpass_path: str,
+    expose_cli_token: bool = False,
+) -> dict[str, str]:
+    env = dict(base_env)
+    env["GIT_TERMINAL_PROMPT"] = "0"
+    if not token:
+        return env
+
+    env.update({
+        "GIT_ASKPASS": askpass_path,
+        "GIT_ASKPASS_USERNAME": "x-access-token",
+        "GIT_ASKPASS_PASSWORD": token,
+    })
+    if expose_cli_token:
+        env["GH_TOKEN"] = token
+        env["GITHUB_TOKEN"] = token
+    return env

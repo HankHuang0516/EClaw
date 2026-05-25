@@ -6,6 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from repo_auth import (
     RepoScopeError,
+    build_git_auth_env,
     parse_github_host_path,
     token_from_vars,
     token_key_candidates,
@@ -49,6 +50,20 @@ class RepoAuthTests(unittest.TestCase):
             keys,
         )
         self.assertEqual((token, key), ("scoped", "GIT_HUB2_HANKHUANG0516"))
+
+    def test_git_auth_env_disables_interactive_prompts_without_token(self):
+        env = build_git_auth_env({"HOME": "/tmp/home"}, None, "/tmp/askpass")
+        self.assertEqual(env["HOME"], "/tmp/home")
+        self.assertEqual(env["GIT_TERMINAL_PROMPT"], "0")
+        self.assertNotIn("GIT_ASKPASS_PASSWORD", env)
+
+    def test_git_auth_env_exports_askpass_and_cli_tokens(self):
+        env = build_git_auth_env({"HOME": "/tmp/home"}, "secret-token", "/tmp/askpass", expose_cli_token=True)
+        self.assertEqual(env["GIT_ASKPASS"], "/tmp/askpass")
+        self.assertEqual(env["GIT_ASKPASS_USERNAME"], "x-access-token")
+        self.assertEqual(env["GIT_ASKPASS_PASSWORD"], "secret-token")
+        self.assertEqual(env["GH_TOKEN"], "secret-token")
+        self.assertEqual(env["GITHUB_TOKEN"], "secret-token")
 
 
 if __name__ == "__main__":
