@@ -6,7 +6,7 @@
     let slug = (params.get('slug') || '').trim();
 
     if (!slug) {
-        const m = window.location.pathname.match(/\/portal\/stories\/([a-z0-9][a-z0-9-]*[a-z0-9])\/?$/i);
+        const m = window.location.pathname.match(/\/portal\/stories\/([a-z0-9](?:[a-z0-9-]*[a-z0-9])?)\/?$/i);
         if (m) slug = m[1].toLowerCase();
     }
 

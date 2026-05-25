@@ -784,12 +784,32 @@ app.get('/portal/bot/:entityId/about', (req, res, next) => {
 });
 
 // Pretty URL: /portal/stories/:slug → serve case.html (JS reads slug from path)
+// Server-side canonical templating so pre-JS crawlers see the right URL per slug.
+let _caseHtmlTemplate = null;
+function _readCaseHtmlTemplate() {
+    if (_caseHtmlTemplate === null) {
+        _caseHtmlTemplate = fs.readFileSync(path.join(__dirname, 'public/portal/stories/case.html'), 'utf8');
+    }
+    return _caseHtmlTemplate;
+}
+function _renderCaseHtml(canonical) {
+    return _readCaseHtmlTemplate().replace('{{CANONICAL_URL}}', canonical);
+}
 app.get(['/portal/stories/:slug', '/portal/stories/:slug/'], (req, res, next) => {
     const slug = String(req.params.slug || '').toLowerCase();
-    if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(slug)) return next();
+    if (!/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(slug)) return next();
     if (slug === 'cases') return next();
+    const canonical = `https://eclawbot.com/portal/stories/${encodeURIComponent(slug)}`;
     res.set('Cache-Control', 'no-cache');
-    res.sendFile(path.join(__dirname, 'public/portal/stories/case.html'));
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.send(_renderCaseHtml(canonical));
+});
+// Direct hit on the template (no slug) → fall back to the listing as canonical
+// so crawlers never see the {{CANONICAL_URL}} placeholder verbatim.
+app.get('/portal/stories/case.html', (req, res) => {
+    res.set('Cache-Control', 'no-cache');
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.send(_renderCaseHtml('https://eclawbot.com/portal/stories/'));
 });
 
 app.use('/portal', express.static(path.join(__dirname, 'public/portal'), {
