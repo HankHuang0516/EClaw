@@ -783,6 +783,15 @@ app.get('/portal/bot/:entityId/about', (req, res, next) => {
     res.sendFile(path.join(__dirname, 'public/portal/bot/about.html'));
 });
 
+// Pretty URL: /portal/stories/:slug → serve case.html (JS reads slug from path)
+app.get(['/portal/stories/:slug', '/portal/stories/:slug/'], (req, res, next) => {
+    const slug = String(req.params.slug || '').toLowerCase();
+    if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(slug)) return next();
+    if (slug === 'cases') return next();
+    res.set('Cache-Control', 'no-cache');
+    res.sendFile(path.join(__dirname, 'public/portal/stories/case.html'));
+});
+
 app.use('/portal', express.static(path.join(__dirname, 'public/portal'), {
     etag: true,
     lastModified: true,
