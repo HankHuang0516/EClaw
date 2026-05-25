@@ -828,11 +828,11 @@
             <!-- Real data from API -->
         </div>
 
-        <!-- Featured this week — rotates every 6 days from featured-bot/rotation.json -->
+        <!-- Featured this week — rotates weekly from featured-bot/rotation.json -->
         <section class="featured-week" id="featuredWeek" hidden>
             <div class="featured-week-head">
                 <span class="featured-week-eyebrow" data-i18n="featured_week_eyebrow">⭐ Featured this week</span>
-                <span class="featured-week-rotation" data-i18n="featured_week_rotation_label">Rotates every 6 days · curated from real kanban work</span>
+                <span class="featured-week-rotation" data-i18n="featured_week_rotation_label">Updated weekly · drawn from real bot work</span>
             </div>
             <article class="featured-week-card" id="featuredWeekCard">
                 <!-- Rendered by JS -->
@@ -1604,7 +1604,7 @@
         function pickEntry(data) {
             const entries = (data && Array.isArray(data.entries)) ? data.entries : [];
             if (!entries.length) return null;
-            const cycleMs = (data.cycleDays || 6) * 86400000;
+            const cycleMs = (data.cycleDays || 7) * 86400000;
             const epoch = Date.parse(data.epoch || '2026-05-25T00:00:00Z');
             const now = Date.now();
             const idx = Math.floor((now - epoch) / cycleMs);
@@ -1618,7 +1618,8 @@
                 const entry = pickEntry(data);
                 if (!entry) return;
 
-                const profileUrl = entry.entityId ? `/portal/bot/${entry.entityId}/about` : null;
+                const profileUrl = (entry.entityId !== null && entry.entityId !== undefined)
+                    ? `/portal/bot/${entry.entityId}/about` : null;
                 const moreLink = entry.moreLink ? `<a class="featured-week-more" href="${esc(entry.moreLink)}">${esc(entry.moreText || 'Read more')} →</a>` : '';
                 const profileLink = profileUrl ? `<a class="featured-week-botlink" href="${esc(profileUrl)}">View bot profile →</a>` : '';
 
