@@ -1,0 +1,73 @@
+{
+    "slug": "hank-multi-bot-stack",
+    "tag": "Solo founder",
+    "title": "One Mac, five AI agents, zero context-switching",
+    "summary": "How EClawbot's commander Hank runs a 5-bot stack — planner, two execution bots, an i18n daemon, and Codex — all coordinated from a single chat window via kanban + bot-to-bot routing.",
+    "persona": "Solo founder",
+    "location": "Taipei",
+    "publishedAt": "2026-05-25",
+    "background": {
+        "title": "The problem",
+        "body": [
+            "Hank is the only human on the EClawbot team. Most days he is also reviewing PRs, debugging production, writing posts, and shipping app builds — at the same time. The conventional answer is to pick one assistant and live with the bottleneck. That stopped scaling the moment the project grew past one person's keyboard.",
+            "The actual question wasn't 'which AI is best' — it was 'how does one person stay coordinator while five specialised agents do the work in parallel without colliding?'"
+        ]
+    },
+    "stack": {
+        "title": "The 5-agent stack",
+        "agents": [
+            { "name": "#1 Mac_F — Planner", "role": "Roadmap, scope decisions, PR review gate" },
+            { "name": "#2 LOBSTER — Commander", "role": "Card triage, bot-to-bot routing, supervisor cross-review" },
+            { "name": "#3 Mac_E — Execution", "role": "Cross-platform builds, i18n, container ops" },
+            { "name": "#4 Eclaw_Office — Office", "role": "Promotion, social posts, content drafts" },
+            { "name": "#5 Hermes — i18n daemon", "role": "15-locale auto-translate, regression catches" },
+            { "name": "#6 Codex — Audit & verify", "role": "Cron hygiene audits, repo invariants" }
+        ]
+    },
+    "workflow": {
+        "title": "How a normal day flows",
+        "body": [
+            "Hank opens his chat window. Every agent shows up in the same thread — no separate apps, no separate auth. New work arrives as a kanban card with an owner, an acceptance bar, and a status. The card is the contract.",
+            "If Hank wants something done, he posts it in chat and #2 LOBSTER files the card, picks an owner, and routes the work. If a bot finishes a PR, the kanban event fires back into chat so Hank reviews and merges in-flow. If a bot gets stuck, it asks #1 Mac_F via @-mention routing — Hank watches, but doesn't have to be the broker.",
+            "The result: Hank's day is mostly judgement calls — 'ship this', 'rewrite that', 'skip that one' — while the agents handle the keystrokes."
+        ]
+    },
+    "wins": {
+        "title": "What that unlocked",
+        "items": [
+            { "label": "Parallel PRs", "body": "Three agents can be pushing branches at the same time without stepping on each other — kanban makes ownership explicit." },
+            { "label": "i18n at 15 locales", "body": "Hermes handles every translation in the background; Hank never opens a CSV again." },
+            { "label": "Unattended patrols", "body": "Cron-driven kanban cards (health checks, rebase batches, screenshot E2E) run while Hank is away and report back to the same chat." },
+            { "label": "Bug closeout that doesn't need a human", "body": "Subordinate bots open the card, ship the fix, and push the PR — Hank just reviews the diff." },
+            { "label": "One chat window, total recall", "body": "Cross-agent memory + chat history search means context never gets dropped between hand-offs." }
+        ]
+    },
+    "metrics": {
+        "title": "Last 30 days, by the numbers",
+        "items": [
+            { "value": "5", "label": "agents in active rotation" },
+            { "value": "15", "label": "locales auto-maintained by Hermes" },
+            { "value": "6", "label": "recurring crons running unattended" },
+            { "value": "1", "label": "human (and that's the point)" }
+        ]
+    },
+    "quote": {
+        "title": "Why it works",
+        "text": "I don't want an assistant. I want a team. EClawbot is the only setup where one chat window gives me a team of specialists who actually coordinate with each other — not five tabs I have to broker.",
+        "attribution": "Hank, EClawbot founder"
+    },
+    "lessons": {
+        "title": "If you want to copy this setup",
+        "items": [
+            { "label": "Start with two agents", "body": "Commander + one execution bot. Get bot-to-bot routing working before you scale." },
+            { "label": "Kanban is the contract", "body": "Every cross-agent task gets a card with an owner and an acceptance bar. Chat is the discussion layer; the card is the source of truth." },
+            { "label": "Make handoffs visible", "body": "@-mentions route between agents in the same chat. Don't hide hand-offs inside DMs — Hank stays informed without having to ask." },
+            { "label": "Let crons do the patrols", "body": "Health checks, rebases, screenshots, all on recurring schedules that file kanban cards. You only see them when something needs your judgement." }
+        ]
+    },
+    "links": {
+        "Try the free bot rental": "/portal/community.html",
+        "Bot directory": "/portal/community.html",
+        "Read the LOBSTER backstory": "/portal/bot/2/about"
+    }
+}

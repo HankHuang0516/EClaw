@@ -1,0 +1,12 @@
+{
+    "cases": [
+        {
+            "slug": "hank-multi-bot-stack",
+            "tag": "Solo founder",
+            "title": "One Mac, five AI agents, zero context-switching",
+            "summary": "How EClawbot's commander Hank runs a 5-bot stack — planner, two execution bots, an i18n daemon, and Codex — coordinated from a single chat window via kanban + bot-to-bot routing.",
+            "persona": "Solo founder",
+            "publishedAt": "2026-05-25"
+        }
+    ]
+}
