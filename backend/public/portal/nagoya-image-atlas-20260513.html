@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>名古屋 11 張圖智慧互參照 Atlas</title>
+<meta name="description" content="以 11 張名古屋旅行圖片整理出的靜態智慧互參照網頁。">
+<style>
+:root{--bg:#fbf7ef;--paper:#fffdf8;--ink:#2f2a24;--muted:#7b6f62;--line:#eadfce;--gold:#c99742;--green:#78956b;--green2:#e7f0df;--brown:#8a633d;--shadow:0 18px 50px rgba(90,61,24,.14);--radius:26px;--max:1180px}
+*{box-sizing:border-box}html{scroll-behavior:smooth;background:radial-gradient(circle at top left,#fff8dc 0,#fbf7ef 32%,#f4ead8 100%);color:var(--ink);font:16px/1.65 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif}body{margin:0}.page{max-width:var(--max);margin:auto;padding:24px}.hero{position:relative;overflow:hidden;border:1px solid rgba(201,151,66,.28);border-radius:34px;background:linear-gradient(135deg,rgba(255,253,248,.96),rgba(237,246,226,.88));box-shadow:var(--shadow);padding:42px 34px 30px}.hero:before{content:"";position:absolute;inset:auto -60px -120px auto;width:340px;height:340px;border-radius:50%;background:rgba(201,151,66,.16)}.eyebrow{display:inline-flex;gap:8px;align-items:center;padding:6px 12px;border-radius:999px;background:#fff;border:1px solid var(--line);color:var(--brown);font-weight:800;font-size:13px}.hero h1{font-size:clamp(34px,7vw,78px);line-height:.96;margin:18px 0 12px;letter-spacing:-.06em}.hero p{max-width:780px;color:var(--muted);font-size:18px}.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:26px;align-items:end}.hero-card{background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:24px;padding:16px}.hero-card img{display:block;width:100%;border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.12)}.quick{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}.pill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fffdf9;color:var(--brown);border-radius:999px;padding:8px 12px;text-decoration:none;font-weight:750;font-size:14px}.pill:hover{border-color:var(--gold);transform:translateY(-1px)}.section{margin:34px 0}.section h2{font-size:clamp(26px,4vw,42px);letter-spacing:-.04em;margin:0 0 12px}.section-lede{color:var(--muted);margin-top:0}.atlas{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}.tile{display:flex;flex-direction:column;min-height:100%;background:var(--paper);border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:0 10px 28px rgba(90,61,24,.08);text-decoration:none;color:inherit}.tile img{width:100%;aspect-ratio:3/4;object-fit:cover;background:#eee}.tile-body{padding:14px}.num{font-weight:900;color:var(--gold);font-size:13px;letter-spacing:.08em}.tile h3{margin:3px 0 6px;font-size:18px;line-height:1.25}.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.tag{font-size:12px;border-radius:999px;padding:3px 8px;background:var(--green2);color:#4d6d42;font-weight:700}.story{display:grid;grid-template-columns:280px 1fr;gap:20px;background:rgba(255,253,248,.88);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 12px 35px rgba(90,61,24,.08);padding:18px;margin:18px 0;scroll-margin-top:16px}.story-media img{width:100%;border-radius:20px;box-shadow:0 8px 24px rgba(0,0,0,.12)}.story h3{font-size:28px;letter-spacing:-.03em;margin:4px 0}.meta{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.meta span{font-size:13px;font-weight:800;color:var(--brown);background:#fff;border:1px solid var(--line);border-radius:999px;padding:5px 9px}.refs{border-top:1px dashed var(--line);margin-top:14px;padding-top:12px}.refs strong{display:block;margin-bottom:8px;color:var(--muted)}.ref-grid{display:flex;flex-wrap:wrap;gap:8px}.ref{font-size:13px;font-weight:800;text-decoration:none;color:#456d3e;background:#edf6e6;border:1px solid #d6e7cb;border-radius:999px;padding:6px 10px}.timeline{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}.day{background:#fff;border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:0 10px 28px rgba(90,61,24,.08)}.day strong{display:block;color:var(--gold);font-size:13px;letter-spacing:.08em}.day a{color:var(--ink);font-weight:900;text-decoration:none}.map-note{background:#2e3a2a;color:#fff;border-radius:26px;padding:22px;display:grid;grid-template-columns:1fr 1fr;gap:18px}.map-note a{color:#fff}.footer{padding:24px;text-align:center;color:var(--muted)}.top{position:fixed;right:16px;bottom:16px;background:#2f2a24;color:white;text-decoration:none;border-radius:999px;padding:10px 13px;box-shadow:0 10px 30px rgba(0,0,0,.22);z-index:9}@media(max-width:900px){.hero-grid{grid-template-columns:1fr}.atlas{grid-template-columns:repeat(2,minmax(0,1fr))}.story{grid-template-columns:1fr}.story-media{max-width:360px}.timeline{grid-template-columns:repeat(2,minmax(0,1fr))}.map-note{grid-template-columns:1fr}}@media(max-width:520px){.page{padding:12px}.hero{padding:26px 18px;border-radius:24px}.atlas{grid-template-columns:1fr}.timeline{grid-template-columns:1fr}.story{padding:12px;border-radius:20px}.story h3{font-size:23px}.tile img{aspect-ratio:4/5}.quick{gap:8px}.pill{font-size:13px;padding:7px 10px}}@media print{.top{display:none}body{background:white}.story,.tile,.hero{box-shadow:none}}
+</style>
+</head><body>
+<main class="page">
+  <section class="hero" id="top"><div class="hero-grid"><div><span class="eyebrow">名古屋旅行 · 11 張圖智慧互參照</span><h1>把行程、地圖、住宿與美食整理成一頁式 Atlas</h1><p>這個靜態頁把 11 張來源圖片整理成可互相跳轉的旅行索引：先看總覽，再從每日行程、地圖、住宿與伴手禮彼此參照。</p><nav class="quick"><a class="pill" href="#atlas">🖼️ 11 張圖總覽</a><a class="pill" href="#timeline">🗓️ 5 日行程</a><a class="pill" href="#decision">🧭 地圖與住宿決策</a><a class="pill" href="#details">🔗 逐圖交叉參照</a></nav></div><div class="hero-card"><img src="https://live.staticflickr.com/65535/55266610541_92152cb44d_b.jpg" alt="名古屋自由行主視覺"></div></div></section>
+  <section class="section" id="atlas"><h2>圖片總覽</h2><p class="section-lede">每張卡片可直接跳到詳情，詳情內再提供相關圖片的快速參照。</p><div class="atlas"><a class="tile" href="#img-01">
+  <img loading="lazy" src="https://live.staticflickr.com/65535/55267004840_fc30e1b11e_b.jpg" alt="名古屋伴手禮精選">
+  <div class="tile-body"><div class="num">IMAGE 01</div><h3>名古屋伴手禮精選</h3><p>購物 / 手信</p><div class="tags"><span class="tag">手信</span><span class="tag">美食</span><span class="tag">購物</span></div></div>
+</a>
+<a class="tile" href="#img-02">
+  <img loading="lazy" src="https://live.staticflickr.com/65535/55266610541_92152cb44d_b.jpg" alt="名古屋自由行主視覺">
+  <div class="tile-body"><div class="num">IMAGE 02</div><h3>名古屋自由行主視覺</h3><p>總覽 / 封面</p><div class="tags"><span class="tag">總覽</span><span class="tag">封面</span><span class="tag">分享</span></div></div>
+</a>
+<a class="tile" href="#img-03">
+  <img loading="lazy" src="https://live.staticflickr.com/65535/55266610586_df1d0e3b24_b.jpg" alt="行程重點速讀">
+  <div class="tile-body"><div class="num">IMAGE 03</div><h3>行程重點速讀</h3><p>重點 / 摘要</p><div class="tags"><span class="tag">重點</span><span class="tag">景點</span><span class="tag">美食</span></div></div>
+</a>
+<a class="tile" href="#img-04">
+  <img loading="lazy" src="https://live.staticflickr.com/65535/55266610571_24c3311c56_b.jpg" alt="名古屋地圖與區域關係">
+  <div class="tile-body"><div class="num">IMAGE 04</div><h3>名古屋地圖與區域關係</h3><p>地圖 / 動線</p><div class="tags"><span class="tag">地圖</span><span class="tag">交通</span><span class="tag">動線</span></div></div>
+</a>
+<a class="tile" href="#img-05">
+  <img loading="lazy" src="https://live.staticflickr.com/65535/55265702052_f5871a5f34_b.jpg" alt="行李準備清單">
+  <div class="tile-body"><div class="num">IMAGE 05</div><h3>行李準備清單</h3><p>準備 / Checklist</p><div class="tags"><span class="tag">準備</span><span class="tag">清單</span><span class="tag">出發前</span></div></div>
+</a>
+<a class="tile" href="#img-06">
+  <img loading="lazy" src="https://live.staticflickr.com/65535/55266610576_560b39c1b5_b.jpg" alt="Day 1 行程">
+  <div class="tile-body"><div class="num">IMAGE 06</div><h3>Day 1 行程</h3><p>每日行程</p><div class="tags"><span class="tag">Day1</span><span class="tag">美食</span><span class="tag">交通</span></div></div>
+</a>
+<a class="tile" href="#img-07">
+  <img loading="lazy" src="https://live.staticflickr.com/65535/55267004865_7a67a8b5d0_b.jpg" alt="Day 2 行程">
+  <div class="tile-body"><div class="num">IMAGE 07</div><h3>Day 2 行程</h3><p>每日行程</p><div class="tags"><span class="tag">Day2</span><span class="tag">景點</span><span class="tag">美食</span></div></div>
+</a>
+<a class="tile" href="#img-08">
+  <img loading="lazy" src="https://live.staticflickr.com/65535/55266841314_8cb278c708_b.jpg" alt="住宿資訊">
+  <div class="tile-body"><div class="num">IMAGE 08</div><h3>住宿資訊</h3><p>住宿 / Basecamp</p><div class="tags"><span class="tag">住宿</span><span class="tag">地圖</span><span class="tag">交通</span></div></div>
+</a>
+<a class="tile" href="#img-09">
+  <img loading="lazy" src="https://live.staticflickr.com/65535/55265702067_97db035882_b.jpg" alt="Day 3 行程">
+  <div class="tile-body"><div class="num">IMAGE 09</div><h3>Day 3 行程</h3><p>每日行程</p><div class="tags"><span class="tag">Day3</span><span class="tag">文化</span><span class="tag">購物</span></div></div>
+</a>
+<a class="tile" href="#img-10">
+  <img loading="lazy" src="https://live.staticflickr.com/65535/55266743803_9e12f24aa5_b.jpg" alt="Day 4 行程">
+  <div class="tile-body"><div class="num">IMAGE 10</div><h3>Day 4 行程</h3><p>每日行程</p><div class="tags"><span class="tag">Day4</span><span class="tag">景點</span><span class="tag">近郊</span></div></div>
+</a>
+<a class="tile" href="#img-11">
+  <img loading="lazy" src="https://live.staticflickr.com/65535/55267004850_4ff2b4b26d_b.jpg" alt="Day 5 行程">
+  <div class="tile-body"><div class="num">IMAGE 11</div><h3>Day 5 行程</h3><p>每日行程 / 返程</p><div class="tags"><span class="tag">Day5</span><span class="tag">返程</span><span class="tag">手信</span></div></div>
+</a></div></section>
+  <section class="section" id="timeline"><h2>5 日行程索引</h2><div class="timeline"><div class="day"><strong>DAY 1</strong><a href="#img-06">抵達、市區節奏與第一輪美食</a></div><div class="day"><strong>DAY 2</strong><a href="#img-07">主要景點與拍照體驗</a></div><div class="day"><strong>DAY 3</strong><a href="#img-09">城市文化、購物與名物料理</a></div><div class="day"><strong>DAY 4</strong><a href="#img-10">大型景點或近郊體驗</a></div><div class="day"><strong>DAY 5</strong><a href="#img-11">收尾、伴手禮與返程緩衝</a></div></div></section>
+  <section class="section" id="decision"><h2>地圖 / 住宿 / 行李的決策入口</h2><div class="map-note"><p>先從 <a href="#img-04">地圖與區域關係</a> 判斷住宿與移動，再回到 <a href="#img-08">住宿資訊</a> 當作每日 basecamp。</p><p>出發前請交叉檢查 <a href="#img-05">行李準備清單</a> 與 <a href="#img-01">伴手禮清單</a>，把採買與返程緩衝放進 Day 5。</p></div></section>
+  <section class="section" id="details"><h2>逐圖詳情與交叉參照</h2><article class="story" id="img-01">
+  <div class="story-media"><img loading="lazy" src="https://live.staticflickr.com/65535/55267004840_fc30e1b11e_b.jpg" alt="名古屋伴手禮精選"></div>
+  <div><div class="num">IMAGE 01</div><h3>名古屋伴手禮精選</h3><div class="meta"><span>購物 / 手信</span><span>#手信</span><span>#美食</span><span>#購物</span></div><p>以伴手禮與名古屋特色點心為核心，適合作為出發前購物清單與返程前補貨指南。</p><div class="refs"><strong>相關參照</strong><div class="ref-grid"><a class="ref" href="#img-11">11 · Day 5 行程</a><a class="ref" href="#img-03">03 · 行程重點速讀</a><a class="ref" href="#img-05">05 · 行李準備清單</a></div></div></div>
+</article>
+<article class="story" id="img-02">
+  <div class="story-media"><img loading="lazy" src="https://live.staticflickr.com/65535/55266610541_92152cb44d_b.jpg" alt="名古屋自由行主視覺"></div>
+  <div><div class="num">IMAGE 02</div><h3>名古屋自由行主視覺</h3><div class="meta"><span>總覽 / 封面</span><span>#總覽</span><span>#封面</span><span>#分享</span></div><p>整份旅行企劃的封面與精神入口，適合分享給同行者快速理解主題與風格。</p><div class="refs"><strong>相關參照</strong><div class="ref-grid"><a class="ref" href="#img-03">03 · 行程重點速讀</a><a class="ref" href="#img-04">04 · 名古屋地圖與區域關係</a><a class="ref" href="#img-06">06 · Day 1 行程</a></div></div></div>
+</article>
+<article class="story" id="img-03">
+  <div class="story-media"><img loading="lazy" src="https://live.staticflickr.com/65535/55266610586_df1d0e3b24_b.jpg" alt="行程重點速讀"></div>
+  <div><div class="num">IMAGE 03</div><h3>行程重點速讀</h3><div class="meta"><span>重點 / 摘要</span><span>#重點</span><span>#景點</span><span>#美食</span></div><p>濃縮必去景點、體驗亮點與美食提醒。規劃或臨時調整行程時，先看這張。</p><div class="refs"><strong>相關參照</strong><div class="ref-grid"><a class="ref" href="#img-04">04 · 名古屋地圖與區域關係</a><a class="ref" href="#img-06">06 · Day 1 行程</a><a class="ref" href="#img-07">07 · Day 2 行程</a><a class="ref" href="#img-09">09 · Day 3 行程</a></div></div></div>
+</article>
+<article class="story" id="img-04">
+  <div class="story-media"><img loading="lazy" src="https://live.staticflickr.com/65535/55266610571_24c3311c56_b.jpg" alt="名古屋地圖與區域關係"></div>
+  <div><div class="num">IMAGE 04</div><h3>名古屋地圖與區域關係</h3><div class="meta"><span>地圖 / 動線</span><span>#地圖</span><span>#交通</span><span>#動線</span></div><p>把景點與區域位置視覺化，幫助判斷住宿、交通與每天行程先後順序。</p><div class="refs"><strong>相關參照</strong><div class="ref-grid"><a class="ref" href="#img-08">08 · 住宿資訊</a><a class="ref" href="#img-06">06 · Day 1 行程</a><a class="ref" href="#img-07">07 · Day 2 行程</a><a class="ref" href="#img-10">10 · Day 4 行程</a></div></div></div>
+</article>
+<article class="story" id="img-05">
+  <div class="story-media"><img loading="lazy" src="https://live.staticflickr.com/65535/55265702052_f5871a5f34_b.jpg" alt="行李準備清單"></div>
+  <div><div class="num">IMAGE 05</div><h3>行李準備清單</h3><div class="meta"><span>準備 / Checklist</span><span>#準備</span><span>#清單</span><span>#出發前</span></div><p>出發前檢查文件、衣物、藥品、3C 與旅途小物，降低忘帶東西的風險。</p><div class="refs"><strong>相關參照</strong><div class="ref-grid"><a class="ref" href="#img-08">08 · 住宿資訊</a><a class="ref" href="#img-01">01 · 名古屋伴手禮精選</a><a class="ref" href="#img-06">06 · Day 1 行程</a></div></div></div>
+</article>
+<article class="story" id="img-06">
+  <div class="story-media"><img loading="lazy" src="https://live.staticflickr.com/65535/55266610576_560b39c1b5_b.jpg" alt="Day 1 行程"></div>
+  <div><div class="num">IMAGE 06</div><h3>Day 1 行程</h3><div class="meta"><span>每日行程</span><span>#Day1</span><span>#美食</span><span>#交通</span></div><p>第一天以抵達、熟悉交通與市區節奏為主，銜接住宿與第一輪美食。</p><div class="refs"><strong>相關參照</strong><div class="ref-grid"><a class="ref" href="#img-04">04 · 名古屋地圖與區域關係</a><a class="ref" href="#img-08">08 · 住宿資訊</a><a class="ref" href="#img-03">03 · 行程重點速讀</a></div></div></div>
+</article>
+<article class="story" id="img-07">
+  <div class="story-media"><img loading="lazy" src="https://live.staticflickr.com/65535/55267004865_7a67a8b5d0_b.jpg" alt="Day 2 行程"></div>
+  <div><div class="num">IMAGE 07</div><h3>Day 2 行程</h3><div class="meta"><span>每日行程</span><span>#Day2</span><span>#景點</span><span>#美食</span></div><p>第二天進入主要景點與拍照體驗，適合搭配地圖確認移動距離。</p><div class="refs"><strong>相關參照</strong><div class="ref-grid"><a class="ref" href="#img-04">04 · 名古屋地圖與區域關係</a><a class="ref" href="#img-03">03 · 行程重點速讀</a><a class="ref" href="#img-09">09 · Day 3 行程</a></div></div></div>
+</article>
+<article class="story" id="img-08">
+  <div class="story-media"><img loading="lazy" src="https://live.staticflickr.com/65535/55266841314_8cb278c708_b.jpg" alt="住宿資訊"></div>
+  <div><div class="num">IMAGE 08</div><h3>住宿資訊</h3><div class="meta"><span>住宿 / Basecamp</span><span>#住宿</span><span>#地圖</span><span>#交通</span></div><p>集中管理飯店位置、周邊機能與每日返回基準點，是全行程的 basecamp。</p><div class="refs"><strong>相關參照</strong><div class="ref-grid"><a class="ref" href="#img-04">04 · 名古屋地圖與區域關係</a><a class="ref" href="#img-05">05 · 行李準備清單</a><a class="ref" href="#img-06">06 · Day 1 行程</a><a class="ref" href="#img-11">11 · Day 5 行程</a></div></div></div>
+</article>
+<article class="story" id="img-09">
+  <div class="story-media"><img loading="lazy" src="https://live.staticflickr.com/65535/55265702067_97db035882_b.jpg" alt="Day 3 行程"></div>
+  <div><div class="num">IMAGE 09</div><h3>Day 3 行程</h3><div class="meta"><span>每日行程</span><span>#Day3</span><span>#文化</span><span>#購物</span></div><p>第三天適合安排城市文化、購物與名物料理，承上啟下調整旅途節奏。</p><div class="refs"><strong>相關參照</strong><div class="ref-grid"><a class="ref" href="#img-01">01 · 名古屋伴手禮精選</a><a class="ref" href="#img-03">03 · 行程重點速讀</a><a class="ref" href="#img-10">10 · Day 4 行程</a></div></div></div>
+</article>
+<article class="story" id="img-10">
+  <div class="story-media"><img loading="lazy" src="https://live.staticflickr.com/65535/55266743803_9e12f24aa5_b.jpg" alt="Day 4 行程"></div>
+  <div><div class="num">IMAGE 10</div><h3>Day 4 行程</h3><div class="meta"><span>每日行程</span><span>#Day4</span><span>#景點</span><span>#近郊</span></div><p>第四天可放較完整的大型景點或近郊體驗，需特別搭配地圖與交通時間。</p><div class="refs"><strong>相關參照</strong><div class="ref-grid"><a class="ref" href="#img-04">04 · 名古屋地圖與區域關係</a><a class="ref" href="#img-07">07 · Day 2 行程</a><a class="ref" href="#img-11">11 · Day 5 行程</a></div></div></div>
+</article>
+<article class="story" id="img-11">
+  <div class="story-media"><img loading="lazy" src="https://live.staticflickr.com/65535/55267004850_4ff2b4b26d_b.jpg" alt="Day 5 行程"></div>
+  <div><div class="num">IMAGE 11</div><h3>Day 5 行程</h3><div class="meta"><span>每日行程 / 返程</span><span>#Day5</span><span>#返程</span><span>#手信</span></div><p>最後一天聚焦收尾、伴手禮、移動到機場與返程緩衝，適合回看購物清單。</p><div class="refs"><strong>相關參照</strong><div class="ref-grid"><a class="ref" href="#img-01">01 · 名古屋伴手禮精選</a><a class="ref" href="#img-05">05 · 行李準備清單</a><a class="ref" href="#img-08">08 · 住宿資訊</a></div></div></div>
+</article></section>
+  <p class="footer">Static smart atlas generated from 11 source images · EClaw domain deployment · 更新：2026-05-13 · 無 JavaScript 版本</p>
+</main><a class="top" href="#top">↑ Top</a>
+</body></html>
