@@ -127,7 +127,7 @@ describe('i18n-lint-dup-keys parser', () => {
     expect(res.code).toBe(0);
   });
 
-  test('regression: real i18n.js detects all 14 locales (no false-positive es absorption)', () => {
+  test('regression: real i18n.js detects all 15 locales (no false-positive es absorption)', () => {
     const realPath = path.resolve(__dirname, '../../public/shared/i18n.js');
     if (!fs.existsSync(realPath)) {
       return;
@@ -141,7 +141,7 @@ describe('i18n-lint-dup-keys parser', () => {
       code = err.status;
     }
     const allOutput = stdout + stderr;
-    for (const locale of ['en', 'zh', 'zh-CN', 'ja', 'ko', 'th', 'vi', 'id', 'fr', 'es', 'de', 'ms', 'hi', 'ar']) {
+    for (const locale of ['en', 'zh', 'zh-CN', 'ja', 'ko', 'th', 'vi', 'id', 'fr', 'es', 'de', 'ms', 'hi', 'ar', 'pt']) {
       expect(allOutput).toMatch(new RegExp(`(PASS|FAIL): ${locale.replace('-', '\\-')} `));
     }
   });

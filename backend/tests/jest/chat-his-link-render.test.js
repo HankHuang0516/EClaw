@@ -130,10 +130,10 @@ describe('his_<uuid> chip — i18n keys', () => {
         }
     });
 
-    test('key appears in every locale block (14 occurrences each)', () => {
+    test('key appears in every locale block (15 occurrences each)', () => {
         for (const key of REQUIRED_KEYS) {
             const count = (i18nJs.match(new RegExp(`"${key}":`, 'g')) || []).length;
-            expect(count).toBe(14);
+            expect(count).toBe(15);
         }
     });
 });
