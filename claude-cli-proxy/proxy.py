@@ -38,6 +38,15 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
+from repo_auth import (
+    DEFAULT_REPO_HOST_PATH,
+    LEGACY_TOKEN_KEYS,
+    RepoScopeError,
+    env_bool,
+    token_from_vars,
+    token_key_candidates,
+    validate_repo_scope,
+)
 
 load_dotenv(Path(__file__).parent / ".env")
 
@@ -61,8 +70,17 @@ MAX_CONCURRENT = 2
 MAX_QUEUE = 8
 
 REPO_DIR = Path(os.getenv("HOME", "/root")) / ".claude" / "repo"
-REPO_GIT_HOST_PATH = "github.com/HankHuang0516/realbot.git"
-REPO_GIT_URL_ANON = f"https://{REPO_GIT_HOST_PATH}"
+REPO_GIT_HOST_PATH = os.getenv("REPO_GIT_HOST_PATH", DEFAULT_REPO_HOST_PATH)
+REPO_ALLOWED_ORGS = os.getenv("REPO_ALLOWED_ORGS", "")
+REPO_REQUIRE_AUTH = env_bool(os.getenv("REPO_REQUIRE_AUTH"), False)
+EVAULT_GITHUB_TOKEN_KEY = os.getenv("EVAULT_GITHUB_TOKEN_KEY", "")
+EVAULT_ALLOW_GLOBAL_GITHUB_TOKEN = env_bool(os.getenv("EVAULT_ALLOW_GLOBAL_GITHUB_TOKEN"), True)
+try:
+    REPO_SCOPE = validate_repo_scope(REPO_GIT_HOST_PATH, REPO_ALLOWED_ORGS)
+    REPO_SCOPE_ERROR = ""
+except RepoScopeError as e:
+    REPO_SCOPE = None
+    REPO_SCOPE_ERROR = str(e)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", stream=sys.stdout)
 log = logging.getLogger("claude-proxy")
@@ -616,20 +634,15 @@ Rules:
 
 
 # ── Repo Clone & Sync ────────────────────────
-# Vault key names checked in priority order. GIT_HUB2 is the canonical key
-# Hank uses across bots; GITHUBTOKEN / GIT are accepted aliases.
-_VAULT_TOKEN_KEYS = ("GIT_HUB2", "GITHUBTOKEN", "GIT")
-
-
-def _fetch_vault_github_token() -> Optional[str]:
+def _fetch_vault_github_token(org: str) -> tuple[Optional[str], Optional[str]]:
     """Pull a GitHub PAT from /api/device-vars using service-account bot creds.
 
-    Returns the raw token on success, None on any failure. The token is held
-    only by the immediate caller's frame and the in-memory git remote URL —
-    we never write it to env, log, or disk.
+    Returns (token, key_name) on success, (None, None) on failure. Org-scoped
+    keys are preferred, with legacy global keys enabled only for backwards
+    compatibility.
     """
     if not (EVAULT_DEVICE_ID and EVAULT_BOT_SECRET):
-        return None
+        return None, None
     qs = urllib.parse.urlencode({"deviceId": EVAULT_DEVICE_ID, "botSecret": EVAULT_BOT_SECRET})
     url = f"{EVAULT_API_BASE}/api/device-vars?{qs}"
     try:
@@ -638,58 +651,81 @@ def _fetch_vault_github_token() -> Optional[str]:
             body = json.loads(resp.read().decode("utf-8"))
     except Exception as e:
         log.warning(f"[Vault] Fetch failed: {str(e)[:200]}")
-        return None
+        return None, None
     if not body.get("success"):
         log.warning(f"[Vault] device-vars returned error: {body.get('error')}")
-        return None
+        return None, None
     vars_map = body.get("vars") or {}
-    for k in _VAULT_TOKEN_KEYS:
-        v = vars_map.get(k)
-        if isinstance(v, str) and v.strip():
-            log.info(f"[Vault] Using token from key={k} (vault has {len(vars_map)} keys)")
-            return v.strip()
-    log.warning(f"[Vault] No GitHub token in vault (looked for {_VAULT_TOKEN_KEYS}; vault has {len(vars_map)} keys)")
-    return None
-
-
-def _resolve_repo_url() -> tuple:
-    """Return (url, source) for cloning realbot.
-
-    source ∈ {'vault', 'env', 'anonymous'}. Vault is preferred so the PAT can
-    rotate without a Railway redeploy; env GITHUB_TOKEN is the legacy
-    fallback; anonymous works while the repo is public.
-    """
-    token = _fetch_vault_github_token()
+    keys = token_key_candidates(
+        org,
+        explicit_key=EVAULT_GITHUB_TOKEN_KEY,
+        allow_global=EVAULT_ALLOW_GLOBAL_GITHUB_TOKEN,
+    )
+    token, key = token_from_vars(vars_map, keys)
     if token:
-        return (f"https://{token}@{REPO_GIT_HOST_PATH}", "vault")
+        log.info(f"[Vault] Using GitHub token key={key} for org={org} (vault has {len(vars_map)} keys)")
+        return token, key
+    log.warning(f"[Vault] No GitHub token in vault for org={org} (looked for {keys}; vault has {len(vars_map)} keys)")
+    return None, None
+
+
+def _resolve_repo_auth() -> tuple:
+    """Return (anonymous_url, source, token) for cloning the configured repo.
+
+    source ∈ {'vault:<key>', 'env', 'anonymous'}. Vault is preferred so the PAT
+    can rotate without a Railway redeploy; env GITHUB_TOKEN is the legacy
+    fallback. When REPO_REQUIRE_AUTH is true, anonymous fallback is disabled.
+    """
+    if REPO_SCOPE_ERROR or REPO_SCOPE is None:
+        raise RepoScopeError(REPO_SCOPE_ERROR or "invalid repo scope")
+
+    token, key = _fetch_vault_github_token(REPO_SCOPE.org)
+    if token:
+        return (REPO_SCOPE.url, f"vault:{key}", token)
     if GITHUB_TOKEN:
-        return (f"https://{GITHUB_TOKEN}@{REPO_GIT_HOST_PATH}", "env")
-    return (REPO_GIT_URL_ANON, "anonymous")
+        return (REPO_SCOPE.url, "env", GITHUB_TOKEN)
+    if REPO_REQUIRE_AUTH:
+        raise RepoScopeError(f"repo auth required for {REPO_SCOPE.org}/{REPO_SCOPE.repo}, but no GitHub token was available")
+    return (REPO_SCOPE.url, "anonymous", None)
+
+
+def _git_env(token: Optional[str]) -> dict:
+    env = {**os.environ}
+    if token:
+        env.update({
+            "GIT_ASKPASS": str(Path(__file__).with_name("git_askpass.sh")),
+            "GIT_ASKPASS_USERNAME": "x-access-token",
+            "GIT_ASKPASS_PASSWORD": token,
+            "GIT_TERMINAL_PROMPT": "0",
+        })
+    return env
 
 
 def ensure_repo_clone():
     import subprocess
     try:
-        repo_url, source = _resolve_repo_url()
+        repo_url, source, token = _resolve_repo_auth()
         git_dir = REPO_DIR / ".git"
         if git_dir.exists():
-            log.info(f"[Repo] Pulling latest (auth={source})...")
-            # Refresh remote so a rotated vault token takes effect immediately.
+            log.info(f"[Repo] Pulling latest {REPO_SCOPE.org}/{REPO_SCOPE.repo} (auth={source})...")
+            # Keep the persisted remote token-free. Auth is supplied only to
+            # this git process through GIT_ASKPASS so PATs are not written to
+            # .git/config and can rotate immediately.
             subprocess.run(
                 ["git", "remote", "set-url", "origin", repo_url],
-                cwd=str(REPO_DIR), timeout=10, capture_output=True,
+                cwd=str(REPO_DIR), timeout=10, capture_output=True, check=True,
             )
             subprocess.run(
                 ["git", "pull", "--ff-only"],
-                cwd=str(REPO_DIR), timeout=30, capture_output=True,
+                cwd=str(REPO_DIR), timeout=30, capture_output=True, check=True, env=_git_env(token),
             )
             log.info("[Repo] Updated.")
         else:
-            log.info(f"[Repo] Cloning repository (auth={source})...")
+            log.info(f"[Repo] Cloning {REPO_SCOPE.org}/{REPO_SCOPE.repo} (auth={source})...")
             REPO_DIR.mkdir(parents=True, exist_ok=True)
             subprocess.run(
                 ["git", "clone", "--depth", "50", repo_url, str(REPO_DIR)],
-                timeout=120, capture_output=True,
+                timeout=120, capture_output=True, check=True, env=_git_env(token),
             )
             log.info(f"[Repo] Cloned to {REPO_DIR} (auth={source})")
     except Exception as e:
@@ -812,7 +848,20 @@ async def require_auth(request: Request):
 # ── Health Check ─────────────────────────────
 @app.get("/health")
 async def health():
-    health_data = {"status": "ok", "service": "eclaw-claude-cli-proxy", "claude_cli": "unknown"}
+    health_data = {
+        "status": "ok",
+        "service": "eclaw-claude-cli-proxy",
+        "claude_cli": "unknown",
+        "repo": {
+            "hostPath": REPO_SCOPE.host_path if REPO_SCOPE else REPO_GIT_HOST_PATH,
+            "org": REPO_SCOPE.org if REPO_SCOPE else None,
+            "allowedOrgs": REPO_ALLOWED_ORGS or (REPO_SCOPE.org if REPO_SCOPE else None),
+            "requireAuth": REPO_REQUIRE_AUTH,
+            "globalVaultFallback": EVAULT_ALLOW_GLOBAL_GITHUB_TOKEN,
+            "legacyTokenKeys": list(LEGACY_TOKEN_KEYS),
+            "scopeError": REPO_SCOPE_ERROR or None,
+        },
+    }
     try:
         proc = await asyncio.create_subprocess_exec(
             CLAUDE_BIN, "--version",
