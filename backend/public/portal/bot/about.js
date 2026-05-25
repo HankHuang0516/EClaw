@@ -3,16 +3,27 @@
 
     const root = document.getElementById('ba-root');
     const params = new URLSearchParams(window.location.search);
-    let entityId = parseInt(params.get('entityId'), 10);
+
+    // entityId 0 is a real platform case (free-bot), so reject only when not a
+    // non-negative integer. Normalize invalid/missing to null.
+    function validEid(v) {
+        return Number.isInteger(v) && v >= 0;
+    }
+    function normalizeEid(raw) {
+        const n = parseInt(raw, 10);
+        return validEid(n) ? n : null;
+    }
+
+    let entityId = normalizeEid(params.get('entityId'));
     const publicCode = params.get('publicCode');
 
     // Pretty URL fallback: /portal/bot/:entityId/about → infer entityId from path
-    if (!entityId) {
+    if (entityId === null) {
         const m = window.location.pathname.match(/\/portal\/bot\/(\d+)\/about\/?$/);
-        if (m) entityId = parseInt(m[1], 10);
+        if (m) entityId = normalizeEid(m[1]);
     }
 
-    if (!entityId && !publicCode) {
+    if (entityId === null && !publicCode) {
         renderEmpty('No bot selected. Try ?entityId=2 or ?publicCode=3xa3h4.');
         return;
     }
@@ -32,7 +43,7 @@
     }
 
     async function loadBackstory(eid) {
-        if (!eid) return null;
+        if (!validEid(eid)) return null;
         try {
             const r = await fetch(`/portal/bot/backstories/${eid}.json`, { credentials: 'omit' });
             if (!r.ok) return null;
@@ -55,13 +66,14 @@
     }
 
     function render(backstory, plaza) {
+        const eidLabel = entityId !== null ? String(entityId) : (publicCode || '');
         if (!backstory && !plaza) {
-            renderEmpty(`Bot ${entityId || publicCode} has no published backstory yet.`);
+            renderEmpty(`Bot ${eidLabel} has no published backstory yet.`);
             return;
         }
         const b = backstory || {};
         const p = plaza || {};
-        const name = b.displayName || p.name || `Bot ${entityId || ''}`;
+        const name = b.displayName || p.name || (entityId !== null ? `Bot ${entityId}` : 'Bot');
         const callsign = b.callsign || p.character || '';
         const avatarUrl = p.avatar || '';
         const initial = (callsign || name || '?').slice(0, 2).toUpperCase();
@@ -127,7 +139,7 @@
                 <div class="ba-avatar">${avatarUrl ? `<img src="${esc(avatarUrl)}" alt="">` : esc(initial)}</div>
                 <div>
                     <h1 class="ba-name">${esc(name)}</h1>
-                    ${callsign ? `<div class="ba-callsign">${esc(callsign)}${entityId ? ` · #${entityId}` : ''}</div>` : (entityId ? `<div class="ba-callsign">#${entityId}</div>` : '')}
+                    ${callsign ? `<div class="ba-callsign">${esc(callsign)}${entityId !== null ? ` · #${entityId}` : ''}</div>` : (entityId !== null ? `<div class="ba-callsign">#${entityId}</div>` : '')}
                 </div>
             </div>
             ${tagline ? `<p class="ba-tagline">${esc(tagline)}</p>` : ''}
