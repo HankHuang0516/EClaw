@@ -905969,6 +905969,15 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_per_entity_throttle_label": "🅰️ 內容督促：同一實體一個間隔最多 1 張",
+        "kanban_nudge_per_entity_section_label": "依實體覆寫",
+        "kanban_nudge_per_entity_section_desc": "為特定實體自訂間隔、欄位與節流。批次大小與優先順序模式維持裝置全域設定。",
+        "kanban_nudge_per_entity_pick_placeholder": "— 選擇一個實體 —",
+        "kanban_nudge_per_entity_clear": "重設為裝置預設值",
+        "kanban_nudge_per_entity_hint_prefix": "切換欄位，以覆寫此實體的裝置預設值。",
+        "kanban_nudge_per_entity_override_interval": "覆寫間隔",
+        "kanban_nudge_per_entity_override_statuses": "覆寫欄位",
+        "kanban_nudge_per_entity_override_throttle": "覆寫節流",
+        "kanban_nudge_per_entity_throttle_short": "將此實體限制為每個間隔最多 1 次督促",
 
 
 
@@ -1077644,6 +1077653,7 @@ const TRANSLATIONS = {
 
 
         "kb_funnel_search": "搜尋…",
+        "kb_funnel_tag": "標籤…",
 
 
 
@@ -1080333,6 +1080343,7 @@ const TRANSLATIONS = {
 
         "kb_label_requires_screenshot": "需截圖審查（完成時附截圖才可推進 review/done）",
         "kb_label_gated": "Launch-gate（發布閘）——開啟時，L1/L2/L3 自動升級跳过此卡；卡片離開發布就緒後自動解除",
+        "kb_gate_backlog_only_hint": "發布閘（Launch-gate）僅適用於待辦積壓卡片",
 
 
 
