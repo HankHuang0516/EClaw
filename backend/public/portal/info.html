@@ -56,6 +56,7 @@
             <button class="info-tab" data-info-tab="channel-plugins" data-i18n="info_tab_channel_plugins">🔌 Channel Plugins</button>
             <button class="info-tab" data-info-tab="faq" data-i18n="info_tab_faq">❓ FAQ</button>
             <button class="info-tab" data-info-tab="release-notes" data-i18n="info_tab_release_notes">📋 Releases</button>
+            <button class="info-tab" data-info-tab="boundaries" data-i18n="info_tab_boundaries">🛡️ Bot Boundaries</button>
             <button class="info-tab" onclick="window.location.href='roadmap.html'" data-i18n="info_tab_roadmap">🗺️ Roadmap</button>
         </div>
 
@@ -4858,6 +4859,85 @@ platforms:
                 <div style="text-align:center;padding:40px;color:var(--text-secondary);" data-i18n="rn_loading">Loading release notes...</div>
             </div>
         </div><!-- /panel-release-notes -->
+
+
+        <!-- ══════════════════════════════════════════════════
+             TAB 7: BOT BOUNDARIES (Trust / Transparency)
+             ══════════════════════════════════════════════════ -->
+        <div class="info-panel" id="panel-boundaries">
+            <div class="bdy-hero">
+                <div class="bdy-hero-title" data-i18n="bdy_hero_title">Where bots say no</div>
+                <div class="bdy-hero-subtitle" data-i18n="bdy_hero_subtitle">EClawbots are autonomous, but they push back in seven specific situations. Each one is a deliberate guardrail, not a quirk — here's exactly what they refuse, why, and how to override when you really need to.</div>
+            </div>
+
+            <div class="bdy-list">
+
+                <div class="bdy-card">
+                    <div class="bdy-card-num">01</div>
+                    <div class="bdy-card-title" data-i18n="bdy_1_title">Vault keys to a rented bot</div>
+                    <div class="bdy-card-quote" data-i18n="bdy_1_quote">"I can't hand a vault key to a rental bot. The rental contract is no-key-disclosure by default — even if the request looks scoped."</div>
+                    <div class="bdy-card-row"><b data-i18n="bdy_label_why">Why:</b> <span data-i18n="bdy_1_why">A rented bot runs in someone else's trust boundary. A leaked key is not the same as a rotated key — once chat history holds it, you have to assume it is exposed forever.</span></div>
+                    <div class="bdy-card-row"><b data-i18n="bdy_label_override">Override:</b> <span data-i18n="bdy_1_override">Bind the bot to your device as owner (not rental). Owner-scope unlocks per-device keys via the device-vars API. There is no whitelist that lets a rented bot read keys.</span></div>
+                </div>
+
+                <div class="bdy-card">
+                    <div class="bdy-card-num">02</div>
+                    <div class="bdy-card-title" data-i18n="bdy_2_title">Destructive ops without a plain-words confirmation</div>
+                    <div class="bdy-card-quote" data-i18n="bdy_2_quote">"That rewrites history / wipes data / closes a shared resource. I want you to confirm in plain words before I run it."</div>
+                    <div class="bdy-card-row"><b data-i18n="bdy_label_why">Why:</b> <span data-i18n="bdy_2_why">The largest class of "oops" tickets comes from destructive commands the bot ran on weak signals (a passing earlier ask, an implied yes). Force pushes, hard resets, dropped tables, rm -rf, killed PIDs, closed branches — all need explicit consent.</span></div>
+                    <div class="bdy-card-row"><b data-i18n="bdy_label_override">Override:</b> <span data-i18n="bdy_2_override">State the action by name ("yes, force push to main", "yes, drop the table"). Once-approval covers the named scope, not future similar actions.</span></div>
+                </div>
+
+                <div class="bdy-card">
+                    <div class="bdy-card-num">03</div>
+                    <div class="bdy-card-title" data-i18n="bdy_3_title">Scope creep on a bug fix</div>
+                    <div class="bdy-card-quote" data-i18n="bdy_3_quote">"I'll fix the bug. The refactor you mentioned is its own thing — let me file a card for it instead of bundling."</div>
+                    <div class="bdy-card-row"><b data-i18n="bdy_label_why">Why:</b> <span data-i18n="bdy_3_why">Bundled diffs hide regressions, inflate review time, and make the rollback path painful. A bug fix should be the smallest diff that fixes the bug.</span></div>
+                    <div class="bdy-card-row"><b data-i18n="bdy_label_override">Override:</b> <span data-i18n="bdy_3_override">Say "bundle the refactor with the fix" explicitly, or file a parent epic that scopes both. Drive-by cleanups need permission, not assumption.</span></div>
+                </div>
+
+                <div class="bdy-card">
+                    <div class="bdy-card-num">04</div>
+                    <div class="bdy-card-title" data-i18n="bdy_4_title">False claims of completion</div>
+                    <div class="bdy-card-quote" data-i18n="bdy_4_quote">"I haven't verified that yet — let me actually run it before I tell you it works."</div>
+                    <div class="bdy-card-row"><b data-i18n="bdy_label_why">Why:</b> <span data-i18n="bdy_4_why">"Shipped" without a merge, "tests pass" without running them, "fixed" without E2E — phantom success burns trust faster than honest failure. Every claim should be backed by evidence the bot ran or read.</span></div>
+                    <div class="bdy-card-row"><b data-i18n="bdy_label_override">Override:</b> <span data-i18n="bdy_4_override">No override. If you want a best-effort unverified patch, ask for it that way — "draft only, don't claim it works" — and the bot will mark the output unverified.</span></div>
+                </div>
+
+                <div class="bdy-card">
+                    <div class="bdy-card-num">05</div>
+                    <div class="bdy-card-title" data-i18n="bdy_5_title">Hook bypasses and quality-gate skips</div>
+                    <div class="bdy-card-quote" data-i18n="bdy_5_quote">"That flag skips pre-commit / sign-off / signing. The gate exists because of a past incident — let me fix what it is catching first."</div>
+                    <div class="bdy-card-row"><b data-i18n="bdy_label_why">Why:</b> <span data-i18n="bdy_5_why">Flags like --no-verify and --no-gpg-sign exist for emergencies, not convenience. Routinely bypassing them removes the alarm system that catches future regressions.</span></div>
+                    <div class="bdy-card-row"><b data-i18n="bdy_label_override">Override:</b> <span data-i18n="bdy_5_override">Provide the reason ("the gate itself is broken and being fixed in PR #N"). Override is per-command, not permanent.</span></div>
+                </div>
+
+                <div class="bdy-card">
+                    <div class="bdy-card-num">06</div>
+                    <div class="bdy-card-title" data-i18n="bdy_6_title">Offensive payloads outside an authorized context</div>
+                    <div class="bdy-card-quote" data-i18n="bdy_6_quote">"That looks like it would target a system you don't own. I'll help if you can ground it in an authorized context — a CTF, your own infra, or a pentesting engagement."</div>
+                    <div class="bdy-card-row"><b data-i18n="bdy_label_why">Why:</b> <span data-i18n="bdy_6_why">Dual-use security tools are fine. The context isn't always — and writing exploits for a system you can't authorize testing on is where defensive becomes offensive.</span></div>
+                    <div class="bdy-card-row"><b data-i18n="bdy_label_override">Override:</b> <span data-i18n="bdy_6_override">Name the engagement, CTF, lab environment, or your own asset clearly. Vague "for research" framing doesn't qualify.</span></div>
+                </div>
+
+                <div class="bdy-card">
+                    <div class="bdy-card-num">07</div>
+                    <div class="bdy-card-title" data-i18n="bdy_7_title">Credentials pasted in chat</div>
+                    <div class="bdy-card-quote" data-i18n="bdy_7_quote">"That looks like a live token. Don't paste credentials in chat — treat the one you just sent as compromised and rotate it before we continue."</div>
+                    <div class="bdy-card-row"><b data-i18n="bdy_label_why">Why:</b> <span data-i18n="bdy_7_why">Chat transcripts are logged, indexed, and synced across devices. A leaked credential does not "unleak" by deleting the message. The only safe state for an exposed token is rotated.</span></div>
+                    <div class="bdy-card-row"><b data-i18n="bdy_label_override">Override:</b> <span data-i18n="bdy_7_override">No override for the leaked token. Rotate it, then use a vault binding to give the bot access without ever sending the value in chat.</span></div>
+                </div>
+
+            </div>
+
+            <div class="bdy-cta">
+                <div class="bdy-cta-text" data-i18n="bdy_cta_text">See a refusal not on this list? It is almost always a special case of one of the seven — open the FAQ for examples, or ping support.</div>
+                <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+                    <button class="btn btn-primary" onclick="switchInfoTab('faq')" data-i18n="bdy_cta_faq">Open FAQ</button>
+                    <a href="index.html" class="btn btn-outline" data-i18n="bdy_cta_back">Back to portal</a>
+                </div>
+            </div>
+        </div><!-- /panel-boundaries -->
 
 
         <!-- ══════════════════════════════════════════════════
