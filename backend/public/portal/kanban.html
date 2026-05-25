@@ -1080,6 +1080,20 @@
             return false;
         }
 
+        const KB_CHAT_MESSAGE_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        function normalizeKanbanChatMessageId(value) {
+            const id = String(value || '').trim().toLowerCase();
+            return KB_CHAT_MESSAGE_ID_RE.test(id) ? id : '';
+        }
+        function extractKanbanChatMessageId(text) {
+            const m = String(text || '').match(/\bhis_([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\b/i);
+            return m ? normalizeKanbanChatMessageId(m[1]) : '';
+        }
+        function getCardChatAnchorMessageId(card) {
+            if (!card) return '';
+            return normalizeKanbanChatMessageId(card.chatAnchorMessageId || card.chat_anchor_message_id);
+        }
+
         // Mention chips and his_ chips rendered by shared MentionRender /
         // HisLinkRender call openMentionProfile() / openHistoryMessage() which
         // live in chat.html. Stub them here so kanban-side clicks don't throw —
@@ -2873,26 +2887,31 @@
             setTimeout(() => { tip.remove(); }, 2700);
         }
 
-        function quoteToChat(source, title, excerpt) {
+        function quoteToChat(source, title, excerpt, opts = {}) {
             const toastMsg = (window.i18n && typeof window.i18n.t === 'function' && window.i18n.t('chip_popover_requoted')) || '已引用 ✓';
+            const messageId = normalizeKanbanChatMessageId(opts.messageId);
+            const quote = { source, title, excerpt: excerpt || '' };
+            if (messageId) quote.messageId = messageId;
             if (window.self !== window.top) {
                 // Workspace split-pane mode: deliver to chat sub-pane via parent relay,
                 // confirm with a source-page floating toast — no force jump.
-                window.parent.postMessage({ type: 'eclaw_quote', source, title, excerpt: excerpt || '' }, window.location.origin);
+                window.parent.postMessage({ type: 'eclaw_quote', ...quote }, window.location.origin);
                 eclawShowFloatToast(toastMsg);
             } else {
                 // Standalone/App WebView: prefer native bottom-tab switch when available.
-                const quote = { source, title, excerpt: excerpt || '' };
                 localStorage.setItem('eclaw_pending_quote', JSON.stringify({ ...quote, ts: Date.now() }));
-                if (eclawNavigateChat({ target: 'quote', quote })) return;
-                window.location.href = '/portal/chat.html';
+                if (eclawNavigateChat({ target: messageId ? 'message' : 'quote', messageId, quote })) return;
+                window.location.href = messageId
+                    ? '/portal/chat.html?messageId=' + encodeURIComponent(messageId)
+                    : '/portal/chat.html';
             }
         }
 
         function quoteKanbanCardToChat() {
+            const card = findCard(openCardId);
             const title = document.getElementById('detailTitle').textContent.trim();
             const meta = document.getElementById('detailMeta').textContent.trim().replace(/\s+/g, ' ').slice(0, 80);
-            quoteToChat('看板卡片', title, meta);
+            quoteToChat('看板卡片', title, meta, { messageId: getCardChatAnchorMessageId(card) });
         }
 
         function quoteCommentToChat(payload) {
@@ -2900,7 +2919,11 @@
             const src = payload.src || '留言';
             const sender = payload.sender || '';
             const text = (payload.text || '').replace(/\s+/g, ' ').slice(0, 80);
-            quoteToChat(src, sender, text);
+            const card = findCard(openCardId);
+            const messageId = normalizeKanbanChatMessageId(payload.messageId)
+                || extractKanbanChatMessageId(payload.text || '')
+                || getCardChatAnchorMessageId(card);
+            quoteToChat(src, sender, text, { messageId });
         }
 
         // ── Inline Schedule Panel (detail modal tab) ──
@@ -3100,7 +3123,8 @@
                     const name = typeof getEntityDisplayName === 'function' ? getEntityDisplayName(fromId) : '#'+(fromId??'?');
                     const avatarHtml = typeof renderAvatarHtml === 'function' ? renderAvatarHtml(avatar, 16, fromId) : avatar;
                     const cardTitle = (findCard(openCardId) || {}).title || '';
-                    const pinPayload = JSON.stringify({ src: '留言 · ' + cardTitle, sender: name, text: c.text || '' })
+                    const messageId = extractKanbanChatMessageId(c.text || '') || getCardChatAnchorMessageId(card);
+                    const pinPayload = JSON.stringify({ src: '留言 · ' + cardTitle, sender: name, text: c.text || '', messageId })
                         .replace(/'/g, '&#39;');
                     return `<div class="kb-comment ${isSent ? 'sent' : 'received'}" data-comment-id="${escapeHtml(cid)}">
                         <div class="kb-comment-source"><span class="comment-avatar">${avatarHtml}</span> ${escapeHtml(name)}</div>

@@ -3496,8 +3496,9 @@
                 const pq = localStorage.getItem('eclaw_pending_quote');
                 if (pq) {
                     localStorage.removeItem('eclaw_pending_quote');
-                    const { source, title, excerpt, prefillInput, ts } = JSON.parse(pq);
+                    const { source, title, excerpt, prefillInput, messageId, ts } = JSON.parse(pq);
                     if (Date.now() - ts < 120000) { // within 2 minutes
+                        await openChatMessageDeepLink(messageId, { showMissingToast: true, scroll: true });
                         quoteToChat(source, title, excerpt || '');
                         // prefillInput: drop a chip token (or any text) directly
                         // into the input so users can press send without typing.
@@ -3548,10 +3549,11 @@
             } catch(e) {}
 
             // Cross-iframe quote from workspace.html relay — only accepted from same origin
-            window.addEventListener('message', (e) => {
+            window.addEventListener('message', async (e) => {
                 if (e.origin !== window.location.origin) return;
                 if (!e.data || e.data.type !== 'eclaw_quote') return;
-                const { source, title, excerpt, prefillInput } = e.data;
+                const { source, title, excerpt, prefillInput, messageId } = e.data;
+                await openChatMessageDeepLink(messageId, { showMissingToast: true, scroll: true });
                 quoteToChat(source, title, excerpt || '');
                 if (prefillInput) {
                     const inp = document.getElementById('messageInput');
@@ -4555,6 +4557,20 @@
                     });
                 }
             });
+        }
+
+        async function openChatMessageDeepLink(messageId, { showMissingToast = true, scroll = true } = {}) {
+            const id = normalizeChatMessageId(messageId);
+            if (!id) return false;
+            try {
+                const url = new URL(window.location.href);
+                url.searchParams.set('messageId', id);
+                url.searchParams.delete('msg');
+                url.searchParams.delete('his');
+                window.history.replaceState({}, '', url.toString());
+            } catch (_) {}
+            await handleChatMessageDeepLink({ showMissingToast, scroll });
+            return true;
         }
 
         window.addEventListener('popstate', () => {
@@ -7679,19 +7695,17 @@
         window.eclawHandleNativeNavigateIntent = async function(intent) {
             if (!intent || intent.targetTab !== 'chat') return false;
             try {
-                if (intent.quote && (intent.quote.title || intent.quote.excerpt)) {
-                    quoteToChat(intent.quote.source || '引用', intent.quote.title || '', intent.quote.excerpt || '');
-                    return true;
-                }
-                const msgId = intent.messageId || (intent.target === 'message' ? intent.threadId : '');
+                const quote = intent.quote || {};
+                const msgId = intent.messageId || quote.messageId || (intent.target === 'message' ? intent.threadId : '');
+                let handled = false;
                 if (msgId) {
-                    const url = new URL(window.location.href);
-                    url.searchParams.set('msg', msgId);
-                    url.searchParams.delete('his');
-                    window.history.replaceState({}, '', url.toString());
-                    await handleChatMessageDeepLink({ showMissingToast: true, scroll: true });
-                    return true;
+                    handled = await openChatMessageDeepLink(msgId, { showMissingToast: true, scroll: true });
                 }
+                if (quote && (quote.title || quote.excerpt)) {
+                    quoteToChat(quote.source || '引用', quote.title || '', quote.excerpt || '');
+                    handled = true;
+                }
+                if (handled) return true;
             } catch (e) {
                 console.warn('[Chat] native navigate intent failed:', e);
             }
