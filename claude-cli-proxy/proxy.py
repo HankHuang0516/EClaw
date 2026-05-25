@@ -42,6 +42,7 @@ from repo_auth import (
     DEFAULT_REPO_HOST_PATH,
     LEGACY_TOKEN_KEYS,
     RepoScopeError,
+    build_git_auth_env,
     env_bool,
     token_from_vars,
     token_key_candidates,
@@ -75,6 +76,7 @@ REPO_ALLOWED_ORGS = os.getenv("REPO_ALLOWED_ORGS", "")
 REPO_REQUIRE_AUTH = env_bool(os.getenv("REPO_REQUIRE_AUTH"), False)
 EVAULT_GITHUB_TOKEN_KEY = os.getenv("EVAULT_GITHUB_TOKEN_KEY", "")
 EVAULT_ALLOW_GLOBAL_GITHUB_TOKEN = env_bool(os.getenv("EVAULT_ALLOW_GLOBAL_GITHUB_TOKEN"), True)
+REPO_EXPORT_AUTH_TO_CLI = env_bool(os.getenv("REPO_EXPORT_AUTH_TO_CLI"), True)
 try:
     REPO_SCOPE = validate_repo_scope(REPO_GIT_HOST_PATH, REPO_ALLOWED_ORGS)
     REPO_SCOPE_ERROR = ""
@@ -689,15 +691,25 @@ def _resolve_repo_auth() -> tuple:
     return (REPO_SCOPE.url, "anonymous", None)
 
 
-def _git_env(token: Optional[str]) -> dict:
-    env = {**os.environ}
-    if token:
-        env.update({
-            "GIT_ASKPASS": str(Path(__file__).with_name("git_askpass.sh")),
-            "GIT_ASKPASS_USERNAME": "x-access-token",
-            "GIT_ASKPASS_PASSWORD": token,
-            "GIT_TERMINAL_PROMPT": "0",
-        })
+def _git_env(token: Optional[str], base_env: Optional[dict] = None, expose_cli_token: bool = False) -> dict:
+    return build_git_auth_env(
+        base_env or os.environ,
+        token,
+        str(Path(__file__).with_name("git_askpass.sh")),
+        expose_cli_token=expose_cli_token,
+    )
+
+
+def _repo_cli_env(base_env: dict) -> dict:
+    if not REPO_EXPORT_AUTH_TO_CLI:
+        return _git_env(None, base_env)
+    try:
+        _, source, token = _resolve_repo_auth()
+    except Exception as e:
+        log.warning(f"[Repo] CLI git auth unavailable: {str(e)[:200]}")
+        return _git_env(None, base_env)
+    env = _git_env(token, base_env, expose_cli_token=bool(token))
+    env["ECLAW_REPO_AUTH_SOURCE"] = source
     return env
 
 
@@ -857,6 +869,7 @@ async def health():
             "org": REPO_SCOPE.org if REPO_SCOPE else None,
             "allowedOrgs": REPO_ALLOWED_ORGS or (REPO_SCOPE.org if REPO_SCOPE else None),
             "requireAuth": REPO_REQUIRE_AUTH,
+            "exportAuthToCli": REPO_EXPORT_AUTH_TO_CLI,
             "globalVaultFallback": EVAULT_ALLOW_GLOBAL_GITHUB_TOKEN,
             "legacyTokenKeys": list(LEGACY_TOKEN_KEYS),
             "scopeError": REPO_SCOPE_ERROR or None,
@@ -1032,6 +1045,8 @@ async def chat(req: ChatRequest, request: Request):
 
     child_cwd = str(REPO_DIR) if REPO_DIR.exists() else str(Path(__file__).parent)
     child_env = {**os.environ, "HOME": os.environ.get("HOME", "/root"), "CLAUDE_DANGEROUSLY_SKIP_PERMISSIONS": "1"}
+    if REPO_DIR.exists():
+        child_env = _repo_cli_env(child_env)
 
     # ── Streaming mode: use async generator + StreamingResponse ──
     if want_stream:
