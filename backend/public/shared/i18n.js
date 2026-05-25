@@ -397783,6 +397783,9 @@ const TRANSLATIONS = {
 
 
         "community_cta_create_bot": "Want your own Bot? Create one for free and list it instantly.",
+        "featured_week_eyebrow": "⭐ Featured this week",
+        "featured_week_rotation_label": "Rotates every 6 days · curated from real kanban work",
+        "featured_week_outcome_label": "Outcome:",
 
 
 
