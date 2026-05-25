@@ -6,9 +6,10 @@ unit-tested without importing the FastAPI proxy app.
 
 from __future__ import annotations
 
+import hashlib
 import re
 from dataclasses import dataclass
-from typing import Mapping, Optional, Sequence
+from typing import Callable, Mapping, Optional, Sequence
 
 
 DEFAULT_REPO_HOST_PATH = "github.com/HankHuang0516/realbot.git"
@@ -19,6 +20,10 @@ class RepoScopeError(ValueError):
     """Raised when a configured repo is outside the allowed org scope."""
 
 
+class RepoAuthError(RuntimeError):
+    """Raised when per-request auth resolution fails (vault miss, no creds, etc)."""
+
+
 @dataclass(frozen=True)
 class RepoScope:
     host: str
@@ -26,6 +31,20 @@ class RepoScope:
     repo: str
     host_path: str
     url: str
+
+
+@dataclass(frozen=True)
+class ResolvedRepoAuth:
+    """Outcome of resolving auth for one request — token + source provenance.
+
+    `source` is one of: 'vault:<key>', 'env', 'anonymous'. `caller_id` is an
+    opaque tenant identifier safe to use as a clone-cache key (never raw creds).
+    """
+    scope: RepoScope
+    url: str
+    token: Optional[str]
+    source: str
+    caller_id: str
 
 
 def env_bool(value: Optional[str], default: bool = False) -> bool:
@@ -121,3 +140,74 @@ def build_git_auth_env(
         env["GH_TOKEN"] = token
         env["GITHUB_TOKEN"] = token
     return env
+
+
+def caller_id_for(device_id: Optional[str], host_path: str) -> str:
+    """Stable, opaque tenant key for clone-cache lookups.
+
+    SHA-256 over (deviceId, host_path) so caller secrets never leak into paths
+    or logs. Empty deviceId → 'anonymous-<hostpath-hash>' so env-mode boots
+    still get a single cache entry without colliding with real tenants.
+    """
+    if not device_id:
+        digest = hashlib.sha256(host_path.encode("utf-8")).hexdigest()[:16]
+        return f"anonymous-{digest}"
+    payload = f"{device_id}|{host_path}".encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()[:16]
+
+
+# Type alias for the vault-fetch callback so resolve_per_request_auth stays
+# dependency-free (the real fetcher lives in proxy.py with urllib).
+VaultFetcher = Callable[[str, str, str, Sequence[str]], "tuple[Optional[str], Optional[str]]"]
+
+
+def resolve_per_request_auth(
+    *,
+    repo_host_path: str,
+    allowed_orgs: str,
+    caller_device_id: Optional[str],
+    caller_bot_secret: Optional[str],
+    vault_key: str,
+    allow_global_vault: bool,
+    require_auth: bool,
+    env_token: Optional[str],
+    vault_fetcher: Optional[VaultFetcher],
+) -> ResolvedRepoAuth:
+    """Resolve auth for a single request without touching module globals.
+
+    Resolution order:
+      1. Per-request vault — caller's deviceId/botSecret + their vault_key
+      2. Env token — legacy GITHUB_TOKEN fallback (only if no caller creds)
+      3. Anonymous — only if require_auth is False
+
+    Raises RepoScopeError on out-of-scope repo, RepoAuthError when require_auth
+    is set and no token can be sourced.
+    """
+    scope = validate_repo_scope(repo_host_path, allowed_orgs)
+    caller_id = caller_id_for(caller_device_id, scope.host_path)
+
+    if caller_device_id and caller_bot_secret and vault_fetcher is not None:
+        keys = token_key_candidates(scope.org, explicit_key=vault_key, allow_global=allow_global_vault)
+        token, used_key = vault_fetcher(caller_device_id, caller_bot_secret, scope.org, keys)
+        if token:
+            return ResolvedRepoAuth(
+                scope=scope, url=scope.url, token=token,
+                source=f"vault:{used_key}", caller_id=caller_id,
+            )
+
+    if env_token:
+        return ResolvedRepoAuth(
+            scope=scope, url=scope.url, token=env_token,
+            source="env", caller_id=caller_id,
+        )
+
+    if require_auth:
+        raise RepoAuthError(
+            f"repo auth required for {scope.org}/{scope.repo}, "
+            "but no caller vault token and no env fallback"
+        )
+
+    return ResolvedRepoAuth(
+        scope=scope, url=scope.url, token=None,
+        source="anonymous", caller_id=caller_id,
+    )
