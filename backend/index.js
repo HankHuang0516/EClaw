@@ -775,6 +775,14 @@ app.get(/^\/portal\/[^\/]+\.html$/, (req, res, next) => {
     });
 });
 
+// Pretty URL: /portal/bot/:entityId/about → serve about.html (JS reads entityId from path)
+app.get('/portal/bot/:entityId/about', (req, res, next) => {
+    const eid = parseInt(req.params.entityId, 10);
+    if (!Number.isInteger(eid) || eid < 0) return next();
+    res.set('Cache-Control', 'no-cache');
+    res.sendFile(path.join(__dirname, 'public/portal/bot/about.html'));
+});
+
 app.use('/portal', express.static(path.join(__dirname, 'public/portal'), {
     etag: true,
     lastModified: true,
