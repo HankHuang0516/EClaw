@@ -2944,6 +2944,223 @@ app.get('/api/debug/info-pricing-slide', async (req, res) => {
     }
 });
 
+// Temporary diagnostic endpoint for Codex channel A2A loop suppression.
+// It reports message classes, route-source shapes, and guard config only; no raw
+// chat text, secrets, tokens, webhook URLs, or callback payloads are returned.
+app.get('/api/debug/a2a-loop-guard', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query || {};
+    const timestamp = new Date().toISOString();
+    const classifyMessage = (message) => {
+        if (!message || typeof message !== 'string') return 'empty';
+        const text = message.trim();
+        if (/^Codex bridge error\b/i.test(text)) return 'codex_bridge_error';
+        if (/^Codex status heartbeat\b/i.test(text)) return 'codex_status_heartbeat';
+        if (/^Codex watchdog\b/i.test(text)) return 'codex_watchdog';
+        if (/^Codex bridge status\b/i.test(text)) return 'codex_bridge_status';
+        if (/^EClaw progress update\b/i.test(text)) return 'eclaw_progress_update';
+        if (/^\[SYSTEM:/i.test(text)) return 'system_control';
+        return 'ordinary';
+    };
+    const classifySource = (source) => {
+        if (!source) return '(empty)';
+        if (source.startsWith('xdevice:')) return 'xdevice';
+        if (source.startsWith('entity:')) return 'entity-route';
+        return 'local-or-channel';
+    };
+
+    try {
+        if (!deviceId || !deviceSecret) {
+            return res.status(401).json({ success: false, bug: 'a2a-loop-guard', error: 'deviceId and deviceSecret required', timestamp });
+        }
+
+        const memDevice = devices[deviceId];
+        const pool = db._getPool ? db._getPool() : authModule.pool;
+        const dbDevice = pool
+            ? await pool.query('SELECT device_secret FROM devices WHERE device_id = $1', [deviceId])
+            : { rows: [] };
+        const dbDeviceRow = dbDevice.rows[0] || null;
+        const memSecretOk = !!(memDevice && memDevice.deviceSecret && safeEqual(memDevice.deviceSecret, deviceSecret));
+        const dbSecretOk = !!(dbDeviceRow && dbDeviceRow.device_secret && safeEqual(dbDeviceRow.device_secret, deviceSecret));
+        if (!memSecretOk && !dbSecretOk) {
+            return res.status(403).json({ success: false, bug: 'a2a-loop-guard', error: 'Invalid credentials', timestamp });
+        }
+
+        const [chatRows, logRows, channelRows] = pool ? await Promise.all([
+            pool.query(
+                `SELECT id, entity_id, source, is_from_bot, is_from_user, LENGTH(COALESCE(text, '')) AS text_length,
+                        CASE
+                            WHEN text ~* '^Codex bridge error' THEN 'codex_bridge_error'
+                            WHEN text ~* '^Codex status heartbeat' THEN 'codex_status_heartbeat'
+                            WHEN text ~* '^Codex watchdog' THEN 'codex_watchdog'
+                            WHEN text ~* '^Codex bridge status' THEN 'codex_bridge_status'
+                            WHEN text ~* '^EClaw progress update' THEN 'eclaw_progress_update'
+                            WHEN text ~* '^\\[SYSTEM:' THEN 'system_control'
+                            ELSE 'ordinary'
+                        END AS message_class,
+                        created_at
+                 FROM chat_messages
+                 WHERE device_id = $1
+                   AND (
+                        source LIKE 'entity:%->%'
+                        OR source LIKE 'xdevice:%->%'
+                        OR text ~* '^(Codex bridge error|Codex status heartbeat|Codex watchdog|Codex bridge status|EClaw progress update|\\[SYSTEM:)'
+                   )
+                 ORDER BY created_at DESC
+                 LIMIT 100`,
+                [deviceId]
+            ).catch(err => ({ rows: [], error: err.message })),
+            pool.query(
+                `SELECT level, category, entity_id,
+                        CASE
+                            WHEN message ~* '^Codex bridge error' THEN 'codex_bridge_error'
+                            WHEN message ~* '^Codex status heartbeat' THEN 'codex_status_heartbeat'
+                            WHEN message ~* '^Codex watchdog' THEN 'codex_watchdog'
+                            WHEN message ~* '^Codex bridge status' THEN 'codex_bridge_status'
+                            WHEN message ~* '^EClaw progress update' THEN 'eclaw_progress_update'
+                            WHEN message ~* '^\\[SYSTEM:' THEN 'system_control'
+                            ELSE 'ordinary'
+                        END AS message_class,
+                        created_at
+                 FROM server_logs
+                 WHERE device_id = $1
+                   AND (
+                        category IN ('cross_speak_push', 'transform', 'chat_save', 'channel')
+                        OR message ~* '^(Codex bridge error|Codex status heartbeat|Codex watchdog|Codex bridge status|EClaw progress update|\\[SYSTEM:)'
+                   )
+                 ORDER BY created_at DESC
+                 LIMIT 100`,
+                [deviceId]
+            ).catch(err => ({ rows: [], error: err.message })),
+            pool.query(
+                `SELECT id, status, callback_url, updated_at
+                 FROM channel_accounts
+                 WHERE device_id = $1
+                 ORDER BY updated_at DESC NULLS LAST, id ASC`,
+                [deviceId]
+            ).catch(err => ({ rows: [], error: err.message })),
+        ]) : [{ rows: [] }, { rows: [] }, { rows: [] }];
+
+        const memEntities = memDevice?.entities || {};
+        const memoryEntities = Object.keys(memEntities).map(Number).sort((a, b) => a - b).map(id => {
+            const entity = memEntities[id] || {};
+            const queue = Array.isArray(entity.messageQueue) ? entity.messageQueue : [];
+            const crossQueue = queue.filter(m => m && m.crossDevice);
+            const queuedMessageClasses = queue.reduce((acc, item) => {
+                const cls = classifyMessage(item?.text || item?.message || '');
+                acc[cls] = (acc[cls] || 0) + 1;
+                return acc;
+            }, {});
+            return {
+                entityId: id,
+                isBound: !!entity.isBound,
+                state: entity.state || null,
+                bindingType: entity.bindingType || null,
+                publicCodePresent: !!entity.publicCode,
+                queueLength: queue.length,
+                crossQueueLength: crossQueue.length,
+                latestCrossFromShape: crossQueue.length ? classifySource(crossQueue[crossQueue.length - 1]?.from || '') : null,
+                queuedMessageClasses,
+            };
+        });
+
+        const chatByClass = {};
+        const chatBySourceShape = {};
+        for (const row of chatRows.rows) {
+            const cls = row.message_class || 'unknown';
+            chatByClass[cls] = (chatByClass[cls] || 0) + 1;
+            const shape = classifySource(row.source || '');
+            chatBySourceShape[shape] = (chatBySourceShape[shape] || 0) + 1;
+        }
+
+        const logsByClass = {};
+        const logsByCategory = {};
+        for (const row of logRows.rows) {
+            const cls = row.message_class || 'unknown';
+            logsByClass[cls] = (logsByClass[cls] || 0) + 1;
+            const category = row.category || '(empty)';
+            logsByCategory[category] = (logsByCategory[category] || 0) + 1;
+        }
+
+        res.json({
+            success: true,
+            bug: 'a2a-loop-guard',
+            diagnostics: {
+                server: {
+                    build: SERVER_BUILD_TAG,
+                    startedAt: SERVER_STARTED_AT.toISOString(),
+                    uptimeSec: Math.round(process.uptime()),
+                },
+                auth: {
+                    memSecretOk,
+                    dbSecretOk,
+                    requestUserDeviceId: req.user?.deviceId || null,
+                    requestUserId: req.user?.userId || null,
+                },
+                guardConfig: {
+                    acceptsSuppressFlags: ['suppressA2A', 'suppress_a2a', 'noA2A', 'no_a2a'],
+                    operationalClasses: [
+                        'codex_bridge_error',
+                        'codex_status_heartbeat',
+                        'codex_watchdog',
+                        'codex_bridge_status',
+                        'eclaw_progress_update',
+                        'system_control',
+                    ],
+                    suppressesCrossDeviceRoute: true,
+                    suppressesSpeakToBroadcast: true,
+                    suppressesOrgForward: true,
+                    suppressesKanbanAutoReview: true,
+                },
+                memoryEntities,
+                recentChat: {
+                    returned: chatRows.rows.length,
+                    queryError: chatRows.error || null,
+                    byClass: chatByClass,
+                    bySourceShape: chatBySourceShape,
+                    rows: chatRows.rows.map(row => ({
+                        id: row.id,
+                        entityId: row.entity_id,
+                        sourceShape: classifySource(row.source || ''),
+                        messageClass: row.message_class,
+                        messageLength: Number(row.text_length || 0),
+                        isFromBot: !!row.is_from_bot,
+                        isFromUser: !!row.is_from_user,
+                        createdAt: row.created_at,
+                    })),
+                },
+                recentServerLogs: {
+                    returned: logRows.rows.length,
+                    queryError: logRows.error || null,
+                    byClass: logsByClass,
+                    byCategory: logsByCategory,
+                    rows: logRows.rows.map(row => ({
+                        level: row.level,
+                        category: row.category,
+                        entityId: row.entity_id,
+                        messageClass: row.message_class,
+                        createdAt: row.created_at,
+                    })),
+                },
+                channelAccounts: {
+                    returned: channelRows.rows.length,
+                    queryError: channelRows.error || null,
+                    rows: channelRows.rows.map(row => ({
+                        id: row.id,
+                        status: row.status,
+                        hasCallback: !!row.callback_url,
+                        callbackHost: row.callback_url ? (() => { try { return new URL(row.callback_url).host; } catch (_) { return 'invalid-url'; } })() : null,
+                        updatedAt: row.updated_at,
+                    })),
+                },
+            },
+            timestamp,
+        });
+    } catch (err) {
+        console.error('[Debug a2a-loop-guard] failed:', err);
+        res.status(500).json({ success: false, bug: 'a2a-loop-guard', error: err.message, timestamp });
+    }
+});
+
 // Wire up pending message flush on email verification
 authModule.setOnEmailVerified(async (deviceId) => {
     console.log(`[PendingFlush] onEmailVerified triggered for device ${deviceId}`);
