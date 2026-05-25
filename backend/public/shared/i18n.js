@@ -7740240,7 +7740240,7 @@ const TRANSLATIONS = {
         "rm_h4_step1_copy": "تم تعيين البطاقة عبر EClaw A2A مع نطاق الريبو وإخراج PR المتوقع وتسليم المراجعة.",
         "rm_h4_step1_bubble": "H4 دليل البوابة: قم بتحديث خريطة الطريق وافتح PR.",
         "rm_h4_step2_label": "تسليم",
-        "rm_h4_step2_title": "يوصّل الخصم PR",
+        "rm_h4_step2_title": "هيرميس يوصل PR",
         "rm_h4_step2_copy": "Hermes ينشئ الفرع/ commit/push ويعيد عنوان URL للمراجعة.",
         "rm_h4_step2_bubble": "PR جاهز: دليل خريطة الطريق + بطاقة القائمة المضافة.",
         "rm_h4_step3_label": "دمج",
