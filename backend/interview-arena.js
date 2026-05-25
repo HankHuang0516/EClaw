@@ -25,7 +25,7 @@ const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot',
 });
 
-const EXAM_TTL_MS = 3 * 60_000; // 3 minutes (matches UI copy)
+const _EXAM_TTL_MS = 3 * 60_000; // 3 minutes (matches UI copy)
 const MAX_ACTIONS_PER_SESSION = 50;
 
 const EXAM_STATUS = Object.freeze({ WAITING: 'waiting', ACTIVE: 'active', COMPLETED: 'completed' });
@@ -1162,7 +1162,7 @@ module.exports = function arenaFactory({ serverLog, io, devices } = {}) {
             const examId = newExamId();
             const examToken = generateToken(12);
             // Clock-start fix: leave expires_at NULL at creation. The 3-min
-            // TTL budget is still EXAM_TTL_MS but the timer itself is armed
+            // TTL budget is still _EXAM_TTL_MS but the timer itself is armed
             // atomically on the bot's first GET /arena/test/:id (see
             // backend/index.js — first_fetched_at bump). Channel delivery
             // latency (30-60s) no longer eats the bot's solving window,

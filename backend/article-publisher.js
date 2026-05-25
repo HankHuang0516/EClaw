@@ -202,6 +202,10 @@ function rateLimitInfo(platform) {
     return { rateLimit: { maxPerDay: limit.maxPerDay, usedToday: used, remaining: Math.max(0, limit.maxPerDay - used) } };
 }
 
+function allNonEmptyStrings(values) {
+    return values.every(value => typeof value === 'string' && value.length > 0);
+}
+
 // ============================================
 // REFERRAL CTA FOOTER — appended to long-form article publishes (slice 4/4)
 // Generic link only (no per-device invite code) since handlers don't always have deviceId context.
@@ -402,10 +406,8 @@ function wpExpiryWarning() {
 async function resolveBloggerCreds(deviceId) {
     if (deviceId && typeof _getDeviceVar === 'function') {
         try {
-            const ci = await _getDeviceVar(deviceId, 'BLOGGER_CLIENT_ID');
-            const cs = await _getDeviceVar(deviceId, 'BLOGGER_CLIENT_SECRET');
-            if (typeof ci === 'string' && ci.length > 0
-                && typeof cs === 'string' && cs.length > 0) {
+            const [ci, cs] = await Promise.all(BLOGGER_CRED_KEYS.map(k => _getDeviceVar(deviceId, k)));
+            if (allNonEmptyStrings([ci, cs])) {
                 return { clientId: ci, clientSecret: cs, source: 'vault' };
             }
         } catch (_) { /* fall through to env */ }
@@ -1615,10 +1617,8 @@ router.delete('/qiita/post/:postId', express.json(), async (req, res) => {
 async function resolveWechatCreds(deviceId) {
     if (deviceId && typeof _getDeviceVar === 'function') {
         try {
-            const ai = await _getDeviceVar(deviceId, 'WECHAT_APP_ID');
-            const as = await _getDeviceVar(deviceId, 'WECHAT_APP_SECRET');
-            if (typeof ai === 'string' && ai.length > 0
-                && typeof as === 'string' && as.length > 0) {
+            const [ai, as] = await Promise.all(WECHAT_CRED_KEYS.map(k => _getDeviceVar(deviceId, k)));
+            if (allNonEmptyStrings([ai, as])) {
                 return { appId: ai, appSecret: as, source: 'vault' };
             }
         } catch (_) { /* fall through to env */ }
@@ -1795,14 +1795,8 @@ router.delete('/wechat/draft/:mediaId', async (req, res) => {
 async function resolveTumblrCreds(deviceId) {
     if (deviceId && typeof _getDeviceVar === 'function') {
         try {
-            const ck = await _getDeviceVar(deviceId, 'TUMBLR_CONSUMER_KEY');
-            const cs = await _getDeviceVar(deviceId, 'TUMBLR_CONSUMER_SECRET');
-            const at = await _getDeviceVar(deviceId, 'TUMBLR_ACCESS_TOKEN');
-            const ats = await _getDeviceVar(deviceId, 'TUMBLR_ACCESS_TOKEN_SECRET');
-            if (typeof ck === 'string' && ck.length > 0
-                && typeof cs === 'string' && cs.length > 0
-                && typeof at === 'string' && at.length > 0
-                && typeof ats === 'string' && ats.length > 0) {
+            const [ck, cs, at, ats] = await Promise.all(TUMBLR_CRED_KEYS.map(k => _getDeviceVar(deviceId, k)));
+            if (allNonEmptyStrings([ck, cs, at, ats])) {
                 return { consumerKey: ck, consumerSecret: cs, accessToken: at, accessTokenSecret: ats, source: 'vault' };
             }
         } catch (_) { /* fall through to env */ }
@@ -1935,11 +1929,8 @@ router.delete('/tumblr/post/:postId', async (req, res) => {
 async function resolveRedditCreds(deviceId) {
     if (deviceId && typeof _getDeviceVar === 'function') {
         try {
-            const cid = await _getDeviceVar(deviceId, 'REDDIT_CLIENT_ID');
-            const csec = await _getDeviceVar(deviceId, 'REDDIT_CLIENT_SECRET');
-            const usr = await _getDeviceVar(deviceId, 'REDDIT_USERNAME');
-            const pwd = await _getDeviceVar(deviceId, 'REDDIT_PASSWORD');
-            if ([cid, csec, usr, pwd].every(v => typeof v === 'string' && v.length > 0)) {
+            const [cid, csec, usr, pwd] = await Promise.all(REDDIT_CRED_KEYS.map(k => _getDeviceVar(deviceId, k)));
+            if (allNonEmptyStrings([cid, csec, usr, pwd])) {
                 return { clientId: cid, clientSecret: csec, username: usr, password: pwd, source: 'vault' };
             }
         } catch (_) { /* fall through to env */ }
@@ -2087,9 +2078,8 @@ router.delete('/reddit/post/:postId', express.json(), async (req, res) => {
 async function resolveLinkedinCreds(deviceId) {
     if (deviceId && typeof _getDeviceVar === 'function') {
         try {
-            const tok = await _getDeviceVar(deviceId, 'LINKEDIN_ACCESS_TOKEN');
-            const urn = await _getDeviceVar(deviceId, 'LINKEDIN_PERSON_URN');
-            if (typeof tok === 'string' && tok.length > 0 && typeof urn === 'string' && urn.length > 0) {
+            const [tok, urn] = await Promise.all(LINKEDIN_CRED_KEYS.map(k => _getDeviceVar(deviceId, k)));
+            if (allNonEmptyStrings([tok, urn])) {
                 return { accessToken: tok, personUrn: urn, source: 'vault' };
             }
         } catch (_) { /* fall through to env */ }
