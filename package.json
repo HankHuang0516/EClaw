@@ -7,7 +7,7 @@
     "start": "cd backend && node server.js",
     "build": "cd backend && npm install",
     "postinstall": "cd backend && npm install",
-    "test": "jest --testPathPattern=backend/test"
+    "test": "cd backend && npm test"
   },
   "engines": {
     "node": ">=18.0.0"
