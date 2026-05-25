@@ -918,6 +918,40 @@
     max-width: 720px;
     margin: 0 auto 40px;
 }
+.qs-promo-video-section {
+    max-width: 720px;
+    margin: 0 auto 40px;
+    padding: 0 20px;
+    text-align: center;
+}
+.qs-promo-video-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+.qs-promo-video-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin: 0 auto 20px;
+    max-width: 600px;
+    line-height: 1.5;
+}
+.qs-promo-video-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--card-border);
+}
+.qs-promo-video-wrap iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
 .qs-steps-section {
     max-width: 720px;
     margin: 0 auto;
@@ -1153,6 +1187,8 @@
     .cmp-cta-buttons { flex-direction: column; }
     .cmp-cta-buttons .btn { width: 100%; justify-content: center; }
     .qs-hero h1 { font-size: 1.6rem; }
+    .qs-promo-video-title { font-size: 1.25rem; }
+    .qs-promo-video-subtitle { font-size: 0.9rem; }
     .qs-hooks-grid { grid-template-columns: 1fr; }
     .qs-hooks-title { font-size: 1.2rem; }
     .qs-intent-grid { grid-template-columns: 1fr; }

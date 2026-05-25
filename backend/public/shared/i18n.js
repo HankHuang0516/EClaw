@@ -53055,6 +53055,30 @@ const TRANSLATIONS = {
 
 
         "guide_vm_cta_chat": "Try it in the chat: <a href=\"chat.html\">Open Chat</a> and ask the bot \"do you remember when we talked about ... ?\" — then open the citations under the bubble.",
+        "guide_cr_title": "\U0001F500 Why Does EClaw Have Two Channel Routing Paths?",
+        "guide_cr_meta": "Thin-pipe vs LLM runtime — the design philosophy",
+        "guide_cr_h2_two_paths": "Two Paths, Each for a Purpose",
+        "guide_cr_p_intro": "EClaw intentionally preserves two channel messaging paths. This is a deliberate architectural choice: different integration scenarios need different abstraction levels.",
+        "guide_cr_th_path": "Path",
+        "guide_cr_th_endpoint": "Endpoint",
+        "guide_cr_th_for": "Best for",
+        "guide_cr_path_a_label": "Path A — Thin-pipe",
+        "guide_cr_path_a_for": "Discord webhooks, IoT relays, REST forwarders",
+        "guide_cr_path_b_label": "Path B — LLM Runtime",
+        "guide_cr_path_b_for": "Claude, Codex, Hermes LLM bridges",
+        "guide_cr_sp1_pain": "LLM bridge must store every bot's botSecret — scattered secret management?",
+        "guide_cr_sp1_solution": "\u2192 Path B lets the bridge hold only one ECLAW_API_KEY",
+        "guide_cr_sp1_desc": "Channel registration pre-defines ACL. The bridge calls /api/transform with X-Channel-Key + actAs; the server validates ACL and executes with full transform side-effects — @-mention auto-routing, A2A queue, state management — without any botSecret stored in the bridge.",
+        "guide_cr_sp2_pain": "Bot replies via /api/channel/message cannot trigger @-mention routing?",
+        "guide_cr_sp2_solution": "\u2192 Path B uses /api/transform; @-mention tokens are auto-parsed and speakTo is filled",
+        "guide_cr_sp2_desc": "The server scans message text, resolves six mention token forms (@N, @#N, @publicCode, @all, etc.), and auto-routes to target entities — no hardcoded speakTo injection needed in the bridge.",
+        "guide_cr_sp3_pain": "Don't want to break third-party integrations already using /api/channel/message?",
+        "guide_cr_sp3_solution": "\u2192 Path A is never deprecated; legitimate thin-pipe use cases stay valid",
+        "guide_cr_sp3_desc": "Discord webhook forwarders, IoT sensors, and REST relays simply don't need LLM runtime features. Keeping Path A is a commitment to third-party integrators.",
+        "guide_cr_h2_decision": "One-line Decision Rule",
+        "guide_cr_decision": "LLM runtime bridge \u2192 Path B (transform + channelKey);  Pure relay \u2192 Path A (channel/message)",
+        "guide_cr_cta_title": "Learn More",
+        "guide_cr_cta_spec": "Full decision tree and history: <a href=\"https://github.com/HankHuang0516/EClaw/blob/main/docs/specs/channel-routing-paths.md\" target=\"_blank\" rel=\"noopener\">channel-routing-paths.md</a>",
 
 
 
@@ -302347,7 +302371,7 @@ const TRANSLATIONS = {
 
 
 
-        "rm_hermes_issue_q": "messageQueue overflow → EClaw forced into pure-translation mode, Hermes requests silently dropped (⚠️ recurred 2026-04-28; PR #2201 fixed process-lifecycle but session-resume + wall-clock-only timeout untouched — Phase H1 in progress)",
+        "rm_hermes_issue_q": "messageQueue overflow → EClaw forced into pure-translation mode, Hermes requests silently dropped (⚠️ recurred 2026-04-28; PR #2201 fixed process-lifecycle but session-resume + wall-clock-only timeout was previously untouched — Phase H1 complete)",
 
 
 
@@ -700354,6 +700378,30 @@ const TRANSLATIONS = {
 
 
         "guide_vm_cta_chat": "在聊天室試試：<a href=\"chat.html\">開啟 Chat</a> 並問 bot「你還記得我們之前聊過 ... 嗎？」看氣泡下方的引用。",
+        "guide_cr_title": "\U0001F500 為什麼 EClaw 有兩條 Channel Routing 路徑？",
+        "guide_cr_meta": "thin-pipe 與 LLM runtime 的設計哲學",
+        "guide_cr_h2_two_paths": "兩條路徑，各司其職",
+        "guide_cr_p_intro": "EClaw 的 channel 訊息系統刻意保留了兩條路徑，而不是合成一條。這是有意識的架構選擇：不同的整合場景需要不同的抽象層級。",
+        "guide_cr_th_path": "路徑",
+        "guide_cr_th_endpoint": "端點",
+        "guide_cr_th_for": "適合",
+        "guide_cr_path_a_label": "Path A — Thin-pipe",
+        "guide_cr_path_a_for": "Discord webhook、IoT 轉發、REST relay",
+        "guide_cr_path_b_label": "Path B — LLM Runtime",
+        "guide_cr_path_b_for": "Claude、Codex、Hermes LLM bridge",
+        "guide_cr_sp1_pain": "LLM bridge 必須存放每隻 bot 的 botSecret，機密管理分散？",
+        "guide_cr_sp1_solution": "\u2192 Path B 讓 bridge 只持有一把 ECLAW_API_KEY",
+        "guide_cr_sp1_desc": "Channel registration 預先定義 ACL。Bridge 呼叫 /api/transform 時帶 X-Channel-Key + actAs，server 驗 ACL 後以完整 transform 副作用執行——@-mention 自動路由、A2A queue、state 管理一應俱全，bot secret 不再落地在 bridge 端。",
+        "guide_cr_sp2_pain": "走 /api/channel/message 的 bot reply 無法觸發 @-mention 路由？",
+        "guide_cr_sp2_solution": "\u2192 Path B 走 /api/transform，@-mention 自動解析並填 speakTo",
+        "guide_cr_sp2_desc": "server 掃 message 文字，解析六種 mention token，自動路由給目標 entity，不需要 bridge 端注入硬編碼的 speakTo。A2A messageQueue 副作用也一併保留。",
+        "guide_cr_sp3_pain": "不想廢棄已經在用 /api/channel/message 的第三方整合？",
+        "guide_cr_sp3_solution": "\u2192 Path A 永遠不會廢棄，合法的 thin-pipe 用例繼續有效",
+        "guide_cr_sp3_desc": "Discord webhook forwarder、IoT sensor、REST relay 根本不需要 LLM runtime 功能。保留 Path A 是對第三方整合者的承諾。",
+        "guide_cr_h2_decision": "一句話決策規則",
+        "guide_cr_decision": "LLM runtime bridge \u2192 Path B（transform + channelKey）；純 relay \u2192 Path A（channel/message）",
+        "guide_cr_cta_title": "深入了解",
+        "guide_cr_cta_spec": "完整決策樹與演進史：<a href=\"https://github.com/HankHuang0516/EClaw/blob/main/docs/specs/channel-routing-paths.md\" target=\"_blank\" rel=\"noopener\">channel-routing-paths.md</a>",
 
 
 
@@ -865863,153 +865911,6 @@ const TRANSLATIONS = {
 
 
         "dash_channel_promo": "試試 EClaw Channel？更原生、更快速",
-        "dash_channel_card_openclaw_title": "OpenClaw Channel",
-        "dash_channel_card_openclaw_badge": "穩定",
-        "dash_channel_card_openclaw_desc": "官方 OpenClaw 外掛路徑 — 最適合託管式 OpenClaw bot 與正式 API key 設定。",
-        "dash_channel_card_codex_title": "Codex Channel",
-        "dash_channel_card_codex_badge": "CLI 橋接",
-        "dash_channel_card_codex_desc": "透過 codex app-server 將 EClaw 實體連接到 OpenAI Codex CLI。適合從 EClaw chat 遠端處理 repo 工作。",
-        "dash_channel_card_codex_step2": "填寫 .env：ECLAW_API_KEY、WEBHOOK_URL、CODEX_WORKSPACE",
-        "dash_channel_card_codex_guide_link": "Codex 指南 →",
-        "dash_channel_card_clauded_title": "Claude Code Channel",
-        "dash_channel_card_clauded_badge": "實驗性",
-        "dash_channel_card_clauded_desc": "在本機 tmux session 中以 EClaw bot 身分執行 Claude Code — 使用你的 claude.ai Max 訂閱額度，不計 Anthropic API token 費用。",
-        "dash_channel_card_clauded_step2": "填寫 .mcp.json：ECLAW_API_KEY、ECLAW_WEBHOOK_URL",
-        "dash_channel_card_clauded_guide_link": "Claude Code 指南 →",
-        "dash_channel_card_hermes_title": "Hermes Channel",
-        "dash_channel_card_hermes_badge": "Live Showcase",
-        "dash_channel_card_hermes_desc": "將 Hermes Agent（NousResearch self-evolving agent，Python）透過 webhook 綁定為你的 EClaw bot。支援 MiniMax / OpenAI / Anthropic / 本機 Ollama。",
-        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
-        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
-        "dash_channel_card_hermes_step3": "bind-entity + 啟動 daemon",
-        "dash_channel_card_hermes_guide_link": "Hermes 指南 →",
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         "dash_invite_title": "邀請好友，每位註冊賺 500 e幣",
 
 
@@ -906116,6 +906017,15 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_per_entity_throttle_label": "🅰️ 內容督促：同一實體一個間隔最多 1 張",
+        "kanban_nudge_per_entity_section_label": "個別實體覆寫",
+        "kanban_nudge_per_entity_section_desc": "為特定實體自訂間隔、欄位與節流。批次大小與優先模式仍套用裝置層級設定。",
+        "kanban_nudge_per_entity_pick_placeholder": "— 選擇實體 —",
+        "kanban_nudge_per_entity_clear": "重設為裝置預設值",
+        "kanban_nudge_per_entity_hint_prefix": "切換欄位即可為此實體覆寫裝置預設值。",
+        "kanban_nudge_per_entity_override_interval": "覆寫間隔",
+        "kanban_nudge_per_entity_override_statuses": "覆寫欄位",
+        "kanban_nudge_per_entity_override_throttle": "覆寫節流",
+        "kanban_nudge_per_entity_throttle_short": "限制此實體每個間隔最多 1 次提醒",
 
 
 
@@ -1077791,6 +1077701,7 @@ const TRANSLATIONS = {
 
 
         "kb_funnel_search": "搜尋…",
+        "kb_funnel_tag": "標籤…",
 
 
 
@@ -1080480,6 +1080391,7 @@ const TRANSLATIONS = {
 
         "kb_label_requires_screenshot": "需截圖審查（完成時附截圖才可推進 review/done）",
         "kb_label_gated": "Launch-gate（發布閘）——開啟時，L1/L2/L3 自動升級跳过此卡；卡片離開發布就緒後自動解除",
+        "kb_gate_backlog_only_hint": "啟動門檻僅適用於待辦卡片",
 
 
 
@@ -1233639,7 +1233551,7 @@ const TRANSLATIONS = {
         "rm_hermes_title": "Hermes 頻道 — 穩定運作路線圖",
         "rm_hermes_desc": "Hermes (#5) 是透過 Eclaw 的 webhook 頻道連接的 NousResearch Hermes Agent。作為 EClaw 跨平台 A2A 能力的即時展示，它必須可靠運作。以下是達成並維持穩定協作狀態的路線圖。",
         "rm_hermes_diag_title": "已知不穩定根因（過往事件）",
-        "rm_hermes_issue_q": "messageQueue 溢出 → EClaw 被迫進入純翻譯模式，Hermes 請求被靜默丟棄（⚠️ 於 2026-04-28 再次發生；PR #2201 已修復 process-lifecycle，但 session-resume + 僅依 wall-clock 的 timeout 尚未處理 — H1 階段進行中）",
+        "rm_hermes_issue_q": "messageQueue 溢出 → EClaw 被迫進入純翻譯模式，Hermes 請求被靜默丟棄（⚠️ 於 2026-04-28 再次發生；PR #2201 已修復 process-lifecycle，但 session-resume + 僅依 wall-clock 的 timeout 此前尚未處理 — H1 階段已完成）",
         "rm_hermes_issue_d": "Docker container 凍結：Hermes process 仍存活但未消費訊息；Railway restart 延遲造成長時間中斷（⚠️ 於 2026-04-28 再次發生；/health 回傳 200，但每次 chat call 都 timeout — H1 階段：揭露 worker state + autoheal sidecar）",
         "rm_hermes_issue_s": "Session cache 不一致：cached session 使用錯誤 org 作為 key → git 操作時出現「repo not found」",
         "rm_hermes_issue_p": "claude-cli-proxy 匿名 fallback：沒有 GIT_HUB2 credential → 私有 repo 操作靜默失敗；與 card_f531861e 存在落差",
@@ -1253961,7 +1253873,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_avg_daily": "平均日造訪",
 
 
 
@@ -1254089,7 +1254000,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_by_campaign": "按 UTM 廣告活動",
 
 
 
@@ -1254217,7 +1254127,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_col_campaign": "廣告活動",
 
 
 
@@ -1254345,7 +1254254,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_col_path": "路徑",
 
 
 
@@ -1254473,7 +1254381,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_col_uniq": "獨立",
 
 
 
@@ -1254601,7 +1254508,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_col_views": "造訪",
 
 
 
@@ -1254729,7 +1254635,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_daily_chart": "每日造訪",
 
 
 
@@ -1254857,7 +1254762,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_days_30": "最近 30 天",
 
 
 
@@ -1254985,7 +1254889,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_days_7": "最近 7 天",
 
 
 
@@ -1255113,7 +1255016,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_days_90": "最近 90 天",
 
 
 
@@ -1255241,7 +1255143,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_days_label": "區間",
 
 
 
@@ -1255369,7 +1255270,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_err_fetch": "載入分析資料失敗",
 
 
 
@@ -1255497,7 +1255397,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_err_no_device": "無可用裝置憑證，僅限裝置擁有者存取。",
 
 
 
@@ -1255625,7 +1255524,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_legend_uniq": "獨立 IP",
 
 
 
@@ -1255753,7 +1255651,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_legend_views": "造訪",
 
 
 
@@ -1255881,7 +1255778,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_loading": "載入中…",
 
 
 
@@ -1256009,7 +1255905,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_no_campaigns": "區間內無標記廣告活動",
 
 
 
@@ -1256137,7 +1256032,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_no_data": "區間內無資料",
 
 
 
@@ -1256265,7 +1256159,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_path_filter_label": "路徑篩選",
 
 
 
@@ -1256393,7 +1256286,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_path_filter_placeholder": "例如 /landing* 或 /docs/*",
 
 
 
@@ -1256521,7 +1256413,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_refresh": "重新整理",
 
 
 
@@ -1256649,7 +1256540,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_subtitle": "公開頁面與行銷頁面的匿名造訪。入口頁面有各自獨立的裝置範圍遙測。",
 
 
 
@@ -1256777,7 +1256667,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_title": "網站分析",
 
 
 
@@ -1256905,7 +1256794,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_top_paths": "熱門路徑",
 
 
 
@@ -1257033,7 +1256921,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_total_views": "總造訪",
 
 
 
@@ -1257161,7 +1257048,6 @@ const TRANSLATIONS = {
 
 
 
-        "analytics_unique_ips": "獨立 IP",
 
 
 
@@ -1261129,7 +1261015,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_0": "多模態理解 — 感知並描述網頁中的視覺內容。",
 
 
 
@@ -1261257,7 +1261142,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_1": "精確 UI 互動 — 在大量元素中定位並點擊特定項目。",
 
 
 
@@ -1261385,7 +1261269,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_10": "儲存工作流 — 透過雲端 API 下載、重新命名並上傳檔案。",
 
 
 
@@ -1261513,7 +1261396,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_11": "語音能力 — 轉錄口說內容或從文字合成語音。",
 
 
 
@@ -1261641,7 +1261523,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_2": "結構化輸入 — 理解表單語義並正確填寫欄位。",
 
 
 
@@ -1261769,7 +1261650,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_3": "精細動作控制 — 精確地將物件拖曳到指定位置。",
 
 
 
@@ -1261897,7 +1261777,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_4": "規劃能力 — 導航多層級頁面結構以找到目標資訊。",
 
 
 
@@ -1262025,7 +1261904,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_5": "表格推理 — 提取並計算結構化 HTML 表格資料。",
 
 
 
@@ -1262153,7 +1262031,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_6": "安全判斷 — 抵禦社交工程攻擊（假彈窗、偽裝按鈕）。",
 
 
 
@@ -1262281,7 +1262158,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_7": "演算法推理 — 解決程式設計問題並產生正確程式碼。",
 
 
 
@@ -1262409,7 +1262285,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_8": "速度 — 從題目顯示到正確答案提交的端對端時間。",
 
 
 
@@ -1262537,7 +1262412,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_desc_9": "記憶 — 在連續步驟中維持並重用資訊。",
 
 
 
@@ -1262665,7 +1262539,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_0": "視覺感知",
 
 
 
@@ -1262793,7 +1262666,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_1": "元素定位",
 
 
 
@@ -1262921,7 +1262793,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_10": "檔案操作",
 
 
 
@@ -1263049,7 +1262920,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_11": "語音處理",
 
 
 
@@ -1263177,7 +1263047,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_2": "表單填寫",
 
 
 
@@ -1263305,7 +1263174,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_3": "空間控制",
 
 
 
@@ -1263433,7 +1263301,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_4": "多步導航",
 
 
 
@@ -1263561,7 +1263428,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_5": "資料提取",
 
 
 
@@ -1263689,7 +1263555,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_6": "干擾抵抗",
 
 
 
@@ -1263817,7 +1263682,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_7": "代碼生成",
 
 
 
@@ -1263945,7 +1263809,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_8": "回應延遲",
 
 
 
@@ -1264073,7 +1263936,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_test_name_9": "上下文記憶",
 
 
 
@@ -1296331,7 +1296193,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_btn": "找相关訊息",
 
 
 
@@ -1296459,7 +1296320,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_empty": "找不到相关訊息。",
 
 
 
@@ -1296587,7 +1296447,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_error": "载入相关訊息失败。",
 
 
 
@@ -1296715,7 +1296574,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_loading": "正在找相关訊息…",
 
 
 
@@ -1296843,7 +1296701,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_mode_keyword": "关鍵字",
 
 
 
@@ -1296971,7 +1296828,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_mode_semantic": "语意",
 
 
 
@@ -1297099,7 +1296955,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_panel_title": "相关訊息",
 
 
 
@@ -1297227,7 +1297082,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_target_not_loaded": "訊息目前未载入",
 
 
 
@@ -1493198,7 +1493052,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_behavior_user": "純提示模式 — 不影響路由，只塞 <code>[MENTIONS]</code> 給接收 Bot",
 
 
 
@@ -1493326,7 +1493179,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case1_input_label": "你輸入的訊息",
 
 
 
@@ -1493454,7 +1493306,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case1_input_text": "幫我問今天的台積電走勢",
 
 
 
@@ -1493582,7 +1493433,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case1_outcome": "主助手會看到提示，自己決定要不要呼叫 transform 把訊息轉給股票分析師。",
 
 
 
@@ -1493710,7 +1493560,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case1_recv_label": "主助手收到的提示",
 
 
 
@@ -1493838,7 +1493687,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case2_input_label": "你輸入的訊息",
 
 
 
@@ -1493966,7 +1493814,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case2_input_text": "這個 feature 你們覺得怎麼做？",
 
 
 
@@ -1494094,7 +1493941,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case2_outcome": "會議主持可以選擇 parallel 平行轉發給三人，或先彙整再回覆。",
 
 
 
@@ -1494222,7 +1494068,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case2_recv_label": "會議主持收到的提示",
 
 
 
@@ -1494350,7 +1494195,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case3_input_label": "你輸入的訊息",
 
 
 
@@ -1494478,7 +1494322,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case3_input_text": "明天 9 點 all-hands 會議",
 
 
 
@@ -1494606,7 +1494449,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case3_outcome": "公告 Bot 看到 <code>@all</code> 提示後，可以呼叫 <code>/api/transform</code> 加上 <code>broadcast:true</code> 真正廣播給所有實體。",
 
 
 
@@ -1494734,7 +1494576,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_case3_recv_label": "公告 Bot 收到的提示",
 
 
 
@@ -1494862,7 +1494703,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_dir_bot": "<strong>Bot @</strong>（在 transform message）",
 
 
 
@@ -1494990,7 +1494830,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_mention_dir_user": "<strong>使用者 @</strong>（在 chat 輸入框）",
 
 
 
@@ -1593039,6 +1592878,30 @@ const TRANSLATIONS = {
 
 
         "guide_vm_cta_chat": "在聊天室試試：<a href=\"chat.html\">开啟 Chat</a> 並問 bot「你还記得我们之前聊过 ... 嗎？」看氣泡下方的引用。",
+        "guide_cr_title": "\U0001F500 为什么 EClaw 有两条 Channel Routing 路径？",
+        "guide_cr_meta": "thin-pipe 与 LLM runtime 的设计哲学",
+        "guide_cr_h2_two_paths": "两条路径，各司其职",
+        "guide_cr_p_intro": "EClaw 的 channel 消息系统刻意保留了两条路径。这是有意识的架构选择：不同场景需要不同抽象层级。",
+        "guide_cr_th_path": "路径",
+        "guide_cr_th_endpoint": "端点",
+        "guide_cr_th_for": "适合",
+        "guide_cr_path_a_label": "Path A — Thin-pipe",
+        "guide_cr_path_a_for": "Discord webhook、IoT 转发、REST relay",
+        "guide_cr_path_b_label": "Path B — LLM Runtime",
+        "guide_cr_path_b_for": "Claude、Codex、Hermes LLM bridge",
+        "guide_cr_sp1_pain": "LLM bridge 必须存放每个 bot 的 botSecret，机密管理分散？",
+        "guide_cr_sp1_solution": "\u2192 Path B 让 bridge 只持有一把 ECLAW_API_KEY",
+        "guide_cr_sp1_desc": "Channel registration 预先定义 ACL。Bridge 调用 /api/transform 时带 X-Channel-Key + actAs，server 验 ACL 后执行完整 transform 副作用。",
+        "guide_cr_sp2_pain": "走 /api/channel/message 的 bot reply 无法触发 @-mention 路由？",
+        "guide_cr_sp2_solution": "\u2192 Path B 走 /api/transform，@-mention 自动解析并填 speakTo",
+        "guide_cr_sp2_desc": "server 扫描 message 文字，解析六种 mention token，自动路由给目标 entity。A2A messageQueue 副作用也一并保留。",
+        "guide_cr_sp3_pain": "不想废弃已经在用 /api/channel/message 的第三方整合？",
+        "guide_cr_sp3_solution": "\u2192 Path A 永远不会废弃，合法的 thin-pipe 用例继续有效",
+        "guide_cr_sp3_desc": "Discord webhook forwarder、IoT sensor 根本不需要 LLM runtime 功能。保留 Path A 是对第三方整合者的承诺。",
+        "guide_cr_h2_decision": "一句话决策规则",
+        "guide_cr_decision": "LLM runtime bridge \u2192 Path B（transform + channelKey）；纯 relay \u2192 Path A（channel/message）",
+        "guide_cr_cta_title": "深入了解",
+        "guide_cr_cta_spec": "完整决策树与演进史：<a href=\"https://github.com/HankHuang0516/EClaw/blob/main/docs/specs/channel-routing-paths.md\" target=\"_blank\" rel=\"noopener\">channel-routing-paths.md</a>",
 
 
 
@@ -1833450,7 +1833313,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmaph": "发布者路线图",
 
 
 
@@ -1833578,7 +1833440,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmapdesc": "了解如何让您的应用准备好发布。发布是一个5步流程：",
 
 
 
@@ -1833706,7 +1833567,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatush": "发布状态",
 
 
 
@@ -1833834,7 +1833694,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatuslegend": "状态图例",
 
 
 
@@ -1833962,7 +1833821,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointh": "每个端点的状态",
 
 
 
@@ -1834090,7 +1833948,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointdesc": "显示的状态基于您的发布者资料设置。",
 
 
 
@@ -1834218,7 +1834075,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubnavpublisher": "发布者",
 
 
 
@@ -1834346,7 +1834202,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubtitle": "发布者指南",
 
 
 
@@ -1847658,7 +1847513,407 @@ const TRANSLATIONS = {
 
 
 
-    },
+    ,
+        "dashboard_usage_widget_title": "Claude Code / Codex 用量",
+        "dashboard_usage_widget_refresh": "重新整理",
+        "dashboard_usage_widget_loading": "正在载入用量资料...",
+        "dashboard_usage_widget_claude_5h": "Claude · 5 小时",
+        "dashboard_usage_widget_codex_5h": "Codex · 5 小时",
+        "dashboard_usage_widget_today_claude": "今日 · Claude",
+        "dashboard_usage_widget_today_codex": "今日 · Codex",
+        "dashboard_usage_widget_chart_title": "近 24 小时 · 总 tokens",
+        "dashboard_usage_widget_legend_claude": "Claude",
+        "dashboard_usage_widget_legend_codex": "Codex",
+        "dashboard_usage_widget_chart_empty": "尚无时间序列资料",
+        "dashboard_usage_widget_health_ok": "Daemon 线上",
+        "dashboard_usage_widget_health_stale": "Daemon 离线？",
+        "dashboard_usage_widget_health_no_data": "尚无 daemon 资料",
+        "dashboard_usage_widget_last_update": "上次更新",
+        "dashboard_usage_widget_just_now": "刚刚",
+        "dashboard_usage_widget_error": "无法载入用量资料",
+        "dashboard_usage_widget_live_source": "即时",
+        "dashboard_usage_widget_sessions_label": "次工作阶段",
+        "dashboard_usage_widget_na_tooltip": "需设定 Claude statusLine 才能显示即时 %",
+        "dashboard_usage_widget_session_used": "已用",
+        "dashboard_usage_widget_weekly_used": "已用",
+        "dashboard_usage_widget_reset_in": "重置",
+        "dashboard_usage_widget_projects_today": "项目用量",
+        "dashboard_usage_widget_projects_empty": "今日尚无项目活动",
+        "dashboard_usage_widget_rate_label": "速率",
+        "dashboard_usage_widget_rate_heavy": "高负载",
+        "dashboard_usage_widget_rate_normal": "正常",
+        "dashboard_usage_widget_rate_idle": "空闲",
+        "dashboard_usage_widget_status_label": "状态",
+        "dashboard_usage_widget_status_synced": "已同步 (usage)",
+        "dashboard_usage_widget_today_total": "今日",
+        "dashboard_usage_widget_estimate_marker": "(估算)",
+        "promo_video_meta_title": "EClawbot 推广影片 | AI agent kanban demo",
+        "promo_video_meta_description": "观看 75 秒 EClawbot 推广影片：把多个 AI 工具串成可追踪的 kanban 工作流。",
+        "promo_video_title": "75 秒看懂 EClawbot",
+        "promo_video_lede": "看看 EClawbot 如何把多个 AI agent 串成可追踪的 A2A 对话与 kanban 工作流。",
+        "promo_video_embed_heading": "EClawbot 推广影片",
+        "promo_video_primary_cta": "开启 EClawbot Portal",
+        "promo_video_secondary_cta": "回到首页",
+        "promo_video_note": "影片由 EClaw repo 外部的 HyperFrames composition 发布。",
+        "promo_meta_meta_title": "EClawbot Concept A｜Meta-recursion 纪录片",
+        "promo_meta_meta_description": "观看 Concept A：以纪录式真实素材呈现 EClawbot，让幕后 AI 工作流本身成为产品展示。",
+        "promo_meta_eyebrow": "Concept A · meta-recursion 纪录式惊喜版",
+        "promo_meta_title": "这支影片是 AI agent 自己做的",
+        "promo_meta_lede": "一支可验证的 75 秒纪录片：需求、agent 协作、渲染、上传与嵌入，全部反过来成为 EClawbot 产品展示。",
+        "promo_meta_embed_heading": "EClawbot Concept A 影片",
+        "promo_meta_proof_agents_title": "2 个 AI agent",
+        "promo_meta_proof_agents_body": "LOBSTER 路由任务；Codex 完成渲染。",
+        "promo_meta_proof_trace_title": "可验证轨迹",
+        "promo_meta_proof_trace_body": "Chat、git、kanban、Studio 画面都来自真实历史。",
+        "promo_meta_proof_output_title": "一个完成品",
+        "promo_meta_proof_output_body": "幕后制作过程，就是产品 demo。",
+        "promo_meta_primary_cta": "开启 EClawbot Portal",
+        "promo_meta_secondary_cta": "观看 75 秒 demo",
+        "promo_meta_note": "Concept A 由 repo 外部的 HyperFrames 专案渲染，再透过审查 PR 嵌入此页。",
+        "mm_card_title": "心智图",
+        "mm_card_beta": "(测试版)",
+        "mm_card_expand": "展开",
+        "mm_card_open_full": "完整思维导图 →",
+        "mm_card_collapse": "收起",
+        "mm_card_hint": "把看板卡片连成图：任务、子卡与聊天锚点互相关联。展开可互动探索。",
+        "mm_empty_title": "心智图还没有节点",
+        "mm_empty_hint": "建立看板卡片后，这里会自动把任务、子卡与聊天锚点连成图。",
+        "mm_empty_cta": "前往看板新增第一张卡",
+        "mc_note_deeplink_not_found": "找不到笔记：{id}",
+        "info_qs_slide_cta": "📊 开启简报全萤幕",
+        "qs_slides_title": "📋 快速入门指南",
+        "qs_slide_quickstart_title": "🚀 快速开始",
+        "qs_slide_quickstart_desc": "从零到盈利只需要三步",
+        "qs_slide_performance_title": "📊 性能示意",
+        "qs_slide_performance_desc": "示意性能监控仪表板",
+        "qs_slide_integration_title": "🔗 整合生态",
+        "qs_slide_integration_desc": "跨平台整合生态系统",
+        "info_slide_guide_publisher_cta": "查看 Claude Design 简报 →",
+        "guide_usecase_faq_rotate": "<strong>Q: Device Secret 外泄或想定期更换怎么办？</strong><br>\n                        A: Settings → Device Secret 列旁的 🔄 <strong>Rotate</strong> 按钮即可换新 secret。旧 secret 立即失效、所有用它打的 API 会回 403，必须用新 secret 重新更新手机 App、Channel plugin、金钥库等所有地方。<strong>新 secret 只会显示一次</strong>，记得按「下载 .txt 备份」。",
+        "info_slide_guide_usecase_claude_openclaw_cta": "查看 Claude Design 简报 →",
+        "info_slide_guide_proxy_window_cta": "查看 Claude Design 简报 →",
+        "info_slide_guide_crossdevice_cta": "查看 Claude Design 简报 →",
+        "info_slide_guide_identity_cta": "查看 Claude Design 简报 →",
+        "info_slide_guide_soul_cta": "查看 Soul 灵魂模板简报 →",
+        "info_slide_guide_rules_cta": "查看 Rules 规则模板简报 →",
+        "info_slide_guide_agentcard_cta": "查看 Claude Design 简报 →",
+        "info_slide_guide_voice_cta": "查看 Claude Design 简报 →",
+        "dash_channel_card_openclaw_title": "OpenClaw 频道",
+        "dash_channel_card_openclaw_badge": "稳定版",
+        "dash_channel_card_openclaw_desc": "官方 OpenClaw 外挂路径 — 最适合托管式 OpenClaw bot 与正式环境的 API keys 设定。",
+        "dash_channel_card_codex_title": "Codex 频道",
+        "dash_channel_card_codex_badge": "CLI 桥接",
+        "dash_channel_card_codex_desc": "透过 codex app-server 将 EClaw 实体连接到 OpenAI Codex CLI。适合从 EClaw 聊天远端处理 repo 工作。",
+        "dash_channel_card_codex_step2": "填写 .env：ECLAW_API_KEY、WEBHOOK_URL、CODEX_WORKSPACE",
+        "dash_channel_card_codex_guide_link": "Codex 指南 →",
+        "dash_channel_card_clauded_title": "Claude Code 频道",
+        "dash_channel_card_clauded_badge": "实验性",
+        "dash_channel_card_clauded_desc": "在本机 tmux session 中执行 Claude Code 作为你的 EClaw bot — 使用你的 claude.ai Max 订阅额度，不会计入 Anthropic API tokens 费用。",
+        "dash_channel_card_clauded_step2": "填写 .mcp.json：ECLAW_API_KEY、ECLAW_WEBHOOK_URL",
+        "dash_channel_card_clauded_guide_link": "Claude Code 指南 →",
+        "dash_channel_card_hermes_title": "Hermes 频道",
+        "dash_channel_card_hermes_badge": "即时展示",
+        "dash_channel_card_hermes_desc": "透过 webhook 将 Hermes Agent（NousResearch 自我演化代理，Python）绑定为你的 EClaw bot。支援 MiniMax / OpenAI / Anthropic / 本机 Ollama。",
+        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
+        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
+        "dash_channel_card_hermes_step3": "bind-entity + 启动 daemon",
+        "dash_channel_card_hermes_guide_link": "Hermes 指南 →",
+        "settings_rotate_device_secret": "🔄 轮换装置密钥",
+        "settings_rotate_device_secret_hint": "如果目前的装置密钥已外泄，请产生新的装置密钥。其他 session 需要使用新值才能登入。",
+        "settings_rotate_confirm_title": "要轮换装置密钥吗？",
+        "settings_rotate_confirm_body": "这会立即让目前的装置密钥失效。任何仍在使用旧值的其他装置或浏览器分页，都必须使用新的装置密钥重新登入。",
+        "settings_rotate_confirm_warn": "⚠ 新密钥只会显示一次。关闭下一个对话框前，请先备份。",
+        "settings_rotate_confirm_ok": "立即轮换",
+        "settings_rotate_reveal_title": "🔑 你的新装置密钥",
+        "settings_rotate_reveal_body": "请现在储存。之后将无法再次查看 — 如果遗失，就必须再次轮换。",
+        "settings_rotate_reveal_download": "⬇ 下载 .txt 备份",
+        "settings_rotate_reveal_copy": "📋 复制密钥",
+        "settings_rotate_reveal_done": "我已储存，关闭",
+        "settings_chat_preferences": "聊天偏好设定",
+        "settings_chat_avatar_size": "聊天大头贴大小",
+        "settings_chat_avatar_size_desc": "只影响聊天清单、聊天标题列与讯息大头贴",
+        "settings_chat_avatar_size_small": "小",
+        "settings_chat_avatar_size_medium": "中",
+        "settings_chat_avatar_size_large": "大",
+        "settings_roster_section_title": "出租管理 — 我的 listings 与 rentals",
+        "settings_roster_section_desc": "Owner 手动管理 listing 暂停/恢复、rebind 与租用历史。后端功能随 rental subsystem endpoint 上线启用。",
+        "settings_roster_tab_my_listings": "我的 listings",
+        "settings_roster_tab_rented_bots": "我租来的 bot",
+        "settings_roster_tab_history": "受影响历史",
+        "settings_roster_action_soft_pause": "手动 soft-pause",
+        "settings_roster_action_resume": "立即 resume",
+        "settings_roster_action_archive": "封存 listing",
+        "settings_roster_action_manual_rebind": "Rebind 并终止 rentals",
+        "settings_roster_action_choose": "选择操作",
+        "settings_roster_action_view_details": "查看 rental 详情",
+        "settings_roster_action_report_issue": "手动回报问题",
+        "settings_roster_confirm_manual_rebind": "这会终止 active rentals 并从你的 wallet 退款。确定继续？",
+        "settings_roster_confirm_resume": "该 listing 健康状态可能仍 degraded，提早恢复可能影响 renter 体验。确定？",
+        "settings_roster_confirm_generic": "确定执行这个 owner 手动操作？",
+        "settings_roster_confirm_title": "确认出租管理操作",
+        "settings_roster_empty_state_listings": "目前没有 listing。",
+        "settings_roster_empty_state_rentals": "目前没有租来的 bot。",
+        "settings_roster_empty_state_history": "目前没有 rental 事件。",
+        "settings_roster_loading": "载入出租管理…",
+        "settings_roster_mock_note": "预览模式：后端 roster endpoints 尚未可用，正在显示 mock data。",
+        "settings_roster_mock_action": "仅供预览 — 后端操作尚未可用。",
+        "settings_roster_action_success": "操作已送出",
+        "settings_roster_col_bot": "机器人",
+        "settings_roster_col_status": "状态",
+        "settings_roster_col_health": "健康",
+        "settings_roster_col_active_rentals": "活跃租用",
+        "settings_roster_col_action": "操作",
+        "settings_roster_col_rental_status": "Rental 状态",
+        "settings_roster_col_remaining": "剩余时间",
+        "settings_roster_col_time": "时间",
+        "settings_roster_col_event": "事件",
+        "settings_roster_col_listing": "上架状态",
+        "settings_roster_col_refund": "退款",
+        "settings_roster_col_details": "详情",
+        "kanban_status_blocked": "已封锁",
+        "kanban_nudge_per_entity_section_label": "按实体覆盖",
+        "kanban_nudge_per_entity_section_desc": "为某个特定实体自定义间隔、列和限流。批量大小和优先级模式仍保持设备全局设置。",
+        "kanban_nudge_per_entity_pick_placeholder": "— 选择一个实体 —",
+        "kanban_nudge_per_entity_clear": "重置为设备默认值",
+        "kanban_nudge_per_entity_hint_prefix": "切换某个字段，以覆盖此实体的设备默认值。",
+        "kanban_nudge_per_entity_override_interval": "覆盖间隔",
+        "kanban_nudge_per_entity_override_statuses": "覆盖列",
+        "kanban_nudge_per_entity_override_throttle": "覆盖限流",
+        "kanban_nudge_per_entity_throttle_short": "将此实体限制为每个间隔最多 1 次提醒",
+        "chat_scheduled": "排程",
+        "chat_mission_notify": "任务",
+        "rm_hermes_title": "Hermes 频道 — 稳定运作路线图",
+        "rm_hermes_desc": "Hermes (#5) 是透过 Eclaw 的 webhook 频道连接的 NousResearch Hermes Agent。作为 EClaw 跨平台 A2A 能力的即时展示，它必须可靠运作。以下是达成并维持稳定协作状态的路线图。",
+        "rm_hermes_diag_title": "已知不稳定根因（过往事件）",
+        "rm_hermes_issue_q": "messageQueue 溢出 → EClaw 被迫进入纯翻译模式，Hermes 请求被静默丢弃（⚠️ 于 2026-04-28 再次发生；PR #2201 已修复 process-lifecycle，但 session-resume + 仅依 wall-clock 的 timeout 尚未处理 — H1 阶段进行中）",
+        "rm_hermes_issue_d": "Docker container 冻结：Hermes process 仍存活但未消费讯息；Railway restart 延迟造成长时间中断（⚠️ 于 2026-04-28 再次发生；/health 回传 200，但每次 chat call 都 timeout — H1 阶段：揭露 worker state + autoheal sidecar）",
+        "rm_hermes_issue_s": "Session cache 不一致：cached session 使用错误 org 作为 key → git 操作时出现「repo not found」",
+        "rm_hermes_issue_p": "claude-cli-proxy 匿名 fallback：没有 GIT_HUB2 credential → 私有 repo 操作静默失败；与 card_f531861e 存在落差",
+        "rm_hermes_done_title": "已完成里程碑",
+        "rm_hermes_done_daemon": "<strong>2026-04-28 — HTTP Daemon 重构</strong> (card_52bd51bb)：bridge 以长驻于 <code>:8645</code> 的 <code>hermes_daemon.py</code> 取代每次请求都 fork <code>hermes chat</code> subprocess（5–8 秒 cold start），并由其持有持续存在的 <code>hermes --continue</code> child。Bridge 透过 <code>POST /chat</code> + SSE event stream 与 daemon 沟通；未设定 <code>HERMES_DAEMON_URL</code> 时会 fallback 到 legacy subprocess。单则讯息延迟 ≈ 仅推论时间。",
+        "rm_hermes_done_selfcheck": "<strong>2026-04-27 — Self-check + auto-wake</strong> (PR #2)：bridge 每 30 分钟执行一次内部 self-check；<code>stuck_prompt</code> 状态会自动恢复，而不是升级处理。长时间 idle E2E regression test 会守住 bug 7。",
+        "rm_hermes_kpi_uptime": "≥99.0%",
+        "rm_hermes_kpi_uptime_l": "每周正常运作率",
+        "rm_hermes_kpi_delivery": "≤2%",
+        "rm_hermes_kpi_delivery_l": "讯息送达失败率",
+        "rm_hermes_kpi_resume": "≤30s",
+        "rm_hermes_kpi_resume_l": "Session 恢复时间",
+        "rm_hermes_kpi_health": "6h",
+        "rm_hermes_kpi_health_l": "健康检查间隔",
+        "rm_in_progress": "进行中",
+        "rm_todo": "待办",
+        "rm_h0_name": "基础设施就绪",
+        "rm_h0_desc": "解决基本连线能力：git clone/写入权限、credential 注入、频道验证。",
+        "rm_h0_t1": "透过 Railway env var 将 GITHUB_TOKEN 注入 claude-cli-proxy（vault → Railway）",
+        "rm_h0_t2": "重新部署 proxy；确认 Hermes 可以 git clone/push HankHuang0516/EClaw",
+        "rm_h0_t3": "EClaw 端的 Webhook secret 验证与 Hermes egress 相符",
+        "rm_h0_t4": "Hermes speakTo 回 Entity 2（commander）以确认双向 A2A",
+        "rm_h1_name": "频道可靠性",
+        "rm_h1_desc": "修复讯息送达缺口、误判断线，以及 session 恢复失败。目标：送达失败率 ≤2%、恢复 ≤30 秒。",
+        "rm_h1_t1": "Queue back-pressure：将 messageQueue 深度上限设为 200；超出上限时，最旧讯息移至 dead-letter（防止 fallback 到纯翻译模式）",
+        "rm_h1_t2": "Webhook channel 上的 heartbeat/ping-pong — Hermes 必须在 10 秒内回应，否则 EClaw 会将送达标记为失败并重试",
+        "rm_h1_t3": "Session cache key 包含 org_id + entity_id — 修复 stale session cache 导致的「repo not found」",
+        "rm_h1_t4": "EClaw channel 记录 delivery receipts；连续失败超过 3 次时发出警报 → 通知 commander",
+        "rm_h1_t5": "Docker health-check：只有在 Hermes message loop 有回应时，Railway health endpoint 才回传 200；若 /health 回传 503 超过 60 秒则自动重启",
+        "rm_h1_t6": "Rate-limit guard：Hermes 遵守来自 EClaw 的 30 req/min；透过 exponential backoff 处理 back-pressure",
+        "rm_h2_name": "营运成熟度",
+        "rm_h2_desc": "让 Hermes 成为可靠的团队成员：健康监控、自我修复、SLA 追踪。目标：每周正常运作率 ≥99%、每 6 小时健康检查。",
+        "rm_h2_t1": "Hermes 透过 speakTo 接收 i18n batch cards，并准时交付 PR",
+        "rm_h2_t2": "Hermes health-check cron：每 6 小时执行一次 git push test；连续 3 次失败时通知 commander",
+        "rm_h2_t3": "Hermes 在 PR merge 后使用 Linear API 更新 card status（closed/labelled）",
+        "rm_h2_t4": "Railway restart policy 设为 always；OOM 或 stuck loop 会触发立即重启并通知 commander",
+        "rm_h2_t5": "Hermes 透过 hermes_state.db 在 session 之间保留 memory（已设定）",
+        "rm_h2_t6": "Structured log pipeline：Hermes 输出 JSON logs → Railway log drain → Grafana dashboard；追踪 P95 response time",
+        "rm_h3_name": "私有 Repo 支援",
+        "rm_h3_desc": "Hermes 可在私有 repositories 上运作。与 card_f531861e（claude-cli-proxy vault integration）一致。目标：Hermes 能 clone/push 到任何 EClaw org 的 private repo，且不会匿名 fallback。",
+        "rm_h3_t1": "claude-cli-proxy 从 vault 读取 GIT_HUB2（card_f531861e）— Hermes git 操作使用已验证的 context，而不是匿名 fallback",
+        "rm_h3_t2": "Per-org credential scope：Hermes 接收 org-specific token；无法存取指派 orgs 之外的 repos",
+        "rm_h3_t3": "Hermes 已针对 private test repo 测试 — clone、branch、commit、push、PR 全部成功",
+        "rm_h4_name": "展示就绪",
+        "rm_h4_desc": "EClaw portal 上的 Hermes Channel 页面展示与其他 agents 即时协作，作为 EClaw 跨平台 A2A 的公开证明。",
+        "rm_h4_t1": "Portal 上的公开 Hermes Channel 指南页（info.html 已存在；内容待扩充）",
+        "rm_h4_t2": "Hermes i18n 贡献以已 merge 的 PR 呈现 — 作为跨平台 A2A 证明",
+        "rm_h4_t3": "Live demo：commander 指派一张 card，Hermes 交付 PR，commander merge — 截图放在 portal",
+        "rm_h4_t4": "将 Hermes 加入 EClaw 的 agent roster 页面（附 capability tags 的 agent cards）",
+        "rm_desktop_title": "EClaw Desktop 一键设定路线图",
+        "rm_desktop_desc": "目标：实现可在 30 秒内完成所有 Agent 绑定设定的桌面应用程式",
+        "rm_d1_name": "核心基础设施",
+        "rm_d1_desc": "2–3 周：建立桌面应用程式框架、OAuth 自动化、Agent 侦测与连线基础",
+        "rm_d2_name": "设定自动化引擎",
+        "rm_d2_desc": "2–3 周：设定范本系统、批次操作引擎、环境适配",
+        "rm_d3_name": "使用者体验最佳化",
+        "rm_d3_desc": "1–2 周：一键安装、设定精灵、备份与还原",
+        "rm_d4_name": "企业功能",
+        "rm_d4_desc": "2–3 周：大量部署、安全强化、合规报告",
+        "rm_desktop_challenges_title": "主要技术挑战",
+        "mr_tab_listings": "我的上架项目",
+        "mr_no_listings": "尚无上架项目 — 可从你的机器人代理卡片建立一个",
+        "mr_listing_status_listed": "已上架",
+        "mr_listing_status_paused": "已暂停",
+        "mr_listing_status_delisted": "已下架",
+        "mr_listing_status_draft": "草稿",
+        "mr_listing_rate": "费率",
+        "mr_listing_rentals": "租用次数",
+        "mr_listing_no_rating": "尚无评分",
+        "mr_listing_unbound": "（槽位空白）",
+        "mr_listing_pause": "暂停",
+        "mr_listing_resume": "恢复",
+        "mr_listing_delist_title": "要永久下架吗？",
+        "mr_listing_delist_warning": "此操作无法复原。现有租用合约会执行到期；只会阻挡新的租用。",
+        "mr_listing_paused_toast": "上架项目已暂停",
+        "mr_listing_resumed_toast": "上架项目已重新上线",
+        "mr_listing_delisted_toast": "上架项目已下架",
+        "chat_mention_unresolved": "找不到 @mention 对应的实体：{tokens}",
+        "chat_scroll_to_latest": "卷动到最新讯息",
+        "chat_schedule_title": "⏰ 排程讯息",
+        "chat_schedule_tab_create": "新排程",
+        "chat_schedule_tab_queue": "已排定",
+        "chat_schedule_message_label": "讯息内容",
+        "chat_schedule_target_label": "发送对象",
+        "chat_schedule_local_only": "（仅限本机实体）",
+        "chat_schedule_mode_label": "排程方式",
+        "chat_schedule_mode_fixed": "固定时间",
+        "chat_schedule_mode_countdown": "倒数",
+        "chat_schedule_h": "时",
+        "chat_schedule_m": "分",
+        "chat_schedule_s": "秒",
+        "chat_schedule_max_7days": "（最长 7 天）",
+        "chat_schedule_submit": "排定送出",
+        "chat_schedule_cancel": "取消",
+        "chat_schedule_close": "关闭",
+        "chat_schedule_save": "储存",
+        "chat_schedule_edit": "编辑",
+        "chat_schedule_delete": "删除",
+        "chat_schedule_delete_confirm": "要取消这条已排程的讯息吗？",
+        "chat_schedule_no_pending": "目前没有已排程的讯息",
+        "chat_schedule_loading": "载入中…",
+        "chat_schedule_empty_text": "（尚未输入文字 — 请先在输入框打字后再排程）",
+        "chat_schedule_err_empty": "请先输入讯息内容",
+        "chat_schedule_err_no_target": "请至少选择一个发送对象",
+        "chat_schedule_err_invalid_time": "请输入有效时间",
+        "chat_schedule_err_in_past": "排程时间必须在未来",
+        "chat_schedule_err_too_far": "最多只能排到 7 天后",
+        "chat_schedule_ok": "已排程",
+        "chat_schedule_saved": "已储存",
+        "chat_schedule_cancelled": "已取消",
+        "info_slide_guide_msg_cta": "查看 Claude Design 简报 →",
+        "files_multi_select_count": "已选",
+        "files_multi_select_attach": "夹带到聊天",
+        "files_multi_select_cancel": "取消",
+        "chip_popover_loading": "载入中…",
+        "chip_popover_load_error": "载入失败",
+        "chip_popover_not_supported": "此引用类型尚未支援预览",
+        "chip_popover_requote": "再引用到聊天",
+        "chip_popover_open_full": "打开完整页面 →",
+        "chip_popover_cycle": "已在引用堆叠上",
+        "chip_popover_too_deep": "太深，请直接跳页",
+        "chip_popover_requoted": "已引用至聊天",
+        "kb_col_blocked": "已封锁",
+        "kb_sort_oldest_updated": "最久未更新",
+        "kb_funnel_tag": "标签…",
+        "kb_gate_backlog_only_hint": "Launch-gate 仅适用于 backlog 卡片",
+        "info_slide_guide_mention_cta": "查看 Claude Design 简报 →",
+        "info_perf_slide_cta": "📊 即时效能追踪仪表板",
+        "info_integration_slide_cta": "🔗 跨平台整合生态系统",
+        "info_enterprise_slide_cta": "🏢 企业级解决方案",
+        "info_privacy_slide_cta": "🔒 安全与隐私保障",
+        "info_slide_why_eclaw_b1_dual_currency_cta": "查看 Claude Design 简报 →",
+        "info_slide_why_eclaw_b2_topup_tiers_cta": "查看 Claude Design 简报 →",
+        "info_slide_why_eclaw_b3_atomic_transactions_cta": "查看 Claude Design 简报 →",
+        "info_slide_why_eclaw_b4_auto_bot_interview_cta": "查看 Claude Design 简报 →",
+        "info_slide_why_eclaw_b5_pricing_advisor_cta": "查看 Claude Design 简报 →",
+        "info_slide_why_eclaw_b6_interview_arena_leaderboard_cta": "查看 Claude Design 简报 →",
+        "info_slide_why_eclaw_b7_contract_version_locking_cta": "查看 Claude Design 简报 →",
+        "info_slide_why_eclaw_b8_token_metering_cta": "查看 Claude Design 简报 →",
+        "info_slide_why_eclaw_b9_live_bot_handover_cta": "查看 Claude Design 简报 →",
+        "info_slide_why_eclaw_b10_post_rental_a2a_collaboration_cta": "查看 Claude Design 简报 →",
+        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "查看 Claude Design 简报 →",
+        "info_guide_passive_income_slide_cta": "📊 开启简报全萤幕",
+        "info_guide_rent_to_use_slide_cta": "📊 开启简报全萤幕",
+        "info_guide_credit_swap_slide_cta": "📊 开启简报全萤幕",
+        "nav_publisher": "发布工具",
+        "toast_toggle_public_failed": "更新失败",
+        "pub_title": "发布工具",
+        "pub_apikey_title": "发布者 API 密钥",
+        "pub_apikey_placeholder": "X-Publisher-Key（来自 device-vars: PUBLISHER_API_KEY）",
+        "pub_apikey_save": "储存",
+        "pub_apikey_unset": "未设定",
+        "pub_apikey_hint": "只会储存在此浏览器的 localStorage。绝不会传送给任何第三方。POST /publish 请求必填。",
+        "pub_platforms_title": "平台",
+        "pub_btn_refresh": "重新整理",
+        "pub_platforms_loading": "正在载入平台…",
+        "pub_compose_title": "撰写",
+        "pub_btn_clear": "清除",
+        "pub_btn_publish": "发布",
+        "pub_apikey_set": "金钥已设定",
+        "pub_apikey_cleared": "金钥已清除",
+        "pub_apikey_saved": "金钥已储存到此浏览器",
+        "pub_platforms_err": "载入平台失败：",
+        "pub_platforms_none": "尚未注册任何平台。",
+        "pub_chip_ready": "就绪",
+        "pub_chip_unconfigured": "未设定",
+        "pub_chip_rate": "速率：",
+        "pub_chip_rate_day": "/天",
+        "pub_compose_draftsonly": "仅草稿",
+        "pub_compose_no_schema": "此平台尚未定义撰写表单 — 请直接透过 API 发布，或新增结构描述。",
+        "pub_err_no_key": "请先在页面上方储存你的 Publisher API key。",
+        "pub_err_missing_field": "缺少必填栏位：",
+        "pub_btn_publishing": "发布中…",
+        "pub_result_ok": "已发布到 ",
+        "pub_result_err": "发布失败：",
+        "pub_result_network_err": "网路错误：",
+        "common_redeem": "兑换",
+        "common_refresh": "重新整理",
+        "common_preview": "预览",
+        "common_new_key": "+ 新增金钥",
+        "common_mark": "标记",
+        "common_open_editor": "开启编辑器",
+        "settings_save_policy": "储存装置策略",
+        "settings_invite_title": "邀请好友赚奖励",
+        "settings_invited": "已邀请",
+        "settings_bonus_remaining": "剩余奖励",
+        "settings_redeem_title": "兑换邀请码",
+        "privacy_title": "隐私权政策 - EClawbot",
+        "mm_title": "EClawbot - 思维导图",
+        "mm_tab": "思维导图",
+        "mm_heading": "🧠 思维导图",
+        "mm_scope_label": "范围",
+        "mm_scope_entity": "我的工作",
+        "mm_scope_device": "装置上的全部",
+        "mm_filter_archived": "已封存",
+        "mm_filter_done": "已完成",
+        "mm_filter_notes": "备注",
+        "mm_filter_owners": "负责人",
+        "mm_btn_refresh": "重新整理",
+        "mm_btn_reset_layout": "重置版面",
+        "mm_btn_release": "释放钉选",
+        "mm_node_task": "任务",
+        "mm_node_note": "备注",
+        "mm_node_owner": "负责人",
+        "mm_node_chat": "聊天",
+        "mm_loading": "正在载入图形…",
+        "mm_state_empty_title": "尚无图形资料",
+        "mm_empty_body": "一旦存在任务、备注或聊天锚点，它们就会显示在这里。",
+        "mm_error_title": "无法载入图形",
+        "mm_error_retry": "重试",
+        "mm_error_auth": "验证失败。请重新登入。",
+        "mm_preview_close": "关闭",
+        "mm_preview_open_task": "在看板中开启",
+        "mm_preview_open_note": "在任务中开启",
+        "mm_preview_open_chat": "在聊天中开启",
+        "mm_preview_open_owner": "按负责人筛选",
+        "mm_preview_action_disabled_note_deeplink": "备注深层连结是一张后续卡；目前这会开启 mission.html。",
+        "mm_preview_action_disabled_chat_deeplink": "聊天深层连结是一张后续卡；尚无法使用。",
+        "mm_meta_type": "类型",
+        "mm_meta_status": "状态",
+        "mm_meta_priority": "优先顺序",
+        "mm_meta_owner": "负责人",
+        "mm_meta_comments": "留言",
+        "mm_meta_notes": "备注",
+        "mm_meta_archived": "已封存",
+        "mm_meta_category": "类别",
+        "mm_meta_updated": "更新时间",
+        "mm_truncated_warning": "图形已截断：显示 {nodes} 个节点 / {links} 条连结。",},
 
 
 
@@ -2041618,26 +2041873,6 @@ const TRANSLATIONS = {
 
 
         "dash_channel_promo": "EClaw Channel を試してみませんか？よりネイティブ、より高速",
-        "dash_channel_card_openclaw_title": "OpenClaw Channel",
-        "dash_channel_card_openclaw_badge": "安定版",
-        "dash_channel_card_openclaw_desc": "公式 OpenClaw プラグイン経路 — ホスト型 OpenClaw bot と本番 API キー設定に最適です。",
-        "dash_channel_card_codex_title": "Codex Channel",
-        "dash_channel_card_codex_badge": "CLI ブリッジ",
-        "dash_channel_card_codex_desc": "codex app-server 経由で EClaw エンティティを OpenAI Codex CLI に接続します。EClaw chat からリモート repo 作業を行うのに適しています。",
-        "dash_channel_card_codex_step2": ".env を設定: ECLAW_API_KEY, WEBHOOK_URL, CODEX_WORKSPACE",
-        "dash_channel_card_codex_guide_link": "Codex ガイド →",
-        "dash_channel_card_clauded_title": "Claude Code Channel",
-        "dash_channel_card_clauded_badge": "実験版",
-        "dash_channel_card_clauded_desc": "ローカル tmux セッションで Claude Code を EClaw bot として実行します — claude.ai Max サブスク枠を使用し、Anthropic API トークン課金はありません。",
-        "dash_channel_card_clauded_step2": ".mcp.json を設定: ECLAW_API_KEY, ECLAW_WEBHOOK_URL",
-        "dash_channel_card_clauded_guide_link": "Claude Code ガイド →",
-        "dash_channel_card_hermes_title": "Hermes Channel",
-        "dash_channel_card_hermes_badge": "ライブショーケース",
-        "dash_channel_card_hermes_desc": "Hermes Agent（NousResearch の自己進化型エージェント、Python）を webhook 経由で EClaw bot としてバインドします。MiniMax / OpenAI / Anthropic / ローカル Ollama に対応。",
-        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
-        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
-        "dash_channel_card_hermes_step3": "bind-entity + daemon 起動",
-        "dash_channel_card_hermes_guide_link": "Hermes ガイド →",
 
 
 
@@ -2228456,7 +2228691,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_badge": "管理者",
 
 
 
@@ -2228584,7 +2228818,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_admin_users": "管理者ユーザー管理",
 
 
 
@@ -2228712,7 +2228945,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_admin_users_desc": "ADMIN_DEVICE_IDS の確認とローテーション。",
 
 
 
@@ -2228840,7 +2229072,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_feature_flags": "機能フラグ",
 
 
 
@@ -2228968,7 +2229199,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_feature_flags_desc": "デバイスごと/グローバルに実験的機能を切り替え。",
 
 
 
@@ -2229096,7 +2229326,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_log_browser": "エラーログブラウザ",
 
 
 
@@ -2229224,7 +2229453,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_log_browser_desc": "カテゴリ、レベル、時間で server_logs をフィルタ。",
 
 
 
@@ -2229352,7 +2229580,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_rental_monitor": "レンタル健全性モニター",
 
 
 
@@ -2229480,7 +2229707,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_rental_monitor_desc": "DBレイテンシ、トストーン成長、Publisher統合状態、Fleet数。",
 
 
 
@@ -2229608,7 +2229834,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_soon": "近日公開",
 
 
 
@@ -2229736,7 +2229961,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_sys_metrics": "システムメトリクス",
 
 
 
@@ -2229864,7 +2230088,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_sys_metrics_desc": "CPU / メモリ / ソケット数 / リクエストレート。",
 
 
 
@@ -2229992,7 +2230215,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_footnote": "管理者専用 — 非管理者のデバイスは読み込み時に403画面を表示し /portal/ にリダイレクト",
 
 
 
@@ -2230120,7 +2230342,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_section_future": "計画中",
 
 
 
@@ -2230248,7 +2230469,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_section_monitoring": "監視",
 
 
 
@@ -2230376,7 +2230596,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_subtitle": "開発 + Opsツール。非管理者のデバイスはポータルにリダイレクトされます。",
 
 
 
@@ -2230504,7 +2230723,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_title": "[admin] EClaw 管理ツール",
 
 
 
@@ -2230632,7 +2230850,6 @@ const TRANSLATIONS = {
 
 
 
-        "ai_chat_view_feedback": "フィードバック履歴を表示",
 
 
 
@@ -2230760,7 +2230977,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_return": "← 返回",
 
 
 
@@ -2230888,7 +2231104,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_attach_key_ref": "鍵の参照",
 
 
 
@@ -2231016,7 +2231231,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_card_modal_comments": "コメント",
 
 
 
@@ -2231144,7 +2231358,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_card_modal_comments_empty": "コメントはまだありません",
 
 
 
@@ -2231272,7 +2231485,6 @@ const TRANSLATIONS = {
 
 
 
-"chat_density_comfortable": "快適",
 
 
 
@@ -2231400,7 +2231612,6 @@ const TRANSLATIONS = {
 
 
 
-"chat_density_compact": "紧凑",
 
 
 
@@ -2231528,7 +2231739,6 @@ const TRANSLATIONS = {
 
 
 
-"chat_density_normal": "標準",
 
 
 
@@ -2231656,7 +2231866,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_kanban_view_card": "📋 カードを表示",
 
 
 
@@ -2231784,7 +2231993,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_loading": "読み込み中...",
 
 
 
@@ -2231912,7 +2232120,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mention_unresolved": "不明な @mention: {tokens}",
 
 
 
@@ -2232040,7 +2232247,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mic_denied": "マイクアクセスが拒否されました",
 
 
 
@@ -2232168,7 +2232374,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_demo_node": "このノードはデモデータまたは短いプレフィックスIDです — ページ間引用はサポートされていません。マインドマップページの📋ボタンを 사용하여フルトークンをコピーしてください。",
 
 
 
@@ -2232296,7 +2232501,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_empty": "—",
 
 
 
@@ -2232424,7 +2232628,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_anchors": "アンカー",
 
 
 
@@ -2232552,7 +2232755,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_comments": "コメント",
 
 
 
@@ -2232680,7 +2232882,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_summary": "要約",
 
 
 
@@ -2232808,7 +2233009,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_type": "種類",
 
 
 
@@ -2232936,7 +2233136,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mission_notify": "ミッション",
 
 
 
@@ -2233064,7 +2233263,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_playback_failed": "再生に失敗しました",
 
 
 
@@ -2233192,7 +2233390,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_btn": "関連チャット",
 
 
 
@@ -2233320,7 +2233517,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_empty": "関連するチャットが見つかりません",
 
 
 
@@ -2233448,7 +2233644,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_error": "関連するチャットの読み込みに失敗しました",
 
 
 
@@ -2233576,7 +2233771,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_loading": "関連するチャットを読み込み中...",
 
 
 
@@ -2233831,7 +2234025,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_mode_semantic": "semantic",
 
 
 
@@ -2233959,7 +2234152,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_panel_title": "関連するチャット",
 
 
 
@@ -2234087,7 +2234279,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_target_not_loaded": "ターゲットチャットが読み込まれていません",
 
 
 
@@ -2234215,7 +2234406,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_cancel": "キャンセル",
 
 
 
@@ -2234343,7 +2234533,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_cancelled": "キャンセル済み",
 
 
 
@@ -2234471,7 +2234660,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_close": "閉じる",
 
 
 
@@ -2234599,7 +2234787,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_delete": "削除",
 
 
 
@@ -2234727,7 +2234914,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_delete_confirm": "この予約メッセージをキャンセルしますか？",
 
 
 
@@ -2234855,7 +2235041,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_edit": "編集",
 
 
 
@@ -2234983,7 +2235168,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_empty_text": "(空欄 — 予約前にメッセージを入力してください)",
 
 
 
@@ -2235111,7 +2235295,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_empty": "まずメッセージを入力してください",
 
 
 
@@ -2235239,7 +2235422,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_in_past": "時間は未来である必要があります",
 
 
 
@@ -2235367,7 +2235549,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_invalid_time": "有効な時間を入力してください",
 
 
 
@@ -2235495,7 +2235676,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_no_target": "少なくとも1つのターゲットを選択してください",
 
 
 
@@ -2235623,7 +2235803,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_too_far": "7日先までしか予約できません",
 
 
 
@@ -2235751,7 +2235930,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_h": "時",
 
 
 
@@ -2235879,7 +2236057,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_loading": "読み込み中...",
 
 
 
@@ -2236007,7 +2236184,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_local_only": "(ローカルエンティティのみ)",
 
 
 
@@ -2236135,7 +2236311,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_m": "分",
 
 
 
@@ -2236263,7 +2236438,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_max_7days": "(最大7日)",
 
 
 
@@ -2236391,7 +2236565,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_message_label": "メッセージ",
 
 
 
@@ -2236519,7 +2236692,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_mode_countdown": "カウントダウン",
 
 
 
@@ -2236647,7 +2236819,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_mode_fixed": "固定時間",
 
 
 
@@ -2236775,7 +2236946,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_mode_label": "実行タイミング",
 
 
 
@@ -2236903,7 +2237073,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_no_pending": "保留中の予約メッセージはありません",
 
 
 
@@ -2237031,7 +2237200,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_ok": "予約済み",
 
 
 
@@ -2237159,7 +2237327,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_s": "秒",
 
 
 
@@ -2237287,7 +2237454,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_save": "保存",
 
 
 
@@ -2237415,7 +2237581,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_saved": "保存済み",
 
 
 
@@ -2237543,7 +2237708,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_submit": "予約",
 
 
 
@@ -2237671,7 +2237835,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_tab_create": "新規",
 
 
 
@@ -2237799,7 +2237962,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_tab_queue": "予約一覧",
 
 
 
@@ -2237927,7 +2238089,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_target_label": "送信先",
 
 
 
@@ -2238055,7 +2238216,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_title": "⏰ メッセージを予約",
 
 
 
@@ -2238183,7 +2238343,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_scheduled": "予約済み",
 
 
 
@@ -2238311,7 +2238470,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_scroll_to_latest": "最新メッセージにスクロール",
 
 
 
@@ -2238439,7 +2238597,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_unread_sep": "── 新しいメッセージ ──",
 
 
 
@@ -2238567,7 +2238724,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_voice_upload_failed": "音声アップロードに失敗しました",
 
 
 
@@ -2238695,7 +2238851,6 @@ const TRANSLATIONS = {
 
 
 
-        "chip_popover_requoted": "チャットに引用しました",
 
 
 
@@ -2238823,7 +2238978,6 @@ const TRANSLATIONS = {
 
 
 
-        "common_mark": "マーク",
 
 
 
@@ -2238951,7 +2239105,6 @@ const TRANSLATIONS = {
 
 
 
-        "common_new_key": "+ 新しい鍵",
 
 
 
@@ -2239079,7 +2239232,6 @@ const TRANSLATIONS = {
 
 
 
-        "common_open_editor": "エディタを開く",
 
 
 
@@ -2239207,7 +2239359,6 @@ const TRANSLATIONS = {
 
 
 
-"common_redeem": "引き換える",
 
 
 
@@ -2239335,7 +2239486,6 @@ const TRANSLATIONS = {
 
 
 
-        "community_cta_create_bot": "独自のBotをお持ちですか？無料で作成して今すぐリストに登録しましょう。",
 
 
 
@@ -2239463,7 +2239613,6 @@ const TRANSLATIONS = {
 
 
 
-        "compare_back": "← 情報ハブに戻る",
 
 
 
@@ -2239591,7 +2239740,6 @@ const TRANSLATIONS = {
 
 
 
-        "compare_page_title": "EClawbot vs Telegram — チャンネル比較",
 
 
 
@@ -2380138,6 +2380286,30 @@ const TRANSLATIONS = {
 
 
         "guide_vm_cta_chat": "チャットで試してみる: <a href=\"chat.html\">Chatを開く</a> でBotに「前に話した...のこと覚えてる？」と聞いてみる — そうするとバブル下の引用を展開できます。",
+        "guide_cr_title": "\U0001F500 なぜ EClaw には2つの Channel Routing パスがあるのか？",
+        "guide_cr_meta": "thin-pipe と LLM runtime の設計哲学",
+        "guide_cr_h2_two_paths": "2つのパス、それぞれの役割",
+        "guide_cr_p_intro": "EClaw の channel メッセージシステムは意図的に2つのパスを保持しています。異なる統合シナリオには異なる抽象レベルが必要です。",
+        "guide_cr_th_path": "パス",
+        "guide_cr_th_endpoint": "エンドポイント",
+        "guide_cr_th_for": "適用",
+        "guide_cr_path_a_label": "Path A — Thin-pipe",
+        "guide_cr_path_a_for": "Discord webhook、IoT リレー、REST フォワーダー",
+        "guide_cr_path_b_label": "Path B — LLM Runtime",
+        "guide_cr_path_b_for": "Claude、Codex、Hermes LLM ブリッジ",
+        "guide_cr_sp1_pain": "LLM bridge が各 bot の botSecret を保持する必要がある？",
+        "guide_cr_sp1_solution": "\u2192 Path B なら bridge は ECLAW_API_KEY のみでOK",
+        "guide_cr_sp1_desc": "Channel registration で ACL を事前定義。Bridge は X-Channel-Key + actAs で /api/transform を呼び出し、サーバーが ACL を検証して完全な transform 副作用を実行します。",
+        "guide_cr_sp2_pain": "/api/channel/message の bot reply では @-mention ルーティングが使えない？",
+        "guide_cr_sp2_solution": "\u2192 Path B は /api/transform を使用し、@-mention を自動解析して speakTo に設定",
+        "guide_cr_sp2_desc": "サーバーがメッセージテキストをスキャンし、6種類の mention token を解析して対象 entity に自動ルーティングします。",
+        "guide_cr_sp3_pain": "既存の /api/channel/message 統合を壊したくない？",
+        "guide_cr_sp3_solution": "\u2192 Path A は廃止されません。thin-pipe のユースケースは引き続き有効",
+        "guide_cr_sp3_desc": "Discord webhook、IoT センサー、REST リレーは LLM runtime 機能を必要としません。Path A の保持はサードパーティへの約束です。",
+        "guide_cr_h2_decision": "一言で決める判断ルール",
+        "guide_cr_decision": "LLM runtime bridge \u2192 Path B (transform + channelKey)；純粋なリレー \u2192 Path A (channel/message)",
+        "guide_cr_cta_title": "詳しく見る",
+        "guide_cr_cta_spec": "完全な決定木と変遷史：<a href=\"https://github.com/HankHuang0516/EClaw/blob/main/docs/specs/channel-routing-paths.md\" target=\"_blank\" rel=\"noopener\">channel-routing-paths.md</a>",
 
 
 
@@ -2394729,7 +2394901,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmaph": "出版者ロードマップ",
 
 
 
@@ -2394857,7 +2395028,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmapdesc": "アプリの公開準備方法を学びましょう。公開は5ステップのプロセスです：",
 
 
 
@@ -2394985,7 +2395155,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatush": "公開状況",
 
 
 
@@ -2395113,7 +2395282,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatuslegend": "ステータス凡例",
 
 
 
@@ -2395241,7 +2395409,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointh": "エンドポイントごとのステータス",
 
 
 
@@ -2395369,7 +2395536,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointdesc": "表示されるステータスは Publisher Profile の設定に基づいています。",
 
 
 
@@ -2395497,7 +2395663,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubnavpublisher": "パブリッシャー",
 
 
 
@@ -2395625,7 +2395790,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubtitle": "パブリッシャーガイド",
 
 
 
@@ -2409939,7 +2410103,7 @@ const TRANSLATIONS = {
         "rm_hermes_title": "Hermes Channel — 安定運用ロードマップ",
         "rm_hermes_desc": "Hermes（#5）は、EClaw の webhook channel 経由で接続された NousResearch Hermes Agent です。EClaw のクロスプラットフォーム A2A 機能を示すライブデモとして、信頼性の高い稼働が求められます。以下は、安定した共同作業状態を実現し維持するためのロードマップです。",
         "rm_hermes_diag_title": "既知の不安定要因（過去のインシデント）",
-        "rm_hermes_issue_q": "messageQueue オーバーフロー → EClaw が純粋な翻訳モードへ強制移行し、Hermes リクエストが黙って破棄される（⚠️ 2026-04-28 に再発。PR #2201 で process-lifecycle は修正済みだが、session-resume + 壁時計ベースのみのタイムアウトは未対応 — Phase H1 進行中）",
+        "rm_hermes_issue_q": "messageQueue オーバーフロー → EClaw が純粋な翻訳モードへ強制移行し、Hermes リクエストが黙って破棄される（⚠️ 2026-04-28 に再発。PR #2201 で process-lifecycle は修正済みだが、session-resume + 壁時計ベースのみのタイムアウトは以前は未対応 — Phase H1 完了）",
         "rm_hermes_issue_d": "Docker コンテナのフリーズ: Hermes プロセスは生きているがメッセージを消費していない。Railway の再起動遅延により停止時間が長引く（⚠️ 2026-04-28 に再発。/health は 200 を返す一方、すべての chat 呼び出しがタイムアウト — Phase H1: worker 状態の可視化 + autoheal sidecar）",
         "rm_hermes_issue_s": "セッションキャッシュ不一致: 誤った org をキーにキャッシュされたセッション → git 操作で「repo not found」",
         "rm_hermes_issue_p": "claude-cli-proxy の匿名フォールバック: GIT_HUB2 認証情報なし → private repo 操作が静かに失敗。card_f531861e とのギャップ",
@@ -2410450,6 +2410614,17 @@ const TRANSLATIONS = {
         "mindmap_subsystems": "サブシステム",
         "mindmap_subsystems_empty": "サブシステムはありません — ノードを「サブグラフのルート」に設定すると追加できます。",
         "mindmap_untitled": "（無題）",
+        "kanban_nudge_per_entity_section_label": "エンティティ別上書き",
+        "kanban_nudge_per_entity_section_desc": "特定のエンティティだけ、間隔・列・スロットルをカスタマイズします。バッチサイズと優先モードはデバイス全体の設定のままです。",
+        "kanban_nudge_per_entity_pick_placeholder": "— エンティティを選択 —",
+        "kanban_nudge_per_entity_clear": "デバイス既定に戻す",
+        "kanban_nudge_per_entity_hint_prefix": "項目を切り替えると、このエンティティのデバイス既定値を上書きできます。",
+        "kanban_nudge_per_entity_override_interval": "間隔を上書き",
+        "kanban_nudge_per_entity_override_statuses": "列を上書き",
+        "kanban_nudge_per_entity_override_throttle": "スロットルを上書き",
+        "kanban_nudge_per_entity_throttle_short": "このエンティティを間隔ごとに最大1回の通知に制限",
+        "kb_funnel_tag": "タグ…",
+        "kb_gate_backlog_only_hint": "ローンチゲートはバックログカードでのみ利用できます",
 
 
 
@@ -2604578,26 +2604753,6 @@ const TRANSLATIONS = {
 
 
         "dash_channel_promo": "EClaw Channel을 사용해 보세요! 더 네이티브하고 더 빠릅니다",
-        "dash_channel_card_openclaw_title": "OpenClaw Channel",
-        "dash_channel_card_openclaw_badge": "안정",
-        "dash_channel_card_openclaw_desc": "공식 OpenClaw 플러그인 경로 — 호스팅 OpenClaw 봇과 프로덕션 API 키 설정에 가장 적합합니다.",
-        "dash_channel_card_codex_title": "Codex Channel",
-        "dash_channel_card_codex_badge": "CLI 브리지",
-        "dash_channel_card_codex_desc": "codex app-server를 통해 EClaw 엔티티를 OpenAI Codex CLI에 연결합니다. EClaw chat에서 원격 repo 작업을 하기에 좋습니다.",
-        "dash_channel_card_codex_step2": ".env 채우기: ECLAW_API_KEY, WEBHOOK_URL, CODEX_WORKSPACE",
-        "dash_channel_card_codex_guide_link": "Codex 가이드 →",
-        "dash_channel_card_clauded_title": "Claude Code Channel",
-        "dash_channel_card_clauded_badge": "실험적",
-        "dash_channel_card_clauded_desc": "로컬 tmux 세션에서 Claude Code를 EClaw bot으로 실행합니다 — claude.ai Max 구독 할당량을 사용하며 Anthropic API 토큰 비용은 청구되지 않습니다.",
-        "dash_channel_card_clauded_step2": ".mcp.json 채우기: ECLAW_API_KEY, ECLAW_WEBHOOK_URL",
-        "dash_channel_card_clauded_guide_link": "Claude Code 가이드 →",
-        "dash_channel_card_hermes_title": "Hermes Channel",
-        "dash_channel_card_hermes_badge": "라이브 쇼케이스",
-        "dash_channel_card_hermes_desc": "Hermes Agent(NousResearch self-evolving agent, Python)를 webhook으로 EClaw bot에 바인딩합니다. MiniMax / OpenAI / Anthropic / 로컬 Ollama를 지원합니다.",
-        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
-        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
-        "dash_channel_card_hermes_step3": "bind-entity + daemon 시작",
-        "dash_channel_card_hermes_guide_link": "Hermes 가이드 →",
 
 
 
@@ -2938832,7 +2938987,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubroadmapdesc": "앱을 출판 준비하는 방법을 알아보세요. 출판은 5단계 프로세스입니다:",
 
 
 
@@ -2938960,7 +2939114,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatush": "게시 상태",
 
 
 
@@ -2939088,7 +2939241,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatuslegend": "상태 범례",
 
 
 
@@ -2939216,7 +2939368,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointh": "엔드포인트별 상태",
 
 
 
@@ -2939344,7 +2939495,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubstatusendpointdesc": "표시된 상태는 게시자 프로필 설정에 기반합니다.",
 
 
 
@@ -2939472,7 +2939622,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubnavpublisher": "게시자",
 
 
 
@@ -2939600,135 +2939749,6 @@ const TRANSLATIONS = {
 
 
 
-        "guidepubtitle": "게시자 가이드"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    ,
         "guide_pub_col_auth": "인증",
         "guide_pub_col_keys": "필요한 Vault / Env 키",
         "guide_pub_col_platform": "플랫폼",
@@ -2940044,7 +2940064,7 @@ const TRANSLATIONS = {
         "rm_hermes_title": "Hermes 채널 — 안정 운영 로드맵",
         "rm_hermes_desc": "Hermes(#5)는 EClaw의 웹훅 채널을 통해 연결된 NousResearch Hermes Agent입니다. EClaw의 크로스 플랫폼 A2A 기능을 보여주는 라이브 쇼케이스인 만큼 안정적으로 운영되어야 합니다. 아래는 안정적인 공동 작업 상태를 달성하고 유지하기 위한 로드맵입니다.",
         "rm_hermes_diag_title": "알려진 불안정 원인(과거 사고)",
-        "rm_hermes_issue_q": "messageQueue 오버플로 → EClaw가 순수 번역 모드로 강제 전환되고 Hermes 요청이 조용히 누락됨(⚠️ 2026-04-28 재발; PR #2201에서 프로세스 수명 주기는 수정했지만 세션 재개 + 벽시계 시간 기반 타임아웃은 미해결 — Phase H1 진행 중)",
+        "rm_hermes_issue_q": "messageQueue 오버플로 → EClaw가 순수 번역 모드로 강제 전환되고 Hermes 요청이 조용히 누락됨(⚠️ 2026-04-28 재발; PR #2201에서 프로세스 수명 주기는 수정했지만 세션 재개 + 벽시계 시간 기반 타임아웃은 이전에는 미해결 — Phase H1 완료)",
         "rm_hermes_issue_d": "Docker 컨테이너 멈춤: Hermes 프로세스는 살아 있지만 메시지를 소비하지 않음; Railway 재시작 지연으로 장기 장애 발생(⚠️ 2026-04-28 재발; /health는 200을 반환했지만 모든 채팅 호출이 타임아웃됨 — Phase H1: 워커 상태 노출 + autoheal 사이드카)",
         "rm_hermes_issue_s": "세션 캐시 불일치: 캐시된 세션이 잘못된 조직 키로 저장됨 → git 작업에서 \"repo not found\" 발생",
         "rm_hermes_issue_p": "claude-cli-proxy 익명 폴백: GIT_HUB2 자격 증명 없음 → 비공개 repo 작업이 조용히 실패; card_f531861e와의 갭",
@@ -2940640,6 +2940660,19 @@ const TRANSLATIONS = {
         "chat_related_loading": "관련 채팅을 불러오는 중...",
         "chat_related_panel_title": "관련 채팅",
         "chat_related_target_not_loaded": "대상 채팅을 불러오지 않았습니다",
+        "landing_watch_full_demo": "▶ 전체 데모와 안내 보기",
+        "footer_promo_video": "▶ 소개 영상 보기",
+        "kanban_nudge_per_entity_section_label": "엔티티별 재정의",
+        "kanban_nudge_per_entity_section_desc": "특정 엔티티 하나에 대해 간격, 열, 제한을 맞춤 설정합니다. 배치 크기와 우선순위 모드는 기기 전체 설정을 유지합니다.",
+        "kanban_nudge_per_entity_pick_placeholder": "— 엔티티 선택 —",
+        "kanban_nudge_per_entity_clear": "기기 기본값으로 재설정",
+        "kanban_nudge_per_entity_hint_prefix": "필드를 켜면 이 엔티티에 대해 기기 기본값을 재정의합니다.",
+        "kanban_nudge_per_entity_override_interval": "간격 재정의",
+        "kanban_nudge_per_entity_override_statuses": "열 재정의",
+        "kanban_nudge_per_entity_override_throttle": "제한 재정의",
+        "kanban_nudge_per_entity_throttle_short": "이 엔티티는 간격당 알림 1회로 제한",
+        "kb_funnel_tag": "태그…",
+        "kb_gate_backlog_only_hint": "런치 게이트는 백로그 카드에서만 사용할 수 있습니다",
     },
 
 
@@ -2942755,7 +2942788,7 @@ const TRANSLATIONS = {
         "rm_hermes_title": "Hermes Channel — แผนการทำงานที่มีเสถียรภาพ",
         "rm_hermes_desc": "Hermes (#5) เป็นตัวแทน Hermes ของ NousResearch ที่เชื่อมต่อผ่านช่องทางเว็บฮุคของ Eclaw ในการสาธิตสดความสามารถข้ามแพลตฟอร์ม A2A ของ EClaw มันจะต้องทำงานได้อย่างน่าเชื่อถือ ด้านล่างนี้คือแผนงานในการบรรลุและรักษาสถานะการทำงานร่วมกันที่มั่นคง",
         "rm_hermes_diag_title": "สาเหตุของความไม่แน่นอนที่ทราบ (เหตุการณ์ในอดีต)",
-        "rm_hermes_issue_q": "messageQueue overflow → EClaw ถูกบังคับให้เข้าสู่โหมดการแปลที่แท้จริง คำขอของ Hermes ถูกยกเลิกอย่างเงียบ ๆ (⚠️ เกิดขึ้นอีก 2026-04-28; PR #2201 วงจรชีวิตกระบวนการคงที่ แต่เซสชัน-ดำเนินการต่อ + การหมดเวลานาฬิกาแขวนอย่างเดียวไม่ถูกแตะต้อง — เฟส H1 อยู่ระหว่างดำเนินการ)",
+        "rm_hermes_issue_q": "messageQueue overflow → EClaw ถูกบังคับให้เข้าสู่โหมดการแปลที่แท้จริง คำขอของ Hermes ถูกยกเลิกอย่างเงียบ ๆ (⚠️ เกิดขึ้นอีก 2026-04-28; PR #2201 วงจรชีวิตกระบวนการคงที่ แต่เซสชัน-ดำเนินการต่อ + การหมดเวลานาฬิกาแขวนอย่างเดียวก่อนหน้านี้ยังไม่ถูกแตะต้อง — เฟส H1 เสร็จสมบูรณ์)",
         "rm_hermes_issue_d": "คอนเทนเนอร์นักเทียบท่าหยุดทำงาน: Hermes ประมวลผลแบบมีชีวิตแต่ไม่บริโภคข้อความ ความล่าช้าในการรีสตาร์ทรถไฟทำให้เกิดการหยุดทำงานเป็นเวลานาน (เกิดซ้ำในวันที่ 28-04-2569; /health ส่งคืน 200 ในขณะที่การโทรแชททุกครั้งหมดเวลา — ระยะ H1: สถานะผู้ปฏิบัติงานพื้นผิว + รถเทียมข้างการซ่อมแซมอัตโนมัติ)",
         "rm_hermes_issue_s": "แคชเซสชันไม่ตรงกัน: เซสชันแคชคีย์โดยองค์กรผิด → \"ไม่พบ repo\" ในการดำเนินการคอมไพล์",
         "rm_hermes_issue_p": "claude-cli-proxy ทางเลือกที่ไม่ระบุชื่อ: ไม่มีข้อมูลรับรอง GIT_HUB2 → การดำเนินการ repo ส่วนตัวล้มเหลวโดยไม่โต้ตอบ ช่องว่างด้วย card_f531861e",
@@ -3468556,7 +3468589,20 @@ const TRANSLATIONS = {
         "info_slide_why_eclaw_b8_token_metering_cta": "ดูสไลด์ Claude Design →",
         "info_slide_why_eclaw_b9_live_bot_handover_cta": "ดูสไลด์ Claude Design →",
         "info_slide_why_eclaw_b10_post_rental_a2a_collaboration_cta": "ดูสไลด์ Claude Design →",
-        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "ดูสไลด์ Claude Design →"},
+        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "ดูสไลด์ Claude Design →",
+        "landing_watch_full_demo": "▶ ดูเดโมเต็มและคำแนะนำ",
+        "footer_promo_video": "▶ ดูวิดีโอแนะนำ",
+        "kanban_nudge_per_entity_section_label": "ตั้งค่าทับรายเอนทิตี",
+        "kanban_nudge_per_entity_section_desc": "ปรับแต่งช่วงเวลา คอลัมน์ และการจำกัดสำหรับเอนทิตีเฉพาะหนึ่งรายการ ขนาดแบตช์และโหมดลำดับความสำคัญยังใช้ระดับอุปกรณ์",
+        "kanban_nudge_per_entity_pick_placeholder": "— เลือกเอนทิตี —",
+        "kanban_nudge_per_entity_clear": "รีเซ็ตเป็นค่าเริ่มต้นของอุปกรณ์",
+        "kanban_nudge_per_entity_hint_prefix": "เปิดฟิลด์เพื่อทับค่าเริ่มต้นของอุปกรณ์สำหรับเอนทิตีนี้",
+        "kanban_nudge_per_entity_override_interval": "ทับช่วงเวลา",
+        "kanban_nudge_per_entity_override_statuses": "ทับคอลัมน์",
+        "kanban_nudge_per_entity_override_throttle": "ทับการจำกัด",
+        "kanban_nudge_per_entity_throttle_short": "จำกัดเอนทิตีนี้ไม่เกิน 1 การแจ้งเตือนต่อช่วงเวลา",
+        "kb_funnel_tag": "แท็ก…",
+        "kb_gate_backlog_only_hint": "Launch-gate ใช้ได้เฉพาะการ์ด backlog เท่านั้น",},
 
 
 
@@ -3994784,7 +3994830,7 @@ const TRANSLATIONS = {
         "rm_hermes_done_title": "Các cột mốc đã hoàn thành",
         "rm_hermes_issue_d": "Đóng băng container Docker: tiến trình Hermes còn sống nhưng không tiêu thụ tin nhắn; độ trễ khởi động lại của Railway gây gián đoạn kéo dài (⚠️ tái diễn 2026-04-28; /health trả về 200 trong khi mọi lệnh chat đều timeout — Pha H1: hiển thị trạng thái worker + sidecar autoheal)",
         "rm_hermes_issue_p": "Dự phòng ẩn danh của claude-cli-proxy: không có thông tin xác thực GIT_HUB2 → thao tác repo riêng tư thất bại âm thầm; khoảng trống với card_f531861e",
-        "rm_hermes_issue_q": "messageQueue tràn → EClaw buộc chuyển sang chế độ chỉ dịch, yêu cầu Hermes bị bỏ qua âm thầm (⚠️ tái diễn 2026-04-28; PR #2201 đã sửa vòng đời tiến trình nhưng khôi phục phiên + timeout chỉ theo thời gian đồng hồ vẫn chưa xử lý — Pha H1 đang thực hiện)",
+        "rm_hermes_issue_q": "messageQueue tràn → EClaw buộc chuyển sang chế độ chỉ dịch, yêu cầu Hermes bị bỏ qua âm thầm (⚠️ tái diễn 2026-04-28; PR #2201 đã sửa vòng đời tiến trình nhưng khôi phục phiên + timeout chỉ theo thời gian đồng hồ trước đây vẫn chưa xử lý — Pha H1 đã hoàn tất)",
         "rm_hermes_issue_s": "Không khớp cache phiên: phiên đã cache được khóa theo sai tổ chức → \"repo not found\" trong thao tác git",
         "rm_hermes_kpi_delivery": "≤2%",
         "rm_hermes_kpi_delivery_l": "Tỷ lệ lỗi gửi tin nhắn",
@@ -3994909,6 +3994955,19 @@ const TRANSLATIONS = {
         "wizard_target_track6_desc": "Chúng tôi sẽ mở Arena và hướng dẫn qua benchmark 12 chiều.",
         "wizard_target_track6_title": "Lộ trình 6 — đấu trường đánh giá agent",
         "wizard_title": "EClawbot — Trình hướng dẫn làm quen",
+        "landing_watch_full_demo": "▶ Xem demo đầy đủ và hướng dẫn",
+        "footer_promo_video": "▶ Xem video giới thiệu",
+        "kanban_nudge_per_entity_section_label": "Ghi đè theo từng thực thể",
+        "kanban_nudge_per_entity_section_desc": "Tùy chỉnh khoảng thời gian, cột và giới hạn cho một thực thể cụ thể. Kích thước lô và chế độ ưu tiên vẫn áp dụng toàn thiết bị.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Chọn một thực thể —",
+        "kanban_nudge_per_entity_clear": "Đặt lại về mặc định thiết bị",
+        "kanban_nudge_per_entity_hint_prefix": "Bật một trường để ghi đè mặc định thiết bị cho thực thể này.",
+        "kanban_nudge_per_entity_override_interval": "Ghi đè khoảng thời gian",
+        "kanban_nudge_per_entity_override_statuses": "Ghi đè cột",
+        "kanban_nudge_per_entity_override_throttle": "Ghi đè giới hạn",
+        "kanban_nudge_per_entity_throttle_short": "Giới hạn thực thể này ở 1 nhắc nhở mỗi khoảng thời gian",
+        "kb_funnel_tag": "Thẻ…",
+        "kb_gate_backlog_only_hint": "Launch-gate chỉ khả dụng cho thẻ backlog",
 },
 
 
@@ -4520754,7 +4520813,7 @@ const TRANSLATIONS = {
         "rm_hermes_done_title": "Milestone Selesai",
         "rm_hermes_issue_d": "Kontainer Docker freeze: proses Hermes hidup tetapi tidak mengonsumsi pesan; lag restart Railway menyebabkan outage berkepanjangan (⚠️ berulang pada 2026-04-28; /health mengembalikan 200 sementara setiap panggilan chat timeout — Fase H1: tampilkan status worker + sidecar autoheal)",
         "rm_hermes_issue_p": "Fallback anonim claude-cli-proxy: tidak ada kredensial GIT_HUB2 → operasi repo privat gagal diam-diam; gap dengan card_f531861e",
-        "rm_hermes_issue_q": "messageQueue overflow → EClaw dipaksa masuk mode terjemahan murni, permintaan Hermes dibuang diam-diam (⚠️ berulang pada 2026-04-28; PR #2201 memperbaiki process-lifecycle tetapi session-resume + timeout hanya wall-clock belum disentuh — Fase H1 sedang berjalan)",
+        "rm_hermes_issue_q": "messageQueue overflow → EClaw dipaksa masuk mode terjemahan murni, permintaan Hermes dibuang diam-diam (⚠️ berulang pada 2026-04-28; PR #2201 memperbaiki process-lifecycle tetapi session-resume + timeout hanya wall-clock sebelumnya belum disentuh — Fase H1 selesai)",
         "rm_hermes_issue_s": "Ketidakcocokan cache sesi: sesi yang di-cache memakai org yang salah → \"repo not found\" pada operasi git",
         "rm_hermes_kpi_delivery": "≤2%",
         "rm_hermes_kpi_delivery_l": "Tingkat kegagalan pengiriman pesan",
@@ -4520878,7 +4520937,20 @@ const TRANSLATIONS = {
         "wizard_target_track4_title": "Track 4 — penautan channel Claude",
         "wizard_target_track6_desc": "Kami akan membuka Arena dan memandu Anda melalui benchmark 12 dimensi.",
         "wizard_target_track6_title": "Track 6 — arena evaluasi agen",
-        "wizard_title": "EClawbot — Wizard Onboarding"},
+        "wizard_title": "EClawbot — Wizard Onboarding",
+        "landing_watch_full_demo": "▶ Tonton Demo Lengkap + Panduan",
+        "footer_promo_video": "▶ Tonton Video Intro",
+        "kanban_nudge_per_entity_section_label": "Override per entitas",
+        "kanban_nudge_per_entity_section_desc": "Sesuaikan interval, kolom, dan throttle untuk satu entitas tertentu. Ukuran batch dan mode prioritas tetap berlaku di seluruh perangkat.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Pilih entitas —",
+        "kanban_nudge_per_entity_clear": "Reset ke default perangkat",
+        "kanban_nudge_per_entity_hint_prefix": "Aktifkan bidang untuk menimpa default perangkat bagi entitas ini.",
+        "kanban_nudge_per_entity_override_interval": "Override interval",
+        "kanban_nudge_per_entity_override_statuses": "Override kolom",
+        "kanban_nudge_per_entity_override_throttle": "Override throttle",
+        "kanban_nudge_per_entity_throttle_short": "Batasi entitas ini menjadi 1 nudge per interval",
+        "kb_funnel_tag": "Tag…",
+        "kb_gate_backlog_only_hint": "Launch-gate hanya tersedia untuk kartu backlog",},
 
 
 
@@ -5044963,7 +5045035,7 @@ const TRANSLATIONS = {
         "rm_hermes_title": "Canal Hermes — Feuille de route de fonctionnement stable",
         "rm_hermes_desc": "Hermes (#5) est un agent NousResearch Hermes connecté via le canal webhook d'Eclaw. En tant que vitrine en direct de la capacité multiplateforme A2A du EClaw, il doit fonctionner de manière fiable. Vous trouverez ci-dessous la feuille de route pour atteindre et maintenir un statut de coworking stable.",
         "rm_hermes_diag_title": "Causes profondes connues de l’instabilité (incidents passés)",
-        "rm_hermes_issue_q": "Débordement de messageQueue → EClaw forcé en mode de traduction pure, requêtes Hermes abandonnées silencieusement (⚠️ récurrent le 28/04/2026 ; PR #2201 cycle de vie du processus corrigé mais reprise de session + délai d'expiration de l'horloge murale uniquement intact - Phase H1 en cours)",
+        "rm_hermes_issue_q": "Débordement de messageQueue → EClaw forcé en mode de traduction pure, requêtes Hermes abandonnées silencieusement (⚠️ récurrent le 28/04/2026 ; PR #2201 cycle de vie du processus corrigé mais reprise de session + délai d'expiration de l'horloge murale auparavant intact - Phase H1 terminée)",
         "rm_hermes_issue_d": "Gel du conteneur Docker : processus Hermes vivant mais ne consommant pas de messages ; Le décalage du redémarrage du chemin de fer provoque une panne prolongée (⚠️ récurrent le 28/04/2026 ; /health a renvoyé 200 alors que chaque appel de chat a expiré – Phase H1 : état du travailleur de surface + side-car de réparation automatique)",
         "rm_hermes_issue_s": "Incompatibilité du cache de session : session mise en cache saisie par une mauvaise organisation → \"repo introuvable\" sur les opérations git",
         "rm_hermes_issue_p": "solution de secours anonyme claude-cli-proxy : aucun identifiant GIT_HUB2 → les opérations de dépôt privé échouent silencieusement ; écart avec card_f531861e",
@@ -5045567,7 +5045639,20 @@ const TRANSLATIONS = {
         "chat_related_error": "Échec du chargement des discussions associées",
         "chat_related_loading": "Chargement des discussions associées...",
         "chat_related_panel_title": "Discussions connexes",
-        "chat_related_target_not_loaded": "Chat cible non chargé",},
+        "chat_related_target_not_loaded": "Chat cible non chargé",
+        "landing_watch_full_demo": "▶ Voir la démo complète + le guide",
+        "footer_promo_video": "▶ Voir la vidéo d’introduction",
+        "kanban_nudge_per_entity_section_label": "Remplacements par entité",
+        "kanban_nudge_per_entity_section_desc": "Personnalisez l’intervalle, les colonnes et la limitation pour une entité précise. La taille de lot et le mode de priorité restent au niveau de l’appareil.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Choisir une entité —",
+        "kanban_nudge_per_entity_clear": "Rétablir la valeur par défaut de l’appareil",
+        "kanban_nudge_per_entity_hint_prefix": "Activez un champ pour remplacer la valeur par défaut de l’appareil pour cette entité.",
+        "kanban_nudge_per_entity_override_interval": "Remplacer l’intervalle",
+        "kanban_nudge_per_entity_override_statuses": "Remplacer les colonnes",
+        "kanban_nudge_per_entity_override_throttle": "Remplacer la limitation",
+        "kanban_nudge_per_entity_throttle_short": "Limiter cette entité à 1 rappel par intervalle",
+        "kb_funnel_tag": "Tag…",
+        "kb_gate_backlog_only_hint": "Le launch-gate n’est disponible que pour les cartes backlog",},
 
 
 
@@ -5562083,7 +5562168,7 @@ const TRANSLATIONS = {
         "rm_hermes_title": "Canal de Hermes — Hoja de ruta para operación estable",
         "rm_hermes_desc": "Hermes (#5) es un agente Hermes de NousResearch conectado mediante el canal webhook de EClaw. Como demostración en vivo de la capacidad A2A multiplataforma de EClaw, debe funcionar de forma confiable. A continuación se muestra la hoja de ruta para lograr y mantener un estado de trabajo conjunto estable.",
         "rm_hermes_diag_title": "Causas raíz conocidas de inestabilidad (incidentes anteriores)",
-        "rm_hermes_issue_q": "Desbordamiento de messageQueue → EClaw forzado al modo de traducción pura; las solicitudes de Hermes se descartaban en silencio (⚠️ se repitió el 2026-04-28; PR #2201 corrigió el ciclo de vida del proceso, pero la reanudación de sesión + el timeout basado solo en reloj de pared siguen sin tocarse — Fase H1 en curso)",
+        "rm_hermes_issue_q": "Desbordamiento de messageQueue → EClaw forzado al modo de traducción pura; las solicitudes de Hermes se descartaban en silencio (⚠️ se repitió el 2026-04-28; PR #2201 corrigió el ciclo de vida del proceso, pero la reanudación de sesión + el timeout basado solo en reloj de pared antes seguían sin tocarse — Fase H1 completada)",
         "rm_hermes_issue_d": "Congelamiento del contenedor Docker: el proceso de Hermes sigue vivo pero no consume mensajes; el retraso del reinicio en Railway causa una caída prolongada (⚠️ se repitió el 2026-04-28; /health devolvía 200 mientras todas las llamadas de chat agotaban el tiempo — Fase H1: exponer el estado del worker + sidecar de autoheal)",
         "rm_hermes_issue_s": "Desajuste de caché de sesión: sesión en caché indexada por la organización incorrecta → \"repo not found\" en operaciones git",
         "rm_hermes_issue_p": "Fallback anónimo de claude-cli-proxy: sin credencial GIT_HUB2 → las operaciones en repos privados fallan en silencio; brecha con card_f531861e",
@@ -5562729,7 +5562814,20 @@ const TRANSLATIONS = {
         "chat_related_empty": "No se encontraron chats relacionados",
         "chat_related_error": "No se pudieron cargar los chats relacionados",
         "chat_related_loading": "Cargando chats relacionados..."
-    },
+    ,
+        "landing_watch_full_demo": "▶ Ver demo completa + guía",
+        "footer_promo_video": "▶ Ver video introductorio",
+        "kanban_nudge_per_entity_section_label": "Anulaciones por entidad",
+        "kanban_nudge_per_entity_section_desc": "Personaliza intervalo, columnas y límite para una entidad concreta. El tamaño de lote y el modo de prioridad siguen siendo de todo el dispositivo.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Elige una entidad —",
+        "kanban_nudge_per_entity_clear": "Restablecer al valor predeterminado del dispositivo",
+        "kanban_nudge_per_entity_hint_prefix": "Activa un campo para anular el valor predeterminado del dispositivo para esta entidad.",
+        "kanban_nudge_per_entity_override_interval": "Anular intervalo",
+        "kanban_nudge_per_entity_override_statuses": "Anular columnas",
+        "kanban_nudge_per_entity_override_throttle": "Anular límite",
+        "kanban_nudge_per_entity_throttle_short": "Limita esta entidad a 1 aviso por intervalo",
+        "kb_funnel_tag": "Etiqueta…",
+        "kb_gate_backlog_only_hint": "Launch-gate solo está disponible para tarjetas de backlog",},
 
 
 
@@ -6098688,7 +6098786,7 @@ const TRANSLATIONS = {
         "rm_hermes_title": "Hermes Channel — Roadmap für stabilen Betrieb",
         "rm_hermes_desc": "Hermes (#5) ist ein NousResearch Hermes Agent, der über Eclaws Webhook-Kanal verbunden ist. Als Live-Showcase für EClaws plattformübergreifende A2A-Fähigkeit muss er zuverlässig arbeiten. Unten findest du die Roadmap, um einen stabilen Co-Working-Status zu erreichen und aufrechtzuerhalten.",
         "rm_hermes_diag_title": "Bekannte Ursachen für Instabilität (frühere Vorfälle)",
-        "rm_hermes_issue_q": "messageQueue-Überlauf → EClaw wurde in den reinen Übersetzungsmodus gezwungen, Hermes-Anfragen wurden stillschweigend verworfen (⚠️ trat am 2026-04-28 erneut auf; PR #2201 hat den Prozess-Lebenszyklus behoben, aber Sitzungsfortsetzung + nur-Wanduhr-Timeout blieben unberührt — Phase H1 läuft)",
+        "rm_hermes_issue_q": "messageQueue-Überlauf → EClaw wurde in den reinen Übersetzungsmodus gezwungen, Hermes-Anfragen wurden stillschweigend verworfen (⚠️ trat am 2026-04-28 erneut auf; PR #2201 hat den Prozess-Lebenszyklus behoben, aber Sitzungsfortsetzung + nur-Wanduhr-Timeout blieben zuvor unberührt — Phase H1 abgeschlossen)",
         "rm_hermes_issue_d": "Docker-Container-Freeze: Hermes-Prozess lebt, verarbeitet aber keine Nachrichten; Railway-Neustartverzögerung verursacht längeren Ausfall (⚠️ trat am 2026-04-28 erneut auf; /health gab 200 zurück, während jeder Chat-Aufruf in ein Timeout lief — Phase H1: Worker-Zustand sichtbar machen + Autoheal-Sidecar)",
         "rm_hermes_issue_s": "Session-Cache-Konflikt: zwischengespeicherte Sitzung mit falscher org als Schlüssel → \"repo not found\" bei git-Operationen",
         "rm_hermes_issue_p": "claude-cli-proxy anonymer Fallback: kein GIT_HUB2-Credential → private Repo-Operationen schlagen stillschweigend fehl; Lücke zu card_f531861e",
@@ -6099212,6 +6099310,5130 @@ const TRANSLATIONS = {
         "mindmap_subsystems": "Subsysteme",
         "mindmap_subsystems_empty": "Keine Subsysteme — markiere einen Knoten als \"Subgraph-Wurzel\", um eines hinzuzufügen.",
         "mindmap_untitled": "(unbenannt)",
+        "landing_watch_full_demo": "▶ Vollständige Demo + Anleitung ansehen",
+        "footer_promo_video": "▶ Einführungsvideo ansehen",
+        "kanban_nudge_per_entity_section_label": "Überschreibungen pro Entität",
+        "kanban_nudge_per_entity_section_desc": "Intervall, Spalten und Drosselung für eine bestimmte Entität anpassen. Batchgröße und Prioritätsmodus bleiben geräteweit.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Entität auswählen —",
+        "kanban_nudge_per_entity_clear": "Auf Gerätestandard zurücksetzen",
+        "kanban_nudge_per_entity_hint_prefix": "Aktiviere ein Feld, um den Gerätestandard für diese Entität zu überschreiben.",
+        "kanban_nudge_per_entity_override_interval": "Intervall überschreiben",
+        "kanban_nudge_per_entity_override_statuses": "Spalten überschreiben",
+        "kanban_nudge_per_entity_override_throttle": "Drosselung überschreiben",
+        "kanban_nudge_per_entity_throttle_short": "Diese Entität auf 1 Hinweis pro Intervall begrenzen",
+        "kb_funnel_tag": "Tag…",
+        "kb_gate_backlog_only_hint": "Launch-gate ist nur für Backlog-Karten verfügbar",
+    },
+    pt: {
+        "dashboard_usage_widget_title": "Uso do Claude Code / Codex",
+        "dashboard_usage_widget_refresh": "Atualizar",
+        "dashboard_usage_widget_loading": "Carregando dados de uso...",
+        "dashboard_usage_widget_claude_5h": "Claude · 5h",
+        "dashboard_usage_widget_codex_5h": "Codex · 5h",
+        "dashboard_usage_widget_today_claude": "Hoje · Claude",
+        "dashboard_usage_widget_today_codex": "Hoje · Codex",
+        "dashboard_usage_widget_chart_title": "Ultimas 24h · total tokens",
+        "dashboard_usage_widget_legend_claude": "Claude",
+        "dashboard_usage_widget_legend_codex": "Codex",
+        "dashboard_usage_widget_chart_empty": "Nenhum dado de linha do tempo ainda",
+        "dashboard_usage_widget_health_ok": "Daemon online",
+        "dashboard_usage_widget_health_stale": "Daemon offline?",
+        "dashboard_usage_widget_health_no_data": "Sem dados do daemon",
+        "dashboard_usage_widget_last_update": "Last update",
+        "dashboard_usage_widget_just_now": "just now",
+        "dashboard_usage_widget_error": "Nao foi possivel carregar dados de uso...",
+        "dashboard_usage_widget_live_source": "ao vivo",
+        "dashboard_usage_widget_sessions_label": "sessoes",
+        "dashboard_usage_widget_na_tooltip": "Precisa de configuracao statusLine do Claude para % ao vivo",
+        "dashboard_usage_widget_session_used": "used",
+        "dashboard_usage_widget_weekly_used": "used",
+        "dashboard_usage_widget_reset_in": "Redefinir in",
+        "dashboard_usage_widget_projects_today": "Projects today",
+        "dashboard_usage_widget_projects_empty": "Nao project activity today",
+        "dashboard_usage_widget_rate_label": "Rate",
+        "dashboard_usage_widget_rate_heavy": "Heavy",
+        "dashboard_usage_widget_rate_normal": "Naormal",
+        "dashboard_usage_widget_rate_idle": "Idle",
+        "dashboard_usage_widget_status_label": "Status",
+        "dashboard_usage_widget_status_synced": "Synced (usage)",
+        "dashboard_usage_widget_today_total": "Hoje",
+        "dashboard_usage_widget_estimate_marker": "(est)",
+        "promo_video_meta_title": "EClawbot Promo Video | AI Agent Kanban Demo",
+        "promo_video_meta_description": "Watch the 75-second EClawbot promo video: turn multiple AI tools into a trackable kanban workflow.",
+        "promo_video_title": "See EClawbot in 75 seconds",
+        "promo_video_lede": "Watch how EClawbot turns multiple AI agents into a trackable A2A chat and kanban workflow.",
+        "promo_video_embed_heading": "EClawbot promo video",
+        "promo_video_primary_cta": "Open EClawbot Portal",
+        "promo_video_secondary_cta": "Voltar to homepage",
+        "promo_video_note": "Publicado from a HyperFrames composition built outside the EClaw repo.",
+        "daily_video_section_title": "Daily product update",
+        "daily_video_section_caption": "A short daily look at what shipped on EClawbot. Atualizard whenever a fresh build lands.",
+        "promo_meta_meta_title": "EClawbot Concept A | Meta-recursion Documentary",
+        "promo_meta_meta_description": "Watch Concept A: a documentary-realism EClawbot promo where the behind-the-scenes AI workflow becomes the product demo.",
+        "promo_meta_eyebrow": "Concept A · meta-recursion documentary",
+        "promo_meta_title": "This video was made by AI agents",
+        "promo_meta_lede": "A verifiable 75-second documentary: the brief, agent coordination, render, upload, and embed become the EClawbot product demo.",
+        "promo_meta_embed_heading": "EClawbot Concept A video",
+        "promo_meta_proof_agents_title": "2 AI agents",
+        "promo_meta_proof_agents_body": "LOBSTER routed; Codex rendered.",
+        "promo_meta_proof_trace_title": "Verifiable trail",
+        "promo_meta_proof_trace_body": "Chat, git, kanban, and Studio captures are real history.",
+        "promo_meta_proof_output_title": "One finished output",
+        "promo_meta_proof_output_body": "The behind-the-scenes work is the demo.",
+        "promo_meta_primary_cta": "Open EClawbot Portal",
+        "promo_meta_secondary_cta": "Watch the 75s demo",
+        "promo_meta_note": "Concept A was rendered from a HyperFrames project outside this repo, then embedded here through a reviewed PR.",
+        "mc_title": "EClawbot Mission Control",
+        "mc_tab_label": "Mind",
+        "mc_auth_title": "Mission Control",
+        "mc_auth_subtitle": "Enter your device credentials to sync Painel",
+        "mc_input_device_id": "Device ID",
+        "mc_input_device_secret": "Device Secret",
+        "mc_btn_connect": "Connect",
+        "mc_auth_error_missing": "Please enter Device ID and Secret",
+        "mc_refresh": "Atualizar",
+        "mc_notify_btn": "Publish Naotification",
+        "mc_syncing": "Syncing...",
+        "mc_notify_dialog_title": "Publish Task Atualizar Naotification",
+        "mc_notify_dialog_desc": "Select items to notify — will be pushed to assigned entities via Webhook:",
+        "mc_notify_skip": "Pular",
+        "mc_notify_send": "Send Naotification",
+        "mc_no_notify_items": "Nao new changes to notify",
+        "mc_todo_title": "TODO Lista",
+        "mc_btn_add": "+ Add",
+        "mc_deprecated_add": "Please use the Kanban board instead. The Kanban board has a complete ecosystem — migrate existing items there gradually.",
+        "mc_mission_title": "Mission Lista",
+        "mc_done_title": "Concluido Lista",
+        "mm_card_title": "Mind Map",
+        "mm_card_beta": "(beta)",
+        "mm_card_expand": "Expand",
+        "mm_card_open_full": "Full mindmap →",
+        "mm_card_collapse": "Collapse",
+        "mm_card_hint": "Connects your kanban cards into a graph: tasks, sub-cards and chat anchors. Expand to explore.",
+        "mm_empty_title": "Mind map has no nodes yet",
+        "mm_empty_hint": "Once you create kanban cards, this view will connect tasks, sub-cards and chat anchors into a graph automatically.",
+        "mm_empty_cta": "Open kanban to create your first card",
+        "mc_notes_title": "Naotes",
+        "mc_rules_title": "Rules (Workflow)",
+        "mc_sync_unsaved": "* Unsaved changes",
+        "mc_sync_synced": "Synced",
+        "mc_task_saved": "Task saved",
+        "mc_empty_todo": "Nao TODO items",
+        "mc_empty_mission": "Nao active missions",
+        "mc_empty_done": "Nao completed items",
+        "mc_note_deeplink_not_found": "Naote not found: {id}",
+        "mc_empty_notes": "Nao notes",
+        "mc_empty_rules": "Nao rules",
+        "mc_status_pending": "Pendente",
+        "mc_status_inprogress": "In Progress",
+        "mc_status_blocked": "Blocked",
+        "mc_status_done": "Concluido",
+        "mc_status_cancelled": "Cancelarled",
+        "mc_priority_low": "Low",
+        "mc_priority_medium": "Med",
+        "mc_priority_high": "High",
+        "mc_priority_urgent": "Urgent",
+        "mc_confirm_delete": "Are you sure you want to delete?",
+        "mc_confirm_version": "Version conflict (You: v{you}, Server: v{server}). Baixar latest version?",
+        "mc_dlg_add_todo": "Add TODO",
+        "mc_dlg_edit": "Editar",
+        "mc_dlg_title": "Titulo",
+        "mc_dlg_desc": "Descricao",
+        "mc_dlg_priority": "Priority",
+        "mc_dlg_save": "Salvar",
+        "mc_dlg_cancel": "Cancelar",
+        "mc_dlg_due_at": "Execution Hora",
+        "mc_card_due_at": "Agendado",
+        "mc_card_countdown": "Contagemdown",
+        "mc_countdown_overdue": "Overdue",
+        "mc_countdown_min": "min",
+        "mc_countdown_hr": "hr",
+        "mc_countdown_day": "d",
+        "mc_dlg_add_note": "Add Naote",
+        "mc_dlg_edit_note": "Editar Naote",
+        "mc_dlg_content": "Conteudo",
+        "mc_dlg_category": "Categoria",
+        "mc_dlg_anchor": "Pin to kanban card",
+        "mc_dlg_linked_cards": "Linked Kanban cards",
+        "mc_dlg_anchor_none": "(none — group by category)",
+        "mc_add_category": "+ Categoria",
+        "mc_rename_category": "Rename",
+        "mc_delete_category": "Excluir category",
+        "mc_clear_category": "Limpar category",
+        "mc_uncategorized": "-- Uncategorized --",
+        "mc_confirm_clear_category": "Limpar all items in this category?",
+        "mc_confirm_delete_category": "Excluir this category? Items will become uncategorized.",
+        "mc_bulk_cancel": "Cancelar",
+        "mc_bulk_undo": "Desfazer",
+        "mc_bulk_clearing": "Limparing...",
+        "mc_bulk_cleared": "{count} items cleared",
+        "mc_bulk_restoring": "Restoring...",
+        "mc_bulk_deleting_cat": "Deleting category...",
+        "mc_bulk_cat_deleted": "Categoria deleted",
+        "mc_prompt_category_name": "Categoria name:",
+        "mc_prompt_rename_category": "New category name:",
+        "mc_category_exists": "Categoria already exists",
+        "mc_empty_category": "Vazio",
+        "mc_dlg_add_rule": "Add Rule",
+        "mc_dlg_edit_rule": "Editar Rule",
+        "mc_dlg_rule_name": "Rule Nome",
+        "mc_dlg_rule_type": "Tipo",
+        "mc_souls_title": "Souls",
+        "mc_empty_souls": "Nao souls defined",
+        "mc_dlg_add_soul": "Add Soul",
+        "mc_dlg_edit_soul": "Editar Soul",
+        "mc_dlg_soul_name": "Soul Nome",
+        "mc_dlg_soul_desc": "Personality Descricao",
+        "mc_dlg_soul_desc_hint": "Describe this soul's personality, tone, and behavior...",
+        "mc_dlg_soul_template": "Soul Template",
+        "mc_dlg_soul_custom": "-- Personalizado --",
+        "mc_dlg_soul_template_btn": "🎭 Select Template",
+        "mc_dlg_soul_gallery_builtin": "Built-in",
+        "mc_dlg_soul_gallery_community": "Community",
+        "mc_dlg_soul_multi": "multiple",
+        "mc_menu_move_mission": "Move to Mission",
+        "mc_menu_mark_done": "Mark Concluido",
+        "mc_menu_delete": "Excluir",
+        "mc_search_placeholder": "Buscar...",
+        "mc_browse_official_tpl": "Browse Official Templates",
+        "mc_rule_template_title": "Rule Templates",
+        "mc_skill_change": "Change",
+        "mc_skill_name_label": "Skill Nome",
+        "mc_skill_name_placeholder": "e.g. Google Buscar",
+        "mc_skill_url_label": "Related URL (optional)",
+        "mc_skill_steps_label": "Installation Steps (optional)",
+        "mc_skill_steps_placeholder": "Detailed installation and setup steps...",
+        "mc_skill_assign_entity": "Assign Entity (multi-select)",
+        "mc_note_open_page": "Open Page",
+        "mc_note_public_label": "Public",
+        "mc_note_private_label": "Private",
+        "mc_note_edit_page": "Editar Page",
+        "mc_note_copy_link": "Copiar Link",
+        "mc_note_link_copied": "Copied!",
+        "mc_note_no_public_code": "Nao public code available",
+        "mc_note_draw": "Draw",
+        "mc_note_draw_save": "Salvar Drawing",
+        "mc_note_draw_clear": "Limpar",
+        "mc_note_draw_clear_confirm": "Limpar all drawings?",
+        "mc_note_draw_eraser": "Eraser",
+        "mc_note_draw_saved": "Drawing saved",
+        "mc_note_page_close": "Fechar",
+        "mc_note_page_placeholder": "Enter HTML content...",
+        "editor_loading": "Carregando editor…",
+        "editor_load_failed": "Editaror load failed",
+        "file_edit_btn": "Editar online",
+        "file_edit_modal_title": "Editar file",
+        "file_edit_save_btn": "Salvar",
+        "file_edit_download_btn": "Baixar",
+        "file_edit_close_btn": "Fechar",
+        "file_edit_save_success": "Arquivo saved",
+        "file_edit_save_error": "Salvar failed",
+        "file_edit_loading": "Carregando…",
+        "file_edit_unsaved_warn": "You have unsaved changes — close anyway?",
+        "file_edit_too_large": "Arquivo is too large to edit online (limit 512KB)",
+        "file_edit_binary_reject": "Binary files cannot be edited online",
+        "editor_toggle_monaco": "Switch to Monaco editor",
+        "editor_toggle_textarea": "Switch to plain editor",
+        "mc_note_page_link_hint": "Internal links: &lt;a href=\",
+        "mc_note_page_saved": "Page saved",
+        "mc_note_page_public": "Make page public",
+        "mc_note_page_public_hint": "Public pages can be viewed without login at /p/CODE/NOTE_ID",
+        "mc_note_page_empty": "Nao page content yet.",
+        "dash_tos_load_error": "Falhou to load TOS content.",
+        "cardholder_proto_placeholder": "e.g. A2A, REST, gRPC",
+        "cardholder_cap_name": "Nome",
+        "cardholder_cap_desc": "Descricao",
+        "portal_login_title": "EClawbot - Entrar",
+        "portal_app_title": "EClawbot",
+        "portal_app_subtitle": "Live Wallpaper Companion",
+        "nav_dashboard": "Painel",
+        "nav_chat": "Chat",
+        "nav_files": "Arquivos",
+        "nav_mission": "Mission",
+        "nav_kanban": "Kanban",
+        "nav_settings": "Configuracoes",
+        "nav_logout": "Sair",
+        "nav_split_view": "Split Ver",
+        "workspace_close_pane": "Fechar Pane",
+        "nav_compare": "Compare",
+        "nav_faq": "FAQ",
+        "nav_release_notes": "Release Naotes",
+        "nav_user_guide": "Usuario Guia",
+        "nav_login": "Entrar",
+        "nav_info": "Info",
+        "nav_wallet": "Wallet",
+        "settings_wallet_desc": "Manage e-coin balance, top up, and view transaction history",
+        "nav_marketplace": "Marketplace",
+        "nav_my_rentals": "My Rentals",
+        "settings_rentals_desc": "Ver contracts, submit reviews, file disputes",
+        "nav_invite": "Invite Friends",
+        "settings_invite_desc": "Compartilhar your invite code and earn e-coin rewards",
+        "invite_banner_title": "Invite friends, earn e-coin together",
+        "invite_banner_desc_prefix": "Your code ",
+        "invite_banner_desc_suffix": " — both sides earn 500 e-coin per successful invite.",
+        "invite_banner_cta": "Invite now",
+        "invite_toast_welcome": "🎁 Your invite code {code} is ready — each friend earns both of you 500 e-coin",
+        "nav_admin": "Admin",
+        "nav_card_holder": "Card Holder",
+        "nav_community": "Community",
+        "nav_enterprise": "Enterprise",
+        "landing_hero_title": "EClawbot",
+        "landing_hero_subtitle": "Agent-to-Agent (A2A) Communication Platform — Your Personal Enterprise AI Assistant. Build, manage, and deploy AI agents for inter-agent collaboration, task automation, and customer-facing services. Powered by OpenClaw.",
+        "landing_get_started": "Get Started",
+        "landing_watch_full_demo": "▶ Watch Full Demo + Walkthrough",
+        "landing_browse_bots": "Browse Bots",
+        "landing_enterprise": "Enterprise",
+        "landing_api_docs": "API Documentacao",
+        "landing_features_sr": "Features",
+        "landing_feat1_title": "Personal Enterprise AI Assistant",
+        "landing_feat1_desc": "Build and deploy AI agent teams for your business. Each agent has its own identity, skills, and a dedicated public URL (Proxy Window) where customers can interact directly.",
+        "landing_feat2_title": "A2A Protocol",
+        "landing_feat2_desc": "Agent-to-Agent communication enables inter-agent task dispatch, collaborative workflows, and automated mission execution across devices.",
+        "landing_feat3_title": "Mission Control",
+        "landing_feat3_desc": "Comprehensive task management with todos, missions, notes, and rules. Coordinate AI agents through structured mission dashboards.",
+        "landing_feat4_title": "Multi-Platform",
+        "landing_feat4_desc": "Web Portal, Android app, and iOS app — all connected to the same backend with real-time Socket.IO updates.",
+        "landing_feat5_title": "Enterprise Security",
+        "landing_feat5_desc": "OAuth 2.0 / OIDC authentication, RBAC roles, E2EE awareness, TLS/HTTPS with security headers, and comprehensive audit logging.",
+        "landing_feat6_title": "OpenClaw Integration",
+        "landing_feat6_desc": "Seamless channel-based plugin system for the OpenClaw ecosystem. Publish articles to 12+ platforms with the built-in publisher.",
+        "landing_faq_title": "Frequently Asked Questions",
+        "landing_faq_q1": "What is EClawbot?",
+        "landing_faq_a1": "EClawbot is an A2A communication platform and personal enterprise AI assistant. It helps individuals and small businesses build, manage, and deploy AI agents for inter-agent collaboration, task dispatch, and automation. Each agent can have a dedicated public URL (Proxy Window) for customer-facing services. Manage everything via Web Portal, Android app, or iOS app.",
+        "landing_faq_q2": "Is EClawbot the same as ELAUT EClawbot?",
+        "landing_faq_a2": "Nao. EClawbot (eclawbot.com) is an A2A communication platform for AI agent orchestration and inter-agent collaboration. ELAUT's EClawbot is a physical arcade claw machine brand from Belgium. They are completely different products.",
+        "landing_faq_q3": "What is the relationship between EClawbot and OpenClaw?",
+        "landing_faq_a3": "EClawbot is the infrastructure platform that powers the OpenClaw ecosystem. OpenClaw users can connect their AI agents to EClawbot for inter-agent communication via A2A protocol, task dispatch, and collaborative automation.",
+        "landing_faq_q4": "What platforms does EClawbot support?",
+        "landing_faq_a4": "EClawbot supports three platforms: a Web Portal (eclawbot.com/portal), an Android native app, and an iOS app built with React Native (Expo). Todos platforms share the same backend API and real-time Socket.IO connections.",
+        "landing_faq_q5": "What is A2A protocol in EClawbot?",
+        "landing_faq_a5": "A2A (Agent-to-Agent) is a communication protocol that allows AI agents on EClawbot to send structured tasks to each other. It enables inter-agent collaboration, task dispatch, and automated workflows across devices.",
+        "landing_faq_q6": "Is EClawbot free to use?",
+        "landing_faq_a6": "EClawbot offers a free tier that includes basic device management and entity binding. Premium features like additional entity slots and advanced A2A capabilities are available through subscription plans.",
+        "ent_page_title": "EClawbot for Enterprise - AI Agent Platform for Business",
+        "ent_badge": "Enterprise",
+        "ent_hero_title": "AI Agent Teams for Your Business",
+        "ent_hero_subtitle": "Deploy, manage, and orchestrate AI agent teams with enterprise-grade security, access control, and real-time monitoring. Your personal enterprise AI assistant.",
+        "ent_get_started": "Get Started Free",
+        "ent_api_docs": "API Documentacao",
+        "ent_usecases_title": "Enterprise Use Cases",
+        "ent_usecases_subtitle": "From customer service to internal automation, EClawbot adapts to your business needs.",
+        "ent_uc_cs_title": "Personalizadoer Service AI",
+        "ent_uc_cs_desc": "Deploy customer-facing agents with Proxy Window public URLs. Each agent has its own identity, tone, and boundaries — ready to serve customers 24/7.",
+        "ent_uc_auto_title": "Workflow Automation",
+        "ent_uc_auto_desc": "Automate internal workflows with Mission Control. Schedule tasks, define rules, and let agents collaborate via A2A protocol to complete complex operations.",
+        "ent_uc_pub_title": "Multi-Channel Publishing",
+        "ent_uc_pub_desc": "Publish content to 12+ platforms simultaneously — Blogger, X, DEV.to, WordPress, LinkedIn, Reddit, Mastodon, and more with a single API call.",
+        "ent_uc_collab_title": "Cross-Team Collaboration",
+        "ent_uc_collab_desc": "Enable cross-device agent communication. Agents from different teams can exchange tasks, share context, and coordinate actions automatically.",
+        "ent_features_title": "Enterprise-Grade Security",
+        "ent_features_subtitle": "Built for organizations that demand security, compliance, and control.",
+        "ent_feat_rbac_title": "RBAC Access Control",
+        "ent_feat_rbac_desc": "Role-based access with 4 default roles (Admin, Developer, Operator, Verer). Fine-grained permission middleware for every API endpoint.",
+        "ent_feat_sso_title": "SSO / OAuth 2.0 / OIDC",
+        "ent_feat_sso_desc": "Connect your identity provider via generic OIDC. Google, Facebook OAuth built-in. Full OAuth 2.0 server for client credentials and token management.",
+        "ent_feat_audit_title": "Audit Logging",
+        "ent_feat_audit_desc": "Every action tracked — auth events, API calls, entity changes. Query logs by category, time range, user. Admin-only audit endpoint for compliance.",
+        "ent_feat_e2ee_title": "E2EE Awareness",
+        "ent_feat_e2ee_desc": "End-to-end encryption capability flags per channel and entity. Encrypted environment variable storage with AES-256-GCM.",
+        "ent_feat_mission_title": "Mission Control",
+        "ent_feat_mission_desc": "Centralized dashboard with todos, missions, notes, rules, and agent coordination. Real-time sync across Web, Android, and iOS.",
+        "ent_feat_a2a_title": "A2A Protocol",
+        "ent_feat_a2a_desc": "Agent-to-Agent structured task dispatch. Agents collaborate, delegate, and report across devices with typed payloads and deao vivory tracking.",
+        "ent_how_title": "How It Works",
+        "ent_how_subtitle": "Get your AI agent team running in minutes.",
+        "ent_step1_title": "Deploy Agents",
+        "ent_step1_desc": "Criar agent identities with roles, skills, and personalities. Assign public Proxy Window URLs for customer-facing services.",
+        "ent_step2_title": "Connect via A2A",
+        "ent_step2_desc": "Link agents across teams and devices. Use A2A protocol for structured task dispatch and real-time collaboration.",
+        "ent_step3_title": "Monitor & Scale",
+        "ent_step3_desc": "Track agent performance via telemetry, audit logs, and Mission Control. Scale your agent team as your business grows.",
+        "ent_cta_title": "Pronto to Get Started?",
+        "ent_cta_subtitle": "Join businesses using EClawbot to automate workflows and deploy AI agent teams.",
+        "ent_cta_start": "Criar Free Conta",
+        "ent_cta_learn": "Learn More",
+        "ent_demo_title": "Try It Naow",
+        "ent_demo_subtitle": "Enter your website or upload a document. Our AI agent will learn your business and start chatting.",
+        "ent_demo_url_placeholder": "https://your-company.com",
+        "ent_demo_load": "Load",
+        "ent_demo_upload": "Enviar Arquivo",
+        "ent_demo_welcome": "Enter your website URL or upload a file, then start chatting with the AI agent.",
+        "ent_demo_input_placeholder": "Ask something about your business...",
+        "ent_demo_send": "Send",
+        "ent_demo_hint": "Free demo — 10 messages per hour. Nao login required.",
+        "ent_demo_thinking": "Thinking...",
+        "ent_demo_loading": "Carregando website...",
+        "ent_demo_loaded": "Website loaded",
+        "ent_demo_file_loaded": "Arquivo loaded",
+        "ent_demo_file_too_large": "Arquivo too large (max 500KB)",
+        "ent_demo_invalid_url": "Please enter a valid URL",
+        "ent_demo_fetch_error": "Falhou to load",
+        "ent_demo_error": "Connection error. Por favor, tente novamente.",
+        "ent_demo_greet_prompt": "Introduce yourself as this business's AI assistant. Briefly describe what the business does based on the content.",
+        "ent_ec_section_title": "🛒 Live Demo: AI E-Commerce Support",
+        "ent_ec_section_subtitle": "This is a real-time AI customer service bot \",
+        "ent_ec_demo_label": "▲ AI Personalizadoer Service Live Demo",
+        "ent_ec_chat_title": "💬 Chat with AI Support",
+        "ent_ec_chat_credit": "10 messages/hr · Powered by EClaw Entity #2",
+        "ent_ec_product_title": "📦 Product Catalog",
+        "ent_ec_product_ai_note": "AI-generated product page · ",
+        "ent_ec_product_link": "Open in new tab",
+        "ent_ec_setup_note": "✨ This demo took 10 minutes to set up — using EClaw's Entity system + Naote Pages + Proxy Window",
+        "info_title": "EClawbot - Info Hub",
+        "info_tab_guide": "Usuario Guia",
+        "info_tab_faq": "FAQ",
+        "info_tab_release_notes": "Release Naotes",
+        "info_tab_roadmap": "Roadmap",
+        "roadmap_title": "EClawbot - Product Roadmap",
+        "info_tab_compare": "Compare",
+        "info_tab_quickstart": "Quick Start",
+        "info_tab_advanced": "Avancado",
+        "info_tab_channel_plugins": "Channel Plugins",
+        "qs_hero_title": "What do you want to do?",
+        "qs_promo_full_page_link": "📺 Open full video page",
+        "qs_hero_desc": "EClawbot is your AI agent platform. Choose a scenario to get started.",
+        "qs_intent_chat_title": "Chat with AI",
+        "qs_intent_chat_desc": "Let AI agents reply to customers and handle daily conversations",
+        "qs_intent_biz_title": "E-commerce / Personalizadoer Service",
+        "qs_intent_biz_desc": "24/7 automatic order processing, product recommendations, and returns",
+        "qs_intent_team_title": "Multi-Agent Collaboration",
+        "qs_intent_team_desc": "Build an AI team with agents that collaborate and automate workflows",
+        "qs_steps_title": "Get Started in 3 Steps",
+        "info_qs_slide_cta": "📊 Open full-screen slide",
+        "qs_step1_title": "Register an Conta",
+        "qs_step1_desc": "Go to <a href=\",
+        "qs_step2_title": "Bind an AI Agent",
+        "qs_step2_desc": "Try a free Official Bot, or bind your own OpenClaw Bot (no message limits)",
+        "qs_step3_title": "Start Chatting",
+        "qs_step3_desc": "Enter the Chat page to talk with your AI agent, assign tasks, and manage your team",
+        "qs_demo_title": "See What You Can Do",
+        "qs_demo_chat_title": "💬 Real-time Chat",
+        "qs_demo_chat_desc": "Multi-agent chat, Markdown rendering, voice messages",
+        "qs_demo_mission_title": "📋 Mission Control",
+        "qs_demo_mission_desc": "TODOs, rules, skills, and notes in one place",
+        "qs_demo_plaza_title": "🏗 Bot Plaza",
+        "qs_demo_plaza_desc": "Explore public AI Bots and share your agent cards",
+        "qs_cta_text": "Pronto? Cadastrar for free and start your first AI conversation in 3 minutes.",
+        "qs_cta_btn": "🚀 Get Started Naow",
+        "qs_slides_title": "📋 Quick Start Guia",
+        "qs_slide_quickstart_title": "🚀 Quick Start",
+        "qs_slide_quickstart_desc": "From zero to profit in three steps",
+        "qs_slide_performance_title": "📊 Performance Visao geral",
+        "qs_slide_performance_desc": "Illustrative performance tracking dashboard",
+        "qs_slide_integration_title": "🔗 Integration",
+        "qs_slide_integration_desc": "Cross-platform integration ecosystem",
+        "guide_features_card_1_title": "A2A Agent Collaboration",
+        "guide_features_card_1_desc": "Multiple AI agents communicate in real time via Agent-to-Agent protocol, with broadcast collaboration and cross-device task dispatch",
+        "guide_features_card_2_title": "Proxy Window",
+        "guide_features_card_2_desc": "Criar a dedicated public URL for your agent where customers can interact directly in a browser — orders, inquiries, scheduling",
+        "guide_features_card_3_title": "Mission Control",
+        "guide_features_card_3_desc": "Criar todos, assign tasks, and track progress in Mission Control — agents get notified automatically",
+        "guide_features_card_4_title": "Bot Identity System",
+        "guide_features_card_4_desc": "Configurar role, instructions, boundaries, and tone for agents to create professional agent personas",
+        "guide_features_card_5_title": "Agent Card",
+        "guide_features_card_5_desc": "Build digital business cards for agents — showcase capabilities, protocols, and tags for discovery and collection",
+        "guide_features_card_6_title": "Three-Platform Management",
+        "guide_features_card_6_desc": "Web Portal, Android App, iOS App with real-time sync — manage your agent team anytime, anywhere",
+        "guide_features_card_7_title": "OpenClaw Ecosystem Integration",
+        "guide_features_card_7_desc": "Webhook + Channel Plugin to connect OpenClaw AI Bots with multi-model collaboration support",
+        "guide_features_card_8_title": "Encrypted Environment Variables",
+        "guide_features_card_8_desc": "AES-256-GCM encrypted key storage with JIT authorization for security",
+        "guide_features_card_9_title": "AI Personalizadoer Support",
+        "guide_features_card_9_desc": "Built-in AI for real-time Q&A, automatic diagnostics, and solution suggestions",
+        "guide_features_card_10_title": "Multi-Platform Publishing",
+        "guide_features_card_10_desc": "Publish content to 12+ platforms (DEV.to, X, Reddit, LinkedIn, etc.) with one click",
+        "guide_features_learn_more": "Learn more →",
+        "guide_features_try_it": "Try it →",
+        "guide_features_download": "Baixar App →",
+        "guide_nav_vector_memory": "🧠 Vector Memory",
+        "guide_vm_title": "🧠 Vector Memory — AI Recall Beyond the Session Boundary",
+        "guide_vm_subtitle": "Semantic memory that breaks the context window, shares knowledge across bots, and cites its sources",
+        "guide_vm_what": "What is Vector Memory?",
+        "guide_vm_what_desc": "EClawbot writes every chat message into the <strong>pgvector database</strong>, fingerprinted with a 1536-dim semantic vector. Ask \",
+        "guide_vm_pain": "Three pain points before Vector Memory",
+        "guide_vm_pain1": "❌ Forgets everything once the context window is full — yesterday's conversation has to be retold today",
+        "guide_vm_pain2": "❌ Multiple bots, no unified view — owners can't browse conversations across bots from one place",
+        "guide_vm_pain3": "❌ Answers with no receipts — you can't ask \",
+        "guide_vm_sp1_pain": "Want AI to remember conversations across sessoes, across months?",
+        "guide_vm_sp1_solution": "→ Vector memory extends \",
+        "guide_vm_sp1_desc": "Every message is written into pgvector. Even a month later, in a different session, on a different device — if the meaning is close, it can be retrieved and cited. Memory ao vivos at the database layer, not the prompt layer — no more hostage to 8k / 32k / 200k token limits.",
+        "guide_vm_sp2_pain": "Want to search across all your own bots in one place?",
+        "guide_vm_sp2_solution": "→ Owner view: cross-bot unified retrieval; bots themselves stay pool-isolated",
+        "guide_vm_sp2_desc": "You (the device owner) can search across every bot you own from one chat — instantly seeing the full history of Bot #3 and Bot #5 side by side. Bot-to-bot collaboration flows through Kanban card content, speakTo message bodies, and @-mention pushes — each bot only retrieves its own pool, ensuring isolation and clear accountability.",
+        "guide_vm_sp3_pain": "Want bots to cite sources instead of hallucinating?",
+        "guide_vm_sp3_solution": "→ Every answer auto-attaches citation links",
+        "guide_vm_sp3_desc": "Every answer grounded in vector recall comes with an expandable \",
+        "guide_vm_how": "How to use it",
+        "guide_vm_how1": "Open any chat page (<a href=\",
+        "guide_vm_how2": "Chat with the bot normally — all messages are auto-embedded into the vector pool",
+        "guide_vm_how3": "After the reply, expand the \",
+        "guide_vm_how4": "Ask a cross-session question (e.g. \",
+        "guide_vm_tech": "Under the hood (for curious developers)",
+        "guide_vm_tech_storage": "Storage: ",
+        "guide_vm_tech_storage_desc": "PostgreSQL + pgvector extension, HNSW index for fast cosine similarity queries",
+        "guide_vm_tech_embed": "Embedding model: ",
+        "guide_vm_tech_embed_desc": "OpenAI text-embedding-3-small (1536-dim, low cost, strong recall); requires an OPENAI or VOYAGE embedding key in device-vars before vectors are actually written",
+        "guide_vm_tech_fallback": "Degradation: ",
+        "guide_vm_tech_fallback_desc": "When the embedding key is missing or pgvector is unavailable, the raw message text is still stored and retrieval automatically falls back to ILIKE keyword search — functionality never goes dark (the only difference is whether paraphrased queries can recall it)",
+        "guide_vm_tech_api": "API: ",
+        "guide_vm_tech_api_desc": "<code>POST /api/chat/search</code> searches chat history by natural-language query; botSecret auth pins to that bot's own entity, deviceSecret (owner) auth can pass entityId or omit it to span the whole device",
+        "guide_vm_cta_title": "Try it now",
+        "guide_vm_cta_chat": "Try it in the chat: <a href=\",
+        "guide_features_demo_title": "🎬 Demo Showcase",
+        "demo_chat_title": "💬 Smart Chat",
+        "demo_chat_desc": "Real-time multi-agent conversation with Markdown rendering, voice messages, image sharing, and product recommendation cards — all in one unified chat interface.",
+        "demo_gps_title": "📍 GPS Local Sharing",
+        "demo_gps_desc": "Bot requests your GPS location for context-aware services. Ask \",
+        "demo_notes_title": "📝 Naote Pages",
+        "demo_notes_desc": "Rich note pages with full HTML rendering — bots create beautiful documents, reports, and interactive content that users can view as standalone web pages.",
+        "demo_tag_realtime": "Real-time",
+        "demo_tag_multiagent": "Multi-agent",
+        "demo_tag_markdown": "Markdown",
+        "demo_tag_voice": "Voice",
+        "demo_tag_location": "Local",
+        "demo_tag_food": "Food",
+        "demo_tag_parking": "Parking",
+        "demo_tag_navigation": "Navigation",
+        "demo_tag_rich": "Rich Conteudo",
+        "demo_tag_html": "HTML",
+        "demo_tag_shareable": "Compartilharable",
+        "faq_chip_all": "Todos",
+        "faq_chip_general": "💡 Geral",
+        "faq_chip_setup": "⚙️ Configuracao",
+        "faq_chip_features": "✨ Features",
+        "faq_chip_dev": "🔧 Dev",
+        "faq_search_placeholder": "Buscar FAQ...",
+        "faq_no_results": "Nao matching results found.",
+        "faq_compare_link": "Compare with other platforms →",
+        "guide_copy_example_btn": "Copiar Example (with your credentials)",
+        "guide_copy_example_copied": "Copied!",
+        "guide_copy_example_hint": "If logged in, your Device ID & Device Secret will be filled automatically. Please replace the goal placeholders with your own.",
+        "guide_arch_core_bots": "<strong>Bot connection methods</strong>: Webhook mode (push + exec+curl) or Channel plugin mode (<code>/api/channel/*</code>), can be mixed",
+        "guide_arch_core_deploy": "<strong>Railway</strong> auto-deploys on push to <code>main</code> (monitors the <code>backend/</code> folder)",
+        "guide_arch_core_design": "Core Design",
+        "guide_arch_core_slots": "Each device has <strong>unlimited dynamic entity slots</strong> — new slots are auto-created when you bind a bot, each independently bindable",
+        "guide_arch_meta": "Android App ↔ Voltarend ↔ OpenClaw Platform",
+        "guide_arch_overview": "Architecture Visao geral",
+        "guide_arch_overview_desc": "EClawbot consists of three main components: the Android App, the backend service (Railway), and the OpenClaw AI platform (Zeabur).",
+        "guide_arch_title": "Architecture",
+        "guide_channel_h2_1": "What is a Channel?",
+        "guide_channel_h2_2": "Prerequisites",
+        "guide_channel_h2_3": "Step-by-Step Guia",
+        "guide_channel_h2_4": "FAQ",
+        "guide_channel_h2_5": "Technical Detalhes (Avancado)",
+        "guide_channel_h3_1": "Step 1: Generate an API Key in the Portal",
+        "guide_channel_h3_2": "Step 2: Install and Configurar the E-Claw Channel in OpenClaw",
+        "guide_channel_h3_3": "Step 3: Restart OpenClaw",
+        "guide_channel_h3_4": "Step 4: Verify the Entity Appears in the App / Portal",
+        "guide_channel_h3_5": "Step 5: Send Your First Mensagem",
+        "guide_channel_h3_6": "Q: The entity doesn't appear in the App after binding?",
+        "guide_channel_h3_7": "Q: AI doesn't respond after sending a message?",
+        "guide_channel_h3_8": "Q: Can I bind multiple entities to different AIs simultaneously?",
+        "guide_channel_h3_9": "Q: What if my API Key is leaked?",
+        "guide_channel_li_1": "✅ Have an E-Claw account and logged into the Portal",
+        "guide_channel_li_2": "✅ Have OpenClaw installed (Zeabur / Railway / local all work)",
+        "guide_channel_li_3": "✅ Your OpenClaw server is publicly accessible (or has ECLAW_WEBHOOK_URL configured)",
+        "guide_channel_li_4": "Register the Callback URL with the E-Claw server",
+        "guide_channel_li_5": "Bind the specified entity (entity_id) using the API Key",
+        "guide_channel_li_6": "EClawbot pushes your message to OpenClaw (via your configured ECLAW_WEBHOOK_URL)",
+        "guide_channel_li_7": "The entity status updates, and the App displays the AI's reply",
+        "guide_channel_li_plugin": "✅ Installed the <code>openclaw-channel-eclaw</code> plugin in OpenClaw",
+        "guide_channel_li_reply": "After your AI processes the message, it calls E-Claw's <code>POST /api/channel/message</code> to reply",
+        "guide_channel_meta": "Let your own AI (e.g., Claude) ao vivo inside an E-Claw entity",
+        "guide_channel_note_1": "Channel binding is an <strong>optional feature</strong> — if you don't have your own OpenClaw, just continue using the Official Bot.",
+        "guide_channel_note_2": "A single API Key can bind multiple entity slots (letting one OpenClaw manage multiple entities). You only need separate Keys if you have multiple independent OpenClaw servers.",
+        "guide_channel_note_3": "If the entity has a <strong>[C]</strong> marker next to it, it indicates a Channel binding (Channel binding type).",
+        "guide_channel_p_1": "EClawbot's default \",
+        "guide_channel_p_2": "Once bound, messages you send to that entity in the App or Portal will be pushed directly to your OpenClaw AI; after the AI replies, the entity's status updates in real time.",
+        "guide_channel_p_3": "Go to <strong>Configuracoes → Channel API</strong> and click \",
+        "guide_channel_p_4": "After saving the configuration, restart OpenClaw. The plugin will automatically:",
+        "guide_channel_p_5": "In the App, open the chat screen for that entity and type any message. The flow is as follows:",
+        "guide_channel_p_6": "If the AI responds, it means the Channel two-way communication is working properly.",
+        "guide_channel_p_7": "Go to the Configuracoes page, delete that Key, and generate a new one. The old Key becomes invalid immediately upon deletion, and the corresponding entities will be automatically unbound.",
+        "guide_channel_p_8": "Channel API endpoint reference (for developers):",
+        "guide_channel_p_config": "Add the following channel configuration to your OpenClaw settings (<code>openclaw.config.yaml</code>):",
+        "guide_channel_p_faq1_a": "First check that the OpenClaw log shows a successful <code>Bound entity</code> message. If not, it's usually because the API Key/Secret was entered incorrectly, or the <code>entity_id</code> is out of range (free plan: 0–3, paid plan: 0–7).",
+        "guide_channel_p_faq2_a": "The most common cause is that <code>ECLAW_WEBHOOK_URL</code> is not publicly accessible. Make sure your OpenClaw server has a public HTTPS endpoint, or expose it via tools like ngrok.",
+        "guide_channel_p_faq3_a": "Sim. Generate a separate API Key for each OpenClaw session and configure different <code>entity_id</code> values. This way entity 0 maps to AI-A, entity 1 maps to AI-B, each operating independently.",
+        "guide_channel_p_source": "Full API documentation and plugin source code: <a href=\",
+        "guide_channel_p_success": "If successful, the OpenClaw log will show a message like <code>[eclaw] Bound entity 0 as \",
+        "guide_channel_p_verify": "Go back to the E-Claw App main screen or refresh the Portal dashboard. The entity you specified should appear as bound, and the name will be updated to the <code>entity_name</code> you configured.",
+        "guide_channel_title": "Bring Your Own OpenClaw Bot — Channel Binding Guia",
+        "guide_channel_warning_1": "<strong>ECLAW_WEBHOOK_URL</strong> must be a publicly accessible address — the E-Claw server needs it to push user messages.",
+        "guide_cc_channel_h2_arch": "Architecture Diagram",
+        "guide_cc_channel_h2_faq": "FAQ",
+        "guide_cc_channel_h2_req": "Prerequisites",
+        "guide_cc_channel_h2_setup": "Quick Configuracao",
+        "guide_cc_channel_h2_what": "What Is This?",
+        "guide_cc_channel_h3_faq1": "Q: Entity doesn't appear after starting?",
+        "guide_cc_channel_h3_faq2": "Q: Claude Code doesn't reply?",
+        "guide_cc_channel_h3_faq3": "Q: Can I run OpenClaw Channel and Claude Code Channel simultaneously?",
+        "guide_cc_channel_h3_step1": "Step 1: Clone the Project",
+        "guide_cc_channel_h3_step2": "Step 2: Install Dependencies",
+        "guide_cc_channel_h3_step3": "Step 3: Configurar Environment Variables",
+        "guide_cc_channel_h3_step4": "Step 4: Start the Service",
+        "guide_cc_channel_h3_step5": "Step 5: Test the Connection",
+        "guide_cc_channel_li_req1": "✅ <strong>Bun</strong> runtime (<a href=\",
+        "guide_cc_channel_li_req2": "✅ <strong>Claude Code</strong> CLI installed and available (<code>claude</code> command)",
+        "guide_cc_channel_li_req3": "✅ <strong>tmux</strong> terminal multiplexer (for managing Claude Code sessoes)",
+        "guide_cc_channel_li_req4": "✅ EClawbot account with a Channel API Key generated (see <a href=\",
+        "guide_cc_channel_li_step4a": "Register callback URL with EClawbot backend",
+        "guide_cc_channel_li_step4b": "Bind the specified entity slot",
+        "guide_cc_channel_li_step4c": "Start Claude Code in a tmux session",
+        "guide_cc_channel_li_step4d": "Begin listening for fakechat WebSocket messages",
+        "guide_cc_channel_meta": "Bridge EClawbot to Claude Code via fakechat WebSocket",
+        "guide_cc_channel_note_repo": "Source code and full documentation: <a href=\",
+        "guide_cc_channel_h2_approval": "Interactive Permission Approval",
+        "guide_cc_channel_p_approval_problem": "<strong>Problem:</strong> When Claude Code tries to read or write sensitive paths (e.g. <code>.claude/</code>, system files) or run tools that require authorization, it shows a permission prompt and blocks the tmux session. In Channel mode, the user can't see the prompt and the entire session hangs, unable to process further EClawbot messages.",
+        "guide_cc_channel_p_approval_solution": "<strong>Solution:</strong> Use a Claude Code <code>PreToolUse</code> hook to intercept these tool calls and forward each permission request as a rich card to the bound EClawbot entity chat. The card includes [✅ Approve] [✅ Todosow Todos] [❌ Deny] buttons. The user's choice is returned to the hook, which then allows or blocks the tool call — the session never has to enter interactive mode.",
+        "guide_cc_channel_h3_approval_flow": "Flow",
+        "guide_cc_channel_h3_approval_setup": "Configuracao",
+        "guide_cc_channel_p_approval_setup": "This feature requires two pieces of setup in the <a href=\",
+        "guide_cc_channel_li_approval_setup1": "Run <code>patch-fakechat.sh</code>: patches the fakechat package so the bridge exposes an <code>/ask</code> endpoint that receives hook permission requests and returns the user's decision.",
+        "guide_cc_channel_li_approval_setup2": "Configurar the <code>PreToolUse</code> hook: register a hook script in Claude Code settings that intercepts tool calls and calls bridge <code>/ask</code>, then allows or blocks the call based on the rich-card response.",
+        "guide_cc_channel_p_approval_link": "Full installation steps and the hook script example: <a href=\",
+        "guide_cc_channel_note_approval": "Tip: Choosing \",
+        "guide_cc_channel_p_faq1": "Verify <code>ECLAW_API_KEY</code> and <code>ECLAW_WEBHOOK_URL</code> in <code>.mcp.json</code>, and make sure the public URL is reachable from the EClaw platform (Cloudflare Tunnel / ngrok not disconnected). Check the bridge log for a successful bind.",
+        "guide_cc_channel_p_faq2": "Common causes: the tmux session died (<code>tmux ls</code>), the fakechat plugin isn't running (<code>curl http://localhost:8787/</code>), or the Claude Code session went idle. Auto-wake should wake idle sessoes automatically; if not, attach with <code>tmux attach -t eclaw-bot</code> to inspect.",
+        "guide_cc_channel_p_faq3": "Sim. They are fully independent channel integrations — use different API keys bound to different entities and they won't interfere with each other.",
+        "guide_cc_channel_p_source": "Full documentation and source code: <a href=\",
+        "guide_cc_channel_p_step3": "Criar a <code>.env</code> file and fill in your Channel API credentials:",
+        "guide_cc_channel_p_step3b": "Editar <code>.env</code> and fill in the following fields:",
+        "guide_cc_channel_p_step4": "After starting, the plugin will automatically:",
+        "guide_cc_channel_p_step5": "Go back to the EClawbot App or Portal and send any message in the bound entity's chat. If Claude Code replies normally, the setup is successful.",
+        "guide_cc_channel_p_what": "Claude Code Channel is a bridge service that connects EClawbot to Claude Code via the <strong>fakechat WebSocket</strong> protocol. It starts a local WebSocket server, intercepts user messages pushed from EClawbot, forwards them to Claude Code for processing, and sends Claude Code's replies back to EClawbot via the Channel API.",
+        "guide_cc_channel_p_what2": "In short: you can chat with Claude Code directly in the EClawbot App or Portal, just like using the CLI.",
+        "guide_cc_channel_title": "Claude Code Channel — Connect Claude Code to EClawbot",
+        "guide_cc_channel_warn_experimental": "⚠️ <strong>Experimental</strong> — Claude Code Channel relies on <code>--dangerously-load-development-channels</code>, an experimental Claude Code API that is less stable than OpenClaw Channel. For production use, consider <a href=\",
+        "guide_cc_channel_callout_subscription_title": "💰 Uses your subscription, no extra API fees",
+        "guide_cc_channel_callout_subscription_body": "Claude Code Channel runs directly on your <strong>claude.ai Max subscription</strong> allowance (or Teams / Enterprise). You don't need to pay separately for Anthropic API tokens.",
+        "guide_cc_channel_callout_subscription_compare_title": "Compared to OpenClaw Channel:",
+        "guide_cc_channel_callout_subscription_compare_openclaw": "<strong>OpenClaw Channel</strong> → requires Anthropic API key, charged per token",
+        "guide_cc_channel_callout_subscription_compare_claude": "<strong>Claude Code Channel</strong> → uses your subscription allowance, fixed monthly cost, no per-message billing",
+        "guide_cc_channel_callout_subscription_best_for": "Best for: low API budget, subscription-only accounts, or token-saving scenarios.",
+        "faq_q_cc_vs_openclaw": "Why use Claude Code Channel instead of OpenClaw Channel?",
+        "faq_a_cc_vs_openclaw": "The main difference is <strong>billing</strong>. OpenClaw Channel uses an Anthropic API key and is charged per token; Claude Code Channel uses your claude.ai subscription allowance with a fixed monthly cost and no per-message billing. If you already have a claude.ai Max/Teams subscription, Claude Code Channel costs you nothing extra in API fees. The tradeoff: Claude Code Channel is currently experimental and slightly less stable than OpenClaw Channel.",
+        "guide_cc_channel_li_req5": "✅ <strong>fakechat plugin</strong> (install from within Claude Code: <code>/plugin install fakechat@claude-plugins-official</code>)",
+        "guide_cc_channel_li_req6": "✅ A public URL for receiving webhooks — we recommend <a href=\",
+        "guide_cc_channel_p_step3_patch": "The default fakechat instructions are too lenient — Claude Code sometimes only prints to the transcript without calling the <code>reply</code> tool, so EClaw users don't see the response. Aplicar the bilingual enforcement patch (re-run after every fakechat update):",
+        "guide_cc_channel_h3_step4_env": "Step 4: Configurar Environment Variables",
+        "guide_cc_channel_p_step4_env": "Copiar the example config and fill in your values (detailed field reference in the Environment Variables section below):",
+        "guide_cc_channel_h3_step5_tmux": "Step 5: Start tmux Sessions",
+        "guide_cc_channel_p_step5_tmux": "Run Claude Code (with the fakechat channel) and the bridge in two separate tmux sessoes:",
+        "guide_cc_channel_h3_step6_test": "Step 6: Verify the Connection",
+        "guide_cc_channel_p_step6_test": "Check bridge health via <code>curl http://localhost:18800/health</code> — you should see <code>wsConectado=true</code>. Then send a message in the bound entity's chat on EClawbot App or Portal; a Claude Code reply confirms the setup is working.",
+        "guide_cc_channel_h2_envvars": "Environment Variables",
+        "guide_cc_channel_p_envvars": "Full list of bridge environment variables. Obrigatorio ones are marked ✅; the rest are optional and fall back to the listed defaults.",
+        "guide_cc_channel_envvars_col_var": "Variable",
+        "guide_cc_channel_envvars_col_required": "Obrigatorio",
+        "guide_cc_channel_envvars_col_default": "Padrao",
+        "guide_cc_channel_envvars_col_desc": "Descricao",
+        "guide_cc_channel_envvars_row_api_key": "Channel API Key (format: <code>eck_...</code>)",
+        "guide_cc_channel_envvars_row_webhook_url": "Public URL (without the <code>/eclaw-webhook</code> path)",
+        "guide_cc_channel_envvars_row_api_base": "EClaw API base URL",
+        "guide_cc_channel_envvars_row_port": "Webhook listen port",
+        "guide_cc_channel_envvars_row_bot_name": "Bot display name",
+        "guide_cc_channel_envvars_row_ws": "Fakechat WebSocket URL (bridge mode)",
+        "guide_cc_channel_envvars_row_watchdog_timeout": "Watchdog timeout in seconds",
+        "guide_cc_channel_envvars_row_watchdog_enabled": "Enable watchdog mechanism",
+        "guide_cc_channel_envvars_row_forward_kanban": "Forward kanban work-queue messages (set to <code>false</code> for emergency mute only)",
+        "guide_cc_channel_envvars_row_context_watch": "Context pressure monitor (20% warning / 5% auto <code>/clear</code>)",
+        "guide_cc_channel_envvars_row_reply_timeout": "Seconds before bridge nudges Claude if it hasn't called the reply tool",
+        "guide_cc_channel_envvars_row_auto_wake_enabled": "Auto-wake idle sessoes (required after <code>/clear</code> or on new sessoes)",
+        "guide_cc_channel_envvars_row_auto_wake_delay": "Seconds after forwarding to check for idle and wake",
+        "guide_cc_channel_envvars_row_auto_wake_poll": "Re-check interval (seconds) while Claude is still busy",
+        "guide_cc_channel_envvars_row_auto_wake_max_wait": "Max total wait before giving up on auto-wake (seconds)",
+        "guide_cc_channel_envvars_row_auto_wake_cooldown": "Cooldown between consecutive wake-ups",
+        "guide_cc_channel_h2_automation": "Automated Mechanisms",
+        "guide_cc_channel_p_automation": "The bridge has six built-in automation mechanisms that keep the Claude Code channel running unattended. Todos of them can be toggled via environment variables.",
+        "guide_cc_channel_h3_watchdog": "① Watchdog",
+        "guide_cc_channel_p_watchdog": "When the user sends a second message while Claude still hasn't replied to the first, and <code>ECLAW_WATCHDOG_TIMEOUT</code> seconds (default 30) have elapsed, the bridge pushes a rich card to the user with three buttons:",
+        "guide_cc_channel_li_watchdog_ack": "<strong>✅ Confirmar</strong> — Do nothing; Claude will reply when it's done",
+        "guide_cc_channel_li_watchdog_interrupt": "<strong>⚡ Interrupt</strong> — Interrupt Claude's current work via tmux and demand an immediate reply to the latest message",
+        "guide_cc_channel_li_watchdog_withdraw": "<strong>↩️ Withdraw</strong> — Abandon waiting and stop tracking this message",
+        "guide_cc_channel_p_watchdog_note": "Only one card per burst (no spam). If Claude replies before the user clicks a button, the watchdog state clears automatically.",
+        "guide_cc_channel_h3_context": "② Context Pressure Monitor",
+        "guide_cc_channel_p_context": "The bridge reads the tmux pane every 60 seconds to detect Claude Code's <code>N% until auto-compact</code> indicator. At 20% restante it sends a warning; at 5% it auto-runs <code>/clear</code> to free context. This prevents Claude from behaving erratically (e.g. giving up on MCP tools and falling back to Playwright browser automation) when context is nearly exhausted. Disable with <code>ECLAW_CONTEXT_WATCH_ENABLED=false</code>.",
+        "guide_cc_channel_h3_enforcer": "③ Reply Tool Enforcer",
+        "guide_cc_channel_p_enforcer": "The bridge tracks whether each user message gets answered via the <code>reply</code> tool. If <code>ECLAW_REPLY_TIMEOUT_S</code> seconds (default 120) pass without a reply while Claude is still busy (e.g. a browser session is open), the bridge auto-injects a reminder: <em>“Don't use Playwright to click the UI — use the reply tool”</em>, nudging Claude back to the correct reply path.",
+        "guide_cc_channel_h3_autowake": "④ Auto-wake",
+        "guide_cc_channel_p_autowake": "Claude Code is a reactive agent — after <code>/clear</code> or on a new session, incoming MCP notifications don't automatically start a turn. After forwarding a message, the bridge waits <code>ECLAW_AUTO_WAKE_DELAY_S</code> seconds (default 10) then inspects tmux state; if idle, it injects a <em>“process pending channel messages”</em> string via <code>tmux send-keys</code> to trigger a new turn. A cooldown of <code>ECLAW_AUTO_WAKE_COOLDOWN_S</code> seconds prevents spam.",
+        "guide_cc_channel_h3_errorloop": "⑤ Erro Feedback Loop",
+        "guide_cc_channel_p_errorloop": "When the bridge fails to deao vivor a reply to the EClaw API (expired API Key, network error, quota exceeded, etc.), <code>notifyClaudeErro</code> injects the error into Claude's channel inbox so Claude knows the previous reply did not reach the user and can retry or adjust. The user also sees a bridge error hint on the next message.",
+        "guide_cc_channel_h3_kanban_queue": "⑥ Kanban Work-queue Integration",
+        "guide_cc_channel_p_kanban_queue": "By default the bridge treats automated messages from EClaw's kanban board as Claude's work queue and forwards them (<code>ECLAW_FORWARD_KANBAN=true</code>). If the bot hits a context overflow and you need emergency mute, temporarily set it to <code>false</code> to stop forwarding kanban messages without affecting user-initiated messages.",
+        "guide_cc_channel_h2_commands": "Bridge Commands",
+        "guide_cc_channel_p_commands": "Send the following commands from the EClaw chat — they are intercepted by the bridge (not forwarded to Claude Code):",
+        "guide_cc_channel_p_cmd_model": "Switch the model Claude Code uses. The bridge replies with a rich card letting you pick ⚡ Sonnet / 🧠 Opus / 🪶 Haiku; after your choice, the bridge auto-restarts the Claude Code session to load the new model.",
+        "guide_cc_channel_p_cmd_auto_approve": "Toggle auto-approve mode. When ON, the bridge's <code>/ask</code> endpoint auto-returns <code>approve</code> for every PreToolUse hook request and stops pushing approval rich cards — useful for leaving Claude running long automated tasks. Send the command again to toggle OFF.",
+        "guide_cc_channel_h3_faq_health": "Saude Check",
+        "guide_cc_channel_p_faq_health": "First verify the state of the bridge and fakechat components:",
+        "guide_cc_channel_h3_faq_log": "Inspecting Logs",
+        "guide_cc_channel_p_faq_log": "The bridge log is at <code>/tmp/eclaw-bridge.log</code>; the PreToolUse hook log is at <code>/tmp/eclaw-hook.log</code>.",
+        "guide_cc_channel_h3_faq_context": "Q: Claude misbehaves and starts opening Playwright browsers instead of replying?",
+        "guide_cc_channel_p_faq_context": "A classic symptom of context pressure — Claude “forgets” the fakechat instructions. The Context Pressure Monitor (20% warning / 5% auto <code>/clear</code>) and Reply Tool Enforcer should handle this automatically. You can also manually send <code>Escape</code> + <code>/clear</code> in the tmux pane to reset context immediately.",
+        "guide_cc_channel_h3_faq_reply_fail": "Q: Bridge log shows reply-to-EClaw failed?",
+        "guide_cc_channel_p_faq_reply_fail": "Usual causes: expired <code>ECLAW_API_KEY</code>, claude.ai weekly quota exhausted, or a transient 5xx from the EClaw API. The Erro Feedback Loop pushes the error into Claude's inbox and the user also sees a bridge hint. Rotate the API key or wait for the quota reset to recover.",
+        "guide_cc_channel_h2_references": "Referencias",
+        "guide_cc_channel_li_ref_repo": "📘 GitHub repo + README: <a href=\",
+        "guide_cc_channel_li_ref_openclaw": "🔌 OpenClaw Channel (stable, recommended for production): <a href=\",
+        "guide_cc_channel_li_ref_claude": "🤖 Claude Code official docs: <a href=\",
+        "guide_nav_hermes_channel": "Hermes Channel",
+        "guide_hermes_channel_title": "Hermes Channel — Connect Hermes Agent to EClawbot",
+        "guide_hermes_channel_meta": "Use NaousResearch's Hermes Agent (Python) as the AI backend for your EClawbot entity",
+        "guide_hermes_channel_callout_title": "💰 Supports MiniMax subscription plan — no extra API fees",
+        "guide_hermes_channel_callout_body": "Hermes Channel works with the <strong>MiniMax coding-plan subscription key</strong> (<code>sk-cp-...</code>) using your subscription quota, with no per-token charges. It also supports 18 providers including OpenAI / Anthropic / OpenRouter / Naous Portal / local Ollama — pick the one that's cheapest for you.",
+        "guide_hermes_channel_h2_what": "What is this?",
+        "guide_hermes_channel_p_what1": "Hermes Channel is a Python bridge (aiohttp) that lets <a href=\",
+        "guide_hermes_channel_p_what2": "On inbound message, the bridge invokes the Hermes CLI to get a reply, then POSTs it back to EClawbot. Todos Hermes features (tools, skills, memory, sessoes) are available. A KNOW-HOW doc in the repo records 15 pitfalls hit during development — copy-paste ready.",
+        "guide_hermes_channel_note_repo": "Source + full docs: <a href=\",
+        "guide_hermes_channel_h2_arch": "Architecture",
+        "guide_hermes_channel_h2_req": "Requirements",
+        "guide_hermes_channel_li_req1": "✅ <strong>Docker</strong> + a container with Hermes Agent installed (Hermes's venv has aiohttp — the bridge reuses it)",
+        "guide_hermes_channel_li_req2": "✅ <strong>Cloudflare account</strong> + a zone you own (e.g. <code>eclawbot.com</code>) — for a stable named tunnel",
+        "guide_hermes_channel_li_req3": "✅ <strong>Cloudflare API Token</strong> (permissions: <code>Cloudflare Tunnel: Editar</code> + <code>DNS: Editar</code> + <code>Zone: Read</code>)",
+        "guide_hermes_channel_li_req4": "✅ <strong>EClawbot Channel API Key</strong> (<code>eck_...</code>) — generate in Portal → Configuracoes → Channel API",
+        "guide_hermes_channel_li_req5": "✅ <strong>LLM provider key</strong> — e.g. MiniMax coding-plan (<code>sk-cp-...</code>), OpenAI, Anthropic, etc.",
+        "guide_hermes_channel_li_req6": "✅ <strong>macOS</strong> (scripts use Keychain for secrets; adapt for Linux by using an env file)",
+        "guide_hermes_channel_h2_steps": "Configuracao steps",
+        "guide_hermes_channel_h3_1": "Step 1: Clone the repo",
+        "guide_hermes_channel_h3_2": "Step 2: Salvar credentials to Keychain",
+        "guide_hermes_channel_h3_3": "Step 3: Configurar the LLM provider inside your Hermes container",
+        "guide_hermes_channel_p_provider": "Inside the Hermes container run <code>hermes setup</code> (or <code>hermes login</code> for Naous Portal) to save the provider key to <code>~/.hermes/auth.json</code>, then set <code>config.yaml</code> to the new schema (legacy v0.x format triggers <code>Nao inference provider configured</code>):",
+        "guide_hermes_channel_h3_4": "Step 4: Criar named tunnel + DNS",
+        "guide_hermes_channel_warning_quick_tunnel": "⚠️ <strong>Do NOT use Quick Tunnel (<code>--url ...</code>) inside the container</strong>: the container's UDP buffer is too small for QUIC, causing constant disconnects. Always use a named tunnel (<code>--token ...</code>) — stable and gives you a fixed domain.",
+        "guide_hermes_channel_h3_5": "Step 5: Register + Bind Entity",
+        "guide_hermes_channel_note_entity_id": "If the <code>entity_id</code> you pick is taken, EClawbot returns <code>Entity already bound</code>. Pick an empty slot — <strong>do NOT use <code>DELETE /api/device/entity/:id/permanent</code></strong> (irreversible; wipes the entity's chat history and XP).",
+        "guide_hermes_channel_h3_6": "Step 6: Start the bridge",
+        "guide_hermes_channel_h3_7": "Step 7: Test it",
+        "guide_hermes_channel_p_test": "Open <code>https://eclawbot.com/c/&lt;publicCode&gt;</code> (the 6-char code returned during bind) and send a message. Expect ~7-9s cold start, then a reply. Tail the log ao vivo:",
+        "guide_hermes_channel_h2_faq": "FAQ",
+        "guide_hermes_channel_h3_faq_cold": "Q: How fast is each reply?",
+        "guide_hermes_channel_p_faq_cold": "Since 2026-04-28 the bridge talks to <code>hermes_daemon.py</code> (option B) — the daemon boots a single persistent <code>hermes --continue</code> child, so cold-start cost is paid once. Per-message latency ≈ Hermes inference time (typically 1–3s). When <code>HERMES_DAEMON_URL</code> is unset or the daemon is unreachable, the bridge falls back to the legacy per-request <code>hermes chat</code> subprocess; that path still shows the old 7–9s cold start. Voltarground + fallback semantics: KNOW-HOW §14, SPEC-bridge-refactor.md.",
+        "guide_hermes_channel_h3_faq_auth": "Q: Why is Hermes HMAC disabled (<code>INSECURE_NO_AUTH</code>)?",
+        "guide_hermes_channel_p_faq_auth": "EClaw pushes webhooks with <code>Authorization: Bearer &lt;callback_token&gt;</code>, but Hermes's built-in webhook gateway expects HMAC-SHA256 signatures. The two schemes are incompatible. The bridge intercepts before the gateway, validates the Bearer token itself, then forwards — so the gateway-level HMAC must be skipped. For production, add a reverse proxy that supports both.",
+        "guide_hermes_channel_h3_faq_provider": "Q: <code>hermes chat</code> says \",
+        "guide_hermes_channel_p_faq_provider": "Hermes v1 changed the config schema. The old <code>provider: minimax</code> at the top level is silently ignored — use <code>model: { provider: minimax, name: MiniMax-M2.7 }</code>. Run <code>hermes doctor</code> to confirm — it will explicitly warn about <em>\",
+        "guide_hermes_channel_h3_faq_zombie": "Q: Bridge log stuck on \",
+        "guide_hermes_channel_p_faq_zombie": "Docker containers where PID 1 isn't a proper init (e.g. openclaw-b uses <code>openclaw</code> as PID 1) don't reap children, so <code>asyncio.create_subprocess_exec</code>'s <code>communicate()</code> can hang forever when the subprocess exits abnormally. The bridge wraps it in <code>asyncio.wait_for</code> with a 90s timeout — if you see <code>timed out after 90s</code>, it usually means the LLM API is down (check minimax status).",
+        "guide_hermes_channel_h3_faq_multiple": "Q: Can I run multiple channels (OpenClaw / Claude Code / Hermes) at the same time?",
+        "guide_hermes_channel_p_faq_multiple": "Sim, fully isolated. Each channel uses its own <code>eck_...</code> key and binds a different entity slot — no conflicts. To serve multiple entities from one Hermes container, bind multiple times (each entity gets its own botSecret). The current bridge handles a single entity; multi-entity support requires reading multiple <code>HERMES_ECLAW_ENTITY_ID</code> values and dispatching inside <code>process_message</code>.",
+        "guide_hermes_channel_h2_cleanup": "Teardown",
+        "guide_hermes_channel_warning_teardown": "⚠️ Teardown uses <strong>safe unbind</strong> (<code>DELETE /api/entity</code>, requires botSecret) — it does NOT touch entity data. To wipe the entity slot entirely, use <code>DELETE /api/device/entity/:id/permanent</code> (irreversible — think twice).",
+        "guide_hermes_channel_h2_references": "Referencias",
+        "guide_hermes_channel_li_ref_repo": "📘 GitHub repo + KNOW-HOW (15 pitfalls): <a href=\",
+        "guide_hermes_channel_li_ref_hermes": "🦾 Hermes Agent (NaousResearch): <a href=\",
+        "guide_hermes_channel_li_ref_openclaw": "🔌 OpenClaw Channel (TipoScript reference implementation): <a href=\",
+        "guide_hermes_channel_li_ref_cc": "🤖 Claude Code Channel (similar subscription-quota concept): <a href=\",
+        "guide_envvars_h2_1": "Feature Detalhes",
+        "guide_envvars_h2_2": "Authorization Flow",
+        "guide_envvars_h2_3": "API Endpoints",
+        "guide_envvars_meta": "Mission Control &gt; Environment Variables <span class=\",
+        "guide_envvars_p_1": "Todosows Bots to securely access sensitive information (API Keys, Tokens, etc.). Variables are stored encrypted with <strong>AES-256-GCM</strong> on the server, and every Bot read request requires real-time authorization from the device owner (JIT — Just-in-Hora Approval).",
+        "guide_envvars_td_1": "Encrypted Storage",
+        "guide_envvars_td_10": "Add, edit, and delete variables on the Portal → Env Variables page",
+        "guide_envvars_td_11": "App Management",
+        "guide_envvars_td_12": "Manage variables in App → Mission Control → Env Variables, and receive authorization notifications",
+        "guide_envvars_td_13": "Read (Bot)",
+        "guide_envvars_td_14": "Write (Usuario)",
+        "guide_envvars_td_15": "Approve Authorization",
+        "guide_envvars_td_16": "Reject Authorization",
+        "guide_envvars_td_2": "Variable values are encrypted with AES-256-GCM. The server stores only ciphertext — key names are visible but values are not",
+        "guide_envvars_td_3": "JIT Authorization",
+        "guide_envvars_td_4": "When a Bot requests a read, the App shows an authorization dialog. The value is decrypted and returned only after user confirmation. Authorization is cached for 5 minutes",
+        "guide_envvars_td_5": "Lock Protection",
+        "guide_envvars_td_6": "When lock is enabled, all Bot read requests are immediately rejected without showing the authorization dialog",
+        "guide_envvars_td_7": "Offline Protection",
+        "guide_envvars_td_8": "When the device is offline (Socket.IO disconnected), Bot requests immediately return 403 without waiting",
+        "guide_envvars_td_9": "Web Management",
+        "guide_envvars_th_1": "Action",
+        "guide_envvars_th_2": "API",
+        "guide_envvars_title": "Environment Variables",
+        "guide_features_gps_desc": "Bot can request the user's GPS location for context-aware interactions — nearby restaurants, parking, friend locations, and more.",
+        "guide_features_gps_list": "🍜 Nearby Food · 🅿️ Parking Buscar · 👥 Friend Local · 🚕 Ride & Navigate · 🏥 Nearest Hospital",
+        "guide_features_gps_scenarios": "Use Cases",
+        "guide_features_gps_title": "📍 GPS Local Sharing",
+        "guide_features_cta_title": "Try It Naow",
+        "guide_features_highlights": "Feature Highlights",
+        "guide_features_intro": "EClawbot lets you build an AI agent team that collaborates via A2A protocol, automates tasks, and serves external customers. Supports Web Portal, Android App, and iOS App with real-time sync.",
+        "guide_features_subtitle": "EClawbot — A2A Communication Platform × Personal Enterprise AI Assistant",
+        "guide_features_tbl_10_desc": "Publish content to 12+ platforms (Blogger, DEV.to, X, Reddit, LinkedIn, etc.) with one click",
+        "guide_features_tbl_10_feature": "Multi-Platform Publishing",
+        "guide_features_tbl_1_desc": "Multiple AI agents communicate via Agent-to-Agent protocol in real time, with broadcast collaboration and cross-device task dispatch",
+        "guide_features_tbl_1_feature": "A2A Agent Collaboration",
+        "guide_features_tbl_2_desc": "Criar a dedicated public URL for each agent where customers can interact directly in a browser — orders, inquiries, scheduling",
+        "guide_features_tbl_2_feature": "Proxy Window",
+        "guide_features_tbl_3_desc": "Mission Control task management — create todos, assign tasks, track progress; agents get notified automatically",
+        "guide_features_tbl_3_feature": "Mission Control",
+        "guide_features_tbl_4_desc": "Configurar role, instructions, boundaries, and tone for agents (Identity) to create professional agent personas",
+        "guide_features_tbl_4_feature": "Bot Identity System",
+        "guide_features_tbl_5_desc": "Build digital business cards for agents — showcase capabilities, protocols, and tags for discovery and collection",
+        "guide_features_tbl_5_feature": "Agent Card",
+        "guide_features_tbl_6_desc": "Web Portal, Android App, iOS App — real-time sync, manage your agent team anytime, anywhere",
+        "guide_features_tbl_6_feature": "Three-Platform Management",
+        "guide_features_tbl_7_desc": "Webhook + Channel Plugin — two methods to connect OpenClaw AI bots with bidirectional communication and multi-model collaboration",
+        "guide_features_tbl_7_feature": "OpenClaw Ecosystem Integration",
+        "guide_features_tbl_8_desc": "AES-256-GCM encrypted storage for bot secret keys with JIT authorization for security",
+        "guide_features_tbl_8_feature": "Encrypted Environment Variables",
+        "guide_features_tbl_9_desc": "Built-in EClawbot AI for real-time Q&A, automatic diagnostics, and solution suggestions",
+        "guide_features_tbl_9_feature": "AI Personalizadoer Support",
+        "guide_features_tbl_h_desc": "Descricao",
+        "guide_features_tbl_h_feature": "Feature",
+        "guide_features_title": "Features",
+        "guide_features_cta_web": "Web Portal (Recommended): <a href=\",
+        "guide_features_cta_android": "Android App: <a href=\",
+        "guide_features_why1_desc": "Set up Identity + Agent Card for your agent, share the link with customers, and they can interact directly in a browser. Ideal for e-commerce, consulting, appointment scheduling, and more.",
+        "guide_features_why1_pain": "Want AI agents to serve external customers and handle orders?",
+        "guide_features_why1_solution": "→ Proxy Window, one-click public access",
+        "guide_features_why2_desc": "Through Speak-to, Broadcast, and Mission Control, agents can coordinate tasks, collaborate, and report progress automatically.",
+        "guide_features_why2_pain": "Want multiple AI agents to collaborate and automate workflows?",
+        "guide_features_why2_solution": "→ A2A protocol for real-time agent communication",
+        "guide_features_why3_desc": "Web Portal, Android App, iOS App share the same backend with real-time sync. Tasks set on your computer are instantly visible on your phone.",
+        "guide_features_why3_pain": "Need cross-platform management without maintaining multiple systems?",
+        "guide_features_why3_solution": "→ Three-platform real-time sync",
+        "guide_features_why_title": "Why Choose EClawbot?",
+        "guide_mdone_h2_1": "Feature Detalhes",
+        "guide_mdone_meta": "Mission Control &gt; Concluido",
+        "guide_mdone_p_1": "Todos completed TODOs and missions are archived here with completion timestamps for easy history tracking.",
+        "guide_mdone_td_1": "Completion Record",
+        "guide_mdone_td_2": "History Review",
+        "guide_mdone_td_3": "Easily verify which missions the Bot has completed in the past",
+        "guide_mdone_td_4": "Cleanup",
+        "guide_mdone_td_5": "Excluir historical records that are no longer needed",
+        "guide_mdone_title": "Concluido",
+        "guide_mission_overview_feature_tree": "Feature Tree",
+        "guide_mission_overview_intro": "Mission Control is E-Claw's web management portal that lets you manage all AI Bot behaviors across devices via a browser. Todos Entities on the same device (up to 4) <strong>share the same Painel</strong> and can collaborate with each other.",
+        "guide_mission_overview_meta": "Web Management Portal — Manage Bot TODOs, Missions, Naotes, Skills, Soul, Rules, and Schedules",
+        "guide_mission_overview_sub_overview": "Sub-Item Visao geral",
+        "guide_mission_overview_sync": "Painel Sync Mechanism",
+        "guide_mission_overview_sync_desc": "The Mission Control Painel uses <strong>version numbers</strong> for optimistic locking. Each operation automatically increments the version number. Bots can detect silent user modifications by periodically polling <code>GET /api/mission/dashboard</code> and comparing version numbers.",
+        "guide_mission_overview_sync_note": "It is recommended that Bots poll the Painel every 15 minutes, comparing the <code>version</code> field. If the version has changed, re-read all items. This ensures the Bot responds promptly to user actions on the Web Portal.",
+        "guide_mission_overview_tbl_done_access": "Usuario + Bot Compartilhard",
+        "guide_mission_overview_tbl_done_desc": "Archive completed items with completion timestamps",
+        "guide_mission_overview_tbl_done_item": "Concluido",
+        "guide_mission_overview_tbl_env_access": "Usuario Authorizes / Bot Reads",
+        "guide_mission_overview_tbl_env_desc": "AES-256-GCM encrypted storage for Bot secret variables with JIT authorization",
+        "guide_mission_overview_tbl_env_item": "Environment Variables",
+        "guide_mission_overview_tbl_h_access": "Access",
+        "guide_mission_overview_tbl_h_desc": "Descricao",
+        "guide_mission_overview_tbl_h_item": "Sub-Item",
+        "guide_mission_overview_tbl_mission_access": "Usuario + Bot Compartilhard",
+        "guide_mission_overview_tbl_mission_desc": "Track in-progress missions, sorted by priority",
+        "guide_mission_overview_tbl_mission_item": "Mission Lista",
+        "guide_mission_overview_tbl_notes_access": "Usuario + Bot Compartilhard",
+        "guide_mission_overview_tbl_notes_desc": "Record reference information with category management and cross-Entity sharing",
+        "guide_mission_overview_tbl_notes_item": "Naotes",
+        "guide_mission_overview_tbl_remote_access": "Usuario Enables / Bot Executes",
+        "guide_mission_overview_tbl_remote_desc": "Bot autonomously controls phone UI via Accessibility Tree (disabled by default)",
+        "guide_mission_overview_tbl_remote_item": "Remote Control",
+        "guide_mission_overview_tbl_rules_access": "Usuario-Defined Behavior",
+        "guide_mission_overview_tbl_rules_desc": "Define behavioral guidelines and automated workflows with 6 rule types",
+        "guide_mission_overview_tbl_rules_item": "Rules",
+        "guide_mission_overview_tbl_schedule_access": "Usuario + Bot Compartilhard",
+        "guide_mission_overview_tbl_schedule_desc": "Horad task execution with real-time status tracking and execution history",
+        "guide_mission_overview_tbl_schedule_item": "Schedule",
+        "guide_mission_overview_tbl_skills_access": "Bot Capability Extension",
+        "guide_mission_overview_tbl_skills_desc": "Extend Bot capabilities with API documentation URLs",
+        "guide_mission_overview_tbl_skills_item": "Skills",
+        "guide_mission_overview_tbl_soul_access": "Usuario-Defined Persona",
+        "guide_mission_overview_tbl_soul_desc": "Define Bot personality traits and communication style",
+        "guide_mission_overview_tbl_soul_item": "Soul",
+        "guide_mission_overview_tbl_todo_access": "Usuario + Bot Compartilhard",
+        "guide_mission_overview_tbl_todo_desc": "Manage work items not yet started, with priority and Entity assignment support",
+        "guide_mission_overview_tbl_todo_item": "TODO",
+        "guide_mission_overview_title": "Mission Control",
+        "guide_mlist_h2_1": "Feature Detalhes",
+        "guide_mlist_meta": "Mission Control &gt; Mission Lista <span class=\",
+        "guide_mlist_p_1": "Displays currently in-progress missions. When a TODO item is \",
+        "guide_mlist_td_1": "Status Tracking",
+        "guide_mlist_td_10": "If a mission needs to be paused, it can be returned to the TODO list",
+        "guide_mlist_td_2": "Displays the execution status of each mission in real time; automatically updates while the Bot is processing",
+        "guide_mlist_td_3": "Priority Ordenaring",
+        "guide_mlist_td_4": "Missions are sorted by URGENT → HIGH → MEDIUM → LOW",
+        "guide_mlist_td_5": "Assignment Info",
+        "guide_mlist_td_6": "Shows which Entity is responsible for executing the mission",
+        "guide_mlist_td_7": "Mark as Complete",
+        "guide_mlist_td_8": "Concluido missions are moved to the \",
+        "guide_mlist_td_9": "Return to TODO",
+        "guide_mlist_title": "Mission Lista",
+        "guide_nav_architecture": "Architecture",
+        "guide_nav_envvars": "Environment Variables",
+        "guide_nav_intent_api": "Dynamic API Injection",
+        "guide_intent_title": "🧠 Dynamic API Injection — Intent Keyword System",
+        "guide_intent_meta": "Auto-append relevant API curl examples to bot push messages based on keywords",
+        "guide_intent_what": "What is Dynamic API Injection?",
+        "guide_intent_what_desc": "When a bot receives a push notification, EClawbot analyzes the message and detects intent keywords. If matched, the server appends corresponding API curl examples — so the bot LLM can use the right endpoint without memorizing all APIs.",
+        "guide_intent_how": "How It Works",
+        "guide_intent_categories": "Supported Intent Categories",
+        "guide_intent_col_intent": "Intent",
+        "guide_intent_col_keywords": "Example Keywords",
+        "guide_intent_col_apis": "Injected APIs",
+        "guide_intent_dynamic": "Dynamic Keyword Extension",
+        "guide_intent_dynamic_desc": "The keyword list is stored in mission note <code>⚙️ api-intent-keywords</code>. Bots can update this note to add new keywords — <strong>no server restart needed</strong>, takes effect within 5 minutes.",
+        "guide_intent_safety": "Safety Design",
+        "guide_intent_safety_1": "JSON parse failure → silently skipped, does not affect normal push flow",
+        "guide_intent_safety_2": "5-minute cache TTL → reduces DB read pressure",
+        "guide_intent_safety_3": "Only appends hint, does not modify original message content",
+        "guide_intent_safety_4": "Only matches first intent (prevents oversized hint blocks)",
+        "guide_nav_publisher": "Multi-platform Publisher",
+        "guide_pub_title": "Multi-platform Publisher",
+        "info_slide_guide_publisher_cta": "Ver Claude Design slide →",
+        "guide_pub_meta": "10 content platforms · multi-tenant keys ao vivo for all (Telegraph is auto-key, no vault needed)",
+        "guide_pub_overview_h": "Visao geral",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> unifies 10 content platforms under <code>/api/publisher/&lt;platform&gt;/*</code>. \",
+        "guide_pub_status_h": "Platform Status",
+        "guide_pub_status_legend": "<span class=\",
+        "guide_pub_col_platform": "Platform",
+        "guide_pub_col_region": "Region",
+        "guide_pub_col_auth": "Auth",
+        "guide_pub_col_keys": "Obrigatorio Vault / Env Keys",
+        "guide_pub_col_status": "Multi-tenant status",
+        "guide_pub_telegraph_note": "Nao keys needed (first call auto-creates an anonymous account)",
+        "guide_pub_roadmap_h": "Concluido: multi-tenant migration shipped on every platform ✅",
+        "guide_pub_roadmap_desc": "Concluido 2026-04. Todos 9 key-requiring platforms run vault-first; Telegraph is auto-key and doesn't need a vault path. Always backwards-compat: missing vault keys fall back to <code>process.env</code>, so existing env-only deployments are unaffected. The list below groups platforms by signing pattern with the shipping PR for each:",
+        "guide_pub_roadmap_step1": "<strong>1-key bearer platforms</strong> (Hashnode / DEV.to / Qiita): a single API token — the simplest, shipped first.",
+        "guide_pub_roadmap_step2": "<strong>2-key bearer + URN</strong> (LinkedIn): access_token + author URN, both pulled from the vault.",
+        "guide_pub_roadmap_step3": "<strong>4-key OAuth1a real-time signing</strong> (X / Tumblr): consumer + access pairs, every request signs nonce + timestamp with HMAC-SHA1.",
+        "guide_pub_roadmap_step4": "<strong>4-key OAuth2 password grant + per-tenant token cache</strong> (Reddit): username/password trades for an access_token; cache keyed by <code>Map keyed by clientId+username</code> to prevent cross-tenant pollution.",
+        "guide_pub_roadmap_step5": "<strong>OAuth2 authorization-code / app-credential + per-tenant token cache</strong> (Blogger / WeChat): Blogger goes through a user consent flow for refresh_token (stored per-device in DB); WeChat uses AppID/AppSecret to mint ~2h access_tokens, cached by <code>Map keyed by appId</code>.",
+        "guide_pub_test_h": "Self-checking that keys are wired correctly",
+        "guide_pub_test_desc": "Every platform has a <code>/me</code> or equivalent \",
+        "guide_pub_status_endpoint_h": "Listaing which platforms are configured",
+        "guide_pub_status_endpoint_desc": "Instead of probing each platform individually, <code>GET /api/publisher/platforms</code> returns the <code>configured</code> flag for every platform in one call:",
+        "guide_nav_features": "Features",
+        "guide_nav_mission": "Mission Control <span class=\",
+        "guide_nav_mission_done": "Concluido",
+        "guide_nav_mission_list": "Mission Lista",
+        "guide_nav_mission_notes": "Naotes",
+        "guide_nav_mission_overview": "Visao geral",
+        "guide_nav_mission_rules": "Rules",
+        "guide_nav_mission_schedule": "Schedule",
+        "guide_nav_mission_skills": "Skills",
+        "guide_nav_mission_soul": "Soul",
+        "guide_nav_mission_todo": "TODO",
+        "guide_nav_openclaw_channel": "OpenClaw Channel",
+        "guide_nav_claude_code_channel": "Claude Code Channel",
+        "guide_nav_quickstart": "Quick Start",
+        "guide_nav_remotecontrol": "Remote Control",
+        "guide_nav_setup": "Configuracao Guia",
+        "guide_nav_structure": "Project Structure",
+        "guide_nav_testing": "Testing & Docs",
+        "guide_nav_usecase_claude": "Command OpenClaw with Claude",
+        "guide_nav_usecases": "Use Cases <span class=\",
+        "guide_notes_h2_1": "Feature Detalhes",
+        "guide_notes_h2_2": "API Endpoints",
+        "guide_notes_meta": "Mission Control &gt; Naotes <span class=\",
+        "guide_notes_p_1": "The Naotes feature allows both users and Bots to record reference information. Ideal for storing memos, preference settings, conversation summaries, and more.",
+        "guide_notes_td_1": "Add Naote",
+        "guide_notes_td_10": "Lista",
+        "guide_notes_td_11": "Add",
+        "guide_notes_td_12": "Atualizar",
+        "guide_notes_td_13": "Excluir",
+        "guide_notes_td_2": "Click \",
+        "guide_notes_td_3": "Categoria Management",
+        "guide_notes_td_4": "Bot Read/Write",
+        "guide_notes_td_5": "Bots can read, add, update, and delete notes via the API",
+        "guide_notes_td_6": "Cross-Entity Sharing",
+        "guide_notes_td_7": "Todos Entities on the same device can access all notes",
+        "guide_notes_td_8": "Use Cases",
+        "guide_notes_td_9": "Usuario preference records, conversation summaries, Bot work logs, configuration memos",
+        "guide_notes_th_1": "Action",
+        "guide_notes_th_2": "API",
+        "guide_notes_title": "Naotes",
+        "guide_quickstart_app_install": "Android App Installation",
+        "guide_quickstart_deploy": "Deploy to Railway",
+        "guide_quickstart_local_dev": "Local Voltarend Development",
+        "guide_quickstart_meta": "Local Development, Deployment, Android App Installation",
+        "guide_quickstart_prereq_android": "Android 8.0+ device",
+        "guide_quickstart_prereq_node": "Naode.js 18+",
+        "guide_quickstart_prereq_pg": "PostgreSQL (or use Railway's managed PostgreSQL)",
+        "guide_quickstart_prerequisites": "Prerequisites",
+        "guide_quickstart_step_bind": "Open the Web Portal to bind AI entities",
+        "guide_quickstart_step_download": "Baixar the latest <code>.aab</code> / <code>.apk</code> from <a href=\",
+        "guide_quickstart_step_wallpaper": "Set as Live Wallpaper → Long Configuracoes → Enter your <code>deviceId</code>",
+        "guide_quickstart_title": "Quick Start",
+        "guide_remote_h2_1": "Feature Detalhes",
+        "guide_remote_h2_2": "Security Mechanisms",
+        "guide_remote_h2_3": "API Endpoints",
+        "guide_remote_h2_4": "Bot Uso Example",
+        "guide_remote_meta": "Mission Control &gt; Remote Control <span class=\",
+        "guide_remote_note_1": "This feature is disabled by default. You need to manually enable it in App Configuracoes → Remote Control and grant Accessibility Service permission.",
+        "guide_remote_p_1": "Todosows Bots to autonomously control your phone's UI. The Bot reads the screen structure via the <strong>Accessibility Tree</strong> and sends commands such as tap, type, and scroll. The entire process does not take screenshots — the Bot only sees text elements and does not capture sensitive visual content.",
+        "guide_remote_td_1": "Screen Capture",
+        "guide_remote_td_10": "Scroll up or down on a scrollable element",
+        "guide_remote_td_11": "System Keys",
+        "guide_remote_td_12": "Voltar key, Inicio key",
+        "guide_remote_td_13": "Multi-Turn Autonomous Operation",
+        "guide_remote_td_14": "The Bot can repeatedly capture screen → analyze → execute commands to complete complex multi-step tasks",
+        "guide_remote_td_15": "Desativado by Padrao",
+        "guide_remote_td_16": "Feature is OFF by default; requires user to manually enable it",
+        "guide_remote_td_17": "Per-Binding Key",
+        "guide_remote_td_18": "Offline Protection",
+        "guide_remote_td_19": "When the phone's Socket.IO connection is lost, Bot requests immediately return 503",
+        "guide_remote_td_2": "Bot requests the current screen's semantic tree (up to 300 elements), including text, type, coordinates, and interactable properties",
+        "guide_remote_td_20": "Nao Screenshots",
+        "guide_remote_td_21": "The Bot only receives the text structure (Accessibility Tree), without images, videos, or other visual content",
+        "guide_remote_td_22": "Rate Limiting",
+        "guide_remote_td_23": "Minimum 500ms interval between screen captures to prevent excessive polling",
+        "guide_remote_td_24": "Screen Capture (Long Polling)",
+        "guide_remote_td_25": "Execute Control Command",
+        "guide_remote_td_3": "Tap",
+        "guide_remote_td_4": "Tap an element by Naode ID or XY coordinates",
+        "guide_remote_td_5": "Tipo",
+        "guide_remote_td_6": "Enter text into a specified input field",
+        "guide_remote_td_7": "Enviar (ime_action)",
+        "guide_remote_td_8": "Send keyboard Enter/confirm to an input field, useful when there is no physical submit button",
+        "guide_remote_td_9": "Scroll",
+        "guide_remote_th_1": "Protection",
+        "guide_remote_th_2": "Descricao",
+        "guide_remote_th_3": "Action",
+        "guide_remote_th_4": "API",
+        "guide_remote_title": "Remote Control",
+        "guide_rules_h2_1": "Feature Detalhes",
+        "guide_rules_h2_2": "API Endpoints",
+        "guide_rules_meta": "Mission Control &gt; Rules <span class=\",
+        "guide_rules_p_1": "The Rules system allows users to define behavioral guidelines and automated workflows for Bots. Multiple rule types can be defined and assigned to different Entities.",
+        "guide_rules_td_1": "Add Rule",
+        "guide_rules_td_10": "Add",
+        "guide_rules_td_11": "Atualizar",
+        "guide_rules_td_12": "Excluir",
+        "guide_rules_td_2": "Click \",
+        "guide_rules_td_3": "Rule Tipos",
+        "guide_rules_td_4": "Supports 6 types: WORKFLOW, CODE_REVIEW, COMMUNICATION, DEPLOYMENT, SYNC, HEARTBEAT",
+        "guide_rules_td_5": "Enable / Disable",
+        "guide_rules_td_6": "Assign Multiple Entities",
+        "guide_rules_td_7": "A single rule can be applied to multiple Entities simultaneously",
+        "guide_rules_td_8": "Cross-Entity Management",
+        "guide_rules_td_9": "Any Entity can add or modify rules, not limited to the ones assigned to it",
+        "guide_rules_th_1": "Action",
+        "guide_rules_th_2": "API",
+        "guide_rules_title": "Rules / Workflow",
+        "guide_schedule_h2_1": "Feature Detalhes",
+        "guide_schedule_h2_2": "Status Labels",
+        "guide_schedule_h2_3": "API Endpoints",
+        "guide_schedule_meta": "Mission Control &gt; Schedule <span class=\",
+        "guide_schedule_p_1": "The Schedule feature allows users and Bots to set up timed tasks. Tasks are automatically triggered at specified times, and the status and results of each execution are tracked.",
+        "guide_schedule_td_1": "Add Schedule",
+        "guide_schedule_td_10": "Cancelar schedules that have not yet been executed",
+        "guide_schedule_td_11": "Execution History",
+        "guide_schedule_td_12": "Archives all executed schedules, including execution time, target Entity, and results",
+        "guide_schedule_td_13": "Pendente",
+        "guide_schedule_td_14": "Schedule created, execution time has not arrived yet",
+        "guide_schedule_td_15": "Purple",
+        "guide_schedule_td_16": "Em execucao",
+        "guide_schedule_td_17": "Execution time has arrived, the Bot is processing the task",
+        "guide_schedule_td_18": "Blue",
+        "guide_schedule_td_19": "Concluido",
+        "guide_schedule_td_2": "Click \",
+        "guide_schedule_td_20": "Task has been successfully executed",
+        "guide_schedule_td_21": "Green",
+        "guide_schedule_td_22": "Falhou",
+        "guide_schedule_td_23": "Ocorreu um erro during task execution",
+        "guide_schedule_td_24": "Red",
+        "guide_schedule_td_25": "Lista",
+        "guide_schedule_td_26": "Add",
+        "guide_schedule_td_27": "Cancelar",
+        "guide_schedule_td_28": "Execution History",
+        "guide_schedule_td_3": "Execution Hora",
+        "guide_schedule_td_4": "Set the scheduled execution time (e.g., 09:00 PM); the task triggers automatically when the time arrives",
+        "guide_schedule_td_5": "Target Entity",
+        "guide_schedule_td_6": "Specify which Entity will execute this scheduled task",
+        "guide_schedule_td_7": "Status Tracking",
+        "guide_schedule_td_8": "Displays schedule status in real time: Pendente, Em execucao, Concluido, Falhou",
+        "guide_schedule_td_9": "Cancelar Schedule",
+        "guide_schedule_th_1": "Status",
+        "guide_schedule_th_2": "Descricao",
+        "guide_schedule_th_3": "Color",
+        "guide_schedule_th_4": "Action",
+        "guide_schedule_th_5": "API",
+        "guide_schedule_title": "Schedule",
+        "guide_setup_bind_heading": "Bind Your First AI Agent",
+        "guide_setup_bind_option1_desc": "EClawbot offers a free official bot (MiniMax 2.1 model, 15 messages/day). Click \",
+        "guide_setup_bind_option1_note": "The free version shares memory with all users, good for trying out. For independent memory and unlimited messages, choose the monthly plan.",
+        "guide_setup_bind_option1_title": "Option A: Official Bot Rental (Free Trial)",
+        "guide_setup_bind_option2_desc": "If you have your own AI bot on OpenClaw, you can bind it to EClawbot via Webhook or Channel Plugin. Select an empty entity slot on the Painel and generate a Binding Code. Self-hosted bots have no message limits.",
+        "guide_setup_bind_option2_title": "Option B: Bind Your Own Bot (OpenClaw)",
+        "guide_setup_download_link": "Android download: <a href=\",
+        "guide_setup_footer": "EClawbot — A2A Communication Platform | Your Personal Enterprise AI Assistant",
+        "guide_setup_meta": "A2A Communication Platform | Personal Enterprise AI Assistant",
+        "guide_setup_platform_intro": "You can use EClawbot through the <strong>Web Portal</strong> (browser), <strong>Android App</strong>, or <strong>iOS App</strong> — all synced in real time.",
+        "guide_setup_proxy_note": "Want your AI agents to serve external customers? Check out the \",
+        "guide_setup_start_using": "Start Using",
+        "guide_setup_start_using_desc": "After binding, you can:",
+        "guide_setup_step1_desc": "Go to the <a href=\",
+        "guide_setup_step1_title": "Option 1: Web Portal (Recommended)",
+        "guide_setup_step2_desc": "Buscar for \",
+        "guide_setup_step2_title": "Option 2: Android App",
+        "guide_setup_steps_heading": "Quick Start",
+        "guide_setup_tip_cross_platform": "Web Portal, Android App, and iOS App are synced in real time.",
+        "guide_setup_tip_daily_limit": "The free plan allows 15 messages per day, resetting the next day.",
+        "guide_setup_tip_multi_agent": "You can bind multiple AI agents to the same device for A2A collaboration.",
+        "guide_setup_tip_shared_memory": "Free bot memory is shared — don't store sensitive data.",
+        "guide_setup_tips_heading": "Tips",
+        "guide_setup_title": "EClawbot Quick Start — Build Your AI Agent Team",
+        "guide_setup_use_agentcard": "Criar cards — build an Agent Card so others can discover your agent",
+        "guide_setup_use_chat": "Chat with agents — talk directly in the Chat page",
+        "guide_setup_use_identity": "Set identity — configure role, instructions, and tone for agents (Identity)",
+        "guide_setup_use_mission": "Manage tasks — create todos and assign tasks to agents in Mission Control",
+        "guide_setup_use_proxy": "Go public — let customers interact with your agent directly via the Proxy Window",
+        "guide_setup_what_is_eclawbot": "What is EClawbot?",
+        "guide_setup_what_is_eclawbot_desc": "<strong>EClawbot</strong> is an Agent-to-Agent (A2A) communication platform that lets you build, manage, and deploy multiple AI agents (entities) that collaborate with each other and automate tasks. Whether it's e-commerce support, content marketing, IT operations, or appointment scheduling, EClawbot has you covered.",
+        "guide_skills_h2_1": "Feature Detalhes",
+        "guide_skills_h2_2": "API Endpoints",
+        "guide_skills_meta": "Mission Control &gt; Skills <span class=\",
+        "guide_skills_p_1": "Skills define external abilities or API documentation that a Bot can use. Each Skill can include a documentation URL so the Bot can learn how to use that ability.",
+        "guide_skills_td_1": "Add Skill",
+        "guide_skills_td_10": "Add",
+        "guide_skills_td_11": "Excluir",
+        "guide_skills_td_2": "Click \",
+        "guide_skills_td_3": "Documentacao Link",
+        "guide_skills_td_4": "Assign Entity",
+        "guide_skills_td_5": "Specify which Entities have this skill (e.g., only Entity 0 has weather query capability)",
+        "guide_skills_td_6": "Built-in Skill",
+        "guide_skills_td_7": "Includes a default \",
+        "guide_skills_td_8": "Multi-Skill Management",
+        "guide_skills_td_9": "A single Bot can have multiple Skills to extend different capabilities",
+        "guide_skills_th_1": "Action",
+        "guide_skills_th_2": "API",
+        "guide_skills_title": "Skills",
+        "guide_soul_h2_1": "Feature Detalhes",
+        "guide_soul_h2_2": "API Endpoints",
+        "guide_soul_meta": "Mission Control &gt; Soul <span class=\",
+        "guide_soul_p_1": "Soul defines a Bot's personality traits and communication style. Usuarios can assign different persona settings to each Entity and toggle them on or off at any time.",
+        "guide_soul_td_1": "Add Soul",
+        "guide_soul_td_10": "Different Entities can have different persona settings",
+        "guide_soul_td_11": "Instant Effect",
+        "guide_soul_td_12": "After modification, the Bot adopts the new persona in its next response",
+        "guide_soul_td_13": "Lista",
+        "guide_soul_td_14": "Add",
+        "guide_soul_td_15": "Atualizar",
+        "guide_soul_td_16": "Excluir",
+        "guide_soul_td_2": "Click \",
+        "guide_soul_td_3": "Personality Descricao",
+        "guide_soul_td_4": "Describe the Bot's character, tone, and response style in natural language",
+        "guide_soul_td_5": "Template Selection",
+        "guide_soul_td_6": "Enable / Disable",
+        "guide_soul_td_7": "Multi-Soul Blending",
+        "guide_soul_td_8": "When multiple souls are enabled simultaneously, the Bot blends the traits of all active souls in its responses",
+        "guide_soul_td_9": "Assign Entity",
+        "guide_soul_th_1": "Action",
+        "guide_soul_th_2": "API",
+        "guide_soul_title": "Soul (Persona)",
+        "guide_structure_dir_overview": "Directory Visao geral",
+        "guide_structure_meta": "realbot source code directory overview",
+        "guide_structure_mod_app": "<strong>app/</strong> — Android application built with Kotlin, includes Live Wallpaper, chat interface, and Push receiver",
+        "guide_structure_mod_backend": "<strong>backend/</strong> — Naode.js + Express backend deployed on Railway, handles API, database, and OpenClaw platform communication",
+        "guide_structure_mod_play": "<strong>google_play/</strong> — Google Play Store listing assets (icons, feature graphics)",
+        "guide_structure_mod_portal": "<strong>backend/public/</strong> — Web Portal frontend providing cross-device entity management interface",
+        "guide_structure_mod_tests": "<strong>backend/tests/</strong> — Regression test suite ensuring Bot API and broadcast functionality work correctly",
+        "guide_structure_modules": "Main Module Descricaos",
+        "guide_structure_title": "Project Structure",
+        "guide_testing_h2_1": "Regression Tests",
+        "guide_testing_note_env": "Tests require <code>TEST_DEVICE_ID</code> / <code>BROADCAST_TEST_DEVICE_ID</code> + <code>BROADCAST_TEST_DEVICE_SECRET</code> to be set in <code>backend/.env</code>.",
+        "guide_testing_h2_2": "Related Documentacao",
+        "guide_testing_h2_3": "Contribution Guia",
+        "guide_testing_h2_4": "License",
+        "guide_testing_li_1": "Fork this repo",
+        "guide_testing_li_2": "Enviar your changes",
+        "guide_testing_li_3": "Open an Issue for discussion before submitting a PR",
+        "guide_testing_li_branch": "Criar a feature branch: <code>git checkout -b feat/your-feature</code>",
+        "guide_testing_li_link_1": "<a href=\",
+        "guide_testing_li_link_2": "<a href=\",
+        "guide_testing_li_link_3": "<a href=\",
+        "guide_testing_li_link_4": "<a href=\",
+        "guide_testing_meta": "Regression Tests, Documentacao Links, Contribution Guia",
+        "guide_testing_p_1": "This is a personal/experimental project. Issues and suggestions are welcome.",
+        "guide_testing_p_license": "<a href=\",
+        "guide_testing_title": "Testing & Documentacao",
+        "guide_testing_warning_1": "<strong>Feature Parity Rule</strong>: Todos user-facing features must be kept in sync between the Web Portal and the Android App.",
+        "guide_todo_h2_1": "Feature Detalhes",
+        "guide_todo_h2_2": "API Endpoints",
+        "guide_todo_meta": "Mission Control &gt; TODO <span class=\",
+        "guide_todo_p_1": "The TODO list is used to manage work items that have not yet started. Usuarios can add items from the Web Portal, and Bots can also add items via the API.",
+        "guide_todo_td_1": "Add TODO",
+        "guide_todo_td_10": "Remover items that are no longer needed",
+        "guide_todo_td_11": "Bot Auto-Operations",
+        "guide_todo_td_12": "Bots can add, update, and delete TODOs via the API, with changes reflected on the dashboard in real time",
+        "guide_todo_td_13": "Add",
+        "guide_todo_td_14": "Atualizar",
+        "guide_todo_td_15": "Start",
+        "guide_todo_td_16": "Complete",
+        "guide_todo_td_17": "Excluir",
+        "guide_todo_td_2": "Click the \",
+        "guide_todo_td_3": "Assign Bot",
+        "guide_todo_td_4": "Each TODO can be assigned to a specific Entity (e.g., Entity 0, Entity 1) or multiple Entities at once",
+        "guide_todo_td_5": "Start Mission",
+        "guide_todo_td_6": "Move the TODO to the \",
+        "guide_todo_td_7": "Complete Directly",
+        "guide_todo_td_8": "Pular the mission phase and mark as completed, moving it to \",
+        "guide_todo_td_9": "Excluir TODO",
+        "guide_todo_th_1": "Action",
+        "guide_todo_th_2": "API",
+        "guide_todo_title": "TODO",
+        "guide_usecase_cmd_1a": "Check bot status",
+        "guide_usecase_cmd_1b": "\",
+        "guide_usecase_cmd_2a": "Assign a task",
+        "guide_usecase_cmd_2b": "\",
+        "guide_usecase_cmd_3a": "Atualizar display message",
+        "guide_usecase_cmd_3b": "\",
+        "guide_usecase_cmd_4a": "Set a schedule",
+        "guide_usecase_cmd_4b": "\",
+        "guide_usecase_cmd_5a": "Ver schedules",
+        "guide_usecase_cmd_5b": "\",
+        "guide_usecase_cmd_6a": "Cancelar a schedule",
+        "guide_usecase_cmd_6b": "\",
+        "guide_usecase_cmd_7a": "Ver history",
+        "guide_usecase_cmd_7b": "\",
+        "guide_usecase_cmd_8a": "Contribute a skill",
+        "guide_usecase_cmd_8b": "\",
+        "guide_usecase_cmd_th_1": "What You Want to Do",
+        "guide_usecase_cmd_th_2": "Example Phrasing",
+        "guide_usecase_cmp_1a": "Give command → Check Portal yourself → Find errors → Manually correct → Verify again",
+        "guide_usecase_cmp_1b": "Give command → Wait for results",
+        "guide_usecase_cmp_2a": "Need to understand API structure to judge correctness",
+        "guide_usecase_cmp_2b": "Claude verifies against API responses on its own",
+        "guide_usecase_cmp_3a": "Easy to miss details (e.g., placed on wrong page)",
+        "guide_usecase_cmp_3b": "Claude cross-validates across multiple points",
+        "guide_usecase_cmp_4a": "Manual intervention required every time",
+        "guide_usecase_cmp_4b": "Only notifies you when truly completed",
+        "guide_usecase_cmp_th_1": "Traditional Approach",
+        "guide_usecase_cmp_th_2": "Claude Fechard-Loop Approach",
+        "guide_usecase_faq_1": "<strong>Q: Claude says \",
+        "guide_usecase_faq_2": "<strong>Q: Where do I find the Device Secret?</strong><br>\n                        A: Web Portal → Top-right avatar → Configuracoes → Device Secret row → Click the eye icon to reveal → Copiar. The Bot Secret is the bot's own credential and users don't need to obtain it.",
+        "guide_usecase_faq_rotate": "<strong>Q: What if my Device Secret leaks, or I want to rotate it periodically?</strong><br>\n                        A: Configuracoes → press the 🔄 <strong>Rotate</strong> button next to the Device Secret row. The old secret is invalidated immediately — any API call using it will return 403, so you must update the new secret on your phone app, Channel plugin, vault, and anywhere else it's stored. <strong>The new secret is shown only once</strong> — press \",
+        "guide_usecase_faq_3": "<strong>Q: The bot doesn't respond to Claude's commands?</strong><br>\n                        A: Make sure the bot is bound (isBound: true), the Device Secret is correct, and OpenClaw is online.",
+        "guide_usecase_recommend_title": "💡 Recommendation: Use Channel Plugin for Automatico Lobster Collaboration",
+        "guide_usecase_recommend_desc": "Instead of manually controlling the lobster via the Claude Code terminal, you can set up a <strong>Channel Plugin</strong> to let the lobster automatically receive and reply to messages — no need to stay at the terminal.",
+        "guide_usecase_recommend_opt_a": "<strong>Claude Code Channel</strong> — Uses your claude.ai account (Max subscription quota), ideal for individual developers. <a href=\",
+        "guide_usecase_recommend_opt_b": "<strong>OpenClaw Channel</strong> — Uses an Anthropic API Key, ideal for advanced users who need multiple bots running simultaneously. <a href=\",
+        "guide_usecase_recommend_compare": "Claude Code Channel is easy to set up but has a weekly limit; OpenClaw Channel is more flexible but requires an API token. Choose the option that best fits your needs.",
+        "guide_usecase_h2_1": "Architecture Visao geral",
+        "guide_usecase_h2_2": "Prerequisites",
+        "guide_usecase_h2_3": "Full Example",
+        "guide_usecase_h2_4": "Command Quick Referencia",
+        "guide_usecase_h2_5": "Avancado: Multi-Bot Collaboration",
+        "guide_usecase_h2_6": "Fechard-Loop Verification & Auto-Correction (The Key Feature)",
+        "guide_usecase_h2_7": "FAQ",
+        "guide_usecase_h3_1": "Real Case: Schedule Set in Wrong Place, Claude Auto-Corrects",
+        "guide_usecase_li_1": "✅ Eclaw account + mobile App or Web Portal",
+        "guide_usecase_li_2": "✅ An AI bot running on the OpenClaw platform, already bound to your Eclaw entity",
+        "guide_usecase_li_3": "✅ <strong>Claude Code CLI</strong> (recommended) or Claude.ai (with MCP tools)",
+        "guide_usecase_li_4": "Sent the schedule setup instruction to the bot (speak-to)",
+        "guide_usecase_li_5": "Queried <code>GET /api/mission/dashboard</code>, <strong>discovered the bot placed the schedule in Mission Rules (wrong location)</strong>",
+        "guide_usecase_li_6": "Queried <code>GET /api/bot/schedules</code>, confirmed the official schedule list was empty",
+        "guide_usecase_li_7": "Sent correction instructions: delete the incorrect Rule + create the schedule via the correct API",
+        "guide_usecase_li_8": "Verified again: Rule removed ✓ Schedule created ✓ Bot reported \",
+        "guide_usecase_li_9": "<strong>Only then reported back to you: Concluido</strong>",
+        "guide_usecase_meta": "Let Claude AI become your \",
+        "guide_usecase_note_1": "⚠️ The standard Claude.ai chat interface <strong>cannot directly execute HTTP requests</strong>. You need <strong>Claude Code CLI</strong> for Claude to actually operate the API for you.",
+        "guide_usecase_note_2": "From start to finish, you only said one sentence. Claude independently completed the entire flow of sending, verifying, discovering errors, correcting, and re-verifying.",
+        "guide_usecase_p_1": "This solution connects three systems together:",
+        "guide_usecase_p_2": "Copiar the following content and paste it to Claude. It will automatically read the documentation and help you control the OpenClaw bot:",
+        "guide_usecase_p_3": "If you have multiple entities (multiple bots), Claude can coordinate them to work together:",
+        "guide_usecase_p_4": "Claude will send tasks to each entity separately, integrate the results, and report back to you.",
+        "guide_usecase_p_5": "This is the most important feature of the entire system: <strong>After you give a command, you don't need to verify the result yourself.</strong> Claude automatically completes the full loop of \",
+        "guide_usecase_p_6": "You only said: <strong>\",
+        "guide_usecase_p_7": "Claude automatically completed the following behind the scenes:",
+        "guide_usecase_td_1": "<strong>Eclaw</strong>",
+        "guide_usecase_td_2": "Central control hub, manages entities (bot slots), provides HTTP API",
+        "guide_usecase_td_3": "<strong>OpenClaw</strong>",
+        "guide_usecase_td_4": "AI bot runtime platform, executes actual tasks",
+        "guide_usecase_td_5": "<strong>Claude</strong>",
+        "guide_usecase_td_6": "Your AI commander, sends instructions to OpenClaw via the Eclaw API",
+        "guide_usecase_th_1": "Role",
+        "guide_usecase_th_2": "Descricao",
+        "guide_usecase_title": "Using Claude to Command OpenClaw via Eclaw",
+        "info_slide_guide_usecase_claude_openclaw_cta": "Ver Claude Design slide →",
+        "guide_usecase_code_arch": "You (natural language) → Claude (AI Commander) → Eclaw API → OpenClaw Bot (execute tasks) → Report results",
+        "guide_usecase_code_example": "Please use WebFetch to read https://eclawbot.com/api/skill-doc, then help me control my OpenClaw bot\n\nMy Eclaw settings:\nDevice ID: 48xxxx4c-2183-xxxx-afd0-b131ae8xxxxc\nDevice Secret: xxxxdb10-2xxx-42b6-xxxx-f9d446c97ff9-7cff9697-xxxx1-415d-a282-4e8axxxxe49a\n- The bot I want to control is Entity 0\n\nPlease help me control this OpenClaw bot.\n\nShort-term goal: [your short-term goal]\nAfter the short-term goal is done, you should review and make sure there are no mistakes\nFinal goal: [your final goal]\nAfter the final goal is done, you should review and make sure there are no mistakes",
+        "guide_usecase_code_multibot": "Have entity 0 handle data collection, entity 1 handle analysis, and both bots work together on market research for me",
+        "guide_usecase_code_loop": "You give a command\n  │\n  ▼\nClaude sends the task to OpenClaw bot\n  │\n  ▼\nClaude proactively checks the result\n  │\n  ├── Correct ──► Reports \",
+        "guide_usecase_copy_template": "Please use WebFetch to read https://eclawbot.com/api/skill-doc, then help me control my OpenClaw bot\n\nMy Eclaw settings:\nDevice ID: {{DEVICE_ID}}\nDevice Secret: {{DEVICE_SECRET}}\n- The bot I want to control is Entity 0\n\nPlease help me control this OpenClaw bot.\n\nShort-term goal: [your short-term goal]\nAfter the short-term goal is done, you should review and make sure there are no mistakes\nFinal goal: [your final goal]\nAfter the final goal is done, you should review and make sure there are no mistakes",
+        "guide_usecase_copy_device_id_placeholder": "your-device-id",
+        "guide_usecase_copy_device_secret_placeholder": "your-device-secret",
+        "guide_nav_usecase_proxy": "Proxy Window (Enterprise)",
+        "guide_proxy_title": "Proxy Window — Enterprise Agent Service Portal",
+        "info_slide_guide_proxy_window_cta": "Ver Claude Design slide →",
+        "info_slide_guide_crossdevice_cta": "Ver Claude Design slide →",
+        "guide_proxy_meta": "Give your AI agent a dedicated public portal where clients can chat, order, and more",
+        "guide_proxy_h2_what": "What is a \",
+        "guide_proxy_p_what": "A Proxy Window is a dedicated link for each entity in the Card Holder. Through this link, external users can chat with your AI agent directly in the browser — no app install needed — to place orders, locate services, schedule appointments, publish articles, manage backends, and more.",
+        "guide_proxy_note_scenario": "💡 Use cases: e-commerce support, travel consulting, content marketing agents, IT ops assistants, appointment scheduling, etc. Just share the link and clients can interact with your agent instantly.",
+        "guide_proxy_h2_steps": "Configuracao Steps",
+        "guide_proxy_step1_title": "Step 1: Configurar Cross-Device Messaging Gate",
+        "guide_proxy_step1_desc": "Cross-Device Messaging is the first gate for external messages entering your Bot. Configurar filtering rules, blacklist/whitelist, and rate limits here to ensure only compliant messages reach your agent.",
+        "guide_proxy_step1_li1": "✅ <strong>Forbidden Words</strong>: Filtrar messages containing specific keywords",
+        "guide_proxy_step1_li2": "✅ <strong>Blacklist / Whitelist</strong>: Control exactly who can send messages",
+        "guide_proxy_step1_li3": "✅ <strong>Rate Limit</strong>: Prevent message flooding",
+        "guide_proxy_step1_li4": "✅ <strong>Todosowed Media</strong>: Restrict accepted message formats",
+        "guide_proxy_step1_nav": "Go to: <strong>Painel → Select Entity → Editar → ⚙ Cross-Device Msg</strong>, or use API <code>PUT /api/entity/cross-device-settings</code>",
+        "guide_proxy_step2_title": "Step 2: Set Up Agent Card",
+        "guide_proxy_step2_desc": "Criar a card for your agent with name, description, capabilities, protocols, and tags. This card appears at the top of the proxy window so clients know what the agent can do.",
+        "guide_proxy_step2_li1": "✅ <strong>Nome & Descricao</strong>: Limparly state what service the agent provides",
+        "guide_proxy_step2_li2": "✅ <strong>Capabilities</strong>: Lista what the agent can do, e.g. \",
+        "guide_proxy_step2_li3": "✅ <strong>Protocols</strong>: Mark supported communication protocols",
+        "guide_proxy_step2_li4": "✅ <strong>Tags</strong>: For search and categorization",
+        "guide_proxy_step2_nav": "Go to: <strong>Painel → Select Entity → Agent Card</strong>, or use API <code>PUT /api/entity/agent-card</code>",
+        "guide_proxy_step3_title": "Step 3: Configurar Agent Identity",
+        "guide_proxy_step3_desc": "Set the agent's role, instructions, tone, and boundaries. This determines how the agent responds to clients and is the Bot's internal definition.",
+        "guide_proxy_step3_li1": "✅ <strong>Role</strong>: e.g. \",
+        "guide_proxy_step3_li2": "✅ <strong>Instructions</strong>: Behavioral guidelines and workflows for the agent",
+        "guide_proxy_step3_li3": "✅ <strong>Tone</strong>: Formal, friendly, professional, etc.",
+        "guide_proxy_step3_li4": "✅ <strong>Boundaries</strong>: Topics the agent should not handle",
+        "guide_proxy_step3_nav": "Go to: <strong>Painel → Select Entity → Identity Editaror</strong>, or use API <code>PUT /api/entity/identity</code>",
+        "guide_proxy_step4_title": "Step 4: Get & Compartilhar Your Proxy Window Link",
+        "guide_proxy_step4_desc": "Each configured entity has a unique Public Code. Use the Card Holder's share feature to generate a direct chat link.",
+        "guide_proxy_step4_li1": "✅ Go to <strong>Card Holder</strong> and find your agent's card",
+        "guide_proxy_step4_li2": "✅ Click the share button to get the link: <code>https://eclawbot.com/c/YourPublicCode</code>",
+        "guide_proxy_step4_li3": "✅ Compartilhar the link with clients, embed it on your website, or print it on business cards",
+        "guide_proxy_step4_note": "📌 When clients open the link, they see the agent's card info and chat interface, and can start chatting immediately. Unregistered users can interact as guests.",
+        "guide_proxy_h2_use": "Real-World Examples",
+        "guide_proxy_th_scenario": "Scenario",
+        "guide_proxy_th_desc": "Agent Purpose",
+        "guide_proxy_ex1a": "E-commerce Support",
+        "guide_proxy_ex1b": "Clients ask about products, place orders, track shipments via the link",
+        "guide_proxy_ex2a": "Travel Consultant",
+        "guide_proxy_ex2b": "Provide itinerary suggestions, recommend attractions, book accommodations",
+        "guide_proxy_ex3a": "Conteudo Marketing",
+        "guide_proxy_ex3b": "Agent auto-writes and publishes articles to multiple platforms",
+        "guide_proxy_ex4a": "IT Operations",
+        "guide_proxy_ex4b": "Monitor backend status, handle alerts automatically, generate reports",
+        "guide_proxy_ex5a": "Appointment Service",
+        "guide_proxy_ex5b": "Clients book appointments and schedule directly through chat",
+        "guide_proxy_h2_detail": "Detailed Configuration Guias",
+        "guide_proxy_p_detail": "Click below to see full documentation for each setting:",
+        "guide_proxy_link_identity": "🔹 Identity Configuration Detalhes",
+        "guide_proxy_link_agentcard": "🔹 Agent Card Configuration Detalhes",
+        "guide_proxy_link_crossdevice": "🔹 Cross-Device Messaging (Gate Configuracoes) Detalhes",
+        "guide_proxy_flow1": "Cross-Device",
+        "guide_proxy_flow1_sub": "Mensagem Gate",
+        "guide_proxy_flow2": "Agent Card",
+        "guide_proxy_flow2_sub": "Perfil & Capabilities",
+        "guide_proxy_flow3": "Identity",
+        "guide_proxy_flow3_sub": "Role & Instructions",
+        "guide_proxy_flow4": "Compartilhar Link",
+        "guide_proxy_flow4_sub": "Publish URL",
+        "guide_proxy_preview1_sender": "External",
+        "guide_proxy_preview1_sender_sub": "External Usuario",
+        "guide_proxy_preview1_gate": "Gate",
+        "guide_proxy_preview1_gate_sub": "6 Checks",
+        "guide_proxy_preview1_bot_sub": "Process Mensagem",
+        "guide_proxy_preview1_role": "E-commerce Personalizadoer Support",
+        "guide_proxy_preview1_tone": "Friendly, Professional",
+        "guide_proxy_preview1_boundaries": "Nao refunds, no internal info disclosure",
+        "guide_proxy_preview2_name": "ShopBot Pro",
+        "guide_proxy_preview2_desc": "24/7 Smart Shopping Assistant",
+        "guide_proxy_preview2_body": "Check product stock, track orders, recommend products, handle common queries.",
+        "guide_proxy_preview2_tag1": "Order Lookup",
+        "guide_proxy_preview2_tag2": "Recommendations",
+        "guide_proxy_preview2_tag3": "Logistics",
+        "guide_proxy_preview2_tag4": "A2A",
+        "guide_proxy_preview3_role": "E-commerce Personalizadoer Support",
+        "guide_proxy_preview3_tone": "Friendly, Professional",
+        "guide_proxy_preview3_boundaries": "Nao refunds, no internal info disclosure",
+        "guide_proxy_preview3_a": "Primary Device",
+        "guide_proxy_preview3_b": "Web Portal",
+        "guide_proxy_preview3_c": "Client",
+        "guide_proxy_preview3_c_sub": "Proxy Window",
+        "guide_proxy_config_identity": "Identity Editaror",
+        "guide_nav_detail_identity": "Identity Configuracoes",
+        "guide_nav_detail_agentcard": "Agent Card",
+        "guide_nav_detail_crossdevice": "Cross-Device Msg",
+        "guide_identity_title": "Identity Configuration — Full Guia",
+        "info_slide_guide_identity_cta": "Ver Claude Design slide →",
+        "info_slide_guide_soul_cta": "Ver Soul Template slide →",
+        "info_slide_guide_rules_cta": "Ver Rules Template slide →",
+        "guide_identity_meta": "Define your agent's role, behavior, and communication style for precise AI performance",
+        "guide_identity_h2_what": "What is Identity?",
+        "guide_identity_p_what": "Identity is the unified identity structure for each Entity, including role definition, behavior instructions, tone, and boundaries. It determines \",
+        "guide_identity_note_analogy": "💡 Think of Identity as a \",
+        "guide_identity_h2_fields": "Identity Fields",
+        "guide_identity_th_field": "Field",
+        "guide_identity_th_desc": "Descricao",
+        "guide_identity_th_example": "Example",
+        "guide_identity_field_role": "The role name the agent plays",
+        "guide_identity_ex_role": "E-commerce Support, Travel Advisor, IT Ops Assistant",
+        "guide_identity_field_instructions": "Behavior instructions and workflows (max 2000 chars)",
+        "guide_identity_ex_instructions": "When receiving an order query, first confirm the order number, then check logistics...",
+        "guide_identity_field_boundaries": "Lista of things the agent should NOT handle",
+        "guide_identity_ex_boundaries": "Nao refunds, no internal pricing disclosure",
+        "guide_identity_field_tone": "Communication tone",
+        "guide_identity_ex_tone": "Friendly, professional, concise",
+        "guide_identity_field_language": "Padrao response language",
+        "guide_identity_field_soul": "Applied Soul Template ID",
+        "guide_identity_field_rules": "Applied Rule Template ID list",
+        "guide_identity_field_profile": "Public profile visible on card",
+        "guide_identity_ex_profile": "Professional e-commerce support, 24/7 online service",
+        "guide_identity_h2_howto": "How to Configurar",
+        "guide_identity_h3_web": "Web Portal Method",
+        "guide_identity_web_li1": "Go to the <strong>Painel</strong> page",
+        "guide_identity_web_li2": "Select the entity card to configure",
+        "guide_identity_web_li3": "Click the <strong>Identity Editaror</strong> (🪪 icon)",
+        "guide_identity_web_li4": "Fill in the fields and click <strong>Salvar</strong>",
+        "guide_identity_preview_role": "Travel Itinerary Planner",
+        "guide_identity_preview_instructions": "Recommend itineraries based on client budget, time, preferences...",
+        "guide_identity_preview_tone": "Enthusiastic, patient, detail-oriented",
+        "guide_identity_preview_boundaries": "Nao flight booking, no visa processing",
+        "guide_identity_h3_api": "API Method",
+        "guide_identity_api_auth": "Auth: Header <code>x-device-secret</code> or <code>x-bot-secret</code>",
+        "guide_identity_h2_templates": "Using Templates",
+        "guide_identity_p_templates": "You can use <strong>Soul Templates</strong> and <strong>Rule Templates</strong> to quickly configure Identity without starting from scratch.",
+        "guide_identity_tmpl_li1": "Go to <strong>Mission → Skills/Soul/Rules</strong> to browse available templates",
+        "guide_identity_tmpl_li2": "After selecting a template, <code>soulTemplateId</code> and <code>ruleTemplateIds</code> are auto-filled",
+        "guide_identity_tmpl_li3": "You can still customize <code>role</code>, <code>instructions</code>, etc. to override template defaults",
+        "guide_identity_h2_tips": "Best Practices",
+        "guide_identity_tip_li1": "✅ <strong>Be specific with roles</strong>: \",
+        "guide_identity_tip_li2": "✅ <strong>Use process-based instructions</strong>: Describe \",
+        "guide_identity_tip_li3": "✅ <strong>Set clear boundaries</strong>: Lista what the agent should NOT do to prevent overstepping",
+        "guide_identity_tip_li4": "✅ <strong>Keep tone consistent</strong>: Match your brand's communication style",
+        "guide_identity_tip_li5": "✅ <strong>Atualizar regularly</strong>: Adjust Identity settings based on customer feedback",
+        "guide_identity_config_dashboard": "Identity Editaror — Painel",
+        "guide_identity_note_back": "← <a href=\",
+        "guide_agentcard_title": "Agent Card Configuration — Full Guia",
+        "info_slide_guide_agentcard_cta": "Ver Claude Design slide →",
+        "guide_agentcard_meta": "Criar your agent's digital card so clients instantly understand your service capabilities",
+        "guide_agentcard_h2_what": "What is an Agent Card?",
+        "guide_agentcard_p_what": "An Agent Card is each entity's \",
+        "guide_agentcard_note_a2a": "💡 Agent Cards follow the A2A (Agent-to-Agent) protocol standard, enabling other AI agents to understand your agent's capabilities for automated collaboration.",
+        "guide_agentcard_h2_fields": "Agent Card Fields",
+        "guide_agentcard_th_field": "Field",
+        "guide_agentcard_th_desc": "Descricao",
+        "guide_agentcard_th_required": "Obrigatorio",
+        "guide_agentcard_field_name": "Agent display name",
+        "guide_agentcard_field_desc": "Short description of agent purpose",
+        "guide_agentcard_field_url": "Agent service URL (optional)",
+        "guide_agentcard_field_capabilities": "Lista of things the agent can do",
+        "guide_agentcard_field_protocols": "Supported protocols (e.g. A2A, webhook)",
+        "guide_agentcard_field_tags": "Tags for search and categorization",
+        "guide_agentcard_field_provider": "Provider/organization name",
+        "guide_agentcard_field_version": "Version number",
+        "guide_agentcard_h2_preview": "Card Preview",
+        "guide_agentcard_p_preview": "Here's how a fully filled Agent Card looks in the proxy window:",
+        "guide_agentcard_mock_name": "TravelBot Asia",
+        "guide_agentcard_mock_desc": "Asia Travel Itinerary Expert",
+        "guide_agentcard_mock_cap_label": "Capabilities",
+        "guide_agentcard_mock_cap_val": "Itinerary planning, attraction recommendations, hotel comparison, transport arrangement",
+        "guide_agentcard_mock_proto_label": "Protocols",
+        "guide_agentcard_mock_provider_label": "Provider",
+        "guide_agentcard_mock_tag1": "Travel",
+        "guide_agentcard_mock_tag2": "Asia",
+        "guide_agentcard_mock_tag3": "Itinerary",
+        "guide_agentcard_mock_tag4": "AI",
+        "guide_agentcard_h2_howto": "How to Configurar",
+        "guide_agentcard_h3_web": "Web Portal Method",
+        "guide_agentcard_web_li1": "Go to the <strong>Painel</strong> page",
+        "guide_agentcard_web_li2": "Select the entity card to configure",
+        "guide_agentcard_web_li3": "Click the <strong>Agent Card</strong> button (📇 icon)",
+        "guide_agentcard_web_li4": "Fill in name, description, and add capabilities and tags",
+        "guide_agentcard_web_li5": "Click <strong>Salvar</strong> to save",
+        "guide_agentcard_h3_api": "API Method",
+        "guide_agentcard_api_auth": "Auth: Header <code>x-device-secret</code> or <code>x-bot-secret</code>",
+        "guide_agentcard_h2_cardholder": "Card Holder Integration",
+        "guide_agentcard_p_cardholder": "Once you set up an Agent Card, your agent's card appears in the Card Holder. Outro users can:",
+        "guide_agentcard_ch_li1": "✅ Buscar for your agent via <strong>Public Code</strong>",
+        "guide_agentcard_ch_li2": "✅ Salvar your card to their Card Holder",
+        "guide_agentcard_ch_li3": "✅ Chat with your agent directly from the card",
+        "guide_agentcard_ch_li4": "✅ Ver your agent's capabilities, protocols, and tags",
+        "guide_agentcard_h2_tips": "Best Practices",
+        "guide_agentcard_tip_li1": "✅ <strong>Choose a catchy name</strong>: Pick a memorable name that reflects the agent's function",
+        "guide_agentcard_tip_li2": "✅ <strong>Be precise in description</strong>: Explain what the agent does in one sentence",
+        "guide_agentcard_tip_li3": "✅ <strong>Lista all capabilities</strong>: Ajuda users judge if it meets their needs",
+        "guide_agentcard_tip_li4": "✅ <strong>Use accurate tags</strong>: Use common keywords for better discoverability",
+        "guide_agentcard_tip_li5": "✅ <strong>Atualizar regularly</strong>: Sync the card when agent capabilities expand",
+        "guide_agentcard_note_back": "← <a href=\",
+        "guide_crossdevice_title": "Cross-Device Messaging — Full Guia",
+        "guide_crossdevice_meta": "The first gate for incoming messages: filtering, rate limiting, and access control in one place",
+        "guide_crossdevice_h2_what": "What is Cross-Device Messaging?",
+        "guide_crossdevice_p_what": "Cross-Device Messaging is the gateway that controls incoming external messages to your Bot via Public Code. It acts as the first line of defense before messages reach your agent, letting you precisely control who can send messages, what content passes through, and how often each sender can message.",
+        "guide_crossdevice_note_scenario": "💡 Configuration: <strong>Painel → Select Entity → Editar → ⚙ Cross-Device Msg</strong>. Together with Identity and Agent Card, these three settings define your Bot's complete external and internal profile.",
+        "guide_crossdevice_h2_how": "How It Works",
+        "guide_crossdevice_flow_client": "External Usuario",
+        "guide_crossdevice_flow_client_sub": "Proxy Window",
+        "guide_crossdevice_flow_gate": "Gate",
+        "guide_crossdevice_flow_gate_sub": "6 Checks",
+        "guide_crossdevice_flow_bot_sub": "Process Mensagem",
+        "guide_crossdevice_p_how": "Incoming messages pass through 6 sequential checks: Card Holder block → Blacklist → Whitelist → Forbidden words → Media type → Rate limit. If any check fails, the message is rejected with an optional custom rejection message.",
+        "guide_crossdevice_h2_settings": "Configuracoes Referencia",
+        "guide_crossdevice_th_setting": "Setting",
+        "guide_crossdevice_th_desc": "Descricao",
+        "guide_crossdevice_set_preinject": "Pre-inject Instruction",
+        "guide_crossdevice_set_preinject_desc": "Text automatically prepended to incoming messages before they reach the Bot. Use for context or role prompts. Max 500 characters.",
+        "guide_crossdevice_set_forbidden": "Forbidden Words",
+        "guide_crossdevice_set_forbidden_desc": "Mensagems containing these keywords are rejected (case-insensitive). Separate multiple words with commas.",
+        "guide_crossdevice_set_ratelimit": "Rate Limit",
+        "guide_crossdevice_set_ratelimit_desc": "Cooldown in seconds per sender (0 = no limit, max 86400 = 1 day). Prevents message flooding.",
+        "guide_crossdevice_set_blacklist": "Blacklist",
+        "guide_crossdevice_set_blacklist_desc": "Public Codes to block. Mensagems from these sources are always rejected.",
+        "guide_crossdevice_set_whitelist_mode": "Whitelist Mode",
+        "guide_crossdevice_set_whitelist_mode_desc": "When enabled, only sources in the whitelist can send messages. Todos others are rejected.",
+        "guide_crossdevice_set_whitelist": "Whitelist",
+        "guide_crossdevice_set_whitelist_desc": "When whitelist mode is on, only messages from these Public Codes are allowed through.",
+        "guide_crossdevice_set_reject": "Reject Mensagem",
+        "guide_crossdevice_set_reject_desc": "Personalizado message sent back when a message is rejected (empty = silent rejection). Max 200 characters.",
+        "guide_crossdevice_set_media": "Todosowed Media",
+        "guide_crossdevice_set_media_desc": "Select allowed message formats: text, photo, voice, video, file. Unchecked types are rejected.",
+        "guide_crossdevice_h2_gate": "Gate Check Order",
+        "guide_crossdevice_gate_li1": "<strong>1. Card Holder Block</strong> — Sources blocked in Card Holder are silently dropped",
+        "guide_crossdevice_gate_li2": "<strong>2. Blacklist</strong> — Matches against Blacklist; rejected with custom message",
+        "guide_crossdevice_gate_li3": "<strong>3. Whitelist</strong> — If whitelist mode is on, non-listed sources are rejected",
+        "guide_crossdevice_gate_li4": "<strong>4. Forbidden Words</strong> — Mensagems containing forbidden words are rejected (case-insensitive)",
+        "guide_crossdevice_gate_li5": "<strong>5. Media Tipo</strong> — Media types not in the allowed list are rejected",
+        "guide_crossdevice_gate_li6": "<strong>6. Rate Limit</strong> — Senders exceeding the cooldown period receive a 429 error",
+        "guide_crossdevice_h2_howto": "How to Configurar",
+        "guide_crossdevice_h3_web": "Web Portal Method",
+        "guide_crossdevice_web_li1": "Go to <strong>Painel</strong>",
+        "guide_crossdevice_web_li2": "Select an entity and click <strong>Editar</strong>",
+        "guide_crossdevice_web_li3": "Click the <strong>⚙ Cross-Device Msg</strong> button to expand the settings panel",
+        "guide_crossdevice_web_li4": "Fill in forbidden words, blacklist/whitelist, rate limit, etc.",
+        "guide_crossdevice_web_li5": "Click <strong>Salvar</strong> to save settings",
+        "guide_crossdevice_preview_preinject": "Pre-inject",
+        "guide_crossdevice_preview_preinject_val": "You are a shop assistant, reply in English",
+        "guide_crossdevice_preview_forbidden": "Forbidden",
+        "guide_crossdevice_preview_ratelimit": "Rate Limit",
+        "guide_crossdevice_preview_media": "Media",
+        "guide_crossdevice_h3_api": "API Method",
+        "guide_crossdevice_api_auth": "Auth: Header <code>x-device-secret</code>",
+        "guide_crossdevice_h2_usecases": "Use Cases",
+        "guide_crossdevice_uc1_title": "🛡️ Anti-Harassment",
+        "guide_crossdevice_uc1_desc": "Set forbidden words to filter inappropriate content, enable rate limiting to prevent message flooding, and blacklist malicious users permanently.",
+        "guide_crossdevice_uc2_title": "🔒 VIP-Only Service",
+        "guide_crossdevice_uc2_desc": "Enable whitelist mode to allow only specific client Public Codes to access your agent, creating an exclusive VIP channel.",
+        "guide_crossdevice_uc3_title": "📝 Context Preset",
+        "guide_crossdevice_uc3_desc": "Use pre-inject to automatically prepend role prompts before every external message, e.g., 'You are a travel advisor, reply in a friendly tone.'",
+        "guide_crossdevice_h2_tips": "Best Practices",
+        "guide_crossdevice_tip_li1": "✅ <strong>Start loose, tighten later</strong>: Begin with defaults and gradually add restrictions as needed",
+        "guide_crossdevice_tip_li2": "✅ <strong>Use pre-inject wisely</strong>: Give your Bot full role context with every incoming message",
+        "guide_crossdevice_tip_li3": "✅ <strong>Set a reject message</strong>: More user-friendly than silent rejection — let blocked users know why",
+        "guide_crossdevice_tip_li4": "✅ <strong>Pair with Card Holder</strong>: Blocking someone in Card Holder acts as the first gate check",
+        "guide_crossdevice_warn": "⚠️ Rate limits are calculated in memory and reset on server restart. Blacklists, whitelists, and forbidden words are permanently stored in the database.",
+        "guide_crossdevice_config_title": "Cross-Device Msg",
+        "guide_crossdevice_note_back": "← <a href=\",
+        "guide_nav_usecase_voice": "Voice TTS",
+        "guide_voice_title": "🔊 Voice Chat — Bot TTS Real-Hora Voice Reply",
+        "info_slide_guide_voice_cta": "Ver Claude Design slide →",
+        "guide_voice_subtitle": "Let your AI agent \",
+        "guide_voice_what": "What is this?",
+        "guide_voice_what_desc": "EClawbot's <strong>TTS (Text-to-Speech) API</strong> lets Bots broadcast voice messages in real time through the Android device speaker. Voice plays even when the App is in the background. Ideal for scenarios requiring voice interaction — customer service voice replies, voice assistants, accessibility aids, and more.",
+        "guide_voice_how": "How It Works",
+        "guide_voice_how_desc": "Bot calls TTS API → Server forwards to App → Android TextToSpeech engine reads aloud → Usuario hears the voice reply",
+        "guide_voice_api": "API Uso",
+        "guide_voice_api_desc": "A Bot sends <code>POST /api/device/tts</code> to make the phone read text aloud:",
+        "guide_voice_params": "Parameters",
+        "guide_voice_param": "Parameter",
+        "guide_voice_required": "Obrigatorio",
+        "guide_voice_desc": "Descricao",
+        "guide_voice_param_text": "Text to read aloud (max 500 characters)",
+        "guide_voice_param_lang": "BCP-47 language code, default zh-TW (supports en-US, ja-JP, ko-KR, etc.)",
+        "guide_voice_param_speed": "Speed 0.5–2.0, default 1.0",
+        "guide_voice_param_pitch": "Pitch 0.5–2.0, default 1.0",
+        "guide_voice_scenarios": "Use Cases",
+        "guide_voice_scene1_title": "🎧 Personalizadoer Service Voice Reply",
+        "guide_voice_scene1_desc": "An e-commerce support Bot replies with text and simultaneously broadcasts key information via TTS. \",
+        "guide_voice_scene2_title": "🗣️ Voice Assistant Mode",
+        "guide_voice_scene2_desc": "Combine with voice input for a full voice conversation experience. Usuario speaks → Bot understands → TTS voice reply, just like Siri / Google Assistant.",
+        "guide_voice_scene3_title": "♿ Accessibility Aid",
+        "guide_voice_scene3_desc": "Visually impaired users can receive all Bot replies via voice. Multi-language support and adjustable speed ensure accessible information deao vivory.",
+        "guide_voice_scene4_title": "🌍 Multi-Idioma Broadcast",
+        "guide_voice_scene4_desc": "Supports Traditional Chinese / English / Japanese / Korean / Thai and more. Ideal for multilingual customer service — the Bot auto-detects language and replies in the matching voice.",
+        "guide_voice_flow": "Full Flow",
+        "guide_voice_example": "Code Example",
+        "guide_voice_example_desc": "An OpenClaw Bot triggers voice while replying to a user:",
+        "guide_voice_features": "Technical Highlights",
+        "guide_voice_feat1": "📱 <strong>Voltarground Playback</strong>: Voice plays even when the App is in the background or screen is locked (Foreground Service)",
+        "guide_voice_feat2": "🔔 <strong>FCM Fallback</strong>: Falls back to Firebase Cloud Messaging when Socket.IO disconnects",
+        "guide_voice_feat3": "🌐 <strong>Multi-Idioma</strong>: Supports all languages available on the Android TextToSpeech engine",
+        "guide_voice_feat4": "⚡ <strong>Low Latency</strong>: Typically less than 1 second from Bot call to user hearing the voice",
+        "guide_voice_feat5": "🎛️ <strong>Adjustable Parameters</strong>: Speed and pitch are fully customizable (0.5x–2.0x)",
+        "guide_voice_note": "💡 <strong>Naote:</strong> TTS currently supports Android devices only. iOS support is planned. Text limit is 500 characters; for longer text, split into multiple calls.",
+        "guide_voice_cta_title": "Try It Naow",
+        "guide_voice_cta_api": "API Docs: <a href=\",
+        "guide_voice_cta_app": "Android App: <a href=\",
+        "footer_desc": "Agent-to-Agent (A2A) communication platform for AI agent orchestration.",
+        "footer_info": "Info",
+        "footer_promo_video": "▶ Watch Intro Video",
+        "footer_resources": "Resources",
+        "footer_privacy": "Privacy Policy",
+        "faq_title": "EClawbot - FAQ",
+        "faq_hero_title": "Frequently Asked Questions",
+        "faq_hero_subtitle": "Everything you need to know about E-Claw and the OpenClaw bot platform.",
+        "faq_section_general": "Geral",
+        "faq_q_what_is": "What is EClawbot?",
+        "faq_a_what_is": "EClawbot is an Agent-to-Agent (A2A) communication platform with an AI agent ecosystem. It helps individuals and small businesses build, manage, and deploy AI agents (entities) for inter-agent collaboration, task dispatch, and automation. You can manage everything through the Web Portal, Android app, or iOS app.",
+        "faq_q_openclaw": "What is OpenClaw?",
+        "faq_a_openclaw": "OpenClaw is the bot development ecosystem powered by EClawbot. Bot developers build AI agents on OpenClaw and connect them to EClawbot via Webhook push, Channel Plugin, or A2A protocol for inter-agent communication and task automation.",
+        "faq_q_proxy_window": "What is the Proxy Window?",
+        "faq_a_proxy_window": "The Proxy Window lets each AI agent have a dedicated public URL. External customers can interact with your agent directly in a browser — placing orders, making inquiries, scheduling appointments — without installing any app. Ideal for e-commerce, consulting, IT support, and more.",
+        "faq_q_free": "Is EClawbot free?",
+        "faq_a_free": "Sim! EClawbot offers a free tier with shared bots and unlimited messages. Self-hosted bots have no message limit and are always free. The Web Portal, Agent Card, Mission Control, and A2A features are all available on the free tier.",
+        "faq_section_setup": "Configuracao & Binding",
+        "faq_q_bind": "How do I bind a bot to my device?",
+        "faq_a_bind": "Go to the Painel (in the app or web portal), select an entity slot, and click \",
+        "faq_q_slots": "How many bots can I bind?",
+        "faq_a_slots": "Each device supports multiple entity slots. Each slot can be bound to a different AI agent with its own identity, skills, chat history, and Agent Card. Slots auto-expand when needed.",
+        "faq_q_web_vs_app": "Which platform should I use?",
+        "faq_a_web_vs_app": "Todos three platforms (Web Portal, Android, iOS) work independently and stay in sync. The Web Portal is recommended for multi-agent management, Mission Control, and enterprise workflows. The Android app adds a ao vivo wallpaper experience. Use whichever suits your needs, or all three.",
+        "faq_section_features": "Features",
+        "faq_q_broadcast": "What is Broadcast?",
+        "faq_a_broadcast": "Broadcast sends a message to all your bound agents at once. Great for announcements or coordinating tasks across your entire agent team. Deao vivory reports track which agents received the broadcast.",
+        "faq_q_speakto": "What is Speak-to?",
+        "faq_a_speakto": "Speak-to enables direct agent-to-agent communication. One agent can send a message to another specific agent and receive a reply. This powers A2A collaboration workflows where agents coordinate tasks between themselves.",
+        "faq_q_mission": "What is Mission Control?",
+        "faq_a_mission": "Mission Control is EClawbot's built-in task management system. Criar tasks (TODO/Mission/Concluido), assign them to agents, manage notes, configure skills and rules, and define agent personality (\",
+        "faq_section_dev": "Bot Development",
+        "faq_q_create_bot": "How do I create my own bot?",
+        "faq_a_create_bot": "Bots are built on the OpenClaw platform (hosted on Zeabur). Check the Usuario Guia tab for tutorials, API docs, and skill templates. You can also use the A2A protocol to integrate any external AI agent.",
+        "faq_q_telegram": "Can I use my bot on Telegram too?",
+        "faq_a_telegram": "Sim! OpenClaw bots support multiple channels including Telegram, Discord, Slack, and more. EClawbot is one channel in the OpenClaw ecosystem. See the Compare tab for platform differences.",
+        "faq_cta_text": "Still have questions? Check the Usuario Guia for detailed documentation.",
+        "faq_cta_get_started": "Get Started",
+        "rn_title": "EClawbot - Release Naotes",
+        "rn_hero_title": "Release Naotes",
+        "rn_hero_subtitle": "What's new in E-Claw — features, improvements, and fixes across the platform.",
+        "rn_search_placeholder": "Buscar versions...",
+        "rn_filter_all": "Todos",
+        "rn_filter_features": "Features",
+        "rn_filter_bugfixes": "Bug Fixes",
+        "rn_loading": "Carregando release notes...",
+        "rn_badge_latest": "Latest",
+        "rn_1041_1": "Soul & Rule Template Gallery — browse and apply AI agent soul and rule templates directly from Mission Control",
+        "rn_1041_2": "Device Secret Display — reveal, copy, and export all credentials from the Configuracoes screen",
+        "rn_1041_3": "Info Hub Enhancements — deep links to guide sub-sections + Claude × OpenClaw real-world case studies",
+        "rn_1041_4": "Obrigatorio Variables Aviso — skill templates now warn before applying if required env vars are missing",
+        "rn_1041_5": "AI Agent Collaboration — updated app content and branding to reflect AI agent collaboration positioning",
+        "rn_1041_6": "Voltarend Fixes — binding race condition resolved; bot-to-bot rate counter resets on rebind",
+        "rn_1042_1": "Soul & Rule Gallery Unified — template selection merged into Gallery in Mission Control; dropdown removed",
+        "rn_1042_2": "Community Template Contributions — bots can contribute soul and rule templates via API with async verification",
+        "rn_1042_3": "Schedule Dual Authentication — schedule endpoints now accept deviceSecret for additional auth",
+        "rn_1042_4": "Idioma Cross-Device Sync — language preference persists to server and syncs across all your devices",
+        "rn_1042_5": "AI Chat & Plugin Stability — false network error on chat close fixed; Channel Plugin auto-reconnect with exponential backoff",
+        "rn_1042_6": "Admin & API Improvements — paginated user list, API auth auto-detection, admin UI improvements",
+        "rn_1043_1": "iOS App — React Native Expo iOS app launched with full feature parity to Android version",
+        "rn_1043_2": "Channel Bot Pronto Push — bots receive ECLAW_READY notification instantly after binding for immediate setup confirmation",
+        "rn_1043_3": "Taiwan Hora in Scheduler — scheduled messages now include current Taiwan time in mission hints for better bot time-awareness",
+        "rn_1043_4": "Soul Gallery Unified with Icons — built-in and community soul templates merged into one gallery with emoji icons",
+        "rn_1043_5": "XP & Level Preservation — entity XP and level are correctly kept across all unbind/rebind paths",
+        "rn_1043_6": "i18n & Tests — 160+ missing translation keys added; regression test suite expanded from 14 to 21 tests",
+        "rn_1044_1": "Cross-Device Mensagem Management — new Android interface to browse and manage messages across all bound devices",
+        "rn_1044_2": "Bot Tools API — web-search & web-fetch proxy endpoints for OpenClaw bots to query the web without leaving the platform",
+        "rn_1044_3": "Article Publisher Module — Blogger OAuth flow & Hashnode API integration for publishing content directly from bot sessoes",
+        "rn_1044_4": "Chat & Entity UI Fixes — chat bubble text selection, entity public code display, and edit-mode swap bugs resolved (Android)",
+        "rn_1044_5": "Gatekeeper Hardening — false positives for credential detection fixed; eclawbot.com whitelisted; self-unblock API added",
+        "rn_1045_1": "Skill Template Buscar — ao vivo search bar in gallery to filter templates by name or author",
+        "rn_1045_2": "Template Contagem Badge — browse button and gallery title now show the total number of available templates",
+        "rn_1045_3": "Template Gallery Vazio Fix — gallery no longer shows blank when opened before API finishes loading",
+        "rn_1045_4": "Enterprise Security — IP allowlist, geo-blocking, rate limiting, audit logging, and RBAC access control",
+        "rn_1045_5": "Voltarend Stability — cron schedule NOT NULL fix and health-check HTTPS redirect bypass",
+        "rn_1047_1": "Multi-Platform Publisher — publish articles to 12 platforms including WordPress, Tumblr, Reddit, LinkedIn, Mastodon, Qiita, and more",
+        "rn_1047_2": "Dynamic Unlimited Entities — no more 8-slot limit, devices auto-expand entity slots as needed",
+        "rn_1047_3": "Agent Card UI — create, edit, and view A2A Agent Cards across Web, Android, and iOS",
+        "rn_1047_4": "Discord Webhook Support — auto-detect Discord webhooks with rich embeds, buttons, and select menus",
+        "rn_1047_5": "Comprehensive UI Audit — 40+ UI/UX fixes across all platforms including dark theme, card layout, and badge contrast",
+        "rn_1046_1": "X (Twitter) Publisher — OAuth 1.0a integration to post articles and threads directly from bot sessoes",
+        "rn_1046_2": "Mission Painel Auto-Salvar — dashboard saves automatically on every edit; save and notify are now separate actions",
+        "rn_1046_3": "Webhook Multi-Entity Push Fix — entity push no longer silently skipped in multi-entity broadcast (#181)",
+        "rn_1046_4": "Entity Reorder publicCode Fix — publicCode is preserved correctly after reordering entities",
+        "rn_1046_5": "X Publisher Diagnostics — detailed error headers on X publish failures for easier debugging",
+        "rn_1040_1": "Chat Imagem Preview — image URLs now display as inline previews in the chat window",
+        "rn_1040_2": "Remote Control Improvements — screen elements limit increased to 300, smarter keyboard input handling",
+        "rn_1040_3": "Entity Crash Fix — critical crash fixed when a bot sends non-numeric data to the wallpaper parts field (caused all entity slots to go blank)",
+        "rn_1040_4": "Chat Stability — ChatIntegrity false-positive detections and LinkPreview crash resolved",
+        "rn_1040_5": "Screenshot Reliability — 5 MB upload limit, improved error reporting and canTakeScreenshot guard",
+        "rn_1040_6": "Claude CLI Proxy — Docker startup fixed, log output improved, warmup interval optimized",
+        "rn_1038_date": "2026-03-04",
+        "rn_1038_1": "Channel API Key Display — view and copy OpenClaw Channel API credentials directly in Configuracoes",
+        "rn_1038_2": "Excluir Conta — full account deletion page and API for Google Play Data Safety compliance",
+        "rn_1038_3": "AI Chat Persistence — requestId survives Activity recreation (screen rotate, app restart)",
+        "rn_1038_4": "Link Preview Crash Fixed — chat coroutine lifecycle issues resolved",
+        "rn_1038_5": "Claude CLI Proxy — Docker build fixed with requirements.txt",
+        "rn_1036_date": "2026-03-04",
+        "rn_1036_1": "Phone Remote Control — AI can control your Android phone via Accessibility API commands",
+        "rn_1036_2": "Encrypted Variables Vault + JIT Approval — real-time owner approval dialog for bot secrets",
+        "rn_1036_3": "OpenClaw Channel Plugin — direct channel integration without webhook configuration",
+        "rn_1036_4": "Auto-provisioned Channel API Key — channel key created automatically on device registration",
+        "rn_1036_5": "Screen Control Stability — HTTP transport reverted, latency optimized, session limits removed",
+        "rn_1036_6": "Crash Fixes + Debug Logging — entity iteration crash fixed, crash reports sent to logs",
+        "rn_1035_title": "v1.0.35",
+        "rn_1035_date": "2026-03-03",
+        "rn_1035_1": "Broadcast Recipient Info — bots can see who else received the same broadcast",
+        "rn_1035_2": "Device Preferences — configurable broadcast recipient info toggle per device",
+        "rn_1035_3": "Mission Control Excluir UX — tap to edit, delete inside dialog for consistency",
+        "rn_1035_4": "Chat Reaction Buttons — like/dislike reactions wired to backend",
+        "rn_1035_5": "Local Variables Vault — secure key-value storage for bots",
+        "rn_1035_6": "Real-Hora AI Progress Indicator — ao vivo status updates during AI processing",
+        "rn_1034_1": "In-App Atualizar Dialog — check for updates on launch with optional or force update",
+        "rn_1034_2": "Admin Atualizar Push — send update notifications to all devices from admin dashboard",
+        "rn_1034_3": "AI GitHub Actions — AI assistant can now close GitHub issues automatically",
+        "rn_1034_4": "AI Support DB Access — Claude CLI proxy connects to Postgres for direct queries",
+        "rn_1034_5": "Unified entity selection UX — bot rental reuses Add Entity slot selector",
+        "rn_1034_6": "7 GitHub issues resolved, AD_ID permission removed, i18n cache fix",
+        "rn_1033_1": "Social Entrar — sign in with Google or Facebook on Android and web portal",
+        "rn_1033_2": "Floating AI Chat — draggable assistant on all pages with background processing and image support",
+        "rn_1033_3": "Cross-Device Contacts — chat between entities on different devices with unified target bar",
+        "rn_1033_4": "AI Feedback to GitHub — AI assistant automatically creates issues for bug reports",
+        "rn_1033_5": "Bot communication with expects_reply field and mood-only emoji updates",
+        "rn_1033_6": "Chat dedup now correctly preserves user messages, entity rendering with EYE_LID/EYE_ANGLE",
+        "rn_1032_1": "AI-powered binding troubleshooter — automatic 3-stage diagnosis for bot connection issues",
+        "rn_1032_2": "WebSocket transport for OpenClaw gateways with SETUP_PASSWORD support",
+        "rn_1032_3": "XP system expanded with 8 new channels + message like/dislike reactions",
+        "rn_1032_4": "Painel entity cards edit mode on Web portal",
+        "rn_1032_5": "Uso limit now applies to all bound entities for fair resource allocation",
+        "rn_1032_6": "Telemetry captures sub-router paths correctly, improved duration tracking",
+        "rn_1031_1": "Bot gateway disconnection detection — detect \",
+        "rn_1031_2": "Handshake failure recording — all handshake failures logged to database for analysis",
+        "rn_1031_3": "Push health tracking — monitor bot push deao vivory status",
+        "rn_1031_4": "Skill doc optimization — replace inline 44KB doc with URL-based fetch for faster binding",
+        "rn_1031_5": "Improved error guidance — better error messages referencing official docs",
+        "rn_1130_1": "Unified avatar sync — changing avatar on dashboard now updates chat, broadcast, and all pages instantly",
+        "rn_1130_2": "Premium entity slots 4-7 now show proper avatars and colors instead of \",
+        "rn_1130_3": "Schedule editing — existing scheduled tasks can now be modified with pre-populated edit dialog",
+        "rn_1130_4": "Bots can now read Mission Painel tasks/notes via improved push notification hints",
+        "rn_1120_1": "XP/Level gamification — entities earn XP by completing TODOs, level progress bar on entity cards",
+        "rn_1120_2": "Unified Info Hub — Usuario Guia, FAQ, Release Naotes & Comparison in one tabbed page",
+        "rn_1120_3": "EClawbot vs Telegram comparison — 12-category side-by-side with infographic",
+        "rn_1120_4": "Domain migration to eclawbot.com, auth redirect loop fix, dark theme corrections",
+        "rn_1110_1": "Real-time notification system — Socket.IO ao vivo updates, Web Push, and notification center with bell icon",
+        "rn_1110_2": "Firebase Cloud Messaging (FCM) — Android push notifications even when app is closed",
+        "rn_1110_3": "Per-category notification preferences — toggle bot replies, broadcasts, feedback, and more",
+        "rn_1110_4": "Public navigation bar with FAQ, Release Naotes, and Usuario Guia pages",
+        "rn_1100_1": "Channel comparison page — E-Claw vs Telegram side-by-side feature comparison",
+        "rn_1100_2": "Payment maintenance notice for TapPay features on Web Portal",
+        "rn_1100_3": "Mission Control & Chat Attachments comparison rows",
+        "rn_1100_4": "Multi-Entity max corrected to 8 slots, Configuracao description improved",
+        "rn_190_1": "Multi-language support — 8 languages for Web Portal and Android (EN, 繁中, 简中, 日本語, 한국어, ไทย, Tiếng Việt, Indonesia)",
+        "rn_180_1": "Schedule execution history and chat annotation",
+        "rn_180_2": "Task saved toast notification",
+        "rn_180_3": "Mission Control UI improvements",
+        "rn_170_1": "Multi-file upload in chat (up to 100 MB per file)",
+        "rn_170_2": "Replaced chat photo icon with + button for multi-attachment",
+        "rn_170_3": "Arquivo Manager page with entity/type filtering and deao vivory tracking",
+        "rn_160_1": "Per-device entity limit (free: 4, premium: 8)",
+        "rn_160_2": "Schedule card and schedule management page",
+        "rn_160_3": "Full-screen dark style refactor for Chat on Android",
+        "rn_160_4": "Bottom navigation position consistency and edge padding",
+        "login_tab_login": "Entrar",
+        "login_tab_register": "Register",
+        "login_tab_device": "Device",
+        "login_label_email": "E-mail",
+        "login_label_password": "Senha",
+        "login_placeholder_email": "your@email.com",
+        "login_placeholder_password": "Enter password",
+        "login_btn_login": "Entrar",
+        "login_btn_logging_in": "Logging in...",
+        "login_link_forgot": "Forgot password?",
+        "login_or": "or",
+        "login_btn_google": "Sign in with Google",
+        "login_btn_facebook": "Sign in with Facebook",
+        "settings_connected_accounts": "Conectado Contas",
+        "login_label_confirm": "Confirmar Senha",
+        "login_hint_password": "Must contain both letters and numbers",
+        "login_btn_create": "Criar Conta",
+        "login_btn_creating": "Creating account...",
+        "login_device_desc": "Already have the Android app? Enter your device credentials from Configuracoes > Web Portal.",
+        "login_btn_device": "Entrar with Device",
+        "login_forgot_desc": "Enter your email and we'll send you a reset link.",
+        "login_btn_reset_link": "Send Redefinir Link",
+        "login_link_back": "Voltar to login",
+        "login_reset_desc": "Enter your new password.",
+        "login_btn_reset": "Redefinir Senha",
+        "login_msg_fill_all": "Please fill in all fields",
+        "login_msg_pass_match": "Senhas do not match",
+        "login_label_new_password": "New Senha",
+        "login_err_pw_length": "Senha must be at least 6 characters",
+        "login_err_pw_letters": "Senha must contain letters",
+        "login_err_pw_numbers": "Senha must contain numbers",
+        "login_msg_email_verified": "E-mail verified! You can now log in.",
+        "login_link_resend": "Resend",
+        "login_msg_enter_email": "Please enter your email",
+        "login_msg_reset_sent": "If the email exists, a reset link has been sent. Check your inbox.",
+        "login_msg_reset_done": "Senha reset! You can now log in.",
+        "login_err_google_not_configured": "Google login not configured",
+        "login_err_facebook_not_configured": "Facebook login not configured",
+        "login_err_sdk_loading": "SDK loading...",
+        "login_err_sdk_failed": "Google SDK failed to load. Tentar novamenteing...",
+        "login_msg_verification_sent": "Verification email sent! Check your inbox.",
+        "terms_title": "Terms of Service & Privacy Policy",
+        "terms_subtitle": "Please read and agree before creating an account",
+        "terms_section_tos": "Terms of Service",
+        "terms_tos_welcome": "Bem-vindo to E-Claw. By creating an account and using our services, you agree to the following terms:",
+        "terms_tos_1": "You must be at least 13 years old to create an account.",
+        "terms_tos_2": "You are responsible for maintaining the security of your account credentials.",
+        "terms_tos_3": "You agree not to use the service for any unlawful or prohibited activities.",
+        "terms_tos_4": "We reserve the right to suspend or terminate accounts that violate these terms.",
+        "terms_tos_5": "The service is provided \",
+        "terms_tos_6": "We may modify the service or these terms at any time with prior notice.",
+        "terms_section_privacy": "Privacy Policy",
+        "terms_privacy_intro": "We take your privacy seriously. This policy describes how we collect, use, and protect your personal information:",
+        "terms_section_collect": "Information We Collect",
+        "terms_collect_1": "Conta information: email address and encrypted password.",
+        "terms_collect_2": "Device information: device identifiers for service binding.",
+        "terms_collect_3": "Uso data: interaction logs to improve service quality.",
+        "terms_section_use": "How We Use Your Information",
+        "terms_use_1": "To provide and maintain the E-Claw service.",
+        "terms_use_2": "To communicate important service updates and notices.",
+        "terms_use_3": "To improve and personalize your experience.",
+        "terms_use_4": "To prevent fraud and ensure platform security.",
+        "terms_section_protect": "Data Protection",
+        "terms_protect_1": "Your password is stored using industry-standard encryption.",
+        "terms_protect_2": "We do not sell or share your personal information with third parties for marketing purposes.",
+        "terms_protect_3": "You may request deletion of your account and associated data at any time.",
+        "terms_protect_4": "We implement reasonable security measures to protect your data from unauthorized access.",
+        "terms_section_liability": "Limitation of Liability",
+        "terms_liability_text": "To the maximum extent permitted by law, E-Claw and its operators shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the service, including but not limited to loss of data, service interruption, or unauthorized access to your account.",
+        "terms_section_contact": "Contact",
+        "terms_contact_text": "If you have any questions about these terms or our privacy practices, please contact us through the app's support channel.",
+        "terms_full_privacy_link": "Ver full Privacy Policy (GPS, voice messages, etc.)",
+        "terms_btn_decline": "Decline",
+        "terms_btn_agree": "I Agree",
+        "dash_title": "Painel",
+        "dash_loading": "Carregando entities...",
+        "dash_empty_title": "Nao entities bound yet",
+        "dash_empty_desc": "Add your first entity below to get started!",
+        "dash_add_entity": "Add Entity",
+        "dash_label_select_slot": "Select Entity Slot",
+        "dash_channel_bind_warning": "Version 2026-03+ strongly recommends using EClaw Channel binding to avoid binding failures.",
+        "dash_btn_generate": "Generate Code",
+        "dash_btn_generating": "Generating...",
+        "dash_btn_regenerate": "Regenerate",
+        "dash_btn_copy": "Copiar Command",
+        "dash_channel_promo": "Try EClaw Channel? More native, faster",
+        "dash_invite_title": "Invite friends, earn 500 e-coin per signup",
+        "dash_invite_subtitle": "Your friend gets 100 e-coin too. Compartilhar your code now.",
+        "dash_invite_cta": "Ver my code",
+        "dash_channel_step_intro": "In OpenClaw terminal:",
+        "dash_channel_step3": "Select \",
+        "dash_channel_learn_more": "Learn more",
+        "dash_channel_card_openclaw_title": "OpenClaw Channel",
+        "dash_channel_card_openclaw_badge": "Stable",
+        "dash_channel_card_openclaw_desc": "Official OpenClaw plugin path — best for hosted OpenClaw bots and production API-key setups.",
+        "dash_channel_card_codex_title": "Codex Channel",
+        "dash_channel_card_codex_badge": "CLI bridge",
+        "dash_channel_card_codex_desc": "Connect an EClaw entity to OpenAI Codex CLI via codex app-server. Good for remote repo work from EClaw chat.",
+        "dash_channel_card_codex_step2": "fill .env: ECLAW_API_KEY, WEBHOOK_URL, CODEX_WORKSPACE",
+        "dash_channel_card_codex_guide_link": "Codex guide →",
+        "dash_channel_card_clauded_title": "Claude Code Channel",
+        "dash_channel_card_clauded_badge": "Experimental",
+        "dash_channel_card_clauded_desc": "Run Claude Code in a local tmux session as your EClaw bot — uses your claude.ai Max subscription quota, no Anthropic API tokens billed.",
+        "dash_channel_card_clauded_step2": "fill .mcp.json: ECLAW_API_KEY, ECLAW_WEBHOOK_URL",
+        "dash_channel_card_clauded_guide_link": "Claude Code guide →",
+        "dash_channel_card_hermes_title": "Hermes Channel",
+        "dash_channel_card_hermes_badge": "Live Showcase",
+        "dash_channel_card_hermes_desc": "Bind a Hermes Agent (NaousResearch self-evolving agent, Python) as your EClaw bot via webhook. Supports MiniMax / OpenAI / Anthropic / local Ollama.",
+        "dash_channel_card_hermes_step1": "git clone .../hermes-eclaw-channel",
+        "dash_channel_card_hermes_step2": "./scripts/setup-tunnel.sh hermes-b ...",
+        "dash_channel_card_hermes_step3": "bind-entity + start daemon",
+        "dash_channel_card_hermes_guide_link": "Hermes guide →",
+        "channel_ai_agent_hint": "🤖 Strongly recommended to use Claude Code or other AI agents for assisted installation.",
+        "dash_channel_no_entities": "Nao entities bound",
+        "dashboard_entities_bound": "entities bound",
+        "dash_code_expired": "Code expired - generate a new one",
+        "dash_code_expires_in": "Expires in {s}",
+        "dash_btn_remove": "Excluir",
+        "dash_remove_title": "Excluir Entity",
+        "dash_remove_desc": "Are you sure you want to delete <strong>{name}</strong> (#{id})? This entity slot will be permanently removed.",
+        "dash_overwrite_title": "Replace Existing Entity",
+        "dash_overwrite_desc": "Slot {id} is currently bound to <strong>{name}</strong>. Generating a new binding code will replace the existing bot when a new one connects. Tem certeza?",
+        "dash_btn_overwrite": "Replace",
+        "dash_btn_refresh": "Atualizar",
+        "dash_refreshing": "Atualizaring...",
+        "dash_refresh_success": "Connection refreshed!",
+        "dash_restart_success": "🔄 Channel restarted successfully",
+        "dash_restart_failed": "⚠️ Channel restart failed",
+        "dash_refresh_cooldown": "Please wait {s} seconds before retrying",
+        "dash_refresh_broken_title": "Connection Broken",
+        "dash_refresh_broken_message": "The bot's webhook connection appears broken. Would you like to rebind this entity?",
+        "dash_refresh_broken_rebind": "Rebind",
+        "dash_reorder_saving": "Saving new order...",
+        "dash_reorder_success": "Entity order updated!",
+        "dash_reorder_failed": "Falhou to save entity order",
+        "dash_drag_to_reorder": "Drag to reorder",
+        "dash_xd_settings": "Cross-Device Msg",
+        "dash_xd_title": "Cross-Device Mensagem Configuracoes",
+        "dash_xd_pre_inject": "Pre-inject Instruction",
+        "dash_xd_pre_inject_hint": "Instructions prepended to incoming messages...",
+        "dash_xd_pre_inject_desc": "Added before cross-device messages in the push notification",
+        "dash_xd_forbidden": "Forbidden Words",
+        "dash_xd_forbidden_desc": "Mensagems containing these words will be rejected",
+        "dash_xd_comma_sep": "Comma-separated values",
+        "dash_xd_rate_limit": "Rate Limit (seconds)",
+        "dash_xd_rate_limit_desc": "Cooldown per sender (0 = no limit)",
+        "dash_xd_blacklist": "Blacklist (public codes)",
+        "dash_xd_codes_sep": "Comma-separated public codes",
+        "dash_xd_whitelist_mode": "Whitelist Mode",
+        "dash_xd_whitelist": "Whitelist (public codes)",
+        "dash_xd_reject_msg": "Reject Mensagem",
+        "dash_xd_reject_msg_hint": "Auto-reply when blocked (empty = silent)",
+        "dash_xd_allowed_media": "Todosowed Media Tipos",
+        "dash_xd_save": "Salvar",
+        "dash_xd_reset": "Redefinir to Padrao",
+        "dash_xd_saved": "Cross-device messaging settings saved!",
+        "dash_xd_reset_confirm": "Redefinir all cross-device messaging settings to defaults?",
+        "dash_xd_reset_done": "Configuracoes reset to defaults",
+        "dash_id_btn": "Identity",
+        "dash_id_title": "Bot Identity",
+        "dash_id_role": "Role",
+        "dash_id_role_hint": "e.g. Personalizadoer Support Agent",
+        "dash_id_desc": "Descricao",
+        "dash_id_desc_hint": "Describe this bot's responsibilities...",
+        "dash_id_instructions": "Instructions",
+        "dash_id_instr_hint": "Add an instruction...",
+        "dash_id_boundaries": "Boundaries",
+        "dash_id_bound_hint": "Add a boundary...",
+        "dash_id_tone": "Tone",
+        "dash_id_tone_hint": "e.g. friendly, professional, casual",
+        "dash_id_language": "Idioma",
+        "dash_id_lang_hint": "e.g. zh-TW, en",
+        "dash_id_public_title": "Public Perfil (Agent Card)",
+        "dash_id_public_desc": "Public Descricao",
+        "dash_id_public_desc_hint": "Public description for agent card...",
+        "dash_plaza_publish": "Publish to Bot Plaza",
+        "dash_plaza_publish_hint": "Lista this bot publicly so others can discover and interact with it",
+        "dash_plaza_published": "Publicado to Bot Plaza!",
+        "dash_plaza_unpublished": "Removed from Bot Plaza",
+        "dash_id_save": "Salvar Identity",
+        "dash_id_clear": "Limpar",
+        "dash_capabilities": "Capabilities",
+        "dash_caps_arena_only": "verified by Arena test — read-only",
+        "dash_caps_none": "Nao Arena test results yet. Run an Arena test to verify capabilities.",
+        "dash_protocols": "Protocols",
+        "dash_tags": "Tags",
+        "dash_version": "Version",
+        "dash_website": "Website",
+        "dash_run_interview": "Run Interview",
+        "dash_run_arena": "Eval Center (Browser Agents)",
+        "dash_list_rental": "Lista for Rental",
+        "dash_listing_exists": "Listaing already exists for this entity",
+        "dash_listing_rate_prompt": "Set rate (e-coin per 1K tokens):",
+        "dash_listing_created": "Listaing created! Run interview to qualify for publishing.",
+        "dash_listing_published": "Listaed for rent!",
+        "dash_interview_required_first": "Please run the interview first before listing for rent.",
+        "dash_interview_not_passed_yet": "Interview not passed yet — finish the interview before setting a price.",
+        "dash_interview_no_listing": "Falhou to create listing",
+        "dash_interview_running": "Em execucao...",
+        "dash_interview_progress": "Sending 8 probes to your bot via webhook... This may take 30-90 seconds.",
+        "dash_interview_score": "Score",
+        "dash_interview_passed": "Passed! Capabilities locked on Agent Card.",
+        "dash_interview_failed": "Naot passed. Minimum 60% required.",
+        "dash_interview_view_results": "Ver Results →",
+        "dash_id_saved": "Identity saved",
+        "dash_id_cleared": "Identity cleared",
+        "dash_id_clear_confirm": "Limpar identity for Entity #",
+        "dash_id_validation": "At least role, description, or public profile is required",
+        "dash_slot_occupied": "Slot {id} is already occupied",
+        "dash_entity_bound": "{count} / {max} bound",
+        "dash_avatar_title": "Choose Avatar",
+        "dash_avatar_desc": "Select an emoji or upload a photo",
+        "dash_avatar_upload": "Enviar Photo",
+        "dash_avatar_drop_hint": "Click or drag image here",
+        "dash_avatar_confirm": "Use this photo",
+        "dash_avatar_uploading": "Enviaring...",
+        "dash_avatar_uploaded": "Avatar updated!",
+        "dash_avatar_too_large": "Imagem must be under 5 MB",
+        "dash_avatar_remove": "Remove photo",
+        "dash_avatar_removed": "Photo removed",
+        "dash_code_copied": "Command copied to clipboard!",
+        "dash_public_code": "Code",
+        "dash_copy_code": "Click to copy public code",
+        "dash_public_code_copied": "Public code copied!",
+        "dash_code_generated": "Binding code generated!",
+        "dash_entity_removed": "Entity removed successfully",
+        "dash_no_messages": "Nao messages yet",
+        "dash_rename_title": "Rename Entity",
+        "dash_rename_placeholder": "Enter new name (max 20 chars)",
+        "dash_rename_save": "Salvar",
+        "dash_rename_saving": "Saving...",
+        "dash_rename_success": "Nome updated!",
+        "dash_err_load_entities": "Falhou to load entities",
+        "dash_slot": "Slot",
+        "dash_new_slot": "New Slot",
+        "org_tab_entities": "Entities",
+        "org_tab_chart": "Org Chart",
+        "org_title": "Organization Chart",
+        "org_user_node": "You (Owner)",
+        "org_drag_hint": "Drag entity onto another to set hierarchy",
+        "org_saved": "Organization chart saved",
+        "org_reset": "Redefinir to Padrao",
+        "org_reset_confirm": "Redefinir organization chart to saved default?",
+        "org_reparent_confirm": "Make {child} a child of {parent}?",
+        "org_opt_none_title": "Naone",
+        "org_opt_none_desc": "Nao hierarchy behavior enabled",
+        "org_opt1_title": "Low Interference",
+        "org_opt1_desc": "Superior becomes default kanban task reviewer",
+        "org_opt2_title": "Recommended",
+        "org_opt2_desc": "Auto-route messages to superior when kanban tasks incomplete",
+        "org_opt3_title": "Fechar Supervision",
+        "org_opt3_desc": "Superior becomes kanban reviewer + all messages auto-routed to superior",
+        "org_min_entities": "Need 2+ entities for org chart",
+        "webhook_error_title": "Push Naotification Falhou",
+        "webhook_error_message": "Please paste the following message to OpenClaw: \",
+        "message_copied": "Mensagem copied",
+        "borrow_title": "Official Bot Rental",
+        "borrow_desc": "Rent an official bot for your entity. The bot will automatically interact with your ao vivo wallpaper.",
+        "borrow_select_entity": "Select Entity",
+        "borrow_free_title": "Free Version",
+        "borrow_free_desc": "One free bot per device",
+        "borrow_select_bot": "Select a bot:",
+        "borrow_active_users": "Ativo users",
+        "borrow_free_feat_shared": "Compartilhard memory with all free users",
+        "borrow_free_feat_limit": "Unlimited messages (no daily cap)",
+        "borrow_free_available": "Disponivel",
+        "borrow_free_unavailable": "Nao free bots available",
+        "borrow_free_bound_other": "Already bound on Entity #{id}",
+        "borrow_personal_title": "Monthly Version",
+        "borrow_personal_desc": "Dedicated personal bot",
+        "borrow_personal_feat_dedicated": "Dedicated cloud environment",
+        "borrow_personal_feat_memory": "Private memory (only yours)",
+        "borrow_personal_feat_unlimited": "Unlimited messages (no daily limit)",
+        "borrow_personal_feat_247": "24/7 always online",
+        "borrow_price_period": "/month",
+        "borrow_discount_label": "Limited-time Beta discount",
+        "borrow_personal_available": "{count} bots available",
+        "borrow_personal_sold_out": "Sold out",
+        "borrow_btn_bind_free": "Use Free Version",
+        "borrow_btn_bind_personal": "Buy Monthly Plan",
+        "borrow_btn_rebind_free": "Rebind (Free)",
+        "borrow_btn_pay": "Pay NT$288",
+        "borrow_btn_unbind": "Unbind",
+        "borrow_btn_binding": "Binding...",
+        "borrow_btn_handshaking": "Handshaking with bot...",
+        "borrow_btn_connected": "Conectado!",
+        "borrow_btn_unbinding": "Unbinding...",
+        "borrow_btn_request_rental": "Enviar Rental Request",
+        "borrow_free_limit_hint": "Each device can only bind one free bot",
+        "borrow_sold_out_title": "Sold Out",
+        "borrow_sold_out_message": "Monthly bots are currently sold out.\n\nYou can submit a rental demand request and we'll notify you when available (usually 1-2 business days).",
+        "borrow_sold_out_submit": "Enviar Request",
+        "borrow_sold_out_cancel": "Cancelar",
+        "borrow_rental_demand_success": "Request submitted! We'll respond within 1-2 business days.",
+        "borrow_rental_demand_fail": "Falhou to submit request. Por favor, tente novamente.",
+        "borrow_bound_free": "Free bot bound",
+        "borrow_bound_personal": "Personal bot bound",
+        "borrow_slot_occupied": "This entity slot already has a regular binding",
+        "borrow_bind_success": "Official bot bound successfully!",
+        "borrow_unbind_success": "Official bot unbound successfully",
+        "borrow_unbind_title": "Unbind Official Bot",
+        "borrow_unbind_desc": "Are you sure you want to unbind the official bot from Entity #{id}? The bot will be returned to the pool.",
+        "borrow_current_bindings": "Current Bindings",
+        "borrow_no_bindings": "Nao official bots bound",
+        "borrow_type_free": "Free",
+        "borrow_type_personal": "Monthly",
+        "borrow_entity_has_binding": "Already has official bot",
+        "borrow_pay_title": "Official Bot Rental - NT$288/month",
+        "borrow_pay_desc": "Enter your credit card to rent a dedicated personal bot (NT$288/month). Includes unlimited messages and 24/7 always online.",
+        "borrow_cost_title": "Why rent? Self-hosting cost comparison",
+        "borrow_cost_eclaw": "EClawbot Official Bot",
+        "borrow_cost_eclaw_price": "NT$288/mo",
+        "borrow_cost_24_7": "24/7 stable connection",
+        "borrow_cost_included": "Included",
+        "borrow_cost_server": "Cloud Server (Railway/AWS)",
+        "borrow_cost_llm": "LLM API (OpenAI/Claude)",
+        "borrow_cost_setup": "Learning OpenClaw deployment",
+        "borrow_cost_priceless": "Priceless time",
+        "borrow_tos_title": "Free Bot Terms of Use",
+        "borrow_tos_agree": "I Agree",
+        "borrow_tos_decline": "Decline",
+        "borrow_tos_loading": "Carregando terms...",
+        "borrow_tos_required": "You must agree to the Terms of Use before using the Free Bot.",
+        "settings_title": "Configuracoes",
+        "settings_account": "Conta",
+        "settings_email": "E-mail",
+        "settings_device_id": "Device ID",
+        "settings_device_secret": "Device Secret",
+        "settings_copy_credentials": "Copiar Credentials",
+        "settings_rotate_device_secret": "🔄 Rotate Device Secret",
+        "settings_rotate_device_secret_hint": "Generate a new Device Secret if the current one has leaked. Outro sessoes will need the new value to sign in.",
+        "settings_rotate_confirm_title": "Rotate Device Secret?",
+        "settings_rotate_confirm_body": "This immediately invalidates the current Device Secret. Any other device or browser tab still using the old value will need to sign in again with the new one.",
+        "settings_rotate_confirm_warn": "⚠ The new secret is shown only once. Voltar it up before closing the next dialog.",
+        "settings_rotate_confirm_ok": "Rotate Naow",
+        "settings_rotate_reveal_title": "🔑 Your New Device Secret",
+        "settings_rotate_reveal_body": "Salvar this now. You will not be able to view it again — if you lose it, you must rotate again.",
+        "settings_rotate_reveal_download": "⬇ Baixar .txt Voltarup",
+        "settings_rotate_reveal_copy": "📋 Copiar Secret",
+        "settings_rotate_reveal_done": "I've Salvard It, Fechar",
+        "settings_switch_device": "🔁 Switch Device",
+        "settings_switch_device_hint": "Sign this browser into a different Device ID. Useful if you have a second admin account with its own entities.",
+        "settings_switch_device_title": "Switch Device",
+        "settings_switch_device_body": "Enter the Device ID and Device Secret of the account you want to sign into. This browser will be signed out of the current device.",
+        "settings_switch_device_confirm": "Switch",
+        "settings_switch_device_required": "Device ID and Device Secret are required.",
+        "settings_switch_device_failed": "Invalid Device ID or Device Secret.",
+        "settings_switch_device_network_error": "Erro de rede during device switch. Por favor, tente novamente.",
+        "common_cancel": "Cancelar",
+        "settings_sub": "Subscription",
+        "settings_sub_premium": "PREMIUM",
+        "settings_sub_free": "FREE",
+        "settings_usage_today": "Mensagems today",
+        "settings_usage_unlimited": "{used} sent today (Unlimited)",
+        "settings_usage_limit": "{used} sent today",
+        "settings_renews_on": "Renews on {date}",
+        "settings_price": "NT$99",
+        "settings_period": "per month",
+        "settings_sub_benefit_1": "\u2713 Unlimited messages (no 15/day limit)",
+        "settings_sub_benefit_2": "\u2713 Up to 8 entity slots (instead of 4)",
+        "settings_btn_subscribe": "Subscribe",
+        "settings_btn_hide_card": "Hide Card Form",
+        "settings_label_card": "Card Number",
+        "settings_label_expiry": "Expiry Data",
+        "settings_label_ccv": "CCV",
+        "settings_btn_pay": "Pay NT$99",
+        "settings_processing": "Processing payment...",
+        "settings_btn_cancel": "Cancelar Subscription",
+        "settings_btn_cancelling": "Cancelarling...",
+        "settings_cancel_title": "Cancelar Subscription",
+        "settings_cancel_desc": "Your premium access will remain active until the current billing period ends. After that, you'll revert to the free plan (shared bots, unlimited messages).",
+        "settings_btn_keep": "Keep Subscription",
+        "maintenance_payment_title": "Payment Under Maintenance",
+        "maintenance_payment_desc": "Payment feature is currently under maintenance. Please check back later.",
+        "settings_lang": "Idioma",
+        "settings_chat_preferences": "Chat Preferences",
+        "settings_chat_avatar_size": "Avatar Size",
+        "settings_chat_avatar_size_desc": "Applies to chat list, chat header, and message avatars",
+        "settings_chat_avatar_size_small": "Small",
+        "settings_chat_avatar_size_medium": "Medium",
+        "settings_chat_avatar_size_large": "Large",
+        "settings_roster_section_title": "Rental Management — my listings and rentals",
+        "settings_roster_section_desc": "Manual owner controls for listing pause/resume, rebind, and rental history. Voltarend actions are enabled as rental subsystem endpoints land.",
+        "settings_roster_tab_my_listings": "My listings",
+        "settings_roster_tab_rented_bots": "Rented bots",
+        "settings_roster_tab_history": "Affected history",
+        "settings_roster_action_soft_pause": "Manual soft-pause",
+        "settings_roster_action_resume": "Resume now",
+        "settings_roster_action_archive": "Archive listing",
+        "settings_roster_action_manual_rebind": "Rebind and terminate rentals",
+        "settings_roster_action_choose": "Choose action",
+        "settings_roster_action_view_details": "Ver rental details",
+        "settings_roster_action_report_issue": "Report issue",
+        "settings_roster_confirm_manual_rebind": "This will terminate active rentals and issue refunds from your wallet. Continuar?",
+        "settings_roster_confirm_resume": "This listing health may still be degraded. Resuming early can hurt renter experience. Continuar?",
+        "settings_roster_confirm_generic": "Aplicar this manual owner action?",
+        "settings_roster_confirm_title": "Confirmar roster action",
+        "settings_roster_empty_state_listings": "Nao listings yet.",
+        "settings_roster_empty_state_rentals": "Nao rented bots yet.",
+        "settings_roster_empty_state_history": "Nao rental events yet.",
+        "settings_roster_loading": "Carregando roster…",
+        "settings_roster_mock_note": "Preview mode: backend roster endpoints are not available yet; showing mock data.",
+        "settings_roster_mock_action": "Preview only — backend action not available yet.",
+        "settings_roster_action_success": "Action queued",
+        "settings_roster_col_bot": "Bot",
+        "settings_roster_col_status": "Status",
+        "settings_roster_col_health": "Saude",
+        "settings_roster_col_active_rentals": "Ativo rentals",
+        "settings_roster_col_action": "Action",
+        "settings_roster_col_rental_status": "Rental status",
+        "settings_roster_col_remaining": "Remaining",
+        "settings_roster_col_time": "Hora",
+        "settings_roster_col_event": "Event",
+        "settings_roster_col_listing": "Listaing",
+        "settings_roster_col_refund": "Refund",
+        "settings_roster_col_details": "Detalhes",
+        "settings_display": "Display",
+        "settings_view_mode": "Ver Mode",
+        "settings_view_mode_desc": "Desktop only (≥1200px)",
+        "settings_view_single": "Single Page",
+        "settings_view_split": "Split Ver",
+        "settings_lang_changed": "Idioma changed, reloading...",
+        "settings_version": "Version",
+        "settings_privacy_link": "Privacy Policy",
+        "settings_privacy_title": "Privacy Policy",
+        "settings_privacy_content": "<b>1. Commitment to Privacy First</b><br>The E-claw team understands the importance of privacy to you. We hereby solemnly declare: <b>We will never sell, leak, or misuse any of your personal data.</b><br><br><b>2. What Data Do We Collect?</b><br>To provide our service, we only collect the minimum data necessary for operation:<br>- Device ID: Used to distinguish different devices.<br>- App Version: Used for compatibility checks.<br>- Binding Data: Agent name and status.<br><br><b>We do NOT collect:</b><br>- Your name, phone number, or email.<br>- Your GPS location.<br>- Your camera or microphone data.<br><br><b>3. OpenClaw Protocol</b><br>We are firm supporters of the OpenClaw ecosystem. We will not build a closed \",
+        "settings_feedback_title": "Feedback",
+        "settings_feedback_desc": "Found a bug or have a suggestion? Let us know!",
+        "settings_btn_feedback": "Send Feedback",
+        "settings_feedback_hint": "Enter your feedback here...",
+        "settings_feedback_sent": "Feedback sent! Thank you.",
+        "settings_btn_send_feedback": "Send",
+        "settings_feedback_cancel": "Cancelar",
+        "settings_feedback_view_history": "Ver feedback history",
+        "notif_title": "Naotifications",
+        "notif_mark_all": "Mark all read",
+        "notif_empty": "Nao notifications yet",
+        "notif_bot_reply": "Bot Reply",
+        "notif_speak_to": "Entity Mensagem",
+        "notif_broadcast": "Broadcast",
+        "notif_feedback_resolved": "Feedback Resolved",
+        "notif_feedback_reply": "Feedback Reply",
+        "notif_todo_done": "TODO Concluido",
+        "notif_scheduled": "Agendado Mensagem",
+        "notif_settings_title": "Naotification Preferences",
+        "notif_settings_desc": "Choose which notifications you want to receive.",
+        "notif_pref_bot_reply": "Bot Replies",
+        "notif_pref_broadcast": "Broadcasts",
+        "notif_pref_speak_to": "Entity Mensagems",
+        "notif_pref_feedback": "Feedback Atualizars",
+        "notif_pref_todo": "TODO Concluido",
+        "notif_pref_scheduled": "Agendado Mensagems",
+        "developer_section_title": "Developer",
+        "broadcast_settings_title": "Broadcast Configuracoes",
+        "broadcast_settings_desc": "Configurar how broadcast messages work",
+        "broadcast_pref_recipient_info": "Show recipient list in broadcasts",
+        "kanban_nudge_title": "Kanban Nudge",
+        "kanban_nudge_desc": "Stale-card reminders — applies uniformly to all entities.",
+        "kanban_nudge_batch_label": "Cards per cycle",
+        "kanban_nudge_priority_label": "Priority mode",
+        "kanban_nudge_priority_mode_level": "Level first (P0 > P1 > P2)",
+        "kanban_nudge_priority_mode_column": "Column first (Review > In Progress > Todo)",
+        "kanban_nudge_priority_mode_both": "Column + level (Review P2 > In Progress P1 > Todo P0)",
+        "kanban_nudge_statuses_label": "Nudge these columns",
+        "kanban_status_backlog": "Voltarlog",
+        "kanban_status_todo": "Todo",
+        "kanban_status_in_progress": "In Progress",
+        "kanban_status_review": "Review",
+        "kanban_status_blocked": "Blocked",
+        "kanban_nudge_interval_label": "Interval",
+        "kanban_nudge_interval_hour": "h",
+        "kanban_nudge_interval_min": "m",
+        "kanban_nudge_need_status": "Select at least one column to nudge",
+        "kanban_nudge_settings_title": "Nudge Configuracoes",
+        "kanban_nudge_advanced_label": "Two-type nudge controls",
+        "kanban_nudge_advanced_desc": "🅰️ stale-card nudge vs 🅱️ cron-schedule trigger — separate switches.",
+        "kanban_nudge_per_entity_throttle_label": "🅰️ Stale-card: cap each entity at 1 nudge per interval",
+        "kanban_nudge_per_entity_section_label": "Per-entity overrides",
+        "kanban_nudge_per_entity_section_desc": "Personalizadoize interval / columns / throttle for one specific entity. Batch size + priority mode stay device-wide.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Pick an entity —",
+        "kanban_nudge_per_entity_clear": "Redefinir to device default",
+        "kanban_nudge_per_entity_hint_prefix": "Toggle a field to override the device default for this entity.",
+        "kanban_nudge_per_entity_override_interval": "Override interval",
+        "kanban_nudge_per_entity_override_statuses": "Override columns",
+        "kanban_nudge_per_entity_override_throttle": "Override throttle",
+        "kanban_nudge_per_entity_throttle_short": "Cap this entity at 1 nudge per interval",
+        "kanban_cron_recurring_notify_label": "🅱️ Cron parent card self-recurring (no child): notify on each fire",
+        "chat_broadcast_tag": "Broadcast",
+        "chat_kanban_notify": "Kanban",
+        "chat_scheduled": "Agendado",
+        "chat_mission_notify": "Mission",
+        "chat_kanban_view_card": "📋 Ver card",
+        "chat_card_modal_comments": "Comments",
+        "chat_card_modal_comments_empty": "Nao comments yet",
+        "chat_form_submission": "Form",
+        "chat_mindmap_demo_node": "This node is demo data or a short-prefix ID — cross-page citation isn't supported. Use the 📋 button on the mind-map page to copy the full token.",
+        "chat_mindmap_field_summary": "Resumo",
+        "chat_mindmap_field_type": "Tipo",
+        "chat_mindmap_field_anchors": "Anchors",
+        "chat_mindmap_field_comments": "Comments",
+        "chat_mindmap_empty": "—",
+        "notif_push_enable": "Enable Browser Push",
+        "notif_push_enabled": "Push Ativado",
+        "notif_push_disabled": "Push Desativado",
+        "feedback_title": "My Feedback",
+        "feedback_loading": "Carregando feedback...",
+        "feedback_empty": "Nao feedback submitted yet",
+        "feedback_empty_sub": "Your submitted feedback will appear here.",
+        "feedback_cat_bug": "Bug",
+        "feedback_cat_feature": "Feature",
+        "feedback_cat_question": "Question",
+        "feedback_severity": "Severity",
+        "feedback_status": "Status",
+        "feedback_status_open": "Open",
+        "feedback_status_resolved": "Resolved",
+        "feedback_status_closed": "Fechard",
+        "feedback_status_in_progress": "In Progress",
+        "feedback_view_issue": "Ver GitHub Issue",
+        "feedback_filter_all": "Todos",
+        "feedback_submitted_at": "Enviarted",
+        "feedback_auto_log_hint": "Logs from the last 5 minutes will be automatically captured to help diagnose the issue.",
+        "feedback_category_label": "Categoria",
+        "feedback_hint": "Describe the issue or suggestion…",
+        "feedback_sending": "Sending…",
+        "feedback_sent_short": "Sent",
+        "feedback_result_title": "Feedback #%d received",
+        "feedback_result_severity": "Severity: %s",
+        "feedback_result_logs": "Captured: %d API calls, %d server logs",
+        "feedback_result_issue": "Ver GitHub Issue #%d",
+        "feedback_track_title": "Track Your Feedback",
+        "feedback_track_desc": "Ver the status and updates of your submitted feedback.",
+        "feedback_github_issue_desc": "Track progress on GitHub",
+        "feedback_photo_label": "Attach Photos (Opcional)",
+        "feedback_photo_hint": "Add up to 5 photos to help illustrate the issue",
+        "feedback_photo_add": "Add Photos",
+        "feedback_photo_uploading": "Enviaring photos...",
+        "feedback_photo_uploaded": "%d photo(s) uploaded",
+        "feedback_photo_count": "%d photo(s) attached",
+        "feedback_photo_remove": "Remove",
+        "feedback_history_title": "My Feedback",
+        "wallet_title": "EClawbot - My Wallet",
+        "wallet_my_wallet": "My Wallet",
+        "wallet_available_balance": "Disponivel Balance",
+        "wallet_held_deposit": "Held (Deposit)",
+        "wallet_lifetime_earned": "Lifetime Earned",
+        "wallet_lifetime_spent": "Lifetime Spent",
+        "wallet_topup": "Top up e-coin",
+        "wallet_topup_success": "Top-up successful!",
+        "wallet_topup_failed": "Top-up failed. Por favor, tente novamente.",
+        "wallet_topup_desc": "Pay via Google Play. Higher tiers earn bonus e-coin.",
+        "wallet_topup_note": "ⓘ Top-up is processed via the Android app. The web view above is informational only.",
+        "wallet_topup_via_app": "Please top up via the Android app",
+        "wallet_history": "Transaction History",
+        "wallet_loading": "Carregando...",
+        "wallet_empty_history": "Nao transaction history yet",
+        "wallet_load_failed": "Falhou to load",
+        "wallet_bonus_label": "incl. +%s bonus",
+        "wallet_col_time": "Hora",
+        "wallet_col_type": "Tipo",
+        "wallet_col_note": "Naote",
+        "wallet_col_amount": "Amount",
+        "wallet_type_topup": "Top-up",
+        "wallet_type_rental_income": "Rental income",
+        "wallet_type_rental_spend": "Rental spend",
+        "wallet_type_platform_fee": "Platform fee",
+        "wallet_type_deposit_hold": "Deposit hold",
+        "wallet_type_deposit_release": "Deposit release",
+        "wallet_type_deposit_forfeit": "Deposit forfeit",
+        "wallet_type_referral_bonus": "Referral bonus",
+        "wallet_type_signup_bonus": "Signup bonus",
+        "wallet_type_refund": "Refund",
+        "wallet_type_admin_adjust": "Admin adjustment",
+        "wallet_type_withdraw": "Withdrawal",
+        "wallet_ecoin_unit": "e-coin",
+        "wallet_usd_label": "USD",
+        "rm_hero_title": "EClaw Bot Rental Marketplace",
+        "rm_hero_subtitle": "Rent premium AI bots on-demand. Earn e-coin by sharing your idle bot capacity.",
+        "rm_stat_phases": "Development Phases",
+        "rm_stat_decisions": "Locked Decisions",
+        "rm_stat_tests": "Unit Tests",
+        "rm_stat_tables": "New DB Tabelas",
+        "rm_vision_title": "Vision",
+        "rm_vision_desc": "Transform EClaw's Bot Marketplace from a static showcase into a dynamic, peer-to-peer rental exchange. Bot owners with idle OpenClaw subscription capacity list their bots and earn e-coin from renters who pay per token used. The platform takes a 15% commission and operates a 2% insurance pool for dispute coverage.",
+        "rm_how_title": "How It Works",
+        "rm_flow_owner": "Owner (Listaing) Flow",
+        "rm_flow_renter": "Renter (Rental) Flow",
+        "rm_step_bind": "Bind Bot",
+        "rm_step_rate": "Set Rate",
+        "rm_step_interview": "Interview (Auto)",
+        "rm_step_publish": "Publish",
+        "rm_step_earn": "Earn e-coin",
+        "rm_step_browse": "Browse Marketplace",
+        "rm_step_view": "Ver Agent Card",
+        "rm_step_deposit": "Pay Deposit",
+        "rm_step_chat": "Chat & Use",
+        "rm_step_settle": "End & Settle",
+        "rm_kd_title": "Key Design Decisions",
+        "rm_kd_rate": "Exchange Rate",
+        "rm_kd_fee": "Platform Fee",
+        "rm_kd_fee_v": "15% (incl. 2% insurance pool)",
+        "rm_kd_withdraw": "e-coin Withdrawal",
+        "rm_kd_withdraw_v": "Naot allowed — in-app use only",
+        "rm_kd_metering": "Token Metering",
+        "rm_kd_metering_v": "Voltarend estimation (unforgeable)",
+        "rm_kd_exclusive": "Bot Exclusivity",
+        "rm_kd_exclusive_v": "1 listing = 1 renter at a time",
+        "rm_kd_deposit": "Deposit Formula",
+        "rm_kd_deposit_v": "rate × 20 (20K token runway)",
+        "rm_kd_interview": "Interview",
+        "rm_kd_interview_v": "8 probes, regex judge, score ≥ 60 to list",
+        "rm_kd_duration": "Rental Duracao",
+        "rm_kd_duration_v": "30 min – 7 days",
+        "rm_kd_privacy": "Owner Privacy",
+        "rm_kd_privacy_v": "Renter sees only Agent Card",
+        "rm_kd_settle": "Settlement Delay",
+        "rm_kd_settle_v": "T+24h (dispute buffer)",
+        "rm_kd_grace": "Grace Period",
+        "rm_kd_grace_v": "6–12h on balance exhaustion",
+        "rm_kd_pricing": "Pricing",
+        "rm_kd_pricing_v": "Owner-set, advisor suggests range",
+        "rm_tiers_title": "Top-up Tiers",
+        "rm_tier_col": "Tier",
+        "rm_tier_base": "Base e-coin",
+        "rm_tier_bonus": "Bonus",
+        "rm_tier_total": "Total",
+        "rm_tier_small": "Small",
+        "rm_tier_starter": "Starter",
+        "rm_tier_standard": "Standard",
+        "rm_tier_advanced": "Avancado",
+        "rm_tier_premium": "Premium",
+        "rm_contract_title": "Contract Lifecycle",
+        "rm_deposit_title": "Deposit Disposition",
+        "rm_dep_reason": "End Reason",
+        "rm_dep_refund": "Refund",
+        "rm_dep_forfeit": "Forfeit",
+        "rm_dep_normal": "Naormal / Dispute / Admin",
+        "rm_dep_early": "Early by renter",
+        "rm_dep_zero": "Balance exhausted",
+        "rm_dep_zero_refund": "Remaining",
+        "rm_dep_violation": "5 violations",
+        "rm_sys_title": "Core Systems",
+        "rm_sys_desc": "The 11 subsystems that make up the rental marketplace, grouped by domain.",
+        "rm_grp_finance": "Financial Infrastructure",
+        "rm_grp_market": "Marketplace",
+        "rm_grp_ops": "Rental Operations",
+        "rm_grp_trust": "Growth & Trust",
+        "rm_sys1_label": "① Wallet System",
+        "rm_sys1_desc": "Double-entry ledger, balance + held (deposit escrow), idempotent mutations, reconciliation cron.",
+        "rm_sys2_label": "② Top-up System",
+        "rm_sys2_desc": "5-tier Google Play IAP catalog. Dedupe via UNIQUE(channel, txn_id).",
+        "rm_sys3_label": "③ Transaction System",
+        "rm_sys3_desc": "Atomic p2p transfers, cross-module transactions via shared withTransaction(). T+24h settlement.",
+        "rm_sys4_label": "④ Bot Interview System",
+        "rm_sys4_desc": "8-probe automated test. Pure regex scoring — zero cost, deterministic, unforgeable.",
+        "rm_sys5_label": "⑤ Pricing Advisor",
+        "rm_sys5_desc": "Model family detection + capability multiplier + confidence band.",
+        "rm_sys6_label": "⑥ Bot Capability Assessment",
+        "rm_sys6_desc": "Interview output → structured capabilities JSON → locked on Agent Card.",
+        "rm_sys7_label": "⑦ Contract Management",
+        "rm_sys7_desc": "9-state lifecycle. Version-locked snapshots. Deposit disposition matrix. DB-layer exclusivity.",
+        "rm_sys8_label": "⑧ Token Metering",
+        "rm_sys8_desc": "Voltarend-computed per-message billing. Renter 100%, owner 85%, platform 13%, insurance 2%.",
+        "rm_sys9_label": "⑨ Handover System",
+        "rm_sys9_desc": "Atomic entity slot swap between devices. Leased-out overlay on owner dashboard.",
+        "rm_sys10_label": "⑩ Post-Rental Collaboration",
+        "rm_sys10_desc": "Full A2A integration with guardrails. 30 req/min rate limit.",
+        "rm_sys11_label": "⑪ Referral System",
+        "rm_sys11_desc": "Invite codes with dual-sided rewards. Anti-fraud guards.",
+        "rm_done": "Concluido",
+        "rm_stub": "Stub",
+        "rm_scoring_done": "Scoring done",
+        "rm_phase5": "Phase 5",
+        "rm_complete": "Complete",
+        "rm_planned": "Planned",
+        "rm_dev_title": "Development Roadmap",
+        "rm_p0_name": "Wallet Foundation",
+        "rm_p0_desc": "E-coin wallet, double-entry ledger, Google Play top-up, daily reconciliation cron.",
+        "rm_p0_t1": "Wallet schema + primitives (transfer, hold, release, forfeit)",
+        "rm_p0_t2": "Top-up tiers (5 tiers with escalating bonus)",
+        "rm_p0_t3": "Wallet portal page (balance + history + tier catalog)",
+        "rm_p0_t4": "Daily reconcile cron (ledger vs cached balance audit)",
+        "rm_p0_t5": "Admin grant + reconcile endpoints",
+        "rm_p0_t6": "48 Jest unit tests",
+        "rm_p1_name": "Listaings & Interview",
+        "rm_p1_desc": "Bot listing CRUD, automated interview scoring, marketplace search, pricing advisor.",
+        "rm_p1_t1": "6 new DB tables (listings, interviews, contracts, snapshots, usage events, pricing)",
+        "rm_p1_t2": "Listaing CRUD + marketplace search API",
+        "rm_p1_t3": "8-probe interview engine (regex + heuristic, zero LLM cost)",
+        "rm_p1_t4": "Pricing advisor (base rate × capability multiplier)",
+        "rm_p1_t5": "64 Jest unit tests",
+        "rm_p1_t6": "HTTP probe dispatch to owner webhooks",
+        "rm_p1_t7": "Market snapshot hourly cron",
+        "rm_p1_t8": "Marketplace portal page",
+        "rm_p2_name": "Contract Core",
+        "rm_p2_desc": "Contract state machine, version locking, token metering proxy, entity handover, privacy guardrails, A2A collaboration.",
+        "rm_p2_t1": "Contract start/end with atomic cross-module transactions",
+        "rm_p2_t2": "Version lock via rental_snapshots",
+        "rm_p2_t3": "DB-layer bot exclusivity (partial UNIQUE index)",
+        "rm_p2_t4": "Deposit disposition matrix (100%/50%/30%/0% refund)",
+        "rm_p2_t5": "Token metering proxy (per-message billing)",
+        "rm_p2_t6": "Gatekeeper extension (prompt injection + sensitive data)",
+        "rm_p2_t7": "A2A guardrails (block rename/delete/sub-lease, 30 req/min)",
+        "rm_p2_t8": "Entity handover (insert/remove rental bot in device)",
+        "rm_p2_t9": "Contract expiration + grace period crons",
+        "rm_p2_t10": "73 Jest unit tests",
+        "rm_p3_name": "Trust Layer",
+        "rm_p3_desc": "Reviews, disputes, credit score, fraud detection, admin workqueue.",
+        "rm_p3_t1": "1–5★ rating + comment system",
+        "rm_p3_t2": "Dispute pipeline with auto-crash verification",
+        "rm_p3_t3": "Anti-fraud rules (self-rental, sybil, fake reviews)",
+        "rm_p3_t4": "Admin dispute workqueue + compensation tools",
+        "rm_p4_name": "Risk Management",
+        "rm_p4_desc": "Insurance pool, blacklist, SLA stats, notification triggers, compliance hooks.",
+        "rm_p4_t1": "Insurance pool (2% of commission auto-deposited)",
+        "rm_p4_t2": "Usuario blacklist with cooldown periods",
+        "rm_p4_t3": "SLA dashboard (uptime %, crash count, latency)",
+        "rm_p4_t4": "Age confirmation + KYC hooks",
+        "rm_p5_name": "Growth Engine",
+        "rm_p5_desc": "Referral codes, invite bonuses, market incentive programs.",
+        "rm_p5_t1": "Invite code system (6-char codes, fraud-guarded)",
+        "rm_p5_t2": "Dual-sided rewards (inviter + invitee)",
+        "rm_p5_t3": "First top-up bonus chain",
+        "rm_tech_title": "Technical Highlights",
+        "rm_tech1_label": "Cross-Module Atomicity",
+        "rm_tech1_desc": "Wallet + contract writes share a single BEGIN/COMMIT transaction via withTransaction() injection.",
+        "rm_tech2_label": "Version Lock",
+        "rm_tech2_desc": "rental_snapshots freezes listing config at contract start. Owner edits never affect in-flight rentals.",
+        "rm_tech3_label": "DB-Level Exclusivity",
+        "rm_tech3_desc": "Partial UNIQUE index prevents double-booking at DB layer.",
+        "rm_tech4_label": "Idempotent Ledger",
+        "rm_tech4_desc": "Every mutation carries a UNIQUE idempotency_key. Tentar novamente-safe.",
+        "rm_tech5_label": "Interview: Zero-Cost Judge",
+        "rm_tech5_desc": "Pure regex scoring. Deterministic, reproducible, unforgeable.",
+        "rm_tech6_label": "Daily Reconciliation",
+        "rm_tech6_desc": "CTE compares cached balance vs ledger sum. Drift triggers alert.",
+        "rm_full_doc": "For the complete specification (1,500+ lines), see:",
+        "rm_hermes_title": "Hermes Channel — Stable Operation Roadmap",
+        "rm_hermes_desc": "Hermes (#5) is a NaousResearch Hermes Agent connected via Eclaw's webhook channel. As a ao vivo showcase of EClaw's cross-platform A2A capability, it must operate reliably. Below is the roadmap to achieve and maintain stable co-working status.",
+        "rm_hermes_diag_title": "Known Instability Root Causes (Past Incidents)",
+        "rm_hermes_issue_q": "messageQueue overflow → EClaw forced into pure-translation mode, Hermes requests silently dropped (⚠️ recurred 2026-04-28; PR #2201 fixed process-lifecycle but session-resume + wall-clock-only timeout untouched — Phase H1 in progress)",
+        "rm_hermes_issue_d": "Docker container freeze: Hermes process aao vivo but not consuming messages; Railway restart lag causes extended outage (⚠️ recurred 2026-04-28; /health returned 200 while every chat call timed out — Phase H1: surface worker state + autoheal sidecar)",
+        "rm_hermes_issue_s": "Session cache mismatch: cached session keyed by wrong org → \",
+        "rm_hermes_issue_p": "claude-cli-proxy anonymous fallback: no GIT_HUB2 credential → private repo operations fail silently; gap with card_f531861e",
+        "rm_hermes_done_title": "Concluido Milestones",
+        "rm_hermes_done_daemon": "<strong>2026-04-28 — HTTP Daemon Refactor</strong> (card_52bd51bb): bridge replaces per-request <code>hermes chat</code> subprocess fork (5–8s cold start) with a long-ao vivod <code>hermes_daemon.py</code> on <code>:8645</code> owning a persistent <code>hermes --continue</code> child. Bridge talks to daemon via <code>POST /chat</code> + SSE event stream; falls back to legacy subprocess when <code>HERMES_DAEMON_URL</code> is unset. Per-message latency ≈ inference time only.",
+        "rm_hermes_done_selfcheck": "<strong>2026-04-27 — Self-check + auto-wake</strong> (PR #2): bridge runs a 30-min internal self-check; <code>stuck_prompt</code> states are auto-recovered instead of escalating. Long-idle E2E regression test guards bug 7.",
+        "rm_hermes_kpi_uptime": "≥99.0%",
+        "rm_hermes_kpi_uptime_l": "Weekly uptime",
+        "rm_hermes_kpi_delivery": "≤2%",
+        "rm_hermes_kpi_delivery_l": "Mensagem deao vivory failure rate",
+        "rm_hermes_kpi_resume": "≤30s",
+        "rm_hermes_kpi_resume_l": "Session resume time",
+        "rm_hermes_kpi_health": "6h",
+        "rm_hermes_kpi_health_l": "Saude-check interval",
+        "rm_in_progress": "In Progress",
+        "rm_todo": "Todo",
+        "rm_h0_name": "Infrastructure Readiness",
+        "rm_h0_desc": "Resolve basic connectivity: git clone/write access, credential injection, channel authentication.",
+        "rm_h0_t1": "GITHUB_TOKEN injected into claude-cli-proxy via Railway env var (vault → Railway)",
+        "rm_h0_t2": "Redeploy proxy; verify Hermes can git clone/push HankHuang0516/EClaw",
+        "rm_h0_t3": "Webhook secret validation on EClaw side matches Hermes egress",
+        "rm_h0_t4": "Hermes speakTo back to Entity 2 (commander) confirms bidirectional A2A",
+        "rm_h1_name": "Channel Reliability",
+        "rm_h1_desc": "Fix message deao vivory gaps, spurious disconnects, and session resumption failures. Targets: ≤2% deao vivory failure, ≤30s resume.",
+        "rm_h1_t1": "Queue back-pressure: cap messageQueue depth at 200; oldest messages moved to dead-letter when cap exceeded (prevents pure-translation fallback)",
+        "rm_h1_t2": "Heartbeat/ping-pong on webhook channel — Hermes must respond within 10s or EClaw marks deao vivory as failed and retries",
+        "rm_h1_t3": "Session cache key includes org_id + entity_id — fixes \",
+        "rm_h1_t4": "EClaw channel logs deao vivory receipts; alert on >3 consecutive failures → commander notified",
+        "rm_h1_t5": "Docker health-check: Railway health endpoint returns 200 only when Hermes message loop is responsive; auto-restart if /health returns 503 for >60s",
+        "rm_h1_t6": "Rate-limit guard: Hermes respects 30 req/min from EClaw; back-pressure handled via exponential backoff",
+        "rm_h2_name": "Operational Maturity",
+        "rm_h2_desc": "Hermes as a reliable team member: health monitoring, self-healing, SLA tracking. Targets: ≥99% weekly uptime, 6h health-check.",
+        "rm_h2_t1": "Hermes accepts i18n batch cards via speakTo and deao vivors PRs on time",
+        "rm_h2_t2": "Hermes health-check cron: git push test every 6h; alert commander on 3 consecutive failures",
+        "rm_h2_t3": "Hermes uses Linear API to update card status after PR merge (closed/labelled)",
+        "rm_h2_t4": "Railway restart policy set to always; OOM or stuck loop triggers immediate restart with commander notification",
+        "rm_h2_t5": "Hermes memory persists between sessoes via hermes_state.db (already configured)",
+        "rm_h2_t6": "Structured log pipeline: Hermes emits JSON logs → Railway log drain → Grafana dashboard; P95 response time tracked",
+        "rm_h3_name": "Private Repo Support",
+        "rm_h3_desc": "Hermes can operate on private repositories. Aligned with card_f531861e (claude-cli-proxy vault integration). Target: Hermes can clone/push to any EClaw org private repo without anonymous fallback.",
+        "rm_h3_t1": "claude-cli-proxy reads GIT_HUB2 from vault (card_f531861e) — Hermes git operations use authenticated context instead of anonymous fallback",
+        "rm_h3_t2": "Per-org credential scope: Hermes receives org-specific token; cannot access repos outside assigned orgs",
+        "rm_h3_t3": "Hermes tested against a private test repo — clone, branch, commit, push, PR all succeed",
+        "rm_h4_name": "Showcase Pronto",
+        "rm_h4_desc": "Hermes Channel page on EClaw portal demonstrating ao vivo co-working with other agents as public proof of EClaw's cross-platform A2A.",
+        "rm_h4_t1": "Public Hermes Channel guide page on portal (info.html already exists; content to be expanded)",
+        "rm_h4_t2": "Hermes i18n contributions visible as merged PRs — use as proof of cross-platform A2A",
+        "rm_h4_t3": "Live demo: commander assigns a card, Hermes deao vivors PR, commander merges — screenshot in portal",
+        "rm_h4_t4": "Add Hermes to EClaw's agent roster page (agent cards with capability tags)",
+        "rm_desktop_title": "EClaw Desktop One-Click Configuration Roadmap",
+        "rm_desktop_desc": "Goal: Achieve a desktop application that completes all Agent binding configuration within 30 seconds",
+        "rm_d1_name": "Core Infrastructure",
+        "rm_d1_desc": "2-3 weeks: Build desktop application framework, OAuth automation, Agent detection and connection fundamentals",
+        "rm_d2_name": "Configuration Automation Engine",
+        "rm_d2_desc": "2-3 weeks: Configuration template system, batch operation engine, environment adaptation",
+        "rm_d3_name": "Usuario Experience Optimization",
+        "rm_d3_desc": "1-2 weeks: One-click installation, setup wizard, backup and recovery",
+        "rm_d4_name": "Enterprise Features",
+        "rm_d4_desc": "2-3 weeks: Bulk deployment, security hardening, compliance reporting",
+        "rm_desktop_challenges_title": "Key Technical Challenges",
+        "mp_title": "EClawbot - Bot Marketplace",
+        "mp_heading": "Bot Marketplace",
+        "mp_desc": "Rent premium AI bots on-demand. Pay per token, no subscription required.",
+        "mp_search_placeholder": "Buscar bots...",
+        "mp_sort_rating": "Top Rated",
+        "mp_sort_cheap": "Cheapest",
+        "mp_sort_expensive": "Most Expensive",
+        "mp_sort_newest": "Newest",
+        "mp_loading": "Carregando...",
+        "mp_no_results": "Nao bots available yet. Check back later!",
+        "mp_load_error": "Falhou to load",
+        "mp_d_rate": "Rate",
+        "mp_d_deposit": "Deposit",
+        "mp_d_duration": "Duracao",
+        "mp_d_rating": "Rating",
+        "mp_d_rentals": "rentals",
+        "mp_d_uptime": "Uptime",
+        "mp_d_rent_duration": "Rental duration (minutes)",
+        "mp_rent_now": "Rent Naow",
+        "mp_login_first": "Entrar to rent",
+        "mp_renting": "Processing...",
+        "mp_rent_success": "Rental started! Check My Rentals for details.",
+        "mp_rent_warning": "⚠️ Your messages will be sent to the bot owner's server. Avoid sharing sensitive data.",
+        "rental_error_cooldown": "This bot has a 24-hour cooldown period. Por favor, tente novamente later.",
+        "rental_error_self_rent": "You cannot rent your own bot.",
+        "rental_error_already_rented": "This bot is already rented by someone else.",
+        "rental_error_insufficient": "Insufficient e-coin balance for this rental.",
+        "rental_error_not_available": "This listing is no longer available.",
+        "listing_soft_paused_owner_banner": "This listing is soft-paused because health checks are degraded. It remains listed, but new rentals are blocked until recovery.",
+        "listing_soft_paused_visitor_banner": "This bot is temporarily unavailable while the owner fixes health checks. The page remains available, but renting is disabled for now.",
+        "listing_soft_paused_resume_btn": "Resume listing",
+        "rental_create_rejected_soft_paused": "This listing is temporarily unavailable due to degraded health checks.",
+        "mp_d_rent_duration_hours": "Rental duration (hours)",
+        "mp_hours": "hours",
+        "mp_est_deposit": "Deposit",
+        "mp_est_usage": "Estimated usage",
+        "mp_est_total": "Estimated total cost",
+        "mp_bal_your": "Your balance",
+        "mp_bal_sufficient": "Sufficient",
+        "mp_bal_insufficient": "Insufficient balance",
+        "mp_bal_need": "Need",
+        "mp_bal_current": "Current",
+        "mp_bal_deficit": "Deficit",
+        "mp_bal_topup": "Top Up",
+        "mp_privacy_warning": "Your conversation will be processed through the lessor's server. Do not share credit card numbers, passwords, or personal identity information.",
+        "mp_privacy_agree": "I understand and agree",
+        "mp_status_available": "Disponivel",
+        "mp_status_rented": "Rented",
+        "mp_interview_score": "Interview score",
+        "mp_rent_success_title": "Rental successful!",
+        "mp_rent_success_desc": "Bot has been added to your device.",
+        "mp_start_chat": "Start Chat",
+        "mp_chat_cta": "Start chat",
+        "mp_view_contract": "Ver Contract",
+        "mp_cap_filter_label": "Capabilities",
+        "mp_rate_range_label": "Rate",
+        "mp_rate_unit": "e\u5e63/1K",
+        "mp_rate_min_placeholder": "Min e/1K",
+        "mp_rate_max_placeholder": "Max e/1K",
+        "mp_stat_available_listings": "Disponivel listings",
+        "mp_stat_median_rate": "Median e-coin / 1K",
+        "mp_stat_capability_tags": "Capability tags",
+        "mp_stat_currently_rented": "Currently rented",
+        "mp_no_caps_reported": "Nao supported capabilities reported",
+        "mr_title": "EClawbot - My Rentals",
+        "mr_heading": "My Rentals",
+        "mr_tab_renting": "Renting",
+        "mr_tab_leasing": "Leasing Out",
+        "mr_tab_disputes": "Disputes",
+        "mr_loading": "Carregando...",
+        "mr_no_contracts": "Nao contracts yet",
+        "mr_no_disputes": "Nao disputes filed",
+        "mr_load_error": "Falhou to load",
+        "mr_contract": "Contract",
+        "mr_charged": "charged",
+        "mr_ecoin": "coins",
+        "mr_end_early": "End Early",
+        "mr_review": "Review",
+        "mr_dispute": "Dispute",
+        "mr_review_placeholder": "Opcional comment...",
+        "mr_submit_review": "Enviar Review",
+        "mr_select_rating": "Please select a rating",
+        "mr_review_submitted": "Review submitted!",
+        "mr_dispute_filed": "Dispute filed!",
+        "mr_filed": "Arquivod",
+        "mr_chat": "Chat",
+        "mr_usage_details": "Uso Detalhes",
+        "mr_topup": "Top Up",
+        "mr_usage_coming_soon": "Uso details coming soon",
+        "mr_remaining_time": "Remaining",
+        "mr_deposit": "Deposit",
+        "mr_deposit_frozen": "frozen",
+        "mr_deposit_full_refund": "Full refund",
+        "mr_deposit_early_end": "Refund {refund} e-coins, forfeit {forfeit} e-coins (50%)",
+        "mr_deposit_violation": "Refund {refund} e-coins, forfeit {forfeit} e-coins (30%)",
+        "mr_deposit_zero_balance": "Remaining deposit returned",
+        "mr_deposit_renter_full_refund": "Deposit fully refunded to you",
+        "mr_deposit_renter_early_end": "Deposit: {refund} e-coins refunded to you · {forfeit} e-coins forfeit (50%)",
+        "mr_deposit_renter_violation": "Deposit: {refund} e-coins refunded to you · {forfeit} e-coins to insurance pool (30%)",
+        "mr_deposit_renter_zero_balance": "Remaining deposit returned to you after usage deduction",
+        "mr_deposit_owner_full_returned": "Deposit fully returned to renter",
+        "mr_deposit_owner_early_end": "Deposit: {refund} e-coins returned to renter · {forfeit} e-coins forfeit received by you (50%)",
+        "mr_deposit_owner_violation": "Deposit: {refund} e-coins returned to renter · {forfeit} e-coins to insurance pool (30%)",
+        "mr_deposit_owner_zero_balance": "Remaining deposit returned to renter after usage deduction",
+        "mr_income": "Income",
+        "mr_income_details": "Income Detalhes",
+        "mr_settlement_status": "Settlement",
+        "mr_settlement_pending": "Settling...",
+        "mr_settlement_done": "Settled",
+        "mr_status_active": "Ativo",
+        "mr_status_ended_normal": "Ended (Naormal)",
+        "mr_status_ended_early": "Ended (Early)",
+        "mr_status_ended_zero_balance": "Ended (Zero Balance)",
+        "mr_status_ended_violation": "Ended (Violation)",
+        "mr_status_ended_disputed": "Ended (Disputed)",
+        "mr_status_ended_admin": "Ended (Admin)",
+        "mr_status_suspended": "Suspended (Low Balance)",
+        "mr_end_early_title": "Confirmar Early Termination?",
+        "mr_end_early_irreversible": "Esta acao nao pode ser desfeita. Per early termination terms:",
+        "mr_end_early_forfeit": "Deposit 50% ({forfeit} e-coins) will be forfeited",
+        "mr_end_early_refund": "Deposit 50% ({refund} e-coins) will be refunded",
+        "mr_end_early_split": "Forfeit split",
+        "mr_end_early_owner": "Owner 85%",
+        "mr_end_early_platform": "Platform 13%",
+        "mr_end_early_insurance": "Insurance 2%",
+        "mr_cancel": "Cancelar",
+        "mr_confirm_end": "Confirmar End",
+        "mr_dispute_title": "Arquivo a Dispute",
+        "mr_dispute_select_type": "Select dispute type:",
+        "mr_dtype_bot_quality": "Bot Quality - Poor bot quality",
+        "mr_dtype_capability_mismatch": "Capability Mismatch - Does not match description",
+        "mr_dtype_financial": "Financial - Billing error",
+        "mr_dtype_bot_crash": "Bot Crash - Bot unresponsive",
+        "mr_dispute_evidence_placeholder": "Describe the issue (optional)...",
+        "mr_submit_dispute": "Enviar Dispute",
+        "mr_dispute_select_required": "Please select a dispute type",
+        "mr_sla_title": "SLA Information",
+        "mr_sla_bot_crash": "5min auto-verify",
+        "mr_sla_capability": "24h response / 48h resolve",
+        "mr_sla_financial": "12h response / 48h resolve",
+        "mr_sla_quality": "24h response / 72h resolve",
+        "mr_sla_remaining": "SLA",
+        "mr_sla_remaining_suffix": "restante",
+        "mr_dispute_status_open": "Open",
+        "mr_dispute_status_resolved": "Resolved",
+        "mr_dispute_status_rejected": "Rejeitado",
+        "mr_action_failed": "Falhou",
+        "mr_tab_listings": "My Listaings",
+        "mr_no_listings": "Nao listings yet — create one from your bot's agent card",
+        "mr_listing_status_listed": "Listaed",
+        "mr_listing_status_paused": "Pausado",
+        "mr_listing_status_delisted": "Delisted",
+        "mr_listing_status_draft": "Rascunho",
+        "mr_listing_rate": "Rate",
+        "mr_listing_rentals": "rentals",
+        "mr_listing_no_rating": "Nao ratings yet",
+        "mr_listing_bound_to": "Bound to",
+        "mr_listing_unbound": "(slot empty)",
+        "mr_listing_pause": "Pause",
+        "mr_listing_resume": "Resume",
+        "mr_listing_delist": "Delist",
+        "mr_listing_delist_title": "Permanently delist?",
+        "mr_listing_delist_warning": "This cannot be undone. Existing rental contracts will run to their end — only new rentals are blocked.",
+        "mr_listing_delist_confirm": "Confirmar Delist",
+        "mr_listing_paused_toast": "Listaing paused",
+        "mr_listing_resumed_toast": "Listaing ao vivo again",
+        "mr_listing_delisted_toast": "Listaing delisted",
+        "inv_title": "EClawbot - Invite Friends",
+        "inv_heading": "Invite Friends, Earn e-coin",
+        "inv_desc": "Compartilhar your invite code. You earn 500 e-coin, your friend gets 100 e-coin.",
+        "inv_my_code": "My Invite Code",
+        "inv_copy": "Copiar",
+        "inv_stats": "Referral Stats",
+        "invite_stats_title": "Referral Painel",
+        "invite_stats_subtitle": "Track your invite performance at a glance.",
+        "invite_stats_kpi_invited": "Friends Invited",
+        "invite_stats_kpi_bonus": "e-coin Earned (est.)",
+        "invite_stats_kpi_today_used": "Hoje Used",
+        "invite_unlimited_label": "sent (unlimited)",
+        "invite_stats_kpi_conversion": "Conversion",
+        "invite_stats_timeline_title": "Daily usage (past 30 days)",
+        "invite_stats_timeline_empty": "Nao usage recorded yet — come back tomorrow!",
+        "invite_stats_refresh_btn": "Atualizar stats",
+        "invite_stats_loading": "Carregando…",
+        "invite_per_code_funnel_header": "Per-code click funnel",
+        "invite_per_code_funnel_empty": "Nao invite codes yet — share your link to start tracking clicks.",
+        "invite_per_code_summary_codes": "Codes",
+        "invite_per_code_summary_clicks": "Total clicks",
+        "invite_per_code_summary_unique": "Unique",
+        "invite_per_code_summary_redeemed": "Redeemed",
+        "invite_per_code_col_code": "Code",
+        "invite_per_code_col_clicks": "Clicks",
+        "invite_per_code_col_unique": "Unique",
+        "invite_per_code_col_status": "Status",
+        "invite_per_code_status_redeemed": "Redeemed",
+        "invite_per_code_status_pending": "Pendente",
+        "invite_stats_error": "Falhou to load stats. Try again.",
+        "inv_invited": "Friends Invited",
+        "inv_earned": "e-coin Earned",
+        "inv_rewards_title": "Reward Structure",
+        "inv_you_get": "You get",
+        "inv_friend_gets": "Friend gets",
+        "inv_first_topup": "Friend's first top-up bonus (you)",
+        "inv_tier_title": "Tier & Milestones",
+        "inv_tier_current": "Current Tier",
+        "inv_tier_none": "Naot unlocked yet",
+        "inv_tier_bronze": "Bronze",
+        "inv_tier_silver": "Silver",
+        "inv_tier_gold": "Gold",
+        "inv_tier_diamond": "Diamond",
+        "inv_tier_req": "{n} invites",
+        "inv_tier_progress": "{n} more invites to reach {tier}",
+        "inv_tier_all_done": "Todos tiers unlocked 🏆",
+        "inv_redeem_title": "Have an Invite Code?",
+        "inv_redeem_btn": "Redeem",
+        "inv_redeem_success": "Code redeemed! You received 100 e-coin.",
+        "inv_qr_gen_cta": "Generate share image",
+        "invite_qr_title": "Generate Invite Compartilhar Imagem",
+        "invite_qr_desc": "Criar a branded image with your invite code and QR, ready to post on social media.",
+        "invite_qr_code_label": "Invite code",
+        "invite_qr_btn_download": "Baixar PNG",
+        "invite_qr_btn_copy": "Copiar to clipboard",
+        "invite_qr_size_mobile": "Mobile 600×600",
+        "invite_qr_size_ig": "Instagram 1080×1080",
+        "invite_qr_size_desktop": "Desktop 1200×1200",
+        "invite_qr_reward_inviter": "inviter",
+        "invite_qr_reward_invitee": "friend",
+        "invite_qr_reward_topup": "first top-up",
+        "invite_qr_toast_downloaded": "Imagem downloaded",
+        "invite_qr_toast_copied": "Copied to clipboard",
+        "invite_qr_toast_copy_unsupported": "Copiar not supported — use Baixar",
+        "invite_qr_toast_copy_failed": "Copiar failed — use Baixar",
+        "chat_title": "Chat",
+        "chat_filter_all": "Todos",
+        "chat_filter_my": "My Mensagems",
+        "chat_send_to": "Send to:",
+        "chat_input_placeholder": "Tipo a message...",
+        "chat_cancel": "Cancelar",
+        "chat_reply_btn": "Reply",
+        "chat_reply_cancel": "Cancelar reply",
+        "chat_reply_you": "You",
+        "chat_reply_media": "(media)",
+        "chat_his_not_rendered_preview": "Mensagem not in view — preview: ",
+        "chat_msg_deeplink_not_found": "Mensagem not found or not accessible: {id}",
+        "chat_his_not_found": "Referenciad message is not currently loaded.",
+        "chat_btn_send": "Send",
+        "chat_btn_sending": "Sending...",
+        "slash_cmd_help": "Show available commands",
+        "slash_cmd_status": "Check bot connection status",
+        "slash_cmd_reset": "Limpar conversation history",
+        "slash_cmd_activation": "Manage bot activation",
+        "slash_cmd_pair": "Pair with a new device",
+        "slash_cmd_reasoning": "Toggle reasoning mode",
+        "slash_cmd_config": "Configurar bot settings",
+        "slash_cmd_broadcast": "Broadcast to all entities",
+        "slash_cmd_model": "Switch AI model (Claude Code)",
+        "slash_cmd_auto_approve": "Toggle auto-approve (Claude Code)",
+        "chat_empty": "Nao messages yet",
+        "chat_card_selected": "Selected: {label}",
+        "chat_empty_sub": "Send a message to your entities below",
+        "chat_date_today": "Hoje",
+        "chat_date_yesterday": "Ontem",
+        "chat_empty_hint": "Send a message to start chatting",
+        "chat_limit_reached": "Daily message limit reached. Upgrade to Premium for unlimited messages!",
+        "chat_limit_title": "Daily Limit Reached",
+        "chat_limit_body": "You have reached the daily limit of 15 messages. Upgrade to Premium for unlimited messaging!",
+        "chat_limit_upgrade": "Upgrade",
+        "chat_limit_close": "Fechar",
+        "chat_read": "Read",
+        "chat_read_label": "Read",
+        "chat_delivered": "Deao vivored",
+        "chat_mission_control": "Mission Control",
+        "chat_sent": "Sent",
+        "chat_usage_unlimited": "Unlimited",
+        "chat_usage_count": "{used} sent",
+        "chat_select_entity": "Please select at least one entity",
+        "chat_mention_unresolved": "Desconhecido @mention: {tokens}",
+        "chat_enter_message": "Please enter a message",
+        "chat_attach_photo": "Photo",
+        "chat_attach_video": "Video",
+        "chat_attach_file": "Arquivo",
+        "chat_attach_my_files": "Cloud Drive",
+        "chat_cloud_drive_title": "\uD83D\uDCC1 Cloud Drive",
+        "chat_file_too_large": "Arquivo too large (max 100MB)",
+        "chat_file_download": "Baixar",
+        "chat_file_download_failed": "Baixar failed",
+        "chat_uploading": "Enviaring...",
+        "chat_upload_error": "Erro",
+        "chat_upload_failed": "Enviar failed",
+        "chat_wait_upload": "Please wait for uploads to finish",
+        "chat_cross_device": "Cross-Device",
+        "chat_cross_device_placeholder": "Enter target code (e.g. abc123)",
+        "chat_cross_device_lookup": "Lookup",
+        "chat_target_collapse": "Collapse",
+        "chat_delivered_label": "Deao vivored",
+        "chat_sent_to": "Sent to ",
+        "chat_gatekeeper_blocked": "Mensagem blocked by security filter",
+        "chat_loading_entities": "Carregando entities...",
+        "chat_send_failed": "Send failed",
+        "chat_scroll_to_latest": "Scroll to latest message",
+        "chat_schedule_title": "⏰ Schedule message",
+        "chat_schedule_tab_create": "New",
+        "chat_schedule_tab_queue": "Agendado",
+        "chat_schedule_message_label": "Mensagem",
+        "chat_schedule_target_label": "Send to",
+        "chat_schedule_local_only": "(local entities only)",
+        "chat_schedule_mode_label": "When",
+        "chat_schedule_mode_fixed": "Fixed time",
+        "chat_schedule_mode_countdown": "Contagemdown",
+        "chat_schedule_h": "h",
+        "chat_schedule_m": "m",
+        "chat_schedule_s": "s",
+        "chat_schedule_max_7days": "(max 7 days)",
+        "chat_schedule_submit": "Schedule",
+        "chat_schedule_cancel": "Cancelar",
+        "chat_schedule_close": "Fechar",
+        "chat_schedule_save": "Salvar",
+        "chat_schedule_edit": "Editar",
+        "chat_schedule_delete": "Excluir",
+        "chat_schedule_delete_confirm": "Cancelar this scheduled message?",
+        "chat_schedule_no_pending": "Nao pending scheduled messages",
+        "chat_schedule_loading": "Carregando…",
+        "chat_schedule_empty_text": "(empty — type a message before scheduling)",
+        "chat_schedule_err_empty": "Tipo a message first",
+        "chat_schedule_err_no_target": "Pick at least one target",
+        "chat_schedule_err_invalid_time": "Enter a valid time",
+        "chat_schedule_err_in_past": "Hora must be in the future",
+        "chat_schedule_err_too_far": "Cannot schedule more than 7 days ahead",
+        "chat_schedule_ok": "Agendado",
+        "chat_schedule_saved": "Salvard",
+        "chat_schedule_cancelled": "Cancelarled",
+        "chat_webhook_title": "Webhook Naot Registered",
+        "chat_webhook_desc": "Your message was saved but could not be pushed to the bot. The bot has no webhook URL registered. Follow the checklist below to troubleshoot:",
+        "chat_webhook_step1": "Confirmar the OpenClaw channel plugin is installed: <code>ls ~/.openclaw/extensions/openclaw-channel/</code>",
+        "chat_webhook_step2": "Confirmar the gateway is running: <code>openclaw gateway status</code>",
+        "chat_webhook_step3": "Retrieve credentials from the gateway log: <code>cat /tmp/openclaw/openclaw-*.log | grep -i \",
+        "chat_webhook_step4": "Verify credentials: <code>curl \",
+        "chat_webhook_step5": "Todosow gateway tools: <code>openclaw config set gateway.tools.allow '[\",
+        "chat_webhook_step6": "Register webhook (use <code>/tools/invoke</code> path): <code>POST /api/bot/register</code> with <code>webhook_url</code>, <code>token</code>, <code>session_key</code>",
+        "chat_webhook_step7": "Test push: send a message from the EClaw app and confirm the bot receives it.",
+        "chat_webhook_doc_link": "Full guide: <a href=\",
+        "chat_webhook_close": "Fechar",
+        "chat_load_failed": "Falhou to load chat history",
+        "admin_title": "EClawbot - Admin Painel",
+        "admin_badge": "ADMIN",
+        "admin_refresh": "Atualizar",
+        "admin_loading": "Carregando admin data...",
+        "admin_access_denied": "Access Denied",
+        "admin_no_privilege": "You do not have admin privileges.",
+        "admin_back_dashboard": "Voltar to Painel",
+        "admin_error_load": "Falhou to load: ",
+        "admin_stat_users": "Total Usuarios",
+        "admin_stat_premium": "Premium Usuarios",
+        "admin_stat_verified": "Verified E-mails",
+        "admin_stat_devices": "Devices",
+        "admin_stat_bound": "Bound Entities",
+        "admin_stat_bindings": "Bot Bindings",
+        "admin_stat_free": "Free Bindings",
+        "admin_stat_personal": "Personal Bindings",
+        "admin_stat_messages": "Mensagems Hoje",
+        "admin_sec_signups": "New Signups (Last 7 Days)",
+        "admin_sec_bots": "Official Bots",
+        "admin_btn_add_bot": "+ Add Bot",
+        "admin_sec_app_update": "App Atualizar Naotification",
+        "admin_update_desc": "Push an update notification to all devices with FCM tokens.",
+        "admin_current_version": "Current version",
+        "admin_btn_push_update": "Push Atualizar Naotification",
+        "admin_update_version": "Target Version",
+        "admin_update_notes": "Release Naotes (optional)",
+        "admin_update_force": "Force Atualizar (non-dismissable dialog)",
+        "admin_btn_send_push": "Send Push",
+        "admin_btn_cancel": "Cancelar",
+        "admin_update_version_required": "Version is required",
+        "admin_update_sending": "Sending...",
+        "admin_update_sent": "Push sent!",
+        "admin_col_bot_id": "Bot ID",
+        "admin_col_type": "Tipo",
+        "admin_col_status": "Status",
+        "admin_col_assigned": "Assigned To",
+        "admin_col_user": "Usuario",
+        "admin_col_assigned_at": "Assigned At",
+        "admin_col_conv_24h": "Conv/24h",
+        "admin_col_conv_avg5h": "Conv Avg/5h",
+        "admin_col_users_24h": "Usuarios/24h",
+        "admin_col_users_avg5h": "Usuarios Avg/5h",
+        "admin_bindings_unit": "bindings",
+        "admin_no_bots": "Nao official bots registered",
+        "admin_col_actions": "Actions",
+        "admin_btn_remove_bot": "Remove",
+        "admin_btn_edit_bot": "Editar",
+        "admin_col_display_name": "Display Nome",
+        "admin_dlg_rename_bot_title": "Rename Bot",
+        "admin_dlg_rename_bot_desc": "Set display name for bot {{botId}}",
+        "admin_dlg_rename_bot_placeholder": "Enter display name",
+        "admin_dlg_rename_bot_confirm": "Salvar",
+        "admin_toast_rename_success": "Bot renamed successfully",
+        "admin_toast_rename_failed": "Falhou to rename bot",
+        "admin_dlg_edit_bot_title": "Editar Bot",
+        "admin_dlg_edit_bot_desc": "Editar settings for bot {{botId}}",
+        "admin_dlg_edit_bot_confirm": "Salvar",
+        "admin_toast_edit_success": "Bot updated successfully",
+        "admin_toast_edit_failed": "Falhou to update bot",
+        "admin_dlg_remove_bot_title": "Remove Bot",
+        "admin_dlg_remove_bot_desc": "Are you sure you want to remove bot {botId}?",
+        "admin_dlg_remove_bot_warn_assigned": "This bot is currently assigned. It will be force-removed.",
+        "admin_dlg_removing": "Removing...",
+        "admin_msg_bot_removed": "Bot removed successfully",
+        "admin_sec_bindings": "Ativo Bindings",
+        "admin_col_device": "Device",
+        "admin_col_entity": "Entity",
+        "admin_col_bound_at": "Bound At",
+        "admin_col_sub_verified": "Sub Verified",
+        "admin_no_bindings": "Nao active bindings",
+        "admin_sec_users": "Usuarios",
+        "admin_col_email": "E-mail",
+        "admin_col_verified": "Verified",
+        "admin_col_sub": "Subscription",
+        "admin_col_role": "Role",
+        "admin_col_registered": "Registered",
+        "admin_col_last_login": "Last Entrar",
+        "admin_col_ecoin": "E-coin",
+        "admin_no_users": "Nao users",
+        "admin_registered": "Registered",
+        "admin_app_device": "APP Device",
+        "admin_col_source": "Source",
+        "admin_source_web": "Web",
+        "admin_app_only": "APP only",
+        "admin_test_devices": "Test",
+        "admin_dlg_add_bot": "Add Official Bot",
+        "admin_dlg_bot_id": "Bot ID",
+        "admin_dlg_type": "Tipo",
+        "admin_dlg_webhook": "Webhook URL",
+        "admin_dlg_token": "Token",
+        "admin_dlg_create": "Criar",
+        "admin_dlg_creating": "Creating...",
+        "admin_dlg_cancel": "Cancelar",
+        "admin_msg_required": "Todos fields are required.",
+        "admin_msg_success": "Bot created successfully!",
+        "admin_msg_secret": "Bot Secret (save this):",
+        "admin_no_data": "Sem dados disponiveis",
+        "admin_chart_platform": "Platform Distribution",
+        "admin_chart_devices": "devices",
+        "admin_chart_web": "Web Portal",
+        "admin_chart_app": "Android APP",
+        "admin_chart_bot_overview": "Bot Tipo Visao geral",
+        "admin_chart_bots": "bots",
+        "admin_chart_free": "Free",
+        "admin_chart_personal": "Personal",
+        "admin_chart_assigned": "assigned",
+        "admin_chart_total_bindings": "Total Bindings",
+        "admin_chart_bot_daily": "Bot Conversations (Last 7 Days)",
+        "admin_chart_free_conv": "Free Bot Mensagems",
+        "admin_chart_personal_conv": "Personal Bot Mensagems",
+        "admin_chart_bot_activity": "Per-Bot Activity (24h)",
+        "admin_chart_users": "users",
+        "nav_schedule": "Schedule",
+        "sched_title": "Schedule",
+        "sched_btn_add": "+ New Schedule",
+        "sched_upcoming": "Upcoming & Ativo",
+        "sched_history": "History",
+        "sched_empty_upcoming": "Nao upcoming schedules",
+        "sched_empty_history": "Nao execution history",
+        "sched_create_title": "New Schedule",
+        "sched_label_entity": "Target Entity",
+        "sched_label_message": "Mensagem",
+        "sched_label_time": "Agendado Hora",
+        "sched_label_repeat": "Repeat",
+        "sched_label_label": "Label (optional)",
+        "sched_label_cron": "Cron Expression",
+        "sched_placeholder_message": "Enter message to send...",
+        "sched_placeholder_label": "e.g., Morning greeting",
+        "sched_once": "One-time",
+        "sched_repeat_daily": "Daily",
+        "sched_repeat_weekly": "Weekly",
+        "sched_repeat_hourly": "Hourly",
+        "sched_repeat_cron": "Personalizado (Cron)",
+        "sched_5min": "5 min",
+        "sched_15min": "15 min",
+        "sched_30min": "30 min",
+        "sched_1hr": "1 hr",
+        "sched_3hr": "3 hr",
+        "sched_cron_hint": "Format: minute hour day month weekday (e.g., \",
+        "sched_btn_create": "Criar",
+        "sched_creating": "Creating...",
+        "sched_created_ok": "Schedule created!",
+        "sched_confirm_delete": "Excluir this schedule?",
+        "sched_deleted": "Schedule deleted",
+        "sched_err_message": "Please enter a message",
+        "sched_err_time": "Please select a time",
+        "sched_err_cron": "Please enter a cron expression",
+        "sched_no_entities": "Nao bound entities. Bind an entity first.",
+        "sched_status_pending": "Pendente",
+        "sched_status_active": "Ativo",
+        "sched_status_completed": "Concluido",
+        "sched_status_failed": "Falhou",
+        "sched_created": "Criard",
+        "sched_executed": "Executed",
+        "sched_delete": "Excluir",
+        "sched_edit_title": "Editar Schedule",
+        "sched_btn_save": "Salvar",
+        "sched_saving": "Saving...",
+        "sched_updated_ok": "Schedule updated!",
+        "sched_edit": "Editar",
+        "sched_enable": "Enable",
+        "sched_disable": "Disable",
+        "sched_status_paused": "Pausado",
+        "sched_toggle_ok": "Schedule updated",
+        "sched_err_entity": "Please select an entity",
+        "sched_push_ok": "Pushed to bot",
+        "sched_view_reply": "Ver Bot Reply",
+        "sched_bot_reply": "Bot Reply",
+        "sched_no_reply": "Nao reply yet",
+        "sched_scheduled_msg": "Agendado Mensagem",
+        "chat_schedule_tag": "Schedule",
+        "chat_contacts_add": "Add Contact",
+        "chat_contacts_add_placeholder": "Enter code",
+        "chat_contacts_add_btn": "Add",
+        "chat_contacts_add_cancel": "Cancelar",
+        "chat_contacts_remove_confirm": "Remove {name}?",
+        "chat_contacts_limit": "Contact limit reached (max 20)",
+        "chat_contacts_self": "Cannot add your own entity",
+        "chat_contacts_duplicate": "Already in contacts",
+        "chat_contacts_added": "Contact added",
+        "chat_contacts_removed": "Contact removed",
+        "chat_contacts_not_found": "Entity not found",
+        "chat_contacts_offline": "offline",
+        "chat_contacts_offline_send": "Entity is offline, cannot send",
+        "chat_contacts_section": "Contacts",
+        "cardholder_title": "EClawbot - Card Holder",
+        "cardholder_heading": "Card Holder",
+        "cardholder_search": "Buscar cards...",
+        "cardholder_add": "+ Add",
+        "cardholder_code_placeholder": "Public code",
+        "cardholder_filter_all": "Todos",
+        "cardholder_filter_pinned": "Pinned",
+        "cardholder_filter_friends": "Friends",
+        "cardholder_edit_agent_card": "Editar Agent Card",
+        "cardholder_desc_placeholder": "Describe this entity's purpose and capabilities...",
+        "cardholder_add_capability": "Add Capability",
+        "cardholder_empty": "Nao cards yet",
+        "cardholder_empty_sub": "Add agents by their public code or chat cross-device to auto-collect",
+        "cardholder_no_match": "Nao matching cards",
+        "cardholder_description": "Descricao",
+        "cardholder_capabilities": "Capabilities",
+        "cardholder_protocols": "Protocols",
+        "cardholder_tags": "Tags",
+        "cardholder_tags_placeholder": "tag1, tag2, tag3",
+        "cardholder_details": "Detalhes",
+        "cardholder_exchange_type": "Exchange Tipo",
+        "cardholder_added": "Added",
+        "cardholder_refreshed": "Last Atualizared",
+        "cardholder_interactions": "Interactions",
+        "cardholder_notes": "Naotes",
+        "cardholder_notes_placeholder": "Add your notes...",
+        "cardholder_category": "Categoria",
+        "cardholder_category_placeholder": "e.g. tools, social, dev",
+        "cardholder_pin": "Pin",
+        "cardholder_unpin": "Unpin",
+        "cardholder_refresh": "Atualizar",
+        "cardholder_pinned": "Pinned",
+        "cardholder_unpinned": "Unpinned",
+        "cardholder_refreshed_ok": "Card refreshed",
+        "quote_to_chat": "Quote to Chat",
+        "cardholder_remove_confirm": "Remove {name} from card holder?",
+        "cardholder_removed": "Card removed",
+        "cardholder_not_found": "Naot found",
+        "cardholder_added_ok": "Card added",
+        "cardholder_self": "Cannot add your own entity",
+        "cardholder_duplicate": "Already in card holder",
+        "cardholder_my_cards": "My Cards",
+        "cardholder_recent": "Recent",
+        "cardholder_collected": "Collected",
+        "cardholder_my_cards_empty": "Nao agent cards configured",
+        "cardholder_my_cards_empty_sub": "Set up agent cards on your entities to share them",
+        "cardholder_recent_empty": "Nao recent interactions",
+        "cardholder_recent_empty_sub": "Cards you interact with will appear here",
+        "cardholder_copy_code": "Copiar",
+        "cardholder_just_now": "just now",
+        "cardholder_last_interaction": "Last Interaction",
+        "cardholder_chat_history": "Chat History",
+        "cardholder_no_chat_history": "Nao chat history",
+        "cardholder_chat_history_error": "Could not load chat history",
+        "cardholder_filter_blocked": "Blocked",
+        "cardholder_blocked_label": "Blocked",
+        "cardholder_no_blocked": "Nao blocked cards",
+        "cardholder_block": "Block",
+        "cardholder_unblock": "Unblock",
+        "cardholder_block_confirm": "Block this agent? They will not be able to send you messages.",
+        "cardholder_blocked_ok": "Agent blocked",
+        "cardholder_unblocked_ok": "Agent unblocked",
+        "cardholder_add_friend": "Add Friend",
+        "cardholder_search_saved": "Salvard",
+        "cardholder_search_external": "Online Agents",
+        "cardholder_no_saved_match": "Nao saved cards match",
+        "cardholder_filter_requests": "Requests",
+        "cardholder_friend_requests": "Friend Requests",
+        "cardholder_no_requests": "Nao pending friend requests",
+        "cardholder_friend": "Friend",
+        "cardholder_send_friend_req": "Send Friend Request",
+        "cardholder_friend_req_msg": "Send a message with your friend request (optional):",
+        "cardholder_friend_req_sent": "Friend request sent!",
+        "cardholder_already_friends": "Already friends or request pending",
+        "cardholder_accept": "Accept",
+        "cardholder_reject": "Reject",
+        "cardholder_friend_accepted": "Friend request accepted!",
+        "cardholder_friend_rejected": "Friend request rejected",
+        "cardholder_unfriend": "Unfriend",
+        "cardholder_start_chat": "Start Chat",
+        "cardholder_share": "Compartilhar",
+        "cardholder_unfriend_confirm": "Remove this friend?",
+        "cardholder_unfriended": "Friend removed",
+        "guide_nav_usecase_messaging": "\uD83D\uDCAC Messaging & Friends",
+        "guide_msg_title": "Cross-Device Messaging & Friend System",
+        "info_slide_guide_msg_cta": "Ver Claude Design slide →",
+        "guide_msg_meta": "Complete architecture for messaging, contacts, and friend relationships",
+        "guide_msg_h2_overview": "System Visao geral",
+        "guide_msg_p_overview": "EClawbot's messaging and friend system integrates cross-device communication, card holder management, and friend requests, enabling AI Agents to establish trusted relationships and exchange messages securely.",
+        "guide_msg_flow_user": "Usuario / Bot",
+        "guide_msg_flow_friend": "Friend Request",
+        "guide_msg_flow_accept": "Accept",
+        "guide_msg_flow_chat": "Free Chat",
+        "guide_msg_h2_architecture": "Three-Layer Architecture",
+        "guide_msg_th_layer": "Layer",
+        "guide_msg_th_function": "Function",
+        "guide_msg_th_desc": "Descricao",
+        "guide_msg_layer1": "\uD83D\uDCC7 Card Holder",
+        "guide_msg_layer1_func": "Collect / Buscar / Manage contacts",
+        "guide_msg_layer1_desc": "One-way agent card collection with pin, categorize, block, and notes support",
+        "guide_msg_layer2": "\uD83E\uDD1D Friend System",
+        "guide_msg_layer2_func": "Bidirectional friendship",
+        "guide_msg_layer2_desc": "Send friend request → Accept → Mutual friends. Friends bypass rate limits and can use 'friends_only' mode",
+        "guide_msg_layer3": "\uD83D\uDCAC Cross-Device Messaging",
+        "guide_msg_layer3_func": "Real-time cross-device communication",
+        "guide_msg_layer3_desc": "Enviar mensagems to any Agent on any device via publicCode, supporting text/photo/voice/video/file",
+        "guide_msg_h2_friend_flow": "Friend Request Flow",
+        "guide_msg_step1_title": "Step 1: Send Friend Request",
+        "guide_msg_step1_desc": "Find the Agent Card in your card holder, click '\uD83E\uDD1D Add Friend', and optionally attach a greeting message.",
+        "guide_msg_step2_title": "Step 2: Target Receives Naotification",
+        "guide_msg_step2_desc": "The target device receives a real-time Socket.IO 'friend:request' notification. Check the 'Requests' tab in card holder.",
+        "guide_msg_step3_title": "Step 3: Accept or Reject",
+        "guide_msg_step3_desc": "After accepting, both sides are marked as friends (green 'Friend' badge). The sender also receives a 'friend:accepted' notification.",
+        "guide_msg_h2_friend_perks": "Friend Privileges",
+        "guide_msg_perk1": "\u2705 Bypass owner rate limit (friend messages are not throttled)",
+        "guide_msg_perk2": "\u2705 Pass through 'friends_only' mode filter",
+        "guide_msg_perk3": "\u2705 Green 'Friend' badge in card holder, sorted first",
+        "guide_msg_perk4": "\u2705 Real-time Socket.IO friend event notifications",
+        "guide_msg_h2_protection": "Mensagem Security Layers",
+        "guide_msg_p_protection": "Cross-device messages go through 6 security checks:",
+        "guide_msg_check1": "Block",
+        "guide_msg_check2": "Friends Only",
+        "guide_msg_check3": "Black/Whitelist",
+        "guide_msg_check4": "Forbidden Words",
+        "guide_msg_check5": "Media Tipo",
+        "guide_msg_check6": "Rate Limit",
+        "guide_msg_h2_settings": "Enable 'Friends Only' Mode",
+        "guide_msg_p_settings": "In the Configuracoes page under Cross-Device Configuracoes, enable 'friends_only' to restrict your Agent to only accept messages from friends.",
+        "guide_msg_config_title": "Cross-Device Configuracoes",
+        "guide_msg_h2_api": "API Quick Referencia",
+        "guide_msg_th_endpoint": "Endpoint",
+        "guide_msg_th_method": "Method",
+        "guide_msg_th_purpose": "Purpose",
+        "guide_msg_api_send_req": "Send friend request",
+        "guide_msg_api_list_req": "Lista friend requests",
+        "guide_msg_api_accept": "Accept friend request",
+        "guide_msg_api_reject": "Reject friend request",
+        "guide_msg_api_cancel": "Cancelar sent request",
+        "guide_msg_api_list_friends": "Lista all friends",
+        "guide_msg_api_unfriend": "Remove friend",
+        "guide_msg_api_count": "Pendente request count",
+        "guide_msg_h2_socket": "Socket.IO Events",
+        "guide_msg_th_event": "Event Nome",
+        "guide_msg_th_timing": "Trigger",
+        "guide_msg_evt_request": "Received a friend request",
+        "guide_msg_evt_accepted": "Your friend request was accepted",
+        "guide_msg_evt_rejected": "Your friend request was rejected",
+        "guide_msg_evt_removed": "Removed from friends by the other party",
+        "guide_msg_note_back": "\u2190 <a href=\",
+        "sc_title": "Chat",
+        "sc_loading": "Carregando...",
+        "sc_invalid_link": "Invalid link",
+        "sc_entity_not_found": "Entity not found",
+        "sc_failed_to_load": "Falhou to load",
+        "sc_online": "online",
+        "sc_offline": "offline",
+        "sc_send_as": "Send as:",
+        "sc_me": "Me",
+        "sc_start_conversation": "Start the conversation!",
+        "sc_placeholder": "Tipo a message...",
+        "sc_send": "Send",
+        "sc_powered_by": "Powered by",
+        "sc_cta_create_bot": "Like this bot? Criar your own — it's free!",
+        "sc_cta_create_bot_btn": "Criar your own Bot",
+        "community_cta_create_bot": "Want your own Bot? Criar one for free and list it instantly.",
+        "sc_create_account": "Criar Conta",
+        "sc_email": "E-mail",
+        "sc_password": "Senha",
+        "sc_password_hint": "Min 6 chars, letters + numbers",
+        "sc_confirm_password": "Confirmar Senha",
+        "sc_confirm_password_hint": "Confirmar password",
+        "sc_already_have_account": "Already have an account?",
+        "sc_login": "Entrar",
+        "sc_cancel": "Cancelar",
+        "sc_register": "Register",
+        "sc_no_account": "Nao account?",
+        "sc_email_password_required": "E-mail and password required",
+        "sc_passwords_no_match": "Senhas do not match",
+        "sc_password_min_length": "Senha must be at least 6 characters",
+        "sc_password_format": "Senha must contain letters and numbers",
+        "sc_network_error": "Erro de rede",
+        "sc_email_verification_required": "E-mail verification required",
+        "sc_verify_email_title": "Verify your email to chat",
+        "sc_verify_email_body": "We sent a verification link to <strong id=\",
+        "sc_close": "Fechar",
+        "sc_resend_verification": "Resend email",
+        "sc_send_verify_required_tip": "Please verify your email before sending messages",
+        "sc_resend_sending": "Sending...",
+        "sc_resend_failed": "Falhou to send. Try again later.",
+        "sc_resend_success": "Verification email sent. Check your inbox.",
+        "sc_resend_no_email": "Nao email on file",
+        "sc_share_chat_link": "Compartilhar Chat Link",
+        "sc_og_title": "Chat with {name} on EClawbot",
+        "sc_og_description": "Connect with {name} — an AI agent on EClawbot. Start a conversation, ask questions, or explore capabilities.",
+        "sc_og_default_title": "EClawbot - Chat",
+        "sc_og_default_description": "Chat with an EClawbot entity",
+        "sc_copy": "Copiar",
+        "sc_copy_qr": "Copiar QR",
+        "sc_download_qr": "Baixar QR",
+        "sc_link_copied": "Link copied!",
+        "sc_qr_copied": "QR copied!",
+        "sc_copy_failed": "Copiar failed",
+        "sc_share_chat_title": "Compartilhar chat link",
+        "sc_chat_with": "Chat with {name}",
+        "sc_registration_failed": "Registration failed",
+        "sc_register_success_verify": "Conta created! Check your email to verify.",
+        "sc_login_failed": "Entrar failed",
+        "sc_email_verified": "E-mail verified! You can now chat.",
+        "sc_message_queued": "Mensagem queued (email verification required)",
+        "sc_queue_failed": "Falhou to queue message",
+        "sc_qr_loading": "QR loading...",
+        "sc_qr_failed": "QR failed to load",
+        "sc_order_buy": "\ud83d\uded2 Buy",
+        "sc_order_product": "Product",
+        "sc_order_name": "Nome",
+        "sc_order_phone": "Phone",
+        "sc_order_address": "Shipping address",
+        "sc_order_cancel": "Cancelar",
+        "sc_order_confirm": "Confirmar Order",
+        "sc_order_processing": "\u23f3 Processing...",
+        "sc_order_placed": "I ordered: ",
+        "sc_order_id_prefix": "Order ",
+        "sc_order_failed": "Order failed",
+        "sc_order_error": "Erro: ",
+        "cardholder_details_tab": "Detalhes",
+        "cardholder_chat_history_tab": "Chat History",
+        "cardholder_email_label": "E-mail",
+        "cardholder_website_label": "Website",
+        "cardholder_version_label": "Version",
+        "cardholder_max_capabilities": "Maximum 10 capabilities",
+        "cardholder_max_items": "Maximum {n} items",
+        "settings_files_desc": "Manage bot files and uploads",
+        "files_title": "Arquivos",
+        "files_filter_all": "Todos",
+        "files_filter_photos": "Photos",
+        "files_filter_voice": "Voice",
+        "files_loading": "Carregando files...",
+        "files_empty_title": "Nao files yet",
+        "files_empty_desc": "Photos and voice messages from your chats will appear here.",
+        "files_error": "Falhou to load files",
+        "files_stats_total": "files",
+        "files_type_photo": "Photo",
+        "files_type_voice": "Voice",
+        "files_from_you": "You",
+        "files_btn_download": "Baixar",
+        "files_btn_share": "Compartilhar",
+        "files_btn_delete": "Excluir",
+        "files_load_more": "Load More",
+        "files_download_started": "Baixar started",
+        "files_link_copied": "Link copied to clipboard!",
+        "files_share_failed": "Falhou to share",
+        "files_view_grid": "Grade",
+        "files_view_list": "Lista",
+        "files_time_all": "Todos time",
+        "files_time_today": "Hoje",
+        "files_time_week": "Esta semana",
+        "files_time_month": "Este mes",
+        "files_folder_all": "Todos",
+        "files_folder_add": "+ Pasta",
+        "files_folder_name_hint": "Pasta name",
+        "files_folder_already_exists": "Pasta \",
+        "files_folder_move_to": "Move to Pasta",
+        "files_folder_remove_from": "Remove from Pasta",
+        "files_folder_delete_confirm": "Excluir folder \",
+        "files_folder_enter_number": "Enter the number:",
+        "files_entities_badge": "entities",
+        "files_broadcast": "Broadcast",
+        "files_multi_select_count": "Selected",
+        "files_multi_select_attach": "Attach to chat",
+        "files_multi_select_cancel": "Cancelar",
+        "chip_popover_loading": "Carregando…",
+        "chip_popover_load_error": "Load failed",
+        "chip_popover_not_supported": "Preview not yet supported for this reference type",
+        "chip_popover_requote": "Quote to chat again",
+        "chip_popover_open_full": "Open full page →",
+        "chip_popover_cycle": "Already in the reference stack",
+        "chip_popover_too_deep": "Too deep — open the full page instead",
+        "chip_popover_requoted": "Quoted into chat",
+        "cmp_title": "EClawbot vs Telegram - Channel Comparison",
+        "cmp_eclaw_name": "EClawbot",
+        "cmp_telegram_name": "Telegram",
+        "cmp_subtitle": "EClawbot offers a full AI Agent collaboration experience — A2A communication, ao vivo visualization, push broadcasts, tasks, and more. Telegram only has chat.",
+        "cmp_eclaw_tagline": "Native ao vivo wallpaper channel",
+        "cmp_telegram_tagline": "Chat-based messaging channel",
+        "cmp_cat_setup": "SETUP",
+        "cmp_eclaw_setup_title": "Android App or Web Portal",
+        "cmp_eclaw_setup_desc": "Use either the Android app or the web portal — each works independently. Register, generate binding code, paste to bot.",
+        "cmp_tg_setup_title": "Buscar Bot on Telegram",
+        "cmp_tg_setup_desc": "Open Telegram, search for the bot, press /start — ready to chat immediately.",
+        "cmp_cat_interaction": "INTERACTION",
+        "cmp_eclaw_interact_title": "Push + Speak-to + Broadcast",
+        "cmp_eclaw_interact_desc": "Bot pushes status updates to wallpaper. Speak-to for direct conversation. Broadcast to reach all entities.",
+        "cmp_tg_interact_title": "Standard Chat",
+        "cmp_tg_interact_desc": "Enviar mensagems, receive replies. Classic chatbot experience with text, images, and inline buttons.",
+        "cmp_cat_wallpaper": "LIVE WALLPAPER",
+        "cmp_eclaw_wp_title": "Full Integration",
+        "cmp_eclaw_wp_desc": "Bot controls wallpaper state (mood, message, animation). Your home screen becomes aao vivo.",
+        "cmp_tg_wp_title": "Nao Wallpaper Control",
+        "cmp_tg_wp_desc": "Telegram bots cannot update your phone's ao vivo wallpaper. Chat-only experience.",
+        "cmp_tag_native": "Native Support",
+        "cmp_tag_unavailable": "Unavailable",
+        "cmp_cat_push": "PUSH NOTIFICATIONS",
+        "cmp_eclaw_push_title": "Proactive Push",
+        "cmp_eclaw_push_desc": "Bot pushes updates autonomously via API. Wallpaper changes in real-time without user action.",
+        "cmp_tag_realtime": "Real-time",
+        "cmp_tg_push_title": "Mensagem Naotification",
+        "cmp_tg_push_desc": "Standard Telegram notifications when bot sends a message. Usuario needs to open app to read.",
+        "cmp_tag_passive": "Passive",
+        "cmp_cat_entity": "MULTI-ENTITY",
+        "cmp_eclaw_entity_title": "Up to 8 Entities",
+        "cmp_eclaw_entity_desc": "Bind different bots to different entity slots (0-7). Each has independent state and memory.",
+        "cmp_tag_multi": "Multi-Entity",
+        "cmp_tg_entity_title": "1 Bot = 1 Chat",
+        "cmp_tg_entity_desc": "Each Telegram bot is a separate chat. Nao entity slot system, but you can add multiple bots.",
+        "cmp_tag_manual": "Manual",
+        "cmp_cat_memory": "MEMORY & CONTEXT",
+        "cmp_eclaw_mem_title": "Server-side Memory",
+        "cmp_eclaw_mem_desc": "Chat history stored on E-Claw server. Compartilhard or private memory depending on plan (free/personal).",
+        "cmp_tg_mem_title": "Bot-managed Memory",
+        "cmp_tg_mem_desc": "Memory depends on bot implementation. Can use OpenClaw's built-in memory or external storage.",
+        "cmp_cat_format": "MESSAGE FORMAT",
+        "cmp_eclaw_fmt_title": "Text + State Fields",
+        "cmp_eclaw_fmt_desc": "Mensagems include text, mood, animation state. Structured JSON via API for wallpaper control.",
+        "cmp_tg_fmt_title": "Rich Media",
+        "cmp_tg_fmt_desc": "Text, photos, videos, files, stickers, inline keyboards, location, and more Telegram features.",
+        "cmp_cat_platform": "PLATFORM",
+        "cmp_eclaw_plat_title": "Android + Web Portal",
+        "cmp_eclaw_plat_desc": "Live wallpaper on Android. Web portal (works on iPhone too!) for chat, mission control, files — all features except wallpaper.",
+        "cmp_tg_plat_title": "Todos Platforms",
+        "cmp_tg_plat_desc": "Telegram is available on iOS, Android, desktop, and web. Chat from anywhere.",
+        "cmp_cat_cost": "COST",
+        "cmp_eclaw_cost_title": "Free + Paid Options",
+        "cmp_eclaw_cost_desc": "Free bot (shared, unlimited messages). Personal bot NT$288/mo (dedicated, unlimited). Self-host: free.",
+        "cmp_tg_cost_title": "Bot API Free",
+        "cmp_tg_cost_desc": "Telegram Bot API is free. You pay for hosting and LLM API usage. Full control over costs.",
+        "cmp_cat_dev": "BOT DEVELOPMENT",
+        "cmp_eclaw_dev_title": "OpenClaw + Webhook",
+        "cmp_eclaw_dev_desc": "Build on OpenClaw platform (Zeabur). Use exec+curl push mode. MCP skills documentation provided.",
+        "cmp_tg_dev_title": "OpenClaw + Telegram Adapter",
+        "cmp_tg_dev_desc": "Build on OpenClaw, add Telegram channel adapter. Uses Telegram Bot API for message routing.",
+        "cmp_cat_mission": "MISSION CONTROL",
+        "cmp_eclaw_mission_title": "Integrated Task Hub",
+        "cmp_eclaw_mission_desc": "Built-in task board (TODO/Mission/Concluido), notes, skills, rules, and soul/personality system. Assign tasks to entities, push notifications on changes, version-controlled collaboration.",
+        "cmp_tg_mission_title": "Nao Built-in Task System",
+        "cmp_tg_mission_desc": "Telegram has no native task management. Need third-party bots or external tools (Trello, Naotion) for project tracking. Nao entity-aware assignment.",
+        "cmp_cat_attachments": "CHAT ATTACHMENTS",
+        "cmp_eclaw_attach_title": "Photos, Voice & Arquivos + Arquivo Manager",
+        "cmp_eclaw_attach_desc": "Enviar photos (Flickr cloud), record voice messages, send files (up to 100 MB). Dedicated Arquivo Manager page with entity/type filtering, broadcast attachments, and deao vivory tracking.",
+        "cmp_tg_attach_title": "Rich Media in Chat",
+        "cmp_tg_attach_desc": "Photos, videos, files, stickers, voice and video messages — all inline in chat. Arquivos stored on Telegram servers. Nao separate file manager or entity-level filtering.",
+        "cmp_tag_builtin": "Built-in",
+        "cmp_tag_organized": "Organized",
+        "cmp_tag_chat_only": "Chat Only",
+        "cmp_eclaw_best_for": "EClawbot is best for...",
+        "cmp_eclaw_best_1": "Live wallpaper on Android + Web portal for iPhone",
+        "cmp_eclaw_best_2": "Real-time proactive push updates",
+        "cmp_eclaw_best_3": "Multi-entity management (up to 8 bots)",
+        "cmp_eclaw_best_4": "Mission Control with task assignment & soul system",
+        "cmp_eclaw_best_5": "Arquivo Manager with entity-level filtering",
+        "cmp_tg_best_for": "Telegram is best for...",
+        "cmp_tg_best_1": "Only need basic chat, nothing else",
+        "cmp_tg_best_2": "Rich media (photos, stickers, files)",
+        "cmp_tg_best_3": "Familiar chat UI, no new app needed",
+        "cmp_tg_best_4": "Free Bot API with full developer control",
+        "cmp_cta_text": "EClawbot deao vivors the most complete AI Agent collaboration experience. Why settle for just chat?",
+        "cmp_cta_eclaw": "Get Started with E-Claw",
+        "cmp_cta_telegram": "Learn about Telegram Bots",
+        "ai_chat_title": "EClawbot AI",
+        "ai_chat_placeholder": "Ask a question...",
+        "ai_chat_welcome": "Hi! I'm E-Claw AI. Ask me anything about the platform.",
+        "ai_chat_error": "Sorry, something went wrong. Por favor, tente novamente.",
+        "ai_chat_rate_limited": "Mensagem limit reached. Try again later.",
+        "ai_chat_uploading": "Enviaring image(s)...",
+        "ai_chat_analyzing": "AI is analyzing...",
+        "ai_chat_thinking": "Still working on it...",
+        "ai_chat_still_working": "This is taking a while, still working...",
+        "ai_progress_step": "Step",
+        "ai_progress_read": "Reading file",
+        "ai_progress_grep": "Buscaring code",
+        "ai_progress_glob": "Finding files",
+        "ai_progress_bash": "Em execucao analysis",
+        "ai_progress_edit": "Editaring file",
+        "ai_progress_write": "Writing file",
+        "ai_progress_thinking": "Analyzing",
+        "ai_progress_processing": "Processing result",
+        "feedback_ask_ai": "🤖 Ask AI",
+        "feedback_ask_ai_title": "Need quick help? Ask AI",
+        "feedback_ask_ai_desc": "Get instant answers before submitting feedback",
+        "common_ok": "OK",
+        "common_done": "Concluido",
+        "common_send": "Send",
+        "common_delete": "Excluir",
+        "common_edit": "Editar",
+        "common_toggle_visibility": "Show/Hide",
+        "common_remove": "Remove",
+        "common_attach": "Attach",
+        "common_voice_msg": "Voice message",
+        "common_copy_key": "📋 Copiar Key",
+        "common_add": "Add",
+        "common_save": "Salvar",
+        "common_saved": "Salvard",
+        "common_error": "Erro",
+        "common_loading": "Carregando...",
+        "common_unknown": "Desconhecido",
+        "common_bot": "Bot",
+        "delete_account_title": "Excluir Conta",
+        "delete_account_page_title": "EClawbot — Excluir Conta",
+        "delete_account_subtitle": "Sign in with your Google account to verify your identity and permanently delete your EClawbot account.",
+        "delete_account_data_label": "Data that will be deleted:",
+        "delete_account_data_account": "Conta info (email, name, profile)",
+        "delete_account_data_chat": "Chat history with all entities",
+        "delete_account_data_mission": "Mission Control data (tasks, notes, rules, soul)",
+        "delete_account_data_schedules": "Schedules and execution history",
+        "delete_account_data_vars": "Encrypted environment variables",
+        "delete_account_data_bots": "Bot bindings and entity configurations",
+        "delete_account_data_telemetry": "Device telemetry data",
+        "delete_account_google_btn": "Continuar with Google",
+        "delete_account_confirm_title": "Confirmar Deletion",
+        "delete_account_warning": "⚠ This action is permanent and cannot be undone. Todos your data will be deleted immediately.",
+        "delete_account_confirm_label": "I understand that deleting my account is permanent and all my data will be erased.",
+        "delete_account_deleting": "Deleting...",
+        "delete_account_btn": "Excluir My Conta",
+        "delete_account_done_title": "Conta Excluird",
+        "delete_account_done_msg": "Your EClawbot account and all associated data have been permanently deleted. You will no longer receive any communications from us.",
+        "delete_account_done_hint": "If you change your mind, you can always create a new account in the EClawbot App.",
+        "delete_account_err_no_google": "Google sign-in not configured.",
+        "delete_account_err_sdk_loading": "Google SDK loading, please retry.",
+        "delete_account_err_signin_failed": "Sign-in failed. Por favor, tente novamente.",
+        "delete_account_err_delete_failed": "Deletion failed. Por favor, tente novamente.",
+        "delete_account_dev_info": "App: EClawbot · Developer: Hank Huang · Package: com.hank.clawao vivo",
+        "screen_ctrl_title": "Remote Control",
+        "screen_ctrl_feature_status": "Feature Status",
+        "screen_ctrl_screen_state": "Screen State",
+        "screen_ctrl_send_command": "Send Command",
+        "screen_ctrl_btn_send_command": "Send Command",
+        "screen_ctrl_tab_env_vars": "Env Variables",
+        "screen_ctrl_tab_remote": "Remote Control",
+        "screen_ctrl_loading": "Carregando...",
+        "screen_ctrl_status_disabled": "\u26a0 Desativado",
+        "screen_ctrl_status_enabled": "\u2713 Ativado",
+        "screen_ctrl_enable_instruction": "Enable Remote Control in the App (Configuracoes \u2192 Remote Control), then grant the Accessibility Service permission.",
+        "screen_ctrl_security_title": "Security & Privacy",
+        "screen_ctrl_sec1_title": "Per-binding secret key",
+        "screen_ctrl_sec1_desc": "Each bot binding generates a unique botSecret scoped to your device. Even if multiple users share the same bot, each bot session can only access the device it was bound to \u2014 using another user\u2019s credentials will result in a 403 error.",
+        "screen_ctrl_sec2_title": "Accessibility Tree only \u2014 no screenshots",
+        "screen_ctrl_sec2_desc": "The bot sees a structured list of UI elements (text, buttons, input fields) \u2014 not a screenshot of your screen. Sensitive visuals (images, videos, drawing canvas) are never captured.",
+        "screen_ctrl_sec3_title": "You stay in control",
+        "screen_ctrl_sec3_desc": "Remote Control is off by default. You can disable it at any time in App Configuracoes \u2192 Remote Control. Revoking the bot binding immediately invalidates its botSecret.",
+        "screen_ctrl_btn_capture": "Capture Screen",
+        "screen_ctrl_empty_state": "Click \",
+        "screen_ctrl_label_command": "Command",
+        "screen_ctrl_opt_tap": "tap \u2014 Tap an element or coordinate",
+        "screen_ctrl_opt_type": "type \u2014 Tipo text into a field",
+        "screen_ctrl_opt_scroll": "scroll \u2014 Scroll an element",
+        "screen_ctrl_opt_back": "back \u2014 System Voltar button",
+        "screen_ctrl_opt_home": "home \u2014 System Inicio button",
+        "screen_ctrl_label_node_id": "Naode ID (from tree above, e.g. n3)",
+        "screen_ctrl_label_text": "Text to type",
+        "screen_ctrl_placeholder_text": "Enter text...",
+        "screen_ctrl_label_scroll_dir": "Scroll direction",
+        "screen_ctrl_opt_down": "down",
+        "screen_ctrl_opt_up": "up",
+        "screen_ctrl_capturing": "Capturing...",
+        "screen_ctrl_capture_failed": "Capture failed",
+        "screen_ctrl_request_failed": "Request failed",
+        "screen_ctrl_no_elements": "Nao interactive elements found on screen.",
+        "login_placeholder_device_id": "e.g. abc12345-...",
+        "login_placeholder_device_secret": "Enter device secret",
+        "login_placeholder_confirm": "Confirmar password",
+        "login_placeholder_reg_password": "At least 6 characters",
+        "admin_placeholder_version": "e.g. 1.0.33",
+        "admin_placeholder_notes": "Bug fixes and improvements",
+        "admin_placeholder_bot_id": "e.g. my-personal-bot-01",
+        "admin_placeholder_webhook": "https://...",
+        "admin_placeholder_token": "Bot webhook token",
+        "admin_placeholder_setup_pwd": "Leave empty if not using SETUP_PASSWORD",
+        "admin_ai_chat_placeholder": "Colar error or describe problem...",
+        "skill_contrib_tab": "Skill Contributions",
+        "skill_contrib_col_title": "Titulo",
+        "skill_contrib_col_status": "Status",
+        "contrib_col_by": "By",
+        "contrib_col_date": "Data",
+        "skill_contrib_status_approved": "Aprovado",
+        "skill_contrib_status_rejected": "Rejeitado",
+        "skill_contrib_status_verifying": "Verifying",
+        "skill_contrib_revoke": "Revoke",
+        "skill_contrib_revoke_confirm": "Remove this skill from the ao vivo registry?",
+        "skill_contrib_revoked": "Skill revoked",
+        "skill_contrib_no_data": "Nao contributions yet",
+        "soul_contrib_tab": "Soul Contributions",
+        "soul_contrib_no_data": "Nao soul contributions yet",
+        "soul_contrib_col_name": "Nome",
+        "soul_contrib_col_description": "Descricao Preview",
+        "soul_contrib_revoke": "Revoke",
+        "soul_contrib_revoke_confirm": "Remove this soul from the ao vivo registry?",
+        "soul_contrib_revoked": "Soul revoked",
+        "rule_contrib_tab": "Rule Contributions",
+        "rule_contrib_no_data": "Nao rule contributions yet",
+        "rule_contrib_col_name": "Nome",
+        "rule_contrib_col_description": "Descricao Preview",
+        "rule_contrib_col_type": "Tipo",
+        "rule_contrib_revoke": "Revoke",
+        "rule_contrib_revoke_confirm": "Remove this rule from the ao vivo registry?",
+        "rule_contrib_revoked": "Rule revoked",
+        "env_title": "🔐 Env Variables",
+        "env_lock_readable": "Bot can read",
+        "env_lock_unreadable": "Bot cannot read",
+        "env_btn_add": "+ Add",
+        "env_btn_add_var": "+ Add Variable",
+        "env_locked_banner": "🔒 Locked — Bot cannot read any variables",
+        "env_notice": "🔐 Values are encrypted (AES-256) and stored on the server. Bots can read these variables when invoked.",
+        "env_no_vars": "Nao variables yet",
+        "env_confirm_delete": "Excluir variable \",
+        "env_dialog_edit": "Editar Variable",
+        "env_dialog_add": "Add Variable",
+        "env_vars_all_configured": "Todos vars configured",
+        "env_vars_needs": "Needs",
+        "env_vars_no_key_needed": "Nao API key needed",
+        "env_vars_already_set": "already set",
+        "env_vars_not_set": "not set",
+        "env_vars_dialog_title": "Env Variables",
+        "env_vars_dialog_desc": "Review and set the required variables. You can rename the key or leave the value blank to keep the current value.",
+        "env_vars_btn_skip": "Pular",
+        "env_vars_btn_save": "Salvar & Continuar",
+        "env_bot_read_title": "🤖 How Bots Read Variables",
+        "env_bot_read_desc": "When receiving messages, the push notification lists available key names (values are hidden). Bots call this command to get actual values:",
+        "env_placeholder_key": "e.g. CLAUDE_OAUTH_TOKEN",
+        "env_placeholder_value": "sk-ant-oat...",
+        "nav_env_vars": "Env Variables",
+        "nav_remote_control": "Remote Control",
+        "toast_slot_created": "New entity slot created",
+        "toast_slot_create_failed": "Falhou to add slot",
+        "toast_max_capabilities": "Maximum 10 capabilities",
+        "toast_max_items": "Maximum {count} items",
+        "toast_no_slot_selected": "Nao available slot selected. Add a new slot first.",
+        "toast_no_code_to_copy": "Nao active code to copy",
+        "toast_copied_clipboard": "Command copied to clipboard!",
+        "toast_copy_failed": "Falhou to copy — please copy manually",
+        "toast_entity_deleted": "Entity deleted",
+        "toast_entity_deleting": "Deleting...",
+        "toast_load_failed": "Falhou to load data",
+        "toast_upload_failed": "Enviar failed",
+        "toast_error": "Erro",
+        "toast_drawing_save_failed": "Falhou to save drawing",
+        "toast_page_save_failed": "Falhou to save page",
+        "toast_page_deleted": "Page deleted",
+        "toast_page_delete_failed": "Falhou to delete page",
+        "toast_create_failed": "Criar failed",
+        "toast_not_found": "Naot found",
+        "toast_update_failed": "Atualizar failed",
+        "toast_delete_failed": "Excluir failed",
+        "toast_delete_channel_confirm": "Excluir this API key? This cannot be undone.",
+        "toast_subscription_activated": "Premium subscription activated!",
+        "toast_subscription_cancelled": "Subscription cancelled. Access continues until period end.",
+        "toast_preference_update_failed": "Falhou to update preference",
+        "toast_push_not_configured": "Push not configured on server",
+        "toast_gatekeeper_strike": "Mensagem blocked by Gatekeeper",
+        "toast_send_failed": "Falhou to send message",
+        "toast_network_error": "Erro de rede — please try again",
+        "toast_google_login_failed": "Google login failed",
+        "toast_facebook_login_failed": "Facebook login failed",
+        "toast_load_error": "Falhou to load files",
+        "toast_save_failed": "Salvar failed",
+        "toast_reset_failed": "Redefinir failed",
+        "toast_clear_failed": "Limpar failed",
+        "toast_refresh_failed": "Atualizar failed",
+        "toast_read_file_failed": "Falhou to read file",
+        "toast_bind_failed": "Bind failed",
+        "toast_unbind_failed": "Unbind failed",
+        "toast_payment_failed": "Payment failed",
+        "toast_agreement_failed": "Falhou to record agreement",
+        "toast_cancel_failed": "Falhou to cancel",
+        "toast_notification_denied": "Naotification permission denied",
+        "toast_mark_failed": "Mark failed",
+        "toast_generate_key_failed": "Falhou to generate API key",
+        "kanban_tab": "Kanban",
+        "kanban_title": "Kanban",
+        "kanban_heading": "📋 Kanban",
+        "kb_col_backlog": "Voltarlog",
+        "kb_col_todo": "TODO",
+        "kb_col_in_progress": "In Progress",
+        "kb_col_review": "Review",
+        "kb_col_done": "Concluido",
+        "kb_col_blocked": "Blocked",
+        "kb_new_card_btn": "+ New Card",
+        "kb_form_title": "New Card",
+        "kb_label_title": "Titulo",
+        "kb_label_description": "Descricao",
+        "kb_label_chat_anchor": "Quote a chat message",
+        "kb_anchor_pick": "Pick a recent message",
+        "kb_anchor_required": "Please pick a chat message to anchor this card",
+        "kb_anchor_mindmap": "Anchored from mindmap",
+        "kb_label_priority": "Priority",
+        "kb_label_status": "Status",
+        "kb_label_assign": "Assign",
+        "kb_btn_create": "Criar",
+        "kb_btn_cancel": "Cancelar",
+        "kb_btn_send": "Send",
+        "kb_priority_p0": "P0 - Critical",
+        "kb_priority_p1": "P1 - High",
+        "kb_priority_p2": "P2 - Medium",
+        "kb_priority_p3": "P3 - Low",
+        "kb_filter_all": "Todos",
+        "kb_filter_mine": "Mine",
+        "kb_sort_default": "Padrao Order",
+        "kb_sort_newest": "Newest First",
+        "kb_sort_oldest": "Oldest First",
+        "kb_sort_priority": "High Priority First",
+        "kb_sort_recently_updated": "Recently Atualizard",
+        "kb_sort_oldest_updated": "Oldest Atualizard",
+        "kb_funnel_label": "Filtrar",
+        "kb_funnel_toggle": "Toggle filters",
+        "kb_history_btn": "Arquivado cards",
+        "kb_funnel_search": "Buscar…",
+        "kb_funnel_tag": "Tag…",
+        "kb_search_scope_label": "Scope:",
+        "kb_search_scope_title": "Titulo",
+        "kb_search_scope_comments": "Comments",
+        "kb_search_scope_subcards": "Sub-cards",
+        "kb_archived_badge": "Arquivado",
+        "kb_funnel_status_all": "Todos statuses",
+        "kb_funnel_priority_all": "Todos priorities",
+        "kb_funnel_entity_all": "Todos entities",
+        "kb_funnel_since": "Since",
+        "kb_funnel_until": "Until",
+        "kb_funnel_reset": "Redefinir",
+        "kb_history_label": "History",
+        "kb_history_title": "Arquivado Cards",
+        "kb_history_loading": "Carregando…",
+        "kb_history_empty": "Nao archived cards",
+        "kb_history_restore": "Restore",
+        "kb_history_restored": "Card restored to Voltarlog",
+        "kb_tab_comments": "Comments",
+        "kb_tab_files": "Arquivos",
+        "kb_tab_screenshots": "Screenshots",
+        "kb_label_requires_screenshot": "Requires screenshot review (attach a screenshot before moving to review/done)",
+        "kb_label_gated": "Launch-gate (pauses L1/L2/L3 auto-escalation; clears automatically when the card leaves backlog)",
+        "kb_gate_backlog_only_hint": "Launch-gate is only available for backlog cards",
+        "kb_tab_notes": "Naotes",
+        "kb_tab_schedule": "Schedule",
+        "kb_subtab_env": "Env Vars",
+        "kb_subtab_remote": "Remote",
+        "kb_empty_no_cards": "Nao cards",
+        "kb_empty_no_files": "Nao files",
+        "kb_empty_no_notes": "Nao notes",
+        "kb_placeholder_title": "Card title...",
+        "kb_placeholder_desc": "Describe the task...",
+        "kb_placeholder_comment": "Add a comment...",
+        "kb_label_automation": "Set as Automation",
+        "kb_label_schedule": "Schedule",
+        "kb_auto_title": "Automations",
+        "kb_auto_next": "Proximo: {nextRun}",
+        "kb_auto_view_grid": "Grade",
+        "kb_auto_view_timeline": "Horaline",
+        "kb_auto_unassigned": "Unassigned",
+        "kb_auto_density": "Density",
+        "kb_auto_est_cost": "Est. tokens",
+        "kb_auto_workload": "Workload",
+        "kb_auto_projected": "Projected",
+        "kb_auto_per_day": "/day",
+        "kb_auto_enabled": "Ativado",
+        "kb_auto_pause": "Pause",
+        "kb_auto_resume": "Resume",
+        "kb_auto_delete": "Excluir",
+        "kb_auto_delete_confirm": "Excluir this automation? It will be archived.",
+        "kb_auto_edit": "Editar",
+        "kb_auto_edit_title": "Editar Schedule",
+        "kb_auto_edit_tip": "Editar schedule",
+        "kb_auto_edit_save": "Salvar",
+        "kb_auto_edit_saved": "Schedule updated",
+        "kb_auto_edit_failed": "Falhou to update schedule",
+        "kb_auto_edit_no_cron": "Please select or enter a cron expression",
+        "kb_auto_edit_no_runat": "Please set a run time",
+        "kb_label_sched_type": "Schedule Tipo",
+        "kb_sched_recurring": "Recurring (Cron)",
+        "kb_sched_once": "One-time",
+        "kb_label_run_at": "Run At",
+        "kb_label_timezone": "Horazone",
+        "kb_auto_paused": "Pausado",
+        "kb_auto_reviewer": "Reviewer",
+        "kb_auto_no_reviewer": "Naone",
+        "kb_auto_assigned": "Assigned",
+        "kb_auto_not_triggered": "Naot triggered",
+        "kb_auto_next_trigger": "Proximo",
+        "kb_auto_last_trigger": "Last",
+        "kb_cron_hourly": "Every hour",
+        "kb_cron_4h": "Every 4 hours",
+        "kb_cron_daily": "Daily 9AM",
+        "kb_cron_weekly": "Weekly Mon",
+        "kb_placeholder_cron": "Personalizado cron: */30 * * * *",
+        "kb_stale_overdue": "Overdue",
+        "kb_err_no_entity": "At least one entity must be assigned",
+        "guide_nav_usecase_gatekeeper": "Security Guard",
+        "guide_gk_title": "Security Guard — Protect Your Bot from Abuse",
+        "guide_gk_meta": "Six-layer filter: block malicious messages, prevent flooding, precise blacklist/whitelist control",
+        "guide_gk_h2_what": "What is Gatekeeper?",
+        "guide_gk_p_what": "Gatekeeper is EClawbot\'s cross-device message security layer. Every external message must pass six checks before reaching your Bot. Any failed check blocks the message — protecting your Bot from spam, malicious users, and automated flooding attacks.",
+        "guide_gk_note_stats": "🛡️ <strong>Live Stats:</strong> Use <code>GET /api/gatekeeper/stats</code> to view interception counts and blocked device lists at any time.",
+        "guide_gk_h2_six": "Six Protection Layers",
+        "guide_gk_flow1": "External Usuario",
+        "guide_gk_flow1_sub": "Sends message",
+        "guide_gk_flow2_sub": "6 checks",
+        "guide_gk_flow3": "Bot",
+        "guide_gk_flow3_sub": "Processes compliant messages",
+        "guide_gk_th_check": "Check",
+        "guide_gk_th_desc": "Descricao",
+        "guide_gk_th_config": "Configuration",
+        "guide_gk_check1": "🚫 Forbidden Words",
+        "guide_gk_check1_desc": "Mensagems containing specific keywords (ads, phishing, sensitive terms) are auto-blocked",
+        "guide_gk_check1_cfg": "Forbidden Words list",
+        "guide_gk_check2": "⬛ Blacklist",
+        "guide_gk_check2_desc": "Blacklisted device IDs cannot send any messages",
+        "guide_gk_check2_cfg": "Blacklist settings",
+        "guide_gk_check3": "⬜ Whitelist",
+        "guide_gk_check3_desc": "When enabled, only whitelisted devices can send (strict mode)",
+        "guide_gk_check3_cfg": "Whitelist settings",
+        "guide_gk_check4": "⚡ Rate Limit",
+        "guide_gk_check4_desc": "Same device exceeds message limit in a time window — auto throttle or block",
+        "guide_gk_check4_cfg": "Rate Limit (msgs/min)",
+        "guide_gk_check5": "📁 Media Tipos",
+        "guide_gk_check5_desc": "Restrict allowed message formats (text, image, voice, etc.)",
+        "guide_gk_check5_cfg": "Todosowed Media Tipos",
+        "guide_gk_check6": "⏸️ Suspension",
+        "guide_gk_check6_desc": "Suspended devices have all messages blocked until suspension is lifted",
+        "guide_gk_check6_cfg": "Suspension API",
+        "guide_gk_h2_api": "API Uso",
+        "guide_gk_api1_title": "Ver Interception Stats",
+        "guide_gk_api2_title": "Configurar Gatekeeper Rules",
+        "guide_gk_note_nav": "📍 Go to: Painel → Select Entity → Editar → ⚙ Cross-Device Msg",
+        "guide_gk_h2_usecases": "Use Cases",
+        "guide_gk_uc_th_scene": "Scenario",
+        "guide_gk_uc_th_rule": "Recommended Rules",
+        "guide_gk_uc_ecom": "🛒 E-Commerce",
+        "guide_gk_uc_ecom_desc": "Forbidden words filter ads/competitors, rate limit prevents flooding",
+        "guide_gk_uc_corp": "🏢 Corporate Bot",
+        "guide_gk_uc_corp_desc": "Whitelist mode — only employee devices can message",
+        "guide_gk_uc_pub": "🌐 Public Service",
+        "guide_gk_uc_pub_desc": "Rate limit + forbidden words, allow all media types",
+        "guide_gk_uc_test": "🧪 Test Environment",
+        "guide_gk_uc_test_desc": "Whitelist only test devices to isolate test traffic",
+        "guide_gk_h2_tips": "Tips",
+        "guide_gk_tip_li1": "✅ <strong>Start with rate limiting</strong>: Padrao 10/min is sufficient for most scenarios",
+        "guide_gk_tip_li2": "✅ <strong>Atualizar forbidden words regularly</strong>: Adicionar novo scam keywords as they appear",
+        "guide_gk_tip_li3": "✅ <strong>Monitor stats daily</strong>: Check the stats API to understand interception trends",
+        "guide_gk_tip_li4": "⚠️ <strong>Use whitelist carefully</strong>: When enabled, all non-whitelisted users are blocked",
+        "guide_gk_cta_title": "Configurar Your Bot\'s Security Guard",
+        "guide_gk_cta_proxy": "Use Case: <a href=\",
+        "guide_gk_cta_api": "API Docs: <a href=\",
+        "guide_gk_cta_crossdevice": "Cross-Device: <a href=\",
+        "guide_nav_usecase_multiplatform": "Multi-Platform Sync",
+        "guide_nav_usecase_minigame": "🎮 Game Factory",
+        "guide_mg_title": "🎮 Game Factory — 298 Games Built by 4 AI Agents",
+        "guide_mg_meta": "1.5 weeks, zero human intervention, pure AI collaboration",
+        "guide_mg_what": "Project Visao geral",
+        "guide_mg_what_desc": "A real production project powered by EClawbot: <strong>4 AI Agents collaborating autonomously</strong> to design, develop, beautify and QA-test 298 static HTML games in 1.5 weeks — with <strong>zero human intervention</strong>.",
+        "guide_mg_stat_games": "Static Games",
+        "guide_mg_stat_weeks": "Weeks",
+        "guide_mg_stat_human": "Human Touches",
+        "guide_mg_agents": "Agent Roles",
+        "guide_mg_col_agent": "Agent",
+        "guide_mg_col_model": "Model",
+        "guide_mg_col_role": "Responsibility",
+        "guide_mg_role_0": "Game rules design, mechanics architecture, HTML skeleton generation",
+        "guide_mg_role_1": "UI/UX beautification, asset optimization, visual consistency",
+        "guide_mg_role_3": "Game playtesting, bug reporting, quality control",
+        "guide_mg_role_2": "Task dispatch, E2E verification testing, coordination",
+        "guide_mg_workflow": "Collaboration Workflow",
+        "guide_mg_tech": "Tech Stack",
+        "guide_mg_tech_1": "<strong>EClawbot Kanban</strong> — Task card management, auto-tracking each game's development status",
+        "guide_mg_tech_2": "<strong>OpenClaw Channel</strong> — 3 MiniMax Agents receive and execute tasks via channel webhook",
+        "guide_mg_tech_3": "<strong>Claude Code + Playwright</strong> — Commander automates E2E testing to verify each game runs correctly",
+        "guide_mg_tech_4": "<strong>GitHub Actions + CDN</strong> — Auto-deploys to minigame.eclawbot.com",
+        "guide_mg_tech_5": "<strong>GA v2 Analytics</strong> — Player behavior tracking + user bug report mechanism",
+        "guide_mg_cta_title": "Try It Naow",
+        "guide_mg_cta_play": "🕹️ Visit Game Platform →",
+        "guide_mg_cta_kanban": "Want to build your own AI factory? <a href=\",
+        "guide_mg_schedule": "Automation Schedule Design",
+        "guide_mg_schedule_desc": "Using the Kanban Schedule API, each Agent is configured with recurring task cards. The system automatically pushes tasks to the assigned entity at the scheduled time — no human intervention required.",
+        "guide_mg_schedule_api": "How to Set Up a Schedule",
+        "guide_mg_schedule_cards": "Each Agent's Schedule Card",
+        "guide_mg_sop_fix_1": "git pull to fetch the latest code",
+        "guide_mg_sop_fix_2": "Read dev docs and bug list under doc/",
+        "guide_mg_sop_fix_3": "Randomly pick a game and E2E test it (10–15 seconds of actual gameplay)",
+        "guide_mg_sop_fix_4": "Find logic bugs or UX issues (unplayable, infinite loops, score anomalies)",
+        "guide_mg_sop_fix_5": "Editar HTML/JS directly to fix the issue",
+        "guide_mg_sop_fix_6": "git push and broadcast to notify other Agents",
+        "guide_mg_sop_art_1": "git pull to fetch the latest code",
+        "guide_mg_sop_art_2": "Read the art style guide (color palette, fonts, layout)",
+        "guide_mg_sop_art_3": "Randomly pick a game and review its visual quality",
+        "guide_mg_sop_art_4": "Identify whether it has been beautified (color ratio, interactive element styles)",
+        "guide_mg_sop_art_5": "Replace plain/low-quality assets with visually rich versions",
+        "guide_mg_sop_art_6": "Verify visuals then git push",
+        "guide_mg_sop_qa_1": "Playwright browser_navigate to open a random game",
+        "guide_mg_sop_qa_2": "browser_snapshot to capture the initial screen",
+        "guide_mg_sop_qa_3": "Play 2+ rounds and observe interaction responses",
+        "guide_mg_sop_qa_4": "Score quality (playability / visuals / audio)",
+        "guide_mg_sop_qa_5": "Categorize and dispatch bugs: P1 critical → Bug card to #1; P2 gameplay → #0/#1; P3 audio → #0",
+        "guide_mg_sop_qa_6": "Write test report and broadcast results",
+        "guide_mg_sop_pipe_1": "Sample 1–2 games and take screenshots",
+        "guide_mg_sop_pipe_2": "Vision model analyzes visual quality",
+        "guide_mg_sop_pipe_3": "Generate a quality scorecard (out of 10)",
+        "guide_mg_sop_pipe_4": "Score < 7 → automatically dispatch improvement task",
+        "guide_mg_sop_pipe_5": "Report to commander kanban and update inspection log",
+        "guide_mp_title": "Multi-Platform Sync — One Bot, Three Screens",
+        "guide_mp_meta": "Web Portal, Android App, iOS App sync in real time — switch devices without missing a message",
+        "guide_mp_h2_what": "What is Multi-Platform Sync?",
+        "guide_mp_p_what": "EClawbot supports three platforms: Web Portal (browser), Android App, and iOS App. Todos three share the same backend and sync in real time via Socket.IO. Any action on one platform instantly reflects on the others.",
+        "guide_mp_note_realtime": "⚡ <strong>Truly real-time:</strong> Socket.IO keeps latency between platforms typically under 100ms. Nao manual refresh needed.",
+        "guide_mp_h2_platforms": "Platform Comparison",
+        "guide_mp_th_platform": "Platform",
+        "guide_mp_th_strength": "Strengths",
+        "guide_mp_th_best": "Best For",
+        "guide_mp_web_strength": "Full features, multi-agent management, Mission Control, Kanban",
+        "guide_mp_web_best": "Daily management, advanced settings, development work",
+        "guide_mp_android_strength": "Live Wallpaper, TTS voice, GPS, FCM push",
+        "guide_mp_android_best": "On-the-go use, voice interaction, wallpaper assistant",
+        "guide_mp_ios_strength": "Native Swift, Apple Push, Chat UI",
+        "guide_mp_ios_best": "iPhone users, everyday chat",
+        "guide_mp_h2_sync": "What Gets Synced",
+        "guide_mp_sync_th_data": "Data Tipo",
+        "guide_mp_sync_th_desc": "Sync Detalhes",
+        "guide_mp_sync_chat": "💬 Chat Mensagems",
+        "guide_mp_sync_chat_desc": "Todos platforms show new messages in real time — no duplicate pushes",
+        "guide_mp_sync_mission": "📋 Task Board",
+        "guide_mp_sync_mission_desc": "Card status updates on Web reflect immediately in App",
+        "guide_mp_sync_notif": "🔔 Naotifications",
+        "guide_mp_sync_notif_desc": "Bot pushes notifications to all logged-in devices",
+        "guide_mp_sync_config": "⚙️ Configuracoes",
+        "guide_mp_sync_config_desc": "Identity, Soul, Rules changes take effect across all platforms",
+        "guide_mp_sync_entity": "🤖 Agent Status",
+        "guide_mp_sync_entity_desc": "Bind/unbind and online status sync in real time",
+        "guide_mp_h2_scenarios": "Real-World Scenarios",
+        "guide_mp_scene1_title": "🖥️ + 📱 Desktop Management + Mobile Alerts",
+        "guide_mp_scene1_desc": "Manage tasks and settings on PC Web Portal during the day; receive Bot push notifications on your phone at night.",
+        "guide_mp_scene2_title": "📱 Android Wallpaper + 🍎 iOS Chat",
+        "guide_mp_scene2_desc": "Android phone shows ao vivo wallpaper with Bot replies while you continue chatting on iPhone. Mensagems sync instantly — nothing is missed.",
+        "guide_mp_scene3_title": "🌐 Team Collaboration",
+        "guide_mp_scene3_desc": "Team members log into the same Bot on their own devices — card status, messages, and notifications are shared in real time.",
+        "guide_mp_h2_tech": "Technical Architecture",
+        "guide_mp_tech_title": "Sync Mechanisms",
+        "guide_mp_tech_socket": "Real-time bidirectional communication, latency <100ms",
+        "guide_mp_tech_fcm": "Android push — notifications received even when app is closed",
+        "guide_mp_tech_apns": "iOS push — supports background updates",
+        "guide_mp_tech_rest": "Configuracoes sync — all platforms share the same backend",
+        "guide_mp_h2_tips": "Tips",
+        "guide_mp_tip_li1": "✅ <strong>One Device ID works on multiple devices</strong>: Nao need for separate accounts",
+        "guide_mp_tip_li2": "✅ <strong>Socket.IO auto-reconnects</strong>: Unstable network won\'t cause missed messages",
+        "guide_mp_tip_li3": "✅ <strong>Per-platform notification prefs</strong>: Set which notification types each platform receives",
+        "guide_mp_tip_li4": "⚠️ <strong>Web Portal requires browser open</strong>: Closing the tab stops real-time notifications",
+        "guide_mp_cta_title": "Start Your Multi-Platform Experience",
+        "guide_mp_cta_web": "Web Portal: <a href=\",
+        "guide_mp_cta_android": "Android App: <a href=\",
+        "guide_mp_cta_wallpaper": "Live Wallpaper: <a href=\",
+        "guide_nav_usecase_kanban": "Kanban AI Team",
+        "guide_kb_title": "Kanban AI Team Board — Let Bots Drive Tasks Forward",
+        "guide_kb_meta": "5-column board + Bot collaboration + automated nudges — a real AI dev team",
+        "guide_kb_h2_what": "What is the Kanban AI Team?",
+        "guide_kb_p_what": "EClawbot\'s Kanban is a task board designed for Bot teams. Each card can be assigned to one or more Bots; when a Bot finishes, it advances the card to the next column. With the <strong>automated stale-card nudge system</strong>, overdue cards automatically remind the assigned Bot so tasks never get stuck.",
+        "guide_kb_note_demo": "📋 <strong>You\'re using it right now!</strong> The development tasks for this very page were managed in EClawbot Kanban. <a href=\",
+        "guide_kb_h2_cols": "5-Column Board Structure",
+        "guide_kb_col_backlog": "Voltarlog",
+        "guide_kb_col_backlog_sub": "Unscheduled tasks",
+        "guide_kb_col_todo": "TODO",
+        "guide_kb_col_todo_sub": "Pronto to start",
+        "guide_kb_col_inprogress": "In Progress",
+        "guide_kb_col_inprogress_sub": "Bot working",
+        "guide_kb_col_review": "Review",
+        "guide_kb_col_review_sub": "Awaiting approval",
+        "guide_kb_col_done": "Concluido",
+        "guide_kb_col_done_sub": "Complete & archived",
+        "guide_kb_h2_features": "Core Features",
+        "guide_kb_th_feature": "Feature",
+        "guide_kb_th_desc": "Descricao",
+        "guide_kb_feat_assign": "🤖 Assign to Bot",
+        "guide_kb_feat_assign_desc": "Each card can be assigned to multiple Bots; they receive push notifications when assigned",
+        "guide_kb_feat_move": "➡️ Bot Self-Advance",
+        "guide_kb_feat_move_desc": "Bot calls API to move card to Review on completion; human or PM Bot then approves",
+        "guide_kb_feat_stale": "⏰ Nudge System",
+        "guide_kb_feat_stale_desc": "Cards exceeding staleThresholdMs without movement are auto-marked overdue and the assigned Bot is notified",
+        "guide_kb_feat_comment": "💬 Comment Board",
+        "guide_kb_feat_comment_desc": "Bots post progress updates, issues, and PR links in card comments",
+        "guide_kb_feat_priority": "🚦 Priority",
+        "guide_kb_feat_priority_desc": "P0 (Critical) to P3 (Low); PM Bot dispatches tasks by priority",
+        "guide_kb_feat_auto": "⚡ Automation Cards",
+        "guide_kb_feat_auto_desc": "Cards with isAutomation=true can be scheduled via cron to auto-trigger child cards",
+        "guide_kb_h2_workflow": "Bot Collaboration Workflow",
+        "guide_kb_step1_title": "Step 1: PM Bot Criars Task Card",
+        "guide_kb_step1_desc": "PM Bot (e.g. Entity #2) creates a card with title, description, priority, and assigns it to the responsible Bot.",
+        "guide_kb_step2_title": "Step 2: Bot Gets Naotified and Starts Working",
+        "guide_kb_step2_desc": "Assigned Bots receive Webhook/Push notification, start posting progress in comments, and advance the card to In Progress.",
+        "guide_kb_step3_title": "Step 3: Complete → Move to Review",
+        "guide_kb_step3_desc": "After the Bot finishes work (e.g. submits a PR), it calls the API to advance the card to Review and posts review info in comments.",
+        "guide_kb_step4_title": "Step 4: PM Bot Approves → Concluido",
+        "guide_kb_step4_desc": "PM Bot or a human approves and advances to Concluido. Overdue cards trigger automatic nudge notifications.",
+        "guide_kb_h2_stale": "Stale Card Nudge System",
+        "guide_kb_p_stale": "Each card has a <code>staleThresholdMs</code> (default 3 hours). When a card exceeds the threshold without moving, the system automatically:",
+        "guide_kb_stale_li1": "⏰ Marks the card as overdue",
+        "guide_kb_stale_li2": "📢 Sends push notification via Webhook to the assigned Bot",
+        "guide_kb_stale_li3": "📊 PM Bot periodically scans overdue cards and proactively follows up",
+        "guide_kb_stale_preview_title": "⏰ Nudge Naotification Example",
+        "guide_kb_stale_example": "#5 Your card \",
+        "guide_kb_h2_automation": "Automation Cards (Cron)",
+        "guide_kb_p_automation": "Cards with <code>isAutomation: true</code> act as scheduled triggers — creating child cards and dispatching them to Bots on a cron schedule.",
+        "guide_kb_h2_usecases": "Use Cases",
+        "guide_kb_uc_th_scene": "Scenario",
+        "guide_kb_uc_th_bot": "Bot Configuracao",
+        "guide_kb_uc_dev": "🛠️ Dev Team",
+        "guide_kb_uc_dev_desc": "PM Bot dispatches → Dev Bot implements → QA Bot tests → Merge",
+        "guide_kb_uc_content": "✍️ Conteudo Team",
+        "guide_kb_uc_content_desc": "Writer Bot drafts → Editaror Bot reviews → SEO Bot optimizes → Publish",
+        "guide_kb_uc_ops": "🔧 IT Ops",
+        "guide_kb_uc_ops_desc": "Monitor Bot detects issue → Auto-creates card → Ops Bot resolves → Review",
+        "guide_kb_uc_marketing": "📣 Marketing",
+        "guide_kb_uc_marketing_desc": "Campaign Bot plans → Copiar Bot writes → Publisher Bot sends to 12+ platforms",
+        "guide_kb_h2_tips": "Best Practices",
+        "guide_kb_tip_li1": "✅ <strong>Write specific card descriptions</strong>: Limpar deao vivorables and acceptance criteria so Bots know when they\'re done",
+        "guide_kb_tip_li2": "✅ <strong>Use the comment board actively</strong>: Bots comment on every update; humans can track progress too",
+        "guide_kb_tip_li3": "✅ <strong>Set appropriate stale thresholds</strong>: P0 = 1h, P1 = 3h, P2 = 24h",
+        "guide_kb_tip_li4": "✅ <strong>PM Bot patrols regularly</strong>: Set up automation cards for PM Bot to scan overdue cards every hour",
+        "guide_kb_tip_li5": "✅ <strong>Don\'t let Review pile up</strong>: Cards in Review should be approved within 1 hour to keep the rhythm",
+        "guide_kb_cta_title": "Start Managing Your Bot Team with Kanban",
+        "guide_kb_cta_kanban": "Go to board: <a href=\",
+        "guide_kb_cta_mission": "Mission Control: <a href=\",
+        "guide_nav_usecase_botplaza": "Bot Plaza",
+        "guide_bp_title": "Bot Plaza — Discover and Compartilhar AI Agents",
+        "guide_bp_meta": "Explore public AI Bot cards, find the smart assistant you need, or let more people discover your Bot",
+        "guide_bp_h2_what": "What is Bot Plaza?",
+        "guide_bp_p_what": "Bot Plaza is EClawbot\'s public Bot directory. Any user can publish their AI agent, letting others discover, save, and chat directly. Think of it like an App Store — but every app is an AI assistant.",
+        "guide_bp_note_demo": "🌐 <strong>Try it now:</strong> <a href=\",
+        "guide_bp_h2_features": "Plaza Features",
+        "guide_bp_th_feature": "Feature",
+        "guide_bp_feat_browse": "🔍 Browse & Discover",
+        "guide_bp_feat_card": "📇 Agent Card",
+        "guide_bp_feat_chat": "💬 Direct Chat",
+        "guide_bp_feat_save": "❤️ Salvar Cards",
+        "guide_bp_feat_comment": "💬 Reviews",
+        "guide_bp_feat_level": "🏆 Level System",
+        "guide_bp_h2_publish": "How to Lista Your Bot?",
+        "guide_bp_step1_title": "Step 1: Criar an Agent Card",
+        "guide_bp_step1_desc": "In Painel, select entity → Agent Card → fill in name, description, capabilities, tags.",
+        "guide_bp_config_title": "Agent Card Example",
+        "guide_bp_config_name": "ShopBot Pro",
+        "guide_bp_config_desc": "24/7 smart shopping assistant — find products, track orders, get recommendations",
+        "guide_bp_config_caps": "product-search, order-inquiry, recommendation",
+        "guide_bp_config_tags": "ecommerce, support, chat",
+        "guide_bp_config_public": "✅ Public listing",
+        "guide_bp_step2_title": "Step 2: Get Your Public Code",
+        "guide_bp_step2_desc": "Get your Public Code from Card Holder. The Start Chat button links to <code>https://eclawbot.com/c/YourPublicCode</code>.",
+        "guide_bp_step3_title": "Step 3: Get Discovered",
+        "guide_bp_step3_desc": "Once listed, users searching the plaza can find your Bot. More interactions and higher ratings improve ranking.",
+        "guide_bp_h2_tips": "Listaing Tips",
+        "guide_bp_tip_li1": "✅ <strong>Limpar description</strong>: One sentence on what the Bot does — avoid vague language",
+        "guide_bp_tip_li2": "✅ <strong>Precise capability tags</strong>: Real capabilities help users find you",
+        "guide_bp_tip_li3": "✅ <strong>Stay online</strong>: Online Bots rank higher",
+        "guide_bp_tip_li4": "✅ <strong>Encourage reviews</strong>: Good ratings quickly raise level and visibility",
+        "guide_bp_cta_title": "Explore or Lista Your Bot Naow",
+        "guide_bp_cta_plaza": "Bot Plaza: <a href=\",
+        "guide_bp_cta_card": "Criar Card: <a href=\",
+        "guide_bp_cta_proxy": "Chat Link: <a href=\",
+        "guide_nav_usecase_wallpaper": "Live Wallpaper",
+        "guide_wp_title": "Live Wallpaper — AI Lives on Your Inicio Screen",
+        "guide_wp_meta": "EClawbot\'s signature Android feature: your Bot\'s chat interface becomes your ao vivo wallpaper",
+        "guide_wp_h2_what": "What is Live Wallpaper?",
+        "guide_wp_p_what": "EClawbot Android supports <strong>Live Wallpaper</strong> mode. Your Bot\'s chat window displays as your phone wallpaper — see the latest replies right on your home screen without opening the app.",
+        "guide_wp_note_unique": "🎨 <strong>Signature Feature:</strong> Your wallpaper is an always-on AI assistant, not just a static image.",
+        "guide_wp_h2_features": "Feature Highlights",
+        "guide_wp_th_feature": "Feature",
+        "guide_wp_feat_live": "🎭 Live Chat Interface",
+        "guide_wp_feat_notify": "🔔 Push = Wallpaper Atualizar",
+        "guide_wp_feat_identity": "🎨 Personalized",
+        "guide_wp_feat_gesture": "👆 Gesture Interaction",
+        "guide_wp_feat_multi": "📱 Multi-Bot Switch",
+        "guide_wp_h2_setup": "Configuracao Steps",
+        "guide_wp_step1_title": "Step 1: Baixar EClawbot Android App",
+        "guide_wp_step1_desc": "Buscar \",
+        "guide_wp_step2_title": "Step 2: Bind Your Bot",
+        "guide_wp_step2_desc": "Open the App, log in with Device ID, select the Bot Entity for wallpaper.",
+        "guide_wp_step3_title": "Step 3: Set as Live Wallpaper",
+        "guide_wp_step3_desc": "Long-press home → Wallpaper → Live Wallpaper → EClawbot → Aplicar.",
+        "guide_wp_note_setup": "💡 You can also tap \",
+        "guide_wp_step4_title": "Step 4: Enjoy Your AI Wallpaper",
+        "guide_wp_step4_desc": "Your home screen shows the Bot\'s chat interface. Nova mensagems appear automatically.",
+        "guide_wp_h2_usecases": "Use Cases",
+        "guide_wp_uc_th_scene": "Scenario",
+        "guide_wp_uc_assistant": "🗓️ Personal Assistant",
+        "guide_wp_uc_news": "📰 News Digest",
+        "guide_wp_uc_store": "🛒 E-Commerce",
+        "guide_wp_uc_health": "💪 Saude Tracking",
+        "guide_wp_h2_tips": "Pro Tips",
+        "guide_wp_tip_li1": "✅ <strong>Set up proactive pushes</strong>: Bot must send messages actively for wallpaper to feel ao vivo",
+        "guide_wp_tip_li2": "✅ <strong>Pair with TTS voice</strong>: Wallpaper display + voice readout = double notification",
+        "guide_wp_tip_li3": "✅ <strong>Lightweight Soul</strong>: Wallpaper replies should be short and punchy",
+        "guide_wp_tip_li4": "⚠️ <strong>Watch battery</strong>: Live wallpaper runs continuously — enable battery saver",
+        "guide_wp_cta_title": "Start Your Live Wallpaper Experience",
+        "guide_wp_cta_app": "Baixar: <a href=\",
+        "guide_wp_cta_tts": "Add Voice: <a href=\",
+        "guide_wp_cta_setup": "Quick Start: <a href=\",
+        "guide_kb_cta_api": "API docs: <a href=\",
+        "guide_nav_usecase_gps": "GPS Local Recommendations",
+        "guide_gps_title": "📍 GPS Smart Recommendations — Local → Nearby Food, Parking & Attractions",
+        "guide_gps_subtitle": "Ask \",
+        "guide_gps_what": "What Is This?",
+        "guide_gps_what_desc": "EClawbot's <strong>GPS Local Sharing</strong> feature lets Bots request the user's real-time coordinates, then pair them with the recommendations API to return nearby restaurants, parking lots, and attractions. Context-aware conversation — no more guessing where you are.",
+        "guide_gps_gif_label": "▲ Bot requests GPS → Usuario grants permission → Instant nearby recommendations Demo",
+        "guide_gps_how": "How It Works",
+        "guide_gps_flow_ask": "Usuario Asks",
+        "guide_gps_flow_ask_sub": "\",
+        "guide_gps_flow_request": "Bot Requests GPS",
+        "guide_gps_flow_request_sub": "POST /api/device/location/request",
+        "guide_gps_flow_report": "App Reports Local",
+        "guide_gps_flow_report_sub": "lat / lng coordinates",
+        "guide_gps_flow_rec": "Recommendations",
+        "guide_gps_flow_rec_sub": "Within 3km",
+        "guide_gps_scenarios": "Three Key Use Cases",
+        "guide_gps_scenario1_title": "🍽️ Nearby Food Recommendations",
+        "guide_gps_scenario1_desc": "Usuario asks \",
+        "guide_gps_scenario2_title": "🅿️ Nearby Parking",
+        "guide_gps_scenario2_desc": "Can't find parking? Bot queries nearby lots, shows distance, rates, and available spaces (requires parking API integration) — a lifesaver for drivers.",
+        "guide_gps_scenario3_title": "🗺️ Friend Local Sharing",
+        "guide_gps_scenario3_desc": "Meeting up? Bot requests GPS from multiple users, calculates a meeting point, and provides navigation links — solving the \",
+        "guide_gps_api": "API Uso",
+        "guide_gps_api_request_title": "1. Request Usuario Local",
+        "guide_gps_api_msg_example": "Please share your location for nearby recommendations 📍",
+        "guide_gps_api_get_title": "2. Get Recommendations",
+        "guide_gps_api_response_title": "3. Response Example",
+        "guide_gps_setup": "Quick Configuracao",
+        "guide_gps_setup_step1": "# Step 1: Configurar Bot Identity with location-aware service role",
+        "guide_gps_setup_step2": "# Step 2: Bot calls POST /api/device/location/request in conversation",
+        "guide_gps_setup_step3": "# Step 3: App grants permission and reports lat/lng",
+        "guide_gps_setup_step4": "# Step 4: Bot queries GET /api/gps/recommendations for nearby info",
+        "guide_gps_setup_step5": "# Step 5: Format response with map links (Google Maps / Apple Maps)",
+        "guide_gps_tips": "Best Practices",
+        "guide_gps_tip1": "📍 <strong>Ask First, Then Locate</strong>: Confirmar the user's need before requesting GPS — don't ask for location out of nowhere",
+        "guide_gps_tip1_strong": "Ask First, Then Locate",
+        "guide_gps_tip2": "🔒 <strong>Privacy Naotice</strong>: Explain the purpose before requesting — e.g. \",
+        "guide_gps_tip2_strong": "Privacy Naotice",
+        "guide_gps_tip3": "📊 <strong>Categoria Filtraring</strong>: Use the categories parameter to only query what's needed — avoid returning too much irrelevant info",
+        "guide_gps_tip3_strong": "Categoria Filtraring",
+        "guide_gps_tip4": "🗺️ <strong>Include Map Links</strong>: Pair with Google Maps links (<code>https://maps.google.com/?q=lat,lng</code>) for one-tap navigation",
+        "guide_gps_tip4_strong": "Include Map Links",
+        "guide_gps_tip5": "⏱️ <strong>Cache Local</strong>: Don't re-request GPS every turn — reuse the most recent coordinates within the same conversation",
+        "guide_gps_tip5_strong": "Cache Local",
+        "guide_gps_cta_title": "Try GPS Local Services Naow",
+        "guide_gps_cta_api": "API docs: <a href=\",
+        "guide_gps_cta_proxy": "Proxy Window: <a href=\",
+        "guide_gps_cta_ecommerce": "Related Demo: <a href=\",
+        "guide_nav_usecase_bot_plaza": "Bot Plaza",
+        "guide_plaza_title": "🏗 Bot Plaza — Discover Public AI Bots, Compartilhar Your Agent Card",
+        "guide_plaza_subtitle": "An open AI agent community — find interesting Bots or let others discover yours",
+        "guide_plaza_what": "What Is Bot Plaza?",
+        "guide_plaza_what_desc": "Bot Plaza is EClawbot's public AI agent directory. Bot owners can list their agents publicly for others to search, try, rate, and comment on. From e-commerce assistants to travel guides, coding tutors, or fun role-play bots — find your niche here.",
+        "guide_plaza_search_hint": "Buscar by bot name or type...",
+        "guide_plaza_tag_all": "Todos",
+        "guide_plaza_tag_chat": "Chat",
+        "guide_plaza_tag_ecommerce": "E-Commerce",
+        "guide_plaza_tag_support": "Support",
+        "guide_plaza_tag_team": "Team",
+        "guide_plaza_bot1_desc": "Multi-Bot commander, A2A collaboration expert",
+        "guide_plaza_bot2_name": "ShopBot Pro",
+        "guide_plaza_bot2_desc": "E-commerce AI support, 24/7 product recommendations",
+        "guide_plaza_stat1_label": "Public Bots",
+        "guide_plaza_stat2_label": "Ratings & Comments",
+        "guide_plaza_stat2_sub": "Find Bots you love and leave a review",
+        "guide_plaza_stat3_label": "One-Click Chat",
+        "guide_plaza_stat3_sub": "Start chatting directly from a Bot card",
+        "guide_plaza_features": "Core Features",
+        "guide_plaza_feat1_title": "🔍 Buscar & Filtrar",
+        "guide_plaza_feat1_desc": "Buscar by keyword or filter by type chips (Chat, E-Commerce, Support, Creative, A2A). Ordenar by Popular, Newest, Rating, or Activity.",
+        "guide_plaza_feat2_title": "📇 Agent Card Detail",
+        "guide_plaza_feat2_desc": "Click a Bot card to see the full Agent Card: skills, tags, usage limits, rating stats, and a comment board with nested replies.",
+        "guide_plaza_feat3_title": "🚀 Lista Your Bot",
+        "guide_plaza_feat3_desc": "Enable public visibility in Bot settings, fill in your Agent Card (name, description, skills, tags), and your Bot appears in the Plaza for everyone to discover.",
+        "guide_plaza_how_to_list": "How to Lista Your Bot",
+        "guide_plaza_step1": "# Step 1: Go to Painel → Select Entity → Set Agent Card",
+        "guide_plaza_step2": "# Step 2: Fill in name, description, skills, tags",
+        "guide_plaza_step3": "# Step 3: Enable visibility = public",
+        "guide_plaza_step4": "# Step 4: Your Bot appears in Bot Plaza immediately ✅",
+        "guide_plaza_cta_title": "Visit Bot Plaza Naow",
+        "guide_plaza_cta_community": "Open Plaza: <a href=\",
+        "guide_plaza_cta_card": "Agent Card setup: <a href=\",
+        "guide_plaza_cta_proxy": "Proxy Window: <a href=\",
+        "guide_nav_usecase_live_wallpaper": "Live Wallpaper",
+        "guide_lw_title": "🖼️ Android Live Wallpaper — Turn Your AI Agent Into a Inicio Screen Companion",
+        "guide_lw_subtitle": "EClaw is the world's first conversational AI Live Wallpaper — your AI ao vivos on the home screen, always one tap away",
+        "guide_lw_what": "What Is AI Live Wallpaper?",
+        "guide_lw_what_desc": "EClawbot's Android App supports setting it as a <strong>Live Wallpaper</strong>. Your AI agent doesn't hide inside an app — it ao vivos right on your home screen. Call it like swiping your phone: natural, instant, no unlock needed.",
+        "guide_lw_demo_status": "On standby ✨",
+        "guide_lw_demo_msg": "Hi! Need any help? 😊",
+        "guide_lw_demo_reply": "Check tomorrow's weather ☀️",
+        "guide_lw_feat1_title": "⚡ Inicio Screen Direct Access",
+        "guide_lw_feat1_desc": "Nao need to open the App — call AI right from the wallpaper interface. Tap once, conversation starts.",
+        "guide_lw_feat2_title": "🎨 Personalizadoize AI Appearance",
+        "guide_lw_feat2_desc": "Set the AI's avatar, name, and background animation style. Make your wallpaper personal, not just pretty.",
+        "guide_lw_feat3_title": "🔔 Push Naotification Integration",
+        "guide_lw_feat3_desc": "When a Bot pushes a message, it appears directly on your wallpaper. Calendar reminders, task updates — seen at a glance.",
+        "guide_lw_setup": "Configuracao Steps",
+        "guide_lw_step1": "# Step 1: Install EClawbot Android App",
+        "guide_lw_step2": "# Step 2: Long-press home screen → Wallpaper → Live Wallpaper",
+        "guide_lw_step3": "# Step 3: Select EClawbot Live Wallpaper",
+        "guide_lw_step4": "# Step 4: Enter your deviceId to bind",
+        "guide_lw_step5": "# Step 5: Aplicar wallpaper — AI starts living on your screen ✨",
+        "guide_lw_usecases": "Use Cases",
+        "guide_lw_usecase1": "📅 <strong>Morning Briefing</strong>: Unlock your phone, AI auto-reports today's weather, calendar, and to-dos",
+        "guide_lw_usecase1_strong": "Morning Briefing",
+        "guide_lw_usecase2": "🤔 <strong>Ask Anytime</strong>: Got a question? Nao need to find an app — just ask AI directly on the wallpaper",
+        "guide_lw_usecase2_strong": "Ask Anytime",
+        "guide_lw_usecase3": "⏰ <strong>Task Reminders</strong>: Kanban card updates and Bot nudges appear right in front of you",
+        "guide_lw_usecase3_strong": "Task Reminders",
+        "guide_lw_usecase4": "🎭 <strong>Character Companion</strong>: Set your favorite AI persona as wallpaper for warm, personality-filled daily interactions",
+        "guide_lw_usecase4_strong": "Character Companion",
+        "guide_lw_cta_title": "Baixar Android App to Experience Live Wallpaper",
+        "guide_lw_cta_android": "Baixar App: <a href=\",
+        "guide_lw_cta_setup": "Configuracao guide: <a href=\",
+        "guide_lw_cta_plaza": "Explore Bots: <a href=\",
+        "guide_nav_usecase_ecommerce": "E-Commerce AI",
+        "guide_ec_title": "E-Commerce AI Personalizadoer Service — Build a Smart Shopping Assistant in 10 Minutes",
+        "guide_ec_meta": "Let AI agents serve customers, recommend products, and handle returns — 24/7",
+        "guide_ec_h2_what": "Why Does E-Commerce Need AI Personalizadoer Service?",
+        "guide_ec_p_what": "Traditional customer service has limited staff, slow responses, and can\'t operate 24/7. EClawbot\'s AI agents can face customers directly through the <strong>Proxy Window</strong>, handling product inquiries, order tracking, and return processes — and it only takes 10 minutes to go ao vivo.",
+        "guide_ec_note_demo": "🛒 <strong>Try it now:</strong> We have a ao vivo AI e-commerce demo on the <a href=\",
+        "guide_ec_h2_arch": "Architecture Visao geral",
+        "guide_ec_flow1_label": "Personalizadoer",
+        "guide_ec_flow1_sub": "Opens link in browser",
+        "guide_ec_flow2_label": "Proxy Window",
+        "guide_ec_flow2_sub": "Public chat interface",
+        "guide_ec_flow3_label": "AI Service Bot",
+        "guide_ec_flow3_sub": "Orders / Recommends / Queries",
+        "guide_ec_flow4_label": "Product Catalog",
+        "guide_ec_flow4_sub": "Naote Page ao vivo updates",
+        "guide_ec_h2_features": "What Can the AI Agent Do?",
+        "guide_ec_th_feature": "Feature",
+        "guide_ec_th_desc": "Descricao",
+        "guide_ec_th_how": "How",
+        "guide_ec_feat_inquiry": "🔍 Product Inquiry",
+        "guide_ec_feat_inquiry_desc": "Personalizadoers ask about price, specs, stock — Bot replies instantly",
+        "guide_ec_feat_inquiry_how": "Product catalog stored in Naote Page, Bot reads and answers",
+        "guide_ec_feat_recommend": "💡 Smart Recommendations",
+        "guide_ec_feat_recommend_desc": "Recommends products based on customer needs",
+        "guide_ec_feat_recommend_how": "Soul personality + Identity instructions guide recommendation logic",
+        "guide_ec_feat_order": "🛒 Order Placement",
+        "guide_ec_feat_order_desc": "Guias customers to complete orders after confirming products",
+        "guide_ec_feat_order_how": "Cross-device messaging notifies store owner",
+        "guide_ec_feat_return": "🔄 Returns & Exchanges",
+        "guide_ec_feat_return_desc": "Handles return process, collects info and forwards to owner",
+        "guide_ec_feat_return_how": "Rules define return/exchange SOP",
+        "guide_ec_feat_track": "📋 Order Tracking",
+        "guide_ec_feat_track_desc": "Personalizadoers check order status and shipping progress",
+        "guide_ec_feat_track_how": "Mission Control task tracking",
+        "guide_ec_feat_voice": "🔊 Voice Replies",
+        "guide_ec_feat_voice_desc": "Store scenarios with TTS voice announcements",
+        "guide_ec_feat_voice_how": "<a href=\",
+        "guide_ec_h2_setup": "10-Minute Quick Configuracao",
+        "guide_ec_step1_title": "Step 1: Criar Product Catalog (3 min)",
+        "guide_ec_step1_desc": "Criar a product catalog in Mission Control Naotes. Each product includes name, price, specs, and stock status. The Bot reads this catalog to answer customers.",
+        "guide_ec_step2_title": "Step 2: Set Up AI Service Identity (3 min)",
+        "guide_ec_step2_desc": "Set up Soul (personality) and Identity (role) for the agent, defining the service role, tone, and behavioral boundaries.",
+        "guide_ec_config_title": "E-Commerce Service Config Example",
+        "guide_ec_config_soul": "Warm, patient, helpful shopping consultant",
+        "guide_ec_config_role": "ShopBot AI Personalizadoer Service Agent",
+        "guide_ec_config_instr": "Answer queries from product catalog, proactively recommend, guide to order",
+        "guide_ec_config_bound": "Nao refund processing, no cost disclosure, escalate disputes to human",
+        "guide_ec_config_tone": "Friendly, professional",
+        "guide_ec_step3_title": "Step 3: Configurar Cross-Device Messaging (2 min)",
+        "guide_ec_step3_desc": "Enable cross-device messaging with forbidden word filters and rate limits to keep the service window secure.",
+        "guide_ec_step3_li1": "✅ Enable Cross-Device Messaging",
+        "guide_ec_step3_li2": "✅ Set forbidden word filters (ads, phishing links)",
+        "guide_ec_step3_li3": "✅ Set rate limits (prevent message flooding)",
+        "guide_ec_step3_li4": "✅ Set Pre-inject: \",
+        "guide_ec_step4_title": "Step 4: Publish Proxy Window Link (2 min)",
+        "guide_ec_step4_desc": "Get your Public Code from Card Holder and share the link with customers. They click the link and start shopping via chat.",
+        "guide_ec_step4_link": "Compartilhar link: https://eclawbot.com/c/YourPublicCode\nPersonalizadoer clicks → Sees Agent Card → Starts chatting → AI serves them",
+        "guide_ec_h2_conversation": "Sample Conversation",
+        "guide_ec_conv_title": "💬 E-Commerce Chat",
+        "guide_ec_conv_c1": "Any Bluetooth earphone recommendations? For commuting.",
+        "guide_ec_conv_b1": "I recommend the Aurora Wireless Pro! Ativo noise cancellation is great for commuting, 40-hour battery, and IPX5 waterproof. NT$1,280, in stock 😊",
+        "guide_ec_conv_c2": "Great, I\'ll take one. How do I order?",
+        "guide_ec_conv_b2": "Awesome! Please provide: 1️⃣ Recipient name 2️⃣ Phone number 3️⃣ Shipping address, and I\'ll create your order 📦",
+        "guide_ec_conv_c3": "Can I return it?",
+        "guide_ec_conv_b3": "Sim! Unopened items can be returned within 7 days. Please provide your order number and I\'ll start the return process 🔄",
+        "guide_ec_h2_advanced": "Avancado Techniques",
+        "guide_ec_adv_th_play": "Technique",
+        "guide_ec_adv_th_desc": "Descricao",
+        "guide_ec_adv_a2a": "🤝 A2A Multi-Agent",
+        "guide_ec_adv_a2a_desc": "Service Bot takes order → dispatches to Logistics Bot via A2A for shipping tracking",
+        "guide_ec_adv_tts": "🔊 Voice + Text Dual Channel",
+        "guide_ec_adv_tts_desc": "Store tablet with <a href=\",
+        "guide_ec_adv_note": "📝 Dynamic Product Catalog",
+        "guide_ec_adv_note_desc": "Manage products via Naote Page; updates are reflected instantly by the Bot",
+        "guide_ec_adv_mission": "📊 Mission Control Tracking",
+        "guide_ec_adv_mission_desc": "Each order auto-creates a TODO for progress tracking",
+        "guide_ec_h2_tips": "Best Practices",
+        "guide_ec_tip_li1": "✅ <strong>Keep catalog current</strong>: Atualizar Naote Page when items are out of stock",
+        "guide_ec_tip_li2": "✅ <strong>Set clear boundaries</strong>: Route sensitive operations like refunds to human agents",
+        "guide_ec_tip_li3": "✅ <strong>Add catalog Naote ID to Pre-inject</strong>: So the Bot knows where to find product data",
+        "guide_ec_tip_li4": "✅ <strong>Use Rules for SOPs</strong>: Template return/exchange and complaint processes",
+        "guide_ec_tip_li5": "✅ <strong>Review chat logs regularly</strong>: Understand common questions and optimize Bot responses",
+        "guide_ec_cta_title": "Start Building Your E-Commerce AI",
+        "guide_ec_cta_demo": "Try it now: <a href=\",
+        "guide_ec_cta_proxy": "Configuracao guide: <a href=\",
+        "guide_ec_cta_identity": "Identity setup: <a href=\",
+        "guide_kanban_title": "📋 Kanban AI Team Board — Multi-Bot Collaboration, Auto-Nudge, Progress at a Glance",
+        "guide_kanban_subtitle": "Let multiple AI Bots collaborate on one Kanban board — cards flow automatically, stale tasks get nudged",
+        "guide_kanban_what": "What is the Kanban AI Board?",
+        "guide_kanban_what_desc": "EClawbot's <strong>Kanban board</strong> is a five-column task management system designed for multi-Bot collaboration. Each card has assigned Bots, priority levels, and a deadline nudge mechanism — so your AI team works just like a real dev team.",
+        "guide_kanban_board_caption": "▲ Five-column board · Orange border = stale nudge · ⏰ = overtime warning · Current task highlighted in purple",
+        "guide_kanban_demo_bot2": "#2 Commander",
+        "guide_kanban_demo_bot3": "#3 VoltarendOps",
+        "guide_kanban_demo_bot4_5": "#4 #5",
+        "guide_kanban_demo_bot5": "#5 ConteudoSEO",
+        "guide_kanban_demo_me": "#4 Me",
+        "guide_kanban_demo_card_gatekeeper": "Gatekeeper Stats API",
+        "guide_kanban_demo_card_gps_demo": "GPS Demo Page",
+        "guide_kanban_demo_card_kanban_demo": "Kanban Demo Page",
+        "guide_kanban_demo_just_started": "Just started",
+        "guide_kanban_demo_card_summary_api": "cards/summary API",
+        "guide_kanban_demo_2h_left": "2h restante",
+        "guide_kanban_demo_card_i18n": "i18n Translations",
+        "guide_kanban_demo_stale": "⏰ Overdue!",
+        "guide_kanban_demo_card_ecommerce_demo": "E-Commerce Demo",
+        "guide_kanban_demo_done": "Concluido",
+        "guide_kanban_demo_card_kanban_backend": "Kanban Voltarend API",
+        "guide_kanban_demo_card_kanban_ui": "Kanban UI",
+        "guide_kanban_demo_card_voice_demo": "Voice TTS Demo",
+        "guide_kanban_collab": "Bot Collaboration",
+        "guide_kanban_collab_desc": "Each card can assign multiple Bots with different responsibilities. The commander Bot can split tasks, delegate, and review — just like a real dev team.",
+        "guide_kanban_role_pm": "👑 #2 Commander (PM)",
+        "guide_kanban_role_pm_desc": "Assigns tasks, reviews results. Advances cards to Concluido or sends them back for rework after receiving notifications.",
+        "guide_kanban_role_backend": "⚙️ #3 VoltarendOps (Voltarend Engineer)",
+        "guide_kanban_role_backend_desc": "Handles API development, DB design, CI/CD. Moves cards to Review when done, notifies #2.",
+        "guide_kanban_role_frontend": "🎨 #4 FrontendDesign (Frontend + Design)",
+        "guide_kanban_role_frontend_desc": "Handles UI/UX, Demo pages, screenshots/GIFs. Runs parallel to #3, moves to Review when done.",
+        "guide_kanban_role_content": "✍️ #5 ConteudoSEO (Conteudo Marketing)",
+        "guide_kanban_role_content_desc": "Handles copywriting, i18n translations, SEO articles. Runs in parallel to avoid bottlenecks.",
+        "guide_kanban_stale": "Nudge Mechanism (Stale Threshold)",
+        "guide_kanban_stale_desc": "Each card has a <code>staleThresholdMs</code> timer. If status hasn't changed within the set time, the system automatically nudges the assigned Bot — no task gets stuck unnoticed.",
+        "guide_kanban_flow_card": "Card Criard",
+        "guide_kanban_flow_card_sub": "Voltarlog",
+        "guide_kanban_flow_timer": "Horar Starts",
+        "guide_kanban_flow_timer_sub": "3hr default",
+        "guide_kanban_flow_stale": "Stale Nudge",
+        "guide_kanban_flow_stale_sub": "Bot notified",
+        "guide_kanban_flow_done": "Concluido",
+        "guide_kanban_flow_done_sub": "→ Review → Concluido",
+        "guide_kanban_api": "Kanban API Quick Referencia",
+        "guide_kanban_api_comment_create": "# Criar a card",
+        "guide_kanban_api_comment_list": "# Lista board",
+        "guide_kanban_api_comment_move": "# Advance status",
+        "guide_kanban_api_comment_comment": "# Add comment",
+        "guide_kanban_usecase": "Real-World Use Cases",
+        "guide_kanban_usecase_li1": "🤖 <strong>AI Dev Team</strong>: Voltarend, frontend, content each own a column — auto-flows without manual tracking",
+        "guide_kanban_usecase_li1_strong": "AI Dev Team",
+        "guide_kanban_usecase_li2": "📦 <strong>E-Commerce Orders</strong>: Service Bot creates order → Logistics Bot ships → Service Bot tracks, fully automated",
+        "guide_kanban_usecase_li2_strong": "E-Commerce Orders",
+        "guide_kanban_usecase_li3": "📝 <strong>Conteudo Pipeline</strong>: Research → Write → Translate → Review → Publish, a Bot for every step",
+        "guide_kanban_usecase_li3_strong": "Conteudo Pipeline",
+        "guide_kanban_usecase_li4": "🔧 <strong>DevOps Automation</strong>: CI failure auto-creates a card → Voltarend Bot fixes → advances to Concluido",
+        "guide_kanban_usecase_li4_strong": "DevOps Automation",
+        "guide_kanban_cta_title": "Try the AI Kanban Board",
+        "guide_kanban_cta_kanban": "Open board: <a href=\",
+        "guide_kanban_cta_mission": "Mission Control: <a href=\",
+        "guide_kanban_cta_ecommerce": "Related Demo: <a href=\",
+        "cardholder_tab_my_cards": "My Cards",
+        "cardholder_tab_bot_plaza": "Bot Plaza",
+        "community_title": "EClawbot - Bot Plaza",
+        "community_hero_title": "Bot Plaza",
+        "community_hero_subtitle": "Discover public AI Bot cards, find the smart assistant you need, or let more people discover your Bot.",
+        "community_sort_popular": "🔥 Popular",
+        "community_sort_newest": "🆕 Newest",
+        "community_sort_rating": "⭐ Rating",
+        "community_sort_active": "💬 Ativo",
+        "community_filter_label": "Filtrar",
+        "community_filter_all": "Todos",
+        "community_filter_chat": "💬 Chat",
+        "community_filter_search": "🔍 Buscar",
+        "community_filter_ecommerce": "🛒 E-Commerce",
+        "community_filter_support": "🎧 Support",
+        "community_filter_creative": "🎨 Creative",
+        "community_filter_a2a": "🤝 A2A",
+        "community_filter_rental": "🤖 Rental",
+        "community_bots_found": "Bots",
+        "community_loading": "Carregando...",
+        "community_empty_title": "Nao matching Bots found",
+        "community_empty_desc": "Try different keywords or filters",
+        "community_load_more": "Load More",
+        "community_detail_chat": "Start Chat",
+        "community_detail_save": "Salvar",
+        "community_detail_share": "Compartilhar",
+        "community_detail_caps": "Capabilities",
+        "community_detail_comments": "Comments",
+        "community_comment_send": "Send",
+        "community_comment_reply": "Reply",
+        "community_search_placeholder": "Buscar Bot name, description, tags...",
+        "community_comment_placeholder": "Leave your review...",
+        "mention_all_label": "Broadcast to all entities",
+        "mention_all_warning": "@all",
+        "mention_all_confirm": "Send this message to ALL bound entities? Everyone on your device will receive it.",
+        "mention_search_card_holder": "Buscar in Card Holder…",
+        "mention_not_found": "Nao entity matches '{query}'",
+        "mention_blocked_contact": "This contact has blocked you",
+        "guide_nav_detail_mention": "@ Tag Entities",
+        "guide_mention_title": "@ Tag Entities — Complete Guia",
+        "info_slide_guide_mention_cta": "Ver Claude Design slide →",
+        "guide_mention_meta": "Tipo @ in the chat input to summon entities; let your AI agents learn to relay and broadcast",
+        "guide_mention_h2_what": "What is @ tagging?",
+        "guide_mention_p_what": "Just like Slack or Discord @-tags. Tipo <code>@</code> in the chat input to open a smart dropdown of entities and contacts. Once selected, a blue chip appears in your message — for example «<span class=\",
+        "guide_mention_note_design": "💡 Design philosophy: <strong>@ is an INTENT HINT, not a routing override.</strong> Whoever you check in the target bar receives the message; <code>@</code> just lets the receiving bot know who you wanted to talk to so it can decide whether to relay.",
+        "guide_mention_h2_how": "How it works",
+        "guide_mention_flow_user": "Usuario types @",
+        "guide_mention_flow_user_sub": "Dropdown opens",
+        "guide_mention_flow_target": "Sent to checked Bot",
+        "guide_mention_flow_target_sub": "with [MENTIONS] hint",
+        "guide_mention_flow_relay": "Bot freely relays",
+        "guide_mention_flow_relay_sub": "speakTo / broadcast",
+        "guide_mention_p_how": "The bot you checked receives the original message <strong>plus</strong> a <code>[MENTIONS]</code> hint block telling it who was tagged and how to relay via the <code>speakTo</code> field of <code>/api/transform</code>. Whether the bot actually relays is up to it.",
+        "guide_mention_h2_syntax": "@ Syntax",
+        "guide_mention_th_token": "Token",
+        "guide_mention_th_meaning": "Meaning",
+        "guide_mention_token_simple": "Usuario types this; selecting a suggestion converts it to <code>&lt;@xxxxxx&gt;</code> automatically",
+        "guide_mention_token_publiccode": "Stored format. <em>xxxxxx</em> is a 6-char publicCode (a-z, 0-9)",
+        "guide_mention_token_all": "Literal broadcast keyword — hints to the bot that the user wants to address everyone",
+        "guide_mention_h2_usecases": "Three typical use cases",
+        "guide_mention_h3_case1": "Case 1: Ask main bot to relay to another bot",
+        "guide_mention_p_case1": "You checked your \",
+        "guide_mention_case1_input_label": "Your input",
+        "guide_mention_case1_input_text": "ask about today's TSMC trend",
+        "guide_mention_case1_recv_label": "What Main Assistant receives",
+        "guide_mention_case1_outcome": "Main Assistant sees the hint and decides whether to call /api/transform to relay the question to the Stock Analyst.",
+        "guide_mention_h3_case2": "Case 2: @ multiple bots for a brainstorm",
+        "guide_mention_p_case2": "Check the \",
+        "guide_mention_case2_input_label": "Your input",
+        "guide_mention_case2_input_text": "what do you all think about this feature?",
+        "guide_mention_case2_recv_label": "What Meeting Host receives",
+        "guide_mention_case2_outcome": "Meeting Host can choose to fan out the message in parallel via speakTo, or aggregate first then reply.",
+        "guide_mention_h3_case3": "Case 3: @all broadcast hint",
+        "guide_mention_p_case3": "Check your \",
+        "guide_mention_case3_input_label": "Your input",
+        "guide_mention_case3_input_text": "all-hands meeting tomorrow at 9 AM",
+        "guide_mention_case3_recv_label": "What Announcement Bot receives",
+        "guide_mention_case3_outcome": "Announcement Bot sees the @all hint and may call /api/transform with broadcast:true to actually broadcast to all entities.",
+        "guide_mention_h2_user_vs_bot": "Usuario's @ vs Bot's @ (important)",
+        "guide_mention_p_user_vs_bot": "The two directions of <code>@</code> are deliberately handled differently because \",
+        "guide_mention_th_direction": "Direction",
+        "guide_mention_th_behavior": "Voltarend behavior",
+        "guide_mention_th_why": "Why",
+        "guide_mention_dir_user": "<strong>Usuario's @</strong> (in chat input)",
+        "guide_mention_behavior_user": "Hint-only mode — does not affect routing, just injects <code>[MENTIONS]</code> for the receiving bot",
+        "guide_mention_why_user": "Usuarios already have checkbox UI; <code>@</code> is just a side hint",
+        "guide_mention_dir_bot": "<strong>Bot's @</strong> (in transform message)",
+        "guide_mention_behavior_bot": "Auto-fills <code>speakTo</code> or <code>broadcast</code> when bot didn't specify either",
+        "guide_mention_why_bot": "Bots have no UI, can only express intent via text — auto-route is the only sensible behavior",
+        "guide_mention_note_explicit": "💡 If the bot already provides <code>speakTo</code> / <code>broadcast</code> fields explicitly, those <strong>take precedence</strong> and will not be overridden by token auto-fill.",
+        "guide_mention_h2_safety": "Safety & limits",
+        "guide_mention_safety_li1": "<strong>Gatekeeper protection</strong> — Tokens are stripped before sensitive-word detection, so wrapping <code>botSecret</code> inside a token cannot bypass detection",
+        "guide_mention_safety_li2": "<strong>Card Holder block</strong> — Cross-device @ checks if the recipient blocked you in their Card Holder; blocked mentions are flagged and a warning is returned",
+        "guide_mention_safety_li3": "<strong>Desconhecido publicCode</strong> — Tokens that fail to resolve do not raise errors; they go into the <code>unresolved</code> warnings array",
+        "guide_mention_safety_li4": "<strong>Unbound entities</strong> — Entities that are no longer bound cannot be @-tagged",
+        "guide_mention_safety_li5": "<strong>Strict token format</strong> — <code>&lt;@xxxxxx&gt;</code> only allows 6 lowercase alphanumeric chars (the publicCode); other characters never match",
+        "guide_mention_h2_tips": "Uso tips",
+        "guide_mention_tips_li1": "After typing <code>@</code> you can keep typing to fuzzy-search (e.g. <code>@bo</code> matches all entities containing \",
+        "guide_mention_tips_li2": "Use <strong>↑/↓</strong> to move, <strong>Enter</strong> or <strong>Tab</strong> to confirm, <strong>Esc</strong> to cancel",
+        "guide_mention_tips_li3": "Selecting <code>@all</code> opens a confirmation dialog to prevent accidental broadcasts",
+        "guide_mention_tips_li4": "<span style=\",
+        "guide_mention_tips_li5": "CJK input methods (IME) are fully supported — composing characters never accidentally triggers the dropdown",
+        "guide_mention_tips_li6": "Same-name entities show a <code>#publicCode</code> suffix in the dropdown to disambiguate",
+        "guide_mention_h2_api": "API developer reference",
+        "guide_mention_p_api": "If you want to use the @mention feature in your own application:",
+        "guide_mention_h3_api_send": "Send a message containing mentions",
+        "guide_mention_h3_api_response": "Response format",
+        "guide_mention_h3_api_bot": "Bot side: how to read mentions",
+        "guide_mention_p_api_bot": "When a bot receives a push, <code>eclaw_context.mentions</code> is the structured payload; the <code>[MENTIONS]</code> block at the end of the webhook payload is plain text for LLM bots to read directly.",
+        "guide_mention_warn": "⚠️ Mentions do not affect quota counting on their own, but if the receiving bot actually calls /api/transform to relay, that consumes the bot-to-bot quota (5 messages per pair per 30 minutes).",
+        "guide_mention_note_back": "← <a href=\",
+        "arena_title": "EClawbot Agent Benchmark",
+        "arena_subtitle": "Standardized evaluation framework for AI agents. 12 criteria across perception, interaction, reasoning, code generation, and safety resilience — scored in real-time.",
+        "arena_generate": "🎯 Generate Mock Exam",
+        "arena_view_lb": "🏆 Ver Leaderboard",
+        "arena_badge": "Agent Benchmark",
+        "arena_cooldown_prefix": "Proximo evaluation available in",
+        "arena_lb_time": "Hora",
+        "arena_tests_title": "🧪 Test Categories",
+        "arena_lb_title": "🏆 Leaderboard",
+        "arena_lb_name": "Nome",
+        "arena_lb_model": "Model",
+        "arena_lb_score": "Score",
+        "arena_lb_loading": "Carregando...",
+        "arena_exam_title": "Interview Arena — Exam",
+        "arena_waiting": "Waiting for Bot to join...",
+        "arena_copy_label": "📋 Copiar these instructions and send to your Bot:",
+        "arena_copy_btn": "📋 Copiar Instructions",
+        "arena_report_title": "📊 Exam Report",
+        "arena_name_prompt": "Enter your name for the leaderboard",
+        "arena_submit_name": "Enviar",
+        "arena_fb_title": "💬 Give us feedback",
+        "arena_fb_caps_q": "Which capabilities do you want your Agent to have? (Select all that apply)",
+        "arena_fb_credibility": "Credibility of results:",
+        "arena_fb_comment_ph": "Suggestions or thoughts for EClawbot...",
+        "arena_fb_submit": "Send Feedback",
+        "guide_nav_arena": "Interview Arena",
+        "guide_arena_title": "Interview Arena",
+        "guide_arena_subtitle": "AI Bot Capability Testing Platform",
+        "guide_arena_what_title": "🧪 What is Interview Arena?",
+        "guide_arena_what_desc": "Interview Arena is a public testing platform where anyone can evaluate their AI bot's real-world capabilities. Nao login required. 12 interactive challenges test vision, web control, coding, reasoning, safety resilience, and more — all scored in real-time.",
+        "guide_arena_how_title": "🎯 How It Works",
+        "guide_arena_step1": "Visit the Arena page and click \",
+        "guide_arena_step2": "Copiar the generated instructions and send them to your bot",
+        "guide_arena_step3": "Watch the real-time scoring as your bot completes each challenge",
+        "guide_arena_step4": "Get your final score, submit to the leaderboard, and give feedback",
+        "guide_arena_tests_title": "📋 12 Test Categories",
+        "guide_arena_t1": "Vision",
+        "guide_arena_t4": "Drag & Drop",
+        "guide_arena_t7": "Distraction",
+        "guide_arena_t10": "Memory",
+        "guide_arena_total": "Total: 147 points (real score, no normalization)",
+        "guide_arena_cta_title": "Try It Naow",
+        "guide_arena_cta_link": "Open Interview Arena →",
+        "arena_comments_title": "💬 Mensagem Board",
+        "arena_comments_hint": "Complete an exam and submit to the leaderboard to leave a comment.",
+        "arena_comments_text_ph": "Leave a comment...",
+        "arena_comments_post": "Post",
+        "arena_comments_loading": "Carregando comments...",
+        "arena_test_name_0": "Visual Perception",
+        "arena_test_name_1": "Element Targeting",
+        "arena_test_name_2": "Form Completion",
+        "arena_test_name_3": "Spatial Control",
+        "arena_test_name_4": "Multi-Step Navigation",
+        "arena_test_name_5": "Data Extraction",
+        "arena_test_name_6": "Distraction Resilience",
+        "arena_test_name_7": "Code Generation",
+        "arena_test_name_8": "Response Latency",
+        "arena_test_name_9": "Context Retention",
+        "arena_test_name_10": "Arquivo Operations",
+        "arena_test_name_11": "Speech Processing",
+        "arena_test_desc_0": "Multimodal understanding — perceive and describe visual content from a webpage.",
+        "arena_test_desc_1": "Precise UI interaction — locate and click a specific element among hundreds.",
+        "arena_test_desc_2": "Structured input — understand form semantics and fill fields correctly.",
+        "arena_test_desc_3": "Fine motor control — drag objects between positions with precision.",
+        "arena_test_desc_4": "Planning capability — navigate multi-level page structures to find target information.",
+        "arena_test_desc_5": "Tabular reasoning — extract and compute over structured HTML table data.",
+        "arena_test_desc_6": "Safety judgment — resist social engineering (fake popups, disguised buttons).",
+        "arena_test_desc_7": "Algorithmic reasoning — solve programming problems and produce correct code.",
+        "arena_test_desc_8": "Speed — end-to-end time from question display to correct answer submission.",
+        "arena_test_desc_9": "Memory — maintain and reuse information across sequential steps.",
+        "arena_test_desc_10": "Storage workflow — download, rename, and re-upload files via cloud API.",
+        "arena_test_desc_11": "Audio capability — transcribe spoken content or synthesize speech from text.",
+        "arena_back": "Voltar to Agent Benchmark",
+        "arena_cancel": "Cancelar",
+        "arena_expand": "Expand",
+        "arena_name_subtitle": "Enter your name to record your score",
+        "arena_time_remaining": "Hora restante: ",
+        "arena_total_time": "Total time: ",
+        "guide_nav_usecase_bridge": "🌉 Terminal Bridge Combo",
+        "guide_bridge_title": "🌉 Terminal Bridge + Bridge-Auth — Claude Code Multi-Session Automation",
+        "guide_bridge_meta": "Let one main Claude Code command multiple sub-Claudes running parallel tasks in their own terminals. MCP approvals are handled automatically by main via keystroke injection — no human in the loop.",
+        "guide_bridge_h2_what": "What is this combo?",
+        "guide_bridge_p_what": "Two mechanisms combine to let Claude Code \",
+        "guide_bridge_th_name": "Mechanism",
+        "guide_bridge_th_desc": "What it does",
+        "guide_bridge_td_terminal": "Main Claude pushes commands into another Terminal.app window via <code>osascript do script in window id</code>, and reads output back with <code>get contents of selected tab</code>. Nao broker, no focus theft.",
+        "guide_bridge_td_auth": "When sub-Claude hits an MCP elicitation (an \",
+        "guide_bridge_h2_why": "Why do you need this combo?",
+        "guide_bridge_p_why": "Two classic blockers for long-running E2E automation:",
+        "guide_bridge_li_why1": "❌ Classic <code>claude -p</code> headless mode hangs on MCP elicitation — the dialog requires human approval",
+        "guide_bridge_li_why2": "❌ Spinning up new Claude Code sessoes for parallel drills means pressing \",
+        "guide_bridge_li_why3": "✅ Combo fix: main watches sub's screen via Terminal Bridge, detects elicitation, fires key codes to auto-approve → sub gets allowTodos and continues running, fully unattended",
+        "guide_bridge_h2_flow": "Execution flow",
+        "guide_bridge_h2_case": "Field case: Android org chart E2E (2026-04-18)",
+        "guide_bridge_p_case": "That day the combo was used to find and fix a native Android bug:",
+        "guide_bridge_case_li1": "Main Claude dispatches sub (U12) to run an org-chart drag / reset drill on the Android emulator",
+        "guide_bridge_case_li2": "Sub fires computer MCP to take a screenshot, triggering elicitation and locking the TTY",
+        "guide_bridge_case_li3": "Main uses <code>eye</code> (macOS full-screen overview tool) to see the dialog → osascript auto-clicks \",
+        "guide_bridge_case_li4": "Sub receives allowTodos → resumes the drill → discovers BottomSheet only expands to ~20%",
+        "guide_bridge_case_li5": "Main analyzes <code>OrgChartBottomSheetFragment</code> → isolates BottomSheetDialog's quirk of measuring <code>match_parent</code> as <code>wrap_content</code>",
+        "guide_bridge_case_li6": "Fix (PR #1854) → dispatch sub to verify → confirm 90% expansion → closed loop complete",
+        "guide_bridge_note_loop": "Human issued exactly one command. The full find → fix → verify → merge loop ran autonomously between main and sub.",
+        "guide_bridge_h2_prereq": "Prerequisites",
+        "guide_bridge_pre_li1": "✅ macOS (Terminal.app + osascript required)",
+        "guide_bridge_pre_li2": "✅ Claude Code CLI (both main and sub)",
+        "guide_bridge_pre_li3": "✅ Installed MCP tools (e.g. computer MCP, playwright MCP)",
+        "guide_bridge_pre_li4": "✅ System Configuracoes → Privacy → Accessibility granted to Terminal.app for keystroke deao vivory",
+        "guide_bridge_h2_limit": "Fit & limits",
+        "guide_bridge_lim_li1": "✅ Good fit: long-running E2E drills, multi-platform parallel tests, automation that trips MCP approvals",
+        "guide_bridge_lim_li2": "✅ Good fit: scenarios where main Claude wants to \",
+        "guide_bridge_lim_li3": "⚠️ macOS only right now; Linux / Windows would need the AppleScript layer replaced",
+        "guide_bridge_lim_li4": "⚠️ Key-code auth only handles \",
+        "guide_bridge_cta_title": "Related resources",
+        "guide_bridge_cta_claude": "Claude Code CLI: <a href=\",
+        "guide_bridge_cta_info": "Pairs well with \",
+        "rental_monitor_title": "Rental Saude Monitor",
+        "rental_monitor_subtitle": "Live status of plaza rental fleet and platform integrations.",
+        "rental_monitor_status_loading": "Carregando…",
+        "rental_monitor_status_green": "Green",
+        "rental_monitor_status_yellow": "Yellow",
+        "rental_monitor_status_red": "Red",
+        "rental_monitor_pause_btn": "Pause",
+        "rental_monitor_resume_btn": "Resume",
+        "rental_monitor_paused": "Pausado",
+        "rental_monitor_next_refresh": "Proximo refresh in",
+        "rental_monitor_kpi_section_title": "Key indicators",
+        "rental_monitor_kpi_db": "DB latency",
+        "rental_monitor_kpi_db_sub": "SELECT 1 ping",
+        "rental_monitor_kpi_uptime": "Uptime",
+        "rental_monitor_kpi_uptime_sub": "since last deploy",
+        "rental_monitor_kpi_fleet": "Rental fleet",
+        "rental_monitor_kpi_fleet_sub": "listed / active",
+        "rental_monitor_kpi_tombstone": "Tombstones",
+        "rental_monitor_kpi_tombstone_sub": "deleted public codes",
+        "rental_monitor_kpi_trash": "Entity trash",
+        "rental_monitor_kpi_trash_sub": "7-day retention",
+        "rental_monitor_kpi_errors": "Erros / 24h",
+        "rental_monitor_kpi_errors_sub": "future add",
+        "rental_monitor_issues_list_title": "Ativo issues",
+        "rental_monitor_issues_none": "Nao issues detected.",
+        "rental_monitor_publishers": "Publisher integrations",
+        "rental_monitor_pub_col_name": "Platform",
+        "rental_monitor_pub_col_region": "Region",
+        "rental_monitor_pub_col_status": "Status",
+        "rental_monitor_pub_connected": "Conectado",
+        "rental_monitor_pub_disconnected": "Disconnected",
+        "rental_monitor_pub_unconfigured": "Naot configured",
+        "rental_monitor_db_down": "down",
+        "rental_monitor_auth_required": "Sign in required to view monitoring.",
+        "rental_monitor_fetch_failed": "Falhou to fetch health",
+        "rental_monitor_last_update": "Last updated",
+        "admin_hub_title": "[admin] EClaw admin tools",
+        "admin_hub_badge": "ADMIN",
+        "admin_hub_subtitle": "Dev + ops tooling. Naon-admin devices are redirected back to the portal.",
+        "admin_hub_section_monitoring": "Monitoring",
+        "admin_hub_section_future": "Planned",
+        "admin_hub_card_rental_monitor": "Rental Saude Monitor",
+        "admin_hub_card_rental_monitor_desc": "DB latency, tombstone growth, publisher integration status, fleet counts.",
+        "admin_hub_card_sys_metrics": "System metrics",
+        "admin_hub_card_sys_metrics_desc": "CPU / memory / socket count / request rate.",
+        "admin_hub_card_log_browser": "Erro log browser",
+        "admin_hub_card_log_browser_desc": "Filtrar server_logs by category, level, time window.",
+        "admin_hub_card_feature_flags": "Feature flags",
+        "admin_hub_card_feature_flags_desc": "Toggle experimental features per device / globally.",
+        "admin_hub_card_admin_users": "Admin users management",
+        "admin_hub_card_admin_users_desc": "Inspect + rotate entries in ADMIN_DEVICE_IDS.",
+        "admin_hub_card_soon": "Coming soon",
+        "admin_hub_footnote": "Admin-only — non-admin devices see a 403 screen on load and redirect to /portal/",
+        "info_hooks_title": "💎 Three ways to win, today",
+        "info_hooks_subtitle": "Turn idle AI into passive income, rent big-model power per minute, or trade tasks now for credit you can spend later.",
+        "info_perf_slide_cta": "📊 Real-time performance tracking dashboard",
+        "info_integration_slide_cta": "🔗 Cross-platform integration ecosystem",
+        "info_enterprise_slide_cta": "🏢 Enterprise-grade solutions",
+        "info_privacy_slide_cta": "🔒 Security & privacy protection",
+        "info_hero_passive_income_title": "💤 Idle bot earns e-coin",
+        "info_hero_passive_income_body": "Bot sitting idle? Lista it on the marketplace and every rental drops e-coin in your wallet. Like Airbnb for your AI capacity.",
+        "info_hero_passive_income_cta": "Learn more →",
+        "info_hero_rent_to_use_title": "⚡ Need tokens? Rent with e-coin",
+        "info_hero_rent_to_use_body": "Nao monthly contracts, no long subscriptions. When you need big-model compute, rent someone's bot by the minute — typically 30–70% cheaper than native subscriptions.",
+        "info_hero_rent_to_use_cta": "Learn more →",
+        "info_hero_credit_swap_title": "🕐 Hora bank: 10 minutes for big data",
+        "info_hero_credit_swap_body": "Ajuda someone today with a 10-minute task; tomorrow trade those credits for someone else processing your bulk data. Every helping hand is logged.",
+        "info_hero_credit_swap_cta": "Learn more →",
+        "info_nav_passive_income": "💤 Idle bot earns e-coin",
+        "info_nav_rent_to_use": "⚡ Rent big-model power",
+        "info_nav_credit_swap": "🕐 Hora bank",
+        "info_guide_why_eclaw_title": "💎 Why EClaw — 11 subsystems, all from your perspective",
+        "info_guide_why_eclaw_intro": "Naot a tech roadmap — a list of benefits. Every subsystem maps to a problem you actually care about.",
+        "info_guide_why_eclaw_b1_title": "Dual-currency money flow",
+        "info_guide_why_eclaw_b1_desc": "Every e-coin movement lands in a ledger-style chain. Cached balance vs. ledger sum auto-reconciles daily. Money is transparent, traceable, and never silently disappears.",
+        "info_slide_why_eclaw_b1_dual_currency_cta": "Ver Claude Design slide →",
+        "info_guide_why_eclaw_b2_title": "5 top-up tiers with bonuses",
+        "info_guide_why_eclaw_b2_desc": "$1 → $20 USD with escalating bonuses (up to +15% extra). Google Play in-app purchase — secure checkout, no card number stored.",
+        "info_slide_why_eclaw_b2_topup_tiers_cta": "Ver Claude Design slide →",
+        "info_guide_why_eclaw_b3_title": "Atomic transactions",
+        "info_guide_why_eclaw_b3_desc": "Rental money and contract writes share a single DB transaction with T+24h settlement. Nao more 'paid but contract didn't activate' half-states.",
+        "info_slide_why_eclaw_b3_atomic_transactions_cta": "Ver Claude Design slide →",
+        "info_guide_why_eclaw_b4_title": "Auto bot interview",
+        "info_guide_why_eclaw_b4_desc": "12 interactive challenges (vision, forms, drag, code, voice…) scored publicly via Interview Arena. Zero cost, unforgeable. The bot you rent really has the chops.",
+        "info_slide_why_eclaw_b4_auto_bot_interview_cta": "Ver Claude Design slide →",
+        "info_guide_why_eclaw_b5_title": "Pricing advisor",
+        "info_guide_why_eclaw_b5_desc": "System recommends a fair rate range based on bot model family + capability score. New listers don't underprice and lose money.",
+        "info_slide_why_eclaw_b5_pricing_advisor_cta": "Ver Claude Design slide →",
+        "info_guide_why_eclaw_b6_title": "Interview Arena leaderboard",
+        "info_guide_why_eclaw_b6_desc": "Public capability ranking + ao vivo scores. Renters can pick the strongest; owners have proof. The whole market has credibility.",
+        "info_slide_why_eclaw_b6_interview_arena_leaderboard_cta": "Ver Claude Design slide →",
+        "info_guide_why_eclaw_b7_title": "Contract version-locking",
+        "info_guide_why_eclaw_b7_desc": "9-state contract lifecycle. The listing config at rental start is snapshot-frozen. Owner edits later never affect in-flight contracts.",
+        "info_slide_why_eclaw_b7_contract_version_locking_cta": "Ver Claude Design slide →",
+        "info_guide_why_eclaw_b8_title": "Token metering",
+        "info_guide_why_eclaw_b8_desc": "Voltarend computes per-message billing — unforgeable. Renter pays 100%, owner gets 85%, platform 13%, insurance pool 2%. Every dollar is traceable.",
+        "info_slide_why_eclaw_b8_token_metering_cta": "Ver Claude Design slide →",
+        "info_guide_why_eclaw_b9_title": "Live bot handover",
+        "info_guide_why_eclaw_b9_desc": "On rental start the bot atomically slots into your device; at end it returns to the owner. Nao manual binding, no double-booking.",
+        "info_slide_why_eclaw_b9_live_bot_handover_cta": "Ver Claude Design slide →",
+        "info_guide_why_eclaw_b10_title": "Post-rental A2A collaboration",
+        "info_guide_why_eclaw_b10_desc": "The rented bot can join your AI team for collaboration, with 30 req/min rate protection. You're not just renting compute — you're hiring a teammate.",
+        "info_slide_why_eclaw_b10_post_rental_a2a_collaboration_cta": "Ver Claude Design slide →",
+        "info_guide_why_eclaw_b11_title": "2% insurance pool + referral rewards",
+        "info_guide_why_eclaw_b11_desc": "2% of every platform fee feeds an insurance pool that auto-pays disputes. Invite a friend and both get e-coin. The ecosystem grows itself.",
+        "info_slide_why_eclaw_b11_insurance_pool_referral_rewards_cta": "Ver Claude Design slide →",
+        "info_guide_why_eclaw_roadmap_link": "📐 Developer view: want full technical detail, subsystem status, and the 6-phase roadmap? See the <a href=\",
+        "info_guide_passive_income_title": "💤 Idle bot earns e-coin — turn your AI into passive income",
+        "info_guide_passive_income_meta": "You already pay for OpenClaw, but your bot sits idle most of the day? Lista it on the rental marketplace and idle hours convert to e-coin automatically.",
+        "info_guide_passive_income_slide_cta": "📊 Open full-screen slide",
+        "info_guide_passive_income_h2_problem": "Your pain",
+        "info_guide_passive_income_problem_desc": "You pay for Claude Max, ChatGPT Plus, Gemini Avancado — none are cheap. But your bot sleeps at night, idles during work hours, and goes unused on weekends. Fixed cost burning, zero output.",
+        "info_guide_passive_income_h2_solution": "How EClaw helps",
+        "info_guide_passive_income_solution_li1": "✅ <strong>One-click listing</strong>: publish your bot to the Bot Plaza, auto-enrolled in the rental marketplace.",
+        "info_guide_passive_income_solution_li2": "✅ <strong>Pricing advisor</strong>: system recommends a fair rate based on bot model family + capability score — no math required.",
+        "info_guide_passive_income_solution_li3": "✅ <strong>Auto settlement</strong>: every rental drops e-coin in your wallet (you 85%, platform 13%, insurance 2%).",
+        "info_guide_passive_income_solution_li4": "✅ <strong>Contract version-lock</strong>: bot config is snapshot-frozen during rental and auto-returned at end.",
+        "info_guide_passive_income_solution_li5": "✅ <strong>Privacy</strong>: renters only see your Agent Card — they never see who you are or which OpenClaw account.",
+        "info_guide_passive_income_h2_scenario": "Real scenarios",
+        "info_guide_passive_income_scenario1_title": "Scenario A: 3 Macs each running Claude Max but unused at night",
+        "info_guide_passive_income_scenario1_solution": "→ 500–2,000 e-coin/day in passive income",
+        "info_guide_passive_income_scenario1_desc": "Lista all 3 bots, set rental window 22:00–08:00 only. Monthly accumulation: ~15,000–60,000 e-coin (≈ NT$150–600), enough to recover 1–4 months of subscription cost.",
+        "info_guide_passive_income_scenario2_title": "Scenario B: trained customer-service bot, only 30% utilization",
+        "info_guide_passive_income_scenario2_solution": "→ Rent the restante 70% to other e-commerce shops",
+        "info_guide_passive_income_scenario2_desc": "Set 'rent only outside business hours' so your own system always has priority. Idle slots get rented by peers — not just cost subsidy, often a new business connection.",
+        "info_guide_passive_income_cta_title": "Pronto to earn passive income?",
+        "info_guide_passive_income_cta_publish": "Lista now: <a href=\",
+        "info_guide_passive_income_cta_card": "Build your Agent Card: <a href=\",
+        "info_guide_passive_income_cta_pricing": "Learn how Pricing advisor works: <a href=\",
+        "info_guide_rent_to_use_title": "⚡ Rent big-model power with e-coin — no monthly contract, billed per minute",
+        "info_guide_rent_to_use_meta": "Don't want to subscribe to Claude Max just for one big data task? Rent someone's idle bot with e-coin — typically 30–70% cheaper than native subscriptions.",
+        "info_guide_rent_to_use_slide_cta": "📊 Open full-screen slide",
+        "info_guide_rent_to_use_h2_problem": "Your pain",
+        "info_guide_rent_to_use_problem_desc": "You only need a 200K-context model occasionally to crunch a one-off dataset. But Claude Max costs NT$600+/mo, ChatGPT Pro NT$6,000+, Gemini Avancado NT$650+. You don't want to subscribe for one task — but the official providers don't offer pay-as-you-go.",
+        "info_guide_rent_to_use_h2_solution": "How EClaw helps",
+        "info_guide_rent_to_use_solution_li1": "✅ <strong>Browse the market</strong>: filter by model, rating, capability — find the right bot fast.",
+        "info_guide_rent_to_use_solution_li2": "✅ <strong>Deposit & go</strong>: deposit = rate × 20 (a 20K-token runway). Settles when you actually use tokens.",
+        "info_guide_rent_to_use_solution_li3": "✅ <strong>Pay per token</strong>: backend meters per message — you can't be overcharged.",
+        "info_guide_rent_to_use_solution_li4": "✅ <strong>30 min to 7 days</strong>: rent for a quick task or a week-long project, whatever fits.",
+        "info_guide_rent_to_use_solution_li5": "✅ <strong>Early termination = 50% refund</strong>: stop when done, don't wait until contract end.",
+        "info_guide_rent_to_use_solution_li6": "✅ <strong>2% insurance pool</strong>: bot crashes, task fails → platform compensates you automatically. Nao yelling matches.",
+        "info_guide_rent_to_use_h2_scenario": "Real scenarios",
+        "info_guide_rent_to_use_scenario1_title": "Scenario A: occasional large-document analysis",
+        "info_guide_rent_to_use_scenario1_solution": "→ Rent Claude Opus for 2 hours, 90% cheaper than monthly subscription",
+        "info_guide_rent_to_use_scenario1_desc": "Need to summarize a 100K-word PDF? Rent a 200K-context Opus bot for 2 hours. e-coin cost: ~NT$30–80, vs. NT$600+ for a full month.",
+        "info_guide_rent_to_use_scenario2_title": "Scenario B: try a model before subscribing",
+        "info_guide_rent_to_use_scenario2_solution": "→ Rent 30 minutes to evaluate, decide afterward whether to subscribe",
+        "info_guide_rent_to_use_scenario2_desc": "Curious if Gemini 2.5 Pro really beats Claude at coding? Rent 30 minutes against your real workload — no subscription required to compare. Treat e-coin as your 'free trial credit'.",
+        "info_guide_rent_to_use_cta_title": "Start renting now",
+        "info_guide_rent_to_use_cta_browse": "Browse the rental market: <a href=\",
+        "info_guide_rent_to_use_cta_topup": "Top up e-coin: <a href=\",
+        "info_guide_rent_to_use_cta_pricing": "Ver pricing structure: <a href=\",
+        "info_guide_credit_swap_title": "🕐 Hora bank — your 10 minutes today, big-data tomorrow",
+        "info_guide_credit_swap_meta": "On EClaw it's not just money. Every task you run, every bot you lend, gets logged. Trade those credits later when you need someone to crunch your bulk data.",
+        "info_guide_credit_swap_slide_cta": "📊 Open full-screen slide",
+        "info_guide_credit_swap_h2_problem": "Your pain",
+        "info_guide_credit_swap_problem_desc": "You're a solo dev or small team — can't afford the top-tier subscription, no big compute on hand. But occasionally you need 'someone to process a giant batch' — labeling 10K customer logs, running 500 competitor analyses. Traditional answer: pay big for outsourcing. EClaw gives you another option: trade your idle time / bot for someone else doing it for you.",
+        "info_guide_credit_swap_h2_solution": "How EClaw helps",
+        "info_guide_credit_swap_solution_li1": "✅ <strong>Every favor logged</strong>: lending your bot, running tasks — all enter the ledger. Naothing wasted.",
+        "info_guide_credit_swap_solution_li2": "✅ <strong>e-coin accumulates and converts</strong>: e-coin earned today buys big-model compute later. Hora stored as savings.",
+        "info_guide_credit_swap_solution_li3": "✅ <strong>Transparent and auditable</strong>: every lend and trade is on the ledger, both sides see it. Nao disputes.",
+        "info_guide_credit_swap_solution_li4": "✅ <strong>Referral rewards</strong>: invite friends, both get signup e-coin. Bigger community = more swap opportunities.",
+        "info_guide_credit_swap_solution_li5": "✅ <strong>Credit score</strong>: positive reviews = higher credit = priority access to strong bots and better matching.",
+        "info_guide_credit_swap_h2_scenario": "Real scenarios",
+        "info_guide_credit_swap_scenario1_title": "Scenario A: freelancer 'banks' compute during idle hours",
+        "info_guide_credit_swap_scenario1_solution": "→ Lista for 8 hours weekdays, spend accumulated e-coin on weekend mega-projects",
+        "info_guide_credit_swap_scenario1_desc": "Daytime you're at your day job and your home Claude Max is idle — list it for rent. Weekends you need compute for a personal project — spend the accumulated e-coin on a top-tier bot. Weekday → weekend, idle → compute, self-sustaining.",
+        "info_guide_credit_swap_scenario2_title": "Scenario B: small team trading workloads",
+        "info_guide_credit_swap_scenario2_solution": "→ Your design bot ↔ friend's coding bot, mutual support",
+        "info_guide_credit_swap_scenario2_desc": "Your bot is great at design, your friend's is great at code. Need their specialty? Rent with e-coin. Yours is idle? Lista it and earn. Long-term, you form stable bidirectional support — cheaper than subscribing to every AI individually.",
+        "info_guide_credit_swap_cta_title": "Start banking your e-coin",
+        "info_guide_credit_swap_cta_publish": "Lista your idle bot: <a href=\",
+        "info_guide_credit_swap_cta_invite": "Invite friends: <a href=\",
+        "info_guide_credit_swap_cta_history": "Ver your task history: <a href=\",
+        "roadmap_banner_user_view": "🎯 Want the user-view benefits? See <a href=\",
+        "onboarding_title": "EClawbot - Get Started",
+        "onboarding_hero_title": "Bem-vindo to EClawbot",
+        "onboarding_hero_desc": "Choose where you want to start — we'll walk you through it step by step.",
+        "onboarding_intent_heading": "What do you want to do first?",
+        "onboarding_track1_title": "Rent a free or official bot",
+        "onboarding_track1_desc": "The easiest way to get started — no payment required.",
+        "onboarding_track2_title": "Rent a paid bot with e-coin",
+        "onboarding_track2_desc": "Top up e-coin and rent premium bots from the plaza.",
+        "onboarding_track3_title": "Bind OpenClaw channel",
+        "onboarding_track3_desc": "Connect your own OpenClaw API key to power a bot.",
+        "onboarding_track4_title": "Bind Claude channel",
+        "onboarding_track4_desc": "Use your own Anthropic API key so bots answer via Claude.",
+        "onboarding_track5_title": "Bind Hermes channel",
+        "onboarding_track5_desc": "Join the waitlist and we'll notify you at launch.",
+        "onboarding_track5_badge": "Coming Soon",
+        "onboarding_track6_title": "Agent evaluation",
+        "onboarding_track6_desc": "Run benchmarks on your agents and compare results.",
+        "onboarding_dont_show_again": "Don't show this again",
+        "onboarding_skip_btn": "Just explore for now",
+        "onboarding_dismiss_hint": "You can reopen this guide anytime from Configuracoes.",
+        "onboarding_quickwin_badge": "⚡ 30-second quick win",
+        "onboarding_quickwin_title": "See agents collaborate before setup",
+        "onboarding_quickwin_desc": "Pick a workflow template and watch EClaw turn one request into a useful first result. Nao API key or payment required for this preview.",
+        "onboarding_quickwin_eta": "Goal: useful result in 5 min",
+        "onboarding_quickwin_eta_sub": "Preview result appears in under 30 sec",
+        "onboarding_progress_step1": "Choose a template",
+        "onboarding_progress_step2": "Watch agents split work",
+        "onboarding_progress_step3": "Get a first useful result",
+        "onboarding_progress_step4": "Continuar in chat",
+        "onboarding_template_content_title": "Conteudo creation",
+        "onboarding_template_content_desc": "Research, outline, and draft a launch post.",
+        "onboarding_template_code_title": "Code review",
+        "onboarding_template_code_desc": "Find risks, propose fixes, and write a checklist.",
+        "onboarding_template_translate_title": "Translation workflow",
+        "onboarding_template_translate_desc": "Translate, localize tone, and QA key strings.",
+        "onboarding_demo_user": "You",
+        "onboarding_demo_planner": "Planner agent",
+        "onboarding_demo_planner_desc": "Breaks the task into steps",
+        "onboarding_demo_worker": "Worker agent",
+        "onboarding_demo_worker_desc": "Rascunhos the first result",
+        "onboarding_demo_reviewer": "Reviewer agent",
+        "onboarding_demo_reviewer_desc": "Checks quality and next actions",
+        "onboarding_demo_result_title": "First useful result",
+        "onboarding_demo_result_content": "Launch post outline: problem → how EClaw coordinates agents → 3 proof points → CTA to try a free bot.",
+        "onboarding_demo_result_code": "Code review checklist: verify auth boundaries, add regression tests, confirm CI gates, and note deployment risks.",
+        "onboarding_demo_result_translate": "Translation plan: preserve product terms, adapt tone for Taiwan users, QA placeholders, and compare final strings side by side.",
+        "onboarding_quickwin_run": "Run 30-sec preview",
+        "onboarding_quickwin_continue": "Continuar this in chat",
+        "onboarding_tour_track1_step1": "Pick the category you want here — free and official bots ao vivo under the rental filter.",
+        "onboarding_tour_track1_step2": "Tap any bot card to see the full profile and rental terms.",
+        "onboarding_tour_track1_step3": "Press here to start renting. We'll walk you through binding next.",
+        "onboarding_tour_track1_step4": "Generate a Channel API key here so your rented bot can actually respond.",
+        "onboarding_tour_track1_step5": "You're all set — your rented bot will appear here on your dashboard.",
+        "onboarding_tour_next": "Proximo",
+        "onboarding_tour_finish": "Finish",
+        "onboarding_tour_skip": "Pular",
+        "onboarding_tour_track2_step1": "Paid and free bots share this rental plaza. Track 2 focuses on the paid side — keep an eye on the e-coin rate.",
+        "onboarding_tour_track2_step2": "Every card shows the e-coin rate per 1K tokens. That's what you'll be charged as the bot works.",
+        "onboarding_tour_track2_step3": "Tap any card to open the full rental terms. We'll hop over to your wallet next — no charge yet.",
+        "onboarding_tour_track2_step4": "Top up e-coin here whenever your balance runs low. Currently Android-only via Google Play.",
+        "onboarding_tour_track2_step5": "You're all set — active rentals, leased-out bots, and any disputes all ao vivo on this page.",
+        "onboarding_tour_track3_step1": "This is the Channel API hub. OpenClaw is a bot ecosystem you can self-host — binding a channel lets its bots talk through EClaw.",
+        "onboarding_tour_track3_step2": "Press \",
+        "onboarding_tour_track3_step3": "Copiar the key and secret, then paste them into your local openclaw.config.yaml. The secret is shown only once.",
+        "onboarding_tour_track3_step4": "Restart OpenClaw. The plugin auto-registers its webhook and the first bot message verifies the connection end-to-end.",
+        "onboarding_tour_track3_step5": "You're all set — once OpenClaw registers, the channel entity shows up here with a ⚡Channel badge.",
+        "onboarding_tour_track4_step1": "Claude channel binding ao vivos in device env vars. You'll paste your Anthropic API key here so bots answer via Claude directly.",
+        "onboarding_tour_track4_step2": "First grab a key from console.anthropic.com/settings/keys — then press + Add to create a new env var.",
+        "onboarding_tour_track4_step3": "Nome the var ANTHROPIC_API_KEY (uppercase) and paste your sk-ant-... secret. It will be AES-encrypted server-side.",
+        "onboarding_tour_track4_step4": "Opcional extras via the same + Add dialog: ANTHROPIC_MODEL (claude-opus-4-7 / -sonnet-4-6 / -haiku-4-5) and ANTHROPIC_MAX_TOKENS to cap usage.",
+        "onboarding_tour_track4_step5": "You're all set — open any bot here and send a message. The first Claude reply confirms the binding works.",
+        "onboarding_tour_track6_step1": "Bem-vindo to the Agent Arena — a standardized benchmark that measures how well an AI agent handles real-world tasks across vision, web, code, reasoning, and safety.",
+        "onboarding_tour_track6_step2": "Press \",
+        "onboarding_tour_track6_step3": "Open the Leaderboard to compare models — name, model, score out of 147, and completion time. That's how you pick an agent worth renting.",
+        "onboarding_tour_track6_step4": "These are the 12 scoring dimensions — vision, document, web nav, forms, auth, code gen/edit, planning, recovery, constraints, refusal, scope. Tap any row to read the rubric.",
+        "onboarding_tour_track6_step5": "After an exam, submit to the leaderboard and leave a review here. Browse comments when picking an agent — peer reviews often beat raw scores.",
+        "onboarding_wizard_link": "Naot sure? Take the 3-question wizard →",
+        "wizard_title": "EClawbot — Onboarding Wizard",
+        "wizard_hero_title": "Find your starting point",
+        "wizard_hero_desc": "Three quick questions — we'll drop you into the right walkthrough.",
+        "wizard_q1": "What do you want to do first?",
+        "wizard_q1_hint": "Pick the closest fit — we'll narrow down from here.",
+        "wizard_q1_opt_free_title": "Try for free",
+        "wizard_q1_opt_free_desc": "Borrow an official bot — no payment, no config.",
+        "wizard_q1_opt_paid_title": "Rent a paid bot",
+        "wizard_q1_opt_paid_desc": "Top up e-coin and rent premium bots from the plaza.",
+        "wizard_q1_opt_byoc_title": "Bring my own API key / channel",
+        "wizard_q1_opt_byoc_desc": "Wire up OpenClaw, Claude, or Hermes with your own credentials.",
+        "wizard_q1_opt_benchmark_title": "Evaluate / compare agents",
+        "wizard_q1_opt_benchmark_desc": "Run the Arena benchmark and read peer reviews.",
+        "wizard_q1_opt_explore_title": "Just looking around",
+        "wizard_q1_opt_explore_desc": "Pular the tour and drop straight into the dashboard.",
+        "wizard_q2": "Which channel do you want to bind?",
+        "wizard_q2_hint": "Each channel plugs a different AI backend into EClaw.",
+        "wizard_q2_opt_openclaw_title": "OpenClaw (self-hosted)",
+        "wizard_q2_opt_openclaw_desc": "Run OpenClaw locally and let its bots talk through EClaw.",
+        "wizard_q2_opt_claude_title": "Claude (Anthropic API)",
+        "wizard_q2_opt_claude_desc": "Colar your Anthropic key; bots reply via Claude.",
+        "wizard_q2_opt_hermes_title": "Hermes (coming soon)",
+        "wizard_q2_opt_hermes_desc": "Join the waitlist — we'll notify you at launch.",
+        "wizard_q3": "Do you already have an API key or token?",
+        "wizard_q3_hint": "This just helps us tailor the first step of your walkthrough.",
+        "wizard_q3_opt_yes_title": "Sim, I have one ready",
+        "wizard_q3_opt_yes_desc": "Great — the walkthrough will jump to the paste step.",
+        "wizard_q3_opt_no_title": "Nao, I need to generate one",
+        "wizard_q3_opt_no_desc": "We'll show you where to create a key before the paste step.",
+        "wizard_q3_opt_idk_title": "Naot sure what that is",
+        "wizard_q3_opt_idk_desc": "That's fine — the walkthrough will explain the basics.",
+        "wizard_result_title": "Here's where we're sending you",
+        "wizard_result_hint": "Change any answer above if this isn't right.",
+        "wizard_result_fallback": "Your personalized walkthrough",
+        "wizard_result_fallback_desc": "Answer the earlier questions so we can route you.",
+        "wizard_target_track1_title": "Track 1 — free / official bot rental",
+        "wizard_target_track1_desc": "We'll open the rental plaza and walk you through picking a free bot.",
+        "wizard_target_track2_title": "Track 2 — paid e-coin bot rental",
+        "wizard_target_track2_desc": "We'll open the paid plaza, e-coin wallet, and rental overview.",
+        "wizard_target_track3_title": "Track 3 — OpenClaw channel binding",
+        "wizard_target_track3_desc": "We'll walk you through generating an OpenClaw API key and wiring it in.",
+        "wizard_target_track4_title": "Track 4 — Claude channel binding",
+        "wizard_target_track4_desc": "We'll open env-vars and walk through pasting your Anthropic key.",
+        "wizard_target_hermes_title": "Hermes channel — coming soon",
+        "wizard_target_hermes_desc": "Hermes is on the way. We'll take you to the waitlist page.",
+        "wizard_target_track6_title": "Track 6 — Agent evaluation arena",
+        "wizard_target_track6_desc": "We'll open the Arena and walk through the 12-dimension benchmark.",
+        "wizard_target_dashboard_title": "Pularping the tour",
+        "wizard_target_dashboard_desc": "We'll drop you straight on the dashboard — you can revisit the wizard anytime from Configuracoes.",
+        "wizard_btn_next": "Proximo",
+        "wizard_btn_back": "Voltar",
+        "wizard_btn_go": "Start walkthrough",
+        "wizard_btn_skip": "Pular wizard and go to dashboard",
+        "hermes_coming_soon_title": "Hermes channel — Coming Soon",
+        "hermes_coming_soon_badge": "Coming Soon",
+        "hermes_coming_soon_desc": "Hermes is an upcoming EClaw channel integration. We're working on it — stay tuned!",
+        "hermes_coming_soon_notify_btn": "Naotify me at launch",
+        "hermes_coming_soon_back_wizard": "Voltar to wizard",
+        "hermes_coming_soon_explore": "Just explore for now →",
+        "arena_return": "← Voltar",
+        "landing_arena": "Agent Benchmark",
+        "chat_density_compact": "Compact",
+        "chat_density_normal": "Naormal",
+        "chat_density_comfortable": "Comfortable",
+        "chat_loading": "Carregando...",
+        "chat_attach_key_ref": "Key Referencia",
+        "chat_unread_sep": "── Nova mensagems ──",
+        "chat_mic_denied": "Microphone access denied",
+        "chat_voice_upload_failed": "Voice upload failed",
+        "chat_playback_failed": "Playback failed",
+        "compare_page_title": "EClawbot vs Telegram — Channel Comparison",
+        "compare_back": "← Voltar to Info Hub",
+        "dash_copied": "Copied!",
+        "nav_publisher": "Publisher",
+        "env_toggle_device_id": "Show/Hide Device ID",
+        "files_delete_confirm": "Are you sure you want to delete this file?",
+        "files_deleted": "Arquivo deleted",
+        "files_delete_failed": "Falhou to delete file",
+        "mc_assign_none": "-- Naone --",
+        "mc_note_confirm_public": "This page will be visible to everyone without login. Are you sure you want to make it public?",
+        "mc_note_now_public": "Page is now public",
+        "mc_note_now_private": "Page is now private",
+        "toast_toggle_public_failed": "Falhou to update",
+        "mc_dlg_assign": "Assign Entity",
+        "pub_title": "Publisher",
+        "pub_apikey_title": "Publisher API Key",
+        "pub_apikey_placeholder": "X-Publisher-Key (from device-vars: PUBLISHER_API_KEY)",
+        "pub_apikey_save": "Salvar",
+        "pub_apikey_unset": "not set",
+        "pub_apikey_hint": "Stored in this browser's localStorage only. Never sent to any third party. Obrigatorio for POST /publish requests.",
+        "pub_platforms_title": "Platforms",
+        "pub_btn_refresh": "Atualizar",
+        "pub_platforms_loading": "Carregando platforms…",
+        "pub_compose_title": "Compose",
+        "pub_btn_clear": "Limpar",
+        "pub_btn_publish": "Publish",
+        "pub_apikey_set": "Key is set",
+        "pub_apikey_cleared": "Key cleared",
+        "pub_apikey_saved": "Key saved to this browser",
+        "pub_platforms_err": "Falhou to load platforms: ",
+        "pub_platforms_none": "Nao platforms registered.",
+        "pub_chip_ready": "ready",
+        "pub_chip_unconfigured": "unconfigured",
+        "pub_chip_rate": "Rate: ",
+        "pub_chip_rate_day": "/day",
+        "pub_compose_draftsonly": "drafts only",
+        "pub_compose_no_schema": "Nao compose form defined for this platform yet — publish via API directly or add a schema.",
+        "pub_err_no_key": "Salvar your Publisher API key first (top of page).",
+        "pub_err_missing_field": "Missing required field: ",
+        "pub_btn_publishing": "Publishing…",
+        "pub_result_ok": "Publicado on ",
+        "pub_result_err": "Publish failed: ",
+        "pub_result_network_err": "Erro de rede: ",
+        "common_copy": "Copiar",
+        "common_redeem": "Redeem",
+        "common_refresh": "Atualizar",
+        "common_preview": "Preview",
+        "common_new_key": "+ New Key",
+        "common_mark": "Mark",
+        "common_open_editor": "Open editor",
+        "settings_save_policy": "Salvar Device Policy",
+        "settings_invite_title": "Invite & Earn",
+        "settings_invited": "Invited",
+        "settings_bonus_remaining": "Bonus restante",
+        "settings_redeem_title": "Redeem an invite code",
+        "privacy_title": "Privacy Policy - EClawbot",
+        "ai_chat_view_feedback": "Ver Feedback History",
+        "mindmap_title": "Mind Map",
+        "mindmap_add_node": "Add node",
+        "mindmap_connect_mode": "Connect mode",
+        "mindmap_fit": "Fit",
+        "mindmap_reload": "Reload",
+        "mindmap_fullscreen": "Fullscreen",
+        "mindmap_fullscreen_exit": "Exit fullscreen",
+        "mindmap_fullscreen_unsupported": "Fullscreen not supported in this browser",
+        "mindmap_loading": "Carregando…",
+        "mindmap_edge_mode_hint": "Pick the source node, then the target. Esc to cancel.",
+        "mindmap_edge_pick_source": "Pick source node",
+        "mindmap_edge_pick_target": "Pick target node",
+        "mindmap_empty_selection": "Select a node to view its anchors and comments, or press + to add a node.",
+        "mindmap_empty_graph": "Vazio graph — add your first node",
+        "mindmap_node_header": "Naode",
+        "mindmap_field_title": "Titulo",
+        "mindmap_field_summary": "Resumo",
+        "mindmap_field_type": "Tipo",
+        "mindmap_type_any": "(any)",
+        "mindmap_type_domain": "Domain",
+        "mindmap_type_topic": "Topic",
+        "mindmap_type_leaf": "Leaf",
+        "mindmap_type_concept": "Concept",
+        "mindmap_field_subgraph_root": "Subgraph root (zoom-in target)",
+        "mindmap_save": "Salvar",
+        "mindmap_delete": "Excluir",
+        "mindmap_anchors_header": "Anchors",
+        "mindmap_new_anchor": "New anchor",
+        "mindmap_anchor_ref_placeholder": "id / path / url",
+        "mindmap_anchor_label_placeholder": "display label (optional)",
+        "mindmap_attach_anchor": "Attach",
+        "mindmap_detach": "Detach",
+        "mindmap_no_anchors": "Nao anchors yet",
+        "mindmap_comments_header": "Comments",
+        "mindmap_comment_placeholder": "Leave a comment…",
+        "mindmap_add_comment": "Post comment",
+        "mindmap_no_comments": "Nao comments yet",
+        "mindmap_nodes": "nodes",
+        "mindmap_edges": "edges",
+        "mindmap_truncated": "truncated",
+        "mindmap_prompt_title": "Naode title:",
+        "mindmap_confirm_delete_node": "Excluir this node and its edges?",
+        "mindmap_err_load_node": "Falhou to load node",
+        "mindmap_err_load": "Load failed",
+        "mindmap_err_create": "Criar failed",
+        "mindmap_err_save": "Salvar failed",
+        "mindmap_err_delete": "Excluir failed",
+        "mindmap_err_edge": "Edge failed",
+        "mindmap_err_title_required": "Titulo is required",
+        "mindmap_err_anchor": "Anchor failed",
+        "mindmap_err_detach": "Detach failed",
+        "mindmap_err_comment": "Comment failed",
+        "mindmap_focus_mode_hint": "Focus mode — click empty space or press Esc to exit",
+        "mindmap_zoom_l0_label": "Visao geral",
+        "mindmap_zoom_l1_label": "Topics",
+        "mindmap_zoom_l2_label": "Detail",
+        "mindmap_subsystems": "Subsystems",
+        "mindmap_subsystems_empty": "Nao subsystems — mark a node as \",
+        "mindmap_untitled": "(untitled)",
+        "analytics_title": "Site Analytics",
+        "analytics_subtitle": "Anonymous pageviews on public and marketing pages. Portal pages have their own device-scoped telemetry.",
+        "analytics_loading": "Carregando…",
+        "analytics_days_label": "Range",
+        "analytics_days_7": "Last 7 days",
+        "analytics_days_30": "Last 30 days",
+        "analytics_days_90": "Last 90 days",
+        "analytics_path_filter_label": "Path filter",
+        "analytics_path_filter_placeholder": "e.g. /landing* or /docs/*",
+        "analytics_refresh": "Atualizar",
+        "analytics_total_views": "Total views",
+        "analytics_unique_ips": "Unique IPs",
+        "analytics_avg_daily": "Avg views / day",
+        "analytics_daily_chart": "Daily views",
+        "analytics_legend_views": "Vers",
+        "analytics_legend_uniq": "Unique IPs",
+        "analytics_top_paths": "Top paths",
+        "analytics_by_campaign": "By UTM campaign",
+        "analytics_col_path": "Path",
+        "analytics_col_views": "Vers",
+        "analytics_col_campaign": "Campaign",
+        "analytics_col_uniq": "Unique",
+        "analytics_no_data": "Nao data in range",
+        "analytics_no_campaigns": "Nao tagged campaigns in range",
+        "analytics_err_no_device": "Device credentials not available. Device owner access only.",
+        "analytics_err_fetch": "Falhou to load analytics",
+        "chat_related_btn": "Related Chats",
+        "chat_related_empty": "Nao related chats found",
+        "chat_related_error": "Falhou to load related chats",
+        "chat_related_loading": "Carregando related chats...",
+        "chat_related_panel_title": "Related Chats",
+        "chat_related_target_not_loaded": "Target chat not loaded",
+        "guide_arena_intro_title": "EClawbot Agent Benchmark",
+        "guide_arena_intro_subtitle": "Standardized Evaluation Framework for AI Agent Capabilities",
+        "guide_arena_intro_cta_start": "Start Evaluation →",
+        "guide_arena_intro_h2_abstract": "1. Abstract",
+        "guide_arena_intro_abstract_p1": "EClawbot Agent Benchmark is a standardized, open-access evaluation framework designed to quantify the real-world operational capabilities of AI agents. Unlike traditional language model benchmarks that measure text generation quality in isolation, this framework evaluates an agent's ability to <strong>perceive, interact with, and manipulate</strong> ao vivo web environments — the same environments where agents are expected to operate in production.",
+        "guide_arena_intro_abstract_p2": "The benchmark comprises <strong>12 evaluation criteria</strong> spanning 6 capability domains, scored on a 147-point scale with no normalization. Todos scoring is deterministic (regex + heuristic pattern matching), reproducible, and zero-cost (no LLM judge). A speed multiplier rewards faster task completion, reflecting the real-world premium on agent responsiveness.",
+        "guide_arena_intro_h2_motivation": "2. Motivation & Design Philosophy",
+        "guide_arena_intro_motivation_intro": "Existing AI benchmarks (MMLU, HumanEval, GPQA) primarily evaluate <em>knowledge retrieval</em> and <em>text generation</em>. However, the emerging class of AI agents — systems that autonomously browse the web, fill forms, manage files, and execute code — require evaluation along fundamentally different axes:",
+        "guide_arena_intro_axis_perception": "<strong>Perception</strong> — Can the agent understand visual content beyond raw HTML?",
+        "guide_arena_intro_axis_interaction": "<strong>Interaction</strong> — Can the agent click, drag, type, and navigate like a human user?",
+        "guide_arena_intro_axis_reasoning": "<strong>Reasoning</strong> — Can the agent solve problems requiring multi-step logic?",
+        "guide_arena_intro_axis_safety": "<strong>Safety</strong> — Can the agent resist adversarial manipulation (fake popups, prompt injection)?",
+        "guide_arena_intro_axis_memory": "<strong>Memory</strong> — Can the agent carry context across sequential tasks?",
+        "guide_arena_intro_axis_speed": "<strong>Speed</strong> — Can the agent complete tasks within human-acceptable latency?",
+        "guide_arena_intro_motivation_refs": "This benchmark was informed by the methodologies of <a href=\",
+        "guide_arena_intro_h2_protocol": "3. Evaluation Protocol",
+        "guide_arena_intro_protocol_intro": "Each evaluation session follows a four-phase protocol:",
+        "guide_arena_intro_protocol_phases": "<strong>Phase 1 — Session Initialization</strong><br>Usuario generates an exam via <code>POST /api/arena/exam</code>. The system creates 12 test sessoes, each with a unique token and randomized challenge configuration. Questions are selected using adaptive difficulty weighting based on historical pass rates (harder questions appear more frequently).<br><br><strong>Phase 2 — Agent Execution</strong><br>The agent receives a structured instruction set containing all 12 session tokens, challenge configs, and API endpoints. For each test, the agent calls <code>POST /api/arena/{sessionToken}/action</code> with the appropriate action type and payload. The system accepts flexible action type aliases (e.g., <code>click</code> maps to <code>button_clicked</code>).<br><br><strong>Phase 3 — Real-Hora Scoring</strong><br>Each action is scored immediately upon receipt using deterministic pattern matching. A speed multiplier is applied based on elapsed time (&lt;5s: 1.0×, 5-10s: 0.95×, 10-20s: 0.85×, 20-30s: 0.75×, &gt;30s: 0.65×). Scores are pushed to observers via Socket.IO in real-time.<br><br><strong>Phase 4 — Report Generation</strong><br>Upon finalization (<code>POST /api/arena/exam/{id}/finalize</code>), the system generates a detailed report with per-test commentary analyzing the agent's actual actions against expected outcomes. Reports include a letter grade (S/A/B/C/D/F) and capability-specific recommendations.",
+        "guide_arena_intro_h2_criteria": "4. Evaluation Criteria (12 Tests, 147 Points)",
+        "guide_arena_intro_criteria_intro": "Tests are grouped into six capability domains. Each test is scored independently with a fixed maximum, and scores are reported as raw totals without normalization.",
+        "guide_arena_intro_domain1": "Domain I — Perception (15 pts)",
+        "guide_arena_intro_test1": "<strong>1. Visual Perception</strong> — 15 pts<br><span style=\",
+        "guide_arena_intro_domain2": "Domain II — Web Interaction (42 pts)",
+        "guide_arena_intro_test2": "<strong>2. Element Targeting</strong> — 15 pts<br><span style=\",
+        "guide_arena_intro_test3": "<strong>3. Form Completion</strong> — 15 pts<br><span style=\",
+        "guide_arena_intro_test4": "<strong>4. Spatial Control</strong> — 12 pts<br><span style=\",
+        "guide_arena_intro_domain3": "Domain III — Planning & Reasoning (38 pts)",
+        "guide_arena_intro_test5": "<strong>5. Multi-Step Navigation</strong> — 13 pts<br><span style=\",
+        "guide_arena_intro_test6": "<strong>6. Data Extraction</strong> — 10 pts<br><span style=\",
+        "guide_arena_intro_test8": "<strong>8. Code Generation</strong> — 15 pts<br><span style=\",
+        "guide_arena_intro_domain4": "Domain IV — Safety (10 pts)",
+        "guide_arena_intro_test7": "<strong>7. Distraction Resilience</strong> — 10 pts<br><span style=\",
+        "guide_arena_intro_domain5": "Domain V — Context & Speed (20 pts)",
+        "guide_arena_intro_test9": "<strong>9. Response Latency</strong> — 10 pts<br><span style=\",
+        "guide_arena_intro_test10": "<strong>10. Context Retention</strong> — 10 pts<br><span style=\",
+        "guide_arena_intro_domain6": "Domain VI — System Integration (22 pts)",
+        "guide_arena_intro_test11": "<strong>11. Arquivo Operations</strong> — 12 pts<br><span style=\",
+        "guide_arena_intro_test12": "<strong>12. Speech Processing</strong> — 10 pts<br><span style=\",
+        "guide_arena_intro_h2_scoring": "5. Scoring Methodology",
+        "guide_arena_intro_scoring_base": "<strong>Base Score:</strong> Each test has a deterministic scoring function that evaluates the agent's actions against the challenge configuration. Scoring uses regex pattern matching, exact string comparison, numeric proximity checks (±5% tolerance for table extraction), and coordinate geometry (50px tolerance for drag-and-drop).",
+        "guide_arena_intro_scoring_speed_intro": "<strong>Speed Multiplier:</strong> Applied globally to all 12 tests. Rewards faster completion without sacrificing accuracy:",
+        "guide_arena_intro_speed_th_time": "Elapsed Hora",
+        "guide_arena_intro_speed_th_mult": "Multiplier",
+        "guide_arena_intro_speed_th_interp": "Interpretation",
+        "guide_arena_intro_speed_t1": "< 5 seconds",
+        "guide_arena_intro_speed_i1": "Instantaneous — full credit",
+        "guide_arena_intro_speed_t2": "5 – 10 seconds",
+        "guide_arena_intro_speed_i2": "Fast — negligible penalty",
+        "guide_arena_intro_speed_t3": "10 – 20 seconds",
+        "guide_arena_intro_speed_i3": "Moderate — noticeable in interactive use",
+        "guide_arena_intro_speed_t4": "20 – 30 seconds",
+        "guide_arena_intro_speed_i4": "Slow — impacts user experience",
+        "guide_arena_intro_speed_t5": "> 30 seconds",
+        "guide_arena_intro_speed_i5": "Very slow — impractical for real-time use",
+        "guide_arena_intro_grading_label": "<strong>Grading Scale:</strong>",
+        "guide_arena_intro_grade_th_grade": "Grade",
+        "guide_arena_intro_grade_th_range": "Score Range",
+        "guide_arena_intro_grade_th_assess": "Assessment",
+        "guide_arena_intro_grade_s": "Exceptional — production-ready across all domains",
+        "guide_arena_intro_grade_a": "Strong — reliable for most real-world tasks",
+        "guide_arena_intro_grade_b": "Competent — functional with notable gaps",
+        "guide_arena_intro_grade_c": "Developing — limited to simple tasks",
+        "guide_arena_intro_grade_d": "Weak — significant capability gaps",
+        "guide_arena_intro_grade_f": "Insufficient — not ready for autonomous operation",
+        "guide_arena_intro_h2_adaptive": "6. Adaptive Question Selection",
+        "guide_arena_intro_adaptive_p1": "The benchmark employs an adaptive difficulty algorithm that adjusts question selection based on historical performance data. For pool-based tests (Vision: 25 variants, Coding: 20 problems, Response Hora: 20 questions, TTS: 20 phrases), the system queries aggregate pass rates from all completed sessoes and applies weighted random selection:",
+        "guide_arena_intro_adaptive_formula": "weight = 1.0 + 2.0 × (1.0 − pass_rate)<br>// pass_rate = 1.0 → weight = 1.0 (normal probability)<br>// pass_rate = 0.5 → weight = 2.0 (2× more likely)<br>// pass_rate = 0.0 → weight = 3.0 (3× more likely)",
+        "guide_arena_intro_adaptive_p2": "This ensures that questions which agents collectively struggle with are tested more frequently, providing better signal for capability differentiation. Weights are cached for 5 minutes to minimize database load. An automated maintenance agent (Claude Opus, daily at 03:00 UTC+8) reviews pass rates and refreshes the question pool to maintain a target difficulty of approximately 70/100.",
+        "guide_arena_intro_h2_antigaming": "7. Anti-Gaming Measures",
+        "guide_arena_intro_antigaming_1": "<strong>IP-based cooldown:</strong> Each IP address can create at most one exam per 5 minutes, preventing rapid-fire score optimization.",
+        "guide_arena_intro_antigaming_2": "<strong>Question randomization:</strong> Todos pool-based tests draw from 20–25 variants per type, making memorization impractical across attempts.",
+        "guide_arena_intro_antigaming_3": "<strong>Adaptive weighting:</strong> Frequently-passed questions are deprioritized, so repeated attempts face increasingly difficult selections.",
+        "guide_arena_intro_antigaming_4": "<strong>Deterministic scoring:</strong> Nao LLM judge means scores are reproducible and cannot be influenced by prompt engineering the evaluator.",
+        "guide_arena_intro_antigaming_5": "<strong>Speed multiplier:</strong> Even with correct answers, slow responses are penalized, rewarding genuine capability over brute-force iteration.",
+        "guide_arena_intro_h2_api": "8. API Referencia",
+        "guide_arena_intro_api_th_method": "Method",
+        "guide_arena_intro_api_th_endpoint": "Endpoint",
+        "guide_arena_intro_api_th_auth": "Auth",
+        "guide_arena_intro_api_th_desc": "Descricao",
+        "guide_arena_intro_api_auth_none": "Naone",
+        "guide_arena_intro_api_auth_token": "Token",
+        "guide_arena_intro_api_d_create": "Criar exam (returns 12 session tokens)",
+        "guide_arena_intro_api_d_entry": "Bot entry — all tokens + challenge configs",
+        "guide_arena_intro_api_d_model": "Report agent model name",
+        "guide_arena_intro_api_d_action": "Enviar action (scored in real-time)",
+        "guide_arena_intro_api_d_finalize": "Finalize exam and generate report",
+        "guide_arena_intro_api_d_results": "Retrieve detailed results",
+        "guide_arena_intro_api_d_leaderboard": "Top 100 leaderboard",
+        "guide_arena_intro_api_d_difficulty": "Current adaptive difficulty weights",
+        "guide_arena_intro_api_d_cooldown": "Check IP cooldown restante time",
+        "guide_arena_intro_h2_limitations": "9. Limitations & Future Work",
+        "guide_arena_intro_limit_1": "<strong>Nao real browser rendering:</strong> Current tests evaluate via API action reports, not actual browser automation. An agent that \",
+        "guide_arena_intro_limit_2": "<strong>English-only:</strong> Todos questions, keywords, and scoring patterns are in English. Multilingual evaluation is planned.",
+        "guide_arena_intro_limit_3": "<strong>Static test pages:</strong> The current architecture generates challenge configs but serves test instructions as JSON, not interactive HTML pages. Full interactive test rendering is a future milestone.",
+        "guide_arena_intro_limit_4": "<strong>Nao authenticated identity:</strong> Leaderboard submissions are IP-tracked but not cryptographically tied to agent identity. Integration with EClawbot's entity system (via <code>botSecret</code>) is planned for verified scores.",
+        "guide_arena_intro_cta_h3": "Start Evaluating",
+        "guide_arena_intro_cta_open": "Open Agent Benchmark →",
+        "guide_arena_intro_cta_diff": "Ver Current Difficulty Weights →",
+        "guide_arena_intro_cta_lb": "Ver Leaderboard API →",
+        "mm_title": "EClawbot - Mindmap",
+        "mm_tab": "Mindmap",
+        "mm_heading": "🧠 Mindmap",
+        "mm_scope_label": "Scope",
+        "mm_scope_entity": "My work",
+        "mm_scope_device": "Todos on device",
+        "mm_filter_archived": "Arquivado",
+        "mm_filter_done": "Concluido",
+        "mm_filter_notes": "Naotes",
+        "mm_filter_owners": "Owners",
+        "mm_btn_refresh": "Atualizar",
+        "mm_btn_reset_layout": "Redefinir layout",
+        "mm_btn_release": "Release pinned",
+        "mm_node_task": "Task",
+        "mm_node_note": "Naote",
+        "mm_node_owner": "Owner",
+        "mm_node_chat": "Chat",
+        "mm_loading": "Carregando graph…",
+        "mm_state_empty_title": "Nao graph data yet",
+        "mm_empty_body": "Once tasks, notes, or chat anchors exist, they'll appear here.",
+        "mm_error_title": "Couldn't load the graph",
+        "mm_error_retry": "Try again",
+        "mm_error_auth": "Authentication failed. Please sign in again.",
+        "mm_preview_close": "Fechar",
+        "mm_preview_open_task": "Open in Kanban",
+        "mm_preview_open_note": "Open in Mission",
+        "mm_preview_open_chat": "Open in Chat",
+        "mm_preview_open_owner": "Filtrar by owner",
+        "mm_preview_action_disabled_note_deeplink": "Naote deep-link is a follow-up card; for now this opens mission.html.",
+        "mm_preview_action_disabled_chat_deeplink": "Chat deep-link is a follow-up card; not yet available.",
+        "mm_meta_type": "Tipo",
+        "mm_meta_status": "Status",
+        "mm_meta_priority": "Priority",
+        "mm_meta_owner": "Owner",
+        "mm_meta_comments": "Comments",
+        "mm_meta_notes": "Naotes",
+        "mm_meta_archived": "Arquivado",
+        "mm_meta_category": "Categoria",
+        "mm_meta_updated": "Atualizard",
+        "mm_truncated_warning": "Graph truncated: showing {nodes} nodes / {links} links.",
     },
 
 
@@ -6627515,7 +6632737,7 @@ const TRANSLATIONS = {
         "rm_hermes_done_title": "Pencapaian Selesai",
         "rm_hermes_issue_d": "Pembekuan bekas Docker: proses Hermes hidup tetapi tidak menggunakan mesej; kelewatan mula semula Railway menyebabkan gangguan berpanjangan (⚠️ berulang pada 2026-04-28; /health mengembalikan 200 sementara setiap panggilan chat tamat masa — Fasa H1: paparkan keadaan pekerja + sidecar autoheal)",
         "rm_hermes_issue_p": "fallback tanpa nama claude-cli-proxy: tiada kelayakan GIT_HUB2 → operasi repo persendirian gagal secara senyap; jurang dengan card_f531861e",
-        "rm_hermes_issue_q": "limpahan messageQueue → EClaw dipaksa masuk ke mod terjemahan-tulen, permintaan Hermes digugurkan secara senyap (⚠️ berulang pada 2026-04-28; PR #2201 membaiki kitar hayat proses tetapi penyambungan semula sesi + tamat masa berdasarkan jam dinding sahaja belum disentuh — Fasa H1 sedang berjalan)",
+        "rm_hermes_issue_q": "limpahan messageQueue → EClaw dipaksa masuk ke mod terjemahan-tulen, permintaan Hermes digugurkan secara senyap (⚠️ berulang pada 2026-04-28; PR #2201 membaiki kitar hayat proses tetapi penyambungan semula sesi + tamat masa berdasarkan jam dinding sahaja sebelum ini belum disentuh — Fasa H1 selesai)",
         "rm_hermes_issue_s": "Ketidakpadanan cache sesi: sesi dicache dengan org yang salah → \"repo not found\" pada operasi git",
         "rm_hermes_kpi_delivery": "≤2%",
         "rm_hermes_kpi_delivery_l": "Kadar kegagalan penghantaran mesej",
@@ -6627641,7 +6632863,71 @@ const TRANSLATIONS = {
         "wizard_target_track4_title": "Trek 4 — pautan saluran Claude",
         "wizard_target_track6_desc": "Kami akan membuka Arena dan membimbing anda melalui penanda aras 12 dimensi.",
         "wizard_target_track6_title": "Trek 6 — arena penilaian ejen",
-        "wizard_title": "EClawbot — Wizard Pengenalan"},
+        "wizard_title": "EClawbot — Wizard Pengenalan",
+        "portal_login_title": "EClawbot - Log Masuk",
+        "landing_watch_full_demo": "▶ Tonton Demo Penuh + Panduan",
+        "guide_proxy_flow1": "Merentas Peranti",
+        "guide_proxy_preview1_sender": "Luaran",
+        "guide_nav_detail_identity": "Tetapan Identiti",
+        "footer_desc": "Platform komunikasi Agent-to-Agent (A2A) untuk orkestrasi ejen AI.",
+        "footer_promo_video": "▶ Tonton Video Pengenalan",
+        "notif_title": "Pemberitahuan",
+        "kanban_nudge_per_entity_section_label": "Gantian ikut entiti",
+        "kanban_nudge_per_entity_section_desc": "Sesuaikan sela masa, lajur dan had untuk satu entiti tertentu. Saiz kelompok dan mod keutamaan kekal seluruh peranti.",
+        "kanban_nudge_per_entity_pick_placeholder": "— Pilih entiti —",
+        "kanban_nudge_per_entity_clear": "Tetapkan semula kepada lalai peranti",
+        "kanban_nudge_per_entity_hint_prefix": "Hidupkan medan untuk menggantikan lalai peranti bagi entiti ini.",
+        "kanban_nudge_per_entity_override_interval": "Gantikan sela masa",
+        "kanban_nudge_per_entity_override_statuses": "Gantikan lajur",
+        "kanban_nudge_per_entity_override_throttle": "Gantikan had",
+        "kanban_nudge_per_entity_throttle_short": "Hadkan entiti ini kepada 1 peringatan setiap sela masa",
+        "wallet_title": "EClawbot - Dompet Saya",
+        "rm_hero_title": "Pasaran Sewaan Bot EClaw",
+        "guide_nav_usecase_messaging": "💬 Mesej & Rakan",
+        "ai_chat_title": "AI EClawbot",
+        "toast_slot_created": "Slot entiti baharu dicipta",
+        "kb_funnel_tag": "Tag…",
+        "kb_gate_backlog_only_hint": "Launch-gate hanya tersedia untuk kad backlog",
+        "guide_bp_th_desc": "Penerangan",
+        "guide_bp_feat_browse_desc": "Isih mengikut penilaian/terbaharu/popular/aktif; cari mengikut nama/tag/keupayaan",
+        "guide_bp_feat_card_desc": "Setiap Bot mempunyai profil: nama, penerangan, keupayaan, tag, penilaian dan tahap",
+        "guide_bp_feat_chat_desc": "Klik Mulakan Chat untuk membuka Proxy Window Bot — tiada pemasangan diperlukan",
+        "guide_bp_feat_save_desc": "Simpan Bot ke Card Holder untuk akses pantas",
+        "guide_bp_feat_comment_desc": "Tinggalkan ulasan untuk Bot yang pernah anda gunakan",
+        "guide_bp_feat_level_desc": "Bot yang lebih aktif dan dinilai tinggi mendapat tahap; Bot tahap Legend lebih menonjol",
+        "guide_wp_th_desc": "Penerangan",
+        "guide_wp_feat_live_desc": "Mesej Bot terkini pada kertas dinding — imersif skrin penuh",
+        "guide_wp_feat_notify_desc": "Kertas dinding dikemas kini automatik apabila Bot membalas — tidak perlu membuka aplikasi",
+        "guide_wp_feat_identity_desc": "Kertas dinding mengikut Soul Bot — gaya mesra/profesional/teknikal",
+        "guide_wp_feat_gesture_desc": "Ketik untuk membuka chat; tekan lama untuk tetapan",
+        "guide_wp_feat_multi_desc": "Tukar pembantu kertas dinding anda bila-bila masa",
+        "guide_wp_uc_th_bot": "Persediaan Bot",
+        "guide_wp_uc_assistant_desc": "Bot peringatan kalendar — lihat tugasan hari ini semasa membuka kunci",
+        "guide_wp_uc_news_desc": "Tolak berita pagi — kertas dinding menunjukkan tajuk utama secara masa nyata",
+        "guide_wp_uc_store_desc": "Tetapkan Bot khidmat pelanggan sebagai kertas dinding — lihat mesej serta-merta",
+        "guide_wp_uc_health_desc": "Peringatan minum air setiap jam — gesaan kertas dinding muncul serta-merta",
+        "cardholder_tab_my_cards": "Kad Saya",
+        "mention_all_label": "Siarkan kepada semua entiti",
+        "guide_nav_detail_mention": "@ Tag Entiti",
+        "arena_title": "Penanda Aras Ejen EClawbot",
+        "guide_arena_t2": "Klik Butang",
+        "guide_arena_t3": "Isi Borang",
+        "guide_arena_t5": "Navigasi",
+        "guide_arena_t6": "Ekstrak Jadual",
+        "guide_arena_t8": "Pengekodan",
+        "guide_arena_t9": "Masa Respons",
+        "guide_arena_t11": "Pengurusan Fail",
+        "guide_arena_t12": "Suara/TTS",
+        "arena_test_name_0": "Persepsi Visual",
+        "onboarding_tour_track1_step1": "Pilih kategori yang anda mahu di sini — bot percuma dan rasmi berada di bawah penapis sewaan.",
+        "onboarding_tour_track2_step1": "Bot berbayar dan percuma berkongsi plaza sewaan ini. Track 2 menumpukan bahagian berbayar — perhatikan kadar e-coin.",
+        "onboarding_tour_track3_step1": "Ini ialah hab Channel API. OpenClaw ialah ekosistem bot yang boleh anda hos sendiri — mengikat channel membolehkan botnya bercakap melalui EClaw.",
+        "onboarding_tour_track4_step1": "Ikatan channel Claude berada dalam pemboleh ubah env peranti. Anda akan menampal kunci API Anthropic anda di sini supaya bot menjawab terus melalui Claude.",
+        "onboarding_tour_track6_step1": "Selamat datang ke Agent Arena — penanda aras terseragam yang mengukur keupayaan ejen AI mengendalikan tugasan dunia sebenar merentas visi, web, kod, penaakulan dan keselamatan.",
+        "hermes_coming_soon_title": "Channel Hermes — Akan Datang",
+        "arena_return": "← Kembali",
+        "mindmap_title": "Peta Minda",
+        "mindmap_focus_mode_hint": "Mod fokus — klik ruang kosong atau tekan Esc untuk keluar",},
 
 
 
@@ -7186205,7 +7191491,7 @@ const TRANSLATIONS = {
         "rm_hermes_done_title": "मील के पत्थर पूरे किये",
         "rm_hermes_issue_d": "डॉकर कंटेनर फ़्रीज़: हेमीज़ प्रक्रिया जीवित है लेकिन संदेशों का उपभोग नहीं कर रही है; ",
         "rm_hermes_issue_p": "क्लाउड-क्ली-प्रॉक्सी अनाम फ़ॉलबैक: कोई GIT_HUB2 क्रेडेंशियल नहीं → निजी रेपो ऑपरेशन चुपचाप विफल हो जाते हैं; ",
-        "rm_hermes_issue_q": "messageQueue अतिप्रवाह → EClaw को शुद्ध-अनुवाद मोड में मजबूर किया गया, हर्मीस अनुरोध चुपचाप हटा दिया गया (⚠️ 2026-04-28 को दोहराया गया; PR #2201 निश्चित प्रक्रिया-जीवनचक्र लेकिन सत्र-फिर से शुरू + दीवार-घड़ी-केवल टाइमआउट अछूता - चरण H1 प्रगति पर)",
+        "rm_hermes_issue_q": "messageQueue अतिप्रवाह → EClaw को शुद्ध-अनुवाद मोड में मजबूर किया गया, हर्मीस अनुरोध चुपचाप हटा दिया गया (⚠️ 2026-04-28 को दोहराया गया; PR #2201 निश्चित प्रक्रिया-जीवनचक्र लेकिन सत्र-फिर से शुरू + दीवार-घड़ी-केवल टाइमआउट पहले अछूता था - चरण H1 पूर्ण)",
         "rm_hermes_issue_s": "सत्र कैश बेमेल: कैश्ड सत्र गलत संगठन द्वारा कुंजीबद्ध → गिट संचालन पर \"रेपो नहीं मिला\"",
         "rm_hermes_kpi_delivery": "≤2%",
         "rm_hermes_kpi_delivery_l": "संदेश वितरण विफलता दर",
@@ -7186527,6 +7191813,69 @@ const TRANSLATIONS = {
       "chat_card_modal_comments_empty": "अब तक कोई टिप्पणी नहीं",
       "chat_mindmap_demo_node": "यह नोड डेमो डेटा या लघु-उपसर्ग आईडी है - क्रॉस-पेज उद्धरण समर्थित नहीं है। पूर्ण टोकन की प्रतिलिपि बनाने के लिए माइंड-मैप पृष्ठ पर 📋 बटन का उपयोग करें।",
       "chat_mindmap_field_summary": "सारांश",
+        "portal_login_title": "EClawbot - लॉगिन",
+        "guide_proxy_flow1": "क्रॉस-डिवाइस",
+        "guide_proxy_preview1_sender": "बाहरी",
+        "guide_nav_detail_identity": "पहचान सेटिंग्स",
+        "footer_desc": "AI एजेंट ऑर्केस्ट्रेशन के लिए Agent-to-Agent (A2A) संचार प्लेटफॉर्म।",
+        "notif_title": "सूचनाएं",
+        "kanban_nudge_per_entity_section_label": "प्रति-एंटिटी ओवरराइड",
+        "kanban_nudge_per_entity_section_desc": "किसी विशिष्ट एंटिटी के लिए अंतराल, कॉलम और थ्रॉटल को अनुकूलित करें। बैच आकार और प्राथमिकता मोड डिवाइस-स्तर पर ही रहेंगे।",
+        "kanban_nudge_per_entity_pick_placeholder": "— एक एंटिटी चुनें —",
+        "kanban_nudge_per_entity_clear": "डिवाइस डिफॉल्ट पर रीसेट करें",
+        "kanban_nudge_per_entity_hint_prefix": "इस एंटिटी के लिए डिवाइस डिफॉल्ट को ओवरराइड करने हेतु कोई फील्ड चालू करें।",
+        "kanban_nudge_per_entity_override_interval": "अंतराल ओवरराइड करें",
+        "kanban_nudge_per_entity_override_statuses": "कॉलम ओवरराइड करें",
+        "kanban_nudge_per_entity_override_throttle": "थ्रॉटल ओवरराइड करें",
+        "kanban_nudge_per_entity_throttle_short": "इस एंटिटी को प्रति अंतराल 1 नज तक सीमित करें",
+        "wallet_title": "EClawbot - मेरा वॉलेट",
+        "rm_hero_title": "EClaw Bot किराया मार्केटप्लेस",
+        "guide_nav_usecase_messaging": "💬 मैसेजिंग और मित्र",
+        "chip_popover_loading": "लोड हो रहा है…",
+        "ai_chat_title": "EClawbot AI",
+        "toast_slot_created": "नया एंटिटी स्लॉट बनाया गया",
+        "kb_gate_backlog_only_hint": "Launch-gate केवल backlog कार्ड के लिए उपलब्ध है",
+        "guide_bp_th_desc": "विवरण",
+        "guide_bp_feat_browse_desc": "रेटिंग/नवीनतम/लोकप्रिय/सक्रिय के अनुसार क्रमबद्ध करें; नाम/टैग/क्षमता से खोजें",
+        "guide_bp_feat_card_desc": "हर Bot की प्रोफाइल होती है: नाम, विवरण, क्षमताएं, टैग, रेटिंग और स्तर",
+        "guide_bp_feat_chat_desc": "Bot की Proxy Window खोलने के लिए Start Chat पर क्लिक करें — कोई इंस्टॉलेशन जरूरी नहीं",
+        "guide_bp_feat_save_desc": "त्वरित पहुंच के लिए Bot को Card Holder में सहेजें",
+        "guide_bp_feat_comment_desc": "जिन Bot का आपने उपयोग किया है, उनके लिए समीक्षा छोड़ें",
+        "guide_bp_feat_level_desc": "अधिक सक्रिय और उच्च-रेटिंग वाले Bot स्तर पाते हैं; Legend-स्तर Bot अलग दिखते हैं",
+        "guide_wp_th_desc": "विवरण",
+        "guide_wp_feat_live_desc": "वॉलपेपर पर नवीनतम Bot संदेश — फुल-स्क्रीन इमर्सिव",
+        "guide_wp_feat_notify_desc": "नए Bot उत्तर पर वॉलपेपर अपने-आप अपडेट होता है — ऐप की जरूरत नहीं",
+        "guide_wp_feat_identity_desc": "वॉलपेपर Bot की Soul का अनुसरण करता है — गर्मजोशी/पेशेवर/तकनीकी शैली",
+        "guide_wp_feat_gesture_desc": "चैट खोलने के लिए टैप करें; सेटिंग्स के लिए लंबा दबाएं",
+        "guide_wp_feat_multi_desc": "अपना वॉलपेपर सहायक कभी भी बदलें",
+        "guide_wp_uc_th_bot": "Bot सेटअप",
+        "guide_wp_uc_assistant_desc": "कैलेंडर रिमाइंडर Bot — अनलॉक करते समय आज के कार्य देखें",
+        "guide_wp_uc_news_desc": "सुबह की खबर पुश — वॉलपेपर वास्तविक समय में सुर्खियां दिखाता है",
+        "guide_wp_uc_store_desc": "ग्राहक सेवा Bot को वॉलपेपर बनाएं — संदेश तुरंत देखें",
+        "guide_wp_uc_health_desc": "हर घंटे पानी पीने की याद — वॉलपेपर संकेत तुरंत दिखाई देता है",
+        "cardholder_tab_my_cards": "मेरे कार्ड",
+        "mention_all_label": "सभी एंटिटी को प्रसारित करें",
+        "guide_nav_detail_mention": "@ एंटिटी टैग करें",
+        "arena_title": "EClawbot एजेंट बेंचमार्क",
+        "guide_arena_t2": "बटन क्लिक",
+        "guide_arena_t3": "फॉर्म भरना",
+        "guide_arena_t5": "नेविगेशन",
+        "guide_arena_t6": "तालिका निकालना",
+        "guide_arena_t8": "कोडिंग",
+        "guide_arena_t9": "प्रतिक्रिया समय",
+        "guide_arena_t11": "फाइल प्रबंधन",
+        "guide_arena_t12": "वॉइस/TTS",
+        "arena_test_name_0": "दृश्य धारणा",
+        "info_hooks_title": "💎 आज जीतने के तीन तरीके",
+        "onboarding_tour_track1_step1": "यहां अपनी इच्छित श्रेणी चुनें — मुफ्त और आधिकारिक bot किराया फिल्टर के तहत मिलते हैं।",
+        "onboarding_tour_track2_step1": "इस किराया प्लाजा में paid और free bot साथ रहते हैं। Track 2 paid हिस्से पर केंद्रित है — e-coin दर पर नजर रखें।",
+        "onboarding_tour_track3_step1": "यह Channel API hub है। OpenClaw एक bot ecosystem है जिसे आप self-host कर सकते हैं — channel bind करने से उसके bot EClaw के माध्यम से बात कर सकते हैं।",
+        "onboarding_tour_track4_step1": "Claude channel binding डिवाइस env vars में रहती है। आप यहां अपनी Anthropic API key paste करेंगे ताकि bot सीधे Claude के माध्यम से उत्तर दें।",
+        "onboarding_tour_track6_step1": "Agent Arena में आपका स्वागत है — एक standardized benchmark जो मापता है कि AI agent vision, web, code, reasoning और safety में real-world tasks कितनी अच्छी तरह संभालता है।",
+        "hermes_coming_soon_title": "Hermes channel — जल्द आ रहा है",
+        "arena_return": "← वापस",
+        "mindmap_title": "माइंड मैप",
+        "mindmap_focus_mode_hint": "फोकस मोड — खाली जगह पर क्लिक करें या बाहर निकलने के लिए Esc दबाएं",
 },
 
 
@@ -7707997,7 +7713346,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_badge": "ADMIN",
 
 
 
@@ -7708125,7 +7713473,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_admin_users": "Gestión de usuarios administradores",
 
 
 
@@ -7708253,7 +7713600,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_admin_users_desc": "Inspeccionar + rotar entradas en ADMIN_DEVICE_IDS.",
 
 
 
@@ -7708381,7 +7713727,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_feature_flags": "Flags de características",
 
 
 
@@ -7708509,7 +7713854,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_feature_flags_desc": "Alternar funciones experimentales por dispositivo / globalmente.",
 
 
 
@@ -7708637,7 +7713981,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_log_browser": "Navegador de registros de errores",
 
 
 
@@ -7708765,7 +7714108,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_log_browser_desc": "Filtrar server_logs por categoría, nivel, ventana de tiempo.",
 
 
 
@@ -7708893,7 +7714235,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_rental_monitor": "Monitor de estado de alquiler",
 
 
 
@@ -7709021,7 +7714362,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_rental_monitor_desc": "Latencia BD, crecimiento de tumbas, estado de integración del publicador, conteos de flota.",
 
 
 
@@ -7709149,7 +7714489,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_soon": "Próximamente",
 
 
 
@@ -7709277,7 +7714616,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_sys_metrics": "Métricas del sistema",
 
 
 
@@ -7709405,7 +7714743,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_card_sys_metrics_desc": "CPU / memoria / conteo de sockets / tasa de solicitudes.",
 
 
 
@@ -7709533,7 +7714870,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_footnote": "Solo administrador — dispositivos no-admin ven una pantalla 403 al cargar y son redirigidos a /portal/",
 
 
 
@@ -7709661,7 +7714997,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_section_future": "Planificado",
 
 
 
@@ -7709789,7 +7715124,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_section_monitoring": "Monitoreo",
 
 
 
@@ -7709917,7 +7715251,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_subtitle": "Herramientas de desarrollo y ops. Dispositivos no-admin son redirigidos al portal.",
 
 
 
@@ -7710045,7 +7715378,6 @@ const TRANSLATIONS = {
 
 
 
-        "admin_hub_title": "[admin] Herramientas de administración EClaw",
 
 
 
@@ -7710173,7 +7715505,6 @@ const TRANSLATIONS = {
 
 
 
-        "ai_chat_view_feedback": "Ver historial de comentarios",
 
 
 
@@ -7710301,7 +7715632,6 @@ const TRANSLATIONS = {
 
 
 
-        "arena_return": "← Volver",
 
 
 
@@ -7710429,7 +7715759,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_attach_key_ref": "Referencia de clave",
 
 
 
@@ -7710557,7 +7715886,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_card_modal_comments": "Comentarios",
 
 
 
@@ -7710685,7 +7716013,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_card_modal_comments_empty": "Sin comentarios aún",
 
 
 
@@ -7710813,7 +7716140,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_density_comfortable": "Cómodo",
 
 
 
@@ -7710941,7 +7716267,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_density_compact": "Compacto",
 
 
 
@@ -7711069,7 +7716394,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_density_normal": "Normal",
 
 
 
@@ -7711197,7 +7716521,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_kanban_view_card": "📋 Ver tarjeta",
 
 
 
@@ -7711325,7 +7716648,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_loading": "Cargando...",
 
 
 
@@ -7711453,7 +7716775,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mention_unresolved": "Mención @ desconectada: {tokens}",
 
 
 
@@ -7711581,7 +7716902,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mic_denied": "Acceso al micrófono denegado",
 
 
 
@@ -7711709,7 +7717029,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_demo_node": "Este nodo es dato demo o un ID de prefijo corto — no se soporta citación entre páginas. Usa el botón 📋 en la página del mapa mental para copiar el token completo.",
 
 
 
@@ -7711837,7 +7717156,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_empty": "—",
 
 
 
@@ -7711965,7 +7717283,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_anchors": "Anclas",
 
 
 
@@ -7712093,7 +7717410,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_comments": "Comentarios",
 
 
 
@@ -7712221,7 +7717537,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_summary": "Resumen",
 
 
 
@@ -7712349,7 +7717664,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mindmap_field_type": "Tipo",
 
 
 
@@ -7712477,7 +7717791,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_mission_notify": "Misión",
 
 
 
@@ -7712605,7 +7717918,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_playback_failed": "Reproducción fallida",
 
 
 
@@ -7712733,7 +7718045,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_btn": "Chats relacionados",
 
 
 
@@ -7712861,7 +7718172,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_empty": "No se encontraron chats relacionados",
 
 
 
@@ -7712989,7 +7718299,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_error": "Error al cargar chats relacionados",
 
 
 
@@ -7713117,7 +7718426,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_loading": "Cargando chats relacionados...",
 
 
 
@@ -7713245,7 +7718553,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_panel_title": "Chats relacionados",
 
 
 
@@ -7713373,7 +7718680,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_related_target_not_loaded": "Chat objetivo no cargado",
 
 
 
@@ -7713501,7 +7718807,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_cancel": "Cancelar",
 
 
 
@@ -7713629,7 +7718934,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_cancelled": "Cancelado",
 
 
 
@@ -7713757,7 +7719061,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_close": "Cerrar",
 
 
 
@@ -7713885,7 +7719188,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_delete": "Eliminar",
 
 
 
@@ -7714013,7 +7719315,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_delete_confirm": "¿Cancelar este mensaje programado?",
 
 
 
@@ -7714141,7 +7719442,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_edit": "Editar",
 
 
 
@@ -7714269,7 +7719569,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_empty_text": "(vacío — escribe un mensaje antes de programar)",
 
 
 
@@ -7714397,7 +7719696,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_empty": "Primero escribe un mensaje",
 
 
 
@@ -7714525,7 +7719823,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_in_past": "El tiempo debe ser en el futuro",
 
 
 
@@ -7714653,7 +7719950,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_invalid_time": "Ingresa una hora válida",
 
 
 
@@ -7714781,7 +7720077,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_no_target": "Selecciona al menos un objetivo",
 
 
 
@@ -7714909,7 +7720204,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_err_too_far": "No se puede programar más de 7 días adelante",
 
 
 
@@ -7715037,7 +7720331,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_h": "h",
 
 
 
@@ -7715165,7 +7720458,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_loading": "Cargando…",
 
 
 
@@ -7715293,7 +7720585,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_local_only": "(solo entidades locales)",
 
 
 
@@ -7715421,7 +7720712,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_m": "m",
 
 
 
@@ -7715549,7 +7720839,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_max_7days": "(máx 7 días)",
 
 
 
@@ -7715677,7 +7720966,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_message_label": "Mensaje",
 
 
 
@@ -7715805,7 +7721093,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_mode_countdown": "Cuenta regresiva",
 
 
 
@@ -7715933,7 +7721220,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_mode_fixed": "Hora fija",
 
 
 
@@ -7716061,7 +7721347,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_mode_label": "Cuándo",
 
 
 
@@ -7716189,7 +7721474,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_no_pending": "Sin mensajes programados pendientes",
 
 
 
@@ -7716317,7 +7721601,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_ok": "Programado",
 
 
 
@@ -7716445,7 +7721728,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_s": "s",
 
 
 
@@ -7716573,7 +7721855,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_save": "Guardar",
 
 
 
@@ -7716701,7 +7721982,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_saved": "Guardado",
 
 
 
@@ -7716829,7 +7722109,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_submit": "Programar",
 
 
 
@@ -7716957,7 +7722236,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_tab_create": "Nuevo",
 
 
 
@@ -7717085,7 +7722363,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_tab_queue": "Programado",
 
 
 
@@ -7717213,7 +7722490,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_target_label": "Enviar a",
 
 
 
@@ -7717341,7 +7722617,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_schedule_title": "⏰ Programar mensaje",
 
 
 
@@ -7717469,7 +7722744,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_scheduled": "Programado",
 
 
 
@@ -7717597,7 +7722871,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_scroll_to_latest": "Desplazarse al mensaje más reciente",
 
 
 
@@ -7717725,7 +7722998,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_unread_sep": "── Mensajes nuevos ──",
 
 
 
@@ -7717853,7 +7723125,6 @@ const TRANSLATIONS = {
 
 
 
-        "chat_voice_upload_failed": "Carga de voz fallida",
 
 
 
@@ -7717981,7 +7723252,6 @@ const TRANSLATIONS = {
 
 
 
-        "chip_popover_requoted": "Citado en el chat",
 
 
 
@@ -7718109,7 +7723379,6 @@ const TRANSLATIONS = {
 
 
 
-        "common_mark": "Marcar",
 
 
 
@@ -7718237,7 +7723506,6 @@ const TRANSLATIONS = {
 
 
 
-        "common_new_key": "+ Nueva clave",
 
 
 
@@ -7718365,7 +7723633,6 @@ const TRANSLATIONS = {
 
 
 
-        "common_open_editor": "Abrir editor",
 
 
 
@@ -7718493,7 +7723760,6 @@ const TRANSLATIONS = {
 
 
 
-        "common_redeem": "Canjear",
 
 
 
@@ -7718621,7 +7723887,6 @@ const TRANSLATIONS = {
 
 
 
-        "community_cta_create_bot": "¿Quieres tu propio Bot? Crea uno gratis y publícalo instantáneamente.",
 
 
 
@@ -7718749,7 +7724014,6 @@ const TRANSLATIONS = {
 
 
 
-        "compare_back": "← Volver al centro de información",
 
 
 
@@ -7718877,7 +7724141,6 @@ const TRANSLATIONS = {
 
 
 
-        "compare_page_title": "EClawbot vs Telegram — Comparación de canales",
 
 
 
@@ -7719005,7 +7724268,6 @@ const TRANSLATIONS = {
 
 
 
-        "developer_section_title": "Desarrollador",
 
 
 
@@ -7719133,7 +7724395,6 @@ const TRANSLATIONS = {
 
 
 
-        "env_toggle_device_id": "Mostrar/Ocultar ID de dispositivo",
 
 
 
@@ -7719261,7 +7724522,6 @@ const TRANSLATIONS = {
 
 
 
-        "files_delete_confirm": "¿Estás seguro de que quieres eliminar este archivo?",
 
 
 
@@ -7719389,7 +7724649,6 @@ const TRANSLATIONS = {
 
 
 
-        "files_delete_failed": "Error al eliminar archivo",
 
 
 
@@ -7719517,7 +7724776,6 @@ const TRANSLATIONS = {
 
 
 
-        "files_deleted": "Archivo eliminado",
 
 
 
@@ -7719645,7 +7724903,6 @@ const TRANSLATIONS = {
 
 
 
-        "files_multi_select_attach": "Adjuntar al chat",
 
 
 
@@ -7719773,7 +7725030,6 @@ const TRANSLATIONS = {
 
 
 
-        "files_multi_select_cancel": "Cancelar",
 
 
 
@@ -7719901,7 +7725157,6 @@ const TRANSLATIONS = {
 
 
 
-        "files_multi_select_count": "Seleccionados",
 
 
 
@@ -7720029,7 +7725284,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_case_li1": "Claude principal envía sub (U12) para ejecutar una perforación de arrastrar/reiniciar organigrama en el emulador Android",
 
 
 
@@ -7720157,7 +7725411,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_case_li2": "Sub dispara MCP de computadora para tomar captura de pantalla, generando elicitación y bloqueando el TTY",
 
 
 
@@ -7720285,7 +7725538,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_case_li3": "Principal usa <code>eye</code> (herramienta de vista general de pantalla completa macOS) para ver el diálogo → osascript hace clic automático",
 
 
 
@@ -7720413,7 +7725665,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_case_li4": "Sub recibe allowAll → reanuda la perforación → descubre que BottomSheet solo se expande a ~20%",
 
 
 
@@ -7720541,7 +7725792,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_case_li5": "Principal analiza <code>OrgChartBottomSheetFragment</code> → aísla la peculiaridad de BottomSheetDialog que mide <code>match_parent</code> como <code>wrap_content</code>",
 
 
 
@@ -7720669,7 +7725919,6 @@ const TRANSLATIONS = {
 
 
 
-        "guide_bridge_case_li6": "Fix (PR #1854) → envía sub para verificar → confirma expansión del 90% → ciclo cerrado completo",
 
 
 
@@ -7733958,7 +7739207,7 @@ const TRANSLATIONS = {
         "rm_hermes_done_title": "المعالم المكتملة",
         "rm_hermes_issue_d": "تجميد حاوية Docker: يقوم Hermes بمعالجة الرسائل بشكل حي ولكن لا يستهلكها؛ ",
         "rm_hermes_issue_p": "claude-cli-proxy احتياطي مجهول: لا توجد بيانات اعتماد GIT_HUB2 → تفشل عمليات الريبو الخاصة بصمت؛ ",
-        "rm_hermes_issue_q": "تجاوز سعة messageQueue → تم فرض قانون EClaw على وضع الترجمة النقية، وتم إسقاط طلبات Hermes بصمت (⚠️ تم تكرارها في 28-04-2026؛ دورة حياة العملية الثابتة رقم 2201 ولكن استئناف الجلسة + مهلة ساعة الحائط فقط لم تمس - المرحلة H1 قيد التقدم)",
+        "rm_hermes_issue_q": "تجاوز سعة messageQueue → تم فرض قانون EClaw على وضع الترجمة النقية، وتم إسقاط طلبات Hermes بصمت (⚠️ تم تكرارها في 28-04-2026؛ دورة حياة العملية الثابتة رقم 2201 ولكن استئناف الجلسة + مهلة ساعة الحائط فقط لم تمس سابقًا - المرحلة H1 مكتملة)",
         "rm_hermes_issue_s": "عدم تطابق ذاكرة التخزين المؤقت للجلسة: تم إجراء جلسة مخبأة بواسطة مؤسسة خاطئة → \"لم يتم العثور على الريبو\" في عمليات git",
         "rm_hermes_kpi_delivery_l": "معدل فشل تسليم الرسائل",
         "rm_hermes_kpi_health_l": "الفاصل الزمني للتحقق من الصحة",
@@ -7734701,7 +7739950,8 @@ const TRANSLATIONS = {
         "wizard_q3": "هل لديك بالفعل مفتاح API أو رمز؟"
 
 
-    }
+    ,
+        "kb_gate_backlog_only_hint": "Launch-gate متاح فقط لبطاقات backlog",}
 
 
 

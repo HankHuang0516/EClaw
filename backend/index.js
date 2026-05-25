@@ -17,6 +17,7 @@ const sitePageviews = require('./site-pageviews');
 const feedbackModule = require('./device-feedback');
 const chatIntegrity = require('./chat-integrity');
 const communitySsr = require('./community-ssr');
+const { buildOrgEntitySessionKey, isOrgEntitySessionKey } = require('./session-scope');
 // JWT secret: fail-safe random per process if env var is missing (tokens signed in one process won't verify in another)
 const JWT_SECRET_FALLBACK = process.env.JWT_SECRET || require('crypto').randomBytes(32).toString('hex');
 
@@ -34,6 +35,7 @@ const sanitizeHtml = require('sanitize-html');
 const compression = require('compression');
 
 const safeEqual = require('./safe-equal');
+const { createHermesHealthMonitor } = require('./hermes-health-check');
 
 // ============================================
 // ADMIN DEVICE GATE
@@ -2180,6 +2182,15 @@ nodeCron.schedule('17 3 * * *', () => {
     require('./files').cleanupExpiredFiles().catch(err => console.error('[Files] Cleanup cron error:', err));
 });
 
+// Roadmap/Hermes H2: operational health-check. The monitor runs a git push
+// dry-run every 6 hours when HERMES_HEALTHCHECK_REPO_DIR is configured, tracks
+// the 7-day success rate, and alerts commander devices after 3 consecutive
+// failures.
+const hermesHealthMonitor = createHermesHealthMonitor({
+    notifyDevice,
+    audit: serverLog,
+});
+
 missionModule.initMissionDatabase();
 kanbanModule.initKanbanDatabase();
 kanbanModule.startBackgroundTimers();
@@ -2930,6 +2941,223 @@ app.get('/api/debug/info-pricing-slide', async (req, res) => {
     } catch (err) {
         console.error('[Debug info-pricing-slide] failed:', err);
         res.status(500).json({ success: false, bug: 'info-pricing-slide', error: err.message, timestamp });
+    }
+});
+
+// Temporary diagnostic endpoint for Codex channel A2A loop suppression.
+// It reports message classes, route-source shapes, and guard config only; no raw
+// chat text, secrets, tokens, webhook URLs, or callback payloads are returned.
+app.get('/api/debug/a2a-loop-guard', async (req, res) => {
+    const { deviceId, deviceSecret } = req.query || {};
+    const timestamp = new Date().toISOString();
+    const classifyMessage = (message) => {
+        if (!message || typeof message !== 'string') return 'empty';
+        const text = message.trim();
+        if (/^Codex bridge error\b/i.test(text)) return 'codex_bridge_error';
+        if (/^Codex status heartbeat\b/i.test(text)) return 'codex_status_heartbeat';
+        if (/^Codex watchdog\b/i.test(text)) return 'codex_watchdog';
+        if (/^Codex bridge status\b/i.test(text)) return 'codex_bridge_status';
+        if (/^EClaw progress update\b/i.test(text)) return 'eclaw_progress_update';
+        if (/^\[SYSTEM:/i.test(text)) return 'system_control';
+        return 'ordinary';
+    };
+    const classifySource = (source) => {
+        if (!source) return '(empty)';
+        if (source.startsWith('xdevice:')) return 'xdevice';
+        if (source.startsWith('entity:')) return 'entity-route';
+        return 'local-or-channel';
+    };
+
+    try {
+        if (!deviceId || !deviceSecret) {
+            return res.status(401).json({ success: false, bug: 'a2a-loop-guard', error: 'deviceId and deviceSecret required', timestamp });
+        }
+
+        const memDevice = devices[deviceId];
+        const pool = db._getPool ? db._getPool() : authModule.pool;
+        const dbDevice = pool
+            ? await pool.query('SELECT device_secret FROM devices WHERE device_id = $1', [deviceId])
+            : { rows: [] };
+        const dbDeviceRow = dbDevice.rows[0] || null;
+        const memSecretOk = !!(memDevice && memDevice.deviceSecret && safeEqual(memDevice.deviceSecret, deviceSecret));
+        const dbSecretOk = !!(dbDeviceRow && dbDeviceRow.device_secret && safeEqual(dbDeviceRow.device_secret, deviceSecret));
+        if (!memSecretOk && !dbSecretOk) {
+            return res.status(403).json({ success: false, bug: 'a2a-loop-guard', error: 'Invalid credentials', timestamp });
+        }
+
+        const [chatRows, logRows, channelRows] = pool ? await Promise.all([
+            pool.query(
+                `SELECT id, entity_id, source, is_from_bot, is_from_user, LENGTH(COALESCE(text, '')) AS text_length,
+                        CASE
+                            WHEN text ~* '^Codex bridge error' THEN 'codex_bridge_error'
+                            WHEN text ~* '^Codex status heartbeat' THEN 'codex_status_heartbeat'
+                            WHEN text ~* '^Codex watchdog' THEN 'codex_watchdog'
+                            WHEN text ~* '^Codex bridge status' THEN 'codex_bridge_status'
+                            WHEN text ~* '^EClaw progress update' THEN 'eclaw_progress_update'
+                            WHEN text ~* '^\\[SYSTEM:' THEN 'system_control'
+                            ELSE 'ordinary'
+                        END AS message_class,
+                        created_at
+                 FROM chat_messages
+                 WHERE device_id = $1
+                   AND (
+                        source LIKE 'entity:%->%'
+                        OR source LIKE 'xdevice:%->%'
+                        OR text ~* '^(Codex bridge error|Codex status heartbeat|Codex watchdog|Codex bridge status|EClaw progress update|\\[SYSTEM:)'
+                   )
+                 ORDER BY created_at DESC
+                 LIMIT 100`,
+                [deviceId]
+            ).catch(err => ({ rows: [], error: err.message })),
+            pool.query(
+                `SELECT level, category, entity_id,
+                        CASE
+                            WHEN message ~* '^Codex bridge error' THEN 'codex_bridge_error'
+                            WHEN message ~* '^Codex status heartbeat' THEN 'codex_status_heartbeat'
+                            WHEN message ~* '^Codex watchdog' THEN 'codex_watchdog'
+                            WHEN message ~* '^Codex bridge status' THEN 'codex_bridge_status'
+                            WHEN message ~* '^EClaw progress update' THEN 'eclaw_progress_update'
+                            WHEN message ~* '^\\[SYSTEM:' THEN 'system_control'
+                            ELSE 'ordinary'
+                        END AS message_class,
+                        created_at
+                 FROM server_logs
+                 WHERE device_id = $1
+                   AND (
+                        category IN ('cross_speak_push', 'transform', 'chat_save', 'channel')
+                        OR message ~* '^(Codex bridge error|Codex status heartbeat|Codex watchdog|Codex bridge status|EClaw progress update|\\[SYSTEM:)'
+                   )
+                 ORDER BY created_at DESC
+                 LIMIT 100`,
+                [deviceId]
+            ).catch(err => ({ rows: [], error: err.message })),
+            pool.query(
+                `SELECT id, status, callback_url, updated_at
+                 FROM channel_accounts
+                 WHERE device_id = $1
+                 ORDER BY updated_at DESC NULLS LAST, id ASC`,
+                [deviceId]
+            ).catch(err => ({ rows: [], error: err.message })),
+        ]) : [{ rows: [] }, { rows: [] }, { rows: [] }];
+
+        const memEntities = memDevice?.entities || {};
+        const memoryEntities = Object.keys(memEntities).map(Number).sort((a, b) => a - b).map(id => {
+            const entity = memEntities[id] || {};
+            const queue = Array.isArray(entity.messageQueue) ? entity.messageQueue : [];
+            const crossQueue = queue.filter(m => m && m.crossDevice);
+            const queuedMessageClasses = queue.reduce((acc, item) => {
+                const cls = classifyMessage(item?.text || item?.message || '');
+                acc[cls] = (acc[cls] || 0) + 1;
+                return acc;
+            }, {});
+            return {
+                entityId: id,
+                isBound: !!entity.isBound,
+                state: entity.state || null,
+                bindingType: entity.bindingType || null,
+                publicCodePresent: !!entity.publicCode,
+                queueLength: queue.length,
+                crossQueueLength: crossQueue.length,
+                latestCrossFromShape: crossQueue.length ? classifySource(crossQueue[crossQueue.length - 1]?.from || '') : null,
+                queuedMessageClasses,
+            };
+        });
+
+        const chatByClass = {};
+        const chatBySourceShape = {};
+        for (const row of chatRows.rows) {
+            const cls = row.message_class || 'unknown';
+            chatByClass[cls] = (chatByClass[cls] || 0) + 1;
+            const shape = classifySource(row.source || '');
+            chatBySourceShape[shape] = (chatBySourceShape[shape] || 0) + 1;
+        }
+
+        const logsByClass = {};
+        const logsByCategory = {};
+        for (const row of logRows.rows) {
+            const cls = row.message_class || 'unknown';
+            logsByClass[cls] = (logsByClass[cls] || 0) + 1;
+            const category = row.category || '(empty)';
+            logsByCategory[category] = (logsByCategory[category] || 0) + 1;
+        }
+
+        res.json({
+            success: true,
+            bug: 'a2a-loop-guard',
+            diagnostics: {
+                server: {
+                    build: SERVER_BUILD_TAG,
+                    startedAt: SERVER_STARTED_AT.toISOString(),
+                    uptimeSec: Math.round(process.uptime()),
+                },
+                auth: {
+                    memSecretOk,
+                    dbSecretOk,
+                    requestUserDeviceId: req.user?.deviceId || null,
+                    requestUserId: req.user?.userId || null,
+                },
+                guardConfig: {
+                    acceptsSuppressFlags: ['suppressA2A', 'suppress_a2a', 'noA2A', 'no_a2a'],
+                    operationalClasses: [
+                        'codex_bridge_error',
+                        'codex_status_heartbeat',
+                        'codex_watchdog',
+                        'codex_bridge_status',
+                        'eclaw_progress_update',
+                        'system_control',
+                    ],
+                    suppressesCrossDeviceRoute: true,
+                    suppressesSpeakToBroadcast: true,
+                    suppressesOrgForward: true,
+                    suppressesKanbanAutoReview: true,
+                },
+                memoryEntities,
+                recentChat: {
+                    returned: chatRows.rows.length,
+                    queryError: chatRows.error || null,
+                    byClass: chatByClass,
+                    bySourceShape: chatBySourceShape,
+                    rows: chatRows.rows.map(row => ({
+                        id: row.id,
+                        entityId: row.entity_id,
+                        sourceShape: classifySource(row.source || ''),
+                        messageClass: row.message_class,
+                        messageLength: Number(row.text_length || 0),
+                        isFromBot: !!row.is_from_bot,
+                        isFromUser: !!row.is_from_user,
+                        createdAt: row.created_at,
+                    })),
+                },
+                recentServerLogs: {
+                    returned: logRows.rows.length,
+                    queryError: logRows.error || null,
+                    byClass: logsByClass,
+                    byCategory: logsByCategory,
+                    rows: logRows.rows.map(row => ({
+                        level: row.level,
+                        category: row.category,
+                        entityId: row.entity_id,
+                        messageClass: row.message_class,
+                        createdAt: row.created_at,
+                    })),
+                },
+                channelAccounts: {
+                    returned: channelRows.rows.length,
+                    queryError: channelRows.error || null,
+                    rows: channelRows.rows.map(row => ({
+                        id: row.id,
+                        status: row.status,
+                        hasCallback: !!row.callback_url,
+                        callbackHost: row.callback_url ? (() => { try { return new URL(row.callback_url).host; } catch (_) { return 'invalid-url'; } })() : null,
+                        updatedAt: row.updated_at,
+                    })),
+                },
+            },
+            timestamp,
+        });
+    } catch (err) {
+        console.error('[Debug a2a-loop-guard] failed:', err);
+        res.status(500).json({ success: false, bug: 'a2a-loop-guard', error: err.message, timestamp });
     }
 });
 
@@ -5807,6 +6035,7 @@ app.get('/api/health', (req, res) => {
             ...deliveryHealth,
             stuck: stuckPreview,
         },
+        hermes: hermesHealthMonitor.getStatus(),
     });
 });
 
@@ -13812,8 +14041,9 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
         return res.status(404).json({ success: false, error: 'No free bot available' });
     }
 
-    // Handshake with bot to discover a working session key and get welcome message
-    const preferredKey = freeBot.session_key_template || 'default';
+    // Handshake with an org/entity scoped session so a stale gateway session from
+    // another org cannot be reused and point the bot at the wrong repo context.
+    const preferredKey = buildOrgEntitySessionKey(freeBot.session_key_template || 'default', deviceId, eId);
     const freeBotAuthOpts = { setupUsername: freeBot.setup_username, setupPassword: freeBot.setup_password };
     const handshake = await handshakeWithBot(freeBot.webhook_url, freeBot.token, preferredKey, deviceId, eId, 'free', freeBotAuthOpts);
 
@@ -13979,8 +14209,9 @@ app.post('/api/official-borrow/bind-personal', async (req, res) => {
         return res.status(404).json({ success: false, error: 'sold_out', message: 'No personal bots available' });
     }
 
-    // Handshake with bot to discover a working session key and get welcome message
-    const preferredKey = personalBot.session_key_template || 'default';
+    // Handshake with an org/entity scoped session so a stale gateway session from
+    // another org cannot be reused and point the bot at the wrong repo context.
+    const preferredKey = buildOrgEntitySessionKey(personalBot.session_key_template || 'default', deviceId, eId);
     const personalBotAuthOpts = { setupUsername: personalBot.setup_username, setupPassword: personalBot.setup_password };
     const handshake = await handshakeWithBot(personalBot.webhook_url, personalBot.token, preferredKey, deviceId, eId, 'personal', personalBotAuthOpts);
 
@@ -14313,8 +14544,12 @@ app.post('/api/entity/refresh', async (req, res) => {
             return res.status(409).json({ success: false, error: 'Personal bot is no longer assigned to this device', webhookBroken: true });
         }
 
-        // Attempt handshake
-        const preferredKey = binding.session_key || bot.session_key_template || 'default';
+        // Attempt handshake. Keep an existing key only when it already matches
+        // this org/entity scope; otherwise mint the scoped key from the bot template.
+        const baseSessionKey = bot.session_key_template || 'default';
+        const preferredKey = isOrgEntitySessionKey(binding.session_key, baseSessionKey, deviceId, eId)
+            ? binding.session_key
+            : buildOrgEntitySessionKey(baseSessionKey, deviceId, eId);
         const botAuthOpts = { setupUsername: bot.setup_username, setupPassword: bot.setup_password };
         const handshake = await handshakeWithBot(bot.webhook_url, bot.token, preferredKey, deviceId, eId, bot.bot_type, botAuthOpts);
 
@@ -15592,9 +15827,10 @@ async function discoverSessions(url, token, authOpts = {}) {
 
 /**
  * Helper: Handshake with bot during binding.
- * 1. Try sessions_send with bot's configured session key
- * 2. If "No session found", discover existing sessions via sessions_list
- * 3. Use first available session, send binding notification
+ * 1. Try sessions_send with the org/entity scoped session key
+ * 2. If "No session found", discover sessions only for diagnostics
+ * 3. Never fall back to arbitrary discovered sessions because those can belong
+ *    to another org/entity and carry stale repo context
  * 4. Return working session key and bot's response
  */
 async function handshakeWithBot(url, token, preferredSessionKey, deviceId, entityId, botType, authOpts = {}) {
@@ -15618,23 +15854,26 @@ async function handshakeWithBot(url, token, preferredSessionKey, deviceId, entit
         return { success: true, sessionKey: preferredSessionKey, botResponse: result.botResponse };
     }
 
-    // Step 2: If session not found OR the first send timed out, discover existing sessions
-    // and retry. Timeout often means the gateway accepted the call but the bot took too
-    // long to reply on the preferred key — a different session may be warm and faster.
-    if (result.sessionNotFound || result.timeout) {
-        console.log(`[Handshake] Preferred session ${result.timeout ? 'timed out' : 'not found'}, discovering sessions...`);
+    // Step 2: If session not found, discover existing sessions and try them as fallback.
+    // The scoped key may not exist yet on older gateways; falling back to discovered
+    // sessions keeps bind-free functional while gateways migrate to scoped sessions.
+    if (result.sessionNotFound) {
+        console.log(`[Handshake] Preferred org/entity session not found, discovering sessions for fallback...`);
         const sessions = await discoverSessions(url, token, authOpts);
         console.log(`[Handshake] Discovered ${sessions.length} sessions: ${JSON.stringify(sessions)}`);
 
         for (const sk of sessions) {
-            if (sk === preferredSessionKey) continue;  // already tried
+            if (sk === preferredSessionKey) continue; // already tried
             console.log(`[Handshake] Trying discovered session: ${sk}...`);
-            result = await sendToSession(url, token, sk, bindMsg, authOpts, sendOpts);
-            if (result.success) {
-                console.log(`[Handshake] ✓ Handshake OK with discovered key: ${sk}`);
-                return { success: true, sessionKey: sk, botResponse: result.botResponse };
+            const fallbackResult = await sendToSession(url, token, sk, bindMsg, authOpts, sendOpts);
+            if (fallbackResult.success) {
+                console.log(`[Handshake] ✓ Handshake OK with discovered session: ${sk}`);
+                return { success: true, sessionKey: sk, botResponse: fallbackResult.botResponse };
             }
         }
+        console.warn(`[Handshake] No discovered session responded successfully for ${deviceId}:${entityId}`);
+    } else if (result.timeout) {
+        console.warn(`[Handshake] Preferred session timed out for ${deviceId}:${entityId}`);
     }
 
     const finalErrorType = result.timeout ? 'timeout'
@@ -17956,6 +18195,18 @@ function serverLog(level, category, message, opts = {}) {
     ).catch(() => {}); // Never throw — logs are non-critical
 }
 
+if (process.env.NODE_ENV !== 'test') {
+    try {
+        hermesHealthMonitor.startCron({ nodeCron });
+    } catch (err) {
+        console.error('[HermesHealth] failed to schedule cron:', err && err.message);
+        serverLog('error', 'hermes_health', `[HermesHealth] failed to schedule cron: ${err && err.message}`, {
+            action: 'hermes_health_check',
+            result: 'schedule_failed',
+        });
+    }
+}
+
 // ── Crash handlers: log uncaught errors to /api/logs (category: crash) before dying ──
 process.on('uncaughtException', async (err) => {
     console.error('[FATAL] Uncaught exception:', err);
@@ -20046,3 +20297,4 @@ module.exports._SEVERE_STUCK_MS = SEVERE_STUCK_MS;
 module.exports._HEALTH_BOOT_GRACE_MS = HEALTH_BOOT_GRACE_MS;
 module.exports._SEVERE_STUCK_MIN_COUNT = SEVERE_STUCK_MIN_COUNT;
 module.exports._evaluateDeliveryHealth = evaluateDeliveryHealth;
+module.exports._hermesHealthMonitor = hermesHealthMonitor;

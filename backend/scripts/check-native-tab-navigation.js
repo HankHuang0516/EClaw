@@ -32,4 +32,15 @@ assertIncludes('backend/kanban.js', 'linkedNextCardId', 'linked next API seriali
 assertIncludes('backend/kanban.js', 'cannot point to the same card', 'self-link validation');
 assertIncludes('backend/kanban.js', 'target card not found', 'target existence validation');
 
+// Android native nav bridge (mirrors iOS PR #2824 transport)
+assertIncludes('app/src/main/java/com/hank/clawlive/ui/nav/EClawNativeNavBridge.kt', '@JavascriptInterface', 'android nav bridge @JavascriptInterface');
+assertIncludes('app/src/main/java/com/hank/clawlive/ui/nav/EClawNativeNavBridge.kt', 'EXTRA_NAV_INTENT', 'android intent extra constant');
+assertIncludes('app/src/main/java/com/hank/clawlive/ui/nav/EClawNativeNavBridge.kt', 'window.EClawNativeNav', 'android JS shim defines EClawNativeNav');
+assertIncludes('app/src/main/java/com/hank/clawlive/ui/nav/EClawNativeNavBridge.kt', 'eclawHandleNativeNavigateIntent', 'android intent replay calls consumer');
+assertIncludes('app/src/main/java/com/hank/clawlive/MissionControlActivity.kt', 'EClawNativeNavBridge', 'mission activity installs nav bridge');
+assertIncludes('app/src/main/java/com/hank/clawlive/MissionControlActivity.kt', 'deliverPendingNavIntent', 'mission activity replays pending intent');
+assertIncludes('app/src/main/java/com/hank/clawlive/ChatActivity.kt', 'EClawNativeNavBridge', 'chat activity installs nav bridge');
+assertIncludes('app/src/main/java/com/hank/clawlive/ChatActivity.kt', 'deliverPendingNavIntent', 'chat activity replays pending intent');
+assertIncludes('backend/public/portal/mission.html', 'window.eclawHandleNativeNavigateIntent', 'mission native intent consumer');
+
 console.log('native tab navigation static checks passed');

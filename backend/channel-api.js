@@ -26,6 +26,11 @@ const dnsLookup = require('util').promisify(require('dns').lookup);
 const { enrichContext, materializeChannelText } = require('./push-context');
 const { scanReferences, buildReferencesBlock } = require('./reference-parser');
 const { resolveReferences } = require('./reference-resolver');
+const {
+    reserveChannelPush,
+    recordChannelPushResult
+} = require('./channel-backpressure');
+const { recordDeliveryReceipt } = require('./delivery-receipts');
 
 // ── SSRF protection: reject private/internal callback URLs ──
 function isPrivateIp(ip) {
@@ -62,7 +67,46 @@ async function assertPublicCallbackUrl(callbackUrl) {
     if (isPrivateIp(address)) throw new Error('callback_url must not resolve to a private/internal IP');
 }
 
-module.exports = function (devices, { authMiddleware, serverLog, generateBotSecret, generatePublicCode, publicCodeIndex, saveChatMessage, io, saveData, createDefaultEntity, apiBase, awardEntityXP, XP_AMOUNTS, notifyDevice, deliverToEntity, gatekeeperCheckText, resolveSpeakToTarget, checkBotToBotRateLimit, checkCrossSpeakRateLimit, crossDeviceSettings, devicePrefs, recentBroadcasts: _recentBroadcasts, BOT2BOT_MAX_MESSAGES: _BOT2BOT_MAX_MESSAGES, db: dbRef, getMissionApiHints, buildIdentitySetupHint, buildBroadcastRecipientBlock, chatPool }) {
+function isTruthyFlag(value) {
+    if (value === true || value === 1) return true;
+    if (typeof value !== 'string') return false;
+    return ['true', '1', 'yes', 'on'].includes(value.trim().toLowerCase());
+}
+
+function isOperationalChannelMessage(message) {
+    if (!message || typeof message !== 'string') return false;
+    const text = message.trim();
+    return [
+        /^Codex bridge error\b/i,
+        /^Codex status heartbeat\b/i,
+        /^Codex watchdog\b/i,
+        /^Codex bridge status\b/i,
+        /^Codex bridge thread reset\./i,
+        /^Codex turn interrupted\./i,
+        /^No active Codex turn\./i,
+        /^Codex is working\.\.\./i,
+        /^Codex model set to\b/i,
+        /^Codex intelligence set to\b/i,
+        /^Invalid Codex model name\./i,
+        /^Invalid Codex intelligence value\./i,
+        /^Unknown Codex model option:/i,
+        /^Unknown Codex intelligence option:/i,
+        /^Choose the Codex model\b/i,
+        /^選擇 Codex 智慧功能等級/i,
+        /^EClaw progress update\b/i,
+        /^\[SYSTEM:/i,
+    ].some(pattern => pattern.test(text));
+}
+
+function shouldSuppressA2A(reqBody, message) {
+    return isTruthyFlag(reqBody.suppressA2A)
+        || isTruthyFlag(reqBody.suppress_a2a)
+        || isTruthyFlag(reqBody.noA2A)
+        || isTruthyFlag(reqBody.no_a2a)
+        || isOperationalChannelMessage(message);
+}
+
+function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecret, generatePublicCode, publicCodeIndex, saveChatMessage, io, saveData, createDefaultEntity, apiBase, awardEntityXP, XP_AMOUNTS, notifyDevice, deliverToEntity, gatekeeperCheckText, resolveSpeakToTarget, checkBotToBotRateLimit, checkCrossSpeakRateLimit, crossDeviceSettings, devicePrefs, recentBroadcasts: _recentBroadcasts, BOT2BOT_MAX_MESSAGES: _BOT2BOT_MAX_MESSAGES, db: dbRef, getMissionApiHints, buildIdentitySetupHint, buildBroadcastRecipientBlock, chatPool }) {
     const pushContextHelpers = { getMissionApiHints, buildIdentitySetupHint, buildBroadcastRecipientBlock };
     // Late-bound kanban auto-review hook (set after kanbanModule init)
     let kanbanAutoReview = null;
@@ -625,6 +669,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
         try {
             const { channel_api_key, deviceId, entityId, botSecret, message, state, mediaType, mediaUrl, targetDeviceId, card, senderHint, aboutCardId } = req.body;
             let { speakTo, broadcast } = req.body;
+            const suppressA2AForward = shouldSuppressA2A(req.body || {}, message);
 
             if (process.env.DEBUG === 'true') serverLog('info', 'client_push', `[PUSH] /channel/message called, state=${state}, hasMsg=${!!message}`, { deviceId, entityId: entityId !== undefined ? parseInt(entityId) : 'auto' });
 
@@ -814,7 +859,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             // Skip silent tokens — internal signals should not appear in chat
             const isSilentMsg = message && /^\[SILENT\]$/i.test(message.trim());
             // Skip self chat save when speakTo/broadcast is present — deliverToEntity will save with routing source
-            const hasDelivery = (broadcast || (speakTo && Array.isArray(speakTo) && speakTo.length > 0));
+            const hasDelivery = !suppressA2AForward && (broadcast || (speakTo && Array.isArray(speakTo) && speakTo.length > 0));
             if (message && !isSilentMsg) {
                 if (!hasDelivery) {
                     // If replying to a cross-device message, tag local copy with routing info
@@ -836,7 +881,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             }
 
             // [CROSS-DEVICE ROUTING] — explicit targetDeviceId OR auto-route from pending cross-device message
-            if (targetDeviceId && message) {
+            if (!suppressA2AForward && targetDeviceId && message) {
                 // Explicit routing — bot specifies which device to route reply to
                 const targetDev = devices[targetDeviceId];
                 if (targetDev) {
@@ -858,7 +903,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 } else {
                     serverLog('warn', 'cross_speak_push', `[EXPLICIT_ROUTE] targetDeviceId ${targetDeviceId} not found`, { deviceId, entityId: eId });
                 }
-            } else if (hasCrossRoute) {
+            } else if (!suppressA2AForward && hasCrossRoute) {
                 const replySource = `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`;
                 const senderEntityId = pendingCross.fromEntityId >= 0 ? pendingCross.fromEntityId : 0;
                 await saveChatMessage(pendingCross.fromDeviceId, senderEntityId, message, replySource, false, true);
@@ -903,14 +948,14 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             // START/progress heartbeats must use BUSY/PROCESSING/WORKING without closing cards.
             const kanbanBusyStates = new Set(['BUSY', 'PROCESSING', 'WORKING', 'IN_PROGRESS', 'IN-PROGRESS']);
             const isKanbanBusyState = kanbanBusyStates.has(String(state || '').trim().toUpperCase());
-            if (!isKanbanBusyState && message && kanbanAutoReview) {
+            if (!suppressA2AForward && !isKanbanBusyState && message && kanbanAutoReview) {
                 kanbanAutoReview(deviceId, eId, message, aboutCardId).catch(err => {
                     console.error(`[Channel] autoReviewOnTransform failed:`, err.message);
                 });
             }
 
             // Org chart: auto-forward channel bot response to superior entity (fire-and-forget)
-            if (finalMessage && entity && orgChartForwardFn) {
+            if (!suppressA2AForward && finalMessage && entity && orgChartForwardFn) {
                 orgChartForwardFn(entity, deviceId, finalMessage).catch(() => {});
             }
 
@@ -924,8 +969,11 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             if (entityIdCorrected) {
                 warnings.push(`entityId mismatch: auto-corrected to ${eId}.`);
             }
+            if (suppressA2AForward) {
+                warnings.push('A2A routing suppressed for operational channel message.');
+            }
 
-            if ((speakTo || broadcast) && message && !isSilentMsg && deliverToEntity && resolveSpeakToTarget) {
+            if (!suppressA2AForward && (speakTo || broadcast) && message && !isSilentMsg && deliverToEntity && resolveSpeakToTarget) {
                 if (speakTo && broadcast) {
                     warnings.push('Both speakTo and broadcast provided — broadcast takes priority, speakTo ignored.');
                 }
@@ -1009,7 +1057,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             // Fallback: delivery was requested but no target resolved — save
             // sender's copy so chat UI still shows the message. Mirror of the
             // same logic in /api/transform.
-            const hasDeliveryRequested = (broadcast || (speakTo && Array.isArray(speakTo) && speakTo.length > 0));
+            const hasDeliveryRequested = !suppressA2AForward && (broadcast || (speakTo && Array.isArray(speakTo) && speakTo.length > 0));
             if (hasDeliveryRequested && !deliverySaved && message && !isSilentMsg) {
                 const localSource = hasCrossRoute
                     ? `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`
@@ -1032,6 +1080,7 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
                 }
             };
             if (deliveryResults) response.delivery = deliveryResults;
+            if (suppressA2AForward) response.suppressedA2A = true;
             if (warnings.length > 0) response.warnings = warnings;
             if (transformMentionContext) response.mentions = transformMentionContext;
             if (senderHintResolution) response.senderHintResolution = senderHintResolution;
@@ -1210,6 +1259,27 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             return { pushed: false, reason: 'no_channel_callback' };
         }
 
+        const backpressureTarget = { deviceId, entityId, channelAccountId: account.id };
+        const reservation = reserveChannelPush(backpressureTarget);
+        if (!reservation.allowed) {
+            const retryAfter = Math.ceil((reservation.retryAfterMs || 0) / 1000);
+            serverLog('warn', 'channel', `Callback push delayed by ${reservation.reason} for Entity ${entityId}`, {
+                deviceId,
+                entityId,
+                metadata: {
+                    channelAccountId: account.id,
+                    retryAfter,
+                    reason: reservation.reason
+                }
+            });
+            return {
+                pushed: false,
+                reason: reservation.reason,
+                retryAfter,
+                backpressure: true
+            };
+        }
+
         try {
             const headers = { 'Content-Type': 'application/json' };
             if (account.callback_username && account.callback_password) {
@@ -1304,16 +1374,70 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
             }
 
             if (response.ok) {
+                recordChannelPushResult(backpressureTarget, { success: true });
                 serverLog('info', 'channel', `Callback push OK for Entity ${entityId}`, { deviceId, entityId });
+                recordDeliveryReceipt({
+                    serverLog,
+                    notifyDevice,
+                    deviceId,
+                    entityId,
+                    success: true,
+                    metadata: {
+                        status: response.status,
+                        channelAccountId: account.id
+                    }
+                });
                 return { pushed: true };
             } else {
                 const errText = await response.text().catch(() => '');
-                serverLog('warn', 'channel', `Callback push failed HTTP ${response.status}`, { deviceId, entityId, metadata: { status: response.status, error: errText.substring(0, 200) } });
-                return { pushed: false, reason: `http_${response.status}` };
+                const backoff = recordChannelPushResult(backpressureTarget, {
+                    success: false,
+                    status: response.status,
+                    reason: `http_${response.status}`,
+                    retryAfter: response.headers && typeof response.headers.get === 'function'
+                        ? response.headers.get('retry-after')
+                        : null
+                });
+                const retryAfter = Math.ceil((backoff.backoffMs || 0) / 1000);
+                serverLog('warn', 'channel', `Callback push failed HTTP ${response.status}`, { deviceId, entityId, metadata: { status: response.status, error: errText.substring(0, 200), retryAfter, consecutiveFailures: backoff.consecutiveFailures } });
+                recordDeliveryReceipt({
+                    serverLog,
+                    notifyDevice,
+                    deviceId,
+                    entityId,
+                    success: false,
+                    reason: `http_${response.status}`,
+                    metadata: {
+                        status: response.status,
+                        error: errText.substring(0, 200),
+                        channelAccountId: account.id,
+                        retryAfter,
+                        consecutiveFailures: backoff.consecutiveFailures
+                    }
+                });
+                return { pushed: false, reason: `http_${response.status}`, retryAfter, backpressure: true };
             }
         } catch (err) {
-            serverLog('error', 'channel', `Callback push error: ${err.message}`, { deviceId, entityId });
-            return { pushed: false, reason: err.message };
+            const backoff = recordChannelPushResult(backpressureTarget, {
+                success: false,
+                reason: err.message
+            });
+            const retryAfter = Math.ceil((backoff.backoffMs || 0) / 1000);
+            serverLog('error', 'channel', `Callback push error: ${err.message}`, { deviceId, entityId, metadata: { retryAfter, consecutiveFailures: backoff.consecutiveFailures } });
+            recordDeliveryReceipt({
+                serverLog,
+                notifyDevice,
+                deviceId,
+                entityId,
+                success: false,
+                reason: err.message,
+                metadata: {
+                    channelAccountId: account.id,
+                    retryAfter,
+                    consecutiveFailures: backoff.consecutiveFailures
+                }
+            });
+            return { pushed: false, reason: err.message, retryAfter, backpressure: true };
         }
     }
 
@@ -1551,4 +1675,9 @@ module.exports = function (devices, { authMiddleware, serverLog, generateBotSecr
         setOrgChartForward,
         verifyChannelKey
     };
-};
+}
+
+channelApiModule.isOperationalChannelMessage = isOperationalChannelMessage;
+channelApiModule.shouldSuppressA2A = shouldSuppressA2A;
+
+module.exports = channelApiModule;

@@ -7,18 +7,25 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { execFileSync } = require('child_process');
+const { execFileSync, spawnSync } = require('child_process');
 
 const SCRIPT = path.resolve(__dirname, '../../scripts/i18n-lint-dup-keys.js');
 
-function runLint(source) {
+function runLint(source, extraArgs = []) {
   const tmp = path.join(os.tmpdir(), `i18n-lint-fixture-${Date.now()}-${Math.random().toString(36).slice(2)}.js`);
   fs.writeFileSync(tmp, source, 'utf8');
   try {
-    const out = execFileSync('node', [SCRIPT, tmp], { encoding: 'utf8' });
-    return { code: 0, stdout: out, stderr: '' };
-  } catch (err) {
-    return { code: err.status, stdout: err.stdout || '', stderr: err.stderr || '' };
+    const res = spawnSync(process.execPath, [SCRIPT, ...extraArgs, tmp], { encoding: 'utf8' });
+    const content = fs.readFileSync(tmp, 'utf8');
+    return {
+      code: res.status,
+      stdout: res.stdout || '',
+      stderr: res.stderr || '',
+      content,
+    };
+  } catch {
+    const content = fs.existsSync(tmp) ? fs.readFileSync(tmp, 'utf8') : '';
+    return { code: 1, stdout: '', stderr: '', content };
   } finally {
     fs.unlinkSync(tmp);
   }
@@ -87,6 +94,27 @@ describe('i18n-lint-dup-keys parser', () => {
     expect(res.code).toBe(1);
   });
 
+  test('--fix removes earlier duplicates and keeps the last value', () => {
+    const src = [
+      'const TRANSLATIONS = {',
+      '    en: {',
+      '        "key_a": "first",',
+      '        "key_b": "second",',
+      '        "key_a": "last",',
+      '    },',
+      '};',
+      '',
+    ].join('\n');
+    const res = runLint(src, ['--fix']);
+    expect(res.stderr).toContain('Fixed 1 duplicate key(s)');
+    expect(res.content).not.toContain('"key_a": "first"');
+    expect(res.content).toContain('"key_a": "last"');
+
+    const clean = runLint(res.content);
+    expect(clean.stdout).toContain('PASS: en');
+    expect(clean.code).toBe(0);
+  });
+
   test('does NOT flag same key across different locales as duplicate', () => {
     const src = [
       'const TRANSLATIONS = {',
@@ -127,7 +155,7 @@ describe('i18n-lint-dup-keys parser', () => {
     expect(res.code).toBe(0);
   });
 
-  test('regression: real i18n.js detects all 14 locales (no false-positive es absorption)', () => {
+  test('regression: real i18n.js detects all 15 locales (no false-positive es absorption)', () => {
     const realPath = path.resolve(__dirname, '../../public/shared/i18n.js');
     if (!fs.existsSync(realPath)) {
       return;
@@ -141,7 +169,7 @@ describe('i18n-lint-dup-keys parser', () => {
       code = err.status;
     }
     const allOutput = stdout + stderr;
-    for (const locale of ['en', 'zh', 'zh-CN', 'ja', 'ko', 'th', 'vi', 'id', 'fr', 'es', 'de', 'ms', 'hi', 'ar']) {
+    for (const locale of ['en', 'zh', 'zh-CN', 'ja', 'ko', 'th', 'vi', 'id', 'fr', 'es', 'de', 'ms', 'hi', 'ar', 'pt']) {
       expect(allOutput).toMatch(new RegExp(`(PASS|FAIL): ${locale.replace('-', '\\-')} `));
     }
   });
