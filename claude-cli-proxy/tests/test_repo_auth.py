@@ -25,6 +25,14 @@ class RepoAuthTests(unittest.TestCase):
         with self.assertRaises(RepoScopeError):
             validate_repo_scope("github.com/OtherOrg/private.git", "HankHuang0516")
 
+    def test_validate_repo_scope_is_case_insensitive_on_allowed_orgs(self):
+        scope = validate_repo_scope("github.com/HankHuang0516/realbot.git", "hankhuang0516")
+        self.assertEqual(scope.org, "HankHuang0516")
+        scope = validate_repo_scope("github.com/HankHuang0516/realbot.git", "HANKHUANG0516,otherorg")
+        self.assertEqual(scope.org, "HankHuang0516")
+        with self.assertRaises(RepoScopeError):
+            validate_repo_scope("github.com/OtherOrg/private.git", "hankhuang0516")
+
     def test_token_candidates_prefer_org_scoped_keys(self):
         keys = token_key_candidates("Hank-Huang 0516")
         self.assertEqual(keys[:4], (
