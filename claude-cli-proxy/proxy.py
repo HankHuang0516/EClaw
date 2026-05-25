@@ -41,9 +41,13 @@ from pydantic import BaseModel
 from repo_auth import (
     DEFAULT_REPO_HOST_PATH,
     LEGACY_TOKEN_KEYS,
+    RepoAuthError,
     RepoScopeError,
+    ResolvedRepoAuth,
     build_git_auth_env,
+    caller_id_for,
     env_bool,
+    resolve_per_request_auth,
     token_from_vars,
     token_key_candidates,
     validate_repo_scope,
@@ -70,19 +74,34 @@ CHAT_TIMEOUT_MS = 180  # seconds (Sonnet general chat with tool access)
 MAX_CONCURRENT = 2
 MAX_QUEUE = 8
 
-REPO_DIR = Path(os.getenv("HOME", "/root")) / ".claude" / "repo"
+# Boot-time env config is now treated as the *legacy single-tenant default*.
+# Per-request fields on /chat and /analyze (caller_device_id, caller_bot_secret,
+# repo_host_path, vault_key) take precedence so the proxy can serve multiple
+# device-owners without sharing a single GitHub PAT.
+REPO_BASE_DIR = Path(os.getenv("REPO_BASE_DIR", str(Path(os.getenv("HOME", "/root")) / ".claude" / "repos")))
+LEGACY_REPO_DIR = Path(os.getenv("HOME", "/root")) / ".claude" / "repo"  # back-compat for first deploy
 REPO_GIT_HOST_PATH = os.getenv("REPO_GIT_HOST_PATH", DEFAULT_REPO_HOST_PATH)
 REPO_ALLOWED_ORGS = os.getenv("REPO_ALLOWED_ORGS", "")
 REPO_REQUIRE_AUTH = env_bool(os.getenv("REPO_REQUIRE_AUTH"), False)
 EVAULT_GITHUB_TOKEN_KEY = os.getenv("EVAULT_GITHUB_TOKEN_KEY", "")
 EVAULT_ALLOW_GLOBAL_GITHUB_TOKEN = env_bool(os.getenv("EVAULT_ALLOW_GLOBAL_GITHUB_TOKEN"), True)
 REPO_EXPORT_AUTH_TO_CLI = env_bool(os.getenv("REPO_EXPORT_AUTH_TO_CLI"), True)
+# Legacy: when set, boot-time clones using service-account creds (single-tenant).
+# Per-request callers now supply their own creds and the env clone becomes
+# a fallback only when callers omit credentials.
+EVAULT_LEGACY_BOOT_CLONE = env_bool(os.getenv("EVAULT_LEGACY_BOOT_CLONE"), False)
 try:
     REPO_SCOPE = validate_repo_scope(REPO_GIT_HOST_PATH, REPO_ALLOWED_ORGS)
     REPO_SCOPE_ERROR = ""
 except RepoScopeError as e:
     REPO_SCOPE = None
     REPO_SCOPE_ERROR = str(e)
+
+# Per-tenant clone cache. Keyed by ResolvedRepoAuth.caller_id so different
+# device-owners never share a working directory (and thus never see each
+# other's branches, fetches, or stashed PATs in .git/config).
+_repo_clone_cache: dict[str, Path] = {}
+_repo_clone_locks: dict[str, asyncio.Lock] = {}
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", stream=sys.stdout)
 log = logging.getLogger("claude-proxy")
@@ -636,59 +655,63 @@ Rules:
 
 
 # ── Repo Clone & Sync ────────────────────────
-def _fetch_vault_github_token(org: str) -> tuple[Optional[str], Optional[str]]:
-    """Pull a GitHub PAT from /api/device-vars using service-account bot creds.
+def _vault_fetch(device_id: str, bot_secret: str, org: str, keys) -> tuple[Optional[str], Optional[str]]:
+    """Pull a GitHub PAT from /api/device-vars using caller-supplied creds.
 
-    Returns (token, key_name) on success, (None, None) on failure. Org-scoped
-    keys are preferred, with legacy global keys enabled only for backwards
-    compatibility.
+    This is the per-request vault fetcher: it never reads module-level
+    EVAULT_DEVICE_ID/EVAULT_BOT_SECRET so different callers stay isolated.
+    Returns (token, used_key_name) or (None, None).
     """
-    if not (EVAULT_DEVICE_ID and EVAULT_BOT_SECRET):
-        return None, None
-    qs = urllib.parse.urlencode({"deviceId": EVAULT_DEVICE_ID, "botSecret": EVAULT_BOT_SECRET})
+    qs = urllib.parse.urlencode({"deviceId": device_id, "botSecret": bot_secret})
     url = f"{EVAULT_API_BASE}/api/device-vars?{qs}"
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "claude-cli-proxy/2.0"})
         with urllib.request.urlopen(req, timeout=10) as resp:
             body = json.loads(resp.read().decode("utf-8"))
     except Exception as e:
-        log.warning(f"[Vault] Fetch failed: {str(e)[:200]}")
+        log.warning(f"[Vault] Fetch failed for device={device_id[:8]}…: {str(e)[:200]}")
         return None, None
     if not body.get("success"):
-        log.warning(f"[Vault] device-vars returned error: {body.get('error')}")
+        log.warning(f"[Vault] device-vars returned error for device={device_id[:8]}…: {body.get('error')}")
         return None, None
     vars_map = body.get("vars") or {}
-    keys = token_key_candidates(
-        org,
-        explicit_key=EVAULT_GITHUB_TOKEN_KEY,
-        allow_global=EVAULT_ALLOW_GLOBAL_GITHUB_TOKEN,
-    )
     token, key = token_from_vars(vars_map, keys)
     if token:
-        log.info(f"[Vault] Using GitHub token key={key} for org={org} (vault has {len(vars_map)} keys)")
+        log.info(f"[Vault] device={device_id[:8]}… key={key} org={org} (vault has {len(vars_map)} keys)")
         return token, key
-    log.warning(f"[Vault] No GitHub token in vault for org={org} (looked for {keys}; vault has {len(vars_map)} keys)")
+    log.warning(f"[Vault] device={device_id[:8]}… no token for org={org} (looked for {keys}; vault has {len(vars_map)} keys)")
     return None, None
 
 
-def _resolve_repo_auth() -> tuple:
-    """Return (anonymous_url, source, token) for cloning the configured repo.
+def _resolve_repo_auth_for_request(
+    *,
+    caller_device_id: Optional[str] = None,
+    caller_bot_secret: Optional[str] = None,
+    repo_host_path: str = "",
+    vault_key: str = "",
+    allowed_orgs: str = "",
+) -> ResolvedRepoAuth:
+    """Per-request auth entry. Falls back to module env when caller omits creds.
 
-    source ∈ {'vault:<key>', 'env', 'anonymous'}. Vault is preferred so the PAT
-    can rotate without a Railway redeploy; env GITHUB_TOKEN is the legacy
-    fallback. When REPO_REQUIRE_AUTH is true, anonymous fallback is disabled.
+    This is the only path /chat and /analyze should use. Module-level
+    REPO_SCOPE / EVAULT_DEVICE_ID are consulted ONLY as defaults when the
+    request itself doesn't carry the corresponding field.
     """
-    if REPO_SCOPE_ERROR or REPO_SCOPE is None:
-        raise RepoScopeError(REPO_SCOPE_ERROR or "invalid repo scope")
+    effective_host_path = repo_host_path or REPO_GIT_HOST_PATH
+    effective_orgs = allowed_orgs or REPO_ALLOWED_ORGS
+    effective_key = vault_key or EVAULT_GITHUB_TOKEN_KEY
 
-    token, key = _fetch_vault_github_token(REPO_SCOPE.org)
-    if token:
-        return (REPO_SCOPE.url, f"vault:{key}", token)
-    if GITHUB_TOKEN:
-        return (REPO_SCOPE.url, "env", GITHUB_TOKEN)
-    if REPO_REQUIRE_AUTH:
-        raise RepoScopeError(f"repo auth required for {REPO_SCOPE.org}/{REPO_SCOPE.repo}, but no GitHub token was available")
-    return (REPO_SCOPE.url, "anonymous", None)
+    return resolve_per_request_auth(
+        repo_host_path=effective_host_path,
+        allowed_orgs=effective_orgs,
+        caller_device_id=caller_device_id,
+        caller_bot_secret=caller_bot_secret,
+        vault_key=effective_key,
+        allow_global_vault=EVAULT_ALLOW_GLOBAL_GITHUB_TOKEN,
+        require_auth=REPO_REQUIRE_AUTH,
+        env_token=GITHUB_TOKEN or None,
+        vault_fetcher=_vault_fetch,
+    )
 
 
 def _git_env(token: Optional[str], base_env: Optional[dict] = None, expose_cli_token: bool = False) -> dict:
@@ -700,48 +723,56 @@ def _git_env(token: Optional[str], base_env: Optional[dict] = None, expose_cli_t
     )
 
 
-def _repo_cli_env(base_env: dict) -> dict:
-    if not REPO_EXPORT_AUTH_TO_CLI:
+def _repo_cli_env(base_env: dict, resolved: Optional[ResolvedRepoAuth]) -> dict:
+    """Build child env for Claude CLI. `resolved` carries the per-request token."""
+    if not REPO_EXPORT_AUTH_TO_CLI or resolved is None:
         return _git_env(None, base_env)
-    try:
-        _, source, token = _resolve_repo_auth()
-    except Exception as e:
-        log.warning(f"[Repo] CLI git auth unavailable: {str(e)[:200]}")
-        return _git_env(None, base_env)
-    env = _git_env(token, base_env, expose_cli_token=bool(token))
-    env["ECLAW_REPO_AUTH_SOURCE"] = source
+    env = _git_env(resolved.token, base_env, expose_cli_token=bool(resolved.token))
+    env["ECLAW_REPO_AUTH_SOURCE"] = resolved.source
     return env
 
 
-def ensure_repo_clone():
+def _tenant_clone_dir(resolved: ResolvedRepoAuth) -> Path:
+    """Path for this caller's clone. Caller_id is a hash, never raw creds."""
+    return REPO_BASE_DIR / resolved.caller_id
+
+
+def ensure_repo_clone_for(resolved: ResolvedRepoAuth) -> Path:
+    """Per-tenant lazy clone. Returns the path to use as cwd for Claude CLI.
+
+    Different callers get different working dirs (keyed by caller_id hash)
+    so cross-tenant leakage is impossible: tenant A's branches/fetches/PATs
+    never touch tenant B's dir. Same caller_id reuses the existing clone
+    and just does a git pull --ff-only.
+    """
     import subprocess
+    target = _tenant_clone_dir(resolved)
+    git_dir = target / ".git"
     try:
-        repo_url, source, token = _resolve_repo_auth()
-        git_dir = REPO_DIR / ".git"
         if git_dir.exists():
-            log.info(f"[Repo] Pulling latest {REPO_SCOPE.org}/{REPO_SCOPE.repo} (auth={source})...")
-            # Keep the persisted remote token-free. Auth is supplied only to
-            # this git process through GIT_ASKPASS so PATs are not written to
-            # .git/config and can rotate immediately.
+            log.info(f"[Repo] Pull caller={resolved.caller_id} {resolved.scope.org}/{resolved.scope.repo} (auth={resolved.source})...")
             subprocess.run(
-                ["git", "remote", "set-url", "origin", repo_url],
-                cwd=str(REPO_DIR), timeout=10, capture_output=True, check=True,
+                ["git", "remote", "set-url", "origin", resolved.url],
+                cwd=str(target), timeout=10, capture_output=True, check=True,
             )
             subprocess.run(
                 ["git", "pull", "--ff-only"],
-                cwd=str(REPO_DIR), timeout=30, capture_output=True, check=True, env=_git_env(token),
+                cwd=str(target), timeout=30, capture_output=True, check=True,
+                env=_git_env(resolved.token),
             )
-            log.info("[Repo] Updated.")
         else:
-            log.info(f"[Repo] Cloning {REPO_SCOPE.org}/{REPO_SCOPE.repo} (auth={source})...")
-            REPO_DIR.mkdir(parents=True, exist_ok=True)
+            log.info(f"[Repo] Clone caller={resolved.caller_id} {resolved.scope.org}/{resolved.scope.repo} (auth={resolved.source})...")
+            target.mkdir(parents=True, exist_ok=True)
             subprocess.run(
-                ["git", "clone", "--depth", "50", repo_url, str(REPO_DIR)],
-                timeout=120, capture_output=True, check=True, env=_git_env(token),
+                ["git", "clone", "--depth", "50", resolved.url, str(target)],
+                timeout=120, capture_output=True, check=True, env=_git_env(resolved.token),
             )
-            log.info(f"[Repo] Cloned to {REPO_DIR} (auth={source})")
+            log.info(f"[Repo] Cloned caller={resolved.caller_id} to {target} (auth={resolved.source})")
+        _repo_clone_cache[resolved.caller_id] = target
+        return target
     except Exception as e:
-        log.error(f"[Repo] Git error: {str(e)[:300]}")
+        log.error(f"[Repo] Git error for caller={resolved.caller_id}: {str(e)[:300]}")
+        raise
 
 
 # ── Warmup ───────────────────────────────────
@@ -800,17 +831,34 @@ async def lifespan(app: FastAPI):
         db_config_path.write_text(DATABASE_URL)
         log.info(f"[Startup] DATABASE_URL written to {db_config_path}")
 
-    # Clone/sync repo after short delay
-    loop = asyncio.get_event_loop()
-    loop.call_later(3, lambda: loop.run_in_executor(None, ensure_repo_clone))
+    # Per-tenant clones are now done lazily on first request, so the proxy
+    # boots stateless — different device-owners get their own clone dirs
+    # under REPO_BASE_DIR keyed by caller_id hash. Set EVAULT_LEGACY_BOOT_CLONE=1
+    # to keep the single-tenant boot-time clone (transitional only).
+    repo_task: Optional[asyncio.Task] = None
+    if EVAULT_LEGACY_BOOT_CLONE and EVAULT_DEVICE_ID and EVAULT_BOT_SECRET:
+        async def _legacy_boot_clone():
+            try:
+                resolved = _resolve_repo_auth_for_request(
+                    caller_device_id=EVAULT_DEVICE_ID,
+                    caller_bot_secret=EVAULT_BOT_SECRET,
+                )
+                await asyncio.get_event_loop().run_in_executor(None, ensure_repo_clone_for, resolved)
+            except Exception as e:
+                log.warning(f"[Repo] Legacy boot clone failed: {str(e)[:200]}")
 
-    # Periodic git pull every 30 minutes
-    async def periodic_repo_sync():
-        while True:
-            await asyncio.sleep(30 * 60)
-            await asyncio.get_event_loop().run_in_executor(None, ensure_repo_clone)
+            while True:
+                await asyncio.sleep(30 * 60)
+                try:
+                    resolved = _resolve_repo_auth_for_request(
+                        caller_device_id=EVAULT_DEVICE_ID,
+                        caller_bot_secret=EVAULT_BOT_SECRET,
+                    )
+                    await asyncio.get_event_loop().run_in_executor(None, ensure_repo_clone_for, resolved)
+                except Exception as e:
+                    log.warning(f"[Repo] Legacy periodic sync failed: {str(e)[:200]}")
 
-    repo_task = asyncio.create_task(periodic_repo_sync())
+        repo_task = asyncio.create_task(_legacy_boot_clone())
 
     # Warmup on startup after 8s delay
     async def startup_warmup():
@@ -830,7 +878,8 @@ async def lifespan(app: FastAPI):
     yield
 
     # Shutdown
-    repo_task.cancel()
+    if repo_task is not None:
+        repo_task.cancel()
     warmup_task.cancel()
     periodic_warmup_task.cancel()
 
@@ -865,14 +914,17 @@ async def health():
         "service": "eclaw-claude-cli-proxy",
         "claude_cli": "unknown",
         "repo": {
-            "hostPath": REPO_SCOPE.host_path if REPO_SCOPE else REPO_GIT_HOST_PATH,
-            "org": REPO_SCOPE.org if REPO_SCOPE else None,
+            "mode": "multi-tenant" if not EVAULT_LEGACY_BOOT_CLONE else "legacy-single-tenant",
+            "defaultHostPath": REPO_SCOPE.host_path if REPO_SCOPE else REPO_GIT_HOST_PATH,
+            "defaultOrg": REPO_SCOPE.org if REPO_SCOPE else None,
             "allowedOrgs": REPO_ALLOWED_ORGS or (REPO_SCOPE.org if REPO_SCOPE else None),
             "requireAuth": REPO_REQUIRE_AUTH,
             "exportAuthToCli": REPO_EXPORT_AUTH_TO_CLI,
             "globalVaultFallback": EVAULT_ALLOW_GLOBAL_GITHUB_TOKEN,
             "legacyTokenKeys": list(LEGACY_TOKEN_KEYS),
             "scopeError": REPO_SCOPE_ERROR or None,
+            "baseDir": str(REPO_BASE_DIR),
+            "activeTenants": len(_repo_clone_cache),
         },
     }
     try:
@@ -917,6 +969,15 @@ class ChatRequest(BaseModel):
     history: list = []
     images: list = []
     device_context: dict = {}
+    # Per-request multi-tenant auth (H3). When set, the proxy uses these
+    # caller-supplied creds to fetch the caller's own GitHub PAT from their
+    # own vault — different device-owners on the same proxy never share a
+    # token or a clone directory.
+    caller_device_id: Optional[str] = None
+    caller_bot_secret: Optional[str] = None
+    repo_host_path: Optional[str] = None  # defaults to module REPO_GIT_HOST_PATH
+    vault_key: Optional[str] = None       # defaults to module EVAULT_GITHUB_TOKEN_KEY
+    allowed_orgs: Optional[str] = None    # defaults to module REPO_ALLOWED_ORGS
 
 
 # ── Analysis Endpoint ────────────────────────
@@ -1032,10 +1093,32 @@ async def chat(req: ChatRequest, request: Request):
     session = create_session("chat", f"{role}@{page}: {req.message[:150]}")
     start_time = time.time()
 
+    # Per-request auth resolution + lazy tenant clone (H3 multi-tenant).
+    # Falls back to env defaults when caller_device_id is absent so the
+    # legacy single-tenant deploy keeps working through the transition.
+    resolved_auth: Optional[ResolvedRepoAuth] = None
+    tenant_repo_dir: Optional[Path] = None
+    try:
+        resolved_auth = _resolve_repo_auth_for_request(
+            caller_device_id=req.caller_device_id,
+            caller_bot_secret=req.caller_bot_secret,
+            repo_host_path=req.repo_host_path or "",
+            vault_key=req.vault_key or "",
+            allowed_orgs=req.allowed_orgs or "",
+        )
+        if resolved_auth.token or not REPO_REQUIRE_AUTH:
+            tenant_repo_dir = await asyncio.get_event_loop().run_in_executor(
+                None, ensure_repo_clone_for, resolved_auth,
+            )
+    except (RepoScopeError, RepoAuthError) as e:
+        log.warning(f"[Chat] Repo auth skipped: {str(e)[:200]}")
+    except Exception as e:
+        log.warning(f"[Chat] Tenant clone failed: {str(e)[:200]}")
+
     # Build Claude CLI args
     cli_args = ["--model", "sonnet", "--max-turns", "15"]
     tools = []
-    if (REPO_DIR / ".git").exists():
+    if tenant_repo_dir and (tenant_repo_dir / ".git").exists():
         tools.extend(["Read", "Glob", "Grep"])
     elif image_paths:
         tools.append("Read")
@@ -1043,10 +1126,10 @@ async def chat(req: ChatRequest, request: Request):
     if tools:
         cli_args.extend(["--allowedTools", ",".join(tools)])
 
-    child_cwd = str(REPO_DIR) if REPO_DIR.exists() else str(Path(__file__).parent)
+    child_cwd = str(tenant_repo_dir) if tenant_repo_dir and tenant_repo_dir.exists() else str(Path(__file__).parent)
     child_env = {**os.environ, "HOME": os.environ.get("HOME", "/root"), "CLAUDE_DANGEROUSLY_SKIP_PERMISSIONS": "1"}
-    if REPO_DIR.exists():
-        child_env = _repo_cli_env(child_env)
+    if tenant_repo_dir and tenant_repo_dir.exists():
+        child_env = _repo_cli_env(child_env, resolved_auth)
 
     # ── Streaming mode: use async generator + StreamingResponse ──
     if want_stream:
