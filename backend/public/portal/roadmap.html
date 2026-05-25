@@ -355,7 +355,7 @@
             <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:16px;">
                 <div style="font-size:12px;font-weight:700;color:#f59e0b;margin-bottom:8px;">⚠️ <span data-i18n="rm_hermes_diag_title">Known Instability Root Causes (Past Incidents)</span></div>
                 <ul style="font-size:12px;color:var(--text-secondary);margin:0;padding-left:16px;line-height:1.8;">
-                    <li data-i18n="rm_hermes_issue_q">messageQueue overflow → EClaw forced into pure-translation mode, Hermes requests silently dropped <em>(⚠️ recurred 2026-04-28; PR #2201 fixed process-lifecycle but session-resume + wall-clock-only timeout untouched — Phase H1 in progress: idle-activity timeout + auto-disable-resume + 503 load-shed + autoheal sidecar)</em></li>
+                    <li data-i18n="rm_hermes_issue_q">messageQueue overflow → EClaw forced into pure-translation mode, Hermes requests silently dropped <em>(⚠️ recurred 2026-04-28; PR #2201 fixed process-lifecycle but session-resume + wall-clock-only timeout was previously untouched — Phase H1 complete: idle-activity timeout + auto-disable-resume + 503 load-shed + autoheal sidecar)</em></li>
                     <li data-i18n="rm_hermes_issue_d">Docker container freeze: Hermes process alive but not consuming messages; Railway restart lag causes extended outage <em>(⚠️ recurred 2026-04-28; /health returned 200 while every chat call timed out — health endpoint lies when worker is stuck inside subprocess. Phase H1: /health surfaces worker state + willfarrell/autoheal sidecar restarts on unhealthy)</em></li>
                     <li data-i18n="rm_hermes_issue_s">Session cache mismatch: cached session keyed by wrong org → "repo not found" on git operations</li>
                     <li data-i18n="rm_hermes_issue_p">claude-cli-proxy anonymous fallback: no GIT_HUB2 credential → private repo operations fail silently; gap with card_f531861e</li>
@@ -402,16 +402,16 @@
                 </ul>
             </div>
 
-            <div class="rm-phase partial">
-                <h3>Phase H1 — <span data-i18n="rm_h1_name">Channel Reliability</span> <span class="rm-status-badge partial" data-i18n="rm_in_progress">In Progress</span></h3>
+            <div class="rm-phase done">
+                <h3>Phase H1 — <span data-i18n="rm_h1_name">Channel Reliability</span> <span class="rm-status-badge done" data-i18n="rm_complete">Complete</span></h3>
                 <div class="rm-phase-desc" data-i18n="rm_h1_desc">Fix message delivery gaps, spurious disconnects, and session resumption failures. Targets: ≤2% delivery failure, ≤30s resume.</div>
                 <ul class="rm-tasks">
                     <li class="done" data-i18n="rm_h1_t1">Queue back-pressure: cap messageQueue depth at 200; oldest messages moved to dead-letter when cap exceeded (prevents pure-translation fallback)</li>
                     <li class="done" data-i18n="rm_h1_t2">Heartbeat/ping-pong on webhook channel — Hermes must respond within 10s or EClaw marks delivery as failed and retries</li>
-                    <li class="todo" data-i18n="rm_h1_t3">Session cache key includes org_id + entity_id — fixes "repo not found" from stale session cache</li>
-                    <li class="partial" data-i18n="rm_h1_t4">EClaw channel logs delivery receipts; alert on &gt;3 consecutive failures → commander notified</li>
+                    <li class="done" data-i18n="rm_h1_t3">Session cache key includes org_id + entity_id — fixes "repo not found" from stale session cache</li>
+                    <li class="done" data-i18n="rm_h1_t4">EClaw channel logs delivery receipts; alert on &gt;3 consecutive failures → commander notified</li>
                     <li class="done" data-i18n="rm_h1_t5">Docker health-check: Railway health endpoint returns 200 only when Hermes message loop is responsive; auto-restart if /health returns 503 for &gt;60s</li>
-                    <li class="todo" data-i18n="rm_h1_t6">Rate-limit guard: Hermes respects 30 req/min from EClaw; back-pressure handled via exponential backoff</li>
+                    <li class="done" data-i18n="rm_h1_t6">Rate-limit guard: Hermes respects 30 req/min from EClaw; back-pressure handled via exponential backoff</li>
                 </ul>
             </div>
 
