@@ -35,6 +35,7 @@ const sanitizeHtml = require('sanitize-html');
 const compression = require('compression');
 
 const safeEqual = require('./safe-equal');
+const { createHermesHealthMonitor } = require('./hermes-health-check');
 
 // ============================================
 // ADMIN DEVICE GATE
@@ -2179,6 +2180,15 @@ app.use('/api/files', filesModule.router);
 const nodeCron = require('node-cron');
 nodeCron.schedule('17 3 * * *', () => {
     require('./files').cleanupExpiredFiles().catch(err => console.error('[Files] Cleanup cron error:', err));
+});
+
+// Roadmap/Hermes H2: operational health-check. The monitor runs a git push
+// dry-run every 6 hours when HERMES_HEALTHCHECK_REPO_DIR is configured, tracks
+// the 7-day success rate, and alerts commander devices after 3 consecutive
+// failures.
+const hermesHealthMonitor = createHermesHealthMonitor({
+    notifyDevice,
+    audit: serverLog,
 });
 
 missionModule.initMissionDatabase();
@@ -5808,6 +5818,7 @@ app.get('/api/health', (req, res) => {
             ...deliveryHealth,
             stuck: stuckPreview,
         },
+        hermes: hermesHealthMonitor.getStatus(),
     });
 });
 
@@ -17967,6 +17978,18 @@ function serverLog(level, category, message, opts = {}) {
     ).catch(() => {}); // Never throw — logs are non-critical
 }
 
+if (process.env.NODE_ENV !== 'test') {
+    try {
+        hermesHealthMonitor.startCron({ nodeCron });
+    } catch (err) {
+        console.error('[HermesHealth] failed to schedule cron:', err && err.message);
+        serverLog('error', 'hermes_health', `[HermesHealth] failed to schedule cron: ${err && err.message}`, {
+            action: 'hermes_health_check',
+            result: 'schedule_failed',
+        });
+    }
+}
+
 // ── Crash handlers: log uncaught errors to /api/logs (category: crash) before dying ──
 process.on('uncaughtException', async (err) => {
     console.error('[FATAL] Uncaught exception:', err);
@@ -20057,3 +20080,4 @@ module.exports._SEVERE_STUCK_MS = SEVERE_STUCK_MS;
 module.exports._HEALTH_BOOT_GRACE_MS = HEALTH_BOOT_GRACE_MS;
 module.exports._SEVERE_STUCK_MIN_COUNT = SEVERE_STUCK_MIN_COUNT;
 module.exports._evaluateDeliveryHealth = evaluateDeliveryHealth;
+module.exports._hermesHealthMonitor = hermesHealthMonitor;
