@@ -1,0 +1,43 @@
+name: CLI-Proxy CI
+
+# Unit tests for claude-cli-proxy/ (FastAPI multi-tenant proxy in front of
+# claude-cli). Mirrors backend-ci.yml shape but pinned to Python.
+#
+# Discovery context: PR #2937 (H3 Phase 1) shipped with empty
+# statusCheckRollup because the existing workflows (backend-ci.yml etc.)
+# don't watch claude-cli-proxy/**. This workflow closes that gap so future
+# cli-proxy PRs run the 21 existing unit tests as a PR gate.
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'claude-cli-proxy/**'
+      - '.github/workflows/cli-proxy-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'claude-cli-proxy/**'
+      - '.github/workflows/cli-proxy-ci.yml'
+
+jobs:
+  unit:
+    name: Python unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          # Pinned to match claude-cli-proxy/Dockerfile (python:3.12-slim).
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: claude-cli-proxy/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+        working-directory: claude-cli-proxy
+
+      - name: Run unittest suite
+        run: python -m unittest tests.test_repo_auth tests.test_multi_tenant -v
+        working-directory: claude-cli-proxy
