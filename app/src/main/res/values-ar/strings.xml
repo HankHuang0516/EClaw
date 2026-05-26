@@ -74,6 +74,21 @@
 
     <!-- Wallpaper Preview -->
     <string name="wallpaper_preview_title">معاينة الخلفية</string>
+    <string name="wallpaper_usage_engine_claude">Claude</string>
+    <string name="wallpaper_usage_engine_codex">Codex</string>
+    <string name="wallpaper_usage_items">العناصر المعروضة</string>
+    <string name="wallpaper_usage_overlay">طبقة الاستخدام</string>
+    <string name="wallpaper_usage_overlay_syncing">جاري مزامنة الاستخدام...</string>
+    <string name="wallpaper_usage_overlay_title">الاستخدام</string>
+    <string name="wallpaper_usage_position">الموضع</string>
+    <string name="wallpaper_usage_position_bl">أسفل اليسار</string>
+    <string name="wallpaper_usage_position_br">أسفل اليمين</string>
+    <string name="wallpaper_usage_position_tl">أعلى اليسار</string>
+    <string name="wallpaper_usage_position_tr">أعلى اليمين</string>
+    <string name="wallpaper_usage_window_session">5h</string>
+    <string name="wallpaper_usage_window_session_label">Session</string>
+    <string name="wallpaper_usage_window_weekly">7d</string>
+    <string name="wallpaper_usage_window_weekly_label">Weekly</string>
     <string name="use_custom_layout">استخدام تخطيط مخصص</string>
     <string name="custom_background">خلفية مخصصة</string>
     <string name="select_photo">اختيار صورة</string>

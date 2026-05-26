@@ -74,6 +74,21 @@
 
     <!-- Wallpaper Preview -->
     <string name="wallpaper_preview_title">Aperçu du fond d\'écran</string>
+    <string name="wallpaper_usage_engine_claude">Claude</string>
+    <string name="wallpaper_usage_engine_codex">Codex</string>
+    <string name="wallpaper_usage_items">Éléments affichés</string>
+    <string name="wallpaper_usage_overlay">Superposition d\'utilisation</string>
+    <string name="wallpaper_usage_overlay_syncing">Synchronisation de l\'utilisation...</string>
+    <string name="wallpaper_usage_overlay_title">Utilisation</string>
+    <string name="wallpaper_usage_position">Position</string>
+    <string name="wallpaper_usage_position_bl">BL</string>
+    <string name="wallpaper_usage_position_br">BR</string>
+    <string name="wallpaper_usage_position_tl">TL</string>
+    <string name="wallpaper_usage_position_tr">TR</string>
+    <string name="wallpaper_usage_window_session">5h</string>
+    <string name="wallpaper_usage_window_session_label">Session</string>
+    <string name="wallpaper_usage_window_weekly">7d</string>
+    <string name="wallpaper_usage_window_weekly_label">Weekly</string>
     <string name="use_custom_layout">Utiliser une disposition personnalisée</string>
     <string name="custom_background">Arrière-plan personnalisé</string>
     <string name="select_photo">Choisir une photo</string>

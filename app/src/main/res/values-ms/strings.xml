@@ -74,6 +74,21 @@
 
     <!-- Wallpaper Preview -->
     <string name="wallpaper_preview_title">Pratonton Kertas Dinding</string>
+    <string name="wallpaper_usage_engine_claude">Claude</string>
+    <string name="wallpaper_usage_engine_codex">Codex</string>
+    <string name="wallpaper_usage_items">Item yang dipaparkan</string>
+    <string name="wallpaper_usage_overlay">Hamparan Penggunaan</string>
+    <string name="wallpaper_usage_overlay_syncing">Menyinkronkan penggunaan...</string>
+    <string name="wallpaper_usage_overlay_title">Penggunaan</string>
+    <string name="wallpaper_usage_position">Kedudukan</string>
+    <string name="wallpaper_usage_position_bl">Bawah Kiri</string>
+    <string name="wallpaper_usage_position_br">Bawah Kanan</string>
+    <string name="wallpaper_usage_position_tl">Atas Kiri</string>
+    <string name="wallpaper_usage_position_tr">Atas Kanan</string>
+    <string name="wallpaper_usage_window_session">5h</string>
+    <string name="wallpaper_usage_window_session_label">Session</string>
+    <string name="wallpaper_usage_window_weekly">7d</string>
+    <string name="wallpaper_usage_window_weekly_label">Weekly</string>
     <string name="use_custom_layout">Guna Susun Atur Tersuai</string>
     <string name="custom_background">Latar Belakang Tersuai</string>
     <string name="select_photo">Pilih Foto</string>
