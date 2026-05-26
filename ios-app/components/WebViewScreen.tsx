@@ -99,7 +99,7 @@ type NativeNavIntent = {
   threadId?: string;
   messageId?: string;
   cardId?: string;
-  quote?: { source?: string; title?: string; excerpt?: string };
+  quote?: { source?: string; title?: string; excerpt?: string; messageId?: string };
 };
 
 type RegisteredWebView = { ref: React.RefObject<WebView | null>; ready: boolean };
@@ -119,8 +119,8 @@ function intentScript(intent: NativeNavIntent) {
         var intent = ${JSON.stringify(intent)};
         if (typeof window.eclawHandleNativeNavigateIntent === 'function') {
           window.eclawHandleNativeNavigateIntent(intent);
-        } else if (intent.targetTab === 'chat' && intent.messageId) {
-          window.location.href = '/portal/chat.html?msg=' + encodeURIComponent(intent.messageId);
+        } else if (intent.targetTab === 'chat' && (intent.messageId || (intent.quote && intent.quote.messageId))) {
+          window.location.href = '/portal/chat.html?messageId=' + encodeURIComponent(intent.messageId || intent.quote.messageId);
         } else if (intent.targetTab === 'mission' && intent.cardId) {
           window.location.href = '/portal/kanban.html?card=' + encodeURIComponent(intent.cardId) + '#' + encodeURIComponent(intent.cardId);
         }
