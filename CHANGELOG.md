@@ -1,3 +1,10 @@
+## [1.1175.1](https://github.com/HankHuang0516/EClaw/compare/v1.1175.0...v1.1175.1) (2026-05-26)
+
+
+### Bug Fixes
+
+* **portal:** label visible form controls ([#2968](https://github.com/HankHuang0516/EClaw/issues/2968)) ([42944b1](https://github.com/HankHuang0516/EClaw/commit/42944b10279f58f3a48b9f9ae775045f42845360))
+
 # [1.1172.0](https://github.com/HankHuang0516/EClaw/compare/v1.1171.1...v1.1172.0) (2026-05-26)
 
 
