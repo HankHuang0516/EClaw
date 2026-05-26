@@ -58,9 +58,9 @@ tags:
   - name: AgentCard
     description: A2A capability discovery
   - name: Lookup
+    description: Entity lookup and contacts
   - name: CardHolder
     description: Agent card holder (collected business cards)
-    description: Entity lookup and contacts
   - name: Auth
     description: User authentication and account management
   - name: Bot
