@@ -10,6 +10,7 @@ import com.hank.clawlive.engine.ClawRenderer
 import com.hank.clawlive.data.model.AgentStatus
 import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.EntityStatus
+import com.hank.clawlive.data.model.UsageSnapshotLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.cancel
 
@@ -60,6 +61,8 @@ class ClawWallpaperService : WallpaperService() {
         // Multi-entity status list (start empty - only show bound entities)
         private var currentEntities: List<EntityStatus> = emptyList()
 
+        private var currentUsageSnapshot: UsageSnapshotLatest? = null
+
         // Tracks whether observeStatus has received its first response. Until
         // then, draw() shows "Loading entities…" instead of the permanent
         // "No entities connected" placeholder — prevents the Live Wallpaper
@@ -74,6 +77,7 @@ class ClawWallpaperService : WallpaperService() {
             Timber.d("ClawEngine onCreate")
             setTouchEventsEnabled(true)
             observeStatus()
+            observeUsage()
         }
 
         // Tracks which entityIds already have a companion-poller flow running so
@@ -105,6 +109,16 @@ class ClawWallpaperService : WallpaperService() {
                             if (visible) draw()
                         }
                 }
+            }
+        }
+
+        private fun observeUsage() {
+            engineScope.launch {
+                repository.getUsageSnapshotFlow(intervalMs = 30000)
+                    .collect { snapshot ->
+                        currentUsageSnapshot = snapshot
+                        if (visible) draw()
+                    }
             }
         }
 
@@ -206,7 +220,12 @@ class ClawWallpaperService : WallpaperService() {
                     if (drawCount <= 3) {
                     }
                     if (multiEntityMode) {
-                        renderer.drawMultiEntity(canvas, currentEntities, loading = !hasFirstResponse)
+                        renderer.drawMultiEntity(
+                            canvas,
+                            currentEntities,
+                            loading = !hasFirstResponse,
+                            usageSnapshot = currentUsageSnapshot
+                        )
                     } else {
                         renderer.draw(canvas, currentStatus)
                     }

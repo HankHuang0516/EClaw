@@ -15,7 +15,9 @@ import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.R
 import com.hank.clawlive.data.model.CompanionDetail
 import com.hank.clawlive.data.model.EntityStatus
+import com.hank.clawlive.data.model.UsageSnapshotLatest
 import com.hank.clawlive.engine.ProceduralCreatureDrawer
+import com.hank.clawlive.engine.UsageOverlayRenderer
 import kotlin.math.ceil
 import kotlin.math.sqrt
 import timber.log.Timber
@@ -35,6 +37,7 @@ class WallpaperPreviewView @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr) {
 
     private val layoutPrefs = LayoutPreferences.getInstance(context)
+    private val usageOverlayRenderer = UsageOverlayRenderer(context, layoutPrefs)
 
     // Entities to display (only bound entities)
     private var entities: List<EntityStatus> = emptyList()
@@ -42,6 +45,10 @@ class WallpaperPreviewView @JvmOverloads constructor(
     // Per-entity selected companion descriptor — drives renderer dispatch
     // (cat/dog/fish via ProceduralCreatureDrawer; null falls back to legacy lobster).
     private var companionsByEntity: Map<Int, CompanionDetail?> = emptyMap()
+
+    private var usageSnapshot: UsageSnapshotLatest? = null
+    private var usageOverlayTopInsetPx: Float = 0f
+    private var usageOverlayBottomInsetPx: Float = 0f
 
     // Custom positions (percentage 0.0-1.0)
     private val entityPositions = mutableMapOf<Int, Pair<Float, Float>>()
@@ -162,6 +169,17 @@ class WallpaperPreviewView @JvmOverloads constructor(
         invalidate()
     }
 
+    fun setUsageSnapshot(snapshot: UsageSnapshotLatest?) {
+        usageSnapshot = snapshot
+        invalidate()
+    }
+
+    fun setUsageOverlayInsets(topInsetPx: Float, bottomInsetPx: Float) {
+        usageOverlayTopInsetPx = topInsetPx.coerceAtLeast(0f)
+        usageOverlayBottomInsetPx = bottomInsetPx.coerceAtLeast(0f)
+        invalidate()
+    }
+
     /**
      * Refresh background image from preferences
      */
@@ -224,6 +242,7 @@ class WallpaperPreviewView @JvmOverloads constructor(
             labelPaint.textSize = 36f
             labelPaint.color = Color.GRAY
             canvas.drawText(context.getString(R.string.wallpaper_no_bound_entities), width / 2f, height / 2f, labelPaint)
+            usageOverlayRenderer.draw(canvas, usageSnapshot, usageOverlayTopInsetPx, usageOverlayBottomInsetPx)
             return
         }
 
@@ -268,6 +287,8 @@ class WallpaperPreviewView @JvmOverloads constructor(
                 canvas.drawText("${String.format("%.1f", entityScale)}x", x, labelY + 30f, labelPaint)
             }
         }
+
+        usageOverlayRenderer.draw(canvas, usageSnapshot, usageOverlayTopInsetPx, usageOverlayBottomInsetPx)
     }
 
     /**

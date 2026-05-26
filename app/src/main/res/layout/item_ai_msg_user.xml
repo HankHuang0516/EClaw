@@ -20,7 +20,8 @@
             android:layout_height="wrap_content"
             android:textColor="@android:color/white"
             android:textSize="14sp"
-            android:lineSpacingExtra="2dp" />
+            android:lineSpacingExtra="2dp"
+            android:textIsSelectable="true" />
 
         <!-- Image thumbnails -->
         <LinearLayout

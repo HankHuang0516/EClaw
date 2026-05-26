@@ -42,10 +42,10 @@ class MainActivityUiTest {
     }
 
     @Test
-    fun testBottomActionsHasSafeInsetFromNavigationBar() {
+    fun testBottomNavHasSafeInsetFromNavigationBar() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
-                val bottomActions = activity.findViewById<View>(R.id.bottomActions)
+                val bottomActions = activity.findViewById<View>(R.id.bottomNav)
                 val rootView = activity.findViewById<View>(android.R.id.content)
 
                 assertNotNull("Bottom actions should exist", bottomActions)
@@ -67,10 +67,10 @@ class MainActivityUiTest {
     }
 
     @Test
-    fun testSettingsButtonIsAccessible() {
+    fun testSettingsNavItemIsAccessible() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
-                val btnSettings = activity.findViewById<View>(R.id.btnSettings)
+                val btnSettings = activity.findViewById<View>(R.id.navSettings)
                 val rootView = activity.findViewById<View>(android.R.id.content)
 
                 assertNotNull("Settings button should exist", btnSettings)
@@ -126,7 +126,7 @@ class MainActivityUiTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
                 val topBar = activity.findViewById<View>(R.id.topBar)
-                val bottomActions = activity.findViewById<View>(R.id.bottomActions)
+                val bottomActions = activity.findViewById<View>(R.id.bottomNav)
                 val rootView = activity.findViewById<View>(android.R.id.content)
 
                 val windowInsets = ViewCompat.getRootWindowInsets(rootView)

@@ -4,12 +4,17 @@ import android.graphics.Rect
 import android.os.Build
 import android.view.View
 import android.view.WindowInsets
+import android.widget.CheckBox
 import android.widget.LinearLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.google.android.material.button.MaterialButtonToggleGroup
+import com.google.android.material.materialswitch.MaterialSwitch
+import com.hank.clawlive.data.local.LayoutPreferences
+import com.hank.clawlive.data.local.UsageOverlayPosition
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -194,6 +199,15 @@ class WallpaperPreviewUiTest {
                     R.id.btnBack,
                     R.id.switchCustomLayout,
                     R.id.switchBackground,
+                    R.id.switchUsageOverlay,
+                    R.id.btnUsageTopLeft,
+                    R.id.btnUsageTopRight,
+                    R.id.btnUsageBottomLeft,
+                    R.id.btnUsageBottomRight,
+                    R.id.checkUsageClaude,
+                    R.id.checkUsageCodex,
+                    R.id.checkUsageSession,
+                    R.id.checkUsageWeekly,
                     R.id.btnReset,
                     R.id.btnSetWallpaper
                 )
@@ -212,6 +226,35 @@ class WallpaperPreviewUiTest {
                         meetsMinimum
                     )
                 }
+            }
+        }
+    }
+
+    @Test
+    fun testUsageOverlayControlsPersistPreferences() {
+        ActivityScenario.launch(WallpaperPreviewActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                val prefs = LayoutPreferences.getInstance(activity)
+                val switch = activity.findViewById<MaterialSwitch>(R.id.switchUsageOverlay)
+                val toggle = activity.findViewById<MaterialButtonToggleGroup>(R.id.toggleUsageOverlayPosition)
+                val checkClaude = activity.findViewById<CheckBox>(R.id.checkUsageClaude)
+                val checkCodex = activity.findViewById<CheckBox>(R.id.checkUsageCodex)
+                val checkSession = activity.findViewById<CheckBox>(R.id.checkUsageSession)
+                val checkWeekly = activity.findViewById<CheckBox>(R.id.checkUsageWeekly)
+
+                switch.isChecked = true
+                toggle.check(R.id.btnUsageBottomLeft)
+                checkClaude.isChecked = true
+                checkCodex.isChecked = false
+                checkSession.isChecked = true
+                checkWeekly.isChecked = false
+
+                assertTrue(prefs.usageOverlayEnabled)
+                assertEquals(UsageOverlayPosition.BOTTOM_LEFT, prefs.usageOverlayPosition)
+                assertTrue(prefs.usageOverlayShowClaude)
+                assertFalse(prefs.usageOverlayShowCodex)
+                assertTrue(prefs.usageOverlayShowSession)
+                assertFalse(prefs.usageOverlayShowWeekly)
             }
         }
     }

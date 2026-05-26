@@ -8,6 +8,7 @@ import com.hank.clawlive.data.model.AgentStatus
 import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.EntityStatus
 import com.hank.clawlive.data.model.MultiEntityResponse
+import com.hank.clawlive.data.model.UsageSnapshotLatest
 import com.hank.clawlive.data.remote.ClawApiService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -140,6 +141,41 @@ class StateRepository(
                         activeCount = 1
                     )
                 )
+            }
+            delay(intervalMs)
+        }
+    }
+
+    /**
+     * Polls the latest Claude Code / Codex usage snapshot for the wallpaper
+     * overlay. Keeps the last good value on transient network failures.
+     */
+    fun getUsageSnapshotFlow(intervalMs: Long = 30_000): Flow<UsageSnapshotLatest?> = flow {
+        var lastSnapshot: UsageSnapshotLatest? = null
+        while (true) {
+            if (!layoutPrefs.usageOverlayEnabled) {
+                lastSnapshot = null
+                emit(null)
+                delay(intervalMs)
+                continue
+            }
+
+            try {
+                val response = api.getUsageSnapshot(
+                    deviceId = deviceManager.deviceId,
+                    deviceSecret = deviceManager.deviceSecret ?: ""
+                )
+                if (response.success) {
+                    lastSnapshot = response.latest
+                    emit(lastSnapshot)
+                    Timber.d("Usage snapshot fetched: received_at=${lastSnapshot?.receivedAt}")
+                } else {
+                    Timber.w("Usage snapshot unavailable: ${response.error}")
+                    emit(lastSnapshot)
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Error fetching usage snapshot")
+                emit(lastSnapshot)
             }
             delay(intervalMs)
         }
