@@ -29,6 +29,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ''
+          persist-credentials: false
 
       - name: Create dummy google-services.json for CI
         run: |
@@ -83,6 +86,9 @@ jobs:
     needs: lint
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ''
+          persist-credentials: false
 
       - name: Create dummy google-services.json for CI
         run: |
@@ -135,6 +141,9 @@ jobs:
     needs: lint
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ''
+          persist-credentials: false
 
       - name: Create dummy google-services.json for CI
         run: |
@@ -189,6 +198,9 @@ jobs:
     if: ${{ vars.RUN_INSTRUMENTED_TESTS == 'true' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ''
+          persist-credentials: false
 
       - name: Create dummy google-services.json for CI
         run: |
