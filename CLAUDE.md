@@ -8,7 +8,7 @@
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
 - **Current version**: 1.1172.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
-- **Android app version**: 1.0.79 (versionCode 85); `LATEST_APP_VERSION` constant in `backend/index.js`
+- **Android app version**: 1.0.85 (versionCode 93); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
 ---
@@ -169,7 +169,7 @@ EClaw/
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
 │   ├── tests/                # Regression + integration tests (59 files)
-│   ├── tests/jest/           # Jest unit tests (206 files, CI-run via `npm test`)
+│   ├── tests/jest/           # Jest unit tests (213 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -387,7 +387,7 @@ EClaw/
 - Billing: Google Play Billing (`BillingManager.kt`)
 - AI Chat: `AiChatViewModel.kt` manages state (fixes message loss, typing race condition)
 - Bottom nav: FILES tab renamed to CARDS (Card Holder); Files link moved to Settings
-- App version: 1.0.79 (versionCode 85)
+- App version: 1.0.85 (versionCode 93)
 
 ### iOS/React Native App (Expo)
 
@@ -1015,7 +1015,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Invite Redeem Fix (v1.1113)**: Preserve `?redeem=` across signup/login flow
 - **i18n Cron-Notify Fix (v1.1117)**: EN labels for cron-notify keys no longer leak CJK 母卡
 - **Telegram Adapter PoC (v1.1121, reverted)**: Long-poll Telegram adapter attempted then reverted
-- **App Version**: Updated to 1.0.79 (versionCode 85)
+- **App Version**: Updated to 1.0.85 (versionCode 93)
 
 ### Recent Features (v1.1122.x – v1.1127.x)
 
@@ -1059,6 +1059,15 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **OpenClaw Channel Fix (PR #2886)**: Support OpenClaw 2026.5.20 protocol changes
 - **Android ClawRenderer i18n (PR #2899)**: Canvas empty-state 4 hardcoded EN strings → strings.xml (14 locales)
 
+### Recent Fixes (v1.1172.x+, 2026-05-26 – 2026-05-27)
+
+- **Live Wallpaper Usage Overlay (PR #2960)**: Release v1.0.85 — Claude/Codex usage overlay on Android live wallpaper
+- **Build Hash in /api/version (PR #2959)**: `build_hash` and `build_time` fields added to `/api/version` response
+- **Channel Healthcheck Ack (PR #2958)**: Ack healthcheck messages before agent dispatch to prevent timeout
+- **Contact Reads Protection (PR #2955)**: Protect contact reads and refresh UX audits
+- **Mobile Delete-Modal Fix (PR #2951)**: P0 fix — mobile delete-modal right edge clipped
+- **Chat Kanban Deep-Links (PR #2946)**: Carry kanban message deep-links through chat navigation
+
 ### Recent Fixes (v1.1172.x+, 2026-05-14 – 2026-05-22)
 
 - **Channel Binding Persistence Fix**: Await binding persistence to prevent race conditions on channel bind
@@ -1090,7 +1099,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 
 ## Test Coverage Summary
 
-**~465 total API routes** across all modules (415 excluding Article Publisher), **~84% covered** by Jest + integration tests (~3008 test cases across 206 Jest files + 59 integration tests).
+**~465 total API routes** across all modules (415 excluding Article Publisher), **~84% covered** by Jest + integration tests (~3053 test cases across 213 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -1183,7 +1192,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | R2 Quota Rich Card | `node backend/tests/test-r2-quota-rich-card.js` | Device ID + Secret | R2 quota exceeded rich card E2E |
 | Subscription Plans Live | `node backend/tests/test-subscription-plans-live.js` | Device ID + Secret | Subscription plans + wallet live verification |
 
-### Jest Unit Tests (CI-run, `npm test`, 206 files)
+### Jest Unit Tests (CI-run, `npm test`, 213 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -1258,7 +1267,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (206 files)
+cd backend && npm test                  # Jest unit tests (213 files)
 cd backend && npm run lint              # ESLint
 ```
 
