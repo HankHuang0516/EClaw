@@ -289,6 +289,24 @@ shape of `channels.eclaw` before runtime loads.
 3. In E-Claw Portal, confirm the entity shows as channel-bound (green dot)
 4. Check server logs: `curl "https://eclawbot.com/api/logs?deviceId=...&deviceSecret=...&limit=20"`
 
+### Healthcheck ACKs are routed through long-running agent work
+
+**Problem:**
+Fleet monitors send `ECLAW_HEALTHCHECK <nonce>` through the same browser/API
+message path as normal user chat. On GPT-backed OpenClaw projects, a busy or
+tool-heavy agent session can treat the healthcheck as ordinary work, run tools,
+or leave the entity message stuck at the client echo instead of replying
+`ACK <nonce>`. The E-Claw channel is healthy, but the monitor records repeated
+ACK failures.
+
+**Countermeasure:**
+- The webhook now detects `ECLAW_HEALTHCHECK <nonce>` before dispatching to the
+  OpenClaw agent and replies through the E-Claw channel with `ACK <nonce>`.
+- Model-health checks still go through the agent so model/reasoning policy is
+  validated independently from transport health.
+- After upgrading the plugin in an OpenClaw runtime, restart the owning
+  container/service and run both API ACK checks and browser chat ACK checks.
+
 ## Major Fix History
 
 A record of critical bug fixes, when they occurred, the problem, and the countermeasure.
