@@ -1420,6 +1420,10 @@ paths:
           in: query
           schema:
             type: string
+        - name: deviceSecret
+          in: query
+          schema:
+            type: string
         - name: pinned
           in: query
           schema:
@@ -1529,6 +1533,10 @@ paths:
           required: true
           schema:
             type: string
+        - name: deviceSecret
+          in: query
+          schema:
+            type: string
         - name: q
           in: query
           required: true
@@ -1554,6 +1562,9 @@ paths:
       tags: [CardHolder]
       summary: Get card detail
       operationId: getCardDetail
+      security:
+        - DeviceSecret: []
+        - CookieAuth: []
       parameters:
         - name: publicCode
           in: path
@@ -1563,6 +1574,10 @@ paths:
         - name: deviceId
           in: query
           required: true
+          schema:
+            type: string
+        - name: deviceSecret
+          in: query
           schema:
             type: string
       responses:

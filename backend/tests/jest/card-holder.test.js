@@ -245,6 +245,18 @@ describe('Card Holder API', () => {
             expect(res.status).toBe(400);
             expect(res.body.error).toMatch(/deviceId/i);
         });
+
+        it('returns 401 with deviceId but no owner auth', async () => {
+            const res = await get('/api/contacts?deviceId=test');
+            expect(res.status).toBe(401);
+            expect(res.body.error).toMatch(/unauthorized/i);
+        });
+
+        it('returns 401 with invalid deviceSecret', async () => {
+            const res = await get('/api/contacts?deviceId=test&deviceSecret=wrong');
+            expect(res.status).toBe(401);
+            expect(res.body.error).toMatch(/unauthorized/i);
+        });
     });
 
     describe('POST /api/contacts', () => {
@@ -280,17 +292,17 @@ describe('Card Holder API', () => {
             expect(res.body.error).toMatch(/deviceId/i);
         });
 
-        it('returns 400 without search query', async () => {
+        it('returns 401 with deviceId but no owner auth', async () => {
             const res = await get('/api/contacts/search?deviceId=test');
-            expect(res.status).toBe(400);
-            expect(res.body.error).toMatch(/query/i);
+            expect(res.status).toBe(401);
+            expect(res.body.error).toMatch(/unauthorized/i);
         });
 
-        it('returns 400 with query too long', async () => {
+        it('returns 401 with invalid deviceSecret before query validation', async () => {
             const longQ = 'a'.repeat(101);
-            const res = await get(`/api/contacts/search?deviceId=test&q=${longQ}`);
-            expect(res.status).toBe(400);
-            expect(res.body.error).toMatch(/long/i);
+            const res = await get(`/api/contacts/search?deviceId=test&deviceSecret=wrong&q=${longQ}`);
+            expect(res.status).toBe(401);
+            expect(res.body.error).toMatch(/unauthorized/i);
         });
     });
 
@@ -301,9 +313,10 @@ describe('Card Holder API', () => {
             expect(res.body.error).toMatch(/deviceId/i);
         });
 
-        it('returns 404 for non-existent card', async () => {
+        it('returns 401 with deviceId but no owner auth', async () => {
             const res = await get('/api/contacts/abc123?deviceId=test');
-            expect(res.status).toBe(404);
+            expect(res.status).toBe(401);
+            expect(res.body.error).toMatch(/unauthorized/i);
         });
     });
 

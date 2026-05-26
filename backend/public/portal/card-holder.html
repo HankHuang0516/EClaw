@@ -821,7 +821,7 @@
 
         async function loadCollected() {
             try {
-                const data = await apiCall('GET', `/api/contacts?deviceId=${currentUser.deviceId}&includeBlocked=true`);
+                const data = await apiCall('GET', `/api/contacts?deviceId=${currentUser.deviceId}&deviceSecret=${currentUser.deviceSecret}&includeBlocked=true`);
                 collectedCards = data.contacts || [];
             } catch (err) {
                 console.error('Failed to load collected:', err);
@@ -1028,7 +1028,7 @@
 
         async function performSearch(query) {
             try {
-                const data = await apiCall('GET', `/api/contacts/search?deviceId=${currentUser.deviceId}&q=${encodeURIComponent(query)}`);
+                const data = await apiCall('GET', `/api/contacts/search?deviceId=${currentUser.deviceId}&deviceSecret=${currentUser.deviceSecret}&q=${encodeURIComponent(query)}`);
                 searchSaved = data.saved || data.cards || [];
                 searchExternal = data.external || [];
                 isSearching = true;

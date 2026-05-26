@@ -3732,7 +3732,7 @@
 
         async function loadContacts() {
             try {
-                const data = await apiCall('GET', `/api/contacts?deviceId=${currentUser.deviceId}`);
+                const data = await apiCall('GET', `/api/contacts?deviceId=${currentUser.deviceId}&deviceSecret=${currentUser.deviceSecret}`);
                 contacts = data.contacts || [];
                 contactsLoaded = true;
                 contacts.forEach(c => {

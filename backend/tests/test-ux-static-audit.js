@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * UX Static Audit — Layer 1
- * Scans all 14 portal HTML files for UX completeness:
+ * Scans all root portal HTML files for UX completeness:
  *   1. i18n coverage (data-i18n vs visible text elements)
  *   2. Form closure (orphaned inputs without event handlers)
  *   3. API error handling (apiCall inside try-catch or with .catch)
@@ -26,25 +26,9 @@ const path = require('path');
 
 const PORTAL_DIR = path.resolve(__dirname, '../public/portal');
 
-const PAGES = [
-    'index.html',
-    'dashboard.html',
-    'chat.html',
-    'kanban.html',
-    'settings.html',
-    'env-vars.html',
-    'files.html',
-    'feedback.html',
-    'admin.html',
-    'card-holder.html',
-    'info.html',
-    'delete-account.html',
-    'screen-control.html',
-    'wallet.html',
-    'my-rentals.html',
-    'invite.html',
-    'community.html',
-];
+const PAGES = fs.readdirSync(PORTAL_DIR)
+    .filter(f => f.endsWith('.html'))
+    .sort();
 
 // index.html is the login page — no auth guard required
 const LOGIN_PAGE = 'index.html';
