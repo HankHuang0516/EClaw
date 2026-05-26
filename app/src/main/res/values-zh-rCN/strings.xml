@@ -497,7 +497,7 @@
     <string name="notifications_title">通知</string>
     <string name="official_borrow">官方机器人租赁</string>
     <string name="official_borrow_title">官方机器人租赁</string>
-    <string name="pinch_to_resize">双指缩放，拖动移动</string>
+    <string name="pinch_to_resize">单指拖动移动，双指缩放实体或用量文字</string>
     <string name="playback_failed">播放失败</string>
     <string name="premium_badge">高级版</string>
     <string name="priority">优先级</string>

@@ -17,16 +17,15 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
-import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.LayoutPreferences
-import com.hank.clawlive.data.local.UsageOverlayPosition
-import com.hank.clawlive.data.model.CompanionDetail
 import com.hank.clawlive.data.remote.NetworkModule
+import com.hank.clawlive.data.repository.CompanionRepository
 import com.hank.clawlive.service.ClawWallpaperService
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import com.hank.clawlive.ui.WallpaperPreviewView
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -42,7 +41,6 @@ class WallpaperPreviewActivity : AppCompatActivity() {
     private lateinit var switchCustomLayout: MaterialSwitch
     private lateinit var switchBackground: MaterialSwitch
     private lateinit var switchUsageOverlay: MaterialSwitch
-    private lateinit var toggleUsageOverlayPosition: MaterialButtonToggleGroup
     private lateinit var checkUsageClaude: CheckBox
     private lateinit var checkUsageCodex: CheckBox
     private lateinit var checkUsageSession: CheckBox
@@ -58,6 +56,8 @@ class WallpaperPreviewActivity : AppCompatActivity() {
     private val api = NetworkModule.api
     private val deviceManager by lazy { DeviceManager.getInstance(this) }
     private val layoutPrefs by lazy { LayoutPreferences.getInstance(this) }
+    private val companionRepository by lazy { CompanionRepository(api, this) }
+    private val companionJobs = mutableMapOf<Int, Job>()
 
     // Photo picker launcher
     private val photoPickerLauncher = registerForActivityResult(
@@ -114,12 +114,19 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         RecordingIndicatorHelper.detach()
     }
 
+    override fun onDestroy() {
+        companionJobs.values.forEach { it.cancel() }
+        companionJobs.clear()
+        companionRepository.release()
+        previewView.onCustomLayoutEnabled = null
+        super.onDestroy()
+    }
+
     private fun initViews() {
         previewView = findViewById(R.id.wallpaperPreviewView)
         switchCustomLayout = findViewById(R.id.switchCustomLayout)
         switchBackground = findViewById(R.id.switchBackground)
         switchUsageOverlay = findViewById(R.id.switchUsageOverlay)
-        toggleUsageOverlayPosition = findViewById(R.id.toggleUsageOverlayPosition)
         checkUsageClaude = findViewById(R.id.checkUsageClaude)
         checkUsageCodex = findViewById(R.id.checkUsageCodex)
         checkUsageSession = findViewById(R.id.checkUsageSession)
@@ -132,10 +139,15 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         bottomControls = findViewById(R.id.bottomControls)
 
         // Initialize switch states from preferences
+        previewView.setCompanionRepository(companionRepository)
+        previewView.onCustomLayoutEnabled = {
+            if (!switchCustomLayout.isChecked) {
+                switchCustomLayout.isChecked = true
+            }
+        }
         switchCustomLayout.isChecked = layoutPrefs.useCustomLayout
         switchBackground.isChecked = layoutPrefs.useBackgroundImage
         switchUsageOverlay.isChecked = layoutPrefs.usageOverlayEnabled
-        toggleUsageOverlayPosition.check(buttonIdForUsagePosition(layoutPrefs.usageOverlayPosition))
         checkUsageClaude.isChecked = layoutPrefs.usageOverlayShowClaude
         checkUsageCodex.isChecked = layoutPrefs.usageOverlayShowCodex
         checkUsageSession.isChecked = layoutPrefs.usageOverlayShowSession
@@ -193,6 +205,7 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         btnReset.setOnClickListener {
             // Reset positions
             previewView.resetPositions()
+            layoutPrefs.clearUsageOverlayTransform()
 
             // Clear background
             layoutPrefs.clearBackgroundImage()
@@ -228,14 +241,6 @@ class WallpaperPreviewActivity : AppCompatActivity() {
             previewView.invalidate()
         }
 
-        toggleUsageOverlayPosition.addOnButtonCheckedListener { _, checkedId, isChecked ->
-            if (!isChecked) return@addOnButtonCheckedListener
-            usagePositionForButtonId(checkedId)?.let { position ->
-                layoutPrefs.usageOverlayPosition = position
-                previewView.invalidate()
-            }
-        }
-
         val usageItemListener = android.widget.CompoundButton.OnCheckedChangeListener { button, isChecked ->
             when (button.id) {
                 R.id.checkUsageClaude -> layoutPrefs.usageOverlayShowClaude = isChecked
@@ -257,10 +262,6 @@ class WallpaperPreviewActivity : AppCompatActivity() {
 
     private fun updateUsageOverlayControlsEnabled() {
         val enabled = switchUsageOverlay.isChecked
-        toggleUsageOverlayPosition.isEnabled = enabled
-        for (i in 0 until toggleUsageOverlayPosition.childCount) {
-            toggleUsageOverlayPosition.getChildAt(i).isEnabled = enabled
-        }
         checkUsageClaude.isEnabled = enabled
         checkUsageCodex.isEnabled = enabled
         checkUsageSession.isEnabled = enabled
@@ -272,21 +273,6 @@ class WallpaperPreviewActivity : AppCompatActivity() {
             topInsetPx = topBar.height.toFloat(),
             bottomInsetPx = bottomControls.height.toFloat()
         )
-    }
-
-    private fun buttonIdForUsagePosition(position: UsageOverlayPosition): Int = when (position) {
-        UsageOverlayPosition.TOP_LEFT -> R.id.btnUsageTopLeft
-        UsageOverlayPosition.TOP_RIGHT -> R.id.btnUsageTopRight
-        UsageOverlayPosition.BOTTOM_LEFT -> R.id.btnUsageBottomLeft
-        UsageOverlayPosition.BOTTOM_RIGHT -> R.id.btnUsageBottomRight
-    }
-
-    private fun usagePositionForButtonId(buttonId: Int): UsageOverlayPosition? = when (buttonId) {
-        R.id.btnUsageTopLeft -> UsageOverlayPosition.TOP_LEFT
-        R.id.btnUsageTopRight -> UsageOverlayPosition.TOP_RIGHT
-        R.id.btnUsageBottomLeft -> UsageOverlayPosition.BOTTOM_LEFT
-        R.id.btnUsageBottomRight -> UsageOverlayPosition.BOTTOM_RIGHT
-        else -> null
     }
 
     private fun openPhotoPicker() {
@@ -360,28 +346,25 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Fetch each entity's currently-selected companion in parallel and push
-     * the resulting map into the preview view so renderer dispatch (cat/dog/fish)
-     * runs in the preview as well as the live wallpaper. Spec §4.3.
-     */
     private fun loadCompanions(entities: List<com.hank.clawlive.data.model.EntityStatus>) {
-        lifecycleScope.launch {
-            val map = mutableMapOf<Int, CompanionDetail?>()
-            for (entity in entities) {
-                val secret = entity.botSecret ?: continue
-                try {
-                    val resp = api.getCurrentCompanion(
-                        deviceId = deviceManager.deviceId,
-                        botSecret = secret,
-                        entityId = entity.entityId
-                    )
-                    map[entity.entityId] = resp.selection?.companion
-                } catch (e: Exception) {
-                    Timber.w(e, "Companion fetch failed for entity ${entity.entityId}")
+        val active = entities.mapNotNull { entity ->
+            entity.botSecret?.let { secret -> entity.entityId to secret }
+        }
+        val activeIds = active.map { it.first }.toSet()
+
+        companionJobs.keys.toList().forEach { entityId ->
+            if (entityId !in activeIds) {
+                companionJobs.remove(entityId)?.cancel()
+            }
+        }
+
+        for ((entityId, secret) in active) {
+            if (companionJobs[entityId]?.isActive == true) continue
+            companionJobs[entityId] = lifecycleScope.launch {
+                companionRepository.getCompanionFlow(entityId, secret).collect {
+                    previewView.invalidate()
                 }
             }
-            previewView.setCompanions(map)
         }
     }
 }

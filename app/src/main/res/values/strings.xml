@@ -84,7 +84,7 @@
     <string name="set_wallpaper">Set Wallpaper</string>
     <string name="browse_companions">Browse Companions</string>
     <string name="drag_to_position">Drag entities to position them</string>
-    <string name="pinch_to_resize">Pinch to resize, drag to move</string>
+    <string name="pinch_to_resize">Drag to move; pinch entities or usage to resize</string>
     <string name="wallpaper_usage_overlay">Usage Overlay</string>
     <string name="wallpaper_usage_overlay_title">Usage</string>
     <string name="wallpaper_usage_overlay_syncing">Usage syncing...</string>

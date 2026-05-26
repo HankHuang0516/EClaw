@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RectF
 import android.net.Uri
 import android.util.AttributeSet
 import android.view.MotionEvent
@@ -17,7 +18,9 @@ import com.hank.clawlive.data.model.CompanionDetail
 import com.hank.clawlive.data.model.EntityStatus
 import com.hank.clawlive.data.model.UsageSnapshotLatest
 import com.hank.clawlive.engine.ProceduralCreatureDrawer
+import com.hank.clawlive.engine.SpritesheetCompanionDrawer
 import com.hank.clawlive.engine.UsageOverlayRenderer
+import com.hank.clawlive.data.repository.CompanionRepository
 import kotlin.math.ceil
 import kotlin.math.sqrt
 import timber.log.Timber
@@ -38,6 +41,8 @@ class WallpaperPreviewView @JvmOverloads constructor(
 
     private val layoutPrefs = LayoutPreferences.getInstance(context)
     private val usageOverlayRenderer = UsageOverlayRenderer(context, layoutPrefs)
+    private var companionRepository: CompanionRepository? = null
+    private var spritesheetDrawer: SpritesheetCompanionDrawer? = null
 
     // Entities to display (only bound entities)
     private var entities: List<EntityStatus> = emptyList()
@@ -60,10 +65,17 @@ class WallpaperPreviewView @JvmOverloads constructor(
     private var draggingEntityIndex: Int = -1
     private var lastTouchX = 0f
     private var lastTouchY = 0f
+    private var dragOffsetX = 0f
+    private var dragOffsetY = 0f
+    private var draggingUsageOverlay = false
+    private var usageOverlayDragOffsetX = 0f
+    private var usageOverlayDragOffsetY = 0f
+    var onCustomLayoutEnabled: (() -> Unit)? = null
     
     // Scale gesture state
     private var scalingEntityIndex: Int = -1
     private var isScaling = false
+    private var isScalingUsageOverlay = false
 
     // Hit test radius (scaled with view size)
     private val hitRadiusFactor = 0.12f
@@ -98,6 +110,14 @@ class WallpaperPreviewView @JvmOverloads constructor(
     private val scaleGestureDetector = ScaleGestureDetector(context,
         object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
             override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
+                if (findUsageOverlayAtPosition(detector.focusX, detector.focusY) != null) {
+                    isScalingUsageOverlay = true
+                    isScaling = true
+                    draggingEntityIndex = -1
+                    draggingUsageOverlay = false
+                    return true
+                }
+
                 // Find entity at scale focus point
                 scalingEntityIndex = findEntityAtPosition(detector.focusX, detector.focusY)
                 if (scalingEntityIndex >= 0 && scalingEntityIndex < entities.size) {
@@ -110,12 +130,20 @@ class WallpaperPreviewView @JvmOverloads constructor(
             }
             
             override fun onScale(detector: ScaleGestureDetector): Boolean {
+                if (isScalingUsageOverlay) {
+                    layoutPrefs.usageOverlayScale = layoutPrefs.usageOverlayScale * detector.scaleFactor
+                    invalidate()
+                    return true
+                }
+
                 if (scalingEntityIndex >= 0 && scalingEntityIndex < entities.size) {
                     val entityId = entities[scalingEntityIndex].entityId
                     // Use cumulative multiplication (Android recommended pattern)
                     val currentScale = entityScales[entityId] ?: 1.0f
                     val newScale = (currentScale * detector.scaleFactor).coerceIn(0.3f, 2.5f)
                     entityScales[entityId] = newScale
+                    layoutPrefs.setEntityScale(entityId, newScale)
+                    enableCustomLayoutForGesture()
                     invalidate()
                     return true
                 }
@@ -130,6 +158,7 @@ class WallpaperPreviewView @JvmOverloads constructor(
                     }
                 }
                 scalingEntityIndex = -1
+                isScalingUsageOverlay = false
                 isScaling = false
             }
         }
@@ -166,6 +195,12 @@ class WallpaperPreviewView @JvmOverloads constructor(
      */
     fun setCompanions(map: Map<Int, CompanionDetail?>) {
         companionsByEntity = map
+        invalidate()
+    }
+
+    fun setCompanionRepository(repository: CompanionRepository) {
+        companionRepository = repository
+        spritesheetDrawer = SpritesheetCompanionDrawer(repository)
         invalidate()
     }
 
@@ -288,7 +323,17 @@ class WallpaperPreviewView @JvmOverloads constructor(
             }
         }
 
-        usageOverlayRenderer.draw(canvas, usageSnapshot, usageOverlayTopInsetPx, usageOverlayBottomInsetPx)
+        usageOverlayRenderer.draw(
+            canvas,
+            usageSnapshot,
+            usageOverlayTopInsetPx,
+            usageOverlayBottomInsetPx,
+            highlighted = draggingUsageOverlay || isScalingUsageOverlay
+        )
+
+        if (isScalingUsageOverlay) {
+            drawUsageOverlayScaleIndicator(canvas)
+        }
     }
 
     /**
@@ -445,13 +490,30 @@ class WallpaperPreviewView @JvmOverloads constructor(
      * Draw entity preview (simplified lobster shape)
      */
     private fun drawEntityPreview(canvas: Canvas, entity: EntityStatus, cx: Float, cy: Float, scale: Float) {
+        val companion = companionRepository?.cached(entity.entityId) ?: companionsByEntity[entity.entityId]
+        if (companion?.assetType == "spritesheet") {
+            val result = spritesheetDrawer?.draw(
+                canvas,
+                companion,
+                entity.entityId,
+                entity.state.toString(),
+                cx,
+                cy,
+                scale * 1.2f
+            ) ?: SpritesheetCompanionDrawer.DrawResult.UNSUPPORTED
+            if (result == SpritesheetCompanionDrawer.DrawResult.DRAWN ||
+                result == SpritesheetCompanionDrawer.DrawResult.LOADING
+            ) {
+                return
+            }
+        }
+
         canvas.save()
 
         val svgScale = 3f * scale
         canvas.translate(cx - (60 * svgScale), cy - (60 * svgScale))
         canvas.scale(svgScale, svgScale)
 
-        val companion = companionsByEntity[entity.entityId]
         val bodyColor = parseHexColor(companion?.color) ?: when (entity.entityId) {
             0 -> Color.parseColor("#FF7F50")
             1 -> Color.parseColor("#4CAF50")
@@ -503,6 +565,18 @@ class WallpaperPreviewView @JvmOverloads constructor(
         canvas.restore()
     }
 
+    private fun drawUsageOverlayScaleIndicator(canvas: Canvas) {
+        val bounds = getUsageOverlayBoundsForTest() ?: return
+        labelPaint.textSize = 22f * resources.displayMetrics.density
+        labelPaint.color = Color.CYAN
+        canvas.drawText(
+            "${String.format("%.1f", layoutPrefs.usageOverlayScale)}x",
+            bounds.centerX(),
+            (bounds.bottom + 24f * resources.displayMetrics.density).coerceAtMost(height - 12f * resources.displayMetrics.density),
+            labelPaint
+        )
+    }
+
     private fun parseHexColor(hex: String?): Int? {
         if (hex.isNullOrBlank()) return null
         return try { Color.parseColor(hex) } catch (_: IllegalArgumentException) { null }
@@ -529,27 +603,56 @@ class WallpaperPreviewView @JvmOverloads constructor(
 
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
+                findUsageOverlayAtPosition(x, y)?.let { bounds ->
+                    draggingUsageOverlay = true
+                    draggingEntityIndex = -1
+                    usageOverlayDragOffsetX = bounds.centerX() - x
+                    usageOverlayDragOffsetY = bounds.centerY() - y
+                    invalidate()
+                    return true
+                }
+
                 draggingEntityIndex = findEntityAtPosition(x, y)
                 lastTouchX = x
                 lastTouchY = y
                 if (draggingEntityIndex >= 0) {
+                    val entity = entities[draggingEntityIndex]
+                    val pos = entityPositions[entity.entityId] ?: Pair(0.5f, 0.5f)
+                    dragOffsetX = pos.first * width - x
+                    dragOffsetY = pos.second * height - y
                     invalidate()
                     return true
                 }
             }
 
             MotionEvent.ACTION_MOVE -> {
+                if (event.pointerCount == 1 && draggingUsageOverlay) {
+                    val centerX = (x + usageOverlayDragOffsetX).coerceIn(0f, width.toFloat())
+                    val centerY = (y + usageOverlayDragOffsetY).coerceIn(0f, height.toFloat())
+                    layoutPrefs.setUsageOverlayCenter(centerX / width, centerY / height)
+                    invalidate()
+                    return true
+                }
+
                 if (event.pointerCount == 1 && draggingEntityIndex >= 0 && draggingEntityIndex < entities.size) {
-                    val xPercent = (x / width).coerceIn(0.1f, 0.9f)
-                    val yPercent = (y / height).coerceIn(0.1f, 0.9f)
+                    val xPercent = ((x + dragOffsetX) / width).coerceIn(0.05f, 0.95f)
+                    val yPercent = ((y + dragOffsetY) / height).coerceIn(0.05f, 0.95f)
                     val entityId = entities[draggingEntityIndex].entityId
                     entityPositions[entityId] = Pair(xPercent, yPercent)
+                    enableCustomLayoutForGesture()
+                    layoutPrefs.setCustomPosition(entityId, xPercent, yPercent)
                     invalidate()
                     return true
                 }
             }
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                if (draggingUsageOverlay) {
+                    draggingUsageOverlay = false
+                    invalidate()
+                    return true
+                }
+
                 if (draggingEntityIndex >= 0 && draggingEntityIndex < entities.size) {
                     val entityId = entities[draggingEntityIndex].entityId
                     entityPositions[entityId]?.let { (px, py) ->
@@ -560,6 +663,7 @@ class WallpaperPreviewView @JvmOverloads constructor(
                     return true
                 }
                 draggingEntityIndex = -1
+                draggingUsageOverlay = false
             }
         }
 
@@ -567,8 +671,9 @@ class WallpaperPreviewView @JvmOverloads constructor(
     }
 
     private fun findEntityAtPosition(touchX: Float, touchY: Float): Int {
-        entities.forEachIndexed { index, entity ->
-            val pos = entityPositions[entity.entityId] ?: return@forEachIndexed
+        for (index in entities.indices.reversed()) {
+            val entity = entities[index]
+            val pos = entityPositions[entity.entityId] ?: continue
             val entityX = pos.first * width
             val entityY = pos.second * height
             
@@ -586,6 +691,33 @@ class WallpaperPreviewView @JvmOverloads constructor(
         }
 
         return -1
+    }
+
+    private fun enableCustomLayoutForGesture() {
+        if (!layoutPrefs.useCustomLayout) {
+            entities.forEach { entity ->
+                entityPositions[entity.entityId]?.let { (px, py) ->
+                    layoutPrefs.setCustomPosition(entity.entityId, px, py)
+                }
+            }
+        }
+        layoutPrefs.useCustomLayout = true
+        onCustomLayoutEnabled?.invoke()
+    }
+
+    private fun findUsageOverlayAtPosition(touchX: Float, touchY: Float): RectF? {
+        val bounds = getUsageOverlayBoundsForTest() ?: return null
+        return if (bounds.contains(touchX, touchY)) bounds else null
+    }
+
+    fun getUsageOverlayBoundsForTest(): RectF? {
+        return usageOverlayRenderer.getBounds(
+            width,
+            height,
+            usageSnapshot,
+            usageOverlayTopInsetPx,
+            usageOverlayBottomInsetPx
+        )
     }
 
     override fun onDetachedFromWindow() {
