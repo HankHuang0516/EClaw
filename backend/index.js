@@ -5497,6 +5497,9 @@ YOUR CREDENTIALS (save these):
 
 Every push message will include a pre-filled curl command. Just replace YOUR_REPLY_HERE and execute it.
 
+Scoped ready-check (must include deviceId so shared free-bot pool secrets cannot resolve to another user's binding):
+exec: curl -s "${apiBase}/api/whoami?deviceId=${deviceId}&entityId=${entityId}&botSecret=${botSecret}"
+
 Example — to reply to a user message, run:
 exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"YOUR_REPLY_HERE"}'
 
@@ -5529,6 +5532,9 @@ YOUR CREDENTIALS (save these):
 🚨 CRITICAL RULE: When you receive a push message from a user, you MUST use the exec tool with curl to call the E-claw API. Your text reply to the webhook is DISCARDED — the user will NEVER see it.
 
 Every push message will include a pre-filled curl command. Just replace YOUR_REPLY_HERE and execute it.
+
+Scoped ready-check (must include deviceId so shared free-bot pool secrets cannot resolve to another user's binding):
+exec: curl -s "https://eclawbot.com/api/whoami?deviceId=${deviceId}&entityId=${entityId}&botSecret=${botSecret}"
 
 ⚠️ IMMEDIATE ACTION REQUIRED — Run this command RIGHT NOW to confirm you're online (server will NOT send any additional test push):
 exec: curl -s -X POST "https://eclawbot.com/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"Hi! I am online and ready to chat~"}'`;
@@ -5602,37 +5608,57 @@ app.get('/', (req, res) => {
 // Health check endpoint for Railway
 /**
  * GET /api/whoami — Identify the calling bot entity
- * Auth: botSecret (query param). Searches all devices to find the matching entity.
+ * Auth: botSecret (query param). If deviceId is provided, the lookup is scoped
+ * to that device; otherwise it falls back to a legacy global lookup.
  * Optional: entityId (if botSecret is shared across multiple entities on same device)
  * Response: { success, entityId, deviceId, name, character, state, level, xp, publicCode, agentCard }
  */
 app.get('/api/whoami', (req, res) => {
-    const { botSecret, entityId } = req.query;
+    const { botSecret, entityId, deviceId: requestedDeviceId } = req.query;
     if (!botSecret) {
         return res.status(400).json({ success: false, error: 'botSecret query parameter required' });
     }
 
-    // Search all devices for matching botSecret
-    const targetEntityId = entityId !== undefined ? parseInt(entityId) : null;
-    for (const [deviceId, device] of Object.entries(devices)) {
+    const targetEntityId = entityId !== undefined ? parseInt(entityId, 10) : null;
+    if (entityId !== undefined && (Number.isNaN(targetEntityId) || targetEntityId < 0)) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+
+    const replyWithEntity = (deviceId, eid, entity) => res.json({
+        success: true,
+        entityId: parseInt(eid, 10),
+        deviceId,
+        name: entity.name || null,
+        character: entity.character || null,
+        state: entity.state || 'IDLE',
+        level: entity.level || 1,
+        xp: entity.xp || 0,
+        publicCode: entity.publicCode || null,
+        agentCard: entity.agentCard || null
+    });
+
+    const searchDevice = (deviceId, device) => {
+        if (!device || !device.entities) return false;
         for (const [eid, entity] of Object.entries(device.entities)) {
             if (!entity || !entity.isBound) continue;
             if (!safeEqual(entity.botSecret, botSecret)) continue;
-            if (targetEntityId !== null && parseInt(eid) !== targetEntityId) continue;
+            if (targetEntityId !== null && parseInt(eid, 10) !== targetEntityId) continue;
 
-            return res.json({
-                success: true,
-                entityId: parseInt(eid),
-                deviceId,
-                name: entity.name || null,
-                character: entity.character || null,
-                state: entity.state || 'IDLE',
-                level: entity.level || 1,
-                xp: entity.xp || 0,
-                publicCode: entity.publicCode || null,
-                agentCard: entity.agentCard || null
-            });
+            replyWithEntity(deviceId, eid, entity);
+            return true;
         }
+        return false;
+    };
+
+    if (requestedDeviceId) {
+        const device = devices[requestedDeviceId];
+        if (searchDevice(requestedDeviceId, device)) return;
+        return res.status(401).json({ success: false, error: 'Invalid botSecret' });
+    }
+
+    // Legacy fallback: search all devices for matching botSecret.
+    for (const [deviceId, device] of Object.entries(devices)) {
+        if (searchDevice(deviceId, device)) return;
     }
 
     return res.status(401).json({ success: false, error: 'Invalid botSecret' });
@@ -14118,8 +14144,10 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
 
     const sessionKey = handshake.sessionKey;
 
-    // Use bot's stored botSecret so the bot can authenticate with E-Claw API
-    const botSecret = freeBot.bot_secret || (() => { const crypto = require('crypto'); return crypto.randomBytes(16).toString('hex'); })();
+    // Free bots can be bound by multiple devices concurrently. Use a per-binding
+    // entity secret so one free-bot pool credential cannot drift or authenticate
+    // another user's rented entity.
+    const botSecret = generateBotSecret();
 
     // Set up entity with official bot's webhook (preserve user-set name, xp, level)
     const existingEntityFree = device.entities[eId];
