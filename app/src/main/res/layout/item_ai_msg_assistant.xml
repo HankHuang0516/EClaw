@@ -29,7 +29,8 @@
             android:layout_height="wrap_content"
             android:textColor="#E0E0E0"
             android:textSize="14sp"
-            android:lineSpacingExtra="2dp" />
+            android:lineSpacingExtra="2dp"
+            android:textIsSelectable="true" />
 
     </LinearLayout>
 

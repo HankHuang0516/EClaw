@@ -5,7 +5,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.view.ViewGroup
+import android.widget.CheckBox
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.Toast
@@ -17,9 +17,11 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.LayoutPreferences
+import com.hank.clawlive.data.local.UsageOverlayPosition
 import com.hank.clawlive.data.model.CompanionDetail
 import com.hank.clawlive.data.remote.NetworkModule
 import com.hank.clawlive.service.ClawWallpaperService
@@ -39,6 +41,12 @@ class WallpaperPreviewActivity : AppCompatActivity() {
     private lateinit var previewView: WallpaperPreviewView
     private lateinit var switchCustomLayout: MaterialSwitch
     private lateinit var switchBackground: MaterialSwitch
+    private lateinit var switchUsageOverlay: MaterialSwitch
+    private lateinit var toggleUsageOverlayPosition: MaterialButtonToggleGroup
+    private lateinit var checkUsageClaude: CheckBox
+    private lateinit var checkUsageCodex: CheckBox
+    private lateinit var checkUsageSession: CheckBox
+    private lateinit var checkUsageWeekly: CheckBox
     private lateinit var btnSelectPhoto: MaterialButton
     private lateinit var btnReset: MaterialButton
     private lateinit var btnSetWallpaper: MaterialButton
@@ -93,6 +101,7 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         setupEdgeToEdgeInsets()
         setupListeners()
         loadBoundEntities()
+        loadUsageSnapshot()
     }
 
     override fun onResume() {
@@ -109,6 +118,12 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         previewView = findViewById(R.id.wallpaperPreviewView)
         switchCustomLayout = findViewById(R.id.switchCustomLayout)
         switchBackground = findViewById(R.id.switchBackground)
+        switchUsageOverlay = findViewById(R.id.switchUsageOverlay)
+        toggleUsageOverlayPosition = findViewById(R.id.toggleUsageOverlayPosition)
+        checkUsageClaude = findViewById(R.id.checkUsageClaude)
+        checkUsageCodex = findViewById(R.id.checkUsageCodex)
+        checkUsageSession = findViewById(R.id.checkUsageSession)
+        checkUsageWeekly = findViewById(R.id.checkUsageWeekly)
         btnSelectPhoto = findViewById(R.id.btnSelectPhoto)
         btnReset = findViewById(R.id.btnReset)
         btnSetWallpaper = findViewById(R.id.btnSetWallpaper)
@@ -119,9 +134,17 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         // Initialize switch states from preferences
         switchCustomLayout.isChecked = layoutPrefs.useCustomLayout
         switchBackground.isChecked = layoutPrefs.useBackgroundImage
+        switchUsageOverlay.isChecked = layoutPrefs.usageOverlayEnabled
+        toggleUsageOverlayPosition.check(buttonIdForUsagePosition(layoutPrefs.usageOverlayPosition))
+        checkUsageClaude.isChecked = layoutPrefs.usageOverlayShowClaude
+        checkUsageCodex.isChecked = layoutPrefs.usageOverlayShowCodex
+        checkUsageSession.isChecked = layoutPrefs.usageOverlayShowSession
+        checkUsageWeekly.isChecked = layoutPrefs.usageOverlayShowWeekly
 
         // Show/hide photo button based on background switch
         updatePhotoButtonVisibility()
+        updateUsageOverlayControlsEnabled()
+        previewView.post { updatePreviewUsageOverlayInsets() }
     }
 
     /**
@@ -147,6 +170,8 @@ class WallpaperPreviewActivity : AppCompatActivity() {
                 right = insets.right + 16.dpToPx(),
                 bottom = insets.bottom + 8.dpToPx()
             )
+
+            previewView.post { updatePreviewUsageOverlayInsets() }
 
             WindowInsetsCompat.CONSUMED
         }
@@ -196,10 +221,72 @@ class WallpaperPreviewActivity : AppCompatActivity() {
                 Toast.makeText(this, getString(R.string.background_disabled), Toast.LENGTH_SHORT).show()
             }
         }
+
+        switchUsageOverlay.setOnCheckedChangeListener { _, isChecked ->
+            layoutPrefs.usageOverlayEnabled = isChecked
+            updateUsageOverlayControlsEnabled()
+            previewView.invalidate()
+        }
+
+        toggleUsageOverlayPosition.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (!isChecked) return@addOnButtonCheckedListener
+            usagePositionForButtonId(checkedId)?.let { position ->
+                layoutPrefs.usageOverlayPosition = position
+                previewView.invalidate()
+            }
+        }
+
+        val usageItemListener = android.widget.CompoundButton.OnCheckedChangeListener { button, isChecked ->
+            when (button.id) {
+                R.id.checkUsageClaude -> layoutPrefs.usageOverlayShowClaude = isChecked
+                R.id.checkUsageCodex -> layoutPrefs.usageOverlayShowCodex = isChecked
+                R.id.checkUsageSession -> layoutPrefs.usageOverlayShowSession = isChecked
+                R.id.checkUsageWeekly -> layoutPrefs.usageOverlayShowWeekly = isChecked
+            }
+            previewView.invalidate()
+        }
+        checkUsageClaude.setOnCheckedChangeListener(usageItemListener)
+        checkUsageCodex.setOnCheckedChangeListener(usageItemListener)
+        checkUsageSession.setOnCheckedChangeListener(usageItemListener)
+        checkUsageWeekly.setOnCheckedChangeListener(usageItemListener)
     }
 
     private fun updatePhotoButtonVisibility() {
         btnSelectPhoto.visibility = if (switchBackground.isChecked) View.VISIBLE else View.GONE
+    }
+
+    private fun updateUsageOverlayControlsEnabled() {
+        val enabled = switchUsageOverlay.isChecked
+        toggleUsageOverlayPosition.isEnabled = enabled
+        for (i in 0 until toggleUsageOverlayPosition.childCount) {
+            toggleUsageOverlayPosition.getChildAt(i).isEnabled = enabled
+        }
+        checkUsageClaude.isEnabled = enabled
+        checkUsageCodex.isEnabled = enabled
+        checkUsageSession.isEnabled = enabled
+        checkUsageWeekly.isEnabled = enabled
+    }
+
+    private fun updatePreviewUsageOverlayInsets() {
+        previewView.setUsageOverlayInsets(
+            topInsetPx = topBar.height.toFloat(),
+            bottomInsetPx = bottomControls.height.toFloat()
+        )
+    }
+
+    private fun buttonIdForUsagePosition(position: UsageOverlayPosition): Int = when (position) {
+        UsageOverlayPosition.TOP_LEFT -> R.id.btnUsageTopLeft
+        UsageOverlayPosition.TOP_RIGHT -> R.id.btnUsageTopRight
+        UsageOverlayPosition.BOTTOM_LEFT -> R.id.btnUsageBottomLeft
+        UsageOverlayPosition.BOTTOM_RIGHT -> R.id.btnUsageBottomRight
+    }
+
+    private fun usagePositionForButtonId(buttonId: Int): UsageOverlayPosition? = when (buttonId) {
+        R.id.btnUsageTopLeft -> UsageOverlayPosition.TOP_LEFT
+        R.id.btnUsageTopRight -> UsageOverlayPosition.TOP_RIGHT
+        R.id.btnUsageBottomLeft -> UsageOverlayPosition.BOTTOM_LEFT
+        R.id.btnUsageBottomRight -> UsageOverlayPosition.BOTTOM_RIGHT
+        else -> null
     }
 
     private fun openPhotoPicker() {
@@ -254,6 +341,21 @@ class WallpaperPreviewActivity : AppCompatActivity() {
                     getString(R.string.wallpaper_load_entities_failed, e.message ?: ""),
                     Toast.LENGTH_LONG
                 ).show()
+            }
+        }
+    }
+
+    private fun loadUsageSnapshot() {
+        lifecycleScope.launch {
+            try {
+                val response = api.getUsageSnapshot(
+                    deviceId = deviceManager.deviceId,
+                    deviceSecret = deviceManager.deviceSecret ?: ""
+                )
+                previewView.setUsageSnapshot(if (response.success) response.latest else null)
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to load usage snapshot for wallpaper preview")
+                previewView.setUsageSnapshot(null)
             }
         }
     }

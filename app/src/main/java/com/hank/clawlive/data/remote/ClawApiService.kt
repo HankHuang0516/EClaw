@@ -196,6 +196,12 @@ interface ClawApiService {
     @POST("api/subscription/usage")
     suspend fun getSubscriptionUsage(@Body body: Map<String, String>): SubscriptionUsageResponse
 
+    @GET("api/usage/snapshot")
+    suspend fun getUsageSnapshot(
+        @Query("deviceId") deviceId: String,
+        @Query("deviceSecret") deviceSecret: String
+    ): UsageSnapshotResponse
+
     // ============================================
     // CROSS-DEVICE CONTACTS
     // ============================================

@@ -23,10 +23,10 @@ class ChatBubbleTextSelectionTest {
     @Test
     fun testReceivedMessageBubbleIsTextSelectable() {
         val inflater = android.view.LayoutInflater.from(context)
-        val root = inflater.inflate(R.layout.item_message_received, null, false)
+        val root = inflater.inflate(R.layout.item_ai_msg_assistant, null, false)
         val tvMessage = root.findViewById<TextView>(R.id.tvMessage)
 
-        assertNotNull("tvMessage should exist in item_message_received", tvMessage)
+        assertNotNull("tvMessage should exist in item_ai_msg_assistant", tvMessage)
         assertTrue(
             "Received message bubble must have textIsSelectable=true (#168)",
             tvMessage.isTextSelectable
@@ -36,10 +36,10 @@ class ChatBubbleTextSelectionTest {
     @Test
     fun testSentMessageBubbleIsTextSelectable() {
         val inflater = android.view.LayoutInflater.from(context)
-        val root = inflater.inflate(R.layout.item_message_sent, null, false)
+        val root = inflater.inflate(R.layout.item_ai_msg_user, null, false)
         val tvMessage = root.findViewById<TextView>(R.id.tvMessage)
 
-        assertNotNull("tvMessage should exist in item_message_sent", tvMessage)
+        assertNotNull("tvMessage should exist in item_ai_msg_user", tvMessage)
         assertTrue(
             "Sent message bubble must have textIsSelectable=true (#168)",
             tvMessage.isTextSelectable

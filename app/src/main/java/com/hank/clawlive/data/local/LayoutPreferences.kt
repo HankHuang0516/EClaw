@@ -15,6 +15,16 @@ enum class EntityLayout {
 }
 
 /**
+ * Screen corner used for the wallpaper usage overlay.
+ */
+enum class UsageOverlayPosition {
+    TOP_LEFT,
+    TOP_RIGHT,
+    BOTTOM_LEFT,
+    BOTTOM_RIGHT
+}
+
+/**
  * Manages entity layout preferences
  */
 class LayoutPreferences private constructor(context: Context) {
@@ -276,6 +286,49 @@ class LayoutPreferences private constructor(context: Context) {
             prefs.edit().putInt(KEY_SERVER_ENTITY_LIMIT, value.coerceIn(4, 8)).apply()
         }
 
+    var usageOverlayEnabled: Boolean
+        get() = prefs.getBoolean(KEY_USAGE_OVERLAY_ENABLED, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_USAGE_OVERLAY_ENABLED, value).apply()
+        }
+
+    var usageOverlayPosition: UsageOverlayPosition
+        get() {
+            val name = prefs.getString(KEY_USAGE_OVERLAY_POSITION, UsageOverlayPosition.TOP_RIGHT.name)
+            return try {
+                UsageOverlayPosition.valueOf(name ?: UsageOverlayPosition.TOP_RIGHT.name)
+            } catch (e: Exception) {
+                UsageOverlayPosition.TOP_RIGHT
+            }
+        }
+        set(value) {
+            prefs.edit().putString(KEY_USAGE_OVERLAY_POSITION, value.name).apply()
+        }
+
+    var usageOverlayShowClaude: Boolean
+        get() = prefs.getBoolean(KEY_USAGE_OVERLAY_SHOW_CLAUDE, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_USAGE_OVERLAY_SHOW_CLAUDE, value).apply()
+        }
+
+    var usageOverlayShowCodex: Boolean
+        get() = prefs.getBoolean(KEY_USAGE_OVERLAY_SHOW_CODEX, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_USAGE_OVERLAY_SHOW_CODEX, value).apply()
+        }
+
+    var usageOverlayShowSession: Boolean
+        get() = prefs.getBoolean(KEY_USAGE_OVERLAY_SHOW_SESSION, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_USAGE_OVERLAY_SHOW_SESSION, value).apply()
+        }
+
+    var usageOverlayShowWeekly: Boolean
+        get() = prefs.getBoolean(KEY_USAGE_OVERLAY_SHOW_WEEKLY, true)
+        set(value) {
+            prefs.edit().putBoolean(KEY_USAGE_OVERLAY_SHOW_WEEKLY, value).apply()
+        }
+
     companion object {
         private const val PREFS_NAME = "entity_layout_prefs"
         private const val KEY_LAYOUT = "layout_type"
@@ -290,6 +343,12 @@ class LayoutPreferences private constructor(context: Context) {
         private const val KEY_BACKGROUND_URI = "background_image_uri"
         private const val KEY_DEBUG_ENTITY_LIMIT = "debug_entity_limit"
         private const val KEY_SERVER_ENTITY_LIMIT = "server_entity_limit"
+        private const val KEY_USAGE_OVERLAY_ENABLED = "usage_overlay_enabled"
+        private const val KEY_USAGE_OVERLAY_POSITION = "usage_overlay_position"
+        private const val KEY_USAGE_OVERLAY_SHOW_CLAUDE = "usage_overlay_show_claude"
+        private const val KEY_USAGE_OVERLAY_SHOW_CODEX = "usage_overlay_show_codex"
+        private const val KEY_USAGE_OVERLAY_SHOW_SESSION = "usage_overlay_show_session"
+        private const val KEY_USAGE_OVERLAY_SHOW_WEEKLY = "usage_overlay_show_weekly"
 
         // Display mode constants
         const val MODE_SINGLE = 1

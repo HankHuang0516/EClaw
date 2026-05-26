@@ -16,6 +16,7 @@ import com.hank.clawlive.data.model.AgentStatus
 import com.hank.clawlive.data.model.CharacterState
 import com.hank.clawlive.data.model.CompanionDetail
 import com.hank.clawlive.data.model.EntityStatus
+import com.hank.clawlive.data.model.UsageSnapshotLatest
 import com.hank.clawlive.data.repository.CompanionRepository
 import timber.log.Timber
 import kotlin.math.ceil
@@ -29,6 +30,7 @@ class ClawRenderer(
 
     private val layoutPrefs = LayoutPreferences.getInstance(context)
     private val spritesheetDrawer = companionRepository?.let { SpritesheetCompanionDrawer(it) }
+    private val usageOverlayRenderer = UsageOverlayRenderer(context, layoutPrefs)
 
     // Background image cache
     private var cachedBackgroundBitmap: Bitmap? = null
@@ -406,7 +408,12 @@ class ClawRenderer(
      *   message while the first network call is still in flight.
      */
     private var multiDrawCount = 0
-    fun drawMultiEntity(canvas: Canvas, entities: List<EntityStatus>, loading: Boolean = false) {
+    fun drawMultiEntity(
+        canvas: Canvas,
+        entities: List<EntityStatus>,
+        loading: Boolean = false,
+        usageSnapshot: UsageSnapshotLatest? = null
+    ) {
         multiDrawCount++
         val width = canvas.width.toFloat()
         val height = canvas.height.toFloat()
@@ -431,6 +438,7 @@ class ClawRenderer(
                 textPaint.textSize = 32f
                 textPaint.color = Color.WHITE
                 canvas.drawText(context.getString(R.string.claw_renderer_loading_entities), width / 2f, height / 2f, textPaint)
+                usageOverlayRenderer.draw(canvas, usageSnapshot)
                 return
             }
             // Draw "No entities" message with instructions
@@ -442,6 +450,7 @@ class ClawRenderer(
             canvas.drawText(context.getString(R.string.claw_renderer_open_app_to_bind), width / 2f, height / 2f + 20f, textPaint)
             textPaint.textSize = 20f
             canvas.drawText(context.getString(R.string.claw_renderer_with_openclaw_bot), width / 2f, height / 2f + 60f, textPaint)
+            usageOverlayRenderer.draw(canvas, usageSnapshot)
             return
         }
 
@@ -457,6 +466,8 @@ class ClawRenderer(
                 drawSingleEntityAt(canvas, entity, cx, cy, finalScale, width)
             }
         }
+
+        usageOverlayRenderer.draw(canvas, usageSnapshot)
     }
 
     /**
