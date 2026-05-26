@@ -188,6 +188,11 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── 2026-05-26 daily update — new medium/hard additions ──
+    { file: null, description: 'A Kanban board with three columns labeled Backlog, In Progress, and Done containing 5, 3, and 8 cards respectively — the top card in the In Progress column is red and marked BLOCKED', keywords: ['kanban', 'three', 'columns', 'backlog', 'progress', 'done', 'blocked', 'red'] },
+    { file: null, description: 'A Snellen eye chart with the top row showing a large letter E, the second row H N, third row D F N, fourth row P R Z, and fifth row T O Z E F — twelve letters appear in the bottom two rows combined', keywords: ['snellen', 'eye', 'chart', 'letter', 'twelve'] },
+    { file: null, description: 'A database entity-relationship diagram with four tables: Users (id, email, created_at), Orders (id, user_id, total, status), OrderItems (id, order_id, product_id, qty), and Products (id, name, price) — three foreign key arrows are drawn', keywords: ['database', 'entity', 'relationship', 'four', 'tables', 'three', 'foreign'] },
+    { file: null, description: 'A financial candlestick chart for a stock over five trading days: Monday opens at 140, peaks at 148, closes at 145; Tuesday gaps up to open at 147, drops to 138 low, closes at 140; Wednesday through Friday show a steady uptrend closing at 155', keywords: ['candlestick', 'stock', 'five', 'monday', 'tuesday', '140', '155', 'uptrend'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -209,7 +214,7 @@ const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@ma
 const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','China','Ghana','Italy','Russia','Netherlands'];
 const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123','+46-70-123-4567','+65-9123-4567','+52-55-1234-5678','+353-87-123-4567'];
 const FORM_DATES = ['1990-06-15','1985-03-22','1992-11-08','1988-01-30','1995-07-14','1983-09-25','1991-12-01','1987-04-17','1993-08-09','1986-02-14','1994-10-31','1989-05-20'];
-const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund'];
+const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund','I would like to report a billing discrepancy from last month','Please expedite my support ticket — SLA deadline is tomorrow','Requesting a data export in CSV format for audit purposes','My account was locked after three failed login attempts','Looking to upgrade from the free tier to the Professional plan'];
 
 function generateFormFillChallenge() {
     const nameIdx = Math.floor(Math.random() * FORM_NAMES.length);
@@ -229,8 +234,10 @@ function generateFormFillChallenge() {
         { name: 'phone', type: 'tel', label: 'Phone', expectedValue: FORM_PHONES[Math.floor(Math.random() * FORM_PHONES.length)] },
         { name: 'birthDate', type: 'date', label: 'Birth Date', expectedValue: FORM_DATES[Math.floor(Math.random() * FORM_DATES.length)] },
         { name: 'message', type: 'textarea', label: 'Message', expectedValue: FORM_MESSAGES[Math.floor(Math.random() * FORM_MESSAGES.length)] },
-        { name: 'company', type: 'text', label: 'Company', expectedValue: ['Acme Corp','TechStart','GlobalCo','DataInc'][Math.floor(Math.random() * 4)] },
+        { name: 'company', type: 'text', label: 'Company', expectedValue: ['Acme Corp','TechStart','GlobalCo','DataInc','NexaCloud','PivotLabs','CoreSystems','BlueSky AI'][Math.floor(Math.random() * 8)] },
         { name: 'role', type: 'select', label: 'Role', expectedValue: 'Developer', options: ['Designer','Developer','Manager','Analyst','Other'] },
+        { name: 'department', type: 'select', label: 'Department', expectedValue: 'Engineering', options: ['Engineering','Marketing','Sales','Operations','Legal'] },
+        { name: 'priority', type: 'select', label: 'Priority', expectedValue: 'High', options: ['Low','Medium','High','Critical'] },
     ];
     return { fields: [...fields, ...shuffle(extras).slice(0, 1 + Math.floor(Math.random() * 2))] };
 }
@@ -368,6 +375,35 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── 2026-05-26 daily update — new medium/hard coding problems ──
+    { title: 'Merge Intervals', description: 'Write `solve(intervals)` — given an array of intervals [start, end] (each as [s,e]), merge all overlapping intervals and return the merged list sorted by start. Example: [[1,3],[2,6],[8,10],[15,18]] → [[1,6],[8,10],[15,18]].',
+      testCases: [
+          { input: '[[1,3],[2,6],[8,10],[15,18]]', expected: '[[1,6],[8,10],[15,18]]' },
+          { input: '[[1,4],[4,5]]', expected: '[[1,5]]' },
+          { input: '[[1,4],[2,3]]', expected: '[[1,4]]' },
+          { input: '[[1,2]]', expected: '[[1,2]]' },
+      ] },
+    { title: 'Longest Common Subsequence', description: 'Write `solve(text1, text2)` — return the length of the longest common subsequence of the two strings. A subsequence is a sequence that appears in the same relative order, but not necessarily contiguous.',
+      testCases: [
+          { input: '"abcde", "ace"', expected: '3' },
+          { input: '"abc", "abc"', expected: '3' },
+          { input: '"abc", "def"', expected: '0' },
+          { input: '"oxcpqrsvwf", "shmtulqrypy"', expected: '2' },
+      ] },
+    { title: 'Minimum Window Substring', description: 'Write `solve(s, t)` — return the minimum window substring of s such that every character in t (including duplicates) is included in the window. If no such substring exists, return "". Example: solve("ADOBECODEBANC", "ABC") → "BANC".',
+      testCases: [
+          { input: '"ADOBECODEBANC", "ABC"', expected: '"BANC"' },
+          { input: '"a", "a"', expected: '"a"' },
+          { input: '"a", "aa"', expected: '""' },
+          { input: '"aa", "aa"', expected: '"aa"' },
+      ] },
+    { title: 'Course Schedule', description: 'Write `solve(numCourses, prerequisites)` — there are numCourses courses labeled 0 to numCourses-1. prerequisites[i] = [a, b] means you must take course b before course a. Return true if you can finish all courses (i.e., no cycle exists), false otherwise.',
+      testCases: [
+          { input: '2, [[1,0]]', expected: 'true' },
+          { input: '2, [[1,0],[0,1]]', expected: 'false' },
+          { input: '4, [[1,0],[2,0],[3,1],[3,2]]', expected: 'true' },
+          { input: '1, []', expected: 'true' },
+      ] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -414,9 +450,16 @@ let RESPONSE_QUESTIONS = [
     { question: 'A plane travels 2000 km at an effective speed of 1000 km/h (900 km/h airspeed plus 100 km/h tailwind). How many hours does the journey take?', expectedKeywords: ['2'] },
     { question: 'A worker paints 1/3 of a fence on day 1 and 1/4 of the remaining unpainted fence on day 2. What fraction of the fence is still unpainted after day 2?', expectedKeywords: ['1/2', '0.5', 'half'] },
     // ── New additions to fill easy + medium-hard tiers ──
-    { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
+    // 'How many sides does a regular hexagon have?' retired (trivially easy — no discriminating power)
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── 2026-05-26 daily update — new medium/hard questions ──
+    { question: 'A merchant buys an item for $60 and marks it up by 40%. During a sale he gives a 20% discount off the marked price. What is his profit percentage on the original cost price?', expectedKeywords: ['12'] },
+    { question: 'In how many ways can a committee of 3 people be chosen from a group of 8?', expectedKeywords: ['56'] },
+    { question: 'A tank can be filled by pipe A in 12 hours and emptied by pipe B in 18 hours. If both pipes are open together when the tank is half full, how many hours does it take to fill it completely?', expectedKeywords: ['18'] },
+    { question: 'What is the value of the expression: 3 + 3 × 3 − 3 ÷ 3?', expectedKeywords: ['11'] },
+    { question: 'A sequence is defined as a(1)=2 and a(n)=2×a(n−1)+1 for n>1. What is a(5)?', expectedKeywords: ['63'] },
+    { question: 'Two numbers are in the ratio 5:8. If their LCM is 120, what is the sum of the two numbers?', expectedKeywords: ['39'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +537,11 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── 2026-05-26 daily update — new medium/hard TTS phrases ──
+    { text: 'Shareholders meeting rescheduled to Tuesday November eighteenth at oh nine hundred hours in Conference Room Delta — RSVP to extension two seven four by end of business Monday', keywords: ['shareholders', 'meeting', 'november', 'conference', 'room', 'extension', 'monday'] },
+    { text: 'The cryptographic hash SHA-256 colon four seven a two eight nine c one d five e f zero b three must match before executing the installer', keywords: ['cryptographic', 'hash', 'SHA', '256', 'match', 'installer'] },
+    { text: 'Prescription label: take two point five milligrams of Warfarin orally once daily at six PM and do not take with grapefruit juice or ibuprofen', keywords: ['prescription', 'milligrams', 'warfarin', 'daily', 'grapefruit', 'ibuprofen'] },
+    { text: 'The package tracking number one Z A four seven three W zero zero four six eight seven nine five shows your shipment cleared customs at oh four thirty UTC on the fourteenth', keywords: ['tracking', 'package', 'customs', 'shipment', 'fourteen', 'UTC'] },
 ];
 
 // ============================================
