@@ -739,12 +739,14 @@ app.use('/mission', express.static(path.join(__dirname, 'public'), {
 // revalidation, so an unchanged src URL serves the pre-deploy bundle
 // well after a merge. Appending ?v=<sha> makes the URL change on every
 // deploy and invalidates both caches immediately.
-const SCRIPT_VERSION = (
+const BUILD_HASH = (
     process.env.RAILWAY_GIT_COMMIT_SHA ||
     process.env.GIT_COMMIT_SHA ||
     process.env.VERCEL_GIT_COMMIT_SHA ||
-    String(Date.now())
-).slice(0, 12);
+    ''
+);
+const BUILD_TIME = new Date().toISOString();
+const SCRIPT_VERSION = (BUILD_HASH || String(Date.now())).slice(0, 12);
 
 const isProductionRuntime = () =>
     process.env.NODE_ENV === 'production' || Boolean(process.env.RAILWAY_ENVIRONMENT);
@@ -6285,6 +6287,8 @@ app.get('/api/version', (req, res) => {
             portal: ['auth', 'dashboard', 'chat', 'mission', 'settings', 'subscription', 'i18n', 'avatar-picker'],
             android: ['auth', 'dashboard', 'chat', 'mission', 'settings', 'subscription', 'i18n', 'avatar-picker', 'live-wallpaper', 'widget']
         },
+        build_hash: BUILD_HASH || null,
+        build_time: BUILD_TIME,
         lastSync: Date.now()
     };
 
