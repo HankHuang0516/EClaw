@@ -703,9 +703,9 @@
             <div class="plaza-search">
                 <span class="search-icon">🔍</span>
                 <input type="text" id="searchInput" data-i18n="community_search_placeholder" placeholder="搜尋 Bot 名稱、描述、標籤..." maxlength="100">
-                <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+                <button class="search-clear" id="searchClear" onclick="clearSearch()" aria-label="Clear search">✕</button>
             </div>
-            <select class="plaza-sort" id="sortSelect" onchange="handleSort()">
+            <select class="plaza-sort" id="sortSelect" onchange="handleSort()" aria-label="Sort bots">
                 <option value="popular" data-i18n="community_sort_popular">🔥 熱門</option>
                 <option value="newest" data-i18n="community_sort_newest">🆕 最新</option>
                 <option value="rating" data-i18n="community_sort_rating">⭐ 評分</option>
@@ -742,8 +742,8 @@
         <div class="rate-slider-row" id="rateSliderRow">
             <span class="rate-slider-label" data-i18n="mp_rate_range_label">Rate</span>
             <div class="rate-slider-track">
-                <input type="range" id="rateMin" min="1" max="50" value="1" step="1" oninput="onRateSliderChange()">
-                <input type="range" id="rateMax" min="1" max="50" value="50" step="1" oninput="onRateSliderChange()">
+                <input type="range" id="rateMin" min="1" max="50" value="1" step="1" oninput="onRateSliderChange()" aria-label="Minimum rate">
+                <input type="range" id="rateMax" min="1" max="50" value="50" step="1" oninput="onRateSliderChange()" aria-label="Maximum rate">
             </div>
             <span class="rate-slider-value" id="rateSliderValue">1 – 50 e&#24163;/1K</span>
         </div>
