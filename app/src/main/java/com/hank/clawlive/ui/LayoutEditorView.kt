@@ -6,7 +6,6 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.MotionEvent
-import android.view.ScaleGestureDetector
 import android.view.View
 import com.hank.clawlive.R
 import com.hank.clawlive.data.local.LayoutPreferences
@@ -15,12 +14,13 @@ import kotlin.math.ceil
 import kotlin.math.sqrt
 
 /**
- * Custom View for drag-and-drop entity positioning with pinch-to-resize.
- * Users can drag entities to custom positions and pinch to resize them.
+ * Custom View for drag-and-drop entity positioning with two-stage
+ * pinch-to-resize.
  * 
  * Gestures:
- * - 1 finger drag: Move entity position
- * - 2 finger pinch: Resize entity
+ * - Tap entity: lock the target
+ * - 1 finger drag on locked entity: move it
+ * - 2 finger pinch anywhere: resize the locked entity
  */
 class LayoutEditorView @JvmOverloads constructor(
     context: Context,
@@ -45,10 +45,12 @@ class LayoutEditorView @JvmOverloads constructor(
     private var lastTouchY = 0f
     private var dragOffsetX = 0f
     private var dragOffsetY = 0f
+    private var lockedEntityId: Int? = null
     
     // Scale gesture state
     private var scalingEntityIndex: Int = -1
     private var isScaling = false
+    private var lastPinchSpan = 0f
 
     // Hit test radius (scaled with view size)
     private val hitRadiusFactor = 0.12f
@@ -68,49 +70,6 @@ class LayoutEditorView @JvmOverloads constructor(
         isAntiAlias = true
     }
     
-    // Scale gesture detector
-    private val scaleGestureDetector = ScaleGestureDetector(context,
-        object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
-            override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
-                // Find entity at scale focus point
-                scalingEntityIndex = findEntityAtPosition(detector.focusX, detector.focusY)
-                if (scalingEntityIndex >= 0 && scalingEntityIndex < entities.size) {
-                    isScaling = true
-                    // Cancel any ongoing drag
-                    draggingEntityIndex = -1
-                    return true
-                }
-                return false
-            }
-            
-            override fun onScale(detector: ScaleGestureDetector): Boolean {
-                if (scalingEntityIndex >= 0 && scalingEntityIndex < entities.size) {
-                    val entityId = entities[scalingEntityIndex].entityId
-                    // Use cumulative multiplication (Android recommended pattern)
-                    val currentScale = entityScales[entityId] ?: 1.0f
-                    val newScale = (currentScale * detector.scaleFactor).coerceIn(0.3f, 2.5f)
-                    entityScales[entityId] = newScale
-                    layoutPrefs.setEntityScale(entityId, newScale)
-                    enableCustomLayoutForGesture()
-                    invalidate()
-                    return true
-                }
-                return false
-            }
-            
-            override fun onScaleEnd(detector: ScaleGestureDetector) {
-                if (scalingEntityIndex >= 0 && scalingEntityIndex < entities.size) {
-                    val entityId = entities[scalingEntityIndex].entityId
-                    entityScales[entityId]?.let { scale ->
-                        layoutPrefs.setEntityScale(entityId, scale)
-                    }
-                }
-                scalingEntityIndex = -1
-                isScaling = false
-            }
-        }
-    )
-
     init {
         // Enable drawing
         setWillNotDraw(false)
@@ -132,6 +91,9 @@ class LayoutEditorView @JvmOverloads constructor(
                 entities.size
             )
             entityScales[entity.entityId] = layoutPrefs.getEntityScale(entity.entityId)
+        }
+        if (lockedEntityId != null && entities.none { it.entityId == lockedEntityId }) {
+            lockedEntityId = null
         }
 
         invalidate()
@@ -207,13 +169,24 @@ class LayoutEditorView @JvmOverloads constructor(
             // Draw position indicator (circle around entity)
             val isDragging = draggingEntityIndex == index
             val isScalingThis = scalingEntityIndex == index
+            val isLocked = lockedEntityId == entity.entityId
+            val indicatorRadius = width * hitRadiusFactor * entityScale
+            if (isLocked) {
+                val highlightColor = when {
+                    isScalingThis -> Color.CYAN
+                    isDragging -> Color.YELLOW
+                    else -> Color.rgb(64, 224, 255)
+                }
+                drawLockedEntityHalo(canvas, x, y, indicatorRadius, highlightColor)
+            }
+
             indicatorPaint.color = when {
                 isScalingThis -> Color.CYAN  // Scaling
                 isDragging -> Color.YELLOW   // Dragging
+                isLocked -> Color.rgb(64, 224, 255)
                 else -> Color.WHITE
             }
-            indicatorPaint.strokeWidth = if (isDragging || isScalingThis) 6f else 3f
-            val indicatorRadius = width * hitRadiusFactor * entityScale
+            indicatorPaint.strokeWidth = if (isDragging || isScalingThis || isLocked) 7f else 3f
             canvas.drawCircle(x, y, indicatorRadius, indicatorPaint)
 
             // Draw entity preview with per-entity scale
@@ -312,15 +285,30 @@ class LayoutEditorView @JvmOverloads constructor(
         canvas.restore()
     }
 
+    private val lockedHaloPaint = Paint().apply {
+        style = Paint.Style.FILL
+        isAntiAlias = true
+    }
+
+    private val lockedHaloStrokePaint = Paint().apply {
+        style = Paint.Style.STROKE
+        isAntiAlias = true
+    }
+
+    private fun drawLockedEntityHalo(canvas: Canvas, x: Float, y: Float, radius: Float, color: Int) {
+        lockedHaloPaint.color = Color.argb(46, Color.red(color), Color.green(color), Color.blue(color))
+        canvas.drawCircle(x, y, radius + 16f, lockedHaloPaint)
+
+        lockedHaloStrokePaint.color = Color.argb(230, Color.red(color), Color.green(color), Color.blue(color))
+        lockedHaloStrokePaint.strokeWidth = 3f * resources.displayMetrics.density
+        canvas.drawCircle(x, y, radius + 8f, lockedHaloStrokePaint)
+    }
+
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        // Let scale detector handle multi-touch first
-        scaleGestureDetector.onTouchEvent(event)
-        
-        // If we're in the middle of a scale gesture, don't process single-touch
-        if (scaleGestureDetector.isInProgress || isScaling) {
-            return true
+        if (event.pointerCount > 1 || isScaling) {
+            return handlePinchTouch(event)
         }
-        
+
         val x = event.x
         val y = event.y
 
@@ -331,11 +319,16 @@ class LayoutEditorView @JvmOverloads constructor(
                 lastTouchX = x
                 lastTouchY = y
                 if (draggingEntityIndex >= 0) {
+                    lockEntity(draggingEntityIndex)
                     val entity = entities[draggingEntityIndex]
                     val pos = entityPositions[entity.entityId] ?: Pair(0.5f, 0.5f)
                     dragOffsetX = pos.first * width - x
                     dragOffsetY = pos.second * height - y
                     invalidate()
+                    return true
+                }
+
+                if (lockedEntityId != null) {
                     return true
                 }
             }
@@ -372,6 +365,96 @@ class LayoutEditorView @JvmOverloads constructor(
         return super.onTouchEvent(event)
     }
 
+    private fun handlePinchTouch(event: MotionEvent): Boolean {
+        when (event.actionMasked) {
+            MotionEvent.ACTION_POINTER_DOWN -> {
+                if (!beginLockedScale(event)) return false
+                lastPinchSpan = pointerSpan(event)
+                return true
+            }
+
+            MotionEvent.ACTION_MOVE -> {
+                if (!isScaling && !beginLockedScale(event)) return false
+                val span = pointerSpan(event)
+                if (lastPinchSpan > 0f && span > 0f) {
+                    applyLockedScale(span / lastPinchSpan)
+                }
+                lastPinchSpan = span
+                return true
+            }
+
+            MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                finishLockedScale()
+                return true
+            }
+        }
+        return isScaling
+    }
+
+    private fun beginLockedScale(event: MotionEvent): Boolean {
+        draggingEntityIndex = -1
+
+        scalingEntityIndex = lockedEntityIndex()
+        if (scalingEntityIndex >= 0 && scalingEntityIndex < entities.size) {
+            isScaling = true
+            invalidate()
+            return true
+        }
+
+        val hitEntityIndex = findEntityAtPosition(pointerFocusX(event), pointerFocusY(event))
+        if (lockEntity(hitEntityIndex)) {
+            scalingEntityIndex = hitEntityIndex
+            isScaling = true
+            invalidate()
+            return true
+        }
+
+        return false
+    }
+
+    private fun applyLockedScale(scaleFactor: Float) {
+        if (!scaleFactor.isFinite() || scaleFactor <= 0f) return
+        if (scalingEntityIndex >= 0 && scalingEntityIndex < entities.size) {
+            val entityId = entities[scalingEntityIndex].entityId
+            val currentScale = entityScales[entityId] ?: 1.0f
+            val newScale = (currentScale * scaleFactor).coerceIn(0.3f, 2.5f)
+            entityScales[entityId] = newScale
+            layoutPrefs.setEntityScale(entityId, newScale)
+            enableCustomLayoutForGesture()
+            invalidate()
+        }
+    }
+
+    private fun finishLockedScale() {
+        if (scalingEntityIndex >= 0 && scalingEntityIndex < entities.size) {
+            val entityId = entities[scalingEntityIndex].entityId
+            entityScales[entityId]?.let { scale ->
+                layoutPrefs.setEntityScale(entityId, scale)
+            }
+        }
+        scalingEntityIndex = -1
+        isScaling = false
+        lastPinchSpan = 0f
+        invalidate()
+    }
+
+    private fun pointerSpan(event: MotionEvent): Float {
+        if (event.pointerCount < 2) return 0f
+        val dx = event.getX(1) - event.getX(0)
+        val dy = event.getY(1) - event.getY(0)
+        return kotlin.math.sqrt(dx * dx + dy * dy)
+    }
+
+    private fun pointerFocusX(event: MotionEvent): Float {
+        if (event.pointerCount < 2) return event.x
+        return (event.getX(0) + event.getX(1)) / 2f
+    }
+
+    private fun pointerFocusY(event: MotionEvent): Float {
+        if (event.pointerCount < 2) return event.y
+        return (event.getY(0) + event.getY(1)) / 2f
+    }
+
     /**
      * Find entity at touch position using hit test
      */
@@ -396,6 +479,17 @@ class LayoutEditorView @JvmOverloads constructor(
         }
 
         return -1
+    }
+
+    private fun lockEntity(index: Int): Boolean {
+        if (index < 0 || index >= entities.size) return false
+        lockedEntityId = entities[index].entityId
+        return true
+    }
+
+    private fun lockedEntityIndex(): Int {
+        val entityId = lockedEntityId ?: return -1
+        return entities.indexOfFirst { it.entityId == entityId }
     }
 
     private fun enableCustomLayoutForGesture() {

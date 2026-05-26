@@ -10,7 +10,6 @@ import android.graphics.RectF
 import android.net.Uri
 import android.util.AttributeSet
 import android.view.MotionEvent
-import android.view.ScaleGestureDetector
 import android.view.View
 import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.R
@@ -27,11 +26,12 @@ import timber.log.Timber
 
 /**
  * Custom View for wallpaper preview with drag-and-drop entity positioning
- * and pinch-to-resize support.
+ * and two-stage pinch-to-resize support.
  * 
  * Gestures:
- * - 1 finger drag: Move entity position
- * - 2 finger pinch: Resize entity
+ * - Tap entity or usage overlay: lock the target
+ * - 1 finger drag on locked target: move it
+ * - 2 finger pinch anywhere: resize the locked target
  */
 class WallpaperPreviewView @JvmOverloads constructor(
     context: Context,
@@ -71,11 +71,20 @@ class WallpaperPreviewView @JvmOverloads constructor(
     private var usageOverlayDragOffsetX = 0f
     private var usageOverlayDragOffsetY = 0f
     var onCustomLayoutEnabled: (() -> Unit)? = null
+
+    private enum class LockedTargetType {
+        ENTITY,
+        USAGE_OVERLAY
+    }
+
+    private var lockedTargetType: LockedTargetType? = null
+    private var lockedEntityId: Int? = null
     
     // Scale gesture state
     private var scalingEntityIndex: Int = -1
     private var isScaling = false
     private var isScalingUsageOverlay = false
+    private var lastPinchSpan = 0f
 
     // Hit test radius (scaled with view size)
     private val hitRadiusFactor = 0.12f
@@ -106,64 +115,6 @@ class WallpaperPreviewView @JvmOverloads constructor(
         isAntiAlias = true
     }
     
-    // Scale gesture detector
-    private val scaleGestureDetector = ScaleGestureDetector(context,
-        object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
-            override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
-                if (findUsageOverlayAtPosition(detector.focusX, detector.focusY) != null) {
-                    isScalingUsageOverlay = true
-                    isScaling = true
-                    draggingEntityIndex = -1
-                    draggingUsageOverlay = false
-                    return true
-                }
-
-                // Find entity at scale focus point
-                scalingEntityIndex = findEntityAtPosition(detector.focusX, detector.focusY)
-                if (scalingEntityIndex >= 0 && scalingEntityIndex < entities.size) {
-                    isScaling = true
-                    // Cancel any ongoing drag
-                    draggingEntityIndex = -1
-                    return true
-                }
-                return false
-            }
-            
-            override fun onScale(detector: ScaleGestureDetector): Boolean {
-                if (isScalingUsageOverlay) {
-                    layoutPrefs.usageOverlayScale = layoutPrefs.usageOverlayScale * detector.scaleFactor
-                    invalidate()
-                    return true
-                }
-
-                if (scalingEntityIndex >= 0 && scalingEntityIndex < entities.size) {
-                    val entityId = entities[scalingEntityIndex].entityId
-                    // Use cumulative multiplication (Android recommended pattern)
-                    val currentScale = entityScales[entityId] ?: 1.0f
-                    val newScale = (currentScale * detector.scaleFactor).coerceIn(0.3f, 2.5f)
-                    entityScales[entityId] = newScale
-                    layoutPrefs.setEntityScale(entityId, newScale)
-                    enableCustomLayoutForGesture()
-                    invalidate()
-                    return true
-                }
-                return false
-            }
-            
-            override fun onScaleEnd(detector: ScaleGestureDetector) {
-                if (scalingEntityIndex >= 0 && scalingEntityIndex < entities.size) {
-                    val entityId = entities[scalingEntityIndex].entityId
-                    entityScales[entityId]?.let { scale ->
-                        layoutPrefs.setEntityScale(entityId, scale)
-                    }
-                }
-                scalingEntityIndex = -1
-                isScalingUsageOverlay = false
-                isScaling = false
-            }
-        }
-    )
-
     init {
         setWillNotDraw(false)
     }
@@ -184,6 +135,12 @@ class WallpaperPreviewView @JvmOverloads constructor(
                 entities.size
             )
             entityScales[entity.entityId] = layoutPrefs.getEntityScale(entity.entityId)
+        }
+        if (lockedTargetType == LockedTargetType.ENTITY &&
+            entities.none { it.entityId == lockedEntityId }
+        ) {
+            lockedTargetType = null
+            lockedEntityId = null
         }
 
         invalidate()
@@ -296,13 +253,24 @@ class WallpaperPreviewView @JvmOverloads constructor(
             // Draw position indicator
             val isDragging = draggingEntityIndex == index
             val isScalingThis = scalingEntityIndex == index
+            val isLocked = isEntityLocked(entity.entityId)
+            val indicatorRadius = width * hitRadiusFactor * entityScale
+            if (isLocked) {
+                val highlightColor = when {
+                    isScalingThis -> Color.CYAN
+                    isDragging -> Color.YELLOW
+                    else -> Color.rgb(64, 224, 255)
+                }
+                drawLockedEntityHalo(canvas, x, y, indicatorRadius, highlightColor)
+            }
+
             indicatorPaint.color = when {
                 isScalingThis -> Color.CYAN  // Scaling
                 isDragging -> Color.YELLOW   // Dragging
+                isLocked -> Color.rgb(64, 224, 255)
                 else -> Color.WHITE
             }
-            indicatorPaint.strokeWidth = if (isDragging || isScalingThis) 6f else 3f
-            val indicatorRadius = width * hitRadiusFactor * entityScale
+            indicatorPaint.strokeWidth = if (isDragging || isScalingThis || isLocked) 7f else 3f
             canvas.drawCircle(x, y, indicatorRadius, indicatorPaint)
 
             // Draw entity preview with per-entity scale
@@ -328,7 +296,7 @@ class WallpaperPreviewView @JvmOverloads constructor(
             usageSnapshot,
             usageOverlayTopInsetPx,
             usageOverlayBottomInsetPx,
-            highlighted = draggingUsageOverlay || isScalingUsageOverlay
+            highlighted = isUsageOverlayLocked() || draggingUsageOverlay || isScalingUsageOverlay
         )
 
         if (isScalingUsageOverlay) {
@@ -577,6 +545,25 @@ class WallpaperPreviewView @JvmOverloads constructor(
         )
     }
 
+    private val lockedHaloPaint = Paint().apply {
+        style = Paint.Style.FILL
+        isAntiAlias = true
+    }
+
+    private val lockedHaloStrokePaint = Paint().apply {
+        style = Paint.Style.STROKE
+        isAntiAlias = true
+    }
+
+    private fun drawLockedEntityHalo(canvas: Canvas, x: Float, y: Float, radius: Float, color: Int) {
+        lockedHaloPaint.color = Color.argb(46, Color.red(color), Color.green(color), Color.blue(color))
+        canvas.drawCircle(x, y, radius + 16f, lockedHaloPaint)
+
+        lockedHaloStrokePaint.color = Color.argb(230, Color.red(color), Color.green(color), Color.blue(color))
+        lockedHaloStrokePaint.strokeWidth = 3f * resources.displayMetrics.density
+        canvas.drawCircle(x, y, radius + 8f, lockedHaloStrokePaint)
+    }
+
     private fun parseHexColor(hex: String?): Int? {
         if (hex.isNullOrBlank()) return null
         return try { Color.parseColor(hex) } catch (_: IllegalArgumentException) { null }
@@ -590,20 +577,17 @@ class WallpaperPreviewView @JvmOverloads constructor(
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        // Let scale detector handle multi-touch first
-        scaleGestureDetector.onTouchEvent(event)
-        
-        // If we're in the middle of a scale gesture, don't process single-touch
-        if (scaleGestureDetector.isInProgress || isScaling) {
-            return true
+        if (event.pointerCount > 1 || isScaling) {
+            return handlePinchTouch(event)
         }
-        
+
         val x = event.x
         val y = event.y
 
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 findUsageOverlayAtPosition(x, y)?.let { bounds ->
+                    lockUsageOverlay()
                     draggingUsageOverlay = true
                     draggingEntityIndex = -1
                     usageOverlayDragOffsetX = bounds.centerX() - x
@@ -616,11 +600,16 @@ class WallpaperPreviewView @JvmOverloads constructor(
                 lastTouchX = x
                 lastTouchY = y
                 if (draggingEntityIndex >= 0) {
+                    lockEntity(draggingEntityIndex)
                     val entity = entities[draggingEntityIndex]
                     val pos = entityPositions[entity.entityId] ?: Pair(0.5f, 0.5f)
                     dragOffsetX = pos.first * width - x
                     dragOffsetY = pos.second * height - y
                     invalidate()
+                    return true
+                }
+
+                if (lockedTargetType != null) {
                     return true
                 }
             }
@@ -670,6 +659,122 @@ class WallpaperPreviewView @JvmOverloads constructor(
         return super.onTouchEvent(event)
     }
 
+    private fun handlePinchTouch(event: MotionEvent): Boolean {
+        when (event.actionMasked) {
+            MotionEvent.ACTION_POINTER_DOWN -> {
+                if (!beginLockedScale(event)) return false
+                lastPinchSpan = pointerSpan(event)
+                return true
+            }
+
+            MotionEvent.ACTION_MOVE -> {
+                if (!isScaling && !beginLockedScale(event)) return false
+                val span = pointerSpan(event)
+                if (lastPinchSpan > 0f && span > 0f) {
+                    applyLockedScale(span / lastPinchSpan)
+                }
+                lastPinchSpan = span
+                return true
+            }
+
+            MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                finishLockedScale()
+                return true
+            }
+        }
+        return isScaling
+    }
+
+    private fun beginLockedScale(event: MotionEvent): Boolean {
+        draggingEntityIndex = -1
+        draggingUsageOverlay = false
+
+        if (isUsageOverlayLocked() && getUsageOverlayBoundsForTest() != null) {
+            isScalingUsageOverlay = true
+            isScaling = true
+            invalidate()
+            return true
+        }
+
+        scalingEntityIndex = lockedEntityIndex()
+        if (scalingEntityIndex >= 0 && scalingEntityIndex < entities.size) {
+            isScaling = true
+            invalidate()
+            return true
+        }
+
+        val focusX = pointerFocusX(event)
+        val focusY = pointerFocusY(event)
+        findUsageOverlayAtPosition(focusX, focusY)?.let {
+            lockUsageOverlay()
+            isScalingUsageOverlay = true
+            isScaling = true
+            invalidate()
+            return true
+        }
+
+        val hitEntityIndex = findEntityAtPosition(focusX, focusY)
+        if (lockEntity(hitEntityIndex)) {
+            scalingEntityIndex = hitEntityIndex
+            isScaling = true
+            invalidate()
+            return true
+        }
+
+        return false
+    }
+
+    private fun applyLockedScale(scaleFactor: Float) {
+        if (!scaleFactor.isFinite() || scaleFactor <= 0f) return
+
+        if (isScalingUsageOverlay) {
+            layoutPrefs.usageOverlayScale = layoutPrefs.usageOverlayScale * scaleFactor
+            invalidate()
+            return
+        }
+
+        if (scalingEntityIndex >= 0 && scalingEntityIndex < entities.size) {
+            val entityId = entities[scalingEntityIndex].entityId
+            val currentScale = entityScales[entityId] ?: 1.0f
+            val newScale = (currentScale * scaleFactor).coerceIn(0.3f, 2.5f)
+            entityScales[entityId] = newScale
+            layoutPrefs.setEntityScale(entityId, newScale)
+            enableCustomLayoutForGesture()
+            invalidate()
+        }
+    }
+
+    private fun finishLockedScale() {
+        if (scalingEntityIndex >= 0 && scalingEntityIndex < entities.size) {
+            val entityId = entities[scalingEntityIndex].entityId
+            entityScales[entityId]?.let { scale ->
+                layoutPrefs.setEntityScale(entityId, scale)
+            }
+        }
+        scalingEntityIndex = -1
+        isScalingUsageOverlay = false
+        isScaling = false
+        lastPinchSpan = 0f
+        invalidate()
+    }
+
+    private fun pointerSpan(event: MotionEvent): Float {
+        if (event.pointerCount < 2) return 0f
+        val dx = event.getX(1) - event.getX(0)
+        val dy = event.getY(1) - event.getY(0)
+        return kotlin.math.sqrt(dx * dx + dy * dy)
+    }
+
+    private fun pointerFocusX(event: MotionEvent): Float {
+        if (event.pointerCount < 2) return event.x
+        return (event.getX(0) + event.getX(1)) / 2f
+    }
+
+    private fun pointerFocusY(event: MotionEvent): Float {
+        if (event.pointerCount < 2) return event.y
+        return (event.getY(0) + event.getY(1)) / 2f
+    }
+
     private fun findEntityAtPosition(touchX: Float, touchY: Float): Int {
         for (index in entities.indices.reversed()) {
             val entity = entities[index]
@@ -691,6 +796,31 @@ class WallpaperPreviewView @JvmOverloads constructor(
         }
 
         return -1
+    }
+
+    private fun lockEntity(index: Int): Boolean {
+        if (index < 0 || index >= entities.size) return false
+        lockedTargetType = LockedTargetType.ENTITY
+        lockedEntityId = entities[index].entityId
+        return true
+    }
+
+    private fun lockUsageOverlay() {
+        lockedTargetType = LockedTargetType.USAGE_OVERLAY
+        lockedEntityId = null
+    }
+
+    private fun isEntityLocked(entityId: Int): Boolean {
+        return lockedTargetType == LockedTargetType.ENTITY && lockedEntityId == entityId
+    }
+
+    private fun isUsageOverlayLocked(): Boolean {
+        return lockedTargetType == LockedTargetType.USAGE_OVERLAY
+    }
+
+    private fun lockedEntityIndex(): Int {
+        val entityId = lockedEntityId ?: return -1
+        return entities.indexOfFirst { it.entityId == entityId }
     }
 
     private fun enableCustomLayoutForGesture() {
@@ -718,6 +848,18 @@ class WallpaperPreviewView @JvmOverloads constructor(
             usageOverlayTopInsetPx,
             usageOverlayBottomInsetPx
         )
+    }
+
+    fun getLockedTargetForTest(): String? {
+        return when (lockedTargetType) {
+            LockedTargetType.USAGE_OVERLAY -> "usage"
+            LockedTargetType.ENTITY -> lockedEntityId?.let { "entity:$it" }
+            null -> null
+        }
+    }
+
+    fun getEntityScaleForTest(entityId: Int): Float {
+        return entityScales[entityId] ?: 1.0f
     }
 
     override fun onDetachedFromWindow() {
