@@ -46,7 +46,7 @@ jobs:
           cd "${GITHUB_WORKSPACE}"
           git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
           # Fetch full history and tags so semantic-release can analyze all commits.
-          git fetch --force --tags origin "+${GITHUB_REF}:refs/remotes/origin/main"
+          git fetch --force --prune --prune-tags --tags origin "+${GITHUB_REF}:refs/remotes/origin/main"
           git checkout --force -B main "${GITHUB_SHA}"
           git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
