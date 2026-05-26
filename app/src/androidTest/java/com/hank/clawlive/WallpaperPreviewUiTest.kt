@@ -14,6 +14,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.hank.clawlive.data.local.LayoutPreferences
+import com.hank.clawlive.data.model.EntityStatus
 import com.hank.clawlive.ui.WallpaperPreviewView
 import org.junit.Assert.*
 import org.junit.Test
@@ -259,6 +260,8 @@ class WallpaperPreviewUiTest {
                 val prefs = LayoutPreferences.getInstance(activity)
                 prefs.clearUsageOverlayTransform()
                 prefs.usageOverlayEnabled = true
+                prefs.usageOverlayShowClaude = true
+                prefs.usageOverlayShowSession = true
 
                 val preview = activity.findViewById<WallpaperPreviewView>(R.id.wallpaperPreviewView)
                 preview.invalidate()
@@ -282,6 +285,88 @@ class WallpaperPreviewUiTest {
                 val expectedY = endY / preview.height
                 assertEquals("Usage overlay X center should track drag", expectedX, savedCenter!!.first, 0.05f)
                 assertEquals("Usage overlay Y center should track drag", expectedY, savedCenter.second, 0.05f)
+            }
+        }
+    }
+
+    @Test
+    fun testUsageOverlayPinchScalesLockedTargetFromOutsideBounds() {
+        ActivityScenario.launch(WallpaperPreviewActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                val prefs = LayoutPreferences.getInstance(activity)
+                prefs.clearUsageOverlayTransform()
+                prefs.usageOverlayEnabled = true
+                prefs.usageOverlayShowClaude = true
+                prefs.usageOverlayShowSession = true
+
+                val preview = activity.findViewById<WallpaperPreviewView>(R.id.wallpaperPreviewView)
+                preview.invalidate()
+
+                val bounds = preview.getUsageOverlayBoundsForTest()
+                assertNotNull("Usage overlay bounds should be available", bounds)
+
+                dispatchTap(preview, bounds!!.centerX(), bounds.centerY())
+                assertEquals("usage", preview.getLockedTargetForTest())
+
+                val beforeScale = prefs.usageOverlayScale
+                dispatchPinch(
+                    preview,
+                    centerX = preview.width * 0.35f,
+                    centerY = preview.height * 0.72f,
+                    startSpan = 60f,
+                    endSpan = 180f
+                )
+
+                assertTrue(
+                    "Locked usage overlay should scale even when pinch starts outside its bounds",
+                    prefs.usageOverlayScale > beforeScale + 0.05f
+                )
+            }
+        }
+    }
+
+    @Test
+    fun testEntityTapRelocksAndPinchScalesLockedEntityFromAnywhere() {
+        ActivityScenario.launch(WallpaperPreviewActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                val prefs = LayoutPreferences.getInstance(activity)
+                prefs.clearAllCustomPositions()
+                prefs.clearAllEntityScales()
+
+                val preview = activity.findViewById<WallpaperPreviewView>(R.id.wallpaperPreviewView)
+                preview.setEntities(
+                    listOf(
+                        EntityStatus(entityId = 0, name = "Alpha", isBound = true),
+                        EntityStatus(entityId = 1, name = "Beta", isBound = true)
+                    )
+                )
+
+                dispatchTap(preview, preview.width * 0.30f, preview.height * 0.50f)
+                assertEquals("entity:0", preview.getLockedTargetForTest())
+
+                dispatchTap(preview, preview.width * 0.70f, preview.height * 0.50f)
+                assertEquals("entity:1", preview.getLockedTargetForTest())
+
+                val beforeEntity0 = preview.getEntityScaleForTest(0)
+                val beforeEntity1 = preview.getEntityScaleForTest(1)
+                dispatchPinch(
+                    preview,
+                    centerX = preview.width * 0.25f,
+                    centerY = preview.height * 0.78f,
+                    startSpan = 70f,
+                    endSpan = 180f
+                )
+
+                assertEquals(
+                    "Previously locked entity should not scale after another entity is selected",
+                    beforeEntity0,
+                    preview.getEntityScaleForTest(0),
+                    0.01f
+                )
+                assertTrue(
+                    "Current locked entity should scale even when pinch starts away from it",
+                    preview.getEntityScaleForTest(1) > beforeEntity1 + 0.05f
+                )
             }
         }
     }
@@ -322,5 +407,112 @@ class WallpaperPreviewUiTest {
                 )
             }
         }
+    }
+
+    private fun dispatchTap(view: View, x: Float, y: Float) {
+        val downTime = android.os.SystemClock.uptimeMillis()
+        view.dispatchTouchEvent(MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_DOWN, x, y, 0))
+        view.dispatchTouchEvent(MotionEvent.obtain(downTime, downTime + 24, MotionEvent.ACTION_UP, x, y, 0))
+    }
+
+    private fun dispatchPinch(
+        view: View,
+        centerX: Float,
+        centerY: Float,
+        startSpan: Float,
+        endSpan: Float
+    ) {
+        val downTime = android.os.SystemClock.uptimeMillis()
+        val startLeft = centerX - startSpan / 2f
+        val startRight = centerX + startSpan / 2f
+        val endLeft = centerX - endSpan / 2f
+        val endRight = centerX + endSpan / 2f
+
+        view.dispatchTouchEvent(MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_DOWN, startLeft, centerY, 0))
+        view.dispatchTouchEvent(
+            multiTouchEvent(
+                downTime,
+                downTime + 16,
+                MotionEvent.ACTION_POINTER_DOWN or (1 shl MotionEvent.ACTION_POINTER_INDEX_SHIFT),
+                startLeft,
+                centerY,
+                startRight,
+                centerY
+            )
+        )
+        view.dispatchTouchEvent(
+            multiTouchEvent(
+                downTime,
+                downTime + 32,
+                MotionEvent.ACTION_MOVE,
+                endLeft,
+                centerY,
+                endRight,
+                centerY
+            )
+        )
+        view.dispatchTouchEvent(
+            multiTouchEvent(
+                downTime,
+                downTime + 48,
+                MotionEvent.ACTION_POINTER_UP or (1 shl MotionEvent.ACTION_POINTER_INDEX_SHIFT),
+                endLeft,
+                centerY,
+                endRight,
+                centerY
+            )
+        )
+        view.dispatchTouchEvent(MotionEvent.obtain(downTime, downTime + 64, MotionEvent.ACTION_UP, endLeft, centerY, 0))
+    }
+
+    private fun multiTouchEvent(
+        downTime: Long,
+        eventTime: Long,
+        action: Int,
+        x0: Float,
+        y0: Float,
+        x1: Float,
+        y1: Float
+    ): MotionEvent {
+        val properties = arrayOf(
+            MotionEvent.PointerProperties().apply {
+                id = 0
+                toolType = MotionEvent.TOOL_TYPE_FINGER
+            },
+            MotionEvent.PointerProperties().apply {
+                id = 1
+                toolType = MotionEvent.TOOL_TYPE_FINGER
+            }
+        )
+        val coords = arrayOf(
+            MotionEvent.PointerCoords().apply {
+                x = x0
+                y = y0
+                pressure = 1f
+                size = 1f
+            },
+            MotionEvent.PointerCoords().apply {
+                x = x1
+                y = y1
+                pressure = 1f
+                size = 1f
+            }
+        )
+        return MotionEvent.obtain(
+            downTime,
+            eventTime,
+            action,
+            2,
+            properties,
+            coords,
+            0,
+            0,
+            1f,
+            1f,
+            0,
+            0,
+            0,
+            0
+        )
     }
 }

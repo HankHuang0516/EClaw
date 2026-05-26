@@ -32,6 +32,19 @@ class UsageOverlayRenderer(
         isAntiAlias = true
     }
 
+    private val highlightGlowPaint = Paint().apply {
+        color = Color.argb(34, 64, 224, 255)
+        style = Paint.Style.FILL
+        isAntiAlias = true
+    }
+
+    private val highlightStrokePaint = Paint().apply {
+        color = Color.argb(230, 64, 224, 255)
+        style = Paint.Style.STROKE
+        strokeWidth = 3f * density
+        isAntiAlias = true
+    }
+
     private val titlePaint = TextPaint().apply {
         color = Color.WHITE
         textSize = 12f * density
@@ -73,6 +86,13 @@ class UsageOverlayRenderer(
         val top = bounds.top
 
         panelRect.set(bounds)
+        if (highlighted) {
+            val glowInset = -4f * density
+            panelRect.inset(glowInset, glowInset)
+            canvas.drawRoundRect(panelRect, cornerRadius + 4f * density, cornerRadius + 4f * density, highlightGlowPaint)
+            canvas.drawRoundRect(panelRect, cornerRadius + 4f * density, cornerRadius + 4f * density, highlightStrokePaint)
+            panelRect.set(bounds)
+        }
         canvas.drawRoundRect(panelRect, cornerRadius, cornerRadius, panelPaint)
         panelStrokePaint.strokeWidth = if (highlighted) 2f * density else 1f * density
         panelStrokePaint.color = if (highlighted) Color.argb(210, 64, 224, 255) else Color.argb(70, 255, 255, 255)

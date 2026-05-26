@@ -28,7 +28,16 @@ jobs:
     name: Android Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init "${GITHUB_WORKSPACE}"
+          cd "${GITHUB_WORKSPACE}"
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --no-tags --depth=1 origin "${GITHUB_REF}"
+          git checkout --force FETCH_HEAD
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
       - name: Create dummy google-services.json for CI
         run: |
@@ -36,10 +45,24 @@ jobs:
           {"project_info":{"project_number":"000000000000","project_id":"dummy-ci","storage_bucket":"dummy-ci.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:000000000000:android:0000000000000000","android_client_info":{"package_name":"com.hank.clawlive"}},"api_key":[{"current_key":"dummy-key-for-ci"}]}],"configuration_version":"1"}
           GSEOF
 
-      - uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+      - name: Configure JDK 17
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${JAVA_HOME_17_X64:-}" && -x "${JAVA_HOME_17_X64:-}/bin/java" ]]; then
+            JAVA17_HOME="${JAVA_HOME_17_X64}"
+          elif [[ -x "/usr/lib/jvm/temurin-17-jdk-amd64/bin/java" ]]; then
+            JAVA17_HOME="/usr/lib/jvm/temurin-17-jdk-amd64"
+          elif [[ -x "/usr/lib/jvm/java-17-openjdk-amd64/bin/java" ]]; then
+            JAVA17_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+          else
+            sudo apt-get update
+            sudo apt-get install -y openjdk-17-jdk
+            JAVA17_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+          fi
+          echo "JAVA_HOME=${JAVA17_HOME}" >> "${GITHUB_ENV}"
+          echo "${JAVA17_HOME}/bin" >> "${GITHUB_PATH}"
+          "${JAVA17_HOME}/bin/java" -version
 
       - name: Cache Gradle packages
         uses: actions/cache@v4
@@ -68,7 +91,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init "${GITHUB_WORKSPACE}"
+          cd "${GITHUB_WORKSPACE}"
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --no-tags --depth=1 origin "${GITHUB_REF}"
+          git checkout --force FETCH_HEAD
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
       - name: Create dummy google-services.json for CI
         run: |
@@ -76,10 +108,24 @@ jobs:
           {"project_info":{"project_number":"000000000000","project_id":"dummy-ci","storage_bucket":"dummy-ci.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:000000000000:android:0000000000000000","android_client_info":{"package_name":"com.hank.clawlive"}},"api_key":[{"current_key":"dummy-key-for-ci"}]}],"configuration_version":"1"}
           GSEOF
 
-      - uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+      - name: Configure JDK 17
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${JAVA_HOME_17_X64:-}" && -x "${JAVA_HOME_17_X64:-}/bin/java" ]]; then
+            JAVA17_HOME="${JAVA_HOME_17_X64}"
+          elif [[ -x "/usr/lib/jvm/temurin-17-jdk-amd64/bin/java" ]]; then
+            JAVA17_HOME="/usr/lib/jvm/temurin-17-jdk-amd64"
+          elif [[ -x "/usr/lib/jvm/java-17-openjdk-amd64/bin/java" ]]; then
+            JAVA17_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+          else
+            sudo apt-get update
+            sudo apt-get install -y openjdk-17-jdk
+            JAVA17_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+          fi
+          echo "JAVA_HOME=${JAVA17_HOME}" >> "${GITHUB_ENV}"
+          echo "${JAVA17_HOME}/bin" >> "${GITHUB_PATH}"
+          "${JAVA17_HOME}/bin/java" -version
 
       - name: Cache Gradle packages
         uses: actions/cache@v4
@@ -106,7 +152,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init "${GITHUB_WORKSPACE}"
+          cd "${GITHUB_WORKSPACE}"
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --no-tags --depth=1 origin "${GITHUB_REF}"
+          git checkout --force FETCH_HEAD
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
       - name: Create dummy google-services.json for CI
         run: |
@@ -114,10 +169,24 @@ jobs:
           {"project_info":{"project_number":"000000000000","project_id":"dummy-ci","storage_bucket":"dummy-ci.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:000000000000:android:0000000000000000","android_client_info":{"package_name":"com.hank.clawlive"}},"api_key":[{"current_key":"dummy-key-for-ci"}]}],"configuration_version":"1"}
           GSEOF
 
-      - uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+      - name: Configure JDK 17
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${JAVA_HOME_17_X64:-}" && -x "${JAVA_HOME_17_X64:-}/bin/java" ]]; then
+            JAVA17_HOME="${JAVA_HOME_17_X64}"
+          elif [[ -x "/usr/lib/jvm/temurin-17-jdk-amd64/bin/java" ]]; then
+            JAVA17_HOME="/usr/lib/jvm/temurin-17-jdk-amd64"
+          elif [[ -x "/usr/lib/jvm/java-17-openjdk-amd64/bin/java" ]]; then
+            JAVA17_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+          else
+            sudo apt-get update
+            sudo apt-get install -y openjdk-17-jdk
+            JAVA17_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+          fi
+          echo "JAVA_HOME=${JAVA17_HOME}" >> "${GITHUB_ENV}"
+          echo "${JAVA17_HOME}/bin" >> "${GITHUB_PATH}"
+          "${JAVA17_HOME}/bin/java" -version
 
       - name: Cache Gradle packages
         uses: actions/cache@v4
@@ -146,7 +215,16 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ vars.RUN_INSTRUMENTED_TESTS == 'true' }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init "${GITHUB_WORKSPACE}"
+          cd "${GITHUB_WORKSPACE}"
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --no-tags --depth=1 origin "${GITHUB_REF}"
+          git checkout --force FETCH_HEAD
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
       - name: Create dummy google-services.json for CI
         run: |
@@ -154,10 +232,24 @@ jobs:
           {"project_info":{"project_number":"000000000000","project_id":"dummy-ci","storage_bucket":"dummy-ci.appspot.com"},"client":[{"client_info":{"mobilesdk_app_id":"1:000000000000:android:0000000000000000","android_client_info":{"package_name":"com.hank.clawlive"}},"api_key":[{"current_key":"dummy-key-for-ci"}]}],"configuration_version":"1"}
           GSEOF
 
-      - uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+      - name: Configure JDK 17
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${JAVA_HOME_17_X64:-}" && -x "${JAVA_HOME_17_X64:-}/bin/java" ]]; then
+            JAVA17_HOME="${JAVA_HOME_17_X64}"
+          elif [[ -x "/usr/lib/jvm/temurin-17-jdk-amd64/bin/java" ]]; then
+            JAVA17_HOME="/usr/lib/jvm/temurin-17-jdk-amd64"
+          elif [[ -x "/usr/lib/jvm/java-17-openjdk-amd64/bin/java" ]]; then
+            JAVA17_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+          else
+            sudo apt-get update
+            sudo apt-get install -y openjdk-17-jdk
+            JAVA17_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+          fi
+          echo "JAVA_HOME=${JAVA17_HOME}" >> "${GITHUB_ENV}"
+          echo "${JAVA17_HOME}/bin" >> "${GITHUB_PATH}"
+          "${JAVA17_HOME}/bin/java" -version
 
       - name: Cache Gradle packages
         uses: actions/cache@v4
