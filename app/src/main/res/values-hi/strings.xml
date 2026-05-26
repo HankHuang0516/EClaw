@@ -74,6 +74,21 @@
 
     <!-- Wallpaper Preview -->
     <string name="wallpaper_preview_title">वॉलपेपर पूर्वावलोकन</string>
+    <string name="wallpaper_usage_engine_claude">Claude</string>
+    <string name="wallpaper_usage_engine_codex">Codex</string>
+    <string name="wallpaper_usage_items">प्रदर्शित आइटम</string>
+    <string name="wallpaper_usage_overlay">उपयोग ओवरले</string>
+    <string name="wallpaper_usage_overlay_syncing">उपयोग सिंक हो रहा है...</string>
+    <string name="wallpaper_usage_overlay_title">उपयोग</string>
+    <string name="wallpaper_usage_position">स्थिति</string>
+    <string name="wallpaper_usage_position_bl">नीचे बाएँ</string>
+    <string name="wallpaper_usage_position_br">नीचे दाएँ</string>
+    <string name="wallpaper_usage_position_tl">ऊपर बाएँ</string>
+    <string name="wallpaper_usage_position_tr">ऊपर दाएँ</string>
+    <string name="wallpaper_usage_window_session">5h</string>
+    <string name="wallpaper_usage_window_session_label">Session</string>
+    <string name="wallpaper_usage_window_weekly">7d</string>
+    <string name="wallpaper_usage_window_weekly_label">Weekly</string>
     <string name="use_custom_layout">कस्टम लेआउट उपयोग करें</string>
     <string name="custom_background">कस्टम बैकग्राउंड</string>
     <string name="select_photo">फोटो चुनें</string>
