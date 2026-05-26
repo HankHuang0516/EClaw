@@ -12023,14 +12023,34 @@ function enrichCardHolderEntry(c) {
     return { ...c, online: false };
 }
 
+/** Helper: resolve owner/session auth for card-holder read APIs */
+function resolveCardHolderReadAuth(req) {
+    let deviceId = req.query.deviceId;
+    let deviceSecret = req.query.deviceSecret;
+    if (!deviceId && req.user) {
+        deviceId = req.user.deviceId;
+        deviceSecret = req.user.deviceSecret;
+    }
+    if (!deviceId) return { error: 'Missing deviceId', status: 400 };
+
+    const device = devices[deviceId];
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+        if (!req.user || req.user.deviceId !== deviceId) {
+            return { error: 'Unauthorized', status: 401 };
+        }
+    }
+
+    return { deviceId };
+}
+
 /**
  * GET /api/contacts — List card holder entries, enriched with live data
- * Query: ?deviceId=X&pinned=true&category=tools&limit=50&offset=0
+ * Query: ?deviceId=X&deviceSecret=Y&pinned=true&category=tools&limit=50&offset=0
  */
 app.get('/api/contacts', async (req, res) => {
-    let deviceId = req.query.deviceId;
-    if (!deviceId && req.user) deviceId = req.user.deviceId;
-    if (!deviceId) return res.status(400).json({ success: false, error: 'Missing deviceId' });
+    const auth = resolveCardHolderReadAuth(req);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    const { deviceId } = auth;
 
     const opts = {};
     if (req.query.pinned !== undefined) opts.pinned = req.query.pinned === 'true';
@@ -12179,13 +12199,13 @@ app.get('/api/contacts/recent', async (req, res) => {
 
 /**
  * GET /api/contacts/search — Search card holder by name, tags, capabilities, notes
- * Query: ?deviceId=X&q=translate
+ * Query: ?deviceId=X&deviceSecret=Y&q=translate
  * NOTE: Must be registered BEFORE /api/contacts/:publicCode to avoid "search" being captured as param
  */
 app.get('/api/contacts/search', async (req, res) => {
-    let deviceId = req.query.deviceId;
-    if (!deviceId && req.user) deviceId = req.user.deviceId;
-    if (!deviceId) return res.status(400).json({ success: false, error: 'Missing deviceId' });
+    const auth = resolveCardHolderReadAuth(req);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    const { deviceId } = auth;
 
     const q = (req.query.q || '').trim();
     if (!q) return res.status(400).json({ success: false, error: 'Missing search query' });
@@ -12308,9 +12328,9 @@ app.get('/api/contacts/friends', async (req, res) => {
  * GET /api/contacts/:publicCode — Get a single card detail
  */
 app.get('/api/contacts/:publicCode', async (req, res) => {
-    let deviceId = req.query.deviceId;
-    if (!deviceId && req.user) deviceId = req.user.deviceId;
-    if (!deviceId) return res.status(400).json({ success: false, error: 'Missing deviceId' });
+    const auth = resolveCardHolderReadAuth(req);
+    if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
+    const { deviceId } = auth;
 
     const card = await db.getCardByCode(deviceId, req.params.publicCode.trim().toLowerCase());
     if (!card) return res.status(404).json({ success: false, error: 'Card not found' });
@@ -18843,7 +18863,7 @@ const beaconLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     skip: () => rateLimitDisabled(),
-    keyGenerator: (req) => req.ip || 'unknown',
+    keyGenerator: (req) => (req.ip ? ipKeyGenerator(req.ip) : 'unknown'),
     message: { success: false, error: 'Too many beacon events — try again shortly' },
 });
 app.post('/api/portal/beacons', express.json({ limit: '64kb' }), beaconLimiter, async (req, res) => {

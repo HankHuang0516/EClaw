@@ -67,7 +67,7 @@ async function run() {
 
     // ── 3. GET /api/contacts/search (unified) ──
     console.log('\n3. Unified Search');
-    const search = await api('GET', `/api/contacts/search?deviceId=${DEVICE_ID}&q=test`);
+    const search = await api('GET', `/api/contacts/search?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}&q=test`);
     assert(search.status === 200, `GET /api/contacts/search → ${search.status}`);
     assert(search.data.success === true, 'success: true');
     // Should have both saved and external in response
@@ -75,7 +75,7 @@ async function run() {
     assert('external' in search.data, 'has external field');
 
     // Missing query
-    const searchBad = await api('GET', `/api/contacts/search?deviceId=${DEVICE_ID}`);
+    const searchBad = await api('GET', `/api/contacts/search?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`);
     assert(searchBad.status === 400, `GET /api/contacts/search no query → ${searchBad.status}`);
 
     // ── 4. GET /api/chat/history-by-code ──
@@ -96,7 +96,7 @@ async function run() {
     // ── 5. PATCH /api/contacts/:publicCode — blocked field ──
     console.log('\n5. Block/Unblock');
     // First get existing cards to test on
-    const list = await api('GET', `/api/contacts?deviceId=${DEVICE_ID}`);
+    const list = await api('GET', `/api/contacts?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`);
     const cards = list.data.contacts || [];
     if (cards.length > 0) {
         const testCode = cards[0].publicCode;
@@ -111,7 +111,7 @@ async function run() {
         assert(blockRes.data.card?.blocked === true, 'card.blocked is true');
 
         // Verify blocked cards hidden from default list
-        const listAfterBlock = await api('GET', `/api/contacts?deviceId=${DEVICE_ID}`);
+        const listAfterBlock = await api('GET', `/api/contacts?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`);
         const blockedVisible = (listAfterBlock.data.contacts || []).find(c => c.publicCode === testCode);
         assert(!blockedVisible, 'blocked card not in default list');
 
@@ -129,7 +129,7 @@ async function run() {
 
     // ── 6. GET /api/contacts with includeBlocked ──
     console.log('\n6. Include Blocked');
-    const listAll = await api('GET', `/api/contacts?deviceId=${DEVICE_ID}&includeBlocked=true`);
+    const listAll = await api('GET', `/api/contacts?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}&includeBlocked=true`);
     assert(listAll.status === 200, `GET /api/contacts includeBlocked → ${listAll.status}`);
 
     // ── Summary ──

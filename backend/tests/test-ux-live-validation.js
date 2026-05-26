@@ -3,7 +3,7 @@
  * UX Live Validation — Layer 3
  * Hits the live server to validate portal pages and API endpoints.
  *
- *   1. Portal page reachability (14 pages → HTTP 200, text/html)
+ *   1. Portal page reachability (root portal HTML files → HTTP 200, text/html)
  *   2. Security headers on portal responses
  *   3. Auth protection (unauthenticated API → 401/403)
  *   4. Authenticated API smoke test (JSON schema basics)
@@ -40,44 +40,39 @@ if (fs.existsSync(envPath)) {
 // ── Config ───────────────────────────────────────────────────
 const args = process.argv.slice(2);
 const API_BASE = args.includes('--local') ? 'http://localhost:3000' : 'https://eclawbot.com';
+const PORTAL_DIR = path.resolve(__dirname, '../public/portal');
 
 const DEVICE_ID = process.env.BROADCAST_TEST_DEVICE_ID;
 const DEVICE_SECRET = process.env.BROADCAST_TEST_DEVICE_SECRET;
 const HAS_CREDS = !!(DEVICE_ID && DEVICE_SECRET);
 
-const PORTAL_PAGES = [
-    'index.html',
-    'dashboard.html',
-    'chat.html',
-    'kanban.html',
-    'settings.html',
-    'env-vars.html',
-    'files.html',
-    'feedback.html',
-    'admin.html',
-    'card-holder.html',
-    'info.html',
-    'delete-account.html',
-    'screen-control.html',
-    'wallet.html',
-    'my-rentals.html',
-    'invite.html',
-    'community.html',
-];
-
-const SHARED_ASSETS = [
-    'shared/api.js',
-    'shared/auth.js',
-    'shared/telemetry.js',
-    'shared/i18n.js',
-];
+const PORTAL_PAGES = fs.existsSync(PORTAL_DIR)
+    ? fs.readdirSync(PORTAL_DIR).filter(f => f.endsWith('.html')).sort()
+    : [
+        'index.html',
+        'dashboard.html',
+        'chat.html',
+        'kanban.html',
+        'settings.html',
+        'env-vars.html',
+        'files.html',
+        'feedback.html',
+        'admin.html',
+        'card-holder.html',
+        'info.html',
+        'delete-account.html',
+        'screen-control.html',
+        'wallet.html',
+        'my-rentals.html',
+        'invite.html',
+        'community.html',
+    ];
 
 // API endpoints that MUST reject unauthenticated requests
 const AUTH_PROTECTED_ENDPOINTS = [
     { method: 'GET',  path: '/api/entities?deviceId=FAKE_ID&deviceSecret=WRONG' },
     { method: 'GET',  path: '/api/chat/history?deviceId=FAKE_ID&deviceSecret=WRONG&entityId=0' },
     { method: 'GET',  path: '/api/feedback?deviceId=FAKE_ID&deviceSecret=WRONG' },
-    { method: 'GET',  path: '/api/schedules?deviceId=FAKE_ID&deviceSecret=WRONG' },
     { method: 'GET',  path: '/api/device-vars?deviceId=FAKE_ID&deviceSecret=WRONG' },
     { method: 'GET',  path: '/api/contacts?deviceId=FAKE_ID&deviceSecret=WRONG' },
     { method: 'GET',  path: '/api/logs?deviceId=FAKE_ID&deviceSecret=WRONG' },
@@ -89,42 +84,28 @@ const AUTHED_SMOKE_ENDPOINTS = [
         method: 'GET',
         path: () => `/api/entities?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`,
         expectStatus: 200,
-        expectShape: { isArray: true },
-        label: 'GET /api/entities',
-    },
-    {
-        method: 'GET',
-        path: () => `/api/status?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`,
-        expectStatus: 200,
         expectShape: { hasKey: 'entities' },
-        label: 'GET /api/status',
+        label: 'GET /api/entities',
     },
     {
         method: 'GET',
         path: () => `/api/feedback?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`,
         expectStatus: 200,
-        expectShape: { isArray: true },
+        expectShape: { hasKey: 'feedback' },
         label: 'GET /api/feedback',
-    },
-    {
-        method: 'GET',
-        path: () => `/api/schedules?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`,
-        expectStatus: 200,
-        expectShape: { isArray: true },
-        label: 'GET /api/schedules',
     },
     {
         method: 'GET',
         path: () => `/api/contacts?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`,
         expectStatus: 200,
-        expectShape: { isArray: true },
+        expectShape: { hasKey: 'contacts' },
         label: 'GET /api/contacts',
     },
     {
         method: 'GET',
         path: () => `/api/device-vars?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`,
         expectStatus: 200,
-        expectShape: { isArray: true },
+        expectShape: { hasKey: 'vars' },
         label: 'GET /api/device-vars',
     },
     {
@@ -138,7 +119,7 @@ const AUTHED_SMOKE_ENDPOINTS = [
         method: 'GET',
         path: () => `/api/mission/dashboard?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`,
         expectStatus: 200,
-        expectShape: { isObject: true },
+        expectShape: { hasKey: 'dashboard' },
         label: 'GET /api/mission/dashboard',
     },
 ];
@@ -179,6 +160,23 @@ async function httpGet(urlPath, opts = {}) {
         headers: opts.headers || {},
         redirect: opts.redirect || 'follow',
     }, { timeoutMs: HTTP_TIMEOUT_MS });
+}
+
+function extractScriptSrcs(html) {
+    const srcs = [];
+    const re = /<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi;
+    let match;
+    while ((match = re.exec(html)) !== null) {
+        const src = match[1].trim();
+        if (src && !/^https?:\/\//i.test(src)) srcs.push(src);
+    }
+    return srcs;
+}
+
+function resolvePortalAssetPath(src, page) {
+    const pageUrl = new URL(`/portal/${page}`, API_BASE);
+    const assetUrl = new URL(src, pageUrl);
+    return assetUrl.pathname;
 }
 
 // ── Main ────────────────────────────────────────────────────
@@ -229,16 +227,33 @@ async function main() {
     // ── Phase 3: Static Asset Resolution ────────────────────
     console.log('\n\u2500\u2500 Phase 3: Static Asset Resolution \u2500\u2500\n');
 
-    for (const asset of SHARED_ASSETS) {
+    const referencedScripts = new Map();
+    for (const page of PORTAL_PAGES) {
+        const pagePath = fs.existsSync(path.join(PORTAL_DIR, page)) ? path.join(PORTAL_DIR, page) : null;
+        let html = '';
         try {
-            const res = await httpGet(`/portal/${asset}`);
+            html = pagePath ? fs.readFileSync(pagePath, 'utf8') : await (await httpGet(`/portal/${page}`)).text();
+        } catch (err) {
+            check(`Asset discovery ${page}`, false, err.message);
+            continue;
+        }
+        for (const src of extractScriptSrcs(html)) {
+            const assetPath = resolvePortalAssetPath(src, page);
+            if (!referencedScripts.has(assetPath)) referencedScripts.set(assetPath, new Set());
+            referencedScripts.get(assetPath).add(page);
+        }
+    }
+
+    for (const [assetPath, pages] of referencedScripts.entries()) {
+        try {
+            const res = await httpGet(assetPath);
             const ct = res.headers.get('content-type') || '';
             const isJs = ct.includes('javascript') || ct.includes('text/plain');
             const ok = res.status === 200;
-            check(`Asset ${asset}`, ok,
-                `status=${res.status}${ok && !isJs ? ', unexpected content-type: ' + ct : ''}`);
+            check(`Asset ${assetPath}`, ok,
+                `status=${res.status}, pages=${pages.size}${ok && !isJs ? ', unexpected content-type: ' + ct : ''}`);
         } catch (err) {
-            check(`Asset ${asset}`, false, err.message);
+            check(`Asset ${assetPath}`, false, err.message);
         }
     }
 

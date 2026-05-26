@@ -45,7 +45,7 @@ async function run() {
 
     // 1. GET /api/contacts — list
     console.log('1. List card holder');
-    const list = await api('GET', `/api/contacts?deviceId=${DEVICE_ID}`);
+    const list = await api('GET', `/api/contacts?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`);
     assert(list.status === 200, `GET /api/contacts → ${list.status}`);
     assert(Array.isArray(list.data.contacts), 'contacts is array');
 
@@ -63,12 +63,12 @@ async function run() {
 
     // 4. GET /api/contacts/search — missing query
     console.log('\n4. Search without query');
-    const noQuery = await api('GET', `/api/contacts/search?deviceId=${DEVICE_ID}`);
+    const noQuery = await api('GET', `/api/contacts/search?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`);
     assert(noQuery.status === 400, `GET search no q → 400 (${noQuery.status})`);
 
     // 5. GET /api/contacts/search — valid
     console.log('\n5. Search with query');
-    const search = await api('GET', `/api/contacts/search?deviceId=${DEVICE_ID}&q=test`);
+    const search = await api('GET', `/api/contacts/search?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}&q=test`);
     assert(search.status === 200, `GET search → 200 (${search.status})`);
     assert(Array.isArray(search.data.cards), 'cards is array');
 
@@ -81,7 +81,7 @@ async function run() {
 
     // 7. GET /api/contacts/:code — not found
     console.log('\n7. GET detail non-existent');
-    const notFound = await api('GET', `/api/contacts/zzz999?deviceId=${DEVICE_ID}`);
+    const notFound = await api('GET', `/api/contacts/zzz999?deviceId=${DEVICE_ID}&deviceSecret=${DEVICE_SECRET}`);
     assert(notFound.status === 404, `GET detail → 404 (${notFound.status})`);
 
     // 8. POST /api/contacts/:code/refresh — not found

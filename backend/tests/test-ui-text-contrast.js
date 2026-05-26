@@ -204,22 +204,33 @@ function scanLayouts() {
 
 // ── Specific Regression Check ───────────────────────────────
 
+function findLayoutWithId(id) {
+    if (!fs.existsSync(LAYOUT_DIR)) return null;
+    const files = fs.readdirSync(LAYOUT_DIR).filter(f => f.endsWith('.xml'));
+    for (const file of files) {
+        const filePath = path.join(LAYOUT_DIR, file);
+        const content = fs.readFileSync(filePath, 'utf8');
+        if (content.includes(`android:id="@+id/${id}"`)) {
+            return { file, content };
+        }
+    }
+    return null;
+}
+
 function checkChatInputFixed() {
-    const chatLayout = path.join(LAYOUT_DIR, 'activity_chat.xml');
-    if (!fs.existsSync(chatLayout)) {
-        check('activity_chat.xml exists', false, 'File not found');
+    const layout = findLayoutWithId('editMessage');
+    if (!layout) {
+        check('editMessage input found', false, 'Not found in layout XML files');
         return;
     }
-
-    const content = fs.readFileSync(chatLayout, 'utf8');
 
     // Find the editMessage input
-    const editMsgMatch = content.match(/<(?:EditText|com\.google\.android\.material\.textfield\.TextInputEditText)\b[^>]*android:id="@\+id\/editMessage"[^>]*\/>/s);
+    const editMsgMatch = layout.content.match(/<(?:EditText|com\.google\.android\.material\.textfield\.TextInputEditText)\b[^>]*android:id="@\+id\/editMessage"[^>]*\/>/s);
     if (!editMsgMatch) {
-        check('editMessage input found', false, 'Not found in activity_chat.xml');
+        check('editMessage input found', false, `Not found in ${layout.file}`);
         return;
     }
-    check('editMessage input found', true);
+    check('editMessage input found', true, layout.file);
 
     const attrs = editMsgMatch[0];
 
@@ -260,7 +271,7 @@ function checkChatInputFixed() {
 
 console.log('\n🎨 UI Text Contrast — Static Analysis\n');
 
-console.log('1️⃣  Chat input regression check (activity_chat.xml):');
+console.log('1️⃣  Chat input regression check (editMessage layout):');
 checkChatInputFixed();
 
 console.log('\n2️⃣  Full layout scan for input contrast issues:');
