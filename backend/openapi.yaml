@@ -428,11 +428,30 @@ paths:
   /api/version:
     get:
       tags: [Health]
-      summary: Server version info
+      summary: Server version info (also serves as app update check)
+      description: |
+        Returns deployed server / portal / android version metadata. When the
+        client supplies its own `?appVersion=<semver>` query, the response also
+        contains an `update` object that compares the client version against
+        the server's latest published Android build, so Android / portal
+        clients can use a single endpoint for both health-sync and update
+        checks.
       operationId: getVersion
+      parameters:
+        - in: query
+          name: appVersion
+          required: false
+          description: |
+            Client semver (e.g. `1.0.50`). When omitted, the response is the
+            plain version-info payload. When supplied, the response adds an
+            `update` object describing whether the client is outdated and
+            whether a force-update is required.
+          schema:
+            type: string
+            example: "1.0.50"
       responses:
         '200':
-          description: Version information
+          description: Version information (with optional `update` block when `appVersion` is supplied)
           content:
             application/json:
               schema:
@@ -464,6 +483,63 @@ paths:
                   lastSync:
                     type: integer
                     description: Server epoch ms at response time.
+                  update:
+                    type: object
+                    description: |
+                      Present only when the request supplied `?appVersion=<semver>`. Compares the client version against the server's latest published Android build.
+                    properties:
+                      available:
+                        type: boolean
+                        description: True when `currentVersion` is strictly less than `latestVersion`.
+                      latestVersion:
+                        type: string
+                        description: Latest Android app version the server is advertising.
+                      currentVersion:
+                        type: string
+                        description: Echoes back the `appVersion` query the client supplied.
+                      forceUpdate:
+                        type: boolean
+                        description: True when `currentVersion` falls below the server's force-update floor (`FORCE_UPDATE_BELOW`). Clients should block usage and prompt the user to update.
+                      releaseNotes:
+                        type: string
+                        description: Human-readable release-notes blob for the latest version.
+                      storeUrl:
+                        type: string
+                        format: uri
+                        description: Play Store URL the client should send the user to.
+                    required: [available, latestVersion, currentVersion, forceUpdate, releaseNotes, storeUrl]
+              examples:
+                withoutAppVersion:
+                  summary: Plain health-sync (no `?appVersion=`)
+                  value:
+                    api: "1.2.0"
+                    portal: "1.2.0"
+                    android: "1.0.85"
+                    features:
+                      portal: [auth, dashboard, chat, mission, settings, subscription, i18n, avatar-picker]
+                      android: [auth, dashboard, chat, mission, settings, subscription, i18n, avatar-picker, live-wallpaper, widget]
+                    build_hash: "6f46f13b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f"
+                    build_time: "2026-05-26T03:14:00.000Z"
+                    lastSync: 1779780000000
+                withAppVersionOutdated:
+                  summary: Update check with `?appVersion=1.0.50` — client is outdated
+                  value:
+                    api: "1.2.0"
+                    portal: "1.2.0"
+                    android: "1.0.85"
+                    features:
+                      portal: [auth, dashboard, chat, mission, settings, subscription, i18n, avatar-picker]
+                      android: [auth, dashboard, chat, mission, settings, subscription, i18n, avatar-picker, live-wallpaper, widget]
+                    build_hash: "6f46f13b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f"
+                    build_time: "2026-05-26T03:14:00.000Z"
+                    lastSync: 1779780000000
+                    update:
+                      available: true
+                      latestVersion: "1.0.85"
+                      currentVersion: "1.0.50"
+                      forceUpdate: false
+                      releaseNotes: "Live wallpaper now shows Claude / Codex usage; native tab routing; portal Nagoya trip page; per-bot About scaffolding; dashboard usage widget v2."
+                      storeUrl: "https://play.google.com/store/apps/details?id=com.hank.clawlive"
 
   # ── Device Management ──
   /api/device/register:
