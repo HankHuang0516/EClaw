@@ -38,16 +38,25 @@ jobs:
       pull-requests: write # comment on PRs
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          # Fetch full history so semantic-release can analyze all commits
-          fetch-depth: 0
-          # Use a PAT or the default GITHUB_TOKEN
-          persist-credentials: false
+      - name: Checkout repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init "${GITHUB_WORKSPACE}"
+          cd "${GITHUB_WORKSPACE}"
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          # Fetch full history and tags so semantic-release can analyze all commits.
+          git fetch --force --tags origin "+${GITHUB_REF}:refs/remotes/origin/main"
+          git checkout --force -B main "${GITHUB_SHA}"
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      - name: Verify Node.js
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --version
+          npm --version
+          node -e "const major = Number(process.versions.node.split('.')[0]); if (major < 20) throw new Error('Node.js 20+ is required')"
 
       - name: Install semantic-release + plugins
         run: |
