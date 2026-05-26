@@ -507,7 +507,7 @@
     <string name="notifications_title">通知</string>
     <string name="official_borrow">官方 Bot 租用</string>
     <string name="official_borrow_title">官方 Bot 租用</string>
-    <string name="pinch_to_resize">雙指縮放調整大小，單指拖曳移動位置</string>
+    <string name="pinch_to_resize">單指拖曳移動，雙指縮放實體或用量文字</string>
     <string name="playback_failed">播放失敗</string>
     <string name="premium_badge">尊爵會員</string>
     <string name="priority">優先權</string>

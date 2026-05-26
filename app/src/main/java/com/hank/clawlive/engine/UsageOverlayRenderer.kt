@@ -49,49 +49,33 @@ class UsageOverlayRenderer(
         canvas: Canvas,
         snapshot: UsageSnapshotLatest?,
         topInsetPx: Float = 0f,
-        bottomInsetPx: Float = 0f
+        bottomInsetPx: Float = 0f,
+        highlighted: Boolean = false
     ) {
         if (!layoutPrefs.usageOverlayEnabled || canvas.width <= 0 || canvas.height <= 0) return
 
         val lines = buildLines(snapshot)
         if (lines.isEmpty()) return
 
-        val paddingH = 10f * density
-        val paddingV = 8f * density
-        val lineGap = 3f * density
-        val margin = 16f * density
-        val cornerRadius = 8f * density
+        val scale = layoutPrefs.usageOverlayScale
+        val paddingH = 10f * density * scale
+        val paddingV = 8f * density * scale
+        val lineGap = 3f * density * scale
+        val cornerRadius = 8f * density * scale
 
-        var maxTextWidth = 0f
-        lines.forEachIndexed { index, line ->
-            val paint = if (index == 0) titlePaint else linePaint
-            maxTextWidth = maxOf(maxTextWidth, paint.measureText(line))
-        }
+        titlePaint.textSize = 12f * density * scale
+        linePaint.textSize = 11f * density * scale
 
-        val maxPanelWidth = (canvas.width - margin * 2).coerceAtLeast(0f)
-        val panelWidth = (maxTextWidth + paddingH * 2).coerceAtMost(maxPanelWidth)
-        val titleHeight = titlePaint.fontMetrics.run { bottom - top }
         val lineHeight = linePaint.fontMetrics.run { bottom - top }
-        val panelHeight = paddingV * 2 +
-            titleHeight +
-            ((lines.size - 1).coerceAtLeast(0) * (lineHeight + lineGap))
+        val bounds = getBounds(canvas.width, canvas.height, snapshot, topInsetPx, bottomInsetPx)
+            ?: return
+        val left = bounds.left
+        val top = bounds.top
 
-        val left = when (layoutPrefs.usageOverlayPosition) {
-            UsageOverlayPosition.TOP_LEFT,
-            UsageOverlayPosition.BOTTOM_LEFT -> margin
-            UsageOverlayPosition.TOP_RIGHT,
-            UsageOverlayPosition.BOTTOM_RIGHT -> canvas.width - margin - panelWidth
-        }.coerceIn(margin, (canvas.width - margin - panelWidth).coerceAtLeast(margin))
-
-        val top = when (layoutPrefs.usageOverlayPosition) {
-            UsageOverlayPosition.TOP_LEFT,
-            UsageOverlayPosition.TOP_RIGHT -> margin + topInsetPx
-            UsageOverlayPosition.BOTTOM_LEFT,
-            UsageOverlayPosition.BOTTOM_RIGHT -> canvas.height - margin - bottomInsetPx - panelHeight
-        }.coerceIn(margin + topInsetPx, (canvas.height - margin - bottomInsetPx - panelHeight).coerceAtLeast(margin + topInsetPx))
-
-        panelRect.set(left, top, left + panelWidth, top + panelHeight)
+        panelRect.set(bounds)
         canvas.drawRoundRect(panelRect, cornerRadius, cornerRadius, panelPaint)
+        panelStrokePaint.strokeWidth = if (highlighted) 2f * density else 1f * density
+        panelStrokePaint.color = if (highlighted) Color.argb(210, 64, 224, 255) else Color.argb(70, 255, 255, 255)
         canvas.drawRoundRect(panelRect, cornerRadius, cornerRadius, panelStrokePaint)
 
         var baseline = top + paddingV - titlePaint.fontMetrics.top
@@ -101,6 +85,84 @@ class UsageOverlayRenderer(
             canvas.drawText(lines[i], left + paddingH, baseline, linePaint)
             baseline += lineHeight + lineGap
         }
+    }
+
+    fun getBounds(
+        width: Int,
+        height: Int,
+        snapshot: UsageSnapshotLatest?,
+        topInsetPx: Float = 0f,
+        bottomInsetPx: Float = 0f
+    ): RectF? {
+        if (!layoutPrefs.usageOverlayEnabled || width <= 0 || height <= 0) return null
+
+        val lines = buildLines(snapshot)
+        if (lines.isEmpty()) return null
+
+        val scale = layoutPrefs.usageOverlayScale
+        titlePaint.textSize = 12f * density * scale
+        linePaint.textSize = 11f * density * scale
+
+        val paddingH = 10f * density * scale
+        val paddingV = 8f * density * scale
+        val lineGap = 3f * density * scale
+        val margin = 16f * density
+
+        var maxTextWidth = 0f
+        lines.forEachIndexed { index, line ->
+            val paint = if (index == 0) titlePaint else linePaint
+            maxTextWidth = maxOf(maxTextWidth, paint.measureText(line))
+        }
+
+        val maxPanelWidth = (width - margin * 2).coerceAtLeast(0f)
+        val panelWidth = (maxTextWidth + paddingH * 2).coerceAtMost(maxPanelWidth)
+        val titleHeight = titlePaint.fontMetrics.run { bottom - top }
+        val lineHeight = linePaint.fontMetrics.run { bottom - top }
+        val panelHeight = paddingV * 2 +
+            titleHeight +
+            ((lines.size - 1).coerceAtLeast(0) * (lineHeight + lineGap))
+
+        val minLeft = margin
+        val maxLeft = (width - margin - panelWidth).coerceAtLeast(minLeft)
+        val minTop = margin + topInsetPx
+        val maxTop = (height - margin - bottomInsetPx - panelHeight).coerceAtLeast(minTop)
+
+        val customCenter = layoutPrefs.getUsageOverlayCenter()
+        val (rawLeft, rawTop) = if (customCenter != null) {
+            (customCenter.first * width - panelWidth / 2f) to
+                (customCenter.second * height - panelHeight / 2f)
+        } else {
+            defaultCornerLeftTop(width, height, panelWidth, panelHeight, margin, topInsetPx, bottomInsetPx)
+        }
+
+        val left = rawLeft.coerceIn(minLeft, maxLeft)
+        val top = rawTop.coerceIn(minTop, maxTop)
+        return RectF(left, top, left + panelWidth, top + panelHeight)
+    }
+
+    private fun defaultCornerLeftTop(
+        width: Int,
+        height: Int,
+        panelWidth: Float,
+        panelHeight: Float,
+        margin: Float,
+        topInsetPx: Float,
+        bottomInsetPx: Float
+    ): Pair<Float, Float> {
+        val left = when (layoutPrefs.usageOverlayPosition) {
+            UsageOverlayPosition.TOP_LEFT,
+            UsageOverlayPosition.BOTTOM_LEFT -> margin
+            UsageOverlayPosition.TOP_RIGHT,
+            UsageOverlayPosition.BOTTOM_RIGHT -> width - margin - panelWidth
+        }
+
+        val top = when (layoutPrefs.usageOverlayPosition) {
+            UsageOverlayPosition.TOP_LEFT,
+            UsageOverlayPosition.TOP_RIGHT -> margin + topInsetPx
+            UsageOverlayPosition.BOTTOM_LEFT,
+            UsageOverlayPosition.BOTTOM_RIGHT -> height - margin - bottomInsetPx - panelHeight
+        }
+        return left to top
     }
 
     fun buildLines(snapshot: UsageSnapshotLatest?): List<String> {

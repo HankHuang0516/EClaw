@@ -43,6 +43,8 @@ class LayoutEditorView @JvmOverloads constructor(
     private var draggingEntityIndex: Int = -1
     private var lastTouchX = 0f
     private var lastTouchY = 0f
+    private var dragOffsetX = 0f
+    private var dragOffsetY = 0f
     
     // Scale gesture state
     private var scalingEntityIndex: Int = -1
@@ -88,6 +90,8 @@ class LayoutEditorView @JvmOverloads constructor(
                     val currentScale = entityScales[entityId] ?: 1.0f
                     val newScale = (currentScale * detector.scaleFactor).coerceIn(0.3f, 2.5f)
                     entityScales[entityId] = newScale
+                    layoutPrefs.setEntityScale(entityId, newScale)
+                    enableCustomLayoutForGesture()
                     invalidate()
                     return true
                 }
@@ -327,6 +331,10 @@ class LayoutEditorView @JvmOverloads constructor(
                 lastTouchX = x
                 lastTouchY = y
                 if (draggingEntityIndex >= 0) {
+                    val entity = entities[draggingEntityIndex]
+                    val pos = entityPositions[entity.entityId] ?: Pair(0.5f, 0.5f)
+                    dragOffsetX = pos.first * width - x
+                    dragOffsetY = pos.second * height - y
                     invalidate()
                     return true
                 }
@@ -335,10 +343,12 @@ class LayoutEditorView @JvmOverloads constructor(
             MotionEvent.ACTION_MOVE -> {
                 if (event.pointerCount == 1 && draggingEntityIndex >= 0 && draggingEntityIndex < entities.size) {
                     // Update position (convert to percentage)
-                    val xPercent = (x / width).coerceIn(0.1f, 0.9f)
-                    val yPercent = (y / height).coerceIn(0.1f, 0.9f)
+                    val xPercent = ((x + dragOffsetX) / width).coerceIn(0.05f, 0.95f)
+                    val yPercent = ((y + dragOffsetY) / height).coerceIn(0.05f, 0.95f)
                     val entityId = entities[draggingEntityIndex].entityId
                     entityPositions[entityId] = Pair(xPercent, yPercent)
+                    enableCustomLayoutForGesture()
+                    layoutPrefs.setCustomPosition(entityId, xPercent, yPercent)
                     invalidate()
                     return true
                 }
@@ -366,8 +376,9 @@ class LayoutEditorView @JvmOverloads constructor(
      * Find entity at touch position using hit test
      */
     private fun findEntityAtPosition(touchX: Float, touchY: Float): Int {
-        entities.forEachIndexed { index, entity ->
-            val pos = entityPositions[entity.entityId] ?: return@forEachIndexed
+        for (index in entities.indices.reversed()) {
+            val entity = entities[index]
+            val pos = entityPositions[entity.entityId] ?: continue
             val entityX = pos.first * width
             val entityY = pos.second * height
             
@@ -385,5 +396,16 @@ class LayoutEditorView @JvmOverloads constructor(
         }
 
         return -1
+    }
+
+    private fun enableCustomLayoutForGesture() {
+        if (!layoutPrefs.useCustomLayout) {
+            entities.forEach { entity ->
+                entityPositions[entity.entityId]?.let { (px, py) ->
+                    layoutPrefs.setCustomPosition(entity.entityId, px, py)
+                }
+            }
+        }
+        layoutPrefs.useCustomLayout = true
     }
 }

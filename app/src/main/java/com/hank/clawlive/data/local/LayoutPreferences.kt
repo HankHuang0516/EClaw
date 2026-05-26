@@ -171,7 +171,7 @@ class LayoutPreferences private constructor(context: Context) {
      */
     fun setCustomPosition(entityId: Int, xPercent: Float, yPercent: Float) {
         val x = xPercent.coerceIn(0.05f, 0.95f)
-        val y = yPercent.coerceIn(0.1f, 0.9f)
+        val y = yPercent.coerceIn(0.05f, 0.95f)
         prefs.edit().putString("${KEY_CUSTOM_POS_PREFIX}$entityId", "$x,$y").apply()
     }
 
@@ -305,6 +305,36 @@ class LayoutPreferences private constructor(context: Context) {
             prefs.edit().putString(KEY_USAGE_OVERLAY_POSITION, value.name).apply()
         }
 
+    fun getUsageOverlayCenter(): Pair<Float, Float>? {
+        val posStr = prefs.getString(KEY_USAGE_OVERLAY_CENTER, null)
+        return posStr?.split(",")?.let {
+            if (it.size == 2) {
+                val x = it[0].toFloatOrNull() ?: return null
+                val y = it[1].toFloatOrNull() ?: return null
+                Pair(x, y)
+            } else null
+        }
+    }
+
+    fun setUsageOverlayCenter(xPercent: Float, yPercent: Float) {
+        val x = xPercent.coerceIn(0.05f, 0.95f)
+        val y = yPercent.coerceIn(0.05f, 0.95f)
+        prefs.edit().putString(KEY_USAGE_OVERLAY_CENTER, "$x,$y").apply()
+    }
+
+    var usageOverlayScale: Float
+        get() = prefs.getFloat(KEY_USAGE_OVERLAY_SCALE, 1.0f)
+        set(value) {
+            prefs.edit().putFloat(KEY_USAGE_OVERLAY_SCALE, value.coerceIn(0.75f, 1.8f)).apply()
+        }
+
+    fun clearUsageOverlayTransform() {
+        prefs.edit()
+            .remove(KEY_USAGE_OVERLAY_CENTER)
+            .remove(KEY_USAGE_OVERLAY_SCALE)
+            .apply()
+    }
+
     var usageOverlayShowClaude: Boolean
         get() = prefs.getBoolean(KEY_USAGE_OVERLAY_SHOW_CLAUDE, true)
         set(value) {
@@ -345,6 +375,8 @@ class LayoutPreferences private constructor(context: Context) {
         private const val KEY_SERVER_ENTITY_LIMIT = "server_entity_limit"
         private const val KEY_USAGE_OVERLAY_ENABLED = "usage_overlay_enabled"
         private const val KEY_USAGE_OVERLAY_POSITION = "usage_overlay_position"
+        private const val KEY_USAGE_OVERLAY_CENTER = "usage_overlay_center"
+        private const val KEY_USAGE_OVERLAY_SCALE = "usage_overlay_scale"
         private const val KEY_USAGE_OVERLAY_SHOW_CLAUDE = "usage_overlay_show_claude"
         private const val KEY_USAGE_OVERLAY_SHOW_CODEX = "usage_overlay_show_codex"
         private const val KEY_USAGE_OVERLAY_SHOW_SESSION = "usage_overlay_show_session"

@@ -2,6 +2,7 @@ package com.hank.clawlive
 
 import android.graphics.Rect
 import android.os.Build
+import android.view.MotionEvent
 import android.view.View
 import android.view.WindowInsets
 import android.widget.CheckBox
@@ -11,10 +12,9 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.hank.clawlive.data.local.LayoutPreferences
-import com.hank.clawlive.data.local.UsageOverlayPosition
+import com.hank.clawlive.ui.WallpaperPreviewView
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -200,10 +200,6 @@ class WallpaperPreviewUiTest {
                     R.id.switchCustomLayout,
                     R.id.switchBackground,
                     R.id.switchUsageOverlay,
-                    R.id.btnUsageTopLeft,
-                    R.id.btnUsageTopRight,
-                    R.id.btnUsageBottomLeft,
-                    R.id.btnUsageBottomRight,
                     R.id.checkUsageClaude,
                     R.id.checkUsageCodex,
                     R.id.checkUsageSession,
@@ -236,25 +232,56 @@ class WallpaperPreviewUiTest {
             scenario.onActivity { activity ->
                 val prefs = LayoutPreferences.getInstance(activity)
                 val switch = activity.findViewById<MaterialSwitch>(R.id.switchUsageOverlay)
-                val toggle = activity.findViewById<MaterialButtonToggleGroup>(R.id.toggleUsageOverlayPosition)
                 val checkClaude = activity.findViewById<CheckBox>(R.id.checkUsageClaude)
                 val checkCodex = activity.findViewById<CheckBox>(R.id.checkUsageCodex)
                 val checkSession = activity.findViewById<CheckBox>(R.id.checkUsageSession)
                 val checkWeekly = activity.findViewById<CheckBox>(R.id.checkUsageWeekly)
 
                 switch.isChecked = true
-                toggle.check(R.id.btnUsageBottomLeft)
                 checkClaude.isChecked = true
                 checkCodex.isChecked = false
                 checkSession.isChecked = true
                 checkWeekly.isChecked = false
 
                 assertTrue(prefs.usageOverlayEnabled)
-                assertEquals(UsageOverlayPosition.BOTTOM_LEFT, prefs.usageOverlayPosition)
                 assertTrue(prefs.usageOverlayShowClaude)
                 assertFalse(prefs.usageOverlayShowCodex)
                 assertTrue(prefs.usageOverlayShowSession)
                 assertFalse(prefs.usageOverlayShowWeekly)
+            }
+        }
+    }
+
+    @Test
+    fun testUsageOverlayDragPersistsFreeformPosition() {
+        ActivityScenario.launch(WallpaperPreviewActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                val prefs = LayoutPreferences.getInstance(activity)
+                prefs.clearUsageOverlayTransform()
+                prefs.usageOverlayEnabled = true
+
+                val preview = activity.findViewById<WallpaperPreviewView>(R.id.wallpaperPreviewView)
+                preview.invalidate()
+
+                val bounds = preview.getUsageOverlayBoundsForTest()
+                assertNotNull("Usage overlay bounds should be available", bounds)
+
+                val startX = bounds!!.centerX()
+                val startY = bounds.centerY()
+                val endX = (startX - 80f).coerceAtLeast(24f)
+                val endY = (startY + 70f).coerceAtMost(preview.height - 24f)
+                val downTime = android.os.SystemClock.uptimeMillis()
+
+                preview.dispatchTouchEvent(MotionEvent.obtain(downTime, downTime, MotionEvent.ACTION_DOWN, startX, startY, 0))
+                preview.dispatchTouchEvent(MotionEvent.obtain(downTime, downTime + 16, MotionEvent.ACTION_MOVE, endX, endY, 0))
+                preview.dispatchTouchEvent(MotionEvent.obtain(downTime, downTime + 32, MotionEvent.ACTION_UP, endX, endY, 0))
+
+                val savedCenter = prefs.getUsageOverlayCenter()
+                assertNotNull("Dragging usage overlay should persist a freeform center", savedCenter)
+                val expectedX = endX / preview.width
+                val expectedY = endY / preview.height
+                assertEquals("Usage overlay X center should track drag", expectedX, savedCenter!!.first, 0.05f)
+                assertEquals("Usage overlay Y center should track drag", expectedY, savedCenter.second, 0.05f)
             }
         }
     }
