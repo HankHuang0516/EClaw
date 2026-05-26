@@ -686,7 +686,7 @@
                     <button class="kb-chip active" data-filter="all" data-i18n="kb_filter_all" onclick="filterCards('all')">All</button>
                     <button class="kb-chip" data-filter="mine" data-i18n="kb_filter_mine" onclick="filterCards('mine')">My Cards</button>
                 </div>
-                <select class="kb-sort-select" onchange="sortCards(this.value)">
+                <select class="kb-sort-select" onchange="sortCards(this.value)" aria-label="Sort kanban cards">
                     <option value="updated_desc" data-i18n="kb_sort_recently_updated">Recently Updated</option>
                     <option value="updated_asc" data-i18n="kb_sort_oldest_updated">Oldest Updated</option>
                     <option value="default" data-i18n="kb_sort_default">Default Order</option>

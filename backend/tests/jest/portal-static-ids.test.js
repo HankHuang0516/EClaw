@@ -45,4 +45,25 @@ describe('portal static HTML IDs', () => {
     expect(html).toContain('renterDeviceId');
   });
 
+  test('visible portal controls expose accessible names', () => {
+    const communityPath = path.join(__dirname, '../../public/portal/community.html');
+    const community = fs.readFileSync(communityPath, 'utf8');
+    expect(community).toContain('id="sortSelect" onchange="handleSort()" aria-label="Sort bots"');
+    expect(community).toContain('id="rateMin" min="1" max="50" value="1" step="1" oninput="onRateSliderChange()" aria-label="Minimum rate"');
+    expect(community).toContain('id="rateMax" min="1" max="50" value="50" step="1" oninput="onRateSliderChange()" aria-label="Maximum rate"');
+    expect(community).toContain('id="searchClear" onclick="clearSearch()" aria-label="Clear search"');
+
+    const kanbanPath = path.join(__dirname, '../../public/portal/kanban.html');
+    const kanban = fs.readFileSync(kanbanPath, 'utf8');
+    expect(kanban).toContain('class="kb-sort-select" onchange="sortCards(this.value)" aria-label="Sort kanban cards"');
+
+    const screenControlPath = path.join(__dirname, '../../public/portal/screen-control.html');
+    const screenControl = fs.readFileSync(screenControlPath, 'utf8');
+    expect(screenControl).toContain('<label for="commandType" data-i18n="screen_ctrl_label_command">Command</label>');
+
+    const settingsPath = path.join(__dirname, '../../public/portal/settings.html');
+    const settings = fs.readFileSync(settingsPath, 'utf8');
+    expect(settings.match(/class="roster-action" aria-label="\$\{rosterT\('settings_roster_col_action','Action'\)\}"/g)).toHaveLength(2);
+  });
+
 });
