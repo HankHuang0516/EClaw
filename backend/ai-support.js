@@ -87,6 +87,26 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
         }
     }, 1800000);
 
+    // ── claude-cli-proxy per-request caller auth (H3 multi-tenant) ──
+    // Returns the extra ChatRequest fields the proxy uses to fetch THIS
+    // tenant's GitHub PAT from their own vault instead of falling through
+    // to the proxy's legacy EVAULT_LEGACY_BOOT_CLONE env-token path.
+    // Returns {} when the deployment hasn't configured caller creds, so the
+    // proxy keeps its legacy env-token behavior until the env vars land.
+    function proxyCallerAuthFields() {
+        const callerDeviceId = process.env.CLAUDE_PROXY_CALLER_DEVICE_ID || '';
+        const callerBotSecret = process.env.CLAUDE_PROXY_CALLER_BOT_SECRET || '';
+        if (!callerDeviceId || !callerBotSecret) return {};
+        const fields = {
+            caller_device_id: callerDeviceId,
+            caller_bot_secret: callerBotSecret,
+        };
+        if (process.env.CLAUDE_PROXY_REPO_HOST_PATH) fields.repo_host_path = process.env.CLAUDE_PROXY_REPO_HOST_PATH;
+        if (process.env.CLAUDE_PROXY_VAULT_KEY) fields.vault_key = process.env.CLAUDE_PROXY_VAULT_KEY;
+        if (process.env.CLAUDE_PROXY_ALLOWED_ORGS) fields.allowed_orgs = process.env.CLAUDE_PROXY_ALLOWED_ORGS;
+        return fields;
+    }
+
     // ── Auto-create GitHub issue (for AI-initiated actions) ──
     async function autoCreateIssue(action, user) {
         const token = process.env.GITHUB_TOKEN;
@@ -1283,7 +1303,8 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                         role: isAdmin ? 'admin' : 'user',
                         email: req.user.email,
                         diagnostics: deviceDiag
-                    }
+                    },
+                    ...proxyCallerAuthFields()
                 }),
                 signal: AbortSignal.timeout(130000)
             });
@@ -1496,7 +1517,8 @@ module.exports = function (devices, chatPool, { serverLog, getWebhookFixInstruct
                 body: JSON.stringify({
                     message: proxyMessage,
                     history,
-                    device_context: { ...ctx, diagnostics: deviceDiag }
+                    device_context: { ...ctx, diagnostics: deviceDiag },
+                    ...proxyCallerAuthFields()
                 }),
                 signal: controller.signal
             });

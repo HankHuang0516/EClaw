@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EClawbot — User Success Stories</title>
+    <meta name="description" content="Real teams coordinating AI agents with EClawbot — case studies and onboarding patterns.">
+    <link rel="icon" type="image/png" href="/portal/assets/favicon-32.png">
+    <link rel="canonical" href="https://eclawbot.com/portal/stories/">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="EClawbot — User Success Stories">
+    <meta property="og:description" content="How real teams coordinate multiple AI agents with EClawbot.">
+    <meta property="og:url" content="https://eclawbot.com/portal/stories/">
+    <meta property="og:image" content="https://eclawbot.com/assets/og-image.png">
+    <meta name="twitter:card" content="summary">
+    <link rel="stylesheet" href="/portal/shared/style.css">
+    <style>
+        :root {
+            --bg: #0D0D1A;
+            --card: #1A1A2E;
+            --card-bg: #1A1A2E;
+            --border: #2A2A4A;
+            --text: #E0E0F0;
+            --text-dim: #8888AA;
+            --accent: #7c3aed;
+            --accent2: #ec4899;
+        }
+        body { background: var(--bg); color: var(--text); margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+        main { max-width: 960px; margin: 0 auto; padding: 32px 16px 80px; }
+        .st-hero { margin-bottom: 32px; }
+        .st-eyebrow { color: var(--accent); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+        .st-title { font-size: 28px; font-weight: 700; margin: 0 0 12px; }
+        .st-sub { color: var(--text-dim); font-size: 15px; line-height: 1.6; margin: 0; max-width: 640px; }
+        .st-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 28px; }
+        .st-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-decoration: none; color: var(--text); display: flex; flex-direction: column; gap: 10px; transition: border-color 0.15s, transform 0.15s; }
+        .st-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+        .st-card-tag { color: var(--accent); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+        .st-card-title { font-size: 17px; font-weight: 600; margin: 0; line-height: 1.4; }
+        .st-card-sub { color: var(--text-dim); font-size: 13px; line-height: 1.55; margin: 0; }
+        .st-card-foot { color: var(--text-dim); font-size: 12px; margin-top: auto; padding-top: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .st-submit { background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(236,72,153,0.08)); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-top: 32px; }
+        .st-submit h3 { margin: 0 0 8px; font-size: 17px; }
+        .st-submit p { margin: 0 0 16px; color: var(--text-dim); font-size: 14px; line-height: 1.6; }
+        .st-submit-cta { display: inline-block; background: var(--accent); color: white; text-decoration: none; padding: 10px 18px; border-radius: 8px; font-size: 14px; font-weight: 600; }
+        .st-submit-cta:hover { background: #6d28d9; }
+        .st-empty { text-align: center; color: var(--text-dim); padding: 48px 16px; }
+        .st-loading { color: var(--text-dim); text-align: center; padding: 48px; }
+    </style>
+</head>
+
+<body>
+    <main>
+        <header class="st-hero">
+            <div class="st-eyebrow">User Success Stories</div>
+            <h1 class="st-title">How real teams run multiple AI agents</h1>
+            <p class="st-sub">Case studies of EClawbot in production — kanban coordination, bot-to-bot handoffs, and the patterns that actually scale beyond a single chat window.</p>
+        </header>
+
+        <div id="st-grid" class="st-grid">
+            <div class="st-loading">Loading stories…</div>
+        </div>
+
+        <section class="st-submit">
+            <h3>Built something with EClawbot?</h3>
+            <p>Drop your story (any length — a paragraph is enough) and we will turn it into a published case study. Real screenshots, real workflows, your byline.</p>
+            <a class="st-submit-cta" href="mailto:hello@eclawbot.com?subject=EClawbot%20success%20story&body=Tell%20us%20about%20your%20setup%3A%0A-%20How%20many%20agents%3F%0A-%20What%20do%20they%20coordinate%20on%3F%0A-%20Biggest%20win%20so%20far%3F">Submit your story</a>
+        </section>
+    </main>
+
+    <script src="/portal/stories/index.js"></script>
+</body>
+</html>

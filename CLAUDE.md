@@ -1041,8 +1041,19 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Growth Tracking (v1.1168)**: `growth.js` module for admin bot growth metrics; static serving fix
 - **UIUX Audit Script Alignment (v1.1172)**: QA/UIUX audit test scripts aligned with current portal contracts
 
-### Recent Features (v1.1172.x+, 2026-05-22 – 2026-05-24)
+### Recent Features (v1.1172.x+, 2026-05-22 – 2026-05-26)
 
+- **AI Support Per-Request Creds (PR #2947)**: `POST /ai-support/chat` passes per-request caller credentials to claude-cli-proxy (H3 Phase 2)
+- **Portal Stories Page (PR #2940)**: `/portal/stories/` user success stories page scaffold; per-slug canonical + 1-char slug allowance
+- **Bot Backstory Page (PR #2938)**: `/portal/bot/:id/about` backstory page scaffold (IP P1)
+- **Entity Queue Clear (PR #616)**: `DELETE /api/entity/queue` to clear pending messageQueue for an entity
+- **CLI Proxy Multi-Tenant Auth (PR #2937)**: Per-request multi-tenant auth refactor for claude-cli-proxy (H3)
+- **H4 Showcase i18n (PR #2935/#2936)**: H4 showcase i18n data-attrs + raw key leak fix; 25 rm_h4 proof keys × 11 non-EN locales
+- **Portuguese Locale (PR #2932)**: `pt` locale block added (5109 keys seeded from EN)
+- **Hermes H4 Roadmap (PR #2933)**: Finish Hermes H4 roadmap proof
+- **Android Native Tab Bridge (PR #2832)**: Native tab navigation bridge for portal pages
+- **Info Promo Video (PR #2795)**: Embed 75s promo video on Quick Start tab
+- **Bind-Free 502 Fix (PR #2915)**: P1 fix — restored handshake fallback for free-bot binding
 - **Usage API + Dashboard Widget (PR #2889–#2896)**: `backend/usage-api.js` module with `POST /api/usage/snapshot` + `GET /api/usage/snapshot` + `GET /api/usage/timeline`; `usage_snapshots` table; macOS launchd daemon (`backend/tooling/eclaw-usage-daemon/`) polls Claude Code + Codex CLI usage → POST snapshots; Dashboard widget shows 5h gauges, session/weekly % bars, projects list; `live.rate_limits.{five_hour,seven_day}.used_percentage` fix; weekly bar reset countdown
 - **Nagoya Trip Interactive Map (PR #2888)**: Leaflet + OpenStreetMap interactive map page at `/portal/nagoya-trip.html` with trip itinerary, day banners, dark mode hero fix
 - **OpenClaw Channel Fix (PR #2886)**: Support OpenClaw 2026.5.20 protocol changes
