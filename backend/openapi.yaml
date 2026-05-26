@@ -438,15 +438,32 @@ paths:
               schema:
                 type: object
                 properties:
-                  buildId:
+                  api:
                     type: string
-                  version:
+                  portal:
                     type: string
-                  latestAppVersion:
+                  android:
                     type: string
-                  forceUpdateBelow:
+                  features:
+                    type: object
+                    properties:
+                      portal:
+                        type: array
+                        items: { type: string }
+                      android:
+                        type: array
+                        items: { type: string }
+                  build_hash:
                     type: string
                     nullable: true
+                    description: Full git commit SHA of the deployed backend (from RAILWAY_GIT_COMMIT_SHA). Null when running outside a git-tagged deploy. Cron consumers use this to detect rollbacks.
+                  build_time:
+                    type: string
+                    format: date-time
+                    description: ISO timestamp captured at server module load (effectively the deploy time on Railway).
+                  lastSync:
+                    type: integer
+                    description: Server epoch ms at response time.
 
   # ── Device Management ──
   /api/device/register:
