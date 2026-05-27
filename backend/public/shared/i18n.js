@@ -1021346,6 +1021346,10 @@ const TRANSLATIONS = {
 
 
         "community_cta_create_bot": "想擁有自己的 Bot？免費建立、立即上架。",
+        "featured_week_eyebrow": "⭐ 本週精選",
+        "featured_week_rotation_label": "每 6 天輪換 · 從真實看板工作精選",
+        "featured_week_outcome_label": "成果：",
+
 
 
 
@@ -2407092,6 +2407096,10 @@ const TRANSLATIONS = {
 
 
         "community_cta_create_bot": "自分だけのBotをお持ちでないですか？無料で作成してすぐに公開しましょう。",
+        "featured_week_eyebrow": "⭐ この週の注目",
+        "featured_week_rotation_label": "毎 6 日間にロートアウト · 実際のカンバン工作から統挙",
+        "featured_week_outcome_label": "成果：",
+
 
 
 
@@ -2940434,6 +2940442,10 @@ const TRANSLATIONS = {
         "chat_schedule_cancelled": "취소되었습니다",
         "info_slide_guide_msg_cta": "Claude Design 슬라이드 보기 →",
         "community_cta_create_bot": "나만의 봇이 필요하신가요? 무료로 만들고 바로 등록하세요.",
+        "featured_week_eyebrow": "⭐ 이번 주 주목",
+        "featured_week_rotation_label": "6일마다 순환 · 실제 칸반 작업에서 선정",
+        "featured_week_outcome_label": "결과：",
+
         "files_multi_select_count": "선택됨",
         "files_multi_select_attach": "채팅에 첨부",
         "files_multi_select_cancel": "취소",
@@ -2943183,6 +2943195,10 @@ const TRANSLATIONS = {
         "chat_schedule_saved": "บันทึกแล้ว",
         "chat_schedule_cancelled": "ยกเลิก",
         "community_cta_create_bot": "ต้องการ Bot ของคุณเองหรือ? สร้างหนึ่งรายการฟรีและลงรายการได้ทันที",
+        "featured_week_eyebrow": "⭐ แนะนำประจำสัปดาห์",
+        "featured_week_rotation_label": "หมุนเวียนทุก 6 วัน · คัดสรรจากงานคันบังจริง",
+        "featured_week_outcome_label": "ผลลัพธ์:",
+
         "files_multi_select_count": "เลือกแล้ว",
         "files_multi_select_attach": "แนบมาในแชท.",
         "files_multi_select_cancel": "ยกเลิก",
@@ -3994531,6 +3994547,10 @@ const TRANSLATIONS = {
         "common_redeem": "Đổi",
         "common_refresh": "Làm mới",
         "community_cta_create_bot": "Muốn có Bot của riêng bạn? Tạo miễn phí và đưa vào danh sách ngay lập tức.",
+        "featured_week_eyebrow": "⭐ Nổi bật tuần này",
+        "featured_week_rotation_label": "Xoay mỗi 6 ngày · từ chọn từ công việc kanban thực",
+        "featured_week_outcome_label": "Kết quả:",
+
         "compare_back": "← Quay lại Trung tâm thông tin",
         "compare_page_title": "EClawbot so với Telegram — So sánh kênh",
         "dash_copied": "Đã sao chép!",
@@ -4520554,6 +4520574,10 @@ const TRANSLATIONS = {
         "common_redeem": "Tukarkan",
         "common_refresh": "Segarkan",
         "community_cta_create_bot": "Ingin Bot sendiri? Buat gratis dan tampilkan langsung.",
+        "featured_week_eyebrow": "⭐ Fitur andalan minggu ini",
+        "featured_week_rotation_label": "Berputar setiap 6 hari · kurasi dari kerja kanban nyata",
+        "featured_week_outcome_label": "Hasil:",
+
         "compare_back": "← Kembali ke Info Hub",
         "compare_page_title": "EClawbot vs Telegram — Perbandingan Kanal",
         "dash_copied": "Disalin!",
@@ -5045656,6 +5045680,10 @@ const TRANSLATIONS = {
         "chat_schedule_saved": "Enregistré",
         "chat_schedule_cancelled": "Annulé",
         "community_cta_create_bot": "Vous voulez votre propre Bot ? Créez-en un gratuitement et répertoriez-le instantanément.",
+        "featured_week_eyebrow": "⭐ À la une cette semaine",
+        "featured_week_rotation_label": "Rotation toutes les 6 journées · sélectionnée parmi le travail Kanban réel",
+        "featured_week_outcome_label": "Résultat :",
+
         "files_multi_select_count": "Choisi",
         "files_multi_select_attach": "Joindre au chat",
         "files_multi_select_cancel": "Annuler",
@@ -5562840,6 +5562868,10 @@ const TRANSLATIONS = {
         "sc_cta_create_bot": "¿Te gusta este bot? Crea el tuyo — ¡es gratis!",
         "sc_cta_create_bot_btn": "Crear tu propio bot",
         "community_cta_create_bot": "¿Quieres tu propio bot? Crea uno gratis y publícalo al instante.",
+        "featured_week_eyebrow": "⭐ Destacado esta semana",
+        "featured_week_rotation_label": "Rota cada 6 días · seleccionado del trabajo real de Kanban",
+        "featured_week_outcome_label": "Resultado:",
+
         "files_multi_select_count": "Seleccionados",
         "files_multi_select_attach": "Adjuntar al chat",
         "files_multi_select_cancel": "Cancelar",
@@ -6096782,6 +6096814,10 @@ const TRANSLATIONS = {
 
 
         "community_cta_create_bot": "Möchten Sie Ihren eigenen Bot? Erstellen Sie kostenlos einen und listen Sie ihn sofort.",
+        "featured_week_eyebrow": "⭐ Diese Woche vorgestellt",
+        "featured_week_rotation_label": "Rotation alle 6 Tage · kuratiert aus echter Kanban-Arbeit",
+        "featured_week_outcome_label": "Ergebnis:",
+
 
 
 
@@ -6103173,6 +6103209,10 @@ const TRANSLATIONS = {
         "sc_cta_create_bot": "Like this bot? Create your own — it's free!",
         "sc_cta_create_bot_btn": "Create your own Bot",
         "community_cta_create_bot": "Want your own Bot? Create one for free and list it instantly.",
+        "featured_week_eyebrow": "⭐ Destaque desta semana",
+        "featured_week_rotation_label": "Rota a cada 6 dias · curado do trabalho real de Kanban",
+        "featured_week_outcome_label": "Resultado:",
+
         "sc_create_account": "Create Account",
         "sc_email": "Email",
         "sc_password": "Password",
@@ -6632696,6 +6632736,10 @@ const TRANSLATIONS = {
         "common_open_editor": "Buka editor",
         "common_redeem": "Tebus",
         "community_cta_create_bot": "Mahukan Bot anda sendiri? Cipta satu secara percuma dan senaraikannya serta-merta.",
+        "featured_week_eyebrow": "⭐ Ciri pilihan minggu ini",
+        "featured_week_rotation_label": "Berputar setiap 6 hari · dipilih dari kerja kanban sebenar",
+        "featured_week_outcome_label": "Hasil:",
+
         "compare_back": "← Kembali ke Hab Maklumat",
         "compare_page_title": "EClawbot lwn Telegram — Perbandingan Saluran",
         "dash_copied": "Disalin!",
@@ -7191894,6 +7191938,10 @@ const TRANSLATIONS = {
         "common_open_editor": "संपादक खोलें",
         "common_redeem": "भुनाना",
         "community_cta_create_bot": "क्या आप अपना स्वयं का बॉट चाहते हैं? ",
+        "featured_week_eyebrow": "⭐ इस सप्ताह में विशेष",
+        "featured_week_rotation_label": "हर 6 दिन में बदलता है · वास्तविक कैनबन कार्य से चुना गया",
+        "featured_week_outcome_label": "परिणाम:",
+
         "compare_back": "← इन्फो हब पर वापस जाएँ",
         "compare_page_title": "EClawbot बनाम टेलीग्राम - चैनल तुलना",
         "env_toggle_device_id": "डिवाइस आईडी दिखाएँ/छिपाएँ",
@@ -7737505,6 +7737553,10 @@ const TRANSLATIONS = {
 
 
         "community_cta_create_bot": "هل تريد بوتك الخاص؟ أنشئ واحداً مجاناً وأدرجه فوراً.",
+        "featured_week_eyebrow": "⭐ المميز هذا الأسبوع",
+        "featured_week_rotation_label": "يدور كل 6 أيام · مخصص من عمل كانبان حقيقي",
+        "featured_week_outcome_label": "نتيجة:",
+
 
 
 
