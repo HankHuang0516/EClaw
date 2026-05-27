@@ -49,12 +49,13 @@ async function run() {
         assert(status === 200, 'GET /platforms returns 200');
         assert(data.success === true, 'Response has success: true');
         assert(Array.isArray(data.platforms), 'platforms is array');
-        assert(data.platforms.length === 11, `11 platforms listed (got ${data.platforms.length})`);
+        assert(data.platforms.length === 9, `9 platforms listed (got ${data.platforms.length}) — mastodon retired 2026-04-15, wordpress 2026-04-20, hashnode 2026-05-27`);
 
         const ids = data.platforms.map(p => p.id);
-        for (const expected of ['blogger', 'hashnode', 'x', 'devto', 'wordpress', 'telegraph', 'qiita', 'wechat', 'tumblr', 'reddit', 'linkedin']) {
+        for (const expected of ['blogger', 'x', 'devto', 'telegraph', 'qiita', 'wechat', 'tumblr', 'reddit', 'linkedin']) {
             assert(ids.includes(expected), `Platform "${expected}" present`);
         }
+        assert(!ids.includes('hashnode'), 'Hashnode retired 2026-05-27 — no longer in platforms list');
         assert(!ids.includes('mastodon'), 'Mastodon retired — no longer in platforms list');
 
         const telegraph = data.platforms.find(p => p.id === 'telegraph');

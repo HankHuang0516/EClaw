@@ -35,17 +35,18 @@ const del = (path) => request(publisherApp).delete(path);
 
 // ════════════════════════════════════════════════════════════════
 // GET /api/publisher/platforms — post-retirement list (10 platforms;
-// mastodon retired 2026-04-15, wordpress retired 2026-04-20)
+// mastodon retired 2026-04-15, wordpress retired 2026-04-20, hashnode retired 2026-05-27)
 // ════════════════════════════════════════════════════════════════
 describe('GET /api/publisher/platforms', () => {
     it('returns list of all supported platforms', async () => {
         const res = await get('/api/publisher/platforms');
         expect(res.status).toBe(200);
         expect(Array.isArray(res.body.platforms)).toBe(true);
-        expect(res.body.platforms.length).toBeGreaterThanOrEqual(10);
+        expect(res.body.platforms.length).toBeGreaterThanOrEqual(9);
         const ids = res.body.platforms.map(p => p.id);
         expect(ids).not.toContain('mastodon');
         expect(ids).not.toContain('wordpress');
+        expect(ids).not.toContain('hashnode');
     });
 
     it('each platform has required fields', async () => {
@@ -66,7 +67,7 @@ describe('Publish endpoints reject without platform API keys', () => {
         // Telegraph excluded — auto-creates account without API key, returns 200
         { method: 'post', path: '/api/publisher/qiita/publish', body: { title: 'T', body: 'B' }, name: 'Qiita' },
         { method: 'post', path: '/api/publisher/x/tweet', body: { text: 'hello' }, name: 'X/Twitter' },
-        { method: 'post', path: '/api/publisher/hashnode/publish', body: { title: 'T', content: 'C' }, name: 'Hashnode' },
+        // Hashnode removed 2026-05-27 — platform retired (pay-or-drop → drop).
         { method: 'post', path: '/api/publisher/wordpress/publish', body: { title: 'T', content: 'C' }, name: 'WordPress' },
         { method: 'post', path: '/api/publisher/tumblr/publish', body: { title: 'T', body: 'B' }, name: 'Tumblr' },
         { method: 'post', path: '/api/publisher/reddit/submit', body: { title: 'T', subreddit: 'r' }, name: 'Reddit' },
@@ -112,7 +113,6 @@ describe('/me endpoints reject without credentials', () => {
     const meEndpoints = [
         '/api/publisher/devto/me',
         '/api/publisher/x/me',
-        '/api/publisher/hashnode/me',
         '/api/publisher/qiita/me',
         '/api/publisher/tumblr/me',
         '/api/publisher/reddit/me',
@@ -139,9 +139,5 @@ describe('Delete endpoints reject without credentials', () => {
         expect(res.status).toBeGreaterThanOrEqual(400);
         expect(res.status).toBeLessThan(600);
     });
-
-    it('Hashnode delete returns error', async () => {
-        const res = await del('/api/publisher/hashnode/post/abc');
-        expect(res.status).toBeGreaterThanOrEqual(400);
-    });
+    // Hashnode delete test removed 2026-05-27 — platform retired.
 });

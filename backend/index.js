@@ -2179,7 +2179,7 @@ app.use('/api/oauth', oauthServer.router);
 oauthServer.initOAuthDatabase();
 
 // ============================================
-// ARTICLE PUBLISHER — Blogger + Hashnode
+// ARTICLE PUBLISHER — Blogger + DEV.to + X + Qiita + Tumblr + Reddit + LinkedIn + Telegraph + WeChat
 // ============================================
 const articlePublisher = require('./article-publisher');
 app.use('/api/publisher', articlePublisher.router);
