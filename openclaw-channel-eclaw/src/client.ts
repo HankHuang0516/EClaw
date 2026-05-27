@@ -3,6 +3,7 @@ import type {
   RegisterResponse,
   BindResponse,
   MessageResponse,
+  HeartbeatResponse,
 } from './types.js';
 
 /**
@@ -124,6 +125,30 @@ export class EClawClient {
     });
 
     return await res.json() as MessageResponse;
+  }
+
+  /** Record this bound entity daemon as alive. */
+  async sendHeartbeat(): Promise<HeartbeatResponse> {
+    if (!this.deviceId || !this.botSecret || this.entityId === undefined) {
+      throw new Error('Not bound — call bindEntity() first');
+    }
+
+    const res = await fetch(`${this.apiBase}/api/entity/heartbeat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        deviceId: this.deviceId,
+        entityId: this.entityId,
+        botSecret: this.botSecret,
+      }),
+    });
+
+    const body = await res.json() as HeartbeatResponse;
+    if (!res.ok || body.success === false) {
+      const reason = (body as { message?: string }).message || `HTTP ${res.status}`;
+      throw new Error(`heartbeat failed: ${reason}`);
+    }
+    return body;
   }
 
   /**

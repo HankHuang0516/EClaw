@@ -487,6 +487,36 @@ describe('mention-parser.stripMentionTokens', () => {
     });
 });
 
+describe('mention-parser.escapeContextualMentionTokens', () => {
+    const zwsp = '\u200b';
+
+    test('leaves direct mentions routable while escaping quote-line mentions', () => {
+        const r = mp.escapeContextualMentionTokens('> @all in quote\nplease ask @#3');
+        expect(r.text).toContain(`> @${zwsp}all in quote`);
+        expect(r.text).toContain('please ask @#3');
+        expect(r.warnings).toContain('MENTION_LEAK_ESCAPED:quote');
+    });
+
+    test('escapes forwarded [from #N] segments without touching text before the marker', () => {
+        const r = mp.escapeContextualMentionTokens('direct @#3 see [from #6] @all stuff');
+        expect(r.text).toBe(`direct @#3 see [from #6] @${zwsp}all stuff`);
+        expect(r.warnings).toContain('MENTION_LEAK_ESCAPED:forward');
+    });
+
+    test('escapes broadcast recipient and task description context blocks', () => {
+        const r = mp.escapeContextualMentionTokens(
+            '[BROADCAST RECIPIENTS]\n@#2 copied recipient\n\n[TASK DESCRIPTION]\nask @all to review\n[/TASK DESCRIPTION]\n@#3 direct'
+        );
+        expect(r.text).toContain(`@${zwsp}#2 copied recipient`);
+        expect(r.text).toContain(`ask @${zwsp}all to review`);
+        expect(r.text).toContain('@#3 direct');
+        expect(r.warnings).toEqual(expect.arrayContaining([
+            'MENTION_LEAK_ESCAPED:context_block',
+            'MENTION_LEAK_ESCAPED:card_context'
+        ]));
+    });
+});
+
 describe('mention-parser.toContextPayload', () => {
     test('returns null when nothing to store', () => {
         expect(mp.toContextPayload({ hasAll: false, mentions: [], unresolved: [] })).toBeNull();
