@@ -1,3 +1,10 @@
+# [1.1177.0](https://github.com/HankHuang0516/EClaw/compare/v1.1176.1...v1.1177.0) (2026-05-27)
+
+
+### Features
+
+* **portal:** page transition overlay (card_64917ead) ([#2975](https://github.com/HankHuang0516/EClaw/issues/2975)) ([dd96524](https://github.com/HankHuang0516/EClaw/commit/dd96524f3fb02fe91268cfc318d2bd9b3134879e)), closes [3/#4](https://github.com/HankHuang0516/EClaw/issues/4) [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 ## [1.1176.1](https://github.com/HankHuang0516/EClaw/compare/v1.1176.0...v1.1176.1) (2026-05-27)
 
 
