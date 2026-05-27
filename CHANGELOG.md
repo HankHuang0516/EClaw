@@ -1,3 +1,10 @@
+## [1.1179.1](https://github.com/HankHuang0516/EClaw/compare/v1.1179.0...v1.1179.1) (2026-05-27)
+
+
+### Bug Fixes
+
+* **borrow:** bind skill doc echoes back as greeting reply ([#2982](https://github.com/HankHuang0516/EClaw/issues/2982)) ([a227741](https://github.com/HankHuang0516/EClaw/commit/a22774172c54c8c3aaf6d7133d610f41f8e9e1e3)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.1179.0](https://github.com/HankHuang0516/EClaw/compare/v1.1178.0...v1.1179.0) (2026-05-27)
 
 
