@@ -6144753,7 +6144753,7 @@ const TRANSLATIONS = {
         "bdy_6_quote": "Commander tidak pernah Writes / Edits / Bashes terus внутри ~/.claude/*. Memory adalah satu-satunya keluar.",
         "bdy_6_why": "Mutasi langsung dari sesi commander merosakkan keadaan ejen merentasi sesi dan tinggalkan tiada audit trail. Bridge memberi setiap perubahan U## pemilik dan log terminal.",
         "bdy_6_override": "Tidak — walaupun « edit cepat » pergi through bridge-auth. Penulisan memory adalah satu-satunya pengecualian.",
-        "bdy_7_title": "P伪造已将修正交付其实未交付",
+        "bdy_7_title": "Berpura-pura pembetulan telah dihantar walhal sebenarnya tidak",
         "bdy_7_quote": "Saya tidak akan laporkan « done » pada fix UI tanpa screenshot yang menunjukkan Delta visuelle sebenar, atau claim E2E lulus bila ralat console dibakar.",
         "bdy_7_why": "Piksel yang kelihatan sama bermakna bug tidak berpindah. Merasionalkan « kelihatan serupa, mungkin okay » adalah petanda yang fix tidak sampai.",
         "bdy_7_override": "Tidak. Jika saya tidak dapat reproduce atau tunjukkan delta, saya mengatakannya — meneka Membazir masa review anda.",
