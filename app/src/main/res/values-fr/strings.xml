@@ -238,6 +238,7 @@
     <string name="background_disabled">Arrière-plan désactivé</string>
     <string name="error_open_picker">Impossible d\'ouvrir le sélecteur de photos</string>
     <string name="error_open_settings">Impossible d\'ouvrir les paramètres de fond d\'écran</string>
+    <string name="error_unknown">Erreur inconnue</string>
     <string name="bot_label">🤖 %s</string>
     <string name="mission_completed_at">✓ %s</string>
     <string name="playback_failed">Échec de la lecture</string>
