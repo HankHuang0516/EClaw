@@ -127,6 +127,7 @@ const TRANSLATIONS = {
 
 
     en: {
+        "transition_loading": "Loading…",
         "dashboard_usage_widget_title": "Claude Code / Codex usage",
         "dashboard_usage_widget_refresh": "Refresh",
         "dashboard_usage_widget_loading": "Loading usage data...",
@@ -650036,6 +650037,7 @@ const TRANSLATIONS = {
 
 
     zh: {
+        "transition_loading": "載入中…",
         "dashboard_usage_widget_title": "Claude Code / Codex 用量",
         "dashboard_usage_widget_refresh": "重新整理",
         "dashboard_usage_widget_loading": "正在載入用量資料...",
@@ -1848296,6 +1848298,7 @@ const TRANSLATIONS = {
 
 
     ja: {
+        "transition_loading": "読み込み中…",
         "dashboard_usage_widget_title": "Claude Code / Codex 利用状況",
         "dashboard_usage_widget_refresh": "更新",
         "dashboard_usage_widget_loading": "利用データを読み込み中...",
@@ -2411197,6 +2411200,7 @@ const TRANSLATIONS = {
 
 
     ko: {
+        "transition_loading": "로딩 중…",
         "dashboard_usage_widget_title": "Claude Code / Codex 사용량",
         "dashboard_usage_widget_refresh": "새로고침",
         "dashboard_usage_widget_loading": "사용량 데이터 로드 중...",
@@ -2942744,6 +2942748,7 @@ const TRANSLATIONS = {
 
 
     th: {
+        "transition_loading": "กำลังโหลด…",
         "dashboard_usage_widget_title": "การใช้งาน Claude Code / Codex",
         "dashboard_usage_widget_refresh": "รีเฟรช",
         "dashboard_usage_widget_loading": "กำลังโหลดข้อมูลการใช้งาน...",
@@ -3469171,6 +3469176,7 @@ const TRANSLATIONS = {
 
 
     vi: {
+        "transition_loading": "Đang tải…",
         "dashboard_usage_widget_title": "Mức sử dụng Claude Code / Codex",
         "dashboard_usage_widget_refresh": "Làm mới",
         "dashboard_usage_widget_loading": "Đang tải dữ liệu sử dụng...",
@@ -3995599,6 +3995605,7 @@ const TRANSLATIONS = {
 
 
     id: {
+        "transition_loading": "Memuat…",
         "dashboard_usage_widget_title": "Penggunaan Claude Code / Codex",
         "dashboard_usage_widget_refresh": "Segarkan",
         "dashboard_usage_widget_loading": "Memuat data penggunaan...",
@@ -4521643,6 +4521650,7 @@ const TRANSLATIONS = {
 
 
     fr: {
+        "transition_loading": "Chargement…",
         "dashboard_usage_widget_title": "Utilisation Claude Code / Codex",
         "dashboard_usage_widget_refresh": "Actualiser",
         "dashboard_usage_widget_loading": "Chargement des données d'utilisation...",
@@ -5046407,6 +5046415,7 @@ const TRANSLATIONS = {
 
 
     es: {
+        "transition_loading": "Cargando…",
         "dashboard_usage_widget_title": "Uso de Claude Code / Codex",
         "dashboard_usage_widget_refresh": "Actualizar",
         "dashboard_usage_widget_loading": "Cargando datos de uso...",
@@ -5563619,6 +5563628,7 @@ const TRANSLATIONS = {
 
 
     de: {
+        "transition_loading": "Lade…",
         "dashboard_usage_widget_title": "Claude Code / Codex Nutzung",
         "dashboard_usage_widget_refresh": "Aktualisieren",
         "dashboard_usage_widget_loading": "Nutzungsdaten werden geladen...",
@@ -6099922,6 +6099932,7 @@ const TRANSLATIONS = {
         "kb_gate_backlog_only_hint": "Launch-gate ist nur für Backlog-Karten verfügbar",
     },
     pt: {
+        "transition_loading": "A carregar…",
         "dashboard_usage_widget_title": "Claude Code / Codex usage",
         "dashboard_usage_widget_refresh": "Refresh",
         "dashboard_usage_widget_loading": "Loading usage data...",
@@ -6105350,6 +6105361,7 @@ const TRANSLATIONS = {
 
 
     ms: {
+        "transition_loading": "Memuatkan…",
         "dashboard_usage_widget_title": "Penggunaan Claude Code / Codex",
         "dashboard_usage_widget_refresh": "Segar semula",
         "dashboard_usage_widget_loading": "Memuatkan data penggunaan...",
@@ -6633905,6 +6633917,7 @@ const TRANSLATIONS = {
 
 
     hi: {
+        "transition_loading": "लोड हो रहा है…",
         "dashboard_usage_widget_title": "Claude Code / Codex उपयोग",
         "dashboard_usage_widget_refresh": "ताज़ा करें",
         "dashboard_usage_widget_loading": "उपयोग डेटा लोड हो रहा है...",
@@ -7192916,6 +7192929,7 @@ const TRANSLATIONS = {
 
 
     ar: {
+        "transition_loading": "جارٍ التحميل…",
         "dashboard_usage_widget_title": "استخدام Claude Code / Codex",
         "dashboard_usage_widget_refresh": "تحديث",
         "dashboard_usage_widget_loading": "جارٍ تحميل بيانات الاستخدام...",
