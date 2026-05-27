@@ -257,7 +257,7 @@ Los registros aparecerán aquí mientras la app funciona.</string>
     <string name="error_occurred">Ocurrió un error</string>
     <string name="error_open_picker">No se puede abrir el selector de fotos</string>
     <string name="error_open_settings">No se puede abrir la configuración del fondo</string>
-    <string name="error_unknown">Unknown error</string>
+    <string name="error_unknown">Error desconocido</string>
     <string name="expand">Expandir</string>
     <string name="expires_in">Expira en %ds</string>
     <string name="failed_add_slot">Error al agregar ranura</string>

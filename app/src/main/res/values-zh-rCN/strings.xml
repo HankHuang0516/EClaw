@@ -248,7 +248,7 @@
     <string name="error_generic">发生错误</string>
     <string name="error_open_picker">无法打开照片选择器</string>
     <string name="error_open_settings">无法打开壁纸设置</string>
-    <string name="error_unknown">Unknown error</string>
+    <string name="error_unknown">未知错误</string>
     <string name="expand">展开</string>
     <string name="expires_in">%d秒后过期</string>
     <string name="failed_add_slot">添加槽位失败</string>

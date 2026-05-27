@@ -248,7 +248,7 @@
     <string name="error_generic">เกิดข้อผิดพลาด</string>
     <string name="error_open_picker">ไม่สามารถเปิดตัวเลือกรูปภาพ</string>
     <string name="error_open_settings">ไม่สามารถเปิดการตั้งค่าวอลเปเปอร์</string>
-    <string name="error_unknown">Unknown error</string>
+    <string name="error_unknown">เกิดข้อผิดพลาดที่ไม่ทราบ</string>
     <string name="expand">ขยาย</string>
     <string name="expires_in">หมดอายุใน %d วินาที</string>
     <string name="failed_add_slot">เพิ่มช่องไม่สำเร็จ</string>

@@ -248,7 +248,7 @@
     <string name="error_generic">Đã xảy ra lỗi</string>
     <string name="error_open_picker">Không thể mở trình chọn ảnh</string>
     <string name="error_open_settings">Không thể mở cài đặt hình nền</string>
-    <string name="error_unknown">Unknown error</string>
+    <string name="error_unknown">Lỗi không xác định</string>
     <string name="expand">Mở rộng</string>
     <string name="expires_in">Hết hạn sau %d giây</string>
     <string name="failed_add_slot">Thêm vị trí thất bại</string>

@@ -238,7 +238,7 @@
     <string name="background_disabled">बैकग्राउंड अक्षम</string>
     <string name="error_open_picker">फोटो पिकर नहीं खुल सकता</string>
     <string name="error_open_settings">वॉलपेपर सेटिंग्स नहीं खुल सकतीं</string>
-    <string name="error_unknown">Unknown error</string>
+    <string name="error_unknown">अज्ञात त्रुटि</string>
     <string name="bot_label">🤖 %s</string>
     <string name="mission_completed_at">✓ %s</string>
     <string name="playback_failed">प्लेबैक विफल</string>

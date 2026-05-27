@@ -248,7 +248,7 @@
     <string name="error_generic">發生錯誤</string>
     <string name="error_open_picker">無法開啟照片選擇器</string>
     <string name="error_open_settings">無法開啟桌布設定</string>
-    <string name="error_unknown">Unknown error</string>
+    <string name="error_unknown">未知錯誤</string>
     <string name="expand">展開</string>
     <string name="expires_in">%d 秒後過期</string>
     <string name="failed_add_slot">新增欄位失敗</string>
