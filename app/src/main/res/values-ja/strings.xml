@@ -248,6 +248,7 @@
     <string name="error_generic">エラーが発生しました</string>
     <string name="error_open_picker">写真ピッカーを開けません</string>
     <string name="error_open_settings">壁紙設定を開けません</string>
+    <string name="error_unknown">Unknown error</string>
     <string name="expand">展開</string>
     <string name="expires_in">あと %d秒で期限切れ</string>
     <string name="failed_add_slot">スロットの追加に失敗しました</string>

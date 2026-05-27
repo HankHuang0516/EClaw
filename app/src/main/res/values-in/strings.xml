@@ -248,6 +248,7 @@
     <string name="error_generic">Terjadi kesalahan</string>
     <string name="error_open_picker">Tidak dapat membuka pemilih foto</string>
     <string name="error_open_settings">Tidak dapat membuka pengaturan wallpaper</string>
+    <string name="error_unknown">Unknown error</string>
     <string name="expand">Perluas</string>
     <string name="expires_in">Kedaluwarsa dalam %dd</string>
     <string name="failed_add_slot">Gagal menambahkan slot</string>

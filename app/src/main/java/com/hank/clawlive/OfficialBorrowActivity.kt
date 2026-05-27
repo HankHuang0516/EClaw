@@ -489,7 +489,9 @@ class OfficialBorrowActivity : AppCompatActivity() {
                 Toast.makeText(this@OfficialBorrowActivity, getString(R.string.rental_demand_success), Toast.LENGTH_LONG).show()
             } catch (e: Exception) {
                 Timber.e(e, "Failed to submit rental demand")
-                Toast.makeText(this@OfficialBorrowActivity, getString(R.string.rental_demand_fail, e.message ?: "Unknown error"), Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@OfficialBorrowActivity,
+                    getString(R.string.rental_demand_fail, e.message ?: getString(R.string.error_unknown)),
+                    Toast.LENGTH_SHORT).show()
             }
         }
     }

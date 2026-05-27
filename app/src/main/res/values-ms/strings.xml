@@ -238,6 +238,7 @@
     <string name="background_disabled">Latar belakang dilumpuhkan</string>
     <string name="error_open_picker">Tidak dapat membuka pemilih foto</string>
     <string name="error_open_settings">Tidak dapat membuka tetapan kertas dinding</string>
+    <string name="error_unknown">Unknown error</string>
     <string name="bot_label">🤖 %s</string>
     <string name="mission_completed_at">✓ %s</string>
     <string name="playback_failed">Main balik gagal</string>

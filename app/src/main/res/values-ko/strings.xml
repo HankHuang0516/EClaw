@@ -248,6 +248,7 @@
     <string name="error_generic">오류가 발생했습니다</string>
     <string name="error_open_picker">사진 선택기를 열 수 없습니다</string>
     <string name="error_open_settings">배경화면 설정을 열 수 없습니다</string>
+    <string name="error_unknown">Unknown error</string>
     <string name="expand">펼치기</string>
     <string name="expires_in">%d초 후 만료</string>
     <string name="failed_add_slot">슬롯 추가에 실패했습니다</string>

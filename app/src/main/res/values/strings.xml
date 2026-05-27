@@ -244,6 +244,7 @@
     <string name="background_disabled">Background disabled</string>
     <string name="error_open_picker">Cannot open photo picker</string>
     <string name="error_open_settings">Cannot open wallpaper settings</string>
+    <string name="error_unknown">Unknown error</string>
     <string name="bot_label">🤖 %s</string>
     <string name="mission_completed_at">✓ %s</string>
     <string name="playback_failed">Playback failed</string>
