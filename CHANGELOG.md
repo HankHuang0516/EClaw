@@ -1,3 +1,10 @@
+## [1.1176.1](https://github.com/HankHuang0516/EClaw/compare/v1.1176.0...v1.1176.1) (2026-05-27)
+
+
+### Bug Fixes
+
+* **android:** OfficialBorrow Toast error_unknown fallback ([#2974](https://github.com/HankHuang0516/EClaw/issues/2974)) ([#2971](https://github.com/HankHuang0516/EClaw/issues/2971)) ([ad8cbb1](https://github.com/HankHuang0516/EClaw/commit/ad8cbb1548de2a3dd0fa99ed4446a6cff92d59a5))
+
 # [1.1176.0](https://github.com/HankHuang0516/EClaw/compare/v1.1175.2...v1.1176.0) (2026-05-27)
 
 
