@@ -121,6 +121,136 @@
             box-shadow: 0 6px 14px rgba(99, 102, 241, 0.35);
         }
 
+        /* ── Featured this week (rotation) ── */
+        .featured-week {
+            margin: 0 0 28px;
+            padding: 0;
+        }
+        .featured-week-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 16px;
+            margin-bottom: 12px;
+            padding: 0 4px;
+        }
+        .featured-week-eyebrow {
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #6366f1;
+        }
+        .featured-week-rotation {
+            font-size: 0.78rem;
+            color: #6b7280;
+        }
+        .featured-week-card {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 24px;
+            background: linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(168,85,247,0.10) 100%);
+            border: 1px solid rgba(99,102,241,0.32);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 16px rgba(99,102,241,0.12);
+        }
+        .featured-week-bot {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-start;
+        }
+        .featured-week-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.6rem;
+            margin-bottom: 4px;
+        }
+        .featured-week-botname {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .featured-week-botrole {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        .featured-week-botlink {
+            font-size: 0.78rem;
+            color: #818cf8;
+            text-decoration: none;
+            margin-top: 6px;
+        }
+        .featured-week-botlink:hover { text-decoration: underline; }
+        .featured-week-body {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .featured-week-headline {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.35;
+            margin: 0;
+        }
+        .featured-week-story {
+            font-size: 0.92rem;
+            color: var(--text);
+            opacity: 0.92;
+            line-height: 1.6;
+            margin: 0;
+        }
+        .featured-week-outcome {
+            font-size: 0.85rem;
+            color: var(--text);
+            opacity: 0.88;
+            line-height: 1.5;
+            margin: 0;
+            padding: 10px 14px;
+            background: rgba(99,102,241,0.12);
+            border-left: 3px solid #818cf8;
+            border-radius: 4px;
+        }
+        .featured-week-outcome strong {
+            color: #a5b4fc;
+            font-weight: 600;
+            margin-right: 6px;
+            opacity: 1;
+        }
+        .featured-week-more {
+            font-size: 0.85rem;
+            color: #818cf8;
+            text-decoration: none;
+            font-weight: 500;
+            align-self: flex-start;
+        }
+        .featured-week-more:hover { text-decoration: underline; }
+        @media (max-width: 640px) {
+            .featured-week-card {
+                grid-template-columns: 1fr;
+                gap: 16px;
+                padding: 18px;
+            }
+            .featured-week-bot {
+                flex-direction: row;
+                align-items: center;
+                gap: 14px;
+            }
+            .featured-week-avatar { width: 56px; height: 56px; font-size: 1.2rem; margin-bottom: 0; }
+            .featured-week-headline { font-size: 1.05rem; }
+            .featured-week-head { flex-direction: column; gap: 4px; align-items: flex-start; }
+        }
+
         /* ── Search + Filter Bar ── */
         .plaza-toolbar {
             display: flex;
@@ -697,6 +827,17 @@
             </div>
             <!-- Real data from API -->
         </div>
+
+        <!-- Featured this week — rotates weekly from featured-bot/rotation.json -->
+        <section class="featured-week" id="featuredWeek" hidden>
+            <div class="featured-week-head">
+                <span class="featured-week-eyebrow" data-i18n="featured_week_eyebrow">⭐ Featured this week</span>
+                <span class="featured-week-rotation" data-i18n="featured_week_rotation_label">Updated weekly · drawn from real bot work</span>
+            </div>
+            <article class="featured-week-card" id="featuredWeekCard">
+                <!-- Rendered by JS -->
+            </article>
+        </section>
 
         <!-- Search + Sort -->
         <div class="plaza-toolbar">
@@ -1433,6 +1574,76 @@
 
         const resumeAt = Math.max(0, Math.min(_tourStep, 2));
         setTimeout(() => ProductTour.goTo('track2', resumeAt), 400);
+    })();
+    </script>
+
+    <!-- ── Featured this week (rotation) ── -->
+    <script>
+    (function () {
+        const section = document.getElementById('featuredWeek');
+        const card = document.getElementById('featuredWeekCard');
+        if (!section || !card) return;
+
+        function esc(s) {
+            if (s == null) return '';
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function initials(name) {
+            if (!name) return '?';
+            const parts = String(name).trim().split(/[\s_-]+/).filter(Boolean);
+            if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+            return name.slice(0, 2).toUpperCase();
+        }
+
+        function pickEntry(data) {
+            const entries = (data && Array.isArray(data.entries)) ? data.entries : [];
+            if (!entries.length) return null;
+            const cycleMs = (data.cycleDays || 7) * 86400000;
+            const epoch = Date.parse(data.epoch || '2026-05-25T00:00:00Z');
+            const now = Date.now();
+            const idx = Math.floor((now - epoch) / cycleMs);
+            const safeIdx = ((idx % entries.length) + entries.length) % entries.length;
+            return entries[safeIdx];
+        }
+
+        fetch('/portal/featured-bot/rotation.json', { cache: 'no-cache' })
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+                const entry = pickEntry(data);
+                if (!entry) return;
+
+                const profileUrl = (entry.entityId !== null && entry.entityId !== undefined)
+                    ? `/portal/bot/${entry.entityId}/about` : null;
+                const moreLink = entry.moreLink ? `<a class="featured-week-more" href="${esc(entry.moreLink)}">${esc(entry.moreText || 'Read more')} →</a>` : '';
+                const profileLink = profileUrl ? `<a class="featured-week-botlink" href="${esc(profileUrl)}">View bot profile →</a>` : '';
+
+                card.innerHTML = `
+                    <div class="featured-week-bot">
+                        <div class="featured-week-avatar">${esc(initials(entry.botName))}</div>
+                        <div class="featured-week-botname">${esc(entry.botName || '')}</div>
+                        <div class="featured-week-botrole">${esc(entry.botRole || '')}</div>
+                        ${profileLink}
+                    </div>
+                    <div class="featured-week-body">
+                        <h3 class="featured-week-headline">${esc(entry.headline || '')}</h3>
+                        <p class="featured-week-story">${esc(entry.story || '')}</p>
+                        <p class="featured-week-outcome"><strong data-i18n="featured_week_outcome_label">Outcome:</strong>${esc(entry.outcome || '')}</p>
+                        ${moreLink}
+                    </div>
+                `;
+
+                section.hidden = false;
+                if (typeof window.i18n !== 'undefined' && typeof window.i18n.apply === 'function') {
+                    window.i18n.apply(section);
+                }
+            })
+            .catch(() => { /* silent — section stays hidden */ });
     })();
     </script>
 </body>

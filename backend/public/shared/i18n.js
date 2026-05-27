@@ -397819,6 +397819,9 @@ const TRANSLATIONS = {
 
 
         "community_cta_create_bot": "Want your own Bot? Create one for free and list it instantly.",
+        "featured_week_eyebrow": "⭐ Featured this week",
+        "featured_week_rotation_label": "Updated weekly · drawn from real bot work",
+        "featured_week_outcome_label": "Outcome:",
 
 
 
