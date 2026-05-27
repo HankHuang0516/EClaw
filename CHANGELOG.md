@@ -1,3 +1,10 @@
+## [1.1175.2](https://github.com/HankHuang0516/EClaw/compare/v1.1175.1...v1.1175.2) (2026-05-27)
+
+
+### Bug Fixes
+
+* **android:** bump production app version to 1.0.87 ([bb4203e](https://github.com/HankHuang0516/EClaw/commit/bb4203ef9aeaf184ea5c270287ef523dbe5779d5))
+
 ## [1.1175.1](https://github.com/HankHuang0516/EClaw/compare/v1.1175.0...v1.1175.1) (2026-05-26)
 
 
