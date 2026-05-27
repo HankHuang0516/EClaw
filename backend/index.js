@@ -5300,10 +5300,14 @@ async function createPendingAckRows(pool, rows) {
     return created;
 }
 
-async function markAckedById(pool, ackId, recipientEntityId) {
+async function markAckedById(pool, ackId, recipientEntityId, nowMs = Date.now()) {
     if (!pool || !ackId) return null;
-    // Idempotent: only the recipient (matching entityId) can ack their own pending row.
-    // CTE returns the row that was actually updated (NULL if already acked/expired).
+    // Idempotent + race-safe:
+    //   UPDATE only matches rows that are still pending AND not past deadline.
+    //   If the deadline has passed (but sweeper hasn't fired yet), UPDATE matches 0
+    //   rows and the UNION-ALL fallback returns the current row with status='pending'
+    //   and deadline_ms<=nowMs — the endpoint then returns 410 instead of acking late.
+    //   Already-acked / already-expired rows are returned unchanged via UNION-ALL.
     const result = await pool.query(
         `WITH updated AS (
              UPDATE pending_ack
@@ -5311,18 +5315,21 @@ async function markAckedById(pool, ackId, recipientEntityId) {
               WHERE ack_id = $1
                 AND recipient_entity_id = $2
                 AND status = 'pending'
+                AND deadline_ms > $3
               RETURNING ack_id, device_id, sender_entity_id, recipient_entity_id,
-                        recipient_public_code, deadline_ms, created_at, acked_at
+                        recipient_public_code, status, deadline_ms, created_at,
+                        acked_at, timed_out_at
          )
          SELECT * FROM updated
          UNION ALL
          SELECT ack_id, device_id, sender_entity_id, recipient_entity_id,
-                recipient_public_code, deadline_ms, created_at, acked_at
+                recipient_public_code, status, deadline_ms, created_at,
+                acked_at, timed_out_at
            FROM pending_ack
           WHERE ack_id = $1
             AND NOT EXISTS (SELECT 1 FROM updated)
           LIMIT 1`,
-        [ackId, recipientEntityId]
+        [ackId, recipientEntityId, nowMs]
     );
     return result.rows[0] || null;
 }
@@ -7493,7 +7500,9 @@ app.post('/api/ack', async (req, res) => {
         return res.status(403).json({ success: false, message: 'ackId not addressed to this entity' });
     }
 
-    if (existing.status === 'expired') {
+    const nowMs = Date.now();
+    if (existing.status === 'expired' ||
+        (existing.status === 'pending' && Number(existing.deadline_ms) <= nowMs)) {
         return res.status(410).json({
             success: false,
             ackId,
@@ -7505,7 +7514,7 @@ app.post('/api/ack', async (req, res) => {
 
     let updated;
     try {
-        updated = await markAckedById(chatPool, ackId, eId);
+        updated = await markAckedById(chatPool, ackId, eId, nowMs);
     } catch (err) {
         console.error('[Ack] update error:', err.message);
         return res.status(500).json({ success: false, message: 'Ack update failed' });
@@ -7513,6 +7522,27 @@ app.post('/api/ack', async (req, res) => {
 
     if (!updated) {
         return res.status(500).json({ success: false, message: 'Ack update returned no row' });
+    }
+
+    // Race guard: pre-check passed but deadline expired before UPDATE ran. UPDATE
+    // matched 0 rows; UNION-ALL returned the still-pending row with deadline_ms
+    // <= now (sweeper will flip on next tick). Reject with 410 — do not late-ack.
+    if (updated.status === 'pending' && Number(updated.deadline_ms) <= nowMs) {
+        return res.status(410).json({
+            success: false,
+            ackId,
+            status: 'expired',
+            message: 'Ack window expired during request',
+        });
+    }
+    if (updated.status === 'expired') {
+        return res.status(410).json({
+            success: false,
+            ackId,
+            status: 'expired',
+            message: 'Ack window already expired',
+            timedOutAt: updated.timed_out_at,
+        });
     }
 
     return res.json({
@@ -8666,7 +8696,14 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
                 }).catch(() => {});
 
                 console.log(`[Transform+SpeakTo] ${deviceId}:${eId} -> ${target.deviceId}:${target.entityId} (${code})`);
-                results.push({ publicCode: code, success: true, ...result });
+                results.push({
+                    publicCode: code,  // original speakTo token (back-compat)
+                    success: true,
+                    targetDeviceId: target.deviceId,
+                    targetEntityId: target.entityId,
+                    targetPublicCode: toEntity.publicCode || null,
+                    ...result,
+                });
                 deliverySaved = true;
             }
 
@@ -8700,31 +8737,71 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         }
     }
 
-    // Platform-P2: ack_required pending row creation. V3 — only for actually-
-    // delivered recipients. For speakTo, deliveryResults.results carries per-
-    // target success; for broadcast (no per-target failure path), routing.routedTo
-    // is presumed delivered. ackDeadlineMs clamps to [60s, 1h] (default 15min).
+    // Platform-P2: ack_required pending row creation. V4 — source rows from
+    // delivery target identity (deviceId + entityId), NOT publicCode strings.
+    //
+    // speakTo path:  iterate deliveryResults.results.filter(r => r.success); each
+    //                row carries targetDeviceId/targetEntityId/targetPublicCode.
+    //                Cross-device targets are skipped with a per-target warning
+    //                (scope lock: NO cross-device fan-out — /api/ack authenticates
+    //                against the row's device_id, so cross-device rows are dead).
+    // broadcast path: deliveryResults.results is the per-target list from
+    //                deliverToEntity; for same-device broadcasts we accept these,
+    //                for cross-device broadcasts we skip with a global warning.
+    //
+    // ackDeadlineMs clamps to [60s, 1h] (default 15min).
     let ackInfo = null;
-    if (ackRequired === true && Array.isArray(routing.routedTo) && routing.routedTo.length > 0) {
-        const deliveredCodes = (deliveryResults && Array.isArray(deliveryResults.results))
-            ? new Set(deliveryResults.results.filter(r => r.success).map(r => r.publicCode))
-            : null;
-        const recipients = routing.routedTo.filter(r => {
-            if (!r.publicCode) return false;
-            return deliveredCodes ? deliveredCodes.has(r.publicCode) : true;
-        });
-        if (recipients.length > 0) {
+    if (ackRequired === true) {
+        const trackableTargets = [];
+        const isCrossDeviceBroadcast = !!(broadcast && targetDeviceId && targetDeviceId !== deviceId);
+
+        if (broadcast) {
+            if (isCrossDeviceBroadcast) {
+                warnings.push('ACK_REQUIRED_CROSS_DEVICE_SKIPPED:broadcast');
+            } else if (deliveryResults && Array.isArray(deliveryResults.targets)) {
+                // Same-device broadcast — deliverToEntity returned {entityId, character, ...}
+                // for each fan-out target. All are same-device by construction here.
+                for (const r of deliveryResults.targets) {
+                    if (!r || r.entityId === undefined) continue;
+                    trackableTargets.push({
+                        deviceId,
+                        senderEntityId: eId,
+                        recipientEntityId: r.entityId,
+                        recipientPublicCode: null,
+                        sourceMsgId: null,
+                    });
+                }
+            }
+        } else if (deliveryResults && Array.isArray(deliveryResults.results)) {
+            // speakTo path
+            const successResults = deliveryResults.results.filter(r => r.success);
+            for (const r of successResults) {
+                if (r.targetDeviceId === undefined || r.targetEntityId === undefined) continue;
+                if (r.targetDeviceId !== deviceId) {
+                    warnings.push(`ACK_REQUIRED_CROSS_DEVICE_SKIPPED:${r.targetEntityId}`);
+                    continue;
+                }
+                trackableTargets.push({
+                    deviceId,
+                    senderEntityId: eId,
+                    recipientEntityId: r.targetEntityId,
+                    recipientPublicCode: r.targetPublicCode || null,
+                    sourceMsgId: null,
+                });
+            }
+            if (trackableTargets.length === 0 && successResults.length > 0) {
+                warnings.push('ACK_REQUIRED_NO_TRACKABLE_RECIPIENTS');
+            }
+        }
+
+        if (trackableTargets.length > 0) {
             const clampedMs = clampAckDeadlineMs(ackDeadlineMs);
             const deadlineMs = Date.now() + clampedMs;
             try {
-                const created = await createPendingAckRows(chatPool, recipients.map(r => ({
-                    deviceId,
-                    senderEntityId: eId,
-                    recipientEntityId: r.entityId,
-                    recipientPublicCode: r.publicCode,
-                    sourceMsgId: null,
-                    deadlineMs,
-                })));
+                const created = await createPendingAckRows(
+                    chatPool,
+                    trackableTargets.map(t => ({ ...t, deadlineMs }))
+                );
                 ackInfo = {
                     required: true,
                     deadlineMs: clampedMs,

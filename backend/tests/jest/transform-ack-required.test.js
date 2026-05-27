@@ -66,11 +66,15 @@ function installPendingAckStore() {
 
         // WITH updated AS (UPDATE pending_ack SET status='acked' ... RETURNING ...)
         // SELECT * FROM updated UNION ALL SELECT ... WHERE NOT EXISTS (...)
+        // Params: [ackId, recipientEntityId, nowMs]
         if (/WITH updated AS[\s\S]*UPDATE pending_ack[\s\S]*'acked'/i.test(s)) {
-            const [ackId, recipientEntityId] = params;
+            const [ackId, recipientEntityId, nowMs] = params;
             const row = rows.find(r => r.ack_id === ackId);
             if (!row) return { rows: [], rowCount: 0 };
-            if (row.status === 'pending' && Number(row.recipient_entity_id) === Number(recipientEntityId)) {
+            // Mirror the UPDATE WHERE: status='pending' AND recipient matches AND deadline > now
+            if (row.status === 'pending'
+                && Number(row.recipient_entity_id) === Number(recipientEntityId)
+                && Number(row.deadline_ms) > Number(nowMs)) {
                 row.status = 'acked';
                 row.acked_at = new Date();
             }
@@ -331,5 +335,172 @@ describe('POST /api/ack — HTTP layer', () => {
     it('unknown device → 404', async () => {
         const res = await post('/api/ack').send({ deviceId: 'no-such-device', entityId: 1, botSecret: botSecret1, ackId: 'x' });
         expect(res.status).toBe(404);
+    });
+
+    it('late-ack race: deadline already passed → 410 (does NOT mark acked)', async () => {
+        // Pre-check passes (status='pending') but deadline has slipped. The race-safe
+        // markAckedById's UPDATE WHERE deadline_ms > now fails to match; the UNION-ALL
+        // fallback returns the row unchanged. Endpoint must return 410.
+        const past = Date.now() - 1000;
+        const { ackId } = await seedPendingRow({ recipientEntityId: 1, deadlineMs: past });
+        // NOTE: no sweep — row is still status='pending', but past deadline.
+        const res = await post('/api/ack').send({ deviceId, entityId: 1, botSecret: botSecret1, ackId });
+        expect(res.status).toBe(410);
+        expect(res.body.status).toBe('expired');
+        // Row must NOT have been flipped to 'acked' by the late call
+        expect(store[0].status).toBe('pending');
+        expect(store[0].acked_at).toBeNull();
+    });
+});
+
+describe('/api/transform — ack_required row creation (integration)', () => {
+    let deviceId, deviceSecret, botSecret0, botSecret1, entity1PublicCode;
+    let crossDeviceId, crossDeviceSecret, crossEntity0PublicCode;
+    let store;
+
+    beforeAll(async () => {
+        // Primary device — two bound entities
+        deviceId = 'tx-ack-device';
+        deviceSecret = await registerDevice(deviceId);
+        botSecret0 = await bindEntity(deviceId, deviceSecret, 0);
+        const addRes = await post('/api/device/add-entity').send({ deviceId, deviceSecret });
+        expect(addRes.status).toBe(200);
+        botSecret1 = await bindEntity(deviceId, deviceSecret, 1);
+        expect(botSecret1).toBeTruthy();
+        const { devices } = indexModule;
+        entity1PublicCode = devices[deviceId].entities[1].publicCode;
+        expect(entity1PublicCode).toBeTruthy();
+
+        // Secondary device — used to verify cross-device skip
+        crossDeviceId = 'tx-ack-xd-device';
+        crossDeviceSecret = await registerDevice(crossDeviceId);
+        await bindEntity(crossDeviceId, crossDeviceSecret, 0);
+        crossEntity0PublicCode = devices[crossDeviceId].entities[0].publicCode;
+        expect(crossEntity0PublicCode).toBeTruthy();
+    });
+
+    beforeEach(() => { store = installPendingAckStore(); });
+
+    it('speakTo with numeric "1" + ackRequired creates one pending row keyed by entityId', async () => {
+        const res = await post('/api/transform').send({
+            deviceId,
+            entityId: 0,
+            botSecret: botSecret0,
+            state: 'IDLE',
+            message: '@#1 ack please',
+            speakTo: ['1'],
+            ackRequired: true,
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.ackInfo).toBeTruthy();
+        expect(res.body.ackInfo.required).toBe(true);
+        expect(res.body.ackInfo.pending).toHaveLength(1);
+        expect(res.body.ackInfo.pending[0].recipientEntityId).toBe(1);
+        expect(res.body.ackInfo.pending[0].ackId).toBeTruthy();
+        expect(store).toHaveLength(1);
+        expect(store[0].device_id).toBe(deviceId);
+        expect(store[0].recipient_entity_id).toBe(1);
+        expect(store[0].sender_entity_id).toBe(0);
+        expect(store[0].status).toBe('pending');
+    });
+
+    it('speakTo with "#1" form creates pending row (same as numeric)', async () => {
+        const res = await post('/api/transform').send({
+            deviceId,
+            entityId: 0,
+            botSecret: botSecret0,
+            state: 'IDLE',
+            message: '@#1 ack please',
+            speakTo: ['#1'],
+            ackRequired: true,
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.ackInfo.pending).toHaveLength(1);
+        expect(res.body.ackInfo.pending[0].recipientEntityId).toBe(1);
+        expect(store).toHaveLength(1);
+        expect(store[0].recipient_entity_id).toBe(1);
+    });
+
+    it('speakTo with publicCode creates pending row', async () => {
+        const res = await post('/api/transform').send({
+            deviceId,
+            entityId: 0,
+            botSecret: botSecret0,
+            state: 'IDLE',
+            message: `@${entity1PublicCode} ack please`,
+            speakTo: [entity1PublicCode],
+            ackRequired: true,
+        });
+        expect(res.status).toBe(200);
+        expect(res.body.ackInfo.pending).toHaveLength(1);
+        expect(res.body.ackInfo.pending[0].recipientEntityId).toBe(1);
+        expect(res.body.ackInfo.pending[0].recipientPublicCode).toBe(entity1PublicCode);
+        expect(store).toHaveLength(1);
+    });
+
+    it('cross-device speakTo + ackRequired → no row, warning ACK_REQUIRED_CROSS_DEVICE_SKIPPED', async () => {
+        const res = await post('/api/transform').send({
+            deviceId,
+            entityId: 0,
+            botSecret: botSecret0,
+            state: 'IDLE',
+            message: `@${crossEntity0PublicCode} ack please`,
+            speakTo: [crossEntity0PublicCode],
+            ackRequired: true,
+        });
+        expect(res.status).toBe(200);
+        expect(store).toHaveLength(0);
+        const warnings = res.body.warnings || [];
+        expect(warnings.some(w => /^ACK_REQUIRED_CROSS_DEVICE_SKIPPED:/.test(w))).toBe(true);
+        // ackInfo absent when no trackable recipients
+        expect(res.body.ackInfo).toBeFalsy();
+    });
+
+    it('mixed same+cross-device speakTo: only same-device row created, cross gets warning', async () => {
+        const res = await post('/api/transform').send({
+            deviceId,
+            entityId: 0,
+            botSecret: botSecret0,
+            state: 'IDLE',
+            message: `@#1 @${crossEntity0PublicCode} ack`,
+            speakTo: ['1', crossEntity0PublicCode],
+            ackRequired: true,
+        });
+        expect(res.status).toBe(200);
+        // Only the same-device target gets a pending row
+        expect(store).toHaveLength(1);
+        expect(store[0].recipient_entity_id).toBe(1);
+        expect(store[0].device_id).toBe(deviceId);
+        const warnings = res.body.warnings || [];
+        expect(warnings.some(w => /^ACK_REQUIRED_CROSS_DEVICE_SKIPPED:/.test(w))).toBe(true);
+        expect(res.body.ackInfo.pending).toHaveLength(1);
+    });
+
+    it('ackRequired without speakTo/broadcast → no rows created', async () => {
+        const res = await post('/api/transform').send({
+            deviceId,
+            entityId: 0,
+            botSecret: botSecret0,
+            state: 'IDLE',
+            message: 'no delivery requested',
+            ackRequired: true,
+        });
+        expect(res.status).toBe(200);
+        expect(store).toHaveLength(0);
+        expect(res.body.ackInfo).toBeFalsy();
+    });
+
+    it('ackRequired=false (default) does not create rows even with speakTo', async () => {
+        const res = await post('/api/transform').send({
+            deviceId,
+            entityId: 0,
+            botSecret: botSecret0,
+            state: 'IDLE',
+            message: '@#1 no ack needed',
+            speakTo: ['1'],
+        });
+        expect(res.status).toBe(200);
+        expect(store).toHaveLength(0);
+        expect(res.body.ackInfo).toBeFalsy();
     });
 });
