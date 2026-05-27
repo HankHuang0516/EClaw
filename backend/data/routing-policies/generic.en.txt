@@ -38,6 +38,16 @@ PRECEDENCE
   2. In-text @-mention tokens (`@#N`, `@publicCode`, `@all`)
   3. `senderHint`                                            (lowest)
 
+DIAGNOSTICS
+  `/api/transform` returns `routing` with `resolvedVia`, `routedTo`,
+  `recipientLastSeen`, `stale`, and `warnings`.
+
+  If you use explicit `speakTo` without a matching @-mention in the reply
+  text, routing still proceeds but `routing.warnings` includes
+  `MENTION_MISSING_FOR_speakTo:<entityId>`. Prefer `senderHint`, or keep the
+  matching @ token in the message when you intentionally use explicit
+  `speakTo`.
+
 If none of the above resolve a target — and the inbound was a status update
 from a real user (`/api/client/speak`) or a system event (kanban automation) —
 just reply normally. The user / system sees your reply via chat history

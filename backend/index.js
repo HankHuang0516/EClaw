@@ -5185,6 +5185,9 @@ const HEARTBEAT_STUCK_MS = 90_000;
 // 90s says "alert ops"; 5min says "the daemon is dead, kill the process". Set well above
 // the H1.2 alert window so transient blips don't cause restart thrash.
 const SEVERE_STUCK_MS = 300_000;
+const ENTITY_HEARTBEAT_STALE_MS = Number.isFinite(Number(process.env.ENTITY_HEARTBEAT_STALE_MS))
+    ? Number(process.env.ENTITY_HEARTBEAT_STALE_MS)
+    : 300_000;
 // Boot-grace: process.uptime ≤ this skips the 503 even if state looks severe. Prevents
 // crashloop where DB-loaded stale mq + cold daemon trips immediate 503 → kill → repeat.
 // 3 min gives a fresh Hermes plenty of time to start polling and reset lastDrainedAt.
@@ -5194,6 +5197,59 @@ const HEALTH_BOOT_GRACE_MS = 180_000;
 // must NOT trigger restart. Only a daemon-wide failure — multiple bots that USED to drain
 // suddenly stopping — warrants a process kill.
 const SEVERE_STUCK_MIN_COUNT = 5;
+
+function parseEntityLastSeenMs(entity) {
+    if (!entity) return null;
+    const raw = entity.lastSeen || entity.last_seen || entity.daemonLastSeenAt || entity.lastSeenAt;
+    if (raw === undefined || raw === null || raw === '') return null;
+    if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+    const ms = Date.parse(raw);
+    return Number.isFinite(ms) ? ms : null;
+}
+
+function getEntityDaemonStatus(entity, nowMs = Date.now()) {
+    const lastSeenMs = parseEntityLastSeenMs(entity);
+    const lastSeen = lastSeenMs === null ? null : new Date(lastSeenMs).toISOString();
+    const stale = lastSeenMs === null || (nowMs - lastSeenMs) > ENTITY_HEARTBEAT_STALE_MS;
+    return {
+        daemonConnected: !!lastSeen && !stale,
+        lastSeen,
+        stale,
+    };
+}
+
+function recordEntityHeartbeat(entity, nowMs = Date.now()) {
+    const iso = new Date(nowMs).toISOString();
+    entity.lastSeen = iso;
+    entity.last_seen = iso;
+    return getEntityDaemonStatus(entity, nowMs);
+}
+
+function createRoutingDiagnostics(resolvedVia = null) {
+    return {
+        routedTo: [],
+        resolvedVia,
+        warnings: [],
+        recipientLastSeen: null,
+        stale: false,
+    };
+}
+
+function appendRoutingRecipient(routing, kind, targetEntityId, targetEntity) {
+    if (!routing || !targetEntity) return;
+    routing.routedTo.push({
+        kind,
+        entityId: targetEntityId,
+        publicCode: targetEntity.publicCode || null,
+    });
+    const status = getEntityDaemonStatus(targetEntity);
+    if (status.lastSeen) {
+        if (!routing.recipientLastSeen || Date.parse(status.lastSeen) < Date.parse(routing.recipientLastSeen)) {
+            routing.recipientLastSeen = status.lastSeen;
+        }
+    }
+    routing.stale = routing.stale || status.stale;
+}
 
 function evaluateDeliveryHealth(stuckList, uptimeMs) {
     const oldestIdleMs = stuckList.length
@@ -5314,6 +5370,7 @@ function createDefaultEntity(entityId) {
         message: `Entity #${entityId} waiting...`,
         parts: {},
         lastUpdated: Date.now(),
+        lastSeen: null, // Runtime heartbeat timestamp from the entity daemon
         messageQueue: [],
         deadLetterQueue: [], // Phase H1.1: capped overflow buffer for forensics
         lastEnqueuedAt: null, // Phase H1.2: when server last appended to messageQueue
@@ -7186,6 +7243,85 @@ app.get('/api/status', (req, res) => {
     });
 });
 
+/**
+ * POST /api/entity/heartbeat
+ * Entity daemon heartbeat. This is intentionally separate from Socket.IO
+ * keepalive: a connected owner app does not prove the bot runtime is alive.
+ * Body: { deviceId, entityId, botSecret } or { deviceId, entityId, deviceSecret }
+ */
+app.post('/api/entity/heartbeat', async (req, res) => {
+    const { deviceId, entityId, botSecret, deviceSecret } = req.body || {};
+
+    if (!deviceId) {
+        return res.status(400).json({ success: false, message: 'deviceId required' });
+    }
+    const device = devices[deviceId];
+    if (!device) {
+        return res.status(404).json({ success: false, message: 'Device not found' });
+    }
+
+    const eId = Number(entityId);
+    if (!Number.isInteger(eId) || !isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, message: 'Invalid entityId' });
+    }
+
+    const entity = device.entities[eId];
+    if (!entity || !entity.isBound) {
+        return res.status(404).json({ success: false, message: `Entity ${eId} is not bound` });
+    }
+
+    const deviceAuthed = !!(deviceSecret && device.deviceSecret && safeEqual(device.deviceSecret, deviceSecret));
+    const botAuthed = !!(botSecret && entity.botSecret && safeEqual(entity.botSecret, botSecret));
+    if (!deviceAuthed && !botAuthed) {
+        return res.status(403).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    const status = recordEntityHeartbeat(entity);
+    saveData().catch(err => console.error(`[Heartbeat] saveData failed: ${err.message}`));
+
+    res.json({
+        success: true,
+        entityId: eId,
+        daemonConnected: status.daemonConnected,
+        lastSeen: status.lastSeen,
+        stale: status.stale,
+    });
+});
+
+/**
+ * GET /api/entity/status
+ * Minimal daemon-online status for a target entity.
+ * Query: ?deviceId=...&entityId=...
+ */
+app.get('/api/entity/status', (req, res) => {
+    const { deviceId, entityId } = req.query || {};
+    if (!deviceId) {
+        return res.status(400).json({ message: 'deviceId required' });
+    }
+    const device = devices[deviceId];
+    if (!device) {
+        return res.status(404).json({ message: 'Device not found' });
+    }
+
+    const eId = Number(entityId);
+    if (!Number.isInteger(eId) || !isValidEntityId(device, eId)) {
+        return res.status(400).json({ message: 'Invalid entityId' });
+    }
+
+    const entity = device.entities[eId];
+    if (!entity || !entity.isBound) {
+        return res.status(404).json({ message: `Entity ${eId} is not bound` });
+    }
+
+    const status = getEntityDaemonStatus(entity);
+    res.json({
+        entityId: eId,
+        daemonConnected: status.daemonConnected,
+        lastSeen: status.lastSeen,
+        stale: status.stale,
+    });
+});
+
 // ── Shared Helpers: Gatekeeper + Delivery ──
 
 /**
@@ -7234,6 +7370,28 @@ function resolveSpeakToTarget(code, senderDeviceId) {
     }
 
     return null;
+}
+
+function collectMissingSpeakToMentionWarnings(speakToList, mentionParse, senderDeviceId) {
+    if (!Array.isArray(speakToList) || speakToList.length === 0) return [];
+    const mentioned = new Set((mentionParse?.mentions || []).map(m => `${m.deviceId}:${m.entityId}`));
+    const warnings = [];
+    const seen = new Set();
+
+    for (const code of speakToList) {
+        const target = resolveSpeakToTarget(code, senderDeviceId);
+        const key = target ? `${target.deviceId}:${target.entityId}` : String(code || '').trim();
+        if (target && mentioned.has(key)) continue;
+
+        const suffix = target ? target.entityId : (String(code || '').trim() || 'unknown');
+        const warning = `MENTION_MISSING_FOR_speakTo:${suffix}`;
+        if (!seen.has(warning)) {
+            seen.add(warning);
+            warnings.push(warning);
+        }
+    }
+
+    return warnings;
 }
 
 /**
@@ -7497,6 +7655,8 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     }
 
     let { deviceId, entityId, botSecret, actAs, name, character, state, message, parts, targetDeviceId, speakTo, broadcast, card, attachments, senderHint, aboutCardId } = req.body;
+    const hadExplicitSpeakTo = Array.isArray(speakTo) && speakTo.length > 0;
+    let routingResolvedVia = broadcast ? 'broadcast' : null;
 
     if (!deviceId) {
         return res.status(400).json({ success: false, message: "deviceId required" });
@@ -7723,6 +7883,14 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     if (character) entity.character = character;
     if (state) entity.state = state;
 
+    let contextualMentionEscape = null;
+    if (typeof message === 'string' && message) {
+        contextualMentionEscape = mentionParser.escapeContextualMentionTokens(message);
+        if (contextualMentionEscape.escaped) {
+            message = contextualMentionEscape.text;
+        }
+    }
+
     // Gatekeeper Second Lock: detect and mask token/info leaks in bot responses (free bots only)
     let finalMessage = message;
     if (message !== undefined && message) {
@@ -7762,6 +7930,9 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
             code !== entity.publicCode && code !== selfEidStr
         );
         if (speakTo.length === 0) speakTo = undefined;
+        if (!routingResolvedVia && speakTo && speakTo.length > 0 && hadExplicitSpeakTo) {
+            routingResolvedVia = 'speakTo';
+        }
     }
 
     // ── @-mention auto-fill + senderHint resolution (PR #2290 / fixes #2282) ──
@@ -7779,18 +7950,22 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // final state, and the self-save correctly skips when delivery is going
     // to happen.
     let transformMentionContext = null;
+    let transformMentionParse = null;
     if (finalMessage) {
         const tParse = mentionParser.parseMentions(finalMessage, {
             senderDeviceId: deviceId,
             devices,
             publicCodeIndex
         });
+        transformMentionParse = tParse;
         transformMentionContext = mentionParser.toContextPayload(tParse);
         if (transformMentionContext) {
             if (tParse.hasAll && !broadcast && !(speakTo && speakTo.length > 0)) {
                 broadcast = true;
+                routingResolvedVia = 'mention';
             } else if (tParse.mentions.length > 0 && !broadcast && !(speakTo && speakTo.length > 0)) {
                 speakTo = tParse.mentions.map(m => m.publicCode);
+                routingResolvedVia = 'mention';
             }
         }
     }
@@ -7806,6 +7981,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         const kind = senderHint.kind || 'unknown';
         if (kind === 'broadcast') {
             broadcast = true;
+            routingResolvedVia = 'senderHint';
             senderHintResolution = { kind, applied: 'broadcast' };
         } else if (kind === 'entity') {
             // Resolve hint → publicCode. publicCode > entityId because publicCode
@@ -7831,6 +8007,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
             }
             if (resolvedCode) {
                 speakTo = [resolvedCode];
+                routingResolvedVia = 'senderHint';
                 senderHintResolution = { kind, applied: 'speakTo', publicCode: resolvedCode };
             } else {
                 senderHintResolution = { kind, applied: 'none', reason: 'unresolved_sender' };
@@ -7854,6 +8031,19 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         if (!perms.has('broadcast')) {
             return res.status(403).json({ success: false, message: 'Missing permission: broadcast', missingPermissions: ['broadcast'] });
         }
+    }
+
+    if (!routingResolvedVia) {
+        if (broadcast) routingResolvedVia = 'broadcast';
+        else if (hadExplicitSpeakTo && speakTo && Array.isArray(speakTo) && speakTo.length > 0) routingResolvedVia = 'speakTo';
+    }
+
+    const routing = createRoutingDiagnostics(routingResolvedVia);
+    if (contextualMentionEscape?.warnings?.length) {
+        routing.warnings.push(...contextualMentionEscape.warnings);
+    }
+    if (routingResolvedVia === 'speakTo' && finalMessage && speakTo && Array.isArray(speakTo) && speakTo.length > 0) {
+        routing.warnings.push(...collectMissingSpeakToMentionWarnings(speakTo, transformMentionParse, deviceId));
     }
 
     // Save bot message to chat history so it appears in Chat page
@@ -8143,6 +8333,9 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
                             const sourceLabel = `entity:${eId}:${entity.character}`;
                             const broadcastChatMsgId = await saveChatMessage(broadcastDeviceId, eId, deliveryText, `${sourceLabel}->${targetIds.join(',')}`, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments, viaChannel);
                             deliverySaved = true;
+                            for (const toId of targetIds) {
+                                appendRoutingRecipient(routing, 'entity', toId, broadcastDevice.entities[toId]);
+                            }
 
                             // Check recipient info preference
                             const bcastPrefs = await devicePrefs.getPrefs(broadcastDeviceId);
@@ -8244,6 +8437,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
                     }
                 }
 
+                appendRoutingRecipient(routing, 'entity', target.entityId, toEntity);
                 const result = await deliverToEntity({
                     senderDeviceId: deviceId, fromId: eId, fromEntity: entity,
                     targetDeviceId: target.deviceId, toId: target.entityId, toEntity,
@@ -8319,6 +8513,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
             encryptionStatus: entity.encryptionStatus || null
         },
         versionInfo: getVersionInfo(entity.appVersion),
+        routing,
         push_status: entity.pushStatus || null,
         auth: channelAuthResult
             ? { via: 'channelKey', channelName: channelAuthResult.registration.channel_name, grantedPermissions: channelAuthResult.grantedPermissions }
@@ -20417,4 +20612,6 @@ module.exports._SEVERE_STUCK_MS = SEVERE_STUCK_MS;
 module.exports._HEALTH_BOOT_GRACE_MS = HEALTH_BOOT_GRACE_MS;
 module.exports._SEVERE_STUCK_MIN_COUNT = SEVERE_STUCK_MIN_COUNT;
 module.exports._evaluateDeliveryHealth = evaluateDeliveryHealth;
+module.exports._ENTITY_HEARTBEAT_STALE_MS = ENTITY_HEARTBEAT_STALE_MS;
+module.exports._getEntityDaemonStatus = getEntityDaemonStatus;
 module.exports._hermesHealthMonitor = hermesHealthMonitor;

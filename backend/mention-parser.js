@@ -62,6 +62,14 @@ const ALL_TOKEN_RE = /(^|\s)@all(?=\s|$|[^\w])/i;
 // Global form for stripping @all (sequential .replace() needs the /g flag).
 const ALL_TOKEN_GLOBAL_RE = /(^|\s)@all(?=\s|$|[^\w])/gi;
 
+const ZERO_WIDTH_SPACE = '\u200b';
+const CONTEXTUAL_AT_SYMBOL_RE = /@(?!\u200b)(?=\S)/g;
+const CONTEXT_BLOCK_HEADER_RE = /^\s*\[(?:BROADCAST RECIPIENTS|REFERENCES|MENTIONS|CARD|KANBAN CARD)[^\]]*\]/i;
+const TASK_DESCRIPTION_START_RE = /^\s*\[TASK DESCRIPTION\]/i;
+const TASK_DESCRIPTION_END_RE = /^\s*\[\/TASK DESCRIPTION\]/i;
+const QUOTE_LINE_RE = /^\s*>/;
+const FORWARDED_FROM_MARKER_RE = /\[(?:from|forwarded from|reply from)\s+#?\d+[^\]]*\]/i;
+
 function isMentionBoundaryBefore(text, atIndex) {
     if (atIndex <= 0) return true;
     const ch = text[atIndex - 1];
@@ -117,6 +125,97 @@ function maskCodeSpansForRouting(text) {
     return text
         .replace(/```[\s\S]*?```/g, (m) => ' '.repeat(m.length))
         .replace(/`[^`\n]+`/g, (m) => ' '.repeat(m.length));
+}
+
+function escapeAtSymbols(segment) {
+    let escaped = false;
+    const text = segment.replace(CONTEXTUAL_AT_SYMBOL_RE, () => {
+        escaped = true;
+        return `@${ZERO_WIDTH_SPACE}`;
+    });
+    return { text, escaped };
+}
+
+function classifyContextBlockStart(line) {
+    if (TASK_DESCRIPTION_START_RE.test(line)) {
+        return { reason: 'card_context', endRe: TASK_DESCRIPTION_END_RE };
+    }
+    if (CONTEXT_BLOCK_HEADER_RE.test(line)) {
+        return { reason: 'context_block', endOnBlank: true };
+    }
+    return null;
+}
+
+/**
+ * Escape @-tokens inside quoted/forwarded/context blocks before routing.
+ *
+ * Direct @-tokens outside these regions are intentionally left untouched so they
+ * still route. The inserted zero-width space keeps the text readable while
+ * making the token inert to the mention regexes.
+ */
+function escapeContextualMentionTokens(text) {
+    const result = {
+        text: text || '',
+        escaped: false,
+        warnings: []
+    };
+    if (!text || typeof text !== 'string') return result;
+
+    const chunks = text.split(/(\r?\n)/);
+    const warnings = new Set();
+    let activeBlock = null;
+
+    for (let i = 0; i < chunks.length; i += 2) {
+        let line = chunks[i];
+        const trimmed = line.trim();
+        let reason = null;
+        let startIndex = 0;
+
+        if (activeBlock && activeBlock.endOnBlank && trimmed === '') {
+            activeBlock = null;
+        }
+
+        if (activeBlock) {
+            reason = activeBlock.reason;
+        }
+
+        if (!reason) {
+            const blockStart = classifyContextBlockStart(line);
+            if (blockStart) {
+                activeBlock = blockStart;
+                reason = blockStart.reason;
+            } else if (QUOTE_LINE_RE.test(line)) {
+                reason = 'quote';
+            } else {
+                const marker = line.match(FORWARDED_FROM_MARKER_RE);
+                if (marker) {
+                    reason = 'forward';
+                    startIndex = marker.index || 0;
+                }
+            }
+        }
+
+        if (reason) {
+            const before = line.slice(0, startIndex);
+            const target = line.slice(startIndex);
+            const escaped = escapeAtSymbols(target);
+            if (escaped.escaped) {
+                line = before + escaped.text;
+                result.escaped = true;
+                warnings.add(`MENTION_LEAK_ESCAPED:${reason}`);
+            }
+        }
+
+        if (activeBlock?.endRe && activeBlock.endRe.test(trimmed)) {
+            activeBlock = null;
+        }
+
+        chunks[i] = line;
+    }
+
+    result.text = chunks.join('');
+    result.warnings = [...warnings];
+    return result;
 }
 
 /**
@@ -423,6 +522,7 @@ module.exports = {
     parseMentions,
     decideRouting,
     stripMentionTokens,
+    escapeContextualMentionTokens,
     toContextPayload,
     // Regex exports kept for compatibility with any consumer that imported them.
     MENTION_TOKEN_RE: PUBLIC_CODE_TOKEN_RE,
@@ -431,5 +531,6 @@ module.exports = {
     ENTITY_ID_BRACKET_RE,
     ENTITY_ID_HASH_RE,
     ENTITY_ID_BARE_RE,
-    ALL_TOKEN_RE
+    ALL_TOKEN_RE,
+    ZERO_WIDTH_SPACE
 };
