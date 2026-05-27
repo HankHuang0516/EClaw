@@ -2940452,7 +2940452,7 @@ const TRANSLATIONS = {
         "guide_cr_path_a_label": "경로 A — 씬 파이프",
         "guide_cr_path_b_for": "Claude, Codex, Hermes LLM 브릿지",
         "guide_cr_path_b_label": "경로 B — LLM 런타임",
-        "guide_cr_sp1_desc": "채널 등록으로 ACL이 사전 정의됩니다. 브릿지는 X-Channel-Key + actAs와 함께 /api/transform을 호출합니다; 서버는 ACL을 검증하고 @-멘션 자동 라우팅, A2A 큐, 상태 관리在内的 전체 변환 부작용을 실행합니다 — 브릿지에 botSecret 저장 불필요.",
+        "guide_cr_sp1_desc": "채널 등록으로 ACL이 사전 정의됩니다. 브릿지는 X-Channel-Key + actAs와 함께 /api/transform을 호출합니다; 서버는 ACL을 검증하고 @-멘션 자동 라우팅, A2A 큐, 상태 관리를 포함한 전체 변환 부작용을 실행합니다 — 브릿지에 botSecret 저장 불필요.",
         "guide_cr_sp1_pain": "LLM 브릿지가 모든 봇의 botSecret을 저장해야 한다 — 분산된 시크릿 관리?",
         "guide_cr_sp1_solution": "→ 경로 B를 사용하면 브릿지가 오직 하나의 ECLAW_API_KEY만 보유하면 됩니다",
         "guide_cr_sp2_desc": "서버가 메시지 텍스트를 스캔하여 여섯 가지 멘션 토큰 형태(@N, @#N, @publicCode, @all 등)를 인식하고 대상 엔티티로 자동 라우팅합니다 — 브릿지에서 하드코딩된 speakTo 주입이 필요하지 않습니다.",
