@@ -5251,6 +5251,109 @@ function appendRoutingRecipient(routing, kind, targetEntityId, targetEntity) {
     routing.stale = routing.stale || status.stale;
 }
 
+// ─── Platform-P2: ack_required delivery confirmation ───
+// High-priority messages can opt-in with `ackRequired: true`. The server inserts
+// a `pending_ack` row per actually-routed recipient (V3: routed-only, never
+// speculative). Recipient acks via POST /api/ack (V1: recipient botSecret OR
+// deviceSecret). A 60s sweeper expires unacked rows past their deadline and
+// posts a fire-once system message back to the sender (V2: idempotent).
+//
+// Scope locks (Codex #6 + #1 sign-off):
+//   IN  : high-priority ack + pending table + ack endpoint + timeout notice
+//   OUT : auto-resend, UI changes, retry counter, cross-device fan-out
+const ACK_DEFAULT_DEADLINE_MS = 15 * 60 * 1000;   // 15min
+const ACK_MIN_DEADLINE_MS     = 60 * 1000;        // 60s
+const ACK_MAX_DEADLINE_MS     = 60 * 60 * 1000;   // 1h
+const ACK_SWEEP_INTERVAL_MS   = Number.isFinite(Number(process.env.ACK_SWEEP_INTERVAL_MS))
+    ? Number(process.env.ACK_SWEEP_INTERVAL_MS)
+    : 60_000;
+
+function clampAckDeadlineMs(raw) {
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n <= 0) return ACK_DEFAULT_DEADLINE_MS;
+    return Math.min(Math.max(n, ACK_MIN_DEADLINE_MS), ACK_MAX_DEADLINE_MS);
+}
+
+async function createPendingAckRows(pool, rows) {
+    if (!pool || !Array.isArray(rows) || rows.length === 0) return [];
+    const created = [];
+    for (const r of rows) {
+        const ackId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+            ? crypto.randomUUID()
+            : `ack_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+        await pool.query(
+            `INSERT INTO pending_ack
+                (ack_id, device_id, sender_entity_id, recipient_entity_id, recipient_public_code,
+                 source_msg_id, status, deadline_ms, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, NOW())`,
+            [ackId, r.deviceId, r.senderEntityId, r.recipientEntityId, r.recipientPublicCode || null,
+             r.sourceMsgId || null, r.deadlineMs]
+        );
+        created.push({
+            ackId,
+            recipientEntityId: r.recipientEntityId,
+            recipientPublicCode: r.recipientPublicCode || null,
+            deadlineMs: r.deadlineMs,
+            expiresAt: new Date(r.deadlineMs).toISOString(),
+        });
+    }
+    return created;
+}
+
+async function markAckedById(pool, ackId, recipientEntityId) {
+    if (!pool || !ackId) return null;
+    // Idempotent: only the recipient (matching entityId) can ack their own pending row.
+    // CTE returns the row that was actually updated (NULL if already acked/expired).
+    const result = await pool.query(
+        `WITH updated AS (
+             UPDATE pending_ack
+                SET status = 'acked', acked_at = NOW()
+              WHERE ack_id = $1
+                AND recipient_entity_id = $2
+                AND status = 'pending'
+              RETURNING ack_id, device_id, sender_entity_id, recipient_entity_id,
+                        recipient_public_code, deadline_ms, created_at, acked_at
+         )
+         SELECT * FROM updated
+         UNION ALL
+         SELECT ack_id, device_id, sender_entity_id, recipient_entity_id,
+                recipient_public_code, deadline_ms, created_at, acked_at
+           FROM pending_ack
+          WHERE ack_id = $1
+            AND NOT EXISTS (SELECT 1 FROM updated)
+          LIMIT 1`,
+        [ackId, recipientEntityId]
+    );
+    return result.rows[0] || null;
+}
+
+async function getPendingAckById(pool, ackId) {
+    if (!pool || !ackId) return null;
+    const result = await pool.query(
+        `SELECT ack_id, device_id, sender_entity_id, recipient_entity_id,
+                recipient_public_code, status, deadline_ms, created_at, acked_at, timed_out_at
+           FROM pending_ack WHERE ack_id = $1 LIMIT 1`,
+        [ackId]
+    );
+    return result.rows[0] || null;
+}
+
+async function sweepExpiredAcks(pool, nowMs = Date.now()) {
+    if (!pool) return [];
+    // Atomic flip: only flip rows that are still 'pending' AND past deadline.
+    // Second call returns 0 rows (V2 idempotent).
+    const result = await pool.query(
+        `UPDATE pending_ack
+            SET status = 'expired', timed_out_at = NOW()
+          WHERE status = 'pending'
+            AND deadline_ms <= $1
+          RETURNING ack_id, device_id, sender_entity_id, recipient_entity_id,
+                    recipient_public_code, deadline_ms, created_at, timed_out_at`,
+        [nowMs]
+    );
+    return result.rows;
+}
+
 function evaluateDeliveryHealth(stuckList, uptimeMs) {
     const oldestIdleMs = stuckList.length
         ? stuckList.reduce((m, s) => (s.idleMs > m ? s.idleMs : m), 0)
@@ -7330,6 +7433,98 @@ app.get('/api/entity/status', (req, res) => {
     });
 });
 
+/**
+ * POST /api/ack
+ * Platform-P2: recipient confirms receipt of an ack_required delivery.
+ *
+ * Body: { deviceId, entityId (recipient), ackId, botSecret OR deviceSecret }
+ *
+ * Auth (V1): recipient's botSecret OR the device's deviceSecret. The pending row
+ * must have recipient_entity_id matching the authenticated entityId.
+ *
+ * Semantics:
+ *   - First successful ack flips status pending → acked.
+ *   - Duplicate ack on the same row returns the existing record (idempotent: 200).
+ *   - Row already expired → 410 Gone (sender already got the timeout notice).
+ *   - Unknown ackId → 404.
+ *   - Wrong recipient/credentials → 403.
+ */
+app.post('/api/ack', async (req, res) => {
+    const { deviceId, entityId, botSecret, deviceSecret, ackId } = req.body || {};
+
+    if (!deviceId) return res.status(400).json({ success: false, message: 'deviceId required' });
+    if (!ackId) return res.status(400).json({ success: false, message: 'ackId required' });
+
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, message: 'Device not found' });
+
+    const eId = Number(entityId);
+    if (!Number.isInteger(eId) || !isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, message: 'Invalid entityId' });
+    }
+
+    const entity = device.entities[eId];
+    if (!entity || !entity.isBound) {
+        return res.status(404).json({ success: false, message: `Entity ${eId} is not bound` });
+    }
+
+    const deviceAuthed = !!(deviceSecret && device.deviceSecret && safeEqual(device.deviceSecret, deviceSecret));
+    const botAuthed = !!(botSecret && entity.botSecret && safeEqual(entity.botSecret, botSecret));
+    if (!deviceAuthed && !botAuthed) {
+        return res.status(403).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    let existing;
+    try {
+        existing = await getPendingAckById(chatPool, ackId);
+    } catch (err) {
+        console.error('[Ack] lookup error:', err.message);
+        return res.status(500).json({ success: false, message: 'Lookup failed' });
+    }
+
+    if (!existing) return res.status(404).json({ success: false, message: 'Unknown ackId' });
+
+    // Cross-device deliveries are out of scope (V1: same-device only). Defensive
+    // check — also blocks acking a row that belongs to a different device.
+    if (existing.device_id !== deviceId) {
+        return res.status(403).json({ success: false, message: 'ackId does not belong to this device' });
+    }
+    if (Number(existing.recipient_entity_id) !== eId) {
+        return res.status(403).json({ success: false, message: 'ackId not addressed to this entity' });
+    }
+
+    if (existing.status === 'expired') {
+        return res.status(410).json({
+            success: false,
+            ackId,
+            status: 'expired',
+            message: 'Ack window already expired',
+            timedOutAt: existing.timed_out_at,
+        });
+    }
+
+    let updated;
+    try {
+        updated = await markAckedById(chatPool, ackId, eId);
+    } catch (err) {
+        console.error('[Ack] update error:', err.message);
+        return res.status(500).json({ success: false, message: 'Ack update failed' });
+    }
+
+    if (!updated) {
+        return res.status(500).json({ success: false, message: 'Ack update returned no row' });
+    }
+
+    return res.json({
+        success: true,
+        ackId,
+        status: updated.status || 'acked',
+        ackedAt: updated.acked_at,
+        senderEntityId: Number(updated.sender_entity_id),
+        recipientEntityId: Number(updated.recipient_entity_id),
+    });
+});
+
 // ── Shared Helpers: Gatekeeper + Delivery ──
 
 /**
@@ -7662,7 +7857,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         }
     }
 
-    let { deviceId, entityId, botSecret, actAs, name, character, state, message, parts, targetDeviceId, speakTo, broadcast, card, attachments, senderHint, aboutCardId } = req.body;
+    let { deviceId, entityId, botSecret, actAs, name, character, state, message, parts, targetDeviceId, speakTo, broadcast, card, attachments, senderHint, aboutCardId, ackRequired, ackDeadlineMs } = req.body;
     const hadExplicitSpeakTo = Array.isArray(speakTo) && speakTo.length > 0;
     let routingResolvedVia = broadcast ? 'broadcast' : null;
 
@@ -8505,6 +8700,44 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         }
     }
 
+    // Platform-P2: ack_required pending row creation. V3 — only for actually-
+    // delivered recipients. For speakTo, deliveryResults.results carries per-
+    // target success; for broadcast (no per-target failure path), routing.routedTo
+    // is presumed delivered. ackDeadlineMs clamps to [60s, 1h] (default 15min).
+    let ackInfo = null;
+    if (ackRequired === true && Array.isArray(routing.routedTo) && routing.routedTo.length > 0) {
+        const deliveredCodes = (deliveryResults && Array.isArray(deliveryResults.results))
+            ? new Set(deliveryResults.results.filter(r => r.success).map(r => r.publicCode))
+            : null;
+        const recipients = routing.routedTo.filter(r => {
+            if (!r.publicCode) return false;
+            return deliveredCodes ? deliveredCodes.has(r.publicCode) : true;
+        });
+        if (recipients.length > 0) {
+            const clampedMs = clampAckDeadlineMs(ackDeadlineMs);
+            const deadlineMs = Date.now() + clampedMs;
+            try {
+                const created = await createPendingAckRows(chatPool, recipients.map(r => ({
+                    deviceId,
+                    senderEntityId: eId,
+                    recipientEntityId: r.entityId,
+                    recipientPublicCode: r.publicCode,
+                    sourceMsgId: null,
+                    deadlineMs,
+                })));
+                ackInfo = {
+                    required: true,
+                    deadlineMs: clampedMs,
+                    expiresAt: new Date(deadlineMs).toISOString(),
+                    pending: created,
+                };
+            } catch (err) {
+                console.error('[PendingAck] create error:', err.message);
+                warnings.push('ack_required: failed to record pending ack rows');
+            }
+        }
+    }
+
     const response = {
         success: true,
         deviceId: deviceId,
@@ -8531,6 +8764,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     if (warnings.length > 0) response.warnings = warnings;
     if (transformMentionContext) response.mentions = transformMentionContext;
     if (senderHintResolution) response.senderHintResolution = senderHintResolution;
+    if (ackInfo) response.ackInfo = ackInfo;
 
     res.json(response);
 });
@@ -17454,6 +17688,63 @@ if (mindmapModule && typeof mindmapModule.initMindmapTables === 'function') {
     }
 })();
 
+// Platform-P2: pending_ack table — high-priority delivery confirmation.
+// See createPendingAckRows / markAckedById / sweepExpiredAcks above for ops.
+(async () => {
+    try {
+        await chatPool.query(`
+            CREATE TABLE IF NOT EXISTS pending_ack (
+                ack_id                TEXT        PRIMARY KEY,
+                device_id             TEXT        NOT NULL,
+                sender_entity_id      INTEGER     NOT NULL,
+                recipient_entity_id   INTEGER     NOT NULL,
+                recipient_public_code TEXT,
+                source_msg_id         TEXT,
+                status                TEXT        NOT NULL DEFAULT 'pending',
+                deadline_ms           BIGINT      NOT NULL,
+                created_at            TIMESTAMPTZ DEFAULT NOW(),
+                acked_at              TIMESTAMPTZ,
+                timed_out_at          TIMESTAMPTZ
+            )
+        `);
+        await chatPool.query(`CREATE INDEX IF NOT EXISTS idx_pa_status_deadline ON pending_ack (status, deadline_ms)`);
+        await chatPool.query(`CREATE INDEX IF NOT EXISTS idx_pa_device_sender   ON pending_ack (device_id, sender_entity_id, created_at DESC)`);
+        console.log('[PendingAck] Table ready');
+
+        // Timeout sweeper — fires every ACK_SWEEP_INTERVAL_MS (default 60s).
+        // V2 idempotent: only flips pending→expired rows past deadline; second
+        // pass over the same row is a no-op. Sender notification is fired once
+        // per row (only rows the UPDATE returned, which is the freshly-flipped set).
+        setInterval(async () => {
+            try {
+                const expired = await sweepExpiredAcks(chatPool);
+                for (const row of expired) {
+                    try {
+                        const deadlineIso = new Date(Number(row.deadline_ms)).toISOString();
+                        const noticeText =
+                            `[ack_required timeout] entity #${row.recipient_entity_id}` +
+                            (row.recipient_public_code ? ` (${row.recipient_public_code})` : '') +
+                            ` did not ack ${row.ack_id} by ${deadlineIso}`;
+                        await saveChatMessage(
+                            row.device_id,
+                            row.sender_entity_id,
+                            noticeText,
+                            'SYSTEM',
+                            false, true, null, null, null, null, null, null, null, null, false
+                        );
+                    } catch (err) {
+                        console.error('[PendingAck] timeout notify error:', err.message);
+                    }
+                }
+            } catch (err) {
+                console.error('[PendingAck] sweeper error:', err.message);
+            }
+        }, ACK_SWEEP_INTERVAL_MS).unref();
+    } catch (err) {
+        console.error('[PendingAck] Table init error:', err.message);
+    }
+})();
+
 feedbackModule.initFeedbackTable(chatPool);
 feedbackModule.initFeedbackPhotosTable(chatPool);
 notifModule.initNotificationTables(chatPool);
@@ -20623,3 +20914,14 @@ module.exports._evaluateDeliveryHealth = evaluateDeliveryHealth;
 module.exports._ENTITY_HEARTBEAT_STALE_MS = ENTITY_HEARTBEAT_STALE_MS;
 module.exports._getEntityDaemonStatus = getEntityDaemonStatus;
 module.exports._hermesHealthMonitor = hermesHealthMonitor;
+module.exports._chatPool = chatPool;
+module.exports._ACK_DEFAULT_DEADLINE_MS = ACK_DEFAULT_DEADLINE_MS;
+module.exports._ACK_MIN_DEADLINE_MS = ACK_MIN_DEADLINE_MS;
+module.exports._ACK_MAX_DEADLINE_MS = ACK_MAX_DEADLINE_MS;
+module.exports._clampAckDeadlineMs = clampAckDeadlineMs;
+module.exports._pendingAck = {
+    createPendingAckRows,
+    markAckedById,
+    getPendingAckById,
+    sweepExpiredAcks,
+};
