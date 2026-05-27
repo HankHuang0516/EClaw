@@ -1,3 +1,10 @@
+# [1.1178.0](https://github.com/HankHuang0516/EClaw/compare/v1.1177.0...v1.1178.0) (2026-05-27)
+
+
+### Features
+
+* **transform:** Platform-P1 delivery confirmation primitives ([#2979](https://github.com/HankHuang0516/EClaw/issues/2979)) ([49d2273](https://github.com/HankHuang0516/EClaw/commit/49d2273879e9b8eca70d3ecd320601242f5612e5)), closes [#N](https://github.com/HankHuang0516/EClaw/issues/N) [#3](https://github.com/HankHuang0516/EClaw/issues/3) [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+
 # [1.1177.0](https://github.com/HankHuang0516/EClaw/compare/v1.1176.1...v1.1177.0) (2026-05-27)
 
 
