@@ -27,7 +27,7 @@
         "NSPhotoLibraryAddUsageDescription": "EClawbot saves media to your photo library only when you choose to download or save an image from chat or files.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "9"
+      "buildNumber": "10"
     },
     "android": {
       "adaptiveIcon": {
