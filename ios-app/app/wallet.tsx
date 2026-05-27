@@ -17,12 +17,16 @@ import {
   initConnection,
   endConnection,
   fetchProducts,
+  getReceiptIOS,
+  requestReceiptRefreshIOS,
   requestPurchase,
   finishTransaction,
   purchaseUpdatedListener,
   purchaseErrorListener,
-  type Product,
+  ErrorCode,
+  type ProductIOS,
   type Purchase,
+  type PurchaseIOS,
   type PurchaseError,
 } from 'react-native-iap';
 import WebViewScreen from '../components/WebViewScreen';
@@ -57,7 +61,7 @@ export default function WalletScreen() {
   const [balance, setBalance] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductIOS[]>([]);
   const [purchasing, setPurchasing] = useState<string | null>(null);
   const [iapAvailable, setIapAvailable] = useState(false);
 
@@ -100,15 +104,15 @@ export default function WalletScreen() {
         setIapAvailable(true);
 
         // Fetch products from App Store (v15: fetchProducts instead of getProducts)
-        const prods = await fetchProducts({ skus: IAP_PRODUCT_IDS });
-        setProducts(prods);
+        const prods = await fetchProducts({ skus: IAP_PRODUCT_IDS, type: 'in-app' });
+        setProducts((prods ?? []).filter((product): product is ProductIOS => product.platform === 'ios'));
 
         // Listen for purchase completions
         purchaseUpdateSub = purchaseUpdatedListener(async (purchase: Purchase) => {
-          const receipt = purchase.transactionReceipt;
-          if (!receipt) return;
+          const iosPurchase = purchase as PurchaseIOS;
+          if (iosPurchase.platform !== 'ios') return;
           try {
-            await verifyAndFinish(purchase);
+            await verifyAndFinish(iosPurchase);
           } catch (err: any) {
             console.error('[IAP] Verify failed:', err.message);
             Alert.alert(t('wallet.topup_failed', 'Top-up failed'), err.message);
@@ -119,7 +123,7 @@ export default function WalletScreen() {
 
         // Listen for purchase errors
         purchaseErrorSub = purchaseErrorListener((err: PurchaseError) => {
-          if (err.code === 'E_USER_CANCELLED') {
+          if (err.code === ErrorCode.UserCancelled) {
             setPurchasing(null);
             return;
           }
@@ -145,10 +149,18 @@ export default function WalletScreen() {
     };
   }, [fetchBalance, t]);
 
-  const verifyAndFinish = async (purchase: Purchase) => {
+  const getReceiptForVerification = async () => {
+    try {
+      const receipt = await getReceiptIOS();
+      if (receipt && receipt.length >= 20) return receipt;
+    } catch {}
+    return requestReceiptRefreshIOS();
+  };
+
+  const verifyAndFinish = async (purchase: PurchaseIOS) => {
     const productId = purchase.productId;
-    const transactionId = purchase.transactionId || '';
-    const receipt = purchase.transactionReceipt || '';
+    const transactionId = purchase.transactionId || purchase.id;
+    const receipt = await getReceiptForVerification();
 
     // Backend verification (must succeed before finishTransaction)
     const SecureStore = require('expo-secure-store');
@@ -191,10 +203,18 @@ export default function WalletScreen() {
     if (purchasing) return;
     setPurchasing(productId);
     try {
-      await requestPurchase({ sku: productId });
+      await requestPurchase({
+        type: 'in-app',
+        request: {
+          apple: {
+            sku: productId,
+            andDangerouslyFinishTransactionAutomatically: false,
+          },
+        },
+      });
       // purchaseUpdatedListener handles the rest
     } catch (err: any) {
-      if (err.code === 'E_USER_CANCELLED') {
+      if (err.code === ErrorCode.UserCancelled) {
         setPurchasing(null);
         return;
       }
@@ -264,22 +284,22 @@ export default function WalletScreen() {
           </Text>
         ) : (
           products
-            .sort((a, b) => parseFloat(a.price || '0') - parseFloat(b.price || '0'))
+            .sort((a, b) => (a.price ?? 0) - (b.price ?? 0))
             .map((product) => {
-              const meta = TIER_META[product.productId];
-              const isPurchasing = purchasing === product.productId;
+              const meta = TIER_META[product.id];
+              const isPurchasing = purchasing === product.id;
               return (
                 <Card
-                  key={product.productId}
+                  key={product.id}
                   style={styles.tierCard}
                   mode="outlined"
-                  onPress={() => handlePurchase(product.productId)}
+                  onPress={() => handlePurchase(product.id)}
                   disabled={!!purchasing}
                 >
                   <Card.Content style={styles.tierContent}>
                     <View style={styles.tierLeft}>
                       <Text variant="titleMedium">
-                        {meta?.label || product.title || product.productId}
+                        {meta?.label || product.title || product.id}
                       </Text>
                       <Text variant="bodySmall" style={{ opacity: 0.75 }}>
                         {meta
@@ -297,7 +317,7 @@ export default function WalletScreen() {
                         <ActivityIndicator />
                       ) : (
                         <Text variant="titleLarge" style={{ color: theme.colors.primary }}>
-                          {product.localizedPrice || `$${product.price}`}
+                          {product.displayPrice || `$${product.price ?? ''}`}
                         </Text>
                       )}
                     </View>

@@ -4,7 +4,7 @@ export interface Entity {
   entityId: string;
   entityIndex: number;
   name: string;
-  character: 'LOBSTER' | 'PIG';
+  character: string;
   state: string;
   message: string;
   isBound: boolean;
