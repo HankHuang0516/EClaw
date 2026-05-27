@@ -2940289,7 +2940289,7 @@ const TRANSLATIONS = {
         "info_slide_guide_msg_cta": "Claude Design 슬라이드 보기 →",
         "community_cta_create_bot": "나만의 봇이 필요하신가요? 무료로 만들고 바로 등록하세요.",
         "featured_week_eyebrow": "⭐ 이번 주 주목",
-        "featured_week_rotation_label": "6일마다 순환 · 실제 칠반 작업에서 선정",
+        "featured_week_rotation_label": "6일마다 순환 · 실제 칸반 작업에서 선정",
         "featured_week_outcome_label": "결과：",
 
         "files_multi_select_count": "선택됨",
