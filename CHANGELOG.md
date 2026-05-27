@@ -1,3 +1,10 @@
+# [1.1179.0](https://github.com/HankHuang0516/EClaw/compare/v1.1178.0...v1.1179.0) (2026-05-27)
+
+
+### Features
+
+* **transform:** Platform-P2 ack_required delivery confirmation ([#2980](https://github.com/HankHuang0516/EClaw/issues/2980)) ([f33db8b](https://github.com/HankHuang0516/EClaw/commit/f33db8bd5939a47a43474491081bbfe8d2f8b616)), closes [hi#priority](https://github.com/hi/issues/priority)
+
 # [1.1178.0](https://github.com/HankHuang0516/EClaw/compare/v1.1177.0...v1.1178.0) (2026-05-27)
 
 
