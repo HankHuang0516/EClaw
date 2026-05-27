@@ -6,6 +6,7 @@
 - **Reviewer:** LOBSTER #2
 - **Parent card:** `card_b0568b17e0380ad25effe79b` - `[Roadmap/Desktop] D0 - spike / architecture gate`
 - **Blocks:** D1 desktop core infrastructure (`card_1434b0534bfb8a9871276c7f`)
+- **Artifact pack:** `docs/desktop/d0-architecture-artifacts.md`
 
 ## Context
 
@@ -17,6 +18,9 @@ scope are settled enough to avoid re-cutting the foundation.
 The first implementation target is macOS plus Windows. This ADR is written from
 the repo as-is on macOS. Windows VM evidence remains a follow-up gate for the
 PoC scope card, not a blocker for documenting the architecture decision.
+
+The companion artifact pack lists the D0 review checklist, the D1 entry
+criteria, and the CI guard that keeps this architecture gate visible on the PR.
 
 ## Decision
 

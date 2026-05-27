@@ -1,0 +1,31 @@
+name: Desktop D0 CI
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'docs/desktop-app-adr-001-framework.md'
+      - 'docs/desktop/**'
+      - 'scripts/validate-desktop-d0-artifacts.js'
+      - '.github/workflows/desktop-d0-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/desktop-app-adr-001-framework.md'
+      - 'docs/desktop/**'
+      - 'scripts/validate-desktop-d0-artifacts.js'
+      - '.github/workflows/desktop-d0-ci.yml'
+
+jobs:
+  artifacts:
+    name: Architecture artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate desktop D0 artifacts
+        run: node scripts/validate-desktop-d0-artifacts.js
