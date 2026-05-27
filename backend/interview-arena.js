@@ -188,6 +188,11 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── New hard-tier additions (daily pool update) ──
+    { file: null, description: 'A software architecture diagram showing three microservices: Auth Service on port 8001, Order Service on port 8002, and Inventory Service on port 8003 — all communicating via a central RabbitMQ message broker with two queues labeled order-events and stock-updates', keywords: ['microservices', 'auth', 'order', 'inventory', 'RabbitMQ', 'three', 'two', 'queues'] },
+    { file: null, description: 'A theater seating chart with rows A through F, ten seats per row, seats B3 B4 C3 C4 marked as reserved in orange, and all seats in row A marked as premium in gold — six rows total sixty seats', keywords: ['seating', 'six', 'rows', 'ten', 'sixty', 'reserved', 'orange', 'premium', 'gold'] },
+    { file: null, description: 'A server error log showing five entries: three INFO lines followed by one WARN line at 14:02:31 and one ERROR line at 14:02:45 reading "ConnectionRefused: port 5432 timeout after 30000ms"', keywords: ['log', 'five', 'three', 'error', '5432', 'timeout', '30000'] },
+    { file: null, description: 'A database entity-relationship diagram with four entities: Users (id, email, created_at), Orders (id, user_id, total, status), Products (id, name, price, stock), and OrderItems (order_id, product_id, qty) — with crow-foot notation showing one User has many Orders and one Order has many OrderItems', keywords: ['database', 'four', 'entities', 'users', 'orders', 'products', 'crow', 'many'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +373,15 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── New medium-hard additions (daily pool update) ──
+    { title: 'Unique Paths', description: 'Write `solve(m, n)` — a robot sits at the top-left corner of an m×n grid. It can only move right or down. Return the number of unique paths to reach the bottom-right corner.',
+      testCases: [{ input: '3, 7', expected: '28' },{ input: '3, 2', expected: '3' },{ input: '1, 1', expected: '1' },{ input: '7, 3', expected: '28' }] },
+    { title: 'Find All Anagrams', description: 'Write `solve(s, p)` — find all start indices of p\'s anagrams in s. Return a sorted array of indices. An anagram uses the same characters with the same frequencies.',
+      testCases: [{ input: '"cbaebabacd", "abc"', expected: '[0,6]' },{ input: '"abab", "ab"', expected: '[0,1,2]' },{ input: '"aa", "bb"', expected: '[]' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array of non-negative integers representing bar heights, compute how much water can be trapped between the bars after it rains.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[3,0,2,0,4]', expected: '7' },{ input: '[1,0,1]', expected: '1' }] },
+    { title: 'Rotate Image', description: 'Write `solve(matrix)` — rotate an n×n 2D matrix 90 degrees clockwise in-place and return the resulting matrix.',
+      testCases: [{ input: '[[1,2,3],[4,5,6],[7,8,9]]', expected: '[[7,4,1],[8,5,2],[9,6,3]]' },{ input: '[[5,1],[2,4]]', expected: '[[2,5],[4,1]]' },{ input: '[[1]]', expected: '[[1]]' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +431,12 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── New hard-tier additions (daily pool update) ──
+    { question: 'What is the last digit of 7 raised to the power of 100?', expectedKeywords: ['1'] },
+    { question: 'A circle has an area of 25π square centimeters. What is its circumference? Express your answer as a multiple of π (e.g. 10π).', expectedKeywords: ['10π', '10 pi', '10*pi', '10pi'] },
+    { question: 'In how many different ways can 4 differently colored balls (red, blue, green, yellow) be arranged in a row?', expectedKeywords: ['24'] },
+    { question: 'All roses are flowers. Some flowers fade quickly. Can we conclude that some roses fade quickly? Answer yes or no and explain.', expectedKeywords: ['no', 'cannot', 'not necessarily'] },
+    { question: 'A container holds exactly 1 liter. You fill it to 80% capacity, then remove 250 ml. How many ml remain?', expectedKeywords: ['550'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +514,10 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── New medium-hard additions (daily pool update) ──
+    { text: 'Case number 2024-CV-08834 is scheduled for hearing before the Honorable Judge Morales on the fourteenth of November at nine thirty in Courtroom 7B', keywords: ['case', '2024', '08834', 'morales', 'november', 'courtroom'] },
+    { text: 'The patient is prescribed Metformin hydrochloride 500 milligrams twice daily and Lisinopril 10 milligrams once daily with food', keywords: ['metformin', 'hydrochloride', '500', 'lisinopril', '10', 'twice', 'daily'] },
+    { text: 'Serial number SN-2024-DELTA-7741-ECHO identifies a batch with a three sigma defect rate of zero point zero zero two percent', keywords: ['serial', 'delta', '7741', 'echo', 'sigma', 'defect', 'percent'] },
 ];
 
 // ============================================
