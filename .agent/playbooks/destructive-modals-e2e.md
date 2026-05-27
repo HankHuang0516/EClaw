@@ -12,10 +12,11 @@ PR #2951 fixed a single mobile clipping case where the delete-modal's right edge
 - It exercises the **production** modal code path, production CSS, production i18n message strings.
 
 ## Run target (per memory `reference_prod_e2e_creds.md`)
-- deviceId: `2a0ad04d-9107-4250-b8be-ecd565983fb2`  (BROADCAST_TEST_DEVICE — throwaway data, safe for prod E2E)
-- deviceSecret: `9b69cf99-b4e9-4feb-9106-b3d05adb0562`
+- deviceId: `${PROD_E2E_DEVICE_ID}` — the BROADCAST_TEST_DEVICE id. **Do not commit the literal value to this file.** Read from `backend/.env` (`BROADCAST_TEST_DEVICE_ID`) or vault (`PROD_E2E_DEVICE_ID`) at run time.
+- deviceSecret: `${PROD_E2E_DEVICE_SECRET}` — the matching deviceSecret. Same rule: read from `backend/.env` (`BROADCAST_TEST_DEVICE_SECRET`) or vault (`PROD_E2E_DEVICE_SECRET`). Never paste the literal into source-controlled docs, PR descriptions, or kanban comments.
 - Origin: `https://eclawbot.com`
-- URL-param auth path (auth.js line 48): append `?deviceId=...&deviceSecret=...` to portal URLs.
+- URL-param auth path (auth.js line 48): append `?deviceId=...&deviceSecret=...` to portal URLs (values supplied at run time from the env/vault references above; the URL itself is constructed locally and never logged with the literal secret).
+- Refer to the canonical memory entry `reference_prod_e2e_creds.md` for the actual values — that memory is local-only and is the single source of truth.
 
 ## Pages × viewports under test
 | Page | URL (suffix to https://eclawbot.com) | Mobile 390x844 | Desktop 1280x800 |
@@ -49,7 +50,7 @@ pages     = ["mission.html", "kanban.html", "settings.html"]
 For each combo:
 
 1. Resize Playwright window: `browser_resize({width, height})`
-2. Navigate: `browser_navigate("https://eclawbot.com/portal/<page>?deviceId=2a0ad04d-9107-4250-b8be-ecd565983fb2&deviceSecret=9b69cf99-b4e9-4feb-9106-b3d05adb0562")`
+2. Navigate: `browser_navigate("https://eclawbot.com/portal/<page>?deviceId=${PROD_E2E_DEVICE_ID}&deviceSecret=${PROD_E2E_DEVICE_SECRET}")` — construct the URL locally by interpolating the env/vault values from the Run target section. The literal URL with secrets must never appear in screenshots, logs, comments, or this file.
 3. Wait for the page to settle (~1.5 s — page-specific scripts often load i18n async).
 4. **Snapshot baseline console errors** (count + messages) — call `browser_console_messages({level:"error", all:true})` and remember the count `errorsBefore`.
 5. Trigger the modal via `browser_evaluate` — DO NOT navigate the page to do this, just call the shared helper directly:
