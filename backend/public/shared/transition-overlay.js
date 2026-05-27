@@ -125,10 +125,19 @@
         if (!anchor || !anchor.href) return false;
         if (anchor.target && anchor.target !== '' && anchor.target !== '_self') return false;
         if (anchor.hasAttribute('download')) return false;
-        var proto = (anchor.protocol || '').toLowerCase();
+        var rawHref = (anchor.getAttribute('href') || '').trim();
+        if (rawHref.charAt(0) === '#') return false;
+        var targetUrl;
+        try {
+            targetUrl = new URL(anchor.href, window.location.href);
+        } catch (e) {
+            return false;
+        }
+        if (targetUrl.href === window.location.href) return false;
+        var proto = (targetUrl.protocol || '').toLowerCase();
         if (proto === 'javascript:' || proto === 'mailto:' || proto === 'tel:' || proto === 'sms:') return false;
-        if (anchor.origin && window.location && anchor.origin !== window.location.origin) return false;
-        if (anchor.hash && anchor.pathname === window.location.pathname && anchor.search === window.location.search) {
+        if (targetUrl.origin !== window.location.origin) return false;
+        if (targetUrl.hash && targetUrl.pathname === window.location.pathname && targetUrl.search === window.location.search) {
             return false;
         }
         return true;
