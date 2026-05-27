@@ -158,7 +158,10 @@
 
     function init() {
         ensureDom();
-        document.addEventListener('click', onAnchorClick, true);
+        // Bubble phase: lets in-page handlers (e.g. workspace.html .nav-link) call
+        // preventDefault first; defaultPrevented check in onAnchorClick then bails out.
+        // Capture phase would schedule overlay before the in-page handler can cancel.
+        document.addEventListener('click', onAnchorClick, false);
         window.addEventListener('beforeunload', onBeforeUnload);
         window.addEventListener('pagehide', onBeforeUnload);
         window.addEventListener('pageshow', onArrival);
