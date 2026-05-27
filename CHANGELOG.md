@@ -1,3 +1,11 @@
+# [1.1176.0](https://github.com/HankHuang0516/EClaw/compare/v1.1175.2...v1.1176.0) (2026-05-27)
+
+
+### Features
+
+* **portal/info:** Bot Boundaries tab — 7 refusal categories with override notes ([#2943](https://github.com/HankHuang0516/EClaw/issues/2943)) ([31d5679](https://github.com/HankHuang0516/EClaw/commit/31d5679495b6916abc2b9b02f9d380e3f13091a6)), closes [3/#4](https://github.com/HankHuang0516/EClaw/issues/4) [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#6](https://github.com/HankHuang0516/EClaw/issues/6) [#2945](https://github.com/HankHuang0516/EClaw/issues/2945) [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+* **plaza:** Featured this week section — 6-day rotation, 6 seeded stories ([#2944](https://github.com/HankHuang0516/EClaw/issues/2944)) ([f20e2da](https://github.com/HankHuang0516/EClaw/commit/f20e2daeea45ecb45c538910cd1579c47d172005)), closes [#2](https://github.com/HankHuang0516/EClaw/issues/2) [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#3](https://github.com/HankHuang0516/EClaw/issues/3) [#4](https://github.com/HankHuang0516/EClaw/issues/4) [#5](https://github.com/HankHuang0516/EClaw/issues/5) [#6](https://github.com/HankHuang0516/EClaw/issues/6) [3/#4](https://github.com/HankHuang0516/EClaw/issues/4) [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#2940](https://github.com/HankHuang0516/EClaw/issues/2940) [#2940](https://github.com/HankHuang0516/EClaw/issues/2940) [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 ## [1.1175.2](https://github.com/HankHuang0516/EClaw/compare/v1.1175.1...v1.1175.2) (2026-05-27)
 
 
