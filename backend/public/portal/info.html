@@ -3914,9 +3914,9 @@ curl -s -X POST "https://eclawbot.com/api/mission/note/update" \
 
                         <h2 data-i18n="guide_pub_overview_h">總覽</h2>
                         <p data-i18n="guide_pub_overview_desc">
-                            <code>backend/article-publisher.js</code> 把 10 個內容平台統一在 <code>/api/publisher/&lt;platform&gt;/*</code> 之下。
+                            <code>backend/article-publisher.js</code> 把 9 個內容平台統一在 <code>/api/publisher/&lt;platform&gt;/*</code> 之下。
                             「多租戶」指的是<strong>每個 device 用自己金鑰庫裡的金鑰</strong>呼叫對應平台，而非全站共用 owner 一把 env 金鑰。
-                            9 個需要金鑰的平台（X、Hashnode、DEV.to、Qiita、LinkedIn、Reddit、Tumblr、Blogger、WeChat）全部走 vault-first 流程：每平台一個 <code>resolve&lt;Platform&gt;Creds(deviceId)</code>，先讀 device vault，缺 key 才 fallback 到 <code>process.env</code>。Telegraph 是 auto-key（首次呼叫匿名建帳）所以不需要 vault 路徑。
+                            8 個需要金鑰的平台（X、DEV.to、Qiita、LinkedIn、Reddit、Tumblr、Blogger、WeChat）全部走 vault-first 流程：每平台一個 <code>resolve&lt;Platform&gt;Creds(deviceId)</code>，先讀 device vault，缺 key 才 fallback 到 <code>process.env</code>。Telegraph 是 auto-key（首次呼叫匿名建帳）所以不需要 vault 路徑。
                         </p>
 
                         <h2 data-i18n="guide_pub_status_h">平台狀態總表</h2>
@@ -3948,13 +3948,6 @@ curl -s -X POST "https://eclawbot.com/api/mission/note/update" \
                                     <td>global</td>
                                     <td>OAuth2</td>
                                     <td><code>BLOGGER_CLIENT_ID</code> · <code>BLOGGER_CLIENT_SECRET</code> （+ DB refresh_token）</td>
-                                    <td><span class="pub-badge pub-badge-vault">🔓 vault-first</span></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Hashnode</strong></td>
-                                    <td>global</td>
-                                    <td>API Key</td>
-                                    <td><code>HASHNODE_API_TOKEN</code></td>
                                     <td><span class="pub-badge pub-badge-vault">🔓 vault-first</span></td>
                                 </tr>
                                 <tr>
@@ -4026,7 +4019,7 @@ curl -s -X POST "https://eclawbot.com/api/mission/note/update" \
                         <h2 data-i18n="guide_pub_roadmap_h">已完工：multi-tenant migration 全平台上線 ✅</h2>
                         <p data-i18n="guide_pub_roadmap_desc">2026-04 完工。9 個需要金鑰的平台全部走 vault-first；Telegraph 為 auto-key 不需 vault。一律 backwards-compat：vault 缺 key 自動 fallback 到 <code>process.env</code>，舊部署零影響。下表為各平台簽章類型 + 上線 PR 對照：</p>
                         <ol>
-                            <li data-i18n="guide_pub_roadmap_step1"><strong>1-key bearer 平台</strong>（Hashnode / DEV.to / Qiita）：單把 API token，最簡單，先收尾。</li>
+                            <li data-i18n="guide_pub_roadmap_step1"><strong>1-key bearer 平台</strong>（DEV.to / Qiita）：單把 API token，最簡單，先收尾。</li>
                             <li data-i18n="guide_pub_roadmap_step2"><strong>2-key bearer + URN</strong>（LinkedIn）：access_token + author URN，兩把都從 vault 取。</li>
                             <li data-i18n="guide_pub_roadmap_step3"><strong>4-key OAuth1a 即時簽章</strong>（X / Tumblr）：consumer + access 各一對，每次 request 用 HMAC-SHA1 即時簽 nonce + timestamp。</li>
                             <li data-i18n="guide_pub_roadmap_step4"><strong>4-key OAuth2 password grant + per-tenant token cache</strong>（Reddit）：username/password 換 access_token，cache 用 <code>Map keyed by clientId+username</code> 防跨租戶污染。</li>
@@ -4039,9 +4032,9 @@ curl -s -X POST "https://eclawbot.com/api/mission/note/update" \
 curl -s -H "X-Publisher-Key: $PUBLISHER_API_KEY" \
   "https://eclawbot.com/api/publisher/x/me?deviceId=DEVICE_ID"
 
-# Hashnode / DEV.to / Qiita / Tumblr / Reddit / LinkedIn / WeChat / Blogger / Telegraph
+# DEV.to / Qiita / Tumblr / Reddit / LinkedIn / WeChat / Blogger / Telegraph
 # 全都有對應 GET /&lt;platform&gt;/me 或 /status，回 200 = 金鑰活著
-for p in hashnode devto qiita tumblr reddit linkedin; do
+for p in devto qiita tumblr reddit linkedin; do
   echo "=== $p ==="
   curl -s -H "X-Publisher-Key: $PUBLISHER_API_KEY" \
     "https://eclawbot.com/api/publisher/$p/me" | head -c 200

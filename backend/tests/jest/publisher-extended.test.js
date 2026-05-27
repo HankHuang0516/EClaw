@@ -3,7 +3,6 @@
  *
  * Tests input validation for publisher platforms NOT covered by publisher.test.js:
  * - Blogger (OAuth + publish + delete)
- * - Hashnode (publish + delete)
  * - X/Twitter (tweet + delete)
  * - Tumblr (publish + delete)
  * - Reddit (submit + delete)
@@ -204,27 +203,7 @@ describe('GET /api/publisher/blogger/status', () => {
     });
 });
 
-// ════════════════════════════════════════════════════════════════
-// Hashnode
-// ════════════════════════════════════════════════════════════════
-describe('POST /api/publisher/hashnode/publish', () => {
-    it('rejects missing title', async () => {
-        const res = await post('/api/publisher/hashnode/publish')
-            .send({ contentMarkdown: '# Test', publicationId: 'pub-1' });
-        expect([400, 501]).toContain(res.status);
-    });
-
-    it('rejects missing contentMarkdown', async () => {
-        const res = await post('/api/publisher/hashnode/publish')
-            .send({ title: 'Test', publicationId: 'pub-1' });
-        expect([400, 501]).toContain(res.status);
-    });
-
-    it('rejects empty body', async () => {
-        const res = await post('/api/publisher/hashnode/publish').send({});
-        expect([400, 501]).toContain(res.status);
-    });
-});
+// Hashnode endpoint tests removed 2026-05-27 — platform retired (pay-or-drop → drop).
 
 // ════════════════════════════════════════════════════════════════
 // X/Twitter
@@ -327,10 +306,7 @@ describe('Publisher delete endpoints', () => {
         expect(res.status).toBeGreaterThanOrEqual(400);
     });
 
-    it('DELETE /api/publisher/hashnode/post/:id responds', async () => {
-        const res = await del('/api/publisher/hashnode/post/123');
-        expect(res.status).toBeGreaterThanOrEqual(400);
-    });
+    // DELETE hashnode test removed 2026-05-27 — platform retired.
 
     it('DELETE /api/publisher/x/tweet/:id responds', async () => {
         const res = await del('/api/publisher/x/tweet/123');
@@ -362,10 +338,7 @@ describe('Publisher delete endpoints', () => {
 // /me endpoints — should require platform config
 // ════════════════════════════════════════════════════════════════
 describe('Publisher /me endpoints', () => {
-    it('GET /api/publisher/hashnode/me responds', async () => {
-        const res = await get('/api/publisher/hashnode/me');
-        expect(res.status).toBeGreaterThanOrEqual(400);
-    });
+    // GET hashnode/me test removed 2026-05-27 — platform retired.
 
     it('GET /api/publisher/x/me responds', async () => {
         const res = await get('/api/publisher/x/me');

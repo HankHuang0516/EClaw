@@ -5,7 +5,7 @@
 **Db tables:** `device_vars` (one row per device), `device_vars_audit` (append-only mutation log)
 
 The vault is the per-device secret store: env-style key/value pairs (X_API_KEY,
-ANTHROPIC_API_KEY, HASHNODE_PUBLICATION_ID, …) that an entity needs at runtime
+ANTHROPIC_API_KEY, DEVTO_API_KEY, …) that an entity needs at runtime
 but the platform must not see in plaintext. This spec captures the encryption
 boundary, the dual-auth read model, the no-whitelist rule for rental, and the
 mutation safeguards. Constants are cited **by name + value** so a grep against
