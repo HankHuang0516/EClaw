@@ -161,19 +161,38 @@ describe('POST /api/entity/heartbeat — last_seen tracking', () => {
         expect(res.body.lastSeen >= before).toBe(true);
     });
 
-    it('GET /api/entity/status reflects the recorded heartbeat', async () => {
+    it('GET /api/entity/status reflects the recorded heartbeat (botSecret-authed)', async () => {
         await post('/api/entity/heartbeat').send({
             deviceId,
             entityId: 0,
             botSecret: botSecret0
         });
 
-        const res = await get(`/api/entity/status?deviceId=${deviceId}&entityId=0`);
+        const res = await get(`/api/entity/status?deviceId=${deviceId}&entityId=0&botSecret=${botSecret0}`);
         expect(res.status).toBe(200);
         expect(res.body.entityId).toBe(0);
         expect(res.body.daemonConnected).toBe(true);
         expect(res.body.stale).toBe(false);
         expect(res.body.lastSeen).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    });
+
+    it('GET /api/entity/status accepts deviceSecret as fallback to botSecret', async () => {
+        const res = await get(`/api/entity/status?deviceId=${deviceId}&entityId=0&deviceSecret=${deviceSecret}`);
+        expect(res.status).toBe(200);
+        expect(res.body.entityId).toBe(0);
+    });
+
+    it('GET /api/entity/status rejects unauthenticated read (no creds → 403)', async () => {
+        const res = await get(`/api/entity/status?deviceId=${deviceId}&entityId=0`);
+        expect(res.status).toBe(403);
+        expect(res.body.daemonConnected).toBeUndefined();
+        expect(res.body.lastSeen).toBeUndefined();
+    });
+
+    it('GET /api/entity/status rejects wrong botSecret', async () => {
+        const res = await get(`/api/entity/status?deviceId=${deviceId}&entityId=0&botSecret=wrong-secret`);
+        expect(res.status).toBe(403);
+        expect(res.body.daemonConnected).toBeUndefined();
     });
 
     it('accepts deviceSecret auth as fallback to botSecret', async () => {

@@ -143,7 +143,12 @@ export class EClawClient {
       }),
     });
 
-    return await res.json() as HeartbeatResponse;
+    const body = await res.json() as HeartbeatResponse;
+    if (!res.ok || body.success === false) {
+      const reason = (body as { message?: string }).message || `HTTP ${res.status}`;
+      throw new Error(`heartbeat failed: ${reason}`);
+    }
+    return body;
   }
 
   /**

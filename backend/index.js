@@ -7290,11 +7290,13 @@ app.post('/api/entity/heartbeat', async (req, res) => {
 
 /**
  * GET /api/entity/status
- * Minimal daemon-online status for a target entity.
- * Query: ?deviceId=...&entityId=...
+ * Minimal daemon-online status for a target entity. Authenticated read:
+ * deviceId is not a credential and entity slots are low-entropy, so we gate
+ * presence/last_seen behind deviceSecret or the target entity's botSecret.
+ * Query: ?deviceId=...&entityId=...&botSecret=... (or &deviceSecret=...)
  */
 app.get('/api/entity/status', (req, res) => {
-    const { deviceId, entityId } = req.query || {};
+    const { deviceId, entityId, botSecret, deviceSecret } = req.query || {};
     if (!deviceId) {
         return res.status(400).json({ message: 'deviceId required' });
     }
@@ -7311,6 +7313,12 @@ app.get('/api/entity/status', (req, res) => {
     const entity = device.entities[eId];
     if (!entity || !entity.isBound) {
         return res.status(404).json({ message: `Entity ${eId} is not bound` });
+    }
+
+    const deviceAuthed = !!(deviceSecret && device.deviceSecret && safeEqual(device.deviceSecret, deviceSecret));
+    const botAuthed = !!(botSecret && entity.botSecret && safeEqual(entity.botSecret, botSecret));
+    if (!deviceAuthed && !botAuthed) {
+        return res.status(403).json({ message: 'Invalid credentials' });
     }
 
     const status = getEntityDaemonStatus(entity);
