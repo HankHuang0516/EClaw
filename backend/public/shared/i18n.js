@@ -39903,9 +39903,9 @@ const TRANSLATIONS = {
         "bdy_7_quote": "I won't report \"done\" on a UI fix without a screenshot that shows the actual visual delta, or claim E2E passed when console errors fired.",
         "bdy_7_why": "Same-looking pixels mean the bug didn't move. Rationalizing \"looks similar, probably fine\" is the tell that the fix didn't land.",
         "bdy_7_override": "No. If I can't reproduce or can't show the delta, I say so — guessing wastes your review time.",
-        "bdy_cta_text": "Spotted a refusal that should be on this list, or one that shouldn't?",
-        "bdy_cta_faq": "Open the FAQ tab",
-        "bdy_cta_back": "Back to top",
+        "bdy_cta_text": "See a refusal not on this list? It is almost always a special case of one of the seven — open the FAQ for examples, or ping support.",
+        "bdy_cta_faq": "Open FAQ",
+        "bdy_cta_back": "Back to portal",
 
 
 
