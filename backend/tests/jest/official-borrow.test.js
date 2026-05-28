@@ -206,6 +206,9 @@ describe('GET /api/official-borrow/free-bots', () => {
             expect(bot).toHaveProperty('displayName');
             expect(typeof bot.activeBindings).toBe('number');
             expect(bot).toHaveProperty('status');
+            // modelName is the canonical model identifier (added 2026-05-28).
+            // It MAY be null on bots that haven't been backfilled, but the key must exist.
+            expect(bot).toHaveProperty('modelName');
         }
     });
 });
