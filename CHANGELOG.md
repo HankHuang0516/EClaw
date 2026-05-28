@@ -1,3 +1,10 @@
+# [1.1181.0](https://github.com/HankHuang0516/EClaw/compare/v1.1180.3...v1.1181.0) (2026-05-28)
+
+
+### Features
+
+* **portal:** point-and-edit demo (Track A — DOM selector + text-selection) ([#2991](https://github.com/HankHuang0516/EClaw/issues/2991)) ([c96f746](https://github.com/HankHuang0516/EClaw/commit/c96f74613cc5dfa986876dddcc15c29b4057e697)), closes [Hermes/#3](https://github.com/HankHuang0516/EClaw/issues/3)
+
 ## [1.1180.3](https://github.com/HankHuang0516/EClaw/compare/v1.1180.2...v1.1180.3) (2026-05-28)
 
 
