@@ -1,3 +1,10 @@
+## [1.1182.1](https://github.com/HankHuang0516/EClaw/compare/v1.1182.0...v1.1182.1) (2026-05-28)
+
+
+### Bug Fixes
+
+* **entity:** sync avatar with character on rebind/transform ([#2993](https://github.com/HankHuang0516/EClaw/issues/2993)) ([af3ca91](https://github.com/HankHuang0516/EClaw/commit/af3ca9153e8a7ab593d0e7bc4b0050b914812d50))
+
 # [1.1182.0](https://github.com/HankHuang0516/EClaw/compare/v1.1181.0...v1.1182.0) (2026-05-28)
 
 
