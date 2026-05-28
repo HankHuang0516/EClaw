@@ -211,6 +211,15 @@ async function createTables() {
         // (bot_id is immutable PK; model_name is editable and authoritative for what the bot actually runs)
         await client.query(`ALTER TABLE official_bots ADD COLUMN IF NOT EXISTS model_name TEXT`);
 
+        // Backfill model_name for the 3 existing free bots whose bot_id PKs were
+        // mislabeled at create time (see closed card_c23a03b4). display_name is
+        // truthful (matches actual wiring); bot_id is the immutable slug. Key the
+        // backfill on display_name + WHERE model_name IS NULL so it's idempotent
+        // and won't clobber any admin-portal edits.
+        await client.query(`UPDATE official_bots SET model_name = 'minimax-2.5' WHERE display_name = 'Cloud_Zeabur_MiniMax2.5' AND model_name IS NULL`);
+        await client.query(`UPDATE official_bots SET model_name = 'minimax-2.7' WHERE display_name = 'Local_Mac_MiniMax2.7' AND model_name IS NULL`);
+        await client.query(`UPDATE official_bots SET model_name = 'openai-codex/gpt-5.5-xhigh' WHERE display_name = 'Local_Mac_CodexGPT5.5_xhight' AND model_name IS NULL`);
+
         // Add paid_borrow_slots column to devices table (tracks how many personal bots a device has paid for)
         await client.query(`
             ALTER TABLE devices ADD COLUMN IF NOT EXISTS paid_borrow_slots INTEGER DEFAULT 0
