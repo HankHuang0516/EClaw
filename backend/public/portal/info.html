@@ -57,6 +57,7 @@
             <button class="info-tab" data-info-tab="faq" data-i18n="info_tab_faq">❓ FAQ</button>
             <button class="info-tab" data-info-tab="release-notes" data-i18n="info_tab_release_notes">📋 Releases</button>
             <button class="info-tab" data-info-tab="boundaries" data-i18n="info_tab_boundaries">🛡️ Bot Boundaries</button>
+            <button class="info-tab info-tab-flagged" data-info-tab="point-edit-demo" data-i18n="info_tab_point_edit_demo" hidden>🎯 Point-and-Edit Demo</button>
             <button class="info-tab" onclick="window.location.href='roadmap.html'" data-i18n="info_tab_roadmap">🗺️ Roadmap</button>
         </div>
 
@@ -4934,6 +4935,76 @@ platforms:
 
 
         <!-- ══════════════════════════════════════════════════
+             TAB: Point-and-Edit Demo (feature-flagged via ?demo=pointedit)
+             A/B/C/D-lite parallel testbed; gated behind URL flag so
+             default users don't see it. Track A scaffolds the harness.
+             ══════════════════════════════════════════════════ -->
+        <div class="info-panel" id="panel-point-edit-demo" data-mode-default="dom">
+            <div class="ped-header">
+                <h1 data-i18n="ped_title">🎯 Point-and-Edit Demo</h1>
+                <p class="ped-lede" data-i18n="ped_lede">Pick the same target three ways. Time yourself, see which one fits your hand.</p>
+                <div class="ped-mode-switch" role="tablist" aria-label="Pick mode">
+                    <button class="ped-mode active" data-ped-mode="dom" type="button" data-i18n="ped_mode_dom">A · Hover & Click (DOM)</button>
+                    <button class="ped-mode" data-ped-mode="coordinate" type="button" data-i18n="ped_mode_coordinate" disabled title="Track B — pending">B · Coordinate + AST</button>
+                    <button class="ped-mode" data-ped-mode="mindmap" type="button" data-i18n="ped_mode_mindmap" disabled title="Track C — pending">C · Mind-map Node</button>
+                    <button class="ped-mode" data-ped-mode="textsel" type="button" data-i18n="ped_mode_textsel">D · Text Selection</button>
+                </div>
+                <p class="ped-status" data-ped-status data-i18n="ped_status_idle">Pick mode A or D, then hover on the sandbox to begin.</p>
+            </div>
+
+            <div class="ped-layout">
+                <!-- Sandbox: 4–6 realistic blocks the user will operate on -->
+                <section class="ped-sandbox" data-ped-sandbox aria-label="Sandbox preview">
+                    <article class="ped-block ped-hero" data-point-edit-id="hero" data-ped-label="hero">
+                        <h2 class="ped-hero-title" data-point-edit-id="hero.title" data-i18n="ped_sb_hero_title">Faster than dragging files around</h2>
+                        <p class="ped-hero-sub" data-point-edit-id="hero.sub" data-i18n="ped_sb_hero_sub">Point at any element on the page and ask Claude to edit it.</p>
+                    </article>
+                    <article class="ped-block ped-feature" data-point-edit-id="feature.card" data-ped-label="feature card">
+                        <span class="ped-feature-icon" data-point-edit-id="feature.icon" aria-hidden="true">⚡</span>
+                        <h3 class="ped-feature-title" data-point-edit-id="feature.title" data-i18n="ped_sb_feature_title">Zero install</h3>
+                        <p class="ped-feature-body" data-point-edit-id="feature.body" data-i18n="ped_sb_feature_body">Works in any browser. No extension. The page is the target.</p>
+                    </article>
+                    <article class="ped-block ped-cta-block" data-point-edit-id="cta.block" data-ped-label="CTA">
+                        <button class="ped-cta-btn" type="button" data-point-edit-id="cta.button" data-i18n="ped_sb_cta_label">Buy Now</button>
+                        <span class="ped-cta-foot" data-point-edit-id="cta.foot" data-i18n="ped_sb_cta_foot">— or browse the catalogue</span>
+                    </article>
+                    <article class="ped-block ped-note" data-point-edit-id="note.block" data-ped-label="note">
+                        <p data-point-edit-id="note.p1" data-i18n="ped_sb_note_p1">Friction matters. The editor that needs three steps to find a button loses to the one that takes one click. Point-and-edit cuts the address-typing tax: instead of describing where an element lives in your DOM tree, you point.</p>
+                        <p data-point-edit-id="note.p2" data-i18n="ped_sb_note_p2">Try selecting a fragment of <em data-point-edit-id="note.em">this very sentence</em> in Track D mode — the selection itself becomes the anchor.</p>
+                    </article>
+                    <article class="ped-block ped-agent" data-point-edit-id="agent.card" data-ped-label="agent card">
+                        <header class="ped-agent-head">
+                            <span class="ped-agent-avatar" data-point-edit-id="agent.avatar" aria-hidden="true">🤖</span>
+                            <span class="ped-agent-name" data-point-edit-id="agent.name" data-i18n="ped_sb_agent_name">EClaw Agent</span>
+                        </header>
+                        <p class="ped-agent-tag" data-point-edit-id="agent.tag" data-i18n="ped_sb_agent_tag">I edit your page in place. Tell me what to change.</p>
+                        <div class="ped-agent-actions" data-point-edit-id="agent.actions">
+                            <button type="button" class="ped-agent-action" data-point-edit-id="agent.action.run" data-i18n="ped_sb_agent_run">Run</button>
+                            <button type="button" class="ped-agent-action ped-tiny" data-point-edit-id="agent.action.help" data-i18n="ped_sb_agent_help">?</button>
+                        </div>
+                    </article>
+                </section>
+
+                <!-- Composer: where the picked target lands -->
+                <aside class="ped-composer" aria-label="Chat composer">
+                    <header class="ped-composer-head">
+                        <span data-i18n="ped_composer_title">Composer (stub)</span>
+                        <button type="button" class="ped-clear" data-ped-clear data-i18n="ped_composer_clear">Clear</button>
+                    </header>
+                    <textarea class="ped-textarea" data-ped-textarea spellcheck="false" rows="10" data-i18n-placeholder="ped_composer_placeholder" placeholder="Pick a target on the left, then describe the change…"></textarea>
+                    <footer class="ped-composer-foot">
+                        <span class="ped-payload-label" data-i18n="ped_payload_label">Last target payload:</span>
+                        <pre class="ped-payload" data-ped-payload aria-live="polite">{}</pre>
+                    </footer>
+                </aside>
+            </div>
+
+            <!-- Highlight overlay — single element, repositioned per hover -->
+            <div class="ped-overlay" data-ped-overlay hidden aria-hidden="true"></div>
+        </div><!-- /panel-point-edit-demo -->
+
+
+        <!-- ══════════════════════════════════════════════════
              TAB 4: COMPARE
              ══════════════════════════════════════════════════ -->
 
@@ -4949,6 +5020,7 @@ platforms:
     <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
     <script src="shared/markdown-render.js"></script>
     <script src="shared/info.js"></script>
+    <script src="shared/point-edit-demo.js"></script>
     <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
     <script src="shared/ai-chat.js"></script>
     </main>
