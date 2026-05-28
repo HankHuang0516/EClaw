@@ -897,4 +897,6 @@ Tu suscripción permanece activa y puedes reenlazar en cualquier momento (sujeto
     <string name="fcm_channel_system_desc">Notificaciones del sistema</string>
     <string name="fcm_channel_feedback_name">Actualizaciones de comentarios</string>
     <string name="fcm_channel_feedback_desc">Actualizaciones del estado de comentarios</string>
+    <string name="ai_chat_status_analyzing">Analizando</string>
+    <string name="ai_chat_status_processing_result">Procesando resultado</string>
 </resources>

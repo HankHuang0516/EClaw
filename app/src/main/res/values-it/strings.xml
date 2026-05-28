@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ai_chat_status_analyzing">Analisi in corso</string>
+    <string name="ai_chat_status_processing_result">Elaborazione risultato</string>
+</resources>

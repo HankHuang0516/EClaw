@@ -974,4 +974,6 @@ Bei Fragen kontaktieren Sie uns über unsere offizielle E-Mail.
     <string name="fcm_channel_system_desc">Systembenachrichtigungen</string>
     <string name="fcm_channel_feedback_name">Feedback-Updates</string>
     <string name="fcm_channel_feedback_desc">Feedback-Statusaktualisierungen</string>
+    <string name="ai_chat_status_analyzing">Analysiere</string>
+    <string name="ai_chat_status_processing_result">Verarbeite Ergebnis</string>
 </resources>

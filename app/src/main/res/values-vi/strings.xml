@@ -869,4 +869,6 @@ Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua
     <string name="fcm_channel_system_desc">Thông báo hệ thống</string>
     <string name="fcm_channel_feedback_name">Cập nhật phản hồi</string>
     <string name="fcm_channel_feedback_desc">Cập nhật trạng thái phản hồi</string>
+    <string name="ai_chat_status_analyzing">Đang phân tích</string>
+    <string name="ai_chat_status_processing_result">Đang xử lý kết quả</string>
 </resources>

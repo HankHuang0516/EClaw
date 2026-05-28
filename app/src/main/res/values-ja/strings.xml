@@ -870,4 +870,6 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="fcm_channel_system_desc">システム通知</string>
     <string name="fcm_channel_feedback_name">フィードバック更新</string>
     <string name="fcm_channel_feedback_desc">フィードバック状態の更新</string>
+    <string name="ai_chat_status_analyzing">分析中</string>
+    <string name="ai_chat_status_processing_result">結果を処理中</string>
 </resources>

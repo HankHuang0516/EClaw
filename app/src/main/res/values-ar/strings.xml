@@ -975,4 +975,6 @@ GPS: عند الطلب فقط، بلا تتبع في الخلفية، تُفقد
     <string name="fcm_channel_system_desc">إشعارات النظام</string>
     <string name="fcm_channel_feedback_name">تحديثات الملاحظات</string>
     <string name="fcm_channel_feedback_desc">تحديثات حالة الملاحظات</string>
+    <string name="ai_chat_status_analyzing">جارٍ التحليل</string>
+    <string name="ai_chat_status_processing_result">معالجة النتيجة</string>
 </resources>
