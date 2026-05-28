@@ -4945,11 +4945,11 @@ platforms:
                 <p class="ped-lede" data-i18n="ped_lede">Pick the same target three ways. Time yourself, see which one fits your hand.</p>
                 <div class="ped-mode-switch" role="tablist" aria-label="Pick mode">
                     <button class="ped-mode active" data-ped-mode="dom" type="button" data-i18n="ped_mode_dom">A · Hover & Click (DOM)</button>
-                    <button class="ped-mode" data-ped-mode="coordinate" type="button" data-i18n="ped_mode_coordinate" disabled title="Track B — pending">B · Coordinate + AST</button>
+                    <button class="ped-mode" data-ped-mode="coordinate" type="button" data-i18n="ped_mode_coordinate">B · Coordinate + AST</button>
                     <button class="ped-mode" data-ped-mode="mindmap" type="button" data-i18n="ped_mode_mindmap" disabled title="Track C — pending">C · Mind-map Node</button>
                     <button class="ped-mode" data-ped-mode="textsel" type="button" data-i18n="ped_mode_textsel">D · Text Selection</button>
                 </div>
-                <p class="ped-status" data-ped-status data-i18n="ped_status_idle">Pick mode A or D, then hover on the sandbox to begin.</p>
+                <p class="ped-status" data-ped-status data-i18n="ped_status_idle">Pick mode A, B, or D, then target the sandbox to begin.</p>
             </div>
 
             <div class="ped-layout">
@@ -5038,7 +5038,7 @@ platforms:
                     <!-- Track B — Coordinate + AST -->
                     <article class="ped-track ped-track-b">
                         <header class="ped-track-head">
-                            <span class="ped-track-badge ped-track-badge-pending" data-i18n="ped_roadmap_badge_pending">PENDING</span>
+                            <span class="ped-track-badge ped-track-badge-live" data-i18n="ped_roadmap_badge_live">LIVE</span>
                             <h3 data-i18n="ped_roadmap_b_title">B · Coordinate + AST</h3>
                             <p class="ped-track-pitch" data-i18n="ped_roadmap_b_pitch">Point with screen coordinates (touch, gaze, voice-coord) and let the AST resolver upgrade x/y into a stable AST node. Best when you can’t hover — mobile thumb-region, drift across deploys, voice control.</p>
                         </header>

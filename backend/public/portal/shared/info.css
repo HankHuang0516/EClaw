@@ -1581,6 +1581,12 @@
 .ped-status[data-state="picked"] {
     color: #86efac;
 }
+.ped-status[data-state="resolving"] {
+    color: #fde68a;
+}
+.ped-status[data-state="error"] {
+    color: #fca5a5;
+}
 
 .ped-layout {
     display: grid;
