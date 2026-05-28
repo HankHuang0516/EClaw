@@ -1,3 +1,10 @@
+## [1.1180.3](https://github.com/HankHuang0516/EClaw/compare/v1.1180.2...v1.1180.3) (2026-05-28)
+
+
+### Bug Fixes
+
+* **borrow:** bind once per fleet-cron via TTL-aware reuse ([#2990](https://github.com/HankHuang0516/EClaw/issues/2990)) ([6563736](https://github.com/HankHuang0516/EClaw/commit/656373655e51c863d74a700dc30371748b19e536)), closes [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+
 ## [1.1180.2](https://github.com/HankHuang0516/EClaw/compare/v1.1180.1...v1.1180.2) (2026-05-28)
 
 
