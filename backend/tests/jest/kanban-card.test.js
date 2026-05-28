@@ -660,3 +660,75 @@ describe('activity bumps updated_at', () => {
         expect(updatedAtCall).toBeDefined();
     });
 });
+
+// ════════════════════════════════════════════════════════════════
+// GET /cards — schedule field schema lock
+// Hygiene audits (e.g. cron-broken heuristic) need every card row to
+// carry a `schedule` key. Cards without a schedule MUST serialize as
+// schedule: null, not omit the field — otherwise schema checks can't
+// distinguish "not scheduled" from "API forgot to include it".
+// ════════════════════════════════════════════════════════════════
+describe('GET /cards — schedule field always present', () => {
+    const get = (path) => request(app).get(path);
+    const baseQ = `?deviceId=test-dev&deviceSecret=test-secret`;
+
+    it('manual card without schedule → schedule: null', async () => {
+        mockQuery
+            .mockResolvedValueOnce({
+                rows: [{
+                    id: 'card_manual', device_id: 'test-dev', title: 'Manual',
+                    description: '', priority: 'P2', status: 'todo',
+                    assigned_bots: [0], created_by: 0,
+                    created_at: new Date(), updated_at: new Date(),
+                    status_changed_at: new Date(), archived: false,
+                    is_automation: false,
+                    schedule_enabled: false, schedule_type: null,
+                    schedule_cron: null, schedule_last_run_at: null,
+                }],
+            })
+            .mockResolvedValueOnce({ rows: [] }) // tags
+            .mockResolvedValueOnce({ rows: [{ manual_count: '1', automation_count: '0' }] }); // summary
+
+        const res = await get(`/api/mission/cards${baseQ}`);
+        expect(res.status).toBe(200);
+        expect(res.body.cards).toHaveLength(1);
+        expect(res.body.cards[0]).toHaveProperty('schedule');
+        expect(res.body.cards[0].schedule).toBeNull();
+    });
+
+    it('automation card with recurring schedule → full schedule object', async () => {
+        const now = new Date();
+        mockQuery
+            .mockResolvedValueOnce({
+                rows: [{
+                    id: 'card_cron', device_id: 'test-dev', title: 'Cron',
+                    description: '', priority: 'P1', status: 'todo',
+                    assigned_bots: [0], created_by: 0,
+                    created_at: now, updated_at: now,
+                    status_changed_at: now, archived: false,
+                    is_automation: true,
+                    schedule_enabled: true,
+                    schedule_type: 'recurring',
+                    schedule_cron: '0 9 * * *',
+                    schedule_timezone: 'Asia/Taipei',
+                    schedule_last_run_at: now,
+                    schedule_next_run_at: new Date(now.getTime() + 86400000),
+                }],
+            })
+            .mockResolvedValueOnce({ rows: [] })
+            .mockResolvedValueOnce({ rows: [{ manual_count: '0', automation_count: '1' }] });
+
+        const res = await get(`/api/mission/cards${baseQ}&automation=all`);
+        expect(res.status).toBe(200);
+        const card = res.body.cards[0];
+        expect(card).toHaveProperty('schedule');
+        expect(card.schedule).toEqual(expect.objectContaining({
+            enabled: true,
+            type: 'recurring',
+            cronExpression: '0 9 * * *',
+            timezone: 'Asia/Taipei',
+        }));
+        expect(typeof card.schedule.lastRunAt).toBe('number');
+        expect(typeof card.schedule.nextRunAt).toBe('number');
+    });
+});
