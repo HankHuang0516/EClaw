@@ -1,3 +1,15 @@
+# [1.1180.0](https://github.com/HankHuang0516/EClaw/compare/v1.1179.1...v1.1180.0) (2026-05-28)
+
+
+### Bug Fixes
+
+* **backend:** skill doc IMMEDIATE ACTION example payload — placeholder redesign (Path A) ([#2986](https://github.com/HankHuang0516/EClaw/issues/2986)) ([c7f6962](https://github.com/HankHuang0516/EClaw/commit/c7f6962e383951203d4463bf0b8c555aea169232)), closes [#2982](https://github.com/HankHuang0516/EClaw/issues/2982) [#6](https://github.com/HankHuang0516/EClaw/issues/6) [#6](https://github.com/HankHuang0516/EClaw/issues/6) [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
+
+### Features
+
+* **official-bots:** add model_name canonical field + PATCH metadata endpoint ([#2987](https://github.com/HankHuang0516/EClaw/issues/2987)) ([b34e165](https://github.com/HankHuang0516/EClaw/commit/b34e1657cee7d5ab9e0ed8845d9cdff2c5566e7e))
+
 ## [1.1179.1](https://github.com/HankHuang0516/EClaw/compare/v1.1179.0...v1.1179.1) (2026-05-27)
 
 
