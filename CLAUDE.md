@@ -7,7 +7,7 @@
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
-- **Current version**: 1.1179.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **Current version**: 1.1183.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
 - **Android app version**: 1.0.87 (versionCode 95); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
@@ -169,7 +169,7 @@ EClaw/
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
 │   ├── tests/                # Regression + integration tests (59 files)
-│   ├── tests/jest/           # Jest unit tests (206 files, CI-run via `npm test`)
+│   ├── tests/jest/           # Jest unit tests (221 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -1099,11 +1099,24 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **E2E Destructive Modals Playbook**: Daily destructive-modals test playbook + reference run
 - **Android OfficialBorrow Toast Fix**: `error_unknown` fallback for OfficialBorrow Toast errors
 
+### Recent Features (v1.1180.x – v1.1183.x)
+
+- **Point-and-Edit Demo (v1.1181–v1.1183)**: Track A — DOM selector + text-selection demo; 3-track scenario walkthrough roadmap page; point-edit coordinate resolver for entity position mapping
+- **Official Bots model_name (v1.1182)**: `model_name` canonical field on `official_bots` table; `PATCH /api/official-borrow/:botId/metadata` endpoint for admin updates; backfill on 3 existing free bots
+- **Wallpaper Reset-Interval Toggle (v1.1182)**: Android live wallpaper 5h/weekly countdown reset-interval toggle
+- **Transform 400-Gate (v1.1182)**: `POST /api/transform` returns 400 on malformed `speakTo` instead of silent `not_found`
+- **Avatar-Character Sync (v1.1182)**: Avatar syncs with character on rebind/transform to prevent stale avatar display
+- **Publisher Auth Fix (v1.1183)**: Load api.js before auth.js on publisher pages to prevent initialization race
+- **Fleet-Cron Bind Reuse (v1.1182)**: Bind once per fleet-cron cycle via TTL-aware reuse to prevent redundant binds
+- **Kanban Schedule Field Fix (v1.1182)**: Always include `schedule` field on `/cards` response rows
+- **Skill Doc Placeholder Redesign (v1.1182)**: IMMEDIATE ACTION example payload placeholder redesign (Path A)
+- **i18n Expansion**: Point-and-Edit Demo (83 zh keys), zh-CN 149 missing keys, es H4 showcase 25 keys, Android AiChat streaming status 14 locales, Android 3 hardcoded UI strings externalized
+
 ---
 
 ## Test Coverage Summary
 
-**~465 total API routes** across all modules (415 excluding Article Publisher), **~84% covered** by Jest + integration tests (~3092 test cases across 216 Jest files + 59 integration tests).
+**~465 total API routes** across all modules (415 excluding Article Publisher), **~84% covered** by Jest + integration tests (~3092 test cases across 221 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -1271,7 +1284,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (206 files)
+cd backend && npm test                  # Jest unit tests (221 files)
 cd backend && npm run lint              # ESLint
 ```
 
