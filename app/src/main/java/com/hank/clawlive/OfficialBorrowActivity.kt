@@ -27,6 +27,7 @@ import com.hank.clawlive.data.model.BorrowBinding
 import com.hank.clawlive.data.model.FreeBotInfo
 import com.hank.clawlive.data.model.OfficialBorrowStatusResponse
 import com.hank.clawlive.data.remote.NetworkModule
+import com.hank.clawlive.R
 import com.hank.clawlive.data.remote.TelemetryHelper
 import com.hank.clawlive.ui.RecordingIndicatorHelper
 import kotlinx.coroutines.delay
@@ -482,7 +483,7 @@ class OfficialBorrowActivity : AppCompatActivity() {
                 api.sendFeedback(mapOf(
                     "deviceId" to deviceManager.deviceId,
                     "deviceSecret" to deviceManager.deviceSecret,
-                    "message" to "Monthly bot rental demand",
+                    "message" to getString(R.string.rental_demand_message_body),
                     "category" to "rental_demand",
                     "source" to "android"
                 ))

@@ -1,6 +1,7 @@
 package com.hank.clawlive.data.repository
 
 import android.content.Context
+import com.hank.clawlive.R
 import com.hank.clawlive.data.local.database.ChatDatabase
 import com.hank.clawlive.data.local.database.ChatMessage
 import com.hank.clawlive.data.local.database.ChatMessageDao
@@ -18,7 +19,8 @@ import java.util.TimeZone
  * Repository for managing chat message history
  */
 class ChatRepository private constructor(
-    private val chatDao: ChatMessageDao
+    private val chatDao: ChatMessageDao,
+    private val context: Context
 ) {
     companion object {
         @Volatile
@@ -27,7 +29,8 @@ class ChatRepository private constructor(
         fun getInstance(context: Context): ChatRepository {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: ChatRepository(
-                    ChatDatabase.getDao(context)
+                    ChatDatabase.getDao(context),
+                    context
                 ).also { INSTANCE = it }
             }
         }
@@ -163,7 +166,7 @@ class ChatRepository private constructor(
         // Skip if message is empty, default, passive state, or system echo
         val passiveMessages = listOf(
             "Loading...",
-            "No message",
+            context.getString(R.string.chat_passive_no_message),
             "Waiting...",
             "Zzz...",
             "Ready",

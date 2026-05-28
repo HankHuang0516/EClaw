@@ -366,7 +366,7 @@ class SettingsActivity : AppCompatActivity() {
         // Account Status Card listeners
         btnAccountOpenPortal.setOnClickListener {
             TelemetryHelper.trackAction("account_card_open_portal")
-            WebViewActivity.launch(this, "https://eclawbot.com/portal/dashboard.html", "EClawbot Portal")
+            WebViewActivity.launch(this, "https://eclawbot.com/portal/dashboard.html", getString(R.string.settings_portal_title))
         }
 
         tvAccountCopyCredentials.setOnClickListener {

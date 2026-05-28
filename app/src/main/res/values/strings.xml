@@ -984,4 +984,11 @@ If you have any questions, please contact us via our official email.
     <string name="tool_status_writing">Writing file…</string>
     <string name="custom_layout_enabled">Custom layout enabled</string>
     <string name="custom_layout_using_preset">Using preset layout</string>
+    <string name="msg_no_entities_bound">No entities connected. Bind entities first.</string>
+    <string name="ai_chat_tool_status_processing">Processing</string>
+    <string name="ai_chat_tool_status_analyzing">Analyzing</string>
+    <string name="ai_chat_tool_status_processing_result">Processing result</string>
+    <string name="settings_portal_title">EClawbot Portal</string>
+    <string name="rental_demand_message_body">Monthly bot rental demand</string>
+    <string name="chat_passive_no_message">No message</string>
 </resources>

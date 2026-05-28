@@ -11,6 +11,7 @@ import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.google.android.material.textfield.TextInputEditText
 import com.hank.clawlive.data.local.ChatPreferences
+import com.hank.clawlive.R
 import com.hank.clawlive.data.local.DeviceManager
 import com.hank.clawlive.data.local.UsageManager
 import com.hank.clawlive.ui.EntityChipHelper
@@ -111,7 +112,7 @@ class MessageActivity : AppCompatActivity() {
                 if (boundIds.isEmpty()) {
                     Toast.makeText(
                         this@MessageActivity,
-                        "No entities connected. Bind entities first.",
+                        getString(R.string.msg_no_entities_bound),
                         Toast.LENGTH_LONG
                     ).show()
                 }
