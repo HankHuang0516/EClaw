@@ -869,4 +869,6 @@ GPS：รับตามความต้องการเท่านั้�
     <string name="fcm_channel_system_desc">การแจ้งเตือนระบบ</string>
     <string name="fcm_channel_feedback_name">อัปเดตคำติชม</string>
     <string name="fcm_channel_feedback_desc">อัปเดตสถานะคำติชม</string>
+    <string name="ai_chat_status_analyzing">กำลังวิเคราะห์</string>
+    <string name="ai_chat_status_processing_result">กำลังประมวลผล</string>
 </resources>

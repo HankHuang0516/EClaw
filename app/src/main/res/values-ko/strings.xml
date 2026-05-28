@@ -870,4 +870,6 @@ GPS: 온디맨드만, 백그라운드 추적 없음, 서버 재시작 시 데이
     <string name="fcm_channel_system_desc">시스템 알림</string>
     <string name="fcm_channel_feedback_name">피드백 업데이트</string>
     <string name="fcm_channel_feedback_desc">피드백 상태 업데이트</string>
+    <string name="ai_chat_status_analyzing">분석 중</string>
+    <string name="ai_chat_status_processing_result">결과 처리 중</string>
 </resources>

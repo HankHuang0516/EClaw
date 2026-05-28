@@ -870,4 +870,6 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="fcm_channel_system_desc">系統通知</string>
     <string name="fcm_channel_feedback_name">回饋更新</string>
     <string name="fcm_channel_feedback_desc">回饋狀態更新</string>
+    <string name="ai_chat_status_analyzing">分析中</string>
+    <string name="ai_chat_status_processing_result">處理結果中</string>
 </resources>
