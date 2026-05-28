@@ -5032,7 +5032,7 @@ app.post('/api/admin/push-update', adminAuth, adminCheck, async (req, res) => {
 // POST /api/admin/bots/create - Create new official bot (cookie-based admin auth)
 app.post('/api/admin/bots/create', adminAuth, adminCheck, async (req, res) => {
     try {
-        const { botId, botType, webhookUrl, token, setupUsername, setupPassword } = req.body;
+        const { botId, botType, webhookUrl, token, setupUsername, setupPassword, displayName, modelName } = req.body;
 
         if (!botId || !botType || !webhookUrl || !token) {
             return res.status(400).json({ success: false, error: 'botId, botType, webhookUrl, and token are required' });
@@ -5062,17 +5062,49 @@ app.post('/api/admin/bots/create', adminAuth, adminCheck, async (req, res) => {
             assigned_at: null,
             created_at: Date.now(),
             setup_username: setupUsername || null,
-            setup_password: setupPassword || null
+            setup_password: setupPassword || null,
+            display_name: displayName || null,
+            model_name: modelName || null
         };
 
         officialBots[botId] = bot;
         if (usePostgreSQL) await db.saveOfficialBot(bot);
 
-        console.log(`[Admin Portal] Created official bot: ${botId} (${botType})`);
-        res.json({ success: true, bot: { botId, botType, status: 'available', botSecret } });
+        console.log(`[Admin Portal] Created official bot: ${botId} (${botType}, model=${modelName || 'unset'})`);
+        res.json({ success: true, bot: { botId, botType, status: 'available', botSecret, displayName: bot.display_name, modelName: bot.model_name } });
     } catch (err) {
         console.error('[Admin] Create bot error:', err);
         res.status(500).json({ success: false, error: 'Failed to create bot' });
+    }
+});
+
+// PATCH /api/admin/bots/:botId/metadata - Update editable bot metadata (display_name, model_name).
+// bot_id is immutable PK; this endpoint exists so admins can backfill or correct the
+// human-facing labels without rotating bindings. webhookUrl/token/secret are NOT editable here.
+app.patch('/api/admin/bots/:botId/metadata', adminAuth, adminCheck, async (req, res) => {
+    try {
+        const { botId } = req.params;
+        const { displayName, modelName } = req.body;
+
+        if (typeof displayName === 'undefined' && typeof modelName === 'undefined') {
+            return res.status(400).json({ success: false, error: 'At least one of displayName or modelName is required' });
+        }
+
+        const bot = officialBots[botId];
+        if (!bot) {
+            return res.status(404).json({ success: false, error: 'Bot not found' });
+        }
+
+        if (typeof displayName !== 'undefined') bot.display_name = displayName || null;
+        if (typeof modelName !== 'undefined') bot.model_name = modelName || null;
+
+        if (usePostgreSQL) await db.saveOfficialBot(bot);
+
+        console.log(`[Admin Portal] Updated bot metadata: ${botId} (displayName=${bot.display_name}, modelName=${bot.model_name})`);
+        res.json({ success: true, bot: { botId, displayName: bot.display_name, modelName: bot.model_name } });
+    } catch (err) {
+        console.error('[Admin] Update bot metadata error:', err);
+        res.status(500).json({ success: false, error: 'Failed to update bot metadata' });
     }
 });
 
@@ -14553,6 +14585,7 @@ app.get('/api/official-borrow/free-bots', (req, res) => {
         return {
             botId: bot.bot_id,
             displayName: bot.display_name || bot.bot_id,
+            modelName: bot.model_name || null,
             activeBindings,
             status: bot.status
         };
