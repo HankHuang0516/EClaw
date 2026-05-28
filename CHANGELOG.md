@@ -1,3 +1,10 @@
+## [1.1183.1](https://github.com/HankHuang0516/EClaw/compare/v1.1183.0...v1.1183.1) (2026-05-28)
+
+
+### Bug Fixes
+
+* **portal:** load api before auth on publisher pages ([#3008](https://github.com/HankHuang0516/EClaw/issues/3008)) ([80ae633](https://github.com/HankHuang0516/EClaw/commit/80ae63315860ffa12674fa0d6a0d94d8acdc72fb))
+
 # [1.1183.0](https://github.com/HankHuang0516/EClaw/compare/v1.1182.2...v1.1183.0) (2026-05-28)
 
 
