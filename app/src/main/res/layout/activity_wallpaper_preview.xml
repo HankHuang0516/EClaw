@@ -192,6 +192,53 @@
 
             </LinearLayout>
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="@string/wallpaper_reset_window_label"
+                android:textColor="@color/text_white_60"
+                android:textSize="12sp" />
+
+            <RadioGroup
+                android:id="@+id/radioResetWindow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/radioResetOff"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:buttonTint="@color/lobster_orange"
+                    android:text="@string/wallpaper_reset_window_off"
+                    android:textColor="@android:color/white"
+                    android:textSize="13sp" />
+
+                <RadioButton
+                    android:id="@+id/radioReset5h"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:buttonTint="@color/lobster_orange"
+                    android:text="@string/wallpaper_reset_window_5h"
+                    android:textColor="@android:color/white"
+                    android:textSize="13sp" />
+
+                <RadioButton
+                    android:id="@+id/radioResetWeekly"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:buttonTint="@color/lobster_orange"
+                    android:text="@string/wallpaper_reset_window_weekly"
+                    android:textColor="@android:color/white"
+                    android:textSize="13sp" />
+
+            </RadioGroup>
+
         </LinearLayout>
 
         <!-- Select Photo Button (only visible when background enabled) -->

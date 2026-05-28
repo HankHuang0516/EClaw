@@ -10,6 +10,8 @@ import com.hank.clawlive.R
 import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.local.UsageOverlayPosition
 import com.hank.clawlive.data.model.UsageSnapshotLatest
+import java.util.Calendar
+import java.util.Locale
 import kotlin.math.roundToInt
 
 class UsageOverlayRenderer(
@@ -216,7 +218,67 @@ class UsageOverlayRenderer(
         if (lines.size == 1) {
             lines.add(context.getString(R.string.wallpaper_usage_overlay_syncing))
         }
+
+        formatResetCountdownLine(snapshot)?.let(lines::add)
         return lines
+    }
+
+    private fun formatResetCountdownLine(snapshot: UsageSnapshotLatest?): String? {
+        return when (layoutPrefs.wallpaperResetWindow) {
+            LayoutPreferences.RESET_WINDOW_5H -> {
+                val resetsAt = nextFiveHourResetEpochSec(snapshot) ?: return null
+                val hhmm = formatHourMinute((resetsAt * 1000.0).toLong())
+                context.getString(R.string.wallpaper_reset_window_5h_next, hhmm)
+            }
+            LayoutPreferences.RESET_WINDOW_WEEKLY -> {
+                val resetsAt = nextWeeklyResetEpochMillis()
+                val mondayHhmm = formatWeeklyReset(resetsAt)
+                context.getString(R.string.wallpaper_reset_window_weekly_next, mondayHhmm)
+            }
+            else -> null
+        }
+    }
+
+    private fun nextFiveHourResetEpochSec(snapshot: UsageSnapshotLatest?): Double? {
+        if (snapshot == null) return null
+        val claudeReset = snapshot.claude?.live?.rateLimits?.fiveHour?.resetsAt
+        val codexReset = snapshot.codex?.rateLimits?.fiveHourResetsAt
+        val nowSec = System.currentTimeMillis() / 1000.0
+        val candidates = listOfNotNull(claudeReset, codexReset).filter { it > nowSec }
+        return candidates.minOrNull()
+    }
+
+    private fun nextWeeklyResetEpochMillis(): Long {
+        val cal = Calendar.getInstance()
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        val daysUntilMonday = ((Calendar.MONDAY - cal.get(Calendar.DAY_OF_WEEK) + 7) % 7).let {
+            if (it == 0) 7 else it
+        }
+        cal.add(Calendar.DAY_OF_YEAR, daysUntilMonday)
+        return cal.timeInMillis
+    }
+
+    private fun formatHourMinute(epochMillis: Long): String {
+        val cal = Calendar.getInstance().apply { timeInMillis = epochMillis }
+        return String.format(
+            Locale.US,
+            "%02d:%02d",
+            cal.get(Calendar.HOUR_OF_DAY),
+            cal.get(Calendar.MINUTE)
+        )
+    }
+
+    private fun formatWeeklyReset(epochMillis: Long): String {
+        val cal = Calendar.getInstance().apply { timeInMillis = epochMillis }
+        return String.format(
+            Locale.US,
+            "Mon %02d:%02d",
+            cal.get(Calendar.HOUR_OF_DAY),
+            cal.get(Calendar.MINUTE)
+        )
     }
 
     private fun formatEngineLine(label: String, sessionPct: Double?, weeklyPct: Double?): String? {

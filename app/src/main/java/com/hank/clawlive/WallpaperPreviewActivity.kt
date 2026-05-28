@@ -8,6 +8,7 @@ import android.view.View
 import android.widget.CheckBox
 import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.RadioGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -45,6 +46,7 @@ class WallpaperPreviewActivity : AppCompatActivity() {
     private lateinit var checkUsageCodex: CheckBox
     private lateinit var checkUsageSession: CheckBox
     private lateinit var checkUsageWeekly: CheckBox
+    private lateinit var radioResetWindow: RadioGroup
     private lateinit var btnSelectPhoto: MaterialButton
     private lateinit var btnReset: MaterialButton
     private lateinit var btnSetWallpaper: MaterialButton
@@ -131,6 +133,7 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         checkUsageCodex = findViewById(R.id.checkUsageCodex)
         checkUsageSession = findViewById(R.id.checkUsageSession)
         checkUsageWeekly = findViewById(R.id.checkUsageWeekly)
+        radioResetWindow = findViewById(R.id.radioResetWindow)
         btnSelectPhoto = findViewById(R.id.btnSelectPhoto)
         btnReset = findViewById(R.id.btnReset)
         btnSetWallpaper = findViewById(R.id.btnSetWallpaper)
@@ -152,6 +155,13 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         checkUsageCodex.isChecked = layoutPrefs.usageOverlayShowCodex
         checkUsageSession.isChecked = layoutPrefs.usageOverlayShowSession
         checkUsageWeekly.isChecked = layoutPrefs.usageOverlayShowWeekly
+        radioResetWindow.check(
+            when (layoutPrefs.wallpaperResetWindow) {
+                LayoutPreferences.RESET_WINDOW_5H -> R.id.radioReset5h
+                LayoutPreferences.RESET_WINDOW_WEEKLY -> R.id.radioResetWeekly
+                else -> R.id.radioResetOff
+            }
+        )
 
         // Show/hide photo button based on background switch
         updatePhotoButtonVisibility()
@@ -254,6 +264,15 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         checkUsageCodex.setOnCheckedChangeListener(usageItemListener)
         checkUsageSession.setOnCheckedChangeListener(usageItemListener)
         checkUsageWeekly.setOnCheckedChangeListener(usageItemListener)
+
+        radioResetWindow.setOnCheckedChangeListener { _, checkedId ->
+            layoutPrefs.wallpaperResetWindow = when (checkedId) {
+                R.id.radioReset5h -> LayoutPreferences.RESET_WINDOW_5H
+                R.id.radioResetWeekly -> LayoutPreferences.RESET_WINDOW_WEEKLY
+                else -> LayoutPreferences.RESET_WINDOW_OFF
+            }
+            previewView.invalidate()
+        }
     }
 
     private fun updatePhotoButtonVisibility() {
@@ -266,6 +285,9 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         checkUsageCodex.isEnabled = enabled
         checkUsageSession.isEnabled = enabled
         checkUsageWeekly.isEnabled = enabled
+        for (i in 0 until radioResetWindow.childCount) {
+            radioResetWindow.getChildAt(i).isEnabled = enabled
+        }
     }
 
     private fun updatePreviewUsageOverlayInsets() {
