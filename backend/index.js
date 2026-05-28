@@ -8413,7 +8413,9 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     });
 
     // ── Rental response mirroring: if owner entity is leased_out, copy response to renter ──
-    if (entity.rental_status === 'leased_out' && entity.rental_contract_id && finalMessage) {
+    // PR #2986 guard — placeholder leaks (the bind-ack template copied verbatim) must NOT
+    // mirror into renter.message, renter chat history, Socket.IO update, or push notify.
+    if (entity.rental_status === 'leased_out' && entity.rental_contract_id && finalMessage && !isPlaceholderLeak) {
         try {
             const cRow = await db._getPool().query(
                 `SELECT c.renter_device_id FROM rental_contracts c WHERE c.id = $1 AND c.status IN ('active','reserved','suspended_insufficient_funds')`,
