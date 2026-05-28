@@ -359,6 +359,16 @@ class LayoutPreferences private constructor(context: Context) {
             prefs.edit().putBoolean(KEY_USAGE_OVERLAY_SHOW_WEEKLY, value).apply()
         }
 
+    var wallpaperResetWindow: String
+        get() = prefs.getString(KEY_WALLPAPER_RESET_WINDOW, RESET_WINDOW_OFF) ?: RESET_WINDOW_OFF
+        set(value) {
+            val normalized = when (value) {
+                RESET_WINDOW_5H, RESET_WINDOW_WEEKLY -> value
+                else -> RESET_WINDOW_OFF
+            }
+            prefs.edit().putString(KEY_WALLPAPER_RESET_WINDOW, normalized).apply()
+        }
+
     companion object {
         private const val PREFS_NAME = "entity_layout_prefs"
         private const val KEY_LAYOUT = "layout_type"
@@ -381,6 +391,11 @@ class LayoutPreferences private constructor(context: Context) {
         private const val KEY_USAGE_OVERLAY_SHOW_CODEX = "usage_overlay_show_codex"
         private const val KEY_USAGE_OVERLAY_SHOW_SESSION = "usage_overlay_show_session"
         private const val KEY_USAGE_OVERLAY_SHOW_WEEKLY = "usage_overlay_show_weekly"
+        private const val KEY_WALLPAPER_RESET_WINDOW = "wallpaper_reset_window"
+
+        const val RESET_WINDOW_OFF = "off"
+        const val RESET_WINDOW_5H = "5h"
+        const val RESET_WINDOW_WEEKLY = "weekly"
 
         // Display mode constants
         const val MODE_SINGLE = 1
