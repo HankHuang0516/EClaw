@@ -7653,6 +7653,35 @@ function resolveSpeakToTarget(code, senderDeviceId) {
     return null;
 }
 
+/**
+ * Validate that a speakTo array entry parses to one of the supported forms
+ * before we attempt resolution. Used by the /api/transform 400-gate so
+ * malformed LLM input fails fast instead of falling through to silent
+ * not_found (which the calling bot used to treat as a successful delivery
+ * and never retry).
+ *
+ * Supported forms (decorators stripped in this fixed order, mirroring
+ * resolveSpeakToTarget: outer angle brackets, then leading @, then leading #):
+ *   - 6-char publicCode [a-z0-9]{6}        e.g. "tbwb9e", "@tbwb9e", "<@tbwb9e>"
+ *   - numeric entityId  \d+                e.g. "6", "#6", "@#6", "<#6>"
+ *
+ * Returns { valid: true } or { valid: false, reason, normalized? }.
+ */
+function validateSpeakToFormat(code) {
+    if (typeof code !== 'string') return { valid: false, reason: 'non_string' };
+    const trimmed = code.trim();
+    if (trimmed.length === 0) return { valid: false, reason: 'empty' };
+    let normalized = trimmed;
+    if (normalized.startsWith('<') && normalized.endsWith('>')) {
+        normalized = normalized.slice(1, -1);
+    }
+    if (normalized.startsWith('@')) normalized = normalized.slice(1);
+    if (normalized.startsWith('#')) normalized = normalized.slice(1);
+    if (/^[a-z0-9]{6}$/.test(normalized)) return { valid: true };
+    if (/^\d+$/.test(normalized)) return { valid: true };
+    return { valid: false, reason: 'unparseable_format', normalized };
+}
+
 function collectMissingSpeakToMentionWarnings(speakToList, mentionParse, senderDeviceId) {
     if (!Array.isArray(speakToList) || speakToList.length === 0) return [];
     const mentioned = new Set((mentionParse?.mentions || []).map(m => `${m.deviceId}:${m.entityId}`));
@@ -7974,6 +8003,34 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         }
     } else if (!usingBotSecret) {
         return res.status(400).json({ success: false, message: "botSecret required" });
+    }
+
+    // ── speakTo format gate (defensive 400 instead of silent not_found drop) ──
+    // Reject malformed containers, then validate each entry's shape. Bots that
+    // pass freeform strings like "Lobster" or "team-2" used to silently fail
+    // (delivery 0/1 success, sender-only chat row) and never retry; now they
+    // get an actionable 400 with the offending value.
+    if (req.body.speakTo !== undefined && req.body.speakTo !== null && !Array.isArray(req.body.speakTo)) {
+        return res.status(400).json({
+            success: false,
+            error: 'speakTo_invalid_format',
+            got: req.body.speakTo,
+            expected: 'speakTo must be an array of strings'
+        });
+    }
+    if (hadExplicitSpeakTo) {
+        for (const entry of speakTo) {
+            const check = validateSpeakToFormat(entry);
+            if (!check.valid) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'speakTo_invalid_format',
+                    got: entry,
+                    reason: check.reason,
+                    expected: '6-char publicCode [a-z0-9] OR numeric entityId; optional <>/@/# decorators allowed'
+                });
+            }
+        }
     }
 
     // Validate optional senderHint — channel bridges pass this so the server

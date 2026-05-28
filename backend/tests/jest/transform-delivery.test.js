@@ -107,7 +107,7 @@ describe('Transform + speakTo', () => {
                 botSecret: botSecret0,
                 message: 'Test invalid code',
                 state: 'IDLE',
-                speakTo: ['nonexistent-code-xyz']
+                speakTo: ['zzzzzz']
             });
         expect(res.status).toBe(200);
         expect(res.body.delivery.results[0].success).toBe(false);
@@ -514,7 +514,7 @@ describe('Transform fallback save on delivery failure', () => {
                 botSecret: botSecret0,
                 message: msg,
                 state: 'IDLE',
-                speakTo: ['nonexistent-code-xyz']
+                speakTo: ['zzzzzz']
             });
 
         expect(res.status).toBe(200);
@@ -596,7 +596,7 @@ describe('Transform fallback save on delivery failure', () => {
                 botSecret: botSecret0,
                 message: msg,
                 state: 'IDLE',
-                speakTo: ['nonexistent-code-xyz']
+                speakTo: ['zzzzzz']
             });
 
         expect(res.status).toBe(200);
