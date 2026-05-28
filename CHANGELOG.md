@@ -1,3 +1,10 @@
+## [1.1182.2](https://github.com/HankHuang0516/EClaw/compare/v1.1182.1...v1.1182.2) (2026-05-28)
+
+
+### Bug Fixes
+
+* **transform:** 400-gate malformed speakTo instead of silent not_found ([#3002](https://github.com/HankHuang0516/EClaw/issues/3002)) ([5b70fa9](https://github.com/HankHuang0516/EClaw/commit/5b70fa9849eb7937df0408f06750c2b67f858174)), closes [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+
 ## [1.1182.1](https://github.com/HankHuang0516/EClaw/compare/v1.1182.0...v1.1182.1) (2026-05-28)
 
 
