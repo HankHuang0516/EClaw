@@ -164,4 +164,27 @@ describe('official borrow free binding reuse', () => {
         expect(res.body.skipBindFree).toBe(false);
         expect(res.body.remainingMs).toBe(0);
     });
+
+    it('marks the binding non-reusable when entity.webhook.sessionKey drifts from binding.session_key', async () => {
+        const { deviceId, deviceSecret, botId } = seedValidFreeBinding();
+        app.devices[deviceId].entities[0].webhook.sessionKey = 'drifted:session:key:from:rehandshake';
+
+        const statusRes = await get('/api/official-borrow/binding-status')
+            .query({ deviceId, deviceSecret, entityId: 0, botType: 'free', botId });
+
+        expect(statusRes.status).toBe(200);
+        expect(statusRes.body.success).toBe(true);
+        expect(statusRes.body.bound).toBe(true);
+        expect(statusRes.body.valid).toBe(false);
+        expect(statusRes.body.reusable).toBe(false);
+        expect(statusRes.body.reason).toBe('session_key_mismatch');
+        expect(statusRes.body.recommendation).toBe('bind_required');
+        expect(statusRes.body.skipBindFree).toBe(false);
+
+        const bindRes = await post('/api/official-borrow/bind-free')
+            .send({ deviceId, deviceSecret, entityId: 0, botId });
+
+        expect(bindRes.body.reusedExistingBinding).not.toBe(true);
+        expect(bindRes.body.idempotent).not.toBe(true);
+    });
 });

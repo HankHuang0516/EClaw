@@ -14514,6 +14514,7 @@ function evaluateOfficialBindingReuse(binding, device, entityId, opts = {}) {
     if (entity.webhook.url !== bot.webhook_url) return { ...base, valid: false, reason: 'webhook_url_mismatch' };
     if (entity.webhook.token !== bot.token) return { ...base, valid: false, reason: 'webhook_token_mismatch' };
     if (!binding.session_key) return { ...base, valid: false, reason: 'binding_missing_session_key' };
+    if (entity.webhook.sessionKey !== binding.session_key) return { ...base, valid: false, reason: 'session_key_mismatch' };
     if (ttlMs <= 0) return { ...base, valid: false, reason: 'binding_reuse_disabled' };
     if (ageMs == null) return { ...base, valid: false, reason: 'binding_bound_at_missing' };
     if (ageMs > ttlMs) return { ...base, valid: false, reason: 'binding_reuse_ttl_expired' };
