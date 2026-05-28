@@ -7,7 +7,15 @@ const router = express.Router();
 
 const MAX_COORDINATE = 100000;
 const MAX_VIEWPORT = 20000;
-const ALLOWED_HOSTS = (process.env.POINT_EDIT_ALLOWED_HOSTS || 'eclawbot.com,localhost,127.0.0.1')
+// SSRF hardening: in prod, default origin allow-list excludes loopback; any operator
+// override is still gated by the hard guard in isAllowedHost (see below).
+const IS_PROD =
+    process.env.NODE_ENV === 'production' ||
+    process.env.RAILWAY_ENVIRONMENT === 'production';
+const DEFAULT_ALLOWED_HOSTS = IS_PROD
+    ? 'eclawbot.com'
+    : 'eclawbot.com,localhost,127.0.0.1';
+const ALLOWED_HOSTS = (process.env.POINT_EDIT_ALLOWED_HOSTS || DEFAULT_ALLOWED_HOSTS)
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
@@ -56,6 +64,13 @@ function normalizeUrl(rawUrl) {
 
 function isAllowedHost(url) {
     if (!url) return false;
+    if (IS_PROD) {
+        const h = url.hostname.toLowerCase();
+        // Hard-reject loopback + link-local in prod even if operator misconfigures env.
+        if (h === 'localhost' || h === '127.0.0.1' || h === '::1' || h.startsWith('169.254.')) {
+            return false;
+        }
+    }
     return ALLOWED_HOSTS.some(
         (h) => url.hostname === h || url.hostname.endsWith('.' + h),
     );
@@ -87,6 +102,9 @@ function validateCoordinateBody(body) {
     }
     if (!isAllowedHost(url)) {
         return { error: 'unsupported_origin', hostname: url.hostname };
+    }
+    if (IS_PROD && url.protocol !== 'https:') {
+        return { error: 'insecure_scheme', protocol: url.protocol };
     }
     return { value: { x, y, viewportW, viewportH, url } };
 }
@@ -198,6 +216,13 @@ router.post('/resolve-coordinate', async (req, res) => {
                 success: false,
                 error: 'unsupported_origin',
                 message: 'Origin ' + parsed.hostname + ' is not in POINT_EDIT_ALLOWED_HOSTS.',
+            });
+        }
+        if (parsed.error === 'insecure_scheme') {
+            return res.status(422).json({
+                success: false,
+                error: 'insecure_scheme',
+                message: 'Scheme ' + parsed.protocol + ' is not allowed; https is required in production.',
             });
         }
         return res.status(400).json({ success: false, error: parsed.error });
