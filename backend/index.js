@@ -14425,9 +14425,106 @@ app.delete('/api/admin/official-bot/:botId', adminAuth, adminCheck, async (req, 
 
 // In-memory cache of official bindings (deviceId:entityId -> binding)
 const officialBindingsCache = {};
+const parsedFreeBindingReuseTtlMs = parseInt(process.env.OFFICIAL_FREE_BINDING_REUSE_TTL_MS || '', 10);
+const OFFICIAL_FREE_BINDING_REUSE_TTL_MS = Number.isFinite(parsedFreeBindingReuseTtlMs) && parsedFreeBindingReuseTtlMs > 0
+    ? parsedFreeBindingReuseTtlMs
+    : 24 * 60 * 60 * 1000;
 
 function getBindingCacheKey(deviceId, entityId) {
     return `${deviceId}:${entityId}`;
+}
+
+async function getOfficialBindingAuthoritative(deviceId, entityId) {
+    const cacheKey = getBindingCacheKey(deviceId, entityId);
+    if (usePostgreSQL) {
+        const binding = await db.getOfficialBinding(deviceId, entityId);
+        if (binding) {
+            officialBindingsCache[cacheKey] = binding;
+            return binding;
+        }
+        delete officialBindingsCache[cacheKey];
+        return null;
+    }
+    return officialBindingsCache[cacheKey] || null;
+}
+
+function getOfficialBindingReuseTtlMs(botType) {
+    return botType === 'free' ? OFFICIAL_FREE_BINDING_REUSE_TTL_MS : 0;
+}
+
+function getOfficialBindingAgeMs(binding, now = Date.now()) {
+    const boundAt = Number(binding?.bound_at ?? binding?.boundAt);
+    if (!Number.isFinite(boundAt) || boundAt <= 0) return null;
+    return Math.max(0, now - boundAt);
+}
+
+function publicBindingReuseStatus(status) {
+    return {
+        bound: Boolean(status.binding),
+        valid: Boolean(status.valid),
+        reusable: Boolean(status.valid),
+        reason: status.reason,
+        botId: status.botId || null,
+        botType: status.botType || null,
+        entityId: status.entityId,
+        boundAt: status.boundAt || null,
+        ageMs: status.ageMs,
+        ttlMs: status.ttlMs,
+        remainingMs: status.remainingMs,
+        expiresAt: status.expiresAt || null
+    };
+}
+
+function evaluateOfficialBindingReuse(binding, device, entityId, opts = {}) {
+    const eId = parseInt(entityId);
+    const entity = device?.entities?.[eId];
+    const requestedBotType = opts.requestedBotType || null;
+    const requestedBotId = opts.requestedBotId || null;
+    const now = opts.now || Date.now();
+
+    if (!binding) {
+        return { valid: false, reason: 'no_binding', binding: null, entityId: eId };
+    }
+
+    const botId = binding.bot_id ?? binding.botId;
+    const bot = officialBots[botId];
+    const botType = bot?.bot_type ?? binding.bot_type ?? binding.botType ?? null;
+    const ttlMs = getOfficialBindingReuseTtlMs(botType);
+    const ageMs = getOfficialBindingAgeMs(binding, now);
+    const boundAt = Number(binding.bound_at ?? binding.boundAt);
+    const base = {
+        binding,
+        entityId: eId,
+        botId,
+        botType,
+        boundAt: Number.isFinite(boundAt) ? boundAt : null,
+        ageMs,
+        ttlMs,
+        remainingMs: ageMs == null || ttlMs <= 0 ? null : Math.max(0, ttlMs - ageMs),
+        expiresAt: Number.isFinite(boundAt) && ttlMs > 0 ? boundAt + ttlMs : null
+    };
+
+    if (!bot) return { ...base, valid: false, reason: 'bot_missing' };
+    if (requestedBotType && botType !== requestedBotType) return { ...base, valid: false, reason: 'bot_type_mismatch' };
+    if (requestedBotId && botId !== requestedBotId) return { ...base, valid: false, reason: 'bound_to_different_bot' };
+    if (bot.status === 'disabled') return { ...base, valid: false, reason: 'bot_disabled' };
+    if (!entity || !entity.isBound) return { ...base, valid: false, reason: 'entity_not_bound' };
+    if (!entity.botSecret) return { ...base, valid: false, reason: 'entity_missing_bot_secret' };
+    if (!entity.webhook) return { ...base, valid: false, reason: 'entity_missing_webhook' };
+    if (entity.webhook.url !== bot.webhook_url) return { ...base, valid: false, reason: 'webhook_url_mismatch' };
+    if (entity.webhook.token !== bot.token) return { ...base, valid: false, reason: 'webhook_token_mismatch' };
+    if (!binding.session_key) return { ...base, valid: false, reason: 'binding_missing_session_key' };
+    if (entity.webhook.sessionKey !== binding.session_key) return { ...base, valid: false, reason: 'session_key_mismatch' };
+    if (ttlMs <= 0) return { ...base, valid: false, reason: 'binding_reuse_disabled' };
+    if (ageMs == null) return { ...base, valid: false, reason: 'binding_bound_at_missing' };
+    if (ageMs > ttlMs) return { ...base, valid: false, reason: 'binding_reuse_ttl_expired' };
+
+    return { ...base, valid: true, reason: 'valid' };
+}
+
+async function getOfficialBindingReuseStatus(deviceId, entityId, opts = {}) {
+    const binding = await getOfficialBindingAuthoritative(deviceId, entityId);
+    return evaluateOfficialBindingReuse(binding, opts.device || devices[deviceId], entityId, opts);
 }
 
 /**
@@ -14565,6 +14662,48 @@ app.get('/api/official-borrow/status', async (req, res) => {
 });
 
 /**
+ * GET /api/official-borrow/binding-status
+ * Device-secret protected status for one official binding, including whether
+ * the binding can be reused without re-running bind-free/bind-personal.
+ */
+app.get('/api/official-borrow/binding-status', async (req, res) => {
+    const { deviceId, deviceSecret, entityId, botType, botId } = req.query;
+
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+
+    const eId = parseInt(entityId);
+    if (isNaN(eId) || eId < 0) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+
+    const device = devices[deviceId];
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+        return res.status(403).json({ success: false, error: 'Invalid device credentials' });
+    }
+
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+
+    const normalizedBotType = botType === 'personal' || botType === 'free' ? botType : null;
+    const status = await getOfficialBindingReuseStatus(deviceId, eId, {
+        device,
+        requestedBotType: normalizedBotType,
+        requestedBotId: botId || null
+    });
+    const publicStatus = publicBindingReuseStatus(status);
+
+    res.json({
+        success: true,
+        ...publicStatus,
+        recommendation: status.valid ? 'reuse_existing_binding' : 'bind_required',
+        skipBindFree: Boolean(status.valid && (normalizedBotType === 'free' || status.botType === 'free'))
+    });
+});
+
+/**
  * GET /api/official-borrow/free-bots
  * List available free bots with active binding counts for user selection.
  */
@@ -14645,6 +14784,30 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
 
     if (!isValidEntityId(device, eId)) {
         return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+
+    const existingFreeReuse = await getOfficialBindingReuseStatus(deviceId, eId, {
+        device,
+        requestedBotType: 'free',
+        requestedBotId: botId || null
+    });
+    if (existingFreeReuse.valid) {
+        const existingEntity = device.entities[eId];
+        if (existingEntity?.publicCode) {
+            publicCodeIndex[existingEntity.publicCode] = { deviceId, entityId: eId };
+        }
+        console.log(`[Borrow] Reuse: valid free bot ${existingFreeReuse.botId} binding for device ${deviceId} entity ${eId}; skipping handshake`);
+        return res.json({
+            success: true,
+            entityId: eId,
+            botType: 'free',
+            botId: existingFreeReuse.botId,
+            publicCode: existingEntity?.publicCode || null,
+            reusedExistingBinding: true,
+            idempotent: true,
+            bindingStatus: publicBindingReuseStatus(existingFreeReuse),
+            message: 'Free bot binding already valid; reused existing binding'
+        });
     }
 
     // Override mode: auto-unbind if entity already has a binding
@@ -21051,4 +21214,11 @@ module.exports._pendingAck = {
     markAckedById,
     getPendingAckById,
     sweepExpiredAcks,
+};
+module.exports._officialBorrowTest = {
+    officialBots,
+    officialBindingsCache,
+    getBindingCacheKey,
+    getOfficialBindingReuseStatus,
+    OFFICIAL_FREE_BINDING_REUSE_TTL_MS,
 };
