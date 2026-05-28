@@ -374,8 +374,8 @@ class AiChatViewModel(application: Application) : AndroidViewModel(application) 
                 }
                 "$label…$suffix"
             }
-            "thinking" -> "Analyzing…$suffix"
-            "tool_result" -> "Processing result…$suffix"
+            "thinking" -> context.getString(R.string.ai_chat_status_analyzing) + "…$suffix"
+            "tool_result" -> context.getString(R.string.ai_chat_status_processing_result) + "…$suffix"
             else -> null
         }
     }
