@@ -1,3 +1,11 @@
+# [1.1183.0](https://github.com/HankHuang0516/EClaw/compare/v1.1182.2...v1.1183.0) (2026-05-28)
+
+
+### Features
+
+* **portal:** add point-edit coordinate resolver ([#3006](https://github.com/HankHuang0516/EClaw/issues/3006)) ([d8bccba](https://github.com/HankHuang0516/EClaw/commit/d8bccba9bf5f547b6f74f60bc45dfc4fdad6f206))
+* **android:** wallpaper reset-interval toggle (5h/weekly countdown) ([#3005](https://github.com/HankHuang0516/EClaw/issues/3005)) ([4e7e324](https://github.com/HankHuang0516/EClaw/commit/4e7e324f462ab74258af09e584573b1ce1dac7e0))
+
 ## [1.1182.2](https://github.com/HankHuang0516/EClaw/compare/v1.1182.1...v1.1182.2) (2026-05-28)
 
 
