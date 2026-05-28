@@ -1,3 +1,10 @@
+# [1.1182.0](https://github.com/HankHuang0516/EClaw/compare/v1.1181.0...v1.1182.0) (2026-05-28)
+
+
+### Features
+
+* **portal:** point-and-edit roadmap — 3-track scenario walkthrough ([#2992](https://github.com/HankHuang0516/EClaw/issues/2992)) ([b7bf4d9](https://github.com/HankHuang0516/EClaw/commit/b7bf4d9b7b8dfc359459b63ac690097b95b88246)), closes [pointedit#point-edit-demo](https://github.com/pointedit/issues/point-edit-demo) [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 # [1.1181.0](https://github.com/HankHuang0516/EClaw/compare/v1.1180.3...v1.1181.0) (2026-05-28)
 
 
