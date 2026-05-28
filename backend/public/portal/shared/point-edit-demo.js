@@ -1,13 +1,14 @@
 /*
- * point-edit-demo.js — Track A (DOM selector + text-selection) of the
+ * point-edit-demo.js — Track A (DOM selector + text-selection) and
+ * Track B (coordinate resolver) of the
  * point-and-edit testbed. Feature-flagged via ?demo=pointedit or
- * window.POINTEDIT_DEMO === true. Tracks B (coord+AST) and C
- * (mind-map node) plug into the same `pointedit:target` event boundary
+ * window.POINTEDIT_DEMO === true. Track C (mind-map node) plugs into
+ * the same `pointedit:target` event boundary
  * so the harness adapter below is reusable.
  *
  * Normalized target payload contract (must stay aligned with #6's plan):
  *   { mode, targetId, selector?, anchorId?, coordinates?, outerHTML,
- *     textSnippet, rect, confidence, sourceHint }
+ *     textSnippet, rect, confidence, sourceHint, astPath? }
  */
 (function () {
     'use strict';
@@ -201,6 +202,7 @@
         if (payload.targetId) parts.push(`targetId="${escapeAttr(payload.targetId)}"`);
         if (payload.selector) parts.push(`selector="${escapeAttr(payload.selector)}"`);
         if (payload.anchorId) parts.push(`anchorId="${escapeAttr(payload.anchorId)}"`);
+        if (payload.astPath) parts.push(`astPath="${escapeAttr(payload.astPath)}"`);
         if (payload.coordinates) {
             parts.push(`x="${payload.coordinates.x}"`);
             parts.push(`y="${payload.coordinates.y}"`);
@@ -229,6 +231,66 @@
         }
     }
 
+    /* ---------- Track B: coordinate resolver ---------- */
+
+    function coordinateRequestFromEvent(ev) {
+        return {
+            x: Math.round(ev.clientX),
+            y: Math.round(ev.clientY),
+            viewportW: Math.round(window.innerWidth || document.documentElement.clientWidth || 0),
+            viewportH: Math.round(window.innerHeight || document.documentElement.clientHeight || 0),
+            url: window.location.href,
+        };
+    }
+
+    function normalizeCoordinateResponse(body) {
+        return body && body.target ? body.target : body;
+    }
+
+    function liftViewportRectToPage(payload) {
+        if (!payload || !payload.rect) return payload;
+        return {
+            ...payload,
+            rect: {
+                x: Math.round(payload.rect.x + window.scrollX),
+                y: Math.round(payload.rect.y + window.scrollY),
+                w: payload.rect.w,
+                h: payload.rect.h,
+            },
+        };
+    }
+
+    async function resolveCoordinateFromEvent(ev, statusEl) {
+        const body = coordinateRequestFromEvent(ev);
+        if (statusEl) {
+            statusEl.dataset.state = 'resolving';
+            statusEl.textContent = `Resolving coordinate ${body.x},${body.y} through AST endpoint…`;
+        }
+
+        const res = await fetch('/api/point-edit/resolve-coordinate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            const msg = json.message || json.error || `HTTP ${res.status}`;
+            throw new Error(msg);
+        }
+
+        const payload = normalizeCoordinateResponse(json);
+        if (!payload || payload.mode !== 'coord') {
+            throw new Error('resolver returned an invalid target payload');
+        }
+        return liftViewportRectToPage(payload);
+    }
+
+    function reportCoordinateError(err, statusEl) {
+        if (!statusEl) return;
+        statusEl.dataset.state = 'error';
+        statusEl.textContent = `Coordinate resolve failed: ${err && err.message ? err.message : 'unknown error'}`;
+    }
+
     /* ---------- Bootstrap ---------- */
 
     function boot() {
@@ -248,6 +310,7 @@
 
         let mode = panel.dataset.modeDefault || 'dom';
         let lastHoverEl = null;
+        let coordinatePending = false;
 
         const setMode = (next) => {
             mode = next;
@@ -258,6 +321,8 @@
                 statusEl.dataset.state = 'idle';
                 if (next === 'dom') {
                     statusEl.textContent = statusEl.dataset.hintDom || 'Hover anywhere in the sandbox to highlight, click to commit.';
+                } else if (next === 'coordinate') {
+                    statusEl.textContent = statusEl.dataset.hintCoordinate || 'Tap or click inside the sandbox to resolve x/y to a source target.';
                 } else if (next === 'textsel') {
                     statusEl.textContent = statusEl.dataset.hintTextsel || 'Drag-select any text inside the sandbox to commit.';
                 }
@@ -287,6 +352,22 @@
         });
 
         sandbox.addEventListener('click', (ev) => {
+            if (mode === 'coordinate') {
+                ev.preventDefault();
+                ev.stopPropagation();
+                if (coordinatePending) return;
+                coordinatePending = true;
+                resolveCoordinateFromEvent(ev, statusEl)
+                    .then((payload) => {
+                        if (payload.rect) positionOverlay(overlay, payload.rect);
+                        emitTarget(payload);
+                    })
+                    .catch((err) => reportCoordinateError(err, statusEl))
+                    .finally(() => {
+                        coordinatePending = false;
+                    });
+                return;
+            }
             if (mode !== 'dom') return;
             const t = ev.target;
             if (!(t instanceof Element)) return;
@@ -311,7 +392,7 @@
                 textarea.value = '';
                 if (payloadEl) payloadEl.textContent = '{}';
                 if (statusEl) {
-                    statusEl.textContent = statusEl.dataset.hintIdle || 'Pick mode A or D, then hover on the sandbox to begin.';
+                    statusEl.textContent = statusEl.dataset.hintIdle || 'Pick mode A, B, or D, then target the sandbox to begin.';
                     statusEl.dataset.state = 'idle';
                 }
             });
@@ -323,6 +404,7 @@
             emitTarget,
             pickFromElement,
             pickFromSelection,
+            resolveCoordinateFromEvent,
             buildSelector,
             sanitizeOuterHtml,
         });

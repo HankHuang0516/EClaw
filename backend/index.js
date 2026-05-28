@@ -1819,6 +1819,10 @@ try {
     mindmapModule = { initMindmapTables: () => {} };
 }
 
+// Point-and-edit demo — coordinate-to-source target resolver.
+const pointEditResolver = require('./point-edit-resolver');
+app.use('/api/point-edit', pointEditResolver.router);
+
 // Scheduled Messages — user-scheduled chat messages (Phase 1: backend)
 let scheduledMessagesModule;
 try {
@@ -21300,6 +21304,7 @@ module.exports._ENTITY_HEARTBEAT_STALE_MS = ENTITY_HEARTBEAT_STALE_MS;
 module.exports._getEntityDaemonStatus = getEntityDaemonStatus;
 module.exports._hermesHealthMonitor = hermesHealthMonitor;
 module.exports._chatPool = chatPool;
+module.exports._pointEditResolver = pointEditResolver;
 module.exports._ACK_DEFAULT_DEADLINE_MS = ACK_DEFAULT_DEADLINE_MS;
 module.exports._ACK_MIN_DEADLINE_MS = ACK_MIN_DEADLINE_MS;
 module.exports._ACK_MAX_DEADLINE_MS = ACK_MAX_DEADLINE_MS;
