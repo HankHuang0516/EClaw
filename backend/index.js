@@ -5672,8 +5672,8 @@ exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/j
 
 Do NOT call /api/bind or /api/bot/register — webhook is already configured for you.
 
-⚠️ IMMEDIATE ACTION REQUIRED — Run this command RIGHT NOW to confirm you're online (one-time bind-ack only — do NOT replay this payload on later user messages; every future reply must be based on the current push message / user request, not this example):
-exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"[BIND_READY entity=${entityId}]"}'
+⚠️ IMMEDIATE ACTION REQUIRED — Run this exact command RIGHT NOW to confirm you're online. The "message" field below is a PLACEHOLDER (angle brackets denote template syntax) — server treats it as a one-time bind marker, not a chat reply. NEVER copy this placeholder text or anything resembling it into any later reply; every reply to a user message must be your own response to that user's content, not this example body.
+exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"<one-time-bind-ack-do-not-copy>"}'
 
 --- E-Claw API Documentation (Latest) ---
 ${skillDoc}`;
@@ -5703,8 +5703,8 @@ Every push message will include a pre-filled curl command. Just replace YOUR_REP
 Scoped ready-check (must include deviceId so shared free-bot pool secrets cannot resolve to another user's binding):
 exec: curl -s "https://eclawbot.com/api/whoami?deviceId=${deviceId}&entityId=${entityId}&botSecret=${botSecret}"
 
-⚠️ IMMEDIATE ACTION REQUIRED — Run this command RIGHT NOW to confirm you're online (one-time bind-ack only — do NOT replay this payload on later user messages; every future reply must be based on the current push message / user request, not this example):
-exec: curl -s -X POST "https://eclawbot.com/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"[BIND_READY entity=${entityId}]"}'`;
+⚠️ IMMEDIATE ACTION REQUIRED — Run this exact command RIGHT NOW to confirm you're online. The "message" field below is a PLACEHOLDER (angle brackets denote template syntax) — server treats it as a one-time bind marker, not a chat reply. NEVER copy this placeholder text or anything resembling it into any later reply; every reply to a user message must be your own response to that user's content, not this example body.
+exec: curl -s -X POST "https://eclawbot.com/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"<one-time-bind-ack-do-not-copy>"}'`;
                 try {
                     const retryResult = await sendToSession(webhookUrl, webhookToken, sessionKey, shortMsg, authOpts, { timeout: 30000 });
                     if (retryResult.success) {
@@ -8139,7 +8139,21 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
             }
         }
     }
-    if (finalMessage !== undefined) entity.message = finalMessage;
+
+    // PR #2986 server-side enforcement — when the BIND_COMPLETE skill doc's
+    // `<one-time-bind-ack-do-not-copy>` placeholder is sent verbatim (bot
+    // mistook the template syntax for a real reply body), suppress all
+    // propagation so the leak does not update entity.message, appear in chat
+    // history, route to peers, or trigger downstream hooks. Server still
+    // returns 200 so the bot doesn't error-loop retrying.
+    const isPlaceholderLeak = typeof finalMessage === 'string' &&
+        finalMessage.trim() === '<one-time-bind-ack-do-not-copy>';
+    if (isPlaceholderLeak) {
+        serverLog('warn', 'placeholder_leak',
+            `[PLACEHOLDER_LEAK] Entity ${eId} on device ${deviceId} sent bind-ack template verbatim — suppressing propagation`,
+            { deviceId, entityId: eId, metadata: { tag: 'PLACEHOLDER_LEAK' } });
+    }
+    if (finalMessage !== undefined && !isPlaceholderLeak) entity.message = finalMessage;
     if (parts) {
         // Only store numeric values — reject URLs/strings that would crash Android Gson deserialization
         const sanitizedParts = {};
@@ -8282,9 +8296,10 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // Save bot message to chat history so it appears in Chat page
     // Skip silent tokens — these are internal signals that should not appear in chat
     const isSilentMessage = finalMessage && /^\[SILENT\]$/i.test(finalMessage.trim());
+    const isSuppressedMessage = isSilentMessage || isPlaceholderLeak;
     // Skip self chat save when speakTo/broadcast is present — deliverToEntity will save with routing source
     const hasDelivery = (broadcast || (speakTo && Array.isArray(speakTo) && speakTo.length > 0));
-    if (finalMessage && !isSilentMessage) {
+    if (finalMessage && !isSuppressedMessage) {
         // [A2A_BOT_REPLY] — detect if this transform is in response to an A2A speak-to
         const pendingA2A = entity.messageQueue && entity.messageQueue.find(m => m.from && m.from.startsWith('entity:'));
 
@@ -8398,7 +8413,9 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     });
 
     // ── Rental response mirroring: if owner entity is leased_out, copy response to renter ──
-    if (entity.rental_status === 'leased_out' && entity.rental_contract_id && finalMessage) {
+    // PR #2986 guard — placeholder leaks (the bind-ack template copied verbatim) must NOT
+    // mirror into renter.message, renter chat history, Socket.IO update, or push notify.
+    if (entity.rental_status === 'leased_out' && entity.rental_contract_id && finalMessage && !isPlaceholderLeak) {
         try {
             const cRow = await db._getPool().query(
                 `SELECT c.renter_device_id FROM rental_contracts c WHERE c.id = $1 AND c.status IN ('active','reserved','suspended_insufficient_funds')`,
@@ -8468,7 +8485,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // Notify device about bot reply (fire-and-forget)
     // Skip owner notification for leased_out entities — renter gets notified via rental mirror
     const isLeasedOutForNotify = entity.rental_status === 'leased_out';
-    if (finalMessage && !isLeasedOutForNotify) {
+    if (finalMessage && !isLeasedOutForNotify && !isPlaceholderLeak) {
         notifyDevice(deviceId, {
             type: 'chat', category: 'bot_reply',
             title: entity.name || `Entity ${eId}`,
@@ -8490,7 +8507,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // Skip for leased_out entities — rental bot responses belong to the renter's context.
     const kanbanBusyStates = new Set(['BUSY', 'PROCESSING', 'WORKING', 'IN_PROGRESS', 'IN-PROGRESS']);
     const isKanbanBusyState = kanbanBusyStates.has(String(state || '').trim().toUpperCase());
-    if (!isKanbanBusyState && finalMessage && entity.rental_status !== 'leased_out' && kanbanModule && kanbanModule.autoReviewOnTransform) {
+    if (!isKanbanBusyState && finalMessage && !isPlaceholderLeak && entity.rental_status !== 'leased_out' && kanbanModule && kanbanModule.autoReviewOnTransform) {
         kanbanModule.autoReviewOnTransform(deviceId, eId, finalMessage, aboutCardId).catch(err => {
             console.error(`[Transform] autoReviewOnTransform failed:`, err.message);
         });
@@ -8498,7 +8515,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
 
     // Org chart: auto-forward message to superior entity (fire-and-forget)
     // Skip for leased_out entities — owner's org chart should not apply to rental responses
-    if (finalMessage && entity && entity.rental_status !== 'leased_out') {
+    if (finalMessage && entity && entity.rental_status !== 'leased_out' && !isPlaceholderLeak) {
         orgChartForward(entity, deviceId, finalMessage).catch(() => {});
     }
 
@@ -8515,7 +8532,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // to run a sender-side fallback save.
     let deliverySaved = false;
 
-    if ((speakTo || broadcast) && finalMessage) {
+    if ((speakTo || broadcast) && finalMessage && !isPlaceholderLeak) {
         // If both provided, broadcast takes priority
         if (speakTo && broadcast) {
             warnings.push('Both speakTo and broadcast provided — broadcast takes priority, speakTo ignored.');
@@ -8726,7 +8743,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // ("looks like sent to #X but never delivered to anyone"). Use the plain
     // entity name so chat UI clearly renders this as a sender-only row.
     const hasDeliveryRequested = (broadcast || (speakTo && Array.isArray(speakTo) && speakTo.length > 0));
-    if (hasDeliveryRequested && !deliverySaved && finalMessage && !isSilentMessage) {
+    if (hasDeliveryRequested && !deliverySaved && finalMessage && !isSuppressedMessage) {
         const isLeasedOut = entity.rental_status === 'leased_out';
         if (!isLeasedOut) {
             const chatSource = entity.name || `Entity ${eId}`;
