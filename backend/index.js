@@ -5500,6 +5500,22 @@ function findStuckEntities(nowMs) {
     return stuck;
 }
 
+// Character → default avatar mapping. Mirrors the client-side
+// ENTITY_CHARS_DEFAULT in public/portal/shared/entity-utils.js so that any
+// time `entity.character` is established or changed, `entity.avatar` can be
+// kept in sync unless the user has set a custom avatar.
+const CHARACTER_DEFAULT_AVATAR = {
+    LOBSTER: '\u{1F99E}', // 🦞
+    PIG: '\u{1F437}',     // 🐷
+};
+function getCharacterDefaultAvatar(character) {
+    return CHARACTER_DEFAULT_AVATAR[character] || CHARACTER_DEFAULT_AVATAR.LOBSTER;
+}
+function isCharacterDefaultAvatar(avatar) {
+    if (avatar === null || avatar === undefined || avatar === '') return true;
+    return Object.values(CHARACTER_DEFAULT_AVATAR).includes(avatar);
+}
+
 // Helper: Create default entity
 function createDefaultEntity(entityId) {
     return {
@@ -5519,7 +5535,7 @@ function createDefaultEntity(entityId) {
         lastDrainedAt: null, // Phase H1.2: when bot daemon last consumed messageQueue (heartbeat)
         webhook: null,
         appVersion: null, // Device app version (e.g., "1.0.3")
-        avatar: null, // User-chosen emoji avatar (synced across devices)
+        avatar: CHARACTER_DEFAULT_AVATAR.LOBSTER, // Synced to default character; user-set avatar overrides via /api/device/entity/avatar
         xp: 0,
         level: 1,
         publicCode: null,
@@ -8145,7 +8161,18 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         entity.name = name || null;
     }
 
-    if (character) entity.character = character;
+    if (character && entity.character !== character) {
+        const oldDefault = getCharacterDefaultAvatar(entity.character);
+        entity.character = character;
+        // Keep avatar in sync with character unless user has set a custom one.
+        // Null/empty avatars and avatars matching the prior character's default
+        // are treated as "still defaulted" and get updated to the new character default.
+        if (!entity.avatar || entity.avatar === oldDefault) {
+            entity.avatar = getCharacterDefaultAvatar(character);
+        }
+    } else if (character) {
+        entity.character = character;
+    }
     if (state) entity.state = state;
 
     let contextualMentionEscape = null;
@@ -14879,8 +14906,9 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
     // Set up entity with official bot's webhook (preserve user-set name, xp, level)
     const existingEntityFree = device.entities[eId];
     const freePublicCode = generatePublicCode();
+    const freeDefaultEntity = createDefaultEntity(eId);
     device.entities[eId] = {
-        ...createDefaultEntity(eId),
+        ...freeDefaultEntity,
         xp: existingEntityFree?.xp || 0,
         level: existingEntityFree?.level || 1,
         rebindCount: (existingEntityFree?.rebindCount || 0) + 1,
@@ -14889,6 +14917,9 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
         publicCode: freePublicCode,
         isBound: true,
         name: existingEntityFree?.name || '免費版',
+        avatar: isCharacterDefaultAvatar(existingEntityFree?.avatar)
+            ? getCharacterDefaultAvatar(freeDefaultEntity.character)
+            : existingEntityFree.avatar,
         state: 'IDLE',
         message: 'Connected!',
         lastUpdated: Date.now(),
@@ -15046,8 +15077,9 @@ app.post('/api/official-borrow/bind-personal', async (req, res) => {
 
     // Set up entity (preserve user-set name, xp, level)
     const existingEntityPersonal = device.entities[eId];
+    const personalDefaultEntity = createDefaultEntity(eId);
     device.entities[eId] = {
-        ...createDefaultEntity(eId),
+        ...personalDefaultEntity,
         xp: existingEntityPersonal?.xp || 0,
         level: existingEntityPersonal?.level || 1,
         rebindCount: (existingEntityPersonal?.rebindCount || 0) + 1,
@@ -15055,6 +15087,9 @@ app.post('/api/official-borrow/bind-personal', async (req, res) => {
         botSecret: botSecret,
         isBound: true,
         name: existingEntityPersonal?.name || '月租版',
+        avatar: isCharacterDefaultAvatar(existingEntityPersonal?.avatar)
+            ? getCharacterDefaultAvatar(personalDefaultEntity.character)
+            : existingEntityPersonal.avatar,
         state: 'IDLE',
         message: 'Connected!',
         lastUpdated: Date.now(),
@@ -21191,6 +21226,9 @@ module.exports._classifyPublisher = classifyPublisher;
 module.exports._MONITORING_THRESHOLDS = MONITORING_THRESHOLDS;
 module.exports._requireAdmin = requireAdmin;
 module.exports._createDefaultEntity = createDefaultEntity;
+module.exports._getCharacterDefaultAvatar = getCharacterDefaultAvatar;
+module.exports._isCharacterDefaultAvatar = isCharacterDefaultAvatar;
+module.exports._CHARACTER_DEFAULT_AVATAR = CHARACTER_DEFAULT_AVATAR;
 module.exports._enqueueMessage = enqueueMessage;
 module.exports._MESSAGE_QUEUE_CAP = MESSAGE_QUEUE_CAP;
 module.exports._DEAD_LETTER_CAP = DEAD_LETTER_CAP;
