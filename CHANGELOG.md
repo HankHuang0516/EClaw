@@ -1,3 +1,10 @@
+## [1.1180.2](https://github.com/HankHuang0516/EClaw/compare/v1.1180.1...v1.1180.2) (2026-05-28)
+
+
+### Bug Fixes
+
+* **kanban:** always include schedule field on /cards rows ([#2989](https://github.com/HankHuang0516/EClaw/issues/2989)) ([1eb7276](https://github.com/HankHuang0516/EClaw/commit/1eb727601ff401a5e3543645bbe35ba96e1a61b8))
+
 ## [1.1180.1](https://github.com/HankHuang0516/EClaw/compare/v1.1180.0...v1.1180.1) (2026-05-28)
 
 
