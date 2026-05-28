@@ -188,6 +188,9 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Hard-tier additions (daily update 2026-05-28) ──
+    { file: null, description: 'A Kubernetes cluster architecture diagram: one control plane running API server, etcd, scheduler and controller manager, connected to three worker nodes each running a kubelet and two pods — six worker pods total, one pod marked red indicating a crash-loop', keywords: ['kubernetes', 'control', 'plane', 'three', 'worker', 'six', 'pods', 'red'] },
+    { file: null, description: 'A SQL execution plan tree showing a nested loop join at the root: left branch is an index scan on orders returning 1,240 rows with cost 0.00..48.3, right branch is a sequential scan on order_items with cost 0.00..120.8; total estimated cost 2,890', keywords: ['SQL', 'plan', 'join', '1240', 'scan', 'cost', '2890'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +371,13 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── Hard-tier additions (daily update 2026-05-28) ──
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array of non-negative integers representing elevation heights, compute how much water can be trapped between them after raining.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[1,2,3]', expected: '0' },{ input: '[3,0,0,2,0,4]', expected: '10' }] },
+    { title: 'Unique Paths', description: 'Write `solve(m, n)` — a robot on an m×n grid starts at top-left and must reach bottom-right, moving only right or down. Return the number of distinct paths.',
+      testCases: [{ input: '3, 7', expected: '28' },{ input: '3, 2', expected: '3' },{ input: '1, 1', expected: '1' },{ input: '5, 5', expected: '70' }] },
+    { title: 'Longest Common Subsequence', description: 'Write `solve(text1, text2)` — return the length of the longest common subsequence of the two strings (characters need not be contiguous).',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"oxcpqrsvwf", "shmtulqrypy"', expected: '2' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +427,13 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Hard-tier additions (daily update 2026-05-28) ──
+    { question: 'A store increases the price of an item by 20% and then applies a 20% discount. What is the net percentage change in the final price?', expectedKeywords: ['4', '-4', 'decrease'] },
+    { question: 'Pipe A fills a tank in 10 hours, pipe B in 20 hours, and pipe C drains it in 12 hours. With all three open simultaneously, how many hours does it take to fill the empty tank?', expectedKeywords: ['15'] },
+    { question: 'A rope is cut into two pieces where the longer piece is 3 times the shorter. If the total length is 48 meters, how long in meters is the shorter piece?', expectedKeywords: ['12'] },
+    { question: 'What is the sum of all odd numbers from 1 to 99 inclusive?', expectedKeywords: ['2500'] },
+    { question: 'If f(x) = 3x² − 2x + 1, what is f(−3)?', expectedKeywords: ['34'] },
+    { question: 'In how many distinct ways can 4 different people be arranged in a row (order matters)?', expectedKeywords: ['24'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +511,11 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Hard-tier additions (daily update 2026-05-28) ──
+    { text: 'The International Space Station orbits Earth at approximately 408 kilometers altitude traveling at 27,600 kilometers per hour and completes sixteen orbits every day', keywords: ['space', 'station', '408', '27600', 'sixteen'] },
+    { text: 'Invoice reference INV-2025-00931 for three thousand seven hundred forty-two dollars and nineteen cents is due by the fifteenth of next month', keywords: ['invoice', '2025', '00931', 'three', 'seven', 'forty', 'fifteen'] },
+    { text: 'Compile TypeScript using tsc in strict mode targeting ES2022 with output to the dist directory and verify zero type errors before deploying to production', keywords: ['TypeScript', 'tsc', 'strict', 'ES2022', 'dist', 'type', 'errors'] },
+    { text: 'The mRNA vaccine uses lipid nanoparticles to deliver genetic instructions that prompt the immune system to generate spike protein antibodies without using live virus', keywords: ['mRNA', 'vaccine', 'nanoparticles', 'immune', 'spike', 'protein'] },
 ];
 
 // ============================================
