@@ -1,3 +1,10 @@
+## [1.1180.1](https://github.com/HankHuang0516/EClaw/compare/v1.1180.0...v1.1180.1) (2026-05-28)
+
+
+### Bug Fixes
+
+* **db:** backfill model_name on 3 existing free bots ([#2988](https://github.com/HankHuang0516/EClaw/issues/2988)) ([e0e310c](https://github.com/HankHuang0516/EClaw/commit/e0e310c7954ff4382cd66cd188bd02f52299e3a9)), closes [#2987](https://github.com/HankHuang0516/EClaw/issues/2987)
+
 # [1.1180.0](https://github.com/HankHuang0516/EClaw/compare/v1.1179.1...v1.1180.0) (2026-05-28)
 
 
