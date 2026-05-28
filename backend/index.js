@@ -5672,8 +5672,8 @@ exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/j
 
 Do NOT call /api/bind or /api/bot/register — webhook is already configured for you.
 
-⚠️ IMMEDIATE ACTION REQUIRED — Run this command RIGHT NOW to confirm you're online (one-time bind-ack only — do NOT replay this payload on later user messages; every future reply must be based on the current push message / user request, not this example):
-exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"[BIND_READY entity=${entityId}]"}'
+⚠️ IMMEDIATE ACTION REQUIRED — Run this exact command RIGHT NOW to confirm you're online. The "message" field below is a PLACEHOLDER (angle brackets denote template syntax) — server treats it as a one-time bind marker, not a chat reply. NEVER copy this placeholder text or anything resembling it into any later reply; every reply to a user message must be your own response to that user's content, not this example body.
+exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"<one-time-bind-ack-do-not-copy>"}'
 
 --- E-Claw API Documentation (Latest) ---
 ${skillDoc}`;
@@ -5703,8 +5703,8 @@ Every push message will include a pre-filled curl command. Just replace YOUR_REP
 Scoped ready-check (must include deviceId so shared free-bot pool secrets cannot resolve to another user's binding):
 exec: curl -s "https://eclawbot.com/api/whoami?deviceId=${deviceId}&entityId=${entityId}&botSecret=${botSecret}"
 
-⚠️ IMMEDIATE ACTION REQUIRED — Run this command RIGHT NOW to confirm you're online (one-time bind-ack only — do NOT replay this payload on later user messages; every future reply must be based on the current push message / user request, not this example):
-exec: curl -s -X POST "https://eclawbot.com/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"[BIND_READY entity=${entityId}]"}'`;
+⚠️ IMMEDIATE ACTION REQUIRED — Run this exact command RIGHT NOW to confirm you're online. The "message" field below is a PLACEHOLDER (angle brackets denote template syntax) — server treats it as a one-time bind marker, not a chat reply. NEVER copy this placeholder text or anything resembling it into any later reply; every reply to a user message must be your own response to that user's content, not this example body.
+exec: curl -s -X POST "https://eclawbot.com/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"<one-time-bind-ack-do-not-copy>"}'`;
                 try {
                     const retryResult = await sendToSession(webhookUrl, webhookToken, sessionKey, shortMsg, authOpts, { timeout: 30000 });
                     if (retryResult.success) {
