@@ -7660,9 +7660,10 @@ function resolveSpeakToTarget(code, senderDeviceId) {
  * not_found (which the calling bot used to treat as a successful delivery
  * and never retry).
  *
- * Supported forms (decorators optional and any combination of < > @ #):
- *   - 6-char publicCode [a-z0-9]{6}
- *   - numeric entityId  \d+
+ * Supported forms (decorators stripped in this fixed order, mirroring
+ * resolveSpeakToTarget: outer angle brackets, then leading @, then leading #):
+ *   - 6-char publicCode [a-z0-9]{6}        e.g. "tbwb9e", "@tbwb9e", "<@tbwb9e>"
+ *   - numeric entityId  \d+                e.g. "6", "#6", "@#6", "<#6>"
  *
  * Returns { valid: true } or { valid: false, reason, normalized? }.
  */
