@@ -1800,3 +1800,221 @@
     transition: transform 60ms linear, width 60ms linear, height 60ms linear;
     z-index: 5;
 }
+
+/* ── Point-and-Edit Roadmap (3-track scenario walkthrough) ── */
+
+.ped-roadmap {
+    margin-top: 36px;
+    padding-top: 28px;
+    border-top: 1px solid rgba(124, 58, 237, 0.25);
+}
+
+.ped-roadmap-head h2 {
+    margin: 0 0 6px 0;
+    color: #f3e8ff;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.ped-roadmap-lede {
+    margin: 0 0 22px 0;
+    color: #c7c9d6;
+    font-size: 14px;
+    max-width: 720px;
+    line-height: 1.55;
+}
+
+.ped-roadmap-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+@media (max-width: 760px) {
+    .ped-roadmap-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ped-track {
+    background: #1a1f2e;
+    border: 1px solid rgba(124, 58, 237, 0.25);
+    border-radius: 8px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ped-track-a {
+    border-color: rgba(124, 58, 237, 0.55);
+}
+
+.ped-track-d {
+    border-color: rgba(124, 58, 237, 0.4);
+}
+
+.ped-track-head {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ped-track-head h3 {
+    margin: 0;
+    color: #f3e8ff;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.ped-track-badge {
+    align-self: flex-start;
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.ped-track-badge-live {
+    background: #7c3aed;
+    color: #fff;
+}
+
+.ped-track-badge-pending {
+    background: #3a3a52;
+    color: #c7c9d6;
+}
+
+.ped-track-pitch {
+    margin: 0;
+    color: #c7c9d6;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.ped-track-steps {
+    margin: 0;
+    padding-left: 18px;
+    color: #d4d6e3;
+    font-size: 12.5px;
+    line-height: 1.55;
+}
+
+.ped-track-steps li {
+    margin-bottom: 4px;
+}
+
+.ped-track-steps code {
+    background: #0f1320;
+    color: #c084fc;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 11.5px;
+}
+
+.ped-track-foot {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(124, 58, 237, 0.25);
+    color: #a8acbe;
+    font-size: 11.5px;
+}
+
+.ped-track-stat strong {
+    color: #e9d5ff;
+}
+
+/* Comparison table */
+
+.ped-roadmap-compare {
+    margin-bottom: 28px;
+}
+
+.ped-roadmap-compare h3 {
+    margin: 0 0 12px 0;
+    color: #f3e8ff;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.ped-compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #1a1f2e;
+    border: 1px solid rgba(124, 58, 237, 0.25);
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 13px;
+}
+
+.ped-compare-table th,
+.ped-compare-table td {
+    text-align: left;
+    padding: 9px 12px;
+    border-bottom: 1px solid rgba(124, 58, 237, 0.15);
+    color: #d4d6e3;
+}
+
+.ped-compare-table th {
+    background: rgba(124, 58, 237, 0.15);
+    color: #f3e8ff;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.ped-compare-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.ped-compare-table td strong {
+    color: #c084fc;
+}
+
+@media (max-width: 760px) {
+    .ped-compare-table th,
+    .ped-compare-table td {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+}
+
+/* Loop diagram */
+
+.ped-roadmap-loop h3 {
+    margin: 0 0 12px 0;
+    color: #f3e8ff;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.ped-loop-steps {
+    margin: 0;
+    padding-left: 22px;
+    color: #d4d6e3;
+    font-size: 13.5px;
+    line-height: 1.65;
+}
+
+.ped-loop-steps li {
+    margin-bottom: 8px;
+}
+
+.ped-loop-steps strong {
+    color: #c084fc;
+}
+
+.ped-loop-steps code {
+    background: #0f1320;
+    color: #c084fc;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 12px;
+}

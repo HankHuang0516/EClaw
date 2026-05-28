@@ -5001,6 +5001,160 @@ platforms:
 
             <!-- Highlight overlay — single element, repositioned per hover -->
             <div class="ped-overlay" data-ped-overlay hidden aria-hidden="true"></div>
+
+            <!-- ═══════════════════════════════════════════════════
+                 ROADMAP: three-track scenario walkthrough
+                 Each track tells the same story — picking a CTA button
+                 to relabel — so the user can A/B/C the friction.
+                 ═══════════════════════════════════════════════════ -->
+            <section class="ped-roadmap" aria-labelledby="ped-roadmap-heading">
+                <header class="ped-roadmap-head">
+                    <h2 id="ped-roadmap-heading" data-i18n="ped_roadmap_title">🗺️ Three tracks, one scenario</h2>
+                    <p class="ped-roadmap-lede" data-i18n="ped_roadmap_lede">A web developer wants to relabel one CTA button on their page from “Buy Now” to “Free Trial”. Here is the same flow through each track. Time yourself; pick the one that costs you least.</p>
+                </header>
+
+                <div class="ped-roadmap-grid">
+                    <!-- Track A — DOM hover & click -->
+                    <article class="ped-track ped-track-a">
+                        <header class="ped-track-head">
+                            <span class="ped-track-badge ped-track-badge-live" data-i18n="ped_roadmap_badge_live">LIVE</span>
+                            <h3 data-i18n="ped_roadmap_a_title">A · Hover &amp; Click (DOM)</h3>
+                            <p class="ped-track-pitch" data-i18n="ped_roadmap_a_pitch">Hover renders a highlight box. One click commits the element as the target. Best when the element is visible and clickable.</p>
+                        </header>
+                        <ol class="ped-track-steps">
+                            <li data-i18n="ped_roadmap_a_s1">Open <code>/portal/info.html?demo=pointedit</code> in any browser, desktop or mobile.</li>
+                            <li data-i18n="ped_roadmap_a_s2">Mode A is selected by default; hover over the “Buy Now” button — purple outline locks on.</li>
+                            <li data-i18n="ped_roadmap_a_s3">Click once. Composer fills with <code>&lt;target mode="dom" targetId="cta.button" confidence="0.98"&gt;Buy Now&lt;/target&gt;</code>.</li>
+                            <li data-i18n="ped_roadmap_a_s4">Type your instruction: <em>“Change to ‘Free Trial’.”</em></li>
+                            <li data-i18n="ped_roadmap_a_s5">Agent receives target + instruction, returns a patch: <code>oldText: "Buy Now" → newText: "Free Trial"</code>.</li>
+                            <li data-i18n="ped_roadmap_a_s6">Preview &amp; accept. Edit lands in the page.</li>
+                        </ol>
+                        <footer class="ped-track-foot">
+                            <span class="ped-track-stat"><strong>Confidence:</strong> 0.98 (data-id) / 0.85 (class path)</span>
+                            <span class="ped-track-stat" data-i18n="ped_roadmap_a_wins"><strong>Wins for:</strong> button text, icon swap, single-element CSS, “this thing here”</span>
+                        </footer>
+                    </article>
+
+                    <!-- Track B — Coordinate + AST -->
+                    <article class="ped-track ped-track-b">
+                        <header class="ped-track-head">
+                            <span class="ped-track-badge ped-track-badge-pending" data-i18n="ped_roadmap_badge_pending">PENDING</span>
+                            <h3 data-i18n="ped_roadmap_b_title">B · Coordinate + AST</h3>
+                            <p class="ped-track-pitch" data-i18n="ped_roadmap_b_pitch">Point with screen coordinates (touch, gaze, voice-coord) and let the AST resolver upgrade x/y into a stable AST node. Best when you can’t hover — mobile thumb-region, drift across deploys, voice control.</p>
+                        </header>
+                        <ol class="ped-track-steps">
+                            <li data-i18n="ped_roadmap_b_s1">Tap-and-hold (or voice say “there”) anywhere on the rendered page. Capture <code>{x, y, viewport, dpr}</code>.</li>
+                            <li data-i18n="ped_roadmap_b_s2">Server runs AST resolver: maps coordinates to nearest semantic node — JSX/Vue template, Markdown block, or CSS rule.</li>
+                            <li data-i18n="ped_roadmap_b_s3">Composer receives <code>&lt;target mode="coord" coordinates="x,y" astPath="src/Hero.jsx:42:cta" confidence="0.91"&gt;</code>.</li>
+                            <li data-i18n="ped_roadmap_b_s4">Type instruction, agent applies edit at the AST node — not the rendered DOM. Edit survives re-renders.</li>
+                            <li data-i18n="ped_roadmap_b_s5">Preview &amp; accept. Patch lands in the source tree, not the live DOM.</li>
+                        </ol>
+                        <footer class="ped-track-foot">
+                            <span class="ped-track-stat"><strong>Confidence:</strong> 0.65–0.95 (depends on AST resolution success)</span>
+                            <span class="ped-track-stat" data-i18n="ped_roadmap_b_wins"><strong>Wins for:</strong> mobile-only edits, voice/gaze input, edits to source not DOM, drift-tolerant</span>
+                        </footer>
+                    </article>
+
+                    <!-- Track C — Mind-map node -->
+                    <article class="ped-track ped-track-c">
+                        <header class="ped-track-head">
+                            <span class="ped-track-badge ped-track-badge-pending" data-i18n="ped_roadmap_badge_pending">PENDING</span>
+                            <h3 data-i18n="ped_roadmap_c_title">C · Mind-map Node</h3>
+                            <p class="ped-track-pitch" data-i18n="ped_roadmap_c_pitch">Pick from the page’s mind-map (already wired in kanban / cardholder). Best when “the thing to change” is a concept, not a pixel — section, theme, feature flag, persona.</p>
+                        </header>
+                        <ol class="ped-track-steps">
+                            <li data-i18n="ped_roadmap_c_s1">Open the page’s mind-map sidecar. Page sections, components, and flows are rendered as a graph.</li>
+                            <li data-i18n="ped_roadmap_c_s2">Click the node labeled “CTA → Buy Now”. Composer receives <code>&lt;target mode="mindmap" nodeId="cta:buy-now" linkedSelectors="[cta.button,cta.foot]" confidence="0.93"&gt;</code>.</li>
+                            <li data-i18n="ped_roadmap_c_s3">Type instruction at the concept level: <em>“Rename this CTA across the site.”</em></li>
+                            <li data-i18n="ped_roadmap_c_s4">Agent fans out: edits every selector bound to the mind-map node — header CTA, footer CTA, OG image alt text.</li>
+                            <li data-i18n="ped_roadmap_c_s5">Preview the diff bundle, accept atomically.</li>
+                        </ol>
+                        <footer class="ped-track-foot">
+                            <span class="ped-track-stat"><strong>Confidence:</strong> 0.93 average (node-bound, not pixel-bound)</span>
+                            <span class="ped-track-stat" data-i18n="ped_roadmap_c_wins"><strong>Wins for:</strong> cross-page rename, theme/persona swap, multi-selector concept edits</span>
+                        </footer>
+                    </article>
+
+                    <!-- Track D-lite — Text selection -->
+                    <article class="ped-track ped-track-d">
+                        <header class="ped-track-head">
+                            <span class="ped-track-badge ped-track-badge-live" data-i18n="ped_roadmap_badge_live">LIVE</span>
+                            <h3 data-i18n="ped_roadmap_d_title">D-lite · Text Selection</h3>
+                            <p class="ped-track-pitch" data-i18n="ped_roadmap_d_pitch">Drag-select any text fragment. The selection itself becomes the anchor — no need to find the right element. Best when the change is inside prose, not a button.</p>
+                        </header>
+                        <ol class="ped-track-steps">
+                            <li data-i18n="ped_roadmap_d_s1">Switch to Mode D in the demo panel above.</li>
+                            <li data-i18n="ped_roadmap_d_s2">Drag-select the words <em>this very sentence</em> in the sandbox note.</li>
+                            <li data-i18n="ped_roadmap_d_s3">Composer fills with <code>&lt;target mode="dom" targetId="note.p2" selector="rangeFor:..." confidence="0.90"&gt;this very sentence&lt;/target&gt;</code>.</li>
+                            <li data-i18n="ped_roadmap_d_s4">Type instruction. Agent edits only the selected range.</li>
+                            <li data-i18n="ped_roadmap_d_s5">Preview &amp; accept.</li>
+                        </ol>
+                        <footer class="ped-track-foot">
+                            <span class="ped-track-stat"><strong>Confidence:</strong> 0.90 (anchored) / 0.75 (free selection)</span>
+                            <span class="ped-track-stat" data-i18n="ped_roadmap_d_wins"><strong>Wins for:</strong> inline copy edits, typo fixes, partial-paragraph rewrites</span>
+                        </footer>
+                    </article>
+                </div>
+
+                <!-- Comparison row: which track wins per scenario -->
+                <div class="ped-roadmap-compare">
+                    <h3 data-i18n="ped_roadmap_compare_title">📊 Which track wins per scenario</h3>
+                    <table class="ped-compare-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="ped_roadmap_compare_scenario">Scenario</th>
+                                <th data-i18n="ped_roadmap_compare_best">Best track</th>
+                                <th data-i18n="ped_roadmap_compare_why">Why</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td data-i18n="ped_roadmap_compare_r1_scenario">Rename one CTA on one page</td>
+                                <td><strong>A</strong></td>
+                                <td data-i18n="ped_roadmap_compare_r1_why">One click is faster than typing or dragging.</td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="ped_roadmap_compare_r2_scenario">Fix typo in mid-paragraph copy</td>
+                                <td><strong>D-lite</strong></td>
+                                <td data-i18n="ped_roadmap_compare_r2_why">Selection is the anchor; no need to find the &lt;p&gt;.</td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="ped_roadmap_compare_r3_scenario">Adjust button on mobile, no hover</td>
+                                <td><strong>B</strong></td>
+                                <td data-i18n="ped_roadmap_compare_r3_why">Tap coords → AST resolver finds the source node.</td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="ped_roadmap_compare_r4_scenario">Rename CTA across 6 pages + OG image</td>
+                                <td><strong>C</strong></td>
+                                <td data-i18n="ped_roadmap_compare_r4_why">Mind-map node fans out to every linked selector.</td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="ped_roadmap_compare_r5_scenario">Source-of-truth edit (Markdown, JSX)</td>
+                                <td><strong>B</strong></td>
+                                <td data-i18n="ped_roadmap_compare_r5_why">AST path persists; DOM-selectors break on rebuild.</td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="ped_roadmap_compare_r6_scenario">Voice/gaze control (no pointer)</td>
+                                <td><strong>B</strong></td>
+                                <td data-i18n="ped_roadmap_compare_r6_why">Coords ingest from any modality, resolver does the rest.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- E2E loop diagram -->
+                <div class="ped-roadmap-loop">
+                    <h3 data-i18n="ped_roadmap_loop_title">🔄 The end-to-end loop (all tracks share this)</h3>
+                    <ol class="ped-loop-steps">
+                        <li data-i18n="ped_roadmap_loop_s1"><strong>Point:</strong> User selects target on web or mobile (A, B, C, or D-lite).</li>
+                        <li data-i18n="ped_roadmap_loop_s2"><strong>Commit:</strong> Track emits <code>pointedit:target</code> with a normalized payload (targetId, selector, rect, confidence, sourceHint).</li>
+                        <li data-i18n="ped_roadmap_loop_s3"><strong>Compose:</strong> User types the change in natural language alongside the target block.</li>
+                        <li data-i18n="ped_roadmap_loop_s4"><strong>Dispatch:</strong> Composer POSTs <code>{ target, instruction }</code> to the agent endpoint.</li>
+                        <li data-i18n="ped_roadmap_loop_s5"><strong>Patch:</strong> Agent (Claude) returns <code>{ patch, confidence, rationale }</code> — a structured diff, not a rerendered page.</li>
+                        <li data-i18n="ped_roadmap_loop_s6"><strong>Preview &amp; accept:</strong> User sees the diff, accepts (commit) or rejects (try again). Telemetry logs the loop time + accept rate.</li>
+                    </ol>
+                </div>
+            </section>
         </div><!-- /panel-point-edit-demo -->
 
 
