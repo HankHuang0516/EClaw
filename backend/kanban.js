@@ -711,18 +711,22 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             tags: Array.isArray(row.tags) ? row.tags : [],
         };
 
-        // Schedule fields — always include if schedule was ever configured
-        if (row.schedule_enabled || row.schedule_type || row.schedule_last_run_at) {
-            card.schedule = {
-                enabled: !!row.schedule_enabled,
-                type: row.schedule_type || null,
-                cronExpression: row.schedule_cron || null,
-                runAt: row.schedule_run_at ? new Date(row.schedule_run_at).getTime() : null,
-                timezone: row.schedule_timezone || 'Asia/Taipei',
-                lastRunAt: row.schedule_last_run_at ? new Date(row.schedule_last_run_at).getTime() : null,
-                nextRunAt: row.schedule_next_run_at ? new Date(row.schedule_next_run_at).getTime() : null,
-            };
-        }
+        // Schedule fields — always present so hygiene audits can lock the schema
+        // and detect cron-broken cards (enabled=true but nextRunAt stale). Cards
+        // without a schedule get null; cards that have ever been scheduled get the
+        // full object. Prior to 2026-05-28 this was conditional, which hid the
+        // field from manual cards AND from any /cards call that didn't pass
+        // ?automation=all (so cron-broken heuristics had nothing to evaluate).
+        const hasSchedule = row.schedule_enabled || row.schedule_type || row.schedule_last_run_at;
+        card.schedule = hasSchedule ? {
+            enabled: !!row.schedule_enabled,
+            type: row.schedule_type || null,
+            cronExpression: row.schedule_cron || null,
+            runAt: row.schedule_run_at ? new Date(row.schedule_run_at).getTime() : null,
+            timezone: row.schedule_timezone || 'Asia/Taipei',
+            lastRunAt: row.schedule_last_run_at ? new Date(row.schedule_last_run_at).getTime() : null,
+            nextRunAt: row.schedule_next_run_at ? new Date(row.schedule_next_run_at).getTime() : null,
+        } : null;
 
         // Automation fields
         if (row.is_automation) card.isAutomation = true;
