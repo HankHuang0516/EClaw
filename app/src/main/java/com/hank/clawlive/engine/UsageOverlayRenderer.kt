@@ -194,6 +194,7 @@ class UsageOverlayRenderer(
         val lines = mutableListOf(context.getString(R.string.wallpaper_usage_overlay_title))
         if (snapshot == null) {
             lines.add(context.getString(R.string.wallpaper_usage_overlay_syncing))
+            formatResetCountdownLine(snapshot)?.let(lines::add)
             return lines
         }
 
