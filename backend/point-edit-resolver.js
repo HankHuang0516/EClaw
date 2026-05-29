@@ -1,6 +1,7 @@
 'use strict';
 
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const { chromium } = require('playwright');
 
 const router = express.Router();
@@ -22,6 +23,27 @@ const ALLOWED_HOSTS = (process.env.POINT_EDIT_ALLOWED_HOSTS || DEFAULT_ALLOWED_H
     .filter(Boolean);
 const BROWSER_LAUNCH_TIMEOUT_MS = 30000;
 const PAGE_NAV_TIMEOUT_MS = 20000;
+
+// Per-route rate limit: resolveCoordinate boots a headless Playwright page per
+// request — much heavier than typical API calls — so the global 100/min cap
+// is too loose. Default 15/min/IP; operators can tune via env. Disabled when
+// RATE_LIMIT_DISABLED=1 (used in dev + jest).
+const RESOLVE_RATE_LIMIT_MAX = Math.max(
+    1,
+    Number(process.env.POINT_EDIT_RATE_LIMIT_PER_MIN || 15)
+);
+const resolveCoordinateLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: RESOLVE_RATE_LIMIT_MAX,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: () => process.env.RATE_LIMIT_DISABLED === '1',
+    message: {
+        success: false,
+        error: 'rate_limited',
+        message: `Point-edit resolve-coordinate rate limit exceeded (max ${RESOLVE_RATE_LIMIT_MAX}/min per IP).`,
+    },
+});
 
 let _browserPromise = null;
 async function getBrowser() {
@@ -164,6 +186,11 @@ const SCRIPT_BLOCK_RE = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi;
 const ON_ATTR_RE = /\s+on[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi;
 const JAVASCRIPT_URL_RE = /(href|src)\s*=\s*(?:"\s*javascript:[^"]*"|'\s*javascript:[^']*'|javascript:[^\s>]+)/gi;
 
+// Strips obvious script vectors so this outerHTML is safe to embed in a JSON
+// response that callers render as TEXT (debug panel, copy-paste, syntax
+// highlight). If a future caller ever passes this string back into the DOM via
+// innerHTML / dangerouslySetInnerHTML, swap to sanitize-html or DOMPurify —
+// regex strips are not a full XSS sanitizer.
 function sanitizeOuterHTML(html) {
     if (typeof html !== 'string') return '';
     return html
@@ -260,7 +287,7 @@ async function resolveCoordinate(input) {
     };
 }
 
-router.post('/resolve-coordinate', async (req, res) => {
+router.post('/resolve-coordinate', resolveCoordinateLimiter, async (req, res) => {
     const parsed = validateCoordinateBody(req.body || {});
     if (parsed.error) {
         if (parsed.error === 'unsupported_origin') {

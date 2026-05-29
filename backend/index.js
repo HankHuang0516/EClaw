@@ -1469,19 +1469,25 @@ setInterval(async () => {
 }, CLEANUP_INTERVAL).unref();
 
 // Graceful shutdown - save data before exit
-process.on('SIGINT', async () => {
-    console.log('[Persistence] Received SIGINT, saving data before exit...');
+async function gracefulShutdown(signal) {
+    console.log(`[Persistence] Received ${signal}, saving data before exit...`);
     await saveData();
     if (usePostgreSQL) await db.closeDatabase();
+    // Close the point-edit headless Chromium so the playwright subprocess
+    // doesn't leak past the parent on Railway redeploys / SIGTERM.
+    try {
+        const pe = require('./point-edit-resolver');
+        if (pe && typeof pe.closeBrowser === 'function') {
+            await pe.closeBrowser();
+        }
+    } catch (err) {
+        console.error('[Shutdown] point-edit closeBrowser failed:', err.message);
+    }
     process.exit(0);
-});
+}
 
-process.on('SIGTERM', async () => {
-    console.log('[Persistence] Received SIGTERM, saving data before exit...');
-    await saveData();
-    if (usePostgreSQL) await db.closeDatabase();
-    process.exit(0);
-});
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 
 // Initialize persistence on startup (async)
 initPersistence().catch(err => {
