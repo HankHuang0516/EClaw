@@ -359,15 +359,65 @@ class LayoutPreferences private constructor(context: Context) {
             prefs.edit().putBoolean(KEY_USAGE_OVERLAY_SHOW_WEEKLY, value).apply()
         }
 
-    var wallpaperResetWindow: String
-        get() = prefs.getString(KEY_WALLPAPER_RESET_WINDOW, RESET_WINDOW_OFF) ?: RESET_WINDOW_OFF
-        set(value) {
-            val normalized = when (value) {
-                RESET_WINDOW_5H, RESET_WINDOW_WEEKLY -> value
-                else -> RESET_WINDOW_OFF
+    var wallpaperResetShowFiveHour: Boolean
+        get() {
+            if (prefs.contains(KEY_WALLPAPER_RESET_SHOW_5H)) {
+                return prefs.getBoolean(KEY_WALLPAPER_RESET_SHOW_5H, false)
             }
-            prefs.edit().putString(KEY_WALLPAPER_RESET_WINDOW, normalized).apply()
+            if (prefs.contains(KEY_WALLPAPER_RESET_WINDOW)) {
+                return legacyResetWindowValue() in listOf(RESET_WINDOW_5H, RESET_WINDOW_5H_WEEKLY)
+            }
+            // New user with no prefs ever set: default both 5h and Weekly to ON.
+            // Why: a fresh user should see countdowns by default; the only way to
+            // get both off is an explicit user toggle, not a silent first-launch state.
+            return true
         }
+        set(value) {
+            writeResetWindowSelection(value, wallpaperResetShowWeekly)
+        }
+
+    var wallpaperResetShowWeekly: Boolean
+        get() {
+            if (prefs.contains(KEY_WALLPAPER_RESET_SHOW_WEEKLY)) {
+                return prefs.getBoolean(KEY_WALLPAPER_RESET_SHOW_WEEKLY, false)
+            }
+            if (prefs.contains(KEY_WALLPAPER_RESET_WINDOW)) {
+                return legacyResetWindowValue() in listOf(RESET_WINDOW_WEEKLY, RESET_WINDOW_5H_WEEKLY)
+            }
+            return true
+        }
+        set(value) {
+            writeResetWindowSelection(wallpaperResetShowFiveHour, value)
+        }
+
+    var wallpaperResetWindow: String
+        get() = resetWindowValue(wallpaperResetShowFiveHour, wallpaperResetShowWeekly)
+        set(value) {
+            val showFiveHour = value in listOf(RESET_WINDOW_5H, RESET_WINDOW_5H_WEEKLY)
+            val showWeekly = value in listOf(RESET_WINDOW_WEEKLY, RESET_WINDOW_5H_WEEKLY)
+            writeResetWindowSelection(showFiveHour, showWeekly)
+        }
+
+    private fun legacyResetWindowValue(): String {
+        return prefs.getString(KEY_WALLPAPER_RESET_WINDOW, RESET_WINDOW_OFF) ?: RESET_WINDOW_OFF
+    }
+
+    private fun writeResetWindowSelection(showFiveHour: Boolean, showWeekly: Boolean) {
+        prefs.edit()
+            .putBoolean(KEY_WALLPAPER_RESET_SHOW_5H, showFiveHour)
+            .putBoolean(KEY_WALLPAPER_RESET_SHOW_WEEKLY, showWeekly)
+            .putString(KEY_WALLPAPER_RESET_WINDOW, resetWindowValue(showFiveHour, showWeekly))
+            .apply()
+    }
+
+    private fun resetWindowValue(showFiveHour: Boolean, showWeekly: Boolean): String {
+        return when {
+            showFiveHour && showWeekly -> RESET_WINDOW_5H_WEEKLY
+            showFiveHour -> RESET_WINDOW_5H
+            showWeekly -> RESET_WINDOW_WEEKLY
+            else -> RESET_WINDOW_OFF
+        }
+    }
 
     companion object {
         private const val PREFS_NAME = "entity_layout_prefs"
@@ -392,10 +442,13 @@ class LayoutPreferences private constructor(context: Context) {
         private const val KEY_USAGE_OVERLAY_SHOW_SESSION = "usage_overlay_show_session"
         private const val KEY_USAGE_OVERLAY_SHOW_WEEKLY = "usage_overlay_show_weekly"
         private const val KEY_WALLPAPER_RESET_WINDOW = "wallpaper_reset_window"
+        private const val KEY_WALLPAPER_RESET_SHOW_5H = "wallpaper_reset_show_5h"
+        private const val KEY_WALLPAPER_RESET_SHOW_WEEKLY = "wallpaper_reset_show_weekly"
 
         const val RESET_WINDOW_OFF = "off"
         const val RESET_WINDOW_5H = "5h"
         const val RESET_WINDOW_WEEKLY = "weekly"
+        const val RESET_WINDOW_5H_WEEKLY = "5h_weekly"
 
         // Display mode constants
         const val MODE_SINGLE = 1
