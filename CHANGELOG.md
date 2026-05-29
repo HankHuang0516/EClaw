@@ -1,3 +1,10 @@
+## [1.1184.2](https://github.com/HankHuang0516/EClaw/compare/v1.1184.1...v1.1184.2) (2026-05-29)
+
+
+### Bug Fixes
+
+* **security:** SSRF — per-request route guard + RFC1918/ULA block (PR [#3010](https://github.com/HankHuang0516/EClaw/issues/3010) review by [#6](https://github.com/HankHuang0516/EClaw/issues/6)) ([#3013](https://github.com/HankHuang0516/EClaw/issues/3013)) ([9fbd8c9](https://github.com/HankHuang0516/EClaw/commit/9fbd8c944738024afa99c9c5c053f7a0517eba1f))
+
 ## [1.1184.1](https://github.com/HankHuang0516/EClaw/compare/v1.1184.0...v1.1184.1) (2026-05-29)
 
 
