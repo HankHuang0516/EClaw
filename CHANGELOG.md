@@ -1,3 +1,10 @@
+## [1.1185.3](https://github.com/HankHuang0516/EClaw/compare/v1.1185.2...v1.1185.3) (2026-05-29)
+
+
+### Bug Fixes
+
+* **android:** wallpaper UX rollup — 5h+Weekly共存 / Claude vs Codex 標記 / 拖曳hit-box ([#3018](https://github.com/HankHuang0516/EClaw/issues/3018)) ([0177811](https://github.com/HankHuang0516/EClaw/commit/0177811dcdd41ec98bfc230c0dfbeec68d52c779)), closes [#2](https://github.com/HankHuang0516/EClaw/issues/2) [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 ## [1.1185.2](https://github.com/HankHuang0516/EClaw/compare/v1.1185.1...v1.1185.2) (2026-05-29)
 
 
