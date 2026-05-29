@@ -188,6 +188,12 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── 2026-05-29 daily update: new hard-tier additions ──
+    { file: null, description: 'A UML class diagram with four classes: Animal (base class) has subclasses Dog and Cat, and Cat has an association to a Toy class — two inheritance arrows and one association arrow visible', keywords: ['UML', 'class', 'four', 'animal', 'dog', 'cat', 'toy', 'inheritance', 'association'] },
+    { file: null, description: 'An entity-relationship (ER) diagram for an e-commerce schema: five tables — Users, Orders, OrderItems, Products, and Categories — with primary keys underlined and five foreign key arrows connecting them', keywords: ['ER', 'diagram', 'five', 'tables', 'users', 'orders', 'products', 'categories', 'foreign', 'key'] },
+    { file: null, description: 'A website heatmap overlay showing click distribution on a landing page: 61% of clicks on the top-right CTA button (shown in deep red), 22% on the navigation menu (orange), 11% on the hero image, 6% scattered on the footer', keywords: ['heatmap', 'click', '61', 'percent', 'CTA', 'navigation', '22', 'hero', 'footer'] },
+    { file: null, description: 'A Kubernetes cluster diagram: one master node connected to three worker nodes, each worker running two pods — six pods total; one pod on worker-2 is shown in red with a CrashLoopBackOff label', keywords: ['kubernetes', 'cluster', 'master', 'three', 'workers', 'six', 'pods', 'red', 'CrashLoopBackOff'] },
+    { file: null, description: 'A Python code screenshot showing a function compute_stats with three parameters; on line 14 an IndexError is highlighted in red — the loop iterates to len(data) but accesses data[i+1]', keywords: ['python', 'function', 'three', 'line', '14', 'IndexError', 'red', 'loop'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +374,15 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── 2026-05-29 daily update: new medium-hard coding problems ──
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array of non-negative integers representing bar heights, return how many units of rain water can be trapped between the bars.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[1,0,1]', expected: '1' },{ input: '[3,3]', expected: '0' }] },
+    { title: 'Merge Intervals', description: 'Write `solve(intervals)` — given an array of [start, end] intervals, merge all overlapping intervals and return the result sorted by start time.',
+      testCases: [{ input: '[[1,3],[2,6],[8,10],[15,18]]', expected: '[[1,6],[8,10],[15,18]]' },{ input: '[[1,4],[4,5]]', expected: '[[1,5]]' },{ input: '[[1,4],[2,3]]', expected: '[[1,4]]' }] },
+    { title: 'Course Schedule', description: 'Write `solve(numCourses, prerequisites)` — given n courses (0 to n-1) and a list of [course, prerequisite] pairs, return true if it is possible to finish all courses (i.e., no circular dependency).',
+      testCases: [{ input: '2, [[1,0]]', expected: 'true' },{ input: '2, [[1,0],[0,1]]', expected: 'false' },{ input: '4, [[1,0],[2,1],[3,2]]', expected: 'true' },{ input: '3, [[0,1],[1,2],[2,0]]', expected: 'false' }] },
+    { title: 'Unique Paths', description: 'Write `solve(m, n)` — a robot starts at top-left of an m×n grid and can only move right or down. Return the number of unique paths to reach bottom-right.',
+      testCases: [{ input: '3, 7', expected: '28' },{ input: '3, 2', expected: '3' },{ input: '1, 1', expected: '1' },{ input: '5, 5', expected: '70' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +432,13 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── 2026-05-29 daily update: new medium-hard reasoning questions ──
+    { question: 'A car travels the first half of a journey at 60 km/h and the second half at 120 km/h. What is the average speed for the entire journey in km/h?', expectedKeywords: ['80'] },
+    { question: 'In how many ways can 3 different books be arranged on a shelf out of 6 different books?', expectedKeywords: ['120'] },
+    { question: 'A and B can complete a job in 12 days. B and C can complete it in 15 days. A and C can complete it in 20 days. In how many days can all three working together complete the job?', expectedKeywords: ['10'] },
+    { question: 'If you have a 3-liter jug and a 5-liter jug, and unlimited water, what is the minimum number of steps to measure exactly 4 liters?', expectedKeywords: ['6'] },
+    { question: 'A palindrome number reads the same forwards and backwards. How many 3-digit palindrome numbers exist?', expectedKeywords: ['90'] },
+    { question: 'Two trains approach each other from 300 km apart. Train A travels at 80 km/h and Train B at 70 km/h. In how many hours will they meet?', expectedKeywords: ['2'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +516,12 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── 2026-05-29 daily update: new medium-hard TTS phrases ──
+    { text: 'The patient is prescribed 500 milligrams of amoxicillin twice daily for seven days with a follow-up on the fourteenth', keywords: ['prescribed', '500', 'milligrams', 'amoxicillin', 'twice', 'daily', 'seven', 'fourteenth'] },
+    { text: 'METAR report: KLAX 291553Z 25015KT 10SM FEW025 SCT080 22 slash 10 A2995 RMK AO2', keywords: ['METAR', 'KLAX', '291553Z', '25015KT', 'SCT', 'A2995'] },
+    { text: 'The legal Latin phrase habeas corpus means you may have the body and protects against unlawful detention', keywords: ['habeas', 'corpus', 'body', 'protects', 'unlawful', 'detention'] },
+    { text: 'Refer to section 4 subsection 2 paragraph 3 clause A of the agreement dated the fifteenth of March two thousand twenty-four', keywords: ['section', 'four', 'subsection', 'paragraph', 'clause', 'March', 'twenty-four'] },
+    { text: 'The wavelength of visible light ranges from approximately 380 nanometers violet to 700 nanometers red', keywords: ['wavelength', 'visible', '380', 'nanometers', '700', 'violet', 'red'] },
 ];
 
 // ============================================
