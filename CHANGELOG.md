@@ -1,3 +1,10 @@
+# [1.1184.0](https://github.com/HankHuang0516/EClaw/compare/v1.1183.1...v1.1184.0) (2026-05-29)
+
+
+### Features
+
+* **point-edit:** Track B v2 — Playwright universal resolver ([#3006](https://github.com/HankHuang0516/EClaw/issues/3006) follow-up) ([#3010](https://github.com/HankHuang0516/EClaw/issues/3010)) ([2fff9ba](https://github.com/HankHuang0516/EClaw/commit/2fff9babd979144bfcae5928ccbb050206cfbece)), closes [#id](https://github.com/HankHuang0516/EClaw/issues/id) [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+
 ## [1.1183.1](https://github.com/HankHuang0516/EClaw/compare/v1.1183.0...v1.1183.1) (2026-05-28)
 
 
