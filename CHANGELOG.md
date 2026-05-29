@@ -1,3 +1,10 @@
+## [1.1184.3](https://github.com/HankHuang0516/EClaw/compare/v1.1184.2...v1.1184.3) (2026-05-29)
+
+
+### Bug Fixes
+
+* **org-chart:** suppress low-signal noise in silent FWD-to-superior path ([#3014](https://github.com/HankHuang0516/EClaw/issues/3014)) ([f0230f9](https://github.com/HankHuang0516/EClaw/commit/f0230f9032d734a96cb61c3baa679ff534b31cc2)), closes [#5](https://github.com/HankHuang0516/EClaw/issues/5)
+
 ## [1.1184.2](https://github.com/HankHuang0516/EClaw/compare/v1.1184.1...v1.1184.2) (2026-05-29)
 
 
