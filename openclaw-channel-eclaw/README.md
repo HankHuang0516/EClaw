@@ -302,6 +302,8 @@ ACK failures.
 **Countermeasure:**
 - The webhook now detects `ECLAW_HEALTHCHECK <nonce>` before dispatching to the
   OpenClaw agent and replies through the E-Claw channel with `ACK <nonce>`.
+  Nonces may contain letters, numbers, underscores, or hyphens, matching the
+  monitor/browser UI target-mode probes.
 - Model-health checks still go through the agent so model/reasoning policy is
   validated independently from transport health.
 - After upgrading the plugin in an OpenClaw runtime, restart the owning

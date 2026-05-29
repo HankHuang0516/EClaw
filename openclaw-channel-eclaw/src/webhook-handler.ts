@@ -52,7 +52,7 @@ export function createWebhookHandler(
       const client = getClient(accountId);
       const conversationId = msg.conversationId || `${msg.deviceId}:${msg.entityId}`;
 
-      const directAck = String(msg.text || '').match(/^ECLAW_HEALTHCHECK\s+([A-Za-z0-9]+)\b/m);
+      const directAck = String(msg.text || '').match(/^ECLAW_HEALTHCHECK\s+([A-Za-z0-9_-]+)(?=\s|$)/m);
       if (directAck) {
         if (client) {
           await client.sendMessage(`ACK ${directAck[1]}`, 'IDLE');
