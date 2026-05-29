@@ -1,3 +1,10 @@
+# [1.1185.0](https://github.com/HankHuang0516/EClaw/compare/v1.1184.3...v1.1185.0) (2026-05-29)
+
+
+### Features
+
+* **info:** embed Day 144 — 三條 P0 同日 ship highlight in info hub ([#3016](https://github.com/HankHuang0516/EClaw/issues/3016)) ([d9d1a1b](https://github.com/HankHuang0516/EClaw/commit/d9d1a1bc692fc52f7289866462a7c8b40619d6d5)), closes [#3014](https://github.com/HankHuang0516/EClaw/issues/3014) [#3013](https://github.com/HankHuang0516/EClaw/issues/3013) [#3012](https://github.com/HankHuang0516/EClaw/issues/3012) [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 ## [1.1184.3](https://github.com/HankHuang0516/EClaw/compare/v1.1184.2...v1.1184.3) (2026-05-29)
 
 
