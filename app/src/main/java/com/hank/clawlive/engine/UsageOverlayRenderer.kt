@@ -5,12 +5,15 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
+import android.os.Build
 import android.text.TextPaint
 import com.hank.clawlive.R
 import com.hank.clawlive.data.local.LayoutPreferences
 import com.hank.clawlive.data.local.UsageOverlayPosition
 import com.hank.clawlive.data.model.UsageSnapshotLatest
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -194,7 +197,7 @@ class UsageOverlayRenderer(
         val lines = mutableListOf(context.getString(R.string.wallpaper_usage_overlay_title))
         if (snapshot == null) {
             lines.add(context.getString(R.string.wallpaper_usage_overlay_syncing))
-            formatResetCountdownLine(snapshot)?.let(lines::add)
+            lines.addAll(formatResetCountdownLines(snapshot))
             return lines
         }
 
@@ -220,33 +223,50 @@ class UsageOverlayRenderer(
             lines.add(context.getString(R.string.wallpaper_usage_overlay_syncing))
         }
 
-        formatResetCountdownLine(snapshot)?.let(lines::add)
+        lines.addAll(formatResetCountdownLines(snapshot))
         return lines
     }
 
-    private fun formatResetCountdownLine(snapshot: UsageSnapshotLatest?): String? {
-        return when (layoutPrefs.wallpaperResetWindow) {
-            LayoutPreferences.RESET_WINDOW_5H -> {
-                val resetsAt = nextFiveHourResetEpochSec(snapshot) ?: return null
-                val hhmm = formatHourMinute((resetsAt * 1000.0).toLong())
-                context.getString(R.string.wallpaper_reset_window_5h_next, hhmm)
-            }
-            LayoutPreferences.RESET_WINDOW_WEEKLY -> {
-                val resetsAt = nextWeeklyResetEpochMillis()
-                val mondayHhmm = formatWeeklyReset(resetsAt)
-                context.getString(R.string.wallpaper_reset_window_weekly_next, mondayHhmm)
-            }
-            else -> null
+    private fun formatResetCountdownLines(snapshot: UsageSnapshotLatest?): List<String> {
+        val lines = mutableListOf<String>()
+        if (layoutPrefs.wallpaperResetShowFiveHour) {
+            fiveHourResetCandidates(snapshot)
+                .filter { isEngineVisibleForReset(it.engineKey) }
+                .forEach { reset ->
+                    val hhmm = formatHourMinute((reset.resetsAtSec * 1000.0).toLong())
+                    lines.add(context.getString(R.string.wallpaper_reset_window_5h_next, reset.engineLabel, hhmm))
+                }
         }
+        if (layoutPrefs.wallpaperResetShowWeekly) {
+            val resetsAt = nextWeeklyResetEpochMillis()
+            val weeklyTime = formatWeeklyReset(resetsAt)
+            lines.add(context.getString(R.string.wallpaper_reset_window_weekly_next, weeklyTime))
+        }
+        return lines
     }
 
-    private fun nextFiveHourResetEpochSec(snapshot: UsageSnapshotLatest?): Double? {
-        if (snapshot == null) return null
+    private fun fiveHourResetCandidates(snapshot: UsageSnapshotLatest?): List<ResetCandidate> {
+        if (snapshot == null) return emptyList()
         val claudeReset = snapshot.claude?.live?.rateLimits?.fiveHour?.resetsAt
         val codexReset = snapshot.codex?.rateLimits?.fiveHourResetsAt
         val nowSec = System.currentTimeMillis() / 1000.0
-        val candidates = listOfNotNull(claudeReset, codexReset).filter { it > nowSec }
-        return candidates.minOrNull()
+        return listOfNotNull(
+            claudeReset?.let {
+                ResetCandidate(ENGINE_KEY_CLAUDE, context.getString(R.string.wallpaper_usage_engine_claude), it)
+            },
+            codexReset?.let {
+                ResetCandidate(ENGINE_KEY_CODEX, context.getString(R.string.wallpaper_usage_engine_codex), it)
+            }
+        ).filter { it.resetsAtSec > nowSec }
+            .sortedBy { it.resetsAtSec }
+    }
+
+    private fun isEngineVisibleForReset(engineKey: String): Boolean {
+        return when (engineKey) {
+            ENGINE_KEY_CLAUDE -> layoutPrefs.usageOverlayShowClaude
+            ENGINE_KEY_CODEX -> layoutPrefs.usageOverlayShowCodex
+            else -> true
+        }
     }
 
     private fun nextWeeklyResetEpochMillis(): Long {
@@ -263,23 +283,21 @@ class UsageOverlayRenderer(
     }
 
     private fun formatHourMinute(epochMillis: Long): String {
-        val cal = Calendar.getInstance().apply { timeInMillis = epochMillis }
-        return String.format(
-            Locale.US,
-            "%02d:%02d",
-            cal.get(Calendar.HOUR_OF_DAY),
-            cal.get(Calendar.MINUTE)
-        )
+        return SimpleDateFormat("HH:mm", currentLocale()).format(Date(epochMillis))
     }
 
     private fun formatWeeklyReset(epochMillis: Long): String {
-        val cal = Calendar.getInstance().apply { timeInMillis = epochMillis }
-        return String.format(
-            Locale.US,
-            "Mon %02d:%02d",
-            cal.get(Calendar.HOUR_OF_DAY),
-            cal.get(Calendar.MINUTE)
-        )
+        return SimpleDateFormat("EEE HH:mm", currentLocale()).format(Date(epochMillis))
+    }
+
+    private fun currentLocale(): Locale {
+        val configuration = context.resources.configuration
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            configuration.locales[0]
+        } else {
+            @Suppress("DEPRECATION")
+            configuration.locale ?: Locale.getDefault()
+        }
     }
 
     private fun formatEngineLine(label: String, sessionPct: Double?, weeklyPct: Double?): String? {
@@ -297,5 +315,16 @@ class UsageOverlayRenderer(
     private fun formatPct(value: Double?): String {
         val pct = value?.takeIf { it.isFinite() }?.roundToInt() ?: return "--"
         return "${pct.coerceIn(0, 999)}%"
+    }
+
+    private data class ResetCandidate(
+        val engineKey: String,
+        val engineLabel: String,
+        val resetsAtSec: Double
+    )
+
+    companion object {
+        private const val ENGINE_KEY_CLAUDE = "claude"
+        private const val ENGINE_KEY_CODEX = "codex"
     }
 }
