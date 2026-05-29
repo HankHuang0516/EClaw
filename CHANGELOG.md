@@ -1,3 +1,10 @@
+## [1.1185.1](https://github.com/HankHuang0516/EClaw/compare/v1.1185.0...v1.1185.1) (2026-05-29)
+
+
+### Bug Fixes
+
+* **server:** point-edit resolver P0 hardening — graceful shutdown + rate limit + sanitizer revisit ([#3015](https://github.com/HankHuang0516/EClaw/issues/3015)) ([651c01d](https://github.com/HankHuang0516/EClaw/commit/651c01d9ea39b710b541213bdf1de1273373dc9f)), closes [#3010](https://github.com/HankHuang0516/EClaw/issues/3010)
+
 # [1.1185.0](https://github.com/HankHuang0516/EClaw/compare/v1.1184.3...v1.1185.0) (2026-05-29)
 
 
