@@ -1,3 +1,10 @@
+## [1.1185.2](https://github.com/HankHuang0516/EClaw/compare/v1.1185.1...v1.1185.2) (2026-05-29)
+
+
+### Bug Fixes
+
+* **openclaw-channel:** ack target-mode healthcheck nonces ([6143436](https://github.com/HankHuang0516/EClaw/commit/61434361ee01394e71b52ff5d83564638b5408ac)), closes [1/#3](https://github.com/HankHuang0516/EClaw/issues/3) [1-#6](https://github.com/1-/issues/6) [1/#3](https://github.com/HankHuang0516/EClaw/issues/3)
+
 ## [1.1185.1](https://github.com/HankHuang0516/EClaw/compare/v1.1185.0...v1.1185.1) (2026-05-29)
 
 
