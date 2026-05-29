@@ -6,7 +6,9 @@ jest.mock('playwright', () => {
         goto: jest.fn().mockResolvedValue(undefined),
         evaluate,
     });
+    const _route = jest.fn().mockResolvedValue(undefined);
     const _newContext = jest.fn().mockResolvedValue({
+        route: _route,
         newPage: _newPage,
         close: jest.fn().mockResolvedValue(undefined),
     });
@@ -18,7 +20,7 @@ jest.mock('playwright', () => {
         chromium: {
             launch: jest.fn().mockResolvedValue(_browser),
         },
-        __mock: { evaluate, _newPage, _newContext, _browser },
+        __mock: { evaluate, _route, _newPage, _newContext, _browser },
     };
 });
 
@@ -37,6 +39,7 @@ function makeApp() {
 
 afterEach(() => {
     __mock.evaluate.mockReset();
+    __mock._route.mockClear();
     chromium.launch.mockClear();
 });
 
@@ -105,6 +108,44 @@ describe('validateCoordinateBody', () => {
     });
 });
 
+describe('browser request guard', () => {
+    function makeRoute(url) {
+        return {
+            request: () => ({ url: () => url }),
+            continue: jest.fn().mockResolvedValue(undefined),
+            abort: jest.fn().mockResolvedValue(undefined),
+        };
+    }
+
+    test('allows only allow-listed network requests', () => {
+        expect(resolver.isAllowedRequestUrl('https://eclawbot.com/assets/app.js')).toBe(true);
+        expect(resolver.isAllowedRequestUrl('https://portal.eclawbot.com/app.js')).toBe(true);
+        expect(resolver.isAllowedRequestUrl('https://evil.com/pixel.png')).toBe(false);
+    });
+
+    test('context route aborts disallowed subresources and redirect targets', async () => {
+        const context = { route: jest.fn().mockResolvedValue(undefined) };
+        await resolver.installRequestGuard(context);
+        expect(context.route).toHaveBeenCalledWith('**/*', expect.any(Function));
+
+        const handler = context.route.mock.calls[0][1];
+        const allowed = makeRoute('https://eclawbot.com/static/app.js');
+        await handler(allowed);
+        expect(allowed.continue).toHaveBeenCalled();
+        expect(allowed.abort).not.toHaveBeenCalled();
+
+        const blockedSubresource = makeRoute('https://evil.com/pixel.png');
+        await handler(blockedSubresource);
+        expect(blockedSubresource.abort).toHaveBeenCalledWith('addressunreachable');
+        expect(blockedSubresource.continue).not.toHaveBeenCalled();
+
+        const blockedRedirectTarget = makeRoute('https://evil.com/redirect-final');
+        await handler(blockedRedirectTarget);
+        expect(blockedRedirectTarget.abort).toHaveBeenCalledWith('addressunreachable');
+        expect(blockedRedirectTarget.continue).not.toHaveBeenCalled();
+    });
+});
+
 describe('POST /api/point-edit/resolve-coordinate', () => {
     const validBody = {
         x: 200,
@@ -133,6 +174,9 @@ describe('POST /api/point-edit/resolve-coordinate', () => {
         expect(res.body.sourceHint).toContain('live:');
         expect(res.body.confidence).toBeCloseTo(0.9);
         expect(res.body.targetId).toBe('main');
+        expect(__mock._route).toHaveBeenCalledWith('**/*', expect.any(Function));
+        expect(__mock._route.mock.invocationCallOrder[0])
+            .toBeLessThan(__mock._newPage.mock.invocationCallOrder[0]);
     });
 
     test('400: missing x', async () => {

@@ -18,6 +18,7 @@ const DEFAULT_ALLOWED_HOSTS = IS_PROD
 const ALLOWED_HOSTS = (process.env.POINT_EDIT_ALLOWED_HOSTS || DEFAULT_ALLOWED_HOSTS)
     .split(',')
     .map((s) => s.trim())
+    .map((s) => normalizeHostname(s))
     .filter(Boolean);
 const BROWSER_LAUNCH_TIMEOUT_MS = 30000;
 const PAGE_NAV_TIMEOUT_MS = 20000;
@@ -62,18 +63,68 @@ function normalizeUrl(rawUrl) {
     }
 }
 
-function isAllowedHost(url) {
-    if (!url) return false;
+function normalizeHostname(hostname) {
+    if (typeof hostname !== 'string') return '';
+    return hostname.toLowerCase().replace(/^\[|\]$/g, '');
+}
+
+function isPrivateIpv4(hostname) {
+    // Returns true if hostname is a literal IPv4 in a private/loopback/link-local range.
+    const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(hostname);
+    if (!m) return false;
+    const [a, b] = [Number(m[1]), Number(m[2])];
+    if (a === 0 || a === 10 || a === 127) return true;        // any-host, RFC1918 10/8, loopback
+    if (a === 169 && b === 254) return true;                  // link-local (incl. AWS metadata 169.254.169.254)
+    if (a === 172 && b >= 16 && b <= 31) return true;         // RFC1918 172.16/12
+    if (a === 192 && b === 168) return true;                  // RFC1918 192.168/16
+    return false;
+}
+
+function isPrivateIpv6(hostname) {
+    const h = hostname.replace(/^\[|\]$/g, '').toLowerCase();
+    if (h === '::1') return true;                              // loopback
+    if (h.startsWith('fe80:')) return true;                    // link-local
+    if (/^(fc|fd)[0-9a-f]{0,2}:/.test(h)) return true;         // ULA (fc00::/7)
+    return false;
+}
+
+function isAllowedRequestUrl(rawUrl) {
+    // Pure scheme + host check, used by both the initial-URL gate (via isAllowedHost)
+    // and the per-request Playwright route interceptor. Blocks non-http(s) schemes
+    // (data:, file:, javascript:, etc.) and prod loopback/private/link-local/ULA hosts.
+    let url;
+    try {
+        url = new URL(rawUrl);
+    } catch (_) {
+        return false;
+    }
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return false;
+    if (IS_PROD && url.protocol !== 'https:') return false;
+
+    const hostname = normalizeHostname(url.hostname);
     if (IS_PROD) {
-        const h = url.hostname.toLowerCase();
-        // Hard-reject loopback + link-local in prod even if operator misconfigures env.
-        if (h === 'localhost' || h === '127.0.0.1' || h === '::1' || h.startsWith('169.254.')) {
-            return false;
-        }
+        if (hostname === 'localhost') return false;
+        if (isPrivateIpv4(hostname)) return false;
+        if (isPrivateIpv6(hostname)) return false;
     }
     return ALLOWED_HOSTS.some(
-        (h) => url.hostname === h || url.hostname.endsWith('.' + h),
+        (h) => hostname === h || hostname.endsWith('.' + h),
     );
+}
+
+function isAllowedHost(url) {
+    if (!url) return false;
+    return isAllowedRequestUrl(url.toString());
+}
+
+async function installRequestGuard(context) {
+    await context.route('**/*', async (route) => {
+        const requestUrl = route.request().url();
+        if (!isAllowedRequestUrl(requestUrl)) {
+            return route.abort('addressunreachable');
+        }
+        return route.continue();
+    });
 }
 
 function validateCoordinateBody(body) {
@@ -100,11 +151,11 @@ function validateCoordinateBody(body) {
     if (!url) {
         return { error: 'url is required and must be a valid URL' };
     }
-    if (!isAllowedHost(url)) {
-        return { error: 'unsupported_origin', hostname: url.hostname };
-    }
     if (IS_PROD && url.protocol !== 'https:') {
         return { error: 'insecure_scheme', protocol: url.protocol };
+    }
+    if (!isAllowedHost(url)) {
+        return { error: 'unsupported_origin', hostname: url.hostname };
     }
     return { value: { x, y, viewportW, viewportH, url } };
 }
@@ -177,6 +228,7 @@ async function resolveCoordinate(input) {
     });
     let result = null;
     try {
+        await installRequestGuard(context);
         const page = await context.newPage();
         await page.goto(input.url.toString(), {
             waitUntil: 'domcontentloaded',
@@ -259,5 +311,7 @@ module.exports = {
     isPointEditDemoUrl,
     TARGETS,
     sanitizeOuterHTML,
+    isAllowedRequestUrl,
+    installRequestGuard,
     closeBrowser,
 };
