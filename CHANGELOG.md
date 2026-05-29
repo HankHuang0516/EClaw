@@ -1,3 +1,10 @@
+## [1.1184.1](https://github.com/HankHuang0516/EClaw/compare/v1.1184.0...v1.1184.1) (2026-05-29)
+
+
+### Bug Fixes
+
+* **wallpaper:** render reset-countdown line regardless of snapshot==null guard (card_4018404d) ([#3012](https://github.com/HankHuang0516/EClaw/issues/3012)) ([751d9d1](https://github.com/HankHuang0516/EClaw/commit/751d9d1f197f5c42fd66e827869f337681fcb498)), closes [#2](https://github.com/HankHuang0516/EClaw/issues/2)
+
 # [1.1184.0](https://github.com/HankHuang0516/EClaw/compare/v1.1183.1...v1.1184.0) (2026-05-29)
 
 
