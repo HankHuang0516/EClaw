@@ -17367,8 +17367,14 @@ async function pushToBot(entity, deviceId, eventType, payload, opts = {}) {
 const ORG_FWD_PREFIX = '[📢 FWD';
 const ORG_TASK_FWD_PREFIX = '[📋 TASK FWD';
 
+const { isLowSignalFwd } = require('./org-fwd-filter');
+
 async function orgChartForward(entity, deviceId, message, opts = {}) {
     if (!message || message.startsWith(ORG_TASK_FWD_PREFIX) || message.startsWith(ORG_FWD_PREFIX)) return;
+    if (isLowSignalFwd(message)) {
+        serverLog('info', 'org_forward_skip', `#${entity.entityId} suppressed low-signal fwd: "${String(message).trim().slice(0, 60)}"`, { deviceId, entityId: entity.entityId });
+        return;
+    }
 
     try {
         const orgData = await orgChartModule.getOrgChart(deviceId);
