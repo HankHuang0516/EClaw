@@ -31,13 +31,13 @@ describe('createWebhookHandler', () => {
       body: {
         deviceId: 'device-1',
         entityId: 0,
-        text: 'ECLAW_HEALTHCHECK abc123',
+        text: 'ECLAW_HEALTHCHECK abc_123-XYZ',
       },
     }, res);
 
     expect(res.writeHead).toHaveBeenCalledWith(200, { 'Content-Type': 'application/json' });
     expect(res.end).toHaveBeenCalledWith(JSON.stringify({ ok: true }));
-    expect(client.sendMessage).toHaveBeenCalledWith('ACK abc123', 'IDLE');
+    expect(client.sendMessage).toHaveBeenCalledWith('ACK abc_123-XYZ', 'IDLE');
     expect(dispatchReplyWithBufferedBlockDispatcher).not.toHaveBeenCalled();
   });
 });
