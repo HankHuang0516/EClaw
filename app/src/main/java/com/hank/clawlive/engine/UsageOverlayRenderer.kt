@@ -191,36 +191,40 @@ class UsageOverlayRenderer(
     }
 
     fun buildLines(snapshot: UsageSnapshotLatest?): List<String> {
-        if (!layoutPrefs.usageOverlayShowClaude && !layoutPrefs.usageOverlayShowCodex) return emptyList()
-        if (!layoutPrefs.usageOverlayShowSession && !layoutPrefs.usageOverlayShowWeekly) return emptyList()
+        val usageSectionVisible =
+            (layoutPrefs.usageOverlayShowClaude || layoutPrefs.usageOverlayShowCodex) &&
+                (layoutPrefs.usageOverlayShowSession || layoutPrefs.usageOverlayShowWeekly)
+        val resetSectionVisible =
+            layoutPrefs.wallpaperResetShowFiveHour || layoutPrefs.wallpaperResetShowWeekly
+        if (!usageSectionVisible && !resetSectionVisible) return emptyList()
 
-        val lines = mutableListOf(context.getString(R.string.wallpaper_usage_overlay_title))
-        if (snapshot == null) {
-            lines.add(context.getString(R.string.wallpaper_usage_overlay_syncing))
-            lines.addAll(formatResetCountdownLines(snapshot))
-            return lines
-        }
-
-        if (layoutPrefs.usageOverlayShowClaude) {
-            formatEngineLine(
-                context.getString(R.string.wallpaper_usage_engine_claude),
-                snapshot.claude?.live?.fiveHourPct
-                    ?: snapshot.claude?.live?.rateLimits?.fiveHour?.usedPercentage,
-                snapshot.claude?.live?.sevenDayPct
-                    ?: snapshot.claude?.live?.rateLimits?.sevenDay?.usedPercentage
-            )?.let(lines::add)
-        }
-
-        if (layoutPrefs.usageOverlayShowCodex) {
-            formatEngineLine(
-                context.getString(R.string.wallpaper_usage_engine_codex),
-                snapshot.codex?.rateLimits?.fiveHourPct,
-                snapshot.codex?.rateLimits?.sevenDayPct
-            )?.let(lines::add)
-        }
-
-        if (lines.size == 1) {
-            lines.add(context.getString(R.string.wallpaper_usage_overlay_syncing))
+        val lines = mutableListOf<String>()
+        if (usageSectionVisible) {
+            lines.add(context.getString(R.string.wallpaper_usage_overlay_title))
+            if (snapshot == null) {
+                lines.add(context.getString(R.string.wallpaper_usage_overlay_syncing))
+            } else {
+                val usageLineStart = lines.size
+                if (layoutPrefs.usageOverlayShowClaude) {
+                    formatEngineLine(
+                        context.getString(R.string.wallpaper_usage_engine_claude),
+                        snapshot.claude?.live?.fiveHourPct
+                            ?: snapshot.claude?.live?.rateLimits?.fiveHour?.usedPercentage,
+                        snapshot.claude?.live?.sevenDayPct
+                            ?: snapshot.claude?.live?.rateLimits?.sevenDay?.usedPercentage
+                    )?.let(lines::add)
+                }
+                if (layoutPrefs.usageOverlayShowCodex) {
+                    formatEngineLine(
+                        context.getString(R.string.wallpaper_usage_engine_codex),
+                        snapshot.codex?.rateLimits?.fiveHourPct,
+                        snapshot.codex?.rateLimits?.sevenDayPct
+                    )?.let(lines::add)
+                }
+                if (lines.size == usageLineStart) {
+                    lines.add(context.getString(R.string.wallpaper_usage_overlay_syncing))
+                }
+            }
         }
 
         lines.addAll(formatResetCountdownLines(snapshot))
@@ -262,6 +266,11 @@ class UsageOverlayRenderer(
     }
 
     private fun isEngineVisibleForReset(engineKey: String): Boolean {
+        // When no engine is visible in the usage section, reset countdowns operate in
+        // standalone mode (no per-engine filter). This lets the user run reset-only mode
+        // — disable both Claude/Codex usage rows but still see the 5h countdown.
+        val anyEngineVisible = layoutPrefs.usageOverlayShowClaude || layoutPrefs.usageOverlayShowCodex
+        if (!anyEngineVisible) return true
         return when (engineKey) {
             ENGINE_KEY_CLAUDE -> layoutPrefs.usageOverlayShowClaude
             ENGINE_KEY_CODEX -> layoutPrefs.usageOverlayShowCodex
