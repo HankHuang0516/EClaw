@@ -1,3 +1,10 @@
+# [1.1186.0](https://github.com/HankHuang0516/EClaw/compare/v1.1185.6...v1.1186.0) (2026-05-30)
+
+
+### Features
+
+* **portal:** /portal/about-founder.html founder story + info-nav tab + /about-founder clean URL ([#3026](https://github.com/HankHuang0516/EClaw/issues/3026)) ([6fc1520](https://github.com/HankHuang0516/EClaw/commit/6fc1520d39dbe1c1fc76bac3f9552eb1e934df5b)), closes [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#5](https://github.com/HankHuang0516/EClaw/issues/5)
+
 ## [1.1185.6](https://github.com/HankHuang0516/EClaw/compare/v1.1185.5...v1.1185.6) (2026-05-30)
 
 
