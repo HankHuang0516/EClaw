@@ -181,3 +181,23 @@ INSERT INTO companions (
     1778000000000, 1778000000000, 1778000000000
 )
 ON CONFLICT (id) DO NOTHING;
+
+-- ============================================
+-- Phase 0 amendment (2026-05-30): companion_select_log.origin
+-- ============================================
+-- Per docs/specs/petdx-uiux-spec-amendment-2026-05-30-phase-0.md §0.2a:
+-- Phase 0 auto-assignment writes source = 'api' (CHECK-constrained) and
+-- records its real provenance in this new `origin` column so user-selected
+-- vs system-default vs rental-inherited is queryable without invalidating
+-- the existing CHECK or breaking older callers that read `source`.
+-- Values written by Phase 0:
+--   'phase0-auto'       — bind / rebind / character-change hook
+--   'phase0-backfill'   — scripts/petdx-phase0-backfill.js stamp
+--   'user-selected'     — companion-select endpoint
+--   'rental-inherited'  — rental bot inheriting lessor's companion
+-- Values may also be NULL on rows written before this migration.
+
+ALTER TABLE companion_select_log ADD COLUMN IF NOT EXISTS origin TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_companion_select_origin
+    ON companion_select_log (device_id, entity_id, origin);

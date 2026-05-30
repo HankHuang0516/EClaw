@@ -72,6 +72,55 @@ describe('portal entity-utils — character-driven avatar resolver (rebind sync)
     });
 });
 
+describe('portal entity-utils — Phase 0 petdx-aware resolver chain', () => {
+    const PETDX_LOBSTER_URL = '/static/companions/petdx-lobster-default/avatar.png';
+
+    test('petdxAvatarUrl from /api/entities enrichment beats character emoji', () => {
+        const ctx = loadResolver();
+        ctx.updateEntityMaps([{ entityId: 1, name: 'Mac_F', character: 'LOBSTER', avatar: null,
+            petdxAvatarUrl: PETDX_LOBSTER_URL }]);
+        expect(ctx.getAvatarForEntity(1)).toBe(PETDX_LOBSTER_URL);
+    });
+
+    test('relative petdx avatar URLs render as image URLs, not text', () => {
+        const ctx = loadResolver();
+        ctx.updateEntityMaps([{ entityId: 1, character: 'LOBSTER', avatar: null,
+            petdxAvatarUrl: PETDX_LOBSTER_URL }]);
+        expect(ctx.isAvatarUrl(ctx.getAvatarForEntity(1))).toBe(true);
+        expect(ctx.renderAvatarHtml(ctx.getAvatarForEntity(1), 20, 1)).toContain('src="' + PETDX_LOBSTER_URL + '"');
+    });
+
+    test('default-emoji avatar dropped from _entityAvatarMap (§0.4 invariant) so petdx wins', () => {
+        const ctx = loadResolver();
+        // Stale entity carries the lobster emoji as its "avatar" — must NOT beat petdxAvatarUrl
+        ctx.updateEntityMaps([{ entityId: 1, name: 'Mac_F', character: 'LOBSTER', avatar: LOBSTER,
+            petdxAvatarUrl: PETDX_LOBSTER_URL }]);
+        expect(ctx.getAvatarForEntity(1)).toBe(PETDX_LOBSTER_URL);
+    });
+
+    test('user-set custom emoji avatar still beats petdx idle frame', () => {
+        const ctx = loadResolver();
+        ctx.updateEntityMaps([{ entityId: 1, character: 'LOBSTER', avatar: '\u{1F431}',
+            petdxAvatarUrl: PETDX_LOBSTER_URL }]);
+        expect(ctx.getAvatarForEntity(1)).toBe('\u{1F431}');
+    });
+
+    test('AvatarPetdx.descriptorAvatarUrl is consulted when enrichment is absent', () => {
+        const ctx = loadResolver();
+        ctx.window.AvatarPetdx = {
+            descriptorAvatarUrl: (id) => id === 1 ? '/static/companions/petdx-lobster-default/avatar.png' : null,
+        };
+        ctx.updateEntityMaps([{ entityId: 1, character: 'LOBSTER', avatar: null }]);
+        expect(ctx.getAvatarForEntity(1)).toBe(PETDX_LOBSTER_URL);
+    });
+
+    test('character emoji stopgap still fires when no petdx layer answers', () => {
+        const ctx = loadResolver();
+        ctx.updateEntityMaps([{ entityId: 1, character: 'LOBSTER', avatar: null }]);
+        expect(ctx.getAvatarForEntity(1)).toBe(LOBSTER);
+    });
+});
+
 describe('portal entity-utils — static guard against id-based hardcoded character defaults', () => {
     test('ENTITY_CHARS_DEFAULT no longer maps any entityId to PIG', () => {
         const idDefaultMatch = SRC.match(/const\s+ENTITY_CHARS_DEFAULT\s*=\s*\{([\s\S]*?)\};/);

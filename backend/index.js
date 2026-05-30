@@ -18,6 +18,7 @@ const feedbackModule = require('./device-feedback');
 const chatIntegrity = require('./chat-integrity');
 const communitySsr = require('./community-ssr');
 const { buildOrgEntitySessionKey, isOrgEntitySessionKey } = require('./session-scope');
+const { assignDefaultCompanionIfMissing } = require('./petdx-phase0-hook');
 // JWT secret: fail-safe random per process if env var is missing (tokens signed in one process won't verify in another)
 const JWT_SECRET_FALLBACK = process.env.JWT_SECRET || require('crypto').randomBytes(32).toString('hex');
 
@@ -294,6 +295,13 @@ app.use('/assets', express.static(path.join(__dirname, 'public/assets'), {
             res.set('Cache-Control', 'public, max-age=600, must-revalidate');
         }
     }
+}));
+// Petdx companion static assets — avatar.png / thumbnail.webp / spritesheets.
+// Path is part of the contract in petdx-uiux-spec.md §5 + the Phase 0 amendment
+// §0.4 resolver, which reads `/static/companions/<id>/avatar.png` URLs.
+app.use('/static/companions', express.static(path.join(__dirname, 'public/companions'), {
+    maxAge: '7d',
+    immutable: true,
 }));
 // Serve public JavaScript helpers mounted outside /portal and /shared.
 // Keep short revalidation so registration attribution fixes roll out quickly.
@@ -1117,6 +1125,7 @@ let persistenceReady = false;
 
 // Pending binding codes (code -> { deviceId, entityId, expires })
 const pendingBindings = {};
+const recentPetdxBindSnapshots = new Map();
 
 // Bot-to-bot loop prevention: token-bucket style — regenerates 1 token per minute, cap = BOT2BOT_MAX_MESSAGES
 // Key: "deviceId:entityId" -> { count, lastRegenAt }
@@ -5543,6 +5552,53 @@ function isCharacterDefaultAvatar(avatar) {
     return Object.values(CHARACTER_DEFAULT_AVATAR).includes(avatar);
 }
 
+const PETDX_PREVIOUS_ENTITY_TTL_MS = 10 * 60 * 1000;
+function getPetdxBindSnapshotKey(deviceId, entityId) {
+    return `${deviceId}:${entityId}`;
+}
+function snapshotEntityForPetdxBind(entity) {
+    if (!entity) return null;
+    return {
+        entityId: entity.entityId,
+        character: entity.character || null,
+        avatar: entity.avatar || null,
+        rental_status: entity.rental_status || null,
+        identity: entity.identity && entity.identity.public
+            ? { public: { ...entity.identity.public } }
+            : null,
+    };
+}
+function rememberPreviousEntityForBind(deviceId, entityId, entity) {
+    const snapshot = snapshotEntityForPetdxBind(entity);
+    if (!snapshot) return;
+    recentPetdxBindSnapshots.set(getPetdxBindSnapshotKey(deviceId, entityId), {
+        snapshot,
+        expiresAt: Date.now() + PETDX_PREVIOUS_ENTITY_TTL_MS,
+    });
+}
+function getPreviousEntityForBind(deviceId, entityId, currentEntity) {
+    const now = Date.now();
+    for (const [key, entry] of recentPetdxBindSnapshots.entries()) {
+        if (!entry || entry.expiresAt <= now) recentPetdxBindSnapshots.delete(key);
+    }
+    const key = getPetdxBindSnapshotKey(deviceId, entityId);
+    const entry = recentPetdxBindSnapshots.get(key);
+    if (entry && entry.expiresAt > now) return entry.snapshot;
+    if (currentEntity && currentEntity.rebindCount > 0) {
+        return {
+            entityId,
+            character: null,
+            avatar: null,
+            rental_status: currentEntity.rental_status || null,
+            identity: null,
+        };
+    }
+    return null;
+}
+function clearPreviousEntityForBind(deviceId, entityId) {
+    recentPetdxBindSnapshots.delete(getPetdxBindSnapshotKey(deviceId, entityId));
+}
+
 // Helper: Create default entity
 function createDefaultEntity(entityId) {
     return {
@@ -6617,6 +6673,187 @@ function decryptVars(encrypted, ivHex, authTagHex) {
     return JSON.parse(decrypted);
 }
 
+function normalizeVarSources(varSources) {
+    if (!varSources) return {};
+    if (typeof varSources === 'string') {
+        try { return JSON.parse(varSources) || {}; } catch (_) { return {}; }
+    }
+    return { ...varSources };
+}
+
+function createPetdxPhase0Io() {
+    const cache = new Map();
+
+    async function loadVault(deviceId) {
+        if (!SEAL_KEY_HEX) throw new Error('SEAL_KEY not configured');
+        if (cache.has(deviceId)) return cache.get(deviceId);
+
+        const row = await db.getDeviceVars(deviceId);
+        const state = {
+            vars: {},
+            sources: {},
+            locked: false,
+        };
+        if (row) {
+            state.vars = decryptVars(row.encrypted_vars, row.iv, row.auth_tag) || {};
+            state.sources = normalizeVarSources(row.var_sources);
+            state.locked = !!row.is_locked;
+        }
+        cache.set(deviceId, state);
+        return state;
+    }
+
+    async function persistVault(deviceId, state) {
+        const { encrypted, iv, authTag } = encryptVars(state.vars);
+        const ok = await db.upsertDeviceVars(
+            deviceId,
+            encrypted,
+            iv,
+            authTag,
+            Object.keys(state.vars),
+            state.locked,
+            state.sources
+        );
+        if (!ok) throw new Error('upsertDeviceVars returned false');
+    }
+
+    return {
+        async getDeviceVar(deviceId, key) {
+            const state = await loadVault(deviceId);
+            return Object.prototype.hasOwnProperty.call(state.vars, key) ? state.vars[key] : null;
+        },
+        async setDeviceVars(deviceId, entries) {
+            const state = await loadVault(deviceId);
+            for (const [key, value] of Object.entries(entries || {})) {
+                state.vars[key] = value;
+                state.sources[key] = 'petdx-phase0';
+            }
+            await persistVault(deviceId, state);
+            if (typeof db.logDeviceVarsAudit === 'function') {
+                db.logDeviceVarsAudit({
+                    deviceId,
+                    action: 'merge',
+                    keyName: null,
+                    source: 'petdx-phase0',
+                    beforeCount: null,
+                    afterCount: Object.keys(state.vars).length,
+                }).catch(() => {});
+            }
+        },
+        async setDeviceVar(deviceId, key, value) {
+            const state = await loadVault(deviceId);
+            state.vars[key] = value;
+            state.sources[key] = 'petdx-phase0';
+            await persistVault(deviceId, state);
+            if (typeof db.logDeviceVarsAudit === 'function') {
+                db.logDeviceVarsAudit({
+                    deviceId,
+                    action: 'merge',
+                    keyName: key,
+                    source: 'petdx-phase0',
+                    beforeCount: null,
+                    afterCount: Object.keys(state.vars).length,
+                }).catch(() => {});
+            }
+        },
+        async appendCompanionSelectLog(entry) {
+            await chatPool.query(
+                `INSERT INTO companion_select_log
+                    (device_id, entity_id, companion_id, selected_at, source, origin)
+                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                [
+                    entry.deviceId,
+                    entry.entityId,
+                    entry.companionId,
+                    Date.now(),
+                    entry.source || 'api',
+                    entry.origin || null,
+                ]
+            );
+        },
+        log(level, tag, message, meta = {}) {
+            const normalizedLevel = level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'info';
+            const text = `${tag} ${message}`;
+            if (normalizedLevel === 'error') console.error(text, meta);
+            else if (normalizedLevel === 'warn') console.warn(text, meta);
+            else console.log(text, meta);
+            serverLog(normalizedLevel, 'petdx_phase0', text, {
+                deviceId: meta.deviceId,
+                entityId: meta.entityId,
+                metadata: meta,
+            });
+        },
+    };
+}
+
+async function getPetdxEntityEnrichmentMap(deviceId) {
+    const out = new Map();
+    if (!deviceId || !SEAL_KEY_HEX) return out;
+
+    try {
+        const row = await db.getDeviceVars(deviceId);
+        if (!row) return out;
+
+        const vars = decryptVars(row.encrypted_vars, row.iv, row.auth_tag) || {};
+        for (const [key, rawValue] of Object.entries(vars)) {
+            const m = /^PETDX_(CURRENT|AVATAR)_(\d+)$/.exec(key);
+            if (!m) continue;
+
+            const entityId = Number(m[2]);
+            if (!Number.isFinite(entityId)) continue;
+
+            const value = typeof rawValue === 'string' && rawValue.trim() ? rawValue : null;
+            if (!value) continue;
+
+            const item = out.get(entityId) || {};
+            if (m[1] === 'CURRENT') item.petdxCompanionId = value;
+            if (m[1] === 'AVATAR') item.petdxAvatarUrl = value;
+            out.set(entityId, item);
+        }
+    } catch (err) {
+        console.warn(`[/api/entities] petdx enrichment failed: ${err.message}`);
+        serverLog('warn', 'entity_poll', `Petdx enrichment failed for ${deviceId}: ${err.message}`, {
+            deviceId,
+            metadata: { reason: 'petdx_enrichment_failed' },
+        });
+    }
+
+    return out;
+}
+
+async function runPetdxPhase0AutoAssign(deviceId, entity, ctx) {
+    try {
+        const result = await assignDefaultCompanionIfMissing(
+            deviceId,
+            entity,
+            ctx,
+            createPetdxPhase0Io()
+        );
+        if (result && result.assigned) {
+            serverLog('info', 'petdx_phase0', `[petdx-phase0] assigned ${result.assigned}`, {
+                deviceId,
+                entityId: entity && entity.entityId,
+                metadata: { ctx, result },
+            });
+        } else if (result && result.skipped && result.skipped !== 'already_assigned') {
+            serverLog('info', 'petdx_phase0', `[petdx-phase0] skipped ${result.skipped}`, {
+                deviceId,
+                entityId: entity && entity.entityId,
+                metadata: { ctx, result },
+            });
+        }
+        return result;
+    } catch (err) {
+        console.warn('[petdx-phase0] auto-assign failed:', err.message);
+        serverLog('warn', 'petdx_phase0', `[petdx-phase0] auto-assign failed: ${err.message}`, {
+            deviceId,
+            entityId: entity && entity.entityId,
+            metadata: { ctx },
+        });
+        return { skipped: 'hook_failed', error: err.message };
+    }
+}
+
 
 // ============================================
 // REMOTE SCREEN CONTROL
@@ -6848,7 +7085,8 @@ app.post('/api/device/register', deviceRegisterRateLimit, (req, res) => {
         deviceId: deviceId,
         entityId: eId,
         expires: expires,
-        appVersion: appVersion || null
+        appVersion: appVersion || null,
+        previousEntity: getPreviousEntityForBind(deviceId, eId, device.entities[eId])
     };
 
     // Store appVersion on entity (update even if already bound)
@@ -7019,6 +7257,7 @@ app.post('/api/bind', async (req, res) => {
     }
 
     const { deviceId, entityId } = binding;
+    const previousEntityForPetdx = binding.previousEntity || null;
     const device = devices[deviceId];
     if (!device) {
         return res.status(400).json({ success: false, message: "Device not found" });
@@ -7053,6 +7292,13 @@ app.post('/api/bind', async (req, res) => {
 
     console.log(`[Bind] Device ${deviceId} Entity ${entityId} bound with botSecret${name ? ` (name: ${name})` : ''} (app v${deviceAppVersion || 'unknown'})`);
     serverLog('info', 'bind', `Entity ${entityId} bound${name ? ` (name: ${name})` : ''}`, { deviceId, entityId });
+
+    await runPetdxPhase0AutoAssign(deviceId, entity, {
+        mode: previousEntityForPetdx ? 'rebind' : 'bind',
+        previousEntity: previousEntityForPetdx,
+        source: 'bind-endpoint',
+    });
+    clearPreviousEntityForBind(deviceId, entityId);
 
     // Dynamic entity auto-expand: ensure at least one empty slot after bind
     const newSlotId = ensureOneEmptySlot(device);
@@ -7190,6 +7436,7 @@ app.get('/api/entities', async (req, res) => {
         console.warn(`[/api/entities] channel_accounts lookup failed: ${err.message}`);
     }
 
+    const petdxByEntityId = await getPetdxEntityEnrichmentMap(authedDeviceId);
     const entities = [];
 
     for (const deviceId in devices) {
@@ -7205,6 +7452,7 @@ app.get('/api/entities', async (req, res) => {
             const entity = device.entities[i];
             if (!entity) continue;
             if (entity.isBound) {
+                const petdx = petdxByEntityId.get(entity.entityId) || {};
                 const payload = {
                     deviceId: deviceId,
                     entityId: entity.entityId,
@@ -7216,6 +7464,8 @@ app.get('/api/entities', async (req, res) => {
                     lastUpdated: entity.lastUpdated,
                     isBound: true,  // Always true since we only return bound entities
                     avatar: entity.avatar || null,
+                    petdxCompanionId: petdx.petdxCompanionId || null,
+                    petdxAvatarUrl: petdx.petdxAvatarUrl || null,
                     xp: entity.xp || 0,
                     level: entity.level || 1,
                     publicCode: entity.publicCode || null,
@@ -8245,6 +8495,9 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         entity.name = name || null;
     }
 
+    const previousEntityForPetdxCharacterChange = (character && entity.character !== character)
+        ? snapshotEntityForPetdxBind(entity)
+        : null;
     if (character && entity.character !== character) {
         const oldDefault = getCharacterDefaultAvatar(entity.character);
         entity.character = character;
@@ -8256,6 +8509,13 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         }
     } else if (character) {
         entity.character = character;
+    }
+    if (previousEntityForPetdxCharacterChange) {
+        await runPetdxPhase0AutoAssign(deviceId, entity, {
+            mode: 'character-change',
+            previousEntity: previousEntityForPetdxCharacterChange,
+            source: 'transform',
+        });
     }
     if (state) entity.state = state;
 
@@ -9104,6 +9364,7 @@ app.delete('/api/entity', async (req, res) => {
 
     // Reset entity to unbound state (preserve user-set name, xp, level)
     const removedEntity = device.entities[eId];
+    rememberPreviousEntityForBind(deviceId, eId, removedEntity);
     device.entities[eId] = createDefaultEntity(eId);
     device.entities[eId].name = removedEntity?.name || null;
     device.entities[eId].xp = removedEntity?.xp || 0;
@@ -9226,6 +9487,7 @@ app.delete('/api/device/entity', async (req, res) => {
 
     // Reset entity to unbound state (preserve user-set name, xp, level)
     const removedEntity2 = device.entities[eId];
+    rememberPreviousEntityForBind(deviceId, eId, removedEntity2);
     device.entities[eId] = createDefaultEntity(eId);
     device.entities[eId].name = removedEntity2?.name || null;
     device.entities[eId].xp = removedEntity2?.xp || 0;
@@ -15017,6 +15279,11 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
         }
     };
     publicCodeIndex[freePublicCode] = { deviceId, entityId: eId };
+    await runPetdxPhase0AutoAssign(deviceId, device.entities[eId], {
+        mode: 'bind',
+        previousEntity: null,
+        source: 'official-borrow-free',
+    });
     await pauseRentalListingsOnRebind(deviceId, eId);
     await terminateRentalContractsOnRebind(deviceId, eId);
 
@@ -15186,6 +15453,11 @@ app.post('/api/official-borrow/bind-personal', async (req, res) => {
             setupPassword: personalBot.setup_password || null
         }
     };
+    await runPetdxPhase0AutoAssign(deviceId, device.entities[eId], {
+        mode: 'bind',
+        previousEntity: null,
+        source: 'official-borrow-paid',
+    });
     await pauseRentalListingsOnRebind(deviceId, eId);
     await terminateRentalContractsOnRebind(deviceId, eId);
 
@@ -21319,6 +21591,14 @@ module.exports._createDefaultEntity = createDefaultEntity;
 module.exports._getCharacterDefaultAvatar = getCharacterDefaultAvatar;
 module.exports._isCharacterDefaultAvatar = isCharacterDefaultAvatar;
 module.exports._CHARACTER_DEFAULT_AVATAR = CHARACTER_DEFAULT_AVATAR;
+module.exports._petdxPhase0 = {
+    snapshotEntityForPetdxBind,
+    rememberPreviousEntityForBind,
+    getPreviousEntityForBind,
+    clearPreviousEntityForBind,
+    runPetdxPhase0AutoAssign,
+    getPetdxEntityEnrichmentMap,
+};
 module.exports._enqueueMessage = enqueueMessage;
 module.exports._MESSAGE_QUEUE_CAP = MESSAGE_QUEUE_CAP;
 module.exports._DEAD_LETTER_CAP = DEAD_LETTER_CAP;

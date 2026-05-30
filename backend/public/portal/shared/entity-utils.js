@@ -8,6 +8,7 @@ const CHARACTER_EMOJI = {
     PIG: '\u{1F437}'
 };
 const DEFAULT_CHARACTER_EMOJI = CHARACTER_EMOJI.LOBSTER;
+const CHARACTER_DEFAULT_AVATARS = new Set(Object.values(CHARACTER_EMOJI));
 
 // Retained as a last-resort visual fallback when neither live character nor
 // any avatar source is known — never used to override a server-supplied character.
@@ -22,19 +23,40 @@ const ENTITY_CHARS_DEFAULT = {
 let _entityAvatarMap = {};
 let _entityNameMap = {};
 let _entityCharacterMap = {};
+let _entityPetdxAvatarMap = {};
+
+/**
+ * Port of backend _isCharacterDefaultAvatar (see backend/index.js +
+ * backend/petdx-phase0-hook.js). Used to enforce the §0.4 invariant:
+ * default emojis must NOT populate _entityAvatarMap so they can never
+ * beat the petdx avatar.png URL.
+ */
+function _isCharacterDefaultAvatar(avatar) {
+    if (avatar === null || avatar === undefined || avatar === '') return true;
+    return CHARACTER_DEFAULT_AVATARS.has(avatar);
+}
 
 /**
  * Call after fetching entities from API to populate shared maps.
+ * Per Phase 0 amendment §0.4 invariant: _entityAvatarMap only stores
+ * explicit non-default avatars (URL or user-set non-default emoji).
+ * Default-emoji avatars are intentionally dropped from the map so they
+ * cannot win over the petdx avatar.png URL further down the chain.
+ *
  * @param {Array} entities - array of entity objects from /api/entities
  */
 function updateEntityMaps(entities) {
     _entityAvatarMap = {};
     _entityNameMap = {};
     _entityCharacterMap = {};
+    _entityPetdxAvatarMap = {};
     (entities || []).forEach(e => {
-        if (e.avatar) _entityAvatarMap[e.entityId] = e.avatar;
+        if (e.avatar && !_isCharacterDefaultAvatar(e.avatar)) {
+            _entityAvatarMap[e.entityId] = e.avatar;
+        }
         if (e.name) _entityNameMap[e.entityId] = e.name;
         if (e.character) _entityCharacterMap[e.entityId] = e.character;
+        if (e.petdxAvatarUrl) _entityPetdxAvatarMap[e.entityId] = e.petdxAvatarUrl;
     });
 }
 
@@ -43,14 +65,35 @@ function _characterEmoji(entityId) {
     return c ? (CHARACTER_EMOJI[c] || DEFAULT_CHARACTER_EMOJI) : null;
 }
 
+function _petdxAvatarUrl(entityId) {
+    return _entityPetdxAvatarMap[entityId] || null;
+}
+
+function _petdxDescriptorAvatarUrl(entityId) {
+    if (typeof window === 'undefined' || !window.AvatarPetdx) return null;
+    const ap = window.AvatarPetdx;
+    if (typeof ap.descriptorAvatarUrl === 'function') return ap.descriptorAvatarUrl(entityId) || null;
+    return null;
+}
+
 /**
- * Get the avatar emoji for an entity.
- * Priority: server avatar > localStorage > live character → emoji > legacy default > fallback
+ * Get the avatar for an entity, per Phase 0 amendment §0.4 priority chain:
+ *   1. _entityAvatarMap (explicit non-default avatar — URL or user-set emoji)
+ *   2. localStorage user override
+ *   3. _entityPetdxAvatarMap (PETDX_AVATAR_<id> from /api/entities enrichment)
+ *   4. AvatarPetdx.descriptorAvatarUrl(entityId) — cached descriptor.avatar.url
+ *   5. live character → emoji (PR #3027 stopgap, kept until §0.6 quarantine ends)
+ *   6. legacy ENTITY_CHARS_DEFAULT
+ *   7. final emoji fallback
  */
 function getAvatarForEntity(entityId) {
     if (_entityAvatarMap[entityId]) return _entityAvatarMap[entityId];
     const saved = localStorage.getItem('eclaw_avatar_' + entityId);
     if (saved) return saved;
+    const fromEnrichment = _petdxAvatarUrl(entityId);
+    if (fromEnrichment) return fromEnrichment;
+    const fromDescriptor = _petdxDescriptorAvatarUrl(entityId);
+    if (fromDescriptor) return fromDescriptor;
     const fromCharacter = _characterEmoji(entityId);
     if (fromCharacter) return fromCharacter;
     const char = ENTITY_CHARS_DEFAULT[entityId];
@@ -77,7 +120,7 @@ function getEntityDisplayName(entityId) {
  * Check if an avatar value is an image URL (not an emoji).
  */
 function isAvatarUrl(avatar) {
-    return avatar && typeof avatar === 'string' && avatar.startsWith('https://');
+    return avatar && typeof avatar === 'string' && /^(https?:\/\/|\/)/.test(avatar);
 }
 
 /**
