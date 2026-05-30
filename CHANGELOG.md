@@ -1,3 +1,10 @@
+## [1.1185.6](https://github.com/HankHuang0516/EClaw/compare/v1.1185.5...v1.1185.6) (2026-05-30)
+
+
+### Bug Fixes
+
+* **seo:** redirect legacy /info|/kanban|/settings|/index .html paths → /portal/* (301) ([#3024](https://github.com/HankHuang0516/EClaw/issues/3024)) ([58fe9a6](https://github.com/HankHuang0516/EClaw/commit/58fe9a6d8a5fcd1c6a564e81ce55908db63d4cfd)), closes [#3021](https://github.com/HankHuang0516/EClaw/issues/3021)
+
 ## [1.1185.5](https://github.com/HankHuang0516/EClaw/compare/v1.1185.4...v1.1185.5) (2026-05-30)
 
 
