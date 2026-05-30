@@ -1,3 +1,10 @@
+# [1.1191.0](https://github.com/HankHuang0516/EClaw/compare/v1.1190.0...v1.1191.0) (2026-05-30)
+
+
+### Features
+
+* **seo:** add TechArticle + BlogPosting JSON-LD to remaining info.html panels ([#3036](https://github.com/HankHuang0516/EClaw/issues/3036)) ([dd9809e](https://github.com/HankHuang0516/EClaw/commit/dd9809eec6669a1b550509e06cc3ca96143b5e87))
+
 # [1.1190.0](https://github.com/HankHuang0516/EClaw/compare/v1.1189.0...v1.1190.0) (2026-05-30)
 
 
