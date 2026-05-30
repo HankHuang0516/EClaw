@@ -188,6 +188,11 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Daily pool update — hard-tier OCR / spatial / diagram additions ──
+    { file: null, description: 'An entity-relationship diagram with five tables: Users, Orders, Products, OrderItems, and Categories — six foreign key arrows connect the tables; the OrderItems table sits in the center with four relationships', keywords: ['diagram', 'five', 'tables', 'orders', 'products', 'categories', 'six', 'foreign'] },
+    { file: null, description: 'A GitHub pull request diff showing three deleted lines in red and five inserted lines in green — the changes rename a function from getUser() to fetchUserById() and add a null-safety guard', keywords: ['diff', 'three', 'deleted', 'five', 'inserted', 'renamed', 'null'] },
+    { file: null, description: 'A Kubernetes cluster topology: one control plane node at the top connected to three worker nodes — worker node 2 contains two pods labeled api-server and redis-cache, one pod on worker node 3 is outlined in red indicating CrashLoopBackOff', keywords: ['kubernetes', 'three', 'worker', 'pods', 'redis', 'red', 'crash'] },
+    { file: null, description: 'A candlestick stock chart covering eight trading sessions — four green candles and four red candles — with a dashed support level at $142 and a blue 20-day moving average line crossing above the candlesticks on session six', keywords: ['candlestick', 'eight', 'four', 'green', 'red', 'support', '142', 'moving average', 'six'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +373,15 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── Daily pool update — medium-hard tier (DP, graph, greedy, two-pointer) ──
+    { title: 'Longest Common Subsequence', description: 'Write `solve(text1, text2)` — return the length of their longest common subsequence. A subsequence is obtained by deleting characters without changing the remaining order.',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"oxcpqrsvwf", "shmtulqrypy"', expected: '2' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array of non-negative integers representing elevation heights, return the total units of water that can be trapped after raining.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[1,0,1]', expected: '1' },{ input: '[3,0,2,0,4]', expected: '7' }] },
+    { title: 'Course Schedule', description: 'Write `solve(numCourses, prerequisites)` — prerequisites is an array of [a,b] pairs meaning course b must be taken before a. Return true if all courses can be completed (no circular dependency), false otherwise.',
+      testCases: [{ input: '2, [[1,0]]', expected: 'true' },{ input: '2, [[1,0],[0,1]]', expected: 'false' },{ input: '4, [[1,0],[2,0],[3,1],[3,2]]', expected: 'true' },{ input: '3, [[0,1],[1,2],[2,0]]', expected: 'false' }] },
+    { title: 'Jump Game', description: 'Write `solve(nums)` — each element represents your maximum jump length at that position. Starting at index 0, return true if you can reach the last index.',
+      testCases: [{ input: '[2,3,1,1,4]', expected: 'true' },{ input: '[3,2,1,0,4]', expected: 'false' },{ input: '[0]', expected: 'true' },{ input: '[1,0,0]', expected: 'false' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +431,12 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Daily pool update — medium-hard reasoning additions ──
+    { question: 'A bank offers 6% annual compound interest. You invest $1,000 today. How much (in dollars, rounded to the nearest cent) will you have after 2 years?', expectedKeywords: ['1123.60', '1123.6', '1123'] },
+    { question: 'In a survey of 100 people, 60 like coffee, 50 like tea, and 20 like neither. How many people like both coffee and tea?', expectedKeywords: ['30'] },
+    { question: 'What is the least common multiple (LCM) of 12 and 18?', expectedKeywords: ['36'] },
+    { question: 'A bag contains 5 red balls and 3 blue balls. You draw two balls without replacement. What is the probability that both are red? Express as a simplified fraction.', expectedKeywords: ['5/14'] },
+    { question: 'A ball rolls off a 80-meter cliff horizontally. Using g = 10 m/s² and ignoring air resistance, how many seconds does it take to hit the ground?', expectedKeywords: ['4'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +514,11 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Daily pool update — hard-tier natural speech challenge additions ──
+    { text: 'The physician prescribed hydrochlorothiazide twelve point five milligrams once daily and lisinopril five milligrams twice daily for hypertension management', keywords: ['physician', 'hydrochlorothiazide', 'lisinopril', 'five', 'twice', 'hypertension'] },
+    { text: 'Cathay Pacific flight CX-838 bound for Hong Kong is now in final boarding at gate B47 departure at twenty-three fifteen', keywords: ['cathay', 'pacific', 'CX-838', 'hong kong', 'B47', 'boarding', 'twenty-three'] },
+    { text: 'The function accepts three parameters: a non-empty string, an integer between zero and one hundred inclusive, and an optional boolean flag defaulting to false', keywords: ['function', 'three', 'parameters', 'string', 'integer', 'boolean', 'false'] },
+    { text: 'The 95 percent confidence interval for the sample mean ranges from 3.42 to 7.81 giving a margin of error of approximately 2.2 units', keywords: ['confidence', 'interval', '3.42', '7.81', 'margin', 'error', '2.2'] },
 ];
 
 // ============================================
