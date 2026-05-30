@@ -18,10 +18,13 @@ describe('POST /api/admin/petdx-phase0/backfill', () => {
     test('endpoint is registered', () => {
         expect(SRC).toMatch(/app\.post\(['"]\/api\/admin\/petdx-phase0\/backfill['"]/);
     });
-    test('requires deviceId + deviceSecret', () => {
+    test('accepts deviceSecret OR botSecret+entityId', () => {
         const body = handlerBody();
-        expect(body).toMatch(/deviceId and deviceSecret are required/);
+        expect(body).toMatch(/deviceId \+ \(deviceSecret OR botSecret\+entityId\) are required/);
+        // deviceSecret branch
         expect(body).toMatch(/safeEqual\(device\.deviceSecret,\s*deviceSecret\)/);
+        // botSecret branch
+        expect(body).toMatch(/safeEqual\(device\.entities\[eid\]\.botSecret,\s*botSecret\)/);
     });
     test('dispatches the petdx Phase 0 hook in backfill mode', () => {
         const body = handlerBody();
