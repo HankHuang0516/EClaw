@@ -1,3 +1,10 @@
+## [1.1186.1](https://github.com/HankHuang0516/EClaw/compare/v1.1186.0...v1.1186.1) (2026-05-30)
+
+
+### Bug Fixes
+
+* **portal:** kanban avatars read live character on rebind, not hardcoded per-id default ([#3027](https://github.com/HankHuang0516/EClaw/issues/3027)) ([4bfcea8](https://github.com/HankHuang0516/EClaw/commit/4bfcea81b44f3ae5e9524b6da580ce45f93ce238)), closes [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#5](https://github.com/HankHuang0516/EClaw/issues/5)
+
 # [1.1186.0](https://github.com/HankHuang0516/EClaw/compare/v1.1185.6...v1.1186.0) (2026-05-30)
 
 
