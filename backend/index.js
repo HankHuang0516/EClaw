@@ -339,8 +339,20 @@ app.use('/promo-videos', express.static(path.join(__dirname, 'public/promo-video
     }
 }));
 // Info Hub page — redirect to /portal/info.html so relative asset paths resolve correctly
-app.get('/info', (req, res) => {
+app.get(['/info', '/info.html'], (req, res) => {
     res.redirect(301, '/portal/info.html');
+});
+
+// Kanban / Settings / root index — sibling redirects so legacy bookmarks + SEO + share
+// links from before the portal/ migration keep working instead of returning hard-404.
+app.get(['/kanban', '/kanban.html'], (req, res) => {
+    res.redirect(301, '/portal/kanban.html');
+});
+app.get(['/settings', '/settings.html'], (req, res) => {
+    res.redirect(301, '/portal/settings.html');
+});
+app.get('/index.html', (req, res) => {
+    res.redirect(301, '/portal/index.html');
 });
 
 // Account deletion page — clean URL for Google Play Data Safety form
