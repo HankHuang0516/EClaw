@@ -295,6 +295,13 @@ app.use('/assets', express.static(path.join(__dirname, 'public/assets'), {
         }
     }
 }));
+// Petdx companion static assets — avatar.png / thumbnail.webp / spritesheets.
+// Path is part of the contract in petdx-uiux-spec.md §5 + the Phase 0 amendment
+// §0.4 resolver, which reads `/static/companions/<id>/avatar.png` URLs.
+app.use('/static/companions', express.static(path.join(__dirname, 'public/companions'), {
+    maxAge: '7d',
+    immutable: true,
+}));
 // Serve public JavaScript helpers mounted outside /portal and /shared.
 // Keep short revalidation so registration attribution fixes roll out quickly.
 app.use('/js', express.static(path.join(__dirname, 'public/js'), {
