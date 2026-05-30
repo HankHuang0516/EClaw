@@ -1,3 +1,10 @@
+## [1.1185.5](https://github.com/HankHuang0516/EClaw/compare/v1.1185.4...v1.1185.5) (2026-05-30)
+
+
+### Bug Fixes
+
+* **portal:** wrap auth credentials in native forms ([#3021](https://github.com/HankHuang0516/EClaw/issues/3021)) ([bfade81](https://github.com/HankHuang0516/EClaw/commit/bfade810ab7d09d28ab830abd0dc230de6400e0c)), closes [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+
 ## [1.1185.4](https://github.com/HankHuang0516/EClaw/compare/v1.1185.3...v1.1185.4) (2026-05-30)
 
 
