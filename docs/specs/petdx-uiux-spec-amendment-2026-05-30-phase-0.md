@@ -20,9 +20,11 @@ Phase 0 closes this gap by **auto-assigning a default companion at entity bind t
 
 Default-companion auto-assignment fires:
 
-1. **At `/api/entity/bind` success** for any newly-bound entity, regardless of binding type (channel / api-key / rental).
-2. **At `/api/entity/rebind`** when `character` changes AND the entity has no user-set custom avatar (i.e. `avatar` is `null` or a system-default emoji per `_isCharacterDefaultAvatar()` — see `backend/index.js` `_isCharacterDefaultAvatar`).
-3. **At backfill migration** (`scripts/petdx-phase0-backfill.js`) for entities that pre-date this amendment.
+1. **At `/api/bind` (first-time)** success for any newly-bound entity, regardless of binding type (channel / api-key / rental).
+2. **At `/api/bind` (rebind)** when `character` changes AND the entity has no user-set custom avatar (i.e. `avatar` is `null` or a system-default emoji per `_isCharacterDefaultAvatar()` — see `backend/index.js`). Rebind is detected by the existing `rebindCount` bump path on `/api/bind`; there is **no** separate `/api/entity/rebind` endpoint.
+3. **At `/api/official-borrow/bind-free` and `/api/official-borrow/bind-personal`** success, treated as `mode: 'bind'`.
+4. **At `/api/transform` character-change side-effect** when the request body sets `character` and changes it.
+5. **At backfill migration** (`scripts/petdx-phase0-backfill.js`) for entities that pre-date this amendment.
 
 Auto-assignment does **NOT** fire when:
 
@@ -84,7 +86,7 @@ There is **no** `/api/entity/rebind` endpoint; spec v0.1–v0.2 named a fictiona
  * @param ctx           {
  *                        mode: 'bind' | 'rebind' | 'character-change' | 'backfill',
  *                        previousEntity: <prior record or null>,
- *                        source: 'bind-endpoint' | 'official-borrow' | 'transform' | 'backfill-script'
+ *                        source: 'bind-endpoint' | 'official-borrow-free' | 'official-borrow-paid' | 'transform' | 'backfill-script'
  *                      }
  */
 async function _assignDefaultCompanionIfMissing(deviceId, entity, ctx) {
@@ -181,20 +183,59 @@ The five entry points each call `_assignDefaultCompanionIfMissing` with appropri
 
 ## §0.5 Backfill migration
 
-`scripts/petdx-phase0-backfill.js`:
+`scripts/petdx-phase0-backfill.js` is the only path that may safely stamp `PETDX_SOURCE_<entityId>` for entities that pre-date this amendment (per §0.2a, the bind hook refuses to overwrite an existing `PETDX_CURRENT_*` whose `PETDX_SOURCE_*` is missing — the script is what closes that loophole).
 
 ```
 for each device in production
-    for each entity where PETDX_CURRENT_<entityId> is null
-        if entity has user-set custom avatar (per §0.1 negative case)
-            skip
-        else
-            companionId = pickDefaultCompanion(entity)
-            write PETDX_CURRENT_<entityId> + PETDX_AVATAR_<entityId>
-            log [petdx-phase0-backfill] <deviceId> <entityId> <companionId>
+    for each entity in device.entities
+        current  = readDeviceVar(deviceId, `PETDX_CURRENT_${entityId}`)
+        source   = readDeviceVar(deviceId, `PETDX_SOURCE_${entityId}`)
+        rentalIn = entity.rental_status === 'leased_in'
+        custom   = !_isCharacterDefaultAvatar(entity.avatar)
+
+        if (rentalIn) { skip 'rental-leased-in'; continue }
+        if (custom)   { skip 'user-custom-avatar'; continue }
+
+        // Existing companion + non-phase0 source → preserve.
+        if (current && source && source !== 'phase0-auto' && source !== 'phase0-backfill') {
+            skip 'preserves_existing_source', source; continue
+        }
+
+        // Existing companion + missing source → stamp the source as phase0-backfill,
+        // do not change companionId or avatar URL. This is what unblocks future
+        // bind-hook refreshes (per §0.2a invariant).
+        if (current && !source) {
+            writeDeviceVar(deviceId, `PETDX_SOURCE_${entityId}`, 'phase0-backfill')
+            appendCompanionSelectLog({
+                deviceId, entityId,
+                companionId: current,
+                source: 'api',             // CHECK-constrained column
+                origin: 'phase0-backfill', // new column
+                ctxMode: 'backfill',
+                ctxSource: 'backfill-script'
+            })
+            log [petdx-phase0-backfill] stamped-existing <deviceId> <entityId> <current>
+            continue
+        }
+
+        // Fresh entity → full assign.
+        companionId = pickDefaultCompanion(entity)
+        avatarUrl   = `/static/companions/${companionId}/avatar.png`
+        writeDeviceVar(deviceId, `PETDX_CURRENT_${entityId}`, companionId)
+        writeDeviceVar(deviceId, `PETDX_AVATAR_${entityId}`,  avatarUrl)
+        writeDeviceVar(deviceId, `PETDX_SOURCE_${entityId}`,  'phase0-backfill')
+        appendCompanionSelectLog({
+            deviceId, entityId,
+            companionId,
+            source: 'api',
+            origin: 'phase0-backfill',
+            ctxMode: 'backfill',
+            ctxSource: 'backfill-script'
+        })
+        log [petdx-phase0-backfill] assigned <deviceId> <entityId> <companionId>
 ```
 
-Runs once per device, idempotent. Hooked into `backend/scripts/run-migrations.js` so the next deploy executes it for the live device automatically.
+Runs once per device, idempotent. Driver supports `--dry-run` (only prints intended actions) and `--commit` (executes). Hooked into `backend/scripts/run-migrations.js` so the next deploy executes the `--commit` form for the live device automatically after the `2026-05-30-companion-origin.sql` migration completes (the migration MUST land first because the audit-log writes use the new `origin` column).
 
 ---
 
@@ -252,3 +293,4 @@ These are deliberately deferred to follow-up specs/PRs:
 | 0.1     | 2026-05-30 | LOBSTER #2   | Initial draft (post PR #3027 incident)                                                                                                |
 | 0.2     | 2026-05-30 | LOBSTER #2   | Per #6 review: §0.2 lobster-only Phase 0 + §0.2a source tagging, §0.3 hook context + 4 entry points, §0.4 enrichment chosen, §0.6 quarantine = 2 cycles + 7 days + 0 fallthrough |
 | 0.3     | 2026-05-30 | LOBSTER #2   | Per #6 re-review: §0.1 rental status fixed (leased_in, not rented_in); §0.2a uses new `origin` column on `companion_select_log` to avoid breaking the existing `source` CHECK; §0.3 entry-point table corrected (no `/api/entity/rebind`, adds `/api/official-borrow/bind-personal`, disambiguates `/api/bind` bind vs rebind); §0.3 guard tightened — existing `PETDX_CURRENT_*` with missing `PETDX_SOURCE_*` refuses overwrite; §0.8 adds explicit acceptance for lobster avatar.png asset + `/static/companions` mount + DB migration ordering |
+| 0.4     | 2026-05-30 | LOBSTER #2   | Per #6 third review: §0.1 trigger list now matches §0.3 entry-point table (5 numbered triggers, no `/api/entity/{bind,rebind}`); §0.3 `ctx.source` JSDoc enum aligned with the table (`'official-borrow-free'` / `'official-borrow-paid'`); §0.5 backfill pseudocode now writes `PETDX_SOURCE_*` + `origin` audit, handles `rental-leased-in` / `user-custom-avatar` / non-phase0 source / missing source / fresh assign separately, requires migration before `--commit` |
