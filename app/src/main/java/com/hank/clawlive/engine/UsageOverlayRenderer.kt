@@ -242,13 +242,14 @@ class UsageOverlayRenderer(
                 }
         }
         if (layoutPrefs.wallpaperResetShowWeekly) {
-            val rawCandidates = weeklyResetCandidates(snapshot)
-            if (snapshot == null || rawCandidates.isEmpty()) {
+            val hasRawWeeklyReset = snapshot?.claude?.live?.rateLimits?.sevenDay?.resetsAt != null ||
+                snapshot?.codex?.rateLimits?.sevenDayResetsAt != null
+            if (snapshot == null || !hasRawWeeklyReset) {
                 val resetsAt = nextWeeklyResetEpochMillis()
                 val weeklyTime = formatWeeklyReset(resetsAt)
                 lines.add(context.getString(R.string.wallpaper_reset_window_weekly_next, weeklyTime))
             } else {
-                rawCandidates
+                weeklyResetCandidates(snapshot)
                     .filter { isEngineVisibleForReset(it.engineKey) }
                     .forEach { reset ->
                         val weeklyTime = formatWeeklyReset((reset.resetsAtSec * 1000.0).toLong())
