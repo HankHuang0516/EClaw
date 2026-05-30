@@ -1,3 +1,10 @@
+# [1.1188.0](https://github.com/HankHuang0516/EClaw/compare/v1.1187.0...v1.1188.0) (2026-05-30)
+
+
+### Features
+
+* **petdx phase 0:** admin backfill endpoint for in-process hook invocation ([#3033](https://github.com/HankHuang0516/EClaw/issues/3033)) ([6cdbe4a](https://github.com/HankHuang0516/EClaw/commit/6cdbe4a5fdce971f8285eeab3fd2f5b4279ba38d)), closes [#8](https://github.com/HankHuang0516/EClaw/issues/8)
+
 # [1.1187.0](https://github.com/HankHuang0516/EClaw/compare/v1.1186.2...v1.1187.0) (2026-05-30)
 
 
