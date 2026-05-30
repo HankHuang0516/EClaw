@@ -871,4 +871,12 @@ GPS：รับตามความต้องการเท่านั้�
     <string name="fcm_channel_feedback_desc">อัปเดตสถานะคำติชม</string>
     <string name="ai_chat_status_analyzing">กำลังวิเคราะห์</string>
     <string name="ai_chat_status_processing_result">กำลังประมวลผล</string>
+    <string name="ai_chat_tool_status_default">กำลังประมวลผล</string>
+    <string name="wallpaper_reset_window_5h">5 ชั่วโมง</string>
+    <string name="wallpaper_reset_window_5h_next">รีเซ็ต 5 ชั่วโมงถัดไป (%1$s): %2$s</string>
+    <string name="wallpaper_reset_window_label">รีเซ็ตการนับถอยหลัง</string>
+    <string name="wallpaper_reset_window_off">ปิด</string>
+    <string name="wallpaper_reset_window_weekly">รายสัปดาห์</string>
+    <string name="wallpaper_reset_window_weekly_next">รีเซ็ตรายสัปดาห์ถัดไป: %1$s</string>
+    <string name="wallpaper_reset_window_weekly_next_per_engine">รีเซ็ตรายสัปดาห์ถัดไป (%1$s): %2$s</string>
 </resources>

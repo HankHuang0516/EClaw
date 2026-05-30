@@ -899,4 +899,12 @@ Tu suscripción permanece activa y puedes reenlazar en cualquier momento (sujeto
     <string name="fcm_channel_feedback_desc">Actualizaciones del estado de comentarios</string>
     <string name="ai_chat_status_analyzing">Analizando</string>
     <string name="ai_chat_status_processing_result">Procesando resultado</string>
+    <string name="ai_chat_tool_status_default">Procesando</string>
+    <string name="wallpaper_reset_window_5h">5h</string>
+    <string name="wallpaper_reset_window_5h_next">Próximo reinicio en 5h (%1$s): %2$s</string>
+    <string name="wallpaper_reset_window_label">Reiniciar cuenta atrás</string>
+    <string name="wallpaper_reset_window_off">Desactivado</string>
+    <string name="wallpaper_reset_window_weekly">Semanal</string>
+    <string name="wallpaper_reset_window_weekly_next">Próximo reinicio semanal: %1$s</string>
+    <string name="wallpaper_reset_window_weekly_next_per_engine">Próximo reinicio semanal (%1$s): %2$s</string>
 </resources>

@@ -977,4 +977,12 @@ GPS: عند الطلب فقط، بلا تتبع في الخلفية، تُفقد
     <string name="fcm_channel_feedback_desc">تحديثات حالة الملاحظات</string>
     <string name="ai_chat_status_analyzing">جارٍ التحليل</string>
     <string name="ai_chat_status_processing_result">معالجة النتيجة</string>
+    <string name="ai_chat_tool_status_default">جارٍ المعالجة</string>
+    <string name="wallpaper_reset_window_5h">5 ساعات</string>
+    <string name="wallpaper_reset_window_5h_next">إعادة التعيين التالية خلال 5 ساعات (%1$s): %2$s</string>
+    <string name="wallpaper_reset_window_label">إعادة تعيين العد التنازلي</string>
+    <string name="wallpaper_reset_window_off">إيقاف</string>
+    <string name="wallpaper_reset_window_weekly">أسبوعي</string>
+    <string name="wallpaper_reset_window_weekly_next">إعادة التعيين الأسبوعية التالية: %1$s</string>
+    <string name="wallpaper_reset_window_weekly_next_per_engine">إعادة التعيين الأسبوعية التالية (%1$s): %2$s</string>
 </resources>
