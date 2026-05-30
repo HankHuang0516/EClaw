@@ -6786,6 +6786,41 @@ function createPetdxPhase0Io() {
     };
 }
 
+async function getPetdxEntityEnrichmentMap(deviceId) {
+    const out = new Map();
+    if (!deviceId || !SEAL_KEY_HEX) return out;
+
+    try {
+        const row = await db.getDeviceVars(deviceId);
+        if (!row) return out;
+
+        const vars = decryptVars(row.encrypted_vars, row.iv, row.auth_tag) || {};
+        for (const [key, rawValue] of Object.entries(vars)) {
+            const m = /^PETDX_(CURRENT|AVATAR)_(\d+)$/.exec(key);
+            if (!m) continue;
+
+            const entityId = Number(m[2]);
+            if (!Number.isFinite(entityId)) continue;
+
+            const value = typeof rawValue === 'string' && rawValue.trim() ? rawValue : null;
+            if (!value) continue;
+
+            const item = out.get(entityId) || {};
+            if (m[1] === 'CURRENT') item.petdxCompanionId = value;
+            if (m[1] === 'AVATAR') item.petdxAvatarUrl = value;
+            out.set(entityId, item);
+        }
+    } catch (err) {
+        console.warn(`[/api/entities] petdx enrichment failed: ${err.message}`);
+        serverLog('warn', 'entity_poll', `Petdx enrichment failed for ${deviceId}: ${err.message}`, {
+            deviceId,
+            metadata: { reason: 'petdx_enrichment_failed' },
+        });
+    }
+
+    return out;
+}
+
 async function runPetdxPhase0AutoAssign(deviceId, entity, ctx) {
     try {
         const result = await assignDefaultCompanionIfMissing(
@@ -7401,6 +7436,7 @@ app.get('/api/entities', async (req, res) => {
         console.warn(`[/api/entities] channel_accounts lookup failed: ${err.message}`);
     }
 
+    const petdxByEntityId = await getPetdxEntityEnrichmentMap(authedDeviceId);
     const entities = [];
 
     for (const deviceId in devices) {
@@ -7416,6 +7452,7 @@ app.get('/api/entities', async (req, res) => {
             const entity = device.entities[i];
             if (!entity) continue;
             if (entity.isBound) {
+                const petdx = petdxByEntityId.get(entity.entityId) || {};
                 const payload = {
                     deviceId: deviceId,
                     entityId: entity.entityId,
@@ -7427,6 +7464,8 @@ app.get('/api/entities', async (req, res) => {
                     lastUpdated: entity.lastUpdated,
                     isBound: true,  // Always true since we only return bound entities
                     avatar: entity.avatar || null,
+                    petdxCompanionId: petdx.petdxCompanionId || null,
+                    petdxAvatarUrl: petdx.petdxAvatarUrl || null,
                     xp: entity.xp || 0,
                     level: entity.level || 1,
                     publicCode: entity.publicCode || null,
@@ -21558,6 +21597,7 @@ module.exports._petdxPhase0 = {
     getPreviousEntityForBind,
     clearPreviousEntityForBind,
     runPetdxPhase0AutoAssign,
+    getPetdxEntityEnrichmentMap,
 };
 module.exports._enqueueMessage = enqueueMessage;
 module.exports._MESSAGE_QUEUE_CAP = MESSAGE_QUEUE_CAP;

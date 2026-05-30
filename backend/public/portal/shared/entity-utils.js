@@ -120,7 +120,7 @@ function getEntityDisplayName(entityId) {
  * Check if an avatar value is an image URL (not an emoji).
  */
 function isAvatarUrl(avatar) {
-    return avatar && typeof avatar === 'string' && avatar.startsWith('https://');
+    return avatar && typeof avatar === 'string' && /^(https?:\/\/|\/)/.test(avatar);
 }
 
 /**

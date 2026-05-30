@@ -82,6 +82,14 @@ describe('portal entity-utils — Phase 0 petdx-aware resolver chain', () => {
         expect(ctx.getAvatarForEntity(1)).toBe(PETDX_LOBSTER_URL);
     });
 
+    test('relative petdx avatar URLs render as image URLs, not text', () => {
+        const ctx = loadResolver();
+        ctx.updateEntityMaps([{ entityId: 1, character: 'LOBSTER', avatar: null,
+            petdxAvatarUrl: PETDX_LOBSTER_URL }]);
+        expect(ctx.isAvatarUrl(ctx.getAvatarForEntity(1))).toBe(true);
+        expect(ctx.renderAvatarHtml(ctx.getAvatarForEntity(1), 20, 1)).toContain('src="' + PETDX_LOBSTER_URL + '"');
+    });
+
     test('default-emoji avatar dropped from _entityAvatarMap (§0.4 invariant) so petdx wins', () => {
         const ctx = loadResolver();
         // Stale entity carries the lobster emoji as its "avatar" — must NOT beat petdxAvatarUrl
