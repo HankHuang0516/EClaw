@@ -89,6 +89,13 @@
     <string name="wallpaper_usage_window_session_label">Session</string>
     <string name="wallpaper_usage_window_weekly">7d</string>
     <string name="wallpaper_usage_window_weekly_label">Weekly</string>
+    <string name="wallpaper_reset_window_label">Set semula bilang detik</string>
+    <string name="wallpaper_reset_window_off">Mati</string>
+    <string name="wallpaper_reset_window_5h">5 jam</string>
+    <string name="wallpaper_reset_window_weekly">Mingguan</string>
+    <string name="wallpaper_reset_window_5h_next">Set semula 5 jam seterusnya (%1$s): %2$s</string>
+    <string name="wallpaper_reset_window_weekly_next">Set semula mingguan seterusnya: %1$s</string>
+    <string name="wallpaper_reset_window_weekly_next_per_engine">Set semula mingguan seterusnya (%1$s): %2$s</string>
     <string name="use_custom_layout">Guna Susun Atur Tersuai</string>
     <string name="custom_background">Latar Belakang Tersuai</string>
     <string name="select_photo">Pilih Foto</string>
@@ -143,6 +150,7 @@
     <string name="ai_chat_tool_status_grep">Mencari kod</string>
     <string name="ai_chat_tool_status_read">Membaca fail</string>
     <string name="ai_chat_tool_status_write">Menulis fail</string>
+    <string name="ai_chat_tool_status_default">Memproses</string>
 
 
     <!-- Chat -->
