@@ -242,9 +242,25 @@ class UsageOverlayRenderer(
                 }
         }
         if (layoutPrefs.wallpaperResetShowWeekly) {
-            val resetsAt = nextWeeklyResetEpochMillis()
-            val weeklyTime = formatWeeklyReset(resetsAt)
-            lines.add(context.getString(R.string.wallpaper_reset_window_weekly_next, weeklyTime))
+            val rawCandidates = weeklyResetCandidates(snapshot)
+            if (snapshot == null || rawCandidates.isEmpty()) {
+                val resetsAt = nextWeeklyResetEpochMillis()
+                val weeklyTime = formatWeeklyReset(resetsAt)
+                lines.add(context.getString(R.string.wallpaper_reset_window_weekly_next, weeklyTime))
+            } else {
+                rawCandidates
+                    .filter { isEngineVisibleForReset(it.engineKey) }
+                    .forEach { reset ->
+                        val weeklyTime = formatWeeklyReset((reset.resetsAtSec * 1000.0).toLong())
+                        lines.add(
+                            context.getString(
+                                R.string.wallpaper_reset_window_weekly_next_per_engine,
+                                reset.engineLabel,
+                                weeklyTime
+                            )
+                        )
+                    }
+            }
         }
         return lines
     }
@@ -253,6 +269,22 @@ class UsageOverlayRenderer(
         if (snapshot == null) return emptyList()
         val claudeReset = snapshot.claude?.live?.rateLimits?.fiveHour?.resetsAt
         val codexReset = snapshot.codex?.rateLimits?.fiveHourResetsAt
+        val nowSec = System.currentTimeMillis() / 1000.0
+        return listOfNotNull(
+            claudeReset?.let {
+                ResetCandidate(ENGINE_KEY_CLAUDE, context.getString(R.string.wallpaper_usage_engine_claude), it)
+            },
+            codexReset?.let {
+                ResetCandidate(ENGINE_KEY_CODEX, context.getString(R.string.wallpaper_usage_engine_codex), it)
+            }
+        ).filter { it.resetsAtSec > nowSec }
+            .sortedBy { it.resetsAtSec }
+    }
+
+    private fun weeklyResetCandidates(snapshot: UsageSnapshotLatest?): List<ResetCandidate> {
+        if (snapshot == null) return emptyList()
+        val claudeReset = snapshot.claude?.live?.rateLimits?.sevenDay?.resetsAt
+        val codexReset = snapshot.codex?.rateLimits?.sevenDayResetsAt
         val nowSec = System.currentTimeMillis() / 1000.0
         return listOfNotNull(
             claudeReset?.let {

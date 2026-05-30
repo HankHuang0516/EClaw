@@ -796,6 +796,7 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="wallpaper_reset_window_weekly">每週</string>
     <string name="wallpaper_reset_window_5h_next">下個 5h 重置 (%1$s)：%2$s</string>
     <string name="wallpaper_reset_window_weekly_next">下個每週重置：%1$s</string>
+    <string name="wallpaper_reset_window_weekly_next_per_engine">下個每週重置 (%1$s)：%2$s</string>
     <string name="wallpaper_settings_panel_label">桌布設定</string>
     <string name="wallpaper_settings_collapse_action">收起設定面板</string>
     <string name="wallpaper_settings_expand_action">展開設定面板</string>
