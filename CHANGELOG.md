@@ -1,3 +1,10 @@
+## [1.1192.1](https://github.com/HankHuang0516/EClaw/compare/v1.1192.0...v1.1192.1) (2026-05-30)
+
+
+### Bug Fixes
+
+* **point-edit Track C:** refresh anchor registry on entering mindmap mode ([#3041](https://github.com/HankHuang0516/EClaw/issues/3041)) ([59c8d87](https://github.com/HankHuang0516/EClaw/commit/59c8d87a981f2865c1f7386ac9da1e81add50f6e)), closes [#3040](https://github.com/HankHuang0516/EClaw/issues/3040)
+
 # [1.1192.0](https://github.com/HankHuang0516/EClaw/compare/v1.1191.0...v1.1192.0) (2026-05-30)
 
 
