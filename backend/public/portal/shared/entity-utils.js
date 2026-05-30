@@ -2,16 +2,26 @@
 // Replaces duplicated ENTITY_CHARS across all portal pages
 // Fixes #77 and #76: entity IDs 4+ showed '?' emoji
 
+// Character → default emoji. Mirrors backend _getCharacterDefaultAvatar.
+const CHARACTER_EMOJI = {
+    LOBSTER: '\u{1F99E}',
+    PIG: '\u{1F437}'
+};
+const DEFAULT_CHARACTER_EMOJI = CHARACTER_EMOJI.LOBSTER;
+
+// Retained as a last-resort visual fallback when neither live character nor
+// any avatar source is known — never used to override a server-supplied character.
 const ENTITY_CHARS_DEFAULT = {
-    0: { name: 'Lobster', emoji: '\u{1F99E}' },
-    1: { name: 'Pig', emoji: '\u{1F437}' },
-    2: { name: 'Lobster', emoji: '\u{1F99E}' },
-    3: { name: 'Pig', emoji: '\u{1F437}' }
+    0: { name: 'Lobster', emoji: CHARACTER_EMOJI.LOBSTER },
+    1: { name: 'Lobster', emoji: CHARACTER_EMOJI.LOBSTER },
+    2: { name: 'Lobster', emoji: CHARACTER_EMOJI.LOBSTER },
+    3: { name: 'Lobster', emoji: CHARACTER_EMOJI.LOBSTER }
 };
 
 // Shared state - populated by each page's entity load
 let _entityAvatarMap = {};
 let _entityNameMap = {};
+let _entityCharacterMap = {};
 
 /**
  * Call after fetching entities from API to populate shared maps.
@@ -20,35 +30,47 @@ let _entityNameMap = {};
 function updateEntityMaps(entities) {
     _entityAvatarMap = {};
     _entityNameMap = {};
+    _entityCharacterMap = {};
     (entities || []).forEach(e => {
         if (e.avatar) _entityAvatarMap[e.entityId] = e.avatar;
         if (e.name) _entityNameMap[e.entityId] = e.name;
+        if (e.character) _entityCharacterMap[e.entityId] = e.character;
     });
+}
+
+function _characterEmoji(entityId) {
+    const c = _entityCharacterMap[entityId];
+    return c ? (CHARACTER_EMOJI[c] || DEFAULT_CHARACTER_EMOJI) : null;
 }
 
 /**
  * Get the avatar emoji for an entity.
- * Priority: server avatar > localStorage > ENTITY_CHARS_DEFAULT > fallback by modulo
+ * Priority: server avatar > localStorage > live character → emoji > legacy default > fallback
  */
 function getAvatarForEntity(entityId) {
     if (_entityAvatarMap[entityId]) return _entityAvatarMap[entityId];
     const saved = localStorage.getItem('eclaw_avatar_' + entityId);
     if (saved) return saved;
+    const fromCharacter = _characterEmoji(entityId);
+    if (fromCharacter) return fromCharacter;
     const char = ENTITY_CHARS_DEFAULT[entityId];
     if (char) return char.emoji;
-    // For entity IDs 4+, cycle through defaults by modulo
-    return ENTITY_CHARS_DEFAULT[entityId % 4]?.emoji || '\u{1F99E}';
+    return ENTITY_CHARS_DEFAULT[entityId % 4]?.emoji || DEFAULT_CHARACTER_EMOJI;
 }
 
 /**
  * Get the display name for an entity.
- * Priority: server name > ENTITY_CHARS_DEFAULT > fallback by parity
+ * Priority: server name > live character > legacy default > parity fallback
  */
 function getEntityDisplayName(entityId) {
     if (_entityNameMap[entityId]) return _entityNameMap[entityId];
+    const c = _entityCharacterMap[entityId];
+    if (c) {
+        return c.charAt(0) + c.slice(1).toLowerCase();
+    }
     const char = ENTITY_CHARS_DEFAULT[entityId];
     if (char) return char.name;
-    return (entityId % 2 === 0 ? 'Lobster' : 'Pig');
+    return 'Lobster';
 }
 
 /**
@@ -100,11 +122,13 @@ function renderAvatarHtml(avatar, size, entityId) {
 function getAvatarText(entityId) {
     const avatar = getAvatarForEntity(entityId);
     if (isAvatarUrl(avatar)) {
-        // URL avatar → use default emoji fallback
+        // URL avatar → use live-character emoji, then legacy default, then fallback
+        const fromCharacter = _characterEmoji(entityId);
+        if (fromCharacter) return fromCharacter;
         const char = ENTITY_CHARS_DEFAULT[entityId] || ENTITY_CHARS_DEFAULT[entityId % 4];
-        return char?.emoji || '\u{1F99E}';
+        return char?.emoji || DEFAULT_CHARACTER_EMOJI;
     }
-    return avatar || '\u{1F99E}';
+    return avatar || DEFAULT_CHARACTER_EMOJI;
 }
 
 /**
