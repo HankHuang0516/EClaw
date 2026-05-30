@@ -1,3 +1,10 @@
+# [1.1192.0](https://github.com/HankHuang0516/EClaw/compare/v1.1191.0...v1.1192.0) (2026-05-30)
+
+
+### Features
+
+* **point-edit:** Track C — mock mind-map node mode ([#3040](https://github.com/HankHuang0516/EClaw/issues/3040)) ([ff86b97](https://github.com/HankHuang0516/EClaw/commit/ff86b9701b3c01bed505e1926a18054edfc382a4)), closes [3006/#3010](https://github.com/HankHuang0516/EClaw/issues/3010)
+
 # [1.1191.0](https://github.com/HankHuang0516/EClaw/compare/v1.1190.0...v1.1191.0) (2026-05-30)
 
 
