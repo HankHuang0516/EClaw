@@ -53,6 +53,28 @@ describe('petdx-phase0-hook — pure helpers', () => {
         expect(hook.pickDefaultCompanion({})).toBe(LOBSTER_COMPANION);
     });
 
+    test('hasCharacterChanged requires a previous entity snapshot', () => {
+        expect(hook.hasCharacterChanged({ character: 'LOBSTER' }, null)).toBe(false);
+        expect(hook.hasCharacterChanged({ character: 'LOBSTER' }, {})).toBe(true);
+        expect(hook.hasCharacterChanged({ character: 'LOBSTER' }, { character: 'LOBSTER' })).toBe(false);
+        expect(hook.hasCharacterChanged({ character: 'PIG' }, { character: 'LOBSTER' })).toBe(true);
+        expect(hook.hasCharacterChanged(
+            { entityId: 7, character: 'PIG' },
+            { entityId: 8, character: 'LOBSTER' },
+        )).toBe(false);
+        expect(hook.hasCharacterChanged(
+            { entityId: 7, character: 'PIG' },
+            { entityId: 7, character: 'LOBSTER' },
+        )).toBe(true);
+    });
+
+    test('isValidContext accepts only spec-listed sources when present', () => {
+        expect(hook.isValidContext({ mode: 'bind', source: 'bind-endpoint' })).toBe(true);
+        expect(hook.isValidContext({ mode: 'bind' })).toBe(true);
+        expect(hook.isValidContext({ mode: 'bind', source: 'unknown' })).toBe(false);
+        expect(hook.isValidContext({ mode: 'fictional', source: 'bind-endpoint' })).toBe(false);
+    });
+
     test('avatarUrlFor matches spec §0.4 URL shape', () => {
         expect(hook.avatarUrlFor(LOBSTER_COMPANION)).toBe(LOBSTER_AVATAR_URL);
     });
@@ -153,6 +175,72 @@ describe('petdx-phase0-hook — assignDefaultCompanionIfMissing', () => {
         expect(io.auditCalls[0].ctxMode).toBe('rebind');
     });
 
+    test('rebind mode without previousEntity cannot infer a refresh', async () => {
+        const io = makeIo({
+            PETDX_CURRENT_7: LOBSTER_COMPANION,
+            PETDX_AVATAR_7:  LOBSTER_AVATAR_URL,
+            PETDX_SOURCE_7:  'phase0-auto',
+        });
+        const result = await hook.assignDefaultCompanionIfMissing(
+            'D1',
+            { entityId: 7, character: 'PIG', avatar: null },
+            { mode: 'rebind', source: 'bind-endpoint' },
+            io,
+        );
+        expect(result).toEqual({ skipped: 'no_refresh_needed', source: undefined });
+        expect(io.auditCalls).toHaveLength(0);
+    });
+
+    test('rebind mode ignores previousEntity snapshots from another slot', async () => {
+        const io = makeIo({
+            PETDX_CURRENT_7: LOBSTER_COMPANION,
+            PETDX_AVATAR_7:  LOBSTER_AVATAR_URL,
+            PETDX_SOURCE_7:  'phase0-auto',
+        });
+        const result = await hook.assignDefaultCompanionIfMissing(
+            'D1',
+            { entityId: 7, character: 'PIG', avatar: null },
+            {
+                mode: 'rebind',
+                previousEntity: { entityId: 8, character: 'LOBSTER', avatar: LOBSTER_EMOJI },
+                source: 'bind-endpoint',
+            },
+            io,
+        );
+        expect(result).toEqual({ skipped: 'no_refresh_needed', source: undefined });
+        expect(io.auditCalls).toHaveLength(0);
+    });
+
+    test('character-change mode skips when previousEntity is missing or unchanged', async () => {
+        const ioMissing = makeIo({
+            PETDX_CURRENT_7: LOBSTER_COMPANION,
+            PETDX_AVATAR_7:  LOBSTER_AVATAR_URL,
+            PETDX_SOURCE_7:  'phase0-auto',
+        });
+        await expect(hook.assignDefaultCompanionIfMissing(
+            'D1',
+            { entityId: 7, character: 'PIG', avatar: null },
+            { mode: 'character-change', source: 'transform' },
+            ioMissing,
+        )).resolves.toEqual({ skipped: 'no_refresh_needed', source: undefined });
+
+        const ioUnchanged = makeIo({
+            PETDX_CURRENT_7: LOBSTER_COMPANION,
+            PETDX_AVATAR_7:  LOBSTER_AVATAR_URL,
+            PETDX_SOURCE_7:  'phase0-auto',
+        });
+        await expect(hook.assignDefaultCompanionIfMissing(
+            'D1',
+            { entityId: 7, character: 'LOBSTER', avatar: null },
+            {
+                mode: 'character-change',
+                source: 'transform',
+                previousEntity: { entityId: 7, character: 'LOBSTER', avatar: LOBSTER_EMOJI },
+            },
+            ioUnchanged,
+        )).resolves.toEqual({ skipped: 'no_refresh_needed', source: undefined });
+    });
+
     test('rebind with custom avatar preserves user choice', async () => {
         const io = makeIo({});
         const result = await hook.assignDefaultCompanionIfMissing(
@@ -247,6 +335,18 @@ describe('petdx-phase0-hook — assignDefaultCompanionIfMissing', () => {
             io,
         );
         expect(result.skipped).toBe('invalid_mode');
+    });
+
+    test('unknown context source returns invalid_context_source skipped', async () => {
+        const io = makeIo();
+        const result = await hook.assignDefaultCompanionIfMissing(
+            'D1',
+            { entityId: 7, character: 'LOBSTER', avatar: null },
+            { mode: 'bind', source: 'unknown-source' },
+            io,
+        );
+        expect(result.skipped).toBe('invalid_context_source');
+        expect(io.vars.PETDX_CURRENT_7).toBeUndefined();
     });
 
     test('vault write failure is reported, no audit', async () => {

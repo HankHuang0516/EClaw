@@ -42,6 +42,15 @@ const CHARACTER_COMPANION = {
     BEAR:    'petdx-lobster-default',
 };
 const SYSTEM_DEFAULT_COMPANION = 'petdx-lobster-default';
+const VALID_MODES = new Set(['bind', 'rebind', 'character-change', 'backfill']);
+const VALID_CONTEXT_SOURCES = new Set([
+    'bind-endpoint',
+    'official-borrow-free',
+    'official-borrow-paid',
+    'transform',
+    'backfill-script',
+]);
+const PHASE0_SOURCES = new Set(['phase0-auto', 'phase0-backfill']);
 
 /**
  * The avatar URL shape that the resolver expects. See spec §0.4 and the
@@ -87,6 +96,35 @@ function pickDefaultCompanion(entity) {
 }
 
 /**
+ * Refresh modes are only meaningful when the caller supplies the previous
+ * entity snapshot. A missing snapshot means the hook cannot prove a rebind /
+ * character-change occurred, so it must not refresh existing Phase 0 state.
+ */
+function hasCharacterChanged(entity, previousEntity) {
+    if (!entity || !previousEntity) return false;
+    if (entity.entityId !== undefined &&
+        previousEntity.entityId !== undefined &&
+        entity.entityId !== previousEntity.entityId) {
+        return false;
+    }
+    const current = entity.character || null;
+    const previous = previousEntity.character || null;
+    return current !== previous;
+}
+
+function isPhase0Source(source) {
+    return PHASE0_SOURCES.has(source);
+}
+
+function isValidContext(ctx) {
+    if (!ctx || !VALID_MODES.has(ctx.mode)) return false;
+    if (ctx.source !== undefined && ctx.source !== null && !VALID_CONTEXT_SOURCES.has(ctx.source)) {
+        return false;
+    }
+    return true;
+}
+
+/**
  * Decide whether the hook should run for this entity in this mode.
  * Returns a `{ skip: <reason> }` object when the hook must early-exit, or
  * `null` when the hook should proceed to write vault entries.
@@ -106,9 +144,7 @@ function decideAction({ entity, ctx, existingCompanion, existingSource }) {
     if (!isCharacterDefaultAvatar(entity && entity.avatar)) {
         return { skip: 'user-custom-avatar' };
     }
-    if (existingSource &&
-        existingSource !== 'phase0-auto' &&
-        existingSource !== 'phase0-backfill') {
+    if (existingSource && !isPhase0Source(existingSource)) {
         return { skip: 'preserves_existing_source', source: existingSource };
     }
     if (existingCompanion && !existingSource) {
@@ -119,8 +155,7 @@ function decideAction({ entity, ctx, existingCompanion, existingSource }) {
     }
     if (ctx.mode === 'rebind' || ctx.mode === 'character-change') {
         const wasDefault = isCharacterDefaultAvatar(entity && entity.avatar);
-        const prevChar = ctx.previousEntity ? ctx.previousEntity.character : null;
-        const charChanged = prevChar !== (entity && entity.character);
+        const charChanged = hasCharacterChanged(entity, ctx.previousEntity);
         if (!(wasDefault && charChanged)) {
             return { skip: 'no_refresh_needed' };
         }
@@ -155,9 +190,11 @@ async function assignDefaultCompanionIfMissing(deviceId, entity, ctx, io) {
     if (!entity || entity.entityId === undefined || entity.entityId === null) {
         return { skipped: 'no_entity_id' };
     }
-    const validModes = ['bind', 'rebind', 'character-change', 'backfill'];
-    if (!ctx || !validModes.includes(ctx.mode)) {
+    if (!ctx || !VALID_MODES.has(ctx.mode)) {
         return { skipped: 'invalid_mode' };
+    }
+    if (!isValidContext(ctx)) {
+        return { skipped: 'invalid_context_source' };
     }
 
     const eid = entity.entityId;
@@ -172,7 +209,7 @@ async function assignDefaultCompanionIfMissing(deviceId, entity, ctx, io) {
         existingSource    = await io.getDeviceVar(deviceId, sourceKey);
     } catch (err) {
         io.log && io.log('warn', '[petdx-phase0]', 'getDeviceVar failed', {
-            deviceId, entityId: eid, error: err && err.message,
+            deviceId, entityId: eid, ctxMode: ctx.mode, ctxSource: ctx.source || null, error: err && err.message,
         });
         return { skipped: 'vault_read_failed' };
     }
@@ -206,7 +243,7 @@ async function assignDefaultCompanionIfMissing(deviceId, entity, ctx, io) {
         }
     } catch (err) {
         io.log && io.log('error', '[petdx-phase0]', 'vault write failed', {
-            deviceId, entityId: eid, error: err && err.message,
+            deviceId, entityId: eid, ctxMode: ctx.mode, ctxSource: ctx.source || null, error: err && err.message,
         });
         return { skipped: 'vault_write_failed' };
     }
@@ -225,7 +262,7 @@ async function assignDefaultCompanionIfMissing(deviceId, entity, ctx, io) {
         }
     } catch (err) {
         io.log && io.log('warn', '[petdx-phase0]', 'audit log write failed', {
-            deviceId, entityId: eid, error: err && err.message,
+            deviceId, entityId: eid, ctxMode: ctx.mode, ctxSource: ctx.source || null, error: err && err.message,
         });
         // Audit-log failure is non-fatal: vault writes already succeeded.
     }
@@ -236,9 +273,14 @@ async function assignDefaultCompanionIfMissing(deviceId, entity, ctx, io) {
 module.exports = {
     CHARACTER_COMPANION,
     SYSTEM_DEFAULT_COMPANION,
+    VALID_CONTEXT_SOURCES,
+    PHASE0_SOURCES,
     avatarUrlFor,
     isCharacterDefaultAvatar,
     pickDefaultCompanion,
+    hasCharacterChanged,
+    isPhase0Source,
+    isValidContext,
     decideAction,
     pickNewSource,
     assignDefaultCompanionIfMissing,
