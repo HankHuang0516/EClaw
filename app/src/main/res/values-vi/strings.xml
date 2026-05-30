@@ -871,4 +871,12 @@ Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua
     <string name="fcm_channel_feedback_desc">Cập nhật trạng thái phản hồi</string>
     <string name="ai_chat_status_analyzing">Đang phân tích</string>
     <string name="ai_chat_status_processing_result">Đang xử lý kết quả</string>
+    <string name="ai_chat_tool_status_default">Đang xử lý</string>
+    <string name="wallpaper_reset_window_5h">5 giờ</string>
+    <string name="wallpaper_reset_window_5h_next">Đặt lại 5 giờ tiếp theo (%1$s): %2$s</string>
+    <string name="wallpaper_reset_window_label">Đặt lại đếm ngược</string>
+    <string name="wallpaper_reset_window_off">Tắt</string>
+    <string name="wallpaper_reset_window_weekly">Hàng tuần</string>
+    <string name="wallpaper_reset_window_weekly_next">Đặt lại hàng tuần tiếp theo: %1$s</string>
+    <string name="wallpaper_reset_window_weekly_next_per_engine">Đặt lại hàng tuần tiếp theo (%1$s): %2$s</string>
 </resources>

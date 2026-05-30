@@ -872,4 +872,12 @@ GPS: 온디맨드만, 백그라운드 추적 없음, 서버 재시작 시 데이
     <string name="fcm_channel_feedback_desc">피드백 상태 업데이트</string>
     <string name="ai_chat_status_analyzing">분석 중</string>
     <string name="ai_chat_status_processing_result">결과 처리 중</string>
+    <string name="ai_chat_tool_status_default">처리 중</string>
+    <string name="wallpaper_reset_window_5h">5시간</string>
+    <string name="wallpaper_reset_window_5h_next">다음 5시간 초기화 (%1$s): %2$s</string>
+    <string name="wallpaper_reset_window_label">초기화 카운트다운</string>
+    <string name="wallpaper_reset_window_off">끄기</string>
+    <string name="wallpaper_reset_window_weekly">매주</string>
+    <string name="wallpaper_reset_window_weekly_next">다음 매주 초기화: %1$s</string>
+    <string name="wallpaper_reset_window_weekly_next_per_engine">다음 매주 초기화 (%1$s): %2$s</string>
 </resources>
