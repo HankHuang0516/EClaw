@@ -1365,7 +1365,8 @@
                 data-i18n="settings_switch_device_body">
                 Enter the Device ID and Device Secret of the account you want to sign into. This browser will be signed out of the current device.
             </p>
-            <div style="display:flex;flex-direction:column;gap:10px;margin:14px 0;">
+            <form id="switchDeviceForm" style="display:flex;flex-direction:column;gap:10px;margin:14px 0;"
+                onsubmit="performSwitchDevice();return false;">
                 <div>
                     <label for="switchDeviceIdInput" style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:4px;"
                         data-i18n="settings_device_id">Device ID</label>
@@ -1381,11 +1382,11 @@
                 </div>
                 <div id="switchDeviceError"
                     style="display:none;font-size:12px;color:var(--danger);line-height:1.4;"></div>
-            </div>
+            </form>
             <div class="dialog-actions">
-                <button class="btn btn-outline" onclick="closeSwitchDeviceDialog()"
+                <button type="button" class="btn btn-outline" onclick="closeSwitchDeviceDialog()"
                     data-i18n="common_cancel">Cancel</button>
-                <button class="btn btn-primary" id="btnConfirmSwitchDevice" onclick="performSwitchDevice()"
+                <button type="submit" form="switchDeviceForm" class="btn btn-primary" id="btnConfirmSwitchDevice"
                     data-i18n="settings_switch_device_confirm">Switch</button>
             </div>
         </div>
