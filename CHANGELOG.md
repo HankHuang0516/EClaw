@@ -1,3 +1,10 @@
+# [1.1189.0](https://github.com/HankHuang0516/EClaw/compare/v1.1188.0...v1.1189.0) (2026-05-30)
+
+
+### Features
+
+* **petdx phase 0:** broaden admin backfill auth to botSecret+entityId ([#3034](https://github.com/HankHuang0516/EClaw/issues/3034)) ([2e60d64](https://github.com/HankHuang0516/EClaw/commit/2e60d6487611b57b9f8bf9efcf414a43c1a1cd16)), closes [#8](https://github.com/HankHuang0516/EClaw/issues/8)
+
 # [1.1188.0](https://github.com/HankHuang0516/EClaw/compare/v1.1187.0...v1.1188.0) (2026-05-30)
 
 
