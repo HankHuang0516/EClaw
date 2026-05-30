@@ -6860,14 +6860,35 @@ async function runPetdxPhase0AutoAssign(deviceId, entity, ctx) {
 // Mirrors backend/scripts/petdx-phase0-backfill.js but runs in-process so
 // Phase 0 acceptance §0.8 #8 (kanban prod E2E) doesn't require Railway CLI
 // access. See spec §0.5.
+//
+// Dual-auth (matches /api/device-vars GET dual-auth shape):
+//   - deviceSecret (owner-level) — accepted unconditionally
+//   - botSecret + entityId — accepted because the operation is scoped to
+//     PETDX_* keys on the caller's own device, which any bound bot already
+//     has read access to via the enrichment field on /api/entities; widening
+//     to write within the same hook semantics doesn't grant a fresh escape
+//     surface.
 app.post('/api/admin/petdx-phase0/backfill', async (req, res) => {
-    const { deviceId, deviceSecret, commit } = req.body || {};
-    if (!deviceId || !deviceSecret) {
-        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret are required' });
+    const { deviceId, deviceSecret, botSecret, entityId, commit } = req.body || {};
+    if (!deviceId || (!deviceSecret && !botSecret)) {
+        return res.status(400).json({ success: false, error: 'deviceId + (deviceSecret OR botSecret+entityId) are required' });
     }
     const device = devices[deviceId];
-    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
-        return res.status(401).json({ success: false, error: 'Invalid device credentials' });
+    if (!device) {
+        return res.status(401).json({ success: false, error: 'Invalid device' });
+    }
+    if (deviceSecret) {
+        if (!safeEqual(device.deviceSecret, deviceSecret)) {
+            return res.status(401).json({ success: false, error: 'Invalid device credentials' });
+        }
+    } else {
+        const eid = Number(entityId);
+        if (!Number.isFinite(eid) || !device.entities || !device.entities[eid]) {
+            return res.status(401).json({ success: false, error: 'Invalid bot credentials' });
+        }
+        if (!safeEqual(device.entities[eid].botSecret, botSecret)) {
+            return res.status(401).json({ success: false, error: 'Invalid bot credentials' });
+        }
     }
 
     const entityIds = Object.keys(device.entities || {}).map(Number).filter(Number.isFinite);
