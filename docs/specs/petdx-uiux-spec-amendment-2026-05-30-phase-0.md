@@ -28,7 +28,7 @@ Default-companion auto-assignment fires:
 
 Auto-assignment does **NOT** fire when:
 
-- The entity already has a non-null `PETDX_CURRENT_<entityId>` vault entry (idempotency).
+- **(bind / backfill modes only — idempotency)** The entity already has a non-null `PETDX_CURRENT_<entityId>` vault entry. The rebind and character-change modes deliberately ignore this guard so they can refresh a stale `phase0-auto` / `phase0-backfill` companion when the character key changes (per §0.3's per-mode logic and §0.2a's source-tag check).
 - The entity has a user-set custom avatar (URL or non-default emoji) — Phase 0 must not override user choice.
 - The entity is in a `rental_status = 'leased_in'` state — rental bots inherit the lessor's companion choice, not a fresh default. (Status enum values from `backend/index.js`: `'leased_in'` / `'leased_out'` / `null`; spec v0.1–v0.2 used the wrong `rented_in` name.)
 
@@ -148,16 +148,16 @@ async function _assignDefaultCompanionIfMissing(deviceId, entity, ctx) {
 
 `pickDefaultCompanion(entity)` follows §0.2's priority order. Errors are non-fatal — bind still succeeds; auto-assign failures emit a `[petdx-phase0]` log line with `ctx.mode` + `ctx.source` and let the resolver fall through to the §5.4 fallback chain.
 
-The five entry points each call `_assignDefaultCompanionIfMissing` with appropriate `ctx`. `/api/bind` is called for both first-time bind and rebind (the existing `rebindCount` bump disambiguates); the hook decides between `mode: 'bind'` and `mode: 'rebind'` by checking whether `ctx.previousEntity` is non-null with a matching entity ID.
+Each entry point calls `_assignDefaultCompanionIfMissing` with appropriate `ctx`. `/api/bind` (per `backend/index.js:7000`) accepts only `code` and `name` and does **not** itself bump `rebindCount`; rebind in the live system happens as a `DELETE /api/entity` → `POST /api/bind` cycle, with the bump performed by `DELETE` handlers (e.g. `backend/index.js:9111`, `9233`). For Phase 0 the hook therefore distinguishes bind vs rebind via **`ctx.previousEntity`**: implementation MUST pass the entity record as it existed before the bind cleared its fields (`null` for a slot that had never been bound, non-null for a rebind regardless of how `rebindCount` was bumped).
 
-| Entry point                              | `ctx.mode`            | `ctx.source`             |
-|------------------------------------------|-----------------------|--------------------------|
-| `/api/bind` (first-time)                 | `'bind'`              | `'bind-endpoint'`        |
-| `/api/bind` (rebind, `rebindCount`++)    | `'rebind'`            | `'bind-endpoint'`        |
-| `/api/official-borrow/bind-free`         | `'bind'`              | `'official-borrow-free'` |
-| `/api/official-borrow/bind-personal`     | `'bind'`              | `'official-borrow-paid'` |
-| `/api/transform` (character-change side) | `'character-change'`  | `'transform'`            |
-| `scripts/petdx-phase0-backfill.js`       | `'backfill'`          | `'backfill-script'`      |
+| Entry point                              | `ctx.mode`            | `ctx.source`             | rebind detection                                    |
+|------------------------------------------|-----------------------|--------------------------|-----------------------------------------------------|
+| `/api/bind` (first-time)                 | `'bind'`              | `'bind-endpoint'`        | `ctx.previousEntity` is `null`                       |
+| `/api/bind` (rebind after unbind)        | `'rebind'`            | `'bind-endpoint'`        | `ctx.previousEntity` is non-null with same `entityId`|
+| `/api/official-borrow/bind-free`         | `'bind'`              | `'official-borrow-free'` | n/a — always treated as bind                        |
+| `/api/official-borrow/bind-personal`     | `'bind'`              | `'official-borrow-paid'` | n/a — always treated as bind                        |
+| `/api/transform` (character-change side) | `'character-change'`  | `'transform'`            | n/a — uses `ctx.previousEntity.character` comparison |
+| `scripts/petdx-phase0-backfill.js`       | `'backfill'`          | `'backfill-script'`      | n/a — see §0.5                                       |
 
 ---
 
@@ -166,14 +166,16 @@ The five entry points each call `_assignDefaultCompanionIfMissing` with appropri
 `backend/public/portal/shared/entity-utils.js` `getAvatarForEntity(entityId)` updates its precedence chain to put petdx layers first:
 
 ```
-1. _entityAvatarMap[entityId]                          // explicit avatar from /api/entities
+1. _entityAvatarMap[entityId]                          // explicit non-default avatar only (see invariant below)
 2. localStorage[`eclaw_avatar_${entityId}`]            // user-set custom emoji
-3. _entityPetdxAvatarMap[entityId]                     // NEW: from PETDX_AVATAR_<id> vault read
+3. _entityPetdxAvatarMap[entityId]                     // NEW: from /api/entities petdxAvatarUrl enrichment
 4. AvatarPetdx.descriptorAvatarUrl(entityId)           // NEW: cached CompanionDescriptor.avatar.url
 5. _characterEmoji(entityId)                           // PR #3027 stopgap (kept until §0.6)
 6. ENTITY_CHARS_DEFAULT[entityId]                      // legacy emoji fallback
 7. final emoji fallback                                // DEFAULT_CHARACTER_EMOJI
 ```
+
+**`_entityAvatarMap` invariant.** Today `updateEntityMaps` populates `_entityAvatarMap[id]` from `e.avatar` for any truthy value, which means a stale `_getCharacterDefaultAvatar()` emoji on the entity record will beat the petdx layers and re-introduce the 🐷/🦞 bug class. Phase 0 changes the contract: `updateEntityMaps` writes to `_entityAvatarMap[id]` **only when `e.avatar` is non-null AND `!_isCharacterDefaultAvatar(e.avatar)`** (i.e. URL avatar or user-set non-default emoji). The mirror helper `_isCharacterDefaultAvatar(avatar)` MUST be ported to `entity-utils.js` as a small re-implementation of the backend helper. Default-emoji avatars are intentionally dropped from the map so they cannot win over a petdx idle frame.
 
 `updateEntityMaps` gains a third map `_entityPetdxAvatarMap`. The canonical transport is **server-side enrichment in `/api/entities`**: the endpoint joins/decrypts vault entries once and returns `petdxCompanionId` + `petdxAvatarUrl` alongside each entity record. This is preferred over a batched `/api/device-vars?keys=PETDX_AVATAR_*` read because (a) pages already fetch entities, (b) the existing `/api/device-vars` lacks a `keys=` projection and adding one would broaden the read surface, and (c) it keeps vault read paths off the UI layer entirely.
 
@@ -294,3 +296,4 @@ These are deliberately deferred to follow-up specs/PRs:
 | 0.2     | 2026-05-30 | LOBSTER #2   | Per #6 review: §0.2 lobster-only Phase 0 + §0.2a source tagging, §0.3 hook context + 4 entry points, §0.4 enrichment chosen, §0.6 quarantine = 2 cycles + 7 days + 0 fallthrough |
 | 0.3     | 2026-05-30 | LOBSTER #2   | Per #6 re-review: §0.1 rental status fixed (leased_in, not rented_in); §0.2a uses new `origin` column on `companion_select_log` to avoid breaking the existing `source` CHECK; §0.3 entry-point table corrected (no `/api/entity/rebind`, adds `/api/official-borrow/bind-personal`, disambiguates `/api/bind` bind vs rebind); §0.3 guard tightened — existing `PETDX_CURRENT_*` with missing `PETDX_SOURCE_*` refuses overwrite; §0.8 adds explicit acceptance for lobster avatar.png asset + `/static/companions` mount + DB migration ordering |
 | 0.4     | 2026-05-30 | LOBSTER #2   | Per #6 third review: §0.1 trigger list now matches §0.3 entry-point table (5 numbered triggers, no `/api/entity/{bind,rebind}`); §0.3 `ctx.source` JSDoc enum aligned with the table (`'official-borrow-free'` / `'official-borrow-paid'`); §0.5 backfill pseudocode now writes `PETDX_SOURCE_*` + `origin` audit, handles `rental-leased-in` / `user-custom-avatar` / non-phase0 source / missing source / fresh assign separately, requires migration before `--commit` |
+| 0.5     | 2026-05-30 | LOBSTER #2   | Per #6 fourth review: §0.1 idempotency rule scoped to bind/backfill modes only (rebind/character-change deliberately bypass the `PETDX_CURRENT_*` exists guard); §0.3 entry-point table corrected — `/api/bind` does not bump `rebindCount` itself (per backend/index.js:7000 it only accepts `code`/`name`); rebind happens via `DELETE /api/entity` → `POST /api/bind` cycle, so the hook distinguishes bind vs rebind via `ctx.previousEntity` rather than `rebindCount`; §0.4 adds the `_entityAvatarMap` invariant — only non-default avatars enter the map (`!_isCharacterDefaultAvatar(e.avatar)`) so default emojis can never beat petdx layers |
