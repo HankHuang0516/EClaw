@@ -1,3 +1,10 @@
+# [1.1190.0](https://github.com/HankHuang0516/EClaw/compare/v1.1189.0...v1.1190.0) (2026-05-30)
+
+
+### Features
+
+* **seo:** add FAQPage JSON-LD to info.html panel-faq ([#3035](https://github.com/HankHuang0516/EClaw/issues/3035)) ([9f2a422](https://github.com/HankHuang0516/EClaw/commit/9f2a422b7a33c2793ef909d69fe7d2718d4956bb))
+
 # [1.1189.0](https://github.com/HankHuang0516/EClaw/compare/v1.1188.0...v1.1189.0) (2026-05-30)
 
 
