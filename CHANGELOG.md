@@ -1,3 +1,10 @@
+## [1.1186.2](https://github.com/HankHuang0516/EClaw/compare/v1.1186.1...v1.1186.2) (2026-05-30)
+
+
+### Bug Fixes
+
+* **org-chart:** suppress silent FWD echo loops ([#3028](https://github.com/HankHuang0516/EClaw/issues/3028)) ([b1205d9](https://github.com/HankHuang0516/EClaw/commit/b1205d923bd686a3fa6d926e1536c7a8d895156e))
+
 ## [1.1186.1](https://github.com/HankHuang0516/EClaw/compare/v1.1186.0...v1.1186.1) (2026-05-30)
 
 
