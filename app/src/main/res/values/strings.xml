@@ -106,6 +106,7 @@
     <string name="wallpaper_reset_window_weekly">Weekly</string>
     <string name="wallpaper_reset_window_5h_next">Next 5h reset (%1$s): %2$s</string>
     <string name="wallpaper_reset_window_weekly_next">Next weekly reset: %1$s</string>
+    <string name="wallpaper_reset_window_weekly_next_per_engine">Next weekly reset (%1$s): %2$s</string>
     <string name="wallpaper_settings_panel_label">Wallpaper settings</string>
     <string name="wallpaper_settings_collapse_action">Collapse settings panel</string>
     <string name="wallpaper_settings_expand_action">Expand settings panel</string>
