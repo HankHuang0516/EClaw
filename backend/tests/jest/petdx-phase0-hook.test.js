@@ -93,6 +93,27 @@ describe('petdx-phase0-hook — assignDefaultCompanionIfMissing', () => {
         });
     });
 
+    test('first-time bind uses batch vault write when IO supports it', async () => {
+        const io = makeIo();
+        io.setDeviceVars = jest.fn(async (_deviceId, entries) => {
+            Object.assign(io.vars, entries);
+        });
+        io.setDeviceVar = jest.fn();
+        const result = await hook.assignDefaultCompanionIfMissing(
+            'D1',
+            { entityId: 7, character: 'LOBSTER', avatar: null },
+            { mode: 'bind', source: 'bind-endpoint' },
+            io,
+        );
+        expect(result.assigned).toBe(LOBSTER_COMPANION);
+        expect(io.setDeviceVars).toHaveBeenCalledWith('D1', {
+            PETDX_CURRENT_7: LOBSTER_COMPANION,
+            PETDX_AVATAR_7: LOBSTER_AVATAR_URL,
+            PETDX_SOURCE_7: 'phase0-auto',
+        });
+        expect(io.setDeviceVar).not.toHaveBeenCalled();
+    });
+
     test('second bind is a no-op when phase0-auto already set', async () => {
         const io = makeIo({
             PETDX_CURRENT_7: LOBSTER_COMPANION,
@@ -159,6 +180,21 @@ describe('petdx-phase0-hook — assignDefaultCompanionIfMissing', () => {
         );
         expect(result).toEqual({ skipped: 'preserves_existing_source', source: 'user-selected' });
         expect(io.vars.PETDX_CURRENT_7).toBe('petdx-custom-001'); // unchanged
+    });
+
+    test('source tag without current companion is still authoritative', async () => {
+        const io = makeIo({
+            PETDX_SOURCE_7: 'rental-inherited',
+        });
+        const result = await hook.assignDefaultCompanionIfMissing(
+            'D1',
+            { entityId: 7, character: 'LOBSTER', avatar: null },
+            { mode: 'bind' },
+            io,
+        );
+        expect(result).toEqual({ skipped: 'preserves_existing_source', source: 'rental-inherited' });
+        expect(io.vars.PETDX_CURRENT_7).toBeUndefined();
+        expect(io.auditCalls).toHaveLength(0);
     });
 
     test('existing PETDX_CURRENT with missing source refuses overwrite', async () => {

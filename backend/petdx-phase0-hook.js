@@ -94,7 +94,7 @@ function pickDefaultCompanion(entity) {
  * Skip reasons mirror §0.1 negatives + §0.2a ownership invariants:
  *   - 'rental-leased-in'             (entity is renting another lessor's companion)
  *   - 'user-custom-avatar'           (entity has a non-default avatar)
- *   - 'preserves_existing_source'    (existing PETDX_SOURCE_* is user-selected / rental-inherited)
+ *   - 'preserves_existing_source'    (PETDX_SOURCE_* is user-selected / rental-inherited)
  *   - 'missing_source_tag_refuse_overwrite' (existing PETDX_CURRENT_* with no PETDX_SOURCE_*)
  *   - 'already_assigned'             (bind/backfill modes only — current already populated)
  *   - 'no_refresh_needed'            (rebind/character-change — avatar isn't default OR character unchanged)
@@ -106,7 +106,7 @@ function decideAction({ entity, ctx, existingCompanion, existingSource }) {
     if (!isCharacterDefaultAvatar(entity && entity.avatar)) {
         return { skip: 'user-custom-avatar' };
     }
-    if (existingCompanion && existingSource &&
+    if (existingSource &&
         existingSource !== 'phase0-auto' &&
         existingSource !== 'phase0-backfill') {
         return { skip: 'preserves_existing_source', source: existingSource };
@@ -141,6 +141,7 @@ function pickNewSource(ctx) {
  *   io = {
  *     getDeviceVar(deviceId, key)             → Promise<string|null>
  *     setDeviceVar(deviceId, key, value)      → Promise<void>
+ *     setDeviceVars(deviceId, entries)        → Promise<void>      (optional batch write)
  *     appendCompanionSelectLog({...})         → Promise<void>
  *     log(level, tag, message, meta)          → void          (non-fatal logging)
  *   }
@@ -191,9 +192,18 @@ async function assignDefaultCompanionIfMissing(deviceId, entity, ctx, io) {
     const newSource   = pickNewSource(ctx);
 
     try {
-        await io.setDeviceVar(deviceId, currentKey, companionId);
-        await io.setDeviceVar(deviceId, avatarKey,  avatarUrl);
-        await io.setDeviceVar(deviceId, sourceKey,  newSource);
+        const updates = {
+            [currentKey]: companionId,
+            [avatarKey]: avatarUrl,
+            [sourceKey]: newSource,
+        };
+        if (io.setDeviceVars) {
+            await io.setDeviceVars(deviceId, updates);
+        } else {
+            await io.setDeviceVar(deviceId, currentKey, companionId);
+            await io.setDeviceVar(deviceId, avatarKey,  avatarUrl);
+            await io.setDeviceVar(deviceId, sourceKey,  newSource);
+        }
     } catch (err) {
         io.log && io.log('error', '[petdx-phase0]', 'vault write failed', {
             deviceId, entityId: eid, error: err && err.message,
