@@ -874,4 +874,12 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="fcm_channel_feedback_desc">反馈状态更新</string>
     <string name="ai_chat_status_analyzing">分析中</string>
     <string name="ai_chat_status_processing_result">处理结果中</string>
+    <string name="ai_chat_tool_status_default">处理中</string>
+    <string name="wallpaper_reset_window_5h">5小时</string>
+    <string name="wallpaper_reset_window_5h_next">下次5小时重置（%1$s）：%2$s</string>
+    <string name="wallpaper_reset_window_label">重置倒计时</string>
+    <string name="wallpaper_reset_window_off">关闭</string>
+    <string name="wallpaper_reset_window_weekly">每周</string>
+    <string name="wallpaper_reset_window_weekly_next">下次每周重置：%1$s</string>
+    <string name="wallpaper_reset_window_weekly_next_per_engine">下次每周重置（%1$s）：%2$s</string>
 </resources>

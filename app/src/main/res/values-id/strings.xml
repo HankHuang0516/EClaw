@@ -841,4 +841,12 @@
     <string name="xd_whitelist">Daftar Putih (kode publik)</string>
     <string name="xd_whitelist_mode">Mode Daftar Putih</string>
     <string name="you">Anda</string>
+    <string name="ai_chat_tool_status_default">Memproses</string>
+    <string name="wallpaper_reset_window_5h">5 jam</string>
+    <string name="wallpaper_reset_window_5h_next">Reset 5 jam berikutnya (%1$s): %2$s</string>
+    <string name="wallpaper_reset_window_label">Reset hitung mundur</string>
+    <string name="wallpaper_reset_window_off">Mati</string>
+    <string name="wallpaper_reset_window_weekly">Mingguan</string>
+    <string name="wallpaper_reset_window_weekly_next">Reset mingguan berikutnya: %1$s</string>
+    <string name="wallpaper_reset_window_weekly_next_per_engine">Reset mingguan berikutnya (%1$s): %2$s</string>
 </resources>
