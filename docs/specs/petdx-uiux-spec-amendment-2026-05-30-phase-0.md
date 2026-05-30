@@ -37,47 +37,107 @@ Auto-assignment does **NOT** fire when:
 Companion selection priority (first match wins):
 
 1. **Explicit `identity.public.companionId`** (if/when bot-identity-layer.md §Step 2 lands the field) — bot author can pin a preferred companion.
-2. **Character → companion mapping** (canonical table):
+2. **Character → companion mapping** — Phase 0 ships with **only `petdx-lobster-default` as the published descriptor**. The non-Lobster character keys in the table below resolve to the lobster default until their descriptors land in Phase 0.1 (§0.7). This avoids §0.4 resolver pointing at a non-existent `/static/companions/<id>/avatar.png` for entities whose character isn't LOBSTER:
 
-   | character | companion id           | rationale |
-   |-----------|------------------------|-----------|
-   | `LOBSTER` | `petdx-lobster-default` | matches existing procedural Lobster renderer |
-   | `PIG`     | `petdx-pig-default`     | matches `_getCharacterDefaultAvatar('PIG')` |
-   | `CHICKEN` | `petdx-chicken-default` | parity with backend character enum |
-   | `CAT`     | `petdx-cat-default`     | parity with backend character enum |
-   | `DOG`     | `petdx-dog-default`     | parity with backend character enum |
-   | `BEAR`    | `petdx-bear-default`    | parity with backend character enum |
-   | *(unknown)* | `petdx-lobster-default` | matches `_getCharacterDefaultAvatar(null)` fallback |
+   | character | Phase 0 companion id     | Phase 0.1 target          | rationale |
+   |-----------|--------------------------|---------------------------|-----------|
+   | `LOBSTER` | `petdx-lobster-default`  | (no change)               | matches existing procedural Lobster renderer |
+   | `PIG`     | `petdx-lobster-default`  | `petdx-pig-default`       | descriptor pending Phase 0.1 |
+   | `CHICKEN` | `petdx-lobster-default`  | `petdx-chicken-default`   | descriptor pending Phase 0.1 |
+   | `CAT`     | `petdx-lobster-default`  | `petdx-cat-default`       | descriptor pending Phase 0.1 |
+   | `DOG`     | `petdx-lobster-default`  | `petdx-dog-default`       | descriptor pending Phase 0.1 |
+   | `BEAR`    | `petdx-lobster-default`  | `petdx-bear-default`      | descriptor pending Phase 0.1 |
+   | *(unknown)* | `petdx-lobster-default` | (no change)               | matches `_getCharacterDefaultAvatar(null)` fallback |
 
-   *(v0.2 publishes only `petdx-lobster-default`. Pig/Chicken/Cat/Dog/Bear descriptors are scheduled for Phase 0.1 — see §0.7.)*
+   When Phase 0.1 ships any non-Lobster descriptor, this table updates and a follow-up backfill re-runs §0.5 for entities whose `PETDX_SOURCE_<entityId>` is `phase0-auto` (so user-selected companions stay untouched — see §0.2a).
 
 3. **System default**: `petdx-lobster-default`.
 
 The mapping is **not** keyed off `entityId` — that was the bug class PR #3027 fixed. It is keyed off the live `character` field that the entity actually reports.
 
+### §0.2a Ownership / source tagging
+
+Every Phase 0 write tags its origin so future code (rebind, Phase 0.1 re-backfill, manual companion change) can tell a system-default from a user choice:
+
+- `PETDX_SOURCE_<entityId>` vault key, value ∈ `{ phase0-auto, phase0-backfill, user-selected, rental-inherited }`.
+- Phase 0 only overwrites `PETDX_CURRENT_<entityId>` / `PETDX_AVATAR_<entityId>` when the existing `PETDX_SOURCE_<entityId>` is **absent** or in the set `{ phase0-auto, phase0-backfill }`. Any `user-selected` or `rental-inherited` tag is preserved untouched.
+- The companion-select endpoint (§7 of parent spec) writes `PETDX_SOURCE_<entityId> = user-selected` so user choice is durable through subsequent rebinds.
+- Equivalent audit row written to `companion_select_log` table with `source` column, so the vault tag has a queryable mirror.
+
 ---
 
 ## §0.3 Backend bind hook
 
-`backend/index.js` `_bindEntity()` (or the closest equivalent at implementation time) gains the following post-bind block:
+The hook signature must accept entry-point context because the live backend has multiple bind paths (`/api/bind`, `/api/entity/rebind`, official-borrow `/api/official-borrow/bind-free`, and `/api/transform` character-change side-effect). A flat "exists → no-op" rule would mis-handle rebinds. The hook is therefore parameterised:
 
 ```js
-async function _assignDefaultCompanionIfMissing(deviceId, entity) {
+/**
+ * @param deviceId      string
+ * @param entity        current entity record (post-bind)
+ * @param ctx           {
+ *                        mode: 'bind' | 'rebind' | 'character-change' | 'backfill',
+ *                        previousEntity: <prior record or null>,
+ *                        source: 'bind-endpoint' | 'official-borrow' | 'transform' | 'backfill-script'
+ *                      }
+ */
+async function _assignDefaultCompanionIfMissing(deviceId, entity, ctx) {
     const currentKey = `PETDX_CURRENT_${entity.entityId}`;
     const avatarKey  = `PETDX_AVATAR_${entity.entityId}`;
-    const existing = await getDeviceVar(deviceId, currentKey);
-    if (existing) return { skipped: 'already_assigned' };
+    const sourceKey  = `PETDX_SOURCE_${entity.entityId}`;
+
+    const existingCompanion = await getDeviceVar(deviceId, currentKey);
+    const existingSource    = await getDeviceVar(deviceId, sourceKey);
+
+    // Preserve any user choice or inherited rental companion. §0.2a tags.
+    if (existingCompanion && existingSource &&
+        existingSource !== 'phase0-auto' &&
+        existingSource !== 'phase0-backfill') {
+        return { skipped: 'preserves_existing_source', source: existingSource };
+    }
+
+    // For bind / backfill: skip if already populated by us.
+    if (ctx.mode === 'bind' || ctx.mode === 'backfill') {
+        if (existingCompanion) return { skipped: 'already_assigned' };
+    }
+
+    // For rebind / character-change: only refresh if the avatar slot is still a
+    // character default (per `_isCharacterDefaultAvatar(entity.avatar)`) AND the
+    // character actually changed compared to ctx.previousEntity.
+    if (ctx.mode === 'rebind' || ctx.mode === 'character-change') {
+        const wasDefault = _isCharacterDefaultAvatar(entity.avatar);
+        const charChanged = ctx.previousEntity?.character !== entity.character;
+        if (!(wasDefault && charChanged)) {
+            return { skipped: 'no_refresh_needed' };
+        }
+    }
 
     const companionId = pickDefaultCompanion(entity);   // §0.2
     const avatarUrl = `/static/companions/${companionId}/avatar.png`;
+    const newSource = ctx.mode === 'backfill' ? 'phase0-backfill' : 'phase0-auto';
 
     await setDeviceVar(deviceId, currentKey, companionId);
     await setDeviceVar(deviceId, avatarKey,  avatarUrl);
-    return { assigned: companionId, avatarUrl };
+    await setDeviceVar(deviceId, sourceKey,  newSource);
+    await appendCompanionSelectLog({
+        deviceId, entityId: entity.entityId,
+        companionId, source: newSource,
+        mode: ctx.mode, ctxSource: ctx.source,
+    });
+    return { assigned: companionId, avatarUrl, source: newSource };
 }
 ```
 
-`pickDefaultCompanion(entity)` follows §0.2's priority order. Errors are non-fatal — bind still succeeds; auto-assign failures emit a `[petdx-phase0]` log line and let the resolver fall through to the §5.4 fallback chain.
+`pickDefaultCompanion(entity)` follows §0.2's priority order. Errors are non-fatal — bind still succeeds; auto-assign failures emit a `[petdx-phase0]` log line with `ctx.mode` + `ctx.source` and let the resolver fall through to the §5.4 fallback chain.
+
+The four bind paths each call `_assignDefaultCompanionIfMissing` with appropriate `ctx`:
+
+| Entry point                              | `ctx.mode`         | `ctx.source`        |
+|------------------------------------------|--------------------|---------------------|
+| `/api/bind`                              | `'bind'`           | `'bind-endpoint'`   |
+| `/api/entity/rebind`                     | `'rebind'`         | `'bind-endpoint'`   |
+| `/api/official-borrow/bind-free`         | `'bind'`           | `'official-borrow'` |
+| `/api/transform` (character-change side) | `'character-change'`| `'transform'`       |
+| `scripts/petdx-phase0-backfill.js`       | `'backfill'`       | `'backfill-script'` |
 
 ---
 
@@ -95,7 +155,7 @@ async function _assignDefaultCompanionIfMissing(deviceId, entity) {
 7. final emoji fallback                                // DEFAULT_CHARACTER_EMOJI
 ```
 
-`updateEntityMaps` gains a third map `_entityPetdxAvatarMap`, populated from a new server-side enrichment in `/api/entities` (returns `petdxCompanionId` + `petdxAvatarUrl` alongside each entity record) or from a separate batched `/api/device-vars?keys=PETDX_AVATAR_*` read. The exact transport is left to the implementation PR; both options are spec-compliant.
+`updateEntityMaps` gains a third map `_entityPetdxAvatarMap`. The canonical transport is **server-side enrichment in `/api/entities`**: the endpoint joins/decrypts vault entries once and returns `petdxCompanionId` + `petdxAvatarUrl` alongside each entity record. This is preferred over a batched `/api/device-vars?keys=PETDX_AVATAR_*` read because (a) pages already fetch entities, (b) the existing `/api/device-vars` lacks a `keys=` projection and adding one would broaden the read surface, and (c) it keeps vault read paths off the UI layer entirely.
 
 `AvatarPetdx.preload({...entityIds})` is called from every page that lists entities — this amendment does not change that contract; it only adds the `descriptorAvatarUrl(entityId)` helper that returns the descriptor's `avatar.png` URL when the descriptor is cached.
 
@@ -122,13 +182,19 @@ Runs once per device, idempotent. Hooked into `backend/scripts/run-migrations.js
 
 ## §0.6 PR #3027 deprecation
 
-The `_characterEmoji()` step in `getAvatarForEntity` (PR #3027 line 53–55) becomes unreachable for any entity that completed Phase 0 bind or backfill. The step stays in the resolver chain through one release cycle as a defense-in-depth net for:
+The `_characterEmoji()` step in `getAvatarForEntity` (PR #3027 line 53–55) becomes unreachable for any entity that completed Phase 0 bind or backfill. The step stays in the resolver chain through a tighter quarantine window before removal:
+
+- The window starts when `scripts/petdx-phase0-backfill.js` reports `success` on the live production device.
+- The step is removed only after **all three** conditions hold:
+  1. At least **two clean release cycles** have passed since the success report.
+  2. At least **7 days** have passed (so a slow week of releases doesn't truncate the window).
+  3. **Zero** `[petdx-phase0-resolver-fallthrough]` log hits across all production devices during the window.
+
+If any of the three fails (early release cadence, short calendar gap, or a single fallthrough log), the window resets. This protects against:
 
 - Entities created during the deploy window before backfill completes.
 - Race conditions where bind succeeds but vault write fails.
 - Future entity types that bypass the bind hook (e.g. ephemeral CI bots).
-
-After two clean release cycles with zero `[petdx-phase0-resolver-fallthrough]` log hits, the `_characterEmoji()` step is removed and the resolver falls straight from petdx layers to `ENTITY_CHARS_DEFAULT` → final fallback.
 
 ---
 
@@ -159,6 +225,7 @@ These are deliberately deferred to follow-up specs/PRs:
 
 ## Modification log
 
-| Version | Date       | Author       | Change                                 |
-|---------|------------|--------------|----------------------------------------|
-| 0.1     | 2026-05-30 | LOBSTER #2   | Initial draft (post PR #3027 incident) |
+| Version | Date       | Author       | Change                                                                                                                                |
+|---------|------------|--------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| 0.1     | 2026-05-30 | LOBSTER #2   | Initial draft (post PR #3027 incident)                                                                                                |
+| 0.2     | 2026-05-30 | LOBSTER #2   | Per #6 review: §0.2 lobster-only Phase 0 + §0.2a source tagging, §0.3 hook context + 4 entry points, §0.4 enrichment chosen, §0.6 quarantine = 2 cycles + 7 days + 0 fallthrough |
