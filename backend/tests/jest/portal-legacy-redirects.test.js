@@ -28,4 +28,8 @@ describe('portal legacy redirects (Bug/SEO old /*.html paths)', () => {
   test('/index.html → /portal/index.html', () => {
     expectRedirect(['/index.html'], '/portal/index.html');
   });
+
+  test('/about-founder and /about-founder.html → /portal/about-founder.html', () => {
+    expectRedirect(['/about-founder', '/about-founder.html'], '/portal/about-founder.html');
+  });
 });

@@ -343,6 +343,11 @@ app.get(['/info', '/info.html'], (req, res) => {
     res.redirect(301, '/portal/info.html');
 });
 
+// Founder story page — long-form why-EClawbot narrative for IP Depth touchpoint
+app.get(['/about-founder', '/about-founder.html'], (req, res) => {
+    res.redirect(301, '/portal/about-founder.html');
+});
+
 // Kanban / Settings / root index — sibling redirects so legacy bookmarks + SEO + share
 // links from before the portal/ migration keep working instead of returning hard-404.
 app.get(['/kanban', '/kanban.html'], (req, res) => {
