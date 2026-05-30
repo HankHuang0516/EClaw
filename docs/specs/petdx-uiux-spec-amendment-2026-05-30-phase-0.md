@@ -21,7 +21,7 @@ Phase 0 closes this gap by **auto-assigning a default companion at entity bind t
 Default-companion auto-assignment fires:
 
 1. **At `/api/bind` (first-time)** success for any newly-bound entity, regardless of binding type (channel / api-key / rental).
-2. **At `/api/bind` (rebind)** when `character` changes AND the entity has no user-set custom avatar (i.e. `avatar` is `null` or a system-default emoji per `_isCharacterDefaultAvatar()` — see `backend/index.js`). Rebind is detected by the existing `rebindCount` bump path on `/api/bind`; there is **no** separate `/api/entity/rebind` endpoint.
+2. **At `/api/bind` (rebind)** when `character` changes AND the entity has no user-set custom avatar (i.e. `avatar` is `null` or a system-default emoji per `_isCharacterDefaultAvatar()` — see `backend/index.js`). Rebind in the live system happens as `DELETE /api/entity` (or `DELETE /api/device/entity`) → `POST /api/bind`; the bind hook distinguishes bind vs rebind via `ctx.previousEntity` (see §0.3). There is **no** separate `/api/entity/rebind` endpoint.
 3. **At `/api/official-borrow/bind-free` and `/api/official-borrow/bind-personal`** success, treated as `mode: 'bind'`.
 4. **At `/api/transform` character-change side-effect** when the request body sets `character` and changes it.
 5. **At backfill migration** (`scripts/petdx-phase0-backfill.js`) for entities that pre-date this amendment.
@@ -72,7 +72,7 @@ Every Phase 0 write tags its origin so future code (rebind, Phase 0.1 re-backfil
 
 The hook signature must accept entry-point context because the live backend has multiple bind paths. Per `backend/index.js` (verified 2026-05-30):
 
-- `/api/bind` — primary bind, also handles rebind via `rebindCount` bump.
+- `/api/bind` — primary bind endpoint (accepts `code` + optional `name` only); per `backend/index.js:7000` it does **not** bump `rebindCount` itself. Rebind in the live system happens as a `DELETE /api/entity` → `POST /api/bind` cycle, with the `rebindCount` bump performed in the `DELETE` handlers.
 - `/api/official-borrow/bind-free` — free-tier official borrow.
 - `/api/official-borrow/bind-personal` — paid-tier official borrow (per `paid_borrow_slots`).
 - `/api/transform` — character-change side effect (when the request body sets `character`).
@@ -297,3 +297,4 @@ These are deliberately deferred to follow-up specs/PRs:
 | 0.3     | 2026-05-30 | LOBSTER #2   | Per #6 re-review: §0.1 rental status fixed (leased_in, not rented_in); §0.2a uses new `origin` column on `companion_select_log` to avoid breaking the existing `source` CHECK; §0.3 entry-point table corrected (no `/api/entity/rebind`, adds `/api/official-borrow/bind-personal`, disambiguates `/api/bind` bind vs rebind); §0.3 guard tightened — existing `PETDX_CURRENT_*` with missing `PETDX_SOURCE_*` refuses overwrite; §0.8 adds explicit acceptance for lobster avatar.png asset + `/static/companions` mount + DB migration ordering |
 | 0.4     | 2026-05-30 | LOBSTER #2   | Per #6 third review: §0.1 trigger list now matches §0.3 entry-point table (5 numbered triggers, no `/api/entity/{bind,rebind}`); §0.3 `ctx.source` JSDoc enum aligned with the table (`'official-borrow-free'` / `'official-borrow-paid'`); §0.5 backfill pseudocode now writes `PETDX_SOURCE_*` + `origin` audit, handles `rental-leased-in` / `user-custom-avatar` / non-phase0 source / missing source / fresh assign separately, requires migration before `--commit` |
 | 0.5     | 2026-05-30 | LOBSTER #2   | Per #6 fourth review: §0.1 idempotency rule scoped to bind/backfill modes only (rebind/character-change deliberately bypass the `PETDX_CURRENT_*` exists guard); §0.3 entry-point table corrected — `/api/bind` does not bump `rebindCount` itself (per backend/index.js:7000 it only accepts `code`/`name`); rebind happens via `DELETE /api/entity` → `POST /api/bind` cycle, so the hook distinguishes bind vs rebind via `ctx.previousEntity` rather than `rebindCount`; §0.4 adds the `_entityAvatarMap` invariant — only non-default avatars enter the map (`!_isCharacterDefaultAvatar(e.avatar)`) so default emojis can never beat petdx layers |
+| 0.6     | 2026-05-31 | LOBSTER #2   | Per #6 fifth review: §0.1 trigger #2 rebind detection wording aligned with §0.3 (`ctx.previousEntity`, not `rebindCount` bump path); §0.3 prologue bullet for `/api/bind` no longer claims it handles rebind via `rebindCount` bump — explicitly states the `DELETE → POST /api/bind` cycle. PR title + body bumped to v0.6.|
