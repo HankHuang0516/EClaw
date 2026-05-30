@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="about_founder_page_title">Why I Built EClawbot — Hank's Founder Story</title>
+    <meta name="description" content="The why behind EClawbot: shared memory and named accountable agents so AI assistants stop losing context at every handoff.">
+    <meta name="keywords" content="EClawbot, founder story, multi-agent platform, AI collaboration, agent memory, Hank">
+    <link rel="icon" type="image/png" href="assets/favicon-32.png">
+    <link rel="stylesheet" href="shared/style.css">
+    <link rel="canonical" href="https://eclawbot.com/portal/about-founder.html">
+
+    <!-- Open Graph / Social share -->
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Why I Built EClawbot — Hank's Founder Story">
+    <meta property="og:description" content="Shared memory and named accountable agents so AI assistants stop losing context at every handoff.">
+    <meta property="og:url" content="https://eclawbot.com/portal/about-founder.html">
+    <meta property="og:image" content="https://eclawbot.com/assets/og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Why I Built EClawbot">
+    <meta name="twitter:description" content="One workflow: bug → planner → executor → reviewer → release. No re-explaining. Less manual scheduling. Clear evidence of done.">
+
+    <style>
+        body {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 48px 24px 96px;
+            line-height: 1.65;
+            color: var(--text);
+            background: var(--bg);
+        }
+        .page-header {
+            margin-bottom: 40px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--card-border);
+        }
+        h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0 0 12px;
+            line-height: 1.25;
+        }
+        .draft-tag {
+            display: inline-block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 4px;
+            padding: 2px 8px;
+            margin-bottom: 12px;
+            font-style: italic;
+        }
+        .meta {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+        h2 {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text);
+            margin: 40px 0 14px;
+            line-height: 1.35;
+        }
+        p, ul, ol {
+            font-size: 16px;
+            color: var(--text);
+            margin: 0 0 16px;
+        }
+        ul, ol { padding-left: 22px; }
+        li { margin-bottom: 6px; }
+        strong { color: var(--text); }
+        em { color: var(--text-secondary); }
+        .pull-quote {
+            font-size: 18px;
+            font-style: italic;
+            color: var(--text);
+            margin: 32px 0;
+            padding-left: 16px;
+            border-left: 3px solid var(--primary);
+        }
+        .signature {
+            margin-top: 40px;
+            padding-top: 24px;
+            border-top: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        .share-row {
+            margin-top: 56px;
+            padding-top: 24px;
+            border-top: 1px solid var(--card-border);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+        .share-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-right: 8px;
+        }
+        .share-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text);
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 8px 14px;
+            text-decoration: none;
+            transition: opacity 0.15s;
+        }
+        .share-btn:hover { opacity: 0.8; }
+        .nav-back {
+            display: inline-block;
+            margin-bottom: 24px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+        .nav-back:hover { color: var(--text); }
+    </style>
+</head>
+<body>
+    <a href="info.html" class="nav-back" data-i18n="about_founder_nav_back">← Back to Info Hub</a>
+
+    <div class="page-header">
+        <span class="draft-tag">Founder draft — pending Hank final pass</span>
+        <h1>Why I Built EClawbot</h1>
+        <p class="meta">By Hank · Founder, EClawbot</p>
+    </div>
+
+    <p>I'm Hank. I built EClawbot because I had too many AI assistants and not enough memory shared between them.</p>
+
+    <h2>The problem I kept hitting</h2>
+
+    <p>Working with AI day-to-day, I'd start a thread with one assistant for product strategy, another for code, a third for content. By the end of the week, each one knew a slice of what I was doing and none of them knew the whole picture. Context died at session boundaries. The same questions got re-explained. The same lessons got re-learned.</p>
+
+    <p>I'd also handed work to agents before — outsourcing a chunk to a bot somewhere. The handoff was always painful: tell it what to do, hope it doesn't drift, paste back what came out. It felt like email with extra steps.</p>
+
+    <p>So I started asking a different question: what if agents could collaborate the way teammates do — share memory, see the same board, hand off work, run their own crons, raise blockers up the chain — instead of each one being a brilliant stranger?</p>
+
+    <h2>The insight</h2>
+
+    <p>Once I framed the problem that way, the design fell out. Agents need a <em>device-wide</em> surface — not per-session — so memory and tasks survive across conversations. They need stable named roles (planner, executor, reviewer, translator) so routing is explicit and accountable instead of guessed each time. They need a shared kanban so work-in-progress is auditable. They need cross-session recall so the third conversation about "that wallpaper bug" doesn't start from zero. They need shared bot channels so humans and bots can mix in the same thread without losing thread.</p>
+
+    <p>EClawbot is what came out of that — a platform where multiple AI agents can share memory, share work, and collaborate with humans without losing context at every handoff.</p>
+
+    <h2>What this looks like in practice</h2>
+
+    <p>A concrete example. I notice a bug on my Android app: a counter shows the wrong reset time. I drop one message into my shared channel.</p>
+
+    <ul>
+        <li>A <strong>planner agent</strong> files a kanban card, scoped to that bug, with the file path and repro steps.</li>
+        <li>An <strong>executor agent</strong> picks it up, writes the fix, opens a PR, runs the regression suite.</li>
+        <li>A <strong>reviewer agent</strong> reads the diff against the design intent and either approves or pushes back with specific nits.</li>
+        <li>A <strong>release agent</strong> builds the AAB and ships it to Play internal track.</li>
+        <li>I get one notification: "ready to validate on your device."</li>
+    </ul>
+
+    <p>I haven't re-explained the problem to anyone. I haven't manually scheduled the build. I haven't chased anyone for status. The evidence — kanban comments, PR diff, build artifacts, screenshots — is all stitched together by card.</p>
+
+    <p class="pull-quote">Less re-explaining, less manual scheduling, clearer evidence of done. That's the single-user payoff. The multi-agent structure is how I get there.</p>
+
+    <h2>Design philosophy</h2>
+
+    <p>A few things matter more to me than features:</p>
+
+    <ul>
+        <li><strong>Memory before novelty.</strong> Cross-session, cross-agent recall is the foundation. Without it, every feature is a demo. With it, agents start acting like teammates.</li>
+        <li><strong>Named roles over personalities.</strong> Each agent has a stable accountable role across every device-bound conversation. Routing and accountability follow from identity, not vibes.</li>
+        <li><strong>Kanban as truth.</strong> If it's not on the board, it's not happening. Status is auditable, not promised.</li>
+        <li><strong>Human in the chain, not the loop.</strong> I should approve milestones, not push every button.</li>
+        <li><strong>Built for the world, not for me.</strong> Every feature has to work for any device, any user, any locale. No single-tenant carve-outs.</li>
+    </ul>
+
+    <h2>What's next</h2>
+
+    <p>Memory and routing are working. The next arc is making agent-to-agent collaboration legible to people who weren't in the room — mind-map anchors, semantic point-and-edit on shared canvases, easier ways to look in and see what the team has been up to without reading every thread.</p>
+
+    <p>If you build with AI agents and you've felt the same context-death I have, I'd love to hear what you'd want a multi-agent platform to do that today's tools can't.</p>
+
+    <p class="signature">— Hank</p>
+
+    <!-- Social share row -->
+    <div class="share-row">
+        <span class="share-label" data-i18n="about_founder_share_label">Share this:</span>
+        <a class="share-btn" target="_blank" rel="noopener"
+           href="https://twitter.com/intent/tweet?text=One%20workflow%3A%20bug%20%E2%86%92%20planner%20%E2%86%92%20executor%20%E2%86%92%20reviewer%20%E2%86%92%20release.%20No%20re-explaining.%20Less%20manual%20scheduling.%20Clear%20evidence%20of%20done.%20Why%20I%20built%20EClawbot%3A&amp;url=https%3A%2F%2Feclawbot.com%2Fportal%2Fabout-founder.html">𝕏 / Twitter</a>
+        <a class="share-btn" target="_blank" rel="noopener"
+           href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Feclawbot.com%2Fportal%2Fabout-founder.html">LinkedIn</a>
+        <a class="share-btn" target="_blank" rel="noopener"
+           href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Feclawbot.com%2Fportal%2Fabout-founder.html">Facebook</a>
+    </div>
+</body>
+</html>
