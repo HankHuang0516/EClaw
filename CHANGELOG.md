@@ -1,3 +1,10 @@
+# [1.1187.0](https://github.com/HankHuang0516/EClaw/compare/v1.1186.2...v1.1187.0) (2026-05-30)
+
+
+### Features
+
+* **petdx phase 0:** implementation — bind hook + DB migration + backfill + frontend resolver ([#3032](https://github.com/HankHuang0516/EClaw/issues/3032)) ([2033821](https://github.com/HankHuang0516/EClaw/commit/20338212d345f572396a0360efdac82722414522)), closes [#1-2](https://github.com/HankHuang0516/EClaw/issues/1-2) [#6](https://github.com/HankHuang0516/EClaw/issues/6) [#2](https://github.com/HankHuang0516/EClaw/issues/2) [#6](https://github.com/HankHuang0516/EClaw/issues/6) [#3027](https://github.com/HankHuang0516/EClaw/issues/3027) [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 ## [1.1186.2](https://github.com/HankHuang0516/EClaw/compare/v1.1186.1...v1.1186.2) (2026-05-30)
 
 
