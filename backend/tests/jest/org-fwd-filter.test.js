@@ -74,6 +74,17 @@ describe('isLowSignalFwd()', () => {
         });
     });
 
+    describe('silent sign-off echo noise (the FWD same-string ack loop)', () => {
+        it('suppresses [SILENT] sign-off FWD echo control messages', () => {
+            expect(isLowSignalFwd('[SILENT] #6 sign-off FWD echo (相同字串) — 已 ack 過，繼續寫 jest test + commit + PR。')).toBe(true);
+            expect(isLowSignalFwd('[SILENT] #12 sign off fwd echo same string')).toBe(true);
+        });
+
+        it('does NOT suppress other silent status messages with real work', () => {
+            expect(isLowSignalFwd('[SILENT] #6 PR #3028 ready; Jest passed and branch pushed')).toBe(false);
+        });
+    });
+
     describe('one-word ack noise (the ack-of-ack loop)', () => {
         it('suppresses bare "ack" / "ACK" / "ack."', () => {
             expect(isLowSignalFwd('ack')).toBe(true);
