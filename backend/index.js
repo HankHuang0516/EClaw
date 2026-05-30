@@ -6854,6 +6854,65 @@ async function runPetdxPhase0AutoAssign(deviceId, entity, ctx) {
     }
 }
 
+// POST /api/admin/petdx-phase0/backfill
+// Owner-auth admin endpoint that runs the petdx Phase 0 default-companion
+// assignment hook in 'backfill' mode for every bound entity on the device.
+// Mirrors backend/scripts/petdx-phase0-backfill.js but runs in-process so
+// Phase 0 acceptance §0.8 #8 (kanban prod E2E) doesn't require Railway CLI
+// access. See spec §0.5.
+app.post('/api/admin/petdx-phase0/backfill', async (req, res) => {
+    const { deviceId, deviceSecret, commit } = req.body || {};
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret are required' });
+    }
+    const device = devices[deviceId];
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+        return res.status(401).json({ success: false, error: 'Invalid device credentials' });
+    }
+
+    const entityIds = Object.keys(device.entities || {}).map(Number).filter(Number.isFinite);
+    const results = { assigned: [], skipped: [], errors: [] };
+    const ctxBase = { mode: 'backfill', source: 'backfill-script' };
+    const io = createPetdxPhase0Io();
+
+    for (const eId of entityIds) {
+        const entity = device.entities[eId];
+        if (!entity || !entity.isBound) {
+            results.skipped.push({ entityId: eId, reason: 'not_bound' });
+            continue;
+        }
+        const entityForHook = {
+            entityId: eId,
+            character: entity.character,
+            avatar: entity.avatar,
+            rental_status: entity.rentalStatus || entity.rental_status || null,
+            identity: entity.identity || null,
+        };
+        try {
+            const result = commit === true
+                ? await assignDefaultCompanionIfMissing(deviceId, entityForHook, ctxBase, io)
+                : await (async () => {
+                    const dryIo = {
+                        ...io,
+                        setDeviceVars: async () => {},
+                        setDeviceVar: async () => {},
+                        appendCompanionSelectLog: async () => {},
+                    };
+                    return assignDefaultCompanionIfMissing(deviceId, entityForHook, ctxBase, dryIo);
+                })();
+            if (result && result.assigned) {
+                results.assigned.push({ entityId: eId, companion: result.assigned, avatarUrl: result.avatarUrl, source: result.source });
+            } else if (result && result.skipped) {
+                results.skipped.push({ entityId: eId, reason: result.skipped });
+            }
+        } catch (err) {
+            results.errors.push({ entityId: eId, error: err.message });
+        }
+    }
+
+    res.json({ success: true, deviceId, committed: commit === true, results });
+});
+
 
 // ============================================
 // REMOTE SCREEN CONTROL
