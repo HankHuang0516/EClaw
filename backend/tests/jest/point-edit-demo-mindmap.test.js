@@ -56,6 +56,8 @@ describe('Track C — mind-map mock', () => {
         expect(b).toMatch(/mode !== ['"]mindmap['"]/);
         // Registry refresh on resize so rect stays accurate
         expect(b).toMatch(/window\.addEventListener\(['"]resize['"], refreshAnchorRegistry/);
+        // Registry refresh on entering mindmap mode (panel may have been hidden at boot)
+        expect(b).toMatch(/if \(next === ['"]mindmap['"]\) refreshAnchorRegistry\(\)/);
     });
 
     test('HTML widget exposes 6 nodes mapped to the canonical sandbox anchors', () => {

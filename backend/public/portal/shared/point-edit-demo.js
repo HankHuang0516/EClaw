@@ -368,6 +368,12 @@
                 b.classList.toggle('active', b.dataset.pedMode === next);
             });
             if (mindmap) mindmap.hidden = next !== 'mindmap';
+            // When entering mindmap mode, refresh the anchor registry. If the
+            // panel was hidden at boot (`?demo=pointedit` users land on another
+            // tab first), `getBoundingClientRect` returned all-zeros — once the
+            // panel is visible we have real layout to capture so the next click
+            // emits a meaningful `rect`.
+            if (next === 'mindmap') refreshAnchorRegistry();
             if (statusEl) {
                 statusEl.dataset.state = 'idle';
                 if (next === 'dom') {
