@@ -1,14 +1,14 @@
 /*
- * point-edit-demo.js — Track A (DOM selector + text-selection) and
- * Track B (coordinate resolver) of the
+ * point-edit-demo.js — Track A (DOM selector + text-selection),
+ * Track B (coordinate resolver), and Track C (mind-map node) of the
  * point-and-edit testbed. Feature-flagged via ?demo=pointedit or
- * window.POINTEDIT_DEMO === true. Track C (mind-map node) plugs into
- * the same `pointedit:target` event boundary
- * so the harness adapter below is reusable.
+ * window.POINTEDIT_DEMO === true. All three tracks plug into the same
+ * `pointedit:target` event boundary so the harness adapter below is reusable.
  *
  * Normalized target payload contract (must stay aligned with #6's plan):
- *   { mode, targetId, selector?, anchorId?, coordinates?, outerHTML,
- *     textSnippet, rect, confidence, sourceHint, astPath? }
+ *   { mode, targetId, selector?, anchorId?, nodeId?, resourceType?,
+ *     coordinates?, outerHTML, textSnippet, rect, confidence, sourceHint,
+ *     astPath? }
  */
 (function () {
     'use strict';
@@ -202,6 +202,8 @@
         if (payload.targetId) parts.push(`targetId="${escapeAttr(payload.targetId)}"`);
         if (payload.selector) parts.push(`selector="${escapeAttr(payload.selector)}"`);
         if (payload.anchorId) parts.push(`anchorId="${escapeAttr(payload.anchorId)}"`);
+        if (payload.nodeId) parts.push(`nodeId="${escapeAttr(payload.nodeId)}"`);
+        if (payload.resourceType) parts.push(`resourceType="${escapeAttr(payload.resourceType)}"`);
         if (payload.astPath) parts.push(`astPath="${escapeAttr(payload.astPath)}"`);
         if (payload.coordinates) {
             parts.push(`x="${payload.coordinates.x}"`);
@@ -210,6 +212,7 @@
         if (payload.rect) {
             parts.push(`rect="${payload.rect.x},${payload.rect.y},${payload.rect.w},${payload.rect.h}"`);
         }
+        if (payload.sourceHint) parts.push(`sourceHint="${escapeAttr(payload.sourceHint)}"`);
         if (typeof payload.confidence === 'number') {
             parts.push(`confidence="${payload.confidence.toFixed(2)}"`);
         }
@@ -291,6 +294,46 @@
         statusEl.textContent = `Coordinate resolve failed: ${err && err.message ? err.message : 'unknown error'}`;
     }
 
+    /* ---------- Track C: mind-map mock ----------
+     * Build an anchor registry from the sandbox at mount-time. Each node
+     * button in the mock mini-map carries data-ped-anchor-id which we
+     * resolve against the registry; click commits the same payload shape
+     * the dispatcher already understands. */
+
+    function buildAnchorRegistry(sandbox) {
+        const registry = new Map();
+        if (!sandbox) return registry;
+        const anchored = sandbox.querySelectorAll('[data-point-edit-id]');
+        anchored.forEach((el) => {
+            const id = el.dataset.pointEditId;
+            if (!id) return;
+            registry.set(id, {
+                outerHTML: sanitizeOuterHtml(el, 4096),
+                textSnippet: clampText(el.textContent, 240),
+                rect: bboxRect(el),
+            });
+        });
+        return registry;
+    }
+
+    function pickFromMindmapNode(nodeBtn, registry) {
+        const anchorId = nodeBtn.dataset.pedAnchorId;
+        const nodeId = nodeBtn.dataset.pedNode;
+        if (!anchorId || !registry || !registry.has(anchorId)) return null;
+        const entry = registry.get(anchorId);
+        return {
+            mode: 'mindmap',
+            nodeId,
+            anchorId,
+            resourceType: 'infohtml-block',
+            outerHTML: entry.outerHTML,
+            textSnippet: entry.textSnippet,
+            rect: entry.rect,
+            confidence: 0.95,
+            sourceHint: 'mindmap-mock',
+        };
+    }
+
     /* ---------- Bootstrap ---------- */
 
     function boot() {
@@ -306,7 +349,14 @@
         const statusEl = panel.querySelector('[data-ped-status]');
         const clearBtn = panel.querySelector('[data-ped-clear]');
         const modeBtns = panel.querySelectorAll('[data-ped-mode]');
+        const mindmap = panel.querySelector('[data-ped-mindmap]');
+        const mindmapNodes = panel.querySelectorAll('[data-ped-node]');
         if (!sandbox || !overlay || !textarea) return;
+
+        // Track C registry — frozen at mount time, refreshed when sandbox layout
+        // changes (window resize / orientation change), since rect is layout-dependent.
+        let anchorRegistry = buildAnchorRegistry(sandbox);
+        const refreshAnchorRegistry = () => { anchorRegistry = buildAnchorRegistry(sandbox); };
 
         let mode = panel.dataset.modeDefault || 'dom';
         let lastHoverEl = null;
@@ -317,12 +367,15 @@
             modeBtns.forEach((b) => {
                 b.classList.toggle('active', b.dataset.pedMode === next);
             });
+            if (mindmap) mindmap.hidden = next !== 'mindmap';
             if (statusEl) {
                 statusEl.dataset.state = 'idle';
                 if (next === 'dom') {
                     statusEl.textContent = statusEl.dataset.hintDom || 'Hover anywhere in the sandbox to highlight, click to commit.';
                 } else if (next === 'coordinate') {
                     statusEl.textContent = statusEl.dataset.hintCoordinate || 'Tap or click inside the sandbox to resolve x/y to a source target.';
+                } else if (next === 'mindmap') {
+                    statusEl.textContent = statusEl.dataset.hintMindmap || 'Click a mind-map node to commit the matching sandbox anchor.';
                 } else if (next === 'textsel') {
                     statusEl.textContent = statusEl.dataset.hintTextsel || 'Drag-select any text inside the sandbox to commit.';
                 }
@@ -383,6 +436,24 @@
             if (payload) emitTarget(payload);
         });
 
+        // Track C — mind-map node clicks. Only fire when mode === 'mindmap'
+        // so the same buttons stay neutral if a user happens to focus them
+        // while a different track is active.
+        mindmapNodes.forEach((btn) => {
+            btn.addEventListener('click', (ev) => {
+                if (mode !== 'mindmap') return;
+                ev.preventDefault();
+                const payload = pickFromMindmapNode(btn, anchorRegistry);
+                if (!payload) return;
+                if (payload.rect) positionOverlay(overlay, payload.rect);
+                emitTarget(payload);
+            });
+        });
+
+        // Recompute the registry's rect data when the page resizes so
+        // mind-map clicks emit a payload aligned with the current layout.
+        window.addEventListener('resize', refreshAnchorRegistry, { passive: true });
+
         document.addEventListener('pointedit:target', (ev) => {
             injectTargetIntoComposer(ev.detail, textarea, payloadEl, statusEl);
         });
@@ -404,9 +475,12 @@
             emitTarget,
             pickFromElement,
             pickFromSelection,
+            pickFromMindmapNode,
             resolveCoordinateFromEvent,
             buildSelector,
             sanitizeOuterHtml,
+            buildAnchorRegistry,
+            getAnchorRegistry: () => anchorRegistry,
         });
     }
 

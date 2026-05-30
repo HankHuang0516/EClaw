@@ -2024,3 +2024,50 @@
     border-radius: 3px;
     font-size: 12px;
 }
+
+/* ═══════════════════════════════════════════════════
+   Point-and-edit Track C — mock mind-map mini panel
+   ═══════════════════════════════════════════════════ */
+#panel-point-edit-demo .ped-mindmap {
+    margin: 16px 0 0 0;
+    padding: 14px 16px;
+    border: 1px dashed rgba(124, 58, 237, 0.45);
+    border-radius: 10px;
+    background: rgba(124, 58, 237, 0.05);
+}
+#panel-point-edit-demo .ped-mindmap[hidden] { display: none; }
+#panel-point-edit-demo .ped-mindmap-head h3 {
+    margin: 0 0 4px 0;
+    font-size: 0.95em;
+    color: #7c3aed;
+}
+#panel-point-edit-demo .ped-mindmap-lede {
+    margin: 0 0 12px 0;
+    font-size: 0.85em;
+    opacity: 0.8;
+}
+#panel-point-edit-demo .ped-mindmap-canvas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+#panel-point-edit-demo .ped-mindmap-node {
+    appearance: none;
+    cursor: pointer;
+    padding: 8px 12px;
+    border: 1px solid rgba(124, 58, 237, 0.4);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    color: inherit;
+    font: inherit;
+    font-size: 0.85em;
+    transition: background 120ms ease, border-color 120ms ease;
+}
+#panel-point-edit-demo .ped-mindmap-node:hover {
+    background: rgba(124, 58, 237, 0.15);
+    border-color: rgba(124, 58, 237, 0.7);
+}
+#panel-point-edit-demo .ped-mindmap-node:focus-visible {
+    outline: 2px solid #7c3aed;
+    outline-offset: 2px;
+}

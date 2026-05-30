@@ -5446,7 +5446,7 @@ platforms:
                 <div class="ped-mode-switch" role="tablist" aria-label="Pick mode">
                     <button class="ped-mode active" data-ped-mode="dom" type="button" data-i18n="ped_mode_dom">A · Hover & Click (DOM)</button>
                     <button class="ped-mode" data-ped-mode="coordinate" type="button" data-i18n="ped_mode_coordinate">B · Coordinate + AST</button>
-                    <button class="ped-mode" data-ped-mode="mindmap" type="button" data-i18n="ped_mode_mindmap" disabled title="Track C — pending">C · Mind-map Node</button>
+                    <button class="ped-mode" data-ped-mode="mindmap" type="button" data-i18n="ped_mode_mindmap">C · Mind-map Node</button>
                     <button class="ped-mode" data-ped-mode="textsel" type="button" data-i18n="ped_mode_textsel">D · Text Selection</button>
                 </div>
                 <p class="ped-status" data-ped-status data-i18n="ped_status_idle">Pick mode A, B, or D, then target the sandbox to begin.</p>
@@ -5501,6 +5501,33 @@ platforms:
 
             <!-- Highlight overlay — single element, repositioned per hover -->
             <div class="ped-overlay" data-ped-overlay hidden aria-hidden="true"></div>
+
+            <!-- ═══════════════════════════════════════════════════
+                 Track C — mock mind-map mini panel
+                 Visible only in mode=mindmap. Each node maps to a
+                 sandbox anchorId; click commits via the same
+                 pointedit:target event boundary used by tracks A/B/D.
+                 ═══════════════════════════════════════════════════ -->
+            <section class="ped-mindmap" data-ped-mindmap hidden aria-label="Mind-map mock for Track C">
+                <header class="ped-mindmap-head">
+                    <h3 data-i18n="ped_mindmap_title">🧠 Mind-map mock (Track C)</h3>
+                    <p class="ped-mindmap-lede" data-i18n="ped_mindmap_lede">Click a node — the harness emits pointedit:target with anchorId, mock rect, and the sandbox block's outerHTML.</p>
+                </header>
+                <div class="ped-mindmap-canvas" role="group">
+                    <button type="button" class="ped-mindmap-node ped-mindmap-node--hero"
+                            data-ped-node="hero" data-ped-anchor-id="hero" data-i18n="ped_mindmap_node_hero">Hero</button>
+                    <button type="button" class="ped-mindmap-node ped-mindmap-node--feature"
+                            data-ped-node="feature" data-ped-anchor-id="feature.card" data-i18n="ped_mindmap_node_feature">Feature card</button>
+                    <button type="button" class="ped-mindmap-node ped-mindmap-node--cta"
+                            data-ped-node="cta" data-ped-anchor-id="cta.block" data-i18n="ped_mindmap_node_cta">CTA</button>
+                    <button type="button" class="ped-mindmap-node ped-mindmap-node--note"
+                            data-ped-node="note" data-ped-anchor-id="note.block" data-i18n="ped_mindmap_node_note">Note</button>
+                    <button type="button" class="ped-mindmap-node ped-mindmap-node--agent"
+                            data-ped-node="agent-card" data-ped-anchor-id="agent.card" data-i18n="ped_mindmap_node_agent">Agent card</button>
+                    <button type="button" class="ped-mindmap-node ped-mindmap-node--nested"
+                            data-ped-node="nested" data-ped-anchor-id="note.em" data-i18n="ped_mindmap_node_nested">Nested em</button>
+                </div>
+            </section>
 
             <!-- ═══════════════════════════════════════════════════
                  ROADMAP: three-track scenario walkthrough
