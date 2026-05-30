@@ -40119,6 +40119,10 @@ const TRANSLATIONS = {
 
 
         "info_tab_roadmap": "Roadmap",
+        "info_tab_about_founder": "👤 Founder Story",
+        "about_founder_page_title": "Why I Built EClawbot — Hank's Founder Story",
+        "about_founder_nav_back": "← Back to Info Hub",
+        "about_founder_share_label": "Share this:",
 
 
 
@@ -688359,6 +688363,10 @@ const TRANSLATIONS = {
 
 
         "info_tab_roadmap": "產品路線圖",
+        "info_tab_about_founder": "👤 創辦人故事",
+        "about_founder_page_title": "我為什麼打造 EClawbot — Hank 的創辦人故事",
+        "about_founder_nav_back": "← 返回 Info Hub",
+        "about_founder_share_label": "分享：",
 
 
 
