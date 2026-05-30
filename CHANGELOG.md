@@ -1,3 +1,10 @@
+## [1.1185.4](https://github.com/HankHuang0516/EClaw/compare/v1.1185.3...v1.1185.4) (2026-05-30)
+
+
+### Bug Fixes
+
+* **android:** wallpaper Weekly reset countdown — per-engine claude/codex/both (parity with 5h) ([#3022](https://github.com/HankHuang0516/EClaw/issues/3022)) ([4bcc33e](https://github.com/HankHuang0516/EClaw/commit/4bcc33e4841533c60140faf081cdd224ea089acf)), closes [#5](https://github.com/HankHuang0516/EClaw/issues/5) [#6](https://github.com/HankHuang0516/EClaw/issues/6) [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+
 ## [1.1185.3](https://github.com/HankHuang0516/EClaw/compare/v1.1185.2...v1.1185.3) (2026-05-29)
 
 
