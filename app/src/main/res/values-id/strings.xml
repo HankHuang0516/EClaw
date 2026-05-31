@@ -849,4 +849,11 @@
     <string name="wallpaper_reset_window_weekly">Mingguan</string>
     <string name="wallpaper_reset_window_weekly_next">Reset mingguan berikutnya: %1$s</string>
     <string name="wallpaper_reset_window_weekly_next_per_engine">Reset mingguan berikutnya (%1$s): %2$s</string>
+    <string name="msg_no_entities_connected">Tidak ada entitas yang terhubung. Ikat entitas terlebih dahulu.</string>
+    <string name="webview_title_eclawbot_portal">Portal EClawbot</string>
+    <string name="wallpaper_settings_panel_label">Pengaturan wallpaper</string>
+    <string name="wallpaper_settings_collapse_caret_down">▼</string>
+    <string name="wallpaper_settings_expand_action">Perluas panel pengaturan</string>
+    <string name="wallpaper_settings_collapse_action">Ciutkan panel pengaturan</string>
+    <string name="wallpaper_settings_collapse_caret_up">▲</string>
 </resources>

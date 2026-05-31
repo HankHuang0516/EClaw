@@ -882,4 +882,11 @@ GPS：仅按需获取，不会后台追踪，服务器重启后数据消失。
     <string name="wallpaper_reset_window_weekly">每周</string>
     <string name="wallpaper_reset_window_weekly_next">下次每周重置：%1$s</string>
     <string name="wallpaper_reset_window_weekly_next_per_engine">下次每周重置（%1$s）：%2$s</string>
+    <string name="msg_no_entities_connected">没有已连接的实体。请先绑定实体。</string>
+    <string name="webview_title_eclawbot_portal">EClawbot 门户网站</string>
+    <string name="wallpaper_settings_panel_label">壁纸设置</string>
+    <string name="wallpaper_settings_collapse_caret_down">▼</string>
+    <string name="wallpaper_settings_expand_action">展开设置面板</string>
+    <string name="wallpaper_settings_collapse_action">收起设置面板</string>
+    <string name="wallpaper_settings_collapse_caret_up">▲</string>
 </resources>

@@ -879,4 +879,11 @@ Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua
     <string name="wallpaper_reset_window_weekly">Hàng tuần</string>
     <string name="wallpaper_reset_window_weekly_next">Đặt lại hàng tuần tiếp theo: %1$s</string>
     <string name="wallpaper_reset_window_weekly_next_per_engine">Đặt lại hàng tuần tiếp theo (%1$s): %2$s</string>
+    <string name="msg_no_entities_connected">Không có thực thể kết nối. Liên kết thực thể trước.</string>
+    <string name="webview_title_eclawbot_portal">Cổng thông tin EClawbot</string>
+    <string name="wallpaper_settings_panel_label">Cài đặt hình nền</string>
+    <string name="wallpaper_settings_collapse_caret_down">▼</string>
+    <string name="wallpaper_settings_expand_action">Mở rộng bảng cài đặt</string>
+    <string name="wallpaper_settings_collapse_action">Thu gọn bảng cài đặt</string>
+    <string name="wallpaper_settings_collapse_caret_up">▲</string>
 </resources>
