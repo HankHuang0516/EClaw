@@ -1,3 +1,10 @@
+## [1.1192.2](https://github.com/HankHuang0516/EClaw/compare/v1.1192.1...v1.1192.2) (2026-05-31)
+
+
+### Bug Fixes
+
+* **petdx Phase 0:** dashboard avatar canvas guard ([2bedabf](https://github.com/HankHuang0516/EClaw/commit/2bedabf03504c7ac9ce68f72c308e0e7c90f8bc6)), closes [#3045](https://github.com/HankHuang0516/EClaw/issues/3045)
+
 ## [1.1192.1](https://github.com/HankHuang0516/EClaw/compare/v1.1192.0...v1.1192.1) (2026-05-30)
 
 
