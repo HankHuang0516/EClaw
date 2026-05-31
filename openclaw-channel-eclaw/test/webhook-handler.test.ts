@@ -7,6 +7,7 @@ describe('createWebhookHandler', () => {
   afterEach(() => {
     delete process.env.ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS;
     delete process.env.ECLAW_SKIP_KANBAN_NOTIFICATIONS;
+    delete process.env.ECLAW_SKIP_KANBAN;
   });
 
   it('acks healthcheck messages without dispatching agent work', async () => {
@@ -46,7 +47,7 @@ describe('createWebhookHandler', () => {
     expect(dispatchReplyWithBufferedBlockDispatcher).not.toHaveBeenCalled();
   });
 
-  it('can ack stale kanban nudges without occupying the model reply path', async () => {
+  it('can ack kanban notifications without occupying the model reply path', async () => {
     process.env.ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS = '1';
     const dispatchReplyWithBufferedBlockDispatcher = vi.fn();
     setPluginRuntime({
@@ -76,7 +77,7 @@ describe('createWebhookHandler', () => {
         entityId: 1,
         event: 'kanban_notification',
         from: 'kanban',
-        text: '⏰ Task nudge: [Fix the bug]\nStuck in "In Progress" for 3h, please continue',
+        text: '📋 New task assigned: 🔥 [P0] Fix the bug\nStatus: TODO',
       },
     }, res);
 
@@ -86,15 +87,7 @@ describe('createWebhookHandler', () => {
     expect(dispatchReplyWithBufferedBlockDispatcher).not.toHaveBeenCalled();
   });
 
-  it.each([
-    ['new assignment', '📋 New task assigned: 🔥 [P0] Fix the bug\nStatus: TODO'],
-    ['status move', '➡️ Task status changed: [Fix the bug]\nTODO → In Progress'],
-    ['reopen', '♻️ Card reopened: Fix the bug\nDone → TODO\nReason: needs rework'],
-    ['review', '🔍 Pending review: [Fix the bug]\nMoved from In Progress to Review. Please review.'],
-    ['priority escalation', '⬆️ Card "Fix the bug" has been stuck for 6h and was upgraded to P0'],
-    ['block escalation', '🚫 Card "Fix the bug" has been stuck for 24h and was moved to blocked'],
-  ])('does not suppress %s kanban notifications', async (_caseName, text) => {
-    process.env.ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS = '1';
+  it('continues dispatching kanban notifications when suppression is disabled', async () => {
     const dispatchReplyWithBufferedBlockDispatcher = vi.fn().mockResolvedValue(undefined);
     const finalizeInboundContext = vi.fn((ctx) => ctx);
     setPluginRuntime({
@@ -124,7 +117,7 @@ describe('createWebhookHandler', () => {
         entityId: 1,
         event: 'kanban_notification',
         from: 'kanban',
-        text,
+        text: '📋 New task assigned: 🔥 [P0] Fix the bug\nStatus: TODO',
       },
     }, res);
 

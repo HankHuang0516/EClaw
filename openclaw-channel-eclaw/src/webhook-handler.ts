@@ -6,17 +6,10 @@ function envFlagEnabled(name: string): boolean {
   return /^(1|true|yes|on)$/i.test(String(process.env[name] || '').trim());
 }
 
-function kanbanNotificationSuppressionEnabled(): boolean {
+function suppressAllKanbanNotifications(): boolean {
   return envFlagEnabled('ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS')
-    || envFlagEnabled('ECLAW_SKIP_KANBAN_NOTIFICATIONS');
-}
-
-function isStaleNudgeKanbanNotification(msg: EClawInboundMessage): boolean {
-  return String(msg.text || '').trimStart().startsWith('⏰');
-}
-
-function shouldSuppressKanbanNotification(msg: EClawInboundMessage): boolean {
-  return kanbanNotificationSuppressionEnabled() && isStaleNudgeKanbanNotification(msg);
+    || envFlagEnabled('ECLAW_SKIP_KANBAN_NOTIFICATIONS')
+    || envFlagEnabled('ECLAW_SKIP_KANBAN');
 }
 
 /**
@@ -85,8 +78,8 @@ export function createWebhookHandler(
       const eclawCtx = msg.eclaw_context;
       const silentToken = eclawCtx?.silentToken ?? '[SILENT]';
 
-      if (event === 'kanban_notification' && shouldSuppressKanbanNotification(msg)) {
-        console.log('[E-Claw] Stale kanban nudge suppressed by runtime policy; webhook ACKed without occupying the model reply path');
+      if (event === 'kanban_notification' && suppressAllKanbanNotifications()) {
+        console.log('[E-Claw] Kanban notification suppressed by runtime policy; webhook ACKed without occupying the model reply path');
         return;
       }
 
