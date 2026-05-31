@@ -317,6 +317,12 @@ Keep current fields and add wallet-backed reward stats:
 
 The returned `code` must be the caller's current active code, resolved with the same active-code selection and auto-rotate logic as `GET /api/invite/my-code`. Implement this through a shared helper or the same transactional active-code select/retry flow so stats never returns a redeemed historical code.
 
+Required resolver contract:
+
+- `GET /api/invite/stats` must not run an independent "first code for owner" or historical-code query for its `code` field.
+- Stats must call the same active-code resolver used by `GET /api/invite/my-code`, including the active filter (`used_by_device_id IS NULL` or the final canonical active predicate), auto-rotate mint, and partial-unique retry path.
+- This is a behavior contract for the stats endpoint, not only a UI display detail: if `my-code` would return a fresh active code after the prior code was redeemed, `stats.code` must return that same active code.
+
 ### Growth API
 
 Extend `GET /api/growth/daily` with date-scoped invite k-value data:
@@ -530,13 +536,21 @@ Required invariants:
 
 This keeps the existing share UX: the page asks for "my code" before showing/copying a link, and the backend guarantees that the returned code is usable.
 
+### Redeem owner-once contract
+
+`POST /api/invite/redeem` must treat the owner/invitee pair as a one-time relationship. The same invitee device may redeem at most one code owned by a given `owner_device_id`, even after that owner auto-rotates and receives a new active code.
+
+This is endpoint behavior, not only schema enforcement. Before marking the submitted code used or crediting any reward, the redeem transaction must check for an existing redeemed historical row with the same `owner_device_id` and `used_by_device_id`. If one exists, reject with `400 invitee_already_redeemed_owner` and leave the submitted code active for another invitee.
+
+The partial unique guard on `(inviter_device_id, invitee_device_id)` in the reward audit table, or an equivalent indexed guard on the live redemption source, is the database backstop for this contract; PR2 backend implementation must still perform the explicit guard so the API returns the stable error above instead of relying on a raw constraint failure.
+
 ### Schema impact
 
 The live table already has `code` as the primary key and no unique constraint on `owner_device_id`, so multi-row ownership is compatible with the table shape. The schema comments and query semantics must change from "one unique code per device" to "one active code per device, many historical codes per device."
 
 Recommended DB guard:
 
-Before adding the active-code partial unique index, run a dedupe/backfill migration for existing duplicate active rows. For each `owner_device_id` with more than one active unredeemed code, keep the newest `created_at` row active and expire the rest using the final schema's inactive marker. Expired duplicates must not be returned by active-code resolution and must not be counted as redeemed invitees or milestone progress.
+Migration ordering requirement: before adding the active-code partial unique index, run a dedupe/backfill migration for existing duplicate active rows. For each `owner_device_id` with more than one active unredeemed code, keep the newest `created_at` row active and expire the rest using the final schema's inactive marker. Expired duplicates must not be returned by active-code resolution and must not be counted as redeemed invitees or milestone progress.
 
 ```sql
 CREATE UNIQUE INDEX IF NOT EXISTS idx_invite_codes_one_active_per_owner
