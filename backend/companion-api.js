@@ -485,9 +485,13 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
         const resolvedAvatarUrl = resolveCompanionAvatarUrl(cRow, companionId);
         const now = Date.now();
 
-        // Without the IO factory injected, fall back to the legacy log-only
-        // write path. Unit tests that don't exercise the vault still pass.
-        if (!petdxIoFactory) {
+        // Vault mirror is per-entity. Device-secret auth (no botSecret) carries
+        // no entity context, so there's no PETDX_*_<id> to mirror — fall through
+        // to the legacy log-only path. Without this guard the vault would
+        // accumulate PETDX_CURRENT_null / PETDX_AVATAR_null / PETDX_SOURCE_null
+        // dead keys on every device-secret select, which the §0.4 resolver
+        // chain never reads but they pollute /api/device-vars output.
+        if (!petdxIoFactory || entityId == null) {
             try {
                 await pool.query(
                     `INSERT INTO companion_select_log
