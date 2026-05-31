@@ -1,3 +1,10 @@
+# [1.1194.0](https://github.com/HankHuang0516/EClaw/compare/v1.1193.3...v1.1194.0) (2026-05-31)
+
+
+### Features
+
+* **kanban:** per-entity nudge stop-mode + avatar warning watermark ([#3055](https://github.com/HankHuang0516/EClaw/issues/3055)) ([6117ae6](https://github.com/HankHuang0516/EClaw/commit/6117ae6a7eecd590e3e9d23aabe7149801d47e39))
+
 ## Unreleased
 
 ### Features
