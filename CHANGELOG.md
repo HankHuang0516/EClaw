@@ -1,3 +1,10 @@
+## [1.1193.3](https://github.com/HankHuang0516/EClaw/compare/v1.1193.2...v1.1193.3) (2026-05-31)
+
+
+### Bug Fixes
+
+* **channel:** suppress stale kanban nudges ([ed0965a](https://github.com/HankHuang0516/EClaw/commit/ed0965a59fdce279583409afa18b25127111c3bb))
+
 ## [1.1193.2](https://github.com/HankHuang0516/EClaw/compare/v1.1193.1...v1.1193.2) (2026-05-31)
 
 
