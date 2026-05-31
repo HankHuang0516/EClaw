@@ -127,21 +127,53 @@ function isAvatarUrl(avatar) {
  * Render an avatar as HTML. Returns an <img> tag for URLs, or emoji text for emoji avatars.
  *
  * If `entityId` is provided AND `window.AvatarPetdx` has a cached
- * companion descriptor for that entity, emits a placeholder canvas
- * instead so AvatarPetdx.mount() can animate it. Pages should call
+ * companion descriptor for that entity AND that descriptor has a
+ * renderable spritesheet asset, emits a placeholder canvas so
+ * AvatarPetdx.mount() can animate it. Pages should call
  * AvatarPetdx.preload(...) once on init, then AvatarPetdx.mount(root)
  * after each batch of markup that contains these placeholders.
+ *
+ * Procedural-only descriptors (e.g. the Phase 0 petdx-lobster-default,
+ * which carries `asset.renderer: 'lobster-procedural'` but no
+ * spritesheet) intentionally fall through to the URL/emoji path, since
+ * PetdxRenderer can't draw them yet (Phase 0.1 follow-up). Without
+ * this guard the canvas placeholder is emitted and stays blank, which
+ * the user sees as a ❓ on the dashboard chip — exactly the bug
+ * card_44017ea5 captured the morning after PR #3032 backfilled
+ * default petdx companions for every entity.
  *
  * @param {string} avatar - emoji string or image URL
  * @param {number} [size=48] - size in px (for image avatars)
  * @param {number} [entityId] - optional entityId to consider for petdx render
  */
+function _petdxCanRenderCanvas(entityId) {
+    if (typeof window === 'undefined' || !window.AvatarPetdx) return false;
+    if (!window.AvatarPetdx.hasDescriptor(entityId)) return false;
+    if (typeof window.AvatarPetdx.getDescriptor !== 'function') return false;
+    const d = window.AvatarPetdx.getDescriptor(entityId);
+    if (!d) return false;
+    // Spritesheet renderer is the only path PetdxRenderer.createRenderer
+    // currently knows how to draw end-to-end. Procedural descriptors are
+    // recorded in the descriptor cache for future Phase 0.1 use but must
+    // not win the canvas branch today (the lobster-procedural drawer
+    // exists, but the mount → createRenderer wiring still needs work —
+    // tracked separately).
+    //
+    // Defense in depth (per #6 review on PR #3044): also require a sheet
+    // URL on the descriptor. A "tagged spritesheet but no URL" descriptor
+    // — possible during transient API failures — would otherwise emit a
+    // canvas that PetdxRenderer can't draw, reproducing the same ❓ bug.
+    const inner = d.descriptor || d;
+    const node = inner && inner.assetType === 'spritesheet' ? inner
+        : d.assetType === 'spritesheet' ? d
+        : null;
+    if (!node) return false;
+    const sheetUrl = (node.asset && node.asset.url) || node.assetUrl;
+    return typeof sheetUrl === 'string' && sheetUrl.length > 0;
+}
 function renderAvatarHtml(avatar, size, entityId) {
     size = size || 48;
-    if (entityId != null
-        && typeof window !== 'undefined'
-        && window.AvatarPetdx
-        && window.AvatarPetdx.hasDescriptor(entityId)) {
+    if (entityId != null && _petdxCanRenderCanvas(entityId)) {
         // imageRendering keeps the spritesheet pixel-art crisp at small sizes;
         // matches PetdxRenderer's ctx.imageSmoothingEnabled = false.
         return '<canvas class="entity-avatar-canvas" '
