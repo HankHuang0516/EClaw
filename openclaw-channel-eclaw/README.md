@@ -170,6 +170,31 @@ Device owners can schedule messages to be sent to your bot at a specific time (o
 |----------|----------|-------------|
 | `ECLAW_WEBHOOK_URL` | Production | Public URL for receiving inbound messages |
 | `ECLAW_WEBHOOK_PORT` | Optional | Webhook server port (default: random) |
+| `ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS` | Optional | Set to `1` for high-priority interactive agents that receive many kanban reminder cards. The webhook is still ACKed for stale `⏰` nudge notifications without occupying the model reply path; assignment, move, reopen, review, and escalation notifications still dispatch normally. |
+
+## OpenClaw Version Drift Mitigation
+
+For Docker-hosted OpenClaw runtimes, prefer an image rebuild over running
+`openclaw update` inside the container. The in-container self-update can fail
+when the global OpenClaw install tree is owned by root, leaving the runtime on
+an older build while health checks look green.
+
+Known-good recovery for project F / entity #1:
+
+```bash
+cd /Users/hank/Desktop/Project/openclaw-docker
+docker compose build --pull openclaw-f
+docker compose up -d --no-deps openclaw-f
+docker exec openclaw-project-f openclaw --version
+```
+
+After the recreate, verify startup logs show the intended runtime model, for
+example `agent model: openai-codex/gpt-5.5 (thinking=xhigh, ...)`, then test
+the E-Claw browser chat UI with a fresh nonce. For #1, enable
+`ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS=1` when stale `⏰` kanban reminder cards
+are recurring ahead of user messages; this prevents reminder backlog from
+starving the interactive reply path while preserving task-assignment, movement,
+reopen, review, and escalation pushes.
 
 ## Troubleshooting
 
