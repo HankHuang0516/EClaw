@@ -2,6 +2,23 @@ import type { EClawInboundMessage } from './types.js';
 import { getPluginRuntime } from './runtime.js';
 import { getClient, setActiveEvent, clearActiveEvent } from './outbound.js';
 
+function envFlagEnabled(name: string): boolean {
+  return /^(1|true|yes|on)$/i.test(String(process.env[name] || '').trim());
+}
+
+function kanbanNotificationSuppressionEnabled(): boolean {
+  return envFlagEnabled('ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS')
+    || envFlagEnabled('ECLAW_SKIP_KANBAN_NOTIFICATIONS');
+}
+
+function isStaleNudgeKanbanNotification(msg: EClawInboundMessage): boolean {
+  return String(msg.text || '').trimStart().startsWith('⏰');
+}
+
+function shouldSuppressKanbanNotification(msg: EClawInboundMessage): boolean {
+  return kanbanNotificationSuppressionEnabled() && isStaleNudgeKanbanNotification(msg);
+}
+
 /**
  * Create an HTTP request handler for inbound messages from E-Claw.
  *
@@ -67,6 +84,11 @@ export function createWebhookHandler(
 
       const eclawCtx = msg.eclaw_context;
       const silentToken = eclawCtx?.silentToken ?? '[SILENT]';
+
+      if (event === 'kanban_notification' && shouldSuppressKanbanNotification(msg)) {
+        console.log('[E-Claw] Stale kanban nudge suppressed by runtime policy; webhook ACKed without occupying the model reply path');
+        return;
+      }
 
       // Map E-Claw media type to OpenClaw media type
       const ocMediaType = msg.mediaType === 'photo' ? 'image'
