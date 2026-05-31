@@ -899,4 +899,11 @@ Tu suscripción permanece activa y puedes reenlazar en cualquier momento (sujeto
     <string name="fcm_channel_feedback_desc">Actualizaciones del estado de comentarios</string>
     <string name="ai_chat_status_analyzing">Analizando</string>
     <string name="ai_chat_status_processing_result">Procesando resultado</string>
+    <string name="msg_no_entities_connected">No hay entidades conectadas. Vincula las entidades primero.</string>
+    <string name="webview_title_eclawbot_portal">Portal EClawbot</string>
+    <string name="wallpaper_settings_panel_label">Configuración del fondo de pantalla</string>
+    <string name="wallpaper_settings_collapse_caret_down">▼</string>
+    <string name="wallpaper_settings_expand_action">Expandir panel de configuración</string>
+    <string name="wallpaper_settings_collapse_action">Contraer panel de configuración</string>
+    <string name="wallpaper_settings_collapse_caret_up">▲</string>
 </resources>

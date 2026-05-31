@@ -2,4 +2,11 @@
 <resources>
     <string name="ai_chat_status_analyzing">Analisi in corso</string>
     <string name="ai_chat_status_processing_result">Elaborazione risultato</string>
+    <string name="msg_no_entities_connected">Nessuna entità connessa. Associa le entità prima.</string>
+    <string name="webview_title_eclawbot_portal">Portale EClawbot</string>
+    <string name="wallpaper_settings_panel_label">Impostazioni sfondo</string>
+    <string name="wallpaper_settings_collapse_caret_down">▼</string>
+    <string name="wallpaper_settings_expand_action">Espandi pannello impostazioni</string>
+    <string name="wallpaper_settings_collapse_action">Comprimi pannello impostazioni</string>
+    <string name="wallpaper_settings_collapse_caret_up">▲</string>
 </resources>

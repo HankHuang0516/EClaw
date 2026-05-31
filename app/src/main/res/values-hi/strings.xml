@@ -974,4 +974,13 @@ GPS: केवल अनुरोध पर, कोई बैकग्राउ�
     <string name="fcm_channel_system_desc">सिस्टम सूचनाएं</string>
     <string name="fcm_channel_feedback_name">फ़ीडबैक अपडेट</string>
     <string name="fcm_channel_feedback_desc">फ़ीडबैक स्थिति अपडेट</string>
+    <string name="msg_no_entities_connected">कोई इकाई कनेक्ट नहीं है। पहले इकाइयों को बाइंड करें।</string>
+    <string name="webview_title_eclawbot_portal">EClawbot पोर्टल</string>
+    <string name="wallpaper_settings_panel_label">वॉलपेपर सेटिंग्स</string>
+    <string name="wallpaper_settings_collapse_caret_down">▼</string>
+    <string name="wallpaper_settings_expand_action">सेटिंग्स पैनल विस्तृत करें</string>
+    <string name="wallpaper_settings_collapse_action">सेटिंग्स पैनल संक्षिप्त करें</string>
+    <string name="wallpaper_settings_collapse_caret_up">▲</string>
+    <string name="ai_chat_status_processing_result">परिणाम प्रोसेस हो रहा है</string>
+    <string name="ai_chat_status_analyzing">विश्लेषण हो रहा है</string>
 </resources>

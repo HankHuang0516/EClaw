@@ -977,4 +977,11 @@ GPS: عند الطلب فقط، بلا تتبع في الخلفية، تُفقد
     <string name="fcm_channel_feedback_desc">تحديثات حالة الملاحظات</string>
     <string name="ai_chat_status_analyzing">جارٍ التحليل</string>
     <string name="ai_chat_status_processing_result">معالجة النتيجة</string>
+    <string name="msg_no_entities_connected">لا توجد جهات اتصال. اربط الجهات أولاً.</string>
+    <string name="webview_title_eclawbot_portal">بوابة EClawbot</string>
+    <string name="wallpaper_settings_panel_label">إعدادات الخلفية</string>
+    <string name="wallpaper_settings_collapse_caret_down">▼</string>
+    <string name="wallpaper_settings_expand_action">توسيع لوحة الإعدادات</string>
+    <string name="wallpaper_settings_collapse_action">طي لوحة الإعدادات</string>
+    <string name="wallpaper_settings_collapse_caret_up">▲</string>
 </resources>

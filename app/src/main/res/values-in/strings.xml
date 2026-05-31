@@ -869,4 +869,13 @@ Jika ada pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="fcm_channel_system_desc">Notifikasi sistem</string>
     <string name="fcm_channel_feedback_name">Pembaruan masukan</string>
     <string name="fcm_channel_feedback_desc">Pembaruan status masukan</string>
+    <string name="msg_no_entities_connected">Tidak ada entitas yang terhubung. Ikat entitas terlebih dahulu.</string>
+    <string name="webview_title_eclawbot_portal">Portal EClawbot</string>
+    <string name="wallpaper_settings_panel_label">Pengaturan wallpaper</string>
+    <string name="wallpaper_settings_collapse_caret_down">▼</string>
+    <string name="wallpaper_settings_expand_action">Perluas panel pengaturan</string>
+    <string name="wallpaper_settings_collapse_action">Ciutkan panel pengaturan</string>
+    <string name="wallpaper_settings_collapse_caret_up">▲</string>
+    <string name="ai_chat_status_processing_result">Memproses hasil</string>
+    <string name="ai_chat_status_analyzing">Menganalisis</string>
 </resources>
