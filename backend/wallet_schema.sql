@@ -51,7 +51,7 @@ CREATE INDEX IF NOT EXISTS idx_wallets_updated ON wallets(updated_at DESC);
 -- type values (mirror LEDGER_TYPES in wallet.js):
 --   topup, rental_income, rental_spend, platform_fee,
 --   deposit_hold, deposit_release, deposit_forfeit,
---   referral_bonus, signup_bonus, refund, admin_adjust, withdraw
+--   referral_bonus, signup_bonus, invite_first_topup_bonus, refund, admin_adjust, withdraw
 CREATE TABLE IF NOT EXISTS wallet_ledger (
     id BIGSERIAL PRIMARY KEY,
     user_id UUID NOT NULL,
