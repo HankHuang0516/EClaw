@@ -77,11 +77,25 @@ function _petdxDescriptorAvatarUrl(entityId) {
 }
 
 /**
- * Get the avatar for an entity, per Phase 0 amendment §0.4 priority chain:
+ * Get the avatar for an entity, per the §0.4 priority chain.
+ *
+ * Originally Phase 0 placed the /api/entities enrichment URL ahead of the
+ * live descriptor URL on the assumption that the enrichment ALWAYS reflects
+ * the current companion selection — but `/api/companion/select` updates the
+ * companion-current table without writing back to PETDX_AVATAR_<id>, so the
+ * vault enrichment quickly goes stale once a user borrows or switches
+ * companions through the marketplace. The dashboard then keeps painting the
+ * Phase-0 default lobster even when the entity is wearing a rented sprite
+ * companion (see card_44017ea5 follow-up + Hank's morning report).
+ *
+ * Live descriptor URL is now ahead of vault enrichment. The vault entry stays
+ * in the chain as a fast-paint fallback for the brief window before
+ * AvatarPetdx.preload() resolves.
+ *
  *   1. _entityAvatarMap (explicit non-default avatar — URL or user-set emoji)
  *   2. localStorage user override
- *   3. _entityPetdxAvatarMap (PETDX_AVATAR_<id> from /api/entities enrichment)
- *   4. AvatarPetdx.descriptorAvatarUrl(entityId) — cached descriptor.avatar.url
+ *   3. AvatarPetdx.descriptorAvatarUrl(entityId) — live cached companion URL
+ *   4. _entityPetdxAvatarMap (PETDX_AVATAR_<id> from /api/entities enrichment) — fast-paint fallback
  *   5. live character → emoji (PR #3027 stopgap, kept until §0.6 quarantine ends)
  *   6. legacy ENTITY_CHARS_DEFAULT
  *   7. final emoji fallback
@@ -90,10 +104,10 @@ function getAvatarForEntity(entityId) {
     if (_entityAvatarMap[entityId]) return _entityAvatarMap[entityId];
     const saved = localStorage.getItem('eclaw_avatar_' + entityId);
     if (saved) return saved;
-    const fromEnrichment = _petdxAvatarUrl(entityId);
-    if (fromEnrichment) return fromEnrichment;
     const fromDescriptor = _petdxDescriptorAvatarUrl(entityId);
     if (fromDescriptor) return fromDescriptor;
+    const fromEnrichment = _petdxAvatarUrl(entityId);
+    if (fromEnrichment) return fromEnrichment;
     const fromCharacter = _characterEmoji(entityId);
     if (fromCharacter) return fromCharacter;
     const char = ENTITY_CHARS_DEFAULT[entityId];
