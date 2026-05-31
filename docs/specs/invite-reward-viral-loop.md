@@ -177,6 +177,8 @@ Follow-up migration options:
 - Relax `invitee_user_id NOT NULL` only when live device-auth redemptions will dual-write here.
 - Add a partial uniqueness guard for live device redemptions:
   `UNIQUE (code) WHERE reward_type = 'redeem'`.
+- Add a partial uniqueness guard for one redeem payout per inviter/invitee device pair:
+  `UNIQUE (inviter_device_id, invitee_device_id) WHERE reward_type = 'redeem'`.
 - Add `reward_type` values: `redeem`, `first_topup`.
 
 If relaxing `invite_redemptions` is too risky, create a separate `invite_reward_events` audit table with the same columns above and leave Phase-5 `invite_redemptions` untouched until the account migration.
@@ -274,6 +276,7 @@ Error responses should keep current HTTP classes:
 | Code not found | `404` | `invite_code_not_found` |
 | Code already used | `409` | `invite_code_already_used` |
 | Self invite | `400` | `self_invite` |
+| Invitee already redeemed this owner | `400` | `invitee_already_redeemed_owner` |
 | Auth missing/invalid | `401` or `403` | existing auth error |
 
 ### Transaction requirement
@@ -283,12 +286,13 @@ Redeem, audit, and wallet credit must be one logical operation. Preferred backen
 1. Open one database transaction.
 2. `SELECT ... FROM invite_codes WHERE code = $1 FOR UPDATE`.
 3. Enforce code/self-use constraints.
-4. Resolve inviter and invitee user IDs from `user_accounts.device_id`.
-5. Mark `invite_codes.used_by_device_id` and `used_at`.
-6. Preserve legacy `invite_rewards` updates during the migration.
-7. Insert or update the redemption reward audit row.
-8. Write wallet ledger entries with stable idempotency keys.
-9. Commit.
+4. Enforce the owner-once guard: `SELECT 1 FROM invite_codes WHERE owner_device_id = $1 AND used_by_device_id = $2 LIMIT 1`; if a row exists for the code owner and invitee device, reject with `400 invitee_already_redeemed_owner`.
+5. Resolve inviter and invitee user IDs from `user_accounts.device_id`.
+6. Mark `invite_codes.used_by_device_id` and `used_at`.
+7. Preserve legacy `invite_rewards` updates during the migration.
+8. Insert or update the redemption reward audit row.
+9. Write wallet ledger entries with stable idempotency keys.
+10. Commit.
 
 If a single transaction cannot be shared cleanly across `authModule.pool` and `walletModule`, use `walletModule.withTransaction` and run all invite queries on that client, since the tables live in the same database.
 
@@ -310,6 +314,8 @@ Keep current fields and add wallet-backed reward stats:
   "tier": "bronze"
 }
 ```
+
+The returned `code` must be the caller's current active code, resolved with the same active-code selection and auto-rotate logic as `GET /api/invite/my-code`. Implement this through a shared helper or the same transactional active-code select/retry flow so stats never returns a redeemed historical code.
 
 ### Growth API
 
@@ -434,7 +440,7 @@ P1 should replace `activated_invitees = redeemed` with a real activation event.
 
 ### Spec PR
 
-- `docs/specs/invite-reward-viral-loop.md` exists and documents current state, gaps, schema/API/frontend/metric decisions, acceptance, and PR split.
+- `docs/specs/invite-reward-viral-loop.md` exists and documents current state, gaps, code lifecycle, schema/API/frontend/metric decisions, acceptance, and PR split.
 - No production code is changed in the spec PR.
 
 ### Schema PR
@@ -516,6 +522,7 @@ Required invariants:
 
 - A device may own many historical invite codes.
 - A device may have at most one active unredeemed invite code at a time.
+- The same invitee device may redeem the same owner only once, even if that owner later receives a fresh active code.
 - `GET /api/invite/my-code` must never return a code whose `used_by_device_id` is non-null.
 - If an active unredeemed code exists, `GET /api/invite/my-code` returns it idempotently.
 - If all of the owner's codes are redeemed, `GET /api/invite/my-code` mints one new active code and returns it.
@@ -528,6 +535,8 @@ This keeps the existing share UX: the page asks for "my code" before showing/cop
 The live table already has `code` as the primary key and no unique constraint on `owner_device_id`, so multi-row ownership is compatible with the table shape. The schema comments and query semantics must change from "one unique code per device" to "one active code per device, many historical codes per device."
 
 Recommended DB guard:
+
+Before adding the active-code partial unique index, run a dedupe/backfill migration for existing duplicate active rows. For each `owner_device_id` with more than one active unredeemed code, keep the newest `created_at` row active and expire the rest using the final schema's inactive marker. Expired duplicates must not be returned by active-code resolution and must not be counted as redeemed invitees or milestone progress.
 
 ```sql
 CREATE UNIQUE INDEX IF NOT EXISTS idx_invite_codes_one_active_per_owner
@@ -579,6 +588,7 @@ Rules:
 
 - Active unredeemed codes count as `0` redeemed invitees.
 - Redeemed historical codes continue to count forever for lifetime milestones.
+- Multiple codes redeemed by the same `used_by_device_id` for the same owner count as one invitee; the owner-once guard should reject any second redemption before this happens.
 - Replays of the same redemption must not increment `total_invited` again.
 - The `milestones_claimed` bitmask remains the idempotency guard for threshold payouts at `3 / 10 / 30 / 100`.
 - For k-value, date-scoped `redeemed` should still use redemption time (`invite_codes.used_at` or audit `redeemed_at`), while lifetime milestones use the cumulative redeemed-invitee total.
