@@ -87,4 +87,36 @@ describe('renderAvatarHtml — canvas-vs-URL guard (Phase 0 dashboard bug fix)',
         expect(html).toContain('<img');
         expect(html).not.toContain('<canvas');
     });
+
+    test('spritesheet descriptor with no sheet URL is treated as un-renderable (per #6 review)', () => {
+        const ctx = loadResolver();
+        ctx.window.AvatarPetdx = {
+            hasDescriptor: () => true,
+            // descriptor is tagged spritesheet but the API failed to return a sheet URL.
+            // Emitting a canvas would reproduce the same blank-canvas ❓ that motivated this fix.
+            getDescriptor: () => ({
+                assetType: 'spritesheet',
+                descriptor: { assetType: 'spritesheet', asset: {} },
+            }),
+        };
+        ctx.updateEntityMaps([{ entityId: 1, character: 'LOBSTER', avatar: null, petdxAvatarUrl: PETDX_LOBSTER_URL }]);
+        const html = ctx.renderAvatarHtml(ctx.getAvatarForEntity(1), 48, 1);
+        expect(html).toContain('<img src="' + PETDX_LOBSTER_URL + '"');
+        expect(html).not.toContain('<canvas');
+    });
+
+    test('spritesheet descriptor with assetUrl (alt shape) also flows through', () => {
+        const ctx = loadResolver();
+        ctx.window.AvatarPetdx = {
+            hasDescriptor: () => true,
+            getDescriptor: () => ({
+                assetType: 'spritesheet',
+                assetUrl: 'https://r2/sheet.webp',
+            }),
+        };
+        ctx.updateEntityMaps([{ entityId: 1, character: 'LOBSTER', avatar: '🐱' }]);
+        const html = ctx.renderAvatarHtml('🐱', 48, 1);
+        expect(html).toContain('<canvas');
+        expect(html).toContain('data-petdx-entity-id="1"');
+    });
 });

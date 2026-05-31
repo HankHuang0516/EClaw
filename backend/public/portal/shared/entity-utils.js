@@ -153,13 +153,23 @@ function _petdxCanRenderCanvas(entityId) {
     const d = window.AvatarPetdx.getDescriptor(entityId);
     if (!d) return false;
     // Spritesheet renderer is the only path PetdxRenderer.createRenderer
-    // currently knows how to draw. Procedural descriptors are recorded
-    // in the descriptor cache for future Phase 0.1 use but must not win
-    // the canvas branch today.
+    // currently knows how to draw end-to-end. Procedural descriptors are
+    // recorded in the descriptor cache for future Phase 0.1 use but must
+    // not win the canvas branch today (the lobster-procedural drawer
+    // exists, but the mount → createRenderer wiring still needs work —
+    // tracked separately).
+    //
+    // Defense in depth (per #6 review on PR #3044): also require a sheet
+    // URL on the descriptor. A "tagged spritesheet but no URL" descriptor
+    // — possible during transient API failures — would otherwise emit a
+    // canvas that PetdxRenderer can't draw, reproducing the same ❓ bug.
     const inner = d.descriptor || d;
-    if (inner && inner.assetType === 'spritesheet') return true;
-    if (d.assetType === 'spritesheet') return true;
-    return false;
+    const node = inner && inner.assetType === 'spritesheet' ? inner
+        : d.assetType === 'spritesheet' ? d
+        : null;
+    if (!node) return false;
+    const sheetUrl = (node.asset && node.asset.url) || node.assetUrl;
+    return typeof sheetUrl === 'string' && sheetUrl.length > 0;
 }
 function renderAvatarHtml(avatar, size, entityId) {
     size = size || 48;
