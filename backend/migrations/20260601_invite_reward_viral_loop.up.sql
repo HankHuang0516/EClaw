@@ -4,6 +4,17 @@
 -- Non-breaking: all new columns have defaults; existing rows auto-populate
 
 -- ============================================================
+-- 0. invite_codes — partial unique index (spec § 11, Option B)
+-- One active (non-redeemed) invite code per owner_device_id.
+-- Enables auto-rotate: after redeem, a new code can be minted for
+-- the same owner without violating the per-owner uniqueness constraint.
+-- Idempotent: CREATE UNIQUE INDEX IF NOT EXISTS skips existing.
+-- ============================================================
+CREATE UNIQUE INDEX IF NOT EXISTS idx_invite_codes_one_active_per_owner
+    ON invite_codes (owner_device_id)
+    WHERE used_by_device_id IS NULL;
+
+-- ============================================================
 -- 1. ALTER invite_redemptions — add audit columns (all non-breaking)
 -- ============================================================
 -- NOTE: device_id columns are VARCHAR(64) per auth_schema.sql convention,
