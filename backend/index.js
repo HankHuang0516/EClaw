@@ -2239,6 +2239,11 @@ const companionModule = require('./companion-api')({
     authenticateBot,
     authenticateDeviceOrBot,
     serverLog,
+    // Per spec §0.4a (2026-05-31 amendment): /api/companion/select must
+    // atomically mirror the select into the vault. The factory is hoisted
+    // (function declaration further down in this file) so the forward
+    // reference is safe.
+    createPetdxPhase0Io,
 });
 app.use('/api/companion', companionModule.router);
 if (process.env.NODE_ENV !== 'test') {
