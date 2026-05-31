@@ -491,3 +491,94 @@ P1 should replace `activated_invitees = redeemed` with a real activation event.
 2. Should the legacy bonus-message rewards continue after wallet rewards launch, or become a temporary migration-only compatibility field?
 3. Should first-topup bonus ship in the backend extension PR, or wait for a separate top-up integration PR?
 4. What activation event should replace `activated_invitees = redeemed` for P1 k-value: first chat, first bot bind, first marketplace action, or first rental?
+
+## 11. Invite Code Lifecycle
+
+### Logic gap to close before backend implementation
+
+The live route currently treats `GET /api/invite/my-code` as one row per device while `POST /api/invite/redeem` treats each code as redeemable once total. That combination caps each inviter at one lifetime redeemed invitee, which makes `k > 1` and the `3 / 10 / 30 / 100` milestones unreachable.
+
+Backend PR2 is blocked until the invite lifecycle explicitly supports more than one redeemed invitee per owner.
+
+### Mint strategy options
+
+| Option | Behavior | Pros | Cons | Schema impact |
+|---|---|---|---|---|
+| A. Explicit mint endpoint | Add `POST /api/invite/code`; `GET /api/invite/my-code` returns the current active code, while a user action mints a new code when needed. | Clear API boundary and easy rate-limit semantics. | Adds user-visible code management and an extra frontend action before sharing again. | Requires multi-row `invite_codes` per `owner_device_id` over time and an active-code selection rule. |
+| B. Auto-rotate after redeem | `GET /api/invite/my-code` returns an unused active code. If the owner's active code has been redeemed and no unused code exists, it mints exactly one fresh replacement and returns it. | Recommended: simplest UX, keeps share flows unchanged, and every share can use a fresh code without exposing code-management UI. | Requires careful idempotency so repeated or concurrent `GET` calls do not mint multiple active codes. | Requires multi-row `invite_codes` per `owner_device_id` over time, with at most one active unredeemed row per owner. |
+| C. Multiple active codes | Allow up to 10 active unredeemed codes per device, optionally grouped by channel/source. | Useful for attribution across QR, native share, campaigns, and communities. | Larger abuse surface and more UI/API complexity than P0 needs. | Requires multi-row active codes, an active-code cap, code status semantics, and possibly source/channel columns. |
+
+### Recommended contract: B, auto-rotate after redeem
+
+Use option B for P0.
+
+Required invariants:
+
+- A device may own many historical invite codes.
+- A device may have at most one active unredeemed invite code at a time.
+- `GET /api/invite/my-code` must never return a code whose `used_by_device_id` is non-null.
+- If an active unredeemed code exists, `GET /api/invite/my-code` returns it idempotently.
+- If all of the owner's codes are redeemed, `GET /api/invite/my-code` mints one new active code and returns it.
+- `POST /api/invite/redeem` continues to consume exactly one code and must not auto-mint for the inviter, because the inviter is not the caller. The inviter receives a fresh code on their next `GET /api/invite/my-code`.
+
+This keeps the existing share UX: the page asks for "my code" before showing/copying a link, and the backend guarantees that the returned code is usable.
+
+### Schema impact
+
+The live table already has `code` as the primary key and no unique constraint on `owner_device_id`, so multi-row ownership is compatible with the table shape. The schema comments and query semantics must change from "one unique code per device" to "one active code per device, many historical codes per device."
+
+Recommended DB guard:
+
+```sql
+CREATE UNIQUE INDEX IF NOT EXISTS idx_invite_codes_one_active_per_owner
+    ON invite_codes(owner_device_id)
+    WHERE used_by_device_id IS NULL;
+```
+
+If the implementation uses `used_at` as the canonical consumed marker, mirror the predicate as `WHERE used_at IS NULL`; otherwise keep `used_by_device_id IS NULL` because that is the live per-code-once guard.
+
+No new table is required for P0 auto-rotate. A future P1/P2 attribution feature can add `status`, `source`, `channel`, `expires_at`, or a dedicated `invite_code_events` table if multiple active codes become necessary.
+
+### Rate-limit and idempotency
+
+`GET /api/invite/my-code` must be safe to retry and safe under concurrency.
+
+Implementation requirements:
+
+1. In a transaction, select the owner's active code: `WHERE owner_device_id = $1 AND used_by_device_id IS NULL`.
+2. If one exists, return it without minting.
+3. If none exists, mint a code and insert it.
+4. Enforce the partial unique index above so two concurrent requests cannot create two active codes.
+5. If the insert hits the partial unique constraint, re-select the active code and return that code.
+
+The endpoint should not expose a user-controlled "rotate" action in P0. That makes mint volume naturally bounded by successful redemptions plus one active code.
+
+Additional safety limits:
+
+- Reuse the existing authenticated invite endpoint rate-limit.
+- Add a server-side mint ceiling such as `max 100 new codes per owner per 24h` as a fraud backstop, counted by `invite_codes.created_at`.
+- Do not count idempotent returns of an existing active code against the mint ceiling.
+- A code generation collision should retry with a fresh code; it must not consume the owner's daily mint allowance unless an insert succeeds.
+
+### Milestone counting logic
+
+Milestones must count cumulative redeemed invitees, not current codes and not active codes.
+
+Canonical P0 count:
+
+```sql
+SELECT COUNT(DISTINCT used_by_device_id)
+FROM invite_codes
+WHERE owner_device_id = $1
+  AND used_by_device_id IS NOT NULL;
+```
+
+The existing `invite_rewards.total_invited` can remain the fast path if it is incremented exactly once in the same transaction that consumes a code. Any repair, backfill, admin view, or consistency check should derive the count from historical redeemed codes or from the redemption audit table after PR1 lands.
+
+Rules:
+
+- Active unredeemed codes count as `0` redeemed invitees.
+- Redeemed historical codes continue to count forever for lifetime milestones.
+- Replays of the same redemption must not increment `total_invited` again.
+- The `milestones_claimed` bitmask remains the idempotency guard for threshold payouts at `3 / 10 / 30 / 100`.
+- For k-value, date-scoped `redeemed` should still use redemption time (`invite_codes.used_at` or audit `redeemed_at`), while lifetime milestones use the cumulative redeemed-invitee total.
