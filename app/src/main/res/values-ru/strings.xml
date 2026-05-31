@@ -853,11 +853,4 @@
     <string name="tool_status_writing">Запись файла…</string>
     <string name="custom_layout_enabled">Пользовательский макет включен</string>
     <string name="custom_layout_using_preset">Использование предустановленного макета</string>
-    <string name="msg_no_entities_connected">Нет подключённых сущностей. Сначала привяжите сущности.</string>
-    <string name="webview_title_eclawbot_portal">Портал EClawbot</string>
-    <string name="wallpaper_settings_panel_label">Настройки обоев</string>
-    <string name="wallpaper_settings_collapse_caret_down">▼</string>
-    <string name="wallpaper_settings_expand_action">Развернуть панель настроек</string>
-    <string name="wallpaper_settings_collapse_action">Свернуть панель настроек</string>
-    <string name="wallpaper_settings_collapse_caret_up">▲</string>
 </resources>
