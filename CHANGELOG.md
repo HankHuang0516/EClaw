@@ -1,3 +1,10 @@
+# [1.1193.0](https://github.com/HankHuang0516/EClaw/compare/v1.1192.3...v1.1193.0) (2026-05-31)
+
+
+### Features
+
+* **petdx Phase 0:** atomic vault sync on /api/companion/select (§0.4a) ([#3050](https://github.com/HankHuang0516/EClaw/issues/3050)) ([9cae851](https://github.com/HankHuang0516/EClaw/commit/9cae8518ae7d9c0aa533259d4bbbf8633d58b9d9))
+
 ## [1.1192.3](https://github.com/HankHuang0516/EClaw/compare/v1.1192.2...v1.1192.3) (2026-05-31)
 
 
