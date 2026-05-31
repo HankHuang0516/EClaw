@@ -984,9 +984,9 @@ Si vous avez des questions, contactez-nous via notre e-mail officiel.
     <string name="wallpaper_reset_window_weekly">Hebdomadaire</string>
     <string name="wallpaper_reset_window_weekly_next">Prochaine réinitialisation hebdomadaire : %1$s</string>
     <string name="wallpaper_reset_window_weekly_next_per_engine">Prochaine réinitialisation hebdomadaire (%1$s) : %2$s</string>
-    <string name="msg_no_entities_connected">Aucune entité connectée. Liez les entités d'abord.</string>
+    <string name="msg_no_entities_connected">Aucune entité connectée. Liez les entités d\'abord.</string>
     <string name="webview_title_eclawbot_portal">Portail EClawbot</string>
-    <string name="wallpaper_settings_panel_label">Paramètres du fond d'écran</string>
+    <string name="wallpaper_settings_panel_label">Paramètres du fond d\'écran</string>
     <string name="wallpaper_settings_collapse_caret_down">▼</string>
     <string name="wallpaper_settings_expand_action">Développer le panneau de paramètres</string>
     <string name="wallpaper_settings_collapse_action">Réduire le panneau de paramètres</string>
