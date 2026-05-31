@@ -1181,6 +1181,12 @@
                             <span data-i18n="kanban_nudge_per_entity_hint_prefix">Toggle a field to override the device default for this entity.</span>
                         </p>
 
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:6px 8px;border:1px solid rgba(251,191,36,0.35);border-radius:8px;background:rgba(251,191,36,0.08);">
+                            <input type="checkbox" id="kanbanNudgeEntStopMode"
+                                   onchange="onKanbanNudgeEntityOverrideToggle('kanban_nudge_stop_mode', this.checked)">
+                            <span data-i18n="kanban_nudge_per_entity_stop_mode">Stop-mode: pause stale-card reminders for this entity</span>
+                        </label>
+
                         <!-- Override row: interval -->
                         <div style="display:flex;flex-direction:column;gap:6px;">
                             <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
@@ -2381,6 +2387,12 @@
             }
         }
 
+        window.onSocketDevicePreferences = function(data) {
+            if (!data || !data.prefs) return;
+            applyChatAvatarSizePref(data.prefs);
+            applyKanbanNudgePrefs(data.prefs);
+        };
+
         const CHAT_AVATAR_SIZE_VALUES = ['small', 'medium', 'large'];
 
         function normalizeChatAvatarSize(value) {
@@ -2779,10 +2791,16 @@
 
         async function saveKanbanNudgePref(key, value) {
             try {
-                await apiCall('PUT', '/api/device-preferences', { prefs: { [key]: value } });
+                const data = await apiCall('PUT', '/api/device-preferences', { prefs: { [key]: value } });
+                if (data && data.prefs) applyKanbanNudgePrefs(data.prefs);
+                markKanbanNudgePrefsUpdated();
             } catch (e) {
                 showToast(i18n.t('toast_preference_update_failed'), 'error');
             }
+        }
+
+        function markKanbanNudgePrefsUpdated() {
+            try { localStorage.setItem('eclaw_kanban_nudge_prefs_updated', String(Date.now())); } catch (_) { }
         }
 
         async function saveKanbanNudgeStatuses() {
@@ -2863,6 +2881,9 @@
 
             const base = kanbanNudgeEntityState.basePrefs || {};
 
+            const stopEl = document.getElementById('kanbanNudgeEntStopMode');
+            if (stopEl) stopEl.checked = override.kanban_nudge_stop_mode === true;
+
             // Interval row
             const hasIntervalOverride = 'kanban_nudge_interval_minutes' in override;
             const intervalToggle = document.getElementById('kanbanNudgeEntOverrideInterval');
@@ -2928,6 +2949,7 @@
                 if (data && data.prefs) {
                     kanbanNudgeEntityState.basePrefs = data.prefs;
                 }
+                markKanbanNudgePrefsUpdated();
                 renderKanbanNudgeEntityPanel();
             } catch (err) {
                 showToast(i18n.t('toast_preference_update_failed') || 'Update failed', 'error');
@@ -2951,6 +2973,8 @@
                         : ['todo','in_progress','review'];
                 } else if (field === 'kanban_nudge_per_entity_throttle') {
                     next[field] = base.kanban_nudge_per_entity_throttle !== false;
+                } else if (field === 'kanban_nudge_stop_mode') {
+                    next[field] = true;
                 }
             } else {
                 delete next[field];
@@ -2993,6 +3017,7 @@
                     overrides: null,
                 });
                 if (data && data.prefs) kanbanNudgeEntityState.basePrefs = data.prefs;
+                markKanbanNudgePrefsUpdated();
                 renderKanbanNudgeEntityPanel();
             } catch (err) {
                 showToast(i18n.t('toast_preference_update_failed') || 'Update failed', 'error');

@@ -54,6 +54,10 @@ function initPortalSocket() {
         if (typeof onSocketChannelAccountsUpdated === 'function') onSocketChannelAccountsUpdated();
     });
 
+    portalSocket.on('device:preferences', (data) => {
+        if (typeof onSocketDevicePreferences === 'function') onSocketDevicePreferences(data);
+    });
+
     portalSocket.on('disconnect', () => {
         console.log('[Socket] Disconnected');
     });

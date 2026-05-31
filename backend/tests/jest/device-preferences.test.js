@@ -249,6 +249,7 @@ describe('kanban_nudge_per_entity_overrides', () => {
             'kanban_nudge_interval_minutes',
             'kanban_nudge_statuses',
             'kanban_nudge_per_entity_throttle',
+            'kanban_nudge_stop_mode',
         ]);
     });
 
@@ -263,6 +264,9 @@ describe('kanban_nudge_per_entity_overrides', () => {
                 '5': {
                     kanban_nudge_interval_minutes: 360,
                     kanban_nudge_per_entity_throttle: false,
+                },
+                '6': {
+                    kanban_nudge_stop_mode: true,
                 },
             },
         };
@@ -285,6 +289,12 @@ describe('kanban_nudge_per_entity_overrides', () => {
             const merged = devicePrefsModule.mergeEntityOverride(base, 5);
             expect(merged.kanban_nudge_interval_minutes).toBe(360);
             expect(merged.kanban_nudge_per_entity_throttle).toBe(false);
+        });
+
+        it('overrides stop-mode independently', () => {
+            const merged = devicePrefsModule.mergeEntityOverride(base, 6);
+            expect(merged.kanban_nudge_stop_mode).toBe(true);
+            expect(merged.kanban_nudge_interval_minutes).toBe(180);
         });
 
         it('accepts numeric or string entityId', () => {

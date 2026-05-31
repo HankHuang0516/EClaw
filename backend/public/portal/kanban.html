@@ -84,6 +84,9 @@
         .kb-card-avatar-face { width:16px; height:16px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:10px; flex-shrink:0; overflow:hidden; }
         .kb-card-avatar-face img,
         .kb-card-avatar-face canvas { width:16px; height:16px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+        .kb-card-avatar-face.nudge-stopped { position:relative; overflow:visible; }
+        .kb-card-avatar-face.nudge-stopped::after { content:''; position:absolute; right:-1px; bottom:-1px; width:0; height:0; border-left:8px solid transparent; border-bottom:8px solid #fbbf24; filter:drop-shadow(0 0 2px rgba(0,0,0,.45)); }
+        .kb-card-avatar-face.nudge-stopped::before { content:'!'; position:absolute; right:0; bottom:-1px; z-index:1; color:#111827; font-size:7px; line-height:1; font-weight:900; }
         .kb-card-avatar-name { color:var(--text-secondary); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60px; }
 
         .kb-card-title { font-size:13px; font-weight:600; color:var(--text); margin-bottom:4px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
@@ -1160,6 +1163,7 @@
         let mobileTab = 'backlog';
         let openCardId = null;
         let boundEntities = [];
+        let kanbanNudgeStopEntityIds = new Set();
         let dragCard = null;
 
         /* i18n helper: get translated text or fallback */
@@ -1193,6 +1197,7 @@
             if (typeof renderFooter === 'function') renderFooter();
             const user = await checkAuth();
             if (!user) return;
+            initPortalSocket();
             const navEl = document.getElementById('navEmail');
             if (navEl) navEl.textContent = user.email || '';
             if (typeof initAiChat === 'function') initAiChat(user);
@@ -1217,6 +1222,7 @@
                 }
             } catch(e) {}
             populateFunnelEntities();
+            await loadKanbanNudgeStopModes();
 
             await loadCards();
             initDragDrop();
@@ -1316,6 +1322,53 @@
         let autoViewMode = 'timeline';
 
         // ── API ──
+        function applyKanbanNudgeStopPrefs(prefs) {
+            const stopIds = new Set();
+            const overrides = prefs?.kanban_nudge_per_entity_overrides || {};
+            const baseStopped = prefs?.kanban_nudge_stop_mode === true;
+            for (const entity of boundEntities || []) {
+                const eid = Number(entity.entityId);
+                if (!Number.isFinite(eid)) continue;
+                const override = overrides[String(eid)] || {};
+                const stopped = Object.prototype.hasOwnProperty.call(override, 'kanban_nudge_stop_mode')
+                    ? override.kanban_nudge_stop_mode === true
+                    : baseStopped;
+                if (stopped) stopIds.add(eid);
+            }
+            kanbanNudgeStopEntityIds = stopIds;
+        }
+
+        async function loadKanbanNudgeStopModes() {
+            try {
+                const data = await apiCall('GET', '/api/device-preferences');
+                applyKanbanNudgeStopPrefs(data.prefs || {});
+            } catch (err) {
+                console.warn('[Kanban] load nudge stop modes failed:', err.message);
+                kanbanNudgeStopEntityIds = new Set();
+            }
+        }
+
+        async function refreshKanbanNudgeStopModes() {
+            await loadKanbanNudgeStopModes();
+            renderBoard(true);
+        }
+
+        function isKanbanNudgeStopped(entityId) {
+            return kanbanNudgeStopEntityIds.has(Number(entityId));
+        }
+
+        window.onSocketDevicePreferences = function(data) {
+            if (!data || !data.prefs) return;
+            applyKanbanNudgeStopPrefs(data.prefs);
+            renderBoard(true);
+        };
+
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'eclaw_kanban_nudge_prefs_updated') {
+                refreshKanbanNudgeStopModes();
+            }
+        });
+
         async function loadCards() {
             try {
                 const extra = funnelQueryParams();
@@ -1511,8 +1564,12 @@
             if (!botIds || !botIds.length) return '';
             return '<span class="kb-card-avatars">' + botIds.map(id => {
                 const name = typeof getEntityDisplayName === 'function' ? getEntityDisplayName(id) : '#'+id;
-                const avatarHtml = renderKanbanEntityAvatar(id, 16, 'kb-card-avatar-face');
-                return `<span class="kb-card-avatar-chip">${avatarHtml}<span class="kb-card-avatar-name">${escapeHtml(name)}</span></span>`;
+                const stopped = isKanbanNudgeStopped(id);
+                const avatarClass = 'kb-card-avatar-face' + (stopped ? ' nudge-stopped' : '');
+                const avatarHtml = renderKanbanEntityAvatar(id, 16, avatarClass);
+                const stopTitle = t('kanban_nudge_stop_mode_avatar_title', 'Nudge stop-mode enabled');
+                const title = stopped ? `${name} - ${stopTitle}` : name;
+                return `<span class="kb-card-avatar-chip" title="${escapeHtml(title)}">${avatarHtml}<span class="kb-card-avatar-name">${escapeHtml(name)}</span></span>`;
             }).join('') + '</span>';
         }
 

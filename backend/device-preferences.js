@@ -18,6 +18,9 @@ const DEFAULTS = {
     kanban_nudge_statuses: [...KanbanStatus.NUDGE_DEFAULT_STATUSES],
     // 內容督促 hard cap per (device, entity): 1 nudge / interval regardless of card count.
     kanban_nudge_per_entity_throttle: true,
+    // Stop-mode pauses stale-card nudges for an entity without changing card ownership.
+    // Exposed through per-entity overrides; device default remains false.
+    kanban_nudge_stop_mode: false,
     // Phase 2 (card_e066cb6b / kanban-nudge-spec.md §6): per-entity overrides on top
     // of the device-wide defaults above. Shape: { "<entityId>": { ...partialPrefs } }.
     // Only the keys in NUDGE_ENTITY_OVERRIDE_KEYS may be overridden — batch_size and
@@ -33,6 +36,7 @@ const NUDGE_ENTITY_OVERRIDE_KEYS = [
     'kanban_nudge_interval_minutes',
     'kanban_nudge_statuses',
     'kanban_nudge_per_entity_throttle',
+    'kanban_nudge_stop_mode',
 ];
 
 // Decommissioned 2026-05-03 (card_dfe3b8df Phase 2): kanban_cron_spawn_notify.
