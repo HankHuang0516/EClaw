@@ -23,7 +23,8 @@ describe('kanban entity avatars match dashboard resolver chain', () => {
         expect(helperBlock).toContain('getAvatarForEntity(eid)');
         expect(helperBlock).toContain('renderAvatarHtml(avatar');
 
-        expect(src).toContain("renderKanbanEntityAvatar(id, 16, 'kb-card-avatar-face')");
+        expect(src).toContain("const avatarClass = 'kb-card-avatar-face' + (stopped ? ' nudge-stopped' : '')");
+        expect(src).toContain('renderKanbanEntityAvatar(id, 16, avatarClass)');
         expect(src).toContain("renderKanbanEntityAvatar(e.entityId, 16, 'kb-assign-avatar')");
         expect(src).toContain("renderKanbanEntityAvatar(fromId, 16, 'comment-avatar')");
         expect(src).toContain("renderKanbanEntityAvatar(eid, 24, 'kb-tl-lane-avatar')");
