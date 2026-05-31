@@ -121,6 +121,112 @@
             box-shadow: 0 6px 14px rgba(99, 102, 241, 0.35);
         }
 
+        /* ── Invite CTA Banner ── */
+        .invite-cta-banner {
+            background: linear-gradient(135deg, rgba(99,102,241,0.15) 0%, rgba(168,85,247,0.12) 100%);
+            border: 1px solid rgba(99,102,241,0.35);
+            border-radius: 16px;
+            padding: 20px 24px;
+            margin: 0 0 24px;
+            display: none;
+        }
+        .invite-cta-banner.visible { display: block; }
+        .invite-cta-inner {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .invite-cta-icon {
+            font-size: 36px;
+            flex-shrink: 0;
+        }
+        .invite-cta-body { flex: 1; min-width: 200px; }
+        .invite-cta-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+        .invite-cta-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        .invite-cta-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .invite-cta-code-box {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-pill);
+            padding: 6px 12px;
+        }
+        .invite-cta-code {
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: var(--primary);
+            font-family: monospace;
+        }
+        .invite-cta-copy-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: color 0.2s;
+        }
+        .invite-cta-copy-btn:hover { color: var(--primary); }
+        .invite-cta-copy-btn.copied { color: var(--success); }
+        .invite-cta-share-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 14px;
+            border-radius: var(--radius-pill);
+            background: var(--primary);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            transition: opacity 0.2s, transform 0.15s;
+            text-decoration: none;
+        }
+        .invite-cta-share-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+        .invite-cta-more-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 14px;
+            border-radius: var(--radius-pill);
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid var(--card-border);
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .invite-cta-more-btn:hover { border-color: var(--primary); color: var(--primary); }
+        @media (max-width: 540px) {
+            .invite-cta-inner { flex-direction: column; align-items: flex-start; }
+            .invite-cta-actions { width: 100%; }
+        }
+
         /* ── Featured this week (rotation) ── */
         .featured-week {
             margin: 0 0 28px;
@@ -828,6 +934,25 @@
             <!-- Real data from API -->
         </div>
 
+        <!-- ── Invite CTA Banner (injected by JS when authenticated) ── -->
+        <div id="inviteCtaBanner" class="invite-cta-banner" aria-label="Invite friends">
+            <div class="invite-cta-inner">
+                <div class="invite-cta-icon">🎁</div>
+                <div class="invite-cta-body">
+                    <div class="invite-cta-title" id="inviteCtaTitle">Invite friends, earn e-coin</div>
+                    <div class="invite-cta-desc" id="inviteCtaDesc">You get 500 e-coin, your friend gets 100 e-coin. Share your link below!</div>
+                </div>
+                <div class="invite-cta-actions">
+                    <div class="invite-cta-code-box">
+                        <span class="invite-cta-code" id="inviteCtaCode">------</span>
+                        <button class="invite-cta-copy-btn" id="inviteCtaCopyBtn" title="Copy link" aria-label="Copy invite link">📋</button>
+                    </div>
+                    <button class="invite-cta-share-btn" id="inviteCtaShareBtn">Share</button>
+                    <a class="invite-cta-more-btn" href="/portal/invite.html">Details →</a>
+                </div>
+            </div>
+        </div>
+
         <!-- Featured this week — rotates weekly from featured-bot/rotation.json -->
         <section class="featured-week" id="featuredWeek" hidden>
             <div class="featured-week-head">
@@ -968,6 +1093,89 @@
         const r = await fetch(location.origin + path, { method:'POST', headers:{'Content-Type':'application/json'}, credentials: 'include', body:JSON.stringify(body) });
         return r.json();
     }
+
+    /* ══════ Invite CTA (§6 Frontend Flow) ══════ */
+    // Non-blocking: does NOT block community/rental loading on failure.
+    // Hidden gracefully when /api/invite/my-code returns 401.
+    let _inviteCode = null;
+
+    async function loadInviteCode() {
+        try {
+            const data = await apiFetch('/api/invite/my-code');
+            if (!data || !data.success || !data.code) return;
+            _inviteCode = data.code;
+            document.getElementById('inviteCtaCode').textContent = data.code;
+            const banner = document.getElementById('inviteCtaBanner');
+            if (banner) banner.classList.add('visible');
+        } catch (e) {
+            // 401 or network error — hide banner silently (user not logged in)
+            _inviteCode = null;
+        }
+    }
+
+    function getInviteShareUrl(channel) {
+        if (!_inviteCode) return null;
+        return `https://eclawbot.com/invite/${_inviteCode}?utm_source=community&utm_medium=${encodeURIComponent(channel)}`;
+    }
+
+    function fireInviteShareBeacon(channel) {
+        // Beacon: portal beacon action='invite_share' with meta.source + meta.channel
+        try {
+            if (typeof telemetry !== 'undefined' && telemetry.trackAction) {
+                telemetry.trackAction('invite_share', { source: 'community', channel });
+            } else {
+                // Fallback: direct fetch beacon
+                fetch('/api/portal/beacons', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        entries: [{
+                            action: 'invite_share',
+                            meta: { source: 'community', channel },
+                            ts: Date.now()
+                        }]
+                    }),
+                    keepalive: true
+                }).catch(() => {});
+            }
+        } catch (_) { /* ignore beacon errors */ }
+    }
+
+    async function copyInviteLink() {
+        const url = getInviteShareUrl('copy');
+        if (!url) return;
+        try {
+            await navigator.clipboard.writeText(url);
+            const btn = document.getElementById('inviteCtaCopyBtn');
+            if (btn) { btn.textContent = '✓'; btn.classList.add('copied'); setTimeout(() => { btn.textContent = '📋'; btn.classList.remove('copied'); }, 1500); }
+            fireInviteShareBeacon('copy');
+        } catch (_) { /* clipboard unavailable */ }
+    }
+
+    async function nativeShareInvite() {
+        const url = getInviteShareUrl('native_share');
+        if (!url || !navigator.share) return;
+        try {
+            await navigator.share({
+                title: 'Join me on EClawbot',
+                text: 'I\'m using EClawbot AI assistants. Get 100 e-coin when you sign up with my invite link!',
+                url
+            });
+            fireInviteShareBeacon('native_share');
+        } catch (e) {
+            if (e.name !== 'AbortError') {
+                // Fallback to copy on error
+                copyInviteLink();
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const copyBtn = document.getElementById('inviteCtaCopyBtn');
+        const shareBtn = document.getElementById('inviteCtaShareBtn');
+        if (copyBtn) copyBtn.addEventListener('click', copyInviteLink);
+        if (shareBtn) shareBtn.addEventListener('click', nativeShareInvite);
+    });
 
     /* ══════ Load ══════ */
     // Default: merge rental listings + community bots in one grid.
@@ -1486,6 +1694,9 @@
         loadBots();
         autoFocusBotFromQuery();
     }
+
+    // Load invite code non-blocking (hides banner if unauthenticated)
+    loadInviteCode();
 
     /* ══════ Onboarding Tour (Track 1: Free/Official Bot Rental) ══════ */
     (function initTourTrack1() {
