@@ -1,3 +1,10 @@
+## [1.1193.2](https://github.com/HankHuang0516/EClaw/compare/v1.1193.1...v1.1193.2) (2026-05-31)
+
+
+### Bug Fixes
+
+* **transform:** drop [SILENT] sentinel + noise before routing ([#3052](https://github.com/HankHuang0516/EClaw/issues/3052)) ([43444b3](https://github.com/HankHuang0516/EClaw/commit/43444b35f6ed1c64e942df087a7bb34266a1dfe9)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
 ## [1.1193.1](https://github.com/HankHuang0516/EClaw/compare/v1.1193.0...v1.1193.1) (2026-05-31)
 
 
