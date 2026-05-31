@@ -148,8 +148,8 @@ function weightedPick(items, keyFn, weights) {
 let VISION_IMAGES = [
     // img-f3a1.svg retired (pass rate 100%) — replaced below
     { file: null, description: 'A system monitoring dashboard showing CPU at 87%, RAM usage 11.2 GB of 16 GB, disk I/O at 340 MB/s, and 3 active processes flagged in red', keywords: ['CPU', '87', 'RAM', 'disk', 'three', 'red'] },
-    { file: 'img-d4e9.svg', keywords: ['green', 'triangle'] },
-    { file: 'img-a2f5.svg', keywords: ['yellow', 'star'] },
+    { file: null, description: 'A software architecture diagram showing three microservices: Auth Service, API Gateway, and User Service — arrows show Auth Service reads from a Redis cache and API Gateway routes to User Service', keywords: ['architecture', 'three', 'microservices', 'gateway', 'redis', 'auth'] },
+    { file: null, description: 'A website heatmap overlay showing user click density with a blue-to-red gradient — the hottest red zones cluster on the navigation menu and the primary call-to-action button, while the footer area shows cold blue with minimal engagement', keywords: ['heatmap', 'red', 'blue', 'navigation', 'footer', 'button'] },
     { file: 'img-c8b3.svg', keywords: ['cat', 'orange'] },
     // ── Easy tier (20%) — basic shape/object recognition ──
     { file: null, description: 'A red heart shape centered on a white background', keywords: ['heart', 'red'] },
@@ -188,6 +188,12 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── 2026-05-31: new hard-tier vision items ──
+    { file: null, description: 'A Python debugger paused at line 42 inside function process_order — the call stack shows 4 frames, a variables pane displays order_id equal to ORD-9821 and status equal to pending, and a red breakpoint dot marks line 42', keywords: ['debugger', 'line', '42', 'four', 'pending', 'breakpoint', 'ORD'] },
+    { file: null, description: 'A database ER schema diagram with five tables: users, products, orders, order_items, and payments — foreign key arrows connect orders.user_id to users.id and order_items.order_id to orders.id', keywords: ['schema', 'five', 'tables', 'foreign', 'users', 'orders', 'payments'] },
+    { file: null, description: 'A Kubernetes cluster dashboard showing 3 nodes (one labeled NotReady highlighted in red), 12 running pods, 2 pods in CrashLoopBackOff state, CPU utilization 78% and memory utilization 61%', keywords: ['kubernetes', 'three', 'nodes', 'twelve', 'pods', 'CrashLoopBackOff', '78'] },
+    { file: null, description: 'A bank statement for account ending 4821 with 6 transactions in February: opening balance $3,247.50, total debits $892.15, total credits $1,500.00, closing balance $3,855.35', keywords: ['statement', '4821', 'six', '3247', 'debits', '1500', '3855'] },
+    { file: null, description: 'An electrical circuit diagram with R1=100Ω and R2=200Ω in parallel, their combination in series with R3=50Ω, powered by a 9V battery — three labeled nodes A, B, and C with current direction arrows', keywords: ['circuit', 'parallel', 'series', '100', '200', '50', '9V', 'three'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +374,15 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── 2026-05-31: new medium-hard coding problems ──
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array of non-negative integers representing elevation heights, compute how much rainwater can be trapped.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[1,0,1]', expected: '1' },{ input: '[3,0,0,2,0,4]', expected: '10' }] },
+    { title: 'Longest Common Subsequence', description: 'Write `solve(text1, text2)` — return the length of the longest common subsequence. A subsequence is derived by deleting characters without changing order.',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"oxcpqrsvwf", "shmtulqrypy"', expected: '2' }] },
+    { title: 'Find All Anagrams', description: 'Write `solve(s, p)` — find all start indices of anagrams of p in s. Return a sorted array of starting indices.',
+      testCases: [{ input: '"cbaebabacd", "abc"', expected: '[0,6]' },{ input: '"abab", "ab"', expected: '[0,1,2]' },{ input: '"aaaa", "aa"', expected: '[0,1,2]' },{ input: '"hello", "xyz"', expected: '[]' }] },
+    { title: 'Validate BST from Preorder', description: 'Write `solve(preorder)` — given a preorder traversal as an array, return true if it represents a valid Binary Search Tree, false otherwise.',
+      testCases: [{ input: '[5,2,1,3,6]', expected: 'true' },{ input: '[5,2,6,1,3]', expected: 'false' },{ input: '[2,3,1]', expected: 'false' },{ input: '[10,5,1,7,40,50]', expected: 'true' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -413,10 +428,14 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many squares of all sizes (1×1, 2×2, up to 8×8) are there on a standard 8×8 chessboard?', expectedKeywords: ['204'] },
     { question: 'A plane travels 2000 km at an effective speed of 1000 km/h (900 km/h airspeed plus 100 km/h tailwind). How many hours does the journey take?', expectedKeywords: ['2'] },
     { question: 'A worker paints 1/3 of a fence on day 1 and 1/4 of the remaining unpainted fence on day 2. What fraction of the fence is still unpainted after day 2?', expectedKeywords: ['1/2', '0.5', 'half'] },
-    // ── New additions to fill easy + medium-hard tiers ──
-    { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
+    // ── 2026-05-31: hexagon (trivially easy) replaced; new questions added ──
+    { question: 'What is the chemical symbol for gold?', expectedKeywords: ['au'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    { question: 'A bag contains 5 red marbles and 3 blue marbles. Two marbles are drawn without replacement. What is the probability that both are red? Express as a simplified fraction.', expectedKeywords: ['5/14'] },
+    { question: 'If x^2 - 5x + 6 = 0, what are the two values of x?', expectedKeywords: ['2', '3'] },
+    { question: 'A regular polygon has an interior angle of 150 degrees. How many sides does it have?', expectedKeywords: ['12'] },
+    { question: 'A company\'s revenue grew from $2,000,000 to $3,500,000 over 3 years. What is the CAGR to the nearest whole percent?', expectedKeywords: ['21'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +513,11 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── 2026-05-31: new hard-tier TTS phrases ──
+    { text: 'Administer 0.5 milligrams of lorazepam intravenously every four to six hours as needed, not to exceed four milligrams per day', keywords: ['lorazepam', 'milligrams', 'intravenously', 'four', 'per day'] },
+    { text: 'The defendant shall pay liquidated damages of forty-seven thousand eight hundred and twenty dollars within thirty calendar days of the termination date', keywords: ['liquidated', 'damages', 'forty', 'thirty', 'termination'] },
+    { text: 'The API endpoint at slash api slash v2 slash users expects a POST request with a JSON body containing the fields email and password plus an Authorization Bearer token', keywords: ['API', 'endpoint', 'POST', 'JSON', 'email', 'authorization'] },
+    { text: 'The NASDAQ composite rose 1.47 percent to sixteen thousand seven hundred and forty-two points while the ten-year Treasury yield fell to 4.21 percent', keywords: ['nasdaq', '1.47', 'percent', 'treasury', '4.21'] },
 ];
 
 // ============================================
