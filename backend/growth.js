@@ -158,6 +158,32 @@ async function fetchInviteConversion() {
     };
 }
 
+// fetchInviteKForDate — viral-loop k-value for a given date (spec § 11)
+// k = total redemptions on date / count of inviters who redeemed at least once on that date
+// Uses Asia/Taipei calendar day (anchorDate is YYYY-MM-DD in Taipei time).
+async function fetchInviteKForDate(anchorDate) {
+    const r = await pool.query(
+        `SELECT
+ COUNT(*)::int AS total_redemptions,
+             COUNT(DISTINCT ic.owner_device_id)::int AS inviters_with_redemption,
+             COUNT(DISTINCT ic.used_by_device_id)::int AS total_invitees
+         FROM invite_codes ic
+         WHERE ic.used_at >= $1::timestamptz
+           AND ic.used_at < ($1::timestamptz + INTERVAL '1 day')
+           AND ic.used_by_device_id IS NOT NULL`,
+        [anchorDate]
+    );
+    const { total_redemptions, inviters_with_redemption, total_invitees } = r.rows[0];
+    if (inviters_with_redemption === 0) return { date: anchorDate, k: null, total_redemptions: 0, inviters_with_redemption: 0, total_invitees: 0 };
+    return {
+        date: anchorDate,
+        k: Math.round((total_redemptions / inviters_with_redemption) * 100) / 100,
+        total_redemptions,
+        inviters_with_redemption,
+        total_invitees,
+    };
+}
+
 async function fetchInviteClicksForDate(anchorDate) {
     const r = await pool.query(
         `SELECT COUNT(*)::int AS total_clicks,
@@ -274,11 +300,7 @@ module.exports = function(devices) {
                 plaza_new_listed_today,
                 invite_conversion,
                 invite_clicks,
-                follow_ups: [
-                    'visitor_to_signup_conversion: page_views has no FK to user_accounts',
-                    'plaza_new_listed_today: counts created_at not status_changed_at (bot_listings has no listed_at column)',
-                    'invite_conversion is cumulative-to-now (not date-scoped); needs invite_codes.used_at filter for historical k-value by day'
-                ]
+                invite_k: await fetchInviteKForDate(anchorDate),
             });
         } catch (err) {
             console.error('[Growth] query error:', err);
@@ -320,6 +342,6 @@ module.exports = function(devices) {
 
     return {
         router,
-        _internal: { checkRate, findEntity, isOwnerAdmin, fetchSignupsForDate, fetchSignupSourceForDate, fetchRetention7dForDate, fetchPlazaNewListedForDate, fetchInviteConversion, fetchInviteClicksForDate, fetchPortalFunnel, isValidDateStr, taipeiTodayISO, rateBuckets }
+        _internal: { checkRate, findEntity, isOwnerAdmin, fetchSignupsForDate, fetchSignupSourceForDate, fetchRetention7dForDate, fetchPlazaNewListedForDate, fetchInviteConversion, fetchInviteClicksForDate, fetchInviteKForDate, fetchPortalFunnel, isValidDateStr, taipeiTodayISO, rateBuckets }
     };
 };
