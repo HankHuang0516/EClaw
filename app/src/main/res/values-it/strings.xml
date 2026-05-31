@@ -853,4 +853,11 @@
     <string name="tool_status_writing">Scrittura del file...</string>
     <string name="custom_layout_enabled">Layout personalizzato abilitato</string>
     <string name="custom_layout_using_preset">Utilizzando il layout preimpostato</string>
+    <string name="msg_no_entities_connected">Nessuna entità connessa. Associa le entità prima.</string>
+    <string name="webview_title_eclawbot_portal">Portale EClawbot</string>
+    <string name="wallpaper_settings_panel_label">Impostazioni sfondo</string>
+    <string name="wallpaper_settings_collapse_caret_down">▼</string>
+    <string name="wallpaper_settings_expand_action">Espandi pannello impostazioni</string>
+    <string name="wallpaper_settings_collapse_action">Comprimi pannello impostazioni</string>
+    <string name="wallpaper_settings_collapse_caret_up">▲</string>
 </resources>

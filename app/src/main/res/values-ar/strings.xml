@@ -985,4 +985,11 @@ GPS: عند الطلب فقط، بلا تتبع في الخلفية، تُفقد
     <string name="wallpaper_reset_window_weekly">أسبوعي</string>
     <string name="wallpaper_reset_window_weekly_next">إعادة التعيين الأسبوعية التالية: %1$s</string>
     <string name="wallpaper_reset_window_weekly_next_per_engine">إعادة التعيين الأسبوعية التالية (%1$s): %2$s</string>
+    <string name="msg_no_entities_connected">لا توجد جهات اتصال. اربط الجهات أولاً.</string>
+    <string name="webview_title_eclawbot_portal">بوابة EClawbot</string>
+    <string name="wallpaper_settings_panel_label">إعدادات الخلفية</string>
+    <string name="wallpaper_settings_collapse_caret_down">▼</string>
+    <string name="wallpaper_settings_expand_action">توسيع لوحة الإعدادات</string>
+    <string name="wallpaper_settings_collapse_action">طي لوحة الإعدادات</string>
+    <string name="wallpaper_settings_collapse_caret_up">▲</string>
 </resources>

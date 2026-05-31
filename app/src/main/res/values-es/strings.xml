@@ -907,4 +907,11 @@ Tu suscripción permanece activa y puedes reenlazar en cualquier momento (sujeto
     <string name="wallpaper_reset_window_weekly">Semanal</string>
     <string name="wallpaper_reset_window_weekly_next">Próximo reinicio semanal: %1$s</string>
     <string name="wallpaper_reset_window_weekly_next_per_engine">Próximo reinicio semanal (%1$s): %2$s</string>
+    <string name="msg_no_entities_connected">No hay entidades conectadas. Vincula las entidades primero.</string>
+    <string name="webview_title_eclawbot_portal">Portal EClawbot</string>
+    <string name="wallpaper_settings_panel_label">Configuración del fondo de pantalla</string>
+    <string name="wallpaper_settings_collapse_caret_down">▼</string>
+    <string name="wallpaper_settings_expand_action">Expandir panel de configuración</string>
+    <string name="wallpaper_settings_collapse_action">Contraer panel de configuración</string>
+    <string name="wallpaper_settings_collapse_caret_up">▲</string>
 </resources>

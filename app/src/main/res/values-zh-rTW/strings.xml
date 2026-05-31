@@ -885,4 +885,6 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="ai_chat_status_analyzing">分析中</string>
     <string name="ai_chat_status_processing_result">處理結果中</string>
     <string name="ai_chat_tool_status_default">處理中</string>
+    <string name="msg_no_entities_connected">沒有已連接的實體。請先綁定實體。</string>
+    <string name="webview_title_eclawbot_portal">EClawbot 入口網站</string>
 </resources>
