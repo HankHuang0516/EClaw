@@ -1,3 +1,10 @@
+## [1.1193.1](https://github.com/HankHuang0516/EClaw/compare/v1.1193.0...v1.1193.1) (2026-05-31)
+
+
+### Bug Fixes
+
+* **petdx Phase 0:** skip vault mirror when /select has no entity context ([#3051](https://github.com/HankHuang0516/EClaw/issues/3051)) ([47fd1b8](https://github.com/HankHuang0516/EClaw/commit/47fd1b88417c29d93d579d4d96fe62af6fa865e6))
+
 # [1.1193.0](https://github.com/HankHuang0516/EClaw/compare/v1.1192.3...v1.1193.0) (2026-05-31)
 
 
