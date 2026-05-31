@@ -3170,6 +3170,33 @@
         const CHAT_AVATAR_SIZE_PX = { small: 32, medium: 48, large: 64 };
         let chatAvatarSize = 'medium';
 
+        // ── Invite Activation Beacon (§6 Frontend Flow — P1 activation = first bot chat) ──
+        // Fires 'invite_activation' beacon once per user after their first bot chat
+        // following an invite code redemption. Uses localStorage to de-duplicate.
+        const INVITE_ACTIVATION_KEY = 'invite_activation_fired_v1';
+
+        function fireInviteActivationOnce() {
+            try {
+                if (localStorage.getItem(INVITE_ACTIVATION_KEY)) return;
+                localStorage.setItem(INVITE_ACTIVATION_KEY, '1');
+            } catch (_) { /* localStorage blocked */ }
+
+            // Fire beacon via portal beacon endpoint (works pre-login too)
+            try {
+                const entry = { action: 'invite_activation', meta: {}, ts: Date.now() };
+                if (typeof telemetry !== 'undefined' && telemetry.trackAction) {
+                    telemetry.trackAction('invite_activation', {});
+                }
+                // Fallback direct fetch
+                fetch('/api/portal/beacons', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ entries: [entry] }),
+                    keepalive: true
+                }).catch(() => {});
+            } catch (_) { /* ignore beacon errors */ }
+        }
+
         function normalizeChatAvatarSize(value) {
             return CHAT_AVATAR_SIZE_PX[value] ? value : 'medium';
         }
@@ -6022,6 +6049,8 @@
                         if (hasNoWebhookWarning(speakResp)) {
                             showWebhookTroubleModal();
                         }
+                        // Fire invite_activation beacon on first bot chat after invite redemption (§6/P1)
+                        fireInviteActivationOnce();
                     }
                 }
 

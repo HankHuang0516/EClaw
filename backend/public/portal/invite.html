@@ -246,9 +246,12 @@
                 const data = await apiCall('GET', '/api/invite/my-code');
                 if (data?.success) {
                     document.getElementById('invCode').textContent = data.code;
-                    document.getElementById('invShareUrl').textContent = data.shareUrl || `https://eclawbot.com/invite/${data.code}`;
+                    // Include UTM params to track share source
+                    const utmSource = new URLSearchParams(window.location.search).get('utm_source') || 'invite_page';
+                    const shareUrl = `https://eclawbot.com/invite/${data.code}?utm_source=${encodeURIComponent(utmSource)}&utm_medium=invite_page`;
+                    document.getElementById('invShareUrl').textContent = shareUrl;
                     const qrLink = document.getElementById('invQrGenLink');
-                    if (qrLink && data.code) qrLink.href = `/portal/invite-qr-generator.html?code=${encodeURIComponent(data.code)}`;
+                    if (qrLink && data.code) qrLink.href = `/portal/invite-qr-generator.html?code=${encodeURIComponent(data.code)}&utm_source=${encodeURIComponent(utmSource)}`;
                 }
             } catch { /* not logged in */ }
         }
@@ -456,16 +459,34 @@
             });
         }
 
+        function translateRedeemError(code) {
+            const map = {
+                'self_invite_forbidden': tt('inv_error_self', 'You cannot use your own invite code.'),
+                'already_redeemed': tt('inv_error_already', 'This code has already been used.'),
+                'code_not_found': tt('inv_error_not_found', 'Invalid invite code.'),
+                'code_expired': tt('inv_error_expired', 'This invite code has expired.'),
+                'code_max_uses_reached': tt('inv_error_max', 'This invite code has reached its usage limit.'),
+            };
+            return map[code] || null;
+        }
+
         async function redeemCode() {
             const code = document.getElementById('redeemInput').value.trim();
             if (!code) return;
             try {
                 const data = await apiCall('POST', '/api/invite/redeem', { code });
                 if (data?.success) {
-                    showToast(tt('inv_redeem_success', `Code redeemed! You received ${data.inviteeRewardEcoin} e幣.`), 'success');
+                    // Show detailed reward result
+                    const inviteeReward = data.inviteeRewardEcoin ?? data.wallet_rewards?.invitee ?? 100;
+                    const inviterReward = data.inviterRewardEcoin ?? data.wallet_rewards?.inviter ?? 500;
+                    const msg = tt('inv_redeem_success_detail',
+                        `Redeemed! You received +${inviteeReward} e-coin. The inviter got +${inviterReward} e-coin.`);
+                    showToast(msg, 'success');
                     loadStats();
                 } else {
-                    showToast(data?.error || 'Failed', 'error');
+                    const err = data?.error || 'Failed';
+                    const translated = translateRedeemError(err);
+                    showToast(translated || err, 'error');
                 }
             } catch (err) { showToast(err.message || 'Failed', 'error'); }
         }
