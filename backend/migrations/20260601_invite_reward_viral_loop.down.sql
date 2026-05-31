@@ -1,7 +1,8 @@
--- Reversal of 20260601_invite_reward_viral_loop
+-- Reversal of 20260601_invvite_reward_viral_loop
 -- Drop indexes first (in reverse order of creation)
-DROP INDEX IF EXISTS idx_invite_codes_one_active_per_owner;
+DROP INDEX IF EXISTS idx_invite_redemptions_inviter_invitee_redeem;
 DROP INDEX IF EXISTS idx_invite_redemptions_code_redeem;
+DROP INDEX IF EXISTS idx_invite_codes_one_active_per_owner;
 
 -- Drop constraints and columns
 ALTER TABLE invite_redemptions
