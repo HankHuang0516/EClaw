@@ -114,6 +114,22 @@ describe('portal entity-utils — Phase 0 petdx-aware resolver chain', () => {
         expect(ctx.getAvatarForEntity(1)).toBe(PETDX_LOBSTER_URL);
     });
 
+    test('live descriptor URL wins over stale vault enrichment when companion was switched via marketplace', () => {
+        // Repro for the morning-after-Phase-0 regression: backfill wrote
+        // PETDX_AVATAR_<id> = lobster URL, then the user borrowed an R2
+        // spritesheet companion via /api/companion/select. /api/companion/select
+        // doesn't sync the vault, so the enrichment goes stale. The live
+        // descriptor must win or the dashboard keeps painting lobster forever.
+        const ctx = loadResolver();
+        const R2_SPRITE = 'https://pub-94495283df974cfea5e98d6a9e3fa462.r2.dev/pets/zoro-9889c11ded54/sprite.webp';
+        ctx.window.AvatarPetdx = {
+            descriptorAvatarUrl: (id) => id === 1 ? R2_SPRITE : null,
+        };
+        ctx.updateEntityMaps([{ entityId: 1, name: 'Mac_F', character: 'LOBSTER', avatar: null,
+            petdxAvatarUrl: PETDX_LOBSTER_URL }]);
+        expect(ctx.getAvatarForEntity(1)).toBe(R2_SPRITE);
+    });
+
     test('character emoji stopgap still fires when no petdx layer answers', () => {
         const ctx = loadResolver();
         ctx.updateEntityMaps([{ entityId: 1, character: 'LOBSTER', avatar: null }]);
