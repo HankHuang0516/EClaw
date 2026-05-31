@@ -4,11 +4,13 @@
 -- Non-breaking: all new columns have defaults; existing rows auto-populate
 
 -- ============================================================
---1. ALTER invite_redemptions — add audit columns
+-- 1. ALTER invite_redemptions — add audit columns (all non-breaking)
 -- ============================================================
+-- NOTE: device_id columns are VARCHAR(64) per auth_schema.sql convention,
+-- NOT UUID (live device-auth writes use VARCHAR(64) device identifiers).
 ALTER TABLE invite_redemptions
-    ADD COLUMN IF NOT EXISTS inviter_device_id UUID,
-    ADD COLUMN IF NOT EXISTS invitee_device_id UUID,
+    ADD COLUMN IF NOT EXISTS inviter_device_id VARCHAR(64),
+    ADD COLUMN IF NOT EXISTS invitee_device_id VARCHAR(64),
     ADD COLUMN IF NOT EXISTS inviter_user_id UUID,
     ADD COLUMN IF NOT EXISTS reward_type VARCHAR(32) NOT NULL DEFAULT 'redeem',
     ADD COLUMN IF NOT EXISTS inviter_reward_amount_mli BIGINT NOT NULL DEFAULT 0,
@@ -19,35 +21,38 @@ ALTER TABLE invite_redemptions
 
 -- ============================================================
 -- 2. Back-populate existing rows from Phase-5 data
--- (invitee_user_id is NOT NULL → safe to use)
+-- Inviter_user_id comes from invite_codes.owner_user_id (FK join).
+-- We reference invite_codes via a LATERAL subquery to avoid
+-- Postgres UPDATE..FROM self-reference restriction.
 -- ============================================================
-UPDATE invite_redemptions
+UPDATE invite_redemptions r
 SET
-    inviter_user_id       = ic.owner_user_id,
-    inviter_reward_amount_mli = inviter_reward_mli,
-    invitee_reward_amount_mli = invitee_reward_mli,
-    reward_type           = 'redeem',
-    wallet_credit_status  = CASE
-        WHEN first_topup_credited THEN 'not_attempted' -- Phase-5 had no wallet credit tracking
-        ELSE 'not_attempted'
-    END
-FROM invite_redemptions r
-JOIN invite_codes ic ON ic.code = r.code
-WHERE invite_redemptions.id = r.id
-  AND invite_redemptions.inviter_user_id IS NULL;
+    inviter_user_id           = sub.owner_user_id,
+    inviter_reward_amount_mli = r.inviter_reward_mli,
+    invitee_reward_amount_mli = r.invitee_reward_mli,
+    reward_type               = 'redeem',
+    wallet_credit_status      = 'not_attempted'
+FROM (
+    SELECT ic.code, ic.owner_user_id
+    FROM invite_codes ic
+) AS sub
+WHERE sub.code = r.code
+  AND r.inviter_user_id IS NULL;
 
 -- ============================================================
 -- 3. Partial unique guard: one 'redeem' per code
--- (Postgres supports WHERE clause in CREATE INDEX; we use
---  a filtered unique index via a separate step below)
+-- Prevents race-condition double-redeem on the 'redeem' path.
+-- Postgres supports partial unique indexes natively.
 -- ============================================================
--- Note: existing constraint + data already enforces uniqueness
--- on invitee_user_id UNIQUE. We add code-scope for 'redeem'
--- path only via a conditional index (see below after col added).
+CREATE UNIQUE INDEX IF NOT EXISTS idx_invite_redemptions_code_redeem
+    ON invite_redemptions (code)
+    WHERE reward_type = 'redeem';
 
 -- ============================================================
--- 4. Add wallet_credit_status check constraint (optional)
--- Valid values for wallet_credit_status
+-- 4. Add wallet_credit_status check constraint
+-- Valid values: not_attempted | pending_user_account | pending | credited | failed
+-- NOT VALID to avoid table-lock on large existing tables.
+-- Will VALIDATE after back-populate in a follow-up maintenance window.
 -- ============================================================
 ALTER TABLE invite_redemptions
     ADD CONSTRAINT chk_wallet_credit_status
@@ -68,14 +73,21 @@ ALTER TABLE invite_redemptions
     NOT VALID;
 
 -- ============================================================
--- 6. Add comments for documentation
+-- 6. Validate constraints after back-populate is stable
+-- (separate from initial ADD to avoid lock; run after data is clean)
 -- ============================================================
-COMMENT ON COLUMN invite_redemptions.inviter_device_id    IS 'Device ID of inviter at time of redemption (for device-only invites)';
-COMMENT ON COLUMN invite_redemptions.invitee_device_id    IS 'Device ID of invitee at time of redemption';
-COMMENT ON COLUMN invite_redemptions.inviter_user_id     IS 'User ID of inviter (populated from invite_codes.owner_user_id)';
-COMMENT ON COLUMN invite_redemptions.reward_type          IS 'Type of reward: redeem (default), first_topup_bonus, manual';
+ALTER TABLE invite_redemptions VALIDATE CONSTRAINT chk_wallet_credit_status;
+ALTER TABLE invite_redemptions VALIDATE CONSTRAINT chk_reward_type;
+
+-- ============================================================
+-- 7. Add column comments for documentation
+-- ============================================================
+COMMENT ON COLUMN invite_redemptions.inviter_device_id       IS 'Device ID of inviter at time of redemption (VARCHAR(64), for device-only invites)';
+COMMENT ON COLUMN invite_redemptions.invitee_device_id       IS 'Device ID of invitee at time of redemption (VARCHAR(64))';
+COMMENT ON COLUMN invite_redemptions.inviter_user_id         IS 'User ID of inviter (populated from invite_codes.owner_user_id)';
+COMMENT ON COLUMN invite_redemptions.reward_type            IS 'Type of reward: redeem (default), first_topup_bonus, manual';
 COMMENT ON COLUMN invite_redemptions.inviter_reward_amount_mli IS 'Actual inviter reward in mLI (may differ from Phase-5 inviter_reward_mli)';
 COMMENT ON COLUMN invite_redemptions.invitee_reward_amount_mli IS 'Actual invitee reward in mLI';
 COMMENT ON COLUMN invite_redemptions.inviter_wallet_ledger_id IS 'wallet_ledger.id for inviter credit (null until credited)';
 COMMENT ON COLUMN invite_redemptions.invitee_wallet_ledger_id IS 'wallet_ledger.id for invitee credit (null until credited)';
-COMMENT ON COLUMN invite_redemptions.wallet_credit_status IS 'Wallet credit state: not_attempted|pending_user_account|pending|credited|failed';
+COMMENT ON COLUMN invite_redemptions.wallet_credit_status  IS 'Wallet credit state: not_attempted|pending_user_account|pending|credited|failed';
