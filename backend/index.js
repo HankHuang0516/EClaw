@@ -1778,6 +1778,9 @@ try {
         pushToBot,
         orgChart: orgChartModule,
         notifyDevice,
+        emitDevicePreferences: (deviceId, prefs) => {
+            io.to(`device:${deviceId}`).emit('device:preferences', { deviceId, prefs });
+        },
     });
     app.use('/api/mission', kanbanModule.router);
     console.log('[Kanban] Module loaded successfully');
@@ -18846,6 +18849,7 @@ app.put('/api/device-preferences', async (req, res) => {
 
     await devicePrefs.updatePrefs(deviceId, prefs);
     const updated = await devicePrefs.getPrefs(deviceId);
+    io.to(`device:${deviceId}`).emit('device:preferences', { deviceId, prefs: updated });
     res.json({ success: true, prefs: updated });
 });
 

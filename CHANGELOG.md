@@ -1,3 +1,9 @@
+## Unreleased
+
+### Features
+
+* **kanban nudge:** add per-entity stop-mode, avatar warning watermark, and live preference sync
+
 ## [1.1193.3](https://github.com/HankHuang0516/EClaw/compare/v1.1193.2...v1.1193.3) (2026-05-31)
 
 
