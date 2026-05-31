@@ -1945,6 +1945,11 @@
             border-color: rgba(245,158,11,0.3);
             color: #f59e0b;
         }
+        .kvalue-k-model-badge.legacy {
+            background: rgba(148,163,184,0.12);
+            border-color: rgba(148,163,184,0.3);
+            color: #94a3b8;
+        }
         .kvalue-loading { color: var(--text-secondary, #aaa); font-size: 13px; text-align: center; padding: 20px 0; }
         .kvalue-empty { color: var(--text-muted, #888); font-size: 12px; text-align: center; padding: 16px 0; }
         .kvalue-error { color: #ef4444; font-size: 12px; text-align: center; padding: 12px 0; }
@@ -5941,31 +5946,48 @@
             if (!content) return;
 
             // The invite_k object is embedded in the daily response by PR2 backend.
-            // Fallback: compose from invite_conversion + invite_clicks if invite_k not present.
+            // Legacy fallback is cumulative and cannot produce a valid same-day k value.
             const inviteK = data.invite_k || null;
             const inviteConversion = data.invite_conversion || {};
             const inviteClicks = data.invite_clicks || [];
+            const metricValue = (...values) => {
+                for (const value of values) {
+                    if (value === null || value === undefined || value === '') continue;
+                    const n = Number(value);
+                    if (Number.isFinite(n)) return n;
+                }
+                return 0;
+            };
+            const nullableMetric = value => {
+                if (value === null || value === undefined || value === '') return null;
+                const n = Number(value);
+                return Number.isFinite(n) ? n : null;
+            };
+            const fmt = n => n == null ? '—' : Number(n).toLocaleString();
 
-            // Try to extract k-value data from available fields
             let shares = 0, clicks = 0, redeemed = 0, activated = 0;
             let kObserved = null, kModel = null;
+            let legacyFallback = false;
 
-            if (inviteK) {
-                shares = inviteK.shares ?? 0;
-                clicks = inviteK.clicks ?? 0;
-                redeemed = inviteK.redeemed ?? 0;
-                activated = inviteK.activated ?? 0;
-                kObserved = inviteK.k_observed ?? null;
-                kModel = inviteK.k_model ?? null;
+            const hasInviteKContract = inviteK && (
+                Object.prototype.hasOwnProperty.call(inviteK, 'share_events') ||
+                Object.prototype.hasOwnProperty.call(inviteK, 'unique_clicks') ||
+                Object.prototype.hasOwnProperty.call(inviteK, 'k_observed') ||
+                Object.prototype.hasOwnProperty.call(inviteK, 'activated_invitees')
+            );
+
+            if (hasInviteKContract) {
+                shares = metricValue(inviteK.share_events, inviteK.shares);
+                clicks = metricValue(inviteK.unique_clicks, inviteK.clicks);
+                redeemed = metricValue(inviteK.redeemed);
+                activated = metricValue(inviteK.activated_invitees, inviteK.activated);
+                kObserved = nullableMetric(inviteK.k_observed);
+                kModel = nullableMetric(inviteK.k_model);
             } else {
-                // Compose from invite_conversion + invite_clicks if invite_k not in response yet
-                shares = inviteConversion.total_codes ?? 0;
-                redeemed = inviteConversion.redeemed_codes ?? 0;
-                clicks = inviteClicks.reduce ? inviteClicks.reduce((s, r) => s + (r.clicks || 0), 0) : 0;
-                // activated not available without event tracking — show as N/A
-                if (shares > 0 && redeemed > 0) {
-                    kObserved = parseFloat((redeemed / shares).toFixed(3));
-                }
+                legacyFallback = true;
+                shares = metricValue(inviteConversion.total_codes);
+                redeemed = metricValue(inviteK?.total_redemptions, inviteConversion.redeemed_codes);
+                clicks = Array.isArray(inviteClicks) ? inviteClicks.reduce((s, r) => s + (Number(r.clicks) || 0), 0) : 0;
             }
 
             // Show empty if no data
@@ -5981,7 +6003,6 @@
             // KPI grid
             const kpiGrid = document.getElementById('kvalueKpiGrid');
             if (kpiGrid) {
-                const fmt = n => n == null ? '—' : n.toLocaleString();
                 kpiGrid.innerHTML = `
                     <div class="kvalue-kpi-card">
                         <div class="kvalue-kpi-value">${fmt(shares)}</div>
@@ -5996,7 +6017,7 @@
                         <div class="kvalue-kpi-label">Redeemed</div>
                     </div>
                     <div class="kvalue-kpi-card">
-                        <div class="kvalue-kpi-value">${activated > 0 ? fmt(activated) : '—'}</div>
+                        <div class="kvalue-kpi-value">${legacyFallback ? '—' : fmt(activated)}</div>
                         <div class="kvalue-kpi-label">Activated (P1)</div>
                     </div>
                     <div class="kvalue-kpi-card k-value ${kObserved != null && kObserved >= 1 ? 'overunity' : ''}">
@@ -6030,7 +6051,7 @@
                     </div>
                     <div class="kvalue-funnel-arrow">→</div>
                     <div class="kvalue-funnel-step">
-                        <div class="kvalue-funnel-value">${activated > 0 ? fmt(activated) : '—'}</div>
+                        <div class="kvalue-funnel-value">${legacyFallback ? '—' : fmt(activated)}</div>
                         <div class="kvalue-funnel-label">activated (${pct(activated, redeemed)}%)</div>
                     </div>`;
             }
@@ -6047,6 +6068,13 @@
                             ${overunity ? 'Viral ✓' : 'Below threshold'}
                         </span>
                     </div>`;
+            } else if (kModelEl && legacyFallback) {
+                kModelEl.innerHTML = `
+                    <div class="kvalue-k-model-badge legacy">
+                        Legacy cumulative fallback — k unavailable
+                    </div>`;
+            } else if (kModelEl) {
+                kModelEl.innerHTML = '';
             }
         }
 

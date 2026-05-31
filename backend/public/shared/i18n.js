@@ -335580,6 +335580,17 @@ const TRANSLATIONS = {
 
 
         "inv_redeem_success": "Code redeemed! You received 100 e-coin.",
+        "inv_error_self": "You cannot use your own invite code.",
+        "inv_error_already": "This code has already been used.",
+        "inv_error_already_owner": "You have already redeemed an invite from this user.",
+        "inv_error_not_found": "Invalid invite code.",
+        "inv_error_expired": "This invite code has expired.",
+        "inv_error_max": "This invite code has reached its usage limit.",
+        "inv_error_wallet_required": "Please sign in to receive wallet rewards.",
+        "inv_redeem_success_pending": "Redeemed! Your invite is recorded. Wallet rewards are pending.",
+        "inv_redeem_success_detail": "Redeemed! You received e-coin. The inviter got e-coin.",
+        "kvalue_date_label": "Date:",
+        "kvalue_refresh": "Refresh",
 
 
 
