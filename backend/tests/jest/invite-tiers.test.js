@@ -103,7 +103,8 @@ describe('invite tier/milestone wiring', () => {
     test('/api/invite/redeem credits milestones via bitmask UPDATE', () => {
         expect(INDEX_JS).toMatch(/milestones_claimed\s*=\s*\$2/);
         expect(INDEX_JS).toMatch(/for\s*\(\s*const\s+t\s+of\s+INVITE_TIERS\s*\)/);
-        expect(INDEX_JS).toMatch(/inviter_milestones_unlocked/);
+        expect(INDEX_JS).toMatch(/let\s+addBonus\s*=\s*0/);
+        expect(INDEX_JS).toMatch(/bonus_messages\s*=\s*bonus_messages\s*\+\s*\$1/);
     });
 
     test('/api/invite/stats exposes tier + unlocked_tiers + tier_catalog', () => {
