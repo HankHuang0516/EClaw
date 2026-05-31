@@ -81,8 +81,9 @@
         .kb-card-assigned { font-size:10px; color:var(--text-muted); display:flex; align-items:center; gap:4px; }
         .kb-card-avatars { display:flex; gap:4px; flex-wrap:wrap; }
         .kb-card-avatar-chip { display:inline-flex; align-items:center; gap:3px; background:var(--input-bg); border:1px solid var(--card-border); border-radius:12px; padding:1px 6px 1px 1px; font-size:10px; }
-        .kb-card-avatar-chip span:first-child { width:16px; height:16px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:10px; flex-shrink:0; }
-        .kb-card-avatar-chip img { width:16px; height:16px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+        .kb-card-avatar-face { width:16px; height:16px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:10px; flex-shrink:0; overflow:hidden; }
+        .kb-card-avatar-face img,
+        .kb-card-avatar-face canvas { width:16px; height:16px; border-radius:50%; object-fit:cover; flex-shrink:0; }
         .kb-card-avatar-name { color:var(--text-secondary); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60px; }
 
         .kb-card-title { font-size:13px; font-weight:600; color:var(--text); margin-bottom:4px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
@@ -234,7 +235,9 @@
         .kb-comment.received { align-self:flex-start; align-items:flex-start; }
         .kb-comment.system-msg { align-self:center; max-width:90%; }
         .kb-comment-source { font-size:11px; color:var(--text-muted); margin-bottom:2px; display:flex; align-items:center; gap:4px; }
-        .kb-comment-source .comment-avatar { font-size:13px; }
+        .kb-comment-source .comment-avatar { width:16px; height:16px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:13px; overflow:hidden; flex-shrink:0; }
+        .kb-comment-source .comment-avatar img,
+        .kb-comment-source .comment-avatar canvas { width:16px; height:16px; border-radius:50%; object-fit:cover; }
         .kb-comment-bubble { padding:8px 12px; border-radius:12px; font-size:13px; color:var(--text); line-height:1.55; word-break:break-word; }
         .kb-comment.sent .kb-comment-bubble { background:var(--primary); color:#fff; border-bottom-right-radius:4px; }
         .kb-comment.received .kb-comment-bubble { background:var(--input-bg); border:1px solid var(--card-border); border-bottom-left-radius:4px; }
@@ -402,7 +405,9 @@
         .kb-tl-lane.unassigned { opacity:0.6; }
         .kb-tl-lane-label { flex:0 0 180px; display:flex; align-items:center; gap:6px; padding:8px 10px; font-size:12px; font-weight:600; color:var(--text-secondary); border-right:1px solid var(--card-border); position:sticky; left:0; z-index:1; background:var(--card); }
         .kb-tl-lane-avatar { width:24px; height:24px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
-        .kb-tl-lane-avatar img { width:24px; height:24px; border-radius:50%; object-fit:cover; }
+        .kb-tl-lane-avatar { overflow:hidden; }
+        .kb-tl-lane-avatar img,
+        .kb-tl-lane-avatar canvas { width:24px; height:24px; border-radius:50%; object-fit:cover; }
         .kb-tl-lane-info { display:flex; flex-direction:column; overflow:hidden; min-width:0; }
         .kb-tl-lane-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:120px; }
         .kb-tl-lane-metrics { display:flex; align-items:center; gap:4px; font-size:9px; color:var(--text-muted); font-weight:400; margin-top:1px; cursor:default; }
@@ -458,8 +463,9 @@
         .kb-assign-chip:hover { border-color:var(--primary); }
         .kb-assign-chip.active { background:rgba(108,99,255,0.12); border-color:rgba(108,99,255,0.4); }
         .kb-assign-chip input { display:none; }
-        .kb-assign-avatar { width:16px; height:16px; border-radius:50%; font-size:10px; display:inline-flex; align-items:center; justify-content:center; }
-        .kb-assign-chip img.kb-assign-avatar { object-fit:cover; }
+        .kb-assign-avatar { width:16px; height:16px; border-radius:50%; font-size:10px; display:inline-flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; }
+        .kb-assign-avatar img,
+        .kb-assign-avatar canvas { width:16px; height:16px; border-radius:50%; object-fit:cover; }
         .kb-auto-reviewer { display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:12px; }
         .kb-auto-reviewer label { color:var(--text-secondary); white-space:nowrap; font-weight:600; }
         .kb-auto-reviewer select { flex:1; padding:4px 8px; border-radius:6px; border:1px solid var(--card-border); background:var(--input-bg); color:var(--text); font-size:12px; cursor:pointer; }
@@ -1162,6 +1168,18 @@
             return fallback || key;
         }
 
+        function renderKanbanEntityAvatar(entityId, size, className) {
+            const eid = Number(entityId);
+            const safeId = Number.isFinite(eid) ? eid : entityId;
+            const avatar = (Number.isFinite(eid) && typeof getAvatarForEntity === 'function')
+                ? getAvatarForEntity(eid)
+                : '\u{1F99E}';
+            const html = typeof renderAvatarHtml === 'function'
+                ? renderAvatarHtml(avatar, size || 16, safeId)
+                : escapeHtml(avatar || '\u{1F99E}');
+            return `<span class="${className || 'kb-assign-avatar'}" data-entity-id="${escapeHtml(String(safeId))}">${html}</span>`;
+        }
+
         // ── Init ──
         window.addEventListener('DOMContentLoaded', async () => {
             // Detect embed mode (workspace split view). Keep sub-tabs visible so
@@ -1492,11 +1510,8 @@
         function renderAssignedAvatars(botIds) {
             if (!botIds || !botIds.length) return '';
             return '<span class="kb-card-avatars">' + botIds.map(id => {
-                const avatar = typeof getAvatarForEntity === 'function' ? getAvatarForEntity(id) : '🦞';
                 const name = typeof getEntityDisplayName === 'function' ? getEntityDisplayName(id) : '#'+id;
-                const avatarHtml = (typeof isAvatarUrl === 'function' && isAvatarUrl(avatar))
-                    ? `<img src="${avatar}" alt="${name}">`
-                    : `<span>${avatar}</span>`;
+                const avatarHtml = renderKanbanEntityAvatar(id, 16, 'kb-card-avatar-face');
                 return `<span class="kb-card-avatar-chip">${avatarHtml}<span class="kb-card-avatar-name">${escapeHtml(name)}</span></span>`;
             }).join('') + '</span>';
         }
@@ -2452,7 +2467,7 @@
                     boundEntities.filter(e => e.isBound).map(e => {
                         const checked = currentBots.includes(e.entityId) ? ' checked' : '';
                         const label = getEntityDisplayName(e.entityId);
-                        const avatarEl = typeof renderAvatarHtml === 'function' ? renderAvatarHtml(e.avatar, 16, e.entityId) : (e.avatar || '🦞');
+                        const avatarEl = renderKanbanEntityAvatar(e.entityId, 16, 'kb-assign-avatar');
                         return `<label class="kb-assign-chip${checked ? ' active' : ''}" title="${escapeHtml(label)}">` +
                             `<input type="checkbox" value="${e.entityId}"${checked} onchange="updateAutoAssign('${cardId}')">` +
                             avatarEl + `<span>${escapeHtml(label)}</span></label>`;
@@ -2946,7 +2961,7 @@
             const assignChips = boundEntities.filter(e => e.isBound).map(e => {
                 const checked = currentBots.includes(e.entityId) ? ' checked' : '';
                 const label = getEntityDisplayName(e.entityId);
-                const avatarEl = typeof renderAvatarHtml === 'function' ? renderAvatarHtml(e.avatar, 16, e.entityId) : (e.avatar || '🦞');
+                const avatarEl = renderKanbanEntityAvatar(e.entityId, 16, 'kb-assign-avatar');
                 return `<label class="kb-assign-chip${checked ? ' active' : ''}" title="${escapeHtml(label)}">` +
                     `<input type="checkbox" value="${e.entityId}"${checked} onchange="spUpdateAssign(this)">` +
                     avatarEl + `<span>${escapeHtml(label)}</span></label>`;
@@ -3120,15 +3135,14 @@
                         </div>`;
                     }
                     const isSent = fromId != null && myEntityIds.has(fromId);
-                    const avatar = typeof getAvatarForEntity === 'function' ? getAvatarForEntity(fromId) : '🦞';
                     const name = typeof getEntityDisplayName === 'function' ? getEntityDisplayName(fromId) : '#'+(fromId??'?');
-                    const avatarHtml = typeof renderAvatarHtml === 'function' ? renderAvatarHtml(avatar, 16, fromId) : avatar;
+                    const avatarHtml = renderKanbanEntityAvatar(fromId, 16, 'comment-avatar');
                     const cardTitle = (findCard(openCardId) || {}).title || '';
                     const messageId = extractKanbanChatMessageId(c.text || '') || getCardChatAnchorMessageId(card);
                     const pinPayload = JSON.stringify({ src: '留言 · ' + cardTitle, sender: name, text: c.text || '', messageId })
                         .replace(/'/g, '&#39;');
                     return `<div class="kb-comment ${isSent ? 'sent' : 'received'}" data-comment-id="${escapeHtml(cid)}">
-                        <div class="kb-comment-source"><span class="comment-avatar">${avatarHtml}</span> ${escapeHtml(name)}</div>
+                        <div class="kb-comment-source">${avatarHtml} ${escapeHtml(name)}</div>
                         <div class="kb-comment-bubble">${renderSmartChips(c.text)}</div>
                         <div class="kb-comment-row">
                             <button class="kb-comment-pin" onclick='quoteCommentToChat(${pinPayload})' title="引用到聊天">📌</button>
@@ -3626,11 +3640,8 @@
             sortedIds.forEach(eid => { totalDailyExecs += computeEntityMetrics(entityLanes[eid]).dailyExecs; });
 
             let lanesHtml = sortedIds.map(eid => {
-                const avatar = getAvatarForEntity(eid);
                 const name = getEntityDisplayName(eid);
-                const avatarHtml = isAvatarUrl(avatar)
-                    ? `<span class="kb-tl-lane-avatar"><img src="${escapeHtml(avatar)}" alt="${escapeHtml(name)}"></span>`
-                    : `<span class="kb-tl-lane-avatar">${avatar}</span>`;
+                const avatarHtml = renderKanbanEntityAvatar(eid, 24, 'kb-tl-lane-avatar');
                 const m = computeEntityMetrics(entityLanes[eid]);
                 const share = totalDailyExecs > 0 ? Math.round(m.dailyExecs / totalDailyExecs * 100) : 0;
                 const tokenLabel = m.estDailyTokens >= 1000 ? (m.estDailyTokens / 1000).toFixed(1) + 'K' : m.estDailyTokens;
@@ -3695,7 +3706,7 @@
             const container = document.getElementById('newAssignees');
             container.innerHTML = boundEntities.map(e =>
                 `<label style="display:flex;align-items:center;gap:6px;font-size:13px;margin:4px 0">
-                    <input type="checkbox" value="${e.entityId}"> #${e.entityId} ${escapeHtml(getEntityDisplayName?.(e.entityId)||'')}
+                    <input type="checkbox" value="${e.entityId}"> ${renderKanbanEntityAvatar(e.entityId, 16, 'kb-assign-avatar')} #${e.entityId} ${escapeHtml(getEntityDisplayName?.(e.entityId)||'')}
                 </label>`
             ).join('') || '<span style="font-size:12px;color:var(--text-muted)">No entities found</span>';
             resetAnchorPicker();
