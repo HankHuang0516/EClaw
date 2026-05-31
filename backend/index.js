@@ -17,6 +17,7 @@ const sitePageviews = require('./site-pageviews');
 const feedbackModule = require('./device-feedback');
 const chatIntegrity = require('./chat-integrity');
 const communitySsr = require('./community-ssr');
+const { isLowSignalFwd } = require('./org-fwd-filter');
 const { buildOrgEntitySessionKey, isOrgEntitySessionKey } = require('./session-scope');
 const { assignDefaultCompanionIfMissing } = require('./petdx-phase0-hook');
 // JWT secret: fail-safe random per process if env var is missing (tokens signed in one process won't verify in another)
@@ -8066,6 +8067,17 @@ function collectMissingSpeakToMentionWarnings(speakToList, mentionParse, senderD
     return warnings;
 }
 
+function getSilentTransformSuppressionReason(text) {
+    if (typeof text !== 'string') return null;
+    const trimmed = text.trim();
+    if (!trimmed) return null;
+    if (/^\[SILENT\]$/i.test(trimmed)) return 'silent_token';
+    if (/^\[SILENT\](?:\s|$)/i.test(trimmed) && isLowSignalFwd(trimmed)) {
+        return 'silent_noise';
+    }
+    return null;
+}
+
 /**
  * Gatekeeper Second Lock: mask leaked tokens for free bots.
  * Returns { text, leaked } where text is potentially masked.
@@ -8641,7 +8653,18 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
             `[PLACEHOLDER_LEAK] Entity ${eId} on device ${deviceId} sent bind-ack template verbatim — suppressing propagation`,
             { deviceId, entityId: eId, metadata: { tag: 'PLACEHOLDER_LEAK' } });
     }
-    if (finalMessage !== undefined && !isPlaceholderLeak) entity.message = finalMessage;
+    const silentSuppressionReason = getSilentTransformSuppressionReason(finalMessage);
+    const isSilentMessage = !!silentSuppressionReason;
+    const isSuppressedMessage = isPlaceholderLeak || isSilentMessage;
+    if (isSilentMessage) {
+        serverLog('info', 'transform_silent_drop',
+            `[TRANSFORM_SILENT_DROP] Entity ${eId} on device ${deviceId} sent ${silentSuppressionReason}; suppressing routing propagation`,
+            { deviceId, entityId: eId, metadata: { reason: silentSuppressionReason } });
+        speakTo = undefined;
+        broadcast = false;
+        routingResolvedVia = null;
+    }
+    if (finalMessage !== undefined && !isSuppressedMessage) entity.message = finalMessage;
     if (parts) {
         // Only store numeric values — reject URLs/strings that would crash Android Gson deserialization
         const sanitizedParts = {};
@@ -8686,7 +8709,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // to happen.
     let transformMentionContext = null;
     let transformMentionParse = null;
-    if (finalMessage) {
+    if (finalMessage && !isSuppressedMessage) {
         const tParse = mentionParser.parseMentions(finalMessage, {
             senderDeviceId: deviceId,
             devices,
@@ -8712,7 +8735,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // server (not the bridge) decides where the bot's reply routes.
     let senderHintResolution = null;
     const noTargetYet = !broadcast && !(speakTo && Array.isArray(speakTo) && speakTo.length > 0);
-    if (senderHint && noTargetYet && finalMessage) {
+    if (senderHint && noTargetYet && finalMessage && !isSuppressedMessage) {
         const kind = senderHint.kind || 'unknown';
         if (kind === 'broadcast') {
             broadcast = true;
@@ -8755,7 +8778,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         senderHintResolution = {
             kind: senderHint.kind || 'unknown',
             applied: 'none',
-            reason: noTargetYet ? 'no_message' : 'explicit_or_mention_won'
+            reason: isSuppressedMessage ? 'silent_message' : (noTargetYet ? 'no_message' : 'explicit_or_mention_won')
         };
     }
 
@@ -8781,10 +8804,9 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         routing.warnings.push(...collectMissingSpeakToMentionWarnings(speakTo, transformMentionParse, deviceId));
     }
 
-    // Save bot message to chat history so it appears in Chat page
-    // Skip silent tokens — these are internal signals that should not appear in chat
-    const isSilentMessage = finalMessage && /^\[SILENT\]$/i.test(finalMessage.trim());
-    const isSuppressedMessage = isSilentMessage || isPlaceholderLeak;
+    // Save bot message to chat history so it appears in Chat page.
+    // isSuppressedMessage is computed before routing so silent control payloads
+    // cannot resolve @mentions/senderHint or fan out through speakTo/broadcast.
     // Skip self chat save when speakTo/broadcast is present — deliverToEntity will save with routing source
     const hasDelivery = (broadcast || (speakTo && Array.isArray(speakTo) && speakTo.length > 0));
     if (finalMessage && !isSuppressedMessage) {
@@ -8903,7 +8925,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // ── Rental response mirroring: if owner entity is leased_out, copy response to renter ──
     // PR #2986 guard — placeholder leaks (the bind-ack template copied verbatim) must NOT
     // mirror into renter.message, renter chat history, Socket.IO update, or push notify.
-    if (entity.rental_status === 'leased_out' && entity.rental_contract_id && finalMessage && !isPlaceholderLeak) {
+    if (entity.rental_status === 'leased_out' && entity.rental_contract_id && finalMessage && !isSuppressedMessage) {
         try {
             const cRow = await db._getPool().query(
                 `SELECT c.renter_device_id FROM rental_contracts c WHERE c.id = $1 AND c.status IN ('active','reserved','suspended_insufficient_funds')`,
@@ -8973,7 +8995,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // Notify device about bot reply (fire-and-forget)
     // Skip owner notification for leased_out entities — renter gets notified via rental mirror
     const isLeasedOutForNotify = entity.rental_status === 'leased_out';
-    if (finalMessage && !isLeasedOutForNotify && !isPlaceholderLeak) {
+    if (finalMessage && !isLeasedOutForNotify && !isSuppressedMessage) {
         notifyDevice(deviceId, {
             type: 'chat', category: 'bot_reply',
             title: entity.name || `Entity ${eId}`,
@@ -8995,7 +9017,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // Skip for leased_out entities — rental bot responses belong to the renter's context.
     const kanbanBusyStates = new Set(['BUSY', 'PROCESSING', 'WORKING', 'IN_PROGRESS', 'IN-PROGRESS']);
     const isKanbanBusyState = kanbanBusyStates.has(String(state || '').trim().toUpperCase());
-    if (!isKanbanBusyState && finalMessage && !isPlaceholderLeak && entity.rental_status !== 'leased_out' && kanbanModule && kanbanModule.autoReviewOnTransform) {
+    if (!isKanbanBusyState && finalMessage && !isSuppressedMessage && entity.rental_status !== 'leased_out' && kanbanModule && kanbanModule.autoReviewOnTransform) {
         kanbanModule.autoReviewOnTransform(deviceId, eId, finalMessage, aboutCardId).catch(err => {
             console.error(`[Transform] autoReviewOnTransform failed:`, err.message);
         });
@@ -9003,7 +9025,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
 
     // Org chart: auto-forward message to superior entity (fire-and-forget)
     // Skip for leased_out entities — owner's org chart should not apply to rental responses
-    if (finalMessage && entity && entity.rental_status !== 'leased_out' && !isPlaceholderLeak) {
+    if (finalMessage && entity && entity.rental_status !== 'leased_out' && !isSuppressedMessage) {
         orgChartForward(entity, deviceId, finalMessage).catch(() => {});
     }
 
@@ -9020,7 +9042,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // to run a sender-side fallback save.
     let deliverySaved = false;
 
-    if ((speakTo || broadcast) && finalMessage && !isPlaceholderLeak) {
+    if ((speakTo || broadcast) && finalMessage && !isSuppressedMessage) {
         // If both provided, broadcast takes priority
         if (speakTo && broadcast) {
             warnings.push('Both speakTo and broadcast provided — broadcast takes priority, speakTo ignored.');
@@ -17746,8 +17768,6 @@ async function pushToBot(entity, deviceId, eventType, payload, opts = {}) {
  */
 const ORG_FWD_PREFIX = '[📢 FWD';
 const ORG_TASK_FWD_PREFIX = '[📋 TASK FWD';
-
-const { isLowSignalFwd } = require('./org-fwd-filter');
 
 async function orgChartForward(entity, deviceId, message, opts = {}) {
     if (!message || message.startsWith(ORG_TASK_FWD_PREFIX) || message.startsWith(ORG_FWD_PREFIX)) return;

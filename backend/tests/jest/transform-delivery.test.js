@@ -604,4 +604,51 @@ describe('Transform fallback save on delivery failure', () => {
         expect(fallbackWarn).toBe(false);
         expect(findChatInserts(msg).length).toBe(0);
     });
+
+    it('[SILENT] sentinel with a valid speakTo is dropped before delivery', async () => {
+        clearPoolQueries();
+
+        const msg = '[SILENT]';
+        const res = await post('/api/transform')
+            .send({
+                deviceId,
+                entityId: 0,
+                botSecret: botSecret0,
+                message: msg,
+                state: 'IDLE',
+                speakTo: [code1]
+            });
+
+        expect(res.status).toBe(200);
+        expect(res.body.delivery).toBeUndefined();
+        expect(res.body.routing.resolvedVia).toBeNull();
+        expect(res.body.routing.routedTo).toEqual([]);
+        expect(findChatInserts(msg).length).toBe(0);
+    });
+
+    it('[SILENT] sign-off FWD echo noise with senderHint does not auto-route', async () => {
+        clearPoolQueries();
+
+        const msg = `[SILENT] #6 sign-off FWD echo same string ${Date.now()}`;
+        const res = await post('/api/transform')
+            .send({
+                deviceId,
+                entityId: 0,
+                botSecret: botSecret0,
+                message: msg,
+                state: 'IDLE',
+                senderHint: { kind: 'entity', entityId: 1, publicCode: code1 }
+            });
+
+        expect(res.status).toBe(200);
+        expect(res.body.delivery).toBeUndefined();
+        expect(res.body.routing.resolvedVia).toBeNull();
+        expect(res.body.routing.routedTo).toEqual([]);
+        expect(res.body.senderHintResolution).toMatchObject({
+            kind: 'entity',
+            applied: 'none',
+            reason: 'silent_message'
+        });
+        expect(findChatInserts(msg).length).toBe(0);
+    });
 });
