@@ -1,3 +1,10 @@
+## [1.1192.3](https://github.com/HankHuang0516/EClaw/compare/v1.1192.2...v1.1192.3) (2026-05-31)
+
+
+### Bug Fixes
+
+* **petdx Phase 0:** live descriptor URL beats stale vault enrichment in §0.4 chain ([#3046](https://github.com/HankHuang0516/EClaw/issues/3046)) ([06e3db3](https://github.com/HankHuang0516/EClaw/commit/06e3db3b456313332a26c28fda8ec40ef96fa364)), closes [#3032](https://github.com/HankHuang0516/EClaw/issues/3032) [#3044](https://github.com/HankHuang0516/EClaw/issues/3044)
+
 ## [1.1192.2](https://github.com/HankHuang0516/EClaw/compare/v1.1192.1...v1.1192.2) (2026-05-31)
 
 
