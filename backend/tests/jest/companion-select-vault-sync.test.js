@@ -272,6 +272,43 @@ describe('POST /api/companion/select — §0.4a atomic vault sync', () => {
             .toBe('/static/companions/petdx-lobster-default/avatar.png');
     });
 
+    test('device-secret auth (entityId=null) skips vault write but still fills log + origin', async () => {
+        const ioMock = makeIoMock();
+        // No __mockClientQuery responses — should never be called.
+        __mockQuery
+            .mockResolvedValueOnce({ rowCount: 1, rows: [COMPANION_ROW_PUBLISHED] })
+            .mockResolvedValueOnce({ rowCount: 1, rows: [] }); // legacy INSERT via pool.query
+
+        // Override the auth predicate so deviceSecret-only succeeds with entityId=null.
+        const app = express();
+        app.use(express.json());
+        const mod = companionFactory({
+            authenticateBot: (d, e, s) => false,
+            authenticateDeviceOrBot: ({ deviceId, deviceSecret }) =>
+                deviceId === DEVICE && deviceSecret === 'dev-secret',
+            createPetdxPhase0Io: () => ioMock.instance,
+        });
+        app.use('/api/companion', mod.router);
+
+        const res = await request(app)
+            .post('/api/companion/select')
+            .query({ deviceId: DEVICE, deviceSecret: 'dev-secret' })  // no entityId
+            .send({ companionId: 'petdx-zoro', source: 'app' });
+
+        expect(res.status).toBe(200);
+        expect(res.body.selection.companionId).toBe('petdx-zoro');
+        // Vault must NOT be touched.
+        expect(ioMock.writes).toHaveLength(0);
+        // Log INSERT used the legacy pool.query path.
+        expect(__mockClientQuery).not.toHaveBeenCalled();
+        const insert = __mockQuery.mock.calls[1];
+        expect(insert[0]).toMatch(/INSERT INTO companion_select_log/);
+        // entityId column gets null since none was provided.
+        expect(insert[1]).toEqual([
+            DEVICE, null, 'petdx-zoro', expect.any(Number), 'app', 'user-selected',
+        ]);
+    });
+
     test('factory-not-injected fallback: legacy log-only INSERT (origin still written, no vault writes)', async () => {
         // No createPetdxPhase0Io passed → legacy code path.
         const app = (() => {
