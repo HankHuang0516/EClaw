@@ -6140,6 +6140,7 @@ function computeInviteTierState(totalInvited, milestonesClaimed) {
 
 // GET /api/invite/my-code — get (or auto-generate) the caller's invite code
 // Auth: deviceId+deviceSecret OR JWT cookie
+// Extended: returns share_url with UTM tags + wallet_reward_preview
 app.get('/api/invite/my-code', async (req, res) => {
     const auth = resolveInviteAuth(req);
     if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
@@ -6151,11 +6152,20 @@ app.get('/api/invite/my-code', async (req, res) => {
         const existing = await pg.query('SELECT code FROM invite_codes WHERE owner_device_id = $1', [deviceId]);
         if (existing.rows.length > 0) {
             const stats = await pg.query('SELECT bonus_messages, total_invited FROM invite_rewards WHERE device_id = $1', [deviceId]);
+            const code = existing.rows[0].code;
+            const shareUrl = `https://minigame.eclawbot.com/?ref=${code}&utm_source=invite&utm_medium=share&utm_campaign=viral_loop`;
             return res.json({
                 success: true,
-                code: existing.rows[0].code,
+                code,
+                share_url: shareUrl,
                 bonus_messages: stats.rows[0]?.bonus_messages ?? 0,
-                total_invited: stats.rows[0]?.total_invited ?? 0
+                total_invited: stats.rows[0]?.total_invited ?? 0,
+                wallet_reward_preview: {
+                    invitee_reward_mli: 100 * 1000, // 100 ecoin
+                    inviter_reward_mli: 500 * 1000, // 500 ecoin
+                    invitee_type: 'signup_bonus',
+                    inviter_type: 'referral_bonus',
+                },
             });
         }
 
@@ -6168,16 +6178,31 @@ app.get('/api/invite/my-code', async (req, res) => {
         } while ((await pg.query('SELECT 1 FROM invite_codes WHERE code = $1', [code])).rows.length > 0);
 
         await pg.query('INSERT INTO invite_codes (code, owner_device_id) VALUES ($1, $2)', [code, deviceId]);
-        return res.json({ success: true, code, bonus_messages: 0, total_invited: 0 });
+        const shareUrl = `https://minigame.eclawbot.com/?ref=${code}&utm_source=invite&utm_medium=share&utm_campaign=viral_loop`;
+        return res.json({
+            success: true,
+            code,
+            share_url: shareUrl,
+            bonus_messages: 0,
+            total_invited: 0,
+            wallet_reward_preview: {
+                invitee_reward_mli: 100 * 1000,
+                inviter_reward_mli: 500 * 1000,
+                invitee_type: 'signup_bonus',
+                inviter_type: 'referral_bonus',
+            },
+        });
     } catch (e) {
         console.error('[Invite] my-code error:', e);
         return res.status(500).json({ success: false, error: 'Internal error' });
     }
-});
+});;
 
 // POST /api/invite/redeem — redeem an invite code
 // Body: { deviceId, deviceSecret, code } OR JWT cookie + { code }
-// Reward: invitee +300 bonus, inviter +50 bonus
+// Wallet credit: inviter 500 ecoin (REFERRAL_BONUS), invitee 100 ecoin (SIGNUP_BONUS)
+// Idempotency keys prevent double-credit on replay.
+// Spec: docs/specs/invite-reward-viral-loop.md §3, § 5
 app.post('/api/invite/redeem', async (req, res) => {
     const { code } = req.body;
     const auth = resolveInviteAuth(req);
@@ -6188,51 +6213,138 @@ app.post('/api/invite/redeem', async (req, res) => {
     }
 
     const pg = authModule.pool;
+    const wallet = walletModule;
+    const INVITER_REWARD_MLI = 500 * 1000; // 500 ecoin in mLI
+    const INVITEE_REWARD_MLI = 100 * 1000; // 100 ecoin in mLI
+
     try {
-        // Look up the code
-        const codeRow = await pg.query('SELECT owner_device_id, used_by_device_id FROM invite_codes WHERE code = $1', [code.toUpperCase()]);
+        // Step 1: SELECT invite_codes FOR UPDATE — lock the row to prevent race
+        const codeRow = await pg.query(
+            'SELECT owner_device_id, used_by_device_id FROM invite_codes WHERE code = $1 FOR UPDATE',
+            [code.toUpperCase()]
+        );
         if (codeRow.rows.length === 0) return res.status(404).json({ success: false, error: 'Invalid invite code' });
 
         const { owner_device_id, used_by_device_id } = codeRow.rows[0];
         if (used_by_device_id) return res.status(409).json({ success: false, error: 'Invite code already used' });
         if (owner_device_id === deviceId) return res.status(400).json({ success: false, error: 'Cannot redeem your own invite code' });
 
-        // Note: Option B — a device can redeem multiple different codes (one per
-        // inviter). Per-code-once is enforced above via used_by_device_id. See
-        // docs/invite-redemption-policy.md.
+        // Step 2: Resolve inviter_user_id + invitee_user_id from user_accounts.device_id
+        const [inviterAcct, inviteeAcct] = await Promise.all([
+            pg.query('SELECT id FROM user_accounts WHERE device_id = $1', [owner_device_id]),
+            pg.query('SELECT id FROM user_accounts WHERE device_id = $1', [deviceId]),
+        ]);
+        const inviterUserId = inviterAcct.rows[0]?.id || null;
+        const inviteeUserId = inviteeAcct.rows[0]?.id || null;
 
-        // Mark code as used
+        // Step 3: Idempotency — check if redemption already recorded
+        const idemKey = `invite:redeem:invitee:${code}:${deviceId}`;
+        const existingRedemption = await pg.query(
+            'SELECT id FROM invite_redemptions WHERE code = $1 AND invitee_device_id = $2',
+            [code.toUpperCase(), deviceId]
+        );
+        if (existingRedemption.rows.length > 0) {
+            return res.json({
+                success: true,
+                wallet_rewards: { status: 'already_credited' },
+                message: 'Invite already redeemed.',
+            });
+        }
+
+        // Step 4: Device-only check (Q1 from spec § 10)
+        // If invitee has no user account, write pending_user_account status
+        const walletStatus = inviteeUserId ? 'not_attempted' : 'pending_user_account';
+
+        // Step 5: Mark code as used
         await pg.query(
             'UPDATE invite_codes SET used_by_device_id = $1, used_at = NOW() WHERE code = $2',
             [deviceId, code.toUpperCase()]
         );
 
-        // Grant invitee +300 bonus
+        // Step 6: Insert invite_redemptions audit row
         await pg.query(
-            `INSERT INTO invite_rewards (device_id, bonus_messages, total_invited)
-             VALUES ($1, 300, 0)
-             ON CONFLICT (device_id)
-             DO UPDATE SET bonus_messages = invite_rewards.bonus_messages + 300, updated_at = NOW()`,
-            [deviceId]
+            `INSERT INTO invite_redemptions
+ (code, inviter_device_id, invitee_device_id, inviter_user_id, invitee_user_id,
+  inviter_reward_amount_mli, invitee_reward_amount_mli, reward_type, wallet_credit_status)
+ VALUES ($1, $2, $3, $4, $5, $6, $7, 'redeem', $8)`,
+            [code.toUpperCase(), owner_device_id, deviceId, inviterUserId, inviteeUserId,
+             INVITER_REWARD_MLI, INVITEE_REWARD_MLI, walletStatus]
         );
 
-        // Grant inviter +50 bonus + increment total_invited
-        const inviterRow = await pg.query(
-            `INSERT INTO invite_rewards (device_id, bonus_messages, total_invited)
-             VALUES ($1, 50, 1)
-             ON CONFLICT (device_id)
-             DO UPDATE SET bonus_messages = invite_rewards.bonus_messages + 50,
-                           total_invited = invite_rewards.total_invited + 1,
-                           updated_at = NOW()
-             RETURNING total_invited, milestones_claimed`,
-            [owner_device_id]
+        // Step 7: Wallet credit (only for users with accounts)
+        let inviterLedgerId = null;
+        let inviteeLedgerId = null;
+        let walletRewardStatus = walletStatus;
+
+        if (inviterUserId) {
+            const idemInviter = `invite:redeem:inviter:${code}:${deviceId}`;
+            try {
+                const inviterResult = await wallet.withTransaction(async (client) => {
+                    return wallet._internals.applyLedgerEntry(client, {
+                        userId: inviterUserId,
+                        balanceDelta: INVITER_REWARD_MLI,
+                        heldDelta: 0,
+                        type: 'referral_bonus',
+                        refType: 'invite_redeem',
+                        refId: `${code}:${deviceId}`,
+                        idempotencyKey: idemInviter,
+                    });
+                });
+                inviterLedgerId = inviterResult?.ledgerId || null;
+            } catch (e) {
+                console.error('[Invite] inviter wallet credit failed:', e);
+            }
+        }
+
+        if (inviteeUserId) {
+            const idemInvitee = `invite:redeem:invitee:${code}:${deviceId}`;
+            try {
+                const inviteeResult = await wallet.withTransaction(async (client) => {
+                    return wallet._internals.applyLedgerEntry(client, {
+                        userId: inviteeUserId,
+                        balanceDelta: INVITEE_REWARD_MLI,
+                        heldDelta: 0,
+                        type: 'signup_bonus',
+                        refType: 'invite_redeem',
+                        refId: `${code}:${deviceId}`,
+                        idempotencyKey: idemInvitee,
+                    });
+                });
+                inviteeLedgerId = inviteeResult?.ledgerId || null;
+                walletRewardStatus = 'credited';
+            } catch (e) {
+                console.error('[Invite] invitee wallet credit failed:', e);
+                walletRewardStatus = 'failed';
+            }
+        }
+
+        // Step 8: Update wallet_credit_status in audit row
+        await pg.query(
+            'UPDATE invite_redemptions SET wallet_credit_status = $1, inviter_wallet_ledger_id = $2, invitee_wallet_ledger_id = $3 WHERE code = $4 AND invitee_device_id = $5',
+            [walletRewardStatus, inviterLedgerId, inviteeLedgerId, code.toUpperCase(), deviceId]
         );
 
-        // Credit any newly-reached tier milestones (one-shot via bitmask).
-        // Wrapped in try/catch so a milestone bookkeeping error can never
-        // break the base redeem success path.
-        let milestonesUnlocked = [];
+        // Step 9: Legacy invite_rewards update (60-day migration window per spec § 10 Q2)
         try {
+            await pg.query(
+                `INSERT INTO invite_rewards (device_id, bonus_messages, total_invited)
+                 VALUES ($1, 300, 0)
+                 ON CONFLICT (device_id)
+                 DO UPDATE SET bonus_messages = invite_rewards.bonus_messages + 300, updated_at = NOW()`,
+                [deviceId]
+            );
+            const inviterRow = await pg.query(
+                `INSERT INTO invite_rewards (device_id, bonus_messages, total_invited)
+                 VALUES ($1, 50, 1)
+                 ON CONFLICT (device_id)
+                 DO UPDATE SET bonus_messages = invite_rewards.bonus_messages + 50,
+                               total_invited = invite_rewards.total_invited + 1,
+                               updated_at = NOW()
+                 RETURNING total_invited, milestones_claimed`,
+                [owner_device_id]
+            );
+
+            let milestonesUnlocked = [];
             const { total_invited: ti, milestones_claimed: mc } = inviterRow.rows[0] || { total_invited: 0, milestones_claimed: 0 };
             let addBonus = 0;
             let newMask = mc | 0;
@@ -6254,23 +6366,29 @@ app.post('/api/invite/redeem', async (req, res) => {
                 );
             }
         } catch (e) {
-            console.error('[Invite] milestone credit failed:', e);
+            console.error('[Invite] legacy bonus_messages update failed:', e);
         }
 
         return res.json({
             success: true,
-            bonus_granted: 300,
-            message: 'Invite code redeemed! +300 bonus messages added.',
-            inviter_milestones_unlocked: milestonesUnlocked,
+            wallet_rewards: {
+                status: walletRewardStatus,
+                inviter_reward_mli: INVITER_REWARD_MLI,
+                invitee_reward_mli: INVITEE_REWARD_MLI,
+                inviter_ledger_id: inviterLedgerId,
+                invitee_ledger_id: inviteeLedgerId,
+            },
+            message: 'Invite code redeemed!' + (walletRewardStatus === 'pending_user_account' ? ' Wallet credit pending user account creation.' : ''),
         });
     } catch (e) {
         console.error('[Invite] redeem error:', e);
         return res.status(500).json({ success: false, error: 'Internal error' });
     }
-});
+});;
 
 // GET /api/invite/stats — get invite stats and remaining bonus
 // Auth: deviceId+deviceSecret OR JWT cookie
+// Extended: uses active-code resolver (spec § 11) + wallet_rewards.total_earned_mli
 app.get('/api/invite/stats', async (req, res) => {
     const auth = resolveInviteAuth(req);
     if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
@@ -6278,15 +6396,25 @@ app.get('/api/invite/stats', async (req, res) => {
 
     const pg = authModule.pool;
     try {
-        const [codeRow, rewardRow, usageRow] = await Promise.all([
-            pg.query('SELECT code FROM invite_codes WHERE owner_device_id = $1', [deviceId]),
+        // Active-code resolver (spec § 11): only return the current active code
+        const [codeRow, rewardRow, usageRow, walletRow] = await Promise.all([
+            pg.query('SELECT code FROM invite_codes WHERE owner_device_id = $1 AND used_by_device_id IS NULL', [deviceId]),
             pg.query('SELECT bonus_messages, total_invited, milestones_claimed FROM invite_rewards WHERE device_id = $1', [deviceId]),
-            pg.query('SELECT message_count FROM usage_tracking WHERE device_id = $1 AND date = CURRENT_DATE', [deviceId])
+            pg.query('SELECT message_count FROM usage_tracking WHERE device_id = $1 AND date = CURRENT_DATE', [deviceId]),
+            pg.query(
+                `SELECT COALESCE(SUM(balance_delta), 0) as total_earned_mli
+                 FROM wallet_ledger wl
+                 JOIN user_accounts ua ON ua.id = wl.user_id
+                 WHERE ua.device_id = $1
+ AND wl.type IN ('referral_bonus', 'signup_bonus', 'invite_first_topup_bonus')`,
+                [deviceId]
+            ),
         ]);
         const bonus = rewardRow.rows[0]?.bonus_messages ?? 0;
         const totalInvited = rewardRow.rows[0]?.total_invited ?? 0;
         const milestonesClaimed = rewardRow.rows[0]?.milestones_claimed ?? 0;
         const dailyUsed = usageRow.rows[0]?.message_count ?? 0;
+        const totalEarnedMli = parseInt(walletRow.rows[0]?.total_earned_mli ??0);
         const tierState = computeInviteTierState(totalInvited, milestonesClaimed);
         return res.json({
             success: true,
@@ -6301,12 +6429,15 @@ app.get('/api/invite/stats', async (req, res) => {
             next_threshold: tierState.next_threshold,
             invites_to_next: tierState.invites_to_next,
             tier_catalog: INVITE_TIERS.map(t => ({ key: t.key, threshold: t.threshold, bonus_messages: t.bonusMessages })),
+            wallet_rewards: {
+                total_earned_mli: totalEarnedMli,
+            },
         });
     } catch (e) {
         console.error('[Invite] stats error:', e);
         return res.status(500).json({ success: false, error: 'Internal error' });
     }
-});
+});;
 
 // GET /api/invite/clicks — per-code funnel breakdown for the caller's own
 // invite codes. Device-scoped twin of /api/admin/invite/clicks: no IP hashes
