@@ -188,6 +188,12 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Daily pool update 2026-06-01: new hard-tier additions ──
+    { file: null, description: 'A database entity-relationship diagram with four tables: Users (id, email, created_at), Orders (id, user_id, total, status), Products (id, name, price, stock), and OrderItems (order_id, product_id, quantity) — three foreign key arrows connecting them', keywords: ['ER', 'diagram', 'four', 'tables', 'users', 'orders', 'products', 'foreign', 'key'] },
+    { file: null, description: 'A Kubernetes cluster diagram showing a master node controlling three worker nodes, each worker running two pods (blue) and one service (green), with an ingress controller at the top receiving external traffic', keywords: ['kubernetes', 'cluster', 'three', 'worker', 'pods', 'blue', 'green', 'ingress'] },
+    { file: null, description: 'A Python traceback error screen: the stack shows 4 frames, the final error is AttributeError on line 47 of data_processor.py — \'NoneType\' object has no attribute \'strip\', highlighted in red', keywords: ['traceback', 'error', '47', 'AttributeError', 'NoneType', 'strip', 'red'] },
+    { file: null, description: 'A kanban board with five columns: Backlog (8 cards), To Do (5 cards), In Progress (3 cards highlighted in blue), Review (2 cards), Done (12 cards) — total 30 cards', keywords: ['kanban', 'five', 'columns', 'backlog', 'eight', 'thirty', 'blue'] },
+    { file: null, description: 'A CPU performance flame graph: the x-axis spans 0 to 2 seconds, the tallest flame is labeled renderFrame() at 34% of total time, three smaller flames for physics(), audio(), and inputPoll() are each under 10%', keywords: ['flame', 'graph', 'CPU', 'renderFrame', '34', 'three', 'physics', 'audio'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +374,15 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── Daily pool update 2026-06-01: new medium-hard coding problems ──
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array of non-negative integers representing elevation heights, compute total units of water that can be trapped between them.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[1,0,1]', expected: '1' },{ input: '[3,0,2,0,4]', expected: '7' }] },
+    { title: 'Merge Intervals', description: 'Write `solve(intervals)` — given an array of [start, end] intervals, merge all overlapping intervals and return the result sorted by start.',
+      testCases: [{ input: '[[1,3],[2,6],[8,10],[15,18]]', expected: '[[1,6],[8,10],[15,18]]' },{ input: '[[1,4],[4,5]]', expected: '[[1,5]]' },{ input: '[[1,4],[2,3]]', expected: '[[1,4]]' }] },
+    { title: 'Product of Array Except Self', description: 'Write `solve(nums)` — return an array where output[i] equals the product of all elements except nums[i]. Do NOT use division.',
+      testCases: [{ input: '[1,2,3,4]', expected: '[24,12,8,6]' },{ input: '[-1,1,0,-3,3]', expected: '[0,0,9,0,0]' },{ input: '[2,3]', expected: '[3,2]' }] },
+    { title: 'Course Schedule', description: 'Write `solve(numCourses, prerequisites)` — given a number of courses and [course, prereq] pairs, return true if all courses can be finished (no dependency cycle exists).',
+      testCases: [{ input: '2, [[1,0]]', expected: 'true' },{ input: '2, [[1,0],[0,1]]', expected: 'false' },{ input: '4, [[1,0],[2,0],[3,1],[3,2]]', expected: 'true' },{ input: '1, []', expected: 'true' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +432,12 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Daily pool update 2026-06-01: new medium-hard reasoning questions ──
+    { question: 'If 10 people are in a room and each person shakes hands with every other person exactly once, how many handshakes take place in total?', expectedKeywords: ['45'] },
+    { question: 'Worker A can complete a job alone in 12 days. Worker B takes 18 days. Worker C takes 9 days. How many days does it take all three working together? (Round to nearest whole number)', expectedKeywords: ['4'] },
+    { question: 'What is the 8th term of the arithmetic sequence 3, 7, 11, 15, ...?', expectedKeywords: ['31'] },
+    { question: 'A bag contains 3 red balls and 7 blue balls. Two balls are drawn at random without replacement. What is the probability that both balls are red? Express as a simplified fraction.', expectedKeywords: ['1/15'] },
+    { question: 'How many distinct permutations are there of the letters in the word "MISSISSIPPI"?', expectedKeywords: ['34650'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +515,12 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Daily pool update 2026-06-01: new hard-tier TTS phrases ──
+    { text: 'Administer 250 milligrams of amoxicillin orally every eight hours for ten days — do not exceed three grams per day', keywords: ['250', 'amoxicillin', 'eight', 'ten', 'three', 'grams'] },
+    { text: 'SWIFT transfer reference MT103 sender BIC CHASUS33 amount USD 47,500.00 value date 2026-06-15 charges SHA', keywords: ['SWIFT', 'MT103', 'BIC', 'CHASUS33', '47500', 'SHA'] },
+    { text: 'Scattered thunderstorms expected Thursday afternoon with wind gusts up to 65 kilometers per hour and visibility below 800 meters', keywords: ['thunderstorms', 'thursday', '65', 'kilometers', '800', 'meters'] },
+    { text: 'Section 14 paragraph 3 sub-clause b: the licensee shall not sublicense assign or transfer any rights granted herein without prior written consent of the licensor', keywords: ['section', '14', 'sublicense', 'assign', 'transfer', 'consent', 'licensor'] },
+    { text: 'Segmentation fault at address 0x7fff5fbff820 — instruction pointer 0x000000010034a9b2 — stack trace frame 3 of 11 in module libcore.dylib', keywords: ['segmentation', 'fault', 'stack', 'trace', 'frame', 'libcore'] },
 ];
 
 // ============================================
