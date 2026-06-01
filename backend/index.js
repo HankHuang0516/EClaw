@@ -8224,8 +8224,15 @@ function getSilentTransformSuppressionReason(text) {
     if (typeof text !== 'string') return null;
     const trimmed = text.trim();
     if (!trimmed) return null;
-    if (/^\[SILENT\]$/i.test(trimmed)) return 'silent_token';
-    if (/^\[SILENT\](?:\s|$)/i.test(trimmed) && isLowSignalFwd(trimmed)) {
+    // Strip leading @-mention prefixes (@#N, @publicCode, @all) — the routing
+    // visibility rule (feedback_dispatch_visible_mention_prefix) requires bot
+    // replies to start with @#N so Hank sees who they're routed to, but that
+    // pushes the [SILENT] token off the start of the string and bypassed the
+    // original ^[SILENT]$ regex, fan-out the no-op echo loop with #6.
+    // Strip any number of `@<token>` prefixes then re-check.
+    const afterMentions = trimmed.replace(/^(?:@\S+\s+)+/, '');
+    if (/^\[SILENT\]$/i.test(afterMentions)) return 'silent_token';
+    if (/^\[SILENT\](?:\s|$)/i.test(afterMentions) && isLowSignalFwd(afterMentions)) {
         return 'silent_noise';
     }
     return null;
@@ -21900,3 +21907,4 @@ module.exports._officialBorrowTest = {
     getOfficialBindingReuseStatus,
     OFFICIAL_FREE_BINDING_REUSE_TTL_MS,
 };
+module.exports._getSilentTransformSuppressionReason = getSilentTransformSuppressionReason;
