@@ -8224,9 +8224,21 @@ function getSilentTransformSuppressionReason(text) {
     if (typeof text !== 'string') return null;
     const trimmed = text.trim();
     if (!trimmed) return null;
-    if (/^\[SILENT\]$/i.test(trimmed)) return 'silent_token';
-    if (/^\[SILENT\](?:\s|$)/i.test(trimmed) && isLowSignalFwd(trimmed)) {
-        return 'silent_noise';
+    // Strip leading @-mention prefixes (@#N, @publicCode, @all) — the routing
+    // visibility rule (feedback_dispatch_visible_mention_prefix) requires bot
+    // replies to start with @#N so Hank sees who they're routed to, but that
+    // pushes the [SILENT] token off the start of the string and bypassed the
+    // original ^[SILENT]$ regex, fan-out the no-op echo loop with #6.
+    const afterMentions = trimmed.replace(/^(?:@\S+\s+)+/, '');
+    if (/^\[SILENT\]$/i.test(afterMentions)) return 'silent_token';
+    if (/^\[SILENT\](?:\s|$)/i.test(afterMentions)) {
+        // For low-signal evaluation, strip the [SILENT] token + whitespace
+        // from the head — otherwise "[SILENT] received" stays 17 chars and
+        // misses both the length floor (12) and the (ping|pong|ack|ok|...)
+        // pattern that only matches a bare ack word. We want to evaluate
+        // the REMAINING trailer, not the literal "[SILENT] trailer".
+        const remainder = afterMentions.replace(/^\[SILENT\]\s*/i, '');
+        if (isLowSignalFwd(remainder)) return 'silent_noise';
     }
     return null;
 }
@@ -21900,3 +21912,4 @@ module.exports._officialBorrowTest = {
     getOfficialBindingReuseStatus,
     OFFICIAL_FREE_BINDING_REUSE_TTL_MS,
 };
+module.exports._getSilentTransformSuppressionReason = getSilentTransformSuppressionReason;

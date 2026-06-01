@@ -16,7 +16,11 @@ const ORG_FWD_NOISE_PATTERNS = [
     /^\s*line \d+ column \d+/i,
     /^\s*\[[^\]]{1,40}回應超時\]\s*$/,
     /^\s*\[[^\]]{1,40}response timeout\]\s*$/i,
-    /^\s*\[SILENT\]\s*#?\d+\s+sign[- ]off\s+FWD\s+echo\b/i,
+    // [SILENT] is optional here so that getSilentTransformSuppressionReason
+    // can pre-strip the token before evaluating the trailer (test:
+    // `@#6 [SILENT] #6 sign-off FWD echo` → strip mention + [SILENT] →
+    // `#6 sign-off FWD echo` should still classify as low-signal).
+    /^\s*(?:\[SILENT\]\s*)?#?\d+\s+sign[- ]off\s+FWD\s+echo\b/i,
     /^\s*(ping|pong|ack|ok|received|noted)\s*[.!]*\s*$/i,
 ];
 
