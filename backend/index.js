@@ -17,7 +17,9 @@ const sitePageviews = require('./site-pageviews');
 const feedbackModule = require('./device-feedback');
 const chatIntegrity = require('./chat-integrity');
 const communitySsr = require('./community-ssr');
+const { isLowSignalFwd } = require('./org-fwd-filter');
 const { buildOrgEntitySessionKey, isOrgEntitySessionKey } = require('./session-scope');
+const { assignDefaultCompanionIfMissing } = require('./petdx-phase0-hook');
 // JWT secret: fail-safe random per process if env var is missing (tokens signed in one process won't verify in another)
 const JWT_SECRET_FALLBACK = process.env.JWT_SECRET || require('crypto').randomBytes(32).toString('hex');
 
@@ -295,6 +297,13 @@ app.use('/assets', express.static(path.join(__dirname, 'public/assets'), {
         }
     }
 }));
+// Petdx companion static assets — avatar.png / thumbnail.webp / spritesheets.
+// Path is part of the contract in petdx-uiux-spec.md §5 + the Phase 0 amendment
+// §0.4 resolver, which reads `/static/companions/<id>/avatar.png` URLs.
+app.use('/static/companions', express.static(path.join(__dirname, 'public/companions'), {
+    maxAge: '7d',
+    immutable: true,
+}));
 // Serve public JavaScript helpers mounted outside /portal and /shared.
 // Keep short revalidation so registration attribution fixes roll out quickly.
 app.use('/js', express.static(path.join(__dirname, 'public/js'), {
@@ -339,8 +348,25 @@ app.use('/promo-videos', express.static(path.join(__dirname, 'public/promo-video
     }
 }));
 // Info Hub page — redirect to /portal/info.html so relative asset paths resolve correctly
-app.get('/info', (req, res) => {
+app.get(['/info', '/info.html'], (req, res) => {
     res.redirect(301, '/portal/info.html');
+});
+
+// Founder story page — long-form why-EClawbot narrative for IP Depth touchpoint
+app.get(['/about-founder', '/about-founder.html'], (req, res) => {
+    res.redirect(301, '/portal/about-founder.html');
+});
+
+// Kanban / Settings / root index — sibling redirects so legacy bookmarks + SEO + share
+// links from before the portal/ migration keep working instead of returning hard-404.
+app.get(['/kanban', '/kanban.html'], (req, res) => {
+    res.redirect(301, '/portal/kanban.html');
+});
+app.get(['/settings', '/settings.html'], (req, res) => {
+    res.redirect(301, '/portal/settings.html');
+});
+app.get('/index.html', (req, res) => {
+    res.redirect(301, '/portal/index.html');
 });
 
 // Account deletion page — clean URL for Google Play Data Safety form
@@ -1088,7 +1114,7 @@ function ensureOneEmptySlot(device) {
 
 // Latest app version - update this with each release
 // Bot will warn users if their app version is older than this
-const LATEST_APP_VERSION = "1.0.86";
+const LATEST_APP_VERSION = "1.0.88";
 const FORCE_UPDATE_BELOW = null; // Set to version string (e.g. "1.0.30") to force-update anything below
 const APP_RELEASE_NOTES = process.env.APP_RELEASE_NOTES || null;
 
@@ -1100,6 +1126,7 @@ let persistenceReady = false;
 
 // Pending binding codes (code -> { deviceId, entityId, expires })
 const pendingBindings = {};
+const recentPetdxBindSnapshots = new Map();
 
 // Bot-to-bot loop prevention: token-bucket style — regenerates 1 token per minute, cap = BOT2BOT_MAX_MESSAGES
 // Key: "deviceId:entityId" -> { count, lastRegenAt }
@@ -1469,19 +1496,25 @@ setInterval(async () => {
 }, CLEANUP_INTERVAL).unref();
 
 // Graceful shutdown - save data before exit
-process.on('SIGINT', async () => {
-    console.log('[Persistence] Received SIGINT, saving data before exit...');
+async function gracefulShutdown(signal) {
+    console.log(`[Persistence] Received ${signal}, saving data before exit...`);
     await saveData();
     if (usePostgreSQL) await db.closeDatabase();
+    // Close the point-edit headless Chromium so the playwright subprocess
+    // doesn't leak past the parent on Railway redeploys / SIGTERM.
+    try {
+        const pe = require('./point-edit-resolver');
+        if (pe && typeof pe.closeBrowser === 'function') {
+            await pe.closeBrowser();
+        }
+    } catch (err) {
+        console.error('[Shutdown] point-edit closeBrowser failed:', err.message);
+    }
     process.exit(0);
-});
+}
 
-process.on('SIGTERM', async () => {
-    console.log('[Persistence] Received SIGTERM, saving data before exit...');
-    await saveData();
-    if (usePostgreSQL) await db.closeDatabase();
-    process.exit(0);
-});
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 
 // Initialize persistence on startup (async)
 initPersistence().catch(err => {
@@ -1745,6 +1778,9 @@ try {
         pushToBot,
         orgChart: orgChartModule,
         notifyDevice,
+        emitDevicePreferences: (deviceId, prefs) => {
+            io.to(`device:${deviceId}`).emit('device:preferences', { deviceId, prefs });
+        },
     });
     app.use('/api/mission', kanbanModule.router);
     console.log('[Kanban] Module loaded successfully');
@@ -1818,6 +1854,10 @@ try {
     console.error('[Mindmap] Failed to load module:', err.message);
     mindmapModule = { initMindmapTables: () => {} };
 }
+
+// Point-and-edit demo — coordinate-to-source target resolver.
+const pointEditResolver = require('./point-edit-resolver');
+app.use('/api/point-edit', pointEditResolver.router);
 
 // Scheduled Messages — user-scheduled chat messages (Phase 1: backend)
 let scheduledMessagesModule;
@@ -2203,6 +2243,11 @@ const companionModule = require('./companion-api')({
     authenticateBot,
     authenticateDeviceOrBot,
     serverLog,
+    // Per spec §0.4a (2026-05-31 amendment): /api/companion/select must
+    // atomically mirror the select into the vault. The factory is hoisted
+    // (function declaration further down in this file) so the forward
+    // reference is safe.
+    createPetdxPhase0Io,
 });
 app.use('/api/companion', companionModule.router);
 if (process.env.NODE_ENV !== 'test') {
@@ -5516,6 +5561,53 @@ function isCharacterDefaultAvatar(avatar) {
     return Object.values(CHARACTER_DEFAULT_AVATAR).includes(avatar);
 }
 
+const PETDX_PREVIOUS_ENTITY_TTL_MS = 10 * 60 * 1000;
+function getPetdxBindSnapshotKey(deviceId, entityId) {
+    return `${deviceId}:${entityId}`;
+}
+function snapshotEntityForPetdxBind(entity) {
+    if (!entity) return null;
+    return {
+        entityId: entity.entityId,
+        character: entity.character || null,
+        avatar: entity.avatar || null,
+        rental_status: entity.rental_status || null,
+        identity: entity.identity && entity.identity.public
+            ? { public: { ...entity.identity.public } }
+            : null,
+    };
+}
+function rememberPreviousEntityForBind(deviceId, entityId, entity) {
+    const snapshot = snapshotEntityForPetdxBind(entity);
+    if (!snapshot) return;
+    recentPetdxBindSnapshots.set(getPetdxBindSnapshotKey(deviceId, entityId), {
+        snapshot,
+        expiresAt: Date.now() + PETDX_PREVIOUS_ENTITY_TTL_MS,
+    });
+}
+function getPreviousEntityForBind(deviceId, entityId, currentEntity) {
+    const now = Date.now();
+    for (const [key, entry] of recentPetdxBindSnapshots.entries()) {
+        if (!entry || entry.expiresAt <= now) recentPetdxBindSnapshots.delete(key);
+    }
+    const key = getPetdxBindSnapshotKey(deviceId, entityId);
+    const entry = recentPetdxBindSnapshots.get(key);
+    if (entry && entry.expiresAt > now) return entry.snapshot;
+    if (currentEntity && currentEntity.rebindCount > 0) {
+        return {
+            entityId,
+            character: null,
+            avatar: null,
+            rental_status: currentEntity.rental_status || null,
+            identity: null,
+        };
+    }
+    return null;
+}
+function clearPreviousEntityForBind(deviceId, entityId) {
+    recentPetdxBindSnapshots.delete(getPetdxBindSnapshotKey(deviceId, entityId));
+}
+
 // Helper: Create default entity
 function createDefaultEntity(entityId) {
     return {
@@ -6048,6 +6140,8 @@ function computeInviteTierState(totalInvited, milestonesClaimed) {
 
 // GET /api/invite/my-code — get (or auto-generate) the caller's invite code
 // Auth: deviceId+deviceSecret OR JWT cookie
+// Extended: returns share_url with UTM tags + wallet_reward_preview
+// Auto-rotate (spec § 11): if no active code exists, mint one new.
 app.get('/api/invite/my-code', async (req, res) => {
     const auth = resolveInviteAuth(req);
     if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
@@ -6055,37 +6149,53 @@ app.get('/api/invite/my-code', async (req, res) => {
 
     const pg = authModule.pool;
     try {
-        // Return existing code if any
-        const existing = await pg.query('SELECT code FROM invite_codes WHERE owner_device_id = $1', [deviceId]);
+        // Try to find an active (non-redeemed) code first
+        const existing = await pg.query(
+            'SELECT code FROM invite_codes WHERE owner_device_id = $1 AND used_by_device_id IS NULL',
+            [deviceId]
+        );
+
+        let code;
         if (existing.rows.length > 0) {
-            const stats = await pg.query('SELECT bonus_messages, total_invited FROM invite_rewards WHERE device_id = $1', [deviceId]);
-            return res.json({
-                success: true,
-                code: existing.rows[0].code,
-                bonus_messages: stats.rows[0]?.bonus_messages ?? 0,
-                total_invited: stats.rows[0]?.total_invited ?? 0
-            });
+            code = existing.rows[0].code;
+        } else {
+            // No active code — mint one new (auto-rotate per spec § 11)
+            let attempts = 0;
+            do {
+                code = generateInviteCode();
+                attempts++;
+                if (attempts > 20) return res.status(500).json({ success: false, error: 'Could not generate unique code' });
+            } while ((await pg.query('SELECT 1 FROM invite_codes WHERE code = $1', [code])).rows.length > 0);
+            await pg.query('INSERT INTO invite_codes (code, owner_device_id) VALUES ($1, $2)', [code, deviceId]);
         }
 
-        // Generate unique code
-        let code, attempts = 0;
-        do {
-            code = generateInviteCode();
-            attempts++;
-            if (attempts > 20) return res.status(500).json({ success: false, error: 'Could not generate unique code' });
-        } while ((await pg.query('SELECT 1 FROM invite_codes WHERE code = $1', [code])).rows.length > 0);
-
-        await pg.query('INSERT INTO invite_codes (code, owner_device_id) VALUES ($1, $2)', [code, deviceId]);
-        return res.json({ success: true, code, bonus_messages: 0, total_invited: 0 });
+        const stats = await pg.query('SELECT bonus_messages, total_invited FROM invite_rewards WHERE device_id = $1', [deviceId]);
+        const shareUrl = `https://minigame.eclawbot.com/?ref=${code}&utm_source=invite&utm_medium=share&utm_campaign=viral_loop`;
+        return res.json({
+            success: true,
+            code,
+            share_url: shareUrl,
+            bonus_messages: stats.rows[0]?.bonus_messages ?? 0,
+            total_invited: stats.rows[0]?.total_invited ?? 0,
+            wallet_reward_preview: {
+                invitee_reward_mli: 100 * 1000, // 100 ecoin
+                inviter_reward_mli: 500 * 1000, // 500 ecoin
+                invitee_type: 'signup_bonus',
+                inviter_type: 'referral_bonus',
+            },
+        });
     } catch (e) {
         console.error('[Invite] my-code error:', e);
         return res.status(500).json({ success: false, error: 'Internal error' });
     }
-});
+});;;
 
 // POST /api/invite/redeem — redeem an invite code
 // Body: { deviceId, deviceSecret, code } OR JWT cookie + { code }
-// Reward: invitee +300 bonus, inviter +50 bonus
+// Wallet credit: inviter 500 ecoin (REFERRAL_BONUS), invitee 100 ecoin (SIGNUP_BONUS)
+// Idempotency keys prevent double-credit on replay.
+// Single ACID transaction: all DB ops + both wallet credits share one client.
+// Spec: docs/specs/invite-reward-viral-loop.md §3, § 5
 app.post('/api/invite/redeem', async (req, res) => {
     const { code } = req.body;
     const auth = resolveInviteAuth(req);
@@ -6096,89 +6206,202 @@ app.post('/api/invite/redeem', async (req, res) => {
     }
 
     const pg = authModule.pool;
+    const wallet = walletModule;
+    const INVITER_REWARD_MLI = 500 * 1000; // 500 ecoin in mLI
+    const INVITEE_REWARD_MLI = 100 * 1000; // 100 ecoin in mLI
+
     try {
-        // Look up the code
-        const codeRow = await pg.query('SELECT owner_device_id, used_by_device_id FROM invite_codes WHERE code = $1', [code.toUpperCase()]);
-        if (codeRow.rows.length === 0) return res.status(404).json({ success: false, error: 'Invalid invite code' });
+        // Single ACID transaction — all ops (SELECT FOR UPDATE, mark used,
+        // user lookup, audit insert, both wallet credits) share one client.
+        const result = await wallet.withTransaction(async (client) => {
+            // Step 1: SELECT invite_codes FOR UPDATE — lock the row to prevent race
+            const codeRow = await client.query(
+                'SELECT owner_device_id, used_by_device_id FROM invite_codes WHERE code = $1 FOR UPDATE',
+                [code.toUpperCase()]
+            );
+            if (codeRow.rows.length === 0) {
+                return { error: 'Invalid invite code', status: 404 };
+            }
 
-        const { owner_device_id, used_by_device_id } = codeRow.rows[0];
-        if (used_by_device_id) return res.status(409).json({ success: false, error: 'Invite code already used' });
-        if (owner_device_id === deviceId) return res.status(400).json({ success: false, error: 'Cannot redeem your own invite code' });
+            const { owner_device_id, used_by_device_id } = codeRow.rows[0];
+            if (used_by_device_id) {
+                return { error: 'Invite code already used', status: 409 };
+            }
+            if (owner_device_id === deviceId) {
+                return { error: 'Cannot redeem your own invite code', status: 400 };
+            }
 
-        // Note: Option B — a device can redeem multiple different codes (one per
-        // inviter). Per-code-once is enforced above via used_by_device_id. See
-        // docs/invite-redemption-policy.md.
+            // Step 2: Resolve inviter_user_id + invitee_user_id from user_accounts.device_id
+            const [inviterAcct, inviteeAcct] = await Promise.all([
+                client.query('SELECT id FROM user_accounts WHERE device_id = $1', [owner_device_id]),
+                client.query('SELECT id FROM user_accounts WHERE device_id = $1', [deviceId]),
+            ]);
+            const inviterUserId = inviterAcct.rows[0]?.id || null;
+            const inviteeUserId = inviteeAcct.rows[0]?.id || null;
 
-        // Mark code as used
-        await pg.query(
-            'UPDATE invite_codes SET used_by_device_id = $1, used_at = NOW() WHERE code = $2',
-            [deviceId, code.toUpperCase()]
-        );
+            // Step 3: Idempotency — check if redemption already recorded
+            const existingRedemption = await client.query(
+                'SELECT id FROM invite_redemptions WHERE code = $1 AND invitee_device_id = $2',
+                [code.toUpperCase(), deviceId]
+            );
+            if (existingRedemption.rows.length > 0) {
+                return {
+                    alreadyDone: true,
+                    wallet_rewards: { status: 'already_credited' },
+                    message: 'Invite already redeemed.',
+                };
+            }
 
-        // Grant invitee +300 bonus
-        await pg.query(
-            `INSERT INTO invite_rewards (device_id, bonus_messages, total_invited)
-             VALUES ($1, 300, 0)
-             ON CONFLICT (device_id)
-             DO UPDATE SET bonus_messages = invite_rewards.bonus_messages + 300, updated_at = NOW()`,
-            [deviceId]
-        );
+            // Step 4: Device-only check (Q1 from spec § 10)
+            const walletStatus = inviteeUserId ? 'not_attempted' : 'pending_user_account';
 
-        // Grant inviter +50 bonus + increment total_invited
-        const inviterRow = await pg.query(
-            `INSERT INTO invite_rewards (device_id, bonus_messages, total_invited)
-             VALUES ($1, 50, 1)
-             ON CONFLICT (device_id)
-             DO UPDATE SET bonus_messages = invite_rewards.bonus_messages + 50,
-                           total_invited = invite_rewards.total_invited + 1,
-                           updated_at = NOW()
-             RETURNING total_invited, milestones_claimed`,
-            [owner_device_id]
-        );
+            // Step 5: Mark code as used
+            await client.query(
+                'UPDATE invite_codes SET used_by_device_id = $1, used_at = NOW() WHERE code = $2',
+                [deviceId, code.toUpperCase()]
+            );
 
-        // Credit any newly-reached tier milestones (one-shot via bitmask).
-        // Wrapped in try/catch so a milestone bookkeeping error can never
-        // break the base redeem success path.
-        let milestonesUnlocked = [];
-        try {
-            const { total_invited: ti, milestones_claimed: mc } = inviterRow.rows[0] || { total_invited: 0, milestones_claimed: 0 };
-            let addBonus = 0;
-            let newMask = mc | 0;
-            for (const t of INVITE_TIERS) {
-                if (ti >= t.threshold && (mc & t.bit) === 0) {
-                    addBonus += t.bonusMessages;
-                    newMask |= t.bit;
-                    milestonesUnlocked.push({ tier: t.key, threshold: t.threshold, bonus_messages: t.bonusMessages });
+            // Step 6: Insert invite_redemptions audit row
+            await client.query(
+                `INSERT INTO invite_redemptions
+ (code, inviter_device_id, invitee_device_id, inviter_user_id, invitee_user_id,
+  inviter_reward_amount_mli, invitee_reward_amount_mli, reward_type, wallet_credit_status)
+ VALUES ($1, $2, $3, $4, $5, $6, $7, 'redeem', $8)`,
+                [code.toUpperCase(), owner_device_id, deviceId, inviterUserId, inviteeUserId,
+                 INVITER_REWARD_MLI, INVITEE_REWARD_MLI, walletStatus]
+            );
+
+            // Step 7: Wallet credit (only for users with accounts) — same client
+            let inviterLedgerId = null;
+            let inviteeLedgerId = null;
+            let walletRewardStatus = walletStatus;
+
+            if (inviterUserId) {
+                const idemInviter = `invite:redeem:inviter:${code}:${deviceId}`;
+                try {
+                    const ir = await wallet._internals.applyLedgerEntry(client, {
+                        userId: inviterUserId,
+                        balanceDelta: INVITER_REWARD_MLI,
+                        heldDelta: 0,
+                        type: 'referral_bonus',
+                        refType: 'invite_redeem',
+                        refId: `${code}:${deviceId}`,
+                        idempotencyKey: idemInviter,
+                    });
+                    inviterLedgerId = ir?.ledgerId || null;
+                } catch (e) {
+                    console.error('[Invite] inviter wallet credit failed:', e);
+                    walletRewardStatus = 'partial';
                 }
             }
-            if (addBonus > 0) {
-                await pg.query(
-                    `UPDATE invite_rewards
-                     SET bonus_messages = bonus_messages + $1,
-                         milestones_claimed = $2,
-                         updated_at = NOW()
-                     WHERE device_id = $3`,
-                    [addBonus, newMask, owner_device_id]
-                );
+
+            if (inviteeUserId) {
+                const idemInvitee = `invite:redeem:invitee:${code}:${deviceId}`;
+                try {
+                    const ir = await wallet._internals.applyLedgerEntry(client, {
+                        userId: inviteeUserId,
+                        balanceDelta: INVITEE_REWARD_MLI,
+                        heldDelta: 0,
+                        type: 'signup_bonus',
+                        refType: 'invite_redeem',
+                        refId: `${code}:${deviceId}`,
+                        idempotencyKey: idemInvitee,
+                    });
+                    inviteeLedgerId = ir?.ledgerId || null;
+                    if (walletRewardStatus !== 'partial') {
+                        walletRewardStatus = 'credited';
+                    }
+                } catch (e) {
+                    console.error('[Invite] invitee wallet credit failed:', e);
+                    walletRewardStatus = walletRewardStatus === 'partial' ? 'partial' : 'failed';
+                }
             }
-        } catch (e) {
-            console.error('[Invite] milestone credit failed:', e);
+
+            // Step 8: Update wallet_credit_status in audit row — same client
+            await client.query(
+                'UPDATE invite_redemptions SET wallet_credit_status = $1, inviter_wallet_ledger_id = $2, invitee_wallet_ledger_id = $3 WHERE code = $4 AND invitee_device_id = $5',
+                [walletRewardStatus, inviterLedgerId, inviteeLedgerId, code.toUpperCase(), deviceId]
+            );
+
+            // Step 9: Legacy invite_rewards update (60-day migration window per spec § 10 Q2)
+            try {
+                await client.query(
+                    `INSERT INTO invite_rewards (device_id, bonus_messages, total_invited)
+                     VALUES ($1, 300, 0)
+                     ON CONFLICT (device_id)
+                     DO UPDATE SET bonus_messages = invite_rewards.bonus_messages + 300, updated_at = NOW()`,
+                    [deviceId]
+                );
+                const inviterRow = await client.query(
+                    `INSERT INTO invite_rewards (device_id, bonus_messages, total_invited)
+                     VALUES ($1, 50, 1)
+                     ON CONFLICT (device_id)
+                     DO UPDATE SET bonus_messages = invite_rewards.bonus_messages + 50,
+                                   total_invited = invite_rewards.total_invited + 1,
+                                   updated_at = NOW()
+                     RETURNING total_invited, milestones_claimed`,
+                    [owner_device_id]
+                );
+
+                const { total_invited: ti, milestones_claimed: mc } = inviterRow.rows[0] || { total_invited: 0, milestones_claimed: 0 };
+                let addBonus = 0;
+                let newMask = mc | 0;
+                for (const t of INVITE_TIERS) {
+                    if (ti >= t.threshold && (mc & t.bit) === 0) {
+                        addBonus += t.bonusMessages;
+                        newMask |= t.bit;
+                    }
+                }
+                if (addBonus > 0) {
+                    await client.query(
+                        `UPDATE invite_rewards
+                         SET bonus_messages = bonus_messages + $1,
+                             milestones_claimed = $2,
+                             updated_at = NOW()
+                         WHERE device_id = $3`,
+                        [addBonus, newMask, owner_device_id]
+                    );
+                }
+            } catch (e) {
+                console.error('[Invite] legacy bonus_messages update failed:', e);
+            }
+
+            return {
+                walletRewardStatus,
+                inviterLedgerId,
+                inviteeLedgerId,
+            };
+        }); // end withTransaction
+
+        // Handle early returns (error before entering transaction)
+        if (result.error) {
+            return res.status(result.status).json({ success: false, error: result.error });
+        }
+        if (result.alreadyDone) {
+            return res.json({ success: true, ...result });
         }
 
+        const { walletRewardStatus, inviterLedgerId, inviteeLedgerId } = result;
         return res.json({
             success: true,
-            bonus_granted: 300,
-            message: 'Invite code redeemed! +300 bonus messages added.',
-            inviter_milestones_unlocked: milestonesUnlocked,
+            wallet_rewards: {
+                status: walletRewardStatus,
+                inviter_reward_mli: INVITER_REWARD_MLI,
+                invitee_reward_mli: INVITEE_REWARD_MLI,
+                inviter_ledger_id: inviterLedgerId,
+                invitee_ledger_id: inviteeLedgerId,
+            },
+            message: 'Invite code redeemed!' + (walletRewardStatus === 'pending_user_account' ? ' Wallet credit pending user account creation.' : ''),
         });
     } catch (e) {
         console.error('[Invite] redeem error:', e);
         return res.status(500).json({ success: false, error: 'Internal error' });
     }
-});
+});;;
 
 // GET /api/invite/stats — get invite stats and remaining bonus
 // Auth: deviceId+deviceSecret OR JWT cookie
+// Extended: uses active-code resolver (spec § 11) + wallet_rewards.total_earned_mli
 app.get('/api/invite/stats', async (req, res) => {
     const auth = resolveInviteAuth(req);
     if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
@@ -6186,15 +6409,25 @@ app.get('/api/invite/stats', async (req, res) => {
 
     const pg = authModule.pool;
     try {
-        const [codeRow, rewardRow, usageRow] = await Promise.all([
-            pg.query('SELECT code FROM invite_codes WHERE owner_device_id = $1', [deviceId]),
+        // Active-code resolver (spec § 11): only return the current active code
+        const [codeRow, rewardRow, usageRow, walletRow] = await Promise.all([
+            pg.query('SELECT code FROM invite_codes WHERE owner_device_id = $1 AND used_by_device_id IS NULL', [deviceId]),
             pg.query('SELECT bonus_messages, total_invited, milestones_claimed FROM invite_rewards WHERE device_id = $1', [deviceId]),
-            pg.query('SELECT message_count FROM usage_tracking WHERE device_id = $1 AND date = CURRENT_DATE', [deviceId])
+            pg.query('SELECT message_count FROM usage_tracking WHERE device_id = $1 AND date = CURRENT_DATE', [deviceId]),
+            pg.query(
+                `SELECT COALESCE(SUM(balance_delta), 0) as total_earned_mli
+                 FROM wallet_ledger wl
+                 JOIN user_accounts ua ON ua.id = wl.user_id
+                 WHERE ua.device_id = $1
+ AND wl.type IN ('referral_bonus', 'signup_bonus', 'invite_first_topup_bonus')`,
+                [deviceId]
+            ),
         ]);
         const bonus = rewardRow.rows[0]?.bonus_messages ?? 0;
         const totalInvited = rewardRow.rows[0]?.total_invited ?? 0;
         const milestonesClaimed = rewardRow.rows[0]?.milestones_claimed ?? 0;
         const dailyUsed = usageRow.rows[0]?.message_count ?? 0;
+        const totalEarnedMli = parseInt(walletRow.rows[0]?.total_earned_mli ??0);
         const tierState = computeInviteTierState(totalInvited, milestonesClaimed);
         return res.json({
             success: true,
@@ -6209,12 +6442,15 @@ app.get('/api/invite/stats', async (req, res) => {
             next_threshold: tierState.next_threshold,
             invites_to_next: tierState.invites_to_next,
             tier_catalog: INVITE_TIERS.map(t => ({ key: t.key, threshold: t.threshold, bonus_messages: t.bonusMessages })),
+            wallet_rewards: {
+                total_earned_mli: totalEarnedMli,
+            },
         });
     } catch (e) {
         console.error('[Invite] stats error:', e);
         return res.status(500).json({ success: false, error: 'Internal error' });
     }
-});
+});;
 
 // GET /api/invite/clicks — per-code funnel breakdown for the caller's own
 // invite codes. Device-scoped twin of /api/admin/invite/clicks: no IP hashes
@@ -6590,6 +6826,267 @@ function decryptVars(encrypted, ivHex, authTagHex) {
     return JSON.parse(decrypted);
 }
 
+function normalizeVarSources(varSources) {
+    if (!varSources) return {};
+    if (typeof varSources === 'string') {
+        try { return JSON.parse(varSources) || {}; } catch (_) { return {}; }
+    }
+    return { ...varSources };
+}
+
+function createPetdxPhase0Io() {
+    const cache = new Map();
+
+    async function loadVault(deviceId) {
+        if (!SEAL_KEY_HEX) throw new Error('SEAL_KEY not configured');
+        if (cache.has(deviceId)) return cache.get(deviceId);
+
+        const row = await db.getDeviceVars(deviceId);
+        const state = {
+            vars: {},
+            sources: {},
+            locked: false,
+        };
+        if (row) {
+            state.vars = decryptVars(row.encrypted_vars, row.iv, row.auth_tag) || {};
+            state.sources = normalizeVarSources(row.var_sources);
+            state.locked = !!row.is_locked;
+        }
+        cache.set(deviceId, state);
+        return state;
+    }
+
+    async function persistVault(deviceId, state) {
+        const { encrypted, iv, authTag } = encryptVars(state.vars);
+        const ok = await db.upsertDeviceVars(
+            deviceId,
+            encrypted,
+            iv,
+            authTag,
+            Object.keys(state.vars),
+            state.locked,
+            state.sources
+        );
+        if (!ok) throw new Error('upsertDeviceVars returned false');
+    }
+
+    return {
+        async getDeviceVar(deviceId, key) {
+            const state = await loadVault(deviceId);
+            return Object.prototype.hasOwnProperty.call(state.vars, key) ? state.vars[key] : null;
+        },
+        async setDeviceVars(deviceId, entries) {
+            const state = await loadVault(deviceId);
+            for (const [key, value] of Object.entries(entries || {})) {
+                state.vars[key] = value;
+                state.sources[key] = 'petdx-phase0';
+            }
+            await persistVault(deviceId, state);
+            if (typeof db.logDeviceVarsAudit === 'function') {
+                db.logDeviceVarsAudit({
+                    deviceId,
+                    action: 'merge',
+                    keyName: null,
+                    source: 'petdx-phase0',
+                    beforeCount: null,
+                    afterCount: Object.keys(state.vars).length,
+                }).catch(() => {});
+            }
+        },
+        async setDeviceVar(deviceId, key, value) {
+            const state = await loadVault(deviceId);
+            state.vars[key] = value;
+            state.sources[key] = 'petdx-phase0';
+            await persistVault(deviceId, state);
+            if (typeof db.logDeviceVarsAudit === 'function') {
+                db.logDeviceVarsAudit({
+                    deviceId,
+                    action: 'merge',
+                    keyName: key,
+                    source: 'petdx-phase0',
+                    beforeCount: null,
+                    afterCount: Object.keys(state.vars).length,
+                }).catch(() => {});
+            }
+        },
+        async appendCompanionSelectLog(entry) {
+            await chatPool.query(
+                `INSERT INTO companion_select_log
+                    (device_id, entity_id, companion_id, selected_at, source, origin)
+                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                [
+                    entry.deviceId,
+                    entry.entityId,
+                    entry.companionId,
+                    Date.now(),
+                    entry.source || 'api',
+                    entry.origin || null,
+                ]
+            );
+        },
+        log(level, tag, message, meta = {}) {
+            const normalizedLevel = level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'info';
+            const text = `${tag} ${message}`;
+            if (normalizedLevel === 'error') console.error(text, meta);
+            else if (normalizedLevel === 'warn') console.warn(text, meta);
+            else console.log(text, meta);
+            serverLog(normalizedLevel, 'petdx_phase0', text, {
+                deviceId: meta.deviceId,
+                entityId: meta.entityId,
+                metadata: meta,
+            });
+        },
+    };
+}
+
+async function getPetdxEntityEnrichmentMap(deviceId) {
+    const out = new Map();
+    if (!deviceId || !SEAL_KEY_HEX) return out;
+
+    try {
+        const row = await db.getDeviceVars(deviceId);
+        if (!row) return out;
+
+        const vars = decryptVars(row.encrypted_vars, row.iv, row.auth_tag) || {};
+        for (const [key, rawValue] of Object.entries(vars)) {
+            const m = /^PETDX_(CURRENT|AVATAR)_(\d+)$/.exec(key);
+            if (!m) continue;
+
+            const entityId = Number(m[2]);
+            if (!Number.isFinite(entityId)) continue;
+
+            const value = typeof rawValue === 'string' && rawValue.trim() ? rawValue : null;
+            if (!value) continue;
+
+            const item = out.get(entityId) || {};
+            if (m[1] === 'CURRENT') item.petdxCompanionId = value;
+            if (m[1] === 'AVATAR') item.petdxAvatarUrl = value;
+            out.set(entityId, item);
+        }
+    } catch (err) {
+        console.warn(`[/api/entities] petdx enrichment failed: ${err.message}`);
+        serverLog('warn', 'entity_poll', `Petdx enrichment failed for ${deviceId}: ${err.message}`, {
+            deviceId,
+            metadata: { reason: 'petdx_enrichment_failed' },
+        });
+    }
+
+    return out;
+}
+
+async function runPetdxPhase0AutoAssign(deviceId, entity, ctx) {
+    try {
+        const result = await assignDefaultCompanionIfMissing(
+            deviceId,
+            entity,
+            ctx,
+            createPetdxPhase0Io()
+        );
+        if (result && result.assigned) {
+            serverLog('info', 'petdx_phase0', `[petdx-phase0] assigned ${result.assigned}`, {
+                deviceId,
+                entityId: entity && entity.entityId,
+                metadata: { ctx, result },
+            });
+        } else if (result && result.skipped && result.skipped !== 'already_assigned') {
+            serverLog('info', 'petdx_phase0', `[petdx-phase0] skipped ${result.skipped}`, {
+                deviceId,
+                entityId: entity && entity.entityId,
+                metadata: { ctx, result },
+            });
+        }
+        return result;
+    } catch (err) {
+        console.warn('[petdx-phase0] auto-assign failed:', err.message);
+        serverLog('warn', 'petdx_phase0', `[petdx-phase0] auto-assign failed: ${err.message}`, {
+            deviceId,
+            entityId: entity && entity.entityId,
+            metadata: { ctx },
+        });
+        return { skipped: 'hook_failed', error: err.message };
+    }
+}
+
+// POST /api/admin/petdx-phase0/backfill
+// Owner-auth admin endpoint that runs the petdx Phase 0 default-companion
+// assignment hook in 'backfill' mode for every bound entity on the device.
+// Mirrors backend/scripts/petdx-phase0-backfill.js but runs in-process so
+// Phase 0 acceptance §0.8 #8 (kanban prod E2E) doesn't require Railway CLI
+// access. See spec §0.5.
+//
+// Dual-auth (matches /api/device-vars GET dual-auth shape):
+//   - deviceSecret (owner-level) — accepted unconditionally
+//   - botSecret + entityId — accepted because the operation is scoped to
+//     PETDX_* keys on the caller's own device, which any bound bot already
+//     has read access to via the enrichment field on /api/entities; widening
+//     to write within the same hook semantics doesn't grant a fresh escape
+//     surface.
+app.post('/api/admin/petdx-phase0/backfill', async (req, res) => {
+    const { deviceId, deviceSecret, botSecret, entityId, commit } = req.body || {};
+    if (!deviceId || (!deviceSecret && !botSecret)) {
+        return res.status(400).json({ success: false, error: 'deviceId + (deviceSecret OR botSecret+entityId) are required' });
+    }
+    const device = devices[deviceId];
+    if (!device) {
+        return res.status(401).json({ success: false, error: 'Invalid device' });
+    }
+    if (deviceSecret) {
+        if (!safeEqual(device.deviceSecret, deviceSecret)) {
+            return res.status(401).json({ success: false, error: 'Invalid device credentials' });
+        }
+    } else {
+        const eid = Number(entityId);
+        if (!Number.isFinite(eid) || !device.entities || !device.entities[eid]) {
+            return res.status(401).json({ success: false, error: 'Invalid bot credentials' });
+        }
+        if (!safeEqual(device.entities[eid].botSecret, botSecret)) {
+            return res.status(401).json({ success: false, error: 'Invalid bot credentials' });
+        }
+    }
+
+    const entityIds = Object.keys(device.entities || {}).map(Number).filter(Number.isFinite);
+    const results = { assigned: [], skipped: [], errors: [] };
+    const ctxBase = { mode: 'backfill', source: 'backfill-script' };
+    const io = createPetdxPhase0Io();
+
+    for (const eId of entityIds) {
+        const entity = device.entities[eId];
+        if (!entity || !entity.isBound) {
+            results.skipped.push({ entityId: eId, reason: 'not_bound' });
+            continue;
+        }
+        const entityForHook = {
+            entityId: eId,
+            character: entity.character,
+            avatar: entity.avatar,
+            rental_status: entity.rentalStatus || entity.rental_status || null,
+            identity: entity.identity || null,
+        };
+        try {
+            const result = commit === true
+                ? await assignDefaultCompanionIfMissing(deviceId, entityForHook, ctxBase, io)
+                : await (async () => {
+                    const dryIo = {
+                        ...io,
+                        setDeviceVars: async () => {},
+                        setDeviceVar: async () => {},
+                        appendCompanionSelectLog: async () => {},
+                    };
+                    return assignDefaultCompanionIfMissing(deviceId, entityForHook, ctxBase, dryIo);
+                })();
+            if (result && result.assigned) {
+                results.assigned.push({ entityId: eId, companion: result.assigned, avatarUrl: result.avatarUrl, source: result.source });
+            } else if (result && result.skipped) {
+                results.skipped.push({ entityId: eId, reason: result.skipped });
+            }
+        } catch (err) {
+            results.errors.push({ entityId: eId, error: err.message });
+        }
+    }
+
+    res.json({ success: true, deviceId, committed: commit === true, results });
+});
+
 
 // ============================================
 // REMOTE SCREEN CONTROL
@@ -6821,7 +7318,8 @@ app.post('/api/device/register', deviceRegisterRateLimit, (req, res) => {
         deviceId: deviceId,
         entityId: eId,
         expires: expires,
-        appVersion: appVersion || null
+        appVersion: appVersion || null,
+        previousEntity: getPreviousEntityForBind(deviceId, eId, device.entities[eId])
     };
 
     // Store appVersion on entity (update even if already bound)
@@ -6992,6 +7490,7 @@ app.post('/api/bind', async (req, res) => {
     }
 
     const { deviceId, entityId } = binding;
+    const previousEntityForPetdx = binding.previousEntity || null;
     const device = devices[deviceId];
     if (!device) {
         return res.status(400).json({ success: false, message: "Device not found" });
@@ -7026,6 +7525,13 @@ app.post('/api/bind', async (req, res) => {
 
     console.log(`[Bind] Device ${deviceId} Entity ${entityId} bound with botSecret${name ? ` (name: ${name})` : ''} (app v${deviceAppVersion || 'unknown'})`);
     serverLog('info', 'bind', `Entity ${entityId} bound${name ? ` (name: ${name})` : ''}`, { deviceId, entityId });
+
+    await runPetdxPhase0AutoAssign(deviceId, entity, {
+        mode: previousEntityForPetdx ? 'rebind' : 'bind',
+        previousEntity: previousEntityForPetdx,
+        source: 'bind-endpoint',
+    });
+    clearPreviousEntityForBind(deviceId, entityId);
 
     // Dynamic entity auto-expand: ensure at least one empty slot after bind
     const newSlotId = ensureOneEmptySlot(device);
@@ -7163,6 +7669,7 @@ app.get('/api/entities', async (req, res) => {
         console.warn(`[/api/entities] channel_accounts lookup failed: ${err.message}`);
     }
 
+    const petdxByEntityId = await getPetdxEntityEnrichmentMap(authedDeviceId);
     const entities = [];
 
     for (const deviceId in devices) {
@@ -7178,6 +7685,7 @@ app.get('/api/entities', async (req, res) => {
             const entity = device.entities[i];
             if (!entity) continue;
             if (entity.isBound) {
+                const petdx = petdxByEntityId.get(entity.entityId) || {};
                 const payload = {
                     deviceId: deviceId,
                     entityId: entity.entityId,
@@ -7189,6 +7697,8 @@ app.get('/api/entities', async (req, res) => {
                     lastUpdated: entity.lastUpdated,
                     isBound: true,  // Always true since we only return bound entities
                     avatar: entity.avatar || null,
+                    petdxCompanionId: petdx.petdxCompanionId || null,
+                    petdxAvatarUrl: petdx.petdxAvatarUrl || null,
                     xp: entity.xp || 0,
                     level: entity.level || 1,
                     publicCode: entity.publicCode || null,
@@ -7653,6 +8163,35 @@ function resolveSpeakToTarget(code, senderDeviceId) {
     return null;
 }
 
+/**
+ * Validate that a speakTo array entry parses to one of the supported forms
+ * before we attempt resolution. Used by the /api/transform 400-gate so
+ * malformed LLM input fails fast instead of falling through to silent
+ * not_found (which the calling bot used to treat as a successful delivery
+ * and never retry).
+ *
+ * Supported forms (decorators stripped in this fixed order, mirroring
+ * resolveSpeakToTarget: outer angle brackets, then leading @, then leading #):
+ *   - 6-char publicCode [a-z0-9]{6}        e.g. "tbwb9e", "@tbwb9e", "<@tbwb9e>"
+ *   - numeric entityId  \d+                e.g. "6", "#6", "@#6", "<#6>"
+ *
+ * Returns { valid: true } or { valid: false, reason, normalized? }.
+ */
+function validateSpeakToFormat(code) {
+    if (typeof code !== 'string') return { valid: false, reason: 'non_string' };
+    const trimmed = code.trim();
+    if (trimmed.length === 0) return { valid: false, reason: 'empty' };
+    let normalized = trimmed;
+    if (normalized.startsWith('<') && normalized.endsWith('>')) {
+        normalized = normalized.slice(1, -1);
+    }
+    if (normalized.startsWith('@')) normalized = normalized.slice(1);
+    if (normalized.startsWith('#')) normalized = normalized.slice(1);
+    if (/^[a-z0-9]{6}$/.test(normalized)) return { valid: true };
+    if (/^\d+$/.test(normalized)) return { valid: true };
+    return { valid: false, reason: 'unparseable_format', normalized };
+}
+
 function collectMissingSpeakToMentionWarnings(speakToList, mentionParse, senderDeviceId) {
     if (!Array.isArray(speakToList) || speakToList.length === 0) return [];
     const mentioned = new Set((mentionParse?.mentions || []).map(m => `${m.deviceId}:${m.entityId}`));
@@ -7673,6 +8212,17 @@ function collectMissingSpeakToMentionWarnings(speakToList, mentionParse, senderD
     }
 
     return warnings;
+}
+
+function getSilentTransformSuppressionReason(text) {
+    if (typeof text !== 'string') return null;
+    const trimmed = text.trim();
+    if (!trimmed) return null;
+    if (/^\[SILENT\]$/i.test(trimmed)) return 'silent_token';
+    if (/^\[SILENT\](?:\s|$)/i.test(trimmed) && isLowSignalFwd(trimmed)) {
+        return 'silent_noise';
+    }
+    return null;
 }
 
 /**
@@ -7976,6 +8526,34 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         return res.status(400).json({ success: false, message: "botSecret required" });
     }
 
+    // ── speakTo format gate (defensive 400 instead of silent not_found drop) ──
+    // Reject malformed containers, then validate each entry's shape. Bots that
+    // pass freeform strings like "Lobster" or "team-2" used to silently fail
+    // (delivery 0/1 success, sender-only chat row) and never retry; now they
+    // get an actionable 400 with the offending value.
+    if (req.body.speakTo !== undefined && req.body.speakTo !== null && !Array.isArray(req.body.speakTo)) {
+        return res.status(400).json({
+            success: false,
+            error: 'speakTo_invalid_format',
+            got: req.body.speakTo,
+            expected: 'speakTo must be an array of strings'
+        });
+    }
+    if (hadExplicitSpeakTo) {
+        for (const entry of speakTo) {
+            const check = validateSpeakToFormat(entry);
+            if (!check.valid) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'speakTo_invalid_format',
+                    got: entry,
+                    reason: check.reason,
+                    expected: '6-char publicCode [a-z0-9] OR numeric entityId; optional <>/@/# decorators allowed'
+                });
+            }
+        }
+    }
+
     // Validate optional senderHint — channel bridges pass this so the server
     // can resolve smart routing centrally instead of each bridge implementing
     // its own decideReplyRouting logic. See issue #2285.
@@ -8161,6 +8739,9 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         entity.name = name || null;
     }
 
+    const previousEntityForPetdxCharacterChange = (character && entity.character !== character)
+        ? snapshotEntityForPetdxBind(entity)
+        : null;
     if (character && entity.character !== character) {
         const oldDefault = getCharacterDefaultAvatar(entity.character);
         entity.character = character;
@@ -8172,6 +8753,13 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         }
     } else if (character) {
         entity.character = character;
+    }
+    if (previousEntityForPetdxCharacterChange) {
+        await runPetdxPhase0AutoAssign(deviceId, entity, {
+            mode: 'character-change',
+            previousEntity: previousEntityForPetdxCharacterChange,
+            source: 'transform',
+        });
     }
     if (state) entity.state = state;
 
@@ -8212,7 +8800,18 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
             `[PLACEHOLDER_LEAK] Entity ${eId} on device ${deviceId} sent bind-ack template verbatim — suppressing propagation`,
             { deviceId, entityId: eId, metadata: { tag: 'PLACEHOLDER_LEAK' } });
     }
-    if (finalMessage !== undefined && !isPlaceholderLeak) entity.message = finalMessage;
+    const silentSuppressionReason = getSilentTransformSuppressionReason(finalMessage);
+    const isSilentMessage = !!silentSuppressionReason;
+    const isSuppressedMessage = isPlaceholderLeak || isSilentMessage;
+    if (isSilentMessage) {
+        serverLog('info', 'transform_silent_drop',
+            `[TRANSFORM_SILENT_DROP] Entity ${eId} on device ${deviceId} sent ${silentSuppressionReason}; suppressing routing propagation`,
+            { deviceId, entityId: eId, metadata: { reason: silentSuppressionReason } });
+        speakTo = undefined;
+        broadcast = false;
+        routingResolvedVia = null;
+    }
+    if (finalMessage !== undefined && !isSuppressedMessage) entity.message = finalMessage;
     if (parts) {
         // Only store numeric values — reject URLs/strings that would crash Android Gson deserialization
         const sanitizedParts = {};
@@ -8257,7 +8856,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // to happen.
     let transformMentionContext = null;
     let transformMentionParse = null;
-    if (finalMessage) {
+    if (finalMessage && !isSuppressedMessage) {
         const tParse = mentionParser.parseMentions(finalMessage, {
             senderDeviceId: deviceId,
             devices,
@@ -8283,7 +8882,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // server (not the bridge) decides where the bot's reply routes.
     let senderHintResolution = null;
     const noTargetYet = !broadcast && !(speakTo && Array.isArray(speakTo) && speakTo.length > 0);
-    if (senderHint && noTargetYet && finalMessage) {
+    if (senderHint && noTargetYet && finalMessage && !isSuppressedMessage) {
         const kind = senderHint.kind || 'unknown';
         if (kind === 'broadcast') {
             broadcast = true;
@@ -8326,7 +8925,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         senderHintResolution = {
             kind: senderHint.kind || 'unknown',
             applied: 'none',
-            reason: noTargetYet ? 'no_message' : 'explicit_or_mention_won'
+            reason: isSuppressedMessage ? 'silent_message' : (noTargetYet ? 'no_message' : 'explicit_or_mention_won')
         };
     }
 
@@ -8352,10 +8951,9 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         routing.warnings.push(...collectMissingSpeakToMentionWarnings(speakTo, transformMentionParse, deviceId));
     }
 
-    // Save bot message to chat history so it appears in Chat page
-    // Skip silent tokens — these are internal signals that should not appear in chat
-    const isSilentMessage = finalMessage && /^\[SILENT\]$/i.test(finalMessage.trim());
-    const isSuppressedMessage = isSilentMessage || isPlaceholderLeak;
+    // Save bot message to chat history so it appears in Chat page.
+    // isSuppressedMessage is computed before routing so silent control payloads
+    // cannot resolve @mentions/senderHint or fan out through speakTo/broadcast.
     // Skip self chat save when speakTo/broadcast is present — deliverToEntity will save with routing source
     const hasDelivery = (broadcast || (speakTo && Array.isArray(speakTo) && speakTo.length > 0));
     if (finalMessage && !isSuppressedMessage) {
@@ -8474,7 +9072,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // ── Rental response mirroring: if owner entity is leased_out, copy response to renter ──
     // PR #2986 guard — placeholder leaks (the bind-ack template copied verbatim) must NOT
     // mirror into renter.message, renter chat history, Socket.IO update, or push notify.
-    if (entity.rental_status === 'leased_out' && entity.rental_contract_id && finalMessage && !isPlaceholderLeak) {
+    if (entity.rental_status === 'leased_out' && entity.rental_contract_id && finalMessage && !isSuppressedMessage) {
         try {
             const cRow = await db._getPool().query(
                 `SELECT c.renter_device_id FROM rental_contracts c WHERE c.id = $1 AND c.status IN ('active','reserved','suspended_insufficient_funds')`,
@@ -8544,7 +9142,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // Notify device about bot reply (fire-and-forget)
     // Skip owner notification for leased_out entities — renter gets notified via rental mirror
     const isLeasedOutForNotify = entity.rental_status === 'leased_out';
-    if (finalMessage && !isLeasedOutForNotify && !isPlaceholderLeak) {
+    if (finalMessage && !isLeasedOutForNotify && !isSuppressedMessage) {
         notifyDevice(deviceId, {
             type: 'chat', category: 'bot_reply',
             title: entity.name || `Entity ${eId}`,
@@ -8566,7 +9164,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // Skip for leased_out entities — rental bot responses belong to the renter's context.
     const kanbanBusyStates = new Set(['BUSY', 'PROCESSING', 'WORKING', 'IN_PROGRESS', 'IN-PROGRESS']);
     const isKanbanBusyState = kanbanBusyStates.has(String(state || '').trim().toUpperCase());
-    if (!isKanbanBusyState && finalMessage && !isPlaceholderLeak && entity.rental_status !== 'leased_out' && kanbanModule && kanbanModule.autoReviewOnTransform) {
+    if (!isKanbanBusyState && finalMessage && !isSuppressedMessage && entity.rental_status !== 'leased_out' && kanbanModule && kanbanModule.autoReviewOnTransform) {
         kanbanModule.autoReviewOnTransform(deviceId, eId, finalMessage, aboutCardId).catch(err => {
             console.error(`[Transform] autoReviewOnTransform failed:`, err.message);
         });
@@ -8574,7 +9172,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
 
     // Org chart: auto-forward message to superior entity (fire-and-forget)
     // Skip for leased_out entities — owner's org chart should not apply to rental responses
-    if (finalMessage && entity && entity.rental_status !== 'leased_out' && !isPlaceholderLeak) {
+    if (finalMessage && entity && entity.rental_status !== 'leased_out' && !isSuppressedMessage) {
         orgChartForward(entity, deviceId, finalMessage).catch(() => {});
     }
 
@@ -8591,7 +9189,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // to run a sender-side fallback save.
     let deliverySaved = false;
 
-    if ((speakTo || broadcast) && finalMessage && !isPlaceholderLeak) {
+    if ((speakTo || broadcast) && finalMessage && !isSuppressedMessage) {
         // If both provided, broadcast takes priority
         if (speakTo && broadcast) {
             warnings.push('Both speakTo and broadcast provided — broadcast takes priority, speakTo ignored.');
@@ -9020,6 +9618,7 @@ app.delete('/api/entity', async (req, res) => {
 
     // Reset entity to unbound state (preserve user-set name, xp, level)
     const removedEntity = device.entities[eId];
+    rememberPreviousEntityForBind(deviceId, eId, removedEntity);
     device.entities[eId] = createDefaultEntity(eId);
     device.entities[eId].name = removedEntity?.name || null;
     device.entities[eId].xp = removedEntity?.xp || 0;
@@ -9142,6 +9741,7 @@ app.delete('/api/device/entity', async (req, res) => {
 
     // Reset entity to unbound state (preserve user-set name, xp, level)
     const removedEntity2 = device.entities[eId];
+    rememberPreviousEntityForBind(deviceId, eId, removedEntity2);
     device.entities[eId] = createDefaultEntity(eId);
     device.entities[eId].name = removedEntity2?.name || null;
     device.entities[eId].xp = removedEntity2?.xp || 0;
@@ -14933,6 +15533,11 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
         }
     };
     publicCodeIndex[freePublicCode] = { deviceId, entityId: eId };
+    await runPetdxPhase0AutoAssign(deviceId, device.entities[eId], {
+        mode: 'bind',
+        previousEntity: null,
+        source: 'official-borrow-free',
+    });
     await pauseRentalListingsOnRebind(deviceId, eId);
     await terminateRentalContractsOnRebind(deviceId, eId);
 
@@ -15102,6 +15707,11 @@ app.post('/api/official-borrow/bind-personal', async (req, res) => {
             setupPassword: personalBot.setup_password || null
         }
     };
+    await runPetdxPhase0AutoAssign(deviceId, device.entities[eId], {
+        mode: 'bind',
+        previousEntity: null,
+        source: 'official-borrow-paid',
+    });
     await pauseRentalListingsOnRebind(deviceId, eId);
     await terminateRentalContractsOnRebind(deviceId, eId);
 
@@ -17308,6 +17918,10 @@ const ORG_TASK_FWD_PREFIX = '[📋 TASK FWD';
 
 async function orgChartForward(entity, deviceId, message, opts = {}) {
     if (!message || message.startsWith(ORG_TASK_FWD_PREFIX) || message.startsWith(ORG_FWD_PREFIX)) return;
+    if (isLowSignalFwd(message)) {
+        serverLog('info', 'org_forward_skip', `#${entity.entityId} suppressed low-signal fwd: "${String(message).trim().slice(0, 60)}"`, { deviceId, entityId: entity.entityId });
+        return;
+    }
 
     try {
         const orgData = await orgChartModule.getOrgChart(deviceId);
@@ -18379,6 +18993,7 @@ app.put('/api/device-preferences', async (req, res) => {
 
     await devicePrefs.updatePrefs(deviceId, prefs);
     const updated = await devicePrefs.getPrefs(deviceId);
+    io.to(`device:${deviceId}`).emit('device:preferences', { deviceId, prefs: updated });
     res.json({ success: true, prefs: updated });
 });
 
@@ -21229,6 +21844,14 @@ module.exports._createDefaultEntity = createDefaultEntity;
 module.exports._getCharacterDefaultAvatar = getCharacterDefaultAvatar;
 module.exports._isCharacterDefaultAvatar = isCharacterDefaultAvatar;
 module.exports._CHARACTER_DEFAULT_AVATAR = CHARACTER_DEFAULT_AVATAR;
+module.exports._petdxPhase0 = {
+    snapshotEntityForPetdxBind,
+    rememberPreviousEntityForBind,
+    getPreviousEntityForBind,
+    clearPreviousEntityForBind,
+    runPetdxPhase0AutoAssign,
+    getPetdxEntityEnrichmentMap,
+};
 module.exports._enqueueMessage = enqueueMessage;
 module.exports._MESSAGE_QUEUE_CAP = MESSAGE_QUEUE_CAP;
 module.exports._DEAD_LETTER_CAP = DEAD_LETTER_CAP;
@@ -21243,6 +21866,7 @@ module.exports._ENTITY_HEARTBEAT_STALE_MS = ENTITY_HEARTBEAT_STALE_MS;
 module.exports._getEntityDaemonStatus = getEntityDaemonStatus;
 module.exports._hermesHealthMonitor = hermesHealthMonitor;
 module.exports._chatPool = chatPool;
+module.exports._pointEditResolver = pointEditResolver;
 module.exports._ACK_DEFAULT_DEADLINE_MS = ACK_DEFAULT_DEADLINE_MS;
 module.exports._ACK_MIN_DEADLINE_MS = ACK_MIN_DEADLINE_MS;
 module.exports._ACK_MAX_DEADLINE_MS = ACK_MAX_DEADLINE_MS;

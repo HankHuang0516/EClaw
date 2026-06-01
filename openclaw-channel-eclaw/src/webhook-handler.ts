@@ -2,6 +2,33 @@ import type { EClawInboundMessage } from './types.js';
 import { getPluginRuntime } from './runtime.js';
 import { getClient, setActiveEvent, clearActiveEvent } from './outbound.js';
 
+function envFlagEnabled(name: string): boolean {
+  return /^(1|true|yes|on)$/i.test(String(process.env[name] || '').trim());
+}
+
+function envListIncludes(name: string, value: string, defaults: readonly string[] = []): boolean {
+  const raw = String(process.env[name] || '').trim();
+  if (!raw) return false;
+  if (/^(1|true|yes|on)$/i.test(raw)) return defaults.includes(value);
+  return raw
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .includes(value);
+}
+
+const DEFAULT_BACKGROUND_EVENTS = ['kanban_notification', 'org_forward'] as const;
+
+function shouldSuppressInboundEvent(event: string): boolean {
+  if (
+    event === 'kanban_notification'
+    && (envFlagEnabled('ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS') || envFlagEnabled('ECLAW_SKIP_KANBAN_NOTIFICATIONS'))
+  ) {
+    return true;
+  }
+  return envListIncludes('ECLAW_SUPPRESS_BACKGROUND_EVENTS', event, DEFAULT_BACKGROUND_EVENTS);
+}
+
 /**
  * Create an HTTP request handler for inbound messages from E-Claw.
  *
@@ -52,7 +79,7 @@ export function createWebhookHandler(
       const client = getClient(accountId);
       const conversationId = msg.conversationId || `${msg.deviceId}:${msg.entityId}`;
 
-      const directAck = String(msg.text || '').match(/^ECLAW_HEALTHCHECK\s+([A-Za-z0-9]+)\b/m);
+      const directAck = String(msg.text || '').match(/^ECLAW_HEALTHCHECK\s+([A-Za-z0-9_-]+)(?=\s|$)/m);
       if (directAck) {
         if (client) {
           await client.sendMessage(`ACK ${directAck[1]}`, 'IDLE');
@@ -67,6 +94,11 @@ export function createWebhookHandler(
 
       const eclawCtx = msg.eclaw_context;
       const silentToken = eclawCtx?.silentToken ?? '[SILENT]';
+
+      if (shouldSuppressInboundEvent(event)) {
+        console.log(`[E-Claw] Background event ${event} suppressed by runtime policy; webhook ACKed without occupying the model reply path`);
+        return;
+      }
 
       // Map E-Claw media type to OpenClaw media type
       const ocMediaType = msg.mediaType === 'photo' ? 'image'

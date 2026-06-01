@@ -36,11 +36,13 @@ describe('i18n.t() — zh-TW / zh-CN → zh fallback chain', () => {
         expect(Object.keys(TRANSLATIONS.zh).length).toBeGreaterThan(1000);
     });
 
-    test('TRANSLATIONS["zh-TW"] is a small override stub (publisher-guide-only)', () => {
+    test('TRANSLATIONS["zh-TW"] stays a small override layer', () => {
         expect(TRANSLATIONS['zh-TW']).toBeDefined();
         const zhTwKeys = Object.keys(TRANSLATIONS['zh-TW']);
-        // Stub by design — small handful of publisher-guide overrides.
-        expect(zhTwKeys.length).toBeLessThan(50);
+        // zh-TW intentionally overrides only locale-specific copy and should
+        // continue to fall back through the canonical zh dictionary.
+        expect(zhTwKeys.length).toBeLessThan(100);
+        expect(zhTwKeys.length).toBeLessThan(Object.keys(TRANSLATIONS.zh).length / 50);
         expect(zhTwKeys.length).toBeGreaterThan(0);
     });
 

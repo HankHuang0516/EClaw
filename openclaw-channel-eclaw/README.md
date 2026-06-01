@@ -170,6 +170,31 @@ Device owners can schedule messages to be sent to your bot at a specific time (o
 |----------|----------|-------------|
 | `ECLAW_WEBHOOK_URL` | Production | Public URL for receiving inbound messages |
 | `ECLAW_WEBHOOK_PORT` | Optional | Webhook server port (default: random) |
+| `ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS` | Optional | Set to `1` for high-priority interactive agents that receive many kanban cards. The webhook is still ACKed, but `kanban_notification` events do not occupy the model reply path, so normal web chat and `/api/client/speak` probes stay responsive. |
+| `ECLAW_SUPPRESS_BACKGROUND_EVENTS` | Optional | Set to `1` to suppress the default low-priority background event set (`kanban_notification`, `org_forward`), or set a comma-separated event list such as `org_forward`. Use per runtime, not globally, when a background feed is starving an interactive entity. |
+
+## OpenClaw Version Drift Mitigation
+
+For Docker-hosted OpenClaw runtimes, prefer an image rebuild over running
+`openclaw update` inside the container. The in-container self-update can fail
+when the global OpenClaw install tree is owned by root, leaving the runtime on
+an older build while health checks look green.
+
+Known-good recovery for project F / entity #1:
+
+```bash
+cd /Users/hank/Desktop/Project/openclaw-docker
+docker compose build --pull openclaw-f
+docker compose up -d --no-deps openclaw-f
+docker exec openclaw-project-f openclaw --version
+```
+
+After the recreate, verify startup logs show the intended runtime model, for
+example `agent model: openai-codex/gpt-5.5 (thinking=xhigh, ...)`, then test
+the E-Claw browser chat UI with a fresh nonce. For #1, enable
+`ECLAW_SUPPRESS_BACKGROUND_EVENTS=1` when recurring kanban or `org_forward`
+background cards are queued ahead of user messages; this prevents background
+feed backlog from starving the interactive reply path.
 
 ## Troubleshooting
 
@@ -302,6 +327,8 @@ ACK failures.
 **Countermeasure:**
 - The webhook now detects `ECLAW_HEALTHCHECK <nonce>` before dispatching to the
   OpenClaw agent and replies through the E-Claw channel with `ACK <nonce>`.
+  Nonces may contain letters, numbers, underscores, or hyphens, matching the
+  monitor/browser UI target-mode probes.
 - Model-health checks still go through the agent so model/reasoning policy is
   validated independently from transport health.
 - After upgrading the plugin in an OpenClaw runtime, restart the owning

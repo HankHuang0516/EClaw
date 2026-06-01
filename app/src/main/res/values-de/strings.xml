@@ -974,4 +974,21 @@ Bei Fragen kontaktieren Sie uns über unsere offizielle E-Mail.
     <string name="fcm_channel_system_desc">Systembenachrichtigungen</string>
     <string name="fcm_channel_feedback_name">Feedback-Updates</string>
     <string name="fcm_channel_feedback_desc">Feedback-Statusaktualisierungen</string>
+    <string name="ai_chat_status_analyzing">Analysiere</string>
+    <string name="ai_chat_status_processing_result">Verarbeite Ergebnis</string>
+    <string name="ai_chat_tool_status_default">Verarbeitung</string>
+    <string name="wallpaper_reset_window_5h">5h</string>
+    <string name="wallpaper_reset_window_5h_next">Nächste 5-Stunden-Zurücksetzung (%1$s): %2$s</string>
+    <string name="wallpaper_reset_window_label">Zurücksetzungs-Countdown</string>
+    <string name="wallpaper_reset_window_off">Aus</string>
+    <string name="wallpaper_reset_window_weekly">Wöchentlich</string>
+    <string name="wallpaper_reset_window_weekly_next">Nächste wöchentliche Zurücksetzung: %1$s</string>
+    <string name="wallpaper_reset_window_weekly_next_per_engine">Nächste wöchentliche Zurücksetzung (%1$s): %2$s</string>
+    <string name="msg_no_entities_connected">Keine Entitäten verbunden. Entitäten zuerst binden.</string>
+    <string name="webview_title_eclawbot_portal">EClawbot Portal</string>
+    <string name="wallpaper_settings_panel_label">Hintergrund-Einstellungen</string>
+    <string name="wallpaper_settings_collapse_caret_down">▼</string>
+    <string name="wallpaper_settings_expand_action">Einstellungspanel erweitern</string>
+    <string name="wallpaper_settings_collapse_action">Einstellungspanel einklappen</string>
+    <string name="wallpaper_settings_collapse_caret_up">▲</string>
 </resources>

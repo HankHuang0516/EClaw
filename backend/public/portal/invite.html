@@ -461,26 +461,83 @@
 
         function translateRedeemError(code) {
             const map = {
+<<<<<<< HEAD
                 'self_invite_forbidden': tt('inv_error_self', 'You cannot use your own invite code.'),
                 'already_redeemed': tt('inv_error_already', 'This code has already been used.'),
                 'code_not_found': tt('inv_error_not_found', 'Invalid invite code.'),
                 'code_expired': tt('inv_error_expired', 'This invite code has expired.'),
                 'code_max_uses_reached': tt('inv_error_max', 'This invite code has reached its usage limit.'),
+=======
+                'self_invite': tt('inv_error_self', 'You cannot use your own invite code.'),
+                'self_invite_forbidden': tt('inv_error_self', 'You cannot use your own invite code.'),
+                'invite_code_already_used': tt('inv_error_already', 'This code has already been used.'),
+                'already_redeemed': tt('inv_error_already', 'This code has already been used.'),
+                'invitee_already_redeemed_owner': tt('inv_error_already_owner', 'You have already redeemed an invite from this user.'),
+                'invite_code_not_found': tt('inv_error_not_found', 'Invalid invite code.'),
+                'code_not_found': tt('inv_error_not_found', 'Invalid invite code.'),
+                'code_expired': tt('inv_error_expired', 'This invite code has expired.'),
+                'code_max_uses_reached': tt('inv_error_max', 'This invite code has reached its usage limit.'),
+                'wallet_user_required': tt('inv_error_wallet_required', 'Please sign in to receive wallet rewards.'),
+>>>>>>> origin/main
             };
             return map[code] || null;
         }
 
+<<<<<<< HEAD
+=======
+        function ecoinFromMli(value) {
+            const n = Number(value);
+            if (!Number.isFinite(n)) return null;
+            return n / 1000;
+        }
+
+        function formatEcoin(value) {
+            const n = Number(value);
+            if (!Number.isFinite(n)) return null;
+            return Number.isInteger(n) ? String(n) : n.toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
+        }
+
+>>>>>>> origin/main
         async function redeemCode() {
             const code = document.getElementById('redeemInput').value.trim();
             if (!code) return;
             try {
                 const data = await apiCall('POST', '/api/invite/redeem', { code });
                 if (data?.success) {
+<<<<<<< HEAD
                     // Show detailed reward result
                     const inviteeReward = data.inviteeRewardEcoin ?? data.wallet_rewards?.invitee ?? 100;
                     const inviterReward = data.inviterRewardEcoin ?? data.wallet_rewards?.inviter ?? 500;
                     const msg = tt('inv_redeem_success_detail',
                         `Redeemed! You received +${inviteeReward} e-coin. The inviter got +${inviterReward} e-coin.`);
+=======
+                    const walletRewards = data.wallet_rewards || {};
+                    const inviteeReward = data.inviteeRewardEcoin
+                        ?? data.invitee_reward_ecoin
+                        ?? ecoinFromMli(walletRewards.invitee_reward_mli)
+                        ?? walletRewards.invitee;
+                    const inviterReward = data.inviterRewardEcoin
+                        ?? data.inviter_reward_ecoin
+                        ?? ecoinFromMli(walletRewards.inviter_reward_mli)
+                        ?? walletRewards.inviter;
+                    const inviteeRewardText = formatEcoin(inviteeReward);
+                    const inviterRewardText = formatEcoin(inviterReward);
+                    const walletStatus = walletRewards.status || null;
+                    let msg;
+                    if (walletStatus === 'pending_user_account' || walletStatus === 'skipped_device_only') {
+                        msg = tt('inv_redeem_success_pending',
+                            `Redeemed! Your invite is recorded. Wallet rewards are ${walletStatus === 'pending_user_account' ? 'pending account binding' : 'not available for this device-only session'}.`);
+                    } else if (walletStatus === 'credited' || walletStatus === 'already_credited') {
+                        msg = tt('inv_redeem_success_detail',
+                            `Redeemed! You received +${inviteeRewardText || 0} e-coin. The inviter got +${inviterRewardText || 0} e-coin.`);
+                    } else if (inviteeRewardText || inviterRewardText) {
+                        msg = tt('inv_redeem_success_detail',
+                            `Redeemed! You received +${inviteeRewardText || 0} e-coin. The inviter got +${inviterRewardText || 0} e-coin.`);
+                    } else {
+                        msg = data.message || tt('inv_redeem_success', 'Invite code redeemed!');
+                    }
+                    try { localStorage.setItem('invite_redeemed_v1', '1'); } catch (_) {}
+>>>>>>> origin/main
                     showToast(msg, 'success');
                     loadStats();
                 } else {

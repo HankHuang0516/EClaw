@@ -869,4 +869,21 @@ GPS：รับตามความต้องการเท่านั้�
     <string name="fcm_channel_system_desc">การแจ้งเตือนระบบ</string>
     <string name="fcm_channel_feedback_name">อัปเดตคำติชม</string>
     <string name="fcm_channel_feedback_desc">อัปเดตสถานะคำติชม</string>
+    <string name="ai_chat_status_analyzing">กำลังวิเคราะห์</string>
+    <string name="ai_chat_status_processing_result">กำลังประมวลผล</string>
+    <string name="ai_chat_tool_status_default">กำลังประมวลผล</string>
+    <string name="wallpaper_reset_window_5h">5 ชั่วโมง</string>
+    <string name="wallpaper_reset_window_5h_next">รีเซ็ต 5 ชั่วโมงถัดไป (%1$s): %2$s</string>
+    <string name="wallpaper_reset_window_label">รีเซ็ตการนับถอยหลัง</string>
+    <string name="wallpaper_reset_window_off">ปิด</string>
+    <string name="wallpaper_reset_window_weekly">รายสัปดาห์</string>
+    <string name="wallpaper_reset_window_weekly_next">รีเซ็ตรายสัปดาห์ถัดไป: %1$s</string>
+    <string name="wallpaper_reset_window_weekly_next_per_engine">รีเซ็ตรายสัปดาห์ถัดไป (%1$s): %2$s</string>
+    <string name="msg_no_entities_connected">ไม่มีเอนทิตี้ที่เชื่อมต่อ ผูกเอนทิตี้ก่อน</string>
+    <string name="webview_title_eclawbot_portal">พอร์ทัล EClawbot</string>
+    <string name="wallpaper_settings_panel_label">การตั้งค่าวอลล์เปเปอร์</string>
+    <string name="wallpaper_settings_collapse_caret_down">▼</string>
+    <string name="wallpaper_settings_expand_action">ขยายแผงการตั้งค่า</string>
+    <string name="wallpaper_settings_collapse_action">ยุบแผงการตั้งค่า</string>
+    <string name="wallpaper_settings_collapse_caret_up">▲</string>
 </resources>

@@ -22,13 +22,19 @@ describe('invite redemption policy — Option B (per-code-once)', () => {
     test('per-code-once check remains at the top of the handler', () => {
         // A code whose used_by_device_id is already set must 409.
         expect(INDEX_JS).toMatch(
-            /if \(used_by_device_id\) return res\.status\(409\)\.json\(\{ success: false, error: 'Invite code already used' \}\)/
+            /if \(used_by_device_id\)\s*\{\s*return \{ error: 'Invite code already used', status: 409 \};\s*\}/
         );
     });
 
     test('self-invite guard remains', () => {
         expect(INDEX_JS).toMatch(
-            /if \(owner_device_id === deviceId\) return res\.status\(400\)/
+            /if \(owner_device_id === deviceId\)\s*\{\s*return \{ error: 'Cannot redeem your own invite code', status: 400 \};\s*\}/
+        );
+    });
+
+    test('transaction early errors are returned through the response handler', () => {
+        expect(INDEX_JS).toMatch(
+            /if \(result\.error\)\s*\{\s*return res\.status\(result\.status\)\.json\(\{ success: false, error: result\.error \}\);\s*\}/
         );
     });
 

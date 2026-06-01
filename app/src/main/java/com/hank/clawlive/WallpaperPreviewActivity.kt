@@ -8,6 +8,7 @@ import android.view.View
 import android.widget.CheckBox
 import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -45,6 +46,8 @@ class WallpaperPreviewActivity : AppCompatActivity() {
     private lateinit var checkUsageCodex: CheckBox
     private lateinit var checkUsageSession: CheckBox
     private lateinit var checkUsageWeekly: CheckBox
+    private lateinit var checkReset5h: CheckBox
+    private lateinit var checkResetWeekly: CheckBox
     private lateinit var btnSelectPhoto: MaterialButton
     private lateinit var btnReset: MaterialButton
     private lateinit var btnSetWallpaper: MaterialButton
@@ -52,6 +55,10 @@ class WallpaperPreviewActivity : AppCompatActivity() {
 
     private lateinit var topBar: LinearLayout
     private lateinit var bottomControls: LinearLayout
+    private lateinit var settingsCollapseHandle: LinearLayout
+    private lateinit var settingsCollapsibleContent: LinearLayout
+    private lateinit var settingsCollapseIndicator: TextView
+    private var settingsCollapsed: Boolean = false
 
     private val api = NetworkModule.api
     private val deviceManager by lazy { DeviceManager.getInstance(this) }
@@ -131,12 +138,17 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         checkUsageCodex = findViewById(R.id.checkUsageCodex)
         checkUsageSession = findViewById(R.id.checkUsageSession)
         checkUsageWeekly = findViewById(R.id.checkUsageWeekly)
+        checkReset5h = findViewById(R.id.checkReset5h)
+        checkResetWeekly = findViewById(R.id.checkResetWeekly)
         btnSelectPhoto = findViewById(R.id.btnSelectPhoto)
         btnReset = findViewById(R.id.btnReset)
         btnSetWallpaper = findViewById(R.id.btnSetWallpaper)
         btnBack = findViewById(R.id.btnBack)
         topBar = findViewById(R.id.topBar)
         bottomControls = findViewById(R.id.bottomControls)
+        settingsCollapseHandle = findViewById(R.id.settingsCollapseHandle)
+        settingsCollapsibleContent = findViewById(R.id.settingsCollapsibleContent)
+        settingsCollapseIndicator = findViewById(R.id.settingsCollapseIndicator)
 
         // Initialize switch states from preferences
         previewView.setCompanionRepository(companionRepository)
@@ -152,6 +164,8 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         checkUsageCodex.isChecked = layoutPrefs.usageOverlayShowCodex
         checkUsageSession.isChecked = layoutPrefs.usageOverlayShowSession
         checkUsageWeekly.isChecked = layoutPrefs.usageOverlayShowWeekly
+        checkReset5h.isChecked = layoutPrefs.wallpaperResetShowFiveHour
+        checkResetWeekly.isChecked = layoutPrefs.wallpaperResetShowWeekly
 
         // Show/hide photo button based on background switch
         updatePhotoButtonVisibility()
@@ -254,6 +268,34 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         checkUsageCodex.setOnCheckedChangeListener(usageItemListener)
         checkUsageSession.setOnCheckedChangeListener(usageItemListener)
         checkUsageWeekly.setOnCheckedChangeListener(usageItemListener)
+
+        val resetItemListener = android.widget.CompoundButton.OnCheckedChangeListener { button, isChecked ->
+            when (button.id) {
+                R.id.checkReset5h -> layoutPrefs.wallpaperResetShowFiveHour = isChecked
+                R.id.checkResetWeekly -> layoutPrefs.wallpaperResetShowWeekly = isChecked
+            }
+            previewView.invalidate()
+        }
+        checkReset5h.setOnCheckedChangeListener(resetItemListener)
+        checkResetWeekly.setOnCheckedChangeListener(resetItemListener)
+
+        settingsCollapseHandle.setOnClickListener {
+            setSettingsCollapsed(!settingsCollapsed)
+        }
+    }
+
+    private fun setSettingsCollapsed(collapsed: Boolean) {
+        settingsCollapsed = collapsed
+        settingsCollapsibleContent.visibility = if (collapsed) View.GONE else View.VISIBLE
+        settingsCollapseIndicator.text = getString(
+            if (collapsed) R.string.wallpaper_settings_collapse_caret_up
+            else R.string.wallpaper_settings_collapse_caret_down
+        )
+        settingsCollapseIndicator.contentDescription = getString(
+            if (collapsed) R.string.wallpaper_settings_expand_action
+            else R.string.wallpaper_settings_collapse_action
+        )
+        bottomControls.post { updatePreviewUsageOverlayInsets() }
     }
 
     private fun updatePhotoButtonVisibility() {
@@ -266,6 +308,8 @@ class WallpaperPreviewActivity : AppCompatActivity() {
         checkUsageCodex.isEnabled = enabled
         checkUsageSession.isEnabled = enabled
         checkUsageWeekly.isEnabled = enabled
+        checkReset5h.isEnabled = enabled
+        checkResetWeekly.isEnabled = enabled
     }
 
     private fun updatePreviewUsageOverlayInsets() {

@@ -790,6 +790,18 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="wallpaper_usage_window_session_label">Session</string>
     <string name="wallpaper_usage_window_weekly">7d</string>
     <string name="wallpaper_usage_window_weekly_label">Weekly</string>
+    <string name="wallpaper_reset_window_label">倒數時段</string>
+    <string name="wallpaper_reset_window_off">關閉</string>
+    <string name="wallpaper_reset_window_5h">5 小時</string>
+    <string name="wallpaper_reset_window_weekly">每週</string>
+    <string name="wallpaper_reset_window_5h_next">下個 5h 重置 (%1$s)：%2$s</string>
+    <string name="wallpaper_reset_window_weekly_next">下個每週重置：%1$s</string>
+    <string name="wallpaper_reset_window_weekly_next_per_engine">下個每週重置 (%1$s)：%2$s</string>
+    <string name="wallpaper_settings_panel_label">桌布設定</string>
+    <string name="wallpaper_settings_collapse_action">收起設定面板</string>
+    <string name="wallpaper_settings_expand_action">展開設定面板</string>
+    <string name="wallpaper_settings_collapse_caret_down">▼</string>
+    <string name="wallpaper_settings_collapse_caret_up">▲</string>
     <string name="web_portal">網頁入口</string>
     <string name="webhook_error_message">請將以下訊息貼給OpenClaw：\"webhook綁定有錯誤或是沒有使用POST /api/bot/register，請重新讀取\'公開webhook URL\'(gateway config) 以及重新讀取\'gateway token\'，立即呼叫 /api/bot/register: 用剛綁到的 deviceId/entityId/botSecret 再帶上 webhook_url、gateway token 把推播註冊好。\"</string>
     <string name="webhook_error_title">推播通知失敗</string>
@@ -870,4 +882,9 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="fcm_channel_system_desc">系統通知</string>
     <string name="fcm_channel_feedback_name">回饋更新</string>
     <string name="fcm_channel_feedback_desc">回饋狀態更新</string>
+    <string name="ai_chat_status_analyzing">分析中</string>
+    <string name="ai_chat_status_processing_result">處理結果中</string>
+    <string name="ai_chat_tool_status_default">處理中</string>
+    <string name="msg_no_entities_connected">沒有已連接的實體。請先綁定實體。</string>
+    <string name="webview_title_eclawbot_portal">EClawbot 入口網站</string>
 </resources>

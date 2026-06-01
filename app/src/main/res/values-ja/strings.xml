@@ -870,4 +870,21 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="fcm_channel_system_desc">システム通知</string>
     <string name="fcm_channel_feedback_name">フィードバック更新</string>
     <string name="fcm_channel_feedback_desc">フィードバック状態の更新</string>
+    <string name="ai_chat_status_analyzing">分析中</string>
+    <string name="ai_chat_status_processing_result">結果を処理中</string>
+    <string name="ai_chat_tool_status_default">処理中</string>
+    <string name="wallpaper_reset_window_5h">5時間</string>
+    <string name="wallpaper_reset_window_5h_next">次の5時間リセット（%1$s）：%2$s</string>
+    <string name="wallpaper_reset_window_label">リセットカウントダウン</string>
+    <string name="wallpaper_reset_window_off">オフ</string>
+    <string name="wallpaper_reset_window_weekly">毎週</string>
+    <string name="wallpaper_reset_window_weekly_next">次の毎週リセット：%1$s</string>
+    <string name="wallpaper_reset_window_weekly_next_per_engine">次の毎週リセット（%1$s）：%2$s</string>
+    <string name="msg_no_entities_connected">エンティティが接続されていません。最初にエンティティをバインドしてください。</string>
+    <string name="webview_title_eclawbot_portal">EClawbot ポータル</string>
+    <string name="wallpaper_settings_panel_label">壁紙設定</string>
+    <string name="wallpaper_settings_collapse_caret_down">▼</string>
+    <string name="wallpaper_settings_expand_action">設定パネルを展開</string>
+    <string name="wallpaper_settings_collapse_action">設定パネルを折りたたむ</string>
+    <string name="wallpaper_settings_collapse_caret_up">▲</string>
 </resources>

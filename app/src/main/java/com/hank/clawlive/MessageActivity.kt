@@ -111,7 +111,7 @@ class MessageActivity : AppCompatActivity() {
                 if (boundIds.isEmpty()) {
                     Toast.makeText(
                         this@MessageActivity,
-                        "No entities connected. Bind entities first.",
+                        getString(R.string.msg_no_entities_connected),
                         Toast.LENGTH_LONG
                     ).show()
                 }

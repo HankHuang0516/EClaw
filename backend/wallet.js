@@ -70,12 +70,13 @@ const LEDGER_TYPES = Object.freeze({
     DEPOSIT_HOLD:    'deposit_hold',
     DEPOSIT_RELEASE: 'deposit_release',
     DEPOSIT_FORFEIT: 'deposit_forfeit',
-    REFERRAL_BONUS:      'referral_bonus',
-    SIGNUP_BONUS:        'signup_bonus',
-    SUBSCRIPTION_GRANT:  'subscription_grant',
-    REFUND:              'refund',
-    ADMIN_ADJUST:        'admin_adjust',
-    WITHDRAW:            'withdraw',
+    REFERRAL_BONUS:          'referral_bonus',
+    SIGNUP_BONUS:            'signup_bonus',
+    SUBSCRIPTION_GRANT:     'subscription_grant',
+    INVITE_FIRST_TOPUP_BONUS:'invite_first_topup_bonus',
+    REFUND:                  'refund',
+    ADMIN_ADJUST:            'admin_adjust',
+    WITHDRAW:                'withdraw',
 });
 
 const ALLOWED_LEDGER_TYPES = new Set(Object.values(LEDGER_TYPES));

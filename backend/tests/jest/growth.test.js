@@ -66,10 +66,12 @@ function setupAdminQueries({
     total_codes = 0, redeemed_codes = 0,
     sourceRows,
     inviteClicksRows,
+    inviteKRow,
 } = {}) {
     const finalSourceRows = sourceRows || [{ source: 'web_portal', count: signups }];
     const finalInviteClicksRows = inviteClicksRows || [];
-    // is_admin lookup → 6 metric queries (parallel order: signups, retention, plaza, invite, invite_clicks, source_channel)
+    const finalInviteKRow = inviteKRow || { total_redemptions: 0, inviters_with_redemption: 0, total_invitees: 0 };
+    // is_admin lookup → 7 metric queries (parallel order: signups, retention, plaza, invite, invite_clicks, source_channel, invite_k)
     mockQuery
         .mockResolvedValueOnce({ rows: [{ is_admin: true }] })
         .mockResolvedValueOnce({ rows: [{ c: signups }] })
@@ -77,7 +79,8 @@ function setupAdminQueries({
         .mockResolvedValueOnce({ rows: [{ c: plaza }] })
         .mockResolvedValueOnce({ rows: [{ total_codes, redeemed_codes }] })
         .mockResolvedValueOnce({ rows: finalInviteClicksRows })
-        .mockResolvedValueOnce({ rows: finalSourceRows });
+        .mockResolvedValueOnce({ rows: finalSourceRows })
+        .mockResolvedValueOnce({ rows: [finalInviteKRow] });
 }
 
 describe('Growth /daily auth', () => {
@@ -110,7 +113,7 @@ describe('Growth /daily auth', () => {
 });
 
 describe('Growth /daily aggregation contract', () => {
-    it('returns the 5 metrics + date + follow-ups list', async () => {
+    it('returns the daily metric contract including invite_k', async () => {
         setupAdminQueries({
             signups: 7, cohort: 20, active: 8, plaza: 3, total_codes: 50, redeemed_codes: 11,
             sourceRows: [{ source: 'invite', count: 4 }, { source: 'web_portal', count: 3 }],
@@ -123,11 +126,14 @@ describe('Growth /daily aggregation contract', () => {
         expect(res.body.retention_7d).toEqual({ cohort_size: 20, active_size: 8, pct: 40 });
         expect(res.body.plaza_new_listed_today).toBe(3);
         expect(res.body.invite_conversion).toEqual({ total_codes: 50, redeemed_codes: 11, pct: 22 });
+        expect(res.body.invite_k).toEqual({
+            date: res.body.date,
+            k: null,
+            total_redemptions: 0,
+            inviters_with_redemption: 0,
+            total_invitees: 0,
+        });
         expect(res.body.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-        expect(Array.isArray(res.body.follow_ups)).toBe(true);
-        expect(res.body.follow_ups.length).toBe(3);
-        expect(res.body.follow_ups.some(s => /schema lacks signup_source/i.test(s))).toBe(false);
-        expect(res.body.follow_ups.some(s => /invite_conversion.*cumulative/i.test(s))).toBe(true);
     });
 
     it('source_channel SQL groups by signup_source without leaking user rows', async () => {

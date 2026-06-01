@@ -253,6 +253,9 @@ Device-uniform settings forced a worst-case compromise.
   "5": {
     "kanban_nudge_interval_minutes": 360,
     "kanban_nudge_per_entity_throttle": false
+  },
+  "6": {
+    "kanban_nudge_stop_mode": true
   }
 }
 ```
@@ -263,6 +266,7 @@ Override keys are restricted to the subset that varies per-recipient:
 kanban_nudge_interval_minutes
 kanban_nudge_statuses
 kanban_nudge_per_entity_throttle
+kanban_nudge_stop_mode
 ```
 
 `batch_size` and `priority_mode` remain device-wide because they govern global
@@ -287,6 +291,21 @@ among `assigned_bots`, or device base when no bots assigned).
 
 Rationale: a 60-minute override for bot #3 must not cause bot #5 (with default
 180-minute interval) to be hammered if they share an assignment.
+
+### Stop-mode semantics (2026-05-31)
+
+`kanban_nudge_stop_mode=true` removes that entity from stale-card reminder
+delivery without changing card ownership. For cards assigned to multiple bots,
+active assignees still receive L1 nudges and participate in throttle/interval
+selection; stopped assignees are skipped. If every assigned bot is stopped, the
+card is excluded from L1/L2/L3 stale processing for that tick. Reviewer/escalation
+notifications also filter stopped recipients.
+
+The kanban board mirrors this preference by drawing a small triangular warning
+watermark on stopped assignee avatars. Settings writes a lightweight
+`eclaw_kanban_nudge_prefs_updated` localStorage marker and the backend emits
+`device:preferences` for device-level and per-entity nudge preference writes so
+open kanban surfaces can refresh without a full page reload.
 
 ### API
 

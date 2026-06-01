@@ -1,0 +1,54 @@
+name: Settings Help Invariant CI
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'backend/public/settings*.html'
+      - 'backend/public/**/settings*.html'
+      - 'backend/public/shared/i18n.js'
+      - 'backend/settings-help-keys.json'
+      - 'backend/scripts/generate-settings-help-keys.js'
+      - 'backend/scripts/check-settings-help-invariant.js'
+      - '.github/workflows/settings-help-invariant-ci.yml'
+      - '.github/workflows/pr-ci-hard-gate.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/public/settings*.html'
+      - 'backend/public/**/settings*.html'
+      - 'backend/public/shared/i18n.js'
+      - 'backend/settings-help-keys.json'
+      - 'backend/scripts/generate-settings-help-keys.js'
+      - 'backend/scripts/check-settings-help-invariant.js'
+      - '.github/workflows/settings-help-invariant-ci.yml'
+      - '.github/workflows/pr-ci-hard-gate.yml'
+
+jobs:
+  settings-help-invariant:
+    name: Settings help invariant
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check settings label/help/HELP-KEY invariant
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            node backend/scripts/check-settings-help-invariant.js \
+              --base "${{ github.event.pull_request.base.sha }}" \
+              --head HEAD
+          else
+            if git rev-parse HEAD~1 >/dev/null 2>&1; then
+              node backend/scripts/check-settings-help-invariant.js --base HEAD~1 --head HEAD
+            else
+              node backend/scripts/check-settings-help-invariant.js --all
+            fi
+          fi

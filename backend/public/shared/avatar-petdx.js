@@ -45,6 +45,18 @@
         return descriptorByEntityId.get(Number(entityId)) || null;
     }
 
+    function descriptorAvatarUrl(entityId) {
+        const descriptor = getDescriptor(entityId);
+        if (!descriptor) return null;
+
+        const nested = descriptor.descriptor && descriptor.descriptor.avatar && descriptor.descriptor.avatar.url;
+        if (typeof nested === 'string' && nested) return nested;
+        const direct = descriptor.avatar && descriptor.avatar.url;
+        if (typeof direct === 'string' && direct) return direct;
+        if (typeof descriptor.avatarUrl === 'string' && descriptor.avatarUrl) return descriptor.avatarUrl;
+        return null;
+    }
+
     // Kick off the spritesheet image download as soon as we have its
     // descriptor. Without this, the first canvas tick triggers the WEBP
     // request, and `drawSpritesheetFrame` paints an empty canvas (or, on
@@ -199,6 +211,7 @@
         unmount,
         hasDescriptor,
         getDescriptor,
+        descriptorAvatarUrl,
         _setDescriptor,
     };
 }));

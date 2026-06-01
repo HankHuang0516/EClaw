@@ -362,7 +362,7 @@ class AiChatViewModel(application: Application) : AndroidViewModel(application) 
         val suffix = if (turn > 0) " (Step $turn/15)" else ""
         return when (progress["event"]) {
             "tool_use" -> {
-                val tool = progress["tool"] as? String ?: "Processing"
+                val tool = progress["tool"] as? String ?: context.getString(R.string.ai_chat_tool_status_default)
                 val label = when (tool) {
                     "Read" -> context.getString(R.string.ai_chat_tool_status_read)
                     "Grep" -> context.getString(R.string.ai_chat_tool_status_grep)
@@ -374,8 +374,8 @@ class AiChatViewModel(application: Application) : AndroidViewModel(application) 
                 }
                 "$label…$suffix"
             }
-            "thinking" -> "Analyzing…$suffix"
-            "tool_result" -> "Processing result…$suffix"
+            "thinking" -> context.getString(R.string.ai_chat_status_analyzing) + "…$suffix"
+            "tool_result" -> context.getString(R.string.ai_chat_status_processing_result) + "…$suffix"
             else -> null
         }
     }
