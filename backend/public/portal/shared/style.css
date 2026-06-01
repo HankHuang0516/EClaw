@@ -1454,7 +1454,7 @@ a:hover { text-decoration: underline; }
 }
 .help-popover-inner {
     padding: 12px 14px 14px;
- color: var(--text-secondary, #aaa);
+    color: var(--text-secondary, #aaa);
     word-break: break-word;
 }
 .help-popover-inner strong { color: var(--text, #fff); font-weight: 600; }

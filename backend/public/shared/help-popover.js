@@ -3,7 +3,7 @@
  *
  * Usage:
  *   <span class="help-icon" data-help-content="Tooltip text" tabindex="0" role="button" aria-label="Help"></span>
- *<span class="help-icon" data-help-content="<strong>Bold</strong> text" tabindex="0"></span>
+ *   <span class="help-icon" data-help-content-key="kanban_nudge_batch_help" tabindex="0"></span>
  *
  * Or inline:
  *   HelpPopover.show(contentHTMLElement, anchorElement)
@@ -32,16 +32,13 @@
     let activePopover = null;
     let activeAnchor  = null;
     let focusTrapStack = [];
+    let activeDescribedBy = null;
+    let popoverSeq = 0;
 
     // ── Icon SVG ──────────────────────────────────────────────────────────────
     const HELP_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
 
     // ── Helpers ───────────────────────────────────────────────────────────────
-    function isVisible(el) {
-        return el && !el.hidden && el.style.display !== 'none' &&
-            el.style.visibility !== 'hidden' && el.getBoundingClientRect().width > 0;
-    }
-
     function getViewportRect() {
         return { w: window.innerWidth, h: window.innerHeight };
     }
@@ -68,7 +65,7 @@
         if (space[preferred] >= size[preferred] + 8) return preferred;
         // Try opposite
         const alt = preferred === 'top' ? 'bottom' : preferred === 'bottom' ? 'top' :
- preferred === 'left' ? 'right' : 'left';
+            preferred === 'left' ? 'right' : 'left';
         if (space[alt] >= size[alt] + 8) return alt;
         // Pick the side with most space
         return Object.keys(space).reduce((a, b) => space[a] > space[b] ? a : b);
@@ -149,6 +146,7 @@
         el.className = POPOVER_CLASS;
         el.setAttribute('role', 'tooltip');
         el.setAttribute('tabindex', '-1');
+        el.id = `${POPOVER_CLASS}-${++popoverSeq}`;
 
         const inner = document.createElement('div');
         inner.className = POPOVER_CLASS + '-inner';
@@ -177,6 +175,8 @@
 
         const popover = buildPopover(content);
         document.body.appendChild(popover);
+        anchor.setAttribute('aria-describedby', popover.id);
+        activeDescribedBy = { anchor, id: popover.id };
 
         // Get computed size after append
         const popRect = popover.getBoundingClientRect();
@@ -210,6 +210,10 @@
 
         activePopover = null;
         activeAnchor  = null;
+        if (activeDescribedBy?.anchor && activeDescribedBy.id === popover.id) {
+            activeDescribedBy.anchor.removeAttribute('aria-describedby');
+            activeDescribedBy = null;
+        }
 
         document.removeEventListener('click', onDocClick, true);
         document.removeEventListener('keydown', onDocKeyDown);
@@ -239,7 +243,7 @@
     function onIconClick(e) {
         e.stopPropagation();
         const icon = e.currentTarget;
-        const content = icon.dataset.helpContent || icon.dataset.help || '';
+        const content = getIconContent(icon);
         if (!content) return;
         if (activeAnchor === icon && activePopover) {
             hidePopover();
@@ -256,18 +260,46 @@
     }
 
     // ── Public API ─────────────────────────────────────────────────────────────
+    function getIconContent(icon) {
+        const key = icon.dataset.helpContentKey;
+        if (key && window.i18n?.t) {
+            const translated = window.i18n.t(key);
+            if (translated && translated !== key) return translated;
+        }
+        return icon.dataset.helpContent || icon.dataset.help || '';
+    }
+
+    function prepareIcon(icon) {
+        if (!icon.innerHTML.trim()) icon.innerHTML = HELP_ICON_SVG;
+        if (!icon.hasAttribute('tabindex')) icon.setAttribute('tabindex', '0');
+        if (!icon.hasAttribute('role')) icon.setAttribute('role', 'button');
+        if (!icon.hasAttribute('aria-label')) icon.setAttribute('aria-label', 'Help');
+    }
+
     /**
      * Attach help-icon behaviour to all elements with class ICON_CLASS.
      * Call once on DOMContentLoaded after all HTML with data-help-content is in DOM.
      */
     function init() {
+        document.querySelectorAll('.' + ICON_CLASS).forEach(prepareIcon);
         document.addEventListener('click', (e) => {
             const icon = e.target.closest('.' + ICON_CLASS);
-            if (icon) onIconClick({ currentTarget: icon, stopPropagation: () => e.stopPropagation() });
+            if (icon) {
+                prepareIcon(icon);
+                onIconClick({ currentTarget: icon, stopPropagation: () => e.stopPropagation() });
+            }
         });
         document.addEventListener('keydown', (e) => {
             const icon = e.target.closest('.' + ICON_CLASS);
-            if (icon) onIconKeyDown(e);
+            if (icon) {
+                prepareIcon(icon);
+                onIconKeyDown({
+                    key: e.key,
+                    currentTarget: icon,
+                    preventDefault: () => e.preventDefault(),
+                    stopPropagation: () => e.stopPropagation()
+                });
+            }
         });
     }
 

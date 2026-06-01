@@ -7,7 +7,15 @@
  * Or: node backend/tests/e2e/help-popover.spec.js   (standalone)
  */
 
-const { chromium } = require('@playwright/test');
+const fs = require('fs');
+const path = require('path');
+const { chromium } = require('playwright');
+
+const ROOT = path.join(__dirname, '..', '..');
+const SHARED_STYLE = fs.readFileSync(path.join(ROOT, 'public', 'portal', 'shared', 'style.css'), 'utf8');
+const HELP_POPOVER_JS = fs.readFileSync(path.join(ROOT, 'public', 'shared', 'help-popover.js'), 'utf8');
+const CHROMIUM_EXECUTABLE = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ||
+    (fs.existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined);
 
 // ── Test page — inline HTML so we don't need a running server ──────────────────
 const TEST_HTML = `<!DOCTYPE html>
@@ -16,25 +24,34 @@ const TEST_HTML = `<!DOCTYPE html>
 <meta charset="UTF-8">
 <title>Help Popover E2E</title>
 <style>
+${SHARED_STYLE}
  body { font-family: sans-serif; padding: 60px 40px; background: #1e1e2e; color: #e0e0e0; }
   .test-row { margin: 20px 0; }
   .test-row label { display: block; margin-bottom: 6px; font-size: 13px; color: #aaa; }
   .test-row .help-icon { font-size: 0; }
 </style>
-<link rel="stylesheet" href="../portal/shared/style.css">
 </head>
 <body>
-<script src="../portal/shared/help-popover.js"></script>
+<script>
+window.i18n = { t: (key) => ({ kanban_nudge_batch_help: 'Translated help copy from i18n.' }[key] || key) };
+</script>
+<script>${HELP_POPOVER_JS}</script>
 
 <div class="test-row">
   <label>Simple tooltip:
-    <span class="help-icon" data-help-content="This is a simple tooltip." tabindex="0" role="button" aria-label="Help"></span>
+    <span class="help-icon" data-help-content="This is a simple tooltip."></span>
   </label>
 </div>
 
 <div class="test-row">
   <label>Rich HTML tooltip:
     <span class="help-icon" data-help-content="<strong>Bold</strong> and <a href='#'>link</a> work." tabindex="0" role="button" aria-label="Help"></span>
+  </label>
+</div>
+
+<div class="test-row">
+  <label>i18n tooltip:
+    <span class="help-icon" data-help-content-key="kanban_nudge_batch_help"></span>
   </label>
 </div>
 
@@ -49,9 +66,9 @@ const TEST_HTML = `<!DOCTYPE html>
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 async function withPage(html, fn) {
-    const browser = await chromium.launch({ headless: true });
+    const browser = await chromium.launch({ headless: true, executablePath: CHROMIUM_EXECUTABLE });
     const page = await browser.newPage();
-    await page.setContent(html, { baseURL: 'file://' });
+    await page.setContent(html);
     await page.waitForLoadState('domcontentloaded');
     try {
         await fn(page);
@@ -86,10 +103,6 @@ async function testEscHidesPopover(page) {
     const popover = page.locator('.help-popover');
     await popover.waitFor({ state: 'visible', timeout: 2000 });
 
-    // Get the icon as the focused element before ESC
-    const focusedBefore = page.locator(':focus');
-    const iconFocused = await focusedBefore.evaluate(el => el.classList.contains('help-icon'));
-
     await page.keyboard.press('Escape');
     await popover.waitFor({ state: 'hidden', timeout: 2000 });
 
@@ -98,6 +111,23 @@ async function testEscHidesPopover(page) {
     const focusClass = await newFocus.evaluate(el => el ? el.className : 'none');
 
     console.log('✓ ESC hides popover, focus returns to icon:', focusClass);
+}
+
+async function testI18nContentKey(page) {
+    const icon = page.locator('.help-icon[data-help-content-key]').first();
+    await icon.click();
+
+    const popover = page.locator('.help-popover');
+    await popover.waitFor({ state: 'visible', timeout: 2000 });
+
+    const inner = await popover.locator('.help-popover-inner').textContent();
+    if (!inner.includes('Translated help copy')) {
+        throw new Error(`Expected translated i18n content, got: ${inner}`);
+    }
+
+    const describedBy = await icon.getAttribute('aria-describedby');
+    if (!describedBy) throw new Error('Expected aria-describedby to be set while popover is open');
+    console.log('✓ data-help-content-key resolves through i18n with aria-describedby');
 }
 
 async function testClickOutsideDismisses(page) {
@@ -116,7 +146,7 @@ async function testClickOutsideDismisses(page) {
 
 async function testFocusableIcon(page) {
     // Tab to the help icon
-    await page.keyboard.tab();
+    await page.keyboard.press('Tab');
     const focused = page.locator(':focus');
     const cls = await focused.evaluate(el => el.className);
     if (!cls.includes('help-icon')) {
@@ -126,7 +156,7 @@ async function testFocusableIcon(page) {
 }
 
 async function testEnterTriggersPopover(page) {
-    await page.keyboard.tab(); // focus first icon
+    await page.keyboard.press('Tab'); // focus first icon
     await page.keyboard.press('Enter');
 
     const popover = page.locator('.help-popover');
@@ -204,6 +234,11 @@ async function main() {
     await withPage(TEST_HTML, async (page) => {
         console.log('Running: testCloseButton');
         await testCloseButton(page);
+    });
+
+    await withPage(TEST_HTML, async (page) => {
+        console.log('Running: testI18nContentKey');
+        await testI18nContentKey(page);
     });
 
     await withPage(TEST_HTML, async (page) => {
