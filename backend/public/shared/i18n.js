@@ -338296,6 +338296,13 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "My Messages",
+        "chat_sys_conversation": "💬 Conversation",
+        "chat_sys_kanban": "📋 Kanban",
+        "chat_sys_scheduled": "⏰ Scheduled",
+        "chat_sys_platform": "🔧 System",
+        "chat_sys_health": "❤️ Health",
+        "chat_sys_n_hidden": "{n} system message(s) hidden by filter — click to show",
+        "chat_sys_n_hidden_hint": "Click to show all categories",
 
 
 
@@ -963228,6 +963235,13 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "我的訊息",
+        "chat_sys_conversation": "💬 對話",
+        "chat_sys_kanban": "📋 看板",
+        "chat_sys_scheduled": "⏰ 排程",
+        "chat_sys_platform": "🔧 系統",
+        "chat_sys_health": "❤️ 健康",
+        "chat_sys_n_hidden": "{n} 則系統訊息已被 filter 隱藏 — 點此顯示",
+        "chat_sys_n_hidden_hint": "點此顯示全部類別",
 
 
 
