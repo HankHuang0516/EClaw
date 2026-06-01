@@ -178,6 +178,56 @@
             color: var(--primary);
         }
 
+        /* ── System-message smart filter chips ── */
+        .chip-group-wrapper-sys {
+            margin-top: 6px;
+        }
+        .chip-group-system {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .sys-chip {
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 12px;
+            line-height: 1.4;
+            cursor: pointer;
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            white-space: nowrap;
+            user-select: none;
+            transition: all 0.15s;
+            flex-shrink: 0;
+            opacity: 0.55;
+        }
+        .sys-chip:hover {
+            opacity: 0.85;
+            border-color: var(--primary);
+        }
+        .sys-chip.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: var(--text);
+            opacity: 1;
+        }
+        .sys-hidden-banner {
+            margin: 8px 16px 0;
+            padding: 6px 10px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            background: var(--card);
+            border: 1px dashed var(--card-border);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .sys-hidden-banner:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
         /* ── Messages Area ── */
         .chat-messages {
             flex: 1;
@@ -2867,6 +2917,16 @@
                     </div>
                     <span class="filter-chip-toggle" id="filterToggle" onclick="toggleFilterExpand()" style="display:none;"></span>
                 </div>
+                <!-- Smart filter — system message categories (multi-select OR, per spec chat-smart-filter-system-messages.md) -->
+                <div class="chip-group-wrapper chip-group-wrapper-sys">
+                    <div class="chip-group chip-group-system" id="systemFilterChips" role="group" aria-label="System message filters">
+                        <button class="sys-chip active" type="button" data-syscat="conversation" onclick="toggleSysCat('conversation')" data-i18n="chat_sys_conversation" title="對話 / Conversation">💬 對話</button>
+                        <button class="sys-chip active" type="button" data-syscat="kanban" onclick="toggleSysCat('kanban')" data-i18n="chat_sys_kanban" title="看板 / Kanban">📋 看板</button>
+                        <button class="sys-chip active" type="button" data-syscat="scheduled" onclick="toggleSysCat('scheduled')" data-i18n="chat_sys_scheduled" title="排程 / Scheduled">⏰ 排程</button>
+                        <button class="sys-chip" type="button" data-syscat="platform" onclick="toggleSysCat('platform')" data-i18n="chat_sys_platform" title="系統 / Platform">🔧 系統</button>
+                        <button class="sys-chip" type="button" data-syscat="health" onclick="toggleSysCat('health')" data-i18n="chat_sys_health" title="健康 / Health">❤️ 健康</button>
+                    </div>
+                </div>
             </div>
 
             <!-- Messages Area -->
@@ -3127,6 +3187,7 @@
     <script src="../shared/petdx-renderer.js"></script>
     <script src="../shared/avatar-petdx.js"></script>
     <script src="shared/entity-utils.js"></script>
+    <script src="shared/chat-source-category.js"></script>
     <script src="shared/mention-autocomplete.js"></script>
     <script src="shared/mention-resolver.js"></script>
     <script src="shared/mention-render.js"></script>
@@ -3167,6 +3228,71 @@
         const entityRuntimeStatus = new Map();
         let activeChatMessageDeepLinkId = null;
         let activeChatMessageDeepLinkMissingId = null;
+
+        // ── System-message smart filter (spec chat-smart-filter-system-messages.md) ──
+        // Active set of 5 categories from ChatSourceCategory. Default per spec:
+        // conversation/kanban/scheduled ON, platform/health OFF. `unknown` always
+        // passes regardless (regression-safe) — not a toggle.
+        let sysFilterActive = (typeof ChatSourceCategory !== 'undefined' && ChatSourceCategory.DEFAULT_ACTIVE)
+            ? Object.assign({}, ChatSourceCategory.DEFAULT_ACTIVE)
+            : { conversation: true, kanban: true, scheduled: true, platform: false, health: false };
+
+        function _sysFilterStorageKey() {
+            const deviceId = (currentUser && currentUser.deviceId) || '';
+            return (typeof ChatSourceCategory !== 'undefined' && ChatSourceCategory.storageKey)
+                ? ChatSourceCategory.storageKey(deviceId)
+                : ('eclaw.chatSysFilter.v1' + (deviceId ? ':' + deviceId : ''));
+        }
+
+        function loadSysFilterFromStorage() {
+            try {
+                const raw = localStorage.getItem(_sysFilterStorageKey());
+                if (!raw) return;
+                const saved = JSON.parse(raw);
+                if (saved && typeof saved === 'object') {
+                    ['conversation', 'kanban', 'scheduled', 'platform', 'health'].forEach(cat => {
+                        if (typeof saved[cat] === 'boolean') sysFilterActive[cat] = saved[cat];
+                    });
+                }
+            } catch (e) { /* ignore parse errors */ }
+        }
+
+        function saveSysFilterToStorage() {
+            try { localStorage.setItem(_sysFilterStorageKey(), JSON.stringify(sysFilterActive)); }
+            catch (e) { /* ignore quota errors */ }
+        }
+
+        function applySysFilterChipState() {
+            const group = document.getElementById('systemFilterChips');
+            if (!group) return;
+            group.querySelectorAll('.sys-chip').forEach(chip => {
+                const cat = chip.dataset.syscat;
+                chip.classList.toggle('active', !!sysFilterActive[cat]);
+                chip.setAttribute('aria-pressed', String(!!sysFilterActive[cat]));
+            });
+        }
+
+        function toggleSysCat(cat) {
+            if (!Object.prototype.hasOwnProperty.call(sysFilterActive, cat)) return;
+            sysFilterActive[cat] = !sysFilterActive[cat];
+            saveSysFilterToStorage();
+            applySysFilterChipState();
+            if (typeof renderMessages === 'function') renderMessages(false);
+        }
+
+        function applySystemFilters(messages) {
+            if (typeof ChatSourceCategory === 'undefined' || !ChatSourceCategory.passesSystemFilter) return messages;
+            return messages.filter(m => ChatSourceCategory.passesSystemFilter(m, sysFilterActive));
+        }
+
+        // 'N hidden' banner click — turn every chip ON (incl platform/health) so
+        // the user can see what's behind the filter without manually toggling 5 chips.
+        function enableAllSysCats() {
+            Object.keys(sysFilterActive).forEach(cat => { sysFilterActive[cat] = true; });
+            saveSysFilterToStorage();
+            applySysFilterChipState();
+            if (typeof renderMessages === 'function') renderMessages(false);
+        }
         const CHAT_AVATAR_SIZE_PX = { small: 32, medium: 48, large: 64 };
         let chatAvatarSize = 'medium';
 
@@ -3482,6 +3608,10 @@
             const user = await checkAuth();
             console.log('[CHAT_DEBUG] checkAuth result:', user ? `deviceId=${user.deviceId}, hasSecret=${!!user.deviceSecret}` : 'NULL');
             if (!user) return;
+            // Hydrate sys-filter chip state from per-device localStorage
+            // (key requires deviceId — see chat-source-category.storageKey).
+            loadSysFilterFromStorage();
+            applySysFilterChipState();
             initPortalSocket();
             initEnvVarBtn(user.deviceId, user.deviceSecret);
             await loadChatAvatarSizePreference();
@@ -4946,12 +5076,20 @@
             const container = document.getElementById('chatMessages');
             const scrollLock = captureChatScrollAnchor(container);
             const shouldFollowBottom = isFirstLoad || (scrollLock && scrollLock.wasAtBottom);
-            const filtered = withRentalHealthSystemMessages(getFilteredMessages());
+            // Apply sys-category filter AFTER withRentalHealthSystemMessages so
+            // synthesized rental_health_system items are subject to the filter
+            // (per #6 amendment 2026-06-01 — health chip OFF must hide them).
+            const beforeSys = withRentalHealthSystemMessages(getFilteredMessages());
+            const filtered = applySystemFilters(beforeSys);
+            const hiddenBySys = beforeSys.length - filtered.length;
 
             const deepLinkMissingHtml = renderChatMessageDeepLinkMissing();
+            const sysHiddenBannerHtml = (hiddenBySys >= 10)
+                ? `<div class="sys-hidden-banner" onclick="enableAllSysCats()" title="${escapeHtml(i18n.t('chat_sys_n_hidden_hint') || 'Click to show all categories')}">${escapeHtml((i18n.t('chat_sys_n_hidden') || '{n} system message(s) hidden by filter — click to show').replace('{n}', String(hiddenBySys)))}</div>`
+                : '';
 
             if (filtered.length === 0) {
-                container.innerHTML = deepLinkMissingHtml + `
+                container.innerHTML = deepLinkMissingHtml + sysHiddenBannerHtml + `
                     <div class="chat-empty">
                         <div class="chat-empty-icon">💬</div>
                         <div class="chat-empty-title" data-i18n="chat_empty">${escapeHtml(i18n.t('chat_empty') || 'No messages yet')}</div>
@@ -4994,7 +5132,7 @@
                 return d.toLocaleDateString([], { month: 'numeric', day: 'numeric' });
             }
 
-            container.innerHTML = deepLinkMissingHtml + displayMessages.map((msg, idx) => {
+            container.innerHTML = deepLinkMissingHtml + sysHiddenBannerHtml + displayMessages.map((msg, idx) => {
                 // Skip earlier messages in a photo run — the last one renders the grid.
                 if (msg._photoGroupSkip) return '';
                 // Walk back over skipped photo-run entries so date separators
