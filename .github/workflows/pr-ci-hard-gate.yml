@@ -1,0 +1,180 @@
+name: PR CI Hard Gate
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  checks: read
+  contents: read
+  pull-requests: read
+
+jobs:
+  ci-gate:
+    name: Required PR CI gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false }}
+    steps:
+      - name: Wait for required path-scoped CI
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              core.notice('No pull_request payload; workflow_dispatch invocation has no PR checks to gate.');
+              return;
+            }
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const headSha = pr.head.sha;
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner,
+              repo,
+              pull_number: pr.number,
+              per_page: 100
+            });
+            const changed = files.map(file => file.filename);
+            core.info(`PR #${pr.number} head ${headSha} changed ${changed.length} file(s).`);
+
+            const has = predicate => changed.some(predicate);
+            const exact = names => path => names.includes(path);
+
+            const groups = [
+              {
+                label: 'Backend CI',
+                when: path => path === 'i18n.js' || path.startsWith('backend/') || path === '.github/workflows/backend-ci.yml',
+                checks: ['ESLint', 'i18n syntax check', 'Jest unit tests']
+              },
+              {
+                label: 'Portal Smoke CI',
+                when: path =>
+                  path.startsWith('backend/public/portal/') ||
+                  path.startsWith('backend/public/shared/') ||
+                  [
+                    'backend/scripts/portal-smoke-check.js',
+                    'backend/tests/jest/chat-targets-static.test.js',
+                    'backend/tests/jest/kanban-nav-static.test.js',
+                    'backend/tests/jest/portal-smoke-static.test.js',
+                    'backend/package.json',
+                    'backend/package-lock.json',
+                    '.github/workflows/portal-smoke-ci.yml'
+                  ].includes(path),
+                checks: ['Critical portal pages']
+              },
+              {
+                label: 'Android CI',
+                when: path =>
+                  path.startsWith('app/') ||
+                  path.startsWith('gradle/') ||
+                  ['build.gradle.kts', 'settings.gradle.kts', '.github/workflows/android-ci.yml'].includes(path),
+                checks: ['Android Lint', 'Assemble Debug APK', 'Kotlin Unit Tests']
+              },
+              {
+                label: 'Entity Cards Stability CI',
+                when: exact([
+                  'backend/index.js',
+                  'backend/public/portal/dashboard.html',
+                  'app/src/main/java/com/hank/clawlive/MainActivity.kt',
+                  'app/src/main/java/com/hank/clawlive/data/model/MultiEntityResponse.kt',
+                  'app/src/main/java/com/hank/clawlive/ui/EntityCardAdapter.kt',
+                  'backend/tests/test-entity-cards-stability.js',
+                  'backend/tests/test-entity-management.js',
+                  '.github/workflows/entity-cards-ci.yml'
+                ]),
+                checks: ['Verify entity-cards guards', 'Web/Android feature parity']
+              },
+              {
+                label: 'CLI-Proxy CI',
+                when: path => path.startsWith('claude-cli-proxy/') || path === '.github/workflows/cli-proxy-ci.yml',
+                checks: ['Python unit tests']
+              },
+              {
+                label: 'iOS App i18n Validation',
+                when: path => path.startsWith('ios-app/i18n/') || path === '.github/workflows/ios-i18n-ci.yml',
+                checks: ['i18n key consistency']
+              }
+            ];
+
+            const activeGroups = groups.filter(group => has(group.when));
+            const expected = [...new Set(activeGroups.flatMap(group => group.checks))];
+
+            if (activeGroups.length === 0) {
+              core.notice('No path-scoped CI workflows are required for these files.');
+              return;
+            }
+
+            core.info(`Required CI groups: ${activeGroups.map(group => group.label).join(', ')}`);
+            core.info(`Required check runs: ${expected.join(', ')}`);
+
+            const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+            const listCheckRuns = async () => {
+              const allRuns = [];
+              for (let page = 1; page <= 10; page++) {
+                const response = await github.rest.checks.listForRef({
+                  owner,
+                  repo,
+                  ref: headSha,
+                  per_page: 100,
+                  page
+                });
+                allRuns.push(...response.data.check_runs);
+                if (response.data.check_runs.length < 100) break;
+              }
+              return allRuns;
+            };
+            const sortLatest = runs => runs.sort((a, b) => {
+              const aTime = Date.parse(a.started_at || a.created_at || 0);
+              const bTime = Date.parse(b.started_at || b.created_at || 0);
+              return bTime - aTime;
+            });
+
+            const deadline = Date.now() + 20 * 60 * 1000;
+            let lastLog = 0;
+
+            while (Date.now() < deadline) {
+              const runs = await listCheckRuns();
+
+              const missing = [];
+              const pending = [];
+              const failed = [];
+              const passed = [];
+
+              for (const name of expected) {
+                const latest = sortLatest(runs.filter(run => run.name === name))[0];
+                if (!latest) {
+                  missing.push(name);
+                  continue;
+                }
+                if (latest.status !== 'completed') {
+                  pending.push(`${name} (${latest.status})`);
+                  continue;
+                }
+                if (latest.conclusion !== 'success') {
+                  failed.push(`${name} (${latest.conclusion}) ${latest.html_url}`);
+                  continue;
+                }
+                passed.push(name);
+              }
+
+              if (failed.length > 0) {
+                core.setFailed(`Required CI failed:\n${failed.join('\n')}`);
+                return;
+              }
+
+              if (missing.length === 0 && pending.length === 0) {
+                core.notice(`All required CI passed: ${passed.join(', ')}`);
+                return;
+              }
+
+              if (Date.now() - lastLog > 60 * 1000) {
+                lastLog = Date.now();
+                core.info(`Waiting for required CI. Passed: ${passed.length}; pending: ${pending.join(', ') || 'none'}; missing: ${missing.join(', ') || 'none'}.`);
+              }
+              await sleep(30 * 1000);
+            }
+
+            core.setFailed(`Timed out waiting for required CI on ${headSha}. Missing or pending check runs: ${expected.join(', ')}`);
