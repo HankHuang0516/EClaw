@@ -1,0 +1,58 @@
+{
+  "generated_at": "GENERATED — do not hand-edit",
+  "source": [
+    "portal/settings.html"
+  ],
+  "keys": [
+    {
+      "field_key": "feedback_category",
+      "label_key": "feedback_category_label",
+      "help_key": "feedback_category_help"
+    },
+    {
+      "field_key": "feedback_photo",
+      "label_key": "feedback_photo_label",
+      "help_key": "feedback_photo_help"
+    },
+    {
+      "field_key": "kanban_cron_recurring_notify",
+      "label_key": "kanban_cron_recurring_notify_label",
+      "help_key": "kanban_cron_recurring_notify_help"
+    },
+    {
+      "field_key": "kanban_nudge_advanced",
+      "label_key": "kanban_nudge_advanced_label",
+      "help_key": "kanban_nudge_advanced_help"
+    },
+    {
+      "field_key": "kanban_nudge_batch",
+      "label_key": "kanban_nudge_batch_label",
+      "help_key": "kanban_nudge_batch_help"
+    },
+    {
+      "field_key": "kanban_nudge_interval",
+      "label_key": "kanban_nudge_interval_label",
+      "help_key": "kanban_nudge_interval_help"
+    },
+    {
+      "field_key": "kanban_nudge_per_entity_section",
+      "label_key": "kanban_nudge_per_entity_section_label",
+      "help_key": "kanban_nudge_per_entity_section_help"
+    },
+    {
+      "field_key": "kanban_nudge_per_entity_throttle",
+      "label_key": "kanban_nudge_per_entity_throttle_label",
+      "help_key": "kanban_nudge_per_entity_throttle_help"
+    },
+    {
+      "field_key": "kanban_nudge_priority",
+      "label_key": "kanban_nudge_priority_label",
+      "help_key": "kanban_nudge_priority_help"
+    },
+    {
+      "field_key": "kanban_nudge_statuses",
+      "label_key": "kanban_nudge_statuses_label",
+      "help_key": "kanban_nudge_statuses_help"
+    }
+  ]
+}
