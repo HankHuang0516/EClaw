@@ -1275659,128 +1275659,16 @@ const TRANSLATIONS = {
 
         "kanban_nudge_interval_min": "分",
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        "feedback_category_help": "选择最符合你汇报的分类。AI 分流流程会根据分类不同运行不同的分类处理（bug = 复现检查，feature = 路线图匹配，design = 视觉 diff）。",
+        "feedback_photo_help": "附上能呈现问题情境的截图。最多 5 张；网页支持拖放。上传前 EXIF 地理位置信息会被移除。",
+        "kanban_cron_recurring_notify_help": "卡片 cron 触发时发送聊天通知。低优先级的定期任务如果不想被 ping，可以关闭。",
+        "kanban_nudge_advanced_help": "按实体覆盖督促间隔、状态、停用模式。大多数看板不需要此功能——除非某个实体有不同的节奏需求，否则保持收起状态。",
+        "kanban_nudge_batch_help": "每个 cron tick 最多挑选几张 L1 候选卡发送提醒——这是设备级别的上限，不是每个实体 N 张。L2（优先升级）和 L3（自动封锁）不受此影响。L1/L2/L3 说明见 kanban-nudge spec。",
+        "kanban_nudge_interval_help": "停滞卡督促的基本间隔（分钟）。默认 180（3 小时）。若已设置实体级覆盖，则以该覆盖为准（见高级区）。",
+        "kanban_nudge_per_entity_section_help": "按实体独立配置督促行为。每个实体可分别覆盖间隔、状态、停用模式。当某个实体需要更安静或不同的状态过滤器时使用。",
+        "kanban_nudge_per_entity_throttle_help": "若卡片任一收件实体在其有效间隔内已被督促，则跳过。避免多张卡同时 ping 同一实体造成刷屏。建议开启。",
+        "kanban_nudge_priority_help": "挑选下一批停滞卡的排序顺序。'priority_first' 高优先级优先；'age_first' 最旧的优先（不看优先级）。",
+        "kanban_nudge_statuses_help": "哪些卡片状态会触发督促。默认是 todo + in_progress + review + blocked。当 blocked 卡确实在等别人时，通常会把 blocked 排除。",
 
 
 
@@ -2081859,128 +2081747,16 @@ const TRANSLATIONS = {
 
         "kanban_nudge_interval_min": "分",
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        "feedback_category_help": "報告内容に最も合ったカテゴリを選択してください。AI支援はカテゴリごとに異なるトリアージフローを実行します（bug＝再現確認、feature＝ロードマップ照合、design＝視覚差分）。",
+        "feedback_photo_help": "問題の状況を示すスクリーンショットを添付してください。最大5枚。Webアップローはドラッグ＆ドロップに対応。EXIF位置情報はアップロード前に削除されます。",
+        "kanban_cron_recurring_notify_help": "このカードのcron起動時にチャット通知を送信します。低優先度の定期ジョブでpingされたくない場合は無効にしてください。",
+        "kanban_nudge_advanced_help": "督促間隔・ステータス・停止モードを実体ごとに上書きします。ほとんどのボードでは不要—特定の実体が異なるリズムを必要とする場合のみ展開してください。",
+        "kanban_nudge_batch_help": "各cron tickで選択するL1停滞カードの最大数—デバイス全体のキャップであり実体ごとではありません。L2（優先度上昇）とL3（自動ブロック）は影響を受けません。L1/L2/L3はkanban-nudge spec参照。",
+        "kanban_nudge_interval_help": "停滞カード督促の基本間隔（分）。デフォルトは180（3時間）。実体ごとの上書きが設定されている場合はそれが優先されます（詳細セクション参照）。",
+        "kanban_nudge_per_entity_section_help": "実体ごとの督促設定。各実体は間隔・ステータス・停止モードを個別に上書き可能。特定の実体がより静かなリズムや異なるステータスフィルターを必要とする場合に使用。",
+        "kanban_nudge_per_entity_throttle_help": "カードのいずれかの宛先実体がその有効間隔内にすでに督促されている場合はそのカードをスキップ。複数のカードが同じ実体をターゲットにする際の重複pingを防止します。推奨はON。",
+        "kanban_nudge_priority_help": "次の停滞カードバッチの選択順序。「priority_first」は高優先度を古いものより先に選択；「age_first」は優先度に関係なく最も古いものを選択。",
+        "kanban_nudge_statuses_help": "督促がトリガーされるカードのステータス。デフォルトはtodo + in_progress + review + blocked。blockedを除外するのは、blockedカードが実際に他のカードを待っている場合一般的です。",
 
 
 
@@ -2644643,128 +2644419,16 @@ const TRANSLATIONS = {
 
         "kanban_nudge_interval_min": "분",
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        "feedback_category_help": "보고서에 가장 적합한 카테고리를 선택하세요. AI 지원은 카테고리별로 다른 트라이아지 흐름을 실행합니다 (bug=재현 확인, feature=로드맵 매칭, design=시각적 차이).",
+        "feedback_photo_help": "문제 상황을 보여주는 스크린샷을 첨부하세요. 최대 5장; 웹 업로드는 드래그앤드롭 지원. EXIF 위치 정보는 업로드 전에 제거됩니다.",
+        "kanban_cron_recurring_notify_help": "이 카드의 cron 실행 시 채팅 알림을 전송합니다. 저우선순위 정기 작업에서 ping을 받고 싶지 않으면 비활성화하세요.",
+        "kanban_nudge_advanced_help": "촉진間隔·상태·중단 모드를 실체별로 재정의합니다. 대부분의 환경에서는 필요 없이며—특정 실체가 다른 주기가 필요한 경우에만 펼치세요.",
+        "kanban_nudge_batch_help": "각 cron tick에서 선택하는 L1 정체 카드 최대 수—장치 전체 상한이며 실체별 아닙니다. L2(우선순위 상승)와 L3(자동 차단)는 영향을 받지 않습니다. L1/L2/L3은 kanban-nudge spec 참조.",
+        "kanban_nudge_interval_help": "정체 카드 촉진 기본 간격(분). 기본값 180(3시간). 실체별 재정의가 설정된 경우 우선 적용(고급 섹션 참조).",
+        "kanban_nudge_per_entity_section_help": "실체별 촉진 설정. 각 실체는 간격·상태·중지 모드를 개별적으로 재정의 가능. 특정 실체가 더 조용한 주기나 다른 상태 필터가 필요할 때 사용.",
+        "kanban_nudge_per_entity_throttle_help": "카드의 배정된 수신자 중 어느 쪽이든 해당 유효 간격 내에 이미 촉진된 경우 카드를 건너뜁니다. 여러 카드가 같은 실체를 대상으로 할 때 중복 ping을 방지. 권장 ON.",
+        "kanban_nudge_priority_help": "다음 정체 카드 배치 선택 순서. 'priority_first'는 우선순위가 높은 것을 오래된 것보다 먼저 선택; 'age_first'는 우선순위와 관계없이 가장 오래된 것을 선택.",
+        "kanban_nudge_statuses_help": "촉진이 트리거되는 카드 상태. 기본값은 todo + in_progress + review + blocked. 'blocked'를 제외하는 것은 blocked 카드가 실제로 다른 카드를 기다리는 경우 일반적입니다.",
 
 
 
