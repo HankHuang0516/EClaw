@@ -9,7 +9,8 @@ EClawbot uses a PR-first workflow. Do not push directly to `main`; open a featur
 3. Run the local checks that match the files you touched.
 4. Open a PR into `main`.
 5. Complete the self-review checklist in [`docs/code-review-checklist.md`](docs/code-review-checklist.md).
-6. Wait for `PR CI Hard Gate / Required PR CI gate` to pass before merge.
+6. For settings field changes, follow [`docs/contribution.md`](docs/contribution.md).
+7. Wait for `PR CI Hard Gate / Required PR CI gate` to pass before merge.
 
 The hard gate is the single branch-protection status that should be required. It runs on every PR and waits for the path-scoped CI jobs that apply to the changed files. If an expected workflow is missing, skipped by mistake, cancelled, or failing, the hard gate fails.
 

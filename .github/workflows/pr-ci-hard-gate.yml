@@ -88,6 +88,20 @@ jobs:
                 checks: ['Verify entity-cards guards', 'Web/Android feature parity']
               },
               {
+                label: 'Settings Help Invariant CI',
+                when: path =>
+                  /^backend\/public\/(?:.*\/)?settings[^/]*\.html$/.test(path) ||
+                  [
+                    'backend/public/shared/i18n.js',
+                    'backend/settings-help-keys.json',
+                    'backend/scripts/generate-settings-help-keys.js',
+                    'backend/scripts/check-settings-help-invariant.js',
+                    '.github/workflows/settings-help-invariant-ci.yml',
+                    '.github/workflows/pr-ci-hard-gate.yml'
+                  ].includes(path),
+                checks: ['Settings help invariant']
+              },
+              {
                 label: 'CLI-Proxy CI',
                 when: path => path.startsWith('claude-cli-proxy/') || path === '.github/workflows/cli-proxy-ci.yml',
                 checks: ['Python unit tests']
