@@ -18,7 +18,9 @@ Example:
 </label>
 ```
 
-The canonical locales for this PR are `en` and `zh-TW`. Fanout locales can land later, but the PR gate blocks if either canonical locale is missing the label or help key.
+The canonical locales for this PR are `en` and `zh`. Fanout locales can land later, but the PR gate blocks if either canonical locale is missing the label or help key.
+
+Note: `TRANSLATIONS["zh-TW"]` is an intentionally thin override stub (publisher-guide-only); the Traditional Chinese canonical dict lives in `TRANSLATIONS.zh`, with `zh-TW` falling back through `zh` at runtime. The invariant gate checks `zh`, not `zh-TW`.
 
 For JS-rendered fields, keep the annotation next to the binding call:
 

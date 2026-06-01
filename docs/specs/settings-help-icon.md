@@ -11,7 +11,7 @@
 Settings pages today use inline labels and short hover hints. Weak inline copy ("實體一視同仁") misleads users about scope. The fix:
 - Every labeled settings field gets a `?` help icon.
 - Click reveals a popover with the canonical explanation.
-- Help content is i18n'd across 16 locales (en + zh-TW canonical + 14 fanout per §3.1).
+- Help content is i18n'd across 16 locales (en + zh canonical + 14 fanout per §3.1).
 - Code and i18n entries reference each other via a `HELP-KEY` annotation, enforced by a CI gate + i18n patrol cron.
 
 ## 2. UI Pattern
@@ -75,12 +75,14 @@ Verified at 2026-06-01 09:30 TWT via combined grep (4-space-indented unquoted + 
 | Locale | Form | Role |
 |--------|------|------|
 | `en` | unquoted, 4-space | Canonical base (handled in child 3) |
-| `zh-TW` | quoted, 4-space | Canonical Traditional Chinese (handled in child 3) |
-| `zh` | unquoted, 4-space | Fanout (handled in child 6) |
+| `zh` | unquoted, 4-space | Canonical Traditional Chinese (handled in child 3) |
+| `zh-TW` | quoted, 4-space | Thin override stub — publisher-guide only (≈41 keys); falls back through `zh` at runtime per `tests/jest/i18n-fallback-chain.test.js`. NOT a canonical injection target. |
 | `zh-CN` | quoted, column 0 | Fanout (handled in child 6) |
 | `ja`, `ko`, `th`, `vi`, `id`, `fr`, `es`, `de`, `pt`, `ms`, `hi`, `ar` | unquoted, 4-space | Fanout (12 locales — handled in child 6) |
 
-**Count: 16 confirmed top-level locales** (en + zh-TW canonical + 14 fanout: zh, zh-CN, ja, ko, th, vi, id, fr, es, de, pt, ms, hi, ar).
+**Count: 16 confirmed top-level locales** (en + zh canonical + 14 fanout: zh-CN, ja, ko, th, vi, id, fr, es, de, pt, ms, hi, ar, plus thin zh-TW override stub).
+
+**Architectural note (added 2026-06-01 per Jest CI feedback):** the canonical pair is `en` + `zh`, not `en` + `zh-TW`. Spec round-1 said zh-TW, but `tests/jest/i18n-fallback-chain.test.js` hard-asserts `zh-TW` stays <50 keys (it's a publisher-guide-only override stub), and the i18n runtime resolves `zh-TW` → `zh` → `en`. Injecting canonical content into `zh` is therefore the right place. See memory `feedback_check_i18n_fallback_before_emergency`.
 
 ## 4. Bidirectional Code↔Doc Invariant
 
@@ -105,7 +107,7 @@ HelpPopover.bindByKey(iconEl, 'kanban_nudge_batch_help');
 ```
 
 ### 4.2 Code → help invariant
-- Every `HELP-KEY: <key>` annotation MUST point to a key that exists in `backend/public/shared/i18n.js` for both `en` and `zh-TW` (the canonical pair). Missing → CI fail.
+- Every `HELP-KEY: <key>` annotation MUST point to a key that exists in `backend/public/shared/i18n.js` for both `en` and `zh` (the canonical pair — see §3.1 architectural note on why `zh`, not `zh-TW`). Missing → CI fail.
 - Fanout locales (the 14 other top-level locales per §3.1) are checked by the patrol cron (warning-level, not hard-block).
 
 ### 4.3 Help → code invariant (SCOPED to settings-help keys)
