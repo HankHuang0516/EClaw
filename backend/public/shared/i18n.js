@@ -1848671,6 +1848671,19 @@ const TRANSLATIONS = {
 
 
 
+    in: {
+                "feedback_category_help": "Pick the category that best matches your report. AI assist runs different triage flows per category (bug = repro check, feature = roadmap match, design = visual diff).",
+        "feedback_photo_help": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF location data is stripped before upload.",
+        "kanban_cron_recurring_notify_help": "Send a chat notification when this card's cron fires. Disable for low-priority recurring jobs that shouldn't ping you.",
+        "kanban_nudge_advanced_help": "Per-entity overrides for nudge interval, statuses, and stop mode. Most decks don't need this — leave collapsed unless one entity has different cadence needs.",
+        "kanban_nudge_batch_help": "Maximum number of L1 stale cards picked per cron tick — device-wide cap, NOT per-entity. L2 (priority bump) and L3 (auto-block) escalations are unaffected. See L1/L2/L3 in the kanban-nudge spec.",
+        "kanban_nudge_interval_help": "Base interval (minutes) between stale-card nudges. Default 180 (3h). Per-entity overrides win when set (see advanced section).",
+        "kanban_nudge_per_entity_section_help": "Per-entity nudge configuration. Each entity can override interval, statuses, and stop-mode independently. Used when one entity wants quieter cadence or different status filters.",
+        "kanban_nudge_per_entity_throttle_help": "Skip a card if any of its assigned recipients was already nudged within their effective interval. Prevents duplicate pings when multiple cards target the same entity. Recommended ON.",
+        "kanban_nudge_priority_help": "Sort order when picking the next batch of stale cards. 'priority_first' picks higher-priority before older; 'age_first' picks oldest regardless of priority.",
+        "kanban_nudge_statuses_help": "Which card statuses trigger nudges. Default is todo + in_progress + review + blocked. Excluding 'blocked' is common when blocked cards are truly waiting on others.",
+    },
+
     ja: {
         "transition_loading": "読み込み中…",
         "dashboard_usage_widget_title": "Claude Code / Codex 利用状況",
@@ -2411196,6 +2411209,16 @@ const TRANSLATIONS = {
         "kanban_nudge_stop_mode_avatar_title": "ナッジ stop-mode 有効",
         "kb_funnel_tag": "タグ…",
         "kb_gate_backlog_only_hint": "ローンチゲートはバックログカードでのみ利用できます",
+                "feedback_category_help": "Pick the category that best matches your report. AI assist runs different triage flows per category (bug = repro check, feature = roadmap match, design = visual diff).",
+                "feedback_photo_help": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF location data is stripped before upload.",
+                "kanban_cron_recurring_notify_help": "Send a chat notification when this card's cron fires. Disable for low-priority recurring jobs that shouldn't ping you.",
+                "kanban_nudge_advanced_help": "Per-entity overrides for nudge interval, statuses, and stop mode. Most decks don't need this — leave collapsed unless one entity has different cadence needs.",
+                "kanban_nudge_batch_help": "Maximum number of L1 stale cards picked per cron tick — device-wide cap, NOT per-entity. L2 (priority bump) and L3 (auto-block) escalations are unaffected. See L1/L2/L3 in the kanban-nudge spec.",
+                "kanban_nudge_interval_help": "Base interval (minutes) between stale-card nudges. Default 180 (3h). Per-entity overrides win when set (see advanced section).",
+                "kanban_nudge_per_entity_section_help": "Per-entity nudge configuration. Each entity can override interval, statuses, and stop-mode independently. Used when one entity wants quieter cadence or different status filters.",
+                "kanban_nudge_per_entity_throttle_help": "Skip a card if any of its assigned recipients was already nudged within their effective interval. Prevents duplicate pings when multiple cards target the same entity. Recommended ON.",
+                "kanban_nudge_priority_help": "Sort order when picking the next batch of stale cards. 'priority_first' picks higher-priority before older; 'age_first' picks oldest regardless of priority.",
+                "kanban_nudge_statuses_help": "Which card statuses trigger nudges. Default is todo + in_progress + review + blocked. Excluding 'blocked' is common when blocked cards are truly waiting on others."
 
 
 
@@ -2941337,6 +2941360,16 @@ const TRANSLATIONS = {
         "kanban_nudge_stop_mode_avatar_title": "넛지 stop-mode 활성화됨",
         "kb_funnel_tag": "태그…",
         "kb_gate_backlog_only_hint": "런치 게이트는 백로그 카드에서만 사용할 수 있습니다",
+                "feedback_category_help": "Pick the category that best matches your report. AI assist runs different triage flows per category (bug = repro check, feature = roadmap match, design = visual diff).",
+                "feedback_photo_help": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF location data is stripped before upload.",
+                "kanban_cron_recurring_notify_help": "Send a chat notification when this card's cron fires. Disable for low-priority recurring jobs that shouldn't ping you.",
+                "kanban_nudge_advanced_help": "Per-entity overrides for nudge interval, statuses, and stop mode. Most decks don't need this — leave collapsed unless one entity has different cadence needs.",
+                "kanban_nudge_batch_help": "Maximum number of L1 stale cards picked per cron tick — device-wide cap, NOT per-entity. L2 (priority bump) and L3 (auto-block) escalations are unaffected. See L1/L2/L3 in the kanban-nudge spec.",
+                "kanban_nudge_interval_help": "Base interval (minutes) between stale-card nudges. Default 180 (3h). Per-entity overrides win when set (see advanced section).",
+                "kanban_nudge_per_entity_section_help": "Per-entity nudge configuration. Each entity can override interval, statuses, and stop-mode independently. Used when one entity wants quieter cadence or different status filters.",
+                "kanban_nudge_per_entity_throttle_help": "Skip a card if any of its assigned recipients was already nudged within their effective interval. Prevents duplicate pings when multiple cards target the same entity. Recommended ON.",
+                "kanban_nudge_priority_help": "Sort order when picking the next batch of stale cards. 'priority_first' picks higher-priority before older; 'age_first' picks oldest regardless of priority.",
+                "kanban_nudge_statuses_help": "Which card statuses trigger nudges. Default is todo + in_progress + review + blocked. Excluding 'blocked' is common when blocked cards are truly waiting on others."
     },
 
 
@@ -3469359,7 +3469392,17 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_stop_mode": "Stop-mode: หยุดการเตือนการ์ดค้างสำหรับเอนทิตีนี้",
         "kanban_nudge_stop_mode_avatar_title": "เปิดใช้ stop-mode การเตือนแล้ว",
         "kb_funnel_tag": "แท็ก…",
-        "kb_gate_backlog_only_hint": "Launch-gate ใช้ได้เฉพาะการ์ด backlog เท่านั้น",},
+        "kb_gate_backlog_only_hint": "Launch-gate ใช้ได้เฉพาะการ์ด backlog เท่านั้น",
+                "feedback_category_help": "Pick the category that best matches your report. AI assist runs different triage flows per category (bug = repro check, feature = roadmap match, design = visual diff).",
+                "feedback_photo_help": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF location data is stripped before upload.",
+                "kanban_cron_recurring_notify_help": "Send a chat notification when this card's cron fires. Disable for low-priority recurring jobs that shouldn't ping you.",
+                "kanban_nudge_advanced_help": "Per-entity overrides for nudge interval, statuses, and stop mode. Most decks don't need this — leave collapsed unless one entity has different cadence needs.",
+                "kanban_nudge_batch_help": "Maximum number of L1 stale cards picked per cron tick — device-wide cap, NOT per-entity. L2 (priority bump) and L3 (auto-block) escalations are unaffected. See L1/L2/L3 in the kanban-nudge spec.",
+                "kanban_nudge_interval_help": "Base interval (minutes) between stale-card nudges. Default 180 (3h). Per-entity overrides win when set (see advanced section).",
+                "kanban_nudge_per_entity_section_help": "Per-entity nudge configuration. Each entity can override interval, statuses, and stop-mode independently. Used when one entity wants quieter cadence or different status filters.",
+                "kanban_nudge_per_entity_throttle_help": "Skip a card if any of its assigned recipients was already nudged within their effective interval. Prevents duplicate pings when multiple cards target the same entity. Recommended ON.",
+                "kanban_nudge_priority_help": "Sort order when picking the next batch of stale cards. 'priority_first' picks higher-priority before older; 'age_first' picks oldest regardless of priority.",
+                "kanban_nudge_statuses_help": "Which card statuses trigger nudges. Default is todo + in_progress + review + blocked. Excluding 'blocked' is common when blocked cards are truly waiting on others."},
 
 
 
@@ -3995818,6 +3995861,16 @@ const TRANSLATIONS = {
         "kanban_nudge_stop_mode_avatar_title": "Đã bật stop-mode nhắc nhở",
         "kb_funnel_tag": "Thẻ…",
         "kb_gate_backlog_only_hint": "Launch-gate chỉ khả dụng cho thẻ backlog",
+                "feedback_category_help": "Pick the category that best matches your report. AI assist runs different triage flows per category (bug = repro check, feature = roadmap match, design = visual diff).",
+                "feedback_photo_help": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF location data is stripped before upload.",
+                "kanban_cron_recurring_notify_help": "Send a chat notification when this card's cron fires. Disable for low-priority recurring jobs that shouldn't ping you.",
+                "kanban_nudge_advanced_help": "Per-entity overrides for nudge interval, statuses, and stop mode. Most decks don't need this — leave collapsed unless one entity has different cadence needs.",
+                "kanban_nudge_batch_help": "Maximum number of L1 stale cards picked per cron tick — device-wide cap, NOT per-entity. L2 (priority bump) and L3 (auto-block) escalations are unaffected. See L1/L2/L3 in the kanban-nudge spec.",
+                "kanban_nudge_interval_help": "Base interval (minutes) between stale-card nudges. Default 180 (3h). Per-entity overrides win when set (see advanced section).",
+                "kanban_nudge_per_entity_section_help": "Per-entity nudge configuration. Each entity can override interval, statuses, and stop-mode independently. Used when one entity wants quieter cadence or different status filters.",
+                "kanban_nudge_per_entity_throttle_help": "Skip a card if any of its assigned recipients was already nudged within their effective interval. Prevents duplicate pings when multiple cards target the same entity. Recommended ON.",
+                "kanban_nudge_priority_help": "Sort order when picking the next batch of stale cards. 'priority_first' picks higher-priority before older; 'age_first' picks oldest regardless of priority.",
+                "kanban_nudge_statuses_help": "Which card statuses trigger nudges. Default is todo + in_progress + review + blocked. Excluding 'blocked' is common when blocked cards are truly waiting on others."
 },
 
 
@@ -3996073,6 +3996126,19 @@ const TRANSLATIONS = {
 
 
 
+
+    it: {
+                "feedback_category_help": "Pick the category that best matches your report. AI assist runs different triage flows per category (bug = repro check, feature = roadmap match, design = visual diff).",
+        "feedback_photo_help": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF location data is stripped before upload.",
+        "kanban_cron_recurring_notify_help": "Send a chat notification when this card's cron fires. Disable for low-priority recurring jobs that shouldn't ping you.",
+        "kanban_nudge_advanced_help": "Per-entity overrides for nudge interval, statuses, and stop mode. Most decks don't need this — leave collapsed unless one entity has different cadence needs.",
+        "kanban_nudge_batch_help": "Maximum number of L1 stale cards picked per cron tick — device-wide cap, NOT per-entity. L2 (priority bump) and L3 (auto-block) escalations are unaffected. See L1/L2/L3 in the kanban-nudge spec.",
+        "kanban_nudge_interval_help": "Base interval (minutes) between stale-card nudges. Default 180 (3h). Per-entity overrides win when set (see advanced section).",
+        "kanban_nudge_per_entity_section_help": "Per-entity nudge configuration. Each entity can override interval, statuses, and stop-mode independently. Used when one entity wants quieter cadence or different status filters.",
+        "kanban_nudge_per_entity_throttle_help": "Skip a card if any of its assigned recipients was already nudged within their effective interval. Prevents duplicate pings when multiple cards target the same entity. Recommended ON.",
+        "kanban_nudge_priority_help": "Sort order when picking the next batch of stale cards. 'priority_first' picks higher-priority before older; 'age_first' picks oldest regardless of priority.",
+        "kanban_nudge_statuses_help": "Which card statuses trigger nudges. Default is todo + in_progress + review + blocked. Excluding 'blocked' is common when blocked cards are truly waiting on others.",
+    },
 
     id: {
         "transition_loading": "Memuat…",
@@ -4521893,7 +4521959,17 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_stop_mode": "Stop-mode: jeda pengingat kartu usang untuk entitas ini",
         "kanban_nudge_stop_mode_avatar_title": "Stop-mode pengingat aktif",
         "kb_funnel_tag": "Tag…",
-        "kb_gate_backlog_only_hint": "Launch-gate hanya tersedia untuk kartu backlog",},
+        "kb_gate_backlog_only_hint": "Launch-gate hanya tersedia untuk kartu backlog",
+                "feedback_category_help": "Pick the category that best matches your report. AI assist runs different triage flows per category (bug = repro check, feature = roadmap match, design = visual diff).",
+                "feedback_photo_help": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF location data is stripped before upload.",
+                "kanban_cron_recurring_notify_help": "Send a chat notification when this card's cron fires. Disable for low-priority recurring jobs that shouldn't ping you.",
+                "kanban_nudge_advanced_help": "Per-entity overrides for nudge interval, statuses, and stop mode. Most decks don't need this — leave collapsed unless one entity has different cadence needs.",
+                "kanban_nudge_batch_help": "Maximum number of L1 stale cards picked per cron tick — device-wide cap, NOT per-entity. L2 (priority bump) and L3 (auto-block) escalations are unaffected. See L1/L2/L3 in the kanban-nudge spec.",
+                "kanban_nudge_interval_help": "Base interval (minutes) between stale-card nudges. Default 180 (3h). Per-entity overrides win when set (see advanced section).",
+                "kanban_nudge_per_entity_section_help": "Per-entity nudge configuration. Each entity can override interval, statuses, and stop-mode independently. Used when one entity wants quieter cadence or different status filters.",
+                "kanban_nudge_per_entity_throttle_help": "Skip a card if any of its assigned recipients was already nudged within their effective interval. Prevents duplicate pings when multiple cards target the same entity. Recommended ON.",
+                "kanban_nudge_priority_help": "Sort order when picking the next batch of stale cards. 'priority_first' picks higher-priority before older; 'age_first' picks oldest regardless of priority.",
+                "kanban_nudge_statuses_help": "Which card statuses trigger nudges. Default is todo + in_progress + review + blocked. Excluding 'blocked' is common when blocked cards are truly waiting on others."},
 
 
 
@@ -5046688,7 +5046764,17 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_stop_mode": "Stop-mode : suspendre les rappels de carte inactive pour cette entité",
         "kanban_nudge_stop_mode_avatar_title": "Stop-mode de rappel activé",
         "kb_funnel_tag": "Tag…",
-        "kb_gate_backlog_only_hint": "Le launch-gate n’est disponible que pour les cartes backlog",},
+        "kb_gate_backlog_only_hint": "Le launch-gate n’est disponible que pour les cartes backlog",
+                "feedback_category_help": "Pick the category that best matches your report. AI assist runs different triage flows per category (bug = repro check, feature = roadmap match, design = visual diff).",
+                "feedback_photo_help": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF location data is stripped before upload.",
+                "kanban_cron_recurring_notify_help": "Send a chat notification when this card's cron fires. Disable for low-priority recurring jobs that shouldn't ping you.",
+                "kanban_nudge_advanced_help": "Per-entity overrides for nudge interval, statuses, and stop mode. Most decks don't need this — leave collapsed unless one entity has different cadence needs.",
+                "kanban_nudge_batch_help": "Maximum number of L1 stale cards picked per cron tick — device-wide cap, NOT per-entity. L2 (priority bump) and L3 (auto-block) escalations are unaffected. See L1/L2/L3 in the kanban-nudge spec.",
+                "kanban_nudge_interval_help": "Base interval (minutes) between stale-card nudges. Default 180 (3h). Per-entity overrides win when set (see advanced section).",
+                "kanban_nudge_per_entity_section_help": "Per-entity nudge configuration. Each entity can override interval, statuses, and stop-mode independently. Used when one entity wants quieter cadence or different status filters.",
+                "kanban_nudge_per_entity_throttle_help": "Skip a card if any of its assigned recipients was already nudged within their effective interval. Prevents duplicate pings when multiple cards target the same entity. Recommended ON.",
+                "kanban_nudge_priority_help": "Sort order when picking the next batch of stale cards. 'priority_first' picks higher-priority before older; 'age_first' picks oldest regardless of priority.",
+                "kanban_nudge_statuses_help": "Which card statuses trigger nudges. Default is todo + in_progress + review + blocked. Excluding 'blocked' is common when blocked cards are truly waiting on others."},
 
 
 
@@ -6100545,6 +6100631,16 @@ const TRANSLATIONS = {
         "kanban_nudge_stop_mode_avatar_title": "Nudge-Stop-mode aktiviert",
         "kb_funnel_tag": "Tag…",
         "kb_gate_backlog_only_hint": "Launch-gate ist nur für Backlog-Karten verfügbar",
+                "feedback_category_help": "Pick the category that best matches your report. AI assist runs different triage flows per category (bug = repro check, feature = roadmap match, design = visual diff).",
+                "feedback_photo_help": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF location data is stripped before upload.",
+                "kanban_cron_recurring_notify_help": "Send a chat notification when this card's cron fires. Disable for low-priority recurring jobs that shouldn't ping you.",
+                "kanban_nudge_advanced_help": "Per-entity overrides for nudge interval, statuses, and stop mode. Most decks don't need this — leave collapsed unless one entity has different cadence needs.",
+                "kanban_nudge_batch_help": "Maximum number of L1 stale cards picked per cron tick — device-wide cap, NOT per-entity. L2 (priority bump) and L3 (auto-block) escalations are unaffected. See L1/L2/L3 in the kanban-nudge spec.",
+                "kanban_nudge_interval_help": "Base interval (minutes) between stale-card nudges. Default 180 (3h). Per-entity overrides win when set (see advanced section).",
+                "kanban_nudge_per_entity_section_help": "Per-entity nudge configuration. Each entity can override interval, statuses, and stop-mode independently. Used when one entity wants quieter cadence or different status filters.",
+                "kanban_nudge_per_entity_throttle_help": "Skip a card if any of its assigned recipients was already nudged within their effective interval. Prevents duplicate pings when multiple cards target the same entity. Recommended ON.",
+                "kanban_nudge_priority_help": "Sort order when picking the next batch of stale cards. 'priority_first' picks higher-priority before older; 'age_first' picks oldest regardless of priority.",
+                "kanban_nudge_statuses_help": "Which card statuses trigger nudges. Default is todo + in_progress + review + blocked. Excluding 'blocked' is common when blocked cards are truly waiting on others."
     },
     pt: {
         "transition_loading": "A carregar…",
@@ -6105749,6 +6105845,16 @@ const TRANSLATIONS = {
         "mm_meta_category": "Category",
         "mm_meta_updated": "Updated",
         "mm_truncated_warning": "Graph truncated: showing {nodes} nodes / {links} links.",
+                "feedback_category_help": "Pick the category that best matches your report. AI assist runs different triage flows per category (bug = repro check, feature = roadmap match, design = visual diff).",
+                "feedback_photo_help": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF location data is stripped before upload.",
+                "kanban_cron_recurring_notify_help": "Send a chat notification when this card's cron fires. Disable for low-priority recurring jobs that shouldn't ping you.",
+                "kanban_nudge_advanced_help": "Per-entity overrides for nudge interval, statuses, and stop mode. Most decks don't need this — leave collapsed unless one entity has different cadence needs.",
+                "kanban_nudge_batch_help": "Maximum number of L1 stale cards picked per cron tick — device-wide cap, NOT per-entity. L2 (priority bump) and L3 (auto-block) escalations are unaffected. See L1/L2/L3 in the kanban-nudge spec.",
+                "kanban_nudge_interval_help": "Base interval (minutes) between stale-card nudges. Default 180 (3h). Per-entity overrides win when set (see advanced section).",
+                "kanban_nudge_per_entity_section_help": "Per-entity nudge configuration. Each entity can override interval, statuses, and stop-mode independently. Used when one entity wants quieter cadence or different status filters.",
+                "kanban_nudge_per_entity_throttle_help": "Skip a card if any of its assigned recipients was already nudged within their effective interval. Prevents duplicate pings when multiple cards target the same entity. Recommended ON.",
+                "kanban_nudge_priority_help": "Sort order when picking the next batch of stale cards. 'priority_first' picks higher-priority before older; 'age_first' picks oldest regardless of priority.",
+                "kanban_nudge_statuses_help": "Which card statuses trigger nudges. Default is todo + in_progress + review + blocked. Excluding 'blocked' is common when blocked cards are truly waiting on others."
     },
 
 
@@ -6106004,6 +6106110,32 @@ const TRANSLATIONS = {
 
 
 
+
+    "pt-rBR": {
+                "feedback_category_help": "Pick the category that best matches your report. AI assist runs different triage flows per category (bug = repro check, feature = roadmap match, design = visual diff).",
+        "feedback_photo_help": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF location data is stripped before upload.",
+        "kanban_cron_recurring_notify_help": "Send a chat notification when this card's cron fires. Disable for low-priority recurring jobs that shouldn't ping you.",
+        "kanban_nudge_advanced_help": "Per-entity overrides for nudge interval, statuses, and stop mode. Most decks don't need this — leave collapsed unless one entity has different cadence needs.",
+        "kanban_nudge_batch_help": "Maximum number of L1 stale cards picked per cron tick — device-wide cap, NOT per-entity. L2 (priority bump) and L3 (auto-block) escalations are unaffected. See L1/L2/L3 in the kanban-nudge spec.",
+        "kanban_nudge_interval_help": "Base interval (minutes) between stale-card nudges. Default 180 (3h). Per-entity overrides win when set (see advanced section).",
+        "kanban_nudge_per_entity_section_help": "Per-entity nudge configuration. Each entity can override interval, statuses, and stop-mode independently. Used when one entity wants quieter cadence or different status filters.",
+        "kanban_nudge_per_entity_throttle_help": "Skip a card if any of its assigned recipients was already nudged within their effective interval. Prevents duplicate pings when multiple cards target the same entity. Recommended ON.",
+        "kanban_nudge_priority_help": "Sort order when picking the next batch of stale cards. 'priority_first' picks higher-priority before older; 'age_first' picks oldest regardless of priority.",
+        "kanban_nudge_statuses_help": "Which card statuses trigger nudges. Default is todo + in_progress + review + blocked. Excluding 'blocked' is common when blocked cards are truly waiting on others.",
+    },
+
+    ru: {
+                "feedback_category_help": "Pick the category that best matches your report. AI assist runs different triage flows per category (bug = repro check, feature = roadmap match, design = visual diff).",
+        "feedback_photo_help": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF location data is stripped before upload.",
+        "kanban_cron_recurring_notify_help": "Send a chat notification when this card's cron fires. Disable for low-priority recurring jobs that shouldn't ping you.",
+        "kanban_nudge_advanced_help": "Per-entity overrides for nudge interval, statuses, and stop mode. Most decks don't need this — leave collapsed unless one entity has different cadence needs.",
+        "kanban_nudge_batch_help": "Maximum number of L1 stale cards picked per cron tick — device-wide cap, NOT per-entity. L2 (priority bump) and L3 (auto-block) escalations are unaffected. See L1/L2/L3 in the kanban-nudge spec.",
+        "kanban_nudge_interval_help": "Base interval (minutes) between stale-card nudges. Default 180 (3h). Per-entity overrides win when set (see advanced section).",
+        "kanban_nudge_per_entity_section_help": "Per-entity nudge configuration. Each entity can override interval, statuses, and stop-mode independently. Used when one entity wants quieter cadence or different status filters.",
+        "kanban_nudge_per_entity_throttle_help": "Skip a card if any of its assigned recipients was already nudged within their effective interval. Prevents duplicate pings when multiple cards target the same entity. Recommended ON.",
+        "kanban_nudge_priority_help": "Sort order when picking the next batch of stale cards. 'priority_first' picks higher-priority before older; 'age_first' picks oldest regardless of priority.",
+        "kanban_nudge_statuses_help": "Which card statuses trigger nudges. Default is todo + in_progress + review + blocked. Excluding 'blocked' is common when blocked cards are truly waiting on others.",
+    },
 
     ms: {
         "transition_loading": "Memuatkan…",
@@ -6634335,7 +6634467,17 @@ const TRANSLATIONS = {
         "hermes_coming_soon_title": "Channel Hermes — Akan Datang",
         "arena_return": "← Kembali",
         "mindmap_title": "Peta Minda",
-        "mindmap_focus_mode_hint": "Mod fokus — klik ruang kosong atau tekan Esc untuk keluar",},
+        "mindmap_focus_mode_hint": "Mod fokus — klik ruang kosong atau tekan Esc untuk keluar",
+                "feedback_category_help": "Pick the category that best matches your report. AI assist runs different triage flows per category (bug = repro check, feature = roadmap match, design = visual diff).",
+                "feedback_photo_help": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF location data is stripped before upload.",
+                "kanban_cron_recurring_notify_help": "Send a chat notification when this card's cron fires. Disable for low-priority recurring jobs that shouldn't ping you.",
+                "kanban_nudge_advanced_help": "Per-entity overrides for nudge interval, statuses, and stop mode. Most decks don't need this — leave collapsed unless one entity has different cadence needs.",
+                "kanban_nudge_batch_help": "Maximum number of L1 stale cards picked per cron tick — device-wide cap, NOT per-entity. L2 (priority bump) and L3 (auto-block) escalations are unaffected. See L1/L2/L3 in the kanban-nudge spec.",
+                "kanban_nudge_interval_help": "Base interval (minutes) between stale-card nudges. Default 180 (3h). Per-entity overrides win when set (see advanced section).",
+                "kanban_nudge_per_entity_section_help": "Per-entity nudge configuration. Each entity can override interval, statuses, and stop-mode independently. Used when one entity wants quieter cadence or different status filters.",
+                "kanban_nudge_per_entity_throttle_help": "Skip a card if any of its assigned recipients was already nudged within their effective interval. Prevents duplicate pings when multiple cards target the same entity. Recommended ON.",
+                "kanban_nudge_priority_help": "Sort order when picking the next batch of stale cards. 'priority_first' picks higher-priority before older; 'age_first' picks oldest regardless of priority.",
+                "kanban_nudge_statuses_help": "Which card statuses trigger nudges. Default is todo + in_progress + review + blocked. Excluding 'blocked' is common when blocked cards are truly waiting on others."},
 
 
 
@@ -7193377,6 +7193519,16 @@ const TRANSLATIONS = {
         "arena_return": "← वापस",
         "mindmap_title": "माइंड मैप",
         "mindmap_focus_mode_hint": "फोकस मोड — खाली जगह पर क्लिक करें या बाहर निकलने के लिए Esc दबाएं",
+                "feedback_category_help": "Pick the category that best matches your report. AI assist runs different triage flows per category (bug = repro check, feature = roadmap match, design = visual diff).",
+                "feedback_photo_help": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF location data is stripped before upload.",
+                "kanban_cron_recurring_notify_help": "Send a chat notification when this card's cron fires. Disable for low-priority recurring jobs that shouldn't ping you.",
+                "kanban_nudge_advanced_help": "Per-entity overrides for nudge interval, statuses, and stop mode. Most decks don't need this — leave collapsed unless one entity has different cadence needs.",
+                "kanban_nudge_batch_help": "Maximum number of L1 stale cards picked per cron tick — device-wide cap, NOT per-entity. L2 (priority bump) and L3 (auto-block) escalations are unaffected. See L1/L2/L3 in the kanban-nudge spec.",
+                "kanban_nudge_interval_help": "Base interval (minutes) between stale-card nudges. Default 180 (3h). Per-entity overrides win when set (see advanced section).",
+                "kanban_nudge_per_entity_section_help": "Per-entity nudge configuration. Each entity can override interval, statuses, and stop-mode independently. Used when one entity wants quieter cadence or different status filters.",
+                "kanban_nudge_per_entity_throttle_help": "Skip a card if any of its assigned recipients was already nudged within their effective interval. Prevents duplicate pings when multiple cards target the same entity. Recommended ON.",
+                "kanban_nudge_priority_help": "Sort order when picking the next batch of stale cards. 'priority_first' picks higher-priority before older; 'age_first' picks oldest regardless of priority.",
+                "kanban_nudge_statuses_help": "Which card statuses trigger nudges. Default is todo + in_progress + review + blocked. Excluding 'blocked' is common when blocked cards are truly waiting on others."
 },
 
 
@@ -7741545,7 +7741697,17 @@ const TRANSLATIONS = {
 
 
     ,
-        "kb_gate_backlog_only_hint": "Launch-gate متاح فقط لبطاقات backlog",}
+        "kb_gate_backlog_only_hint": "Launch-gate متاح فقط لبطاقات backlog",
+                "feedback_category_help": "Pick the category that best matches your report. AI assist runs different triage flows per category (bug = repro check, feature = roadmap match, design = visual diff).",
+                "feedback_photo_help": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF location data is stripped before upload.",
+                "kanban_cron_recurring_notify_help": "Send a chat notification when this card's cron fires. Disable for low-priority recurring jobs that shouldn't ping you.",
+                "kanban_nudge_advanced_help": "Per-entity overrides for nudge interval, statuses, and stop mode. Most decks don't need this — leave collapsed unless one entity has different cadence needs.",
+                "kanban_nudge_batch_help": "Maximum number of L1 stale cards picked per cron tick — device-wide cap, NOT per-entity. L2 (priority bump) and L3 (auto-block) escalations are unaffected. See L1/L2/L3 in the kanban-nudge spec.",
+                "kanban_nudge_interval_help": "Base interval (minutes) between stale-card nudges. Default 180 (3h). Per-entity overrides win when set (see advanced section).",
+                "kanban_nudge_per_entity_section_help": "Per-entity nudge configuration. Each entity can override interval, statuses, and stop-mode independently. Used when one entity wants quieter cadence or different status filters.",
+                "kanban_nudge_per_entity_throttle_help": "Skip a card if any of its assigned recipients was already nudged within their effective interval. Prevents duplicate pings when multiple cards target the same entity. Recommended ON.",
+                "kanban_nudge_priority_help": "Sort order when picking the next batch of stale cards. 'priority_first' picks higher-priority before older; 'age_first' picks oldest regardless of priority.",
+                "kanban_nudge_statuses_help": "Which card statuses trigger nudges. Default is todo + in_progress + review + blocked. Excluding 'blocked' is common when blocked cards are truly waiting on others."}
 
 
 
