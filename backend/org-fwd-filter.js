@@ -18,6 +18,9 @@ const ORG_FWD_NOISE_PATTERNS = [
     /^\s*\[[^\]]{1,40}response timeout\]\s*$/i,
     /^\s*\[SILENT\]\s*#?\d+\s+sign[- ]off\s+FWD\s+echo\b/i,
     /^\s*(ping|pong|ack|ok|received|noted)\s*[.!]*\s*$/i,
+    // ACK / FWD-ACK nonce responses — these are no-op acknowledgements
+    /^\s*ACK\s+<\/?nonce>\s*$/i,
+    /^\s*\[📢\s*FWD\s+from\s+#\d+\]\s+ACK\s+<\/?nonce>\s*$/i,
 ];
 
 const ORG_FWD_MIN_BODY_LEN = 12;
