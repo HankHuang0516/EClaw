@@ -62,9 +62,21 @@ Example:
 - `kanban_nudge_batch_help` (new) — "每個 cron tick 整台裝置最多挑 N 張 L1 候選卡發提醒。跨實體共用這個額度，不是每個實體 N 張。L2/L3 升級不受此限。"
 
 ### 3.1 Locale set
-17 locales:
-- Canonical (handled in child 3): `en` (base), `zh-rTW`
-- Fanout (handled in child 6): `ar`, `de`, `es`, `fr`, `hi`, `id`, `in`, `it`, `ja`, `ko`, `ms`, `pt-rBR`, `ru`, `th`, `vi`, `zh-rCN` (16)
+
+**Authoritative source**: top-level locale keys in `backend/public/shared/i18n.js` (NOT Android `values-*/strings.xml` — those use different naming conventions like `zh-rTW`, `pt-rBR`, `in`).
+
+Verified at 2026-06-01 09:20 TWT via `awk '/^[ ]{4}[a-zA-Z]+:[ ]*\{/'` + quoted-key probe:
+
+| Locale | Form | Role |
+|--------|------|------|
+| `en` | unquoted | Canonical base (handled in child 3) |
+| `zh-TW` | quoted | Canonical Traditional Chinese (handled in child 3) |
+| `zh` | unquoted | Fanout (handled in child 6) |
+| `ja`, `ko`, `th`, `vi`, `id`, `fr`, `es`, `de`, `pt`, `ms`, `hi`, `ar` | unquoted | Fanout (12 locales — handled in child 6) |
+
+**Count: 14 confirmed top-level locales** (en + zh-TW canonical + 12 fanout).
+
+**Open question (must resolve in child 3 inventory)**: #6 spike found a 16-locale claim including `zh-CN`; direct grep finds no top-level `"zh-CN"` block. Child 3 owner must run an authoritative key-extraction script and lock the final set before child 6 fanout PRs are filed. Provisional fanout list above stands until child 3 verifies.
 
 ## 4. Bidirectional Code↔Doc Invariant
 
