@@ -70,18 +70,17 @@ Example:
 
 **Authoritative source**: top-level locale keys in `backend/public/shared/i18n.js` (NOT Android `values-*/strings.xml` — those use different naming conventions like `zh-rTW`, `pt-rBR`, `in`).
 
-Verified at 2026-06-01 09:20 TWT via `awk '/^[ ]{4}[a-zA-Z]+:[ ]*\{/'` + quoted-key probe:
+Verified at 2026-06-01 09:30 TWT via combined grep (4-space-indented unquoted + quoted-anywhere). `"zh-CN"` is at column 0, not 4-space indent, which an earlier scan missed (caught here per #6's review):
 
 | Locale | Form | Role |
 |--------|------|------|
-| `en` | unquoted | Canonical base (handled in child 3) |
-| `zh-TW` | quoted | Canonical Traditional Chinese (handled in child 3) |
-| `zh` | unquoted | Fanout (handled in child 6) |
-| `ja`, `ko`, `th`, `vi`, `id`, `fr`, `es`, `de`, `pt`, `ms`, `hi`, `ar` | unquoted | Fanout (12 locales — handled in child 6) |
+| `en` | unquoted, 4-space | Canonical base (handled in child 3) |
+| `zh-TW` | quoted, 4-space | Canonical Traditional Chinese (handled in child 3) |
+| `zh` | unquoted, 4-space | Fanout (handled in child 6) |
+| `zh-CN` | quoted, column 0 | Fanout (handled in child 6) |
+| `ja`, `ko`, `th`, `vi`, `id`, `fr`, `es`, `de`, `pt`, `ms`, `hi`, `ar` | unquoted, 4-space | Fanout (12 locales — handled in child 6) |
 
-**Count: 14 confirmed top-level locales** (en + zh-TW canonical + 12 fanout).
-
-**Open question (must resolve in child 3 inventory)**: #6 spike found a 16-locale claim including `zh-CN`; direct grep finds no top-level `"zh-CN"` block. Child 3 owner must run an authoritative key-extraction script and lock the final set before child 6 fanout PRs are filed. Provisional fanout list above stands until child 3 verifies.
+**Count: 16 confirmed top-level locales** (en + zh-TW canonical + 14 fanout: zh, zh-CN, ja, ko, th, vi, id, fr, es, de, pt, ms, hi, ar).
 
 ## 4. Bidirectional Code↔Doc Invariant
 
@@ -92,20 +91,22 @@ At every code site that renders or binds a settings field, place a nearby commen
 
 ```html
 <!-- HELP-KEY: kanban_nudge_batch_help -->
-<label for="kanban_nudge_batch_size" data-help-key="kanban_nudge_batch_help">
-  ...
+<label for="kanban_nudge_batch_size">
+  <span data-i18n="kanban_nudge_batch_label">每次督促張數</span>
+  <span class="help-icon"
+        data-help-content="{{ i18n.get('kanban_nudge_batch_help') }}"></span>
 </label>
 ```
 
-For JS-rendered fields:
+For JS-rendered fields (using PR #3065's helper wrapper per §5):
 ```js
 // HELP-KEY: kanban_nudge_batch_help
-const el = h('span', { 'data-help-content-key': 'kanban_nudge_batch_help' });
+HelpPopover.bindByKey(iconEl, 'kanban_nudge_batch_help');
 ```
 
 ### 4.2 Code → help invariant
 - Every `HELP-KEY: <key>` annotation MUST point to a key that exists in `backend/public/shared/i18n.js` for both `en` and `zh-TW` (the canonical pair). Missing → CI fail.
-- Fanout locales (the 12 other top-level locales per §3.1) are checked by the patrol cron (warning-level, not hard-block).
+- Fanout locales (the 14 other top-level locales per §3.1) are checked by the patrol cron (warning-level, not hard-block).
 
 ### 4.3 Help → code invariant (SCOPED to settings-help keys)
 
@@ -153,7 +154,7 @@ Spec is accepted when:
 
 - Per-field migration order (which fields get `?` icon first) — covered by child 3 inventory.
 - The actual help copy for each field — child 3 deliverable.
-- Translation of help copy to 16 fanout locales — child 6.
+- Translation of help copy to the 14 fanout locales — child 6.
 - Hand-edited registry file (deferred per §4.4).
 - Settings page UI redesign beyond `?` icon placement.
 
@@ -166,3 +167,8 @@ Spec is accepted when:
   - §4.2: `zh-rTW` → `zh-TW`, fanout count corrected to 12.
   - §4.3: scoped orphan check to a generated `settings-help-keys.json` registry (produced by child 3), so existing non-settings `_help` keys like `slash_cmd_help` are not false-failed.
   - §5: re-baselined to PR #3065's actual API surface; added `bindByKey(iconEl, key)` wrapper requirement.
+- 2026-06-01 09:31 TWT — Round-3 amendments after #6's second review (CHANGES REQUESTED on f8fe488):
+  - §3.1: locale list amended to 16 — `"zh-CN"` is at column 0 indent (not 4-space), which earlier scans missed. Fanout count corrected to 14.
+  - §4.1: code examples updated to match PR #3065's content-based API (`data-help-content` not `data-help-key`/`data-help-content-key`), and JS example uses `HelpPopover.bindByKey` per §5.
+  - §4.2: fanout count text "12 other top-level locales" → "14 other top-level locales".
+  - §7: "16 fanout locales" → "14 fanout locales".
