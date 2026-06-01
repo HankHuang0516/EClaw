@@ -2136649,6 +2136649,13 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "自分のメッセージ",
+        "chat_sys_conversation": "ð¬ Conversation",
+        "chat_sys_kanban": "ð Kanban",
+        "chat_sys_scheduled": "â° Scheduled",
+        "chat_sys_platform": "ð§ System",
+        "chat_sys_health": "â¤ï¸ Health",
+        "chat_sys_n_hidden": "{n} system message(s) hidden by filter â click to show",
+        "chat_sys_n_hidden_hint": "Click to show all categories",
 
 
 
@@ -2699317,6 +2699324,13 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "내 메시지",
+        "chat_sys_conversation": "ð¬ Conversation",
+        "chat_sys_kanban": "ð Kanban",
+        "chat_sys_scheduled": "â° Scheduled",
+        "chat_sys_platform": "ð§ System",
+        "chat_sys_health": "â¤ï¸ Health",
+        "chat_sys_n_hidden": "{n} system message(s) hidden by filter â click to show",
+        "chat_sys_n_hidden_hint": "Click to show all categories",
 
 
 
@@ -3221947,6 +3221961,13 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "ข้อความของฉัน",
+        "chat_sys_conversation": "ð¬ Conversation",
+        "chat_sys_kanban": "ð Kanban",
+        "chat_sys_scheduled": "â° Scheduled",
+        "chat_sys_platform": "ð§ System",
+        "chat_sys_health": "â¤ï¸ Health",
+        "chat_sys_n_hidden": "{n} system message(s) hidden by filter â click to show",
+        "chat_sys_n_hidden_hint": "Click to show all categories",
 
 
 
@@ -3750838,6 +3750859,13 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "Tin nhắn của tôi",
+        "chat_sys_conversation": "ð¬ Conversation",
+        "chat_sys_kanban": "ð Kanban",
+        "chat_sys_scheduled": "â° Scheduled",
+        "chat_sys_platform": "ð§ System",
+        "chat_sys_health": "â¤ï¸ Health",
+        "chat_sys_n_hidden": "{n} system message(s) hidden by filter â click to show",
+        "chat_sys_n_hidden_hint": "Click to show all categories",
 
 
 
@@ -4277169,6 +4277197,13 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "Pesan Saya",
+        "chat_sys_conversation": "ð¬ Conversation",
+        "chat_sys_kanban": "ð Kanban",
+        "chat_sys_scheduled": "â° Scheduled",
+        "chat_sys_platform": "ð§ System",
+        "chat_sys_health": "â¤ï¸ Health",
+        "chat_sys_n_hidden": "{n} system message(s) hidden by filter â click to show",
+        "chat_sys_n_hidden_hint": "Click to show all categories",
 
 
 
@@ -4814644,6 +4814679,13 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "Mes messages",
+        "chat_sys_conversation": "ð¬ Conversation",
+        "chat_sys_kanban": "ð Kanban",
+        "chat_sys_scheduled": "â° Scheduled",
+        "chat_sys_platform": "ð§ System",
+        "chat_sys_health": "â¤ï¸ Health",
+        "chat_sys_n_hidden": "{n} system message(s) hidden by filter â click to show",
+        "chat_sys_n_hidden_hint": "Click to show all categories",
 
 
 
@@ -5336475,6 +5336517,13 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "Mis Mensajes...",
+        "chat_sys_conversation": "ð¬ Conversation",
+        "chat_sys_kanban": "ð Kanban",
+        "chat_sys_scheduled": "â° Scheduled",
+        "chat_sys_platform": "ð§ System",
+        "chat_sys_health": "â¤ï¸ Health",
+        "chat_sys_n_hidden": "{n} system message(s) hidden by filter â click to show",
+        "chat_sys_n_hidden_hint": "Click to show all categories",
 
 
 
@@ -5854654,6 +5854703,13 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "Meine Nachrichten",
+        "chat_sys_conversation": "ð¬ Conversation",
+        "chat_sys_kanban": "ð Kanban",
+        "chat_sys_scheduled": "â° Scheduled",
+        "chat_sys_platform": "ð§ System",
+        "chat_sys_health": "â¤ï¸ Health",
+        "chat_sys_n_hidden": "{n} system message(s) hidden by filter â click to show",
+        "chat_sys_n_hidden_hint": "Click to show all categories",
 
 
 
@@ -6103064,6 +6103120,13 @@ const TRANSLATIONS = {
         "chat_title": "Chat",
         "chat_filter_all": "All",
         "chat_filter_my": "My Messages",
+        "chat_sys_conversation": "ð¬ Conversation",
+        "chat_sys_kanban": "ð Kanban",
+        "chat_sys_scheduled": "â° Scheduled",
+        "chat_sys_platform": "ð§ System",
+        "chat_sys_health": "â¤ï¸ Health",
+        "chat_sys_n_hidden": "{n} system message(s) hidden by filter â click to show",
+        "chat_sys_n_hidden_hint": "Click to show all categories",
         "chat_send_to": "Send to:",
         "chat_input_placeholder": "Type a message...",
         "chat_cancel": "Cancel",
@@ -6342418,6 +6342481,13 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "Mesej Saya",
+        "chat_sys_conversation": "ð¬ Conversation",
+        "chat_sys_kanban": "ð Kanban",
+        "chat_sys_scheduled": "â° Scheduled",
+        "chat_sys_platform": "ð§ System",
+        "chat_sys_health": "â¤ï¸ Health",
+        "chat_sys_n_hidden": "{n} system message(s) hidden by filter â click to show",
+        "chat_sys_n_hidden_hint": "Click to show all categories",
 
 
 
@@ -6743744,6 +6743814,13 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "मेरे संदेश",
+        "chat_sys_conversation": "ð¬ Conversation",
+        "chat_sys_kanban": "ð Kanban",
+        "chat_sys_scheduled": "â° Scheduled",
+        "chat_sys_platform": "ð§ System",
+        "chat_sys_health": "â¤ï¸ Health",
+        "chat_sys_n_hidden": "{n} system message(s) hidden by filter â click to show",
+        "chat_sys_n_hidden_hint": "Click to show all categories",
 
 
 
@@ -7430055,6 +7430132,13 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "رسائلي",
+        "chat_sys_conversation": "ð¬ Conversation",
+        "chat_sys_kanban": "ð Kanban",
+        "chat_sys_scheduled": "â° Scheduled",
+        "chat_sys_platform": "ð§ System",
+        "chat_sys_health": "â¤ï¸ Health",
+        "chat_sys_n_hidden": "{n} system message(s) hidden by filter â click to show",
+        "chat_sys_n_hidden_hint": "Click to show all categories",
 
 
 
