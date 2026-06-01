@@ -1428,3 +1428,81 @@ a:hover { text-decoration: underline; }
     .ai-chat-panel { width: calc(100vw - 16px); height: calc(100vh - 80px); bottom: 8px; right: 8px; }
     .ai-chat-fab { bottom: 16px; right: 16px; width: 50px; height: 50px; }
 }
+
+/* ── Help Popover ───────────────────────────────────────────────────────────── */
+.help-popover {
+    position: fixed;
+    z-index: 9999;
+    max-width: 280px;
+    min-width: 160px;
+    background: var(--card, #1e1e2e);
+    border: 1px solid var(--card-border, #333);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text, #e0e0e0);
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    pointer-events: none;
+}
+.help-popover-visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+.help-popover-inner {
+    padding: 12px 14px 14px;
+ color: var(--text-secondary, #aaa);
+    word-break: break-word;
+}
+.help-popover-inner strong { color: var(--text, #fff); font-weight: 600; }
+.help-popover-inner a { color: var(--primary, #6c63ff); text-decoration: underline; }
+.help-popover-inner ul, .help-popover-inner ol {
+    margin: 6px 0 6px 18px;
+    padding: 0;
+}
+.help-popover-inner li { margin-bottom: 3px; }
+.help-popover-close {
+    position: absolute;
+    top: 6px; right: 8px;
+    background: none;
+    border: none;
+    color: var(--text-muted, #888);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    line-height: 1;
+    transition: color 0.15s;
+}
+.help-popover-close:hover { color: var(--text, #fff); }
+
+/* ── Help Icon (use as .help-icon[data-help-content]) ───────────────────────── */
+.help-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgba(108,99,255,0.15);
+    color: var(--primary, #6c63ff);
+    cursor: pointer;
+    flex-shrink: 0;
+    vertical-align: middle;
+    margin-left: 3px;
+    transition: background 0.15s, color 0.15s;
+    border: none;
+    padding: 0;
+    font-size: 0; /* hide text */
+}
+.help-icon:hover {
+    background: rgba(108,99,255,0.3);
+}
+.help-icon:focus {
+    outline: 2px solid var(--primary, #6c63ff);
+    outline-offset: 2px;
+}
+.help-icon svg { width: 12px; height: 12px; }
