@@ -17,8 +17,16 @@ const path = require('path');
 const vm = require('vm');
 const { execFileSync } = require('child_process');
 
-const REPO_ROOT = path.resolve(__dirname, '..', '..');
-const BACKEND_DIR = path.join(REPO_ROOT, 'backend');
+// __dirname-anchored paths. BACKEND_DIR is always the parent of scripts/.
+// REPO_ROOT is one level above BACKEND_DIR — but on Railway the backend
+// directory is deployed at root (no <repo>/backend/ wrapper), so BACKEND_DIR
+// can equal '/' on Railway and REPO_ROOT computed via `..` would step outside
+// the deploy tree. The fix is to anchor BACKEND_DIR off __dirname and use it
+// directly for backend-internal lookups (i18n.js, settings-help-keys.json),
+// only falling through to REPO_ROOT for cross-package scans (e.g. ios-app/,
+// openclaw-channel-eclaw/) which are handled separately in walk()'s root list.
+const BACKEND_DIR = path.resolve(__dirname, '..');
+const REPO_ROOT = path.resolve(BACKEND_DIR, '..');
 const PUBLIC_DIR = path.join(BACKEND_DIR, 'public');
 const I18N_FILE = path.join(PUBLIC_DIR, 'shared', 'i18n.js');
 const REGISTRY_FILE = path.join(BACKEND_DIR, 'settings-help-keys.json');
