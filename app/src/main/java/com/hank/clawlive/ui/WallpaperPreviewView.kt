@@ -586,7 +586,7 @@ class WallpaperPreviewView @JvmOverloads constructor(
 
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                findUsageOverlayAtPosition(x, y)?.let { bounds ->
+                findUsageOverlayAtPosition(x, y, expanded = false)?.let { bounds ->
                     lockUsageOverlay()
                     draggingUsageOverlay = true
                     draggingEntityIndex = -1
@@ -605,6 +605,15 @@ class WallpaperPreviewView @JvmOverloads constructor(
                     val pos = entityPositions[entity.entityId] ?: Pair(0.5f, 0.5f)
                     dragOffsetX = pos.first * width - x
                     dragOffsetY = pos.second * height - y
+                    invalidate()
+                    return true
+                }
+
+                findUsageOverlayAtPosition(x, y, expanded = true)?.let { bounds ->
+                    lockUsageOverlay()
+                    draggingUsageOverlay = true
+                    usageOverlayDragOffsetX = bounds.centerX() - x
+                    usageOverlayDragOffsetY = bounds.centerY() - y
                     invalidate()
                     return true
                 }
@@ -705,7 +714,7 @@ class WallpaperPreviewView @JvmOverloads constructor(
 
         val focusX = pointerFocusX(event)
         val focusY = pointerFocusY(event)
-        findUsageOverlayAtPosition(focusX, focusY)?.let {
+        findUsageOverlayAtPosition(focusX, focusY, expanded = false)?.let {
             lockUsageOverlay()
             isScalingUsageOverlay = true
             isScaling = true
@@ -716,6 +725,14 @@ class WallpaperPreviewView @JvmOverloads constructor(
         val hitEntityIndex = findEntityAtPosition(focusX, focusY)
         if (lockEntity(hitEntityIndex)) {
             scalingEntityIndex = hitEntityIndex
+            isScaling = true
+            invalidate()
+            return true
+        }
+
+        findUsageOverlayAtPosition(focusX, focusY, expanded = true)?.let {
+            lockUsageOverlay()
+            isScalingUsageOverlay = true
             isScaling = true
             invalidate()
             return true
@@ -784,7 +801,8 @@ class WallpaperPreviewView @JvmOverloads constructor(
             
             // Scale hit radius with entity scale
             val entityScale = entityScales[entity.entityId] ?: 1.0f
-            val hitRadius = width * hitRadiusFactor * entityScale
+            val minHitRadius = 32f * resources.displayMetrics.density
+            val hitRadius = maxOf(width * hitRadiusFactor * entityScale, minHitRadius)
 
             val dx = touchX - entityX
             val dy = touchY - entityY
@@ -835,9 +853,22 @@ class WallpaperPreviewView @JvmOverloads constructor(
         onCustomLayoutEnabled?.invoke()
     }
 
-    private fun findUsageOverlayAtPosition(touchX: Float, touchY: Float): RectF? {
+    private fun findUsageOverlayAtPosition(touchX: Float, touchY: Float, expanded: Boolean): RectF? {
         val bounds = getUsageOverlayBoundsForTest() ?: return null
-        return if (bounds.contains(touchX, touchY)) bounds else null
+        val hitBounds = if (expanded) expandedUsageOverlayHitBounds(bounds) else bounds
+        return if (hitBounds.contains(touchX, touchY)) bounds else null
+    }
+
+    private fun expandedUsageOverlayHitBounds(bounds: RectF): RectF {
+        val density = resources.displayMetrics.density
+        val horizontalPad = 18f * density
+        val verticalPad = 18f * density
+        val minTouchTarget = 48f * density
+        val extraX = maxOf(horizontalPad, (minTouchTarget - bounds.width()) / 2f)
+        val extraY = maxOf(verticalPad, (minTouchTarget - bounds.height()) / 2f)
+        return RectF(bounds).apply {
+            inset(-extraX.coerceAtLeast(0f), -extraY.coerceAtLeast(0f))
+        }
     }
 
     fun getUsageOverlayBoundsForTest(): RectF? {

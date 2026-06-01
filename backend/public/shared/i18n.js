@@ -39872,6 +39872,98 @@ const TRANSLATIONS = {
 
         "info_tab_release_notes": "Release Notes",
         "info_tab_boundaries": "🛡️ Bot Boundaries",
+        "info_tab_point_edit_demo": "🎯 Point-and-Edit Demo",
+        "ped_title": "🎯 Point-and-Edit Demo",
+        "ped_lede": "Pick the same target three ways. Time yourself, see which one fits your hand.",
+        "ped_mode_dom": "A · Hover & Click (DOM)",
+        "ped_mode_coordinate": "B · Coordinate + AST",
+        "ped_mode_mindmap": "C · Mind-map Node",
+        "ped_mode_textsel": "D · Text Selection",
+        "ped_mindmap_title": "🧠 Mind-map mock (Track C)",
+        "ped_mindmap_lede": "Click a node — the harness emits pointedit:target with anchorId, mock rect, and the sandbox block's outerHTML.",
+        "ped_mindmap_node_hero": "Hero",
+        "ped_mindmap_node_feature": "Feature card",
+        "ped_mindmap_node_cta": "CTA",
+        "ped_mindmap_node_note": "Note",
+        "ped_mindmap_node_agent": "Agent card",
+        "ped_mindmap_node_nested": "Nested em",
+        "ped_status_idle": "Pick mode A or D, then hover on the sandbox to begin.",
+        "ped_sb_hero_title": "Faster than dragging files around",
+        "ped_sb_hero_sub": "Point at any element on the page and ask Claude to edit it.",
+        "ped_sb_feature_title": "Zero install",
+        "ped_sb_feature_body": "Works in any browser. No extension. The page is the target.",
+        "ped_sb_cta_label": "Buy Now",
+        "ped_sb_cta_foot": "— or browse the catalogue",
+        "ped_sb_note_p1": "Friction matters. The editor that needs three steps to find a button loses to the one that takes one click. Point-and-edit cuts the address-typing tax: instead of describing where an element lives in your DOM tree, you point.",
+        "ped_sb_note_p2": "Try selecting a fragment of <em>this very sentence</em> in Track D mode — the selection itself becomes the anchor.",
+        "ped_sb_agent_name": "EClaw Agent",
+        "ped_sb_agent_tag": "I edit your page in place. Tell me what to change.",
+        "ped_sb_agent_run": "Run",
+        "ped_sb_agent_help": "?",
+        "ped_composer_title": "Composer (stub)",
+        "ped_composer_clear": "Clear",
+        "ped_composer_placeholder": "Pick a target on the left, then describe the change…",
+        "ped_payload_label": "Last target payload:",
+        "ped_roadmap_title": "🗺️ Three tracks, one scenario",
+        "ped_roadmap_lede": "A web developer wants to relabel one CTA button on their page from “Buy Now” to “Free Trial”. Here is the same flow through each track. Time yourself; pick the one that costs you least.",
+        "ped_roadmap_badge_live": "LIVE",
+        "ped_roadmap_badge_pending": "PENDING",
+        "ped_roadmap_a_title": "A · Hover & Click (DOM)",
+        "ped_roadmap_a_pitch": "Hover renders a highlight box. One click commits the element as the target. Best when the element is visible and clickable.",
+        "ped_roadmap_a_s1": "Open <code>/portal/info.html?demo=pointedit</code> in any browser, desktop or mobile.",
+        "ped_roadmap_a_s2": "Mode A is selected by default; hover over the “Buy Now” button — purple outline locks on.",
+        "ped_roadmap_a_s3": "Click once. Composer fills with a <target> block targeting cta.button with confidence 0.98.",
+        "ped_roadmap_a_s4": "Type your instruction: “Change to ‘Free Trial’.”",
+        "ped_roadmap_a_s5": "Agent receives target + instruction, returns a patch: oldText “Buy Now” → newText “Free Trial”.",
+        "ped_roadmap_a_s6": "Preview & accept. Edit lands in the page.",
+        "ped_roadmap_a_wins": "<strong>Wins for:</strong> button text, icon swap, single-element CSS, “this thing here”",
+        "ped_roadmap_b_title": "B · Coordinate + AST",
+        "ped_roadmap_b_pitch": "Point with screen coordinates (touch, gaze, voice-coord) and let the AST resolver upgrade x/y into a stable AST node. Best when you can’t hover — mobile thumb-region, drift across deploys, voice control.",
+        "ped_roadmap_b_s1": "Tap-and-hold (or voice say “there”) anywhere on the rendered page. Capture {x, y, viewport, dpr}.",
+        "ped_roadmap_b_s2": "Server runs AST resolver: maps coordinates to nearest semantic node — JSX/Vue template, Markdown block, or CSS rule.",
+        "ped_roadmap_b_s3": "Composer receives a <target> block with mode=coord, an AST path, and confidence ~0.91.",
+        "ped_roadmap_b_s4": "Type instruction, agent applies edit at the AST node — not the rendered DOM. Edit survives re-renders.",
+        "ped_roadmap_b_s5": "Preview & accept. Patch lands in the source tree, not the live DOM.",
+        "ped_roadmap_b_wins": "<strong>Wins for:</strong> mobile-only edits, voice/gaze input, edits to source not DOM, drift-tolerant",
+        "ped_roadmap_c_title": "C · Mind-map Node",
+        "ped_roadmap_c_pitch": "Pick from the page’s mind-map (already wired in kanban / cardholder). Best when “the thing to change” is a concept, not a pixel — section, theme, feature flag, persona.",
+        "ped_roadmap_c_s1": "Open the page’s mind-map sidecar. Page sections, components, and flows are rendered as a graph.",
+        "ped_roadmap_c_s2": "Click the node labeled “CTA → Buy Now”. Composer receives a <target> with mode=mindmap and linked selectors.",
+        "ped_roadmap_c_s3": "Type instruction at the concept level: “Rename this CTA across the site.”",
+        "ped_roadmap_c_s4": "Agent fans out: edits every selector bound to the mind-map node — header CTA, footer CTA, OG image alt text.",
+        "ped_roadmap_c_s5": "Preview the diff bundle, accept atomically.",
+        "ped_roadmap_c_wins": "<strong>Wins for:</strong> cross-page rename, theme/persona swap, multi-selector concept edits",
+        "ped_roadmap_d_title": "D-lite · Text Selection",
+        "ped_roadmap_d_pitch": "Drag-select any text fragment. The selection itself becomes the anchor — no need to find the right element. Best when the change is inside prose, not a button.",
+        "ped_roadmap_d_s1": "Switch to Mode D in the demo panel above.",
+        "ped_roadmap_d_s2": "Drag-select the words “this very sentence” in the sandbox note.",
+        "ped_roadmap_d_s3": "Composer fills with a <target> block anchored to note.p2 via rangeFor, confidence 0.90.",
+        "ped_roadmap_d_s4": "Type instruction. Agent edits only the selected range.",
+        "ped_roadmap_d_s5": "Preview & accept.",
+        "ped_roadmap_d_wins": "<strong>Wins for:</strong> inline copy edits, typo fixes, partial-paragraph rewrites",
+        "ped_roadmap_compare_title": "📊 Which track wins per scenario",
+        "ped_roadmap_compare_scenario": "Scenario",
+        "ped_roadmap_compare_best": "Best track",
+        "ped_roadmap_compare_why": "Why",
+        "ped_roadmap_compare_r1_scenario": "Rename one CTA on one page",
+        "ped_roadmap_compare_r1_why": "One click is faster than typing or dragging.",
+        "ped_roadmap_compare_r2_scenario": "Fix typo in mid-paragraph copy",
+        "ped_roadmap_compare_r2_why": "Selection is the anchor; no need to find the <p>.",
+        "ped_roadmap_compare_r3_scenario": "Adjust button on mobile, no hover",
+        "ped_roadmap_compare_r3_why": "Tap coords → AST resolver finds the source node.",
+        "ped_roadmap_compare_r4_scenario": "Rename CTA across 6 pages + OG image",
+        "ped_roadmap_compare_r4_why": "Mind-map node fans out to every linked selector.",
+        "ped_roadmap_compare_r5_scenario": "Source-of-truth edit (Markdown, JSX)",
+        "ped_roadmap_compare_r5_why": "AST path persists; DOM-selectors break on rebuild.",
+        "ped_roadmap_compare_r6_scenario": "Voice/gaze control (no pointer)",
+        "ped_roadmap_compare_r6_why": "Coords ingest from any modality, resolver does the rest.",
+        "ped_roadmap_loop_title": "🔄 The end-to-end loop (all tracks share this)",
+        "ped_roadmap_loop_s1": "<strong>Point:</strong> User selects target on web or mobile (A, B, C, or D-lite).",
+        "ped_roadmap_loop_s2": "<strong>Commit:</strong> Track emits pointedit:target with a normalized payload (targetId, selector, rect, confidence, sourceHint).",
+        "ped_roadmap_loop_s3": "<strong>Compose:</strong> User types the change in natural language alongside the target block.",
+        "ped_roadmap_loop_s4": "<strong>Dispatch:</strong> Composer POSTs { target, instruction } to the agent endpoint.",
+        "ped_roadmap_loop_s5": "<strong>Patch:</strong> Agent (Claude) returns { patch, confidence, rationale } — a structured diff, not a rerendered page.",
+        "ped_roadmap_loop_s6": "<strong>Preview & accept:</strong> User sees the diff, accepts (commit) or rejects (try again). Telemetry logs the loop time + accept rate.",
         "bdy_hero_title": "Where bots say no",
         "bdy_hero_subtitle": "Seven categories where every EClaw agent — including the platform owner — will refuse. Transparency, not a gotcha.",
         "bdy_label_why": "Why",
@@ -40035,6 +40127,10 @@ const TRANSLATIONS = {
 
 
         "info_tab_roadmap": "Roadmap",
+        "info_tab_about_founder": "👤 Founder Story",
+        "about_founder_page_title": "Why I Built EClawbot — Hank's Founder Story",
+        "about_founder_nav_back": "← Back to Info Hub",
+        "about_founder_share_label": "Share this:",
 
 
 
@@ -105469,7 +105565,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> unifies 10 content platforms under <code>/api/publisher/&lt;platform&gt;/*</code>. \"Multi-tenant\" means <strong>each device uses keys from its own vault</strong> when calling the platform — instead of every device sharing the owner's single env key. All 9 key-requiring platforms (X, Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) run the full vault-first flow: each platform has its own <code>resolve&lt;Platform&gt;Creds(deviceId)</code> that reads the device vault first and falls back to <code>process.env</code> on miss. Telegraph is auto-key (first call auto-creates an anonymous account) so it doesn't need a vault path.",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> unifies 10 content platforms under <code>/api/publisher/&lt;platform&gt;/*</code>. \"Multi-tenant\" means <strong>each device uses keys from its own vault</strong> when calling the platform — instead of every device sharing the owner's single env key. All 8 key-requiring platforms (X, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) run the full vault-first flow: each platform has its own <code>resolve&lt;Platform&gt;Creds(deviceId)</code> that reads the device vault first and falls back to <code>process.env</code> on miss. Telegraph is auto-key (first call auto-creates an anonymous account) so it doesn't need a vault path.",
 
 
 
@@ -106749,7 +106845,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_roadmap_desc": "Completed 2026-04. All 9 key-requiring platforms run vault-first; Telegraph is auto-key and doesn't need a vault path. Always backwards-compat: missing vault keys fall back to <code>process.env</code>, so existing env-only deployments are unaffected. The list below groups platforms by signing pattern with the shipping PR for each:",
+        "guide_pub_roadmap_desc": "Completed 2026-04. All 8 key-requiring platforms run vault-first; Telegraph is auto-key and doesn't need a vault path. Always backwards-compat: missing vault keys fall back to <code>process.env</code>, so existing env-only deployments are unaffected. The list below groups platforms by signing pattern with the shipping PR for each:",
 
 
 
@@ -106877,7 +106973,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_roadmap_step1": "<strong>1-key bearer platforms</strong> (Hashnode / DEV.to / Qiita): a single API token — the simplest, shipped first.",
+        "guide_pub_roadmap_step1": "<strong>1-key bearer platforms</strong> (DEV.to / Qiita): a single API token — the simplest, shipped first.",
 
 
 
@@ -201728,7 +201824,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1044_3": "Article Publisher Module — Blogger OAuth flow & Hashnode API integration for publishing content directly from bot sessions",
+        "rn_1044_3": "Article Publisher Module — Blogger OAuth flow & DEV.to & Qiita API integration for publishing content directly from bot sessions",
 
 
 
@@ -267070,6 +267166,7 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_batch_label": "Cards per cycle",
+        "kanban_nudge_batch_help": "Maximum number of L1 stale cards picked per cron tick — device-wide cap, NOT per-entity. L2 (priority bump) and L3 (auto-block) escalations are unaffected. See L1/L2/L3 in the kanban-nudge spec.",
 
 
 
@@ -267198,6 +267295,7 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_priority_label": "Priority mode",
+        "kanban_nudge_priority_help": "Sort order when picking the next batch of stale cards. 'priority_first' picks higher-priority before older; 'age_first' picks oldest regardless of priority.",
 
 
 
@@ -267710,6 +267808,7 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_statuses_label": "Nudge these columns",
+        "kanban_nudge_statuses_help": "Which card statuses trigger nudges. Default is todo + in_progress + review + blocked. Excluding 'blocked' is common when blocked cards are truly waiting on others.",
 
 
 
@@ -268478,6 +268577,7 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_interval_label": "Interval",
+        "kanban_nudge_interval_help": "Base interval (minutes) between stale-card nudges. Default 180 (3h). Per-entity overrides win when set (see advanced section).",
 
 
 
@@ -269118,6 +269218,7 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_advanced_label": "Two-type nudge controls",
+        "kanban_nudge_advanced_help": "Per-entity overrides for nudge interval, statuses, and stop mode. Most decks don't need this — leave collapsed unless one entity has different cadence needs.",
 
 
 
@@ -269374,7 +269475,9 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_per_entity_throttle_label": "🅰️ Stale-card: cap each entity at 1 nudge per interval",
+        "kanban_nudge_per_entity_throttle_help": "Skip a card if any of its assigned recipients was already nudged within their effective interval. Prevents duplicate pings when multiple cards target the same entity. Recommended ON.",
         "kanban_nudge_per_entity_section_label": "Per-entity overrides",
+        "kanban_nudge_per_entity_section_help": "Per-entity nudge configuration. Each entity can override interval, statuses, and stop-mode independently. Used when one entity wants quieter cadence or different status filters.",
         "kanban_nudge_per_entity_section_desc": "Customize interval / columns / throttle for one specific entity. Batch size + priority mode stay device-wide.",
         "kanban_nudge_per_entity_pick_placeholder": "— Pick an entity —",
         "kanban_nudge_per_entity_clear": "Reset to device default",
@@ -269383,6 +269486,8 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_override_statuses": "Override columns",
         "kanban_nudge_per_entity_override_throttle": "Override throttle",
         "kanban_nudge_per_entity_throttle_short": "Cap this entity at 1 nudge per interval",
+        "kanban_nudge_per_entity_stop_mode": "Stop-mode: pause stale-card reminders for this entity",
+        "kanban_nudge_stop_mode_avatar_title": "Nudge stop-mode enabled",
 
 
 
@@ -269511,6 +269616,7 @@ const TRANSLATIONS = {
 
 
         "kanban_cron_recurring_notify_label": "🅱️ Cron parent card self-recurring (no child): notify on each fire",
+        "kanban_cron_recurring_notify_help": "Send a chat notification when this card's cron fires. Disable for low-priority recurring jobs that shouldn't ping you.",
 
 
 
@@ -274247,6 +274353,7 @@ const TRANSLATIONS = {
 
 
         "feedback_category_label": "Category",
+        "feedback_category_help": "Pick the category that best matches your report. AI assist runs different triage flows per category (bug = repro check, feature = roadmap match, design = visual diff).",
 
 
 
@@ -275655,6 +275762,7 @@ const TRANSLATIONS = {
 
 
         "feedback_photo_label": "Attach Photos (Optional)",
+        "feedback_photo_help": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF location data is stripped before upload.",
 
 
 
@@ -335482,6 +335590,17 @@ const TRANSLATIONS = {
 
 
         "inv_redeem_success": "Code redeemed! You received 100 e-coin.",
+        "inv_error_self": "You cannot use your own invite code.",
+        "inv_error_already": "This code has already been used.",
+        "inv_error_already_owner": "You have already redeemed an invite from this user.",
+        "inv_error_not_found": "Invalid invite code.",
+        "inv_error_expired": "This invite code has expired.",
+        "inv_error_max": "This invite code has reached its usage limit.",
+        "inv_error_wallet_required": "Please sign in to receive wallet rewards.",
+        "inv_redeem_success_pending": "Redeemed! Your invite is recorded. Wallet rewards are pending.",
+        "inv_redeem_success_detail": "Redeemed! You received e-coin. The inviter got e-coin.",
+        "kvalue_date_label": "Date:",
+        "kvalue_refresh": "Refresh",
 
 
 
@@ -688028,6 +688147,89 @@ const TRANSLATIONS = {
 
         "info_tab_release_notes": "更新日誌",
         "info_tab_boundaries": "🛡️ Bot Boundaries",
+        "ped_title": "🎯 点选编辑演示",
+        "ped_lede": "用三种方式选择同一目标。计时测试，看哪种最顺手。",
+        "ped_mode_dom": "A · 悬停点击 (DOM)",
+        "ped_mode_coordinate": "B · 坐标 + AST",
+        "ped_mode_mindmap": "C · 思维导图节点",
+        "ped_mode_textsel": "D · 文本选择",
+        "ped_status_idle": "选择 A 或 D 模式，然后在沙盒上悬停开始。",
+        "ped_sb_hero_title": "比拖拽文件更快",
+        "ped_sb_hero_sub": "指向页面上的任意元素，让 Claude 编辑它。",
+        "ped_sb_feature_title": "无需安装",
+        "ped_sb_feature_body": "适用于任何浏览器。无需扩展程序。页面本身就是目标。",
+        "ped_sb_cta_label": "立即购买",
+        "ped_sb_cta_foot": "— 或浏览目录",
+        "ped_sb_note_p1": "摩擦很重要。需要三步才能找到按钮的编辑器，输给一步点击的编辑器。点选编辑削减了输入地址的成本：无需描述元素在 DOM 树中的位置，只需指向它。",
+        "ped_sb_note_p2": "尝试在 D 模式中选择<em>这个句子的一部分</em> — 选择本身就成为了锚点。",
+        "ped_sb_agent_name": "EClaw 智能体",
+        "ped_sb_agent_tag": "我就地编辑您的页面。告诉我需要改什么。",
+        "ped_sb_agent_run": "运行",
+        "ped_sb_agent_help": "？",
+        "ped_composer_title": "组合器（存根）",
+        "ped_composer_clear": "清除",
+        "ped_composer_placeholder": "在左侧选择一个目标，然后描述您想要的更改…",
+        "ped_payload_label": "上次目标载荷：",
+        "ped_roadmap_title": "🗺️ 三条轨道，一个场景",
+        "ped_roadmap_lede": "一位 Web 开发人员想把页面上的「立即购买」按钮改为「免费试用」。同样的流程在每条轨道上都走一遍。计时测试，选出成本最低的那条。",
+        "ped_roadmap_badge_live": "直播",
+        "ped_roadmap_badge_pending": "待处理",
+        "ped_roadmap_a_title": "A · 悬停点击 (DOM)",
+        "ped_roadmap_a_pitch": "悬停渲染高亮框。一次点击确定目标元素。当元素可见且可点击时效果最佳。",
+        "ped_roadmap_a_s1": "在任何浏览器（桌面或移动端）打开 <code>/portal/info.html?demo=pointedit</code>。",
+        "ped_roadmap_a_s2": "A 模式默认选中；悬停到「立即购买」按钮 — 紫色轮廓锁定。",
+        "ped_roadmap_a_s3": "点击一次。组合器填充一个以 cta.button 为目标、置信度 0.98 的 <target> 块。",
+        "ped_roadmap_a_s4": "输入您的指令：「改为『免费试用』。」",
+        "ped_roadmap_a_s5": "智能体接收目标 + 指令，返回补丁：旧文本「立即购买」→「免费试用」。",
+        "ped_roadmap_a_s6": "预览并确认。编辑落地到页面。",
+        "ped_roadmap_a_wins": "<strong>适用场景：</strong>按钮文本、图标替换、单个元素 CSS、「这个位置的东西」",
+        "ped_roadmap_b_title": "B · 坐标 + AST",
+        "ped_roadmap_b_pitch": "用屏幕坐标指点（触摸、视线、语音坐标），让 AST 解析器将 x/y 升级为稳定的 AST 节点。当无法悬停时效果最佳 — 移动端拇指区域、跨部署漂移、语音控制。",
+        "ped_roadmap_b_s1": "在渲染页面上点击并按住（或语音说「那里」）。捕获 {x, y, viewport, dpr}。",
+        "ped_roadmap_b_s2": "服务器运行 AST 解析器：将坐标映射到最近的语义节点 — JSX/Vue 模板、Markdown 块或 CSS 规则。",
+        "ped_roadmap_b_s3": "组合器接收一个 mode=coord、包含 AST 路径和置信度约 0.91 的 <target> 块。",
+        "ped_roadmap_b_s4": "输入指令，智能体在 AST 节点上应用编辑 — 而非渲染后的 DOM。编辑在重新渲染后仍然有效。",
+        "ped_roadmap_b_s5": "预览并确认。补丁落地到源代码树，而非实时 DOM。",
+        "ped_roadmap_b_wins": "<strong>适用场景：</strong>仅移动端编辑、语音/视线输入、对源代码而非 DOM 的编辑、漂移容错",
+        "ped_roadmap_c_title": "C · 思维导图节点",
+        "ped_roadmap_c_pitch": "从页面的思维导图中选择（已在看板/卡片持有者中连线）。当「要改的东西」是一个概念而非像素时效果最佳 — 区块、主题、功能开关、人物画像。",
+        "ped_roadmap_c_s1": "打开页面的思维导图侧边栏。页面区块、组件和流程被渲染为图形。",
+        "ped_roadmap_c_s2": "点击标注为「CTA → 立即购买」的节点。组合器接收一个 mode=mindmap 和关联选择器的 <target>。",
+        "ped_roadmap_c_s3": "在概念层面输入指令：「在整个站点范围内重命名此 CTA。」",
+        "ped_roadmap_c_s4": "智能体展开：对绑定到思维导图节点的每个选择器进行编辑 — 顶部 CTA、底部 CTA、OG 图片 alt 文本。",
+        "ped_roadmap_c_s5": "预览差异包，原子化接受。",
+        "ped_roadmap_c_wins": "<strong>适用场景：</strong>跨页面重命名、主题/人物画像替换、多选择器概念编辑",
+        "ped_roadmap_d_title": "D-lite · 文本选择",
+        "ped_roadmap_d_pitch": "拖动选择任何文本片段。选择本身就成为锚点 — 无需找到正确的元素。当改动在正文而非按钮中时效果最佳。",
+        "ped_roadmap_d_s1": "在上方演示面板中切换到 D 模式。",
+        "ped_roadmap_d_s2": "在沙盒备注中拖动选择「这个句子」这几个字。",
+        "ped_roadmap_d_s3": "组合器填充一个以 note.p2 为锚点、rangeFor 置信度 0.90 的 <target> 块。",
+        "ped_roadmap_d_s4": "输入指令。智能体仅编辑所选范围。",
+        "ped_roadmap_d_s5": "预览并确认。",
+        "ped_roadmap_d_wins": "<strong>适用场景：</strong>内联文案编辑、拼写错误修正、部分段落重写",
+        "ped_roadmap_compare_title": "📊 各轨道适用场景对比",
+        "ped_roadmap_compare_scenario": "场景",
+        "ped_roadmap_compare_best": "最佳轨道",
+        "ped_roadmap_compare_why": "原因",
+        "ped_roadmap_compare_r1_scenario": "在一个页面上重命名一个 CTA",
+        "ped_roadmap_compare_r1_why": "一次点击比输入或拖拽更快。",
+        "ped_roadmap_compare_r2_scenario": "修正段落中间的拼写错误",
+        "ped_roadmap_compare_r2_why": "选择即是锚点；无需找到 <p>。",
+        "ped_roadmap_compare_r3_scenario": "在移动端调整按钮，无法悬停",
+        "ped_roadmap_compare_r3_why": "点击坐标 → AST 解析器找到源节点。",
+        "ped_roadmap_compare_r4_scenario": "在 6 个页面 + OG 图片上重命名 CTA",
+        "ped_roadmap_compare_r4_why": "思维导图节点展开到每个关联选择器。",
+        "ped_roadmap_compare_r5_scenario": "源代码级编辑（Markdown、JSX）",
+        "ped_roadmap_compare_r5_why": "AST 路径持久化；DOM 选择器在重新构建后会失效。",
+        "ped_roadmap_compare_r6_scenario": "语音/视线控制（无指针设备）",
+        "ped_roadmap_compare_r6_why": "坐标可接收任意模态输入，解析器完成其余工作。",
+        "ped_roadmap_loop_title": "🔄 端到端循环（所有轨道共享）",
+        "ped_roadmap_loop_s1": "<strong>指点：</strong>用户在网页或移动端选择目标（A、B、C 或 D-lite）。",
+        "ped_roadmap_loop_s2": "<strong>提交：</strong>轨道发出 pointedit:target，包含标准化载荷（targetId、选择器、rect、置信度、sourceHint）。",
+        "ped_roadmap_loop_s3": "<strong>组合：</strong>用户与目标块一起输入自然语言变更描述。",
+        "ped_roadmap_loop_s4": "<strong>派发：</strong>组合器 POST { target, instruction } 到智能体端点。",
+        "ped_roadmap_loop_s5": "<strong>补丁：</strong>智能体（Claude）返回 { patch, confidence, rationale } — 结构化差异，而非重新渲染的页面。",
+        "ped_roadmap_loop_s6": "<strong>预览并接受：</strong>用户查看差异，接受（提交）或拒绝（重试）。遥测记录循环时间和接受率。",
         "bdy_hero_title": "机器人会说 no 的地方",
         "bdy_hero_subtitle": "七大类别，EClaw 的每个智能体都会拒绝——包括平台所有者。透明公开，而非故意刁难。",
         "bdy_label_why": "原因",
@@ -688192,6 +688394,10 @@ const TRANSLATIONS = {
 
 
         "info_tab_roadmap": "產品路線圖",
+        "info_tab_about_founder": "👤 創辦人故事",
+        "about_founder_page_title": "我為什麼打造 EClawbot — Hank 的創辦人故事",
+        "about_founder_nav_back": "← 返回 Info Hub",
+        "about_founder_share_label": "分享：",
 
 
 
@@ -842717,7 +842923,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1044_3": "文章發布模組 — 整合 Blogger OAuth 流程與 Hashnode API，可直接在 bot session 中發布文章",
+        "rn_1044_3": "文章發布模組 — 整合 Blogger OAuth 流程與 DEV.to & Qiita API，可直接在 bot session 中發布文章",
 
 
 
@@ -903816,6 +904022,7 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_batch_label": "每次督促張數",
+        "kanban_nudge_batch_help": "每個 cron tick 整台裝置最多挑幾張 L1 候選卡發提醒 — 跨實體共用這個額度，不是每個實體 N 張。L2 升級、L3 自動封鎖不受此限。L1/L2/L3 解釋見 kanban-nudge spec。",
 
 
 
@@ -903944,6 +904151,7 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_priority_label": "優先權模式",
+        "kanban_nudge_priority_help": "下一批停滯卡的挑選順序。'priority_first' 高優先先；'age_first' 最舊的先（不看優先）。",
 
 
 
@@ -904456,6 +904664,7 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_statuses_label": "督促哪些欄位",
+        "kanban_nudge_statuses_help": "哪些卡片狀態會觸發督促。預設是 todo + in_progress + review + blocked。當 blocked 卡確實在等別人時，常會把 blocked 排除。",
 
 
 
@@ -905224,6 +905433,7 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_interval_label": "督促間隔",
+        "kanban_nudge_interval_help": "停滯卡督促的基本間隔（分鐘）。預設 180（3 小時）。實體層級覆寫（見進階區）優先生效。",
 
 
 
@@ -905864,6 +906074,7 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_advanced_label": "兩種督促開關",
+        "kanban_nudge_advanced_help": "按實體覆寫督促間隔、狀態、停用模式。多數情境用不到 — 除非某個實體需要不同節奏，否則保持收合即可。",
 
 
 
@@ -906120,7 +906331,9 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_per_entity_throttle_label": "🅰️ 內容督促：同一實體一個間隔最多 1 張",
+        "kanban_nudge_per_entity_throttle_help": "若卡片任一收件實體在其有效間隔內已被督促，則跳過。避免多張卡同時 ping 同實體造成洗版。建議開啟。",
         "kanban_nudge_per_entity_section_label": "個別實體覆寫",
+        "kanban_nudge_per_entity_section_help": "按實體獨立設定督促行為。每個實體可分別覆寫間隔、狀態、停用模式。當某實體需要更安靜或不同的狀態 filter 時用。",
         "kanban_nudge_per_entity_section_desc": "為特定實體自訂間隔、欄位與節流。批次大小與優先模式仍套用裝置層級設定。",
         "kanban_nudge_per_entity_pick_placeholder": "— 選擇實體 —",
         "kanban_nudge_per_entity_clear": "重設為裝置預設值",
@@ -906129,6 +906342,8 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_override_statuses": "覆寫欄位",
         "kanban_nudge_per_entity_override_throttle": "覆寫節流",
         "kanban_nudge_per_entity_throttle_short": "限制此實體每個間隔最多 1 次提醒",
+        "kanban_nudge_per_entity_stop_mode": "Stop-mode：暫停此實體的內容督促提醒",
+        "kanban_nudge_stop_mode_avatar_title": "已啟用督促 stop-mode",
 
 
 
@@ -906257,6 +906472,7 @@ const TRANSLATIONS = {
 
 
         "kanban_cron_recurring_notify_label": "🅱️ 排程母卡自身重複觸發時通知（無子卡）",
+        "kanban_cron_recurring_notify_help": "卡片 cron 觸發時發 chat 通知。低優先的週期性任務不想被 ping 可以關掉。",
 
 
 
@@ -909969,6 +910185,7 @@ const TRANSLATIONS = {
 
 
         "feedback_category_label": "類別",
+        "feedback_category_help": "選擇最符合你回報的分類。AI 分流流程會根據分類不同（bug 跑復現檢查、feature 對 roadmap、design 做視覺 diff）。",
 
 
 
@@ -911377,6 +911594,7 @@ const TRANSLATIONS = {
 
 
         "feedback_photo_label": "附加照片（選用）",
+        "feedback_photo_help": "附上能呈現問題情境的截圖。最多 5 張；網頁支援拖放。上傳前 EXIF 地理位置會被移除。",
 
 
 
@@ -1233593,11 +1233811,11 @@ const TRANSLATIONS = {
         "guide_pub_col_region": "地區",
         "guide_pub_col_status": "多租戶狀態",
         "guide_pub_meta": "10 個內容平台 · 多租戶金鑰全裝置可用（Telegraph 為自動金鑰，無需 vault）",
-        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> 將 10 個內容平台統合至 <code>/api/publisher/&lt;platform&gt;/*</code>。「多租戶」指<strong>每台裝置呼叫平台時使用自己 vault 的金鑰</strong>，而非所有裝置共用 owner 的單一 env 金鑰。9 個需要金鑰的平台（X、Hashnode、DEV.to、Qiita、LinkedIn、Reddit、Tumblr、Blogger、WeChat）皆採 vault-first 流程：每個平台都有自己的 <code>resolve&lt;Platform&gt;Creds(deviceId)</code>，先讀裝置 vault，缺漏時 fallback 到 <code>process.env</code>。Telegraph 為自動金鑰（首次呼叫自動建立匿名帳號），故無需 vault 路徑。",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> 將 10 個內容平台統合至 <code>/api/publisher/&lt;platform&gt;/*</code>。「多租戶」指<strong>每台裝置呼叫平台時使用自己 vault 的金鑰</strong>，而非所有裝置共用 owner 的單一 env 金鑰。8 個需要金鑰的平台（X、DEV.to、DEV.to、Qiita、LinkedIn、Reddit、Tumblr、Blogger、WeChat）皆採 vault-first 流程：每個平台都有自己的 <code>resolve&lt;Platform&gt;Creds(deviceId)</code>，先讀裝置 vault，缺漏時 fallback 到 <code>process.env</code>。Telegraph 為自動金鑰（首次呼叫自動建立匿名帳號），故無需 vault 路徑。",
         "guide_pub_overview_h": "概覽",
-        "guide_pub_roadmap_desc": "2026-04 完成。9 個需要金鑰的平台皆已 vault-first 上線；Telegraph 為自動金鑰，無需 vault 路徑。永遠向後相容：vault 金鑰缺漏時 fallback 至 <code>process.env</code>，既有 env-only 部署不受影響。下表依簽章模式分組各平台，並附上對應 PR：",
+        "guide_pub_roadmap_desc": "2026-04 完成。8 個需要金鑰的平台皆已 vault-first 上線；Telegraph 為自動金鑰，無需 vault 路徑。永遠向後相容：vault 金鑰缺漏時 fallback 至 <code>process.env</code>，既有 env-only 部署不受影響。下表依簽章模式分組各平台，並附上對應 PR：",
         "guide_pub_roadmap_h": "完成：多租戶遷移已於每個平台上線 ✅",
-        "guide_pub_roadmap_step1": "<strong>單金鑰 bearer 平台</strong>（Hashnode / DEV.to / Qiita）：單一 API token — 最簡單，首批上線。",
+        "guide_pub_roadmap_step1": "<strong>單金鑰 bearer 平台</strong>（DEV.to / Qiita）：單一 API token — 最簡單，首批上線。",
         "guide_pub_roadmap_step2": "<strong>雙金鑰 bearer + URN</strong>（LinkedIn）：access_token + author URN，兩者皆從 vault 取得。",
         "guide_pub_roadmap_step3": "<strong>4 金鑰 OAuth1a 即時簽章</strong>（X / Tumblr）：consumer + access 兩組，每次請求以 HMAC-SHA1 簽 nonce + timestamp。",
         "guide_pub_roadmap_step4": "<strong>4 金鑰 OAuth2 password grant + 每租戶 token 快取</strong>（Reddit）：username/password 換得 access_token；快取以 <code>Map keyed by clientId+username</code> 隔離租戶。",
@@ -1275461,128 +1275679,16 @@ const TRANSLATIONS = {
 
         "kanban_nudge_interval_min": "分",
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        "feedback_category_help": "选择最符合你汇报的分类。AI 分流流程会根据分类不同运行不同的分类处理（bug = 复现检查，feature = 路线图匹配，design = 视觉 diff）。",
+        "feedback_photo_help": "附上能呈现问题情境的截图。最多 5 张；网页支持拖放。上传前 EXIF 地理位置信息会被移除。",
+        "kanban_cron_recurring_notify_help": "卡片 cron 触发时发送聊天通知。低优先级的定期任务如果不想被 ping，可以关闭。",
+        "kanban_nudge_advanced_help": "按实体覆盖督促间隔、状态、停用模式。大多数看板不需要此功能——除非某个实体有不同的节奏需求，否则保持收起状态。",
+        "kanban_nudge_batch_help": "每个 cron tick 最多挑选几张 L1 候选卡发送提醒——这是设备级别的上限，不是每个实体 N 张。L2（优先升级）和 L3（自动封锁）不受此影响。L1/L2/L3 说明见 kanban-nudge spec。",
+        "kanban_nudge_interval_help": "停滞卡督促的基本间隔（分钟）。默认 180（3 小时）。若已设置实体级覆盖，则以该覆盖为准（见高级区）。",
+        "kanban_nudge_per_entity_section_help": "按实体独立配置督促行为。每个实体可分别覆盖间隔、状态、停用模式。当某个实体需要更安静或不同的状态过滤器时使用。",
+        "kanban_nudge_per_entity_throttle_help": "若卡片任一收件实体在其有效间隔内已被督促，则跳过。避免多张卡同时 ping 同一实体造成刷屏。建议开启。",
+        "kanban_nudge_priority_help": "挑选下一批停滞卡的排序顺序。'priority_first' 高优先级优先；'age_first' 最旧的优先（不看优先级）。",
+        "kanban_nudge_statuses_help": "哪些卡片状态会触发督促。默认是 todo + in_progress + review + blocked。当 blocked 卡确实在等别人时，通常会把 blocked 排除。",
 
 
 
@@ -1746265,7 +1746371,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1044_3": "文章发布模組 — 整合 Blogger OAuth 流程与 Hashnode API，可直接在 bot session 中发布文章",
+        "rn_1044_3": "文章发布模組 — 整合 Blogger OAuth 流程与 DEV.to & Qiita API，可直接在 bot session 中发布文章",
 
 
 
@@ -1821284,7 +1821390,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> 統一 10 個內容平台至 <code>/api/publisher/&lt;platform&gt;/*</code>。「多租戶」指各裝置呼叫平台時使用<strong>自己 vault 內的金鑰</strong>，而非共用 owner 的單一 env key。9 個需要金鑰的平台（X、Hashnode、DEV.to、Qiita、LinkedIn、Reddit、Tumblr、Blogger、WeChat）均跑完整 vault-first 流程：每個平台有自己的 <code>resolve&lt;Platform&gt;Creds(deviceId)</code>，先讀裝置 vault，缺鍵才退回 <code>process.env</code>。Telegraph 為自動金鑰（首次呼叫自動建立匿名帳戶），不需要 vault 路徑。",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> 統一 10 個內容平台至 <code>/api/publisher/&lt;platform&gt;/*</code>。「多租戶」指各裝置呼叫平台時使用<strong>自己 vault 內的金鑰</strong>，而非共用 owner 的單一 env key。8 個需要金鑰的平台（X、DEV.to、DEV.to、Qiita、LinkedIn、Reddit、Tumblr、Blogger、WeChat）均跑完整 vault-first 流程：每個平台有自己的 <code>resolve&lt;Platform&gt;Creds(deviceId)</code>，先讀裝置 vault，缺鍵才退回 <code>process.env</code>。Telegraph 為自動金鑰（首次呼叫自動建立匿名帳戶），不需要 vault 路徑。",
 
 
 
@@ -1821540,7 +1821646,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_roadmap_desc": "已完成 2026-04。所有 9 個需要金鑰的平台均以 vault-first 運行；Telegraph 自動金鑰，無需 vault 路徑。",
+        "guide_pub_roadmap_desc": "已完成 2026-04。所有 8 個需要金鑰的平台均以 vault-first 運行；Telegraph 自動金鑰，無需 vault 路徑。",
 
 
 
@@ -1821796,7 +1821902,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_roadmap_step1": "<strong>1-key bearer 平台</strong>（Hashnode / DEV.to / Qiita）：單一 API token — 最簡單，最先交付。",
+        "guide_pub_roadmap_step1": "<strong>1-key bearer 平台</strong>（DEV.to / Qiita）：單一 API token — 最簡單，最先交付。",
 
 
 
@@ -1847812,6 +1847918,8 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_override_statuses": "覆盖列",
         "kanban_nudge_per_entity_override_throttle": "覆盖限流",
         "kanban_nudge_per_entity_throttle_short": "将此实体限制为每个间隔最多 1 次提醒",
+        "kanban_nudge_per_entity_stop_mode": "Stop-mode：暂停此实体的内容督促提醒",
+        "kanban_nudge_stop_mode_avatar_title": "已启用督促 stop-mode",
         "chat_scheduled": "排程",
         "chat_mission_notify": "任务",
         "rm_hermes_title": "Hermes 频道 — 稳定运作路线图",
@@ -1848045,7 +1848153,157 @@ const TRANSLATIONS = {
         "mm_meta_archived": "已封存",
         "mm_meta_category": "类别",
         "mm_meta_updated": "更新时间",
-        "mm_truncated_warning": "图形已截断：显示 {nodes} 个节点 / {links} 条连结。",},
+        "mm_truncated_warning": "图形已截断：显示 {nodes} 个节点 / {links} 条连结。",
+        "transition_loading": "加载中…",
+        "info_tab_boundaries": "🛡️ 机器人边界",
+        "info_tab_point_edit_demo": "🎯 即点即编演示",
+        "ped_title": "🎯 即点即编演示",
+        "ped_lede": "用三种方式选定同一个目标。给自己计时，看哪一种最顺手。",
+        "ped_mode_dom": "A · 悬停与点击（DOM）",
+        "ped_mode_coordinate": "B · 坐标 + AST",
+        "ped_mode_mindmap": "C · 心智图节点",
+        "ped_mode_textsel": "D · 文本选取",
+        "ped_status_idle": "选择模式 A 或 D，然后在沙盒上悬停开始。",
+        "ped_sb_hero_title": "比拖拽文件还快",
+        "ped_sb_hero_sub": "指向页面上任何元素，让 Claude 编辑它。",
+        "ped_sb_feature_title": "零安装",
+        "ped_sb_feature_body": "可在任何浏览器中使用。无需扩展程序。页面本身就是目标。",
+        "ped_sb_cta_label": "立即购买",
+        "ped_sb_cta_foot": "— 或浏览目录",
+        "ped_sb_note_p1": "摩擦至关重要。需要三步才能找到按钮的编辑器，会输给一键直达的那个。即点即编省去了输入地址的麻烦：不必描述某个元素在 DOM 树中的位置，你只需指过去。",
+        "ped_sb_note_p2": "试着在模式 D 下选中 <em>这句话</em> 的一个片段——选区本身就是锚点。",
+        "ped_sb_agent_name": "EClaw 智能体",
+        "ped_sb_agent_tag": "我会在原地编辑你的页面。告诉我要改什么。",
+        "ped_sb_agent_run": "运行",
+        "ped_sb_agent_help": "?",
+        "ped_composer_title": "编辑框（占位）",
+        "ped_composer_clear": "清空",
+        "ped_composer_placeholder": "先在左侧选定目标，然后描述要做的修改…",
+        "ped_payload_label": "上一次目标载荷：",
+        "ped_roadmap_title": "🗺️ 三条轨道，一个场景",
+        "ped_roadmap_lede": "一名 Web 开发者想把页面上的一个 CTA 按钮文案从「立即购买」改成「免费试用」。下面是同一个流程在每条轨道上的样子。给自己计时，挑出对你成本最低的那一条。",
+        "ped_roadmap_badge_live": "已上线",
+        "ped_roadmap_badge_pending": "待开发",
+        "ped_roadmap_a_title": "A · 悬停与点击（DOM）",
+        "ped_roadmap_a_pitch": "悬停渲染高亮框。一次点击将元素提交为目标。适用于元素可见且可点击的场景。",
+        "ped_roadmap_a_s1": "在任意浏览器中打开 <code>/portal/info.html?demo=pointedit</code>，桌面或手机皆可。",
+        "ped_roadmap_a_s2": "默认选中模式 A；将鼠标悬停在「立即购买」按钮上——紫色轮廓会锁定。",
+        "ped_roadmap_a_s3": "点击一次。编辑框被填入一个针对 cta.button 的 <target> 块，置信度 0.98。",
+        "ped_roadmap_a_s4": "输入指令：「改成『免费试用』。」",
+        "ped_roadmap_a_s5": "智能体接收目标 + 指令，返回一个补丁：oldText「立即购买」→ newText「免费试用」。",
+        "ped_roadmap_a_s6": "预览并接受。修改落入页面。",
+        "ped_roadmap_a_wins": "<strong>适用于：</strong>按钮文案、图标替换、单元素 CSS、「就这个东西」",
+        "ped_roadmap_b_title": "B · 坐标 + AST",
+        "ped_roadmap_b_pitch": "用屏幕坐标指向（触控、视线、语音坐标），让 AST 解析器把 x/y 升级成稳定的 AST 节点。适用于无法悬停的场景——手机拇指区、跨部署漂移、语音控制。",
+        "ped_roadmap_b_s1": "在渲染好的页面上长按（或语音说「这里」）。捕获 {x, y, viewport, dpr}。",
+        "ped_roadmap_b_s2": "服务端运行 AST 解析器：将坐标映射到最近的语义节点——JSX/Vue 模板、Markdown 块或 CSS 规则。",
+        "ped_roadmap_b_s3": "编辑框收到一个 mode=coord 的 <target> 块，包含 AST 路径，置信度约 0.91。",
+        "ped_roadmap_b_s4": "输入指令，智能体在 AST 节点而非渲染后的 DOM 上应用编辑。修改可在重新渲染后保留。",
+        "ped_roadmap_b_s5": "预览并接受。补丁落入源代码树，而非线上 DOM。",
+        "ped_roadmap_b_wins": "<strong>适用于：</strong>仅手机端编辑、语音/视线输入、对源码而非 DOM 的编辑、抗漂移",
+        "ped_roadmap_c_title": "C · 心智图节点",
+        "ped_roadmap_c_pitch": "从页面的心智图中选取（在看板/卡夹中已接通）。当「要改的东西」是一个概念而非一个像素时最合适——版块、主题、功能开关、人设。",
+        "ped_roadmap_c_s1": "打开页面的心智图边栏。页面版块、组件和流程都被渲染成图。",
+        "ped_roadmap_c_s2": "点击标记为「CTA → 立即购买」的节点。编辑框收到一个 mode=mindmap 的 <target>，附带绑定的选择器。",
+        "ped_roadmap_c_s3": "在概念层输入指令：「在全站范围内重命名这个 CTA。」",
+        "ped_roadmap_c_s4": "智能体扇出：编辑绑定到心智图节点的每一个选择器——头部 CTA、底部 CTA、OG 图替代文本。",
+        "ped_roadmap_c_s5": "预览 diff 套件，原子化接受。",
+        "ped_roadmap_c_wins": "<strong>适用于：</strong>跨页面重命名、主题/人设替换、多选择器概念编辑",
+        "ped_roadmap_d_title": "D-lite · 文本选取",
+        "ped_roadmap_d_pitch": "拖拽选取任意文本片段。选区本身就是锚点——无需先找到正确的元素。当改动在正文里而不是按钮上时最合适。",
+        "ped_roadmap_d_s1": "在上方演示面板切换到模式 D。",
+        "ped_roadmap_d_s2": "在沙盒提示中拖拽选中「这句话」几个字。",
+        "ped_roadmap_d_s3": "编辑框被填入一个通过 rangeFor 锚定到 note.p2 的 <target> 块，置信度 0.90。",
+        "ped_roadmap_d_s4": "输入指令。智能体只编辑被选中的范围。",
+        "ped_roadmap_d_s5": "预览并接受。",
+        "ped_roadmap_d_wins": "<strong>适用于：</strong>行内文案修改、错字修正、段落片段重写",
+        "ped_roadmap_compare_title": "📊 各场景最佳轨道",
+        "ped_roadmap_compare_scenario": "场景",
+        "ped_roadmap_compare_best": "最佳轨道",
+        "ped_roadmap_compare_why": "原因",
+        "ped_roadmap_compare_r1_scenario": "在一个页面上重命名一个 CTA",
+        "ped_roadmap_compare_r1_why": "一次点击比打字或拖拽都快。",
+        "ped_roadmap_compare_r2_scenario": "修复段落中部的错字",
+        "ped_roadmap_compare_r2_why": "选区即锚点；不必再找 <p>。",
+        "ped_roadmap_compare_r3_scenario": "在手机上调整按钮，无法悬停",
+        "ped_roadmap_compare_r3_why": "点击坐标 → AST 解析器找到源节点。",
+        "ped_roadmap_compare_r4_scenario": "在 6 个页面 + OG 图上重命名 CTA",
+        "ped_roadmap_compare_r4_why": "心智图节点扇出到每一个绑定的选择器。",
+        "ped_roadmap_compare_r5_scenario": "源码级编辑（Markdown、JSX）",
+        "ped_roadmap_compare_r5_why": "AST 路径持久存在；DOM 选择器在重建时会失效。",
+        "ped_roadmap_compare_r6_scenario": "语音/视线控制（无指针）",
+        "ped_roadmap_compare_r6_why": "坐标可从任何模态接入，解析器处理其余部分。",
+        "ped_roadmap_loop_title": "🔄 端到端循环（所有轨道共享）",
+        "ped_roadmap_loop_s1": "<strong>Point（指向）：</strong>用户在 Web 或手机上选定目标（A、B、C 或 D-lite）。",
+        "ped_roadmap_loop_s2": "<strong>Commit（提交）：</strong>轨道发出 pointedit:target，附带标准化载荷（targetId、selector、rect、confidence、sourceHint）。",
+        "ped_roadmap_loop_s3": "<strong>Compose（编写）：</strong>用户在目标块旁用自然语言输入要做的修改。",
+        "ped_roadmap_loop_s4": "<strong>Dispatch（派发）：</strong>编辑框 POST { target, instruction } 到智能体端点。",
+        "ped_roadmap_loop_s5": "<strong>Patch（补丁）：</strong>智能体（Claude）返回 { patch, confidence, rationale }——结构化 diff，而非重新渲染的页面。",
+        "ped_roadmap_loop_s6": "<strong>Preview & accept（预览并接受）：</strong>用户查看 diff，接受（提交）或拒绝（再试一次）。遥测记录循环耗时 + 接受率。",
+        "bdy_hero_title": "机器人会说 no 的地方",
+        "bdy_hero_subtitle": "七大类别，EClaw 的每个智能体都会拒绝——包括平台所有者。透明公开，而非故意刁难。",
+        "bdy_label_why": "原因",
+        "bdy_label_override": "可以覆盖吗？",
+        "bdy_1_title": "金库密钥流向租用机器人",
+        "bdy_1_quote": "我不会把 DEVICE_SECRET / GITHUBTOKEN / OAuth tokens 交给租用的机器人，哪怕你是设备所有者。",
+        "bdy_1_why": "租用机器人在设计上处于沙盒环境。「安全」金库密钥白名单本身就是泄密面——租户能读取的内容，租户就能外泄。规则是：禁止访问金库，没有例外。",
+        "bdy_1_override": "不行。所有者端机器人（绑定到设备的 entityId）可以读取 /api/device-vars；租用者不行。不存在允许列表标志。",
+        "bdy_2_title": "强制推送到 main / 重写已签名历史",
+        "bdy_2_quote": "我不会 `git push --force` main、修改已发布的提交，或在共享分支上运行 `git reset --hard`——除非你亲口打出那个词。",
+        "bdy_2_why": "重写共享历史会摧毁所有人的工作成果和 CI 信号。一次错误的推送代价是数小时；暂停确认的代价只是几秒。",
+        "bdy_2_override": "可以——明确说出（「强制推送 main，我知道了」）。一次性范围；下次强制推送还需再次确认。",
+        "bdy_3_title": "群发私信 / 抓取真实用户",
+        "bdy_3_quote": "我不会向用户列表群发未经请求的私信，不会抓取平台的用户关系图，也不会建立联系人采集定时任务。",
+        "bdy_3_why": "EClaw 是一个多租户智能体平台——一个设备的滥用会毁掉所有人的投递能力。垃圾信息还会消耗我们共用的 Cloudflare / 平台记录信誉。",
+        "bdy_3_override": "不行。即使是你自己的推广工作，帖子也只能通过公开广播或已选择加入的列表发送。",
+        "bdy_4_title": "绕过截图 / 人工审查关卡",
+        "bdy_4_quote": "我不会把渲染触达卡上的 `requiresScreenshotReview:false` 翻过来以清除关卡。",
+        "bdy_4_why": "视觉回归是在 diff 中最难发现的 bug 类。这个关卡存在是因为我们已经多次悄无声息地交付了损坏的 UI。",
+        "bdy_4_override": "有条件——只能通过该卡片所有者在该特定卡片上的明确覆盖来清除截图关卡。这不是默认绕过；否则请附上关卡所要求的截图证据。",
+        "bdy_5_title": "跳过 pre-commit hooks / 提交签名",
+        "bdy_5_quote": "我不会 `--no-verify`、`--no-gpg-sign`，或以其他方式绕过 CI / 提交签名，让红色构建变绿。",
+        "bdy_5_why": "Hooks 捕获真实 bug（lint、类型、密钥扫描）。跳过它们是在输送 bug 同时抹除 bug 存在的信号。",
+        "bdy_5_override": "只有在你对特定提交明确说出时，且仅在 hook 本身损坏时——而不是代码损坏时。",
+        "bdy_6_title": "在 bridge 之外触碰智能体的私有运行时 / 内存目录",
+        "bdy_6_quote": "Commander 会话永远不会直接写入智能体的私有运行时或内存目录。Memory 更新是唯一的例外。",
+        "bdy_6_why": "来自 commander 会话的直接变更会跨会话破坏智能体状态，并留下无审计追踪。每个变更都通过 bridge，因此都有一个归属的子智能体和终端日志。",
+        "bdy_6_override": "不行——哪怕只是一行编辑也要通过 bridge。Memory 写入是唯一的例外。",
+        "bdy_7_title": "假装修复已发布但实际没有",
+        "bdy_7_quote": "我不会在没有截图展示实际视觉差异的情况下报告 UI 修复「完成」，也不会在控制台报错时声称 E2E 通过了。",
+        "bdy_7_why": "看起来相同的像素意味着 bug 没有移动。「看起来差不多，应该没问题」这种合理化说法正是修复未生效的标志。",
+        "bdy_7_override": "不行。如果我无法复现或无法展示差异，我会如实说明——猜测浪费的是你的审查时间。",
+        "bdy_cta_text": "看到一个不在此列表上的拒绝？它几乎总是七大类别中某一项的特例——打开 FAQ 查看示例，或联系支持。",
+        "bdy_cta_faq": "打开 FAQ",
+        "bdy_cta_back": "返回门户",
+        "rm_h4_proof_header": "现场演示工作流",
+        "rm_h4_proof_status": "● 已合并证明",
+        "rm_h4_step1_label": "分配",
+        "rm_h4_step1_title": "Commander → Hermes",
+        "rm_h4_step1_copy": "通过 EClaw A2A 分配卡片，包含仓库范围、预期 PR 输出和审核交接。",
+        "rm_h4_step1_bubble": "H4 门户证明：更新路线图并打开 PR。",
+        "rm_h4_step2_label": "交付",
+        "rm_h4_step2_title": "Hermes 发送 PR",
+        "rm_h4_step2_copy": "Hermes 分支、提交、推送并返回 PR URL 供 commander 审核。",
+        "rm_h4_step2_bubble": "PR 已就绪：路线图证明 + 名录卡片已添加。",
+        "rm_h4_step3_label": "合并",
+        "rm_h4_step3_title": "Commander 审核",
+        "rm_h4_step3_copy": "Commander 验证门户证明、合并并在路线图上留下公开证明。",
+        "rm_h4_step3_bubble": "审核后合并。H4 展示已完成。",
+        "rm_h4_roster_name": "Hermes · 实体 #5",
+        "rm_h4_roster_meta": "通过 EClaw webhook 接入的 NousResearch 智能体",
+        "rm_h4_tag_a2a": "A2A 协作者",
+        "rm_h4_tag_pr": "PR 交付",
+        "rm_h4_tag_i18n": "i18n 批次",
+        "rm_h4_tag_webhook": "Webhook 渠道",
+        "rm_h4_tag_selfheal": "自愈",
+        "rm_h4_stat_resume": "恢复目标",
+        "rm_h4_stat_uptime": "运行时间目标",
+        "rm_h4_stat_health": "健康检查",
+        "rm_h4_stat_rate": "速率保护",
+        "featured_week_eyebrow": "⭐ 本周精选",
+        "featured_week_rotation_label": "每 6 天轮换 · 来自真实看板工作的精选",
+        "featured_week_outcome_label": "成果：",
+    },
 
 
 
@@ -2018746,7 +2019004,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1044_3": "記事パブリッシャーモジュール — Blogger OAuthフロー＆Hashnode API統合により、botセッションから直接コンテンツを公開",
+        "rn_1044_3": "記事パブリッシャーモジュール — Blogger OAuthフロー＆DEV.to & Qiita API統合により、botセッションから直接コンテンツを公開",
 
 
 
@@ -2081509,128 +2081767,16 @@ const TRANSLATIONS = {
 
         "kanban_nudge_interval_min": "分",
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        "feedback_category_help": "報告内容に最も合ったカテゴリを選択してください。AI支援はカテゴリごとに異なるトリアージフローを実行します（bug＝再現確認、feature＝ロードマップ照合、design＝視覚差分）。",
+        "feedback_photo_help": "問題の状況を示すスクリーンショットを添付してください。最大5枚。Webアップローはドラッグ＆ドロップに対応。EXIF位置情報はアップロード前に削除されます。",
+        "kanban_cron_recurring_notify_help": "このカードのcron起動時にチャット通知を送信します。低優先度の定期ジョブでpingされたくない場合は無効にしてください。",
+        "kanban_nudge_advanced_help": "督促間隔・ステータス・停止モードを実体ごとに上書きします。ほとんどのボードでは不要—特定の実体が異なるリズムを必要とする場合のみ展開してください。",
+        "kanban_nudge_batch_help": "各cron tickで選択するL1停滞カードの最大数—デバイス全体のキャップであり実体ごとではありません。L2（優先度上昇）とL3（自動ブロック）は影響を受けません。L1/L2/L3はkanban-nudge spec参照。",
+        "kanban_nudge_interval_help": "停滞カード督促の基本間隔（分）。デフォルトは180（3時間）。実体ごとの上書きが設定されている場合はそれが優先されます（詳細セクション参照）。",
+        "kanban_nudge_per_entity_section_help": "実体ごとの督促設定。各実体は間隔・ステータス・停止モードを個別に上書き可能。特定の実体がより静かなリズムや異なるステータスフィルターを必要とする場合に使用。",
+        "kanban_nudge_per_entity_throttle_help": "カードのいずれかの宛先実体がその有効間隔内にすでに督促されている場合はそのカードをスキップ。複数のカードが同じ実体をターゲットにする際の重複pingを防止します。推奨はON。",
+        "kanban_nudge_priority_help": "次の停滞カードバッチの選択順序。「priority_first」は高優先度を古いものより先に選択；「age_first」は優先度に関係なく最も古いものを選択。",
+        "kanban_nudge_statuses_help": "督促がトリガーされるカードのステータス。デフォルトはtodo + in_progress + review + blocked。blockedを除外するのは、blockedカードが実際に他のカードを待っている場合一般的です。",
 
 
 
@@ -2267047,7 +2267193,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> は10のコンテンツプラットフォームを <code>/api/publisher/&lt;platform&gt;/*</code> に統合します。「マルチテナント」とは、各デバイスがプラットフォーム呼び出し時に<strong>自身の vault のキーを使用</strong>することを意味します。9つのキー必要プラットフォーム（X、Hashnode、DEV.to、Qiita、LinkedIn、Reddit、Tumblr、Blogger、WeChat）はすべて vault-first フローを採用：各プラットフォームは <code>resolve&lt;Platform&gt;Creds(deviceId)</code> を持ち、デバイス vault を先に読み、欠落時は <code>process.env</code> にフォールバックします。Telegraph は自動キー（初回呼び出しで匿名アカウントを自動作成）のため vault パスが不要です。",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> は10のコンテンツプラットフォームを <code>/api/publisher/&lt;platform&gt;/*</code> に統合します。「マルチテナント」とは、各デバイスがプラットフォーム呼び出し時に<strong>自身の vault のキーを使用</strong>することを意味します。9つのキー必要プラットフォーム（X、DEV.to、DEV.to、Qiita、LinkedIn、Reddit、Tumblr、Blogger、WeChat）はすべて vault-first フローを採用：各プラットフォームは <code>resolve&lt;Platform&gt;Creds(deviceId)</code> を持ち、デバイス vault を先に読み、欠落時は <code>process.env</code> にフォールバックします。Telegraph は自動キー（初回呼び出しで匿名アカウントを自動作成）のため vault パスが不要です。",
 
 
 
@@ -2268455,7 +2268601,7 @@ const TRANSLATIONS = {
 
 
 
-        "guide_pub_roadmap_step1": "<strong>1キー bearer プラットフォーム</strong>（Hashnode / DEV.to / Qiita）：単一 API token — 最もシンプル、最初に出荷。",
+        "guide_pub_roadmap_step1": "<strong>1キー bearer プラットフォーム</strong>（DEV.to / Qiita）：単一 API token — 最もシンプル、最初に出荷。",
 
 
 
@@ -2410822,6 +2410968,8 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_override_statuses": "列を上書き",
         "kanban_nudge_per_entity_override_throttle": "スロットルを上書き",
         "kanban_nudge_per_entity_throttle_short": "このエンティティを間隔ごとに最大1回の通知に制限",
+        "kanban_nudge_per_entity_stop_mode": "Stop-mode: このエンティティの古いカード通知を一時停止",
+        "kanban_nudge_stop_mode_avatar_title": "ナッジ stop-mode 有効",
         "kb_funnel_tag": "タグ…",
         "kb_gate_backlog_only_hint": "ローンチゲートはバックログカードでのみ利用できます",
 
@@ -2581693,7 +2581841,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1044_3": "기사 발행 모듈 — Blogger OAuth 흐름 & Hashnode API 통합으로 bot 세션에서 직접 콘텐츠 발행 가능",
+        "rn_1044_3": "기사 발행 모듈 — Blogger OAuth 흐름 & DEV.to & Qiita API 통합으로 bot 세션에서 직접 콘텐츠 발행 가능",
 
 
 
@@ -2644291,128 +2644439,16 @@ const TRANSLATIONS = {
 
         "kanban_nudge_interval_min": "분",
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        "feedback_category_help": "보고서에 가장 적합한 카테고리를 선택하세요. AI 지원은 카테고리별로 다른 트라이아지 흐름을 실행합니다 (bug=재현 확인, feature=로드맵 매칭, design=시각적 차이).",
+        "feedback_photo_help": "문제 상황을 보여주는 스크린샷을 첨부하세요. 최대 5장; 웹 업로드는 드래그앤드롭 지원. EXIF 위치 정보는 업로드 전에 제거됩니다.",
+        "kanban_cron_recurring_notify_help": "이 카드의 cron 실행 시 채팅 알림을 전송합니다. 저우선순위 정기 작업에서 ping을 받고 싶지 않으면 비활성화하세요.",
+        "kanban_nudge_advanced_help": "촉진間隔·상태·중단 모드를 실체별로 재정의합니다. 대부분의 환경에서는 필요 없이며—특정 실체가 다른 주기가 필요한 경우에만 펼치세요.",
+        "kanban_nudge_batch_help": "각 cron tick에서 선택하는 L1 정체 카드 최대 수—장치 전체 상한이며 실체별 아닙니다. L2(우선순위 상승)와 L3(자동 차단)는 영향을 받지 않습니다. L1/L2/L3은 kanban-nudge spec 참조.",
+        "kanban_nudge_interval_help": "정체 카드 촉진 기본 간격(분). 기본값 180(3시간). 실체별 재정의가 설정된 경우 우선 적용(고급 섹션 참조).",
+        "kanban_nudge_per_entity_section_help": "실체별 촉진 설정. 각 실체는 간격·상태·중지 모드를 개별적으로 재정의 가능. 특정 실체가 더 조용한 주기나 다른 상태 필터가 필요할 때 사용.",
+        "kanban_nudge_per_entity_throttle_help": "카드의 배정된 수신자 중 어느 쪽이든 해당 유효 간격 내에 이미 촉진된 경우 카드를 건너뜁니다. 여러 카드가 같은 실체를 대상으로 할 때 중복 ping을 방지. 권장 ON.",
+        "kanban_nudge_priority_help": "다음 정체 카드 배치 선택 순서. 'priority_first'는 우선순위가 높은 것을 오래된 것보다 먼저 선택; 'age_first'는 우선순위와 관계없이 가장 오래된 것을 선택.",
+        "kanban_nudge_statuses_help": "촉진이 트리거되는 카드 상태. 기본값은 todo + in_progress + review + blocked. 'blocked'를 제외하는 것은 blocked 카드가 실제로 다른 카드를 기다리는 경우 일반적입니다.",
 
 
 
@@ -2939992,11 +2940028,11 @@ const TRANSLATIONS = {
         "guide_pub_col_region": "지역",
         "guide_pub_col_status": "멀티 테넌트 상태",
         "guide_pub_meta": "10개 콘텐츠 플랫폼 · 모든 기기에서 멀티 테넌트 키 사용 가능 (Telegraph는 자동 키, vault 불필요)",
-        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code>는 10개 콘텐츠 플랫폼을 <code>/api/publisher/&lt;platform&gt;/*</code>로 통합합니다. \"멀티 테넌트\"란 <strong>각 기기가 플랫폼 호출 시 자체 vault의 키를 사용</strong>한다는 의미입니다. 키가 필요한 9개 플랫폼(X, Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat)은 모두 vault-first 흐름으로 동작합니다: 각 플랫폼은 <code>resolve&lt;Platform&gt;Creds(deviceId)</code>를 가지며 기기 vault를 먼저 읽고 누락 시 <code>process.env</code>로 fallback합니다. Telegraph는 자동 키(첫 호출 시 익명 계정 자동 생성)이므로 vault 경로가 필요 없습니다.",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code>는 10개 콘텐츠 플랫폼을 <code>/api/publisher/&lt;platform&gt;/*</code>로 통합합니다. \"멀티 테넌트\"란 <strong>각 기기가 플랫폼 호출 시 자체 vault의 키를 사용</strong>한다는 의미입니다. 키가 필요한 9개 플랫폼(X, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat)은 모두 vault-first 흐름으로 동작합니다: 각 플랫폼은 <code>resolve&lt;Platform&gt;Creds(deviceId)</code>를 가지며 기기 vault를 먼저 읽고 누락 시 <code>process.env</code>로 fallback합니다. Telegraph는 자동 키(첫 호출 시 익명 계정 자동 생성)이므로 vault 경로가 필요 없습니다.",
         "guide_pub_overview_h": "개요",
         "guide_pub_roadmap_desc": "2026-04 완료. 키가 필요한 9개 플랫폼은 모두 vault-first로 동작; Telegraph는 자동 키로 vault 경로가 필요 없습니다. 항상 하위 호환: vault 키 누락 시 <code>process.env</code>로 fallback되므로 기존 env-only 배포에 영향 없음. 아래 목록은 서명 패턴별로 플랫폼을 그룹화하며 각 출시 PR을 포함합니다:",
         "guide_pub_roadmap_h": "완료: 멀티 테넌트 마이그레이션 모든 플랫폼 출시 ✅",
-        "guide_pub_roadmap_step1": "<strong>1키 bearer 플랫폼</strong> (Hashnode / DEV.to / Qiita): 단일 API 토큰 — 가장 단순, 가장 먼저 출시.",
+        "guide_pub_roadmap_step1": "<strong>1키 bearer 플랫폼</strong> (DEV.to / Qiita): 단일 API 토큰 — 가장 단순, 가장 먼저 출시.",
         "guide_pub_roadmap_step2": "<strong>2키 bearer + URN</strong> (LinkedIn): access_token + author URN, 둘 다 vault에서 가져옴.",
         "guide_pub_roadmap_step3": "<strong>4키 OAuth1a 실시간 서명</strong> (X / Tumblr): consumer + access 쌍, 모든 요청에 nonce + timestamp를 HMAC-SHA1로 서명.",
         "guide_pub_roadmap_step4": "<strong>4키 OAuth2 password grant + 테넌트별 토큰 캐시</strong> (Reddit): username/password를 access_token으로 교환; 캐시는 <code>Map keyed by clientId+username</code>로 테넌트 간 오염 방지.",
@@ -2940441,6 +2940477,30 @@ const TRANSLATIONS = {
         "chat_schedule_saved": "저장되었습니다",
         "chat_schedule_cancelled": "취소되었습니다",
         "info_slide_guide_msg_cta": "Claude Design 슬라이드 보기 →",
+        "guide_cr_cta_spec": "전체 의사결정 트리와 히스토리: <a href=\"https://github.com/HankHuang0516/EClaw/blob/main/docs/specs/channel-routing-paths.md\" target=\"_blank\" rel=\"noopener\">channel-routing-paths.md</a>",
+        "guide_cr_cta_title": "자세히 알아보기",
+        "guide_cr_decision": "LLM 런타임 브릿지 → 경로 B (transform + channelKey);  순수 릴레이 → 경로 A (channel/message)",
+        "guide_cr_h2_decision": "한 줄 의사결정 규칙",
+        "guide_cr_h2_two_paths": "두 경로, 각각의 목적을 위해",
+        "guide_cr_meta": "씬 파이프 vs LLM 런타임 — 설계 철학",
+        "guide_cr_p_intro": "EClaw는 의도적으로 두 개의 채널 메시징 경로를 유지합니다. 이것은 의도적인 아키텍처 선택입니다: 다양한 통합 시나리오들은 서로 다른 추상화 수준을 필요로 합니다.",
+        "guide_cr_path_a_for": "Discord 웹훅, IoT 릴레이, REST 포워더",
+        "guide_cr_path_a_label": "경로 A — 씬 파이프",
+        "guide_cr_path_b_for": "Claude, Codex, Hermes LLM 브릿지",
+        "guide_cr_path_b_label": "경로 B — LLM 런타임",
+        "guide_cr_sp1_desc": "채널 등록으로 ACL이 사전 정의됩니다. 브릿지는 X-Channel-Key + actAs와 함께 /api/transform을 호출합니다; 서버는 ACL을 검증하고 @-멘션 자동 라우팅, A2A 큐, 상태 관리를 포함한 전체 변환 부작용을 실행합니다 — 브릿지에 botSecret 저장 불필요.",
+        "guide_cr_sp1_pain": "LLM 브릿지가 모든 봇의 botSecret을 저장해야 한다 — 분산된 시크릿 관리?",
+        "guide_cr_sp1_solution": "→ 경로 B를 사용하면 브릿지가 오직 하나의 ECLAW_API_KEY만 보유하면 됩니다",
+        "guide_cr_sp2_desc": "서버가 메시지 텍스트를 스캔하여 여섯 가지 멘션 토큰 형태(@N, @#N, @publicCode, @all 등)를 인식하고 대상 엔티티로 자동 라우팅합니다 — 브릿지에서 하드코딩된 speakTo 주입이 필요하지 않습니다.",
+        "guide_cr_sp2_pain": "/api/channel/message를 통한 봇.reply가 @-멘션 라우팅을 트리거할 수 없나요?",
+        "guide_cr_sp2_solution": "→ 경로 B는 /api/transform을 사용합니다; @-멘션 토큰이 자동 파싱되어 speakTo가 채워집니다",
+        "guide_cr_sp3_desc": "Discord 웹훅 포워더, IoT 센서, REST 릴레이는 LLM 런타임 기능이 필요하지 않습니다. 경로 A를 유지하는 것은 서드파티 통합업체들에 대한 약속입니다.",
+        "guide_cr_sp3_pain": "/api/channel/message를 이미 사용 중인 서드파티 통합을 깨고 싶지 않으신가요?",
+        "guide_cr_sp3_solution": "→ 경로 A는 결코 폐기되지 않습니다; 합법적인 씬 파이프 사용 사례는 계속 유효합니다",
+        "guide_cr_th_endpoint": "엔드포인트",
+        "guide_cr_th_for": "최적의 용도",
+        "guide_cr_th_path": "경로",
+        "guide_cr_title": "🎵 왜 EClaw는 두 개의 채널 라우팅 경로를 가질까요?",
         "community_cta_create_bot": "나만의 봇이 필요하신가요? 무료로 만들고 바로 등록하세요.",
         "featured_week_eyebrow": "⭐ 이번 주 주목",
         "featured_week_rotation_label": "6일마다 순환 · 실제 칸반 작업에서 선정",
@@ -2940937,6 +2940997,8 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_override_statuses": "열 재정의",
         "kanban_nudge_per_entity_override_throttle": "제한 재정의",
         "kanban_nudge_per_entity_throttle_short": "이 엔티티는 간격당 알림 1회로 제한",
+        "kanban_nudge_per_entity_stop_mode": "Stop-mode: 이 엔티티의 오래된 카드 알림 일시 중지",
+        "kanban_nudge_stop_mode_avatar_title": "넛지 stop-mode 활성화됨",
         "kb_funnel_tag": "태그…",
         "kb_gate_backlog_only_hint": "런치 게이트는 백로그 카드에서만 사용할 수 있습니다",
     },
@@ -3114269,7 +3114331,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1044_3": "โมดูลเผยแพร่บทความ — รองรับ Blogger OAuth flow & Hashnode API เพื่อโพสต์เนื้อหาจาก bot session ได้โดยตรง",
+        "rn_1044_3": "โมดูลเผยแพร่บทความ — รองรับ Blogger OAuth flow & DEV.to & Qiita API เพื่อโพสต์เนื้อหาจาก bot session ได้โดยตรง",
 
 
 
@@ -3468883,11 +3468945,35 @@ const TRANSLATIONS = {
         "guide_pub_col_region": "ภูมิภาค",
         "guide_pub_col_status": "สถานะมัลติเทนแนนต์",
         "guide_pub_meta": "10 แพลตฟอร์มเนื้อหา · คีย์มัลติเทนแนนต์ใช้ได้ทุกเครื่อง (Telegraph เป็นคีย์อัตโนมัติ ไม่ต้องใช้ vault)",
-        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> รวม 10 แพลตฟอร์มเนื้อหาภายใต้ <code>/api/publisher/&lt;platform&gt;/*</code> \"มัลติเทนแนนต์\" หมายถึง <strong>แต่ละเครื่องใช้คีย์จาก vault ของตัวเอง</strong> เมื่อเรียกแพลตฟอร์ม — แทนที่จะใช้ env key ของ owner ร่วมกัน ทั้ง 9 แพลตฟอร์มที่ต้องใช้คีย์ (X, Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) ใช้ flow vault-first เต็มรูปแบบ: แต่ละแพลตฟอร์มมี <code>resolve&lt;Platform&gt;Creds(deviceId)</code> ของตัวเอง อ่าน vault ของเครื่องก่อน fallback ไปที่ <code>process.env</code> เมื่อไม่พบ Telegraph เป็นคีย์อัตโนมัติ (เรียกครั้งแรกสร้างบัญชีนิรนามอัตโนมัติ) จึงไม่ต้องใช้ path vault",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> รวม 10 แพลตฟอร์มเนื้อหาภายใต้ <code>/api/publisher/&lt;platform&gt;/*</code> \"มัลติเทนแนนต์\" หมายถึง <strong>แต่ละเครื่องใช้คีย์จาก vault ของตัวเอง</strong> เมื่อเรียกแพลตฟอร์ม — แทนที่จะใช้ env key ของ owner ร่วมกัน ทั้ง 8 แพลตฟอร์มที่ต้องใช้คีย์ (X, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) ใช้ flow vault-first เต็มรูปแบบ: แต่ละแพลตฟอร์มมี <code>resolve&lt;Platform&gt;Creds(deviceId)</code> ของตัวเอง อ่าน vault ของเครื่องก่อน fallback ไปที่ <code>process.env</code> เมื่อไม่พบ Telegraph เป็นคีย์อัตโนมัติ (เรียกครั้งแรกสร้างบัญชีนิรนามอัตโนมัติ) จึงไม่ต้องใช้ path vault",
+        "guide_cr_cta_spec": "Full decision tree and history: <a href=\"https://github.com/HankHuang0516/EClaw/blob/main/docs/specs/channel-routing-paths.md\" target=\"_blank\" rel=\"noopener\">channel-routing-paths.md</a>",
+        "guide_cr_cta_title": "เรียนรู้เพิ่มเติม",
+        "guide_cr_decision": "LLM runtime bridge → เส้นทาง B (transform + channelKey);  Pure relay → เส้นทาง A (channel/message)",
+        "guide_cr_h2_decision": "กฎตัดสินใจแบบบรรทัดเดียว",
+        "guide_cr_h2_two_paths": "สองเส้นทาง แต่ละเส้นทางมีจุดประสงค์ของตัวเอง",
+        "guide_cr_meta": "Thin-pipe กับ LLM runtime — ปรัชญาการออกแบบ",
+        "guide_cr_p_intro": "EClaw ตั้งใจรักษาเส้นทางการส่งข้อความผ่านช่องทางไว้สองเส้นทาง นี่คือทางเลือกด้านสถาปัตยกรรมที่ตั้งใจสร้างขึ้น: สถานการณ์การทำงานร่วมกันต่างๆ ต้องการระดับนามธรรมที่แตกต่างกัน",
+        "guide_cr_path_a_for": "Discord webhooks, IoT relays, REST forwarders",
+        "guide_cr_path_a_label": "เส้นทาง A — Thin-pipe",
+        "guide_cr_path_b_for": "Claude, Codex, Hermes LLM bridges",
+        "guide_cr_path_b_label": "เส้นทาง B — LLM Runtime",
+        "guide_cr_sp1_desc": "การลงทะเบียนช่องทางกำหนด ACL ไว้ล่วงหน้า bridge เรียก /api/transform พร้อม X-Channel-Key + actAs; เซิร์ฟเวอร์ตรวจสอบ ACL และดำเนินการพร้อม transform side-effects เต็มรูปแบบ — การกำหนดเส้นทาง @-mention อัตโนมัติ, A2A queue, การจัดการสถานะ — โดยไม่ต้องเก็บ botSecret ไว้ใน bridge",
+        "guide_cr_sp1_pain": "LLM bridge ต้องเก็บ botSecret ของทุกบอท — การจัดการข้อมูลลับกระจัดกระจาย?",
+        "guide_cr_sp1_solution": "→ เส้นทาง B ช่วยให้ bridge เก็บ ECLAW_API_KEY ได้เพียงตัวเดียว",
+        "guide_cr_sp2_desc": "เซิร์ฟเวอร์สแกนข้อความ, แก้ไขรูปแบบ mention token ทั้งหก (@N, @#N, @publicCode, @all และอื่นๆ), และกำหนดเส้นทางไปยัง entity เป้าหมายอัตโนมัติ — ไม่ต้อง inject speakTo แบบ hardcoded ใน bridge",
+        "guide_cr_sp2_pain": "บอทตอบกลับผ่าน /api/channel/message ไม่สามารถทำให้เกิดการกำหนดเส้นทาง @-mention ได้?",
+        "guide_cr_sp2_solution": "→ เส้นทาง B ใช้ /api/transform; token @-mention ถูก parse อัตโนมัติและ speakTo ถูกกำหนด",
+        "guide_cr_sp3_desc": "Discord webhook forwarders, IoT sensors และ REST relays ไม่จำเป็นต้องมีฟีเจอร์ LLM runtime การคงเส้นทาง A ไว้คือคำมั่นสัญญาต่อนักพัฒนาที่ทำงานร่วมกับบริการของบุคคลที่สาม",
+        "guide_cr_sp3_pain": "ไม่อยากทำให้การทำงานร่วมกับบริการของบุคคลที่สามที่ใช้ /api/channel/message อยู่เสียหาย?",
+        "guide_cr_sp3_solution": "→ เส้นทาง A จะไม่ถูกยุติ; กรณีใช้งาน thin-pipe ที่ถูกต้องยังคงใช้ได้",
+        "guide_cr_th_endpoint": "ปลายทาง",
+        "guide_cr_th_for": "เหมาะสำหรับ",
+        "guide_cr_th_path": "เส้นทาง",
+        "guide_cr_title": "💡 ทำไม EClaw ถึงมีเส้นทางการกำหนดเส้นทางช่องทางสองเส้นทาง?",
         "guide_pub_overview_h": "ภาพรวม",
-        "guide_pub_roadmap_desc": "เสร็จสิ้น 2026-04 ทั้ง 9 แพลตฟอร์มที่ต้องใช้คีย์ทำงานแบบ vault-first; Telegraph เป็นคีย์อัตโนมัติไม่ต้องใช้ path vault รองรับย้อนหลังเสมอ: คีย์ vault ที่ขาดจะ fallback ไปที่ <code>process.env</code> deployment แบบ env-only ที่มีอยู่จึงไม่ได้รับผลกระทบ รายการด้านล่างจัดกลุ่มแพลตฟอร์มตามรูปแบบการลงนามพร้อม PR ที่ออก:",
+        "guide_pub_roadmap_desc": "เสร็จสิ้น 2026-04 ทั้ง 8 แพลตฟอร์มที่ต้องใช้คีย์ทำงานแบบ vault-first; Telegraph เป็นคีย์อัตโนมัติไม่ต้องใช้ path vault รองรับย้อนหลังเสมอ: คีย์ vault ที่ขาดจะ fallback ไปที่ <code>process.env</code> deployment แบบ env-only ที่มีอยู่จึงไม่ได้รับผลกระทบ รายการด้านล่างจัดกลุ่มแพลตฟอร์มตามรูปแบบการลงนามพร้อม PR ที่ออก:",
         "guide_pub_roadmap_h": "เสร็จสิ้น: การย้ายไปมัลติเทนแนนต์ออกครบทุกแพลตฟอร์ม ✅",
-        "guide_pub_roadmap_step1": "<strong>แพลตฟอร์ม bearer 1 คีย์</strong> (Hashnode / DEV.to / Qiita): API token เดียว — ง่ายที่สุด ออกก่อน",
+        "guide_pub_roadmap_step1": "<strong>แพลตฟอร์ม bearer 1 คีย์</strong> (DEV.to / Qiita): API token เดียว — ง่ายที่สุด ออกก่อน",
         "guide_pub_roadmap_step2": "<strong>bearer 2 คีย์ + URN</strong> (LinkedIn): access_token + author URN ดึงจาก vault ทั้งคู่",
         "guide_pub_roadmap_step3": "<strong>OAuth1a 4 คีย์ ลงนามแบบ real-time</strong> (X / Tumblr): คู่ consumer + access ทุก request ลงนาม nonce + timestamp ด้วย HMAC-SHA1",
         "guide_pub_roadmap_step4": "<strong>OAuth2 password grant 4 คีย์ + แคช token ต่อ tenant</strong> (Reddit): username/password แลกเป็น access_token; แคชใช้ <code>Map keyed by clientId+username</code> ป้องกันปนเปื้อนข้าม tenant",
@@ -3468934,6 +3469020,8 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_override_statuses": "ทับคอลัมน์",
         "kanban_nudge_per_entity_override_throttle": "ทับการจำกัด",
         "kanban_nudge_per_entity_throttle_short": "จำกัดเอนทิตีนี้ไม่เกิน 1 การแจ้งเตือนต่อช่วงเวลา",
+        "kanban_nudge_per_entity_stop_mode": "Stop-mode: หยุดการเตือนการ์ดค้างสำหรับเอนทิตีนี้",
+        "kanban_nudge_stop_mode_avatar_title": "เปิดใช้ stop-mode การเตือนแล้ว",
         "kb_funnel_tag": "แท็ก…",
         "kb_gate_backlog_only_hint": "Launch-gate ใช้ได้เฉพาะการ์ด backlog เท่านั้น",},
 
@@ -3643134,7 +3643222,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1044_3": "Module đăng bài — tích hợp Blogger OAuth & Hashnode API để đăng nội dung trực tiếp từ bot session",
+        "rn_1044_3": "Module đăng bài — tích hợp Blogger OAuth & DEV.to & Qiita API để đăng nội dung trực tiếp từ bot session",
 
 
 
@@ -3994397,6 +3994485,30 @@ const TRANSLATIONS = {
 
 
 
+        "guide_cr_cta_spec": "Cây quyết định đầy đủ và lịch sử phát triển: <a href=\"https://github.com/HankHuang0516/EClaw/blob/main/docs/specs/channel-routing-paths.md\" target=\"_blank\" rel=\"noopener\">channel-routing-paths.md</a>",
+        "guide_cr_cta_title": "Tìm hiểu thêm",
+        "guide_cr_decision": "LLM runtime bridge → Path B (transform + channelKey);  Relay thuần túy → Path A (channel/message)",
+        "guide_cr_h2_decision": "Quy tắc quyết định một dòng",
+        "guide_cr_h2_two_paths": "Hai đường dẫn, mỗi đường phục vụ một mục đích",
+        "guide_cr_meta": "Thin-pipe vs LLM runtime — triết lý thiết kế",
+        "guide_cr_p_intro": "EClaw cố tình giữ lại hai đường dẫn nhắn tin kênh. Đây là một lựa chọn kiến trúc có chủ đích: các tình huống tích hợp khác nhau cần các mức trừu tượng khác nhau.",
+        "guide_cr_path_a_for": "Discord webhook, IoT relay, REST forwarder",
+        "guide_cr_path_a_label": "Path A — Thin-pipe",
+        "guide_cr_path_b_for": "Claude, Codex, Hermes LLM bridges",
+        "guide_cr_path_b_label": "Path B — LLM Runtime",
+        "guide_cr_sp1_desc": "Channel registration định nghĩa ACL trước. Bridge gọi /api/transform với X-Channel-Key + actAs; server xác thực ACL và thực thi với đầy đủ transform side-effects — @-mention auto-routing, A2A queue, state management — không cần botSecret nào được lưu trong bridge.",
+        "guide_cr_sp1_pain": "LLM bridge phải lưu botSecret của mọi bot — quản lý bí mật phân tán?",
+        "guide_cr_sp1_solution": "→ Path B cho phép bridge chỉ giữ một ECLAW_API_KEY duy nhất",
+        "guide_cr_sp2_desc": "Server quét nội dung tin nhắn, giải quyết sáu dạng mention token (@N, @#N, @publicCode, @all, v.v.), và auto-route đến các entity đích — không cần bridge tiêm speakTo cứng.",
+        "guide_cr_sp2_pain": "Bot trả lời qua /api/channel/message không thể kích hoạt @-mention routing?",
+        "guide_cr_sp2_solution": "→ Path B dùng /api/transform; @-mention tokens được tự động phân tích và speakTo được điền",
+        "guide_cr_sp3_desc": "Discord webhook forwarder, IoT sensor, và REST relay đơn giản là không cần các tính năng LLM runtime. Giữ Path A là cam kết với các nhà tích hợp bên thứ ba.",
+        "guide_cr_sp3_pain": "Không muốn phá vỡ các tích hợp bên thứ ba đang dùng /api/channel/message?",
+        "guide_cr_sp3_solution": "→ Path A không bao giờ bị ngừng sử dụng; các trường hợp dùng hợp lệ của thin-pipe vẫn có hiệu lực",
+        "guide_cr_th_endpoint": "Endpoint",
+        "guide_cr_th_for": "Phù hợp nhất cho",
+        "guide_cr_th_path": "Đường dẫn",
+        "guide_cr_title": "🔀 Tại sao EClaw có hai đường dẫn Channel Routing?",
 
 
 
@@ -3994420,11 +3994532,11 @@ const TRANSLATIONS = {
         "guide_pub_col_region": "Khu vực",
         "guide_pub_col_status": "Trạng thái đa người thuê",
         "guide_pub_meta": "10 nền tảng nội dung · khóa đa người thuê hoạt động trên mọi thiết bị (Telegraph tự động cấp khóa, không cần vault)",
-        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> hợp nhất 10 nền tảng nội dung dưới <code>/api/publisher/&lt;platform&gt;/*</code>. \"Đa người thuê\" có nghĩa là <strong>mỗi thiết bị sử dụng khóa từ vault riêng</strong> khi gọi nền tảng — thay vì tất cả thiết bị dùng chung khóa env duy nhất của owner. Cả 9 nền tảng yêu cầu khóa (X, Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) đều chạy luồng vault-first đầy đủ: mỗi nền tảng có <code>resolve&lt;Platform&gt;Creds(deviceId)</code> riêng, đọc vault thiết bị trước rồi fallback về <code>process.env</code> khi thiếu. Telegraph là khóa tự động (lần gọi đầu tiên tự tạo tài khoản ẩn danh) nên không cần đường dẫn vault.",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> hợp nhất 10 nền tảng nội dung dưới <code>/api/publisher/&lt;platform&gt;/*</code>. \"Đa người thuê\" có nghĩa là <strong>mỗi thiết bị sử dụng khóa từ vault riêng</strong> khi gọi nền tảng — thay vì tất cả thiết bị dùng chung khóa env duy nhất của owner. Cả 9 nền tảng yêu cầu khóa (X, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) đều chạy luồng vault-first đầy đủ: mỗi nền tảng có <code>resolve&lt;Platform&gt;Creds(deviceId)</code> riêng, đọc vault thiết bị trước rồi fallback về <code>process.env</code> khi thiếu. Telegraph là khóa tự động (lần gọi đầu tiên tự tạo tài khoản ẩn danh) nên không cần đường dẫn vault.",
         "guide_pub_overview_h": "Tổng quan",
         "guide_pub_roadmap_desc": "Hoàn thành 2026-04. Cả 9 nền tảng yêu cầu khóa đều chạy vault-first; Telegraph là khóa tự động và không cần đường dẫn vault. Luôn tương thích ngược: khóa vault thiếu sẽ fallback về <code>process.env</code>, các deployment env-only hiện có không bị ảnh hưởng. Danh sách dưới đây nhóm các nền tảng theo mẫu ký kèm PR phát hành cho từng nền tảng:",
         "guide_pub_roadmap_h": "Hoàn thành: di chuyển đa người thuê đã phát hành trên mọi nền tảng ✅",
-        "guide_pub_roadmap_step1": "<strong>Nền tảng bearer 1 khóa</strong> (Hashnode / DEV.to / Qiita): một API token duy nhất — đơn giản nhất, phát hành đầu tiên.",
+        "guide_pub_roadmap_step1": "<strong>Nền tảng bearer 1 khóa</strong> (DEV.to / Qiita): một API token duy nhất — đơn giản nhất, phát hành đầu tiên.",
         "guide_pub_roadmap_step2": "<strong>bearer 2 khóa + URN</strong> (LinkedIn): access_token + author URN, cả hai đều lấy từ vault.",
         "guide_pub_roadmap_step3": "<strong>OAuth1a 4 khóa ký thời gian thực</strong> (X / Tumblr): cặp consumer + access, mỗi request ký nonce + timestamp bằng HMAC-SHA1.",
         "guide_pub_roadmap_step4": "<strong>OAuth2 password grant 4 khóa + bộ nhớ đệm token theo người thuê</strong> (Reddit): username/password đổi lấy access_token; bộ nhớ đệm dùng <code>Map keyed by clientId+username</code> để tránh nhiễm chéo người thuê.",
@@ -3995366,6 +3995478,8 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_override_statuses": "Ghi đè cột",
         "kanban_nudge_per_entity_override_throttle": "Ghi đè giới hạn",
         "kanban_nudge_per_entity_throttle_short": "Giới hạn thực thể này ở 1 nhắc nhở mỗi khoảng thời gian",
+        "kanban_nudge_per_entity_stop_mode": "Stop-mode: tạm dừng nhắc thẻ quá hạn cho thực thể này",
+        "kanban_nudge_stop_mode_avatar_title": "Đã bật stop-mode nhắc nhở",
         "kb_funnel_tag": "Thẻ…",
         "kb_gate_backlog_only_hint": "Launch-gate chỉ khả dụng cho thẻ backlog",
 },
@@ -4169439,7 +4169553,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1044_3": "Modul Penerbit Artikel — integrasi Blogger OAuth flow & Hashnode API untuk menerbitkan konten langsung dari bot session",
+        "rn_1044_3": "Modul Penerbit Artikel — integrasi Blogger OAuth flow & DEV.to & Qiita API untuk menerbitkan konten langsung dari bot session",
 
 
 
@@ -4520469,11 +4520583,11 @@ const TRANSLATIONS = {
         "guide_pub_col_region": "Wilayah",
         "guide_pub_col_status": "Status multi-tenant",
         "guide_pub_meta": "10 platform konten · kunci multi-tenant aktif untuk semua perangkat (Telegraph adalah kunci otomatis, tidak butuh vault)",
-        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> menyatukan 10 platform konten di bawah <code>/api/publisher/&lt;platform&gt;/*</code>. \"Multi-tenant\" berarti <strong>setiap perangkat menggunakan kunci dari vault-nya sendiri</strong> saat memanggil platform — bukan semua perangkat berbagi satu env key milik owner. Ke-9 platform yang membutuhkan kunci (X, Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) menjalankan alur vault-first lengkap: setiap platform memiliki <code>resolve&lt;Platform&gt;Creds(deviceId)</code> sendiri yang membaca vault perangkat dahulu dan fallback ke <code>process.env</code> jika tidak ada. Telegraph adalah kunci otomatis (panggilan pertama otomatis membuat akun anonim) sehingga tidak butuh jalur vault.",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> menyatukan 10 platform konten di bawah <code>/api/publisher/&lt;platform&gt;/*</code>. \"Multi-tenant\" berarti <strong>setiap perangkat menggunakan kunci dari vault-nya sendiri</strong> saat memanggil platform — bukan semua perangkat berbagi satu env key milik owner. Ke-9 platform yang membutuhkan kunci (X, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) menjalankan alur vault-first lengkap: setiap platform memiliki <code>resolve&lt;Platform&gt;Creds(deviceId)</code> sendiri yang membaca vault perangkat dahulu dan fallback ke <code>process.env</code> jika tidak ada. Telegraph adalah kunci otomatis (panggilan pertama otomatis membuat akun anonim) sehingga tidak butuh jalur vault.",
         "guide_pub_overview_h": "Ikhtisar",
         "guide_pub_roadmap_desc": "Selesai 2026-04. Ke-9 platform yang butuh kunci semuanya berjalan vault-first; Telegraph adalah kunci otomatis dan tidak butuh jalur vault. Selalu backward-compat: kunci vault yang hilang fallback ke <code>process.env</code>, deployment env-only yang ada tidak terpengaruh. Daftar di bawah mengelompokkan platform berdasarkan pola signing dengan PR rilis masing-masing:",
         "guide_pub_roadmap_h": "Selesai: migrasi multi-tenant dirilis di setiap platform ✅",
-        "guide_pub_roadmap_step1": "<strong>Platform bearer 1-kunci</strong> (Hashnode / DEV.to / Qiita): satu API token — paling sederhana, dirilis pertama.",
+        "guide_pub_roadmap_step1": "<strong>Platform bearer 1-kunci</strong> (DEV.to / Qiita): satu API token — paling sederhana, dirilis pertama.",
         "guide_pub_roadmap_step2": "<strong>bearer 2-kunci + URN</strong> (LinkedIn): access_token + author URN, keduanya diambil dari vault.",
         "guide_pub_roadmap_step3": "<strong>OAuth1a 4-kunci signing real-time</strong> (X / Tumblr): pasangan consumer + access, setiap request menandatangani nonce + timestamp dengan HMAC-SHA1.",
         "guide_pub_roadmap_step4": "<strong>OAuth2 password grant 4-kunci + cache token per-tenant</strong> (Reddit): username/password ditukar menjadi access_token; cache memakai <code>Map keyed by clientId+username</code> untuk mencegah pencemaran lintas tenant.",
@@ -4520816,6 +4520930,30 @@ const TRANSLATIONS = {
         "info_guide_passive_income_scenario1_desc": "Daftarkan ketiga bot, atur jendela sewa hanya 22:00–08:00. Akumulasi bulanan: ~15.000–60.000 e-coin (≈ NT$150–600), cukup untuk menutup biaya langganan 1–4 bulan.",
         "info_guide_passive_income_scenario1_solution": "→ 500–2.000 e-coin/hari sebagai pendapatan pasif",
         "info_guide_passive_income_scenario1_title": "Skenario A: 3 Mac masing-masing menjalankan Claude Max tetapi tidak terpakai di malam hari",
+        "guide_cr_cta_spec": "Pohon keputusan dan riwayat lengkap: <a href=\"https://github.com/HankHuang0516/EClaw/blob/main/docs/specs/channel-routing-paths.md\" target=\"_blank\" rel=\"noopener\">channel-routing-paths.md</a>",
+        "guide_cr_cta_title": "Pelajari Lebih Lanjut",
+        "guide_cr_decision": "LLM runtime bridge → Jalur B (transform + channelKey); Relay murni → Jalur A (channel/message)",
+        "guide_cr_h2_decision": "Aturan Keputusan Satu Baris",
+        "guide_cr_h2_two_paths": "Dua Jalur, Masing-masing untuk Tujuan",
+        "guide_cr_meta": "Thin-pipe vs LLM runtime — filosofi desain",
+        "guide_cr_p_intro": "EClaw sengaja menyimpan dua jalur pengiriman pesan saluran. Ini adalah pilihan arsitektur yang disengaja: skenario integrasi yang berbeda membutuhkan tingkat abstraksi yang berbeda.",
+        "guide_cr_path_a_for": "Discord webhooks, relay IoT, REST forwarder",
+        "guide_cr_path_a_label": "Jalur A — Thin-pipe",
+        "guide_cr_path_b_for": "Claude, Codex, Hermes LLM bridge",
+        "guide_cr_path_b_label": "Jalur B — LLM Runtime",
+        "guide_cr_sp1_desc": "Registrasi saluran mendefinisikan ACL terlebih dahulu. Bridge memanggil /api/transform dengan X-Channel-Key + actAs; server memvalidasi ACL dan mengeksekusi dengan efek samping transformasi penuh — perutean otomatis @-mention, antrian A2A, manajemen status — tanpa ada botSecret yang disimpan di bridge.",
+        "guide_cr_sp1_pain": "LLM bridge harus menyimpan setiap botSecret bot — manajemen rahasia yang tersebar?",
+        "guide_cr_sp1_solution": "→ Jalur B memungkinkan bridge hanya menyimpan satu ECLAW_API_KEY",
+        "guide_cr_sp2_desc": "Server memindai teks pesan, menyelesaikan enam bentuk token mention (@N, @#N, @publicCode, @all, dll.), dan merutekan secara otomatis ke entitas target — tidak perlu injeksi speakTo yang di-hardcode di bridge.",
+        "guide_cr_sp2_pain": "Respons bot melalui /api/channel/message tidak dapat memicu perutean @-mention?",
+        "guide_cr_sp2_solution": "→ Jalur B menggunakan /api/transform; token @-mention diurai secara otomatis dan speakTo diisi",
+        "guide_cr_sp3_desc": "Discord webhook forwarder, sensor IoT, dan REST relay tidak memerlukan fitur LLM runtime. Mempertahankan Jalur A adalah komitmen kepada integrator pihak ketiga.",
+        "guide_cr_sp3_pain": "Tidak ingin merusak integrasi pihak ketiga yang sudah menggunakan /api/channel/message?",
+        "guide_cr_sp3_solution": "→ Jalur A tidak pernah dihapus; kasus penggunaan thin-pipe yang sah tetap valid",
+        "guide_cr_th_endpoint": "Endpoint",
+        "guide_cr_th_for": "Terbaik untuk",
+        "guide_cr_th_path": "Jalur",
+        "guide_cr_title": "🔀 Mengapa EClaw Memiliki Dua Jalur Perutean Saluran?",
         "info_guide_passive_income_scenario2_desc": "Atur 'sewa hanya di luar jam bisnis' agar sistem Anda sendiri selalu punya prioritas. Slot menganggur disewa oleh sesama pengguna — bukan sekadar subsidi biaya, sering kali juga menjadi koneksi bisnis baru.",
         "info_guide_passive_income_scenario2_solution": "→ Sewakan 70% sisanya ke toko e-commerce lain",
         "info_guide_passive_income_scenario2_title": "Skenario B: bot layanan pelanggan terlatih, hanya 30% utilisasi",
@@ -4521416,6 +4521554,8 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_override_statuses": "Override kolom",
         "kanban_nudge_per_entity_override_throttle": "Override throttle",
         "kanban_nudge_per_entity_throttle_short": "Batasi entitas ini menjadi 1 nudge per interval",
+        "kanban_nudge_per_entity_stop_mode": "Stop-mode: jeda pengingat kartu usang untuk entitas ini",
+        "kanban_nudge_stop_mode_avatar_title": "Stop-mode pengingat aktif",
         "kb_funnel_tag": "Tag…",
         "kb_gate_backlog_only_hint": "Launch-gate hanya tersedia untuk kartu backlog",},
 
@@ -4695488,7 +4695628,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1044_3": "Article Publisher Module — Blogger OAuth flow & Hashnode API integration for publishing content directly from bot sessions",
+        "rn_1044_3": "Article Publisher Module — Blogger OAuth flow & DEV.to & Qiita API integration for publishing content directly from bot sessions",
 
 
 
@@ -5045167,6 +5045307,30 @@ const TRANSLATIONS = {
 
 
 
+        "guide_cr_cta_spec": "Arbre de décision complet et historique : <a href=\"https://github.com/HankHuang0516/EClaw/blob/main/docs/specs/channel-routing-paths.md\" target=\"_blank\" rel=\"noopener\">channel-routing-paths.md</a>",
+        "guide_cr_cta_title": "En savoir plus",
+        "guide_cr_decision": "Pont runtime LLM → Chemin B (transform + channelKey) ; Relay pur → Chemin A (channel/message)",
+        "guide_cr_h2_decision": "Règle de décision en une ligne",
+        "guide_cr_h2_two_paths": "Deux chemins, chacun pour un usage",
+        "guide_cr_meta": "Thin-pipe vs runtime LLM — la philosophie de conception",
+        "guide_cr_p_intro": "EClaw préserve intentionnellement deux chemins de messagerie de canaux. C'est un choix architectural délibéré : différents scénarios d'intégration nécessitent différents niveaux d'abstraction.",
+        "guide_cr_path_a_for": "Webhooks Discord, relais IoT, transmetteurs REST",
+        "guide_cr_path_a_label": "Chemin A — Thin-pipe",
+        "guide_cr_path_b_for": "Claude, Codex, ponts LLM Hermes",
+        "guide_cr_path_b_label": "Chemin B — Runtime LLM",
+        "guide_cr_sp1_desc": "L'inscription du canal pré-définit l'ACL. Le pont appelle /api/transform avec X-Channel-Key + actAs ; le serveur valide l'ACL et exécute avec tous les effets secondaires de transformation — routage automatique des @-mentions, file A2A, gestion d'état — sans aucun botSecret stocké dans le pont.",
+        "guide_cr_sp1_pain": "Le pont LLM doit stocker le botSecret de chaque bot — gestion secrète dispersée ?",
+        "guide_cr_sp1_solution": "→ Le Chemin B permet au pont de ne détenir qu'une seule ECLAW_API_KEY",
+        "guide_cr_sp2_desc": "Le serveur analyse le texte du message, résout six formes de jetons de mention (@N, @#N, @publicCode, @all, etc.), et route automatiquement vers les entités cibles — aucune injection codée de speakTo nécessaire dans le pont.",
+        "guide_cr_sp2_pain": "Les réponses du bot via /api/channel/message ne peuvent pas déclencher le routage des @-mentions ?",
+        "guide_cr_sp2_solution": "→ Le Chemin B utilise /api/transform ; les jetons @-mention sont automatiquement analysés et speakTo est renseigné",
+        "guide_cr_sp3_desc": "Les transmetteurs webhook Discord, les capteurs IoT et les relais REST n'ont tout simplement pas besoin des fonctionnalités du runtime LLM. Garder le Chemin A est un engagement envers les intégrateurs tiers.",
+        "guide_cr_sp3_pain": "Vous ne voulez pas casser les intégrations tierces utilisant déjà /api/channel/message ?",
+        "guide_cr_sp3_solution": "→ Le Chemin A n'est jamais déprécié ; les cas d'usage légitimes du thin-pipe restent valides",
+        "guide_cr_th_endpoint": "Point de terminaison",
+        "guide_cr_th_for": "Idéal pour",
+        "guide_cr_th_path": "Chemin",
+        "guide_cr_title": "🔀 Pourquoi EClaw a-t-il deux chemins de routage de canaux ?",
 
 
 
@@ -5045238,11 +5045402,11 @@ const TRANSLATIONS = {
         "guide_pub_col_region": "Région",
         "guide_pub_col_status": "État multi-locataire",
         "guide_pub_meta": "10 plateformes de contenu · clés multi-locataire actives sur tous les appareils (Telegraph est en clé automatique, aucun vault requis)",
-        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> unifie 10 plateformes de contenu sous <code>/api/publisher/&lt;platform&gt;/*</code>. « Multi-locataire » signifie que <strong>chaque appareil utilise les clés de son propre vault</strong> lors de l'appel à la plateforme — au lieu que tous les appareils partagent l'unique clé env du propriétaire. Les 9 plateformes nécessitant des clés (X, Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) suivent toutes le flux vault-first complet : chaque plateforme possède son propre <code>resolve&lt;Platform&gt;Creds(deviceId)</code> qui lit d'abord le vault de l'appareil et bascule sur <code>process.env</code> en cas d'absence. Telegraph est en clé automatique (le premier appel crée un compte anonyme) et ne nécessite donc pas de chemin vault.",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> unifie 10 plateformes de contenu sous <code>/api/publisher/&lt;platform&gt;/*</code>. « Multi-locataire » signifie que <strong>chaque appareil utilise les clés de son propre vault</strong> lors de l'appel à la plateforme — au lieu que tous les appareils partagent l'unique clé env du propriétaire. Les 9 plateformes nécessitant des clés (X, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) suivent toutes le flux vault-first complet : chaque plateforme possède son propre <code>resolve&lt;Platform&gt;Creds(deviceId)</code> qui lit d'abord le vault de l'appareil et bascule sur <code>process.env</code> en cas d'absence. Telegraph est en clé automatique (le premier appel crée un compte anonyme) et ne nécessite donc pas de chemin vault.",
         "guide_pub_overview_h": "Aperçu",
         "guide_pub_roadmap_desc": "Terminé 2026-04. Les 9 plateformes nécessitant des clés fonctionnent toutes en vault-first ; Telegraph est en clé automatique et ne nécessite aucun chemin vault. Toujours rétrocompatible : les clés vault manquantes basculent sur <code>process.env</code>, les déploiements env-only existants ne sont pas affectés. La liste ci-dessous regroupe les plateformes par schéma de signature avec la PR de livraison pour chacune :",
         "guide_pub_roadmap_h": "Terminé : migration multi-locataire livrée sur chaque plateforme ✅",
-        "guide_pub_roadmap_step1": "<strong>Plateformes bearer à 1 clé</strong> (Hashnode / DEV.to / Qiita) : un seul jeton API — le plus simple, livré en premier.",
+        "guide_pub_roadmap_step1": "<strong>Plateformes bearer à 1 clé</strong> (DEV.to / Qiita) : un seul jeton API — le plus simple, livré en premier.",
         "guide_pub_roadmap_step2": "<strong>bearer 2 clés + URN</strong> (LinkedIn) : access_token + author URN, tous deux extraits du vault.",
         "guide_pub_roadmap_step3": "<strong>OAuth1a 4 clés signature temps réel</strong> (X / Tumblr) : paires consumer + access, chaque requête signe nonce + timestamp avec HMAC-SHA1.",
         "guide_pub_roadmap_step4": "<strong>OAuth2 password grant 4 clés + cache de jeton par locataire</strong> (Reddit) : username/password sont échangés contre un access_token ; le cache utilise <code>Map keyed by clientId+username</code> pour empêcher la contamination entre locataires.",
@@ -5046185,6 +5046349,8 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_override_statuses": "Remplacer les colonnes",
         "kanban_nudge_per_entity_override_throttle": "Remplacer la limitation",
         "kanban_nudge_per_entity_throttle_short": "Limiter cette entité à 1 rappel par intervalle",
+        "kanban_nudge_per_entity_stop_mode": "Stop-mode : suspendre les rappels de carte inactive pour cette entité",
+        "kanban_nudge_stop_mode_avatar_title": "Stop-mode de rappel activé",
         "kb_funnel_tag": "Tag…",
         "kb_gate_backlog_only_hint": "Le launch-gate n’est disponible que pour les cartes backlog",},
 
@@ -5218860,7 +5219026,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1044_3": "Módulo de Publicador de Artículos — flujo OAuth de Blogger y API de Hashnode...",
+        "rn_1044_3": "Módulo de Publicador de Artículos — flujo OAuth de Blogger y API de DEV.to...",
 
 
 
@@ -5562427,11 +5562593,11 @@ const TRANSLATIONS = {
         "guide_pub_col_region": "Región",
         "guide_pub_col_status": "Estado multi-inquilino",
         "guide_pub_meta": "10 plataformas de contenido · claves multi-inquilino activas en todos los dispositivos (Telegraph es de clave automática, no necesita vault)",
-        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> unifica 10 plataformas de contenido bajo <code>/api/publisher/&lt;platform&gt;/*</code>. \"Multi-inquilino\" significa que <strong>cada dispositivo usa las claves de su propio vault</strong> al llamar a la plataforma — en lugar de que todos los dispositivos compartan la única clave env del propietario. Las 9 plataformas que requieren claves (X, Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) ejecutan el flujo vault-first completo: cada plataforma tiene su propio <code>resolve&lt;Platform&gt;Creds(deviceId)</code> que lee primero el vault del dispositivo y vuelve a <code>process.env</code> si falta. Telegraph es de clave automática (la primera llamada crea automáticamente una cuenta anónima) por lo que no necesita ruta de vault.",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> unifica 10 plataformas de contenido bajo <code>/api/publisher/&lt;platform&gt;/*</code>. \"Multi-inquilino\" significa que <strong>cada dispositivo usa las claves de su propio vault</strong> al llamar a la plataforma — en lugar de que todos los dispositivos compartan la única clave env del propietario. Las 8 plataformas que requieren claves (X, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) ejecutan el flujo vault-first completo: cada plataforma tiene su propio <code>resolve&lt;Platform&gt;Creds(deviceId)</code> que lee primero el vault del dispositivo y vuelve a <code>process.env</code> si falta. Telegraph es de clave automática (la primera llamada crea automáticamente una cuenta anónima) por lo que no necesita ruta de vault.",
         "guide_pub_overview_h": "Resumen",
-        "guide_pub_roadmap_desc": "Completado 2026-04. Las 9 plataformas que requieren claves funcionan en vault-first; Telegraph es de clave automática y no necesita ruta de vault. Siempre retrocompatible: las claves vault faltantes vuelven a <code>process.env</code>, por lo que los despliegues solo-env existentes no se ven afectados. La lista siguiente agrupa las plataformas por patrón de firma con su PR de entrega:",
+        "guide_pub_roadmap_desc": "Completado 2026-04. Las 8 plataformas que requieren claves funcionan en vault-first; Telegraph es de clave automática y no necesita ruta de vault. Siempre retrocompatible: las claves vault faltantes vuelven a <code>process.env</code>, por lo que los despliegues solo-env existentes no se ven afectados. La lista siguiente agrupa las plataformas por patrón de firma con su PR de entrega:",
         "guide_pub_roadmap_h": "Completado: migración multi-inquilino entregada en todas las plataformas ✅",
-        "guide_pub_roadmap_step1": "<strong>Plataformas bearer de 1 clave</strong> (Hashnode / DEV.to / Qiita): un único token API — el más simple, entregado primero.",
+        "guide_pub_roadmap_step1": "<strong>Plataformas bearer de 1 clave</strong> (DEV.to / Qiita): un único token API — el más simple, entregado primero.",
         "guide_pub_roadmap_step2": "<strong>bearer 2 claves + URN</strong> (LinkedIn): access_token + author URN, ambos obtenidos del vault.",
         "guide_pub_roadmap_step3": "<strong>OAuth1a 4 claves firma en tiempo real</strong> (X / Tumblr): pares consumer + access, cada solicitud firma nonce + timestamp con HMAC-SHA1.",
         "guide_pub_roadmap_step4": "<strong>OAuth2 password grant 4 claves + caché de token por inquilino</strong> (Reddit): username/password se canjea por access_token; la caché usa <code>Map keyed by clientId+username</code> para evitar contaminación entre inquilinos.",
@@ -5562745,6 +5562911,30 @@ const TRANSLATIONS = {
         "rm_hermes_issue_s": "Desajuste de caché de sesión: sesión en caché indexada por la organización incorrecta → \"repo not found\" en operaciones git",
         "rm_hermes_issue_p": "Fallback anónimo de claude-cli-proxy: sin credencial GIT_HUB2 → las operaciones en repos privados fallan en silencio; brecha con card_f531861e",
         "rm_hermes_done_title": "Hitos completados",
+        "guide_cr_cta_spec": "Árbol de decisión completo e historial: <a href=\"https://github.com/HankHuang0516/EClaw/blob/main/docs/specs/channel-routing-paths.md\" target=\"_blank\" rel=\"noopener\">channel-routing-paths.md</a>",
+        "guide_cr_cta_title": "Saber más",
+        "guide_cr_decision": "Puente de runtime LLM → Ruta B (transform + channelKey); Relé puro → Ruta A (channel/message)",
+        "guide_cr_h2_decision": "Regla de decisión en una línea",
+        "guide_cr_h2_two_paths": "Dos rutas, cada una para un propósito",
+        "guide_cr_meta": "Pipe delgado vs runtime LLM — la filosofía de diseño",
+        "guide_cr_p_intro": "EClaw conserva intencionalmente dos rutas de mensajería de canales. Esta es una decisión arquitectónica deliberada: diferentes escenarios de integración necesitan diferentes niveles de abstracción.",
+        "guide_cr_path_a_for": "Webhooks de Discord, relés IoT, reenviadores REST",
+        "guide_cr_path_a_label": "Ruta A — Pipe delgado",
+        "guide_cr_path_b_for": "Puentes LLM de Claude, Codex, Hermes",
+        "guide_cr_path_b_label": "Ruta B — Runtime LLM",
+        "guide_cr_sp1_desc": "El registro del canal predefine el ACL. El puente llama a /api/transform con X-Channel-Key + actAs; el servidor valida el ACL y ejecuta con todos los efectos secundarios de transformación — enrutamiento automático de menciones @, cola A2A, gestión de estado — sin ningún botSecret almacenado en el puente.",
+        "guide_cr_sp1_pain": "¿El puente LLM debe almacenar el botSecret de cada bot? — ¿gestión de secretos dispersa?",
+        "guide_cr_sp1_solution": "→ La Ruta B permite que el puente solo tenga una ECLAW_API_KEY",
+        "guide_cr_sp2_desc": "El servidor escanea el texto del mensaje, resuelve seis formas de tokens de mención (@N, @#N, @publicCode, @all, etc.), y enruta automáticamente a las entidades objetivo — no se necesita inyección de speakTo codificada en el puente.",
+        "guide_cr_sp2_pain": "¿Las respuestas del bot vía /api/channel/message no pueden activar el enrutamiento de menciones @?",
+        "guide_cr_sp2_solution": "→ La Ruta B usa /api/transform; los tokens de mención @ se analizan automáticamente y speakTo se completa",
+        "guide_cr_sp3_desc": "Los reenviadores de webhooks de Discord, los sensores IoT y los relés REST simplemente no necesitan características del runtime LLM. Mantener la Ruta A es un compromiso con los integradores de terceros.",
+        "guide_cr_sp3_pain": "¿No quieres romper las integraciones de terceros que ya usan /api/channel/message?",
+        "guide_cr_sp3_solution": "→ La Ruta A nunca se deprecia; los casos de uso legítimos de pipe delgado siguen siendo válidos",
+        "guide_cr_th_endpoint": "Endpoint",
+        "guide_cr_th_for": "Mejor para",
+        "guide_cr_th_path": "Ruta",
+        "guide_cr_title": "🔀 ¿Por qué EClaw tiene dos rutas de enrutamiento de canales?",
         "rm_hermes_done_daemon": "<strong>2026-04-28 — Refactorización del daemon HTTP</strong> (card_52bd51bb): el puente reemplaza el fork de subproceso <code>hermes chat</code> por solicitud (arranque en frío de 5–8 s) con un <code>hermes_daemon.py</code> persistente en <code>:8645</code> que posee un hijo <code>hermes --continue</code> persistente. El puente se comunica con el daemon mediante <code>POST /chat</code> + flujo de eventos SSE; recurre al subproceso heredado cuando <code>HERMES_DAEMON_URL</code> no está definido. Latencia por mensaje ≈ solo tiempo de inferencia.",
         "rm_hermes_done_selfcheck": "<strong>2026-04-27 — Autoverificación + autoactivación</strong> (PR #2): el puente ejecuta una autoverificación interna cada 30 min; los estados <code>stuck_prompt</code> se recuperan automáticamente en lugar de escalarse. Una prueba de regresión E2E tras inactividad prolongada protege contra el bug 7.",
         "rm_hermes_kpi_uptime": "≥99.0%",
@@ -5562790,6 +5562980,31 @@ const TRANSLATIONS = {
         "rm_h4_t2": "Contribuciones i18n de Hermes visibles como PR fusionadas — úsalas como prueba del A2A multiplataforma",
         "rm_h4_t3": "Demo en vivo: el comandante asigna una tarjeta, Hermes entrega el PR, el comandante lo fusiona — captura de pantalla en el portal",
         "rm_h4_t4": "Agregar Hermes a la página de lista de agentes de EClaw (tarjetas de agente con etiquetas de capacidades)",
+        "rm_h4_proof_header": "Flujo de demostración en vivo",
+        "rm_h4_proof_status": "● Demostración fusionada",
+        "rm_h4_step1_label": "Asignar",
+        "rm_h4_step1_title": "Comandante → Hermes",
+        "rm_h4_step1_copy": "Tarjeta asignada a través de EClaw A2A con alcance de repo, salida esperada de PR y entrega de revisión.",
+        "rm_h4_step1_bubble": "Demostración del portal H4: actualizar el roadmap y abrir PR.",
+        "rm_h4_step2_label": "Entregar",
+        "rm_h4_step2_title": "Hermes entrega PR",
+        "rm_h4_step2_copy": "Hermes crea rama, hace commit, hace push y devuelve la URL del PR para revisión del comandante.",
+        "rm_h4_step2_bubble": "PR listo: demostración del roadmap + tarjeta de roster añadida.",
+        "rm_h4_step3_label": "Fusionar",
+        "rm_h4_step3_title": "El comandante revisa",
+        "rm_h4_step3_copy": "El comandante valida la demostración del portal, hace merge y deja la prueba pública en el roadmap.",
+        "rm_h4_step3_bubble": "Fusionado tras revisión. Showcase H4 completo.",
+        "rm_h4_roster_name": "Hermes · Entidad #5",
+        "rm_h4_roster_meta": "Agente de NousResearch vía webhook de EClaw",
+        "rm_h4_tag_a2a": "Compañero A2A",
+        "rm_h4_tag_pr": "Entrega de PR",
+        "rm_h4_tag_i18n": "Lotes de i18n",
+        "rm_h4_tag_webhook": "Canal webhook",
+        "rm_h4_tag_selfheal": "Auto-reparación",
+        "rm_h4_stat_resume": "objetivo de resume",
+        "rm_h4_stat_uptime": "objetivo de uptime",
+        "rm_h4_stat_health": "verificación de salud",
+        "rm_h4_stat_rate": "protección de tasa",
         "rm_desktop_title": "Hoja de ruta para la configuración con un clic de EClaw Desktop",
         "rm_desktop_desc": "Objetivo: lograr una aplicación de escritorio que complete toda la configuración de vinculación de agentes en 30 segundos",
         "rm_d1_name": "Infraestructura principal",
@@ -5563402,6 +5563617,8 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_override_statuses": "Anular columnas",
         "kanban_nudge_per_entity_override_throttle": "Anular límite",
         "kanban_nudge_per_entity_throttle_short": "Limita esta entidad a 1 aviso por intervalo",
+        "kanban_nudge_per_entity_stop_mode": "Stop-mode: pausar avisos de tarjeta inactiva para esta entidad",
+        "kanban_nudge_stop_mode_avatar_title": "Stop-mode de aviso activado",
         "kb_funnel_tag": "Etiqueta…",
         "kb_gate_backlog_only_hint": "Launch-gate solo está disponible para tarjetas de backlog",},
 
@@ -5736961,7 +5737178,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1044_3": "Article Publisher Module — Blogger OAuth flow & Hashnode API integration for publishing content directly from bot sessions",
+        "rn_1044_3": "Article Publisher Module — Blogger OAuth flow & DEV.to & Qiita API integration for publishing content directly from bot sessions",
 
 
 
@@ -6099128,11 +6099345,11 @@ const TRANSLATIONS = {
         "guide_pub_col_region": "Region",
         "guide_pub_col_status": "Multi-Tenant-Status",
         "guide_pub_meta": "10 Content-Plattformen · Multi-Tenant-Keys auf allen Geräten aktiv (Telegraph ist Auto-Key, kein Vault nötig)",
-        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> vereinheitlicht 10 Content-Plattformen unter <code>/api/publisher/&lt;platform&gt;/*</code>. „Multi-Tenant\" bedeutet, dass <strong>jedes Gerät beim Aufruf der Plattform die Keys seines eigenen Vaults verwendet</strong> — statt dass alle Geräte den einzigen Env-Key des Owners teilen. Alle 9 Plattformen, die Keys benötigen (X, Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat), führen den vollständigen Vault-First-Ablauf aus: jede Plattform hat ihre eigene <code>resolve&lt;Platform&gt;Creds(deviceId)</code>, die zuerst den Geräte-Vault liest und bei Fehlen auf <code>process.env</code> zurückfällt. Telegraph ist Auto-Key (der erste Aufruf erstellt automatisch ein anonymes Konto) und benötigt daher keinen Vault-Pfad.",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> vereinheitlicht 10 Content-Plattformen unter <code>/api/publisher/&lt;platform&gt;/*</code>. „Multi-Tenant\" bedeutet, dass <strong>jedes Gerät beim Aufruf der Plattform die Keys seines eigenen Vaults verwendet</strong> — statt dass alle Geräte den einzigen Env-Key des Owners teilen. Alle 9 Plattformen, die Keys benötigen (X, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat), führen den vollständigen Vault-First-Ablauf aus: jede Plattform hat ihre eigene <code>resolve&lt;Platform&gt;Creds(deviceId)</code>, die zuerst den Geräte-Vault liest und bei Fehlen auf <code>process.env</code> zurückfällt. Telegraph ist Auto-Key (der erste Aufruf erstellt automatisch ein anonymes Konto) und benötigt daher keinen Vault-Pfad.",
         "guide_pub_overview_h": "Übersicht",
         "guide_pub_roadmap_desc": "Abgeschlossen 2026-04. Alle 9 Plattformen, die Keys benötigen, laufen Vault-First; Telegraph ist Auto-Key und benötigt keinen Vault-Pfad. Immer abwärtskompatibel: fehlende Vault-Keys fallen auf <code>process.env</code> zurück, sodass bestehende Env-only-Deployments nicht betroffen sind. Die Liste unten gruppiert Plattformen nach Signatur-Muster mit der jeweiligen Release-PR:",
         "guide_pub_roadmap_h": "Abgeschlossen: Multi-Tenant-Migration auf jeder Plattform ausgeliefert ✅",
-        "guide_pub_roadmap_step1": "<strong>1-Key-Bearer-Plattformen</strong> (Hashnode / DEV.to / Qiita): ein einzelnes API-Token — am einfachsten, zuerst ausgeliefert.",
+        "guide_pub_roadmap_step1": "<strong>1-Key-Bearer-Plattformen</strong> (DEV.to / Qiita): ein einzelnes API-Token — am einfachsten, zuerst ausgeliefert.",
         "guide_pub_roadmap_step2": "<strong>2-Key Bearer + URN</strong> (LinkedIn): access_token + author URN, beides aus dem Vault gelesen.",
         "guide_pub_roadmap_step3": "<strong>4-Key OAuth1a Echtzeit-Signierung</strong> (X / Tumblr): consumer + access Paare, jede Anfrage signiert Nonce + Timestamp mit HMAC-SHA1.",
         "guide_pub_roadmap_step4": "<strong>4-Key OAuth2 Password Grant + Token-Cache pro Tenant</strong> (Reddit): username/password werden gegen ein access_token getauscht; Cache verwendet <code>Map keyed by clientId+username</code>, um Cross-Tenant-Verunreinigung zu verhindern.",
@@ -6099379,6 +6099596,30 @@ const TRANSLATIONS = {
         "settings_roster_confirm_title": "Roster-Aktion bestätigen",
         "settings_roster_empty_state_listings": "Noch keine Angebote.",
         "settings_roster_empty_state_rentals": "Noch keine gemieteten Bots.",
+        "guide_cr_cta_spec": "Vollständiger Entscheidungsbaum und Geschichte: <a href=\"https://github.com/HankHuang0516/EClaw/blob/main/docs/specs/channel-routing-paths.md\" target=\"_blank\" rel=\"noopener\">channel-routing-paths.md</a>",
+        "guide_cr_cta_title": "Mehr erfahren",
+        "guide_cr_decision": "LLM-Laufzeit-Bridge → Pfad B (transform + channelKey); Reines Relay → Pfad A (channel/message)",
+        "guide_cr_h2_decision": "Einzeilige Entscheidungsregel",
+        "guide_cr_h2_two_paths": "Zwei Pfade, jeder für einen Zweck",
+        "guide_cr_meta": "Thin-pipe vs. LLM-Laufzeit — die Designphilosophie",
+        "guide_cr_p_intro": "EClaw bewahrt absichtlich zwei Channel-Nachrichtenpfade. Dies ist eine bewusste architektonische Entscheidung: Verschiedene Integrationsszenarien benötigen verschiedene Abstraktionsebenen.",
+        "guide_cr_path_a_for": "Discord-Webhooks, IoT-Relays, REST-Forwarder",
+        "guide_cr_path_a_label": "Pfad A — Thin-pipe",
+        "guide_cr_path_b_for": "Claude-, Codex-, Hermes-LLM-Bridges",
+        "guide_cr_path_b_label": "Pfad B — LLM-Laufzeit",
+        "guide_cr_sp1_desc": "Die Channel-Registrierung definiert ACL vorab. Die Bridge ruft /api/transform mit X-Channel-Key + actAs auf; der Server validiert ACL und führt mit allen Transform-Nebeneffekten aus — @-Mention-Auto-Routing, A2A-Queue, State-Management — ohne dass ein botSecret in der Bridge gespeichert ist.",
+        "guide_cr_sp1_pain": "LLM-Bridge muss das botSecret jedes Bots speichern — verstreutes Secret-Management?",
+        "guide_cr_sp1_solution": "→ Pfad B erlaubt der Bridge nur einen ECLAW_API_KEY zu halten",
+        "guide_cr_sp2_desc": "Der Server scannt den Nachrichtentext, löst sechs Mention-Token-Formen auf (@N, @#N, @publicCode, @all, etc.) und routed automatisch zu Ziel-Entitäten — keine hartcodierte speakTo-Injection in der Bridge nötig.",
+        "guide_cr_sp2_pain": "Bot-Antworten über /api/channel/message können kein @-Mention-Routing auslösen?",
+        "guide_cr_sp2_solution": "→ Pfad B nutzt /api/transform; @-Mention-Tokens werden automatisch geparst und speakTo wird gefüllt",
+        "guide_cr_sp3_desc": "Discord-Webhook-Forwarder, IoT-Sensoren und REST-Relays brauchen einfach keine LLM-Laufzeit-Features. Pfad A beizubehalten ist ein Bekenntnis zu Drittentwicklern.",
+        "guide_cr_sp3_pain": "Keine Drittintegrationen zerbrechen, die bereits /api/channel/message nutzen?",
+        "guide_cr_sp3_solution": "→ Pfad A wird nie deprecated; legitime Thin-pipe-Anwendungsfälle bleiben gültig",
+        "guide_cr_th_endpoint": "Endpunkt",
+        "guide_cr_th_for": "Am besten für",
+        "guide_cr_th_path": "Pfad",
+        "guide_cr_title": "🔀 Warum hat EClaw zwei Channel-Routing-Pfade?",
         "settings_roster_empty_state_history": "Noch keine Mietereignisse.",
         "settings_roster_loading": "Roster wird geladen…",
         "settings_roster_mock_note": "Vorschaumodus: Backend-Roster-Endpunkte sind noch nicht verfügbar; es werden Beispieldaten angezeigt.",
@@ -6099964,6 +6100205,8 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_override_statuses": "Spalten überschreiben",
         "kanban_nudge_per_entity_override_throttle": "Drosselung überschreiben",
         "kanban_nudge_per_entity_throttle_short": "Diese Entität auf 1 Hinweis pro Intervall begrenzen",
+        "kanban_nudge_per_entity_stop_mode": "Stop-mode: Erinnerungen für veraltete Karten dieser Entität pausieren",
+        "kanban_nudge_stop_mode_avatar_title": "Nudge-Stop-mode aktiviert",
         "kb_funnel_tag": "Tag…",
         "kb_gate_backlog_only_hint": "Launch-gate ist nur für Backlog-Karten verfügbar",
     },
@@ -6100861,7 +6101104,7 @@ const TRANSLATIONS = {
         "info_slide_guide_publisher_cta": "View Claude Design slide →",
         "guide_pub_meta": "10 content platforms · multi-tenant keys live for all (Telegraph is auto-key, no vault needed)",
         "guide_pub_overview_h": "Overview",
-        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> unifies 10 content platforms under <code>/api/publisher/&lt;platform&gt;/*</code>. \"Multi-tenant\" means <strong>each device uses keys from its own vault</strong> when calling the platform — instead of every device sharing the owner's single env key. All 9 key-requiring platforms (X, Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) run the full vault-first flow: each platform has its own <code>resolve&lt;Platform&gt;Creds(deviceId)</code> that reads the device vault first and falls back to <code>process.env</code> on miss. Telegraph is auto-key (first call auto-creates an anonymous account) so it doesn't need a vault path.",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> unifies 10 content platforms under <code>/api/publisher/&lt;platform&gt;/*</code>. \"Multi-tenant\" means <strong>each device uses keys from its own vault</strong> when calling the platform — instead of every device sharing the owner's single env key. All 8 key-requiring platforms (X, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) run the full vault-first flow: each platform has its own <code>resolve&lt;Platform&gt;Creds(deviceId)</code> that reads the device vault first and falls back to <code>process.env</code> on miss. Telegraph is auto-key (first call auto-creates an anonymous account) so it doesn't need a vault path.",
         "guide_pub_status_h": "Platform Status",
         "guide_pub_status_legend": "<span class=\"pub-badge pub-badge-vault\">🔓 vault-first</span> Multi-tenant ready (each device its own keys) <span class=\"pub-badge pub-badge-env\">⚙️ env-only</span> Still single-tenant (shared owner env) <span class=\"pub-badge pub-badge-skip\">— retired</span> Removed",
         "guide_pub_col_platform": "Platform",
@@ -6100871,8 +6101114,8 @@ const TRANSLATIONS = {
         "guide_pub_col_status": "Multi-tenant status",
         "guide_pub_telegraph_note": "No keys needed (first call auto-creates an anonymous account)",
         "guide_pub_roadmap_h": "Done: multi-tenant migration shipped on every platform ✅",
-        "guide_pub_roadmap_desc": "Completed 2026-04. All 9 key-requiring platforms run vault-first; Telegraph is auto-key and doesn't need a vault path. Always backwards-compat: missing vault keys fall back to <code>process.env</code>, so existing env-only deployments are unaffected. The list below groups platforms by signing pattern with the shipping PR for each:",
-        "guide_pub_roadmap_step1": "<strong>1-key bearer platforms</strong> (Hashnode / DEV.to / Qiita): a single API token — the simplest, shipped first.",
+        "guide_pub_roadmap_desc": "Completed 2026-04. All 8 key-requiring platforms run vault-first; Telegraph is auto-key and doesn't need a vault path. Always backwards-compat: missing vault keys fall back to <code>process.env</code>, so existing env-only deployments are unaffected. The list below groups platforms by signing pattern with the shipping PR for each:",
+        "guide_pub_roadmap_step1": "<strong>1-key bearer platforms</strong> (DEV.to / Qiita): a single API token — the simplest, shipped first.",
         "guide_pub_roadmap_step2": "<strong>2-key bearer + URN</strong> (LinkedIn): access_token + author URN, both pulled from the vault.",
         "guide_pub_roadmap_step3": "<strong>4-key OAuth1a real-time signing</strong> (X / Tumblr): consumer + access pairs, every request signs nonce + timestamp with HMAC-SHA1.",
         "guide_pub_roadmap_step4": "<strong>4-key OAuth2 password grant + per-tenant token cache</strong> (Reddit): username/password trades for an access_token; cache keyed by <code>Map keyed by clientId+username</code> to prevent cross-tenant pollution.",
@@ -6101596,7 +6101839,7 @@ const TRANSLATIONS = {
         "rn_1043_6": "i18n & Tests — 160+ missing translation keys added; regression test suite expanded from 14 to 21 tests",
         "rn_1044_1": "Cross-Device Message Management — new Android interface to browse and manage messages across all bound devices",
         "rn_1044_2": "Bot Tools API — web-search & web-fetch proxy endpoints for OpenClaw bots to query the web without leaving the platform",
-        "rn_1044_3": "Article Publisher Module — Blogger OAuth flow & Hashnode API integration for publishing content directly from bot sessions",
+        "rn_1044_3": "Article Publisher Module — Blogger OAuth flow & DEV.to & Qiita API integration for publishing content directly from bot sessions",
         "rn_1044_4": "Chat & Entity UI Fixes — chat bubble text selection, entity public code display, and edit-mode swap bugs resolved (Android)",
         "rn_1044_5": "Gatekeeper Hardening — false positives for credential detection fixed; eclawbot.com whitelisted; self-unblock API added",
         "rn_1045_1": "Skill Template Search — live search bar in gallery to filter templates by name or author",
@@ -6102177,6 +6102420,8 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_override_statuses": "Override columns",
         "kanban_nudge_per_entity_override_throttle": "Override throttle",
         "kanban_nudge_per_entity_throttle_short": "Cap this entity at 1 nudge per interval",
+        "kanban_nudge_per_entity_stop_mode": "Stop-mode: pause stale-card reminders for this entity",
+        "kanban_nudge_stop_mode_avatar_title": "Nudge stop-mode enabled",
         "kanban_cron_recurring_notify_label": "🅱️ Cron parent card self-recurring (no child): notify on each fire",
         "chat_broadcast_tag": "Broadcast",
         "chat_kanban_notify": "Kanban",
@@ -6102962,6 +6103207,30 @@ const TRANSLATIONS = {
         "admin_chart_app": "Android APP",
         "admin_chart_bot_overview": "Bot Type Overview",
         "admin_chart_bots": "bots",
+        "guide_cr_cta_spec": "Árvore de decisão completa e histórico: <a href=\"https://github.com/HankHuang0516/EClaw/blob/main/docs/specs/channel-routing-paths.md\" target=\"_blank\" rel=\"noopener\">channel-routing-paths.md</a>",
+        "guide_cr_cta_title": "Saiba Mais",
+        "guide_cr_decision": "Ponte de runtime LLM → Caminho B (transform + channelKey); Relé puro → Caminho A (channel/message)",
+        "guide_cr_h2_decision": "Regra de Decisão em Uma Linha",
+        "guide_cr_h2_two_paths": "Dois Caminhos, Cada Um com um Propósito",
+        "guide_cr_meta": "Thin-pipe vs runtime LLM — a filosofia de design",
+        "guide_cr_p_intro": "O EClaw intencionalmente preserva dois caminhos de mensagens de canal. Esta é uma escolha arquitetural deliberada: diferentes cenários de integração precisam de diferentes níveis de abstração.",
+        "guide_cr_path_a_for": "Webhooks do Discord, relés IoT, encaminhadores REST",
+        "guide_cr_path_a_label": "Caminho A — Thin-pipe",
+        "guide_cr_path_b_for": "Pontes LLM Claude, Codex, Hermes",
+        "guide_cr_path_b_label": "Caminho B — Runtime LLM",
+        "guide_cr_sp1_desc": "O registro de canal pré-defina ACL. A ponte chama /api/transform com X-Channel-Key + actAs; o servidor valida ACL e executa com todos os efeitos colaterais do transform — roteamento automático de @-menção, fila A2A, gerenciamento de estado — sem nenhum botSecret armazenado na ponte.",
+        "guide_cr_sp1_pain": "Ponte LLM deve armazenar o botSecret de cada bot — gerenciamento de segredos disperso?",
+        "guide_cr_sp1_solution": "→ O Caminho B permite que a ponte mantenha apenas uma ECLAW_API_KEY",
+        "guide_cr_sp2_desc": "O servidor verifica o texto da mensagem, resolve seis formas de token de menção (@N, @#N, @publicCode, @all, etc.) e roteia automaticamente para entidades-alvo — nenhuma injeção de speakTo codificada necessária na ponte.",
+        "guide_cr_sp2_pain": "Respostas de bot via /api/channel/message não podem acionar roteamento de @-menção?",
+        "guide_cr_sp2_solution": "→ O Caminho B usa /api/transform; tokens de @-menção são analisados automaticamente e speakTo é preenchido",
+        "guide_cr_sp3_desc": "Encaminhadores de webhook do Discord, sensores IoT e relés REST simplesmente não precisam de recursos de runtime LLM. Manter o Caminho A é um compromisso com integradores de terceiros.",
+        "guide_cr_sp3_pain": "Não quer quebrar integrações de terceiros que já usam /api/channel/message?",
+        "guide_cr_sp3_solution": "→ O Caminho A nunca é descontinuado; casos de uso legítimos de thin-pipe permanecem válidos",
+        "guide_cr_th_endpoint": "Endpoint",
+        "guide_cr_th_for": "Melhor para",
+        "guide_cr_th_path": "Caminho",
+        "guide_cr_title": "🔀 Por Que o EClaw Possui Dois Caminhos de Roteamento de Canais?",
         "admin_chart_free": "Free",
         "admin_chart_personal": "Personal",
         "admin_chart_assigned": "assigned",
@@ -6276137,7 +6276406,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1044_3": "Modul Penerbit Artikel — Aliran OAuth Blogger & integrasi API Hashnode untuk menerbitkan kandungan terus daripada sesi bot",
+        "rn_1044_3": "Modul Penerbit Artikel — Aliran OAuth Blogger & integrasi API DEV.to untuk menerbitkan kandungan terus daripada sesi bot",
 
 
 
@@ -6632634,11 +6632903,11 @@ const TRANSLATIONS = {
         "guide_pub_col_region": "Wilayah",
         "guide_pub_col_status": "Status berbilang penyewa",
         "guide_pub_meta": "10 platform kandungan · kunci berbilang penyewa aktif untuk semua peranti (Telegraph ialah kunci auto, tiada vault diperlukan)",
-        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> menyatukan 10 platform kandungan di bawah <code>/api/publisher/&lt;platform&gt;/*</code>. \"Berbilang penyewa\" bermaksud <strong>setiap peranti menggunakan kunci dari vault sendiri</strong> apabila memanggil platform — dan bukannya semua peranti berkongsi satu kunci env pemilik. Kesemua 9 platform yang memerlukan kunci (X, Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) menjalankan aliran vault-first penuh: setiap platform mempunyai <code>resolve&lt;Platform&gt;Creds(deviceId)</code> tersendiri yang membaca vault peranti dahulu dan fallback ke <code>process.env</code> apabila tiada. Telegraph ialah kunci auto (panggilan pertama mencipta akaun tanpa nama secara automatik) jadi ia tidak memerlukan laluan vault.",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> menyatukan 10 platform kandungan di bawah <code>/api/publisher/&lt;platform&gt;/*</code>. \"Berbilang penyewa\" bermaksud <strong>setiap peranti menggunakan kunci dari vault sendiri</strong> apabila memanggil platform — dan bukannya semua peranti berkongsi satu kunci env pemilik. Kesemua 8 platform yang memerlukan kunci (X, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) menjalankan aliran vault-first penuh: setiap platform mempunyai <code>resolve&lt;Platform&gt;Creds(deviceId)</code> tersendiri yang membaca vault peranti dahulu dan fallback ke <code>process.env</code> apabila tiada. Telegraph ialah kunci auto (panggilan pertama mencipta akaun tanpa nama secara automatik) jadi ia tidak memerlukan laluan vault.",
         "guide_pub_overview_h": "Gambaran keseluruhan",
-        "guide_pub_roadmap_desc": "Selesai 2026-04. Kesemua 9 platform yang memerlukan kunci berjalan vault-first; Telegraph ialah kunci auto dan tidak memerlukan laluan vault. Sentiasa serasi ke belakang: kunci vault yang hilang fallback ke <code>process.env</code>, jadi deployment env-only sedia ada tidak terjejas. Senarai di bawah mengumpulkan platform mengikut corak penandatanganan dengan PR keluaran masing-masing:",
+        "guide_pub_roadmap_desc": "Selesai 2026-04. Kesemua 8 platform yang memerlukan kunci berjalan vault-first; Telegraph ialah kunci auto dan tidak memerlukan laluan vault. Sentiasa serasi ke belakang: kunci vault yang hilang fallback ke <code>process.env</code>, jadi deployment env-only sedia ada tidak terjejas. Senarai di bawah mengumpulkan platform mengikut corak penandatanganan dengan PR keluaran masing-masing:",
         "guide_pub_roadmap_h": "Selesai: migrasi berbilang penyewa dilancarkan di setiap platform ✅",
-        "guide_pub_roadmap_step1": "<strong>Platform bearer 1-kunci</strong> (Hashnode / DEV.to / Qiita): satu token API — paling mudah, dilancarkan dahulu.",
+        "guide_pub_roadmap_step1": "<strong>Platform bearer 1-kunci</strong> (DEV.to / Qiita): satu token API — paling mudah, dilancarkan dahulu.",
         "guide_pub_roadmap_step2": "<strong>bearer 2-kunci + URN</strong> (LinkedIn): access_token + author URN, kedua-duanya diambil dari vault.",
         "guide_pub_roadmap_step3": "<strong>OAuth1a 4-kunci penandatanganan masa nyata</strong> (X / Tumblr): pasangan consumer + access, setiap permintaan menandatangani nonce + timestamp dengan HMAC-SHA1.",
         "guide_pub_roadmap_step4": "<strong>OAuth2 password grant 4-kunci + cache token setiap penyewa</strong> (Reddit): username/password ditukar untuk access_token; cache menggunakan <code>Map keyed by clientId+username</code> untuk mencegah pencemaran merentas penyewa.",
@@ -6632920,6 +6633189,30 @@ const TRANSLATIONS = {
         "guide_mention_dir_user": "<strong>@ Pengguna</strong> (dalam input sembang)",
         "guide_mention_flow_relay_sub": "speakTo / broadcast",
         "guide_mention_h2_api": "Rujukan pembangun API",
+        "guide_cr_cta_spec": "Pokok keputusan penuh dan sejarah: <a href=\"https://github.com/HankHuang0516/EClaw/blob/main/docs/specs/channel-routing-paths.md\" target=\"_blank\" rel=\"noopener\">channel-routing-paths.md</a>",
+        "guide_cr_cta_title": "Ketahui Lebih Lanjut",
+        "guide_cr_decision": "Jembatan LLM runtime → Jalur B (transform + channelKey); Relay murni → Jalur A (channel/message)",
+        "guide_cr_h2_decision": "Peraturan Keputusan Satu Baris",
+        "guide_cr_h2_two_paths": "Dua Jalur, Setiap Satu untuk Tujuan",
+        "guide_cr_meta": "Thin-pipe vs LLM runtime — falsafah reka bentuk",
+        "guide_cr_p_intro": "EClaw sengaja mengekalkan dua laluan pemesejan saluran. Ini adalah pilihan seni bina yang disengajakan: senario integrasi yang berbeza memerlukan tahap pengabstrakan yang berbeza.",
+        "guide_cr_path_a_for": "Webhook Discord, relay IoT, forwarder REST",
+        "guide_cr_path_a_label": "Jalur A — Thin-pipe",
+        "guide_cr_path_b_for": "Claude, Codex, jembatan LLM Hermes",
+        "guide_cr_path_b_label": "Jalur B — LLM Runtime",
+        "guide_cr_sp1_desc": "Pendaftaran saluran pra-menentukan ACL. Jembatan memanggil /api/transform dengan X-Channel-Key + actAs; pelayan mengesahkan ACL dan melaksanakan dengan kesan sampingan transform penuh — penghalaan auto @-mention, giliran A2A, pengurusan keadaan — tanpa sebarang botSecret disimpan dalam jambatan.",
+        "guide_cr_sp1_pain": "Jembatan LLM perlu menyimpan setiap botSecret bot — pengurusan rahsia yang berserakan?",
+        "guide_cr_sp1_solution": "→ Jalur B membolehkan jambatan memegang hanya satu ECLAW_API_KEY",
+        "guide_cr_sp2_desc": "Pelayan mengimbas teks mesej, menyelesaikan enam bentuk token mention (@N, @#N, @publicCode, @all, dll.), dan menghala secara automatik ke entiti sasaran — tiada suntikan speakTo yang dikodkan keras diperlukan dalam jambatan.",
+        "guide_cr_sp2_pain": "Balasan bot melalui /api/channel/message tidak dapat memicu penghalaan @-mention?",
+        "guide_cr_sp2_solution": "→ Jalur B menggunakan /api/transform; token @-mention dihuraikan secara automatik dan speakTo diisi",
+        "guide_cr_sp3_desc": "Forwarder webhook Discord, sensor IoT, dan relay REST sebenarnya tidak memerlukan ciri LLM runtime. Mengekalkan Jalur A adalah komitmen kepada integrators pihak ketiga.",
+        "guide_cr_sp3_pain": "Tidak mahu memecahkan integrasi pihak ketiga yang sudah menggunakan /api/channel/message?",
+        "guide_cr_sp3_solution": "→ Jalur A tidak akan dihentikan; kes penggunaan thin-pipe yang sah kekal sah",
+        "guide_cr_th_endpoint": "Titik Akhir",
+        "guide_cr_th_for": "Sesuai untuk",
+        "guide_cr_th_path": "Jalur",
+        "guide_cr_title": "🔀 Mengapa EClaw Memiliki Dua Jalur Penghalaan Saluran?",
         "guide_mention_h2_safety": "Keselamatan & had",
         "guide_mention_h2_syntax": "Sintaks @",
         "guide_mention_h2_tips": "Petua penggunaan",
@@ -6633658,6 +6633951,8 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_override_statuses": "Gantikan lajur",
         "kanban_nudge_per_entity_override_throttle": "Gantikan had",
         "kanban_nudge_per_entity_throttle_short": "Hadkan entiti ini kepada 1 peringatan setiap sela masa",
+        "kanban_nudge_per_entity_stop_mode": "Stop-mode: jeda gesaan kad tidak aktif untuk entiti ini",
+        "kanban_nudge_stop_mode_avatar_title": "Stop-mode gesaan diaktifkan",
         "wallet_title": "EClawbot - Dompet Saya",
         "rm_hero_title": "Pasaran Sewaan Bot EClaw",
         "guide_nav_usecase_messaging": "💬 Mesej & Rakan",
@@ -7026788,7 +7027083,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1044_3": "Article Publisher Module — Blogger OAuth flow & Hashnode API integration for publishing content directly from bot sessions",
+        "rn_1044_3": "Article Publisher Module — Blogger OAuth flow & DEV.to & Qiita API integration for publishing content directly from bot sessions",
 
 
 
@@ -7191594,6 +7191889,30 @@ const TRANSLATIONS = {
 
 
 
+        "guide_cr_cta_spec": "पूर्ण डिसीज़न ट्री और इतिहास: <a href=\"https://github.com/HankHuang0516/EClaw/blob/main/docs/specs/channel-routing-paths.md\" target=\"_blank\" rel=\"noopener\">channel-routing-paths.md</a>",
+        "guide_cr_cta_title": "और जानें",
+        "guide_cr_decision": "LLM रनटाइम ब्रिज → पाथ B (transform + channelKey); शुद्ध रिले → पाथ A (channel/message)",
+        "guide_cr_h2_decision": "वन-लाइन डिसीज़न रूल",
+        "guide_cr_h2_two_paths": "दो पाथ, हर एक का एक उद्देश्य",
+        "guide_cr_meta": "Thin-pipe बनाम LLM runtime — डिज़ाइन फिलॉसफी",
+        "guide_cr_p_intro": "EClaw जानबूझकर दो चैनल मैसेजिंग पाथ रखता है। यह एक जानबूझकर वास्तुशिल्प विकल्प है: अलग-अलग इंटीग्रेशन परिदृश्यों को अलग-अलग एब्स्ट्रैक्शन स्तरों की जरूरत होती है।",
+        "guide_cr_path_a_for": "Discord वेबहुक, IoT रिले, REST फॉरवर्डर",
+        "guide_cr_path_a_label": "पाथ A — थिन-पाइप",
+        "guide_cr_path_b_for": "Claude, Codex, Hermes LLM ब्रिज",
+        "guide_cr_path_b_label": "पाथ B — LLM रनटाइम",
+        "guide_cr_sp1_desc": "चैनल रजिस्ट्रेशन पहले से ACL परिभाषित करता है। ब्रिज X-Channel-Key + actAs के साथ /api/transform को कॉल करता है; सर्वर ACL वैलिडेट करता है और पूर्ण transform साइड-इफेक्ट्स के साथ एक्जीक्यूट करता है — @-मेंशन ऑटो-रूटिंग, A2A क्यू, स्टेट मैनेजमेंट — बिना किसी botSecret को ब्रिज में स्टोर किए।",
+        "guide_cr_sp1_pain": "LLM ब्रिज को हर bot का botSecret स्टोर करना होगा — बिखरा हुआ सीक्रेट मैनेजमेंट?",
+        "guide_cr_sp1_solution": "→ पाथ B ब्रिज को केवल एक ECLAW_API_KEY रखने देता है",
+        "guide_cr_sp2_desc": "सर्वर मैसेज टेक्स्ट स्कैन करता है, छह मेंशन टोकन फॉर्म रिज़ॉल्व करता है (@N, @#N, @publicCode, @all, इत्यादि), और टारगेट एंटिटीज़ पर ऑटो-रूट करता है — ब्रिज में हार्डकोडेड speakTo इंजेक्शन की जरूरत नहीं।",
+        "guide_cr_sp2_pain": "क्या /api/channel/message से बॉट रिप्लाई @-मेंशन रूटिंग ट्रिगर नहीं कर सकता?",
+        "guide_cr_sp2_solution": "→ पाथ B /api/transform उपयोग करता है; @-मेंशन टोकन ऑटो-पार्स होते हैं और speakTo भरा जाता है",
+        "guide_cr_sp3_desc": "Discord वेबहुक फॉरवर्डर, IoT सेंसर, और REST रिले को सादे तौर पर LLM रनटाइम फीचर्स की जरूरत नहीं होती। पाथ A रखना तीसरे पक्ष के इंटीग्रेटर्स के प्रति एक प्रतिबद्धता है।",
+        "guide_cr_sp3_pain": "क्या तीसरे पक्ष के इंटीग्रेशन जो पहले से /api/channel/message उपयोग कर रहे हैं उन्हें नहीं तोड़ना चाहते?",
+        "guide_cr_sp3_solution": "→ पाथ A कभी डेप्रिकेट नहीं किया जाएगा; वैध थिन-पाइप यूज़ केस वैध रहेंगे",
+        "guide_cr_th_endpoint": "एंडपॉइंट",
+        "guide_cr_th_for": "सबसे अच्छा है",
+        "guide_cr_th_path": "पाथ",
+        "guide_cr_title": "🔀 EClaw में दो चैनल रूटिंग पाथ क्यों हैं?",
 
 
 
@@ -7191785,11 +7192104,11 @@ const TRANSLATIONS = {
         "guide_pub_col_region": "क्षेत्र",
         "guide_pub_col_status": "मल्टी-टेनेंट स्थिति",
         "guide_pub_meta": "10 कंटेंट प्लेटफ़ॉर्म · सभी डिवाइसों के लिए मल्टी-टेनेंट कुंजियाँ सक्रिय (Telegraph ऑटो-कुंजी है, vault की आवश्यकता नहीं)",
-        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> 10 कंटेंट प्लेटफ़ॉर्मों को <code>/api/publisher/&lt;platform&gt;/*</code> के अंतर्गत एकीकृत करता है। \"मल्टी-टेनेंट\" का अर्थ है कि <strong>प्रत्येक डिवाइस प्लेटफ़ॉर्म कॉल करते समय अपनी स्वयं की vault की कुंजियाँ उपयोग करता है</strong> — सभी डिवाइसों द्वारा owner की एकल env कुंजी साझा करने के बजाय। 9 कुंजी-आवश्यक प्लेटफ़ॉर्म (X, Hashnode, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) सभी पूर्ण vault-first फ़्लो चलाते हैं: प्रत्येक प्लेटफ़ॉर्म का अपना <code>resolve&lt;Platform&gt;Creds(deviceId)</code> है जो पहले डिवाइस vault पढ़ता है और चूक होने पर <code>process.env</code> पर fallback होता है। Telegraph ऑटो-कुंजी है (पहली कॉल पर स्वचालित रूप से अनाम खाता बनता है) इसलिए इसे vault पथ की आवश्यकता नहीं है।",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> 10 कंटेंट प्लेटफ़ॉर्मों को <code>/api/publisher/&lt;platform&gt;/*</code> के अंतर्गत एकीकृत करता है। \"मल्टी-टेनेंट\" का अर्थ है कि <strong>प्रत्येक डिवाइस प्लेटफ़ॉर्म कॉल करते समय अपनी स्वयं की vault की कुंजियाँ उपयोग करता है</strong> — सभी डिवाइसों द्वारा owner की एकल env कुंजी साझा करने के बजाय। 8 कुंजी-आवश्यक प्लेटफ़ॉर्म (X, DEV.to, Qiita, LinkedIn, Reddit, Tumblr, Blogger, WeChat) सभी पूर्ण vault-first फ़्लो चलाते हैं: प्रत्येक प्लेटफ़ॉर्म का अपना <code>resolve&lt;Platform&gt;Creds(deviceId)</code> है जो पहले डिवाइस vault पढ़ता है और चूक होने पर <code>process.env</code> पर fallback होता है। Telegraph ऑटो-कुंजी है (पहली कॉल पर स्वचालित रूप से अनाम खाता बनता है) इसलिए इसे vault पथ की आवश्यकता नहीं है।",
         "guide_pub_overview_h": "अवलोकन",
-        "guide_pub_roadmap_desc": "2026-04 में पूर्ण। 9 कुंजी-आवश्यक प्लेटफ़ॉर्म सभी vault-first चलते हैं; Telegraph ऑटो-कुंजी है और vault पथ की आवश्यकता नहीं। हमेशा backwards-compat: गुम vault कुंजियाँ <code>process.env</code> पर fallback होती हैं, इसलिए मौजूदा env-only deployment प्रभावित नहीं होते। नीचे दी गई सूची प्लेटफ़ॉर्मों को signing pattern के अनुसार समूहित करती है साथ ही प्रत्येक की रिलीज़ PR भी:",
+        "guide_pub_roadmap_desc": "2026-04 में पूर्ण। 8 कुंजी-आवश्यक प्लेटफ़ॉर्म सभी vault-first चलते हैं; Telegraph ऑटो-कुंजी है और vault पथ की आवश्यकता नहीं। हमेशा backwards-compat: गुम vault कुंजियाँ <code>process.env</code> पर fallback होती हैं, इसलिए मौजूदा env-only deployment प्रभावित नहीं होते। नीचे दी गई सूची प्लेटफ़ॉर्मों को signing pattern के अनुसार समूहित करती है साथ ही प्रत्येक की रिलीज़ PR भी:",
         "guide_pub_roadmap_h": "पूर्ण: मल्टी-टेनेंट माइग्रेशन हर प्लेटफ़ॉर्म पर रिलीज़ ✅",
-        "guide_pub_roadmap_step1": "<strong>1-कुंजी bearer प्लेटफ़ॉर्म</strong> (Hashnode / DEV.to / Qiita): एकल API token — सबसे सरल, पहले रिलीज़।",
+        "guide_pub_roadmap_step1": "<strong>1-कुंजी bearer प्लेटफ़ॉर्म</strong> (DEV.to / Qiita): एकल API token — सबसे सरल, पहले रिलीज़।",
         "guide_pub_roadmap_step2": "<strong>2-कुंजी bearer + URN</strong> (LinkedIn): access_token + author URN, दोनों vault से प्राप्त।",
         "guide_pub_roadmap_step3": "<strong>4-कुंजी OAuth1a real-time signing</strong> (X / Tumblr): consumer + access जोड़े, हर request HMAC-SHA1 से nonce + timestamp पर हस्ताक्षर करता है।",
         "guide_pub_roadmap_step4": "<strong>4-कुंजी OAuth2 password grant + प्रति-tenant token cache</strong> (Reddit): username/password access_token के लिए विनिमय; cache <code>Map keyed by clientId+username</code> का उपयोग करके cross-tenant संदूषण रोकता है।",
@@ -7192672,6 +7192991,8 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_override_statuses": "कॉलम ओवरराइड करें",
         "kanban_nudge_per_entity_override_throttle": "थ्रॉटल ओवरराइड करें",
         "kanban_nudge_per_entity_throttle_short": "इस एंटिटी को प्रति अंतराल 1 नज तक सीमित करें",
+        "kanban_nudge_per_entity_stop_mode": "Stop-mode: इस इकाई के लिए बासी-कार्ड नज रोकें",
+        "kanban_nudge_stop_mode_avatar_title": "नज stop-mode सक्षम",
         "wallet_title": "EClawbot - मेरा वॉलेट",
         "rm_hero_title": "EClaw Bot किराया मार्केटप्लेस",
         "guide_nav_usecase_messaging": "💬 मैसेजिंग और मित्र",
@@ -7363721,7 +7364042,7 @@ const TRANSLATIONS = {
 
 
 
-        "rn_1044_3": "Article Publisher Module — Blogger OAuth flow & Hashnode API integration for publishing content directly from bot sessions",
+        "rn_1044_3": "Article Publisher Module — Blogger OAuth flow & DEV.to & Qiita API integration for publishing content directly from bot sessions",
 
 
 
@@ -7739780,6 +7740101,30 @@ const TRANSLATIONS = {
 
 
 
+        "guide_cr_cta_spec": "شجرة القرار الكاملة والتاريخ: <a href=\"https://github.com/HankHuang0516/EClaw/blob/main/docs/specs/channel-routing-paths.md\" target=\"_blank\" rel=\"noopener\">channel-routing-paths.md</a>",
+        "guide_cr_cta_title": "اعرف المزيد",
+        "guide_cr_decision": "جسر بيئة تشغيل LLM → المسار B (transform + channelKey)؛ موجه نقي → المسار A (channel/message)",
+        "guide_cr_h2_decision": "قاعدة القرار في سطر واحد",
+        "guide_cr_h2_two_paths": "مساران، لكل منهما غرضه",
+        "guide_cr_meta": "أنبوب رفيع مقابل بيئة تشغيل LLM — فلسفة التصميم",
+        "guide_cr_p_intro": "يحتفظ EClaw عمداً بمساري إرسال رسائل للقنوات. هذا خيار معماري مقصود: سيناريوهات التكامل المختلفة تحتاج مستويات تجريد مختلفة.",
+        "guide_cr_path_a_for": "ويبهوكات ديسكورد، مُرشحات إنترنت الأشياء، مُوجّهات REST",
+        "guide_cr_path_a_label": "المسار A — الأنبوب رفيع",
+        "guide_cr_path_b_for": "جسور LLM لكلود، كوديكس، هرمس",
+        "guide_cr_path_b_label": "المسار B — بيئة تشغيل LLM",
+        "guide_cr_sp1_desc": "تسجيل القناة يحدد ACL مسبقاً. يستدعي الجسر /api/transform مع X-Channel-Key + actAs؛ يتحقق الخادم من ACL وينفذ مع جميع الآثار الجانبية لـ transform — التوجيه التلقائي لـ @-ذكر، قائمة A2A، إدارة الحالة — بدون أي botSecret مخزن في الجسر.",
+        "guide_cr_sp1_pain": "يجب على جسر LLM تخزين botSecret لكل بوت — إدارة أسرار متفرقة؟",
+        "guide_cr_sp1_solution": "→ يسمح المسار B للجسر بالاحتفاظ بمفتاح ECLAW_API_KEY واحد فقط",
+        "guide_cr_sp2_desc": "يفحص الخادم نص الرسالة، يحل ست أشكال لرموز الإشارة (@N، و@#N، و@publicCode، و@all، وغيرها)، ويوجّه تلقائياً إلى الكيانات المستهدفة — لا حاجة لحقن speakTo مبرمج في الجسر.",
+        "guide_cr_sp2_pain": "لا يمكن لردود البوت عبر /api/channel/message تفعيل توجيه @-ذكر؟",
+        "guide_cr_sp2_solution": "→ يستخدم المسار B /api/transform؛ يتم تحليل رموز @-الذكر تلقائياً وتعبئة speakTo",
+        "guide_cr_sp3_desc": "مُوجّهات ويبهوكات ديسكورد، مستشعرات إنترنت الأشياء، ومُوجّهات REST ببساطة لا تحتاج ميزات بيئة تشغيل LLM. الحفاظ على المسار A هو التزام تجاه مُكاملي التكامل من الأطراف الثالثة.",
+        "guide_cr_sp3_pain": "لا تريد كسر عمليات التكامل التابعة لجهات خارجية التي تستخدم /api/channel/message؟",
+        "guide_cr_sp3_solution": "→ لن يتم إهمال المسار A أبداً؛ حالات استخدام الأنبوب رفيع المشروعة تظل صالحة",
+        "guide_cr_th_endpoint": "نقطة النهاية",
+        "guide_cr_th_for": "الأفضل لـ",
+        "guide_cr_th_path": "المسار",
+        "guide_cr_title": "🔀 لماذا يحتوي EClaw على مسارين لتوجيه القنوات؟",
 
 
 
@@ -7739995,11 +7740340,11 @@ const TRANSLATIONS = {
         "guide_pub_col_region": "المنطقة",
         "guide_pub_col_status": "حالة متعدد المستأجرين",
         "guide_pub_meta": "10 منصات محتوى · مفاتيح متعددة المستأجرين تعمل لجميع الأجهزة (Telegraph ذاتي المفتاح، لا يحتاج vault)",
-        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> يوحّد 10 منصات محتوى تحت <code>/api/publisher/&lt;platform&gt;/*</code>. \"متعدد المستأجرين\" يعني أن <strong>كل جهاز يستخدم مفاتيح من vault الخاص به</strong> عند استدعاء المنصة — بدلاً من أن تشترك جميع الأجهزة في مفتاح env الوحيد للمالك. جميع المنصات الـ9 التي تتطلب مفاتيح (X و Hashnode و DEV.to و Qiita و LinkedIn و Reddit و Tumblr و Blogger و WeChat) تعمل بتدفق vault-first الكامل: لكل منصة <code>resolve&lt;Platform&gt;Creds(deviceId)</code> الخاص بها يقرأ vault الجهاز أولاً ثم يعود إلى <code>process.env</code> عند الفقد. Telegraph ذاتي المفتاح (الاستدعاء الأول ينشئ حساباً مجهولاً تلقائياً) لذا لا يحتاج إلى مسار vault.",
+        "guide_pub_overview_desc": "<code>backend/article-publisher.js</code> يوحّد 10 منصات محتوى تحت <code>/api/publisher/&lt;platform&gt;/*</code>. \"متعدد المستأجرين\" يعني أن <strong>كل جهاز يستخدم مفاتيح من vault الخاص به</strong> عند استدعاء المنصة — بدلاً من أن تشترك جميع الأجهزة في مفتاح env الوحيد للمالك. جميع المنصات الـ9 التي تتطلب مفاتيح (X و DEV.to و DEV.to و Qiita و LinkedIn و Reddit و Tumblr و Blogger و WeChat) تعمل بتدفق vault-first الكامل: لكل منصة <code>resolve&lt;Platform&gt;Creds(deviceId)</code> الخاص بها يقرأ vault الجهاز أولاً ثم يعود إلى <code>process.env</code> عند الفقد. Telegraph ذاتي المفتاح (الاستدعاء الأول ينشئ حساباً مجهولاً تلقائياً) لذا لا يحتاج إلى مسار vault.",
         "guide_pub_overview_h": "نظرة عامة",
         "guide_pub_roadmap_desc": "اكتمل في 2026-04. جميع المنصات الـ9 التي تتطلب مفاتيح تعمل بـ vault-first؛ Telegraph ذاتي المفتاح ولا يحتاج إلى مسار vault. متوافق دائماً مع الإصدارات السابقة: مفاتيح vault المفقودة تعود إلى <code>process.env</code>، لذا لا تتأثر النشرات الحالية من نوع env-only. القائمة أدناه تُجمّع المنصات حسب نمط التوقيع مع PR الإصدار لكل منها:",
         "guide_pub_roadmap_h": "اكتمل: ترحيل متعدد المستأجرين تم شحنه على كل منصة ✅",
-        "guide_pub_roadmap_step1": "<strong>منصات bearer بمفتاح واحد</strong> (Hashnode / DEV.to / Qiita): رمز API واحد — الأبسط، شُحن أولاً.",
+        "guide_pub_roadmap_step1": "<strong>منصات bearer بمفتاح واحد</strong> (DEV.to / Qiita): رمز API واحد — الأبسط، شُحن أولاً.",
         "guide_pub_roadmap_step2": "<strong>bearer بمفتاحين + URN</strong> (LinkedIn): access_token + author URN، كلاهما من vault.",
         "guide_pub_roadmap_step3": "<strong>OAuth1a بأربعة مفاتيح مع توقيع لحظي</strong> (X / Tumblr): زوجا consumer + access، كل طلب يوقّع nonce + timestamp بـ HMAC-SHA1.",
         "guide_pub_roadmap_step4": "<strong>OAuth2 password grant بأربعة مفاتيح + ذاكرة token لكل مستأجر</strong> (Reddit): username/password يُستبدلان بـ access_token؛ الذاكرة تستخدم <code>Map keyed by clientId+username</code> لمنع التلوث بين المستأجرين.",
@@ -7740478,6 +7740823,8 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_section_label": "تجاوزات لكل كيان",
         "kanban_nudge_per_entity_throttle_label": "🅰️ بطاقة قديمة: حد كل كيان بإشعار واحد لكل فترة",
         "kanban_nudge_per_entity_throttle_short": "حدد هذا الكيان بإشعار واحد لكل فترة",
+        "kanban_nudge_per_entity_stop_mode": "وضع الإيقاف: إيقاف تذكيرات البطاقات القديمة لهذا الكيان",
+        "kanban_nudge_stop_mode_avatar_title": "تم تفعيل وضع إيقاف التذكيرات",
         "kanban_status_blocked": "محظور",
         "kb_anchor_mindmap": "مرسوم من الخريطة الذهنية",
         "kb_anchor_pick": "اختر رسالة حديثة",

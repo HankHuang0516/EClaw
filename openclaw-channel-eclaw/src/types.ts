@@ -91,3 +91,12 @@ export interface MessageResponse {
     level: number;
   };
 }
+
+/** Response from POST /api/entity/heartbeat */
+export interface HeartbeatResponse {
+  success: boolean;
+  entityId: number;
+  daemonConnected: boolean;
+  lastSeen: string | null;
+  stale: boolean;
+}

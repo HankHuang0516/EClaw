@@ -1,3 +1,302 @@
+# [1.1194.0](https://github.com/HankHuang0516/EClaw/compare/v1.1193.3...v1.1194.0) (2026-05-31)
+
+
+### Features
+
+* **kanban:** per-entity nudge stop-mode + avatar warning watermark ([#3055](https://github.com/HankHuang0516/EClaw/issues/3055)) ([6117ae6](https://github.com/HankHuang0516/EClaw/commit/6117ae6a7eecd590e3e9d23aabe7149801d47e39))
+
+## Unreleased
+
+### Features
+
+* **kanban nudge:** add per-entity stop-mode, avatar warning watermark, and live preference sync
+
+## [1.1193.3](https://github.com/HankHuang0516/EClaw/compare/v1.1193.2...v1.1193.3) (2026-05-31)
+
+
+### Bug Fixes
+
+* **channel:** suppress stale kanban nudges ([ed0965a](https://github.com/HankHuang0516/EClaw/commit/ed0965a59fdce279583409afa18b25127111c3bb))
+
+## [1.1193.2](https://github.com/HankHuang0516/EClaw/compare/v1.1193.1...v1.1193.2) (2026-05-31)
+
+
+### Bug Fixes
+
+* **transform:** drop [SILENT] sentinel + noise before routing ([#3052](https://github.com/HankHuang0516/EClaw/issues/3052)) ([43444b3](https://github.com/HankHuang0516/EClaw/commit/43444b35f6ed1c64e942df087a7bb34266a1dfe9)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
+## [1.1193.1](https://github.com/HankHuang0516/EClaw/compare/v1.1193.0...v1.1193.1) (2026-05-31)
+
+
+### Bug Fixes
+
+* **petdx Phase 0:** skip vault mirror when /select has no entity context ([#3051](https://github.com/HankHuang0516/EClaw/issues/3051)) ([47fd1b8](https://github.com/HankHuang0516/EClaw/commit/47fd1b88417c29d93d579d4d96fe62af6fa865e6))
+
+# [1.1193.0](https://github.com/HankHuang0516/EClaw/compare/v1.1192.3...v1.1193.0) (2026-05-31)
+
+
+### Features
+
+* **petdx Phase 0:** atomic vault sync on /api/companion/select (§0.4a) ([#3050](https://github.com/HankHuang0516/EClaw/issues/3050)) ([9cae851](https://github.com/HankHuang0516/EClaw/commit/9cae8518ae7d9c0aa533259d4bbbf8633d58b9d9))
+
+## [1.1192.3](https://github.com/HankHuang0516/EClaw/compare/v1.1192.2...v1.1192.3) (2026-05-31)
+
+
+### Bug Fixes
+
+* **petdx Phase 0:** live descriptor URL beats stale vault enrichment in §0.4 chain ([#3046](https://github.com/HankHuang0516/EClaw/issues/3046)) ([06e3db3](https://github.com/HankHuang0516/EClaw/commit/06e3db3b456313332a26c28fda8ec40ef96fa364)), closes [#3032](https://github.com/HankHuang0516/EClaw/issues/3032) [#3044](https://github.com/HankHuang0516/EClaw/issues/3044)
+
+## [1.1192.2](https://github.com/HankHuang0516/EClaw/compare/v1.1192.1...v1.1192.2) (2026-05-31)
+
+
+### Bug Fixes
+
+* **petdx Phase 0:** dashboard avatar canvas guard ([2bedabf](https://github.com/HankHuang0516/EClaw/commit/2bedabf03504c7ac9ce68f72c308e0e7c90f8bc6)), closes [#3045](https://github.com/HankHuang0516/EClaw/issues/3045)
+
+## [1.1192.1](https://github.com/HankHuang0516/EClaw/compare/v1.1192.0...v1.1192.1) (2026-05-30)
+
+
+### Bug Fixes
+
+* **point-edit Track C:** refresh anchor registry on entering mindmap mode ([#3041](https://github.com/HankHuang0516/EClaw/issues/3041)) ([59c8d87](https://github.com/HankHuang0516/EClaw/commit/59c8d87a981f2865c1f7386ac9da1e81add50f6e)), closes [#3040](https://github.com/HankHuang0516/EClaw/issues/3040)
+
+# [1.1192.0](https://github.com/HankHuang0516/EClaw/compare/v1.1191.0...v1.1192.0) (2026-05-30)
+
+
+### Features
+
+* **point-edit:** Track C — mock mind-map node mode ([#3040](https://github.com/HankHuang0516/EClaw/issues/3040)) ([ff86b97](https://github.com/HankHuang0516/EClaw/commit/ff86b9701b3c01bed505e1926a18054edfc382a4)), closes [3006/#3010](https://github.com/HankHuang0516/EClaw/issues/3010)
+
+# [1.1191.0](https://github.com/HankHuang0516/EClaw/compare/v1.1190.0...v1.1191.0) (2026-05-30)
+
+
+### Features
+
+* **seo:** add TechArticle + BlogPosting JSON-LD to remaining info.html panels ([#3036](https://github.com/HankHuang0516/EClaw/issues/3036)) ([dd9809e](https://github.com/HankHuang0516/EClaw/commit/dd9809eec6669a1b550509e06cc3ca96143b5e87))
+
+# [1.1190.0](https://github.com/HankHuang0516/EClaw/compare/v1.1189.0...v1.1190.0) (2026-05-30)
+
+
+### Features
+
+* **seo:** add FAQPage JSON-LD to info.html panel-faq ([#3035](https://github.com/HankHuang0516/EClaw/issues/3035)) ([9f2a422](https://github.com/HankHuang0516/EClaw/commit/9f2a422b7a33c2793ef909d69fe7d2718d4956bb))
+
+# [1.1189.0](https://github.com/HankHuang0516/EClaw/compare/v1.1188.0...v1.1189.0) (2026-05-30)
+
+
+### Features
+
+* **petdx phase 0:** broaden admin backfill auth to botSecret+entityId ([#3034](https://github.com/HankHuang0516/EClaw/issues/3034)) ([2e60d64](https://github.com/HankHuang0516/EClaw/commit/2e60d6487611b57b9f8bf9efcf414a43c1a1cd16)), closes [#8](https://github.com/HankHuang0516/EClaw/issues/8)
+
+# [1.1188.0](https://github.com/HankHuang0516/EClaw/compare/v1.1187.0...v1.1188.0) (2026-05-30)
+
+
+### Features
+
+* **petdx phase 0:** admin backfill endpoint for in-process hook invocation ([#3033](https://github.com/HankHuang0516/EClaw/issues/3033)) ([6cdbe4a](https://github.com/HankHuang0516/EClaw/commit/6cdbe4a5fdce971f8285eeab3fd2f5b4279ba38d)), closes [#8](https://github.com/HankHuang0516/EClaw/issues/8)
+
+# [1.1187.0](https://github.com/HankHuang0516/EClaw/compare/v1.1186.2...v1.1187.0) (2026-05-30)
+
+
+### Features
+
+* **petdx phase 0:** implementation — bind hook + DB migration + backfill + frontend resolver ([#3032](https://github.com/HankHuang0516/EClaw/issues/3032)) ([2033821](https://github.com/HankHuang0516/EClaw/commit/20338212d345f572396a0360efdac82722414522)), closes [#1-2](https://github.com/HankHuang0516/EClaw/issues/1-2) [#6](https://github.com/HankHuang0516/EClaw/issues/6) [#2](https://github.com/HankHuang0516/EClaw/issues/2) [#6](https://github.com/HankHuang0516/EClaw/issues/6) [#3027](https://github.com/HankHuang0516/EClaw/issues/3027) [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
+## [1.1186.2](https://github.com/HankHuang0516/EClaw/compare/v1.1186.1...v1.1186.2) (2026-05-30)
+
+
+### Bug Fixes
+
+* **org-chart:** suppress silent FWD echo loops ([#3028](https://github.com/HankHuang0516/EClaw/issues/3028)) ([b1205d9](https://github.com/HankHuang0516/EClaw/commit/b1205d923bd686a3fa6d926e1536c7a8d895156e))
+
+## [1.1186.1](https://github.com/HankHuang0516/EClaw/compare/v1.1186.0...v1.1186.1) (2026-05-30)
+
+
+### Bug Fixes
+
+* **portal:** kanban avatars read live character on rebind, not hardcoded per-id default ([#3027](https://github.com/HankHuang0516/EClaw/issues/3027)) ([4bfcea8](https://github.com/HankHuang0516/EClaw/commit/4bfcea81b44f3ae5e9524b6da580ce45f93ce238)), closes [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#5](https://github.com/HankHuang0516/EClaw/issues/5)
+
+# [1.1186.0](https://github.com/HankHuang0516/EClaw/compare/v1.1185.6...v1.1186.0) (2026-05-30)
+
+
+### Features
+
+* **portal:** /portal/about-founder.html founder story + info-nav tab + /about-founder clean URL ([#3026](https://github.com/HankHuang0516/EClaw/issues/3026)) ([6fc1520](https://github.com/HankHuang0516/EClaw/commit/6fc1520d39dbe1c1fc76bac3f9552eb1e934df5b)), closes [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#5](https://github.com/HankHuang0516/EClaw/issues/5)
+
+## [1.1185.6](https://github.com/HankHuang0516/EClaw/compare/v1.1185.5...v1.1185.6) (2026-05-30)
+
+
+### Bug Fixes
+
+* **seo:** redirect legacy /info|/kanban|/settings|/index .html paths → /portal/* (301) ([#3024](https://github.com/HankHuang0516/EClaw/issues/3024)) ([58fe9a6](https://github.com/HankHuang0516/EClaw/commit/58fe9a6d8a5fcd1c6a564e81ce55908db63d4cfd)), closes [#3021](https://github.com/HankHuang0516/EClaw/issues/3021)
+
+## [1.1185.5](https://github.com/HankHuang0516/EClaw/compare/v1.1185.4...v1.1185.5) (2026-05-30)
+
+
+### Bug Fixes
+
+* **portal:** wrap auth credentials in native forms ([#3021](https://github.com/HankHuang0516/EClaw/issues/3021)) ([bfade81](https://github.com/HankHuang0516/EClaw/commit/bfade810ab7d09d28ab830abd0dc230de6400e0c)), closes [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+
+## [1.1185.4](https://github.com/HankHuang0516/EClaw/compare/v1.1185.3...v1.1185.4) (2026-05-30)
+
+
+### Bug Fixes
+
+* **android:** wallpaper Weekly reset countdown — per-engine claude/codex/both (parity with 5h) ([#3022](https://github.com/HankHuang0516/EClaw/issues/3022)) ([4bcc33e](https://github.com/HankHuang0516/EClaw/commit/4bcc33e4841533c60140faf081cdd224ea089acf)), closes [#5](https://github.com/HankHuang0516/EClaw/issues/5) [#6](https://github.com/HankHuang0516/EClaw/issues/6) [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+
+## [1.1185.3](https://github.com/HankHuang0516/EClaw/compare/v1.1185.2...v1.1185.3) (2026-05-29)
+
+
+### Bug Fixes
+
+* **android:** wallpaper UX rollup — 5h+Weekly共存 / Claude vs Codex 標記 / 拖曳hit-box ([#3018](https://github.com/HankHuang0516/EClaw/issues/3018)) ([0177811](https://github.com/HankHuang0516/EClaw/commit/0177811dcdd41ec98bfc230c0dfbeec68d52c779)), closes [#2](https://github.com/HankHuang0516/EClaw/issues/2) [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
+## [1.1185.2](https://github.com/HankHuang0516/EClaw/compare/v1.1185.1...v1.1185.2) (2026-05-29)
+
+
+### Bug Fixes
+
+* **openclaw-channel:** ack target-mode healthcheck nonces ([6143436](https://github.com/HankHuang0516/EClaw/commit/61434361ee01394e71b52ff5d83564638b5408ac)), closes [1/#3](https://github.com/HankHuang0516/EClaw/issues/3) [1-#6](https://github.com/1-/issues/6) [1/#3](https://github.com/HankHuang0516/EClaw/issues/3)
+
+## [1.1185.1](https://github.com/HankHuang0516/EClaw/compare/v1.1185.0...v1.1185.1) (2026-05-29)
+
+
+### Bug Fixes
+
+* **server:** point-edit resolver P0 hardening — graceful shutdown + rate limit + sanitizer revisit ([#3015](https://github.com/HankHuang0516/EClaw/issues/3015)) ([651c01d](https://github.com/HankHuang0516/EClaw/commit/651c01d9ea39b710b541213bdf1de1273373dc9f)), closes [#3010](https://github.com/HankHuang0516/EClaw/issues/3010)
+
+# [1.1185.0](https://github.com/HankHuang0516/EClaw/compare/v1.1184.3...v1.1185.0) (2026-05-29)
+
+
+### Features
+
+* **info:** embed Day 144 — 三條 P0 同日 ship highlight in info hub ([#3016](https://github.com/HankHuang0516/EClaw/issues/3016)) ([d9d1a1b](https://github.com/HankHuang0516/EClaw/commit/d9d1a1bc692fc52f7289866462a7c8b40619d6d5)), closes [#3014](https://github.com/HankHuang0516/EClaw/issues/3014) [#3013](https://github.com/HankHuang0516/EClaw/issues/3013) [#3012](https://github.com/HankHuang0516/EClaw/issues/3012) [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
+## [1.1184.3](https://github.com/HankHuang0516/EClaw/compare/v1.1184.2...v1.1184.3) (2026-05-29)
+
+
+### Bug Fixes
+
+* **org-chart:** suppress low-signal noise in silent FWD-to-superior path ([#3014](https://github.com/HankHuang0516/EClaw/issues/3014)) ([f0230f9](https://github.com/HankHuang0516/EClaw/commit/f0230f9032d734a96cb61c3baa679ff534b31cc2)), closes [#5](https://github.com/HankHuang0516/EClaw/issues/5)
+
+## [1.1184.2](https://github.com/HankHuang0516/EClaw/compare/v1.1184.1...v1.1184.2) (2026-05-29)
+
+
+### Bug Fixes
+
+* **security:** SSRF — per-request route guard + RFC1918/ULA block (PR [#3010](https://github.com/HankHuang0516/EClaw/issues/3010) review by [#6](https://github.com/HankHuang0516/EClaw/issues/6)) ([#3013](https://github.com/HankHuang0516/EClaw/issues/3013)) ([9fbd8c9](https://github.com/HankHuang0516/EClaw/commit/9fbd8c944738024afa99c9c5c053f7a0517eba1f))
+
+## [1.1184.1](https://github.com/HankHuang0516/EClaw/compare/v1.1184.0...v1.1184.1) (2026-05-29)
+
+
+### Bug Fixes
+
+* **wallpaper:** render reset-countdown line regardless of snapshot==null guard (card_4018404d) ([#3012](https://github.com/HankHuang0516/EClaw/issues/3012)) ([751d9d1](https://github.com/HankHuang0516/EClaw/commit/751d9d1f197f5c42fd66e827869f337681fcb498)), closes [#2](https://github.com/HankHuang0516/EClaw/issues/2)
+
+# [1.1184.0](https://github.com/HankHuang0516/EClaw/compare/v1.1183.1...v1.1184.0) (2026-05-29)
+
+
+### Features
+
+* **point-edit:** Track B v2 — Playwright universal resolver ([#3006](https://github.com/HankHuang0516/EClaw/issues/3006) follow-up) ([#3010](https://github.com/HankHuang0516/EClaw/issues/3010)) ([2fff9ba](https://github.com/HankHuang0516/EClaw/commit/2fff9babd979144bfcae5928ccbb050206cfbece)), closes [#id](https://github.com/HankHuang0516/EClaw/issues/id) [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+
+## [1.1183.1](https://github.com/HankHuang0516/EClaw/compare/v1.1183.0...v1.1183.1) (2026-05-28)
+
+
+### Bug Fixes
+
+* **portal:** load api before auth on publisher pages ([#3008](https://github.com/HankHuang0516/EClaw/issues/3008)) ([80ae633](https://github.com/HankHuang0516/EClaw/commit/80ae63315860ffa12674fa0d6a0d94d8acdc72fb))
+
+# [1.1183.0](https://github.com/HankHuang0516/EClaw/compare/v1.1182.2...v1.1183.0) (2026-05-28)
+
+
+### Features
+
+* **portal:** add point-edit coordinate resolver ([#3006](https://github.com/HankHuang0516/EClaw/issues/3006)) ([d8bccba](https://github.com/HankHuang0516/EClaw/commit/d8bccba9bf5f547b6f74f60bc45dfc4fdad6f206))
+* **android:** wallpaper reset-interval toggle (5h/weekly countdown) ([#3005](https://github.com/HankHuang0516/EClaw/issues/3005)) ([4e7e324](https://github.com/HankHuang0516/EClaw/commit/4e7e324f462ab74258af09e584573b1ce1dac7e0))
+
+## [1.1182.2](https://github.com/HankHuang0516/EClaw/compare/v1.1182.1...v1.1182.2) (2026-05-28)
+
+
+### Bug Fixes
+
+* **transform:** 400-gate malformed speakTo instead of silent not_found ([#3002](https://github.com/HankHuang0516/EClaw/issues/3002)) ([5b70fa9](https://github.com/HankHuang0516/EClaw/commit/5b70fa9849eb7937df0408f06750c2b67f858174)), closes [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+
+## [1.1182.1](https://github.com/HankHuang0516/EClaw/compare/v1.1182.0...v1.1182.1) (2026-05-28)
+
+
+### Bug Fixes
+
+* **entity:** sync avatar with character on rebind/transform ([#2993](https://github.com/HankHuang0516/EClaw/issues/2993)) ([af3ca91](https://github.com/HankHuang0516/EClaw/commit/af3ca9153e8a7ab593d0e7bc4b0050b914812d50))
+
+# [1.1182.0](https://github.com/HankHuang0516/EClaw/compare/v1.1181.0...v1.1182.0) (2026-05-28)
+
+
+### Features
+
+* **portal:** point-and-edit roadmap — 3-track scenario walkthrough ([#2992](https://github.com/HankHuang0516/EClaw/issues/2992)) ([b7bf4d9](https://github.com/HankHuang0516/EClaw/commit/b7bf4d9b7b8dfc359459b63ac690097b95b88246)), closes [pointedit#point-edit-demo](https://github.com/pointedit/issues/point-edit-demo) [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
+# [1.1181.0](https://github.com/HankHuang0516/EClaw/compare/v1.1180.3...v1.1181.0) (2026-05-28)
+
+
+### Features
+
+* **portal:** point-and-edit demo (Track A — DOM selector + text-selection) ([#2991](https://github.com/HankHuang0516/EClaw/issues/2991)) ([c96f746](https://github.com/HankHuang0516/EClaw/commit/c96f74613cc5dfa986876dddcc15c29b4057e697)), closes [Hermes/#3](https://github.com/HankHuang0516/EClaw/issues/3)
+
+## [1.1180.3](https://github.com/HankHuang0516/EClaw/compare/v1.1180.2...v1.1180.3) (2026-05-28)
+
+
+### Bug Fixes
+
+* **borrow:** bind once per fleet-cron via TTL-aware reuse ([#2990](https://github.com/HankHuang0516/EClaw/issues/2990)) ([6563736](https://github.com/HankHuang0516/EClaw/commit/656373655e51c863d74a700dc30371748b19e536)), closes [#1](https://github.com/HankHuang0516/EClaw/issues/1) [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+
+## [1.1180.2](https://github.com/HankHuang0516/EClaw/compare/v1.1180.1...v1.1180.2) (2026-05-28)
+
+
+### Bug Fixes
+
+* **kanban:** always include schedule field on /cards rows ([#2989](https://github.com/HankHuang0516/EClaw/issues/2989)) ([1eb7276](https://github.com/HankHuang0516/EClaw/commit/1eb727601ff401a5e3543645bbe35ba96e1a61b8))
+
+## [1.1180.1](https://github.com/HankHuang0516/EClaw/compare/v1.1180.0...v1.1180.1) (2026-05-28)
+
+
+### Bug Fixes
+
+* **db:** backfill model_name on 3 existing free bots ([#2988](https://github.com/HankHuang0516/EClaw/issues/2988)) ([e0e310c](https://github.com/HankHuang0516/EClaw/commit/e0e310c7954ff4382cd66cd188bd02f52299e3a9)), closes [#2987](https://github.com/HankHuang0516/EClaw/issues/2987)
+
+# [1.1180.0](https://github.com/HankHuang0516/EClaw/compare/v1.1179.1...v1.1180.0) (2026-05-28)
+
+
+### Bug Fixes
+
+* **backend:** skill doc IMMEDIATE ACTION example payload — placeholder redesign (Path A) ([#2986](https://github.com/HankHuang0516/EClaw/issues/2986)) ([c7f6962](https://github.com/HankHuang0516/EClaw/commit/c7f6962e383951203d4463bf0b8c555aea169232)), closes [#2982](https://github.com/HankHuang0516/EClaw/issues/2982) [#6](https://github.com/HankHuang0516/EClaw/issues/6) [#6](https://github.com/HankHuang0516/EClaw/issues/6) [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
+
+### Features
+
+* **official-bots:** add model_name canonical field + PATCH metadata endpoint ([#2987](https://github.com/HankHuang0516/EClaw/issues/2987)) ([b34e165](https://github.com/HankHuang0516/EClaw/commit/b34e1657cee7d5ab9e0ed8845d9cdff2c5566e7e))
+
+## [1.1179.1](https://github.com/HankHuang0516/EClaw/compare/v1.1179.0...v1.1179.1) (2026-05-27)
+
+
+### Bug Fixes
+
+* **borrow:** bind skill doc echoes back as greeting reply ([#2982](https://github.com/HankHuang0516/EClaw/issues/2982)) ([a227741](https://github.com/HankHuang0516/EClaw/commit/a22774172c54c8c3aaf6d7133d610f41f8e9e1e3)), closes [#6](https://github.com/HankHuang0516/EClaw/issues/6)
+
+# [1.1179.0](https://github.com/HankHuang0516/EClaw/compare/v1.1178.0...v1.1179.0) (2026-05-27)
+
+
+### Features
+
+* **transform:** Platform-P2 ack_required delivery confirmation ([#2980](https://github.com/HankHuang0516/EClaw/issues/2980)) ([f33db8b](https://github.com/HankHuang0516/EClaw/commit/f33db8bd5939a47a43474491081bbfe8d2f8b616)), closes [hi#priority](https://github.com/hi/issues/priority)
+
+# [1.1178.0](https://github.com/HankHuang0516/EClaw/compare/v1.1177.0...v1.1178.0) (2026-05-27)
+
+
+### Features
+
+* **transform:** Platform-P1 delivery confirmation primitives ([#2979](https://github.com/HankHuang0516/EClaw/issues/2979)) ([49d2273](https://github.com/HankHuang0516/EClaw/commit/49d2273879e9b8eca70d3ecd320601242f5612e5)), closes [#N](https://github.com/HankHuang0516/EClaw/issues/N) [#3](https://github.com/HankHuang0516/EClaw/issues/3) [#1](https://github.com/HankHuang0516/EClaw/issues/1)
+
 # [1.1177.0](https://github.com/HankHuang0516/EClaw/compare/v1.1176.1...v1.1177.0) (2026-05-27)
 
 

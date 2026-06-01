@@ -286,7 +286,7 @@ function handleHash() {
         if (window._navigateToGuide) window._navigateToGuide(guideId);
         return;
     }
-    const validTabs = ['guide', 'faq', 'release-notes', 'compare', 'advanced', 'channel-plugins'];
+    const validTabs = ['quickstart', 'guide', 'advanced', 'channel-plugins', 'faq', 'release-notes', 'boundaries', 'point-edit-demo'];
     if (validTabs.includes(hash)) {
         switchInfoTab(hash);
     }

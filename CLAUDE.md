@@ -7,8 +7,8 @@
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
-- **Current version**: 1.1172.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
-- **Android app version**: 1.0.79 (versionCode 85); `LATEST_APP_VERSION` constant in `backend/index.js`
+- **Current version**: 1.1183.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **Android app version**: 1.0.87 (versionCode 95); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
 ---
@@ -169,7 +169,7 @@ EClaw/
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
 │   ├── tests/                # Regression + integration tests (59 files)
-│   ├── tests/jest/           # Jest unit tests (206 files, CI-run via `npm test`)
+│   ├── tests/jest/           # Jest unit tests (221 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -387,7 +387,7 @@ EClaw/
 - Billing: Google Play Billing (`BillingManager.kt`)
 - AI Chat: `AiChatViewModel.kt` manages state (fixes message loss, typing race condition)
 - Bottom nav: FILES tab renamed to CARDS (Card Holder); Files link moved to Settings
-- App version: 1.0.79 (versionCode 85)
+- App version: 1.0.87 (versionCode 95)
 
 ### iOS/React Native App (Expo)
 
@@ -1015,7 +1015,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Invite Redeem Fix (v1.1113)**: Preserve `?redeem=` across signup/login flow
 - **i18n Cron-Notify Fix (v1.1117)**: EN labels for cron-notify keys no longer leak CJK 母卡
 - **Telegram Adapter PoC (v1.1121, reverted)**: Long-poll Telegram adapter attempted then reverted
-- **App Version**: Updated to 1.0.79 (versionCode 85)
+- **App Version**: Updated to 1.0.87 (versionCode 95)
 
 ### Recent Features (v1.1122.x – v1.1127.x)
 
@@ -1086,11 +1086,37 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Task Chip UX (PR #2825)**: Group task chip actions in portal
 - **App Chat-Mission Navigation (PR #2824)**: Route chat mission jumps through native Android tabs
 
+### Recent Features (v1.1176.x – v1.1179.x)
+
+- **Platform Delivery Confirmation (v1.1178–v1.1179)**: `ack_required` field on `POST /api/transform` — Platform-P1 primitives + Platform-P2 delivery confirmation; `pending_ack` system for tracking delivery status
+- **Plaza Featured Week (v1.1177)**: Featured bots section on plaza.html with 6-day rotation, 6 seeded stories; i18n for 13 locales
+- **Bot Boundaries Tab (v1.1176)**: Info page Bot Boundaries tab — 7 refusal categories with override notes; i18n for 13 locales
+- **Page Transition Overlay (v1.1177)**: Smooth page transition overlay for portal navigation
+- **Hashnode Platform Retired (v1.1178)**: Hashnode removed from publisher platforms (pay-or-drop → drop)
+- **Info Boundaries Hash Routing (v1.1179.1)**: Fix info page boundaries tab hash routing
+- **Bind Skill Doc Echo Fix (v1.1179.1)**: Fix bind skill doc echoing back as greeting reply
+- **i18n Expansion**: Channel Routing Paths (24 keys × 11 locales), Bot Boundaries (37 keys × 13 locales), Featured Week (3 keys × 13 locales)
+- **E2E Destructive Modals Playbook**: Daily destructive-modals test playbook + reference run
+- **Android OfficialBorrow Toast Fix**: `error_unknown` fallback for OfficialBorrow Toast errors
+
+### Recent Features (v1.1180.x – v1.1183.x)
+
+- **Point-and-Edit Demo (v1.1181–v1.1183)**: Track A — DOM selector + text-selection demo; 3-track scenario walkthrough roadmap page; point-edit coordinate resolver for entity position mapping
+- **Official Bots model_name (v1.1182)**: `model_name` canonical field on `official_bots` table; `PATCH /api/official-borrow/:botId/metadata` endpoint for admin updates; backfill on 3 existing free bots
+- **Wallpaper Reset-Interval Toggle (v1.1182)**: Android live wallpaper 5h/weekly countdown reset-interval toggle
+- **Transform 400-Gate (v1.1182)**: `POST /api/transform` returns 400 on malformed `speakTo` instead of silent `not_found`
+- **Avatar-Character Sync (v1.1182)**: Avatar syncs with character on rebind/transform to prevent stale avatar display
+- **Publisher Auth Fix (v1.1183)**: Load api.js before auth.js on publisher pages to prevent initialization race
+- **Fleet-Cron Bind Reuse (v1.1182)**: Bind once per fleet-cron cycle via TTL-aware reuse to prevent redundant binds
+- **Kanban Schedule Field Fix (v1.1182)**: Always include `schedule` field on `/cards` response rows
+- **Skill Doc Placeholder Redesign (v1.1182)**: IMMEDIATE ACTION example payload placeholder redesign (Path A)
+- **i18n Expansion**: Point-and-Edit Demo (83 zh keys), zh-CN 149 missing keys, es H4 showcase 25 keys, Android AiChat streaming status 14 locales, Android 3 hardcoded UI strings externalized
+
 ---
 
 ## Test Coverage Summary
 
-**~465 total API routes** across all modules (415 excluding Article Publisher), **~84% covered** by Jest + integration tests (~3008 test cases across 206 Jest files + 59 integration tests).
+**~465 total API routes** across all modules (415 excluding Article Publisher), **~84% covered** by Jest + integration tests (~3092 test cases across 221 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -1258,7 +1284,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (206 files)
+cd backend && npm test                  # Jest unit tests (221 files)
 cd backend && npm run lint              # ESLint
 ```
 

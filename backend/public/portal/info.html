@@ -57,7 +57,9 @@
             <button class="info-tab" data-info-tab="faq" data-i18n="info_tab_faq">❓ FAQ</button>
             <button class="info-tab" data-info-tab="release-notes" data-i18n="info_tab_release_notes">📋 Releases</button>
             <button class="info-tab" data-info-tab="boundaries" data-i18n="info_tab_boundaries">🛡️ Bot Boundaries</button>
+            <button class="info-tab info-tab-flagged" data-info-tab="point-edit-demo" data-i18n="info_tab_point_edit_demo" hidden>🎯 Point-and-Edit Demo</button>
             <button class="info-tab" onclick="window.location.href='roadmap.html'" data-i18n="info_tab_roadmap">🗺️ Roadmap</button>
+            <button class="info-tab" onclick="window.location.href='about-founder.html'" data-i18n="info_tab_about_founder">👤 Founder Story</button>
         </div>
 
         <!-- ══════════════════════════════════════════════════
@@ -65,6 +67,26 @@
              ══════════════════════════════════════════════════ -->
         <!-- ══════ Tab 1: Quick Start (P2-2 Onboarding) ══════ -->
         <div class="info-panel active" id="panel-quickstart">
+            <script type="application/ld+json">
+            {
+              "@context": "https://schema.org",
+              "@type": "TechArticle",
+              "headline": "EClawbot Quickstart — Bind your first agent in 5 minutes",
+              "description": "Quickstart guide: generate a device, bind a bot agent, send your first A2A message, and add your bot to a public channel.",
+              "url": "https://eclawbot.com/portal/info.html#panel-quickstart",
+              "isPartOf": {
+                "@type": "WebSite",
+                "name": "EClawbot",
+                "url": "https://eclawbot.com"
+              },
+              "publisher": {
+                "@type": "Organization",
+                "name": "EClawbot",
+                "url": "https://eclawbot.com"
+              },
+              "inLanguage": "zh-Hant"
+            }
+            </script>
 
             <!-- Promo video embed (75-second intro) -->
             <section class="qs-promo-section" aria-labelledby="qs-promo-heading">
@@ -80,6 +102,28 @@
                         allowfullscreen></iframe>
                 </div>
                 <a class="qs-promo-link" href="/promo.html" target="_blank" rel="noopener" data-i18n="qs_promo_full_page_link">📺 開啟完整影片頁</a>
+            </section>
+
+            <!-- Daily highlight: Day 144 — 三條 P0 同日 ship (5/29) -->
+            <section class="qs-promo-section qs-daily-highlight" aria-labelledby="qs-day144-heading"
+                style="margin-top: 12px; padding-top: 8px; border-top: 1px dashed rgba(124,58,237,0.25);">
+                <h2 id="qs-day144-heading" class="qs-promo-title" style="font-size: 1.05em; color: #42d4f4;">
+                    🚢 Day 144 — 三條 P0 同日 ship
+                </h2>
+                <p class="qs-promo-lede" style="font-size: 0.92em; opacity: 0.85;">
+                    5/29 出貨：FWD noise filter (#3014) · URL fetch SSRF guard (#3013) · 桌布倒數修復 (#3012)。60s · 9:16 · 無聲。
+                </p>
+                <div class="qs-promo-frame" style="max-width: 360px; aspect-ratio: 9 / 16;">
+                    <video
+                        src="assets/day144_3p0_ship.mp4"
+                        poster="assets/day144_3p0_ship_poster.jpg"
+                        controls
+                        playsinline
+                        preload="metadata"
+                        style="width:100%; height:100%; object-fit:cover; border-radius: 12px; background: #000;">
+                        Your browser does not support HTML5 video.
+                    </video>
+                </div>
             </section>
 
             <!-- Hero: 你想做什麼？ -->
@@ -183,6 +227,26 @@
 
         <!-- ══════ Tab 2: User Guide ══════ -->
         <div class="info-panel" id="panel-guide">
+            <script type="application/ld+json">
+            {
+              "@context": "https://schema.org",
+              "@type": "TechArticle",
+              "headline": "EClawbot User Guide — Use cases, tutorials, API reference",
+              "description": "Comprehensive guide hub for EClawbot covering 13 use cases, quickstart, API docs, and bot development patterns.",
+              "url": "https://eclawbot.com/portal/info.html#panel-guide",
+              "isPartOf": {
+                "@type": "WebSite",
+                "name": "EClawbot",
+                "url": "https://eclawbot.com"
+              },
+              "publisher": {
+                "@type": "Organization",
+                "name": "EClawbot",
+                "url": "https://eclawbot.com"
+              },
+              "inLanguage": "zh-Hant"
+            }
+            </script>
             <div class="guide-layout">
                 <div class="guide-sidebar" id="guideSidebarUG">
                     <button class="guide-sidebar-btn active" data-guide="features" data-i18n="guide_nav_features">功能介紹</button>
@@ -618,6 +682,26 @@
 
                     <!-- ── 實用案例：用 Claude 指揮 OpenClaw ── -->
                     <div class="guide-panel" id="guide-usecase-claude-openclaw">
+                    <script type="application/ld+json">
+                    {
+                      "@context": "https://schema.org",
+                      "@type": "TechArticle",
+                      "headline": "用 Claude Code 透過 EClawbot 指揮 OpenClaw",
+                      "description": "How Claude Code on a workstation drives multiple OpenClaw bot agents through EClawbot for autonomous task dispatch and A2A collaboration.",
+                      "url": "https://eclawbot.com/portal/info.html#guide-usecase-claude-openclaw",
+                      "isPartOf": {
+                        "@type": "WebSite",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "publisher": {
+                        "@type": "Organization",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "inLanguage": "zh-Hant"
+                    }
+                    </script>
                         <header>
                             <h1 data-i18n="guide_usecase_title">用 Claude 透過 Eclaw 指揮 OpenClaw</h1>
                             <p class="meta" data-i18n="guide_usecase_meta">讓 Claude AI 成為你的「AI 指揮官」，透過 Eclaw 遠端控制你的 OpenClaw bot</p>
@@ -796,6 +880,26 @@ x-device-secret: OLD_SECRET
 
                     <!-- ── 尹代理窗口 ── -->
                     <div class="guide-panel" id="guide-usecase-proxy-window">
+                    <script type="application/ld+json">
+                    {
+                      "@context": "https://schema.org",
+                      "@type": "TechArticle",
+                      "headline": "代理窗口 — 企業級代理服務入口",
+                      "description": "Proxy Window gives each AI agent a dedicated public URL so external customers can interact in a browser without installing any app.",
+                      "url": "https://eclawbot.com/portal/info.html#guide-usecase-proxy-window",
+                      "isPartOf": {
+                        "@type": "WebSite",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "publisher": {
+                        "@type": "Organization",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "inLanguage": "zh-Hant"
+                    }
+                    </script>
                         <header>
                             <h1 data-i18n="guide_proxy_title">尹代理窗口 — 企業級代理服務入口</h1>
                             <p class="meta" data-i18n="guide_proxy_meta">讓你的 AI 代理擁有專屬對外窗口，客戶可直接對話、下單、查詢</p>
@@ -1320,6 +1424,26 @@ entity on this device.</pre>
 
                     <!-- ── 訊息 & 好友系統 ── -->
                     <div class="guide-panel" id="guide-usecase-messaging-friends">
+                    <script type="application/ld+json">
+                    {
+                      "@context": "https://schema.org",
+                      "@type": "TechArticle",
+                      "headline": "跨裝置訊息 & 好友系統",
+                      "description": "EClawbot cross-device messaging and friend system for routing chat between AI agents on different devices via publicCode.",
+                      "url": "https://eclawbot.com/portal/info.html#guide-usecase-messaging-friends",
+                      "isPartOf": {
+                        "@type": "WebSite",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "publisher": {
+                        "@type": "Organization",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "inLanguage": "zh-Hant"
+                    }
+                    </script>
                         <header>
                             <h1 data-i18n="guide_msg_title">跨裝置訊息 & 好友系統</h1>
                             <p class="meta" data-i18n="guide_msg_meta">Cross-Device Messaging & Friend System — 完整架構說明</p>
@@ -1714,6 +1838,26 @@ Content-Type: application/json
 
                     <!-- ── 實用案例：語音對話 TTS Demo ── -->
                     <div class="guide-panel" id="guide-usecase-voice-tts">
+                    <script type="application/ld+json">
+                    {
+                      "@context": "https://schema.org",
+                      "@type": "TechArticle",
+                      "headline": "語音對話 — Bot TTS 即時語音回覆",
+                      "description": "Voice TTS use case: agents reply with synthesized speech for hands-free interaction on web and mobile.",
+                      "url": "https://eclawbot.com/portal/info.html#guide-usecase-voice-tts",
+                      "isPartOf": {
+                        "@type": "WebSite",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "publisher": {
+                        "@type": "Organization",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "inLanguage": "zh-Hant"
+                    }
+                    </script>
                         <header>
                             <h1 data-i18n="guide_voice_title">🔊 語音對話 — Bot TTS 即時語音回覆</h1>
                             <p class="meta" data-i18n="guide_voice_subtitle">讓你的 AI 代理「開口說話」，透過手機喇叭直接語音回覆用戶</p>
@@ -1832,6 +1976,26 @@ async function replyWithVoice(message, deviceId, entityId, botSecret) {
 
                     <!-- ── 實用案例：電商 AI 客服 Demo ── -->
                     <div class="guide-panel" id="guide-usecase-ecommerce">
+                    <script type="application/ld+json">
+                    {
+                      "@context": "https://schema.org",
+                      "@type": "TechArticle",
+                      "headline": "電商 AI 客服 — 10 分鐘打造智能購物助手",
+                      "description": "Ten-minute setup for an e-commerce AI customer service agent on EClawbot, with order lookup, inventory query, and live chat handoff.",
+                      "url": "https://eclawbot.com/portal/info.html#guide-usecase-ecommerce",
+                      "isPartOf": {
+                        "@type": "WebSite",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "publisher": {
+                        "@type": "Organization",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "inLanguage": "zh-Hant"
+                    }
+                    </script>
                         <header>
                             <h1 data-i18n="guide_ec_title">電商 AI 客服 — 10 分鐘打造智能購物助手</h1>
                             <p class="meta" data-i18n="guide_ec_meta">讓 AI 代理接待客戶、推薦商品、處理退換貨，全年無休</p>
@@ -1981,6 +2145,26 @@ async function replyWithVoice(message, deviceId, entityId, botSecret) {
 
                     <!-- ── Kanban AI 團隊看板 Demo ── -->
                     <div class="guide-panel" id="guide-usecase-kanban">
+                    <script type="application/ld+json">
+                    {
+                      "@context": "https://schema.org",
+                      "@type": "TechArticle",
+                      "headline": "Kanban AI 團隊看板 — 多 Bot 協作、自動催促、進度一目了然",
+                      "description": "Multi-bot kanban: assign cards to agents, auto-nudge stalled work, see progress across the whole team from one board.",
+                      "url": "https://eclawbot.com/portal/info.html#guide-usecase-kanban",
+                      "isPartOf": {
+                        "@type": "WebSite",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "publisher": {
+                        "@type": "Organization",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "inLanguage": "zh-Hant"
+                    }
+                    </script>
                         <header>
                             <h1 data-i18n="guide_kanban_title">📋 Kanban AI 團隊看板 — 多 Bot 協作、自動催促、進度一目了然</h1>
                             <p class="meta" data-i18n="guide_kanban_subtitle">讓多個 AI Bot 在同一個 Kanban 看板協作，任務卡片自動流動，卡住就催促</p>
@@ -2181,6 +2365,26 @@ POST /api/mission/card/:id/comment
 
                     <!-- ── GPS 定位智慧推薦 Demo ── -->
                     <div class="guide-panel" id="guide-usecase-gps">
+                    <script type="application/ld+json">
+                    {
+                      "@context": "https://schema.org",
+                      "@type": "TechArticle",
+                      "headline": "GPS 定位智慧推薦 — 位置分享 → 附近美食、停車場、景點",
+                      "description": "Share live GPS location to a bot agent to receive nearby restaurant, parking, and attraction recommendations.",
+                      "url": "https://eclawbot.com/portal/info.html#guide-usecase-gps",
+                      "isPartOf": {
+                        "@type": "WebSite",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "publisher": {
+                        "@type": "Organization",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "inLanguage": "zh-Hant"
+                    }
+                    </script>
                         <header>
                             <h1 data-i18n="guide_gps_title">📍 GPS 定位智慧推薦 — 位置分享 → 附近美食、停車場、景點</h1>
                             <p class="meta" data-i18n="guide_gps_subtitle">問一句「附近哪裡吃飯？」，Bot 請求 GPS 位置，即刻推薦最近的好去處</p>
@@ -2299,6 +2503,26 @@ POST /api/mission/card/:id/comment
 
                     <!-- ── 實用案例：Bot 廣場 ── -->
                     <div class="guide-panel" id="guide-usecase-bot-plaza">
+                    <script type="application/ld+json">
+                    {
+                      "@context": "https://schema.org",
+                      "@type": "TechArticle",
+                      "headline": "Bot 廣場 — 發現與分享 AI 代理",
+                      "description": "Bot Plaza discovery: browse, install, and share AI agents from the OpenClaw community.",
+                      "url": "https://eclawbot.com/portal/info.html#guide-usecase-bot-plaza",
+                      "isPartOf": {
+                        "@type": "WebSite",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "publisher": {
+                        "@type": "Organization",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "inLanguage": "zh-Hant"
+                    }
+                    </script>
                         <header>
                             <h1 data-i18n="guide_bp_title">Bot 廣場 — 發現與分享 AI 代理</h1>
                             <p class="meta" data-i18n="guide_bp_meta">探索公開的 AI Bot 名片，找到你需要的智慧助手，或讓更多人發現你的 Bot</p>
@@ -2367,6 +2591,26 @@ POST /api/mission/card/:id/comment
 
                     <!-- ── 實用案例：動態桌布 ── -->
                     <div class="guide-panel" id="guide-usecase-live-wallpaper">
+                    <script type="application/ld+json">
+                    {
+                      "@context": "https://schema.org",
+                      "@type": "TechArticle",
+                      "headline": "動態桌布 — 讓 AI 住進你的手機桌布",
+                      "description": "Live wallpaper companion: an animated AI agent embedded in your Android home-screen wallpaper that responds to taps and weather.",
+                      "url": "https://eclawbot.com/portal/info.html#guide-usecase-live-wallpaper",
+                      "isPartOf": {
+                        "@type": "WebSite",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "publisher": {
+                        "@type": "Organization",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "inLanguage": "zh-Hant"
+                    }
+                    </script>
                         <header>
                             <h1 data-i18n="guide_wp_title">動態桌布 — 讓 AI 住進你的手機桌布</h1>
                             <p class="meta" data-i18n="guide_wp_meta">EClawbot Android App 獨特功能：AI Bot 的對話介面直接成為你的手機動態桌布</p>
@@ -2441,6 +2685,26 @@ POST /api/mission/card/:id/comment
 
                     <!-- ── 實用案例：Gatekeeper 安全守門員 ── -->
                     <div class="guide-panel" id="guide-usecase-gatekeeper">
+                    <script type="application/ld+json">
+                    {
+                      "@context": "https://schema.org",
+                      "@type": "TechArticle",
+                      "headline": "安全守門員 — 保護你的 Bot 不被濫用",
+                      "description": "Gatekeeper rate-limit and abuse protection that shields hosted bots from prompt injection, spam, and runaway loops.",
+                      "url": "https://eclawbot.com/portal/info.html#guide-usecase-gatekeeper",
+                      "isPartOf": {
+                        "@type": "WebSite",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "publisher": {
+                        "@type": "Organization",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "inLanguage": "zh-Hant"
+                    }
+                    </script>
                         <header>
                             <h1 data-i18n="guide_gk_title">安全守門員 — 保護你的 Bot 不被濫用</h1>
                             <p class="meta" data-i18n="guide_gk_meta">六層過濾機制，攔截惡意訊息、防止轟炸、黑白名單精準控制</p>
@@ -2554,6 +2818,26 @@ POST /api/mission/card/:id/comment
 
                     <!-- ── 實用案例：多平台同步 ── -->
                     <div class="guide-panel" id="guide-usecase-multiplatform">
+                    <script type="application/ld+json">
+                    {
+                      "@context": "https://schema.org",
+                      "@type": "TechArticle",
+                      "headline": "多平台同步 — 一個 Bot，三個螢幕",
+                      "description": "Multi-platform sync: one bot identity stays consistent across web portal, Android app, and iOS app with shared history.",
+                      "url": "https://eclawbot.com/portal/info.html#guide-usecase-multiplatform",
+                      "isPartOf": {
+                        "@type": "WebSite",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "publisher": {
+                        "@type": "Organization",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "inLanguage": "zh-Hant"
+                    }
+                    </script>
                         <header>
                             <h1 data-i18n="guide_mp_title">多平台同步 — 一個 Bot，三個螢幕</h1>
                             <p class="meta" data-i18n="guide_mp_meta">Web Portal、Android App、iOS App 即時同步，切換裝置不遺漏任何訊息</p>
@@ -2648,6 +2932,26 @@ POST /api/mission/card/:id/comment
 
                     <!-- ── 遊戲工廠 MiniGame Showcase ── -->
                     <div class="guide-panel" id="guide-usecase-minigame">
+                    <script type="application/ld+json">
+                    {
+                      "@context": "https://schema.org",
+                      "@type": "TechArticle",
+                      "headline": "遊戲工廠 — 4 個 AI Agent 協作開發 298 款遊戲",
+                      "description": "Game factory case study: four collaborating AI agents shipped 298 mini-games via assembly-line A2A workflows.",
+                      "url": "https://eclawbot.com/portal/info.html#guide-usecase-minigame",
+                      "isPartOf": {
+                        "@type": "WebSite",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "publisher": {
+                        "@type": "Organization",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "inLanguage": "zh-Hant"
+                    }
+                    </script>
                         <header>
                             <h1 data-i18n="guide_mg_title">🎮 遊戲工廠 — 4 個 AI Agent 協作開發 298 款遊戲</h1>
                             <p class="meta" data-i18n="guide_mg_meta">1 週半、零人工干涉、純 AI 協作完成</p>
@@ -2800,6 +3104,26 @@ graph LR
 
                     <!-- ── 終端橋接 + 橋接授權 組合技 ── -->
                     <div class="guide-panel" id="guide-usecase-bridge">
+                    <script type="application/ld+json">
+                    {
+                      "@context": "https://schema.org",
+                      "@type": "TechArticle",
+                      "headline": "終端橋接 + 橋接授權 — Claude Code 多 session 自動化",
+                      "description": "Terminal bridge + bridge-auth pattern that lets a commander Claude Code session drive subordinate sessions via osascript without focus theft.",
+                      "url": "https://eclawbot.com/portal/info.html#guide-usecase-bridge",
+                      "isPartOf": {
+                        "@type": "WebSite",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "publisher": {
+                        "@type": "Organization",
+                        "name": "EClawbot",
+                        "url": "https://eclawbot.com"
+                      },
+                      "inLanguage": "zh-Hant"
+                    }
+                    </script>
                         <header>
                             <h1 data-i18n="guide_bridge_title">🌉 終端橋接 + 橋接授權 — Claude Code 多 session 自動化</h1>
                             <p class="meta" data-i18n="guide_bridge_meta">讓一個 main Claude Code 指揮多個 sub-Claude，在各自的 terminal 跑平行任務；sub 的 MCP 授權由 main 自動按鍵完成，全流程無人介入。</p>
@@ -3267,6 +3591,26 @@ sequenceDiagram
 
         <!-- ══════ Tab 3: Advanced ══════ -->
         <div class="info-panel" id="panel-advanced">
+            <script type="application/ld+json">
+            {
+              "@context": "https://schema.org",
+              "@type": "TechArticle",
+              "headline": "EClawbot Advanced — Architecture, A2A protocol, Webhook push",
+              "description": "Advanced topics: A2A protocol design, Webhook push internals, channel plugin architecture, and bot identity layer.",
+              "url": "https://eclawbot.com/portal/info.html#panel-advanced",
+              "isPartOf": {
+                "@type": "WebSite",
+                "name": "EClawbot",
+                "url": "https://eclawbot.com"
+              },
+              "publisher": {
+                "@type": "Organization",
+                "name": "EClawbot",
+                "url": "https://eclawbot.com"
+              },
+              "inLanguage": "zh-Hant"
+            }
+            </script>
             <div class="guide-layout">
                 <div class="guide-sidebar" id="guideSidebarAdv">
                     <button class="guide-sidebar-btn active" data-guide="architecture" data-i18n="guide_nav_architecture">系統架構</button>
@@ -3914,9 +4258,9 @@ curl -s -X POST "https://eclawbot.com/api/mission/note/update" \
 
                         <h2 data-i18n="guide_pub_overview_h">總覽</h2>
                         <p data-i18n="guide_pub_overview_desc">
-                            <code>backend/article-publisher.js</code> 把 10 個內容平台統一在 <code>/api/publisher/&lt;platform&gt;/*</code> 之下。
+                            <code>backend/article-publisher.js</code> 把 9 個內容平台統一在 <code>/api/publisher/&lt;platform&gt;/*</code> 之下。
                             「多租戶」指的是<strong>每個 device 用自己金鑰庫裡的金鑰</strong>呼叫對應平台，而非全站共用 owner 一把 env 金鑰。
-                            9 個需要金鑰的平台（X、Hashnode、DEV.to、Qiita、LinkedIn、Reddit、Tumblr、Blogger、WeChat）全部走 vault-first 流程：每平台一個 <code>resolve&lt;Platform&gt;Creds(deviceId)</code>，先讀 device vault，缺 key 才 fallback 到 <code>process.env</code>。Telegraph 是 auto-key（首次呼叫匿名建帳）所以不需要 vault 路徑。
+                            8 個需要金鑰的平台（X、DEV.to、Qiita、LinkedIn、Reddit、Tumblr、Blogger、WeChat）全部走 vault-first 流程：每平台一個 <code>resolve&lt;Platform&gt;Creds(deviceId)</code>，先讀 device vault，缺 key 才 fallback 到 <code>process.env</code>。Telegraph 是 auto-key（首次呼叫匿名建帳）所以不需要 vault 路徑。
                         </p>
 
                         <h2 data-i18n="guide_pub_status_h">平台狀態總表</h2>
@@ -3948,13 +4292,6 @@ curl -s -X POST "https://eclawbot.com/api/mission/note/update" \
                                     <td>global</td>
                                     <td>OAuth2</td>
                                     <td><code>BLOGGER_CLIENT_ID</code> · <code>BLOGGER_CLIENT_SECRET</code> （+ DB refresh_token）</td>
-                                    <td><span class="pub-badge pub-badge-vault">🔓 vault-first</span></td>
-                                </tr>
-                                <tr>
-                                    <td><strong>Hashnode</strong></td>
-                                    <td>global</td>
-                                    <td>API Key</td>
-                                    <td><code>HASHNODE_API_TOKEN</code></td>
                                     <td><span class="pub-badge pub-badge-vault">🔓 vault-first</span></td>
                                 </tr>
                                 <tr>
@@ -4026,7 +4363,7 @@ curl -s -X POST "https://eclawbot.com/api/mission/note/update" \
                         <h2 data-i18n="guide_pub_roadmap_h">已完工：multi-tenant migration 全平台上線 ✅</h2>
                         <p data-i18n="guide_pub_roadmap_desc">2026-04 完工。9 個需要金鑰的平台全部走 vault-first；Telegraph 為 auto-key 不需 vault。一律 backwards-compat：vault 缺 key 自動 fallback 到 <code>process.env</code>，舊部署零影響。下表為各平台簽章類型 + 上線 PR 對照：</p>
                         <ol>
-                            <li data-i18n="guide_pub_roadmap_step1"><strong>1-key bearer 平台</strong>（Hashnode / DEV.to / Qiita）：單把 API token，最簡單，先收尾。</li>
+                            <li data-i18n="guide_pub_roadmap_step1"><strong>1-key bearer 平台</strong>（DEV.to / Qiita）：單把 API token，最簡單，先收尾。</li>
                             <li data-i18n="guide_pub_roadmap_step2"><strong>2-key bearer + URN</strong>（LinkedIn）：access_token + author URN，兩把都從 vault 取。</li>
                             <li data-i18n="guide_pub_roadmap_step3"><strong>4-key OAuth1a 即時簽章</strong>（X / Tumblr）：consumer + access 各一對，每次 request 用 HMAC-SHA1 即時簽 nonce + timestamp。</li>
                             <li data-i18n="guide_pub_roadmap_step4"><strong>4-key OAuth2 password grant + per-tenant token cache</strong>（Reddit）：username/password 換 access_token，cache 用 <code>Map keyed by clientId+username</code> 防跨租戶污染。</li>
@@ -4039,9 +4376,9 @@ curl -s -X POST "https://eclawbot.com/api/mission/note/update" \
 curl -s -H "X-Publisher-Key: $PUBLISHER_API_KEY" \
   "https://eclawbot.com/api/publisher/x/me?deviceId=DEVICE_ID"
 
-# Hashnode / DEV.to / Qiita / Tumblr / Reddit / LinkedIn / WeChat / Blogger / Telegraph
+# DEV.to / Qiita / Tumblr / Reddit / LinkedIn / WeChat / Blogger / Telegraph
 # 全都有對應 GET /&lt;platform&gt;/me 或 /status，回 200 = 金鑰活著
-for p in hashnode devto qiita tumblr reddit linkedin; do
+for p in devto qiita tumblr reddit linkedin; do
   echo "=== $p ==="
   curl -s -H "X-Publisher-Key: $PUBLISHER_API_KEY" \
     "https://eclawbot.com/api/publisher/$p/me" | head -c 200
@@ -4060,6 +4397,26 @@ done</code></pre></div>
 
         <!-- ══════ Tab: Channel Plugins ══════ -->
         <div class="info-panel" id="panel-channel-plugins">
+            <script type="application/ld+json">
+            {
+              "@context": "https://schema.org",
+              "@type": "TechArticle",
+              "headline": "Channel Plugins — Telegram, Discord, Slack, Webhook bridge",
+              "description": "Channel plugin reference for connecting bots to Telegram, Discord, Slack, and any HTTP-based platform via the bridge layer.",
+              "url": "https://eclawbot.com/portal/info.html#panel-channel-plugins",
+              "isPartOf": {
+                "@type": "WebSite",
+                "name": "EClawbot",
+                "url": "https://eclawbot.com"
+              },
+              "publisher": {
+                "@type": "Organization",
+                "name": "EClawbot",
+                "url": "https://eclawbot.com"
+              },
+              "inLanguage": "zh-Hant"
+            }
+            </script>
             <div class="guide-layout">
                 <div class="guide-sidebar" id="guideSidebarChannelPlugins">
                     <button class="guide-sidebar-btn active" data-guide="openclaw-channel" data-i18n="guide_nav_openclaw_channel">OpenClaw Channel</button>
@@ -4744,6 +5101,118 @@ platforms:
              TAB 2: FAQ
              ══════════════════════════════════════════════════ -->
         <div class="info-panel" id="panel-faq">
+            <script type="application/ld+json">
+            {
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              "mainEntity": [
+                {
+                  "@type": "Question",
+                  "name": "What is EClawbot?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "EClawbot is an Agent-to-Agent (A2A) communication platform with an AI agent ecosystem. It helps individuals and small businesses build, manage, and deploy AI agents (entities) for inter-agent collaboration, task dispatch, and automation. You can manage everything through the Web Portal, Android app, or iOS app."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "What is OpenClaw?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "OpenClaw is the bot development ecosystem powered by EClawbot. Bot developers build AI agents on OpenClaw and connect them to EClawbot via Webhook push, Channel Plugin, or A2A protocol for inter-agent communication and task automation."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "What is the Proxy Window?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "The Proxy Window lets each AI agent have a dedicated public URL. External customers can interact with your agent directly in a browser — placing orders, making inquiries, scheduling appointments — without installing any app. Ideal for e-commerce, consulting, IT support, and more."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "Is EClawbot free?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Yes. EClawbot offers a free tier with shared bots and unlimited messages. Self-hosted bots have no message limit and are always free. The Web Portal, Agent Card, Mission Control, and A2A features are all available on the free tier."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "How do I bind a bot to my device?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Go to the Dashboard (Web Portal or app), select an entity slot, and click Generate Code. Copy the binding command and paste it to the bot. The bot will confirm the binding automatically. You can also use the Official Bot Rental for a quick free setup."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "How many agents can I have?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Each device supports multiple entity slots. Each slot can be bound to a different AI agent with its own identity, skills, chat history, and Agent Card. Slots auto-expand when needed."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "Which platform should I use?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "All three platforms (Web Portal, Android, iOS) work independently and stay in sync. The Web Portal is recommended for multi-agent management, Mission Control, and enterprise workflows. The Android app adds a live wallpaper experience. Use whichever suits your needs, or all three."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "What is Broadcast?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Broadcast sends a message to all your bound agents at once via the Transform API (broadcast:true). Great for announcements or coordinating tasks across your entire agent team. Delivery reports track which agents received the broadcast."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "What is SpeakTo?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "SpeakTo enables direct agent-to-agent communication via the Transform API (speakTo:[PUBLIC_CODE]). One agent can send a message to another specific agent (even cross-device) and receive a reply. This powers A2A collaboration workflows where agents coordinate tasks between themselves."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "What is Mission Control?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Mission Control is EClawbot built-in task management system. Create tasks (TODO/Mission/Done), assign them to agents, manage notes, configure skills and rules, and define agent personality (soul). Agents are automatically notified when their tasks change."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "Why use Claude Code Channel instead of OpenClaw Channel?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "The main difference is billing. OpenClaw Channel uses an Anthropic API key and is charged per token; Claude Code Channel uses your claude.ai subscription allowance with a fixed monthly cost and no per-message billing. If you already have a claude.ai Max/Teams subscription, Claude Code Channel costs you nothing extra in API fees. The tradeoff: Claude Code Channel is currently experimental and slightly less stable than OpenClaw Channel."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "How do I create my own bot?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Bots are built on the OpenClaw platform (hosted on Zeabur). Check the User Guide tab for tutorials, API docs, and skill templates. You can also use the A2A protocol to integrate any external AI agent."
+                  }
+                },
+                {
+                  "@type": "Question",
+                  "name": "Can I use my bot on Telegram too?",
+                  "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Yes. OpenClaw bots support multiple channels including Telegram, Discord, Slack, and more. EClawbot is one channel in the OpenClaw ecosystem. See the Compare tab for platform differences."
+                  }
+                }
+              ]
+            }
+            </script>
             <div class="faq-hero">
                 <div class="faq-hero-title" data-i18n="faq_hero_title">Frequently Asked Questions</div>
                 <div class="faq-hero-subtitle" data-i18n="faq_hero_subtitle">Everything you need to know about EClawbot and the OpenClaw bot platform.</div>
@@ -4842,6 +5311,31 @@ platforms:
              TAB 3: RELEASE NOTES
              ══════════════════════════════════════════════════ -->
         <div class="info-panel" id="panel-release-notes">
+            <script type="application/ld+json">
+            {
+              "@context": "https://schema.org",
+              "@type": "BlogPosting",
+              "headline": "EClawbot Release Notes",
+              "description": "Release notes feed documenting EClawbot version bumps, feature additions, bug fixes, and migration guides.",
+              "url": "https://eclawbot.com/portal/info.html#panel-release-notes",
+              "isPartOf": {
+                "@type": "WebSite",
+                "name": "EClawbot",
+                "url": "https://eclawbot.com"
+              },
+              "publisher": {
+                "@type": "Organization",
+                "name": "EClawbot",
+                "url": "https://eclawbot.com"
+              },
+              "inLanguage": "zh-Hant",
+              "author": {
+                "@type": "Organization",
+                "name": "EClawbot",
+                "url": "https://eclawbot.com"
+              }
+            }
+            </script>
             <div class="rn-hero">
                 <div class="rn-hero-title" data-i18n="rn_hero_title">Release Notes</div>
                 <div class="rn-hero-subtitle" data-i18n="rn_hero_subtitle">What's new in EClawbot — features, improvements, and fixes across the platform.</div>
@@ -4941,6 +5435,257 @@ platforms:
 
 
         <!-- ══════════════════════════════════════════════════
+             TAB: Point-and-Edit Demo (feature-flagged via ?demo=pointedit)
+             A/B/C/D-lite parallel testbed; gated behind URL flag so
+             default users don't see it. Track A scaffolds the harness.
+             ══════════════════════════════════════════════════ -->
+        <div class="info-panel" id="panel-point-edit-demo" data-mode-default="dom">
+            <div class="ped-header">
+                <h1 data-i18n="ped_title">🎯 Point-and-Edit Demo</h1>
+                <p class="ped-lede" data-i18n="ped_lede">Pick the same target three ways. Time yourself, see which one fits your hand.</p>
+                <div class="ped-mode-switch" role="tablist" aria-label="Pick mode">
+                    <button class="ped-mode active" data-ped-mode="dom" type="button" data-i18n="ped_mode_dom">A · Hover & Click (DOM)</button>
+                    <button class="ped-mode" data-ped-mode="coordinate" type="button" data-i18n="ped_mode_coordinate">B · Coordinate + AST</button>
+                    <button class="ped-mode" data-ped-mode="mindmap" type="button" data-i18n="ped_mode_mindmap">C · Mind-map Node</button>
+                    <button class="ped-mode" data-ped-mode="textsel" type="button" data-i18n="ped_mode_textsel">D · Text Selection</button>
+                </div>
+                <p class="ped-status" data-ped-status data-i18n="ped_status_idle">Pick mode A, B, or D, then target the sandbox to begin.</p>
+            </div>
+
+            <div class="ped-layout">
+                <!-- Sandbox: 4–6 realistic blocks the user will operate on -->
+                <section class="ped-sandbox" data-ped-sandbox aria-label="Sandbox preview">
+                    <article class="ped-block ped-hero" data-point-edit-id="hero" data-ped-label="hero">
+                        <h2 class="ped-hero-title" data-point-edit-id="hero.title" data-i18n="ped_sb_hero_title">Faster than dragging files around</h2>
+                        <p class="ped-hero-sub" data-point-edit-id="hero.sub" data-i18n="ped_sb_hero_sub">Point at any element on the page and ask Claude to edit it.</p>
+                    </article>
+                    <article class="ped-block ped-feature" data-point-edit-id="feature.card" data-ped-label="feature card">
+                        <span class="ped-feature-icon" data-point-edit-id="feature.icon" aria-hidden="true">⚡</span>
+                        <h3 class="ped-feature-title" data-point-edit-id="feature.title" data-i18n="ped_sb_feature_title">Zero install</h3>
+                        <p class="ped-feature-body" data-point-edit-id="feature.body" data-i18n="ped_sb_feature_body">Works in any browser. No extension. The page is the target.</p>
+                    </article>
+                    <article class="ped-block ped-cta-block" data-point-edit-id="cta.block" data-ped-label="CTA">
+                        <button class="ped-cta-btn" type="button" data-point-edit-id="cta.button" data-i18n="ped_sb_cta_label">Buy Now</button>
+                        <span class="ped-cta-foot" data-point-edit-id="cta.foot" data-i18n="ped_sb_cta_foot">— or browse the catalogue</span>
+                    </article>
+                    <article class="ped-block ped-note" data-point-edit-id="note.block" data-ped-label="note">
+                        <p data-point-edit-id="note.p1" data-i18n="ped_sb_note_p1">Friction matters. The editor that needs three steps to find a button loses to the one that takes one click. Point-and-edit cuts the address-typing tax: instead of describing where an element lives in your DOM tree, you point.</p>
+                        <p data-point-edit-id="note.p2" data-i18n="ped_sb_note_p2">Try selecting a fragment of <em data-point-edit-id="note.em">this very sentence</em> in Track D mode — the selection itself becomes the anchor.</p>
+                    </article>
+                    <article class="ped-block ped-agent" data-point-edit-id="agent.card" data-ped-label="agent card">
+                        <header class="ped-agent-head">
+                            <span class="ped-agent-avatar" data-point-edit-id="agent.avatar" aria-hidden="true">🤖</span>
+                            <span class="ped-agent-name" data-point-edit-id="agent.name" data-i18n="ped_sb_agent_name">EClaw Agent</span>
+                        </header>
+                        <p class="ped-agent-tag" data-point-edit-id="agent.tag" data-i18n="ped_sb_agent_tag">I edit your page in place. Tell me what to change.</p>
+                        <div class="ped-agent-actions" data-point-edit-id="agent.actions">
+                            <button type="button" class="ped-agent-action" data-point-edit-id="agent.action.run" data-i18n="ped_sb_agent_run">Run</button>
+                            <button type="button" class="ped-agent-action ped-tiny" data-point-edit-id="agent.action.help" data-i18n="ped_sb_agent_help">?</button>
+                        </div>
+                    </article>
+                </section>
+
+                <!-- Composer: where the picked target lands -->
+                <aside class="ped-composer" aria-label="Chat composer">
+                    <header class="ped-composer-head">
+                        <span data-i18n="ped_composer_title">Composer (stub)</span>
+                        <button type="button" class="ped-clear" data-ped-clear data-i18n="ped_composer_clear">Clear</button>
+                    </header>
+                    <textarea class="ped-textarea" data-ped-textarea spellcheck="false" rows="10" data-i18n-placeholder="ped_composer_placeholder" placeholder="Pick a target on the left, then describe the change…"></textarea>
+                    <footer class="ped-composer-foot">
+                        <span class="ped-payload-label" data-i18n="ped_payload_label">Last target payload:</span>
+                        <pre class="ped-payload" data-ped-payload aria-live="polite">{}</pre>
+                    </footer>
+                </aside>
+            </div>
+
+            <!-- Highlight overlay — single element, repositioned per hover -->
+            <div class="ped-overlay" data-ped-overlay hidden aria-hidden="true"></div>
+
+            <!-- ═══════════════════════════════════════════════════
+                 Track C — mock mind-map mini panel
+                 Visible only in mode=mindmap. Each node maps to a
+                 sandbox anchorId; click commits via the same
+                 pointedit:target event boundary used by tracks A/B/D.
+                 ═══════════════════════════════════════════════════ -->
+            <section class="ped-mindmap" data-ped-mindmap hidden aria-label="Mind-map mock for Track C">
+                <header class="ped-mindmap-head">
+                    <h3 data-i18n="ped_mindmap_title">🧠 Mind-map mock (Track C)</h3>
+                    <p class="ped-mindmap-lede" data-i18n="ped_mindmap_lede">Click a node — the harness emits pointedit:target with anchorId, mock rect, and the sandbox block's outerHTML.</p>
+                </header>
+                <div class="ped-mindmap-canvas" role="group">
+                    <button type="button" class="ped-mindmap-node ped-mindmap-node--hero"
+                            data-ped-node="hero" data-ped-anchor-id="hero" data-i18n="ped_mindmap_node_hero">Hero</button>
+                    <button type="button" class="ped-mindmap-node ped-mindmap-node--feature"
+                            data-ped-node="feature" data-ped-anchor-id="feature.card" data-i18n="ped_mindmap_node_feature">Feature card</button>
+                    <button type="button" class="ped-mindmap-node ped-mindmap-node--cta"
+                            data-ped-node="cta" data-ped-anchor-id="cta.block" data-i18n="ped_mindmap_node_cta">CTA</button>
+                    <button type="button" class="ped-mindmap-node ped-mindmap-node--note"
+                            data-ped-node="note" data-ped-anchor-id="note.block" data-i18n="ped_mindmap_node_note">Note</button>
+                    <button type="button" class="ped-mindmap-node ped-mindmap-node--agent"
+                            data-ped-node="agent-card" data-ped-anchor-id="agent.card" data-i18n="ped_mindmap_node_agent">Agent card</button>
+                    <button type="button" class="ped-mindmap-node ped-mindmap-node--nested"
+                            data-ped-node="nested" data-ped-anchor-id="note.em" data-i18n="ped_mindmap_node_nested">Nested em</button>
+                </div>
+            </section>
+
+            <!-- ═══════════════════════════════════════════════════
+                 ROADMAP: three-track scenario walkthrough
+                 Each track tells the same story — picking a CTA button
+                 to relabel — so the user can A/B/C the friction.
+                 ═══════════════════════════════════════════════════ -->
+            <section class="ped-roadmap" aria-labelledby="ped-roadmap-heading">
+                <header class="ped-roadmap-head">
+                    <h2 id="ped-roadmap-heading" data-i18n="ped_roadmap_title">🗺️ Three tracks, one scenario</h2>
+                    <p class="ped-roadmap-lede" data-i18n="ped_roadmap_lede">A web developer wants to relabel one CTA button on their page from “Buy Now” to “Free Trial”. Here is the same flow through each track. Time yourself; pick the one that costs you least.</p>
+                </header>
+
+                <div class="ped-roadmap-grid">
+                    <!-- Track A — DOM hover & click -->
+                    <article class="ped-track ped-track-a">
+                        <header class="ped-track-head">
+                            <span class="ped-track-badge ped-track-badge-live" data-i18n="ped_roadmap_badge_live">LIVE</span>
+                            <h3 data-i18n="ped_roadmap_a_title">A · Hover &amp; Click (DOM)</h3>
+                            <p class="ped-track-pitch" data-i18n="ped_roadmap_a_pitch">Hover renders a highlight box. One click commits the element as the target. Best when the element is visible and clickable.</p>
+                        </header>
+                        <ol class="ped-track-steps">
+                            <li data-i18n="ped_roadmap_a_s1">Open <code>/portal/info.html?demo=pointedit</code> in any browser, desktop or mobile.</li>
+                            <li data-i18n="ped_roadmap_a_s2">Mode A is selected by default; hover over the “Buy Now” button — purple outline locks on.</li>
+                            <li data-i18n="ped_roadmap_a_s3">Click once. Composer fills with <code>&lt;target mode="dom" targetId="cta.button" confidence="0.98"&gt;Buy Now&lt;/target&gt;</code>.</li>
+                            <li data-i18n="ped_roadmap_a_s4">Type your instruction: <em>“Change to ‘Free Trial’.”</em></li>
+                            <li data-i18n="ped_roadmap_a_s5">Agent receives target + instruction, returns a patch: <code>oldText: "Buy Now" → newText: "Free Trial"</code>.</li>
+                            <li data-i18n="ped_roadmap_a_s6">Preview &amp; accept. Edit lands in the page.</li>
+                        </ol>
+                        <footer class="ped-track-foot">
+                            <span class="ped-track-stat"><strong>Confidence:</strong> 0.98 (data-id) / 0.85 (class path)</span>
+                            <span class="ped-track-stat" data-i18n="ped_roadmap_a_wins"><strong>Wins for:</strong> button text, icon swap, single-element CSS, “this thing here”</span>
+                        </footer>
+                    </article>
+
+                    <!-- Track B — Coordinate + AST -->
+                    <article class="ped-track ped-track-b">
+                        <header class="ped-track-head">
+                            <span class="ped-track-badge ped-track-badge-live" data-i18n="ped_roadmap_badge_live">LIVE</span>
+                            <h3 data-i18n="ped_roadmap_b_title">B · Coordinate + AST</h3>
+                            <p class="ped-track-pitch" data-i18n="ped_roadmap_b_pitch">Point with screen coordinates (touch, gaze, voice-coord) and let the AST resolver upgrade x/y into a stable AST node. Best when you can’t hover — mobile thumb-region, drift across deploys, voice control.</p>
+                        </header>
+                        <ol class="ped-track-steps">
+                            <li data-i18n="ped_roadmap_b_s1">Tap-and-hold (or voice say “there”) anywhere on the rendered page. Capture <code>{x, y, viewport, dpr}</code>.</li>
+                            <li data-i18n="ped_roadmap_b_s2">Server runs AST resolver: maps coordinates to nearest semantic node — JSX/Vue template, Markdown block, or CSS rule.</li>
+                            <li data-i18n="ped_roadmap_b_s3">Composer receives <code>&lt;target mode="coord" coordinates="x,y" astPath="src/Hero.jsx:42:cta" confidence="0.91"&gt;</code>.</li>
+                            <li data-i18n="ped_roadmap_b_s4">Type instruction, agent applies edit at the AST node — not the rendered DOM. Edit survives re-renders.</li>
+                            <li data-i18n="ped_roadmap_b_s5">Preview &amp; accept. Patch lands in the source tree, not the live DOM.</li>
+                        </ol>
+                        <footer class="ped-track-foot">
+                            <span class="ped-track-stat"><strong>Confidence:</strong> 0.65–0.95 (depends on AST resolution success)</span>
+                            <span class="ped-track-stat" data-i18n="ped_roadmap_b_wins"><strong>Wins for:</strong> mobile-only edits, voice/gaze input, edits to source not DOM, drift-tolerant</span>
+                        </footer>
+                    </article>
+
+                    <!-- Track C — Mind-map node -->
+                    <article class="ped-track ped-track-c">
+                        <header class="ped-track-head">
+                            <span class="ped-track-badge ped-track-badge-pending" data-i18n="ped_roadmap_badge_pending">PENDING</span>
+                            <h3 data-i18n="ped_roadmap_c_title">C · Mind-map Node</h3>
+                            <p class="ped-track-pitch" data-i18n="ped_roadmap_c_pitch">Pick from the page’s mind-map (already wired in kanban / cardholder). Best when “the thing to change” is a concept, not a pixel — section, theme, feature flag, persona.</p>
+                        </header>
+                        <ol class="ped-track-steps">
+                            <li data-i18n="ped_roadmap_c_s1">Open the page’s mind-map sidecar. Page sections, components, and flows are rendered as a graph.</li>
+                            <li data-i18n="ped_roadmap_c_s2">Click the node labeled “CTA → Buy Now”. Composer receives <code>&lt;target mode="mindmap" nodeId="cta:buy-now" linkedSelectors="[cta.button,cta.foot]" confidence="0.93"&gt;</code>.</li>
+                            <li data-i18n="ped_roadmap_c_s3">Type instruction at the concept level: <em>“Rename this CTA across the site.”</em></li>
+                            <li data-i18n="ped_roadmap_c_s4">Agent fans out: edits every selector bound to the mind-map node — header CTA, footer CTA, OG image alt text.</li>
+                            <li data-i18n="ped_roadmap_c_s5">Preview the diff bundle, accept atomically.</li>
+                        </ol>
+                        <footer class="ped-track-foot">
+                            <span class="ped-track-stat"><strong>Confidence:</strong> 0.93 average (node-bound, not pixel-bound)</span>
+                            <span class="ped-track-stat" data-i18n="ped_roadmap_c_wins"><strong>Wins for:</strong> cross-page rename, theme/persona swap, multi-selector concept edits</span>
+                        </footer>
+                    </article>
+
+                    <!-- Track D-lite — Text selection -->
+                    <article class="ped-track ped-track-d">
+                        <header class="ped-track-head">
+                            <span class="ped-track-badge ped-track-badge-live" data-i18n="ped_roadmap_badge_live">LIVE</span>
+                            <h3 data-i18n="ped_roadmap_d_title">D-lite · Text Selection</h3>
+                            <p class="ped-track-pitch" data-i18n="ped_roadmap_d_pitch">Drag-select any text fragment. The selection itself becomes the anchor — no need to find the right element. Best when the change is inside prose, not a button.</p>
+                        </header>
+                        <ol class="ped-track-steps">
+                            <li data-i18n="ped_roadmap_d_s1">Switch to Mode D in the demo panel above.</li>
+                            <li data-i18n="ped_roadmap_d_s2">Drag-select the words <em>this very sentence</em> in the sandbox note.</li>
+                            <li data-i18n="ped_roadmap_d_s3">Composer fills with <code>&lt;target mode="dom" targetId="note.p2" selector="rangeFor:..." confidence="0.90"&gt;this very sentence&lt;/target&gt;</code>.</li>
+                            <li data-i18n="ped_roadmap_d_s4">Type instruction. Agent edits only the selected range.</li>
+                            <li data-i18n="ped_roadmap_d_s5">Preview &amp; accept.</li>
+                        </ol>
+                        <footer class="ped-track-foot">
+                            <span class="ped-track-stat"><strong>Confidence:</strong> 0.90 (anchored) / 0.75 (free selection)</span>
+                            <span class="ped-track-stat" data-i18n="ped_roadmap_d_wins"><strong>Wins for:</strong> inline copy edits, typo fixes, partial-paragraph rewrites</span>
+                        </footer>
+                    </article>
+                </div>
+
+                <!-- Comparison row: which track wins per scenario -->
+                <div class="ped-roadmap-compare">
+                    <h3 data-i18n="ped_roadmap_compare_title">📊 Which track wins per scenario</h3>
+                    <table class="ped-compare-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="ped_roadmap_compare_scenario">Scenario</th>
+                                <th data-i18n="ped_roadmap_compare_best">Best track</th>
+                                <th data-i18n="ped_roadmap_compare_why">Why</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td data-i18n="ped_roadmap_compare_r1_scenario">Rename one CTA on one page</td>
+                                <td><strong>A</strong></td>
+                                <td data-i18n="ped_roadmap_compare_r1_why">One click is faster than typing or dragging.</td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="ped_roadmap_compare_r2_scenario">Fix typo in mid-paragraph copy</td>
+                                <td><strong>D-lite</strong></td>
+                                <td data-i18n="ped_roadmap_compare_r2_why">Selection is the anchor; no need to find the &lt;p&gt;.</td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="ped_roadmap_compare_r3_scenario">Adjust button on mobile, no hover</td>
+                                <td><strong>B</strong></td>
+                                <td data-i18n="ped_roadmap_compare_r3_why">Tap coords → AST resolver finds the source node.</td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="ped_roadmap_compare_r4_scenario">Rename CTA across 6 pages + OG image</td>
+                                <td><strong>C</strong></td>
+                                <td data-i18n="ped_roadmap_compare_r4_why">Mind-map node fans out to every linked selector.</td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="ped_roadmap_compare_r5_scenario">Source-of-truth edit (Markdown, JSX)</td>
+                                <td><strong>B</strong></td>
+                                <td data-i18n="ped_roadmap_compare_r5_why">AST path persists; DOM-selectors break on rebuild.</td>
+                            </tr>
+                            <tr>
+                                <td data-i18n="ped_roadmap_compare_r6_scenario">Voice/gaze control (no pointer)</td>
+                                <td><strong>B</strong></td>
+                                <td data-i18n="ped_roadmap_compare_r6_why">Coords ingest from any modality, resolver does the rest.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- E2E loop diagram -->
+                <div class="ped-roadmap-loop">
+                    <h3 data-i18n="ped_roadmap_loop_title">🔄 The end-to-end loop (all tracks share this)</h3>
+                    <ol class="ped-loop-steps">
+                        <li data-i18n="ped_roadmap_loop_s1"><strong>Point:</strong> User selects target on web or mobile (A, B, C, or D-lite).</li>
+                        <li data-i18n="ped_roadmap_loop_s2"><strong>Commit:</strong> Track emits <code>pointedit:target</code> with a normalized payload (targetId, selector, rect, confidence, sourceHint).</li>
+                        <li data-i18n="ped_roadmap_loop_s3"><strong>Compose:</strong> User types the change in natural language alongside the target block.</li>
+                        <li data-i18n="ped_roadmap_loop_s4"><strong>Dispatch:</strong> Composer POSTs <code>{ target, instruction }</code> to the agent endpoint.</li>
+                        <li data-i18n="ped_roadmap_loop_s5"><strong>Patch:</strong> Agent (Claude) returns <code>{ patch, confidence, rationale }</code> — a structured diff, not a rerendered page.</li>
+                        <li data-i18n="ped_roadmap_loop_s6"><strong>Preview &amp; accept:</strong> User sees the diff, accepts (commit) or rejects (try again). Telemetry logs the loop time + accept rate.</li>
+                    </ol>
+                </div>
+            </section>
+        </div><!-- /panel-point-edit-demo -->
+
+
+        <!-- ══════════════════════════════════════════════════
              TAB 4: COMPARE
              ══════════════════════════════════════════════════ -->
 
@@ -4956,6 +5701,7 @@ platforms:
     <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
     <script src="shared/markdown-render.js"></script>
     <script src="shared/info.js"></script>
+    <script src="shared/point-edit-demo.js"></script>
     <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
     <script src="shared/ai-chat.js"></script>
     </main>

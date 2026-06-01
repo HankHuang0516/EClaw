@@ -897,4 +897,21 @@ Tu suscripción permanece activa y puedes reenlazar en cualquier momento (sujeto
     <string name="fcm_channel_system_desc">Notificaciones del sistema</string>
     <string name="fcm_channel_feedback_name">Actualizaciones de comentarios</string>
     <string name="fcm_channel_feedback_desc">Actualizaciones del estado de comentarios</string>
+    <string name="ai_chat_status_analyzing">Analizando</string>
+    <string name="ai_chat_status_processing_result">Procesando resultado</string>
+    <string name="ai_chat_tool_status_default">Procesando</string>
+    <string name="wallpaper_reset_window_5h">5h</string>
+    <string name="wallpaper_reset_window_5h_next">Próximo reinicio en 5h (%1$s): %2$s</string>
+    <string name="wallpaper_reset_window_label">Reiniciar cuenta atrás</string>
+    <string name="wallpaper_reset_window_off">Desactivado</string>
+    <string name="wallpaper_reset_window_weekly">Semanal</string>
+    <string name="wallpaper_reset_window_weekly_next">Próximo reinicio semanal: %1$s</string>
+    <string name="wallpaper_reset_window_weekly_next_per_engine">Próximo reinicio semanal (%1$s): %2$s</string>
+    <string name="msg_no_entities_connected">No hay entidades conectadas. Vincula las entidades primero.</string>
+    <string name="webview_title_eclawbot_portal">Portal EClawbot</string>
+    <string name="wallpaper_settings_panel_label">Configuración del fondo de pantalla</string>
+    <string name="wallpaper_settings_collapse_caret_down">▼</string>
+    <string name="wallpaper_settings_expand_action">Expandir panel de configuración</string>
+    <string name="wallpaper_settings_collapse_action">Contraer panel de configuración</string>
+    <string name="wallpaper_settings_collapse_caret_up">▲</string>
 </resources>

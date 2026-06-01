@@ -9,6 +9,8 @@ import { setClient } from './outbound.js';
 import { createWebhookHandler } from './webhook-handler.js';
 import { registerWebhookToken, unregisterWebhookToken } from './webhook-registry.js';
 
+const ENTITY_HEARTBEAT_INTERVAL_MS = 60_000;
+
 function normalizeEntityId(value: unknown): number | undefined {
   if (typeof value === 'number' && Number.isInteger(value) && value >= 0) return value;
   if (typeof value === 'string' && value.trim() !== '') {
@@ -72,6 +74,7 @@ export async function startAccount(ctx: any): Promise<void> {
   // Initialize HTTP client
   const client = new EClawClient(account);
   setClient(accountId, client);
+  let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
   // Generate per-session callback token
   const callbackToken = randomBytes(32).toString('hex');
@@ -127,6 +130,15 @@ export async function startAccount(ctx: any): Promise<void> {
         : `[E-Claw] Entity ${assignedEntityId} bound, publicCode: ${bindData.publicCode}`
     );
 
+    const sendHeartbeat = (): void => {
+      client.sendHeartbeat().catch((err) => {
+        console.warn(`[E-Claw] Heartbeat failed for account ${accountId}: ${err instanceof Error ? err.message : String(err)}`);
+      });
+    };
+    sendHeartbeat();
+    heartbeatTimer = setInterval(sendHeartbeat, ENTITY_HEARTBEAT_INTERVAL_MS);
+    (heartbeatTimer as unknown as { unref?: () => void }).unref?.();
+
     console.log(`[E-Claw] Account ${accountId} ready!`);
   } catch (err) {
     console.error(`[E-Claw] Setup failed for account ${accountId}:`, err);
@@ -140,11 +152,13 @@ export async function startAccount(ctx: any): Promise<void> {
     if (signal) {
       signal.addEventListener('abort', () => {
         console.log(`[E-Claw] Shutting down account ${accountId}`);
+        if (heartbeatTimer) clearInterval(heartbeatTimer);
         client.unregisterCallback().catch(() => {});
         unregisterWebhookToken(callbackToken);
         resolve();
       });
     } else {
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
       resolve();
     }
   });

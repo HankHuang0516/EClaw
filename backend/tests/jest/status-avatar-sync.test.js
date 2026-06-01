@@ -39,7 +39,7 @@ afterAll(async () => {
 });
 
 describe('GET /api/status — avatar sync regression', () => {
-    it('returns the avatar field (null) for a freshly registered entity', async () => {
+    it('returns the avatar field (character default) for a freshly registered entity', async () => {
         const deviceId = 'status-avatar-test-fresh';
         const deviceSecret = await registerDevice(deviceId);
 
@@ -48,9 +48,12 @@ describe('GET /api/status — avatar sync regression', () => {
         );
 
         expect(res.status).toBe(200);
-        // Regression lock: `avatar` MUST be in the response payload, even if null.
+        // Regression lock: `avatar` MUST be in the response payload. Since the
+        // character→avatar sync fix (PR #2993), fresh entities seed avatar to
+        // CHARACTER_DEFAULT_AVATAR[character] rather than null so the kanban /
+        // wallpaper UI doesn't fall back to the per-entityId map.
         expect(res.body).toHaveProperty('avatar');
-        expect(res.body.avatar).toBeNull();
+        expect(res.body.avatar).toBe('\u{1F99E}'); // 🦞 LOBSTER default
     });
 
     it('reflects an emoji avatar set via PUT /api/device/entity/avatar', async () => {

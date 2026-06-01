@@ -100,6 +100,18 @@
     <string name="wallpaper_usage_window_weekly">7d</string>
     <string name="wallpaper_usage_window_session_label">Session</string>
     <string name="wallpaper_usage_window_weekly_label">Weekly</string>
+    <string name="wallpaper_reset_window_label">Reset countdown</string>
+    <string name="wallpaper_reset_window_off">Off</string>
+    <string name="wallpaper_reset_window_5h">5h</string>
+    <string name="wallpaper_reset_window_weekly">Weekly</string>
+    <string name="wallpaper_reset_window_5h_next">Next 5h reset (%1$s): %2$s</string>
+    <string name="wallpaper_reset_window_weekly_next">Next weekly reset: %1$s</string>
+    <string name="wallpaper_reset_window_weekly_next_per_engine">Next weekly reset (%1$s): %2$s</string>
+    <string name="wallpaper_settings_panel_label">Wallpaper settings</string>
+    <string name="wallpaper_settings_collapse_action">Collapse settings panel</string>
+    <string name="wallpaper_settings_expand_action">Expand settings panel</string>
+    <string name="wallpaper_settings_collapse_caret_down">▼</string>
+    <string name="wallpaper_settings_collapse_caret_up">▲</string>
     <string name="back">Back</string>
     
     <!-- Layout Editor -->
@@ -142,11 +154,16 @@
     <string name="ai_chat_view_feedback">View Feedback History →</string>
 
     <string name="ai_chat_tool_status_bash">Running analysis</string>
+    <string name="ai_chat_tool_status_default">Processing</string>
     <string name="ai_chat_tool_status_edit">Editing file</string>
     <string name="ai_chat_tool_status_glob">Finding files</string>
     <string name="ai_chat_tool_status_grep">Searching code</string>
     <string name="ai_chat_tool_status_read">Reading file</string>
     <string name="ai_chat_tool_status_write">Writing file</string>
+    <string name="ai_chat_status_analyzing">Analyzing</string>
+    <string name="ai_chat_status_processing_result">Processing result</string>
+    <string name="msg_no_entities_connected">No entities connected. Bind entities first.</string>
+    <string name="webview_title_eclawbot_portal">EClawbot Portal</string>
 
     <!-- Chat -->
     <string name="chat_history">Chat</string>

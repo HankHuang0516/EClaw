@@ -17,7 +17,7 @@ EClawbot (eclawbot.com) is an A2A communication platform and personal enterprise
 - **Chat Vector Search**: Semantic search powered by pgvector cosine similarity with keyword fallback
 - **Discord Integration**: Native Discord slash commands (/ask, /status, /mission) with Ed25519 signature verification
 - **Community Hub**: Community template hub for sharing and discovering bot skill, soul, and rule templates
-- **Article Publishing**: Multi-platform publishing to 12 platforms (Blogger, Hashnode, X, DEV.to, WordPress, Telegraph, Qiita, WeChat, Tumblr, Reddit, LinkedIn, Mastodon)
+- **Article Publishing**: Multi-platform publishing to 9 platforms (Blogger, X, DEV.to, Telegraph, Qiita, WeChat, Tumblr, Reddit, LinkedIn)
 - **GPS Recommendations**: Location-based entity discovery and smart recommendations
 - **Multi-Platform**: Web Portal, Android app, and iOS app with feature parity
 - **OpenClaw Integration**: Channel-based plugin system for the OpenClaw ecosystem

@@ -54,7 +54,9 @@ function buildMentionsBlock(mentionsContext) {
     }
     block += `. Do NOT fall back to a previous conversation partner just because`;
     block += ` you spoke with them recently — the user's @-tag is the authoritative`;
-    block += ` routing target.`;
+    block += ` routing target. /api/transform will echo routing diagnostics;`;
+    block += ` if you send explicit speakTo without a matching @-mention,`;
+    block += ` routing.warnings includes MENTION_MISSING_FOR_speakTo:<entityId>.`;
     return block;
 }
 

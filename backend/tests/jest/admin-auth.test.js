@@ -171,6 +171,7 @@ let app;
 const get = (path) => request(app).get(path).set('Host', 'localhost');
 const post = (path) => request(app).post(path).set('Host', 'localhost');
 const del = (path) => request(app).delete(path).set('Host', 'localhost');
+const patch = (path) => request(app).patch(path).set('Host', 'localhost');
 
 beforeAll(() => {
     app = require('../../index');
@@ -235,6 +236,12 @@ describe('Admin endpoints — unauthenticated access blocked', () => {
         expect(res.status).toBe(401);
     });
 
+    it('PATCH /api/admin/bots/:botId/metadata rejects without auth', async () => {
+        const res = await patch('/api/admin/bots/anybot/metadata')
+            .send({ modelName: 'gpt-5' });
+        expect(res.status).toBe(401);
+    });
+
     it('DELETE /api/admin/official-bot/test rejects without auth', async () => {
         const res = await del('/api/admin/official-bot/test');
         expect(res.status).toBe(401);
@@ -274,6 +281,13 @@ describe('Admin endpoints — non-admin access blocked', () => {
         const res = await post('/api/admin/bots/create')
             .set('Cookie', cookie)
             .send({ botName: 'test' });
+        expect(res.status).toBe(403);
+    });
+
+    it('PATCH /api/admin/bots/:botId/metadata rejects non-admin', async () => {
+        const res = await patch('/api/admin/bots/anybot/metadata')
+            .set('Cookie', cookie)
+            .send({ modelName: 'gpt-5' });
         expect(res.status).toBe(403);
     });
 

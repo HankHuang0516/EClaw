@@ -1530,3 +1530,544 @@
     color: #9ca3af;
     border: 1px solid rgba(107, 114, 128, 0.35);
 }
+
+/* ══════════════ Point-and-Edit Demo (Track A scaffold) ══════════════ */
+#panel-point-and-edit-demo .ped-header {
+    margin-bottom: 18px;
+}
+#panel-point-and-edit-demo .ped-header h1 {
+    margin: 0 0 6px;
+    font-size: 22px;
+    color: #f3f4f6;
+}
+#panel-point-and-edit-demo .ped-lede {
+    margin: 0 0 12px;
+    color: #cbd5e1;
+    font-size: 14px;
+}
+.ped-mode-switch {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+.ped-mode {
+    background: rgba(124, 58, 237, 0.12);
+    color: #cbd5e1;
+    border: 1px solid rgba(124, 58, 237, 0.35);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12.5px;
+    cursor: pointer;
+    transition: background 120ms;
+}
+.ped-mode:hover:not([disabled]) {
+    background: rgba(124, 58, 237, 0.25);
+}
+.ped-mode.active {
+    background: #7c3aed;
+    color: #fff;
+    border-color: #7c3aed;
+}
+.ped-mode[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.ped-status {
+    margin: 0;
+    font-size: 12.5px;
+    color: #94a3b8;
+}
+.ped-status[data-state="picked"] {
+    color: #86efac;
+}
+.ped-status[data-state="resolving"] {
+    color: #fde68a;
+}
+.ped-status[data-state="error"] {
+    color: #fca5a5;
+}
+
+.ped-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 380px);
+    gap: 14px;
+    align-items: start;
+}
+@media (max-width: 760px) {
+    .ped-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ped-sandbox {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(124, 58, 237, 0.25);
+    border-radius: 10px;
+    padding: 14px;
+    min-height: 320px;
+    isolation: isolate;
+}
+.ped-block {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: #e2e8f0;
+}
+.ped-hero-title {
+    margin: 0 0 4px;
+    font-size: 17px;
+    color: #f8fafc;
+}
+.ped-hero-sub {
+    margin: 0;
+    font-size: 13px;
+    color: #cbd5e1;
+}
+.ped-feature {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    column-gap: 10px;
+    align-items: start;
+}
+.ped-feature-icon {
+    grid-row: span 2;
+    font-size: 22px;
+    line-height: 1;
+}
+.ped-feature-title {
+    margin: 0;
+    font-size: 14px;
+    color: #f3f4f6;
+}
+.ped-feature-body {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #cbd5e1;
+}
+.ped-cta-block {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.ped-cta-btn {
+    background: #7c3aed;
+    color: #fff;
+    border: 0;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+}
+.ped-cta-foot {
+    font-size: 12.5px;
+    color: #94a3b8;
+}
+.ped-note p {
+    margin: 0 0 6px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: #cbd5e1;
+}
+.ped-note p:last-child {
+    margin: 0;
+}
+.ped-note em {
+    color: #fde68a;
+    font-style: normal;
+    background: rgba(253, 230, 138, 0.1);
+    padding: 0 3px;
+    border-radius: 3px;
+}
+.ped-agent {
+    display: grid;
+    gap: 8px;
+}
+.ped-agent-head {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.ped-agent-avatar {
+    font-size: 18px;
+}
+.ped-agent-name {
+    font-weight: 600;
+    color: #f3f4f6;
+    font-size: 14px;
+}
+.ped-agent-tag {
+    margin: 0;
+    font-size: 13px;
+    color: #cbd5e1;
+}
+.ped-agent-actions {
+    display: flex;
+    gap: 6px;
+}
+.ped-agent-action {
+    background: rgba(124, 58, 237, 0.18);
+    border: 1px solid rgba(124, 58, 237, 0.4);
+    color: #ddd6fe;
+    border-radius: 5px;
+    padding: 4px 10px;
+    font-size: 12.5px;
+    cursor: pointer;
+}
+.ped-agent-action.ped-tiny {
+    padding: 4px 8px;
+    font-size: 11px;
+}
+
+.ped-composer {
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(34, 197, 94, 0.22);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 320px;
+}
+.ped-composer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #e2e8f0;
+    font-weight: 600;
+}
+.ped-clear {
+    background: transparent;
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 11.5px;
+    cursor: pointer;
+}
+.ped-clear:hover {
+    color: #f3f4f6;
+}
+.ped-textarea {
+    flex: 1;
+    background: #0f172a;
+    color: #e2e8f0;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 6px;
+    padding: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 140px;
+}
+.ped-composer-foot {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 11.5px;
+    color: #94a3b8;
+}
+.ped-payload-label {
+    font-weight: 600;
+    color: #cbd5e1;
+}
+.ped-payload {
+    margin: 0;
+    background: #020617;
+    color: #a7f3d0;
+    border-radius: 5px;
+    padding: 8px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+    line-height: 1.45;
+    max-height: 160px;
+    overflow: auto;
+    white-space: pre;
+}
+
+.ped-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    border: 2px solid #c084fc;
+    background: rgba(192, 132, 252, 0.12);
+    border-radius: 4px;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+    transition: transform 60ms linear, width 60ms linear, height 60ms linear;
+    z-index: 5;
+}
+
+/* ── Point-and-Edit Roadmap (3-track scenario walkthrough) ── */
+
+.ped-roadmap {
+    margin-top: 36px;
+    padding-top: 28px;
+    border-top: 1px solid rgba(124, 58, 237, 0.25);
+}
+
+.ped-roadmap-head h2 {
+    margin: 0 0 6px 0;
+    color: #f3e8ff;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.ped-roadmap-lede {
+    margin: 0 0 22px 0;
+    color: #c7c9d6;
+    font-size: 14px;
+    max-width: 720px;
+    line-height: 1.55;
+}
+
+.ped-roadmap-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+@media (max-width: 760px) {
+    .ped-roadmap-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.ped-track {
+    background: #1a1f2e;
+    border: 1px solid rgba(124, 58, 237, 0.25);
+    border-radius: 8px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ped-track-a {
+    border-color: rgba(124, 58, 237, 0.55);
+}
+
+.ped-track-d {
+    border-color: rgba(124, 58, 237, 0.4);
+}
+
+.ped-track-head {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ped-track-head h3 {
+    margin: 0;
+    color: #f3e8ff;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.ped-track-badge {
+    align-self: flex-start;
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.ped-track-badge-live {
+    background: #7c3aed;
+    color: #fff;
+}
+
+.ped-track-badge-pending {
+    background: #3a3a52;
+    color: #c7c9d6;
+}
+
+.ped-track-pitch {
+    margin: 0;
+    color: #c7c9d6;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.ped-track-steps {
+    margin: 0;
+    padding-left: 18px;
+    color: #d4d6e3;
+    font-size: 12.5px;
+    line-height: 1.55;
+}
+
+.ped-track-steps li {
+    margin-bottom: 4px;
+}
+
+.ped-track-steps code {
+    background: #0f1320;
+    color: #c084fc;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 11.5px;
+}
+
+.ped-track-foot {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(124, 58, 237, 0.25);
+    color: #a8acbe;
+    font-size: 11.5px;
+}
+
+.ped-track-stat strong {
+    color: #e9d5ff;
+}
+
+/* Comparison table */
+
+.ped-roadmap-compare {
+    margin-bottom: 28px;
+}
+
+.ped-roadmap-compare h3 {
+    margin: 0 0 12px 0;
+    color: #f3e8ff;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.ped-compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #1a1f2e;
+    border: 1px solid rgba(124, 58, 237, 0.25);
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 13px;
+}
+
+.ped-compare-table th,
+.ped-compare-table td {
+    text-align: left;
+    padding: 9px 12px;
+    border-bottom: 1px solid rgba(124, 58, 237, 0.15);
+    color: #d4d6e3;
+}
+
+.ped-compare-table th {
+    background: rgba(124, 58, 237, 0.15);
+    color: #f3e8ff;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.ped-compare-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.ped-compare-table td strong {
+    color: #c084fc;
+}
+
+@media (max-width: 760px) {
+    .ped-compare-table th,
+    .ped-compare-table td {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+}
+
+/* Loop diagram */
+
+.ped-roadmap-loop h3 {
+    margin: 0 0 12px 0;
+    color: #f3e8ff;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.ped-loop-steps {
+    margin: 0;
+    padding-left: 22px;
+    color: #d4d6e3;
+    font-size: 13.5px;
+    line-height: 1.65;
+}
+
+.ped-loop-steps li {
+    margin-bottom: 8px;
+}
+
+.ped-loop-steps strong {
+    color: #c084fc;
+}
+
+.ped-loop-steps code {
+    background: #0f1320;
+    color: #c084fc;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+/* ═══════════════════════════════════════════════════
+   Point-and-edit Track C — mock mind-map mini panel
+   ═══════════════════════════════════════════════════ */
+#panel-point-edit-demo .ped-mindmap {
+    margin: 16px 0 0 0;
+    padding: 14px 16px;
+    border: 1px dashed rgba(124, 58, 237, 0.45);
+    border-radius: 10px;
+    background: rgba(124, 58, 237, 0.05);
+}
+#panel-point-edit-demo .ped-mindmap[hidden] { display: none; }
+#panel-point-edit-demo .ped-mindmap-head h3 {
+    margin: 0 0 4px 0;
+    font-size: 0.95em;
+    color: #7c3aed;
+}
+#panel-point-edit-demo .ped-mindmap-lede {
+    margin: 0 0 12px 0;
+    font-size: 0.85em;
+    opacity: 0.8;
+}
+#panel-point-edit-demo .ped-mindmap-canvas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+#panel-point-edit-demo .ped-mindmap-node {
+    appearance: none;
+    cursor: pointer;
+    padding: 8px 12px;
+    border: 1px solid rgba(124, 58, 237, 0.4);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+    color: inherit;
+    font: inherit;
+    font-size: 0.85em;
+    transition: background 120ms ease, border-color 120ms ease;
+}
+#panel-point-edit-demo .ped-mindmap-node:hover {
+    background: rgba(124, 58, 237, 0.15);
+    border-color: rgba(124, 58, 237, 0.7);
+}
+#panel-point-edit-demo .ped-mindmap-node:focus-visible {
+    outline: 2px solid #7c3aed;
+    outline-offset: 2px;
+}

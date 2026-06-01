@@ -50,8 +50,48 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:orientation="vertical"
-        android:paddingTop="16dp"
+        android:paddingTop="8dp"
         android:background="@drawable/gradient_bottom_fade">
+
+        <!-- Collapse/Expand Handle -->
+        <LinearLayout
+            android:id="@+id/settingsCollapseHandle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="?attr/selectableItemBackground"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:layout_marginBottom="4dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/wallpaper_settings_panel_label"
+                android:textColor="@android:color/white"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/settingsCollapseIndicator"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/wallpaper_settings_collapse_caret_down"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:contentDescription="@string/wallpaper_settings_collapse_action" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/settingsCollapsibleContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
         <!-- Custom Layout Toggle -->
         <LinearLayout
@@ -192,6 +232,42 @@
 
             </LinearLayout>
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="@string/wallpaper_reset_window_label"
+                android:textColor="@color/text_white_60"
+                android:textSize="12sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:orientation="horizontal">
+
+                <CheckBox
+                    android:id="@+id/checkReset5h"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:buttonTint="@color/lobster_orange"
+                    android:text="@string/wallpaper_reset_window_5h"
+                    android:textColor="@android:color/white"
+                    android:textSize="13sp" />
+
+                <CheckBox
+                    android:id="@+id/checkResetWeekly"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:buttonTint="@color/lobster_orange"
+                    android:text="@string/wallpaper_reset_window_weekly"
+                    android:textColor="@android:color/white"
+                    android:textSize="13sp" />
+
+            </LinearLayout>
+
         </LinearLayout>
 
         <!-- Select Photo Button (only visible when background enabled) -->
@@ -243,6 +319,8 @@
             android:textColor="@color/text_secondary"
             android:textSize="12sp"
             android:gravity="center" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

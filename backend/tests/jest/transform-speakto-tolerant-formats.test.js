@@ -162,8 +162,8 @@ describe('POST /api/transform — speakTo tolerant formats (#2291)', () => {
         expect(res.body.delivery?.results?.[0]?.entityId).toBe(1);
     });
 
-    test('speakTo: ["nonexistent"] still returns not_found (regression)', async () => {
-        const tag = `TOL-NF-${Date.now()}`;
+    test('speakTo: ["notreal"] (unparseable format) → 400 speakTo_invalid_format', async () => {
+        const tag = `TOL-FMT-${Date.now()}`;
         const res = await post('/api/transform').send({
             deviceId,
             entityId: 2,
@@ -173,17 +173,52 @@ describe('POST /api/transform — speakTo tolerant formats (#2291)', () => {
             speakTo: ['notreal'],
         });
 
-        expect(res.status).toBe(200);
-        const result = res.body.delivery?.results?.[0];
-        expect(result?.success).toBe(false);
-        expect(result?.reason).toBe('not_found');
-
-        // Fallback save still creates ONE sender-side row.
+        expect(res.status).toBe(400);
+        expect(res.body.success).toBe(false);
+        expect(res.body.error).toBe('speakTo_invalid_format');
+        expect(res.body.got).toBe('notreal');
+        // Gate fires before delivery — no chat row should have been saved
         const rows = rowsForProbe(tag);
-        expect(rows).toHaveLength(1);
-        // Critical: NO misleading routing arrow that pretends a target was reached.
-        // pendingA2A is from entity 0 — pre-fix this row would be `->0`.
-        expect(/->\d+$/.test(rows[0].source)).toBe(false);
+        expect(rows).toHaveLength(0);
+    });
+
+    test.each([
+        ['Lobster',     'mixed-case word (likely entity name)'],
+        ['team-2',      'with hyphen'],
+        ['abc',         'too short'],
+        ['ABCDEF',      'uppercase 6-char'],
+        ['  ',          'whitespace only'],
+        ['',            'empty string'],
+        ['@@abc123',    'double-@ junk'],
+        ['hello world', 'with space'],
+    ])('speakTo: [%j] (%s) → 400 speakTo_invalid_format', async (badEntry) => {
+        const res = await post('/api/transform').send({
+            deviceId,
+            entityId: 2,
+            botSecret: botSecret2,
+            state: 'IDLE',
+            message: `BAD-${Date.now()}`,
+            speakTo: [badEntry],
+        });
+
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('speakTo_invalid_format');
+        expect(res.body.got).toBe(badEntry);
+    });
+
+    test('speakTo: "abc123" (non-array container) → 400 speakTo_invalid_format', async () => {
+        const res = await post('/api/transform').send({
+            deviceId,
+            entityId: 2,
+            botSecret: botSecret2,
+            state: 'IDLE',
+            message: `BAD-CONTAINER-${Date.now()}`,
+            speakTo: 'abc123',
+        });
+
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('speakTo_invalid_format');
+        expect(res.body.expected).toMatch(/array/);
     });
 
     test('speakTo: ["#999"] (numeric but invalid entity) → not_found, no phantom anchor', async () => {

@@ -42,7 +42,7 @@ afterAll(async () => {
 });
 
 describe('POST /api/transform — senderHint', () => {
-    let deviceId, deviceSecret, botSecret0, botSecret1, entity1PublicCode;
+    let deviceId, deviceSecret, botSecret0, botSecret1, botSecret3, entity1PublicCode, entity3PublicCode;
 
     beforeAll(async () => {
         deviceId = 'sh-device';
@@ -50,22 +50,27 @@ describe('POST /api/transform — senderHint', () => {
         botSecret0 = await bindEntity(deviceId, deviceSecret);
         expect(botSecret0).toBeTruthy();
 
-        // Add a second entity (entityId: 1) so we have a routing target
+        // Add more entities so mention-routing fixtures can target #3.
         const { devices } = require('../../index');
-        const addRes = await post('/api/device/add-entity')
-            .send({ deviceId, deviceSecret });
-        expect(addRes.status).toBe(200);
+        for (const targetEntityId of [1, 2, 3]) {
+            const addRes = await post('/api/device/add-entity')
+                .send({ deviceId, deviceSecret });
+            expect(addRes.status).toBe(200);
 
-        // Bind entity 1 by registering and getting binding code
-        const regRes2 = await post('/api/device/register')
-            .send({ deviceId, deviceSecret, entityId: 1 });
-        const code2 = regRes2.body.bindingCode;
-        const bindRes2 = await post('/api/bind').send({ code: code2 });
-        botSecret1 = bindRes2.body.botSecret;
+            const regRes = await post('/api/device/register')
+                .send({ deviceId, deviceSecret, entityId: targetEntityId });
+            const code = regRes.body.bindingCode;
+            const bindRes = await post('/api/bind').send({ code });
+            if (targetEntityId === 1) botSecret1 = bindRes.body.botSecret;
+            if (targetEntityId === 3) botSecret3 = bindRes.body.botSecret;
+        }
         expect(botSecret1).toBeTruthy();
+        expect(botSecret3).toBeTruthy();
 
         entity1PublicCode = devices[deviceId].entities[1].publicCode;
+        entity3PublicCode = devices[deviceId].entities[3].publicCode;
         expect(entity1PublicCode).toBeTruthy();
+        expect(entity3PublicCode).toBeTruthy();
     });
 
     it('resolves senderHint kind=entity with publicCode → fills speakTo', async () => {
@@ -205,5 +210,62 @@ describe('POST /api/transform — senderHint', () => {
 
         expect(res.status).toBe(200);
         expect(res.body.senderHintResolution).toBeUndefined();
+    });
+
+    it('escapes forwarded mention leaks and does not broadcast from copied @all text', async () => {
+        const res = await post('/api/transform').send({
+            deviceId, entityId: 1, botSecret: botSecret1,
+            state: 'IDLE',
+            message: 'see [from #6] @all stuff'
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.body.routing.resolvedVia).toBeNull();
+        expect(res.body.routing.routedTo).toEqual([]);
+        expect(res.body.delivery).toBeUndefined();
+        expect(res.body.routing.warnings).toEqual(
+            expect.arrayContaining([expect.stringMatching(/^MENTION_LEAK_ESCAPED:/)])
+        );
+        expect(res.body.currentState.message).toContain(`@${'\u200b'}all`);
+    });
+
+    it('escapes @all in quoted text but still routes a direct @#3 mention', async () => {
+        const res = await post('/api/transform').send({
+            deviceId, entityId: 1, botSecret: botSecret1,
+            state: 'IDLE',
+            message: `> @all in quote\nplease send this to @#3`
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.body.routing.resolvedVia).toBe('mention');
+        expect(res.body.routing.routedTo).toHaveLength(1);
+        expect(res.body.routing.routedTo[0]).toMatchObject({
+            kind: 'entity',
+            entityId: 3,
+            publicCode: entity3PublicCode
+        });
+        expect(res.body.delivery?.broadcast).not.toBe(true);
+        expect(res.body.delivery?.results?.map(r => r.entityId)).toEqual([3]);
+        expect(res.body.currentState.message).toContain(`> @${'\u200b'}all in quote`);
+        expect(res.body.currentState.message).toContain('@#3');
+    });
+
+    it('keeps senderHint routing when there is no quote and no @-mention', async () => {
+        const res = await post('/api/transform').send({
+            deviceId, entityId: 1, botSecret: botSecret1,
+            state: 'IDLE',
+            message: 'plain reply with sender hint only',
+            senderHint: { kind: 'entity', entityId: 3, publicCode: entity3PublicCode }
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.body.routing.resolvedVia).toBe('senderHint');
+        expect(res.body.senderHintResolution).toMatchObject({
+            kind: 'entity',
+            applied: 'speakTo',
+            publicCode: entity3PublicCode
+        });
+        expect(res.body.routing.routedTo).toHaveLength(1);
+        expect(res.body.routing.routedTo[0].entityId).toBe(3);
     });
 });

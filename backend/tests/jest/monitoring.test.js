@@ -265,19 +265,19 @@ describe('classifyPublisher (threshold math)', () => {
     const { _classifyPublisher: classify } = require('../../index');
 
     it('configured platform with no error → connected', () => {
-        expect(classify({ id: 'hashnode', configured: true })).toBe('connected');
+        expect(classify({ id: 'devto', configured: true })).toBe('connected');
     });
 
     it('configured but lastError → disconnected', () => {
-        expect(classify({ id: 'hashnode', configured: true, error: 'token expired' })).toBe('disconnected');
+        expect(classify({ id: 'devto', configured: true, error: 'token expired' })).toBe('disconnected');
     });
 
     it('configured but expiresAt in past → disconnected', () => {
-        expect(classify({ id: 'hashnode', configured: true, expiresAt: Date.now() - 1000 })).toBe('disconnected');
+        expect(classify({ id: 'devto', configured: true, expiresAt: Date.now() - 1000 })).toBe('disconnected');
     });
 
     it('configured with future expiresAt → connected', () => {
-        expect(classify({ id: 'hashnode', configured: true, expiresAt: Date.now() + 1000 })).toBe('connected');
+        expect(classify({ id: 'devto', configured: true, expiresAt: Date.now() + 1000 })).toBe('connected');
     });
 
     it('unconfigured platform with no setup trace → unconfigured', () => {
@@ -340,7 +340,7 @@ describe('GET /api/monitoring/rental-health threshold math (status)', () => {
         const origFn = articlePublisher.getPlatformsStatus;
         articlePublisher.getPlatformsStatus = () => ([
             { id: 'blogger', name: 'Blogger', region: 'global', configured: true, error: 'token expired' },
-            { id: 'hashnode', name: 'Hashnode', region: 'global', configured: true, error: 'api quota exceeded' },
+            { id: 'qiita', name: 'Qiita', region: 'ja', configured: true, error: 'api quota exceeded' },
             { id: 'devto', name: 'DEV.to', region: 'global', configured: true, error: 'unauthorized' },
             { id: 'telegraph', name: 'Telegraph', region: 'global', configured: true },
         ]);
@@ -360,7 +360,7 @@ describe('GET /api/monitoring/rental-health threshold math (status)', () => {
         const origFn = articlePublisher.getPlatformsStatus;
         articlePublisher.getPlatformsStatus = () => ([
             { id: 'blogger', name: 'Blogger', region: 'global', configured: true, error: 'token expired' },
-            { id: 'hashnode', name: 'Hashnode', region: 'global', configured: true, error: 'api quota exceeded' },
+            { id: 'qiita', name: 'Qiita', region: 'ja', configured: true, error: 'api quota exceeded' },
             { id: 'telegraph', name: 'Telegraph', region: 'global', configured: true },
             { id: 'reddit', name: 'Reddit', region: 'global', configured: false },
         ]);
@@ -421,13 +421,14 @@ describe('GET /api/monitoring/rental-health happy path', () => {
         expect(res.body.db.entityTrash.oldestRowAgeSeconds).toBe(3600);
     });
 
-    it('publishers list contains 10 platforms (mastodon retired 2026-04-15, wordpress retired 2026-04-20)', async () => {
+    it('publishers list contains 9 platforms (mastodon retired 2026-04-15, wordpress 2026-04-20, hashnode 2026-05-27)', async () => {
         const res = await request(app)
             .get('/api/monitoring/rental-health?key=test-monitoring-key-1234');
-        expect(res.body.publishers.length).toBe(10);
+        expect(res.body.publishers.length).toBe(9);
         const ids = res.body.publishers.map(p => p.id);
         expect(ids).not.toContain('mastodon');
         expect(ids).not.toContain('wordpress');
+        expect(ids).not.toContain('hashnode');
         expect(res.body.publishers[0]).toMatchObject({
             id: expect.any(String),
             name: expect.any(String),

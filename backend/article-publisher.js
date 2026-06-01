@@ -1,6 +1,8 @@
 // Article Publisher — Multi-platform article publishing
-// Supported: Blogger, Hashnode, X/Twitter, DEV.to, WordPress.com, Telegraph, Qiita, WeChat,
-//            Tumblr, Reddit, LinkedIn, Mastodon
+// Supported: Blogger, X/Twitter, DEV.to, Telegraph, Qiita, WeChat,
+//            Tumblr, Reddit, LinkedIn
+// Retired: Hashnode (2026-05-27, pay-or-drop → drop), WordPress.com (2026-04-20),
+//          Mastodon (2026-04-15)
 const express = require('express');
 const crypto = require('crypto');
 const OAuth = require('oauth-1.0a');
@@ -69,13 +71,10 @@ const BLOGGER_CREDS_MISSING = {
     error: 'Blogger credentials not set for this device',
     setup_url: '/portal/publisher-setup.html'
 };
-const HASHNODE_API_TOKEN = process.env.HASHNODE_API_TOKEN;
-const HASHNODE_GQL_ENDPOINT = 'https://gql.hashnode.com';
-const HASHNODE_CRED_KEYS = ['HASHNODE_API_TOKEN'];
-const HASHNODE_CREDS_MISSING = {
-    error: 'Hashnode credentials not set for this device',
-    setup_url: '/portal/publisher-setup.html'
-};
+// Hashnode retired 2026-05-27 (pay-or-drop decision — vendor required paid tier
+// for posting beyond a low free quota; ROI didn't justify $25/mo). Routes,
+// constants, and DB tokens removed wholesale; reads from old data won't find
+// a hashnode entry in the platforms list / probes.
 
 // DEV.to (Forem API)
 const DEVTO_API_KEY = process.env.DEVTO_API_KEY;
@@ -606,106 +605,7 @@ router.delete('/blogger/post/:postId', async (req, res) => {
     }
 });
 
-// ============================================
-// HASHNODE PUBLISH / DELETE
-// ============================================
-
-// Resolve the Hashnode API token (vault-first, env fallback). Returns
-// { token, source: 'vault'|'env'|'missing' }. Caller passes token into hashnodeGQL.
-async function resolveHashnodeCreds(deviceId) {
-    if (deviceId && typeof _getDeviceVar === 'function') {
-        try {
-            const v = await _getDeviceVar(deviceId, HASHNODE_CRED_KEYS[0]);
-            if (typeof v === 'string' && v.length > 0) return { token: v, source: 'vault' };
-        } catch (_) { /* fall through to env */ }
-    }
-    if (HASHNODE_API_TOKEN) return { token: HASHNODE_API_TOKEN, source: 'env' };
-    return { token: null, source: 'missing' };
-}
-
-async function hashnodeGQL(query, variables = {}, token = HASHNODE_API_TOKEN) {
-    const res = await fetch(HASHNODE_GQL_ENDPOINT, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: token
-        },
-        body: JSON.stringify({ query, variables })
-    });
-    const data = await res.json();
-    if (data.errors) throw new Error(data.errors.map(e => e.message).join('; '));
-    return data.data;
-}
-
-// Get current user's publications
-router.get('/hashnode/me', async (req, res) => {
-    try {
-        const deviceId = req.query?.deviceId || null;
-        const { token, source } = await resolveHashnodeCreds(deviceId);
-        if (!token) return res.status(400).json(HASHNODE_CREDS_MISSING);
-        const data = await hashnodeGQL(`query { me { id username publications(first: 10) { edges { node { id title url } } } } }`, {}, token);
-        res.json({ success: true, user: data.me, _credSource: source });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-router.post('/hashnode/publish', express.json(), async (req, res) => {
-    const { publicationId, title, contentMarkdown, tags, slug, includeReferralCTA, deviceId } = req.body;
-    if (!publicationId || !title || !contentMarkdown) {
-        return res.status(400).json({ error: 'publicationId, title, contentMarkdown required' });
-    }
-
-    try {
-        const { token, source } = await resolveHashnodeCreds(deviceId || null);
-        if (!token) return res.status(400).json(HASHNODE_CREDS_MISSING);
-
-        const finalMarkdown = appendReferralCTA(contentMarkdown, { format: 'md', locale: 'en', skip: includeReferralCTA === false });
-
-        const data = await hashnodeGQL(`
-            mutation PublishPost($input: PublishPostInput!) {
-                publishPost(input: $input) {
-                    post { id title slug url }
-                }
-            }
-        `, {
-            input: {
-                publicationId,
-                title,
-                contentMarkdown: finalMarkdown,
-                slug: slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-                tags: tags ? tags.map(t => typeof t === 'string' ? { slug: t, name: t } : t) : []
-            }
-        }, token);
-        const post = data.publishPost.post;
-        console.log(`[Publisher] Hashnode post created: ${post.id} "${title}" (creds: ${source})`);
-        res.json({ success: true, platform: 'hashnode', postId: post.id, url: post.url, slug: post.slug });
-    } catch (err) {
-        console.error('[Publisher] Hashnode publish error:', err);
-        res.status(500).json({ error: err.message });
-    }
-});
-
-router.delete('/hashnode/post/:postId', express.json(), async (req, res) => {
-    const { postId } = req.params;
-    const deviceId = req.body?.deviceId || req.query?.deviceId || null;
-    try {
-        const { token } = await resolveHashnodeCreds(deviceId);
-        if (!token) return res.status(400).json(HASHNODE_CREDS_MISSING);
-        await hashnodeGQL(`
-            mutation RemovePost($id: ID!) {
-                removePost(input: { id: $id }) {
-                    post { id }
-                }
-            }
-        `, { id: postId }, token);
-        console.log(`[Publisher] Hashnode post deleted: ${postId}`);
-        res.json({ success: true, platform: 'hashnode', deleted: postId });
-    } catch (err) {
-        console.error('[Publisher] Hashnode delete error:', err);
-        res.status(500).json({ error: err.message });
-    }
-});
+// Hashnode publish/delete routes removed 2026-05-27 (pay-or-drop → drop).
 
 // ============================================
 // X (TWITTER) PUBLISH / REPLY / DELETE
@@ -2307,8 +2207,7 @@ function getPlatformsStatus() {
     return [
         { id: 'blogger', name: 'Blogger', region: 'global', authType: 'oauth', contentFormat: 'html',
           configured: !!(BLOGGER_CLIENT_ID && BLOGGER_CLIENT_SECRET) },
-        { id: 'hashnode', name: 'Hashnode', region: 'global', authType: 'api_key', contentFormat: 'markdown',
-          configured: !!HASHNODE_API_TOKEN },
+        // Hashnode retired 2026-05-27 (pay-or-drop → drop).
         { id: 'x', name: 'X (Twitter)', region: 'global', authType: 'oauth1a', contentFormat: 'text',
           configured: !!(process.env.X_CONSUMER_KEY && process.env.X_ACCESS_TOKEN) },
         { id: 'devto', name: 'DEV.to', region: 'global', authType: 'api_key', contentFormat: 'markdown',
@@ -2363,18 +2262,7 @@ router.get('/health', async (req, res) => {
             // Blogger uses DB-backed OAuth; checking if we have stored tokens is enough
             return { configured: true };
         }),
-        // Hashnode
-        probe('hashnode', 'Hashnode', async () => {
-            if (!HASHNODE_API_TOKEN) return { skip: true, reason: 'HASHNODE_API_TOKEN not set' };
-            const r = await fetch(HASHNODE_GQL_ENDPOINT, {
-                method: 'POST',
-                headers: { Authorization: HASHNODE_API_TOKEN, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: '{ me { id username } }' })
-            });
-            const d = await r.json();
-            if (d.errors) throw Object.assign(new Error(d.errors[0].message), { status: 401 });
-            return { user: d.data?.me?.username };
-        }),
+        // Hashnode probe removed 2026-05-27 — platform retired.
         // DEV.to
         probe('devto', 'DEV.to', async () => {
             if (!DEVTO_API_KEY) return { skip: true, reason: 'DEVTO_API_KEY not set' };

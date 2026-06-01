@@ -870,4 +870,21 @@ GPS: 온디맨드만, 백그라운드 추적 없음, 서버 재시작 시 데이
     <string name="fcm_channel_system_desc">시스템 알림</string>
     <string name="fcm_channel_feedback_name">피드백 업데이트</string>
     <string name="fcm_channel_feedback_desc">피드백 상태 업데이트</string>
+    <string name="ai_chat_status_analyzing">분석 중</string>
+    <string name="ai_chat_status_processing_result">결과 처리 중</string>
+    <string name="ai_chat_tool_status_default">처리 중</string>
+    <string name="wallpaper_reset_window_5h">5시간</string>
+    <string name="wallpaper_reset_window_5h_next">다음 5시간 초기화 (%1$s): %2$s</string>
+    <string name="wallpaper_reset_window_label">초기화 카운트다운</string>
+    <string name="wallpaper_reset_window_off">끄기</string>
+    <string name="wallpaper_reset_window_weekly">매주</string>
+    <string name="wallpaper_reset_window_weekly_next">다음 매주 초기화: %1$s</string>
+    <string name="wallpaper_reset_window_weekly_next_per_engine">다음 매주 초기화 (%1$s): %2$s</string>
+    <string name="msg_no_entities_connected">연결된 엔티티가 없습니다. 먼저 엔티티를 바인딩하세요.</string>
+    <string name="webview_title_eclawbot_portal">EClawbot 포털</string>
+    <string name="wallpaper_settings_panel_label">배경화면 설정</string>
+    <string name="wallpaper_settings_collapse_caret_down">▼</string>
+    <string name="wallpaper_settings_expand_action">설정 패널 펼치기</string>
+    <string name="wallpaper_settings_collapse_action">설정 패널 접기</string>
+    <string name="wallpaper_settings_collapse_caret_up">▲</string>
 </resources>

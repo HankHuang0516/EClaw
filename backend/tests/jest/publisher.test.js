@@ -256,19 +256,21 @@ describe('GET /api/publisher/platforms', () => {
         const res = await request(app).get('/api/publisher/platforms');
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
-        expect(res.body.platforms).toHaveLength(10);
+        expect(res.body.platforms).toHaveLength(9);
     });
 
     it('includes all expected platform IDs', async () => {
         const res = await request(app).get('/api/publisher/platforms');
         const ids = res.body.platforms.map(p => p.id);
         expect(ids).toEqual(expect.arrayContaining([
-            'blogger', 'hashnode', 'x', 'devto', 'telegraph', 'qiita', 'wechat',
+            'blogger', 'x', 'devto', 'telegraph', 'qiita', 'wechat',
             'tumblr', 'reddit', 'linkedin'
         ]));
-        // mastodon retired 2026-04-15; wordpress retired 2026-04-20 (owner's
-        // wp.com site suspended). Routes still exist for token recovery but
-        // platforms are no longer in the public list.
+        // hashnode retired 2026-05-27 (pay-or-drop → drop); mastodon retired
+        // 2026-04-15; wordpress retired 2026-04-20 (owner's wp.com site
+        // suspended). Routes for mastodon/wordpress still exist for token
+        // recovery; hashnode routes removed wholesale.
+        expect(ids).not.toContain('hashnode');
         expect(ids).not.toContain('mastodon');
         expect(ids).not.toContain('wordpress');
     });

@@ -235,9 +235,9 @@
 
     <script src="../shared/i18n.js"></script>
     <script src="../shared/transition-overlay.js"></script>
-    <script src="shared/auth.js"></script>
     <script src="shared/api.js"></script>
     <script src="shared/nav.js"></script>
+    <script src="shared/auth.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
     <script src="shared/ai-chat.js"></script>
@@ -374,23 +374,7 @@
                 }),
                 path: '/api/publisher/devto/publish'
             },
-            hashnode: {
-                fields: [
-                    { key: 'publicationId', type: 'text', label: 'Publication ID',
-                        hint: 'Hashnode publicationId — required. Add to device-vars as HASHNODE_PUBLICATION_ID and paste here, or use your workspace URL.' ,
-                        required: true },
-                    { key: 'title', type: 'text', label: 'Title', required: true },
-                    { key: 'contentMarkdown', type: 'textarea', label: 'Markdown body', required: true, tall: true },
-                    { key: 'tags', type: 'text', label: 'Tags (comma-separated)' }
-                ],
-                toBody: s => ({
-                    publicationId: s.publicationId,
-                    title: s.title,
-                    contentMarkdown: s.contentMarkdown,
-                    tags: splitTags(s.tags)
-                }),
-                path: '/api/publisher/hashnode/publish'
-            },
+            // Hashnode form removed 2026-05-27 — platform retired.
             qiita: {
                 fields: [
                     { key: 'title', type: 'text', label: 'Title', required: true },

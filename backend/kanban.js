@@ -274,7 +274,7 @@ async function initKanbanDatabase() {
 /**
  * Factory: receives in-memory devices object from index.js
  */
-function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, pushToChannelCallback, saveChatMessage, getMissionApiHints, pushToBot, orgChart, notifyDevice } = {}) {
+function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, pushToChannelCallback, saveChatMessage, getMissionApiHints, pushToBot, orgChart, notifyDevice, emitDevicePreferences } = {}) {
     const router = express.Router();
 
     // Health check
@@ -336,6 +336,9 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             await devicePrefs.updatePrefs(deviceId, { kanban_nudge_per_entity_overrides: map });
             const updated = await devicePrefs.getPrefs(deviceId);
             const effective = devicePrefs.mergeEntityOverride(updated, Number(entityId));
+            if (typeof emitDevicePreferences === 'function') {
+                emitDevicePreferences(deviceId, updated);
+            }
             res.json({ success: true, prefs: updated, effective });
         } catch (err) {
             console.error('[Kanban] PUT /nudge-prefs error:', err.message);
@@ -711,18 +714,22 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             tags: Array.isArray(row.tags) ? row.tags : [],
         };
 
-        // Schedule fields — always include if schedule was ever configured
-        if (row.schedule_enabled || row.schedule_type || row.schedule_last_run_at) {
-            card.schedule = {
-                enabled: !!row.schedule_enabled,
-                type: row.schedule_type || null,
-                cronExpression: row.schedule_cron || null,
-                runAt: row.schedule_run_at ? new Date(row.schedule_run_at).getTime() : null,
-                timezone: row.schedule_timezone || 'Asia/Taipei',
-                lastRunAt: row.schedule_last_run_at ? new Date(row.schedule_last_run_at).getTime() : null,
-                nextRunAt: row.schedule_next_run_at ? new Date(row.schedule_next_run_at).getTime() : null,
-            };
-        }
+        // Schedule fields — always present so hygiene audits can lock the schema
+        // and detect cron-broken cards (enabled=true but nextRunAt stale). Cards
+        // without a schedule get null; cards that have ever been scheduled get the
+        // full object. Prior to 2026-05-28 this was conditional, which hid the
+        // field from manual cards AND from any /cards call that didn't pass
+        // ?automation=all (so cron-broken heuristics had nothing to evaluate).
+        const hasSchedule = row.schedule_enabled || row.schedule_type || row.schedule_last_run_at;
+        card.schedule = hasSchedule ? {
+            enabled: !!row.schedule_enabled,
+            type: row.schedule_type || null,
+            cronExpression: row.schedule_cron || null,
+            runAt: row.schedule_run_at ? new Date(row.schedule_run_at).getTime() : null,
+            timezone: row.schedule_timezone || 'Asia/Taipei',
+            lastRunAt: row.schedule_last_run_at ? new Date(row.schedule_last_run_at).getTime() : null,
+            nextRunAt: row.schedule_next_run_at ? new Date(row.schedule_next_run_at).getTime() : null,
+        } : null;
 
         // Automation fields
         if (row.is_automation) card.isAutomation = true;
@@ -2723,6 +2730,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         const priorityMode = basePrefs.kanban_nudge_priority_mode || 'priority_first';
         const baseIntervalMs = Math.max(5, Number(basePrefs.kanban_nudge_interval_minutes) || 180) * 60 * 1000;
         const basePerEntityThrottle = basePrefs.kanban_nudge_per_entity_throttle !== false;
+        const baseStopMode = basePrefs.kanban_nudge_stop_mode === true;
         const baseStatuses = new Set(
             Array.isArray(basePrefs.kanban_nudge_statuses) && basePrefs.kanban_nudge_statuses.length
                 ? basePrefs.kanban_nudge_statuses
@@ -2744,6 +2752,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                         : KanbanStatus.NUDGE_DEFAULT_STATUSES
                 ),
                 perEntityThrottle: merged.kanban_nudge_per_entity_throttle !== false,
+                stopMode: merged.kanban_nudge_stop_mode === true,
             };
             entityPrefsCache.set(bid, ep);
             return ep;
@@ -2759,24 +2768,50 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             if (bots.length === 0) {
                 return {
                     intervalMs: baseIntervalMs,
-                    statusEligible: baseStatuses.has(card.status),
+                    statusEligible: !baseStopMode && baseStatuses.has(card.status),
                     perEntityThrottle: basePerEntityThrottle,
+                    recipientBots: [],
                 };
             }
             let minInterval = Infinity;
             let statusEligible = false;
             let anyThrottle = false;
+            const recipientBots = [];
             for (const bid of bots) {
                 const ep = effectiveFor(bid);
+                if (ep.stopMode) continue;
+                recipientBots.push(bid);
                 if (ep.intervalMs < minInterval) minInterval = ep.intervalMs;
                 if (ep.statuses.has(card.status)) statusEligible = true;
                 if (ep.perEntityThrottle) anyThrottle = true;
+            }
+            if (recipientBots.length === 0) {
+                return {
+                    intervalMs: baseIntervalMs,
+                    statusEligible: false,
+                    perEntityThrottle: basePerEntityThrottle,
+                    recipientBots,
+                };
             }
             return {
                 intervalMs: Number.isFinite(minInterval) ? minInterval : baseIntervalMs,
                 statusEligible,
                 perEntityThrottle: anyThrottle,
+                recipientBots,
             };
+        }
+
+        function filterNudgeStoppedRecipients(ids) {
+            const seen = new Set();
+            const out = [];
+            for (const id of ids || []) {
+                const n = Number(id);
+                if (!Number.isFinite(n) || seen.has(n)) continue;
+                seen.add(n);
+                if (effectiveFor(n).stopMode) continue;
+                out.push(n);
+            }
+            return out;
         }
 
         // Status filter applies to ALL levels — if status falls outside every recipient's
@@ -2825,11 +2860,11 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 : Infinity;
 
             if (elapsedMs >= blockAfterMs && card.status !== 'blocked' && sinceLast > intervalMs) {
-                await fireBlockEscalation(card);
+                await fireBlockEscalation(card, filterNudgeStoppedRecipients(buildEscalationRecipients(card)));
                 continue;
             }
             if (elapsedMs >= escalateAfterMs && sinceLast > intervalMs) {
-                const fired = await fireLevelTwoEscalation(card);
+                const fired = await fireLevelTwoEscalation(card, filterNudgeStoppedRecipients(buildEscalationRecipients(card)));
                 if (fired) continue;
             }
             // Level 1 candidate if enough interval has passed.
@@ -2848,11 +2883,13 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         for (const card of sortedCandidates) {
             if (picked.length >= batchSize) break;
             const ce = cardEffective(card);
-            if (ce.perEntityThrottle && !cardHasFreshRecipient(card, lastByEntity, willNudgeEntity, effectiveFor, baseIntervalMs)) {
+            if (!ce.recipientBots.length) continue;
+            const throttleCard = { ...card, assigned_bots: ce.recipientBots };
+            if (ce.perEntityThrottle && !cardHasFreshRecipient(throttleCard, lastByEntity, willNudgeEntity, effectiveFor, baseIntervalMs)) {
                 continue;
             }
-            picked.push(card);
-            for (const bid of (card.assigned_bots || [])) willNudgeEntity.add(Number(bid));
+            picked.push({ card, recipients: ce.recipientBots });
+            for (const bid of ce.recipientBots) willNudgeEntity.add(Number(bid));
         }
 
         if (picked.length === 0) return;
@@ -2860,8 +2897,8 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         const overrideCount = Object.keys(basePrefs.kanban_nudge_per_entity_overrides || {}).length;
         console.log(`[Kanban] Stale nudge for ${deviceId}: ${picked.length}/${level1Pending.length} (mode=${priorityMode}, batch=${batchSize}, baseInterval=${baseIntervalMs / 60000}m, perEntityOverrides=${overrideCount})`);
 
-        for (const card of picked) {
-            await fireLevelOneNudge(card);
+        for (const item of picked) {
+            await fireLevelOneNudge(item.card, item.recipients);
         }
     }
 
@@ -2976,9 +3013,9 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         return out;
     }
 
-    async function fireBlockEscalation(card) {
+    async function fireBlockEscalation(card, recipientIds = null) {
         const elapsedHrs = Math.round((Date.now() - new Date(card.status_changed_at).getTime()) / 3600000 * 10) / 10;
-        const recipients = buildEscalationRecipients(card);
+        const recipients = Array.isArray(recipientIds) ? recipientIds : buildEscalationRecipients(card);
         await pool.query(
             `UPDATE kanban_cards SET status = 'blocked', status_changed_at = NOW(), last_stale_nudge_at = NOW(), updated_at = NOW() WHERE id = $1`,
             [card.id]
@@ -2993,9 +3030,9 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         if (serverLog) serverLog('warn', 'kanban', `[Stale] Card ${card.id} auto-blocked after ${elapsedHrs}h`, { deviceId: card.device_id });
     }
 
-    async function fireLevelTwoEscalation(card) {
+    async function fireLevelTwoEscalation(card, recipientIds = null) {
         const elapsedHrs = Math.round((Date.now() - new Date(card.status_changed_at).getTime()) / 3600000 * 10) / 10;
-        const recipients = buildEscalationRecipients(card);
+        const recipients = Array.isArray(recipientIds) ? recipientIds : buildEscalationRecipients(card);
         const PRIORITY_UPGRADE = { P3: 'P2', P2: 'P1', P1: 'P0', P0: 'P0' };
         const newPriority = PRIORITY_UPGRADE[card.priority] || card.priority;
         if (newPriority === card.priority) return false;
@@ -3014,8 +3051,8 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
         return true;
     }
 
-    async function fireLevelOneNudge(card) {
-        const bots = card.assigned_bots || [];
+    async function fireLevelOneNudge(card, recipientIds = null) {
+        const bots = Array.isArray(recipientIds) ? recipientIds : (card.assigned_bots || []);
         const cardStatusLabel = STATUS_LABELS[card.status] || card.status;
         const elapsedMs = Date.now() - new Date(card.status_changed_at).getTime();
         const elapsedHrs = Math.round(elapsedMs / 3600000 * 10) / 10;

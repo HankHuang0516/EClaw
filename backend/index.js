@@ -17,7 +17,9 @@ const sitePageviews = require('./site-pageviews');
 const feedbackModule = require('./device-feedback');
 const chatIntegrity = require('./chat-integrity');
 const communitySsr = require('./community-ssr');
+const { isLowSignalFwd } = require('./org-fwd-filter');
 const { buildOrgEntitySessionKey, isOrgEntitySessionKey } = require('./session-scope');
+const { assignDefaultCompanionIfMissing } = require('./petdx-phase0-hook');
 // JWT secret: fail-safe random per process if env var is missing (tokens signed in one process won't verify in another)
 const JWT_SECRET_FALLBACK = process.env.JWT_SECRET || require('crypto').randomBytes(32).toString('hex');
 
@@ -295,6 +297,13 @@ app.use('/assets', express.static(path.join(__dirname, 'public/assets'), {
         }
     }
 }));
+// Petdx companion static assets — avatar.png / thumbnail.webp / spritesheets.
+// Path is part of the contract in petdx-uiux-spec.md §5 + the Phase 0 amendment
+// §0.4 resolver, which reads `/static/companions/<id>/avatar.png` URLs.
+app.use('/static/companions', express.static(path.join(__dirname, 'public/companions'), {
+    maxAge: '7d',
+    immutable: true,
+}));
 // Serve public JavaScript helpers mounted outside /portal and /shared.
 // Keep short revalidation so registration attribution fixes roll out quickly.
 app.use('/js', express.static(path.join(__dirname, 'public/js'), {
@@ -339,8 +348,25 @@ app.use('/promo-videos', express.static(path.join(__dirname, 'public/promo-video
     }
 }));
 // Info Hub page — redirect to /portal/info.html so relative asset paths resolve correctly
-app.get('/info', (req, res) => {
+app.get(['/info', '/info.html'], (req, res) => {
     res.redirect(301, '/portal/info.html');
+});
+
+// Founder story page — long-form why-EClawbot narrative for IP Depth touchpoint
+app.get(['/about-founder', '/about-founder.html'], (req, res) => {
+    res.redirect(301, '/portal/about-founder.html');
+});
+
+// Kanban / Settings / root index — sibling redirects so legacy bookmarks + SEO + share
+// links from before the portal/ migration keep working instead of returning hard-404.
+app.get(['/kanban', '/kanban.html'], (req, res) => {
+    res.redirect(301, '/portal/kanban.html');
+});
+app.get(['/settings', '/settings.html'], (req, res) => {
+    res.redirect(301, '/portal/settings.html');
+});
+app.get('/index.html', (req, res) => {
+    res.redirect(301, '/portal/index.html');
 });
 
 // Account deletion page — clean URL for Google Play Data Safety form
@@ -1088,7 +1114,7 @@ function ensureOneEmptySlot(device) {
 
 // Latest app version - update this with each release
 // Bot will warn users if their app version is older than this
-const LATEST_APP_VERSION = "1.0.86";
+const LATEST_APP_VERSION = "1.0.88";
 const FORCE_UPDATE_BELOW = null; // Set to version string (e.g. "1.0.30") to force-update anything below
 const APP_RELEASE_NOTES = process.env.APP_RELEASE_NOTES || null;
 
@@ -1100,6 +1126,7 @@ let persistenceReady = false;
 
 // Pending binding codes (code -> { deviceId, entityId, expires })
 const pendingBindings = {};
+const recentPetdxBindSnapshots = new Map();
 
 // Bot-to-bot loop prevention: token-bucket style — regenerates 1 token per minute, cap = BOT2BOT_MAX_MESSAGES
 // Key: "deviceId:entityId" -> { count, lastRegenAt }
@@ -1469,19 +1496,25 @@ setInterval(async () => {
 }, CLEANUP_INTERVAL).unref();
 
 // Graceful shutdown - save data before exit
-process.on('SIGINT', async () => {
-    console.log('[Persistence] Received SIGINT, saving data before exit...');
+async function gracefulShutdown(signal) {
+    console.log(`[Persistence] Received ${signal}, saving data before exit...`);
     await saveData();
     if (usePostgreSQL) await db.closeDatabase();
+    // Close the point-edit headless Chromium so the playwright subprocess
+    // doesn't leak past the parent on Railway redeploys / SIGTERM.
+    try {
+        const pe = require('./point-edit-resolver');
+        if (pe && typeof pe.closeBrowser === 'function') {
+            await pe.closeBrowser();
+        }
+    } catch (err) {
+        console.error('[Shutdown] point-edit closeBrowser failed:', err.message);
+    }
     process.exit(0);
-});
+}
 
-process.on('SIGTERM', async () => {
-    console.log('[Persistence] Received SIGTERM, saving data before exit...');
-    await saveData();
-    if (usePostgreSQL) await db.closeDatabase();
-    process.exit(0);
-});
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 
 // Initialize persistence on startup (async)
 initPersistence().catch(err => {
@@ -1745,6 +1778,9 @@ try {
         pushToBot,
         orgChart: orgChartModule,
         notifyDevice,
+        emitDevicePreferences: (deviceId, prefs) => {
+            io.to(`device:${deviceId}`).emit('device:preferences', { deviceId, prefs });
+        },
     });
     app.use('/api/mission', kanbanModule.router);
     console.log('[Kanban] Module loaded successfully');
@@ -1818,6 +1854,10 @@ try {
     console.error('[Mindmap] Failed to load module:', err.message);
     mindmapModule = { initMindmapTables: () => {} };
 }
+
+// Point-and-edit demo — coordinate-to-source target resolver.
+const pointEditResolver = require('./point-edit-resolver');
+app.use('/api/point-edit', pointEditResolver.router);
 
 // Scheduled Messages — user-scheduled chat messages (Phase 1: backend)
 let scheduledMessagesModule;
@@ -2179,7 +2219,7 @@ app.use('/api/oauth', oauthServer.router);
 oauthServer.initOAuthDatabase();
 
 // ============================================
-// ARTICLE PUBLISHER — Blogger + Hashnode
+// ARTICLE PUBLISHER — Blogger + DEV.to + X + Qiita + Tumblr + Reddit + LinkedIn + Telegraph + WeChat
 // ============================================
 const articlePublisher = require('./article-publisher');
 app.use('/api/publisher', articlePublisher.router);
@@ -2203,6 +2243,11 @@ const companionModule = require('./companion-api')({
     authenticateBot,
     authenticateDeviceOrBot,
     serverLog,
+    // Per spec §0.4a (2026-05-31 amendment): /api/companion/select must
+    // atomically mirror the select into the vault. The factory is hoisted
+    // (function declaration further down in this file) so the forward
+    // reference is safe.
+    createPetdxPhase0Io,
 });
 app.use('/api/companion', companionModule.router);
 if (process.env.NODE_ENV !== 'test') {
@@ -5032,7 +5077,7 @@ app.post('/api/admin/push-update', adminAuth, adminCheck, async (req, res) => {
 // POST /api/admin/bots/create - Create new official bot (cookie-based admin auth)
 app.post('/api/admin/bots/create', adminAuth, adminCheck, async (req, res) => {
     try {
-        const { botId, botType, webhookUrl, token, setupUsername, setupPassword } = req.body;
+        const { botId, botType, webhookUrl, token, setupUsername, setupPassword, displayName, modelName } = req.body;
 
         if (!botId || !botType || !webhookUrl || !token) {
             return res.status(400).json({ success: false, error: 'botId, botType, webhookUrl, and token are required' });
@@ -5062,17 +5107,49 @@ app.post('/api/admin/bots/create', adminAuth, adminCheck, async (req, res) => {
             assigned_at: null,
             created_at: Date.now(),
             setup_username: setupUsername || null,
-            setup_password: setupPassword || null
+            setup_password: setupPassword || null,
+            display_name: displayName || null,
+            model_name: modelName || null
         };
 
         officialBots[botId] = bot;
         if (usePostgreSQL) await db.saveOfficialBot(bot);
 
-        console.log(`[Admin Portal] Created official bot: ${botId} (${botType})`);
-        res.json({ success: true, bot: { botId, botType, status: 'available', botSecret } });
+        console.log(`[Admin Portal] Created official bot: ${botId} (${botType}, model=${modelName || 'unset'})`);
+        res.json({ success: true, bot: { botId, botType, status: 'available', botSecret, displayName: bot.display_name, modelName: bot.model_name } });
     } catch (err) {
         console.error('[Admin] Create bot error:', err);
         res.status(500).json({ success: false, error: 'Failed to create bot' });
+    }
+});
+
+// PATCH /api/admin/bots/:botId/metadata - Update editable bot metadata (display_name, model_name).
+// bot_id is immutable PK; this endpoint exists so admins can backfill or correct the
+// human-facing labels without rotating bindings. webhookUrl/token/secret are NOT editable here.
+app.patch('/api/admin/bots/:botId/metadata', adminAuth, adminCheck, async (req, res) => {
+    try {
+        const { botId } = req.params;
+        const { displayName, modelName } = req.body;
+
+        if (typeof displayName === 'undefined' && typeof modelName === 'undefined') {
+            return res.status(400).json({ success: false, error: 'At least one of displayName or modelName is required' });
+        }
+
+        const bot = officialBots[botId];
+        if (!bot) {
+            return res.status(404).json({ success: false, error: 'Bot not found' });
+        }
+
+        if (typeof displayName !== 'undefined') bot.display_name = displayName || null;
+        if (typeof modelName !== 'undefined') bot.model_name = modelName || null;
+
+        if (usePostgreSQL) await db.saveOfficialBot(bot);
+
+        console.log(`[Admin Portal] Updated bot metadata: ${botId} (displayName=${bot.display_name}, modelName=${bot.model_name})`);
+        res.json({ success: true, bot: { botId, displayName: bot.display_name, modelName: bot.model_name } });
+    } catch (err) {
+        console.error('[Admin] Update bot metadata error:', err);
+        res.status(500).json({ success: false, error: 'Failed to update bot metadata' });
     }
 });
 
@@ -5185,6 +5262,9 @@ const HEARTBEAT_STUCK_MS = 90_000;
 // 90s says "alert ops"; 5min says "the daemon is dead, kill the process". Set well above
 // the H1.2 alert window so transient blips don't cause restart thrash.
 const SEVERE_STUCK_MS = 300_000;
+const ENTITY_HEARTBEAT_STALE_MS = Number.isFinite(Number(process.env.ENTITY_HEARTBEAT_STALE_MS))
+    ? Number(process.env.ENTITY_HEARTBEAT_STALE_MS)
+    : 300_000;
 // Boot-grace: process.uptime ≤ this skips the 503 even if state looks severe. Prevents
 // crashloop where DB-loaded stale mq + cold daemon trips immediate 503 → kill → repeat.
 // 3 min gives a fresh Hermes plenty of time to start polling and reset lastDrainedAt.
@@ -5194,6 +5274,169 @@ const HEALTH_BOOT_GRACE_MS = 180_000;
 // must NOT trigger restart. Only a daemon-wide failure — multiple bots that USED to drain
 // suddenly stopping — warrants a process kill.
 const SEVERE_STUCK_MIN_COUNT = 5;
+
+function parseEntityLastSeenMs(entity) {
+    if (!entity) return null;
+    const raw = entity.lastSeen || entity.last_seen || entity.daemonLastSeenAt || entity.lastSeenAt;
+    if (raw === undefined || raw === null || raw === '') return null;
+    if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+    const ms = Date.parse(raw);
+    return Number.isFinite(ms) ? ms : null;
+}
+
+function getEntityDaemonStatus(entity, nowMs = Date.now()) {
+    const lastSeenMs = parseEntityLastSeenMs(entity);
+    const lastSeen = lastSeenMs === null ? null : new Date(lastSeenMs).toISOString();
+    const stale = lastSeenMs === null || (nowMs - lastSeenMs) > ENTITY_HEARTBEAT_STALE_MS;
+    return {
+        daemonConnected: !!lastSeen && !stale,
+        lastSeen,
+        stale,
+    };
+}
+
+function recordEntityHeartbeat(entity, nowMs = Date.now()) {
+    const iso = new Date(nowMs).toISOString();
+    entity.lastSeen = iso;
+    entity.last_seen = iso;
+    return getEntityDaemonStatus(entity, nowMs);
+}
+
+function createRoutingDiagnostics(resolvedVia = null) {
+    return {
+        routedTo: [],
+        resolvedVia,
+        warnings: [],
+        recipientLastSeen: null,
+        stale: false,
+    };
+}
+
+function appendRoutingRecipient(routing, kind, targetEntityId, targetEntity) {
+    if (!routing || !targetEntity) return;
+    routing.routedTo.push({
+        kind,
+        entityId: targetEntityId,
+        publicCode: targetEntity.publicCode || null,
+    });
+    const status = getEntityDaemonStatus(targetEntity);
+    if (status.lastSeen) {
+        if (!routing.recipientLastSeen || Date.parse(status.lastSeen) < Date.parse(routing.recipientLastSeen)) {
+            routing.recipientLastSeen = status.lastSeen;
+        }
+    }
+    routing.stale = routing.stale || status.stale;
+}
+
+// ─── Platform-P2: ack_required delivery confirmation ───
+// High-priority messages can opt-in with `ackRequired: true`. The server inserts
+// a `pending_ack` row per actually-routed recipient (V3: routed-only, never
+// speculative). Recipient acks via POST /api/ack (V1: recipient botSecret OR
+// deviceSecret). A 60s sweeper expires unacked rows past their deadline and
+// posts a fire-once system message back to the sender (V2: idempotent).
+//
+// Scope locks (Codex #6 + #1 sign-off):
+//   IN  : high-priority ack + pending table + ack endpoint + timeout notice
+//   OUT : auto-resend, UI changes, retry counter, cross-device fan-out
+const ACK_DEFAULT_DEADLINE_MS = 15 * 60 * 1000;   // 15min
+const ACK_MIN_DEADLINE_MS     = 60 * 1000;        // 60s
+const ACK_MAX_DEADLINE_MS     = 60 * 60 * 1000;   // 1h
+const ACK_SWEEP_INTERVAL_MS   = Number.isFinite(Number(process.env.ACK_SWEEP_INTERVAL_MS))
+    ? Number(process.env.ACK_SWEEP_INTERVAL_MS)
+    : 60_000;
+
+function clampAckDeadlineMs(raw) {
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n <= 0) return ACK_DEFAULT_DEADLINE_MS;
+    return Math.min(Math.max(n, ACK_MIN_DEADLINE_MS), ACK_MAX_DEADLINE_MS);
+}
+
+async function createPendingAckRows(pool, rows) {
+    if (!pool || !Array.isArray(rows) || rows.length === 0) return [];
+    const created = [];
+    for (const r of rows) {
+        const ackId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+            ? crypto.randomUUID()
+            : `ack_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+        await pool.query(
+            `INSERT INTO pending_ack
+                (ack_id, device_id, sender_entity_id, recipient_entity_id, recipient_public_code,
+                 source_msg_id, status, deadline_ms, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, NOW())`,
+            [ackId, r.deviceId, r.senderEntityId, r.recipientEntityId, r.recipientPublicCode || null,
+             r.sourceMsgId || null, r.deadlineMs]
+        );
+        created.push({
+            ackId,
+            recipientEntityId: r.recipientEntityId,
+            recipientPublicCode: r.recipientPublicCode || null,
+            deadlineMs: r.deadlineMs,
+            expiresAt: new Date(r.deadlineMs).toISOString(),
+        });
+    }
+    return created;
+}
+
+async function markAckedById(pool, ackId, recipientEntityId, nowMs = Date.now()) {
+    if (!pool || !ackId) return null;
+    // Idempotent + race-safe:
+    //   UPDATE only matches rows that are still pending AND not past deadline.
+    //   If the deadline has passed (but sweeper hasn't fired yet), UPDATE matches 0
+    //   rows and the UNION-ALL fallback returns the current row with status='pending'
+    //   and deadline_ms<=nowMs — the endpoint then returns 410 instead of acking late.
+    //   Already-acked / already-expired rows are returned unchanged via UNION-ALL.
+    const result = await pool.query(
+        `WITH updated AS (
+             UPDATE pending_ack
+                SET status = 'acked', acked_at = NOW()
+              WHERE ack_id = $1
+                AND recipient_entity_id = $2
+                AND status = 'pending'
+                AND deadline_ms > $3
+              RETURNING ack_id, device_id, sender_entity_id, recipient_entity_id,
+                        recipient_public_code, status, deadline_ms, created_at,
+                        acked_at, timed_out_at
+         )
+         SELECT * FROM updated
+         UNION ALL
+         SELECT ack_id, device_id, sender_entity_id, recipient_entity_id,
+                recipient_public_code, status, deadline_ms, created_at,
+                acked_at, timed_out_at
+           FROM pending_ack
+          WHERE ack_id = $1
+            AND NOT EXISTS (SELECT 1 FROM updated)
+          LIMIT 1`,
+        [ackId, recipientEntityId, nowMs]
+    );
+    return result.rows[0] || null;
+}
+
+async function getPendingAckById(pool, ackId) {
+    if (!pool || !ackId) return null;
+    const result = await pool.query(
+        `SELECT ack_id, device_id, sender_entity_id, recipient_entity_id,
+                recipient_public_code, status, deadline_ms, created_at, acked_at, timed_out_at
+           FROM pending_ack WHERE ack_id = $1 LIMIT 1`,
+        [ackId]
+    );
+    return result.rows[0] || null;
+}
+
+async function sweepExpiredAcks(pool, nowMs = Date.now()) {
+    if (!pool) return [];
+    // Atomic flip: only flip rows that are still 'pending' AND past deadline.
+    // Second call returns 0 rows (V2 idempotent).
+    const result = await pool.query(
+        `UPDATE pending_ack
+            SET status = 'expired', timed_out_at = NOW()
+          WHERE status = 'pending'
+            AND deadline_ms <= $1
+          RETURNING ack_id, device_id, sender_entity_id, recipient_entity_id,
+                    recipient_public_code, deadline_ms, created_at, timed_out_at`,
+        [nowMs]
+    );
+    return result.rows;
+}
 
 function evaluateDeliveryHealth(stuckList, uptimeMs) {
     const oldestIdleMs = stuckList.length
@@ -5302,6 +5545,69 @@ function findStuckEntities(nowMs) {
     return stuck;
 }
 
+// Character → default avatar mapping. Mirrors the client-side
+// ENTITY_CHARS_DEFAULT in public/portal/shared/entity-utils.js so that any
+// time `entity.character` is established or changed, `entity.avatar` can be
+// kept in sync unless the user has set a custom avatar.
+const CHARACTER_DEFAULT_AVATAR = {
+    LOBSTER: '\u{1F99E}', // 🦞
+    PIG: '\u{1F437}',     // 🐷
+};
+function getCharacterDefaultAvatar(character) {
+    return CHARACTER_DEFAULT_AVATAR[character] || CHARACTER_DEFAULT_AVATAR.LOBSTER;
+}
+function isCharacterDefaultAvatar(avatar) {
+    if (avatar === null || avatar === undefined || avatar === '') return true;
+    return Object.values(CHARACTER_DEFAULT_AVATAR).includes(avatar);
+}
+
+const PETDX_PREVIOUS_ENTITY_TTL_MS = 10 * 60 * 1000;
+function getPetdxBindSnapshotKey(deviceId, entityId) {
+    return `${deviceId}:${entityId}`;
+}
+function snapshotEntityForPetdxBind(entity) {
+    if (!entity) return null;
+    return {
+        entityId: entity.entityId,
+        character: entity.character || null,
+        avatar: entity.avatar || null,
+        rental_status: entity.rental_status || null,
+        identity: entity.identity && entity.identity.public
+            ? { public: { ...entity.identity.public } }
+            : null,
+    };
+}
+function rememberPreviousEntityForBind(deviceId, entityId, entity) {
+    const snapshot = snapshotEntityForPetdxBind(entity);
+    if (!snapshot) return;
+    recentPetdxBindSnapshots.set(getPetdxBindSnapshotKey(deviceId, entityId), {
+        snapshot,
+        expiresAt: Date.now() + PETDX_PREVIOUS_ENTITY_TTL_MS,
+    });
+}
+function getPreviousEntityForBind(deviceId, entityId, currentEntity) {
+    const now = Date.now();
+    for (const [key, entry] of recentPetdxBindSnapshots.entries()) {
+        if (!entry || entry.expiresAt <= now) recentPetdxBindSnapshots.delete(key);
+    }
+    const key = getPetdxBindSnapshotKey(deviceId, entityId);
+    const entry = recentPetdxBindSnapshots.get(key);
+    if (entry && entry.expiresAt > now) return entry.snapshot;
+    if (currentEntity && currentEntity.rebindCount > 0) {
+        return {
+            entityId,
+            character: null,
+            avatar: null,
+            rental_status: currentEntity.rental_status || null,
+            identity: null,
+        };
+    }
+    return null;
+}
+function clearPreviousEntityForBind(deviceId, entityId) {
+    recentPetdxBindSnapshots.delete(getPetdxBindSnapshotKey(deviceId, entityId));
+}
+
 // Helper: Create default entity
 function createDefaultEntity(entityId) {
     return {
@@ -5314,13 +5620,14 @@ function createDefaultEntity(entityId) {
         message: `Entity #${entityId} waiting...`,
         parts: {},
         lastUpdated: Date.now(),
+        lastSeen: null, // Runtime heartbeat timestamp from the entity daemon
         messageQueue: [],
         deadLetterQueue: [], // Phase H1.1: capped overflow buffer for forensics
         lastEnqueuedAt: null, // Phase H1.2: when server last appended to messageQueue
         lastDrainedAt: null, // Phase H1.2: when bot daemon last consumed messageQueue (heartbeat)
         webhook: null,
         appVersion: null, // Device app version (e.g., "1.0.3")
-        avatar: null, // User-chosen emoji avatar (synced across devices)
+        avatar: CHARACTER_DEFAULT_AVATAR.LOBSTER, // Synced to default character; user-set avatar overrides via /api/device/entity/avatar
         xp: 0,
         level: 1,
         publicCode: null,
@@ -5505,8 +5812,8 @@ exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/j
 
 Do NOT call /api/bind or /api/bot/register — webhook is already configured for you.
 
-⚠️ IMMEDIATE ACTION REQUIRED — Run this command RIGHT NOW to confirm you're online (server will NOT send any additional test push):
-exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"Hi! I am online and ready to chat~"}'
+⚠️ IMMEDIATE ACTION REQUIRED — Run this exact command RIGHT NOW to confirm you're online. The "message" field below is a PLACEHOLDER (angle brackets denote template syntax) — server treats it as a one-time bind marker, not a chat reply. NEVER copy this placeholder text or anything resembling it into any later reply; every reply to a user message must be your own response to that user's content, not this example body.
+exec: curl -s -X POST "${apiBase}/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"<one-time-bind-ack-do-not-copy>"}'
 
 --- E-Claw API Documentation (Latest) ---
 ${skillDoc}`;
@@ -5536,8 +5843,8 @@ Every push message will include a pre-filled curl command. Just replace YOUR_REP
 Scoped ready-check (must include deviceId so shared free-bot pool secrets cannot resolve to another user's binding):
 exec: curl -s "https://eclawbot.com/api/whoami?deviceId=${deviceId}&entityId=${entityId}&botSecret=${botSecret}"
 
-⚠️ IMMEDIATE ACTION REQUIRED — Run this command RIGHT NOW to confirm you're online (server will NOT send any additional test push):
-exec: curl -s -X POST "https://eclawbot.com/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"Hi! I am online and ready to chat~"}'`;
+⚠️ IMMEDIATE ACTION REQUIRED — Run this exact command RIGHT NOW to confirm you're online. The "message" field below is a PLACEHOLDER (angle brackets denote template syntax) — server treats it as a one-time bind marker, not a chat reply. NEVER copy this placeholder text or anything resembling it into any later reply; every reply to a user message must be your own response to that user's content, not this example body.
+exec: curl -s -X POST "https://eclawbot.com/api/transform" -H "Content-Type: application/json" -d '{"deviceId":"${deviceId}","entityId":${entityId},"botSecret":"${botSecret}","targetDeviceId":"${deviceId}","state":"IDLE","message":"<one-time-bind-ack-do-not-copy>"}'`;
                 try {
                     const retryResult = await sendToSession(webhookUrl, webhookToken, sessionKey, shortMsg, authOpts, { timeout: 30000 });
                     if (retryResult.success) {
@@ -5833,6 +6140,8 @@ function computeInviteTierState(totalInvited, milestonesClaimed) {
 
 // GET /api/invite/my-code — get (or auto-generate) the caller's invite code
 // Auth: deviceId+deviceSecret OR JWT cookie
+// Extended: returns share_url with UTM tags + wallet_reward_preview
+// Auto-rotate (spec § 11): if no active code exists, mint one new.
 app.get('/api/invite/my-code', async (req, res) => {
     const auth = resolveInviteAuth(req);
     if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
@@ -5840,37 +6149,53 @@ app.get('/api/invite/my-code', async (req, res) => {
 
     const pg = authModule.pool;
     try {
-        // Return existing code if any
-        const existing = await pg.query('SELECT code FROM invite_codes WHERE owner_device_id = $1', [deviceId]);
+        // Try to find an active (non-redeemed) code first
+        const existing = await pg.query(
+            'SELECT code FROM invite_codes WHERE owner_device_id = $1 AND used_by_device_id IS NULL',
+            [deviceId]
+        );
+
+        let code;
         if (existing.rows.length > 0) {
-            const stats = await pg.query('SELECT bonus_messages, total_invited FROM invite_rewards WHERE device_id = $1', [deviceId]);
-            return res.json({
-                success: true,
-                code: existing.rows[0].code,
-                bonus_messages: stats.rows[0]?.bonus_messages ?? 0,
-                total_invited: stats.rows[0]?.total_invited ?? 0
-            });
+            code = existing.rows[0].code;
+        } else {
+            // No active code — mint one new (auto-rotate per spec § 11)
+            let attempts = 0;
+            do {
+                code = generateInviteCode();
+                attempts++;
+                if (attempts > 20) return res.status(500).json({ success: false, error: 'Could not generate unique code' });
+            } while ((await pg.query('SELECT 1 FROM invite_codes WHERE code = $1', [code])).rows.length > 0);
+            await pg.query('INSERT INTO invite_codes (code, owner_device_id) VALUES ($1, $2)', [code, deviceId]);
         }
 
-        // Generate unique code
-        let code, attempts = 0;
-        do {
-            code = generateInviteCode();
-            attempts++;
-            if (attempts > 20) return res.status(500).json({ success: false, error: 'Could not generate unique code' });
-        } while ((await pg.query('SELECT 1 FROM invite_codes WHERE code = $1', [code])).rows.length > 0);
-
-        await pg.query('INSERT INTO invite_codes (code, owner_device_id) VALUES ($1, $2)', [code, deviceId]);
-        return res.json({ success: true, code, bonus_messages: 0, total_invited: 0 });
+        const stats = await pg.query('SELECT bonus_messages, total_invited FROM invite_rewards WHERE device_id = $1', [deviceId]);
+        const shareUrl = `https://minigame.eclawbot.com/?ref=${code}&utm_source=invite&utm_medium=share&utm_campaign=viral_loop`;
+        return res.json({
+            success: true,
+            code,
+            share_url: shareUrl,
+            bonus_messages: stats.rows[0]?.bonus_messages ?? 0,
+            total_invited: stats.rows[0]?.total_invited ?? 0,
+            wallet_reward_preview: {
+                invitee_reward_mli: 100 * 1000, // 100 ecoin
+                inviter_reward_mli: 500 * 1000, // 500 ecoin
+                invitee_type: 'signup_bonus',
+                inviter_type: 'referral_bonus',
+            },
+        });
     } catch (e) {
         console.error('[Invite] my-code error:', e);
         return res.status(500).json({ success: false, error: 'Internal error' });
     }
-});
+});;;
 
 // POST /api/invite/redeem — redeem an invite code
 // Body: { deviceId, deviceSecret, code } OR JWT cookie + { code }
-// Reward: invitee +300 bonus, inviter +50 bonus
+// Wallet credit: inviter 500 ecoin (REFERRAL_BONUS), invitee 100 ecoin (SIGNUP_BONUS)
+// Idempotency keys prevent double-credit on replay.
+// Single ACID transaction: all DB ops + both wallet credits share one client.
+// Spec: docs/specs/invite-reward-viral-loop.md §3, § 5
 app.post('/api/invite/redeem', async (req, res) => {
     const { code } = req.body;
     const auth = resolveInviteAuth(req);
@@ -5881,89 +6206,202 @@ app.post('/api/invite/redeem', async (req, res) => {
     }
 
     const pg = authModule.pool;
+    const wallet = walletModule;
+    const INVITER_REWARD_MLI = 500 * 1000; // 500 ecoin in mLI
+    const INVITEE_REWARD_MLI = 100 * 1000; // 100 ecoin in mLI
+
     try {
-        // Look up the code
-        const codeRow = await pg.query('SELECT owner_device_id, used_by_device_id FROM invite_codes WHERE code = $1', [code.toUpperCase()]);
-        if (codeRow.rows.length === 0) return res.status(404).json({ success: false, error: 'Invalid invite code' });
+        // Single ACID transaction — all ops (SELECT FOR UPDATE, mark used,
+        // user lookup, audit insert, both wallet credits) share one client.
+        const result = await wallet.withTransaction(async (client) => {
+            // Step 1: SELECT invite_codes FOR UPDATE — lock the row to prevent race
+            const codeRow = await client.query(
+                'SELECT owner_device_id, used_by_device_id FROM invite_codes WHERE code = $1 FOR UPDATE',
+                [code.toUpperCase()]
+            );
+            if (codeRow.rows.length === 0) {
+                return { error: 'Invalid invite code', status: 404 };
+            }
 
-        const { owner_device_id, used_by_device_id } = codeRow.rows[0];
-        if (used_by_device_id) return res.status(409).json({ success: false, error: 'Invite code already used' });
-        if (owner_device_id === deviceId) return res.status(400).json({ success: false, error: 'Cannot redeem your own invite code' });
+            const { owner_device_id, used_by_device_id } = codeRow.rows[0];
+            if (used_by_device_id) {
+                return { error: 'Invite code already used', status: 409 };
+            }
+            if (owner_device_id === deviceId) {
+                return { error: 'Cannot redeem your own invite code', status: 400 };
+            }
 
-        // Note: Option B — a device can redeem multiple different codes (one per
-        // inviter). Per-code-once is enforced above via used_by_device_id. See
-        // docs/invite-redemption-policy.md.
+            // Step 2: Resolve inviter_user_id + invitee_user_id from user_accounts.device_id
+            const [inviterAcct, inviteeAcct] = await Promise.all([
+                client.query('SELECT id FROM user_accounts WHERE device_id = $1', [owner_device_id]),
+                client.query('SELECT id FROM user_accounts WHERE device_id = $1', [deviceId]),
+            ]);
+            const inviterUserId = inviterAcct.rows[0]?.id || null;
+            const inviteeUserId = inviteeAcct.rows[0]?.id || null;
 
-        // Mark code as used
-        await pg.query(
-            'UPDATE invite_codes SET used_by_device_id = $1, used_at = NOW() WHERE code = $2',
-            [deviceId, code.toUpperCase()]
-        );
+            // Step 3: Idempotency — check if redemption already recorded
+            const existingRedemption = await client.query(
+                'SELECT id FROM invite_redemptions WHERE code = $1 AND invitee_device_id = $2',
+                [code.toUpperCase(), deviceId]
+            );
+            if (existingRedemption.rows.length > 0) {
+                return {
+                    alreadyDone: true,
+                    wallet_rewards: { status: 'already_credited' },
+                    message: 'Invite already redeemed.',
+                };
+            }
 
-        // Grant invitee +300 bonus
-        await pg.query(
-            `INSERT INTO invite_rewards (device_id, bonus_messages, total_invited)
-             VALUES ($1, 300, 0)
-             ON CONFLICT (device_id)
-             DO UPDATE SET bonus_messages = invite_rewards.bonus_messages + 300, updated_at = NOW()`,
-            [deviceId]
-        );
+            // Step 4: Device-only check (Q1 from spec § 10)
+            const walletStatus = inviteeUserId ? 'not_attempted' : 'pending_user_account';
 
-        // Grant inviter +50 bonus + increment total_invited
-        const inviterRow = await pg.query(
-            `INSERT INTO invite_rewards (device_id, bonus_messages, total_invited)
-             VALUES ($1, 50, 1)
-             ON CONFLICT (device_id)
-             DO UPDATE SET bonus_messages = invite_rewards.bonus_messages + 50,
-                           total_invited = invite_rewards.total_invited + 1,
-                           updated_at = NOW()
-             RETURNING total_invited, milestones_claimed`,
-            [owner_device_id]
-        );
+            // Step 5: Mark code as used
+            await client.query(
+                'UPDATE invite_codes SET used_by_device_id = $1, used_at = NOW() WHERE code = $2',
+                [deviceId, code.toUpperCase()]
+            );
 
-        // Credit any newly-reached tier milestones (one-shot via bitmask).
-        // Wrapped in try/catch so a milestone bookkeeping error can never
-        // break the base redeem success path.
-        let milestonesUnlocked = [];
-        try {
-            const { total_invited: ti, milestones_claimed: mc } = inviterRow.rows[0] || { total_invited: 0, milestones_claimed: 0 };
-            let addBonus = 0;
-            let newMask = mc | 0;
-            for (const t of INVITE_TIERS) {
-                if (ti >= t.threshold && (mc & t.bit) === 0) {
-                    addBonus += t.bonusMessages;
-                    newMask |= t.bit;
-                    milestonesUnlocked.push({ tier: t.key, threshold: t.threshold, bonus_messages: t.bonusMessages });
+            // Step 6: Insert invite_redemptions audit row
+            await client.query(
+                `INSERT INTO invite_redemptions
+ (code, inviter_device_id, invitee_device_id, inviter_user_id, invitee_user_id,
+  inviter_reward_amount_mli, invitee_reward_amount_mli, reward_type, wallet_credit_status)
+ VALUES ($1, $2, $3, $4, $5, $6, $7, 'redeem', $8)`,
+                [code.toUpperCase(), owner_device_id, deviceId, inviterUserId, inviteeUserId,
+                 INVITER_REWARD_MLI, INVITEE_REWARD_MLI, walletStatus]
+            );
+
+            // Step 7: Wallet credit (only for users with accounts) — same client
+            let inviterLedgerId = null;
+            let inviteeLedgerId = null;
+            let walletRewardStatus = walletStatus;
+
+            if (inviterUserId) {
+                const idemInviter = `invite:redeem:inviter:${code}:${deviceId}`;
+                try {
+                    const ir = await wallet._internals.applyLedgerEntry(client, {
+                        userId: inviterUserId,
+                        balanceDelta: INVITER_REWARD_MLI,
+                        heldDelta: 0,
+                        type: 'referral_bonus',
+                        refType: 'invite_redeem',
+                        refId: `${code}:${deviceId}`,
+                        idempotencyKey: idemInviter,
+                    });
+                    inviterLedgerId = ir?.ledgerId || null;
+                } catch (e) {
+                    console.error('[Invite] inviter wallet credit failed:', e);
+                    walletRewardStatus = 'partial';
                 }
             }
-            if (addBonus > 0) {
-                await pg.query(
-                    `UPDATE invite_rewards
-                     SET bonus_messages = bonus_messages + $1,
-                         milestones_claimed = $2,
-                         updated_at = NOW()
-                     WHERE device_id = $3`,
-                    [addBonus, newMask, owner_device_id]
-                );
+
+            if (inviteeUserId) {
+                const idemInvitee = `invite:redeem:invitee:${code}:${deviceId}`;
+                try {
+                    const ir = await wallet._internals.applyLedgerEntry(client, {
+                        userId: inviteeUserId,
+                        balanceDelta: INVITEE_REWARD_MLI,
+                        heldDelta: 0,
+                        type: 'signup_bonus',
+                        refType: 'invite_redeem',
+                        refId: `${code}:${deviceId}`,
+                        idempotencyKey: idemInvitee,
+                    });
+                    inviteeLedgerId = ir?.ledgerId || null;
+                    if (walletRewardStatus !== 'partial') {
+                        walletRewardStatus = 'credited';
+                    }
+                } catch (e) {
+                    console.error('[Invite] invitee wallet credit failed:', e);
+                    walletRewardStatus = walletRewardStatus === 'partial' ? 'partial' : 'failed';
+                }
             }
-        } catch (e) {
-            console.error('[Invite] milestone credit failed:', e);
+
+            // Step 8: Update wallet_credit_status in audit row — same client
+            await client.query(
+                'UPDATE invite_redemptions SET wallet_credit_status = $1, inviter_wallet_ledger_id = $2, invitee_wallet_ledger_id = $3 WHERE code = $4 AND invitee_device_id = $5',
+                [walletRewardStatus, inviterLedgerId, inviteeLedgerId, code.toUpperCase(), deviceId]
+            );
+
+            // Step 9: Legacy invite_rewards update (60-day migration window per spec § 10 Q2)
+            try {
+                await client.query(
+                    `INSERT INTO invite_rewards (device_id, bonus_messages, total_invited)
+                     VALUES ($1, 300, 0)
+                     ON CONFLICT (device_id)
+                     DO UPDATE SET bonus_messages = invite_rewards.bonus_messages + 300, updated_at = NOW()`,
+                    [deviceId]
+                );
+                const inviterRow = await client.query(
+                    `INSERT INTO invite_rewards (device_id, bonus_messages, total_invited)
+                     VALUES ($1, 50, 1)
+                     ON CONFLICT (device_id)
+                     DO UPDATE SET bonus_messages = invite_rewards.bonus_messages + 50,
+                                   total_invited = invite_rewards.total_invited + 1,
+                                   updated_at = NOW()
+                     RETURNING total_invited, milestones_claimed`,
+                    [owner_device_id]
+                );
+
+                const { total_invited: ti, milestones_claimed: mc } = inviterRow.rows[0] || { total_invited: 0, milestones_claimed: 0 };
+                let addBonus = 0;
+                let newMask = mc | 0;
+                for (const t of INVITE_TIERS) {
+                    if (ti >= t.threshold && (mc & t.bit) === 0) {
+                        addBonus += t.bonusMessages;
+                        newMask |= t.bit;
+                    }
+                }
+                if (addBonus > 0) {
+                    await client.query(
+                        `UPDATE invite_rewards
+                         SET bonus_messages = bonus_messages + $1,
+                             milestones_claimed = $2,
+                             updated_at = NOW()
+                         WHERE device_id = $3`,
+                        [addBonus, newMask, owner_device_id]
+                    );
+                }
+            } catch (e) {
+                console.error('[Invite] legacy bonus_messages update failed:', e);
+            }
+
+            return {
+                walletRewardStatus,
+                inviterLedgerId,
+                inviteeLedgerId,
+            };
+        }); // end withTransaction
+
+        // Handle early returns (error before entering transaction)
+        if (result.error) {
+            return res.status(result.status).json({ success: false, error: result.error });
+        }
+        if (result.alreadyDone) {
+            return res.json({ success: true, ...result });
         }
 
+        const { walletRewardStatus, inviterLedgerId, inviteeLedgerId } = result;
         return res.json({
             success: true,
-            bonus_granted: 300,
-            message: 'Invite code redeemed! +300 bonus messages added.',
-            inviter_milestones_unlocked: milestonesUnlocked,
+            wallet_rewards: {
+                status: walletRewardStatus,
+                inviter_reward_mli: INVITER_REWARD_MLI,
+                invitee_reward_mli: INVITEE_REWARD_MLI,
+                inviter_ledger_id: inviterLedgerId,
+                invitee_ledger_id: inviteeLedgerId,
+            },
+            message: 'Invite code redeemed!' + (walletRewardStatus === 'pending_user_account' ? ' Wallet credit pending user account creation.' : ''),
         });
     } catch (e) {
         console.error('[Invite] redeem error:', e);
         return res.status(500).json({ success: false, error: 'Internal error' });
     }
-});
+});;;
 
 // GET /api/invite/stats — get invite stats and remaining bonus
 // Auth: deviceId+deviceSecret OR JWT cookie
+// Extended: uses active-code resolver (spec § 11) + wallet_rewards.total_earned_mli
 app.get('/api/invite/stats', async (req, res) => {
     const auth = resolveInviteAuth(req);
     if (auth.error) return res.status(auth.status).json({ success: false, error: auth.error });
@@ -5971,15 +6409,25 @@ app.get('/api/invite/stats', async (req, res) => {
 
     const pg = authModule.pool;
     try {
-        const [codeRow, rewardRow, usageRow] = await Promise.all([
-            pg.query('SELECT code FROM invite_codes WHERE owner_device_id = $1', [deviceId]),
+        // Active-code resolver (spec § 11): only return the current active code
+        const [codeRow, rewardRow, usageRow, walletRow] = await Promise.all([
+            pg.query('SELECT code FROM invite_codes WHERE owner_device_id = $1 AND used_by_device_id IS NULL', [deviceId]),
             pg.query('SELECT bonus_messages, total_invited, milestones_claimed FROM invite_rewards WHERE device_id = $1', [deviceId]),
-            pg.query('SELECT message_count FROM usage_tracking WHERE device_id = $1 AND date = CURRENT_DATE', [deviceId])
+            pg.query('SELECT message_count FROM usage_tracking WHERE device_id = $1 AND date = CURRENT_DATE', [deviceId]),
+            pg.query(
+                `SELECT COALESCE(SUM(balance_delta), 0) as total_earned_mli
+                 FROM wallet_ledger wl
+                 JOIN user_accounts ua ON ua.id = wl.user_id
+                 WHERE ua.device_id = $1
+ AND wl.type IN ('referral_bonus', 'signup_bonus', 'invite_first_topup_bonus')`,
+                [deviceId]
+            ),
         ]);
         const bonus = rewardRow.rows[0]?.bonus_messages ?? 0;
         const totalInvited = rewardRow.rows[0]?.total_invited ?? 0;
         const milestonesClaimed = rewardRow.rows[0]?.milestones_claimed ?? 0;
         const dailyUsed = usageRow.rows[0]?.message_count ?? 0;
+        const totalEarnedMli = parseInt(walletRow.rows[0]?.total_earned_mli ??0);
         const tierState = computeInviteTierState(totalInvited, milestonesClaimed);
         return res.json({
             success: true,
@@ -5994,12 +6442,15 @@ app.get('/api/invite/stats', async (req, res) => {
             next_threshold: tierState.next_threshold,
             invites_to_next: tierState.invites_to_next,
             tier_catalog: INVITE_TIERS.map(t => ({ key: t.key, threshold: t.threshold, bonus_messages: t.bonusMessages })),
+            wallet_rewards: {
+                total_earned_mli: totalEarnedMli,
+            },
         });
     } catch (e) {
         console.error('[Invite] stats error:', e);
         return res.status(500).json({ success: false, error: 'Internal error' });
     }
-});
+});;
 
 // GET /api/invite/clicks — per-code funnel breakdown for the caller's own
 // invite codes. Device-scoped twin of /api/admin/invite/clicks: no IP hashes
@@ -6375,6 +6826,267 @@ function decryptVars(encrypted, ivHex, authTagHex) {
     return JSON.parse(decrypted);
 }
 
+function normalizeVarSources(varSources) {
+    if (!varSources) return {};
+    if (typeof varSources === 'string') {
+        try { return JSON.parse(varSources) || {}; } catch (_) { return {}; }
+    }
+    return { ...varSources };
+}
+
+function createPetdxPhase0Io() {
+    const cache = new Map();
+
+    async function loadVault(deviceId) {
+        if (!SEAL_KEY_HEX) throw new Error('SEAL_KEY not configured');
+        if (cache.has(deviceId)) return cache.get(deviceId);
+
+        const row = await db.getDeviceVars(deviceId);
+        const state = {
+            vars: {},
+            sources: {},
+            locked: false,
+        };
+        if (row) {
+            state.vars = decryptVars(row.encrypted_vars, row.iv, row.auth_tag) || {};
+            state.sources = normalizeVarSources(row.var_sources);
+            state.locked = !!row.is_locked;
+        }
+        cache.set(deviceId, state);
+        return state;
+    }
+
+    async function persistVault(deviceId, state) {
+        const { encrypted, iv, authTag } = encryptVars(state.vars);
+        const ok = await db.upsertDeviceVars(
+            deviceId,
+            encrypted,
+            iv,
+            authTag,
+            Object.keys(state.vars),
+            state.locked,
+            state.sources
+        );
+        if (!ok) throw new Error('upsertDeviceVars returned false');
+    }
+
+    return {
+        async getDeviceVar(deviceId, key) {
+            const state = await loadVault(deviceId);
+            return Object.prototype.hasOwnProperty.call(state.vars, key) ? state.vars[key] : null;
+        },
+        async setDeviceVars(deviceId, entries) {
+            const state = await loadVault(deviceId);
+            for (const [key, value] of Object.entries(entries || {})) {
+                state.vars[key] = value;
+                state.sources[key] = 'petdx-phase0';
+            }
+            await persistVault(deviceId, state);
+            if (typeof db.logDeviceVarsAudit === 'function') {
+                db.logDeviceVarsAudit({
+                    deviceId,
+                    action: 'merge',
+                    keyName: null,
+                    source: 'petdx-phase0',
+                    beforeCount: null,
+                    afterCount: Object.keys(state.vars).length,
+                }).catch(() => {});
+            }
+        },
+        async setDeviceVar(deviceId, key, value) {
+            const state = await loadVault(deviceId);
+            state.vars[key] = value;
+            state.sources[key] = 'petdx-phase0';
+            await persistVault(deviceId, state);
+            if (typeof db.logDeviceVarsAudit === 'function') {
+                db.logDeviceVarsAudit({
+                    deviceId,
+                    action: 'merge',
+                    keyName: key,
+                    source: 'petdx-phase0',
+                    beforeCount: null,
+                    afterCount: Object.keys(state.vars).length,
+                }).catch(() => {});
+            }
+        },
+        async appendCompanionSelectLog(entry) {
+            await chatPool.query(
+                `INSERT INTO companion_select_log
+                    (device_id, entity_id, companion_id, selected_at, source, origin)
+                 VALUES ($1, $2, $3, $4, $5, $6)`,
+                [
+                    entry.deviceId,
+                    entry.entityId,
+                    entry.companionId,
+                    Date.now(),
+                    entry.source || 'api',
+                    entry.origin || null,
+                ]
+            );
+        },
+        log(level, tag, message, meta = {}) {
+            const normalizedLevel = level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'info';
+            const text = `${tag} ${message}`;
+            if (normalizedLevel === 'error') console.error(text, meta);
+            else if (normalizedLevel === 'warn') console.warn(text, meta);
+            else console.log(text, meta);
+            serverLog(normalizedLevel, 'petdx_phase0', text, {
+                deviceId: meta.deviceId,
+                entityId: meta.entityId,
+                metadata: meta,
+            });
+        },
+    };
+}
+
+async function getPetdxEntityEnrichmentMap(deviceId) {
+    const out = new Map();
+    if (!deviceId || !SEAL_KEY_HEX) return out;
+
+    try {
+        const row = await db.getDeviceVars(deviceId);
+        if (!row) return out;
+
+        const vars = decryptVars(row.encrypted_vars, row.iv, row.auth_tag) || {};
+        for (const [key, rawValue] of Object.entries(vars)) {
+            const m = /^PETDX_(CURRENT|AVATAR)_(\d+)$/.exec(key);
+            if (!m) continue;
+
+            const entityId = Number(m[2]);
+            if (!Number.isFinite(entityId)) continue;
+
+            const value = typeof rawValue === 'string' && rawValue.trim() ? rawValue : null;
+            if (!value) continue;
+
+            const item = out.get(entityId) || {};
+            if (m[1] === 'CURRENT') item.petdxCompanionId = value;
+            if (m[1] === 'AVATAR') item.petdxAvatarUrl = value;
+            out.set(entityId, item);
+        }
+    } catch (err) {
+        console.warn(`[/api/entities] petdx enrichment failed: ${err.message}`);
+        serverLog('warn', 'entity_poll', `Petdx enrichment failed for ${deviceId}: ${err.message}`, {
+            deviceId,
+            metadata: { reason: 'petdx_enrichment_failed' },
+        });
+    }
+
+    return out;
+}
+
+async function runPetdxPhase0AutoAssign(deviceId, entity, ctx) {
+    try {
+        const result = await assignDefaultCompanionIfMissing(
+            deviceId,
+            entity,
+            ctx,
+            createPetdxPhase0Io()
+        );
+        if (result && result.assigned) {
+            serverLog('info', 'petdx_phase0', `[petdx-phase0] assigned ${result.assigned}`, {
+                deviceId,
+                entityId: entity && entity.entityId,
+                metadata: { ctx, result },
+            });
+        } else if (result && result.skipped && result.skipped !== 'already_assigned') {
+            serverLog('info', 'petdx_phase0', `[petdx-phase0] skipped ${result.skipped}`, {
+                deviceId,
+                entityId: entity && entity.entityId,
+                metadata: { ctx, result },
+            });
+        }
+        return result;
+    } catch (err) {
+        console.warn('[petdx-phase0] auto-assign failed:', err.message);
+        serverLog('warn', 'petdx_phase0', `[petdx-phase0] auto-assign failed: ${err.message}`, {
+            deviceId,
+            entityId: entity && entity.entityId,
+            metadata: { ctx },
+        });
+        return { skipped: 'hook_failed', error: err.message };
+    }
+}
+
+// POST /api/admin/petdx-phase0/backfill
+// Owner-auth admin endpoint that runs the petdx Phase 0 default-companion
+// assignment hook in 'backfill' mode for every bound entity on the device.
+// Mirrors backend/scripts/petdx-phase0-backfill.js but runs in-process so
+// Phase 0 acceptance §0.8 #8 (kanban prod E2E) doesn't require Railway CLI
+// access. See spec §0.5.
+//
+// Dual-auth (matches /api/device-vars GET dual-auth shape):
+//   - deviceSecret (owner-level) — accepted unconditionally
+//   - botSecret + entityId — accepted because the operation is scoped to
+//     PETDX_* keys on the caller's own device, which any bound bot already
+//     has read access to via the enrichment field on /api/entities; widening
+//     to write within the same hook semantics doesn't grant a fresh escape
+//     surface.
+app.post('/api/admin/petdx-phase0/backfill', async (req, res) => {
+    const { deviceId, deviceSecret, botSecret, entityId, commit } = req.body || {};
+    if (!deviceId || (!deviceSecret && !botSecret)) {
+        return res.status(400).json({ success: false, error: 'deviceId + (deviceSecret OR botSecret+entityId) are required' });
+    }
+    const device = devices[deviceId];
+    if (!device) {
+        return res.status(401).json({ success: false, error: 'Invalid device' });
+    }
+    if (deviceSecret) {
+        if (!safeEqual(device.deviceSecret, deviceSecret)) {
+            return res.status(401).json({ success: false, error: 'Invalid device credentials' });
+        }
+    } else {
+        const eid = Number(entityId);
+        if (!Number.isFinite(eid) || !device.entities || !device.entities[eid]) {
+            return res.status(401).json({ success: false, error: 'Invalid bot credentials' });
+        }
+        if (!safeEqual(device.entities[eid].botSecret, botSecret)) {
+            return res.status(401).json({ success: false, error: 'Invalid bot credentials' });
+        }
+    }
+
+    const entityIds = Object.keys(device.entities || {}).map(Number).filter(Number.isFinite);
+    const results = { assigned: [], skipped: [], errors: [] };
+    const ctxBase = { mode: 'backfill', source: 'backfill-script' };
+    const io = createPetdxPhase0Io();
+
+    for (const eId of entityIds) {
+        const entity = device.entities[eId];
+        if (!entity || !entity.isBound) {
+            results.skipped.push({ entityId: eId, reason: 'not_bound' });
+            continue;
+        }
+        const entityForHook = {
+            entityId: eId,
+            character: entity.character,
+            avatar: entity.avatar,
+            rental_status: entity.rentalStatus || entity.rental_status || null,
+            identity: entity.identity || null,
+        };
+        try {
+            const result = commit === true
+                ? await assignDefaultCompanionIfMissing(deviceId, entityForHook, ctxBase, io)
+                : await (async () => {
+                    const dryIo = {
+                        ...io,
+                        setDeviceVars: async () => {},
+                        setDeviceVar: async () => {},
+                        appendCompanionSelectLog: async () => {},
+                    };
+                    return assignDefaultCompanionIfMissing(deviceId, entityForHook, ctxBase, dryIo);
+                })();
+            if (result && result.assigned) {
+                results.assigned.push({ entityId: eId, companion: result.assigned, avatarUrl: result.avatarUrl, source: result.source });
+            } else if (result && result.skipped) {
+                results.skipped.push({ entityId: eId, reason: result.skipped });
+            }
+        } catch (err) {
+            results.errors.push({ entityId: eId, error: err.message });
+        }
+    }
+
+    res.json({ success: true, deviceId, committed: commit === true, results });
+});
+
 
 // ============================================
 // REMOTE SCREEN CONTROL
@@ -6606,7 +7318,8 @@ app.post('/api/device/register', deviceRegisterRateLimit, (req, res) => {
         deviceId: deviceId,
         entityId: eId,
         expires: expires,
-        appVersion: appVersion || null
+        appVersion: appVersion || null,
+        previousEntity: getPreviousEntityForBind(deviceId, eId, device.entities[eId])
     };
 
     // Store appVersion on entity (update even if already bound)
@@ -6777,6 +7490,7 @@ app.post('/api/bind', async (req, res) => {
     }
 
     const { deviceId, entityId } = binding;
+    const previousEntityForPetdx = binding.previousEntity || null;
     const device = devices[deviceId];
     if (!device) {
         return res.status(400).json({ success: false, message: "Device not found" });
@@ -6811,6 +7525,13 @@ app.post('/api/bind', async (req, res) => {
 
     console.log(`[Bind] Device ${deviceId} Entity ${entityId} bound with botSecret${name ? ` (name: ${name})` : ''} (app v${deviceAppVersion || 'unknown'})`);
     serverLog('info', 'bind', `Entity ${entityId} bound${name ? ` (name: ${name})` : ''}`, { deviceId, entityId });
+
+    await runPetdxPhase0AutoAssign(deviceId, entity, {
+        mode: previousEntityForPetdx ? 'rebind' : 'bind',
+        previousEntity: previousEntityForPetdx,
+        source: 'bind-endpoint',
+    });
+    clearPreviousEntityForBind(deviceId, entityId);
 
     // Dynamic entity auto-expand: ensure at least one empty slot after bind
     const newSlotId = ensureOneEmptySlot(device);
@@ -6948,6 +7669,7 @@ app.get('/api/entities', async (req, res) => {
         console.warn(`[/api/entities] channel_accounts lookup failed: ${err.message}`);
     }
 
+    const petdxByEntityId = await getPetdxEntityEnrichmentMap(authedDeviceId);
     const entities = [];
 
     for (const deviceId in devices) {
@@ -6963,6 +7685,7 @@ app.get('/api/entities', async (req, res) => {
             const entity = device.entities[i];
             if (!entity) continue;
             if (entity.isBound) {
+                const petdx = petdxByEntityId.get(entity.entityId) || {};
                 const payload = {
                     deviceId: deviceId,
                     entityId: entity.entityId,
@@ -6974,6 +7697,8 @@ app.get('/api/entities', async (req, res) => {
                     lastUpdated: entity.lastUpdated,
                     isBound: true,  // Always true since we only return bound entities
                     avatar: entity.avatar || null,
+                    petdxCompanionId: petdx.petdxCompanionId || null,
+                    petdxAvatarUrl: petdx.petdxAvatarUrl || null,
                     xp: entity.xp || 0,
                     level: entity.level || 1,
                     publicCode: entity.publicCode || null,
@@ -7186,6 +7911,208 @@ app.get('/api/status', (req, res) => {
     });
 });
 
+/**
+ * POST /api/entity/heartbeat
+ * Entity daemon heartbeat. This is intentionally separate from Socket.IO
+ * keepalive: a connected owner app does not prove the bot runtime is alive.
+ * Body: { deviceId, entityId, botSecret } or { deviceId, entityId, deviceSecret }
+ */
+app.post('/api/entity/heartbeat', async (req, res) => {
+    const { deviceId, entityId, botSecret, deviceSecret } = req.body || {};
+
+    if (!deviceId) {
+        return res.status(400).json({ success: false, message: 'deviceId required' });
+    }
+    const device = devices[deviceId];
+    if (!device) {
+        return res.status(404).json({ success: false, message: 'Device not found' });
+    }
+
+    const eId = Number(entityId);
+    if (!Number.isInteger(eId) || !isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, message: 'Invalid entityId' });
+    }
+
+    const entity = device.entities[eId];
+    if (!entity || !entity.isBound) {
+        return res.status(404).json({ success: false, message: `Entity ${eId} is not bound` });
+    }
+
+    const deviceAuthed = !!(deviceSecret && device.deviceSecret && safeEqual(device.deviceSecret, deviceSecret));
+    const botAuthed = !!(botSecret && entity.botSecret && safeEqual(entity.botSecret, botSecret));
+    if (!deviceAuthed && !botAuthed) {
+        return res.status(403).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    const status = recordEntityHeartbeat(entity);
+    saveData().catch(err => console.error(`[Heartbeat] saveData failed: ${err.message}`));
+
+    res.json({
+        success: true,
+        entityId: eId,
+        daemonConnected: status.daemonConnected,
+        lastSeen: status.lastSeen,
+        stale: status.stale,
+    });
+});
+
+/**
+ * GET /api/entity/status
+ * Minimal daemon-online status for a target entity. Authenticated read:
+ * deviceId is not a credential and entity slots are low-entropy, so we gate
+ * presence/last_seen behind deviceSecret or the target entity's botSecret.
+ * Query: ?deviceId=...&entityId=...&botSecret=... (or &deviceSecret=...)
+ */
+app.get('/api/entity/status', (req, res) => {
+    const { deviceId, entityId, botSecret, deviceSecret } = req.query || {};
+    if (!deviceId) {
+        return res.status(400).json({ message: 'deviceId required' });
+    }
+    const device = devices[deviceId];
+    if (!device) {
+        return res.status(404).json({ message: 'Device not found' });
+    }
+
+    const eId = Number(entityId);
+    if (!Number.isInteger(eId) || !isValidEntityId(device, eId)) {
+        return res.status(400).json({ message: 'Invalid entityId' });
+    }
+
+    const entity = device.entities[eId];
+    if (!entity || !entity.isBound) {
+        return res.status(404).json({ message: `Entity ${eId} is not bound` });
+    }
+
+    const deviceAuthed = !!(deviceSecret && device.deviceSecret && safeEqual(device.deviceSecret, deviceSecret));
+    const botAuthed = !!(botSecret && entity.botSecret && safeEqual(entity.botSecret, botSecret));
+    if (!deviceAuthed && !botAuthed) {
+        return res.status(403).json({ message: 'Invalid credentials' });
+    }
+
+    const status = getEntityDaemonStatus(entity);
+    res.json({
+        entityId: eId,
+        daemonConnected: status.daemonConnected,
+        lastSeen: status.lastSeen,
+        stale: status.stale,
+    });
+});
+
+/**
+ * POST /api/ack
+ * Platform-P2: recipient confirms receipt of an ack_required delivery.
+ *
+ * Body: { deviceId, entityId (recipient), ackId, botSecret OR deviceSecret }
+ *
+ * Auth (V1): recipient's botSecret OR the device's deviceSecret. The pending row
+ * must have recipient_entity_id matching the authenticated entityId.
+ *
+ * Semantics:
+ *   - First successful ack flips status pending → acked.
+ *   - Duplicate ack on the same row returns the existing record (idempotent: 200).
+ *   - Row already expired → 410 Gone (sender already got the timeout notice).
+ *   - Unknown ackId → 404.
+ *   - Wrong recipient/credentials → 403.
+ */
+app.post('/api/ack', async (req, res) => {
+    const { deviceId, entityId, botSecret, deviceSecret, ackId } = req.body || {};
+
+    if (!deviceId) return res.status(400).json({ success: false, message: 'deviceId required' });
+    if (!ackId) return res.status(400).json({ success: false, message: 'ackId required' });
+
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, message: 'Device not found' });
+
+    const eId = Number(entityId);
+    if (!Number.isInteger(eId) || !isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, message: 'Invalid entityId' });
+    }
+
+    const entity = device.entities[eId];
+    if (!entity || !entity.isBound) {
+        return res.status(404).json({ success: false, message: `Entity ${eId} is not bound` });
+    }
+
+    const deviceAuthed = !!(deviceSecret && device.deviceSecret && safeEqual(device.deviceSecret, deviceSecret));
+    const botAuthed = !!(botSecret && entity.botSecret && safeEqual(entity.botSecret, botSecret));
+    if (!deviceAuthed && !botAuthed) {
+        return res.status(403).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    let existing;
+    try {
+        existing = await getPendingAckById(chatPool, ackId);
+    } catch (err) {
+        console.error('[Ack] lookup error:', err.message);
+        return res.status(500).json({ success: false, message: 'Lookup failed' });
+    }
+
+    if (!existing) return res.status(404).json({ success: false, message: 'Unknown ackId' });
+
+    // Cross-device deliveries are out of scope (V1: same-device only). Defensive
+    // check — also blocks acking a row that belongs to a different device.
+    if (existing.device_id !== deviceId) {
+        return res.status(403).json({ success: false, message: 'ackId does not belong to this device' });
+    }
+    if (Number(existing.recipient_entity_id) !== eId) {
+        return res.status(403).json({ success: false, message: 'ackId not addressed to this entity' });
+    }
+
+    const nowMs = Date.now();
+    if (existing.status === 'expired' ||
+        (existing.status === 'pending' && Number(existing.deadline_ms) <= nowMs)) {
+        return res.status(410).json({
+            success: false,
+            ackId,
+            status: 'expired',
+            message: 'Ack window already expired',
+            timedOutAt: existing.timed_out_at,
+        });
+    }
+
+    let updated;
+    try {
+        updated = await markAckedById(chatPool, ackId, eId, nowMs);
+    } catch (err) {
+        console.error('[Ack] update error:', err.message);
+        return res.status(500).json({ success: false, message: 'Ack update failed' });
+    }
+
+    if (!updated) {
+        return res.status(500).json({ success: false, message: 'Ack update returned no row' });
+    }
+
+    // Race guard: pre-check passed but deadline expired before UPDATE ran. UPDATE
+    // matched 0 rows; UNION-ALL returned the still-pending row with deadline_ms
+    // <= now (sweeper will flip on next tick). Reject with 410 — do not late-ack.
+    if (updated.status === 'pending' && Number(updated.deadline_ms) <= nowMs) {
+        return res.status(410).json({
+            success: false,
+            ackId,
+            status: 'expired',
+            message: 'Ack window expired during request',
+        });
+    }
+    if (updated.status === 'expired') {
+        return res.status(410).json({
+            success: false,
+            ackId,
+            status: 'expired',
+            message: 'Ack window already expired',
+            timedOutAt: updated.timed_out_at,
+        });
+    }
+
+    return res.json({
+        success: true,
+        ackId,
+        status: updated.status || 'acked',
+        ackedAt: updated.acked_at,
+        senderEntityId: Number(updated.sender_entity_id),
+        recipientEntityId: Number(updated.recipient_entity_id),
+    });
+});
+
 // ── Shared Helpers: Gatekeeper + Delivery ──
 
 /**
@@ -7233,6 +8160,68 @@ function resolveSpeakToTarget(code, senderDeviceId) {
         }
     }
 
+    return null;
+}
+
+/**
+ * Validate that a speakTo array entry parses to one of the supported forms
+ * before we attempt resolution. Used by the /api/transform 400-gate so
+ * malformed LLM input fails fast instead of falling through to silent
+ * not_found (which the calling bot used to treat as a successful delivery
+ * and never retry).
+ *
+ * Supported forms (decorators stripped in this fixed order, mirroring
+ * resolveSpeakToTarget: outer angle brackets, then leading @, then leading #):
+ *   - 6-char publicCode [a-z0-9]{6}        e.g. "tbwb9e", "@tbwb9e", "<@tbwb9e>"
+ *   - numeric entityId  \d+                e.g. "6", "#6", "@#6", "<#6>"
+ *
+ * Returns { valid: true } or { valid: false, reason, normalized? }.
+ */
+function validateSpeakToFormat(code) {
+    if (typeof code !== 'string') return { valid: false, reason: 'non_string' };
+    const trimmed = code.trim();
+    if (trimmed.length === 0) return { valid: false, reason: 'empty' };
+    let normalized = trimmed;
+    if (normalized.startsWith('<') && normalized.endsWith('>')) {
+        normalized = normalized.slice(1, -1);
+    }
+    if (normalized.startsWith('@')) normalized = normalized.slice(1);
+    if (normalized.startsWith('#')) normalized = normalized.slice(1);
+    if (/^[a-z0-9]{6}$/.test(normalized)) return { valid: true };
+    if (/^\d+$/.test(normalized)) return { valid: true };
+    return { valid: false, reason: 'unparseable_format', normalized };
+}
+
+function collectMissingSpeakToMentionWarnings(speakToList, mentionParse, senderDeviceId) {
+    if (!Array.isArray(speakToList) || speakToList.length === 0) return [];
+    const mentioned = new Set((mentionParse?.mentions || []).map(m => `${m.deviceId}:${m.entityId}`));
+    const warnings = [];
+    const seen = new Set();
+
+    for (const code of speakToList) {
+        const target = resolveSpeakToTarget(code, senderDeviceId);
+        const key = target ? `${target.deviceId}:${target.entityId}` : String(code || '').trim();
+        if (target && mentioned.has(key)) continue;
+
+        const suffix = target ? target.entityId : (String(code || '').trim() || 'unknown');
+        const warning = `MENTION_MISSING_FOR_speakTo:${suffix}`;
+        if (!seen.has(warning)) {
+            seen.add(warning);
+            warnings.push(warning);
+        }
+    }
+
+    return warnings;
+}
+
+function getSilentTransformSuppressionReason(text) {
+    if (typeof text !== 'string') return null;
+    const trimmed = text.trim();
+    if (!trimmed) return null;
+    if (/^\[SILENT\]$/i.test(trimmed)) return 'silent_token';
+    if (/^\[SILENT\](?:\s|$)/i.test(trimmed) && isLowSignalFwd(trimmed)) {
+        return 'silent_noise';
+    }
     return null;
 }
 
@@ -7496,7 +8485,9 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         }
     }
 
-    let { deviceId, entityId, botSecret, actAs, name, character, state, message, parts, targetDeviceId, speakTo, broadcast, card, attachments, senderHint, aboutCardId } = req.body;
+    let { deviceId, entityId, botSecret, actAs, name, character, state, message, parts, targetDeviceId, speakTo, broadcast, card, attachments, senderHint, aboutCardId, ackRequired, ackDeadlineMs } = req.body;
+    const hadExplicitSpeakTo = Array.isArray(speakTo) && speakTo.length > 0;
+    let routingResolvedVia = broadcast ? 'broadcast' : null;
 
     if (!deviceId) {
         return res.status(400).json({ success: false, message: "deviceId required" });
@@ -7533,6 +8524,34 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         }
     } else if (!usingBotSecret) {
         return res.status(400).json({ success: false, message: "botSecret required" });
+    }
+
+    // ── speakTo format gate (defensive 400 instead of silent not_found drop) ──
+    // Reject malformed containers, then validate each entry's shape. Bots that
+    // pass freeform strings like "Lobster" or "team-2" used to silently fail
+    // (delivery 0/1 success, sender-only chat row) and never retry; now they
+    // get an actionable 400 with the offending value.
+    if (req.body.speakTo !== undefined && req.body.speakTo !== null && !Array.isArray(req.body.speakTo)) {
+        return res.status(400).json({
+            success: false,
+            error: 'speakTo_invalid_format',
+            got: req.body.speakTo,
+            expected: 'speakTo must be an array of strings'
+        });
+    }
+    if (hadExplicitSpeakTo) {
+        for (const entry of speakTo) {
+            const check = validateSpeakToFormat(entry);
+            if (!check.valid) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'speakTo_invalid_format',
+                    got: entry,
+                    reason: check.reason,
+                    expected: '6-char publicCode [a-z0-9] OR numeric entityId; optional <>/@/# decorators allowed'
+                });
+            }
+        }
     }
 
     // Validate optional senderHint — channel bridges pass this so the server
@@ -7720,8 +8739,37 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         entity.name = name || null;
     }
 
-    if (character) entity.character = character;
+    const previousEntityForPetdxCharacterChange = (character && entity.character !== character)
+        ? snapshotEntityForPetdxBind(entity)
+        : null;
+    if (character && entity.character !== character) {
+        const oldDefault = getCharacterDefaultAvatar(entity.character);
+        entity.character = character;
+        // Keep avatar in sync with character unless user has set a custom one.
+        // Null/empty avatars and avatars matching the prior character's default
+        // are treated as "still defaulted" and get updated to the new character default.
+        if (!entity.avatar || entity.avatar === oldDefault) {
+            entity.avatar = getCharacterDefaultAvatar(character);
+        }
+    } else if (character) {
+        entity.character = character;
+    }
+    if (previousEntityForPetdxCharacterChange) {
+        await runPetdxPhase0AutoAssign(deviceId, entity, {
+            mode: 'character-change',
+            previousEntity: previousEntityForPetdxCharacterChange,
+            source: 'transform',
+        });
+    }
     if (state) entity.state = state;
+
+    let contextualMentionEscape = null;
+    if (typeof message === 'string' && message) {
+        contextualMentionEscape = mentionParser.escapeContextualMentionTokens(message);
+        if (contextualMentionEscape.escaped) {
+            message = contextualMentionEscape.text;
+        }
+    }
 
     // Gatekeeper Second Lock: detect and mask token/info leaks in bot responses (free bots only)
     let finalMessage = message;
@@ -7738,7 +8786,32 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
             }
         }
     }
-    if (finalMessage !== undefined) entity.message = finalMessage;
+
+    // PR #2986 server-side enforcement — when the BIND_COMPLETE skill doc's
+    // `<one-time-bind-ack-do-not-copy>` placeholder is sent verbatim (bot
+    // mistook the template syntax for a real reply body), suppress all
+    // propagation so the leak does not update entity.message, appear in chat
+    // history, route to peers, or trigger downstream hooks. Server still
+    // returns 200 so the bot doesn't error-loop retrying.
+    const isPlaceholderLeak = typeof finalMessage === 'string' &&
+        finalMessage.trim() === '<one-time-bind-ack-do-not-copy>';
+    if (isPlaceholderLeak) {
+        serverLog('warn', 'placeholder_leak',
+            `[PLACEHOLDER_LEAK] Entity ${eId} on device ${deviceId} sent bind-ack template verbatim — suppressing propagation`,
+            { deviceId, entityId: eId, metadata: { tag: 'PLACEHOLDER_LEAK' } });
+    }
+    const silentSuppressionReason = getSilentTransformSuppressionReason(finalMessage);
+    const isSilentMessage = !!silentSuppressionReason;
+    const isSuppressedMessage = isPlaceholderLeak || isSilentMessage;
+    if (isSilentMessage) {
+        serverLog('info', 'transform_silent_drop',
+            `[TRANSFORM_SILENT_DROP] Entity ${eId} on device ${deviceId} sent ${silentSuppressionReason}; suppressing routing propagation`,
+            { deviceId, entityId: eId, metadata: { reason: silentSuppressionReason } });
+        speakTo = undefined;
+        broadcast = false;
+        routingResolvedVia = null;
+    }
+    if (finalMessage !== undefined && !isSuppressedMessage) entity.message = finalMessage;
     if (parts) {
         // Only store numeric values — reject URLs/strings that would crash Android Gson deserialization
         const sanitizedParts = {};
@@ -7762,6 +8835,9 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
             code !== entity.publicCode && code !== selfEidStr
         );
         if (speakTo.length === 0) speakTo = undefined;
+        if (!routingResolvedVia && speakTo && speakTo.length > 0 && hadExplicitSpeakTo) {
+            routingResolvedVia = 'speakTo';
+        }
     }
 
     // ── @-mention auto-fill + senderHint resolution (PR #2290 / fixes #2282) ──
@@ -7779,18 +8855,22 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // final state, and the self-save correctly skips when delivery is going
     // to happen.
     let transformMentionContext = null;
-    if (finalMessage) {
+    let transformMentionParse = null;
+    if (finalMessage && !isSuppressedMessage) {
         const tParse = mentionParser.parseMentions(finalMessage, {
             senderDeviceId: deviceId,
             devices,
             publicCodeIndex
         });
+        transformMentionParse = tParse;
         transformMentionContext = mentionParser.toContextPayload(tParse);
         if (transformMentionContext) {
             if (tParse.hasAll && !broadcast && !(speakTo && speakTo.length > 0)) {
                 broadcast = true;
+                routingResolvedVia = 'mention';
             } else if (tParse.mentions.length > 0 && !broadcast && !(speakTo && speakTo.length > 0)) {
                 speakTo = tParse.mentions.map(m => m.publicCode);
+                routingResolvedVia = 'mention';
             }
         }
     }
@@ -7802,10 +8882,11 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // server (not the bridge) decides where the bot's reply routes.
     let senderHintResolution = null;
     const noTargetYet = !broadcast && !(speakTo && Array.isArray(speakTo) && speakTo.length > 0);
-    if (senderHint && noTargetYet && finalMessage) {
+    if (senderHint && noTargetYet && finalMessage && !isSuppressedMessage) {
         const kind = senderHint.kind || 'unknown';
         if (kind === 'broadcast') {
             broadcast = true;
+            routingResolvedVia = 'senderHint';
             senderHintResolution = { kind, applied: 'broadcast' };
         } else if (kind === 'entity') {
             // Resolve hint → publicCode. publicCode > entityId because publicCode
@@ -7831,6 +8912,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
             }
             if (resolvedCode) {
                 speakTo = [resolvedCode];
+                routingResolvedVia = 'senderHint';
                 senderHintResolution = { kind, applied: 'speakTo', publicCode: resolvedCode };
             } else {
                 senderHintResolution = { kind, applied: 'none', reason: 'unresolved_sender' };
@@ -7843,7 +8925,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         senderHintResolution = {
             kind: senderHint.kind || 'unknown',
             applied: 'none',
-            reason: noTargetYet ? 'no_message' : 'explicit_or_mention_won'
+            reason: isSuppressedMessage ? 'silent_message' : (noTargetYet ? 'no_message' : 'explicit_or_mention_won')
         };
     }
 
@@ -7856,12 +8938,25 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
         }
     }
 
-    // Save bot message to chat history so it appears in Chat page
-    // Skip silent tokens — these are internal signals that should not appear in chat
-    const isSilentMessage = finalMessage && /^\[SILENT\]$/i.test(finalMessage.trim());
+    if (!routingResolvedVia) {
+        if (broadcast) routingResolvedVia = 'broadcast';
+        else if (hadExplicitSpeakTo && speakTo && Array.isArray(speakTo) && speakTo.length > 0) routingResolvedVia = 'speakTo';
+    }
+
+    const routing = createRoutingDiagnostics(routingResolvedVia);
+    if (contextualMentionEscape?.warnings?.length) {
+        routing.warnings.push(...contextualMentionEscape.warnings);
+    }
+    if (routingResolvedVia === 'speakTo' && finalMessage && speakTo && Array.isArray(speakTo) && speakTo.length > 0) {
+        routing.warnings.push(...collectMissingSpeakToMentionWarnings(speakTo, transformMentionParse, deviceId));
+    }
+
+    // Save bot message to chat history so it appears in Chat page.
+    // isSuppressedMessage is computed before routing so silent control payloads
+    // cannot resolve @mentions/senderHint or fan out through speakTo/broadcast.
     // Skip self chat save when speakTo/broadcast is present — deliverToEntity will save with routing source
     const hasDelivery = (broadcast || (speakTo && Array.isArray(speakTo) && speakTo.length > 0));
-    if (finalMessage && !isSilentMessage) {
+    if (finalMessage && !isSuppressedMessage) {
         // [A2A_BOT_REPLY] — detect if this transform is in response to an A2A speak-to
         const pendingA2A = entity.messageQueue && entity.messageQueue.find(m => m.from && m.from.startsWith('entity:'));
 
@@ -7975,7 +9070,9 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     });
 
     // ── Rental response mirroring: if owner entity is leased_out, copy response to renter ──
-    if (entity.rental_status === 'leased_out' && entity.rental_contract_id && finalMessage) {
+    // PR #2986 guard — placeholder leaks (the bind-ack template copied verbatim) must NOT
+    // mirror into renter.message, renter chat history, Socket.IO update, or push notify.
+    if (entity.rental_status === 'leased_out' && entity.rental_contract_id && finalMessage && !isSuppressedMessage) {
         try {
             const cRow = await db._getPool().query(
                 `SELECT c.renter_device_id FROM rental_contracts c WHERE c.id = $1 AND c.status IN ('active','reserved','suspended_insufficient_funds')`,
@@ -8045,7 +9142,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // Notify device about bot reply (fire-and-forget)
     // Skip owner notification for leased_out entities — renter gets notified via rental mirror
     const isLeasedOutForNotify = entity.rental_status === 'leased_out';
-    if (finalMessage && !isLeasedOutForNotify) {
+    if (finalMessage && !isLeasedOutForNotify && !isSuppressedMessage) {
         notifyDevice(deviceId, {
             type: 'chat', category: 'bot_reply',
             title: entity.name || `Entity ${eId}`,
@@ -8067,7 +9164,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // Skip for leased_out entities — rental bot responses belong to the renter's context.
     const kanbanBusyStates = new Set(['BUSY', 'PROCESSING', 'WORKING', 'IN_PROGRESS', 'IN-PROGRESS']);
     const isKanbanBusyState = kanbanBusyStates.has(String(state || '').trim().toUpperCase());
-    if (!isKanbanBusyState && finalMessage && entity.rental_status !== 'leased_out' && kanbanModule && kanbanModule.autoReviewOnTransform) {
+    if (!isKanbanBusyState && finalMessage && !isSuppressedMessage && entity.rental_status !== 'leased_out' && kanbanModule && kanbanModule.autoReviewOnTransform) {
         kanbanModule.autoReviewOnTransform(deviceId, eId, finalMessage, aboutCardId).catch(err => {
             console.error(`[Transform] autoReviewOnTransform failed:`, err.message);
         });
@@ -8075,7 +9172,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
 
     // Org chart: auto-forward message to superior entity (fire-and-forget)
     // Skip for leased_out entities — owner's org chart should not apply to rental responses
-    if (finalMessage && entity && entity.rental_status !== 'leased_out') {
+    if (finalMessage && entity && entity.rental_status !== 'leased_out' && !isSuppressedMessage) {
         orgChartForward(entity, deviceId, finalMessage).catch(() => {});
     }
 
@@ -8092,7 +9189,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // to run a sender-side fallback save.
     let deliverySaved = false;
 
-    if ((speakTo || broadcast) && finalMessage) {
+    if ((speakTo || broadcast) && finalMessage && !isSuppressedMessage) {
         // If both provided, broadcast takes priority
         if (speakTo && broadcast) {
             warnings.push('Both speakTo and broadcast provided — broadcast takes priority, speakTo ignored.');
@@ -8143,6 +9240,9 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
                             const sourceLabel = `entity:${eId}:${entity.character}`;
                             const broadcastChatMsgId = await saveChatMessage(broadcastDeviceId, eId, deliveryText, `${sourceLabel}->${targetIds.join(',')}`, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments, viaChannel);
                             deliverySaved = true;
+                            for (const toId of targetIds) {
+                                appendRoutingRecipient(routing, 'entity', toId, broadcastDevice.entities[toId]);
+                            }
 
                             // Check recipient info preference
                             const bcastPrefs = await devicePrefs.getPrefs(broadcastDeviceId);
@@ -8244,6 +9344,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
                     }
                 }
 
+                appendRoutingRecipient(routing, 'entity', target.entityId, toEntity);
                 const result = await deliverToEntity({
                     senderDeviceId: deviceId, fromId: eId, fromEntity: entity,
                     targetDeviceId: target.deviceId, toId: target.entityId, toEntity,
@@ -8269,7 +9370,14 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
                 }).catch(() => {});
 
                 console.log(`[Transform+SpeakTo] ${deviceId}:${eId} -> ${target.deviceId}:${target.entityId} (${code})`);
-                results.push({ publicCode: code, success: true, ...result });
+                results.push({
+                    publicCode: code,  // original speakTo token (back-compat)
+                    success: true,
+                    targetDeviceId: target.deviceId,
+                    targetEntityId: target.entityId,
+                    targetPublicCode: toEntity.publicCode || null,
+                    ...result,
+                });
                 deliverySaved = true;
             }
 
@@ -8292,7 +9400,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     // ("looks like sent to #X but never delivered to anyone"). Use the plain
     // entity name so chat UI clearly renders this as a sender-only row.
     const hasDeliveryRequested = (broadcast || (speakTo && Array.isArray(speakTo) && speakTo.length > 0));
-    if (hasDeliveryRequested && !deliverySaved && finalMessage && !isSilentMessage) {
+    if (hasDeliveryRequested && !deliverySaved && finalMessage && !isSuppressedMessage) {
         const isLeasedOut = entity.rental_status === 'leased_out';
         if (!isLeasedOut) {
             const chatSource = entity.name || `Entity ${eId}`;
@@ -8300,6 +9408,84 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
             serverLog('warn', 'chat_save', `[CHAT_FALLBACK_TRANSFORM] all targets failed for entity ${eId}; saving sender copy. reasons=[${reasons}] speakTo=${JSON.stringify(speakTo || null)} broadcast=${!!broadcast}`, { deviceId, entityId: eId, metadata: { path: 'fallback_transform', reasons, hadSpeakTo: !!speakTo, hadBroadcast: !!broadcast } });
             await saveChatMessage(deviceId, eId, finalMessage, chatSource, false, true, null, null, null, null, null, null, validatedCard, validatedAttachments, viaChannel);
             warnings.push('All delivery targets failed; message saved to sender chat only.');
+        }
+    }
+
+    // Platform-P2: ack_required pending row creation. V4 — source rows from
+    // delivery target identity (deviceId + entityId), NOT publicCode strings.
+    //
+    // speakTo path:  iterate deliveryResults.results.filter(r => r.success); each
+    //                row carries targetDeviceId/targetEntityId/targetPublicCode.
+    //                Cross-device targets are skipped with a per-target warning
+    //                (scope lock: NO cross-device fan-out — /api/ack authenticates
+    //                against the row's device_id, so cross-device rows are dead).
+    // broadcast path: deliveryResults.results is the per-target list from
+    //                deliverToEntity; for same-device broadcasts we accept these,
+    //                for cross-device broadcasts we skip with a global warning.
+    //
+    // ackDeadlineMs clamps to [60s, 1h] (default 15min).
+    let ackInfo = null;
+    if (ackRequired === true) {
+        const trackableTargets = [];
+        const isCrossDeviceBroadcast = !!(broadcast && targetDeviceId && targetDeviceId !== deviceId);
+
+        if (broadcast) {
+            if (isCrossDeviceBroadcast) {
+                warnings.push('ACK_REQUIRED_CROSS_DEVICE_SKIPPED:broadcast');
+            } else if (deliveryResults && Array.isArray(deliveryResults.targets)) {
+                // Same-device broadcast — deliverToEntity returned {entityId, character, ...}
+                // for each fan-out target. All are same-device by construction here.
+                for (const r of deliveryResults.targets) {
+                    if (!r || r.entityId === undefined) continue;
+                    trackableTargets.push({
+                        deviceId,
+                        senderEntityId: eId,
+                        recipientEntityId: r.entityId,
+                        recipientPublicCode: null,
+                        sourceMsgId: null,
+                    });
+                }
+            }
+        } else if (deliveryResults && Array.isArray(deliveryResults.results)) {
+            // speakTo path
+            const successResults = deliveryResults.results.filter(r => r.success);
+            for (const r of successResults) {
+                if (r.targetDeviceId === undefined || r.targetEntityId === undefined) continue;
+                if (r.targetDeviceId !== deviceId) {
+                    warnings.push(`ACK_REQUIRED_CROSS_DEVICE_SKIPPED:${r.targetEntityId}`);
+                    continue;
+                }
+                trackableTargets.push({
+                    deviceId,
+                    senderEntityId: eId,
+                    recipientEntityId: r.targetEntityId,
+                    recipientPublicCode: r.targetPublicCode || null,
+                    sourceMsgId: null,
+                });
+            }
+            if (trackableTargets.length === 0 && successResults.length > 0) {
+                warnings.push('ACK_REQUIRED_NO_TRACKABLE_RECIPIENTS');
+            }
+        }
+
+        if (trackableTargets.length > 0) {
+            const clampedMs = clampAckDeadlineMs(ackDeadlineMs);
+            const deadlineMs = Date.now() + clampedMs;
+            try {
+                const created = await createPendingAckRows(
+                    chatPool,
+                    trackableTargets.map(t => ({ ...t, deadlineMs }))
+                );
+                ackInfo = {
+                    required: true,
+                    deadlineMs: clampedMs,
+                    expiresAt: new Date(deadlineMs).toISOString(),
+                    pending: created,
+                };
+            } catch (err) {
+                console.error('[PendingAck] create error:', err.message);
+                warnings.push('ack_required: failed to record pending ack rows');
+            }
         }
     }
 
@@ -8319,6 +9505,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
             encryptionStatus: entity.encryptionStatus || null
         },
         versionInfo: getVersionInfo(entity.appVersion),
+        routing,
         push_status: entity.pushStatus || null,
         auth: channelAuthResult
             ? { via: 'channelKey', channelName: channelAuthResult.registration.channel_name, grantedPermissions: channelAuthResult.grantedPermissions }
@@ -8328,6 +9515,7 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     if (warnings.length > 0) response.warnings = warnings;
     if (transformMentionContext) response.mentions = transformMentionContext;
     if (senderHintResolution) response.senderHintResolution = senderHintResolution;
+    if (ackInfo) response.ackInfo = ackInfo;
 
     res.json(response);
 });
@@ -8430,6 +9618,7 @@ app.delete('/api/entity', async (req, res) => {
 
     // Reset entity to unbound state (preserve user-set name, xp, level)
     const removedEntity = device.entities[eId];
+    rememberPreviousEntityForBind(deviceId, eId, removedEntity);
     device.entities[eId] = createDefaultEntity(eId);
     device.entities[eId].name = removedEntity?.name || null;
     device.entities[eId].xp = removedEntity?.xp || 0;
@@ -8552,6 +9741,7 @@ app.delete('/api/device/entity', async (req, res) => {
 
     // Reset entity to unbound state (preserve user-set name, xp, level)
     const removedEntity2 = device.entities[eId];
+    rememberPreviousEntityForBind(deviceId, eId, removedEntity2);
     device.entities[eId] = createDefaultEntity(eId);
     device.entities[eId].name = removedEntity2?.name || null;
     device.entities[eId].xp = removedEntity2?.xp || 0;
@@ -13862,9 +15052,106 @@ app.delete('/api/admin/official-bot/:botId', adminAuth, adminCheck, async (req, 
 
 // In-memory cache of official bindings (deviceId:entityId -> binding)
 const officialBindingsCache = {};
+const parsedFreeBindingReuseTtlMs = parseInt(process.env.OFFICIAL_FREE_BINDING_REUSE_TTL_MS || '', 10);
+const OFFICIAL_FREE_BINDING_REUSE_TTL_MS = Number.isFinite(parsedFreeBindingReuseTtlMs) && parsedFreeBindingReuseTtlMs > 0
+    ? parsedFreeBindingReuseTtlMs
+    : 24 * 60 * 60 * 1000;
 
 function getBindingCacheKey(deviceId, entityId) {
     return `${deviceId}:${entityId}`;
+}
+
+async function getOfficialBindingAuthoritative(deviceId, entityId) {
+    const cacheKey = getBindingCacheKey(deviceId, entityId);
+    if (usePostgreSQL) {
+        const binding = await db.getOfficialBinding(deviceId, entityId);
+        if (binding) {
+            officialBindingsCache[cacheKey] = binding;
+            return binding;
+        }
+        delete officialBindingsCache[cacheKey];
+        return null;
+    }
+    return officialBindingsCache[cacheKey] || null;
+}
+
+function getOfficialBindingReuseTtlMs(botType) {
+    return botType === 'free' ? OFFICIAL_FREE_BINDING_REUSE_TTL_MS : 0;
+}
+
+function getOfficialBindingAgeMs(binding, now = Date.now()) {
+    const boundAt = Number(binding?.bound_at ?? binding?.boundAt);
+    if (!Number.isFinite(boundAt) || boundAt <= 0) return null;
+    return Math.max(0, now - boundAt);
+}
+
+function publicBindingReuseStatus(status) {
+    return {
+        bound: Boolean(status.binding),
+        valid: Boolean(status.valid),
+        reusable: Boolean(status.valid),
+        reason: status.reason,
+        botId: status.botId || null,
+        botType: status.botType || null,
+        entityId: status.entityId,
+        boundAt: status.boundAt || null,
+        ageMs: status.ageMs,
+        ttlMs: status.ttlMs,
+        remainingMs: status.remainingMs,
+        expiresAt: status.expiresAt || null
+    };
+}
+
+function evaluateOfficialBindingReuse(binding, device, entityId, opts = {}) {
+    const eId = parseInt(entityId);
+    const entity = device?.entities?.[eId];
+    const requestedBotType = opts.requestedBotType || null;
+    const requestedBotId = opts.requestedBotId || null;
+    const now = opts.now || Date.now();
+
+    if (!binding) {
+        return { valid: false, reason: 'no_binding', binding: null, entityId: eId };
+    }
+
+    const botId = binding.bot_id ?? binding.botId;
+    const bot = officialBots[botId];
+    const botType = bot?.bot_type ?? binding.bot_type ?? binding.botType ?? null;
+    const ttlMs = getOfficialBindingReuseTtlMs(botType);
+    const ageMs = getOfficialBindingAgeMs(binding, now);
+    const boundAt = Number(binding.bound_at ?? binding.boundAt);
+    const base = {
+        binding,
+        entityId: eId,
+        botId,
+        botType,
+        boundAt: Number.isFinite(boundAt) ? boundAt : null,
+        ageMs,
+        ttlMs,
+        remainingMs: ageMs == null || ttlMs <= 0 ? null : Math.max(0, ttlMs - ageMs),
+        expiresAt: Number.isFinite(boundAt) && ttlMs > 0 ? boundAt + ttlMs : null
+    };
+
+    if (!bot) return { ...base, valid: false, reason: 'bot_missing' };
+    if (requestedBotType && botType !== requestedBotType) return { ...base, valid: false, reason: 'bot_type_mismatch' };
+    if (requestedBotId && botId !== requestedBotId) return { ...base, valid: false, reason: 'bound_to_different_bot' };
+    if (bot.status === 'disabled') return { ...base, valid: false, reason: 'bot_disabled' };
+    if (!entity || !entity.isBound) return { ...base, valid: false, reason: 'entity_not_bound' };
+    if (!entity.botSecret) return { ...base, valid: false, reason: 'entity_missing_bot_secret' };
+    if (!entity.webhook) return { ...base, valid: false, reason: 'entity_missing_webhook' };
+    if (entity.webhook.url !== bot.webhook_url) return { ...base, valid: false, reason: 'webhook_url_mismatch' };
+    if (entity.webhook.token !== bot.token) return { ...base, valid: false, reason: 'webhook_token_mismatch' };
+    if (!binding.session_key) return { ...base, valid: false, reason: 'binding_missing_session_key' };
+    if (entity.webhook.sessionKey !== binding.session_key) return { ...base, valid: false, reason: 'session_key_mismatch' };
+    if (ttlMs <= 0) return { ...base, valid: false, reason: 'binding_reuse_disabled' };
+    if (ageMs == null) return { ...base, valid: false, reason: 'binding_bound_at_missing' };
+    if (ageMs > ttlMs) return { ...base, valid: false, reason: 'binding_reuse_ttl_expired' };
+
+    return { ...base, valid: true, reason: 'valid' };
+}
+
+async function getOfficialBindingReuseStatus(deviceId, entityId, opts = {}) {
+    const binding = await getOfficialBindingAuthoritative(deviceId, entityId);
+    return evaluateOfficialBindingReuse(binding, opts.device || devices[deviceId], entityId, opts);
 }
 
 /**
@@ -14002,6 +15289,48 @@ app.get('/api/official-borrow/status', async (req, res) => {
 });
 
 /**
+ * GET /api/official-borrow/binding-status
+ * Device-secret protected status for one official binding, including whether
+ * the binding can be reused without re-running bind-free/bind-personal.
+ */
+app.get('/api/official-borrow/binding-status', async (req, res) => {
+    const { deviceId, deviceSecret, entityId, botType, botId } = req.query;
+
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+
+    const eId = parseInt(entityId);
+    if (isNaN(eId) || eId < 0) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+
+    const device = devices[deviceId];
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+        return res.status(403).json({ success: false, error: 'Invalid device credentials' });
+    }
+
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+
+    const normalizedBotType = botType === 'personal' || botType === 'free' ? botType : null;
+    const status = await getOfficialBindingReuseStatus(deviceId, eId, {
+        device,
+        requestedBotType: normalizedBotType,
+        requestedBotId: botId || null
+    });
+    const publicStatus = publicBindingReuseStatus(status);
+
+    res.json({
+        success: true,
+        ...publicStatus,
+        recommendation: status.valid ? 'reuse_existing_binding' : 'bind_required',
+        skipBindFree: Boolean(status.valid && (normalizedBotType === 'free' || status.botType === 'free'))
+    });
+});
+
+/**
  * GET /api/official-borrow/free-bots
  * List available free bots with active binding counts for user selection.
  */
@@ -14022,6 +15351,7 @@ app.get('/api/official-borrow/free-bots', (req, res) => {
         return {
             botId: bot.bot_id,
             displayName: bot.display_name || bot.bot_id,
+            modelName: bot.model_name || null,
             activeBindings,
             status: bot.status
         };
@@ -14081,6 +15411,30 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
 
     if (!isValidEntityId(device, eId)) {
         return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+
+    const existingFreeReuse = await getOfficialBindingReuseStatus(deviceId, eId, {
+        device,
+        requestedBotType: 'free',
+        requestedBotId: botId || null
+    });
+    if (existingFreeReuse.valid) {
+        const existingEntity = device.entities[eId];
+        if (existingEntity?.publicCode) {
+            publicCodeIndex[existingEntity.publicCode] = { deviceId, entityId: eId };
+        }
+        console.log(`[Borrow] Reuse: valid free bot ${existingFreeReuse.botId} binding for device ${deviceId} entity ${eId}; skipping handshake`);
+        return res.json({
+            success: true,
+            entityId: eId,
+            botType: 'free',
+            botId: existingFreeReuse.botId,
+            publicCode: existingEntity?.publicCode || null,
+            reusedExistingBinding: true,
+            idempotent: true,
+            bindingStatus: publicBindingReuseStatus(existingFreeReuse),
+            message: 'Free bot binding already valid; reused existing binding'
+        });
     }
 
     // Override mode: auto-unbind if entity already has a binding
@@ -14152,8 +15506,9 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
     // Set up entity with official bot's webhook (preserve user-set name, xp, level)
     const existingEntityFree = device.entities[eId];
     const freePublicCode = generatePublicCode();
+    const freeDefaultEntity = createDefaultEntity(eId);
     device.entities[eId] = {
-        ...createDefaultEntity(eId),
+        ...freeDefaultEntity,
         xp: existingEntityFree?.xp || 0,
         level: existingEntityFree?.level || 1,
         rebindCount: (existingEntityFree?.rebindCount || 0) + 1,
@@ -14162,6 +15517,9 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
         publicCode: freePublicCode,
         isBound: true,
         name: existingEntityFree?.name || '免費版',
+        avatar: isCharacterDefaultAvatar(existingEntityFree?.avatar)
+            ? getCharacterDefaultAvatar(freeDefaultEntity.character)
+            : existingEntityFree.avatar,
         state: 'IDLE',
         message: 'Connected!',
         lastUpdated: Date.now(),
@@ -14175,6 +15533,11 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
         }
     };
     publicCodeIndex[freePublicCode] = { deviceId, entityId: eId };
+    await runPetdxPhase0AutoAssign(deviceId, device.entities[eId], {
+        mode: 'bind',
+        previousEntity: null,
+        source: 'official-borrow-free',
+    });
     await pauseRentalListingsOnRebind(deviceId, eId);
     await terminateRentalContractsOnRebind(deviceId, eId);
 
@@ -14319,8 +15682,9 @@ app.post('/api/official-borrow/bind-personal', async (req, res) => {
 
     // Set up entity (preserve user-set name, xp, level)
     const existingEntityPersonal = device.entities[eId];
+    const personalDefaultEntity = createDefaultEntity(eId);
     device.entities[eId] = {
-        ...createDefaultEntity(eId),
+        ...personalDefaultEntity,
         xp: existingEntityPersonal?.xp || 0,
         level: existingEntityPersonal?.level || 1,
         rebindCount: (existingEntityPersonal?.rebindCount || 0) + 1,
@@ -14328,6 +15692,9 @@ app.post('/api/official-borrow/bind-personal', async (req, res) => {
         botSecret: botSecret,
         isBound: true,
         name: existingEntityPersonal?.name || '月租版',
+        avatar: isCharacterDefaultAvatar(existingEntityPersonal?.avatar)
+            ? getCharacterDefaultAvatar(personalDefaultEntity.character)
+            : existingEntityPersonal.avatar,
         state: 'IDLE',
         message: 'Connected!',
         lastUpdated: Date.now(),
@@ -14340,6 +15707,11 @@ app.post('/api/official-borrow/bind-personal', async (req, res) => {
             setupPassword: personalBot.setup_password || null
         }
     };
+    await runPetdxPhase0AutoAssign(deviceId, device.entities[eId], {
+        mode: 'bind',
+        previousEntity: null,
+        source: 'official-borrow-paid',
+    });
     await pauseRentalListingsOnRebind(deviceId, eId);
     await terminateRentalContractsOnRebind(deviceId, eId);
 
@@ -16546,6 +17918,10 @@ const ORG_TASK_FWD_PREFIX = '[📋 TASK FWD';
 
 async function orgChartForward(entity, deviceId, message, opts = {}) {
     if (!message || message.startsWith(ORG_TASK_FWD_PREFIX) || message.startsWith(ORG_FWD_PREFIX)) return;
+    if (isLowSignalFwd(message)) {
+        serverLog('info', 'org_forward_skip', `#${entity.entityId} suppressed low-signal fwd: "${String(message).trim().slice(0, 60)}"`, { deviceId, entityId: entity.entityId });
+        return;
+    }
 
     try {
         const orgData = await orgChartModule.getOrgChart(deviceId);
@@ -17251,6 +18627,63 @@ if (mindmapModule && typeof mindmapModule.initMindmapTables === 'function') {
     }
 })();
 
+// Platform-P2: pending_ack table — high-priority delivery confirmation.
+// See createPendingAckRows / markAckedById / sweepExpiredAcks above for ops.
+(async () => {
+    try {
+        await chatPool.query(`
+            CREATE TABLE IF NOT EXISTS pending_ack (
+                ack_id                TEXT        PRIMARY KEY,
+                device_id             TEXT        NOT NULL,
+                sender_entity_id      INTEGER     NOT NULL,
+                recipient_entity_id   INTEGER     NOT NULL,
+                recipient_public_code TEXT,
+                source_msg_id         TEXT,
+                status                TEXT        NOT NULL DEFAULT 'pending',
+                deadline_ms           BIGINT      NOT NULL,
+                created_at            TIMESTAMPTZ DEFAULT NOW(),
+                acked_at              TIMESTAMPTZ,
+                timed_out_at          TIMESTAMPTZ
+            )
+        `);
+        await chatPool.query(`CREATE INDEX IF NOT EXISTS idx_pa_status_deadline ON pending_ack (status, deadline_ms)`);
+        await chatPool.query(`CREATE INDEX IF NOT EXISTS idx_pa_device_sender   ON pending_ack (device_id, sender_entity_id, created_at DESC)`);
+        console.log('[PendingAck] Table ready');
+
+        // Timeout sweeper — fires every ACK_SWEEP_INTERVAL_MS (default 60s).
+        // V2 idempotent: only flips pending→expired rows past deadline; second
+        // pass over the same row is a no-op. Sender notification is fired once
+        // per row (only rows the UPDATE returned, which is the freshly-flipped set).
+        setInterval(async () => {
+            try {
+                const expired = await sweepExpiredAcks(chatPool);
+                for (const row of expired) {
+                    try {
+                        const deadlineIso = new Date(Number(row.deadline_ms)).toISOString();
+                        const noticeText =
+                            `[ack_required timeout] entity #${row.recipient_entity_id}` +
+                            (row.recipient_public_code ? ` (${row.recipient_public_code})` : '') +
+                            ` did not ack ${row.ack_id} by ${deadlineIso}`;
+                        await saveChatMessage(
+                            row.device_id,
+                            row.sender_entity_id,
+                            noticeText,
+                            'SYSTEM',
+                            false, true, null, null, null, null, null, null, null, null, false
+                        );
+                    } catch (err) {
+                        console.error('[PendingAck] timeout notify error:', err.message);
+                    }
+                }
+            } catch (err) {
+                console.error('[PendingAck] sweeper error:', err.message);
+            }
+        }, ACK_SWEEP_INTERVAL_MS).unref();
+    } catch (err) {
+        console.error('[PendingAck] Table init error:', err.message);
+    }
+})();
+
 feedbackModule.initFeedbackTable(chatPool);
 feedbackModule.initFeedbackPhotosTable(chatPool);
 notifModule.initNotificationTables(chatPool);
@@ -17560,6 +18993,7 @@ app.put('/api/device-preferences', async (req, res) => {
 
     await devicePrefs.updatePrefs(deviceId, prefs);
     const updated = await devicePrefs.getPrefs(deviceId);
+    io.to(`device:${deviceId}`).emit('device:preferences', { deviceId, prefs: updated });
     res.json({ success: true, prefs: updated });
 });
 
@@ -20407,6 +21841,17 @@ module.exports._classifyPublisher = classifyPublisher;
 module.exports._MONITORING_THRESHOLDS = MONITORING_THRESHOLDS;
 module.exports._requireAdmin = requireAdmin;
 module.exports._createDefaultEntity = createDefaultEntity;
+module.exports._getCharacterDefaultAvatar = getCharacterDefaultAvatar;
+module.exports._isCharacterDefaultAvatar = isCharacterDefaultAvatar;
+module.exports._CHARACTER_DEFAULT_AVATAR = CHARACTER_DEFAULT_AVATAR;
+module.exports._petdxPhase0 = {
+    snapshotEntityForPetdxBind,
+    rememberPreviousEntityForBind,
+    getPreviousEntityForBind,
+    clearPreviousEntityForBind,
+    runPetdxPhase0AutoAssign,
+    getPetdxEntityEnrichmentMap,
+};
 module.exports._enqueueMessage = enqueueMessage;
 module.exports._MESSAGE_QUEUE_CAP = MESSAGE_QUEUE_CAP;
 module.exports._DEAD_LETTER_CAP = DEAD_LETTER_CAP;
@@ -20417,4 +21862,25 @@ module.exports._SEVERE_STUCK_MS = SEVERE_STUCK_MS;
 module.exports._HEALTH_BOOT_GRACE_MS = HEALTH_BOOT_GRACE_MS;
 module.exports._SEVERE_STUCK_MIN_COUNT = SEVERE_STUCK_MIN_COUNT;
 module.exports._evaluateDeliveryHealth = evaluateDeliveryHealth;
+module.exports._ENTITY_HEARTBEAT_STALE_MS = ENTITY_HEARTBEAT_STALE_MS;
+module.exports._getEntityDaemonStatus = getEntityDaemonStatus;
 module.exports._hermesHealthMonitor = hermesHealthMonitor;
+module.exports._chatPool = chatPool;
+module.exports._pointEditResolver = pointEditResolver;
+module.exports._ACK_DEFAULT_DEADLINE_MS = ACK_DEFAULT_DEADLINE_MS;
+module.exports._ACK_MIN_DEADLINE_MS = ACK_MIN_DEADLINE_MS;
+module.exports._ACK_MAX_DEADLINE_MS = ACK_MAX_DEADLINE_MS;
+module.exports._clampAckDeadlineMs = clampAckDeadlineMs;
+module.exports._pendingAck = {
+    createPendingAckRows,
+    markAckedById,
+    getPendingAckById,
+    sweepExpiredAcks,
+};
+module.exports._officialBorrowTest = {
+    officialBots,
+    officialBindingsCache,
+    getBindingCacheKey,
+    getOfficialBindingReuseStatus,
+    OFFICIAL_FREE_BINDING_REUSE_TTL_MS,
+};

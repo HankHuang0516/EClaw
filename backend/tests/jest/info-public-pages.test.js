@@ -116,6 +116,21 @@ describe('release notes Markdown rendering', () => {
     });
 });
 
+describe('info page hash tab routing', () => {
+    test('hash router supports every rendered info tab and no stale tab ids', () => {
+        const html = fs.readFileSync(INFO_HTML, 'utf8');
+        const source = fs.readFileSync(INFO_JS, 'utf8');
+        const tabIds = [...html.matchAll(/data-info-tab=["']([^"']+)["']/g)].map(match => match[1]);
+        const validTabsMatch = source.match(/const validTabs = \[([^\]]+)\]/);
+
+        expect(validTabsMatch).toBeTruthy();
+        const validTabs = [...validTabsMatch[1].matchAll(/['"]([^'"]+)['"]/g)].map(match => match[1]);
+
+        expect(validTabs).toEqual(tabIds);
+        expect(validTabs).toContain('boundaries');
+    });
+});
+
 describe('info-public-pages debug endpoint registration', () => {
     test('backend exposes an authenticated temporary debug endpoint for the info public-page bugs', () => {
         const source = fs.readFileSync(INDEX_JS, 'utf8');

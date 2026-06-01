@@ -299,9 +299,9 @@
 
     <script src="../shared/i18n.js"></script>
     <script src="../shared/transition-overlay.js"></script>
-    <script src="shared/auth.js"></script>
     <script src="shared/api.js"></script>
     <script src="shared/nav.js"></script>
+    <script src="shared/auth.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
     <script src="shared/ai-chat.js"></script>
@@ -312,6 +312,7 @@
             renderNav('mission');
             if (typeof renderFooter === 'function') renderFooter();
             currentUser = await checkAuth();
+            if (!currentUser) return;
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('pageContent').style.display = 'block';
             loadStatus();
