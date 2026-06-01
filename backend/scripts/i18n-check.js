@@ -4,7 +4,9 @@
  * `data-i18n` (or its -title / -placeholder variants) in HTML, or via
  * `i18n.t('...')` in JS, is missing from the English locale in
  * `backend/public/shared/i18n.js`. Also reports per-locale coverage so
- * translators can see where gaps are.
+ * translators can see where gaps are. The settings-help registry is also
+ * checked as a soft fanout warning so the i18n patrol can file follow-up work
+ * without turning locale backlog into a hard CI block.
  *
  * Run locally: `node backend/scripts/i18n-check.js`
  * Exit codes:
@@ -22,7 +24,11 @@ const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const BACKEND_DIR = path.join(REPO_ROOT, 'backend');
 const PUBLIC_DIR = path.join(BACKEND_DIR, 'public');
 const I18N_FILE = path.join(PUBLIC_DIR, 'shared', 'i18n.js');
+const SETTINGS_HELP_REGISTRY_FILE = path.join(BACKEND_DIR, 'settings-help-keys.json');
 const COVERAGE_WARN_THRESHOLD = 0.8;
+const SETTINGS_HELP_CANONICAL_LOCALES = new Set(['en', 'zh']);
+const SETTINGS_HELP_STUB_LOCALES = new Set(['zh-TW']);
+const COVERAGE_STUB_LOCALES = new Set(['zh-TW']);
 
 function walk(dir, exts) {
     const out = [];
@@ -136,6 +142,67 @@ function loadOrphanBaseline() {
     }
 }
 
+function loadSettingsHelpRegistry(filePath = SETTINGS_HELP_REGISTRY_FILE) {
+    try {
+        const raw = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        return Array.isArray(raw.keys)
+            ? raw.keys
+                .map(entry => ({
+                    labelKey: entry.label_key,
+                    helpKey: entry.help_key,
+                }))
+                .filter(entry => entry.labelKey && entry.helpKey)
+            : [];
+    } catch {
+        return [];
+    }
+}
+
+function realLocaleNames(translations) {
+    return Object.keys(translations || {})
+        .filter(locale => translations[locale] && typeof translations[locale] === 'object')
+        .sort();
+}
+
+function collectSettingsHelpFanoutGaps(translations, registryEntries, {
+    canonicalLocales = SETTINGS_HELP_CANONICAL_LOCALES,
+    stubLocales = SETTINGS_HELP_STUB_LOCALES,
+    locales = null,
+} = {}) {
+    const canonical = canonicalLocales instanceof Set ? canonicalLocales : new Set(canonicalLocales);
+    const stubs = stubLocales instanceof Set ? stubLocales : new Set(stubLocales);
+    const requiredKeys = [...new Set((registryEntries || []).flatMap(entry => [entry.labelKey, entry.helpKey]).filter(Boolean))];
+    if (requiredKeys.length === 0) return [];
+
+    return (locales || realLocaleNames(translations))
+        .filter(locale => !canonical.has(locale) && !stubs.has(locale))
+        .map(locale => {
+            const dict = translations[locale];
+            if (!dict || typeof dict !== 'object') return null;
+            const missingKeys = requiredKeys.filter(key => !Object.prototype.hasOwnProperty.call(dict, key));
+            return missingKeys.length ? { locale, missingKeys } : null;
+        })
+        .filter(Boolean);
+}
+
+function formatSettingsHelpFanoutWarnings(gaps, { maxPreviewKeys = 8 } = {}) {
+    if (!gaps || gaps.length === 0) return [];
+    const totalMissing = gaps.reduce((sum, gap) => sum + gap.missingKeys.length, 0);
+    const lines = [
+        '',
+        `[i18n-check] ⚠  Settings-help fanout gaps: ${totalMissing} missing key(s) across ${gaps.length} locale(s).`,
+        '[i18n-check]    Soft warning only: en + zh stay hard-gated; zh-TW is a thin fallback stub and is skipped.',
+    ];
+    for (const gap of gaps) {
+        const preview = gap.missingKeys.slice(0, maxPreviewKeys).join(', ');
+        const suffix = gap.missingKeys.length > maxPreviewKeys
+            ? `, ... +${gap.missingKeys.length - maxPreviewKeys} more`
+            : '';
+        lines.push(`[i18n-check]    ${gap.locale}: ${gap.missingKeys.length} missing (${preview}${suffix})`);
+    }
+    return lines;
+}
+
 function updateOrphanBaseline() {
     const TRANSLATIONS = loadTranslations();
     const orphans = findOrphanKeys(TRANSLATIONS).sort();
@@ -237,16 +304,33 @@ function main() {
         .sort();
     console.log('\n[i18n-check] Per-locale coverage (vs EN):');
     const below = [];
+    const stubBelow = [];
     for (const lang of langs) {
         const count = Object.keys(TRANSLATIONS[lang] || {}).length;
         const pct = count / enKeys.size;
         const bar = '█'.repeat(Math.round(pct * 20)).padEnd(20, '·');
         const pctStr = (pct * 100).toFixed(1) + '%';
-        console.log(`  ${lang.padEnd(8)} ${bar} ${count.toString().padStart(5)} / ${enKeys.size}  ${pctStr}`);
-        if (pct < COVERAGE_WARN_THRESHOLD) below.push({ lang, pct });
+        const isStub = COVERAGE_STUB_LOCALES.has(lang);
+        console.log(`  ${(isStub ? `${lang}*` : lang).padEnd(8)} ${bar} ${count.toString().padStart(5)} / ${enKeys.size}  ${pctStr}`);
+        if (pct < COVERAGE_WARN_THRESHOLD) {
+            if (isStub) stubBelow.push({ lang, pct });
+            else below.push({ lang, pct });
+        }
     }
     if (below.length) {
         console.log(`\n[i18n-check] ⚠  ${below.length} locale(s) below ${Math.round(COVERAGE_WARN_THRESHOLD*100)}% coverage — users will see English fallback for gaps.`);
+    }
+    if (stubBelow.length) {
+        console.log(`\n[i18n-check] ℹ  Coverage threshold skipped fallback stub locale(s): ${stubBelow.map(({ lang }) => lang).join(', ')}.`);
+    }
+
+    // 5. Settings-help fanout gaps (warn only). The hard invariant gate blocks
+    // missing canonical `en`/`zh` settings help keys; this patrol-side layer
+    // surfaces missing non-canonical locale work without breaking CI or cron.
+    const settingsHelpRegistry = loadSettingsHelpRegistry();
+    const settingsHelpFanoutGaps = collectSettingsHelpFanoutGaps(TRANSLATIONS, settingsHelpRegistry);
+    for (const line of formatSettingsHelpFanoutWarnings(settingsHelpFanoutGaps)) {
+        console.log(line);
     }
 
     console.log('\n✅ [i18n-check] All referenced keys resolve in EN. No runtime "i18n not defined" risk.');
@@ -254,4 +338,10 @@ function main() {
 
 if (require.main === module) main();
 
-module.exports = { findOrphanKeys, loadOrphanBaseline };
+module.exports = {
+    collectSettingsHelpFanoutGaps,
+    findOrphanKeys,
+    formatSettingsHelpFanoutWarnings,
+    loadOrphanBaseline,
+    loadSettingsHelpRegistry,
+};
