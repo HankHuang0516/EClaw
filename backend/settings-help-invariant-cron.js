@@ -127,8 +127,18 @@ function execFilePromise(execFileImpl, file, args, options) {
     });
 }
 
+// __dirname-anchored script path. The cron module lives at
+// backend/settings-help-invariant-cron.js, so the sibling scripts/ dir is
+// always at path.resolve(__dirname, 'scripts') regardless of cwd or deploy
+// layout. The earlier path.join(config.repoDir, 'backend', 'scripts', ...)
+// approach assumed cwd-derived repoDir mirrored the git tree, which Railway
+// flattens — first fire 2026-06-01 14:17 TW hit MODULE_NOT_FOUND on
+// '/backend/scripts/check-settings-help-invariant.js' because repoDir
+// resolved to '/' under Railway's flattened layout.
+const RESOLVED_SCRIPT_PATH = path.resolve(__dirname, 'scripts', 'check-settings-help-invariant.js');
+
 async function runInvariantCheck(config, execFileImpl = defaultExecFile) {
-    const scriptPath = path.join(config.repoDir, 'backend', 'scripts', 'check-settings-help-invariant.js');
+    const scriptPath = RESOLVED_SCRIPT_PATH;
     const options = {
         cwd: config.repoDir,
         timeout: config.timeoutMs,
