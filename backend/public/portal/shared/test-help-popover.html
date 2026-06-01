@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Help Popover — Visual Test</title>
+<style>
+ body { font-family: sans-serif; padding: 40px; background: #1e1e2e; color: #e0e0e0; }
+ h2 { color: #fff; margin-bottom: 8px; }
+ p { color: #aaa; font-size: 13px; margin-top: 0; }
+ .test-row { margin: 32px 0; padding: 16px; background: #252540; border-radius: 10px; }
+ .test-row label { display: block; font-size: 14px; color: #ccc; margin-bottom: 8px; }
+</style>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h2>Help Popover — Visual Test Page</h2>
+<p>Click each ? icon to see the popover. Press ESC to close. Click outside to dismiss.</p>
+
+<div class="test-row">
+  <label>Simple tooltip:
+    <span class="help-icon" data-help-content="This is a simple tooltip explaining the feature." tabindex="0" role="button" aria-label="Help"></span>
+  </label>
+</div>
+
+<div class="test-row">
+  <label>Rich HTML tooltip (bold + link):
+    <span class="help-icon" data-help-content="<strong>Bold text</strong> and<a href='#'>a link</a> work inside popovers." tabindex="0" role="button" aria-label="Help"></span>
+  </label>
+</div>
+
+<div class="test-row">
+  <label>Long content tooltip:
+    <span class="help-icon" data-help-content="This is a longer tooltip that contains more detailed information about the feature. It should wrap nicely and not overflow the viewport." tabindex="0" role="button" aria-label="Help"></span>
+  </label>
+</div>
+
+<div class="test-row">
+  <label>Multiple icons in same row:
+    <span class="help-icon" data-help-content="First icon tooltip" tabindex="0" role="button" aria-label="Help"></span>
+    <span class="help-icon" data-help-content="Second icon tooltip" tabindex="0" role="button" aria-label="Help"></span>
+    <span class="help-icon" data-help-content="Third icon tooltip" tabindex="0" role="button" aria-label="Help"></span>
+  </label>
+</div>
+
+<script src="help-popover.js"></script>
+</body>
+</html>
