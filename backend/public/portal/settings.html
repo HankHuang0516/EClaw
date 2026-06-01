@@ -1159,12 +1159,20 @@
                         <span class="help-icon" data-help-content-key="kanban_nudge_statuses_help"></span>
                     </span>
                     <!-- Match this row to NUDGEABLE_STATUSES in shared/kanban-status.js. 'done' is intentionally excluded. -->
+                    <!--
+                        'blocked' is intentionally omitted from these checkboxes.
+                        Blocked cards wait on external dependencies (other entities, manual
+                        review, screenshot-gate, etc.), so periodic nudges add noise without
+                        helping unblock. backend/kanban.js SQL pre-filter also hard-excludes
+                        'blocked' from the stale-card candidate query (line 2700) — offering
+                        the checkbox here was misleading (toggling it had no effect).
+                        Per Hank 2026-06-01 16:57 TW directive.
+                    -->
                     <div style="display:flex;flex-wrap:wrap;gap:8px;">
                         <label class="nudge-status-chip"><input type="checkbox" value="backlog" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_backlog">Backlog</span></label>
                         <label class="nudge-status-chip"><input type="checkbox" value="todo" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_todo">Todo</span></label>
                         <label class="nudge-status-chip"><input type="checkbox" value="in_progress" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_in_progress">In Progress</span></label>
                         <label class="nudge-status-chip"><input type="checkbox" value="review" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_review">Review</span></label>
-                        <label class="nudge-status-chip"><input type="checkbox" value="blocked" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_blocked">Blocked</span></label>
                     </div>
                 </div>
 
@@ -1275,12 +1283,12 @@
                                 <span data-i18n="kanban_nudge_per_entity_override_statuses">Override columns</span>
                                 <span class="help-icon" data-help-content-key="kanban_nudge_per_entity_override_statuses_help"></span>
                             </label>
+                            <!-- 'blocked' omitted; see device-wide chip block above. -->
                             <div id="kanbanNudgeEntStatusChips" style="display:flex;flex-wrap:wrap;gap:8px;padding-left:24px;opacity:0.5;">
                                 <label class="nudge-status-chip"><input type="checkbox" value="backlog" data-ent-status onchange="saveKanbanNudgeEntityStatuses()"><span data-i18n="kanban_status_backlog">Backlog</span></label>
                                 <label class="nudge-status-chip"><input type="checkbox" value="todo" data-ent-status onchange="saveKanbanNudgeEntityStatuses()"><span data-i18n="kanban_status_todo">Todo</span></label>
                                 <label class="nudge-status-chip"><input type="checkbox" value="in_progress" data-ent-status onchange="saveKanbanNudgeEntityStatuses()"><span data-i18n="kanban_status_in_progress">In Progress</span></label>
                                 <label class="nudge-status-chip"><input type="checkbox" value="review" data-ent-status onchange="saveKanbanNudgeEntityStatuses()"><span data-i18n="kanban_status_review">Review</span></label>
-                                <label class="nudge-status-chip"><input type="checkbox" value="blocked" data-ent-status onchange="saveKanbanNudgeEntityStatuses()"><span data-i18n="kanban_status_blocked">Blocked</span></label>
                             </div>
                         </div>
 
@@ -2885,7 +2893,15 @@
         }
 
         async function saveKanbanNudgeStatuses() {
-            const checked = Array.from(document.querySelectorAll('.nudge-status-chip input[type="checkbox"]:checked')).map(cb => cb.value);
+            // The selector previously matched ANY '.nudge-status-chip input' on the page,
+            // which included the per-entity override chips marked with [data-ent-status].
+            // When both panels had values selected, the array contained duplicates
+            // (one entry per chip group). Filter to device-wide chips only and dedup
+            // defensively in case future markup adds another chip source.
+            const raw = Array.from(document.querySelectorAll('.nudge-status-chip input[type="checkbox"]:checked'))
+                .filter(cb => !cb.hasAttribute('data-ent-status'))
+                .map(cb => cb.value);
+            const checked = Array.from(new Set(raw));
             // Guard: require at least one status (otherwise nudges would never fire).
             if (checked.length === 0) {
                 showToast(i18n.t('kanban_nudge_need_status') || 'Select at least one column', 'error');
@@ -3071,7 +3087,8 @@
         }
 
         async function saveKanbanNudgeEntityStatuses() {
-            const checked = Array.from(document.querySelectorAll('input[data-ent-status]:checked')).map(cb => cb.value);
+            const raw = Array.from(document.querySelectorAll('input[data-ent-status]:checked')).map(cb => cb.value);
+            const checked = Array.from(new Set(raw));  // defensive dedup
             if (checked.length === 0) {
                 showToast(i18n.t('kanban_nudge_need_status') || 'Select at least one column', 'error');
                 renderKanbanNudgeEntityPanel();
