@@ -38,6 +38,7 @@ const compression = require('compression');
 
 const safeEqual = require('./safe-equal');
 const { createHermesHealthMonitor } = require('./hermes-health-check');
+const { createSettingsHelpInvariantCron } = require('./settings-help-invariant-cron');
 
 // ============================================
 // ADMIN DEVICE GATE
@@ -2272,6 +2273,10 @@ nodeCron.schedule('17 3 * * *', () => {
 // failures.
 const hermesHealthMonitor = createHermesHealthMonitor({
     notifyDevice,
+    audit: serverLog,
+});
+const settingsHelpInvariantCron = createSettingsHelpInvariantCron({
+    getPool: () => db._getPool(),
     audit: serverLog,
 });
 
@@ -6552,6 +6557,7 @@ app.get('/api/health', (req, res) => {
             stuck: stuckPreview,
         },
         hermes: hermesHealthMonitor.getStatus(),
+        settingsHelpInvariant: settingsHelpInvariantCron.getStatus(),
     });
 });
 
@@ -19759,6 +19765,15 @@ if (process.env.NODE_ENV !== 'test') {
             result: 'schedule_failed',
         });
     }
+    try {
+        settingsHelpInvariantCron.startCron({ nodeCron });
+    } catch (err) {
+        console.error('[SettingsHelpInvariant] failed to schedule cron:', err && err.message);
+        serverLog('error', 'settings_help_invariant', `[SettingsHelpInvariant] failed to schedule cron: ${err && err.message}`, {
+            action: 'settings_help_invariant',
+            result: 'schedule_failed',
+        });
+    }
 }
 
 // ── Crash handlers: log uncaught errors to /api/logs (category: crash) before dying ──
@@ -21865,6 +21880,7 @@ module.exports._evaluateDeliveryHealth = evaluateDeliveryHealth;
 module.exports._ENTITY_HEARTBEAT_STALE_MS = ENTITY_HEARTBEAT_STALE_MS;
 module.exports._getEntityDaemonStatus = getEntityDaemonStatus;
 module.exports._hermesHealthMonitor = hermesHealthMonitor;
+module.exports._settingsHelpInvariantCron = settingsHelpInvariantCron;
 module.exports._chatPool = chatPool;
 module.exports._pointEditResolver = pointEditResolver;
 module.exports._ACK_DEFAULT_DEADLINE_MS = ACK_DEFAULT_DEADLINE_MS;
