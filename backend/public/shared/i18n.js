@@ -267166,6 +267166,7 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_batch_label": "Cards per cycle",
+        "kanban_nudge_batch_help": "Maximum number of L1 stale cards picked per cron tick — device-wide cap, NOT per-entity. L2 (priority bump) and L3 (auto-block) escalations are unaffected. See L1/L2/L3 in the kanban-nudge spec.",
 
 
 
@@ -267294,6 +267295,7 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_priority_label": "Priority mode",
+        "kanban_nudge_priority_help": "Sort order when picking the next batch of stale cards. 'priority_first' picks higher-priority before older; 'age_first' picks oldest regardless of priority.",
 
 
 
@@ -267806,6 +267808,7 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_statuses_label": "Nudge these columns",
+        "kanban_nudge_statuses_help": "Which card statuses trigger nudges. Default is todo + in_progress + review + blocked. Excluding 'blocked' is common when blocked cards are truly waiting on others.",
 
 
 
@@ -268574,6 +268577,7 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_interval_label": "Interval",
+        "kanban_nudge_interval_help": "Base interval (minutes) between stale-card nudges. Default 180 (3h). Per-entity overrides win when set (see advanced section).",
 
 
 
@@ -269214,6 +269218,7 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_advanced_label": "Two-type nudge controls",
+        "kanban_nudge_advanced_help": "Per-entity overrides for nudge interval, statuses, and stop mode. Most decks don't need this — leave collapsed unless one entity has different cadence needs.",
 
 
 
@@ -269470,7 +269475,9 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_per_entity_throttle_label": "🅰️ Stale-card: cap each entity at 1 nudge per interval",
+        "kanban_nudge_per_entity_throttle_help": "Skip a card if any of its assigned recipients was already nudged within their effective interval. Prevents duplicate pings when multiple cards target the same entity. Recommended ON.",
         "kanban_nudge_per_entity_section_label": "Per-entity overrides",
+        "kanban_nudge_per_entity_section_help": "Per-entity nudge configuration. Each entity can override interval, statuses, and stop-mode independently. Used when one entity wants quieter cadence or different status filters.",
         "kanban_nudge_per_entity_section_desc": "Customize interval / columns / throttle for one specific entity. Batch size + priority mode stay device-wide.",
         "kanban_nudge_per_entity_pick_placeholder": "— Pick an entity —",
         "kanban_nudge_per_entity_clear": "Reset to device default",
@@ -269609,6 +269616,7 @@ const TRANSLATIONS = {
 
 
         "kanban_cron_recurring_notify_label": "🅱️ Cron parent card self-recurring (no child): notify on each fire",
+        "kanban_cron_recurring_notify_help": "Send a chat notification when this card's cron fires. Disable for low-priority recurring jobs that shouldn't ping you.",
 
 
 
@@ -274345,6 +274353,7 @@ const TRANSLATIONS = {
 
 
         "feedback_category_label": "Category",
+        "feedback_category_help": "Pick the category that best matches your report. AI assist runs different triage flows per category (bug = repro check, feature = roadmap match, design = visual diff).",
 
 
 
@@ -275753,6 +275762,7 @@ const TRANSLATIONS = {
 
 
         "feedback_photo_label": "Attach Photos (Optional)",
+        "feedback_photo_help": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF location data is stripped before upload.",
 
 
 
@@ -904012,6 +904022,7 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_batch_label": "每次督促張數",
+        "kanban_nudge_batch_help": "每個 cron tick 整台裝置最多挑幾張 L1 候選卡發提醒 — 跨實體共用這個額度，不是每個實體 N 張。L2 升級、L3 自動封鎖不受此限。L1/L2/L3 解釋見 kanban-nudge spec。",
 
 
 
@@ -904140,6 +904151,7 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_priority_label": "優先權模式",
+        "kanban_nudge_priority_help": "下一批停滯卡的挑選順序。'priority_first' 高優先先；'age_first' 最舊的先（不看優先）。",
 
 
 
@@ -904652,6 +904664,7 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_statuses_label": "督促哪些欄位",
+        "kanban_nudge_statuses_help": "哪些卡片狀態會觸發督促。預設是 todo + in_progress + review + blocked。當 blocked 卡確實在等別人時，常會把 blocked 排除。",
 
 
 
@@ -905420,6 +905433,7 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_interval_label": "督促間隔",
+        "kanban_nudge_interval_help": "停滯卡督促的基本間隔（分鐘）。預設 180（3 小時）。實體層級覆寫（見進階區）優先生效。",
 
 
 
@@ -906060,6 +906074,7 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_advanced_label": "兩種督促開關",
+        "kanban_nudge_advanced_help": "按實體覆寫督促間隔、狀態、停用模式。多數情境用不到 — 除非某個實體需要不同節奏，否則保持收合即可。",
 
 
 
@@ -906316,7 +906331,9 @@ const TRANSLATIONS = {
 
 
         "kanban_nudge_per_entity_throttle_label": "🅰️ 內容督促：同一實體一個間隔最多 1 張",
+        "kanban_nudge_per_entity_throttle_help": "若卡片任一收件實體在其有效間隔內已被督促，則跳過。避免多張卡同時 ping 同實體造成洗版。建議開啟。",
         "kanban_nudge_per_entity_section_label": "個別實體覆寫",
+        "kanban_nudge_per_entity_section_help": "按實體獨立設定督促行為。每個實體可分別覆寫間隔、狀態、停用模式。當某實體需要更安靜或不同的狀態 filter 時用。",
         "kanban_nudge_per_entity_section_desc": "為特定實體自訂間隔、欄位與節流。批次大小與優先模式仍套用裝置層級設定。",
         "kanban_nudge_per_entity_pick_placeholder": "— 選擇實體 —",
         "kanban_nudge_per_entity_clear": "重設為裝置預設值",
@@ -906455,6 +906472,7 @@ const TRANSLATIONS = {
 
 
         "kanban_cron_recurring_notify_label": "🅱️ 排程母卡自身重複觸發時通知（無子卡）",
+        "kanban_cron_recurring_notify_help": "卡片 cron 觸發時發 chat 通知。低優先的週期性任務不想被 ping 可以關掉。",
 
 
 
@@ -910167,6 +910185,7 @@ const TRANSLATIONS = {
 
 
         "feedback_category_label": "類別",
+        "feedback_category_help": "選擇最符合你回報的分類。AI 分流流程會根據分類不同（bug 跑復現檢查、feature 對 roadmap、design 做視覺 diff）。",
 
 
 
@@ -911575,6 +911594,7 @@ const TRANSLATIONS = {
 
 
         "feedback_photo_label": "附加照片（選用）",
+        "feedback_photo_help": "附上能呈現問題情境的截圖。最多 5 張；網頁支援拖放。上傳前 EXIF 地理位置會被移除。",
 
 
 
@@ -2941574,6 +2941594,26 @@ const TRANSLATIONS = {
 
 
     "zh-TW": {
+        "feedback_category_label": "類別",
+        "feedback_category_help": "選擇最符合你回報的分類。AI 分流流程會根據分類不同（bug 跑復現檢查、feature 對 roadmap、design 做視覺 diff）。",
+        "feedback_photo_label": "附加照片（選用）",
+        "feedback_photo_help": "附上能呈現問題情境的截圖。最多 5 張；網頁支援拖放。上傳前 EXIF 地理位置會被移除。",
+        "kanban_cron_recurring_notify_label": "🅱️ 排程母卡自身重複觸發時通知（無子卡）",
+        "kanban_cron_recurring_notify_help": "卡片 cron 觸發時發 chat 通知。低優先的週期性任務不想被 ping 可以關掉。",
+        "kanban_nudge_advanced_label": "兩種督促開關",
+        "kanban_nudge_advanced_help": "按實體覆寫督促間隔、狀態、停用模式。多數情境用不到 — 除非某個實體需要不同節奏，否則保持收合即可。",
+        "kanban_nudge_batch_label": "每次督促張數",
+        "kanban_nudge_batch_help": "每個 cron tick 整台裝置最多挑幾張 L1 候選卡發提醒 — 跨實體共用這個額度，不是每個實體 N 張。L2 升級、L3 自動封鎖不受此限。L1/L2/L3 解釋見 kanban-nudge spec。",
+        "kanban_nudge_interval_label": "督促間隔",
+        "kanban_nudge_interval_help": "停滯卡督促的基本間隔（分鐘）。預設 180（3 小時）。實體層級覆寫（見進階區）優先生效。",
+        "kanban_nudge_per_entity_section_label": "個別實體覆寫",
+        "kanban_nudge_per_entity_section_help": "按實體獨立設定督促行為。每個實體可分別覆寫間隔、狀態、停用模式。當某實體需要更安靜或不同的狀態 filter 時用。",
+        "kanban_nudge_per_entity_throttle_label": "🅰️ 內容督促：同一實體一個間隔最多 1 張",
+        "kanban_nudge_per_entity_throttle_help": "若卡片任一收件實體在其有效間隔內已被督促，則跳過。避免多張卡同時 ping 同實體造成洗版。建議開啟。",
+        "kanban_nudge_priority_label": "優先權模式",
+        "kanban_nudge_priority_help": "下一批停滯卡的挑選順序。'priority_first' 高優先先；'age_first' 最舊的先（不看優先）。",
+        "kanban_nudge_statuses_label": "督促哪些欄位",
+        "kanban_nudge_statuses_help": "哪些卡片狀態會觸發督促。預設是 todo + in_progress + review + blocked。當 blocked 卡確實在等別人時，常會把 blocked 排除。",
         "dashboard_usage_widget_session_used": "已用",
         "dashboard_usage_widget_weekly_used": "已用",
         "dashboard_usage_widget_reset_in": "重置",
