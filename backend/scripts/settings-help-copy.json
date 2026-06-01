@@ -1,0 +1,43 @@
+{
+  "_comment": "Canonical help copy per field. Source of truth for en + zh-TW. Locale fanout in child 6 (translate from these into the other 14 locales).",
+  "feedback_category": {
+    "en": "Pick the category that best matches your report. AI assist runs different triage flows per category (bug = repro check, feature = roadmap match, design = visual diff).",
+    "zh-TW": "選擇最符合你回報的分類。AI 分流流程會根據分類不同（bug 跑復現檢查、feature 對 roadmap、design 做視覺 diff）。"
+  },
+  "feedback_photo": {
+    "en": "Attach screenshots showing the problem in context. Maximum 5 photos; web upload supports drag-and-drop. EXIF location data is stripped before upload.",
+    "zh-TW": "附上能呈現問題情境的截圖。最多 5 張；網頁支援拖放。上傳前 EXIF 地理位置會被移除。"
+  },
+  "kanban_cron_recurring_notify": {
+    "en": "Send a chat notification when this card's cron fires. Disable for low-priority recurring jobs that shouldn't ping you.",
+    "zh-TW": "卡片 cron 觸發時發 chat 通知。低優先的週期性任務不想被 ping 可以關掉。"
+  },
+  "kanban_nudge_advanced": {
+    "en": "Per-entity overrides for nudge interval, statuses, and stop mode. Most decks don't need this — leave collapsed unless one entity has different cadence needs.",
+    "zh-TW": "按實體覆寫督促間隔、狀態、停用模式。多數情境用不到 — 除非某個實體需要不同節奏，否則保持收合即可。"
+  },
+  "kanban_nudge_batch": {
+    "en": "Maximum number of L1 stale cards picked per cron tick — device-wide cap, NOT per-entity. L2 (priority bump) and L3 (auto-block) escalations are unaffected. See L1/L2/L3 in the kanban-nudge spec.",
+    "zh-TW": "每個 cron tick 整台裝置最多挑幾張 L1 候選卡發提醒 — 跨實體共用這個額度，不是每個實體 N 張。L2 升級、L3 自動封鎖不受此限。L1/L2/L3 解釋見 kanban-nudge spec。"
+  },
+  "kanban_nudge_interval": {
+    "en": "Base interval (minutes) between stale-card nudges. Default 180 (3h). Per-entity overrides win when set (see advanced section).",
+    "zh-TW": "停滯卡督促的基本間隔（分鐘）。預設 180（3 小時）。實體層級覆寫（見進階區）優先生效。"
+  },
+  "kanban_nudge_per_entity_section": {
+    "en": "Per-entity nudge configuration. Each entity can override interval, statuses, and stop-mode independently. Used when one entity wants quieter cadence or different status filters.",
+    "zh-TW": "按實體獨立設定督促行為。每個實體可分別覆寫間隔、狀態、停用模式。當某實體需要更安靜或不同的狀態 filter 時用。"
+  },
+  "kanban_nudge_per_entity_throttle": {
+    "en": "Skip a card if any of its assigned recipients was already nudged within their effective interval. Prevents duplicate pings when multiple cards target the same entity. Recommended ON.",
+    "zh-TW": "若卡片任一收件實體在其有效間隔內已被督促，則跳過。避免多張卡同時 ping 同實體造成洗版。建議開啟。"
+  },
+  "kanban_nudge_priority": {
+    "en": "Sort order when picking the next batch of stale cards. 'priority_first' picks higher-priority before older; 'age_first' picks oldest regardless of priority.",
+    "zh-TW": "下一批停滯卡的挑選順序。'priority_first' 高優先先；'age_first' 最舊的先（不看優先）。"
+  },
+  "kanban_nudge_statuses": {
+    "en": "Which card statuses trigger nudges. Default is todo + in_progress + review + blocked. Excluding 'blocked' is common when blocked cards are truly waiting on others.",
+    "zh-TW": "哪些卡片狀態會觸發督促。預設是 todo + in_progress + review + blocked。當 blocked 卡確實在等別人時，常會把 blocked 排除。"
+  }
+}

@@ -230,7 +230,10 @@ function main() {
     const errors = [];
 
     for (const entry of required.values()) {
-        for (const locale of ['en', 'zh-TW']) {
+        // Canonical locale pair is en + zh — zh-TW is intentionally a thin
+        // override stub (publisher-guide-only), with zh holding the canonical
+        // Traditional Chinese dict (enforced by tests/jest/i18n-fallback-chain).
+        for (const locale of ['en', 'zh']) {
             if (!hasTranslation(translations, locale, entry.labelKey)) {
                 errors.push(`${entry.source}: missing ${locale} label key ${entry.labelKey}`);
             }
@@ -247,7 +250,7 @@ function main() {
     }
 
     for (const [helpKey, locations] of annotations.entries()) {
-        for (const locale of ['en', 'zh-TW']) {
+        for (const locale of ['en', 'zh']) {
             if (!hasTranslation(translations, locale, helpKey)) {
                 errors.push(`HELP-KEY ${helpKey} at ${locations.join(', ')} points to missing ${locale} i18n key`);
             }
@@ -258,9 +261,10 @@ function main() {
         console.error('\nFAIL: settings help invariant violations:\n');
         for (const error of errors) console.error(`  - ${error}`);
         console.error('\nEvery settings field added or listed in backend/settings-help-keys.json must have:');
-        console.error('  1. <field>_label in en and zh-TW');
-        console.error('  2. <field>_help in en and zh-TW');
+        console.error('  1. <field>_label in en and zh');
+        console.error('  2. <field>_help in en and zh');
         console.error('  3. A code-side HELP-KEY annotation pointing at <field>_help');
+        console.error('  (zh-TW is a thin override stub — Traditional Chinese canonical lives in zh)');
         process.exit(1);
     }
 
