@@ -194,8 +194,13 @@ function walk(dir, out = []) {
 }
 
 function collectHelpAnnotations() {
+    // backend uses BACKEND_DIR directly — on Railway the backend tree is at
+    // root (no '/backend' wrapper) so deriving via REPO_ROOT misses files.
+    // Cross-package scans (app/src, ios-app, openclaw-channel-eclaw/src) are
+    // path.join'd off REPO_ROOT and skipped via fs.existsSync in walk() when
+    // those packages aren't deployed (e.g. Railway deploys only backend/).
     const roots = [
-        path.join(REPO_ROOT, 'backend'),
+        BACKEND_DIR,
         path.join(REPO_ROOT, 'app', 'src'),
         path.join(REPO_ROOT, 'ios-app'),
         path.join(REPO_ROOT, 'openclaw-channel-eclaw', 'src'),
