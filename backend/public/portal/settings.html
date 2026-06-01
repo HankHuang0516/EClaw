@@ -1091,7 +1091,10 @@
             <div class="notif-content" id="kanbanNudgeContent">
                 <div class="setting-row">
                     <!-- HELP-KEY: kanban_nudge_batch_help -->
-                    <span class="setting-row-label" data-i18n="kanban_nudge_batch_label">Cards per cycle</span>
+                    <span class="setting-row-label">
+                        <span data-i18n="kanban_nudge_batch_label">Cards per cycle</span>
+                        <span class="help-icon" data-help-content-key="kanban_nudge_batch_help"></span>
+                    </span>
                     <input type="number" id="kanbanNudgeBatchSize" min="1" max="20" step="1"
                            style="width:72px;padding:6px 8px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);text-align:right;"
                            onchange="saveKanbanNudgePref('kanban_nudge_batch_size', Math.max(1, Math.min(20, parseInt(this.value)||1)))">
@@ -1099,7 +1102,10 @@
 
                 <div class="setting-row" style="flex-direction:column;align-items:stretch;">
                     <!-- HELP-KEY: kanban_nudge_priority_help -->
-                    <span class="setting-row-label" style="margin-bottom:8px;" data-i18n="kanban_nudge_priority_label">Priority mode</span>
+                    <span class="setting-row-label" style="margin-bottom:8px;">
+                        <span data-i18n="kanban_nudge_priority_label">Priority mode</span>
+                        <span class="help-icon" data-help-content-key="kanban_nudge_priority_help"></span>
+                    </span>
                     <label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px;cursor:pointer;">
                         <input type="radio" name="kanbanNudgePriorityMode" value="priority_first" onchange="saveKanbanNudgePref('kanban_nudge_priority_mode', this.value)">
                         <span data-i18n="kanban_nudge_priority_mode_level">Level-first (P0 &gt; P1 &gt; P2)</span>
@@ -1116,7 +1122,10 @@
 
                 <div class="setting-row" style="flex-direction:column;align-items:stretch;">
                     <!-- HELP-KEY: kanban_nudge_statuses_help -->
-                    <span class="setting-row-label" style="margin-bottom:8px;" data-i18n="kanban_nudge_statuses_label">Nudge these columns</span>
+                    <span class="setting-row-label" style="margin-bottom:8px;">
+                        <span data-i18n="kanban_nudge_statuses_label">Nudge these columns</span>
+                        <span class="help-icon" data-help-content-key="kanban_nudge_statuses_help"></span>
+                    </span>
                     <!-- Match this row to NUDGEABLE_STATUSES in shared/kanban-status.js. 'done' is intentionally excluded. -->
                     <div style="display:flex;flex-wrap:wrap;gap:8px;">
                         <label class="nudge-status-chip"><input type="checkbox" value="backlog" onchange="saveKanbanNudgeStatuses()"><span data-i18n="kanban_status_backlog">Backlog</span></label>
@@ -1129,7 +1138,10 @@
 
                 <div class="setting-row">
                     <!-- HELP-KEY: kanban_nudge_interval_help -->
-                    <span class="setting-row-label" data-i18n="kanban_nudge_interval_label">Interval</span>
+                    <span class="setting-row-label">
+                        <span data-i18n="kanban_nudge_interval_label">Interval</span>
+                        <span class="help-icon" data-help-content-key="kanban_nudge_interval_help"></span>
+                    </span>
                     <span style="display:flex;align-items:center;gap:4px;">
                         <input type="number" id="kanbanNudgeIntervalHours" min="0" max="24" step="1"
                                style="width:56px;padding:6px 8px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);text-align:right;"
@@ -1144,19 +1156,24 @@
 
                 <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:6px;">
                     <!-- HELP-KEY: kanban_nudge_advanced_help -->
-                    <span class="setting-row-label" style="margin-bottom:4px;" data-i18n="kanban_nudge_advanced_label">Two-type nudge controls</span>
+                    <span class="setting-row-label" style="margin-bottom:4px;">
+                        <span data-i18n="kanban_nudge_advanced_label">Two-type nudge controls</span>
+                        <span class="help-icon" data-help-content-key="kanban_nudge_advanced_help"></span>
+                    </span>
                     <p class="section-desc" style="margin:0 0 6px 0;font-size:12px;" data-i18n="kanban_nudge_advanced_desc">🅰️ stale-card nudge vs 🅱️ cron-schedule trigger — separate switches.</p>
                     <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
                         <input type="checkbox" id="kanbanNudgePerEntityThrottle"
                                onchange="saveKanbanNudgePref('kanban_nudge_per_entity_throttle', this.checked)">
                         <!-- HELP-KEY: kanban_nudge_per_entity_throttle_help -->
                         <span data-i18n="kanban_nudge_per_entity_throttle_label">🅰️ Stale-card: cap each entity at 1 nudge per interval</span>
+                        <span class="help-icon" data-help-content-key="kanban_nudge_per_entity_throttle_help"></span>
                     </label>
                     <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
                         <input type="checkbox" id="kanbanCronRecurringNotify"
                                onchange="saveKanbanNudgePref('kanban_cron_recurring_notify', this.checked)">
                         <!-- HELP-KEY: kanban_cron_recurring_notify_help -->
                         <span data-i18n="kanban_cron_recurring_notify_label">🅱️ Cron母卡 self-recurring (no child): notify on each fire</span>
+                        <span class="help-icon" data-help-content-key="kanban_cron_recurring_notify_help"></span>
                     </label>
                 </div>
 
@@ -1164,8 +1181,9 @@
                 <div class="setting-row" id="kanbanNudgePerEntitySection"
                      style="flex-direction:column;align-items:stretch;gap:8px;border-top:1px solid var(--border);padding-top:12px;margin-top:4px;">
                     <!-- HELP-KEY: kanban_nudge_per_entity_section_help -->
-                    <span class="setting-row-label" data-i18n="kanban_nudge_per_entity_section_label">
-                        Per-entity overrides
+                    <span class="setting-row-label">
+                        <span data-i18n="kanban_nudge_per_entity_section_label">Per-entity overrides</span>
+                        <span class="help-icon" data-help-content-key="kanban_nudge_per_entity_section_help"></span>
                     </span>
                     <p class="section-desc" style="margin:0;font-size:12px;" data-i18n="kanban_nudge_per_entity_section_desc">
                         Customize interval / columns / throttle for one specific entity. Batch size + priority mode stay device-wide.
@@ -1425,7 +1443,10 @@
                 Logs from the last 5 minutes will be automatically captured to help diagnose the issue.
             </p>
             <!-- HELP-KEY: feedback_category_help -->
-            <div class="section-desc" style="font-weight:600;margin-bottom:10px;" data-i18n="feedback_category_label">Category</div>
+            <div class="section-desc" style="font-weight:600;margin-bottom:10px;">
+                <span data-i18n="feedback_category_label">Category</span>
+                <span class="help-icon" data-help-content-key="feedback_category_help"></span>
+            </div>
             <div class="feedback-cats">
                 <div class="feedback-cat-card selected-bug" data-cat="bug" onclick="setFeedbackCategory('bug')">
                     <span class="cat-icon">🐛</span>
@@ -1446,7 +1467,10 @@
             <!-- Photo upload -->
             <div class="fb-photo-section">
                 <!-- HELP-KEY: feedback_photo_help -->
-                <div class="fb-photo-label" data-i18n="feedback_photo_label">Attach Photos (Optional)</div>
+                <div class="fb-photo-label">
+                    <span data-i18n="feedback_photo_label">Attach Photos (Optional)</span>
+                    <span class="help-icon" data-help-content-key="feedback_photo_help"></span>
+                </div>
                 <input type="file" id="fbPhotoInput" accept="image/jpeg,image/png,image/webp,image/gif" multiple style="display:none" onchange="onFeedbackPhotosSelected(event)">
                 <button type="button" class="fb-photo-btn" id="fbPhotoAddBtn" onclick="document.getElementById('fbPhotoInput').click()">
                     📷 <span data-i18n="feedback_photo_add">Add Photos</span>
@@ -1473,6 +1497,7 @@
     <script src="shared/auth.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
+    <script src="../shared/help-popover.js"></script>
     <script src="../shared/transition-overlay.js"></script>
     <script src="../shared/settings-deep-link.js"></script>
     <script src="/socket.io/socket.io.js"></script>
