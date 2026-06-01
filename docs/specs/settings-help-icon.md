@@ -108,7 +108,7 @@ HelpPopover.bindByKey(iconEl, 'kanban_nudge_batch_help');
 
 ### 4.2 Code → help invariant
 - Every `HELP-KEY: <key>` annotation MUST point to a key that exists in `backend/public/shared/i18n.js` for both `en` and `zh` (the canonical pair — see §3.1 architectural note on why `zh`, not `zh-TW`). Missing → CI fail.
-- Fanout locales (the 14 other top-level locales per §3.1) are checked by the patrol cron (warning-level, not hard-block).
+- Fanout locales are checked by the i18n patrol cron (warning-level, not hard-block). The soft layer is `node backend/scripts/i18n-check.js`: it reports settings-help gaps for non-canonical real locale blocks and keeps exit code 0 if EN references are otherwise valid. `zh-TW` is intentionally skipped here because it is a thin fallback stub; Traditional Chinese canonical coverage is enforced through `zh`.
 
 ### 4.3 Help → code invariant (SCOPED to settings-help keys)
 
@@ -174,3 +174,7 @@ Spec is accepted when:
   - §4.1: code examples updated to match PR #3065's content-based API (`data-help-content` not `data-help-key`/`data-help-content-key`), and JS example uses `HelpPopover.bindByKey` per §5.
   - §4.2: fanout count text "12 other top-level locales" → "14 other top-level locales".
   - §7: "16 fanout locales" → "14 fanout locales".
+- 2026-06-01 17:59 TWT — Child 7 soft-warning SOP clarified:
+  - §4.2 names `backend/scripts/i18n-check.js` as the patrol layer for settings-help fanout gaps.
+  - `zh-TW` is explicitly skipped by the soft warning because it is a fallback stub, not a fanout injection target.
+  - Fanout gaps are warning-only and must not change the checker exit code.

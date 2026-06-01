@@ -22,6 +22,8 @@ The canonical locales for this PR are `en` and `zh`. Fanout locales can land lat
 
 Note: `TRANSLATIONS["zh-TW"]` is an intentionally thin override stub (publisher-guide-only); the Traditional Chinese canonical dict lives in `TRANSLATIONS.zh`, with `zh-TW` falling back through `zh` at runtime. The invariant gate checks `zh`, not `zh-TW`.
 
+Fanout SOP: `node backend/scripts/i18n-check.js` emits a soft warning when settings-help keys listed in `backend/settings-help-keys.json` are missing from non-canonical locale blocks. This is backlog signal for i18n patrol cards, not a PR blocker. The warning intentionally skips the `zh-TW` stub because it falls back through `zh`.
+
 For JS-rendered fields, keep the annotation next to the binding call:
 
 ```js
