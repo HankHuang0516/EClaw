@@ -11,7 +11,7 @@
 Settings pages today use inline labels and short hover hints. Weak inline copy ("實體一視同仁") misleads users about scope. The fix:
 - Every labeled settings field gets a `?` help icon.
 - Click reveals a popover with the canonical explanation.
-- Help content is i18n'd across 17 locales.
+- Help content is i18n'd across 16 locales (en + zh-TW canonical + 14 fanout per §3.1).
 - Code and i18n entries reference each other via a `HELP-KEY` annotation, enforced by a CI gate + i18n patrol cron.
 
 ## 2. UI Pattern
@@ -144,7 +144,7 @@ This keeps the existing content-based core for legacy callers AND lets settings 
 Spec is accepted when:
 - [ ] This document merged to main.
 - [ ] #6 sign-off on the bidirectional invariant section (§4).
-- [ ] Section 2.4 markup contract reviewed against #4's `help-popover.js` PR #3065 — confirm `data-help-content-key` is the attribute name the component reads.
+- [ ] Section 2.4 markup contract reviewed against #4's `help-popover.js` PR #3065 — confirm `data-help-content` is the attribute name the component reads AND that PR #3065 adds the `HelpPopover.bindByKey(iconEl, key)` wrapper per §5.
 - [ ] Child 3 (Backend inventory) can begin once §3 (key convention) is locked.
 - [ ] Child 6 (i18n fanout) can begin once §3.1 (locale set) is locked.
 - [ ] Child 7 (cron soft warning) can implement §4 rules.
