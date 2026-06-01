@@ -1,8 +1,9 @@
 'use strict';
 
-// Use jest mock for the heavy DB-touching modules so we can require index.js
-jest.mock('pg');
-jest.mock('node-cron', () => ({ schedule: () => ({ stop: jest.fn() }) }));
+// Full mock setup — installs pg/db/scheduler mocks needed to load index.js
+// without a real DB. Bare jest.mock('pg') is insufficient because in-module
+// DB init reads pool.query(...).rows synchronously (#6 caught this 2026-06-01).
+require('./helpers/mock-setup');
 
 const { _getSilentTransformSuppressionReason: getReason } = require('../../index');
 

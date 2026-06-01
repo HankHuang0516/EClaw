@@ -8229,11 +8229,16 @@ function getSilentTransformSuppressionReason(text) {
     // replies to start with @#N so Hank sees who they're routed to, but that
     // pushes the [SILENT] token off the start of the string and bypassed the
     // original ^[SILENT]$ regex, fan-out the no-op echo loop with #6.
-    // Strip any number of `@<token>` prefixes then re-check.
     const afterMentions = trimmed.replace(/^(?:@\S+\s+)+/, '');
     if (/^\[SILENT\]$/i.test(afterMentions)) return 'silent_token';
-    if (/^\[SILENT\](?:\s|$)/i.test(afterMentions) && isLowSignalFwd(afterMentions)) {
-        return 'silent_noise';
+    if (/^\[SILENT\](?:\s|$)/i.test(afterMentions)) {
+        // For low-signal evaluation, strip the [SILENT] token + whitespace
+        // from the head — otherwise "[SILENT] received" stays 17 chars and
+        // misses both the length floor (12) and the (ping|pong|ack|ok|...)
+        // pattern that only matches a bare ack word. We want to evaluate
+        // the REMAINING trailer, not the literal "[SILENT] trailer".
+        const remainder = afterMentions.replace(/^\[SILENT\]\s*/i, '');
+        if (isLowSignalFwd(remainder)) return 'silent_noise';
     }
     return null;
 }
