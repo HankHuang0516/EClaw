@@ -87,9 +87,15 @@ describe('settings-help invariant cron wrapper', () => {
 
         expect(result.ok).toBe(false);
         expect(result.card).toEqual(expect.objectContaining({ created: true, cardId: expect.stringMatching(/^card_/) }));
+        // scriptPath is anchored to the cron module's __dirname (always at
+        // backend/scripts/check-settings-help-invariant.js, regardless of cwd
+        // or repoDir env override). cwd still honors repoDir env so the
+        // invoked script's relative paths inherit it.
+        const path = require('path');
+        const expectedScript = path.resolve(__dirname, '..', '..', 'scripts', 'check-settings-help-invariant.js');
         expect(execFile).toHaveBeenCalledWith(
             process.execPath,
-            ['/repo/backend/scripts/check-settings-help-invariant.js', '--all'],
+            [expectedScript, '--all'],
             expect.objectContaining({ cwd: '/repo', timeout: 60000 }),
             expect.any(Function)
         );
