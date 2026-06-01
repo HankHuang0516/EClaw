@@ -1001,56 +1001,88 @@
                     <div class="policy-grid">
                         <div class="policy-inline-grid" data-testid="prompt-policy-scope-controls">
                             <label class="policy-field">
-                                <span class="setting-row-label">Policy scope</span>
+                                <!-- HELP-KEY: prompt_policy_scope_help -->
+                                <span class="setting-row-label">
+                                    <span data-i18n="prompt_policy_scope_label">Policy scope</span>
+                                    <span class="help-icon" data-help-content-key="prompt_policy_scope_help"></span>
+                                </span>
                                 <select id="promptPolicyScope" class="policy-select" onchange="onPromptPolicyScopeChange()">
                                     <option value="device">Device default</option>
                                     <option value="entity">Entity override</option>
                                 </select>
                             </label>
                             <label class="policy-field" id="promptPolicyEntityField" style="display:none;">
-                                <span class="setting-row-label">Entity #</span>
+                                <!-- HELP-KEY: prompt_policy_entity_help -->
+                                <span class="setting-row-label">
+                                    <span data-i18n="prompt_policy_entity_label">Entity #</span>
+                                    <span class="help-icon" data-help-content-key="prompt_policy_entity_help"></span>
+                                </span>
                                 <input type="number" id="promptPolicyEntityId" min="0" step="1" value="0" class="policy-input" onchange="onPromptPolicyEntityChange()">
                             </label>
                         </div>
 
                         <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
                             <input type="checkbox" id="promptPolicyEnabled">
-                            <span id="promptPolicyEnabledLabel">Enable device prompt policy</span>
+                            <!-- HELP-KEY: prompt_policy_enabled_help -->
+                            <span id="promptPolicyEnabledLabel" data-i18n="prompt_policy_enabled_label">Enable device prompt policy</span>
+                            <span class="help-icon" data-help-content-key="prompt_policy_enabled_help"></span>
                         </label>
 
                         <label style="display:block;">
-                            <span class="setting-row-label">Device instructions</span>
+                            <!-- HELP-KEY: prompt_policy_instructions_help -->
+                            <span class="setting-row-label">
+                                <span data-i18n="prompt_policy_instructions_label">Device instructions</span>
+                                <span class="help-icon" data-help-content-key="prompt_policy_instructions_help"></span>
+                            </span>
                             <textarea id="promptPolicyInstructions" class="policy-textarea" placeholder="One instruction per line"></textarea>
                         </label>
 
                         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">
                             <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
                                 <input type="checkbox" id="promptPolicyRequirePlan">
-                                <span>Require test plan</span>
+                                <!-- HELP-KEY: prompt_policy_require_plan_help -->
+                                <span data-i18n="prompt_policy_require_plan_label">Require test plan</span>
+                                <span class="help-icon" data-help-content-key="prompt_policy_require_plan_help"></span>
                             </label>
                             <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
                                 <input type="checkbox" id="promptPolicyRequireMilestones">
-                                <span>Require milestone updates</span>
+                                <!-- HELP-KEY: prompt_policy_require_milestones_help -->
+                                <span data-i18n="prompt_policy_require_milestones_label">Require milestone updates</span>
+                                <span class="help-icon" data-help-content-key="prompt_policy_require_milestones_help"></span>
                             </label>
                             <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
-                                <span>Heartbeat min</span>
+                                <!-- HELP-KEY: prompt_policy_heartbeat_help -->
+                                <span data-i18n="prompt_policy_heartbeat_label">Heartbeat min</span>
+                                <span class="help-icon" data-help-content-key="prompt_policy_heartbeat_help"></span>
                                 <input type="number" id="promptPolicyHeartbeatMinutes" min="1" max="30" step="1"
                                        style="width:70px;padding:6px 8px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);text-align:right;">
                             </label>
                         </div>
 
                         <label style="display:block;">
-                            <span class="setting-row-label">Codex override</span>
+                            <!-- HELP-KEY: prompt_policy_codex_override_help -->
+                            <span class="setting-row-label">
+                                <span data-i18n="prompt_policy_codex_override_label">Codex override</span>
+                                <span class="help-icon" data-help-content-key="prompt_policy_codex_override_help"></span>
+                            </span>
                             <textarea id="promptPolicyCodexOverride" class="policy-textarea" placeholder="Codex-only instructions"></textarea>
                         </label>
 
                         <label style="display:block;">
-                            <span class="setting-row-label">Claude Code override</span>
+                            <!-- HELP-KEY: prompt_policy_claude_override_help -->
+                            <span class="setting-row-label">
+                                <span data-i18n="prompt_policy_claude_override_label">Claude Code override</span>
+                                <span class="help-icon" data-help-content-key="prompt_policy_claude_override_help"></span>
+                            </span>
                             <textarea id="promptPolicyClaudeOverride" class="policy-textarea" placeholder="Claude Code-only instructions"></textarea>
                         </label>
 
                         <label style="display:block;">
-                            <span class="setting-row-label">Hermes override</span>
+                            <!-- HELP-KEY: prompt_policy_hermes_override_help -->
+                            <span class="setting-row-label">
+                                <span data-i18n="prompt_policy_hermes_override_label">Hermes override</span>
+                                <span class="help-icon" data-help-content-key="prompt_policy_hermes_override_help"></span>
+                            </span>
                             <textarea id="promptPolicyHermesOverride" class="policy-textarea" placeholder="Hermes-only instructions"></textarea>
                         </label>
 

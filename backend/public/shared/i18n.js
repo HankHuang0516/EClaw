@@ -624131,6 +624131,26 @@ const TRANSLATIONS = {
 
 
         "settings_save_policy": "Save Device Policy",
+        "prompt_policy_scope_label": "Policy scope",
+        "prompt_policy_scope_help": "Choose whether the prompt policy applies device-wide by default or overrides a single entity. Entity override only affects the selected entity.",
+        "prompt_policy_entity_label": "Entity #",
+        "prompt_policy_entity_help": "Entity number receiving this override. Use this only when policy scope is Entity override.",
+        "prompt_policy_enabled_label": "Enable device prompt policy",
+        "prompt_policy_enabled_help": "When enabled, channel bridges inject the saved policy into agent system prompts for this device or entity.",
+        "prompt_policy_instructions_label": "Device instructions",
+        "prompt_policy_instructions_help": "One instruction per line. Keep rules global, stable, and safe for every agent on this device.",
+        "prompt_policy_require_plan_label": "Require test plan",
+        "prompt_policy_require_plan_help": "Ask agents to include an explicit test plan before coding or deployment work when this policy applies.",
+        "prompt_policy_require_milestones_label": "Require milestone updates",
+        "prompt_policy_require_milestones_help": "Ask agents to report progress milestones during longer tasks so the operator can track status.",
+        "prompt_policy_heartbeat_label": "Heartbeat min",
+        "prompt_policy_heartbeat_help": "Minimum minutes between proactive heartbeat messages for agents using this policy.",
+        "prompt_policy_codex_override_label": "Codex override",
+        "prompt_policy_codex_override_help": "Extra instructions appended only for Codex sessions. Leave blank unless Codex needs different behavior.",
+        "prompt_policy_claude_override_label": "Claude Code override",
+        "prompt_policy_claude_override_help": "Extra instructions appended only for Claude Code sessions. Leave blank unless Claude Code needs different behavior.",
+        "prompt_policy_hermes_override_label": "Hermes override",
+        "prompt_policy_hermes_override_help": "Extra instructions appended only for Hermes sessions. Leave blank unless Hermes needs different behavior.",
 
 
 
@@ -1052169,6 +1052189,26 @@ const TRANSLATIONS = {
 
 
         "settings_save_policy": "儲存裝置策略",
+        "prompt_policy_scope_label": "策略範圍",
+        "prompt_policy_scope_help": "選擇提示詞策略要套用到整台裝置預設值，或只覆寫單一實體。實體覆寫只影響選定的實體。",
+        "prompt_policy_entity_label": "實體 #",
+        "prompt_policy_entity_help": "要套用這個覆寫的實體編號。只有策略範圍選擇「實體覆寫」時才需要填寫。",
+        "prompt_policy_enabled_label": "啟用裝置提示詞策略",
+        "prompt_policy_enabled_help": "啟用後，通道橋接會把儲存的策略注入此裝置或實體的代理系統提示詞。",
+        "prompt_policy_instructions_label": "裝置指示",
+        "prompt_policy_instructions_help": "每行一條指示。請保持規則全域、穩定，且對此裝置上的所有代理都安全。",
+        "prompt_policy_require_plan_label": "要求測試計畫",
+        "prompt_policy_require_plan_help": "要求代理在程式或部署工作前先列出明確測試計畫。",
+        "prompt_policy_require_milestones_label": "要求里程碑更新",
+        "prompt_policy_require_milestones_help": "要求代理在較長任務中回報進度里程碑，方便操作者追蹤狀態。",
+        "prompt_policy_heartbeat_label": "心跳最小分鐘",
+        "prompt_policy_heartbeat_help": "使用此策略的代理主動心跳訊息之間，至少要間隔的分鐘數。",
+        "prompt_policy_codex_override_label": "Codex 覆寫",
+        "prompt_policy_codex_override_help": "只追加到 Codex 工作階段的額外指示。除非 Codex 需要不同規則，否則留空。",
+        "prompt_policy_claude_override_label": "Claude Code 覆寫",
+        "prompt_policy_claude_override_help": "只追加到 Claude Code 工作階段的額外指示。除非 Claude Code 需要不同規則，否則留空。",
+        "prompt_policy_hermes_override_label": "Hermes 覆寫",
+        "prompt_policy_hermes_override_help": "只追加到 Hermes 工作階段的額外指示。除非 Hermes 需要不同規則，否則留空。",
 
 
 

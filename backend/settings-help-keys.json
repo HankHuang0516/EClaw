@@ -53,6 +53,56 @@
       "field_key": "kanban_nudge_statuses",
       "label_key": "kanban_nudge_statuses_label",
       "help_key": "kanban_nudge_statuses_help"
+    },
+    {
+      "field_key": "prompt_policy_claude_override",
+      "label_key": "prompt_policy_claude_override_label",
+      "help_key": "prompt_policy_claude_override_help"
+    },
+    {
+      "field_key": "prompt_policy_codex_override",
+      "label_key": "prompt_policy_codex_override_label",
+      "help_key": "prompt_policy_codex_override_help"
+    },
+    {
+      "field_key": "prompt_policy_enabled",
+      "label_key": "prompt_policy_enabled_label",
+      "help_key": "prompt_policy_enabled_help"
+    },
+    {
+      "field_key": "prompt_policy_entity",
+      "label_key": "prompt_policy_entity_label",
+      "help_key": "prompt_policy_entity_help"
+    },
+    {
+      "field_key": "prompt_policy_heartbeat",
+      "label_key": "prompt_policy_heartbeat_label",
+      "help_key": "prompt_policy_heartbeat_help"
+    },
+    {
+      "field_key": "prompt_policy_hermes_override",
+      "label_key": "prompt_policy_hermes_override_label",
+      "help_key": "prompt_policy_hermes_override_help"
+    },
+    {
+      "field_key": "prompt_policy_instructions",
+      "label_key": "prompt_policy_instructions_label",
+      "help_key": "prompt_policy_instructions_help"
+    },
+    {
+      "field_key": "prompt_policy_require_milestones",
+      "label_key": "prompt_policy_require_milestones_label",
+      "help_key": "prompt_policy_require_milestones_help"
+    },
+    {
+      "field_key": "prompt_policy_require_plan",
+      "label_key": "prompt_policy_require_plan_label",
+      "help_key": "prompt_policy_require_plan_help"
+    },
+    {
+      "field_key": "prompt_policy_scope",
+      "label_key": "prompt_policy_scope_label",
+      "help_key": "prompt_policy_scope_help"
     }
   ]
 }
