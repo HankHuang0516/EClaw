@@ -312,6 +312,7 @@
             renderNav('mission');
             if (typeof renderFooter === 'function') renderFooter();
             currentUser = await checkAuth();
+            if (!currentUser) return;
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('pageContent').style.display = 'block';
             loadStatus();
