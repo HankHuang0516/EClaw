@@ -7,9 +7,11 @@
  * Or: node backend/tests/e2e/help-popover.spec.js   (standalone)
  */
 
-const { chromium } = require('@playwright/test');
+const { chromium } = require('playwright');
 
 // ── Test page — inline HTML so we don't need a running server ──────────────────
+const HELP_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+
 const TEST_HTML = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,7 +21,6 @@ const TEST_HTML = `<!DOCTYPE html>
  body { font-family: sans-serif; padding: 60px 40px; background: #1e1e2e; color: #e0e0e0; }
   .test-row { margin: 20px 0; }
   .test-row label { display: block; margin-bottom: 6px; font-size: 13px; color: #aaa; }
-  .test-row .help-icon { font-size: 0; }
 </style>
 <link rel="stylesheet" href="../portal/shared/style.css">
 </head>
@@ -28,19 +29,19 @@ const TEST_HTML = `<!DOCTYPE html>
 
 <div class="test-row">
   <label>Simple tooltip:
-    <span class="help-icon" data-help-content="This is a simple tooltip." tabindex="0" role="button" aria-label="Help"></span>
+    <span class="help-icon" data-help-content="This is a simple tooltip." tabindex="0" role="button" aria-label="Help">${HELP_ICON_SVG}</span>
   </label>
 </div>
 
 <div class="test-row">
   <label>Rich HTML tooltip:
-    <span class="help-icon" data-help-content="<strong>Bold</strong> and <a href='#'>link</a> work." tabindex="0" role="button" aria-label="Help"></span>
+    <span class="help-icon" data-help-content="<strong>Bold</strong> and <a href='#'>link</a> work." tabindex="0" role="button" aria-label="Help">${HELP_ICON_SVG}</span>
   </label>
 </div>
 
 <div class="test-row">
   <label>Edge tooltip (near viewport bottom):
-    <span class="help-icon" data-help-content="This is near the bottom of the viewport." tabindex="0" role="button" aria-label="Help"></span>
+    <span class="help-icon" data-help-content="This is near the bottom of the viewport." tabindex="0" role="button" aria-label="Help">${HELP_ICON_SVG}</span>
   </label>
 </div>
 
@@ -48,10 +49,13 @@ const TEST_HTML = `<!DOCTYPE html>
 </html>`;
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-async function withPage(html, fn) {
+const path = require('path');
+
+async function withPage(fn) {
     const browser = await chromium.launch({ headless: true });
     const page = await browser.newPage();
-    await page.setContent(html, { baseURL: 'file://' });
+    const testPagePath = path.join(__dirname, '..', '..', 'public', 'portal', 'shared', 'test-help-popover.html');
+    await page.goto(`file://${testPagePath}`);
     await page.waitForLoadState('domcontentloaded');
     try {
         await fn(page);
@@ -116,7 +120,7 @@ async function testClickOutsideDismisses(page) {
 
 async function testFocusableIcon(page) {
     // Tab to the help icon
-    await page.keyboard.tab();
+    await page.keyboard.press('Tab');
     const focused = page.locator(':focus');
     const cls = await focused.evaluate(el => el.className);
     if (!cls.includes('help-icon')) {
@@ -126,7 +130,7 @@ async function testFocusableIcon(page) {
 }
 
 async function testEnterTriggersPopover(page) {
-    await page.keyboard.tab(); // focus first icon
+    await page.keyboard.press('Tab'); // focus first icon
     await page.keyboard.press('Enter');
 
     const popover = page.locator('.help-popover');
@@ -147,9 +151,12 @@ async function testCloseButton(page) {
 }
 
 async function testCollisionAvoidance(page) {
-    // Load a tall page so bottom icons flip upward
-    await page.setContent(TEST_HTML.replace('</body>', '<div style="height:2000px"></div></body>'));
-    await page.waitForLoadState('domcontentloaded');
+    // Inject extra height to test collision detection
+    await page.evaluate(() => {
+        const div = document.createElement('div');
+        div.style.height = '2000px';
+        document.body.appendChild(div);
+    });
 
     // Scroll to bottom
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
@@ -176,37 +183,37 @@ async function testCollisionAvoidance(page) {
 async function main() {
     console.log('\n=== Help Popover E2E Tests ===\n');
 
-    await withPage(TEST_HTML, async (page) => {
+    await withPage(async (page) => {
         console.log('Running: testClickShowsPopover');
         await testClickShowsPopover(page);
     });
 
-    await withPage(TEST_HTML, async (page) => {
+    await withPage(async (page) => {
         console.log('Running: testEscHidesPopover');
         await testEscHidesPopover(page);
     });
 
-    await withPage(TEST_HTML, async (page) => {
+    await withPage(async (page) => {
         console.log('Running: testClickOutsideDismisses');
         await testClickOutsideDismisses(page);
     });
 
-    await withPage(TEST_HTML, async (page) => {
+    await withPage(async (page) => {
         console.log('Running: testFocusableIcon');
         await testFocusableIcon(page);
     });
 
-    await withPage(TEST_HTML, async (page) => {
+    await withPage(async (page) => {
         console.log('Running: testEnterTriggersPopover');
         await testEnterTriggersPopover(page);
     });
 
-    await withPage(TEST_HTML, async (page) => {
+    await withPage(async (page) => {
         console.log('Running: testCloseButton');
         await testCloseButton(page);
     });
 
-    await withPage(TEST_HTML, async (page) => {
+    await withPage(async (page) => {
         console.log('Running: testCollisionAvoidance');
         await testCollisionAvoidance(page);
     });

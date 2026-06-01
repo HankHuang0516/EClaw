@@ -238,7 +238,16 @@
 
     function onIconClick(e) {
         e.stopPropagation();
-        const icon = e.currentTarget;
+        // For click events (via delegation), e.currentTarget is the icon.
+        // For keyboard events (via document listener), e.currentTarget may be undefined,
+        // so we fall back to e.target.closest().
+        let icon;
+        if (e.currentTarget && e.currentTarget.classList && e.currentTarget.classList.contains(ICON_CLASS)) {
+            icon = e.currentTarget;
+        } else if (e.target) {
+            icon = e.target.closest('.' + ICON_CLASS);
+        }
+        if (!icon) return;
         const content = icon.dataset.helpContent || icon.dataset.help || '';
         if (!content) return;
         if (activeAnchor === icon && activePopover) {
@@ -261,6 +270,13 @@
      * Call once on DOMContentLoaded after all HTML with data-help-content is in DOM.
      */
     function init() {
+        // Inject SVG into any .help-icon that doesn't already have content
+        document.querySelectorAll('.' + ICON_CLASS).forEach(icon => {
+            if (!icon.innerHTML.trim()) {
+                icon.innerHTML = HELP_ICON_SVG;
+            }
+        });
+
         document.addEventListener('click', (e) => {
             const icon = e.target.closest('.' + ICON_CLASS);
             if (icon) onIconClick({ currentTarget: icon, stopPropagation: () => e.stopPropagation() });
