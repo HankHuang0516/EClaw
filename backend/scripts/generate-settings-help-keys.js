@@ -29,24 +29,45 @@ function extractLabelKeys(htmlPath) {
   if (!fs.existsSync(full)) return [];
   const html = fs.readFileSync(full, 'utf8');
   const matches = [...html.matchAll(/data-i18n="([^"]+)_label"/g)];
-  return matches.map((m) => m[1]);
+  return matches.map((m) => ({
+    field_key: m[1],
+    label_key: `${m[1]}_label`,
+    help_key: `${m[1]}_help`,
+  }));
 }
 
-const all = new Set();
+function extractHelpIconEntries(htmlPath) {
+  const full = path.join(ROOT, htmlPath);
+  if (!fs.existsSync(full)) return [];
+  const html = fs.readFileSync(full, 'utf8');
+  const matches = [...html.matchAll(/data-help-content-key="([^"]+_help)"/g)];
+  return matches.map((m) => {
+    const helpKey = m[1];
+    const nearby = html.slice(Math.max(0, m.index - 800), m.index);
+    const labelMatches = [...nearby.matchAll(/data-i18n="([^"]+)"/g)];
+    const labelKey = labelMatches.length ? labelMatches[labelMatches.length - 1][1] : helpKey.replace(/_help$/, '_label');
+    return {
+      field_key: helpKey.replace(/_help$/, ''),
+      label_key: labelKey,
+      help_key: helpKey,
+    };
+  });
+}
+
+const all = new Map();
 for (const page of SETTINGS_PAGES) {
-  for (const baseKey of extractLabelKeys(page)) {
-    all.add(baseKey);
+  for (const entry of extractLabelKeys(page)) {
+    all.set(entry.help_key, entry);
+  }
+  for (const entry of extractHelpIconEntries(page)) {
+    all.set(entry.help_key, entry);
   }
 }
 
 const registry = {
   generated_at: 'GENERATED — do not hand-edit',
   source: SETTINGS_PAGES,
-  keys: [...all].sort().map((k) => ({
-    field_key: k,
-    label_key: `${k}_label`,
-    help_key: `${k}_help`,
-  })),
+  keys: [...all.values()].sort((a, b) => a.help_key.localeCompare(b.help_key)),
 };
 
 const outPath = path.join(__dirname, '..', 'settings-help-keys.json');
