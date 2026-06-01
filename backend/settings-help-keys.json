@@ -35,14 +35,39 @@
       "help_key": "kanban_nudge_interval_help"
     },
     {
+      "field_key": "kanban_nudge_per_entity_override_interval",
+      "label_key": "kanban_nudge_per_entity_override_interval",
+      "help_key": "kanban_nudge_per_entity_override_interval_help"
+    },
+    {
+      "field_key": "kanban_nudge_per_entity_override_statuses",
+      "label_key": "kanban_nudge_per_entity_override_statuses",
+      "help_key": "kanban_nudge_per_entity_override_statuses_help"
+    },
+    {
+      "field_key": "kanban_nudge_per_entity_override_throttle",
+      "label_key": "kanban_nudge_per_entity_override_throttle",
+      "help_key": "kanban_nudge_per_entity_override_throttle_help"
+    },
+    {
       "field_key": "kanban_nudge_per_entity_section",
       "label_key": "kanban_nudge_per_entity_section_label",
       "help_key": "kanban_nudge_per_entity_section_help"
     },
     {
+      "field_key": "kanban_nudge_per_entity_stop_mode",
+      "label_key": "kanban_nudge_per_entity_stop_mode",
+      "help_key": "kanban_nudge_per_entity_stop_mode_help"
+    },
+    {
       "field_key": "kanban_nudge_per_entity_throttle",
       "label_key": "kanban_nudge_per_entity_throttle_label",
       "help_key": "kanban_nudge_per_entity_throttle_help"
+    },
+    {
+      "field_key": "kanban_nudge_per_entity_throttle_short",
+      "label_key": "kanban_nudge_per_entity_throttle_short",
+      "help_key": "kanban_nudge_per_entity_throttle_short_help"
     },
     {
       "field_key": "kanban_nudge_priority",
@@ -103,6 +128,16 @@
       "field_key": "prompt_policy_scope",
       "label_key": "prompt_policy_scope_label",
       "help_key": "prompt_policy_scope_help"
+    },
+    {
+      "field_key": "settings_device_id",
+      "label_key": "settings_device_id",
+      "help_key": "settings_device_id_help"
+    },
+    {
+      "field_key": "settings_device_secret",
+      "label_key": "settings_device_secret",
+      "help_key": "settings_device_secret_help"
     }
   ]
 }
