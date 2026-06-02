@@ -188,6 +188,9 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Daily pool update: new hard-tier vision scenes ──
+    { file: null, description: 'A Git diff terminal output showing three files changed: main.py with 12 insertions and 4 deletions, config.json with 2 insertions, and README.md with 8 deletions — the summary line reads 24 lines changed', keywords: ['git', 'diff', 'three', 'files', 'main', 'config', 'README', '24'] },
+    { file: null, description: 'A Kubernetes pod status dashboard showing 8 pods: 6 in Running state in green, 1 in Pending shown in yellow, and 1 in CrashLoopBackOff in red — cluster CPU usage displayed as 43%', keywords: ['kubernetes', 'pods', 'eight', 'running', 'six', 'pending', 'crash', '43'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -309,8 +312,8 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '0', expected: '0' },{ input: '10', expected: '55' },{ input: '20', expected: '6765' }] },
     { title: 'Max Subarray Sum', description: 'Write `solve(arr)` — return maximum contiguous subarray sum.',
       testCases: [{ input: '[-2,1,-3,4,-1,2,1,-5,4]', expected: '6' },{ input: '[1]', expected: '1' },{ input: '[-1,-2,-3]', expected: '-1' }] },
-    { title: 'Reverse Words', description: 'Write `solve(s)` — reverse word order in string (trim spaces).',
-      testCases: [{ input: '"hello world"', expected: '"world hello"' },{ input: '"  a  b  "', expected: '"b a"' }] },
+    { title: 'Longest Common Prefix', description: 'Write `solve(strs)` — find the longest common prefix string among an array of strings. Return an empty string if there is no common prefix.',
+      testCases: [{ input: '["flower","flow","flight"]', expected: '"fl"' },{ input: '["dog","racecar","car"]', expected: '""' },{ input: '["interview","internet","internal"]', expected: '"inter"' },{ input: '[""]', expected: '""' }] },
     { title: 'Two Sum', description: 'Write `solve(nums, target)` — return indices of two numbers that add to target.',
       testCases: [{ input: '[2,7,11,15], 9', expected: '[0,1]' },{ input: '[3,2,4], 6', expected: '[1,2]' }] },
     { title: 'Valid Parentheses', description: 'Write `solve(s)` — return true if brackets ()[]{}  are balanced.',
@@ -321,8 +324,8 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[1,3,5,7,9], 5', expected: '2' },{ input: '[1,3,5], 4', expected: '-1' }] },
     { title: 'Matrix Transpose', description: 'Write `solve(matrix)` — return transposed matrix.',
       testCases: [{ input: '[[1,2],[3,4]]', expected: '[[1,3],[2,4]]' },{ input: '[[1,2,3]]', expected: '[[1],[2],[3]]' }] },
-    { title: 'Count Vowels', description: 'Write `solve(s)` — return count of vowels (aeiouAEIOU).',
-      testCases: [{ input: '"Hello World"', expected: '3' },{ input: '"aEiOu"', expected: '5' }] },
+    { title: 'Product Except Self', description: 'Write `solve(nums)` — return an array where each element is the product of all other elements. Do not use division.',
+      testCases: [{ input: '[1,2,3,4]', expected: '[24,12,8,6]' },{ input: '[2,3]', expected: '[3,2]' },{ input: '[1,1,1,1]', expected: '[1,1,1,1]' },{ input: '[0,1,2]', expected: '[2,0,0]' }] },
     { title: 'Flatten Array', description: 'Write `solve(arr)` — flatten nested arrays to single level.',
       testCases: [{ input: '[[1,2],[3,[4,5]]]', expected: '[1,2,3,4,5]' },{ input: '[1,[2,[3]]]', expected: '[1,2,3]' }] },
     { title: 'Roman to Integer', description: 'Write `solve(s)` — convert Roman numeral string to integer.',
@@ -333,21 +336,21 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '12, 8', expected: '4' },{ input: '17, 5', expected: '1' },{ input: '100, 75', expected: '25' }] },
     { title: 'Remove Nth from End', description: 'Write `solve(arr, n)` — remove nth element from end, return new array.',
       testCases: [{ input: '[1,2,3,4,5], 2', expected: '[1,2,3,5]' },{ input: '[1], 1', expected: '[]' }] },
-    { title: 'String Compression', description: 'Write `solve(s)` — compress "aabcccccaaa" → "a2b1c5a3".',
-      testCases: [{ input: '"aabcccccaaa"', expected: '"a2b1c5a3"' },{ input: '"abc"', expected: '"a1b1c1"' }] },
+    { title: 'Jump Game', description: 'Write `solve(nums)` — starting at index 0, each element is the max jump length from that position. Return true if you can reach the last index.',
+      testCases: [{ input: '[2,3,1,1,4]', expected: 'true' },{ input: '[3,2,1,0,4]', expected: 'false' },{ input: '[1]', expected: 'true' },{ input: '[0,1]', expected: 'false' }] },
     { title: 'Power of Two', description: 'Write `solve(n)` — return true if n is a power of 2.',
       testCases: [{ input: '16', expected: 'true' },{ input: '18', expected: 'false' },{ input: '1', expected: 'true' }] },
     { title: 'Merge Sorted Arrays', description: 'Write `solve(a, b)` — merge two sorted arrays into one sorted array.',
       testCases: [{ input: '[1,3,5], [2,4,6]', expected: '[1,2,3,4,5,6]' },{ input: '[], [1]', expected: '[1]' }] },
     { title: 'Spiral Order', description: 'Write `solve(matrix)` — return elements in spiral order.',
       testCases: [{ input: '[[1,2,3],[4,5,6],[7,8,9]]', expected: '[1,2,3,6,9,8,7,4,5]' }] },
-    // ── Added harder problems (DP, BFS/DFS, Sliding Window) ──
-    { title: 'Climbing Stairs', description: 'Write `solve(n)` — you can climb 1 or 2 steps at a time. Return the number of distinct ways to reach step n.',
-      testCases: [{ input: '2', expected: '2' },{ input: '5', expected: '8' },{ input: '10', expected: '89' }] },
+    // ── Added harder problems (DP, BFS/DFS, Sliding Window, Backtracking) ──
+    { title: 'Rotate Array', description: 'Write `solve(nums, k)` — rotate the array to the right by k steps and return the result.',
+      testCases: [{ input: '[1,2,3,4,5,6,7], 3', expected: '[5,6,7,1,2,3,4]' },{ input: '[1,2,3], 2', expected: '[2,3,1]' },{ input: '[1], 3', expected: '[1]' },{ input: '[1,2], 0', expected: '[1,2]' }] },
     { title: 'Coin Change', description: 'Write `solve(coins, amount)` — return the fewest number of coins needed to make the amount, or -1 if impossible.',
       testCases: [{ input: '[1,5,10,25], 30', expected: '2' },{ input: '[2], 3', expected: '-1' },{ input: '[1,2,5], 11', expected: '3' }] },
-    { title: 'Number of Islands', description: 'Write `solve(grid)` — grid is a 2D array of "1" (land) and "0" (water). Return the number of islands (groups of connected land cells, horizontally or vertically).',
-      testCases: [{ input: '[["1","1","0"],["1","1","0"],["0","0","1"]]', expected: '2' },{ input: '[["1","0","1"],["0","0","0"],["1","0","1"]]', expected: '4' },{ input: '[["0","0","0"]]', expected: '0' }] },
+    { title: 'Subsets', description: 'Write `solve(nums)` — return all possible subsets (the power set) of a sorted array of unique integers. Each subset must be sorted; return all subsets in lexicographic order.',
+      testCases: [{ input: '[1,2,3]', expected: '[[],[1],[1,2],[1,2,3],[1,3],[2],[2,3],[3]]' },{ input: '[0]', expected: '[[],[0]]' },{ input: '[1,2]', expected: '[[],[1],[1,2],[2]]' }] },
     { title: 'Longest Substring No Repeat', description: 'Write `solve(s)` — return the length of the longest substring without any repeating characters.',
       testCases: [{ input: '"abcabcbb"', expected: '3' },{ input: '"bbbbb"', expected: '1' },{ input: '"pwwkew"', expected: '3' },{ input: '""', expected: '0' }] },
     { title: 'Group Anagrams', description: 'Write `solve(strs)` — group anagrams together. Return an array of arrays where each inner array contains words that are anagrams of each other (each group sorted alphabetically).',
@@ -359,8 +362,8 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[2,3,-2,4]', expected: '6' },{ input: '[-2,0,-1]', expected: '0' },{ input: '[-2,3,-4]', expected: '24' },{ input: '[0,2]', expected: '2' }] },
     { title: 'Longest Palindromic Substring', description: 'Write `solve(s)` — return the longest palindromic substring. If multiple with equal length, return the first occurring.',
       testCases: [{ input: '"babad"', expected: '"bab"' },{ input: '"cbbd"', expected: '"bb"' },{ input: '"a"', expected: '"a"' },{ input: '"racecar"', expected: '"racecar"' }] },
-    { title: '0-1 Knapsack', description: 'Write `solve(weights, values, capacity)` — given items with weights and values arrays and a knapsack of given capacity, return the maximum total value (each item used at most once).',
-      testCases: [{ input: '[1,3,4,5], [1,4,5,7], 7', expected: '9' },{ input: '[2,3,4,5], [3,4,5,6], 5', expected: '7' },{ input: '[1], [10], 0', expected: '0' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array of bar heights, compute how much rain water can be trapped between the bars.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[3,0,2,0,4]', expected: '7' },{ input: '[1,0,1]', expected: '1' }] },
     // ── New medium-hard additions ──
     { title: 'Word Break', description: 'Write `solve(s, wordDict)` — return true if the string s can be segmented into a space-separated sequence of one or more dictionary words.',
       testCases: [{ input: '"leetcode", ["leet","code"]', expected: 'true' },{ input: '"applepenapple", ["apple","pen"]', expected: 'true' },{ input: '"catsandog", ["cats","dog","sand","an","cat"]', expected: 'false' },{ input: '"", ["a"]', expected: 'true' }] },
@@ -417,6 +420,10 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Daily pool update: new medium-hard additions ──
+    { question: 'A fill pipe fills a tank in 4 hours. A drain pipe empties a full tank in 3 hours. Starting with a full tank and both pipes open, how many hours until the tank is empty?', expectedKeywords: ['12'] },
+    { question: 'A cube has a surface area of 150 square centimeters. What is the length of one edge in centimeters?', expectedKeywords: ['5'] },
+    { question: 'In a class, 60% of students are girls. There are 18 boys. How many students are in the class in total?', expectedKeywords: ['45'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +501,10 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Daily pool update: new hard-tier TTS phrases ──
+    { text: 'The package tracking number 1Z 999 AA1 01 2345 6784 will arrive Wednesday between two and six PM', keywords: ['tracking', 'wednesday', 'arrive', 'six'] },
+    { text: 'All API rate limits reset at midnight UTC and the current plan allows five thousand requests per hour', keywords: ['API', 'rate', 'midnight', 'UTC', 'five', 'thousand'] },
+    { text: 'The annual percentage rate for this loan is four point seven five percent compounded monthly over thirty-six months', keywords: ['annual', 'percentage', 'rate', 'four', 'seven', 'thirty', 'six', 'months'] },
 ];
 
 // ============================================
