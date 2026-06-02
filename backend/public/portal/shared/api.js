@@ -90,10 +90,6 @@ function showConfirm({ message, title, confirmText, cancelText, danger } = {}) {
         const t = _tFb;
         const overlay = document.createElement('div');
         overlay.className = 'dialog-overlay eclaw-confirm-overlay';
-        // ARIA: role=alertdialog + aria-modal=true so assistive tech announces
-        // the dialog as modal, and aria-labelledby points to the title id so
-        // the dialog name is read. Bodies without a title fall back to
-        // aria-label using the message text.
         const titleId = title ? `eclaw-confirm-title-${++_eclawDialogId}` : '';
         const dialogAria = title
             ? `role="alertdialog" aria-modal="true" aria-labelledby="${titleId}"`
@@ -108,13 +104,21 @@ function showConfirm({ message, title, confirmText, cancelText, danger } = {}) {
         </div>`;
         document.body.appendChild(overlay);
         const cleanup = (result) => { overlay.remove(); resolve(result); };
-        overlay.querySelector('.eclaw-confirm-ok').focus();
+        // Safe default focus: when danger=true, focus Cancel so a stray
+        // Enter / Space does not commit the destructive action. Matches the
+        // Material Design and Apple HIG guidance for destructive confirms.
+        const safeBtnSel = danger ? '.eclaw-confirm-cancel' : '.eclaw-confirm-ok';
+        overlay.querySelector(safeBtnSel).focus();
         overlay.querySelector('.eclaw-confirm-ok').addEventListener('click', () => cleanup(true));
         overlay.querySelector('.eclaw-confirm-cancel').addEventListener('click', () => cleanup(false));
         overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(false); });
         overlay.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') cleanup(false);
-            if (e.key === 'Enter') cleanup(true);
+            // For destructive confirms Enter dismisses (= cancel) so an
+            // accidental keypress on a focused Cancel button still resolves
+            // false. Non-danger confirms keep the original Enter=confirm
+            // ergonomics so OK-flow dialogs still feel snappy.
+            if (e.key === 'Enter') cleanup(!danger ? true : false);
             // Focus trap: keep Tab / Shift+Tab cycling among the two buttons so
             // focus cannot escape onto background elements while the modal is
             // open. Cancel is the first tabbable, OK is the last.
@@ -145,8 +149,12 @@ function showPrompt({ message, title, defaultValue, placeholder, confirmText, ca
         const t = _tFb;
         const overlay = document.createElement('div');
         overlay.className = 'dialog-overlay eclaw-confirm-overlay';
-        overlay.innerHTML = `<div class="dialog eclaw-confirm-dialog">
-            ${title ? `<div class="dialog-title">${_escHtml(title)}</div>` : ''}
+        const titleId = title ? `eclaw-confirm-title-${++_eclawDialogId}` : '';
+        const dialogAria = title
+            ? `role="alertdialog" aria-modal="true" aria-labelledby="${titleId}"`
+            : `role="alertdialog" aria-modal="true" aria-label="${_escAttr(message)}"`;
+        overlay.innerHTML = `<div class="dialog eclaw-confirm-dialog" ${dialogAria}>
+            ${title ? `<div class="dialog-title" id="${titleId}">${_escHtml(title)}</div>` : ''}
             <div class="dialog-body">
                 <p style="margin:0 0 12px;line-height:1.6;color:var(--text-secondary)">${_escHtml(message)}</p>
                 <input type="text" class="eclaw-prompt-input" value="${_escAttr(defaultValue || '')}" placeholder="${_escAttr(placeholder || '')}" style="width:100%;padding:8px 12px;border:1px solid var(--card-border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;box-sizing:border-box;">
