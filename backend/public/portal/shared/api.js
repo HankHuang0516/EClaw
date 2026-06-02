@@ -84,13 +84,18 @@ function _tFb(k, fb) {
     return (v === k || !v) ? (fb || k) : v;
 }
 
+let _eclawDialogId = 0;
 function showConfirm({ message, title, confirmText, cancelText, danger } = {}) {
     return new Promise((resolve) => {
         const t = _tFb;
         const overlay = document.createElement('div');
         overlay.className = 'dialog-overlay eclaw-confirm-overlay';
-        overlay.innerHTML = `<div class="dialog eclaw-confirm-dialog">
-            ${title ? `<div class="dialog-title">${_escHtml(title)}</div>` : ''}
+        const titleId = title ? `eclaw-confirm-title-${++_eclawDialogId}` : '';
+        const dialogAria = title
+            ? `role="alertdialog" aria-modal="true" aria-labelledby="${titleId}"`
+            : `role="alertdialog" aria-modal="true" aria-label="${_escAttr(message)}"`;
+        overlay.innerHTML = `<div class="dialog eclaw-confirm-dialog" ${dialogAria}>
+            ${title ? `<div class="dialog-title" id="${titleId}">${_escHtml(title)}</div>` : ''}
             <div class="dialog-body"><p style="margin:0;line-height:1.6;color:var(--text-secondary)">${_escHtml(message)}</p></div>
             <div class="dialog-actions">
                 <button class="btn btn-outline eclaw-confirm-cancel">${_escHtml(cancelText || t('dialog_cancel', 'Cancel'))}</button>
@@ -114,6 +119,16 @@ function showConfirm({ message, title, confirmText, cancelText, danger } = {}) {
             // false. Non-danger confirms keep the original Enter=confirm
             // ergonomics so OK-flow dialogs still feel snappy.
             if (e.key === 'Enter') cleanup(!danger ? true : false);
+            // Focus trap: keep Tab / Shift+Tab cycling among the two buttons so
+            // focus cannot escape onto background elements while the modal is
+            // open. Cancel is the first tabbable, OK is the last.
+            if (e.key === 'Tab') {
+                const cancel = overlay.querySelector('.eclaw-confirm-cancel');
+                const ok = overlay.querySelector('.eclaw-confirm-ok');
+                const active = document.activeElement;
+                if (e.shiftKey && active === cancel) { e.preventDefault(); ok.focus(); }
+                else if (!e.shiftKey && active === ok) { e.preventDefault(); cancel.focus(); }
+            }
         });
     });
 }
@@ -134,8 +149,12 @@ function showPrompt({ message, title, defaultValue, placeholder, confirmText, ca
         const t = _tFb;
         const overlay = document.createElement('div');
         overlay.className = 'dialog-overlay eclaw-confirm-overlay';
-        overlay.innerHTML = `<div class="dialog eclaw-confirm-dialog">
-            ${title ? `<div class="dialog-title">${_escHtml(title)}</div>` : ''}
+        const titleId = title ? `eclaw-confirm-title-${++_eclawDialogId}` : '';
+        const dialogAria = title
+            ? `role="alertdialog" aria-modal="true" aria-labelledby="${titleId}"`
+            : `role="alertdialog" aria-modal="true" aria-label="${_escAttr(message)}"`;
+        overlay.innerHTML = `<div class="dialog eclaw-confirm-dialog" ${dialogAria}>
+            ${title ? `<div class="dialog-title" id="${titleId}">${_escHtml(title)}</div>` : ''}
             <div class="dialog-body">
                 <p style="margin:0 0 12px;line-height:1.6;color:var(--text-secondary)">${_escHtml(message)}</p>
                 <input type="text" class="eclaw-prompt-input" value="${_escAttr(defaultValue || '')}" placeholder="${_escAttr(placeholder || '')}" style="width:100%;padding:8px 12px;border:1px solid var(--card-border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;box-sizing:border-box;">
