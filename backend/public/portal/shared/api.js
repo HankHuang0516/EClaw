@@ -99,13 +99,21 @@ function showConfirm({ message, title, confirmText, cancelText, danger } = {}) {
         </div>`;
         document.body.appendChild(overlay);
         const cleanup = (result) => { overlay.remove(); resolve(result); };
-        overlay.querySelector('.eclaw-confirm-ok').focus();
+        // Safe default focus: when danger=true, focus Cancel so a stray
+        // Enter / Space does not commit the destructive action. Matches the
+        // Material Design and Apple HIG guidance for destructive confirms.
+        const safeBtnSel = danger ? '.eclaw-confirm-cancel' : '.eclaw-confirm-ok';
+        overlay.querySelector(safeBtnSel).focus();
         overlay.querySelector('.eclaw-confirm-ok').addEventListener('click', () => cleanup(true));
         overlay.querySelector('.eclaw-confirm-cancel').addEventListener('click', () => cleanup(false));
         overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(false); });
         overlay.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') cleanup(false);
-            if (e.key === 'Enter') cleanup(true);
+            // For destructive confirms Enter dismisses (= cancel) so an
+            // accidental keypress on a focused Cancel button still resolves
+            // false. Non-danger confirms keep the original Enter=confirm
+            // ergonomics so OK-flow dialogs still feel snappy.
+            if (e.key === 'Enter') cleanup(!danger ? true : false);
         });
     });
 }
