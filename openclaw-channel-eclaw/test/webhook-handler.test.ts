@@ -5,12 +5,14 @@ import { setClient } from '../src/outbound.js';
 
 describe('createWebhookHandler', () => {
   afterEach(() => {
+    vi.useRealTimers();
     delete process.env.ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS;
     delete process.env.ECLAW_SKIP_KANBAN_NOTIFICATIONS;
     delete process.env.ECLAW_SUPPRESS_BACKGROUND_EVENTS;
   });
 
   it('acks healthcheck messages without dispatching agent work', async () => {
+    vi.useFakeTimers();
     const dispatchReplyWithBufferedBlockDispatcher = vi.fn();
     setPluginRuntime({
       channel: {
@@ -32,7 +34,7 @@ describe('createWebhookHandler', () => {
       end: vi.fn(),
     };
 
-    await handler({
+    const promise = handler({
       method: 'POST',
       body: {
         deviceId: 'device-1',
@@ -43,6 +45,11 @@ describe('createWebhookHandler', () => {
 
     expect(res.writeHead).toHaveBeenCalledWith(200, { 'Content-Type': 'application/json' });
     expect(res.end).toHaveBeenCalledWith(JSON.stringify({ ok: true }));
+    expect(client.sendMessage).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(3000);
+    await promise;
+
     expect(client.sendMessage).toHaveBeenCalledWith('ACK abc_123-XYZ', 'IDLE');
     expect(dispatchReplyWithBufferedBlockDispatcher).not.toHaveBeenCalled();
   });
