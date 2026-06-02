@@ -84,13 +84,22 @@ function _tFb(k, fb) {
     return (v === k || !v) ? (fb || k) : v;
 }
 
+let _eclawDialogId = 0;
 function showConfirm({ message, title, confirmText, cancelText, danger } = {}) {
     return new Promise((resolve) => {
         const t = _tFb;
         const overlay = document.createElement('div');
         overlay.className = 'dialog-overlay eclaw-confirm-overlay';
-        overlay.innerHTML = `<div class="dialog eclaw-confirm-dialog">
-            ${title ? `<div class="dialog-title">${_escHtml(title)}</div>` : ''}
+        // ARIA: role=alertdialog + aria-modal=true so assistive tech announces
+        // the dialog as modal, and aria-labelledby points to the title id so
+        // the dialog name is read. Bodies without a title fall back to
+        // aria-label using the message text.
+        const titleId = title ? `eclaw-confirm-title-${++_eclawDialogId}` : '';
+        const dialogAria = title
+            ? `role="alertdialog" aria-modal="true" aria-labelledby="${titleId}"`
+            : `role="alertdialog" aria-modal="true" aria-label="${_escAttr(message)}"`;
+        overlay.innerHTML = `<div class="dialog eclaw-confirm-dialog" ${dialogAria}>
+            ${title ? `<div class="dialog-title" id="${titleId}">${_escHtml(title)}</div>` : ''}
             <div class="dialog-body"><p style="margin:0;line-height:1.6;color:var(--text-secondary)">${_escHtml(message)}</p></div>
             <div class="dialog-actions">
                 <button class="btn btn-outline eclaw-confirm-cancel">${_escHtml(cancelText || t('dialog_cancel', 'Cancel'))}</button>
@@ -106,6 +115,16 @@ function showConfirm({ message, title, confirmText, cancelText, danger } = {}) {
         overlay.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') cleanup(false);
             if (e.key === 'Enter') cleanup(true);
+            // Focus trap: keep Tab / Shift+Tab cycling among the two buttons so
+            // focus cannot escape onto background elements while the modal is
+            // open. Cancel is the first tabbable, OK is the last.
+            if (e.key === 'Tab') {
+                const cancel = overlay.querySelector('.eclaw-confirm-cancel');
+                const ok = overlay.querySelector('.eclaw-confirm-ok');
+                const active = document.activeElement;
+                if (e.shiftKey && active === cancel) { e.preventDefault(); ok.focus(); }
+                else if (!e.shiftKey && active === ok) { e.preventDefault(); cancel.focus(); }
+            }
         });
     });
 }
