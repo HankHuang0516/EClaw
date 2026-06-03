@@ -45,12 +45,15 @@
   display: none;
 }
 
-/* Overlay used on mobile only (backdrop behind bottom-sheet panel) */
+/* Overlay used on mobile only (backdrop behind bottom-sheet panel).
+ * z-index kept BELOW the shared showConfirm() .dialog-overlay (600) so a
+ * confirm popped while the filter sheet is open layers above it (#1 Mac_F
+ * review on PR #3095). */
 .eclaw-filter-summary__overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.35);
-  z-index: 9000;
+  z-index: 500;
 }
 
 .eclaw-filter-summary__overlay[hidden] {
@@ -69,7 +72,8 @@
   border: 1px solid var(--card-border, #d0d4dc);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  z-index: 9100;
+  /* Below showConfirm .dialog-overlay (600) so destructive confirms stack on top. */
+  z-index: 510;
   padding: 12px 14px 14px;
 }
 

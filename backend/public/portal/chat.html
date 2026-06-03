@@ -3614,13 +3614,24 @@
             console.log('[CHAT_DEBUG] checkAuth result:', user ? `deviceId=${user.deviceId}, hasSecret=${!!user.deviceSecret}` : 'NULL');
             if (!user) return;
 
+            // Hydrate sys-filter chip state from per-device localStorage
+            // (key requires deviceId — see chat-source-category.storageKey).
+            loadSysFilterFromStorage();
+            applySysFilterChipState();
+
             // ── Filter summary primitive — collapse 2 filter rows into 1 chip ──
             // Spec: docs/specs/chat-page-filter-bar-collapse.md
+            // Init AFTER hydration so the initial count reflects the persisted state,
+            // not the markup defaults (per #1 Mac_F review on PR #3095).
             try {
                 const anchor = document.getElementById('filterSummaryAnchor');
                 const legacy = document.getElementById('filterBarLegacy');
                 if (anchor && legacy && typeof createFilterSummary === 'function') {
-                    const sysCatDefault = { conversation: true, kanban: true, scheduled: true, platform: false, health: false };
+                    // Read default set from chat-source-category.js so this stays in sync
+                    // if the smart-filter defaults ever change.
+                    const sysCatDefault = (window.ChatSourceCategory && window.ChatSourceCategory.DEFAULT_ACTIVE)
+                        ? window.ChatSourceCategory.DEFAULT_ACTIVE
+                        : { conversation: true, kanban: true, scheduled: true, platform: false, health: false };
                     window.__filterSummary = createFilterSummary({
                         anchorEl: anchor,
                         panelContent: (panelEl) => { panelEl.appendChild(legacy); legacy.style.display = ''; },
@@ -3637,17 +3648,27 @@
                         },
                         i18nKey: 'chat_filter',
                     });
-                    // Refresh summary count whenever the user toggles anything inside the panel
+                    // Refresh summary count whenever the user toggles anything inside the panel.
                     legacy.addEventListener('click', () => {
                         try { setTimeout(() => window.__filterSummary && window.__filterSummary.refresh(), 0); } catch (e) {}
                     }, true);
+                    // Wrap external entry points (chips outside the panel — e.g. the "{n} hidden" banner
+                    // calls enableAllSysCats() — so the summary count stays in sync.
+                    const _wrap = (name) => {
+                        const orig = window[name];
+                        if (typeof orig !== 'function') return;
+                        window[name] = function () {
+                            const r = orig.apply(this, arguments);
+                            try { window.__filterSummary && window.__filterSummary.refresh(); } catch (e) {}
+                            return r;
+                        };
+                    };
+                    _wrap('setFilter');
+                    _wrap('toggleSysCat');
+                    _wrap('enableAllSysCats');
                 }
             } catch (e) { console.warn('[chat] filter-summary init failed:', e); }
 
-            // Hydrate sys-filter chip state from per-device localStorage
-            // (key requires deviceId — see chat-source-category.storageKey).
-            loadSysFilterFromStorage();
-            applySysFilterChipState();
             initPortalSocket();
             initEnvVarBtn(user.deviceId, user.deviceSecret);
             await loadChatAvatarSizePreference();
