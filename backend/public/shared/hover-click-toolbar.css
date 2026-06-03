@@ -176,6 +176,104 @@
   color: inherit;
 }
 
+/* ----- v1.2b Style picker subpanel ----- */
+.eclaw-hover-click-toolbar__subpanel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--bg, #ffffff);
+  border: 1px solid var(--card-border, rgba(0, 0, 0, 0.12));
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  padding: 12px;
+  min-width: 280px;
+  max-width: min(420px, calc(100vw - 32px));
+  font-size: 13px;
+  color: var(--text, #18181b);
+  user-select: none;
+}
+
+.eclaw-style-picker__section {
+  margin-bottom: 10px;
+}
+
+.eclaw-style-picker__section + .eclaw-style-picker__section {
+  border-top: 1px solid var(--card-border, rgba(0, 0, 0, 0.08));
+  padding-top: 10px;
+}
+
+.eclaw-style-picker__section-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-secondary, #71717a);
+  margin-bottom: 6px;
+}
+
+.eclaw-style-picker__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  min-height: 28px;
+}
+
+.eclaw-style-picker__label {
+  flex: 0 0 64px;
+  font-size: 12px;
+  color: var(--text-secondary, #71717a);
+}
+
+.eclaw-style-picker__row input[type="color"] {
+  width: 32px; height: 28px;
+  border: 1px solid var(--card-border, rgba(0, 0, 0, 0.12));
+  border-radius: 6px;
+  padding: 0; cursor: pointer;
+}
+
+.eclaw-style-picker__row input[type="number"],
+.eclaw-style-picker__row select {
+  flex: 1;
+  border: 1px solid var(--card-border, rgba(0, 0, 0, 0.12));
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 13px;
+  color: inherit;
+  background: var(--bg, #ffffff);
+}
+
+.eclaw-style-picker__inline-quartet {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 4px;
+  flex: 1;
+}
+
+.eclaw-style-picker__inline-quartet input {
+  width: 100%;
+}
+
+.eclaw-style-picker__quartet-hint {
+  font-size: 10px;
+  color: var(--text-secondary, #71717a);
+  display: flex;
+  gap: 4px;
+  margin-top: 2px;
+}
+.eclaw-style-picker__quartet-hint span { flex: 1; text-align: center; }
+
+@media (max-width: 720px) {
+  .eclaw-hover-click-toolbar__subpanel {
+    position: fixed;
+    bottom: 0; left: 0; right: 0; top: auto;
+    border-radius: 16px 16px 0 0;
+    max-width: 100%;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+}
+
 /* ----- Delete inline-Undo ghost (per #6 review §10 Q5) ----- */
 .eclaw-hover-click-toolbar__ghost-delete {
   display: inline-flex;

@@ -151,6 +151,8 @@
         }
       }
       if (e.key === 'Escape') {
+        // v1.2b: if style subpanel is open, first Esc closes it.
+        if (stylePanelEl) { e.preventDefault(); closeStyleSubpanel(); return; }
         // v1.2a: if an action is armed, Esc just disarms (stays LOCKED).
         // Second Esc closes the toolbar.
         if (armedAction) { e.preventDefault(); disarm(); return; }
@@ -205,6 +207,8 @@
 
     function close() {
       if (!openFlag) return;
+      // v1.2b: close style subpanel too.
+      closeStyleSubpanel();
       // v1.2a: clear armed state + amber rings so the target is left clean.
       if (currentTarget) clearArmedClasses(currentTarget);
       armedAction = null;
@@ -554,19 +558,195 @@
       document.addEventListener('pointerup', upHandler, true);
     }
 
+    // v1.2b: real Style picker subpanel — replaces the prompt('color').
+    // Subpanel anchors below the toolbar; closes on Esc, on Style chip
+    // toggle, or when the toolbar itself closes. Each input commits a
+    // single mutation on commit-debounce (400ms idle or change-blur), so
+    // dragging a color slider doesn't spam the history stack.
+    let stylePanelEl = null;
+    function rgbToHex(rgb) {
+      if (!rgb) return '#000000';
+      if (rgb[0] === '#') return rgb.length === 4
+        ? '#' + rgb.slice(1).split('').map(c => c + c).join('')
+        : rgb;
+      const m = rgb.match(/rgba?\(\s*(\d+)\D+(\d+)\D+(\d+)/i);
+      if (!m) return '#000000';
+      return '#' + [+m[1], +m[2], +m[3]]
+        .map(n => n.toString(16).padStart(2, '0')).join('');
+    }
+    function pxToNum(v) {
+      if (!v) return 0;
+      const n = parseFloat(v);
+      return Number.isFinite(n) ? Math.round(n) : 0;
+    }
     function showStyleSubpanel() {
       if (!currentTarget) return;
-      const color = prompt(t('hover_click.style_prompt_color', 'Set color (CSS value, e.g. rebeccapurple, #f00):'), '');
-      if (color === null) return;
+      if (stylePanelEl) { closeStyleSubpanel(); return; }
       const target = currentTarget;
-      const before = target.style.color || null;
+      const cs = getComputedStyle(target);
+      const initial = {
+        color: target.style.color || cs.color,
+        background: target.style.backgroundColor || cs.backgroundColor,
+        borderColor: target.style.borderColor || cs.borderColor,
+        fontSize: pxToNum(target.style.fontSize || cs.fontSize),
+        fontWeight: parseInt(target.style.fontWeight || cs.fontWeight, 10) || 400,
+        fontFamily: target.style.fontFamily || cs.fontFamily || 'system-ui',
+        paddingTop: pxToNum(target.style.paddingTop || cs.paddingTop),
+        paddingRight: pxToNum(target.style.paddingRight || cs.paddingRight),
+        paddingBottom: pxToNum(target.style.paddingBottom || cs.paddingBottom),
+        paddingLeft: pxToNum(target.style.paddingLeft || cs.paddingLeft),
+        marginTop: pxToNum(target.style.marginTop || cs.marginTop),
+        marginRight: pxToNum(target.style.marginRight || cs.marginRight),
+        marginBottom: pxToNum(target.style.marginBottom || cs.marginBottom),
+        marginLeft: pxToNum(target.style.marginLeft || cs.marginLeft),
+        borderWidth: pxToNum(target.style.borderWidth || cs.borderWidth),
+        borderStyle: target.style.borderStyle || cs.borderStyle,
+        borderRadius: pxToNum(target.style.borderRadius || cs.borderRadius),
+      };
       const beforeHTML = snapshotBefore(target);
-      target.style.color = color;
-      recordMutation(
-        { type: 'style', target, property: 'color', from: before, to: color, _beforeHTML: beforeHTML },
-        () => { target.style.color = before || ''; },
-        () => { target.style.color = color; },
-      );
+
+      const panel = document.createElement('div');
+      panel.className = 'eclaw-hover-click-toolbar__subpanel';
+      panel.innerHTML = `
+        <div class="eclaw-style-picker__section">
+          <div class="eclaw-style-picker__section-title">${t('hover_click.style_color', 'Color')}</div>
+          <div class="eclaw-style-picker__row">
+            <span class="eclaw-style-picker__label">${t('hover_click.style_text', 'Text')}</span>
+            <input type="color" data-style-key="color" value="${rgbToHex(initial.color)}">
+          </div>
+          <div class="eclaw-style-picker__row">
+            <span class="eclaw-style-picker__label">${t('hover_click.style_bg', 'Background')}</span>
+            <input type="color" data-style-key="backgroundColor" value="${rgbToHex(initial.background)}">
+          </div>
+          <div class="eclaw-style-picker__row">
+            <span class="eclaw-style-picker__label">${t('hover_click.style_border_color', 'Border')}</span>
+            <input type="color" data-style-key="borderColor" value="${rgbToHex(initial.borderColor)}">
+          </div>
+        </div>
+
+        <div class="eclaw-style-picker__section">
+          <div class="eclaw-style-picker__section-title">${t('hover_click.style_font', 'Font')}</div>
+          <div class="eclaw-style-picker__row">
+            <span class="eclaw-style-picker__label">${t('hover_click.style_font_size', 'Size')}</span>
+            <input type="number" data-style-key="fontSize" data-unit="px" min="8" max="96" value="${initial.fontSize || 14}">
+          </div>
+          <div class="eclaw-style-picker__row">
+            <span class="eclaw-style-picker__label">${t('hover_click.style_font_weight', 'Weight')}</span>
+            <input type="number" data-style-key="fontWeight" min="100" max="900" step="100" value="${initial.fontWeight}">
+          </div>
+          <div class="eclaw-style-picker__row">
+            <span class="eclaw-style-picker__label">${t('hover_click.style_font_family', 'Family')}</span>
+            <select data-style-key="fontFamily">
+              <option value="">${t('hover_click.style_font_default', 'Default')}</option>
+              <option value="system-ui, -apple-system, sans-serif">System sans</option>
+              <option value="Georgia, 'Times New Roman', serif">Serif</option>
+              <option value="ui-monospace, Menlo, Consolas, monospace">Monospace</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="eclaw-style-picker__section">
+          <div class="eclaw-style-picker__section-title">${t('hover_click.style_spacing', 'Spacing')}</div>
+          <div class="eclaw-style-picker__row">
+            <span class="eclaw-style-picker__label">${t('hover_click.style_padding', 'Padding')}</span>
+            <div class="eclaw-style-picker__inline-quartet">
+              <input type="number" data-style-key="paddingTop" data-unit="px" min="0" max="200" value="${initial.paddingTop}">
+              <input type="number" data-style-key="paddingRight" data-unit="px" min="0" max="200" value="${initial.paddingRight}">
+              <input type="number" data-style-key="paddingBottom" data-unit="px" min="0" max="200" value="${initial.paddingBottom}">
+              <input type="number" data-style-key="paddingLeft" data-unit="px" min="0" max="200" value="${initial.paddingLeft}">
+            </div>
+          </div>
+          <div class="eclaw-style-picker__quartet-hint" aria-hidden="true">
+            <span>T</span><span>R</span><span>B</span><span>L</span>
+          </div>
+          <div class="eclaw-style-picker__row">
+            <span class="eclaw-style-picker__label">${t('hover_click.style_margin', 'Margin')}</span>
+            <div class="eclaw-style-picker__inline-quartet">
+              <input type="number" data-style-key="marginTop" data-unit="px" min="-200" max="200" value="${initial.marginTop}">
+              <input type="number" data-style-key="marginRight" data-unit="px" min="-200" max="200" value="${initial.marginRight}">
+              <input type="number" data-style-key="marginBottom" data-unit="px" min="-200" max="200" value="${initial.marginBottom}">
+              <input type="number" data-style-key="marginLeft" data-unit="px" min="-200" max="200" value="${initial.marginLeft}">
+            </div>
+          </div>
+        </div>
+
+        <div class="eclaw-style-picker__section">
+          <div class="eclaw-style-picker__section-title">${t('hover_click.style_border', 'Border')}</div>
+          <div class="eclaw-style-picker__row">
+            <span class="eclaw-style-picker__label">${t('hover_click.style_border_width', 'Width')}</span>
+            <input type="number" data-style-key="borderWidth" data-unit="px" min="0" max="32" value="${initial.borderWidth}">
+          </div>
+          <div class="eclaw-style-picker__row">
+            <span class="eclaw-style-picker__label">${t('hover_click.style_border_style', 'Style')}</span>
+            <select data-style-key="borderStyle">
+              <option value="none" ${initial.borderStyle === 'none' ? 'selected' : ''}>none</option>
+              <option value="solid" ${initial.borderStyle === 'solid' ? 'selected' : ''}>solid</option>
+              <option value="dashed" ${initial.borderStyle === 'dashed' ? 'selected' : ''}>dashed</option>
+              <option value="dotted" ${initial.borderStyle === 'dotted' ? 'selected' : ''}>dotted</option>
+            </select>
+          </div>
+          <div class="eclaw-style-picker__row">
+            <span class="eclaw-style-picker__label">${t('hover_click.style_border_radius', 'Radius')}</span>
+            <input type="number" data-style-key="borderRadius" data-unit="px" min="0" max="100" value="${initial.borderRadius}">
+          </div>
+        </div>
+      `;
+      shell.appendChild(panel);
+      stylePanelEl = panel;
+
+      // Track session-level mutation: commit one entry per (property,
+      // target) pair on debounce. Map keyed by style property.
+      const sessionDebounce = {};
+      const sessionSnapshots = {}; // property → original value when first edited
+      function commitProperty(key, value) {
+        // Commit happens after debounce; capture the BEFORE value once.
+        if (!(key in sessionSnapshots)) {
+          sessionSnapshots[key] = target.style[key] !== '' ? target.style[key] : null;
+        }
+        const before = sessionSnapshots[key];
+        target.style[key] = value;
+        // Replace any prior history entry for this key with the new BEFORE→to.
+        // We don't dedupe in history; rapid edits get one entry per debounce.
+        recordMutation(
+          { type: 'style', target, property: key, from: before, to: value, _beforeHTML: beforeHTML },
+          () => { target.style[key] = before == null ? '' : before; },
+          () => { target.style[key] = value; },
+        );
+      }
+
+      panel.addEventListener('input', function(ev) {
+        const input = ev.target.closest('[data-style-key]');
+        if (!input) return;
+        const key = input.dataset.styleKey;
+        const unit = input.dataset.unit || '';
+        const rawValue = input.value;
+        const value = unit && rawValue !== '' ? `${rawValue}${unit}` : rawValue;
+        // Live preview (no history yet)
+        target.style[key] = value;
+        // Debounce commit to history
+        clearTimeout(sessionDebounce[key]);
+        sessionDebounce[key] = setTimeout(() => {
+          commitProperty(key, value);
+        }, 400);
+      });
+      // Force commit on change (color picker dismissal) so the user can
+      // pick → undo immediately without a 400ms wait.
+      panel.addEventListener('change', function(ev) {
+        const input = ev.target.closest('[data-style-key]');
+        if (!input) return;
+        const key = input.dataset.styleKey;
+        clearTimeout(sessionDebounce[key]);
+        const unit = input.dataset.unit || '';
+        const value = unit && input.value !== '' ? `${input.value}${unit}` : input.value;
+        commitProperty(key, value);
+      });
+    }
+
+    function closeStyleSubpanel() {
+      if (stylePanelEl) {
+        stylePanelEl.remove();
+        stylePanelEl = null;
+      }
     }
 
     function doDuplicate() {
