@@ -382,6 +382,38 @@ No other change requests from #6.
 
 ---
 
+## 10.B v1.3 addendum — Import UX rework + draggable toolbar (2026-06-03)
+
+Driven by prod feedback `card_e3e0d94efb6f388a91f01f47`. Items merged into the live spec; the v1 acceptance section above still applies.
+
+### 10.B.1 Cover-mode mount (replaces §4.4 v1 "push down")
+
+When an Import is active the mount overlays the bundled `#panel-point-edit-demo` sandbox instead of pushing it below. CSS hook: `body.id-import-active { #panel-point-edit-demo { display: none } }`. A close chip in the top-right of the import shell restores the bundled sandbox.
+
+Reason: prod 2026-06-03 showed users seeing an empty box above the demo and assuming Import was broken. Cover-mode makes the active edit surface the visible one.
+
+### 10.B.2 Start-editing gate
+
+After an iframe load (or selector clone), an overlay button "開始調整 ✏️" is rendered on the import shell. The hover-click toolbar is NOT bound until the user clicks it. This lets the user log in / set cookies inside the iframe without the toolbar trapping clicks on auth widgets. Toolbar binding flips a `data-edit-armed="true"` attribute on the shell which hides the overlay.
+
+### 10.B.3 Same-origin iframe sandbox loosening
+
+Same-origin imports add `allow-scripts allow-popups` to the iframe sandbox so portal-side auth/i18n/nav JS actually renders content. Cross-origin proxied content stays in the strict `allow-same-origin allow-forms` per §4.2 threat model.
+
+### 10.B.4 Iframe-blocked error UX
+
+Load event fires on `X-Frame-Options DENY` but with an empty body. After load (or an 8-second timeout) the content-import lib checks `body.childElementCount + textContent.trim()`; if both are empty the iframe is disposed and an i18n error message (`hover_click.import_iframe_blocked`) bubbles. The UI renders a red error box with a retry button.
+
+### 10.B.5 Draggable toolbar
+
+The docked top-right toolbar grows a left-edge drag handle (`⠇`). Pointer-down/move/up handlers translate to `position: fixed; left/top: <px>` with viewport-clamp. Position persists to `localStorage` key `eclaw.hctoolbar.pos` and restores on init (also clamped to current viewport in case the window shrank between sessions). Mobile (bottom-sheet variant) hides the handle. `data-dragging="true"` disables CSS transitions during the drag.
+
+### 10.B.6 Real prod E2E gate (process)
+
+"Claim done" requires a Playwright drill on the prod URL covering open-import → mount cover-mode → Start-editing → drag persistence → not-allowlisted error. Local smoke is not sufficient. Cache-bust is applied to all four hover-click assets (`?v=1.3`).
+
+---
+
 ## 11. Rollback
 
 The entire feature is gated behind `ECLAW_HOVER_CLICK_DOM_ENABLED` env flag (default false in v1). Reverting the integration commit removes the entry-point button from `portal/` and disposes the toolbar / dom-select primitives. Imported content sources are not modified by the feature (the diff is the OUTPUT, not a side effect on the source). No DB migration, no backend schema changes.
