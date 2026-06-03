@@ -1,0 +1,141 @@
+/**
+ * filter-summary.css — paired styles for createFilterSummary()
+ * Spec: docs/specs/chat-page-filter-bar-collapse.md §2
+ * Z-index aligned with shared/api.js showConfirm overlay layer (PR #3088).
+ */
+
+.eclaw-filter-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--card-border, #d0d4dc);
+  border-radius: 16px;
+  background: var(--bg, #fff);
+  color: var(--text, #222);
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.eclaw-filter-summary:hover {
+  background: var(--card-bg-hover, #f5f6f8);
+}
+
+.eclaw-filter-summary.is-active {
+  border-color: var(--accent, #4a7dff);
+  color: var(--accent, #4a7dff);
+}
+
+.eclaw-filter-summary.is-active .eclaw-filter-summary__count {
+  color: var(--accent, #4a7dff);
+  font-weight: 600;
+}
+
+.eclaw-filter-summary__icon {
+  font-size: 14px;
+}
+
+.eclaw-filter-summary__label {
+  display: inline-block;
+}
+
+.eclaw-filter-summary__count[hidden] {
+  display: none;
+}
+
+/* Overlay used on mobile only (backdrop behind bottom-sheet panel).
+ * z-index kept BELOW the shared showConfirm() .dialog-overlay (600) so a
+ * confirm popped while the filter sheet is open layers above it (#1 Mac_F
+ * review on PR #3095). */
+.eclaw-filter-summary__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 500;
+}
+
+.eclaw-filter-summary__overlay[hidden] {
+  display: none;
+}
+
+/* Panel — desktop default: popover anchored under the chip */
+.eclaw-filter-summary__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 280px;
+  max-width: 480px;
+  background: var(--bg, #fff);
+  color: var(--text, #222);
+  border: 1px solid var(--card-border, #d0d4dc);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  /* Below showConfirm .dialog-overlay (600) so destructive confirms stack on top. */
+  z-index: 510;
+  padding: 12px 14px 14px;
+}
+
+.eclaw-filter-summary__panel[hidden] {
+  display: none;
+}
+
+/* Mobile (≤600px): full-width bottom-sheet */
+.eclaw-filter-summary__panel.is-mobile {
+  position: fixed;
+  top: auto;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: none;
+  border-radius: 14px 14px 0 0;
+  padding: 14px 16px 20px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.eclaw-filter-summary__panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.eclaw-filter-summary__panel-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.eclaw-filter-summary__close {
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  color: var(--text, #222);
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 8px;
+}
+
+.eclaw-filter-summary__close::before {
+  content: '✕';
+}
+
+.eclaw-filter-summary__close:hover {
+  color: var(--accent, #4a7dff);
+}
+
+.eclaw-filter-summary__panel-body > * + * {
+  margin-top: 10px;
+}
+
+/* Respect reduced motion: no slide-in animation. (Default has none; this is a
+ * future guard if we add one.) */
+@media (prefers-reduced-motion: reduce) {
+  .eclaw-filter-summary__panel {
+    transition: none !important;
+    animation: none !important;
+  }
+}
