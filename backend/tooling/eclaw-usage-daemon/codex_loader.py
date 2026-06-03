@@ -51,6 +51,22 @@ def _as_float(v: Any) -> float | None:
     return float(v)
 
 
+def _is_valid_rate_limits(v: Any) -> bool:
+    rl = _as_dict(v)
+    if not rl:
+        return False
+    primary = _as_dict(rl.get("primary"))
+    secondary = _as_dict(rl.get("secondary"))
+    if not primary or not secondary:
+        return False
+    if _as_float(primary.get("window_minutes")) == 0:
+        return False
+    return (
+        _as_float(primary.get("used_percent")) is not None
+        and _as_float(secondary.get("used_percent")) is not None
+    )
+
+
 def _project_from_cwd(cwd: str) -> str:
     if not cwd:
         return "unknown"
@@ -199,11 +215,10 @@ class CodexLoader:
                     if payload.get("type") != "token_count":
                         continue
 
-                    if file_rate_limits is None:
-                        rl = _as_dict(payload.get("rate_limits"))
-                        if rl:
-                            file_rate_limits = rl
-                            file_rate_limits_ts = _as_str(d.get("timestamp"))
+                    rl = _as_dict(payload.get("rate_limits"))
+                    if _is_valid_rate_limits(rl):
+                        file_rate_limits = rl
+                        file_rate_limits_ts = _as_str(d.get("timestamp"))
 
                     info = _as_dict(payload.get("info"))
                     usage = _as_dict(info.get("total_token_usage"))
