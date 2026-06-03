@@ -334,6 +334,25 @@ ACK failures.
 - After upgrading the plugin in an OpenClaw runtime, restart the owning
   container/service and run both API ACK checks and browser chat ACK checks.
 
+### Channel message send failures are silently treated as delivery success
+
+**Problem:**
+During fleet monitor bursts, the E-Claw API can temporarily return HTTP 429 or
+`Too many requests` for `/api/channel/message`. Older plugin builds returned
+that JSON body to the caller without retrying or throwing. Direct healthcheck
+ACKs and normal replies could therefore be marked as delivered inside
+OpenClaw while the portal still showed only the client echo.
+
+**Countermeasure:**
+- `EClawClient.sendMessage()` retries transient HTTP 429 / rate-limit / server
+  startup / HTTP 5xx responses with bounded backoff before failing the
+  delivery.
+- Non-transient failures now throw instead of being treated as success, so
+  webhook delivery logs expose the real cause.
+- After deploying this mitigation to a runtime extension directory, restart
+  only the affected OpenClaw container and verify API ACK, model-backed reply,
+  and browser UI ACK independently.
+
 ## Major Fix History
 
 A record of critical bug fixes, when they occurred, the problem, and the countermeasure.

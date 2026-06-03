@@ -6,6 +6,20 @@ import type {
   HeartbeatResponse,
 } from './types.js';
 
+const TRANSIENT_ERROR_RE = /(server starting up|too many requests|rate.?limit|HTTP 429|HTTP 5\d\d)/i;
+
+async function sleep(ms: number): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function responseReason(res: Response, data: { message?: string; error?: string } = {}): string {
+  return data.message || data.error || `HTTP ${res.status}`;
+}
+
+function shouldRetry(res: Response, reason: string): boolean {
+  return res.status === 429 || res.status >= 500 || TRANSIENT_ERROR_RE.test(reason);
+}
+
 /**
  * HTTP client for E-Claw Channel API.
  * Handles all communication between the OpenClaw plugin and the E-Claw backend.
@@ -107,24 +121,39 @@ export class EClawClient {
       throw new Error('Not bound — call bindEntity() first');
     }
 
-    const res = await fetch(`${this.apiBase}/api/channel/message`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        channel_api_key: this.apiKey,
-        deviceId: this.deviceId,
-        entityId: this.entityId,
-        botSecret: this.botSecret,
-        message,
-        state,
-        ...(opts?.mediaType && { mediaType: opts.mediaType }),
-        ...(opts?.mediaUrl && { mediaUrl: opts.mediaUrl }),
-        ...(opts?.speakTo && { speakTo: opts.speakTo.map(String) }),
-        ...(opts?.broadcast && { broadcast: true }),
-      }),
+    const body = JSON.stringify({
+      channel_api_key: this.apiKey,
+      deviceId: this.deviceId,
+      entityId: this.entityId,
+      botSecret: this.botSecret,
+      message,
+      state,
+      ...(opts?.mediaType && { mediaType: opts.mediaType }),
+      ...(opts?.mediaUrl && { mediaUrl: opts.mediaUrl }),
+      ...(opts?.speakTo && { speakTo: opts.speakTo.map(String) }),
+      ...(opts?.broadcast && { broadcast: true }),
     });
 
-    return await res.json() as MessageResponse;
+    const attempts = 5;
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      const res = await fetch(`${this.apiBase}/api/channel/message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      });
+
+      const data = await res.json().catch(() => ({})) as MessageResponse & { message?: string; error?: string };
+      if (res.ok && data.success !== false) return data;
+
+      const reason = responseReason(res, data);
+      if (attempt < attempts && shouldRetry(res, reason)) {
+        await sleep(Math.min(30_000, 2_000 * attempt));
+        continue;
+      }
+      throw new Error(`Message send failed: ${reason}`);
+    }
+
+    throw new Error('Message send failed');
   }
 
   /** Record this bound entity daemon as alive. */
