@@ -188,6 +188,10 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Daily pool update additions (target difficulty 70/100) ──
+    { file: null, description: 'A Docker Compose snippet showing three services: a Node.js web app on port 3000, a PostgreSQL database on port 5432, and a Redis cache on port 6379 with a named volume mapping', keywords: ['docker', 'three', 'services', 'node', 'postgres', '5432', 'redis', 'volume'] },
+    { file: null, description: 'A stock market candlestick chart for one trading day: open $142.30, high $158.75, low $139.80, close $156.20 — a green bullish candle with a long lower wick and a short upper wick', keywords: ['candlestick', '142', '158', 'close', '156', 'green', 'bullish', 'wick'] },
+    { file: null, description: 'An API response JSON object showing: status 200, an array of three user objects each with id, name, email, and role fields, plus a pagination block at the bottom with total 47 and page 1 of 5', keywords: ['API', 'JSON', 'three', 'users', 'pagination', '47', 'page', 'five'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +372,17 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── Daily pool update additions (target difficulty 70/100) ──
+    { title: 'Merge Intervals', description: 'Write `solve(intervals)` — given an array of [start, end] intervals, merge all overlapping intervals and return the result sorted by start time.',
+      testCases: [{ input: '[[1,3],[2,6],[8,10],[15,18]]', expected: '[[1,6],[8,10],[15,18]]' },{ input: '[[1,4],[4,5]]', expected: '[[1,5]]' },{ input: '[[1,4],[2,3]]', expected: '[[1,4]]' },{ input: '[[1,2]]', expected: '[[1,2]]' }] },
+    { title: 'Jump Game', description: 'Write `solve(nums)` — given an array of non-negative integers where each element represents the maximum jump length from that position, return true if you can reach the last index starting from index 0.',
+      testCases: [{ input: '[2,3,1,1,4]', expected: 'true' },{ input: '[3,2,1,0,4]', expected: 'false' },{ input: '[0]', expected: 'true' },{ input: '[2,0,0]', expected: 'true' }] },
+    { title: 'Letter Combinations', description: 'Write `solve(digits)` — given a string of digits (2-9), return all possible T9 phone letter combinations in lexicographic order. Mapping: 2=abc,3=def,4=ghi,5=jkl,6=mno,7=pqrs,8=tuv,9=wxyz.',
+      testCases: [{ input: '"23"', expected: '["ad","ae","af","bd","be","bf","cd","ce","cf"]' },{ input: '""', expected: '[]' },{ input: '"2"', expected: '["a","b","c"]' }] },
+    { title: 'Rotate Image', description: 'Write `solve(matrix)` — rotate an n×n matrix 90 degrees clockwise in-place and return it.',
+      testCases: [{ input: '[[1,2,3],[4,5,6],[7,8,9]]', expected: '[[7,4,1],[8,5,2],[9,6,3]]' },{ input: '[[5,1],[2,3]]', expected: '[[2,5],[3,1]]' },{ input: '[[1]]', expected: '[[1]]' }] },
+    { title: 'Longest Common Subsequence', description: 'Write `solve(text1, text2)` — return the length of the longest common subsequence. A subsequence does not need to be contiguous.',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"oxcpqrsvwf", "shmtulqrypy"', expected: '2' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +432,12 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Daily pool update additions (target difficulty 70/100) ──
+    { question: 'What is the LCM (Least Common Multiple) of 12 and 18?', expectedKeywords: ['36'] },
+    { question: 'In how many ways can 5 different students be arranged in a row for a class photo?', expectedKeywords: ['120'] },
+    { question: 'A fair coin is flipped 3 times. What is the probability of getting exactly 2 heads? Express as a simplified fraction.', expectedKeywords: ['3/8'] },
+    { question: 'The average of five numbers is 20. Four of them are 18, 22, 15, and 25. What is the fifth number?', expectedKeywords: ['20'] },
+    { question: 'How many diagonals does a regular octagon (8 sides) have?', expectedKeywords: ['20'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +515,10 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Daily pool update additions (target difficulty 70/100) ──
+    { text: 'The patient is prescribed amoxicillin 500 milligrams three times daily for seven days and should avoid alcohol', keywords: ['amoxicillin', '500', 'three', 'seven', 'alcohol'] },
+    { text: 'Section 4 subsection B paragraph 3 of the amended statute mandates disclosure within forty-eight hours of the incident', keywords: ['section', '4', 'subsection', 'forty-eight', 'disclosure', 'incident'] },
+    { text: 'The transaction reference TXN-8821-XKQZ-4490 was declined due to insufficient funds at 09:17 UTC on the second attempt', keywords: ['TXN', '8821', 'XKQZ', '4490', 'declined', 'insufficient', 'UTC'] },
 ];
 
 // ============================================
