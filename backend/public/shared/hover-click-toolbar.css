@@ -1,0 +1,148 @@
+/* hover-click-toolbar.css — IDE-style floating toolbar + dom-select rings
+ * Spec: docs/specs/a-hover-click-dom-interaction.md §3
+ *
+ * Mobile: bottom-sheet variant (slides up from bottom edge, ~50% viewport).
+ * Desktop: dropdown popover anchored under the selected element (max 480px).
+ * Reduced motion respected on both.
+ */
+
+/* ----- DOM-select rings (consumed by dom-select.js) ----- */
+.eclaw-dom-select__ring-preview {
+  outline: 2px dashed rgba(99, 102, 241, 0.7) !important;
+  outline-offset: 2px !important;
+  cursor: crosshair !important;
+}
+
+.eclaw-dom-select__ring-selected {
+  outline: 2px solid rgba(99, 102, 241, 0.95) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15) !important;
+}
+
+/* ----- Toolbar shell ----- */
+.eclaw-hover-click-toolbar {
+  position: absolute;
+  z-index: 9999;
+  background: var(--bg, #ffffff);
+  border: 1px solid var(--card-border, rgba(0, 0, 0, 0.12));
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  padding: 8px;
+  max-width: 480px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 14px;
+  color: var(--text, #18181b);
+  user-select: none;
+}
+
+.eclaw-hover-click-toolbar[hidden] { display: none !important; }
+
+.eclaw-hover-click-toolbar__row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+
+.eclaw-hover-click-toolbar__chip {
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  padding: 6px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  min-height: 32px;
+  white-space: nowrap;
+}
+
+.eclaw-hover-click-toolbar__chip:hover,
+.eclaw-hover-click-toolbar__chip:focus-visible {
+  background: rgba(99, 102, 241, 0.12);
+  outline: 2px solid rgba(99, 102, 241, 0.5);
+  outline-offset: 1px;
+}
+
+.eclaw-hover-click-toolbar__chip[data-chip="delete"]:hover,
+.eclaw-hover-click-toolbar__chip[data-chip="delete"]:focus-visible {
+  background: rgba(244, 63, 94, 0.12);
+  outline-color: rgba(244, 63, 94, 0.5);
+}
+
+.eclaw-hover-click-toolbar__chip-icon { font-size: 16px; line-height: 1; }
+.eclaw-hover-click-toolbar__chip-label { font-size: 13px; }
+
+.eclaw-hover-click-toolbar__close {
+  margin-left: 4px;
+  padding: 6px;
+  background: transparent;
+  border: 1px solid var(--card-border, rgba(0, 0, 0, 0.12));
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+/* ----- Delete inline-Undo ghost (per #6 review §10 Q5) ----- */
+.eclaw-hover-click-toolbar__ghost-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(244, 63, 94, 0.08);
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.eclaw-hover-click-toolbar__ghost-undo {
+  border: none;
+  background: rgba(244, 63, 94, 0.15);
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+/* ----- Mobile: bottom sheet ----- */
+@media (max-width: 720px) {
+  .eclaw-hover-click-toolbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto !important;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    padding: 12px 12px 24px;
+    transform: translateY(100%);
+    transition: transform 0.18s ease-out;
+  }
+  .eclaw-hover-click-toolbar[data-visible="true"] {
+    transform: translateY(0);
+  }
+  .eclaw-hover-click-toolbar__row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+  }
+  .eclaw-hover-click-toolbar__chip {
+    justify-content: flex-start;
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+  .eclaw-hover-click-toolbar__close {
+    margin-top: 8px;
+    margin-left: 0;
+    align-self: center;
+    width: 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eclaw-hover-click-toolbar {
+    transition: none !important;
+  }
+}
