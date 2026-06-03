@@ -84,6 +84,9 @@
       // "skip" markers — that would block re-selecting the same element
       // after dismiss.
       if (el.closest('.eclaw-hover-click-toolbar')) return false;
+      // The delete Undo ghost is rendered into the scene, but it is toolbar
+      // control chrome rather than user content.
+      if (el.closest('.eclaw-hover-click-toolbar__ghost-delete')) return false;
       // User predicate
       if (userPredicate && !userPredicate(el)) return false;
       return true;
@@ -96,13 +99,31 @@
       }
     }
 
-    function clearSelection() {
+    function focusElement(el) {
+      if (!el || typeof el.focus !== 'function') return;
+      const hadTabIndex = el.hasAttribute('tabindex');
+      if (!hadTabIndex && !/^(A|BUTTON|INPUT|SELECT|TEXTAREA)$/i.test(el.tagName)) {
+        el.setAttribute('tabindex', '-1');
+        el.addEventListener('blur', () => {
+          if (el.getAttribute('tabindex') === '-1') el.removeAttribute('tabindex');
+        }, { once: true });
+      }
+      try {
+        el.focus({ preventScroll: true });
+      } catch (e) {
+        try { el.focus(); } catch (_) {}
+      }
+    }
+
+    function clearSelection(opts) {
+      const focusTarget = selectedEl;
       if (selectedEl) {
         selectedEl.classList.remove(SELECTED_RING_CLASS);
         selectedEl = null;
       }
       lastAncestorClickPath = [];
       if (onDismiss) onDismiss();
+      if (opts && opts.restoreFocus) focusElement(focusTarget);
     }
 
     function setPreview(el) {
@@ -175,7 +196,7 @@
     function onKeyDown(e) {
       if (e.key === 'Escape' && selectedEl) {
         e.preventDefault();
-        clearSelection();
+        clearSelection({ restoreFocus: true });
       }
     }
 
@@ -199,11 +220,21 @@
       touchTarget = null;
     }
 
+    function onDocumentClick(e) {
+      if (!selectedEl) return;
+      const clickTarget = e.target;
+      if (clickTarget && clickTarget.closest && clickTarget.closest('.eclaw-hover-click-toolbar')) return;
+      const root = scope === document ? document.documentElement : scope;
+      if (root.contains(clickTarget)) return;
+      clearSelection();
+    }
+
     // Attach
     const target = scope === document ? document : scope;
     target.addEventListener('pointerover', onPointerOver, true);
     target.addEventListener('pointerout', onPointerOut, true);
     target.addEventListener('click', onClick, true);
+    document.addEventListener('click', onDocumentClick, true);
     document.addEventListener('keydown', onKeyDown, true);
     target.addEventListener('touchstart', onTouchStart, { passive: true });
     target.addEventListener('touchend', onTouchEnd, { passive: true });
@@ -214,6 +245,7 @@
         target.removeEventListener('pointerover', onPointerOver, true);
         target.removeEventListener('pointerout', onPointerOut, true);
         target.removeEventListener('click', onClick, true);
+        document.removeEventListener('click', onDocumentClick, true);
         document.removeEventListener('keydown', onKeyDown, true);
         target.removeEventListener('touchstart', onTouchStart);
         target.removeEventListener('touchend', onTouchEnd);
