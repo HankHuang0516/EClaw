@@ -14,6 +14,7 @@
         .sub-tab { padding:10px 18px; color:var(--text-secondary); text-decoration:none; font-size:14px; font-weight:600; border-bottom:2px solid transparent; transition:all 0.2s; white-space:nowrap; flex-shrink:0; }
         .sub-tab:hover { color:var(--text); }
         .sub-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+        .beta-badge { font-size:10px; padding:1px 6px; border-radius:8px; background:rgba(255,176,32,0.16); color:#ffb020; margin-left:4px; letter-spacing:0.5px; vertical-align:middle; }
 
         /* ══════════════ Toolbar ══════════════ */
         .kb-gate-hint { font-size:11px; color:#9ca3af; margin-top:4px; }
@@ -673,6 +674,7 @@
         <div class="sub-tabs">
             <a class="sub-tab" href="mission.html">🧠 <span data-i18n="mc_tab_label">Mind</span></a>
             <a class="sub-tab active" href="kanban.html">📋 <span data-i18n="kanban_tab">Kanban Board</span></a>
+            <a class="sub-tab" href="interactive-dev.html">🧪 <span data-i18n="mission_tab_interactive_dev">Interactive Dev</span> <span class="beta-badge" data-i18n="mission_tab_interactive_dev_beta">BETA</span></a>
             <a class="sub-tab" href="env-vars.html">🔐 <span data-i18n="kb_subtab_env">Env Variables</span></a>
             <a class="sub-tab" href="screen-control.html">📱 <span data-i18n="kb_subtab_remote">Remote Control</span></a>
             <a class="sub-tab" href="publisher.html">📰 <span data-i18n="nav_publisher">Publisher</span></a>
@@ -2993,6 +2995,10 @@
             const messageId = normalizeKanbanChatMessageId(opts.messageId);
             const quote = { source, title, excerpt: excerpt || '' };
             if (messageId) quote.messageId = messageId;
+            // Smart receiver auto-select: chat.html consumes `meta` to pre-toggle
+            // recipient checkboxes. Card quotes pass kind:'card' + assignedBots;
+            // chat-msg requotes pass kind:'chat-entity' + entityId.
+            if (opts.meta && typeof opts.meta === 'object') quote.meta = opts.meta;
             if (window.self !== window.top) {
                 // Workspace split-pane mode: deliver to chat sub-pane via parent relay,
                 // confirm with a source-page floating toast — no force jump.
@@ -3011,8 +3017,15 @@
         function quoteKanbanCardToChat() {
             const card = findCard(openCardId);
             const title = document.getElementById('detailTitle').textContent.trim();
-            const meta = document.getElementById('detailMeta').textContent.trim().replace(/\s+/g, ' ').slice(0, 80);
-            quoteToChat('看板卡片', title, meta, { messageId: getCardChatAnchorMessageId(card) });
+            const detailExcerpt = document.getElementById('detailMeta').textContent.trim().replace(/\s+/g, ' ').slice(0, 80);
+            const assignedBots = Array.isArray(card && card.assignedBots)
+                ? card.assignedBots.map(n => parseInt(n, 10)).filter(n => Number.isFinite(n))
+                : [];
+            const smartMeta = assignedBots.length > 0 ? { kind: 'card', cardAssignedBots: assignedBots } : undefined;
+            quoteToChat('看板卡片', title, detailExcerpt, {
+                messageId: getCardChatAnchorMessageId(card),
+                meta: smartMeta,
+            });
         }
 
         function quoteCommentToChat(payload) {
@@ -3024,7 +3037,18 @@
             const messageId = normalizeKanbanChatMessageId(payload.messageId)
                 || extractKanbanChatMessageId(payload.text || '')
                 || getCardChatAnchorMessageId(card);
-            quoteToChat(src, sender, text, { messageId });
+            // Multi-source rule: a comment quoted from inside a card detail
+            // panel is still "from chat" — if the comment carries a sender
+            // entityId, the chat-entity meta wins over the surrounding card.
+            const senderEntityId = parseInt(payload.senderEntityId ?? payload.fromEntityId, 10);
+            let smartMeta;
+            if (Number.isFinite(senderEntityId) && senderEntityId > 0) {
+                smartMeta = { kind: 'chat-entity', entityId: senderEntityId };
+            } else if (Array.isArray(card && card.assignedBots) && card.assignedBots.length > 0) {
+                const bots = card.assignedBots.map(n => parseInt(n, 10)).filter(n => Number.isFinite(n));
+                if (bots.length > 0) smartMeta = { kind: 'card', cardAssignedBots: bots };
+            }
+            quoteToChat(src, sender, text, { messageId, meta: smartMeta });
         }
 
         // ── Inline Schedule Panel (detail modal tab) ──

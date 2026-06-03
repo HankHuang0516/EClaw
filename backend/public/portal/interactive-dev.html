@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title data-i18n="interactive_dev_page_title">🧪 Interactive Development</title>
+    <link rel="icon" type="image/png" href="assets/favicon-32.png">
+    <link rel="stylesheet" href="shared/style.css">
+    <link rel="stylesheet" href="shared/info.css">
+    <style>
+        /* ══════════════ Sub-tabs (same as mission.html / kanban.html) ══════════════ */
+        .sub-tabs { display:flex; gap:0; margin-bottom:20px; border-bottom:1px solid var(--card-border); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+        .sub-tabs::-webkit-scrollbar { display:none; }
+        .sub-tab { padding:10px 18px; color:var(--text-secondary); text-decoration:none; font-size:14px; font-weight:600; border-bottom:2px solid transparent; transition:all 0.2s; white-space:nowrap; flex-shrink:0; }
+        .sub-tab:hover { color:var(--text); }
+        .sub-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
+        .beta-badge { font-size:10px; padding:1px 6px; border-radius:8px; background:rgba(255,176,32,0.16); color:#ffb020; margin-left:4px; letter-spacing:0.5px; vertical-align:middle; }
+
+        .id-page-heading { margin: 0 0 8px; font-size: 22px; }
+        .id-page-lede { margin: 0 0 20px; color: var(--text-secondary); font-size: 14px; line-height: 1.5; max-width: 720px; }
+
+        @media (max-width:768px) {
+            .sub-tab { padding:8px 12px; font-size:13px; }
+            .id-page-heading { font-size: 18px; }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="public-nav" id="publicNav"></nav>
+    <main class="container">
+
+        <!-- Sub-tabs nav (parity with mission/kanban/env-vars) -->
+        <div class="sub-tabs">
+            <a class="sub-tab" href="mission.html">🧠 <span data-i18n="mc_tab_label">Mind</span></a>
+            <a class="sub-tab" href="kanban.html">📋 <span data-i18n="kanban_tab">Kanban Board</span></a>
+            <a class="sub-tab active" href="interactive-dev.html">🧪 <span data-i18n="mission_tab_interactive_dev">Interactive Dev</span> <span class="beta-badge" data-i18n="mission_tab_interactive_dev_beta">BETA</span></a>
+            <a class="sub-tab" href="env-vars.html">🔐 <span data-i18n="kb_subtab_env">Env Variables</span></a>
+            <a class="sub-tab" href="screen-control.html">📱 <span data-i18n="kb_subtab_remote">Remote Control</span></a>
+            <a class="sub-tab" href="publisher.html">📰 <span data-i18n="nav_publisher">Publisher</span></a>
+        </div>
+        <script>
+        // Preserve ?embed=1 on sub-tab links for workspace split-view (parity with mission/kanban/env-vars)
+        (function() {
+            if (new URLSearchParams(window.location.search).get('embed') !== '1') return;
+            document.querySelectorAll('.sub-tab').forEach(a => {
+                const href = a.getAttribute('href');
+                if (href && !href.includes('embed=')) a.setAttribute('href', href + '?embed=1');
+            });
+        })();
+        </script>
+
+        <h1 class="id-page-heading" data-i18n="interactive_dev_page_title">🧪 Interactive Development</h1>
+        <p class="id-page-lede" data-i18n="interactive_dev_page_lede">Point-and-Edit testbed — pick the same target three ways (DOM, coordinate, mind-map). The same harness the agent uses, exposed as a public sandbox.</p>
+        <!--
+            interactive_dev_page_lede is intentionally added alongside the 3 sub-tab keys
+            so every locale block carries it. Spec §5 lists 3 keys, the impl adds a 4th
+            (lede) for parity; lede text is short and stable.
+        -->
+
+        <!--
+            Panel-point-edit-demo: cloned verbatim from info.html so the boot routine
+            in shared/point-edit-demo.js attaches to the same selectors. `info-panel active`
+            keeps it visible (info.css hides bare .info-panel by default).
+        -->
+        <div class="info-panel active" id="panel-point-edit-demo" data-mode-default="dom">
+            <div class="ped-header">
+                <h1 data-i18n="ped_title">🎯 Point-and-Edit Demo</h1>
+                <p class="ped-lede" data-i18n="ped_lede">Pick the same target three ways. Time yourself, see which one fits your hand.</p>
+                <div class="ped-mode-switch" role="tablist" aria-label="Pick mode">
+                    <button class="ped-mode active" data-ped-mode="dom" type="button" data-i18n="ped_mode_dom">A · Hover & Click (DOM)</button>
+                    <button class="ped-mode" data-ped-mode="coordinate" type="button" data-i18n="ped_mode_coordinate">B · Coordinate + AST</button>
+                    <button class="ped-mode" data-ped-mode="mindmap" type="button" data-i18n="ped_mode_mindmap">C · Mind-map Node</button>
+                    <button class="ped-mode" data-ped-mode="textsel" type="button" data-i18n="ped_mode_textsel">D · Text Selection</button>
+                </div>
+                <p class="ped-status" data-ped-status data-i18n="ped_status_idle">Pick mode A, B, or D, then target the sandbox to begin.</p>
+            </div>
+
+            <div class="ped-layout">
+                <!-- Sandbox: 4–6 realistic blocks the user will operate on -->
+                <section class="ped-sandbox" data-ped-sandbox aria-label="Sandbox preview">
+                    <article class="ped-block ped-hero" data-point-edit-id="hero" data-ped-label="hero">
+                        <h2 class="ped-hero-title" data-point-edit-id="hero.title" data-i18n="ped_sb_hero_title">Faster than dragging files around</h2>
+                        <p class="ped-hero-sub" data-point-edit-id="hero.sub" data-i18n="ped_sb_hero_sub">Point at any element on the page and ask Claude to edit it.</p>
+                    </article>
+                    <article class="ped-block ped-feature" data-point-edit-id="feature.card" data-ped-label="feature card">
+                        <span class="ped-feature-icon" data-point-edit-id="feature.icon" aria-hidden="true">⚡</span>
+                        <h3 class="ped-feature-title" data-point-edit-id="feature.title" data-i18n="ped_sb_feature_title">Zero install</h3>
+                        <p class="ped-feature-body" data-point-edit-id="feature.body" data-i18n="ped_sb_feature_body">Works in any browser. No extension. The page is the target.</p>
+                    </article>
+                    <article class="ped-block ped-cta-block" data-point-edit-id="cta.block" data-ped-label="CTA">
+                        <button class="ped-cta-btn" type="button" data-point-edit-id="cta.button" data-i18n="ped_sb_cta_label">Buy Now</button>
+                        <span class="ped-cta-foot" data-point-edit-id="cta.foot" data-i18n="ped_sb_cta_foot">— or browse the catalogue</span>
+                    </article>
+                    <article class="ped-block ped-note" data-point-edit-id="note.block" data-ped-label="note">
+                        <p data-point-edit-id="note.p1" data-i18n="ped_sb_note_p1">Friction matters. The editor that needs three steps to find a button loses to the one that takes one click. Point-and-edit cuts the address-typing tax: instead of describing where an element lives in your DOM tree, you point.</p>
+                        <p data-point-edit-id="note.p2" data-i18n="ped_sb_note_p2">Try selecting a fragment of <em data-point-edit-id="note.em">this very sentence</em> in Track D mode — the selection itself becomes the anchor.</p>
+                    </article>
+                    <article class="ped-block ped-agent" data-point-edit-id="agent.card" data-ped-label="agent card">
+                        <header class="ped-agent-head">
+                            <span class="ped-agent-avatar" data-point-edit-id="agent.avatar" aria-hidden="true">🤖</span>
+                            <span class="ped-agent-name" data-point-edit-id="agent.name" data-i18n="ped_sb_agent_name">EClaw Agent</span>
+                        </header>
+                        <p class="ped-agent-tag" data-point-edit-id="agent.tag" data-i18n="ped_sb_agent_tag">I edit your page in place. Tell me what to change.</p>
+                        <div class="ped-agent-actions" data-point-edit-id="agent.actions">
+                            <button type="button" class="ped-agent-action" data-point-edit-id="agent.action.run" data-i18n="ped_sb_agent_run">Run</button>
+                            <button type="button" class="ped-agent-action ped-tiny" data-point-edit-id="agent.action.help" data-i18n="ped_sb_agent_help">?</button>
+                        </div>
+                    </article>
+                </section>
+
+                <!-- Composer: where the picked target lands -->
+                <aside class="ped-composer" aria-label="Chat composer">
+                    <header class="ped-composer-head">
+                        <span data-i18n="ped_composer_title">Composer (stub)</span>
+                        <button type="button" class="ped-clear" data-ped-clear data-i18n="ped_composer_clear">Clear</button>
+                    </header>
+                    <textarea class="ped-textarea" data-ped-textarea spellcheck="false" rows="10" data-i18n-placeholder="ped_composer_placeholder" placeholder="Pick a target on the left, then describe the change…"></textarea>
+                    <footer class="ped-composer-foot">
+                        <span class="ped-payload-label" data-i18n="ped_payload_label">Last target payload:</span>
+                        <pre class="ped-payload" data-ped-payload aria-live="polite">{}</pre>
+                    </footer>
+                </aside>
+            </div>
+
+            <!-- Highlight overlay — single element, repositioned per hover -->
+            <div class="ped-overlay" data-ped-overlay hidden aria-hidden="true"></div>
+
+            <!-- Track C — mock mind-map mini panel -->
+            <section class="ped-mindmap" data-ped-mindmap hidden aria-label="Mind-map mock for Track C">
+                <header class="ped-mindmap-head">
+                    <h3 data-i18n="ped_mindmap_title">🧠 Mind-map mock (Track C)</h3>
+                    <p class="ped-mindmap-lede" data-i18n="ped_mindmap_lede">Click a node — the harness emits pointedit:target with anchorId, mock rect, and the sandbox block's outerHTML.</p>
+                </header>
+                <div class="ped-mindmap-canvas" role="group">
+                    <button type="button" class="ped-mindmap-node ped-mindmap-node--hero"
+                            data-ped-node="hero" data-ped-anchor-id="hero" data-i18n="ped_mindmap_node_hero">Hero</button>
+                    <button type="button" class="ped-mindmap-node ped-mindmap-node--feature"
+                            data-ped-node="feature" data-ped-anchor-id="feature.card" data-i18n="ped_mindmap_node_feature">Feature card</button>
+                    <button type="button" class="ped-mindmap-node ped-mindmap-node--cta"
+                            data-ped-node="cta" data-ped-anchor-id="cta.block" data-i18n="ped_mindmap_node_cta">CTA</button>
+                    <button type="button" class="ped-mindmap-node ped-mindmap-node--note"
+                            data-ped-node="note" data-ped-anchor-id="note.block" data-i18n="ped_mindmap_node_note">Note</button>
+                    <button type="button" class="ped-mindmap-node ped-mindmap-node--agent"
+                            data-ped-node="agent-card" data-ped-anchor-id="agent.card" data-i18n="ped_mindmap_node_agent">Agent card</button>
+                    <button type="button" class="ped-mindmap-node ped-mindmap-node--nested"
+                            data-ped-node="nested" data-ped-anchor-id="note.em" data-i18n="ped_mindmap_node_nested">Nested em</button>
+                </div>
+            </section>
+        </div><!-- /panel-point-edit-demo -->
+
+    </main>
+
+    <script src="shared/api.js"></script>
+    <script src="shared/nav.js"></script>
+    <script src="shared/public-nav.js"></script>
+    <script src="../shared/telemetry.js"></script>
+    <script src="../shared/i18n.js?v=1.2.2"></script>
+    <script src="shared/footer.js"></script>
+    <!--
+        Flip the point-edit demo flag BEFORE the script loads so flagOn() returns true
+        on boot — equivalent to ?demo=pointedit on info.html but baked into this page.
+    -->
+    <script>window.POINTEDIT_DEMO = true;</script>
+    <script src="shared/point-edit-demo.js"></script>
+    <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
+    <script src="shared/ai-chat.js"></script>
+</body>
+
+</html>

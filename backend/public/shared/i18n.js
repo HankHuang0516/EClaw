@@ -338938,6 +338938,134 @@ const TRANSLATIONS = {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "chat_receiver_hint_auto": "auto",
         "chat_reply_cancel": "Cancel reply",
 
 
@@ -453385,6 +453513,10 @@ const TRANSLATIONS = {
 
 
         "kanban_tab": "Kanban",
+        "mission_tab_interactive_dev": "Interactive Dev",
+        "mission_tab_interactive_dev_beta": "BETA",
+        "interactive_dev_page_title": "🧪 Interactive Development",
+        "interactive_dev_page_lede": "Point-and-Edit testbed — pick the same target three ways (DOM, coordinate, mind-map). The same harness the agent uses, exposed as a public sandbox.",
 
 
 
@@ -963873,6 +964005,134 @@ const TRANSLATIONS = {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "chat_receiver_hint_auto": "自动",
         "chat_reply_cancel": "取消回覆",
 
 
@@ -1074117,6 +1074377,10 @@ const TRANSLATIONS = {
 
 
         "kanban_tab": "看板",
+        "mission_tab_interactive_dev": "交互开发",
+        "mission_tab_interactive_dev_beta": "测试版",
+        "interactive_dev_page_title": "🧪 交互开发",
+        "interactive_dev_page_lede": "Point-and-Edit 测试台 — 用三种方式选同一目标（DOM、坐标、心智图）。与 agent 同一套机制，开放为公开沙盒。",
 
 
 
@@ -1632500,6 +1632764,10 @@ const TRANSLATIONS = {
 
 
         "kanban_tab": "看板",
+        "mission_tab_interactive_dev": "交互开发",
+        "mission_tab_interactive_dev_beta": "测试版",
+        "interactive_dev_page_title": "🧪 交互开发",
+        "interactive_dev_page_lede": "Point-and-Edit 测试台 — 用三种方式选同一目标（DOM、坐标、心智图）。与 agent 同一套机制，开放为公开沙盒。",
 
 
 
@@ -2137378,6 +2137646,134 @@ const TRANSLATIONS = {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "chat_receiver_hint_auto": "自動",
         "chat_reply_cancel": "返信をキャンセル",
 
 
@@ -2252886,6 +2253282,10 @@ const TRANSLATIONS = {
 
 
         "kanban_tab": "かんばん",
+        "mission_tab_interactive_dev": "インタラクティブ開発",
+        "mission_tab_interactive_dev_beta": "ベータ",
+        "interactive_dev_page_title": "🧪 インタラクティブ開発",
+        "interactive_dev_page_lede": "Point-and-Edit テストベッド — 同じターゲットを 3 通りの方法（DOM、座標、マインドマップ）で選択。エージェントが使うのと同じハーネスを公開サンドボックスとして公開。",
 
 
 
@@ -2700141,6 +2700541,134 @@ const TRANSLATIONS = {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "chat_receiver_hint_auto": "자동",
         "chat_reply_cancel": "답장 취소",
 
 
@@ -2804473,6 +2805001,10 @@ const TRANSLATIONS = {
 
 
         "kanban_tab": "칸반",
+        "mission_tab_interactive_dev": "인터랙티브 개발",
+        "mission_tab_interactive_dev_beta": "베타",
+        "interactive_dev_page_title": "🧪 인터랙티브 개발",
+        "interactive_dev_page_lede": "Point-and-Edit 테스트베드 — 같은 대상을 세 가지 방법(DOM, 좌표, 마인드맵)으로 선택. 에이전트가 사용하는 것과 동일한 하네스를 공개 샌드박스로 노출.",
 
 
 
@@ -2941511,6 +2942043,11 @@ const TRANSLATIONS = {
 
 
     "zh-TW": {
+        "chat_receiver_hint_auto": "自動",
+        "mission_tab_interactive_dev": "交互開發",
+        "mission_tab_interactive_dev_beta": "測試版",
+        "interactive_dev_page_title": "🧪 交互開發",
+        "interactive_dev_page_lede": "Point-and-Edit 測試台 — 用三種方式選同一目標（DOM、座標、心智圖）。與 agent 同一套機制，開放為公開沙盒。",
         "dashboard_usage_widget_session_used": "已用",
         "dashboard_usage_widget_weekly_used": "已用",
         "dashboard_usage_widget_reset_in": "重置",
@@ -3222866,6 +3223403,134 @@ const TRANSLATIONS = {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "chat_receiver_hint_auto": "อัตโนมัติ",
         "chat_reply_cancel": "ยกเลิกการตอบกลับ",
 
 
@@ -3327198,6 +3327863,10 @@ const TRANSLATIONS = {
 
 
         "kanban_tab": "Kanban",
+        "mission_tab_interactive_dev": "การพัฒนาแบบโต้ตอบ",
+        "mission_tab_interactive_dev_beta": "เบต้า",
+        "interactive_dev_page_title": "🧪 การพัฒนาแบบโต้ตอบ",
+        "interactive_dev_page_lede": "ฐานทดสอบ Point-and-Edit — เลือกเป้าหมายเดียวกันด้วยสามวิธี (DOM, พิกัด, มายด์แมป) เครื่องมือเดียวกับที่เอเจนต์ใช้ เปิดเป็นแซนด์บ็อกซ์สาธารณะ",
 
 
 
@@ -3751852,6 +3752521,134 @@ const TRANSLATIONS = {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "chat_receiver_hint_auto": "tự động",
         "chat_reply_cancel": "Hủy trả lời",
 
 
@@ -3856184,6 +3856981,10 @@ const TRANSLATIONS = {
 
 
         "kanban_tab": "Kanban",
+        "mission_tab_interactive_dev": "Phát triển tương tác",
+        "mission_tab_interactive_dev_beta": "BETA",
+        "interactive_dev_page_title": "🧪 Phát triển tương tác",
+        "interactive_dev_page_lede": "Bàn thử Point-and-Edit — chọn cùng một mục tiêu theo ba cách (DOM, tọa độ, sơ đồ tư duy). Cùng bộ công cụ mà agent sử dụng, mở ra như sandbox công khai.",
 
 
 
@@ -4278278,6 +4279079,134 @@ const TRANSLATIONS = {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "chat_receiver_hint_auto": "otomatis",
         "chat_reply_cancel": "Batal balas",
 
 
@@ -4382610,6 +4383539,10 @@ const TRANSLATIONS = {
 
 
         "kanban_tab": "Kanban",
+        "mission_tab_interactive_dev": "Pengembangan interaktif",
+        "mission_tab_interactive_dev_beta": "BETA",
+        "interactive_dev_page_title": "🧪 Pengembangan interaktif",
+        "interactive_dev_page_lede": "Bangku uji Point-and-Edit — pilih target yang sama dengan tiga cara (DOM, koordinat, mind-map). Harness yang sama dengan yang digunakan agent, diekspos sebagai sandbox publik.",
 
 
 
@@ -4815848,6 +4816781,134 @@ const TRANSLATIONS = {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "chat_receiver_hint_auto": "auto",
         "chat_reply_cancel": "Annuler la réponse",
 
 
@@ -4920436,6 +4921497,10 @@ const TRANSLATIONS = {
 
 
         "kanban_tab": "Kanban",
+        "mission_tab_interactive_dev": "Dév. interactif",
+        "mission_tab_interactive_dev_beta": "BÊTA",
+        "interactive_dev_page_title": "🧪 Développement interactif",
+        "interactive_dev_page_lede": "Banc d'essai Point-and-Edit — sélectionnez la même cible de trois manières (DOM, coordonnées, mind-map). Le même harnais que l'agent utilise, exposé comme sandbox public.",
 
 
 
@@ -5337774,6 +5338839,134 @@ const TRANSLATIONS = {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "chat_receiver_hint_auto": "auto",
         "chat_reply_cancel": "Cancelar respuesta",
 
 
@@ -5440858,6 +5442051,10 @@ const TRANSLATIONS = {
 
 
         "kanban_tab": "Kanban",
+        "mission_tab_interactive_dev": "Desarrollo interactivo",
+        "mission_tab_interactive_dev_beta": "BETA",
+        "interactive_dev_page_title": "🧪 Desarrollo interactivo",
+        "interactive_dev_page_lede": "Banco de pruebas Point-and-Edit — selecciona el mismo objetivo de tres maneras (DOM, coordenadas, mind-map). El mismo arnés que usa el agente, expuesto como sandbox público.",
 
 
 
@@ -5856048,6 +5857245,134 @@ const TRANSLATIONS = {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        "chat_receiver_hint_auto": "auto",
         "chat_reply_cancel": "Cancel reply",
 
 
@@ -5959322,6 +5960647,10 @@ const TRANSLATIONS = {
 
 
         "kanban_tab": "Kanban",
+        "mission_tab_interactive_dev": "Interaktive Entwicklung",
+        "mission_tab_interactive_dev_beta": "BETA",
+        "interactive_dev_page_title": "🧪 Interaktive Entwicklung",
+        "interactive_dev_page_lede": "Point-and-Edit-Testbank — wähle dasselbe Ziel auf drei Arten aus (DOM, Koordinate, Mindmap). Dasselbe Harness, das der Agent verwendet, als öffentliche Sandbox.",
 
 
 
@@ -6103826,6 +6105155,7 @@ const TRANSLATIONS = {
         "chat_input_placeholder": "Type a message...",
         "chat_cancel": "Cancel",
         "chat_reply_btn": "Reply",
+        "chat_receiver_hint_auto": "auto",
         "chat_reply_cancel": "Cancel reply",
         "chat_reply_you": "You",
         "chat_reply_media": "(media)",
@@ -6104719,6 +6106049,10 @@ const TRANSLATIONS = {
         "toast_mark_failed": "Mark failed",
         "toast_generate_key_failed": "Failed to generate API key",
         "kanban_tab": "Kanban",
+        "mission_tab_interactive_dev": "Desenvolvimento interativo",
+        "mission_tab_interactive_dev_beta": "BETA",
+        "interactive_dev_page_title": "🧪 Desenvolvimento interativo",
+        "interactive_dev_page_lede": "Bancada de teste Point-and-Edit — selecione o mesmo alvo de três formas (DOM, coordenadas, mind-map). O mesmo arnês que o agente usa, exposto como sandbox público.",
         "kanban_title": "Kanban",
         "kanban_heading": "📋 Kanban",
         "kb_col_backlog": "Backlog",
@@ -6438304,6 +6439638,10 @@ const TRANSLATIONS = {
 
 
         "kanban_tab": "Kanban",
+        "mission_tab_interactive_dev": "Pembangunan interaktif",
+        "mission_tab_interactive_dev_beta": "BETA",
+        "interactive_dev_page_title": "🧪 Pembangunan interaktif",
+        "interactive_dev_page_lede": "Bangku ujian Point-and-Edit — pilih sasaran yang sama dengan tiga cara (DOM, koordinat, mind-map). Harness yang sama yang digunakan agent, didedahkan sebagai sandbox awam.",
 
 
 
@@ -6876975,6 +6878313,10 @@ const TRANSLATIONS = {
 
 
         "kanban_tab": "कानबन",
+        "mission_tab_interactive_dev": "इंटरैक्टिव डेव",
+        "mission_tab_interactive_dev_beta": "बीटा",
+        "interactive_dev_page_title": "🧪 इंटरैक्टिव डेवलपमेंट",
+        "interactive_dev_page_lede": "Point-and-Edit परीक्षण मंच — एक ही लक्ष्य को तीन तरीकों (DOM, निर्देशांक, माइंड-मैप) से चुनें। एजेंट के समान हार्नेस, सार्वजनिक सैंडबॉक्स के रूप में।",
 
 
 
@@ -7525237,6 +7526579,10 @@ const TRANSLATIONS = {
 
 
         "kanban_tab": "كانبان",
+        "mission_tab_interactive_dev": "التطوير التفاعلي",
+        "mission_tab_interactive_dev_beta": "تجريبي",
+        "interactive_dev_page_title": "🧪 التطوير التفاعلي",
+        "interactive_dev_page_lede": "مختبر Point-and-Edit — اختر نفس الهدف بثلاث طرق (DOM، إحداثيات، خريطة ذهنية). نفس الحزام الذي يستخدمه الوكيل، معروض كصندوق رمل عام.",
 
 
 
