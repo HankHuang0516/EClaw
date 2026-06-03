@@ -1564,6 +1564,31 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             );
             card.files = await Promise.all(filesResult.rows.map(mapCardFileRow));
 
+            // Hydrate linkedPrev/linkedNext payloads so the UI can render workflow-chain
+            // chips (Parent/Prev/Next) without a follow-up round-trip per neighbour.
+            // See docs/specs/card-link-system.md — this is the "Mechanism A" read side.
+            const linkedIds = [card.linkedPrevCardId, card.linkedNextCardId].filter(Boolean);
+            if (linkedIds.length > 0) {
+                const linked = await pool.query(
+                    `SELECT id, title, status, priority, archived
+                     FROM kanban_cards
+                     WHERE device_id = $1 AND id = ANY($2::text[])`,
+                    [deviceId, linkedIds]
+                );
+                const linkedById = new Map(linked.rows.map(r => [r.id, {
+                    id: r.id,
+                    title: r.title,
+                    status: r.status,
+                    priority: r.priority,
+                    archived: !!r.archived,
+                }]));
+                card.linkedPrev = card.linkedPrevCardId ? (linkedById.get(card.linkedPrevCardId) || null) : null;
+                card.linkedNext = card.linkedNextCardId ? (linkedById.get(card.linkedNextCardId) || null) : null;
+            } else {
+                card.linkedPrev = null;
+                card.linkedNext = null;
+            }
+
             res.json({ success: true, card });
         } catch (err) {
             console.error('[Kanban] Get card error:', err);
@@ -1697,12 +1722,89 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             params.push(cardId);
             params.push(deviceId);
 
-            const result = await pool.query(
-                `UPDATE kanban_cards SET ${updates.join(', ')}
-                 WHERE id = $${paramIdx++} AND device_id = $${paramIdx++}
-                 RETURNING *`,
-                params
-            );
+            // linkedPrev/Next must keep the A.next=B ⟺ B.prev=A invariant on both sides.
+            // When either pointer is being touched, run the primary UPDATE and the
+            // reciprocal sync in a single transaction so a crash mid-write cannot leave
+            // half-broken chains (see docs/specs/card-link-system.md).
+            const needsLinkSync = (linkedPrevCardId !== undefined || linkedNextCardId !== undefined);
+            const client = needsLinkSync ? await pool.connect() : null;
+            let result;
+            try {
+                if (client) await client.query('BEGIN');
+                const q = client || pool;
+
+                result = await q.query(
+                    `UPDATE kanban_cards SET ${updates.join(', ')}
+                     WHERE id = $${paramIdx++} AND device_id = $${paramIdx++}
+                     RETURNING *`,
+                    params
+                );
+
+                if (needsLinkSync) {
+                    const before = existing.rows[0];
+                    const after = result.rows[0];
+
+                    if (linkedNextCardId !== undefined) {
+                        const oldNext = before.linked_next_card_id;
+                        const newNext = after.linked_next_card_id;
+                        // Disconnect the old downstream partner if we are changing target.
+                        if (oldNext && oldNext !== newNext) {
+                            await client.query(
+                                `UPDATE kanban_cards SET linked_prev_card_id = NULL, updated_at = NOW()
+                                 WHERE id = $1 AND device_id = $2 AND linked_prev_card_id = $3`,
+                                [oldNext, deviceId, cardId]
+                            );
+                        }
+                        if (newNext) {
+                            // Detach any other card currently pointing at newNext as its next,
+                            // then claim newNext.prev = cardId. Idempotent on repeat calls.
+                            await client.query(
+                                `UPDATE kanban_cards SET linked_next_card_id = NULL, updated_at = NOW()
+                                 WHERE device_id = $1 AND linked_next_card_id = $2 AND id <> $3`,
+                                [deviceId, newNext, cardId]
+                            );
+                            await client.query(
+                                `UPDATE kanban_cards SET linked_prev_card_id = $1, updated_at = NOW()
+                                 WHERE id = $2 AND device_id = $3`,
+                                [cardId, newNext, deviceId]
+                            );
+                        }
+                    }
+
+                    if (linkedPrevCardId !== undefined) {
+                        const oldPrev = before.linked_prev_card_id;
+                        const newPrev = after.linked_prev_card_id;
+                        if (oldPrev && oldPrev !== newPrev) {
+                            await client.query(
+                                `UPDATE kanban_cards SET linked_next_card_id = NULL, updated_at = NOW()
+                                 WHERE id = $1 AND device_id = $2 AND linked_next_card_id = $3`,
+                                [oldPrev, deviceId, cardId]
+                            );
+                        }
+                        if (newPrev) {
+                            await client.query(
+                                `UPDATE kanban_cards SET linked_prev_card_id = NULL, updated_at = NOW()
+                                 WHERE device_id = $1 AND linked_prev_card_id = $2 AND id <> $3`,
+                                [deviceId, newPrev, cardId]
+                            );
+                            await client.query(
+                                `UPDATE kanban_cards SET linked_next_card_id = $1, updated_at = NOW()
+                                 WHERE id = $2 AND device_id = $3`,
+                                [cardId, newPrev, deviceId]
+                            );
+                        }
+                    }
+
+                    await client.query('COMMIT');
+                }
+            } catch (txErr) {
+                if (client) {
+                    try { await client.query('ROLLBACK'); } catch (_) { /* ignore */ }
+                }
+                throw txErr;
+            } finally {
+                if (client) client.release();
+            }
 
             await bumpVersion(deviceId);
             res.json({ success: true, card: serializeCard(result.rows[0]) });

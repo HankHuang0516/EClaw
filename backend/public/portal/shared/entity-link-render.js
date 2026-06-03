@@ -193,7 +193,9 @@
             const data = await response.json();
 
             if (!data.success || !data.dependencies || data.dependencies.length === 0) {
-                showToast('No dependencies found for this card', 'warning');
+                // "DAG dependencies" = blocked_by/dependents from /api/mission/card/:id/dependencies.
+                // The Prev/Next workflow chain is a separate mechanism — see docs/specs/card-link-system.md.
+                showToast('No DAG dependencies (use Prev/Next chip for workflow chain)', 'warning');
                 return;
             }
 
