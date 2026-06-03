@@ -1551,7 +1551,8 @@ app.get('/api/help', (req, res) => {
         entities:   ['entity','實體','bind','綁定','status','lookup','查詢實體','エンティティ','バインディング','엔티티','연결','바인딩','เอนทิตี','การผูกมัด','thực thể','liên kết','kết nối','entitas','pengikatan','koneksi','entité','liaison','entidad','enlace','vínculo','entiti','sambungan'],
         vault:      ['vault','device-vars','devicevars','secret','api key','apikey','金鑰','密鑰','秘密','保險箱','audit','審計','variables','環境變數','환경 변수','보관소','감사','シークレット','金庫','監査','bí mật','kho','giám sát','rahasia','brankas','audit log'],
         analytics:  ['analytics','growth','metrics','signup','retention','kpi','viral','k-value','成長','指標','留存','分析','회귀','분석','지표','メトリクス','分析','指標'],
-        usage:      ['usage','spend','token spend','token','claude usage','codex usage','snapshot','timeline','daemon','widget','usage widget','dashboard widget','dashboard usage widget','5h','5-hour','five hour','gauge','用量','花費','token 花費','token 用量','使用量','消費','儀表板用量','用量小工具','5小時','コスト','使用量','使用ウィジェット','사용량','비용','사용량 위젯']
+        usage:      ['usage','spend','token spend','token','claude usage','codex usage','snapshot','timeline','daemon','widget','usage widget','dashboard widget','dashboard usage widget','5h','5-hour','five hour','gauge','用量','花費','token 花費','token 用量','使用量','消費','儀表板用量','用量小工具','5小時','コスト','使用量','使用ウィジェット','사용량','비용','사용량 위젯'],
+        remote_control: ['remote control','screen control','screen capture','screen image','device control','tap','swipe','long press','launch app','stop app','mobile-use','mobile use','minitap','遠端控制','螢幕控制','畫面控制','點擊','滑動','長按','啟動 app','關閉 app','操作 app','遥控','屏幕控制','リモート制御','画面制御','タップ','スワイプ','長押し','앱 실행','앱 종료','원격 제어','화면 제어','탭']
     };
 
     const matched = Object.entries(INTENT_MAP).find(([category, kws]) =>
@@ -1628,6 +1629,19 @@ app.get('/api/help', (req, res) => {
             { title: 'GET timeline (last 24h)', curl: `curl -s "${apiBase}/api/usage/timeline?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}&hours=24"` },
             { title: 'GET timeline (last 7 days)', curl: `curl -s "${apiBase}/api/usage/timeline?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}&hours=168"` },
             { title: 'Dashboard usage widget v2 (web portal — Session/Weekly % bars + projects + status footer, no cost displays)', curl: `# Visit dashboard:\n# https://${req.hostname}/portal/dashboard.html\n# Widget polls /api/usage/snapshot every 30s (no timeline call).\n# Claude card: Session bar (live.five_hour_pct from statusLine, else estimated from sessions) + Weekly bar (live.seven_day_pct, else estimated).\n#   Reset countdowns: Session = oldest session.first_seen + 5h, Weekly = no reset shown.\n#   Estimate marker '(est)' appended when no live %.\n# Codex card: Session + Weekly bars from rate_limits.{five_hour_pct, seven_day_pct} with *_resets_at countdowns.\n# Projects today: top 5 by tokens (project_id || basename(cwd)), comma-separated full integers, NO $ cost.\n# Status footer: Rate (heavy/normal/idle from last-hour Claude+Codex tokens) + Status (✓ synced / ⚠ Daemon offline if received_at > 5min) + Today total tokens (no $).\n# Subscription users only see % remaining — cost displays intentionally removed.` }
+        ],
+        remote_control: [
+            { title: 'Screen capture (UI tree, long-poll ≤5s)', curl: `curl -s -X POST "${apiBase}/api/device/screen-capture" -H "Content-Type: application/json" -d ${d}}'` },
+            { title: 'Send tap', curl: `curl -s -X POST "${apiBase}/api/device/control" -H "Content-Type: application/json" -d ${d},"command":"tap","params":{"x":100,"y":200}}'` },
+            { title: 'Send type text', curl: `curl -s -X POST "${apiBase}/api/device/control" -H "Content-Type: application/json" -d ${d},"command":"type","params":{"text":"hello"}}'` },
+            { title: 'Send scroll', curl: `curl -s -X POST "${apiBase}/api/device/control" -H "Content-Type: application/json" -d ${d},"command":"scroll","params":{"direction":"down","amount":300}}'` },
+            { title: 'Send back / home / ime_action', curl: `curl -s -X POST "${apiBase}/api/device/control" -H "Content-Type: application/json" -d ${d},"command":"back"}'  # or "home" / "ime_action"` },
+            { title: 'M1 mobile-use: swipe (requires ECLAW_MOBILE_USE_API_ENABLED=true)', curl: `curl -s -X POST "${apiBase}/api/device/control" -H "Content-Type: application/json" -d ${d},"command":"swipe","params":{"startX":100,"startY":800,"endX":100,"endY":200,"durationMs":250}}'` },
+            { title: 'M1 mobile-use: long_press', curl: `curl -s -X POST "${apiBase}/api/device/control" -H "Content-Type: application/json" -d ${d},"command":"long_press","params":{"x":150,"y":400,"durationMs":1000}}'` },
+            { title: 'M1 mobile-use: launch_app (Android packageName / iOS bundleId)', curl: `curl -s -X POST "${apiBase}/api/device/control" -H "Content-Type: application/json" -d ${d},"command":"launch_app","params":{"packageName":"com.android.settings"}}'` },
+            { title: 'M1 mobile-use: stop_app', curl: `curl -s -X POST "${apiBase}/api/device/control" -H "Content-Type: application/json" -d ${d},"command":"stop_app","params":{"packageName":"com.android.settings"}}'` },
+            { title: 'M1 mobile-use: screen-image (base64 PNG for vision agents)', curl: `curl -s "${apiBase}/api/device/screen-image?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}&maxBytes=500000"` },
+            { title: 'Spec reference', curl: `# docs/specs/mobile-use-integration.md §3 — M1 control API expand.\n# Feature flag: ECLAW_MOBILE_USE_API_ENABLED=true on backend.\n# Without the flag, swipe/long_press/launch_app/stop_app + /screen-image return 403 feature-disabled.\n# Core primitives (tap/type/scroll/back/home/ime_action) remain ungated.` }
         ]
     };
 
@@ -1637,7 +1651,7 @@ app.get('/api/help', (req, res) => {
     res.json({
         intent,
         matched_category: matched,
-        tip: `Use ?intent=KEYWORD to discover APIs. Categories: messaging, kanban, schedule, notes, search, files, entities, vault, analytics, usage`,
+        tip: `Use ?intent=KEYWORD to discover APIs. Categories: messaging, kanban, schedule, notes, search, files, entities, vault, analytics, usage, remote_control`,
         curl_examples: curlBlock
     });
 });
@@ -19215,10 +19229,115 @@ app.post('/api/device/screen-result', (req, res) => {
 });
 
 /**
+ * GET /api/device/screen-image
+ * M1 mobile-use parity (docs/specs/mobile-use-integration.md §3.2).
+ * Long-poll capture of a raw screen image (PNG) for vision-based agents.
+ * Auth: deviceId + (botSecret | deviceSecret). Gated by ECLAW_MOBILE_USE_API_ENABLED env.
+ * Shares the 500ms rate-limit + the same pending-map as /screen-capture.
+ */
+app.get('/api/device/screen-image', async (req, res) => {
+    if (process.env.ECLAW_MOBILE_USE_API_ENABLED !== 'true') {
+        return res.status(403).json({ success: false, error: 'feature-disabled',
+            message: 'screen-image requires ECLAW_MOBILE_USE_API_ENABLED=true' });
+    }
+    const { deviceId, entityId, botSecret, deviceSecret, maxBytes } = req.query;
+    if (!deviceId || (botSecret === undefined && deviceSecret === undefined)) {
+        return res.status(400).json({ success: false, error: 'deviceId and botSecret (or deviceSecret) required' });
+    }
+    const eId = parseInt(entityId) || 0;
+    if (eId < 0) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+    const device = devices[deviceId];
+    if (!device) return res.status(404).json({ success: false, error: 'Device not found' });
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+    const isOwner = deviceSecret && device.deviceSecret && safeEqual(String(deviceSecret), device.deviceSecret);
+    if (!isOwner) {
+        const entity = device.entities[eId];
+        if (!entity || !entity.isBound) {
+            return res.status(400).json({ success: false, error: 'Entity not bound' });
+        }
+        if (!botSecret || !safeEqual(String(botSecret), entity.botSecret)) {
+            return res.status(403).json({ success: false, error: 'Invalid botSecret' });
+        }
+    }
+    const prefs = await devicePrefs.getPrefs(deviceId);
+    if (!prefs.remote_control_enabled) {
+        return res.status(403).json({ success: false, error: 'remote_control_disabled',
+            message: 'Remote control is not enabled. User must enable it in App Settings.' });
+    }
+    const now = Date.now();
+    if (!screenCaptureRateLimits[deviceId]) {
+        screenCaptureRateLimits[deviceId] = { lastAt: 0 };
+    }
+    const rateState = screenCaptureRateLimits[deviceId];
+    if (now - rateState.lastAt < SCREEN_CAPTURE_MIN_INTERVAL_MS) {
+        return res.status(429).json({ success: false, error: 'too_fast',
+            message: `Min ${SCREEN_CAPTURE_MIN_INTERVAL_MS}ms between captures.` });
+    }
+    rateState.lastAt = now;
+    const sockets = await io.in(`device:${deviceId}`).fetchSockets();
+    if (sockets.length === 0) {
+        return res.status(503).json({ success: false, error: 'device_offline',
+            message: 'Device is not connected. Open the app.' });
+    }
+    if (pendingScreenRequests[deviceId]) {
+        return res.status(409).json({ success: false, error: 'capture_in_progress',
+            message: 'Another screen capture is already pending for this device.' });
+    }
+    const cap = Math.min(parseInt(maxBytes) || 500000, 2000000);
+    serverLog('info', 'remote_control', 'screen-image requested', { deviceId, entityId: eId, metadata: { maxBytes: cap } });
+    try {
+        const imageData = await new Promise((resolve, reject) => {
+            const timeoutHandle = setTimeout(() => {
+                delete pendingScreenRequests[deviceId];
+                reject(new Error('timeout'));
+            }, 5000);
+            pendingScreenRequests[deviceId] = { resolve, reject, timeoutHandle, kind: 'image' };
+            io.to(`device:${deviceId}`).emit('device:screen-image-request', { requestedAt: now, maxBytes: cap });
+        });
+        return res.json({ success: true, ...imageData });
+    } catch (err) {
+        if (err.message === 'timeout') {
+            return res.status(504).json({ success: false, error: 'timeout',
+                message: 'Device did not respond within 5 seconds.' });
+        }
+        return res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+/**
+ * POST /api/device/screen-image-result
+ * App delivers the captured PNG (base64) resolving the pending screen-image long-poll.
+ * Body: { image (base64), width, height, byteSize, timestamp }
+ */
+app.post('/api/device/screen-image-result', (req, res) => {
+    const deviceId = authDevice(req);
+    if (!deviceId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const { image, width, height, byteSize, timestamp } = req.body;
+    const pending = pendingScreenRequests[deviceId];
+    if (!pending || pending.kind !== 'image') {
+        return res.json({ success: true, message: 'No pending image request, result discarded' });
+    }
+    clearTimeout(pending.timeoutHandle);
+    delete pendingScreenRequests[deviceId];
+    pending.resolve({ image, width, height, byteSize, timestamp });
+    serverLog('info', 'remote_control', 'screen-image delivered', { deviceId,
+        metadata: { byteSize, width, height } });
+    res.json({ success: true });
+});
+
+/**
  * POST /api/device/control
  * Bot or device owner sends a UI control command. Relayed to App via Socket.IO (fire-and-forget).
  * Body: { deviceId, entityId, botSecret, command, params } — bot auth
  *    or { deviceId, entityId, deviceSecret, command, params } — device owner auth (portal)
+ *
+ * Core commands: tap, type, scroll, back, home, ime_action (always available).
+ * M1 mobile-use parity commands (ECLAW_MOBILE_USE_API_ENABLED=true): swipe, long_press,
+ *   launch_app, stop_app. See docs/specs/mobile-use-integration.md §3.1.
  */
 app.post('/api/device/control', async (req, res) => {
     const { deviceId, entityId, botSecret, deviceSecret, command, params } = req.body;
@@ -19227,9 +19346,36 @@ app.post('/api/device/control', async (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId and command required' });
     }
 
-    const VALID_COMMANDS = new Set(['tap', 'type', 'scroll', 'back', 'home', 'ime_action']);
+    // Core primitives — always available
+    const CORE_COMMANDS = new Set(['tap', 'type', 'scroll', 'back', 'home', 'ime_action']);
+    // M1 mobile-use parity — gated by ECLAW_MOBILE_USE_API_ENABLED env var
+    // (default false in prod until M2 ships per docs/specs/mobile-use-integration.md §3.3)
+    const M1_COMMANDS = new Set(['swipe', 'long_press', 'launch_app', 'stop_app']);
+    const mobileUseEnabled = process.env.ECLAW_MOBILE_USE_API_ENABLED === 'true';
+    if (M1_COMMANDS.has(command) && !mobileUseEnabled) {
+        return res.status(403).json({ success: false, error: 'feature-disabled',
+            message: 'mobile-use control primitives require ECLAW_MOBILE_USE_API_ENABLED=true' });
+    }
+    const VALID_COMMANDS = mobileUseEnabled ? new Set([...CORE_COMMANDS, ...M1_COMMANDS]) : CORE_COMMANDS;
     if (!VALID_COMMANDS.has(command)) {
         return res.status(400).json({ success: false, error: `Invalid command. Must be one of: ${[...VALID_COMMANDS].join(', ')}` });
+    }
+    // Per-command param validation (M1 commands only; core commands keep existing lax accept-all)
+    if (command === 'swipe') {
+        const p = params || {};
+        if (!Number.isFinite(p.startX) || !Number.isFinite(p.startY) || !Number.isFinite(p.endX) || !Number.isFinite(p.endY)) {
+            return res.status(400).json({ success: false, error: 'swipe requires numeric startX,startY,endX,endY' });
+        }
+    } else if (command === 'long_press') {
+        const p = params || {};
+        if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) {
+            return res.status(400).json({ success: false, error: 'long_press requires numeric x,y' });
+        }
+    } else if (command === 'launch_app' || command === 'stop_app') {
+        const p = params || {};
+        if (!p.packageName && !p.bundleId) {
+            return res.status(400).json({ success: false, error: `${command} requires packageName (Android) or bundleId (iOS)` });
+        }
     }
 
     const eId = parseInt(entityId) || 0;

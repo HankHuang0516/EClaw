@@ -244,3 +244,147 @@ describe('POST /api/device/control', () => {
         }
     );
 });
+
+// ════════════════════════════════════════════════════════════════
+// M1 mobile-use parity — gated commands + new screen-image endpoint
+// docs/specs/mobile-use-integration.md §3
+// ════════════════════════════════════════════════════════════════
+describe('POST /api/device/control — M1 mobile-use commands (gated)', () => {
+    const M1_ENV_KEY = 'ECLAW_MOBILE_USE_API_ENABLED';
+    let originalEnv;
+    beforeAll(() => { originalEnv = process.env[M1_ENV_KEY]; });
+    afterAll(() => {
+        if (originalEnv === undefined) delete process.env[M1_ENV_KEY];
+        else process.env[M1_ENV_KEY] = originalEnv;
+    });
+
+    it.each(['swipe', 'long_press', 'launch_app', 'stop_app'])(
+        'returns 403 feature-disabled when flag is off: %s',
+        async (command) => {
+            delete process.env[M1_ENV_KEY];
+            const deviceId = `m1-off-${command}`;
+            const secret = await registerDevice(deviceId);
+            const res = await post('/api/device/control')
+                .send({ deviceId, deviceSecret: secret, command, entityId: 0,
+                        params: command === 'swipe' ? { startX:0, startY:0, endX:10, endY:10 }
+                              : command === 'long_press' ? { x:5, y:5 }
+                              : { packageName: 'com.example' } });
+            expect(res.status).toBe(403);
+            expect(res.body.error).toBe('feature-disabled');
+        }
+    );
+
+    it('swipe accepts valid params with flag on', async () => {
+        process.env[M1_ENV_KEY] = 'true';
+        const deviceId = 'm1-swipe-ok';
+        const secret = await registerDevice(deviceId);
+        const res = await post('/api/device/control')
+            .send({ deviceId, deviceSecret: secret, command: 'swipe', entityId: 0,
+                    params: { startX: 100, startY: 800, endX: 100, endY: 200, durationMs: 250 } });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+    });
+
+    it('swipe rejects non-numeric coords (400)', async () => {
+        process.env[M1_ENV_KEY] = 'true';
+        const deviceId = 'm1-swipe-bad';
+        const secret = await registerDevice(deviceId);
+        const res = await post('/api/device/control')
+            .send({ deviceId, deviceSecret: secret, command: 'swipe', entityId: 0,
+                    params: { startX: 'bad', startY: 0, endX: 10, endY: 10 } });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toMatch(/swipe requires numeric/);
+    });
+
+    it('long_press accepts valid coords with flag on', async () => {
+        process.env[M1_ENV_KEY] = 'true';
+        const deviceId = 'm1-lp-ok';
+        const secret = await registerDevice(deviceId);
+        const res = await post('/api/device/control')
+            .send({ deviceId, deviceSecret: secret, command: 'long_press', entityId: 0,
+                    params: { x: 50, y: 100, durationMs: 1000 } });
+        expect(res.status).toBe(200);
+    });
+
+    it('long_press rejects missing coords (400)', async () => {
+        process.env[M1_ENV_KEY] = 'true';
+        const deviceId = 'm1-lp-bad';
+        const secret = await registerDevice(deviceId);
+        const res = await post('/api/device/control')
+            .send({ deviceId, deviceSecret: secret, command: 'long_press', entityId: 0, params: {} });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toMatch(/long_press requires numeric/);
+    });
+
+    it('launch_app accepts packageName with flag on', async () => {
+        process.env[M1_ENV_KEY] = 'true';
+        const deviceId = 'm1-launch-ok';
+        const secret = await registerDevice(deviceId);
+        const res = await post('/api/device/control')
+            .send({ deviceId, deviceSecret: secret, command: 'launch_app', entityId: 0,
+                    params: { packageName: 'com.android.settings' } });
+        expect(res.status).toBe(200);
+    });
+
+    it('launch_app rejects empty params (400)', async () => {
+        process.env[M1_ENV_KEY] = 'true';
+        const deviceId = 'm1-launch-bad';
+        const secret = await registerDevice(deviceId);
+        const res = await post('/api/device/control')
+            .send({ deviceId, deviceSecret: secret, command: 'launch_app', entityId: 0, params: {} });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toMatch(/packageName.*bundleId/);
+    });
+
+    it('stop_app accepts bundleId with flag on', async () => {
+        process.env[M1_ENV_KEY] = 'true';
+        const deviceId = 'm1-stop-ok';
+        const secret = await registerDevice(deviceId);
+        const res = await post('/api/device/control')
+            .send({ deviceId, deviceSecret: secret, command: 'stop_app', entityId: 0,
+                    params: { bundleId: 'com.apple.Preferences' } });
+        expect(res.status).toBe(200);
+    });
+});
+
+describe('GET /api/device/screen-image — M1 mobile-use endpoint', () => {
+    const M1_ENV_KEY = 'ECLAW_MOBILE_USE_API_ENABLED';
+    let originalEnv;
+    beforeAll(() => { originalEnv = process.env[M1_ENV_KEY]; });
+    afterAll(() => {
+        if (originalEnv === undefined) delete process.env[M1_ENV_KEY];
+        else process.env[M1_ENV_KEY] = originalEnv;
+    });
+
+    it('returns 403 feature-disabled when flag is off', async () => {
+        delete process.env[M1_ENV_KEY];
+        const res = await request(app).get('/api/device/screen-image')
+            .query({ deviceId: 'si-off', deviceSecret: 'sec' });
+        expect(res.status).toBe(403);
+        expect(res.body.error).toBe('feature-disabled');
+    });
+
+    it('returns 400 when deviceId missing (flag on)', async () => {
+        process.env[M1_ENV_KEY] = 'true';
+        const res = await request(app).get('/api/device/screen-image')
+            .query({ deviceSecret: 'sec' });
+        expect(res.status).toBe(400);
+    });
+
+    it('returns 404 for unknown device (flag on)', async () => {
+        process.env[M1_ENV_KEY] = 'true';
+        const res = await request(app).get('/api/device/screen-image')
+            .query({ deviceId: 'unknown-si', deviceSecret: 'sec' });
+        expect(res.status).toBe(404);
+    });
+
+    it('returns 503 device_offline when device not connected via socket', async () => {
+        process.env[M1_ENV_KEY] = 'true';
+        const deviceId = 'si-offline';
+        const secret = await registerDevice(deviceId);
+        const res = await request(app).get('/api/device/screen-image')
+            .query({ deviceId, deviceSecret: secret });
+        expect(res.status).toBe(503);
+        expect(res.body.error).toBe('device_offline');
+    });
+});
