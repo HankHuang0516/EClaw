@@ -2132,6 +2132,20 @@
             user-select: none;
         }
 
+        .receiver-hint-auto {
+            display: inline-block;
+            margin-left: 4px;
+            padding: 1px 6px;
+            font-size: 10px;
+            line-height: 1.3;
+            color: var(--primary, #6C63FF);
+            background: rgba(108, 99, 255, 0.12);
+            border: 1px solid rgba(108, 99, 255, 0.45);
+            border-radius: 999px;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
         .sched-target-chip input {
             margin: 0;
         }
@@ -3714,10 +3728,10 @@
                 const pq = localStorage.getItem('eclaw_pending_quote');
                 if (pq) {
                     localStorage.removeItem('eclaw_pending_quote');
-                    const { source, title, excerpt, prefillInput, messageId, ts } = JSON.parse(pq);
+                    const { source, title, excerpt, prefillInput, messageId, meta, ts } = JSON.parse(pq);
                     if (Date.now() - ts < 120000) { // within 2 minutes
                         await openChatMessageDeepLink(messageId, { showMissingToast: true, scroll: true });
-                        quoteToChat(source, title, excerpt || '');
+                        quoteToChat(source, title, excerpt || '', meta);
                         // prefillInput: drop a chip token (or any text) directly
                         // into the input so users can press send without typing.
                         // Used by mindmap chip 📌 引用 — delivers mindmap_<uuid>
@@ -3770,9 +3784,9 @@
             window.addEventListener('message', async (e) => {
                 if (e.origin !== window.location.origin) return;
                 if (!e.data || e.data.type !== 'eclaw_quote') return;
-                const { source, title, excerpt, prefillInput, messageId } = e.data;
+                const { source, title, excerpt, prefillInput, messageId, meta } = e.data;
                 await openChatMessageDeepLink(messageId, { showMissingToast: true, scroll: true });
-                quoteToChat(source, title, excerpt || '');
+                quoteToChat(source, title, excerpt || '', meta);
                 if (prefillInput) {
                     const inp = document.getElementById('messageInput');
                     if (inp) {
@@ -4277,12 +4291,24 @@
             persistTargetSelection();
         }
 
-        function updateTargetAll() {
+        function updateTargetAll(opts) {
             const allCb = document.querySelector('#targetAll input');
             const entityCbs = document.querySelectorAll('.target-entity-check input[type="checkbox"]');
             if (entityCbs.length === 0) return;
             const allChecked = Array.from(entityCbs).every(cb => cb.checked);
             allCb.checked = allChecked;
+            // Manual uncheck revokes that receiver's auto-select hint — keep
+            // the badge truthful: it only marks receivers we picked and the
+            // user kept. Still-checked auto-toggled entries keep their badge.
+            // applyAutoToggleReceivers passes skipHintClear when it just
+            // rendered the badges so we don't strip them on the same tick.
+            if (!(opts && opts.skipHintClear)) {
+                Array.from(entityCbs).forEach(cb => {
+                    if (cb.checked) return;
+                    const eid = parseInt(cb.dataset.entity, 10);
+                    if (Number.isFinite(eid)) clearReceiverHintForEntity(eid);
+                });
+            }
             persistTargetSelection();
         }
 
@@ -5469,7 +5495,14 @@
 
                 const replySnippet = stripReplyQuotePrefix(rawText || '').replace(/\n/g, ' ').slice(0, 120);
                 const replySenderName = isSent ? (i18n.t('chat_reply_you') || 'You') : isPlatform ? 'Platform' : (getEntityLabel(msg.entity_id) || '');
-                const replyBtnHtml = (!isSystem && msg.id) ? `<button class="chat-reply-btn" data-msg-id="${escapeHtml(msg.id)}" data-sender="${escapeHtml(replySenderName)}" data-text="${escapeHtml(replySnippet)}" onclick="handleReplyBtn(this);event.stopPropagation()" data-i18n-title="chat_reply_btn" title="Quote">📌</button>` : '';
+                // Smart receiver hint: a quote of a bot message should pre-
+                // toggle the sender entity on the target bar. Self (web_chat)
+                // and platform/system messages stay neutral.
+                const receiverKind = isSent ? 'self' : isPlatform ? 'system' : 'entity';
+                const receiverEntityAttr = (receiverKind === 'entity' && Number.isFinite(msg.entity_id))
+                    ? ` data-receiver-entity-id="${msg.entity_id}"`
+                    : '';
+                const replyBtnHtml = (!isSystem && msg.id) ? `<button class="chat-reply-btn" data-msg-id="${escapeHtml(msg.id)}" data-sender="${escapeHtml(replySenderName)}" data-text="${escapeHtml(replySnippet)}" data-receiver-kind="${receiverKind}"${receiverEntityAttr} onclick="handleReplyBtn(this);event.stopPropagation()" data-i18n-title="chat_reply_btn" title="Quote">📌</button>` : '';
                 const renderedMessageIds = getRenderedMessageIds(msg);
                 const renderedIdsAttr = escapeHtml(renderedMessageIds.join(' '));
 
@@ -6055,12 +6088,23 @@
 
         // ── Quote Reply State ──
         let replyContext = null;
+        // Smart receiver auto-select — entityIds we auto-toggled-on for the
+        // current reply context. Cleared on reply clear, on send, and when
+        // the user manually changes a checkbox (the hint badge belongs to
+        // the auto-toggle, so a manual toggle revokes it).
+        const autoToggledReceiverEntities = new Set();
 
         function handleReplyBtn(btn) {
             const msgId = btn.dataset.msgId;
             const sender = btn.dataset.sender;
             const text = btn.dataset.text;
+            const kind = btn.dataset.receiverKind || '';
+            const entityId = parseInt(btn.dataset.receiverEntityId, 10);
+            const meta = (kind === 'entity' && Number.isFinite(entityId))
+                ? { kind: 'chat-entity', entityId }
+                : { kind: 'chat-system' };
             setReplyContext(msgId, sender, text);
+            applyAutoToggleReceivers(meta);
         }
 
         function setReplyContext(msgId, senderName, text) {
@@ -6075,13 +6119,65 @@
         function clearReplyContext() {
             replyContext = null;
             document.getElementById('replyPreviewBar').classList.remove('show');
+            clearAllReceiverHints();
         }
 
-        // Smart quote: activates the reply bar with source+excerpt, no full-content paste
-        function quoteToChat(source, title, excerpt) {
+        // Smart quote: activates the reply bar with source+excerpt, no full-content paste.
+        // meta carries origin info for smart receiver auto-select:
+        //   { kind: 'card', cardAssignedBots: number[] }    — kanban card → toggle assigned bots
+        //   { kind: 'chat-entity', entityId: number }       — chat msg from a bot → toggle that bot
+        //   { kind: 'chat-system' | other }                 — no auto-toggle
+        // Multi-source rule: chat-entity wins over card (resolved at the caller).
+        function quoteToChat(source, title, excerpt, meta) {
             const senderLabel = '📌 ' + source;
             const previewText = title + (excerpt ? ': ' + excerpt.slice(0, 60) + (excerpt.length > 60 ? '…' : '') : '');
             setReplyContext(null, senderLabel, previewText);
+            applyAutoToggleReceivers(meta || {});
+        }
+
+        function applyAutoToggleReceivers(meta) {
+            clearAllReceiverHints();
+            if (!meta || typeof meta !== 'object') return;
+            let entityIds = [];
+            if (meta.kind === 'chat-entity' && Number.isFinite(meta.entityId)) {
+                entityIds = [meta.entityId];
+            } else if (meta.kind === 'card' && Array.isArray(meta.cardAssignedBots)) {
+                entityIds = meta.cardAssignedBots.filter(id => Number.isFinite(id));
+            } else {
+                return;
+            }
+            const hintLabel = (i18n && typeof i18n.t === 'function' && i18n.t('chat_receiver_hint_auto')) || 'auto';
+            entityIds.forEach(eid => {
+                const cb = document.querySelector('.target-entity-check input[type="checkbox"][data-entity="' + eid + '"]');
+                if (!cb) return;
+                if (!cb.checked) cb.checked = true;
+                const label = cb.closest('.target-entity-check');
+                if (label && !label.querySelector('.receiver-hint-auto')) {
+                    const badge = document.createElement('span');
+                    badge.className = 'receiver-hint-auto';
+                    badge.setAttribute('data-i18n', 'chat_receiver_hint_auto');
+                    badge.textContent = hintLabel;
+                    label.appendChild(badge);
+                }
+                autoToggledReceiverEntities.add(eid);
+            });
+            if (typeof persistTargetSelection === 'function') persistTargetSelection();
+            if (typeof updateTargetAll === 'function') updateTargetAll({ skipHintClear: true });
+        }
+
+        function clearReceiverHintForEntity(entityId) {
+            if (!autoToggledReceiverEntities.has(entityId)) return;
+            const label = document.querySelector('.target-entity-check[data-entity-id="' + entityId + '"]');
+            if (label) {
+                const badge = label.querySelector('.receiver-hint-auto');
+                if (badge) badge.remove();
+            }
+            autoToggledReceiverEntities.delete(entityId);
+        }
+
+        function clearAllReceiverHints() {
+            document.querySelectorAll('.target-entity-check .receiver-hint-auto').forEach(b => b.remove());
+            autoToggledReceiverEntities.clear();
         }
 
         function fileMsgText(index, file, text) {
