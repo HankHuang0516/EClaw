@@ -20,19 +20,47 @@
 }
 
 /* ----- Toolbar shell ----- */
+/* v1.1 (Hank feedback): dock at top-right of the viewport instead of
+   anchoring under the picked element, so it never blocks the visible
+   target. Mobile keeps the bottom-sheet variant (handled in @media). */
 .eclaw-hover-click-toolbar {
-  position: absolute;
+  position: fixed;
+  top: 16px;
+  right: 16px;
   z-index: 9999;
   background: var(--bg, #ffffff);
   border: 1px solid var(--card-border, rgba(0, 0, 0, 0.12));
   border-radius: 12px;
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
   padding: 8px;
-  max-width: 480px;
+  max-width: min(620px, calc(100vw - 32px));
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 14px;
   color: var(--text, #18181b);
   user-select: none;
+}
+
+.eclaw-hover-click-toolbar__row {
+  flex-wrap: wrap;
+}
+
+.eclaw-hover-click-toolbar__divider {
+  width: 1px;
+  height: 20px;
+  background: var(--card-border, rgba(0, 0, 0, 0.12));
+  margin: 0 4px;
+  align-self: center;
+}
+
+.eclaw-hover-click-toolbar__target-label {
+  font-size: 12px;
+  color: var(--text-secondary, #71717a);
+  padding: 0 6px;
+  margin-right: 4px;
+  white-space: nowrap;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .eclaw-hover-click-toolbar[hidden] { display: none !important; }
@@ -74,6 +102,13 @@
 
 .eclaw-hover-click-toolbar__chip-icon { font-size: 16px; line-height: 1; }
 .eclaw-hover-click-toolbar__chip-label { font-size: 13px; }
+
+/* Tight pack so the docked top-right toolbar fits 10 chips on one row
+   at typical desktop widths without wrap. Falls back to wrap below 620px. */
+@media (min-width: 721px) {
+  .eclaw-hover-click-toolbar__chip { padding: 4px 8px; gap: 3px; }
+  .eclaw-hover-click-toolbar__chip-label { font-size: 12px; }
+}
 
 .eclaw-hover-click-toolbar__close {
   margin-left: 4px;

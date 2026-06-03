@@ -208,6 +208,24 @@
             const target = document.querySelector(`[data-point-edit-id="${targetId}"]`);
             if (target) toolbar.open(target);
         });
+        // v1.1: Quote chip → stuff the bundled diff payload into the
+        // existing composer textarea so the user can review + send to
+        // the Agent. Sandbox is still inert; no chat round-trip yet.
+        document.addEventListener('hover-click:quote', function(ev) {
+            const ta = document.querySelector('[data-ped-textarea]');
+            if (!ta || !ev.detail) return;
+            const lines = [
+                '<diff-quote>',
+                '  target: ' + (ev.detail.target ? ev.detail.target.selector : '(none)'),
+                '  summary: ' + (ev.detail.diff && ev.detail.diff.summary),
+                '  history: ' + ev.detail.history.length + ' mutation(s)',
+                '</diff-quote>',
+                '',
+                ev.detail.diff && ev.detail.diff.unified ? ev.detail.diff.unified : '(no unified diff)',
+            ];
+            ta.value = lines.join('\n') + '\n\n' + ta.value;
+            ta.focus();
+        });
     })();
     </script>
 

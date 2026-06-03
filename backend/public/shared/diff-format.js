@@ -91,41 +91,73 @@
   // mutation. Real impl will swap this for a sourceMap-driven producer in v1.1;
   // v1 ships this approximate version so downstream wiring (chat Quote, Agent
   // dispatch) can be exercised end-to-end.
+  // v1.1: prefer real outerHTML before/after pairs when the toolbar
+  // captures them. Falls back to property-level diff if the mutation
+  // wasn't tagged with _beforeHTML / target.outerHTML (e.g. for canvas-
+  // collage mode where there is no DOM source).
   function buildUnified(mutations, sourceContext, sourceMap) {
     const file = (sourceContext && sourceContext.url) || '<synthetic:user-edit-now>';
     const hunks = [];
     mutations.forEach((m) => {
       const sel = describeSelector(m.target);
+      const beforeHTML = m._beforeHTML;
+      const afterHTML = m.target && m.target.outerHTML ? m.target.outerHTML : null;
+      if (beforeHTML && afterHTML && beforeHTML !== afterHTML) {
+        // Emit a real before-vs-after outerHTML hunk that an Agent can
+        // pattern-match against the source file. Lines are split so the
+        // unified-diff format is well-formed.
+        const beforeLines = beforeHTML.split(/\r?\n/);
+        const afterLines = afterHTML.split(/\r?\n/);
+        hunks.push([
+          `--- a/${file}`,
+          `+++ b/${file}`,
+          `@@ ${sel} @@`,
+          ...beforeLines.map((l) => `-${l}`),
+          ...afterLines.map((l) => `+${l}`),
+        ].join('\n'));
+        return;
+      }
+      // Fallback: property-level diff (geometry / canvas / no-source mode).
       if (m.type === 'style') {
         hunks.push([
           `--- a/${file}`,
           `+++ b/${file}`,
           `@@ ${sel} @@`,
-          `-/* before: ${m.property}=${JSON.stringify(m.from)} */`,
-          `+/* after:  ${m.property}=${JSON.stringify(m.to)} */`,
+          `-/* ${m.property}=${JSON.stringify(m.from)} */`,
+          `+/* ${m.property}=${JSON.stringify(m.to)} */`,
         ].join('\n'));
       } else if (m.type === 'geometry') {
         hunks.push([
           `--- a/${file}`,
           `+++ b/${file}`,
           `@@ ${sel} (geometry) @@`,
-          `-/* before: ${JSON.stringify(m.from)} */`,
-          `+/* after:  ${JSON.stringify(m.to)} */`,
+          `-/* ${JSON.stringify(m.from)} */`,
+          `+/* ${JSON.stringify(m.to)} */`,
         ].join('\n'));
       } else if (m.type === 'remove') {
-        hunks.push([
-          `--- a/${file}`,
-          `+++ b/${file}`,
-          `@@ ${sel} @@`,
-          `-/* removed: ${sel} */`,
-        ].join('\n'));
+        if (beforeHTML) {
+          const beforeLines = beforeHTML.split(/\r?\n/);
+          hunks.push([
+            `--- a/${file}`,
+            `+++ b/${file}`,
+            `@@ ${sel} (removed) @@`,
+            ...beforeLines.map((l) => `-${l}`),
+          ].join('\n'));
+        } else {
+          hunks.push([`--- a/${file}`, `+++ b/${file}`, `@@ ${sel} @@`, `-/* removed: ${sel} */`].join('\n'));
+        }
       } else if (m.type === 'duplicate') {
-        hunks.push([
-          `--- a/${file}`,
-          `+++ b/${file}`,
-          `@@ ${sel} @@`,
-          `+/* duplicated: clone of ${sel} appended */`,
-        ].join('\n'));
+        if (afterHTML) {
+          const afterLines = afterHTML.split(/\r?\n/);
+          hunks.push([
+            `--- a/${file}`,
+            `+++ b/${file}`,
+            `@@ ${sel} (duplicated) @@`,
+            ...afterLines.map((l) => `+${l}`),
+          ].join('\n'));
+        } else {
+          hunks.push([`--- a/${file}`, `+++ b/${file}`, `@@ ${sel} @@`, `+/* duplicated: clone of ${sel} appended */`].join('\n'));
+        }
       }
     });
     return hunks.join('\n\n');

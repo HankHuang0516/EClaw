@@ -20,14 +20,24 @@
   let _seq = 0;
   const MOBILE_BP = 720;
 
+  // v1.1 layout (Hank feedback 2026-06-03): Undo/Redo + Quote chips
+  // added. `divider:true` entries render a vertical separator. Order
+  // groups by purpose: history → transform → structural → inspect → send.
   const CHIP_DEFS = [
+    { id: 'undo',      icon: '↶', i18n: 'hover_click.chip_undo',      fallback: 'Undo' },
+    { id: 'redo',      icon: '↷', i18n: 'hover_click.chip_redo',      fallback: 'Redo' },
+    { divider: true },
     { id: 'move',      icon: '⇕', i18n: 'hover_click.chip_move',      fallback: 'Move' },
     { id: 'resize',    icon: '↔', i18n: 'hover_click.chip_resize',    fallback: 'Resize' },
     { id: 'style',     icon: '\u{1F3A8}', i18n: 'hover_click.chip_style',  fallback: 'Style' },
+    { divider: true },
     { id: 'duplicate', icon: '⧉', i18n: 'hover_click.chip_duplicate', fallback: 'Duplicate' },
     { id: 'delete',    icon: '\u{1F5D1}', i18n: 'hover_click.chip_delete', fallback: 'Delete' },
+    { divider: true },
     { id: 'inspect',   icon: '\u{1F50D}', i18n: 'hover_click.chip_inspect', fallback: 'Inspect' },
     { id: 'info',      icon: 'ⓘ', i18n: 'hover_click.chip_info',      fallback: 'Info' },
+    { divider: true },
+    { id: 'quote',     icon: '\u{1F4E4}', i18n: 'hover_click.chip_quote', fallback: 'Quote' },
   ];
 
   function t(key, fallback) {
@@ -65,13 +75,28 @@
     const row = document.createElement('div');
     row.className = 'eclaw-hover-click-toolbar__row';
 
+    // v1.1: target-label readout at the front so the docked toolbar
+    // tells the user what they're acting on (was implicit before).
+    const labelEl = document.createElement('span');
+    labelEl.className = 'eclaw-hover-click-toolbar__target-label';
+    row.appendChild(labelEl);
+
     const chipEls = {};
+    let firstChipFocused = false;
     CHIP_DEFS.forEach((def, idx) => {
+      if (def.divider) {
+        const div = document.createElement('span');
+        div.className = 'eclaw-hover-click-toolbar__divider';
+        div.setAttribute('aria-hidden', 'true');
+        row.appendChild(div);
+        return;
+      }
       const b = document.createElement('button');
       b.type = 'button';
       b.className = 'eclaw-hover-click-toolbar__chip';
       b.setAttribute('data-chip', def.id);
-      b.setAttribute('tabindex', idx === 0 ? '0' : '-1');
+      b.setAttribute('tabindex', firstChipFocused ? '-1' : '0');
+      firstChipFocused = true;
       const labelTxt = t(def.i18n, def.fallback);
       b.innerHTML = `<span class="eclaw-hover-click-toolbar__chip-icon" aria-hidden="true">${def.icon}</span><span class="eclaw-hover-click-toolbar__chip-label">${labelTxt}</span>`;
       b.addEventListener('click', () => activateChip(def.id));
@@ -99,9 +124,32 @@
       close();
     }
 
-    // Esc closes
+    // Esc closes; v1.1 also wires Undo/Redo/Delete/Duplicate shortcuts.
     function onKeyDown(e) {
       if (!openFlag) return;
+      const meta = e.ctrlKey || e.metaKey;
+      // Don't trap shortcuts when the user is typing into an input/textarea.
+      const ae = document.activeElement;
+      const inEditable = ae && (
+        ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable
+      );
+      if (!inEditable) {
+        if (meta && !e.shiftKey && (e.key === 'z' || e.key === 'Z')) {
+          e.preventDefault(); doUndo(); return;
+        }
+        if ((meta && e.shiftKey && (e.key === 'z' || e.key === 'Z')) ||
+            (meta && (e.key === 'y' || e.key === 'Y'))) {
+          e.preventDefault(); doRedo(); return;
+        }
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+          if (currentTarget && !shell.contains(document.activeElement)) {
+            e.preventDefault(); confirmDelete(); return;
+          }
+        }
+        if (meta && (e.key === 'd' || e.key === 'D') && currentTarget) {
+          e.preventDefault(); doDuplicate(); return;
+        }
+      }
       if (e.key === 'Escape') { e.preventDefault(); close(); }
       else if (e.key === 'Tab') {
         // Tab cycles within the toolbar; default browser behaviour handles
@@ -120,27 +168,25 @@
     document.addEventListener('click', onOutsideClick, true);
     document.addEventListener('keydown', onKeyDown, true);
 
+    function describeShort(el) {
+      if (!el) return '';
+      const tag = el.tagName.toLowerCase();
+      const id = el.id ? '#' + el.id : '';
+      const cls = el.className && typeof el.className === 'string'
+        ? '.' + el.className.trim().split(/\s+/)[0]
+        : '';
+      return `${tag}${id}${cls}`;
+    }
+
     function anchorTo(el) {
       currentTarget = el;
+      // v1.1: docked at top-right of viewport via CSS — no inline
+      // top/left needed on desktop. Mobile bottom-sheet still wired
+      // through data-visible attribute.
       if (isMobile()) {
-        // Bottom sheet: positioning is via CSS (fixed bottom).
-        shell.style.top = '';
-        shell.style.left = '';
         shell.setAttribute('data-visible', 'true');
-        return;
       }
-      const r = el.getBoundingClientRect();
-      const tWidth = 480;
-      let left = r.left + window.scrollX + (r.width - tWidth) / 2;
-      left = Math.max(8, Math.min(left, window.scrollX + window.innerWidth - tWidth - 8));
-      let top = r.bottom + window.scrollY + 8;
-      // Flip above if no space below
-      const tooLow = top + 56 > window.scrollY + window.innerHeight;
-      if (tooLow) {
-        top = r.top + window.scrollY - 56;
-      }
-      shell.style.top = `${top}px`;
-      shell.style.left = `${left}px`;
+      labelEl.textContent = describeShort(el);
     }
 
     function open(el) {
@@ -161,14 +207,54 @@
       if (onClose) onClose();
     }
 
-    function recordMutation(mut) {
+    // v1.1: history stack for Undo/Redo + smarter-diff outerHTML
+    // snapshots. Each entry carries:
+    //   { mutation: {type, property, from, to, target},
+    //     undo: () => void,   // inverse of apply, used by Ctrl+Z
+    //     redo: () => void,   // re-apply after undo, used by Ctrl+Shift+Z
+    //     beforeHTML, afterHTML }  // for diff-format spec §6 outerHTML diff
+    const history = [];
+    let historyCursor = 0; // points one past the last applied entry
+    function recordMutation(mut, undoFn, redoFn) {
+      // Drop redo tail if we recorded a new mutation after some undos.
+      if (historyCursor < history.length) history.length = historyCursor;
+      const beforeHTML = mut._beforeHTML || null;
+      // Capture afterHTML after any DOM change has been applied.
+      const afterHTML = mut.target && mut.target.outerHTML
+        ? mut.target.outerHTML.slice(0, 4096)
+        : null;
+      const entry = {
+        mutation: mut, undo: undoFn || null, redo: redoFn || null,
+        beforeHTML, afterHTML,
+      };
+      history.push(entry);
+      historyCursor = history.length;
       mutations.push(mut);
       if (onMutation) onMutation(mut);
+    }
+    function snapshotBefore(el) {
+      return el && el.outerHTML ? el.outerHTML.slice(0, 4096) : null;
+    }
+    function doUndo() {
+      if (historyCursor === 0) return;
+      const entry = history[historyCursor - 1];
+      if (entry.undo) entry.undo();
+      historyCursor -= 1;
+    }
+    function doRedo() {
+      if (historyCursor >= history.length) return;
+      const entry = history[historyCursor];
+      if (entry.redo) entry.redo();
+      historyCursor += 1;
     }
 
     let dragging = null;
 
     function activateChip(chipId) {
+      // Undo/Redo + Quote work without currentTarget; the others need it.
+      if (chipId === 'undo') { doUndo(); return; }
+      if (chipId === 'redo') { doRedo(); return; }
+      if (chipId === 'quote') { doQuote(); return; }
       if (!currentTarget) return;
       switch (chipId) {
         case 'move':   startMove(); break;
@@ -179,6 +265,37 @@
         case 'inspect': showInspect(); break;
         case 'info': showInfo(); break;
       }
+    }
+
+    function doQuote() {
+      // Spec §7: bundle the live mutation log into a diff Quote payload
+      // and emit it as a CustomEvent on the document. The host page (e.g.
+      // interactive-dev.html or the chat composer) listens for
+      // `hover-click:quote` and routes it to the chat thread.
+      const diff = root.EClawDiffFormat
+        ? root.EClawDiffFormat.produce(mutations.slice(), {
+            kind: 'portal', url: root.location && root.location.pathname,
+          })
+        : { semantic: { changes: [] }, unified: '', summary: '0 changes' };
+      const payload = {
+        target: currentTarget ? {
+          selector: describeShort(currentTarget),
+          outerHTML: currentTarget.outerHTML.slice(0, 4096),
+        } : null,
+        diff: {
+          semantic: diff.semantic,
+          unified: diff.unified,
+          summary: diff.summary,
+        },
+        history: history.map((h) => ({
+          type: h.mutation && h.mutation.type,
+          property: h.mutation && h.mutation.property,
+          beforeHTML: h.beforeHTML,
+          afterHTML: h.afterHTML,
+        })),
+        ts: Date.now(),
+      };
+      document.dispatchEvent(new CustomEvent('hover-click:quote', { detail: payload }));
     }
 
     function startMove() {
@@ -255,19 +372,28 @@
       if (!currentTarget) return;
       const color = prompt(t('hover_click.style_prompt_color', 'Set color (CSS value, e.g. rebeccapurple, #f00):'), '');
       if (color === null) return;
-      const before = currentTarget.style.color || null;
-      currentTarget.style.color = color;
-      recordMutation({
-        type: 'style', target: currentTarget,
-        property: 'color', from: before, to: color,
-      });
+      const target = currentTarget;
+      const before = target.style.color || null;
+      const beforeHTML = snapshotBefore(target);
+      target.style.color = color;
+      recordMutation(
+        { type: 'style', target, property: 'color', from: before, to: color, _beforeHTML: beforeHTML },
+        () => { target.style.color = before || ''; },
+        () => { target.style.color = color; },
+      );
     }
 
     function doDuplicate() {
       if (!currentTarget) return;
-      const clone = currentTarget.cloneNode(true);
-      currentTarget.parentElement.insertBefore(clone, currentTarget.nextSibling);
-      recordMutation({ type: 'duplicate', target: currentTarget, newNode: clone });
+      const target = currentTarget;
+      const beforeHTML = snapshotBefore(target);
+      const clone = target.cloneNode(true);
+      target.parentElement.insertBefore(clone, target.nextSibling);
+      recordMutation(
+        { type: 'duplicate', target, newNode: clone, _beforeHTML: beforeHTML },
+        () => { clone.remove(); },
+        () => { target.parentElement.insertBefore(clone, target.nextSibling); },
+      );
     }
 
     function confirmDelete() {
@@ -294,7 +420,11 @@
       setTimeout(() => {
         if (undone) return;
         ghost.remove();
-        recordMutation({ type: 'remove', target, parent, beforeSibling: before });
+        recordMutation(
+          { type: 'remove', target, parent, beforeSibling: before, _beforeHTML: snapshotBefore(target) },
+          () => { parent.insertBefore(target, before); },
+          () => { target.remove(); },
+        );
         close();
       }, 3000);
     }
