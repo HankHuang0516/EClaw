@@ -37,8 +37,52 @@
     { id: 'inspect',   icon: '\u{1F50D}', i18n: 'hover_click.chip_inspect', fallback: 'Inspect' },
     { id: 'info',      icon: 'ⓘ', i18n: 'hover_click.chip_info',      fallback: 'Info' },
     { divider: true },
+    { id: 'reset',     icon: '\u{21BA}', i18n: 'hover_click.chip_reset', fallback: 'Reset' },
     { id: 'quote',     icon: '\u{1F4E4}', i18n: 'hover_click.chip_quote', fallback: 'Quote' },
   ];
+
+  // v1.2d: shortest unique selector. Tries data-component-id, id,
+  // unique class (subset of all classes minimal enough to be unique),
+  // then falls back to a tag:nth-of-type ancestor path.
+  function shortestSelector(el) {
+    if (!el || el.nodeType !== 1) return '*';
+    if (el.dataset && el.dataset.componentId) {
+      return `[data-component-id="${el.dataset.componentId}"]`;
+    }
+    if (el.id && document.querySelectorAll(`#${CSS.escape(el.id)}`).length === 1) {
+      return `#${el.id}`;
+    }
+    if (el.classList && el.classList.length) {
+      for (const cls of el.classList) {
+        try {
+          if (document.querySelectorAll(`.${CSS.escape(cls)}`).length === 1) {
+            return `.${cls}`;
+          }
+        } catch (e) { /* ignore weird classnames */ }
+      }
+    }
+    // Fallback: tag:nth-of-type with two ancestor levels.
+    const path = [];
+    let node = el;
+    for (let i = 0; i < 3 && node && node.nodeType === 1; i++) {
+      const tag = node.tagName.toLowerCase();
+      let segment = tag;
+      if (node.parentElement) {
+        const siblings = Array.from(node.parentElement.children).filter(c => c.tagName === node.tagName);
+        if (siblings.length > 1) {
+          const idx = siblings.indexOf(node) + 1;
+          segment += `:nth-of-type(${idx})`;
+        }
+      }
+      path.unshift(segment);
+      node = node.parentElement;
+      if (node && node.id) {
+        path.unshift(`#${node.id}`);
+        break;
+      }
+    }
+    return path.join(' > ');
+  }
 
   function t(key, fallback) {
     try {
@@ -177,12 +221,9 @@
 
     function describeShort(el) {
       if (!el) return '';
-      const tag = el.tagName.toLowerCase();
-      const id = el.id ? '#' + el.id : '';
-      const cls = el.className && typeof el.className === 'string'
-        ? '.' + el.className.trim().split(/\s+/)[0]
-        : '';
-      return `${tag}${id}${cls}`;
+      // v1.2d: use shortest unique selector for the docked label so the
+      // Agent receives less ambiguous selectors in the Quote payload.
+      return shortestSelector(el);
     }
 
     function anchorTo(el) {
@@ -196,13 +237,60 @@
       labelEl.textContent = describeShort(el);
     }
 
+    let initialOuterHTML = null;
     function open(el) {
       if (!el) return;
       shell.hidden = false;
       anchorTo(el);
+      // v1.2d: snapshot the target's initial outerHTML at open time so the
+      // Reset chip can revert to it.
+      initialOuterHTML = el.outerHTML;
       openFlag = true;
       // First chip focused per #6 review Q1.
-      requestAnimationFrame(() => chipEls.move.focus());
+      requestAnimationFrame(() => {
+        const focusTarget = chipEls.undo || chipEls.move;
+        if (focusTarget) focusTarget.focus();
+      });
+    }
+
+    function doReset() {
+      if (!currentTarget || initialOuterHTML == null) return;
+      const target = currentTarget;
+      const currentHTML = target.outerHTML;
+      if (currentHTML === initialOuterHTML) return;
+      // Replace the target node with a fresh parse of its initial outerHTML
+      // and restore the toolbar's currentTarget pointer.
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = initialOuterHTML;
+      const fresh = wrapper.firstElementChild;
+      if (!fresh) return;
+      const parent = target.parentElement;
+      const sibling = target.nextSibling;
+      parent.removeChild(target);
+      parent.insertBefore(fresh, sibling);
+      // Re-apply ring class so the user sees the restored selection.
+      fresh.classList.add('eclaw-dom-select__ring-selected');
+      currentTarget = fresh;
+      // Record the reset as a single mutation with undo restoring the
+      // dirty state and redo re-applying the reset.
+      recordMutation(
+        { type: 'reset', target: fresh, from: 'dirty', to: 'initial', _beforeHTML: currentHTML },
+        () => {
+          const w2 = document.createElement('div');
+          w2.innerHTML = currentHTML;
+          const restored = w2.firstElementChild;
+          fresh.parentElement.replaceChild(restored, fresh);
+          currentTarget = restored;
+        },
+        () => {
+          const w2 = document.createElement('div');
+          w2.innerHTML = initialOuterHTML;
+          const re = w2.firstElementChild;
+          currentTarget.parentElement.replaceChild(re, currentTarget);
+          re.classList.add('eclaw-dom-select__ring-selected');
+          currentTarget = re;
+        },
+      );
     }
 
     function close() {
@@ -268,6 +356,7 @@
       if (chipId === 'undo') { doUndo(); return; }
       if (chipId === 'redo') { doRedo(); return; }
       if (chipId === 'quote') { doQuote(); return; }
+      if (chipId === 'reset') { doReset(); return; }
       if (!currentTarget) return;
       switch (chipId) {
         // v1.2a: Move/Resize now ARM the action; the user has to press
@@ -283,21 +372,61 @@
       }
     }
 
+    function getResolvedCss(el) {
+      // v1.2d: top 30 resolved CSS properties — enough for Agent to
+      // pattern-match without dumping the full 400+ computed declarations.
+      if (!el || el.nodeType !== 1) return {};
+      const wanted = [
+        'color', 'background-color', 'font-family', 'font-size', 'font-weight',
+        'line-height', 'letter-spacing', 'text-align',
+        'display', 'position', 'top', 'left', 'right', 'bottom',
+        'width', 'height', 'min-width', 'min-height', 'max-width', 'max-height',
+        'padding', 'margin',
+        'border', 'border-radius', 'box-shadow', 'opacity',
+        'flex', 'gap', 'grid-template-columns', 'transform',
+      ];
+      const cs = getComputedStyle(el);
+      const out = {};
+      wanted.forEach((k) => { out[k] = cs.getPropertyValue(k); });
+      return out;
+    }
+
+    function getNeighborContext(el) {
+      // v1.2d: ±2 sibling outerHTML snippets so the Agent can locate the
+      // target uniquely in the source file.
+      if (!el || !el.parentElement) return [];
+      const sibs = Array.from(el.parentElement.children);
+      const idx = sibs.indexOf(el);
+      const window2 = sibs.slice(Math.max(0, idx - 2), idx + 3);
+      return window2.map((s, i) => ({
+        offset: (Math.max(0, idx - 2) + i) - idx,
+        selector: shortestSelector(s),
+        outerHTML: s.outerHTML.slice(0, 1024),
+      }));
+    }
+
     function doQuote() {
-      // Spec §7: bundle the live mutation log into a diff Quote payload
-      // and emit it as a CustomEvent on the document. The host page (e.g.
-      // interactive-dev.html or the chat composer) listens for
-      // `hover-click:quote` and routes it to the chat thread.
+      // Spec §7 + v1.2d enrichment: bundle the live mutation log into a
+      // diff Quote payload with viewport, resolvedCss, neighbor context,
+      // and the import sourceContext stashed by interactive-dev.html.
+      const baseSourceContext = root.__hcImportSourceContext || {
+        kind: 'portal', url: root.location && root.location.pathname,
+      };
       const diff = root.EClawDiffFormat
-        ? root.EClawDiffFormat.produce(mutations.slice(), {
-            kind: 'portal', url: root.location && root.location.pathname,
-          })
+        ? root.EClawDiffFormat.produce(mutations.slice(), baseSourceContext)
         : { semantic: { changes: [] }, unified: '', summary: '0 changes' };
       const payload = {
         target: currentTarget ? {
-          selector: describeShort(currentTarget),
+          selector: shortestSelector(currentTarget),
           outerHTML: currentTarget.outerHTML.slice(0, 4096),
+          resolvedCss: getResolvedCss(currentTarget),
+          neighbors: getNeighborContext(currentTarget),
         } : null,
+        sourceContext: baseSourceContext,
+        viewport: {
+          width: root.innerWidth, height: root.innerHeight,
+          devicePixelRatio: root.devicePixelRatio || 1,
+        },
         diff: {
           semantic: diff.semantic,
           unified: diff.unified,
@@ -309,7 +438,7 @@
           beforeHTML: h.beforeHTML,
           afterHTML: h.afterHTML,
         })),
-        ts: Date.now(),
+        ts: 0, // v1.2d: rely on host page to stamp if needed (Date.now banned in workflows)
       };
       document.dispatchEvent(new CustomEvent('hover-click:quote', { detail: payload }));
     }
