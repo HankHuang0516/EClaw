@@ -90,16 +90,18 @@ function showConfirm({ message, title, confirmText, cancelText, danger } = {}) {
         const t = _tFb;
         const overlay = document.createElement('div');
         overlay.className = 'dialog-overlay eclaw-confirm-overlay';
-        const titleId = title ? `eclaw-confirm-title-${++_eclawDialogId}` : '';
+        const dialogId = ++_eclawDialogId;
+        const titleId = title ? `eclaw-confirm-title-${dialogId}` : '';
+        const messageId = `eclaw-confirm-message-${dialogId}`;
         const dialogAria = title
-            ? `role="alertdialog" aria-modal="true" aria-labelledby="${titleId}"`
-            : `role="alertdialog" aria-modal="true" aria-label="${_escAttr(message)}"`;
+            ? `role="alertdialog" aria-modal="true" aria-labelledby="${titleId}" aria-describedby="${messageId}"`
+            : `role="alertdialog" aria-modal="true" aria-label="${_escAttr(message)}" aria-describedby="${messageId}"`;
         overlay.innerHTML = `<div class="dialog eclaw-confirm-dialog" ${dialogAria}>
             ${title ? `<div class="dialog-title" id="${titleId}">${_escHtml(title)}</div>` : ''}
-            <div class="dialog-body"><p style="margin:0;line-height:1.6;color:var(--text-secondary)">${_escHtml(message)}</p></div>
+            <div class="dialog-body"><p id="${messageId}" style="margin:0;line-height:1.6;color:var(--text-secondary)">${_escHtml(message)}</p></div>
             <div class="dialog-actions">
-                <button class="btn btn-outline eclaw-confirm-cancel">${_escHtml(cancelText || t('dialog_cancel', 'Cancel'))}</button>
-                <button class="btn ${danger ? 'btn-danger' : 'btn-primary'} eclaw-confirm-ok">${_escHtml(confirmText || t('dialog_ok', 'OK'))}</button>
+                <button type="button" class="btn btn-outline eclaw-confirm-cancel">${_escHtml(cancelText || t('dialog_cancel', 'Cancel'))}</button>
+                <button type="button" class="btn ${danger ? 'btn-danger' : 'btn-primary'} eclaw-confirm-ok">${_escHtml(confirmText || t('dialog_ok', 'OK'))}</button>
             </div>
         </div>`;
         document.body.appendChild(overlay);
@@ -149,19 +151,21 @@ function showPrompt({ message, title, defaultValue, placeholder, confirmText, ca
         const t = _tFb;
         const overlay = document.createElement('div');
         overlay.className = 'dialog-overlay eclaw-confirm-overlay';
-        const titleId = title ? `eclaw-confirm-title-${++_eclawDialogId}` : '';
+        const dialogId = ++_eclawDialogId;
+        const titleId = title ? `eclaw-confirm-title-${dialogId}` : '';
+        const messageId = `eclaw-confirm-message-${dialogId}`;
         const dialogAria = title
-            ? `role="alertdialog" aria-modal="true" aria-labelledby="${titleId}"`
-            : `role="alertdialog" aria-modal="true" aria-label="${_escAttr(message)}"`;
+            ? `role="alertdialog" aria-modal="true" aria-labelledby="${titleId}" aria-describedby="${messageId}"`
+            : `role="alertdialog" aria-modal="true" aria-label="${_escAttr(message)}" aria-describedby="${messageId}"`;
         overlay.innerHTML = `<div class="dialog eclaw-confirm-dialog" ${dialogAria}>
             ${title ? `<div class="dialog-title" id="${titleId}">${_escHtml(title)}</div>` : ''}
             <div class="dialog-body">
-                <p style="margin:0 0 12px;line-height:1.6;color:var(--text-secondary)">${_escHtml(message)}</p>
+                <p id="${messageId}" style="margin:0 0 12px;line-height:1.6;color:var(--text-secondary)">${_escHtml(message)}</p>
                 <input type="text" class="eclaw-prompt-input" value="${_escAttr(defaultValue || '')}" placeholder="${_escAttr(placeholder || '')}" style="width:100%;padding:8px 12px;border:1px solid var(--card-border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px;box-sizing:border-box;">
             </div>
             <div class="dialog-actions">
-                <button class="btn btn-outline eclaw-confirm-cancel">${_escHtml(cancelText || t('dialog_cancel', 'Cancel'))}</button>
-                <button class="btn btn-primary eclaw-confirm-ok">${_escHtml(confirmText || t('dialog_ok', 'OK'))}</button>
+                <button type="button" class="btn btn-outline eclaw-confirm-cancel">${_escHtml(cancelText || t('dialog_cancel', 'Cancel'))}</button>
+                <button type="button" class="btn btn-primary eclaw-confirm-ok">${_escHtml(confirmText || t('dialog_ok', 'OK'))}</button>
             </div>
         </div>`;
         document.body.appendChild(overlay);
