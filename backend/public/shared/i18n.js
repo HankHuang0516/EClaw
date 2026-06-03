@@ -338296,13 +338296,9 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "My Messages",
-        "chat_sys_conversation": "💬 Conversation",
-        "chat_sys_kanban": "📋 Kanban",
-        "chat_sys_scheduled": "⏰ Scheduled",
-        "chat_sys_platform": "🔧 System",
-        "chat_sys_health": "❤️ Health",
-        "chat_sys_n_hidden": "{n} system message(s) hidden by filter — click to show",
-        "chat_sys_n_hidden_hint": "Click to show all categories",
+        "chat_filter_summary_label": "Filters",
+        "chat_filter_summary_count": "Filters ({n})",
+        "chat_filter_summary_close": "Close filter panel",
 
 
 
@@ -963235,13 +963231,9 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "我的訊息",
-        "chat_sys_conversation": "💬 對話",
-        "chat_sys_kanban": "📋 看板",
-        "chat_sys_scheduled": "⏰ 排程",
-        "chat_sys_platform": "🔧 系統",
-        "chat_sys_health": "❤️ 健康",
-        "chat_sys_n_hidden": "{n} 則系統訊息已被 filter 隱藏 — 點此顯示",
-        "chat_sys_n_hidden_hint": "點此顯示全部類別",
+        "chat_filter_summary_label": "篩選條件",
+        "chat_filter_summary_count": "篩選條件 ({n})",
+        "chat_filter_summary_close": "關閉篩選面板",
 
 
 
@@ -1294196,6 +1294188,9 @@ const TRANSLATIONS = {
 
         "chat_filter_my": "我的消息",
 
+        "chat_filter_summary_label": "筛选条件",
+        "chat_filter_summary_count": "筛选条件 ({n})",
+        "chat_filter_summary_close": "关闭筛选面板",
 
 
 
@@ -2136741,6 +2136736,9 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "自分のメッセージ",
+        "chat_filter_summary_label": "フィルター",
+        "chat_filter_summary_count": "フィルター ({n})",
+        "chat_filter_summary_close": "フィルター面板を閉じる",
 
 
 
@@ -2699501,6 +2699499,9 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "내 메시지",
+        "chat_filter_summary_label": "필터",
+        "chat_filter_summary_count": "필터 ({n})",
+        "chat_filter_summary_close": "필터 패널 닫기",
 
 
 
@@ -3222223,6 +3222224,9 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "ข้อความของฉัน",
+        "chat_filter_summary_label": "ตัวกรอง",
+        "chat_filter_summary_count": "ตัวกรอง ({n})",
+        "chat_filter_summary_close": "ปิดแผงตัวกรอง",
 
 
 
@@ -3751206,6 +3751210,9 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "Tin nhắn của tôi",
+        "chat_filter_summary_label": "Bộ lọc",
+        "chat_filter_summary_count": "Bộ lọc ({n})",
+        "chat_filter_summary_close": "Đóng panel bộ lọc",
 
 
 
@@ -4277629,6 +4277636,9 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "Pesan Saya",
+        "chat_filter_summary_label": "Filter",
+        "chat_filter_summary_count": "Filter ({n})",
+        "chat_filter_summary_close": "Tutup panel filter",
 
 
 
@@ -4815196,6 +4815206,9 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "Mes messages",
+        "chat_filter_summary_label": "Filtres",
+        "chat_filter_summary_count": "Filtres ({n})",
+        "chat_filter_summary_close": "Fermer le panneau des filtres",
 
 
 
@@ -5337119,6 +5337132,9 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "Mis Mensajes...",
+        "chat_filter_summary_label": "Filtros",
+        "chat_filter_summary_count": "Filtros ({n})",
+        "chat_filter_summary_close": "Cerrar panel de filtros",
 
 
 
@@ -5855390,6 +5855406,9 @@ const TRANSLATIONS = {
 
 
         "chat_filter_my": "Meine Nachrichten",
+        "chat_filter_summary_label": "Filter",
+        "chat_filter_summary_count": "Filter ({n})",
+        "chat_filter_summary_close": "Filterpanel schließen",
 
 
 
@@ -6103800,6 +6103819,9 @@ const TRANSLATIONS = {
         "chat_title": "Chat",
         "chat_filter_all": "All",
         "chat_filter_my": "My Messages",
+        "chat_filter_summary_label": "Filtros",
+        "chat_filter_summary_count": "Filtros ({n})",
+        "chat_filter_summary_close": "Fechar painel de filtros",
         "chat_send_to": "Send to:",
         "chat_input_placeholder": "Type a message...",
         "chat_cancel": "Cancel",
@@ -6343423,6 +6343445,9 @@ const TRANSLATIONS = {
 
         "chat_filter_my": "Mesej Saya",
 
+        "chat_filter_summary_label": "Penapis",
+        "chat_filter_summary_count": "Penapis ({n})",
+        "chat_filter_summary_close": "Tutup panel penapis",
 
 
 
@@ -6744841,6 +6744866,9 @@ const TRANSLATIONS = {
 
         "chat_filter_my": "मेरे संदेश",
 
+        "chat_filter_summary_label": "फ़िल्टर",
+        "chat_filter_summary_count": "फ़िल्टर ({n})",
+        "chat_filter_summary_close": "फ़िल्टर पैनल बंद करें",
 
 
 
@@ -7431244,6 +7431272,9 @@ const TRANSLATIONS = {
 
         "chat_filter_my": "رسائلي",
 
+        "chat_filter_summary_label": "تصفية",
+        "chat_filter_summary_count": "تصفية ({n})",
+        "chat_filter_summary_close": "إغلاق لوحة التصفية",
 
 
 
