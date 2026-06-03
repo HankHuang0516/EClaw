@@ -1,0 +1,202 @@
+# Portal `?` icon — bidirectional references spec
+
+| | |
+|---|---|
+| Card | `card_a20b69d79f4aba684e7d04ec` |
+| Linked prev | `card_aa15ed2618c9246d11a0f6b1` (research card that surfaced the need) |
+| Status | Spec + Impl / P1 |
+| Date | 2026-06-03 |
+| Author | #2 (LOBSTER) |
+
+## 1. Motivation
+
+The EClaw chat bridge already auto-expands references when a user mentions a card id, PR number, or spec doc — the `[REFERENCES — CONTEXT]` block in inbound payloads is a working example. That expansion only happens at chat-send time and is one-way: the chat sees the referenced thing, but the referenced thing does not know it was cited.
+
+Hank's 2026-06-03 chat request:
+
+> card_aa15ed26 直接全做 + 整理 SPEC + ? icon 雙向參照
+
+surfaces three asks. The first two are handled by `card_7579f20522a8276240736c7d`. This card is the third: make the reference graph visible inside portal UI, and make it **bidirectional** so an artifact's `?` panel shows both *what it cites* and *who cites it*.
+
+Concrete pain it removes:
+- When I open a spec doc in portal `/docs`, I can't see which cards / PRs implement it.
+- When I look at a card, I can't see which spec doc grounds it without digging through the description body.
+- When a PR is opened, the linked card and spec are buried in PR body markdown that nobody reads twice.
+
+## 1.1 Non-goals (v1)
+
+- A full knowledge-graph UI (think Obsidian). v1 surfaces in-place popovers only.
+- Cross-device refs. v1 is scoped to a single EClaw device's kanban + repos + portal.
+- Editing references through the UI. v1 reads only; refs are derived from text content.
+- Refs to arbitrary URLs. v1 supports four kinds: **card**, **spec**, **pr**, **doc** (research docs under `docs/research/`).
+
+## 2. Surfaces — where `?` appears
+
+| Surface | Where | Trigger | Position |
+|---|---|---|---|
+| Kanban card | `portal/kanban.html`, kanban card list / detail | always-visible `?` next to card title | next to `…` menu |
+| Spec doc | `portal/docs.html` rendering `docs/specs/*.md` | always-visible `?` in doc header | next to title `h1` |
+| Research doc | `portal/docs.html` rendering `docs/research/*.md` | same as spec doc | same |
+| PR card | `portal/prs.html` (new, optional v1.5) | `?` next to PR row | inline |
+| Chat quote bubble | `portal/chat.html` reference cards | `?` already implicit via expand; v1 reuses same data | inline |
+
+`?` is a 16-px round button with the glyph `ⓘ` (info circle) — `?` is the user-facing nickname but the glyph is `ⓘ` because it scans better in non-CJK locales. The CSS class is `eclaw-refs-icon`. Aria-label: `"Show related cards, specs, and PRs"`.
+
+## 3. Backend contract
+
+### 3.1 `GET /api/refs?from=<id>` — get refs for an artifact
+
+```
+GET /api/refs?from=card_aa15ed2618c9246d11a0f6b1&deviceId=<uuid>&botSecret=<hex>&entityId=2
+```
+
+Response:
+```json
+{
+  "success": true,
+  "from": {"kind": "card", "id": "card_aa15ed26...", "label": "Eclaw 遠端控制 vs minitap-ai/mobile-use"},
+  "refs": [
+    {"kind": "spec",   "id": "docs/specs/mobile-use-integration.md", "label": "mobile-use integration", "direction": "out"},
+    {"kind": "spec",   "id": "docs/specs/portal-bidirectional-refs.md", "label": "portal ? icon refs", "direction": "out"},
+    {"kind": "doc",    "id": "docs/research/2026-06-03-mobile-use-comparison.md", "label": "mobile-use comparison report", "direction": "out"},
+    {"kind": "pr",     "id": "3123", "label": "docs(research): EClaw vs minitap-ai/mobile-use", "direction": "in"},
+    {"kind": "card",   "id": "card_7579f20...", "label": "mobile-use integration full spec", "direction": "out"},
+    {"kind": "card",   "id": "card_a20b69d7...", "label": "portal ? icon bidirectional refs", "direction": "out"}
+  ]
+}
+```
+
+`direction`:
+- `out` — the `from` artifact mentions the ref (looking at the from, it points outward).
+- `in` — the ref mentions `from` (looking at the from, the ref points inward — back-link).
+
+### 3.2 Source-of-truth scan
+
+The refs index is built from these sources, scanned every 5 min by a background job:
+
+| ref kind | scan source |
+|---|---|
+| card | `kanban.cards.description / scope / linkedPrevCardId / linkedNextCardId / comments.text` |
+| spec | files under `docs/specs/**/*.md` (git working tree at HEAD on main) |
+| doc | files under `docs/research/**/*.md` |
+| pr | `gh pr list --state all --limit 200` — title + body |
+
+Pattern matching:
+- `card_[a-f0-9]{24}` for card ids
+- `docs/specs/[\w-]+\.md` and `docs/research/[\w-]+\.md` for doc paths
+- `#\d{3,5}` for PR numbers (validated against the gh listing)
+
+Cache: in-memory map keyed by `from` id, TTL 5 min, written to disk at `backend/.cache/refs.json` for warm start.
+
+### 3.3 `GET /api/refs/graph` (v1.5, optional)
+
+Returns the full edge list for a graph view. Out of scope for v1; spec'd here so the API shape is stable from the start.
+
+```json
+{
+  "success": true,
+  "nodes": [{"kind":"card","id":"...","label":"..."}, ...],
+  "edges": [{"from":"card_X","to":"docs/specs/Y.md"}, ...]
+}
+```
+
+## 4. Frontend contract — `?` popover
+
+### 4.1 Component shell
+
+```html
+<button class="eclaw-refs-icon" data-refs-from="card_aa15ed26..." aria-label="Show related cards, specs, and PRs">ⓘ</button>
+```
+
+A single shared script (`backend/public/shared/refs-popover.js`) wires the click handler. On click:
+
+1. POST not needed; GET `/api/refs?from=<id>` with cached creds.
+2. Render a popover anchored under the `?` button.
+3. Popover content: two columns — **Outgoing** (this cites ↓) and **Incoming** (← cites this). Each row is a clickable link.
+
+### 4.2 Mock — ASCII
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  ⓘ References for card_aa15ed26...                  [ × ]   │
+├─────────────────────────────────────────────────────────────┤
+│  This card cites (out):                                      │
+│   📄 docs/specs/mobile-use-integration.md                    │
+│   📄 docs/specs/portal-bidirectional-refs.md                 │
+│   📄 docs/research/2026-06-03-mobile-use-comparison.md       │
+│   📋 card_7579f205... mobile-use integration full spec       │
+│   📋 card_a20b69d7... portal ? icon bidirectional refs       │
+│                                                              │
+│  Cited by (in):                                              │
+│   🔀 PR #3123 docs(research): EClaw vs minitap-ai/mobile-use │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+CSS rules live in `backend/public/shared/refs-popover.css`. Mobile (≤720 px) uses bottom-sheet variant matching `shared/hover-click-toolbar.css` mobile pattern. Reduced motion respected.
+
+### 4.3 i18n
+
+```jsonc
+{
+  "refs.popover_title": "References",
+  "refs.section_out": "This cites",
+  "refs.section_in": "Cited by",
+  "refs.empty": "No related items yet.",
+  "refs.error": "Couldn't load related items."
+}
+```
+
+EN dictionary update + delegation to #3/#4 for non-EN per `feedback_i18n_delegate`.
+
+## 5. Schema
+
+```ts
+type RefKind = "card" | "spec" | "doc" | "pr";
+type RefDirection = "in" | "out";
+
+interface Ref {
+  kind: RefKind;
+  id: string;          // card_xxx | docs/specs/foo.md | docs/research/bar.md | PR number as string
+  label: string;       // human-readable; truncated to 80 chars
+  direction: RefDirection;
+}
+
+interface RefsResponse {
+  success: true;
+  from: { kind: RefKind; id: string; label: string };
+  refs: Ref[];
+}
+```
+
+## 6. Phasing
+
+| Phase | Scope | Card status |
+|---|---|---|
+| **Phase 1 (this spec PR)** | Spec doc only. No code. | spec PR opened against this card |
+| **Phase 2 (impl backend + scan)** | `/api/refs` endpoint + 5-min scan job + cache | impl card spawned with linkedPrev to this card |
+| **Phase 3 (impl frontend)** | `shared/refs-popover.{js,css}` + i18n keys + wire `?` into kanban/docs/PR portal pages | impl card spawned |
+| **Phase 4 (back-link scan)** | Inbound direction works (PR body mentions card_X → card's `?` panel shows back-link) | included in Phase 2 |
+| **Phase 5 (graph view)** | `/api/refs/graph` + dedicated `/portal/refs/graph.html` | OPTIONAL, deferred to v1.5 if Phase 1-4 are usable |
+
+## 7. Acceptance criteria
+
+- **AC1** — Spec PR merged after Hank + #1/#6 review per `feedback_spec_first`.
+- **AC2** — `GET /api/refs?from=<id>` returns valid `RefsResponse` for any of the 4 ref kinds.
+- **AC3** — Background scan runs every 5 min and refreshes the cache without blocking requests.
+- **AC4** — Clicking `?` on any of the 3 v1 surfaces (kanban / spec doc / research doc) opens the popover with at least one out-direction ref.
+- **AC5** — Back-link auto-populates: open PR mentioning `card_X` in its body → card_X's `?` shows the PR as incoming, no manual editing.
+- **AC6** — Mobile bottom-sheet variant at 390 × 844 viewport.
+- **AC7** — Playwright prod E2E covering all 3 v1 surfaces + screenshots attached to the impl card per `feedback_personal_screenshot_review`.
+
+## 8. Rollback
+
+- Spec PR revert removes the doc only.
+- Phase 2 impl behind env flag `ECLAW_REFS_INDEX_ENABLED`; flag off → endpoint returns `{success:true, refs:[]}` — `?` icon renders an empty popover but doesn't break the UI.
+- Phase 3 impl: removing `<script src="shared/refs-popover.js">` from portal pages removes all `?` icons; no other DOM impact.
+
+## 9. References
+
+- Research card that surfaced the ask: `card_aa15ed2618c9246d11a0f6b1`
+- Existing chat-side reference expansion pattern: bridge's `[REFERENCES — CONTEXT]` block (see `claude-code-eclaw-channel/bridge.ts`)
+- Memory: `feedback_spec_first`, `feedback_link_card_full_e2e_required`, `feedback_i18n_delegate`, `feedback_personal_screenshot_review`
