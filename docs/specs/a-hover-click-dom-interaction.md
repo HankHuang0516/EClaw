@@ -1,6 +1,6 @@
 # Spec: A · hover-click DOM interaction — IDE toolbar + import + diff→Quote→Agent loop
 
-**Status:** Draft — awaiting #1 + #6 sign-off on §2 / §4 / §6
+**Status:** Approved — #6 sign-off [PR #3106 comment 4609844155](https://github.com/HankHuang0516/EClaw/pull/3106#issuecomment-4609844155) covering §2 / §4 / §6 + all 7 §10 reviewer calls.
 **Cards:** `card_6df1925b065a175b58f5ea38` (Spec/P1) → `card_3ea95119635be91b5ad0a18f` (Impl/P1) → `card_af967715a0ab1724da98dcc2` (Test/P2)
 **Driver:** Hank web_chat 2026-06-03 14:43 TW —「交互開法走 A · 悬停点击 (DOM) 的路線繼續」
 **Author:** #2 (LOBSTER)
@@ -199,22 +199,32 @@ Every selection-release produces TWO artifacts that travel together:
 
 ### 6.1 Unified diff (Agent-consumable)
 
-Standard `diff -u` format, file path is the source location from `sourceMap` (§4.1). Example for a `style.color` change:
+Standard `diff -u` format, file path is the source location from `sourceMap` (§4.1). Example for a `style.color` change on a button (real before / after — the button had no inline `style` before, only a class):
 
 ```diff
 --- a/portal/chat.html
 +++ b/portal/chat.html
-@@ -42,7 +42,7 @@
+@@ -42,6 +42,7 @@
    <button id="filterToggle"
--          class="btn btn-primary"
-+          class="btn btn-primary"
-           style="color: rebeccapurple;"
+           class="btn btn-primary"
++          style="color: rebeccapurple;"
            data-i18n="filter.toggle">
+     Toggle
+   </button>
 ```
 
 - Multi-element mutations produce one diff per affected source file, concatenated.
-- Synthetic content with no source file gets a virtual path (`<synthetic:user-edit-${timestamp}>`).
+- Synthetic content with no source file gets a virtual path (`<synthetic:user-edit-${timestamp}>`), but only as an **intermediate / draft** path — see §6.1.1.
 - Whitespace + reformatting kept to a minimum so the human-readable patch is the same shape the Agent will write.
+
+### 6.1.1 Synthetic-source path constraint (#6 review decision)
+
+`<synthetic:user-edit-${timestamp}>` is acceptable on the local draft (so the toolbar can show a preview before a real target is known) but **must NOT travel to a receiving Agent unaltered**. Before the Quote is committed to chat:
+
+- Either the source-map resolves to a real target file (HTML / JSX / template) and the synthetic path is rewritten to the resolved path, OR
+- The Quote is explicitly tagged `semantic-only: true` — the receiving Agent treats it as a description of intent (a 'change request') rather than a directly-applicable patch.
+
+`semantic-only` Quotes show a visual marker in the chat composer ("Description-only — Agent will reinterpret") so the user knows their diff is not a hand-applicable patch. The default behaviour is to BLOCK send-to-Agent until the path resolves; the semantic-only flag is an opt-in for cases where the user wants the Agent to figure out the right file.
 
 ### 6.2 Semantic patch JSON (UI display)
 
@@ -356,15 +366,19 @@ Covered in detail in the linked-next test card (`card_af967715a0ab1724da98dcc2`)
 
 ---
 
-## 10. Open questions for #1 / #6 review
+## 10. Reviewer decisions (locked from #6 sign-off, 2026-06-03)
 
-1. **Toolbar focus default (§3.2):** first chip vs close button — I lean first chip, breaks PR #3088 precedent but matches Figma / VS Code muscle memory. Reviewer call.
-2. **Container vs leaf selection (§2.5):** default to smallest containing element with `Alt+Click` to walk up — vs default to a smarter heuristic (e.g. nearest `data-component-id`). Smarter heuristic is harder to spec but better UX.
-3. **CORS proxy allowlist (§4.2):** open public-host allowlist vs allow-by-default-deny-on-allowlist-miss. Open-allowlist is safer but more friction; revisit after first prod usage data.
-4. **Synthetic-content source file path (§6.1):** `<synthetic:user-edit-${timestamp}>` placeholder vs forcing the user to attach a real target file. Placeholder is friendlier; reviewer call on whether the Agent can handle synthetic paths gracefully.
-5. **Delete inline Undo timer (§3.1):** 3s ghost-then-commit vs immediate commit with toast-Undo. The ghost approach is slower but harder to misclick.
-6. **Mobile chip order (§3.1):** vertical list vs horizontal scroll. Vertical is friendlier for thumb reach; horizontal saves vertical space. Lean vertical.
-7. **Accessibility-tree v2 timing:** ship hover-click v1 first then layer AX in v2 (current plan), vs spec both surfaces in v1 and ship them together. Lean v1-first; AX is hard.
+All 7 calls below were originally open questions; #6's review on [PR #3106 comment 4609844155](https://github.com/HankHuang0516/EClaw/pull/3106#issuecomment-4609844155) resolved them as follows. Locking inline so future readers don't have to dig the PR.
+
+1. **Toolbar focus default (§3.2):** ✅ First chip (`Move`). Esc + close button stay reachable. Delete confirm still uses PR #3088 Cancel-first.
+2. **Container vs leaf selection (§2.5):** ✅ Smallest selectable element + `Alt+Click` / `Option+Tap` ancestor walk. NO smart heuristic as v1 default — surprise factor too high. `data-component-id` may be used to improve labels or as a future jump affordance, not as a selection heuristic.
+3. **CORS proxy allowlist (§4.2):** ✅ Deny-on-miss with a curated public-host allowlist. Private IPs / localhost / file:// blocked server-side. Arbitrary public-internet proxying is too much SSRF + content-policy surface for v1.
+4. **Synthetic-content source file path (§6.1):** ✅ Allowed only as draft/preview. Before send-to-Agent, the source-map must resolve to a real target file, OR the Quote is explicitly tagged `semantic-only: true` (description of intent, not directly-applicable patch). See §6.1.1.
+5. **Delete inline Undo (§3.1):** ✅ 3s ghost-then-commit. Slower but harder to misclick on destructive DOM removal; easier to visually audit.
+6. **Mobile chip order (§3.1):** ✅ Vertical list. Thumb-friendly; avoids hidden horizontal-scroll on a destructive-capable toolbar.
+7. **Accessibility-tree v2 timing:** ✅ Ship DOM-backed v1 first. Keep the `kind: "ax"` stub returning `not-supported-v1`. Layer AX-tree support in v2 after source-backed flow is proven.
+
+No other change requests from #6.
 
 ---
 
