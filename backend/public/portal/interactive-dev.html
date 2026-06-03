@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" href="assets/favicon-32.png">
     <link rel="stylesheet" href="shared/style.css">
     <link rel="stylesheet" href="shared/info.css">
-    <link rel="stylesheet" href="../shared/hover-click-toolbar.css?v=1.2b1">
+    <link rel="stylesheet" href="../shared/hover-click-toolbar.css?v=1.3">
     <style>
         /* ══════════════ Sub-tabs (same as mission.html / kanban.html) ══════════════ */
         .sub-tabs { display:flex; gap:0; margin-bottom:20px; border-bottom:1px solid var(--card-border); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
@@ -38,8 +38,34 @@
         .id-import-actions { display: flex; justify-content: flex-end; gap: 8px; margin: 16px 0 0; padding: 0; }
         .id-import-actions button { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--card-border, rgba(0,0,0,0.12)); background: var(--bg, #fff); color: inherit; cursor: pointer; font-size: 13px; }
         .id-import-actions button[type="submit"] { background: var(--primary, #6366f1); color: #fff; border-color: transparent; }
-        #id-import-mount iframe { width: 100%; min-height: 480px; border: 1px solid var(--card-border, rgba(0,0,0,0.12)); border-radius: 10px; margin-top: 12px; }
-        #id-import-mount .id-import-imported-html { padding: 12px; border: 1px solid var(--card-border, rgba(0,0,0,0.12)); border-radius: 10px; margin-top: 12px; background: var(--bg, #fff); }
+        /* v1.3: cover-mode mount.
+           When import is active, #id-import-mount becomes the full editable
+           surface and the bundled sandbox (#panel-point-edit-demo) is hidden.
+           This avoids the "empty box pushed above demo" confusion Hank flagged
+           on prod 2026-06-03. */
+        body.id-import-active #panel-point-edit-demo { display: none; }
+        #id-import-mount:empty { display: none; }
+        #id-import-mount { margin-top: 12px; }
+        .id-import-shell { position: relative; border: 1px solid var(--card-border, rgba(0,0,0,0.12)); border-radius: 10px; background: var(--bg, #fff); min-height: 520px; }
+        .id-import-shell iframe,
+        .id-import-shell .id-import-imported-html { display: block; width: 100%; min-height: 520px; border: 0; border-radius: 10px; background: #fff; }
+        .id-import-shell .id-import-imported-html { padding: 16px; }
+        /* "Start editing" overlay — visible after iframe load, dismissed on click.
+           Sits over the iframe so the user can see the loaded content while
+           confirming the cookie/login state is correct before edit mode arms. */
+        .id-import-startgate { position: absolute; left: 12px; right: 12px; bottom: 12px; display: flex; gap: 12px; align-items: center; padding: 12px 16px; background: rgba(99,102,241,0.95); color: #fff; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.18); z-index: 5; }
+        .id-import-startgate small { display: block; font-size: 11px; opacity: 0.85; margin-top: 2px; }
+        .id-import-startgate button { margin-left: auto; padding: 8px 16px; background: #fff; color: #4338ca; border: 0; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px; }
+        .id-import-startgate button:hover { background: #f4f4f5; }
+        .id-import-shell[data-edit-armed="true"] .id-import-startgate { display: none; }
+        /* Iframe error / blocked UX */
+        .id-import-error-box { display: flex; flex-direction: column; gap: 8px; padding: 24px; min-height: 240px; align-items: center; justify-content: center; text-align: center; background: rgba(244, 63, 94, 0.06); border-radius: 10px; }
+        .id-import-error-box .id-import-error-title { font-weight: 600; color: #b91c1c; }
+        .id-import-error-box .id-import-error-msg { font-size: 13px; color: var(--text-secondary, #71717a); max-width: 420px; }
+        .id-import-error-box button { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--card-border, rgba(0,0,0,0.12)); background: var(--bg, #fff); color: inherit; cursor: pointer; font-size: 13px; }
+        /* Cancel-import button — top-right of mount when active */
+        .id-import-shell .id-import-cancel { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); color: #fff; border: 0; border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; z-index: 6; }
+        .id-import-shell .id-import-cancel:hover { background: rgba(0,0,0,0.8); }
 
         @media (max-width:768px) {
             .sub-tab { padding:8px 12px; font-size:13px; }
@@ -230,10 +256,10 @@
         opens anchored to the picked element. Esc / outside-click dismisses
         per the toolbar's own handlers; the sandbox stays interactive.
     -->
-    <script src="../shared/dom-select.js?v=1.2b1"></script>
-    <script src="../shared/hover-click-toolbar.js?v=1.2b1"></script>
-    <script src="../shared/diff-format.js?v=1.2b1"></script>
-    <script src="../shared/content-import.js?v=1.2b1"></script>
+    <script src="../shared/dom-select.js?v=1.3"></script>
+    <script src="../shared/hover-click-toolbar.js?v=1.3"></script>
+    <script src="../shared/diff-format.js?v=1.3"></script>
+    <script src="../shared/content-import.js?v=1.3"></script>
     <script>
     // v1.2c Import modal wiring
     (function() {
@@ -267,8 +293,8 @@
 
             try {
                 if (kind === 'this-page') {
-                    // Default — just clear any prior import. Existing sandbox stays.
-                    mount.innerHTML = '';
+                    // Default — clear any prior import + restore the bundled sandbox.
+                    clearImportMount();
                     sourceContextOut({ kind: 'portal', path: window.location.pathname, url: window.location.href });
                     return;
                 }
@@ -278,12 +304,16 @@
                     const found = document.querySelectorAll(sel);
                     if (found.length === 0) throw new Error(`No element matches ${sel}`);
                     if (found.length > 1) console.warn(`Selector matched ${found.length} elements; using first`);
+                    const shell = makeImportShell();
                     const wrap = document.createElement('div');
                     wrap.className = 'id-import-imported-html';
                     wrap.appendChild(found[0].cloneNode(true));
-                    mount.innerHTML = '';
-                    mount.appendChild(wrap);
-                    rebindToolbar(wrap);
+                    shell.appendChild(wrap);
+                    activateMount(shell);
+                    // v1.3: Start-editing gate for "selector" too — same cookie/login
+                    // confirmation flow, since the cloned fragment may be from a
+                    // page that isn't ready yet.
+                    showStartGate(shell, () => rebindToolbar(wrap, shell));
                     sourceContextOut({ kind: 'portal', path: window.location.pathname, url: window.location.href + '#' + sel });
                     return;
                 }
@@ -294,16 +324,30 @@
                     if (!ImportLib.isAllowedPublicUrl(url)) {
                         throw new Error('URL not in allowlist (eclawbot.com domains + example.com only in v1)');
                     }
-                    mount.innerHTML = '<p>Loading…</p>';
-                    const result = await ImportLib.importContent({ kind: 'url', url });
-                    mount.innerHTML = '';
-                    // result.rootEl is inside an iframe — we surface the iframe itself for visibility.
-                    const ifr = document.querySelector('.eclaw-content-import__iframe');
-                    if (ifr) {
-                        ifr.style.position = 'static';
-                        mount.appendChild(ifr);
+                    const shell = makeImportShell();
+                    shell.innerHTML = '<p style="padding:24px;text-align:center;color:#71717a">Loading…</p>';
+                    activateMount(shell);
+                    try {
+                        const result = await ImportLib.importContent({ kind: 'url', url });
+                        shell.innerHTML = '';
+                        addCancelChip(shell);
+                        const ifr = result.iframe || document.querySelector('.eclaw-content-import__iframe');
+                        if (ifr) {
+                            ifr.style.position = 'static';
+                            shell.appendChild(ifr);
+                        }
+                        sourceContextOut(result.sourceContext);
+                        // v1.3: defer toolbar binding until user clicks "Start editing".
+                        // This lets the user log in / set cookies inside the iframe
+                        // without the toolbar trapping clicks on auth widgets.
+                        showStartGate(shell, () => {
+                            const root = (ifr && ifr.contentDocument && ifr.contentDocument.body) || shell;
+                            rebindToolbar(root, shell);
+                        });
+                    } catch (err) {
+                        showFrameError(shell, String(err.message || err), () => performImport('url', form));
+                        throw err;
                     }
-                    sourceContextOut(result.sourceContext);
                     return;
                 }
             } catch (err) {
@@ -313,7 +357,77 @@
             }
         }
 
-        function rebindToolbar(newRoot) {
+        // v1.3 helpers — cover-mode mount + Start-editing gate + error UX.
+        function makeImportShell() {
+            const shell = document.createElement('div');
+            shell.className = 'id-import-shell';
+            return shell;
+        }
+        function activateMount(shell) {
+            mount.innerHTML = '';
+            mount.appendChild(shell);
+            document.body.classList.add('id-import-active');
+        }
+        function clearImportMount() {
+            mount.innerHTML = '';
+            document.body.classList.remove('id-import-active');
+            if (window.__hcDomSelect && window.__hcDomSelect.destroy) {
+                window.__hcDomSelect.destroy();
+                window.__hcDomSelect = null;
+            }
+            // re-bind the bundled sandbox so "This page" import works after a URL import.
+            const sandbox = document.querySelector('.ped-sandbox');
+            if (sandbox) rebindToolbar(sandbox, null);
+        }
+        function addCancelChip(shell) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'id-import-cancel';
+            btn.textContent = '✕ Close import';
+            btn.addEventListener('click', clearImportMount);
+            shell.appendChild(btn);
+        }
+        function showStartGate(shell, onStart) {
+            const gate = document.createElement('div');
+            gate.className = 'id-import-startgate';
+            gate.innerHTML = `
+                <span>
+                    <strong>確認頁面已就緒？</strong>
+                    <small>登入完成 / 內容載入後再開始編輯，工具列才會綁定。</small>
+                </span>`;
+            const startBtn = document.createElement('button');
+            startBtn.type = 'button';
+            startBtn.textContent = '開始調整 ✏️';
+            startBtn.addEventListener('click', () => {
+                shell.setAttribute('data-edit-armed', 'true');
+                gate.remove();
+                onStart();
+            });
+            gate.appendChild(startBtn);
+            shell.appendChild(gate);
+        }
+        function showFrameError(shell, msg, onRetry) {
+            shell.innerHTML = '';
+            addCancelChip(shell);
+            const box = document.createElement('div');
+            box.className = 'id-import-error-box';
+            const title = document.createElement('div');
+            title.className = 'id-import-error-title';
+            title.textContent = '無法載入頁面';
+            const body = document.createElement('div');
+            body.className = 'id-import-error-msg';
+            body.textContent = msg;
+            const retry = document.createElement('button');
+            retry.type = 'button';
+            retry.textContent = '重試 Retry';
+            retry.addEventListener('click', onRetry);
+            box.appendChild(title);
+            box.appendChild(body);
+            box.appendChild(retry);
+            shell.appendChild(box);
+        }
+
+        function rebindToolbar(newRoot, shell) {
             // Stop the existing dom-select binding on ped-sandbox and bind a
             // fresh one to the imported root. The toolbar instance is reused.
             if (window.__hcDomSelect && window.__hcDomSelect.destroy) {
@@ -326,6 +440,7 @@
                 onSelect: (el) => toolbar.open(el),
                 onDismiss: () => toolbar.close(),
             });
+            if (shell) shell.setAttribute('data-edit-armed', 'true');
         }
     })();
 

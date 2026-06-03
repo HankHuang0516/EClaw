@@ -119,6 +119,17 @@
     const row = document.createElement('div');
     row.className = 'eclaw-hover-click-toolbar__row';
 
+    // v1.3: drag handle. Hank wants the docked toolbar to be repositionable
+    // anywhere on the viewport. Position persists per origin in localStorage.
+    const dragHandle = document.createElement('span');
+    dragHandle.className = 'eclaw-hover-click-toolbar__drag-handle';
+    dragHandle.setAttribute('role', 'button');
+    dragHandle.setAttribute('tabindex', '-1');
+    dragHandle.setAttribute('aria-label', t('hover_click.drag_handle_aria', 'Drag to move toolbar'));
+    dragHandle.title = t('hover_click.drag_handle_title', 'Drag to move');
+    dragHandle.textContent = '⠇';
+    row.appendChild(dragHandle);
+
     // v1.1: target-label readout at the front so the docked toolbar
     // tells the user what they're acting on (was implicit before).
     const labelEl = document.createElement('span');
@@ -158,6 +169,87 @@
 
     shell.appendChild(row);
     document.body.appendChild(shell);
+
+    // v1.3: restore persisted user-chosen position from localStorage and clamp
+    // to the current viewport. Default is the CSS top:16px right:16px dock; we
+    // only override when the user has dragged before.
+    const POS_STORAGE_KEY = 'eclaw.hctoolbar.pos';
+    function clampToViewport(x, y, w, h) {
+      const vw = (root.innerWidth || document.documentElement.clientWidth);
+      const vh = (root.innerHeight || document.documentElement.clientHeight);
+      return {
+        x: Math.max(4, Math.min(x, vw - w - 4)),
+        y: Math.max(4, Math.min(y, vh - h - 4)),
+      };
+    }
+    function applyPersistedPosition() {
+      if (isMobile()) return;
+      let raw;
+      try { raw = root.localStorage.getItem(POS_STORAGE_KEY); } catch (_) { raw = null; }
+      if (!raw) return;
+      let pos;
+      try { pos = JSON.parse(raw); } catch (_) { return; }
+      if (!pos || typeof pos.x !== 'number' || typeof pos.y !== 'number') return;
+      // Measure shell first by rendering invisibly to get width.
+      const wasHidden = shell.hidden;
+      shell.hidden = false;
+      shell.style.visibility = 'hidden';
+      const rect = shell.getBoundingClientRect();
+      shell.style.visibility = '';
+      shell.hidden = wasHidden;
+      const clamped = clampToViewport(pos.x, pos.y, rect.width, rect.height);
+      shell.style.left = clamped.x + 'px';
+      shell.style.top = clamped.y + 'px';
+      shell.style.right = 'auto';
+      shell.setAttribute('data-user-positioned', 'true');
+    }
+    applyPersistedPosition();
+
+    function persistPosition() {
+      try {
+        const rect = shell.getBoundingClientRect();
+        root.localStorage.setItem(POS_STORAGE_KEY, JSON.stringify({ x: rect.left, y: rect.top }));
+      } catch (_) {}
+    }
+
+    let toolbarDrag = null;
+    dragHandle.addEventListener('pointerdown', function(e) {
+      if (isMobile()) return; // mobile uses bottom-sheet variant
+      e.preventDefault();
+      const rect = shell.getBoundingClientRect();
+      toolbarDrag = {
+        offsetX: e.clientX - rect.left,
+        offsetY: e.clientY - rect.top,
+        width: rect.width,
+        height: rect.height,
+        pointerId: e.pointerId,
+      };
+      shell.setAttribute('data-dragging', 'true');
+      try { dragHandle.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+    dragHandle.addEventListener('pointermove', function(e) {
+      if (!toolbarDrag || e.pointerId !== toolbarDrag.pointerId) return;
+      const clamped = clampToViewport(
+        e.clientX - toolbarDrag.offsetX,
+        e.clientY - toolbarDrag.offsetY,
+        toolbarDrag.width,
+        toolbarDrag.height,
+      );
+      shell.style.left = clamped.x + 'px';
+      shell.style.top = clamped.y + 'px';
+      shell.style.right = 'auto';
+      shell.setAttribute('data-user-positioned', 'true');
+    });
+    function endToolbarDrag(e) {
+      if (!toolbarDrag) return;
+      if (e && e.pointerId !== toolbarDrag.pointerId) return;
+      try { dragHandle.releasePointerCapture(toolbarDrag.pointerId); } catch (_) {}
+      toolbarDrag = null;
+      shell.removeAttribute('data-dragging');
+      persistPosition();
+    }
+    dragHandle.addEventListener('pointerup', endToolbarDrag);
+    dragHandle.addEventListener('pointercancel', endToolbarDrag);
 
     // Outside click closes (but not clicks inside the toolbar or on the
     // currently-selected element).
