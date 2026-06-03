@@ -1832,6 +1832,18 @@ try {
     console.error('[KanbanTags] Failed to load module:', err.message);
 }
 
+// Portal `?` icon bidirectional refs index — spec docs/specs/portal-bidirectional-refs.md
+// Gated by env flag ECLAW_REFS_INDEX_ENABLED (default off in prod per spec §8).
+try {
+    const refsModule = require('./api_refs')(devices, { serverLog });
+    app.use('/api', refsModule.router);
+    const refsEnabled = process.env.ECLAW_REFS_INDEX_ENABLED === '1' ||
+                        process.env.ECLAW_REFS_INDEX_ENABLED === 'true';
+    console.log('[Refs] Module loaded (enabled=' + refsEnabled + ')');
+} catch (err) {
+    console.error('[Refs] Failed to load module:', err.message);
+}
+
 // Idle Dispatch System — smart bot availability-based card dispatch
 try {
     const idleDispatchRouter = require('./api_idle_dispatch');

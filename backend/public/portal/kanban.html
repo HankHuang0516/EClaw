@@ -7,6 +7,7 @@
     <title data-i18n="kanban_title">EClawbot - Kanban Board</title>
     <link rel="icon" type="image/png" href="assets/favicon-32.png">
     <link rel="stylesheet" href="shared/style.css">
+    <link rel="stylesheet" href="../shared/refs-popover.css">
     <style>
         /* ══════════════ Sub-tabs (same as mission.html) ══════════════ */
         .sub-tabs { display:flex; gap:0; margin-bottom:20px; border-bottom:1px solid var(--card-border); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
@@ -1065,6 +1066,8 @@
     <script src="../shared/transition-overlay.js"></script>
     <script src="../shared/kanban-status.js"></script>
     <script src="../shared/kanban-sort.js"></script>
+    <script src="../shared/help-popover.js"></script>
+    <script src="../shared/refs-popover.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>
     <script src="shared/footer.js"></script>
@@ -1878,7 +1881,10 @@
                     ${archivedBadge}
                     <span class="kb-card-assigned">${renderAssignedAvatars(card.assignedBots)}</span>
                 </div>
-                <div class="kb-card-title">${escapeHtml(card.title)}</div>
+                <div class="kb-card-title">
+                    ${escapeHtml(card.title)}
+                    <button type="button" class="eclaw-refs-icon" data-refs-from="${card.id}" aria-label="Show related cards, specs, and PRs" title="References" onclick="event.stopPropagation()">ⓘ</button>
+                </div>
                 ${renderTags(card.tags)}
                 ${card.description ? '<div class="kb-card-desc">'+escapeHtml(compactKanbanPreview(card.description))+'</div>' : ''}
                 <div class="kb-card-footer">
