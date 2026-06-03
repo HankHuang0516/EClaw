@@ -267169,6 +267169,12 @@ const TRANSLATIONS = {
 
         "kanban_nudge_batch_label": "Cards per cycle",
         "kanban_nudge_batch_help": "Maximum number of L1 stale cards picked per cron tick — device-wide cap, NOT per-entity. L2 (priority bump) and L3 (auto-block) escalations are unaffected. See L1/L2/L3 in the kanban-nudge spec.",
+        "refs.popover_title": "References",
+        "refs.section_out": "This cites",
+        "refs.section_in": "Cited by",
+        "refs.empty": "No related items yet.",
+        "refs.error": "Couldn't load related items.",
+        "refs.close": "Close references",
 
 
 

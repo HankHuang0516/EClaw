@@ -141,9 +141,16 @@
     }
 
     // ── Build popover DOM ──────────────────────────────────────────────────────
-    function buildPopover(content) {
+    function buildPopover(content, opts) {
+        opts = opts || {};
         const el = document.createElement('div');
         el.className = POPOVER_CLASS;
+        if (opts.variant === 'sheet') el.classList.add(POPOVER_CLASS + '--sheet');
+        if (opts.extraClass) el.classList.add(opts.extraClass);
+        if (typeof opts.maxWidth === 'number' && opts.maxWidth > 0) {
+            el.style.setProperty('--help-popover-max-width', opts.maxWidth + 'px');
+            el.style.maxWidth = opts.maxWidth + 'px';
+        }
         el.setAttribute('role', 'tooltip');
         el.setAttribute('tabindex', '-1');
         el.id = `${POPOVER_CLASS}-${++popoverSeq}`;
@@ -159,7 +166,7 @@
 
         const closeBtn = document.createElement('button');
         closeBtn.className = POPOVER_CLASS + '-close';
-        closeBtn.setAttribute('aria-label', 'Close help');
+        closeBtn.setAttribute('aria-label', opts.closeLabel || 'Close help');
         closeBtn.textContent = '✕';
         closeBtn.type = 'button';
         closeBtn.addEventListener('click', () => hidePopover());
@@ -170,10 +177,25 @@
     }
 
     // ── Show / Hide ────────────────────────────────────────────────────────────
-    function showPopover(content, anchor, placement = 'top') {
+    /**
+     * showPopover(content, anchor, placementOrOpts)
+     *   placementOrOpts may be:
+     *     - a string ('top'|'bottom'|'left'|'right')   → legacy placement
+     *     - an object { placement?, maxWidth?, variant?: 'tooltip'|'sheet', extraClass?, closeLabel? }
+     * `variant: 'sheet'` engages the mobile bottom-sheet layout (CSS-driven).
+     */
+    function showPopover(content, anchor, placementOrOpts) {
+        let placement = 'top';
+        let opts = {};
+        if (typeof placementOrOpts === 'string') {
+            placement = placementOrOpts;
+        } else if (placementOrOpts && typeof placementOrOpts === 'object') {
+            opts = placementOrOpts;
+            if (opts.placement) placement = opts.placement;
+        }
         hidePopover(); // close any existing
 
-        const popover = buildPopover(content);
+        const popover = buildPopover(content, opts);
         document.body.appendChild(popover);
         anchor.setAttribute('aria-describedby', popover.id);
         activeDescribedBy = { anchor, id: popover.id };
@@ -303,9 +325,11 @@
         });
     }
 
-    /** Show popover programmatically */
-    function show(content, anchor, placement) {
-        showPopover(content, anchor, placement);
+    /** Show popover programmatically.
+     *  Signature: show(content, anchor, placementOrOpts) — see showPopover().
+     */
+    function show(content, anchor, placementOrOpts) {
+        showPopover(content, anchor, placementOrOpts);
     }
 
     /** Hide active popover */
