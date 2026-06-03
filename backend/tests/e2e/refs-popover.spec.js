@@ -51,8 +51,8 @@ ${extraStyle}
 </head>
 <body>
 <script>
-  // Stub creds + fetch
-  window.deviceState = { deviceId: 'dev-test', botSecret: 'sec-test', entityId: '2' };
+  // Stub creds + fetch — match kanban portal convention (window.currentUser).
+  window.currentUser = { deviceId: 'dev-test', deviceSecret: 'sec-test', entityId: '2' };
   window.__capturedFetches = [];
   window.__fetchResolver = null;
   window.fetch = (url) => {
@@ -127,11 +127,30 @@ test('desktop: ? icon click → popover renders Outgoing + Incoming', async () =
         assert(out.length === 2, `outgoing rows=${out.length}, expected 2`);
         assert(inn.length === 1, `incoming rows=${inn.length}, expected 1`);
 
-        // fetch was called with correct URL shape
+        // fetch was called with correct URL shape — using window.currentUser
+        // convention (deviceSecret, not botSecret)
         const urls = await page.evaluate(() => window.__capturedFetches);
         assert(urls.length === 1, `fetches=${urls.length}`);
         assert(urls[0].includes('/api/refs?from=card_aa15ed26'), 'fetch URL: ' + urls[0]);
         assert(urls[0].includes('deviceId=dev-test'), 'fetch creds: ' + urls[0]);
+        assert(urls[0].includes('deviceSecret=sec-test'), 'expected deviceSecret in URL, was: ' + urls[0]);
+        assert(!urls[0].includes('botSecret='), 'should NOT include botSecret when deviceSecret present: ' + urls[0]);
+    });
+});
+
+test('auth: botSecret fallback when deviceSecret absent (bot-authed caller)', async () => {
+    const html = buildHtml().replace(
+        "window.currentUser = { deviceId: 'dev-test', deviceSecret: 'sec-test', entityId: '2' };",
+        "window.currentUser = { deviceId: 'dev-test', botSecret: 'bot-test', entityId: 2 };"
+    );
+    await withPage({ viewport: { width: 1280, height: 800 }, html }, async (page) => {
+        await page.click('.eclaw-refs-icon');
+        await page.waitForSelector('.eclaw-refs-icon-title');
+        const urls = await page.evaluate(() => window.__capturedFetches);
+        assert(urls.length === 1, `fetches=${urls.length}`);
+        assert(urls[0].includes('botSecret=bot-test'), 'expected botSecret fallback: ' + urls[0]);
+        assert(urls[0].includes('entityId=2'), 'expected entityId in URL: ' + urls[0]);
+        assert(!urls[0].includes('deviceSecret='), 'should NOT include deviceSecret: ' + urls[0]);
     });
 });
 

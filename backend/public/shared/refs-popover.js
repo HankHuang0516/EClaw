@@ -27,16 +27,21 @@
     const REFS_ENDPOINT = '/api/refs';
 
     // ── Auth ──────────────────────────────────────────────────────────────────
+    // Matches the kanban portal convention: `window.currentUser.deviceId /
+    // deviceSecret / entityId` is the canonical source set by shared/auth.js.
+    // Test stubs may inject `window.deviceState` instead.
     function readCreds() {
         try {
+            const cu = window.currentUser || {};
             const ds = window.deviceState || {};
             return {
-                deviceId: ds.deviceId || localStorage.getItem('eclaw.deviceId'),
-                botSecret: ds.botSecret || localStorage.getItem('eclaw.botSecret'),
-                entityId: ds.entityId || localStorage.getItem('eclaw.entityId') || '2',
+                deviceId: cu.deviceId || ds.deviceId || null,
+                deviceSecret: cu.deviceSecret || ds.deviceSecret || null,
+                botSecret: cu.botSecret || ds.botSecret || null,
+                entityId: cu.entityId ?? ds.entityId ?? null,
             };
         } catch (_) {
-            return { deviceId: null, botSecret: null, entityId: '2' };
+            return { deviceId: null, deviceSecret: null, botSecret: null, entityId: null };
         }
     }
 
@@ -174,15 +179,23 @@
 
     // ── Fetch ─────────────────────────────────────────────────────────────────
     async function fetchRefs(fromId) {
-        const { deviceId, botSecret, entityId } = readCreds();
-        if (!deviceId || !botSecret) {
+        const { deviceId, deviceSecret, botSecret, entityId } = readCreds();
+        if (!deviceId) throw new Error('missing_creds');
+        const params = ['from=' + encodeURIComponent(fromId),
+                        'deviceId=' + encodeURIComponent(deviceId)];
+        // Prefer deviceSecret (kanban portal convention); fall back to botSecret
+        // for bot-authed callers / tests.
+        if (deviceSecret) {
+            params.push('deviceSecret=' + encodeURIComponent(deviceSecret));
+        } else if (botSecret) {
+            params.push('botSecret=' + encodeURIComponent(botSecret));
+        } else {
             throw new Error('missing_creds');
         }
-        const url = REFS_ENDPOINT
-            + '?from=' + encodeURIComponent(fromId)
-            + '&deviceId=' + encodeURIComponent(deviceId)
-            + '&botSecret=' + encodeURIComponent(botSecret)
-            + '&entityId=' + encodeURIComponent(entityId);
+        if (entityId !== null && entityId !== undefined && entityId !== '') {
+            params.push('entityId=' + encodeURIComponent(entityId));
+        }
+        const url = REFS_ENDPOINT + '?' + params.join('&');
         const res = await fetch(url, { credentials: 'same-origin' });
         if (!res.ok) throw new Error('http_' + res.status);
         const json = await res.json();

@@ -32,6 +32,7 @@ const path = require('path');
 const { execFile } = require('child_process');
 const { promisify } = require('util');
 const { Pool } = require('pg');
+const safeEqual = require('./safe-equal');
 
 const execFileAsync = promisify(execFile);
 
@@ -362,20 +363,28 @@ function readCache() {
 }
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
-
+// Mirrors the kanban.js / mission.js authenticate() pattern so the portal calls
+// from kanban.html (which already pass deviceSecret) and bot calls (which pass
+// botSecret + entityId) both work. Refs reads are device-scoped, so any valid
+// credential pair for the device is accepted.
 function authDevice(devices, req) {
-    const deviceId = req.query.deviceId || req.body?.deviceId;
-    const botSecret = req.query.botSecret || req.body?.botSecret;
-    if (!deviceId || !botSecret) return null;
-    const dev = devices?.[deviceId];
-    if (!dev) return null;
-    // Match the shape used elsewhere in the codebase: bot_secret stored on
-    // entity records keyed by entityId. We accept any entity's botSecret on
-    // this device (the refs read is device-scoped, not per-entity).
-    if (dev.bot_secret && dev.bot_secret === botSecret) return deviceId;
-    if (Array.isArray(dev.entities)) {
-        for (const ent of dev.entities) {
-            if (ent.bot_secret === botSecret) return deviceId;
+    const params = { ...(req.query || {}), ...(req.body || {}) };
+    const { deviceId, deviceSecret, botSecret, entityId } = params;
+    if (!deviceId) return null;
+    const device = devices?.[deviceId];
+    if (!device) return null;
+    if (deviceSecret && safeEqual(device.deviceSecret, deviceSecret)) return deviceId;
+    if (botSecret) {
+        // entities is an object map keyed by entityId.
+        const entities = device.entities || {};
+        if (entityId !== undefined && entityId !== null && entityId !== '') {
+            const entity = entities[entityId] || entities[parseInt(entityId, 10)];
+            if (entity && safeEqual(entity.botSecret, botSecret)) return deviceId;
+        } else {
+            // Fall through: any entity on the device with matching botSecret.
+            for (const k of Object.keys(entities)) {
+                if (safeEqual(entities[k]?.botSecret, botSecret)) return deviceId;
+            }
         }
     }
     return null;
