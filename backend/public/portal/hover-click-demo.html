@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A · Hover-click DOM — demo (v1)</title>
+  <!--
+    Demo / verification page for docs/specs/a-hover-click-dom-interaction.md.
+    Standalone so screenshot review can exercise the toolbar without touching
+    chat.html. Production integration in chat.html / portal/* is a follow-up,
+    gated behind ECLAW_HOVER_CLICK_DOM_ENABLED.
+  -->
+  <link rel="stylesheet" href="../shared/hover-click-toolbar.css">
+  <style>
+    :root { --bg: #ffffff; --text: #18181b; --card-border: rgba(0,0,0,0.12); }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 16px; background: #f4f4f5; color: var(--text); }
+    h1 { font-size: 18px; margin: 0 0 8px; }
+    p.intro { font-size: 13px; color: #71717a; margin: 0 0 16px; line-height: 1.5; }
+    .demo-scene { background: #ffffff; border: 1px solid var(--card-border); border-radius: 16px; padding: 24px; max-width: 720px; }
+    .demo-scene h2 { margin: 0 0 8px; font-size: 16px; }
+    .demo-card { border: 1px solid var(--card-border); border-radius: 12px; padding: 12px; margin-top: 12px; background: #fafafa; }
+    .demo-button { background: #6366f1; color: white; border: 0; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+    .demo-button.secondary { background: #fff; color: #18181b; border: 1px solid var(--card-border); }
+    .status-bar { margin-top: 16px; padding: 12px; background: #eef2ff; border-radius: 8px; font-size: 13px; max-width: 720px; }
+    .mutation-log { margin-top: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+  </style>
+</head>
+<body>
+  <h1>A · hover-click DOM — verification demo</h1>
+  <p class="intro">
+    Hover any element below to see the preview ring. Click to commit selection and open the floating toolbar.
+    Use the toolbar to Move / Resize / Style / Duplicate / Delete / Inspect / Info. Esc or outside-click dismisses.
+    Mobile: long-press the element to commit. Alt+Click walks one ancestor up.
+  </p>
+
+  <div class="demo-scene" id="scene">
+    <h2 data-i18n="hover_click.demo_heading">Demo scene</h2>
+    <p>Pick anything in this box. The toolbar reads from <code>spec §3</code> and the mutation log feeds <code>diff-format.js</code>.</p>
+    <div class="demo-card">
+      <p>This is a draggable / styleable card. Try Move, Style → color.</p>
+      <button class="demo-button">Primary action</button>
+      <button class="demo-button secondary">Secondary</button>
+    </div>
+    <div class="demo-card">
+      <p>Second card. Try Duplicate, Delete (3s undo ghost).</p>
+      <button class="demo-button">Another</button>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <strong>Last diff summary:</strong> <span id="summary">—</span>
+    <pre class="mutation-log" id="log"></pre>
+  </div>
+
+  <script src="../shared/i18n.js" onerror="window.i18n=null"></script>
+  <script src="../shared/dom-select.js"></script>
+  <script src="../shared/hover-click-toolbar.js"></script>
+  <script src="../shared/content-import.js"></script>
+  <script src="../shared/diff-format.js"></script>
+
+  <script>
+    (function() {
+      'use strict';
+      const scene = document.getElementById('scene');
+      const summaryEl = document.getElementById('summary');
+      const logEl = document.getElementById('log');
+
+      const toolbar = window.EClawHoverClickToolbar.createHoverClickToolbar({
+        onMutation: () => refreshDiff(),
+        onClose: () => { /* keep mutations for the log */ },
+      });
+
+      const dom = window.EClawDomSelect.createDomSelect({
+        scope: scene,
+        onSelect: (el) => toolbar.open(el),
+        onDismiss: () => toolbar.close(),
+      });
+
+      function refreshDiff() {
+        const muts = toolbar.getMutations();
+        const result = window.EClawDiffFormat.produce(muts, {
+          kind: 'portal',
+          url: window.location.href,
+        });
+        summaryEl.textContent = result.summary;
+        logEl.textContent = result.unified;
+      }
+    })();
+  </script>
+</body>
+</html>
