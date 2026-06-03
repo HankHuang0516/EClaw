@@ -175,6 +175,7 @@
         .kb-modal-meta { padding:12px 24px; display:flex; gap:12px; flex-wrap:wrap; font-size:12px; color:var(--text-secondary); border-bottom:1px solid var(--card-border); flex:0 0 auto; max-height:min(32vh, 260px); overflow-y:auto; overscroll-behavior:contain; }
         .kb-modal-meta .meta-item { display:flex; align-items:center; gap:4px; }
         .kb-detail-desc { width:100%; font-size:13px; color:var(--text-secondary); margin-top:8px; white-space:pre-wrap; word-break:break-word; max-height:30vh; overflow-y:auto; overscroll-behavior:contain; padding-right:4px; }
+        .kb-detail-link-chip-row { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; width:100%; }
 
         /* 智慧引用 / Smart-chip base + autolink-chip variants */
         .entity-link, .note-link, .autolink-chip {
@@ -2340,6 +2341,32 @@
             return `<button type="button" class="kb-task-chip ${kind}" title="${escapeHtml(title || label)}" onclick="${onClick}">${label}</button>`;
         }
 
+        // In-description workflow-chain chip row — Parent / Prev / Next pointers.
+        // Hidden when no pointer is set so empty cards do not get a noisy always-visible row.
+        // Uses linkedPrev/linkedNext hydrated payloads from GET /card/:id so we render
+        // real titles instead of raw IDs; falls back to id if the hydrated payload is
+        // unavailable (older GET /cards list, mid-deploy compat). See docs/specs/card-link-system.md.
+        function renderDetailLinkChipRow(card) {
+            if (!card) return '';
+            const parentId = card.parentCardId || card.parent_card_id || '';
+            const hasPrev = !!card.linkedPrevCardId;
+            const hasNext = !!card.linkedNextCardId;
+            if (!parentId && !hasPrev && !hasNext) return '';
+            const chips = [];
+            if (parentId) {
+                chips.push(taskChip('parent', `↖ <span>${t('kb_chip_parent','母卡')}</span>`, parentId, `openDetail('${escapeJs(parentId)}')`));
+            }
+            if (hasPrev) {
+                const prevTitle = (card.linkedPrev && card.linkedPrev.title) || card.linkedPrevCardId;
+                chips.push(taskChip('prev', `← <span>${t('kb_chip_prev','上一張')}</span>`, prevTitle, `openDetail('${escapeJs(card.linkedPrevCardId)}')`));
+            }
+            if (hasNext) {
+                const nextTitle = (card.linkedNext && card.linkedNext.title) || card.linkedNextCardId;
+                chips.push(taskChip('next', `<span>${t('kb_chip_next','下一張')}</span> →`, nextTitle, `openDetail('${escapeJs(card.linkedNextCardId)}')`));
+            }
+            return `<div class="kb-detail-link-chip-row" data-testid="detail-link-chip-row" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;width:100%">${chips.join('')}</div>`;
+        }
+
         function renderParentArchivedBanner(parentCard) {
             if (!parentCard || !parentCard.archived) return '';
             return `<div class="kb-parent-archived-banner">⚠️ ${t('kb_parent_archived_banner', '此母卡已封存 / Parent card is archived')}：${escapeHtml(parentCard.title || parentCard.id)}</div>`;
@@ -2473,6 +2500,7 @@
                 <span class="meta-item">🕐 ${formatTime(card.createdAt || card.created_at)}</span>
                 ${scheduleInfo}
                 ${card.description ? '<div class="kb-detail-desc">'+renderSmartChips(card.description)+'</div>' : ''}
+                ${renderDetailLinkChipRow(card)}
                 <div id="detailTaskRelationBanner" style="width:100%"></div>
                 <div class="kb-dep-chips-container kb-detail-dep-chips" data-dep-card-id="${cardId}"></div>
                 <div id="detailTagsPanel" style="width:100%;margin-top:10px;padding:10px;border:1px solid var(--border-color,#333);border-radius:8px;background:rgba(255,255,255,.03)"></div>
