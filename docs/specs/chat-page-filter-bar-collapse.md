@@ -16,6 +16,8 @@ Today `portal/chat.html` stacks **two** filter rows directly above the message a
 [ 💬 對話 ] [ 📋 看板 ] [ ⏰ 排程 ] [ 🔧 系統 ] [ ❤️ 健康 ]      ←  #systemFilterChips (smart filter)
 ```
 
+**Both rows are eligible for collapse in v1.** The summary-chip + panel primitive defined in §2 hides both `#filterChips` and `#systemFilterChips` in the collapsed state; neither row is treated as a privileged always-visible affordance. This was the source of a 2026-06-03 ambiguity reported by Hank from the prod chat page — see §2.1 for the explicit hidden-set.
+
 On desktop the rows wrap; on mobile each row is a horizontal scroll with a fade-out + `#filterToggle` overflow indicator. Together they occupy ~96px of vertical space on mobile (≈11% of a 390×844 viewport) just to expose controls the user touches rarely after the first read.
 
 User pain reported by Hank: 「目前看起來散亂」. Concrete UX failures:
@@ -47,6 +49,8 @@ Introduce a **summary-chip + popover panel** primitive in `backend/public/shared
 - `(3)` text comes from `data-i18n="chat_filter_summary_count"` so locales can render it idiomatically.
 - Clicking / tapping opens the expanded panel.
 - Long-press on mobile opens the panel and announces it via `aria-live` for screen readers.
+
+**Hidden in this state:** both `#filterChips` (entity scope row) **AND** `#systemFilterChips` (smart-filter row). The summary chip is the **sole visible filter affordance** in the collapsed state — no chip row peeks out, no partial-row reveal, no smart-filter row left always-visible as a "primary" affordance. If either row is visible while the summary chip is rendered, the collapse has regressed. (2026-06-03 clarification — earlier wireframe drafts only showed the panel-side payload, leaving room to read the smart-filter row as "out of collapse scope". It is not.)
 
 ### 2.2 Expanded state (panel)
 
@@ -158,7 +162,7 @@ Mobile reuses the existing `.scroll-to-bottom-btn` z-index layer; popover uses t
 
 ## 6. Rollback
 
-The primitive is gated behind a single import in chat.html; reverting the integration commit removes the summary chip and restores the original two-row layout. No DB or backend changes; no data migration.
+The primitive is gated behind a single import in chat.html; reverting the integration commit removes the summary chip and restores the original two-row layout. **Reverting the integration commit restores BOTH rows to their always-visible state** — `#filterChips` and `#systemFilterChips` both go back to always-rendered above the message area, identical to the pre-PR layout. No partial-collapse fallback state exists; rollback is all-or-nothing. No DB or backend changes; no data migration.
 
 ---
 
