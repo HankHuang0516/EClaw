@@ -5579,8 +5579,10 @@
         // Rate thresholds (tokens in the last hour, Claude + Codex combined).
         const RATE_HEAVY_PER_HOUR  = 10_000_000;
         const RATE_NORMAL_PER_HOUR =  1_000_000;
+        const CODEX_RATE_LIMIT_CACHE_KEY = 'eclaw.dashboard.codexRateLimits.v1';
         let pollTimer = null;
         let lastFetchOk = false;
+        let lastValidCodexRateLimits = null;
 
         function t(key, fallback) {
             return (typeof i18n !== 'undefined' && typeof i18n.t === 'function') ? i18n.t(key) : fallback;
@@ -5638,6 +5640,89 @@
                     resetEl.textContent = '';
                 }
             }
+        }
+
+        function numberOrNull(value) {
+            if (value === null || value === undefined || value === '') return null;
+            const n = Number(value);
+            return Number.isFinite(n) ? n : null;
+        }
+
+        function isInvalidRawCodexRateLimits(rl) {
+            if (!rl || typeof rl !== 'object') return true;
+            const primary = rl.primary && typeof rl.primary === 'object' ? rl.primary : null;
+            if (primary && Number(primary.window_minutes) === 0) return true;
+            return Object.prototype.hasOwnProperty.call(rl, 'secondary') && rl.secondary == null;
+        }
+
+        function normalizeCodexRateLimits(rl) {
+            if (!rl || typeof rl !== 'object') return null;
+            if (isInvalidRawCodexRateLimits(rl)) return null;
+
+            if (rl.primary || rl.secondary) {
+                const primary = (rl.primary && typeof rl.primary === 'object') ? rl.primary : {};
+                const secondary = (rl.secondary && typeof rl.secondary === 'object') ? rl.secondary : {};
+                return {
+                    five_hour_pct: numberOrNull(primary.used_percent),
+                    five_hour_resets_at: numberOrNull(primary.resets_at),
+                    seven_day_pct: numberOrNull(secondary.used_percent),
+                    seven_day_resets_at: numberOrNull(secondary.resets_at),
+                    plan_type: typeof rl.plan_type === 'string' ? rl.plan_type : null,
+                    updated_at: typeof rl.updated_at === 'string' ? rl.updated_at : ''
+                };
+            }
+
+            return {
+                five_hour_pct: numberOrNull(rl.five_hour_pct),
+                five_hour_resets_at: numberOrNull(rl.five_hour_resets_at),
+                seven_day_pct: numberOrNull(rl.seven_day_pct),
+                seven_day_resets_at: numberOrNull(rl.seven_day_resets_at),
+                plan_type: typeof rl.plan_type === 'string' ? rl.plan_type : null,
+                updated_at: typeof rl.updated_at === 'string' ? rl.updated_at : ''
+            };
+        }
+
+        function isValidCodexRateLimits(rl) {
+            const normalized = normalizeCodexRateLimits(rl);
+            return !!normalized
+                && Number.isFinite(normalized.five_hour_pct)
+                && Number.isFinite(normalized.seven_day_pct);
+        }
+
+        function readCachedCodexRateLimits() {
+            try {
+                if (!window.localStorage) return null;
+                const cached = JSON.parse(window.localStorage.getItem(CODEX_RATE_LIMIT_CACHE_KEY) || 'null');
+                return isValidCodexRateLimits(cached) ? normalizeCodexRateLimits(cached) : null;
+            } catch (_) {
+                return null;
+            }
+        }
+
+        function writeCachedCodexRateLimits(rl) {
+            try {
+                if (window.localStorage && isValidCodexRateLimits(rl)) {
+                    window.localStorage.setItem(CODEX_RATE_LIMIT_CACHE_KEY, JSON.stringify(normalizeCodexRateLimits(rl)));
+                }
+            } catch (_) { /* localStorage is best-effort only. */ }
+        }
+
+        function resolveCodexRateLimits(rl) {
+            if (isValidCodexRateLimits(rl)) {
+                lastValidCodexRateLimits = normalizeCodexRateLimits(rl);
+                writeCachedCodexRateLimits(lastValidCodexRateLimits);
+                return lastValidCodexRateLimits;
+            }
+            if (!lastValidCodexRateLimits) lastValidCodexRateLimits = readCachedCodexRateLimits();
+            return lastValidCodexRateLimits;
+        }
+
+        function withResolvedCodexRateLimits(latest) {
+            if (!latest || !latest.codex) return latest;
+            const resolved = resolveCodexRateLimits(latest.codex.rate_limits);
+            return Object.assign({}, latest, {
+                codex: Object.assign({}, latest.codex, { rate_limits: resolved })
+            });
         }
 
         function renderClaudeBars(latest) {
@@ -5876,14 +5961,15 @@
                 if (!snapRes.ok) throw new Error('http ' + snapRes.status);
                 const snap = await snapRes.json();
                 if (!snap.success) throw new Error(snap.error || 'snapshot failed');
+                const latest = withResolvedCodexRateLimits(snap.latest);
 
                 lastFetchOk = true;
                 showContent();
-                renderClaudeBars(snap.latest);
-                renderCodexBars(snap.latest);
-                renderProjects(snap.latest);
-                renderStatusFooter(snap.latest, snap.aggregates);
-                renderHealth(snap.latest);
+                renderClaudeBars(latest);
+                renderCodexBars(latest);
+                renderProjects(latest);
+                renderStatusFooter(latest, snap.aggregates);
+                renderHealth(latest);
             } catch (err) {
                 console.warn('[UsageWidget] load failed:', err && err.message);
                 if (!lastFetchOk) showError();

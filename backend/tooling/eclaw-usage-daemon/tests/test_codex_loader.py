@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 from pathlib import Path
 
@@ -84,6 +85,116 @@ def test_token_count_event_aggregates(tmp_path: Path) -> None:
     assert rl["five_hour_pct"] == 12.5
     assert rl["seven_day_pct"] == 7.0
     assert rl["plan_type"] == "pro"
+
+
+def test_bad_rate_limit_block_skips_to_previous_valid(tmp_path: Path) -> None:
+    sessions_dir = tmp_path / "sessions"
+    state_db = tmp_path / "state.sqlite"
+    _make_state_db(state_db, {})
+
+    loader = CodexLoader(sessions_dir=sessions_dir, state_db=state_db)
+
+    old_path = sessions_dir / "old.jsonl"
+    new_path = sessions_dir / "new.jsonl"
+    _write(
+        old_path,
+        {"type": "session_meta", "payload": {"id": "old", "timestamp": "2026-06-03T09:00:00Z", "cwd": "/old"}},
+        {
+            "type": "event_msg",
+            "timestamp": "2026-06-03T09:01:00Z",
+            "payload": {
+                "type": "token_count",
+                "rate_limits": {
+                    "primary": {"used_percent": 51.0, "resets_at": 1780000000},
+                    "secondary": {"used_percent": 22.0, "resets_at": 1780500000},
+                    "plan_type": "pro",
+                },
+                "info": {"total_token_usage": {"input_tokens": 10, "output_tokens": 5}},
+            },
+        },
+    )
+    _write(
+        new_path,
+        {"type": "session_meta", "payload": {"id": "new", "timestamp": "2026-06-03T10:00:00Z", "cwd": "/new"}},
+        {
+            "type": "event_msg",
+            "timestamp": "2026-06-03T10:01:00Z",
+            "payload": {
+                "type": "token_count",
+                "rate_limits": {
+                    "primary": {"used_percent": 0.0, "window_minutes": 0, "resets_at": 1780000100},
+                    "secondary": None,
+                    "plan_type": "pro",
+                },
+                "info": {"total_token_usage": {"input_tokens": 12, "output_tokens": 6}},
+            },
+        },
+    )
+    os.utime(old_path, (1000, 1000))
+    os.utime(new_path, (2000, 2000))
+
+    sessions, rl = loader.load(hours_back=0)
+    assert len(sessions) == 2
+    assert rl is not None
+    assert rl["five_hour_pct"] == 51.0
+    assert rl["seven_day_pct"] == 22.0
+
+
+def test_file_rate_limits_keep_last_valid_block(tmp_path: Path) -> None:
+    sessions_dir = tmp_path / "sessions"
+    state_db = tmp_path / "state.sqlite"
+    _make_state_db(state_db, {})
+
+    loader = CodexLoader(sessions_dir=sessions_dir, state_db=state_db)
+
+    _write(
+        sessions_dir / "rollout.jsonl",
+        {"type": "session_meta", "payload": {"id": "thread-a", "timestamp": "2026-06-03T09:00:00Z", "cwd": "/x"}},
+        {
+            "type": "event_msg",
+            "timestamp": "2026-06-03T09:01:00Z",
+            "payload": {
+                "type": "token_count",
+                "rate_limits": {
+                    "primary": {"used_percent": 8.0, "resets_at": 1780000000},
+                    "secondary": {"used_percent": 3.0, "resets_at": 1780500000},
+                    "plan_type": "pro",
+                },
+                "info": {"total_token_usage": {"input_tokens": 10, "output_tokens": 5}},
+            },
+        },
+        {
+            "type": "event_msg",
+            "timestamp": "2026-06-03T09:02:00Z",
+            "payload": {
+                "type": "token_count",
+                "rate_limits": {
+                    "primary": {"used_percent": 0.0, "window_minutes": 0, "resets_at": 1780000100},
+                    "secondary": None,
+                    "plan_type": "pro",
+                },
+                "info": {"total_token_usage": {"input_tokens": 12, "output_tokens": 6}},
+            },
+        },
+        {
+            "type": "event_msg",
+            "timestamp": "2026-06-03T09:03:00Z",
+            "payload": {
+                "type": "token_count",
+                "rate_limits": {
+                    "primary": {"used_percent": 19.0, "resets_at": 1780000200},
+                    "secondary": {"used_percent": 7.0, "resets_at": 1780500200},
+                    "plan_type": "pro",
+                },
+                "info": {"total_token_usage": {"input_tokens": 14, "output_tokens": 7}},
+            },
+        },
+    )
+
+    _, rl = loader.load(hours_back=0)
+    assert rl is not None
+    assert rl["five_hour_pct"] == 19.0
+    assert rl["seven_day_pct"] == 7.0
 
 
 def test_corrupt_lines_skipped(tmp_path: Path) -> None:
