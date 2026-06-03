@@ -6,17 +6,72 @@
  * Reduced motion respected on both.
  */
 
-/* ----- DOM-select rings (consumed by dom-select.js) ----- */
+/* ----- DOM-select rings (consumed by dom-select.js) -----
+ * v1.2a state machine (Hank feedback 2026-06-03):
+ *   IDLE        — no ring
+ *   PREVIEW     — pointer is over a selectable element (dashed indigo)
+ *   LOCKED      — clicked + toolbar open (solid indigo + soft halo)
+ *   ARMED_*     — toolbar action staged, awaiting drag (amber pulsing outline)
+ *   ACTIVE      — drag in flight (amber solid + heavier shadow)
+ * The state transitions are explicit in JS; the user clicks a chip BEFORE
+ * any drag fires, instead of immediate-grab.
+ */
 .eclaw-dom-select__ring-preview {
   outline: 2px dashed rgba(99, 102, 241, 0.7) !important;
   outline-offset: 2px !important;
   cursor: crosshair !important;
+  transition: outline-color 0.15s ease-out, box-shadow 0.15s ease-out;
 }
 
 .eclaw-dom-select__ring-selected {
   outline: 2px solid rgba(99, 102, 241, 0.95) !important;
   outline-offset: 2px !important;
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15) !important;
+  transition: outline-color 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+
+/* v1.2a: ARMED state — toolbar action staged. Amber to distinguish
+   from the indigo LOCKED state. cursor hints at the upcoming interaction. */
+.eclaw-dom-select__ring-armed-move {
+  outline: 3px solid rgba(245, 158, 11, 0.95) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.18) !important;
+  cursor: move !important;
+  animation: eclaw-armed-pulse 0.9s ease-in-out infinite;
+}
+
+.eclaw-dom-select__ring-armed-resize {
+  outline: 3px solid rgba(245, 158, 11, 0.95) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.18) !important;
+  cursor: nwse-resize !important;
+  animation: eclaw-armed-pulse 0.9s ease-in-out infinite;
+}
+
+.eclaw-dom-select__ring-active {
+  outline: 3px solid rgba(245, 158, 11, 1) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 8px rgba(245, 158, 11, 0.25), 0 6px 20px rgba(0,0,0,0.25) !important;
+}
+
+@keyframes eclaw-armed-pulse {
+  0%, 100% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.18); }
+  50% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0.32); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eclaw-dom-select__ring-armed-move,
+  .eclaw-dom-select__ring-armed-resize {
+    animation: none !important;
+  }
+}
+
+/* v1.2a: ARMED-state hint in the toolbar — the active chip glows amber
+   while waiting for the user to drag. */
+.eclaw-hover-click-toolbar__chip[data-armed="true"] {
+  background: rgba(245, 158, 11, 0.15) !important;
+  outline: 2px solid rgba(245, 158, 11, 0.6) !important;
+  outline-offset: 1px !important;
 }
 
 /* ----- Toolbar shell ----- */

@@ -150,7 +150,12 @@
           e.preventDefault(); doDuplicate(); return;
         }
       }
-      if (e.key === 'Escape') { e.preventDefault(); close(); }
+      if (e.key === 'Escape') {
+        // v1.2a: if an action is armed, Esc just disarms (stays LOCKED).
+        // Second Esc closes the toolbar.
+        if (armedAction) { e.preventDefault(); disarm(); return; }
+        e.preventDefault(); close();
+      }
       else if (e.key === 'Tab') {
         // Tab cycles within the toolbar; default browser behaviour handles
         // the in-toolbar focus, we just need to wrap.
@@ -200,6 +205,10 @@
 
     function close() {
       if (!openFlag) return;
+      // v1.2a: clear armed state + amber rings so the target is left clean.
+      if (currentTarget) clearArmedClasses(currentTarget);
+      armedAction = null;
+      Object.values(chipEls).forEach((b) => b && b.removeAttribute('data-armed'));
       openFlag = false;
       shell.hidden = true;
       shell.removeAttribute('data-visible');
@@ -257,8 +266,11 @@
       if (chipId === 'quote') { doQuote(); return; }
       if (!currentTarget) return;
       switch (chipId) {
-        case 'move':   startMove(); break;
-        case 'resize': startResize(); break;
+        // v1.2a: Move/Resize now ARM the action; the user has to press
+        // pointer-down on the LOCKED target to commit. This separates
+        // selection (LOCKED) from interaction (ARMED → ACTIVE).
+        case 'move':   setArmed('move'); break;
+        case 'resize': setArmed('resize'); break;
         case 'style':  showStyleSubpanel(); break;
         case 'duplicate': doDuplicate(); break;
         case 'delete': confirmDelete(); break;
@@ -296,6 +308,150 @@
         ts: Date.now(),
       };
       document.dispatchEvent(new CustomEvent('hover-click:quote', { detail: payload }));
+    }
+
+    // v1.2a state machine: instead of clicking Move and immediately grabbing
+    // the element, we arm the action and wait for a pointerdown on the target.
+    // armedAction is one of: null | 'move' | 'resize'. While armed, the
+    // ring transitions to amber and the cursor changes; the Move/Resize chip
+    // also shows a glow (data-armed="true") so the user sees we're staged.
+    let armedAction = null;
+    function clearArmedClasses(target) {
+      if (!target) return;
+      target.classList.remove(
+        'eclaw-dom-select__ring-armed-move',
+        'eclaw-dom-select__ring-armed-resize',
+        'eclaw-dom-select__ring-active',
+      );
+    }
+    function setArmed(action) {
+      if (!currentTarget) return;
+      // Re-arming the same action toggles off (Esc-equivalent without leaving toolbar focus).
+      const wasArmed = armedAction;
+      Object.values(chipEls).forEach((b) => b && b.removeAttribute('data-armed'));
+      clearArmedClasses(currentTarget);
+      if (wasArmed === action) {
+        armedAction = null;
+        return;
+      }
+      armedAction = action;
+      currentTarget.classList.add(
+        action === 'move'
+          ? 'eclaw-dom-select__ring-armed-move'
+          : 'eclaw-dom-select__ring-armed-resize',
+      );
+      const chip = chipEls[action];
+      if (chip) chip.setAttribute('data-armed', 'true');
+    }
+    function disarm() {
+      if (!armedAction) return;
+      armedAction = null;
+      Object.values(chipEls).forEach((b) => b && b.removeAttribute('data-armed'));
+      clearArmedClasses(currentTarget);
+    }
+
+    // Listen for pointerdown on the LOCKED target while armed → starts drag.
+    document.addEventListener('pointerdown', function(e) {
+      if (!openFlag || !currentTarget || !armedAction) return;
+      if (!currentTarget.contains(e.target) && e.target !== currentTarget) return;
+      e.preventDefault();
+      const action = armedAction;
+      // Transition ARMED → ACTIVE
+      clearArmedClasses(currentTarget);
+      currentTarget.classList.add('eclaw-dom-select__ring-active');
+      Object.values(chipEls).forEach((b) => b && b.removeAttribute('data-armed'));
+      if (action === 'move') doMoveFromPointerDown(e);
+      else if (action === 'resize') doResizeFromPointerDown(e);
+      armedAction = null;
+    }, true);
+
+    function doMoveFromPointerDown(downEvent) {
+      const target = currentTarget;
+      const cs = getComputedStyle(target);
+      const startX0 = parseFloat(cs.left) || 0;
+      const startY0 = parseFloat(cs.top) || 0;
+      const wasPos = cs.position;
+      const beforeHTML = snapshotBefore(target);
+      if (wasPos === 'static') target.style.position = 'relative';
+      const startMouseX = downEvent.clientX;
+      const startMouseY = downEvent.clientY;
+      function moveHandler(e) {
+        target.style.left = `${startX0 + (e.clientX - startMouseX)}px`;
+        target.style.top = `${startY0 + (e.clientY - startMouseY)}px`;
+      }
+      function upHandler() {
+        document.removeEventListener('pointermove', moveHandler, true);
+        document.removeEventListener('pointerup', upHandler, true);
+        clearArmedClasses(target);
+        target.classList.add('eclaw-dom-select__ring-selected');
+        const endLeft = parseFloat(target.style.left) || 0;
+        const endTop = parseFloat(target.style.top) || 0;
+        const r = target.getBoundingClientRect();
+        recordMutation(
+          { type: 'geometry', target,
+            from: { x: startX0, y: startY0, w: r.width, h: r.height },
+            to: { x: endLeft, y: endTop, w: r.width, h: r.height },
+            _beforeHTML: beforeHTML },
+          () => {
+            target.style.left = `${startX0}px`;
+            target.style.top = `${startY0}px`;
+            if (wasPos === 'static') target.style.position = '';
+          },
+          () => {
+            if (wasPos === 'static') target.style.position = 'relative';
+            target.style.left = `${endLeft}px`;
+            target.style.top = `${endTop}px`;
+          },
+        );
+      }
+      document.addEventListener('pointermove', moveHandler, true);
+      document.addEventListener('pointerup', upHandler, true);
+    }
+
+    function doResizeFromPointerDown(downEvent) {
+      const target = currentTarget;
+      const r = target.getBoundingClientRect();
+      const startW = r.width, startH = r.height;
+      const startWidthCss = target.style.width;
+      const startHeightCss = target.style.height;
+      const beforeHTML = snapshotBefore(target);
+      const startX = downEvent.clientX, startY = downEvent.clientY;
+      function moveHandler(e) {
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        let newW = startW + dx, newH = startH + dy;
+        if (e.shiftKey) {
+          const ratio = startW / startH;
+          newH = newW / ratio;
+        }
+        target.style.width = `${Math.max(20, newW)}px`;
+        target.style.height = `${Math.max(20, newH)}px`;
+      }
+      function upHandler() {
+        document.removeEventListener('pointermove', moveHandler, true);
+        document.removeEventListener('pointerup', upHandler, true);
+        clearArmedClasses(target);
+        target.classList.add('eclaw-dom-select__ring-selected');
+        const r2 = target.getBoundingClientRect();
+        const endWidthCss = target.style.width;
+        const endHeightCss = target.style.height;
+        recordMutation(
+          { type: 'geometry', target,
+            from: { w: startW, h: startH },
+            to: { w: r2.width, h: r2.height },
+            _beforeHTML: beforeHTML },
+          () => {
+            target.style.width = startWidthCss;
+            target.style.height = startHeightCss;
+          },
+          () => {
+            target.style.width = endWidthCss;
+            target.style.height = endHeightCss;
+          },
+        );
+      }
+      document.addEventListener('pointermove', moveHandler, true);
+      document.addEventListener('pointerup', upHandler, true);
     }
 
     function startMove() {
