@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" href="assets/favicon-32.png">
     <link rel="stylesheet" href="shared/style.css">
     <link rel="stylesheet" href="shared/info.css">
-    <link rel="stylesheet" href="../shared/hover-click-toolbar.css?v=1.2b">
+    <link rel="stylesheet" href="../shared/hover-click-toolbar.css?v=1.2c">
     <style>
         /* ══════════════ Sub-tabs (same as mission.html / kanban.html) ══════════════ */
         .sub-tabs { display:flex; gap:0; margin-bottom:20px; border-bottom:1px solid var(--card-border); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
@@ -18,8 +18,28 @@
         .sub-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
         .beta-badge { font-size:10px; padding:1px 6px; border-radius:8px; background:rgba(255,176,32,0.16); color:#ffb020; margin-left:4px; letter-spacing:0.5px; vertical-align:middle; }
 
-        .id-page-heading { margin: 0 0 8px; font-size: 22px; }
+        .id-page-heading { margin: 0 0 8px; font-size: 22px; display: flex; align-items: center; gap: 12px; }
         .id-page-lede { margin: 0 0 20px; color: var(--text-secondary); font-size: 14px; line-height: 1.5; max-width: 720px; }
+        /* v1.2c Import button + modal */
+        .id-import-btn { font-size: 13px; padding: 5px 12px; border: 1px solid var(--card-border, rgba(0,0,0,0.12)); background: var(--bg, #fff); color: var(--text, #18181b); border-radius: 8px; cursor: pointer; font-weight: 500; }
+        .id-import-btn:hover { background: rgba(99,102,241,0.08); }
+        .id-import-dialog { border: none; border-radius: 12px; padding: 0; max-width: 520px; width: calc(100vw - 32px); background: var(--bg, #fff); color: var(--text, #18181b); box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
+        .id-import-dialog::backdrop { background: rgba(0,0,0,0.45); }
+        .id-import-form { padding: 20px; }
+        .id-import-form h2 { margin: 0 0 4px; font-size: 18px; }
+        .id-import-lede { font-size: 13px; color: var(--text-secondary, #71717a); margin: 0 0 16px; }
+        .id-import-fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+        .id-import-option { display: flex; gap: 10px; padding: 10px; border: 1px solid var(--card-border, rgba(0,0,0,0.08)); border-radius: 8px; cursor: pointer; }
+        .id-import-option:has(input:checked) { border-color: var(--primary, #6366f1); background: rgba(99,102,241,0.06); }
+        .id-import-option strong { font-size: 13px; }
+        .id-import-option small { font-size: 11px; color: var(--text-secondary, #71717a); display: block; margin-top: 2px; }
+        .id-import-input { width: 100%; margin-top: 6px; padding: 6px 10px; border: 1px solid var(--card-border, rgba(0,0,0,0.12)); border-radius: 6px; font-size: 12px; background: var(--bg, #fff); color: inherit; }
+        .id-import-error { color: #dc2626; font-size: 12px; margin: 8px 0 0; }
+        .id-import-actions { display: flex; justify-content: flex-end; gap: 8px; margin: 16px 0 0; padding: 0; }
+        .id-import-actions button { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--card-border, rgba(0,0,0,0.12)); background: var(--bg, #fff); color: inherit; cursor: pointer; font-size: 13px; }
+        .id-import-actions button[type="submit"] { background: var(--primary, #6366f1); color: #fff; border-color: transparent; }
+        #id-import-mount iframe { width: 100%; min-height: 480px; border: 1px solid var(--card-border, rgba(0,0,0,0.12)); border-radius: 10px; margin-top: 12px; }
+        #id-import-mount .id-import-imported-html { padding: 12px; border: 1px solid var(--card-border, rgba(0,0,0,0.12)); border-radius: 10px; margin-top: 12px; background: var(--bg, #fff); }
 
         @media (max-width:768px) {
             .sub-tab { padding:8px 12px; font-size:13px; }
@@ -52,8 +72,44 @@
         })();
         </script>
 
-        <h1 class="id-page-heading" data-i18n="interactive_dev_page_title">🧪 Interactive Development</h1>
+        <h1 class="id-page-heading">
+            <span data-i18n="interactive_dev_page_title">🧪 Interactive Development</span>
+            <button type="button" id="id-import-btn" class="id-import-btn" data-i18n="interactive_dev_import">📥 Import</button>
+        </h1>
         <p class="id-page-lede" data-i18n="interactive_dev_page_lede">Point-and-Edit testbed — pick the same target three ways (DOM, coordinate, mind-map). The same harness the agent uses, exposed as a public sandbox.</p>
+
+        <!-- v1.2c Import modal — opens on Import button click. Three modes:
+             "this-page" (sandbox), "selector" (CSS selector), "url" (iframe). -->
+        <dialog id="id-import-dialog" class="id-import-dialog">
+            <form method="dialog" class="id-import-form">
+                <h2 data-i18n="interactive_dev_import_title">Import content</h2>
+                <p class="id-import-lede" data-i18n="interactive_dev_import_lede">Pick what the toolbar edits.</p>
+                <fieldset class="id-import-fieldset">
+                    <label class="id-import-option">
+                        <input type="radio" name="kind" value="this-page" checked>
+                        <span><strong data-i18n="interactive_dev_import_this_page">This page (sandbox)</strong><br>
+                        <small data-i18n="interactive_dev_import_this_page_hint">Default. Edit the existing Point-and-Edit testbed below.</small></span>
+                    </label>
+                    <label class="id-import-option">
+                        <input type="radio" name="kind" value="selector">
+                        <span><strong data-i18n="interactive_dev_import_selector">Specific element</strong><br>
+                        <input type="text" name="selector" placeholder="CSS selector, e.g. .my-card" class="id-import-input"></span>
+                    </label>
+                    <label class="id-import-option">
+                        <input type="radio" name="kind" value="url">
+                        <span><strong data-i18n="interactive_dev_import_url">URL</strong><br>
+                        <input type="url" name="url" placeholder="https://eclawbot.com/portal/info.html" class="id-import-input">
+                        <small data-i18n="interactive_dev_import_url_hint">Deny-on-miss allowlist. eclawbot.com domains + example.com allowed in v1.</small></span>
+                    </label>
+                </fieldset>
+                <p id="id-import-error" class="id-import-error" hidden></p>
+                <menu class="id-import-actions">
+                    <button type="button" value="cancel" data-action="cancel" data-i18n="interactive_dev_import_cancel">Cancel</button>
+                    <button type="submit" value="import" data-action="import" data-i18n="interactive_dev_import_submit">Import</button>
+                </menu>
+            </form>
+        </dialog>
+        <div id="id-import-mount"></div>
         <!--
             interactive_dev_page_lede is intentionally added alongside the 3 sub-tab keys
             so every locale block carries it. Spec §5 lists 3 keys, the impl adds a 4th
@@ -174,13 +230,107 @@
         opens anchored to the picked element. Esc / outside-click dismisses
         per the toolbar's own handlers; the sandbox stays interactive.
     -->
-    <script src="../shared/dom-select.js?v=1.2b"></script>
-    <script src="../shared/hover-click-toolbar.js?v=1.2b"></script>
-    <script src="../shared/diff-format.js?v=1.2b"></script>
+    <script src="../shared/dom-select.js?v=1.2c"></script>
+    <script src="../shared/hover-click-toolbar.js?v=1.2c"></script>
+    <script src="../shared/diff-format.js?v=1.2c"></script>
     <script>
+    // v1.2c Import modal wiring
+    (function() {
+        const btn = document.getElementById('id-import-btn');
+        const dlg = document.getElementById('id-import-dialog');
+        const errorEl = document.getElementById('id-import-error');
+        const mount = document.getElementById('id-import-mount');
+        if (!btn || !dlg) return;
+        btn.addEventListener('click', () => {
+            errorEl.hidden = true;
+            errorEl.textContent = '';
+            if (typeof dlg.showModal === 'function') dlg.showModal();
+            else dlg.setAttribute('open', '');
+        });
+        dlg.querySelector('[data-action="cancel"]').addEventListener('click', () => {
+            dlg.close('cancel');
+        });
+        dlg.addEventListener('close', () => {
+            if (dlg.returnValue !== 'import') return;
+            const form = dlg.querySelector('form');
+            const kind = form.querySelector('input[name="kind"]:checked').value;
+            performImport(kind, form);
+        });
+
+        async function performImport(kind, form) {
+            const ImportLib = window.EClawContentImport;
+            const sourceContextOut = (ctx) => {
+                window.__hcImportSourceContext = ctx;
+            };
+            errorEl.hidden = true;
+
+            try {
+                if (kind === 'this-page') {
+                    // Default — just clear any prior import. Existing sandbox stays.
+                    mount.innerHTML = '';
+                    sourceContextOut({ kind: 'portal', path: window.location.pathname, url: window.location.href });
+                    return;
+                }
+                if (kind === 'selector') {
+                    const sel = form.querySelector('input[name="selector"]').value.trim();
+                    if (!sel) throw new Error('Selector is required');
+                    const found = document.querySelectorAll(sel);
+                    if (found.length === 0) throw new Error(`No element matches ${sel}`);
+                    if (found.length > 1) console.warn(`Selector matched ${found.length} elements; using first`);
+                    const wrap = document.createElement('div');
+                    wrap.className = 'id-import-imported-html';
+                    wrap.appendChild(found[0].cloneNode(true));
+                    mount.innerHTML = '';
+                    mount.appendChild(wrap);
+                    rebindToolbar(wrap);
+                    sourceContextOut({ kind: 'portal', path: window.location.pathname, url: window.location.href + '#' + sel });
+                    return;
+                }
+                if (kind === 'url') {
+                    const url = form.querySelector('input[name="url"]').value.trim();
+                    if (!url) throw new Error('URL is required');
+                    if (!ImportLib) throw new Error('content-import.js not loaded');
+                    if (!ImportLib.isAllowedPublicUrl(url)) {
+                        throw new Error('URL not in allowlist (eclawbot.com domains + example.com only in v1)');
+                    }
+                    mount.innerHTML = '<p>Loading…</p>';
+                    const result = await ImportLib.importContent({ kind: 'url', url });
+                    mount.innerHTML = '';
+                    // result.rootEl is inside an iframe — we surface the iframe itself for visibility.
+                    const ifr = document.querySelector('.eclaw-content-import__iframe');
+                    if (ifr) {
+                        ifr.style.position = 'static';
+                        mount.appendChild(ifr);
+                    }
+                    sourceContextOut(result.sourceContext);
+                    return;
+                }
+            } catch (err) {
+                errorEl.textContent = String(err.message || err);
+                errorEl.hidden = false;
+                if (typeof dlg.showModal === 'function') dlg.showModal();
+            }
+        }
+
+        function rebindToolbar(newRoot) {
+            // Stop the existing dom-select binding on ped-sandbox and bind a
+            // fresh one to the imported root. The toolbar instance is reused.
+            if (window.__hcDomSelect && window.__hcDomSelect.destroy) {
+                window.__hcDomSelect.destroy();
+            }
+            const toolbar = window.__hcToolbar;
+            if (!toolbar || !window.EClawDomSelect) return;
+            window.__hcDomSelect = window.EClawDomSelect.createDomSelect({
+                scope: newRoot,
+                onSelect: (el) => toolbar.open(el),
+                onDismiss: () => toolbar.close(),
+            });
+        }
+    })();
+
     (function() {
         if (!window.EClawHoverClickToolbar || !document.querySelector('.ped-sandbox')) return;
-        const toolbar = window.EClawHoverClickToolbar.createHoverClickToolbar({
+        const toolbar = window.__hcToolbar = window.EClawHoverClickToolbar.createHoverClickToolbar({
             onMutation: function(mut) {
                 // Surface the mutation in the existing composer payload so
                 // the Track A user can see the diff Quote round-trip live.
