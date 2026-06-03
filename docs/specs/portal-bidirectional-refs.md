@@ -76,17 +76,19 @@ The refs index is built from these sources, scanned every 5 min by a background 
 
 | ref kind | scan source |
 |---|---|
-| card | `kanban.cards.description / scope / linkedPrevCardId / linkedNextCardId / comments.text` |
+| card | `kanban_cards.description` + `kanban_cards.title` + `kanban_cards.linked_prev_card_id` + `kanban_cards.linked_next_card_id` + `kanban_card_dependencies` (card_id ↔ depends_on_card_id) + `kanban_card_links` (source_card_id ↔ target_card_id) + `kanban_comments.text` |
 | spec | files under `docs/specs/**/*.md` (git working tree at HEAD on main) |
 | doc | files under `docs/research/**/*.md` |
-| pr | `gh pr list --state all --limit 200` — title + body |
+| pr | `gh pr list --state all --limit 200 --json number,title,body,url,state,updatedAt` — scan `body` for cited refs |
 
 Pattern matching:
 - `card_[a-f0-9]{24}` for card ids
 - `docs/specs/[\w-]+\.md` and `docs/research/[\w-]+\.md` for doc paths
 - `#\d{3,5}` for PR numbers (validated against the gh listing)
 
-Cache: in-memory map keyed by `from` id, TTL 5 min, written to disk at `backend/.cache/refs.json` for warm start.
+**Back-link sources (AC5)**: incoming refs to a card are derived from ALL of the above, not just PR bodies. A spec doc mentioning `card_X`, a research doc mentioning `card_X`, OR another card's description/comments mentioning `card_X` all surface as `direction: "in"` in `card_X`'s `?` popover. PR-body back-refs are required but not exclusive.
+
+Cache: in-memory map keyed by **`<deviceId>|<kind>|<id>`** (NOT just `from` id — multi-device isolation), TTL 5 min, written to disk at `backend/.cache/refs.json` for warm start. Cache stores only normalized refs (post-resolution: id, label, kind, direction — no raw scan rows). `backend/.cache/` MUST be in `.gitignore`; warm-start file is regenerated on cold start so its absence is non-fatal.
 
 ### 3.3 `GET /api/refs/graph` (v1.5, optional)
 
@@ -113,6 +115,8 @@ A single shared script (`backend/public/shared/refs-popover.js`) wires the click
 1. POST not needed; GET `/api/refs?from=<id>` with cached creds.
 2. Render a popover anchored under the `?` button.
 3. Popover content: two columns — **Outgoing** (this cites ↓) and **Incoming** (← cites this). Each row is a clickable link.
+
+`refs-popover.js` reuses `shared/help-popover.js`'s show/hide/focus-trap/ESC plumbing. A minimal options hook is added to `help-popover.js` to accept per-popover `maxWidth` (default 280, refs needs ~360) and a `variant: 'tooltip' | 'sheet'` flag — `sheet` engages the mobile bottom-sheet layout. No new focus-trap or ARIA code is added; the existing one is parameterized.
 
 ### 4.2 Mock — ASCII
 
@@ -185,7 +189,7 @@ interface RefsResponse {
 - **AC2** — `GET /api/refs?from=<id>` returns valid `RefsResponse` for any of the 4 ref kinds.
 - **AC3** — Background scan runs every 5 min and refreshes the cache without blocking requests.
 - **AC4** — Clicking `?` on any of the 3 v1 surfaces (kanban / spec doc / research doc) opens the popover with at least one out-direction ref.
-- **AC5** — Back-link auto-populates: open PR mentioning `card_X` in its body → card_X's `?` shows the PR as incoming, no manual editing.
+- **AC5** — Back-link auto-populates from ALL source kinds, not PR-only: (a) open PR mentioning `card_X` in its body → card_X's `?` shows the PR as incoming; (b) a spec or research doc mentioning `card_X` → card_X's `?` shows the doc as incoming; (c) another card's description/comments mentioning `card_X` → card_X's `?` shows the citing card as incoming. All cases without manual editing.
 - **AC6** — Mobile bottom-sheet variant at 390 × 844 viewport.
 - **AC7** — Playwright prod E2E covering all 3 v1 surfaces + screenshots attached to the impl card per `feedback_personal_screenshot_review`.
 
@@ -200,3 +204,15 @@ interface RefsResponse {
 - Research card that surfaced the ask: `card_aa15ed2618c9246d11a0f6b1`
 - Existing chat-side reference expansion pattern: bridge's `[REFERENCES — CONTEXT]` block (see `claude-code-eclaw-channel/bridge.ts`)
 - Memory: `feedback_spec_first`, `feedback_link_card_full_e2e_required`, `feedback_i18n_delegate`, `feedback_personal_screenshot_review`
+
+## 10. Amendments
+
+### 2026-06-03 — #6 yrt82n review (pre-impl)
+
+Original spec merged in PR #3124 with reviews:[]. U94 requested retroactive sign-off on `card_a20b69d79f4aba684e7d04ec`. #6 returned 5 amendments REQUIRED before Impl PR; folded into §3.2, §4.1, AC5:
+
+1. **Cache key**: must include `<deviceId>|<kind>|<id>` (not just `from` id) for multi-device isolation. Cache stores normalized refs only. `backend/.cache/` added to `.gitignore`. → §3.2 Cache line.
+2. **Card sources**: replace non-existent `kanban.cards.scope` with the real structured tables — `linked_prev_card_id` + `linked_next_card_id` columns, plus `kanban_card_dependencies` (card_id/depends_on_card_id) and `kanban_card_links` (source_card_id/target_card_id). → §3.2 table.
+3. **gh pr list flags**: plain `gh pr list` does not return `body`; AC5 needs it. Use `--json number,title,body,url,state,updatedAt`. → §3.2 table.
+4. **Frontend hook**: refs-popover wraps `help-popover.js`; add minimal options hook on the base (`maxWidth`, `variant: 'tooltip' | 'sheet'`) instead of forking. → §4.1.
+5. **AC5 back-refs not PR-only**: in v1, back-links include card description/comments and doc citations, not just PR-body matches. → §3.2 "Back-link sources" paragraph + AC5 enumeration.

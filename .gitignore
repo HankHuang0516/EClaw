@@ -21,6 +21,7 @@ backend/data/*
 !backend/data/skill-templates.json
 !backend/data/routing-policies/
 !backend/data/routing-policies/*.txt
+backend/.cache/
 dist/
 coverage/
 .env
