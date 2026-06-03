@@ -42,6 +42,40 @@ def _coerce_xy(obj: Any) -> tuple[int, int]:
     raise TypeError(f"unsupported coordinate type: {type(obj).__name__}")
 
 
+class _BoundsShim:
+    """Lightweight Bounds substitute used when upstream `mobile_use` is not installed.
+
+    Matches the duck-typed surface upstream `UnifiedMobileController.tap_element()`
+    needs: a `.get_center()` that returns something `tap()`'s `_coerce_xy` can read.
+    """
+
+    __slots__ = ("x1", "y1", "x2", "y2")
+
+    def __init__(self, x1: int, y1: int, x2: int, y2: int) -> None:
+        self.x1 = int(x1)
+        self.y1 = int(y1)
+        self.x2 = int(x2)
+        self.y2 = int(y2)
+
+    def get_center(self) -> dict[str, int]:
+        return {"x": (self.x1 + self.x2) // 2, "y": (self.y1 + self.y2) // 2}
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, _BoundsShim):
+            return (
+                self.x1 == other.x1
+                and self.y1 == other.y1
+                and self.x2 == other.x2
+                and self.y2 == other.y2
+            )
+        if isinstance(other, dict):
+            return {"x1": self.x1, "y1": self.y1, "x2": self.x2, "y2": self.y2} == other
+        return NotImplemented
+
+    def __repr__(self) -> str:
+        return f"_BoundsShim(x1={self.x1}, y1={self.y1}, x2={self.x2}, y2={self.y2})"
+
+
 def _success(body: dict[str, Any]) -> bool:
     return bool(body.get("success", False))
 
@@ -248,8 +282,12 @@ class EclawController:
         text: str | None = None,
         index: int = 0,
     ):  # noqa: ANN201 — return type uses upstream-only types when present.
-        # Linear scan; upstream's own controllers do the same. Mobile-use's
-        # cortex picks one selector at a time so the cost is bounded.
+        # Upstream contract: (node, bounds, error_message). Upstream
+        # `UnifiedMobileController.tap_element()` does `if error or not bounds:
+        # return error`, then calls `bounds.get_center()`. So on success the
+        # third slot MUST be None and `bounds` MUST expose `.get_center()`.
+        if not resource_id and not text:
+            return None, None, "no selector provided (resource_id or text required)"
         matches: list[dict] = []
         for node in ui_hierarchy or []:
             if resource_id and node.get("resource-id") != resource_id and node.get("resourceId") != resource_id:
@@ -257,11 +295,15 @@ class EclawController:
             if text and (node.get("text") or "") != text:
                 continue
             matches.append(node)
-        if not matches or index < 0 or index >= len(matches):
-            return None, None, None
+        if not matches:
+            return None, None, "no element matches selector"
+        if index < 0 or index >= len(matches):
+            return None, None, f"index {index} out of range ({len(matches)} matches)"
         node = matches[index]
         bounds = self._extract_bounds(node)
-        return node, bounds, node.get("resource-id") or node.get("resourceId")
+        if bounds is None:
+            return None, None, "matched node has no parseable bounds"
+        return node, bounds, None
 
     # ---------------------------------------------------------------- video / misc
 
@@ -321,22 +363,40 @@ class EclawController:
 
     @staticmethod
     def _extract_bounds(node: dict[str, Any]):
-        # Accept either an upstream `Bounds` dict or Android-style
-        # "[x1,y1][x2,y2]" string.
+        # Return upstream `Bounds` when available (so isinstance checks pass);
+        # otherwise return a small shim that exposes the same `.get_center()`
+        # contract upstream `UnifiedMobileController.tap_element()` relies on.
         b = node.get("bounds")
         if b is None:
             return None
-        if isinstance(b, dict) and "x1" in b:
-            return b
-        if isinstance(b, str) and b.startswith("[") and "][" in b:
+        coords: dict[str, int] | None = None
+        if isinstance(b, dict) and all(k in b for k in ("x1", "y1", "x2", "y2")):
+            try:
+                coords = {
+                    "x1": int(b["x1"]),
+                    "y1": int(b["y1"]),
+                    "x2": int(b["x2"]),
+                    "y2": int(b["y2"]),
+                }
+            except (ValueError, TypeError):
+                coords = None
+        elif isinstance(b, str) and b.startswith("[") and "][" in b:
             try:
                 left, right = b.replace("[", "").split("]")[:2]
                 x1, y1 = (int(v) for v in left.split(","))
                 x2, y2 = (int(v) for v in right.split(","))
-                return {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
+                coords = {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
             except (ValueError, TypeError):
-                return None
-        return b
+                coords = None
+        if coords is None:
+            return None
+        try:
+            from minitap.mobile_use.controllers.types import Bounds  # type: ignore[import-not-found]
+            return Bounds(**coords)
+        except ImportError:
+            return _BoundsShim(**coords)
+        except Exception:
+            return _BoundsShim(**coords)
 
 
 __all__ = ["EclawController"]

@@ -357,28 +357,58 @@ def test_get_screen_data_returns_payload_dict_when_upstream_absent():
     assert elements == [{"text": "OK"}]
 
 
-def test_find_element_by_text():
+def test_find_element_by_text_returns_error_none_and_centered_bounds():
+    # Successful match: upstream contract is `(node, bounds, None)`. Bounds
+    # must expose `.get_center()` because `UnifiedMobileController.tap_element()`
+    # does `bounds.get_center()` after the error-None check.
     ctrl, _ = _make_controller([])
     nodes = [
-        {"resource-id": "r1", "text": "Settings"},
-        {"resource-id": "r2", "text": "Wifi"},
+        {"resource-id": "r1", "text": "Settings", "bounds": "[0,0][100,40]"},
+        {"resource-id": "r2", "text": "Wifi", "bounds": "[0,40][100,80]"},
     ]
-    node, bounds, rid = ctrl.find_element(nodes, text="Wifi")
-    assert rid == "r2"
-    assert bounds is None
+    node, bounds, err = ctrl.find_element(nodes, text="Wifi")
+    assert err is None
+    assert node is not None and node["resource-id"] == "r2"
+    assert bounds is not None and hasattr(bounds, "get_center")
+    center = bounds.get_center()
+    cx = center["x"] if isinstance(center, dict) else center.x
+    cy = center["y"] if isinstance(center, dict) else center.y
+    assert (cx, cy) == (50, 60)
 
 
-def test_find_element_returns_none_when_no_match():
+def test_find_element_no_match_returns_descriptive_error():
     ctrl, _ = _make_controller([])
-    node, bounds, rid = ctrl.find_element([{"text": "X"}], text="Y")
-    assert (node, bounds, rid) == (None, None, None)
+    node, bounds, err = ctrl.find_element([{"text": "X"}], text="Y")
+    assert node is None
+    assert bounds is None
+    assert err and "no element matches" in err
+
+
+def test_find_element_no_selector_returns_error():
+    ctrl, _ = _make_controller([])
+    node, bounds, err = ctrl.find_element([{"text": "X"}])
+    assert (node, bounds) == (None, None)
+    assert err and "no selector" in err
+
+
+def test_find_element_index_out_of_range_returns_error():
+    ctrl, _ = _make_controller([])
+    nodes = [{"text": "T", "bounds": "[0,0][10,10]"}]
+    node, bounds, err = ctrl.find_element(nodes, text="T", index=2)
+    assert (node, bounds) == (None, None)
+    assert err and "out of range" in err
 
 
 def test_find_element_parses_android_bounds_string():
     ctrl, _ = _make_controller([])
     nodes = [{"resource-id": "r", "text": "T", "bounds": "[10,20][30,40]"}]
-    _, bounds, _ = ctrl.find_element(nodes, text="T")
+    _, bounds, err = ctrl.find_element(nodes, text="T")
+    assert err is None
+    assert bounds is not None
+    # The shim compares equal to the legacy dict shape for backward-compat
+    # callers that don't yet use `.get_center()`.
     assert bounds == {"x1": 10, "y1": 20, "x2": 30, "y2": 40}
+    assert bounds.get_center() == {"x": 20, "y": 30}
 
 
 # ---------------------------------------------------------------- error mapping
