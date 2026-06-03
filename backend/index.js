@@ -1636,12 +1636,12 @@ app.get('/api/help', (req, res) => {
             { title: 'Send type text', curl: `curl -s -X POST "${apiBase}/api/device/control" -H "Content-Type: application/json" -d ${d},"command":"type","params":{"text":"hello"}}'` },
             { title: 'Send scroll', curl: `curl -s -X POST "${apiBase}/api/device/control" -H "Content-Type: application/json" -d ${d},"command":"scroll","params":{"direction":"down","amount":300}}'` },
             { title: 'Send back / home / ime_action', curl: `curl -s -X POST "${apiBase}/api/device/control" -H "Content-Type: application/json" -d ${d},"command":"back"}'  # or "home" / "ime_action"` },
-            { title: 'M1 mobile-use: swipe (requires ECLAW_MOBILE_USE_API_ENABLED=true)', curl: `curl -s -X POST "${apiBase}/api/device/control" -H "Content-Type: application/json" -d ${d},"command":"swipe","params":{"startX":100,"startY":800,"endX":100,"endY":200,"durationMs":250}}'` },
+            { title: 'M1 mobile-use: swipe', curl: `curl -s -X POST "${apiBase}/api/device/control" -H "Content-Type: application/json" -d ${d},"command":"swipe","params":{"startX":100,"startY":800,"endX":100,"endY":200,"durationMs":250}}'` },
             { title: 'M1 mobile-use: long_press', curl: `curl -s -X POST "${apiBase}/api/device/control" -H "Content-Type: application/json" -d ${d},"command":"long_press","params":{"x":150,"y":400,"durationMs":1000}}'` },
             { title: 'M1 mobile-use: launch_app (Android packageName / iOS bundleId)', curl: `curl -s -X POST "${apiBase}/api/device/control" -H "Content-Type: application/json" -d ${d},"command":"launch_app","params":{"packageName":"com.android.settings"}}'` },
             { title: 'M1 mobile-use: stop_app', curl: `curl -s -X POST "${apiBase}/api/device/control" -H "Content-Type: application/json" -d ${d},"command":"stop_app","params":{"packageName":"com.android.settings"}}'` },
             { title: 'M1 mobile-use: screen-image (base64 PNG for vision agents)', curl: `curl -s "${apiBase}/api/device/screen-image?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}&maxBytes=500000"` },
-            { title: 'Spec reference', curl: `# docs/specs/mobile-use-integration.md §3 — M1 control API expand.\n# Feature flag: ECLAW_MOBILE_USE_API_ENABLED=true on backend.\n# Without the flag, swipe/long_press/launch_app/stop_app + /screen-image return 403 feature-disabled.\n# Core primitives (tap/type/scroll/back/home/ime_action) remain ungated.` }
+            { title: 'Spec reference', curl: `# docs/specs/mobile-use-integration.md §3 — M1 control API expand.\n# All 4 new commands + /screen-image are always-on; per-user gating is the\n# existing remote_control_enabled device pref (per feedback_platform_user_rule_compliance).\n# 403 remote_control_disabled returned if the device owner hasn't enabled remote control in app Settings.` }
         ]
     };
 
@@ -19232,14 +19232,12 @@ app.post('/api/device/screen-result', (req, res) => {
  * GET /api/device/screen-image
  * M1 mobile-use parity (docs/specs/mobile-use-integration.md §3.2).
  * Long-poll capture of a raw screen image (PNG) for vision-based agents.
- * Auth: deviceId + (botSecret | deviceSecret). Gated by ECLAW_MOBILE_USE_API_ENABLED env.
+ * Auth: deviceId + (botSecret | deviceSecret). Per-user gating is the existing
+ * remote_control_enabled device pref (per feedback_platform_user_rule_compliance —
+ * no global env flag that decides for ALL EClawbot users).
  * Shares the 500ms rate-limit + the same pending-map as /screen-capture.
  */
 app.get('/api/device/screen-image', async (req, res) => {
-    if (process.env.ECLAW_MOBILE_USE_API_ENABLED !== 'true') {
-        return res.status(403).json({ success: false, error: 'feature-disabled',
-            message: 'screen-image requires ECLAW_MOBILE_USE_API_ENABLED=true' });
-    }
     const { deviceId, entityId, botSecret, deviceSecret, maxBytes } = req.query;
     if (!deviceId || (botSecret === undefined && deviceSecret === undefined)) {
         return res.status(400).json({ success: false, error: 'deviceId and botSecret (or deviceSecret) required' });
@@ -19336,8 +19334,9 @@ app.post('/api/device/screen-image-result', (req, res) => {
  *    or { deviceId, entityId, deviceSecret, command, params } — device owner auth (portal)
  *
  * Core commands: tap, type, scroll, back, home, ime_action (always available).
- * M1 mobile-use parity commands (ECLAW_MOBILE_USE_API_ENABLED=true): swipe, long_press,
- *   launch_app, stop_app. See docs/specs/mobile-use-integration.md §3.1.
+ * M1 mobile-use parity commands (always-on, per-user via remote_control_enabled
+ * pref): swipe, long_press, launch_app, stop_app. See
+ * docs/specs/mobile-use-integration.md §3.1.
  */
 app.post('/api/device/control', async (req, res) => {
     const { deviceId, entityId, botSecret, deviceSecret, command, params } = req.body;
@@ -19346,17 +19345,16 @@ app.post('/api/device/control', async (req, res) => {
         return res.status(400).json({ success: false, error: 'deviceId and command required' });
     }
 
-    // Core primitives — always available
-    const CORE_COMMANDS = new Set(['tap', 'type', 'scroll', 'back', 'home', 'ime_action']);
-    // M1 mobile-use parity — gated by ECLAW_MOBILE_USE_API_ENABLED env var
-    // (default false in prod until M2 ships per docs/specs/mobile-use-integration.md §3.3)
-    const M1_COMMANDS = new Set(['swipe', 'long_press', 'launch_app', 'stop_app']);
-    const mobileUseEnabled = process.env.ECLAW_MOBILE_USE_API_ENABLED === 'true';
-    if (M1_COMMANDS.has(command) && !mobileUseEnabled) {
-        return res.status(403).json({ success: false, error: 'feature-disabled',
-            message: 'mobile-use control primitives require ECLAW_MOBILE_USE_API_ENABLED=true' });
-    }
-    const VALID_COMMANDS = mobileUseEnabled ? new Set([...CORE_COMMANDS, ...M1_COMMANDS]) : CORE_COMMANDS;
+    // Core primitives + M1 mobile-use parity (swipe / long_press / launch_app /
+    // stop_app). All commands are available to any caller whose deviceSecret /
+    // botSecret pair authenticates; per-user opt-in is the existing
+    // remote_control_enabled device pref (gated below). Global env flags are
+    // not used here — per feedback_platform_user_rule_compliance, EClawbot is a
+    // global agent-collab platform and features must work for ALL users.
+    const VALID_COMMANDS = new Set([
+        'tap', 'type', 'scroll', 'back', 'home', 'ime_action',
+        'swipe', 'long_press', 'launch_app', 'stop_app',
+    ]);
     if (!VALID_COMMANDS.has(command)) {
         return res.status(400).json({ success: false, error: `Invalid command. Must be one of: ${[...VALID_COMMANDS].join(', ')}` });
     }

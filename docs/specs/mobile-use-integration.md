@@ -142,13 +142,11 @@ Compression: app-side downscales to fit `maxBytes` (default 500 KB) using Androi
 
 Rate-limit: same 500 ms minimum between captures as `/screen-capture`. Both endpoints share a single per-device cool-down counter.
 
-### 3.3 Feature flag
+### 3.3 Gating — per-user, not global
 
-All M1 expansion lives behind env var `ECLAW_MOBILE_USE_API_ENABLED`:
-- Dev / staging: `true` by default.
-- Prod: `false` until M2 is shipped and reviewed.
+The M1 commands + `/screen-image` are always available on the API surface, exactly like the existing 6 primitives. Per-user opt-in is the existing `remote_control_enabled` device preference (toggled by the user in app Settings, persisted via `/api/device-preferences`). No global env flag gates the feature for the whole platform.
 
-Existing 6 primitives are NOT gated — only the 4 new commands + `/screen-image` endpoint.
+This is a hard rule from `feedback_platform_user_rule_compliance`: EClawbot is a global agent-collab platform and a single env var on Railway must not decide behaviour for every user worldwide. (Earlier drafts of this spec had an `ECLAW_MOBILE_USE_API_ENABLED` global flag; that was reverted in `card_f03617476ab053d54384ae79` before any production user reached the endpoints.)
 
 ## 4. M1 — Native handler contract
 
@@ -265,7 +263,7 @@ If upstream interest is high (will probe via GitHub issue), an upstream PR can f
 - **AC1.1** — `jest` tests: 4 new commands + screen-image endpoint each pass authentication, param validation, rate-limit (`backend/tests/jest/screen-control.test.js` extends to ≥ 25 cases total).
 - **AC1.2** — Live probe: a bash script on this Mac drives a real Android emulator through all 4 new commands; expected screen changes confirmed via accessibility tree before/after.
 - **AC1.3** — `/api/device/screen-image` returns base64 PNG ≤ 500 KB; decoded image header is valid PNG.
-- **AC1.4** — Feature flag `ECLAW_MOBILE_USE_API_ENABLED=false` → all 4 new commands + screen-image return `403 {error: "feature-disabled"}`.
+- **AC1.4** — Per-user gate: `remote_control_enabled=false` on a device → all 4 new commands + screen-image return `403 {error: "remote_control_disabled"}` exactly like the existing 6 primitives. No global env flag involved.
 - **AC1.5** — `/api/help?intent=mobile-use` returns curl examples for all new endpoints.
 - **AC1.6** — Spec PR cites this doc section.
 
@@ -279,7 +277,7 @@ If upstream interest is high (will probe via GitHub issue), an upstream PR can f
 
 ## 7. Rollback
 
-M1: revert PR. Endpoint set returns to 6 commands. Feature flag automatically returns 403 for the 4 new endpoints if env is unset.
+M1: revert PR. Endpoint set returns to 6 commands. (No env flag exists; per-user `remote_control_enabled` gate keeps the existing surface unchanged.)
 
 M2: driver lives in its own repo / PyPI package. Removing the user's `pip install eclaw-mobile-use-driver` reverts.
 
