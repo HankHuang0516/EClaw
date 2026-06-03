@@ -79,9 +79,11 @@
       const cs = getComputedStyle(el);
       if (cs.visibility === 'hidden' || cs.display === 'none') return false;
       if (el.offsetWidth === 0 || el.offsetHeight === 0) return false;
-      // Not inside the toolbar itself
+      // Not inside the toolbar itself. The ring classes apply directly to
+      // the selected/previewed element itself, so we must NOT use them as
+      // "skip" markers — that would block re-selecting the same element
+      // after dismiss.
       if (el.closest('.eclaw-hover-click-toolbar')) return false;
-      if (el.closest('.eclaw-dom-select__ring-preview, .eclaw-dom-select__ring-selected')) return false;
       // User predicate
       if (userPredicate && !userPredicate(el)) return false;
       return true;
