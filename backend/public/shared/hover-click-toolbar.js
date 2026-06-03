@@ -300,13 +300,15 @@
 
     function startMove() {
       if (!currentTarget) return;
-      const cs = getComputedStyle(currentTarget);
+      const target = currentTarget;
+      const cs = getComputedStyle(target);
       const startX0 = parseFloat(cs.left) || 0;
       const startY0 = parseFloat(cs.top) || 0;
       const wasPos = cs.position;
-      if (wasPos === 'static') currentTarget.style.position = 'relative';
-      dragging = { target: currentTarget, startMouseX: null, startMouseY: null, startLeft: startX0, startTop: startY0 };
-      currentTarget.style.cursor = 'move';
+      const beforeHTML = snapshotBefore(target);
+      if (wasPos === 'static') target.style.position = 'relative';
+      dragging = { target, startMouseX: null, startMouseY: null, startLeft: startX0, startTop: startY0 };
+      target.style.cursor = 'move';
       const moveHandler = (e) => {
         if (dragging.startMouseX === null) {
           dragging.startMouseX = e.clientX;
@@ -315,20 +317,33 @@
         }
         const dx = e.clientX - dragging.startMouseX;
         const dy = e.clientY - dragging.startMouseY;
-        currentTarget.style.left = `${dragging.startLeft + dx}px`;
-        currentTarget.style.top = `${dragging.startTop + dy}px`;
+        target.style.left = `${dragging.startLeft + dx}px`;
+        target.style.top = `${dragging.startTop + dy}px`;
       };
       const upHandler = () => {
         document.removeEventListener('pointermove', moveHandler, true);
         document.removeEventListener('pointerup', upHandler, true);
-        const r = currentTarget.getBoundingClientRect();
-        recordMutation({
-          type: 'geometry',
-          target: currentTarget,
-          from: { x: startX0, y: startY0, w: r.width, h: r.height },
-          to:   { x: parseFloat(currentTarget.style.left) || 0, y: parseFloat(currentTarget.style.top) || 0, w: r.width, h: r.height },
-        });
-        currentTarget.style.cursor = '';
+        const r = target.getBoundingClientRect();
+        const endLeft = parseFloat(target.style.left) || 0;
+        const endTop = parseFloat(target.style.top) || 0;
+        // v1.1.1: wire undo/redo for Move so Ctrl+Z reverses it.
+        recordMutation(
+          { type: 'geometry', target,
+            from: { x: startX0, y: startY0, w: r.width, h: r.height },
+            to: { x: endLeft, y: endTop, w: r.width, h: r.height },
+            _beforeHTML: beforeHTML },
+          () => {
+            target.style.left = `${startX0}px`;
+            target.style.top = `${startY0}px`;
+            if (wasPos === 'static') target.style.position = '';
+          },
+          () => {
+            if (wasPos === 'static') target.style.position = 'relative';
+            target.style.left = `${endLeft}px`;
+            target.style.top = `${endTop}px`;
+          },
+        );
+        target.style.cursor = '';
         dragging = null;
       };
       document.addEventListener('pointermove', moveHandler, true);
@@ -337,8 +352,12 @@
 
     function startResize() {
       if (!currentTarget) return;
-      const r = currentTarget.getBoundingClientRect();
+      const target = currentTarget;
+      const r = target.getBoundingClientRect();
       const startW = r.width, startH = r.height;
+      const startWidthCss = target.style.width;
+      const startHeightCss = target.style.height;
+      const beforeHTML = snapshotBefore(target);
       let startX = null, startY = null;
       const moveHandler = (e) => {
         if (startX === null) { startX = e.clientX; startY = e.clientY; return; }
@@ -350,19 +369,30 @@
           const ratio = startW / startH;
           newH = newW / ratio;
         }
-        currentTarget.style.width = `${Math.max(20, newW)}px`;
-        currentTarget.style.height = `${Math.max(20, newH)}px`;
+        target.style.width = `${Math.max(20, newW)}px`;
+        target.style.height = `${Math.max(20, newH)}px`;
       };
       const upHandler = () => {
         document.removeEventListener('pointermove', moveHandler, true);
         document.removeEventListener('pointerup', upHandler, true);
-        const r2 = currentTarget.getBoundingClientRect();
-        recordMutation({
-          type: 'geometry',
-          target: currentTarget,
-          from: { w: startW, h: startH },
-          to: { w: r2.width, h: r2.height },
-        });
+        const r2 = target.getBoundingClientRect();
+        const endWidthCss = target.style.width;
+        const endHeightCss = target.style.height;
+        // v1.1.1: wire undo/redo for Resize too.
+        recordMutation(
+          { type: 'geometry', target,
+            from: { w: startW, h: startH },
+            to: { w: r2.width, h: r2.height },
+            _beforeHTML: beforeHTML },
+          () => {
+            target.style.width = startWidthCss;
+            target.style.height = startHeightCss;
+          },
+          () => {
+            target.style.width = endWidthCss;
+            target.style.height = endHeightCss;
+          },
+        );
       };
       document.addEventListener('pointermove', moveHandler, true);
       document.addEventListener('pointerup', upHandler, true);

@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" href="assets/favicon-32.png">
     <link rel="stylesheet" href="shared/style.css">
     <link rel="stylesheet" href="shared/info.css">
-    <link rel="stylesheet" href="../shared/hover-click-toolbar.css">
+    <link rel="stylesheet" href="../shared/hover-click-toolbar.css?v=1.1.1">
     <style>
         /* ══════════════ Sub-tabs (same as mission.html / kanban.html) ══════════════ */
         .sub-tabs { display:flex; gap:0; margin-bottom:20px; border-bottom:1px solid var(--card-border); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
@@ -174,9 +174,9 @@
         opens anchored to the picked element. Esc / outside-click dismisses
         per the toolbar's own handlers; the sandbox stays interactive.
     -->
-    <script src="../shared/dom-select.js"></script>
-    <script src="../shared/hover-click-toolbar.js"></script>
-    <script src="../shared/diff-format.js"></script>
+    <script src="../shared/dom-select.js?v=1.1.1"></script>
+    <script src="../shared/hover-click-toolbar.js?v=1.1.1"></script>
+    <script src="../shared/diff-format.js?v=1.1.1"></script>
     <script>
     (function() {
         if (!window.EClawHoverClickToolbar || !document.querySelector('.ped-sandbox')) return;
