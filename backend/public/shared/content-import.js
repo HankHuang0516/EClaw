@@ -78,12 +78,21 @@
     if (spec.kind === 'url') {
       if (!spec.url) throw new Error('content-import: spec.url required');
       const allowed = isAllowedPublicUrl(spec.url);
+      const sameOrigin = allowed && new URL(spec.url).origin === root.location.origin;
       const iframe = document.createElement('iframe');
       iframe.className = 'eclaw-content-import__iframe';
       iframe.setAttribute('referrerpolicy', 'no-referrer');
       iframe.setAttribute('loading', 'eager');
-      iframe.setAttribute('sandbox', 'allow-same-origin allow-forms');
-      if (allowed && new URL(spec.url).origin === root.location.origin) {
+      // v1.3: same-origin portal pages need scripts to render (auth-checks,
+      // i18n.apply, nav inject). Without allow-scripts they hand back an empty
+      // body and the user sees a blank box. Cross-origin proxied content stays
+      // in the strict-no-scripts sandbox per spec §4.2 threat model.
+      if (sameOrigin) {
+        iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts allow-forms allow-popups');
+      } else {
+        iframe.setAttribute('sandbox', 'allow-same-origin allow-forms');
+      }
+      if (sameOrigin) {
         iframe.src = spec.url;
       } else if (allowed) {
         // Cross-origin allowed → proxy through our origin (strips X-Frame-Options /
@@ -98,18 +107,29 @@
       }
       // Wait for the iframe to load before exposing rootEl, so callers can
       // attach DOM-select to the iframe document.
-      await new Promise((res, rej) => {
-        iframe.addEventListener('load', res, { once: true });
-        iframe.addEventListener('error', rej, { once: true });
+      // v1.3: also reject after a load-with-empty-body timeout, since browsers
+      // fire 'load' even on X-Frame-Options DENY and the document is unusable.
+      const loaded = await new Promise((res, rej) => {
+        iframe.addEventListener('load', () => res('load'), { once: true });
+        iframe.addEventListener('error', () => rej(new Error('iframe error event')), { once: true });
         document.body.appendChild(iframe);
+        setTimeout(() => res('timeout'), 8000);
       });
-      const doc = iframe.contentDocument;
-      if (!doc) throw new Error('content-import: iframe document inaccessible (cross-origin?)');
+      let doc;
+      try { doc = iframe.contentDocument; } catch (_) { doc = null; }
+      const bodyEmpty = !doc || !doc.body || (doc.body.childElementCount === 0 && !doc.body.textContent.trim());
+      if (loaded === 'timeout' || bodyEmpty) {
+        iframe.remove();
+        throw new Error(root.i18n && root.i18n.t
+          ? root.i18n.t('hover_click.import_iframe_blocked')
+          : 'Import target blocked the iframe (X-Frame-Options / frame-ancestors). Try a different URL or use "This page".');
+      }
       const sourceMap = new Map();
       sourceMap.set('__root__', { file: spec.url, kind: 'url' });
       return {
         rootEl: doc.body || doc.documentElement,
         sourceMap,
+        iframe,
         sourceContext: { kind: 'url', url: spec.url, viewport: { w: iframe.clientWidth, h: iframe.clientHeight } },
         dispose() { iframe.remove(); },
       };

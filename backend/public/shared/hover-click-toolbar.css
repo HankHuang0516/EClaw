@@ -99,6 +99,42 @@
   flex-wrap: wrap;
 }
 
+/* v1.3: drag handle. Renders as a vertical-dots glyph at the left of the row.
+   Cursor switches to grabbing while dragging. Mobile hides it — the bottom
+   sheet is fixed full-width. */
+.eclaw-hover-click-toolbar__drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 28px;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--text-secondary, #71717a);
+  cursor: grab;
+  user-select: none;
+  border-radius: 6px;
+  margin-right: 2px;
+  touch-action: none;
+}
+.eclaw-hover-click-toolbar__drag-handle:hover {
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--text, #18181b);
+}
+.eclaw-hover-click-toolbar[data-dragging="true"] {
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+  transition: none !important;
+}
+.eclaw-hover-click-toolbar[data-dragging="true"] .eclaw-hover-click-toolbar__drag-handle {
+  cursor: grabbing;
+}
+/* v1.3: when user has dragged, override default top-right dock. Inline styles
+   on the shell carry left/top/right=auto so this rule mainly documents the
+   contract — the shell switches to absolute-positioned mode. */
+.eclaw-hover-click-toolbar[data-user-positioned="true"] {
+  /* inline left/top win over right:16px in the base rule */
+}
+
 .eclaw-hover-click-toolbar__divider {
   width: 1px;
   height: 20px;
@@ -326,6 +362,9 @@
     margin-left: 0;
     align-self: center;
     width: 50%;
+  }
+  .eclaw-hover-click-toolbar__drag-handle {
+    display: none;
   }
 }
 
