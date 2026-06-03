@@ -2866,6 +2866,7 @@
     <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/styles/github-dark.min.css">
     <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11/build/highlight.min.js"></script>
+    <link rel="stylesheet" href="../shared/filter-summary.css">
 </head>
 
 <body>
@@ -2909,6 +2910,8 @@
                         <button type="button" data-density="comfortable" onclick="setChatDensity('comfortable')" title="Comfortable" data-i18n-title="chat_density_comfortable">A</button>
                     </div>
                 </div>
+                <div class="filter-summary-anchor" id="filterSummaryAnchor" style="position:relative;"></div>
+                <div class="filter-bar-legacy" id="filterBarLegacy">
                 <div class="chip-group-wrapper">
                     <div class="chip-group" id="filterChips">
                         <button class="filter-chip active" data-filter="all" onclick="setFilter('all')" data-i18n="chat_filter_all">All</button>
@@ -2927,6 +2930,7 @@
                         <button class="sys-chip" type="button" data-syscat="health" onclick="toggleSysCat('health')" data-i18n="chat_sys_health" title="健康 / Health">❤️ 健康</button>
                     </div>
                 </div>
+                </div><!-- /#filterBarLegacy — moved into filter-summary panel at boot -->
             </div>
 
             <!-- Messages Area -->
@@ -3188,6 +3192,7 @@
     <script src="../shared/avatar-petdx.js"></script>
     <script src="shared/entity-utils.js"></script>
     <script src="shared/chat-source-category.js"></script>
+    <script src="../shared/filter-summary.js"></script>
     <script src="shared/mention-autocomplete.js"></script>
     <script src="shared/mention-resolver.js"></script>
     <script src="shared/mention-render.js"></script>
@@ -3608,6 +3613,37 @@
             const user = await checkAuth();
             console.log('[CHAT_DEBUG] checkAuth result:', user ? `deviceId=${user.deviceId}, hasSecret=${!!user.deviceSecret}` : 'NULL');
             if (!user) return;
+
+            // ── Filter summary primitive — collapse 2 filter rows into 1 chip ──
+            // Spec: docs/specs/chat-page-filter-bar-collapse.md
+            try {
+                const anchor = document.getElementById('filterSummaryAnchor');
+                const legacy = document.getElementById('filterBarLegacy');
+                if (anchor && legacy && typeof createFilterSummary === 'function') {
+                    const sysCatDefault = { conversation: true, kanban: true, scheduled: true, platform: false, health: false };
+                    window.__filterSummary = createFilterSummary({
+                        anchorEl: anchor,
+                        panelContent: (panelEl) => { panelEl.appendChild(legacy); legacy.style.display = ''; },
+                        countActive: () => {
+                            let n = 0;
+                            const scope = document.querySelector('#filterChips .filter-chip.active');
+                            if (scope && scope.dataset.filter && scope.dataset.filter !== 'all') n++;
+                            document.querySelectorAll('#systemFilterChips .sys-chip').forEach(c => {
+                                const cat = c.dataset.syscat;
+                                const isActive = c.classList.contains('active');
+                                if (cat in sysCatDefault && sysCatDefault[cat] !== isActive) n++;
+                            });
+                            return n;
+                        },
+                        i18nKey: 'chat_filter',
+                    });
+                    // Refresh summary count whenever the user toggles anything inside the panel
+                    legacy.addEventListener('click', () => {
+                        try { setTimeout(() => window.__filterSummary && window.__filterSummary.refresh(), 0); } catch (e) {}
+                    }, true);
+                }
+            } catch (e) { console.warn('[chat] filter-summary init failed:', e); }
+
             // Hydrate sys-filter chip state from per-device localStorage
             // (key requires deviceId — see chat-source-category.storageKey).
             loadSysFilterFromStorage();
