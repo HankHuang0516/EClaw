@@ -822,20 +822,34 @@
       `;
       shell.appendChild(panel);
       stylePanelEl = panel;
+      // v1.2b1: expose a flushPending() for closeStyleSubpanel so any
+      // in-flight debounce commits immediately (otherwise quick edits
+      // followed by panel close lose the history entry).
+      panel._flushPending = function() {
+        Object.keys(sessionDebounce).forEach((key) => {
+          if (sessionDebounce[key] != null) {
+            clearTimeout(sessionDebounce[key]);
+            const input = panel.querySelector(`[data-style-key="${key}"]`);
+            if (input) {
+              const unit = input.dataset.unit || '';
+              const value = unit && input.value !== '' ? `${input.value}${unit}` : input.value;
+              commitProperty(key, value);
+            }
+            sessionDebounce[key] = null;
+          }
+        });
+      };
 
       // Track session-level mutation: commit one entry per (property,
       // target) pair on debounce. Map keyed by style property.
       const sessionDebounce = {};
       const sessionSnapshots = {}; // property → original value when first edited
       function commitProperty(key, value) {
-        // Commit happens after debounce; capture the BEFORE value once.
-        if (!(key in sessionSnapshots)) {
-          sessionSnapshots[key] = target.style[key] !== '' ? target.style[key] : null;
-        }
+        // v1.2b1: sessionSnapshots[key] is captured in the 'input' handler
+        // BEFORE the live preview overwrites target.style[key]. By the time
+        // commit fires, sessionSnapshots[key] is the true ORIGINAL value.
         const before = sessionSnapshots[key];
         target.style[key] = value;
-        // Replace any prior history entry for this key with the new BEFORE→to.
-        // We don't dedupe in history; rapid edits get one entry per debounce.
         recordMutation(
           { type: 'style', target, property: key, from: before, to: value, _beforeHTML: beforeHTML },
           () => { target.style[key] = before == null ? '' : before; },
@@ -850,7 +864,13 @@
         const unit = input.dataset.unit || '';
         const rawValue = input.value;
         const value = unit && rawValue !== '' ? `${rawValue}${unit}` : rawValue;
-        // Live preview (no history yet)
+        // v1.2b1 fix: snapshot the ORIGINAL inline value BEFORE the live
+        // preview overwrites it. Previously commit-time snapshot saw the
+        // already-previewed value, making undo a no-op.
+        if (!(key in sessionSnapshots)) {
+          sessionSnapshots[key] = target.style[key] !== '' ? target.style[key] : null;
+        }
+        // Live preview
         target.style[key] = value;
         // Debounce commit to history
         clearTimeout(sessionDebounce[key]);
@@ -873,6 +893,9 @@
 
     function closeStyleSubpanel() {
       if (stylePanelEl) {
+        // v1.2b1: flush any pending live-preview debounce so the user's
+        // last value is recorded to history before the panel goes away.
+        if (stylePanelEl._flushPending) stylePanelEl._flushPending();
         stylePanelEl.remove();
         stylePanelEl = null;
       }
