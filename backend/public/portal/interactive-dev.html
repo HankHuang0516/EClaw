@@ -8,6 +8,7 @@
     <link rel="icon" type="image/png" href="assets/favicon-32.png">
     <link rel="stylesheet" href="shared/style.css">
     <link rel="stylesheet" href="shared/info.css">
+    <link rel="stylesheet" href="../shared/hover-click-toolbar.css">
     <style>
         /* ══════════════ Sub-tabs (same as mission.html / kanban.html) ══════════════ */
         .sub-tabs { display:flex; gap:0; margin-bottom:20px; border-bottom:1px solid var(--card-border); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
@@ -164,6 +165,52 @@
     -->
     <script>window.POINTEDIT_DEMO = true;</script>
     <script src="shared/point-edit-demo.js"></script>
+
+    <!--
+        Track A (hover-click DOM) extension — wires the IDE-style floating
+        toolbar primitive (docs/specs/a-hover-click-dom-interaction.md +
+        PR #3107) into the existing point-edit demo. When point-edit-demo.js
+        fires `pointedit:target` with sourceHint='dom-click', the toolbar
+        opens anchored to the picked element. Esc / outside-click dismisses
+        per the toolbar's own handlers; the sandbox stays interactive.
+    -->
+    <script src="../shared/dom-select.js"></script>
+    <script src="../shared/hover-click-toolbar.js"></script>
+    <script src="../shared/diff-format.js"></script>
+    <script>
+    (function() {
+        if (!window.EClawHoverClickToolbar || !document.querySelector('.ped-sandbox')) return;
+        const toolbar = window.EClawHoverClickToolbar.createHoverClickToolbar({
+            onMutation: function(mut) {
+                // Surface the mutation in the existing composer payload so
+                // the Track A user can see the diff Quote round-trip live.
+                try {
+                    const payload = document.querySelector('[data-ped-payload]');
+                    if (!payload) return;
+                    const muts = (window.__hcMutations = window.__hcMutations || []);
+                    muts.push({ type: mut.type, property: mut.property, from: mut.from, to: mut.to });
+                    const diff = window.EClawDiffFormat
+                        ? window.EClawDiffFormat.produce(muts, { kind: 'portal', url: window.location.pathname })
+                        : null;
+                    payload.textContent = diff
+                        ? JSON.stringify({ semantic: diff.semantic, summary: diff.summary }, null, 2)
+                        : JSON.stringify({ mutations: muts.length }, null, 2);
+                } catch (_) {}
+            },
+        });
+        document.addEventListener('pointedit:target', function(ev) {
+            // Only activate on Track A (DOM mode) — Track B coordinate,
+            // C mind-map, D text-selection have their own affordances
+            // and shouldn't get the floating toolbar.
+            if (!ev.detail || ev.detail.mode !== 'dom') return;
+            const targetId = ev.detail.targetId;
+            if (!targetId) return;
+            const target = document.querySelector(`[data-point-edit-id="${targetId}"]`);
+            if (target) toolbar.open(target);
+        });
+    })();
+    </script>
+
     <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
     <script src="shared/ai-chat.js"></script>
 </body>
