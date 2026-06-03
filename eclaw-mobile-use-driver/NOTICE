@@ -1,0 +1,19 @@
+eclaw-mobile-use-driver
+=======================
+
+This package is an out-of-tree adapter for `minitap-ai/mobile-use`. It
+implements the upstream `MobileDeviceController` Protocol so that LangGraph
+agents in mobile-use can drive devices connected to the EClawbot platform.
+
+Upstream project: minitap-ai/mobile-use
+  Homepage:  https://github.com/minitap-ai/mobile-use
+  License:   Apache License, Version 2.0
+  Authors:   minitap.ai contributors
+
+This package does not vendor any upstream source; it depends on
+`mobile-use` at runtime (declared as an optional install) and implements
+the protocol structurally.
+
+This package is released under the MIT License (see LICENSE). Users
+combining this driver with mobile-use must also comply with the Apache 2.0
+terms of the upstream project.

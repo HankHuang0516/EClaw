@@ -290,5 +290,7 @@ No EClaw DB migration. No mobile-use upstream change in v1 (extension model). Ri
 
 - Research card: `card_aa15ed2618c9246d11a0f6b1` → [report](../research/2026-06-03-mobile-use-comparison.md)
 - minitap-ai/mobile-use: https://github.com/minitap-ai/mobile-use (Apache-2.0, v3.3.0 Jan 2026, 2.6k stars)
+- Upstream `MobileDeviceController` Protocol — [`minitap/mobile_use/controllers/device_controller.py`](https://github.com/minitap-ai/mobile-use/blob/main/minitap/mobile_use/controllers/device_controller.py)
 - EClaw remote-control inventory: `backend/index.js` `/api/device/*`, `backend/public/portal/screen-control.html`, `app/.../ChatJsBridge.java`
+- **M2 driver implementation** — [`eclaw-mobile-use-driver/`](../../eclaw-mobile-use-driver/) (this repo) — PyPI package `eclaw-mobile-use-driver`.
 - Memory: `feedback_spec_first`, `feedback_planning_via_macf`, `feedback_no_new_api_keys`, `feedback_link_card_full_e2e_required`
