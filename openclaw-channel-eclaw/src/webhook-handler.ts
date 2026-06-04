@@ -17,7 +17,9 @@ function envListIncludes(name: string, value: string, defaults: readonly string[
     .includes(value);
 }
 
-const DEFAULT_BACKGROUND_EVENTS = ['kanban_notification', 'org_forward'] as const;
+// Keep kanban notifications model-routed by default. They are task nudges, not
+// passive telemetry; suppressing them ACKs the webhook but prevents execution.
+const DEFAULT_BACKGROUND_EVENTS = ['org_forward'] as const;
 
 function shouldSuppressInboundEvent(event: string): boolean {
   if (
@@ -78,6 +80,7 @@ export function createWebhookHandler(
       const rt = getPluginRuntime();
       const client = getClient(accountId);
       const conversationId = msg.conversationId || `${msg.deviceId}:${msg.entityId}`;
+      const replyTarget = conversationId || msg.from || accountId;
 
       const directAck = String(msg.text || '').match(/^ECLAW_HEALTHCHECK\s+([A-Za-z0-9_-]+)(?=\s|$)/m);
       if (directAck) {
@@ -155,9 +158,10 @@ export function createWebhookHandler(
         Provider: 'eclaw',
         OriginatingChannel: 'eclaw',
         AccountId: accountId,
-        From: msg.from,
-        To: conversationId,
-        OriginatingTo: msg.from,
+        From: replyTarget,
+        To: replyTarget,
+        OriginatingTo: replyTarget,
+        SenderName: msg.from,
         SessionKey: conversationId,
         Body: body,
         RawBody: body,

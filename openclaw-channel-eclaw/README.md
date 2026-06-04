@@ -170,8 +170,8 @@ Device owners can schedule messages to be sent to your bot at a specific time (o
 |----------|----------|-------------|
 | `ECLAW_WEBHOOK_URL` | Production | Public URL for receiving inbound messages |
 | `ECLAW_WEBHOOK_PORT` | Optional | Webhook server port (default: random) |
-| `ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS` | Optional | Set to `1` for high-priority interactive agents that receive many kanban cards. The webhook is still ACKed, but `kanban_notification` events do not occupy the model reply path, so normal web chat and `/api/client/speak` probes stay responsive. |
-| `ECLAW_SUPPRESS_BACKGROUND_EVENTS` | Optional | Set to `1` to suppress the default low-priority background event set (`kanban_notification`, `org_forward`), or set a comma-separated event list such as `org_forward`. Use per runtime, not globally, when a background feed is starving an interactive entity. |
+| `ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS` | Optional | Set to `1` only for agents where kanban cards are intentionally notification-only. The webhook is still ACKed, but `kanban_notification` events do not occupy the model reply path, so the agent will not execute those task nudges. |
+| `ECLAW_SUPPRESS_BACKGROUND_EVENTS` | Optional | Set to `1` to suppress the default low-priority background event set (`org_forward`), or set a comma-separated event list such as `org_forward`. Kanban task notifications are model-routed by default; use `ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS=1` only when that is the intended behavior. |
 
 ## OpenClaw Version Drift Mitigation
 
@@ -190,11 +190,29 @@ docker exec openclaw-project-f openclaw --version
 ```
 
 After the recreate, verify startup logs show the intended runtime model, for
-example `agent model: openai-codex/gpt-5.5 (thinking=xhigh, ...)`, then test
-the E-Claw browser chat UI with a fresh nonce. For #1, enable
-`ECLAW_SUPPRESS_BACKGROUND_EVENTS=1` when recurring kanban or `org_forward`
-background cards are queued ahead of user messages; this prevents background
-feed backlog from starving the interactive reply path.
+example `agent model: openai/gpt-5.5 (thinking=xhigh, ...)`, then confirm the
+configured model entry has `agentRuntime.id=codex`. Older OpenClaw builds may
+log `openai-codex/gpt-5.5`; OpenClaw 2026.6.1 migrates this to canonical
+`openai/gpt-5.5` while preserving Codex OAuth routing through `agentRuntime`.
+
+After upgrading to OpenClaw 2026.6.1, run `openclaw doctor --fix` once inside
+the recreated container. It migrates legacy `openai-codex` provider config,
+auth profiles, session routes, and model refs to the canonical OpenAI provider.
+Without that migration, project F can start with stale config or fail model
+turns with provider 400/403 errors.
+
+Then test the E-Claw browser chat UI with a fresh nonce and a model-backed
+reply-path probe. API `/api/client/speak` health probes may set `from` to a
+source label such as `targeted-model-health`; the channel must not treat that
+label as the message-tool reply target. Current channel builds route replies
+through the stable E-Claw conversation id (`deviceId:entityId`) and declare an
+E-Claw target resolver so OpenClaw's `message` tool can send the reply instead
+of failing with `Unknown target`.
+
+For task-execution agents such as #1 and #3, keep kanban notifications
+model-routed. If low-priority organization forwards are starving the
+interactive reply path, use `ECLAW_SUPPRESS_BACKGROUND_EVENTS=org_forward`
+rather than suppressing kanban task nudges.
 
 ## Troubleshooting
 

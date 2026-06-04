@@ -3,6 +3,14 @@ import { sendText, sendMedia } from './outbound.js';
 import { startAccount } from './gateway.js';
 import { eclawOnboardingAdapter } from './onboarding.js';
 
+function normalizeEClawMessagingTarget(target: string): string {
+  return target.trim();
+}
+
+function looksLikeEClawTargetId(target: string): boolean {
+  return target.trim().length > 0;
+}
+
 /**
  * E-Claw ChannelPlugin definition.
  *
@@ -35,6 +43,22 @@ export const eclawChannel = {
   config: {
     listAccountIds,
     resolveAccount,
+  },
+
+  messaging: {
+    targetPrefixes: ['eclaw'],
+    normalizeTarget: normalizeEClawMessagingTarget,
+    inferTargetChatType: () => 'direct',
+    targetResolver: {
+      looksLikeId: looksLikeEClawTargetId,
+      hint: '<conversationId|publicCode|source>',
+    },
+  },
+
+  agentPrompt: {
+    messageToolHints: () => [
+      '- E-Claw targeting: omit `target` to reply to the current entity conversation. Explicit targets may be the E-Claw conversation id, public code, or source label resolved by the channel.',
+    ],
   },
 
   outbound: {
