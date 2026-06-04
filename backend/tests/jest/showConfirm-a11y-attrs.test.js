@@ -38,7 +38,9 @@ describe('showConfirm — ARIA dialog + focus trap', () => {
         // when it appears.
         expect(apiJs).toMatch(/aria-labelledby="\$\{titleId\}"/);
         expect(apiJs).toMatch(/id="\$\{titleId\}"/);
-        expect(apiJs).toMatch(/eclaw-confirm-title-\$\{\+\+_eclawDialogId\}/);
+        expect(apiJs).toMatch(/const\s+dialogId\s*=\s*\+\+_eclawDialogId/);
+        expect(apiJs).toMatch(/eclaw-confirm-title-\$\{dialogId\}/);
+        expect(apiJs).toMatch(/eclaw-confirm-message-\$\{dialogId\}/);
     });
 
     test('title-less variant falls back to aria-label using message text', () => {
