@@ -53,7 +53,7 @@
     <pre class="mutation-log" id="log"></pre>
   </div>
 
-  <script src="../shared/i18n.js" onerror="window.i18n=function(k,fb){return typeof fb==='string'?fb:k}"></script>
+  <script src="../shared/i18n.js" onerror="if(typeof i18n==='undefined')window.i18n=function(k,fb){return typeof fb==='string'?fb:k}"></script>
   <script src="../shared/dom-select.js"></script>
   <script src="../shared/hover-click-toolbar.js"></script>
   <script src="../shared/content-import.js"></script>
