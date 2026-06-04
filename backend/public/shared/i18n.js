@@ -1234604,44 +1234604,6 @@ const TRANSLATIONS = {
         "chat_related_loading": "載入相關聊天中...",
         "chat_related_panel_title": "相關聊天",
         "chat_related_target_not_loaded": "目標聊天尚未載入",
-        "chat_sys_conversation": "💬 對話",
-        "chat_sys_health": "❤️ 健康",
-        "chat_sys_kanban": "📋 任務板",
-        "chat_sys_n_hidden": "{n} 條系統訊息已被篩選隱藏 — 點擊顯示",
-        "chat_sys_n_hidden_hint": "點擊顯示所有分類",
-        "chat_sys_platform": "🔧 平台",
-        "chat_sys_scheduled": "⏰ 排程",
-        "hover_click.demo_heading": "Hover-Click DOM 展示",
-        "hover_click.import_iframe_blocked": "導入目標被封鎖了 iframe (X-Frame-Options / frame-ancestors)。請嘗試其他 URL。",
-        "hover_click.import_unsupported_ax_v1": "原生 APP 元素選擇將在 v2 版本推出。",
-        "hover_click.import_url_not_allowed": "URL 不在允許的導入清單中。",
-        "interactive_dev_import": "📥 導入",
-        "interactive_dev_import_cancel": "取消",
-        "interactive_dev_import_lede": "選擇工具列要編輯的內容。",
-        "interactive_dev_import_selector": "特定元素",
-        "interactive_dev_import_submit": "導入",
-        "interactive_dev_import_this_page": "本頁面（沙盒）",
-        "interactive_dev_import_this_page_hint": "預設。在下方現有的定點編輯測試區進行編輯。",
-        "interactive_dev_import_title": "導入內容",
-        "interactive_dev_import_url": "網址",
-        "interactive_dev_import_url_hint": "否決式白名單。v1 版允許 eclawbot.com 網域 + example.com。",
-        "inv_error_already": "此邀請碼已被使用過。",
-        "inv_error_already_owner": "你已經兌換過此用戶的邀請了。",
-        "inv_error_expired": "此邀請碼已過期。",
-        "inv_error_max": "此邀請碼已達使用上限。",
-        "inv_error_not_found": "無效的邀請碼。",
-        "inv_error_self": "你無法使用自己的邀請碼。",
-        "inv_error_wallet_required": "請登入以領取錢包獎勵。",
-        "inv_redeem_success_detail": "兌換成功！你獲得了 e-coin，邀請人也獲得了 e-coin。",
-        "inv_redeem_success_pending": "兌換成功！你的邀請已記錄。錢包獎勵將在稍後發放。",
-        "kvalue_date_label": "日期：",
-        "kvalue_refresh": "重新整理",
-        "refs.close": "關閉引用",
-        "refs.empty": "尚無相關項目。",
-        "refs.error": "無法載入相關項目。",
-        "refs.popover_title": "引用",
-        "refs.section_in": "被引用",
-        "refs.section_out": "引用",
     },
 
 
@@ -2411595,44 +2411557,133 @@ const TRANSLATIONS = {
         "kanban_nudge_stop_mode_avatar_title": "ナッジ stop-mode 有効",
         "kb_funnel_tag": "タグ…",
         "kb_gate_backlog_only_hint": "ローンチゲートはバックログカードでのみ利用できます",
-        "chat_sys_conversation": "💬 会話",
-        "chat_sys_health": "❤️ 健康",
-        "chat_sys_kanban": "📋 かんばん",
-        "chat_sys_n_hidden": "{n} 件のシステムメッセージがフィルターで非表示 — クリックで表示",
-        "chat_sys_n_hidden_hint": "クリックして全カテゴリを表示",
-        "chat_sys_platform": "🔧 プラットフォーム",
-        "chat_sys_scheduled": "⏰ スケジュール",
-        "hover_click.demo_heading": "Hover-Click DOM デモ",
-        "hover_click.import_iframe_blocked": "インポート先がiframeをブロックしました（X-Frame-Options / frame-ancestors）。別のURLを試してください。",
-        "hover_click.import_unsupported_ax_v1": "ネイティブAPP要素選択はv2で登場します。",
-        "hover_click.import_url_not_allowed": "URLがインポート許可リストにありません。",
-        "interactive_dev_import": "📥 インポート",
-        "interactive_dev_import_cancel": "キャンセル",
-        "interactive_dev_import_lede": "ツールバーが編集する対象を選択してください。",
-        "interactive_dev_import_selector": "特定の要素",
-        "interactive_dev_import_submit": "インポート",
-        "interactive_dev_import_this_page": "このページ（サンドボックス）",
-        "interactive_dev_import_this_page_hint": "デフォルト。下部の既存のポイント＆編集テストベッドを編集します。",
-        "interactive_dev_import_title": "コンテンツをインポート",
-        "interactive_dev_import_url": "URL",
-        "interactive_dev_import_url_hint": "否認式ホワイトリスト。v1ではeclawbot.comドメインとexample.comが許可されています。",
-        "inv_error_already": "このコードは既に利用されています。",
-        "inv_error_already_owner": "このユーザーの招待を既に受け取ったています。",
-        "inv_error_expired": "この招待コードは期限切れです。",
-        "inv_error_max": "この招待コードは利用上限に達しました。",
-        "inv_error_not_found": "無効な招待コードです。",
-        "inv_error_self": "自分の招待コードは使用できません。",
-        "inv_error_wallet_required": "ウォレット報酬を受け取るにはログインしてください。",
-        "inv_redeem_success_detail": "引き換え完了！e-coinを受け取りました。招待者もe-coinを受け取りました。",
-        "inv_redeem_success_pending": "引き換え完了！招待が記録されました。ウォレット報酬は保留中です。",
-        "kvalue_date_label": "日付：",
-        "kvalue_refresh": "更新",
-        "refs.close": "参照を閉じる",
-        "refs.empty": "まだ関連アイテムがありません。",
-        "refs.error": "関連アイテムを読み込めませんでした。",
-        "refs.popover_title": "参照",
-        "refs.section_in": "引用された",
-        "refs.section_out": "これは引用",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     },
 
 
@@ -2941762,6 +2941813,44 @@ const TRANSLATIONS = {
         "kanban_nudge_stop_mode_avatar_title": "넛지 stop-mode 활성화됨",
         "kb_funnel_tag": "태그…",
         "kb_gate_backlog_only_hint": "런치 게이트는 백로그 카드에서만 사용할 수 있습니다",
+        "chat_sys_conversation": "💬 대화",
+        "chat_sys_health": "❤️ 건강",
+        "chat_sys_kanban": "📋 칸반",
+        "chat_sys_n_hidden": "{n}개 시스템 메시지가 필터로 숨겨짐 — 클릭하여 표시",
+        "chat_sys_n_hidden_hint": "모든 카테고리 표시하려면 클릭",
+        "chat_sys_platform": "🔧 플랫폼",
+        "chat_sys_scheduled": "⏰ 예약",
+        "hover_click.demo_heading": "Hover-Click DOM 데모",
+        "hover_click.import_iframe_blocked": "가져오기 대상이 iframe을 차단했습니다 (X-Frame-Options / frame-ancestors). 다른 URL을 시도해 보세요.",
+        "hover_click.import_unsupported_ax_v1": "네이티브 APP 요소 선택이 v2에서 제공됩니다.",
+        "hover_click.import_url_not_allowed": "URL이 가져오기 허용 목록에 없습니다.",
+        "interactive_dev_import": "📥 가져오기",
+        "interactive_dev_import_cancel": "취소",
+        "interactive_dev_import_lede": "도구모음이 편집할 항목을 선택하세요.",
+        "interactive_dev_import_selector": "특정 요소",
+        "interactive_dev_import_submit": "가져오기",
+        "interactive_dev_import_this_page": "이 페이지 (샌드박스)",
+        "interactive_dev_import_this_page_hint": "기본값. 아래의 기존 Point-and-Edit 테스트베드를 편집합니다.",
+        "interactive_dev_import_title": "콘텐츠 가져오기",
+        "interactive_dev_import_url": "URL",
+        "interactive_dev_import_url_hint": "거부식 화이트리스트. v1에서는 eclawbot.com 도메인과 example.com이 허용됩니다.",
+        "inv_error_already": "이 코드는 이미 사용되었습니다.",
+        "inv_error_already_owner": "이 사용자의 초대를 이미 받았습니다.",
+        "inv_error_expired": "이 초대 코드가 만료되었습니다.",
+        "inv_error_max": "이 초대 코드가 사용 한도에 도달했습니다.",
+        "inv_error_not_found": "유효하지 않은 초대 코드입니다.",
+        "inv_error_self": "자신의 초대 코드는 사용할 수 없습니다.",
+        "inv_error_wallet_required": "지갑 보상을 받으려면 로그인하세요.",
+        "inv_redeem_success_detail": "교환 완료! e-coin을 받았습니다. 초대자도 e-coin을 받았습니다.",
+        "inv_redeem_success_pending": "교환 완료! 초대가 기록되었습니다. 지갑 보상은 보류 중입니다.",
+        "kvalue_date_label": "날짜:",
+        "kvalue_refresh": "새로고침",
+        "refs.close": "참조 닫기",
+        "refs.empty": "아직 관련 항목이 없습니다.",
+        "refs.error": "관련 항목을 로드할 수 없습니다.",
+        "refs.popover_title": "참조",
+        "refs.section_in": "인용됨",
+        "refs.section_out": "이는 인용",
     },
 
 
