@@ -189,6 +189,35 @@ docker compose up -d --no-deps openclaw-f
 docker exec openclaw-project-f openclaw --version
 ```
 
+Known-good recovery for project E / entity #3 after version drift:
+
+```bash
+cd /Users/hank/Desktop/Project/openclaw-docker
+# project E intentionally reuses the same verified runtime image as project F;
+# its MiniMax default model remains controlled by project-e's mounted config.
+docker compose up -d --no-deps --force-recreate openclaw-e
+docker exec openclaw-project-e openclaw --version
+docker exec openclaw-project-e openclaw plugins list --json
+```
+
+Expected post-upgrade state for #3:
+
+- `openclaw --version` reports `OpenClaw 2026.6.1`.
+- The loaded `openclaw-channel` plugin reports version `1.3.1` and is sourced
+  from `/home/node/.openclaw/npm/projects/.../@eclaw/openclaw-channel`.
+- `session.reset` is set to an idle reset window so six-hour fleet monitors do
+  not reuse a stale, task-heavy MiniMax conversation indefinitely.
+- API ACK, model-backed reply-path, and browser UI ACK all pass for entity #3.
+
+If #3 has an older untracked side-loaded extension, `openclaw plugins update`
+will report no install record. Install the tracked npm package instead:
+
+```bash
+docker exec openclaw-project-e \
+  openclaw plugins install @eclaw/openclaw-channel@1.3.1
+docker restart openclaw-project-e
+```
+
 After the recreate, verify startup logs show the intended runtime model, for
 example `agent model: openai/gpt-5.5 (thinking=xhigh, ...)`, then confirm the
 configured model entry has `agentRuntime.id=codex`. Older OpenClaw builds may
@@ -208,6 +237,12 @@ label as the message-tool reply target. Current channel builds route replies
 through the stable E-Claw conversation id (`deviceId:entityId`) and declare an
 E-Claw target resolver so OpenClaw's `message` tool can send the reply instead
 of failing with `Unknown target`.
+
+For model-health probes, avoid ambiguous text such as `entity=#3` in the
+expected reply. Some MiniMax turns can shorten that to only `3`, which proves a
+model turn happened but fails nonce validation. Prefer an unambiguous nonce-only
+line such as `MODEL_HEALTH_OK_<nonce>` and pass/fail on the nonce, not on a
+self-reported model name.
 
 For task-execution agents such as #1 and #3, keep kanban notifications
 model-routed. If low-priority organization forwards are starving the
