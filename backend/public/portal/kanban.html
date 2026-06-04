@@ -529,7 +529,7 @@
         body.app-webview .kb-task-action-shell { gap:6px; flex-wrap:nowrap; }
         body.app-webview .kb-task-primary-btn { padding:8px 12px; font-size:11px; }
         body.app-webview .kb-task-secondary-row { flex-wrap:nowrap; overflow-x:auto; }
-        body.app-webview .kb-task-chip { max-width:132px; padding:6px 9px; font-size:11px; }
+        body.app-webview .kb-task-chip { max-width:132px; min-height:40px; padding:10px 12px; font-size:11px; }
         body.app-webview .kb-move-btn { padding:6px 10px; font-size:11px; }
 
         /* App WebView: hide redundant heading (sub-tabs already indicate page) */
@@ -622,8 +622,10 @@
             .kb-task-action-shell { gap:6px; flex-wrap:nowrap; }
             .kb-task-primary-btn { padding:8px 12px; font-size:11px; }
             .kb-task-secondary-row { flex-wrap:nowrap; overflow-x:auto; }
-            .kb-task-chip { max-width:132px; padding:6px 9px; font-size:11px; }
-            .kb-move-btn { padding:6px 10px; font-size:11px; }
+            /* Mobile hit-target: chip-drill acceptance ≥40px (2026-06-04 fix) */
+            .kb-task-chip { max-width:132px; padding:10px 12px; font-size:11px; min-height:40px; }
+            .kb-detail-link-chip-row .kb-task-chip { min-height:40px; padding:10px 12px; }
+            .kb-move-btn { padding:10px 14px; font-size:11px; min-height:40px; }
 
             /* Toolbar compact */
             .kb-toolbar { flex-direction:column; align-items:stretch; }
@@ -2212,11 +2214,11 @@
         }
 
         function renderTaskSecondaryActions(card) {
+            // parent/prev/next chips are rendered by renderDetailLinkChipRow() above in the
+            // description area (L2511) with zh-TW titles; keep this row to PR + Chat only
+            // to avoid the duplicate-chip stack the chip-drill surfaced (2026-06-04).
             const actions = [];
             const add = (cls, icon, label, onclick, title) => actions.push(`<button class="kb-task-chip ${cls}" onclick="${onclick}" title="${escapeHtml(title || label)}">${icon}<span>${escapeHtml(label)}</span></button>`);
-            if (card.parentCardId) add('parent', '↟', t('chip_parent','Parent'), `openDetail('${escapeJs(card.parentCardId)}')`, card.parentCardId);
-            if (card.linkedPrevCardId) add('prev', '←', t('chip_prev','Prev'), `openDetail('${escapeJs(card.linkedPrevCardId)}')`, card.linkedPrevCardId);
-            if (card.linkedNextCardId) add('next', '→', t('chip_next','Next'), `openDetail('${escapeJs(card.linkedNextCardId)}')`, card.linkedNextCardId);
             if (getTaskPrUrl(card)) add('pr', '⑂', 'PR', `openTaskPr('${escapeJs(card.id)}')`, getTaskPrUrl(card));
             add('chat', '💬', t('chip_chat','Chat'), `quoteKanbanCardToChat()`, 'Quote this card to Chat');
             return actions.slice(0, 5).join('');
@@ -2246,6 +2248,7 @@
                     `<div class="kb-task-overflow-section"><div class="kb-task-overflow-title">Assignment</div>${assignHtml}</div>` +
                     `<div class="kb-task-overflow-section"><div class="kb-task-overflow-title">Review</div>${reviewerHtml}</div>` +
                     (card.isAutomation ? `<div class="kb-task-overflow-section"><div class="kb-task-overflow-title">Schedule</div>${dispatchHtml}</div>` : '') +
+                    (!card.isAutomation && !card.archived ? renderStatusOverflow(card.id, card.status) : '') +
                     `<div class="kb-task-overflow-section"><div class="kb-task-overflow-title">Admin</div><div class="kb-task-overflow-actions">${adminButtons}</div></div>` +
                 `</div></div>`;
         }
@@ -2434,15 +2437,6 @@
             if (kind === 'reopen') return openReopenDialog(cardId);
             if (kind === 'toggleSchedule') return toggleAutoSchedule(cardId, value === 'true');
             if (kind === 'restore') return restoreCard(cardId);
-        }
-
-        function toggleTaskOverflow(cardId, event) {
-            if (event) event.stopPropagation();
-            document.querySelectorAll('.kb-task-overflow.open').forEach(el => {
-                if (el.id !== 'taskOverflow-' + cardId) el.classList.remove('open');
-            });
-            const el = document.getElementById('taskOverflow-' + cardId);
-            if (el) el.classList.toggle('open');
         }
 
         function openCardPr(cardId) {
