@@ -2411745,7 +2411745,7 @@ const TRANSLATIONS = {
         "interactive_dev_import_url": "URL",
         "interactive_dev_import_url_hint": "否認式ホワイトリスト。v1ではeclawbot.comドメインとexample.comが許可されています。",
         "inv_error_already": "このコードは既に利用されています。",
-        "inv_error_already_owner": "このユーザーの招待を既に受け取ったています。",
+        "inv_error_already_owner": "このユーザーの招待を既に受け取っています。",
         "inv_error_expired": "この招待コードは期限切れです。",
         "inv_error_max": "この招待コードは利用上限に達しました。",
         "inv_error_not_found": "無効な招待コードです。",
