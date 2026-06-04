@@ -152,11 +152,11 @@ let VISION_IMAGES = [
     { file: 'img-a2f5.svg', keywords: ['yellow', 'star'] },
     { file: 'img-c8b3.svg', keywords: ['cat', 'orange'] },
     // ── Easy tier (20%) — basic shape/object recognition ──
-    { file: null, description: 'A red heart shape centered on a white background', keywords: ['heart', 'red'] },
-    { file: null, description: 'A green checkmark inside a circle', keywords: ['checkmark', 'green', 'circle'] },
+    { file: null, description: 'A train schedule departure board showing three trains: Platform 4A at 09:15 to Munich, Platform 7B at 09:43 to Berlin, Platform 2 at 10:00 to Vienna — the Munich train shows "Delayed 20 min" in orange text', keywords: ['train', 'three', 'munich', 'berlin', 'vienna', 'delayed', 'platform', 'orange'] },
+    { file: null, description: 'A restaurant bill receipt for Table 7 with three guests: Margherita Pizza $18, Pasta Carbonara $22, Grilled Salmon $28, and two glasses of house wine at $12 each — subtotal $92 before a 15% gratuity', keywords: ['table', 'seven', 'three', 'pizza', 'salmon', 'wine', '92', 'gratuity'] },
     // A blue water droplet shape on gray retired (pass rate 100%) — replaced below
-    { file: null, description: 'A yellow sun with eight rays extending outward', keywords: ['sun', 'yellow', 'rays'] },
-    { file: null, description: 'A simple house with a red roof and brown door', keywords: ['house', 'roof', 'door'] },
+    { file: null, description: 'A stock candlestick chart with five candles: the first two are green bullish candles, the third is a red reversal candle, the fourth and fifth trend lower — price range $142 to $159, RSI indicator shown at 68 below the chart', keywords: ['stock', 'candlestick', 'five', 'green', 'red', 'reversal', 'RSI', '68'] },
+    { file: null, description: 'A database entity-relationship diagram with four entities: Users linked to Orders by a one-to-many line, Orders linked to Products by a many-to-many line through an OrderItems junction table, and Products linked to Categories by a many-to-one line', keywords: ['database', 'entity', 'four', 'users', 'orders', 'products', 'junction', 'many'] },
     // ── Medium tier (50%) — counting, labels, multi-object scenes ──
     { file: null, description: 'A bar chart with four bars labeled Q1 through Q4 where Q3 is the tallest', keywords: ['bar', 'chart', 'four', 'Q3'] },
     { file: null, description: 'A Git commit graph showing three branches: main has 5 commits, feature-auth branches off commit 2 with 3 commits, and hotfix branches off commit 4 of main with 1 commit', keywords: ['git', 'three', 'branches', 'main', 'feature', 'hotfix'] },
@@ -368,6 +368,13 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── New medium/hard additions — DP + sliding window ──
+    { title: 'Unique Paths', description: 'Write `solve(m, n)` — a robot starts at the top-left corner of an m×n grid and can only move right or down. Return the number of distinct paths to the bottom-right corner.',
+      testCases: [{ input: '3, 7', expected: '28' },{ input: '3, 2', expected: '3' },{ input: '1, 1', expected: '1' },{ input: '2, 2', expected: '2' }] },
+    { title: 'Longest Common Subsequence', description: 'Write `solve(text1, text2)` — return the length of the longest common subsequence of the two strings (not necessarily contiguous).',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"bl", "yby"', expected: '1' }] },
+    { title: 'Minimum Window Substring', description: 'Write `solve(s, t)` — return the minimum length window substring of s that contains all characters of t (including duplicates). Return empty string if no such window exists.',
+      testCases: [{ input: '"ADOBECODEBANC", "ABC"', expected: '"BANC"' },{ input: '"a", "a"', expected: '"a"' },{ input: '"a", "aa"', expected: '""' },{ input: '"aa", "aa"', expected: '"aa"' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -414,9 +421,13 @@ let RESPONSE_QUESTIONS = [
     { question: 'A plane travels 2000 km at an effective speed of 1000 km/h (900 km/h airspeed plus 100 km/h tailwind). How many hours does the journey take?', expectedKeywords: ['2'] },
     { question: 'A worker paints 1/3 of a fence on day 1 and 1/4 of the remaining unpainted fence on day 2. What fraction of the fence is still unpainted after day 2?', expectedKeywords: ['1/2', '0.5', 'half'] },
     // ── New additions to fill easy + medium-hard tiers ──
-    { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
+    { question: 'A pipe fills a tank in 12 hours; a drain empties it in 18 hours. If both are open simultaneously starting with an empty tank, how many hours does it take to fill the tank completely?', expectedKeywords: ['36'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Additional hard-tier additions ──
+    { question: 'A principal of $1000 is invested at 10% annual compound interest. What is the total amount (in dollars) after 3 years?', expectedKeywords: ['1331'] },
+    { question: 'A bag contains 4 red marbles and 6 blue marbles. Two marbles are drawn without replacement. What is the probability that both are red? Express as a simplified fraction.', expectedKeywords: ['2/15'] },
+    { question: 'What is the value of x if 3 to the power of x equals 81?', expectedKeywords: ['4'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +505,10 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── New medium/hard TTS additions ──
+    { text: 'The patient blood pressure reading is 140 over 92 millimeters of mercury indicating stage 2 hypertension — the cardiologist recommends a follow-up in 30 days', keywords: ['blood', 'pressure', '140', '92', 'hypertension', 'cardiologist', '30'] },
+    { text: 'The microcontroller operates at 3.3 volts with a clock frequency of 240 megahertz and has 512 kilobytes of flash memory and 256 kilobytes of SRAM', keywords: ['microcontroller', '3.3', 'volts', '240', 'megahertz', '512', 'flash', 'SRAM'] },
+    { text: 'Avogadro\'s number is approximately 6.022 times 10 to the power of 23 and represents the number of atoms or molecules in one mole of a substance', keywords: ['avogadro', '6.022', '23', 'mole', 'atoms', 'molecules'] },
 ];
 
 // ============================================
