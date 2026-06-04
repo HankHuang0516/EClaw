@@ -7743907,7 +7743907,45 @@ const TRANSLATIONS = {
 
 
     ,
-        "kb_gate_backlog_only_hint": "Launch-gate متاح فقط لبطاقات backlog",}
+
+        "chat_sys_conversation": "💬 محادثة",
+        "chat_sys_health": "❤️ صحة",
+        "chat_sys_kanban": "📋 كانبان",
+        "chat_sys_n_hidden": "{n} رسالة نظام مخفية بواسطة الفلتر — انقر للعرض",
+        "chat_sys_n_hidden_hint": "انقر لعرض جميع الفئات",
+        "chat_sys_platform": "🔧 منصة",
+        "chat_sys_scheduled": "⏰ مجدول",
+        "hover_click.demo_heading": "عرض Hover-Click DOM",
+        "hover_click.import_iframe_blocked": "الهدف المستورد حظر iframe (X-Frame-Options / frame-ancestors). جرب عنوان URL آخر.",
+        "hover_click.import_unsupported_ax_v1": "اختيار عنصر APP الأصلي سيكون متاحًا في v2.",
+        "hover_click.import_url_not_allowed": "عنوان URL غير موجود في قائمة الاستيراد المسموح.",
+        "interactive_dev_import": "📥 استيراد",
+        "interactive_dev_import_cancel": "إلغاء",
+        "interactive_dev_import_lede": "اختر المحتوى الذي ستقوم شريط الأدوات بتحريره.",
+        "interactive_dev_import_selector": "عنصر محدد",
+        "interactive_dev_import_submit": "استيراد",
+        "interactive_dev_import_this_page": "هذه الصفحة (صندوق رمل)",
+        "interactive_dev_import_this_page_hint": "افتراضي. قم بتحرير منطقة الاختبار Point-and-Edit الموجودة أدناه.",
+        "interactive_dev_import_title": "استيراد المحتوى",
+        "interactive_dev_import_url": "عنوان URL",
+        "interactive_dev_import_url_hint": "قائمة بيضاء للرفض. النطاقات eclawbot.com و example.com مسموح بها في v1.",
+        "inv_error_already": "تم استخدام هذا الرمز بالفعل.",
+        "inv_error_already_owner": "لقد استلمت بالفعل دعوة من هذا المستخدم.",
+        "inv_error_expired": "انتهت صلاحية رمز الدعوة.",
+        "inv_error_max": "وصل رمز الدعوة إلى حد الاستخدام.",
+        "inv_error_not_found": "رمز دعوة غير صالح.",
+        "inv_error_self": "لا يمكنك استخدام رمز الدعوة الخاص بك.",
+        "inv_error_wallet_required": "يرجى تسجيل الدخول للحصول على مكافآت المحفظة.",
+        "inv_redeem_success_detail": "تم الاسترداد! حصلت على عملة إلكترونية. حصل الداعي أيضًا على عملة إلكترونية.",
+        "inv_redeem_success_pending": "تم الاسترداد! تم تسجيل دعوتك. مكافآت المحفظة معلقة.",
+        "kvalue_date_label": "التاريخ:",
+        "kvalue_refresh": "تحديث",
+        "refs.close": "إغلاق المراجع",
+        "refs.empty": "لا توجد عناصر ذات صلة حتى الآن.",
+        "refs.error": "تعذر تحميل العناصر ذات الصلة.",
+        "refs.popover_title": "المراجع",
+        "refs.section_in": "اقتباس بواسطة",
+        "refs.section_out": "هذا اقتباس",        "kb_gate_backlog_only_hint": "Launch-gate متاح فقط لبطاقات backlog",}
 
 
 
