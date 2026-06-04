@@ -45,6 +45,58 @@ body { background:#1a1a2e; color:#e0e0e0; font-family:-apple-system,BlinkMacSyst
 /* Animations */
 .highlight { animation: glow 1.5s ease-in-out; }
 @keyframes glow { 0%,100%{box-shadow:none} 50%{box-shadow:0 0 12px rgba(124,131,255,0.5)} }
+
+@media (max-width: 820px) {
+  body { overflow: hidden; }
+  .container {
+    width: calc(100vw - 24px);
+    height: calc(100vh - 24px);
+    max-height: 500px;
+    margin: 12px auto;
+  }
+  .note-list {
+    width: 34%;
+    height: 100%;
+    padding: 12px;
+  }
+  .page-viewer {
+    width: calc(66% - 10px);
+    height: 100%;
+  }
+  .viewer-toolbar,
+  .url-bar {
+    padding-left: 10px;
+    padding-right: 10px;
+    gap: 8px;
+  }
+  .viewer-title,
+  .url-text { min-width: 0; }
+}
+
+@media (max-width: 520px) {
+  .container { max-height: none; }
+  .note-list {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    height: 150px;
+    overflow-y: auto;
+  }
+  .page-viewer {
+    left: 0;
+    right: auto;
+    top: 162px;
+    width: 100%;
+    height: calc(100% - 162px);
+  }
+  .note-item {
+    padding: 8px 10px;
+    margin-bottom: 6px;
+  }
+  .page-content { padding: 14px; }
+  .toggle-btn,
+  .copy-btn { flex: 0 0 auto; }
+}
 </style>
 </head>
 <body>

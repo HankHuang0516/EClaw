@@ -18,6 +18,7 @@
             min-height: 100vh;
             position: relative;
             overflow-x: hidden;
+            max-width: 100%;
         }
 
         /* Geometric pattern overlay */
@@ -281,8 +282,16 @@
 
         /* Mobile Responsive */
         @media (max-width: 768px) {
+            html,
+            body {
+                width: 100%;
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+
             .slide-container {
                 padding: 24px;
+                overflow-x: hidden;
             }
 
             .content-layout {
@@ -294,6 +303,9 @@
                 order: -1;
                 height: 280px;
                 margin-bottom: 32px;
+                width: 100%;
+                max-width: 100%;
+                overflow: hidden;
             }
 
             .emoji-icon {
@@ -328,6 +340,19 @@
             .robot-container {
                 margin-right: 0;
                 transform: scale(0.8);
+            }
+
+            .digital-clock {
+                right: 0;
+                max-width: 150px;
+                white-space: nowrap;
+            }
+
+            .sleep-indicator { right: 0; }
+
+            .floating-coins {
+                overflow: hidden;
+                inset: 0;
             }
 
             /* Simplified animations for mobile */

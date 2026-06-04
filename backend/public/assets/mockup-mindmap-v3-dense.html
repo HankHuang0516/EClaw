@@ -359,6 +359,80 @@ body {
   color: var(--text-secondary);
 }
 .mind-foot strong { color: var(--text); }
+
+@media (max-width: 700px) {
+  body { overflow: hidden; }
+  .mockup-banner {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+  .topnav {
+    height: auto;
+    min-height: 48px;
+    padding: 8px 12px;
+    flex-wrap: wrap;
+  }
+  .topnav .crumbs { font-size: 12px; }
+  .sub-tabs {
+    padding: 0 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .sub-tab {
+    flex: 0 0 auto;
+    padding: 10px 12px;
+    white-space: nowrap;
+  }
+  .mind-shell {
+    grid-template-columns: 1fr;
+    height: calc(100vh - 48px - 40px - 32px - 30px);
+    min-height: 0;
+  }
+  .sys-rail { display: none; }
+  .mind-canvas-wrap { min-width: 0; }
+  .mm-toolbar {
+    left: 8px;
+    right: 8px;
+    max-width: calc(100vw - 16px);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .mm-toolbar button {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 6px 8px;
+  }
+  .mm-search {
+    top: 58px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    transform: none;
+  }
+  .zoom-tier {
+    top: 104px;
+    right: 8px;
+  }
+  .mind-side {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    z-index: 12;
+    max-height: 34%;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+  }
+  .mind-foot {
+    height: 30px;
+    padding: 0 10px;
+    gap: 8px;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .mind-foot span { flex: 0 0 auto; }
+  .mind-foot span:last-child { display: none; }
+}
 </style>
 </head>
 <body>

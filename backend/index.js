@@ -317,12 +317,12 @@ app.use('/js', express.static(path.join(__dirname, 'public/js'), {
     }
 }));
 // Landing page
-app.get('/landing', (req, res) => {
+app.get(['/landing', '/landing.html'], (req, res) => {
     res.set('Cache-Control', 'public, max-age=3600');
     res.sendFile(path.join(__dirname, 'public/landing.html'));
 });
 // Enterprise page
-app.get('/enterprise', (req, res) => {
+app.get(['/enterprise', '/enterprise.html'], (req, res) => {
     res.set('Cache-Control', 'public, max-age=3600');
     res.sendFile(path.join(__dirname, 'public/enterprise.html'));
 });
@@ -877,7 +877,7 @@ app.use('/docs', express.static(path.join(__dirname, 'public/docs'), {
 }));
 
 // Privacy policy (public, root-level)
-app.get('/privacy-policy.html', (req, res) => {
+app.get(['/privacy-policy.html', '/privacy-policy'], (req, res) => {
     res.sendFile(path.join(__dirname, 'public/privacy-policy.html'));
 });
 
@@ -3589,7 +3589,8 @@ if (process.env.NODE_ENV !== 'test') setTimeout(() => inviteModule.initInviteDat
 const arenaModule = require('./interview-arena')({ serverLog, io, devices });
 app.use('/api/arena', arenaModule.router);
 // Serve arena public pages (no-cache to prevent CDN stale versions)
-app.get('/arena', (_req, res) => { res.set('Cache-Control', 'no-cache'); res.sendFile(path.join(__dirname, 'public/arena/index.html')); });
+app.get(['/arena', '/arena/index.html'], (_req, res) => { res.set('Cache-Control', 'no-cache'); res.sendFile(path.join(__dirname, 'public/arena/index.html')); });
+app.get('/arena/exam.html', (_req, res) => { res.redirect(302, '/arena'); });
 app.get('/arena/exam/:examId', (_req, res) => { res.set('Cache-Control', 'no-cache'); res.sendFile(path.join(__dirname, 'public/arena/exam.html')); });
 // Bot entry point: returns exam sessions with tokens + challenge configs
 app.get('/arena/test/:examId', async (req, res) => {
