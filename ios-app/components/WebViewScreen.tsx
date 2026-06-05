@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, ActivityIndicator, BackHandler } from 'react-native';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
@@ -160,6 +160,18 @@ function handleNativeNavigate(intent: NativeNavIntent) {
   setTimeout(() => consumePendingIntent(intent.targetTab), 80);
 }
 
+function nativeRouteForInternalUrl(rawUrl: string) {
+  try {
+    const parsed = new URL(rawUrl);
+    if (!parsed.hostname.endsWith('eclawbot.com')) return null;
+    if (parsed.pathname === '/portal/wallet.html') return '/wallet';
+    if (parsed.pathname === '/portal/settings.html') return '/(tabs)/settings';
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 export default function WebViewScreen({ url, tabId }: WebViewScreenProps) {
   const { deviceId, deviceSecret, authToken } = useAuthStore();
   const webViewRef = useRef<WebView>(null);
@@ -220,6 +232,11 @@ export default function WebViewScreen({ url, tabId }: WebViewScreenProps) {
           // Only hand off to the system browser for http(s) URLs that are outside our own domain —
           // otherwise iOS throws "Unable to open URL: about:blank" on the WebView's own internal loads.
           if (u.startsWith('http://') || u.startsWith('https://')) {
+            const nativeRoute = nativeRouteForInternalUrl(u);
+            if (nativeRoute) {
+              router.push(nativeRoute as never);
+              return false;
+            }
             if (u.includes('eclawbot.com')) return true;
             Linking.openURL(u).catch(() => { /* swallow — URL may be unsupported */ });
             return false;

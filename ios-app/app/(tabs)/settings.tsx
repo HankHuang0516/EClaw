@@ -168,9 +168,9 @@ export default function SettingsScreen() {
             description={t('settings.messages_used', { used: 0, total: 15 })}
             left={(props) => <List.Icon {...props} icon="star" />}
             right={() => (
-              <Button mode="contained" compact onPress={() => {}}>
-                {t('settings.upgrade')}
-              </Button>
+              <Text variant="labelMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                {t('settings.subscription_free')}
+              </Text>
             )}
           />
         </List.Section>

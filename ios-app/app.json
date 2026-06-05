@@ -27,7 +27,7 @@
         "NSPhotoLibraryAddUsageDescription": "E-Claw saves media files to your photo library.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "3"
+      "buildNumber": "11"
     },
     "android": {
       "adaptiveIcon": {
