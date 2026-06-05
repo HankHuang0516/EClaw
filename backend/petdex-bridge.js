@@ -147,8 +147,17 @@ async function fetchAndUploadSprite({ r2, bucket, slug, upstreamUrl, log }) {
 
     let upstream;
     try {
+        // Petdex's raillyhugo Worker enforces a Referer allowlist matching the
+        // origin scheme + host + trailing slash. The CLI sends exactly this
+        // header (see crafter-station/petdex packages/petdex-cli function wF).
+        // Without the trailing slash the Worker returns 403; with it, 200.
+        // We mirror the CLI so the bridge sees the same surface as a user
+        // running `npx petdex install <slug>`.
         upstream = await fetch(upstreamUrl, {
-            headers: { 'User-Agent': 'EClaw-petdex-bridge/2.0' },
+            headers: {
+                'User-Agent': 'EClaw-petdex-bridge/2.0',
+                'Referer': 'https://petdex.crafter.run/',
+            },
         });
     } catch (err) {
         return { ok: false, reason: 'upstream_fetch_error', key, error: err.message };
