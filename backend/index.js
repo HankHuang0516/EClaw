@@ -3773,6 +3773,35 @@ nodeCron.schedule('23 4 * * *', async () => {
     }
 });
 
+// Petdx upstream-recovery monitor — spec §4 (Phase 3) / card_05aa3f9226b3.
+// Sweeps companions WHERE needs_recovery=TRUE every 30 minutes. For each
+// orphan slug whose upstream raillyhugo asset is back online, the run
+// fetchAndUploadSprite-mirrors it into R2 and clears the flag. Idempotent
+// (fetchAndUploadSprite HEAD-checks R2 before downloading), so re-running
+// against an already-mirrored row is a no-op. Acceptance is a 24h prod
+// observation of railway logs showing `[PetdexRecoverCron]` rows with
+// non-zero `promoted` counts as upstream slugs come back.
+const petdexRouter = companionModule.router || companionModule;
+nodeCron.schedule('*/30 * * * *', async () => {
+    if (typeof petdexRouter._runPetdexRecovery !== 'function') {
+        serverLog('warn', 'companion', '[PetdexRecoverCron] helper not exported — skipping');
+        return;
+    }
+    try {
+        const result = await petdexRouter._runPetdexRecovery({ limit: 50 });
+        if (result.promoted > 0 || result.stillBroken > 0) {
+            serverLog(
+                'info',
+                'companion',
+                `[PetdexRecoverCron] scanned=${result.scanned} promoted=${result.promoted} stillBroken=${result.stillBroken}`
+                + (result.errors && result.errors.length ? ` firstErr=${JSON.stringify(result.errors[0])}` : ''),
+            );
+        }
+    } catch (err) {
+        serverLog('error', 'companion', `[PetdexRecoverCron] failed: ${err.message}`);
+    }
+});
+
 // ============================================
 // GATEKEEPER - Free Bot Abuse Prevention
 // ============================================
