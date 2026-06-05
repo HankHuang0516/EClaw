@@ -237,10 +237,31 @@ async function upsertPetdexCompanion(pool, pet, { r2, bucket, apiBase, log }) {
     return upload;
 }
 
+// Lazy default-construct an R2 client from env if the caller didn't pass one.
+// Keeps backward-compat with the original (pool, logger) signature and lets
+// existing prod callers in companion-api.js work without any change.
+function defaultR2Client() {
+    try {
+        const { S3Client } = require('@aws-sdk/client-s3');
+        return new S3Client({
+            region: 'auto',
+            endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+            credentials: {
+                accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+                secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+            },
+        });
+    } catch (_) {
+        return null;
+    }
+}
+
 async function syncPetdexCatalog(pool, options = {}) {
-    const log = typeof options.serverLog === 'function' ? options.serverLog
-              : (typeof options === 'function' ? options : console.log);
-    const r2 = options.r2 || null;
+    // Old positional shape: syncPetdexCatalog(pool, logger). New shape:
+    // syncPetdexCatalog(pool, { r2, bucket, apiBase, serverLog }).
+    if (typeof options === 'function') options = { serverLog: options };
+    const log = typeof options.serverLog === 'function' ? options.serverLog : console.log;
+    const r2 = options.r2 || defaultR2Client();
     const bucket = options.bucket || process.env.R2_BUCKET_NAME || 'eclaw-files';
     const apiBase = options.apiBase
         || process.env.PUBLIC_BASE_URL
