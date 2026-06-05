@@ -1250,6 +1250,110 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
         }
     });
 
+    // ── POST /petdex-recover — backfill orphan-slug companions ─────
+    // The manifest-driven sync only touches rows whose slug still appears
+    // upstream. Six EClaw entity companions reference older catalog slugs
+    // that were rotated out of the manifest, so they never get caught by
+    // the regular sync and stay needs_recovery=true forever. This route
+    // walks the companions table itself, tries to re-fetch each orphan's
+    // existing upstream asset_url with the bridge's Referer trick, and
+    // promotes the row to the EClaw R2 proxy URL when it succeeds.
+    //
+    // deviceSecret-auth (owner-only). Idempotent via the bridge's R2 HEAD.
+    const {
+        fetchAndUploadSprite,
+        spriteProxyUrl,
+        R2_KEY_PREFIX,
+        PROXY_PATH_PREFIX,
+    } = require('./petdex-bridge');
+    router.post('/petdex-recover', authReader, async (req, res) => {
+        if (req.botAuth.authMode !== 'device') {
+            return res.status(403).json({ success: false, error: 'deviceSecret_required' });
+        }
+        const limit = Math.max(1, Math.min(parseInt(req.body && req.body.limit, 10) || 50, 500));
+        const apiBase = process.env.PUBLIC_BASE_URL
+            || process.env.BASE_URL
+            || process.env.API_BASE
+            || 'https://eclawbot.com';
+
+        let r2;
+        try {
+            const { S3Client } = require('@aws-sdk/client-s3');
+            r2 = new S3Client({
+                region: 'auto',
+                endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+                credentials: {
+                    accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+                    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+                },
+            });
+        } catch (err) {
+            return res.status(500).json({ success: false, error: 'r2_init_failed' });
+        }
+        const bucket = process.env.R2_BUCKET_NAME || 'eclaw-files';
+
+        try {
+            // Targets: rows that still point upstream (not yet on the proxy)
+            // OR were flagged needs_recovery by an earlier sync attempt.
+            const rows = (await pool.query(
+                `SELECT id, asset_url, descriptor
+                   FROM companions
+                  WHERE asset_type = 'spritesheet'
+                    AND (needs_recovery = TRUE OR asset_url NOT LIKE $1)
+                    AND id LIKE 'petdex-%'
+                  ORDER BY updated_at DESC
+                  LIMIT $2`,
+                [`%${PROXY_PATH_PREFIX}/%`, limit],
+            )).rows;
+
+            let promoted = 0;
+            let stillBroken = 0;
+            const errors = [];
+
+            for (const row of rows) {
+                const slug = row.id.replace(/^petdex-/, '');
+                const upstreamUrl = row.asset_url;
+                if (!slug || !upstreamUrl) {
+                    stillBroken++;
+                    continue;
+                }
+                const upload = await fetchAndUploadSprite({
+                    r2, bucket, slug, upstreamUrl, log,
+                });
+                if (!upload.ok) {
+                    stillBroken++;
+                    if (errors.length < 5) errors.push({ slug, reason: upload.reason });
+                    continue;
+                }
+                const newUrl = spriteProxyUrl(apiBase, slug);
+                // Rewrite the descriptor.asset.url to match — the renderer
+                // reads from the descriptor, not the companions columns.
+                let descriptor = row.descriptor;
+                if (typeof descriptor === 'string') {
+                    try { descriptor = JSON.parse(descriptor); } catch (_) { descriptor = null; }
+                }
+                if (descriptor && descriptor.asset) descriptor.asset.url = newUrl;
+                await pool.query(
+                    `UPDATE companions
+                        SET asset_url = $1,
+                            avatar_url = $1,
+                            thumbnail_url = $1,
+                            descriptor = COALESCE($2::jsonb, descriptor),
+                            needs_recovery = FALSE,
+                            updated_at = $3
+                      WHERE id = $4`,
+                    [newUrl, descriptor ? JSON.stringify(descriptor) : null, Date.now(), row.id],
+                );
+                promoted++;
+            }
+
+            res.json({ success: true, scanned: rows.length, promoted, stillBroken, errors });
+        } catch (err) {
+            log('error', 'companion', `[Companion] petdex-recover failed: ${err.message}`);
+            res.status(500).json({ success: false, error: 'recover_failed', detail: err.message });
+        }
+    });
+
     return { router, initCompanionDatabase: () => initCompanionDatabase(log) };
 };
 
