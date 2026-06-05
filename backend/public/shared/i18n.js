@@ -21694,6 +21694,8 @@ const TRANSLATIONS = {
 
 
         "nav_files": "Files",
+        "nav_companion": "Companion",
+        "settings_companion_desc": "Browse and pick a Petdx companion for each of your entities",
 
 
 
