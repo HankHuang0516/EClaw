@@ -85,6 +85,7 @@ function _tFb(k, fb) {
 }
 
 let _eclawDialogId = 0;
+const _ECLAW_DIALOG_SHADOW_STYLE = 'style="box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);"';
 function showConfirm({ message, title, confirmText, cancelText, danger } = {}) {
     return new Promise((resolve) => {
         const t = _tFb;
@@ -96,7 +97,7 @@ function showConfirm({ message, title, confirmText, cancelText, danger } = {}) {
         const dialogAria = title
             ? `role="alertdialog" aria-modal="true" aria-labelledby="${titleId}" aria-describedby="${messageId}"`
             : `role="alertdialog" aria-modal="true" aria-label="${_escAttr(message)}" aria-describedby="${messageId}"`;
-        overlay.innerHTML = `<div class="dialog eclaw-confirm-dialog" ${dialogAria}>
+        overlay.innerHTML = `<div class="dialog eclaw-confirm-dialog" ${dialogAria} ${_ECLAW_DIALOG_SHADOW_STYLE}>
             ${title ? `<div class="dialog-title" id="${titleId}">${_escHtml(title)}</div>` : ''}
             <div class="dialog-body"><p id="${messageId}" style="margin:0;line-height:1.6;color:var(--text-secondary)">${_escHtml(message)}</p></div>
             <div class="dialog-actions">
@@ -164,7 +165,7 @@ function showPrompt({ message, title, defaultValue, placeholder, confirmText, ca
         const dialogAria = title
             ? `role="alertdialog" aria-modal="true" aria-labelledby="${titleId}" aria-describedby="${messageId}"`
             : `role="alertdialog" aria-modal="true" aria-label="${_escAttr(message)}" aria-describedby="${messageId}"`;
-        overlay.innerHTML = `<div class="dialog eclaw-confirm-dialog" ${dialogAria}>
+        overlay.innerHTML = `<div class="dialog eclaw-confirm-dialog" ${dialogAria} ${_ECLAW_DIALOG_SHADOW_STYLE}>
             ${title ? `<div class="dialog-title" id="${titleId}">${_escHtml(title)}</div>` : ''}
             <div class="dialog-body">
                 <p id="${messageId}" style="margin:0 0 12px;line-height:1.6;color:var(--text-secondary)">${_escHtml(message)}</p>
