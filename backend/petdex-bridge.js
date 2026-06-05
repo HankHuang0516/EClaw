@@ -89,6 +89,7 @@ function buildDescriptor(pet) {
     return {
         id: `petdex-${pet.slug}`,
         name: pet.displayName,
+        kind: pet.kind || 'object',
         assetType: 'spritesheet',
         asset: {
             url: pet.spritesheetUrl,

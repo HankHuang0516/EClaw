@@ -222,7 +222,10 @@
             const asset = descriptor.asset || {};
             const sheet = loadSpritesheet(asset.url);
             if (!sheet || sheet.error) {
-                drawSpritesheetMessage(ctx, w, h, state, sheet && sheet.error ? '⚠︎ sheet load failed' : 'no sprite url');
+                // Spec §3.4: per-kind emoji + name-initial badge when sprite load fails or url is missing.
+                // The original "⚠︎ sheet load failed" / "no sprite url" diagnostic is kept in console
+                // via spriteImageCache (see loadSpritesheet) so debuggability is preserved.
+                drawSpritesheetFallback(ctx, w, h, descriptor);
                 return;
             }
             if (!sheet.ready) {
@@ -268,6 +271,41 @@
             ctx.textAlign = 'center';
             ctx.fillText(msg, w / 2, h / 2);
             ctx.fillText(state, w / 2, h / 2 + 14);
+            ctx.restore();
+        }
+
+        function drawSpritesheetFallback(ctx, w, h, descriptor) {
+            // Per-kind emoji + name-initial badge, used when sprite asset is missing
+            // or failed to load. See docs/specs/petdx-uiux-spec-amendment-2026-06-05-self-host-sprite.md §3.4.
+            const kind = descriptor && (descriptor.kind || (descriptor.sourceAttribution && descriptor.sourceAttribution.kind));
+            const emojiByKind = { creature: '🐾', character: '🧑', object: '🎯' };
+            const emoji = emojiByKind[kind] || '🦞';
+            const name = (descriptor && descriptor.name) || '';
+            const initial = name.trim().charAt(0).toUpperCase();
+
+            ctx.save();
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, w, h);
+
+            ctx.font = Math.floor(h * 0.7) + 'px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(emoji, w / 2, h * 0.55);
+
+            if (initial) {
+                const badgeR = Math.min(w, h) * 0.16;
+                const bx = w - badgeR;
+                const by = badgeR;
+                ctx.beginPath();
+                ctx.arc(bx, by, badgeR, 0, Math.PI * 2);
+                ctx.fillStyle = '#3a3a3a';
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold ' + Math.floor(badgeR * 1.2) + 'px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(initial, bx, by + 1);
+            }
             ctx.restore();
         }
 
