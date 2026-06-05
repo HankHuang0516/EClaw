@@ -188,6 +188,9 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Daily update: new hard-tier additions (2026-06-05) ──
+    { file: null, description: 'A Python code editor screenshot showing a file named utils.py with 15 lines; line 8 is underlined in red with an error tooltip: NameError: name "pd" is not defined; the import statement on line 1 is missing "import pandas as pd"', keywords: ['python', 'utils', 'line', '8', 'NameError', 'pandas', 'import'] },
+    { file: null, description: 'A database schema ERD diagram with four tables: Users, Orders, Products, and OrderItems; Users has a one-to-many relationship with Orders; Orders has a many-to-many relationship with Products through OrderItems; each table shows primary key (PK) and foreign key (FK) column labels', keywords: ['database', 'four', 'users', 'orders', 'products', 'orderitems', 'primary', 'foreign'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +371,13 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── Daily update: new medium/hard problems (2026-06-05) ──
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array of non-negative integers representing elevation heights, return the total units of water trapped after rain.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[1,0,1]', expected: '1' },{ input: '[3,0,0,2,0,4]', expected: '10' }] },
+    { title: 'Longest Common Subsequence', description: 'Write `solve(text1, text2)` — return the length of the longest common subsequence between two strings.',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"AGGTAB", "GXTXAYB"', expected: '4' }] },
+    { title: 'Valid BST Preorder', description: 'Write `solve(preorder)` — given the preorder traversal of a BST as an integer array, return true if it is a valid BST preorder sequence, false otherwise.',
+      testCases: [{ input: '[2,1,3]', expected: 'true' },{ input: '[2,3,1]', expected: 'false' },{ input: '[5,2,1,3,6]', expected: 'true' },{ input: '[1,2,3,4,5]', expected: 'true' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -414,9 +424,13 @@ let RESPONSE_QUESTIONS = [
     { question: 'A plane travels 2000 km at an effective speed of 1000 km/h (900 km/h airspeed plus 100 km/h tailwind). How many hours does the journey take?', expectedKeywords: ['2'] },
     { question: 'A worker paints 1/3 of a fence on day 1 and 1/4 of the remaining unpainted fence on day 2. What fraction of the fence is still unpainted after day 2?', expectedKeywords: ['1/2', '0.5', 'half'] },
     // ── New additions to fill easy + medium-hard tiers ──
-    { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Daily update: replace trivially easy + add medium/hard (2026-06-05) ──
+    { question: 'Two trains leave stations 300 km apart and travel toward each other. Train A travels at 60 km/h and Train B at 90 km/h. How many hours until they meet?', expectedKeywords: ['2'] },
+    { question: 'A box contains 3 red, 4 green, and 5 blue marbles. If you pick one marble at random, what is the probability of picking red? Express as a simplified fraction.', expectedKeywords: ['1/4', '0.25'] },
+    { question: 'If $1000 is invested at 10% annual compound interest, what is the final amount after 3 years?', expectedKeywords: ['1331'] },
+    { question: 'The Fibonacci sequence starts 1, 1, 2, 3, 5, 8, 13, 21, ... What is the sum of the first 8 terms?', expectedKeywords: ['54'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +508,10 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Daily update: new medium/hard phrases (2026-06-05) ──
+    { text: 'Flight JAL-741 from Tokyo Narita Terminal 1 departs gate 47C at zero six forty-five and has a stopover in Hong Kong at fourteen hundred hours', keywords: ['JAL', '741', 'terminal', '47C', 'Hong', 'Kong', 'fourteen'] },
+    { text: 'Take two 500 milligram acetaminophen tablets every six hours not exceeding eight tablets in a twenty-four hour period', keywords: ['acetaminophen', '500', 'milligram', 'six', 'eight', 'twenty-four'] },
+    { text: 'The IBAN DE89 3704 0044 0532 0130 00 corresponds to a Deutsche Bank account in Frankfurt — please verify all twenty-two characters before initiating the wire transfer', keywords: ['IBAN', 'DE89', '3704', 'Deutsche', 'twenty-two', 'Frankfurt'] },
 ];
 
 // ============================================
