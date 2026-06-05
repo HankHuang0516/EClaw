@@ -113,7 +113,14 @@ function showConfirm({ message, title, confirmText, cancelText, danger } = {}) {
         overlay.querySelector(safeBtnSel).focus();
         overlay.querySelector('.eclaw-confirm-ok').addEventListener('click', () => cleanup(true));
         overlay.querySelector('.eclaw-confirm-cancel').addEventListener('click', () => cleanup(false));
-        overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(false); });
+        // Backdrop-tap dismiss: only allowed when NOT destructive. iOS HIG forbids
+        // scrim-dismiss on .alert-style modals because the backdrop is ~80% of a
+        // mobile viewport and accidental thumb-stretch taps shouldn't cancel a
+        // confirmation the user is actively reading. Esc + the explicit Cancel
+        // button still dismiss either way.
+        if (!danger) {
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(false); });
+        }
         overlay.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') cleanup(false);
             // For destructive confirms Enter dismisses (= cancel) so an

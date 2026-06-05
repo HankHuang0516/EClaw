@@ -59,13 +59,15 @@ For each combo:
    () => {
      return showConfirm({
        title: 'E2E: destructive modal viewport check',
-       message: i18n?.t?.('confirm_delete') || 'Are you sure you want to delete this?',
+       message: 'Are you sure you want to delete this?',
        danger: true
      }).then(() => {
        // resolved with false from auto-dismiss below; ignore
      });
    }
    ```
+
+   The earlier version of this snippet read `i18n?.t?.('confirm_delete') || '...fallback...'`. Don't restore that: the generic key `confirm_delete` is not registered in `TRANSLATIONS[*]`, so `i18n.t()` returns the literal string `'confirm_delete'` — a truthy value — and the `||` fallback never fires. Real consumers use namespaced keys (`mc_confirm_delete`, `env_confirm_delete`, `sched_confirm_delete`) which DO resolve. For the E2E probe a hard-coded English literal is the right choice; what matters is exercising the modal at the production viewport, not the message content. Spec source: child of card_06a75d056fd5a98c3b4e95d0.
 
    `showConfirm` is a global in `api.js` (sibling to `apiCall`). It returns a Promise that resolves when Cancel/OK is clicked or Esc pressed.
 
