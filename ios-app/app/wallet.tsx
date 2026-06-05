@@ -6,14 +6,14 @@ import {
   Button,
   ActivityIndicator,
   useTheme,
-  List,
   Divider,
   Chip,
 } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Stack, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import {
+  ErrorCode,
   initConnection,
   endConnection,
   fetchProducts,
@@ -21,11 +21,11 @@ import {
   finishTransaction,
   purchaseUpdatedListener,
   purchaseErrorListener,
-  type Product,
   type Purchase,
+  type ProductIOS,
+  type PurchaseIOS,
   type PurchaseError,
 } from 'react-native-iap';
-import WebViewScreen from '../components/WebViewScreen';
 import { authApi } from '../services/api';
 import axios from 'axios';
 
@@ -49,17 +49,41 @@ const TIER_META: Record<string, { ecoin: number; bonusPct: number; label: string
 
 const API_BASE = 'https://eclawbot.com';
 
+type ApplePurchasePayload = PurchaseIOS & {
+  transactionReceipt?: string | null;
+  jwsRepresentationIOS?: string | null;
+  signedTransactionInfoIOS?: string | null;
+};
+
+function isIosProduct(product: unknown): product is ProductIOS {
+  return !!product && typeof product === 'object' && (product as ProductIOS).platform === 'ios';
+}
+
+function appleReceiptPayload(purchase: PurchaseIOS) {
+  const p = purchase as ApplePurchasePayload;
+  return p.transactionReceipt
+    || p.purchaseToken
+    || p.jwsRepresentationIOS
+    || p.signedTransactionInfoIOS
+    || '';
+}
+
+function productPrice(product: ProductIOS) {
+  return typeof product.price === 'number' ? product.price : Number.parseFloat(String(product.price || '0'));
+}
+
 export default function WalletScreen() {
   const { t } = useTranslation();
   const theme = useTheme();
-  const router = useRouter();
 
   const [balance, setBalance] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductIOS[]>([]);
   const [purchasing, setPurchasing] = useState<string | null>(null);
   const [iapAvailable, setIapAvailable] = useState(false);
+  const [iapInitError, setIapInitError] = useState<string | null>(null);
+  const [retryNonce, setRetryNonce] = useState(0);
 
   const fetchBalance = useCallback(async () => {
     try {
@@ -90,6 +114,7 @@ export default function WalletScreen() {
     (async () => {
       // IAP only on real iOS device (not simulator, not Android)
       if (Platform.OS !== 'ios') {
+        await fetchBalance();
         setIapAvailable(false);
         setLoading(false);
         return;
@@ -98,17 +123,19 @@ export default function WalletScreen() {
       try {
         await initConnection();
         setIapAvailable(true);
+        setIapInitError(null);
 
         // Fetch products from App Store (v15: fetchProducts instead of getProducts)
-        const prods = await fetchProducts({ skus: IAP_PRODUCT_IDS });
-        setProducts(prods);
+        const prods = await fetchProducts({ skus: IAP_PRODUCT_IDS, type: 'in-app' });
+        setProducts((prods || []).filter(isIosProduct));
 
         // Listen for purchase completions
         purchaseUpdateSub = purchaseUpdatedListener(async (purchase: Purchase) => {
-          const receipt = purchase.transactionReceipt;
+          if (purchase.platform !== 'ios') return;
+          const receipt = appleReceiptPayload(purchase as PurchaseIOS);
           if (!receipt) return;
           try {
-            await verifyAndFinish(purchase);
+            await verifyAndFinish(purchase as PurchaseIOS);
           } catch (err: any) {
             console.error('[IAP] Verify failed:', err.message);
             Alert.alert(t('wallet.topup_failed', 'Top-up failed'), err.message);
@@ -119,7 +146,7 @@ export default function WalletScreen() {
 
         // Listen for purchase errors
         purchaseErrorSub = purchaseErrorListener((err: PurchaseError) => {
-          if (err.code === 'E_USER_CANCELLED') {
+          if (err.code === ErrorCode.UserCancelled) {
             setPurchasing(null);
             return;
           }
@@ -131,8 +158,9 @@ export default function WalletScreen() {
         await fetchBalance();
       } catch (err: any) {
         console.error('[IAP] Init failed:', err.message);
-        // If IAP init fails (e.g. Simulator), fall back to WebView
+        await fetchBalance();
         setIapAvailable(false);
+        setIapInitError(err.message || String(err));
       } finally {
         setLoading(false);
       }
@@ -143,12 +171,12 @@ export default function WalletScreen() {
       purchaseErrorSub?.remove();
       endConnection().catch(() => {});
     };
-  }, [fetchBalance, t]);
+  }, [fetchBalance, retryNonce, t]);
 
-  const verifyAndFinish = async (purchase: Purchase) => {
+  const verifyAndFinish = async (purchase: PurchaseIOS) => {
     const productId = purchase.productId;
-    const transactionId = purchase.transactionId || '';
-    const receipt = purchase.transactionReceipt || '';
+    const transactionId = purchase.transactionId || purchase.id || '';
+    const receipt = appleReceiptPayload(purchase);
 
     // Backend verification (must succeed before finishTransaction)
     const SecureStore = require('expo-secure-store');
@@ -191,10 +219,13 @@ export default function WalletScreen() {
     if (purchasing) return;
     setPurchasing(productId);
     try {
-      await requestPurchase({ sku: productId });
+      await requestPurchase({
+        request: { apple: { sku: productId } },
+        type: 'in-app',
+      });
       // purchaseUpdatedListener handles the rest
     } catch (err: any) {
-      if (err.code === 'E_USER_CANCELLED') {
+      if (err.code === ErrorCode.UserCancelled) {
         setPurchasing(null);
         return;
       }
@@ -209,12 +240,60 @@ export default function WalletScreen() {
     setRefreshing(false);
   };
 
-  // Fallback: WebView for non-iOS / simulator / IAP init failure
+  const retryIap = () => {
+    if (loading) return;
+    setLoading(true);
+    setIapInitError(null);
+    setRetryNonce((n) => n + 1);
+  };
+
+  const balanceCard = (
+    <Card style={styles.balanceCard} mode="contained">
+      <Card.Content style={styles.balanceContent}>
+        <Text variant="labelMedium" style={styles.balanceLabel}>
+          {t('wallet.balance', 'Balance')}
+        </Text>
+        <Text variant="displayMedium" style={styles.balanceValue}>
+          {balance !== null ? balance.toLocaleString() : '-'}
+        </Text>
+        <Text variant="bodyMedium" style={styles.balanceUnit}>
+          {t('wallet.ecoin_unit', 'e-coins')}
+        </Text>
+      </Card.Content>
+    </Card>
+  );
+
   if (!iapAvailable && !loading) {
     return (
       <SafeAreaView style={styles.container} edges={['bottom']}>
         <Stack.Screen options={{ title: t('wallet.title', 'Wallet'), headerShown: true }} />
-        <WebViewScreen url="https://eclawbot.com/portal/wallet.html" />
+        <ScrollView
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          contentContainerStyle={styles.scroll}
+        >
+          {balanceCard}
+          <Card mode="outlined" style={styles.unavailableCard}>
+            <Card.Content>
+              <Text variant="titleMedium" style={styles.sectionTitle}>
+                {t('wallet.iap_unavailable_title', 'Purchases unavailable')}
+              </Text>
+              <Text variant="bodyMedium" style={styles.unavailableText}>
+                {t(
+                  'wallet.iap_unavailable_desc',
+                  'E-coin top-up is only available through Apple In-App Purchase in the iOS app. Please try again later.'
+                )}
+              </Text>
+              {iapInitError ? (
+                <Text variant="bodySmall" style={styles.errorHint}>
+                  {iapInitError}
+                </Text>
+              ) : null}
+              <Button mode="contained-tonal" onPress={retryIap} style={styles.retryButton}>
+                {t('common.retry', 'Retry')}
+              </Button>
+            </Card.Content>
+          </Card>
+        </ScrollView>
       </SafeAreaView>
     );
   }
@@ -235,20 +314,7 @@ export default function WalletScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         contentContainerStyle={styles.scroll}
       >
-        {/* Balance Card */}
-        <Card style={styles.balanceCard} mode="contained">
-          <Card.Content style={styles.balanceContent}>
-            <Text variant="labelMedium" style={styles.balanceLabel}>
-              {t('wallet.balance', 'Balance')}
-            </Text>
-            <Text variant="displayMedium" style={styles.balanceValue}>
-              {balance !== null ? balance.toLocaleString() : '—'}
-            </Text>
-            <Text variant="bodyMedium" style={styles.balanceUnit}>
-              {t('wallet.ecoin_unit', 'e-coins')}
-            </Text>
-          </Card.Content>
-        </Card>
+        {balanceCard}
 
         {/* Top-up Section */}
         <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -260,26 +326,28 @@ export default function WalletScreen() {
 
         {products.length === 0 ? (
           <Text style={styles.noProducts}>
-            {t('wallet.no_products', 'No products available. Check App Store Connect setup.')}
+            {t('wallet.no_products', 'Purchases are temporarily unavailable. Please try again later.')}
           </Text>
         ) : (
           products
-            .sort((a, b) => parseFloat(a.price || '0') - parseFloat(b.price || '0'))
+            .slice()
+            .sort((a, b) => productPrice(a) - productPrice(b))
             .map((product) => {
-              const meta = TIER_META[product.productId];
-              const isPurchasing = purchasing === product.productId;
+              const productId = product.id;
+              const meta = TIER_META[productId];
+              const isPurchasing = purchasing === productId;
               return (
                 <Card
-                  key={product.productId}
+                  key={productId}
                   style={styles.tierCard}
                   mode="outlined"
-                  onPress={() => handlePurchase(product.productId)}
+                  onPress={() => handlePurchase(productId)}
                   disabled={!!purchasing}
                 >
                   <Card.Content style={styles.tierContent}>
                     <View style={styles.tierLeft}>
                       <Text variant="titleMedium">
-                        {meta?.label || product.title || product.productId}
+                        {meta?.label || product.title || productId}
                       </Text>
                       <Text variant="bodySmall" style={{ opacity: 0.75 }}>
                         {meta
@@ -297,7 +365,7 @@ export default function WalletScreen() {
                         <ActivityIndicator />
                       ) : (
                         <Text variant="titleLarge" style={{ color: theme.colors.primary }}>
-                          {product.localizedPrice || `$${product.price}`}
+                          {product.displayPrice || `$${product.price || ''}`}
                         </Text>
                       )}
                     </View>
@@ -307,21 +375,8 @@ export default function WalletScreen() {
             })
         )}
 
-        {/* Transaction History */}
-        <Divider style={{ marginVertical: 16 }} />
-        <List.Item
-          title={t('wallet.transaction_history', 'Transaction History')}
-          left={(props) => <List.Icon {...props} icon="history" />}
-          right={(props) => <List.Icon {...props} icon="chevron-right" />}
-          onPress={() =>
-            router.push({
-              pathname: '/community',
-              params: { url: 'https://eclawbot.com/portal/wallet.html' },
-            })
-          }
-        />
-
         {/* Apple compliance footer */}
+        <Divider style={{ marginVertical: 16 }} />
         <Text variant="bodySmall" style={styles.compliance}>
           {t(
             'wallet.iap_compliance',
@@ -354,5 +409,9 @@ const styles = StyleSheet.create({
   tierRight: { minWidth: 80, alignItems: 'flex-end' },
   bonusChip: { alignSelf: 'flex-start', marginTop: 4 },
   noProducts: { textAlign: 'center', opacity: 0.6, padding: 24 },
+  unavailableCard: { marginTop: 8 },
+  unavailableText: { opacity: 0.78, lineHeight: 20 },
+  errorHint: { opacity: 0.58, marginTop: 12 },
+  retryButton: { marginTop: 16, alignSelf: 'flex-start' },
   compliance: { textAlign: 'center', opacity: 0.5, marginTop: 24, padding: 16 },
 });
