@@ -1,5 +1,6 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import WebViewScreen from '../../components/WebViewScreen';
 
 export default function MissionScreen() {

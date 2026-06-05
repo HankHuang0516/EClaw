@@ -1134,6 +1134,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | R2 Files | `node backend/tests/test-r2-files.js` | Device ID + Secret | R2 file storage CRUD validation |
 | R2 Quota Rich Card | `node backend/tests/test-r2-quota-rich-card.js` | Device ID + Secret | R2 quota exceeded rich card E2E |
 | Subscription Plans Live | `node backend/tests/test-subscription-plans-live.js` | Device ID + Secret | Subscription plans + wallet live verification |
+| iOS Wallet IAP Compliance | `cd ios-app && npm run test:iap-compliance` | None | Static guard for App Review 3.1.1: native wallet only, no web-wallet fallback, Upgrade opens native wallet |
 
 ### Jest Unit Tests (CI-run, `npm test`, 116 files)
 
