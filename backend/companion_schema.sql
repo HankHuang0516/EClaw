@@ -201,3 +201,17 @@ ALTER TABLE companion_select_log ADD COLUMN IF NOT EXISTS origin TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_companion_select_origin
     ON companion_select_log (device_id, entity_id, origin);
+
+-- ============================================
+-- Phase 2 amendment (2026-06-05): companions.needs_recovery
+-- ============================================
+-- Per docs/specs/petdx-uiux-spec-amendment-2026-06-05-phase2-r2-pipeline.md §3.4:
+-- petdex-bridge.syncPetdexCatalog now downloads each upstream sprite and
+-- self-hosts it in EClaw R2. Rows whose upstream fetch failed (e.g. the
+-- 2026-06 raillyhugo Worker outage) get needs_recovery=true and keep the
+-- upstream URL so the Phase 1 renderer emoji fallback fires for them. The
+-- Phase 3 monitor cron flips them back when upstream recovers.
+ALTER TABLE companions ADD COLUMN IF NOT EXISTS needs_recovery BOOLEAN NOT NULL DEFAULT FALSE;
+
+CREATE INDEX IF NOT EXISTS idx_companions_needs_recovery
+    ON companions (needs_recovery) WHERE needs_recovery;

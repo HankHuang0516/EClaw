@@ -2287,6 +2287,15 @@ if (process.env.NODE_ENV !== 'test') {
 const filesModule = require('./files')(devices);
 app.use('/api/files', filesModule.router);
 
+// ============================================
+// PETDX PUBLIC SPRITE PROXY (Cloudflare R2, no auth)
+// ============================================
+// Spec: docs/specs/petdx-uiux-spec-amendment-2026-06-05-phase2-r2-pipeline.md §3.2
+// Streams sprite.webp bytes from R2 directly so descriptor URLs are stable
+// and CDN-cacheable. Slug whitelist + no listing surface per #1 sign-off.
+const petdxRoute = require('./petdex-route');
+app.use('/api/petdx', petdxRoute.createRouter({ log: serverLog }));
+
 // Daily cleanup of expired files (runs at 03:17 server time)
 const nodeCron = require('node-cron');
 nodeCron.schedule('17 3 * * *', () => {
