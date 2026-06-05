@@ -671310,6 +671310,8 @@ const TRANSLATIONS = {
 
 
         "nav_files": "檔案",
+        "settings_companion_desc": "瀏覽並為你的每個實體挑選 Petdx 夥伴",
+        "nav_companion": "夥伴",
 
 
 
@@ -1691339,6 +1691341,8 @@ const TRANSLATIONS = {
 
 
         "nav_files": "檔案",
+        "settings_companion_desc": "浏览并为你的每个实体挑选 Petdx 伙伴",
+        "nav_companion": "伙伴",
 
 
 
@@ -1869473,6 +1869477,8 @@ const TRANSLATIONS = {
 
 
         "nav_files": "ファイル",
+        "settings_companion_desc": "エンティティごとに Petdx コンパニオンを選択",
+        "nav_companion": "コンパニオン",
 
 
 
@@ -2432577,6 +2432583,8 @@ const TRANSLATIONS = {
 
 
         "nav_files": "파일",
+        "settings_companion_desc": "각 엔티티에 맞는 Petdx 컴패니언을 둘러보고 선택",
+        "nav_companion": "컴패니언",
 
 
 
@@ -2965209,6 +2965217,8 @@ const TRANSLATIONS = {
 
 
         "nav_files": "ไฟล์",
+        "settings_companion_desc": "เลือกคู่หู Petdx สำหรับเอนทิตีของคุณแต่ละตัว",
+        "nav_companion": "คู่หู",
 
 
 
@@ -3494365,6 +3494375,8 @@ const TRANSLATIONS = {
 
 
         "nav_files": "Tập tin",
+        "settings_companion_desc": "Duyệt và chọn bạn đồng hành Petdx cho từng entity của bạn",
+        "nav_companion": "Bạn đồng hành",
 
 
 
@@ -4021089,6 +4021101,8 @@ const TRANSLATIONS = {
 
 
         "nav_files": "File",
+        "settings_companion_desc": "Jelajahi dan pilih pendamping Petdx untuk setiap entitas Anda",
+        "nav_companion": "Pendamping",
 
 
 
@@ -4547429,6 +4547443,8 @@ const TRANSLATIONS = {
 
 
         "nav_files": "Fichiers",
+        "settings_companion_desc": "Parcourez et choisissez un compagnon Petdx pour chacune de vos entités",
+        "nav_companion": "Compagnon",
 
 
 
@@ -5072488,6 +5072504,8 @@ const TRANSLATIONS = {
 
 
         "nav_files": "Archivos",
+        "settings_companion_desc": "Explora y elige un compañero Petdx para cada una de tus entidades",
+        "nav_companion": "Compañero",
 
 
 
@@ -5590059,6 +5590077,8 @@ const TRANSLATIONS = {
 
 
         "nav_files": "Fichiers",
+        "settings_companion_desc": "Stöbern und wählen Sie einen Petdx-Begleiter für jede Ihrer Entitäten",
+        "nav_companion": "Begleiter",
 
 
 
@@ -6102995,6 +6103015,8 @@ const TRANSLATIONS = {
         "nav_dashboard": "Dashboard",
         "nav_chat": "Chat",
         "nav_files": "Files",
+        "settings_companion_desc": "Navegue e escolha um companheiro Petdx para cada uma das suas entidades",
+        "nav_companion": "Companheiro",
         "nav_mission": "Mission",
         "nav_kanban": "Kanban",
         "nav_settings": "Settings",
@@ -6132254,6 +6132276,8 @@ const TRANSLATIONS = {
 
 
         "nav_files": "Fail",
+        "settings_companion_desc": "Layari dan pilih teman Petdx untuk setiap entiti anda",
+        "nav_companion": "Teman",
 
 
 
@@ -6670534,6 +6670558,8 @@ const TRANSLATIONS = {
 
 
         "nav_files": "फ़ाइलें",
+        "settings_companion_desc": "अपनी प्रत्येक एंटिटी के लिए Petdx साथी ब्राउज़ करें और चुनें",
+        "nav_companion": "साथी",
 
 
 
@@ -7220244,6 +7220270,8 @@ const TRANSLATIONS = {
 
 
         "nav_files": "ملفات",
+        "settings_companion_desc": "تصفح واختر رفيق Petdx لكل من كياناتك",
+        "nav_companion": "رفيق",
 
 
 
