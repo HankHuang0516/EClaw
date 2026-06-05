@@ -127,6 +127,47 @@ describe('createWebhookHandler', () => {
     expect(dispatchReplyWithBufferedBlockDispatcher).not.toHaveBeenCalled();
   });
 
+  it('keeps kanban notifications model-routed when generic background suppression is enabled', async () => {
+    process.env.ECLAW_SUPPRESS_BACKGROUND_EVENTS = '1';
+    const dispatchReplyWithBufferedBlockDispatcher = vi.fn().mockResolvedValue(undefined);
+    const finalizeInboundContext = vi.fn((ctx) => ctx);
+    setPluginRuntime({
+      channel: {
+        reply: {
+          finalizeInboundContext,
+          dispatchReplyWithBufferedBlockDispatcher,
+        },
+      },
+    });
+
+    const client = {
+      sendMessage: vi.fn().mockResolvedValue({ success: true }),
+    };
+    setClient('default', client as any);
+
+    const handler = createWebhookHandler('token', 'default', {});
+    const res = {
+      writeHead: vi.fn(),
+      end: vi.fn(),
+    };
+
+    await handler({
+      method: 'POST',
+      body: {
+        deviceId: 'device-1',
+        entityId: 1,
+        event: 'kanban_notification',
+        from: 'kanban',
+        text: '📋 New task assigned: 🔥 [P0] Fix the bug\nStatus: TODO',
+      },
+    }, res);
+
+    expect(res.writeHead).toHaveBeenCalledWith(200, { 'Content-Type': 'application/json' });
+    expect(res.end).toHaveBeenCalledWith(JSON.stringify({ ok: true }));
+    expect(finalizeInboundContext).toHaveBeenCalled();
+    expect(dispatchReplyWithBufferedBlockDispatcher).toHaveBeenCalled();
+  });
+
   it('continues dispatching kanban notifications when suppression is disabled', async () => {
     const dispatchReplyWithBufferedBlockDispatcher = vi.fn().mockResolvedValue(undefined);
     const finalizeInboundContext = vi.fn((ctx) => ctx);

@@ -17,7 +17,10 @@ function envListIncludes(name: string, value: string, defaults: readonly string[
     .includes(value);
 }
 
-const DEFAULT_BACKGROUND_EVENTS = ['kanban_notification', 'org_forward'] as const;
+// Kanban notifications are task nudges and must stay model-routed by default.
+// Only explicit ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS should turn them into
+// notification-only ACKs.
+const DEFAULT_BACKGROUND_EVENTS = ['org_forward'] as const;
 
 function shouldSuppressInboundEvent(event: string): boolean {
   if (

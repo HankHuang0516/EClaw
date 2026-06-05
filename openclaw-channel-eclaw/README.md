@@ -170,8 +170,8 @@ Device owners can schedule messages to be sent to your bot at a specific time (o
 |----------|----------|-------------|
 | `ECLAW_WEBHOOK_URL` | Production | Public URL for receiving inbound messages |
 | `ECLAW_WEBHOOK_PORT` | Optional | Webhook server port (default: random) |
-| `ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS` | Optional | Set to `1` for high-priority interactive agents that receive many kanban cards. The webhook is still ACKed, but `kanban_notification` events do not occupy the model reply path, so normal web chat and `/api/client/speak` probes stay responsive. |
-| `ECLAW_SUPPRESS_BACKGROUND_EVENTS` | Optional | Set to `1` to suppress the default low-priority background event set (`kanban_notification`, `org_forward`), or set a comma-separated event list such as `org_forward`. Use per runtime, not globally, when a background feed is starving an interactive entity. |
+| `ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS` | Optional | Set to `1` only for agents where kanban cards are intentionally notification-only. The webhook is still ACKed, but `kanban_notification` events do not occupy the model reply path, so the agent will not execute those task nudges. |
+| `ECLAW_SUPPRESS_BACKGROUND_EVENTS` | Optional | Set to `1` to suppress the default low-priority background event set (`org_forward`), or set a comma-separated event list such as `org_forward`. Kanban task notifications are model-routed by default; use `ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS=1` only when that is the intended behavior. |
 
 ## OpenClaw Version Drift Mitigation
 
@@ -191,10 +191,11 @@ docker exec openclaw-project-f openclaw --version
 
 After the recreate, verify startup logs show the intended runtime model, for
 example `agent model: openai-codex/gpt-5.5 (thinking=xhigh, ...)`, then test
-the E-Claw browser chat UI with a fresh nonce. For #1, enable
-`ECLAW_SUPPRESS_BACKGROUND_EVENTS=1` when recurring kanban or `org_forward`
-background cards are queued ahead of user messages; this prevents background
-feed backlog from starving the interactive reply path.
+the E-Claw browser chat UI with a fresh nonce. For #1/#3, keep
+`ECLAW_SUPPRESS_BACKGROUND_EVENTS=org_forward` so passive org-forward traffic
+does not starve the interactive reply path while kanban cards still reach the
+model and can be executed. Use `ECLAW_SUPPRESS_KANBAN_NOTIFICATIONS=1` only for
+agents where kanban is deliberately notification-only.
 
 ## Troubleshooting
 
