@@ -84,11 +84,20 @@ class ClawWallpaperService : WallpaperService() {
         // we don't spawn duplicate jobs each time getMultiEntityStatusFlow emits.
         private val companionJobs = mutableMapOf<Int, kotlinx.coroutines.Job>()
 
+        // Held references so visibility transitions can cancel/restart pollers
+        // rather than letting them burn API quota while the wallpaper is
+        // covered/screen-off. Bug card_a7baa3b0b1151099d4523428: previously
+        // these flows ran unconditionally from onCreate, hitting /api/status
+        // every 5s × 6 entities → 72 calls/min → CF rate limit 429 storms.
+        private var statusJob: kotlinx.coroutines.Job? = null
+        private var usageJob: kotlinx.coroutines.Job? = null
+
         private fun observeStatus() {
-            engineScope.launch {
+            statusJob?.cancel()
+            statusJob = engineScope.launch {
                 if (multiEntityMode) {
                     // Multi-entity mode: fetch all entities
-                    repository.getMultiEntityStatusFlow(intervalMs = 5000)
+                    repository.getMultiEntityStatusFlow(intervalMs = 30000)
                         .collect { response ->
                             Timber.d("Multi-entity status: ${response.activeCount} entities")
                             // Debug: log first entity's name
@@ -102,7 +111,7 @@ class ClawWallpaperService : WallpaperService() {
                         }
                 } else {
                     // Single entity mode (backward compatible)
-                    repository.getStatusFlow(intervalMs = 5000)
+                    repository.getStatusFlow(intervalMs = 30000)
                         .collect { newStatus ->
                             Timber.d("Single status: ${newStatus.state}")
                             currentStatus = newStatus
@@ -113,13 +122,23 @@ class ClawWallpaperService : WallpaperService() {
         }
 
         private fun observeUsage() {
-            engineScope.launch {
+            usageJob?.cancel()
+            usageJob = engineScope.launch {
                 repository.getUsageSnapshotFlow(intervalMs = 30000)
                     .collect { snapshot ->
                         currentUsageSnapshot = snapshot
                         if (visible) draw()
                     }
             }
+        }
+
+        private fun cancelAllPollers() {
+            statusJob?.cancel()
+            statusJob = null
+            usageJob?.cancel()
+            usageJob = null
+            companionJobs.values.forEach { it.cancel() }
+            companionJobs.clear()
         }
 
         private fun ensureCompanionPollers(entities: List<EntityStatus>) {
@@ -148,9 +167,21 @@ class ClawWallpaperService : WallpaperService() {
             this.visible = visible
             Timber.d("onVisibilityChanged: $visible")
             if (visible) {
+                // Restart pollers if they were cancelled while hidden. Without
+                // this, the wallpaper would only repaint stale state until the
+                // user re-enters the live wallpaper preview. Bug
+                // card_a7baa3b0b1151099d4523428 close-out.
+                if (statusJob?.isActive != true) observeStatus()
+                if (usageJob?.isActive != true) observeUsage()
                 draw()
             } else {
+                // Stop hitting /api/status while the wallpaper isn't on
+                // screen (screen off, app covering, dock visible). Without
+                // this gate the service kept polling every 5s indefinitely,
+                // saturating CF rate-limits → 429 storms. The companion
+                // jobs are tied to the same lifecycle.
                 handler.removeCallbacks(drawRunnable)
+                cancelAllPollers()
             }
         }
 
