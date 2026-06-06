@@ -3205,6 +3205,7 @@
     <script src="../shared/petdx-renderer.js"></script>
     <script src="../shared/avatar-petdx.js"></script>
     <script src="shared/entity-utils.js"></script>
+    <script src="shared/entity-status-panel.js"></script>
     <script src="shared/chat-source-category.js"></script>
     <script src="../shared/filter-summary.js"></script>
     <script src="shared/mention-autocomplete.js"></script>
@@ -3601,6 +3602,10 @@
             // Detect embed mode (workspace split view)
             if (new URLSearchParams(window.location.search).get('embed') === '1') {
                 document.body.classList.add('embed-mode');
+            }
+            // Avatar click → entity status drawer (per card_dbe18b333ac98076cc213055 P0.5).
+            if (typeof attachAvatarClickHandler === 'function' && window.EntityStatusPanel) {
+                attachAvatarClickHandler(document.body, (eid) => window.EntityStatusPanel.open(eid));
             }
 
             // Highlight current density button (value already applied pre-paint)

@@ -687,6 +687,7 @@
     <script src="../shared/petdx-renderer.js"></script>
     <script src="../shared/avatar-petdx.js"></script>
     <script src="shared/entity-utils.js"></script>
+    <script src="shared/entity-status-panel.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
     <script src="../shared/transition-overlay.js"></script>
@@ -807,6 +808,9 @@
 
         // --- Init ---
         window.addEventListener('DOMContentLoaded', async () => {
+            if (typeof attachAvatarClickHandler === 'function' && window.EntityStatusPanel) {
+                attachAvatarClickHandler(document.body, (eid) => window.EntityStatusPanel.open(eid));
+            }
             renderNav('files');
             if (typeof renderFooter === 'function') renderFooter();
             const user = await checkAuth();

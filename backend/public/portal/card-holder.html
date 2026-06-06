@@ -712,6 +712,7 @@
     <script src="../shared/petdx-renderer.js"></script>
     <script src="../shared/avatar-petdx.js"></script>
     <script src="shared/entity-utils.js"></script>
+    <script src="shared/entity-status-panel.js"></script>
     <script>if(typeof renderAvatarHtml==='undefined'){window.renderAvatarHtml=function(a){return a||'\u{1F99E}'};window.isAvatarUrl=function(){return false}}</script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
@@ -753,6 +754,9 @@
         if (__isEmbedded) document.body.classList.add('embedded');
 
         window.addEventListener('DOMContentLoaded', async () => {
+            if (typeof attachAvatarClickHandler === 'function' && window.EntityStatusPanel) {
+                attachAvatarClickHandler(document.body, (eid) => window.EntityStatusPanel.open(eid));
+            }
             renderNav('card-holder');
             if (typeof renderFooter === 'function') renderFooter();
             const user = await checkAuth();

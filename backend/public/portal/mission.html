@@ -1003,6 +1003,7 @@
     <script src="shared/nav.js"></script>
     <script src="shared/auth.js"></script>
     <script src="shared/entity-utils.js"></script>
+    <script src="shared/entity-status-panel.js"></script>
     <script src="../shared/petdx-renderer.js"></script>
     <script src="../shared/avatar-petdx.js"></script>
     <script src="../shared/telemetry.js"></script>
@@ -1251,6 +1252,9 @@
 
         window.addEventListener('DOMContentLoaded', async () => {
             try {
+            if (typeof attachAvatarClickHandler === 'function' && window.EntityStatusPanel) {
+                attachAvatarClickHandler(document.body, (eid) => window.EntityStatusPanel.open(eid));
+            }
             // Detect embed mode (workspace split view). Keep sub-tabs visible so
             // users can still reach env-vars / remote-control / publisher — those
             // are sub-pages of Mission and are not reachable from the workspace

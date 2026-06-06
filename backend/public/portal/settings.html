@@ -1568,6 +1568,7 @@
     <script src="../shared/petdx-renderer.js"></script>
     <script src="../shared/avatar-petdx.js"></script>
     <script src="shared/entity-utils.js"></script>
+    <script src="shared/entity-status-panel.js"></script>
     <script src="shared/socket.js"></script>
     <script src="shared/footer.js"></script>
     <script src="shared/product-tour.js"></script>
@@ -1582,6 +1583,9 @@
         // Initialization
         // ============================================
         window.addEventListener('DOMContentLoaded', async () => {
+            if (typeof attachAvatarClickHandler === 'function' && window.EntityStatusPanel) {
+                attachAvatarClickHandler(document.body, (eid) => window.EntityStatusPanel.open(eid));
+            }
             renderNav('settings');
             if (typeof renderFooter === 'function') renderFooter();
 
