@@ -63,7 +63,7 @@ describe('renderAvatarHtml — canvas-vs-URL guard (Phase 0 dashboard bug fix)',
         expect(html).not.toContain('<canvas');
     });
 
-    test('emoji avatar still renders as text when no descriptor', () => {
+    test('emoji avatar still renders as clickable span when no descriptor', () => {
         const ctx = loadResolver();
         ctx.window.AvatarPetdx = {
             hasDescriptor: () => false,
@@ -72,7 +72,12 @@ describe('renderAvatarHtml — canvas-vs-URL guard (Phase 0 dashboard bug fix)',
         };
         ctx.updateEntityMaps([{ entityId: 1, character: 'LOBSTER', avatar: '🐱' }]);
         const html = ctx.renderAvatarHtml('🐱', 48, 1);
-        expect(html).toBe('🐱');
+        expect(html).toContain('<span');
+        expect(html).toContain('class="entity-avatar-emoji"');
+        expect(html).toContain('data-entity-id="1"');
+        expect(html).toContain('🐱');
+        expect(html).not.toContain('<canvas');
+        expect(html).not.toContain('<img');
     });
 
     test('_petdxCanRenderCanvas handles missing getDescriptor (older avatar-petdx)', () => {
