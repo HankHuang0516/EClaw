@@ -49,6 +49,13 @@ const { emit: emitKanbanEvent } = require('./lib/kanban-events');
 // Cache device→language to avoid repeated lookups
 const deviceLangCache = new Map();
 const DEVICE_LANG_TTL_MS = 60_000;
+// 'zh' holds the Traditional Chinese dict; normalize BCP-47 Traditional aliases on read so
+// rows that ended up as zh-TW / zh-Hant / zh-HK still resolve to the Traditional templates.
+const KANBAN_ZH_TRADITIONAL_ALIASES = new Set(['zh-TW', 'zh-Hant', 'zh-HK', 'zh-Hant-TW', 'zh-Hant-HK']);
+function normalizeKanbanLang(raw) {
+    if (KANBAN_ZH_TRADITIONAL_ALIASES.has(raw)) return 'zh';
+    return raw || 'en';
+}
 async function getDeviceLanguage(deviceId) {
     const cached = deviceLangCache.get(deviceId);
     if (cached && cached.expires > Date.now()) return cached.lang;
@@ -57,7 +64,7 @@ async function getDeviceLanguage(deviceId) {
             'SELECT language FROM user_accounts WHERE device_id = $1 LIMIT 1',
             [deviceId]
         );
-        const lang = result.rows[0]?.language || 'en';
+        const lang = normalizeKanbanLang(result.rows[0]?.language);
         deviceLangCache.set(deviceId, { lang, expires: Date.now() + DEVICE_LANG_TTL_MS });
         return lang;
     } catch (err) {

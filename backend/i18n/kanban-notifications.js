@@ -187,8 +187,15 @@ const TRANSLATIONS = {
     }
 };
 
+// BCP-47 Traditional Chinese aliases resolve to the 'zh' dict (Traditional).
+const ZH_TRADITIONAL_ALIASES = new Set(['zh-TW', 'zh-Hant', 'zh-HK', 'zh-Hant-TW', 'zh-Hant-HK']);
+function resolveDict(lang) {
+    if (ZH_TRADITIONAL_ALIASES.has(lang)) return TRANSLATIONS.zh;
+    return TRANSLATIONS[lang] || TRANSLATIONS.en;
+}
+
 function tKanban(lang, key, params = {}) {
-    const dict = TRANSLATIONS[lang] || TRANSLATIONS.en;
+    const dict = resolveDict(lang);
     let str = dict[key] || TRANSLATIONS.en[key] || key;
     for (const [k, v] of Object.entries(params)) {
         str = str.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
@@ -197,7 +204,7 @@ function tKanban(lang, key, params = {}) {
 }
 
 function statusLabel(lang, status) {
-    const dict = TRANSLATIONS[lang] || TRANSLATIONS.en;
+    const dict = resolveDict(lang);
     return (dict.statusLabels && dict.statusLabels[status]) || TRANSLATIONS.en.statusLabels[status] || status;
 }
 
