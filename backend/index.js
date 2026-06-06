@@ -1479,6 +1479,7 @@ setInterval(async () => {
                 device.entities[binding.entity_id].level = prev.level || 1;
                 device.entities[binding.entity_id].rebindCount = (prev.rebindCount || 0) + 1;
                 device.entities[binding.entity_id].lastRebindAt = Date.now();
+                await clearPetdxVaultForEntity(binding.device_id, binding.entity_id, 'rental-expire');
                 await pauseRentalListingsOnRebind(binding.device_id, binding.entity_id);
                 await terminateRentalContractsOnRebind(binding.device_id, binding.entity_id);
             }
@@ -7010,6 +7011,82 @@ function createPetdxPhase0Io() {
     };
 }
 
+/**
+ * Clear the per-entity Phase 0 vault keys (PETDX_CURRENT_<eId>, PETDX_AVATAR_<eId>,
+ * PETDX_SOURCE_<eId>) for a given entity. Called from every unbind path right
+ * after `createDefaultEntity(eId)` resets the in-memory entity row.
+ *
+ * Why: `createDefaultEntity()` resets entity.character → LOBSTER and
+ * entity.avatar → 🦞 default emoji, but the Phase 0 vault keys were left
+ * behind. The portal chip rendering chain (entity-utils.js getAvatarForEntity)
+ * reads PETDX_AVATAR_<id> via the /api/entities enrichment ahead of the
+ * character emoji fallback, so the chip kept painting the *previous*
+ * companion's sprite long after the entity was rebound. New bot binds did not
+ * fix it either — petdx-phase0-hook's `decideAction` skips with reason
+ * 'already_assigned' when PETDX_CURRENT_<id> is still populated.
+ *
+ * Wipes both the encrypted blob and the source map for the three keys.
+ * Audit log gets one 'delete_one' row per key with source='petdx-phase0-unbind'.
+ *
+ * Returns the number of keys actually removed (0..3). Errors are swallowed
+ * and logged — vault cleanup is best-effort and must never break the unbind
+ * flow itself.
+ */
+async function clearPetdxVaultForEntity(deviceId, entityId, callContext = 'unbind') {
+    if (!deviceId || entityId === undefined || entityId === null) return 0;
+    if (!SEAL_KEY_HEX) return 0;
+    try {
+        const row = await db.getDeviceVars(deviceId);
+        if (!row) return 0;
+        let vars = {};
+        let sources = {};
+        try {
+            vars = decryptVars(row.encrypted_vars, row.iv, row.auth_tag) || {};
+            sources = row.var_sources || {};
+        } catch (e) {
+            console.warn(`[Petdx vault clear] decryptVars failed for ${deviceId}: ${e.message}`);
+            return 0;
+        }
+        const targetKeys = [
+            `PETDX_CURRENT_${entityId}`,
+            `PETDX_AVATAR_${entityId}`,
+            `PETDX_SOURCE_${entityId}`,
+        ];
+        const removed = [];
+        for (const k of targetKeys) {
+            if (Object.prototype.hasOwnProperty.call(vars, k)) {
+                delete vars[k];
+                delete sources[k];
+                removed.push(k);
+            }
+        }
+        if (removed.length === 0) return 0;
+        const beforeCount = Object.keys(vars).length + removed.length;
+        const { encrypted, iv, authTag } = encryptVars(vars);
+        const varKeys = Object.keys(vars);
+        await db.upsertDeviceVars(deviceId, encrypted, iv, authTag, varKeys, row.is_locked || false, sources);
+        if (typeof db.logDeviceVarsAudit === 'function') {
+            for (const k of removed) {
+                db.logDeviceVarsAudit({
+                    deviceId,
+                    action: 'delete_one',
+                    keyName: k,
+                    source: `petdx-phase0-${callContext}`,
+                    beforeCount,
+                    afterCount: varKeys.length,
+                }).catch(() => {});
+            }
+        }
+        serverLog('info', 'petdx_vault_clear',
+            `[Petdx vault clear] device ${deviceId} entity ${entityId} cleared ${removed.length} key(s) (${callContext})`,
+            { deviceId, entityId, metadata: { removed, callContext } });
+        return removed.length;
+    } catch (err) {
+        console.warn(`[Petdx vault clear] failed for ${deviceId}:${entityId}: ${err.message}`);
+        return 0;
+    }
+}
+
 async function getPetdxEntityEnrichmentMap(deviceId) {
     const out = new Map();
     if (!deviceId || !SEAL_KEY_HEX) return out;
@@ -9708,6 +9785,7 @@ app.delete('/api/entity', async (req, res) => {
     device.entities[eId].level = removedEntity?.level || 1;
     device.entities[eId].rebindCount = (removedEntity?.rebindCount || 0) + 1;
     device.entities[eId].lastRebindAt = Date.now();
+    await clearPetdxVaultForEntity(deviceId, eId, 'entity-remove');
     await pauseRentalListingsOnRebind(deviceId, eId);
     await terminateRentalContractsOnRebind(deviceId, eId);
 
@@ -9831,6 +9909,7 @@ app.delete('/api/device/entity', async (req, res) => {
     device.entities[eId].level = removedEntity2?.level || 1;
     device.entities[eId].rebindCount = (removedEntity2?.rebindCount || 0) + 1;
     device.entities[eId].lastRebindAt = Date.now();
+    await clearPetdxVaultForEntity(deviceId, eId, 'device-entity-remove');
     await pauseRentalListingsOnRebind(deviceId, eId);
     await terminateRentalContractsOnRebind(deviceId, eId);
 
@@ -15282,6 +15361,7 @@ async function autoUnbindEntity(deviceId, eId, device) {
     device.entities[eId].level = prevEntity?.level || 1;
     device.entities[eId].rebindCount = (prevEntity?.rebindCount || 0) + 1;
     device.entities[eId].lastRebindAt = Date.now();
+    await clearPetdxVaultForEntity(deviceId, eId, 'borrow-unbind');
     await pauseRentalListingsOnRebind(deviceId, eId);
     await terminateRentalContractsOnRebind(deviceId, eId);
 }
@@ -15971,6 +16051,7 @@ app.post('/api/official-borrow/unbind', async (req, res) => {
     device.entities[eId].level = prevBorrow?.level || 1;
     device.entities[eId].rebindCount = (prevBorrow?.rebindCount || 0) + 1;
     device.entities[eId].lastRebindAt = Date.now();
+    await clearPetdxVaultForEntity(deviceId, eId, 'official-borrow-unbind');
     await pauseRentalListingsOnRebind(deviceId, eId);
     await terminateRentalContractsOnRebind(deviceId, eId);
     await saveData();
@@ -18219,6 +18300,7 @@ app.post('/api/admin/transfer-device', async (req, res) => {
             sourceDevice.entities[eId] = createDefaultEntity(eId);
             sourceDevice.entities[eId].rebindCount = (srcEntity.rebindCount || 0) + 1;
             sourceDevice.entities[eId].lastRebindAt = Date.now();
+            await clearPetdxVaultForEntity(sourceDeviceId, eId, 'entity-transfer-out');
             await pauseRentalListingsOnRebind(sourceDeviceId, eId);
             await terminateRentalContractsOnRebind(sourceDeviceId, eId);
             transferred.push({ entityId: eId, name: srcEntity.name, character: srcEntity.character });
