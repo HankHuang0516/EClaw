@@ -1082,6 +1082,7 @@
     let rateMin = 1;
     let rateMax = 50;
     let _rateDebounce = null;
+    let loadBotsRequestSeq = 0;
 
     /* ══════ API ══════ */
     async function apiFetch(path) {
@@ -1181,6 +1182,7 @@
     // Default: merge rental listings + community bots in one grid.
     // "出租" filter narrows to rental-only; other filters narrow to community-only.
     async function loadBots() {
+        const requestSeq = ++loadBotsRequestSeq;
         document.getElementById('loading').style.display = 'flex';
         try {
             const isRentalOnly = currentFilter === 'rental';
@@ -1246,13 +1248,17 @@
             }
 
             // 3. Merge: rental listings first (highlighted), then community
+            if (requestSeq !== loadBotsRequestSeq) return;
             allBots = [...rentalBots, ...communityBots];
             renderGrid(allBots);
         } catch (e) {
+            if (requestSeq !== loadBotsRequestSeq) return;
             console.error('loadBots:', e);
             document.getElementById('emptyState').style.display = 'block';
         } finally {
-            document.getElementById('loading').style.display = 'none';
+            if (requestSeq === loadBotsRequestSeq) {
+                document.getElementById('loading').style.display = 'none';
+            }
         }
     }
 
