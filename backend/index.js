@@ -2253,6 +2253,14 @@ const articlePublisher = require('./article-publisher');
 app.use('/api/publisher', articlePublisher.router);
 
 // ============================================
+// ENTITY STATUS PANEL — counters surfaced when user clicks any non-dashboard avatar.
+// P0: counters; P1 (next PR) adds operation log + smart chip + smart quote.
+// ============================================
+const entityStatus = require('./entity-status');
+entityStatus.bindDevicesRef(devices);
+app.use('/api/entity-status', entityStatus.router);
+
+// ============================================
 // API DOCS — OpenAPI / Swagger UI
 // ============================================
 const apiDocs = require('./api-docs')();
@@ -18853,6 +18861,7 @@ feedbackModule.initFeedbackTable(chatPool);
 feedbackModule.initFeedbackPhotosTable(chatPool);
 notifModule.initNotificationTables(chatPool);
 devicePrefs.initTable(chatPool);
+entityStatus.initTable(chatPool).catch(err => console.error('[EntityStatus] initTable error:', err.message));
 orgChartModule.initTable(chatPool);
 crossDeviceSettings.initTable(chatPool);
 chatIntegrity.initIntegrityTable(chatPool);
