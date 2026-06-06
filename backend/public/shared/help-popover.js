@@ -307,6 +307,10 @@
         document.addEventListener('click', (e) => {
             const icon = e.target.closest('.' + ICON_CLASS);
             if (icon) {
+                // Block <label> activation behavior — without this, a help-icon nested
+                // inside <label> triggers a synthesized click on the associated input,
+                // which fires the capture-phase onDocClick and dismisses the popover.
+                e.preventDefault();
                 prepareIcon(icon);
                 onIconClick({ currentTarget: icon, stopPropagation: () => e.stopPropagation() });
             }
