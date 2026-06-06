@@ -188,6 +188,15 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Daily pool update additions (2026-06-06) ──
+    // Medium tier
+    { file: null, description: 'A pie chart divided into six slices: Technology 32%, Healthcare 21%, Finance 18%, Energy 12%, Consumer Goods 10%, Other 7% — Technology slice is highlighted in blue', keywords: ['pie', 'chart', 'six', 'technology', '32', 'blue'] },
+    { file: null, description: 'A mobile app settings screen showing toggles for Notifications (ON), Dark Mode (OFF), Location (ON), Auto-Update (OFF), and a slider for Text Size at 75%', keywords: ['settings', 'notifications', 'dark', 'location', 'auto', 'text', '75'] },
+    { file: null, description: 'A Trello-style kanban board with three columns: To Do has 4 cards, In Progress has 2 cards, Done has 7 cards — a card labeled "Fix login bug" is highlighted in red in the To Do column', keywords: ['kanban', 'three', 'columns', 'fix', 'login', 'red', 'done', 'seven'] },
+    // Hard tier
+    { file: null, description: 'A database entity-relationship diagram showing four tables: Users, Orders, Products, and OrderItems — Users connects to Orders (1 to many), Orders connects to OrderItems (1 to many), Products connects to OrderItems (1 to many)', keywords: ['database', 'ER', 'four', 'users', 'orders', 'products', 'one', 'many'] },
+    { file: null, description: 'A stock candlestick chart for five trading days: Monday opened $142 closed $155 (green), Tuesday opened $155 closed $148 (red), Wednesday opened $148 closed $161 (green), Thursday opened $161 closed $158 (red), Friday opened $158 closed $170 (green)', keywords: ['stock', 'candlestick', 'five', 'green', 'red', 'monday', 'friday', '170'] },
+    { file: null, description: 'A Kubernetes cluster diagram: one control plane node connected to three worker nodes; each worker node runs two pods shown as blue squares; a load balancer sits in front of the cluster routing external traffic', keywords: ['kubernetes', 'cluster', 'three', 'worker', 'two', 'pods', 'load', 'balancer'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +377,17 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── Daily pool update additions (2026-06-06) ──
+    { title: 'Unique Paths', description: 'Write `solve(m, n)` — a robot starts at top-left of an m×n grid and can only move right or down. Return the number of distinct paths to reach bottom-right.',
+      testCases: [{ input: '3, 7', expected: '28' },{ input: '3, 2', expected: '3' },{ input: '1, 1', expected: '1' },{ input: '5, 5', expected: '70' }] },
+    { title: 'Course Schedule', description: 'Write `solve(numCourses, prerequisites)` — prerequisites is an array of [a, b] pairs meaning "take b before a". Return true if it is possible to finish all courses (no cycle in dependency graph).',
+      testCases: [{ input: '2, [[1,0]]', expected: 'true' },{ input: '2, [[1,0],[0,1]]', expected: 'false' },{ input: '4, [[1,0],[2,1],[3,2]]', expected: 'true' },{ input: '3, [[0,1],[1,2],[2,0]]', expected: 'false' }] },
+    { title: 'Container With Most Water', description: 'Write `solve(height)` — given an array where height[i] is the height of a vertical line at position i, find two lines that together with the x-axis form a container that holds the most water. Return the maximum area.',
+      testCases: [{ input: '[1,8,6,2,5,4,8,3,7]', expected: '49' },{ input: '[1,1]', expected: '1' },{ input: '[4,3,2,1,4]', expected: '16' },{ input: '[1,2,1]', expected: '2' }] },
+    { title: 'Edit Distance', description: 'Write `solve(word1, word2)` — return the minimum number of single-character operations (insert, delete, or replace) required to convert word1 into word2.',
+      testCases: [{ input: '"horse", "ros"', expected: '3' },{ input: '"intention", "execution"', expected: '5' },{ input: '"", "abc"', expected: '3' },{ input: '"abc", "abc"', expected: '0' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an elevation map where height[i] represents the elevation at position i, compute how much water can be trapped between the bars after it rains.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[1,0,1]', expected: '1' },{ input: '[3,0,2,0,4]', expected: '7' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +437,16 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Daily pool update additions (2026-06-06) ──
+    // Medium tier
+    { question: 'A pipe can fill a tank in 12 hours. Another pipe can empty the full tank in 8 hours. If both pipes are open simultaneously when the tank is full, how many hours will it take to empty the tank?', expectedKeywords: ['24'] },
+    { question: 'A number is increased by 20% and then decreased by 20%. What is the net percentage change?', expectedKeywords: ['4', '-4', 'decrease', 'decreases'] },
+    { question: 'A bag contains 4 red balls, 3 green balls, and 5 blue balls. If one ball is drawn at random, what is the probability that it is NOT blue? Express as a simplified fraction.', expectedKeywords: ['7/12'] },
+    { question: 'If the pattern is 1, 4, 9, 16, 25, what is the 10th term in the sequence?', expectedKeywords: ['100'] },
+    // Hard tier
+    { question: 'Two trains start at the same time from cities A and B, which are 450 km apart, traveling toward each other. Train A travels at 80 km/h and train B at 70 km/h. How many km from city A will they meet?', expectedKeywords: ['240'] },
+    { question: 'In a village, every resident either always tells the truth or always lies. You meet two residents: Alice says "We are both liars." What can you conclude about Alice?', expectedKeywords: ['liar', 'alice is a liar', 'alice lies'] },
+    { question: 'A shopkeeper buys an item for $120 and marks it up by 50%. He then offers a 20% discount on the marked price. What is his profit percentage?', expectedKeywords: ['20'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +524,15 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Daily pool update additions (2026-06-06) ──
+    // Medium tier
+    { text: 'The patient is prescribed two hundred fifty milligrams of amoxicillin three times daily for seven days', keywords: ['250', 'amoxicillin', 'three', 'daily', 'seven'] },
+    { text: 'Order number ORD-2026-88412 for fourteen items shipped via DHL tracking number 1Z999AA10123456784', keywords: ['order', '2026', '88412', 'fourteen', 'DHL', 'tracking'] },
+    // Hard tier
+    { text: 'Pursuant to section four point two of the service agreement the indemnification clause shall survive termination for a period of thirty-six months', keywords: ['pursuant', 'section', 'indemnification', 'termination', 'thirty', 'months'] },
+    { text: 'The athlete ran the four hundred meters in forty-three point seven five seconds breaking the previous record by twelve hundredths of a second', keywords: ['athlete', 'four', 'hundred', 'forty-three', 'record', 'twelve', 'hundredths'] },
+    { text: 'The portfolio returned twelve point eight percent year to date outperforming the benchmark S and P five hundred index by three hundred and forty basis points', keywords: ['portfolio', 'twelve', 'percent', 'benchmark', 'five', 'hundred', 'basis', 'points'] },
+    { text: 'Attention: your HTTPS SSL certificate for api dot eclawbot dot com expires in fourteen days on June twentieth two thousand twenty-six — please renew immediately to avoid service interruption', keywords: ['certificate', 'eclawbot', 'fourteen', 'june', 'renew', 'interruption'] },
 ];
 
 // ============================================
