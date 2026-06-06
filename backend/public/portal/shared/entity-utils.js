@@ -187,19 +187,24 @@ function _petdxCanRenderCanvas(entityId) {
 }
 function renderAvatarHtml(avatar, size, entityId) {
     size = size || 48;
+    const eidAttr = entityId != null ? ' data-entity-id="' + Number(entityId) + '"' : '';
     if (entityId != null && _petdxCanRenderCanvas(entityId)) {
         // imageRendering keeps the spritesheet pixel-art crisp at small sizes;
         // matches PetdxRenderer's ctx.imageSmoothingEnabled = false.
-        return '<canvas class="entity-avatar-canvas" '
-            + 'data-petdx-entity-id="' + Number(entityId) + '" '
-            + 'width="' + size + '" height="' + size + '" '
-            + 'style="width:' + size + 'px;height:' + size + 'px;'
-            + 'image-rendering:pixelated;border-radius:50%;vertical-align:middle;" '
-            + 'aria-label="entity avatar"></canvas>';
+        return '<canvas class="entity-avatar-canvas"' + eidAttr
+            + ' data-petdx-entity-id="' + Number(entityId) + '"'
+            + ' width="' + size + '" height="' + size + '"'
+            + ' style="width:' + size + 'px;height:' + size + 'px;'
+            + 'image-rendering:pixelated;border-radius:50%;vertical-align:middle;"'
+            + ' aria-label="entity avatar"></canvas>';
     }
     if (isAvatarUrl(avatar)) {
-        return '<img src="' + avatar + '" class="entity-avatar-img" ' +
-            'style="width:' + size + 'px;height:' + size + 'px;" alt="avatar" loading="lazy">';
+        return '<img src="' + avatar + '" class="entity-avatar-img"' + eidAttr +
+            ' style="width:' + size + 'px;height:' + size + 'px;" alt="avatar" loading="lazy">';
+    }
+    // Emoji fallback — wrap in a span so the click delegate can resolve entityId.
+    if (entityId != null) {
+        return '<span class="entity-avatar-emoji"' + eidAttr + '>' + (avatar || '\u{1F99E}') + '</span>';
     }
     return avatar || '\u{1F99E}';
 }
@@ -243,4 +248,29 @@ function getEntityLabelText(entityId) {
     const emoji = getAvatarText(entityId);
     const name = getEntityDisplayName(entityId);
     return `${emoji} ${name} (#${entityId})`;
+}
+
+/**
+ * Attach a delegated click handler to `container` that fires `onClick(entityId)`
+ * whenever the user clicks any element with `data-entity-id` (covers canvas /
+ * img / emoji-span avatars rendered by renderAvatarHtml).
+ *
+ * Skip dashboard surfaces — they own the avatar-change UX; per Hank 2026-06-06
+ * 19:40 TW directive, every OTHER surface opens the entity status drawer.
+ *
+ * Returns the listener so callers can detach if needed.
+ */
+function attachAvatarClickHandler(container, onClick) {
+    if (!container || typeof onClick !== 'function') return null;
+    const listener = (e) => {
+        const el = e.target.closest('[data-entity-id]');
+        if (!el || !container.contains(el)) return;
+        const eid = parseInt(el.dataset.entityId, 10);
+        if (!Number.isFinite(eid) || eid < 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+        onClick(eid, el);
+    };
+    container.addEventListener('click', listener);
+    return listener;
 }

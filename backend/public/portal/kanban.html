@@ -1055,6 +1055,7 @@
     <script src="../shared/petdx-renderer.js"></script>
     <script src="../shared/avatar-petdx.js"></script>
     <script src="shared/entity-utils.js"></script>
+    <script src="shared/entity-status-panel.js"></script>
     <script src="shared/entity-link-render.js"></script>
     <script src="shared/note-link-render.js"></script>
     <script src="shared/mention-render.js"></script>
@@ -1200,6 +1201,11 @@
             const _isEmbed = new URLSearchParams(window.location.search).get('embed') === '1';
             if (_isEmbed) {
                 document.body.classList.add('embed-mode');
+            }
+            // Avatar click → entity status drawer (per card_dbe18b333ac98076cc213055).
+            // Delegated on document.body so chips rendered after initial paint still fire.
+            if (typeof attachAvatarClickHandler === 'function' && window.EntityStatusPanel) {
+                attachAvatarClickHandler(document.body, (eid) => window.EntityStatusPanel.open(eid));
             }
             renderNav('kanban');
             if (typeof renderFooter === 'function') renderFooter();
