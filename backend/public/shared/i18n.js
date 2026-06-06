@@ -462638,6 +462638,13 @@ const TRANSLATIONS = {
 
 
         "kb_auto_title": "Automations",
+        "kb_auto_filter_search_ph": "Search title / description...",
+        "kb_auto_filter_entity": "Entity",
+        "kb_auto_filter_status": "Status",
+        "kb_auto_filter_all": "All",
+        "kb_auto_filter_invert": "Invert",
+        "kb_auto_filter_reset": "Reset",
+        "kb_auto_filter_empty_hint": "No entity selected - showing all automations.",
 
 
 
@@ -1082737,6 +1082744,13 @@ const TRANSLATIONS = {
 
 
         "kb_auto_title": "自動化任務",
+        "kb_auto_filter_search_ph": "搜尋標題 / 描述...",
+        "kb_auto_filter_entity": "實體",
+        "kb_auto_filter_status": "狀態",
+        "kb_auto_filter_all": "全選",
+        "kb_auto_filter_invert": "反選",
+        "kb_auto_filter_reset": "重設",
+        "kb_auto_filter_empty_hint": "未選擇實體 - 顯示所有自動化任務。",
 
 
 
