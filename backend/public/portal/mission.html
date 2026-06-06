@@ -2290,7 +2290,9 @@
         }
 
         async function deleteNote(id) {
-            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) {
+            const note = dashboard.notes.find(n => n.id === id);
+            const itemName = note ? (note.title || note.id) : id;
+            if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, danger: true })) {
                 dashboard.notes = dashboard.notes.filter(n => n.id !== id);
                 markChanged();
                 renderNotes();
@@ -2306,7 +2308,9 @@
             menu.style.top = e.clientY + 'px';
 
             menu.querySelector('.context-menu-item').onclick = async () => {
-                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), danger: true })) {
+                const note = dashboard.notes.find(n => n.id === id);
+                const itemName = note ? (note.title || note.id) : id;
+                if (await showConfirm({ message: i18n.t('mc_confirm_delete'), itemName, danger: true })) {
                     dashboard.notes = dashboard.notes.filter(n => n.id !== id);
                     markChanged();
                     renderNotes();
