@@ -5,7 +5,10 @@ import { deviceApi } from '../services/api';
 import { socketService } from '../services/socketService';
 import { EntityUpdate } from '../services/socketService';
 
-const POLL_INTERVAL = 5000; // 5 seconds, same as Android Wallpaper Service
+// 30s safety-net poll; Socket.IO entity:update carries realtime deltas.
+// Prior 5s value mis-cited Android Wallpaper Service (which uses 30s) and
+// stacked with the socket stream → CF WAF 429 storms on active sessions.
+const POLL_INTERVAL = 30000;
 
 export function useEntities() {
   const { deviceId, deviceSecret } = useAuthStore();
@@ -21,7 +24,7 @@ export function useEntities() {
     }
   }, [deviceId, deviceSecret, setEntities]);
 
-  // Initial fetch + polling (matches Android's 5s interval)
+  // Initial fetch + 30s safety-net poll (realtime updates flow via Socket.IO below).
   useEffect(() => {
     if (!deviceId || !deviceSecret) return;
 
