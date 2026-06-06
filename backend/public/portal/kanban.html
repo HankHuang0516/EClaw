@@ -387,6 +387,27 @@
         .kb-auto-card-result.fail { color:#ef4444; }
         .kb-auto-card-active { font-size:10px; color:#fbbf24; margin-top:2px; }
 
+        /* ══════════════ Automation Filter Bar (entity multi-select + search + status chips) ══════════════ */
+        .kb-auto-filter { display:flex; flex-wrap:wrap; gap:8px; align-items:center; padding:8px 0 12px;
+            border-bottom:1px solid var(--card-border); margin-bottom:10px; }
+        .kb-auto-filter-search { flex:1 1 180px; min-width:140px; background:var(--input-bg); color:var(--text);
+            border:1px solid var(--card-border); border-radius:6px; padding:6px 10px; font-size:12px; }
+        .kb-auto-filter-search:focus { outline:1px solid var(--primary); }
+        .kb-auto-filter-group { display:flex; flex-wrap:wrap; gap:4px; align-items:center; }
+        .kb-auto-filter-group-label { font-size:10px; color:var(--text-muted); text-transform:uppercase;
+            letter-spacing:0.04em; margin-right:4px; }
+        .kb-auto-chip { display:inline-flex; align-items:center; gap:4px; font-size:11px; padding:3px 9px;
+            border-radius:999px; background:var(--input-bg); border:1px solid var(--card-border); cursor:pointer;
+            color:var(--text-muted); transition:all 0.15s; user-select:none; }
+        .kb-auto-chip:hover { color:var(--text); border-color:var(--primary); }
+        .kb-auto-chip.active { background:rgba(108,99,255,0.18); color:var(--text); border-color:var(--primary); }
+        .kb-auto-filter-actions { display:flex; gap:4px; margin-left:auto; }
+        .kb-auto-filter-btn { background:none; border:none; color:var(--text-muted); font-size:11px;
+            cursor:pointer; padding:3px 8px; border-radius:6px; }
+        .kb-auto-filter-btn:hover { color:var(--text); background:rgba(255,255,255,0.06); }
+        .kb-auto-filter-empty-hint { width:100%; font-size:11px; color:var(--text-muted); font-style:italic;
+            padding:4px 0 0; }
+
         /* ══════════════ Timeline Swimlane View ══════════════ */
         .kb-auto-view-toggle { display:inline-flex; gap:2px; background:var(--input-bg); border-radius:var(--radius-sm); padding:2px; margin-left:8px; vertical-align:middle; }
         .kb-auto-view-btn { background:none; border:none; color:var(--text-muted); padding:3px 8px; border-radius:6px; font-size:11px; cursor:pointer; transition:all 0.2s; }
@@ -791,6 +812,27 @@
                 <span class="kb-auto-toggle">▼</span>
             </div>
             <div class="kb-auto-body" id="autoBody">
+                <div class="kb-auto-filter" id="autoFilter">
+                    <input type="search" class="kb-auto-filter-search" id="autoFilterSearch"
+                        placeholder="Search title / description…" data-i18n-placeholder="kb_auto_filter_search_ph"
+                        autocomplete="off">
+                    <div class="kb-auto-filter-group" id="autoFilterEntities">
+                        <span class="kb-auto-filter-group-label" data-i18n="kb_auto_filter_entity">Entity</span>
+                    </div>
+                    <div class="kb-auto-filter-group" id="autoFilterStatuses">
+                        <span class="kb-auto-filter-group-label" data-i18n="kb_auto_filter_status">Status</span>
+                    </div>
+                    <div class="kb-auto-filter-actions">
+                        <button type="button" class="kb-auto-filter-btn" id="autoFilterSelectAll"
+                            data-i18n="kb_auto_filter_all">All</button>
+                        <button type="button" class="kb-auto-filter-btn" id="autoFilterInvert"
+                            data-i18n="kb_auto_filter_invert">Invert</button>
+                        <button type="button" class="kb-auto-filter-btn" id="autoFilterReset"
+                            data-i18n="kb_auto_filter_reset">Reset</button>
+                    </div>
+                    <div class="kb-auto-filter-empty-hint" id="autoFilterEmptyHint" style="display:none"
+                        data-i18n="kb_auto_filter_empty_hint">No entity selected — showing all automations.</div>
+                </div>
                 <div class="kb-auto-grid" id="autoGrid" style="display:none"></div>
                 <div class="kb-auto-timeline" id="autoTimeline"></div>
             </div>
@@ -1334,6 +1376,55 @@
         let cardProjections = {};
         let autoCollapsed = true;
         let autoViewMode = 'timeline';
+
+        // ── Automation filter state (per Hank 2026-06-06 16:57 TW card_bb89696b...) ──
+        // Persisted in localStorage so each user's filter selection survives reload.
+        const AUTO_FILTER_LS_KEY = 'kanban_auto_filter_v1';
+        const AUTO_FILTER_STATUSES = ['todo','in_progress','review','done','blocked'];
+        const autoFilterState = (() => {
+            try {
+                const raw = JSON.parse(localStorage.getItem(AUTO_FILTER_LS_KEY) || '{}');
+                return {
+                    search: typeof raw.search === 'string' ? raw.search : '',
+                    entities: new Set(Array.isArray(raw.entities) ? raw.entities.map(Number) : []),
+                    statuses: new Set(Array.isArray(raw.statuses) && raw.statuses.length
+                        ? raw.statuses.filter(s => AUTO_FILTER_STATUSES.includes(s))
+                        : AUTO_FILTER_STATUSES),
+                };
+            } catch {
+                return { search: '', entities: new Set(), statuses: new Set(AUTO_FILTER_STATUSES) };
+            }
+        })();
+        let autoFilterSearchDebounce = null;
+        function persistAutoFilter() {
+            try {
+                localStorage.setItem(AUTO_FILTER_LS_KEY, JSON.stringify({
+                    search: autoFilterState.search,
+                    entities: [...autoFilterState.entities],
+                    statuses: [...autoFilterState.statuses],
+                }));
+            } catch {}
+        }
+        function applyAutoFilter(cards) {
+            const q = autoFilterState.search.trim().toLowerCase();
+            const hasEntityFilter = autoFilterState.entities.size > 0;
+            const statuses = autoFilterState.statuses;
+            return cards.filter(c => {
+                // Status chip filter — empty set means show none, full default set means show all 5.
+                if (statuses.size > 0 && !statuses.has(c.status)) return false;
+                // Entity filter — empty set = show all (per spec: '沒勾選 → 顯示全部').
+                if (hasEntityFilter) {
+                    const bots = Array.isArray(c.assignedBots) ? c.assignedBots : [];
+                    if (!bots.some(b => autoFilterState.entities.has(Number(b)))) return false;
+                }
+                // Substring search across title + description.
+                if (q) {
+                    const hay = ((c.title || '') + ' ' + (c.description || '')).toLowerCase();
+                    if (!hay.includes(q)) return false;
+                }
+                return true;
+            });
+        }
 
         // ── API ──
         function applyKanbanNudgeStopPrefs(prefs) {
@@ -3570,6 +3661,117 @@
             } catch(e) { console.error('[Kanban] loadAutomations failed:', e.message); }
         }
 
+        // Build the entity + status chip rows inside #autoFilter from the data we already have.
+        // Re-rendered each time renderAutomationSection runs so newly-bound entities / new statuses
+        // get chips without a reload.
+        function renderAutoFilterUi() {
+            const entitiesEl = document.getElementById('autoFilterEntities');
+            const statusesEl = document.getElementById('autoFilterStatuses');
+            const searchEl = document.getElementById('autoFilterSearch');
+            const emptyHint = document.getElementById('autoFilterEmptyHint');
+            if (!entitiesEl || !statusesEl) return;
+
+            const entitySet = new Set();
+            automationCards.forEach(c => (c.assignedBots || []).forEach(b => entitySet.add(Number(b))));
+            const entityIds = [...entitySet].sort((a, b) => a - b);
+
+            const labelFor = (eid) => {
+                if (typeof getEntityLabelText === 'function') return getEntityLabelText(eid);
+                return '#' + eid;
+            };
+
+            entitiesEl.querySelectorAll('.kb-auto-chip').forEach(n => n.remove());
+            entityIds.forEach(eid => {
+                const active = autoFilterState.entities.has(eid);
+                const chip = document.createElement('span');
+                chip.className = 'kb-auto-chip' + (active ? ' active' : '');
+                chip.dataset.entityId = String(eid);
+                chip.textContent = labelFor(eid);
+                chip.addEventListener('click', () => {
+                    if (autoFilterState.entities.has(eid)) autoFilterState.entities.delete(eid);
+                    else autoFilterState.entities.add(eid);
+                    persistAutoFilter();
+                    renderAutomationSection();
+                });
+                entitiesEl.appendChild(chip);
+            });
+
+            statusesEl.querySelectorAll('.kb-auto-chip').forEach(n => n.remove());
+            AUTO_FILTER_STATUSES.forEach(s => {
+                const active = autoFilterState.statuses.has(s);
+                const chip = document.createElement('span');
+                chip.className = 'kb-auto-chip' + (active ? ' active' : '');
+                chip.dataset.status = s;
+                chip.textContent = (typeof t === 'function') ? t('kb_col_' + s, s) : s;
+                chip.addEventListener('click', () => {
+                    if (autoFilterState.statuses.has(s)) autoFilterState.statuses.delete(s);
+                    else autoFilterState.statuses.add(s);
+                    persistAutoFilter();
+                    renderAutomationSection();
+                });
+                statusesEl.appendChild(chip);
+            });
+
+            if (searchEl && searchEl.value !== autoFilterState.search) {
+                searchEl.value = autoFilterState.search;
+            }
+            if (emptyHint) {
+                emptyHint.style.display = autoFilterState.entities.size === 0 ? '' : 'none';
+            }
+        }
+
+        // Wire filter inputs once on DOM ready (search debounce + 3 action buttons).
+        function initAutoFilterControls() {
+            const searchEl = document.getElementById('autoFilterSearch');
+            if (searchEl && !searchEl.dataset.bound) {
+                searchEl.dataset.bound = '1';
+                searchEl.value = autoFilterState.search;
+                searchEl.addEventListener('input', () => {
+                    clearTimeout(autoFilterSearchDebounce);
+                    autoFilterSearchDebounce = setTimeout(() => {
+                        autoFilterState.search = searchEl.value;
+                        persistAutoFilter();
+                        renderAutomationSection();
+                    }, 150);
+                });
+            }
+            const allBtn = document.getElementById('autoFilterSelectAll');
+            const invBtn = document.getElementById('autoFilterInvert');
+            const rstBtn = document.getElementById('autoFilterReset');
+            if (allBtn && !allBtn.dataset.bound) {
+                allBtn.dataset.bound = '1';
+                allBtn.addEventListener('click', () => {
+                    const entitySet = new Set();
+                    automationCards.forEach(c => (c.assignedBots || []).forEach(b => entitySet.add(Number(b))));
+                    autoFilterState.entities = entitySet;
+                    persistAutoFilter();
+                    renderAutomationSection();
+                });
+            }
+            if (invBtn && !invBtn.dataset.bound) {
+                invBtn.dataset.bound = '1';
+                invBtn.addEventListener('click', () => {
+                    const allSet = new Set();
+                    automationCards.forEach(c => (c.assignedBots || []).forEach(b => allSet.add(Number(b))));
+                    const inverted = new Set();
+                    allSet.forEach(eid => { if (!autoFilterState.entities.has(eid)) inverted.add(eid); });
+                    autoFilterState.entities = inverted;
+                    persistAutoFilter();
+                    renderAutomationSection();
+                });
+            }
+            if (rstBtn && !rstBtn.dataset.bound) {
+                rstBtn.dataset.bound = '1';
+                rstBtn.addEventListener('click', () => {
+                    autoFilterState.search = '';
+                    autoFilterState.entities = new Set();
+                    autoFilterState.statuses = new Set(AUTO_FILTER_STATUSES);
+                    persistAutoFilter();
+                    renderAutomationSection();
+                });
+            }
+        }
+
         function renderAutomationSection() {
             const section = document.getElementById('kbAutomation');
             const grid = document.getElementById('autoGrid');
@@ -3578,8 +3780,11 @@
             const active = automationCards.filter(c => c.activeChildId);
             countEl.textContent = active.length + ' active';
             section.style.display = automationCards.length ? '' : 'none';
-            if (autoViewMode === 'timeline') { renderTimelineView(); return; }
-            grid.innerHTML = automationCards.map(c => {
+            initAutoFilterControls();
+            renderAutoFilterUi();
+            const filtered = applyAutoFilter(automationCards);
+            if (autoViewMode === 'timeline') { renderTimelineView(filtered); return; }
+            grid.innerHTML = filtered.map(c => {
                 const cronDesc = c.schedule?.cron || '—';
                 const nextRun = c.schedule?.nextRunAt ? formatTime(c.schedule.nextRunAt) : '—';
                 const lastResult = c.lastRunResult;
@@ -3617,10 +3822,11 @@
 
         const TL_WIDTH_PX = 2400;
 
-        function renderTimelineView() {
+        function renderTimelineView(filteredCards) {
             const container = document.getElementById('autoTimeline');
             if (!container) return;
-            if (!automationCards.length) {
+            const sourceCards = Array.isArray(filteredCards) ? filteredCards : applyAutoFilter(automationCards);
+            if (!sourceCards.length) {
                 container.innerHTML = `<div class="kb-empty" style="padding:24px;text-align:center">${t('kb_auto_none','No automations yet')}</div>`;
                 return;
             }
@@ -3638,7 +3844,7 @@
             // Group cards by entity (assignedBots → createdBy → unassigned)
             const entityLanes = {};
             const unassigned = [];
-            automationCards.forEach(card => {
+            sourceCards.forEach(card => {
                 const bots = card.assignedBots || [];
                 if (bots.length) {
                     bots.forEach(botId => {
