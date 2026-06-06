@@ -927,8 +927,11 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
     // ============================================
     router.patch('/language', async (req, res) => {
         try {
-            const { language, deviceId, deviceSecret } = req.body;
+            const { language: rawLanguage, deviceId, deviceSecret } = req.body;
             const validLangs = ['en', 'zh', 'zh-CN', 'ja', 'ko', 'th', 'vi', 'id', 'es', 'fr', 'de', 'pt', 'it', 'ru', 'tr', 'ms', 'hi', 'ar', 'nl', 'pl'];
+            // 'zh' holds the Traditional Chinese dict; accept BCP-47 Traditional aliases and normalize.
+            const ZH_TRADITIONAL_ALIASES = new Set(['zh-TW', 'zh-Hant', 'zh-HK', 'zh-Hant-TW', 'zh-Hant-HK']);
+            const language = ZH_TRADITIONAL_ALIASES.has(rawLanguage) ? 'zh' : rawLanguage;
             if (!language || !validLangs.includes(language)) {
                 return res.status(400).json({ success: false, error: 'Invalid language' });
             }
