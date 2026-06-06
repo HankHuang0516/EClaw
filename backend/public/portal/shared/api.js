@@ -67,11 +67,17 @@ function showToast(message, type = 'info') {
 /**
  * showConfirm — styled replacement for window.confirm()
  * @param {Object} opts
- * @param {string} opts.message - Main message text
+ * @param {string} opts.message - Main message text. For destructive flows prefer the {itemName} field
+ *   below over baking the item name into this string — it lets the dialog quote the item in distinct
+ *   styling and lets the daily destructive-modals E2E spot-check that the user can see WHAT they're about to destroy.
  * @param {string} [opts.title] - Optional dialog title
  * @param {string} [opts.confirmText='OK'] - Confirm button label
  * @param {string} [opts.cancelText='Cancel'] - Cancel button label
  * @param {boolean} [opts.danger=false] - Red confirm button for destructive actions
+ * @param {string} [opts.itemName] - Name of the specific item being destroyed (card title,
+ *   note name, entity label, etc). When provided AND `danger:true`, the dialog renders this
+ *   below the message in a quoted, bold strip so the user can verify WHICH item they're confirming.
+ *   Omitting it on a `danger:true` call logs a dev-time console.warn (production stays silent).
  * @returns {Promise<boolean>}
  */
 // i18n helper that honours a fallback string. i18n.t(key, params) uses the
@@ -86,7 +92,13 @@ function _tFb(k, fb) {
 
 let _eclawDialogId = 0;
 const _ECLAW_DIALOG_SHADOW_STYLE = 'style="box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);"';
-function showConfirm({ message, title, confirmText, cancelText, danger } = {}) {
+function showConfirm({ message, title, confirmText, cancelText, danger, itemName } = {}) {
+    // Dev-time hint: destructive confirms should name the item so a fast-clicking user can
+    // verify what's about to be destroyed. Localhost / dev hosts only; silent in production.
+    if (danger && !itemName && typeof window !== 'undefined' && window.location
+        && /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/.test(window.location.hostname)) {
+        console.warn('[showConfirm] danger:true called without itemName — caller should pass `itemName` so the dialog can name the destroyed item. Caller:', new Error().stack);
+    }
     return new Promise((resolve) => {
         const t = _tFb;
         const overlay = document.createElement('div');
@@ -97,9 +109,12 @@ function showConfirm({ message, title, confirmText, cancelText, danger } = {}) {
         const dialogAria = title
             ? `role="alertdialog" aria-modal="true" aria-labelledby="${titleId}" aria-describedby="${messageId}"`
             : `role="alertdialog" aria-modal="true" aria-label="${_escAttr(message)}" aria-describedby="${messageId}"`;
+        const itemStrip = (danger && itemName)
+            ? `<div class="eclaw-confirm-item" style="margin:8px 0 0;padding:8px 12px;background:var(--bg-secondary, rgba(0,0,0,0.04));border-left:3px solid var(--danger, #e53e3e);border-radius:4px;font-weight:600;color:var(--text);word-break:break-word">${_escHtml(itemName)}</div>`
+            : '';
         overlay.innerHTML = `<div class="dialog eclaw-confirm-dialog" ${dialogAria} ${_ECLAW_DIALOG_SHADOW_STYLE}>
             ${title ? `<div class="dialog-title" id="${titleId}">${_escHtml(title)}</div>` : ''}
-            <div class="dialog-body"><p id="${messageId}" style="margin:0;line-height:1.6;color:var(--text-secondary)">${_escHtml(message)}</p></div>
+            <div class="dialog-body"><p id="${messageId}" style="margin:0;line-height:1.6;color:var(--text-secondary)">${_escHtml(message)}</p>${itemStrip}</div>
             <div class="dialog-actions">
                 <button type="button" class="btn btn-outline eclaw-confirm-cancel">${_escHtml(cancelText || t('dialog_cancel', 'Cancel'))}</button>
                 <button type="button" class="btn ${danger ? 'btn-danger' : 'btn-primary'} eclaw-confirm-ok"${danger && !confirmText ? ` aria-label="${_escAttr(t('dialog_confirm_destructive', 'Confirm destructive action'))}"` : ''}>${_escHtml(confirmText || t('dialog_ok', 'OK'))}</button>

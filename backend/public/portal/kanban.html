@@ -2283,7 +2283,7 @@
         async function archiveTaskCard(cardId) {
             const card = findCard(cardId);
             if (!card) return;
-            if (!await showConfirm({ message: `Archive "${card.title || card.id}"?`, danger: true })) return;
+            if (!await showConfirm({ message: t('kb_archive_confirm', 'Archive this card?'), itemName: card.title || card.id, danger: true })) return;
             try {
                 await apiCall('DELETE', `/api/mission/card/${cardId}?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
                 showToast('Archived');
@@ -2450,7 +2450,7 @@
         async function archiveCardFromDetail(cardId) {
             const card = findCard(cardId);
             if (!card) return;
-            if (!await showConfirm({ message: `Archive "${card.title || card.id}"?`, danger: true })) return;
+            if (!await showConfirm({ message: t('kb_archive_confirm', 'Archive this card?'), itemName: card.title || card.id, danger: true })) return;
             await withAutoAction(null, () => apiCall('DELETE', `/api/mission/card/${cardId}?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`), {
                 closeOnDone: true, successMsg: '🗑 ' + t('kb_archive', 'Archive'),
             });
