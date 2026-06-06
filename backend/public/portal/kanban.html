@@ -1380,16 +1380,27 @@
         // ── Automation filter state (per Hank 2026-06-06 16:57 TW card_bb89696b...) ──
         // Persisted in localStorage so each user's filter selection survives reload.
         const AUTO_FILTER_LS_KEY = 'kanban_auto_filter_v1';
-        const AUTO_FILTER_STATUSES = ['todo','in_progress','review','done','blocked'];
+        const AUTO_FILTER_STATUSES = ['backlog','todo','in_progress','review','done','blocked'];
+        const LEGACY_AUTO_FILTER_STATUSES = ['todo','in_progress','review','done','blocked'];
+        function normalizeAutoFilterStatuses(rawStatuses) {
+            if (!Array.isArray(rawStatuses) || !rawStatuses.length) {
+                return AUTO_FILTER_STATUSES;
+            }
+            const known = rawStatuses.filter(s => AUTO_FILTER_STATUSES.includes(s));
+            // PR #3203 initially shipped without `backlog`. Users who loaded that
+            // build can have the old full-default set persisted; migrate that set
+            // so backlog automations remain visible by default after the fix.
+            const isLegacyFullDefault = LEGACY_AUTO_FILTER_STATUSES.every(s => known.includes(s))
+                && !known.includes('backlog');
+            return isLegacyFullDefault ? ['backlog', ...known] : known;
+        }
         const autoFilterState = (() => {
             try {
                 const raw = JSON.parse(localStorage.getItem(AUTO_FILTER_LS_KEY) || '{}');
                 return {
                     search: typeof raw.search === 'string' ? raw.search : '',
                     entities: new Set(Array.isArray(raw.entities) ? raw.entities.map(Number) : []),
-                    statuses: new Set(Array.isArray(raw.statuses) && raw.statuses.length
-                        ? raw.statuses.filter(s => AUTO_FILTER_STATUSES.includes(s))
-                        : AUTO_FILTER_STATUSES),
+                    statuses: new Set(normalizeAutoFilterStatuses(raw.statuses)),
                 };
             } catch {
                 return { search: '', entities: new Set(), statuses: new Set(AUTO_FILTER_STATUSES) };
@@ -1410,7 +1421,7 @@
             const hasEntityFilter = autoFilterState.entities.size > 0;
             const statuses = autoFilterState.statuses;
             return cards.filter(c => {
-                // Status chip filter — empty set means show none, full default set means show all 5.
+                // Status chip filter — empty set means show none, full default set means show all board statuses.
                 if (statuses.size > 0 && !statuses.has(c.status)) return false;
                 // Entity filter — empty set = show all (per spec: '沒勾選 → 顯示全部').
                 if (hasEntityFilter) {
