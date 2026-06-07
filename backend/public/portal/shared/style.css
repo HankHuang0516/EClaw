@@ -1498,6 +1498,15 @@ a:hover { text-decoration: underline; }
     border: none;
     padding: 0;
     font-size: 0; /* hide text */
+    position: relative; /* anchor the ::after tap-target expansion */
+}
+/* Invisible expanded hit area — bumps the effective tap target from 16x16
+   to 36x36 (Apple HIG 44pt / Material 48dp minimum). Click/tap bubbles
+   from ::after to .help-icon so the popover toggler still fires. */
+.help-icon::after {
+    content: '';
+    position: absolute;
+    inset: -10px;
 }
 .help-icon:hover {
     background: rgba(108,99,255,0.3);
