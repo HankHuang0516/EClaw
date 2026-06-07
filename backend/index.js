@@ -8660,6 +8660,16 @@ app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
     if (!deviceId) {
         return res.status(400).json({ success: false, message: "deviceId required" });
     }
+    // The very act of an entity calling /api/transform means it produced a reply
+    // — clear any pending outbound row where this entity was the recipient that
+    // owed us an answer. Fire-and-forget: a stale row that survives this call
+    // will get caught by the sweeper in the next minute, so we never block.
+    if (entityId != null) {
+        try {
+            const entityStatus = require('./entity-status');
+            entityStatus.markReplyReceived(deviceId, entityId, null);
+        } catch (_) { /* ignore */ }
+    }
 
     // ── Dual-auth: channel key XOR botSecret ──
     const channelKey = req.headers['x-channel-key'];
@@ -18016,6 +18026,21 @@ async function pushToBot(entity, deviceId, eventType, payload, opts = {}) {
 
             if (entity.pendingRename) { entity.pendingRename = null; }
             entity.pushStatus = { ok: true, at: Date.now() };
+            // Track the outbound push so the brain-silence sweeper can tick the
+            // no_reply counter for this recipient if they don't reply in time.
+            // Fire-and-forget — the pushToBot hot path must not block on this.
+            try {
+                const entityStatus = require('./entity-status');
+                const senderEntityId = (payload && (payload.senderEntityId || payload.from_entity_id)) || 0;
+                const snippet = (payload && (payload.message || payload.text || payload.title)) || '';
+                entityStatus.trackOutbound(
+                    deviceId,
+                    senderEntityId,
+                    entity.entityId,
+                    eventType,
+                    typeof snippet === 'string' ? snippet : JSON.stringify(snippet).slice(0, 240)
+                );
+            } catch (_) { /* ignore */ }
             return { pushed: true };
         } else {
             const errorText = await response.text().catch(() => '');
@@ -18879,7 +18904,9 @@ feedbackModule.initFeedbackTable(chatPool);
 feedbackModule.initFeedbackPhotosTable(chatPool);
 notifModule.initNotificationTables(chatPool);
 devicePrefs.initTable(chatPool);
-entityStatus.initTable(chatPool).catch(err => console.error('[EntityStatus] initTable error:', err.message));
+entityStatus.initTable(chatPool)
+    .then(() => entityStatus.startSweeper(60_000))
+    .catch(err => console.error('[EntityStatus] initTable error:', err.message));
 orgChartModule.initTable(chatPool);
 crossDeviceSettings.initTable(chatPool);
 chatIntegrity.initIntegrityTable(chatPool);
