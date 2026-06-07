@@ -337,10 +337,29 @@ async function incrementCounter(deviceId, entityId, axis) {
 }
 
 function authDeviceOrBot(req) {
-    const deviceId = req.query.deviceId || req.body?.deviceId;
+    let deviceId = req.query.deviceId || req.body?.deviceId;
     const deviceSecret = req.query.deviceSecret || req.body?.deviceSecret;
     const botSecret = req.query.botSecret || req.body?.botSecret;
     const callerEntityId = parseInt(req.query.entityId || req.body?.entityId) || 0;
+
+    // Portal sessions hit this endpoint with a JWT cookie and no explicit
+    // device/bot secret in the query string. Mirror the same fallback used by
+    // /api/entities and friends so the avatar drawer doesn't 403 against
+    // logged-in users. The cookie carries the device the session is bound to.
+    if (!deviceId && req.cookies && req.cookies.eclaw_session) {
+        try {
+            const jwt = require('jsonwebtoken');
+            const decoded = jwt.verify(req.cookies.eclaw_session,
+                process.env.JWT_SECRET || '');
+            if (decoded && decoded.deviceId) {
+                deviceId = decoded.deviceId;
+                if (devicesRef && devicesRef[deviceId]) {
+                    return { deviceId, callerEntityId };
+                }
+            }
+        } catch (_) { /* invalid/expired token — fall through to the 403 */ }
+    }
+
     if (!deviceId || !devicesRef || !devicesRef[deviceId]) return null;
     const device = devicesRef[deviceId];
     if (deviceSecret && safeEqual(device.deviceSecret, deviceSecret)) {
