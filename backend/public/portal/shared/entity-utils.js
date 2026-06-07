@@ -263,6 +263,11 @@ function getEntityLabelText(entityId) {
 function attachAvatarClickHandler(container, onClick) {
     if (!container || typeof onClick !== 'function') return null;
     const listener = (e) => {
+        // Belt-and-suspenders: ignore any click that originates inside the
+        // entity status drawer itself, regardless of what data-* attributes
+        // its content might happen to carry (close button, scrim, future chip
+        // rows in the P1 operation log section, etc.).
+        if (e.target.closest('.entity-status-panel')) return;
         const el = e.target.closest('[data-entity-id]');
         if (!el || !container.contains(el)) return;
         const eid = parseInt(el.dataset.entityId, 10);

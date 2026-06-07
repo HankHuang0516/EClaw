@@ -79,7 +79,11 @@
         root.setAttribute('role', 'dialog');
         root.setAttribute('aria-modal', 'true');
         root.setAttribute('aria-label', 'Entity status');
-        root.dataset.entityId = String(eid);
+        // Use targetEntityId (not data-entity-id) so the delegated
+        // attachAvatarClickHandler on document.body doesn't treat clicks inside
+        // the drawer — including the close button or scrim — as a fresh avatar
+        // click and re-open the drawer.
+        root.dataset.targetEntityId = String(eid);
         root.innerHTML = `
             <div class="${ROOT_CLASS}__scrim" data-action="close"></div>
             <div class="${ROOT_CLASS}__sheet">
