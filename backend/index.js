@@ -18940,6 +18940,34 @@ entityStatus.initTable(chatPool)
     .catch(err => console.error('[EntityStatus] initTable error:', err.message));
 agentImprovement.initTable(chatPool)
     .catch(err => console.error('[AgentImprovement] initTable error:', err.message));
+
+// OODA-R Phase 1 #4 — anti-laziness heartbeat sweeper.
+// in_progress >2h with no new comment → post a "what's next?" prompt;
+// in_progress >24h → move to blocked. Dedupes so it doesn't spam.
+const heartbeat = require('./agent-improvement/heartbeat');
+heartbeat.startSweeper({
+    pool: chatPool,
+    addSystemComment: async (cardId, deviceId, text) => {
+        await chatPool.query(
+            `INSERT INTO kanban_comments (card_id, device_id, from_entity_id, text, is_system)
+             VALUES ($1, $2, -1, $3, true)`,
+            [cardId, deviceId, text]
+        );
+        await chatPool.query(
+            `UPDATE kanban_cards SET updated_at = NOW() WHERE id = $1 AND device_id = $2`,
+            [cardId, deviceId]
+        );
+    },
+    moveCard: async (cardId, deviceId, newStatus) => {
+        await chatPool.query(
+            `UPDATE kanban_cards
+             SET status = $1, status_changed_at = NOW(), updated_at = NOW()
+             WHERE id = $2 AND device_id = $3`,
+            [newStatus, cardId, deviceId]
+        );
+    },
+});
+
 orgChartModule.initTable(chatPool);
 crossDeviceSettings.initTable(chatPool);
 chatIntegrity.initIntegrityTable(chatPool);

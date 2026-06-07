@@ -125,10 +125,11 @@ function composePreflightComment({
     lines.push('- [ ] **Scope** — what files / endpoints / surfaces will change; what stays untouched');
     lines.push('- [ ] **Acceptance** — concrete, verifiable conditions; no "should work" language');
     lines.push('- [ ] **Test plan** — specific commands; jest test names if unit; URL if E2E');
-    lines.push('- [ ] **Evidence plan** — where the post-run proof will live (PR link, screenshot, jest output file)');
+    lines.push('- [ ] **Evidence plan** — where the post-run proof will live (PR link, screenshot, jest output file). PR link MUST be a github.com/.../pull/N URL.');
     lines.push('- [ ] **Out-of-scope** — explicit deferral list so the close-out can be audited');
+    lines.push('- [ ] **User POV** — what the USER (not the developer) clicks, in which viewport (desktop 1280x800 + mobile 390x844), with which entity context (single / multi-entity switch). Include screenshot for UI changes.');
     lines.push('');
-    lines.push('Move to done ONLY after evidence comment cites all five items.');
+    lines.push('Move to done ONLY after evidence comment cites all six items AND the required artifacts (jest log file + screenshot for P0/P1 UI cards + PR link) are attached.');
 
     return lines.join('\n');
 }
