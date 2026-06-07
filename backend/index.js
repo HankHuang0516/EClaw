@@ -18076,6 +18076,24 @@ async function pushToBot(entity, deviceId, eventType, payload, opts = {}) {
 
         const reasonCode = isAbort ? 'push_timeout' : err.message;
         entity.pushStatus = { ok: false, reason: reasonCode, at: Date.now() };
+        // Tick the matching no_reply axis for the avatar status drawer. We bucket
+        // by pushToBot eventType so the drawer surfaces *which* channel went
+        // silent (user chat vs bot-to-bot vs system probe). Fire-and-forget —
+        // a counter write must never mask the underlying push failure.
+        try {
+            const entityStatus = require('./entity-status');
+            let axis = 'chat_no_reply';
+            if (eventType === 'cross_device_message'
+                || eventType === 'entity_message'
+                || eventType === 'entity_broadcast') {
+                axis = 'a2a_no_reply';
+            } else if (eventType === 'system_message'
+                || eventType === 'model_healthcheck'
+                || eventType === 'kanban_nudge') {
+                axis = 'system_msg_no_reply';
+            }
+            entityStatus.incrementCounter(deviceId, entity.entityId, axis);
+        } catch (_) { /* ignore */ }
         return { pushed: false, reason: reasonCode };
     }
 }
