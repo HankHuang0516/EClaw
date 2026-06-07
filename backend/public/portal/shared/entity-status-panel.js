@@ -125,8 +125,10 @@
         }[c]));
     }
 
-    // Render event_summary text with card_xxxxxxxx tokens replaced by clickable
-    // status-colored chips. Status comes from event_payload.status if present.
+    // Render event_summary text with card_xxxxxxxx tokens replaced by .autolink-chip
+    // spans so the existing AutolinkChipPreview popover system owns the click —
+    // popover (with "open full page →" inside) instead of full navigate. Status
+    // color comes from event_payload.status if present.
     function renderSummaryHtml(summary, payload) {
         const text = escapeHtml(summary);
         const payloadCardId = payload && payload.card_id;
@@ -136,10 +138,13 @@
             const cardId = match.replace(/^#/, '');
             const status = (payloadCardId === cardId && payloadStatus) || 'todo';
             const color = STATUS_COLOR[status] || STATUS_COLOR.todo;
-            return `<a class="${ROOT_CLASS}__chip" data-card-id="${escapeHtml(cardId)}" `
+            // .autolink-chip + data-ref-type/data-ref-id makes the document-level
+            // listener in autolink-chip-preview.js open the popover on click.
+            return `<span class="autolink-chip ${ROOT_CLASS}__chip" `
+                + `data-ref-type="card" data-ref-id="${escapeHtml(cardId)}" `
+                + `data-card-id="${escapeHtml(cardId)}" `
                 + `style="background:${color}22;border-color:${color};color:${color};" `
-                + `href="/portal/kanban.html?card=${encodeURIComponent(cardId)}" `
-                + `title="Open ${escapeHtml(cardId)}">${escapeHtml(cardId.slice(0, 12))}</a>`;
+                + `title="${escapeHtml(cardId)}">${escapeHtml(cardId.slice(0, 12))}</span>`;
         });
     }
 
@@ -217,25 +222,48 @@
     async function handleQuoteClick(eid, logId) {
         try {
             const res = await fetchQuote(eid, logId);
-            if (!res.quote || !res.quote.text) return;
-            // Try common chat textbox selectors; degrade to clipboard if none found.
-            const targets = [
-                'textarea#chatInput', 'textarea#chat-input', '#chatTextarea',
-                'textarea[data-chat-input]', 'textarea[name="message"]',
-            ];
-            let pasted = false;
-            for (const sel of targets) {
-                const ta = document.querySelector(sel);
-                if (ta && typeof ta.value === 'string') {
-                    ta.value = res.quote.text + ta.value;
-                    ta.focus();
-                    try { ta.setSelectionRange(0, 0); } catch (_) { /* ok */ }
-                    pasted = true;
-                    break;
-                }
+            if (!res.quote) return;
+            // Preferred path: insert a card_<id> token so the chat renderer
+            // turns it into the same .autolink-chip popover as every other
+            // quoted card on the platform — single quote style across the app
+            // instead of a free-form "> [Entity #X ...]" block.
+            const cardId = res.quote.payload && res.quote.payload.card_id;
+            const chatInput = document.getElementById('messageInput');
+            if (cardId && chatInput) {
+                const token = ' ' + cardId + ' ';
+                const cur = chatInput.value || '';
+                const pos = chatInput.selectionStart != null ? chatInput.selectionStart : cur.length;
+                chatInput.value = cur.slice(0, pos) + token + cur.slice(pos);
+                chatInput.focus();
+                const caret = pos + token.length;
+                try { chatInput.setSelectionRange(caret, caret); } catch (_) { /* ok */ }
+                chatInput.dispatchEvent(new Event('input', { bubbles: true }));
+                close();
+                return;
             }
-            if (!pasted && navigator.clipboard && navigator.clipboard.writeText) {
-                await navigator.clipboard.writeText(res.quote.text);
+            // Fallback for log rows without a card_id payload (msg/system/etc):
+            // legacy quote block — kept for parity with rows that don't have a
+            // chip token to lean on. Try common chat textbox selectors first;
+            // last-resort clipboard write.
+            if (res.quote.text) {
+                const targets = [
+                    'textarea#messageInput', 'textarea#chatInput', 'textarea#chat-input',
+                    '#chatTextarea', 'textarea[data-chat-input]', 'textarea[name="message"]',
+                ];
+                let pasted = false;
+                for (const sel of targets) {
+                    const ta = document.querySelector(sel);
+                    if (ta && typeof ta.value === 'string') {
+                        ta.value = res.quote.text + ta.value;
+                        ta.focus();
+                        try { ta.setSelectionRange(0, 0); } catch (_) { /* ok */ }
+                        pasted = true;
+                        break;
+                    }
+                }
+                if (!pasted && navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(res.quote.text);
+                }
             }
             close();
         } catch (err) {
@@ -286,9 +314,13 @@
                 e.stopPropagation();
                 return;
             }
-            // Card chip click: let default <a> navigation happen, just close drawer.
-            if (e.target.closest('.' + ROOT_CLASS + '__chip')) {
-                close();
+            // Card chip click: the chip is now a .autolink-chip span — let the
+            // global AutolinkChipPreview document listener open its popover
+            // (the popover has a "打開完整頁面 →" link to navigate). Stop
+            // propagation so the drawer's own click-outside-closes logic
+            // (if any) doesn't fire.
+            if (e.target.closest('.autolink-chip')) {
+                e.stopPropagation();
             }
         });
         return root;
