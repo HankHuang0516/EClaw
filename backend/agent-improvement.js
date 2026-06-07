@@ -28,6 +28,15 @@ const {
     validateEpisode,
     assertNoSecrets,
 } = require('./agent-improvement/episode-schema');
+const {
+    KEYWORD_TO_TAG,
+    TASKTYPE_TO_TAG,
+    classifyPainTags,
+} = require('./agent-improvement/classifier');
+const {
+    composePreflightComment,
+    selectSimilarEpisodes,
+} = require('./agent-improvement/preflight');
 
 let pool = null;
 let devicesRef = null;
@@ -60,52 +69,6 @@ function initTable(chatPool) {
 
 function bindDevicesRef(ref) {
     devicesRef = ref;
-}
-
-// Keyword → painTag heuristic. Order matters: first match wins per taxonomy
-// scan but we accumulate matches into a set so a single feedback line can
-// emit multiple tags. Upgrade path: swap this for an LLM classifier behind
-// the same signature without changing call sites.
-const KEYWORD_TO_TAG = Object.freeze([
-    { tag: 'delivery_reliability', kws: ['offline', 'queue', 'reconnect', 'delivery', '斷線', '送不出', '訊息被阻擋', '無法送達', 'retry', 'backoff'] },
-    { tag: 'auth_session',         kws: ['login', 'session', '登入', '重新登入', 'token', 'refresh', '401', 'auth', '帳號'] },
-    { tag: 'redirect_deeplink',    kws: ['redirect', 'deep link', 'deeplink', '轉導', 'universal link', 'app links', 'route'] },
-    { tag: 'ux_feedback',          kws: ['feedback', '回饋', '使用者看不到', 'silent', '無感', 'no signal', '不知道送出沒'] },
-    { tag: 'agent_ownership',      kws: ['偷懶', 'slack', 'ownership', '誰負責', 'handoff', 'idle', '沒人接'] },
-    { tag: 'task_context',         kws: ['不知道該做', 'context', '不知道做甚麼', '不知道自己要做', 'scope unclear', '沒說清楚'] },
-    { tag: 'test_coverage',        kws: ['測試', 'test', 'coverage', 'no e2e', 'mock', '沒測'] },
-    { tag: 'scope_completeness',   kws: ['不能一次到位', '修修改改', 'rework', 'partial', '未完成', 'incomplete'] },
-]);
-
-const TASKTYPE_TO_TAG = Object.freeze({
-    pr_review: 'scope_completeness',
-    test_coverage: 'test_coverage',
-    spec_draft: 'task_context',
-    bugfix: 'ux_feedback',
-});
-
-/**
- * Heuristic classifier. Returns a non-empty array of painTag strings.
- * Falls back to ['scope_completeness'] when no signal matches — that tag is
- * the catch-all "we shipped something incomplete" bucket.
- * @param {string} text
- * @param {string} [taskType]
- * @returns {string[]}
- */
-function classifyPainTags(text, taskType) {
-    const hits = new Set();
-    const haystack = (text || '').toLowerCase();
-    for (const { tag, kws } of KEYWORD_TO_TAG) {
-        for (const kw of kws) {
-            if (haystack.includes(kw.toLowerCase())) {
-                hits.add(tag);
-                break;
-            }
-        }
-    }
-    if (taskType && TASKTYPE_TO_TAG[taskType]) hits.add(TASKTYPE_TO_TAG[taskType]);
-    if (hits.size === 0) hits.add('scope_completeness');
-    return Array.from(hits);
 }
 
 /**
@@ -241,11 +204,61 @@ router.get('/episodes', async (req, res) => {
     }
 });
 
+// Phase 1 #3a — preflight composer endpoint. Pulls candidate episodes from the
+// store, ranks them against the card's classified taxonomy, returns the
+// composed markdown. The caller (Hank, or the #3b auto-fire hook) decides
+// whether to post the resulting text as a kanban comment.
+router.post('/preflight', express.json({ limit: '64kb' }), async (req, res) => {
+    const auth = authDeviceOrBot(req);
+    if (!auth) return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    if (!pool) return res.status(503).json({ success: false, error: 'store not ready' });
+
+    const cardTitle = (req.body?.cardTitle || '').toString();
+    const cardDescription = (req.body?.cardDescription || '').toString();
+    const taskType = (req.body?.taskType || '').toString() || undefined;
+    if (!cardTitle.trim()) {
+        return res.status(400).json({ success: false, error: 'cardTitle required' });
+    }
+
+    const taxonomy = classifyPainTags(`${cardTitle}\n\n${cardDescription}`, taskType);
+
+    try {
+        const r = await pool.query(`
+            SELECT card_id AS "cardId", entity_id AS "entityId", task_type AS "taskType",
+                   pain_tags AS "painTags", deliverable, user_visible_result AS "userVisibleResult",
+                   evidence, missed_checks AS "missedChecks", user_feedback AS "userFeedback",
+                   severity, occurred_at AS "occurredAt"
+            FROM agent_improvement_episodes
+            WHERE device_id = $1
+              AND pain_tags ?| $2::text[]
+            ORDER BY occurred_at DESC
+            LIMIT 100
+        `, [auth.deviceId, taxonomy]);
+
+        const similar = selectSimilarEpisodes(taxonomy, r.rows, 5);
+        const preflightText = composePreflightComment({
+            cardTitle, cardDescription, similarEpisodes: similar, taskType,
+        });
+        return res.json({
+            success: true,
+            taxonomy,
+            similarCount: similar.length,
+            candidateCount: r.rows.length,
+            preflightText,
+        });
+    } catch (err) {
+        console.error('[AgentImprovement] preflight error:', err.message);
+        return res.status(500).json({ success: false, error: 'internal' });
+    }
+});
+
 module.exports = {
     initTable,
     bindDevicesRef,
     classifyPainTags,
     ingestEpisode,
+    composePreflightComment,
+    selectSimilarEpisodes,
     router,
     KEYWORD_TO_TAG,
     TASKTYPE_TO_TAG,
