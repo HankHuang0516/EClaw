@@ -208,6 +208,40 @@ function authDeviceOrBot(req) {
 
 const router = express.Router();
 
+// Aggregate counters across every entity bound on the caller's device.
+// Powers the avatar-drawer overview, dashboards, and cross-entity admin pages
+// without requiring callers to loop /:eId per entity.
+router.get('/', async (req, res) => {
+    const auth = authDeviceOrBot(req);
+    if (!auth) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    if (!pool || !devicesRef || !devicesRef[auth.deviceId]) {
+        return res.status(404).json({ success: false, error: 'device not found' });
+    }
+    try {
+        const entIds = Object.keys(devicesRef[auth.deviceId].entities || {})
+            .map(k => parseInt(k, 10))
+            .filter(n => Number.isFinite(n) && n >= 0)
+            .sort((a, b) => a - b);
+        const entities = [];
+        for (const eid of entIds) {
+            entities.push({
+                entityId: eid,
+                counters: await getCounters(auth.deviceId, eid),
+            });
+        }
+        res.json({
+            success: true,
+            deviceId: auth.deviceId,
+            entities,
+        });
+    } catch (err) {
+        console.error('[EntityStatus] aggregate getCounters error:', err.message);
+        res.status(500).json({ success: false, error: 'internal' });
+    }
+});
+
 router.get('/:eId', async (req, res) => {
     const auth = authDeviceOrBot(req);
     if (!auth) {
