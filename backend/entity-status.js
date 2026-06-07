@@ -23,6 +23,12 @@ const CANONICAL_AXES = [
 
 let pool = null;
 let devicesRef = null;
+// Shared with index.js so we verify cookies against the same secret. Set via
+// bindJwtSecret() at bootstrap. Falling back to process.env.JWT_SECRET works
+// only when that env var is present (i.e. when the secret survives restarts);
+// without the explicit handoff, index.js may generate a per-process random
+// fallback that this module would never match.
+let jwtSecret = null;
 
 function initTable(chatPool) {
     pool = chatPool;
@@ -293,6 +299,14 @@ function bindDevicesRef(devices) {
     devicesRef = devices;
 }
 
+// Share the same JWT signing secret that index.js issues cookies with so
+// authDeviceOrBot can fall back to cookie auth for portal sessions. Without
+// this handoff, the env-only fallback fails whenever process.env.JWT_SECRET
+// is unset (each process generates its own random secret).
+function bindJwtSecret(secret) {
+    jwtSecret = secret || null;
+}
+
 async function getCounters(deviceId, entityId) {
     if (!pool) return [];
     const result = await pool.query(
@@ -350,7 +364,7 @@ function authDeviceOrBot(req) {
         try {
             const jwt = require('jsonwebtoken');
             const decoded = jwt.verify(req.cookies.eclaw_session,
-                process.env.JWT_SECRET || '');
+                jwtSecret || process.env.JWT_SECRET || '');
             if (decoded && decoded.deviceId) {
                 deviceId = decoded.deviceId;
                 if (devicesRef && devicesRef[deviceId]) {
@@ -552,6 +566,7 @@ router.post('/:eId/quote', express.json(), async (req, res) => {
 module.exports = {
     initTable,
     bindDevicesRef,
+    bindJwtSecret,
     getCounters,
     incrementCounter,
     axisForEventType,
