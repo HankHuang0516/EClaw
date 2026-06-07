@@ -398,6 +398,48 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Diagnostic view into outbound_msg_pending. Lets the operator (or this
+// session's E2E probe) see the in-flight rows the sweeper will tick on
+// expiry. Same auth as the rest of /api/entity-status — caller must already
+// have device or bot creds for this device.
+router.get('/_debug/pending', async (req, res) => {
+    const auth = authDeviceOrBot(req);
+    if (!auth) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    if (!pool) {
+        return res.status(500).json({ success: false, error: 'pool not init' });
+    }
+    try {
+        const result = await pool.query(
+            `SELECT id, device_id, sender_entity_id, recipient_entity_id,
+                    event_type, axis, dispatched_at, expires_at, payload_snippet
+               FROM outbound_msg_pending
+              WHERE device_id = $1
+              ORDER BY dispatched_at DESC
+              LIMIT 50`,
+            [auth.deviceId]
+        );
+        res.json({
+            success: true,
+            deviceId: auth.deviceId,
+            pending: result.rows.map(r => ({
+                id: String(r.id),
+                senderEntityId: r.sender_entity_id,
+                recipientEntityId: r.recipient_entity_id,
+                eventType: r.event_type,
+                axis: r.axis,
+                dispatchedAt: r.dispatched_at ? r.dispatched_at.toISOString() : null,
+                expiresAt: r.expires_at ? r.expires_at.toISOString() : null,
+                payloadSnippet: r.payload_snippet,
+            })),
+        });
+    } catch (err) {
+        console.error('[EntityStatus] debug/pending error:', err.message);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 router.get('/:eId', async (req, res) => {
     const auth = authDeviceOrBot(req);
     if (!auth) {
