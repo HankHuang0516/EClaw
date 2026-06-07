@@ -56,6 +56,11 @@ ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS reviewer_entity_id INTEGER DEF
 -- without at least one image/* file attached via POST /api/mission/card/:id/file.
 ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS requires_screenshot_review BOOLEAN DEFAULT TRUE;
 
+-- OODA-R Phase 1 #3c done-gate (2026-06-07): cards with this flag cannot move to done
+-- without a composer-marker preflight comment AND a 5-item evidence comment.
+-- Bypass: flip to FALSE via PUT /card/:id for trivial dep-bumps / doc renames.
+ALTER TABLE kanban_cards ADD COLUMN IF NOT EXISTS requires_preflight_review BOOLEAN DEFAULT TRUE;
+
 -- Backlog launch-gate (2026-05-20): when gated=true, L1/L2/L3 staleness escalation
 -- skips this card so launch-pending drafts don't auto-bounce backlog→blocked.
 -- App layer auto-resets gated=false on any status change out of backlog.
