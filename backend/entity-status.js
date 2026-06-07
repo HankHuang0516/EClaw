@@ -54,7 +54,163 @@ function initTable(chatPool) {
             ON entity_operation_log(device_id, entity_id, occurred_at DESC);
         CREATE INDEX IF NOT EXISTS idx_eol_event_type
             ON entity_operation_log(device_id, entity_id, event_type, occurred_at DESC);
+
+        CREATE TABLE IF NOT EXISTS outbound_msg_pending (
+            id BIGSERIAL PRIMARY KEY,
+            device_id VARCHAR(64) NOT NULL,
+            sender_entity_id INT NOT NULL,
+            recipient_entity_id INT NOT NULL,
+            event_type VARCHAR(64) NOT NULL,
+            axis VARCHAR(64) NOT NULL,
+            dispatched_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            expires_at TIMESTAMPTZ NOT NULL,
+            payload_snippet TEXT
+        );
+        CREATE INDEX IF NOT EXISTS idx_omp_expires_at
+            ON outbound_msg_pending(expires_at);
+        CREATE INDEX IF NOT EXISTS idx_omp_match
+            ON outbound_msg_pending(device_id, sender_entity_id, recipient_entity_id, axis);
     `);
+}
+
+// Axis selection mirrors the buckets the drawer surfaces; pushToBot eventType
+// → which counter ticks when the recipient stays silent. Keep these in sync
+// with the legacy push-failure hook in backend/index.js — both should agree on
+// which axis a given eventType belongs to.
+function axisForEventType(eventType) {
+    if (eventType === 'cross_device_message'
+        || eventType === 'entity_message'
+        || eventType === 'entity_broadcast') return 'a2a_no_reply';
+    if (eventType === 'system_message'
+        || eventType === 'model_healthcheck'
+        || eventType === 'kanban_nudge') return 'system_msg_no_reply';
+    return 'chat_no_reply';
+}
+
+// Per-axis grace window before a pending row counts as unanswered. Tuned to
+// the rough p99 reply latency for each channel — chat users expect quick
+// turnaround; bot-to-bot routing through transform takes longer; system
+// probes are async by design.
+function expiryMsForAxis(axis) {
+    if (axis === 'chat_no_reply') return 90 * 1000;          // 90s
+    if (axis === 'a2a_no_reply') return 5 * 60 * 1000;       // 5 min
+    if (axis === 'system_msg_no_reply') return 10 * 60 * 1000; // 10 min
+    return 5 * 60 * 1000;
+}
+
+// Track an outbound message that succeeded at the push layer (HTTP 200). The
+// recipient still owes a reply within the axis-specific grace window; if it
+// arrives we delete the row (markReplyReceived), otherwise the sweeper ticks
+// the counter. Fire-and-forget — never await on the hot push path.
+async function trackOutbound(deviceId, senderEntityId, recipientEntityId, eventType, payloadSnippet) {
+    if (!pool || deviceId == null || recipientEntityId == null) return;
+    const axis = axisForEventType(eventType);
+    const expiryMs = expiryMsForAxis(axis);
+    try {
+        await pool.query(
+            `INSERT INTO outbound_msg_pending
+                (device_id, sender_entity_id, recipient_entity_id, event_type, axis, expires_at, payload_snippet)
+             VALUES ($1, $2, $3, $4, $5, NOW() + ($6 || ' milliseconds')::interval, $7)`,
+            [
+                String(deviceId).slice(0, 64),
+                Number(senderEntityId) || 0,
+                Number(recipientEntityId),
+                String(eventType || 'other').slice(0, 64),
+                axis,
+                String(expiryMs),
+                payloadSnippet ? String(payloadSnippet).slice(0, 240) : null,
+            ]
+        );
+    } catch (err) {
+        console.error('[EntityStatus] trackOutbound error:', err.message);
+    }
+}
+
+// Called when an incoming transform/speak from `senderEntityId` arrives. Match
+// the oldest pending row where the recipient (the bot that owed us a reply)
+// matches our incoming sender. Delete it so the sweeper doesn't tick.
+//
+// Heuristic: match by (device, recipient = incoming sender). Optional eventType
+// filter for same-channel matching; pass null to match any pending row.
+async function markReplyReceived(deviceId, replyFromEntityId, eventType) {
+    if (!pool || deviceId == null || replyFromEntityId == null) return 0;
+    try {
+        const params = [deviceId, Number(replyFromEntityId)];
+        let extra = '';
+        if (eventType) {
+            params.push(axisForEventType(eventType));
+            extra = `AND axis = $${params.length}`;
+        }
+        const result = await pool.query(
+            `DELETE FROM outbound_msg_pending
+              WHERE id IN (
+                SELECT id FROM outbound_msg_pending
+                 WHERE device_id = $1
+                   AND recipient_entity_id = $2
+                   ${extra}
+                 ORDER BY dispatched_at ASC
+                 LIMIT 1
+              )`,
+            params
+        );
+        return result.rowCount || 0;
+    } catch (err) {
+        console.error('[EntityStatus] markReplyReceived error:', err.message);
+        return 0;
+    }
+}
+
+// Sweeper: pick up every row whose expires_at has passed, tick the matching
+// counter, and remove the row. Runs once per minute on a setInterval registered
+// at bootstrap. Idempotent — the COUNT increment uses UPSERT, the DELETE
+// targets the exact ids we just promoted, so a duplicate run is a no-op.
+async function sweepExpired() {
+    if (!pool) return { tickedCount: 0 };
+    try {
+        const expired = await pool.query(
+            `SELECT id, device_id, recipient_entity_id, axis
+               FROM outbound_msg_pending
+              WHERE expires_at <= NOW()
+              LIMIT 500`
+        );
+        if (!expired.rows.length) return { tickedCount: 0 };
+        for (const row of expired.rows) {
+            try {
+                await pool.query(`
+                    INSERT INTO entity_error_counters (device_id, entity_id, axis, count, last_event_at)
+                    VALUES ($1, $2, $3, 1, NOW())
+                    ON CONFLICT (device_id, entity_id, axis) DO UPDATE
+                    SET count = entity_error_counters.count + 1,
+                        last_event_at = NOW(),
+                        updated_at = NOW()
+                `, [row.device_id, row.recipient_entity_id, row.axis]);
+            } catch (err) {
+                console.error('[EntityStatus] sweepExpired upsert error:', err.message);
+            }
+        }
+        const ids = expired.rows.map(r => r.id);
+        await pool.query(
+            `DELETE FROM outbound_msg_pending WHERE id = ANY($1::bigint[])`,
+            [ids]
+        );
+        return { tickedCount: ids.length };
+    } catch (err) {
+        console.error('[EntityStatus] sweepExpired error:', err.message);
+        return { tickedCount: 0 };
+    }
+}
+
+// Bootstrap the sweeper so the production process ticks counters without
+// needing an external cron. Returns the interval handle for tests that want
+// to stop it. Single-instance only — if multiple replicas come up, dedup later
+// with a row-level lock; today we run single-replica on Railway.
+function startSweeper(intervalMs) {
+    const ms = Math.max(15000, parseInt(intervalMs) || 60000);
+    return setInterval(() => {
+        sweepExpired().catch(err => {
+            console.error('[EntityStatus] sweep tick error:', err.message);
+        });
+    }, ms);
 }
 
 // Best-effort fire-and-forget insert into entity_operation_log. Callers should
@@ -337,6 +493,11 @@ module.exports = {
     bindDevicesRef,
     getCounters,
     incrementCounter,
+    axisForEventType,
+    trackOutbound,
+    markReplyReceived,
+    sweepExpired,
+    startSweeper,
     logOperation,
     getOperationLog,
     getLogRowById,
