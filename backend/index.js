@@ -2262,6 +2262,15 @@ entityStatus.bindJwtSecret(JWT_SECRET_FALLBACK);
 app.use('/api/entity-status', entityStatus.router);
 
 // ============================================
+// AGENT IMPROVEMENT — OODA-R episode store (Phase 0 #2a, card_2024e5eebe...).
+// Ingests user-visible feedback signals into the episode store defined by
+// Phase 0 #1's schema; Phase 1 #3 preflight lint will read from this table.
+// ============================================
+const agentImprovement = require('./agent-improvement');
+agentImprovement.bindDevicesRef(devices);
+app.use('/api/agent-improvement', agentImprovement.router);
+
+// ============================================
 // API DOCS — OpenAPI / Swagger UI
 // ============================================
 const apiDocs = require('./api-docs')();
@@ -18929,6 +18938,8 @@ devicePrefs.initTable(chatPool);
 entityStatus.initTable(chatPool)
     .then(() => entityStatus.startSweeper(60_000))
     .catch(err => console.error('[EntityStatus] initTable error:', err.message));
+agentImprovement.initTable(chatPool)
+    .catch(err => console.error('[AgentImprovement] initTable error:', err.message));
 orgChartModule.initTable(chatPool);
 crossDeviceSettings.initTable(chatPool);
 chatIntegrity.initIntegrityTable(chatPool);
