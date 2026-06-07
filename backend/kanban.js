@@ -2042,6 +2042,40 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
 
             await bumpVersion(deviceId);
 
+            // OODA-R Phase 1 #3b — auto-fire preflight comment on todo→in_progress.
+            // Pulls similar prior episodes via the same SQL the /preflight endpoint
+            // uses, composes the markdown, and posts it as a system comment.
+            // Failure-isolated: never blocks the move, never throws.
+            if (oldStatus !== 'in_progress' && newStatus === 'in_progress') {
+                (async () => {
+                    try {
+                        const ai = require('./agent-improvement');
+                        const taxonomy = ai.classifyPainTags(
+                            `${card.title || ''}\n\n${card.description || ''}`,
+                            undefined,
+                        );
+                        const r = await pool.query(`
+                            SELECT card_id AS "cardId", entity_id AS "entityId", task_type AS "taskType",
+                                   pain_tags AS "painTags", deliverable, user_visible_result AS "userVisibleResult",
+                                   evidence, missed_checks AS "missedChecks", user_feedback AS "userFeedback",
+                                   severity, occurred_at AS "occurredAt"
+                            FROM agent_improvement_episodes
+                            WHERE device_id = $1 AND pain_tags ?| $2::text[]
+                            ORDER BY occurred_at DESC LIMIT 100
+                        `, [deviceId, taxonomy]);
+                        const similar = ai.selectSimilarEpisodes(taxonomy, r.rows, 5);
+                        const text = ai.composePreflightComment({
+                            cardTitle: card.title || '',
+                            cardDescription: card.description || '',
+                            similarEpisodes: similar,
+                        });
+                        await addSystemComment(cardId, deviceId, text);
+                    } catch (e) {
+                        console.error('[Kanban] OODA-R preflight hook error (non-blocking):', e.message);
+                    }
+                })();
+            }
+
             // Idle-dispatch hook (PR-B). emit() is a no-op when
             // IDLE_DISPATCH_HOOKS_ENABLED !== 'true'. Synchronous, never
             // throws (wrapped internally), and runs after the DB write +
