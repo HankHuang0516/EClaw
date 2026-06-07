@@ -2258,6 +2258,7 @@ app.use('/api/publisher', articlePublisher.router);
 // ============================================
 const entityStatus = require('./entity-status');
 entityStatus.bindDevicesRef(devices);
+entityStatus.bindJwtSecret(JWT_SECRET_FALLBACK);
 app.use('/api/entity-status', entityStatus.router);
 
 // ============================================
