@@ -951,6 +951,26 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 try { await awardEntityXP(deviceId, createdBy, 10); } catch (e) { /* ignore */ }
             }
 
+            // P1: log operation for entity status drawer block 2.
+            // One row per assigned entity so each can see this in their own log.
+            try {
+                const entityStatus = require('./entity-status');
+                for (const botId of bots) {
+                    entityStatus.logOperation(
+                        deviceId, botId, 'card_create',
+                        `Created task card #${card.id} (${(card.title || '').slice(0, 60)})`,
+                        { card_id: card.id, title: card.title, priority: card.priority, status: card.status }
+                    );
+                }
+                if (createdBy && !bots.includes(createdBy)) {
+                    entityStatus.logOperation(
+                        deviceId, createdBy, 'card_create',
+                        `Created task card #${card.id} (${(card.title || '').slice(0, 60)})`,
+                        { card_id: card.id, title: card.title, priority: card.priority, status: card.status }
+                    );
+                }
+            } catch (e) { /* fire-and-forget */ }
+
             res.json({ success: true, card });
         } catch (err) {
             console.error('[Kanban] Create card error:', err);
@@ -1845,6 +1865,20 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             await addSystemComment(cardId, deviceId, '🗄️ 卡片已歸檔');
             await bumpVersion(deviceId);
 
+            // P1: log operation for entity status drawer
+            try {
+                const entityStatus = require('./entity-status');
+                const archivedCard = result.rows[0] || {};
+                const bots = Array.isArray(archivedCard.assigned_bots) ? archivedCard.assigned_bots : [];
+                for (const botId of bots) {
+                    entityStatus.logOperation(
+                        deviceId, Number(botId), 'card_delete',
+                        `Archived card #${archivedCard.id} (${(archivedCard.title || '').slice(0, 50)})`,
+                        { card_id: archivedCard.id, title: archivedCard.title }
+                    );
+                }
+            } catch (e) { /* fire-and-forget */ }
+
             res.json({ success: true, message: 'Card archived' });
         } catch (err) {
             console.error('[Kanban] Archive card error:', err);
@@ -2078,6 +2112,19 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     console.error(`[Kanban] Failed to update parent card ${card.parent_card_id}:`, parentErr.message);
                 }
             }
+
+            // P1: log operation for entity status drawer
+            try {
+                const entityStatus = require('./entity-status');
+                const bots = Array.isArray(updatedCard.assignedBots) ? updatedCard.assignedBots : [];
+                for (const botId of bots) {
+                    entityStatus.logOperation(
+                        deviceId, Number(botId), 'card_status',
+                        `Card #${updatedCard.id} status ${oldStatus} → ${newStatus} (${(updatedCard.title || '').slice(0, 50)})`,
+                        { card_id: updatedCard.id, title: updatedCard.title, status: newStatus, from: oldStatus }
+                    );
+                }
+            } catch (e) { /* fire-and-forget */ }
 
             res.json({ success: true, card: updatedCard, transition: { from: oldStatus, to: newStatus } });
         } catch (err) {

@@ -36,6 +36,17 @@
 
     let rootEl = null;
     let currentEid = null;
+    let logCursor = null;        // pagination cursor for /log endpoint
+    let logLoading = false;
+    let logScrollObserver = null;
+    const STATUS_COLOR = {
+        backlog:     '#9ca3af',
+        todo:        '#3b82f6',
+        in_progress: '#f59e0b',
+        review:      '#a855f7',
+        blocked:     '#ef4444',
+        done:        '#22c55e',
+    };
 
     function pickLabel(axis) {
         const lang = (document.documentElement.getAttribute('lang') || 'en').toLowerCase();
@@ -57,7 +68,7 @@
         };
     }
 
-    async function fetchStatus(eid) {
+    function _credQs() {
         const c = readCreds();
         const qs = new URLSearchParams();
         if (c.deviceId) qs.set('deviceId', c.deviceId);
@@ -66,11 +77,170 @@
             qs.set('botSecret', c.botSecret);
             if (c.entityId) qs.set('entityId', String(c.entityId));
         }
+        return qs;
+    }
+
+    async function fetchStatus(eid) {
+        const qs = _credQs();
         const res = await fetch(`/api/entity-status/${eid}?${qs.toString()}`, {
             credentials: 'include',
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();
+    }
+
+    async function fetchLog(eid, before, limit) {
+        const qs = _credQs();
+        qs.set('limit', String(limit || 20));
+        if (before) qs.set('before', String(before));
+        const res = await fetch(`/api/entity-status/${eid}/log?${qs.toString()}`, {
+            credentials: 'include',
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+    }
+
+    async function fetchQuote(eid, logId) {
+        const c = readCreds();
+        const body = { logId: Number(logId) };
+        if (c.deviceId) body.deviceId = c.deviceId;
+        if (c.deviceSecret) body.deviceSecret = c.deviceSecret;
+        else if (c.botSecret) {
+            body.botSecret = c.botSecret;
+            if (c.entityId) body.entityId = Number(c.entityId);
+        }
+        const res = await fetch(`/api/entity-status/${eid}/quote`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+            credentials: 'include',
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+    }
+
+    function escapeHtml(s) {
+        return String(s || '').replace(/[&<>"']/g, (c) => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+    }
+
+    // Render event_summary text with card_xxxxxxxx tokens replaced by clickable
+    // status-colored chips. Status comes from event_payload.status if present.
+    function renderSummaryHtml(summary, payload) {
+        const text = escapeHtml(summary);
+        const payloadCardId = payload && payload.card_id;
+        const payloadStatus = (payload && payload.status) || null;
+        // Match card_<hex|alnum>{6,32} — covers card_71d075680e6e2c952fbc3ffe etc.
+        return text.replace(/(card_[a-zA-Z0-9]{6,32})|(#card_[a-zA-Z0-9]{6,32})/g, (match) => {
+            const cardId = match.replace(/^#/, '');
+            const status = (payloadCardId === cardId && payloadStatus) || 'todo';
+            const color = STATUS_COLOR[status] || STATUS_COLOR.todo;
+            return `<a class="${ROOT_CLASS}__chip" data-card-id="${escapeHtml(cardId)}" `
+                + `style="background:${color}22;border-color:${color};color:${color};" `
+                + `href="/portal/kanban.html?card=${encodeURIComponent(cardId)}" `
+                + `title="Open ${escapeHtml(cardId)}">${escapeHtml(cardId.slice(0, 12))}</a>`;
+        });
+    }
+
+    function formatTs(iso) {
+        if (!iso) return '';
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return iso;
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    function renderLogRow(item) {
+        const ts = formatTs(item.occurredAt);
+        const summary = renderSummaryHtml(item.eventSummary, item.eventPayload);
+        return `
+            <li class="${ROOT_CLASS}__log-row" data-log-id="${escapeHtml(item.id)}" data-event-type="${escapeHtml(item.eventType)}">
+                <time class="${ROOT_CLASS}__log-time">${escapeHtml(ts)}</time>
+                <span class="${ROOT_CLASS}__log-summary">${summary}</span>
+                <button type="button" class="${ROOT_CLASS}__log-quote" data-action="quote"
+                    data-log-id="${escapeHtml(item.id)}" title="Quote this row">❝</button>
+            </li>`;
+    }
+
+    function appendLogRows(root, items) {
+        const list = root.querySelector('[data-role="log-list"]');
+        if (!list) return;
+        const sentinel = list.querySelector('[data-role="log-sentinel"]');
+        if (!items || !items.length) {
+            if (list.querySelector('[data-state="empty"]')) return;
+            if (!list.querySelector('[data-log-id]')) {
+                list.insertAdjacentHTML('afterbegin',
+                    `<li class="${ROOT_CLASS}__log-row" data-state="empty">No operations yet.</li>`);
+            }
+            if (sentinel) sentinel.style.display = 'none';
+            return;
+        }
+        const emptyMark = list.querySelector('[data-state="empty"]');
+        if (emptyMark) emptyMark.remove();
+        const html = items.map(renderLogRow).join('');
+        if (sentinel) sentinel.insertAdjacentHTML('beforebegin', html);
+        else list.insertAdjacentHTML('beforeend', html);
+    }
+
+    async function loadMoreLog(root, eid) {
+        if (logLoading) return;
+        if (logCursor === null && root.dataset.logFetchedOnce === '1') return;
+        logLoading = true;
+        try {
+            const data = await fetchLog(eid, logCursor, 20);
+            root.dataset.logFetchedOnce = '1';
+            appendLogRows(root, data.items || []);
+            logCursor = data.nextCursor || null;
+            const sentinel = root.querySelector('[data-role="log-sentinel"]');
+            if (sentinel && !logCursor) sentinel.style.display = 'none';
+        } catch (err) {
+            const list = root.querySelector('[data-role="log-list"]');
+            if (list && !list.querySelector('[data-state="error"]')) {
+                list.insertAdjacentHTML('beforeend',
+                    `<li class="${ROOT_CLASS}__log-row" data-state="error">Failed to load log: ${escapeHtml(err.message)}</li>`);
+            }
+        } finally {
+            logLoading = false;
+        }
+    }
+
+    function setupInfiniteScroll(root, eid) {
+        const sentinel = root.querySelector('[data-role="log-sentinel"]');
+        if (!sentinel || !('IntersectionObserver' in window)) return;
+        logScrollObserver = new IntersectionObserver((entries) => {
+            if (entries.some(e => e.isIntersecting)) loadMoreLog(root, eid);
+        }, { root: root.querySelector(`.${ROOT_CLASS}__sheet`), rootMargin: '120px' });
+        logScrollObserver.observe(sentinel);
+    }
+
+    async function handleQuoteClick(eid, logId) {
+        try {
+            const res = await fetchQuote(eid, logId);
+            if (!res.quote || !res.quote.text) return;
+            // Try common chat textbox selectors; degrade to clipboard if none found.
+            const targets = [
+                'textarea#chatInput', 'textarea#chat-input', '#chatTextarea',
+                'textarea[data-chat-input]', 'textarea[name="message"]',
+            ];
+            let pasted = false;
+            for (const sel of targets) {
+                const ta = document.querySelector(sel);
+                if (ta && typeof ta.value === 'string') {
+                    ta.value = res.quote.text + ta.value;
+                    ta.focus();
+                    try { ta.setSelectionRange(0, 0); } catch (_) { /* ok */ }
+                    pasted = true;
+                    break;
+                }
+            }
+            if (!pasted && navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(res.quote.text);
+            }
+            close();
+        } catch (err) {
+            console.warn('[EntityStatusPanel] quote error:', err.message);
+        }
     }
 
     function buildDom(eid) {
@@ -97,15 +267,29 @@
                         <li class="${ROOT_CLASS}__counter-row" data-state="loading">Loading…</li>
                     </ul>
                 </section>
-                <section class="${ROOT_CLASS}__section ${ROOT_CLASS}__section--placeholder">
+                <section class="${ROOT_CLASS}__section" data-section="log">
                     <h3 class="${ROOT_CLASS}__section-title">操作 log / Operation log</h3>
-                    <p class="${ROOT_CLASS}__placeholder-note">P1 follow-up — see card_dbe18b333ac98076cc213055.</p>
+                    <ol class="${ROOT_CLASS}__log-list" data-role="log-list">
+                        <li class="${ROOT_CLASS}__log-row" data-state="loading">Loading…</li>
+                        <li class="${ROOT_CLASS}__log-sentinel" data-role="log-sentinel" aria-hidden="true"></li>
+                    </ol>
                 </section>
             </div>
         `;
         root.addEventListener('click', (e) => {
-            const action = e.target?.dataset?.action;
-            if (action === 'close') close();
+            const action = e.target?.dataset?.action || e.target?.closest('[data-action]')?.dataset?.action;
+            if (action === 'close') { close(); return; }
+            if (action === 'quote') {
+                const btn = e.target.closest('[data-action="quote"]');
+                const logId = btn && btn.dataset.logId;
+                if (logId) handleQuoteClick(eid, logId);
+                e.stopPropagation();
+                return;
+            }
+            // Card chip click: let default <a> navigation happen, just close drawer.
+            if (e.target.closest('.' + ROOT_CLASS + '__chip')) {
+                close();
+            }
         });
         return root;
     }
@@ -161,6 +345,27 @@
     background: rgba(108,99,255,0.12); padding: 2px 10px; border-radius: 999px; min-width: 32px;
     text-align: center; }
 .${ROOT_CLASS}__placeholder-note { font-size: 12px; color: var(--text-muted, #888); font-style: italic; }
+.${ROOT_CLASS}__log-list { list-style: none; margin: 0; padding: 0; }
+.${ROOT_CLASS}__log-row { display: grid; grid-template-columns: auto 1fr auto; gap: 8px;
+    align-items: start; padding: 8px 0; border-bottom: 1px dashed var(--card-border, #333);
+    font-size: 12.5px; line-height: 1.45; }
+.${ROOT_CLASS}__log-row[data-state="empty"], .${ROOT_CLASS}__log-row[data-state="loading"],
+.${ROOT_CLASS}__log-row[data-state="error"] {
+    grid-template-columns: 1fr; color: var(--text-muted, #888); font-style: italic;
+    text-align: center; padding: 16px 0; }
+.${ROOT_CLASS}__log-time { font-variant-numeric: tabular-nums; color: var(--text-muted, #888);
+    font-size: 11px; padding-top: 2px; }
+.${ROOT_CLASS}__log-summary { color: var(--text, #e0e0e0); word-break: break-word; }
+.${ROOT_CLASS}__log-quote { background: none; border: none; color: var(--text-muted, #888);
+    cursor: pointer; font-size: 13px; padding: 2px 6px; border-radius: 4px;
+    opacity: 0; transition: opacity 0.15s, color 0.15s; }
+.${ROOT_CLASS}__log-row:hover .${ROOT_CLASS}__log-quote { opacity: 1; }
+.${ROOT_CLASS}__log-quote:hover { color: var(--primary, #6c63ff); background: rgba(108,99,255,0.1); }
+.${ROOT_CLASS}__log-sentinel { padding: 0; border: none; height: 1px; }
+.${ROOT_CLASS}__chip { display: inline-block; font-size: 11px; padding: 1px 8px; margin: 0 2px;
+    border-radius: 999px; border: 1px solid transparent; text-decoration: none;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; vertical-align: baseline; }
+.${ROOT_CLASS}__chip:hover { filter: brightness(1.4); text-decoration: none; }
         `.trim();
         document.head.appendChild(style);
     }
@@ -191,15 +396,31 @@
                 list.innerHTML = `<li class="${ROOT_CLASS}__counter-row" data-state="error">Failed to load: ${err.message}</li>`;
             }
         }
+
+        // Initial log fetch + infinite scroll setup.
+        logCursor = null;
+        const logList = rootEl.querySelector('[data-role="log-list"]');
+        if (logList) {
+            // Clear "Loading…" placeholder before first paint.
+            logList.querySelectorAll('[data-state="loading"]').forEach(n => n.remove());
+        }
+        await loadMoreLog(rootEl, targetEid);
+        setupInfiniteScroll(rootEl, targetEid);
     }
 
     function close() {
         if (!rootEl) return;
         document.removeEventListener('keydown', _onEsc);
+        if (logScrollObserver) {
+            try { logScrollObserver.disconnect(); } catch (_) { /* ok */ }
+            logScrollObserver = null;
+        }
         rootEl.classList.remove(ROOT_CLASS + '--visible');
         const el = rootEl;
         rootEl = null;
         currentEid = null;
+        logCursor = null;
+        logLoading = false;
         setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 240);
     }
 
