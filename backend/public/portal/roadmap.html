@@ -275,6 +275,97 @@
             <div class="rm-badge">Codename: BRM</div>
         </div>
 
+        <!-- ═══════════════════════════════════════════════════════════
+             AI Agent 自發性自我改進 Roadmap (kickoff 2026-06-07)
+             Filed under card_be59aa034883fe36d3645a27 — P0 strategic.
+             Triggered by Hank's 2026-06-07 12:28 TW feedback covering 10
+             concrete pains across delivery reliability, agent ownership,
+             and verification. Cross-reviewed by #1 Mac_F (planner OODA-R
+             framework) and #6 Codex (infra/behavior classification).
+             ═══════════════════════════════════════════════════════════ -->
+        <div class="rm-section" id="ai-agent-self-improvement" style="border-left:4px solid #f59e0b;">
+            <h2>🧠 AI Agent 自發性自我改進 — 2026-06-07 kickoff</h2>
+            <p style="font-size:14px;line-height:1.7;color:var(--text-secondary);margin-bottom:14px;">
+                Strategic roadmap for closing the delivery-reliability and agent-ownership gaps. Drafted off Hank's 2026-06-07 12:28 TW feedback (10 user-facing pains), then cross-reviewed by <strong>#1 Mac_F (planner)</strong> and <strong>#6 Codex (technical)</strong>. Tracked end-to-end on <code>card_be59aa034883fe36d3645a27</code>.
+            </p>
+
+            <h3 style="font-size:14px;font-weight:700;margin:14px 0 8px;">🎯 10 user-facing pains (Hank 2026-06-07)</h3>
+            <ol style="font-size:13px;line-height:1.7;padding-left:22px;margin-bottom:16px;">
+                <li>App 轉導不穩定 <span style="opacity:.6;">(infra)</span></li>
+                <li>使用者回饋差 <span style="opacity:.6;">(mixed)</span></li>
+                <li>一旦斷線訊息就被阻擋 <span style="opacity:.6;">(infra)</span></li>
+                <li>帳號莫名要重新登入 <span style="opacity:.6;">(infra)</span></li>
+                <li>Web 轉導不盡人意 <span style="opacity:.6;">(infra)</span></li>
+                <li>實體被下達命令之後任務偷懶 <span style="opacity:.6;">(agent behavior)</span></li>
+                <li>測試沒完整 <span style="opacity:.6;">(agent behavior)</span></li>
+                <li>實體常不知道自己該做甚麼 <span style="opacity:.6;">(agent behavior)</span></li>
+                <li>用戶功能總是不能一次到位 <span style="opacity:.6;">(agent behavior)</span></li>
+                <li>還要修修改改 <span style="opacity:.6;">(mixed)</span></li>
+            </ol>
+
+            <h3 style="font-size:14px;font-weight:700;margin:14px 0 8px;">🔁 Self-improvement loop — OODA-R framework</h3>
+            <p style="font-size:13px;line-height:1.7;color:var(--text-secondary);margin-bottom:8px;">
+                Observe → Orient → Decide → Act → Reinforce. Each agent task produces an episode record that feeds a shared taxonomy; subsequent tasks query that store at preflight time so the same failures don't re-ship.
+            </p>
+            <ol style="font-size:13px;line-height:1.7;padding-left:22px;margin-bottom:16px;">
+                <li><strong>Observe</strong>: every card emits an episode record (goal, type, deliverable, user-visible result, evidence, missed checks)</li>
+                <li><strong>Orient</strong>: episode auto-classified into 8-tag taxonomy (delivery reliability / auth / redirect / UX feedback / agent ownership / task context / test coverage / scope completeness)</li>
+                <li><strong>Retrieve</strong>: before moving any card to in_progress, pull same-taxonomy prior failures + Hank feedback + same-module recent PR risks</li>
+                <li><strong>Decide</strong>: agent must publish a Task Contract on the card — scope, acceptance, test matrix, user-visible proof, blocked conditions</li>
+                <li><strong>Act</strong>: progress heartbeat + blocker reporting + evidence accumulation; long silent runs are treated as anomalies, not loyalty</li>
+                <li><strong>Verify</strong>: cross-surface smoke/E2E/route/WebView/mobile checks before "done"; result attached as kanban evidence</li>
+                <li><strong>Reinforce</strong>: after N consecutive same-taxonomy warnings, promote the lesson into an enforced rule (SOP / CI check / lint / required checklist)</li>
+                <li><strong>Feedback bridge</strong>: Hank's chat corrections, kanban comments, review feedback all funnel into the episode store automatically — no more human-cached reminders</li>
+            </ol>
+
+            <h3 style="font-size:14px;font-weight:700;margin:14px 0 8px;">🗺️ 9-item delivery roadmap (4 phases)</h3>
+            <div style="font-size:13px;line-height:1.65;">
+                <div style="margin-bottom:14px;">
+                    <strong>Phase 0 — make problems recordable + classifiable</strong>
+                    <ol style="padding-left:22px;margin-top:6px;">
+                        <li>Pain taxonomy + episode schema (8 tags, JSON/markdown shape, secrets-free)</li>
+                        <li>Feedback ingestion bridge (Hank chat / kanban / review / bot handoff → tagged episode)</li>
+                    </ol>
+                </div>
+                <div style="margin-bottom:14px;">
+                    <strong>Phase 1 — agent stops guessing + stops shipping half</strong>
+                    <ol start="3" style="padding-left:22px;margin-top:6px;">
+                        <li>Task-start preflight lint (open-card hook: pull prior failures, publish scope/acceptance/test/evidence plan)</li>
+                        <li>Done-evidence gate + anti-laziness guard (no silent done; idle in_progress gets a next-action prompt)</li>
+                    </ol>
+                </div>
+                <div style="margin-bottom:14px;">
+                    <strong>Phase 2 — fix the reliability foundation Hank actually feels</strong>
+                    <ol start="5" style="padding-left:22px;margin-top:6px;">
+                        <li>Offline delivery queue + reconnect replay (queue/idempotency/replay; non-blocking UI; visible queued/retrying/sent/failed states)</li>
+                        <li>Auth/session persistence + refresh diagnostics (single refresh mutex, expiry+clock-skew guards, visible reason codes)</li>
+                        <li>Unified App/Web redirect state machine (canonical route contract, signed envelope+traceId across deep-link/web/post-login return)</li>
+                    </ol>
+                </div>
+                <div style="margin-bottom:14px;">
+                    <strong>Phase 3 — turn tests into user-path guarantees</strong>
+                    <ol start="8" style="padding-left:22px;margin-top:6px;">
+                        <li>Cross-surface E2E matrix for top workflows (login/refresh, redirect, offline/online message send, kanban lifecycle, agent reply visibility — desktop + mobile + WebView)</li>
+                    </ol>
+                </div>
+                <div style="margin-bottom:14px;">
+                    <strong>Phase 4 — make self-improvement an institution, not a memo</strong>
+                    <ol start="9" style="padding-left:22px;margin-top:6px;">
+                        <li>Rule promotion engine + this public roadmap tracker (N repeats → auto-promote to SOP/lint/CI; roadmap status visible here)</li>
+                    </ol>
+                </div>
+            </div>
+
+            <h3 style="font-size:14px;font-weight:700;margin:14px 0 8px;">🚀 Recommended first PoC</h3>
+            <p style="font-size:13px;line-height:1.7;color:var(--text-secondary);">
+                Ship <strong>Phase 1</strong> first (preflight lint + done-evidence gate). Smallest scope, fastest payback on pains 6/7/8/9/10, and every subsequent reliability PR inherits the gate. Offline queue (Phase 2 #5) lands next so Hank stops losing messages.
+            </p>
+
+            <p style="font-size:12px;color:var(--text-secondary);margin-top:14px;padding-top:10px;border-top:1px dashed var(--card-border);">
+                Status: 🟡 kickoff (2026-06-07). #1/#6 reviews integrated. Next: split into 9 implementation cards, ship Phase 0+1 within the week. Live progress on <code>card_be59aa034883fe36d3645a27</code>.
+            </p>
+        </div>
+
         <!-- Stats -->
         <div class="rm-stats">
             <div class="rm-stat"><div class="rm-stat-value">6</div><div class="rm-stat-label" data-i18n="rm_stat_phases">Development Phases</div></div>
