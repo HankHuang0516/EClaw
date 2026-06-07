@@ -705,6 +705,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : null,
             reviewerEntityId: row.reviewer_entity_id != null ? parseInt(row.reviewer_entity_id) : null,
             requiresScreenshotReview: row.requires_screenshot_review !== false,
+            requiresPreflightReview: row.requires_preflight_review !== false,
             gated: !!row.gated,
             gateReason: row.gate_reason || null,
             reopenedAt: row.reopened_at ? new Date(row.reopened_at).getTime() : null,
@@ -1629,7 +1630,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
     router.put('/card/:id', async (req, res) => {
         if (!authenticate(req, res)) return;
         const _p = { ...req.query, ...req.body }; console.log('[Kanban] PUT /card/:id called', { deviceId: _p.deviceId, entityId: _p.entityId, cardId: req.params?.id });
-        const { deviceId, title, description, priority, assignedBots, reviewerEntityId, requiresScreenshotReview, dispatchMode, requiresPrRework, reworkPrNumber, linkedPrevCardId, linkedNextCardId } = req.body;
+        const { deviceId, title, description, priority, assignedBots, reviewerEntityId, requiresScreenshotReview, requiresPreflightReview, dispatchMode, requiresPrRework, reworkPrNumber, linkedPrevCardId, linkedNextCardId } = req.body;
         const cardId = req.params.id;
 
         try {
@@ -1703,6 +1704,10 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             if (requiresScreenshotReview !== undefined) {
                 updates.push(`requires_screenshot_review = $${paramIdx++}`);
                 params.push(!!requiresScreenshotReview);
+            }
+            if (requiresPreflightReview !== undefined) {
+                updates.push(`requires_preflight_review = $${paramIdx++}`);
+                params.push(!!requiresPreflightReview);
             }
             if (dispatchMode !== undefined) {
                 const normalizedDispatchMode = dispatchMode === 'idle_only' ? 'idle_only' : (dispatchMode === 'immediate' ? 'immediate' : null);
@@ -1986,6 +1991,36 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                         error: 'Screenshot review required',
                         hint: `此卡開啟了「截圖審查」，需先附上任務完成截圖才能移到 ${STATUS_LABELS[newStatus] || newStatus}。請用 POST /api/mission/card/${cardId}/file 帶 { url, filename, mimeType: "image/png" } 上傳 R2 截圖 URL。`,
                         code: 'SCREENSHOT_REQUIRED'
+                    });
+                }
+            }
+
+            // OODA-R Phase 1 #3c — done-evidence gate.
+            // Blocks in_progress→done (or any →done) when the card has not
+            // accumulated a composer-marker preflight comment AND a
+            // subsequent 5-item evidence comment. Bypass: card.requires_preflight_review === false.
+            if (newStatus === 'done' && card.requires_preflight_review !== false) {
+                const cs = await pool.query(
+                    `SELECT text, is_system AS "isSystem", created_at AS "createdAt"
+                     FROM kanban_comments
+                     WHERE card_id = $1 AND device_id = $2
+                     ORDER BY created_at ASC`,
+                    [cardId, deviceId]
+                );
+                const { evaluateDoneGate } = require('./agent-improvement/done-gate');
+                const verdict = evaluateDoneGate({
+                    oldStatus,
+                    newStatus,
+                    requiresPreflightReview: card.requires_preflight_review !== false,
+                    comments: cs.rows,
+                });
+                if (!verdict.allowed) {
+                    return res.status(400).json({
+                        success: false,
+                        error: verdict.error,
+                        hint: verdict.hint,
+                        code: verdict.code,
+                        missingItems: verdict.missingItems,
                     });
                 }
             }
