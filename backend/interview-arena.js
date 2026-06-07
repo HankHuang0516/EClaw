@@ -188,6 +188,11 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Daily pool update additions ──
+    { file: null, description: 'A kanban board with four columns labeled Backlog, In Progress, Review, and Done — twelve cards distributed across all columns, three of which have a red Urgent badge in the top-right corner', keywords: ['kanban', 'four', 'columns', 'twelve', 'three', 'urgent', 'red'] },
+    { file: null, description: 'A pie chart of website traffic sources: Organic Search 45% in blue (largest slice), Referral 25% in green, Direct 20% in orange, Social Media 10% in purple — the blue slice is highlighted with a shadow', keywords: ['pie', 'chart', 'organic', '45', 'blue', 'referral', '25', 'social', '10'] },
+    { file: null, description: 'A network security topology: the Internet connects to a firewall labeled FW-01, behind which is a DMZ subnet containing a web server and a mail server, and an internal LAN subnet with three client workstations labeled PC1, PC2, and PC3', keywords: ['firewall', 'DMZ', 'internet', 'web', 'mail', 'three', 'internal', 'LAN'] },
+    { file: null, description: 'A database entity-relationship diagram with five tables: users (id, email), orders (id, user_id, total), products (id, category_id, price), order_items (order_id, product_id, quantity), and categories (id, name) — primary keys underlined, six foreign key arrows connecting the tables', keywords: ['entity', 'relationship', 'five', 'tables', 'users', 'orders', 'products', 'primary', 'foreign', 'six'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +373,16 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── Daily pool update additions ──
+    { title: 'Longest Common Subsequence', description: 'Write `solve(text1, text2)` — return the length of the longest common subsequence of the two strings (characters need not be contiguous).',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"bsbininm", "jmjkbkjkv"', expected: '1' }] },
+    { title: 'Trap Rainwater', description: 'Write `solve(height)` — given an array of non-negative integers representing bar heights, compute how much water can be trapped after raining.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[1,0,1]', expected: '1' },{ input: '[3,0,2,0,4]', expected: '7' }] },
+    { title: 'Valid Sudoku', description: 'Write `solve(board)` — determine if a 9×9 Sudoku board is valid. Only filled cells (non-".") need validation: each row, column, and 3×3 box must contain digits 1-9 without repetition. Return true or false.',
+      testCases: [
+        { input: '[["5","3",".",".","7",".",".",".","."],["6",".",".","1","9","5",".",".","."],[".","9","8",".",".",".",".","6","."],["8",".",".",".","6",".",".",".","3"],["4",".",".","8",".","3",".",".","1"],["7",".",".",".","2",".",".",".","6"],[".","6",".",".",".",".","2","8","."],[".",".",".","4","1","9",".",".","5"],[".",".",".",".","8",".",".","7","9"]]', expected: 'true' },
+        { input: '[["8","3",".",".","7",".",".",".","."],["6",".",".","1","9","5",".",".","."],[".","9","8",".",".",".",".","6","."],["8",".",".",".","6",".",".",".","3"],["4",".",".","8",".","3",".",".","1"],["7",".",".",".","2",".",".",".","6"],[".","6",".",".",".",".","2","8","."],[".",".",".","4","1","9",".",".","5"],[".",".",".",".","8",".",".","7","9"]]', expected: 'false' },
+      ] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +432,13 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Daily pool update additions ──
+    { question: 'How many degrees are in a full rotation?', expectedKeywords: ['360'] },
+    { question: 'What is 15% of 200?', expectedKeywords: ['30'] },
+    { question: 'A car travels at 90 km/h. How long in minutes does it take to travel 30 km?', expectedKeywords: ['20'] },
+    { question: 'What is the smallest prime number greater than 100?', expectedKeywords: ['101'] },
+    { question: 'A ladder 10 meters long leans against a vertical wall. The base of the ladder is 6 meters from the wall. How high up the wall does the ladder reach?', expectedKeywords: ['8'] },
+    { question: 'If you invest $1000 at an annual interest rate of 5% compounded annually, what is the value after 2 years (rounded to the nearest cent)?', expectedKeywords: ['1102.5', '1102.50'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +516,11 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Daily pool update additions ──
+    { text: 'Please note that your reservation confirmation number is C-2847-XR and check-in is on December twenty-third at three PM', keywords: ['reservation', 'C-2847', 'december', 'twenty', 'three'] },
+    { text: 'The bond portfolio has a modified duration of 4.7 years and a yield to maturity of 6.25 percent per annum compounded semi-annually', keywords: ['bond', 'portfolio', 'duration', '4.7', '6.25', 'semi-annually'] },
+    { text: 'The electrocardiogram showed sinus tachycardia at 112 beats per minute with a corrected QT interval of 452 milliseconds', keywords: ['electrocardiogram', 'tachycardia', '112', 'QT', '452', 'milliseconds'] },
+    { text: 'The software patch CVE-2024-00847 addresses a heap buffer overflow in versions 3.1 through 3.9 of the affected library and should be applied immediately', keywords: ['patch', 'CVE', '2024', 'heap', 'buffer', 'overflow', '3.1', '3.9'] },
 ];
 
 // ============================================
