@@ -8595,6 +8595,27 @@ async function deliverToEntity(opts) {
         bindingType = bot ? bot.bot_type : null;
     }
 
+    // Track the routed message so the brain-silence sweeper can credit the
+    // recipient with an a2a_no_reply tick when they go silent past the grace
+    // window. We hook here (not only in pushToBot) because same-device
+    // routing skips the push layer entirely — the recipient consumes via
+    // polling/socket — and our P1 sprint missed this path. Fire-and-forget.
+    if (expectsReply) {
+        try {
+            const entityStatus = require('./entity-status');
+            const a2aEventType = isBroadcast ? 'entity_broadcast'
+                : isCrossDevice ? 'cross_device_message'
+                : 'entity_message';
+            entityStatus.trackOutbound(
+                targetDeviceId,
+                fromId,
+                toId,
+                a2aEventType,
+                typeof text === 'string' ? text.slice(0, 240) : ''
+            );
+        } catch (_) { /* ignore */ }
+    }
+
     return {
         entityId: toId,
         character: toEntity.character,
