@@ -3202,6 +3202,15 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             notifyEntities(card.device_id, recipients,
                 `⬆️ 卡片「${card.title}」停滯 ${elapsedHrs}h，已自動升級至 ${newPriority}`,
                 { cardId: card.id });
+            // Reaching L2 means the L1 nudges didn't move the card — credit each
+            // recipient with a kanban_nudge_no_reply tick so the avatar drawer
+            // counter surfaces unresponsive bots.
+            try {
+                const entityStatus = require('./entity-status');
+                for (const eid of recipients) {
+                    entityStatus.incrementCounter(card.device_id, eid, 'kanban_nudge_no_reply');
+                }
+            } catch (_) { /* fire-and-forget */ }
         }
         if (serverLog) serverLog('info', 'kanban', `[Stale] Card ${card.id} escalated ${card.priority}→${newPriority}`, { deviceId: card.device_id });
         return true;
