@@ -268,6 +268,14 @@ function attachAvatarClickHandler(container, onClick) {
         // its content might happen to carry (close button, scrim, future chip
         // rows in the P1 operation log section, etc.).
         if (e.target.closest('.entity-status-panel')) return;
+        // Entity-selector surfaces own the click — opening the status drawer
+        // here would steal the user's intent (pick this entity as a filter /
+        // target). The closest() walk catches both opt-in markers and the
+        // currently-known selector containers.
+        if (e.target.closest('[data-no-avatar-click]')) return;
+        if (e.target.closest('.entity-selector')) return;
+        if (e.target.closest('#entityFilters')) return;
+        if (e.target.closest('.kb-auto-filter')) return;
         const el = e.target.closest('[data-entity-id]');
         if (!el || !container.contains(el)) return;
         const eid = parseInt(el.dataset.entityId, 10);
