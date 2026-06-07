@@ -1995,24 +1995,48 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                 }
             }
 
-            // OODA-R Phase 1 #3c — done-evidence gate.
-            // Blocks in_progress→done (or any →done) when the card has not
-            // accumulated a composer-marker preflight comment AND a
-            // subsequent 5-item evidence comment. Bypass: card.requires_preflight_review === false.
+            // OODA-R Phase 1 #3c (+ #4 harden) — done-evidence gate.
+            // Blocks any →done transition when the card has not accumulated
+            // a composer-marker preflight comment + a subsequent 6-item
+            // evidence comment + a PR link + the required artifact files
+            // (jest log always; screenshot for P0/P1 UI cards). Bypass via
+            // card.requires_preflight_review === false.
             if (newStatus === 'done' && card.requires_preflight_review !== false) {
-                const cs = await pool.query(
-                    `SELECT text, is_system AS "isSystem", created_at AS "createdAt"
-                     FROM kanban_comments
-                     WHERE card_id = $1 AND device_id = $2
-                     ORDER BY created_at ASC`,
-                    [cardId, deviceId]
-                );
+                const [csRes, filesRes] = await Promise.all([
+                    pool.query(
+                        `SELECT text, is_system AS "isSystem", created_at AS "createdAt"
+                         FROM kanban_comments
+                         WHERE card_id = $1 AND device_id = $2
+                         ORDER BY created_at ASC`,
+                        [cardId, deviceId]
+                    ),
+                    pool.query(
+                        `SELECT filename, mime_type, created_at
+                         FROM kanban_files
+                         WHERE card_id = $1 AND device_id = $2
+                         ORDER BY created_at ASC`,
+                        [cardId, deviceId]
+                    ),
+                ]);
+                // Heuristic painTags via the classifier on title + description
+                // so the gate knows whether to require a screenshot.
+                let painTags = [];
+                try {
+                    const classifier = require('./agent-improvement/classifier');
+                    painTags = classifier.classifyPainTags(
+                        `${card.title || ''}\n\n${card.description || ''}`,
+                        undefined,
+                    );
+                } catch (_) { /* classifier optional; gate falls back */ }
                 const { evaluateDoneGate } = require('./agent-improvement/done-gate');
                 const verdict = evaluateDoneGate({
                     oldStatus,
                     newStatus,
                     requiresPreflightReview: card.requires_preflight_review !== false,
-                    comments: cs.rows,
+                    comments: csRes.rows,
+                    files: filesRes.rows,
+                    severity: (card.priority || 'P2'),
+                    painTags,
                 });
                 if (!verdict.allowed) {
                     return res.status(400).json({
