@@ -148,9 +148,9 @@ function weightedPick(items, keyFn, weights) {
 let VISION_IMAGES = [
     // img-f3a1.svg retired (pass rate 100%) — replaced below
     { file: null, description: 'A system monitoring dashboard showing CPU at 87%, RAM usage 11.2 GB of 16 GB, disk I/O at 340 MB/s, and 3 active processes flagged in red', keywords: ['CPU', '87', 'RAM', 'disk', 'three', 'red'] },
-    { file: 'img-d4e9.svg', keywords: ['green', 'triangle'] },
-    { file: 'img-a2f5.svg', keywords: ['yellow', 'star'] },
-    { file: 'img-c8b3.svg', keywords: ['cat', 'orange'] },
+    { file: null, description: 'A product comparison table with three columns: Basic at $9/month, Pro at $29/month, and Enterprise with custom pricing — the Pro column is highlighted in yellow', keywords: ['comparison', 'three', 'basic', 'pro', 'enterprise', 'yellow', '29'] },
+    { file: null, description: 'A mobile app notifications screen showing 3 unread messages from "Alice", 1 calendar reminder for "Team Meeting at 2 PM", and a battery warning in orange', keywords: ['three', 'unread', 'alice', 'calendar', 'meeting', 'orange', 'battery'] },
+    { file: null, description: 'A traffic light monitoring dashboard showing intersection data: 127 vehicles in the last hour, average wait time 45 seconds, current signal status is green', keywords: ['traffic', '127', 'vehicles', 'wait', '45', 'green'] },
     // ── Easy tier (20%) — basic shape/object recognition ──
     { file: null, description: 'A red heart shape centered on a white background', keywords: ['heart', 'red'] },
     { file: null, description: 'A green checkmark inside a circle', keywords: ['checkmark', 'green', 'circle'] },
@@ -188,6 +188,10 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── New hard-tier additions ──
+    { file: null, description: 'A server rack diagram: two 1U servers at top, three 2U storage arrays in the middle, and one 4U GPU cluster at the bottom — 12U used out of 20U total capacity', keywords: ['server', 'rack', 'two', 'three', '12', '20', 'GPU'] },
+    { file: null, description: 'A sticky note on a monitor reading: TODO: review PR #482, deploy to staging, call Sarah @ 3:30 PM, buy milk — written in black marker', keywords: ['todo', 'PR', '482', 'staging', 'sarah', 'milk'] },
+    { file: null, description: 'A code diff viewer: three lines in red showing deleted code `if x == None:` and two lines in green showing added code `if x is None:` — with a comment "Fix null check"', keywords: ['code', 'diff', 'three', 'red', 'two', 'green', 'none'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +372,17 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── New additions: medium-hard DP / algorithm problems ──
+    { title: 'Longest Common Subsequence', description: 'Write `solve(s1, s2)` — return the length of the longest common subsequence (non-contiguous characters allowed).',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"", "abc"', expected: '0' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array of non-negative bar heights, return the total units of water trapped between the bars.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[1,0,1]', expected: '1' },{ input: '[]', expected: '0' }] },
+    { title: 'Top K Frequent Elements', description: 'Write `solve(nums, k)` — return the k most frequent elements; sort by frequency descending, then by value ascending for ties.',
+      testCases: [{ input: '[1,1,1,2,2,3], 2', expected: '[1,2]' },{ input: '[1], 1', expected: '[1]' },{ input: '[4,1,2,2,3,3,3], 2', expected: '[3,2]' }] },
+    { title: 'All Permutations', description: 'Write `solve(nums)` — return all distinct permutations of a unique-integer array, sorted lexicographically.',
+      testCases: [{ input: '[1,2,3]', expected: '[[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]' },{ input: '[1,2]', expected: '[[1,2],[2,1]]' },{ input: '[1]', expected: '[[1]]' }] },
+    { title: 'Median of Two Sorted Arrays', description: 'Write `solve(nums1, nums2)` — return the median of two sorted arrays. For even total length return the average of the two middle values.',
+      testCases: [{ input: '[1,3], [2]', expected: '2' },{ input: '[1,2], [3,4]', expected: '2.5' },{ input: '[], [1]', expected: '1' },{ input: '[2], []', expected: '2' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +432,12 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── New medium/hard additions ──
+    { question: 'Two standard six-sided dice are rolled. What is the probability of getting a sum of exactly 8? Express as a simplified fraction.', expectedKeywords: ['5/36'] },
+    { question: 'A recipe calls for 2.5 cups of flour for 12 cookies. How many cups of flour are needed to make 30 cookies?', expectedKeywords: ['6.25', '6 1/4'] },
+    { question: 'What is each interior angle of a regular octagon in degrees?', expectedKeywords: ['135'] },
+    { question: 'Alice can complete a task alone in 4 hours; Bob can complete the same task alone in 6 hours. Working together, how many hours will it take them? Express as a decimal.', expectedKeywords: ['2.4', '12/5'] },
+    { question: 'How many different 4-digit PINs can be formed if no digit is repeated and the PIN cannot start with zero?', expectedKeywords: ['4536'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +515,12 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── New hard-tier additions ──
+    { text: 'The webhook requires an HMAC-SHA256 signature in the X-Signature-256 header formatted as sha256 equals the hex digest', keywords: ['webhook', 'HMAC', 'SHA256', 'signature', 'header', 'hex'] },
+    { text: 'The new office at 1847 Silicon Valley Boulevard Suite 404 Cupertino California opens on Monday the ninth', keywords: ['1847', 'Silicon', 'Valley', 'Suite', '404', 'Cupertino', 'Monday'] },
+    { text: 'The Kubernetes pod crashed with OOMKilled status after consuming 2.1 gigabytes against a memory limit of 2 gigabytes', keywords: ['Kubernetes', 'OOMKilled', 'memory', 'limit', 'gigabytes'] },
+    { text: 'The database migration rollback failed with error code E1215 due to a foreign key constraint violation between the orders and customers tables', keywords: ['database', 'migration', 'rollback', 'E1215', 'foreign', 'constraint', 'orders', 'customers'] },
+    { text: 'Your two-factor authentication backup codes are 7F3A9B 2D8E4C 1K0P6M — store them in a secure offline location', keywords: ['two-factor', 'authentication', 'backup', 'codes', '7F3A9B', 'secure'] },
 ];
 
 // ============================================
