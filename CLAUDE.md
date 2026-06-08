@@ -80,6 +80,15 @@ EClaw/
 │   ├── kanban-dependencies.js  # Kanban card dependency chain (cycle detection, topological sort)
 │   ├── api_kanban_dependencies.js # Kanban dependency HTTP API (add/remove/list deps)
 │   ├── lib/kanban-events.js    # Kanban event emitter (card status changes)
+│   ├── agent-improvement.js   # OODA-R agent improvement: episode ingestion + preflight endpoint
+│   ├── agent-improvement/     # OODA-R submodules
+│   │   ├── episode-schema.js  # Pain taxonomy (8 tags) + episode validation + secret detection
+│   │   ├── classifier.js      # Keyword heuristic pain-tag classifier
+│   │   ├── preflight.js       # Preflight comment composer (lessons + checklist)
+│   │   ├── done-gate.js       # Done-evidence gate (v2: artifacts + PR link + User POV)
+│   │   ├── heartbeat.js       # Anti-laziness sweeper (2h prompt, 24h escalate)
+│   │   └── audit-rules.js     # Compliance + multi-tenant audit rules (9 rules)
+│   ├── entity-status.js       # Per-entity error counters + operation log + quote service
 │   ├── openapi.yaml          # OpenAPI 3.0 specification
 │   ├── auth_schema.sql       # User accounts + auth SQL schema
 │   ├── mission_schema.sql    # Mission dashboard SQL schema
@@ -169,7 +178,7 @@ EClaw/
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
 │   ├── tests/                # Regression + integration tests (59 files)
-│   ├── tests/jest/           # Jest unit tests (221 files, CI-run via `npm test`)
+│   ├── tests/jest/           # Jest unit tests (260 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -276,6 +285,10 @@ EClaw/
 | `pending_cross_messages` | Cross-device message queue |
 | `discord_bots` | Discord application registrations per entity |
 | `device_preferences` | Per-device settings (prefs JSONB, org_chart JSONB for hierarchy + behavior options) |
+| `agent_improvement_episodes` | OODA-R episode records (pain tags, severity, evidence, lessons) |
+| `entity_error_counters` | Per-entity cumulative error counters by axis (chat_no_reply, a2a_no_reply, etc.) |
+| `entity_operation_log` | Per-entity operation log (event type, summary, payload, timestamp) |
+| `outbound_msg_pending` | Tracks outbound messages awaiting reply for entity-status sweeper |
 
 ### API Route Groups
 
@@ -332,6 +345,8 @@ EClaw/
 | `/api/chat/message/:id/related` | index.js + chat-embedding.js | Nearest-neighbor message lookup |
 | `/api/mission/card/:id/deps` | api_kanban_dependencies.js | Kanban card dependency chain (add/remove/list dependencies) |
 | `/api/idle-dispatch/*` | api_idle_dispatch.js | Idle dispatch API (queue status, manual drain) |
+| `/api/agent-improvement/*` | agent-improvement.js | OODA-R episode ingestion, preflight composer, episode listing |
+| `/api/entity-status/*` | entity-status.js | Per-entity error counters, operation log, quote service |
 | `/api/health`, `/api/version` | index.js | Health check and version |
 | `/c/:code` | index.js | Shareable chat link (read-only view) |
 | `/`, `/landing`, `/llms.txt` | index.js | Landing page, SEO, AI search discovery |
@@ -1112,11 +1127,26 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Skill Doc Placeholder Redesign (v1.1182)**: IMMEDIATE ACTION example payload placeholder redesign (Path A)
 - **i18n Expansion**: Point-and-Edit Demo (83 zh keys), zh-CN 149 missing keys, es H4 showcase 25 keys, Android AiChat streaming status 14 locales, Android 3 hardcoded UI strings externalized
 
+### Recent Features (v1.1184.x+)
+
+- **OODA-R Agent Improvement System (Phase 0–1)**: Closed-loop agent self-improvement pipeline — `agent-improvement.js` module with episode ingestion (`POST /api/agent-improvement/episode`), heuristic pain-tag classifier (8 taxonomy tags: delivery_reliability, auth_session, redirect_deeplink, ux_feedback, agent_ownership, task_context, test_coverage, scope_completeness), preflight comment composer, and episode listing; `episode-schema.js` defines PAIN_TAXONOMY + SEVERITY_LEVELS + secret detection; `classifier.js` maps free-form text to pain tags; `agent_improvement_episodes` table; 3 Jest test suites
+- **Kanban Preflight Auto-Fire (Phase 1 #3b)**: When card moves to `in_progress`, auto-generates preflight comment from prior episodes + required 6-item checklist (Scope, Acceptance, Test plan, Evidence plan, Out-of-scope, User POV); hooked into `kanban.js` card transition; `requires_preflight_review` boolean column on `kanban_cards` (default TRUE)
+- **Done-Evidence Gate (Phase 1 #3c + #4)**: Prevents moving cards to `done` without: preflight comment, evidence citing all 6 checklist items, PR link, and severity-aware artifacts (P0/P1 UI cards require screenshot + jest log; P0/P1 non-UI require jest log); `done-gate.js` v2 with backward-compatible v1 text-only fallback; 2 Jest test suites (43+ cases)
+- **Anti-Laziness Heartbeat (Phase 1 #4)**: `heartbeat.js` sweeper detects stuck `in_progress` cards — >2h no comment → posts "what's next?" prompt; >24h → moves to `blocked` + system note; 5-minute sweep interval with deduplication; started on server boot
+- **Entity Status Panel**: `entity-status.js` module — per-entity cumulative error counters (`chat_no_reply`, `a2a_no_reply`, `kanban_nudge_no_reply`, `system_msg_no_reply`); operation log; quote service for chat injection; `entity_error_counters` + `entity_operation_log` + `outbound_msg_pending` tables; JWT cookie session auth fallback
+- **Audit Rules Module**: `audit-rules.js` — 9 deterministic compliance rules across 2 dimensions (Compliance: hardcoded device IDs, absolute paths, entity ID comparisons; Multi-Tenant: missing entity_id filters, broadcast without recipients); not yet wired to sweep job
+- **Entity Counter Tracking Fixes**: Track brain silence (not just push failure) in counters; track outbound in same-device delivery path
+- **Help Icon Tap Target Fix**: Expanded tap target to 36×36 via `::after` pseudo-element
+- **showConfirm Default Fix**: Default button text changed to 'Confirm' instead of 'OK' for danger flows
+- **Avatar Drawer Improvements**: Card chips reuse autolink-chip popover + quote token; exclude entity-selector surfaces from avatar click; `chat_no_reply` + `a2a_no_reply` + `system_msg_no_reply` hooks
+- **Kanban Nudge Counter Integration**: Increment `entity_error_counters` on L2 escalation
+- **Roadmap OODA-R Section**: AI agent self-improvement roadmap section on roadmap page
+
 ---
 
 ## Test Coverage Summary
 
-**~465 total API routes** across all modules (415 excluding Article Publisher), **~84% covered** by Jest + integration tests (~3092 test cases across 221 Jest files + 59 integration tests).
+**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~3605 test cases across 260 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -1209,7 +1239,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | R2 Quota Rich Card | `node backend/tests/test-r2-quota-rich-card.js` | Device ID + Secret | R2 quota exceeded rich card E2E |
 | Subscription Plans Live | `node backend/tests/test-subscription-plans-live.js` | Device ID + Secret | Subscription plans + wallet live verification |
 
-### Jest Unit Tests (CI-run, `npm test`, 206 files)
+### Jest Unit Tests (CI-run, `npm test`, 260 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -1280,11 +1310,17 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Invite Clicks | `tests/jest/invite-clicks.test.js` | Invite click telemetry + funnel dashboard |
 | Kanban Dispatch Mode UX | `tests/jest/kanban-dispatch-mode-ux.test.js` | Dispatch mode toggle UI validation |
 | Portal Workspace Telemetry | `tests/jest/portal-workspace-telemetry.test.js` | Workspace page view telemetry |
+| Agent Improvement Episode Schema | `tests/jest/agent-improvement-episode-schema.test.js` | Episode validation, secret detection, pain taxonomy |
+| Agent Improvement Ingest | `tests/jest/agent-improvement-ingest.test.js` | POST/GET episode ingestion endpoints, auth, classification |
+| Agent Improvement Preflight | `tests/jest/agent-improvement-preflight.test.js` | Preflight composer lessons, checklist, episode ranking |
+| Kanban OODA-R Done Gate | `tests/jest/kanban-ooda-r-done-gate.test.js` | Done-gate v1 text presence, preflight marker, 5-item checklist |
+| Kanban OODA-R Done Gate v2 | `tests/jest/kanban-ooda-r-done-gate-v2.test.js` | Done-gate v2 artifacts, PR links, User POV, severity tiers |
+| Kanban OODA-R Preflight Hook | `tests/jest/kanban-ooda-r-preflight-hook.test.js` | Preflight auto-fire on card→in_progress transition |
 
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (221 files)
+cd backend && npm test                  # Jest unit tests (260 files)
 cd backend && npm run lint              # ESLint
 ```
 
