@@ -25,21 +25,23 @@ let app;
 const SAMPLE_ROW = {
     id: 1,
     channel_type: 'openclaw-channel-eclaw',
-    entity_refs: '#1',
+    entity_refs: null,
     kind: 'fix',
     title: 'Sample',
     detail: 'Sample detail',
     status: 'mitigated',
     occurred_at: '2026-06-08T05:33:00.000Z',
     source: 'seed',
+    pr_url: null,
 };
 
 beforeEach(() => {
     jest.resetModules();
-    // SQL-aware mock: seedIfEmpty sees a non-empty table (skips seeding),
-    // GET returns one canned record + total, INSERT returns an id.
+    // SQL-aware mock: meta reports the current seed version (so reconcileSeed is a
+    // no-op), GET returns one canned record + total, INSERT returns an id.
     mockQuery = jest.fn((sql) => {
-        if (/INSERT INTO channel_repair_log/i.test(sql)) return Promise.resolve({ rows: [{ id: 99 }] });
+        if (/FROM channel_repair_log_meta/i.test(sql)) return Promise.resolve({ rows: [{ v: '2' }] });
+        if (/INSERT INTO channel_repair_log\b/i.test(sql)) return Promise.resolve({ rows: [{ id: 99 }] });
         if (/COUNT\(\*\)/i.test(sql)) return Promise.resolve({ rows: [{ c: 8 }] });
         if (/SELECT id, channel_type/i.test(sql)) return Promise.resolve({ rows: [SAMPLE_ROW] });
         return Promise.resolve({ rows: [] });
@@ -141,6 +143,20 @@ describe('POST /api/channel-repair-log validation', () => {
             .send({ ...auth, channel_type: 'codex-eclaw-bridge', kind: 'fix', title: 'x', occurred_at: future });
         expect(res.status).toBe(400);
     });
+
+    it('400 on non-github pr_url', async () => {
+        const res = await request(app).post('/api/channel-repair-log')
+            .send({ ...auth, channel_type: 'codex-eclaw-bridge', kind: 'fix', title: 'x', pr_url: 'https://evil.example.com/x' });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toMatch(/pr_url/i);
+    });
+
+    it('200 with a valid github pr_url', async () => {
+        const res = await request(app).post('/api/channel-repair-log')
+            .send({ ...auth, channel_type: 'codex-eclaw-bridge', kind: 'fix', title: 'x', pr_url: 'https://github.com/HankHuang0516/EClaw/pull/3233' });
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+    });
 });
 
 describe('internal helpers', () => {
@@ -161,5 +177,20 @@ describe('internal helpers', () => {
         expect(internal.VALID_CHANNELS.size).toBe(4);
         expect(internal.VALID_KINDS.has('fix')).toBe(true);
         expect(internal.VALID_KINDS.has('bogus')).toBe(false);
+    });
+
+    it('channel metadata is user-facing (no internal entity refs)', () => {
+        for (const ch of internal.CHANNELS) {
+            expect(ch).toHaveProperty('summary');
+            expect(ch).not.toHaveProperty('entities');
+            expect(ch.summary).not.toMatch(/#\d|Mac_|project-[a-z]/);
+        }
+    });
+
+    it('PR_URL_RE accepts github URLs and rejects others', () => {
+        expect(internal.PR_URL_RE.test('https://github.com/HankHuang0516/EClaw/pull/3233')).toBe(true);
+        expect(internal.PR_URL_RE.test('https://evil.example.com/x')).toBe(false);
+        expect(internal.PR_URL_RE.test('http://github.com/x')).toBe(false);
+        expect(internal.PR_URL_RE.test('https://github.com/a" onerror=x')).toBe(false);
     });
 });

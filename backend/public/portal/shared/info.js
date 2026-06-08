@@ -498,6 +498,10 @@ async function copyClaudeOpenclawExample() {
                         ? window.renderSafeMarkdownInline(r.detail) : esc(r.detail))
                     : '';
                 const statusHtml = r.status ? '<span class="crl-status">' + esc(r.status) + '</span>' : '';
+                // pr_url is validated server-side to a plain github.com URL (no quotes/spaces).
+                const prHtml = (typeof r.pr_url === 'string' && /^https:\/\/github\.com\//i.test(r.pr_url))
+                    ? '<a class="crl-pr" href="' + esc(r.pr_url) + '" target="_blank" rel="noopener noreferrer">' + tr('crl_pr_link', 'View PR') + '</a>'
+                    : '';
                 return '<div class="crl-entry kind-' + esc(r.kind) + '">' +
                     '<div class="crl-entry-head">' +
                         '<span class="crl-kind crl-kind-' + esc(r.kind) + '">' + esc(kindLabel(r.kind)) + '</span>' +
@@ -506,12 +510,13 @@ async function copyClaudeOpenclawExample() {
                         '<span class="crl-time">' + fmtTime(r.occurred_at) + '</span>' +
                     '</div>' +
                     (detailHtml ? '<div class="crl-entry-detail">' + detailHtml + '</div>' : '') +
+                    (prHtml ? '<div class="crl-entry-foot">' + prHtml + '</div>' : '') +
                     '</div>';
             }).join('');
             return '<div class="crl-group">' +
                 '<div class="crl-group-head">' +
                     '<span class="crl-group-title">' + esc(meta.label) + '</span>' +
-                    '<span class="crl-group-entities">' + esc(meta.entities) + '</span>' +
+                    '<span class="crl-group-entities">' + esc(meta.summary || '') + '</span>' +
                     '<span class="crl-group-count">' + groups[type].length + '</span>' +
                 '</div>' + rows + '</div>';
         }).join('');
