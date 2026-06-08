@@ -717,6 +717,29 @@
 .rn-platforms { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
 .rn-platform { font-size: 11px; padding: 2px 8px; border-radius: 10px; background: var(--input-bg); color: var(--text-secondary); }
 
+/* Channel Repair Log */
+.crl-group { margin-bottom: 22px; }
+.crl-group-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-bottom: 8px; margin-bottom: 12px; border-bottom: 1px solid var(--card-border); }
+.crl-group-title { font-size: 16px; font-weight: 800; }
+.crl-group-entities { font-size: 12px; color: var(--text-muted); }
+.crl-group-count { font-size: 11px; color: var(--text-muted); margin-left: auto; }
+.crl-entry { background: var(--card); border: 1px solid var(--card-border); border-left: 3px solid var(--card-border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; }
+.crl-entry.kind-fix { border-left-color: var(--success); }
+.crl-entry.kind-guideline { border-left-color: var(--primary); }
+.crl-entry.kind-risk { border-left-color: var(--danger, #e5534b); }
+.crl-entry.kind-todo { border-left-color: var(--warning); }
+.crl-entry-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.crl-kind { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; flex-shrink: 0; }
+.crl-kind-fix { background: rgba(76, 175, 80, 0.15); color: var(--success); }
+.crl-kind-guideline { background: rgba(108, 99, 255, 0.15); color: var(--primary); }
+.crl-kind-risk { background: rgba(229, 83, 75, 0.15); color: var(--danger, #e5534b); }
+.crl-kind-todo { background: rgba(255, 210, 63, 0.15); color: var(--warning); }
+.crl-entry-title { font-size: 14px; font-weight: 700; }
+.crl-time { font-size: 12px; color: var(--text-muted); margin-left: auto; }
+.crl-status { font-size: 10px; padding: 1px 7px; border-radius: 10px; background: var(--input-bg); color: var(--text-secondary); text-transform: uppercase; font-weight: 600; }
+.crl-entry-detail { margin-top: 8px; font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+.crl-empty { text-align: center; padding: 40px; color: var(--text-secondary); }
+
 /* ══════════════ Compare Styles ══════════════ */
 .cmp-hero { text-align: center; padding: 24px 0 20px; }
 .cmp-hero-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
