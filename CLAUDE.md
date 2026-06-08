@@ -18,7 +18,7 @@
 ```
 EClaw/
 ├── backend/                  # Node.js Express server (deployed to Railway)
-│   ├── index.js              # Main server (~17,979 lines) — all API routes
+│   ├── index.js              # Main server (~22,320 lines) — all API routes
 │   ├── db.js                 # PostgreSQL connection pool + schema creation
 │   ├── auth.js               # Auth module (JWT, OAuth, OIDC, RBAC)
 │   ├── mission.js            # Mission Control dashboard system
@@ -178,7 +178,7 @@ EClaw/
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
 │   ├── tests/                # Regression + integration tests (59 files)
-│   ├── tests/jest/           # Jest unit tests (260 files, CI-run via `npm test`)
+│   ├── tests/jest/           # Jest unit tests (261 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -241,7 +241,7 @@ EClaw/
 
 ### Backend (Node.js/Express)
 
-- **Single-file server**: `backend/index.js` (~18,186 lines) contains all API routes
+- **Single-file server**: `backend/index.js` (~22,320 lines) contains all API routes
 - **Database**: PostgreSQL (Railway-managed), connection in `backend/db.js`
 - **Real-time**: Socket.IO for live updates to Web Portal and Android app
 - **Auth**: JWT tokens (cookie-based for web, header-based for API), social OAuth (Google, Facebook), OIDC
@@ -1146,7 +1146,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 
 ## Test Coverage Summary
 
-**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~3605 test cases across 260 Jest files + 59 integration tests).
+**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~3621 test cases across 261 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -1239,7 +1239,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | R2 Quota Rich Card | `node backend/tests/test-r2-quota-rich-card.js` | Device ID + Secret | R2 quota exceeded rich card E2E |
 | Subscription Plans Live | `node backend/tests/test-subscription-plans-live.js` | Device ID + Secret | Subscription plans + wallet live verification |
 
-### Jest Unit Tests (CI-run, `npm test`, 260 files)
+### Jest Unit Tests (CI-run, `npm test`, 261 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -1316,11 +1316,13 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | Kanban OODA-R Done Gate | `tests/jest/kanban-ooda-r-done-gate.test.js` | Done-gate v1 text presence, preflight marker, 5-item checklist |
 | Kanban OODA-R Done Gate v2 | `tests/jest/kanban-ooda-r-done-gate-v2.test.js` | Done-gate v2 artifacts, PR links, User POV, severity tiers |
 | Kanban OODA-R Preflight Hook | `tests/jest/kanban-ooda-r-preflight-hook.test.js` | Preflight auto-fire on card→in_progress transition |
+| Content Import | `tests/jest/content-import.test.js` | Content import URL allowlist, SSRF guard, CORS proxy, iframe sandbox |
+| Channel Repair Log | `tests/jest/channel-repair-log.test.js` | Channel repair log GET/POST, auth, validation, secret scrub |
 
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (260 files)
+cd backend && npm test                  # Jest unit tests (261 files)
 cd backend && npm run lint              # ESLint
 ```
 
@@ -1339,7 +1341,7 @@ Set in `backend/.env` (gitignored):
 - `server_logs` schema extension is backward-compatible — all existing 67+ `serverLog()` calls work without modification (new fields default to null)
 - Entity unbind calls `createDefaultEntity()` which resets all fields including new ones — no separate cleanup needed
 - `const` redeclaration in same scope is a JS error — check existing variable names before adding new ones (e.g., `adminAuth` already declared at line 1198)
-- `index.js` is a single ~17,979-line file — use line numbers when referencing specific code sections
+- `index.js` is a single ~22,320-line file — use line numbers when referencing specific code sections
 - Module initialization order matters: `db.js` → `devices` in-memory map → module `require()` calls with dependency injection
 - `scheduler.js` is dead code — no longer required by any module after v1.362 legacy schedule removal
 - `kanban.js` is the replacement for the legacy schedule/todo system — mounted at `/api/mission/card*`
