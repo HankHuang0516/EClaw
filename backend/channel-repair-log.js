@@ -64,7 +64,7 @@ function looksLikeSecret(...vals) {
 
 // Bump when SEED_RECORDS content changes so deployed instances replace the old
 // curated rows (source='seed') in place, without touching monitor/manual rows.
-const SEED_VERSION = 2;
+const SEED_VERSION = 3;
 
 // ============================================
 // SCHEMA BOOTSTRAP — idempotent, safe on every boot.
@@ -125,7 +125,8 @@ const SEED_RECORDS = [
         channel_type: 'claude-code-eclaw-channel', kind: 'fix',
         title: 'Fixed the bot appearing stuck while background work ran',
         detail: 'Previously the assistant could look "busy" and stop replying while long background jobs were running. It now stays responsive and answers your messages normally.',
-        status: 'resolved', occurred_at: '2026-05-11T06:00:00Z'
+        status: 'resolved', occurred_at: '2026-05-11T06:00:00Z',
+        pr_url: 'https://github.com/HankHuang0516/claude-code-eclaw-channel/pull/2'
     },
     {
         channel_type: 'claude-code-eclaw-channel', kind: 'fix',
@@ -150,7 +151,8 @@ const SEED_RECORDS = [
         channel_type: 'codex-eclaw-bridge', kind: 'fix',
         title: 'Automatic reconnection for the Codex connection',
         detail: 'If the connection to Codex stalls, the bridge now restarts it automatically so replies resume on their own, with no manual steps needed.',
-        status: 'resolved', occurred_at: '2026-06-08T05:27:00Z'
+        status: 'resolved', occurred_at: '2026-06-08T05:27:00Z',
+        pr_url: 'https://github.com/HankHuang0516/codex-eclaw-bridge/pull/7'
     }
 ];
 
