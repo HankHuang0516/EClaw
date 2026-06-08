@@ -1631,6 +1631,10 @@ app.get('/api/help', (req, res) => {
             { title: 'GET timeline (last 7 days)', curl: `curl -s "${apiBase}/api/usage/timeline?deviceId=${deviceId}&botSecret=${botSecret}&entityId=${eId}&hours=168"` },
             { title: 'Dashboard usage widget v2 (web portal — Session/Weekly % bars + projects + status footer, no cost displays)', curl: `# Visit dashboard:\n# https://${req.hostname}/portal/dashboard.html\n# Widget polls /api/usage/snapshot every 30s (no timeline call).\n# Claude card: Session bar (live.five_hour_pct from statusLine, else estimated from sessions) + Weekly bar (live.seven_day_pct, else estimated).\n#   Reset countdowns: Session = oldest session.first_seen + 5h, Weekly = no reset shown.\n#   Estimate marker '(est)' appended when no live %.\n# Codex card: Session + Weekly bars from rate_limits.{five_hour_pct, seven_day_pct} with *_resets_at countdowns.\n# Projects today: top 5 by tokens (project_id || basename(cwd)), comma-separated full integers, NO $ cost.\n# Status footer: Rate (heavy/normal/idle from last-hour Claude+Codex tokens) + Status (✓ synced / ⚠ Daemon offline if received_at > 5min) + Today total tokens (no $).\n# Subscription users only see % remaining — cost displays intentionally removed.` }
         ],
+        channel_repair_log: [
+            { title: 'GET channel repair log (public; filter channel/kind/limit)', curl: `curl -s "${apiBase}/api/channel-repair-log?limit=50"  # &channel=openclaw-channel-eclaw&kind=fix` },
+            { title: 'POST a repair record (auth: deviceSecret OR entityId+botSecret; never include secrets)', curl: `curl -s -X POST "${apiBase}/api/channel-repair-log" -H "Content-Type: application/json" -d ${d},"channel_type":"openclaw-channel-eclaw","entity_refs":"#1","kind":"fix","title":"...","detail":"...","status":"mitigated","occurred_at":"2026-06-08T05:33:00Z","source":"monitor"}'` }
+        ],
         remote_control: [
             { title: 'Screen capture (UI tree, long-poll ≤5s)', curl: `curl -s -X POST "${apiBase}/api/device/screen-capture" -H "Content-Type: application/json" -d ${d}}'` },
             { title: 'Send tap', curl: `curl -s -X POST "${apiBase}/api/device/control" -H "Content-Type: application/json" -d ${d},"command":"tap","params":{"x":100,"y":200}}'` },
@@ -1870,6 +1874,15 @@ try {
     console.log('[UsageAPI] Module loaded successfully');
 } catch (err) {
     console.error('[UsageAPI] Failed to load module:', err.message);
+}
+
+// Channel Repair Log — per-channel-type maintenance timeline (info page tab)
+try {
+    const channelRepairModule = require('./channel-repair-log')(devices);
+    app.use('/api/channel-repair-log', channelRepairModule.router);
+    console.log('[ChannelRepairLog] Module loaded successfully');
+} catch (err) {
+    console.error('[ChannelRepairLog] Failed to load module:', err.message);
 }
 
 // Mindmap — multi-layer thinking graph (Card #19, Phase 1: schema + CRUD)

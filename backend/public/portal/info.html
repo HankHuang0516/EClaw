@@ -57,6 +57,7 @@
             <button class="info-tab" data-info-tab="faq" data-i18n="info_tab_faq">❓ FAQ</button>
             <button class="info-tab" data-info-tab="release-notes" data-i18n="info_tab_release_notes">📋 Releases</button>
             <button class="info-tab" data-info-tab="boundaries" data-i18n="info_tab_boundaries">🛡️ Bot Boundaries</button>
+            <button class="info-tab" data-info-tab="channel-repair" data-i18n="info_tab_channel_repair">🔧 Channel Repair</button>
             <button class="info-tab info-tab-flagged" data-info-tab="point-edit-demo" data-i18n="info_tab_point_edit_demo" hidden>🎯 Point-and-Edit Demo</button>
             <button class="info-tab" onclick="window.location.href='roadmap.html'" data-i18n="info_tab_roadmap">🗺️ Roadmap</button>
             <button class="info-tab" onclick="window.location.href='about-founder.html'" data-i18n="info_tab_about_founder">👤 Founder Story</button>
@@ -5432,6 +5433,38 @@ platforms:
                 </div>
             </div>
         </div><!-- /panel-boundaries -->
+
+
+        <!-- ══════════════════════════════════════════════════
+             TAB: CHANNEL REPAIR LOG (per-channel maintenance timeline)
+             ══════════════════════════════════════════════════ -->
+        <div class="info-panel" id="panel-channel-repair">
+            <div class="rn-hero">
+                <div class="rn-hero-title" data-i18n="crl_hero_title">Channel Repair Log</div>
+                <div class="rn-hero-subtitle" data-i18n="crl_hero_subtitle">Per-channel maintenance timeline — repair records, guidelines, risks and TODOs for each EClaw channel type, newest first.</div>
+                <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;">
+                    <select id="crlChannelFilter" style="padding:8px 12px;border-radius:8px;border:1px solid var(--card-border);background:var(--card-bg);color:var(--text);font-size:13px;">
+                        <option value="all" data-i18n="crl_filter_all_channels">All channels</option>
+                        <option value="openclaw-channel-eclaw" data-i18n="crl_channel_openclaw">OpenClaw Channel (#1/#3/#4)</option>
+                        <option value="claude-code-eclaw-channel" data-i18n="crl_channel_claude">Claude Code Channel (#2)</option>
+                        <option value="hermes-eclaw-channel" data-i18n="crl_channel_hermes">Hermes Channel (#5)</option>
+                        <option value="codex-eclaw-bridge" data-i18n="crl_channel_codex">Codex Bridge (#6)</option>
+                    </select>
+                    <select id="crlKindFilter" style="padding:8px 12px;border-radius:8px;border:1px solid var(--card-border);background:var(--card-bg);color:var(--text);font-size:13px;">
+                        <option value="all" data-i18n="crl_filter_all_kinds">All types</option>
+                        <option value="fix" data-i18n="crl_kind_fix">Repair</option>
+                        <option value="guideline" data-i18n="crl_kind_guideline">Guideline</option>
+                        <option value="risk" data-i18n="crl_kind_risk">Risk</option>
+                        <option value="todo" data-i18n="crl_kind_todo">TODO</option>
+                    </select>
+                    <input type="text" id="crlSearch" data-i18n="crl_search_placeholder" placeholder="Search records..." style="padding:8px 12px;border-radius:8px;border:1px solid var(--card-border);background:var(--card-bg);color:var(--text);font-size:13px;width:180px;">
+                    <span id="crlCount" style="color:var(--text-secondary);font-size:13px;"></span>
+                </div>
+            </div>
+            <div id="crlContainer" style="margin-top:16px;">
+                <div style="text-align:center;padding:40px;color:var(--text-secondary);" data-i18n="crl_loading">Loading repair log...</div>
+            </div>
+        </div><!-- /panel-channel-repair -->
 
 
         <!-- ══════════════════════════════════════════════════

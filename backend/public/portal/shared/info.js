@@ -189,6 +189,7 @@ const SEO_META = {
     'channel-plugins':  { title: 'Channel Plugins',   desc: 'EClawbot channel plugins: OpenClaw, Claude Code, Codex, Telegram, Discord, web chat bridges.' },
     'faq':              { title: 'FAQ',               desc: 'Frequently asked questions about EClawbot — billing, devices, rentals, plugins.' },
     'release-notes':    { title: 'Release Notes',     desc: 'EClawbot release notes and changelog.' },
+    'channel-repair':   { title: 'Channel Repair Log', desc: 'Per-channel maintenance timeline — repair records, guidelines, risks and TODOs for each EClaw channel type.' },
     // Guide sub-pages (#guide/<id>)
     'usecase-ecommerce':           { title: 'E-commerce Bot',          desc: 'Use EClawbot to run an AI-powered storefront and customer-service agent.' },
     'usecase-kanban':              { title: 'Mission Center / Kanban', desc: 'Run AI agents against a shared kanban board with auto-cron tasks.' },
@@ -286,7 +287,7 @@ function handleHash() {
         if (window._navigateToGuide) window._navigateToGuide(guideId);
         return;
     }
-    const validTabs = ['quickstart', 'guide', 'advanced', 'channel-plugins', 'faq', 'release-notes', 'boundaries', 'point-edit-demo'];
+    const validTabs = ['quickstart', 'guide', 'advanced', 'channel-plugins', 'faq', 'release-notes', 'boundaries', 'channel-repair', 'point-edit-demo'];
     if (validTabs.includes(hash)) {
         switchInfoTab(hash);
     }
@@ -433,4 +434,118 @@ async function copyClaudeOpenclawExample() {
     if (panel) observer.observe(panel, { attributes: true, attributeFilter: ['class'] });
     // Also load if already active
     if (panel && panel.classList.contains('active')) loadReleaseNotes();
+})();
+
+// ── Channel Repair Log dynamic rendering ──
+(function() {
+    let crlData = [];
+    let crlChannels = [];
+    let crlLoaded = false;
+    const API = window.location.origin;
+
+    function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; }
+    function tr(key, fallback) {
+        return (typeof i18n !== 'undefined' && i18n.t(key) !== key) ? i18n.t(key) : fallback;
+    }
+
+    async function loadRepairLog() {
+        try {
+            const res = await fetch(API + '/api/channel-repair-log?limit=500');
+            const data = await res.json();
+            if (data.success) {
+                crlData = data.records || [];
+                crlChannels = data.channels || [];
+                crlLoaded = true;
+                applyCrlFilters();
+            }
+        } catch (e) {
+            const c = document.getElementById('crlContainer');
+            if (c) c.innerHTML = '<div class="crl-empty">' + tr('crl_load_failed', 'Failed to load repair log.') + '</div>';
+        }
+    }
+
+    function fmtTime(iso) {
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return esc(iso);
+        const p = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+    }
+
+    function kindLabel(kind) {
+        return tr('crl_kind_' + kind, kind);
+    }
+
+    function render(records) {
+        const c = document.getElementById('crlContainer');
+        if (!c) return;
+        if (!records.length) {
+            c.innerHTML = '<div class="crl-empty">' + tr('crl_empty', 'No records match your filters.') + '</div>';
+            return;
+        }
+        // Group by channel_type, preserving the channel order from the API.
+        const order = crlChannels.map(ch => ch.channel_type);
+        const metaByType = {};
+        crlChannels.forEach(ch => { metaByType[ch.channel_type] = ch; });
+        const groups = {};
+        records.forEach(r => { (groups[r.channel_type] = groups[r.channel_type] || []).push(r); });
+
+        const types = Object.keys(groups).sort((a, b) => order.indexOf(a) - order.indexOf(b));
+        c.innerHTML = types.map(type => {
+            const meta = metaByType[type] || { label: type, entities: '' };
+            const rows = groups[type].map(r => {
+                const detailHtml = r.detail
+                    ? (typeof window.renderSafeMarkdownInline === 'function'
+                        ? window.renderSafeMarkdownInline(r.detail) : esc(r.detail))
+                    : '';
+                const statusHtml = r.status ? '<span class="crl-status">' + esc(r.status) + '</span>' : '';
+                return '<div class="crl-entry kind-' + esc(r.kind) + '">' +
+                    '<div class="crl-entry-head">' +
+                        '<span class="crl-kind crl-kind-' + esc(r.kind) + '">' + esc(kindLabel(r.kind)) + '</span>' +
+                        '<span class="crl-entry-title">' + esc(r.title) + '</span>' +
+                        statusHtml +
+                        '<span class="crl-time">' + fmtTime(r.occurred_at) + '</span>' +
+                    '</div>' +
+                    (detailHtml ? '<div class="crl-entry-detail">' + detailHtml + '</div>' : '') +
+                    '</div>';
+            }).join('');
+            return '<div class="crl-group">' +
+                '<div class="crl-group-head">' +
+                    '<span class="crl-group-title">' + esc(meta.label) + '</span>' +
+                    '<span class="crl-group-entities">' + esc(meta.entities) + '</span>' +
+                    '<span class="crl-group-count">' + groups[type].length + '</span>' +
+                '</div>' + rows + '</div>';
+        }).join('');
+    }
+
+    function applyCrlFilters() {
+        const chan = document.getElementById('crlChannelFilter')?.value || 'all';
+        const kind = document.getElementById('crlKindFilter')?.value || 'all';
+        const q = (document.getElementById('crlSearch')?.value || '').toLowerCase();
+        let filtered = crlData;
+        if (chan !== 'all') filtered = filtered.filter(r => r.channel_type === chan);
+        if (kind !== 'all') filtered = filtered.filter(r => r.kind === kind);
+        if (q) filtered = filtered.filter(r =>
+            (r.title || '').toLowerCase().includes(q) ||
+            (r.detail || '').toLowerCase().includes(q) ||
+            (r.entity_refs || '').toLowerCase().includes(q));
+        const countEl = document.getElementById('crlCount');
+        if (countEl) countEl.textContent = filtered.length + (crlData.length ? ' / ' + crlData.length : '');
+        render(filtered);
+    }
+
+    let searchTimer;
+    const debouncedFilters = () => { clearTimeout(searchTimer); searchTimer = setTimeout(applyCrlFilters, 200); };
+
+    document.getElementById('crlChannelFilter')?.addEventListener('change', applyCrlFilters);
+    document.getElementById('crlKindFilter')?.addEventListener('change', applyCrlFilters);
+    document.getElementById('crlSearch')?.addEventListener('input', debouncedFilters);
+
+    const panel = document.getElementById('panel-channel-repair');
+    if (panel) {
+        const observer = new MutationObserver(() => {
+            if (panel.classList.contains('active') && !crlLoaded) loadRepairLog();
+        });
+        observer.observe(panel, { attributes: true, attributeFilter: ['class'] });
+        if (panel.classList.contains('active')) loadRepairLog();
+    }
 })();
