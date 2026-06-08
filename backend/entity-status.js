@@ -469,7 +469,7 @@ router.get('/_debug/pending', async (req, res) => {
         });
     } catch (err) {
         console.error('[EntityStatus] debug/pending error:', err.message);
-        res.status(500).json({ success: false, error: err.message });
+        res.status(500).json({ success: false, error: 'internal' });
     }
 });
 
