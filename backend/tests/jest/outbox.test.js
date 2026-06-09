@@ -188,4 +188,58 @@ describe('outbox.js — Phase 2 #5 client queue', () => {
         global.localStorage.setItem(outbox.STORAGE_KEY, '<<<not json>>>');
         expect(outbox.snapshot()).toEqual([]);
     });
+
+    test('flushOutbox sends every queued entry whose nextRetryAt is due', async () => {
+        outbox.enqueue({ m: 'a' }, { idempotencyKey: 'k-a' });
+        outbox.enqueue({ m: 'b' }, { idempotencyKey: 'k-b' });
+        const sender = jest.fn().mockResolvedValue(undefined);
+        const result = await outbox.flushOutbox(sender);
+        expect(result.sent).toBe(2);
+        expect(result.failed).toBe(0);
+        expect(sender).toHaveBeenCalledTimes(2);
+        // All entries now sent
+        const final = outbox.snapshot();
+        expect(final.every(e => e.state === 'sent')).toBe(true);
+    });
+
+    test('flushOutbox marks failed entries when sender throws + bumps attempts', async () => {
+        outbox.enqueue({ m: 'a' }, { idempotencyKey: 'k-a' });
+        const sender = jest.fn().mockRejectedValue(new Error('network'));
+        const result = await outbox.flushOutbox(sender);
+        expect(result.sent).toBe(0);
+        // First throw → not terminal, entry is requeued via bumpAttempt
+        expect(result.requeued + result.failed).toBe(1);
+        const entry = outbox.snapshot()[0];
+        expect(entry.attempts).toBe(1);
+    });
+
+    test('flushOutbox terminal-fails an entry after MAX_ATTEMPTS', async () => {
+        outbox.enqueue({ m: 'a' }, { idempotencyKey: 'k-a' });
+        // Pre-bump to one before max so the next throw terminal-fails
+        for (let i = 0; i < outbox.MAX_ATTEMPTS - 1; i++) outbox.bumpAttempt('k-a');
+        // Reset nextRetryAt to now so flushOutbox picks the entry up
+        outbox.update('k-a', (e) => { e.nextRetryAt = Date.now(); return e; });
+        const sender = jest.fn().mockRejectedValue(new Error('network'));
+        const result = await outbox.flushOutbox(sender);
+        expect(result.failed).toBe(1);
+        expect(outbox.snapshot()[0].state).toBe('failed');
+    });
+
+    test('flushOutbox skips entries whose nextRetryAt is in the future', async () => {
+        outbox.enqueue({ m: 'a' }, { idempotencyKey: 'k-a' });
+        outbox.update('k-a', (e) => { e.nextRetryAt = Date.now() + 60_000; return e; });
+        const sender = jest.fn().mockResolvedValue(undefined);
+        const result = await outbox.flushOutbox(sender);
+        expect(result.sent).toBe(0);
+        expect(sender).not.toHaveBeenCalled();
+    });
+
+    test('flushOutbox ignores already-sent entries', async () => {
+        outbox.enqueue({ m: 'a' }, { idempotencyKey: 'k-a' });
+        outbox.markSent('k-a');
+        const sender = jest.fn().mockResolvedValue(undefined);
+        const result = await outbox.flushOutbox(sender);
+        expect(result.sent).toBe(0);
+        expect(sender).not.toHaveBeenCalled();
+    });
 });
