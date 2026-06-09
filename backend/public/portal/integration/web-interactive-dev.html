@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>web-interactive-dev — EClaw Integration</title>
+    <!--
+        Minimum-viable integration of upstream web-interactive-dev v1.0.0
+        (https://github.com/HankHuang0516/web-interactive-dev) into the
+        EClaw portal. Card: card_a0a04dbf0ccb69867b1dc362.
+
+        Scope shipped (1/4): chunk 2 of the parent card — iframe embed.
+        Adapter layer (chunk 1) + integration tests (chunk 4) defer to
+        follow-up cards once the iframe wrapper proves the standalone
+        public API surface is sufficient. NO fork of upstream repo (chunk 3).
+    -->
+    <style>
+        html, body { margin: 0; padding: 0; height: 100%; background: #0d0d12; color: #eee; font-family: -apple-system, "Segoe UI", sans-serif; }
+        .integ-header {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 16px; background: #14141b; border-bottom: 1px solid #2a2a35;
+            position: sticky; top: 0; z-index: 10;
+        }
+        .integ-header h1 { margin: 0; font-size: 14px; font-weight: 600; }
+        .integ-header .v { font-size: 11px; padding: 2px 6px; background: #1e6c4e; border-radius: 4px; color: #d4f4e2; }
+        .integ-header .src { margin-left: auto; font-size: 11px; opacity: 0.6; }
+        .integ-header .src a { color: #6b8eff; text-decoration: none; }
+        .frame { display: block; width: 100%; height: calc(100vh - 47px); border: 0; background: #fff; }
+        .fallback {
+            display: none; padding: 40px 20px; text-align: center;
+            color: #aaa; font-size: 13px; line-height: 1.6;
+        }
+        .fallback code { background: #1e1e26; padding: 2px 6px; border-radius: 3px; color: #ffb86c; }
+        .frame:not([data-loaded]) ~ .fallback { display: block; }
+    </style>
+</head>
+<body>
+    <header class="integ-header">
+        <h1>🛠 web-interactive-dev</h1>
+        <span class="v">v1.0.0</span>
+        <span class="src">embedded from <a href="https://github.com/HankHuang0516/web-interactive-dev/releases/tag/v1.0.0" target="_blank" rel="noopener">github.com/HankHuang0516/web-interactive-dev</a></span>
+    </header>
+    <iframe
+        class="frame"
+        src="https://hankhuang0516.github.io/web-interactive-dev/"
+        title="web-interactive-dev v1.0.0"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        sandbox="allow-scripts allow-forms allow-popups allow-same-origin"
+        onload="this.dataset.loaded = '1';"
+    ></iframe>
+    <div class="fallback">
+        <p>The upstream standalone is not loading. Check <code>https://hankhuang0516.github.io/web-interactive-dev/</code> directly.</p>
+        <p>Source: <code>github.com/HankHuang0516/web-interactive-dev</code> commit <code>4773595938c7</code> tagged <code>v1.0.0</code>.</p>
+    </div>
+</body>
+</html>
