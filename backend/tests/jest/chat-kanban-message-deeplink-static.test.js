@@ -37,7 +37,8 @@ describe('chat message deep-link plumbing', () => {
     test('chat page opens messageId deep-links from query, quotes, and native intents', () => {
         expect(chatHtml).toContain('async function openChatMessageDeepLink(messageId, { showMissingToast = true, scroll = true } = {})');
         expect(chatHtml).toContain("url.searchParams.set('messageId', id);");
-        expect(chatHtml).toContain('const { source, title, excerpt, prefillInput, messageId, meta, ts } = JSON.parse(pq);');
+        expect(chatHtml).toContain('const { source, title, excerpt, messageId, meta, ts } = JSON.parse(pq);');
+        expect(chatHtml).not.toContain('prefillInput, messageId, meta, ts } = JSON.parse(pq)');
         expect(chatHtml).toContain('await openChatMessageDeepLink(messageId, { showMissingToast: true, scroll: true });');
         expect(chatHtml).toContain('const msgId = intent.messageId || quote.messageId');
         expect(chatHtml).toContain("quoteToChat(quote.source || '引用', quote.title || '', quote.excerpt || '');");
