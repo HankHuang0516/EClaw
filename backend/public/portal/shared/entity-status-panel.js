@@ -408,12 +408,25 @@
                 e.stopPropagation();
                 return;
             }
-            // Card chip click: the chip is now a .autolink-chip span — let the
-            // global AutolinkChipPreview document listener open its popover
-            // (the popover has a "打開完整頁面 →" link to navigate). Stop
-            // propagation so the drawer's own click-outside-closes logic
-            // (if any) doesn't fire.
-            if (e.target.closest('.autolink-chip')) {
+            // Card / autolink-chip click. The earlier comment claimed the
+            // document-level chip-preview handler would open the popover —
+            // it doesn't (autolink-chip-preview.js' document listener only
+            // CLOSES on outside-click). Opening lives on each chip's own
+            // onclick attribute that AutolinkChip.flush() bakes in, but the
+            // chips we render here in entity-status-panel are produced
+            // locally (renderSummaryHtml + renderCounterEvents) and don't
+            // get that inline handler. Invoke the preview opener directly
+            // off the click event so the user gets the popover (cf. Hank
+            // 2026-06-09 18:13 TW bug report w/ annotated photos).
+            const chip = e.target.closest && e.target.closest('.autolink-chip');
+            if (chip) {
+                const refType = chip.getAttribute('data-ref-type');
+                const refId = chip.getAttribute('data-ref-id');
+                if (refType && refId && typeof window.AutolinkChipPreview === 'function') {
+                    try { window.AutolinkChipPreview(refType, refId, chip); } catch (_) { /* ok */ }
+                }
+                // Stop propagation so the outer drawer / chat-page click
+                // listeners don't treat this as a panel-area click.
                 e.stopPropagation();
             }
         });
