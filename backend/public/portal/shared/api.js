@@ -95,9 +95,21 @@ const _ECLAW_DIALOG_SHADOW_STYLE = 'style="box-shadow: 0 8px 32px rgba(0, 0, 0, 
 function showConfirm({ message, title, confirmText, cancelText, danger, itemName } = {}) {
     // Dev-time hint: destructive confirms should name the item so a fast-clicking user can
     // verify what's about to be destroyed. Localhost / dev hosts only; silent in production.
-    if (danger && !itemName && typeof window !== 'undefined' && window.location
-        && /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/.test(window.location.hostname)) {
+    const _isDevHost = typeof window !== 'undefined' && window.location
+        && /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/.test(window.location.hostname);
+    if (danger && !itemName && _isDevHost) {
         console.warn('[showConfirm] danger:true called without itemName — caller should pass `itemName` so the dialog can name the destroyed item. Caller:', new Error().stack);
+    }
+    // Dev-time hint: catch contributors who pass a raw i18n key as title/message and the
+    // lookup resolves to itself (key not registered in TRANSLATIONS[*]). Without this the
+    // dialog renders the literal key string to the user with no console signal.
+    if (_isDevHost && typeof i18n !== 'undefined' && i18n.t) {
+        [['title', title], ['message', message]].forEach(([field, val]) => {
+            if (typeof val !== 'string' || !val) return;
+            if (/^[a-z][a-z0-9_]+$/.test(val) && i18n.t(val) === val) {
+                console.warn(`[showConfirm] ${field} looks like an unresolved i18n key (t() returned the key itself): "${val}"`);
+            }
+        });
     }
     return new Promise((resolve) => {
         const t = _tFb;
@@ -116,7 +128,7 @@ function showConfirm({ message, title, confirmText, cancelText, danger, itemName
             ${title ? `<div class="dialog-title" id="${titleId}">${_escHtml(title)}</div>` : ''}
             <div class="dialog-body"><p id="${messageId}" style="margin:0;line-height:1.6;color:var(--text-secondary)">${_escHtml(message)}</p>${itemStrip}</div>
             <div class="dialog-actions">
-                <button type="button" class="btn btn-outline eclaw-confirm-cancel">${_escHtml(cancelText || t('dialog_cancel', 'Cancel'))}</button>
+                <button type="button" class="btn btn-outline eclaw-confirm-cancel"${danger && !cancelText ? ` aria-label="${_escAttr(t('dialog_cancel_aria', 'Cancel, keep current state'))}"` : ''}>${_escHtml(cancelText || t('dialog_cancel', 'Cancel'))}</button>
                 <button type="button" class="btn ${danger ? 'btn-danger' : 'btn-primary'} eclaw-confirm-ok"${danger && !confirmText ? ` aria-label="${_escAttr(t('dialog_confirm_destructive', 'Confirm destructive action'))}"` : ''}>${_escHtml(confirmText || (danger ? t('dialog_confirm', 'Confirm') : t('dialog_ok', 'OK')))}</button>
             </div>
         </div>`;
