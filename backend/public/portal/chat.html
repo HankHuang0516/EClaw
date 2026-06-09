@@ -3202,6 +3202,8 @@
     <script src="shared/api.js"></script>
     <script src="shared/nav.js"></script>
     <script src="shared/auth.js"></script>
+    <!-- Phase 2 #5 offline delivery queue: load before sendMessage runs. -->
+    <script src="shared/outbox.js"></script>
     <script src="../shared/petdx-renderer.js"></script>
     <script src="../shared/avatar-petdx.js"></script>
     <script src="shared/entity-utils.js"></script>
@@ -6323,7 +6325,33 @@
                             speakBody.confirmed = true;
                             pendingConfirmCommand = null;
                         }
-                        const speakResp = await apiCall('POST', '/api/client/speak', speakBody);
+                        // Phase 2 #5 offline-queue wrap: enqueue + tag with
+                        // Idempotency-Key so a retry from a spotty connection
+                        // hits the server-side cache (PRs #3271/#3272/#3274/#3276).
+                        // Outbox state surfaces nowhere yet; UI bubbles in a follow-up.
+                        let __outboxEntry = null;
+                        let __idempotencyKey = null;
+                        if (window.EclawOutbox) {
+                            try {
+                                const enqueued = window.EclawOutbox.enqueue(speakBody);
+                                __outboxEntry = enqueued && enqueued.entry;
+                                __idempotencyKey = __outboxEntry && __outboxEntry.idempotencyKey;
+                                if (__outboxEntry) window.EclawOutbox.markRetrying(__idempotencyKey);
+                            } catch (e) { /* outbox is best-effort, never block send */ }
+                        }
+                        let speakResp;
+                        try {
+                            const __opts = __idempotencyKey ? { headers: { 'Idempotency-Key': __idempotencyKey } } : undefined;
+                            speakResp = await apiCall('POST', '/api/client/speak', speakBody, __opts);
+                            if (__idempotencyKey && window.EclawOutbox) {
+                                window.EclawOutbox.markSent(__idempotencyKey);
+                            }
+                        } catch (e) {
+                            if (__idempotencyKey && window.EclawOutbox) {
+                                window.EclawOutbox.markFailed(__idempotencyKey, e && e.message);
+                            }
+                            throw e;
+                        }
                         // Track confirmation state from platform commands
                         if (speakResp && speakResp.needsConfirmation && speakResp.confirmCommand) {
                             pendingConfirmCommand = speakResp.confirmCommand;
