@@ -188,6 +188,15 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Daily pool update additions ──
+    // Medium tier
+    { file: null, description: 'An office whiteboard showing a Kanban board with three columns: Todo has 4 sticky notes, In Progress has 2 sticky notes, Done has 7 sticky notes — 13 total notes visible', keywords: ['kanban', 'three', 'columns', 'todo', 'progress', 'done', '13'] },
+    { file: null, description: 'A scatter plot with 20 data points in two distinct clusters — the upper-right cluster in blue contains 12 points, the lower-left cluster in red contains 8 points, with a dashed diagonal trend line', keywords: ['scatter', 'two', 'clusters', 'blue', 'red', 'trend', '12', '8'] },
+    { file: null, description: 'A mobile app login screen showing username and password fields, a blue Sign In button, links to Forgot Password and Create Account, and a red validation error message reading Email is required', keywords: ['login', 'username', 'password', 'sign in', 'forgot', 'error', 'required', 'red'] },
+    // Hard tier
+    { file: null, description: 'A network packet capture screenshot showing five TCP packets in sequence: SYN, SYN-ACK, ACK, PSH-ACK, FIN-ACK — source IP 192.168.1.100, destination IP 10.0.0.5, port 443', keywords: ['TCP', 'five', 'SYN', 'ACK', 'FIN', '192', '10', '443'] },
+    { file: null, description: 'A Python stack trace showing AttributeError: NoneType object has no attribute split at line 47 of data_processor.py, called from main.py at line 132', keywords: ['AttributeError', 'NoneType', 'split', '47', 'data_processor', 'main', '132'] },
+    { file: null, description: 'A database ER diagram with four entities: Users (id, name, email), Orders (id, user_id, total), Products (id, name, price), OrderItems (order_id, product_id, quantity) — with labeled foreign-key arrows connecting them', keywords: ['database', 'four', 'entities', 'users', 'orders', 'products', 'foreign', 'key'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -207,9 +216,9 @@ function generateButtonClickChallenge() {
 const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Wei Zhang','Amara Osei','Ravi Kapoor','Isabella Rossi','Dmitri Volkov'];
 const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se','wei@demo.cn','amara@test.gh','ravi@sample.in','isabella@demo.it','dmitri@test.ru'];
 const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','China','Ghana','Italy','Russia','Netherlands'];
-const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123','+46-70-123-4567','+65-9123-4567','+52-55-1234-5678','+353-87-123-4567'];
+const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123','+46-70-123-4567','+65-9123-4567','+52-55-1234-5678','+353-87-123-4567','+1-800-555-0100','+86-138-0013-8000','+34-600-123-456','+39-333-123-4567'];
 const FORM_DATES = ['1990-06-15','1985-03-22','1992-11-08','1988-01-30','1995-07-14','1983-09-25','1991-12-01','1987-04-17','1993-08-09','1986-02-14','1994-10-31','1989-05-20'];
-const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund'];
+const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund','Follow up on open ticket #4521','Partnership inquiry','Unsubscribe from mailing list','Report a billing issue','Product return request'];
 
 function generateFormFillChallenge() {
     const nameIdx = Math.floor(Math.random() * FORM_NAMES.length);
@@ -368,6 +377,17 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── Daily pool update: medium-hard additions ──
+    { title: 'Container With Most Water', description: 'Write `solve(height)` — given an array of heights, find two lines that together with the x-axis form a container that holds the most water. Return the maximum water volume.',
+      testCases: [{ input: '[1,8,6,2,5,4,8,3,7]', expected: '49' },{ input: '[1,1]', expected: '1' },{ input: '[4,3,2,1,4]', expected: '16' },{ input: '[1,2,1]', expected: '2' }] },
+    { title: 'Merge Intervals', description: 'Write `solve(intervals)` — given an array of intervals [start, end], merge all overlapping intervals and return the result sorted by start time.',
+      testCases: [{ input: '[[1,3],[2,6],[8,10],[15,18]]', expected: '[[1,6],[8,10],[15,18]]' },{ input: '[[1,4],[4,5]]', expected: '[[1,5]]' },{ input: '[[1,4],[0,4]]', expected: '[[0,4]]' },{ input: '[[1,4]]', expected: '[[1,4]]' }] },
+    { title: 'Jump Game', description: 'Write `solve(nums)` — each element represents the maximum jump length from that position. Return true if you can reach the last index, false otherwise.',
+      testCases: [{ input: '[2,3,1,1,4]', expected: 'true' },{ input: '[3,2,1,0,4]', expected: 'false' },{ input: '[0]', expected: 'true' },{ input: '[1,0,1,0]', expected: 'false' }] },
+    { title: 'Product of Array Except Self', description: 'Write `solve(nums)` — return an array where each element is the product of all elements in the original array except itself. Do not use division.',
+      testCases: [{ input: '[1,2,3,4]', expected: '[24,12,8,6]' },{ input: '[1,0,3]', expected: '[0,0,0]' },{ input: '[-1,1,0,-3,3]', expected: '[0,0,9,0,0]' },{ input: '[2,3]', expected: '[3,2]' }] },
+    { title: 'Find All Anagram Positions', description: 'Write `solve(s, p)` — given strings s and p, return all start indices in s where an anagram of p begins. Return sorted array of indices.',
+      testCases: [{ input: '"cbaebabacd", "abc"', expected: '[0,6]' },{ input: '"abab", "ab"', expected: '[0,1,2]' },{ input: '"aa", "bb"', expected: '[]' },{ input: '"baa", "aa"', expected: '[1]' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +437,19 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Daily pool update additions ──
+    // Easy tier
+    { question: 'What element has the chemical symbol Fe?', expectedKeywords: ['iron'] },
+    { question: 'How many degrees are in a right angle?', expectedKeywords: ['90'] },
+    // Medium tier
+    { question: 'A train can carry 450 passengers and is currently 72% full. How many more passengers can board?', expectedKeywords: ['126'] },
+    { question: 'What is 15% of 240?', expectedKeywords: ['36'] },
+    { question: 'There are 5 teams in a round-robin tournament where each team plays every other team exactly once. How many total games are played?', expectedKeywords: ['10'] },
+    { question: 'A cistern holds 1200 liters. Pipe A fills it in 4 hours, pipe B drains it in 6 hours. If both are open together starting when the cistern is empty, how many hours to fill it?', expectedKeywords: ['12'] },
+    // Hard tier
+    { question: 'If f(x) = 3x² − 2x + 1, what is f(3)?', expectedKeywords: ['22'] },
+    { question: 'How many 3-digit palindrome numbers exist (a palindrome reads the same forwards and backwards)?', expectedKeywords: ['90'] },
+    { question: 'A box contains 4 red balls and 6 blue balls. Two balls are drawn at random without replacement. What is the probability both are red? Express as a simplified fraction.', expectedKeywords: ['2/15'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +527,15 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Daily pool update additions ──
+    // Medium tier
+    { text: 'Your boarding pass shows seat 14F — please proceed to Gate C22 for departure at ten forty-five AM', keywords: ['boarding', 'seat', '14F', 'gate', 'C22', 'ten', 'forty-five'] },
+    { text: 'The meeting has been rescheduled to Thursday March twenty-third at two-thirty PM in conference room four hundred four', keywords: ['rescheduled', 'thursday', 'march', 'twenty-third', 'conference', '404'] },
+    // Hard tier
+    { text: 'Transaction reference TXN-2026-XK9A has been authorized for USD two thousand eight hundred forty-seven dollars and fifty cents on June ninth at seventeen forty-three UTC', keywords: ['transaction', 'TXN', '2026', 'authorized', '2847', 'june', 'UTC'] },
+    { text: 'The medication dosage is 250 milligrams taken twice daily with food — contraindicated in patients who have used an MAO inhibitor within the past fourteen days', keywords: ['medication', '250', 'milligrams', 'twice', 'MAO', 'inhibitor', 'fourteen'] },
+    { text: 'In Unicode the copyright symbol is code point U plus 00A9 the registered trademark is U plus 00AE and the degree symbol is U plus 00B0', keywords: ['unicode', 'copyright', '00A9', 'trademark', '00AE', 'degree', '00B0'] },
+    { text: 'RFC 7519 defines JSON Web Tokens as a compact URL-safe means of representing claims to be transferred between two parties using a base64url-encoded header dot payload dot signature structure', keywords: ['RFC', '7519', 'JSON', 'web', 'tokens', 'claims', 'base64', 'signature'] },
 ];
 
 // ============================================
