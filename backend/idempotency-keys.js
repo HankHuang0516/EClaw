@@ -39,6 +39,32 @@ async function ensureTable(pool) {
     `);
 }
 
+async function sweepExpired(pool) {
+    if (!pool || typeof pool.query !== 'function') return { deleted: 0 };
+    try {
+        const result = await pool.query(
+            'DELETE FROM idempotency_keys WHERE expires_at < NOW() RETURNING id'
+        );
+        return { deleted: result.rowCount || result.rows.length || 0 };
+    } catch (err) {
+        console.error('[idem] sweepExpired error:', err && err.message);
+        return { deleted: 0, error: err && err.message };
+    }
+}
+
+function startSweeper(pool, intervalMs) {
+    const ms = Math.max(60_000, parseInt(intervalMs) || 5 * 60_000);
+    return setInterval(() => {
+        sweepExpired(pool).then((res) => {
+            if (res.deleted > 0) {
+                console.log(`[idem] swept ${res.deleted} expired rows`);
+            }
+        }).catch((err) => {
+            console.error('[idem] sweep tick error:', err && err.message);
+        });
+    }, ms);
+}
+
 function hashKey(deviceId, key) {
     return crypto.createHash('sha256').update(`${deviceId}|${key}`).digest('hex');
 }
@@ -93,6 +119,8 @@ function makeMiddleware(pool, { ttlHours = TTL_HOURS } = {}) {
 module.exports = {
     makeMiddleware,
     ensureTable,
+    sweepExpired,
+    startSweeper,
     hashKey,
     isValidClientKey,
     TTL_HOURS,
