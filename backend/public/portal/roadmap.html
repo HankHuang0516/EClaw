@@ -321,17 +321,17 @@
             <h3 style="font-size:14px;font-weight:700;margin:14px 0 8px;">🗺️ 9-item delivery roadmap (4 phases)</h3>
             <div style="font-size:13px;line-height:1.65;">
                 <div style="margin-bottom:14px;">
-                    <strong>Phase 0 — make problems recordable + classifiable</strong>
+                    <strong>Phase 0 — make problems recordable + classifiable</strong> <span style="color:#0a7;">✓ shipped 2026-06-07/08</span>
                     <ol style="padding-left:22px;margin-top:6px;">
-                        <li>Pain taxonomy + episode schema (8 tags, JSON/markdown shape, secrets-free)</li>
-                        <li>Feedback ingestion bridge (Hank chat / kanban / review / bot handoff → tagged episode)</li>
+                        <li>Pain taxonomy + episode schema (8 tags, JSON/markdown shape, secrets-free) — <em>backend/agent-improvement/episode-schema.js (PR #3226, 20 jest tests)</em></li>
+                        <li>Feedback ingestion bridge (Hank chat / kanban / review / bot handoff → tagged episode) — <em>backend/agent-improvement.js routes + classifier.js (PR #3227, 16 ingest tests)</em></li>
                     </ol>
                 </div>
                 <div style="margin-bottom:14px;">
-                    <strong>Phase 1 — agent stops guessing + stops shipping half</strong>
+                    <strong>Phase 1 — agent stops guessing + stops shipping half</strong> <span style="color:#0a7;">✓ shipped 2026-06-07/08</span>
                     <ol start="3" style="padding-left:22px;margin-top:6px;">
-                        <li>Task-start preflight lint (open-card hook: pull prior failures, publish scope/acceptance/test/evidence plan)</li>
-                        <li>Done-evidence gate + anti-laziness guard (no silent done; idle in_progress gets a next-action prompt)</li>
+                        <li>Task-start preflight lint (open-card hook: pull prior failures, publish scope/acceptance/test/evidence plan) — <em>backend/agent-improvement/preflight.js (PR #3228, 14 jest tests)</em></li>
+                        <li>Done-evidence gate + anti-laziness guard (no silent done; idle in_progress gets a next-action prompt) — <em>done-gate.js + heartbeat.js (PRs #3230 + #3231)</em></li>
                     </ol>
                 </div>
                 <div style="margin-bottom:14px;">
