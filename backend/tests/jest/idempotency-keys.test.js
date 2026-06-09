@@ -2,6 +2,7 @@
 
 const {
     makeMiddleware,
+    sweepExpired,
     hashKey,
     isValidClientKey,
     TTL_HOURS,
@@ -200,5 +201,37 @@ describe('idempotency-keys middleware', () => {
 
     test('constants expose TTL_HOURS = 24', () => {
         expect(TTL_HOURS).toBe(24);
+    });
+
+    test('sweepExpired deletes rows with expires_at < NOW() and returns count', async () => {
+        const deleted = [];
+        const fakePool = {
+            async query(sql) {
+                if (sql.startsWith('DELETE FROM idempotency_keys')) {
+                    deleted.push(sql);
+                    return { rowCount: 3, rows: [{ id: 1 }, { id: 2 }, { id: 3 }] };
+                }
+                return { rows: [] };
+            },
+        };
+        const res = await sweepExpired(fakePool);
+        expect(res.deleted).toBe(3);
+        expect(deleted[0]).toContain('expires_at < NOW()');
+    });
+
+    test('sweepExpired swallows DB errors and returns deleted=0', async () => {
+        const fakePool = {
+            async query() { throw new Error('boom-sweep'); },
+        };
+        const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        const res = await sweepExpired(fakePool);
+        expect(res.deleted).toBe(0);
+        expect(res.error).toBe('boom-sweep');
+        errSpy.mockRestore();
+    });
+
+    test('sweepExpired no-ops when pool is null/missing', async () => {
+        await expect(sweepExpired(null)).resolves.toEqual({ deleted: 0 });
+        await expect(sweepExpired({})).resolves.toEqual({ deleted: 0 });
     });
 });

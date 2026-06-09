@@ -18877,7 +18877,12 @@ if (mindmapModule && typeof mindmapModule.initMindmapTables === 'function') {
 // Wire idempotency-keys middleware to the real pool now that chatPool exists.
 // Spec: docs/offline-delivery-queue-spec.md, card: card_47ed9a0c.
 _idempotencyInner = idempotencyKeys.makeMiddleware(chatPool);
-idempotencyKeys.ensureTable(chatPool).catch((err) => {
+idempotencyKeys.ensureTable(chatPool).then(() => {
+    // Run sweeper every 5 minutes so expired (>24h) rows are deleted instead of
+    // growing the table unbounded. Found 02:36 TW 2026-06-10 via Run 1 of the
+    // perpetual E2E card (gap A4).
+    idempotencyKeys.startSweeper(chatPool, 5 * 60_000);
+}).catch((err) => {
     console.warn('[idem] ensureTable failed (retries on first request):', err && err.message);
 });
 
