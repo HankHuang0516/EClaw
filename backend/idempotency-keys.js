@@ -20,6 +20,25 @@ const TTL_HOURS = 24;
 const MIN_KEY_LEN = 8;
 const MAX_KEY_LEN = 128;
 
+// Inline DDL matches the outbound_msg_pending pattern in entity-status.js.
+// The migrations/20260609_idempotency_keys.up.sql file mirrors this shape
+// for the historical record + the explicit down sibling.
+async function ensureTable(pool) {
+    if (!pool || typeof pool.query !== 'function') return;
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS idempotency_keys (
+            id BIGSERIAL PRIMARY KEY,
+            hash CHAR(64) NOT NULL UNIQUE,
+            response_blob JSONB NOT NULL,
+            status_code SMALLINT NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            expires_at TIMESTAMPTZ NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_idem_expires_at
+            ON idempotency_keys(expires_at);
+    `);
+}
+
 function hashKey(deviceId, key) {
     return crypto.createHash('sha256').update(`${deviceId}|${key}`).digest('hex');
 }
@@ -73,6 +92,7 @@ function makeMiddleware(pool, { ttlHours = TTL_HOURS } = {}) {
 
 module.exports = {
     makeMiddleware,
+    ensureTable,
     hashKey,
     isValidClientKey,
     TTL_HOURS,
