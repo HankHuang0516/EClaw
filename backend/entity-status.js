@@ -315,6 +315,19 @@ async function getCounters(deviceId, entityId) {
           WHERE device_id = $1 AND entity_id = $2`,
         [deviceId, entityId]
     );
+    // Currently-open events per axis: rows still sitting in outbound_msg_pending
+    // for this entity-as-recipient. These are the events the panel's drill-down
+    // will surface. `count` (cumulative) stays for backward-compat with any
+    // existing chart/badge; `openCount` is the live health number Hank's spec
+    // is built around — drops as the entity replies.
+    const openRows = await pool.query(
+        `SELECT axis, COUNT(*)::int AS open_count
+           FROM outbound_msg_pending
+          WHERE device_id = $1 AND recipient_entity_id = $2
+          GROUP BY axis`,
+        [deviceId, entityId]
+    );
+    const openByAxis = new Map(openRows.rows.map(r => [r.axis, Number(r.open_count)]));
     const byAxis = new Map(result.rows.map(r => [r.axis, r]));
     // Always surface canonical axes even when count = 0, so the UI can render
     // a stable row order. Extra non-canonical axes (forward-compat) appear after.
@@ -324,18 +337,54 @@ async function getCounters(deviceId, entityId) {
         ordered.push({
             axis,
             count: row ? Number(row.count) : 0,
+            openCount: openByAxis.get(axis) || 0,
             lastEventAt: row && row.last_event_at ? row.last_event_at.toISOString() : null,
         });
         byAxis.delete(axis);
+        openByAxis.delete(axis);
     }
     for (const [axis, row] of byAxis) {
         ordered.push({
             axis,
             count: Number(row.count),
+            openCount: openByAxis.get(axis) || 0,
             lastEventAt: row.last_event_at ? row.last_event_at.toISOString() : null,
         });
+        openByAxis.delete(axis);
+    }
+    // Axes with open pending but no cumulative row yet (fresh counter — sweeper
+    // hasn't fired since first dispatch). Surface them so the drill-down lists
+    // line up even before the cumulative row is created.
+    for (const [axis, openCount] of openByAxis) {
+        ordered.push({ axis, count: 0, openCount, lastEventAt: null });
     }
     return ordered;
+}
+
+// Drill-down: list of currently-open pending events for a single axis.
+// Each row carries enough to render a (timestamp, chip) on the panel —
+// the chip is either a card chip (event_payload.card_id) or a chat-coord
+// chip from message_id. Newest first. Limited to keep the panel snappy.
+async function getCounterEvents(deviceId, entityId, axis, limit) {
+    if (!pool) return [];
+    const lim = Math.max(1, Math.min(100, Number(limit) || 30));
+    const result = await pool.query(
+        `SELECT id, sender_entity_id, event_type, axis, dispatched_at, expires_at, payload_snippet
+           FROM outbound_msg_pending
+          WHERE device_id = $1 AND recipient_entity_id = $2 AND axis = $3
+          ORDER BY dispatched_at DESC
+          LIMIT $4`,
+        [deviceId, entityId, axis, lim]
+    );
+    return result.rows.map(r => ({
+        id: String(r.id),
+        senderEntityId: r.sender_entity_id,
+        eventType: r.event_type,
+        axis: r.axis,
+        dispatchedAt: r.dispatched_at ? r.dispatched_at.toISOString() : null,
+        expiresAt: r.expires_at ? r.expires_at.toISOString() : null,
+        payload: r.payload_snippet,
+    }));
 }
 
 async function incrementCounter(deviceId, entityId, axis) {
@@ -496,6 +545,37 @@ router.get('/:eId', async (req, res) => {
     }
 });
 
+// Drill-down — the (timestamp, chip) list that opens when a user clicks one of
+// the four counter rows on the panel. Returns the currently-pending events for
+// that axis on this entity (i.e. what the live `openCount` counts). Newest first.
+router.get('/:eId/counter/:axis/events', async (req, res) => {
+    const auth = authDeviceOrBot(req);
+    if (!auth) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    const targetEId = parseInt(req.params.eId);
+    if (!Number.isFinite(targetEId) || targetEId < 0) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+    const axis = String(req.params.axis || '');
+    if (!/^[a-z][a-z0-9_]{2,63}$/.test(axis)) {
+        return res.status(400).json({ success: false, error: 'Invalid axis' });
+    }
+    try {
+        const items = await getCounterEvents(auth.deviceId, targetEId, axis, req.query.limit);
+        res.json({
+            success: true,
+            deviceId: auth.deviceId,
+            entityId: targetEId,
+            axis,
+            items,
+        });
+    } catch (err) {
+        console.error('[EntityStatus] getCounterEvents error:', err.message);
+        res.status(500).json({ success: false, error: 'internal' });
+    }
+});
+
 router.get('/:eId/log', express.json(), async (req, res) => {
     const auth = authDeviceOrBot(req);
     if (!auth) {
@@ -568,6 +648,7 @@ module.exports = {
     bindDevicesRef,
     bindJwtSecret,
     getCounters,
+    getCounterEvents,
     incrementCounter,
     axisForEventType,
     trackOutbound,

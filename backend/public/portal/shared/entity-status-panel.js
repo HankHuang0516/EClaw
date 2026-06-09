@@ -48,6 +48,30 @@
         done:        '#22c55e',
     };
 
+    // Lucide/Feather-family quote icon. Matches the rest of portal/shared (24x24
+    // viewBox, fill=none, stroke=currentColor, stroke-width=2, round caps) so
+    // the panel doesn't look out of place next to nav, ai-chat, etc.
+    const SVG_QUOTE = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" '
+        + 'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
+        + 'aria-hidden="true" focusable="false">'
+        + '<path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-.5 2-2 2-1 0-1 .989-1 .989C2 18.978 2 21 3 21z"/>'
+        + '<path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-.5 2-2 2-1 0-1 .989-1 .989C14 18.978 14 21 15 21z"/>'
+        + '</svg>';
+    // Same family as nav.js, just the help-circle variant. Used as the ? icon
+    // next to the panel title.
+    const SVG_HELP = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" '
+        + 'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
+        + 'aria-hidden="true" focusable="false">'
+        + '<circle cx="12" cy="12" r="10"/>'
+        + '<path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>'
+        + '<line x1="12" y1="17" x2="12.01" y2="17"/>'
+        + '</svg>';
+    // Chevron right (collapsed) / down (expanded). Mirrors counter drill-down.
+    const SVG_CHEVRON = '<svg class="' + ROOT_CLASS + '__counter-chevron" width="12" height="12" '
+        + 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+        + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+        + '<polyline points="9 6 15 12 9 18"/></svg>';
+
     function pickLabel(axis) {
         const lang = (document.documentElement.getAttribute('lang') || 'en').toLowerCase();
         const isZh = lang.startsWith('zh') || lang === 'tw' || lang === 'cn';
@@ -94,6 +118,16 @@
         qs.set('limit', String(limit || 20));
         if (before) qs.set('before', String(before));
         const res = await fetch(`/api/entity-status/${eid}/log?${qs.toString()}`, {
+            credentials: 'include',
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+    }
+
+    async function fetchCounterEvents(eid, axis) {
+        const qs = _credQs();
+        qs.set('limit', '50');
+        const res = await fetch(`/api/entity-status/${eid}/counter/${encodeURIComponent(axis)}/events?${qs.toString()}`, {
             credentials: 'include',
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -164,7 +198,7 @@
                 <time class="${ROOT_CLASS}__log-time">${escapeHtml(ts)}</time>
                 <span class="${ROOT_CLASS}__log-summary">${summary}</span>
                 <button type="button" class="${ROOT_CLASS}__log-quote" data-action="quote"
-                    data-log-id="${escapeHtml(item.id)}" title="Quote this row">❝</button>
+                    data-log-id="${escapeHtml(item.id)}" title="Quote this row" aria-label="Quote this row">${SVG_QUOTE}</button>
             </li>`;
     }
 
@@ -287,8 +321,16 @@
             <div class="${ROOT_CLASS}__sheet">
                 <header class="${ROOT_CLASS}__header">
                     <strong class="${ROOT_CLASS}__title">Entity #${eid}</strong>
+                    <button type="button" class="${ROOT_CLASS}__help"
+                        data-action="help" aria-label="What does this panel show?"
+                        aria-expanded="false" title="What does this panel show?">${SVG_HELP}</button>
+                    <span class="${ROOT_CLASS}__header-spacer"></span>
                     <button type="button" class="${ROOT_CLASS}__close" aria-label="Close" data-action="close">✕</button>
                 </header>
+                <div class="${ROOT_CLASS}__help-popover" data-role="help-popover" hidden>
+                    <p><strong>Counters</strong> — each row counts open events the entity hasn&#39;t acted on. Number is live: it drops as the entity replies. Click a counter to see <em>which</em> events.</p>
+                    <p><strong>Operation log</strong> — recent kanban / message / system events for this entity, newest first. Card chips open the card&#39;s popover; ${SVG_QUOTE} quotes the row into your chat composer.</p>
+                </div>
                 <section class="${ROOT_CLASS}__section" data-section="counters">
                     <h3 class="${ROOT_CLASS}__section-title">累計錯誤次數 / Error counters</h3>
                     <ul class="${ROOT_CLASS}__counter-list" data-role="counter-list">
@@ -307,10 +349,32 @@
         root.addEventListener('click', (e) => {
             const action = e.target?.dataset?.action || e.target?.closest('[data-action]')?.dataset?.action;
             if (action === 'close') { close(); return; }
+            if (action === 'help') {
+                const btn = e.target.closest('[data-action="help"]');
+                const pop = root.querySelector('[data-role="help-popover"]');
+                if (pop && btn) {
+                    const open = pop.hasAttribute('hidden') ? false : true;
+                    if (open) { pop.setAttribute('hidden', ''); btn.setAttribute('aria-expanded', 'false'); }
+                    else { pop.removeAttribute('hidden'); btn.setAttribute('aria-expanded', 'true'); }
+                }
+                e.stopPropagation();
+                return;
+            }
             if (action === 'quote') {
                 const btn = e.target.closest('[data-action="quote"]');
                 const logId = btn && btn.dataset.logId;
                 if (logId) handleQuoteClick(eid, logId);
+                e.stopPropagation();
+                return;
+            }
+            // Counter drill-down: clicking a counter row expands the open
+            // events that comprise the live `openCount`. Toggles closed on
+            // a second click. Doesn't fire if the user clicked inside an
+            // already-rendered drill-down child (those bubble up).
+            const counterRow = e.target.closest && e.target.closest(`.${ROOT_CLASS}__counter-row[data-axis]`);
+            if (counterRow && !e.target.closest(`.${ROOT_CLASS}__counter-events`)) {
+                const axis = counterRow.dataset.axis;
+                if (axis) toggleCounterDrilldown(root, eid, axis, counterRow);
                 e.stopPropagation();
                 return;
             }
@@ -333,12 +397,84 @@
             list.innerHTML = `<li class="${ROOT_CLASS}__counter-row" data-state="empty">No counters yet.</li>`;
             return;
         }
-        list.innerHTML = counters.map(c => `
-            <li class="${ROOT_CLASS}__counter-row" data-axis="${c.axis}">
+        // Live counter = openCount when the backend provides it; fall back to
+        // cumulative count for old clients / old backends. Hank's spec: the
+        // displayed number is "what's currently open", not lifetime total.
+        list.innerHTML = counters.map(c => {
+            const live = (typeof c.openCount === 'number') ? c.openCount : c.count;
+            return `
+            <li class="${ROOT_CLASS}__counter-row" data-axis="${c.axis}"
+                role="button" tabindex="0"
+                aria-expanded="false"
+                aria-label="${pickLabel(c.axis)}: ${live} open. Click to see which events.">
+                ${SVG_CHEVRON}
                 <span class="${ROOT_CLASS}__counter-label">${pickLabel(c.axis)}</span>
-                <span class="${ROOT_CLASS}__counter-value">${c.count}</span>
-            </li>
-        `).join('');
+                <span class="${ROOT_CLASS}__counter-value">${live}</span>
+            </li>`;
+        }).join('');
+    }
+
+    // Render the drill-down rows for one axis. Each row = (timestamp, chip).
+    // Chip is a card chip if event payload carries card_id, otherwise a
+    // message-coord chip from message_id. The list lives as a child <ul>
+    // appended to the counter row so it slots in-line under the counter that
+    // owns it (no second drawer push).
+    function renderCounterEvents(items) {
+        if (!items || items.length === 0) {
+            return `<li class="${ROOT_CLASS}__counter-event-row" data-state="empty">No open events.</li>`;
+        }
+        return items.map(it => {
+            const ts = formatTs(it.dispatchedAt);
+            let chipHtml = '';
+            const cardId = it.payload && it.payload.card_id;
+            const messageId = it.payload && (it.payload.message_id || it.payload.msg_id);
+            if (cardId) {
+                const status = (it.payload && it.payload.status) || 'todo';
+                const color = STATUS_COLOR[status] || STATUS_COLOR.todo;
+                chipHtml = `<span class="autolink-chip ${ROOT_CLASS}__chip" `
+                    + `data-ref-type="card" data-ref-id="${escapeHtml(cardId)}" `
+                    + `data-card-id="${escapeHtml(cardId)}" `
+                    + `style="background:${color}22;border-color:${color};color:${color};" `
+                    + `title="${escapeHtml(cardId)}">${escapeHtml(cardId.slice(0, 12))}</span>`;
+            } else if (messageId) {
+                chipHtml = `<span class="autolink-chip ${ROOT_CLASS}__chip" `
+                    + `data-ref-type="message" data-ref-id="${escapeHtml(messageId)}" `
+                    + `title="${escapeHtml(messageId)}">msg ${escapeHtml(String(messageId).slice(-6))}</span>`;
+            } else {
+                chipHtml = `<span class="${ROOT_CLASS}__chip" title="${escapeHtml(it.eventType || '')}">`
+                    + `${escapeHtml(it.eventType || 'event')}</span>`;
+            }
+            return `<li class="${ROOT_CLASS}__counter-event-row" data-event-id="${escapeHtml(it.id)}">
+                <time class="${ROOT_CLASS}__counter-event-time">${escapeHtml(ts)}</time>
+                <span class="${ROOT_CLASS}__counter-event-chip">${chipHtml}</span>
+            </li>`;
+        }).join('');
+    }
+
+    async function toggleCounterDrilldown(root, eid, axis, counterRow) {
+        if (!counterRow) return;
+        const existing = counterRow.nextElementSibling
+            && counterRow.nextElementSibling.matches(`.${ROOT_CLASS}__counter-events[data-axis="${axis}"]`)
+            ? counterRow.nextElementSibling : null;
+        if (existing) {
+            existing.remove();
+            counterRow.setAttribute('aria-expanded', 'false');
+            counterRow.classList.remove(`${ROOT_CLASS}__counter-row--expanded`);
+            return;
+        }
+        const list = document.createElement('ul');
+        list.className = `${ROOT_CLASS}__counter-events`;
+        list.dataset.axis = axis;
+        list.innerHTML = `<li class="${ROOT_CLASS}__counter-event-row" data-state="loading">Loading…</li>`;
+        counterRow.insertAdjacentElement('afterend', list);
+        counterRow.setAttribute('aria-expanded', 'true');
+        counterRow.classList.add(`${ROOT_CLASS}__counter-row--expanded`);
+        try {
+            const data = await fetchCounterEvents(eid, axis);
+            list.innerHTML = renderCounterEvents(data.items || []);
+        } catch (err) {
+            list.innerHTML = `<li class="${ROOT_CLASS}__counter-event-row" data-state="error">Failed to load: ${escapeHtml(err.message)}</li>`;
+        }
     }
 
     function ensureStyles() {
@@ -369,13 +505,38 @@
 .${ROOT_CLASS}__section-title { font-size: 13px; font-weight: 600;
     color: var(--text-secondary, #aaa); margin: 0 0 10px; text-transform: uppercase; letter-spacing: 0.04em; }
 .${ROOT_CLASS}__counter-list { list-style: none; margin: 0; padding: 0; }
-.${ROOT_CLASS}__counter-row { display: flex; justify-content: space-between; align-items: center;
-    padding: 8px 0; border-bottom: 1px dashed var(--card-border, #333); }
+.${ROOT_CLASS}__counter-row { display: grid; grid-template-columns: 16px 1fr auto; gap: 8px;
+    align-items: center; padding: 8px 0; border-bottom: 1px dashed var(--card-border, #333);
+    cursor: pointer; user-select: none; }
+.${ROOT_CLASS}__counter-row[data-state] { grid-template-columns: 1fr; cursor: default;
+    color: var(--text-muted, #888); font-style: italic; padding: 12px 0; }
 .${ROOT_CLASS}__counter-row:last-child { border-bottom: none; }
+.${ROOT_CLASS}__counter-row:hover:not([data-state]) { background: rgba(255,255,255,0.03); }
+.${ROOT_CLASS}__counter-row:focus { outline: 2px solid var(--primary, #6c63ff); outline-offset: -2px; border-radius: 4px; }
+.${ROOT_CLASS}__counter-chevron { transition: transform 0.15s ease; color: var(--text-muted, #888); }
+.${ROOT_CLASS}__counter-row--expanded .${ROOT_CLASS}__counter-chevron { transform: rotate(90deg); }
 .${ROOT_CLASS}__counter-label { font-size: 13px; color: var(--text, #e0e0e0); }
 .${ROOT_CLASS}__counter-value { font-size: 16px; font-weight: 600; color: var(--primary, #6c63ff);
     background: rgba(108,99,255,0.12); padding: 2px 10px; border-radius: 999px; min-width: 32px;
     text-align: center; }
+.${ROOT_CLASS}__counter-events { list-style: none; margin: 4px 0 8px 24px; padding: 0;
+    border-left: 2px solid var(--card-border, #333); }
+.${ROOT_CLASS}__counter-event-row { display: grid; grid-template-columns: auto 1fr; gap: 8px;
+    align-items: center; padding: 4px 8px; font-size: 12px; color: var(--text-secondary, #aaa); }
+.${ROOT_CLASS}__counter-event-row[data-state] { grid-template-columns: 1fr; text-align: center;
+    color: var(--text-muted, #888); font-style: italic; padding: 8px; }
+.${ROOT_CLASS}__counter-event-time { font-variant-numeric: tabular-nums; font-size: 11px;
+    color: var(--text-muted, #888); }
+.${ROOT_CLASS}__help { background: none; border: none; color: var(--text-muted, #888);
+    cursor: pointer; padding: 4px; border-radius: 6px; display: inline-flex; align-items: center; }
+.${ROOT_CLASS}__help:hover, .${ROOT_CLASS}__help[aria-expanded="true"] { color: var(--primary, #6c63ff); background: rgba(108,99,255,0.1); }
+.${ROOT_CLASS}__header-spacer { flex: 1; }
+.${ROOT_CLASS}__help-popover { padding: 12px 18px; font-size: 12.5px; line-height: 1.55;
+    color: var(--text-secondary, #aaa); background: var(--bg-secondary, rgba(108,99,255,0.04));
+    border-bottom: 1px solid var(--card-border, #333); }
+.${ROOT_CLASS}__help-popover p { margin: 0 0 8px; }
+.${ROOT_CLASS}__help-popover p:last-child { margin-bottom: 0; }
+.${ROOT_CLASS}__help-popover svg { vertical-align: -2px; }
 .${ROOT_CLASS}__placeholder-note { font-size: 12px; color: var(--text-muted, #888); font-style: italic; }
 .${ROOT_CLASS}__log-list { list-style: none; margin: 0; padding: 0; }
 .${ROOT_CLASS}__log-row { display: grid; grid-template-columns: auto 1fr auto; gap: 8px;
@@ -464,6 +625,14 @@
         if (e.key === 'Escape') {
             e.stopPropagation();
             close();
+        } else if ((e.key === 'Enter' || e.key === ' ') && rootEl) {
+            // Counter row keyboard activation (focused counter expands via
+            // Enter/Space, same as a button — they have role="button" set).
+            const active = document.activeElement;
+            if (active && active.classList && active.classList.contains(ROOT_CLASS + '__counter-row') && active.dataset.axis) {
+                e.preventDefault();
+                toggleCounterDrilldown(rootEl, currentEid, active.dataset.axis, active);
+            }
         }
     }
 
