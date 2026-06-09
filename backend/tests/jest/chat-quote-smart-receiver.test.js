@@ -84,15 +84,18 @@ describe('chat quote-reply smart receiver — chat.html surface', () => {
     });
 
     test('localStorage and cross-iframe pickup forward the meta param', () => {
-        // pending_quote pickup at first-load
+        // pending_quote pickup at first-load — prefillInput intentionally dropped per PR #3263 smart-quote sink fix
         expect(chatHtml).toMatch(
-            /const\s*\{\s*source,\s*title,\s*excerpt,\s*prefillInput,\s*messageId,\s*meta,\s*ts\s*\}\s*=\s*JSON\.parse\(pq\)/
+            /const\s*\{\s*source,\s*title,\s*excerpt,\s*messageId,\s*meta,\s*ts\s*\}\s*=\s*JSON\.parse\(pq\)/
         );
         expect(chatHtml).toMatch(/quoteToChat\(\s*source,\s*title,\s*excerpt\s*\|\|\s*['"]['"]\s*,\s*meta\s*\)/);
-        // workspace.html postMessage relay
+        // workspace.html postMessage relay — same intentional drop
         expect(chatHtml).toMatch(
-            /const\s*\{\s*source,\s*title,\s*excerpt,\s*prefillInput,\s*messageId,\s*meta\s*\}\s*=\s*e\.data/
+            /const\s*\{\s*source,\s*title,\s*excerpt,\s*messageId,\s*meta\s*\}\s*=\s*e\.data/
         );
+        // Regression guard: prefillInput must NOT reappear in either destructure
+        expect(chatHtml).not.toMatch(/prefillInput,\s*messageId,\s*meta,\s*ts\s*\}\s*=\s*JSON\.parse\(pq\)/);
+        expect(chatHtml).not.toMatch(/prefillInput,\s*messageId,\s*meta\s*\}\s*=\s*e\.data/);
     });
 
     test('manual uncheck revokes the hint via updateTargetAll', () => {
