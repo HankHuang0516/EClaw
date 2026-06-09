@@ -48,15 +48,13 @@
         done:        '#22c55e',
     };
 
-    // Lucide/Feather-family quote icon. Matches the rest of portal/shared (24x24
-    // viewBox, fill=none, stroke=currentColor, stroke-width=2, round caps) so
-    // the panel doesn't look out of place next to nav, ai-chat, etc.
-    const SVG_QUOTE = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" '
-        + 'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" '
-        + 'aria-hidden="true" focusable="false">'
-        + '<path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-.5 2-2 2-1 0-1 .989-1 .989C2 18.978 2 21 3 21z"/>'
-        + '<path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-.5 2-2 2-1 0-1 .989-1 .989C14 18.978 14 21 15 21z"/>'
-        + '</svg>';
+    // Quote icon — pushpin glyph that matches the rest of the portal's quote
+    // language. chat.html's `chip_popover_requote` button (line 3112) uses 📌,
+    // and so does the mindmap node 引用 affordance. Earlier this row had a
+    // Lucide-style SVG quote that looked out of place against those — Hank
+    // flagged the inconsistency on 2026-06-09 17:53 TW with annotated photos
+    // (consistent quote = 📌 + reply-bar banner, not text-token paste).
+    const ICON_QUOTE = '📌';
     // Same family as nav.js, just the help-circle variant. Used as the ? icon
     // next to the panel title.
     const SVG_HELP = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" '
@@ -198,7 +196,7 @@
                 <time class="${ROOT_CLASS}__log-time">${escapeHtml(ts)}</time>
                 <span class="${ROOT_CLASS}__log-summary">${summary}</span>
                 <button type="button" class="${ROOT_CLASS}__log-quote" data-action="quote"
-                    data-log-id="${escapeHtml(item.id)}" title="Quote this row" aria-label="Quote this row">${SVG_QUOTE}</button>
+                    data-log-id="${escapeHtml(item.id)}" title="Quote this row" aria-label="Quote this row">${ICON_QUOTE}</button>
             </li>`;
     }
 
@@ -257,49 +255,81 @@
         try {
             const res = await fetchQuote(eid, logId);
             if (!res.quote) return;
-            // Preferred path: insert a card_<id> token so the chat renderer
-            // turns it into the same .autolink-chip popover as every other
-            // quoted card on the platform — single quote style across the app
-            // instead of a free-form "> [Entity #X ...]" block.
-            const cardId = res.quote.payload && res.quote.payload.card_id;
-            const chatInput = document.getElementById('messageInput');
-            if (cardId && chatInput) {
-                const token = ' ' + cardId + ' ';
-                const cur = chatInput.value || '';
-                const pos = chatInput.selectionStart != null ? chatInput.selectionStart : cur.length;
-                chatInput.value = cur.slice(0, pos) + token + cur.slice(pos);
-                chatInput.focus();
-                const caret = pos + token.length;
-                try { chatInput.setSelectionRange(caret, caret); } catch (_) { /* ok */ }
-                chatInput.dispatchEvent(new Event('input', { bubbles: true }));
+            // Build the smart-quote payload — same shape that mindmap chips
+            // and other portal pages stash before hopping to chat.html. The
+            // chat receiver picks it up in two ways:
+            //   (a) Same surface (this panel is open on /portal/chat.html)
+            //       → call window.quoteToChat() directly so the reply-bar
+            //         banner (📌 source / title: excerpt) lights up and the
+            //         appropriate receiver checkboxes auto-toggle.
+            //   (b) Cross-page (panel open on kanban.html, mission.html, etc.)
+            //       → stash {source,title,excerpt,prefillInput?,meta,ts} into
+            //         localStorage('eclaw_pending_quote') and navigate to
+            //         /portal/chat.html — chat.html's loadInit picks the row
+            //         up within 2 minutes and runs the same quoteToChat() flow.
+            //
+            // The earlier impl just spliced a card_xxx token into messageInput
+            // (or fell back to clipboard.write). Hank flagged that as
+            // off-pattern on 2026-06-09 17:53 TW with annotated screenshots —
+            // the consistent quote across the portal is the reply-bar banner
+            // (📌 + auto-receivers), not a text-token paste.
+            const payload = res.quote.payload || {};
+            const cardId = payload.card_id || null;
+            const cardAssignedBots = Array.isArray(payload.assigned_bots) ? payload.assigned_bots
+                : Array.isArray(payload.assignedBots) ? payload.assignedBots
+                : null;
+            const source = 'Entity #' + eid;
+            const title = res.quote.eventSummary || res.quote.eventType || 'log entry';
+            const excerpt = (function () {
+                const t = res.quote.text || '';
+                // The /quote endpoint already stitches a `> [Entity #X ...]`
+                // header — pull just the summary back out so the reply-bar
+                // preview doesn't show the marker leading ">". Falls back to
+                // eventSummary if the strip fails.
+                const stripped = t.replace(/^>\s*\[[^\]]+\]\s*/, '').split('\n')[0].trim();
+                return stripped || res.quote.eventSummary || '';
+            })();
+            const meta = cardId
+                ? { kind: 'card', cardId, cardAssignedBots: cardAssignedBots || [] }
+                : { kind: 'chat-system' };
+            // prefillInput drops the card_<id> token into the textbox so the
+            // sent message renders the same .autolink-chip preview the rest of
+            // chat does — preserves the deep-link affordance the old text-token
+            // impl gave, but now alongside the reply-bar banner rather than
+            // instead of it.
+            const prefillInput = cardId ? (cardId + ' ') : '';
+
+            if (typeof window.quoteToChat === 'function') {
+                // Same-surface path: chat.html owns this. Just light up the bar.
+                try { window.quoteToChat(source, title, excerpt, meta); } catch (_) { /* ok */ }
+                if (prefillInput) {
+                    const inp = document.getElementById('messageInput');
+                    if (inp) {
+                        const cur = inp.value || '';
+                        // Don't double-stamp the token if the user already has it.
+                        if (cur.indexOf(prefillInput.trim()) === -1) {
+                            inp.value = (cur + (cur && !cur.endsWith(' ') ? ' ' : '') + prefillInput).trimStart();
+                            inp.focus();
+                            try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch (_) { /* ok */ }
+                            inp.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                    }
+                }
                 close();
                 return;
             }
-            // Fallback for log rows without a card_id payload (msg/system/etc):
-            // legacy quote block — kept for parity with rows that don't have a
-            // chip token to lean on. Try common chat textbox selectors first;
-            // last-resort clipboard write.
-            if (res.quote.text) {
-                const targets = [
-                    'textarea#messageInput', 'textarea#chatInput', 'textarea#chat-input',
-                    '#chatTextarea', 'textarea[data-chat-input]', 'textarea[name="message"]',
-                ];
-                let pasted = false;
-                for (const sel of targets) {
-                    const ta = document.querySelector(sel);
-                    if (ta && typeof ta.value === 'string') {
-                        ta.value = res.quote.text + ta.value;
-                        ta.focus();
-                        try { ta.setSelectionRange(0, 0); } catch (_) { /* ok */ }
-                        pasted = true;
-                        break;
-                    }
-                }
-                if (!pasted && navigator.clipboard && navigator.clipboard.writeText) {
-                    await navigator.clipboard.writeText(res.quote.text);
-                }
-            }
+            // Cross-page path: hand off via localStorage and navigate.
+            try {
+                localStorage.setItem('eclaw_pending_quote', JSON.stringify({
+                    source, title, excerpt, prefillInput, meta, ts: Date.now(),
+                }));
+            } catch (_) { /* private mode etc — fall through to navigation */ }
             close();
+            // Use replace() so the back button doesn't bounce the user into the
+            // current page (where the drawer just closed and the localStorage
+            // payload was already consumed — clicking back would be confusing).
+            try { window.location.assign('/portal/chat.html'); }
+            catch (_) { window.location.href = '/portal/chat.html'; }
         } catch (err) {
             console.warn('[EntityStatusPanel] quote error:', err.message);
         }
@@ -329,7 +359,7 @@
                 </header>
                 <div class="${ROOT_CLASS}__help-popover" data-role="help-popover" hidden>
                     <p><strong>Counters</strong> — each row counts open events the entity hasn&#39;t acted on. Number is live: it drops as the entity replies. Click a counter to see <em>which</em> events.</p>
-                    <p><strong>Operation log</strong> — recent kanban / message / system events for this entity, newest first. Card chips open the card&#39;s popover; ${SVG_QUOTE} quotes the row into your chat composer.</p>
+                    <p><strong>Operation log</strong> — recent kanban / message / system events for this entity, newest first. Card chips open the card&#39;s popover; ${ICON_QUOTE} quotes the row into your chat composer.</p>
                 </div>
                 <section class="${ROOT_CLASS}__section" data-section="counters">
                     <h3 class="${ROOT_CLASS}__section-title">累計錯誤次數 / Error counters</h3>
