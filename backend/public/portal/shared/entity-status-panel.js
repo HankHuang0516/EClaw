@@ -297,36 +297,22 @@
             const meta = cardId
                 ? { kind: 'card', cardId, cardAssignedBots: cardAssignedBots || [] }
                 : { kind: 'chat-system' };
-            // prefillInput drops the card_<id> token into the textbox so the
-            // sent message renders the same .autolink-chip preview the rest of
-            // chat does — preserves the deep-link affordance the old text-token
-            // impl gave, but now alongside the reply-bar banner rather than
-            // instead of it.
-            const prefillInput = cardId ? (cardId + ' ') : '';
-
+            // Smart-quote ONLY. The earlier impl pre-filled `card_<id>` into
+            // the textbox so the sent message would render a chip preview,
+            // but that's exactly the paste-id behavior Hank called out as
+            // off-pattern on 2026-06-09 20:10 TW. The reply-bar banner
+            // (📌 source / title: excerpt) + meta + send-time ↩-prefix
+            // already carry the card reference; the receiver bot sees the
+            // chip from meta. No token paste needed.
             if (typeof window.quoteToChat === 'function') {
-                // Same-surface path: chat.html owns this. Just light up the bar.
                 try { window.quoteToChat(source, title, excerpt, meta); } catch (_) { /* ok */ }
-                if (prefillInput) {
-                    const inp = document.getElementById('messageInput');
-                    if (inp) {
-                        const cur = inp.value || '';
-                        // Don't double-stamp the token if the user already has it.
-                        if (cur.indexOf(prefillInput.trim()) === -1) {
-                            inp.value = (cur + (cur && !cur.endsWith(' ') ? ' ' : '') + prefillInput).trimStart();
-                            inp.focus();
-                            try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch (_) { /* ok */ }
-                            inp.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-                    }
-                }
                 close();
                 return;
             }
             // Cross-page path: hand off via localStorage and navigate.
             try {
                 localStorage.setItem('eclaw_pending_quote', JSON.stringify({
-                    source, title, excerpt, prefillInput, meta, ts: Date.now(),
+                    source, title, excerpt, meta, ts: Date.now(),
                 }));
             } catch (_) { /* private mode etc — fall through to navigation */ }
             close();

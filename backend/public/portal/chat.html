@@ -3733,27 +3733,20 @@
                 const pq = localStorage.getItem('eclaw_pending_quote');
                 if (pq) {
                     localStorage.removeItem('eclaw_pending_quote');
-                    const { source, title, excerpt, prefillInput, messageId, meta, ts } = JSON.parse(pq);
+                    // prefillInput intentionally NOT destructured: per Hank
+                    // 2026-06-09 20:10 TW, all quote flows must be smart-quote
+                    // (reply-bar banner + auto-toggle receivers + send-time
+                    // ↩-prefix carries the reference), not paste-id-token. The
+                    // legacy prefillInput consumption dumped raw card_xxx /
+                    // mindmap_<uuid> tokens into the textbox — that's exactly
+                    // the copy-paste behavior to kill. We silently ignore the
+                    // field so existing callers (mission-mindmap.js,
+                    // mission.html, entity-status-panel) can still emit it
+                    // without behavior change at the sink.
+                    const { source, title, excerpt, messageId, meta, ts } = JSON.parse(pq);
                     if (Date.now() - ts < 120000) { // within 2 minutes
                         await openChatMessageDeepLink(messageId, { showMissingToast: true, scroll: true });
                         quoteToChat(source, title, excerpt || '', meta);
-                        // prefillInput: drop a chip token (or any text) directly
-                        // into the input so users can press send without typing.
-                        // Used by mindmap chip 📌 引用 — delivers mindmap_<uuid>
-                        // / card_<id> token, which autolink-chip then renders
-                        // as a chip preview in the sent message.
-                        if (prefillInput) {
-                            const inp = document.getElementById('messageInput');
-                            if (inp) {
-                                inp.value = prefillInput;
-                                inp.focus();
-                                try { inp.setSelectionRange(prefillInput.length, prefillInput.length); } catch(e2) {}
-                            }
-                            // The chat_draft restore below would otherwise
-                            // overwrite the prefill with a stale draft; the
-                            // deep-link explicitly asked for prefill, so it wins.
-                            localStorage.removeItem('chat_draft');
-                        }
                     }
                 }
             } catch(e) {}
@@ -3785,21 +3778,15 @@
                 }
             } catch(e) {}
 
-            // Cross-iframe quote from workspace.html relay — only accepted from same origin
+            // Cross-iframe quote from workspace.html relay — only accepted from same origin.
+            // prefillInput intentionally ignored (see localStorage handler above for
+            // the rationale: smart-quote only, no paste-id-token).
             window.addEventListener('message', async (e) => {
                 if (e.origin !== window.location.origin) return;
                 if (!e.data || e.data.type !== 'eclaw_quote') return;
-                const { source, title, excerpt, prefillInput, messageId, meta } = e.data;
+                const { source, title, excerpt, messageId, meta } = e.data;
                 await openChatMessageDeepLink(messageId, { showMissingToast: true, scroll: true });
                 quoteToChat(source, title, excerpt || '', meta);
-                if (prefillInput) {
-                    const inp = document.getElementById('messageInput');
-                    if (inp) {
-                        inp.value = String(prefillInput);
-                        inp.focus();
-                        try { inp.setSelectionRange(inp.value.length, inp.value.length); } catch(e2) {}
-                    }
-                }
             });
 
             // Mount @mention autocomplete on the message input.
