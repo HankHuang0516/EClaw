@@ -140,3 +140,15 @@ Do **not** /move card to done on FAIL — file a child card describing the regre
 
 ## Evidence archive
 Initial reference run (2026-05-26) lives at `backend/public/portal/assets/e2e-evidence/destructive-modal-{page}-{viewport}-{WxH}.png`. Daily runs append timestamped subdirs or upload-only to `/api/files`.
+
+## Companion regression checks (entity-status panel flows)
+
+Each daily run, also exercise these three entity-status-panel behaviors shipped in PRs #3259–#3263. They are NOT destructive modals but were broken at the same surface; bundling here keeps coverage tight.
+
+| # | Flow | Pass criterion |
+|---|------|----------------|
+| 1 | Operation-log row Quote button (📌) → click | Reply-bar banner lights with title:excerpt; messageInput.value === '' (no `card_xxx` token paste). Per memory `feedback_e2e_visual_change_is_the_bar`. |
+| 2 | Entity "傳送給" row checkbox → click | No entity-status panel opens. Only the checkbox toggles. Source: `entity-utils.js attachAvatarClickHandler` skip on `input[type=checkbox]`. |
+| 3 | Operation-log card chip → click | AutolinkChipPreview popover opens with `src://kanban/card/<bare_hex>` (title/status/priority/assigned/留言/created/updated/desc preview + 在看板中開啟 button). |
+
+Run flow: navigate `/portal/chat.html`, open entity-status panel (avatar click → drawer), perform each action above, screenshot. Mobile 390x844 + desktop 1280x800. If any fails → file child card under the parent kanban card for that PR; do not silently skip.
