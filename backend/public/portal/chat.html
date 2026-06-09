@@ -3600,11 +3600,28 @@
         });
 
         // ── Init ──
+        // Phase 2 #5 offline queue: on reconnect, replay any queued/retrying
+        // outbox entries. Heartbeat every 30s also catches the case where
+        // navigator.onLine never fired (mobile WebView quirks). Per Run 16
+        // of perpetual E2E card_509e45f9 (gap J4).
+        function _flushOutboxWithSender() {
+            if (!window.EclawOutbox || !window.currentUser) return;
+            return window.EclawOutbox.flushOutbox(async (payload, idempotencyKey) => {
+                return apiCall('POST', '/api/client/speak', payload, { headers: { 'Idempotency-Key': idempotencyKey } });
+            }).catch((err) => { console.warn('[outbox] flush error:', err && err.message); });
+        }
+        window.addEventListener('online', _flushOutboxWithSender);
+        setInterval(() => { if (navigator.onLine) _flushOutboxWithSender(); }, 30_000);
+
         window.addEventListener('DOMContentLoaded', async () => {
             // Detect embed mode (workspace split view)
             if (new URLSearchParams(window.location.search).get('embed') === '1') {
                 document.body.classList.add('embed-mode');
             }
+            // Initial flush on load — catches the case where the user closed
+            // the tab during an in-flight send (state=retrying) and the queue
+            // is sitting in localStorage waiting to be replayed.
+            setTimeout(_flushOutboxWithSender, 2000);
             // Avatar click → entity status drawer (per card_dbe18b333ac98076cc213055 P0.5).
             if (typeof attachAvatarClickHandler === 'function' && window.EntityStatusPanel) {
                 attachAvatarClickHandler(document.body, (eid) => window.EntityStatusPanel.open(eid));

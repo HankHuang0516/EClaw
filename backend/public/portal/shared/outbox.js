@@ -207,6 +207,49 @@
         return due.length === 0 ? null : due[0];
     }
 
+    /**
+     * Walk every queued/retrying entry whose nextRetryAt is due and call the
+     * caller-supplied sender. Per-entry state transitions are handled here so
+     * callers stay thin.
+     *
+     * @param {(payload: Object, idempotencyKey: string) => Promise<unknown>} sender
+     *        async function that performs the POST and resolves on 2xx.
+     *        Must throw on network error / non-2xx.
+     * @returns {Promise<{sent:number, failed:number, requeued:number, skipped:number}>}
+     */
+    async function flushOutbox(sender) {
+        var entries = load();
+        var nowMs = now();
+        var sent = 0, failed = 0, requeued = 0, skipped = 0;
+        var due = entries.filter(function (e) {
+            return (e.state === 'queued' || e.state === 'retrying') &&
+                (e.nextRetryAt || 0) <= nowMs;
+        });
+        for (var i = 0; i < due.length; i++) {
+            var e = due[i];
+            markRetrying(e.idempotencyKey);
+            try {
+                await sender(e.payload, e.idempotencyKey);
+                markSent(e.idempotencyKey);
+                sent++;
+            } catch (err) {
+                var msg = err && err.message ? err.message : String(err);
+                // Reschedule via backoff up to MAX_ATTEMPTS; bumpAttempt does the
+                // terminal-fail logic for us.
+                bumpAttempt(e.idempotencyKey);
+                var after = load().find(function (x) { return x.idempotencyKey === e.idempotencyKey; });
+                if (after && after.state === 'failed') {
+                    markFailed(e.idempotencyKey, msg);
+                    failed++;
+                } else {
+                    requeued++;
+                }
+            }
+        }
+        skipped = entries.length - due.length;
+        return { sent: sent, failed: failed, requeued: requeued, skipped: skipped };
+    }
+
     var api = {
         STORAGE_KEY: STORAGE_KEY,
         MAX_ENTRIES: MAX_ENTRIES,
@@ -227,6 +270,7 @@
         markFailed: markFailed,
         bumpAttempt: bumpAttempt,
         nextDueAt: nextDueAt,
+        flushOutbox: flushOutbox,
     };
 
     if (typeof module !== 'undefined' && module.exports) {
