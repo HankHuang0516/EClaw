@@ -2283,6 +2283,15 @@ const agentImprovement = require('./agent-improvement');
 agentImprovement.bindDevicesRef(devices);
 app.use('/api/agent-improvement', agentImprovement.router);
 
+// IDEMPOTENCY KEYS — required up here so /api/transform can reference the
+// middleware reference; the actual implementation + pool wire-up + ensureTable
+// run once chatPool is initialized further down (see chatPool block). The
+// wrapper holds a mutable inner; Express captures the wrapper at registration
+// time and dispatches through it.
+const idempotencyKeys = require('./idempotency-keys');
+let _idempotencyInner = (req, res, next) => next();
+const idempotencyMiddleware = (req, res, next) => _idempotencyInner(req, res, next);
+
 // ============================================
 // API DOCS — OpenAPI / Swagger UI
 // ============================================
@@ -8678,7 +8687,7 @@ function transformMaybeMultipart(req, res, next) {
     }
     return next();
 }
-app.post('/api/transform', transformMaybeMultipart, async (req, res) => {
+app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async (req, res) => {
     // Multipart sends text fields as strings; re-parse the JSON-shaped ones
     // and coerce scalar types so downstream logic stays uniform with JSON mode.
     if (req.file || String(req.headers['content-type'] || '').toLowerCase().startsWith('multipart/form-data')) {
@@ -18864,6 +18873,13 @@ sitePageviews.initPageviewsTable(chatPool);
 if (mindmapModule && typeof mindmapModule.initMindmapTables === 'function') {
     mindmapModule.initMindmapTables(chatPool);
 }
+
+// Wire idempotency-keys middleware to the real pool now that chatPool exists.
+// Spec: docs/offline-delivery-queue-spec.md, card: card_47ed9a0c.
+_idempotencyInner = idempotencyKeys.makeMiddleware(chatPool);
+idempotencyKeys.ensureTable(chatPool).catch((err) => {
+    console.warn('[idem] ensureTable failed (retries on first request):', err && err.message);
+});
 
 // Anonymous portal beacons table (for growth funnel tracking)
 (async () => {
