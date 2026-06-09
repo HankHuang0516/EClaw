@@ -11204,7 +11204,7 @@ app.post('/api/device/entity/avatar/upload', avatarUpload.single('file'), async 
  *
  * If bot has registered webhook, push notification is sent.
  */
-app.post('/api/client/speak', async (req, res) => {
+app.post('/api/client/speak', idempotencyMiddleware, async (req, res) => {
     const { deviceId, deviceSecret, entityId, text, source = "client", mediaType, mediaUrl, attachments } = req.body;
 
     if (!deviceId) {
