@@ -276,6 +276,13 @@ function attachAvatarClickHandler(container, onClick) {
         if (e.target.closest('.entity-selector')) return;
         if (e.target.closest('#entityFilters')) return;
         if (e.target.closest('.kb-auto-filter')) return;
+        // Chat target-bar checkbox row ("傳送給: ☑ Mac_F ☑ LOBSTER ..."). The
+        // user's intent here is to toggle the entity as a send target; opening
+        // the status drawer on top of it steals that interaction. Catches both
+        // the wrapping label (.target-entity-check) and bare checkbox / label
+        // hits to be defensive against similar checkbox-styled rows added later.
+        if (e.target.closest('.target-entity-check')) return;
+        if (e.target.matches && e.target.matches('input[type="checkbox"], input[type="radio"]')) return;
         const el = e.target.closest('[data-entity-id]');
         if (!el || !container.contains(el)) return;
         const eid = parseInt(el.dataset.entityId, 10);
