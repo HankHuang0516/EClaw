@@ -170,10 +170,15 @@
             const cardId = match.replace(/^#/, '');
             const status = (payloadCardId === cardId && payloadStatus) || 'todo';
             const color = STATUS_COLOR[status] || STATUS_COLOR.todo;
-            // .autolink-chip + data-ref-type/data-ref-id makes the document-level
-            // listener in autolink-chip-preview.js open the popover on click.
+            // AutolinkChipPreview understands src://kanban/card/<bare_hex>;
+            // the bare card_<hex> id alone resolves to "Preview not yet
+            // supported for this reference type". Strip the card_ prefix
+            // for the ref-id; keep the full card_xxx as the chip label so
+            // users still see the canonical token.
+            const bareId = cardId.replace(/^card_/, '');
+            const srcRef = 'src://kanban/card/' + bareId;
             return `<span class="autolink-chip ${ROOT_CLASS}__chip" `
-                + `data-ref-type="card" data-ref-id="${escapeHtml(cardId)}" `
+                + `data-ref-type="src" data-ref-id="${escapeHtml(srcRef)}" `
                 + `data-card-id="${escapeHtml(cardId)}" `
                 + `style="background:${color}22;border-color:${color};color:${color};" `
                 + `title="${escapeHtml(cardId)}">${escapeHtml(cardId.slice(0, 12))}</span>`;
@@ -474,8 +479,10 @@
             if (cardId) {
                 const status = (it.payload && it.payload.status) || 'todo';
                 const color = STATUS_COLOR[status] || STATUS_COLOR.todo;
+                const bareId = String(cardId).replace(/^card_/, '');
+                const srcRef = 'src://kanban/card/' + bareId;
                 chipHtml = `<span class="autolink-chip ${ROOT_CLASS}__chip" `
-                    + `data-ref-type="card" data-ref-id="${escapeHtml(cardId)}" `
+                    + `data-ref-type="src" data-ref-id="${escapeHtml(srcRef)}" `
                     + `data-card-id="${escapeHtml(cardId)}" `
                     + `style="background:${color}22;border-color:${color};color:${color};" `
                     + `title="${escapeHtml(cardId)}">${escapeHtml(cardId.slice(0, 12))}</span>`;
