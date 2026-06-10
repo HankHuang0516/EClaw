@@ -21,6 +21,19 @@ const CANONICAL_AXES = [
     'system_msg_no_reply',
 ];
 
+// card_8ca0b6acb1fb3d7a0b650dfd — Achievement axes (Hank 2026-06-10 09:04 TW).
+// 3 Hank-flagged (tasks_done / chat_upvotes / chat_downvotes) + 3 self-added
+// (prs_merged / cards_reviewed / notes_authored). Same regex/whitelist
+// hardening pattern as CANONICAL_AXES per card_f20e3635 fix.
+const CANONICAL_ACHIEVEMENTS = [
+    'tasks_done',
+    'chat_upvotes',
+    'chat_downvotes',
+    'prs_merged',
+    'cards_reviewed',
+    'notes_authored',
+];
+
 let pool = null;
 let devicesRef = null;
 // Shared with index.js so we verify cookies against the same secret. Set via
@@ -387,6 +400,152 @@ async function getCounterEvents(deviceId, entityId, axis, limit) {
     }));
 }
 
+// ────────────────────────────────────────────────────────────────────────────
+// Achievements — card_8ca0b6acb1fb3d7a0b650dfd
+// Mirrors the counter pattern but cumulative-only (no openCount). Each axis
+// aggregates a different domain table. Backend slice only; frontend rendering
+// + i18n keys ship in a follow-up PR.
+// ────────────────────────────────────────────────────────────────────────────
+
+async function getAchievements(deviceId, entityId) {
+    if (!pool) return [];
+    const eid = Number(entityId);
+    if (!Number.isFinite(eid) || eid < 0) return [];
+
+    const results = await Promise.all(CANONICAL_ACHIEVEMENTS.map(async (axis) => {
+        let count = 0;
+        let lastEventAt = null;
+        try {
+            if (axis === 'tasks_done') {
+                const r = await pool.query(
+                    `SELECT COUNT(*)::int AS c, MAX(updated_at) AS ts
+                       FROM kanban_cards
+                      WHERE device_id = $1 AND status = 'done'
+                        AND $2 = ANY(assigned_bots)`,
+                    [deviceId, eid]
+                );
+                count = Number(r.rows[0]?.c || 0);
+                lastEventAt = r.rows[0]?.ts || null;
+            } else if (axis === 'chat_upvotes' || axis === 'chat_downvotes') {
+                const col = axis === 'chat_upvotes' ? 'like_count' : 'dislike_count';
+                const r = await pool.query(
+                    `SELECT COALESCE(SUM(${col}), 0)::int AS c, MAX(created_at) AS ts
+                       FROM chat_messages
+                      WHERE device_id = $1 AND entity_id = $2 AND is_from_bot = true
+                        AND ${col} > 0`,
+                    [deviceId, eid]
+                );
+                count = Number(r.rows[0]?.c || 0);
+                lastEventAt = r.rows[0]?.ts || null;
+            } else if (axis === 'cards_reviewed') {
+                // Q1 default per Hank's spec: count all reviewer participation
+                // (signed-off + bounced both count).
+                const r = await pool.query(
+                    `SELECT COUNT(*)::int AS c, MAX(updated_at) AS ts
+                       FROM kanban_cards
+                      WHERE device_id = $1 AND reviewer_entity_id = $2
+                        AND status IN ('in_progress','done')`,
+                    [deviceId, eid]
+                );
+                count = Number(r.rows[0]?.c || 0);
+                lastEventAt = r.rows[0]?.ts || null;
+            } else if (axis === 'notes_authored') {
+                const r = await pool.query(
+                    `SELECT COUNT(*)::int AS c, MAX(created_at) AS ts
+                       FROM mission_notes
+                      WHERE device_id = $1 AND entity_id = $2`,
+                    [deviceId, eid]
+                );
+                count = Number(r.rows[0]?.c || 0);
+                lastEventAt = r.rows[0]?.ts || null;
+            }
+            // prs_merged: skipped in backend (would need GH API or per-entity
+            // commit-author mapping that we don't store); always 0 until v2.
+        } catch (err) {
+            // Per-axis failure isolated: log + treat as 0 so one missing
+            // table (e.g. mission_notes on a fresh device) doesn't abort all axes.
+            console.warn(`[Achievements] axis=${axis} query failed:`, err && err.message);
+        }
+        return {
+            axis,
+            count,
+            lastEventAt: lastEventAt ? new Date(lastEventAt).toISOString() : null,
+        };
+    }));
+    return results;
+}
+
+async function getAchievementEvents(deviceId, entityId, axis, limit) {
+    if (!pool) return [];
+    if (!CANONICAL_ACHIEVEMENTS.includes(axis)) return [];
+    const lim = Math.max(1, Math.min(100, Number(limit) || 30));
+    const eid = Number(entityId);
+
+    try {
+        if (axis === 'tasks_done') {
+            const r = await pool.query(
+                `SELECT id, title, updated_at
+                   FROM kanban_cards
+                  WHERE device_id = $1 AND status = 'done'
+                    AND $2 = ANY(assigned_bots)
+                  ORDER BY updated_at DESC LIMIT $3`,
+                [deviceId, eid, lim]
+            );
+            return r.rows.map(row => ({
+                ts: row.updated_at ? row.updated_at.toISOString() : null,
+                chip: { kind: 'card', cardId: row.id, label: row.title },
+            }));
+        }
+        if (axis === 'chat_upvotes' || axis === 'chat_downvotes') {
+            const col = axis === 'chat_upvotes' ? 'like_count' : 'dislike_count';
+            const r = await pool.query(
+                `SELECT id, text, created_at
+                   FROM chat_messages
+                  WHERE device_id = $1 AND entity_id = $2 AND is_from_bot = true
+                    AND ${col} > 0
+                  ORDER BY created_at DESC LIMIT $3`,
+                [deviceId, eid, lim]
+            );
+            return r.rows.map(row => ({
+                ts: row.created_at ? row.created_at.toISOString() : null,
+                chip: { kind: 'chat', messageId: row.id, excerpt: (row.text || '').slice(0, 60) },
+            }));
+        }
+        if (axis === 'cards_reviewed') {
+            const r = await pool.query(
+                `SELECT id, title, updated_at
+                   FROM kanban_cards
+                  WHERE device_id = $1 AND reviewer_entity_id = $2
+                    AND status IN ('in_progress','done')
+                  ORDER BY updated_at DESC LIMIT $3`,
+                [deviceId, eid, lim]
+            );
+            return r.rows.map(row => ({
+                ts: row.updated_at ? row.updated_at.toISOString() : null,
+                chip: { kind: 'card', cardId: row.id, label: row.title },
+            }));
+        }
+        if (axis === 'notes_authored') {
+            const r = await pool.query(
+                `SELECT id, title, created_at
+                   FROM mission_notes
+                  WHERE device_id = $1 AND entity_id = $2
+                  ORDER BY created_at DESC LIMIT $3`,
+                [deviceId, eid, lim]
+            );
+            return r.rows.map(row => ({
+                ts: row.created_at ? row.created_at.toISOString() : null,
+                chip: { kind: 'note', noteId: row.id, label: row.title },
+            }));
+        }
+        // prs_merged: empty until v2 (see getAchievements comment)
+        return [];
+    } catch (err) {
+        console.warn(`[Achievements] events axis=${axis} failed:`, err && err.message);
+        return [];
+    }
+}
+
 async function incrementCounter(deviceId, entityId, axis) {
     if (!pool) return;
     await pool.query(`
@@ -581,6 +740,61 @@ router.get('/:eId/counter/:axis/events', async (req, res) => {
     }
 });
 
+// Achievements panel data — card_8ca0b6acb1fb3d7a0b650dfd.
+router.get('/:eId/achievements', async (req, res) => {
+    const auth = authDeviceOrBot(req);
+    if (!auth) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    const targetEId = parseInt(req.params.eId);
+    if (!Number.isFinite(targetEId) || targetEId < 0) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+    try {
+        const items = await getAchievements(auth.deviceId, targetEId);
+        res.json({
+            success: true,
+            deviceId: auth.deviceId,
+            entityId: targetEId,
+            achievements: items,
+        });
+    } catch (err) {
+        console.error('[EntityStatus] getAchievements error:', err.message);
+        res.status(500).json({ success: false, error: 'internal' });
+    }
+});
+
+router.get('/:eId/achievement/:axis/events', async (req, res) => {
+    const auth = authDeviceOrBot(req);
+    if (!auth) {
+        return res.status(403).json({ success: false, error: 'Invalid credentials' });
+    }
+    const targetEId = parseInt(req.params.eId);
+    if (!Number.isFinite(targetEId) || targetEId < 0) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+    const axis = String(req.params.axis || '');
+    // Same regex+whitelist defense-in-depth pattern as counter-events
+    // (card_f20e3635 fix). The whitelist check is the load-bearing one;
+    // the regex stays as belt-and-suspenders against header injection.
+    if (!/^[a-z][a-z0-9_]{2,63}$/.test(axis) || !CANONICAL_ACHIEVEMENTS.includes(axis)) {
+        return res.status(400).json({ success: false, error: 'Invalid axis' });
+    }
+    try {
+        const items = await getAchievementEvents(auth.deviceId, targetEId, axis, req.query.limit);
+        res.json({
+            success: true,
+            deviceId: auth.deviceId,
+            entityId: targetEId,
+            axis,
+            items,
+        });
+    } catch (err) {
+        console.error('[EntityStatus] getAchievementEvents error:', err.message);
+        res.status(500).json({ success: false, error: 'internal' });
+    }
+});
+
 router.get('/:eId/log', express.json(), async (req, res) => {
     const auth = authDeviceOrBot(req);
     if (!auth) {
@@ -665,4 +879,7 @@ module.exports = {
     getLogRowById,
     router,
     CANONICAL_AXES,
+    CANONICAL_ACHIEVEMENTS,
+    getAchievements,
+    getAchievementEvents,
 };
