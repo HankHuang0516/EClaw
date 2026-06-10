@@ -316,12 +316,23 @@ module.exports = function(devices) {
             const points = r.rows.map(row => {
                 const c = sumEngineSessions(row.claude_json);
                 const x = sumEngineSessions(row.codex_json);
+                // card_fb8a5a39ebe67581a66c6061: surface the same %-quota fields
+                // the live dashboard widget already reads from the latest row,
+                // so the new SVG line chart can render 5h/weekly curves.
+                // Tolerate null (statusLine hook may not have populated %s) —
+                // chart side filters null points.
+                const claudeLive = (row.claude_json && row.claude_json.live) || {};
+                const codexLimits = (row.codex_json && row.codex_json.rate_limits) || {};
                 return {
                     captured_at: row.captured_at,
                     claude_total_tokens: c.sum_input_tokens + c.sum_output_tokens,
                     codex_total_tokens:  x.sum_input_tokens + x.sum_output_tokens,
                     claude_total_cost_usd: c.sum_cost_usd,
-                    codex_total_cost_usd:  x.sum_cost_usd
+                    codex_total_cost_usd:  x.sum_cost_usd,
+                    claude_5h_pct: typeof claudeLive.five_hour_pct === 'number' ? claudeLive.five_hour_pct : null,
+                    claude_7d_pct: typeof claudeLive.seven_day_pct === 'number' ? claudeLive.seven_day_pct : null,
+                    codex_5h_pct: typeof codexLimits.five_hour_pct === 'number' ? codexLimits.five_hour_pct : null,
+                    codex_7d_pct: typeof codexLimits.seven_day_pct === 'number' ? codexLimits.seven_day_pct : null,
                 };
             });
 
