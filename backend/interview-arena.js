@@ -150,6 +150,7 @@ let VISION_IMAGES = [
     { file: null, description: 'A system monitoring dashboard showing CPU at 87%, RAM usage 11.2 GB of 16 GB, disk I/O at 340 MB/s, and 3 active processes flagged in red', keywords: ['CPU', '87', 'RAM', 'disk', 'three', 'red'] },
     { file: 'img-d4e9.svg', keywords: ['green', 'triangle'] },
     { file: 'img-a2f5.svg', keywords: ['yellow', 'star'] },
+    // img-b7c2.svg retired (pass rate 100%) — replaced below
     { file: 'img-c8b3.svg', keywords: ['cat', 'orange'] },
     // ── Easy tier (20%) — basic shape/object recognition ──
     { file: null, description: 'A red heart shape centered on a white background', keywords: ['heart', 'red'] },
@@ -188,6 +189,9 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Replacement for img-b7c2.svg (retired 100% pass rate) + new hard items ──
+    { file: null, description: 'A kanban board with four columns: Backlog has 5 cards, In Progress has 3 cards, Review has 2 cards, Done has 8 cards — one card in In Progress is marked Blocked in red and has a flame icon', keywords: ['kanban', 'four', 'backlog', 'blocked', 'red', 'eight', 'review'] },
+    { file: null, description: 'A database entity-relationship diagram showing three tables: Users (id, name, email), Orders (id, user_id, total, created_at), and Products (id, name, price, stock) — Users linked to Orders by a one-to-many line, Orders linked to Products by a many-to-many junction table called OrderItems with columns order_id and product_id', keywords: ['database', 'three', 'tables', 'users', 'orders', 'products', 'many', 'junction'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +372,11 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── New medium-hard additions (daily pool update) ──
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array of non-negative integers representing bar heights, compute the total water that can be trapped after raining. Use the two-pointer approach.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[3,0,2,0,4]', expected: '7' },{ input: '[]', expected: '0' }] },
+    { title: 'Top K Frequent Elements', description: 'Write `solve(nums, k)` — return the k most frequent elements in the array. You may return the answer in any order.',
+      testCases: [{ input: '[1,1,1,2,2,3], 2', expected: '[1,2]' },{ input: '[1], 1', expected: '[1]' },{ input: '[1,2,2,3,3,3], 2', expected: '[3,2]' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -378,7 +387,7 @@ function generateCodingChallenge(weights) {
 
 let RESPONSE_QUESTIONS = [
     // ── Easy tier (20%) — basic facts ──
-    { question: 'What is the capital of France?', expectedKeywords: ['paris'] },
+    // 'What is the capital of France?' retired (pass rate 100%)
     { question: 'What is 17 × 23?', expectedKeywords: ['391'] },
     { question: 'Name the largest planet in our solar system.', expectedKeywords: ['jupiter'] },
     { question: 'What is 13 × 17?', expectedKeywords: ['221'] },
@@ -417,6 +426,10 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Replacement for retired easy item + new medium-hard additions ──
+    { question: 'A recipe requires 2.5 cups of flour to make 20 cookies. How many cups of flour are needed to make 48 cookies?', expectedKeywords: ['6'] },
+    { question: 'Two trains start 300 km apart and travel toward each other. Train A travels at 80 km/h and Train B at 70 km/h. How many hours until they meet?', expectedKeywords: ['2'] },
+    { question: 'A water tank has capacity 1000 liters. Pipe X fills it at 50 liters per minute, while Pipe Y drains it at 20 liters per minute. Starting from empty, how many minutes does it take to fill the tank?', expectedKeywords: ['33', '34'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +507,9 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── New hard-tier additions (daily pool update) ──
+    { text: 'The Federal Reserve raised the benchmark interest rate by twenty-five basis points to a target range of five point two five to five point five percent effective immediately', keywords: ['federal', 'reserve', 'twenty-five', 'basis', 'five', 'percent', 'benchmark'] },
+    { text: 'Package tracking number 1Z-999-AA1-01-2345-6784 shows your shipment departed the Memphis distribution center at oh-three-forty-seven on the fourteenth of November', keywords: ['tracking', '1Z', 'memphis', 'distribution', 'november', 'fourteenth'] },
 ];
 
 // ============================================
