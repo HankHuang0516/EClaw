@@ -561,6 +561,11 @@ router.get('/:eId/counter/:axis/events', async (req, res) => {
     if (!/^[a-z][a-z0-9_]{2,63}$/.test(axis)) {
         return res.status(400).json({ success: false, error: 'Invalid axis' });
     }
+    // card_f20e3635: tighten beyond regex to the actual canonical 4 axes so
+    // arbitrary well-formed-but-unknown labels don't pass through to SQL.
+    if (!CANONICAL_AXES.includes(axis)) {
+        return res.status(400).json({ success: false, error: 'Invalid axis' });
+    }
     try {
         const items = await getCounterEvents(auth.deviceId, targetEId, axis, req.query.limit);
         res.json({
