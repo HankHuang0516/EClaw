@@ -8,7 +8,7 @@
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
 - **Current version**: 1.1183.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
-- **Android app version**: 1.0.87 (versionCode 95); `LATEST_APP_VERSION` constant in `backend/index.js`
+- **Android app version**: 1.0.88 (versionCode 96); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
 ---
@@ -178,7 +178,7 @@ EClaw/
 │   │   └── docs/
 │   │       └── webhook-troubleshooting.md
 │   ├── tests/                # Regression + integration tests (59 files)
-│   ├── tests/jest/           # Jest unit tests (265 files, CI-run via `npm test`)
+│   ├── tests/jest/           # Jest unit tests (268 files, CI-run via `npm test`)
 │   └── scripts/              # Setup scripts
 ├── app/                      # Android app (Kotlin)
 │   └── src/main/java/com/hank/clawlive/
@@ -402,7 +402,7 @@ EClaw/
 - Billing: Google Play Billing (`BillingManager.kt`)
 - AI Chat: `AiChatViewModel.kt` manages state (fixes message loss, typing race condition)
 - Bottom nav: FILES tab renamed to CARDS (Card Holder); Files link moved to Settings
-- App version: 1.0.87 (versionCode 95)
+- App version: 1.0.88 (versionCode 96)
 
 ### iOS/React Native App (Expo)
 
@@ -451,7 +451,7 @@ EClaw/
    ### Active Debug Endpoints
    | Bug | Endpoint | Created | Status |
    |-----|----------|---------|--------|
-   | Interview start fails with owner_device_not_found | `GET /api/rental/debug/interview-start-fail?deviceId=X&deviceSecret=Y` | 2026-04-12 | Active |
+   | _(none currently active)_ | — | — | — |
 
 6. **Demand Elegance (Balanced)** — 在保持 minimal change 的前提下，追求可讀、一致的程式風格；不為了「漂亮」而過度重構，但也不容忍明顯的 code smell 在新增的程式碼中出現。
 
@@ -1030,7 +1030,7 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Invite Redeem Fix (v1.1113)**: Preserve `?redeem=` across signup/login flow
 - **i18n Cron-Notify Fix (v1.1117)**: EN labels for cron-notify keys no longer leak CJK 母卡
 - **Telegram Adapter PoC (v1.1121, reverted)**: Long-poll Telegram adapter attempted then reverted
-- **App Version**: Updated to 1.0.87 (versionCode 95)
+- **App Version**: Updated to 1.0.88 (versionCode 96)
 
 ### Recent Features (v1.1122.x – v1.1127.x)
 
@@ -1142,11 +1142,19 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Kanban Nudge Counter Integration**: Increment `entity_error_counters` on L2 escalation
 - **Roadmap OODA-R Section**: AI agent self-improvement roadmap section on roadmap page
 
+### Recent Features (v1.1185.x+)
+
+- **Usage API Quota Fields (v1.1185)**: `GET /api/usage/timeline` now includes `five_hour_used_pct` and `seven_day_used_pct` percentage-quota fields (#3291)
+- **Entity Status Achievements (v1.1185)**: 6-axis canonical achievement system — `GET /api/entity-status/:eId/achievements` returns achievement badges per axis; `GET /api/entity-status/:eId/achievement/:axis/events` for drill-down (#3290)
+- **Counter-Events Axis Whitelist (v1.1185)**: `entity_error_counters` axis tightened to CANONICAL_AXES whitelist to prevent arbitrary axis injection (#3289)
+- **Chat Queue-Count Banner (v1.1185)**: Outbox queue-count banner in chat UI showing pending message count (spec acceptance #5) (#3288)
+- **Client Speak Payload-Hash Dedupe (v1.1185)**: 10-second window payload-hash deduplication on `POST /api/client/speak` to catch client auto-retry duplicates (#3287)
+
 ---
 
 ## Test Coverage Summary
 
-**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~3670 test cases across 265 Jest files + 59 integration tests).
+**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~3707 test cases across 268 Jest files + 59 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
@@ -1239,7 +1247,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 | R2 Quota Rich Card | `node backend/tests/test-r2-quota-rich-card.js` | Device ID + Secret | R2 quota exceeded rich card E2E |
 | Subscription Plans Live | `node backend/tests/test-subscription-plans-live.js` | Device ID + Secret | Subscription plans + wallet live verification |
 
-### Jest Unit Tests (CI-run, `npm test`, 265 files)
+### Jest Unit Tests (CI-run, `npm test`, 268 files)
 
 | Test | File | Description |
 |------|------|-------------|
@@ -1322,7 +1330,7 @@ All test files are in `backend/tests/`. Run with `node backend/tests/<file>`.
 ### Running All Tests
 ```bash
 node backend/run_all_tests.js          # Run all tests sequentially
-cd backend && npm test                  # Jest unit tests (265 files)
+cd backend && npm test                  # Jest unit tests (268 files)
 cd backend && npm run lint              # ESLint
 ```
 

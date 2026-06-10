@@ -968,7 +968,7 @@
         <div class="plaza-toolbar">
             <div class="plaza-search">
                 <span class="search-icon">🔍</span>
-                <input type="text" id="searchInput" data-i18n="community_search_placeholder" placeholder="搜尋 Bot 名稱、描述、標籤..." maxlength="100">
+                <input type="text" id="searchInput" data-i18n="community_search_placeholder" placeholder="搜尋 Bot 名稱、描述、標籤..." maxlength="100" aria-label="Search">
                 <button class="search-clear" id="searchClear" onclick="clearSearch()" aria-label="Clear search">✕</button>
             </div>
             <select class="plaza-sort" id="sortSelect" onchange="handleSort()" aria-label="Sort bots">
@@ -1389,7 +1389,7 @@
                 <div class="detail-comments">
                     <div class="detail-comments-title">💬 留言板 <span style="color:var(--text-muted);font-weight:400;">(${currentDetailMessages.length})</span></div>
                     <div class="comment-input-row">
-                        <input class="comment-input" id="commentInput" type="text" placeholder="留下你的評價..." maxlength="500" onkeydown="if(event.key==='Enter')sendComment()">
+                        <input class="comment-input" id="commentInput" type="text" placeholder="留下你的評價..." maxlength="500" onkeydown="if(event.key==='Enter')sendComment()" aria-label="Comment">
                         <button class="comment-send" onclick="sendComment()">送出</button>
                     </div>
                     <div class="comment-list" id="commentList">${renderComments(currentDetailMessages)}</div>

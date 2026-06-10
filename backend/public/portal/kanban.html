@@ -741,7 +741,7 @@
         <!-- Funnel (collapsible) -->
         <div class="kb-funnel" id="kbFunnel" style="display:none; padding:8px 0 4px 0; gap:8px; flex-wrap:wrap;">
             <input type="text" id="funnelSearch" placeholder="Search…" data-i18n-placeholder="kb_funnel_search"
-                   oninput="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px; min-width:180px;">
+                   oninput="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px; min-width:180px;" aria-label="Search cards">
             <div class="kb-search-scope" id="kbSearchScope" style="display:flex; gap:4px; align-items:center;">
                 <span style="font-size:12px; color:#888;" data-i18n="kb_search_scope_label">Scope:</span>
                 <label class="kb-scope-chip active" data-scope="title">
@@ -757,7 +757,7 @@
                     <span data-i18n="kb_search_scope_subcards">Sub-cards</span>
                 </label>
             </div>
-            <select id="funnelStatus" onchange="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px;">
+            <select id="funnelStatus" onchange="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px;" aria-label="Filter by status">
                 <option value="" data-i18n="kb_funnel_status_all">All statuses</option>
                 <option value="backlog" data-i18n="kb_col_backlog">Backlog</option>
                 <option value="todo" data-i18n="kb_col_todo">TODO</option>
@@ -765,18 +765,18 @@
                 <option value="review" data-i18n="kb_col_review">Review</option>
                 <option value="done" data-i18n="kb_col_done">Done</option>
             </select>
-            <select id="funnelPriority" onchange="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px;">
+            <select id="funnelPriority" onchange="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px;" aria-label="Filter by priority">
                 <option value="" data-i18n="kb_funnel_priority_all">All priorities</option>
                 <option value="P0">P0</option>
                 <option value="P1">P1</option>
                 <option value="P2">P2</option>
                 <option value="P3">P3</option>
             </select>
-            <select id="funnelEntity" onchange="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px;">
+            <select id="funnelEntity" onchange="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px;" aria-label="Filter by entity">
                 <option value="" data-i18n="kb_funnel_entity_all">All entities</option>
             </select>
             <input type="text" id="funnelTag" placeholder="Tag…" data-i18n-placeholder="kb_funnel_tag"
-                   oninput="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px; min-width:120px;">
+                   oninput="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px; min-width:120px;" aria-label="Filter by tag">
             <label style="font-size:13px; color:#666;">
                 <span data-i18n="kb_funnel_since">Since</span>:
                 <input type="date" id="funnelSince" onchange="onFunnelChange()" style="padding:4px 6px; border:1px solid #ccc; border-radius:6px;">
@@ -815,7 +815,7 @@
                 <div class="kb-auto-filter" id="autoFilter">
                     <input type="search" class="kb-auto-filter-search" id="autoFilterSearch"
                         placeholder="Search title / description…" data-i18n-placeholder="kb_auto_filter_search_ph"
-                        autocomplete="off">
+                        autocomplete="off" aria-label="Search automations">
                     <div class="kb-auto-filter-group" id="autoFilterEntities">
                         <span class="kb-auto-filter-group-label" data-i18n="kb_auto_filter_entity">Entity</span>
                     </div>
@@ -908,11 +908,11 @@
         <div class="kb-new-form">
             <h3 data-i18n="kb_form_title">🆕 New Card</h3>
             <div class="kb-form-group">
-                <label class="kb-form-label" data-i18n="kb_label_title">Title</label>
+                <label class="kb-form-label" for="newTitle" data-i18n="kb_label_title">Title</label>
                 <input class="kb-form-input" id="newTitle" data-i18n-placeholder="kb_placeholder_title" placeholder="Card title...">
             </div>
             <div class="kb-form-group">
-                <label class="kb-form-label" data-i18n="kb_label_description">Description</label>
+                <label class="kb-form-label" for="newDesc" data-i18n="kb_label_description">Description</label>
                 <textarea class="kb-form-textarea" id="newDesc" data-i18n-placeholder="kb_placeholder_desc" placeholder="Brief description..."></textarea>
             </div>
             <div class="kb-form-group">
@@ -923,7 +923,7 @@
                 <div class="kb-anchor-panel" id="newAnchorPanel"></div>
             </div>
             <div class="kb-form-group">
-                <label class="kb-form-label" data-i18n="kb_label_priority">Priority</label>
+                <label class="kb-form-label" for="newPriority" data-i18n="kb_label_priority">Priority</label>
                 <select class="kb-form-select" id="newPriority">
                     <option value="P0" data-i18n="kb_priority_p0">🔴 P0 — Critical</option>
                     <option value="P1" data-i18n="kb_priority_p1">🟠 P1 — High</option>
@@ -932,7 +932,7 @@
                 </select>
             </div>
             <div class="kb-form-group">
-                <label class="kb-form-label" data-i18n="kb_label_status">Initial Status</label>
+                <label class="kb-form-label" for="newStatus" data-i18n="kb_label_status">Initial Status</label>
                 <select class="kb-form-select" id="newStatus" onchange="applyNewGateState()">
                     <option value="backlog" data-i18n="kb_col_backlog">Backlog</option>
                     <option value="todo" selected data-i18n="kb_col_todo">TODO</option>
@@ -952,7 +952,7 @@
                 <div class="kb-auto-toggle-row">
                     <label class="kb-auto-toggle-label"><input type="checkbox" id="newGated" onchange="document.getElementById('newGateReason').style.display=this.checked?'block':'none'"> 🔒 <span data-i18n="kb_label_gated">Launch-gate（暫停 L1/L2/L3 自動升級；移出 backlog 時自動關閉）</span></label>
                 </div>
-                <input type="text" id="newGateReason" class="kb-form-input" placeholder="原因（選填，例：等發版）" maxlength="255" style="display:none;margin-top:6px;">
+                <input type="text" id="newGateReason" class="kb-form-input" placeholder="原因（選填，例：等發版）" maxlength="255" style="display:none;margin-top:6px;" aria-label="Gate reason">
                 <div class="kb-gate-hint" data-i18n="kb_gate_backlog_only_hint" style="display:none;font-size:11px;color:#9ca3af;margin-top:4px;">Launch-gate 只在 backlog 卡可用</div>
             </div>
             <div class="kb-form-group">
@@ -967,8 +967,8 @@
                         <button type="button" class="kb-cron-chip" data-cron="0 9 * * *" onclick="selectCron(this)" data-i18n="kb_cron_daily">Daily 9AM</button>
                         <button type="button" class="kb-cron-chip" data-cron="0 9 * * 1" onclick="selectCron(this)" data-i18n="kb_cron_weekly">Weekly Mon</button>
                     </div>
-                    <input class="kb-form-input" id="newCronCustom" style="margin-top:8px" placeholder="Custom cron: */30 * * * *" data-i18n-placeholder="kb_placeholder_cron">
-                    <label class="kb-form-label" style="margin-top:12px">Dispatch Mode</label>
+                    <input class="kb-form-input" id="newCronCustom" style="margin-top:8px" placeholder="Custom cron: */30 * * * *" data-i18n-placeholder="kb_placeholder_cron" aria-label="Custom cron expression">
+                    <label class="kb-form-label" for="newDispatchMode" style="margin-top:12px">Dispatch Mode</label>
                     <select class="kb-form-select" id="newDispatchMode">
                         <option value="immediate">Immediate</option>
                         <option value="idle_only">Idle only</option>
@@ -988,11 +988,11 @@
             <h3>✏️ <span data-i18n="kb_auto_edit_title">Edit Schedule</span></h3>
             <input type="hidden" id="editSchedCardId">
             <div class="kb-form-group">
-                <label class="kb-form-label" data-i18n="kb_label_title">Title</label>
+                <label class="kb-form-label" for="editCardTitle" data-i18n="kb_label_title">Title</label>
                 <input class="kb-form-input" id="editCardTitle" data-i18n-placeholder="kb_placeholder_title" placeholder="Card title...">
             </div>
             <div class="kb-form-group">
-                <label class="kb-form-label" data-i18n="kb_label_description">Description</label>
+                <label class="kb-form-label" for="editCardDesc" data-i18n="kb_label_description">Description</label>
                 <textarea class="kb-form-textarea" id="editCardDesc" data-i18n-placeholder="kb_placeholder_desc" placeholder="Brief description..."></textarea>
             </div>
             <div class="kb-form-group">
@@ -1004,17 +1004,17 @@
                 <div class="kb-auto-toggle-row">
                     <label class="kb-auto-toggle-label"><input type="checkbox" id="editGated"> 🔒 <span data-i18n="kb_label_gated">Launch-gate（暫停 L1/L2/L3 自動升級；移出 backlog 時自動關閉）</span></label>
                 </div>
-                <input type="text" id="editGateReason" class="kb-form-input" placeholder="原因（選填，例：等發版）" maxlength="255" style="margin-top:6px;">
+                <input type="text" id="editGateReason" class="kb-form-input" placeholder="原因（選填，例：等發版）" maxlength="255" style="margin-top:6px;" aria-label="Gate reason">
             </div>
             <div class="kb-form-group" id="editReworkGroup" style="display:none">
                 <div class="kb-auto-toggle-row">
                     <label class="kb-auto-toggle-label"><input type="checkbox" id="editRequiresPrRework"> 🔁 Requires PR rework before Done</label>
                 </div>
-                <input class="kb-form-input" id="editReworkPrNumber" placeholder="New PR number or URL">
+                <input class="kb-form-input" id="editReworkPrNumber" placeholder="New PR number or URL" aria-label="PR number or URL">
                 <div style="font-size:12px;color:var(--text-secondary);margin-top:6px">Reopened PR-linked cards cannot return to Done until a follow-up PR number is recorded.</div>
             </div>
             <div class="kb-form-group" id="editDispatchGroup">
-                <label class="kb-form-label">Dispatch Mode</label>
+                <label class="kb-form-label" for="editDispatchMode">Dispatch Mode</label>
                 <select class="kb-form-select" id="editDispatchMode">
                     <option value="immediate">Immediate</option>
                     <option value="idle_only">Idle only</option>
@@ -1023,7 +1023,7 @@
             </div>
             <div id="editSchedFields">
             <div class="kb-form-group">
-                <label class="kb-form-label" data-i18n="kb_label_sched_type">Schedule Type</label>
+                <label class="kb-form-label" for="editSchedType" data-i18n="kb_label_sched_type">Schedule Type</label>
                 <select class="kb-form-select" id="editSchedType" onchange="toggleEditSchedFields()">
                     <option value="recurring" data-i18n="kb_sched_recurring">Recurring (Cron)</option>
                     <option value="once" data-i18n="kb_sched_once">One-time</option>
@@ -1038,17 +1038,17 @@
                         <button type="button" class="kb-cron-chip" data-cron="0 9 * * *" onclick="selectEditCron(this)" data-i18n="kb_cron_daily">Daily 9AM</button>
                         <button type="button" class="kb-cron-chip" data-cron="0 9 * * 1" onclick="selectEditCron(this)" data-i18n="kb_cron_weekly">Weekly Mon</button>
                     </div>
-                    <input class="kb-form-input" id="editCronCustom" style="margin-top:8px" data-i18n-placeholder="kb_placeholder_cron" placeholder="Custom cron: */30 * * * *">
+                    <input class="kb-form-input" id="editCronCustom" style="margin-top:8px" data-i18n-placeholder="kb_placeholder_cron" placeholder="Custom cron: */30 * * * *" aria-label="Custom cron expression">
                 </div>
             </div>
             <div id="editSchedOnce" style="display:none">
                 <div class="kb-form-group">
-                    <label class="kb-form-label" data-i18n="kb_label_run_at">Run At</label>
+                    <label class="kb-form-label" for="editSchedRunAt" data-i18n="kb_label_run_at">Run At</label>
                     <input class="kb-form-input" id="editSchedRunAt" type="datetime-local">
                 </div>
             </div>
             <div class="kb-form-group">
-                <label class="kb-form-label" data-i18n="kb_label_timezone">Timezone</label>
+                <label class="kb-form-label" for="editSchedTz" data-i18n="kb_label_timezone">Timezone</label>
                 <select class="kb-form-select" id="editSchedTz">
                     <option value="Asia/Taipei">Asia/Taipei (UTC+8)</option>
                     <option value="Asia/Tokyo">Asia/Tokyo (UTC+9)</option>
