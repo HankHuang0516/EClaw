@@ -53,11 +53,55 @@ describeIfCreds('Multi-tenant E2E matrix — Part B Slice 2 (prod)', () => {
     // ─── Row 4: /portal/settings.html ───
     test.todo('settings.html: concurrent A+B setting writes never cross-write (Playwright)');
 
-    // ─── Row 5: /api/transform — entity A speakTo entity B routing ───
-    test.todo('/api/transform: entity A speakTo entity B routes correctly, no A leakage in B context (needs real msg send)');
+    // ─── Row 5: /api/transform — auth-rejection isolation (read-only, no real msg sent) ───
+    test('/api/transform: missing botSecret rejected (no auth bypass)', async () => {
+        if (!DEVICE_ID) return;
+        const res = await fetch(`${PROD}/api/transform`, {
+            method: 'POST',
+            headers: { 'User-Agent': UA, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceId: DEVICE_ID, entityId: ENT_A, message: '[E2E auth-probe]', state: 'IDLE' }),
+        });
+        expect(res.status).toBeGreaterThanOrEqual(400);
+        expect(res.status).toBeLessThan(500);
+    });
 
-    // ─── Row 6: /api/client/speak — owner-side entity isolation ───
-    test.todo('/api/client/speak: user as device-owner, entityId scoping holds (needs real msg send)');
+    test('/api/transform: wrong-deviceId rejected with botSecret-of-other-device (no cross-device leak)', async () => {
+        if (!BOT_SECRET_A) return;
+        const res = await fetch(`${PROD}/api/transform`, {
+            method: 'POST',
+            headers: { 'User-Agent': UA, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceId: '00000000-0000-0000-0000-000000000000', entityId: ENT_A, botSecret: BOT_SECRET_A, message: '[E2E cross-device probe]', state: 'IDLE' }),
+        });
+        expect(res.status).toBeGreaterThanOrEqual(400);
+        expect(res.status).toBeLessThan(500);
+    });
+
+    test.todo('/api/transform: positive case — entity A speakTo entity B real msg delivery + no A-context leakage in B response (bridge-auth follow-up)');
+
+    // ─── Row 6: /api/client/speak — auth-rejection isolation (read-only) ───
+    test('/api/client/speak: missing deviceSecret rejected (no auth bypass)', async () => {
+        if (!DEVICE_ID) return;
+        const res = await fetch(`${PROD}/api/client/speak`, {
+            method: 'POST',
+            headers: { 'User-Agent': UA, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceId: DEVICE_ID, entityId: ENT_A, text: '[E2E auth-probe]', source: 'client' }),
+        });
+        expect(res.status).toBeGreaterThanOrEqual(400);
+        expect(res.status).toBeLessThan(500);
+    });
+
+    test('/api/client/speak: nonexistent deviceId returns 404 (no silent accept)', async () => {
+        const res = await fetch(`${PROD}/api/client/speak`, {
+            method: 'POST',
+            headers: { 'User-Agent': UA, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceId: '00000000-0000-0000-0000-000000000000', entityId: 0, text: '[E2E nonexistent probe]', source: 'client' }),
+        });
+        // Expect a clear failure: 4xx (404 device not found, 401 no auth, 400 bad shape).
+        expect(res.status).toBeGreaterThanOrEqual(400);
+        expect(res.status).toBeLessThan(500);
+    });
+
+    test.todo('/api/client/speak: positive case — user-A real msg send + entityId scoping holds in receipt (bridge-auth follow-up)');
 
     // ─── Row 7: /api/mission/cards — entity-scoped queries ───
     test('mission/cards: device-wide board returns all cards regardless of entityId param (current contract)', async () => {
