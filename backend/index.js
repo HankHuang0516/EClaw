@@ -2292,6 +2292,12 @@ const idempotencyKeys = require('./idempotency-keys');
 let _idempotencyInner = (req, res, next) => next();
 const idempotencyMiddleware = (req, res, next) => _idempotencyInner(req, res, next);
 
+// Payload-hash dedupe for /api/client/speak (card_51eb9991, Hank 2026-06-10 12:08 TW).
+// Catches client-side auto-retries where Idempotency-Key is missing or
+// regenerated per attempt. 10s rolling window keyed on payload sha256.
+const clientSpeakPayloadDedupe = require('./client-speak-payload-dedupe');
+const clientSpeakDedupeMiddleware = clientSpeakPayloadDedupe.makeMiddleware({ windowMs: 10_000 });
+
 // ============================================
 // API DOCS — OpenAPI / Swagger UI
 // ============================================
@@ -11204,7 +11210,7 @@ app.post('/api/device/entity/avatar/upload', avatarUpload.single('file'), async 
  *
  * If bot has registered webhook, push notification is sent.
  */
-app.post('/api/client/speak', idempotencyMiddleware, async (req, res) => {
+app.post('/api/client/speak', idempotencyMiddleware, clientSpeakDedupeMiddleware, async (req, res) => {
     const { deviceId, deviceSecret, entityId, text, source = "client", mediaType, mediaUrl, attachments } = req.body;
 
     if (!deviceId) {
