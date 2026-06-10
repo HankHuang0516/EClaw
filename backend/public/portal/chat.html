@@ -63,6 +63,23 @@
             flex-direction: column;
         }
 
+        /* Outbox banner — offline-queue spec acceptance #5 (card_751775f0) */
+        .outbox-banner {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #fff8e1;
+            border-bottom: 1px solid #f3d27a;
+            color: #5d4317;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .outbox-banner[hidden] { display: none; }
+        body.dark .outbox-banner { background: #2a2417; border-bottom-color: #5a4a20; color: #e8d488; }
+        .outbox-banner-icon { font-size: 14px; line-height: 1; }
+        .outbox-banner-text { line-height: 1.3; }
+
         .chat-container {
             display: flex;
             flex-direction: column;
@@ -2947,6 +2964,12 @@
                 </div><!-- /#filterBarLegacy — moved into filter-summary panel at boot -->
             </div>
 
+            <!-- Outbox queue banner (card_751775f0, offline-queue spec acceptance #5) -->
+            <div class="outbox-banner" id="outboxBanner" hidden role="status" aria-live="polite">
+                <span class="outbox-banner-icon" aria-hidden="true">📤</span>
+                <span class="outbox-banner-text" id="outboxBannerText"></span>
+            </div>
+
             <!-- Messages Area -->
             <div class="chat-messages-wrapper">
                 <div class="chat-messages" id="chatMessages">
@@ -3612,6 +3635,31 @@
         }
         window.addEventListener('online', _flushOutboxWithSender);
         setInterval(() => { if (navigator.onLine) _flushOutboxWithSender(); }, 30_000);
+
+        // Outbox queue-count banner — card_751775f0 (offline-queue spec acceptance #5).
+        // Polls EclawOutbox.summary() every 2s. Banner hidden when 0 queued + 0 retrying.
+        function _updateOutboxBanner() {
+            const el = document.getElementById('outboxBanner');
+            const txtEl = document.getElementById('outboxBannerText');
+            if (!el || !txtEl || !window.EclawOutbox || typeof window.EclawOutbox.summary !== 'function') return;
+            let s;
+            try { s = window.EclawOutbox.summary(); } catch (e) { return; }
+            const by = (s && s.by) || {};
+            const queued = by.queued || 0;
+            const retrying = by.retrying || 0;
+            if (queued === 0 && retrying === 0) {
+                el.hidden = true;
+                txtEl.textContent = '';
+                return;
+            }
+            const parts = [];
+            if (queued > 0) parts.push(queued + ' queued');
+            if (retrying > 0) parts.push(retrying + ' retrying');
+            txtEl.textContent = parts.join(' · ');
+            el.hidden = false;
+        }
+        setInterval(_updateOutboxBanner, 2_000);
+        window.addEventListener('online', _updateOutboxBanner);
 
         window.addEventListener('DOMContentLoaded', async () => {
             // Detect embed mode (workspace split view)
