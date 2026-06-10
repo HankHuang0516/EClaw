@@ -3058,13 +3058,13 @@
                     </div>
                     <button class="btn-media" id="btnVoice" onclick="toggleRecording()" aria-label="Record voice message">&#x1F3A4;</button>
                     <textarea class="chat-input" id="messageInput" rows="1"
-                        data-i18n="chat_input_placeholder" placeholder="Type a message..."
+                        aria-label="Message" data-i18n="chat_input_placeholder" placeholder="Type a message..."
                         oninput="renderSlashSuggestions(this.value); localStorage.setItem('chat_draft', this.value); this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,120)+'px'"
                         onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing&&event.keyCode!==229){if(window.__eclawMobileInput===undefined){window.__eclawMobileInput=/EClawAndroid|EClawIOS/i.test(navigator.userAgent)||(window.matchMedia&&window.matchMedia('(pointer:coarse)').matches)}if(!window.__eclawMobileInput){event.preventDefault();sendMessage()}}"></textarea>
                     <button class="btn btn-primary btn-send" id="btnSend" onclick="sendMessage()"
                         data-i18n="chat_btn_send" title="Send">&#10148;</button>
                 </div>
-                <input type="file" id="photoFileInput" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" multiple style="display:none" onchange="handleFilesSelected(this, 'photo')">
+                <input type="file" id="photoFileInput" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" multiple style="display:none" onchange="handleFilesSelected(this, 'photo')" aria-label="Upload photo or video">
             </div>
         </div>
     </div>
@@ -3189,15 +3189,15 @@
                         <button type="button" class="sched-mode-btn" id="schedModeCountdownBtn" onclick="setScheduleMode('countdown')" data-i18n="chat_schedule_mode_countdown">Countdown</button>
                     </div>
                     <div class="sched-mode-pane active" id="schedModeFixedPane">
-                        <input type="datetime-local" id="schedFixedAt" oninput="validateScheduleInput()" style="width:100%;padding:8px 10px;border:1px solid var(--card-border);border-radius:8px;font-size:14px;">
+                        <input type="datetime-local" id="schedFixedAt" oninput="validateScheduleInput()" style="width:100%;padding:8px 10px;border:1px solid var(--card-border);border-radius:8px;font-size:14px;" aria-label="Scheduled date and time">
                     </div>
                     <div class="sched-mode-pane" id="schedModeCountdownPane">
                         <div class="sched-countdown-row">
-                            <input type="number" id="schedCdH" min="0" max="167" value="0" oninput="validateScheduleInput()">
+                            <input type="number" id="schedCdH" min="0" max="167" value="0" oninput="validateScheduleInput()" aria-label="Hours">
                             <span data-i18n="chat_schedule_h">h</span>
-                            <input type="number" id="schedCdM" min="0" max="59" value="5" oninput="validateScheduleInput()">
+                            <input type="number" id="schedCdM" min="0" max="59" value="5" oninput="validateScheduleInput()" aria-label="Minutes">
                             <span data-i18n="chat_schedule_m">m</span>
-                            <input type="number" id="schedCdS" min="0" max="59" value="0" oninput="validateScheduleInput()">
+                            <input type="number" id="schedCdS" min="0" max="59" value="0" oninput="validateScheduleInput()" aria-label="Seconds">
                             <span data-i18n="chat_schedule_s">s</span>
                             <span style="margin-left:auto;font-size:11px;color:var(--text-muted)" data-i18n="chat_schedule_max_7days">(max 7 days)</span>
                         </div>
