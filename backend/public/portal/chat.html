@@ -288,6 +288,23 @@
 
         body.density-comfortable .chat-messages { padding: 20px; padding-right: 36px; gap: 18px; }
         body.density-comfortable .chat-bubble { padding: 12px 18px; font-size: 15px; line-height: 1.5; }
+
+        /* ── 情緒價值 #1: greeting banner (card_f8167ec5) ── */
+        .greet-banner {
+            margin: 8px 14px 4px; padding: 10px 14px; border-radius: 14px;
+            background: var(--bg-card, #f4f6fb); border: 1px solid var(--border-color, #dfe3ec);
+            font-size: 14px; line-height: 1.5; display: flex; flex-direction: column; gap: 8px;
+        }
+        body.dark .greet-banner { background: #23262f; border-color: #3a3f4d; }
+        .greet-banner-text { display: flex; align-items: flex-start; gap: 6px; }
+        .greet-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .greet-chip {
+            border: 1px solid var(--primary, #5b6cff); color: var(--primary, #5b6cff);
+            background: transparent; border-radius: 16px; padding: 5px 14px;
+            font-size: 13px; cursor: pointer; min-height: 32px;
+        }
+        .greet-chip:hover { background: rgba(91,108,255,0.1); }
+        .greet-chip.greet-chip-dismiss { border-color: var(--border-color, #c8cdd9); color: var(--text-secondary, #8a8f9c); }
         body.density-comfortable .chat-msg { max-width: 75%; }
         body.density-comfortable .chat-source { font-size: 12px; margin-bottom: 4px; }
 
@@ -2996,6 +3013,7 @@
 
             <!-- Messages Area -->
             <div class="chat-messages-wrapper">
+                <div class="greet-banner" id="greetBanner" style="display:none" role="status"></div>
                 <div class="chat-messages" id="chatMessages">
                     <div class="chat-loading" id="chatLoading">
                         <div class="spinner"></div>
@@ -4636,6 +4654,7 @@
                     _sourceParseCache.clear();
                     renderFilterChips();
                     renderMessages(prevCount < allMessages.length);
+                    try { EclawGreeting.maybeShow(); } catch (_) { /* greeting must never break chat */ }
                     if (!isFirstLoad && getChatMessageDeepLinkId()) {
                         await handleChatMessageDeepLink({ showMissingToast: false, scroll: false });
                     }
@@ -6327,6 +6346,76 @@
         }
 
         // ── Send Message ──
+        // ── 情緒價值 #1: 回訪個人化問候 + 新手 starter chips (card_f8167ec5) ──
+        // Banner lives OUTSIDE #chatMessages so renderMessages() re-renders
+        // can never wipe it. Shown at most once per device per day.
+        const EclawGreeting = {
+            _shown: false,
+            _guardKey() {
+                const d = new Date();
+                const day = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+                return 'eclaw_greet_' + day;
+            },
+            maybeShow() {
+                if (this._shown) return;
+                this._shown = true; // single evaluation per page load
+                let guarded = false;
+                try { guarded = !!localStorage.getItem(this._guardKey()); } catch (_) {}
+                if (guarded) return;
+                const banner = document.getElementById('greetBanner');
+                if (!banner) return;
+                const t = (k, fb) => (window.i18n && i18n.t) ? i18n.t(k, fb) : fb;
+                const esc = (x) => (typeof escapeHtml === 'function') ? escapeHtml(x) : x;
+                const botMsgs = (allMessages || []).filter(m => m.is_from_bot && (m.text || '').trim());
+                let html;
+                if (botMsgs.length > 0) {
+                    // Returning user: topic = last bot message, stripped to 40 chars.
+                    // (Vector recall has no portal client route today — this is the
+                    // card-sanctioned fallback and needs zero extra API calls.)
+                    const last = botMsgs[botMsgs.length - 1];
+                    const topic = (typeof stripReplyQuotePrefix === 'function' ? stripReplyQuotePrefix(last.text) : last.text)
+                        .replace(/\s+/g, ' ').trim().slice(0, 40);
+                    const tpl = t('greet_returning_template', '上次我們聊到「{topic}」，要接著聊嗎？');
+                    html = '<div class="greet-banner-text">👋 ' + esc(tpl).replace('{topic}', '<b>' + esc(topic) + '</b>') + '</div>' +
+                        '<div class="greet-chips">' +
+                        '<button class="greet-chip" onclick="EclawGreeting.continueTopic()">' + esc(t('greet_continue', '繼續上次話題')) + '</button>' +
+                        '<button class="greet-chip greet-chip-dismiss" onclick="EclawGreeting.dismiss()">' + esc(t('greet_change_topic', '換個話題')) + '</button>' +
+                        '</div>';
+                } else {
+                    // Brand-new entity: welcome + 3 starter prompts (activation moment).
+                    const starters = [
+                        t('greet_starter_1', '你可以幫我做什麼？'),
+                        t('greet_starter_2', '幫我規劃今天的待辦事項'),
+                        t('greet_starter_3', '用三句話介紹一下你自己')
+                    ];
+                    html = '<div class="greet-banner-text">🎉 ' + esc(t('greet_welcome_new', '歡迎！我是你的 AI 夥伴，點一個問題開始吧：')) + '</div>' +
+                        '<div class="greet-chips">' +
+                        starters.map(st => '<button class="greet-chip" onclick="EclawGreeting.sendStarter(this)">' + esc(st) + '</button>').join('') +
+                        '<button class="greet-chip greet-chip-dismiss" onclick="EclawGreeting.dismiss()">✕</button>' +
+                        '</div>';
+                }
+                banner.innerHTML = html;
+                banner.style.display = '';
+                try { localStorage.setItem(this._guardKey(), '1'); } catch (_) {}
+            },
+            continueTopic() {
+                const t = (k, fb) => (window.i18n && i18n.t) ? i18n.t(k, fb) : fb;
+                const input = document.getElementById('messageInput');
+                if (input) { input.value = t('greet_continue_send_text', '我們繼續上次的話題吧'); sendMessage(); }
+                this.dismiss();
+            },
+            sendStarter(btn) {
+                const input = document.getElementById('messageInput');
+                if (input) { input.value = btn.textContent.trim(); sendMessage(); }
+                this.dismiss();
+            },
+            dismiss() {
+                const banner = document.getElementById('greetBanner');
+                if (banner) banner.style.display = 'none';
+            }
+        };
+        window.EclawGreeting = EclawGreeting;
+
         async function sendMessage() {
             const input = document.getElementById('messageInput');
             const text = input.value.trim();
