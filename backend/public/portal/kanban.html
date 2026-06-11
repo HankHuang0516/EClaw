@@ -363,8 +363,10 @@
 
         /* ══════════════ Toast ══════════════ */
         .kb-toast { position:fixed; bottom:24px; right:24px; background:#4ade80; color:#000; padding:10px 20px; border-radius:var(--radius-sm); font-size:13px; font-weight:600; z-index:200; display:none; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
-        .kb-toast.show { display:block; }
+        .kb-toast.show { display:flex; align-items:center; gap:4px; }
         .kb-toast.error { background:#ef4444; color:#fff; }
+        .kb-toast-undo { margin-left:10px; background:rgba(0,0,0,0.15); border:none; color:inherit; font-weight:700; padding:4px 12px; border-radius:6px; cursor:pointer; font-size:13px; font-family:inherit; }
+        .kb-toast-undo:hover { background:rgba(0,0,0,0.28); }
 
         /* ══════════════ Automation Collapse Section ══════════════ */
         .kb-automation { margin-bottom:16px; background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius); }
@@ -1076,7 +1078,7 @@
     </div>
 
     <!-- Toast -->
-    <div class="kb-toast" id="kbToast"></div>
+    <div class="kb-toast" id="kbToast" role="status" aria-live="polite"></div>
 
     <!-- Message Preview Modal -->
     <div class="kb-message-modal" id="messageModal" style="display: none;">
@@ -1515,6 +1517,44 @@
                 deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret,
                 newStatus, assignedBots
             });
+        }
+
+        // ── Optimistic move + undo (情緒價值 #2, card_c575aacae639721dbc8cfaa3) ──
+        // Flip the local model and re-render BEFORE the server confirms, so the
+        // card visually lands in the target column immediately. Server failure
+        // (e.g. done-gate rejection) reverts the flip and surfaces the error.
+        async function optimisticMove(cardId, newStatus) {
+            const card = findCard(cardId);
+            if (!card) return;
+            const prevStatus = card.status;
+            card.status = newStatus;
+            renderBoard(true);
+            try {
+                await apiMoveCard(cardId, newStatus, card.assignedBots || []);
+                showUndoToast(
+                    t('kb_toast_moved', 'Moved to {col}').replace('{col}', STATUS_LABELS[newStatus] || newStatus),
+                    () => undoMove(cardId, prevStatus)
+                );
+                await loadCards();
+                if (openCardId === cardId) openDetail(cardId);
+            } catch (err) {
+                card.status = prevStatus;
+                renderBoard(true);
+                showToast(t('kb_err_move', 'Move failed') + ': ' + (err.message || err), true);
+            }
+        }
+
+        async function undoMove(cardId, prevStatus) {
+            const card = findCard(cardId);
+            if (card) { card.status = prevStatus; renderBoard(true); }
+            try {
+                await apiMoveCard(cardId, prevStatus, (card && card.assignedBots) || []);
+                await loadCards(); // re-fetch = server-state consistency check
+                showToast(t('kb_undo_done', 'Undone'));
+            } catch (err) {
+                await loadCards();
+                showToast(t('kb_undo_failed', 'Undo failed') + ': ' + (err.message || err), true);
+            }
         }
 
         async function apiReopenCard(cardId, body) {
@@ -2254,12 +2294,9 @@
                     if (!card || card.status === newStatus) { dragCard = null; return; }
                     if (card.isAutomation) { showToast('自動化母卡無法手動移動', true); dragCard = null; return; }
                     if (card.status === 'done') { showToast('Cannot move Done cards', true); dragCard = null; return; }
-                    try {
-                        await apiMoveCard(dragCard, newStatus, card.assignedBots || []);
-                        showToast('Moved to ' + STATUS_LABELS[newStatus]);
-                        await loadCards();
-                    } catch(err) { showToast('Move failed: ' + (err.message||err), true); }
+                    const moving = dragCard;
                     dragCard = null;
+                    await optimisticMove(moving, newStatus);
                 });
             });
         }
@@ -2400,12 +2437,28 @@
             const card = findCard(cardId);
             if (!card) return;
             if (!await showConfirm({ message: t('kb_archive_confirm', 'Archive this card?'), itemName: card.title || card.id, danger: true })) return;
+            // Optimistic: drop the card from the board right away; revert on
+            // server failure. Undo path uses the existing /restore endpoint.
+            const idx = allCards.findIndex(c => c.id === cardId);
+            const snapshot = idx >= 0 ? allCards[idx] : null;
+            if (idx >= 0) { allCards.splice(idx, 1); renderBoard(true); }
+            closeDetail();
             try {
                 await apiCall('DELETE', `/api/mission/card/${cardId}?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
-                showToast('Archived');
-                closeDetail();
+                showUndoToast(t('kb_toast_archived', 'Archived'), async () => {
+                    try {
+                        await apiCall('POST', `/api/mission/card/${cardId}/restore`, {
+                            deviceId: currentUser.deviceId, deviceSecret: currentUser.deviceSecret
+                        });
+                        await loadCards();
+                        showToast(t('kb_undo_done', 'Undone'));
+                    } catch (err) {
+                        showToast(t('kb_undo_failed', 'Undo failed') + ': ' + (err.message || err), true);
+                    }
+                });
                 await loadCards();
             } catch (err) {
+                if (snapshot) { allCards.splice(idx, 0, snapshot); renderBoard(true); }
                 showToast('Archive failed: ' + (err.message || err), true);
             }
         }
@@ -3710,12 +3763,7 @@
             if (!card || card.status === newStatus) return;
             if (card.isAutomation) { showToast('自動化母卡由排程管理，無法手動移動', true); return; }
             if (card.status === 'done') { showToast('Cannot move Done cards; use Reopen', true); return; }
-            try {
-                await apiMoveCard(cardId, newStatus, card.assignedBots || []);
-                showToast('Moved to ' + STATUS_LABELS[newStatus]);
-                await loadCards();
-                if (openCardId === cardId) openDetail(cardId);
-            } catch(e) { showToast('Move failed', true); }
+            await optimisticMove(cardId, newStatus);
         }
 
         function closeReopenDialog() {
@@ -4384,11 +4432,33 @@
         }
 
         // ── Utils ──
+        let _toastTimer = null;
         function showToast(msg, isError) {
-            const t = document.getElementById('kbToast');
-            t.textContent = msg;
-            t.className = 'kb-toast show' + (isError ? ' error' : '');
-            setTimeout(() => t.classList.remove('show'), 2500);
+            const el = document.getElementById('kbToast');
+            el.textContent = msg;
+            el.className = 'kb-toast show' + (isError ? ' error' : '');
+            clearTimeout(_toastTimer);
+            _toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+        }
+        // Toast with an inline undo action. Stays up longer than the plain
+        // toast (default 5s) so the user has time to hit 復原. Card: 情緒價值 #2
+        // (card_c575aacae639721dbc8cfaa3).
+        function showUndoToast(msg, onUndo, duration = 5000) {
+            const el = document.getElementById('kbToast');
+            el.textContent = msg;
+            const btn = document.createElement('button');
+            btn.className = 'kb-toast-undo';
+            btn.id = 'kbToastUndo';
+            btn.textContent = t('kb_undo', 'Undo');
+            btn.onclick = () => {
+                clearTimeout(_toastTimer);
+                el.classList.remove('show');
+                try { onUndo(); } catch (e) { console.error('[Kanban] undo failed:', e); }
+            };
+            el.appendChild(btn);
+            el.className = 'kb-toast show';
+            clearTimeout(_toastTimer);
+            _toastTimer = setTimeout(() => el.classList.remove('show'), duration);
         }
     </script>
 </body>
