@@ -6165,6 +6165,12 @@
             }
         }
 
+        // This whole block lives inside the usage-widget IIFE (line ~5631) —
+        // expose the modal pair on window so the overlay's inline onclick and
+        // other surfaces can reach them (same pattern as refreshUsageWidget).
+        window.openUsageTimelineModal = openUsageTimelineModal;
+        window.closeUsageTimelineModal = closeUsageTimelineModal;
+
         // Whole-widget click opens the timeline (Hank: 「點擊儀表板的用量視窗」);
         // inner buttons (Refresh etc.) keep their own behavior.
         (function () {
