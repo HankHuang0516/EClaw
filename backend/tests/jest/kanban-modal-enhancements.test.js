@@ -46,6 +46,11 @@ describe('kanban modal — splitter', () => {
     test('keyboard arrows nudge the split (a11y)', () => {
         expect(src).toMatch(/e\.key !== 'ArrowUp' && e\.key !== 'ArrowDown'/);
     });
+    test('user split overrides the comments-mode auto-height (kb-user-split escape)', () => {
+        expect(src).toMatch(/\.kb-modal\.kb-modal-comments-active:not\(\.kb-user-split\) \.kb-modal-meta \{ max-height:none/);
+        expect(src).toMatch(/\.kb-modal\.kb-user-split \.kb-modal-meta \{ max-height:var\(--kb-meta-h\)/);
+        expect(src).toMatch(/modal\.classList\.add\('kb-user-split'\)/);
+    });
 });
 
 describe('kanban modal — side prev/next chips', () => {

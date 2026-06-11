@@ -179,7 +179,9 @@
         .kb-modal-side-prev { left:6px; }
         .kb-modal-side-next { right:6px; }
         .kb-modal.kb-modal-comments-active { height:min(85dvh, 760px); }
-        .kb-modal.kb-modal-comments-active .kb-modal-meta { max-height:none; overflow:visible; overscroll-behavior:contain; }
+        .kb-modal.kb-modal-comments-active:not(.kb-user-split) .kb-modal-meta { max-height:none; overflow:visible; overscroll-behavior:contain; }
+        /* user dragged the splitter → their ratio wins even in comments mode */
+        .kb-modal.kb-user-split .kb-modal-meta { max-height:var(--kb-meta-h); overflow-y:auto; }
         .kb-modal.kb-modal-comments-active .kb-detail-desc,
         .kb-modal.kb-modal-comments-active .kb-detail-dep-chips,
         .kb-modal.kb-modal-comments-active #detailTagsPanel,
@@ -562,7 +564,7 @@
         body.app-webview .kb-modal-overlay { padding:0; align-items:stretch; }
         body.app-webview .kb-modal { max-width:100%; height:100dvh; max-height:100dvh; border-radius:0; display:flex; flex-direction:column; overflow:hidden; }
         body.app-webview .kb-modal.kb-modal-comments-active { height:100dvh; }
-        body.app-webview .kb-modal.kb-modal-comments-active .kb-modal-meta { max-height:none; overflow:visible; }
+        body.app-webview .kb-modal.kb-modal-comments-active:not(.kb-user-split) .kb-modal-meta { max-height:none; overflow:visible; }
         body.app-webview .kb-modal-header { padding:16px; }
         body.app-webview .kb-modal-header h3 { font-size:16px; }
         body.app-webview .kb-modal-meta { padding:10px 16px; flex-wrap:wrap; gap:8px; max-height:22dvh; overflow-y:auto; }
@@ -650,7 +652,7 @@
             .kb-modal-overlay { padding:0; align-items:stretch; }
             .kb-modal { max-width:100%; height:100dvh; max-height:100dvh; border-radius:0; display:flex; flex-direction:column; overflow:hidden; }
             .kb-modal.kb-modal-comments-active { height:100dvh; }
-            .kb-modal.kb-modal-comments-active .kb-modal-meta { max-height:none; overflow:visible; }
+            .kb-modal.kb-modal-comments-active:not(.kb-user-split) .kb-modal-meta { max-height:none; overflow:visible; }
             .kb-modal-header { padding:16px; }
             .kb-modal-header h3 { font-size:16px; }
             .kb-modal-meta { padding:10px 16px; flex-wrap:wrap; gap:8px; max-height:22dvh; overflow-y:auto; }
@@ -3196,6 +3198,7 @@
                 }
                 const savedH = parseInt(localStorage.getItem('kb_modal_split_px') || '', 10);
                 if (modal && Number.isFinite(savedH) && savedH >= 80) {
+                    modal.classList.add('kb-user-split');
                     modal.style.setProperty('--kb-meta-h', savedH + 'px');
                 }
             } catch (_) {}
@@ -3214,6 +3217,7 @@
             const onMove = (clientY) => {
                 if (!dragging) return;
                 const h = clampH(startH + (clientY - startY));
+                modal.classList.add('kb-user-split');
                 modal.style.setProperty('--kb-meta-h', h + 'px');
             };
             const stop = () => {
@@ -3241,6 +3245,7 @@
                 e.preventDefault();
                 const cur = meta.getBoundingClientRect().height;
                 const h = clampH(cur + (e.key === 'ArrowDown' ? 24 : -24));
+                modal.classList.add('kb-user-split');
                 modal.style.setProperty('--kb-meta-h', h + 'px');
                 try { localStorage.setItem('kb_modal_split_px', String(h)); } catch (_) {}
             });
