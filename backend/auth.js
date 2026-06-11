@@ -150,12 +150,37 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
         );
     }
 
-    function verifyToken(token) {
+    // 30s clock tolerance: device clocks (esp. mobile) drift; without this a
+    // slightly-fast client gets 401 token_expired moments before real expiry.
+    const JWT_CLOCK_TOLERANCE_S = 30;
+
+    // Detailed verify: callers that surface 401s need to tell an expired
+    // session (user-fixable: re-login / refresh) from a tampered token.
+    function verifyTokenDetailed(token) {
         try {
-            return jwt.verify(token, JWT_SECRET, { algorithms: ['HS256'] });
-        } catch {
-            return null;
+            const decoded = jwt.verify(token, JWT_SECRET, {
+                algorithms: ['HS256'],
+                clockTolerance: JWT_CLOCK_TOLERANCE_S,
+            });
+            return { decoded, reason: null };
+        } catch (err) {
+            const reason = err && err.name === 'TokenExpiredError' ? 'token_expired' : 'token_invalid';
+            return { decoded: null, reason };
         }
+    }
+
+    function verifyToken(token) {
+        return verifyTokenDetailed(token).decoded;
+    }
+
+    function setSessionCookie(res, token) {
+        res.cookie('eclaw_session', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            path: '/'
+        });
     }
 
     // Extract bearer token from Authorization header (mobile clients can't carry httpOnly cookies)
@@ -166,15 +191,19 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
         return m ? m[1] : null;
     }
 
-    // Middleware: extract user from cookie OR Authorization: Bearer header
+    // Middleware: extract user from cookie OR Authorization: Bearer header.
+    // 401 responses carry a machine-readable `reason` (no_token /
+    // token_expired / token_invalid) so clients can show "session expired,
+    // please log in again" instead of a silent kick (pain 4).
     function authMiddleware(req, res, next) {
         const token = (req.cookies && req.cookies.eclaw_session) || extractBearer(req);
         if (!token) {
-            return res.status(401).json({ success: false, error: 'Not authenticated' });
+            return res.status(401).json({ success: false, error: 'Not authenticated', reason: 'no_token' });
         }
-        const decoded = verifyToken(token);
+        const { decoded, reason } = verifyTokenDetailed(token);
         if (!decoded) {
-            return res.status(401).json({ success: false, error: 'Invalid or expired session' });
+            const message = reason === 'token_expired' ? 'Session expired' : 'Invalid session';
+            return res.status(401).json({ success: false, error: message, reason });
         }
         // Enrich with deviceSecret from in-memory devices map (no longer stored in JWT)
         if (decoded.deviceId && devices[decoded.deviceId]) {
@@ -527,6 +556,32 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
     });
 
     // ============================================
+    // POST /refresh — sliding-session renewal (OODA-R Phase 2 #6, pain 4)
+    // Requires a CURRENTLY-VALID token (cookie or bearer); mints a fresh
+    // 7-day JWT and re-sets the cookie. An expired token cannot refresh
+    // itself — that 401 carries reason:token_expired so the client shows a
+    // re-login prompt instead of silently kicking. Clients are expected to
+    // call this proactively before expiry (portal: session-keeper in
+    // auth.js with a single-flight mutex against thundering herd).
+    // ============================================
+    router.post('/refresh', authMiddleware, (req, res) => {
+        const fresh = signToken({ id: req.user.userId, device_id: req.user.deviceId });
+        setSessionCookie(res, fresh);
+        const decoded = jwt.decode(fresh);
+        audit('info', 'auth', 'Session refreshed', {
+            userId: req.user.userId, deviceId: req.user.deviceId, ipAddress: req.ip,
+            action: 'refresh', resource: 'session', result: 'success'
+        });
+        res.json({
+            success: true,
+            // Bearer clients (mobile) can't read the httpOnly cookie — return
+            // the token in-body for them; browser clients just use the cookie.
+            token: fresh,
+            expiresAt: decoded && decoded.exp ? decoded.exp * 1000 : null
+        });
+    });
+
+    // ============================================
     // GET /verify-email?token=xxx — serves a page that auto-POSTs token
     // (CWE-598 mitigation: token consumed via POST, not GET)
     // ============================================
@@ -812,6 +867,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
 
                 return res.json({
                     success: true,
+                    session: { expiresAt: req.user.exp ? req.user.exp * 1000 : null },
                     user: {
                         id: null,
                         email: null,
@@ -896,6 +952,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
 
             res.json({
                 success: true,
+                session: { expiresAt: req.user.exp ? req.user.exp * 1000 : null },
                 user: {
                     id: user.id,
                     email: user.email,
