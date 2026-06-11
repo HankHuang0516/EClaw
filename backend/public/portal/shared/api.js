@@ -45,7 +45,15 @@ async function apiCall(method, path, body = null, opts = {}) {
                 ? t('session_expired_relogin', 'Session expired — please log in again')
                 : t('session_invalid_relogin', 'Please log in to continue');
             try { showToast(msg, 'warning'); } catch (_) { /* toast not ready pre-DOM */ }
-            setTimeout(() => { window.location.href = 'index.html?authReason=' + encodeURIComponent(reason); }, 1200);
+            // Carry the interrupted destination so login can round-trip back
+            // (redirect spec §4 LOGIN_REDIRECT; index.html validates against
+            // its portal-page allowlist before honoring it).
+            const returnTo = (window.location.pathname || '')
+                + (window.location.search || '') + (window.location.hash || '');
+            setTimeout(() => {
+                window.location.href = 'index.html?authReason=' + encodeURIComponent(reason)
+                    + '&return_to=' + encodeURIComponent(returnTo);
+            }, 1200);
         }
         const authErr = new Error(data.error || 'Not authenticated');
         authErr.status = 401;

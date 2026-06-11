@@ -2275,6 +2275,14 @@ entityStatus.bindJwtSecret(JWT_SECRET_FALLBACK);
 app.use('/api/entity-status', entityStatus.router);
 
 // ============================================
+// REDIRECT STATE MACHINE — universal /r/:target entry + mint/telemetry/stats.
+// Phase A (web slice) of docs/redirect-state-machine-spec.md (OODA-R #7).
+// Pool wired below alongside the other initTable calls.
+// ============================================
+const redirectRouter = require('./redirect-router');
+app.use(redirectRouter.router);
+
+// ============================================
 // AGENT IMPROVEMENT — OODA-R episode store (Phase 0 #2a, card_2024e5eebe...).
 // Ingests user-visible feedback signals into the episode store defined by
 // Phase 0 #1's schema; Phase 1 #3 preflight lint will read from this table.
@@ -18988,6 +18996,7 @@ devicePrefs.initTable(chatPool);
 entityStatus.initTable(chatPool)
     .then(() => entityStatus.startSweeper(60_000))
     .catch(err => console.error('[EntityStatus] initTable error:', err.message));
+redirectRouter.init({ chatPool, devices, jwtSecret: JWT_SECRET_FALLBACK });
 agentImprovement.initTable(chatPool)
     .catch(err => console.error('[AgentImprovement] initTable error:', err.message));
 
