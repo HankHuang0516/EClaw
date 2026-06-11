@@ -33,6 +33,25 @@
         kanban_nudge_no_reply: 'Task nudges not acted on',
         system_msg_no_reply:   'System msgs not acked',
     };
+    // Achievements (card_8ca0b6acb1fb3d7a0b650dfd). Shared i18n.js carries the
+    // same strings under entity_status_achievement_* for pages that load i18n;
+    // these local dicts are the fallback for pages that don't.
+    const ACHIEVEMENT_LABELS_ZH = {
+        tasks_done:     '完成任務數',
+        chat_upvotes:   '聊天泡泡 👍',
+        chat_downvotes: '聊天泡泡 👎',
+        prs_merged:     '合併的 PR 數',
+        cards_reviewed: '評審參與數',
+        notes_authored: '撰寫的筆記數',
+    };
+    const ACHIEVEMENT_LABELS_EN = {
+        tasks_done:     'Tasks completed',
+        chat_upvotes:   'Chat bubble 👍',
+        chat_downvotes: 'Chat bubble 👎',
+        prs_merged:     'PRs merged',
+        cards_reviewed: 'Cards reviewed',
+        notes_authored: 'Notes authored',
+    };
 
     let rootEl = null;
     let currentEid = null;
@@ -74,6 +93,22 @@
         const lang = (document.documentElement.getAttribute('lang') || 'en').toLowerCase();
         const isZh = lang.startsWith('zh') || lang === 'tw' || lang === 'cn';
         const dict = isZh ? COUNTER_LABELS_ZH : COUNTER_LABELS_EN;
+        return dict[axis] || axis;
+    }
+
+    function pickAchievementLabel(axis) {
+        // Prefer the shared i18n dictionary when the host page loaded it —
+        // covers all 8 locales; the local zh/en dicts are the fallback.
+        const key = 'entity_status_achievement_' + axis;
+        try {
+            if (window.i18n && typeof window.i18n.t === 'function') {
+                const v = window.i18n.t(key);
+                if (v && v !== key) return v;
+            }
+        } catch (_) { /* fall through */ }
+        const lang = (document.documentElement.getAttribute('lang') || 'en').toLowerCase();
+        const isZh = lang.startsWith('zh') || lang === 'tw' || lang === 'cn';
+        const dict = isZh ? ACHIEVEMENT_LABELS_ZH : ACHIEVEMENT_LABELS_EN;
         return dict[axis] || axis;
     }
 
@@ -126,6 +161,25 @@
         const qs = _credQs();
         qs.set('limit', '50');
         const res = await fetch(`/api/entity-status/${eid}/counter/${encodeURIComponent(axis)}/events?${qs.toString()}`, {
+            credentials: 'include',
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+    }
+
+    async function fetchAchievements(eid) {
+        const qs = _credQs();
+        const res = await fetch(`/api/entity-status/${eid}/achievements?${qs.toString()}`, {
+            credentials: 'include',
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+    }
+
+    async function fetchAchievementEvents(eid, axis) {
+        const qs = _credQs();
+        qs.set('limit', '50');
+        const res = await fetch(`/api/entity-status/${eid}/achievement/${encodeURIComponent(axis)}/events?${qs.toString()}`, {
             credentials: 'include',
         });
         if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -350,11 +404,18 @@
                 </header>
                 <div class="${ROOT_CLASS}__help-popover" data-role="help-popover" hidden>
                     <p><strong>Counters</strong> — each row counts open events the entity hasn&#39;t acted on. Number is live: it drops as the entity replies. Click a counter to see <em>which</em> events.</p>
+                    <p><strong>Achievements</strong> — cumulative wins: tasks completed, chat 👍/👎, reviews, notes. Click a row to see the contributing cards / messages as chips.</p>
                     <p><strong>Operation log</strong> — recent kanban / message / system events for this entity, newest first. Card chips open the card&#39;s popover; ${ICON_QUOTE} quotes the row into your chat composer.</p>
                 </div>
                 <section class="${ROOT_CLASS}__section" data-section="counters">
                     <h3 class="${ROOT_CLASS}__section-title">累計錯誤次數 / Error counters</h3>
                     <ul class="${ROOT_CLASS}__counter-list" data-role="counter-list">
+                        <li class="${ROOT_CLASS}__counter-row" data-state="loading">Loading…</li>
+                    </ul>
+                </section>
+                <section class="${ROOT_CLASS}__section" data-section="achievements">
+                    <h3 class="${ROOT_CLASS}__section-title">成就 / Achievements</h3>
+                    <ul class="${ROOT_CLASS}__counter-list" data-role="achievement-list">
                         <li class="${ROOT_CLASS}__counter-row" data-state="loading">Loading…</li>
                     </ul>
                 </section>
@@ -395,7 +456,14 @@
             const counterRow = e.target.closest && e.target.closest(`.${ROOT_CLASS}__counter-row[data-axis]`);
             if (counterRow && !e.target.closest(`.${ROOT_CLASS}__counter-events`)) {
                 const axis = counterRow.dataset.axis;
-                if (axis) toggleCounterDrilldown(root, eid, axis, counterRow);
+                // Achievement rows reuse the counter row class for identical
+                // styling; data-kind distinguishes which drill-down endpoint
+                // the click hits.
+                if (axis && counterRow.dataset.kind === 'achievement') {
+                    toggleAchievementDrilldown(root, eid, axis, counterRow);
+                } else if (axis) {
+                    toggleCounterDrilldown(root, eid, axis, counterRow);
+                }
                 e.stopPropagation();
                 return;
             }
@@ -485,6 +553,100 @@
                 <span class="${ROOT_CLASS}__counter-event-chip">${chipHtml}</span>
             </li>`;
         }).join('');
+    }
+
+    function renderAchievements(root, items) {
+        const list = root.querySelector('[data-role="achievement-list"]');
+        if (!list) return;
+        if (!items || items.length === 0) {
+            const empty = pickAchievementLabel('no_events') !== 'no_events'
+                ? pickAchievementLabel('no_events') : 'No achievements yet.';
+            list.innerHTML = `<li class="${ROOT_CLASS}__counter-row" data-state="empty">${escapeHtml(empty)}</li>`;
+            return;
+        }
+        list.innerHTML = items.map(a => `
+            <li class="${ROOT_CLASS}__counter-row" data-axis="${escapeHtml(a.axis)}" data-kind="achievement"
+                role="button" tabindex="0"
+                aria-expanded="false"
+                aria-label="${escapeHtml(pickAchievementLabel(a.axis))}: ${Number(a.count) || 0}. Click to see contributing events.">
+                ${SVG_CHEVRON}
+                <span class="${ROOT_CLASS}__counter-label">${escapeHtml(pickAchievementLabel(a.axis))}</span>
+                <span class="${ROOT_CLASS}__counter-value">${Number(a.count) || 0}</span>
+            </li>`).join('');
+    }
+
+    // Achievement drill-down rows: (timestamp, chip). Backend chip shapes:
+    //   {kind:'card', cardId, label} → src://kanban/card/<bare> preview chip
+    //   {kind:'chat', messageId, excerpt} → message-coord chip
+    //   {kind:'note', noteId, label} → plain chip (no preview route for notes)
+    function renderAchievementEvents(items) {
+        if (!items || items.length === 0) {
+            const empty = (function () {
+                try {
+                    if (window.i18n && typeof window.i18n.t === 'function') {
+                        const v = window.i18n.t('entity_status_achievement_no_events');
+                        if (v && v !== 'entity_status_achievement_no_events') return v;
+                    }
+                } catch (_) { /* fall through */ }
+                return 'No events yet.';
+            })();
+            return `<li class="${ROOT_CLASS}__counter-event-row" data-state="empty">${escapeHtml(empty)}</li>`;
+        }
+        return items.map(it => {
+            const ts = formatTs(it.ts);
+            const chip = it.chip || {};
+            let chipHtml = '';
+            if (chip.kind === 'card' && chip.cardId) {
+                const cardId = String(chip.cardId);
+                const bareId = cardId.replace(/^card_/, '');
+                const srcRef = 'src://kanban/card/' + bareId;
+                const color = STATUS_COLOR.done; // contributing cards are done/reviewed
+                const label = chip.label ? String(chip.label).slice(0, 26) : cardId.slice(0, 12);
+                chipHtml = `<span class="autolink-chip ${ROOT_CLASS}__chip" `
+                    + `data-ref-type="src" data-ref-id="${escapeHtml(srcRef)}" `
+                    + `data-card-id="${escapeHtml(cardId)}" `
+                    + `style="background:${color}22;border-color:${color};color:${color};" `
+                    + `title="${escapeHtml(chip.label || cardId)}">${escapeHtml(label)}</span>`;
+            } else if (chip.kind === 'chat' && chip.messageId) {
+                const label = chip.excerpt ? String(chip.excerpt).slice(0, 26) : ('msg ' + String(chip.messageId).slice(-6));
+                chipHtml = `<span class="autolink-chip ${ROOT_CLASS}__chip" `
+                    + `data-ref-type="message" data-ref-id="${escapeHtml(chip.messageId)}" `
+                    + `title="${escapeHtml(chip.excerpt || chip.messageId)}">${escapeHtml(label)}</span>`;
+            } else {
+                const label = chip.label ? String(chip.label).slice(0, 26) : (chip.kind || 'event');
+                chipHtml = `<span class="${ROOT_CLASS}__chip" title="${escapeHtml(chip.label || '')}">${escapeHtml(label)}</span>`;
+            }
+            return `<li class="${ROOT_CLASS}__counter-event-row">
+                <time class="${ROOT_CLASS}__counter-event-time">${escapeHtml(ts)}</time>
+                <span class="${ROOT_CLASS}__counter-event-chip">${chipHtml}</span>
+            </li>`;
+        }).join('');
+    }
+
+    async function toggleAchievementDrilldown(root, eid, axis, row) {
+        if (!row) return;
+        const existing = row.nextElementSibling
+            && row.nextElementSibling.matches(`.${ROOT_CLASS}__counter-events[data-axis="${axis}"]`)
+            ? row.nextElementSibling : null;
+        if (existing) {
+            existing.remove();
+            row.setAttribute('aria-expanded', 'false');
+            row.classList.remove(`${ROOT_CLASS}__counter-row--expanded`);
+            return;
+        }
+        const list = document.createElement('ul');
+        list.className = `${ROOT_CLASS}__counter-events`;
+        list.dataset.axis = axis;
+        list.innerHTML = `<li class="${ROOT_CLASS}__counter-event-row" data-state="loading">Loading…</li>`;
+        row.insertAdjacentElement('afterend', list);
+        row.setAttribute('aria-expanded', 'true');
+        row.classList.add(`${ROOT_CLASS}__counter-row--expanded`);
+        try {
+            const data = await fetchAchievementEvents(eid, axis);
+            list.innerHTML = renderAchievementEvents(data.items || []);
+        } catch (err) {
+            list.innerHTML = `<li class="${ROOT_CLASS}__counter-event-row" data-state="error">Failed to load: ${escapeHtml(err.message)}</li>`;
+        }
     }
 
     async function toggleCounterDrilldown(root, eid, axis, counterRow) {
@@ -616,15 +778,27 @@
         // ESC closes.
         document.addEventListener('keydown', _onEsc);
 
-        try {
-            const data = await fetchStatus(targetEid);
-            renderCounters(rootEl, data.counters);
-        } catch (err) {
-            const list = rootEl.querySelector('[data-role="counter-list"]');
-            if (list) {
-                list.innerHTML = `<li class="${ROOT_CLASS}__counter-row" data-state="error">Failed to load: ${err.message}</li>`;
+        // Counters + achievements fetch concurrently; either failing leaves
+        // its own section in an error state without blocking the other.
+        const statusP = fetchStatus(targetEid).then(
+            (data) => renderCounters(rootEl, data.counters),
+            (err) => {
+                const list = rootEl && rootEl.querySelector('[data-role="counter-list"]');
+                if (list) {
+                    list.innerHTML = `<li class="${ROOT_CLASS}__counter-row" data-state="error">Failed to load: ${escapeHtml(err.message)}</li>`;
+                }
             }
-        }
+        );
+        const achP = fetchAchievements(targetEid).then(
+            (data) => renderAchievements(rootEl, data.achievements),
+            (err) => {
+                const list = rootEl && rootEl.querySelector('[data-role="achievement-list"]');
+                if (list) {
+                    list.innerHTML = `<li class="${ROOT_CLASS}__counter-row" data-state="error">Failed to load: ${escapeHtml(err.message)}</li>`;
+                }
+            }
+        );
+        await Promise.all([statusP, achP]);
 
         // Initial log fetch + infinite scroll setup.
         logCursor = null;
@@ -667,7 +841,11 @@
             const active = document.activeElement;
             if (active && active.classList && active.classList.contains(ROOT_CLASS + '__counter-row') && active.dataset.axis) {
                 e.preventDefault();
-                toggleCounterDrilldown(rootEl, currentEid, active.dataset.axis, active);
+                if (active.dataset.kind === 'achievement') {
+                    toggleAchievementDrilldown(rootEl, currentEid, active.dataset.axis, active);
+                } else {
+                    toggleCounterDrilldown(rootEl, currentEid, active.dataset.axis, active);
+                }
             }
         }
     }
