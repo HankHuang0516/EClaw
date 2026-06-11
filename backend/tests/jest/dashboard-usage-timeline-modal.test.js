@@ -40,6 +40,10 @@ describe('usage timeline modal — wiring contract', () => {
     test('empty data falls back to the no-data i18n string', () => {
         expect(src).toMatch(/dashboard_usage_chart_no_data/);
     });
+    test('modal pair exposed on window (block lives inside the widget IIFE; inline ✕ onclick needs the global)', () => {
+        expect(src).toMatch(/window\.openUsageTimelineModal = openUsageTimelineModal;/);
+        expect(src).toMatch(/window\.closeUsageTimelineModal = closeUsageTimelineModal;/);
+    });
     test('usage widget gets pointer cursor, refresh button keeps refreshUsageWidget', () => {
         expect(src).toMatch(/\.usage-widget \{ cursor: pointer; \}/);
         expect(src).toMatch(/onclick="refreshUsageWidget\(\)"/);
