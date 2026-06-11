@@ -115,13 +115,17 @@
     function readCreds() {
         // Reuse the same credential plumbing that every portal page already
         // sets up (api.js / auth.js writes to window.EClawAuth or localStorage).
+        // The LIVE session (window.currentUser) outranks localStorage — stale
+        // localStorage from a previous device login otherwise makes the panel
+        // silently show another device's data (caught in card_8ca0b6ac E2E).
         const w = window;
+        const cu = w.currentUser || {};
         const ls = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
         return {
-            deviceId: w.DEVICE_ID || w.deviceId || ls('deviceId'),
-            deviceSecret: w.DEVICE_SECRET || w.deviceSecret || ls('deviceSecret'),
+            deviceId: cu.deviceId || w.DEVICE_ID || w.deviceId || ls('deviceId'),
+            deviceSecret: cu.deviceSecret || w.DEVICE_SECRET || w.deviceSecret || ls('deviceSecret'),
             botSecret: w.BOT_SECRET || w.botSecret || ls('botSecret'),
-            entityId: w.ENTITY_ID || w.entityId || ls('entityId'),
+            entityId: cu.entityId || w.ENTITY_ID || w.entityId || ls('entityId'),
         };
     }
 
