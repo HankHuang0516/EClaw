@@ -650152,6 +650152,13 @@ const TRANSLATIONS = {
         "kb_undo_failed": "Undo failed",
         "kb_err_move": "Move failed",
         "chat_sending": "Sending…",
+
+        "levelup_title": "Level {n}!",
+        "levelup_praise_1": "Amazing progress — keep it up!",
+        "levelup_praise_2": "Your agent is getting stronger!",
+        "levelup_praise_3": "Hard work pays off!",
+        "levelup_praise_4": "A new milestone unlocked!",
+        "levelup_praise_5": "Onward and upward!",
 },
 
 
@@ -1234771,6 +1234778,13 @@ const TRANSLATIONS = {
         "kb_undo_failed": "撤销失败",
         "kb_err_move": "移动失败",
         "chat_sending": "发送中…",
+
+        "levelup_title": "升到 Lv.{n}！",
+        "levelup_praise_1": "进步神速，继续保持！",
+        "levelup_praise_2": "你的智能体越来越强了！",
+        "levelup_praise_3": "努力没有白费！",
+        "levelup_praise_4": "解锁新的里程碑！",
+        "levelup_praise_5": "更上一层楼！",
 },
 
 
@@ -2411993,6 +2412007,13 @@ const TRANSLATIONS = {
         "kb_undo_failed": "元に戻せませんでした",
         "kb_err_move": "移動に失敗しました",
         "chat_sending": "送信中…",
+
+        "levelup_title": "Lv.{n} にアップ！",
+        "levelup_praise_1": "すごい成長です — この調子！",
+        "levelup_praise_2": "エージェントがどんどん強くなっています！",
+        "levelup_praise_3": "努力が実りました！",
+        "levelup_praise_4": "新しいマイルストーン達成！",
+        "levelup_praise_5": "さらなる高みへ！",
 },
 
 
@@ -2942227,6 +2942248,13 @@ const TRANSLATIONS = {
         "kb_undo_failed": "실행 취소 실패",
         "kb_err_move": "이동 실패",
         "chat_sending": "전송 중…",
+
+        "levelup_title": "Lv.{n} 달성!",
+        "levelup_praise_1": "놀라운 성장이에요 — 계속 화이팅!",
+        "levelup_praise_2": "에이전트가 점점 강해지고 있어요!",
+        "levelup_praise_3": "노력이 결실을 맺었어요!",
+        "levelup_praise_4": "새로운 이정표 달성!",
+        "levelup_praise_5": "더 높은 곳으로!",
 },
 
 
@@ -2943833,6 +2943861,13 @@ const TRANSLATIONS = {
         "kb_undo_failed": "復原失敗",
         "kb_err_move": "移動失敗",
         "chat_sending": "傳送中…",
+
+        "levelup_title": "升到 Lv.{n}！",
+        "levelup_praise_1": "進步神速，繼續保持！",
+        "levelup_praise_2": "你的智能體越來越強了！",
+        "levelup_praise_3": "努力沒有白費！",
+        "levelup_praise_4": "解鎖新的里程碑！",
+        "levelup_praise_5": "更上一層樓！",
 },
 
 
@@ -3997403,6 +3997438,13 @@ const TRANSLATIONS = {
         "kb_undo_failed": "Hoàn tác thất bại",
         "kb_err_move": "Di chuyển thất bại",
         "chat_sending": "Đang gửi…",
+
+        "levelup_title": "Lên cấp {n}!",
+        "levelup_praise_1": "Tiến bộ tuyệt vời — cố lên!",
+        "levelup_praise_2": "Agent của bạn ngày càng mạnh hơn!",
+        "levelup_praise_3": "Nỗ lực đã được đền đáp!",
+        "levelup_praise_4": "Mở khóa cột mốc mới!",
+        "levelup_praise_5": "Tiến lên phía trước!",
 },
 
 
@@ -4523820,6 +4523862,13 @@ const TRANSLATIONS = {
         "kb_undo_failed": "Gagal mengurungkan",
         "kb_err_move": "Gagal memindahkan",
         "chat_sending": "Mengirim…",
+
+        "levelup_title": "Naik ke Lv.{n}!",
+        "levelup_praise_1": "Kemajuan luar biasa — pertahankan!",
+        "levelup_praise_2": "Agenmu semakin kuat!",
+        "levelup_praise_3": "Kerja keras membuahkan hasil!",
+        "levelup_praise_4": "Tonggak baru terbuka!",
+        "levelup_praise_5": "Terus melangkah maju!",
 },
 
 
@@ -5566537,6 +5566586,13 @@ const TRANSLATIONS = {
         "kb_undo_failed": "No se pudo deshacer",
         "kb_err_move": "Error al mover",
         "chat_sending": "Enviando…",
+
+        "levelup_title": "¡Nivel {n}!",
+        "levelup_praise_1": "¡Progreso increíble — sigue así!",
+        "levelup_praise_2": "¡Tu agente es cada vez más fuerte!",
+        "levelup_praise_3": "¡El esfuerzo da sus frutos!",
+        "levelup_praise_4": "¡Nuevo hito desbloqueado!",
+        "levelup_praise_5": "¡Siempre hacia arriba!",
 },
 
 
