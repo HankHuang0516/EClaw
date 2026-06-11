@@ -650159,6 +650159,15 @@ const TRANSLATIONS = {
         "levelup_praise_3": "Hard work pays off!",
         "levelup_praise_4": "A new milestone unlocked!",
         "levelup_praise_5": "Onward and upward!",
+
+        "entity_status_achievements_section_title": "Achievements",
+        "entity_status_achievement_tasks_done": "Tasks completed",
+        "entity_status_achievement_chat_upvotes": "Chat bubble 👍",
+        "entity_status_achievement_chat_downvotes": "Chat bubble 👎",
+        "entity_status_achievement_prs_merged": "PRs merged",
+        "entity_status_achievement_cards_reviewed": "Cards reviewed",
+        "entity_status_achievement_notes_authored": "Notes authored",
+        "entity_status_achievement_no_events": "No events yet.",
 },
 
 
@@ -1234785,6 +1234794,15 @@ const TRANSLATIONS = {
         "levelup_praise_3": "努力没有白费！",
         "levelup_praise_4": "解锁新的里程碑！",
         "levelup_praise_5": "更上一层楼！",
+
+        "entity_status_achievements_section_title": "成就",
+        "entity_status_achievement_tasks_done": "完成任务数",
+        "entity_status_achievement_chat_upvotes": "聊天泡泡 👍",
+        "entity_status_achievement_chat_downvotes": "聊天泡泡 👎",
+        "entity_status_achievement_prs_merged": "合并的 PR 数",
+        "entity_status_achievement_cards_reviewed": "评审参与数",
+        "entity_status_achievement_notes_authored": "撰写的笔记数",
+        "entity_status_achievement_no_events": "暂无事件。",
 },
 
 
@@ -2412014,6 +2412032,15 @@ const TRANSLATIONS = {
         "levelup_praise_3": "努力が実りました！",
         "levelup_praise_4": "新しいマイルストーン達成！",
         "levelup_praise_5": "さらなる高みへ！",
+
+        "entity_status_achievements_section_title": "実績",
+        "entity_status_achievement_tasks_done": "完了したタスク数",
+        "entity_status_achievement_chat_upvotes": "チャットの👍",
+        "entity_status_achievement_chat_downvotes": "チャットの👎",
+        "entity_status_achievement_prs_merged": "マージされたPR数",
+        "entity_status_achievement_cards_reviewed": "レビュー参加数",
+        "entity_status_achievement_notes_authored": "作成したノート数",
+        "entity_status_achievement_no_events": "イベントはまだありません。",
 },
 
 
@@ -2942255,6 +2942282,15 @@ const TRANSLATIONS = {
         "levelup_praise_3": "노력이 결실을 맺었어요!",
         "levelup_praise_4": "새로운 이정표 달성!",
         "levelup_praise_5": "더 높은 곳으로!",
+
+        "entity_status_achievements_section_title": "업적",
+        "entity_status_achievement_tasks_done": "완료한 작업 수",
+        "entity_status_achievement_chat_upvotes": "채팅 말풍선 👍",
+        "entity_status_achievement_chat_downvotes": "채팅 말풍선 👎",
+        "entity_status_achievement_prs_merged": "병합된 PR 수",
+        "entity_status_achievement_cards_reviewed": "리뷰 참여 수",
+        "entity_status_achievement_notes_authored": "작성한 노트 수",
+        "entity_status_achievement_no_events": "아직 이벤트가 없습니다.",
 },
 
 
@@ -2943868,6 +2943904,15 @@ const TRANSLATIONS = {
         "levelup_praise_3": "努力沒有白費！",
         "levelup_praise_4": "解鎖新的里程碑！",
         "levelup_praise_5": "更上一層樓！",
+
+        "entity_status_achievements_section_title": "成就",
+        "entity_status_achievement_tasks_done": "完成任務數",
+        "entity_status_achievement_chat_upvotes": "聊天泡泡 👍",
+        "entity_status_achievement_chat_downvotes": "聊天泡泡 👎",
+        "entity_status_achievement_prs_merged": "合併的 PR 數",
+        "entity_status_achievement_cards_reviewed": "評審參與數",
+        "entity_status_achievement_notes_authored": "撰寫的筆記數",
+        "entity_status_achievement_no_events": "尚無事件。",
 },
 
 
@@ -3997445,6 +3997490,15 @@ const TRANSLATIONS = {
         "levelup_praise_3": "Nỗ lực đã được đền đáp!",
         "levelup_praise_4": "Mở khóa cột mốc mới!",
         "levelup_praise_5": "Tiến lên phía trước!",
+
+        "entity_status_achievements_section_title": "Thành tích",
+        "entity_status_achievement_tasks_done": "Số nhiệm vụ hoàn thành",
+        "entity_status_achievement_chat_upvotes": "Bong bóng chat 👍",
+        "entity_status_achievement_chat_downvotes": "Bong bóng chat 👎",
+        "entity_status_achievement_prs_merged": "Số PR đã hợp nhất",
+        "entity_status_achievement_cards_reviewed": "Số thẻ đã đánh giá",
+        "entity_status_achievement_notes_authored": "Số ghi chú đã viết",
+        "entity_status_achievement_no_events": "Chưa có sự kiện nào.",
 },
 
 
@@ -4523869,6 +4523923,15 @@ const TRANSLATIONS = {
         "levelup_praise_3": "Kerja keras membuahkan hasil!",
         "levelup_praise_4": "Tonggak baru terbuka!",
         "levelup_praise_5": "Terus melangkah maju!",
+
+        "entity_status_achievements_section_title": "Pencapaian",
+        "entity_status_achievement_tasks_done": "Tugas selesai",
+        "entity_status_achievement_chat_upvotes": "Gelembung chat 👍",
+        "entity_status_achievement_chat_downvotes": "Gelembung chat 👎",
+        "entity_status_achievement_prs_merged": "PR digabungkan",
+        "entity_status_achievement_cards_reviewed": "Kartu direviu",
+        "entity_status_achievement_notes_authored": "Catatan dibuat",
+        "entity_status_achievement_no_events": "Belum ada acara.",
 },
 
 
@@ -5566593,6 +5566656,15 @@ const TRANSLATIONS = {
         "levelup_praise_3": "¡El esfuerzo da sus frutos!",
         "levelup_praise_4": "¡Nuevo hito desbloqueado!",
         "levelup_praise_5": "¡Siempre hacia arriba!",
+
+        "entity_status_achievements_section_title": "Logros",
+        "entity_status_achievement_tasks_done": "Tareas completadas",
+        "entity_status_achievement_chat_upvotes": "Burbujas de chat 👍",
+        "entity_status_achievement_chat_downvotes": "Burbujas de chat 👎",
+        "entity_status_achievement_prs_merged": "PRs fusionados",
+        "entity_status_achievement_cards_reviewed": "Tarjetas revisadas",
+        "entity_status_achievement_notes_authored": "Notas creadas",
+        "entity_status_achievement_no_events": "Aún no hay eventos.",
 },
 
 
