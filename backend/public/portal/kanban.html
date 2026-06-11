@@ -362,7 +362,9 @@
         .kb-empty { text-align:center; padding:40px 20px; color:var(--text-muted); font-size:13px; }
 
         /* ══════════════ Toast ══════════════ */
-        .kb-toast { position:fixed; bottom:24px; right:24px; background:#4ade80; color:#000; padding:10px 20px; border-radius:var(--radius-sm); font-size:13px; font-weight:600; z-index:200; display:none; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+        /* right:96px clears the AI-chat FAB (fixed bottom/right 24px, 56px wide,
+           z-index 500) so the undo button stays clickable — found by EV2 prod E2E. */
+        .kb-toast { position:fixed; bottom:24px; right:96px; background:#4ade80; color:#000; padding:10px 20px; border-radius:var(--radius-sm); font-size:13px; font-weight:600; z-index:600; display:none; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
         .kb-toast.show { display:flex; align-items:center; gap:4px; }
         .kb-toast.error { background:#ef4444; color:#fff; }
         .kb-toast-undo { margin-left:10px; background:rgba(0,0,0,0.15); border:none; color:inherit; font-weight:700; padding:4px 12px; border-radius:6px; cursor:pointer; font-size:13px; font-family:inherit; }
