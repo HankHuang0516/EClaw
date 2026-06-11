@@ -1960,6 +1960,37 @@
             .uw-bar-label { font-size: 12px; }
             .uw-bar-pct { font-size: 13px; }
         }
+
+        /* ── Level-up celebration (情緒價值 #3, card_91c97a12a385cac144ad223e) ── */
+        .lvlup-overlay {
+            position: fixed; inset: 0; z-index: 10050;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.45); pointer-events: none; overflow: hidden;
+        }
+        .lvlup-card {
+            background: var(--card, #1b1b2f); border: 1px solid var(--card-border, #333);
+            border-radius: 18px; padding: 28px 44px; text-align: center;
+            box-shadow: 0 18px 60px rgba(108,99,255,0.35);
+            animation: lvlup-pop 0.45s cubic-bezier(0.18, 1.4, 0.4, 1);
+        }
+        .lvlup-badge { font-size: 44px; animation: lvlup-spin 1.2s ease-in-out; }
+        .lvlup-title { font-size: 26px; font-weight: 800; color: #fbbf24; margin-top: 6px; }
+        .lvlup-name { font-size: 14px; color: var(--text-secondary, #aaa); margin-top: 4px; }
+        .lvlup-praise { font-size: 15px; font-weight: 600; color: var(--text-primary, #fff); margin-top: 10px; }
+        .lvlup-confetti {
+            position: absolute; top: -12px; width: 10px; height: 14px; border-radius: 2px;
+            animation: lvlup-fall 1.5s linear forwards;
+        }
+        @keyframes lvlup-pop { 0% { transform: scale(0.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes lvlup-spin { 0% { transform: rotate(-25deg) scale(0.3); } 60% { transform: rotate(12deg) scale(1.25); } 100% { transform: rotate(0) scale(1); } }
+        @keyframes lvlup-fall { 0% { transform: translateY(0) rotate(0); opacity: 1; } 100% { transform: translateY(105vh) rotate(540deg); opacity: 0.6; } }
+        /* reduced-motion → static banner, no confetti / pop / spin */
+        .lvlup-overlay.lvlup-reduced .lvlup-card,
+        .lvlup-overlay.lvlup-reduced .lvlup-badge { animation: none; }
+        @media (prefers-reduced-motion: reduce) {
+            .lvlup-card, .lvlup-badge { animation: none !important; }
+            .lvlup-confetti { display: none; }
+        }
     </style>
     <link rel="canonical" href="https://eclawbot.com/portal/dashboard.html">
 </head>
@@ -2557,6 +2588,7 @@
     <script src="shared/nav.js"></script>
     <script src="shared/auth.js"></script>
     <script src="shared/entity-utils.js"></script>
+    <script src="shared/levelup.js"></script>
     <script src="../shared/petdx-renderer.js"></script>
     <script src="../shared/avatar-petdx.js"></script>
     <script src="../shared/telemetry.js"></script>
@@ -2939,6 +2971,14 @@
 
                 entities = newEntities;
                 updateEntityMaps(entities);
+
+                // 情緒價值 #3: celebrate level-ups detected across poll cycles.
+                // First poll only primes the baseline; failures never block the dashboard.
+                try {
+                    if (window.EclawLevelUp) {
+                        EclawLevelUp.onEntitiesUpdated(entities, { t: (k) => i18n.t(k) });
+                    }
+                } catch (_e) { /* celebration is best-effort */ }
 
                 if (window.AvatarPetdx && currentUser && currentUser.deviceSecret) {
                     const entityIds = entities.map(e => e.entityId).filter(Boolean);
