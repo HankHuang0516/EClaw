@@ -452,6 +452,16 @@
                 window.location.href = 'invite.html?redeem=' + encodeURIComponent(pendingCode);
                 return;
             }
+            // LOGIN_REDIRECT return_to round-trip (redirect spec §4): honor the
+            // interrupted destination only if it's a same-origin portal page or
+            // the /r/ entry — mirrors route-registry.isSafeReturnTo so a crafted
+            // link can't turn login into an open redirect.
+            const returnTo = new URLSearchParams(window.location.search).get('return_to');
+            if (returnTo && !returnTo.startsWith('//')
+                && /^\/(r\/|portal\/(dashboard|chat|kanban|mission|settings)\.html)/.test(returnTo)) {
+                window.location.href = returnTo;
+                return;
+            }
             window.location.href = 'dashboard.html';
         }
 
