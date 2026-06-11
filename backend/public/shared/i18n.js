@@ -650168,6 +650168,12 @@ const TRANSLATIONS = {
         "entity_status_achievement_cards_reviewed": "Cards reviewed",
         "entity_status_achievement_notes_authored": "Notes authored",
         "entity_status_achievement_no_events": "No events yet.",
+
+        "kb_modal_maximize": "Maximize",
+        "kb_modal_restore": "Restore size",
+        "kb_modal_splitter_aria": "Drag to resize description area",
+        "kb_modal_prev_card": "Previous linked card",
+        "kb_modal_next_card": "Next linked card",
 },
 
 
@@ -1234803,6 +1234809,12 @@ const TRANSLATIONS = {
         "entity_status_achievement_cards_reviewed": "评审参与数",
         "entity_status_achievement_notes_authored": "撰写的笔记数",
         "entity_status_achievement_no_events": "暂无事件。",
+
+        "kb_modal_maximize": "最大化",
+        "kb_modal_restore": "还原大小",
+        "kb_modal_splitter_aria": "拖拉调整描述区高度",
+        "kb_modal_prev_card": "上一张链接任务卡",
+        "kb_modal_next_card": "下一张链接任务卡",
 },
 
 
@@ -2412041,6 +2412053,12 @@ const TRANSLATIONS = {
         "entity_status_achievement_cards_reviewed": "レビュー参加数",
         "entity_status_achievement_notes_authored": "作成したノート数",
         "entity_status_achievement_no_events": "イベントはまだありません。",
+
+        "kb_modal_maximize": "最大化",
+        "kb_modal_restore": "元のサイズに戻す",
+        "kb_modal_splitter_aria": "ドラッグして説明エリアの高さを調整",
+        "kb_modal_prev_card": "前のリンクカード",
+        "kb_modal_next_card": "次のリンクカード",
 },
 
 
@@ -2942291,6 +2942309,12 @@ const TRANSLATIONS = {
         "entity_status_achievement_cards_reviewed": "리뷰 참여 수",
         "entity_status_achievement_notes_authored": "작성한 노트 수",
         "entity_status_achievement_no_events": "아직 이벤트가 없습니다.",
+
+        "kb_modal_maximize": "최대화",
+        "kb_modal_restore": "크기 복원",
+        "kb_modal_splitter_aria": "드래그하여 설명 영역 크기 조절",
+        "kb_modal_prev_card": "이전 연결 카드",
+        "kb_modal_next_card": "다음 연결 카드",
 },
 
 
@@ -2943913,6 +2943937,12 @@ const TRANSLATIONS = {
         "entity_status_achievement_cards_reviewed": "評審參與數",
         "entity_status_achievement_notes_authored": "撰寫的筆記數",
         "entity_status_achievement_no_events": "尚無事件。",
+
+        "kb_modal_maximize": "最大化",
+        "kb_modal_restore": "還原大小",
+        "kb_modal_splitter_aria": "拖拉調整描述區高度",
+        "kb_modal_prev_card": "上一張鏈結任務卡",
+        "kb_modal_next_card": "下一張鏈結任務卡",
 },
 
 
@@ -3997499,6 +3997529,12 @@ const TRANSLATIONS = {
         "entity_status_achievement_cards_reviewed": "Số thẻ đã đánh giá",
         "entity_status_achievement_notes_authored": "Số ghi chú đã viết",
         "entity_status_achievement_no_events": "Chưa có sự kiện nào.",
+
+        "kb_modal_maximize": "Phóng to",
+        "kb_modal_restore": "Khôi phục kích thước",
+        "kb_modal_splitter_aria": "Kéo để điều chỉnh vùng mô tả",
+        "kb_modal_prev_card": "Thẻ liên kết trước",
+        "kb_modal_next_card": "Thẻ liên kết tiếp theo",
 },
 
 
@@ -4523932,6 +4523968,12 @@ const TRANSLATIONS = {
         "entity_status_achievement_cards_reviewed": "Kartu direviu",
         "entity_status_achievement_notes_authored": "Catatan dibuat",
         "entity_status_achievement_no_events": "Belum ada acara.",
+
+        "kb_modal_maximize": "Maksimalkan",
+        "kb_modal_restore": "Kembalikan ukuran",
+        "kb_modal_splitter_aria": "Seret untuk mengubah tinggi area deskripsi",
+        "kb_modal_prev_card": "Kartu tertaut sebelumnya",
+        "kb_modal_next_card": "Kartu tertaut berikutnya",
 },
 
 
@@ -5566665,6 +5566707,12 @@ const TRANSLATIONS = {
         "entity_status_achievement_cards_reviewed": "Tarjetas revisadas",
         "entity_status_achievement_notes_authored": "Notas creadas",
         "entity_status_achievement_no_events": "Aún no hay eventos.",
+
+        "kb_modal_maximize": "Maximizar",
+        "kb_modal_restore": "Restaurar tamaño",
+        "kb_modal_splitter_aria": "Arrastra para redimensionar la descripción",
+        "kb_modal_prev_card": "Tarjeta enlazada anterior",
+        "kb_modal_next_card": "Tarjeta enlazada siguiente",
 },
 
 

@@ -162,7 +162,22 @@
         /* ══════════════ Detail Modal ══════════════ */
         .kb-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); display:none; align-items:flex-start; justify-content:center; z-index:100; padding:40px 16px; overflow-y:auto; }
         .kb-modal-overlay.show { display:flex; }
-        .kb-modal { background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius); width:100%; max-width:640px; max-height:85vh; display:flex; flex-direction:column; overflow:hidden; }
+        .kb-modal { background:var(--card); border:1px solid var(--card-border); border-radius:var(--radius); width:100%; max-width:640px; max-height:85vh; display:flex; flex-direction:column; overflow:hidden; position:relative; --kb-meta-h:min(32vh, 260px); }
+        /* ── Modal 3 增強 (card_3651ed7ad8e676d3a4f6a9dc) ── */
+        .kb-modal.kb-modal-max { max-width:95vw; width:95vw; height:95vh; max-height:95vh; }
+        .kb-modal-maximize { background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:17px; padding:2px 8px; border-radius:6px; line-height:1; flex:0 0 auto; }
+        .kb-modal-maximize:hover, .kb-modal-maximize[aria-pressed="true"] { color:var(--text-primary,#fff); background:rgba(255,255,255,0.08); }
+        .kb-modal-splitter { flex:0 0 4px; height:4px; cursor:ns-resize; background:var(--card-border); opacity:0.6; transition:opacity 0.15s, background 0.15s; touch-action:none; }
+        .kb-modal-splitter:hover, .kb-modal-splitter.dragging { opacity:1; background:var(--primary,#6c63ff); }
+        .kb-modal-splitter:focus { outline:2px solid var(--primary,#6c63ff); outline-offset:-1px; }
+        .kb-modal-side-chip { position:absolute; top:50%; transform:translateY(-50%); z-index:5;
+            width:34px; height:34px; border-radius:50%; border:1px solid var(--card-border);
+            background:rgba(20,20,32,0.82); color:var(--text-primary,#fff); font-size:13px; cursor:pointer;
+            display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px);
+            box-shadow:0 2px 10px rgba(0,0,0,0.4); transition:background 0.15s, transform 0.15s; }
+        .kb-modal-side-chip:hover { background:var(--primary,#6c63ff); transform:translateY(-50%) scale(1.12); }
+        .kb-modal-side-prev { left:6px; }
+        .kb-modal-side-next { right:6px; }
         .kb-modal.kb-modal-comments-active { height:min(85dvh, 760px); }
         .kb-modal.kb-modal-comments-active .kb-modal-meta { max-height:none; overflow:visible; overscroll-behavior:contain; }
         .kb-modal.kb-modal-comments-active .kb-detail-desc,
@@ -174,7 +189,7 @@
         .kb-modal-close { background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; padding:4px; }
         .kb-btn-quote-chat { background:none; border:1px solid var(--primary,#3b82f6); color:var(--primary,#3b82f6); border-radius:6px; font-size:12px; padding:4px 10px; cursor:pointer; white-space:nowrap; }
         .kb-btn-quote-chat:hover { background:var(--primary,#3b82f6); color:#fff; }
-        .kb-modal-meta { padding:12px 24px; display:flex; gap:12px; flex-wrap:wrap; font-size:12px; color:var(--text-secondary); border-bottom:1px solid var(--card-border); flex:0 0 auto; max-height:min(32vh, 260px); overflow-y:auto; overscroll-behavior:contain; }
+        .kb-modal-meta { padding:12px 24px; display:flex; gap:12px; flex-wrap:wrap; font-size:12px; color:var(--text-secondary); border-bottom:1px solid var(--card-border); flex:0 0 auto; max-height:var(--kb-meta-h); overflow-y:auto; overscroll-behavior:contain; }
         .kb-modal-meta .meta-item { display:flex; align-items:center; gap:4px; }
         .kb-detail-desc { width:100%; font-size:13px; color:var(--text-secondary); margin-top:8px; white-space:pre-wrap; word-break:break-word; max-height:30vh; overflow-y:auto; overscroll-behavior:contain; padding-right:4px; }
         .kb-detail-link-chip-row { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; width:100%; }
@@ -896,9 +911,14 @@
             <div class="kb-modal-header">
                 <h3 id="detailTitle"></h3>
                 <button class="kb-btn-quote-chat" onclick="quoteKanbanCardToChat()" title="引用到聊天視窗">📌 引用</button>
+                <button class="kb-modal-maximize" id="kbModalMaxBtn" onclick="toggleModalMaximize()" aria-label="Maximize" aria-pressed="false">⛶</button>
                 <button class="kb-modal-close" onclick="closeDetail()" aria-label="Close">&times;</button>
             </div>
+            <button class="kb-modal-side-chip kb-modal-side-prev" id="kbSidePrev" style="display:none" aria-label="Previous linked card">◀</button>
+            <button class="kb-modal-side-chip kb-modal-side-next" id="kbSideNext" style="display:none" aria-label="Next linked card">▶</button>
             <div class="kb-modal-meta" id="detailMeta"></div>
+            <div class="kb-modal-splitter" id="kbModalSplitter" role="separator" aria-orientation="horizontal"
+                 aria-label="Drag to resize description area" tabindex="0"></div>
             <div class="kb-modal-tabs">
                 <button class="kb-modal-tab active" data-i18n="kb_tab_comments" onclick="switchDetailTab('comments',this)">💬 Comments</button>
                 <button class="kb-modal-tab" data-i18n="kb_tab_notes" onclick="switchDetailTab('notes',this)">📝 Notes</button>
@@ -2692,6 +2712,7 @@
             refreshDetailTags(cardId);
             loadCardLinksForDetail(cardId);
             refreshTaskRelationBanner(card);
+            updateModalSideChips(card);
 
             // Move bar — primary action + secondary chips + overflow admin UI
             const moveBar = document.getElementById('moveBar');
@@ -3150,6 +3171,98 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && document.getElementById('detailModal').classList.contains('show')) closeDetail();
         });
+
+        // ── Modal 3 增強 (card_3651ed7ad8e676d3a4f6a9dc) ──
+        // 1) maximize toggle, persisted; 2) draggable meta/tabs splitter,
+        // persisted px height; 3) side prev/next chips populated in openDetail.
+        function toggleModalMaximize() {
+            const modal = document.querySelector('#detailModal .kb-modal');
+            const btn = document.getElementById('kbModalMaxBtn');
+            if (!modal || !btn) return;
+            const on = !modal.classList.contains('kb-modal-max');
+            modal.classList.toggle('kb-modal-max', on);
+            btn.setAttribute('aria-pressed', String(on));
+            btn.title = on ? t('kb_modal_restore', 'Restore size') : t('kb_modal_maximize', 'Maximize');
+            try { localStorage.setItem('kb_modal_max', on ? '1' : '0'); } catch (_) {}
+        }
+
+        function applyModalPrefs() {
+            const modal = document.querySelector('#detailModal .kb-modal');
+            const btn = document.getElementById('kbModalMaxBtn');
+            try {
+                if (localStorage.getItem('kb_modal_max') === '1' && modal && btn) {
+                    modal.classList.add('kb-modal-max');
+                    btn.setAttribute('aria-pressed', 'true');
+                }
+                const savedH = parseInt(localStorage.getItem('kb_modal_split_px') || '', 10);
+                if (modal && Number.isFinite(savedH) && savedH >= 80) {
+                    modal.style.setProperty('--kb-meta-h', savedH + 'px');
+                }
+            } catch (_) {}
+            if (btn && !btn.title) btn.title = t('kb_modal_maximize', 'Maximize');
+            const splitter = document.getElementById('kbModalSplitter');
+            if (splitter) splitter.setAttribute('aria-label', t('kb_modal_splitter_aria', 'Drag to resize description area'));
+        }
+
+        function initModalSplitter() {
+            const splitter = document.getElementById('kbModalSplitter');
+            const modal = document.querySelector('#detailModal .kb-modal');
+            const meta = document.getElementById('detailMeta');
+            if (!splitter || !modal || !meta) return;
+            let startY = 0, startH = 0, dragging = false;
+            const clampH = (h) => Math.max(80, Math.min(h, Math.round(modal.clientHeight * 0.8)));
+            const onMove = (clientY) => {
+                if (!dragging) return;
+                const h = clampH(startH + (clientY - startY));
+                modal.style.setProperty('--kb-meta-h', h + 'px');
+            };
+            const stop = () => {
+                if (!dragging) return;
+                dragging = false;
+                splitter.classList.remove('dragging');
+                const h = parseInt(getComputedStyle(meta).height, 10);
+                try { localStorage.setItem('kb_modal_split_px', String(h)); } catch (_) {}
+            };
+            splitter.addEventListener('mousedown', (e) => {
+                dragging = true; startY = e.clientY; startH = meta.getBoundingClientRect().height;
+                splitter.classList.add('dragging'); e.preventDefault();
+            });
+            document.addEventListener('mousemove', (e) => onMove(e.clientY));
+            document.addEventListener('mouseup', stop);
+            splitter.addEventListener('touchstart', (e) => {
+                dragging = true; startY = e.touches[0].clientY; startH = meta.getBoundingClientRect().height;
+                splitter.classList.add('dragging');
+            }, { passive: true });
+            document.addEventListener('touchmove', (e) => { if (dragging) onMove(e.touches[0].clientY); }, { passive: true });
+            document.addEventListener('touchend', stop);
+            // keyboard a11y: arrows nudge the split by 24px
+            splitter.addEventListener('keydown', (e) => {
+                if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+                e.preventDefault();
+                const cur = meta.getBoundingClientRect().height;
+                const h = clampH(cur + (e.key === 'ArrowDown' ? 24 : -24));
+                modal.style.setProperty('--kb-meta-h', h + 'px');
+                try { localStorage.setItem('kb_modal_split_px', String(h)); } catch (_) {}
+            });
+        }
+
+        function updateModalSideChips(card) {
+            const sp = document.getElementById('kbSidePrev');
+            const sn = document.getElementById('kbSideNext');
+            const wire = (btn, linkedId, label) => {
+                if (!btn) return;
+                if (!linkedId) { btn.style.display = 'none'; btn.onclick = null; return; }
+                const linked = findCard(linkedId);
+                btn.style.display = 'flex';
+                btn.title = (linked && linked.title) ? linked.title : linkedId;
+                btn.setAttribute('aria-label', label + ': ' + btn.title);
+                btn.onclick = (e) => { e.stopPropagation(); openDetail(linkedId); };
+            };
+            wire(sp, card.linkedPrevCardId, t('kb_modal_prev_card', 'Previous linked card'));
+            wire(sn, card.linkedNextCardId, t('kb_modal_next_card', 'Next linked card'));
+        }
+        applyModalPrefs();
+        initModalSplitter();
 
         function eclawShowFloatToast(msg) {
             const tip = document.createElement('div');
