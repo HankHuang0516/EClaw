@@ -133,7 +133,7 @@ function showConfirm({ message, title, confirmText, cancelText, danger, itemName
             </div>
         </div>`;
         document.body.appendChild(overlay);
-        const cleanup = (result) => { overlay.remove(); resolve(result); };
+        const cleanup = (result) => { document.removeEventListener('keydown', _keyHandler, true); overlay.remove(); resolve(result); };
         // Safe default focus: when danger=true, focus Cancel so a stray
         // Enter / Space does not commit the destructive action. Matches the
         // Material Design and Apple HIG guidance for destructive confirms.
@@ -149,7 +149,7 @@ function showConfirm({ message, title, confirmText, cancelText, danger, itemName
         if (!danger) {
             overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(false); });
         }
-        overlay.addEventListener('keydown', (e) => {
+        const _keyHandler = (e) => {
             if (e.key === 'Escape') cleanup(false);
             // For destructive confirms Enter dismisses (= cancel) so an
             // accidental keypress on a focused Cancel button still resolves
@@ -165,8 +165,14 @@ function showConfirm({ message, title, confirmText, cancelText, danger, itemName
                 const active = document.activeElement;
                 if (e.shiftKey && active === cancel) { e.preventDefault(); ok.focus(); }
                 else if (!e.shiftKey && active === ok) { e.preventDefault(); cancel.focus(); }
+                // Focus escaped the dialog (scrim click / programmatic blur): pull it back in.
+                else if (active !== cancel && active !== ok) { e.preventDefault(); cancel.focus(); }
             }
-        });
+        };
+        // Document-level capture so the dialog's key handling keeps working even
+        // when focus has escaped the dialog (scrim click / programmatic blur).
+        // Removed in cleanup.
+        document.addEventListener('keydown', _keyHandler, true);
     });
 }
 
@@ -207,12 +213,14 @@ function showPrompt({ message, title, defaultValue, placeholder, confirmText, ca
         const input = overlay.querySelector('.eclaw-prompt-input');
         input.focus();
         input.select();
-        const cleanup = (result) => { overlay.remove(); resolve(result); };
+        const cleanup = (result) => { document.removeEventListener('keydown', _escHandler, true); overlay.remove(); resolve(result); };
         overlay.querySelector('.eclaw-confirm-ok').addEventListener('click', () => cleanup(input.value));
         overlay.querySelector('.eclaw-confirm-cancel').addEventListener('click', () => cleanup(null));
         overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(null); });
         input.addEventListener('keydown', (e) => { if (e.key === 'Enter') cleanup(input.value); });
-        overlay.addEventListener('keydown', (e) => { if (e.key === 'Escape') cleanup(null); });
+        const _escHandler = (e) => { if (e.key === 'Escape') cleanup(null); };
+        // Document-level capture so Esc works even when focus left the dialog. Removed in cleanup.
+        document.addEventListener('keydown', _escHandler, true);
     });
 }
 
