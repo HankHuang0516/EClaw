@@ -255,6 +255,24 @@
             <h1 data-i18n="portal_app_title">EClawbot</h1>
         </div>
 
+        <!-- Pain-4 (OODA-R Phase 2 #6): explain WHY the user landed on login.
+             api.js redirects with ?authReason=token_expired|token_invalid|no_token. -->
+        <div id="authReasonBanner" style="display:none;margin:0 0 14px;padding:10px 14px;border-radius:10px;background:rgba(255,152,0,0.12);border:1px solid rgba(255,152,0,0.45);color:#ffb74d;font-size:14px;line-height:1.5;"></div>
+        <script>
+        (function () {
+            try {
+                var reason = new URLSearchParams(window.location.search).get('authReason');
+                if (!reason) return;
+                var t = function (k, fb) { return (window.i18n && window.i18n.t) ? window.i18n.t(k, fb) : fb; };
+                var msg = reason === 'token_expired'
+                    ? t('session_expired_relogin', 'Session expired — please log in again')
+                    : t('session_invalid_relogin', 'Please log in to continue');
+                var el = document.getElementById('authReasonBanner');
+                if (el) { el.textContent = '\u23F3 ' + msg; el.style.display = 'block'; }
+            } catch (_) { /* never block login rendering */ }
+        })();
+        </script>
+
         <!-- Tabs -->
         <div class="auth-tabs">
             <div class="auth-tab active" onclick="showTab('login')" data-i18n="login_tab_login">Login</div>
