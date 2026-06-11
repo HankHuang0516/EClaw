@@ -2,7 +2,9 @@
 
 > Card: `card_1242aaa56221c42a1fe5ef87` ([Hermes/P2] H3 t2)
 > Roadmap: 🤖 Hermes Channel — H3 Private Repo Support (roadmap.html L682)
-> Status: DRAFT — pending #6 sign-off
+> Status: SIGNED-OFF — #6 review 2026-06-12 00:53-01:00 TW (3 amendments folded,
+> CI green; formal GitHub approve blocked by shared-account self-approve rule,
+> substantive sign-off recorded in chat + PR #3301 comments)
 > Author: #2 LOBSTER, 2026-06-12. Facts below verified against
 > `HankHuang0516/hermes-eclaw-channel@main` (2026-06-11 22:25 TW code read;
 > Hermes consult unanswered 3×, self-answered per card comment).
