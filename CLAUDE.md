@@ -7,7 +7,7 @@
 - **Repository**: `HankHuang0516/realbot` (GitHub repo ID: `1150444936`)
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
-- **Current version**: 1.1183.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
+- **Current version**: 1.1185.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
 - **Android app version**: 1.0.88 (versionCode 96); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
@@ -18,7 +18,7 @@
 ```
 EClaw/
 ├── backend/                  # Node.js Express server (deployed to Railway)
-│   ├── index.js              # Main server (~22,320 lines) — all API routes
+│   ├── index.js              # Main server (~22,357 lines) — all API routes
 │   ├── db.js                 # PostgreSQL connection pool + schema creation
 │   ├── auth.js               # Auth module (JWT, OAuth, OIDC, RBAC)
 │   ├── mission.js            # Mission Control dashboard system
@@ -241,7 +241,7 @@ EClaw/
 
 ### Backend (Node.js/Express)
 
-- **Single-file server**: `backend/index.js` (~22,320 lines) contains all API routes
+- **Single-file server**: `backend/index.js` (~22,357 lines) contains all API routes
 - **Database**: PostgreSQL (Railway-managed), connection in `backend/db.js`
 - **Real-time**: Socket.IO for live updates to Web Portal and Android app
 - **Auth**: JWT tokens (cookie-based for web, header-based for API), social OAuth (Google, Facebook), OIDC
@@ -1149,12 +1149,20 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Counter-Events Axis Whitelist (v1.1185)**: `entity_error_counters` axis tightened to CANONICAL_AXES whitelist to prevent arbitrary axis injection (#3289)
 - **Chat Queue-Count Banner (v1.1185)**: Outbox queue-count banner in chat UI showing pending message count (spec acceptance #5) (#3288)
 - **Client Speak Payload-Hash Dedupe (v1.1185)**: 10-second window payload-hash deduplication on `POST /api/client/speak` to catch client auto-retry duplicates (#3287)
+- **Returning-User Greeting + Starter Chips (v1.1186)**: Chat greeting shows returning-user message with contextual starter chips for new users (#3305)
+- **Login-Page AuthReason Banner (v1.1186)**: Login page banner explains why user was redirected (session expired, 401, etc.) — OODA-R pain 4 follow-through (#3303)
+- **Sliding Session Refresh + 401 Reason Codes (v1.1186)**: Auth sliding session refresh with structured 401 reason codes — OODA-R Phase 2 #6 (#3302)
+- **Client/Speak deviceSecret Enforcement (v1.1186)**: `POST /api/client/speak` now returns 401 on missing and 403 on wrong `deviceSecret` (#3298)
+- **Portal Nav + Publisher Mobile Overflow Fix (v1.1186)**: Prevent nav and publisher page overflow on mobile viewports (#3300)
+- **Dialog Key Capture Fix (v1.1186)**: Document-level key capture for showConfirm/showPrompt dialogs (#3296)
+- **Kanban Smart-Quote Chip-Ref (v1.1186)**: Smart-quote chip reference support in kanban card-comment composer (parity with chat.html) (#3294)
+- **i18n kb_quote/kb_reply + dialog keys (v1.1186)**: Added kanban quote/reply and dialog keys to all 8 locales (#3297)
 
 ---
 
 ## Test Coverage Summary
 
-**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~3707 test cases across 268 Jest files + 59 integration tests).
+**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~3747 test cases across 270 Jest files + 79 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
