@@ -75,9 +75,14 @@ Hank instead of creating one).
   and inside `_pr_env()` — the only two places credentials meet a remote.
   Git credential helper unchanged.
 - Audit log line (JSON, aligns with H2 t6 Part A):
-  `{event:"org_token_denied", entity_id, org_login, ts}`.
-- Bridge change: outbound dispatch payload gains `entity_id` (bridge.ts) so
-  the daemon can attribute tasks; daemon threads it to the token fetch.
+  `{event:"org_token_denied", device_id, entity_id, org_login, ts}` —
+  `device_id` required because `entity_id` is only unique within a device.
+- Hermes-side wiring (per #6 review, PR #3301): the dispatch path is
+  `plugin/eclaw_bridge.py` → `daemon/hermes_daemon.py` /chat — NOT the
+  EClaw-repo bridge.ts. The daemon's token fetch authenticates with the
+  full trust tuple `deviceId + entityId + botSecret`, read from the
+  daemon's shared env (same source as its channel credentials) or threaded
+  through the /chat request body; a bare `entity_id` is never sufficient.
 
 ### 3. Tests
 
