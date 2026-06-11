@@ -49,11 +49,11 @@ describe('Achievements backend slice', () => {
         });
     });
 
-    test('getAchievements aggregates tasks_done by status=done AND $entity=ANY(assigned_bots)', async () => {
+    test('getAchievements aggregates tasks_done by status=done AND jsonb containment on assigned_bots', async () => {
         const lastTs = new Date('2026-06-10T12:00:00Z');
         const pool = makePool([
             {
-                match: (s) => s.includes('FROM kanban_cards') && s.includes('status = \'done\'') && s.includes('ANY(assigned_bots)'),
+                match: (s) => s.includes('FROM kanban_cards') && s.includes('status = \'done\'') && s.includes('assigned_bots @> to_jsonb($2::int)'),
                 rows: (p) => {
                     expect(p[0]).toBe(DEVICE);
                     expect(p[1]).toBe(ENTITY);
@@ -113,7 +113,7 @@ describe('Achievements backend slice', () => {
     test('getAchievementEvents for tasks_done returns card chips', async () => {
         const pool = makePool([
             {
-                match: (s) => s.includes('FROM kanban_cards') && s.includes('ANY(assigned_bots)') && s.includes('ORDER BY updated_at DESC'),
+                match: (s) => s.includes('FROM kanban_cards') && s.includes('assigned_bots @> to_jsonb($2::int)') && s.includes('ORDER BY updated_at DESC'),
                 rows: () => [
                     { id: 'card_a', title: 'Ship X', updated_at: new Date('2026-06-10T08:00:00Z') },
                     { id: 'card_b', title: 'Ship Y', updated_at: new Date('2026-06-09T08:00:00Z') },
@@ -150,7 +150,7 @@ describe('Achievements backend slice', () => {
         let capturedLimit = null;
         const pool = makePool([
             {
-                match: (s) => s.includes('FROM kanban_cards') && s.includes('ANY(assigned_bots)'),
+                match: (s) => s.includes('FROM kanban_cards') && s.includes('assigned_bots @> to_jsonb($2::int)'),
                 rows: (p) => { capturedLimit = p[2]; return []; },
             },
         ]);
