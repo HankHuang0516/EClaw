@@ -256,6 +256,14 @@
         .kb-comment-input { display:flex; gap:8px; margin-top:12px; flex:0 0 auto; position:relative; z-index:3; background:var(--card); border-top:1px solid var(--card-border); padding:12px 0 0; }
         .kb-comment-input textarea { flex:1; background:var(--input-bg); border:1px solid var(--card-border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text); font-size:13px; resize:none; min-height:60px; max-height:120px; font-family:inherit; }
         .kb-comment-input button { align-self:flex-end; }
+        /* Smart-quote reply preview bar (parity with chat.html .reply-preview-bar) */
+        .kb-reply-bar { display:none; align-items:center; gap:8px; padding:6px 10px; background:var(--input-bg); border-left:3px solid var(--primary); border-radius:4px; margin-top:8px; font-size:12px; max-width:100%; overflow:hidden; }
+        .kb-reply-bar.show { display:flex; }
+        .kb-reply-content { flex:1; min-width:0; }
+        .kb-reply-sender { font-weight:600; color:var(--primary); font-size:11px; margin-bottom:1px; }
+        .kb-reply-text { color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .kb-reply-cancel { background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:16px; padding:0 2px; flex-shrink:0; line-height:1; }
+        .kb-reply-cancel:hover { color:var(--text); }
         @keyframes kb-comment-flash {
             0%   { box-shadow:0 0 0 0 rgba(99,102,241,0); background-color:transparent; }
             18%  { box-shadow:0 0 0 6px rgba(99,102,241,0.45); background-color:rgba(99,102,241,0.18); }
@@ -3370,11 +3378,24 @@
 
                 panel.innerHTML = `
                     <div class="kb-comments-list">${commentsHtml || '<div class="kb-empty">' + t('kb_no_comments','No comments yet') + '</div>'}</div>
+                    <div class="kb-reply-bar" id="kbReplyBar">
+                        <div class="kb-reply-content">
+                            <div class="kb-reply-sender" id="kbReplySender"></div>
+                            <div class="kb-reply-text" id="kbReplyText"></div>
+                        </div>
+                        <button class="kb-reply-cancel" onclick="kbClearReplyContext()" title="${t('kb_reply_cancel','Cancel reply')}">✕</button>
+                    </div>
                     <div class="kb-comment-input">
                         <textarea id="commentText" data-i18n-placeholder="kb_placeholder_comment" placeholder="${t('kb_placeholder_comment','Add a comment...')}"></textarea>
                         <button class="btn btn-primary" data-i18n="kb_btn_send" onclick="postComment()">${t('kb_btn_send','Send')}</button>
                     </div>
                 `;
+                // Smart-quote: detect src:// URLs on paste/input, lift into kbReplyContext banner.
+                const _ct = document.getElementById('commentText');
+                if (_ct) {
+                    _ct.addEventListener('paste', kbHandleCommentPaste);
+                    _ct.addEventListener('input', kbHandleCommentInput);
+                }
                 // Auto-scroll comments to bottom
                 const list = panel.querySelector('.kb-comments-list');
                 if (list) list.scrollTop = list.scrollHeight;
@@ -3401,11 +3422,107 @@
         // Deep-link anchor: comment id pulled from #card_X#comment-Y; consumed by loadComments after render.
         let pendingCommentAnchor = null;
 
-        async function postComment() {
-            const text = document.getElementById('commentText')?.value?.trim();
-            if (!text || !openCardId) return;
+        // ── Smart-quote reply context (parity with chat.html replyContext) ──
+        // Banner above the comment composer. Detected src:// URLs are extracted
+        // from the textarea into kbReplyContext + previewed; on submit we re-embed
+        // the URL as a `↩ <sender>:<src://…> "<excerpt>"` prefix so the rendered
+        // chip-preview pipeline (renderSmartChips) resolves the same way as
+        // pasted-id used to — but the textarea stays clean.
+        let kbReplyContext = null;
+        const KB_SRC_URL_RE = /src:\/\/(?:kanban\/card|chat\/msg|mindmap\/node)\/[A-Za-z0-9_-]+/;
+
+        function kbSetReplyContext(senderLabel, previewText, srcUrl) {
+            kbReplyContext = { senderLabel, previewText, srcUrl };
+            const sender = document.getElementById('kbReplySender');
+            const txt = document.getElementById('kbReplyText');
+            const bar = document.getElementById('kbReplyBar');
+            if (sender) sender.textContent = senderLabel || '';
+            if (txt) txt.textContent = previewText || '';
+            if (bar) bar.classList.add('show');
+        }
+
+        function kbClearReplyContext() {
+            kbReplyContext = null;
+            const bar = document.getElementById('kbReplyBar');
+            if (bar) bar.classList.remove('show');
+        }
+
+        async function kbResolveSrcUrl(url) {
+            // Returns { senderLabel, previewText } or null on failure.
             try {
-                await apiPostComment(openCardId, text);
+                const m = url.match(/^src:\/\/kanban\/card\/([A-Za-z0-9_-]+)/);
+                if (m) {
+                    const data = await apiGetCardDetail(m[1]);
+                    const card = data?.card || data;
+                    if (card?.title) {
+                        const status = card.status ? ' [' + card.status + ']' : '';
+                        return { senderLabel: '📌 ' + t('kb_quote_card_source','卡片') + status, previewText: card.title };
+                    }
+                }
+                const mChat = url.match(/^src:\/\/chat\/msg\/([A-Za-z0-9_-]+)/);
+                if (mChat) {
+                    return { senderLabel: '📌 ' + t('kb_quote_chat_source','聊天訊息'), previewText: url };
+                }
+                const mMind = url.match(/^src:\/\/mindmap\/node\/([A-Za-z0-9_-]+)/);
+                if (mMind) {
+                    return { senderLabel: '📌 ' + t('kb_quote_mindmap_source','心智圖節點'), previewText: url };
+                }
+            } catch(e) { /* fall through */ }
+            return { senderLabel: '📌 ' + t('kb_quote_generic_source','引用'), previewText: url };
+        }
+
+        function kbExtractAndLift(textarea, candidateText) {
+            // Pull the first src:// URL out of the textarea, lift it into the
+            // reply bar (async resolve for richer preview), and strip the raw
+            // URL from the textbox so the user sees clean text.
+            const m = candidateText.match(KB_SRC_URL_RE);
+            if (!m) return false;
+            const url = m[0];
+            // Strip the URL (and any surrounding whitespace) from the textarea
+            const cleaned = candidateText.replace(url, '').replace(/\s{2,}/g, ' ').trim();
+            textarea.value = cleaned;
+            // Provisional banner while we resolve
+            kbSetReplyContext('📌 …', url, url);
+            kbResolveSrcUrl(url).then(info => {
+                if (info && kbReplyContext && kbReplyContext.srcUrl === url) {
+                    kbSetReplyContext(info.senderLabel, info.previewText, url);
+                }
+            });
+            return true;
+        }
+
+        function kbHandleCommentPaste(e) {
+            const ta = e.currentTarget;
+            const pasted = (e.clipboardData || window.clipboardData)?.getData?.('text') || '';
+            if (!KB_SRC_URL_RE.test(pasted)) return;
+            // Let the browser do the default paste, then in next tick extract
+            // the URL from the (now-merged) textarea value.
+            setTimeout(() => kbExtractAndLift(ta, ta.value || ''), 0);
+        }
+
+        function kbHandleCommentInput(e) {
+            // Catches typed/dragged src:// URLs even outside the paste event.
+            const ta = e.currentTarget;
+            if (kbReplyContext) return; // one quote at a time, like chat.html
+            if (!KB_SRC_URL_RE.test(ta.value)) return;
+            kbExtractAndLift(ta, ta.value);
+        }
+
+        async function postComment() {
+            const ta = document.getElementById('commentText');
+            const userText = ta?.value?.trim() || '';
+            if (!userText && !kbReplyContext) return;
+            if (!openCardId) return;
+            let finalText = userText;
+            if (kbReplyContext) {
+                const excerpt = (kbReplyContext.previewText || '').slice(0, 80);
+                const prefix = `↩ ${kbReplyContext.senderLabel}: ${kbReplyContext.srcUrl} "${excerpt}"`;
+                finalText = userText ? `${prefix}\n\n${userText}` : prefix;
+            }
+            try {
+                await apiPostComment(openCardId, finalText);
+                kbClearReplyContext();
+                if (ta) ta.value = '';
                 await loadComments();
                 showToast('Comment added');
             } catch(e) { showToast('Failed to add comment', true); }
