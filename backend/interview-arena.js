@@ -188,6 +188,11 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Daily pool additions (medium/hard) ──
+    { file: null, description: 'A stock market candlestick chart showing five candles: three green bullish candles followed by two red bearish candles — the rightmost red candle shows a high of $150 and a low of $138 with the close at $141', keywords: ['candlestick', 'three', 'green', 'two', 'red', '150', '138'] },
+    { file: null, description: 'A subway map with three color-coded lines: Red Line with 5 stations, Blue Line with 5 stations, and Green Line with 4 stations — Red and Blue lines intersect at Central Station, Blue and Green lines intersect at Harbor Station — twelve stations total', keywords: ['subway', 'three', 'red', 'blue', 'green', 'central', 'harbor', 'twelve'] },
+    { file: null, description: 'A 3×3 magic square grid where every row, column, and diagonal sums to 15: top row is 2, 7, 6 — middle row is 9, 5, 1 — bottom row is 4, 3, 8', keywords: ['magic', 'square', 'fifteen', '2', '7', '6', '9', '5', 'three'] },
+    { file: null, description: 'A login form with a Username text field, a Password field masking the input with dots, a checked Remember me checkbox, a blue Sign In button, and a Forgot Password hyperlink beneath the button', keywords: ['login', 'username', 'password', 'remember', 'sign', 'forgot'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -368,6 +373,13 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── Daily pool additions (medium-hard) ──
+    { title: 'Longest Common Subsequence', description: 'Write `solve(text1, text2)` — return the length of the longest common subsequence of the two strings. A subsequence need not be contiguous.',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"", "abc"', expected: '0' }] },
+    { title: 'Course Schedule', description: 'Write `solve(numCourses, prerequisites)` — prerequisites is an array of [a, b] pairs meaning b must be taken before a. Return true if it is possible to finish all courses (i.e., no circular dependency).',
+      testCases: [{ input: '2, [[1,0]]', expected: 'true' },{ input: '2, [[1,0],[0,1]]', expected: 'false' },{ input: '4, [[1,0],[2,0],[3,1],[3,2]]', expected: 'true' },{ input: '1, []', expected: 'true' }] },
+    { title: 'Sliding Window Maximum', description: 'Write `solve(nums, k)` — return an array of the maximum values in each sliding window of size k as it moves from left to right across nums.',
+      testCases: [{ input: '[1,3,-1,-3,5,3,6,7], 3', expected: '[3,3,5,5,6,7]' },{ input: '[1], 1', expected: '[1]' },{ input: '[1,-1], 1', expected: '[1,-1]' },{ input: '[2,1,5,3,6,4,8,2], 4', expected: '[5,6,6,8,8]' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +429,10 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Daily pool additions (medium-hard) ──
+    { question: 'A bag contains 4 red marbles and 6 blue marbles. If you draw 2 marbles at random without replacement, what is the probability that both are red? Express as a simplified fraction.', expectedKeywords: ['2/15'] },
+    { question: 'An arithmetic sequence has its 5th term equal to 17 and its 10th term equal to 37. What is the value of its 1st term?', expectedKeywords: ['1'] },
+    { question: 'A cylinder has a radius of 5 cm and a height of 10 cm. What is its volume in cubic centimeters? Use π ≈ 3.14159 and round to the nearest whole number.', expectedKeywords: ['785'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +510,11 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Daily pool additions (hard-tier) ──
+    { text: 'The recombinant mRNA vaccine encodes the spike protein of SARS-CoV-2 using codon-optimized synthetic sequences', keywords: ['recombinant', 'mRNA', 'vaccine', 'spike', 'SARS', 'codon'] },
+    { text: 'Net present value equals the sum of all future cash flows discounted at twelve percent per annum over seven years', keywords: ['net', 'present', 'value', 'cash', 'twelve', 'percent', 'seven'] },
+    { text: 'The arterial blood gas shows pH 7.32 PaCO2 48 millimeters of mercury and bicarbonate 24 milliequivalents per liter indicating respiratory acidosis', keywords: ['arterial', 'blood', 'gas', 'pH', '7.32', 'PaCO2', 'respiratory', 'acidosis'] },
+    { text: 'kubectl apply dash f deployment.yaml sets three replicas behind a ClusterIP service on port 8080 targeting container port 3000', keywords: ['kubectl', 'apply', 'deployment', 'three', 'replicas', 'ClusterIP', '8080', '3000'] },
 ];
 
 // ============================================
