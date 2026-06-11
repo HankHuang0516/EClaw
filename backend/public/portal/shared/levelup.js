@@ -140,6 +140,103 @@
         return overlay;
     }
 
+    // ── First-achievement toast (card_d355616434834b0737d6380f) ──
+    // Watches the card_8ca achievements API for any axis count crossing
+    // 0 → ≥1 during the session. Small toast, NOT the full-screen level-up
+    // overlay. Same guard philosophy: first sighting primes the baseline,
+    // localStorage keeps each (entity, axis) to a single celebration ever.
+    var FIRSTACH_PREFIX = 'eclaw_firstach_';
+    var _achSeen = {};          // 'eid:axis' -> last seen count
+    var _achLastPollMs = 0;
+    var ACH_POLL_MIN_MS = 60000; // piggyback on the 10s entity poll, act every ~60s
+
+    function _achGuarded(storage, eid, axis) {
+        try { return storage.getItem(FIRSTACH_PREFIX + eid + '_' + axis) === '1'; }
+        catch (_e) { return false; }
+    }
+    function _achMarc(storage, eid, axis) {
+        try { storage.setItem(FIRSTACH_PREFIX + eid + '_' + axis, '1'); } catch (_e) { /* quota */ }
+    }
+
+    /** Pure diff: returns [{entityId, axis}] crossing 0→≥1, baseline-primed + guarded. */
+    function checkFirstAchievements(entityId, achievements, storage) {
+        storage = storage || global.localStorage;
+        var hits = [];
+        (achievements || []).forEach(function (a) {
+            if (!a || !a.axis) return;
+            var key = entityId + ':' + a.axis;
+            var count = Number(a.count) || 0;
+            var prev = _achSeen[key];
+            _achSeen[key] = count;
+            if (prev === undefined) return;        // baseline priming
+            if (!(prev === 0 && count >= 1)) return;
+            if (_achGuarded(storage, entityId, a.axis)) return;
+            _achMarc(storage, entityId, a.axis);
+            hits.push({ entityId: entityId, axis: a.axis });
+        });
+        return hits;
+    }
+
+    /** Test hook. */
+    function _resetAchSession() { _achSeen = {}; _achLastPollMs = 0; }
+
+    function _axisLabel(axis, t) {
+        var key = 'entity_status_achievement_' + axis;
+        var v = (typeof t === 'function') ? t(key) : null;
+        return (v && v !== key) ? v : axis;
+    }
+
+    /** Small toast — distinct from the full-screen level-up overlay. */
+    function celebrateFirstAchievement(hit, opts) {
+        opts = opts || {};
+        var doc = opts.doc || global.document;
+        var t = opts.t;
+        var duration = opts.duration || 2500;
+        var reduced = _prefersReducedMotion();
+        var prev = doc.getElementById('firstachToast');
+        if (prev && prev.parentNode) prev.parentNode.removeChild(prev);
+        var el = doc.createElement('div');
+        el.id = 'firstachToast';
+        el.className = 'firstach-toast' + (reduced ? ' firstach-reduced' : '');
+        el.setAttribute('role', 'status');
+        el.setAttribute('aria-live', 'polite');
+        var tpl = (typeof t === 'function' && t('firstach_title') !== 'firstach_title' && t('firstach_title'))
+            ? t('firstach_title') : 'First achievement: {label}!';
+        el.textContent = '🏅 ' + tpl.replace('{label}', _axisLabel(hit.axis, t));
+        doc.body.appendChild(el);
+        setTimeout(function () {
+            if (el.parentNode) el.parentNode.removeChild(el);
+        }, duration);
+        return el;
+    }
+
+    /**
+     * Throttled poll driver — call from the dashboard's entity-poll hook.
+     * opts.fetcher(entityId) must resolve to the /achievements payload
+     * ({achievements:[...]}) and is injected so tests need no network.
+     */
+    function pollFirstAchievements(entities, opts) {
+        opts = opts || {};
+        var nowMs = (typeof opts.nowMs === 'number') ? opts.nowMs : Date.now();
+        if (nowMs - _achLastPollMs < ACH_POLL_MIN_MS) return Promise.resolve([]);
+        _achLastPollMs = nowMs;
+        var fetcher = opts.fetcher;
+        if (typeof fetcher !== 'function') return Promise.resolve([]);
+        var ids = (entities || []).map(function (e) { return e && e.entityId; })
+            .filter(function (id) { return id !== undefined && id !== null; });
+        return Promise.all(ids.map(function (eid) {
+            return Promise.resolve(fetcher(eid)).then(function (data) {
+                return checkFirstAchievements(eid, (data && data.achievements) || [], opts.storage);
+            }).catch(function () { return []; });
+        })).then(function (lists) {
+            var hits = [].concat.apply([], lists);
+            hits.forEach(function (hit, idx) {
+                setTimeout(function () { celebrateFirstAchievement(hit, opts); }, idx * 2700);
+            });
+            return hits;
+        });
+    }
+
     /** Convenience: diff + celebrate each hit (stagger if multiple). */
     function onEntitiesUpdated(entities, opts) {
         opts = opts || {};
@@ -154,7 +251,11 @@
         check: check,
         celebrate: celebrate,
         onEntitiesUpdated: onEntitiesUpdated,
+        checkFirstAchievements: checkFirstAchievements,
+        celebrateFirstAchievement: celebrateFirstAchievement,
+        pollFirstAchievements: pollFirstAchievements,
         _resetSession: _resetSession,
+        _resetAchSession: _resetAchSession,
         PRAISE_KEYS: PRAISE_KEYS,
     };
 
