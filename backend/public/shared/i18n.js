@@ -650121,6 +650121,17 @@ const TRANSLATIONS = {
         "chat_outbox_cancel_confirm": "Cancel this queued message?",
         "chat_outbox_failed_retry_q": "Retry sending this message?",
         "chat_outbox_failed_delete_q": "Delete this failed message?",
+
+        "kb_reply_cancel": "Cancel reply",
+        "kb_quote_card_source": "Card",
+        "kb_quote_chat_source": "Chat message",
+        "kb_quote_mindmap_source": "Mind-map node",
+        "kb_quote_generic_source": "Quote",
+        "dialog_cancel": "Cancel",
+        "dialog_confirm": "Confirm",
+        "dialog_ok": "OK",
+        "dialog_cancel_aria": "Cancel, keep current state",
+        "dialog_confirm_destructive": "Confirm destructive action",
 },
 
 
@@ -1234709,6 +1234720,17 @@ const TRANSLATIONS = {
         "chat_outbox_cancel_confirm": "取消這則排隊中的訊息？",
         "chat_outbox_failed_retry_q": "重新傳送這則訊息？",
         "chat_outbox_failed_delete_q": "刪除這則失敗的訊息？",
+
+        "kb_reply_cancel": "取消回复",
+        "kb_quote_card_source": "卡片",
+        "kb_quote_chat_source": "聊天消息",
+        "kb_quote_mindmap_source": "思维导图节点",
+        "kb_quote_generic_source": "引用",
+        "dialog_cancel": "取消",
+        "dialog_confirm": "确认",
+        "dialog_ok": "好",
+        "dialog_cancel_aria": "取消，保持当前状态",
+        "dialog_confirm_destructive": "确认破坏性操作",
 },
 
 
@@ -2411900,6 +2411922,17 @@ const TRANSLATIONS = {
         "chat_outbox_cancel_confirm": "このキュー中のメッセージをキャンセルしますか？",
         "chat_outbox_failed_retry_q": "このメッセージを再送信しますか？",
         "chat_outbox_failed_delete_q": "この失敗したメッセージを削除しますか？",
+
+        "kb_reply_cancel": "返信をキャンセル",
+        "kb_quote_card_source": "カード",
+        "kb_quote_chat_source": "チャットメッセージ",
+        "kb_quote_mindmap_source": "マインドマップノード",
+        "kb_quote_generic_source": "引用",
+        "dialog_cancel": "キャンセル",
+        "dialog_confirm": "確認",
+        "dialog_ok": "OK",
+        "dialog_cancel_aria": "キャンセルして現在の状態を保持",
+        "dialog_confirm_destructive": "破壊的な操作を確認",
 },
 
 
@@ -2942103,6 +2942136,17 @@ const TRANSLATIONS = {
         "chat_outbox_cancel_confirm": "대기 중인 이 메시지를 취소하시겠습니까?",
         "chat_outbox_failed_retry_q": "이 메시지를 다시 보내시겠습니까?",
         "chat_outbox_failed_delete_q": "실패한 이 메시지를 삭제하시겠습니까?",
+
+        "kb_reply_cancel": "답글 취소",
+        "kb_quote_card_source": "카드",
+        "kb_quote_chat_source": "채팅 메시지",
+        "kb_quote_mindmap_source": "마인드맵 노드",
+        "kb_quote_generic_source": "인용",
+        "dialog_cancel": "취소",
+        "dialog_confirm": "확인",
+        "dialog_ok": "확인",
+        "dialog_cancel_aria": "취소하고 현재 상태 유지",
+        "dialog_confirm_destructive": "위험한 작업 확인",
 },
 
 
@@ -2943678,6 +2943722,17 @@ const TRANSLATIONS = {
         "chat_outbox_cancel_confirm": "取消這則排隊中的訊息？",
         "chat_outbox_failed_retry_q": "重新傳送這則訊息？",
         "chat_outbox_failed_delete_q": "刪除這則失敗的訊息？",
+
+        "kb_reply_cancel": "取消回覆",
+        "kb_quote_card_source": "卡片",
+        "kb_quote_chat_source": "聊天訊息",
+        "kb_quote_mindmap_source": "心智圖節點",
+        "kb_quote_generic_source": "引用",
+        "dialog_cancel": "取消",
+        "dialog_confirm": "確認",
+        "dialog_ok": "好",
+        "dialog_cancel_aria": "取消，保持目前狀態",
+        "dialog_confirm_destructive": "確認破壞性操作",
 },
 
 
@@ -3997217,6 +3997272,17 @@ const TRANSLATIONS = {
         "chat_outbox_cancel_confirm": "Hủy tin nhắn đang chờ này?",
         "chat_outbox_failed_retry_q": "Gửi lại tin nhắn này?",
         "chat_outbox_failed_delete_q": "Xóa tin nhắn thất bại này?",
+
+        "kb_reply_cancel": "Hủy trả lời",
+        "kb_quote_card_source": "Thẻ",
+        "kb_quote_chat_source": "Tin nhắn trò chuyện",
+        "kb_quote_mindmap_source": "Nút sơ đồ tư duy",
+        "kb_quote_generic_source": "Trích dẫn",
+        "dialog_cancel": "Hủy",
+        "dialog_confirm": "Xác nhận",
+        "dialog_ok": "OK",
+        "dialog_cancel_aria": "Hủy, giữ nguyên trạng thái hiện tại",
+        "dialog_confirm_destructive": "Xác nhận hành động phá hủy",
 },
 
 
@@ -4523603,6 +4523669,17 @@ const TRANSLATIONS = {
         "chat_outbox_cancel_confirm": "Batalkan pesan dalam antrian ini?",
         "chat_outbox_failed_retry_q": "Coba kirim ulang pesan ini?",
         "chat_outbox_failed_delete_q": "Hapus pesan yang gagal ini?",
+
+        "kb_reply_cancel": "Batalkan balasan",
+        "kb_quote_card_source": "Kartu",
+        "kb_quote_chat_source": "Pesan obrolan",
+        "kb_quote_mindmap_source": "Simpul peta pikiran",
+        "kb_quote_generic_source": "Kutipan",
+        "dialog_cancel": "Batal",
+        "dialog_confirm": "Konfirmasi",
+        "dialog_ok": "OK",
+        "dialog_cancel_aria": "Batal, pertahankan status saat ini",
+        "dialog_confirm_destructive": "Konfirmasi tindakan destruktif",
 },
 
 
@@ -5566289,6 +5566366,17 @@ const TRANSLATIONS = {
         "chat_outbox_cancel_confirm": "¿Cancelar este mensaje en cola?",
         "chat_outbox_failed_retry_q": "¿Reintentar enviar este mensaje?",
         "chat_outbox_failed_delete_q": "¿Eliminar este mensaje fallido?",
+
+        "kb_reply_cancel": "Cancelar respuesta",
+        "kb_quote_card_source": "Tarjeta",
+        "kb_quote_chat_source": "Mensaje de chat",
+        "kb_quote_mindmap_source": "Nodo de mapa mental",
+        "kb_quote_generic_source": "Cita",
+        "dialog_cancel": "Cancelar",
+        "dialog_confirm": "Confirmar",
+        "dialog_ok": "Aceptar",
+        "dialog_cancel_aria": "Cancelar y mantener el estado actual",
+        "dialog_confirm_destructive": "Confirmar acción destructiva",
 },
 
 
