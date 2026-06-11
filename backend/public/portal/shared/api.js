@@ -36,9 +36,21 @@ async function apiCall(method, path, body = null, opts = {}) {
             && !window.location.pathname.includes('index.html')
             && !window.location.pathname.endsWith('/portal/')
             && !window.location.pathname.includes('info.html')) {
-            window.location.href = 'index.html';
+            // Pain 4 fix: tell the user WHY they are being sent to login
+            // instead of a silent kick. `reason` comes from authMiddleware
+            // (no_token / token_expired / token_invalid).
+            const reason = data.reason || 'no_token';
+            const t = (k, fb) => (window.i18n && window.i18n.t) ? window.i18n.t(k, fb) : fb;
+            const msg = reason === 'token_expired'
+                ? t('session_expired_relogin', 'Session expired — please log in again')
+                : t('session_invalid_relogin', 'Please log in to continue');
+            try { showToast(msg, 'warning'); } catch (_) { /* toast not ready pre-DOM */ }
+            setTimeout(() => { window.location.href = 'index.html?authReason=' + encodeURIComponent(reason); }, 1200);
         }
-        throw new Error(data.error || 'Not authenticated');
+        const authErr = new Error(data.error || 'Not authenticated');
+        authErr.status = 401;
+        authErr.reason = data.reason || null;
+        throw authErr;
     }
 
     if (!response.ok) {

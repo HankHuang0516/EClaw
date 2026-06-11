@@ -3,6 +3,38 @@
 
 let currentUser = null;
 
+// ── Session keeper (OODA-R Phase 2 #6, pain 4) ──
+// Single-flight refresh: many tabs / many callers collapse onto one
+// in-flight POST /api/auth/refresh (mutex against thundering herd on
+// expiry). Refresh fires 10 minutes before expiresAt (floor 30s).
+let _refreshTimer = null;
+let _refreshInflight = null;
+
+function _refreshSession() {
+    if (_refreshInflight) return _refreshInflight;
+    _refreshInflight = apiCall('POST', '/api/auth/refresh', {}, { skip401Redirect: true })
+        .then((resp) => {
+            if (resp && resp.expiresAt) _scheduleSessionRefresh(resp.expiresAt);
+            return resp;
+        })
+        .catch((err) => {
+            // Refresh with an already-expired/invalid token: let the next
+            // regular apiCall surface the reason-coded 401 prompt.
+            console.warn('[Auth] session refresh failed:', err && err.message);
+            return null;
+        })
+        .finally(() => { _refreshInflight = null; });
+    return _refreshInflight;
+}
+
+function _scheduleSessionRefresh(expiresAtMs) {
+    if (_refreshTimer) clearTimeout(_refreshTimer);
+    const lead = 10 * 60 * 1000;
+    const delay = Math.max(expiresAtMs - Date.now() - lead, 30 * 1000);
+    _refreshTimer = setTimeout(_refreshSession, delay);
+    _refreshTimer && _refreshTimer.unref && _refreshTimer.unref();
+}
+
 async function checkAuth() {
     // If WebView host passed an authToken in the URL (iOS shell), stash it as a cookie
     // so apiCall's default credentials include it on /me. Also mirror to localStorage
@@ -37,6 +69,13 @@ async function checkAuth() {
         const data = await apiCall('GET', '/api/auth/me', null, { skip401Redirect: true });
         currentUser = data.user;
         window.currentUser = currentUser;
+
+        // Pain 4 fix: proactive sliding-session renewal. /me now returns
+        // session.expiresAt; refresh shortly before expiry so a long-lived
+        // tab never hits a hard token_expired 401.
+        if (data.session && data.session.expiresAt) {
+            _scheduleSessionRefresh(data.session.expiresAt);
+        }
 
         // WebView stale-session guard: if the host passed deviceId+deviceSecret
         // in the URL but /me returned a DIFFERENT device (e.g. leftover session

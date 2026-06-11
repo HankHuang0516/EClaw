@@ -650132,6 +650132,9 @@ const TRANSLATIONS = {
         "dialog_ok": "OK",
         "dialog_cancel_aria": "Cancel, keep current state",
         "dialog_confirm_destructive": "Confirm destructive action",
+
+        "session_expired_relogin": "Session expired — please log in again",
+        "session_invalid_relogin": "Please log in to continue",
 },
 
 
@@ -1234731,6 +1234734,9 @@ const TRANSLATIONS = {
         "dialog_ok": "好",
         "dialog_cancel_aria": "取消，保持当前状态",
         "dialog_confirm_destructive": "确认破坏性操作",
+
+        "session_expired_relogin": "会话已过期，请重新登录",
+        "session_invalid_relogin": "请登录后继续",
 },
 
 
@@ -2411933,6 +2411939,9 @@ const TRANSLATIONS = {
         "dialog_ok": "OK",
         "dialog_cancel_aria": "キャンセルして現在の状態を保持",
         "dialog_confirm_destructive": "破壊的な操作を確認",
+
+        "session_expired_relogin": "セッションの有効期限が切れました。再度ログインしてください",
+        "session_invalid_relogin": "続行するにはログインしてください",
 },
 
 
@@ -2942147,6 +2942156,9 @@ const TRANSLATIONS = {
         "dialog_ok": "확인",
         "dialog_cancel_aria": "취소하고 현재 상태 유지",
         "dialog_confirm_destructive": "위험한 작업 확인",
+
+        "session_expired_relogin": "세션이 만료되었습니다. 다시 로그인해 주세요",
+        "session_invalid_relogin": "계속하려면 로그인해 주세요",
 },
 
 
@@ -2943733,6 +2943745,9 @@ const TRANSLATIONS = {
         "dialog_ok": "好",
         "dialog_cancel_aria": "取消，保持目前狀態",
         "dialog_confirm_destructive": "確認破壞性操作",
+
+        "session_expired_relogin": "登入已過期，請重新登入",
+        "session_invalid_relogin": "請登入後繼續",
 },
 
 
@@ -3997283,6 +3997298,9 @@ const TRANSLATIONS = {
         "dialog_ok": "OK",
         "dialog_cancel_aria": "Hủy, giữ nguyên trạng thái hiện tại",
         "dialog_confirm_destructive": "Xác nhận hành động phá hủy",
+
+        "session_expired_relogin": "Phiên đã hết hạn — vui lòng đăng nhập lại",
+        "session_invalid_relogin": "Vui lòng đăng nhập để tiếp tục",
 },
 
 
@@ -4523680,6 +4523698,9 @@ const TRANSLATIONS = {
         "dialog_ok": "OK",
         "dialog_cancel_aria": "Batal, pertahankan status saat ini",
         "dialog_confirm_destructive": "Konfirmasi tindakan destruktif",
+
+        "session_expired_relogin": "Sesi berakhir — silakan masuk lagi",
+        "session_invalid_relogin": "Silakan masuk untuk melanjutkan",
 },
 
 
@@ -5566377,6 +5566398,9 @@ const TRANSLATIONS = {
         "dialog_ok": "Aceptar",
         "dialog_cancel_aria": "Cancelar y mantener el estado actual",
         "dialog_confirm_destructive": "Confirmar acción destructiva",
+
+        "session_expired_relogin": "La sesión ha expirado: vuelve a iniciar sesión",
+        "session_invalid_relogin": "Inicia sesión para continuar",
 },
 
 

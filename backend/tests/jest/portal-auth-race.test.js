@@ -76,7 +76,9 @@ describe('apiCall 401 behavior', () => {
         loadApiJs(sandbox);
 
         await expect(sandbox.apiCall('GET', '/api/auth/me')).rejects.toThrow(/Not authenticated/);
-        expect(hrefSetter).toHaveBeenCalledWith('index.html');
+        // Pain-4 contract (OODA-R Phase 2 #6): redirect now carries the
+        // machine-readable reason so index.html can explain the kick.
+        expect(hrefSetter).toHaveBeenCalledWith('index.html?authReason=no_token');
     });
 
     test('401 with skip401Redirect=true does NOT navigate', async () => {
