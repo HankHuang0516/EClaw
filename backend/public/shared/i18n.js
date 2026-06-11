@@ -650174,6 +650174,12 @@ const TRANSLATIONS = {
         "kb_modal_splitter_aria": "Drag to resize description area",
         "kb_modal_prev_card": "Previous linked card",
         "kb_modal_next_card": "Next linked card",
+
+        "dashboard_usage_chart_modal_title": "Usage timeline",
+        "dashboard_usage_chart_5h_label": "5h session % (last 24h)",
+        "dashboard_usage_chart_weekly_label": "Weekly % (last 30d)",
+        "dashboard_usage_chart_loading": "Loading…",
+        "dashboard_usage_chart_no_data": "No data yet",
 },
 
 
@@ -1234815,6 +1234821,12 @@ const TRANSLATIONS = {
         "kb_modal_splitter_aria": "拖拉调整描述区高度",
         "kb_modal_prev_card": "上一张链接任务卡",
         "kb_modal_next_card": "下一张链接任务卡",
+
+        "dashboard_usage_chart_modal_title": "用量波形图",
+        "dashboard_usage_chart_5h_label": "5 小时用量 %（近 24 小时）",
+        "dashboard_usage_chart_weekly_label": "每周用量 %（近 30 天）",
+        "dashboard_usage_chart_loading": "载入中…",
+        "dashboard_usage_chart_no_data": "暂无数据",
 },
 
 
@@ -2412059,6 +2412071,12 @@ const TRANSLATIONS = {
         "kb_modal_splitter_aria": "ドラッグして説明エリアの高さを調整",
         "kb_modal_prev_card": "前のリンクカード",
         "kb_modal_next_card": "次のリンクカード",
+
+        "dashboard_usage_chart_modal_title": "使用量タイムライン",
+        "dashboard_usage_chart_5h_label": "5時間使用率 %（過去24時間）",
+        "dashboard_usage_chart_weekly_label": "週間使用率 %（過去30日）",
+        "dashboard_usage_chart_loading": "読み込み中…",
+        "dashboard_usage_chart_no_data": "データはまだありません",
 },
 
 
@@ -2942315,6 +2942333,12 @@ const TRANSLATIONS = {
         "kb_modal_splitter_aria": "드래그하여 설명 영역 크기 조절",
         "kb_modal_prev_card": "이전 연결 카드",
         "kb_modal_next_card": "다음 연결 카드",
+
+        "dashboard_usage_chart_modal_title": "사용량 타임라인",
+        "dashboard_usage_chart_5h_label": "5시간 사용률 %(최근 24시간)",
+        "dashboard_usage_chart_weekly_label": "주간 사용률 %(최근 30일)",
+        "dashboard_usage_chart_loading": "불러오는 중…",
+        "dashboard_usage_chart_no_data": "아직 데이터가 없습니다",
 },
 
 
@@ -2943943,6 +2943967,12 @@ const TRANSLATIONS = {
         "kb_modal_splitter_aria": "拖拉調整描述區高度",
         "kb_modal_prev_card": "上一張鏈結任務卡",
         "kb_modal_next_card": "下一張鏈結任務卡",
+
+        "dashboard_usage_chart_modal_title": "用量波形圖",
+        "dashboard_usage_chart_5h_label": "5 小時用量 %（近 24 小時）",
+        "dashboard_usage_chart_weekly_label": "每週用量 %（近 30 天）",
+        "dashboard_usage_chart_loading": "載入中…",
+        "dashboard_usage_chart_no_data": "尚無資料",
 },
 
 
@@ -3997535,6 +3997565,12 @@ const TRANSLATIONS = {
         "kb_modal_splitter_aria": "Kéo để điều chỉnh vùng mô tả",
         "kb_modal_prev_card": "Thẻ liên kết trước",
         "kb_modal_next_card": "Thẻ liên kết tiếp theo",
+
+        "dashboard_usage_chart_modal_title": "Dòng thời gian sử dụng",
+        "dashboard_usage_chart_5h_label": "% phiên 5 giờ (24 giờ qua)",
+        "dashboard_usage_chart_weekly_label": "% hàng tuần (30 ngày qua)",
+        "dashboard_usage_chart_loading": "Đang tải…",
+        "dashboard_usage_chart_no_data": "Chưa có dữ liệu",
 },
 
 
@@ -4523974,6 +4524010,12 @@ const TRANSLATIONS = {
         "kb_modal_splitter_aria": "Seret untuk mengubah tinggi area deskripsi",
         "kb_modal_prev_card": "Kartu tertaut sebelumnya",
         "kb_modal_next_card": "Kartu tertaut berikutnya",
+
+        "dashboard_usage_chart_modal_title": "Linimasa penggunaan",
+        "dashboard_usage_chart_5h_label": "% sesi 5 jam (24 jam terakhir)",
+        "dashboard_usage_chart_weekly_label": "% mingguan (30 hari terakhir)",
+        "dashboard_usage_chart_loading": "Memuat…",
+        "dashboard_usage_chart_no_data": "Belum ada data",
 },
 
 
@@ -5566713,6 +5566755,12 @@ const TRANSLATIONS = {
         "kb_modal_splitter_aria": "Arrastra para redimensionar la descripción",
         "kb_modal_prev_card": "Tarjeta enlazada anterior",
         "kb_modal_next_card": "Tarjeta enlazada siguiente",
+
+        "dashboard_usage_chart_modal_title": "Cronología de uso",
+        "dashboard_usage_chart_5h_label": "% de sesión 5h (últimas 24h)",
+        "dashboard_usage_chart_weekly_label": "% semanal (últimos 30 días)",
+        "dashboard_usage_chart_loading": "Cargando…",
+        "dashboard_usage_chart_no_data": "Aún no hay datos",
 },
 
 
