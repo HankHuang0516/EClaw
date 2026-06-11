@@ -417,11 +417,15 @@ async function getAchievements(deviceId, entityId) {
         let lastEventAt = null;
         try {
             if (axis === 'tasks_done') {
+                // assigned_bots is JSONB (not int[]) — `= ANY()` throws and the
+                // per-axis catch silently zeroed this axis. jsonb containment
+                // ('[2,6]' @> '2') is the correct predicate. Found via prod
+                // probe: board had 215 done cards for #2, API said 0.
                 const r = await pool.query(
                     `SELECT COUNT(*)::int AS c, MAX(updated_at) AS ts
                        FROM kanban_cards
                       WHERE device_id = $1 AND status = 'done'
-                        AND $2 = ANY(assigned_bots)`,
+                        AND assigned_bots @> to_jsonb($2::int)`,
                     [deviceId, eid]
                 );
                 count = Number(r.rows[0]?.c || 0);
@@ -487,7 +491,7 @@ async function getAchievementEvents(deviceId, entityId, axis, limit) {
                 `SELECT id, title, updated_at
                    FROM kanban_cards
                   WHERE device_id = $1 AND status = 'done'
-                    AND $2 = ANY(assigned_bots)
+                    AND assigned_bots @> to_jsonb($2::int)
                   ORDER BY updated_at DESC LIMIT $3`,
                 [deviceId, eid, lim]
             );
