@@ -2,7 +2,7 @@
 
 **Card:** card_14571f26914b9c1eae148362 (OODA-R Phase 2 #7)
 **Parent:** card_be59aa034883fe36d3645a27 (10-pain roadmap — pains 1 + 5)
-**Status:** DRAFT — pending #6 sign-off
+**Status:** APPROVED — #6 review 2026-06-12 06:22 TW (3 open points ruled + 3 amendments folded in this revision)
 **Author:** #2 LOBSTER, 2026-06-12
 
 ## 1. Problem
@@ -12,7 +12,7 @@ Redirect/deep-link behavior is fragmented and mostly absent:
 | Surface | Today |
 |---|---|
 | Android | No `eclaw://` scheme, no App Links `autoVerify` — only the FB-login scheme is registered. App cannot be opened from a link at all. |
-| iOS | No Universal Links / AASA file. |
+| iOS | `applinks:eclawbot.com` entitlement EXISTS (ios-app/EClaw.entitlements) — the missing piece is the server-side AASA file + `/r/` route, not the app config (#6 review amendment 3). |
 | Web | `eclaw://note/<id>` is an *internal* pseudo-protocol for iframe note previews (mission.html / share-chat.html) — not OS deep linking; the name collides with what a real app scheme would be. |
 | Cross-page | Pages hand-roll `window.location` hops (auth 401 → index, quote → chat.html); no shared route builder, no return-to contract beyond `?authReason`. |
 
@@ -23,13 +23,16 @@ Pain 1 (App 轉導不穩定) and pain 5 (Web 轉導不行) are both symptoms of 
 New `backend/shared/route-registry.js` (plain CJS, importable by backend + copied to portal shared/) declaring every logical destination once:
 
 ```js
+// URL shapes match the CURRENT consumers exactly (#6 review amendment 1 —
+// verified against kanban.html hash handler, chat.html ?contact, /p/ + 
+// /community/ Express routes):
 const ROUTES = {
-  dashboard:   { web: '/portal/dashboard.html',                       params: [] },
-  chat:        { web: '/portal/chat.html',                            params: ['entityId'] },
-  card:        { web: '/portal/kanban.html#card={cardId}',            params: ['cardId'] },
-  note:        { web: '/portal/mission.html#note={noteId}',           params: ['noteId'] },
-  profile:     { web: '/portal/bot/{publicCode}',                     params: ['publicCode'] },
-  settings:    { web: '/portal/settings.html',                        params: [] },
+  dashboard:   { web: '/portal/dashboard.html',                          params: [] },
+  chat:        { web: '/portal/chat.html?contact={publicCode}',          params: ['publicCode'] },
+  card:        { web: '/portal/kanban.html?card={cardId}#{cardId}',      params: ['cardId'] },
+  note:        { web: '/portal/mission.html?note={noteId}',              params: ['noteId'] },
+  profile:     { web: '/p/{publicCode}',                                 params: ['publicCode'] },
+  settings:    { web: '/portal/settings.html',                           params: [] },
 };
 ```
 
@@ -45,12 +48,13 @@ https://eclawbot.com/r/card?cardId=card_abc123&traceId=rt_8f3a...&sig=...&exp=..
 ```
 
 - **Android App Links**: `assetlinks.json` + manifest intent-filter `autoVerify` on `https://eclawbot.com/r/*` → OS opens the app when installed (app slice ships separately; the contract is fixed here).
-- **iOS Universal Links**: `apple-app-site-association` on the same `/r/*` prefix (separate slice, same contract).
+- **iOS Universal Links**: serve `apple-app-site-association` for the `/r/*` prefix — the app-side `applinks:eclawbot.com` entitlement already exists, so Phase C is server-only.
 - **Web / app-not-installed**: the router serves a tiny interstitial that (a) logs telemetry, (b) 302s (or JS-redirects after a 400 ms app-attempt window on mobile UAs) to `buildWebUrl(target, params)`.
 
 ### Signed envelope
 
-- `traceId` (`rt_` + 12 hex) — ALWAYS present; minted by whoever creates the link (`mintRedirectLink()` helper, server-side or portal).
+- `traceId` (`rt_` + 12 hex) — ALWAYS present.
+- **Minting is server-side only** (#6 review amendment 2): `POST /api/redirect/mint {target, params}` (botSecret/deviceSecret-authed) returns the signed URL. Portal JS never sees the signing secret; for public targets the portal may build unsigned URLs locally via the registry.
 - `sig` + `exp` — REQUIRED only for **sensitive** targets (anything that pre-selects private context: `card`, `note`). HMAC-SHA256 over `target|sortedParams|exp` with server `REDIRECT_SIGNING_SECRET` (reuses JWT_SECRET in v1 — no new key, per no-new-keys rule). Public targets (`dashboard`, `profile`) skip `sig`.
 - Invalid/expired sig → state `SIG_REJECTED` → redirect to plain `dashboard` with toast param (`?redirectError=expired`), never a dead end.
 
