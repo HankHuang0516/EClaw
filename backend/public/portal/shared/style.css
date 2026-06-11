@@ -196,6 +196,36 @@ a:hover { text-decoration: underline; }
     white-space: nowrap;
 }
 
+@media (min-width: 769px) and (max-width: 1440px) {
+    .nav {
+        padding: 0 10px;
+        gap: 4px;
+    }
+
+    .nav-brand {
+        margin-right: 10px;
+    }
+
+    .nav-links {
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .nav-link {
+        padding: 8px 9px;
+        font-size: 13px;
+    }
+
+    .nav-user {
+        gap: 8px;
+        min-width: 0;
+    }
+
+    .nav-user .email {
+        max-width: 96px;
+    }
+}
+
 /* ==========================================
    Notification Bell + Dropdown
    ========================================== */
