@@ -23,8 +23,11 @@
  */
 
 const PROD = 'https://eclawbot.com';
-const ENT_A = 2;  // LOBSTER
-const ENT_B = 5;  // Hermes
+// Entity slots on the BROADCAST_TEST device (bound 2026-06-11: A=free-borrow
+// "E2E Bot", B=/api/bind "E2E Bot B"). Override via env for other devices.
+const ENT_A = parseInt(process.env.PROD_E2E_ENTITY_A ?? '0', 10);
+const ENT_B = parseInt(process.env.PROD_E2E_ENTITY_B ?? '1', 10);
+const PUBCODE_B = process.env.PROD_E2E_PUBCODE_B;  // entity B's 6-char routing code
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
 const DEVICE_ID = process.env.PROD_E2E_DEVICE_ID;
@@ -76,7 +79,42 @@ describeIfCreds('Multi-tenant E2E matrix — Part B Slice 2 (prod)', () => {
         expect(res.status).toBeLessThan(500);
     });
 
-    test.todo('/api/transform: positive case — entity A speakTo entity B real msg delivery + no A-context leakage in B response (bridge-auth follow-up)');
+    test('/api/transform: entity A speakTo entity B — marker delivered to B history, unrouted A msg does NOT leak to B', async () => {
+        if (!BOT_SECRET_A || !BOT_SECRET_B || !PUBCODE_B) return;
+        const run = Date.now().toString(36);
+        const routedMarker = `[E2E-MT row5 routed ${run}]`;
+        const unroutedMarker = `[E2E-MT row5 unrouted ${run}]`;
+
+        // A -> B (explicit speakTo by publicCode) — MUST arrive in B's scope.
+        const routed = await fetch(`${PROD}/api/transform`, {
+            method: 'POST',
+            headers: { 'User-Agent': UA, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceId: DEVICE_ID, entityId: ENT_A, botSecret: BOT_SECRET_A, message: routedMarker, state: 'IDLE', speakTo: [PUBCODE_B] }),
+        });
+        expect(routed.status).toBe(200);
+
+        // A plain status update (no speakTo / no mention) — must NOT appear in B's scope.
+        const unrouted = await fetch(`${PROD}/api/transform`, {
+            method: 'POST',
+            headers: { 'User-Agent': UA, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceId: DEVICE_ID, entityId: ENT_A, botSecret: BOT_SECRET_A, message: unroutedMarker, state: 'IDLE' }),
+        });
+        expect(unrouted.status).toBe(200);
+
+        // Poll B's history (scoped to entity B) up to ~20s for the routed marker.
+        const histUrl = `${PROD}/api/chat/history?deviceId=${DEVICE_ID}&botSecret=${BOT_SECRET_B}&entityId=${ENT_B}&limit=50`;
+        let texts = [];
+        for (let i = 0; i < 10; i++) {
+            const { status, body } = await getJSON(histUrl);
+            expect(status).toBe(200);
+            texts = (body.messages || []).map(m => m.text || '');
+            if (texts.some(t => t.includes(routedMarker))) break;
+            await new Promise(r => setTimeout(r, 2000));
+        }
+        expect(texts.some(t => t.includes(routedMarker))).toBe(true);
+        // Negative: the unrouted A status update never enters B's scope.
+        expect(texts.some(t => t.includes(unroutedMarker))).toBe(false);
+    }, 45000);
 
     // ─── Row 6: /api/client/speak — auth-rejection isolation (read-only) ───
     test('/api/client/speak: missing deviceSecret rejected (no auth bypass)', async () => {
@@ -101,7 +139,37 @@ describeIfCreds('Multi-tenant E2E matrix — Part B Slice 2 (prod)', () => {
         expect(res.status).toBeLessThan(500);
     });
 
-    test.todo('/api/client/speak: positive case — user-A real msg send + entityId scoping holds in receipt (bridge-auth follow-up)');
+    test('/api/client/speak: user msg targeted at entity A lands in A history only — never in B', async () => {
+        if (!DEVICE_SECRET || !BOT_SECRET_A || !BOT_SECRET_B) return;
+        const run = Date.now().toString(36);
+        const marker = `[E2E-MT row6 user->A ${run}]`;
+
+        const res = await fetch(`${PROD}/api/client/speak`, {
+            method: 'POST',
+            headers: { 'User-Agent': UA, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET, entityId: ENT_A, text: marker, source: 'client' }),
+        });
+        expect(res.status).toBe(200);
+
+        const histA = `${PROD}/api/chat/history?deviceId=${DEVICE_ID}&botSecret=${BOT_SECRET_A}&entityId=${ENT_A}&limit=50`;
+        const histB = `${PROD}/api/chat/history?deviceId=${DEVICE_ID}&botSecret=${BOT_SECRET_B}&entityId=${ENT_B}&limit=50`;
+
+        // Poll A's scope up to ~20s for the marker.
+        let inA = false;
+        for (let i = 0; i < 10; i++) {
+            const { status, body } = await getJSON(histA);
+            expect(status).toBe(200);
+            inA = (body.messages || []).some(m => (m.text || '').includes(marker));
+            if (inA) break;
+            await new Promise(r => setTimeout(r, 2000));
+        }
+        expect(inA).toBe(true);
+
+        // Negative: B's scope never sees the user msg addressed to A.
+        const { status: sB, body: bB } = await getJSON(histB);
+        expect(sB).toBe(200);
+        expect((bB.messages || []).some(m => (m.text || '').includes(marker))).toBe(false);
+    }, 45000);
 
     // ─── Row 7: /api/mission/cards — entity-scoped queries ───
     test('mission/cards: device-wide board returns all cards regardless of entityId param (current contract)', async () => {
