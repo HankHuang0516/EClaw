@@ -122,6 +122,19 @@
         .key-bar .key-status.set { background: rgba(76,175,80,0.15); color: var(--success); }
         .key-bar .key-status.unset { background: rgba(255,152,0,0.15); color: var(--warning-hover, #ffb74d); }
 
+        @media (max-width: 480px) {
+            .key-bar {
+                flex-wrap: wrap;
+            }
+            .key-bar input {
+                min-width: 0;
+                flex: 1 1 150px;
+            }
+            .key-bar .key-status {
+                margin-left: auto;
+            }
+        }
+
         .result-box {
             margin-top: 12px; padding: 10px 12px;
             border-radius: var(--radius-sm);
