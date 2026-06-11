@@ -11241,6 +11241,16 @@ app.post('/api/client/speak', idempotencyMiddleware, clientSpeakDedupeMiddleware
         return res.status(404).json({ success: false, message: "Device not found" });
     }
 
+    // deviceId alone is NOT a credential — it appears in URLs, screenshots and
+    // logs. Without this gate anyone holding a deviceId could impersonate the
+    // device owner and push commands to its bots (card_b0fbccf25252518e7044c47c).
+    if (!deviceSecret) {
+        return res.status(401).json({ success: false, message: "deviceSecret required" });
+    }
+    if (!safeEqual(device.deviceSecret, deviceSecret)) {
+        return res.status(403).json({ success: false, message: "Invalid deviceSecret for this device" });
+    }
+
     // Developer exemption: admin-owned devices with valid deviceSecret skip Gatekeeper First Lock
     const isDeveloper = deviceSecret && safeEqual(device.deviceSecret, deviceSecret) && developerDeviceIds.has(deviceId);
     if (deviceSecret) {
