@@ -650180,6 +650180,8 @@ const TRANSLATIONS = {
         "dashboard_usage_chart_weekly_label": "Weekly % (last 30d)",
         "dashboard_usage_chart_loading": "Loading…",
         "dashboard_usage_chart_no_data": "No data yet",
+
+        "firstach_title": "First achievement: {label}!",
 },
 
 
@@ -1234827,6 +1234829,8 @@ const TRANSLATIONS = {
         "dashboard_usage_chart_weekly_label": "每週用量 %（近 30 天）",
         "dashboard_usage_chart_loading": "載入中…",
         "dashboard_usage_chart_no_data": "尚無資料",
+
+        "firstach_title": "首個成就：{label}！",
 },
 
 
@@ -2412077,6 +2412081,8 @@ const TRANSLATIONS = {
         "dashboard_usage_chart_weekly_label": "週間使用率 %（過去30日）",
         "dashboard_usage_chart_loading": "読み込み中…",
         "dashboard_usage_chart_no_data": "データはまだありません",
+
+        "firstach_title": "初めての実績：{label}！",
 },
 
 
@@ -2942339,6 +2942345,8 @@ const TRANSLATIONS = {
         "dashboard_usage_chart_weekly_label": "주간 사용률 %(최근 30일)",
         "dashboard_usage_chart_loading": "불러오는 중…",
         "dashboard_usage_chart_no_data": "아직 데이터가 없습니다",
+
+        "firstach_title": "첫 업적: {label}!",
 },
 
 
@@ -3997530,6 +3997538,8 @@ const TRANSLATIONS = {
         "dashboard_usage_chart_weekly_label": "% hàng tuần (30 ngày qua)",
         "dashboard_usage_chart_loading": "Đang tải…",
         "dashboard_usage_chart_no_data": "Chưa có dữ liệu",
+
+        "firstach_title": "Thành tích đầu tiên: {label}!",
 },
 
 
@@ -4523975,6 +4523985,8 @@ const TRANSLATIONS = {
         "dashboard_usage_chart_weekly_label": "% mingguan (30 hari terakhir)",
         "dashboard_usage_chart_loading": "Memuat…",
         "dashboard_usage_chart_no_data": "Belum ada data",
+
+        "firstach_title": "Pencapaian pertama: {label}!",
 },
 
 
@@ -5566720,6 +5566732,8 @@ const TRANSLATIONS = {
         "dashboard_usage_chart_weekly_label": "% semanal (últimos 30 días)",
         "dashboard_usage_chart_loading": "Cargando…",
         "dashboard_usage_chart_no_data": "Aún no hay datos",
+
+        "firstach_title": "¡Primer logro: {label}!",
 },
 
 

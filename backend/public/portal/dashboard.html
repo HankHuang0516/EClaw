@@ -2013,6 +2013,18 @@
             .lvlup-card, .lvlup-badge { animation: none !important; }
             .lvlup-confetti { display: none; }
         }
+        /* first-achievement toast (card_d3556164) — small, non-fullscreen */
+        .firstach-toast {
+            position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+            z-index: 10060; background: var(--card, #1b1b2f); color: var(--text-primary, #fff);
+            border: 1px solid rgba(251,191,36,0.5); border-radius: 999px;
+            padding: 10px 22px; font-size: 14px; font-weight: 700;
+            box-shadow: 0 8px 30px rgba(251,191,36,0.25);
+            animation: firstach-pop 0.4s cubic-bezier(0.18, 1.4, 0.4, 1);
+        }
+        @keyframes firstach-pop { 0% { transform: translateX(-50%) scale(0.6); opacity: 0; } 100% { transform: translateX(-50%) scale(1); opacity: 1; } }
+        .firstach-toast.firstach-reduced { animation: none; }
+        @media (prefers-reduced-motion: reduce) { .firstach-toast { animation: none !important; } }
     </style>
     <link rel="canonical" href="https://eclawbot.com/portal/dashboard.html">
 </head>
@@ -2999,6 +3011,12 @@
                 try {
                     if (window.EclawLevelUp) {
                         EclawLevelUp.onEntitiesUpdated(entities, { t: (k) => i18n.t(k) });
+                        // First-achievement toast (card_d3556164): throttled to
+                        // ~60s inside pollFirstAchievements; same best-effort rule.
+                        EclawLevelUp.pollFirstAchievements(entities, {
+                            t: (k) => i18n.t(k),
+                            fetcher: (eid) => fetch(`/api/entity-status/${eid}/achievements?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`, { credentials: 'same-origin' }).then(r => r.json()),
+                        });
                     }
                 } catch (_e) { /* celebration is best-effort */ }
 

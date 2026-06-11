@@ -116,3 +116,82 @@ describe('levelup — i18n keys exist', () => {
         expect(i18nJs).toMatch(new RegExp('"' + key + '":'));
     });
 });
+
+describe('first-achievement — checkFirstAchievements() diff + guard (card_d3556164)', () => {
+    let lvl, storage;
+    beforeEach(() => {
+        lvl = loadLevelUp();
+        lvl._resetAchSession();
+        storage = makeStorage();
+    });
+
+    const ach = (axis, count) => ({ axis, count });
+
+    test('first sighting primes baseline, never celebrates (even count≥1)', () => {
+        expect(lvl.checkFirstAchievements(2, [ach('tasks_done', 5)], storage)).toEqual([]);
+        expect(lvl.checkFirstAchievements(2, [ach('tasks_done', 6)], storage)).toEqual([]);
+    });
+
+    test('0→1 transition after baseline celebrates once with entity+axis', () => {
+        lvl.checkFirstAchievements(2, [ach('chat_upvotes', 0)], storage);
+        expect(lvl.checkFirstAchievements(2, [ach('chat_upvotes', 1)], storage))
+            .toEqual([{ entityId: 2, axis: 'chat_upvotes' }]);
+        // and never again, even if it dips and rises (server-side anomaly)
+        lvl.checkFirstAchievements(2, [ach('chat_upvotes', 0)], storage);
+        expect(lvl.checkFirstAchievements(2, [ach('chat_upvotes', 3)], storage)).toEqual([]);
+    });
+
+    test('localStorage guard survives session reset', () => {
+        lvl.checkFirstAchievements(2, [ach('notes_authored', 0)], storage);
+        lvl.checkFirstAchievements(2, [ach('notes_authored', 1)], storage); // celebrated
+        lvl._resetAchSession();
+        lvl.checkFirstAchievements(2, [ach('notes_authored', 0)], storage); // stale baseline
+        expect(lvl.checkFirstAchievements(2, [ach('notes_authored', 1)], storage)).toEqual([]);
+    });
+
+    test('axes are independent per entity', () => {
+        lvl.checkFirstAchievements(1, [ach('tasks_done', 0)], storage);
+        lvl.checkFirstAchievements(2, [ach('tasks_done', 0)], storage);
+        expect(lvl.checkFirstAchievements(1, [ach('tasks_done', 1)], storage))
+            .toEqual([{ entityId: 1, axis: 'tasks_done' }]);
+        // entity 2 still eligible independently
+        expect(lvl.checkFirstAchievements(2, [ach('tasks_done', 2)], storage))
+            .toEqual([{ entityId: 2, axis: 'tasks_done' }]);
+    });
+
+    test('pollFirstAchievements throttles to one pass per 60s window', async () => {
+        const fetcher = jest.fn().mockResolvedValue({ achievements: [ach('tasks_done', 0)] });
+        await lvl.pollFirstAchievements([{ entityId: 2 }], { fetcher, storage, nowMs: 1000000 });
+        await lvl.pollFirstAchievements([{ entityId: 2 }], { fetcher, storage, nowMs: 1030000 }); // +30s → skipped
+        expect(fetcher).toHaveBeenCalledTimes(1);
+        await lvl.pollFirstAchievements([{ entityId: 2 }], { fetcher, storage, nowMs: 1070000 }); // +70s → runs
+        expect(fetcher).toHaveBeenCalledTimes(2);
+    });
+
+    test('fetcher failure for one entity never throws or blocks others', async () => {
+        const fetcher = jest.fn()
+            .mockImplementation((eid) => eid === 1 ? Promise.reject(new Error('boom')) : Promise.resolve({ achievements: [] }));
+        await expect(lvl.pollFirstAchievements([{ entityId: 1 }, { entityId: 2 }], { fetcher, storage, nowMs: 5000000 }))
+            .resolves.toEqual([]);
+    });
+});
+
+describe('first-achievement — dashboard integration + i18n', () => {
+    const fs = require('fs');
+    const dashHtml = fs.readFileSync(
+        path.join(__dirname, '..', '..', 'public', 'portal', 'dashboard.html'), 'utf8');
+    const i18nJs = fs.readFileSync(
+        path.join(__dirname, '..', '..', 'public', 'shared', 'i18n.js'), 'utf8');
+
+    test('dashboard hooks pollFirstAchievements with an injected fetcher', () => {
+        expect(dashHtml).toMatch(/EclawLevelUp\.pollFirstAchievements\(entities/);
+        expect(dashHtml).toMatch(/\/api\/entity-status\/\$\{eid\}\/achievements/);
+    });
+    test('toast CSS exists with reduced-motion fallback', () => {
+        expect(dashHtml).toMatch(/\.firstach-toast \{/);
+        expect(dashHtml).toMatch(/\.firstach-toast \{ animation: none !important; \}/);
+    });
+    test('firstach_title declared in i18n.js', () => {
+        expect(i18nJs).toMatch(/"firstach_title":/);
+    });
+});
