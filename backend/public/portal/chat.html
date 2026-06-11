@@ -92,7 +92,12 @@
         body.dark .msg-outbox-retrying .chat-bubble { background: #3a3220; color: #e8d488; }
         .msg-outbox-failed .chat-bubble { border: 1.5px solid #d94f4f; background: #fdecec; color: #5a1a1a; }
         body.dark .msg-outbox-failed .chat-bubble { background: #3a1e1e; color: #ffb4b4; border-color: #b34141; }
+        /* sending = online optimistic state (情緒價值 #2): keep the normal sent
+           bubble look, just dim it + spin until the POST resolves. */
+        .msg-outbox-sending { cursor: default; }
+        .msg-outbox-sending .chat-bubble { opacity: 0.7; }
         .msg-outbox-queued .msg-outbox-spinner,
+        .msg-outbox-sending .msg-outbox-spinner,
         .msg-outbox-retrying .msg-outbox-spinner {
             display: inline-block;
             width: 10px; height: 10px;
@@ -6563,8 +6568,12 @@
                                 }
                                 if (__outboxEntry) {
                                     window.EclawOutbox.markRetrying(__idempotencyKey);
+                                    // Visual state is 'sending' (online optimistic, 情緒價值 #2),
+                                    // not 'retrying' — this is the first in-flight attempt. The
+                                    // queue bookkeeping above still tracks it for offline flush.
                                     if (__chatContainer && window.EclawOutboxUI) {
-                                        window.EclawOutboxUI.setBubbleState(__chatContainer, __idempotencyKey, 'retrying');
+                                        const __sendingEl = window.EclawOutboxUI.setBubbleState(__chatContainer, __idempotencyKey, 'sending');
+                                        if (__sendingEl) __sendingEl.setAttribute('aria-label', i18n.t('chat_sending') || 'Sending…');
                                     }
                                 }
                                 _updateOutboxBanner();

@@ -650144,6 +650144,14 @@ const TRANSLATIONS = {
         "greet_starter_1": "What can you help me with?",
         "greet_starter_2": "Help me plan today's to-dos",
         "greet_starter_3": "Introduce yourself in three sentences",
+
+        "kb_toast_moved": "Moved to {col}",
+        "kb_toast_archived": "Archived",
+        "kb_undo": "Undo",
+        "kb_undo_done": "Undone",
+        "kb_undo_failed": "Undo failed",
+        "kb_err_move": "Move failed",
+        "chat_sending": "Sending…",
 },
 
 
@@ -1234755,6 +1234763,14 @@ const TRANSLATIONS = {
         "greet_starter_1": "你可以帮我做什么？",
         "greet_starter_2": "帮我规划今天的待办事项",
         "greet_starter_3": "用三句话介绍一下你自己",
+
+        "kb_toast_moved": "已移到 {col}",
+        "kb_toast_archived": "已封存",
+        "kb_undo": "撤销",
+        "kb_undo_done": "已撤销",
+        "kb_undo_failed": "撤销失败",
+        "kb_err_move": "移动失败",
+        "chat_sending": "发送中…",
 },
 
 
@@ -2411969,6 +2411985,14 @@ const TRANSLATIONS = {
         "greet_starter_1": "何を手伝ってくれますか？",
         "greet_starter_2": "今日のタスクを計画して",
         "greet_starter_3": "3文で自己紹介して",
+
+        "kb_toast_moved": "{col} に移動しました",
+        "kb_toast_archived": "アーカイブしました",
+        "kb_undo": "元に戻す",
+        "kb_undo_done": "元に戻しました",
+        "kb_undo_failed": "元に戻せませんでした",
+        "kb_err_move": "移動に失敗しました",
+        "chat_sending": "送信中…",
 },
 
 
@@ -2942195,6 +2942219,14 @@ const TRANSLATIONS = {
         "greet_starter_1": "무엇을 도와줄 수 있나요?",
         "greet_starter_2": "오늘 할 일을 계획해 줘",
         "greet_starter_3": "세 문장으로 자기소개해 줘",
+
+        "kb_toast_moved": "{col}(으)로 이동했습니다",
+        "kb_toast_archived": "보관했습니다",
+        "kb_undo": "실행 취소",
+        "kb_undo_done": "실행 취소됨",
+        "kb_undo_failed": "실행 취소 실패",
+        "kb_err_move": "이동 실패",
+        "chat_sending": "전송 중…",
 },
 
 
@@ -2943793,6 +2943825,14 @@ const TRANSLATIONS = {
         "greet_starter_1": "你可以幫我做什麼？",
         "greet_starter_2": "幫我規劃今天的待辦事項",
         "greet_starter_3": "用三句話介紹一下你自己",
+
+        "kb_toast_moved": "已移到 {col}",
+        "kb_toast_archived": "已封存",
+        "kb_undo": "復原",
+        "kb_undo_done": "已復原",
+        "kb_undo_failed": "復原失敗",
+        "kb_err_move": "移動失敗",
+        "chat_sending": "傳送中…",
 },
 
 
@@ -3997355,6 +3997395,14 @@ const TRANSLATIONS = {
         "greet_starter_1": "Bạn có thể giúp tôi những gì?",
         "greet_starter_2": "Giúp tôi lên kế hoạch việc cần làm hôm nay",
         "greet_starter_3": "Giới thiệu bản thân trong ba câu",
+
+        "kb_toast_moved": "Đã chuyển đến {col}",
+        "kb_toast_archived": "Đã lưu trữ",
+        "kb_undo": "Hoàn tác",
+        "kb_undo_done": "Đã hoàn tác",
+        "kb_undo_failed": "Hoàn tác thất bại",
+        "kb_err_move": "Di chuyển thất bại",
+        "chat_sending": "Đang gửi…",
 },
 
 
@@ -4523764,6 +4523812,14 @@ const TRANSLATIONS = {
         "greet_starter_1": "Apa yang bisa kamu bantu?",
         "greet_starter_2": "Bantu saya merencanakan tugas hari ini",
         "greet_starter_3": "Perkenalkan dirimu dalam tiga kalimat",
+
+        "kb_toast_moved": "Dipindahkan ke {col}",
+        "kb_toast_archived": "Diarsipkan",
+        "kb_undo": "Urungkan",
+        "kb_undo_done": "Telah diurungkan",
+        "kb_undo_failed": "Gagal mengurungkan",
+        "kb_err_move": "Gagal memindahkan",
+        "chat_sending": "Mengirim…",
 },
 
 
@@ -5566473,6 +5566529,14 @@ const TRANSLATIONS = {
         "greet_starter_1": "¿En qué puedes ayudarme?",
         "greet_starter_2": "Ayúdame a planificar mis tareas de hoy",
         "greet_starter_3": "Preséntate en tres frases",
+
+        "kb_toast_moved": "Movido a {col}",
+        "kb_toast_archived": "Archivado",
+        "kb_undo": "Deshacer",
+        "kb_undo_done": "Deshecho",
+        "kb_undo_failed": "No se pudo deshacer",
+        "kb_err_move": "Error al mover",
+        "chat_sending": "Enviando…",
 },
 
 

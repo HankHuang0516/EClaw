@@ -13,7 +13,9 @@
 (function (global) {
     'use strict';
 
-    var STATES = ['queued', 'retrying', 'sent', 'failed'];
+    // 'sending' = online optimistic first attempt (情緒價值 #2). It is NOT
+    // tap-cancellable like queued/retrying — the POST is already in flight.
+    var STATES = ['queued', 'sending', 'retrying', 'sent', 'failed'];
 
     function tt(t, key, fallback) {
         if (typeof t === 'function') {

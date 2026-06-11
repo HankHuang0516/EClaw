@@ -203,6 +203,18 @@ describe('outbox-ui — bubble lifecycle + state classes', () => {
         expect(el.classList.contains('msg-outbox-sent')).toBe(true);
     });
 
+    test('setBubbleState supports sending state (online optimistic)', () => {
+        ui.renderQueuedBubble(container, { idempotencyKey: 'k-snd', text: 't' });
+        ui.setBubbleState(container, 'k-snd', 'sending');
+        const el = ui.findBubble(container, 'k-snd');
+        expect(el.classList.contains('msg-outbox-queued')).toBe(false);
+        expect(el.classList.contains('msg-outbox-sending')).toBe(true);
+        // first-attempt failure path: sending → failed
+        ui.setBubbleState(container, 'k-snd', 'failed');
+        expect(el.classList.contains('msg-outbox-sending')).toBe(false);
+        expect(el.classList.contains('msg-outbox-failed')).toBe(true);
+    });
+
     test('setBubbleState ignores unknown state', () => {
         ui.renderQueuedBubble(container, { idempotencyKey: 'k-4', text: 't' });
         ui.setBubbleState(container, 'k-4', 'nonsense');
@@ -277,6 +289,18 @@ describe('outbox-ui — tap handlers', () => {
         expect(onCancel).not.toHaveBeenCalled();
     });
 
+    test('clicking sending bubble triggers neither handler (POST already in flight)', () => {
+        const onCancel = jest.fn();
+        const onFailedMenu = jest.fn();
+        ui.attachTapHandlers(container, { onCancel, onFailedMenu });
+        ui.renderQueuedBubble(container, { idempotencyKey: 'ksnd2', text: 's' });
+        ui.setBubbleState(container, 'ksnd2', 'sending');
+        const el = ui.findBubble(container, 'ksnd2');
+        fireClick(el);
+        expect(onCancel).not.toHaveBeenCalled();
+        expect(onFailedMenu).not.toHaveBeenCalled();
+    });
+
     test('clicking sent bubble triggers neither handler', () => {
         const onCancel = jest.fn();
         const onFailedMenu = jest.fn();
@@ -328,9 +352,13 @@ describe('outbox-ui — chat.html integration contract', () => {
         expect(chatHtml).toMatch(/id="outboxBannerText"/);
     });
 
-    test('enqueue path calls renderQueuedBubble + setBubbleState retrying', () => {
+    test('enqueue path calls renderQueuedBubble + setBubbleState sending (online optimistic, 情緒價值 #2)', () => {
         expect(chatHtml).toMatch(/EclawOutboxUI\.renderQueuedBubble\(/);
-        expect(chatHtml).toMatch(/EclawOutboxUI\.setBubbleState\([^,]+,\s*__idempotencyKey,\s*['"]retrying['"]\)/);
+        expect(chatHtml).toMatch(/EclawOutboxUI\.setBubbleState\([^,]+,\s*__idempotencyKey,\s*['"]sending['"]\)/);
+    });
+
+    test('sending bubble carries a localized aria-label', () => {
+        expect(chatHtml).toMatch(/setAttribute\('aria-label',\s*i18n\.t\('chat_sending'\)/);
     });
 
     test('success path removes the inline bubble', () => {
@@ -374,6 +402,14 @@ describe('outbox-ui — i18n keys exist in EN locale', () => {
         'chat_outbox_cancel_confirm',
         'chat_outbox_failed_retry_q',
         'chat_outbox_failed_delete_q',
+        // 情緒價值 #2 (card_c575aacae639721dbc8cfaa3)
+        'chat_sending',
+        'kb_toast_moved',
+        'kb_toast_archived',
+        'kb_undo',
+        'kb_undo_done',
+        'kb_undo_failed',
+        'kb_err_move',
     ];
     test.each(NEEDED)('%s is declared in i18n.js', (key) => {
         expect(i18nJs).toMatch(new RegExp('"' + key + '":'));
