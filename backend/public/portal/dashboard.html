@@ -6137,11 +6137,18 @@
                 if (!res.ok) throw new Error('http ' + res.status);
                 const data = await res.json();
                 if (!data.success) throw new Error(data.error || 'timeline failed');
-                return (data.points || []).map(p => ({
+                let pts = (data.points || []).map(p => ({
                     t: new Date(p.captured_at),
                     c5: p.claude_5h_pct, x5: p.codex_5h_pct,
                     c7: p.claude_7d_pct, x7: p.codex_7d_pct,
                 }));
+                // #3291 returns every 5-min row (30d ≈ 8.6k) — downsample to
+                // ≤600 points so the weekly polyline stays light on mobile.
+                if (pts.length > 600) {
+                    const step = Math.ceil(pts.length / 600);
+                    pts = pts.filter((_, i) => i % step === 0 || i === pts.length - 1);
+                }
+                return pts;
             };
             const fill = (blockSel, points, fields, colors, labels) => {
                 const block = overlay.querySelector(blockSel);
