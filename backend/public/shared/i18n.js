@@ -650115,7 +650115,13 @@ const TRANSLATIONS = {
 
 
 
-    },
+    
+        "chat_outbox_queued_n": "{n} queued",
+        "chat_outbox_retrying_n": "{n} retrying",
+        "chat_outbox_cancel_confirm": "Cancel this queued message?",
+        "chat_outbox_failed_retry_q": "Retry sending this message?",
+        "chat_outbox_failed_delete_q": "Delete this failed message?",
+},
 
 
 
@@ -1234697,7 +1234703,13 @@ const TRANSLATIONS = {
         "refs.popover_title": "引用",
         "refs.section_in": "被引用",
         "refs.section_out": "引用",        "chat_related_target_not_loaded": "目標聊天尚未載入",
-    },
+    
+        "chat_outbox_queued_n": "{n} 則排隊中",
+        "chat_outbox_retrying_n": "{n} 則重試中",
+        "chat_outbox_cancel_confirm": "取消這則排隊中的訊息？",
+        "chat_outbox_failed_retry_q": "重新傳送這則訊息？",
+        "chat_outbox_failed_delete_q": "刪除這則失敗的訊息？",
+},
 
 
 
@@ -1848784,7 +1848796,13 @@ const TRANSLATIONS = {
         "prompt_policy_scope_help": "选择提示词策略要应用到整台设备默认值，或只覆盖单一实体。实体覆盖只影响选定的实体。",
         "settings_device_id_help": "要让此浏览器使用的设备/账号唯一标识符。需要搭配相符的 Device Secret。",
         "settings_device_secret_help": "选定 Device ID 的私钥。请像密码一样保护，只在你控制的设备上输入。",
-    },
+    
+        "chat_outbox_queued_n": "{n} 条排队中",
+        "chat_outbox_retrying_n": "{n} 条重试中",
+        "chat_outbox_cancel_confirm": "取消这条排队中的消息？",
+        "chat_outbox_failed_retry_q": "重新发送这条消息？",
+        "chat_outbox_failed_delete_q": "删除这条失败的消息？",
+},
 
 
 
@@ -2411876,7 +2411894,13 @@ const TRANSLATIONS = {
         "prompt_policy_scope_help": "プロンプトポリシーをデバイス全体にデフォルトで適用するか、特定のエンティティを上書きするかを選択します。",
         "settings_device_id_help": "このブラウザで使用するデバイス/アカウントの一意の識別子。ペアリングする際は対応する Device Secret と一緒に保管してください。",
         "settings_device_secret_help": "選択した Device ID の秘密キー。パスワードとして扱い、信頼するデバイスにのみ入力してください。",
-    },
+    
+        "chat_outbox_queued_n": "{n} 件キュー中",
+        "chat_outbox_retrying_n": "{n} 件再試行中",
+        "chat_outbox_cancel_confirm": "このキュー中のメッセージをキャンセルしますか？",
+        "chat_outbox_failed_retry_q": "このメッセージを再送信しますか？",
+        "chat_outbox_failed_delete_q": "この失敗したメッセージを削除しますか？",
+},
 
 
 
@@ -2942073,7 +2942097,13 @@ const TRANSLATIONS = {
         "prompt_policy_scope_label": "정책 범위",
         "prompt_policy_scope_help": "프롬프트 정책을 기기 전체에 기본으로 적용할지 또는 특정 엔티티를 재정의할지 선택합니다.",
         "settings_device_id_help": "이 브라우저에서 사용할 기기/계정의 고유 식별자입니다. 페어링할 때 해당 Device Secret과 함께 보관하세요.",
-        "settings_device_secret_help": "선택한 Device ID의 비밀 키입니다. 비밀번호처럼 취급하고 신뢰할 수 있는 기기에만 입력하세요.",    },
+        "settings_device_secret_help": "선택한 Device ID의 비밀 키입니다. 비밀번호처럼 취급하고 신뢰할 수 있는 기기에만 입력하세요.",    
+        "chat_outbox_queued_n": "{n}개 대기 중",
+        "chat_outbox_retrying_n": "{n}개 재시도 중",
+        "chat_outbox_cancel_confirm": "대기 중인 이 메시지를 취소하시겠습니까?",
+        "chat_outbox_failed_retry_q": "이 메시지를 다시 보내시겠습니까?",
+        "chat_outbox_failed_delete_q": "실패한 이 메시지를 삭제하시겠습니까?",
+},
 
 
 
@@ -2943642,7 +2943672,13 @@ const TRANSLATIONS = {
 
 
 
-    },
+    ,
+        "chat_outbox_queued_n": "{n} 則排隊中",
+        "chat_outbox_retrying_n": "{n} 則重試中",
+        "chat_outbox_cancel_confirm": "取消這則排隊中的訊息？",
+        "chat_outbox_failed_retry_q": "重新傳送這則訊息？",
+        "chat_outbox_failed_delete_q": "刪除這則失敗的訊息？",
+},
 
 
 
@@ -3470405,7 +3470441,13 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_section_help": "การตั้งค่า nudge ต่อเอนทิตี เอนทิตีแต่ละตัวสามารถแทนที่ช่วงเวลา สถานะ และโหมดหยุดได้อย่างอิสระ ใช้เมื่อหนึ่งเอนทิตีต้องการจังหวะที่เงียบกว่าหรือตัวกรองสถานะที่แตกต่างกัน",
         "kanban_nudge_per_entity_throttle_help": "ข้ามการ์ดหากผู้รับที่กำหนดคนใดคนหนึ่งของมันถูก nudge แล้วภายในช่วงเวลาที่มีผลของพวกเขา ป้องกัน ping ซ้ำเมื่อหลายการ์ดมุ่งเป้าไปที่เอนทิตีเดียวกัน แนะนำให้เปิด",
         "kanban_nudge_priority_help": "ลำดับการเรียงเมื่อเลือกชุดถัดไปของการ์ดที่ค้าง 'priority_first' เลือกลำดับความสำคัญสูงกว่าก่อนที่เก่ากว่า; 'age_first' เลือกที่เก่าที่สุดไม่ว่าลำดับความสำคัญใด",
-        "kanban_nudge_statuses_help": "สถานะการ์ดใดที่กระตุ้น nudge ค่าเริ่มต้นคือ todo + in_progress + review + blocked การยกเว้น 'blocked' เป็นเรื่องปกติเมื่อการ์ดที่ถูกบล็อกรอผู้อื่นจริงๆ",},
+        "kanban_nudge_statuses_help": "สถานะการ์ดใดที่กระตุ้น nudge ค่าเริ่มต้นคือ todo + in_progress + review + blocked การยกเว้น 'blocked' เป็นเรื่องปกติเมื่อการ์ดที่ถูกบล็อกรอผู้อื่นจริงๆ",
+        "chat_outbox_queued_n": "อยู่ในคิว {n} รายการ",
+        "chat_outbox_retrying_n": "กำลังลองใหม่ {n} รายการ",
+        "chat_outbox_cancel_confirm": "ยกเลิกข้อความที่อยู่ในคิวนี้?",
+        "chat_outbox_failed_retry_q": "ลองส่งข้อความนี้อีกครั้ง?",
+        "chat_outbox_failed_delete_q": "ลบข้อความที่ล้มเหลวนี้?",
+},
 
 
 
@@ -3997169,7 +3997211,13 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_section_help": "Cấu hình nhắc theo từng thực thể. Mỗi thực thể có thể ghi đè khoảng, trạng thái và chế độ dừng độc lập. Sử dụng khi một thực thể muốn nhịp độ yên tĩnh hơn hoặc bộ lọc trạng thái khác.",
         "kanban_nudge_per_entity_throttle_help": "Bỏ qua thẻ nếu bất kỳ người nhận được giao nào đã được nhắc trong khoảng hiệu dụng của họ. Ngăn ping trùng lặp khi nhiều thẻ nhắm đến cùng một thực thể. Khuyến nghị BẬT.",
         "kanban_nudge_priority_help": "Thứ tự sắp xếp khi chọn lô thẻ trì trệ tiếp theo. 'priority_first' chọn ưu tiên cao hơn trước cái cũ hơn; 'age_first' chọn cái cũ nhất bất kể ưu tiên.",
-        "kanban_nudge_statuses_help": "Trạng thái thẻ nào kích hoạt nhắc. Mặc định là todo + in_progress + review + blocked. Loại trừ 'blocked' phổ biến khi các thẻ bị chặn thực sự đang chờ người khác.",},
+        "kanban_nudge_statuses_help": "Trạng thái thẻ nào kích hoạt nhắc. Mặc định là todo + in_progress + review + blocked. Loại trừ 'blocked' phổ biến khi các thẻ bị chặn thực sự đang chờ người khác.",
+        "chat_outbox_queued_n": "{n} đang chờ",
+        "chat_outbox_retrying_n": "{n} đang thử lại",
+        "chat_outbox_cancel_confirm": "Hủy tin nhắn đang chờ này?",
+        "chat_outbox_failed_retry_q": "Gửi lại tin nhắn này?",
+        "chat_outbox_failed_delete_q": "Xóa tin nhắn thất bại này?",
+},
 
 
 
@@ -4523549,7 +4523597,13 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_section_help": "Konfigurasi nudge per-entitas. Setiap entitas dapat mengganti interval, status, dan mode-berhenti secara independen. Digunakan saat satu entitas menginginkan irama lebih tenang atau filter status berbeda.",
         "kanban_nudge_per_entity_throttle_help": "Lewati kartu jika salah satu penerima yang ditugaskan sudah di-nudge dalam interval efektif mereka. Mencegah ping duplikat saat beberapa kartu menargetkan entitas yang sama. Direkomendasikan ON.",
         "kanban_nudge_priority_help": "Urutan pengurutan saat memilih batch kartu macet berikutnya. 'priority_first' memilih prioritas lebih tinggi sebelum yang lebih lama; 'age_first' memilih yang tertua tanpa memandang prioritas.",
-        "kanban_nudge_statuses_help": "Status kartu mana yang memicu nudge. Default adalah todo + in_progress + review + blocked. Mengecualikan 'blocked' umum saat kartu yang diblokir benar-benar menunggu orang lain.",},
+        "kanban_nudge_statuses_help": "Status kartu mana yang memicu nudge. Default adalah todo + in_progress + review + blocked. Mengecualikan 'blocked' umum saat kartu yang diblokir benar-benar menunggu orang lain.",
+        "chat_outbox_queued_n": "{n} dalam antrian",
+        "chat_outbox_retrying_n": "{n} mencoba lagi",
+        "chat_outbox_cancel_confirm": "Batalkan pesan dalam antrian ini?",
+        "chat_outbox_failed_retry_q": "Coba kirim ulang pesan ini?",
+        "chat_outbox_failed_delete_q": "Hapus pesan yang gagal ini?",
+},
 
 
 
@@ -5048649,7 +5048703,13 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_section_help": "Configuration de nudge par entité. Chaque entité peut remplacer indépendamment l'intervalle, les statuts et le mode d'arrêt. Utilisé lorsqu'une entité veut une cadence plus calme ou des filtres de statut différents.",
         "kanban_nudge_per_entity_throttle_help": "Ignorer une carte si l'un de ses destinataires assignés a déjà été nudge dans son intervalle effectif. Empêche les pings dupliqués lorsque plusieurs cartes ciblent la même entité. Recommandé ACTIVÉ.",
         "kanban_nudge_priority_help": "Ordre de tri lors de la sélection du prochain lot de cartes bloquées. 'priority_first' choisit une priorité plus élevée avant les plus anciennes ; 'age_first' choisit les plus anciennes indépendamment de la priorité.",
-        "kanban_nudge_statuses_help": "Quels statuts de carte déclenchent des nudges. Par défaut, c'est todo + in_progress + review + blocked. Exclure 'blocked' est courant lorsque les cartes bloquées attendent vraiment d'autres.",},
+        "kanban_nudge_statuses_help": "Quels statuts de carte déclenchent des nudges. Par défaut, c'est todo + in_progress + review + blocked. Exclure 'blocked' est courant lorsque les cartes bloquées attendent vraiment d'autres.",
+        "chat_outbox_queued_n": "{n} en attente",
+        "chat_outbox_retrying_n": "{n} en cours de réessai",
+        "chat_outbox_cancel_confirm": "Annuler ce message en attente ?",
+        "chat_outbox_failed_retry_q": "Réessayer d'envoyer ce message ?",
+        "chat_outbox_failed_delete_q": "Supprimer ce message échoué ?",
+},
 
 
 
@@ -5566223,6 +5566283,12 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_throttle_help": "Omitir una tarjeta si alguno de sus destinatarios asignados ya fue nudgeado dentro de su intervalo efectivo. Previene pings duplicados cuando varias tarjetas apuntan a la misma entidad. Recomendado ACTIVADO.",
         "kanban_nudge_priority_help": "Orden de clasificación al elegir el próximo lote de tarjetas estancadas. 'priority_first' elige mayor prioridad antes que las más antiguas; 'age_first' elige las más antiguas independientemente de la prioridad.",
         "kanban_nudge_statuses_help": "Qué estados de tarjeta activan nudges. Predeterminado es todo + in_progress + review + blocked. Excluir 'blocked' es común cuando las tarjetas bloqueadas realmente esperan a otros.",
+
+        "chat_outbox_queued_n": "{n} en cola",
+        "chat_outbox_retrying_n": "{n} reintentando",
+        "chat_outbox_cancel_confirm": "¿Cancelar este mensaje en cola?",
+        "chat_outbox_failed_retry_q": "¿Reintentar enviar este mensaje?",
+        "chat_outbox_failed_delete_q": "¿Eliminar este mensaje fallido?",
 },
 
 
@@ -6103117,7 +6103183,13 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_section_help": "Pro-Entität-Nudge-Konfiguration. Jede Entität kann Intervall, Status und Stoppmodus unabhängig überschreiben. Wird verwendet, wenn eine Entität eine ruhigere Kadenz oder unterschiedliche Statusfilter wünscht.",
         "kanban_nudge_per_entity_throttle_help": "Eine Karte überspringen, wenn einer ihrer zugewiesenen Empfänger bereits innerhalb seines effektiven Intervalls genudgt wurde. Verhindert doppelte Pings, wenn mehrere Karten dieselbe Entität anvisieren. EIN empfohlen.",
         "kanban_nudge_priority_help": "Sortierreihenfolge bei der Auswahl der nächsten Charge von Stockungskarten. 'priority_first' wählt höhere Priorität vor älteren; 'age_first' wählt die ältesten unabhängig von der Priorität.",
-        "kanban_nudge_statuses_help": "Welche Kartenstatus Nudges auslösen. Standard ist todo + in_progress + review + blocked. Das Ausschließen von 'blocked' ist üblich, wenn blockierte Karten wirklich auf andere warten.",    },
+        "kanban_nudge_statuses_help": "Welche Kartenstatus Nudges auslösen. Standard ist todo + in_progress + review + blocked. Das Ausschließen von 'blocked' ist üblich, wenn blockierte Karten wirklich auf andere warten.",    
+        "chat_outbox_queued_n": "{n} in der Warteschlange",
+        "chat_outbox_retrying_n": "{n} werden erneut versucht",
+        "chat_outbox_cancel_confirm": "Diese Nachricht in der Warteschlange abbrechen?",
+        "chat_outbox_failed_retry_q": "Diese Nachricht erneut senden?",
+        "chat_outbox_failed_delete_q": "Diese fehlgeschlagene Nachricht löschen?",
+},
     pt: {
         "transition_loading": "A carregar…",
         "dashboard_usage_widget_title": "Claude Code / Codex usage",
@@ -6108500,6 +6108572,12 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_throttle_help": "Pule um cartão se algum de seus destinatários atribuídos já foi nudge dentro de seu intervalo efetivo. Evita pings duplicados quando vários cartões visam a mesma entidade. Recomendado LIGADO.",
         "kanban_nudge_priority_help": "Ordem de classificação ao escolher o próximo lote de cartões parados. 'priority_first' escolhe maior prioridade antes dos mais antigos; 'age_first' escolhe os mais antigos independentemente da prioridade.",
         "kanban_nudge_statuses_help": "Quais status de cartão acionam nudges. Padrão é todo + in_progress + review + blocked. Excluir 'blocked' é comum quando cartões bloqueados realmente esperam por outros.",
+
+        "chat_outbox_queued_n": "{n} na fila",
+        "chat_outbox_retrying_n": "{n} tentando novamente",
+        "chat_outbox_cancel_confirm": "Cancelar esta mensagem na fila?",
+        "chat_outbox_failed_retry_q": "Tentar enviar esta mensagem novamente?",
+        "chat_outbox_failed_delete_q": "Excluir esta mensagem com falha?",
 },
 
 
@@ -6637263,7 +6637341,13 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_section_help": "Konfigurasi dorongan setiap entiti. Setiap entiti boleh mengatasi selang, status dan mod-henti secara bebas. Digunakan apabila satu entiti mahukan irama lebih senyap atau penapis status berbeza.",
         "kanban_nudge_per_entity_throttle_help": "Langkau kad jika mana-mana penerima yang ditugaskan sudah didorong dalam selang berkesan mereka. Mengelakkan ping pendua apabila beberapa kad menyasarkan entiti yang sama. Disyorkan HIDUP.",
         "kanban_nudge_priority_help": "Susunan isihan apabila memilih kumpulan kad terbantut berikutnya. 'priority_first' memilih keutamaan lebih tinggi sebelum yang lebih lama; 'age_first' memilih yang tertua tanpa mengira keutamaan.",
-        "kanban_nudge_statuses_help": "Status kad mana yang mencetuskan dorongan. Lalai ialah todo + in_progress + review + blocked. Mengecualikan 'blocked' adalah biasa apabila kad disekat benar-benar menunggu orang lain.",},
+        "kanban_nudge_statuses_help": "Status kad mana yang mencetuskan dorongan. Lalai ialah todo + in_progress + review + blocked. Mengecualikan 'blocked' adalah biasa apabila kad disekat benar-benar menunggu orang lain.",
+        "chat_outbox_queued_n": "{n} dalam baris gilir",
+        "chat_outbox_retrying_n": "{n} sedang cuba semula",
+        "chat_outbox_cancel_confirm": "Batalkan mesej dalam baris gilir ini?",
+        "chat_outbox_failed_retry_q": "Cuba hantar semula mesej ini?",
+        "chat_outbox_failed_delete_q": "Padam mesej yang gagal ini?",
+},
 
 
 
@@ -7196483,6 +7196567,12 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_throttle_help": "यदि इसके किसी भी असाइन किए गए प्राप्तकर्ता को उनके प्रभावी अंतराल के भीतर पहले से ही nudge किया गया है तो कार्ड छोड़ें। जब कई कार्ड एक ही इकाई को लक्षित करते हैं तो डुप्लिकेट पिंग को रोकता है। चालू अनुशंसित।",
         "kanban_nudge_priority_help": "रुके हुए कार्डों के अगले बैच को चुनते समय सॉर्ट ऑर्डर। 'priority_first' पुराने से पहले उच्च प्राथमिकता चुनता है; 'age_first' प्राथमिकता की परवाह किए बिना सबसे पुराने को चुनता है।",
         "kanban_nudge_statuses_help": "कौन सी कार्ड स्थितियां nudges ट्रिगर करती हैं। डिफ़ॉल्ट todo + in_progress + review + blocked है। 'blocked' को छोड़ना सामान्य है जब अवरुद्ध कार्ड वास्तव में दूसरों की प्रतीक्षा कर रहे हों।",
+
+        "chat_outbox_queued_n": "{n} कतार में",
+        "chat_outbox_retrying_n": "{n} पुनः प्रयास हो रहा है",
+        "chat_outbox_cancel_confirm": "इस कतारबद्ध संदेश को रद्द करें?",
+        "chat_outbox_failed_retry_q": "इस संदेश को पुनः भेजें?",
+        "chat_outbox_failed_delete_q": "इस असफल संदेश को हटाएं?",
 },
 
 
@@ -7744829,6 +7744919,12 @@ const TRANSLATIONS = {
         "kanban_nudge_per_entity_throttle_help": "تخطى البطاقة إذا تم بالفعل nudge أي من المستلمين المعينين لها ضمن فاصلهم الفعال. يمنع pings المكررة عندما تستهدف بطاقات متعددة نفس الكيان. يُوصى بالتشغيل.",
         "kanban_nudge_priority_help": "ترتيب الفرز عند اختيار الدفعة التالية من البطاقات المتوقفة. 'priority_first' يختار الأولوية الأعلى قبل الأقدم؛ 'age_first' يختار الأقدم بغض النظر عن الأولوية.",
         "kanban_nudge_statuses_help": "حالات البطاقة التي تؤدي إلى nudges. الافتراضي هو todo + in_progress + review + blocked. استبعاد 'blocked' شائع عندما تنتظر البطاقات المحجوبة الآخرين فعلاً.",
+
+        "chat_outbox_queued_n": "{n} في الانتظار",
+        "chat_outbox_retrying_n": "{n} قيد إعادة المحاولة",
+        "chat_outbox_cancel_confirm": "إلغاء هذه الرسالة في الانتظار؟",
+        "chat_outbox_failed_retry_q": "إعادة محاولة إرسال هذه الرسالة؟",
+        "chat_outbox_failed_delete_q": "حذف هذه الرسالة الفاشلة؟",
 }
 
 

@@ -80,6 +80,30 @@
         .outbox-banner-icon { font-size: 14px; line-height: 1; }
         .outbox-banner-text { line-height: 1.3; }
 
+        /* Outbox bubble states — spec acceptance #4 (card_751775f0). */
+        .msg-outbox { cursor: pointer; }
+        .msg-outbox .msg-outbox-spinner,
+        .msg-outbox .msg-outbox-warn { display: none; vertical-align: middle; margin-left: 6px; }
+        .msg-outbox-queued .chat-bubble,
+        .msg-outbox-retrying .chat-bubble { opacity: 0.85; }
+        .msg-outbox-queued .chat-bubble { background: #ececec; color: #555; }
+        body.dark .msg-outbox-queued .chat-bubble { background: #2a2a2a; color: #bbb; }
+        .msg-outbox-retrying .chat-bubble { background: #fff4d1; color: #5d4317; }
+        body.dark .msg-outbox-retrying .chat-bubble { background: #3a3220; color: #e8d488; }
+        .msg-outbox-failed .chat-bubble { border: 1.5px solid #d94f4f; background: #fdecec; color: #5a1a1a; }
+        body.dark .msg-outbox-failed .chat-bubble { background: #3a1e1e; color: #ffb4b4; border-color: #b34141; }
+        .msg-outbox-queued .msg-outbox-spinner,
+        .msg-outbox-retrying .msg-outbox-spinner {
+            display: inline-block;
+            width: 10px; height: 10px;
+            border: 2px solid #bbb;
+            border-top-color: #5d4317;
+            border-radius: 50%;
+            animation: outbox-spin 0.9s linear infinite;
+        }
+        .msg-outbox-failed .msg-outbox-warn { display: inline; font-size: 14px; }
+        @keyframes outbox-spin { to { transform: rotate(360deg); } }
+
         .chat-container {
             display: flex;
             flex-direction: column;
@@ -3227,6 +3251,7 @@
     <script src="shared/auth.js"></script>
     <!-- Phase 2 #5 offline delivery queue: load before sendMessage runs. -->
     <script src="shared/outbox.js"></script>
+    <script src="shared/outbox-ui.js"></script>
     <script src="../shared/petdx-renderer.js"></script>
     <script src="../shared/avatar-petdx.js"></script>
     <script src="shared/entity-utils.js"></script>
@@ -3637,29 +3662,72 @@
         setInterval(() => { if (navigator.onLine) _flushOutboxWithSender(); }, 30_000);
 
         // Outbox queue-count banner — card_751775f0 (offline-queue spec acceptance #5).
-        // Polls EclawOutbox.summary() every 2s. Banner hidden when 0 queued + 0 retrying.
+        // Polls EclawOutbox.summary() every 5s. Banner hidden when 0 queued + 0 retrying.
         function _updateOutboxBanner() {
             const el = document.getElementById('outboxBanner');
             const txtEl = document.getElementById('outboxBannerText');
-            if (!el || !txtEl || !window.EclawOutbox || typeof window.EclawOutbox.summary !== 'function') return;
+            if (!el || !txtEl || !window.EclawOutbox || !window.EclawOutboxUI) return;
             let s;
             try { s = window.EclawOutbox.summary(); } catch (e) { return; }
-            const by = (s && s.by) || {};
-            const queued = by.queued || 0;
-            const retrying = by.retrying || 0;
-            if (queued === 0 && retrying === 0) {
-                el.hidden = true;
-                txtEl.textContent = '';
+            window.EclawOutboxUI.updateBanner(el, txtEl, s, (k) => (window.i18n && i18n.t ? i18n.t(k) : k));
+        }
+        setInterval(_updateOutboxBanner, 5_000);
+        window.addEventListener('online', _updateOutboxBanner);
+
+        // Outbox bubble tap handlers — spec acceptance #4 (card_751775f0).
+        // queued/retrying → confirm cancel. failed → menu (retry / delete).
+        function _onOutboxCancel(key) {
+            const t = (k, fb) => (window.i18n && i18n.t ? i18n.t(k) : null) || fb;
+            const msg = t('chat_outbox_cancel_confirm', 'Cancel this queued message?');
+            if (typeof showConfirm === 'function') {
+                showConfirm(msg, () => {
+                    try { window.EclawOutbox && window.EclawOutbox.remove(key); } catch (_) { /* noop */ }
+                    const c = document.getElementById('chatMessages');
+                    if (c && window.EclawOutboxUI) window.EclawOutboxUI.removeBubble(c, key);
+                    _updateOutboxBanner();
+                });
+            } else if (window.confirm(msg)) {
+                try { window.EclawOutbox && window.EclawOutbox.remove(key); } catch (_) { /* noop */ }
+                const c = document.getElementById('chatMessages');
+                if (c && window.EclawOutboxUI) window.EclawOutboxUI.removeBubble(c, key);
+                _updateOutboxBanner();
+            }
+        }
+        function _onOutboxFailedMenu(key) {
+            const t = (k, fb) => (window.i18n && i18n.t ? i18n.t(k) : null) || fb;
+            // Native confirm: OK = retry (re-enqueue with fresh idempotencyKey),
+            // Cancel = open delete prompt. Keeps the menu mobile-friendly.
+            const wantRetry = window.confirm(t('chat_outbox_failed_retry_q', 'Retry sending this message?'));
+            if (wantRetry) {
+                try {
+                    const snap = window.EclawOutbox.snapshot();
+                    const entry = snap.find(e => e.idempotencyKey === key);
+                    if (entry) {
+                        window.EclawOutbox.remove(key);
+                        const c = document.getElementById('chatMessages');
+                        if (c && window.EclawOutboxUI) window.EclawOutboxUI.removeBubble(c, key);
+                        // Re-enqueue same payload — gets a fresh idempotencyKey + queued state.
+                        window.EclawOutbox.enqueue(entry.payload);
+                        if (typeof _flushOutboxWithSender === 'function') _flushOutboxWithSender();
+                    }
+                } catch (_) { /* noop */ }
+                _updateOutboxBanner();
                 return;
             }
-            const parts = [];
-            if (queued > 0) parts.push(queued + ' queued');
-            if (retrying > 0) parts.push(retrying + ' retrying');
-            txtEl.textContent = parts.join(' · ');
-            el.hidden = false;
+            const wantDelete = window.confirm(t('chat_outbox_failed_delete_q', 'Delete this failed message?'));
+            if (wantDelete) {
+                try { window.EclawOutbox && window.EclawOutbox.remove(key); } catch (_) { /* noop */ }
+                const c = document.getElementById('chatMessages');
+                if (c && window.EclawOutboxUI) window.EclawOutboxUI.removeBubble(c, key);
+                _updateOutboxBanner();
+            }
         }
-        setInterval(_updateOutboxBanner, 2_000);
-        window.addEventListener('online', _updateOutboxBanner);
+        (function _bindOutboxTaps() {
+            const c = document.getElementById('chatMessages');
+            if (c && window.EclawOutboxUI) {
+                window.EclawOutboxUI.attachTapHandlers(c, { onCancel: _onOutboxCancel, onFailedMenu: _onOutboxFailedMenu });
+            }
+        })();
 
         window.addEventListener('DOMContentLoaded', async () => {
             // Detect embed mode (workspace split view)
@@ -6391,17 +6459,26 @@
                             pendingConfirmCommand = null;
                         }
                         // Phase 2 #5 offline-queue wrap: enqueue + tag with
-                        // Idempotency-Key so a retry from a spotty connection
-                        // hits the server-side cache (PRs #3271/#3272/#3274/#3276).
-                        // Outbox state surfaces nowhere yet; UI bubbles in a follow-up.
+                        // Idempotency-Key + render an inline outbox bubble.
+                        // Spec acceptance #4+#5 (card_751775f0).
                         let __outboxEntry = null;
                         let __idempotencyKey = null;
+                        const __chatContainer = document.getElementById('chatMessages');
                         if (window.EclawOutbox) {
                             try {
                                 const enqueued = window.EclawOutbox.enqueue(speakBody);
                                 __outboxEntry = enqueued && enqueued.entry;
                                 __idempotencyKey = __outboxEntry && __outboxEntry.idempotencyKey;
-                                if (__outboxEntry) window.EclawOutbox.markRetrying(__idempotencyKey);
+                                if (__outboxEntry && __chatContainer && window.EclawOutboxUI) {
+                                    window.EclawOutboxUI.renderQueuedBubble(__chatContainer, { idempotencyKey: __idempotencyKey, text: finalText });
+                                }
+                                if (__outboxEntry) {
+                                    window.EclawOutbox.markRetrying(__idempotencyKey);
+                                    if (__chatContainer && window.EclawOutboxUI) {
+                                        window.EclawOutboxUI.setBubbleState(__chatContainer, __idempotencyKey, 'retrying');
+                                    }
+                                }
+                                _updateOutboxBanner();
                             } catch (e) { /* outbox is best-effort, never block send */ }
                         }
                         let speakResp;
@@ -6410,10 +6487,20 @@
                             speakResp = await apiCall('POST', '/api/client/speak', speakBody, __opts);
                             if (__idempotencyKey && window.EclawOutbox) {
                                 window.EclawOutbox.markSent(__idempotencyKey);
+                                // Drop the inline bubble — loadMessages() will re-render with
+                                // the real server message id below.
+                                if (__chatContainer && window.EclawOutboxUI) {
+                                    window.EclawOutboxUI.removeBubble(__chatContainer, __idempotencyKey);
+                                }
+                                _updateOutboxBanner();
                             }
                         } catch (e) {
                             if (__idempotencyKey && window.EclawOutbox) {
                                 window.EclawOutbox.markFailed(__idempotencyKey, e && e.message);
+                                if (__chatContainer && window.EclawOutboxUI) {
+                                    window.EclawOutboxUI.setBubbleState(__chatContainer, __idempotencyKey, 'failed');
+                                }
+                                _updateOutboxBanner();
                             }
                             throw e;
                         }
