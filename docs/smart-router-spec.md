@@ -1,7 +1,7 @@
 # Smart Router — 3-Mode Navigation Spec (Web 單頁 / Web 分割版 / APP)
 
 **Card:** card_1d433654456b95e3a281827f (Hank 2026-06-10 15:21 TW)
-**Status:** DRAFT — Q1–Q3 pending sign-off (#6 per route-asks rule; Hank may override)
+**Status:** APPROVED — #6 review 2026-06-12 08:50 TW: Q1=(a), Q2=(c, native follow-up card), Q3=as proposed; 4 amendments folded in this revision
 **Author:** #2 LOBSTER, 2026-06-12
 **Sibling spec:** `docs/redirect-state-machine-spec.md` (entry/deep-link layer; see §6)
 
@@ -45,8 +45,8 @@ const SmartRouter = {
 | Mode | `navigate()` does |
 |---|---|
 | `single` | `window.location.assign(buildUrl(target, params))` — browser history natural |
-| `split` | `parent.postMessage({type:'split_navigate', target, params, panel: opts.panel ?? 'self'}, origin)` — workspace.html's existing message listener (the one already relaying `eclaw_quote` / `eclaw_requote`) gains a `split_navigate` case that swaps the requesting pane's iframe src (Q1) |
-| `app` | `window.EClawNativeNav.navigate({targetTab, sourceTab, target, ...params})` — the EXISTING typed contract (`EClawNativeNavBridge.kt` on Android, iOS postMessage twin from PR #2824). Native replays into the destination WebView via `window.eclawHandleNativeNavigateIntent`. ⚠️ The card description guessed `AndroidBridge.navigateTo(toPage)` — that API does not exist; this spec binds to the real bridge. |
+| `split` | `parent.postMessage({type:'split_navigate', requestId, target, params, panel:'self'}, origin)` — workspace.html's existing message listener (the one already relaying `eclaw_quote` / `eclaw_requote`) gains a `split_navigate` case. **Ack contract (#6 review am.4):** `requestId` = `nav_` + 8 hex minted by the pane; the host identifies the requesting iframe via `event.source` (NEVER by src matching — duplicate pages break that), swaps that pane's src, and posts `{type:'split_navigate_ack', requestId}` back to `event.source` BEFORE the swap unloads it. The pane starts a **300 ms** timer at send: ack received → cancel timer, await unload; timer fires with no ack → degrade to `single` dispatch (full-page navigate). A late ack after degradation is ignored (requestId no longer pending). |
+| `app` | `window.EClawNativeNav.navigate({targetTab, sourceTab, target, ...params})` — the EXISTING typed contract (`EClawNativeNavBridge.kt` on Android, iOS postMessage twin from PR #2824). Native replays into the destination WebView via `window.eclawHandleNativeNavigateIntent`. ⚠️ The card description guessed `AndroidBridge.navigateTo(toPage)` — that API does not exist; this spec binds to the real bridge. **Native-host mapping (#6 review am.1):** the bridge today routes only `targetTab: 'chat' \| 'mission'`; the router carries an explicit `APP_TARGET_TAB = { chat:'chat', card:'mission', note:'mission' }` map, and ANY target absent from that map (dashboard, settings, profile, wallet, …) falls back to `single` dispatch IMMEDIATELY — no bridge round-trip, no timeout wait. The map grows only when the native shells gain hosts (native follow-up card per Q2 ruling). |
 
 Fallback rule: if a mode-specific dispatch fails (no parent listener ack within 300 ms in split; bridge returns false in app), degrade one level (`app→single`, `split→single`) so navigation never dead-ends.
 
@@ -56,21 +56,34 @@ Fallback rule: if a mode-specific dispatch fails (no parent listener ack within 
 - `app`: wraps the existing `eclawHandleNativeNavigateIntent` replay so pages subscribe once instead of defining the global.
 - `single`: no-op (full reload re-boots the page anyway); kept for call-site symmetry.
 
-## 4. Migration inventory (follow-up cards, per page)
+## 4. Migration inventory (proof-slice scope; #6 review am.2+am.3)
 
-23 raw `window.location.href =` sites today. Classification:
+⚠️ The original 23-site count under-grepped (it missed bare `location =` and
+`location.replace()` forms). Full-form grep over the 6 spec pages + nav.js
+finds **28** assignments (settings 11, chat 5, kanban 5, mission 3, files 2,
+dashboard 1, nav.js 1), and pages outside this spec's scope contain more.
+This table is therefore a **proof-slice inventory** for the listed pages, not
+a repo-total; Phase D's first task is the authoritative full-repo grep
+(`(window\.)?location(\.href)?\s*=|location\.(assign|replace)\(`) checked in
+as a lint snapshot.
 
-| Page | Sites | Notes |
+| Page | Sites (full-form) | Notes |
 |---|---|---|
-| settings.html | 9 | 5 are static nav cards (wallet/my-rentals/invite/files/petdx) → `SmartRouter.navigate` directly; 2 tour hops; 1 post-action dashboard hop; 1 rental-details |
-| kanban.html | 5 | 2 chat hops with context (`?mention=`, `?msg=`) → registry params; 3 are `if (!opened)` popup fallbacks (external URLs — stay raw, out of router scope) |
-| chat.html | 3 | 2 are WebView download interceptions (external; stay raw); 1 popup fallback (stay raw) |
+| settings.html | 11 | 5 static nav cards (wallet/my-rentals/invite/files/petdx) + tour hops + post-action hops + rental-details |
+| chat.html | 5 | 2 WebView download interceptions + popup fallback (stay raw); 2 others to classify in Phase D |
+| kanban.html | 5 | 2 chat hops with context (`?mention=`, `?msg=`) → registry params; 3 popup fallbacks (stay raw) |
 | mission.html | 3 | kanban card hop + 2 chat hops → router |
-| files.html | 2 | both chat hops → router |
-| dashboard.html | 1 | settings#agent-policy hop → router (registry gains `settings` fragment param) |
+| files.html | 2 | both chat hops → router (proof slice) |
+| dashboard.html | 1 | settings#agent-policy hop → router |
 | shared/nav.js | 1 | logout → index (stays raw: auth boundary precedes router boot) |
 
-Router-eligible: **15**; intentionally-raw (external/popup/download/logout): **8**. One follow-up card per page, smallest (files) first as the pattern-proof.
+**Registry expansion required before migration (#6 am.2):** the v1 registry
+(dashboard/chat/card/note/profile/settings) must grow targets for
+`wallet`, `my-rentals` (+ `rentalId` param), `invite`, `files`, `petdx`
+(petdx-browser), `settings` fragment param (e.g. `#agent-policy`), `chat`
+extra params (`mention`, `msg`), and tour params (`tour`, `step`) — added in
+the same PR as the first page migration that needs each one (registry stays
+minimal until a consumer exists; every addition includes its param regex).
 
 ## 5. Open questions (defaults proposed; need sign-off)
 
