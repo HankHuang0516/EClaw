@@ -696,6 +696,8 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>
     <script src="shared/footer.js"></script>
+    <script src="/shared-core/route-registry.js"></script>
+    <script src="shared/smart-router.js"></script>
     <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
     <script src="shared/ai-chat.js"></script>
     <script>if(typeof renderAvatarHtml==='undefined'){window.renderAvatarHtml=function(a){return a||'\u{1F99E}'};window.isAvatarUrl=function(){return false}}</script>
@@ -1348,7 +1350,10 @@
                 }));
             } catch (_) {}
             exitMultiSelectMode();
-            window.location.href = '/portal/chat.html';
+            // SmartRouter proof slice: single→full nav, split→sibling chat pane swap,
+            // app→native chat tab. Falls back to raw nav if router absent.
+            if (window.SmartRouter) window.SmartRouter.navigate('chat');
+            else window.location.href = '/portal/chat.html';
         }
 
         // --- Long-press / pointer handling ---
@@ -1420,7 +1425,9 @@
                 window.parent.postMessage({ type: 'eclaw_quote', source, title, excerpt: excerpt || '' }, window.location.origin);
             } else {
                 localStorage.setItem('eclaw_pending_quote', JSON.stringify({ source, title, excerpt: excerpt || '', ts: Date.now() }));
-                window.location.href = '/portal/chat.html';
+                // Not embedded → single mode; SmartRouter resolves to full chat nav.
+                if (window.SmartRouter) window.SmartRouter.navigate('chat');
+                else window.location.href = '/portal/chat.html';
             }
         }
 

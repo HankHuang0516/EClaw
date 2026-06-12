@@ -135,6 +135,7 @@
     <script src="shared/footer.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="shared/ai-chat.js"></script>
+    <script src="/shared-core/route-registry.js"></script>
     <script>
     const PAGES = {
         'dashboard':   { href: 'dashboard.html',   icon: '📊', label: 'Dashboard',  i18nKey: 'nav_dashboard' },
@@ -479,7 +480,38 @@
             if (chatPane) chatPane.contentWindow.postMessage(e.data, window.location.origin);
             return;
         }
+        if (e.data.type === 'split_navigate') {
+            // SmartRouter split dispatch (smart-router.js §3 ack contract).
+            // Identify the requesting pane by event.source — NEVER by src matching
+            // (duplicate pages break that). Ack BEFORE the swap unloads the pane.
+            handleSplitNavigate(e);
+            return;
+        }
     });
+
+    // Swap the requesting pane's src to the SmartRouter target. Acks first so the
+    // pane can cancel its 300ms degrade timer before its document unloads.
+    function handleSplitNavigate(e) {
+        const { requestId, target, params } = e.data;
+        const pane = Array.from(document.querySelectorAll('iframe.workspace-pane'))
+            .find(f => f.contentWindow === e.source);
+        const url = (window.EClawRouteRegistry && buildPaneUrl(target, params)) || null;
+        if (!pane || !url) return; // unknown target / orphan source → pane stays, its timer degrades it
+        // Ack to the exact requesting window before we swap it.
+        if (requestId && e.source) {
+            try { e.source.postMessage({ type: 'split_navigate_ack', requestId }, window.location.origin); } catch (_) {}
+        }
+        bustChatPaneCache();
+        pane.src = url;
+    }
+
+    // Mirror SmartRouter.buildUrl's tolerant-degrade: strict registry URL, else bare path.
+    function buildPaneUrl(target, params) {
+        const reg = window.EClawRouteRegistry;
+        if (!reg || !reg.isKnownTarget(target)) return null;
+        try { return reg.buildWebUrl(target, params || {}); }
+        catch (_) { return reg.ROUTES[target].web.split(/[?#]/)[0]; }
+    }
 
     document.addEventListener('DOMContentLoaded', initWorkspace);
     </script>
