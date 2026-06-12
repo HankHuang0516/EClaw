@@ -3908,7 +3908,7 @@
                     const { source, title, excerpt, messageId, meta, ts } = JSON.parse(pq);
                     if (Date.now() - ts < 120000) { // within 2 minutes
                         await openChatMessageDeepLink(messageId, { showMissingToast: true, scroll: true });
-                        quoteToChat(source, title, excerpt || '', meta);
+                        quoteToChat(source, title, excerpt || '', meta || receiverMetaFromMessageId(messageId));
                     }
                 }
             } catch(e) {}
@@ -3948,7 +3948,7 @@
                 if (!e.data || e.data.type !== 'eclaw_quote') return;
                 const { source, title, excerpt, messageId, meta } = e.data;
                 await openChatMessageDeepLink(messageId, { showMissingToast: true, scroll: true });
-                quoteToChat(source, title, excerpt || '', meta);
+                quoteToChat(source, title, excerpt || '', meta || receiverMetaFromMessageId(messageId));
             });
 
             // Mount @mention autocomplete on the message input.
@@ -4851,6 +4851,20 @@
             return Array.isArray(allMessages)
                 ? allMessages.find(m => normalizeChatMessageId(m && m.id) === id) || null
                 : null;
+        }
+
+        // Derive the smart-receiver auto-select meta from a quoted chat message.
+        // Quote entry points that don't carry an explicit `meta` (native/canvas
+        // nav-intent, cross-page deep-link) can resolve the sender entity from the
+        // already-loaded message so the reply still auto-routes to its sender.
+        function receiverMetaFromMessageId(messageId) {
+            const m = messageId ? findChatMessageById(messageId) : null;
+            if (m && m.is_from_bot === true &&
+                m.entity_id !== null && m.entity_id !== undefined &&
+                Number.isFinite(Number(m.entity_id))) {
+                return { kind: 'chat-entity', entityId: Number(m.entity_id) };
+            }
+            return {};
         }
 
         function getRenderedMessageIds(msg) {
@@ -6301,11 +6315,33 @@
             } else {
                 return;
             }
-            const hintLabel = (i18n && typeof i18n.t === 'function' && i18n.t('chat_receiver_hint_auto')) || 'auto';
+            // Only the quoted sender(s) that actually have a target checkbox can be
+            // auto-selected. If none are bound here (e.g. a cross-device sender),
+            // leave the existing selection untouched rather than wiping it blank.
+            const wanted = new Set();
             entityIds.forEach(eid => {
+                if (document.querySelector('.target-entity-check input[type="checkbox"][data-entity="' + eid + '"]')) {
+                    wanted.add(eid);
+                }
+            });
+            if (wanted.size === 0) return;
+            // EXCLUSIVE auto-select: a quote of #6 must route to #6 ONLY. The old
+            // additive toggle left the prior/default recipient set checked, so
+            // replies leaked to whoever was already selected — typically #1, the
+            // first bound entity (card_3462117951fa588df9ff8a95 "誤路由到 #1").
+            // Clear every entity + contact checkbox first, then check exactly the
+            // quoted sender(s). The user can still re-add recipients manually
+            // afterwards (a manual toggle revokes that entry's auto hint).
+            document.querySelectorAll('.target-entity-check input[type="checkbox"]').forEach(cb => {
+                cb.checked = wanted.has(Number(cb.dataset.entity));
+            });
+            document.querySelectorAll('.target-contact-check input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+            const hintLabel = (i18n && typeof i18n.t === 'function' && i18n.t('chat_receiver_hint_auto')) || 'auto';
+            wanted.forEach(eid => {
                 const cb = document.querySelector('.target-entity-check input[type="checkbox"][data-entity="' + eid + '"]');
                 if (!cb) return;
-                if (!cb.checked) cb.checked = true;
                 const label = cb.closest('.target-entity-check');
                 if (label && !label.querySelector('.receiver-hint-auto')) {
                     const badge = document.createElement('span');
@@ -8300,7 +8336,11 @@
                     handled = await openChatMessageDeepLink(msgId, { showMissingToast: true, scroll: true });
                 }
                 if (quote && (quote.title || quote.excerpt)) {
-                    quoteToChat(quote.source || '引用', quote.title || '', quote.excerpt || '');
+                    // Carry the sender so the reply auto-routes to it. Native nav
+                    // intents don't pass `meta`, so derive it from the deep-linked
+                    // message (card_3462... — canvas quote dropped the receiver).
+                    const qMeta = quote.meta || receiverMetaFromMessageId(msgId);
+                    quoteToChat(quote.source || '引用', quote.title || '', quote.excerpt || '', qMeta);
                     handled = true;
                 }
                 if (handled) return true;
