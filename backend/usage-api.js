@@ -108,6 +108,28 @@ function authenticate(devices, { deviceId, deviceSecret, entityId, botSecret }) 
  * We surface a unified `sum_input_tokens` / `sum_output_tokens` / `sum_cost_usd`
  * regardless of which engine is being aggregated.
  */
+/**
+ * Read Claude rate-limit %s out of the `claude.live` blob the daemon stored.
+ *
+ * The Claude statusLine hook (~/.claude/usage-statusline.py) emits the
+ * **nested** shape — `live.rate_limits.{five_hour,seven_day}.used_percentage`
+ * — but earlier callers (including the live dashboard widget) used to also
+ * accept a **flat** `live.{five_hour,seven_day}_pct`. The widget already
+ * tolerates both; this helper keeps the timeline endpoint in lockstep so
+ * the SVG line chart isn't silently empty whenever the only available shape
+ * is nested. Returns null if neither shape carries a number.
+ *
+ * card_555a7d5f99fd5c6f1a28a169
+ */
+function pickClaudeLivePct(live, key) {
+    if (!live) return null;
+    const flatKey = key + '_pct';
+    if (typeof live[flatKey] === 'number') return live[flatKey];
+    const nested = live.rate_limits && live.rate_limits[key];
+    if (nested && typeof nested.used_percentage === 'number') return nested.used_percentage;
+    return null;
+}
+
 function sumEngineSessions(engineJson) {
     const sessions = Array.isArray(engineJson?.sessions) ? engineJson.sessions : [];
     let inputTokens = 0;
@@ -329,8 +351,8 @@ module.exports = function(devices) {
                     codex_total_tokens:  x.sum_input_tokens + x.sum_output_tokens,
                     claude_total_cost_usd: c.sum_cost_usd,
                     codex_total_cost_usd:  x.sum_cost_usd,
-                    claude_5h_pct: typeof claudeLive.five_hour_pct === 'number' ? claudeLive.five_hour_pct : null,
-                    claude_7d_pct: typeof claudeLive.seven_day_pct === 'number' ? claudeLive.seven_day_pct : null,
+                    claude_5h_pct: pickClaudeLivePct(claudeLive, 'five_hour'),
+                    claude_7d_pct: pickClaudeLivePct(claudeLive, 'seven_day'),
                     codex_5h_pct: typeof codexLimits.five_hour_pct === 'number' ? codexLimits.five_hour_pct : null,
                     codex_7d_pct: typeof codexLimits.seven_day_pct === 'number' ? codexLimits.seven_day_pct : null,
                 };
@@ -351,6 +373,6 @@ module.exports = function(devices) {
 
     return {
         router,
-        _internal: { authenticate, sumEngineSessions, aggregateOverRange, MAX_TIMELINE_HOURS, SNAPSHOT_BODY_LIMIT }
+        _internal: { authenticate, sumEngineSessions, aggregateOverRange, pickClaudeLivePct, MAX_TIMELINE_HOURS, SNAPSHOT_BODY_LIMIT }
     };
 };
