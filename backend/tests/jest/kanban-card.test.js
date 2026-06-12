@@ -136,6 +136,74 @@ describe('POST /card — assignedBots validation', () => {
         expect(JSON.parse(coordParam)).toEqual({ x: 142.5, y: -87.3 });
     });
 
+    // Self-improvement template auto-inject (Hank 2026-06-12 audit follow-up)
+    // — every parent card description gets a "## Self-improvement (OODA-R)" slot
+    // appended when missing; idempotent when caller already wrote one.
+    it('appends ## Self-improvement section to bot-filed card with empty description', async () => {
+        mockQuery.mockResolvedValueOnce({
+            rows: [{
+                id: 'si-1', device_id: 'test-dev', title: 'Bot card',
+                description: '', priority: 'P2', status: 'backlog',
+                assigned_bots: [0], created_by: 1,
+                created_at: new Date(), updated_at: new Date(),
+                status_changed_at: new Date(), archived: false,
+            }],
+        });
+        const res = await post('/api/mission/card')
+            .send({ ...AUTH, title: 'Bot card', assignedBots: [0], entityId: 1 });
+        expect(res.status).not.toBe(400);
+        const insertCall = mockQuery.mock.calls.find(c => /INSERT INTO kanban_cards/.test(c[0]));
+        expect(insertCall).toBeTruthy();
+        const descParam = insertCall[1][3];
+        expect(descParam).toMatch(/## Self-improvement \(OODA-R\)/);
+        expect(descParam).toMatch(/Episode trigger/);
+        expect(descParam).toMatch(/Rule promotion candidate/);
+    });
+
+    it('appends ## Self-improvement section while preserving caller description', async () => {
+        mockQuery.mockResolvedValueOnce({
+            rows: [{
+                id: 'si-2', device_id: 'test-dev', title: 'Has scope',
+                description: '## Scope\nDo the thing', priority: 'P2', status: 'backlog',
+                assigned_bots: [0], created_by: 1,
+                created_at: new Date(), updated_at: new Date(),
+                status_changed_at: new Date(), archived: false,
+            }],
+        });
+        const res = await post('/api/mission/card').send({
+            ...AUTH, title: 'Has scope', assignedBots: [0], entityId: 1,
+            description: '## Scope\nDo the thing',
+        });
+        expect(res.status).not.toBe(400);
+        const insertCall = mockQuery.mock.calls.find(c => /INSERT INTO kanban_cards/.test(c[0]));
+        const descParam = insertCall[1][3];
+        expect(descParam).toMatch(/^## Scope\nDo the thing/);
+        expect(descParam).toMatch(/## Self-improvement \(OODA-R\)/);
+    });
+
+    it('is idempotent — does not re-append when description already has Self-improvement', async () => {
+        const callerDesc = '## Scope\nFoo\n\n## Self-improvement\n- Episode trigger: custom one';
+        mockQuery.mockResolvedValueOnce({
+            rows: [{
+                id: 'si-3', device_id: 'test-dev', title: 'Has SI',
+                description: callerDesc, priority: 'P2', status: 'backlog',
+                assigned_bots: [0], created_by: 1,
+                created_at: new Date(), updated_at: new Date(),
+                status_changed_at: new Date(), archived: false,
+            }],
+        });
+        const res = await post('/api/mission/card').send({
+            ...AUTH, title: 'Has SI', assignedBots: [0], entityId: 1,
+            description: callerDesc,
+        });
+        expect(res.status).not.toBe(400);
+        const insertCall = mockQuery.mock.calls.find(c => /INSERT INTO kanban_cards/.test(c[0]));
+        const descParam = insertCall[1][3];
+        expect(descParam).toBe(callerDesc);
+        // ensure the template's distinctive "(OODA-R)" qualifier was NOT appended
+        expect(descParam).not.toMatch(/## Self-improvement \(OODA-R\)/);
+    });
+
     it('ignores malformed chatAnchorCoord (NaN coords stored as null)', async () => {
         mockQuery.mockResolvedValueOnce({
             rows: [{

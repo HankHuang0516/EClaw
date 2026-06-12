@@ -242,6 +242,20 @@ const PRIORITY_COLORS = { P0: '🔴', P1: '🟠', P2: '🔵', P3: '⚪' };
 // should ask a supervisor/reviewer/creator to reopen rather than drag Done cards.
 const REOPEN_SUPERVISOR_ENTITY_IDS = new Set([1, 2]);
 
+// Self-improvement (OODA-R) section auto-appended on every parent card created
+// via POST /card. Per Hank 2026-06-12 audit: every parent kanban automation card
+// must carry a retro slot so the loop closes. Skipped when description already
+// contains "Self-improvement" (idempotent + lets callers opt to write their own).
+const SI_TEMPLATE_SECTION = `
+
+## Self-improvement (OODA-R)
+- **Episode trigger**: <event that writes an episode — usually move-to-done or done-evidence>
+- **Pain taxonomy axis**: <axis from pain taxonomy / episode schema>
+- **Feedback ingest**: <signal flowing back into this card — cron output / child retro / chat upvote/downvote / kanban refire>
+- **Done-retro slot**: <one question to answer at close-out — "what guard/gate/template change would prevent recurrence?">
+- **Rule promotion candidate**: <if learning generalizes, name the meta-PR / lint rule / template diff>
+`;
+
 // ── Schema init ──
 async function initKanbanDatabase() {
     try {
@@ -916,6 +930,15 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             });
         }
 
+        // Auto-inject Self-improvement template if description doesn't already include it.
+        // Per Hank 2026-06-12: every parent kanban automation card must carry an OODA-R
+        // retro slot. POST /card only creates parent cards (cron-instance children INSERT
+        // directly without this path), so unconditional injection is safe.
+        const rawDesc = description || '';
+        const finalDescription = rawDesc.includes('Self-improvement')
+            ? rawDesc
+            : (rawDesc.trimEnd() + SI_TEMPLATE_SECTION);
+
         try {
             const result = await pool.query(
                 `INSERT INTO kanban_cards (id, device_id, title, description, priority, status, assigned_bots, created_by, reviewer_entity_id, status_changed_at,
@@ -925,7 +948,7 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
                     $10, $11, $12, $13, $14, $15, $16, $17,
                     $18, $19::jsonb, $20)
                  RETURNING *`,
-                [newCardId(), deviceId, title.trim(), description || '', cardPriority, cardStatus, JSON.stringify(bots), createdBy, reviewer,
+                [newCardId(), deviceId, title.trim(), finalDescription, cardPriority, cardStatus, JSON.stringify(bots), createdBy, reviewer,
                     finalAutomation, schedEnabled, schedType, schedCron, schedRunAt, schedTz, schedNextRunAt, finalRequiresScreenshot,
                     anchorMsgId, anchorCoord ? JSON.stringify(anchorCoord) : null, finalDispatchMode]
             );
