@@ -22,7 +22,7 @@ const registry = require('./shared/route-registry');
 const SIG_TTL_DEFAULT_S = 7 * 24 * 3600;   // minted links live a week unless overridden
 const RETENTION_DAYS = 30;                  // approved open-point 2
 const TRACE_RE = /^rt_[a-f0-9]{12}$/;
-const STATES = ['RECEIVED', 'SIG_REJECTED', 'WEB_DIRECT', 'WEB_FALLBACK', 'APP_OPENED', 'LOGIN_REDIRECT', 'TARGET_RENDERED'];
+const STATES = ['RECEIVED', 'SIG_REJECTED', 'WEB_DIRECT', 'WEB_FALLBACK', 'APP_ATTEMPT', 'APP_OPENED', 'LOGIN_REDIRECT', 'TARGET_RENDERED'];
 
 let pool = null;
 let devicesRef = null;
@@ -167,16 +167,70 @@ router.get('/r/:target', async (req, res) => {
         return res.redirect(302, '/portal/dashboard.html?redirectError=expired');
     }
 
-    // Phase A (approved open-point 1): straight to web on every platform.
-    // APP_ATTEMPT activates with Phase B App Links.
     const dest = registry.buildWebUrl(target, params);
     const sep = dest.includes('?') ? '&' : '?';
     const hashIdx = dest.indexOf('#');
     const withTrace = hashIdx === -1
         ? dest + sep + 'traceId=' + traceId
         : dest.slice(0, hashIdx) + sep + 'traceId=' + traceId + dest.slice(hashIdx);
+
+    // Phase B: Android mobile browsers get the 400 ms APP_ATTEMPT interstitial
+    // (spec §4). Installed+verified apps never reach here — the OS routes the
+    // link natively — so this covers app-not-installed / unverified, falling
+    // back to the web target. Other platforms keep the Phase A straight 302.
+    if (platform === 'mobile_web' && /Android/i.test(String(req.headers['user-agent'] || ''))) {
+        await logEvent(traceId, 'APP_ATTEMPT', target, platform);
+        return res.status(200).type('html').send(appAttemptInterstitial(withTrace, traceId, target));
+    }
     await logEvent(traceId, 'WEB_DIRECT', target, platform);
     return res.redirect(302, withTrace);
+});
+
+// 400 ms app-attempt window (spec §3/§4, approved open-point 1 — activates
+// with Phase B). Logs WEB_FALLBACK via the telemetry beacon when the timer
+// fires, then JS-redirects to the web destination.
+function appAttemptInterstitial(destUrl, traceId, target) {
+    const dest = JSON.stringify(destUrl);
+    const body = JSON.stringify({ traceId, state: 'WEB_FALLBACK', target, platform: 'mobile_web', fallbackReason: 'app_attempt_timeout' });
+    return `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EClaw</title></head>
+<body style="background:#0D0D1A;margin:0">
+<script>
+setTimeout(function () {
+    try { navigator.sendBeacon('/api/redirect/telemetry', new Blob([${JSON.stringify(body)}], { type: 'application/json' })); } catch (e) {}
+    location.replace(${dest});
+}, 400);
+</script>
+<noscript><meta http-equiv="refresh" content="0;url=${destUrl.replace(/"/g, '&quot;')}"></noscript>
+</body></html>`;
+}
+
+// ── Android App Links verification (Phase B) ─────────────────────────────
+// Digital Asset Links statement for com.hank.clawlive. Fingerprints come from
+// ASSETLINKS_FINGERPRINTS (comma-separated SHA-256 cert digests) so the Play
+// App Signing certificate can be added without a deploy-time code change; the
+// committed default is the local release-key (upload) certificate.
+const ANDROID_PACKAGE = 'com.hank.clawlive';
+const UPLOAD_CERT_SHA256 = '0D:F0:18:33:A4:41:C4:02:74:9C:CF:4A:5A:59:F2:0C:62:00:3D:59:91:86:36:98:17:D5:89:50:47:DB:E8:10';
+
+function assetlinksFingerprints() {
+    const fromEnv = String(process.env.ASSETLINKS_FINGERPRINTS || '')
+        .split(',').map(s => s.trim()).filter(Boolean);
+    return fromEnv.length ? fromEnv : [UPLOAD_CERT_SHA256];
+}
+
+router.get('/.well-known/assetlinks.json', (req, res) => {
+    res.set('Cache-Control', 'public, max-age=3600');
+    return res.json([{
+        relation: ['delegate_permission/common.handle_all_urls'],
+        target: {
+            namespace: 'android_app',
+            package_name: ANDROID_PACKAGE,
+            sha256_cert_fingerprints: assetlinksFingerprints(),
+        },
+    }]);
 });
 
 // ── server-side mint (#6 amendment 2) ───────────────────────────────────
