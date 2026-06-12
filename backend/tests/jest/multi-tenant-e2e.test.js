@@ -50,8 +50,75 @@ describeIfCreds('Multi-tenant E2E matrix — Part B Slice 2 (prod)', () => {
     // ─── Row 2: /portal/kanban.html ───
     test.todo('kanban.html: device-wide board visible to both, per-card assignedBots scoping correct (Playwright)');
 
-    // ─── Row 3: /portal/dashboard.html ───
-    test.todo('dashboard.html: each user sees only their bound entities (Playwright)');
+    // ─── Row 3: /portal/dashboard.html + kanban.html — dual USER accounts ───
+    // Two real user_accounts (registered via /api/auth/register), each with
+    // entityId 0 bound (overlapping entity ids across devices) and one
+    // private marker card. Fixture creds via env:
+    //   PROD_E2E_USERA_DEVICE_ID / PROD_E2E_USERA_DEVICE_SECRET / PROD_E2E_USERA_MARKER
+    //   PROD_E2E_USERB_DEVICE_ID / PROD_E2E_USERB_DEVICE_SECRET / PROD_E2E_USERB_MARKER
+    const USERS = {
+        a: { deviceId: process.env.PROD_E2E_USERA_DEVICE_ID, deviceSecret: process.env.PROD_E2E_USERA_DEVICE_SECRET, marker: process.env.PROD_E2E_USERA_MARKER },
+        b: { deviceId: process.env.PROD_E2E_USERB_DEVICE_ID, deviceSecret: process.env.PROD_E2E_USERB_DEVICE_SECRET, marker: process.env.PROD_E2E_USERB_MARKER },
+    };
+    const haveUserFixture = Boolean(USERS.a.deviceId && USERS.a.deviceSecret && USERS.a.marker
+        && USERS.b.deviceId && USERS.b.deviceSecret && USERS.b.marker);
+    const testIfUsers = haveUserFixture ? test : test.skip;
+
+    testIfUsers('row 3 API: each user board holds own marker card only; cross-device creds rejected', async () => {
+        for (const [suf, u] of Object.entries(USERS)) {
+            const other = USERS[suf === 'a' ? 'b' : 'a'];
+            const { status, body } = await getJSON(
+                `${PROD}/api/mission/cards?deviceId=${u.deviceId}&deviceSecret=${encodeURIComponent(u.deviceSecret)}&entityId=0`);
+            expect(status).toBe(200);
+            const titles = (body.cards || body).map(c => c.title || '');
+            expect(titles.some(t => t.includes(u.marker))).toBe(true);
+            expect(titles.some(t => t.includes(other.marker))).toBe(false);
+            // Negative: user A's secret must not open user B's board.
+            const cross = await getJSON(
+                `${PROD}/api/mission/cards?deviceId=${other.deviceId}&deviceSecret=${encodeURIComponent(u.deviceSecret)}&entityId=0`);
+            expect(cross.status).toBeGreaterThanOrEqual(400);
+            expect(cross.status).toBeLessThan(500);
+        }
+    }, 30000);
+
+    testIfUsers('row 3 UI: dual-context Playwright — each user dashboard/kanban shows own marker, never the other (device-login session)', async () => {
+        const { chromium } = require('playwright');
+        const browser = await chromium.launch();
+        try {
+            const views = {};
+            for (const [suf, u] of Object.entries(USERS)) {
+                const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+                const page = await ctx.newPage();
+                await page.goto(`${PROD}/portal/index.html`, { waitUntil: 'networkidle', timeout: 45000 });
+                const login = await page.evaluate(async creds => {
+                    const r = await fetch('/api/auth/device-login', {
+                        method: 'POST', credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(creds),
+                    });
+                    return r.status;
+                }, { deviceId: u.deviceId, deviceSecret: u.deviceSecret });
+                expect(login).toBe(200);
+                views[suf] = {};
+                for (const target of ['dashboard', 'kanban']) {
+                    await page.goto(`${PROD}/portal/${target}.html`, { waitUntil: 'networkidle', timeout: 45000 });
+                    await page.waitForTimeout(4000);
+                    views[suf][target] = await page.evaluate(() => document.body.innerText);
+                }
+                await ctx.close();
+            }
+            // Positive: own marker renders on own kanban.
+            expect(views.a.kanban).toContain(USERS.a.marker);
+            expect(views.b.kanban).toContain(USERS.b.marker);
+            // Negative: the other user's marker never renders on any surface.
+            for (const target of ['dashboard', 'kanban']) {
+                expect(views.a[target]).not.toContain(USERS.b.marker);
+                expect(views.b[target]).not.toContain(USERS.a.marker);
+            }
+        } finally {
+            await browser.close();
+        }
+    }, 120000);
 
     // ─── Row 4: /portal/settings.html ───
     test.todo('settings.html: concurrent A+B setting writes never cross-write (Playwright)');
