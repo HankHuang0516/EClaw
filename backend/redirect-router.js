@@ -233,6 +233,38 @@ router.get('/.well-known/assetlinks.json', (req, res) => {
     }]);
 });
 
+// ── iOS Universal Links AASA (Phase C) ───────────────────────────────────
+// apple-app-site-association maps https://eclawbot.com/r/* to the app whose
+// `applinks:eclawbot.com` entitlement already exists (spec §3, #6 amendment 3).
+// The appID is <TeamID>.<bundleID>; the Team ID lives in IOS_TEAM_ID (managed
+// signing keeps it out of the repo). Without it we 404 rather than publish a
+// broken AASA — a malformed file makes iOS silently stop verifying the domain.
+const IOS_BUNDLE_ID = 'com.eclawbot.app';
+
+function serveAASA(req, res) {
+    const teamId = String(process.env.IOS_TEAM_ID || '').trim();
+    if (!/^[A-Z0-9]{10}$/.test(teamId)) {
+        return res.status(404).json({ error: 'aasa_unconfigured' });
+    }
+    // AASA must be served as application/json, no redirect, over HTTPS.
+    res.type('application/json');
+    res.set('Cache-Control', 'public, max-age=3600');
+    return res.json({
+        applinks: {
+            apps: [],
+            details: [{
+                appID: `${teamId}.${IOS_BUNDLE_ID}`,
+                paths: ['/r/*'],
+            }],
+        },
+    });
+}
+
+// Apple fetches the root path first; the .well-known location is the modern
+// canonical one. Serve both so old and new iOS both verify.
+router.get('/apple-app-site-association', serveAASA);
+router.get('/.well-known/apple-app-site-association', serveAASA);
+
 // ── server-side mint (#6 amendment 2) ───────────────────────────────────
 router.post('/api/redirect/mint', express.json(), async (req, res) => {
     const auth = authDeviceOrBot(req);
