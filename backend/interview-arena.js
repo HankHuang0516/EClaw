@@ -188,6 +188,13 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Daily pool update 2026-06-12: OCR, spatial, complex counting ──
+    { file: null, description: 'A terminal window showing: git status output with 3 modified files listed in red, 1 untracked file, and the current branch name "feature/auth-fix" in parentheses at the top', keywords: ['terminal', 'git', 'three', 'modified', 'untracked', 'feature', 'auth'] },
+    { file: null, description: 'A database schema diagram with four tables: users (id, email, created_at), orders (id, user_id, total, status), items (id, order_id, product, qty), products (id, name, price) — arrows indicate foreign key relationships', keywords: ['database', 'schema', 'four', 'tables', 'users', 'orders', 'products', 'foreign'] },
+    { file: null, description: 'An API monitoring dashboard showing endpoint GET /api/users: 412 requests per minute, P99 latency 847ms, error rate 2.3%, and three red alert badges in the top-right corner', keywords: ['API', 'monitoring', '412', 'latency', '847', 'error', 'three', 'red'] },
+    { file: null, description: 'A 5×5 grid of colored dots: the top three rows contain 5 blue dots each and the bottom two rows contain 5 orange dots each — 15 blue and 10 orange total', keywords: ['grid', 'dots', 'fifteen', 'blue', 'ten', 'orange', 'twenty-five'] },
+    { file: null, description: 'A product label showing SKU: BLK-HDPHN-42X, price $89.99, a UPC barcode, and the text OUT OF STOCK printed in red across a diagonal banner', keywords: ['SKU', 'BLK', '89', 'barcode', 'out', 'stock', 'red'] },
+    { file: null, description: 'A pie chart with six slices: slice A 35%, slice B 25%, slice C 18%, slice D 12%, slice E 7%, slice F 3% — slice A is the largest and highlighted in dark blue', keywords: ['pie', 'chart', 'six', 'slices', '35', 'largest', 'blue'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -204,12 +211,12 @@ function generateButtonClickChallenge() {
     return { correctIndex, correctLabel, buttonCount, seed: Math.floor(Math.random() * 1e9) };
 }
 
-const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Wei Zhang','Amara Osei','Ravi Kapoor','Isabella Rossi','Dmitri Volkov'];
-const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se','wei@demo.cn','amara@test.gh','ravi@sample.in','isabella@demo.it','dmitri@test.ru'];
-const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','China','Ghana','Italy','Russia','Netherlands'];
-const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123','+46-70-123-4567','+65-9123-4567','+52-55-1234-5678','+353-87-123-4567'];
-const FORM_DATES = ['1990-06-15','1985-03-22','1992-11-08','1988-01-30','1995-07-14','1983-09-25','1991-12-01','1987-04-17','1993-08-09','1986-02-14','1994-10-31','1989-05-20'];
-const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund'];
+const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Wei Zhang','Amara Osei','Ravi Kapoor','Isabella Rossi','Dmitri Volkov','Nguyen Thi Lan','Kofi Mensah','Elena Papadopoulos','Tariq Al-Mansouri','Valentina Cruz','Björn Eriksson','Nadia Petersen','Chidi Okeke','Yuna Kim','Rafael Morales'];
+const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se','wei@demo.cn','amara@test.gh','ravi@sample.in','isabella@demo.it','dmitri@test.ru','nguyen@demo.vn','kofi@test.gh','elena@sample.gr','tariq@demo.sa','valentina@mail.mx','bjorn@test.se','nadia@demo.dk','chidi@sample.ng','yuna@test.kr','rafael@demo.es'];
+const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','China','Ghana','Italy','Russia','Netherlands','Vietnam','Greece','Denmark','Nigeria','Spain','New Zealand','Portugal','Argentina','Egypt','Turkey'];
+const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123','+46-70-123-4567','+65-9123-4567','+52-55-1234-5678','+353-87-123-4567','+84-90-123-4567','+30-697-123-4567','+45-50-12-34-56','+234-80-1234-5678','+34-612-345-678','+64-21-123-4567'];
+const FORM_DATES = ['1990-06-15','1985-03-22','1992-11-08','1988-01-30','1995-07-14','1983-09-25','1991-12-01','1987-04-17','1993-08-09','1986-02-14','1994-10-31','1989-05-20','1997-03-07','1982-08-19','1999-12-25','2000-01-01','1996-06-30'];
+const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund','Report an issue','Verify my account','Partnership inquiry','Technical support needed','Billing question'];
 
 function generateFormFillChallenge() {
     const nameIdx = Math.floor(Math.random() * FORM_NAMES.length);
@@ -368,6 +375,17 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── Daily pool update 2026-06-12: sliding window, two-pointer, DP ──
+    { title: 'Max Sum Subarray of Size K', description: 'Write `solve(nums, k)` — return the maximum sum of any contiguous subarray of exactly k elements.',
+      testCases: [{ input: '[2,1,5,1,3,2], 3', expected: '9' },{ input: '[2,3,-2,5,-3,1], 3', expected: '6' },{ input: '[1,1,1], 2', expected: '2' },{ input: '[1], 1', expected: '1' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array representing elevation heights, return the total water trapped after raining.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[3,0,2,0,4]', expected: '7' },{ input: '[1,0,1]', expected: '1' }] },
+    { title: 'Jump Game', description: 'Write `solve(nums)` — each element is the maximum jump length from that position. Return true if you can reach the last index starting from index 0.',
+      testCases: [{ input: '[2,3,1,1,4]', expected: 'true' },{ input: '[3,2,1,0,4]', expected: 'false' },{ input: '[0]', expected: 'true' },{ input: '[2,0,0]', expected: 'true' }] },
+    { title: 'Longest Common Subsequence', description: 'Write `solve(text1, text2)` — return the length of the longest common subsequence of two strings.',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"", "abc"', expected: '0' }] },
+    { title: 'Unique Paths', description: 'Write `solve(m, n)` — a robot is on an m×n grid starting at top-left. It can only move right or down. Return the number of unique paths to reach the bottom-right corner.',
+      testCases: [{ input: '3, 7', expected: '28' },{ input: '3, 2', expected: '3' },{ input: '1, 1', expected: '1' },{ input: '2, 2', expected: '2' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +435,14 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Daily pool update 2026-06-12: multi-step math, logic, probability ──
+    { question: 'A container holds 80 liters. Pipe A fills it in 10 minutes and Pipe B drains it in 15 minutes. Starting empty with both pipes open, how many minutes until the container is full?', expectedKeywords: ['30'] },
+    { question: 'What is 15 percent of 240?', expectedKeywords: ['36'] },
+    { question: 'A combination lock has 3 dials, each with 10 digits (0–9). How many possible combinations are there?', expectedKeywords: ['1000'] },
+    { question: 'A coin is biased so that heads appears 2/3 of the time. If flipped 3 times, what is the probability of exactly 2 heads? Express as a simplified fraction.', expectedKeywords: ['4/9'] },
+    { question: 'An operation is defined as a ★ b = a² + b² − ab. What is 3 ★ 4?', expectedKeywords: ['13'] },
+    { question: 'What is the smallest positive integer that gives remainder 3 when divided by 7, and remainder 5 when divided by 11?', expectedKeywords: ['38'] },
+    { question: 'Two fair dice are rolled. What is the probability that the product of the two numbers is greater than 16? Express as a simplified fraction.', expectedKeywords: ['5/18'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +520,12 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Daily pool update 2026-06-12: mixed content, natural speech challenges ──
+    { text: 'Conference dial-in number is 1-800-555-0192 access code 7 3 9 dash 4 1 2 followed by the pound key', keywords: ['conference', 'dial', '0192', '739', '412', 'pound'] },
+    { text: 'Run kubectl rollout restart deployment web-backend in namespace production with a thirty-second rollout timeout', keywords: ['kubectl', 'rollout', 'restart', 'web-backend', 'namespace', 'production', 'thirty'] },
+    { text: 'Prescription reads: Amoxicillin 500 milligrams, take three capsules daily for ten days with food, zero refills', keywords: ['amoxicillin', '500', 'three', 'capsules', 'ten', 'days', 'refills', 'zero'] },
+    { text: 'Please transfer forty-nine thousand nine hundred ninety-nine dollars and ninety-nine cents from account ending seven eight two three to account ending four one zero six reference WIRE-2024-0891', keywords: ['forty-nine', 'thousand', '7823', '4106', 'WIRE', '0891'] },
+    { text: 'The regex pattern caret open-bracket a-z A-Z close-bracket plus dollar sign matches one or more alphabetic characters only', keywords: ['regex', 'caret', 'bracket', 'alphabetic', 'characters'] },
 ];
 
 // ============================================
