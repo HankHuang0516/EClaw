@@ -1015,6 +1015,8 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="shared/socket.js"></script>
     <script src="shared/footer.js"></script>
+    <script src="/shared-core/route-registry.js"></script>
+    <script src="shared/smart-router.js"></script>
     <script>if (typeof AndroidBridge !== 'undefined' || /EClawAndroid|EClawIOS/i.test(navigator.userAgent)) window.__blockAiChatWidget = true;</script>
     <script src="shared/ai-chat.js"></script>
     <script>if(typeof renderAvatarHtml==='undefined'){window.renderAvatarHtml=function(a){return a||'\u{1F99E}'};window.isAvatarUrl=function(){return false}}</script>
@@ -1510,7 +1512,8 @@
                 }).catch(() => {});
                 updateNotifiedSnapshot();
                 closeDialog();
-                window.location.href = 'chat.html';
+                if (window.SmartRouter) window.SmartRouter.navigate('chat');
+                else window.location.href = 'chat.html';
             };
         }
 
@@ -2141,7 +2144,8 @@
                 window.parent.postMessage({ type: 'eclaw_quote', source, title, excerpt: excerpt || '', prefillInput }, window.location.origin);
             } else {
                 localStorage.setItem('eclaw_pending_quote', JSON.stringify({ source, title, excerpt: excerpt || '', prefillInput, ts: Date.now() }));
-                window.location.href = '/portal/chat.html';
+                if (window.SmartRouter) window.SmartRouter.navigate('chat');
+                else window.location.href = '/portal/chat.html';
             }
         }
 
