@@ -2685,6 +2685,44 @@
             border-color: rgba(168, 85, 247, 0.35);
         }
 
+        /* ── Routing chip (card_b3724a8 routing-viz v1) ── */
+        /* Per-message proof the org-hierarchy/smart routing fired. Segmented LV
+           palette (target entity LV): higher LV → stronger saturation/border. */
+        .routing-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 0 6px;
+            margin-right: 6px;
+            border-radius: 9px;
+            font-size: 0.78em;
+            font-weight: 600;
+            line-height: 1.5;
+            border: 1px solid transparent;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .routing-chip .rc-mode {
+            font-size: 0.92em;
+            opacity: 0.85;
+            padding-right: 3px;
+            border-right: 1px solid currentColor;
+            margin-right: 1px;
+        }
+        .routing-chip .rc-lv { font-weight: 700; letter-spacing: 0.02em; }
+        /* LV segments — text/border share the hue; bg is a faint tint that
+           deepens with LV so high-LV (上級) hops visibly stand out. */
+        .routing-chip.rc-lv-unknown { color: #6B7280; border-color: rgba(107,114,128,0.40); background: rgba(107,114,128,0.10); }
+        .routing-chip.rc-lv-1 { color: #2563EB; border-color: rgba(37,99,235,0.45);  background: rgba(37,99,235,0.10); }
+        .routing-chip.rc-lv-3 { color: #0F766E; border-color: rgba(15,118,110,0.50); background: rgba(15,118,110,0.13); }
+        .routing-chip.rc-lv-5 { color: #B45309; border-color: rgba(180,83,9,0.55);   background: rgba(180,83,9,0.16); }
+        .routing-chip.rc-lv-7 { color: #C2410C; border-color: rgba(194,65,12,0.60);  background: rgba(194,65,12,0.19); }
+        .routing-chip.rc-lv-9 { color: #B91C1C; border-color: rgba(185,28,28,0.70);  background: rgba(185,28,28,0.22); }
+        /* Negative indicators (#6 spec point 4) */
+        .routing-chip.rc-unconfirmed { color: #9CA3AF; border-color: rgba(156,163,175,0.40); background: rgba(156,163,175,0.10); font-weight: 500; }
+        .routing-chip.rc-degraded { color: #D97706; border-color: rgba(217,119,6,0.55); background: rgba(217,119,6,0.16); }
+        .routing-chip.rc-failed { color: #DC2626; border-color: rgba(220,38,38,0.65); background: rgba(220,38,38,0.18); }
+
         /* ── 引用預覽卡 popover (Chip B) ── */
         .autolink-chip-popover {
             background: #1e1e28;
@@ -5674,6 +5712,7 @@
                 const replyBtnHtml = (!isSystem && msg.id) ? `<button class="chat-reply-btn" data-msg-id="${escapeHtml(msg.id)}" data-sender="${escapeHtml(replySenderName)}" data-text="${escapeHtml(replySnippet)}" data-receiver-kind="${receiverKind}"${receiverEntityAttr} onclick="handleReplyBtn(this);event.stopPropagation()" data-i18n-title="chat_reply_btn" title="Quote">📌</button>` : '';
                 const renderedMessageIds = getRenderedMessageIds(msg);
                 const renderedIdsAttr = escapeHtml(renderedMessageIds.join(' '));
+                const routingChipHtml = renderRoutingChip(msg);
 
                 return `${dateSep}${unreadSep}
                     <div class="chat-msg ${msgClass}${isGrouped ? ' grouped' : ''}" data-message-id="${escapeHtml(normalizeChatMessageId(msg.id) || msg.id || '')}" data-message-ids="${renderedIdsAttr}" style="position:relative">
@@ -5682,7 +5721,7 @@
                         ${replyBtnHtml}
                         ${previewId ? `<div class="link-preview-slot" id="${previewId}" data-url="${escapeHtml(firstUrl)}"></div>` : ''}
                         ${reactionsHtml}
-                        <div class="chat-meta">${time}</div>
+                        <div class="chat-meta">${routingChipHtml}${time}</div>
                         ${receipt ? `<div class="chat-receipt">${receipt}</div>` : ''}
                     </div>`;
             }).join('');
@@ -5750,6 +5789,54 @@
             _sourceParseCache.set(source, result);
             if (_sourceParseCache.size > 1000) _sourceParseCache.clear();
             return result;
+        }
+
+        // ── Routing chip (card_b3724a8 routing-viz v1, #6 spec) ──
+        // Per-message proof that org-hierarchy / smart routing fired. Reads the
+        // backend-supplied msg.routing_meta ONLY — never recomputes routing.
+        //   positive: 來源→目標 · LV{to_lv}, coloured by a segmented LV palette
+        //   negative: degraded/failed status, or a routed message missing meta
+        // LV palette segments (target entity LV, clamped):
+        //   unknown #6B7280 · 1-2 #2563EB · 3-4 #0F766E · 5-6 #B45309 · 7-8 #C2410C · 9+ #B91C1C
+        function routingLvSegment(lv) {
+            const n = Number(lv);
+            if (!Number.isFinite(n)) return 'unknown';
+            if (n <= 2) return '1';
+            if (n <= 4) return '3';
+            if (n <= 6) return '5';
+            if (n <= 8) return '7';
+            return '9';
+        }
+
+        function renderRoutingChip(msg) {
+            const rm = msg && msg.routing_meta;
+            const tt = (k, fb) => (typeof i18n !== 'undefined' && i18n.t && i18n.t(k)) || fb;
+            // Negative: a message that WAS routed (entity:..->.. / xdevice source)
+            // but carries no routing_meta → "路由未確認".
+            if (!rm || typeof rm !== 'object') {
+                const routed = parseEntitySource(msg && msg.source);
+                if (routed && (msg.is_from_bot || routed.crossDevice)) {
+                    return `<span class="routing-chip rc-unconfirmed" title="${escapeHtml(tt('chat_routing_unconfirmed','路由未確認'))}">⚑ ${escapeHtml(tt('chat_routing_unconfirmed','路由未確認'))}</span>`;
+                }
+                return '';
+            }
+            // Negative: explicit degraded / failed status from the backend.
+            if (rm.status === 'failed' || rm.status === 'degraded') {
+                const isFail = rm.status === 'failed';
+                const cls = isFail ? 'rc-failed' : 'rc-degraded';
+                const lbl = isFail ? tt('chat_routing_failed','路由失敗') : tt('chat_routing_degraded','路由降級');
+                return `<span class="routing-chip ${cls}" title="${escapeHtml(lbl)}">⚠ ${escapeHtml(lbl)}</span>`;
+            }
+            // Positive: from → to · LV{to_lv}, optional mode prefix.
+            const seg = routingLvSegment(rm.to_lv);
+            const from = rm.from_name || (rm.from_entity_id != null ? '#' + rm.from_entity_id : '?');
+            const to = rm.to_name || (rm.to_entity_id != null ? '#' + rm.to_entity_id : '?');
+            const lvNum = Number.isFinite(Number(rm.to_lv)) ? Number(rm.to_lv) : '?';
+            let modeTag = '';
+            if (rm.mode === 'broadcast') modeTag = `<span class="rc-mode">${escapeHtml(tt('chat_routing_broadcast','廣播'))}</span>`;
+            else if (rm.mode === 'xdevice') modeTag = `<span class="rc-mode">${escapeHtml(tt('chat_routing_xdevice','跨裝置'))}</span>`;
+            const title = `${tt('chat_routing_label','路由')}: ${from} → ${to} · LV${lvNum}`;
+            return `<span class="routing-chip rc-lv-${seg}" title="${escapeHtml(title)}">${modeTag}<span class="rc-route">${escapeHtml(from)} → ${escapeHtml(to)}</span><span class="rc-lv">LV${lvNum}</span></span>`;
         }
 
         /** Cross-device message received from another device (not sent by this device's entities) */
