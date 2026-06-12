@@ -88,7 +88,9 @@ describe('chat quote-reply smart receiver — chat.html surface', () => {
         expect(chatHtml).toMatch(
             /const\s*\{\s*source,\s*title,\s*excerpt,\s*messageId,\s*meta,\s*ts\s*\}\s*=\s*JSON\.parse\(pq\)/
         );
-        expect(chatHtml).toMatch(/quoteToChat\(\s*source,\s*title,\s*excerpt\s*\|\|\s*['"]['"]\s*,\s*meta\s*\)/);
+        // meta is forwarded; when the producer omits it we derive the sender
+        // from the deep-linked message (card_3462... fix).
+        expect(chatHtml).toMatch(/quoteToChat\(\s*source,\s*title,\s*excerpt\s*\|\|\s*['"]['"]\s*,\s*meta\s*\|\|\s*receiverMetaFromMessageId\(messageId\)\s*\)/);
         // workspace.html postMessage relay — same intentional drop
         expect(chatHtml).toMatch(
             /const\s*\{\s*source,\s*title,\s*excerpt,\s*messageId,\s*meta\s*\}\s*=\s*e\.data/
@@ -96,6 +98,33 @@ describe('chat quote-reply smart receiver — chat.html surface', () => {
         // Regression guard: prefillInput must NOT reappear in either destructure
         expect(chatHtml).not.toMatch(/prefillInput,\s*messageId,\s*meta,\s*ts\s*\}\s*=\s*JSON\.parse\(pq\)/);
         expect(chatHtml).not.toMatch(/prefillInput,\s*messageId,\s*meta\s*\}\s*=\s*e\.data/);
+    });
+
+    // card_3462117951fa588df9ff8a95 — the canvas/native nav-intent quote path
+    // dropped the receiver meta, so a quote of #6 fell back to the residual
+    // selection (#1). It must now derive the sender from the deep-linked msg.
+    test('native nav-intent quote derives receiver meta from the deep-linked message', () => {
+        // helper resolves a bot sender → { kind:'chat-entity', entityId }
+        expect(chatHtml).toMatch(/function\s+receiverMetaFromMessageId\s*\(\s*messageId\s*\)/);
+        expect(chatHtml).toMatch(/m\.is_from_bot\s*===\s*true/);
+        expect(chatHtml).toMatch(/return\s*\{\s*kind:\s*['"]chat-entity['"]\s*,\s*entityId:\s*Number\(m\.entity_id\)\s*\}/);
+        // eclawHandleNativeNavigateIntent wires it in (was bare quoteToChat w/o meta)
+        expect(chatHtml).toMatch(/const\s+qMeta\s*=\s*quote\.meta\s*\|\|\s*receiverMetaFromMessageId\(msgId\)/);
+        expect(chatHtml).toMatch(/quoteToChat\(\s*quote\.source\s*\|\|\s*['"]引用['"]\s*,\s*quote\.title\s*\|\|\s*['"]['"]\s*,\s*quote\.excerpt\s*\|\|\s*['"]['"]\s*,\s*qMeta\s*\)/);
+    });
+
+    // The auto-select must be EXCLUSIVE — clearing the residual/default
+    // selection — otherwise a quote of #6 still leaks to whoever was already
+    // checked (#1). This is the load-bearing assertion for card_3462...
+    test('applyAutoToggleReceivers clears every entity + contact checkbox before checking the sender', () => {
+        const fn = chatHtml.match(/function\s+applyAutoToggleReceivers\s*\(\s*meta\s*\)\s*\{[\s\S]*?\n        \}/);
+        expect(fn).not.toBeNull();
+        const body = fn[0];
+        // resets all entity checkboxes to (wanted.has) and all contacts to false
+        expect(body).toMatch(/\.target-entity-check input\[type="checkbox"\][\s\S]*?cb\.checked\s*=\s*wanted\.has\(Number\(cb\.dataset\.entity\)\)/);
+        expect(body).toMatch(/\.target-contact-check input\[type="checkbox"\][\s\S]*?cb\.checked\s*=\s*false/);
+        // bails out (leaves selection untouched) when no quoted sender is bound here
+        expect(body).toMatch(/if\s*\(\s*wanted\.size\s*===\s*0\s*\)\s*return/);
     });
 
     test('manual uncheck revokes the hint via updateTargetAll', () => {
@@ -364,6 +393,30 @@ describe('applyAutoToggleReceivers — behaviour against a hand-rolled DOM stub'
         expect(sandbox.document.querySelector('[data-entity="7"]').checked).toBe(false);
         const badges = sandbox.document.querySelectorAll('.receiver-hint-auto');
         expect(badges.length).toBe(1);
+    });
+
+    // card_3462... regression: a residual/default recipient (#1) must be
+    // UNCHECKED when a quote of #5 auto-selects, so the reply routes to #5 only.
+    test('chat-entity source clears a pre-checked residual recipient (#1 → off)', () => {
+        const { sandbox, api } = makeSandbox([1, 5, 7]);
+        // simulate the default "all checked" / last-sent residual state
+        sandbox.document.querySelector('[data-entity="1"]').checked = true;
+        sandbox.document.querySelector('[data-entity="7"]').checked = true;
+        api.applyAutoToggleReceivers({ kind: 'chat-entity', entityId: 5 });
+        expect(sandbox.document.querySelector('[data-entity="1"]').checked).toBe(false);
+        expect(sandbox.document.querySelector('[data-entity="5"]').checked).toBe(true);
+        expect(sandbox.document.querySelector('[data-entity="7"]').checked).toBe(false);
+        expect(sandbox.document.querySelectorAll('.receiver-hint-auto').length).toBe(1);
+    });
+
+    // If the quoted sender isn't a bound target here, leave the selection
+    // untouched rather than wiping the bar blank (no recipient = unsendable).
+    test('unbound sender → existing selection preserved (no exclusive wipe)', () => {
+        const { sandbox, api } = makeSandbox([1, 2]);
+        sandbox.document.querySelector('[data-entity="1"]').checked = true;
+        api.applyAutoToggleReceivers({ kind: 'chat-entity', entityId: 9 }); // 9 not bound
+        expect(sandbox.document.querySelector('[data-entity="1"]').checked).toBe(true);
+        expect(sandbox.document.querySelectorAll('.receiver-hint-auto').length).toBe(0);
     });
 
     test('chat-system source → no toggle, no badge', () => {
