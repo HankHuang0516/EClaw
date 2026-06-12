@@ -118,7 +118,7 @@ const DRIVERS = {
                 ok: rendered,
                 detail: `card ${cardId} lifecycle ${seen.join('→')}; rendered_in_kanban=${rendered}`,
             };
-        } finally {
+        } finally { // eslint-disable-line no-unsafe-finally
             // self-clean: archive the marker card. Cleanup failure throws → cell fails.
             if (cardId) {
                 const del = await api('DELETE', `/api/mission/card/${cardId}`, auth);
@@ -128,6 +128,68 @@ const DRIVERS = {
                 }
             }
         }
+    },
+
+    // A bot reply in chat history renders as a visible bubble WITH sender identity.
+    // READ-ONLY (#6 ruling: stable existing fixture on BROADCAST_TEST). No writes,
+    // no cleanup. Finds an existing is_from_bot reply via API, then asserts chat.html
+    // renders a received bubble (.chat-bubble) carrying a non-empty sender label
+    // (.chat-source) for a bot message.
+    agent_reply_visibility: async (page, { base }) => {
+        const { deviceId, deviceSecret, entityId } = testCreds();
+        const STUBS = [
+            'Hi! I am online and ready to chat~',
+            '你好！我已上線，準備好聊天囉~',
+        ];
+        // 1. confirm a real bot reply exists (fixture)
+        const histResp = await page.request.fetch(
+            `${base}/api/chat/history?deviceId=${encodeURIComponent(deviceId)}&deviceSecret=${encodeURIComponent(deviceSecret)}&entityId=${entityId}&limit=50`,
+            { timeout: 45000 }
+        );
+        let hist = null; try { hist = await histResp.json(); } catch (_) {}
+        const msgs = (hist && (hist.messages || hist)) || [];
+        const botReply = Array.isArray(msgs) ? msgs.find(m =>
+            (m.is_from_bot === true || m.isFromBot === true) &&
+            (m.text || '').trim().length >= 5 &&
+            !STUBS.includes((m.text || '').trim())
+        ) : null;
+        if (!botReply) {
+            return { ok: false, detail: 'no stable bot-reply fixture in chat history (need a prior bot reply on the test device)' };
+        }
+
+        // 2. render check: inject creds, load chat.html, assert a received bubble
+        //    with a non-empty sender label (.chat-source) exists for a bot message.
+        await page.addInitScript(([d, sec]) => {
+            try { localStorage.setItem('deviceId', d); localStorage.setItem('deviceSecret', sec); } catch (_) {}
+        }, [deviceId, deviceSecret]);
+        await page.goto(`${base}/portal/chat.html`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+
+        let verdict = { ok: false };
+        try {
+            verdict = await page.waitForFunction(() => {
+                const msgs = Array.from(document.querySelectorAll('.chat-msg'));
+                for (const m of msgs) {
+                    if (m.classList.contains('sent')) continue;       // skip our own
+                    const src = m.querySelector('.chat-source');
+                    const bubble = m.querySelector('.chat-bubble');
+                    const senderLabel = src && (src.textContent || '').trim();
+                    const bodyText = bubble && (bubble.textContent || '').trim();
+                    if (senderLabel && bodyText) {
+                        return { ok: true, sender: senderLabel.slice(0, 40), textLen: bodyText.length };
+                    }
+                }
+                return false; // keep waiting
+            }, null, { timeout: 15000 }).then(h => h.jsonValue());
+        } catch (_) {
+            verdict = { ok: false };
+        }
+
+        return {
+            ok: !!verdict.ok,
+            detail: verdict.ok
+                ? `bot reply renders with sender="${verdict.sender}" (${verdict.textLen} chars)`
+                : `bot reply found in API but no received .chat-msg with .chat-source + .chat-bubble rendered`,
+        };
     },
 };
 
