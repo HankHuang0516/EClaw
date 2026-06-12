@@ -114,6 +114,12 @@
         padding: 8px 16px; border-radius: 6px; cursor: pointer;
         font: inherit;
     }
+    .load-more-btn {
+        background: var(--accent); border: none; color: #fff;
+        padding: 6px 16px; border-radius: 6px; cursor: pointer;
+        font: inherit; font-size: 13px;
+    }
+    .load-more-btn:hover { opacity: 0.9; }
     .login-warn {
         padding: 12px; margin-bottom: 12px;
         background: #5a3000; color: #ffb04a;
@@ -275,6 +281,13 @@
     ];
     const filterState = { scope: '', category: '', sort: 'popular' };
     let searchTerm = '';
+    // Pagination state (Hank 2026-06-12: browser capped at first 60, no paging).
+    // /api/companion/list already supports page/limit/total; we page client-side.
+    const PAGE_SIZE = 60;
+    let currentPage = 1;
+    let loadedCount = 0;
+    let totalCount = 0;
+    let loadingMore = false;
     let searchTimer = 0;
 
     // ── Renderer pool ─────────────────────────────────────────────
@@ -323,7 +336,8 @@
     };
 
     // ── List loader ───────────────────────────────────────────────
-    async function loadList() {
+    // loadList(false) = fresh load (page 1, clears grid); loadList(true) = append next page.
+    async function loadList(append = false) {
         const status = document.getElementById('status');
         const grid = document.getElementById('grid');
         const empty = document.getElementById('empty');
@@ -336,17 +350,27 @@
             return;
         }
 
-        status.textContent = '載入中…';
-        empty.style.display = 'none';
-        tearDownRenderers();
-        grid.innerHTML = '';
+        if (append) {
+            if (loadingMore || loadedCount >= totalCount) return;
+            loadingMore = true;
+            currentPage += 1;
+        } else {
+            currentPage = 1;
+            loadedCount = 0;
+            totalCount = 0;
+            empty.style.display = 'none';
+            tearDownRenderers();
+            grid.innerHTML = '';
+        }
+        status.textContent = append ? '載入更多…' : '載入中…';
 
         const q = authQuery();
         if (filterState.scope)    q.set('scope', filterState.scope);
         if (filterState.category) q.set('category', filterState.category);
         if (filterState.sort)     q.set('sort', filterState.sort);
         if (searchTerm)           q.set('q', searchTerm);
-        q.set('limit', '60');
+        q.set('limit', String(PAGE_SIZE));
+        q.set('page', String(currentPage));
 
         let data;
         try {
@@ -354,21 +378,25 @@
             data = await r.json();
             if (!data.success) {
                 status.textContent = '載入失敗：' + (data.error || r.status);
+                if (append) { currentPage -= 1; }
                 return;
             }
         } catch (err) {
             status.textContent = '網路錯誤：' + err.message;
+            if (append) { currentPage -= 1; }
             return;
+        } finally {
+            loadingMore = false;
         }
 
         const items = data.companions || [];
-        status.textContent = '共 ' + (data.total || 0) + ' 個伙伴';
-        pagination.textContent = items.length === data.total
-            ? ''
-            : '顯示前 ' + items.length + ' 個';
+        totalCount = data.total || 0;
+        loadedCount += items.length;
+        status.textContent = '共 ' + totalCount + ' 個伙伴';
 
-        if (!items.length) {
+        if (!loadedCount) {
             empty.style.display = 'block';
+            renderPagination();
             return;
         }
 
@@ -376,6 +404,28 @@
             const node = renderCardNode(card);
             grid.appendChild(node);
         });
+        renderPagination();
+    }
+
+    // Render the load-more control in the #pagination slot. Shows a button while
+    // more remain; a "all shown" note once everything is loaded.
+    function renderPagination() {
+        const pagination = document.getElementById('pagination');
+        if (!pagination) return;
+        pagination.innerHTML = '';
+        if (loadedCount >= totalCount) {
+            if (totalCount > PAGE_SIZE) {
+                pagination.textContent = '已顯示全部 ' + totalCount + ' 個';
+            }
+            return;
+        }
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = 'load-more-btn';
+        btn.className = 'load-more-btn';
+        btn.textContent = `載入更多（${loadedCount}/${totalCount}）`;
+        btn.addEventListener('click', () => loadList(true));
+        pagination.appendChild(btn);
     }
 
     // ── Card node ─────────────────────────────────────────────────
