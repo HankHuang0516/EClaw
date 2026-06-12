@@ -7,9 +7,12 @@
  * kanban's `?card=<id>#<id>` hash handler, chat's `?contact=<publicCode>`
  * shareable-link param, mission's `?note=`, and the `/p/:publicCode` route.
  *
- * Used by: backend/redirect-router.js (Phase A). The portal-side SmartRouter
- * (docs/smart-router-spec.md) consumes a copy when its implementation card
- * lands — keep this file dependency-free CJS so it can be served verbatim.
+ * Used by: backend/redirect-router.js (Phase A) AND the portal-side
+ * SmartRouter (docs/smart-router-spec.md), which consumes this very file in
+ * the browser via the `/shared-core/route-registry.js` static mount — single
+ * URL SoT, no drift. The UMD tail below exposes `window.EClawRouteRegistry`
+ * in the browser while keeping `module.exports` for Node; keep this file
+ * dependency-free so it serves verbatim.
  */
 'use strict';
 
@@ -84,7 +87,7 @@ function isSafeReturnTo(value) {
     return Object.values(ROUTES).some(r => r.web.split(/[?#]/)[0] === path);
 }
 
-module.exports = {
+const _api = {
     ROUTES,
     isKnownTarget,
     validateParams,
@@ -92,3 +95,11 @@ module.exports = {
     buildUniversalUrl,
     isSafeReturnTo,
 };
+
+// UMD tail: CJS for Node (redirect-router), global for the browser (SmartRouter).
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = _api;
+}
+if (typeof window !== 'undefined') {
+    window.EClawRouteRegistry = _api;
+}

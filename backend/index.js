@@ -875,6 +875,17 @@ app.use('/docs', express.static(path.join(__dirname, 'public/docs'), {
     lastModified: true,
     maxAge: '1h'
 }));
+// Dependency-free shared core modules served verbatim to the browser so the
+// portal SmartRouter consumes the SAME route-registry.js as the server (single
+// URL SoT, no drift). Whitelist .js only — this dir is server code, not assets.
+app.use('/shared-core', express.static(path.join(__dirname, 'shared'), {
+    etag: true,
+    lastModified: true,
+    maxAge: '1h',
+    setHeaders: (res, filePath) => {
+        if (!filePath.endsWith('.js')) { res.status(404); }
+    }
+}));
 
 // Privacy policy (public, root-level)
 app.get(['/privacy-policy.html', '/privacy-policy'], (req, res) => {
