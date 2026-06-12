@@ -113,17 +113,27 @@ function _tFb(k, fb) {
 let _eclawDialogId = 0;
 
 // Body scroll-lock for modal dialogs (showConfirm / showPrompt). Without it the
-// page behind a destructive confirm still scrolls on wheel/touch, so the user can
-// lose the dialog out of view or mis-tap a moved control. Ref-counted so stacked
-// dialogs don't unlock prematurely; restores the prior inline overflow on the last
-// close. Inline style (not a CSS class) keeps it self-contained — no stylesheet dep.
+// page behind a destructive confirm still scrolls (wheel/touch AND programmatic),
+// so the user can lose the dialog out of view or mis-tap a moved control.
+//
+// `overflow:hidden` alone only blocks USER wheel/touch — programmatic scrollTo
+// still moves the page. The robust mobile lock is position:fixed on body with
+// top:-scrollY: the document collapses to the viewport so it cannot scroll at all,
+// and the visual position is preserved. Restored (incl. scroll position) on the
+// last close. Ref-counted so stacked dialogs don't unlock prematurely.
 let _eclawScrollLockCount = 0;
-let _eclawPrevBodyOverflow = '';
+let _eclawPrevBody = null;     // saved inline styles to restore
+let _eclawLockedScrollY = 0;   // scroll position captured at first lock
 function _eclawLockBodyScroll() {
     if (typeof document === 'undefined' || !document.body) return;
     if (_eclawScrollLockCount === 0) {
-        _eclawPrevBodyOverflow = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
+        const b = document.body.style;
+        _eclawPrevBody = { overflow: b.overflow, position: b.position, top: b.top, width: b.width };
+        _eclawLockedScrollY = window.scrollY || window.pageYOffset || 0;
+        b.overflow = 'hidden';
+        b.position = 'fixed';
+        b.top = `-${_eclawLockedScrollY}px`;
+        b.width = '100%';
     }
     _eclawScrollLockCount++;
 }
@@ -131,8 +141,14 @@ function _eclawUnlockBodyScroll() {
     if (typeof document === 'undefined' || !document.body) return;
     if (_eclawScrollLockCount === 0) return;
     _eclawScrollLockCount--;
-    if (_eclawScrollLockCount === 0) {
-        document.body.style.overflow = _eclawPrevBodyOverflow;
+    if (_eclawScrollLockCount === 0 && _eclawPrevBody) {
+        const b = document.body.style;
+        b.overflow = _eclawPrevBody.overflow;
+        b.position = _eclawPrevBody.position;
+        b.top = _eclawPrevBody.top;
+        b.width = _eclawPrevBody.width;
+        _eclawPrevBody = null;
+        window.scrollTo(0, _eclawLockedScrollY); // restore the pre-lock scroll position
     }
 }
 const _ECLAW_DIALOG_SHADOW_STYLE = 'style="box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);"';
