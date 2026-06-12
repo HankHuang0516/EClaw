@@ -111,6 +111,30 @@ function _tFb(k, fb) {
 }
 
 let _eclawDialogId = 0;
+
+// Body scroll-lock for modal dialogs (showConfirm / showPrompt). Without it the
+// page behind a destructive confirm still scrolls on wheel/touch, so the user can
+// lose the dialog out of view or mis-tap a moved control. Ref-counted so stacked
+// dialogs don't unlock prematurely; restores the prior inline overflow on the last
+// close. Inline style (not a CSS class) keeps it self-contained — no stylesheet dep.
+let _eclawScrollLockCount = 0;
+let _eclawPrevBodyOverflow = '';
+function _eclawLockBodyScroll() {
+    if (typeof document === 'undefined' || !document.body) return;
+    if (_eclawScrollLockCount === 0) {
+        _eclawPrevBodyOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+    }
+    _eclawScrollLockCount++;
+}
+function _eclawUnlockBodyScroll() {
+    if (typeof document === 'undefined' || !document.body) return;
+    if (_eclawScrollLockCount === 0) return;
+    _eclawScrollLockCount--;
+    if (_eclawScrollLockCount === 0) {
+        document.body.style.overflow = _eclawPrevBodyOverflow;
+    }
+}
 const _ECLAW_DIALOG_SHADOW_STYLE = 'style="box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);"';
 function showConfirm({ message, title, confirmText, cancelText, danger, itemName } = {}) {
     // Dev-time hint: destructive confirms should name the item so a fast-clicking user can
@@ -153,7 +177,8 @@ function showConfirm({ message, title, confirmText, cancelText, danger, itemName
             </div>
         </div>`;
         document.body.appendChild(overlay);
-        const cleanup = (result) => { document.removeEventListener('keydown', _keyHandler, true); overlay.remove(); resolve(result); };
+        _eclawLockBodyScroll();
+        const cleanup = (result) => { document.removeEventListener('keydown', _keyHandler, true); overlay.remove(); _eclawUnlockBodyScroll(); resolve(result); };
         // Safe default focus: when danger=true, focus Cancel so a stray
         // Enter / Space does not commit the destructive action. Matches the
         // Material Design and Apple HIG guidance for destructive confirms.
@@ -230,10 +255,11 @@ function showPrompt({ message, title, defaultValue, placeholder, confirmText, ca
             </div>
         </div>`;
         document.body.appendChild(overlay);
+        _eclawLockBodyScroll();
         const input = overlay.querySelector('.eclaw-prompt-input');
         input.focus();
         input.select();
-        const cleanup = (result) => { document.removeEventListener('keydown', _escHandler, true); overlay.remove(); resolve(result); };
+        const cleanup = (result) => { document.removeEventListener('keydown', _escHandler, true); overlay.remove(); _eclawUnlockBodyScroll(); resolve(result); };
         overlay.querySelector('.eclaw-confirm-ok').addEventListener('click', () => cleanup(input.value));
         overlay.querySelector('.eclaw-confirm-cancel').addEventListener('click', () => cleanup(null));
         overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(null); });
