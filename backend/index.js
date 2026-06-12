@@ -8538,17 +8538,34 @@ async function deliverToEntity(opts) {
         ? `${sourceLabel}->${toEntity.publicCode || targetDeviceId}`
         : `${sourceLabel}->${isBroadcast && broadcastTargetIds ? broadcastTargetIds.join(',') : toId}`;
 
+    // Routing trace (card_b3724a8 routing-viz v1): record the resolved
+    // sender→receiver hop + target level so the chat UI can render a per-message
+    // routing chip proving the org-hierarchy/smart routing actually fired. Front
+    // end only renders this; it never recomputes routing (#6 v1 spec point 3).
+    const entityName = (e, id) => e && (e.name || e.character) || `Entity ${id}`;
+    const entityLv = (e) => (e && Number.isFinite(Number(e.level))) ? Number(e.level) : 1;
+    const routingMeta = {
+        mode: isBroadcast ? 'broadcast' : (isCrossDevice ? 'xdevice' : 'speakTo'),
+        from_entity_id: fromId,
+        from_name: entityName(fromEntity, fromId),
+        from_lv: entityLv(fromEntity),
+        to_entity_id: toId,
+        to_name: entityName(toEntity, toId),
+        to_lv: entityLv(toEntity),
+        status: 'sent'
+    };
+
     let chatMsgId;
     if (isBroadcast && broadcastChatMsgId) {
         // Broadcast: reuse the single shared chat message ID for delivery tracking
         chatMsgId = broadcastChatMsgId;
     } else {
-        chatMsgId = await saveChatMessage(targetDeviceId, isCrossDevice ? toId : fromId, text, chatSource, false, true, mediaType || null, mediaUrl || null, null, null, null, null, card, null, viaChannel);
+        chatMsgId = await saveChatMessage(targetDeviceId, isCrossDevice ? toId : fromId, text, chatSource, false, true, mediaType || null, mediaUrl || null, null, null, null, null, card, null, viaChannel, routingMeta);
     }
 
     // Cross-device: also save sender's copy
     if (isCrossDevice) {
-        await saveChatMessage(senderDeviceId, fromId, text, chatSource, false, true, mediaType || null, mediaUrl || null, null, null, null, null, card, null, viaChannel);
+        await saveChatMessage(senderDeviceId, fromId, text, chatSource, false, true, mediaType || null, mediaUrl || null, null, null, null, null, card, null, viaChannel, routingMeta);
     }
 
     markMessagesAsRead(targetDeviceId, toId);
@@ -19063,6 +19080,7 @@ chatPool.query(`
     ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS card_resolved_action TEXT DEFAULT NULL;
     ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS card_resolved_at TIMESTAMP DEFAULT NULL;
     ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS attachments JSONB DEFAULT NULL;
+    ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS routing_meta JSONB DEFAULT NULL;
 `).catch(() => {});
 
 // Chat semantic embedding (pgvector) — safe to run; soft-fails if pgvector unavailable
@@ -19999,12 +20017,7 @@ async function sendFcm(deviceId, notif) {
     const silent = notif.category === 'tts' || notif.category === 'location_request';
     const fcmMessage = {
         token,
-        data: {
-            title: notif.title || '',
-            body: notif.body || '',
-            category: notif.category || '',
-            link: notif.link || ''
-        },
+        data: notifModule.buildFcmNotificationData(notif),
         android: { priority: 'high' }
     };
     if (!silent) {
@@ -20059,7 +20072,7 @@ async function getDeviceVarForEmbedding(deviceId, varName) {
 // Data-loss hardening (2026-04-23): one retry on INSERT failure, structured
 // log on every catch, dead-letter line to /tmp/chat_dead_letter.jsonl so we
 // can replay or grep for lost messages even when pg blips.
-async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null, scheduleId = null, scheduleLabel = null, backupUrl = null, mentions = null, card = null, attachments = null, viaChannel = null) {
+async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isFromBot, mediaType = null, mediaUrl = null, scheduleId = null, scheduleLabel = null, backupUrl = null, mentions = null, card = null, attachments = null, viaChannel = null, routingMeta = null) {
     // Guard: coerce null/undefined text to empty string to avoid NOT NULL constraint violation
     if (text == null) text = '';
     const textPreview = String(text).slice(0, 120);
@@ -20084,9 +20097,9 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
             }
         }
 
-        const insertParams = [deviceId, entityId, text, source, isFromUser || false, isFromBot || false, mediaType, mediaUrl, scheduleId, scheduleLabel, backupUrl, mentions ? JSON.stringify(mentions) : null, card ? JSON.stringify(card) : null, attachments ? JSON.stringify(attachments) : null, viaChannel || null];
-        const insertSQL = `INSERT INTO chat_messages (device_id, entity_id, text, source, is_from_user, is_from_bot, media_type, media_url, schedule_id, schedule_label, backup_url, mentions, card, attachments, via_channel)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id`;
+        const insertParams = [deviceId, entityId, text, source, isFromUser || false, isFromBot || false, mediaType, mediaUrl, scheduleId, scheduleLabel, backupUrl, mentions ? JSON.stringify(mentions) : null, card ? JSON.stringify(card) : null, attachments ? JSON.stringify(attachments) : null, viaChannel || null, routingMeta ? JSON.stringify(routingMeta) : null];
+        const insertSQL = `INSERT INTO chat_messages (device_id, entity_id, text, source, is_from_user, is_from_bot, media_type, media_url, schedule_id, schedule_label, backup_url, mentions, card, attachments, via_channel, routing_meta)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id`;
 
         let result;
         try {
@@ -20132,6 +20145,7 @@ async function saveChatMessage(deviceId, entityId, text, source, isFromUser, isF
                 mentions: mentions || null,
                 card: card || null,
                 attachments: attachments || null,
+                routing_meta: routingMeta || null,
                 created_at: Date.now()
             });
         }
