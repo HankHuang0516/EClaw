@@ -297,7 +297,11 @@
         /* ── 情緒價值 #1: greeting banner (card_f8167ec5) ── */
         .greet-banner {
             margin: 8px 14px 4px; padding: 10px 14px; border-radius: 14px;
-            background: var(--bg-card, #f4f6fb); border: 1px solid var(--border-color, #dfe3ec);
+            /* real theme tokens only — the originals referenced two variables
+               that exist nowhere in style.css, so their light fallbacks painted
+               a white box on the dark portal (Hank 06/12 08:25, card_079ea943) */
+            background: var(--card, #1A1A2E); border: 1px solid var(--card-border, #333355);
+            color: var(--text, #ffffff);
             font-size: 14px; line-height: 1.5; display: flex; flex-direction: column; gap: 8px;
         }
         body.dark .greet-banner { background: #23262f; border-color: #3a3f4d; }
@@ -309,7 +313,7 @@
             font-size: 13px; cursor: pointer; min-height: 32px;
         }
         .greet-chip:hover { background: rgba(91,108,255,0.1); }
-        .greet-chip.greet-chip-dismiss { border-color: var(--border-color, #c8cdd9); color: var(--text-secondary, #8a8f9c); }
+        .greet-chip.greet-chip-dismiss { border-color: var(--card-border, #333355); color: var(--text-secondary, #AAAAAA); }
         body.density-comfortable .chat-msg { max-width: 75%; }
         body.density-comfortable .chat-source { font-size: 12px; margin-bottom: 4px; }
 
