@@ -51,10 +51,23 @@
 
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Android App Links: /r/ universal entry (redirect-state-machine-spec §3).
+                 Verification requires /.well-known/assetlinks.json to list the
+                 Play App Signing certificate fingerprint. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="eclawbot.com"
+                    android:pathPrefix="/r/" />
             </intent-filter>
         </activity>
 

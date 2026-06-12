@@ -262,9 +262,24 @@ class MainActivity : AppCompatActivity() {
         // devices[] map so dashboard.html's /api/auth/device-login can succeed.
         val deviceId = deviceManager.deviceId
         val deviceSecret = deviceManager.deviceSecret
-        val baseUrl = "https://eclawbot.com/portal/dashboard.html"
-        val url = "$baseUrl?embed=1&deviceId=$deviceId&deviceSecret=$deviceSecret"
+        // App Links (/r/ universal entry, spec §3) land here — route the
+        // WebView to the deep-link target; plain launches keep the dashboard.
+        val url = com.hank.clawlive.util.RedirectLinkParser
+            .buildPortalUrl(intent?.data, deviceId, deviceSecret)
         wv.loadUrl(com.hank.clawlive.util.PortalUrlHelper.withAppLang(this, url))
+    }
+
+    // singleTask relaunch from a verified App Link while already running.
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val data = intent.data ?: return
+        if (!com.hank.clawlive.util.RedirectLinkParser.isRedirectLink(data)) return
+        val deviceId = deviceManager.deviceId ?: return
+        val deviceSecret = deviceManager.deviceSecret ?: return
+        val url = com.hank.clawlive.util.RedirectLinkParser
+            .buildPortalUrl(data, deviceId, deviceSecret)
+        webView?.loadUrl(com.hank.clawlive.util.PortalUrlHelper.withAppLang(this, url))
     }
 
     private fun injectCredentials(webView: WebView?) {
