@@ -132,8 +132,11 @@ function evaluateDoneGate(input) {
         : REQUIRED_EVIDENCE_ITEMS.slice();
 
     let bestMissing = requiredItems.slice();
-    let evidenceComment = null;
-    let evidenceCommentTs = 0;
+    // Collect EVERY comment that satisfies all checklist items — not just the
+    // first. card_4c3a75bc: the old loop locked onto the first complete comment,
+    // so if that one lacked the PR link, a later comment that ADDED the link was
+    // never read ("先到先贏"). We now pick among all complete comments below.
+    const completeComments = [];
     for (let i = preflightIdx + 1; i < list.length; i++) {
         const c = list[i];
         if (!c || typeof c.text !== 'string' || c.isSystem) continue;
@@ -143,13 +146,18 @@ function evaluateDoneGate(input) {
             }
             return !c.text.includes(item);
         });
-        if (missing.length < bestMissing.length) {
-            bestMissing = missing;
-            if (missing.length === 0) {
-                evidenceComment = c;
-                evidenceCommentTs = tsOf(c);
-            }
-        }
+        if (missing.length < bestMissing.length) bestMissing = missing;
+        if (missing.length === 0) completeComments.push(c);
+    }
+
+    // Prefer a complete comment that ALSO carries the PR link (latest wins);
+    // otherwise fall back to the latest complete comment so the PR-link error
+    // below still fires correctly instead of being masked.
+    let evidenceComment = null;
+    if (completeComments.length) {
+        const newest = (a, b) => (tsOf(b) >= tsOf(a) ? b : a);
+        const withPrLink = completeComments.filter(c => PR_LINK_PATTERN.test(c.text));
+        evidenceComment = (withPrLink.length ? withPrLink : completeComments).reduce(newest);
     }
 
     if (evidenceComment === null) {
