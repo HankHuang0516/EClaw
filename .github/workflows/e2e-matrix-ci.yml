@@ -1,0 +1,64 @@
+name: Cross-surface E2E Matrix
+
+# OODA-R Phase 3 #8 (card_42ffca0d29ce22b369d55ca4): canonical E2E matrix for the
+# top user flows × {desktop, mobile, webview}. Runs against the live target
+# (MATRIX_BASE, default prod). Fails the job on any IMPLEMENTED cell that fails;
+# PENDING cells (driver not yet written) are reported but non-fatal until all
+# five drivers land. To make this a REQUIRED merge check, add "Cross-surface E2E
+# Matrix / matrix" to the branch-protection rules for main (repo setting).
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'backend/public/portal/**'
+      - 'backend/public/shared/**'
+      - 'backend/shared/route-registry.js'
+      - 'backend/redirect-router.js'
+      - 'backend/tests/e2e/matrix/**'
+      - '.github/workflows/e2e-matrix-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/public/portal/**'
+      - 'backend/public/shared/**'
+      - 'backend/shared/route-registry.js'
+      - 'backend/redirect-router.js'
+      - 'backend/tests/e2e/matrix/**'
+      - '.github/workflows/e2e-matrix-ci.yml'
+
+jobs:
+  matrix:
+    name: matrix
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: backend
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+        working-directory: backend
+
+      - name: Run cross-surface E2E matrix
+        run: node tests/e2e/matrix/run-matrix.js
+        working-directory: backend
+        env:
+          MATRIX_BASE: ${{ vars.MATRIX_BASE || 'https://eclawbot.com' }}
+          MATRIX_ARTIFACT_DIR: ${{ github.workspace }}/matrix-artifacts
+
+      - name: Upload matrix artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-matrix-${{ github.run_id }}
+          path: matrix-artifacts/
+          retention-days: 14
