@@ -650182,6 +650182,13 @@ const TRANSLATIONS = {
         "dashboard_usage_chart_no_data": "No data yet",
 
         "firstach_title": "First achievement: {label}!",
+
+        "chat_routing_label": "Route",
+        "chat_routing_unconfirmed": "Routing unconfirmed",
+        "chat_routing_degraded": "Routing degraded",
+        "chat_routing_failed": "Routing failed",
+        "chat_routing_broadcast": "Broadcast",
+        "chat_routing_xdevice": "Cross-device",
 },
 
 
@@ -1234831,6 +1234838,13 @@ const TRANSLATIONS = {
         "dashboard_usage_chart_no_data": "尚無資料",
 
         "firstach_title": "首個成就：{label}！",
+
+        "chat_routing_label": "路由",
+        "chat_routing_unconfirmed": "路由未确认",
+        "chat_routing_degraded": "路由降级",
+        "chat_routing_failed": "路由失败",
+        "chat_routing_broadcast": "广播",
+        "chat_routing_xdevice": "跨设备",
 },
 
 
@@ -2943940,6 +2943954,13 @@ const TRANSLATIONS = {
 
 
 
+
+        "chat_routing_label": "路由",
+        "chat_routing_unconfirmed": "路由未確認",
+        "chat_routing_degraded": "路由降級",
+        "chat_routing_failed": "路由失敗",
+        "chat_routing_broadcast": "廣播",
+        "chat_routing_xdevice": "跨裝置",
 },
 
 
