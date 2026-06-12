@@ -20,16 +20,21 @@ const apiJs = fs.readFileSync(
 );
 
 describe('modal body scroll-lock (showConfirm / showPrompt)', () => {
-    test('defines a ref-counted lock helper that sets body overflow hidden', () => {
+    test('lock helper uses position:fixed + top:-scrollY (blocks programmatic scroll too)', () => {
         expect(apiJs).toMatch(/function\s+_eclawLockBodyScroll\s*\(/);
-        expect(apiJs).toMatch(/document\.body\.style\.overflow\s*=\s*['"]hidden['"]/);
+        expect(apiJs).toMatch(/\.overflow\s*=\s*['"]hidden['"]/);
+        expect(apiJs).toMatch(/\.position\s*=\s*['"]fixed['"]/);
+        expect(apiJs).toMatch(/\.top\s*=\s*[`'"]-\$\{?_eclawLockedScrollY/);
+        expect(apiJs).toMatch(/_eclawLockedScrollY\s*=\s*window\.scrollY/);
         // ref count so stacked dialogs don't unlock prematurely
         expect(apiJs).toMatch(/_eclawScrollLockCount\s*\+\+/);
     });
 
-    test('defines an unlock helper that restores the prior overflow on the last close', () => {
+    test('unlock helper restores saved inline styles AND the pre-lock scroll position', () => {
         expect(apiJs).toMatch(/function\s+_eclawUnlockBodyScroll\s*\(/);
-        expect(apiJs).toMatch(/document\.body\.style\.overflow\s*=\s*_eclawPrevBodyOverflow/);
+        expect(apiJs).toMatch(/b\.overflow\s*=\s*_eclawPrevBody\.overflow/);
+        expect(apiJs).toMatch(/b\.position\s*=\s*_eclawPrevBody\.position/);
+        expect(apiJs).toMatch(/window\.scrollTo\(0,\s*_eclawLockedScrollY\)/);
         expect(apiJs).toMatch(/_eclawScrollLockCount\s*--/);
     });
 
