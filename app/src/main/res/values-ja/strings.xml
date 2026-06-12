@@ -851,7 +851,6 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="channel_api_manage_all">すべてのキーを管理 →</string>
     <string name="facebook_app_id">772387505935344</string>
     <string name="facebook_client_token">139b350cf525d7785d370b1813e77838</string>
-    <string name="fb_login_protocol_scheme">fb772387505935344</string>
     <string name="google_server_client_id">857252321032-3e8ajfc30up4957l8lqns562dee7ll72.apps.googleusercontent.com</string>
 
     <string name="tool_status_analyzing">分析を実行中…</string>

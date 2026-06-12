@@ -955,7 +955,6 @@ Bei Fragen kontaktieren Sie uns über unsere offizielle E-Mail.
     <string name="channel_api_manage_all">Alle Schlüssel verwalten →</string>
     <string name="facebook_app_id">772387505935344</string>
     <string name="facebook_client_token">139b350cf525d7785d370b1813e77838</string>
-    <string name="fb_login_protocol_scheme">fb772387505935344</string>
     <string name="google_server_client_id">857252321032-3e8ajfc30up4957l8lqns562dee7ll72.apps.googleusercontent.com</string>
 
     <string name="tool_status_analyzing">Analyse wird ausgeführt…</string>
