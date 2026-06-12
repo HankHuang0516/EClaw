@@ -1267,7 +1267,7 @@ class SettingsActivity : AppCompatActivity() {
                 .start()
             if (isRemoteControlExpanded && !remoteControlPrefsLoaded) {
                 remoteControlPrefsLoaded = true
-                loadRemoteControlPrefs()
+                buildRemoteControlUi(emptyMap())
             }
         }
     }
@@ -1300,15 +1300,10 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun buildRemoteControlUi(prefs: Map<String, Boolean>) {
         remoteControlContainer.removeAllViews()
-        val enabled = prefs["remote_control_enabled"] ?: false
-
-        // Accessibility status indicator
-        val isActive = isAccessibilityServiceEnabled()
-        val statusText = TextView(this).apply {
-            text = if (isActive) getString(R.string.remote_control_status_active)
-                   else getString(R.string.remote_control_status_inactive)
-            textSize = 12f
-            setTextColor(if (isActive) 0xFF4CAF50.toInt() else 0xFFFF9800.toInt())
+        val unavailableText = TextView(this).apply {
+            text = getString(R.string.remote_control_unavailable_play_review)
+            textSize = 13f
+            setTextColor(0x99FFFFFF.toInt())
             val lp = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -1316,59 +1311,7 @@ class SettingsActivity : AppCompatActivity() {
             lp.bottomMargin = dpToPx(8)
             layoutParams = lp
         }
-        remoteControlContainer.addView(statusText)
-
-        // Enable/disable toggle row
-        val row = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = android.view.Gravity.CENTER_VERTICAL
-            val lp = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            lp.bottomMargin = dpToPx(4)
-            layoutParams = lp
-            setPadding(0, dpToPx(4), 0, dpToPx(4))
-        }
-        val label = TextView(this).apply {
-            text = getString(R.string.remote_control_toggle_label)
-            textSize = 14f
-            setTextColor(0xDDFFFFFF.toInt())
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-        }
-        val toggle = MaterialSwitch(this).apply {
-            isChecked = enabled
-            setOnCheckedChangeListener { _, isChecked ->
-                TelemetryHelper.trackAction("remote_control_toggle", mapOf("enabled" to isChecked.toString()))
-                updateRemoteControlPref(isChecked)
-            }
-        }
-        row.addView(label)
-        row.addView(toggle)
-        remoteControlContainer.addView(row)
-
-        // Button to open system Accessibility Settings (with mandatory prominent disclosure)
-        val btnAccessibility = com.google.android.material.button.MaterialButton(this).apply {
-            text = getString(R.string.remote_control_open_accessibility)
-            setOnClickListener {
-                TelemetryHelper.trackAction("remote_control_open_accessibility")
-                com.google.android.material.dialog.MaterialAlertDialogBuilder(this@SettingsActivity)
-                    .setTitle(getString(R.string.remote_control_disclosure_title))
-                    .setMessage(getString(R.string.remote_control_disclosure_message))
-                    .setPositiveButton(getString(R.string.remote_control_disclosure_confirm)) { _, _ ->
-                        startActivity(android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                    }
-                    .setNegativeButton(getString(R.string.cancel), null)
-                    .show()
-            }
-            val lp = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            lp.topMargin = dpToPx(8)
-            layoutParams = lp
-        }
-        remoteControlContainer.addView(btnAccessibility)
+        remoteControlContainer.addView(unavailableText)
     }
 
     private fun updateRemoteControlPref(enabled: Boolean) {
@@ -1387,16 +1330,6 @@ class SettingsActivity : AppCompatActivity() {
                 Timber.e(e, "Failed to update remote control preference")
                 TelemetryHelper.trackError(e, mapOf("action" to "update_remote_control_pref"))
             }
-        }
-    }
-
-    private fun isAccessibilityServiceEnabled(): Boolean {
-        val am = getSystemService(ACCESSIBILITY_SERVICE) as android.view.accessibility.AccessibilityManager
-        return am.getEnabledAccessibilityServiceList(
-            android.accessibilityservice.AccessibilityServiceInfo.FEEDBACK_ALL_MASK
-        ).any { info ->
-            info.resolveInfo.serviceInfo.packageName == packageName &&
-            info.resolveInfo.serviceInfo.name.endsWith(".ScreenControlService")
         }
     }
 
