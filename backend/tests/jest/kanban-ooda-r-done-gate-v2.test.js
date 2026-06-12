@@ -353,3 +353,47 @@ describe('heartbeat — classifyBatch', () => {
         expect(escalate).toEqual([]);
     });
 });
+
+describe('evaluateDoneGate v2 — evidence comment selection (card_4c3a75bc)', () => {
+    // Regression: the gate used to lock onto the FIRST comment with all 6 items.
+    // If that comment lacked the PR link, a LATER comment that added the link was
+    // never read ("先到先贏 — 後補 PR link 永遠讀不到").
+    const preflight = mkComment(preflightText, { isSystem: true, t: '2026-06-07T01:00:00Z' });
+    const completeNoPr = mkComment(evidence({ pr: false }), { t: '2026-06-07T02:00:00Z' });
+    const completeWithPr = mkComment(evidence({ pr: true }), { t: '2026-06-07T03:00:00Z' });
+    const jest = mkFile('jest_out.txt', 'text/plain', '2026-06-07T04:00:00Z');
+
+    test('earlier complete-but-no-PR comment + later complete-with-PR comment → PASS', () => {
+        const v = evaluateDoneGate({
+            oldStatus: 'in_progress', newStatus: 'done',
+            requiresPreflightReview: true,
+            severity: 'P2', painTags: ['task_context'],
+            comments: [preflight, completeNoPr, completeWithPr],
+            files: [jest],
+        });
+        expect(v.allowed).toBe(true);
+    });
+
+    test('order-independent: PR-link comment BEFORE a later no-PR comment still PASS', () => {
+        const v = evaluateDoneGate({
+            oldStatus: 'in_progress', newStatus: 'done',
+            requiresPreflightReview: true,
+            severity: 'P2', painTags: ['task_context'],
+            comments: [preflight, completeWithPr, completeNoPr],
+            files: [jest],
+        });
+        expect(v.allowed).toBe(true);
+    });
+
+    test('still fails when NO complete comment carries a PR link', () => {
+        const v = evaluateDoneGate({
+            oldStatus: 'in_progress', newStatus: 'done',
+            requiresPreflightReview: true,
+            severity: 'P2', painTags: ['task_context'],
+            comments: [preflight, completeNoPr],
+            files: [jest],
+        });
+        expect(v.allowed).toBe(false);
+        expect(v.missingItems).toEqual(['PR link']);
+    });
+});
