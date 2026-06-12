@@ -1,3 +1,4 @@
+/* global window */
 /**
  * Canonical route registry — docs/redirect-state-machine-spec.md §2.
  * Card: card_14571f26914b9c1eae148362 (OODA-R Phase 2 #7, Phase A).

@@ -41,7 +41,7 @@ describe('chat message deep-link plumbing', () => {
         expect(chatHtml).not.toContain('prefillInput, messageId, meta, ts } = JSON.parse(pq)');
         expect(chatHtml).toContain('await openChatMessageDeepLink(messageId, { showMissingToast: true, scroll: true });');
         expect(chatHtml).toContain('const msgId = intent.messageId || quote.messageId');
-        expect(chatHtml).toContain("quoteToChat(quote.source || '引用', quote.title || '', quote.excerpt || '');");
+        expect(chatHtml).toContain("quoteToChat(quote.source || '引用', quote.title || '', quote.excerpt || '', qMeta);");
     });
 
     test('native WebView fallback uses canonical messageId query', () => {
