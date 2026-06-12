@@ -28,6 +28,8 @@ const CHROMIUM_EXECUTABLE = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE ||
 
 async function run() {
     fs.mkdirSync(ARTIFACT_DIR, { recursive: true });
+    // Run-scoped token for write-flow markers (data isolation + self-clean).
+    const runId = process.env.MATRIX_RUN_ID || ('r' + Date.now().toString(36));
     const browser = await chromium.launch({ executablePath: CHROMIUM_EXECUTABLE });
     const results = [];
 
@@ -48,7 +50,7 @@ async function run() {
             const page = await context.newPage();
             const shot = path.join(ARTIFACT_DIR, `${flow.key}__${platform.key}.png`);
             try {
-                const r = await driver(page, { base: BASE, platform });
+                const r = await driver(page, { base: BASE, platform, runId });
                 cell.status = r.ok ? 'pass' : 'fail';
                 cell.detail = r.detail || '';
             } catch (e) {
