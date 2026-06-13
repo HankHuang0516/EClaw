@@ -241032,7 +241032,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_public_code": "Code",
+        "dash_public_code": "Code", "health_checking": "Health-checking",
 
 
 
@@ -880739,7 +880739,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_public_code": "代碼",
+        "dash_public_code": "代碼", "health_checking": "健檢中",
 
 
 
@@ -1330810,7 +1330810,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_public_code": "代碼",
+        "dash_public_code": "代碼", "health_checking": "健检中",
 
 
 
@@ -2057366,7 +2057366,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_public_code": "コード",
+        "dash_public_code": "コード", "health_checking": "ヘルスチェック中",
 
 
 
@@ -2620566,7 +2620566,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_public_code": "코드",
+        "dash_public_code": "코드", "health_checking": "상태 점검 중",
 
 
 
@@ -3153474,7 +3153474,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_public_code": "โค้ด",
+        "dash_public_code": "โค้ด", "health_checking": "กำลังตรวจสุขภาพ",
 
 
 
@@ -3682676,7 +3682676,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_public_code": "Mã",
+        "dash_public_code": "Mã", "health_checking": "Đang kiểm tra tình trạng",
 
 
 
@@ -4209379,7 +4209379,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_public_code": "Kode",
+        "dash_public_code": "Kode", "health_checking": "Memeriksa kesehatan",
 
 
 
@@ -4735826,7 +4735826,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_public_code": "Code",
+        "dash_public_code": "Code", "health_checking": "Vérification de l’état",
 
 
 
@@ -5259388,7 +5259388,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_public_code": "Código...",
+        "dash_public_code": "Código...", "health_checking": "Comprobando estado",
 
 
 
@@ -5778060,7 +5778060,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_public_code": "Code",
+        "dash_public_code": "Code", "health_checking": "Zustandsprüfung läuft",
 
 
 
@@ -6105604,7 +6105604,7 @@ const TRANSLATIONS = {
         "dash_avatar_remove": "Remove photo",
         "dash_avatar_removed": "Photo removed",
         "dash_code_copied": "Command copied to clipboard!",
-        "dash_public_code": "Code",
+        "dash_public_code": "Code", "health_checking": "Verificando integridade",
         "dash_copy_code": "Click to copy public code",
         "dash_public_code_copied": "Public code copied!",
         "dash_code_generated": "Binding code generated!",
@@ -6315096,7 +6315096,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_public_code": "Kod",
+        "dash_public_code": "Kod", "health_checking": "Menyemak kesihatan",
 
 
 
@@ -6780118,7 +6780118,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_public_code": "कोड",
+        "dash_public_code": "कोड", "health_checking": "स्वास्थ्य जाँच जारी",
 
 
 
@@ -7403099,7 +7403099,7 @@ const TRANSLATIONS = {
 
 
 
-        "dash_public_code": "الكود",
+        "dash_public_code": "الكود", "health_checking": "جارٍ فحص الحالة",
 
 
 

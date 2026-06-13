@@ -185,28 +185,57 @@ function _petdxCanRenderCanvas(entityId) {
     const sheetUrl = (node.asset && node.asset.url) || node.assetUrl;
     return typeof sheetUrl === 'string' && sheetUrl.length > 0;
 }
-function renderAvatarHtml(avatar, size, entityId) {
+function _healthCheckingBadgeHtml() {
+    // Small 「健檢中」label rendered next to a health-checking avatar. Uses
+    // i18n.t() when available (data-i18n keeps it live-translatable), else
+    // falls back to the English string so it never renders a raw key.
+    var label = (typeof i18n !== 'undefined' && typeof i18n.t === 'function')
+        ? i18n.t('health_checking')
+        : 'Health-checking';
+    return '<span class="health-checking-badge" data-i18n="health_checking">' + label + '</span>';
+}
+
+/**
+ * Render an avatar as HTML.
+ *
+ * @param {string} avatar - emoji string or image URL
+ * @param {number} [size=48] - size in px (for image avatars)
+ * @param {number} [entityId] - optional entityId to consider for petdx render
+ * @param {object} [opts] - optional flags. opts.healthChecking=true wraps the
+ *        avatar in a `.health-checking` ring animation + a 「健檢中」badge.
+ */
+function renderAvatarHtml(avatar, size, entityId, opts) {
     size = size || 48;
     const eidAttr = entityId != null ? ' data-entity-id="' + Number(entityId) + '"' : '';
+    let inner;
     if (entityId != null && _petdxCanRenderCanvas(entityId)) {
         // imageRendering keeps the spritesheet pixel-art crisp at small sizes;
         // matches PetdxRenderer's ctx.imageSmoothingEnabled = false.
-        return '<canvas class="entity-avatar-canvas"' + eidAttr
+        inner = '<canvas class="entity-avatar-canvas"' + eidAttr
             + ' data-petdx-entity-id="' + Number(entityId) + '"'
             + ' width="' + size + '" height="' + size + '"'
             + ' style="width:' + size + 'px;height:' + size + 'px;'
             + 'image-rendering:pixelated;border-radius:50%;vertical-align:middle;"'
             + ' aria-label="entity avatar"></canvas>';
-    }
-    if (isAvatarUrl(avatar)) {
-        return '<img src="' + avatar + '" class="entity-avatar-img"' + eidAttr +
+    } else if (isAvatarUrl(avatar)) {
+        inner = '<img src="' + avatar + '" class="entity-avatar-img"' + eidAttr +
             ' style="width:' + size + 'px;height:' + size + 'px;" alt="avatar" loading="lazy">';
+    } else if (entityId != null) {
+        // Emoji fallback — wrap in a span so the click delegate can resolve entityId.
+        inner = '<span class="entity-avatar-emoji"' + eidAttr + '>' + (avatar || '\u{1F99E}') + '</span>';
+    } else {
+        inner = avatar || '\u{1F99E}';
     }
-    // Emoji fallback — wrap in a span so the click delegate can resolve entityId.
-    if (entityId != null) {
-        return '<span class="entity-avatar-emoji"' + eidAttr + '>' + (avatar || '\u{1F99E}') + '</span>';
+
+    // Health-checking: wrap in a pulsing/glowing ring + 「健檢中」badge. The
+    // wrapper keeps the original markup intact so existing click delegates that
+    // resolve data-entity-id still work.
+    if (opts && opts.healthChecking) {
+        return '<span class="avatar-health-wrap health-checking" '
+            + 'style="width:' + size + 'px;height:' + size + 'px;">'
+            + inner + _healthCheckingBadgeHtml() + '</span>';
     }
-    return avatar || '\u{1F99E}';
+    return inner;
 }
 
 /**

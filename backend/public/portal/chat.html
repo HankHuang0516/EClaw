@@ -4076,6 +4076,12 @@
                 } else {
                     hideTypingIndicator();
                 }
+                // Passive-health 健檢中: toggle a ring + badge on the target-bar
+                // entity label without re-rendering the whole bar. Keeps the
+                // in-memory boundEntities flag in sync for subsequent re-renders.
+                if ('healthChecking' in data && entityId != null) {
+                    applyHealthCheckingToTargetBar(entityId, !!data.healthChecking);
+                }
             };
 
             // Poll every 5 seconds (fallback when socket disconnected)
@@ -4085,6 +4091,29 @@
                 }
             }, 5000);
         });
+
+        // Toggle the 健檢中 (health-checking) ring + badge on a target-bar entity
+        // label. Patches boundEntities so a later full re-render keeps the state,
+        // and mutates the DOM label in place for an instant visual update.
+        function applyHealthCheckingToTargetBar(entityId, on) {
+            const ent = (boundEntities || []).find(e => e.entityId === entityId);
+            if (ent) ent.healthChecking = on;
+            const label = document.querySelector('.target-entity-check[data-entity-id="' + entityId + '"]');
+            if (!label) return;
+            const main = label.querySelector('.target-label-main');
+            if (!main) return;
+            main.classList.toggle('health-checking-inline', on);
+            let badge = main.querySelector('.health-checking-badge-inline');
+            if (on && !badge) {
+                badge = document.createElement('span');
+                badge.className = 'health-checking-badge health-checking-badge-inline';
+                badge.setAttribute('data-i18n', 'health_checking');
+                badge.textContent = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t('health_checking') : 'Health-checking';
+                main.appendChild(badge);
+            } else if (!on && badge) {
+                badge.remove();
+            }
+        }
 
         // ── Usage Badge ──
         // Daily message limit was removed — badge always shows "Unlimited".

@@ -585,6 +585,81 @@ a:hover { text-decoration: underline; }
     object-fit: cover;
 }
 
+/* ── Passive-health "健檢中" (health-checking) animation ─────────────────────
+   When an entity is being checked/repaired by the passive-health subsystem,
+   renderAvatarHtml() wraps its avatar in .avatar-health-wrap.health-checking.
+   A pulsing/glowing ring + a small badge signal the in-progress state. */
+.avatar-health-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    vertical-align: middle;
+}
+.avatar-health-wrap.health-checking::before {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid var(--accent-cyan, #4fc3f7);
+    box-shadow: 0 0 8px 2px rgba(79, 195, 247, 0.6);
+    pointer-events: none;
+    animation: healthCheckPulse 1.4s ease-in-out infinite;
+}
+@keyframes healthCheckPulse {
+    0%   { transform: scale(0.92); opacity: 0.55; }
+    50%  { transform: scale(1.08); opacity: 1; }
+    100% { transform: scale(0.92); opacity: 0.55; }
+}
+.health-checking-badge {
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent-cyan, #4fc3f7);
+    color: #06283d;
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 2px 5px;
+    border-radius: 8px;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+/* Inline variant for the chat target bar: the label is a compact flex row, so
+   render the badge inline (not absolutely positioned) and give the row a subtle
+   pulsing glow instead of a ring. */
+.health-checking-badge-inline {
+    position: static;
+    transform: none;
+    bottom: auto;
+    left: auto;
+    margin-left: 4px;
+}
+.target-label-main.health-checking-inline {
+    animation: healthCheckGlow 1.4s ease-in-out infinite;
+    border-radius: 6px;
+}
+@keyframes healthCheckGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(79, 195, 247, 0); }
+    50%      { box-shadow: 0 0 6px 1px rgba(79, 195, 247, 0.7); }
+}
+
+/* Respect users who prefer reduced motion: keep the ring + badge visible as a
+   static indicator, but drop the pulsing animation. */
+@media (prefers-reduced-motion: reduce) {
+    .avatar-health-wrap.health-checking::before {
+        animation: none;
+        opacity: 0.9;
+    }
+    .target-label-main.health-checking-inline {
+        animation: none;
+        box-shadow: 0 0 4px 1px rgba(79, 195, 247, 0.6);
+    }
+}
+
 .avatar-upload-area {
     position: relative;
     width: 100%;
