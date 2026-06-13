@@ -3858,7 +3858,7 @@
                 '</p>' +
                 '<div class="dialog-actions">' +
                 '<button class="btn btn-outline" onclick="this.closest(\'.confirm-overlay\').remove()">' + i18n.t('mc_dlg_cancel') + '</button>' +
-                '<button class="btn btn-primary" onclick="this.closest(\'.confirm-overlay\').remove(); scrollToRebind(' + entityId + ')">' + i18n.t('dash_refresh_broken_rebind') + '</button>' +
+                '<button class="btn btn-primary" onclick="this.closest(\'.confirm-overlay\').remove(); rebindSelfRepair(' + entityId + ', this)">' + i18n.t('dash_refresh_broken_rebind') + '</button>' +
                 '</div>' +
                 '</div>';
             document.body.appendChild(overlay);
@@ -3869,6 +3869,43 @@
             if (!isAddExpanded) toggleAddEntity();
             selectSlot(entityId);
             document.getElementById('addEntityCard').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Smart re-bind: trigger the bound channel's version-aware self-repair program
+        // (detect+install latest repair version -> repair -> health -> /api/channel/bind re-bind).
+        // Falls back to the manual rebind scroll if the channel bridge is unreachable.
+        async function rebindSelfRepair(entityId, btnEl) {
+            var originalText = btnEl ? btnEl.textContent : '';
+            if (btnEl) { btnEl.disabled = true; btnEl.textContent = i18n.t('dash_refreshing'); }
+            if (window.telemetry) telemetry.trackAction('channel_self_repair', { entityId: entityId });
+            try {
+                var result = await apiCall('POST', '/api/channel/self-repair', {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret,
+                    entityId: entityId
+                });
+                if (result.success) {
+                    var detail = result.localVersion ? (' v' + result.localVersion + (result.updated ? '\u2192latest' : '')) : '';
+                    showToast(i18n.t('dash_restart_success') + detail, 'success');
+                    setTimeout(function() { loadEntities(); }, 2000);
+                } else if (result.webhookBroken) {
+                    // Channel bridge unreachable — fall back to manual rebind
+                    showToast(result.error || i18n.t('dash_restart_failed'), 'error');
+                    scrollToRebind(entityId);
+                } else {
+                    showToast(i18n.t('dash_restart_failed') + (result.error ? ': ' + result.error : ''), 'error');
+                }
+            } catch (e) {
+                if (e.status === 429) {
+                    var remaining = (e.data && e.data.cooldown_remaining) || 60;
+                    showToast(i18n.t('dash_refresh_cooldown', { s: remaining }), 'error');
+                } else {
+                    if (window.telemetry) telemetry.trackError(e, { action: 'channel_self_repair' });
+                    showToast(e.message || i18n.t('dash_restart_failed'), 'error');
+                }
+            } finally {
+                if (btnEl) { btnEl.disabled = false; btnEl.textContent = originalText; }
+            }
         }
 
         // --- Avatar Emoji Picker ---
