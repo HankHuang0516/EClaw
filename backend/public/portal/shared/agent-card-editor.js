@@ -78,7 +78,7 @@ window.AgentCardEditor = (function() {
                 '<div class="ace-caps" id="aceCaps' + uid + '"></div>' +
                 (this.isOwner ? '<div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">' +
                     '<button class="btn btn-sm" id="aceInterviewBtn' + uid + '" style="font-size:12px;background:#10b981;color:#fff;border:none;">🧪 ' + t('dash_run_interview', 'Run Interview') + '</button>' +
-                    '<button class="btn btn-sm btn-outline" id="aceRentalBtn' + uid + '" style="font-size:12px;">🤖 ' + t('dash_list_rental', 'List for Rental') + '</button>' +
+                    '<button class="btn btn-sm btn-outline" id="aceRentalBtn' + uid + '" style="font-size:12px;" title="' + t('dash_list_rental', 'List for Rental') + t('dash_list_rental_paid_suffix', ' (paid rental)') + '">💴 ' + t('dash_list_rental', 'List for Rental') + t('dash_list_rental_paid_suffix', ' (paid rental)') + '</button>' +
                     '<button class="btn btn-sm btn-outline" id="aceArenaBtn' + uid + '" style="font-size:12px;opacity:0.7;">' + t('dash_run_arena', '📝 Eval Center') + '</button>' +
                 '</div>' +
                 '<div id="aceInterviewStatus' + uid + '" style="margin-top:8px;font-size:12px;"></div>' : '') +

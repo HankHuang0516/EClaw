@@ -9289,7 +9289,12 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
             const targetDev = devices[targetDeviceId];
             if (targetDev) {
                 const replySource = `xdevice:${entity.publicCode}:${entity.character}->${targetDeviceId}`;
-                await saveChatMessage(targetDeviceId, 0, finalMessage, replySource, false, true);
+                const explicitRouteMeta = buildRoutingMeta({
+                    mode: 'xdevice', fromEntity: entity, fromId: eId,
+                    toEntity: null, toId: 0,
+                    fromPublicCode: entity.publicCode
+                });
+                await saveChatMessage(targetDeviceId, 0, finalMessage, replySource, false, true, null, null, null, null, null, null, null, null, null, explicitRouteMeta);
                 serverLog('info', 'cross_speak_push', `[EXPLICIT_ROUTE] Transform routed reply to ${targetDeviceId}`, {
                     deviceId, entityId: eId,
                     metadata: { targetDeviceId, fromPublicCode: entity.publicCode }
@@ -9310,7 +9315,13 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
             if (pendingCross && pendingCross.fromDeviceId) {
                 const replySource = `xdevice:${entity.publicCode}:${entity.character}->${pendingCross.fromPublicCode || pendingCross.fromDeviceId}`;
                 const senderEntityId = pendingCross.fromEntityId >= 0 ? pendingCross.fromEntityId : 0;
-                await saveChatMessage(pendingCross.fromDeviceId, senderEntityId, finalMessage, replySource, false, true);
+                const autoRouteMeta = buildRoutingMeta({
+                    mode: 'xdevice', fromEntity: entity, fromId: eId,
+                    toEntity: null, toId: senderEntityId,
+                    fromPublicCode: entity.publicCode,
+                    toPublicCode: pendingCross.fromPublicCode || null
+                });
+                await saveChatMessage(pendingCross.fromDeviceId, senderEntityId, finalMessage, replySource, false, true, null, null, null, null, null, null, null, null, null, autoRouteMeta);
                 serverLog('info', 'cross_speak_push', `[CROSS_ROUTE] Transform auto-routed reply to sender ${pendingCross.fromDeviceId}:${senderEntityId}`, {
                     deviceId, entityId: eId,
                     metadata: { senderDeviceId: pendingCross.fromDeviceId, senderEntityId, fromPublicCode: pendingCross.fromPublicCode }
@@ -11856,7 +11867,8 @@ app.post('/api/entity/speak-to', async (req, res) => {
         deviceId, entityId: toId,
         metadata: { tag: 'A2A_MQ_PUSH', fromEntityId: fromId, toEntityId: toId, mqLen: toEntity.messageQueue.length }
     });
-    const chatMsgId = await saveChatMessage(deviceId, fromId, speakToText, `${sourceLabel}->${toId}`, false, true, mediaType || null, mediaUrl || null);
+    const speakToRoutingMeta = buildRoutingMeta({ mode: 'speakTo', fromEntity, fromId, toEntity, toId });
+    const chatMsgId = await saveChatMessage(deviceId, fromId, speakToText, `${sourceLabel}->${toId}`, false, true, mediaType || null, mediaUrl || null, null, null, null, null, null, null, null, speakToRoutingMeta);
     markMessagesAsRead(deviceId, toId);
 
     // ── A2A Debug Telemetry ──
@@ -12254,9 +12266,13 @@ app.post('/api/entity/cross-speak', async (req, res) => {
     enqueueMessage(toEntity, messageObj, 'xdevice_publiccode');
 
     // Save chat message on BOTH devices
-    const chatMsgId = await saveChatMessage(target.deviceId, target.entityId, crossText, `${sourceLabel}->${targetCode}`, false, true, mediaType || null, mediaUrl || null);
+    const crossRoutingMeta = buildRoutingMeta({
+        mode: 'xdevice', fromEntity, fromId, toEntity, toId: target.entityId,
+        fromPublicCode: fromEntity.publicCode, toPublicCode: targetCode
+    });
+    const chatMsgId = await saveChatMessage(target.deviceId, target.entityId, crossText, `${sourceLabel}->${targetCode}`, false, true, mediaType || null, mediaUrl || null, null, null, null, null, null, null, null, crossRoutingMeta);
     // Also save on sender side for their chat history
-    await saveChatMessage(deviceId, fromId, crossText, `${sourceLabel}->${targetCode}`, false, true, mediaType || null, mediaUrl || null);
+    await saveChatMessage(deviceId, fromId, crossText, `${sourceLabel}->${targetCode}`, false, true, mediaType || null, mediaUrl || null, null, null, null, null, null, null, null, crossRoutingMeta);
 
     // Update target entity state
     toEntity.message = `xdevice:${fromEntity.publicCode}:${fromEntity.character}: ${crossText}`;
@@ -12627,9 +12643,27 @@ async function handleVisibility(req, res) {
         return res.status(404).json({ success: false, error: 'Entity not found or not bound' });
     }
 
-    // Must have an agent card to publish
-    if (isPublic && !entity.agentCard) {
-        return res.status(400).json({ success: false, error: 'Entity must have an agent card before publishing' });
+    // card_36a: AGENT_CARD_INCOMPLETE returns missing-field list so the
+    // toggle UI can highlight the empty inputs instead of showing a single
+    // abstract red banner.
+    if (isPublic) {
+        const card = entity.agentCard;
+        const missingFields = [];
+        if (!card || typeof card !== 'object') {
+            missingFields.push('description', 'protocols', 'tags');
+        } else {
+            if (!card.description || !String(card.description).trim()) missingFields.push('description');
+            if (!Array.isArray(card.protocols) || card.protocols.length === 0) missingFields.push('protocols');
+            if (!Array.isArray(card.tags) || card.tags.length === 0) missingFields.push('tags');
+        }
+        if (missingFields.length) {
+            return res.status(400).json({
+                success: false,
+                code: 'AGENT_CARD_INCOMPLETE',
+                error: 'Agent card incomplete — please fill: ' + missingFields.join(', '),
+                missingFields
+            });
+        }
     }
 
     const ok = await db.setEntityPublic(deviceId, eId, isPublic);
@@ -14372,11 +14406,18 @@ app.post('/api/client/cross-speak', async (req, res) => {
 
     // Save chat message — always save to both sender and target devices
     const sourceTag = `${sourceLabel}->${targetCode}`;
-    const chatMsgId = await saveChatMessage(target.deviceId, target.entityId, text, sourceTag, true, false, mediaType || null, mediaUrl || null, null, null, null, null, null, validatedAttachments);
+    const clientCrossRoutingMeta = buildRoutingMeta({
+        mode: 'xdevice',
+        fromEntity: isOwnerMode ? null : fromEntity, fromId: isOwnerMode ? 0 : fromId,
+        toEntity, toId: target.entityId,
+        fromPublicCode: isOwnerMode ? null : fromEntity.publicCode,
+        toPublicCode: targetCode
+    });
+    const chatMsgId = await saveChatMessage(target.deviceId, target.entityId, text, sourceTag, true, false, mediaType || null, mediaUrl || null, null, null, null, null, null, validatedAttachments, null, clientCrossRoutingMeta);
     // Also save sender's copy: in owner mode use entity 0; in entity mode use fromId
     const senderEntityId = isOwnerMode ? 0 : fromId;
     if (deviceId !== target.deviceId || senderEntityId !== target.entityId) {
-        await saveChatMessage(deviceId, senderEntityId, text, sourceTag, true, false, mediaType || null, mediaUrl || null, null, null, null, null, null, validatedAttachments);
+        await saveChatMessage(deviceId, senderEntityId, text, sourceTag, true, false, mediaType || null, mediaUrl || null, null, null, null, null, null, validatedAttachments, null, clientCrossRoutingMeta);
     }
 
     toEntity.message = isOwnerMode ? `xdevice:owner: ${text}` : `xdevice:${fromEntity.publicCode}:${fromEntity.character}: ${text}`;
@@ -14679,7 +14720,14 @@ app.post('/api/entity/broadcast', async (req, res) => {
     serverLog('info', 'broadcast', `Entity ${fromId} -> [${targetIds.join(',')}]: "${broadcastText.slice(0, 80)}"`, { deviceId, entityId: fromId, metadata: { targets: targetIds, b2bRemaining } });
 
     // Save ONE chat message for the broadcast (sender's perspective, all targets)
-    const broadcastChatMsgId = await saveChatMessage(deviceId, fromId, broadcastText, `${sourceLabel}->${targetIds.join(',')}`, false, true, mediaType || null, mediaUrl || null);
+    // routing_meta uses the first target's LV as representative (broadcast chip mode is set explicitly).
+    const broadcastFirstTarget = device.entities[targetIds[0]];
+    const broadcastRoutingMeta = buildRoutingMeta({
+        mode: 'broadcast', fromEntity, fromId,
+        toEntity: broadcastFirstTarget, toId: targetIds[0]
+    });
+    broadcastRoutingMeta.broadcast_target_ids = targetIds.slice();
+    const broadcastChatMsgId = await saveChatMessage(deviceId, fromId, broadcastText, `${sourceLabel}->${targetIds.join(',')}`, false, true, mediaType || null, mediaUrl || null, null, null, null, null, null, null, null, broadcastRoutingMeta);
 
     // Notify device about broadcast (fire-and-forget)
     notifyDevice(deviceId, {
@@ -20264,6 +20312,28 @@ async function getDeviceVarForEmbedding(deviceId, varName) {
     } catch {
         return null;
     }
+}
+
+// Build a routing_meta object for chat_messages from sender/target entities.
+// Used by non-deliverToEntity paths (legacy entity speak-to, cross-speak, broadcast)
+// so renderRoutingChip on the client always has structured routing context.
+// deliverToEntity keeps its own inline literal (locked by routing-meta-payload.test.js).
+function buildRoutingMeta({ mode, fromEntity, fromId, toEntity, toId, status, fromPublicCode, toPublicCode } = {}) {
+    const entityName = (e, id) => (e && (e.name || e.character)) || (id != null ? `Entity ${id}` : '?');
+    const entityLv = (e) => (e && Number.isFinite(Number(e.level))) ? Number(e.level) : 1;
+    const meta = {
+        mode: mode || 'speakTo',
+        from_entity_id: fromId != null ? fromId : null,
+        from_name: entityName(fromEntity, fromId),
+        from_lv: entityLv(fromEntity),
+        to_entity_id: toId != null ? toId : null,
+        to_name: entityName(toEntity, toId),
+        to_lv: entityLv(toEntity),
+        status: status || 'sent'
+    };
+    if (fromPublicCode) meta.from_public_code = fromPublicCode;
+    if (toPublicCode) meta.to_public_code = toPublicCode;
+    return meta;
 }
 
 // Save chat message to database, returns row ID (UUID) or null
