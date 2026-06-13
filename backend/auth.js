@@ -24,6 +24,7 @@ const path = require('path');
 
 const { OAuth2Client } = require('google-auth-library');
 const safeEqual = require('./safe-equal');
+const { apiError, requireFields } = require('./lib/api-errors');
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/realbot'
@@ -265,19 +266,18 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
             const { email, password } = req.body;
             const signupSource = getSignupSource(req, 'web_email');
 
-            if (!email || !password) {
-                return res.status(400).json({ success: false, error: 'Email and password required' });
-            }
+            if (!requireFields(res, req.body, ['email', 'password'], { error: 'Email and password required' })) return;
 
             const emailLower = email.toLowerCase().trim();
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLower)) {
-                return res.status(400).json({ success: false, error: 'Invalid email format' });
+                return apiError(res, 'INVALID_EMAIL', { missingFields: ['email'], error: 'Invalid email format' });
             }
 
             if (!isValidPassword(password)) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Password must be at least 6 characters and contain both letters and numbers'
+                return apiError(res, 'INVALID_PASSWORD', {
+                    missingFields: ['password'],
+                    error: 'Password must be at least 6 characters and contain both letters and numbers',
+                    hint: 'Use 6+ characters with both letters and numbers',
                 });
             }
 
@@ -395,9 +395,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
         try {
             const { email, password } = req.body;
 
-            if (!email || !password) {
-                return res.status(400).json({ success: false, error: 'Email and password required' });
-            }
+            if (!requireFields(res, req.body, ['email', 'password'], { error: 'Email and password required' })) return;
 
             const emailLower = email.toLowerCase().trim();
 
@@ -486,9 +484,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
         try {
             const { deviceId, deviceSecret } = req.body;
 
-            if (!deviceId || !deviceSecret) {
-                return res.status(400).json({ success: false, error: 'Device ID and Secret required' });
-            }
+            if (!requireFields(res, req.body, ['deviceId', 'deviceSecret'], { error: 'Device ID and Secret required' })) return;
 
             // Verify device credentials
             const device = devices[deviceId];
@@ -678,9 +674,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
     router.post('/forgot-password', authRateLimit, async (req, res) => {
         try {
             const { email } = req.body;
-            if (!email) {
-                return res.status(400).json({ success: false, error: 'Email required' });
-            }
+            if (!requireFields(res, req.body, ['email'], { error: 'Email required' })) return;
 
             const emailLower = email.toLowerCase().trim();
             const result = await pool.query('SELECT * FROM user_accounts WHERE email = $1', [emailLower]);
@@ -738,14 +732,13 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
         try {
             const { token, newPassword } = req.body;
 
-            if (!token || !newPassword) {
-                return res.status(400).json({ success: false, error: 'Token and new password required' });
-            }
+            if (!requireFields(res, req.body, ['token', 'newPassword'], { error: 'Token and new password required' })) return;
 
             if (!isValidPassword(newPassword)) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Password must be at least 6 characters and contain both letters and numbers'
+                return apiError(res, 'INVALID_PASSWORD', {
+                    missingFields: ['newPassword'],
+                    error: 'Password must be at least 6 characters and contain both letters and numbers',
+                    hint: 'Use 6+ characters with both letters and numbers',
                 });
             }
 
@@ -755,13 +748,13 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
             );
 
             if (result.rows.length === 0) {
-                return res.status(400).json({ success: false, error: 'Invalid reset token' });
+                return apiError(res, 'INVALID_TOKEN', { error: 'Invalid reset token' });
             }
 
             const user = result.rows[0];
 
             if (user.reset_token_expires && user.reset_token_expires < Date.now()) {
-                return res.status(400).json({ success: false, error: 'Reset token expired' });
+                return apiError(res, 'EXPIRED_TOKEN', { error: 'Reset token expired' });
             }
 
             const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
@@ -990,7 +983,11 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
             const ZH_TRADITIONAL_ALIASES = new Set(['zh-TW', 'zh-Hant', 'zh-HK', 'zh-Hant-TW', 'zh-Hant-HK']);
             const language = ZH_TRADITIONAL_ALIASES.has(rawLanguage) ? 'zh' : rawLanguage;
             if (!language || !validLangs.includes(language)) {
-                return res.status(400).json({ success: false, error: 'Invalid language' });
+                return apiError(res, 'INVALID_LANGUAGE', {
+                    missingFields: ['language'],
+                    error: 'Invalid language',
+                    extra: { allowed: validLangs },
+                });
             }
 
             // Support both cookie auth and deviceId/deviceSecret auth (for Android)
@@ -1092,9 +1089,9 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
             const { deviceId, deviceSecret, email, password } = req.body;
             const signupSource = getSignupSource(req, 'device_bind_email');
 
-            if (!deviceId || !deviceSecret || !email || !password) {
-                return res.status(400).json({ success: false, error: 'deviceId, deviceSecret, email, and password are required' });
-            }
+            if (!requireFields(res, req.body, ['deviceId', 'deviceSecret', 'email', 'password'], {
+                error: 'deviceId, deviceSecret, email, and password are required',
+            })) return;
 
             // Verify device credentials
             const device = devices[deviceId];
@@ -1104,13 +1101,14 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
 
             const emailLower = email.toLowerCase().trim();
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLower)) {
-                return res.status(400).json({ success: false, error: 'Invalid email format' });
+                return apiError(res, 'INVALID_EMAIL', { missingFields: ['email'], error: 'Invalid email format' });
             }
 
             if (!isValidPassword(password)) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Password must be at least 6 characters and contain both letters and numbers'
+                return apiError(res, 'INVALID_PASSWORD', {
+                    missingFields: ['password'],
+                    error: 'Password must be at least 6 characters and contain both letters and numbers',
+                    hint: 'Use 6+ characters with both letters and numbers',
                 });
             }
 
@@ -1196,9 +1194,7 @@ module.exports = function(devices, getOrCreateDevice, serverLog) {
         try {
             const { deviceId, deviceSecret } = req.query;
 
-            if (!deviceId || !deviceSecret) {
-                return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
-            }
+            if (!requireFields(res, req.query, ['deviceId', 'deviceSecret'], { error: 'deviceId and deviceSecret required' })) return;
 
             // Verify device credentials
             const device = devices[deviceId];
