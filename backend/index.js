@@ -20315,9 +20315,10 @@ async function getDeviceVarForEmbedding(deviceId, varName) {
 }
 
 // Build a routing_meta object for chat_messages from sender/target entities.
-// Used by non-deliverToEntity paths (legacy entity speak-to, cross-speak, broadcast)
-// so renderRoutingChip on the client always has structured routing context.
-// deliverToEntity keeps its own inline literal (locked by routing-meta-payload.test.js).
+// Used by non-deliverToEntity paths (legacy entity speak-to, cross-speak, broadcast,
+// transform cross-device routes) so renderRoutingChip on the client always has
+// structured routing context. deliverToEntity keeps its own inline literal
+// (locked by routing-meta-payload.test.js — do not refactor that literal away).
 function buildRoutingMeta({ mode, fromEntity, fromId, toEntity, toId, status, fromPublicCode, toPublicCode } = {}) {
     const entityName = (e, id) => (e && (e.name || e.character)) || (id != null ? `Entity ${id}` : '?');
     const entityLv = (e) => (e && Number.isFinite(Number(e.level))) ? Number(e.level) : 1;

@@ -650195,8 +650195,8 @@ const TRANSLATIONS = {
         "chat_routing_degraded": "Routing degraded",
         "chat_routing_failed": "Routing failed",
         "chat_routing_broadcast": "Broadcast",
-        "chat_routing_client_derived": "client-derived",
         "chat_routing_xdevice": "Cross-device",
+        "chat_routing_client_derived": "client-derived",
 },
 
 
@@ -1234859,8 +1234859,8 @@ const TRANSLATIONS = {
         "chat_routing_degraded": "路由降级",
         "chat_routing_failed": "路由失败",
         "chat_routing_broadcast": "广播",
-        "chat_routing_client_derived": "客户端推导",
         "chat_routing_xdevice": "跨设备",
+        "chat_routing_client_derived": "客户端推导",
 },
 
 
@@ -2943997,8 +2943997,8 @@ const TRANSLATIONS = {
         "chat_routing_degraded": "路由降級",
         "chat_routing_failed": "路由失敗",
         "chat_routing_broadcast": "廣播",
-        "chat_routing_client_derived": "客戶端推導",
         "chat_routing_xdevice": "跨裝置",
+        "chat_routing_client_derived": "客戶端推導",
 },
 
 
