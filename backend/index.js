@@ -16555,22 +16555,56 @@ app.post('/api/channel/self-repair', async (req, res) => {
     }
 
     // 2) Fallback: legacy /restart (no version-check / bind-verify, but better than a dead button).
+    let restartFailed = false;
     try {
         const restartUrl = account.callback_url.replace(/\/eclaw-webhook\/?$/, '/restart');
         const resp = await fetch(restartUrl, {
             method: 'POST', headers, body: JSON.stringify({ mode: '--smart', deviceId, entityId: eId }),
             signal: AbortSignal.timeout(95000)
         });
-        const data = await resp.json().catch(() => ({}));
-        if (resp.ok && data.ok) {
-            entity.lastUpdated = Date.now();
-            await saveData();
-            return res.json({ success: true, mode: 'restart-fallback', repairTriggered: true, message: data.message || '通道已重啟（此通道尚未部署自我修復）' });
+        if (resp.status !== 404) {
+            const data = await resp.json().catch(() => ({}));
+            if (resp.ok && data.ok) {
+                entity.lastUpdated = Date.now();
+                await saveData();
+                return res.json({ success: true, mode: 'restart-fallback', repairTriggered: true, message: data.message || '通道已重啟（此通道尚未部署自我修復）' });
+            }
+            return res.json({ success: false, mode: 'restart-fallback', repairTriggered: true, error: (data && (data.message || data.error)) || '通道修復失敗' });
         }
-        return res.json({ success: false, mode: 'restart-fallback', repairTriggered: true, error: (data && (data.message || data.error)) || '通道修復失敗' });
+        // 404 -> channel has no /restart HTTP endpoint either; fall through to the
+        // universal directive fallback below.
+        restartFailed = true;
     } catch (err2) {
-        return res.json({ success: false, webhookBroken: true, error: `通道修復失敗: ${err2.message}`, hint: 'Channel bridge unreachable.' });
+        console.warn(`[SelfRepair] /restart failed device ${deviceId} entity ${eId}: ${err2.message}; trying directive fallback`);
+        restartFailed = true;
     }
+
+    // 3) Universal fallback: when neither HTTP endpoint exists, deliver the
+    // ECLAW_SELF_REPAIR directive over the channel's own inbound push so the
+    // channel's webhook handler restarts itself in-place (the openclaw container
+    // relaunches under `restart: unless-stopped` and re-binds on boot). Recovery
+    // is verified asynchronously by passive-health, not synchronously here.
+    if (restartFailed && channelModule?.pushToChannelCallback) {
+        try {
+            const nonce = crypto.randomBytes(6).toString('hex');
+            const result = await channelModule.pushToChannelCallback(deviceId, eId, {
+                event: 'message',
+                from: 'EClaw',
+                text: `ECLAW_SELF_REPAIR ${nonce}`,
+            }, entity.channelAccountId);
+            if (result?.pushed) {
+                entity.lastUpdated = Date.now();
+                await saveData();
+                console.log(`[SelfRepair] directive dispatched device ${deviceId} entity ${eId}`);
+                return res.json({ success: true, mode: 'directive', repairTriggered: true, message: '已透過通道指令觸發自我修復' });
+            }
+            return res.json({ success: false, mode: 'directive', repairTriggered: false, error: `通道指令派送失敗: ${result?.reason || 'push_failed'}`, hint: 'Channel callback unreachable.' });
+        } catch (err3) {
+            return res.json({ success: false, webhookBroken: true, error: `通道修復失敗: ${err3.message}`, hint: 'Channel bridge unreachable.' });
+        }
+    }
+
+    return res.json({ success: false, webhookBroken: true, error: '通道修復失敗', hint: 'Channel bridge unreachable.' });
 });
 
 // ============================================

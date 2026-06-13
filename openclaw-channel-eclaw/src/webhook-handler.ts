@@ -90,6 +90,20 @@ export function createWebhookHandler(
         return;
       }
 
+      // Universal self-repair directive: when the version-aware /self-repair and
+      // /restart channel endpoints are unavailable, EClaw delivers this directive
+      // over the normal inbound push so the channel restarts itself in-place.
+      // The openclaw container runs `restart: unless-stopped`, so exiting here
+      // relaunches the process and re-binds via gateway.ts startAccount.
+      const selfRepair = String(msg.text || '').match(/\bECLAW_SELF_REPAIR\s+([A-Za-z0-9_-]+)/);
+      if (selfRepair) {
+        if (client) {
+          await client.sendMessage(`ACK ${selfRepair[1]}`, 'IDLE');
+        }
+        setTimeout(() => process.exit(0), 400);
+        return;
+      }
+
       // Capture event context for deliver routing
       const event = msg.event || 'message';
       const fromEntityId = msg.fromEntityId;
