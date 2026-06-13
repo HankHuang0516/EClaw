@@ -2156,11 +2156,25 @@ async function searchPublicCards({ q, tag, capability, limit = 20, offset = 0, s
         const safeOffset = Math.max(parseInt(offset) || 0, 0);
 
         params.push(safeLimit, safeOffset);
+        // LEFT JOIN LATERAL surfaces the owner's currently selected
+        // companion avatar (PETDX dressing system). Without it, the
+        // plaza shows e.avatar — the static emoji/upload set on first
+        // bind — even after the owner picked a sprite companion.
         const sql = `
             SELECT e.public_code, e.name, e.character, e.avatar, e.agent_card,
                    e.avg_rating, e.rating_count, e.community_message_count,
-                   e.published_at, e.level, e.xp
+                   e.published_at, e.level, e.xp,
+                   petdx.avatar_url AS petdx_avatar_url
             FROM entities e
+            LEFT JOIN LATERAL (
+                SELECT c.avatar_url
+                FROM companion_select_log s
+                LEFT JOIN companions c ON c.id = s.companion_id
+                WHERE s.device_id = e.device_id
+                  AND s.entity_id IS NOT DISTINCT FROM e.entity_id
+                ORDER BY s.selected_at DESC
+                LIMIT 1
+            ) petdx ON true
             WHERE ${conditions.join(' AND ')}
             ORDER BY ${orderBy}
             LIMIT $${paramIdx} OFFSET $${paramIdx + 1}
@@ -2172,6 +2186,7 @@ async function searchPublicCards({ q, tag, capability, limit = 20, offset = 0, s
             name: r.name,
             character: r.character,
             avatar: r.avatar,
+            petdxAvatarUrl: r.petdx_avatar_url || null,
             description: r.agent_card?.description || null,
             capabilities: r.agent_card?.capabilities || [],
             tags: r.agent_card?.tags || [],
@@ -2193,8 +2208,18 @@ async function getPublicCardDetail(publicCode) {
         const result = await pool.query(
             `SELECT e.public_code, e.name, e.character, e.avatar, e.agent_card,
                     e.avg_rating, e.rating_count, e.community_message_count,
-                    e.published_at, e.level, e.xp, e.state
+                    e.published_at, e.level, e.xp, e.state,
+                    petdx.avatar_url AS petdx_avatar_url
              FROM entities e
+             LEFT JOIN LATERAL (
+                 SELECT c.avatar_url
+                 FROM companion_select_log s
+                 LEFT JOIN companions c ON c.id = s.companion_id
+                 WHERE s.device_id = e.device_id
+                   AND s.entity_id IS NOT DISTINCT FROM e.entity_id
+                 ORDER BY s.selected_at DESC
+                 LIMIT 1
+             ) petdx ON true
              WHERE e.public_code = $1 AND e.is_public = true`,
             [publicCode]
         );
@@ -2205,6 +2230,7 @@ async function getPublicCardDetail(publicCode) {
             name: r.name,
             character: r.character,
             avatar: r.avatar,
+            petdxAvatarUrl: r.petdx_avatar_url || null,
             agentCard: r.agent_card || null,
             avgRating: parseFloat(r.avg_rating) || 0,
             ratingCount: parseInt(r.rating_count) || 0,

@@ -1065,6 +1065,8 @@
     <script src="shared/footer.js"></script>
     <script src="shared/product-tour.js"></script>
     <script src="../shared/telemetry.js"></script>
+    <script src="shared/entity-utils.js"></script>
+    <script src="../shared/avatar-petdx.js"></script>
     <script>
     /* ══════════════════════════════════════
        Real API Integration
@@ -1083,6 +1085,30 @@
     let rateMax = 50;
     let _rateDebounce = null;
     let loadBotsRequestSeq = 0;
+
+    /* ══════ Avatar resolution ══════ */
+    // Plaza bots belong to OTHER users, so we can't rely on the per-entity
+    // AvatarPetdx descriptor cache (keyed on the current user's deviceId).
+    // Instead, the server enriches each row with petdxAvatarUrl — the bot
+    // owner's currently selected companion's avatar URL — and we prefer it
+    // over the legacy entities.avatar emoji/upload.
+    function resolveBotAvatar(row) {
+        if (!row) return '\u{1F916}';
+        if (typeof row.petdxAvatarUrl === 'string' && row.petdxAvatarUrl) {
+            return row.petdxAvatarUrl;
+        }
+        return row.avatar || '\u{1F916}';
+    }
+    function botAvatarHtml(avatar, size) {
+        if (typeof renderAvatarHtml === 'function') {
+            return renderAvatarHtml(avatar, size || 48);
+        }
+        // Fallback if entity-utils.js failed to load (CDN miss, etc.)
+        if (typeof avatar === 'string' && /^(https?:\/\/|\/)/.test(avatar)) {
+            return '<img src="' + esc(avatar) + '" style="width:' + (size || 48) + 'px;height:' + (size || 48) + 'px;border-radius:50%;object-fit:cover;" alt="">';
+        }
+        return avatar || '\u{1F916}';
+    }
 
     /* ══════ API ══════ */
     async function apiFetch(path) {
@@ -1196,7 +1222,8 @@
                 if (isCommunityFilter) p.set('tag', currentFilter);
                 const data = await apiFetch('/api/community/search?' + p);
                 communityBots = (data.results || []).map(r => ({
-                    publicCode: r.publicCode, name: r.name || 'Unnamed', avatar: r.avatar || '🤖',
+                    publicCode: r.publicCode, name: r.name || 'Unnamed',
+                    avatar: resolveBotAvatar(r),
                     desc: r.description || '', tags: r.tags || [],
                     caps: (r.capabilities || []).map(c => c.name || c.id || c),
                     stars: r.avgRating || 0, reviews: r.messageCount || 0,
@@ -1219,7 +1246,8 @@
                     rentalBots = (data.listings || []).map(l => {
                         const caps = l.capabilities ? Object.keys(l.capabilities).filter(k => l.capabilities[k]?.supported) : [];
                         return {
-                            publicCode: l.owner_public_code || null, name: l.title || 'Rental Bot', avatar: l.avatar_url || '🤖',
+                            publicCode: l.owner_public_code || null, name: l.title || 'Rental Bot',
+                            avatar: resolveBotAvatar({ petdxAvatarUrl: l.petdx_avatar_url, avatar: l.avatar_url }),
                             desc: l.description || (l.model_detected || ''),
                             tags: caps, caps: caps, _capsObj: l.capabilities || {},
                             stars: l.avg_rating || 0, reviews: l.total_rentals || 0,
@@ -1277,7 +1305,7 @@
             <span class="bot-card-level ${lvClass(bot.level)}">Lv.${bot.level}</span>
             <div class="bot-card-header">
                 <div class="bot-card-avatar">
-                    ${(bot.avatar||'').startsWith('http') ? `<img src="${esc(bot.avatar)}" alt="">` : (bot.avatar||'🤖')}
+                    ${botAvatarHtml(bot.avatar, 56)}
                 </div>
                 <div class="bot-card-info"><div class="bot-card-name">${esc(bot.name)}</div></div>
             </div>
@@ -1310,7 +1338,7 @@
         return `<div class="${isRented ? 'bot-card rented' : 'bot-card'}" onclick="${isRented ? '' : "openRentalDetail('" + bot.listingId + "')"}" style="border-left:3px solid ${borderColor};">
             <span class="bot-card-level" style="background:${borderColor};color:#fff;">${isRented ? tt('mp_status_rented','\u5df2\u51fa\u79df') : tt('community_filter_rental','\u51fa\u79df')}</span>
             <div class="bot-card-header">
-                <div class="bot-card-avatar">${bot.avatar && bot.avatar.startsWith('http') ? '<img src="' + esc(bot.avatar) + '" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">' : (bot.avatar || '\ud83e\udd16')}</div>
+                <div class="bot-card-avatar">${botAvatarHtml(bot.avatar, 40)}</div>
                 <div class="bot-card-info">
                     <div class="bot-card-name">${esc(bot.name)}</div>
                     ${bot.modelDetected ? `<div style="font-size:11px;color:var(--text-secondary);">\ud83e\udd16 ${esc(bot.modelDetected)}</div>` : ''}
@@ -1368,7 +1396,7 @@
             content.innerHTML = `
                 <button class="modal-close" onclick="closeDetail()">✕</button>
                 <div class="detail-header">
-                    <div class="detail-avatar">${(bot.avatar||'🤖').startsWith('http') ? `<img src="${esc(bot.avatar)}" alt="">` : (bot.avatar||'🤖')}</div>
+                    <div class="detail-avatar">${botAvatarHtml(resolveBotAvatar(bot), 72)}</div>
                     <div class="detail-name">${esc(bot.name)}</div>
                     <div class="detail-code" onclick="navigator.clipboard.writeText('${bot.publicCode}')" title="Copy">${bot.publicCode}</div>
                     <div class="detail-desc">${esc(desc)}</div>
@@ -1516,7 +1544,7 @@
             content.innerHTML = `
                 <button class="modal-close" onclick="closeDetail()">\u2715</button>
                 <div class="detail-header">
-                    <div class="detail-avatar">${l.avatar_url && l.avatar_url.startsWith('http') ? '<img src="' + esc(l.avatar_url) + '" style="width:60px;height:60px;border-radius:50%;object-fit:cover;">' : (l.avatar_url || '\ud83e\udd16')}</div>
+                    <div class="detail-avatar">${botAvatarHtml(resolveBotAvatar({ petdxAvatarUrl: l.petdx_avatar_url, avatar: l.avatar_url }), 72)}</div>
                     <div class="detail-name">${esc(l.title)}</div>
                     ${l.model_detected ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">\ud83e\udd16 ${esc(l.model_detected)}</div>` : ''}
                     <div class="detail-level-xp"><span style="color:#f59e0b;">${stars} (${l.total_rentals || 0} ${ttt('mp_d_rentals','rentals')})</span></div>

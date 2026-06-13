@@ -169,11 +169,13 @@ jest.mock('pg', () => {
             return { rows: [{ id: row.id, status: row.status, updated_at: row.updated_at }], rowCount: 1 };
         }
 
-        // GET single listing
-        if (/^SELECT id, owner_user_id.*title.*description.*rate_mli_per_ktoken/i.test(norm)) {
+        // GET single listing — accept both legacy unaliased and the
+        // `bl.`-aliased shape introduced when getListing picked up a
+        // LEFT JOIN LATERAL on companion_select_log for petdx avatar.
+        if (/^SELECT (?:bl\.)?id, (?:bl\.)?owner_user_id.*(?:bl\.)?title.*(?:bl\.)?description.*(?:bl\.)?rate_mli_per_ktoken/i.test(norm)) {
             const row = state.listings.find(l => l.id === params[0]);
             if (!row) return { rows: [], rowCount: 0 };
-            return { rows: [{ ...row }], rowCount: 1 };
+            return { rows: [{ ...row, petdx_avatar_url: null }], rowCount: 1 };
         }
 
         // List my listings

@@ -75,9 +75,9 @@ jest.mock('pg', () => {
             return rows([{ id: l.id, status: l.status, soft_pause_until: null, soft_pause_reason: null }]);
         }
 
-        if (/^SELECT id, owner_user_id, owner_device_id, owner_entity_id,.*soft_pause_until, soft_pause_reason,.*FROM bot_listings WHERE id = \$1$/i.test(norm)) {
+        if (/^SELECT (?:bl\.)?id, (?:bl\.)?owner_user_id, (?:bl\.)?owner_device_id, (?:bl\.)?owner_entity_id,.*soft_pause_until, (?:bl\.)?soft_pause_reason,.*FROM bot_listings/i.test(norm)) {
             const l = getListing(params[0]);
-            return l ? rows([{ ...l }]) : rows([]);
+            return l ? rows([{ ...l, petdx_avatar_url: null }]) : rows([]);
         }
         if (/^SELECT id FROM rental_contracts WHERE listing_id = \$1 AND status LIKE 'active%' LIMIT 1$/i.test(norm)) {
             return rows(state.contracts.filter((c) => c.listing_id === params[0] && String(c.status).startsWith('active')).slice(0, 1).map((c) => ({ id: c.id })));
@@ -93,7 +93,7 @@ jest.mock('pg', () => {
             })));
         }
 
-        if (/FROM bot_listings bl\s+WHERE/i.test(norm) && /bl.status = 'listed'/i.test(norm)) {
+        if (/FROM bot_listings bl\b/i.test(norm) && /bl.status = 'listed'/i.test(norm)) {
             const now = Date.now();
             const limit = params[params.length - 2] || 20;
             const offset = params[params.length - 1] || 0;
@@ -103,7 +103,8 @@ jest.mock('pg', () => {
                 min_rental_minutes: l.min_rental_minutes, max_rental_minutes: l.max_rental_minutes,
                 model_detected: l.model_detected, capabilities: l.capabilities, benchmark_score: l.benchmark_score,
                 avg_rating: l.avg_rating, total_rentals: l.total_rentals, uptime_pct: l.uptime_pct,
-                owner_device_id: l.owner_device_id, owner_entity_id: l.owner_entity_id, avatar_url: l.avatar_url,
+                owner_device_id: l.owner_device_id, owner_entity_id: l.owner_entity_id,
+                avatar_url: l.avatar_url, petdx_avatar_url: null,
                 bound_rebind_count: l.bound_rebind_count, soft_pause_until: l.soft_pause_until, soft_pause_reason: l.soft_pause_reason,
                 has_active_contract: activeContracts(l.id).length > 0,
             })));
