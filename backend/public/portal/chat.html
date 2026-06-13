@@ -5847,6 +5847,14 @@
                 if (routed && (msg.is_from_bot || routed.crossDevice)) {
                     return `<span class="routing-chip rc-unconfirmed" title="${escapeHtml(tt('chat_routing_unconfirmed','路由未確認'))}">⚑ ${escapeHtml(tt('chat_routing_unconfirmed','路由未確認'))}</span>`;
                 }
+                // card_1f8 fallback: source unparseable but row is a bot reply with a
+                // known sender — render a degraded sender-only chip so the user at
+                // least sees who said it (instead of an empty meta row).
+                if (msg && msg.is_from_bot && msg.entity_id != null) {
+                    const senderLabel = '#' + msg.entity_id;
+                    const title = `${tt('chat_routing_label','路由')}: ${senderLabel} → ? · ${tt('chat_routing_client_derived','client-derived')}`;
+                    return `<span class="routing-chip rc-degraded" title="${escapeHtml(title)}"><span class="rc-route">${escapeHtml(senderLabel)} → ?</span></span>`;
+                }
                 return '';
             }
             // Negative: explicit degraded / failed status from the backend.
