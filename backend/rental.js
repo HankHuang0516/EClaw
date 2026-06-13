@@ -755,14 +755,26 @@ async function terminateActiveContractsOnRebind(deviceId, entityId, walletApi) {
 
 async function getListing(listingId) {
     const res = await pool.query(
-        `SELECT id, owner_user_id, owner_device_id, owner_entity_id,
-                title, description, rate_mli_per_ktoken,
-                min_rental_minutes, max_rental_minutes, availability_windows,
-                model_detected, capabilities, benchmark_score, interview_passed,
-                last_interview_at, avg_rating, total_rentals, uptime_pct, status,
-                soft_pause_until, soft_pause_reason,
-                created_at, updated_at
-         FROM bot_listings WHERE id = $1`,
+        `SELECT bl.id, bl.owner_user_id, bl.owner_device_id, bl.owner_entity_id,
+                bl.title, bl.description, bl.rate_mli_per_ktoken,
+                bl.min_rental_minutes, bl.max_rental_minutes, bl.availability_windows,
+                bl.model_detected, bl.capabilities, bl.benchmark_score, bl.interview_passed,
+                bl.last_interview_at, bl.avg_rating, bl.total_rentals, bl.uptime_pct, bl.status,
+                bl.soft_pause_until, bl.soft_pause_reason,
+                bl.avatar_url,
+                petdx.avatar_url AS petdx_avatar_url,
+                bl.created_at, bl.updated_at
+         FROM bot_listings bl
+         LEFT JOIN LATERAL (
+             SELECT c.avatar_url
+             FROM companion_select_log s
+             LEFT JOIN companions c ON c.id = s.companion_id
+             WHERE s.device_id = bl.owner_device_id
+               AND s.entity_id IS NOT DISTINCT FROM bl.owner_entity_id
+             ORDER BY s.selected_at DESC
+             LIMIT 1
+         ) petdx ON true
+         WHERE bl.id = $1`,
         [listingId]
     );
     return serializeSoftPauseFields(res.rows[0] || null);
@@ -913,6 +925,7 @@ async function searchMarketplace({
                 bl.avg_rating, bl.total_rentals, bl.uptime_pct,
                 bl.owner_device_id, bl.owner_entity_id,
                 bl.avatar_url,
+                petdx.avatar_url AS petdx_avatar_url,
                 bl.bound_rebind_count,
                 bl.soft_pause_until, bl.soft_pause_reason,
                 bl.created_at AS bl_created_at,
@@ -924,6 +937,15 @@ async function searchMarketplace({
                       AND ac.status IN ('reserved', 'active', 'suspended_insufficient_funds')
                 ) AS has_active_contract
             FROM bot_listings bl
+            LEFT JOIN LATERAL (
+                SELECT c.avatar_url
+                FROM companion_select_log s
+                LEFT JOIN companions c ON c.id = s.companion_id
+                WHERE s.device_id = bl.owner_device_id
+                  AND s.entity_id IS NOT DISTINCT FROM bl.owner_entity_id
+                ORDER BY s.selected_at DESC
+                LIMIT 1
+            ) petdx ON true
             WHERE ${where.join(' AND ')}
             ORDER BY bl.owner_device_id, bl.owner_entity_id, bl.created_at DESC
          ) deduped

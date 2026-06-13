@@ -44,10 +44,11 @@ jest.mock('pg', () => {
             return { rows: [{ id: row.id, status: row.status, created_at: row.created_at }], rowCount: 1 };
         }
 
-        // SELECT listing by id
-        if (/^SELECT .* FROM bot_listings WHERE id = \$1$/i.test(norm)) {
+        // SELECT listing by id — accept both legacy and `bl.`-aliased shape
+        // (introduced when getListing picked up a petdx_avatar_url JOIN).
+        if (/^SELECT .* FROM bot_listings(?:\s+bl)?.* WHERE (?:bl\.)?id = \$1$/i.test(norm)) {
             const row = state.listings.find(l => l.id === params[0]);
-            return { rows: row ? [{ ...row }] : [], rowCount: row ? 1 : 0 };
+            return { rows: row ? [{ ...row, petdx_avatar_url: null }] : [], rowCount: row ? 1 : 0 };
         }
 
         // COUNT recent interviews (rate limit)
