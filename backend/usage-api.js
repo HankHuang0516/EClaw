@@ -148,24 +148,50 @@ function sumEngineSessions(engineJson) {
     };
 }
 
+/**
+ * Aggregate from the latest snapshot in a range.
+ *
+ * The daemon (~/.../eclaw-usage-daemon/daemon.py) pushes a FULL 24h
+ * cumulative sessions snapshot every minute, so summing every row in a
+ * range double-counts each session by `snapshot_count`. card_694be9fe...
+ * found a ~881x overcount on `aggregates.today` because of that. Using
+ * the latest row's sessions returns the true cumulative window.
+ *
+ * Limitation: the daemon only persists last-24h-of-sessions, so the
+ * `week` and `month` aggregates can only show 24h of activity at best.
+ * Showing that consistently is preferable to silently overcounting; true
+ * 7d/30d totals need a daemon-side schema change (session-level state)
+ * which is out of scope for this PR.
+ */
 function aggregateOverRange(rows) {
-    let claude = { session_count: 0, sum_input_tokens: 0, sum_output_tokens: 0, sum_cost_usd: 0 };
-    let codex  = { session_count: 0, sum_input_tokens: 0, sum_output_tokens: 0, sum_cost_usd: 0 };
-    for (const row of rows) {
-        const c = sumEngineSessions(row.claude_json);
-        const x = sumEngineSessions(row.codex_json);
-        claude.session_count     += c.session_count;
-        claude.sum_input_tokens  += c.sum_input_tokens;
-        claude.sum_output_tokens += c.sum_output_tokens;
-        claude.sum_cost_usd      += c.sum_cost_usd;
-        codex.session_count      += x.session_count;
-        codex.sum_input_tokens   += x.sum_input_tokens;
-        codex.sum_output_tokens  += x.sum_output_tokens;
-        codex.sum_cost_usd       += x.sum_cost_usd;
+    // Take the latest row (highest captured_at). Caller passes ASC or
+    // unordered rows; for safety pick the last element of the array if
+    // it's sorted, else scan for max via received timestamp.
+    if (!Array.isArray(rows) || rows.length === 0) {
+        return {
+            claude: { session_count: 0, sum_input_tokens: 0, sum_output_tokens: 0, sum_cost_usd: 0 },
+            codex:  { session_count: 0, sum_input_tokens: 0, sum_output_tokens: 0, sum_cost_usd: 0 },
+            snapshot_count: 0,
+        };
     }
-    claude.sum_cost_usd = Math.round(claude.sum_cost_usd * 1000000) / 1000000;
-    codex.sum_cost_usd  = Math.round(codex.sum_cost_usd  * 1000000) / 1000000;
-    return { claude, codex, snapshot_count: rows.length };
+    const latest = rows[rows.length - 1];
+    const c = sumEngineSessions(latest.claude_json);
+    const x = sumEngineSessions(latest.codex_json);
+    return {
+        claude: {
+            session_count: c.session_count,
+            sum_input_tokens: c.sum_input_tokens,
+            sum_output_tokens: c.sum_output_tokens,
+            sum_cost_usd: Math.round(c.sum_cost_usd * 1000000) / 1000000,
+        },
+        codex: {
+            session_count: x.session_count,
+            sum_input_tokens: x.sum_input_tokens,
+            sum_output_tokens: x.sum_output_tokens,
+            sum_cost_usd: Math.round(x.sum_cost_usd * 1000000) / 1000000,
+        },
+        snapshot_count: rows.length,
+    };
 }
 
 // ============================================
@@ -270,17 +296,20 @@ module.exports = function(devices) {
             const [todayRows, weekRows, monthRows] = await Promise.all([
                 pool.query(
                     `SELECT claude_json, codex_json FROM usage_snapshots
-                     WHERE device_id = $1 AND captured_at >= $2`,
+                     WHERE device_id = $1 AND captured_at >= $2
+                     ORDER BY captured_at ASC`,
                     [deviceId, new Date(now - dayMs).toISOString()]
                 ),
                 pool.query(
                     `SELECT claude_json, codex_json FROM usage_snapshots
-                     WHERE device_id = $1 AND captured_at >= $2`,
+                     WHERE device_id = $1 AND captured_at >= $2
+                     ORDER BY captured_at ASC`,
                     [deviceId, new Date(now - weekMs).toISOString()]
                 ),
                 pool.query(
                     `SELECT claude_json, codex_json FROM usage_snapshots
-                     WHERE device_id = $1 AND captured_at >= $2`,
+                     WHERE device_id = $1 AND captured_at >= $2
+                     ORDER BY captured_at ASC`,
                     [deviceId, new Date(now - monthMs).toISOString()]
                 )
             ]);
