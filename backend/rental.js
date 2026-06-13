@@ -384,14 +384,21 @@ async function createListing({
 
     // Avatar is passed from the route handler where _interviewDeps is in scope
 
+    // card_68242d883b51c3b6ceda09cb: don't depend on the DB-side DEFAULT for id.
+    // Prod's bot_listings.id lost its DEFAULT in an old migration and the
+    // startup ALTER (above) doesn't always reach the live table (e.g. when the
+    // app DB user lacks ALTER privilege). Generate the id in JS — same shape
+    // as the schema DEFAULT — so INSERT always supplies a value.
+    const listingId = 'listing_' + crypto.randomBytes(12).toString('hex');
+
     const res = await pool.query(
         `INSERT INTO bot_listings
-            (owner_user_id, owner_device_id, owner_entity_id, title, description,
+            (id, owner_user_id, owner_device_id, owner_entity_id, title, description,
              rate_mli_per_ktoken, min_rental_minutes, max_rental_minutes, avatar_url, status,
              bound_rebind_count)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'draft', $10)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'draft', $11)
          RETURNING id, status, created_at, bound_rebind_count`,
-        [ownerUserId, ownerDeviceId, ownerEntityId, title, description,
+        [listingId, ownerUserId, ownerDeviceId, ownerEntityId, title, description,
          rateMliPerKtoken, minRentalMinutes, maxRentalMinutes, avatarUrl || null,
          Number.isInteger(boundRebindCount) && boundRebindCount >= 0 ? boundRebindCount : 0]
     );
