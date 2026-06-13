@@ -16460,6 +16460,112 @@ app.post('/api/entity/refresh', async (req, res) => {
 });
 
 // ============================================
+// CHANNEL SELF-REPAIR (version-aware repair + re-bind sync-verify)
+// ============================================
+// Wired to the dashboard 重新綁定 button. Triggers the bound channel's
+// POST {callback_url -> /self-repair} webhook — a repo-bound, version-aware repair
+// program that detects+installs the latest repair version, repairs, health-checks,
+// then idempotently re-binds via /api/channel/bind. Falls back to the legacy /restart
+// for channels whose /self-repair endpoint is not yet deployed. Mirrors the channel
+// restart auth path in /api/entity/refresh (X-API-Key: channel_api_key).
+app.post('/api/channel/self-repair', async (req, res) => {
+    const { deviceId, deviceSecret, entityId } = req.body;
+
+    if (!deviceId || !deviceSecret) {
+        return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
+    }
+    const eId = parseInt(entityId);
+    if (isNaN(eId) || eId < 0) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+    const device = devices[deviceId];
+    if (!device || !safeEqual(device.deviceSecret, deviceSecret)) {
+        return res.status(403).json({ success: false, error: 'Invalid device credentials' });
+    }
+    if (!isValidEntityId(device, eId)) {
+        return res.status(400).json({ success: false, error: 'Invalid entityId' });
+    }
+    const entity = device.entities[eId];
+    if (!entity || !entity.isBound) {
+        return res.status(400).json({ success: false, error: 'Entity is not bound' });
+    }
+    if (entity.bindingType !== 'channel' || !entity.channelAccountId) {
+        return res.status(400).json({ success: false, error: 'Entity is not a channel binding' });
+    }
+
+    // Cooldown: reuse refresh cooldown map (1 minute)
+    const cooldownKey = `${deviceId}:${eId}`;
+    const lastRun = refreshCooldowns[cooldownKey] || 0;
+    const elapsed = Date.now() - lastRun;
+    const COOLDOWN_MS = 60000;
+    if (elapsed < COOLDOWN_MS) {
+        const remaining = Math.ceil((COOLDOWN_MS - elapsed) / 1000);
+        return res.status(429).json({ success: false, error: `請等待 ${remaining} 秒後再試`, cooldown_remaining: remaining });
+    }
+
+    let account;
+    try {
+        account = await db.getChannelAccountById(entity.channelAccountId);
+    } catch { /* ignore */ }
+    if (!account || !account.callback_url) {
+        return res.json({ success: false, error: 'Channel callback URL not set', hint: 'Re-register the channel callback first.' });
+    }
+
+    const headers = { 'Content-Type': 'application/json', 'X-API-Key': account.channel_api_key };
+    refreshCooldowns[cooldownKey] = Date.now();
+
+    // 1) Try the version-aware self-repair endpoint first.
+    const selfRepairUrl = account.callback_url.replace(/\/eclaw-webhook\/?$/, '/self-repair');
+    try {
+        const resp = await fetch(selfRepairUrl, {
+            method: 'POST', headers, body: JSON.stringify({ deviceId, entityId: eId }),
+            signal: AbortSignal.timeout(160000) // version-check + restart + bind can take a while
+        });
+        if (resp.status !== 404) {
+            const data = await resp.json().catch(() => ({}));
+            if (resp.ok && data.ok) {
+                entity.lastUpdated = Date.now();
+                await saveData();
+                console.log(`[SelfRepair] OK device ${deviceId} entity ${eId} v${data.localVersion}->${data.latestVersion} updated=${data.updated} bindOk=${data.bindOk}`);
+                return res.json({
+                    success: true, mode: 'self-repair', repairTriggered: true,
+                    localVersion: data.localVersion, latestVersion: data.latestVersion,
+                    updated: !!data.updated, bindOk: !!data.bindOk,
+                    message: data.message || '自我修復完成'
+                });
+            }
+            return res.json({
+                success: false, mode: 'self-repair', repairTriggered: true,
+                bindOk: !!(data && data.bindOk),
+                error: (data && (data.message || data.error)) || '自我修復失敗'
+            });
+        }
+        // 404 -> channel has no /self-repair yet; fall through to /restart.
+    } catch (err) {
+        console.warn(`[SelfRepair] /self-repair failed device ${deviceId} entity ${eId}: ${err.message}; trying /restart`);
+        // fall through to restart fallback
+    }
+
+    // 2) Fallback: legacy /restart (no version-check / bind-verify, but better than a dead button).
+    try {
+        const restartUrl = account.callback_url.replace(/\/eclaw-webhook\/?$/, '/restart');
+        const resp = await fetch(restartUrl, {
+            method: 'POST', headers, body: JSON.stringify({ mode: '--smart', deviceId, entityId: eId }),
+            signal: AbortSignal.timeout(95000)
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (resp.ok && data.ok) {
+            entity.lastUpdated = Date.now();
+            await saveData();
+            return res.json({ success: true, mode: 'restart-fallback', repairTriggered: true, message: data.message || '通道已重啟（此通道尚未部署自我修復）' });
+        }
+        return res.json({ success: false, mode: 'restart-fallback', repairTriggered: true, error: (data && (data.message || data.error)) || '通道修復失敗' });
+    } catch (err2) {
+        return res.json({ success: false, webhookBroken: true, error: `通道修復失敗: ${err2.message}`, hint: 'Channel bridge unreachable.' });
+    }
+});
+
+// ============================================
 // BOT WEBHOOK REGISTRATION (Push Mode)
 // ============================================
 
