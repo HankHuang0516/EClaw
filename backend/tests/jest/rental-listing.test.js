@@ -41,10 +41,13 @@ jest.mock('pg', () => {
 
         // INSERT new listing
         if (/^INSERT INTO bot_listings/i.test(norm)) {
-            const [ownerUserId, ownerDeviceId, ownerEntityId, title, description,
+            // card_68242d883b51c3b6ceda09cb: id now generated in JS and passed
+            // explicitly as $1; prod DB's lost-DEFAULT failure mode was the
+            // original root cause of the 執行面試 P0.
+            const [id, ownerUserId, ownerDeviceId, ownerEntityId, title, description,
                    rate, minMin, maxMin, avatarUrl, boundRebindCount /* 'draft' status is literal */] = params;
             const row = {
-                id: genId(),
+                id: id || genId(),
                 owner_user_id: ownerUserId,
                 owner_device_id: ownerDeviceId,
                 owner_entity_id: ownerEntityId,
@@ -322,7 +325,8 @@ describe('rental: createListing', () => {
             title: 'My Bot',
             rateMliPerKtoken: 5000, // ignored — always 0 at creation
         });
-        expect(listing.id).toMatch(/^listing-/);
+        // card_68242d883b51c3b6ceda09cb: id is now JS-generated as 'listing_<hex>'
+        expect(listing.id).toMatch(/^listing_[0-9a-f]{24}$/);
         expect(listing.status).toBe('draft');
         const row = globalThis.__rentalFakeState.listings.find(l => l.id === listing.id);
         expect(row.rate_mli_per_ktoken).toBe(0);
