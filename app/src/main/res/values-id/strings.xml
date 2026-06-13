@@ -302,7 +302,6 @@
     <string name="facebook_client_token">139b350cf525d7785d370b1813e77838</string>
     <string name="failed_add_slot">Gagal menambahkan slot</string>
     <string name="failed_format">Gagal: %s</string>
-    <string name="fb_login_protocol_scheme">fb772387505935344</string>
     <string name="fcm_channel_chat_desc">Pesan dari entitas Anda</string>
     <string name="fcm_channel_chat_name">Pesan obrolan</string>
     <string name="fcm_channel_feedback_desc">Pembaruan status masukan</string>
