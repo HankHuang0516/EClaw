@@ -50,17 +50,19 @@ jest.mock('pg', () => {
             return { rows: [], rowCount: 1 };
         }
         if (/^INSERT INTO bot_listings/i.test(norm)) {
-            const id = `listing-${state.nextListingId++}`;
+            // card_68242d883b51c3b6ceda09cb: id is now JS-generated and passed
+            // as $1; all subsequent params shift by 1.
+            const id = params[0] || `listing-${state.nextListingId++}`;
             state.listings.push({
                 id,
-                owner_user_id: params[0],
-                owner_device_id: params[1],
-                owner_entity_id: params[2],
-                title: params[3],
-                description: params[4],
-                rate_mli_per_ktoken: params[5],
-                min_rental_minutes: params[6],
-                max_rental_minutes: params[7],
+                owner_user_id: params[1],
+                owner_device_id: params[2],
+                owner_entity_id: params[3],
+                title: params[4],
+                description: params[5],
+                rate_mli_per_ktoken: params[6],
+                min_rental_minutes: params[7],
+                max_rental_minutes: params[8],
                 availability_windows: [],
                 model_detected: null,
                 capabilities: {},
