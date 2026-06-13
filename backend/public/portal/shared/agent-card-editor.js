@@ -292,13 +292,37 @@ window.AgentCardEditor = (function() {
                     ' <a href="' + examUrl + '?returnUrl=' + returnUrl + '" target="_blank" style="color:var(--primary);">' +
                     t('dash_interview_view_results', 'View Results →') + '</a></span>';
             } else {
-                if (statusEl) { statusEl.textContent = ''; var _sp2 = document.createElement('span'); _sp2.style.color = '#ef4444'; _sp2.textContent = '\u274c ' + (examRes.error || 'Failed to create exam'); statusEl.appendChild(_sp2); }
+                // SI stream D card_7fc8e7ab: friendly message + error_id for
+                // support reference instead of leaking the raw server token.
+                this._renderInterviewError(statusEl, examRes.error || null);
             }
         } catch (err) {
             btn.disabled = false;
             btn.textContent = '🧪 ' + t('dash_run_interview', 'Run Interview');
-            if (statusEl) { statusEl.textContent = ''; var _sp = document.createElement('span'); _sp.style.color = '#ef4444'; _sp.textContent = '\u274c ' + (err.message || 'Error'); statusEl.appendChild(_sp); }
+            this._renderInterviewError(statusEl, err && err.message);
         }
+    };
+
+    /**
+     * SI stream D - card_7fc8e7ab: replace raw server error codes with a
+     * localized friendly message plus an error_id the user can quote to
+     * support. Raw code is logged via console.error so technical users can
+     * still find it in DevTools - only the user-visible surface is sanitized.
+     */
+    AgentCardEditor.prototype._renderInterviewError = function(statusEl, rawError) {
+        if (!statusEl) return;
+        var errorId = (Math.random().toString(16).slice(2, 6) + Math.random().toString(16).slice(2, 6));
+        var friendly = t('dash_interview_failed_retry',
+            'Interview could not start - please try again. Reference code: %s');
+        var withCode = friendly.indexOf('%s') >= 0
+            ? friendly.replace('%s', errorId)
+            : (friendly + ' (' + errorId + ')');
+        statusEl.textContent = '';
+        var sp = document.createElement('span');
+        sp.style.color = '#ef4444';
+        sp.textContent = '\u274c ' + withCode;
+        statusEl.appendChild(sp);
+        try { console.error('[interview] error_id=' + errorId + ' raw=' + (rawError || 'unknown')); } catch (_) {}
     };
 
     AgentCardEditor.prototype._openArena = async function() {
