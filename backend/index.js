@@ -2285,6 +2285,14 @@ entityStatus.bindDevicesRef(devices);
 entityStatus.bindJwtSecret(JWT_SECRET_FALLBACK);
 app.use('/api/entity-status', entityStatus.router);
 
+// Passive health-check + auto self-repair subsystem (DEFAULT OFF, opt-in per
+// device). Routers are mounted here; the pool/devices/dependency wiring +
+// scheduler start happen at boot (see passiveHealth.init below) once chatPool
+// and persistenceReady exist. Inert until a device sets passiveHealth.enabled.
+const passiveHealth = require('./passive-health');
+app.use('/api/passive-health', passiveHealth.router);
+app.use('/api/channel/passive-health', passiveHealth.channelRouter);
+
 // ============================================
 // REDIRECT STATE MACHINE — universal /r/:target entry + mint/telemetry/stats.
 // Phase A (web slice) of docs/redirect-state-machine-spec.md (OODA-R #7).
@@ -19163,6 +19171,21 @@ heartbeat.startSweeper({
         );
     },
 });
+
+// Passive health subsystem boot — wire dependencies + start the hourly scheduler.
+// DEFAULT OFF: the scheduler tick no-ops until persistenceReady AND a device has
+// opted in (passiveHealth.enabled). Mirrors the OODA-R heartbeat boot above.
+passiveHealth.init({
+    pool: chatPool,
+    devices,
+    entityStatus,
+    feedbackModule,
+    deriveChannelProvider,
+    getChannelAccountById: db.getChannelAccountById,
+    isReady: () => persistenceReady,
+    selfBaseUrl: `http://localhost:${port}`,
+});
+passiveHealth.startScheduler(3_600_000); // hourly tick; per-device intervalHours gates actual runs
 
 orgChartModule.initTable(chatPool);
 crossDeviceSettings.initTable(chatPool);
