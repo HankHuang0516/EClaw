@@ -1259,6 +1259,15 @@
             color: var(--text-secondary);
         }
 
+        /* card_36a: red highlight on incomplete agent-card fields when Plaza toggle rejected */
+        .plaza-missing-field,
+        .plaza-missing-field input,
+        .plaza-missing-field textarea {
+            border: 1.5px solid #ef4444 !important;
+            background: rgba(239, 68, 68, 0.06) !important;
+            transition: border-color 0.3s, background 0.3s;
+        }
+
         /* ═══════════════════════════ Dashboard Tab Bar ═══════════════════════════ */
         .dash-tabs {
             display: flex;
@@ -3312,11 +3321,11 @@
                     '</div>' +
                     /* Public profile section (Agent Card) */
                     '<h4 style="margin-top:16px;border-top:1px solid var(--card-border);padding-top:12px;">&#x1F4C7; ' + i18n.t('dash_id_public_title') + '</h4>' +
-                    /* Bot Plaza toggle */
+                    /* Bot Plaza toggle — distinct from 上架出租 (rental) */
                     '<div class="plaza-toggle-row">' +
                         '<div class="plaza-label">' +
-                            '<span>' + i18n.t('dash_plaza_publish') + '</span>' +
-                            '<span>' + i18n.t('dash_plaza_publish_hint') + '</span>' +
+                            '<span>' + i18n.t('card_plaza_make_public') + '</span>' +
+                            '<span>' + i18n.t('card_plaza_make_public_hint') + '</span>' +
                         '</div>' +
                         '<label class="toggle-switch">' +
                             '<input type="checkbox" id="plazaToggle' + entity.entityId + '" onchange="togglePlaza(' + entity.entityId + ', this.checked)"' + (entity.isPublic ? ' checked' : '') + '>' +
@@ -3616,6 +3625,31 @@
             if (window.telemetry) telemetry.trackAction('identity_save', { entityId: entityId });
         }
 
+        // card_36a: map missingFields code → localized field label + highlight target id
+        var PLAZA_MISSING_FIELD_MAP = {
+            description: { i18n: 'dash_plaza_missing_description', fallback: 'Description', target: 'aceDesc' },
+            protocols: { i18n: 'dash_plaza_missing_protocols', fallback: 'Protocols (at least one)', target: 'aceProtoIn' },
+            tags: { i18n: 'dash_plaza_missing_tags', fallback: 'Tags (at least one)', target: 'aceTagIn' }
+        };
+
+        function highlightMissingFields(entityId, missingFields) {
+            (missingFields || []).forEach(function(f) {
+                var info = PLAZA_MISSING_FIELD_MAP[f];
+                if (!info) return;
+                var el = document.getElementById(info.target + entityId);
+                if (!el) return;
+                el.classList.add('plaza-missing-field');
+                var clear = function() {
+                    el.classList.remove('plaza-missing-field');
+                    el.removeEventListener('input', clear);
+                    el.removeEventListener('change', clear);
+                };
+                el.addEventListener('input', clear);
+                el.addEventListener('change', clear);
+                setTimeout(clear, 8000);
+            });
+        }
+
         async function togglePlaza(entityId, isPublic) {
             var checkbox = document.getElementById('plazaToggle' + entityId);
             checkbox.disabled = true;
@@ -3632,11 +3666,30 @@
                     showToast(i18n.t(isPublic ? 'dash_plaza_published' : 'dash_plaza_unpublished'), 'success');
                 } else {
                     checkbox.checked = !isPublic;
-                    showToast(data.error || i18n.t('toast_error'), 'error');
+                    if (data.code === 'AGENT_CARD_INCOMPLETE' && Array.isArray(data.missingFields)) {
+                        var labels = data.missingFields.map(function(f) {
+                            var info = PLAZA_MISSING_FIELD_MAP[f];
+                            return info ? i18n.t(info.i18n) || info.fallback : f;
+                        }).join('、');
+                        showToast(i18n.t('dash_plaza_incomplete_title') + '：' + labels, 'error');
+                        highlightMissingFields(entityId, data.missingFields);
+                    } else {
+                        showToast(data.error || i18n.t('toast_error'), 'error');
+                    }
                 }
             } catch (err) {
                 checkbox.checked = !isPublic;
-                showToast(i18n.t('toast_error') + ': ' + err.message, 'error');
+                var payload = (err && err.data) || {};
+                if (payload.code === 'AGENT_CARD_INCOMPLETE' && Array.isArray(payload.missingFields)) {
+                    var labels2 = payload.missingFields.map(function(f) {
+                        var info = PLAZA_MISSING_FIELD_MAP[f];
+                        return info ? i18n.t(info.i18n) || info.fallback : f;
+                    }).join('、');
+                    showToast(i18n.t('dash_plaza_incomplete_title') + '：' + labels2, 'error');
+                    highlightMissingFields(entityId, payload.missingFields);
+                } else {
+                    showToast(i18n.t('toast_error') + ': ' + err.message, 'error');
+                }
             } finally {
                 checkbox.disabled = false;
             }
