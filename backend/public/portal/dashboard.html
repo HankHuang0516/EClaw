@@ -2979,6 +2979,20 @@
             loadEntities().then(() => onOrgChartEntityChange());
         }
 
+        // Live entity:update push (e.g. passive-health 健檢中 flag toggling on/off).
+        // Patch the in-memory entity + re-render the card so the avatar ring
+        // animation flips without a full reload. Skip during edit mode to
+        // preserve drag state (parity with loadEntities).
+        function onSocketEntityUpdate(data) {
+            if (!data || data.entityId == null) return;
+            if (isEditMode) return;
+            const ent = entities.find(e => e.entityId === data.entityId);
+            if (!ent) return;
+            if ('healthChecking' in data) ent.healthChecking = !!data.healthChecking;
+            if ('healthCheckingAt' in data) ent.healthCheckingAt = data.healthCheckingAt;
+            renderEntities();
+        }
+
         // --- Entity Loading ---
         async function loadEntities() {
             // Skip updates during edit mode to preserve drag state (parity with Android)
@@ -3188,7 +3202,7 @@
                 return '<div class="entity-card card" data-entity-id="' + entity.entityId + '"' + (isEditMode ? ' draggable="true"' : '') + '>' +
                     '<div class="entity-card-body">' +
                     '<div class="drag-handle" title="' + i18n.t('dash_drag_to_reorder') + '">&#9776;</div>' +
-                    '<div class="entity-avatar" onclick="openAvatarPicker(' + entity.entityId + ')">' + renderAvatarHtml(avatar, 48, entity.entityId) + '</div>' +
+                    '<div class="entity-avatar" onclick="openAvatarPicker(' + entity.entityId + ')">' + renderAvatarHtml(avatar, 48, entity.entityId, { healthChecking: !!entity.healthChecking }) + '</div>' +
                     '<div class="entity-info">' +
                     '<div class="entity-name" onclick="openRenamePicker(' + entity.entityId + ', \'' + escapedName + '\')" title="' + i18n.t('dash_rename_title') + '">' + escapeHtml(displayName) + '</div>' +
                     '<div class="entity-badges">' +

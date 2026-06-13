@@ -7921,6 +7921,11 @@ app.get('/api/entities', async (req, res) => {
                     lastUpdated: entity.lastUpdated,
                     isBound: true,  // Always true since we only return bound entities
                     avatar: entity.avatar || null,
+                    // Transient passive-health flag (in-memory). Lets polling
+                    // clients (Android live wallpaper / widget / iOS) render the
+                    // 健檢中 (health-checking) animation. Backward-compatible add.
+                    healthChecking: !!entity.healthChecking,
+                    healthCheckingAt: entity.healthCheckingAt || null,
                     petdxCompanionId: petdx.petdxCompanionId || null,
                     petdxAvatarUrl: petdx.petdxAvatarUrl || null,
                     xp: entity.xp || 0,
@@ -8129,6 +8134,11 @@ app.get('/api/status', (req, res) => {
         // widget, iOS) keep entity avatars in sync with the dashboard.
         // See backend/openapi.yaml `/api/status` and Entity schema.
         avatar: entity.avatar || null,
+        // Transient passive-health flag (in-memory). Lets polling clients
+        // (Android live wallpaper / widget / iOS) render the 健檢中
+        // (health-checking) animation. Backward-compatible add.
+        healthChecking: !!entity.healthChecking,
+        healthCheckingAt: entity.healthCheckingAt || null,
         rental_status: entity.rental_status || null,  // 'leased_in', 'leased_out', or null
         rental_contract_id: entity.rental_contract_id || null,
         versionInfo: getVersionInfo(appVersion || entity.appVersion)
@@ -19218,6 +19228,29 @@ passiveHealth.init({
     getChannelAccountById: db.getChannelAccountById,
     isReady: () => persistenceReady,
     selfBaseUrl: `http://localhost:${port}`,
+    // Live-push the transient healthChecking flag so portal clients flip the
+    // 健檢中 (health-checking) animation on/off in real time. Reuses the same
+    // 'entity:update' Socket.IO room-per-device pattern as Discord/bot register.
+    emitEntityUpdate: (deviceId, entityId) => {
+        try {
+            const entity = devices[deviceId] && devices[deviceId].entities
+                ? devices[deviceId].entities[entityId]
+                : null;
+            if (!entity) return;
+            io.to(`device:${deviceId}`).emit('entity:update', {
+                deviceId,
+                entityId,
+                name: entity.name,
+                character: entity.character,
+                state: entity.state,
+                message: entity.message,
+                healthChecking: !!entity.healthChecking,
+                healthCheckingAt: entity.healthCheckingAt || null,
+            });
+        } catch (err) {
+            console.error(`[PassiveHealth] emitEntityUpdate broadcast failed: ${err.message}`);
+        }
+    },
 });
 passiveHealth.startScheduler(3_600_000); // hourly tick; per-device intervalHours gates actual runs
 

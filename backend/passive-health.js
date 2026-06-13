@@ -44,6 +44,10 @@ let deriveProvider = null;  // index.js deriveChannelProvider(callbackUrl)
 let getChannelAccount = null; // db.getChannelAccountById(id)
 let isReady = () => false;  // () => persistenceReady
 let selfBaseUrl = 'http://localhost:3000'; // base URL for internal self-repair call
+// Optional broadcaster (injected): emitEntityUpdate(deviceId, entityId) pushes a
+// live Socket.IO entity-update to portal clients so the 健檢中 (health-checking)
+// animation flips on/off in real time. No-op if not wired.
+let emitEntityUpdate = null;
 
 // ── Settings defaults (stored under prefs.passiveHealth) ──────────────────────
 const SETTINGS_DEFAULTS = {
@@ -75,6 +79,18 @@ function init(opts) {
     getChannelAccount = opts.getChannelAccountById || null;
     if (typeof opts.isReady === 'function') isReady = opts.isReady;
     if (opts.selfBaseUrl) selfBaseUrl = opts.selfBaseUrl;
+    if (typeof opts.emitEntityUpdate === 'function') emitEntityUpdate = opts.emitEntityUpdate;
+}
+
+// Best-effort live push of the in-memory healthChecking flag. Never throws —
+// a broadcast failure must not abort a health sweep.
+function notifyEntityUpdate(deviceId, entityId) {
+    if (!emitEntityUpdate) return;
+    try {
+        emitEntityUpdate(deviceId, entityId);
+    } catch (err) {
+        console.error('[PassiveHealth] emitEntityUpdate error:', err.message);
+    }
 }
 
 // ── Settings read/write (prefs.passiveHealth JSONB merge) ─────────────────────
@@ -377,52 +393,71 @@ async function fileBugIssue(deviceId, deviceSecret, entityId, provider, failingS
  * 60s cooldown), then file a bug if still unhealthy. Returns a summary.
  */
 async function runEntity(deviceId, deviceSecret, entityId, settings) {
-    const health = await computePassiveHealth(deviceId, entityId);
-    if (!health.eligible) {
-        return { entityId, eligible: false, reason: health.reason };
+    // Mark the entity as "health-checking" for the whole check+repair span so
+    // the Web Portal (and polling clients) can show the 健檢中 animation. The
+    // flag is in-memory only and is guaranteed cleared by the finally guard
+    // below, even if the check/repair throws.
+    const entity = getEntity(deviceId, entityId);
+    if (entity) {
+        entity.healthChecking = true;
+        entity.healthCheckingAt = Date.now();
+        notifyEntityUpdate(deviceId, entityId);
     }
 
-    await logEvent(deviceId, entityId, 'passive_health',
-        health.healthy ? 'Passive health: healthy' : `Passive health: unhealthy (${health.failingSignals.join(', ')})`,
-        { healthy: health.healthy, failingSignals: health.failingSignals, provider: health.provider, signals: health.signals });
+    try {
+        const health = await computePassiveHealth(deviceId, entityId);
+        if (!health.eligible) {
+            return { entityId, eligible: false, reason: health.reason };
+        }
 
-    if (health.healthy || !settings.autoRepair) {
-        return { entityId, eligible: true, healthy: health.healthy, repaired: false, failingSignals: health.failingSignals };
-    }
+        await logEvent(deviceId, entityId, 'passive_health',
+            health.healthy ? 'Passive health: healthy' : `Passive health: unhealthy (${health.failingSignals.join(', ')})`,
+            { healthy: health.healthy, failingSignals: health.failingSignals, provider: health.provider, signals: health.signals });
 
-    // Unhealthy + autoRepair → up to 3 repair attempts, spaced past the cooldown.
-    let recovered = false;
-    for (let attempt = 1; attempt <= MAX_REPAIR_ATTEMPTS; attempt++) {
-        const repair = await attemptSelfRepair(deviceId, deviceSecret, entityId);
+        if (health.healthy || !settings.autoRepair) {
+            return { entityId, eligible: true, healthy: health.healthy, repaired: false, failingSignals: health.failingSignals };
+        }
+
+        // Unhealthy + autoRepair → up to 3 repair attempts, spaced past the cooldown.
+        let recovered = false;
+        for (let attempt = 1; attempt <= MAX_REPAIR_ATTEMPTS; attempt++) {
+            const repair = await attemptSelfRepair(deviceId, deviceSecret, entityId);
+            await logEvent(deviceId, entityId, 'self_repair',
+                `Self-repair attempt ${attempt}/${MAX_REPAIR_ATTEMPTS}: ${repair.ok ? 'triggered' : 'failed'} (http ${repair.status})`,
+                { attempt, ok: repair.ok, httpStatus: repair.status, mode: repair.data && repair.data.mode });
+
+            // Re-check health after the attempt.
+            const recheck = await computePassiveHealth(deviceId, entityId);
+            if (recheck.eligible && recheck.healthy) {
+                recovered = true;
+                await logEvent(deviceId, entityId, 'passive_health',
+                    `Recovered after self-repair attempt ${attempt}`,
+                    { healthy: true, afterAttempt: attempt });
+                break;
+            }
+            if (attempt < MAX_REPAIR_ATTEMPTS) {
+                await sleep(REPAIR_SPACING_MS); // respect the 60s self-repair cooldown
+            }
+        }
+
+        if (recovered) {
+            return { entityId, eligible: true, healthy: false, repaired: true, failingSignals: health.failingSignals };
+        }
+
+        // Still unhealthy after all attempts → file a bug.
+        const bug = await fileBugIssue(deviceId, deviceSecret, entityId, health.provider, health.failingSignals);
         await logEvent(deviceId, entityId, 'self_repair',
-            `Self-repair attempt ${attempt}/${MAX_REPAIR_ATTEMPTS}: ${repair.ok ? 'triggered' : 'failed'} (http ${repair.status})`,
-            { attempt, ok: repair.ok, httpStatus: repair.status, mode: repair.data && repair.data.mode });
+            bug.filed ? `Bug filed after ${MAX_REPAIR_ATTEMPTS} failed repairs (feedback #${bug.feedbackId})` : `Bug filing failed: ${bug.reason}`,
+            { filed: bug.filed, feedbackId: bug.feedbackId, issueUrl: bug.issueUrl, failingSignals: health.failingSignals });
 
-        // Re-check health after the attempt.
-        const recheck = await computePassiveHealth(deviceId, entityId);
-        if (recheck.eligible && recheck.healthy) {
-            recovered = true;
-            await logEvent(deviceId, entityId, 'passive_health',
-                `Recovered after self-repair attempt ${attempt}`,
-                { healthy: true, afterAttempt: attempt });
-            break;
-        }
-        if (attempt < MAX_REPAIR_ATTEMPTS) {
-            await sleep(REPAIR_SPACING_MS); // respect the 60s self-repair cooldown
+        return { entityId, eligible: true, healthy: false, repaired: false, bugFiled: bug.filed, feedbackId: bug.feedbackId, failingSignals: health.failingSignals };
+    } finally {
+        // Always clear the transient flag + push the cleared state, even on error.
+        if (entity) {
+            entity.healthChecking = false;
+            notifyEntityUpdate(deviceId, entityId);
         }
     }
-
-    if (recovered) {
-        return { entityId, eligible: true, healthy: false, repaired: true, failingSignals: health.failingSignals };
-    }
-
-    // Still unhealthy after all attempts → file a bug.
-    const bug = await fileBugIssue(deviceId, deviceSecret, entityId, health.provider, health.failingSignals);
-    await logEvent(deviceId, entityId, 'self_repair',
-        bug.filed ? `Bug filed after ${MAX_REPAIR_ATTEMPTS} failed repairs (feedback #${bug.feedbackId})` : `Bug filing failed: ${bug.reason}`,
-        { filed: bug.filed, feedbackId: bug.feedbackId, issueUrl: bug.issueUrl, failingSignals: health.failingSignals });
-
-    return { entityId, eligible: true, healthy: false, repaired: false, bugFiled: bug.filed, feedbackId: bug.feedbackId, failingSignals: health.failingSignals };
 }
 
 /**
