@@ -235145,6 +235145,13 @@ const TRANSLATIONS = {
 
 
         "dash_plaza_publish": "Publish to Bot Plaza",
+        "card_plaza_make_public": "Make public on Plaza (free showcase)",
+        "card_plaza_make_public_hint": "Display your bot on the public Plaza so others can discover it — free showcase, not for rental.",
+        "dash_plaza_incomplete_title": "Please complete your card before publishing",
+        "dash_plaza_missing_description": "Description",
+        "dash_plaza_missing_protocols": "Protocols (at least one)",
+        "dash_plaza_missing_tags": "Tags (at least one)",
+        "dash_list_rental_paid_suffix": " (paid rental)",
 
 
 
@@ -875365,6 +875372,13 @@ const TRANSLATIONS = {
 
 
         "dash_plaza_publish": "上架到 Bot Plaza",
+        "card_plaza_make_public": "公開到廣場（免費展示）",
+        "card_plaza_make_public_hint": "在 Bot Plaza 公開展示你的 Bot，讓其他人可以發現並互動 — 免費展示，非出租。",
+        "dash_plaza_incomplete_title": "請先補齊名片欄位再公開",
+        "dash_plaza_missing_description": "描述",
+        "dash_plaza_missing_protocols": "通訊協定（至少一項）",
+        "dash_plaza_missing_tags": "標籤（至少一項）",
+        "dash_list_rental_paid_suffix": "（付費租借）",
 
 
 
@@ -1330301,6 +1330315,13 @@ const TRANSLATIONS = {
 
 
         "dash_plaza_publish": "上架到 Bot Plaza",
+        "card_plaza_make_public": "公開到廣場（免費展示）",
+        "card_plaza_make_public_hint": "在 Bot Plaza 公開展示你的 Bot，讓其他人可以發現並互動 — 免費展示，非出租。",
+        "dash_plaza_incomplete_title": "請先補齊名片欄位再公開",
+        "dash_plaza_missing_description": "描述",
+        "dash_plaza_missing_protocols": "通訊協定（至少一項）",
+        "dash_plaza_missing_tags": "標籤（至少一項）",
+        "dash_list_rental_paid_suffix": "（付費租借）",
 
 
 
@@ -2051993,6 +2052014,13 @@ const TRANSLATIONS = {
 
 
         "dash_plaza_publish": "Bot Plazaに公開",
+        "card_plaza_make_public": "Plaza に公開（無料ショーケース）",
+        "card_plaza_make_public_hint": "あなたの Bot を Plaza に公開して他のユーザーが発見・対話できるようにします — 無料展示、レンタルではありません。",
+        "dash_plaza_incomplete_title": "公開前にカードを完成させてください",
+        "dash_plaza_missing_description": "説明",
+        "dash_plaza_missing_protocols": "プロトコル（少なくとも1つ）",
+        "dash_plaza_missing_tags": "タグ（少なくとも1つ）",
+        "dash_list_rental_paid_suffix": "（有料レンタル）",
 
 
 
@@ -2615193,6 +2615221,13 @@ const TRANSLATIONS = {
 
 
         "dash_plaza_publish": "Bot Plaza에 게시",
+        "card_plaza_make_public": "Plaza에 공개 (무료 쇼케이스)",
+        "card_plaza_make_public_hint": "다른 사용자가 발견하고 상호작용할 수 있도록 봇을 Plaza에 공개합니다 — 무료 쇼케이스, 임대 아님.",
+        "dash_plaza_incomplete_title": "공개하기 전에 카드를 완성해 주세요",
+        "dash_plaza_missing_description": "설명",
+        "dash_plaza_missing_protocols": "프로토콜 (최소 1개)",
+        "dash_plaza_missing_tags": "태그 (최소 1개)",
+        "dash_list_rental_paid_suffix": " (유료 임대)",
 
 
 
@@ -6105562,6 +6105597,13 @@ const TRANSLATIONS = {
         "dash_id_public_desc": "Public Description",
         "dash_id_public_desc_hint": "Public description for agent card...",
         "dash_plaza_publish": "Publish to Bot Plaza",
+        "card_plaza_make_public": "Make public on Plaza (free showcase)",
+        "card_plaza_make_public_hint": "Display your bot on the public Plaza so others can discover it — free showcase, not for rental.",
+        "dash_plaza_incomplete_title": "Please complete your card before publishing",
+        "dash_plaza_missing_description": "Description",
+        "dash_plaza_missing_protocols": "Protocols (at least one)",
+        "dash_plaza_missing_tags": "Tags (at least one)",
+        "dash_list_rental_paid_suffix": " (paid rental)",
         "dash_plaza_publish_hint": "List this bot publicly so others can discover and interact with it",
         "dash_plaza_published": "Published to Bot Plaza!",
         "dash_plaza_unpublished": "Removed from Bot Plaza",

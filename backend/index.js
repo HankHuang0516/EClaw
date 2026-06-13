@@ -12643,9 +12643,27 @@ async function handleVisibility(req, res) {
         return res.status(404).json({ success: false, error: 'Entity not found or not bound' });
     }
 
-    // Must have an agent card to publish
-    if (isPublic && !entity.agentCard) {
-        return res.status(400).json({ success: false, error: 'Entity must have an agent card before publishing' });
+    // card_36a: AGENT_CARD_INCOMPLETE returns missing-field list so the
+    // toggle UI can highlight the empty inputs instead of showing a single
+    // abstract red banner.
+    if (isPublic) {
+        const card = entity.agentCard;
+        const missingFields = [];
+        if (!card || typeof card !== 'object') {
+            missingFields.push('description', 'protocols', 'tags');
+        } else {
+            if (!card.description || !String(card.description).trim()) missingFields.push('description');
+            if (!Array.isArray(card.protocols) || card.protocols.length === 0) missingFields.push('protocols');
+            if (!Array.isArray(card.tags) || card.tags.length === 0) missingFields.push('tags');
+        }
+        if (missingFields.length) {
+            return res.status(400).json({
+                success: false,
+                code: 'AGENT_CARD_INCOMPLETE',
+                error: 'Agent card incomplete — please fill: ' + missingFields.join(', '),
+                missingFields
+            });
+        }
     }
 
     const ok = await db.setEntityPublic(deviceId, eId, isPublic);
@@ -14702,6 +14720,7 @@ app.post('/api/entity/broadcast', async (req, res) => {
     serverLog('info', 'broadcast', `Entity ${fromId} -> [${targetIds.join(',')}]: "${broadcastText.slice(0, 80)}"`, { deviceId, entityId: fromId, metadata: { targets: targetIds, b2bRemaining } });
 
     // Save ONE chat message for the broadcast (sender's perspective, all targets)
+    // routing_meta uses the first target's LV as representative (broadcast chip mode is set explicitly).
     const broadcastFirstTarget = device.entities[targetIds[0]];
     const broadcastRoutingMeta = buildRoutingMeta({
         mode: 'broadcast', fromEntity, fromId,
