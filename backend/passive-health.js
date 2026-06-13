@@ -551,11 +551,14 @@ router.put('/settings', express.json(), async (req, res) => {
         }
     }
     try {
-        const settings = await updateSettings(auth.deviceId, {
-            enabled: body.enabled,
-            intervalHours: body.intervalHours,
-            autoRepair: body.autoRepair,
-        });
+        // Partial update: only patch keys actually present in the body. (Passing
+        // undefined for an omitted key would make coerceSettings clobber it — e.g.
+        // a PUT of just {autoRepair:false} must NOT silently disable `enabled`.)
+        const patch = {};
+        if ('enabled' in body) patch.enabled = body.enabled;
+        if ('intervalHours' in body) patch.intervalHours = body.intervalHours;
+        if ('autoRepair' in body) patch.autoRepair = body.autoRepair;
+        const settings = await updateSettings(auth.deviceId, patch);
         return res.json({ success: true, deviceId: auth.deviceId, settings });
     } catch (err) {
         console.error('[PassiveHealth] put settings error:', err.message);

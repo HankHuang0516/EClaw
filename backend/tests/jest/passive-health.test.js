@@ -234,6 +234,19 @@ describe('disabled-device no-op', () => {
     });
 });
 
+describe('partial settings PUT preserves omitted fields', () => {
+    it('PUT {autoRepair:false} alone does NOT disable enabled', async () => {
+        await request(app).put('/api/passive-health/settings')
+            .send({ deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET, enabled: true, autoRepair: true, intervalHours: 6 });
+        const res = await request(app).put('/api/passive-health/settings')
+            .send({ deviceId: DEVICE_ID, deviceSecret: DEVICE_SECRET, autoRepair: false });
+        expect(res.statusCode).toBe(200);
+        expect(res.body.settings.enabled).toBe(true);      // preserved
+        expect(res.body.settings.intervalHours).toBe(6);   // preserved
+        expect(res.body.settings.autoRepair).toBe(false);  // changed
+    });
+});
+
 describe('heartbeat signal (channel-push entities have no daemon lastSeen)', () => {
     const { collectHeartbeatSignal } = passiveHealth._internal;
     const now = Date.now();
