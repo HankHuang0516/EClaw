@@ -3529,6 +3529,9 @@ const rentalModule = require('./rental')({
     adminMiddleware: authModule.adminMiddleware,
     walletModule,
     serverLog,
+    // card_7fc8e7abc3cb546e89721a26 (SI stream C): wire OODA-R episode
+    // emit so rentalRoute 500s self-file an Episode for downstream mining.
+    agentImprovementModule: agentImprovement,
 });
 app.use('/api/rental', rentalModule.router);
 

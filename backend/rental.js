@@ -1757,7 +1757,7 @@ function createDefaultRentalEntity(entityId) {
 // Express factory
 // ============================================
 
-module.exports = function rentalFactory({ authMiddleware, softAuthMiddleware, adminMiddleware, walletModule, serverLog } = {}) {
+module.exports = function rentalFactory({ authMiddleware, softAuthMiddleware, adminMiddleware, walletModule, serverLog, agentImprovementModule } = {}) {
     if (typeof authMiddleware !== 'function') {
         throw new Error('rental: authMiddleware is required');
     }
@@ -1766,6 +1766,35 @@ module.exports = function rentalFactory({ authMiddleware, softAuthMiddleware, ad
     }
     const router = express.Router();
     const audit = serverLog || (() => {});
+
+    // card_7fc8e7abc3cb546e89721a26 (SI stream C): emit an OODA-R Episode on
+    // every rentalRoute 500 so the self-improvement framework can mine the
+    // failure class — closes the gap Hank flagged on card_68242d88
+    // ("internal_error 會回傳API 到內部進行 self improvement?").
+    // Anchored to the SI parent card; fire-and-forget so episode failures
+    // never affect the user-visible response.
+    const EPISODE_ANCHOR_CARD = 'card_7fc8e7abc3cb546e89721a26';
+    async function emitRentalEpisode({ req, err, pool }) {
+        if (!agentImprovementModule?.ingestEpisode || !pool) return;
+        try {
+            const route = `${req.method} ${(req.originalUrl || req.path || '').split('?')[0]}`;
+            await agentImprovementModule.ingestEpisode({
+                _deviceId: req.user?.deviceId || 'unknown',
+                cardId: EPISODE_ANCHOR_CARD,
+                entityId: 0,
+                taskType: 'rental_handler_500',
+                painTags: ['delivery_reliability', 'test_coverage'],
+                deliverable: `rental endpoint ${route}`,
+                userVisibleResult: 'internal_error',
+                evidence: [
+                    { kind: 'log', ref: `audit:rental:${route}`, note: 'rentalRoute catch audit row' },
+                ],
+                missedChecks: ['schema-drift-sentinel', 'integration-test-real-db'],
+                severity: 'P0',
+                occurredAt: new Date().toISOString(),
+            }, pool);
+        } catch (_) { /* fire-and-forget — never let SI emit affect the response */ }
+    }
     const optionalAuthMiddleware = typeof softAuthMiddleware === 'function'
         ? softAuthMiddleware
         : (_req, _res, next) => next();
@@ -1822,6 +1851,10 @@ module.exports = function rentalFactory({ authMiddleware, softAuthMiddleware, ad
                         },
                     });
                 } catch (_) { /* never let audit failure cascade */ }
+                // SI stream C: fire-and-forget OODA-R episode emit. Awaiting
+                // would tie the user response to SI store availability — we
+                // explicitly don't want that.
+                emitRentalEpisode({ req, err, pool });
                 res.status(500).json({ success: false, error: 'internal_error' });
             }
         };
