@@ -202,9 +202,16 @@ function collectHeartbeatSignal(entity, nowMs) {
         if (typeof raw === 'number' && Number.isFinite(raw)) lastSeenMs = raw;
         else { const ms = Date.parse(raw); if (Number.isFinite(ms)) lastSeenMs = ms; }
     }
-    const stale = lastSeenMs === null || (nowMs - lastSeenMs) > HEARTBEAT_STALE_MS;
+    // Only flag stale when a heartbeat is actually KNOWN and old. Channel-push
+    // entities (claude-code, openclaw channel, etc.) legitimately never report a
+    // daemon lastSeen — treating "no heartbeat" as stale would falsely mark every
+    // healthy channel entity unhealthy and trigger needless repairs. For those,
+    // liveness is judged by the callback /health probe + stuck-message signals.
+    const heartbeatKnown = lastSeenMs !== null;
+    const stale = heartbeatKnown && (nowMs - lastSeenMs) > HEARTBEAT_STALE_MS;
     return {
-        lastSeen: lastSeenMs === null ? null : new Date(lastSeenMs).toISOString(),
+        lastSeen: heartbeatKnown ? new Date(lastSeenMs).toISOString() : null,
+        heartbeatKnown,
         heartbeatStale: stale,
     };
 }
@@ -276,6 +283,7 @@ async function computePassiveHealth(deviceId, entityId) {
             stuckPending: errorSignals.stuckPending,
             counters: errorSignals.counters,
             lastSeen: heartbeat.lastSeen,
+            heartbeatKnown: heartbeat.heartbeatKnown,
             heartbeatStale: heartbeat.heartbeatStale,
             callbackHealthy: channel.callbackHealthy,
         },
