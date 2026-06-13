@@ -317,6 +317,17 @@ async function initRentalDatabase() {
         } catch (err) {
             console.warn('[Rental] Schema warning: rental_contracts.id default:', err.message);
         }
+        // P0 card_68242d883b51c3b6ceda09cb: live bot_listings.id lost its DEFAULT
+        // during an earlier schema migration. CREATE TABLE IF NOT EXISTS at the
+        // top of this file does nothing on existing tables, so the VARCHAR(48)
+        // DEFAULT in the schema definition never reached prod. INSERT without
+        // explicit id then hits 23502 not_null_violation. Mirror the
+        // rental_contracts fix above so every startup re-asserts the DEFAULT.
+        try {
+            await pool.query(`ALTER TABLE bot_listings ALTER COLUMN id SET DEFAULT ('listing_' || encode(gen_random_bytes(12), 'hex'))`);
+        } catch (err) {
+            console.warn('[Rental] Schema warning: bot_listings.id default:', err.message);
+        }
 
         // Startup cleanup: revert any listings stuck in 'interview' (server crashed mid-run)
         await pool.query(
