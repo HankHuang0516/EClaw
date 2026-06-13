@@ -234,6 +234,30 @@ describe('disabled-device no-op', () => {
     });
 });
 
+describe('heartbeat signal (channel-push entities have no daemon lastSeen)', () => {
+    const { collectHeartbeatSignal } = passiveHealth._internal;
+    const now = Date.now();
+
+    it('does NOT flag stale when no heartbeat is known (channel-push entity)', () => {
+        const sig = collectHeartbeatSignal({ isBound: true, bindingType: 'channel' }, now);
+        expect(sig.heartbeatKnown).toBe(false);
+        expect(sig.heartbeatStale).toBe(false);
+        expect(sig.lastSeen).toBeNull();
+    });
+
+    it('flags stale only when a known heartbeat is old', () => {
+        const old = collectHeartbeatSignal({ lastSeen: now - 10 * 60 * 1000 }, now);
+        expect(old.heartbeatKnown).toBe(true);
+        expect(old.heartbeatStale).toBe(true);
+    });
+
+    it('does not flag a fresh known heartbeat', () => {
+        const fresh = collectHeartbeatSignal({ lastSeen: now - 1000 }, now);
+        expect(fresh.heartbeatKnown).toBe(true);
+        expect(fresh.heartbeatStale).toBe(false);
+    });
+});
+
 describe('exports surface', () => {
     it('exposes scheduler + compute functions', () => {
         expect(typeof passiveHealth.startScheduler).toBe('function');
