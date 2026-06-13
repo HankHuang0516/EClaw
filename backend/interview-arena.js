@@ -188,6 +188,18 @@ let VISION_IMAGES = [
     { file: null, description: 'A binary search tree: root node 45, left subtree root 22 with children 10 and 35, right subtree root 60 with left child 55 — five non-root nodes visible', keywords: ['binary', 'tree', 'root', '45', '22', '60', 'five'] },
     { file: null, description: 'A GitHub contribution heatmap for the year 2024 showing 347 total contributions — the darkest green squares cluster in February and September, with many empty days in summer', keywords: ['github', 'contribution', '347', 'green', 'february', 'september'] },
     { file: null, description: 'A shopping cart UI with three line items: a laptop at $999, wireless earbuds at $149, and a USB-C charger at $29 — subtotal $1,177 with a red Apply Coupon button and a 10% Off badge', keywords: ['cart', 'three', 'laptop', '999', 'earbuds', '149', '1177', 'coupon'] },
+    // ── Daily pool update: added 2026-06-13 ──
+    // Easy tier
+    { file: null, description: 'A red traffic light signal glowing against a dark background with the amber and green lights unlit', keywords: ['traffic', 'light', 'red', 'signal'] },
+    { file: null, description: 'A calculator display showing the number 2048 after an equals key press', keywords: ['calculator', '2048', 'display'] },
+    // Medium tier
+    { file: null, description: 'An email inbox showing 7 unread messages; the top email is from "Alice Brown" with the subject "Q3 Budget Review"', keywords: ['email', 'inbox', 'seven', 'unread', 'Alice', 'Q3', 'budget'] },
+    { file: null, description: 'A mobile phone screen displaying a battery icon at 23% with red fill and a "Low Battery — Connect charger" alert dialog', keywords: ['phone', 'battery', '23', 'red', 'low', 'alert'] },
+    { file: null, description: 'A code editor showing a Python file with a red squiggly underline on line 7 and a popup tooltip reading "SyntaxError: unexpected EOF while parsing"', keywords: ['code', 'editor', 'python', 'error', 'line', '7', 'syntax'] },
+    { file: null, description: 'An analytics dashboard with four KPI metric cards arranged in a row: Revenue $2.4M (+12%), Active Users 48K (+7%), Churn Rate 3.2% (−0.5%), NPS Score 72', keywords: ['dashboard', 'revenue', 'users', '48', 'churn', 'NPS', '72'] },
+    // Hard tier
+    { file: null, description: 'A partially filled 6×6 Sudoku grid where row 1 shows 1, 2, blank, 4, blank, 6 and row 2 shows blank, 5, 3, blank, 1, blank — the bottom-right 3×3 box is entirely empty', keywords: ['sudoku', 'six', 'grid', 'empty', 'row', 'partially'] },
+    { file: null, description: 'A transit route diagram showing 5 bus stops in sequence: Central → Park → Museum → Library → Airport; a yellow diamond at Museum marks a transfer connection to Line 3', keywords: ['bus', 'route', 'five', 'stops', 'museum', 'transfer', 'airport', 'line'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -204,12 +216,12 @@ function generateButtonClickChallenge() {
     return { correctIndex, correctLabel, buttonCount, seed: Math.floor(Math.random() * 1e9) };
 }
 
-const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Wei Zhang','Amara Osei','Ravi Kapoor','Isabella Rossi','Dmitri Volkov'];
+const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Wei Zhang','Amara Osei','Ravi Kapoor','Isabella Rossi','Dmitri Volkov','Nguyen Van An','Zainab Hassan','Lucas Ferreira','Elena Kowalski','Tariq Nasser','Mei-Ling Wu','Bjorn Larsen','Ayaan Khan','Valentina Cruz','Kenji Nakamura'];
 const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se','wei@demo.cn','amara@test.gh','ravi@sample.in','isabella@demo.it','dmitri@test.ru'];
 const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','China','Ghana','Italy','Russia','Netherlands'];
 const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123','+46-70-123-4567','+65-9123-4567','+52-55-1234-5678','+353-87-123-4567'];
 const FORM_DATES = ['1990-06-15','1985-03-22','1992-11-08','1988-01-30','1995-07-14','1983-09-25','1991-12-01','1987-04-17','1993-08-09','1986-02-14','1994-10-31','1989-05-20'];
-const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund'];
+const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund','Report a billing issue','Upgrade account plan','Technical support needed','Request API access','Partnership inquiry','Download invoice','Reset 2FA device','Submit compliance form','Activate trial extension','Transfer account ownership'];
 
 function generateFormFillChallenge() {
     const nameIdx = Math.floor(Math.random() * FORM_NAMES.length);
@@ -368,6 +380,19 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,3,1],[1,5,1],[4,2,1]]', expected: '7' },{ input: '[[1,2,3],[4,5,6]]', expected: '12' },{ input: '[[1]]', expected: '1' }] },
     { title: 'Kth Largest Element', description: 'Write `solve(nums, k)` — return the kth largest element in the array (not the kth distinct element).',
       testCases: [{ input: '[3,2,1,5,6,4], 2', expected: '5' },{ input: '[3,2,3,1,2,4,5,5,6], 4', expected: '4' },{ input: '[1], 1', expected: '1' }] },
+    // ── Daily pool update: added 2026-06-13 ──
+    { title: 'Rotate Image 90°', description: 'Write `solve(matrix)` — rotate an n×n 2D matrix 90 degrees clockwise in-place and return it.',
+      testCases: [{ input: '[[1,2,3],[4,5,6],[7,8,9]]', expected: '[[7,4,1],[8,5,2],[9,6,3]]' },{ input: '[[5,1],[2,4]]', expected: '[[2,5],[4,1]]' },{ input: '[[1]]', expected: '[[1]]' }] },
+    { title: 'Longest Common Subsequence', description: 'Write `solve(s1, s2)` — return the length of the longest common subsequence of the two strings (characters need not be contiguous).',
+      testCases: [{ input: '"abcde", "ace"', expected: '3' },{ input: '"abc", "abc"', expected: '3' },{ input: '"abc", "def"', expected: '0' },{ input: '"", "abc"', expected: '0' }] },
+    { title: 'Trapping Rain Water', description: 'Write `solve(height)` — given an array of non-negative integers representing an elevation map where each bar has width 1, return how much water can be trapped.',
+      testCases: [{ input: '[0,1,0,2,1,0,1,3,2,1,2,1]', expected: '6' },{ input: '[4,2,0,3,2,5]', expected: '9' },{ input: '[1,0,1]', expected: '1' },{ input: '[]', expected: '0' }] },
+    { title: 'Edit Distance', description: 'Write `solve(word1, word2)` — return the minimum number of operations (insert, delete, or replace a single character) required to convert word1 into word2.',
+      testCases: [{ input: '"horse", "ros"', expected: '3' },{ input: '"intention", "execution"', expected: '5' },{ input: '"", "abc"', expected: '3' },{ input: '"abc", "abc"', expected: '0' }] },
+    { title: 'Merge K Sorted Arrays', description: 'Write `solve(arrays)` — given an array of k sorted arrays, merge all of them into one sorted array.',
+      testCases: [{ input: '[[1,4,7],[2,5,8],[3,6,9]]', expected: '[1,2,3,4,5,6,7,8,9]' },{ input: '[[1,2],[3,4],[5,6]]', expected: '[1,2,3,4,5,6]' },{ input: '[[]]', expected: '[]' },{ input: '[[1]]', expected: '[1]' }] },
+    { title: 'Valid Sudoku', description: 'Write `solve(board)` — given a 9×9 2D array (with "." for empty), return true if the board is valid: each row, column, and 3×3 box must contain digits 1-9 with no repeats.',
+      testCases: [{ input: '[["5","3",".",".","7",".",".",".","."],["6",".",".","1","9","5",".",".","."],[".","9","8",".",".",".",".","6","."],["8",".",".",".","6",".",".",".","3"],["4",".",".","8",".","3",".",".","1"],["7",".",".",".","2",".",".",".","6"],[".","6",".",".",".",".","2","8","."],[".",".",".","4","1","9",".",".","5"],[".",".",".",".","8",".",".","7","9"]]', expected: 'true' },{ input: '[["8","3",".",".","7",".",".",".","."],["6",".",".","1","9","5",".",".","."],[".","9","8",".",".",".",".","6","."],["8",".",".",".","6",".",".",".","3"],["4",".",".","8",".","3",".",".","1"],["7",".",".",".","2",".",".",".","6"],[".","6",".",".",".",".","2","8","."],[".",".",".","4","1","9",".",".","5"],[".",".",".",".","8",".",".","7","9"]]', expected: 'false' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -417,6 +442,14 @@ let RESPONSE_QUESTIONS = [
     { question: 'How many sides does a regular hexagon have?', expectedKeywords: ['6', 'six'] },
     { question: 'A boat travels 24 km upstream in 6 hours and the same 24 km downstream in 3 hours. What is the speed of the river current in km/h?', expectedKeywords: ['2'] },
     { question: 'In a class of 30 students, 18 play football, 15 play cricket, and 5 play neither sport. How many students play both football and cricket?', expectedKeywords: ['8'] },
+    // ── Daily pool update: added 2026-06-13 ──
+    { question: 'What is the least common multiple (LCM) of 12 and 18?', expectedKeywords: ['36'] },
+    { question: 'You invest $1000 at 10% annual interest compounded annually. What is the value of the investment after 2 years?', expectedKeywords: ['1210', '1,210'] },
+    { question: 'You draw 2 cards from a standard 52-card deck without replacement. What is the probability that both cards are aces? Express as a simplified fraction.', expectedKeywords: ['1/221'] },
+    { question: 'A man looks at a photograph and says: "Brothers and sisters I have none, but this man\'s father is my father\'s son." Whose photograph is he looking at?', expectedKeywords: ['son', 'his son'] },
+    { question: 'A cistern can be filled by pipe A in 12 hours and drained by pipe B in 18 hours. If both pipes are open simultaneously and the cistern starts empty, how many hours until it is full?', expectedKeywords: ['36'] },
+    { question: 'What is the value of 7! (7 factorial)?', expectedKeywords: ['5040'] },
+    { question: 'A train 150 m long passes a stationary observer in 10 seconds. What is the speed of the train in km/h?', expectedKeywords: ['54'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -494,6 +527,12 @@ let TTS_PHRASES = [
     { text: 'The clinical trial enrolled one thousand two hundred forty-eight participants across seven research sites in North America and Europe', keywords: ['clinical', 'trial', '1248', 'seven', 'research', 'Europe'] },
     { text: 'The train departs from Platform 7B at 08:42 and arrives at Zurich Hauptbahnhof after two hours and nineteen minutes', keywords: ['train', 'platform', '7B', 'Zurich', 'two', 'nineteen'] },
     { text: 'In organic chemistry a carbonyl group consists of a carbon atom double bonded to an oxygen atom written as C equals O', keywords: ['organic', 'chemistry', 'carbonyl', 'carbon', 'oxygen', 'double'] },
+    // ── Daily pool update: added 2026-06-13 ──
+    { text: 'The meeting has been rescheduled from Wednesday the 5th at 10 AM to Friday the 14th at 3:30 PM — conference room Delta on floor 8', keywords: ['rescheduled', 'wednesday', 'friday', '14', 'delta', 'floor', '8'] },
+    { text: 'Order confirmation: SKU-79043-B quantity 24 shipped to 1425 Elm Street warehouse zone 7 expected delivery Tuesday the seventeenth', keywords: ['SKU', '79043', 'quantity', '24', 'Elm', 'zone', 'tuesday'] },
+    { text: 'Euler prime number e approximately equals 2.71828 and serves as the base of the natural logarithm written as ln of x', keywords: ['euler', '2.71828', 'natural', 'logarithm', 'base'] },
+    { text: 'IBAN GB29 NWBK 6016 1331 9268 19 — please verify the account number before initiating the SEPA transfer of two thousand four hundred euros', keywords: ['IBAN', 'GB29', 'SEPA', 'transfer', 'euros', 'verify'] },
+    { text: 'The Reynolds number determines whether fluid flow is laminar or turbulent and equals density times velocity times characteristic length divided by dynamic viscosity', keywords: ['reynolds', 'laminar', 'turbulent', 'density', 'velocity', 'viscosity'] },
 ];
 
 // ============================================
