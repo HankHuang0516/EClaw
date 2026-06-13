@@ -1783,6 +1783,27 @@ module.exports = function rentalFactory({ authMiddleware, softAuthMiddleware, ad
                     return res.status(code).json(body);
                 }
                 console.error('[Rental] handler error:', err);
+                // P0 card_68242d883b51c3b6ceda09cb: surface Pg-level details to
+                // audit log so internal_error responses can be diagnosed from
+                // /api/logs?category=rental&level=error without Railway stdout.
+                try {
+                    audit('error', 'rental', `handler error ${req.method} ${req.originalUrl || req.path}: ${err.message || 'unknown'}`, {
+                        userId: req.user?.userId,
+                        action: 'handler_error',
+                        resource: req.originalUrl || req.path,
+                        result: 'failure',
+                        metadata: {
+                            errMessage: err.message || null,
+                            errCode: err.code || null,
+                            errConstraint: err.constraint || null,
+                            errDetail: err.detail || null,
+                            errTable: err.table || null,
+                            errColumn: err.column || null,
+                            errRoutine: err.routine || null,
+                            errStackHead: (err.stack || '').split('\n').slice(0, 3).join(' | '),
+                        },
+                    });
+                } catch (_) { /* never let audit failure cascade */ }
                 res.status(500).json({ success: false, error: 'internal_error' });
             }
         };
