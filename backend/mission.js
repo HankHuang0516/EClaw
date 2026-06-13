@@ -32,6 +32,7 @@ const path = require('path');
 const safeEqual = require('./safe-equal');
 const { newNoteId, newSkillId, newRuleId } = require('./entity-id');
 const mindmapMirror = require('./mindmap-mirror');
+const { apiError } = require('./lib/api-errors');
 
 // Mirror a note-CRUD event into the mindmap, swallowing errors. The mindmap
 // is a derived read model — a mirror failure must never roll back the note
@@ -386,7 +387,10 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
         const { deviceId, deviceSecret, botSecret, entityId } = params;
 
         if (!deviceId) {
-            res.status(400).json({ success: false, error: 'Missing deviceId' });
+            apiError(res, 'MISSING_REQUIRED_FIELD', {
+                missingFields: ['deviceId'],
+                error: 'Missing deviceId',
+            });
             return false;
         }
 
@@ -404,7 +408,11 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
 
         // Neither credential is valid
         if (!deviceSecret && !botSecret) {
-            res.status(400).json({ success: false, error: 'Missing deviceSecret or botSecret' });
+            apiError(res, 'MISSING_REQUIRED_FIELD', {
+                missingFields: ['deviceSecret', 'botSecret'],
+                error: 'Missing deviceSecret or botSecret',
+                hint: 'Provide either deviceSecret (user auth) or botSecret (bot auth)',
+            });
         } else {
             res.status(401).json({ success: false, error: 'Invalid credentials' });
         }
@@ -708,8 +716,17 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
         if (!authenticate(req, res)) return;
         const { deviceId, entityId, item, listType } = req.body;
 
-        if (!item || !item.title) {
-            return res.status(400).json({ success: false, error: 'Missing item or title' });
+        if (!item) {
+            return apiError(res, 'MISSING_REQUIRED_FIELD', {
+                missingFields: ['item'],
+                error: 'Missing item or title',
+            });
+        }
+        if (!item.title) {
+            return apiError(res, 'MISSING_REQUIRED_FIELD', {
+                missingFields: ['item.title'],
+                error: 'Missing item or title',
+            });
         }
 
         try {
@@ -757,7 +774,10 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
         const { id } = req.params;
 
         if (!item) {
-            return res.status(400).json({ success: false, error: 'Missing item data' });
+            return apiError(res, 'MISSING_REQUIRED_FIELD', {
+                missingFields: ['item'],
+                error: 'Missing item data',
+            });
         }
 
         try {
@@ -871,7 +891,10 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
         const linkedCardIdsInput = normalizeLinkedCardIds(req.body.linkedCardIds);
 
         if (!title) {
-            return res.status(400).json({ success: false, error: 'Missing title' });
+            return apiError(res, 'MISSING_REQUIRED_FIELD', {
+                missingFields: ['title'],
+                error: 'Missing title',
+            });
         }
 
         // Phase 4: optional anchor pins the note to a kanban card or chat
@@ -954,7 +977,10 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
         const linkedCardIdsInput = linkedCardIdsTouched ? normalizeLinkedCardIds(req.body.linkedCardIds) : undefined;
 
         if (!title) {
-            return res.status(400).json({ success: false, error: 'Missing title' });
+            return apiError(res, 'MISSING_REQUIRED_FIELD', {
+                missingFields: ['title'],
+                error: 'Missing title',
+            });
         }
 
         const client = await pool.connect();
@@ -1037,7 +1063,10 @@ module.exports = function(devices, { awardEntityXP: _awardEntityXP, serverLog } 
         const { deviceId, title } = req.body;
 
         if (!title) {
-            return res.status(400).json({ success: false, error: 'Missing title' });
+            return apiError(res, 'MISSING_REQUIRED_FIELD', {
+                missingFields: ['title'],
+                error: 'Missing title',
+            });
         }
 
         const client = await pool.connect();
