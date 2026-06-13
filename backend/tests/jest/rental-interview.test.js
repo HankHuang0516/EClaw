@@ -25,10 +25,11 @@ jest.mock('pg', () => {
 
         // INSERT new listing
         if (/^INSERT INTO bot_listings/i.test(norm)) {
-            const [ownerUserId, ownerDeviceId, ownerEntityId, title, description,
+            // card_68242d88: id is now passed explicitly as $1 — shift the rest.
+            const [explicitId, ownerUserId, ownerDeviceId, ownerEntityId, title, description,
                    rate, minMin, maxMin] = params;
             const row = {
-                id: genId(), owner_user_id: ownerUserId,
+                id: explicitId || genId(), owner_user_id: ownerUserId,
                 owner_device_id: ownerDeviceId, owner_entity_id: ownerEntityId,
                 title, description, rate_mli_per_ktoken: rate,
                 min_rental_minutes: minMin, max_rental_minutes: maxMin,
