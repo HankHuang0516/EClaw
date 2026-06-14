@@ -220,6 +220,25 @@ async function createTables() {
         await client.query(`UPDATE official_bots SET model_name = 'minimax-2.7' WHERE display_name = 'Local_Mac_MiniMax2.7' AND model_name IS NULL`);
         await client.query(`UPDATE official_bots SET model_name = 'openai-codex/gpt-5.5-xhigh' WHERE display_name = 'Local_Mac_CodexGPT5.5_xhight' AND model_name IS NULL`);
 
+        // Retirement reason: sticky flag for bots retired due to chronic delivery
+        // failures. Once set, the bot stays disabled across deploys; admin can
+        // re-enable by clearing retirement_reason via PUT /api/admin/official-bot/:botId.
+        await client.query(`ALTER TABLE official_bots ADD COLUMN IF NOT EXISTS retirement_reason TEXT`);
+
+        // GH#2956: Local_Mac_CodexGPT5.5_xhight (botId Mac本地版_MiniMax2.7) stalled
+        // 2 consecutive 6h free-bot health cycles on 2026-05-26 (cycle 1 welcome-stub
+        // greeting only, cycle 2 no first_token within 60s, speak2 push_timeout).
+        // Local Mac listener is unreachable; retire from the free pool until the
+        // listener is restored. Guard on retirement_reason IS NULL so admin can
+        // re-enable later by clearing the column without it being reverted at boot.
+        await client.query(`
+            UPDATE official_bots
+            SET status = 'disabled',
+                retirement_reason = 'GH#2956: push_timeout x2 cycles on 2026-05-26 — local Mac listener unreachable'
+            WHERE display_name = 'Local_Mac_CodexGPT5.5_xhight'
+              AND retirement_reason IS NULL
+        `);
+
         // Add paid_borrow_slots column to devices table (tracks how many personal bots a device has paid for)
         await client.query(`
             ALTER TABLE devices ADD COLUMN IF NOT EXISTS paid_borrow_slots INTEGER DEFAULT 0
@@ -947,11 +966,11 @@ async function saveOfficialBot(bot) {
     try {
         const client = await pool.connect();
         await client.query(
-            `INSERT INTO official_bots (bot_id, bot_type, webhook_url, token, bot_secret, session_key_template, status, assigned_device_id, assigned_entity_id, assigned_at, created_at, setup_username, setup_password, display_name, model_name)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+            `INSERT INTO official_bots (bot_id, bot_type, webhook_url, token, bot_secret, session_key_template, status, assigned_device_id, assigned_entity_id, assigned_at, created_at, setup_username, setup_password, display_name, model_name, retirement_reason)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
              ON CONFLICT (bot_id)
-             DO UPDATE SET webhook_url = $3, token = $4, bot_secret = $5, session_key_template = $6, status = $7, assigned_device_id = $8, assigned_entity_id = $9, assigned_at = $10, setup_username = $12, setup_password = $13, display_name = $14, model_name = $15`,
-            [bot.bot_id, bot.bot_type, bot.webhook_url, bot.token, bot.bot_secret || null, bot.session_key_template || null, bot.status || 'available', bot.assigned_device_id || null, bot.assigned_entity_id ?? null, bot.assigned_at || null, bot.created_at || Date.now(), bot.setup_username || null, bot.setup_password || null, bot.display_name || null, bot.model_name || null]
+             DO UPDATE SET webhook_url = $3, token = $4, bot_secret = $5, session_key_template = $6, status = $7, assigned_device_id = $8, assigned_entity_id = $9, assigned_at = $10, setup_username = $12, setup_password = $13, display_name = $14, model_name = $15, retirement_reason = $16`,
+            [bot.bot_id, bot.bot_type, bot.webhook_url, bot.token, bot.bot_secret || null, bot.session_key_template || null, bot.status || 'available', bot.assigned_device_id || null, bot.assigned_entity_id ?? null, bot.assigned_at || null, bot.created_at || Date.now(), bot.setup_username || null, bot.setup_password || null, bot.display_name || null, bot.model_name || null, bot.retirement_reason || null]
         );
         client.release();
         return true;
@@ -984,7 +1003,8 @@ async function loadOfficialBots() {
                 setup_username: row.setup_username || null,
                 setup_password: row.setup_password || null,
                 display_name: row.display_name || null,
-                model_name: row.model_name || null
+                model_name: row.model_name || null,
+                retirement_reason: row.retirement_reason || null
             };
         }
         console.log(`[DB] Loaded ${Object.keys(bots).length} official bots`);
