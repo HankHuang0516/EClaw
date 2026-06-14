@@ -751,7 +751,7 @@
                     <button class="kb-chip active" data-filter="all" data-i18n="kb_filter_all" onclick="filterCards('all')">All</button>
                     <button class="kb-chip" data-filter="mine" data-i18n="kb_filter_mine" onclick="filterCards('mine')">My Cards</button>
                 </div>
-                <select class="kb-sort-select" onchange="sortCards(this.value)" aria-label="Sort kanban cards">
+                <select class="kb-sort-select" onchange="sortCards(this.value)" data-i18n-aria-label="a11y_kanban_sort_cards" aria-label="Sort kanban cards">
                     <option value="updated_desc" data-i18n="kb_sort_recently_updated">Recently Updated</option>
                     <option value="updated_asc" data-i18n="kb_sort_oldest_updated">Oldest Updated</option>
                     <option value="default" data-i18n="kb_sort_default">Default Order</option>
@@ -770,7 +770,7 @@
         <!-- Funnel (collapsible) -->
         <div class="kb-funnel" id="kbFunnel" style="display:none; padding:8px 0 4px 0; gap:8px; flex-wrap:wrap;">
             <input type="text" id="funnelSearch" placeholder="Search…" data-i18n-placeholder="kb_funnel_search"
-                   oninput="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px; min-width:180px;" aria-label="Search cards">
+                   oninput="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px; min-width:180px;" data-i18n-aria-label="a11y_kanban_search_cards" aria-label="Search cards">
             <div class="kb-search-scope" id="kbSearchScope" style="display:flex; gap:4px; align-items:center;">
                 <span style="font-size:12px; color:#888;" data-i18n="kb_search_scope_label">Scope:</span>
                 <label class="kb-scope-chip active" data-scope="title">
@@ -786,7 +786,7 @@
                     <span data-i18n="kb_search_scope_subcards">Sub-cards</span>
                 </label>
             </div>
-            <select id="funnelStatus" onchange="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px;" aria-label="Filter by status">
+            <select id="funnelStatus" onchange="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px;" data-i18n-aria-label="a11y_kanban_filter_status" aria-label="Filter by status">
                 <option value="" data-i18n="kb_funnel_status_all">All statuses</option>
                 <option value="backlog" data-i18n="kb_col_backlog">Backlog</option>
                 <option value="todo" data-i18n="kb_col_todo">TODO</option>
@@ -794,18 +794,18 @@
                 <option value="review" data-i18n="kb_col_review">Review</option>
                 <option value="done" data-i18n="kb_col_done">Done</option>
             </select>
-            <select id="funnelPriority" onchange="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px;" aria-label="Filter by priority">
+            <select id="funnelPriority" onchange="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px;" data-i18n-aria-label="a11y_kanban_filter_priority" aria-label="Filter by priority">
                 <option value="" data-i18n="kb_funnel_priority_all">All priorities</option>
                 <option value="P0">P0</option>
                 <option value="P1">P1</option>
                 <option value="P2">P2</option>
                 <option value="P3">P3</option>
             </select>
-            <select id="funnelEntity" onchange="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px;" aria-label="Filter by entity">
+            <select id="funnelEntity" onchange="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px;" data-i18n-aria-label="a11y_kanban_filter_entity" aria-label="Filter by entity">
                 <option value="" data-i18n="kb_funnel_entity_all">All entities</option>
             </select>
             <input type="text" id="funnelTag" placeholder="Tag…" data-i18n-placeholder="kb_funnel_tag"
-                   oninput="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px; min-width:120px;" aria-label="Filter by tag">
+                   oninput="onFunnelChange()" style="padding:6px 10px; border:1px solid #ccc; border-radius:6px; min-width:120px;" data-i18n-aria-label="a11y_kanban_filter_tag" aria-label="Filter by tag">
             <label style="font-size:13px; color:#666;">
                 <span data-i18n="kb_funnel_since">Since</span>:
                 <input type="date" id="funnelSince" onchange="onFunnelChange()" style="padding:4px 6px; border:1px solid #ccc; border-radius:6px;">
@@ -844,7 +844,7 @@
                 <div class="kb-auto-filter" id="autoFilter">
                     <input type="search" class="kb-auto-filter-search" id="autoFilterSearch"
                         placeholder="Search title / description…" data-i18n-placeholder="kb_auto_filter_search_ph"
-                        autocomplete="off" aria-label="Search automations">
+                        autocomplete="off" data-i18n-aria-label="a11y_kanban_search_automations" aria-label="Search automations">
                     <div class="kb-auto-filter-group" id="autoFilterEntities">
                         <span class="kb-auto-filter-group-label" data-i18n="kb_auto_filter_entity">Entity</span>
                     </div>
