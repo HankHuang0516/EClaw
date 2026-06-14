@@ -9245,6 +9245,33 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
         broadcast = false;
         routingResolvedVia = null;
     }
+    // Usage warning prefix (card_9cd84ee7d830b2f76c595f6c).
+    // When the device opted in and the latest usage_snapshots row shows
+    // Claude 5h/7d remaining ≤ thresholds, prepend a system warning so the
+    // dialog partner knows quota is tight. Best-effort: any failure here
+    // (no snapshot / stale / DB hiccup) silently skips — never blocks delivery.
+    if (typeof finalMessage === 'string' && finalMessage && !isSuppressedMessage) {
+        try {
+            const _prefs = await devicePrefs.getPrefs(deviceId);
+            const _cfg = _prefs && _prefs.usage_warning_config;
+            if (_cfg && _cfg.enabled !== false) {
+                let _lang = 'en';
+                try {
+                    const _r = await chatPool.query(
+                        'SELECT language FROM user_accounts WHERE device_id = $1 LIMIT 1',
+                        [deviceId]
+                    );
+                    if (_r.rows[0] && _r.rows[0].language) _lang = _r.rows[0].language;
+                } catch (_) { /* keep en */ }
+                const _uw = require('./lib/usage-warning');
+                const _prefix = await _uw.getWarningPrefix(chatPool, deviceId, _cfg, _lang);
+                if (_prefix) {
+                    finalMessage = _prefix + '\n\n' + finalMessage;
+                }
+            }
+        } catch (_) { /* never block delivery */ }
+    }
+
     if (finalMessage !== undefined && !isSuppressedMessage) entity.message = finalMessage;
     if (parts) {
         // Only store numeric values — reject URLs/strings that would crash Android Gson deserialization
