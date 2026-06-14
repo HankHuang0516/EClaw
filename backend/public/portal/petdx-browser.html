@@ -215,10 +215,28 @@
     </div>
 </div>
 
+<script src="/shared/i18n.js"></script>
 <script src="/shared/petdx-renderer.js"></script>
 <script>
 (function () {
     'use strict';
+
+    function t(key, params) {
+        if (typeof i18n !== 'undefined' && typeof i18n.t === 'function') {
+            return i18n.t(key, params || {});
+        }
+        const fallback = {
+            petdx_switch_success: 'Switched to {name}',
+            petdx_switch_failed: 'Switch failed: {error}',
+            petdx_network_error: 'Network error: {error}',
+            petdx_favorite_failed: 'Save to favorites failed: {error}',
+        };
+        let s = fallback[key] || key;
+        Object.keys(params || {}).forEach(k => {
+            s = s.replace(new RegExp('\\{' + k + '\\}', 'g'), params[k]);
+        });
+        return s;
+    }
 
     // ── Auth ──────────────────────────────────────────────────────
     // activeEntityId is the user's in-UI pick:
@@ -675,12 +693,12 @@
             const data = await r.json().catch(() => ({}));
             if (r.ok && data.success) {
                 currentSelectionId = detail.id;
-                alert('已切換為 ' + detail.name);
+                alert(t('petdx_switch_success', { name: detail.name }));
             } else {
-                alert('切換失敗：' + (data.error || r.status));
+                alert(t('petdx_switch_failed', { error: data.error || r.status }));
             }
         } catch (err) {
-            alert('網路錯誤：' + err.message);
+            alert(t('petdx_network_error', { error: err.message }));
         }
     }
 
@@ -698,10 +716,10 @@
                 else favoriteIds.delete(detail.id);
                 if (btn) btn.textContent = data.favorited ? '★ 已收藏' : '☆ 收藏';
             } else {
-                alert('收藏失敗：' + (data.error || r.status));
+                alert(t('petdx_favorite_failed', { error: data.error || r.status }));
             }
         } catch (err) {
-            alert('網路錯誤：' + err.message);
+            alert(t('petdx_network_error', { error: err.message }));
         }
     }
 
