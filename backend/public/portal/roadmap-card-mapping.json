@@ -1,0 +1,30 @@
+{
+  "_version": "1.0",
+  "_doc": "Maps each roadmap.html phase/task slug to the kanban card_XXX that tracks it on THIS EClaw deployment. Slugs in roadmap.html appear in `data-card-id` attributes. To re-target for your own deployment, replace each card ID with one from your kanban (queryable via GET /api/mission/cards). Leave the value as null to render the ? icon empty state, prompting whoever opens the page to file or update the mapping.",
+  "phases": {
+    "ooda-phase-0-master": "card_be59aa034883fe36d3645a27",
+    "ooda-phase-0-taxonomy": "card_d65aef6b582c055986350bf3",
+    "ooda-phase-0-ingestion": "card_af7d8bb1c7c74301fca67e05",
+    "ooda-phase-1-preflight": "card_50dccd356888b22d6654e85a",
+    "ooda-phase-1-done-gate": "card_337040389de34bcb65cf0cb0",
+    "ooda-phase-2-offline-queue": "card_47ed9a0c21dd507d3b726136",
+    "ooda-phase-2-auth-session": "card_214d48e395e812b3e909e5ca",
+    "ooda-phase-2-redirect": "card_14571f26914b9c1eae148362",
+    "ooda-phase-3-matrix": "card_42ffca0d29ce22b369d55ca4",
+    "ooda-phase-3-required-check": "card_5ea44479c72edce14ac00a2e",
+    "ooda-phase-4-promotion": "card_5ac74610cbf1f89440427809",
+    "ooda-phase-4-part-a-roadmap-live": "card_0f74c9e4941e7a350fa6f425",
+    "hermes-h1-reliability": "card_7a785b397b7db54ccaf0a490",
+    "hermes-h2-operational": "card_07891ac51d55509f7d74c4a0",
+    "hermes-h3-private-repo": "card_cf39087265b2e5176d25c00f",
+    "hermes-h4-showcase": "card_66967596573c046f3cb0f5f6",
+    "desktop-roadmap-master": "card_6935b427383a61a921ecdf65",
+    "rental-phase-0-wallet": null,
+    "rental-phase-1-listings": null,
+    "rental-phase-2-contract": null,
+    "rental-phase-3-trust": null,
+    "rental-phase-4-risk": null,
+    "rental-phase-5-growth": null,
+    "demo-missing-card-example": "card_thisdoesnotexist0000000000"
+  }
+}

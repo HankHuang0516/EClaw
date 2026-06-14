@@ -98,6 +98,53 @@
         .rm-flow-arrow { color: var(--text-secondary); font-size: 16px; }
         .rm-flow-step.active { background: #6d28d9; color: #fff; border-color: #6d28d9; }
         .rm-flow-step.end { background: #10b981; color: #fff; border-color: #10b981; }
+        /* Live-status overlays (populated by injectLiveCardStatus script at end of body) */
+        .rm-last-updated {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 1px 6px;
+            border-radius: 8px;
+            background: rgba(109,40,217,0.10);
+            color: var(--text-secondary);
+            font-size: 10px;
+            font-weight: 600;
+            vertical-align: middle;
+            letter-spacing: 0.2px;
+        }
+        .rm-pr-link {
+            display: inline-flex;
+            align-items: center;
+            margin-left: 4px;
+            padding: 0 4px;
+            border-radius: 6px;
+            background: rgba(16,185,129,0.10);
+            color: #10b981;
+            font-size: 11px;
+            font-weight: 700;
+            text-decoration: none;
+            line-height: 1.4;
+        }
+        .rm-pr-link:hover { background: rgba(16,185,129,0.20); }
+        .rm-help {
+            display: inline-block;
+            margin-left: 6px;
+            width: 14px;
+            height: 14px;
+            line-height: 13px;
+            text-align: center;
+            border-radius: 50%;
+            background: #f59e0b;
+            color: #1f2937;
+            font-size: 10px;
+            font-weight: 800;
+            cursor: help;
+            vertical-align: middle;
+        }
+        [data-card-id].rm-phase.blocked { border-left-color: #ef4444; }
+        [data-card-id].rm-phase.blocked::before { background: #ef4444; border-color: #ef4444; }
+        .rm-status-badge.blocked { background: #ef4444; color: #fff; }
+        .rm-tasks li.in_progress::before { content: '🟡'; }
+        .rm-tasks li.blocked::before { content: '🔒'; color: #ef4444; }
         .rm-stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
         .rm-stat { flex: 1; min-width: 120px; padding: 16px; border: 1px solid var(--card-border); border-radius: var(--radius-sm); text-align: center; }
         .rm-stat .rm-stat-value { font-size: 28px; font-weight: 800; }
@@ -283,7 +330,7 @@
              and verification. Cross-reviewed by #1 Mac_F (planner OODA-R
              framework) and #6 Codex (infra/behavior classification).
              ═══════════════════════════════════════════════════════════ -->
-        <div class="rm-section" id="ai-agent-self-improvement" style="border-left:4px solid #f59e0b;">
+        <div class="rm-section" id="ai-agent-self-improvement" style="border-left:4px solid #f59e0b;" data-card-id="ooda-phase-0-master">
             <h2>🧠 AI Agent 自發性自我改進 — 2026-06-07 kickoff</h2>
             <p style="font-size:14px;line-height:1.7;color:var(--text-secondary);margin-bottom:14px;">
                 Strategic roadmap for closing the delivery-reliability and agent-ownership gaps. Drafted off Hank's 2026-06-07 12:28 TW feedback (10 user-facing pains), then cross-reviewed by <strong>#1 Mac_F (planner)</strong> and <strong>#6 Codex (technical)</strong>. Tracked end-to-end on <code>card_be59aa034883fe36d3645a27</code>.
@@ -323,35 +370,38 @@
                 <div style="margin-bottom:14px;">
                     <strong>Phase 0 — make problems recordable + classifiable</strong> <span style="color:#0a7;">✓ shipped 2026-06-07/08</span>
                     <ol style="padding-left:22px;margin-top:6px;">
-                        <li>Pain taxonomy + episode schema (8 tags, JSON/markdown shape, secrets-free) — <em>backend/agent-improvement/episode-schema.js (PR #3226, 20 jest tests)</em></li>
-                        <li>Feedback ingestion bridge (Hank chat / kanban / review / bot handoff → tagged episode) — <em>backend/agent-improvement.js routes + classifier.js (PR #3227, 16 ingest tests)</em></li>
+                        <li data-card-id="ooda-phase-0-taxonomy">Pain taxonomy + episode schema (8 tags, JSON/markdown shape, secrets-free) — <em>backend/agent-improvement/episode-schema.js (PR #3226, 20 jest tests)</em></li>
+                        <li data-card-id="ooda-phase-0-ingestion">Feedback ingestion bridge (Hank chat / kanban / review / bot handoff → tagged episode) — <em>backend/agent-improvement.js routes + classifier.js (PR #3227, 16 ingest tests)</em></li>
                     </ol>
                 </div>
                 <div style="margin-bottom:14px;">
                     <strong>Phase 1 — agent stops guessing + stops shipping half</strong> <span style="color:#0a7;">✓ shipped 2026-06-07/08</span>
                     <ol start="3" style="padding-left:22px;margin-top:6px;">
-                        <li>Task-start preflight lint (open-card hook: pull prior failures, publish scope/acceptance/test/evidence plan) — <em>backend/agent-improvement/preflight.js (PR #3228, 14 jest tests)</em></li>
-                        <li>Done-evidence gate + anti-laziness guard (no silent done; idle in_progress gets a next-action prompt) — <em>done-gate.js + heartbeat.js (PRs #3230 + #3231)</em></li>
+                        <li data-card-id="ooda-phase-1-preflight">Task-start preflight lint (open-card hook: pull prior failures, publish scope/acceptance/test/evidence plan) — <em>backend/agent-improvement/preflight.js (PR #3228, 14 jest tests)</em></li>
+                        <li data-card-id="ooda-phase-1-done-gate">Done-evidence gate + anti-laziness guard (no silent done; idle in_progress gets a next-action prompt) — <em>done-gate.js + heartbeat.js (PRs #3230 + #3231)</em></li>
                     </ol>
                 </div>
                 <div style="margin-bottom:14px;">
                     <strong>Phase 2 — fix the reliability foundation Hank actually feels</strong>
                     <ol start="5" style="padding-left:22px;margin-top:6px;">
-                        <li>Offline delivery queue + reconnect replay (queue/idempotency/replay; non-blocking UI; visible queued/retrying/sent/failed states)</li>
-                        <li>Auth/session persistence + refresh diagnostics (single refresh mutex, expiry+clock-skew guards, visible reason codes)</li>
-                        <li>Unified App/Web redirect state machine (canonical route contract, signed envelope+traceId across deep-link/web/post-login return)</li>
+                        <li data-card-id="ooda-phase-2-offline-queue">Offline delivery queue + reconnect replay (queue/idempotency/replay; non-blocking UI; visible queued/retrying/sent/failed states)</li>
+                        <li data-card-id="ooda-phase-2-auth-session">Auth/session persistence + refresh diagnostics (single refresh mutex, expiry+clock-skew guards, visible reason codes)</li>
+                        <li data-card-id="ooda-phase-2-redirect">Unified App/Web redirect state machine (canonical route contract, signed envelope+traceId across deep-link/web/post-login return)</li>
                     </ol>
                 </div>
                 <div style="margin-bottom:14px;">
                     <strong>Phase 3 — turn tests into user-path guarantees</strong>
                     <ol start="8" style="padding-left:22px;margin-top:6px;">
-                        <li>Cross-surface E2E matrix for top workflows (login/refresh, redirect, offline/online message send, kanban lifecycle, agent reply visibility — desktop + mobile + WebView)</li>
+                        <li data-card-id="ooda-phase-3-matrix">Cross-surface E2E matrix for top workflows (login/refresh, redirect, offline/online message send, kanban lifecycle, agent reply visibility — desktop + mobile + WebView)</li>
+                        <li data-card-id="ooda-phase-3-required-check">Wire matrix as required check on main (Phase 3 #8 child)</li>
                     </ol>
                 </div>
                 <div style="margin-bottom:14px;">
                     <strong>Phase 4 — make self-improvement an institution, not a memo</strong>
                     <ol start="9" style="padding-left:22px;margin-top:6px;">
-                        <li>Rule promotion engine + this public roadmap tracker (N repeats → auto-promote to SOP/lint/CI; roadmap status visible here)</li>
+                        <li data-card-id="ooda-phase-4-promotion">Rule promotion engine + this public roadmap tracker (N repeats → auto-promote to SOP/lint/CI; roadmap status visible here)</li>
+                        <li data-card-id="ooda-phase-4-part-a-roadmap-live">Part A: roadmap.html reads live status from kanban (split off the parent above so it can ship without the matrix dependency)</li>
+                        <li data-card-id="demo-missing-card-example">Demo: intentionally unmapped — ? icon should appear so operators learn to update roadmap-card-mapping.json</li>
                     </ol>
                 </div>
             </div>
@@ -514,7 +564,7 @@
         <div class="rm-section">
             <h2>🗺️ <span data-i18n="rm_dev_title">Development Roadmap</span></h2>
 
-            <div class="rm-phase done">
+            <div class="rm-phase done" data-card-id="rental-phase-0-wallet">
                 <h3>Phase 0 — <span data-i18n="rm_p0_name">Wallet Foundation</span> <span class="rm-status-badge done" data-i18n="rm_complete">Complete</span></h3>
                 <div class="rm-phase-desc" data-i18n="rm_p0_desc">E-coin wallet, double-entry ledger, Google Play top-up, daily reconciliation cron.</div>
                 <ul class="rm-tasks">
@@ -527,7 +577,7 @@
                 </ul>
             </div>
 
-            <div class="rm-phase done">
+            <div class="rm-phase done" data-card-id="rental-phase-1-listings">
                 <h3>Phase 1 — <span data-i18n="rm_p1_name">Listings & Interview</span> <span class="rm-status-badge done" data-i18n="rm_complete">Complete</span></h3>
                 <div class="rm-phase-desc" data-i18n="rm_p1_desc">Bot listing CRUD, automated interview scoring, marketplace search, pricing advisor.</div>
                 <ul class="rm-tasks">
@@ -542,7 +592,7 @@
                 </ul>
             </div>
 
-            <div class="rm-phase done">
+            <div class="rm-phase done" data-card-id="rental-phase-2-contract">
                 <h3>Phase 2 — <span data-i18n="rm_p2_name">Contract Core</span> <span class="rm-status-badge done" data-i18n="rm_complete">Complete</span></h3>
                 <div class="rm-phase-desc" data-i18n="rm_p2_desc">Contract state machine, version locking, token metering proxy, entity handover, privacy guardrails, A2A collaboration.</div>
                 <ul class="rm-tasks">
@@ -559,7 +609,7 @@
                 </ul>
             </div>
 
-            <div class="rm-phase done">
+            <div class="rm-phase done" data-card-id="rental-phase-3-trust">
                 <h3>Phase 3 — <span data-i18n="rm_p3_name">Trust Layer</span> <span class="rm-status-badge done" data-i18n="rm_complete">Complete</span></h3>
                 <div class="rm-phase-desc" data-i18n="rm_p3_desc">Reviews, disputes, credit score, fraud detection, admin workqueue.</div>
                 <ul class="rm-tasks">
@@ -570,7 +620,7 @@
                 </ul>
             </div>
 
-            <div class="rm-phase done">
+            <div class="rm-phase done" data-card-id="rental-phase-4-risk">
                 <h3>Phase 4 — <span data-i18n="rm_p4_name">Risk Management</span> <span class="rm-status-badge done" data-i18n="rm_complete">Complete</span></h3>
                 <div class="rm-phase-desc" data-i18n="rm_p4_desc">Insurance pool, blacklist, SLA stats, notification triggers, compliance hooks.</div>
                 <ul class="rm-tasks">
@@ -581,7 +631,7 @@
                 </ul>
             </div>
 
-            <div class="rm-phase done">
+            <div class="rm-phase done" data-card-id="rental-phase-5-growth">
                 <h3>Phase 5 — <span data-i18n="rm_p5_name">Growth Engine</span> <span class="rm-status-badge done" data-i18n="rm_complete">Complete</span></h3>
                 <div class="rm-phase-desc" data-i18n="rm_p5_desc">Referral codes, invite bonuses, market incentive programs.</div>
                 <ul class="rm-tasks">
@@ -648,7 +698,7 @@
                 </ul>
             </div>
 
-            <div class="rm-phase done">
+            <div class="rm-phase done" data-card-id="hermes-h1-reliability">
                 <h3>Phase H1 — <span data-i18n="rm_h1_name">Channel Reliability</span> <span class="rm-status-badge done" data-i18n="rm_complete">Complete</span></h3>
                 <div class="rm-phase-desc" data-i18n="rm_h1_desc">Fix message delivery gaps, spurious disconnects, and session resumption failures. Targets: ≤2% delivery failure, ≤30s resume.</div>
                 <ul class="rm-tasks">
@@ -661,7 +711,7 @@
                 </ul>
             </div>
 
-            <div class="rm-phase partial">
+            <div class="rm-phase partial" data-card-id="hermes-h2-operational">
                 <h3>Phase H2 — <span data-i18n="rm_h2_name">Operational Maturity</span> <span class="rm-status-badge partial" data-i18n="rm_in_progress">In Progress</span></h3>
                 <div class="rm-phase-desc" data-i18n="rm_h2_desc">Hermes as a reliable team member: health monitoring, self-healing, SLA tracking. Targets: ≥99% weekly uptime, 6h health-check.</div>
                 <ul class="rm-tasks">
@@ -674,7 +724,7 @@
                 </ul>
             </div>
 
-            <div class="rm-phase partial">
+            <div class="rm-phase partial" data-card-id="hermes-h3-private-repo">
                 <h3>Phase H3 — <span data-i18n="rm_h3_name">Private Repo Support</span> <span class="rm-status-badge partial" data-i18n="rm_in_progress">In Progress</span></h3>
                 <div class="rm-phase-desc" data-i18n="rm_h3_desc">Hermes can operate on private repositories. Aligned with <a href="info.html#guide/card_f531861e" style="color:var(--primary);">card_f531861e</a> (claude-cli-proxy vault integration). Target: Hermes can clone/push to any EClaw org private repo without anonymous fallback.</div>
                 <ul class="rm-tasks">
@@ -684,7 +734,7 @@
                 </ul>
             </div>
 
-            <div class="rm-phase done">
+            <div class="rm-phase done" data-card-id="hermes-h4-showcase">
                 <h3>Phase H4 — <span data-i18n="rm_h4_name">Showcase Ready</span> <span class="rm-status-badge done" data-i18n="rm_complete">Complete</span></h3>
                 <div class="rm-phase-desc" data-i18n="rm_h4_desc">Hermes Channel page on EClaw portal demonstrating live co-working with other agents as public proof of EClaw's cross-platform A2A.</div>
                 <ul class="rm-tasks">
@@ -780,7 +830,7 @@
                 </div>
             </div>
 
-            <div class="rm-phase todo">
+            <div class="rm-phase todo" data-card-id="desktop-roadmap-master">
                 <h3>Phase 1 — <span data-i18n="rm_d1_name">核心基礎架構</span> <span class="rm-status-badge todo" data-i18n="rm_todo">Todo</span></h3>
                 <div class="rm-phase-desc" data-i18n="rm_d1_desc">2-3 週：建立桌面應用框架、OAuth 自動化、Agent 探測連接基礎</div>
                 <ul class="rm-tasks">
@@ -900,7 +950,210 @@
             }
             if (typeof renderFooter === 'function') renderFooter();
             if (typeof i18n !== 'undefined') i18n.apply();
+            try { await injectLiveCardStatus(); } catch (e) { console.warn('[roadmap] live status injection failed:', e?.message || e); }
         });
+
+        // ── Live status from kanban ───────────────────────────────────────
+        // Reads /api/mission/cards, walks every [data-card-id] element, and
+        // overlays the LIVE status pulled from the kanban so this page stays
+        // honest as work moves through todo → in_progress → done. The mapping
+        // file (roadmap-card-mapping.json) is deployment-specific; missing /
+        // unknown slugs render a small ? icon so the next operator knows to
+        // file or update the mapping.
+        async function injectLiveCardStatus() {
+            const targets = Array.from(document.querySelectorAll('[data-card-id]'));
+            if (targets.length === 0) return;
+
+            // 1. Load the deployment-specific slug → card_xxx mapping.
+            let mapping = null;
+            try {
+                const res = await fetch('roadmap-card-mapping.json', { credentials: 'omit' });
+                if (res.ok) mapping = await res.json();
+            } catch (e) { console.warn('[roadmap] mapping fetch failed:', e?.message || e); }
+            if (!mapping || !mapping.phases) {
+                // No mapping file → ? icons across the board, nothing to fetch.
+                targets.forEach(el => markUnmappedSlug(el));
+                return;
+            }
+
+            // 2. Resolve credentials from the same place auth.js stashes them.
+            //    Public visitors (no creds) silently keep the hard-coded
+            //    statuses — no console error, no UI churn.
+            const deviceId = (window.currentUser && window.currentUser.deviceId)
+                || (typeof localStorage !== 'undefined' && localStorage.getItem('deviceId'))
+                || null;
+            const deviceSecret = (window.currentUser && window.currentUser.deviceSecret)
+                || (typeof localStorage !== 'undefined' && localStorage.getItem('deviceSecret'))
+                || null;
+            if (!deviceId || !deviceSecret) {
+                console.info('[roadmap] no deviceId/deviceSecret available — keeping hard-coded status badges.');
+                targets.forEach(el => annotateMappingOnly(el, mapping.phases));
+                return;
+            }
+
+            // 3. Fetch the kanban card list once and index by id.
+            const qs = new URLSearchParams({
+                deviceId,
+                deviceSecret,
+                limit: '300'
+            }).toString();
+            let cards = [];
+            try {
+                const res = await fetch('/api/mission/cards?' + qs, { credentials: 'same-origin' });
+                if (!res.ok) {
+                    console.warn('[roadmap] /api/mission/cards returned', res.status);
+                    targets.forEach(el => annotateMappingOnly(el, mapping.phases));
+                    return;
+                }
+                const data = await res.json();
+                cards = Array.isArray(data?.cards) ? data.cards : [];
+            } catch (e) {
+                console.warn('[roadmap] /api/mission/cards fetch failed:', e?.message || e);
+                targets.forEach(el => annotateMappingOnly(el, mapping.phases));
+                return;
+            }
+            const byId = new Map(cards.map(c => [c.id, c]));
+
+            // 4. Overlay live status on every [data-card-id] element.
+            for (const el of targets) {
+                const slug = el.getAttribute('data-card-id');
+                const cardId = mapping.phases[slug];
+                if (cardId === undefined) { markUnmappedSlug(el, slug); continue; }
+                if (cardId === null) { markIntentionallyEmpty(el, slug); continue; }
+                const card = byId.get(cardId);
+                if (!card) { markMissingCard(el, slug, cardId); continue; }
+                applyLiveStatus(el, card);
+            }
+        }
+
+        const STATUS_CLASSES = ['todo', 'in_progress', 'partial', 'done', 'blocked'];
+
+        function applyLiveStatus(el, card) {
+            const status = String(card.status || '').trim();
+            if (!status) return;
+
+            // rm-phase containers: swap container class.
+            if (el.classList.contains('rm-phase')) {
+                STATUS_CLASSES.forEach(c => el.classList.remove(c));
+                el.classList.add(status === 'review' ? 'partial' : status);
+                const badge = el.querySelector('.rm-status-badge');
+                if (badge) {
+                    STATUS_CLASSES.forEach(c => badge.classList.remove(c));
+                    badge.classList.add(status === 'review' ? 'partial' : status);
+                    badge.textContent = labelForStatus(status);
+                    badge.removeAttribute('data-i18n');
+                }
+            }
+
+            // <li> rows: rewrite leaf class so the ::before icon matches status.
+            if (el.tagName === 'LI') {
+                STATUS_CLASSES.forEach(c => el.classList.remove(c));
+                if (status === 'done') {
+                    // default ::before is ✅, no class needed
+                } else if (status === 'in_progress' || status === 'review') {
+                    el.classList.add('in_progress');
+                } else if (status === 'blocked') {
+                    el.classList.add('blocked');
+                } else {
+                    el.classList.add('todo');
+                }
+            }
+
+            // Last-updated chip + optional PR link, attached once.
+            if (!el.querySelector('.rm-last-updated')) {
+                const stamp = card.statusChangedAt || card.updatedAt;
+                if (stamp) {
+                    const chip = document.createElement('span');
+                    chip.className = 'rm-last-updated';
+                    chip.title = `Live status: ${status} · updated ${new Date(stamp).toISOString()}`;
+                    chip.textContent = `updated ${humanAgo(stamp)}`;
+                    appendChip(el, chip);
+                }
+            }
+            if (!el.querySelector('.rm-pr-link')) {
+                const pr = extractPrLink(card.description || '');
+                if (pr) {
+                    const a = document.createElement('a');
+                    a.className = 'rm-pr-link';
+                    a.href = pr;
+                    a.target = '_blank';
+                    a.rel = 'noopener';
+                    a.textContent = '↗ PR';
+                    a.title = pr;
+                    appendChip(el, a);
+                }
+            }
+        }
+
+        function markUnmappedSlug(el, slug) {
+            if (el.querySelector('.rm-help')) return;
+            const tip = slug
+                ? `Slug "${slug}" is not in roadmap-card-mapping.json — add it or remove the data-card-id.`
+                : 'roadmap-card-mapping.json is missing or invalid.';
+            appendChip(el, buildHelp(tip));
+        }
+        function markIntentionallyEmpty(el, slug) {
+            if (el.querySelector('.rm-help')) return;
+            appendChip(el, buildHelp(`No kanban card for "${slug}" yet — set it in roadmap-card-mapping.json when one exists.`));
+        }
+        function markMissingCard(el, slug, cardId) {
+            if (el.querySelector('.rm-help')) return;
+            appendChip(el, buildHelp(`Mapping points to ${cardId} which doesn't exist on this kanban — file it or update roadmap-card-mapping.json (slug "${slug}").`));
+        }
+        function annotateMappingOnly(el, phases) {
+            const slug = el.getAttribute('data-card-id');
+            if (phases[slug] === undefined) markUnmappedSlug(el, slug);
+            // When credentials are missing we don't show ? icons for known
+            // mappings — those just keep their hard-coded badge silently.
+        }
+
+        function buildHelp(text) {
+            const span = document.createElement('span');
+            span.className = 'rm-help';
+            span.title = text;
+            span.textContent = '?';
+            return span;
+        }
+        function appendChip(el, node) {
+            // For rm-phase containers, prefer to drop the chip into the <h3>
+            // so it lives next to the title rather than floating beneath the
+            // task list.
+            const target = el.classList?.contains('rm-phase') ? (el.querySelector('h3') || el) : el;
+            target.appendChild(document.createTextNode(' '));
+            target.appendChild(node);
+        }
+        function humanAgo(ms) {
+            const diff = Date.now() - Number(ms);
+            if (!Number.isFinite(diff) || diff < 0) return 'just now';
+            const m = Math.floor(diff / 60000);
+            if (m < 1) return 'just now';
+            if (m < 60) return `${m}m ago`;
+            const h = Math.floor(m / 60);
+            if (h < 48) return `${h}h ago`;
+            const d = Math.floor(h / 24);
+            if (d < 30) return `${d}d ago`;
+            const mo = Math.floor(d / 30);
+            return `${mo}mo ago`;
+        }
+        function labelForStatus(s) {
+            // Prefer the existing i18n keys (rm_complete / rm_in_progress / rm_todo).
+            // For the kanban-only statuses (review/blocked/backlog) we fall back to
+            // English — adding 12-locale translations is out of scope for Part A.
+            const t = (key) => (typeof i18n !== 'undefined' && i18n.t) ? i18n.t(key) : null;
+            switch (s) {
+                case 'done': return t('rm_complete') || 'Complete';
+                case 'in_progress': return t('rm_in_progress') || 'In Progress';
+                case 'review': return t('rm_review') || 'Review';
+                case 'blocked': return t('rm_blocked') || 'Blocked';
+                case 'todo': return t('rm_todo') || 'Todo';
+                case 'backlog': return t('rm_backlog') || 'Backlog';
+                default: return s;
+            }
+        }
+        function extractPrLink(desc) {
+            const m = String(desc || '').match(/https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/\d+/);
+            return m ? m[0] : null;
+        }
     </script>
 </body>
 </html>
