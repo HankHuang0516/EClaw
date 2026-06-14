@@ -47,6 +47,8 @@ function resolveAsset(pageFile, rawUrl) {
     const url = cleanAssetUrl(rawUrl);
     if (!url || isExternal(url)) return null;
     if (url === '/socket.io/socket.io.js') return null;
+    // /shared-core/* portal URLs are served from backend/shared/ (Express alias)
+    if (url.startsWith('/shared-core/')) return path.join(ROOT, 'shared', url.slice('/shared-core/'.length));
     if (url.startsWith('/')) return path.join(PUBLIC, url);
     return path.join(path.dirname(path.join(PUBLIC, pageFile)), url);
 }
