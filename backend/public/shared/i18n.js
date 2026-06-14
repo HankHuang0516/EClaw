@@ -241040,6 +241040,16 @@ const TRANSLATIONS = {
 
 
         "dash_public_code": "Code", "health_checking": "Health-checking",
+        "dash_pr_count_label": "Merged PRs",
+        "dash_pr_recent_title": "Recent merged PRs",
+        "dash_pr_none": "No merged PRs yet",
+        "dash_pr_setup_no_login": "⚠️ This entity has no GitHub login mapped. To enable PR count: add { \"entityId\": \"your-gh-login\" } to backend/config/entity-gh-login.json.",
+        "dash_pr_setup_no_token": "⚠️ GitHub integration not configured. Set GITHUB_TOKEN env var to enable PR stats.",
+        "dash_pr_widget_hint": "Click to see recent merged PRs",
+        "dash_pr_widget_open": "Open recent merged PRs",
+        "dash_pr_widget_error_hint": "Couldn't load PR stats:",
+        "dash_pr_view_all": "View all on GitHub",
+        "common_close": "Close",
 
 
 
@@ -880761,6 +880771,16 @@ const TRANSLATIONS = {
 
 
         "dash_public_code": "代碼", "health_checking": "健檢中",
+        "dash_pr_count_label": "已合併 PR",
+        "dash_pr_recent_title": "最近合併的 PR",
+        "dash_pr_none": "尚無已合併的 PR",
+        "dash_pr_setup_no_login": "⚠️ 這個實體尚未對應 GitHub 帳號。若要啟用 PR 計數，請在 backend/config/entity-gh-login.json 加入 { \"entityId\": \"your-gh-login\" }。",
+        "dash_pr_setup_no_token": "⚠️ 尚未設定 GitHub 整合。請在環境變數設定 GITHUB_TOKEN 以啟用 PR 統計。",
+        "dash_pr_widget_hint": "點擊查看最近合併的 PR",
+        "dash_pr_widget_open": "開啟最近合併的 PR",
+        "dash_pr_widget_error_hint": "無法載入 PR 統計：",
+        "dash_pr_view_all": "在 GitHub 上查看全部",
+        "common_close": "關閉",
 
 
 
@@ -1330846,6 +1330866,16 @@ const TRANSLATIONS = {
 
 
         "dash_public_code": "代碼", "health_checking": "健检中",
+        "dash_pr_count_label": "已合并 PR",
+        "dash_pr_recent_title": "最近合并的 PR",
+        "dash_pr_none": "暂无已合并的 PR",
+        "dash_pr_setup_no_login": "⚠️ 该实体尚未映射 GitHub 账号。若要启用 PR 计数，请在 backend/config/entity-gh-login.json 加入 { \"entityId\": \"your-gh-login\" }。",
+        "dash_pr_setup_no_token": "⚠️ 尚未配置 GitHub 集成。请设置 GITHUB_TOKEN 环境变量以启用 PR 统计。",
+        "dash_pr_widget_hint": "点击查看最近合并的 PR",
+        "dash_pr_widget_open": "打开最近合并的 PR",
+        "dash_pr_widget_error_hint": "无法加载 PR 统计：",
+        "dash_pr_view_all": "在 GitHub 上查看全部",
+        "common_close": "关闭",
 
 
 
