@@ -2630,6 +2630,8 @@
     <script src="shared/api.js"></script>
     <script src="shared/nav.js"></script>
     <script src="shared/auth.js"></script>
+    <script src="/shared-core/route-registry.js"></script>
+    <script src="shared/smart-router.js"></script>
     <script src="shared/entity-utils.js"></script>
     <script src="shared/levelup.js"></script>
     <script src="../shared/petdx-renderer.js"></script>
@@ -2968,12 +2970,13 @@
 
         function openDashboardAgentPolicyEditor(scope) {
             const { entityId, channel } = getDashboardPolicyPreviewParams();
-            const params = new URLSearchParams({
-                agentPolicy: '1',
+            const routerParams = {
                 scope: scope === 'entity' ? 'entity' : 'device',
                 entityId: String(entityId),
                 channel
-            });
+            };
+            if (window.SmartRouter && window.SmartRouter.navigate('settings-agent-policy', routerParams)) return;
+            const params = new URLSearchParams({ agentPolicy: '1', ...routerParams });
             window.location.href = 'settings.html?' + params.toString() + '#agent-policy';
         }
 

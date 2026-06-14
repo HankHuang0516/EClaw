@@ -1315,7 +1315,7 @@
         </div>
 
         <!-- Wallet Card -->
-        <div class="card" style="cursor:pointer;" onclick="window.location.href='wallet.html'">
+        <div class="card" style="cursor:pointer;" onclick="(window.SmartRouter&&window.SmartRouter.navigate('wallet'))||(window.location.href='wallet.html')">
             <div class="card-title">
                 <span>💎 <span data-i18n="nav_wallet">Wallet</span></span>
             </div>
@@ -1323,7 +1323,7 @@
         </div>
 
         <!-- My Rentals Card -->
-        <div class="card" style="cursor:pointer;" onclick="window.location.href='my-rentals.html'">
+        <div class="card" style="cursor:pointer;" onclick="(window.SmartRouter&&window.SmartRouter.navigate('my-rentals'))||(window.location.href='my-rentals.html')">
             <div class="card-title">
                 <span>🤝 <span data-i18n="nav_my_rentals">My Rentals</span></span>
             </div>
@@ -1331,7 +1331,7 @@
         </div>
 
         <!-- Invite Card -->
-        <div class="card" style="cursor:pointer;" onclick="window.location.href='invite.html'">
+        <div class="card" style="cursor:pointer;" onclick="(window.SmartRouter&&window.SmartRouter.navigate('invite'))||(window.location.href='invite.html')">
             <div class="card-title">
                 <span>🎁 <span data-i18n="nav_invite">Invite Friends</span></span>
             </div>
@@ -1339,7 +1339,7 @@
         </div>
 
         <!-- Files Card (moved from nav) -->
-        <div class="card" style="cursor:pointer;" onclick="window.location.href='files.html'">
+        <div class="card" style="cursor:pointer;" onclick="(window.SmartRouter&&window.SmartRouter.navigate('files'))||(window.location.href='files.html')">
             <div class="card-title">
                 <span>📁 <span data-i18n="nav_files">Files</span></span>
             </div>
@@ -1347,7 +1347,7 @@
         </div>
 
         <!-- Companion Card (Phase C: Petdx UIUX integration; see docs/specs/petdx-uiux-spec-amendment-2026-06-05-phase-C-settings-integration.md) -->
-        <div class="card" style="cursor:pointer;" onclick="window.location.href='petdx-browser.html'">
+        <div class="card" style="cursor:pointer;" onclick="(window.SmartRouter&&window.SmartRouter.navigate('petdx'))||(window.location.href='petdx-browser.html')">
             <div class="card-title">
                 <span>🐾 <span data-i18n="nav_companion">Companion</span></span>
             </div>
@@ -1559,6 +1559,8 @@
     <script src="shared/api.js"></script>
     <script src="shared/nav.js"></script>
     <script src="shared/auth.js"></script>
+    <script src="/shared-core/route-registry.js"></script>
+    <script src="shared/smart-router.js"></script>
     <script src="../shared/telemetry.js"></script>
     <script src="../shared/i18n.js"></script>
     <script src="../shared/help-popover.js"></script>
@@ -1835,7 +1837,9 @@
                     if (data.authToken) localStorage.setItem('authToken', data.authToken);
                 } catch (_) { /* storage blocked */ }
                 // Land on dashboard so the user sees the new device's entities.
-                window.location.href = 'dashboard.html';
+                if (!(window.SmartRouter && window.SmartRouter.navigate('dashboard'))) {
+                    window.location.href = 'dashboard.html';
+                }
             } catch (e) {
                 console.error('switch-device failed:', e);
                 errBox.textContent = (typeof i18n !== 'undefined' && i18n.t)
@@ -2843,7 +2847,12 @@
             const action = selectEl.value;
             selectEl.value = '';
             if (!action || !targetId) return;
-            if (action === 'details') { window.location.href = `my-rentals.html?rentalId=${encodeURIComponent(targetId)}`; return; }
+            if (action === 'details') {
+                if (!(window.SmartRouter && window.SmartRouter.navigate('my-rentals', { rentalId: targetId }))) {
+                    window.location.href = `my-rentals.html?rentalId=${encodeURIComponent(targetId)}`;
+                }
+                return;
+            }
             const confirmKey = action === 'manual_rebind' ? 'settings_roster_confirm_manual_rebind'
                 : action === 'resume' ? 'settings_roster_confirm_resume'
                 : 'settings_roster_confirm_generic';
