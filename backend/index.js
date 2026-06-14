@@ -15844,11 +15844,14 @@ app.post('/api/official-borrow/bind-free', async (req, res) => {
     const handshake = await handshakeWithBot(freeBot.webhook_url, freeBot.token, preferredKey, deviceId, eId, 'free', freeBotAuthOpts);
 
     if (!handshake.success) {
-        return res.status(502).json({
-            success: false,
-            error: `無法與免費版機器人建立連線。${handshake.error || ''}`,
-            hint: 'Bot gateway may not have active sessions. Check bot configuration.'
+        const failurePayload = buildBindFailurePayload(handshake, {
+            botKind: 'free',
+            botId: freeBot.bot_id,
+            botName: freeBot.display_name || freeBot.bot_id,
+            webhookUrl: freeBot.webhook_url,
         });
+        failurePayload.error = `無法與免費版機器人建立連線 (${failurePayload.code}). ${handshake.error || ''}`.trim();
+        return res.status(502).json(failurePayload);
     }
 
     const sessionKey = handshake.sessionKey;
@@ -16023,11 +16026,14 @@ app.post('/api/official-borrow/bind-personal', async (req, res) => {
     const handshake = await handshakeWithBot(personalBot.webhook_url, personalBot.token, preferredKey, deviceId, eId, 'personal', personalBotAuthOpts);
 
     if (!handshake.success) {
-        return res.status(502).json({
-            success: false,
-            error: `無法與月租版機器人建立連線。${handshake.error || ''}`,
-            hint: 'Bot gateway may not have active sessions. Check bot configuration.'
+        const failurePayload = buildBindFailurePayload(handshake, {
+            botKind: 'personal',
+            botId: personalBot.bot_id,
+            botName: personalBot.display_name || personalBot.bot_id,
+            webhookUrl: personalBot.webhook_url,
         });
+        failurePayload.error = `無法與月租版機器人建立連線 (${failurePayload.code}). ${handshake.error || ''}`.trim();
+        return res.status(502).json(failurePayload);
     }
 
     const sessionKey = handshake.sessionKey;
@@ -16373,12 +16379,16 @@ app.post('/api/entity/refresh', async (req, res) => {
         if (!handshake.success) {
             // Set cooldown even on failure to prevent spamming
             refreshCooldowns[cooldownKey] = Date.now();
-            return res.json({
-                success: false,
-                webhookBroken: true,
-                error: `無法與機器人建立連線。${handshake.error || ''}`,
-                hint: 'Bot gateway may not have active sessions. A full rebind may be required.'
+            const failurePayload = buildBindFailurePayload(handshake, {
+                botKind: bot.bot_type,
+                botId: bot.bot_id,
+                botName: bot.display_name || bot.bot_id,
+                webhookUrl: bot.webhook_url,
             });
+            failurePayload.webhookBroken = true;
+            failurePayload.error = `無法與機器人建立連線 (${failurePayload.code}). ${handshake.error || ''}`.trim();
+            failurePayload.hint = (failurePayload.hint || '') + ' A full rebind may be required.';
+            return res.json(failurePayload);
         }
 
         const newSessionKey = handshake.sessionKey;
@@ -17870,7 +17880,78 @@ async function handshakeWithBot(url, token, preferredSessionKey, deviceId, entit
     console.error(`[Handshake] ✗ All session attempts failed (type=${finalErrorType}): ${result.error}`);
     serverLog('error', 'handshake', `All session attempts failed for Entity ${entityId} (${finalErrorType})`, { deviceId, entityId, metadata: { url, errorType: finalErrorType } });
     logHandshakeFailure({ deviceId, entityId, webhookUrl: url, errorType: finalErrorType, errorMessage: result.error || 'No working session found on gateway', source: 'bind_handshake' });
-    return { success: false, error: result.error || 'No working session found on gateway' };
+    return {
+        success: false,
+        error: result.error || 'No working session found on gateway',
+        errorType: finalErrorType,
+        httpStatus: result.httpStatus || null,
+    };
+}
+
+/**
+ * Helper: Build a structured 502 payload for bind failures.
+ * Caller maps errorType (timeout|no_sessions|http_NNN|connection_failed) into a
+ * stable `code` so debugging tools and the user-facing UI know whether the bot
+ * box is offline, the gateway is up but has no sessions, or the upstream LLM
+ * timed out.
+ */
+function buildBindFailurePayload(handshake, { botKind, botId, botName, webhookUrl }) {
+    const errorType = handshake?.errorType || 'connection_failed';
+    const httpStatus = handshake?.httpStatus || null;
+    // Map errorType → stable code + hint + retryable flag
+    let code;
+    let hint;
+    let retryable;
+    let retryAfterMs;
+    if (errorType === 'timeout') {
+        code = 'UPSTREAM_TIMEOUT';
+        hint = 'Bot took longer than 60s to reply. Cold-start or LLM provider slow — retry usually succeeds.';
+        retryable = true;
+        retryAfterMs = 5000;
+    } else if (errorType === 'no_sessions') {
+        code = 'BOT_NO_SESSIONS';
+        hint = 'Gateway responded but has no active sessions for this bot. Check bot is running and connected to its gateway.';
+        retryable = false;
+        retryAfterMs = null;
+    } else if (errorType === 'connection_failed') {
+        // No HTTP response at all — host unreachable, DNS fail, tunnel down
+        // (most common cause: Mac local bot box offline / ngrok tunnel dropped).
+        code = 'BOT_UNREACHABLE';
+        hint = 'Could not reach the bot webhook. The bot host may be offline (e.g. local tunnel dropped). Verify the bot box is up.';
+        retryable = true;
+        retryAfterMs = 30000;
+    } else if (errorType.startsWith('http_')) {
+        const status = httpStatus || parseInt(errorType.slice(5), 10) || 502;
+        code = status === 502 ? 'UPSTREAM_502' : `UPSTREAM_HTTP_${status}`;
+        hint = `Bot webhook returned HTTP ${status}. Upstream gateway or LLM provider failed — retry after a short delay.`;
+        retryable = status >= 500;
+        retryAfterMs = retryable ? 10000 : null;
+    } else {
+        code = 'BIND_FAILED';
+        hint = 'Bot gateway may not have active sessions. Check bot configuration.';
+        retryable = false;
+        retryAfterMs = null;
+    }
+    const payload = {
+        success: false,
+        code,
+        errorType,
+        upstream: 'bot_webhook',
+        error: handshake?.error || 'Bind handshake failed',
+        hint,
+        retryable,
+        botKind: botKind || null,
+        botId: botId || null,
+        botName: botName || null,
+        webhookHost: webhookUrl ? safeHostname(webhookUrl) : null,
+    };
+    if (retryAfterMs != null) payload.retry_after_ms = retryAfterMs;
+    if (httpStatus != null) payload.upstream_http_status = httpStatus;
+    return payload;
+}
+
+function safeHostname(urlStr) {
+    try { return new URL(urlStr).hostname; } catch { return null; }
 }
 
 /**
@@ -22658,4 +22739,5 @@ module.exports._officialBorrowTest = {
     getOfficialBindingReuseStatus,
     OFFICIAL_FREE_BINDING_REUSE_TTL_MS,
 };
+module.exports._buildBindFailurePayload = buildBindFailurePayload;
 module.exports._getSilentTransformSuppressionReason = getSilentTransformSuppressionReason;
