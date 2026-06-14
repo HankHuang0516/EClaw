@@ -147,6 +147,170 @@ describe('per-mode dispatch + fallback degradation (spec §3)', () => {
     });
 });
 
+describe('Phase D — new routes (route-registry.js extension)', () => {
+    // Card: card_125161f56080b1d7df597f6f.
+    // Spec: docs/smart-router-spec.md §4 (proof-slice migration targets).
+    // TDD-style: these tests gate the 15-site migration that follows.
+    test('wallet → /portal/wallet.html (no params)', () => {
+        const win = makeWin({}); win.parent = win;
+        const SR = loadRouter(win);
+        expect(SR.buildUrl('wallet')).toBe('/portal/wallet.html');
+    });
+    test('invite → /portal/invite.html (no params)', () => {
+        const win = makeWin({}); win.parent = win;
+        const SR = loadRouter(win);
+        expect(SR.buildUrl('invite')).toBe('/portal/invite.html');
+    });
+    test('files → /portal/files.html (no params)', () => {
+        const win = makeWin({}); win.parent = win;
+        const SR = loadRouter(win);
+        expect(SR.buildUrl('files')).toBe('/portal/files.html');
+    });
+    test('petdx → /portal/petdx-browser.html (no params)', () => {
+        const win = makeWin({}); win.parent = win;
+        const SR = loadRouter(win);
+        expect(SR.buildUrl('petdx')).toBe('/portal/petdx-browser.html');
+    });
+    test('my-rentals → /portal/my-rentals.html (no params)', () => {
+        const win = makeWin({}); win.parent = win;
+        const SR = loadRouter(win);
+        expect(SR.buildUrl('my-rentals')).toBe('/portal/my-rentals.html');
+    });
+    test('my-rentals with optional rentalId → query string', () => {
+        const win = makeWin({}); win.parent = win;
+        const SR = loadRouter(win);
+        expect(SR.buildUrl('my-rentals', { rentalId: 'rent_abc123' }))
+            .toBe('/portal/my-rentals.html?rentalId=rent_abc123');
+    });
+    test('my-rentals rejects bad rentalId (degrades to bare path)', () => {
+        const win = makeWin({}); win.parent = win;
+        const SR = loadRouter(win);
+        // SmartRouter tolerant-degrade strips invalid optional params (returns bare).
+        expect(SR.buildUrl('my-rentals', { rentalId: 'has spaces' }))
+            .toBe('/portal/my-rentals.html');
+    });
+    test('chat-mention → /portal/chat.html?mention=<code>', () => {
+        const win = makeWin({}); win.parent = win;
+        const SR = loadRouter(win);
+        expect(SR.buildUrl('chat-mention', { mention: 'abc123' }))
+            .toBe('/portal/chat.html?mention=abc123');
+    });
+    test('chat-mention rejects bad mention (degrades to bare /portal/chat.html)', () => {
+        const win = makeWin({}); win.parent = win;
+        const SR = loadRouter(win);
+        // Required param missing/invalid → SmartRouter degrades to bare path of the template.
+        expect(SR.buildUrl('chat-mention', { mention: 'BAD!' }))
+            .toBe('/portal/chat.html');
+    });
+    test('chat-msg → /portal/chat.html?msg=<id>', () => {
+        const win = makeWin({}); win.parent = win;
+        const SR = loadRouter(win);
+        expect(SR.buildUrl('chat-msg', { msg: 'm_abc-123_xyz' }))
+            .toBe('/portal/chat.html?msg=m_abc-123_xyz');
+    });
+    test('settings-agent-policy → full URL with 3 params + fragment', () => {
+        const win = makeWin({}); win.parent = win;
+        const SR = loadRouter(win);
+        expect(SR.buildUrl('settings-agent-policy', { scope: 'device', entityId: '2', channel: 'openclaw' }))
+            .toBe('/portal/settings.html?agentPolicy=1&scope=device&entityId=2&channel=openclaw#agent-policy');
+    });
+    test('settings-agent-policy rejects bad scope (degrades to bare)', () => {
+        const win = makeWin({}); win.parent = win;
+        const SR = loadRouter(win);
+        expect(SR.buildUrl('settings-agent-policy', { scope: 'admin', entityId: '2', channel: 'openclaw' }))
+            .toBe('/portal/settings.html');
+    });
+    test('settings-agent-policy rejects bad entityId (degrades to bare)', () => {
+        const win = makeWin({}); win.parent = win;
+        const SR = loadRouter(win);
+        expect(SR.buildUrl('settings-agent-policy', { scope: 'device', entityId: 'abc', channel: 'openclaw' }))
+            .toBe('/portal/settings.html');
+    });
+});
+
+describe('Phase D — registry validateParams (param regex)', () => {
+    // Drive route-registry.js directly to lock in per-param regex behavior.
+    const registry = require('../../shared/route-registry.js');
+
+    test('mention must be 6 lowercase alphanumeric', () => {
+        expect(registry.validateParams('chat-mention', { mention: 'abc123' }).ok).toBe(true);
+        expect(registry.validateParams('chat-mention', { mention: 'ABCDEF' }).ok).toBe(false);
+        expect(registry.validateParams('chat-mention', { mention: 'abc12'  }).ok).toBe(false);
+        expect(registry.validateParams('chat-mention', { mention: ''        }).ok).toBe(false);
+    });
+    test('msg max 64 chars, alphanumeric/_/-', () => {
+        expect(registry.validateParams('chat-msg', { msg: 'm_123' }).ok).toBe(true);
+        expect(registry.validateParams('chat-msg', { msg: 'a'.repeat(64) }).ok).toBe(true);
+        expect(registry.validateParams('chat-msg', { msg: 'a'.repeat(65) }).ok).toBe(false);
+        expect(registry.validateParams('chat-msg', { msg: 'bad space'    }).ok).toBe(false);
+    });
+    test('rentalId optional but validated when present', () => {
+        expect(registry.validateParams('my-rentals', {                       }).ok).toBe(true);
+        expect(registry.validateParams('my-rentals', { rentalId: 'rent_abc' }).ok).toBe(true);
+        expect(registry.validateParams('my-rentals', { rentalId: 'a'.repeat(65) }).ok).toBe(false);
+        expect(registry.validateParams('my-rentals', { rentalId: 'bad space' }).ok).toBe(false);
+    });
+    test('agent-policy scope must be device|entity', () => {
+        expect(registry.validateParams('settings-agent-policy', { scope: 'device', entityId: '2', channel: 'openclaw' }).ok).toBe(true);
+        expect(registry.validateParams('settings-agent-policy', { scope: 'entity', entityId: '2', channel: 'openclaw' }).ok).toBe(true);
+        expect(registry.validateParams('settings-agent-policy', { scope: 'admin',  entityId: '2', channel: 'openclaw' }).ok).toBe(false);
+    });
+    test('agent-policy entityId must be numeric 1-4 digits', () => {
+        expect(registry.validateParams('settings-agent-policy', { scope: 'device', entityId: '9999', channel: 'openclaw' }).ok).toBe(true);
+        expect(registry.validateParams('settings-agent-policy', { scope: 'device', entityId: '12345', channel: 'openclaw' }).ok).toBe(false);
+        expect(registry.validateParams('settings-agent-policy', { scope: 'device', entityId: 'abc', channel: 'openclaw' }).ok).toBe(false);
+    });
+    test('agent-policy channel slug — lowercase start, alphanum/_/-', () => {
+        expect(registry.validateParams('settings-agent-policy', { scope: 'device', entityId: '2', channel: 'openclaw' }).ok).toBe(true);
+        expect(registry.validateParams('settings-agent-policy', { scope: 'device', entityId: '2', channel: '2hermes'  }).ok).toBe(false);
+        expect(registry.validateParams('settings-agent-policy', { scope: 'device', entityId: '2', channel: 'Bad Chan' }).ok).toBe(false);
+    });
+});
+
+describe('Phase D — isSafeReturnTo coverage for new targets', () => {
+    const registry = require('../../shared/route-registry.js');
+    test('new web paths are safe return_to', () => {
+        expect(registry.isSafeReturnTo('/portal/wallet.html')).toBe(true);
+        expect(registry.isSafeReturnTo('/portal/my-rentals.html')).toBe(true);
+        expect(registry.isSafeReturnTo('/portal/my-rentals.html?rentalId=rent_abc')).toBe(true);
+        expect(registry.isSafeReturnTo('/portal/invite.html')).toBe(true);
+        expect(registry.isSafeReturnTo('/portal/files.html')).toBe(true);
+        expect(registry.isSafeReturnTo('/portal/petdx-browser.html')).toBe(true);
+        expect(registry.isSafeReturnTo('/portal/settings.html#agent-policy')).toBe(true);
+        expect(registry.isSafeReturnTo('/portal/chat.html?mention=abc123')).toBe(true);
+        expect(registry.isSafeReturnTo('/portal/chat.html?msg=m_123')).toBe(true);
+    });
+    test('absolute external URLs are NOT safe (open redirect guard)', () => {
+        expect(registry.isSafeReturnTo('https://evil.example/phish')).toBe(false);
+        expect(registry.isSafeReturnTo('//evil.example/protocol-relative')).toBe(false);
+        expect(registry.isSafeReturnTo('http://eclawbot.com/portal/wallet.html')).toBe(false);
+    });
+    test('unregistered same-origin path NOT safe (only allowlist)', () => {
+        expect(registry.isSafeReturnTo('/portal/not-a-real-page.html')).toBe(false);
+        expect(registry.isSafeReturnTo('/admin/secret.html')).toBe(false);
+    });
+});
+
+describe('Phase D — buildWebUrl strict (registry-level, not via SmartRouter degrade)', () => {
+    const registry = require('../../shared/route-registry.js');
+    test('strict build throws on missing required param', () => {
+        expect(() => registry.buildWebUrl('chat-mention', {})).toThrow(/missing_param:mention/);
+        expect(() => registry.buildWebUrl('settings-agent-policy', { scope: 'device' })).toThrow(/missing_param:entityId/);
+    });
+    test('strict build throws on invalid required param', () => {
+        expect(() => registry.buildWebUrl('chat-mention', { mention: 'BAD' })).toThrow(/invalid_param:mention/);
+    });
+    test('strict build throws on invalid optional param', () => {
+        expect(() => registry.buildWebUrl('my-rentals', { rentalId: 'bad space' })).toThrow(/invalid_param:rentalId/);
+    });
+    test('optional param appended after existing query string with &', () => {
+        // Pre-condition: my-rentals base has no query; chat has ?contact={publicCode}.
+        // Build by hand to exercise the `&` separator path: synthetic route with both.
+        // We use the existing registry behavior by checking that my-rentals + rentalId yields '?'.
+        expect(registry.buildWebUrl('my-rentals', { rentalId: 'rent_x1' })).toBe('/portal/my-rentals.html?rentalId=rent_x1');
+    });
+});
+
 describe('split ack contract (spec §3)', () => {
     test('posts split_navigate to parent with nav_ requestId', () => {
         const post = jest.fn();

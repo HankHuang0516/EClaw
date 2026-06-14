@@ -1078,6 +1078,7 @@
                 if (intent.target === 'card' && intent.cardId) {
                     const id = String(intent.cardId).trim();
                     if (!id) return false;
+                    if (window.SmartRouter && window.SmartRouter.navigate('card', { cardId: id })) return true;
                     window.location.href = '/portal/kanban.html?card=' + encodeURIComponent(id) + '#' + encodeURIComponent(id);
                     return true;
                 }

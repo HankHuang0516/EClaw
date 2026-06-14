@@ -1128,6 +1128,8 @@
     <script src="shared/api.js"></script>
     <script src="shared/nav.js"></script>
     <script src="shared/auth.js"></script>
+    <script src="/shared-core/route-registry.js"></script>
+    <script src="shared/smart-router.js"></script>
     <script src="../shared/petdx-renderer.js"></script>
     <script src="../shared/avatar-petdx.js"></script>
     <script src="shared/entity-utils.js"></script>
@@ -1196,6 +1198,7 @@
         if (typeof window.openMentionProfile !== 'function') {
             window.openMentionProfile = function (code) {
                 if (!code) return;
+                if (window.SmartRouter && window.SmartRouter.navigate('chat-mention', { mention: code })) return;
                 window.location.href = '/portal/chat.html?mention=' + encodeURIComponent(code);
             };
         }
@@ -1203,6 +1206,7 @@
             window.openHistoryMessage = function (msgId) {
                 if (!msgId) return;
                 if (eclawNavigateChat({ target: 'message', messageId: msgId })) return;
+                if (window.SmartRouter && window.SmartRouter.navigate('chat-msg', { msg: msgId })) return;
                 window.location.href = '/portal/chat.html?msg=' + encodeURIComponent(msgId);
             };
         }
