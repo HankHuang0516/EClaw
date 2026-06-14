@@ -63,9 +63,24 @@
     // older builds, a dark-grey placeholder) until the image decodes — a
     // visible flicker on cold-cache page loads, including the first launch
     // after Hank reinstalls the APP.
+    // `/api/companion/current` returns a companion *card* wrapper. For
+    // spritesheets the API hoists `asset`/`stateAssets` to the top level
+    // (see rowToCompanionCard in backend/companion-api.js), but for
+    // procedural cards the renderer payload only lives under `.descriptor`
+    // — so PetdxRenderer can't find `asset.renderer` on the wrapper and
+    // silently falls back to the `fallback-blob` drawer. Mirror the
+    // unwrap pattern in petdx-browser.html (modal detail dialog).
+    function effectiveRendererDescriptor(d) {
+        if (!d) return d;
+        const nested = d.descriptor;
+        if (nested && typeof nested === 'object' && nested.assetType) return nested;
+        return d;
+    }
+
     function warmSpritesheet(descriptor) {
-        if (!descriptor || descriptor.assetType !== 'spritesheet') return;
-        const url = descriptor.asset && descriptor.asset.url;
+        const d = effectiveRendererDescriptor(descriptor);
+        if (!d || d.assetType !== 'spritesheet') return;
+        const url = d.asset && d.asset.url;
         if (!url) return;
         if (typeof window === 'undefined' || !window.PetdxRenderer) return;
         if (typeof window.PetdxRenderer.prefetchSpritesheet !== 'function') return;
@@ -137,7 +152,7 @@
             try {
                 const controller = window.PetdxRenderer.createRenderer({
                     canvas,
-                    descriptor,
+                    descriptor: effectiveRendererDescriptor(descriptor),
                     state: canvas.getAttribute('data-petdx-state') || 'IDLE'
                 });
                 controller.start();
