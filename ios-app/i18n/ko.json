@@ -103,7 +103,8 @@
     "unbind_success": "엔티티 바인딩이 해제되었습니다",
     "edit_mode": "편집",
     "edit_mode_on": "완료",
-    "org_chart": "조직도"
+    "org_chart": "조직도",
+    "health_checking": "상태 확인 중"
   },
   "chat": {
     "title": "채팅",

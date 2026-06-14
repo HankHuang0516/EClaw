@@ -852,4 +852,6 @@
     <string name="tool_status_writing">Scrittura del file...</string>
     <string name="custom_layout_enabled">Layout personalizzato abilitato</string>
     <string name="custom_layout_using_preset">Utilizzando il layout preimpostato</string>
+    <!-- Health-checking status shown on entity avatar while passive health-check runs -->
+    <string name="health_checking">Controllo integrità</string>
 </resources>

@@ -102,7 +102,8 @@
     "unbind_success": "Encja odwiązana",
     "edit_mode": "Edytuj",
     "edit_mode_on": "Gotowe",
-    "org_chart": "Schemat organizacyjny"
+    "org_chart": "Schemat organizacyjny",
+    "health_checking": "Sprawdzanie stanu"
   },
   "chat": {
     "title": "Czat",

@@ -103,7 +103,8 @@
     "entity_idle": "Idle",
     "unbind_title": "Unbind Entity",
     "unbind_message": "Are you sure you want to unbind {{name}}?",
-    "unbind_success": "Entity unbound"
+    "unbind_success": "Entity unbound",
+    "health_checking": "Health-checking"
   },
   "chat": {
     "title": "Chat",

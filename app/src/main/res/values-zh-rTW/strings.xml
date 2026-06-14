@@ -886,4 +886,6 @@ GPS：僅按需取得，不會背景追蹤，伺服器重啟後資料消失。
     <string name="ai_chat_tool_status_default">處理中</string>
     <string name="msg_no_entities_connected">沒有已連接的實體。請先綁定實體。</string>
     <string name="webview_title_eclawbot_portal">EClawbot 入口網站</string>
+    <!-- Health-checking status shown on entity avatar while passive health-check runs -->
+    <string name="health_checking">健檢中</string>
 </resources>

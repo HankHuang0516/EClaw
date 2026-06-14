@@ -28,6 +28,9 @@ export interface EntityUpdate {
   character?: string;
   state?: string;
   message?: string;
+  // Passive health-check flag toggling on/off (drives avatar pulse + 健檢中 label).
+  healthChecking?: boolean;
+  healthCheckingAt?: number;
 }
 
 type EventCallback<T = unknown> = (data: T) => void;

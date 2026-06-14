@@ -103,7 +103,8 @@
     "unbind_success": "Đã hủy liên kết thực thể",
     "edit_mode": "Sửa",
     "edit_mode_on": "Xong",
-    "org_chart": "Sơ đồ tổ chức"
+    "org_chart": "Sơ đồ tổ chức",
+    "health_checking": "Đang kiểm tra"
   },
   "chat": {
     "title": "Trò chuyện",

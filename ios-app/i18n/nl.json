@@ -102,7 +102,8 @@
     "unbind_success": "Entiteit ontbonden",
     "edit_mode": "Bewerken",
     "edit_mode_on": "Klaar",
-    "org_chart": "Organigram"
+    "org_chart": "Organigram",
+    "health_checking": "Gezondheidscontrole"
   },
   "chat": {
     "title": "Chat",

@@ -103,7 +103,8 @@
     "unbind_success": "エンティティのバインドを解除しました",
     "edit_mode": "編集",
     "edit_mode_on": "完了",
-    "org_chart": "組織図"
+    "org_chart": "組織図",
+    "health_checking": "ヘルスチェック中"
   },
   "chat": {
     "title": "チャット",

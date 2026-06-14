@@ -1002,4 +1002,6 @@ If you have any questions, please contact us via our official email.
     <string name="tool_status_writing">Writing file…</string>
     <string name="custom_layout_enabled">Custom layout enabled</string>
     <string name="custom_layout_using_preset">Using preset layout</string>
+    <!-- Health-checking status shown on entity avatar while passive health-check runs -->
+    <string name="health_checking">Health-checking</string>
 </resources>

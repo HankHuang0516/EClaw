@@ -10,7 +10,9 @@ data class AgentStatus(
     val isBound: Boolean = false,
     val usage: UsageInfo? = null,
     val messageQueue: List<MessageQueueItem>? = null,
-    val botSecret: String? = null
+    val botSecret: String? = null,
+    val healthChecking: Boolean = false,  // true while passive health-check/repair runs (held visible >=4.5s)
+    val healthCheckingAt: Long? = null  // epoch ms the health-check flag was set (server-provided)
 ) {
     // All characters are now LOBSTER type (PIG removed)
     val baseShape: CharacterType

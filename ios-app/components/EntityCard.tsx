@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
 import { Card, Text, Avatar, IconButton, useTheme } from 'react-native-paper';
 import { useTranslation } from 'react-i18next';
 import { Entity } from '../store/entityStore';
@@ -56,6 +56,36 @@ export default function EntityCard({ entity, editMode, onLongPress, onAvatarPres
   const xpNext = entity.xpForNextLevel ?? 100;
   const xpProgress = xpNext > 0 ? Math.min(xp / xpNext, 1) : 0;
 
+  // Health-checking: breathing avatar pulse + 健檢中 label while the backend
+  // passive health-check/repair runs (parity with the Web avatar ring).
+  const healthChecking = !!entity.healthChecking;
+  const pulse = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (!healthChecking) {
+      pulse.stopAnimation();
+      pulse.setValue(1);
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          toValue: 0.45,
+          duration: 750,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 750,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [healthChecking, pulse]);
+
   return (
     <Card
       style={[styles.card, { backgroundColor: theme.colors.surfaceVariant }]}
@@ -69,7 +99,13 @@ export default function EntityCard({ entity, editMode, onLongPress, onAvatarPres
           delayLongPress={500}
           activeOpacity={0.7}
         >
-          <View style={styles.avatarContainer}>
+          <Animated.View
+            style={[
+              styles.avatarContainer,
+              healthChecking && styles.avatarHealthRing,
+              healthChecking && { opacity: pulse },
+            ]}
+          >
             {entity.avatarUrl ? (
               <Avatar.Image size={48} source={{ uri: entity.avatarUrl }} />
             ) : (
@@ -79,7 +115,7 @@ export default function EntityCard({ entity, editMode, onLongPress, onAvatarPres
                 style={{ backgroundColor: CHARACTER_COLORS[entity.character] || '#7C3AED' }}
               />
             )}
-          </View>
+          </Animated.View>
         </TouchableOpacity>
 
         {/* Info section */}
@@ -114,8 +150,8 @@ export default function EntityCard({ entity, editMode, onLongPress, onAvatarPres
             ) : null}
           </View>
 
-          {/* Badges row: Channel + E2EE */}
-          {(entity.channelBound || entity.encryptionStatus === 'e2ee') && (
+          {/* Badges row: Channel + E2EE + Health-checking */}
+          {(entity.channelBound || entity.encryptionStatus === 'e2ee' || healthChecking) && (
             <View style={styles.badgeRow}>
               {entity.channelBound && (
                 <View style={[styles.badge, { backgroundColor: '#4CAF5022' }]}>
@@ -126,6 +162,13 @@ export default function EntityCard({ entity, editMode, onLongPress, onAvatarPres
                 <View style={[styles.badge, { backgroundColor: '#60A5FA22' }]}>
                   <Text style={[styles.badgeText, { color: '#60A5FA' }]}>🔒 E2EE</Text>
                 </View>
+              )}
+              {healthChecking && (
+                <Animated.View style={[styles.badge, { backgroundColor: '#22D3EE22', opacity: pulse }]}>
+                  <Text style={[styles.badgeText, { color: '#22D3EE' }]}>
+                    {t('home.health_checking', 'Health-checking')}
+                  </Text>
+                </Animated.View>
               )}
             </View>
           )}
@@ -179,6 +222,12 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     marginTop: 2,
+  },
+  avatarHealthRing: {
+    borderRadius: 28,
+    borderWidth: 2,
+    borderColor: '#22D3EE',
+    padding: 2,
   },
   info: {
     flex: 1,

@@ -18,6 +18,10 @@ export interface Entity {
   xpForNextLevel?: number;
   channelBound?: boolean;
   messageTime?: number; // timestamp ms of last message
+  // True while the backend passive health-check/repair runs for this entity
+  // (held visible >=4.5s). Drives the avatar pulse + 健檢中 label (Web parity).
+  healthChecking?: boolean;
+  healthCheckingAt?: number; // epoch ms the health-check flag was set (server-provided)
 }
 
 interface EntityState {

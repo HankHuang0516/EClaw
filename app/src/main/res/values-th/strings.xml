@@ -885,4 +885,6 @@ GPS：รับตามความต้องการเท่านั้�
     <string name="wallpaper_settings_expand_action">ขยายแผงการตั้งค่า</string>
     <string name="wallpaper_settings_collapse_action">ยุบแผงการตั้งค่า</string>
     <string name="wallpaper_settings_collapse_caret_up">▲</string>
+    <!-- Health-checking status shown on entity avatar while passive health-check runs -->
+    <string name="health_checking">กำลังตรวจสุขภาพ</string>
 </resources>

@@ -114,6 +114,20 @@
                 android:background="@drawable/badge_channel_background"
                 android:visibility="gone" />
 
+            <!-- Health-checking Badge (visible only while passive health-check runs) -->
+            <TextView
+                android:id="@+id/tvHealthCheckingBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:text="@string/health_checking"
+                android:textColor="#22D3EE"
+                android:textSize="11sp"
+                android:background="@drawable/badge_background"
+                android:visibility="gone" />
+
             <!-- E2EE Badge (visible only for E2EE-capable channel entities) -->
             <TextView
                 android:id="@+id/tvE2eeBadge"

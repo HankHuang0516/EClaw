@@ -886,4 +886,6 @@ GPS: 온디맨드만, 백그라운드 추적 없음, 서버 재시작 시 데이
     <string name="wallpaper_settings_expand_action">설정 패널 펼치기</string>
     <string name="wallpaper_settings_collapse_action">설정 패널 접기</string>
     <string name="wallpaper_settings_collapse_caret_up">▲</string>
+    <!-- Health-checking status shown on entity avatar while passive health-check runs -->
+    <string name="health_checking">상태 확인 중</string>
 </resources>

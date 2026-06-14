@@ -886,4 +886,6 @@ GPS：オンデマンドのみ、バックグラウンド追跡なし、サー�
     <string name="wallpaper_settings_expand_action">設定パネルを展開</string>
     <string name="wallpaper_settings_collapse_action">設定パネルを折りたたむ</string>
     <string name="wallpaper_settings_collapse_caret_up">▲</string>
+    <!-- Health-checking status shown on entity avatar while passive health-check runs -->
+    <string name="health_checking">ヘルスチェック中</string>
 </resources>

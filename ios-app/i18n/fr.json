@@ -103,7 +103,8 @@
     "unbind_success": "Entité déliée",
     "edit_mode": "Modifier",
     "edit_mode_on": "Terminé",
-    "org_chart": "Organigramme"
+    "org_chart": "Organigramme",
+    "health_checking": "Vérification de santé"
   },
   "chat": {
     "title": "Discussion",

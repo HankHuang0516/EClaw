@@ -89,12 +89,19 @@ class EntityCardAdapter(
         holder.bind(entity)
     }
 
+    override fun onViewRecycled(holder: ViewHolder) {
+        super.onViewRecycled(holder)
+        // Stop any running health-checking pulse so recycled rows don't animate
+        holder.stopHealthChecking()
+    }
+
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvEntityIcon: TextView = itemView.findViewById(R.id.tvEntityIcon)
         private val tvEntityName: TextView = itemView.findViewById(R.id.tvEntityName)
         private val tvEntityId: TextView = itemView.findViewById(R.id.tvEntityId)
         private val tvStateBadge: TextView = itemView.findViewById(R.id.tvStateBadge)
         private val tvChannelBadge: TextView = itemView.findViewById(R.id.tvChannelBadge)
+        private val tvHealthCheckingBadge: TextView = itemView.findViewById(R.id.tvHealthCheckingBadge)
         private val tvE2eeBadge: TextView = itemView.findViewById(R.id.tvE2eeBadge)
         private val publicCodeRow: LinearLayout = itemView.findViewById(R.id.publicCodeRow)
         private val tvPublicCode: TextView = itemView.findViewById(R.id.tvPublicCode)
@@ -148,6 +155,10 @@ class EntityCardAdapter(
 
             // E2EE Badge
             tvE2eeBadge.visibility = if (entity.encryptionStatus == "e2ee") View.VISIBLE else View.GONE
+
+            // Health-checking: 健檢中 badge + subtle avatar pulse while the
+            // passive health-check/repair runs (parity with Web avatar ring).
+            applyHealthChecking(entity.healthChecking)
 
             // Message
             tvLastMessage.text = entity.message
@@ -214,6 +225,44 @@ class EntityCardAdapter(
                 }
                 popup.show()
             }
+        }
+
+        /** Running avatar pulse animator while health-checking; null when idle. */
+        private var healthPulseAnimator: android.animation.ObjectAnimator? = null
+
+        /**
+         * Toggle the 健檢中 badge + a subtle breathing alpha pulse on the avatar.
+         * Mirrors the Web `.health-checking` avatar ring animation. The pulse is
+         * cancelled (and alpha restored) whenever health-checking ends so recycled
+         * rows never keep a stale animation.
+         */
+        private fun applyHealthChecking(healthChecking: Boolean) {
+            tvHealthCheckingBadge.visibility = if (healthChecking) View.VISIBLE else View.GONE
+
+            if (healthChecking) {
+                if (healthPulseAnimator?.isRunning != true) {
+                    healthPulseAnimator = android.animation.ObjectAnimator.ofFloat(
+                        avatarContainer, View.ALPHA, 1f, 0.45f
+                    ).apply {
+                        duration = 750
+                        repeatCount = android.animation.ObjectAnimator.INFINITE
+                        repeatMode = android.animation.ObjectAnimator.REVERSE
+                        interpolator = android.view.animation.AccelerateDecelerateInterpolator()
+                        start()
+                    }
+                }
+            } else {
+                healthPulseAnimator?.cancel()
+                healthPulseAnimator = null
+                avatarContainer.alpha = 1f
+            }
+        }
+
+        /** Cancel the avatar pulse + restore alpha (called on view recycle). */
+        fun stopHealthChecking() {
+            healthPulseAnimator?.cancel()
+            healthPulseAnimator = null
+            avatarContainer.alpha = 1f
         }
 
         private fun getStateBadgeColor(state: CharacterState): Int {
