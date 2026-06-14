@@ -62,6 +62,10 @@ const MAX_INTERVAL_HOURS = 168; // one week
 const MAX_REPAIR_ATTEMPTS = 3;
 const REPAIR_COOLDOWN_MS = 60_000; // self-repair endpoint enforces a 60s cooldown
 const REPAIR_SPACING_MS = REPAIR_COOLDOWN_MS + 5_000; // space attempts past the cooldown
+// Minimum time the in-memory `healthChecking` flag stays on so the 健檢中 avatar/
+// wallpaper animation is perceptible even on a fast healthy check (which can finish
+// in <1s). The clear is scheduled non-blocking (does not slow the sweep).
+const HEALTH_CHECKING_MIN_VISIBLE_MS = 4500;
 // An entity is "unhealthy" if any error axis has accrued at least this many
 // recent (still-open) failures, or its daemon heartbeat is stale, or the
 // callback host /health probe fails.
@@ -452,10 +456,25 @@ async function runEntity(deviceId, deviceSecret, entityId, settings) {
 
         return { entityId, eligible: true, healthy: false, repaired: false, bugFiled: bug.filed, feedbackId: bug.feedbackId, failingSignals: health.failingSignals };
     } finally {
-        // Always clear the transient flag + push the cleared state, even on error.
+        // Clear the transient flag + push the cleared state, but hold it visible for a
+        // minimum duration so the 健檢中 animation is perceptible even on a fast healthy
+        // check. Non-blocking (scheduled, does not slow the sweep) and guarded so a newer
+        // check on the same entity (different healthCheckingAt) is never cleared early.
         if (entity) {
-            entity.healthChecking = false;
-            notifyEntityUpdate(deviceId, entityId);
+            const startedAt = entity.healthCheckingAt;
+            const clearFlag = () => {
+                if (entity.healthCheckingAt === startedAt) {
+                    entity.healthChecking = false;
+                    notifyEntityUpdate(deviceId, entityId);
+                }
+            };
+            const remaining = HEALTH_CHECKING_MIN_VISIBLE_MS - (Date.now() - (startedAt || Date.now()));
+            if (remaining > 0) {
+                const t = setTimeout(clearFlag, remaining);
+                if (t.unref) t.unref();
+            } else {
+                clearFlag();
+            }
         }
     }
 }
