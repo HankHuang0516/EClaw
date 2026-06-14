@@ -990,4 +990,6 @@ GPS: केवल अनुरोध पर, कोई बैकग्राउ�
     <string name="wallpaper_settings_collapse_caret_up">▲</string>
     <string name="ai_chat_status_processing_result">परिणाम प्रोसेस हो रहा है</string>
     <string name="ai_chat_status_analyzing">विश्लेषण हो रहा है</string>
+    <!-- Health-checking status shown on entity avatar while passive health-check runs -->
+    <string name="health_checking">स्वास्थ्य जांच</string>
 </resources>

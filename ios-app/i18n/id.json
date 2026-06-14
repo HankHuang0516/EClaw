@@ -103,7 +103,8 @@
     "unbind_success": "Ikatan entitas dilepas",
     "edit_mode": "Sunting",
     "edit_mode_on": "Selesai",
-    "org_chart": "Bagan Organisasi"
+    "org_chart": "Bagan Organisasi",
+    "health_checking": "Memeriksa kesehatan"
   },
   "chat": {
     "title": "Obrolan",

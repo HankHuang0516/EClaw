@@ -855,4 +855,6 @@
     <string name="wallpaper_settings_expand_action">Perluas panel pengaturan</string>
     <string name="wallpaper_settings_collapse_action">Ciutkan panel pengaturan</string>
     <string name="wallpaper_settings_collapse_caret_up">▲</string>
+    <!-- Health-checking status shown on entity avatar while passive health-check runs -->
+    <string name="health_checking">Memeriksa kesehatan</string>
 </resources>

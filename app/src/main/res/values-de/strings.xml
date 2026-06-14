@@ -990,4 +990,6 @@ Bei Fragen kontaktieren Sie uns über unsere offizielle E-Mail.
     <string name="wallpaper_settings_expand_action">Einstellungspanel erweitern</string>
     <string name="wallpaper_settings_collapse_action">Einstellungspanel einklappen</string>
     <string name="wallpaper_settings_collapse_caret_up">▲</string>
+    <!-- Health-checking status shown on entity avatar while passive health-check runs -->
+    <string name="health_checking">Gesundheitsprüfung</string>
 </resources>

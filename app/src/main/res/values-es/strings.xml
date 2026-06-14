@@ -913,4 +913,6 @@ Tu suscripción permanece activa y puedes reenlazar en cualquier momento (sujeto
     <string name="wallpaper_settings_expand_action">Expandir panel de configuración</string>
     <string name="wallpaper_settings_collapse_action">Contraer panel de configuración</string>
     <string name="wallpaper_settings_collapse_caret_up">▲</string>
+    <!-- Health-checking status shown on entity avatar while passive health-check runs -->
+    <string name="health_checking">Comprobando estado</string>
 </resources>

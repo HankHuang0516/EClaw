@@ -102,7 +102,8 @@
     "unbind_success": "Entidade desvinculada",
     "edit_mode": "Editar",
     "edit_mode_on": "Concluído",
-    "org_chart": "Organograma"
+    "org_chart": "Organograma",
+    "health_checking": "Verificando integridade"
   },
   "chat": {
     "title": "Chat",

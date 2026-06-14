@@ -103,7 +103,8 @@
     "unbind_success": "实体已解除绑定",
     "edit_mode": "编辑",
     "edit_mode_on": "完成",
-    "org_chart": "组织图"
+    "org_chart": "组织图",
+    "health_checking": "健检中"
   },
   "chat": {
     "title": "聊天",

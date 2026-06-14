@@ -21,7 +21,9 @@ data class EntityStatus(
     val level: Int = 1,
     val publicCode: String? = null,  // Cross-device messaging code
     val bindingType: String? = null,  // "channel" = OpenClaw channel plugin, null = direct binding
-    val encryptionStatus: String? = null  // "e2ee" | "transport" | null (Issue #212)
+    val encryptionStatus: String? = null,  // "e2ee" | "transport" | null (Issue #212)
+    val healthChecking: Boolean = false,  // true while passive health-check/repair runs (held visible >=4.5s)
+    val healthCheckingAt: Long? = null  // epoch ms the health-check flag was set (server-provided)
 ) {
     // All characters are now LOBSTER type (PIG removed)
     val baseShape: CharacterType
@@ -39,7 +41,9 @@ data class EntityStatus(
         lastUpdated = lastUpdated,
         usage = usage,
         messageQueue = messageQueue,
-        botSecret = botSecret
+        botSecret = botSecret,
+        healthChecking = healthChecking,
+        healthCheckingAt = healthCheckingAt
     )
 
     companion object {
@@ -57,7 +61,9 @@ data class EntityStatus(
             isBound = agentStatus.isBound,
             usage = agentStatus.usage,
             messageQueue = agentStatus.messageQueue,
-            botSecret = agentStatus.botSecret
+            botSecret = agentStatus.botSecret,
+            healthChecking = agentStatus.healthChecking,
+            healthCheckingAt = agentStatus.healthCheckingAt
         )
     }
 }

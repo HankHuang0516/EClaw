@@ -991,4 +991,6 @@ GPS: عند الطلب فقط، بلا تتبع في الخلفية، تُفقد
     <string name="wallpaper_settings_expand_action">توسيع لوحة الإعدادات</string>
     <string name="wallpaper_settings_collapse_action">طي لوحة الإعدادات</string>
     <string name="wallpaper_settings_collapse_caret_up">▲</string>
+    <!-- Health-checking status shown on entity avatar while passive health-check runs -->
+    <string name="health_checking">جارٍ الفحص الصحي</string>
 </resources>

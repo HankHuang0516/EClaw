@@ -852,4 +852,6 @@
     <string name="tool_status_writing">Gravando arquivo…</string>
     <string name="custom_layout_enabled">Layout personalizado ativado</string>
     <string name="custom_layout_using_preset">Usando layout predefinido</string>
+    <!-- Health-checking status shown on entity avatar while passive health-check runs -->
+    <string name="health_checking">Verificando integridade</string>
 </resources>

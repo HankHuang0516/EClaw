@@ -89,6 +89,22 @@ class ClawRenderer(
         isAntiAlias = true
     }
 
+    // Health-checking pulsing ring paint (parity with Web .health-checking ring)
+    private val healthRingPaint = Paint().apply {
+        style = Paint.Style.STROKE
+        color = Color.parseColor("#22D3EE") // cyan, matches Web health ring accent
+        isAntiAlias = true
+        strokeCap = Paint.Cap.ROUND
+    }
+
+    // Health-checking 「健檢中」label paint
+    private val healthLabelPaint = TextPaint().apply {
+        color = Color.parseColor("#22D3EE")
+        textAlign = Paint.Align.CENTER
+        isAntiAlias = true
+        isFakeBoldText = true
+    }
+
     // Animation state
     private var startTime = System.currentTimeMillis()
 
@@ -493,6 +509,14 @@ class ClawRenderer(
         val charY = centerY + bobOffset
         val radius = 150f * scale
 
+        // Health-checking: pulsing/glowing ring around the creature while the
+        // passive health-check/repair runs (parity with Web .health-checking
+        // avatar ring). Time-based sine pulse reuses the per-frame redraw loop
+        // (33ms) already driving the bobbing animation.
+        if (entity.healthChecking && !isAmbient) {
+            drawHealthCheckingRing(canvas, centerX, charY, radius, scale, time)
+        }
+
         // Petdx companion routing — if the entity has a current companion and
         // it's a spritesheet asset, render that. Procedural assets and missing
         // descriptors go to the legacy lobster drawer with optional body-color
@@ -562,6 +586,20 @@ class ClawRenderer(
             stateTextPaint.textAlign = Paint.Align.LEFT
             canvas.drawText(statusText, groupStartX + badgeDiameter + spacing, statusY, stateTextPaint)
             stateTextPaint.textAlign = Paint.Align.CENTER // Restore default
+
+            // 「健檢中」label below the status bar while health-checking. Pulses
+            // its alpha in sync with the ring so the two read as one effect.
+            if (entity.healthChecking) {
+                val pulse = (sin(time * 0.006f) * 0.5f + 0.5f) // 0..1
+                healthLabelPaint.textSize = (24f * scale).coerceAtLeast(16f)
+                healthLabelPaint.alpha = (140 + 115 * pulse).toInt().coerceIn(0, 255)
+                canvas.drawText(
+                    context.getString(R.string.health_checking),
+                    centerX,
+                    statusY + lineHeight,
+                    healthLabelPaint
+                )
+            }
         }
 
         // Draw "Zzz" if sleeping (Overlay on body/head, maybe slightly adjusted)
@@ -570,6 +608,39 @@ class ClawRenderer(
             // Moving Zzz slightly up so it doesn't overlap too much with the center face features
             canvas.drawText("Zzz...", centerX + radius * 0.7f, charY - radius * 0.8f, textPaint)
         }
+    }
+
+    /**
+     * Draw a pulsing/glowing ring around a health-checking entity.
+     *
+     * Uses a time-based sine pulse so the ring radius + opacity breathe in sync
+     * with the wallpaper's 33ms redraw loop (parity with the Web avatar
+     * `.health-checking` ring). Two concentric strokes give a soft glow.
+     */
+    private fun drawHealthCheckingRing(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        radius: Float,
+        scale: Float,
+        time: Long
+    ) {
+        val pulse = (sin(time * 0.006f) * 0.5f + 0.5f) // 0..1 breathing factor
+        val baseRingRadius = radius * 0.95f
+        val ringRadius = baseRingRadius + (12f * scale * pulse)
+
+        // Outer glow (wider stroke, lower alpha)
+        healthRingPaint.strokeWidth = 10f * scale
+        healthRingPaint.alpha = (50 + 60 * pulse).toInt().coerceIn(0, 255)
+        canvas.drawCircle(cx, cy, ringRadius + (6f * scale), healthRingPaint)
+
+        // Inner crisp ring (thinner stroke, higher alpha)
+        healthRingPaint.strokeWidth = 5f * scale
+        healthRingPaint.alpha = (140 + 115 * pulse).toInt().coerceIn(0, 255)
+        canvas.drawCircle(cx, cy, ringRadius, healthRingPaint)
+
+        // Restore full alpha so the shared paint doesn't leak state into reuse
+        healthRingPaint.alpha = 255
     }
 
     /**

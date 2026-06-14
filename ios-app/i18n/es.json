@@ -103,7 +103,8 @@
     "channel_ai_agent_hint": "🤖 Se recomienda encarecidamente usar Claude Code u otros agentes de IA para la instalación asistida.",
     "edit_mode": "Editar",
     "edit_mode_on": "Hecho",
-    "org_chart": "Organigrama"
+    "org_chart": "Organigrama",
+    "health_checking": "Comprobando estado"
   },
   "chat": {
     "title": "Chat",

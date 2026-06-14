@@ -852,4 +852,6 @@
     <string name="tool_status_writing">Запись файла…</string>
     <string name="custom_layout_enabled">Пользовательский макет включен</string>
     <string name="custom_layout_using_preset">Использование предустановленного макета</string>
+    <!-- Health-checking status shown on entity avatar while passive health-check runs -->
+    <string name="health_checking">Проверка состояния</string>
 </resources>

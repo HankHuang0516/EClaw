@@ -885,4 +885,6 @@ Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi qua
     <string name="wallpaper_settings_expand_action">Mở rộng bảng cài đặt</string>
     <string name="wallpaper_settings_collapse_action">Thu gọn bảng cài đặt</string>
     <string name="wallpaper_settings_collapse_caret_up">▲</string>
+    <!-- Health-checking status shown on entity avatar while passive health-check runs -->
+    <string name="health_checking">Đang kiểm tra</string>
 </resources>

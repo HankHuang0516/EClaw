@@ -885,4 +885,6 @@ Jika ada pertanyaan, silakan hubungi kami melalui email resmi kami.
     <string name="wallpaper_settings_collapse_caret_up">▲</string>
     <string name="ai_chat_status_processing_result">Memproses hasil</string>
     <string name="ai_chat_status_analyzing">Menganalisis</string>
+    <!-- Health-checking status shown on entity avatar while passive health-check runs -->
+    <string name="health_checking">Memeriksa kesehatan</string>
 </resources>

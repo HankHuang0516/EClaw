@@ -103,7 +103,8 @@
     "unbind_success": "ยกเลิกการผูกเอนทิตีแล้ว",
     "edit_mode": "แก้ไข",
     "edit_mode_on": "เสร็จ",
-    "org_chart": "แผนผังองค์กร"
+    "org_chart": "แผนผังองค์กร",
+    "health_checking": "กำลังตรวจสุขภาพ"
   },
   "chat": {
     "title": "แชท",

@@ -103,7 +103,8 @@
     "unbind_success": "Entität entbunden",
     "edit_mode": "Bearbeiten",
     "edit_mode_on": "Fertig",
-    "org_chart": "Organigramm"
+    "org_chart": "Organigramm",
+    "health_checking": "Gesundheitsprüfung"
   },
   "chat": {
     "title": "Chat",

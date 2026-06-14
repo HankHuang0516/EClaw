@@ -990,4 +990,6 @@ Si vous avez des questions, contactez-nous via notre e-mail officiel.
     <string name="wallpaper_settings_expand_action">Développer le panneau de paramètres</string>
     <string name="wallpaper_settings_collapse_action">Réduire le panneau de paramètres</string>
     <string name="wallpaper_settings_collapse_caret_up">▲</string>
+    <!-- Health-checking status shown on entity avatar while passive health-check runs -->
+    <string name="health_checking">Vérification de santé</string>
 </resources>
