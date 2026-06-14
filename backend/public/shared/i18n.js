@@ -650217,6 +650217,12 @@ const TRANSLATIONS = {
         "petdx_switch_failed": "Switch failed: {error}",
         "petdx_network_error": "Network error: {error}",
         "petdx_favorite_failed": "Save to favorites failed: {error}",
+        "env_saving": "Saving...",
+        "env_saved": "Saved",
+        "env_save_failed": "Save failed: {error}",
+        "env_key_deleted": "Deleted \"{key}\"",
+        "env_delete_failed": "Delete failed: {error}",
+        "env_empty_setup_hint": "No keys yet. Click \"+ Add\" to store credentials your bots can read via the secrets API.",
 },
 
 
@@ -1234901,6 +1234907,12 @@ const TRANSLATIONS = {
         "petdx_switch_failed": "切換失敗：{error}",
         "petdx_network_error": "網路錯誤：{error}",
         "petdx_favorite_failed": "收藏失敗：{error}",
+        "env_saving": "儲存中...",
+        "env_saved": "已儲存",
+        "env_save_failed": "儲存失敗：{error}",
+        "env_key_deleted": "已刪除「{key}」",
+        "env_delete_failed": "刪除失敗：{error}",
+        "env_empty_setup_hint": "尚未設定金鑰。點擊「+ 新增」來儲存 Bot 可透過 secrets API 讀取的憑證。",
 },
 
 
