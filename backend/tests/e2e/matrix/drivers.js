@@ -11,9 +11,13 @@
  *   - kanban_lifecycle (WRITE flow → BROADCAST_TEST device only, creds from env,
  *     run/platform-scoped marker, finally self-clean; cleanup failure fails the
  *     cell). #6 ruling 2026-06-12: never commit creds; missing secrets fail fast.
+ *   - agent_reply_visibility (SELF-SEEDED: source entity's botSecret resolved via
+ *     /api/entities, /api/transform writes a run/platform-scoped marker that lands
+ *     in chat history as is_from_bot, then chat.html render check. No external
+ *     fixture dependency — survives history wipes / device rebinds).
  * Pending (intentionally absent → runner reports `pending`, never silent-pass):
  *   login_refresh (prod-behavior discrepancy under investigation — auth.js /me
- *   probe pre-empts the api.js authReason path), message_send, agent_reply_visibility.
+ *   probe pre-empts the api.js authReason path), message_send.
  * Flip run-matrix.js's gate to fatal-on-pending once all five exist.
  */
 'use strict';
@@ -131,17 +135,53 @@ const DRIVERS = {
     },
 
     // A bot reply in chat history renders as a visible bubble WITH sender identity.
-    // READ-ONLY (#6 ruling: stable existing fixture on BROADCAST_TEST). No writes,
-    // no cleanup. Finds an existing is_from_bot reply via API, then asserts chat.html
-    // renders a received bubble (.chat-bubble) carrying a non-empty sender label
-    // (.chat-source) for a bot message.
-    agent_reply_visibility: async (page, { base }) => {
+    // SELF-SEEDED on BROADCAST_TEST (#6 ruling: never depend on pre-existing chat
+    // state). Per run: resolve source entity's botSecret via /api/entities, POST
+    // /api/transform with a run/platform-scoped marker (lands as is_from_bot in
+    // chat history), then assert chat.html renders a received .chat-bubble whose
+    // .chat-source sender label is non-empty AND whose body contains the marker.
+    // speakTo target = MATRIX_TEST_ENTITY_PUBLIC_CODE (env) ∥ 'ldsntq' (BROADCAST_TEST
+    // entity 1's published publicCode — same device, same surface).
+    agent_reply_visibility: async (page, { base, platform, runId }) => {
         const { deviceId, deviceSecret, entityId } = testCreds();
-        const STUBS = [
-            'Hi! I am online and ready to chat~',
-            '你好！我已上線，準備好聊天囉~',
-        ];
-        // 1. confirm a real bot reply exists (fixture)
+        const speakToCode = process.env.MATRIX_TEST_ENTITY_PUBLIC_CODE || 'ldsntq';
+        const marker = `E2E reply visibility marker run=${runId || 'run'} platform=${platform.key}`;
+
+        // 1. Resolve botSecret for the source entity (deviceSecret → entities list).
+        //    /api/entities accepts deviceSecret; botSecret is per-entity, not committable.
+        const entResp = await page.request.fetch(
+            `${base}/api/entities?deviceId=${encodeURIComponent(deviceId)}&deviceSecret=${encodeURIComponent(deviceSecret)}`,
+            { timeout: 30000 }
+        );
+        let entJson = null; try { entJson = await entResp.json(); } catch (_) {}
+        const ent = ((entJson && entJson.entities) || []).find(e => Number(e.entityId) === entityId);
+        if (!ent || !ent.botSecret) {
+            return { ok: false, detail: `cannot resolve botSecret for entityId=${entityId} (entities status ${entResp.status()})` };
+        }
+
+        // 2. Seed: transform with a run/platform-scoped marker → saved as is_from_bot.
+        const seedResp = await page.request.fetch(`${base}/api/transform`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            data: JSON.stringify({
+                deviceId,
+                botSecret: ent.botSecret,
+                entityId,
+                message: marker,
+                state: 'IDLE',
+                speakTo: [speakToCode],
+            }),
+            timeout: 45000,
+        });
+        if (seedResp.status() >= 400) {
+            let body = ''; try { body = await seedResp.text(); } catch (_) {}
+            return { ok: false, detail: `seed transform failed (status ${seedResp.status()}): ${body.slice(0, 200)}` };
+        }
+
+        // 3. Wait ~3s for the chat-message persistence (transform → chat_messages write).
+        await page.waitForTimeout(3000);
+
+        // 4. Verify marker appears in chat history with is_from_bot=true.
         const histResp = await page.request.fetch(
             `${base}/api/chat/history?deviceId=${encodeURIComponent(deviceId)}&deviceSecret=${encodeURIComponent(deviceSecret)}&entityId=${entityId}&limit=50`,
             { timeout: 45000 }
@@ -150,15 +190,14 @@ const DRIVERS = {
         const msgs = (hist && (hist.messages || hist)) || [];
         const botReply = Array.isArray(msgs) ? msgs.find(m =>
             (m.is_from_bot === true || m.isFromBot === true) &&
-            (m.text || '').trim().length >= 5 &&
-            !STUBS.includes((m.text || '').trim())
+            (m.text || '').includes(marker)
         ) : null;
         if (!botReply) {
-            return { ok: false, detail: 'no stable bot-reply fixture in chat history (need a prior bot reply on the test device)' };
+            return { ok: false, detail: `seeded marker not visible in chat history (history msgs=${msgs.length})` };
         }
 
-        // 2. render check: inject creds, load chat.html, assert a received bubble
-        //    with a non-empty sender label (.chat-source) exists for a bot message.
+        // 5. Render check: inject creds, load chat.html, assert a received bubble
+        //    whose body contains the marker text appears with a non-empty sender.
         await page.addInitScript(([d, sec]) => {
             try { localStorage.setItem('deviceId', d); localStorage.setItem('deviceSecret', sec); } catch (_) {}
         }, [deviceId, deviceSecret]);
@@ -166,7 +205,7 @@ const DRIVERS = {
 
         let verdict = { ok: false };
         try {
-            verdict = await page.waitForFunction(() => {
+            verdict = await page.waitForFunction((mk) => {
                 const msgs = Array.from(document.querySelectorAll('.chat-msg'));
                 for (const m of msgs) {
                     if (m.classList.contains('sent')) continue;       // skip our own
@@ -174,12 +213,12 @@ const DRIVERS = {
                     const bubble = m.querySelector('.chat-bubble');
                     const senderLabel = src && (src.textContent || '').trim();
                     const bodyText = bubble && (bubble.textContent || '').trim();
-                    if (senderLabel && bodyText) {
+                    if (senderLabel && bodyText && bodyText.includes(mk)) {
                         return { ok: true, sender: senderLabel.slice(0, 40), textLen: bodyText.length };
                     }
                 }
                 return false; // keep waiting
-            }, null, { timeout: 15000 }).then(h => h.jsonValue());
+            }, marker, { timeout: 15000 }).then(h => h.jsonValue());
         } catch (_) {
             verdict = { ok: false };
         }
@@ -187,8 +226,8 @@ const DRIVERS = {
         return {
             ok: !!verdict.ok,
             detail: verdict.ok
-                ? `bot reply renders with sender="${verdict.sender}" (${verdict.textLen} chars)`
-                : `bot reply found in API but no received .chat-msg with .chat-source + .chat-bubble rendered`,
+                ? `seeded marker renders with sender="${verdict.sender}" (${verdict.textLen} chars)`
+                : `seeded marker found in API but not rendered in chat.html (msg .chat-bubble + .chat-source not matched)`,
         };
     },
 };
