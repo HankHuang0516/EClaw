@@ -182,7 +182,7 @@
             align-items: center;
             justify-content: center;
             transition: all 0.15s;
-            opacity: 0.5;
+            opacity: 0.8;
         }
 
         .var-row:hover .var-action-btn { opacity: 1; }
@@ -192,9 +192,37 @@
             color: var(--text);
         }
 
+        .var-action-btn.delete {
+            color: var(--danger, #f44336);
+            opacity: 0.85;
+        }
+
         .var-action-btn.delete:hover {
             background: var(--danger, #f44336);
             color: #fff;
+            opacity: 1;
+        }
+
+        /* Mobile: no hover state, so keep actions visible at full opacity. */
+        @media (hover: none) {
+            .var-action-btn { opacity: 1; }
+        }
+
+        /* Empty-state setup hint */
+        .env-empty-hint {
+            text-align: center;
+            padding: 28px 16px;
+            color: var(--text-muted);
+        }
+        .env-empty-hint .env-empty-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        .env-empty-hint .env-empty-text {
+            font-size: 13px;
+            line-height: 1.6;
+            max-width: 420px;
+            margin: 0 auto;
         }
 
         .vars-add-row {
@@ -408,7 +436,10 @@
             const vars = loadLocalVars();
             const keys = Object.keys(vars).sort();
             if (!keys.length) {
-                el.innerHTML = '<div class="mc-empty">' + i18n.t('env_no_vars') + '</div>';
+                el.innerHTML = `<div class="env-empty-hint">
+                    <div class="env-empty-icon">🔑</div>
+                    <div class="env-empty-text" data-i18n="env_empty_setup_hint">${esc(i18n.t('env_empty_setup_hint'))}</div>
+                </div>`;
                 return;
             }
             el.innerHTML = keys.map(k => `
@@ -417,9 +448,9 @@
                     <div class="var-row-val" id="varVal_${esc(k)}">••••••••</div>
                     <div class="var-row-actions">
                         <button class="var-action-btn" onclick="copyVarRef(this,'${esc(k)}')" title="Copy {{${esc(k)}}} reference">📎</button>
-                        <button class="var-action-btn" onclick="toggleVarVal('${esc(k)}')" title="${i18n.t('common_toggle_visibility')}">👁</button>
-                        <button class="var-action-btn" onclick="showVarDialog('${esc(k)}')" title="${i18n.t('common_edit')}">✏️</button>
-                        <button class="var-action-btn delete" onclick="deleteVar('${esc(k)}')" title="${i18n.t('common_delete')}">×</button>
+                        <button class="var-action-btn" onclick="toggleVarVal('${esc(k)}')" title="${esc(i18n.t('common_toggle_visibility'))}">👁</button>
+                        <button class="var-action-btn" onclick="showVarDialog('${esc(k)}')" title="${esc(i18n.t('common_edit'))}">✏️</button>
+                        <button class="var-action-btn delete" onclick="deleteVar('${esc(k)}')" title="${esc(i18n.t('common_delete'))}" aria-label="${esc(i18n.t('common_delete'))} ${esc(k)}">🗑</button>
                     </div>
                 </div>`).join('');
         }
@@ -451,17 +482,49 @@
         }
 
         // ── CRUD ──
-        function saveLocalVars(vars) {
+        // Save flow: localStorage first (so render is instant), then await server commit.
+        // Returns { ok: bool, error?: string } so the dialog can show pending state and
+        // only close after the server confirms — fixes the save race-loss where a refresh
+        // before the (fire-and-forget) POST landed would re-hydrate stale server state
+        // and wipe the just-added key from localStorage.
+        async function saveLocalVars(vars) {
             localStorage.setItem(varsKey(), JSON.stringify(vars));
             renderVars();
-            syncVarsToServer();
+            return await syncVarsToServer();
         }
 
         async function deleteVar(key) {
-            if (!await showConfirm({ message: i18n.t('env_confirm_delete').replace('{key}', key), danger: true })) return;
-            const vars = loadLocalVars();
-            delete vars[key];
-            saveLocalVars(vars);
+            const confirmed = await showConfirm({
+                message: i18n.t('env_confirm_delete').replace('{key}', key),
+                danger: true,
+                itemName: key,
+                confirmText: i18n.t('common_delete')
+            });
+            if (!confirmed) return;
+
+            // Use the dedicated DELETE endpoint so deleting the LAST key still works.
+            // (Going via the merge-POST would send {vars:{},source:'web'} which the
+            // server's empty-merge guard refuses with refuse_empty_merge_wipe.)
+            try {
+                const res = await apiCall('DELETE', '/api/device-vars/' + encodeURIComponent(key), {
+                    deviceId: currentUser.deviceId,
+                    deviceSecret: currentUser.deviceSecret
+                });
+                if (!res || res.success === false) {
+                    throw new Error((res && res.error) || 'delete_failed');
+                }
+                const vars = loadLocalVars();
+                delete vars[key];
+                localStorage.setItem(varsKey(), JSON.stringify(vars));
+                renderVars();
+                if (typeof showToast === 'function') {
+                    showToast(i18n.t('env_key_deleted').replace('{key}', key), 'success');
+                }
+            } catch (e) {
+                if (typeof showToast === 'function') {
+                    showToast(i18n.t('env_delete_failed').replace('{error}', e.message || 'unknown'), 'error');
+                }
+            }
         }
 
         function showVarDialog(editKey) {
@@ -492,15 +555,37 @@
                     </div>
                 </div>
             </div>`;
-            document.getElementById('dlgVarSaveBtn').onclick = () => {
+            document.getElementById('dlgVarSaveBtn').onclick = async () => {
+                const btn = document.getElementById('dlgVarSaveBtn');
+                const cancelBtn = btn.parentElement.querySelector('.btn-outline');
                 const key = document.getElementById('dlg_var_key').value.trim();
                 const val = document.getElementById('dlg_var_value').value;
-                if (!key) return;
+                if (!key || btn.disabled) return;
                 const updated = loadLocalVars();
                 if (isEdit && editKey !== key) delete updated[editKey]; // handle key rename
                 updated[key] = val;
-                saveLocalVars(updated);
-                closeDialog();
+
+                // Pending state — keep the dialog open and the button disabled until the
+                // server confirms. Closing before confirm caused the race-loss bug where
+                // a refresh re-hydrated stale server state and dropped the new key.
+                const origText = btn.textContent;
+                btn.disabled = true;
+                if (cancelBtn) cancelBtn.disabled = true;
+                btn.textContent = i18n.t('env_saving');
+
+                const result = await saveLocalVars(updated);
+
+                if (result && result.ok) {
+                    if (typeof showToast === 'function') showToast(i18n.t('env_saved'), 'success');
+                    closeDialog();
+                } else {
+                    btn.disabled = false;
+                    if (cancelBtn) cancelBtn.disabled = false;
+                    btn.textContent = origText;
+                    if (typeof showToast === 'function') {
+                        showToast(i18n.t('env_save_failed').replace('{error}', (result && result.error) || 'unknown'), 'error');
+                    }
+                }
             };
             setTimeout(() => {
                 const f = isEdit
@@ -523,11 +608,14 @@
         }
 
         // ── Server sync ──
+        // Returns { ok: bool, skipped?: bool, error?: string } so the Save dialog can
+        // gate its close + show toast based on the server commit, not on the optimistic
+        // localStorage write. Callers that don't care can ignore the return.
         async function syncVarsToServer() {
-            if (!currentUser) return;
+            if (!currentUser) return { ok: true, skipped: true };
             const locked = isLocked();
             const vars = loadLocalVars();
-            if (Object.keys(vars).length === 0) return;
+            if (Object.keys(vars).length === 0) return { ok: true, skipped: true };
             try {
                 const result = await apiCall('POST', '/api/device-vars', {
                     deviceId: currentUser.deviceId,
@@ -541,8 +629,9 @@
                     localStorage.setItem(varsKey(), JSON.stringify(result.mergedVars));
                     renderAll();
                 }
+                return { ok: true };
             } catch (e) {
-                // silent — non-critical background sync
+                return { ok: false, error: e.message || 'sync_failed' };
             }
         }
 
