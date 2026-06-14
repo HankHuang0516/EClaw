@@ -1,3 +1,47 @@
+# [1.0.92](https://github.com/HankHuang0516/EClaw/compare/fc3b147701c05889be8122b956d96e62705a8db6...9dda20ee06fabc157b32106ae27a8cf964672221) (2026-06-14)
+
+
+### Features
+
+* **android:** add health-checking animation to wallpaper entities and dashboard cards, including localized `health_checking` strings ([#3375](https://github.com/HankHuang0516/EClaw/pull/3375)) ([9798590](https://github.com/HankHuang0516/EClaw/commit/97985906821084b9252f19bff88a2b8be289aace))
+* **ios:** mirror the `healthChecking` entity state in socket payloads and animate entity cards with the same visible status ([#3375](https://github.com/HankHuang0516/EClaw/pull/3375)) ([9798590](https://github.com/HankHuang0516/EClaw/commit/97985906821084b9252f19bff88a2b8be289aace))
+* **passive-health:** keep the health-checking flag visible long enough for users to see without slowing the sweep ([#3375](https://github.com/HankHuang0516/EClaw/pull/3375)) ([9798590](https://github.com/HankHuang0516/EClaw/commit/97985906821084b9252f19bff88a2b8be289aace))
+* **portal:** replace Petdx load-more browsing with 60-per-page previous/next pagination ([#3376](https://github.com/HankHuang0516/EClaw/pull/3376)) ([a111550](https://github.com/HankHuang0516/EClaw/commit/a1115502e41f8d7fb977be553d7383ab15fa2e90))
+* **entity:** add merged-PR counts and smart-link widgets to entity cards ([#3394](https://github.com/HankHuang0516/EClaw/pull/3394)) ([ee85a57](https://github.com/HankHuang0516/EClaw/commit/ee85a578c87ba1ef035c33fdb092bd85d5a7fe39))
+* **message-lifecycle:** add database migration, lifecycle event log, Redis deadline wheel, sweeper, and cold-start scan ([#3385](https://github.com/HankHuang0516/EClaw/pull/3385), [#3388](https://github.com/HankHuang0516/EClaw/pull/3388)) ([3642636](https://github.com/HankHuang0516/EClaw/commit/3642636d8b1cbcfab099f1071a91b3983d1d3e93), [27e2e32](https://github.com/HankHuang0516/EClaw/commit/27e2e3227cb5e2cd04e162e2528678911667dc99))
+* **portal:** make roadmap status read live kanban data and add telemetry page/API map coverage ([#3384](https://github.com/HankHuang0516/EClaw/pull/3384), [#3393](https://github.com/HankHuang0516/EClaw/pull/3393)) ([3bce73e](https://github.com/HankHuang0516/EClaw/commit/3bce73ec67eef15fd78c5b7f3bf7844733d384af), [d23ebcf](https://github.com/HankHuang0516/EClaw/commit/d23ebcfdec530fcddba579bf95cac938a405225d))
+* **self-repair:** add the universal `ECLAW_SELF_REPAIR` directive and version-aware channel repair flow ([#3359](https://github.com/HankHuang0516/EClaw/pull/3359), [#3363](https://github.com/HankHuang0516/EClaw/pull/3363)) ([e168308](https://github.com/HankHuang0516/EClaw/commit/e168308c27d815bc40e56b722550c34de20b15b9), [829baf3](https://github.com/HankHuang0516/EClaw/commit/829baf328a29696f8bca19e1ddd9cd968320c19a))
+* **passive-health:** add the passive health-check subsystem and live health-checking state plumbing ([#3360](https://github.com/HankHuang0516/EClaw/pull/3360), [#3364](https://github.com/HankHuang0516/EClaw/pull/3364)) ([11501eb](https://github.com/HankHuang0516/EClaw/commit/11501eb7b4f86036935b21417f08721999bd4e9a), [f86a5cb](https://github.com/HankHuang0516/EClaw/commit/f86a5cbc1c7ebb3af254f12db2d7d9dd47ac1fcc))
+* **portal:** migrate another set of legacy navigation hops to the shared `buildWebUrl` redirect contract ([#3373](https://github.com/HankHuang0516/EClaw/pull/3373)) ([0c54fd3](https://github.com/HankHuang0516/EClaw/commit/0c54fd3fbeb74d2d26ab311ac77185bab4ce30c2))
+* **rental:** emit OODA-R episodes for rental-route 500s to improve diagnostics ([#3356](https://github.com/HankHuang0516/EClaw/pull/3356)) ([74b518d](https://github.com/HankHuang0516/EClaw/commit/74b518dc85b97c1f590250f15a5c6ca071542278))
+* **infra:** add hourly card processing scripts and bridge-watcher cron documentation ([#3387](https://github.com/HankHuang0516/EClaw/pull/3387), [#3396](https://github.com/HankHuang0516/EClaw/pull/3396)) ([d51c5e6](https://github.com/HankHuang0516/EClaw/commit/d51c5e6313afc438e5482d729231c743c72ff4ff), [9dda20e](https://github.com/HankHuang0516/EClaw/commit/9dda20ee06fabc157b32106ae27a8cf964672221))
+
+
+### Bug Fixes
+
+* **release:** sync Android app metadata to version `1.0.92` / versionCode `100` and restore backend latest-version reporting.
+* **chat:** fall back routing chips to org-chart commander labels or hide the chip when the route is unknown ([#3377](https://github.com/HankHuang0516/EClaw/pull/3377)) ([1990cc4](https://github.com/HankHuang0516/EClaw/commit/1990cc41beec41d73a83e67175319af2274d677b))
+* **avatar-petdx:** fix procedural mount/createRenderer behavior used by shared avatar rendering ([#3391](https://github.com/HankHuang0516/EClaw/pull/3391)) ([f37f256](https://github.com/HankHuang0516/EClaw/commit/f37f256f786e49b5f66693dcebd81a93420fdde4))
+* **portal-a11y:** add accessible labels to visible portal controls ([#3386](https://github.com/HankHuang0516/EClaw/pull/3386)) ([3b737ab](https://github.com/HankHuang0516/EClaw/commit/3b737ab4efe5b348a8bb039ab67dc33e03df9f20))
+* **portal-vault:** wait for env-var save commits and add a dedicated last-key delete path ([#3392](https://github.com/HankHuang0516/EClaw/pull/3392)) ([0ab02b7](https://github.com/HankHuang0516/EClaw/commit/0ab02b712fb71585e473f24046a30769666d1fdd))
+* **rental:** make official-borrow bind 502s structured with retry hints and retire a stalled free bot ([#3390](https://github.com/HankHuang0516/EClaw/pull/3390), [#3395](https://github.com/HankHuang0516/EClaw/pull/3395)) ([103575d](https://github.com/HankHuang0516/EClaw/commit/103575d3a034298883989fe5057b673da8b9d59d), [a715dbb](https://github.com/HankHuang0516/EClaw/commit/a715dbb51c5a0576de35a2b205ae9258868382fd))
+* **release:** drop semantic-release changelog/git plugins that were conflicting with the release path ([#3383](https://github.com/HankHuang0516/EClaw/pull/3383)) ([105e9b7](https://github.com/HankHuang0516/EClaw/commit/105e9b7ec9fcb74c96964a9bd093ff68cb34f333))
+* **tests:** repair E2E matrix fixtures for kanban lifecycle and seeded agent replies ([#3382](https://github.com/HankHuang0516/EClaw/pull/3382)) ([291f3e1](https://github.com/HankHuang0516/EClaw/commit/291f3e1ab7bdd1041be7bcc9512498fa9949fb2d))
+* **passive-health:** avoid false heartbeat-stale reports for channel-push entities and preserve omitted settings on partial PUTs ([#3361](https://github.com/HankHuang0516/EClaw/pull/3361), [#3362](https://github.com/HankHuang0516/EClaw/pull/3362)) ([91dd223](https://github.com/HankHuang0516/EClaw/commit/91dd2231002ca4da61207ec70010d79c2f67c088), [874a296](https://github.com/HankHuang0516/EClaw/commit/874a296ea7d05622fe6e0afea0653b5d6e28c5ab))
+* **portal-smoke:** resolve the `/shared-core` mount used by portal smoke checks ([#3374](https://github.com/HankHuang0516/EClaw/pull/3374)) ([f0ca344](https://github.com/HankHuang0516/EClaw/commit/f0ca344efc5598d42dc6a2feb4439fa6b2e45b5b))
+* **i18n:** replace remaining zh-only alert strings with keyed translations ([#3372](https://github.com/HankHuang0516/EClaw/pull/3372)) ([e523b29](https://github.com/HankHuang0516/EClaw/commit/e523b29f56d7e5009bfab1c6f81012fdc16c8275))
+* **api-errors:** unify null-input failures into consistent 400 responses ([#3369](https://github.com/HankHuang0516/EClaw/pull/3369)) ([17459c1](https://github.com/HankHuang0516/EClaw/commit/17459c11411702e1b2cb1d7790172996851e9122))
+* **plaza:** show PETDX companion avatars on community cards and clarify incomplete-card publish copy ([#3368](https://github.com/HankHuang0516/EClaw/pull/3368), [#3366](https://github.com/HankHuang0516/EClaw/pull/3366)) ([aecddc5](https://github.com/HankHuang0516/EClaw/commit/aecddc50f79ae244e6efc744c094bdad80739ebb), [603431a](https://github.com/HankHuang0516/EClaw/commit/603431ae5de105515296809f401a506603858c1d))
+* **chat:** backfill routing chips on legacy paths and add sender fallback ([81acdf](https://github.com/HankHuang0516/EClaw/commit/81acdfef0ad2b442a5656920b977ff3ee4d04d3e))
+* **arena:** fix the mobile 390x844 interview leaderboard slide layout ([#3365](https://github.com/HankHuang0516/EClaw/pull/3365)) ([b4b39a9](https://github.com/HankHuang0516/EClaw/commit/b4b39a957faf2a7f0a54444164711e0275b43b90))
+* **rental:** restore and guard `bot_listings.id` defaults with schema-drift regression coverage ([#3351](https://github.com/HankHuang0516/EClaw/pull/3351), [#3352](https://github.com/HankHuang0516/EClaw/pull/3352), [#3354](https://github.com/HankHuang0516/EClaw/pull/3354)) ([78dc8c7](https://github.com/HankHuang0516/EClaw/commit/78dc8c70d4d82c85402d32b5f35533dd60169bab), [45a9d94](https://github.com/HankHuang0516/EClaw/commit/45a9d948946283b1ba382022bd7853982d64792b), [8e7efb](https://github.com/HankHuang0516/EClaw/commit/8e7efb11f5089e30b8d2b4cc811496d357ec23c2))
+
+
+### Documentation
+
+* **specs:** add kanban card state-edit UX and chat smart-filter system-message specs ([#3085](https://github.com/HankHuang0516/EClaw/issues/3085), [#3083](https://github.com/HankHuang0516/EClaw/issues/3083)) ([939fcce](https://github.com/HankHuang0516/EClaw/commit/939fccee4a7f127b3d75168d241050167c65b9fb), [54f9d60](https://github.com/HankHuang0516/EClaw/commit/54f9d60b6c9cf138e2243e18272aa7be73d73bdd))
+
+
 # [1.1194.0](https://github.com/HankHuang0516/EClaw/compare/v1.1193.3...v1.1194.0) (2026-05-31)
 
 
