@@ -1,7 +1,11 @@
 name: Semantic Release
 
-# Automatically analyzes commits on main, bumps version, generates
-# CHANGELOG.md, and creates a GitHub Release.
+# Automatically analyzes commits on main, bumps version, and creates
+# a GitHub Release (tag + release notes). Per #6 ruling Path A
+# (2026-06-14), this workflow no longer pushes a release commit back
+# to main — branch protection blocks @semantic-release/git, and
+# GitHub Releases are the system of record. CHANGELOG.md is not
+# regenerated; release notes live on the Releases page.
 #
 # Commit message convention (Angular preset):
 #   feat: add feature          → minor bump (1.x.0)
@@ -33,7 +37,7 @@ jobs:
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
 
     permissions:
-      contents: write      # push tags + update CHANGELOG.md
+      contents: write      # create tags + GitHub Releases
       issues: write        # close issues referenced in commits
       pull-requests: write # comment on PRs
 
@@ -64,8 +68,6 @@ jobs:
             semantic-release@24 \
             @semantic-release/commit-analyzer@13 \
             @semantic-release/release-notes-generator@14 \
-            @semantic-release/changelog@6 \
-            @semantic-release/git@10 \
             @semantic-release/github@10
 
       - name: Run semantic-release
