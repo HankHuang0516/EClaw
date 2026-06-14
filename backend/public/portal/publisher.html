@@ -203,7 +203,11 @@
                     <input type="password" id="apiKeyInput"
                         data-i18n-placeholder="pub_apikey_placeholder"
                         placeholder="X-Publisher-Key (from device-vars: PUBLISHER_API_KEY)">
-                    <button class="btn btn-sm btn-outline" onclick="togglePasswordVisibility('apiKeyInput', this)">👁</button>
+                    <button type="button" class="btn btn-sm btn-outline"
+                        data-visibility-label="publisher API key"
+                        aria-label="Show publisher API key"
+                        title="Show publisher API key"
+                        onclick="togglePasswordVisibility('apiKeyInput', this)">👁</button>
                     <button class="btn btn-sm btn-primary" onclick="saveApiKey()" data-i18n="pub_apikey_save">Save</button>
                     <span id="apiKeyStatus" class="key-status unset" data-i18n="pub_apikey_unset">not set</span>
                 </div>
@@ -266,7 +270,12 @@
         function togglePasswordVisibility(inputId, btn) {
             const el = document.getElementById(inputId);
             el.type = el.type === 'password' ? 'text' : 'password';
+            const subject = btn.dataset.visibilityLabel || 'secret value';
+            const action = el.type === 'password' ? 'Show' : 'Hide';
+            const label = `${action} ${subject}`;
             btn.textContent = el.type === 'password' ? '👁' : '🙈';
+            btn.setAttribute('aria-label', label);
+            btn.setAttribute('title', label);
         }
 
         // ─── Init ───
