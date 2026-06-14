@@ -1,0 +1,158 @@
+{
+  "_comment": "Source of truth for parity audits: maps backend API paths to the portal page(s) that implement their UI. Used by the weekly parity audit cron card (entity #2) to avoid false-positive 'missing portal page' gaps when the page exists under a different name. Add new entries when introducing portal pages for existing APIs.",
+  "_updated": "2026-06-14",
+  "_format": {
+    "api": "Backend API path prefix (e.g. '/api/contacts')",
+    "page": "Portal page filename under backend/public/portal/, or an array if multiple pages",
+    "kind": "primary | secondary | embedded — primary is the canonical UI; embedded means it's a section/widget inside another page",
+    "notes": "Optional human note about the mapping"
+  },
+  "mappings": [
+    {
+      "api": "/api/contacts",
+      "page": "card-holder.html",
+      "kind": "primary",
+      "notes": "Card Holder / 名片夾 — list, search, pin, block, refresh agent cards"
+    },
+    {
+      "api": "/api/entity/agent-card",
+      "page": "dashboard.html",
+      "kind": "embedded",
+      "notes": "Agent card editor is loaded via shared/agent-card-editor.js inside dashboard.html (per-entity card)"
+    },
+    {
+      "api": "/api/entities",
+      "page": "dashboard.html",
+      "kind": "embedded",
+      "notes": "Entity CRUD (add/delete/rename/reorder) is the central panel of dashboard.html; raw /api/entities is bot-scoped (botSecret + entityId), not user-scoped"
+    },
+    {
+      "api": "/api/device/add-entity",
+      "page": "dashboard.html",
+      "kind": "embedded"
+    },
+    {
+      "api": "/api/device/entity/:entityId/permanent",
+      "page": "dashboard.html",
+      "kind": "embedded"
+    },
+    {
+      "api": "/api/device-telemetry",
+      "page": "telemetry.html",
+      "kind": "primary",
+      "notes": "Read-only telemetry viewer for the current device — added 2026-06-14 to close W22 parity gap"
+    },
+    {
+      "api": "/api/publisher/platforms",
+      "page": ["publisher.html", "publisher-setup.html"],
+      "kind": "primary",
+      "notes": "publisher.html is the composer; publisher-setup.html is the platform-credentials wizard. Not linked in main nav by design (entry via Wallet / Info hub)."
+    },
+    {
+      "api": "/api/mission/card",
+      "page": ["kanban.html", "mission.html"],
+      "kind": "primary"
+    },
+    {
+      "api": "/api/mindmap",
+      "page": "mission.html",
+      "kind": "embedded",
+      "notes": "Mind map is embedded inside mission.html since v1.1114 (standalone mindmap.html was removed)"
+    },
+    {
+      "api": "/api/chat",
+      "page": "chat.html",
+      "kind": "primary"
+    },
+    {
+      "api": "/api/files",
+      "page": "files.html",
+      "kind": "primary"
+    },
+    {
+      "api": "/api/device-vars",
+      "page": "env-vars.html",
+      "kind": "primary"
+    },
+    {
+      "api": "/api/feedback",
+      "page": "feedback.html",
+      "kind": "primary"
+    },
+    {
+      "api": "/api/notifications",
+      "page": "settings.html",
+      "kind": "embedded",
+      "notes": "Notification subscription is part of Settings page; vapid-key path is /api/notifications/vapid (audit's /vapid-key was wrong)"
+    },
+    {
+      "api": "/api/auth",
+      "page": ["index.html", "delete-account.html", "settings.html"],
+      "kind": "primary"
+    },
+    {
+      "api": "/api/analytics",
+      "page": "analytics.html",
+      "kind": "primary"
+    },
+    {
+      "api": "/api/wallet",
+      "page": "wallet.html",
+      "kind": "primary"
+    },
+    {
+      "api": "/api/rental",
+      "page": ["plaza.html", "marketplace.html", "my-rentals.html"],
+      "kind": "primary"
+    },
+    {
+      "api": "/api/invite",
+      "page": ["invite.html", "invite-qr-generator.html"],
+      "kind": "primary"
+    },
+    {
+      "api": "/api/community",
+      "page": "community.html",
+      "kind": "primary"
+    },
+    {
+      "api": "/api/oauth",
+      "page": null,
+      "kind": "none",
+      "notes": "OAuth 2.0 server endpoints — programmatic only, no portal UI by design"
+    },
+    {
+      "api": "/api/a2a",
+      "page": null,
+      "kind": "none",
+      "notes": "A2A protocol — bot-to-bot only, no portal UI by design"
+    },
+    {
+      "api": "/api/grpc",
+      "page": null,
+      "kind": "none"
+    },
+    {
+      "api": "/api/discord",
+      "page": null,
+      "kind": "none",
+      "notes": "Discord native slash commands — no portal UI"
+    },
+    {
+      "api": "/api/health",
+      "page": null,
+      "kind": "none"
+    },
+    {
+      "api": "/api/version",
+      "page": null,
+      "kind": "none"
+    },
+    {
+      "api": "/api/schedules",
+      "page": null,
+      "kind": "deprecated",
+      "notes": "Legacy bare schedules API returns 410 GONE since v1.362. Scheduling lives on /api/mission/card/:id/schedule and is surfaced via kanban.html"
+    }
+  ]
+}
