@@ -565,9 +565,22 @@ EClaw/
 ## Git Workflow
 
 - **PR then merge**: When work is complete, push the feature branch, create a PR via GitHub API, then merge it to `main` yourself (squash merge). After merging, check that the CI actions on `main` have not failed.
-- **Workflow**: develop on feature branch → push → create PR → merge PR → **check CI status on main** → **verify production**
+- **Workflow**: develop on feature branch → push → create PR → **wait for PR CI to pass** → convert draft→ready → squash merge → **check CI status on main** → **verify production**
 - 工作完成後 push feature branch、建立 PR、自行 merge 到 main，然後確認 main 的 CI actions 沒有 failed。
 - Codex 會在 git push 之前審查你的代碼
+
+### ⚠️ Merge Gate — CI Must Pass Before Merge (MANDATORY)
+
+**任務未結束，直到以下三步全部完成：**
+
+1. **PR CI 全綠** — 用 `mcp__github__pull_request_read(get_check_runs)` 確認所有 check runs 的 `conclusion` 都是 `success`（或 `skipped`）。若有失敗立即修復，不可繞過。
+2. **Squash merge 進 main** — `update_pull_request(draft: false)` 轉為 ready，再 `merge_pull_request(squash)`。**Draft PR 無法 merge，必須先轉換。**
+3. **確認 main CI 也綠** — merge 後用 `actions_list(list_workflow_runs, branch: main)` 確認最新一次 run 沒有 failure。
+
+**絕對不可以：**
+- 在 CI 還在跑（`in_progress` / `queued`）時就 merge
+- 留著 draft PR 不 merge 就結束任務
+- 把舊的同類 PR 堆積不關閉 — 同一功能只能有 1 個 open PR，建新 PR 前先關閉舊的
 
 ### ⚠️ Code Review Checklist (MANDATORY — applies to every PR)
 
