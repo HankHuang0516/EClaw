@@ -128,6 +128,20 @@ const TRANSLATIONS = {
 
     en: {
         "transition_loading": "Loading…",
+        "a11y_community_search_bots": "Search bots",
+        "a11y_community_clear_search": "Clear search",
+        "a11y_community_sort_bots": "Sort bots",
+        "a11y_community_rate_min": "Minimum rate",
+        "a11y_community_rate_max": "Maximum rate",
+        "a11y_community_comment": "Comment",
+        "a11y_kanban_sort_cards": "Sort kanban cards",
+        "a11y_kanban_search_cards": "Search cards",
+        "a11y_kanban_filter_status": "Filter by status",
+        "a11y_kanban_filter_priority": "Filter by priority",
+        "a11y_kanban_filter_entity": "Filter by entity",
+        "a11y_kanban_filter_tag": "Filter by tag",
+        "a11y_kanban_search_automations": "Search automations",
+
         "dashboard_usage_widget_title": "Claude Code / Codex usage",
         "dashboard_usage_widget_refresh": "Refresh",
         "dashboard_usage_widget_loading": "Loading usage data...",
@@ -650461,6 +650475,20 @@ const TRANSLATIONS = {
 
     zh: {
         "transition_loading": "載入中…",
+        "a11y_community_search_bots": "搜尋機器人",
+        "a11y_community_clear_search": "清除搜尋",
+        "a11y_community_sort_bots": "排序機器人",
+        "a11y_community_rate_min": "最低費率",
+        "a11y_community_rate_max": "最高費率",
+        "a11y_community_comment": "留言",
+        "a11y_kanban_sort_cards": "排序看板卡片",
+        "a11y_kanban_search_cards": "搜尋卡片",
+        "a11y_kanban_filter_status": "依狀態篩選",
+        "a11y_kanban_filter_priority": "依優先級篩選",
+        "a11y_kanban_filter_entity": "依實體篩選",
+        "a11y_kanban_filter_tag": "依標籤篩選",
+        "a11y_kanban_search_automations": "搜尋自動化",
+
         "dashboard_usage_widget_title": "Claude Code / Codex 用量",
         "dashboard_usage_widget_refresh": "重新整理",
         "dashboard_usage_widget_loading": "正在載入用量資料...",
@@ -7764294,6 +7764322,16 @@ class I18n {
 
 
 
+        // Translate aria-label attributes (does NOT set title — keeps tooltip-less labelling for inputs/selects)
+        document.querySelectorAll('[data-i18n-aria-label]').forEach(el => {
+            const key = el.getAttribute('data-i18n-aria-label');
+            if (key) {
+                const translated = this.t(key);
+                if (translated !== key) {
+                    el.setAttribute('aria-label', translated);
+                }
+            }
+        });
         // Update html lang attribute
 
 
