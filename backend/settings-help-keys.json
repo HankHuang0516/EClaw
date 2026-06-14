@@ -138,6 +138,21 @@
       "field_key": "settings_device_secret",
       "label_key": "settings_device_secret",
       "help_key": "settings_device_secret_help"
+    },
+    {
+      "field_key": "usage_warning_5h",
+      "label_key": "usage_warning_5h_label",
+      "help_key": "usage_warning_5h_help"
+    },
+    {
+      "field_key": "usage_warning_7d",
+      "label_key": "usage_warning_7d_label",
+      "help_key": "usage_warning_7d_help"
+    },
+    {
+      "field_key": "usage_warning_enable",
+      "label_key": "usage_warning_enable_label",
+      "help_key": "usage_warning_enable_help"
     }
   ]
 }
