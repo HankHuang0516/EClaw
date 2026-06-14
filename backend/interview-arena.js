@@ -200,6 +200,14 @@ let VISION_IMAGES = [
     // Hard tier
     { file: null, description: 'A partially filled 6×6 Sudoku grid where row 1 shows 1, 2, blank, 4, blank, 6 and row 2 shows blank, 5, 3, blank, 1, blank — the bottom-right 3×3 box is entirely empty', keywords: ['sudoku', 'six', 'grid', 'empty', 'row', 'partially'] },
     { file: null, description: 'A transit route diagram showing 5 bus stops in sequence: Central → Park → Museum → Library → Airport; a yellow diamond at Museum marks a transfer connection to Line 3', keywords: ['bus', 'route', 'five', 'stops', 'museum', 'transfer', 'airport', 'line'] },
+    // ── Daily pool update: added 2026-06-14 ──
+    // Medium tier
+    { file: null, description: 'A 7-day weather forecast grid showing Mon 22°C sunny, Tue 19°C cloudy, Wed 15°C rainy, Thu 14°C rainy, Fri 18°C partly cloudy, Sat 24°C sunny, Sun 26°C sunny — temperatures drop midweek', keywords: ['weather', 'seven', 'sunny', 'rainy', 'wednesday', 'thursday', '14', '26'] },
+    { file: null, description: 'An e-commerce product grid showing 6 items: a laptop at $849, headphones at $129, a mouse at $39, a keyboard at $79, a monitor at $349, and a webcam at $59 — the laptop and monitor are marked "Best Seller"', keywords: ['six', 'laptop', '849', 'headphones', 'monitor', 'best', 'seller'] },
+    // Hard tier
+    { file: null, description: 'A database entity-relationship diagram with five tables: users (id, name, email), orders (id, user_id, total), products (id, name, price), order_items (order_id, product_id, qty), and categories (id, name) — three foreign-key arrows are drawn in blue', keywords: ['database', 'five', 'tables', 'users', 'orders', 'products', 'foreign', 'three'] },
+    { file: null, description: 'A terminal window showing git log output: 5 commits from the last 3 days — the most recent commit reads "fix: resolve null pointer in payment handler" authored by dev@company.com at 14:07', keywords: ['terminal', 'git', 'five', 'commits', 'null', 'payment', 'handler', '14:07'] },
+    { file: null, description: 'A legal contract page showing clause 7.3 titled "Indemnification" with two sub-clauses (a) and (b), a highlighted sentence reading "The aggregate liability shall not exceed $50,000", and a margin annotation in red ink reading "review this"', keywords: ['contract', 'clause', '7.3', 'indemnification', 'liability', '50000', 'review'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -393,6 +401,21 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '[[1,4,7],[2,5,8],[3,6,9]]', expected: '[1,2,3,4,5,6,7,8,9]' },{ input: '[[1,2],[3,4],[5,6]]', expected: '[1,2,3,4,5,6]' },{ input: '[[]]', expected: '[]' },{ input: '[[1]]', expected: '[1]' }] },
     { title: 'Valid Sudoku', description: 'Write `solve(board)` — given a 9×9 2D array (with "." for empty), return true if the board is valid: each row, column, and 3×3 box must contain digits 1-9 with no repeats.',
       testCases: [{ input: '[["5","3",".",".","7",".",".",".","."],["6",".",".","1","9","5",".",".","."],[".","9","8",".",".",".",".","6","."],["8",".",".",".","6",".",".",".","3"],["4",".",".","8",".","3",".",".","1"],["7",".",".",".","2",".",".",".","6"],[".","6",".",".",".",".","2","8","."],[".",".",".","4","1","9",".",".","5"],[".",".",".",".","8",".",".","7","9"]]', expected: 'true' },{ input: '[["8","3",".",".","7",".",".",".","."],["6",".",".","1","9","5",".",".","."],[".","9","8",".",".",".",".","6","."],["8",".",".",".","6",".",".",".","3"],["4",".",".","8",".","3",".",".","1"],["7",".",".",".","2",".",".",".","6"],[".","6",".",".",".",".","2","8","."],[".",".",".","4","1","9",".",".","5"],[".",".",".",".","8",".",".","7","9"]]', expected: 'false' }] },
+    // ── Daily pool update: added 2026-06-14 ──
+    { title: 'Jump Game', description: 'Write `solve(nums)` — given an array of non-negative integers where each element represents the maximum jump length from that position, return true if you can reach the last index starting from index 0.',
+      testCases: [{ input: '[2,3,1,1,4]', expected: 'true' },{ input: '[3,2,1,0,4]', expected: 'false' },{ input: '[0]', expected: 'true' },{ input: '[1,0,1]', expected: 'false' }] },
+    { title: 'Unique Paths', description: 'Write `solve(m, n)` — a robot is on the top-left of an m×n grid. It can only move right or down. Return the number of distinct paths to reach the bottom-right corner.',
+      testCases: [{ input: '3, 3', expected: '6' },{ input: '3, 7', expected: '28' },{ input: '1, 1', expected: '1' },{ input: '2, 2', expected: '2' }] },
+    { title: 'Best Time to Buy and Sell Stock', description: 'Write `solve(prices)` — given an array where prices[i] is the price of a stock on day i, return the maximum profit you can achieve from one buy and one sell. If no profit is possible, return 0.',
+      testCases: [{ input: '[7,1,5,3,6,4]', expected: '5' },{ input: '[7,6,4,3,1]', expected: '0' },{ input: '[1,2]', expected: '1' },{ input: '[2,4,1]', expected: '2' }] },
+    { title: 'Letter Combinations of Phone Number', description: 'Write `solve(digits)` — given a string of digits 2-9, return all possible letter combinations using the telephone keypad (2=abc, 3=def, 4=ghi, 5=jkl, 6=mno, 7=pqrs, 8=tuv, 9=wxyz). Return sorted alphabetically.',
+      testCases: [{ input: '"2"', expected: '["a","b","c"]' },{ input: '"23"', expected: '["ad","ae","af","bd","be","bf","cd","ce","cf"]' },{ input: '""', expected: '[]' }] },
+    { title: 'Find Duplicate Number', description: 'Write `solve(nums)` — given an array of n+1 integers where each integer is in the range [1, n] inclusive and exactly one number is duplicated, return that duplicate number without modifying the array.',
+      testCases: [{ input: '[1,3,4,2,2]', expected: '2' },{ input: '[3,1,3,4,2]', expected: '3' },{ input: '[1,1]', expected: '1' },{ input: '[2,5,9,6,9,3,8,9,7,1]', expected: '9' }] },
+    { title: 'Minimum Window Substring', description: 'Write `solve(s, t)` — return the shortest substring of s that contains every character in t (including duplicates). If no such substring exists, return an empty string "".',
+      testCases: [{ input: '"ADOBECODEBANC", "ABC"', expected: '"BANC"' },{ input: '"a", "a"', expected: '"a"' },{ input: '"a", "aa"', expected: '""' },{ input: '"ab", "b"', expected: '"b"' }] },
+    { title: 'Largest Rectangle in Histogram', description: 'Write `solve(heights)` — given an array of integers representing the height of bars in a histogram (each bar has width 1), return the area of the largest rectangle that can be formed.',
+      testCases: [{ input: '[2,1,5,6,2,3]', expected: '10' },{ input: '[2,4]', expected: '4' },{ input: '[1,2]', expected: '2' },{ input: '[1]', expected: '1' },{ input: '[0,9]', expected: '9' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -450,6 +473,14 @@ let RESPONSE_QUESTIONS = [
     { question: 'A cistern can be filled by pipe A in 12 hours and drained by pipe B in 18 hours. If both pipes are open simultaneously and the cistern starts empty, how many hours until it is full?', expectedKeywords: ['36'] },
     { question: 'What is the value of 7! (7 factorial)?', expectedKeywords: ['5040'] },
     { question: 'A train 150 m long passes a stationary observer in 10 seconds. What is the speed of the train in km/h?', expectedKeywords: ['54'] },
+    // ── Daily pool update: added 2026-06-14 ──
+    { question: 'Worker A can complete a job in 8 days; worker B can complete the same job in 12 days. Working together, how many days will it take them to complete the job?', expectedKeywords: ['4.8', '24/5'] },
+    { question: 'What is the 15th term of the arithmetic sequence 3, 7, 11, 15, ...?', expectedKeywords: ['59'] },
+    { question: 'A bag contains 5 red balls and 3 blue balls. You draw 2 balls without replacement. What is the probability that both balls are red? Express as a simplified fraction.', expectedKeywords: ['5/14', '10/28'] },
+    { question: 'You have 12 identical-looking coins, but one is counterfeit and slightly heavier than the rest. What is the minimum number of weighings on a balance scale needed to guarantee finding the counterfeit coin?', expectedKeywords: ['3', 'three'] },
+    { question: 'What is the greatest common divisor (GCD) of 84 and 126?', expectedKeywords: ['42'] },
+    { question: 'In how many distinct ways can the letters of the word MISSISSIPPI be arranged?', expectedKeywords: ['34650'] },
+    { question: 'A circle has a circumference of 12π cm. What is the area of the circle in square centimetres?', expectedKeywords: ['36π', '36pi', '113'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -533,6 +564,12 @@ let TTS_PHRASES = [
     { text: 'Euler prime number e approximately equals 2.71828 and serves as the base of the natural logarithm written as ln of x', keywords: ['euler', '2.71828', 'natural', 'logarithm', 'base'] },
     { text: 'IBAN GB29 NWBK 6016 1331 9268 19 — please verify the account number before initiating the SEPA transfer of two thousand four hundred euros', keywords: ['IBAN', 'GB29', 'SEPA', 'transfer', 'euros', 'verify'] },
     { text: 'The Reynolds number determines whether fluid flow is laminar or turbulent and equals density times velocity times characteristic length divided by dynamic viscosity', keywords: ['reynolds', 'laminar', 'turbulent', 'density', 'velocity', 'viscosity'] },
+    // ── Daily pool update: added 2026-06-14 ──
+    { text: 'The patient hemoglobin A1c is 7.2 percent, LDL cholesterol is 142 milligrams per deciliter, and blood pressure is 128 over 82 millimeters of mercury', keywords: ['hemoglobin', '7.2', 'cholesterol', '142', 'blood', 'pressure', '128'] },
+    { text: 'The conference call dial-in number is 1-800-555-0173 passcode 4729 pound recorded for compliance — your reference number is REF-2024-8841', keywords: ['conference', '555', '4729', 'compliance', 'REF', '2024', '8841'] },
+    { text: 'PostgreSQL version 15.4 introduced MERGE statements improved logical replication slot management and row-level security policy inheritance', keywords: ['PostgreSQL', '15.4', 'MERGE', 'replication', 'row-level', 'security'] },
+    { text: 'Avogadro number is approximately 6.022 times ten to the power of 23 which represents the number of atoms or molecules in one mole of a substance', keywords: ['avogadro', '6.022', 'twenty-three', 'mole', 'atoms', 'molecules'] },
+    { text: 'Your parcel tracking number is 1Z 999 AA1 01 2345 6784 expected to arrive Thursday the 19th between 9 AM and 1 PM at 42 Maple Drive', keywords: ['parcel', '1Z', '999', 'thursday', '19', 'maple', '42'] },
 ];
 
 // ============================================
