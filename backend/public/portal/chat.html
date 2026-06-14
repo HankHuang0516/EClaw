@@ -3502,6 +3502,27 @@
         const rentalHealthByEntity = new Map();
         let _rentalHealthPollTimer = null;
 
+        // Org-chart commander cache — used by renderRoutingChip() as a
+        // fallback target when routing_meta has no to_entity_id (so we
+        // never render the meaningless '-> ?'). null until /api/device/
+        // org-chart resolves; if it never does, the chip is hidden.
+        // card_29eed229d389e53bfae7d954.
+        let orgChartCommanderId = null;
+
+        async function loadOrgChartCommander() {
+            if (!currentUser?.deviceId || !currentUser?.deviceSecret) return;
+            try {
+                const data = await apiCall('GET', `/api/device/org-chart?deviceId=${encodeURIComponent(currentUser.deviceId)}&deviceSecret=${encodeURIComponent(currentUser.deviceSecret)}`);
+                const root = data?.orgChart?.hierarchy?.USER;
+                if (Array.isArray(root) && root.length > 0) {
+                    const top = Number(root[0]);
+                    if (Number.isFinite(top)) orgChartCommanderId = top;
+                }
+            } catch (_) {
+                // Chip simply hides on unknown route — never block chat load.
+            }
+        }
+
         // ── Chat Integrity Validator ──
         const ChatIntegrityValidator = (() => {
             const _reportedTs = {};
@@ -3920,6 +3941,8 @@
             updateUsageBadge();
             console.log('[CHAT_DEBUG] loadBoundEntities starting...');
             await loadBoundEntities();
+            // Fire-and-forget: chip falls back to commander once this resolves.
+            loadOrgChartCommander();
             await loadRentalHealthStatus();
             if (!_rentalHealthPollTimer) _rentalHealthPollTimer = setInterval(loadRentalHealthStatus, 60000);
             console.log('[CHAT_DEBUG] loadBoundEntities done, loading messages...');
@@ -5865,15 +5888,24 @@
                 return `<span class="routing-chip ${cls}" title="${escapeHtml(lbl)}">⚠ ${escapeHtml(lbl)}</span>`;
             }
             // Positive: from → to · LV{to_lv}, optional mode prefix.
+            // Globe-user rule (card_29eed229d389e53bfae7d954): never render
+            // '?' for an unknown side. Fall back to the org-chart commander
+            // (cached via loadOrgChartCommander) if available; otherwise
+            // hide the chip entirely. Same treatment for an unknown LV.
             const seg = routingLvSegment(rm.to_lv);
-            const from = rm.from_name || (rm.from_entity_id != null ? '#' + rm.from_entity_id : '?');
-            const to = rm.to_name || (rm.to_entity_id != null ? '#' + rm.to_entity_id : '?');
-            const lvNum = Number.isFinite(Number(rm.to_lv)) ? Number(rm.to_lv) : '?';
+            const fallback = (orgChartCommanderId != null) ? ('#' + orgChartCommanderId) : null;
+            const from = rm.from_name || (rm.from_entity_id != null ? '#' + rm.from_entity_id : fallback);
+            const to = rm.to_name || (rm.to_entity_id != null ? '#' + rm.to_entity_id : fallback);
+            if (!from || !to) return '';
+            const lvNum = Number(rm.to_lv);
+            const hasLv = Number.isFinite(lvNum);
             let modeTag = '';
             if (rm.mode === 'broadcast') modeTag = `<span class="rc-mode">${escapeHtml(tt('chat_routing_broadcast','廣播'))}</span>`;
             else if (rm.mode === 'xdevice') modeTag = `<span class="rc-mode">${escapeHtml(tt('chat_routing_xdevice','跨裝置'))}</span>`;
-            const title = `${tt('chat_routing_label','路由')}: ${from} → ${to} · LV${lvNum}`;
-            return `<span class="routing-chip rc-lv-${seg}" title="${escapeHtml(title)}">${modeTag}<span class="rc-route">${escapeHtml(from)} → ${escapeHtml(to)}</span><span class="rc-lv">LV${lvNum}</span></span>`;
+            const lvHtml = hasLv ? `<span class="rc-lv">LV${lvNum}</span>` : '';
+            const lvTitle = hasLv ? ` · LV${lvNum}` : '';
+            const title = `${tt('chat_routing_label','路由')}: ${from} → ${to}${lvTitle}`;
+            return `<span class="routing-chip rc-lv-${seg}" title="${escapeHtml(title)}">${modeTag}<span class="rc-route">${escapeHtml(from)} → ${escapeHtml(to)}</span>${lvHtml}</span>`;
         }
 
         /** Cross-device message received from another device (not sent by this device's entities) */
