@@ -1862,7 +1862,7 @@ async function submitPayment() {
         if (r.success) {
             document.querySelector('.pay-card').innerHTML = '<h2>✅ 付款成功！</h2><p style="margin-top:16px;color:var(--muted)">訂單 ' + ORDER_ID + ' 已完成付款。<br>客服將會聯繫您確認出貨。</p><p style="margin-top:24px;text-align:center"><a href="javascript:window.close()" style="color:var(--accent)">關閉此頁面</a></p>';
         }
-    } catch(e) { alert('付款失敗：' + e.message); }
+    } catch(e) { alert('Payment failed: ' + e.message); /* i18n: mc_payment_failed — page is server-rendered standalone, /shared/i18n.js not loaded */ }
 }
 </script></body></html>`);
         } catch (error) {

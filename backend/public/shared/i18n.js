@@ -650197,6 +650197,12 @@ const TRANSLATIONS = {
         "chat_routing_broadcast": "Broadcast",
         "chat_routing_xdevice": "Cross-device",
         "chat_routing_client_derived": "client-derived",
+
+        "mc_payment_failed": "Payment failed: {error}",
+        "petdx_switch_success": "Switched to {name}",
+        "petdx_switch_failed": "Switch failed: {error}",
+        "petdx_network_error": "Network error: {error}",
+        "petdx_favorite_failed": "Save to favorites failed: {error}",
 },
 
 
@@ -1234861,6 +1234867,12 @@ const TRANSLATIONS = {
         "chat_routing_broadcast": "广播",
         "chat_routing_xdevice": "跨设备",
         "chat_routing_client_derived": "客户端推导",
+
+        "mc_payment_failed": "付款失敗：{error}",
+        "petdx_switch_success": "已切換為 {name}",
+        "petdx_switch_failed": "切換失敗：{error}",
+        "petdx_network_error": "網路錯誤：{error}",
+        "petdx_favorite_failed": "收藏失敗：{error}",
 },
 
 
@@ -2412127,6 +2412139,12 @@ const TRANSLATIONS = {
         "dashboard_usage_chart_no_data": "データはまだありません",
 
         "firstach_title": "初めての実績：{label}！",
+
+        "mc_payment_failed": "支払いに失敗しました：{error}",
+        "petdx_switch_success": "{name} に切り替えました",
+        "petdx_switch_failed": "切り替えに失敗しました：{error}",
+        "petdx_network_error": "ネットワークエラー：{error}",
+        "petdx_favorite_failed": "お気に入りの保存に失敗しました：{error}",
 },
 
 
@@ -2942398,6 +2942416,12 @@ const TRANSLATIONS = {
         "dashboard_usage_chart_no_data": "아직 데이터가 없습니다",
 
         "firstach_title": "첫 업적: {label}!",
+
+        "mc_payment_failed": "결제 실패: {error}",
+        "petdx_switch_success": "{name}(으)로 전환되었습니다",
+        "petdx_switch_failed": "전환 실패: {error}",
+        "petdx_network_error": "네트워크 오류: {error}",
+        "petdx_favorite_failed": "즐겨찾기 저장 실패: {error}",
 },
 
 
@@ -3997599,6 +3997623,12 @@ const TRANSLATIONS = {
         "dashboard_usage_chart_no_data": "Chưa có dữ liệu",
 
         "firstach_title": "Thành tích đầu tiên: {label}!",
+
+        "mc_payment_failed": "Thanh toán thất bại: {error}",
+        "petdx_switch_success": "Đã chuyển sang {name}",
+        "petdx_switch_failed": "Chuyển đổi thất bại: {error}",
+        "petdx_network_error": "Lỗi mạng: {error}",
+        "petdx_favorite_failed": "Lưu vào yêu thích thất bại: {error}",
 },
 
 
@@ -4524046,6 +4524076,12 @@ const TRANSLATIONS = {
         "dashboard_usage_chart_no_data": "Belum ada data",
 
         "firstach_title": "Pencapaian pertama: {label}!",
+
+        "mc_payment_failed": "Pembayaran gagal: {error}",
+        "petdx_switch_success": "Beralih ke {name}",
+        "petdx_switch_failed": "Pergantian gagal: {error}",
+        "petdx_network_error": "Kesalahan jaringan: {error}",
+        "petdx_favorite_failed": "Gagal menyimpan ke favorit: {error}",
 },
 
 
@@ -5566793,6 +5566829,12 @@ const TRANSLATIONS = {
         "dashboard_usage_chart_no_data": "Aún no hay datos",
 
         "firstach_title": "¡Primer logro: {label}!",
+
+        "mc_payment_failed": "Error de pago: {error}",
+        "petdx_switch_success": "Cambiado a {name}",
+        "petdx_switch_failed": "Cambio fallido: {error}",
+        "petdx_network_error": "Error de red: {error}",
+        "petdx_favorite_failed": "Error al guardar en favoritos: {error}",
 },
 
 
