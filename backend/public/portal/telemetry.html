@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title data-i18n="[html]telemetry_title">EClawbot - Device Telemetry</title>
+    <meta name="description" content="Per-device telemetry buffer viewer for debugging API calls, page views, and client-side errors.">
+    <link rel="icon" type="image/png" href="assets/favicon-32.png">
+    <link rel="stylesheet" href="shared/style.css">
+    <style>
+        .tel-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+        .tel-controls label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .tel-controls select, .tel-controls input {
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 6px 10px;
+            font-size: 13px;
+        }
+        .tel-actions { margin-left: auto; display: flex; gap: 8px; }
+        .tel-btn {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 6px 14px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        .tel-btn.secondary {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--card-border);
+        }
+        .tel-btn.danger { background: #c0392b; }
+        .tel-btn:hover { opacity: 0.85; }
+
+        .tel-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .tel-stat-card {
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+        }
+        .tel-stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .tel-stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+            font-variant-numeric: tabular-nums;
+        }
+        .tel-section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            margin-bottom: 18px;
+        }
+        .tel-section h2 {
+            font-size: 15px;
+            font-weight: 600;
+            margin: 0 0 12px 0;
+            color: var(--text);
+        }
+        table.tel-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            font-family: monospace;
+        }
+        table.tel-table th, table.tel-table td {
+            text-align: left;
+            padding: 6px 8px;
+            border-bottom: 1px solid var(--card-border);
+            vertical-align: top;
+        }
+        table.tel-table th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        table.tel-table td.col-time { white-space: nowrap; color: var(--text-secondary); }
+        table.tel-table td.col-type {
+            font-weight: 600;
+            color: var(--primary);
+            white-space: nowrap;
+        }
+        table.tel-table td.col-detail { word-break: break-all; }
+        .tel-empty {
+            color: var(--text-secondary);
+            font-size: 13px;
+            padding: 14px 4px;
+            text-align: center;
+        }
+        .tel-error {
+            color: #f44;
+            background: rgba(255, 68, 68, 0.08);
+            border: 1px solid rgba(255, 68, 68, 0.3);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+        .tel-loading { color: var(--text-secondary); text-align: center; padding: 40px 20px; }
+        .tel-note { color: var(--text-secondary); font-size: 12px; margin-top: 6px; }
+        @media (max-width: 720px) {
+            .tel-actions { margin-left: 0; width: 100%; }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="navContainer"></div>
+
+    <main class="page">
+        <div class="page-header">
+            <h1 data-i18n="[html]telemetry_heading">Device Telemetry</h1>
+        </div>
+        <p class="tel-note" data-i18n="[html]telemetry_subtitle">
+            Per-device debug buffer: API calls, page views, actions, errors. Auth-gated to this device only. Buffer auto-trims at ~1 MB.
+        </p>
+
+        <div id="loadingState" class="tel-loading" data-i18n="common_loading">Loading...</div>
+
+        <div id="telemetryContent" style="display: none;">
+            <div class="tel-controls">
+                <label>
+                    <span data-i18n="[html]telemetry_type_label">Type</span>
+                    <select id="typeSel">
+                        <option value="" data-i18n="[html]telemetry_type_all">All</option>
+                        <option value="api_req">api_req</option>
+                        <option value="page_view">page_view</option>
+                        <option value="action">action</option>
+                        <option value="error">error</option>
+                    </select>
+                </label>
+                <label>
+                    <span data-i18n="[html]telemetry_limit_label">Limit</span>
+                    <select id="limitSel">
+                        <option value="50">50</option>
+                        <option value="100" selected>100</option>
+                        <option value="250">250</option>
+                        <option value="500">500</option>
+                    </select>
+                </label>
+                <div class="tel-actions">
+                    <button id="refreshBtn" class="tel-btn" data-i18n="common_refresh">Refresh</button>
+                    <button id="clearBtn" class="tel-btn danger" data-i18n="[html]telemetry_clear">Clear buffer</button>
+                </div>
+            </div>
+
+            <div id="errorBanner" class="tel-error" style="display: none;"></div>
+
+            <div class="tel-summary" id="summaryGrid"></div>
+
+            <div class="tel-section">
+                <h2 data-i18n="[html]telemetry_entries">Recent entries</h2>
+                <div style="overflow-x:auto;">
+                    <table class="tel-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="[html]telemetry_col_time">Time</th>
+                                <th data-i18n="[html]telemetry_col_type">Type</th>
+                                <th data-i18n="[html]telemetry_col_detail">Detail</th>
+                            </tr>
+                        </thead>
+                        <tbody id="entriesBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="shared/api.js"></script>
+    <script src="shared/nav.js"></script>
+    <script src="shared/auth.js"></script>
+    <script src="../shared/telemetry.js"></script>
+    <script src="../shared/i18n.js"></script>
+    <script src="../shared/transition-overlay.js"></script>
+    <script src="shared/footer.js"></script>
+    <script>
+        let refreshTimer = null;
+
+        function showError(msg) {
+            const el = document.getElementById('errorBanner');
+            if (!msg) { el.style.display = 'none'; el.textContent = ''; return; }
+            el.style.display = '';
+            el.textContent = msg;
+        }
+
+        function fmtNumber(n) {
+            if (typeof n !== 'number' || !isFinite(n)) return '—';
+            return n.toLocaleString();
+        }
+
+        function fmtTime(ts) {
+            if (!ts) return '—';
+            const d = new Date(ts);
+            if (isNaN(d.getTime())) return String(ts);
+            const pad = (n) => String(n).padStart(2, '0');
+            return `${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        }
+
+        function escapeHtml(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        function renderSummary(s) {
+            const grid = document.getElementById('summaryGrid');
+            grid.innerHTML = '';
+            const totalLabel = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t('[html]telemetry_total_label', 'Total entries') : 'Total entries';
+            const cards = [
+                { label: totalLabel, value: fmtNumber(s.total || 0) }
+            ];
+            const byType = s.byType || {};
+            Object.keys(byType).sort().forEach(k => {
+                cards.push({ label: k, value: fmtNumber(byType[k]) });
+            });
+            cards.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'tel-stat-card';
+                div.innerHTML = `<div class="tel-stat-label">${escapeHtml(c.label)}</div><div class="tel-stat-value">${escapeHtml(c.value)}</div>`;
+                grid.appendChild(div);
+            });
+        }
+
+        function summarizeEntry(e) {
+            if (!e || typeof e !== 'object') return '';
+            if (e.endpoint) {
+                const status = e.status ? ` [${e.status}]` : '';
+                const dur = e.durationMs != null ? ` ${e.durationMs}ms` : '';
+                return `${e.method || ''} ${e.endpoint}${status}${dur}`.trim();
+            }
+            if (e.page) return e.page;
+            if (e.action) return e.action + (e.detail ? ' — ' + (typeof e.detail === 'string' ? e.detail : JSON.stringify(e.detail)) : '');
+            if (e.message) return e.message;
+            return JSON.stringify(e).slice(0, 240);
+        }
+
+        function renderEntries(entries) {
+            const tbody = document.getElementById('entriesBody');
+            tbody.innerHTML = '';
+            if (!entries || entries.length === 0) {
+                const tr = document.createElement('tr');
+                const td = document.createElement('td');
+                td.colSpan = 3;
+                td.className = 'tel-empty';
+                td.setAttribute('data-i18n', '[html]telemetry_no_entries');
+                td.textContent = (typeof i18n !== 'undefined' && i18n.t) ? i18n.t('[html]telemetry_no_entries', 'No telemetry entries in buffer.') : 'No telemetry entries in buffer.';
+                tr.appendChild(td); tbody.appendChild(tr);
+                return;
+            }
+            entries.forEach(e => {
+                const tr = document.createElement('tr');
+                const tdT = document.createElement('td');
+                tdT.className = 'col-time';
+                tdT.textContent = fmtTime(e.ts || e.timestamp || e.time);
+                const tdY = document.createElement('td');
+                tdY.className = 'col-type';
+                tdY.textContent = e.type || '—';
+                const tdD = document.createElement('td');
+                tdD.className = 'col-detail';
+                tdD.textContent = summarizeEntry(e);
+                tr.appendChild(tdT); tr.appendChild(tdY); tr.appendChild(tdD);
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function fetchTelemetry() {
+            const user = window.currentUser;
+            if (!user || !user.deviceId || !user.deviceSecret) {
+                showError('Not signed in or missing device credentials.');
+                return;
+            }
+            const type = document.getElementById('typeSel').value;
+            const limit = document.getElementById('limitSel').value;
+
+            const qs = new URLSearchParams({
+                deviceId: user.deviceId,
+                deviceSecret: user.deviceSecret,
+                limit
+            });
+            if (type) qs.set('type', type);
+
+            try {
+                showError('');
+                const summary = await apiCall('GET', `/api/device-telemetry/summary?deviceId=${encodeURIComponent(user.deviceId)}&deviceSecret=${encodeURIComponent(user.deviceSecret)}`);
+                renderSummary(summary || {});
+
+                const data = await apiCall('GET', `/api/device-telemetry?${qs.toString()}`);
+                renderEntries((data && data.entries) || []);
+            } catch (e) {
+                console.error('[Telemetry] Fetch failed:', e);
+                showError('Failed to load telemetry: ' + (e.message || e));
+            }
+        }
+
+        async function clearBuffer() {
+            const user = window.currentUser;
+            if (!user || !user.deviceId || !user.deviceSecret) return;
+            const proceed = window.confirm((typeof i18n !== 'undefined' && i18n.t) ? i18n.t('[html]telemetry_clear_confirm', 'Clear the entire telemetry buffer for this device?') : 'Clear the entire telemetry buffer for this device?');
+            if (!proceed) return;
+            try {
+                await apiCall('DELETE', '/api/device-telemetry', {
+                    deviceId: user.deviceId,
+                    deviceSecret: user.deviceSecret
+                });
+                await fetchTelemetry();
+            } catch (e) {
+                console.error('[Telemetry] Clear failed:', e);
+                showError('Failed to clear: ' + (e.message || e));
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                renderNav('telemetry');
+                if (typeof renderFooter === 'function') renderFooter();
+                const user = await checkAuth();
+                if (!user) return;
+
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('telemetryContent').style.display = '';
+
+                document.getElementById('typeSel').addEventListener('change', fetchTelemetry);
+                document.getElementById('limitSel').addEventListener('change', fetchTelemetry);
+                document.getElementById('refreshBtn').addEventListener('click', fetchTelemetry);
+                document.getElementById('clearBtn').addEventListener('click', clearBuffer);
+
+                await fetchTelemetry();
+
+                refreshTimer = setInterval(() => {
+                    if (document.hidden) return;
+                    fetchTelemetry();
+                }, 30000);
+            } catch (initErr) {
+                console.error('[Telemetry] Init error:', initErr);
+                const el = document.getElementById('loadingState');
+                if (el) {
+                    const p = document.createElement('p');
+                    p.style.cssText = 'color:#f44;padding:20px;';
+                    p.textContent = 'Telemetry init error: ' + initErr.message;
+                    el.innerHTML = ''; el.appendChild(p);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -27,6 +27,7 @@ data/*.json
 !data/skill-templates.json
 !data/soul-templates.json
 !data/rule-templates.json
+!data/portal-page-api-map.json
 
 # Test files
 test-entity-info.json
