@@ -1329,8 +1329,12 @@
                  style="display:none;margin:8px 0;padding:8px 10px;border-radius:6px;background:rgba(245,158,11,0.12);color:#b45309;font-size:12px;"
                  data-i18n="usage_warning_stale_notice">⚠️ Usage data stale (no fresh snapshot in the last 6h) — warnings cannot fire right now.</div>
 
+            <!-- HELP-KEY: usage_warning_enable_help -->
             <div class="setting-row" style="margin-top:8px;">
-                <span class="setting-row-label" data-i18n="usage_warning_enable_label">Enable usage warning</span>
+                <span class="setting-row-label">
+                    <span data-i18n="usage_warning_enable_label">Enable usage warning</span>
+                    <span class="help-icon" data-help-content-key="usage_warning_enable_help"></span>
+                </span>
                 <label class="switch" style="position:relative;display:inline-block;width:44px;height:24px;">
                     <input type="checkbox" id="toggleUsageWarning"
                            onchange="onUsageWarningEnabledChange(this.checked)"
@@ -1340,9 +1344,13 @@
                 </label>
             </div>
 
+            <!-- HELP-KEY: usage_warning_5h_help -->
             <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:6px;">
                 <span class="setting-row-label" style="display:flex;justify-content:space-between;align-items:center;">
-                    <span data-i18n="usage_warning_5h_label">5h budget threshold (warn when remaining ≤ this)</span>
+                    <span>
+                        <span data-i18n="usage_warning_5h_label">5h budget threshold (warn when remaining ≤ this)</span>
+                        <span class="help-icon" data-help-content-key="usage_warning_5h_help"></span>
+                    </span>
                     <span id="usageWarning5hValue" style="font-variant-numeric:tabular-nums;color:var(--text-secondary);">15%</span>
                 </span>
                 <input type="range" id="usageWarning5hSlider" min="0" max="100" step="1" value="15"
@@ -1351,9 +1359,13 @@
                        style="width:100%;">
             </div>
 
+            <!-- HELP-KEY: usage_warning_7d_help -->
             <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:6px;">
                 <span class="setting-row-label" style="display:flex;justify-content:space-between;align-items:center;">
-                    <span data-i18n="usage_warning_7d_label">7d weekly threshold (warn when remaining ≤ this)</span>
+                    <span>
+                        <span data-i18n="usage_warning_7d_label">7d weekly threshold (warn when remaining ≤ this)</span>
+                        <span class="help-icon" data-help-content-key="usage_warning_7d_help"></span>
+                    </span>
                     <span id="usageWarning7dValue" style="font-variant-numeric:tabular-nums;color:var(--text-secondary);">5%</span>
                 </span>
                 <input type="range" id="usageWarning7dSlider" min="0" max="100" step="1" value="5"
