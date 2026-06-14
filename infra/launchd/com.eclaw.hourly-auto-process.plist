@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  com.eclaw.hourly-auto-process.plist
+
+  Hourly LaunchAgent that:
+    1. Dispatches stale TODO sub-cards (backend/scripts/hourly-auto-process-cards.sh)
+    2. Closes idle worker terminals when memory is tight (backend/scripts/terminal-gc.sh)
+
+  Install:
+    cp infra/launchd/com.eclaw.hourly-auto-process.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.eclaw.hourly-auto-process.plist
+
+  Edit the four <string>REPLACE_ME_*</string> values below before loading.
+  See docs/infra/hourly-cron.md for the full guide.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.eclaw.hourly-auto-process</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-lc</string>
+    <string>REPO=REPLACE_ME_REPO_PATH; "$REPO/backend/scripts/hourly-auto-process-cards.sh" &amp;&amp; "$REPO/backend/scripts/terminal-gc.sh"</string>
+  </array>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Minute</key>
+    <integer>0</integer>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <false/>
+
+  <key>StandardOutPath</key>
+  <string>/tmp/eclaw-hourly.launchd.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/eclaw-hourly.launchd.err.log</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>DEVICE_ID</key>
+    <string>REPLACE_ME_DEVICE_ID</string>
+    <key>BOT_SECRET</key>
+    <string>REPLACE_ME_BOT_SECRET</string>
+    <key>ENTITY_ID</key>
+    <string>2</string>
+    <key>ENDPOINT</key>
+    <string>https://eclawbot.com</string>
+    <key>MAX_CARDS</key>
+    <string>2</string>
+    <key>FREE_MB_THRESHOLD</key>
+    <string>200</string>
+  </dict>
+</dict>
+</plist>
