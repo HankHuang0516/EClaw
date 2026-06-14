@@ -114,12 +114,21 @@
         padding: 8px 16px; border-radius: 6px; cursor: pointer;
         font: inherit;
     }
-    .load-more-btn {
-        background: var(--accent); border: none; color: #fff;
-        padding: 6px 16px; border-radius: 6px; cursor: pointer;
-        font: inherit; font-size: 13px;
+    .pager {
+        display: inline-flex; align-items: center; gap: 8px;
     }
-    .load-more-btn:hover { opacity: 0.9; }
+    .pager-btn {
+        background: var(--panel); border: 1px solid var(--border); color: var(--text);
+        padding: 4px 10px; border-radius: 6px; cursor: pointer;
+        font: inherit; font-size: 12px;
+    }
+    .pager-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .pager-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .pager-info { color: var(--muted); font-size: 12px; }
+    .pager-controls {
+        max-width: 1280px; margin: 16px auto 0;
+        display: flex; justify-content: center;
+    }
     .login-warn {
         padding: 12px; margin-bottom: 12px;
         background: #5a3000; color: #ffb04a;
@@ -203,9 +212,10 @@
     </div>
     <div id="grid" class="grid"></div>
     <div id="empty" class="empty" style="display: none;">
-        <div>沒有符合條件的伙伴 / No companions match your filter.</div>
-        <button onclick="resetFilters()">清除篩選 / Reset</button>
+        <div id="empty-msg">沒有符合條件的伙伴 / No companions match your filter.</div>
+        <button id="empty-reset" onclick="resetFilters()">清除篩選 / Reset</button>
     </div>
+    <div class="pager-controls" id="pager-controls"></div>
 </main>
 
 <div id="modal" class="modal-bg" role="dialog" aria-modal="true">
@@ -299,14 +309,29 @@
     ];
     const filterState = { scope: '', category: '', sort: 'popular' };
     let searchTerm = '';
-    // Pagination state (Hank 2026-06-12: browser capped at first 60, no paging).
-    // /api/companion/list already supports page/limit/total; we page client-side.
+    // Pagination state (Hank 2026-06-14): 60-per-page prev/next, no accumulation.
+    // Each page-flip *replaces* grid content so DOM nodes from the previous page
+    // are released to GC — prevents memory bloat on long browsing sessions.
     const PAGE_SIZE = 60;
     let currentPage = 1;
-    let loadedCount = 0;
     let totalCount = 0;
-    let loadingMore = false;
+    let totalPages = 1;
+    let isLoading = false;
     let searchTimer = 0;
+
+    // Sync ?page=N back into the URL bar without reloading. Preserves all other
+    // query params (deviceId/deviceSecret/entityId/botSecret/…) so a deep link
+    // copied off the address bar keeps the user logged in on the right page.
+    function syncUrlPage() {
+        try {
+            const params = new URLSearchParams(location.search);
+            if (currentPage > 1) params.set('page', String(currentPage));
+            else params.delete('page');
+            const qs = params.toString();
+            const newUrl = location.pathname + (qs ? '?' + qs : '') + location.hash;
+            history.replaceState(null, '', newUrl);
+        } catch (_) { /* history API failure is non-fatal */ }
+    }
 
     // ── Renderer pool ─────────────────────────────────────────────
     // One PetdxRenderer controller per visible card. We tear down on
@@ -336,6 +361,7 @@
                 c.textContent = opt.t;
                 c.addEventListener('click', () => {
                     filterState[group.key] = opt.v;
+                    currentPage = 1;
                     renderFilters();
                     loadList();
                 });
@@ -348,18 +374,22 @@
     window.resetFilters = function () {
         Object.keys(filterState).forEach(k => filterState[k] = (k === 'sort' ? 'popular' : ''));
         searchTerm = '';
+        currentPage = 1;
         document.getElementById('search').value = '';
         renderFilters();
         loadList();
     };
 
     // ── List loader ───────────────────────────────────────────────
-    // loadList(false) = fresh load (page 1, clears grid); loadList(true) = append next page.
-    async function loadList(append = false) {
+    // loadList(): always loads the page in `currentPage`, replacing grid
+    // content (no append). Filter/search/entity changes reset currentPage=1
+    // *before* calling this; prev/next set currentPage explicitly.
+    async function loadList() {
         const status = document.getElementById('status');
         const grid = document.getElementById('grid');
         const empty = document.getElementById('empty');
-        const pagination = document.getElementById('pagination');
+        const emptyMsg = document.getElementById('empty-msg');
+        const emptyReset = document.getElementById('empty-reset');
 
         const creds = getCreds();
         if (!creds.deviceId || (!creds.deviceSecret && !creds.botSecret)) {
@@ -368,19 +398,15 @@
             return;
         }
 
-        if (append) {
-            if (loadingMore || loadedCount >= totalCount) return;
-            loadingMore = true;
-            currentPage += 1;
-        } else {
-            currentPage = 1;
-            loadedCount = 0;
-            totalCount = 0;
-            empty.style.display = 'none';
-            tearDownRenderers();
-            grid.innerHTML = '';
-        }
-        status.textContent = append ? '載入更多…' : '載入中…';
+        if (isLoading) return;
+        isLoading = true;
+
+        // Tear down current page renderers + clear grid BEFORE the fetch so
+        // the old DOM nodes can be GC'd while we wait. Critical for memory.
+        empty.style.display = 'none';
+        tearDownRenderers();
+        grid.innerHTML = '';
+        status.textContent = '載入中…';
 
         const q = authQuery();
         if (filterState.scope)    q.set('scope', filterState.scope);
@@ -396,25 +422,45 @@
             data = await r.json();
             if (!data.success) {
                 status.textContent = '載入失敗：' + (data.error || r.status);
-                if (append) { currentPage -= 1; }
                 return;
             }
         } catch (err) {
             status.textContent = '網路錯誤：' + err.message;
-            if (append) { currentPage -= 1; }
             return;
         } finally {
-            loadingMore = false;
+            isLoading = false;
         }
 
         const items = data.companions || [];
         totalCount = data.total || 0;
-        loadedCount += items.length;
+        totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+        // Clamp currentPage if the active filter shrank the result set so much
+        // that the saved page no longer exists (e.g. user on page 5, then
+        // applies a filter that has only 2 pages).
+        if (currentPage > totalPages) {
+            currentPage = totalPages;
+            isLoading = false;
+            syncUrlPage();
+            return loadList();
+        }
+
         status.textContent = '共 ' + totalCount + ' 個伙伴';
 
-        if (!loadedCount) {
+        if (totalCount === 0) {
+            // Distinguish "no companions exist at all" from "no match for current
+            // filter" — first is a system-wide empty state, second is filter UX.
+            const filtered = !!(searchTerm || filterState.scope || filterState.category);
+            if (filtered) {
+                emptyMsg.textContent = '沒有符合條件的伙伴 / No companions match your filter.';
+                emptyReset.style.display = '';
+            } else {
+                emptyMsg.textContent = '尚無夥伴 / No partners yet.';
+                emptyReset.style.display = 'none';
+            }
             empty.style.display = 'block';
             renderPagination();
+            syncUrlPage();
             return;
         }
 
@@ -423,27 +469,58 @@
             grid.appendChild(node);
         });
         renderPagination();
+        syncUrlPage();
     }
 
-    // Render the load-more control in the #pagination slot. Shows a button while
-    // more remain; a "all shown" note once everything is loaded.
+    function goToPage(n) {
+        const clamped = Math.max(1, Math.min(totalPages, n));
+        if (clamped === currentPage) return;
+        currentPage = clamped;
+        loadList();
+        // Scroll back to the top of the grid so the user sees the new page,
+        // not whatever scroll position the previous page left them at.
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Render the prev/next pager beneath the grid + a compact "Page X of Y"
+    // indicator in the top status bar. Both slots stay in sync.
     function renderPagination() {
-        const pagination = document.getElementById('pagination');
-        if (!pagination) return;
-        pagination.innerHTML = '';
-        if (loadedCount >= totalCount) {
-            if (totalCount > PAGE_SIZE) {
-                pagination.textContent = '已顯示全部 ' + totalCount + ' 個';
-            }
-            return;
-        }
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.id = 'load-more-btn';
-        btn.className = 'load-more-btn';
-        btn.textContent = `載入更多（${loadedCount}/${totalCount}）`;
-        btn.addEventListener('click', () => loadList(true));
-        pagination.appendChild(btn);
+        const topSlot = document.getElementById('pagination');
+        const pagerSlot = document.getElementById('pager-controls');
+        if (!topSlot || !pagerSlot) return;
+
+        topSlot.textContent = totalCount > 0
+            ? `第 ${currentPage} / ${totalPages} 頁 · Page ${currentPage} of ${totalPages}`
+            : '';
+
+        pagerSlot.innerHTML = '';
+        if (totalPages <= 1) return;
+
+        const pager = document.createElement('div');
+        pager.className = 'pager';
+
+        const prev = document.createElement('button');
+        prev.type = 'button';
+        prev.className = 'pager-btn';
+        prev.textContent = '‹ 上一頁 / Prev';
+        prev.disabled = currentPage <= 1;
+        prev.addEventListener('click', () => goToPage(currentPage - 1));
+        pager.appendChild(prev);
+
+        const info = document.createElement('span');
+        info.className = 'pager-info';
+        info.textContent = `${currentPage} / ${totalPages}`;
+        pager.appendChild(info);
+
+        const next = document.createElement('button');
+        next.type = 'button';
+        next.className = 'pager-btn';
+        next.textContent = '下一頁 / Next ›';
+        next.disabled = currentPage >= totalPages;
+        next.addEventListener('click', () => goToPage(currentPage + 1));
+        pager.appendChild(next);
+
+        pagerSlot.appendChild(pager);
     }
 
     // ── Card node ─────────────────────────────────────────────────
@@ -739,7 +816,10 @@
     document.getElementById('search').addEventListener('input', (e) => {
         searchTerm = e.target.value.trim();
         clearTimeout(searchTimer);
-        searchTimer = setTimeout(loadList, 250);
+        searchTimer = setTimeout(() => {
+            currentPage = 1;
+            loadList();
+        }, 250);
     });
 
     // ── Entity selector ──────────────────────────────────────────
@@ -790,6 +870,7 @@
         }
         // mine-scope filtering is tied to entityId — re-apply both list and
         // owner-state so the "✓ 目前選用" badge tracks the new scope.
+        currentPage = 1;
         loadList();
         refreshOwnerState();
     });
@@ -833,6 +914,12 @@
         const c = getCreds();
         const stored = localStorage.getItem(ACTIVE_ENTITY_KEY) || '';
         activeEntityId = c.entityId || stored || '';
+
+        // Restore page from ?page= URL param so a shared deep link lands the
+        // viewer on the same page the linker saw. Clamped to >=1; out-of-range
+        // values are corrected after the first fetch (see loadList clamp).
+        const urlPage = parseInt(new URLSearchParams(location.search).get('page'), 10);
+        if (Number.isFinite(urlPage) && urlPage >= 1) currentPage = urlPage;
 
         renderFilters();
         loadEntities();

@@ -167,6 +167,68 @@ describe('companion-api: GET /list auth + validation', () => {
         expect(listCall[0]).toMatch(/device_id = \$\d/);
         expect(listCall[1]).toEqual(expect.arrayContaining([ENTITY, DEVICE]));
     });
+
+    // ── Pagination params (petdx-browser prev/next page-flip contract) ────
+    // The portal pager calls /list with explicit page=N&limit=60. These tests
+    // pin the response shape (page+limit+total) so the frontend can compute
+    // totalPages = ceil(total/limit) and disable prev/next accurately.
+    test('echoes page=N&limit=60 back in response + reflects them in SQL OFFSET/LIMIT', async () => {
+        __mockQuery
+            .mockResolvedValueOnce({ rows: [] })
+            .mockResolvedValueOnce({ rows: [{ total: 240 }] });
+        const res = await request(makeApp())
+            .get('/api/companion/list')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY, page: '3', limit: '60' });
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({
+            success: true, page: 3, limit: 60, total: 240, companions: [],
+        });
+        // SQL params end with [..., limit, offset]; offset = (3-1)*60 = 120.
+        const listCallParams = __mockQuery.mock.calls[0][1];
+        expect(listCallParams[listCallParams.length - 2]).toBe(60);
+        expect(listCallParams[listCallParams.length - 1]).toBe(120);
+    });
+
+    test('limit is clamped to MAX_LIMIT (100) when caller asks for 9999', async () => {
+        __mockQuery
+            .mockResolvedValueOnce({ rows: [] })
+            .mockResolvedValueOnce({ rows: [{ total: 0 }] });
+        const res = await request(makeApp())
+            .get('/api/companion/list')
+            .query({ deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY, limit: '9999' });
+        expect(res.status).toBe(200);
+        expect(res.body.limit).toBe(100);
+    });
+
+    test('bad page/limit input falls back to defaults (page=1, limit=30)', async () => {
+        __mockQuery
+            .mockResolvedValueOnce({ rows: [] })
+            .mockResolvedValueOnce({ rows: [{ total: 0 }] });
+        const res = await request(makeApp())
+            .get('/api/companion/list')
+            .query({
+                deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY,
+                page: 'abc', limit: '-7',
+            });
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ page: 1, limit: 30 });
+    });
+
+    test('page=N with no result rows still returns the requested page number (frontend clamps via total)', async () => {
+        // Server doesn't clamp page against total — the frontend does (so the
+        // user gets feedback before a wasted round-trip). Pin that contract.
+        __mockQuery
+            .mockResolvedValueOnce({ rows: [] })
+            .mockResolvedValueOnce({ rows: [{ total: 5 }] });
+        const res = await request(makeApp())
+            .get('/api/companion/list')
+            .query({
+                deviceId: DEVICE, botSecret: SECRET, entityId: ENTITY,
+                page: '99', limit: '60',
+            });
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ page: 99, limit: 60, total: 5, companions: [] });
+    });
 });
 
 describe('companion-api: deviceSecret auth path (portal pages)', () => {
