@@ -1,0 +1,8 @@
+{
+  "_comment": "Maps entityId -> GitHub login for the 'merged-PR count' widget on entity cards (card_8a25). Customize for your deployment. byDevice overrides byEntityId. Entries with no mapping render a setup hint instead of a count.",
+  "byEntityId": {
+    "2": "HankHuang0516",
+    "5": "HankHuang0516"
+  },
+  "byDevice": {}
+}

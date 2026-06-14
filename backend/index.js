@@ -2285,6 +2285,12 @@ entityStatus.bindDevicesRef(devices);
 entityStatus.bindJwtSecret(JWT_SECRET_FALLBACK);
 app.use('/api/entity-status', entityStatus.router);
 
+// ENTITY GH-STATS — merged-PR count + smart-link widget on entity cards
+// (card_8a25cadcc9fc88f153fa1316). Endpoint is registered later (~line 8067)
+// next to /api/entities so it sits alongside its peers; the module itself is
+// stateless so we just require() it here.
+const entityGhStats = require('./entity-gh-stats');
+
 // Passive health-check + auto self-repair subsystem (DEFAULT OFF, opt-in per
 // device). Routers are mounted here; the pool/devices/dependency wiring +
 // scheduler start happen at boot (see passiveHealth.init below) once chatPool
@@ -8064,6 +8070,74 @@ app.get('/api/entities/status', async (req, res) => {
         entities: entityList,
         activeCount: entityList.filter(e => e.isBound).length,
     });
+});
+
+/**
+ * GET /api/entities/:entityId/gh-stats
+ * card_8a25cadcc9fc88f153fa1316 — merged-PR count + smart-link for entity cards.
+ *
+ * Resolves the entity's GitHub login from backend/config/entity-gh-login.json,
+ * queries GitHub Search for merged PRs authored by that login, and returns
+ * { merged_pr_count, recent_prs, gh_login, actions_url, setup_required }.
+ *
+ * Always 200 with `setup_required:true` when the login is unmapped or
+ * GITHUB_TOKEN is absent — the dashboard widget surfaces those as ? hints
+ * rather than treating them as errors.
+ *
+ * Auth: deviceId+deviceSecret OR deviceId+botSecret(+entityId) OR JWT cookie.
+ * Mirrors /api/entities (line 7844) so the dashboard can reuse its session.
+ */
+app.get('/api/entities/:entityId/gh-stats', async (req, res) => {
+    const filterDeviceId = req.query.deviceId;
+    const deviceSecret = req.query.deviceSecret;
+    const botSecret = req.query.botSecret;
+    const queryEntityId = parseInt(req.query.entityId) || 0;
+    const targetEntityId = parseInt(req.params.entityId);
+
+    if (!Number.isFinite(targetEntityId) || targetEntityId < 0) {
+        return res.status(400).json({ success: false, message: 'Invalid entityId' });
+    }
+
+    const jwtDeviceId = req.user && req.user.deviceId;
+    const deviceAuthed = filterDeviceId && deviceSecret && devices[filterDeviceId]
+        && safeEqual(devices[filterDeviceId].deviceSecret, deviceSecret);
+    let botAuthed = false;
+    if (!deviceAuthed && filterDeviceId && botSecret && devices[filterDeviceId]) {
+        const ents = devices[filterDeviceId].entities || {};
+        if (queryEntityId > 0) {
+            const e = ents[queryEntityId];
+            botAuthed = !!(e && e.isBound && e.botSecret && safeEqual(e.botSecret, botSecret));
+        } else {
+            botAuthed = Object.values(ents).some(e => e && e.isBound && e.botSecret && safeEqual(e.botSecret, botSecret));
+        }
+    }
+    const authedDeviceId = deviceAuthed
+        ? filterDeviceId
+        : botAuthed
+            ? filterDeviceId
+            : (jwtDeviceId && (!filterDeviceId || filterDeviceId === jwtDeviceId)) ? jwtDeviceId : null;
+
+    if (!filterDeviceId && !jwtDeviceId) {
+        return res.status(400).json({ success: false, message: 'deviceId required' });
+    }
+    const effectiveDeviceId = filterDeviceId || jwtDeviceId;
+    if (!devices[effectiveDeviceId]) {
+        return res.status(404).json({ success: false, message: 'Device not found' });
+    }
+    if (!authedDeviceId) {
+        return res.status(403).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    const entity = devices[authedDeviceId].entities?.[targetEntityId];
+    if (!entity || !entity.isBound) {
+        return res.status(404).json({ success: false, message: 'Entity not bound' });
+    }
+
+    const stats = await entityGhStats.buildStats(authedDeviceId, targetEntityId);
+    if (stats.success === false) {
+        return res.status(stats.status || 502).json(stats);
+    }
+    res.json(stats);
 });
 
 /**
