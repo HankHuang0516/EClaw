@@ -15324,7 +15324,10 @@ app.get('/api/admin/official-bots', (req, res) => {
         assigned_device_id: b.assigned_device_id,
         assigned_entity_id: b.assigned_entity_id,
         assigned_at: b.assigned_at,
-        created_at: b.created_at
+        created_at: b.created_at,
+        display_name: b.display_name || null,
+        model_name: b.model_name || null,
+        retirement_reason: b.retirement_reason || null
     }));
 
     res.json({ success: true, bots, count: bots.length });
@@ -15341,7 +15344,7 @@ app.put('/api/admin/official-bot/:botId', adminAuth, adminCheck, async (req, res
         return res.status(404).json({ success: false, error: 'Bot not found' });
     }
 
-    const { webhookUrl, token, sessionKeyTemplate, status, setupUsername, setupPassword, displayName } = req.body;
+    const { webhookUrl, token, sessionKeyTemplate, status, setupUsername, setupPassword, displayName, retirementReason } = req.body;
     if (webhookUrl) bot.webhook_url = webhookUrl;
     if (token) bot.token = token;
     if (sessionKeyTemplate !== undefined) bot.session_key_template = sessionKeyTemplate;
@@ -15349,6 +15352,11 @@ app.put('/api/admin/official-bot/:botId', adminAuth, adminCheck, async (req, res
     if (setupUsername !== undefined) bot.setup_username = setupUsername || null;
     if (setupPassword !== undefined) bot.setup_password = setupPassword || null;
     if (displayName !== undefined) bot.display_name = displayName || null;
+    // Clearing retirement_reason (pass empty string or null) lets admin re-enable a
+    // bot that was disabled by a startup migration (e.g. GH#2956). Without this,
+    // setting status='available' alone would survive in DB but the next deploy's
+    // migration could re-disable it if its guard still matches.
+    if (retirementReason !== undefined) bot.retirement_reason = retirementReason || null;
 
     if (usePostgreSQL) await db.saveOfficialBot(bot);
 
