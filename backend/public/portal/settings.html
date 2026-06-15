@@ -1314,6 +1314,86 @@
             </div>
         </div>
 
+        <!-- Usage Warning Settings (card_9cd84ee7d830b2f76c595f6c) -->
+        <div class="card" id="usage-warning-card">
+            <div class="card-title" style="display:flex;align-items:center;gap:8px;">
+                <span>⚠️ <span data-i18n="usage_warning_title">Usage Warning</span></span>
+                <button type="button" id="usageWarningHelpBtn"
+                        onclick="showUsageWarningHelp()"
+                        aria-label="Usage warning help"
+                        style="background:transparent;border:1px solid var(--card-border);color:var(--text-secondary);width:24px;height:24px;border-radius:50%;font-size:13px;cursor:pointer;padding:0;line-height:1;">?</button>
+            </div>
+            <p class="section-desc" data-i18n="usage_warning_desc">When triggered, the Agent prepends a system warning to every outgoing message so the recipient knows quota is tight.</p>
+
+            <div id="usageWarningStaleNotice"
+                 style="display:none;margin:8px 0;padding:8px 10px;border-radius:6px;background:rgba(245,158,11,0.12);color:#b45309;font-size:12px;"
+                 data-i18n="usage_warning_stale_notice">⚠️ Usage data stale (no fresh snapshot in the last 6h) — warnings cannot fire right now.</div>
+
+            <!-- HELP-KEY: usage_warning_enable_help -->
+            <div class="setting-row" style="margin-top:8px;">
+                <span class="setting-row-label">
+                    <span data-i18n="usage_warning_enable_label">Enable usage warning</span>
+                    <span class="help-icon" data-help-content-key="usage_warning_enable_help"></span>
+                </span>
+                <label class="switch" style="position:relative;display:inline-block;width:44px;height:24px;">
+                    <input type="checkbox" id="toggleUsageWarning"
+                           onchange="onUsageWarningEnabledChange(this.checked)"
+                           style="opacity:0;width:0;height:0;">
+                    <span aria-hidden="true"
+                          style="position:absolute;inset:0;background:var(--card-border);border-radius:24px;transition:.2s;cursor:pointer;"></span>
+                </label>
+            </div>
+
+            <!-- HELP-KEY: usage_warning_5h_help -->
+            <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:6px;">
+                <span class="setting-row-label" style="display:flex;justify-content:space-between;align-items:center;">
+                    <span>
+                        <span data-i18n="usage_warning_5h_label">5h budget threshold (warn when remaining ≤ this)</span>
+                        <span class="help-icon" data-help-content-key="usage_warning_5h_help"></span>
+                    </span>
+                    <span id="usageWarning5hValue" style="font-variant-numeric:tabular-nums;color:var(--text-secondary);">15%</span>
+                </span>
+                <input type="range" id="usageWarning5hSlider" min="0" max="100" step="1" value="15"
+                       oninput="onUsageWarningSliderInput('5h', this.value)"
+                       onchange="saveUsageWarningConfig()"
+                       style="width:100%;">
+            </div>
+
+            <!-- HELP-KEY: usage_warning_7d_help -->
+            <div class="setting-row" style="flex-direction:column;align-items:stretch;gap:6px;">
+                <span class="setting-row-label" style="display:flex;justify-content:space-between;align-items:center;">
+                    <span>
+                        <span data-i18n="usage_warning_7d_label">7d weekly threshold (warn when remaining ≤ this)</span>
+                        <span class="help-icon" data-help-content-key="usage_warning_7d_help"></span>
+                    </span>
+                    <span id="usageWarning7dValue" style="font-variant-numeric:tabular-nums;color:var(--text-secondary);">5%</span>
+                </span>
+                <input type="range" id="usageWarning7dSlider" min="0" max="100" step="1" value="5"
+                       oninput="onUsageWarningSliderInput('7d', this.value)"
+                       onchange="saveUsageWarningConfig()"
+                       style="width:100%;">
+            </div>
+        </div>
+
+        <!-- Usage Warning Help Modal -->
+        <div class="dialog-overlay" id="usageWarningHelpDialog" style="display:none;">
+            <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="usageWarningHelpTitle">
+                <div class="dialog-title" id="usageWarningHelpTitle" data-i18n="usage_warning_modal_title">How usage warning works</div>
+                <div style="font-size:14px;line-height:1.6;color:var(--text-secondary);">
+                    <p data-i18n="usage_warning_modal_intro">When enabled, if Claude 5h remaining ≤ your 5h threshold OR weekly remaining ≤ your 7d threshold, the Agent prepends a system warning to every outgoing message in this device.</p>
+                    <ul style="padding-left:20px;margin:8px 0;">
+                        <li data-i18n="usage_warning_modal_bullet_5h">5h threshold default 15% — warning fires roughly 45min before exhaustion.</li>
+                        <li data-i18n="usage_warning_modal_bullet_7d">7d threshold default 5% — warning fires roughly 8h before exhaustion.</li>
+                        <li data-i18n="usage_warning_modal_bullet_behavior">This does NOT change Agent behavior — it only tells the dialog partner that quota is tight.</li>
+                        <li data-i18n="usage_warning_modal_bullet_off">When the toggle is OFF, quota-exhaustion failures still occur but with no advance warning.</li>
+                    </ul>
+                </div>
+                <div class="dialog-actions" style="margin-top:12px;display:flex;justify-content:flex-end;">
+                    <button class="btn btn-primary" onclick="closeUsageWarningHelp()" data-i18n="usage_warning_modal_close">Close</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Wallet Card -->
         <div class="card" style="cursor:pointer;" onclick="(window.SmartRouter&&window.SmartRouter.navigate('wallet'))||(window.location.href='wallet.html')">
             <div class="card-title">
@@ -2482,6 +2562,8 @@
                 if (toggle) toggle.checked = prefs.broadcast_recipient_info !== false;
                 applyChatAvatarSizePref(prefs);
                 applyKanbanNudgePrefs(prefs);
+                applyUsageWarningPrefs(prefs);
+                refreshUsageWarningStaleNotice();
             } catch (e) {
                 console.error('Failed to load device preferences:', e);
             }
@@ -2501,7 +2583,86 @@
             if (!data || !data.prefs) return;
             applyChatAvatarSizePref(data.prefs);
             applyKanbanNudgePrefs(data.prefs);
+            applyUsageWarningPrefs(data.prefs);
         };
+
+        // ============================================
+        // USAGE WARNING (card_9cd84ee7d830b2f76c595f6c)
+        // ============================================
+        const USAGE_WARNING_DEFAULTS = { enabled: true, threshold_5h_pct: 15, threshold_7d_pct: 5 };
+
+        function getUsageWarningConfigFromUI() {
+            const enabled = document.getElementById('toggleUsageWarning')?.checked !== false;
+            const t5 = parseInt(document.getElementById('usageWarning5hSlider')?.value, 10);
+            const t7 = parseInt(document.getElementById('usageWarning7dSlider')?.value, 10);
+            return {
+                enabled,
+                threshold_5h_pct: Number.isFinite(t5) ? Math.max(0, Math.min(100, t5)) : USAGE_WARNING_DEFAULTS.threshold_5h_pct,
+                threshold_7d_pct: Number.isFinite(t7) ? Math.max(0, Math.min(100, t7)) : USAGE_WARNING_DEFAULTS.threshold_7d_pct,
+            };
+        }
+
+        function applyUsageWarningPrefs(prefs) {
+            const cfg = (prefs && prefs.usage_warning_config) || USAGE_WARNING_DEFAULTS;
+            const toggle = document.getElementById('toggleUsageWarning');
+            const sl5 = document.getElementById('usageWarning5hSlider');
+            const sl7 = document.getElementById('usageWarning7dSlider');
+            const v5  = document.getElementById('usageWarning5hValue');
+            const v7  = document.getElementById('usageWarning7dValue');
+            if (toggle) toggle.checked = cfg.enabled !== false;
+            if (sl5) sl5.value = cfg.threshold_5h_pct;
+            if (sl7) sl7.value = cfg.threshold_7d_pct;
+            if (v5) v5.textContent = cfg.threshold_5h_pct + '%';
+            if (v7) v7.textContent = cfg.threshold_7d_pct + '%';
+        }
+
+        function onUsageWarningSliderInput(which, value) {
+            const el = document.getElementById(which === '5h' ? 'usageWarning5hValue' : 'usageWarning7dValue');
+            if (el) el.textContent = value + '%';
+        }
+
+        async function onUsageWarningEnabledChange(checked) {
+            // Persist immediately so toggle reflects state without a save button.
+            await saveUsageWarningConfig();
+        }
+
+        async function saveUsageWarningConfig() {
+            try {
+                const cfg = getUsageWarningConfigFromUI();
+                const data = await apiCall('PUT', '/api/device-preferences', { prefs: { usage_warning_config: cfg } });
+                if (data && data.prefs) applyUsageWarningPrefs(data.prefs);
+                if (typeof showToast === 'function') showToast(i18n.t('common_saved') || 'Saved', 'success');
+            } catch (e) {
+                if (typeof showToast === 'function') showToast(i18n.t('toast_preference_update_failed') || 'Update failed', 'error');
+            }
+        }
+
+        function showUsageWarningHelp() {
+            const dlg = document.getElementById('usageWarningHelpDialog');
+            if (dlg) dlg.style.display = 'flex';
+        }
+        function closeUsageWarningHelp() {
+            const dlg = document.getElementById('usageWarningHelpDialog');
+            if (dlg) dlg.style.display = 'none';
+        }
+
+        // Detect stale snapshot via /api/usage/snapshot (best-effort).
+        async function refreshUsageWarningStaleNotice() {
+            const notice = document.getElementById('usageWarningStaleNotice');
+            if (!notice) return;
+            try {
+                const data = await apiCall('GET', '/api/usage/snapshot');
+                const cap = data && data.latest && data.latest.captured_at;
+                const t = cap ? Date.parse(cap) : NaN;
+                const STALE_MS = 6 * 60 * 60 * 1000;
+                const stale = !Number.isFinite(t) || (Date.now() - t) > STALE_MS;
+                notice.style.display = stale ? 'block' : 'none';
+            } catch (e) {
+                // /api/usage/snapshot may 401 on app webview without device-login —
+                // treat as "unknown" and stay hidden rather than false-alarming.
+                notice.style.display = 'none';
+            }
+        }
 
         const CHAT_AVATAR_SIZE_VALUES = ['small', 'medium', 'large'];
 

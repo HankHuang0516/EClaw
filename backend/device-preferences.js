@@ -29,6 +29,12 @@ const DEFAULTS = {
     // 排程觸發母卡 self-recurring (no子卡, only re-trigger self): notify on each fire?
     // Default true — these fire less often (one per cron tick) and the user usually wants to know.
     kanban_cron_recurring_notify: true,
+    // Usage warning (card_9cd84ee7d830b2f76c595f6c): when Claude 5h/7d remaining
+    // drops below the thresholds, each outbound Agent message is prepended with
+    // a system warning so the dialog partner knows quota is tight.
+    // Shape: { enabled: bool, threshold_5h_pct: 0-100, threshold_7d_pct: 0-100 }
+    // Trigger logic: warn if (5h_remaining ≤ threshold_5h_pct) OR (7d_remaining ≤ threshold_7d_pct).
+    usage_warning_config: { enabled: true, threshold_5h_pct: 15, threshold_7d_pct: 5 },
 };
 
 // Spec: docs/specs/kanban-nudge-spec.md §6 — restricted override key set.
@@ -76,6 +82,21 @@ function coerceValue(key, raw) {
             }
         }
         return out;
+    }
+    if (key === 'usage_warning_config') {
+        const d = DEFAULTS.usage_warning_config;
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { ...d };
+        const enabled = 'enabled' in raw ? !!raw.enabled : d.enabled;
+        const clampPct = (v, fallback) => {
+            const n = Number(v);
+            if (!Number.isFinite(n)) return fallback;
+            return Math.max(0, Math.min(100, Math.round(n)));
+        };
+        return {
+            enabled,
+            threshold_5h_pct: 'threshold_5h_pct' in raw ? clampPct(raw.threshold_5h_pct, d.threshold_5h_pct) : d.threshold_5h_pct,
+            threshold_7d_pct: 'threshold_7d_pct' in raw ? clampPct(raw.threshold_7d_pct, d.threshold_7d_pct) : d.threshold_7d_pct,
+        };
     }
     if (key === 'kanban_nudge_per_entity_overrides') {
         if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
