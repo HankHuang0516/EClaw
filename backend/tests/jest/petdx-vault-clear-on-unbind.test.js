@@ -66,6 +66,28 @@ describe('clearPetdxVaultForEntity — static invariants', () => {
         }
     });
 
+    it('PR-B: writes an unbind tombstone into companion_select_log before the legacy wipe', () => {
+        const fs = require('fs');
+        const src = fs.readFileSync(require.resolve('../../index'), 'utf8');
+        const i = src.indexOf('async function clearPetdxVaultForEntity');
+        expect(i).toBeGreaterThan(-1);
+        const body = src.slice(i, i + 2600);
+        // Looks up the latest selection, then inserts a tombstone row tagged
+        // origin=PETDX_TOMBSTONE_ORIGIN, skipping when already tombstoned.
+        expect(body).toMatch(/FROM companion_select_log/);
+        expect(body).toMatch(/INSERT INTO companion_select_log/);
+        expect(body).toMatch(/latest\.rows\[0\]\.origin !== PETDX_TOMBSTONE_ORIGIN/);
+        expect(body).toMatch(/PETDX_TOMBSTONE_ORIGIN/);
+        // The tombstone write is best-effort and must not break the unbind.
+        expect(body).toMatch(/\[Petdx tombstone\] failed/);
+    });
+
+    it('PR-B: PETDX_TOMBSTONE_ORIGIN is the unbind-cleared sentinel origin', () => {
+        const fs = require('fs');
+        const src = fs.readFileSync(require.resolve('../../index'), 'utf8');
+        expect(src).toMatch(/PETDX_TOMBSTONE_ORIGIN\s*=\s*['"]unbind-cleared['"]/);
+    });
+
     it('helper signature: (deviceId, entityId, callContext) — null/undefined inputs short-circuit', () => {
         // Documents the early-exit contract: if deviceId or entityId is missing,
         // the helper returns 0 without throwing or hitting the DB.

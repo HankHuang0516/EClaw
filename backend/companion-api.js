@@ -193,15 +193,11 @@ async function initCompanionDatabase(serverLog = console.log) {
     }
 }
 
-module.exports = function companionFactory({ authenticateBot, authenticateDeviceOrBot, serverLog, createPetdxPhase0Io } = {}) {
+module.exports = function companionFactory({ authenticateBot, authenticateDeviceOrBot, serverLog } = {}) {
     if (typeof authenticateBot !== 'function') {
         throw new Error('companionFactory requires authenticateBot');
     }
     const log = serverLog || (() => {});
-    // Optional: if not injected (e.g. some unit tests), /api/companion/select
-    // falls back to the legacy log-only path. The §0.4a invariant only holds
-    // when the IO factory is wired in (production + jest integration tests).
-    const petdxIoFactory = typeof createPetdxPhase0Io === 'function' ? createPetdxPhase0Io : null;
     const router = express.Router();
 
     // Submit rate-limit: per-entity sliding window, factory-scoped so unit
@@ -411,35 +407,16 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
     //
     // Spec: docs/specs/petdx-uiux-spec-amendment-2026-05-31-phase-0-4a.md §0.4a.
     //
-    // Atomic write across two state layers:
-    //   1. companion_select_log row (with origin='user-selected' — the new
-    //      audit column from the 2026-05-30-companion-origin migration).
-    //   2. Vault keys PETDX_CURRENT_<id>, PETDX_AVATAR_<id>, PETDX_SOURCE_<id>
-    //      via createPetdxPhase0Io().setDeviceVars (the same factory the bind
-    //      hook uses, so write semantics stay consistent).
+    // PR-B (SoT refactor): companion_select_log is the single source of truth.
+    // The selection is a single INSERT of a row with origin='user-selected'
+    // (the audit column from the 2026-05-30-companion-origin migration). The
+    // per-entity PETDX_CURRENT_/AVATAR_/SOURCE_<id> vault mirror is gone — the
+    // §0.4 resolver chain and /api/entities enrichment now read straight from
+    // the log, so there is no second layer to keep consistent and no atomic
+    // cross-pool dance to perform.
     //
-    // The spec invariant is "no partial success." Implementation:
-    //   a. Resolve the avatar URL from the companions row BEFORE any write
-    //      opens, so the write phase only does writes.
-    //   b. Snapshot prior vault values for the three keys (so we can restore
-    //      on a downstream log-tx failure).
-    //   c. Open a tx on a client checked out from the local pool. INSERT
-    //      the log row, but DO NOT commit yet.
-    //   d. Write the vault keys. If that throws, ROLLBACK the log tx and
-    //      return 500 {layer:'vault'}.
-    //   e. Try to COMMIT the log tx. If COMMIT throws, restore the prior
-    //      vault values and return 500 {layer:'log'}.
-    //   f. On success, both layers are consistent: vault matches the latest
-    //      log row, and the §0.4 resolver chain can read either.
-    //
-    // The vault and log writes use different pg pools (the IO factory has its
-    // own chatPool; the log uses companion-api's local pool). True
-    // cross-pool 2PC is not on the table — instead the write order plus
-    // explicit vault restore on log COMMIT failure gives the same observable
-    // guarantee: either both layers reflect the new selection, or neither
-    // does. The only window where they can disagree is between vault write
-    // and log COMMIT, and the restore step closes that window unless the
-    // restore itself throws (logged loudly, then the route returns 500).
+    // The avatar URL is still resolved from the companions row so the success
+    // payload can echo it back to the caller, but it is no longer persisted.
     router.post('/select', authReader, async (req, res) => {
         const companionId = req.body?.companionId;
         const source = req.body?.source || 'portal';
@@ -452,9 +429,6 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
 
         const deviceId = req.botAuth.deviceId;
         const entityId = req.botAuth.entityId;
-        const currentKey = `PETDX_CURRENT_${entityId}`;
-        const avatarKey  = `PETDX_AVATAR_${entityId}`;
-        const sourceKey  = `PETDX_SOURCE_${entityId}`;
         const origin     = 'user-selected';
 
         let cRow;
@@ -485,84 +459,17 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
         const resolvedAvatarUrl = resolveCompanionAvatarUrl(cRow, companionId);
         const now = Date.now();
 
-        // Vault mirror is per-entity. Device-secret auth (no botSecret) carries
-        // no entity context, so there's no PETDX_*_<id> to mirror — fall through
-        // to the legacy log-only path. Without this guard the vault would
-        // accumulate PETDX_CURRENT_null / PETDX_AVATAR_null / PETDX_SOURCE_null
-        // dead keys on every device-secret select, which the §0.4 resolver
-        // chain never reads but they pollute /api/device-vars output.
-        if (!petdxIoFactory || entityId == null) {
-            try {
-                await pool.query(
-                    `INSERT INTO companion_select_log
-                        (device_id, entity_id, companion_id, selected_at, source, origin)
-                     VALUES ($1, $2, $3, $4, $5, $6)`,
-                    [deviceId, entityId, companionId, now, source, origin]
-                );
-                return res.json({
-                    success: true,
-                    selection: { companionId, selectedAt: now, source },
-                });
-            } catch (err) {
-                log('error', 'companion', `[Companion] select (legacy path) failed: ${err.message}`);
-                return res.status(500).json({ success: false, error: 'query_failed' });
-            }
-        }
-
-        const io = petdxIoFactory();
-        let priorVault;
+        // SoT write (PR-B): a single companion_select_log INSERT. No vault
+        // mirror to keep in sync, so no tx/restore dance — the row IS the
+        // selection. avatarUrl is echoed back for the caller's convenience but
+        // not persisted (the §0.4 resolver derives it from the companions row).
         try {
-            priorVault = {
-                [currentKey]: await io.getDeviceVar(deviceId, currentKey),
-                [avatarKey]:  await io.getDeviceVar(deviceId, avatarKey),
-                [sourceKey]:  await io.getDeviceVar(deviceId, sourceKey),
-            };
-        } catch (err) {
-            log('error', 'companion', `[Companion] select vault snapshot failed: ${err.message}`);
-            return res.status(500).json({ success: false, layer: 'vault', error: 'vault_read_failed' });
-        }
-
-        const client = await pool.connect();
-        let txOpened = false;
-        let vaultWritten = false;
-        try {
-            await client.query('BEGIN');
-            txOpened = true;
-
-            await client.query(
+            await pool.query(
                 `INSERT INTO companion_select_log
                     (device_id, entity_id, companion_id, selected_at, source, origin)
                  VALUES ($1, $2, $3, $4, $5, $6)`,
                 [deviceId, entityId, companionId, now, source, origin]
             );
-
-            try {
-                await io.setDeviceVars(deviceId, {
-                    [currentKey]: companionId,
-                    [avatarKey]:  resolvedAvatarUrl,
-                    [sourceKey]:  origin,
-                });
-                vaultWritten = true;
-            } catch (vErr) {
-                await client.query('ROLLBACK');
-                txOpened = false;
-                log('error', 'companion', `[Companion] select vault write failed: ${vErr.message}`);
-                return res.status(500).json({ success: false, layer: 'vault', error: 'vault_write_failed' });
-            }
-
-            try {
-                await client.query('COMMIT');
-                txOpened = false;
-            } catch (cErr) {
-                log('error', 'companion', `[Companion] select log commit failed: ${cErr.message}`);
-                try {
-                    await io.setDeviceVars(deviceId, priorVault);
-                } catch (restoreErr) {
-                    log('error', 'companion', `[Companion] vault restore failed after log COMMIT error: ${restoreErr.message}`);
-                }
-                return res.status(500).json({ success: false, layer: 'log', error: 'log_commit_failed' });
-            }
-
             return res.json({
                 success: true,
                 selection: {
@@ -574,28 +481,15 @@ module.exports = function companionFactory({ authenticateBot, authenticateDevice
                 },
             });
         } catch (err) {
-            if (txOpened) {
-                try { await client.query('ROLLBACK'); } catch (_) { /* ignore */ }
-            }
-            if (vaultWritten) {
-                try { await io.setDeviceVars(deviceId, priorVault); }
-                catch (restoreErr) {
-                    log('error', 'companion', `[Companion] vault restore failed after late error: ${restoreErr.message}`);
-                }
-            }
             log('error', 'companion', `[Companion] select failed: ${err.message}`);
-            return res.status(500).json({ success: false, layer: 'log', error: 'query_failed' });
-        } finally {
-            client.release();
+            return res.status(500).json({ success: false, error: 'query_failed' });
         }
     });
 
-    // Resolve the avatar URL for the vault write. Preference order matches
-    // the §0.4 frontend resolver: explicit avatar_url column wins; otherwise
-    // try descriptor.avatar.url (set by marketplace submit), then fall back
-    // to the Phase 0 static-path convention. This is the value that the
-    // dashboard's fast-paint mirror will read until AvatarPetdx.preload()
-    // resolves on the next page load.
+    // Resolve the avatar URL echoed back in the select response. Preference
+    // order matches the §0.4 frontend resolver: explicit avatar_url column
+    // wins; otherwise try descriptor.avatar.url (set by marketplace submit),
+    // then fall back to the Phase 0 static-path convention.
     function resolveCompanionAvatarUrl(row, companionId) {
         if (row && typeof row.avatar_url === 'string' && row.avatar_url.trim()) {
             return row.avatar_url.trim();

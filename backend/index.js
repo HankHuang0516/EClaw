@@ -7144,6 +7144,37 @@ function createPetdxPhase0Io() {
  */
 async function clearPetdxVaultForEntity(deviceId, entityId, callContext = 'unbind') {
     if (!deviceId || entityId === undefined || entityId === null) return 0;
+
+    // PR-B: write an unbind tombstone into companion_select_log (the source of
+    // truth) so getLatestSelection() and the /api/entities enrichment treat the
+    // slot as having no live companion — mirroring the old vault-cleared-on-
+    // unbind behaviour and letting a rebind re-assign a default. Copies the last
+    // real selection's companion_id (companion_id is NOT NULL) and tags
+    // origin='unbind-cleared'. Skipped when there is no prior selection or the
+    // latest row is already a tombstone. Best-effort: never breaks the unbind.
+    try {
+        const latest = await chatPool.query(
+            `SELECT companion_id, origin FROM companion_select_log
+              WHERE device_id = $1 AND entity_id = $2
+              ORDER BY selected_at DESC, id DESC LIMIT 1`,
+            [deviceId, entityId]
+        );
+        if (latest.rowCount > 0 && latest.rows[0].origin !== PETDX_TOMBSTONE_ORIGIN) {
+            await chatPool.query(
+                `INSERT INTO companion_select_log
+                    (device_id, entity_id, companion_id, selected_at, source, origin)
+                 VALUES ($1, $2, $3, $4, 'api', $5)`,
+                [deviceId, entityId, latest.rows[0].companion_id, Date.now(), PETDX_TOMBSTONE_ORIGIN]
+            );
+            serverLog('info', 'petdx_vault_clear',
+                `[Petdx tombstone] device ${deviceId} entity ${entityId} tombstoned (${callContext})`,
+                { deviceId, entityId, metadata: { callContext, companionId: latest.rows[0].companion_id } });
+        }
+    } catch (e) {
+        console.warn(`[Petdx tombstone] failed for ${deviceId}:${entityId}: ${e.message}`);
+    }
+
+    // Legacy vault-key cleanup (transitional — PR-C does the one-time fleet wipe).
     if (!SEAL_KEY_HEX) return 0;
     try {
         const row = await db.getDeviceVars(deviceId);
@@ -7197,29 +7228,38 @@ async function clearPetdxVaultForEntity(deviceId, entityId, callContext = 'unbin
     }
 }
 
+// PR-B: read the per-entity companion enrichment straight from the DB source of
+// truth (companion_select_log latest row per entity, JOIN companions for the
+// live avatar) instead of the retired PETDX_CURRENT_/PETDX_AVATAR_ vault mirror.
+// Output shape is unchanged: Map<entityId, {petdxCompanionId, petdxAvatarUrl}>.
+// petdxAvatarUrl prefers the live companions.avatar_url and falls back to the
+// /static/companions/<id>/avatar.png shape the vault used to cache. Tombstoned
+// (origin='unbind-cleared') entities are excluded so a freshly-unbound slot
+// shows no stale companion.
 async function getPetdxEntityEnrichmentMap(deviceId) {
     const out = new Map();
-    if (!deviceId || !SEAL_KEY_HEX) return out;
+    if (!deviceId) return out;
 
     try {
-        const row = await db.getDeviceVars(deviceId);
-        if (!row) return out;
-
-        const vars = decryptVars(row.encrypted_vars, row.iv, row.auth_tag) || {};
-        for (const [key, rawValue] of Object.entries(vars)) {
-            const m = /^PETDX_(CURRENT|AVATAR)_(\d+)$/.exec(key);
-            if (!m) continue;
-
-            const entityId = Number(m[2]);
+        const res = await chatPool.query(
+            `SELECT DISTINCT ON (l.entity_id)
+                    l.entity_id, l.companion_id, l.origin, c.avatar_url
+               FROM companion_select_log l
+               LEFT JOIN companions c ON c.id = l.companion_id
+              WHERE l.device_id = $1 AND l.entity_id IS NOT NULL
+              ORDER BY l.entity_id, l.selected_at DESC, l.id DESC`,
+            [deviceId]
+        );
+        for (const r of res.rows) {
+            if (r.origin === PETDX_TOMBSTONE_ORIGIN) continue;
+            const entityId = Number(r.entity_id);
             if (!Number.isFinite(entityId)) continue;
-
-            const value = typeof rawValue === 'string' && rawValue.trim() ? rawValue : null;
-            if (!value) continue;
-
-            const item = out.get(entityId) || {};
-            if (m[1] === 'CURRENT') item.petdxCompanionId = value;
-            if (m[1] === 'AVATAR') item.petdxAvatarUrl = value;
-            out.set(entityId, item);
+            const companionId = r.companion_id;
+            if (!companionId) continue;
+            const avatarUrl = (typeof r.avatar_url === 'string' && r.avatar_url.trim())
+                ? r.avatar_url
+                : `/static/companions/${companionId}/avatar.png`;
+            out.set(entityId, { petdxCompanionId: companionId, petdxAvatarUrl: avatarUrl });
         }
     } catch (err) {
         console.warn(`[/api/entities] petdx enrichment failed: ${err.message}`);
@@ -7326,8 +7366,6 @@ app.post('/api/admin/petdx-phase0/backfill', async (req, res) => {
                 : await (async () => {
                     const dryIo = {
                         ...io,
-                        setDeviceVars: async () => {},
-                        setDeviceVar: async () => {},
                         appendCompanionSelectLog: async () => {},
                     };
                     return assignDefaultCompanionIfMissing(deviceId, entityForHook, ctxBase, dryIo);

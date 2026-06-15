@@ -32,10 +32,8 @@ describe('POST /api/admin/petdx-phase0/backfill', () => {
         expect(body).toMatch(/source:\s*['"]backfill-script['"]/);
         expect(body).toMatch(/assignDefaultCompanionIfMissing/);
     });
-    test('honors dry-run by stubbing the IO writes', () => {
+    test('honors dry-run by stubbing the companion_select_log write', () => {
         const body = handlerBody();
-        expect(body).toMatch(/setDeviceVars:\s*async \(\) => \{\}/);
-        expect(body).toMatch(/setDeviceVar:\s*async \(\) => \{\}/);
         expect(body).toMatch(/appendCompanionSelectLog:\s*async \(\) => \{\}/);
     });
     test('returns committed flag + per-entity results buckets', () => {

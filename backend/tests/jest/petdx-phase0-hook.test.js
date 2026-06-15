@@ -88,7 +88,7 @@ describe('petdx-phase0-hook — pure helpers', () => {
 });
 
 describe('petdx-phase0-hook — assignDefaultCompanionIfMissing', () => {
-    test('first-time bind writes all 3 vault keys + audit log', async () => {
+    test('first-time bind appends the companion_select_log row (PR-B: no vault write)', async () => {
         const io = makeIo();
         const result = await hook.assignDefaultCompanionIfMissing(
             'D1',
@@ -101,9 +101,10 @@ describe('petdx-phase0-hook — assignDefaultCompanionIfMissing', () => {
             avatarUrl: LOBSTER_AVATAR_URL,
             source: 'phase0-auto',
         });
-        expect(io.vars.PETDX_CURRENT_7).toBe(LOBSTER_COMPANION);
-        expect(io.vars.PETDX_AVATAR_7).toBe(LOBSTER_AVATAR_URL);
-        expect(io.vars.PETDX_SOURCE_7).toBe('phase0-auto');
+        // PR-B: the vault mirror is gone — the single SoT write is the audit log.
+        expect(io.vars.PETDX_CURRENT_7).toBeUndefined();
+        expect(io.vars.PETDX_AVATAR_7).toBeUndefined();
+        expect(io.vars.PETDX_SOURCE_7).toBeUndefined();
         expect(io.auditCalls).toHaveLength(1);
         expect(io.auditCalls[0]).toMatchObject({
             entityId: 7,
@@ -113,27 +114,6 @@ describe('petdx-phase0-hook — assignDefaultCompanionIfMissing', () => {
             ctxMode: 'bind',
             ctxSource: 'bind-endpoint',
         });
-    });
-
-    test('first-time bind uses batch vault write when IO supports it', async () => {
-        const io = makeIo();
-        io.setDeviceVars = jest.fn(async (_deviceId, entries) => {
-            Object.assign(io.vars, entries);
-        });
-        io.setDeviceVar = jest.fn();
-        const result = await hook.assignDefaultCompanionIfMissing(
-            'D1',
-            { entityId: 7, character: 'LOBSTER', avatar: null },
-            { mode: 'bind', source: 'bind-endpoint' },
-            io,
-        );
-        expect(result.assigned).toBe(LOBSTER_COMPANION);
-        expect(io.setDeviceVars).toHaveBeenCalledWith('D1', {
-            PETDX_CURRENT_7: LOBSTER_COMPANION,
-            PETDX_AVATAR_7: LOBSTER_AVATAR_URL,
-            PETDX_SOURCE_7: 'phase0-auto',
-        });
-        expect(io.setDeviceVar).not.toHaveBeenCalled();
     });
 
     test('second bind is a no-op when phase0-auto already set', async () => {
@@ -321,7 +301,6 @@ describe('petdx-phase0-hook — assignDefaultCompanionIfMissing', () => {
             io,
         );
         expect(result.source).toBe('phase0-backfill');
-        expect(io.vars.PETDX_SOURCE_7).toBe('phase0-backfill');
         expect(io.auditCalls[0].origin).toBe('phase0-backfill');
         expect(io.auditCalls[0].ctxSource).toBe('backfill-script');
     });
@@ -349,20 +328,7 @@ describe('petdx-phase0-hook — assignDefaultCompanionIfMissing', () => {
         expect(io.vars.PETDX_CURRENT_7).toBeUndefined();
     });
 
-    test('vault write failure is reported, no audit', async () => {
-        const io = makeIo();
-        io.setDeviceVar = async () => { throw new Error('boom'); };
-        const result = await hook.assignDefaultCompanionIfMissing(
-            'D1',
-            { entityId: 7, character: 'LOBSTER', avatar: null },
-            { mode: 'bind' },
-            io,
-        );
-        expect(result.skipped).toBe('vault_write_failed');
-        expect(io.auditCalls).toHaveLength(0);
-    });
-
-    test('companion_select_log write failure is FATAL (PR-A: log is SoT)', async () => {
+    test('companion_select_log write failure is FATAL (log is the only SoT write)', async () => {
         const io = makeIo();
         io.appendCompanionSelectLog = async () => { throw new Error('log boom'); };
         const result = await hook.assignDefaultCompanionIfMissing(
@@ -372,8 +338,9 @@ describe('petdx-phase0-hook — assignDefaultCompanionIfMissing', () => {
             io,
         );
         expect(result).toEqual({ skipped: 'log_write_failed' });
-        // Vault mirror was written before the (now-fatal) SoT append.
-        expect(io.vars.PETDX_SOURCE_7).toBe('phase0-auto');
+        // PR-B: no vault mirror is written at all.
+        expect(io.vars.PETDX_CURRENT_7).toBeUndefined();
+        expect(io.vars.PETDX_SOURCE_7).toBeUndefined();
     });
 });
 

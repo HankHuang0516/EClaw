@@ -1,7 +1,9 @@
 /**
- * Phase 0 regression: /api/entities is the canonical transport for
- * PETDX_CURRENT_<entityId> and PETDX_AVATAR_<entityId>. The portal resolver
- * must not read broad device-vars directly just to render kanban avatars.
+ * PR-B regression: /api/entities enrichment reads companion selections from
+ * the companion_select_log source of truth (joined to companions for the live
+ * avatar_url), NOT the retired PETDX_CURRENT_/PETDX_AVATAR_<id> device-vars
+ * vault mirror. The portal resolver still receives petdxCompanionId +
+ * petdxAvatarUrl on each entity payload.
  */
 
 const fs = require('fs');
@@ -18,16 +20,24 @@ describe('/api/entities petdx enrichment', () => {
     const helper = slice('async function getPetdxEntityEnrichmentMap', 2500);
     const handler = slice("app.get('/api/entities',", 8000);
 
-    it('decrypts device_vars once server-side and projects only PETDX_CURRENT/PETDX_AVATAR keys', () => {
-        expect(helper).toMatch(/db\.getDeviceVars\(deviceId\)/);
-        expect(helper).toMatch(/decryptVars\(row\.encrypted_vars,\s*row\.iv,\s*row\.auth_tag\)/);
-        expect(helper).toMatch(/PETDX_\(CURRENT\|AVATAR\)_/);
-        expect(helper).toMatch(/item\.petdxCompanionId\s*=\s*value/);
-        expect(helper).toMatch(/item\.petdxAvatarUrl\s*=\s*value/);
+    it('reads the latest selection per entity from companion_select_log joined to companions', () => {
+        expect(helper).toMatch(/chatPool\.query/);
+        expect(helper).toMatch(/DISTINCT ON \(l\.entity_id\)/);
+        expect(helper).toMatch(/FROM companion_select_log l/);
+        expect(helper).toMatch(/LEFT JOIN companions c ON c\.id = l\.companion_id/);
+        // No vault decrypt path remains.
+        expect(helper).not.toMatch(/decryptVars/);
+        expect(helper).not.toMatch(/db\.getDeviceVars/);
     });
 
-    it('does not break /api/entities when vault enrichment is unavailable', () => {
-        expect(helper).toMatch(/if \(!deviceId \|\| !SEAL_KEY_HEX\) return out/);
+    it('skips tombstoned selections and falls back to the static avatar path', () => {
+        expect(helper).toMatch(/if \(r\.origin === PETDX_TOMBSTONE_ORIGIN\) continue/);
+        expect(helper).toMatch(/\/static\/companions\/\$\{companionId\}\/avatar\.png/);
+        expect(helper).toMatch(/petdxCompanionId: companionId, petdxAvatarUrl: avatarUrl/);
+    });
+
+    it('does not break /api/entities when enrichment query fails', () => {
+        expect(helper).toMatch(/if \(!deviceId\) return out/);
         expect(helper).toMatch(/catch \(err\)/);
         expect(helper).toMatch(/return out/);
     });
