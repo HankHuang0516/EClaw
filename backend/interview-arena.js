@@ -208,6 +208,15 @@ let VISION_IMAGES = [
     { file: null, description: 'A database entity-relationship diagram with five tables: users (id, name, email), orders (id, user_id, total), products (id, name, price), order_items (order_id, product_id, qty), and categories (id, name) — three foreign-key arrows are drawn in blue', keywords: ['database', 'five', 'tables', 'users', 'orders', 'products', 'foreign', 'three'] },
     { file: null, description: 'A terminal window showing git log output: 5 commits from the last 3 days — the most recent commit reads "fix: resolve null pointer in payment handler" authored by dev@company.com at 14:07', keywords: ['terminal', 'git', 'five', 'commits', 'null', 'payment', 'handler', '14:07'] },
     { file: null, description: 'A legal contract page showing clause 7.3 titled "Indemnification" with two sub-clauses (a) and (b), a highlighted sentence reading "The aggregate liability shall not exceed $50,000", and a margin annotation in red ink reading "review this"', keywords: ['contract', 'clause', '7.3', 'indemnification', 'liability', '50000', 'review'] },
+    // ── Daily pool update: added 2026-06-15 ──
+    // Medium tier
+    { file: null, description: 'A music streaming app showing a playlist of 8 songs; track #3 titled "Ocean Drive" is currently paused at 1:47 out of a total duration of 3:42', keywords: ['playlist', 'eight', 'songs', 'paused', '1:47', '3:42', 'Ocean'] },
+    { file: null, description: 'A comparison table showing four programming languages (Python, Go, Rust, JavaScript) evaluated across five criteria: speed, memory efficiency, syntax simplicity, ecosystem maturity, and learning curve — each rated 1 to 5 stars', keywords: ['comparison', 'four', 'languages', 'Python', 'Rust', 'five', 'criteria', 'stars'] },
+    { file: null, description: 'A pie chart divided into five sectors: North America 38%, Europe 27%, Asia-Pacific 22%, Latin America 8%, Rest of World 5%', keywords: ['pie', 'chart', 'five', 'North America', '38', 'Europe', '27'] },
+    // Hard tier
+    { file: null, description: 'An electrical wiring diagram showing three parallel circuits: left circuit has a closed switch, a 10-ohm resistor, and a green LED; middle circuit has an open switch, a 47-ohm resistor, and a red LED (off); right circuit has a closed switch, a 22-ohm resistor, and a blue LED', keywords: ['wiring', 'three', 'parallel', 'switch', 'open', 'resistor', 'ohm', 'LED'] },
+    { file: null, description: 'A permissions matrix table with five user roles (Admin, Editor, Viewer, Moderator, Guest) across the top and seven permissions down the side — checkmarks and X marks fill the grid; only Admin row shows all seven checkmarks', keywords: ['permissions', 'matrix', 'five', 'roles', 'admin', 'seven', 'checkmarks'] },
+    { file: null, description: 'A UML sequence diagram showing three actors: Client, API Gateway, and Database — Client sends a POST /orders request, API Gateway validates the Authorization header (shown in a loop box labeled "retry up to 3 times"), makes two sequential SELECT queries to the Database, and returns a 201 Created response with an order ID', keywords: ['UML', 'sequence', 'three', 'actors', 'client', 'gateway', 'database', 'POST', '201'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -224,9 +233,9 @@ function generateButtonClickChallenge() {
     return { correctIndex, correctLabel, buttonCount, seed: Math.floor(Math.random() * 1e9) };
 }
 
-const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Wei Zhang','Amara Osei','Ravi Kapoor','Isabella Rossi','Dmitri Volkov','Nguyen Van An','Zainab Hassan','Lucas Ferreira','Elena Kowalski','Tariq Nasser','Mei-Ling Wu','Bjorn Larsen','Ayaan Khan','Valentina Cruz','Kenji Nakamura'];
-const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se','wei@demo.cn','amara@test.gh','ravi@sample.in','isabella@demo.it','dmitri@test.ru'];
-const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','China','Ghana','Italy','Russia','Netherlands'];
+const FORM_NAMES = ['John Smith','Alice Chen','Bob Kumar','Maria Garcia','Yuki Tanaka','Hans Mueller','Fatima Al-Said','Pierre Dubois','Olga Petrova','Carlos Silva','Priya Sharma','Liam O\'Brien','Aiko Yamamoto','Mohammed Al-Rashid','Sofia Andersson','Wei Zhang','Amara Osei','Ravi Kapoor','Isabella Rossi','Dmitri Volkov','Nguyen Van An','Zainab Hassan','Lucas Ferreira','Elena Kowalski','Tariq Nasser','Mei-Ling Wu','Bjorn Larsen','Ayaan Khan','Valentina Cruz','Kenji Nakamura','Fatou Diallo','Nikola Petrov','Sung-Min Park','Aisyah Rahman','Tomás Herrera'];
+const FORM_EMAILS = ['john@example.com','alice@test.org','bob@demo.io','maria@mail.com','yuki@sample.jp','hans@test.de','fatima@example.sa','pierre@demo.fr','olga@test.ru','carlos@mail.br','priya@demo.in','liam@test.ie','aiko@sample.co.jp','mohammed@example.ae','sofia@test.se','wei@demo.cn','amara@test.gh','ravi@sample.in','isabella@demo.it','dmitri@test.ru','fatou@demo.sn','nikola@test.bg','sungmin@sample.kr','aisyah@demo.my','tomas@test.es'];
+const FORM_COUNTRIES = ['USA','Japan','Germany','Brazil','Australia','France','India','Canada','UK','South Korea','Sweden','UAE','Ireland','Mexico','Singapore','China','Ghana','Italy','Russia','Netherlands','Nigeria','Argentina','Turkey','Poland','Vietnam'];
 const FORM_PHONES = ['+1-555-0123','+81-90-1234-5678','+49-170-1234567','+55-11-91234-5678','+61-400-123-456','+33-6-12-34-56-78','+91-98765-43210','+44-7700-900123','+46-70-123-4567','+65-9123-4567','+52-55-1234-5678','+353-87-123-4567'];
 const FORM_DATES = ['1990-06-15','1985-03-22','1992-11-08','1988-01-30','1995-07-14','1983-09-25','1991-12-01','1987-04-17','1993-08-09','1986-02-14','1994-10-31','1989-05-20'];
 const FORM_MESSAGES = ['Hello World','Please process my order','Testing the form','Quick inquiry','Need assistance','Feedback submission','Schedule a demo','Request for quote','Update my subscription','Cancel and refund','Report a billing issue','Upgrade account plan','Technical support needed','Request API access','Partnership inquiry','Download invoice','Reset 2FA device','Submit compliance form','Activate trial extension','Transfer account ownership'];
@@ -416,6 +425,13 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '"ADOBECODEBANC", "ABC"', expected: '"BANC"' },{ input: '"a", "a"', expected: '"a"' },{ input: '"a", "aa"', expected: '""' },{ input: '"ab", "b"', expected: '"b"' }] },
     { title: 'Largest Rectangle in Histogram', description: 'Write `solve(heights)` — given an array of integers representing the height of bars in a histogram (each bar has width 1), return the area of the largest rectangle that can be formed.',
       testCases: [{ input: '[2,1,5,6,2,3]', expected: '10' },{ input: '[2,4]', expected: '4' },{ input: '[1,2]', expected: '2' },{ input: '[1]', expected: '1' },{ input: '[0,9]', expected: '9' }] },
+    // ── Daily pool update: added 2026-06-15 ──
+    { title: 'Generate Parentheses', description: 'Write `solve(n)` — given n pairs of parentheses, generate all combinations of well-formed parentheses and return them in sorted order.',
+      testCases: [{ input: '1', expected: '["()"]' },{ input: '2', expected: '["(())","()()"]' },{ input: '3', expected: '["((()))","(()())","(())()","()(())","()()()"]' }] },
+    { title: 'Course Schedule', description: 'Write `solve(numCourses, prerequisites)` — there are numCourses courses labeled 0 to numCourses-1. prerequisites[i] = [a, b] means course b must be taken before course a. Return true if it is possible to finish all courses (i.e., no circular dependency exists).',
+      testCases: [{ input: '2, [[1,0]]', expected: 'true' },{ input: '2, [[1,0],[0,1]]', expected: 'false' },{ input: '3, [[1,0],[2,0]]', expected: 'true' },{ input: '1, []', expected: 'true' }] },
+    { title: 'Balanced Binary Tree', description: 'Write `solve(nodes)` — given a binary tree as a level-order array (use null for missing nodes), return true if the tree is height-balanced (the heights of left and right subtrees of every node differ by at most 1).',
+      testCases: [{ input: '[3,9,20,null,null,15,7]', expected: 'true' },{ input: '[1,2,2,3,3,null,null,4,4]', expected: 'false' },{ input: '[]', expected: 'true' },{ input: '[1]', expected: 'true' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -481,6 +497,14 @@ let RESPONSE_QUESTIONS = [
     { question: 'What is the greatest common divisor (GCD) of 84 and 126?', expectedKeywords: ['42'] },
     { question: 'In how many distinct ways can the letters of the word MISSISSIPPI be arranged?', expectedKeywords: ['34650'] },
     { question: 'A circle has a circumference of 12π cm. What is the area of the circle in square centimetres?', expectedKeywords: ['36π', '36pi', '113'] },
+    // ── Daily pool update: added 2026-06-15 ──
+    { question: 'What is the next term in the sequence: 1, 4, 9, 16, 25, ...?', expectedKeywords: ['36'] },
+    { question: 'A cube has a side length of 3 cm. What is its total surface area in square centimetres?', expectedKeywords: ['54'] },
+    { question: 'A shop buys a jacket and sells it for $120, making a 20% profit on the cost price. What was the original cost price of the jacket?', expectedKeywords: ['100'] },
+    { question: 'A bag contains 4 white, 3 black, and 2 red balls. One ball is drawn at random. What is the probability of NOT drawing a red ball? Express as a simplified fraction.', expectedKeywords: ['7/9'] },
+    { question: 'A car travels from city A to city B at 60 km/h and returns along the same route at 40 km/h. What is the average speed for the entire round trip in km/h?', expectedKeywords: ['48'] },
+    { question: 'In a row of five differently-coloured houses, the red house is always immediately to the left of the white house. How many possible positions can the red house occupy?', expectedKeywords: ['4', 'four'] },
+    { question: 'What is the value of 10 to the power of 0?', expectedKeywords: ['1', 'one'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -570,6 +594,12 @@ let TTS_PHRASES = [
     { text: 'PostgreSQL version 15.4 introduced MERGE statements improved logical replication slot management and row-level security policy inheritance', keywords: ['PostgreSQL', '15.4', 'MERGE', 'replication', 'row-level', 'security'] },
     { text: 'Avogadro number is approximately 6.022 times ten to the power of 23 which represents the number of atoms or molecules in one mole of a substance', keywords: ['avogadro', '6.022', 'twenty-three', 'mole', 'atoms', 'molecules'] },
     { text: 'Your parcel tracking number is 1Z 999 AA1 01 2345 6784 expected to arrive Thursday the 19th between 9 AM and 1 PM at 42 Maple Drive', keywords: ['parcel', '1Z', '999', 'thursday', '19', 'maple', '42'] },
+    // ── Daily pool update: added 2026-06-15 ──
+    { text: 'Please update the Project Alpha meeting invite from 2:00 PM to 4:30 PM and add Sarah from the UX team as an optional attendee', keywords: ['Project Alpha', '2:00', '4:30', 'Sarah', 'optional'] },
+    { text: 'The regulation requires form W-9 to be submitted within 30 business days of receiving a payment exceeding the de minimis threshold of six hundred US dollars', keywords: ['W-9', 'thirty', 'business', 'de minimis', 'six hundred', 'payment'] },
+    { text: 'Container vessel MSC Splendida ETA zero-six-hundred Zulu on the fourteenth carrying two thousand eight hundred forty-seven TEUs bound for Eurogate terminal berth seven', keywords: ['MSC', 'Splendida', 'zero-six-hundred', '2847', 'TEUs', 'Eurogate', 'seven'] },
+    { text: 'Software release 3.14.2-beta.4 patches CVE-2024-1337 and improves rendering pipeline throughput by 18 percent', keywords: ['3.14.2', 'beta', 'CVE', '2024', '1337', 'rendering', '18'] },
+    { text: 'The derivative of x cubed is 3x squared, and the integral of 2x with respect to x equals x squared plus C where C is the constant of integration', keywords: ['derivative', 'cubed', '3x', 'squared', 'integral', 'constant', 'integration'] },
 ];
 
 // ============================================
