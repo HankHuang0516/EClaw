@@ -69,4 +69,29 @@ describe('portal static HTML IDs', () => {
     expect(settings.match(/class="roster-action" aria-label="\$\{rosterT\('settings_roster_col_action','Action'\)\}"/g)).toHaveLength(2);
   });
 
+  test('publisher secret visibility toggles expose accessible names and tooltips', () => {
+    const publisherPath = path.join(__dirname, '../../public/portal/publisher.html');
+    const publisher = fs.readFileSync(publisherPath, 'utf8');
+    expect(publisher).toContain('data-visibility-label="publisher API key"');
+    expect(publisher).toContain('aria-label="Show publisher API key"');
+    expect(publisher).toContain('title="Show publisher API key"');
+    expect(publisher).toContain("btn.setAttribute('aria-label', label)");
+    expect(publisher).toContain("btn.setAttribute('title', label)");
+
+    const setupPath = path.join(__dirname, '../../public/portal/publisher-setup.html');
+    const setup = fs.readFileSync(setupPath, 'utf8');
+    [
+      'consumer key',
+      'consumer secret',
+      'access token',
+      'access token secret',
+    ].forEach((label) => {
+      expect(setup).toContain(`data-visibility-label="${label}"`);
+      expect(setup).toContain(`aria-label="Show ${label}"`);
+      expect(setup).toContain(`title="Show ${label}"`);
+    });
+    expect(setup).toContain("btn.setAttribute('aria-label', label)");
+    expect(setup).toContain("btn.setAttribute('title', label)");
+  });
+
 });
