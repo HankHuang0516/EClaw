@@ -362,16 +362,108 @@ describe('petdx-phase0-hook — assignDefaultCompanionIfMissing', () => {
         expect(io.auditCalls).toHaveLength(0);
     });
 
-    test('audit log failure is non-fatal (vault writes succeed)', async () => {
+    test('companion_select_log write failure is FATAL (PR-A: log is SoT)', async () => {
         const io = makeIo();
-        io.appendCompanionSelectLog = async () => { throw new Error('audit boom'); };
+        io.appendCompanionSelectLog = async () => { throw new Error('log boom'); };
         const result = await hook.assignDefaultCompanionIfMissing(
             'D1',
             { entityId: 7, character: 'LOBSTER', avatar: null },
             { mode: 'bind' },
             io,
         );
-        expect(result.assigned).toBe(LOBSTER_COMPANION);
+        expect(result).toEqual({ skipped: 'log_write_failed' });
+        // Vault mirror was written before the (now-fatal) SoT append.
         expect(io.vars.PETDX_SOURCE_7).toBe('phase0-auto');
+    });
+});
+
+// PR-A — idempotency reads now come from companion_select_log via
+// io.getLatestSelection (the DB source of truth), not the PETDX_ vault mirror.
+function makeDbIo(seedSelection = null) {
+    const vars = {};
+    const auditCalls = [];
+    const logCalls = [];
+    let selection = seedSelection;
+    return {
+        vars,
+        auditCalls,
+        logCalls,
+        async getLatestSelection(_deviceId, _entityId) { return selection; },
+        async getDeviceVar() { throw new Error('getDeviceVar must not be used when getLatestSelection exists'); },
+        async setDeviceVar(_deviceId, key, value) { vars[key] = value; },
+        async appendCompanionSelectLog(entry) {
+            auditCalls.push(entry);
+            selection = { companionId: entry.companionId, source: entry.origin };
+        },
+        log(level, tag, message, meta) { logCalls.push({ level, tag, message, meta }); },
+    };
+}
+
+describe('petdx-phase0-hook — SoT read via getLatestSelection (PR-A)', () => {
+    test('first-time bind with no prior selection assigns + appends log', async () => {
+        const io = makeDbIo(null);
+        const result = await hook.assignDefaultCompanionIfMissing(
+            'D1',
+            { entityId: 7, character: 'LOBSTER', avatar: null },
+            { mode: 'bind', source: 'bind-endpoint' },
+            io,
+        );
+        expect(result).toEqual({
+            assigned: LOBSTER_COMPANION,
+            avatarUrl: LOBSTER_AVATAR_URL,
+            source: 'phase0-auto',
+        });
+        expect(io.auditCalls).toHaveLength(1);
+        expect(io.auditCalls[0]).toMatchObject({ origin: 'phase0-auto', source: 'api' });
+    });
+
+    test('second bind is a no-op when a phase0 selection already exists in the log', async () => {
+        const io = makeDbIo({ companionId: LOBSTER_COMPANION, source: 'phase0-auto' });
+        const result = await hook.assignDefaultCompanionIfMissing(
+            'D1',
+            { entityId: 7, character: 'LOBSTER', avatar: LOBSTER_EMOJI },
+            { mode: 'bind' },
+            io,
+        );
+        expect(result).toEqual({ skipped: 'already_assigned', source: undefined });
+        expect(io.auditCalls).toHaveLength(0);
+    });
+
+    test('user-selected selection in the log is preserved', async () => {
+        const io = makeDbIo({ companionId: 'petdx-custom-001', source: 'user-selected' });
+        const result = await hook.assignDefaultCompanionIfMissing(
+            'D1',
+            { entityId: 7, character: 'LOBSTER', avatar: LOBSTER_EMOJI },
+            { mode: 'bind' },
+            io,
+        );
+        expect(result).toEqual({ skipped: 'preserves_existing_source', source: 'user-selected' });
+        expect(io.auditCalls).toHaveLength(0);
+    });
+
+    test('null selection (e.g. PR-B unbind tombstone) makes a rebound entity re-assignable', async () => {
+        // getLatestSelection returns null after a tombstone, so bind proceeds.
+        const io = makeDbIo(null);
+        const result = await hook.assignDefaultCompanionIfMissing(
+            'D1',
+            { entityId: 7, character: 'LOBSTER', avatar: null },
+            { mode: 'bind', source: 'bind-endpoint' },
+            io,
+        );
+        expect(result.assigned).toBe(LOBSTER_COMPANION);
+        expect(io.auditCalls).toHaveLength(1);
+    });
+
+    test('getLatestSelection failure short-circuits with selection_read_failed', async () => {
+        const io = makeDbIo(null);
+        io.getLatestSelection = async () => { throw new Error('db down'); };
+        const result = await hook.assignDefaultCompanionIfMissing(
+            'D1',
+            { entityId: 7, character: 'LOBSTER', avatar: null },
+            { mode: 'bind' },
+            io,
+        );
+        expect(result).toEqual({ skipped: 'selection_read_failed' });
+        expect(io.auditCalls).toHaveLength(0);
     });
 });

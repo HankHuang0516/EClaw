@@ -6988,6 +6988,12 @@ function normalizeVarSources(varSources) {
     return { ...varSources };
 }
 
+// PR-B unbind tombstone marker written into companion_select_log.origin when an
+// entity unbinds. getLatestSelection() treats it as "no live selection" so the
+// DB read mirrors the old vault-cleared-on-unbind behaviour. Defined here in
+// PR-A so the read side is forward-compatible before PR-B starts writing it.
+const PETDX_TOMBSTONE_ORIGIN = 'unbind-cleared';
+
 function createPetdxPhase0Io() {
     const cache = new Map();
 
@@ -7077,6 +7083,28 @@ function createPetdxPhase0Io() {
                     entry.origin || null,
                 ]
             );
+        },
+        // PR-A (PETDX SoT swap): read the current per-entity companion selection
+        // straight from companion_select_log — the DB source of truth — instead
+        // of the PETDX_CURRENT_/PETDX_SOURCE_ vault mirror. Returns the latest
+        // non-tombstone row as { companionId, source } (where `source` carries
+        // the PETDX_SOURCE_ origin-tag semantics: phase0-auto / phase0-backfill /
+        // user-selected / rental-inherited), or null when the entity has no live
+        // selection. A PR-B unbind tombstone (origin === 'unbind-cleared') reads
+        // back as null so a rebound entity is re-assignable.
+        async getLatestSelection(deviceId, entityId) {
+            const res = await chatPool.query(
+                `SELECT companion_id, origin
+                   FROM companion_select_log
+                  WHERE device_id = $1 AND entity_id = $2
+                  ORDER BY selected_at DESC, id DESC
+                  LIMIT 1`,
+                [deviceId, entityId]
+            );
+            if (res.rowCount === 0) return null;
+            const row = res.rows[0];
+            if (row.origin === PETDX_TOMBSTONE_ORIGIN) return null;
+            return { companionId: row.companion_id, source: row.origin || null };
         },
         log(level, tag, message, meta = {}) {
             const normalizedLevel = level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'info';

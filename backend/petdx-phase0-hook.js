@@ -174,12 +174,20 @@ function pickNewSource(ctx) {
  * Core hook. Pure function over IO injected via `io`:
  *
  *   io = {
+ *     getLatestSelection(deviceId, entityId)  → Promise<{companionId, source}|null>
  *     getDeviceVar(deviceId, key)             → Promise<string|null>
  *     setDeviceVar(deviceId, key, value)      → Promise<void>
  *     setDeviceVars(deviceId, entries)        → Promise<void>      (optional batch write)
  *     appendCompanionSelectLog({...})         → Promise<void>
  *     log(level, tag, message, meta)          → void          (non-fatal logging)
  *   }
+ *
+ * PR-A (PETDX SoT swap): idempotency reads come from `getLatestSelection`
+ * (companion_select_log = source of truth), not the PETDX_CURRENT_/PETDX_SOURCE_
+ * vault mirror. The vault is still written (dual-write) for one validation
+ * round; PR-B removes the vault writes. Because the DB is now SoT, the
+ * companion_select_log append is FATAL — if it fails the hook reports a skip
+ * rather than silently leaving the SoT un-updated.
  *
  * Returns `{ assigned, avatarUrl, source }` on a successful write, or
  * `{ skipped: <reason>, source? }` on an intentional no-op. Throws only on
@@ -205,13 +213,21 @@ async function assignDefaultCompanionIfMissing(deviceId, entity, ctx, io) {
     let existingCompanion = null;
     let existingSource = null;
     try {
-        existingCompanion = await io.getDeviceVar(deviceId, currentKey);
-        existingSource    = await io.getDeviceVar(deviceId, sourceKey);
+        // SoT read: companion_select_log via getLatestSelection (PR-A). Falls
+        // back to the vault mirror only if the io factory predates PR-A.
+        if (io.getLatestSelection) {
+            const latest = await io.getLatestSelection(deviceId, eid);
+            existingCompanion = latest ? latest.companionId : null;
+            existingSource    = latest ? latest.source : null;
+        } else {
+            existingCompanion = await io.getDeviceVar(deviceId, currentKey);
+            existingSource    = await io.getDeviceVar(deviceId, sourceKey);
+        }
     } catch (err) {
-        io.log && io.log('warn', '[petdx-phase0]', 'getDeviceVar failed', {
+        io.log && io.log('warn', '[petdx-phase0]', 'selection read failed', {
             deviceId, entityId: eid, ctxMode: ctx.mode, ctxSource: ctx.source || null, error: err && err.message,
         });
-        return { skipped: 'vault_read_failed' };
+        return { skipped: 'selection_read_failed' };
     }
 
     const decision = decideAction({ entity, ctx, existingCompanion, existingSource });
@@ -248,6 +264,10 @@ async function assignDefaultCompanionIfMissing(deviceId, entity, ctx, io) {
         return { skipped: 'vault_write_failed' };
     }
 
+    // companion_select_log is the source of truth (PR-A), so this append is
+    // FATAL: a failure here means the SoT was not updated, so report a skip
+    // (the vault mirror may be ahead, but getLatestSelection won't see the
+    // selection and the next hook run re-attempts — SoT stays authoritative).
     try {
         if (io.appendCompanionSelectLog) {
             await io.appendCompanionSelectLog({
@@ -261,10 +281,10 @@ async function assignDefaultCompanionIfMissing(deviceId, entity, ctx, io) {
             });
         }
     } catch (err) {
-        io.log && io.log('warn', '[petdx-phase0]', 'audit log write failed', {
+        io.log && io.log('error', '[petdx-phase0]', 'companion_select_log write failed', {
             deviceId, entityId: eid, ctxMode: ctx.mode, ctxSource: ctx.source || null, error: err && err.message,
         });
-        // Audit-log failure is non-fatal: vault writes already succeeded.
+        return { skipped: 'log_write_failed' };
     }
 
     return { assigned: companionId, avatarUrl, source: newSource };
