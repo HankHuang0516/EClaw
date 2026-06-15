@@ -85,12 +85,90 @@ patterns short enough to match normal output — the watcher debounces by
 afterwards; an overly broad pattern can still trigger across many windows
 on the first run.
 
+## v2 hardening (2026-06-15, card_c0e7)
+
+Three known v1 failure modes are now bounded so a single bad Terminal window
+can't sink the whole cron run.
+
+### A. Silent close path
+
+v1 called `term-close --id` which wraps `tell app "Terminal" to close (first
+window whose id is N)`. When a child process was still attached to that
+window, Terminal popped its `Are you sure you want to close this terminal?`
+confirmation dialog and `osascript` hung forever, leaving `gcAttempts`
+climbing while `gcClosed` stayed at 0.
+
+v2 now:
+
+1. Looks up the window's `tty` via osascript.
+2. Runs `ps -t <tty_short> -o pid=,comm=` and `kill -TERM`s any `claude` or
+   `node` child PID it finds. This detaches the process so Terminal will
+   close silently when asked.
+3. Sleeps 2s for graceful exit.
+4. Calls `osascript … close …` directly, wrapped in a 5-second timeout. If
+   that times out, falls back to `term-close` (also timeout-wrapped). If
+   both time out, increments `close_dialogs_hit` and moves on — one stuck
+   window no longer blocks the whole run.
+
+There is no public macOS default to disable the "are you sure" dialog
+globally — `defaults write com.apple.Terminal …` has no key for it — so
+killing the child first is the only reliable workaround.
+
+### B. AE / TCC pre-flight gate
+
+When the commander shell loses AppleEvents access (TCC drift after a Mac
+update, fresh tmux context where the GUI is not inherited, system locked
+out of Automation), every `osascript` returns `AppleEvent 逾時 (-1712)` or
+returns empty. v1 silently logged `windowsScanned:0` and looked like nothing
+was wrong.
+
+v2 starts each run with a 3-second-timeout probe:
+
+```applescript
+tell application "Terminal" to count windows
+```
+
+If the result is empty OR contains `-1712` / `AppleEvent` / `逾時`, the run
+sets `ae_blocked:true` in the heartbeat, **skips the whole sweep**, and
+fakechats Hank once per hour with:
+
+> ⚠️ bridge-watcher AE blocked — TCC drift. Grant Terminal in System
+> Settings → Privacy & Security → Automation, then `launchctl kickstart -k
+> gui/$(id -u)/com.eclaw.bridge-watcher`.
+
+The hourly debounce uses `~/.claude/state/ae_last_alert`. Delete that file
+to force a fresh alert on the next blocked run.
+
+### C. Per-osascript timeout
+
+All osascript invocations now route through a `run_osascript <secs>` helper
+that picks `gtimeout`/`timeout` if available and falls back to `perl -e
+'alarm <secs>; exec @ARGV' osascript …`. Every enumeration, contents-read,
+and close call gets the same 5-second cap. One hung Terminal window can no
+longer keep the cron worker alive past its launchd interval.
+
+### D. Heartbeat schema additions
+
+`/tmp/bridge-watcher-last.json` now includes:
+
+| Field | Meaning |
+|-------|---------|
+| `ae_blocked` | true if the AE pre-flight tripped and the sweep was skipped |
+| `close_dialogs_hit` | windows where both direct-close and fallback timed out (close dialog likely still attached) |
+| `pids_killed` | child claude/node PIDs SIGTERM'd this run, summed across all closures |
+| `windows_skipped_timeout` | windows where the per-window osascript timed out and we moved on |
+
+Older fields (`windowsScanned`, `elicitationsFound`, `gcClosed`,
+`gcAttempts`, `dryRun`, `fakechatEnabled`) keep their v1 semantics.
+
 ## Troubleshooting
 
 | Symptom | Check |
 |---------|-------|
 | Heartbeat file missing | `tail /tmp/bridge-watcher.err.log` — usually a missing dep or PATH issue inside launchd's env |
-| Heartbeat shows `windowsScanned:0` but Terminal is open | macOS Automation permission for `osascript` is denied. Grant Terminal → System Events automation in System Settings → Privacy & Security → Automation |
+| Heartbeat shows `windowsScanned:0` but Terminal is open | If `ae_blocked:true` is also set, macOS Automation permission is denied — grant Terminal → System Events automation in System Settings → Privacy & Security → Automation, then `launchctl kickstart -k gui/$(id -u)/com.eclaw.bridge-watcher`. If `ae_blocked:false`, Terminal itself isn't running. |
+| `gcAttempts` keeps climbing but `gcClosed` stays 0 | Pre-v2 symptom — Terminal close confirmation dialog was hanging osascript. v2 SIGTERMs the child PID first; if you still see this on v2, run a single foreground sweep (`DRY_RUN=0 bash ~/.claude/bin/bridge-watcher.sh`) and check `~/.claude/logs/bridge-watcher.log` for `gc[pid-kill]` and `gc[fail]` lines. |
+| `ae[blocked]` repeating every run | TCC drift after a macOS update or fresh shell context. Grant Automation permission to Terminal, then `rm ~/.claude/state/ae_last_alert` to force a verification fakechat on the next run. |
 | `fakechat[skip] no channel api key in env` | `ECLAW_API_KEY` not resolvable. Either drop `~/.claude/secrets/eclaw.env` with `CHANNEL_API_KEY=eck_…` or keep `~/Desktop/Project/claude-code-eclaw-channel/.env` populated |
 | `fakechat[sent]` log shows `invalid_channel_key` | API key was rotated server-side. Update the channel `.env` (memory: `fakechat_creds.md`) |
 | GC ran but nothing closed | Cards may not actually be at `status=done`; check `~/.claude/logs/bridge-watcher.log` for the per-card status echo |
