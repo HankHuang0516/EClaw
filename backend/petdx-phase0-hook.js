@@ -175,19 +175,16 @@ function pickNewSource(ctx) {
  *
  *   io = {
  *     getLatestSelection(deviceId, entityId)  → Promise<{companionId, source}|null>
- *     getDeviceVar(deviceId, key)             → Promise<string|null>
- *     setDeviceVar(deviceId, key, value)      → Promise<void>
- *     setDeviceVars(deviceId, entries)        → Promise<void>      (optional batch write)
- *     appendCompanionSelectLog({...})         → Promise<void>
- *     log(level, tag, message, meta)          → void          (non-fatal logging)
+ *     getDeviceVar(deviceId, key)             → Promise<string|null>   (legacy read fallback only)
+ *     appendCompanionSelectLog({...})         → Promise<void>          (the SoT write)
+ *     log(level, tag, message, meta)          → void                   (non-fatal logging)
  *   }
  *
- * PR-A (PETDX SoT swap): idempotency reads come from `getLatestSelection`
+ * PETDX SoT swap: idempotency reads come from `getLatestSelection`
  * (companion_select_log = source of truth), not the PETDX_CURRENT_/PETDX_SOURCE_
- * vault mirror. The vault is still written (dual-write) for one validation
- * round; PR-B removes the vault writes. Because the DB is now SoT, the
- * companion_select_log append is FATAL — if it fails the hook reports a skip
- * rather than silently leaving the SoT un-updated.
+ * vault mirror. PR-B removed the vault writes entirely — the single
+ * companion_select_log append IS the write, and it is FATAL: if it fails the
+ * hook reports a skip rather than silently leaving the SoT un-updated.
  *
  * Returns `{ assigned, avatarUrl, source }` on a successful write, or
  * `{ skipped: <reason>, source? }` on an intentional no-op. Throws only on
@@ -207,7 +204,6 @@ async function assignDefaultCompanionIfMissing(deviceId, entity, ctx, io) {
 
     const eid = entity.entityId;
     const currentKey = `PETDX_CURRENT_${eid}`;
-    const avatarKey  = `PETDX_AVATAR_${eid}`;
     const sourceKey  = `PETDX_SOURCE_${eid}`;
 
     let existingCompanion = null;
@@ -244,30 +240,10 @@ async function assignDefaultCompanionIfMissing(deviceId, entity, ctx, io) {
     const avatarUrl   = avatarUrlFor(companionId);
     const newSource   = pickNewSource(ctx);
 
-    try {
-        const updates = {
-            [currentKey]: companionId,
-            [avatarKey]: avatarUrl,
-            [sourceKey]: newSource,
-        };
-        if (io.setDeviceVars) {
-            await io.setDeviceVars(deviceId, updates);
-        } else {
-            await io.setDeviceVar(deviceId, currentKey, companionId);
-            await io.setDeviceVar(deviceId, avatarKey,  avatarUrl);
-            await io.setDeviceVar(deviceId, sourceKey,  newSource);
-        }
-    } catch (err) {
-        io.log && io.log('error', '[petdx-phase0]', 'vault write failed', {
-            deviceId, entityId: eid, ctxMode: ctx.mode, ctxSource: ctx.source || null, error: err && err.message,
-        });
-        return { skipped: 'vault_write_failed' };
-    }
-
-    // companion_select_log is the source of truth (PR-A), so this append is
-    // FATAL: a failure here means the SoT was not updated, so report a skip
-    // (the vault mirror may be ahead, but getLatestSelection won't see the
-    // selection and the next hook run re-attempts — SoT stays authoritative).
+    // companion_select_log is the single source of truth (PR-B: the vault
+    // mirror writes are gone). This append IS the write and is therefore
+    // FATAL — a failure means the SoT was not updated, so report a skip and
+    // let the next hook run re-attempt rather than claiming a phantom assign.
     try {
         if (io.appendCompanionSelectLog) {
             await io.appendCompanionSelectLog({

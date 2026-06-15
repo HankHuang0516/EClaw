@@ -1,7 +1,6 @@
 const backfill = require('../../scripts/petdx-phase0-backfill');
 
 const LOBSTER_COMPANION = 'petdx-lobster-default';
-const LOBSTER_AVATAR_URL = '/static/companions/petdx-lobster-default/avatar.png';
 
 function entity(overrides = {}) {
     return {
@@ -16,16 +15,11 @@ function entity(overrides = {}) {
 }
 
 describe('petdx-phase0-backfill decision planner', () => {
-    test('fresh default-avatar entity receives current/avatar/source updates', () => {
-        const decision = backfill.planBackfillForEntity(entity(), {});
+    test('fresh default-avatar entity (no log selection) is assigned + audited', () => {
+        const decision = backfill.planBackfillForEntity(entity(), null);
         expect(decision.outcome).toBe('assigned');
         expect(decision.companionId).toBe(LOBSTER_COMPANION);
-        expect(decision.avatarUrl).toBe(LOBSTER_AVATAR_URL);
-        expect(decision.updates).toEqual({
-            PETDX_CURRENT_7: LOBSTER_COMPANION,
-            PETDX_AVATAR_7: LOBSTER_AVATAR_URL,
-            PETDX_SOURCE_7: 'phase0-backfill',
-        });
+        expect(decision.updates).toBeUndefined();
         expect(decision.audit).toMatchObject({
             deviceId: 'D1',
             entityId: 7,
@@ -33,52 +27,53 @@ describe('petdx-phase0-backfill decision planner', () => {
         });
     });
 
-    test('existing current without source stamps source only', () => {
+    test('existing selection without source stamps a phase0 audit row', () => {
         const decision = backfill.planBackfillForEntity(entity(), {
-            PETDX_CURRENT_7: 'petdx-legacy',
-            PETDX_AVATAR_7: '/static/companions/petdx-legacy/avatar.png',
+            companionId: 'petdx-legacy',
+            source: null,
         });
         expect(decision.outcome).toBe('stamped-existing');
-        expect(decision.updates).toEqual({ PETDX_SOURCE_7: 'phase0-backfill' });
+        expect(decision.updates).toBeUndefined();
         expect(decision.audit.companionId).toBe('petdx-legacy');
     });
 
     test('user-selected source is preserved untouched', () => {
         const decision = backfill.planBackfillForEntity(entity(), {
-            PETDX_CURRENT_7: 'petdx-custom',
-            PETDX_SOURCE_7: 'user-selected',
+            companionId: 'petdx-custom',
+            source: 'user-selected',
         });
         expect(decision).toMatchObject({
             outcome: 'preserves_existing_source',
             source: 'user-selected',
             companionId: 'petdx-custom',
         });
-        expect(decision.updates).toBeUndefined();
+        expect(decision.audit).toBeUndefined();
     });
 
-    test('non-phase0 source tag is preserved even when current is missing', () => {
+    test('non-phase0 source tag is preserved even when companion is missing', () => {
         const decision = backfill.planBackfillForEntity(entity(), {
-            PETDX_SOURCE_7: 'rental-inherited',
+            companionId: null,
+            source: 'rental-inherited',
         });
         expect(decision).toMatchObject({
             outcome: 'preserves_existing_source',
             source: 'rental-inherited',
             companionId: null,
         });
-        expect(decision.updates).toBeUndefined();
+        expect(decision.audit).toBeUndefined();
     });
 
     test('leased-in rental and custom avatar are skipped', () => {
-        expect(backfill.planBackfillForEntity(entity({ rental_status: 'leased_in' }), {}))
+        expect(backfill.planBackfillForEntity(entity({ rental_status: 'leased_in' }), null))
             .toMatchObject({ outcome: 'skipped', reason: 'rental-leased-in' });
-        expect(backfill.planBackfillForEntity(entity({ avatar: 'https://example.com/me.png' }), {}))
+        expect(backfill.planBackfillForEntity(entity({ avatar: 'https://example.com/me.png' }), null))
             .toMatchObject({ outcome: 'skipped', reason: 'user-custom-avatar' });
     });
 
-    test('phase0 current is idempotent', () => {
+    test('phase0 selection is idempotent', () => {
         const decision = backfill.planBackfillForEntity(entity(), {
-            PETDX_CURRENT_7: LOBSTER_COMPANION,
-            PETDX_SOURCE_7: 'phase0-auto',
+            companionId: LOBSTER_COMPANION,
+            source: 'phase0-auto',
         });
         expect(decision).toMatchObject({
             outcome: 'skipped',
