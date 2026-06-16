@@ -650262,6 +650262,14 @@ const TRANSLATIONS = {
 
         "notif_pref_user_mention": "@Mention pings",
         "notif_pref_user_mention_help": "Push notification when someone writes @YourDisplayName in chat. Requires a display name set in 'My Display Name' above. Independent of entity-conversation push.",
+
+        "arena_avatar_alt": "Your companion",
+        "arena_avatar_setup_hint": "Bind an entity in Dashboard to see your companion react to each exam stage.",
+        "arena_avatar_stage_ready": "Ready",
+        "arena_avatar_stage_focused": "Focused",
+        "arena_avatar_stage_celebrate": "Pass!",
+        "arena_avatar_stage_concerned": "Miss",
+        "arena_avatar_stage_proud": "Done!",
 },
 
 
@@ -1234990,6 +1234998,14 @@ const TRANSLATIONS = {
 
         "notif_pref_user_mention": "@提及推送",
         "notif_pref_user_mention_help": "聊天中有人输入 @你的显示名 时推送通知。需要先在上方「我的显示名」中设置显示名。独立于实体对话推送开关。",
+
+        "arena_avatar_alt": "你的伙伴",
+        "arena_avatar_setup_hint": "在 Dashboard 绑定一个 entity，即可看到你的伙伴随考试阶段反应。",
+        "arena_avatar_stage_ready": "就绪",
+        "arena_avatar_stage_focused": "专注中",
+        "arena_avatar_stage_celebrate": "通过！",
+        "arena_avatar_stage_concerned": "失误",
+        "arena_avatar_stage_proud": "完成！",
 },
 
 
@@ -2412285,6 +2412301,14 @@ const TRANSLATIONS = {
 
         "notif_pref_user_mention": "@メンション通知",
         "notif_pref_user_mention_help": "チャットで @あなたの表示名 と書かれたときにプッシュ通知。上記「マイ表示名」での設定が必要です。エンティティ会話通知とは独立しています。",
+
+        "arena_avatar_alt": "あなたのパートナー",
+        "arena_avatar_setup_hint": "ダッシュボードでエンティティをバインドすると、評価の各ステージでパートナーが反応します。",
+        "arena_avatar_stage_ready": "準備完了",
+        "arena_avatar_stage_focused": "集中中",
+        "arena_avatar_stage_celebrate": "合格！",
+        "arena_avatar_stage_concerned": "失敗",
+        "arena_avatar_stage_proud": "完了！",
 },
 
 
@@ -2942575,6 +2942599,14 @@ const TRANSLATIONS = {
 
         "notif_pref_user_mention": "@멘션 알림",
         "notif_pref_user_mention_help": "채팅에서 누군가 @표시명 을 입력하면 푸시 알림. 위 '내 표시 이름'에서 표시명을 먼저 설정하세요. 엔티티 대화 알림과 독립적입니다.",
+
+        "arena_avatar_alt": "당신의 동반자",
+        "arena_avatar_setup_hint": "대시보드에서 엔티티를 연결하면, 평가 단계마다 동반자가 반응합니다.",
+        "arena_avatar_stage_ready": "준비됨",
+        "arena_avatar_stage_focused": "집중 중",
+        "arena_avatar_stage_celebrate": "통과!",
+        "arena_avatar_stage_concerned": "실패",
+        "arena_avatar_stage_proud": "완료!",
 },
 
 
@@ -2944192,6 +2944224,14 @@ const TRANSLATIONS = {
 
         "notif_pref_user_mention": "@提及推送",
         "notif_pref_user_mention_help": "聊天中有人輸入 @你的顯示名稱 時推送通知。需要先在上方「我的顯示名稱」中設定顯示名稱。獨立於實體對話推送開關。",
+
+        "arena_avatar_alt": "你的夥伴",
+        "arena_avatar_setup_hint": "在 Dashboard 綁定一個 entity，就能看到你的夥伴隨考試階段反應。",
+        "arena_avatar_stage_ready": "就緒",
+        "arena_avatar_stage_focused": "專注中",
+        "arena_avatar_stage_celebrate": "通過！",
+        "arena_avatar_stage_concerned": "失誤",
+        "arena_avatar_stage_proud": "完成！",
 },
 
 
@@ -3470964,6 +3471004,14 @@ const TRANSLATIONS = {
 
         "notif_pref_user_mention": "การแจ้งเตือน @เมนชั่น",
         "notif_pref_user_mention_help": "ส่งการแจ้งเตือนเมื่อมีคนพิมพ์ @ชื่อแสดงผลของคุณ ในการแชท ต้องตั้งชื่อแสดงผลในการ์ด 'ชื่อแสดงผลของฉัน' ด้านบนก่อน เป็นอิสระจากการแจ้งเตือนการสนทนาเอนทิตี",
+
+        "arena_avatar_alt": "เพื่อนร่วมทางของคุณ",
+        "arena_avatar_setup_hint": "ผูกเอนทิตีในแดชบอร์ดเพื่อให้เพื่อนร่วมทางตอบสนองในแต่ละขั้นตอนการสอบ",
+        "arena_avatar_stage_ready": "พร้อม",
+        "arena_avatar_stage_focused": "กำลังโฟกัส",
+        "arena_avatar_stage_celebrate": "ผ่าน!",
+        "arena_avatar_stage_concerned": "พลาด",
+        "arena_avatar_stage_proud": "เสร็จสิ้น!",
 },
 
 
@@ -3997814,6 +3997862,14 @@ const TRANSLATIONS = {
 
         "notif_pref_user_mention": "Thông báo khi được @nhắc",
         "notif_pref_user_mention_help": "Đẩy thông báo khi ai đó viết @TênHiểnThịCủaBạn trong chat. Cần đặt tên hiển thị ở thẻ 'Tên Hiển Thị Của Tôi' phía trên. Độc lập với thông báo trò chuyện thực thể.",
+
+        "arena_avatar_alt": "Người bạn đồng hành của bạn",
+        "arena_avatar_setup_hint": "Liên kết một thực thể trong Bảng điều khiển để bạn đồng hành phản ứng với từng giai đoạn của kỳ thi.",
+        "arena_avatar_stage_ready": "Sẵn sàng",
+        "arena_avatar_stage_focused": "Tập trung",
+        "arena_avatar_stage_celebrate": "Đạt!",
+        "arena_avatar_stage_concerned": "Trượt",
+        "arena_avatar_stage_proud": "Hoàn thành!",
 },
 
 
@@ -4524280,6 +4524336,14 @@ const TRANSLATIONS = {
 
         "notif_pref_user_mention": "Notifikasi @Sebut",
         "notif_pref_user_mention_help": "Kirim notifikasi push saat seseorang menulis @NamaTampilanAnda di obrolan. Memerlukan nama tampilan yang diatur di 'Nama Tampilan Saya' di atas. Independen dari notifikasi percakapan entitas.",
+
+        "arena_avatar_alt": "Pendampingmu",
+        "arena_avatar_setup_hint": "Tautkan entitas di Dasbor agar pendampingmu bereaksi di setiap tahap ujian.",
+        "arena_avatar_stage_ready": "Siap",
+        "arena_avatar_stage_focused": "Fokus",
+        "arena_avatar_stage_celebrate": "Lulus!",
+        "arena_avatar_stage_concerned": "Gagal",
+        "arena_avatar_stage_proud": "Selesai!",
 },
 
 
@@ -5049389,6 +5049453,14 @@ const TRANSLATIONS = {
 
         "notif_pref_user_mention": "Notifications de @mention",
         "notif_pref_user_mention_help": "Notification push lorsque quelqu'un écrit @VotreNomAffiché dans le chat. Nécessite un nom d'affichage défini dans « Mon nom d'affichage » ci-dessus. Indépendant des notifications de conversation d'entité.",
+
+        "arena_avatar_alt": "Votre compagnon",
+        "arena_avatar_setup_hint": "Liez une entité dans le Tableau de bord pour que votre compagnon réagisse à chaque étape de l'examen.",
+        "arena_avatar_stage_ready": "Prêt",
+        "arena_avatar_stage_focused": "Concentré",
+        "arena_avatar_stage_celebrate": "Réussi !",
+        "arena_avatar_stage_concerned": "Raté",
+        "arena_avatar_stage_proud": "Terminé !",
 },
 
 
@@ -5567049,6 +5567121,14 @@ const TRANSLATIONS = {
 
         "notif_pref_user_mention": "Notificaciones de @mención",
         "notif_pref_user_mention_help": "Notificación push cuando alguien escribe @TuNombreVisible en el chat. Requiere un nombre visible configurado en «Mi nombre visible» arriba. Independiente de las notificaciones de conversación de entidad.",
+
+        "arena_avatar_alt": "Tu compañero",
+        "arena_avatar_setup_hint": "Vincula una entidad en el Dashboard para que tu compañero reaccione en cada etapa del examen.",
+        "arena_avatar_stage_ready": "Listo",
+        "arena_avatar_stage_focused": "Concentrado",
+        "arena_avatar_stage_celebrate": "¡Pasó!",
+        "arena_avatar_stage_concerned": "Falló",
+        "arena_avatar_stage_proud": "¡Listo!",
 },
 
 
@@ -6103952,6 +6104032,14 @@ const TRANSLATIONS = {
 
         "notif_pref_user_mention": "@Erwähnungs-Benachrichtigungen",
         "notif_pref_user_mention_help": "Push-Benachrichtigung, wenn jemand @IhrAnzeigename im Chat schreibt. Erfordert einen oben unter „Mein Anzeigename\" festgelegten Namen. Unabhängig von Entitäts-Konversationsbenachrichtigungen.",
+
+        "arena_avatar_alt": "Dein Begleiter",
+        "arena_avatar_setup_hint": "Verknüpfe eine Entität im Dashboard, damit dein Begleiter auf jede Prüfungsphase reagiert.",
+        "arena_avatar_stage_ready": "Bereit",
+        "arena_avatar_stage_focused": "Fokussiert",
+        "arena_avatar_stage_celebrate": "Bestanden!",
+        "arena_avatar_stage_concerned": "Verfehlt",
+        "arena_avatar_stage_proud": "Fertig!",
 },
     pt: {
         "transition_loading": "A carregar…",
@@ -6109367,6 +6109455,14 @@ const TRANSLATIONS = {
 
         "notif_pref_user_mention": "Notificações de @menção",
         "notif_pref_user_mention_help": "Notificação push quando alguém escreve @SeuNomeExibido no chat. Requer um nome de exibição definido em \"Meu Nome de Exibição\" acima. Independente das notificações de conversa de entidade.",
+
+        "arena_avatar_alt": "Seu companheiro",
+        "arena_avatar_setup_hint": "Vincule uma entidade no Painel para que seu companheiro reaja a cada etapa do exame.",
+        "arena_avatar_stage_ready": "Pronto",
+        "arena_avatar_stage_focused": "Focado",
+        "arena_avatar_stage_celebrate": "Passou!",
+        "arena_avatar_stage_concerned": "Errou",
+        "arena_avatar_stage_proud": "Concluído!",
 },
 
 
@@ -6638139,6 +6638235,14 @@ const TRANSLATIONS = {
 
         "notif_pref_user_mention": "Notifikasi @Sebutan",
         "notif_pref_user_mention_help": "Hantar notifikasi push apabila seseorang menulis @NamaPaparanAnda dalam sembang. Memerlukan nama paparan ditetapkan di 'Nama Paparan Saya' di atas. Bebas daripada notifikasi perbualan entiti.",
+
+        "arena_avatar_alt": "Teman anda",
+        "arena_avatar_setup_hint": "Pautkan entiti di Papan Pemuka untuk teman anda bertindak balas pada setiap peringkat peperiksaan.",
+        "arena_avatar_stage_ready": "Sedia",
+        "arena_avatar_stage_focused": "Fokus",
+        "arena_avatar_stage_celebrate": "Lulus!",
+        "arena_avatar_stage_concerned": "Gagal",
+        "arena_avatar_stage_proud": "Selesai!",
 },
 
 
@@ -7197368,6 +7197472,14 @@ const TRANSLATIONS = {
 
         "notif_pref_user_mention": "@मेंशन सूचनाएं",
         "notif_pref_user_mention_help": "जब कोई चैट में @आपकाडिस्प्लेनाम लिखे तो पुश सूचना भेजें। ऊपर 'मेरा डिस्प्ले नाम' में डिस्प्ले नाम सेट करना आवश्यक। एंटिटी वार्तालाप सूचनाओं से स्वतंत्र।",
+
+        "arena_avatar_alt": "आपका साथी",
+        "arena_avatar_setup_hint": "अपने साथी को परीक्षा के हर चरण पर प्रतिक्रिया देने के लिए डैशबोर्ड में एक एंटिटी बाइंड करें।",
+        "arena_avatar_stage_ready": "तैयार",
+        "arena_avatar_stage_focused": "केंद्रित",
+        "arena_avatar_stage_celebrate": "पास!",
+        "arena_avatar_stage_concerned": "चूक",
+        "arena_avatar_stage_proud": "हो गया!",
 },
 
 
@@ -7745723,6 +7745835,14 @@ const TRANSLATIONS = {
 
         "notif_pref_user_mention": "إشعارات الإشارة @",
         "notif_pref_user_mention_help": "إشعار فوري عندما يكتب شخص ما @اسمك_المعروض في الدردشة. يتطلب تعيين اسم العرض في 'اسم العرض الخاص بي' أعلاه. مستقل عن إشعارات محادثات الكيان.",
+
+        "arena_avatar_alt": "رفيقك",
+        "arena_avatar_setup_hint": "اربط كياناً من لوحة التحكم ليتفاعل رفيقك مع كل مرحلة من مراحل الاختبار.",
+        "arena_avatar_stage_ready": "جاهز",
+        "arena_avatar_stage_focused": "مركّز",
+        "arena_avatar_stage_celebrate": "نجاح!",
+        "arena_avatar_stage_concerned": "إخفاق",
+        "arena_avatar_stage_proud": "انتهى!",
 }
 
 

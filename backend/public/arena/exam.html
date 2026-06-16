@@ -8,6 +8,10 @@
     <link rel="stylesheet" href="/portal/shared/style.css">
     <script src="/shared/i18n.js"></script>
     <script src="/portal/shared/api.js"></script>
+    <script src="/portal/shared/entity-utils.js"></script>
+    <script src="/shared/avatar-petdx.js"></script>
+    <script src="/shared/petdx-renderer.js"></script>
+    <script src="/arena/exam-stage-mapper.js"></script>
     <script>i18n.apply();</script>
     <script src="/socket.io/socket.io.js"></script>
     <style>
@@ -184,9 +188,169 @@
             .eval-header h1 { font-size: 18px; }
             .comment-row { flex-direction: column; }
         }
+
+        /* ─────────────────────────────────────────────────────────────────
+           Stage-by-stage companion avatar — card_eda0e8f889c67
+           Mounts the current viewer's entity petdx companion at top-right
+           and reacts to exam socket events with 5 distinct micro-animations
+           (ready / focused / celebrate / concerned / proud). Pure CSS
+           keyframes, no animation libraries, no new dependencies.
+           Honors prefers-reduced-motion: animations collapse to a static
+           frame (the resting avatar) so motion-sensitive users see the
+           emotional state via the data-emotion label only.
+           ───────────────────────────────────────────────────────────────── */
+        .arena-companion {
+            position: fixed; top: 16px; right: 16px; z-index: 30;
+            display: flex; flex-direction: column; align-items: center;
+            gap: 4px; pointer-events: none;
+            /* Tap target for the "?" empty-state hint is the only interactive child */
+        }
+        .arena-companion-stage {
+            width: 64px; height: 64px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--card, #1e1e2e); border: 1px solid var(--card-border, rgba(255,255,255,0.08));
+            border-radius: 50%;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+            transform-origin: center;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .arena-companion-stage > canvas,
+        .arena-companion-stage > img,
+        .arena-companion-stage > .arena-companion-emoji {
+            width: 56px; height: 56px; border-radius: 50%;
+            display: inline-block;
+            image-rendering: pixelated;
+        }
+        .arena-companion-stage > .arena-companion-emoji {
+            font-size: 40px; line-height: 56px; text-align: center;
+        }
+        .arena-companion-caption {
+            font-size: 10px; font-weight: 600; letter-spacing: 0.4px;
+            color: var(--text-muted, #888); text-transform: uppercase;
+            background: var(--card, #1e1e2e); padding: 2px 8px; border-radius: 10px;
+            border: 1px solid var(--card-border, rgba(255,255,255,0.06));
+            pointer-events: none;
+            min-width: 60px; text-align: center;
+        }
+        .arena-companion-help {
+            position: absolute; top: 0; right: -8px;
+            width: 18px; height: 18px; border-radius: 50%;
+            background: var(--card-border, rgba(255,255,255,0.12));
+            color: var(--text, #fff); font-size: 11px; font-weight: 700;
+            display: none; align-items: center; justify-content: center;
+            cursor: help; pointer-events: auto; user-select: none;
+            border: none; padding: 0; font-family: inherit;
+        }
+        .arena-companion[data-empty="true"] .arena-companion-help { display: inline-flex; }
+        .arena-companion[data-empty="true"] .arena-companion-stage { opacity: 0.55; }
+        .arena-companion-help:hover,
+        .arena-companion-help:focus {
+            background: var(--primary, #6C63FF); color: #fff; outline: none;
+        }
+
+        /* Mobile: shrink + push to safe corner so the question card isn't covered */
+        @media (max-width: 600px) {
+            .arena-companion { top: 8px; right: 8px; }
+            .arena-companion-stage { width: 44px; height: 44px; }
+            .arena-companion-stage > canvas,
+            .arena-companion-stage > img,
+            .arena-companion-stage > .arena-companion-emoji {
+                width: 36px; height: 36px; font-size: 26px; line-height: 36px;
+            }
+            .arena-companion-caption { font-size: 9px; padding: 1px 6px; min-width: 50px; }
+        }
+
+        /* Resting state — gentle pulse so the avatar feels alive even when idle */
+        @keyframes arena-companion-idle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.04); }
+        }
+        @keyframes arena-companion-ready {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        @keyframes arena-companion-focused {
+            0%, 100% { transform: rotate(-3deg); }
+            50% { transform: rotate(3deg); }
+        }
+        @keyframes arena-companion-celebrate {
+            0%   { transform: translateY(0) scale(1); }
+            30%  { transform: translateY(-10px) scale(1.15); }
+            60%  { transform: translateY(-4px) scale(1.05); }
+            100% { transform: translateY(0) scale(1); }
+        }
+        @keyframes arena-companion-celebrate-glow {
+            0%, 100% { box-shadow: 0 2px 10px rgba(0,0,0,0.25); border-color: var(--card-border, rgba(255,255,255,0.08)); }
+            50% { box-shadow: 0 0 18px rgba(76,175,80,0.65); border-color: var(--success, #4CAF50); }
+        }
+        @keyframes arena-companion-concerned {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-3px); }
+            40% { transform: translateX(3px); }
+            60% { transform: translateX(-2px); }
+            80% { transform: translateX(2px); }
+        }
+        @keyframes arena-companion-proud {
+            0%   { transform: scale(1) rotate(0deg); }
+            25%  { transform: scale(1.12) rotate(-6deg); }
+            50%  { transform: scale(1.15) rotate(0deg); }
+            75%  { transform: scale(1.12) rotate(6deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        @keyframes arena-companion-proud-glow {
+            0%, 100% { box-shadow: 0 2px 10px rgba(0,0,0,0.25); border-color: var(--card-border, rgba(255,255,255,0.08)); }
+            50% { box-shadow: 0 0 22px rgba(255,215,0,0.7); border-color: var(--accent-gold, #FFD700); }
+        }
+
+        .arena-companion[data-emotion="ready"] .arena-companion-stage {
+            animation: arena-companion-ready 1.8s ease-in-out infinite;
+        }
+        .arena-companion[data-emotion="focused"] .arena-companion-stage {
+            animation: arena-companion-focused 1.2s ease-in-out infinite;
+        }
+        .arena-companion[data-emotion="celebrate"] .arena-companion-stage {
+            animation:
+                arena-companion-celebrate 0.6s ease-out 2,
+                arena-companion-celebrate-glow 0.6s ease-out 2;
+        }
+        .arena-companion[data-emotion="concerned"] .arena-companion-stage {
+            animation: arena-companion-concerned 0.5s ease-in-out 2;
+        }
+        .arena-companion[data-emotion="proud"] .arena-companion-stage {
+            animation:
+                arena-companion-proud 1.2s ease-in-out infinite,
+                arena-companion-proud-glow 1.2s ease-in-out infinite;
+        }
+
+        /* Accessibility — collapse all motion to a static frame for users who
+           prefer reduced motion. The data-emotion attribute is still set so
+           screen readers (via the caption) can still hear the emotional state.
+           Tested per [feedback_e2e_visual_change_is_the_bar]. */
+        @media (prefers-reduced-motion: reduce) {
+            .arena-companion[data-emotion] .arena-companion-stage {
+                animation: none !important;
+                transform: none !important;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Stage-by-stage companion avatar — card_eda0e8f889c67.
+         Mounts at top-right via fixed positioning so it stays in view as the
+         spectator scrolls through the 12 test rows. Starts in [data-empty="true"]
+         until JS resolves either an entity petdx companion or the neutral fallback. -->
+    <div class="arena-companion" id="arenaCompanion" data-emotion="ready" data-empty="true"
+         role="status" aria-live="polite" aria-atomic="true">
+        <div class="arena-companion-stage" id="arenaCompanionStage" aria-label="Companion avatar" data-i18n-aria-label="arena_avatar_alt">
+            <span class="arena-companion-emoji" aria-hidden="true">&#x1F99E;</span>
+        </div>
+        <div class="arena-companion-caption" id="arenaCompanionCaption" data-emotion-label="ready"></div>
+        <button type="button" class="arena-companion-help" id="arenaCompanionHelp"
+                aria-label="How to enable your companion" data-i18n-aria-label="arena_avatar_setup_hint"
+                title="Bind an entity in Dashboard to see your companion here"
+                data-i18n-title="arena_avatar_setup_hint">?</button>
+    </div>
+
     <div class="container">
         <div style="margin-bottom:12px;"><a href="/arena" style="color:var(--text-muted);font-size:13px;text-decoration:none;">&larr; <span data-i18n="arena_back">Back to Agent Benchmark</span></a></div>
         <div class="eval-header">
@@ -341,6 +505,135 @@
             el.insertAdjacentHTML('afterbegin', `<div class="comment-item"><div class="comment-meta"><span class="comment-nick">${esc(c.nickname)}</span>${badge}<span class="comment-time">just now</span></div><div class="comment-text">${esc(c.text)}</div></div>`);
         });
 
+        // ──────────────────────────────────────────────────────────────────
+        // Stage-by-stage companion avatar — card_eda0e8f889c67
+        //
+        // Mounts the viewer's selected petdx companion (when an entity is
+        // bound in localStorage) into the fixed-position #arenaCompanion
+        // bubble. Socket arena:update events run through ArenaExamStageMapper
+        // (pure function) which decides which of 5 emotion classes to put on
+        // the container; CSS keyframes do the rest.
+        //
+        // Globe-user: no deviceId / locale carveout. Anyone can open
+        // /arena/exam/<id> — anonymous viewers fall back to a neutral mascot
+        // (🦞) with the "?" help bubble visible, explaining how to bind an
+        // entity. The mapper itself is content-agnostic.
+        //
+        // Empty-state ? icon UX: clicking/hovering "?" reveals the setup
+        // hint (i18n key arena_avatar_setup_hint).
+        // ──────────────────────────────────────────────────────────────────
+        const arenaCompanion = (function () {
+            const root = document.getElementById('arenaCompanion');
+            const stage = document.getElementById('arenaCompanionStage');
+            const caption = document.getElementById('arenaCompanionCaption');
+            const Mapper = (typeof ArenaExamStageMapper !== 'undefined') ? ArenaExamStageMapper : null;
+            const captionFor = (em) => {
+                if (!em) return '';
+                if (typeof i18n !== 'undefined' && i18n.t) {
+                    const key = 'arena_avatar_stage_' + em;
+                    const t = i18n.t(key);
+                    if (t && t !== key) return t;
+                }
+                // Fallback captions when i18n key not present in current locale
+                return ({
+                    ready: 'Ready',
+                    focused: 'Focused',
+                    celebrate: 'Pass!',
+                    concerned: 'Miss',
+                    proud: 'Done!',
+                })[em] || '';
+            };
+            let state = { emotion: 'ready' };
+
+            function setEmotion(em) {
+                if (!em || !root) return;
+                if (state.emotion === em && root.getAttribute('data-emotion') === em) return;
+                // Re-trigger CSS animation by toggling the attribute (animations
+                // with finite counts like celebrate/concerned otherwise only run
+                // on the first transition).
+                root.removeAttribute('data-emotion');
+                // Force reflow so the browser registers the attribute change
+                // as an animation restart.
+                // eslint-disable-next-line no-unused-expressions
+                root.offsetWidth;
+                root.setAttribute('data-emotion', em);
+                if (caption) caption.textContent = captionFor(em);
+                state.emotion = em;
+            }
+
+            function handleSocketEvent(msg) {
+                if (!Mapper) return;
+                const next = Mapper.mapEvent(msg, state);
+                if (next) setEmotion(next);
+            }
+
+            async function mount(examData) {
+                if (!root) return;
+                // Initial caption + emotion (defaults to 'ready' or 'proud'
+                // depending on examData status — re-used on reload of finished exams)
+                const init = Mapper ? Mapper.initialState(examData && examData.exam) : 'ready';
+                setEmotion(init);
+
+                // Try to resolve the viewer's bound entity from localStorage.
+                // Anonymous viewers (and bots taking the exam directly) skip
+                // this and keep the neutral fallback.
+                let deviceId = null, deviceSecret = null, entityId = null;
+                try {
+                    deviceId = localStorage.getItem('deviceId');
+                    deviceSecret = localStorage.getItem('deviceSecret');
+                } catch (_) { /* private browsing — leave as null */ }
+                if (!deviceId || !deviceSecret) return; // empty-state: keep "?" visible
+
+                try {
+                    const res = await fetch(`${API}/api/entities?deviceId=${encodeURIComponent(deviceId)}&deviceSecret=${encodeURIComponent(deviceSecret)}`);
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    const bound = (data.entities || []).filter(e => e && e.isBound !== false);
+                    if (!bound.length) return;
+                    entityId = Number(bound[0].entityId || bound[0].id);
+                } catch (_) { return; }
+                if (!Number.isFinite(entityId)) return;
+
+                // We have an entity — clear the empty-state flag so "?" hides
+                // and stage opacity returns to full.
+                root.removeAttribute('data-empty');
+
+                // Preload + mount the petdx companion canvas in place of the
+                // default emoji. Falls back silently to the existing emoji if
+                // no companion is bound to this entity (AvatarPetdx leaves the
+                // canvas untouched in that case).
+                if (window.AvatarPetdx && typeof window.AvatarPetdx.preload === 'function') {
+                    try {
+                        await window.AvatarPetdx.preload({
+                            deviceId, deviceSecret, entityIds: [entityId],
+                        });
+                    } catch (_) { /* network blip — keep fallback emoji */ }
+                }
+
+                // Replace the placeholder emoji with renderAvatarHtml output so
+                // entity-utils + AvatarPetdx pick the right element (canvas /
+                // img / emoji).
+                if (typeof renderAvatarHtml === 'function') {
+                    const avatarMarkup = renderAvatarHtml(null, 56, entityId);
+                    stage.innerHTML = avatarMarkup;
+                    if (window.AvatarPetdx && typeof window.AvatarPetdx.autoMount === 'function') {
+                        window.AvatarPetdx.autoMount();
+                    }
+                }
+            }
+
+            return {
+                setEmotion: setEmotion,
+                handleSocketEvent: handleSocketEvent,
+                mount: mount,
+            };
+        })();
+
+        // Forward every arena socket event through the mapper. Listening
+        // separately (rather than splicing into the existing handler above)
+        // keeps the avatar logic decoupled and easy to disable.
+        socket.on('arena:update', (m) => arenaCompanion.handleSocketEvent(m));
+
         function updateTotal() {
             const t = scores.reduce((s, v) => s + (v || 0), 0);
             document.getElementById('totalScore').textContent = t;
@@ -393,6 +686,10 @@
 `  → Returns total score and per-test breakdown. Auto-invoked at the 3-min cutoff; calling it sooner locks in your score early.`,
                 ].join('\n');
                 console.log('[Arena DEBUG] loadExam response:', JSON.stringify({ status: data.exam.status, expiresAt: data.exam.expiresAt, firstFetchedAt: data.exam.firstFetchedAt, createdAt: data.exam.createdAt }));
+                // Mount the companion avatar now that we know whether the
+                // exam is already completed (different initial emotion).
+                arenaCompanion.mount(data);
+
                 if (data.exam.status === 'completed') {
                     showResults(data);
                 } else if (data.exam.firstFetchedAt) {
@@ -1004,6 +1301,10 @@
         }
 
         loadExam();
+        // Mount companion immediately so the user sees the resting avatar
+        // even before /results comes back. loadExam() will re-mount once the
+        // exam status is known (e.g. already-completed exams jump to 'proud').
+        arenaCompanion.mount(null);
 
         // Polling fallback: refresh exam state every 5s until completed
         // (covers cases where Socket.IO misses events)
