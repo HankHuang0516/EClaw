@@ -1082,6 +1082,53 @@ function mapArenaResultToCapabilities(report) {
     };
 }
 
+/**
+ * Build the entity.identity patch that records a verified Arena
+ * interview result on the bot's namecard (card_ad404375 — Arena/Feature/P1).
+ *
+ * Pure function — no I/O. Caller merges the returned object into
+ * `entity.identity` and persists via db.saveDeviceData.
+ *
+ * Latest-wins: callers should overwrite any prior interviewCapabilities
+ * block with this patch (latest interview defines the verified score).
+ *
+ * @param {object} exam — { id, model, total_score, max_score, completed_at }
+ * @param {object} mapped — output of mapArenaResultToCapabilities()
+ * @param {number} [nowMs] — clock injection for tests
+ * @returns {{interviewCapabilities:object,lastInterviewAt:number}|null}
+ */
+function buildInterviewIdentityPatch(exam, mapped, nowMs) {
+    if (!exam || !mapped || typeof mapped !== 'object') return null;
+
+    const totalScore = Number(exam.total_score);
+    const maxScore = Number(exam.max_score);
+    if (!Number.isFinite(totalScore) || !Number.isFinite(maxScore) || maxScore <= 0) {
+        return null;
+    }
+    // Clamp + guard against out-of-range / negative server-side rows
+    const score = Math.max(0, Math.min(maxScore, Math.round(totalScore)));
+    const max = Math.max(1, Math.round(maxScore));
+    const normalized = Math.round((score / max) * 100);
+    const passed = !!mapped.passed;
+    const completedAtMs = exam.completed_at
+        ? new Date(exam.completed_at).getTime()
+        : (typeof nowMs === 'number' ? nowMs : Date.now());
+
+    return {
+        interviewCapabilities: {
+            score,
+            maxScore: max,
+            normalized,
+            passed,
+            model: exam.model || null,
+            examId: exam.id || null,
+            completedAt: completedAtMs,
+            source: 'arena',
+        },
+        lastInterviewAt: typeof nowMs === 'number' ? nowMs : Date.now(),
+    };
+}
+
 // ============================================
 // Answer-leak prevention: decoy + strip
 // ============================================
@@ -1230,10 +1277,12 @@ function stripSecretsForBot(testType, config) {
 // Express factory
 // ============================================
 
-module.exports = function arenaFactory({ serverLog, io, devices } = {}) {
+module.exports = function arenaFactory({ serverLog, io, devices, saveDeviceData } = {}) {
     const router = express.Router();
     const audit = serverLog || (() => {});
     const deviceRegistry = devices || {};
+    // Used to verify entity botSecret on the /leaderboard binding path.
+    const safeEqual = require('./safe-equal');
 
     // Per-IP cooldown: 1 exam per 5 minutes
     const examCooldownMap = new Map(); // ip → last exam timestamp
@@ -1730,9 +1779,19 @@ module.exports = function arenaFactory({ serverLog, io, devices } = {}) {
     });
 
     // POST /api/arena/leaderboard — submit to leaderboard
+    //
+    // Anonymous path (back-compat): { examId, name } only — writes a
+    // leaderboard row tagged with the typed display name.
+    //
+    // Entity-bound path (card_ad404375 — namecard score binding):
+    // { examId, name, deviceId, entityId, botSecret } — if the credentials
+    // verify, the verified score is also written back to
+    // entity.identity.interviewCapabilities so the bot's namecard + plaza
+    // tile show the verified score. Anonymous path keeps working when no
+    // botSecret is supplied or credentials fail.
     router.post('/leaderboard', async (req, res) => {
         try {
-            const { examId, name } = req.body || {};
+            const { examId, name, deviceId, entityId, botSecret } = req.body || {};
             if (!examId || !name || typeof name !== 'string' || name.trim().length === 0) {
                 return res.status(400).json({ success: false, error: 'examId_and_name_required' });
             }
@@ -1763,7 +1822,51 @@ module.exports = function arenaFactory({ serverLog, io, devices } = {}) {
                  JSON.stringify(report)]
             );
             const leaderboardId = lbRes.rows[0] ? lbRes.rows[0].id : null;
-            res.json({ success: true, leaderboardId });
+
+            // Optional entity binding — write the verified score back to the
+            // bot's identity if botSecret authenticates. Failures here MUST
+            // NOT fail the public LB submit (back-compat with anonymous flow).
+            let entityBinding = null;
+            try {
+                if (deviceId && botSecret) {
+                    const eId = parseInt(entityId, 10);
+                    const device = deviceRegistry[deviceId];
+                    const entity = (device && Number.isInteger(eId)) ? device.entities?.[eId] : null;
+                    const credsOk = !!(entity && entity.isBound && entity.botSecret && safeEqual(entity.botSecret, botSecret));
+                    if (credsOk) {
+                        const mapped = mapArenaResultToCapabilities(report);
+                        const patch = buildInterviewIdentityPatch(exam, mapped);
+                        if (patch) {
+                            if (!entity.identity) entity.identity = {};
+                            // Latest-wins: overwrite any prior interviewCapabilities block.
+                            entity.identity.interviewCapabilities = patch.interviewCapabilities;
+                            entity.identity.lastInterviewAt = patch.lastInterviewAt;
+                            entity.lastUpdated = Date.now();
+                            if (saveDeviceData) {
+                                // Fire-and-forget persistence — log failures but
+                                // don't fail the LB submit. Same pattern as
+                                // identity PATCH (index.js:13598).
+                                Promise.resolve(saveDeviceData(deviceId, device))
+                                    .catch(err => audit('warn', 'arena', `entity binding save failed: ${err.message}`));
+                            }
+                            entityBinding = {
+                                entityId: eId,
+                                score: patch.interviewCapabilities.score,
+                                maxScore: patch.interviewCapabilities.maxScore,
+                                normalized: patch.interviewCapabilities.normalized,
+                                passed: patch.interviewCapabilities.passed,
+                            };
+                            audit('info', 'arena', `entity ${deviceId}:${eId} bound to exam ${exam.id} score=${entityBinding.normalized}%`);
+                        }
+                    } else if (entityId !== undefined) {
+                        audit('warn', 'arena', `entity binding rejected for device=${deviceId} entity=${entityId}: invalid credentials`);
+                    }
+                }
+            } catch (bindErr) {
+                console.warn('[Arena] entity binding error (non-blocking):', bindErr.message);
+            }
+
+            res.json({ success: true, leaderboardId, entityBinding });
         } catch (err) {
             res.status(500).json({ success: false, error: 'internal_error' });
         }
@@ -1893,7 +1996,8 @@ module.exports = function arenaFactory({ serverLog, io, devices } = {}) {
     // Path 1 unchanged. Paths 2–3 let ops admin without a separate env —
     // possession of deviceSecret / botSecret is already proof of ownership.
     // When multi-tenant launches, gate 2–3 on a specific ADMIN_DEVICE_ID env.
-    const safeEqual = require('./safe-equal');
+    // (safeEqual already required at the top of arenaFactory for the
+    // /leaderboard entity binding path; reuse the same import.)
 
     function checkAdminAuth(req) {
         const body = req.body || {};
@@ -2027,6 +2131,7 @@ module.exports = function arenaFactory({ serverLog, io, devices } = {}) {
 module.exports.TEST_TYPES = TEST_TYPES;
 module.exports.MAX_TOTAL_SCORE = MAX_TOTAL_SCORE;
 module.exports.mapArenaResultToCapabilities = mapArenaResultToCapabilities;
+module.exports.buildInterviewIdentityPatch = buildInterviewIdentityPatch;
 module.exports.ARENA_PASS_THRESHOLD = ARENA_PASS_THRESHOLD;
 module.exports.ARENA_TO_CAPABILITY_MAP = ARENA_TO_CAPABILITY_MAP;
 module.exports.SCORING_ENGINES = SCORING_ENGINES;

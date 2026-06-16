@@ -1228,6 +1228,14 @@
                     caps: (r.capabilities || []).map(c => c.name || c.id || c),
                     stars: r.avgRating || 0, reviews: r.messageCount || 0,
                     level: r.level || 1, xp: r.xp || 0,
+                    // Arena verified score (card_ad404375). Number fields only —
+                    // server enrichment never lets these leak strings/HTML, so
+                    // they're safe to interpolate directly in number contexts.
+                    arenaScore: (typeof r.arenaScore === 'number') ? r.arenaScore : null,
+                    arenaMaxScore: (typeof r.arenaMaxScore === 'number') ? r.arenaMaxScore : null,
+                    arenaNormalized: (typeof r.arenaNormalized === 'number') ? r.arenaNormalized : null,
+                    arenaPassed: (typeof r.arenaPassed === 'boolean') ? r.arenaPassed : null,
+                    lastInterviewAt: (typeof r.lastInterviewAt === 'number') ? r.lastInterviewAt : null,
                     isRental: false
                 }));
             }
@@ -1301,13 +1309,30 @@
         grid.innerHTML = bots.map(bot => bot.isRental ? renderRentalCard(bot) : renderCommunityCard(bot)).join('');
     }
     function renderCommunityCard(bot) {
+        // Arena verified score chip (card_ad404375). Number-only fields, so
+        // safe to interpolate. Color tier: pass=green, attempt=amber.
+        let arenaChip = '';
+        if (typeof bot.arenaScore === 'number' && typeof bot.arenaMaxScore === 'number' && bot.arenaMaxScore > 0) {
+            const pct = (typeof bot.arenaNormalized === 'number') ? bot.arenaNormalized : Math.round((bot.arenaScore / bot.arenaMaxScore) * 100);
+            const pass = bot.arenaPassed === true;
+            const bg = pass ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.12)';
+            const fg = pass ? '#10b981' : '#f59e0b';
+            const bd = pass ? 'rgba(16,185,129,0.3)' : 'rgba(245,158,11,0.3)';
+            const ariaLabel = (pass ? 'Arena verified passed' : 'Arena verified attempt')
+                + ' ' + bot.arenaScore + ' of ' + bot.arenaMaxScore + ', ' + pct + ' percent';
+            arenaChip = `<span class="bot-card-arena-chip" aria-label="${ariaLabel}" `
+                + `style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;`
+                + `background:${bg};color:${fg};border:1px solid ${bd};font-size:10px;font-weight:600;margin-left:6px;">`
+                + (pass ? '✓ ' : '• ') + 'Arena ' + bot.arenaScore + '/' + bot.arenaMaxScore + ' (' + pct + '%)'
+                + `</span>`;
+        }
         return `<div class="bot-card" onclick="openDetail('${bot.publicCode}')">
             <span class="bot-card-level ${lvClass(bot.level)}">Lv.${bot.level}</span>
             <div class="bot-card-header">
                 <div class="bot-card-avatar">
                     ${botAvatarHtml(bot.avatar, 56)}
                 </div>
-                <div class="bot-card-info"><div class="bot-card-name">${esc(bot.name)}</div></div>
+                <div class="bot-card-info"><div class="bot-card-name">${esc(bot.name)}${arenaChip}</div></div>
             </div>
             <div class="bot-card-desc">${esc(bot.desc)}</div>
             <div class="bot-card-footer">
@@ -1393,6 +1418,35 @@
             const tags = bot.agentCard?.tags || [];
             const desc = bot.agentCard?.description || '';
 
+            // Arena verified score line (card_ad404375). Falls back to a
+            // ? icon empty state so plaza viewers can see how the score is
+            // earned (Globe-user setup-clarity rule).
+            const hasArena = typeof bot.arenaScore === 'number'
+                && typeof bot.arenaMaxScore === 'number' && bot.arenaMaxScore > 0;
+            let arenaLine;
+            if (hasArena) {
+                const pct = (typeof bot.arenaNormalized === 'number') ? bot.arenaNormalized : Math.round((bot.arenaScore / bot.arenaMaxScore) * 100);
+                const pass = bot.arenaPassed === true;
+                const tone = pass ? '#10b981' : '#f59e0b';
+                let when = '';
+                if (typeof bot.lastInterviewAt === 'number') {
+                    try { when = ' • ' + new Date(bot.lastInterviewAt).toISOString().slice(0, 10); } catch (_) {}
+                }
+                arenaLine = `<div class="detail-arena" role="status" aria-label="Arena verified score ${bot.arenaScore} of ${bot.arenaMaxScore}, ${pct} percent"
+                    style="margin:8px auto 0;padding:6px 12px;border-radius:14px;background:rgba(16,185,129,0.10);color:${tone};border:1px solid ${tone}33;font-size:13px;font-weight:600;display:inline-flex;gap:6px;">
+                    ${pass ? '✓' : '•'} Arena ${bot.arenaScore}/${bot.arenaMaxScore} (${pct}%)<span style="font-weight:400;color:var(--text-secondary);">${when}</span>
+                </div>`;
+            } else {
+                arenaLine = `<div class="detail-arena-empty" style="margin:8px auto 0;font-size:12px;color:var(--text-secondary);">
+                    尚未面試 / No Arena interview yet
+                    <span class="detail-arena-help" tabindex="0" role="button"
+                        aria-label="How a verified Arena score works"
+                        onclick="event.stopPropagation();window.__plazaArenaHelp(this)"
+                        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();window.__plazaArenaHelp(this);}"
+                        style="cursor:help;display:inline-block;border:1px solid var(--card-border);border-radius:50%;width:16px;height:16px;line-height:14px;text-align:center;margin-left:4px;font-size:10px;">?</span>
+                </div>`;
+            }
+
             content.innerHTML = `
                 <button class="modal-close" onclick="closeDetail()">✕</button>
                 <div class="detail-header">
@@ -1400,6 +1454,7 @@
                     <div class="detail-name">${esc(bot.name)}</div>
                     <div class="detail-code" onclick="navigator.clipboard.writeText('${bot.publicCode}')" title="Copy">${bot.publicCode}</div>
                     <div class="detail-desc">${esc(desc)}</div>
+                    ${arenaLine}
                     <div class="detail-level-xp">
                         <span>🏆 Lv.${bot.level||1}</span>
                         <span>⚡ ${(bot.xp||0).toLocaleString()} XP</span>
@@ -1694,6 +1749,49 @@
     /* ══════ Utilities ══════ */
     function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
     function lvClass(lv) { return lv >= 15 ? 'lv-legend' : lv >= 10 ? 'lv-elite' : lv >= 7 ? 'lv-high' : lv >= 4 ? 'lv-mid' : 'lv-low'; }
+
+    // Arena ? icon help popover for the plaza detail's empty state
+    // (card_ad404375). Tells viewers HOW a verified score is earned.
+    // Keyboard-dismissible (Escape) + click-outside-dismissible — same UX
+    // as the namecard editor's popover.
+    window.__plazaArenaHelp = function(anchor) {
+        const msg = 'The verified score is recorded after the bot completes an Arena interview.\n\nHow it appears here:\n1. Owner runs an Arena interview from their dashboard\n2. Bot runs 12 challenges (≤3 min)\n3. Score binds to the bot identity and shows on this plaza tile';
+        try {
+            const existing = document.querySelector('.plaza-arena-help-popover');
+            if (existing) existing.remove();
+            const pop = document.createElement('div');
+            pop.className = 'plaza-arena-help-popover';
+            pop.setAttribute('role', 'tooltip');
+            pop.style.cssText = 'position:absolute;z-index:99999;max-width:280px;background:var(--card-bg,#1e1e2e);color:var(--text-primary,#fff);border:1px solid var(--card-border,#333);padding:10px 12px;border-radius:8px;font-size:12px;line-height:1.5;white-space:pre-line;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+            pop.textContent = msg;
+            const r = anchor.getBoundingClientRect();
+            pop.style.left = (window.scrollX + r.left) + 'px';
+            pop.style.top = (window.scrollY + r.bottom + 6) + 'px';
+            document.body.appendChild(pop);
+            const cleanup = function() {
+                if (pop.parentNode) pop.remove();
+                document.removeEventListener('click', dismiss, true);
+                document.removeEventListener('keydown', onKey, true);
+                try { if (anchor && typeof anchor.focus === 'function') anchor.focus(); } catch (_) {}
+            };
+            const dismiss = function(ev) {
+                if (ev && pop.contains(ev.target)) return;
+                cleanup();
+            };
+            const onKey = function(ev) {
+                if (ev.key === 'Escape' || ev.key === 'Esc') {
+                    ev.preventDefault();
+                    cleanup();
+                }
+            };
+            setTimeout(function() {
+                document.addEventListener('click', dismiss, true);
+                document.addEventListener('keydown', onKey, true);
+            }, 0);
+        } catch (e) {
+            alert(msg);
+        }
+    };
 
     /* ══════ Init ══════ */
     let _st;

@@ -2175,7 +2175,32 @@ async function setEntityPublic(deviceId, entityId, isPublic) {
     }
 }
 
-async function searchPublicCards({ q, tag, capability, limit = 20, offset = 0, sort = 'newest' }) {
+// Extract Arena interview fields from the entity's identity JSONB blob.
+// Returns nulls when no interview has been recorded — UI uses these to
+// render the "尚未面試 / No interview yet" placeholder + ? icon UX.
+function extractArenaFieldsFromIdentity(identity) {
+    if (!identity || typeof identity !== 'object') {
+        return { arenaScore: null, arenaMaxScore: null, arenaNormalized: null, arenaPassed: null, lastInterviewAt: null };
+    }
+    const ic = identity.interviewCapabilities;
+    if (!ic || typeof ic !== 'object') {
+        return { arenaScore: null, arenaMaxScore: null, arenaNormalized: null, arenaPassed: null, lastInterviewAt: identity.lastInterviewAt || null };
+    }
+    const score = Number.isFinite(Number(ic.score)) ? Number(ic.score) : null;
+    const max = Number.isFinite(Number(ic.maxScore)) ? Number(ic.maxScore) : null;
+    const normalized = Number.isFinite(Number(ic.normalized)) ? Number(ic.normalized) : null;
+    const passed = typeof ic.passed === 'boolean' ? ic.passed : null;
+    const completedAt = Number.isFinite(Number(ic.completedAt)) ? Number(ic.completedAt) : null;
+    return {
+        arenaScore: score,
+        arenaMaxScore: max,
+        arenaNormalized: normalized,
+        arenaPassed: passed,
+        lastInterviewAt: completedAt || identity.lastInterviewAt || null,
+    };
+}
+
+async function searchPublicCards({ q, tag, capability, minArenaScore, limit = 20, offset = 0, sort = 'newest' }) {
     try {
         const conditions = [`e.is_public = true`, `e.bot_secret IS NOT NULL`];
         const params = [];
@@ -2196,8 +2221,26 @@ async function searchPublicCards({ q, tag, capability, limit = 20, offset = 0, s
             params.push(`%${capability}%`);
             paramIdx++;
         }
+        // minArenaScore: 0–100 normalized percentage. Read from
+        // identity.interviewCapabilities.normalized. Filters out
+        // entities with no recorded interview.
+        const minScoreNum = parseInt(minArenaScore, 10);
+        if (Number.isFinite(minScoreNum) && minScoreNum > 0 && minScoreNum <= 100) {
+            conditions.push(`((e.identity->'interviewCapabilities'->>'normalized')::int >= $${paramIdx})`);
+            params.push(minScoreNum);
+            paramIdx++;
+        }
 
-        const orderBy = sort === 'rating' ? 'e.avg_rating DESC, e.rating_count DESC' : 'e.published_at DESC NULLS LAST';
+        let orderBy;
+        if (sort === 'rating') {
+            orderBy = 'e.avg_rating DESC, e.rating_count DESC';
+        } else if (sort === 'arena_score') {
+            // Sort highest-scoring entities first; entities with no recorded
+            // interview (NULL normalized) sort last via NULLS LAST.
+            orderBy = `(e.identity->'interviewCapabilities'->>'normalized')::int DESC NULLS LAST, e.published_at DESC NULLS LAST`;
+        } else {
+            orderBy = 'e.published_at DESC NULLS LAST';
+        }
         const safeLimit = Math.min(Math.max(parseInt(limit) || 20, 1), 50);
         const safeOffset = Math.max(parseInt(offset) || 0, 0);
 
@@ -2207,7 +2250,7 @@ async function searchPublicCards({ q, tag, capability, limit = 20, offset = 0, s
         // plaza shows e.avatar — the static emoji/upload set on first
         // bind — even after the owner picked a sprite companion.
         const sql = `
-            SELECT e.public_code, e.name, e.character, e.avatar, e.agent_card,
+            SELECT e.public_code, e.name, e.character, e.avatar, e.agent_card, e.identity,
                    e.avg_rating, e.rating_count, e.community_message_count,
                    e.published_at, e.level, e.xp,
                    petdx.avatar_url AS petdx_avatar_url
@@ -2227,22 +2270,26 @@ async function searchPublicCards({ q, tag, capability, limit = 20, offset = 0, s
         `;
 
         const result = await pool.query(sql, params);
-        return result.rows.map(r => ({
-            publicCode: r.public_code,
-            name: r.name,
-            character: r.character,
-            avatar: r.avatar,
-            petdxAvatarUrl: r.petdx_avatar_url || null,
-            description: r.agent_card?.description || null,
-            capabilities: r.agent_card?.capabilities || [],
-            tags: r.agent_card?.tags || [],
-            avgRating: parseFloat(r.avg_rating) || 0,
-            ratingCount: parseInt(r.rating_count) || 0,
-            messageCount: parseInt(r.community_message_count) || 0,
-            publishedAt: r.published_at,
-            level: r.level || 1,
-            xp: r.xp || 0
-        }));
+        return result.rows.map(r => {
+            const arena = extractArenaFieldsFromIdentity(r.identity);
+            return {
+                publicCode: r.public_code,
+                name: r.name,
+                character: r.character,
+                avatar: r.avatar,
+                petdxAvatarUrl: r.petdx_avatar_url || null,
+                description: r.agent_card?.description || null,
+                capabilities: r.agent_card?.capabilities || [],
+                tags: r.agent_card?.tags || [],
+                avgRating: parseFloat(r.avg_rating) || 0,
+                ratingCount: parseInt(r.rating_count) || 0,
+                messageCount: parseInt(r.community_message_count) || 0,
+                publishedAt: r.published_at,
+                level: r.level || 1,
+                xp: r.xp || 0,
+                ...arena,
+            };
+        });
     } catch (err) {
         console.error('[DB] searchPublicCards error:', err.message);
         return [];
@@ -2252,7 +2299,7 @@ async function searchPublicCards({ q, tag, capability, limit = 20, offset = 0, s
 async function getPublicCardDetail(publicCode) {
     try {
         const result = await pool.query(
-            `SELECT e.public_code, e.name, e.character, e.avatar, e.agent_card,
+            `SELECT e.public_code, e.name, e.character, e.avatar, e.agent_card, e.identity,
                     e.avg_rating, e.rating_count, e.community_message_count,
                     e.published_at, e.level, e.xp, e.state,
                     petdx.avatar_url AS petdx_avatar_url
@@ -2271,6 +2318,7 @@ async function getPublicCardDetail(publicCode) {
         );
         if (result.rows.length === 0) return null;
         const r = result.rows[0];
+        const arena = extractArenaFieldsFromIdentity(r.identity);
         return {
             publicCode: r.public_code,
             name: r.name,
@@ -2284,7 +2332,8 @@ async function getPublicCardDetail(publicCode) {
             publishedAt: r.published_at,
             level: r.level || 1,
             xp: r.xp || 0,
-            state: r.state || 'IDLE'
+            state: r.state || 'IDLE',
+            ...arena,
         };
     } catch (err) {
         console.error('[DB] getPublicCardDetail error:', err.message);
@@ -2590,6 +2639,7 @@ module.exports = {
     setEntityPublic,
     searchPublicCards,
     getPublicCardDetail,
+    extractArenaFieldsFromIdentity,
     getCommunityMessages,
     addCommunityMessage,
     upsertCommunityRating,

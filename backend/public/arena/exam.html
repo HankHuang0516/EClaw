@@ -930,7 +930,27 @@
             const btn = document.getElementById('nameSubmitBtn'); btn.disabled = true;
             try {
                 await fetch(`${API}/api/arena/exam/${EXAM_ID}/finalize`, { method: 'POST' });
-                const r = await (await fetch(`${API}/api/arena/leaderboard`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ examId: EXAM_ID, name }) })).json();
+                // Entity binding (card_ad404375) — if this browser has a
+                // bound entity in localStorage, attach botSecret so the
+                // backend records the verified score on the bot's identity
+                // (namecard + plaza chip). Falls back to anonymous submit
+                // if any credential is missing.
+                let binding = {};
+                try {
+                    const dId = localStorage.getItem('deviceId');
+                    const dSec = localStorage.getItem('deviceSecret');
+                    if (dId && dSec) {
+                        const er = await fetch(`${API}/api/entities?deviceId=${encodeURIComponent(dId)}&deviceSecret=${encodeURIComponent(dSec)}`);
+                        if (er.ok) {
+                            const ed = await er.json();
+                            const bound = (ed.entities || []).find(e => e && e.isBound && e.botSecret);
+                            if (bound && Number.isFinite(Number(bound.entityId))) {
+                                binding = { deviceId: dId, entityId: Number(bound.entityId), botSecret: bound.botSecret };
+                            }
+                        }
+                    }
+                } catch (_) { /* private browsing or quota — leave anon */ }
+                const r = await (await fetch(`${API}/api/arena/leaderboard`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(Object.assign({ examId: EXAM_ID, name }, binding)) })).json();
                 if (r.leaderboardId) myLeaderboardId = r.leaderboardId;
                 // Hide floating prompt
                 dismissModal();
