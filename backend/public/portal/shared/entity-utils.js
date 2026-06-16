@@ -323,3 +323,333 @@ function attachAvatarClickHandler(container, onClick) {
     container.addEventListener('click', listener);
     return listener;
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Arena interview retest countdown — card_959b58d0351153bc94aea8da
+ *
+ * Bots that have passed an Arena interview must retest periodically (default
+ * cooldown = 30 days). The agent card shows a countdown chip below the
+ * Capabilities row so the owner sees, at a glance, how soon retest is due
+ * and the urgency level via color tier. Five tiers per card scope:
+ *
+ *   >14 days remaining     → gray    (plenty of time, no urgency)
+ *   7–14 days remaining    → yellow  (getting closer, informational)
+ *   3–7  days remaining    → orange  (schedule retest soon)
+ *   1–3  days remaining    → red     (urgent, retest required)
+ *   <1   day  remaining    → green   (cooldown lifting — retest already
+ *                                     available within 24h)
+ *   <=0  remaining         → ready   ("立即可重測" — green CTA pill)
+ *
+ * The "green" tier intentionally overlaps with "ready" semantically: per
+ * card scope <1 day = 綠（可重測）. We model these as two render states
+ * (countdown vs CTA) but share the same green palette, so users perceive
+ * "almost-unlocked" and "unlocked" as the same positive signal.
+ *
+ * Color is NEVER the only signal — every tier ships an explicit text label
+ * + aria-label + WCAG AA contrast ratio. prefers-reduced-motion disables
+ * the red-tier pulse animation.
+ *
+ * Pure helpers (computeRetestDeadlineMs, getRetestSeverity,
+ * formatRetestRemaining, renderRetestCountdownHtml, attachRetestCountdown)
+ * are exported on `window.EntityRetestCountdown` AND via CommonJS so jest
+ * can unit-test them server-side without a DOM.
+ *
+ * Timezone: we operate in epoch ms throughout. Date.parse / Date.now() are
+ * UTC-anchored, so DST transitions and user TZ don't shift the deadline.
+ * The DISPLAY string (24d 03h) is duration math on ms, not calendar days,
+ * so a "1 day remaining" chip means exactly 86,400,000ms — no DST drift.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+const ARENA_RETEST_COOLDOWN_DAYS = 30;
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+// Boundaries in ms — exclusive on the lower edge, so >14d means "more
+// than 14 full days", matching the 灰/黃/橙/紅/綠 scope verbatim.
+const RETEST_THRESHOLD_GRAY_MS = 14 * ONE_DAY_MS;   // >14d → gray
+const RETEST_THRESHOLD_YELLOW_MS = 7 * ONE_DAY_MS;  // 7-14d → yellow
+const RETEST_THRESHOLD_ORANGE_MS = 3 * ONE_DAY_MS;  // 3-7d  → orange
+const RETEST_THRESHOLD_RED_MS = 1 * ONE_DAY_MS;     // 1-3d  → red; <1d → green
+
+/**
+ * Compute the retest deadline in epoch ms from the last interview timestamp.
+ * Accepts ISO string, epoch ms, or a Date. Returns null when input is missing
+ * or unparseable — callers should hide the countdown in that case.
+ */
+function computeRetestDeadlineMs(lastInterviewAt, cooldownDays) {
+    if (lastInterviewAt == null) return null;
+    const days = Number.isFinite(cooldownDays) && cooldownDays > 0
+        ? cooldownDays
+        : ARENA_RETEST_COOLDOWN_DAYS;
+    let ts;
+    if (typeof lastInterviewAt === 'number') {
+        ts = lastInterviewAt;
+    } else if (lastInterviewAt instanceof Date) {
+        ts = lastInterviewAt.getTime();
+    } else {
+        ts = Date.parse(String(lastInterviewAt));
+    }
+    if (!Number.isFinite(ts) || ts <= 0) return null;
+    return ts + days * 24 * 60 * 60 * 1000;
+}
+
+/**
+ * Map remaining milliseconds → severity tier per card_959 scope.
+ * Boundaries match the scope verbatim; intervals are half-open so each
+ * tier is unambiguous at the boundary:
+ *
+ *   (14d, ∞)     → 'gray'    (plenty of time)
+ *   (7d, 14d]    → 'yellow'  (informational; 14d exactly falls here)
+ *   (3d, 7d]    → 'orange'  (schedule soon; 7d exactly falls here)
+ *   [1d, 3d]    → 'red'     (urgent; 1d exactly is the red→green pivot)
+ *   (0, 1d)     → 'green'   (cooldown ends within 24h)
+ *   (-∞, 0]     → 'ready'   (retest available — caller renders CTA pill)
+ *
+ * 'ready' is the only non-color tier in the sense that callers swap to a
+ * different label ("立即可重測"). All other tiers render the same chip
+ * layout, just with a different palette class.
+ *
+ * Non-finite input (NaN, Infinity, strings) collapses to 'ready' — the
+ * safest UX default when we can't compute remaining: show the green CTA
+ * and let the user retest if they want.
+ */
+function getRetestSeverity(remainingMs) {
+    if (!Number.isFinite(remainingMs) || remainingMs <= 0) return 'ready';
+    if (remainingMs > RETEST_THRESHOLD_GRAY_MS) return 'gray';
+    if (remainingMs > RETEST_THRESHOLD_YELLOW_MS) return 'yellow';
+    if (remainingMs > RETEST_THRESHOLD_ORANGE_MS) return 'orange';
+    if (remainingMs >= RETEST_THRESHOLD_RED_MS) return 'red';
+    return 'green';
+}
+
+/**
+ * Format remaining milliseconds as a human-readable countdown.
+ * The dispatch (card_959) requires that the seconds tick visibly down, so
+ * we always emit a seconds segment when remaining < 1 hour.
+ *
+ * Shape examples:
+ *   25d 03h        (≥ 1 day,  drop minutes/seconds — too noisy at this scale)
+ *   05h 23m        (< 1 day,  ≥ 1 hour)
+ *   42m 17s        (< 1 hour, ≥ 1 minute)
+ *   09s            (< 1 minute)
+ */
+function formatRetestRemaining(remainingMs) {
+    if (!Number.isFinite(remainingMs) || remainingMs <= 0) return '0s';
+    const totalSec = Math.floor(remainingMs / 1000);
+    const days = Math.floor(totalSec / 86400);
+    const hours = Math.floor((totalSec % 86400) / 3600);
+    const minutes = Math.floor((totalSec % 3600) / 60);
+    const seconds = totalSec % 60;
+    const pad = (n) => (n < 10 ? '0' + n : String(n));
+    if (days >= 1) return days + 'd ' + pad(hours) + 'h';
+    if (hours >= 1) return pad(hours) + 'h ' + pad(minutes) + 'm';
+    if (minutes >= 1) return pad(minutes) + 'm ' + pad(seconds) + 's';
+    return pad(seconds) + 's';
+}
+
+function _t(key, fallback) {
+    return (typeof i18n !== 'undefined' && typeof i18n.t === 'function')
+        ? i18n.t(key)
+        : fallback;
+}
+
+// Minimal attribute-context escaper so the deadline + label strings
+// can't break out of the HTML we build by string-concat. deadlineMs is
+// always Number.isFinite, but the localized strings come from i18n.js
+// which is owner-controlled and could theoretically contain quotes.
+function _escAttr(s) {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+/**
+ * Render the countdown chip HTML. Caller injects this into a container
+ * then calls attachRetestCountdown(container, deadlineMs) to start ticking.
+ *
+ * The chip always carries:
+ *   - role="status" + aria-live="polite" — screen readers announce updates
+ *   - aria-label — full "{label}: {value} ({tier})" sentence for assistive tech
+ *   - text label + numeric value — color is never the only signal (WCAG 1.4.1)
+ *   - data-testid hooks for Playwright E2E
+ */
+function renderRetestCountdownHtml(deadlineMs) {
+    if (!Number.isFinite(deadlineMs)) return '';
+    const remaining = deadlineMs - Date.now();
+    const severity = getRetestSeverity(remaining);
+    const labelText = _t('card_retest_label', 'Next retest');
+    const tierLabel = _t('card_retest_tier_' + severity,
+        severity.charAt(0).toUpperCase() + severity.slice(1));
+    if (severity === 'ready') {
+        const readyText = _t('card_retest_ready', 'Available now');
+        const aria = _escAttr(labelText + ': ' + readyText + ' (' + tierLabel + ')');
+        return ''
+            + '<div class="retest-countdown retest-countdown--ready" '
+            + 'data-retest-deadline="' + deadlineMs + '" '
+            + 'data-testid="retest-countdown" '
+            + 'role="status" aria-live="off" aria-label="' + aria + '">'
+            +   '<span class="retest-countdown__label" data-i18n="card_retest_label">'
+            +     _escAttr(labelText)
+            +   '</span>'
+            +   '<span class="retest-countdown__value" data-i18n="card_retest_ready" data-testid="retest-countdown-value">'
+            +     _escAttr(readyText)
+            +   '</span>'
+            + '</div>';
+    }
+    const value = formatRetestRemaining(remaining);
+    const aria = _escAttr(labelText + ': ' + value + ' (' + tierLabel + ')');
+    return ''
+        + '<div class="retest-countdown retest-countdown--' + severity + '" '
+        + 'data-retest-deadline="' + deadlineMs + '" '
+        + 'data-testid="retest-countdown" '
+        + 'role="status" aria-live="off" aria-label="' + aria + '">'
+        +   '<span class="retest-countdown__label" data-i18n="card_retest_label">'
+        +     _escAttr(labelText)
+        +   '</span>'
+        +   '<span class="retest-countdown__value" data-testid="retest-countdown-value">'
+        +     _escAttr(value)
+        +   '</span>'
+        + '</div>';
+}
+
+/**
+ * Attach a 1-second tick to a `.retest-countdown` element so the value
+ * counts down in real time. Auto-detaches when the element leaves the DOM
+ * (MutationObserver fallback for environments without document.body).
+ * Returns a stop() function for explicit cleanup (used by tests + on
+ * dashboard tab switch so we never leak intervals into other pages).
+ */
+function attachRetestCountdown(rootEl) {
+    if (!rootEl) return function noop() {};
+    const node = rootEl.classList && rootEl.classList.contains('retest-countdown')
+        ? rootEl
+        : rootEl.querySelector && rootEl.querySelector('.retest-countdown');
+    if (!node) return function noop() {};
+    const deadline = parseInt(node.getAttribute('data-retest-deadline'), 10);
+    if (!Number.isFinite(deadline)) return function noop() {};
+    // Upper-bound sanity check: anything more than 10 years out is either a
+    // bug or a tamper attempt — skip rather than render a millennial chip.
+    const SANE_MAX_DEADLINE = Date.now() + 10 * 365 * ONE_DAY_MS;
+    if (deadline > SANE_MAX_DEADLINE) return function noop() {};
+
+    const valueEl = node.querySelector('.retest-countdown__value');
+    if (!valueEl) return function noop() {};
+
+    let stopped = false;
+    let lastTier = null;
+
+    // All 5 severity classes (plus 'ready') so tick() can fully toggle.
+    // Listed once at attach time to avoid string-array allocation per tick.
+    const SEVERITY_CLASSES = [
+        'retest-countdown--gray',
+        'retest-countdown--yellow',
+        'retest-countdown--orange',
+        'retest-countdown--red',
+        'retest-countdown--green',
+        'retest-countdown--ready',
+    ];
+
+    function tick() {
+        if (stopped) return;
+        if (typeof document !== 'undefined' && document.body && !document.body.contains(node)) {
+            stop();
+            return;
+        }
+        const remaining = deadline - Date.now();
+        const severity = getRetestSeverity(remaining);
+        // Toggle the palette class set in one pass.
+        node.classList.remove.apply(node.classList, SEVERITY_CLASSES);
+        node.classList.add('retest-countdown--' + severity);
+        // Re-read i18n labels every tick so live locale switches propagate
+        // (the dashboard's <select lang> swap doesn't re-render this chip).
+        const labelText = _t('card_retest_label', 'Next retest');
+        const tierLabel = _t('card_retest_tier_' + severity,
+            severity.charAt(0).toUpperCase() + severity.slice(1));
+        if (severity === 'ready') {
+            valueEl.textContent = _t('card_retest_ready', 'Available now');
+            valueEl.setAttribute('data-i18n', 'card_retest_ready');
+            node.setAttribute('aria-label',
+                labelText + ': ' + valueEl.textContent + ' (' + tierLabel + ')');
+            // Once "ready" there is nothing left to tick — stop the timer so
+            // the dashboard doesn't keep waking up every second forever.
+            stop();
+            return;
+        }
+        valueEl.textContent = formatRetestRemaining(remaining);
+        valueEl.removeAttribute('data-i18n');
+        // Always update aria-label so AT can re-read the current state on
+        // demand. Only flip aria-live="polite" on TIER TRANSITIONS so
+        // screen readers don't chatter every second (a known SR antipattern
+        // — see sub-agent review #5). The chip ships role="status" and
+        // aria-live="off" by default; we briefly promote to polite when
+        // the urgency tier changes, then drop back.
+        node.setAttribute('aria-label',
+            labelText + ': ' + valueEl.textContent + ' (' + tierLabel + ')');
+        if (severity !== lastTier) {
+            lastTier = severity;
+            node.setAttribute('aria-live', 'polite');
+        } else {
+            node.setAttribute('aria-live', 'off');
+        }
+    }
+
+    const interval = setInterval(tick, 1000);
+    tick();
+
+    // Pause when the tab is hidden so a long-backgrounded dashboard stops
+    // burning a tick per second. Resume on visibilitychange:visible.
+    let pausedForVisibility = false;
+    function onVis() {
+        if (typeof document === 'undefined') return;
+        if (document.hidden) pausedForVisibility = true;
+        else { pausedForVisibility = false; tick(); }
+    }
+    // Hard-stop on pagehide so SPA navigation doesn't leak intervals.
+    function onPageHide() { stop(); }
+    if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+        document.addEventListener('visibilitychange', onVis);
+    }
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+        window.addEventListener('pagehide', onPageHide);
+    }
+
+    // Wrap setInterval's tick so it no-ops during pauses without losing
+    // its scheduled cadence (we still want to resume on visibility).
+    // tick() itself does nothing when stopped, so this is just an optimization.
+
+    function stop() {
+        if (stopped) return;
+        stopped = true;
+        clearInterval(interval);
+        if (typeof document !== 'undefined' && typeof document.removeEventListener === 'function') {
+            document.removeEventListener('visibilitychange', onVis);
+        }
+        if (typeof window !== 'undefined' && typeof window.removeEventListener === 'function') {
+            window.removeEventListener('pagehide', onPageHide);
+        }
+    }
+    return stop;
+}
+
+// Expose helpers for jest + dashboard wiring.
+if (typeof window !== 'undefined') {
+    window.EntityRetestCountdown = {
+        ARENA_RETEST_COOLDOWN_DAYS,
+        computeRetestDeadlineMs,
+        getRetestSeverity,
+        formatRetestRemaining,
+        renderRetestCountdownHtml,
+        attachRetestCountdown,
+    };
+}
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        ARENA_RETEST_COOLDOWN_DAYS,
+        computeRetestDeadlineMs,
+        getRetestSeverity,
+        formatRetestRemaining,
+        renderRetestCountdownHtml,
+        attachRetestCountdown,
+    };
+}

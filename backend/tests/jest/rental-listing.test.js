@@ -183,10 +183,18 @@ jest.mock('pg', () => {
             const rows = state.listings
                 .filter(l => l.owner_user_id === params[0])
                 .map(r => ({
-                    id: r.id, title: r.title,
+                    id: r.id,
+                    owner_device_id: r.owner_device_id,
+                    owner_entity_id: r.owner_entity_id,
+                    title: r.title,
                     rate_mli_per_ktoken: r.rate_mli_per_ktoken,
                     status: r.status, interview_passed: r.interview_passed,
+                    // last_interview_at: surfaced for the retest countdown
+                    // (card_959).
+                    last_interview_at: r.last_interview_at,
                     avg_rating: r.avg_rating, total_rentals: r.total_rentals,
+                    soft_pause_until: r.soft_pause_until,
+                    soft_pause_reason: r.soft_pause_reason,
                     created_at: r.created_at,
                 }))
                 .sort((a, b) => b.created_at - a.created_at);

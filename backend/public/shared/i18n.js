@@ -650299,6 +650299,15 @@ const TRANSLATIONS = {
         "notif_pref_rich_card": "Rich-card questions",
         "notif_pref_rich_card_help": "Push notifications when an agent attaches interactive buttons asking you to pick an option. Like Claude Code asking for permission — wakes your device because the agent is blocked on your choice. Default ON; if no bot is sending rich cards in your chats, no notifications arrive even when enabled.",
         "notif_rich_card_question_title_suffix": "needs your input",
+
+        "card_retest_label": "Next retest",
+        "card_retest_ready": "Available now",
+        "card_retest_tier_gray": "Plenty of time",
+        "card_retest_tier_yellow": "Approaching",
+        "card_retest_tier_orange": "Due soon",
+        "card_retest_tier_red": "Urgent",
+        "card_retest_tier_green": "Lifting",
+        "card_retest_tier_ready": "Ready",
 },
 
 
@@ -1235064,6 +1235073,15 @@ const TRANSLATIONS = {
         "notif_pref_rich_card": "互動卡片詢問",
         "notif_pref_rich_card_help": "當智能體在訊息中附上可點擊按鈕請你選擇選項時推播通知，就像 Claude Code 詢問權限那樣 — 智能體正在等你決定，所以會喚醒裝置。預設開啟；若聊天裡沒有智能體送出互動卡片，即使開啟也不會收到通知。",
         "notif_rich_card_question_title_suffix": "需要你的選擇",
+
+        "card_retest_label": "下次重測",
+        "card_retest_ready": "立即可重測",
+        "card_retest_tier_gray": "時間充裕",
+        "card_retest_tier_yellow": "即將到期",
+        "card_retest_tier_orange": "快到期",
+        "card_retest_tier_red": "緊急",
+        "card_retest_tier_green": "即將解鎖",
+        "card_retest_tier_ready": "可重測",
 },
 
 
@@ -1849203,6 +1849221,15 @@ const TRANSLATIONS = {
         "notif_pref_rich_card": "互动卡片询问",
         "notif_pref_rich_card_help": "当智能体在消息中附上可点击按钮请你选择选项时推送通知，就像 Claude Code 询问权限那样 — 智能体正在等你决定，所以会唤醒设备。默认开启；若聊天里没有智能体发送互动卡片，即使开启也不会收到通知。",
         "notif_rich_card_question_title_suffix": "需要你的选择",
+
+        "card_retest_label": "下次重测",
+        "card_retest_ready": "立即可重测",
+        "card_retest_tier_gray": "时间充裕",
+        "card_retest_tier_yellow": "即将到期",
+        "card_retest_tier_orange": "快到期",
+        "card_retest_tier_red": "紧急",
+        "card_retest_tier_green": "即将解锁",
+        "card_retest_tier_ready": "可重测",
 },
 
 
@@ -2412425,6 +2412452,15 @@ const TRANSLATIONS = {
         "notif_pref_rich_card": "リッチカードの質問",
         "notif_pref_rich_card_help": "エージェントがインタラクティブなボタンを添えて選択を求めるときに通知を送信します。Claude Code が許可を求めるのと同じ仕組み — エージェントがあなたの判断を待っているのでデバイスを起こします。デフォルトでオン。チャットでリッチカードを送信するボットがいない場合は、オンでも通知は届きません。",
         "notif_rich_card_question_title_suffix": "の操作待ちです",
+
+        "card_retest_label": "次回再試験",
+        "card_retest_ready": "今すぐ再試験可能",
+        "card_retest_tier_gray": "余裕あり",
+        "card_retest_tier_yellow": "近づいています",
+        "card_retest_tier_orange": "まもなく期限",
+        "card_retest_tier_red": "緊急",
+        "card_retest_tier_green": "解除間近",
+        "card_retest_tier_ready": "準備完了",
 },
 
 
@@ -2942752,6 +2942788,15 @@ const TRANSLATIONS = {
         "notif_pref_rich_card": "리치 카드 질문",
         "notif_pref_rich_card_help": "에이전트가 옵션 선택을 요청하는 대화형 버튼을 첨부할 때 푸시 알림을 보냅니다. Claude Code의 권한 요청과 같은 방식 — 에이전트가 사용자의 결정을 기다리므로 기기를 깨웁니다. 기본 켜짐; 리치 카드를 보내는 봇이 없으면 켜져 있어도 알림이 오지 않습니다.",
         "notif_rich_card_question_title_suffix": "입력 대기 중",
+
+        "card_retest_label": "다음 재시험",
+        "card_retest_ready": "지금 재시험 가능",
+        "card_retest_tier_gray": "여유 있음",
+        "card_retest_tier_yellow": "다가옴",
+        "card_retest_tier_orange": "곧 마감",
+        "card_retest_tier_red": "긴급",
+        "card_retest_tier_green": "곧 해제",
+        "card_retest_tier_ready": "준비됨",
 },
 
 
@@ -2944382,6 +2944427,15 @@ const TRANSLATIONS = {
         "notif_pref_rich_card": "互動卡片詢問",
         "notif_pref_rich_card_help": "當智能體在訊息中附上可點擊按鈕請你選擇選項時推播通知，就像 Claude Code 詢問權限那樣 — 智能體正在等你決定，所以會喚醒裝置。預設開啟；若聊天裡沒有智能體送出互動卡片，即使開啟也不會收到通知。",
         "notif_rich_card_question_title_suffix": "需要你的選擇",
+
+        "card_retest_label": "下次重測",
+        "card_retest_ready": "立即可重測",
+        "card_retest_tier_gray": "時間充裕",
+        "card_retest_tier_yellow": "即將到期",
+        "card_retest_tier_orange": "快到期",
+        "card_retest_tier_red": "緊急",
+        "card_retest_tier_green": "即將解鎖",
+        "card_retest_tier_ready": "可重測",
 },
 
 
@@ -3471191,6 +3471245,15 @@ const TRANSLATIONS = {
         "notif_pref_rich_card": "คำถามจากการ์ดแบบโต้ตอบ",
         "notif_pref_rich_card_help": "แจ้งเตือนแบบพุชเมื่อเอเจนต์แนบปุ่มแบบโต้ตอบให้คุณเลือกตัวเลือก เหมือนกับที่ Claude Code ขออนุญาต — เอเจนต์กำลังรอการตัดสินใจของคุณ จึงปลุกอุปกรณ์ ค่าเริ่มต้นเปิด หากไม่มีบอทส่งการ์ดแบบโต้ตอบในแชต จะไม่มีการแจ้งเตือนแม้จะเปิดอยู่",
         "notif_rich_card_question_title_suffix": "ต้องการคำตอบจากคุณ",
+
+        "card_retest_label": "การทดสอบครั้งถัดไป",
+        "card_retest_ready": "พร้อมทดสอบใหม่",
+        "card_retest_tier_gray": "มีเวลาเหลือเฟือ",
+        "card_retest_tier_yellow": "ใกล้ครบกำหนด",
+        "card_retest_tier_orange": "จะครบกำหนดเร็วๆ นี้",
+        "card_retest_tier_red": "เร่งด่วน",
+        "card_retest_tier_green": "กำลังจะปลดล็อก",
+        "card_retest_tier_ready": "พร้อม",
 },
 
 
@@ -3998078,6 +3998141,15 @@ const TRANSLATIONS = {
         "notif_pref_rich_card": "Câu hỏi thẻ tương tác",
         "notif_pref_rich_card_help": "Thông báo đẩy khi tác nhân đính kèm các nút tương tác yêu cầu bạn chọn một tùy chọn. Giống như Claude Code yêu cầu cấp quyền — tác nhân đang chờ quyết định của bạn nên sẽ đánh thức thiết bị. Mặc định bật; nếu không có bot nào gửi thẻ tương tác trong các cuộc trò chuyện, sẽ không nhận được thông báo ngay cả khi đã bật.",
         "notif_rich_card_question_title_suffix": "cần phản hồi của bạn",
+
+        "card_retest_label": "Lần kiểm tra tiếp theo",
+        "card_retest_ready": "Có thể kiểm tra lại ngay",
+        "card_retest_tier_gray": "Còn nhiều thời gian",
+        "card_retest_tier_yellow": "Sắp đến hạn",
+        "card_retest_tier_orange": "Sắp hết hạn",
+        "card_retest_tier_red": "Khẩn cấp",
+        "card_retest_tier_green": "Sắp mở khóa",
+        "card_retest_tier_ready": "Sẵn sàng",
 },
 
 
@@ -4524581,6 +4524653,15 @@ const TRANSLATIONS = {
         "notif_pref_rich_card": "Pertanyaan kartu interaktif",
         "notif_pref_rich_card_help": "Notifikasi push ketika agen melampirkan tombol interaktif yang meminta Anda memilih opsi. Seperti Claude Code yang meminta izin — agen sedang menunggu keputusan Anda, jadi akan membangunkan perangkat. Default aktif; jika tidak ada bot yang mengirim kartu interaktif di obrolan Anda, tidak ada notifikasi yang masuk meskipun diaktifkan.",
         "notif_rich_card_question_title_suffix": "menunggu respons Anda",
+
+        "card_retest_label": "Tes ulang berikutnya",
+        "card_retest_ready": "Tersedia sekarang",
+        "card_retest_tier_gray": "Banyak waktu",
+        "card_retest_tier_yellow": "Mendekati",
+        "card_retest_tier_orange": "Segera",
+        "card_retest_tier_red": "Mendesak",
+        "card_retest_tier_green": "Akan terbuka",
+        "card_retest_tier_ready": "Siap",
 },
 
 
@@ -5049727,6 +5049808,15 @@ const TRANSLATIONS = {
         "notif_pref_rich_card": "Questions de cartes interactives",
         "notif_pref_rich_card_help": "Notifications push lorsqu'un agent joint des boutons interactifs vous demandant de choisir une option. Comme Claude Code demandant une autorisation — l'agent attend votre décision, donc cela réveille l'appareil. Activé par défaut ; si aucun bot n'envoie de cartes interactives dans vos discussions, aucune notification n'arrive même si l'option est activée.",
         "notif_rich_card_question_title_suffix": "attend votre réponse",
+
+        "card_retest_label": "Prochain retest",
+        "card_retest_ready": "Disponible maintenant",
+        "card_retest_tier_gray": "Beaucoup de temps",
+        "card_retest_tier_yellow": "Approche",
+        "card_retest_tier_orange": "Bientôt dû",
+        "card_retest_tier_red": "Urgent",
+        "card_retest_tier_green": "Bientôt débloqué",
+        "card_retest_tier_ready": "Prêt",
 },
 
 
@@ -5567424,6 +5567514,15 @@ const TRANSLATIONS = {
         "notif_pref_rich_card": "Preguntas de tarjetas interactivas",
         "notif_pref_rich_card_help": "Notificaciones push cuando un agente adjunta botones interactivos pidiéndote elegir una opción. Como Claude Code pidiendo permiso — el agente está esperando tu decisión, por lo que despierta el dispositivo. Activado por defecto; si ningún bot envía tarjetas interactivas en tus chats, no llegan notificaciones aunque esté activado.",
         "notif_rich_card_question_title_suffix": "espera tu respuesta",
+
+        "card_retest_label": "Próximo reexamen",
+        "card_retest_ready": "Disponible ahora",
+        "card_retest_tier_gray": "Tiempo de sobra",
+        "card_retest_tier_yellow": "Acercándose",
+        "card_retest_tier_orange": "Pronto vence",
+        "card_retest_tier_red": "Urgente",
+        "card_retest_tier_green": "Pronto disponible",
+        "card_retest_tier_ready": "Listo",
 },
 
 
@@ -6104364,6 +6104463,15 @@ const TRANSLATIONS = {
         "notif_pref_rich_card": "Rich-Card-Fragen",
         "notif_pref_rich_card_help": "Push-Benachrichtigungen, wenn ein Agent interaktive Schaltflächen anhängt und dich bittet, eine Option zu wählen. Wie Claude Code, das um Erlaubnis fragt — der Agent wartet auf deine Entscheidung und weckt daher das Gerät. Standardmäßig aktiviert; wenn kein Bot Rich-Cards in deinen Chats sendet, kommen keine Benachrichtigungen, auch wenn aktiviert.",
         "notif_rich_card_question_title_suffix": "wartet auf deine Antwort",
+
+        "card_retest_label": "Nächster Retest",
+        "card_retest_ready": "Jetzt verfügbar",
+        "card_retest_tier_gray": "Viel Zeit",
+        "card_retest_tier_yellow": "Nähert sich",
+        "card_retest_tier_orange": "Bald fällig",
+        "card_retest_tier_red": "Dringend",
+        "card_retest_tier_green": "Bald frei",
+        "card_retest_tier_ready": "Bereit",
 },
     pt: {
         "transition_loading": "A carregar…",
@@ -6109816,6 +6109924,15 @@ const TRANSLATIONS = {
         "notif_pref_rich_card": "Perguntas de cartões interativos",
         "notif_pref_rich_card_help": "Notificações push quando um agente anexa botões interativos pedindo para você escolher uma opção. Como o Claude Code pedindo permissão — o agente está esperando sua decisão, então acorda o dispositivo. Padrão ligado; se nenhum bot enviar cartões interativos em seus chats, nenhuma notificação chega mesmo que esteja ativado.",
         "notif_rich_card_question_title_suffix": "aguarda sua resposta",
+
+        "card_retest_label": "Próximo reteste",
+        "card_retest_ready": "Disponível agora",
+        "card_retest_tier_gray": "Muito tempo",
+        "card_retest_tier_yellow": "Aproximando-se",
+        "card_retest_tier_orange": "Em breve",
+        "card_retest_tier_red": "Urgente",
+        "card_retest_tier_green": "Liberando em breve",
+        "card_retest_tier_ready": "Pronto",
 },
 
 
@@ -6638625,6 +6638742,15 @@ const TRANSLATIONS = {
         "notif_pref_rich_card": "Soalan kad interaktif",
         "notif_pref_rich_card_help": "Pemberitahuan tolak apabila ejen melampirkan butang interaktif meminta anda memilih pilihan. Seperti Claude Code meminta kebenaran — ejen sedang menunggu keputusan anda, jadi ia mengejutkan peranti. Lalai HIDUP; jika tiada bot menghantar kad interaktif dalam sembang anda, tiada pemberitahuan tiba walaupun dihidupkan.",
         "notif_rich_card_question_title_suffix": "menunggu maklum balas anda",
+
+        "card_retest_label": "Ujian semula seterusnya",
+        "card_retest_ready": "Tersedia sekarang",
+        "card_retest_tier_gray": "Masa mencukupi",
+        "card_retest_tier_yellow": "Menghampiri",
+        "card_retest_tier_orange": "Tidak lama lagi",
+        "card_retest_tier_red": "Mendesak",
+        "card_retest_tier_green": "Akan dibuka",
+        "card_retest_tier_ready": "Sedia",
 },
 
 
@@ -7197891,6 +7198017,15 @@ const TRANSLATIONS = {
         "notif_pref_rich_card": "इंटरैक्टिव कार्ड प्रश्न",
         "notif_pref_rich_card_help": "जब कोई एजेंट इंटरैक्टिव बटन संलग्न करके आपसे विकल्प चुनने के लिए कहता है तो पुश सूचनाएं भेजी जाती हैं। जैसे Claude Code अनुमति मांगता है — एजेंट आपके निर्णय की प्रतीक्षा कर रहा है, इसलिए डिवाइस को जगाता है। डिफ़ॉल्ट चालू; यदि आपकी चैट में कोई बॉट इंटरैक्टिव कार्ड नहीं भेज रहा है, तो चालू होने पर भी कोई सूचना नहीं आती।",
         "notif_rich_card_question_title_suffix": "को आपके इनपुट की आवश्यकता है",
+
+        "card_retest_label": "अगला पुनः परीक्षण",
+        "card_retest_ready": "अभी उपलब्ध",
+        "card_retest_tier_gray": "बहुत समय है",
+        "card_retest_tier_yellow": "नज़दीक",
+        "card_retest_tier_orange": "जल्द ही देय",
+        "card_retest_tier_red": "अत्यावश्यक",
+        "card_retest_tier_green": "जल्द खुलेगा",
+        "card_retest_tier_ready": "तैयार",
 },
 
 
@@ -7746283,6 +7746418,15 @@ const TRANSLATIONS = {
         "notif_pref_rich_card": "أسئلة البطاقات التفاعلية",
         "notif_pref_rich_card_help": "إشعارات فورية عندما يرفق وكيل أزرارًا تفاعلية يطلب منك اختيار خيار. مثل Claude Code عند طلب الإذن — الوكيل ينتظر قرارك، لذا يوقظ الجهاز. ممكّن افتراضيًا؛ إذا لم يرسل أي روبوت بطاقات تفاعلية في محادثاتك، فلن تصل إشعارات حتى لو كان مفعّلاً.",
         "notif_rich_card_question_title_suffix": "ينتظر ردك",
+
+        "card_retest_label": "الاختبار التالي",
+        "card_retest_ready": "متاح الآن",
+        "card_retest_tier_gray": "وقت كافٍ",
+        "card_retest_tier_yellow": "يقترب",
+        "card_retest_tier_orange": "قريباً",
+        "card_retest_tier_red": "عاجل",
+        "card_retest_tier_green": "سيُفتح قريباً",
+        "card_retest_tier_ready": "جاهز",
 }
 
 
