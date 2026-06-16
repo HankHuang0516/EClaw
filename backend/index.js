@@ -21071,9 +21071,18 @@ app.post('/api/device-vars', async (req, res) => {
             const existingKeyCount = existingRow && existingRow.var_keys && Array.isArray(existingRow.var_keys)
                 ? existingRow.var_keys.length
                 : 0;
-            const existingUpdatedAt = existingRow && existingRow.updated_at
-                ? new Date(existingRow.updated_at).toISOString()
-                : null;
+            // Defensive: row.updated_at may be Date, string, or unexpected shape
+            // depending on pg driver state. `new Date(invalidShape).toISOString()`
+            // throws RangeError "Invalid time value" → unhandled rejection → crash
+            // → restart loop (incident 2026-06-16 14:15:45Z; same pattern as PR #3424
+            // hotfixed in GET handler). Wrap defensively + fall back to null.
+            let existingUpdatedAt = null;
+            try {
+                if (existingRow && existingRow.updated_at) {
+                    const d = new Date(existingRow.updated_at);
+                    if (!Number.isNaN(d.getTime())) existingUpdatedAt = d.toISOString();
+                }
+            } catch (_) { existingUpdatedAt = null; }
             if (existingKeyCount > 0) {
                 const _srcLabel = (source === 'web' || source === 'app') ? source : 'legacy';
                 console.warn(`[Vars] POST without expectedUpdatedAt against non-empty row (deviceId=${deviceId} source=${_srcLabel} keys=${existingKeyCount} strictMode=${strictMode})`);
@@ -21099,9 +21108,14 @@ app.post('/api/device-vars', async (req, res) => {
         }
     } else {
         const currentRow = await loadExistingRowOnce();
-        const currentUpdatedAt = currentRow && currentRow.updated_at
-            ? new Date(currentRow.updated_at).toISOString()
-            : null;
+        // Defensive: see comment on existingUpdatedAt above (incident 2026-06-16 14:15:45Z).
+        let currentUpdatedAt = null;
+        try {
+            if (currentRow && currentRow.updated_at) {
+                const d = new Date(currentRow.updated_at);
+                if (!Number.isNaN(d.getTime())) currentUpdatedAt = d.toISOString();
+            }
+        } catch (_) { currentUpdatedAt = null; }
         if (currentUpdatedAt && currentUpdatedAt !== expectedUpdatedAt) {
             const _srcLabel = (source === 'web' || source === 'app') ? source : 'legacy';
             db.logDeviceVarsAudit({
