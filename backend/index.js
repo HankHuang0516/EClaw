@@ -12675,6 +12675,160 @@ app.get('/api/entity/lookup', (req, res) => {
     });
 });
 
+/**
+ * GET /api/entity/routing-detail
+ * Card_53c57504 (Chat / Routing-viz v2): click a routing chip → modal renders
+ * "this message route + org tree + rule source". Returns a non-sensitive slice
+ * of org-chart hierarchy + the resolved sender/receiver entity summaries so
+ * the chat UI can render the org-rule explanation WITHOUT recomputing routing
+ * (#6 routing-viz spec §3: front-end never re-derives routes).
+ *
+ * Auth: deviceId + (deviceSecret OR botSecret) — same shape as /api/entities.
+ *       deviceSecret callers see all entities on their device. botSecret
+ *       callers also see all entities on their own device (the chat UI
+ *       running under bot auth still needs the full tree to draw it) but
+ *       NEVER cross-device.
+ *
+ * Query:
+ *   deviceId       (required)
+ *   deviceSecret   (one of)
+ *   botSecret      (one of)
+ *   toEntityId     (optional) — target of the route, highlighted in tree
+ *   fromEntityId   (optional) — sender of the route, also highlighted
+ *   publicCode     (optional) — convenience: resolve toEntityId from
+ *                               publicCode on this same device
+ *
+ * Returns:
+ *   { success, deviceId, toEntity?, fromEntity?, hierarchy,
+ *     entities[], chain{superiorOfTo, subordinatesOfTo, peersOfTo},
+ *     orgRules{kanbanReviewer, taskForward, allForward},
+ *     ruleSource (computed: 'speakTo' | 'broadcast' | 'xdevice' | 'unknown') }
+ */
+app.get('/api/entity/routing-detail', async (req, res) => {
+    const deviceId = req.query.deviceId;
+    const deviceSecret = req.query.deviceSecret;
+    const botSecret = req.query.botSecret;
+    if (!deviceId) {
+        return res.status(400).json({ success: false, message: 'deviceId required' });
+    }
+    const device = devices[deviceId];
+    if (!device) {
+        return res.status(404).json({ success: false, message: 'Device not found' });
+    }
+
+    const deviceAuthed = deviceSecret && safeEqual(device.deviceSecret, deviceSecret);
+    let botAuthed = false;
+    if (!deviceAuthed && botSecret) {
+        botAuthed = Object.values(device.entities || {}).some(
+            e => e && e.isBound && e.botSecret && safeEqual(e.botSecret, botSecret)
+        );
+    }
+    const jwtDeviceId = req.user && req.user.deviceId;
+    const jwtAuthed = jwtDeviceId && jwtDeviceId === deviceId;
+    if (!deviceAuthed && !botAuthed && !jwtAuthed) {
+        return res.status(403).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    // Lightweight (non-sensitive) summary helper. Mirrors /api/entity/lookup
+    // public fields; never returns botSecret / webhook / channelAccountId.
+    const summarize = (e) => {
+        if (!e || !e.isBound) return null;
+        return {
+            entityId: e.entityId,
+            publicCode: e.publicCode || null,
+            name: e.name || null,
+            character: e.character || null,
+            state: e.state || null,
+            avatar: e.avatar || null,
+            level: Number.isFinite(Number(e.level)) ? Number(e.level) : 1,
+            role: (e.identity && e.identity.role) || null,
+            bindingType: e.bindingType || null,
+        };
+    };
+
+    // Resolve toEntityId: prefer explicit toEntityId, fall back to publicCode.
+    let toId = req.query.toEntityId != null ? parseInt(req.query.toEntityId, 10) : null;
+    if ((!toId && toId !== 0) || Number.isNaN(toId)) toId = null;
+    if (toId == null && req.query.publicCode) {
+        const target = publicCodeIndex[req.query.publicCode];
+        // Only same-device resolutions — routing-detail never leaks cross-device.
+        if (target && target.deviceId === deviceId) toId = target.entityId;
+    }
+    let fromId = req.query.fromEntityId != null ? parseInt(req.query.fromEntityId, 10) : null;
+    if (fromId !== 0 && (!fromId || Number.isNaN(fromId))) fromId = null;
+
+    const toEntity = toId != null ? summarize(device.entities[toId]) : null;
+    const fromEntity = fromId != null ? summarize(device.entities[fromId]) : null;
+
+    // Build full bound-entity roster (non-sensitive) so the client can label
+    // nodes in the hierarchy tree without a second /api/entities call.
+    const entities = [];
+    for (const idKey of Object.keys(device.entities || {})) {
+        const e = device.entities[idKey];
+        if (!e || !e.isBound) continue;
+        const s = summarize(e);
+        if (s) entities.push(s);
+    }
+    entities.sort((a, b) => a.entityId - b.entityId);
+
+    // Fetch org chart (auto-falls-back to flat USER-rooted default).
+    let orgData = { hierarchy: {}, options: { ...orgChartModule.DEFAULT_OPTIONS } };
+    try {
+        orgData = await orgChartModule.getOrgChart(deviceId);
+    } catch (err) {
+        console.warn(`[/api/entity/routing-detail] org-chart fetch failed: ${err.message}`);
+    }
+    let hierarchy = (orgData && orgData.hierarchy) || {};
+    if (!hierarchy || Object.keys(hierarchy).length === 0) {
+        hierarchy = orgChartModule.buildDefault(entities.map(e => e.entityId));
+    }
+
+    // Compute superior/subordinates/peers of the target entity (helps modal
+    // highlight relationships without re-walking the tree in JS).
+    let chain = null;
+    if (toId != null) {
+        const superiorRaw = orgChartModule.getSuperior(hierarchy, toId);
+        const subordinateIds = orgChartModule.getSubordinates(hierarchy, toId);
+        let peersOfTo = [];
+        if (superiorRaw != null) {
+            peersOfTo = orgChartModule.getSubordinates(hierarchy, superiorRaw)
+                .filter(eid => eid !== toId);
+        }
+        chain = {
+            superior: superiorRaw === 'USER'
+                ? { kind: 'USER' }
+                : (superiorRaw != null
+                    ? { kind: 'entity', entityId: superiorRaw, summary: summarize(device.entities[superiorRaw]) }
+                    : null),
+            subordinates: subordinateIds.map(eid => ({ entityId: eid, summary: summarize(device.entities[eid]) })),
+            peers: peersOfTo.map(eid => ({ entityId: eid, summary: summarize(device.entities[eid]) })),
+        };
+    }
+
+    // Rule-source heuristic. The front-end can override with the actual
+    // routing_meta.mode it already has; this is here so non-meta lookups
+    // (e.g. broadcast probes) still get a sensible default.
+    const mode = String(req.query.mode || '').toLowerCase();
+    let ruleSource = 'unknown';
+    if (['speakto', 'broadcast', 'xdevice'].includes(mode)) ruleSource = mode === 'speakto' ? 'speakTo' : mode;
+
+    res.json({
+        success: true,
+        deviceId,
+        toEntity,
+        fromEntity,
+        hierarchy,
+        entities,
+        chain,
+        orgRules: {
+            kanbanReviewer: !!(orgData.options && orgData.options.kanbanReviewer),
+            taskForward: !!(orgData.options && orgData.options.taskForward),
+            allForward: !!(orgData.options && orgData.options.allForward),
+        },
+        ruleSource,
+    });
+});
+
 // ── Agent Card: A2A Capability Discovery (Issue #174) ──
 
 /** Fields that can ONLY be set by the interview system, never by user/bot. */

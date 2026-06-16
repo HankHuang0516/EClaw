@@ -2722,6 +2722,209 @@
         .routing-chip.rc-unconfirmed { color: #9CA3AF; border-color: rgba(156,163,175,0.40); background: rgba(156,163,175,0.10); font-weight: 500; }
         .routing-chip.rc-degraded { color: #D97706; border-color: rgba(217,119,6,0.55); background: rgba(217,119,6,0.16); }
         .routing-chip.rc-failed { color: #DC2626; border-color: rgba(220,38,38,0.65); background: rgba(220,38,38,0.18); }
+        /* Clickable affordance for card_53c5 routing-chip click→modal. */
+        .routing-chip[role="button"]:hover { filter: brightness(1.12); text-decoration: underline; }
+        .routing-chip[role="button"]:focus-visible {
+            outline: 2px solid #a5b4fc;
+            outline-offset: 1px;
+        }
+
+        /* ── Routing chip detail modal (card_53c57504) ── */
+        #routingChipDetailModal .routing-detail-modal {
+            max-width: 560px;
+            width: calc(100% - 32px);
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+        }
+        #routingChipDetailModal .routing-detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--card-border, rgba(255,255,255,0.08));
+            margin-bottom: 12px;
+        }
+        #routingChipDetailModal .routing-detail-eyebrow {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #a5b4fc;
+            margin-bottom: 4px;
+        }
+        #routingChipDetailModal .routing-detail-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+        #routingChipDetailModal .routing-detail-close {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.12);
+            color: inherit;
+            border-radius: 8px;
+            width: 32px;
+            height: 32px;
+            font-size: 22px;
+            line-height: 1;
+            cursor: pointer;
+        }
+        #routingChipDetailModal .routing-detail-close:hover { background: rgba(255,255,255,0.08); }
+        #routingChipDetailModal .routing-detail-body {
+            overflow-y: auto;
+            font-size: 13.5px;
+        }
+        #routingChipDetailModal .routing-detail-loading,
+        #routingChipDetailModal .routing-detail-error {
+            padding: 24px;
+            text-align: center;
+            color: var(--text-secondary, #94a3b8);
+        }
+        #routingChipDetailModal .routing-detail-error { color: #f87171; }
+        #routingChipDetailModal .rd-section {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px dashed rgba(255,255,255,0.07);
+        }
+        #routingChipDetailModal .rd-section:first-child {
+            margin-top: 0;
+            padding-top: 0;
+            border-top: none;
+        }
+        #routingChipDetailModal .rd-section-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-secondary, #94a3b8);
+            margin-bottom: 8px;
+        }
+        #routingChipDetailModal .rd-route-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        #routingChipDetailModal .rd-entity-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border-radius: 14px;
+            background: rgba(99,102,241,0.12);
+            border: 1px solid rgba(99,102,241,0.30);
+        }
+        #routingChipDetailModal .rd-entity-pill.rd-pill-from { background: rgba(45,212,191,0.10); border-color: rgba(45,212,191,0.30); }
+        #routingChipDetailModal .rd-entity-pill.rd-pill-to { background: rgba(244,114,182,0.10); border-color: rgba(244,114,182,0.30); }
+        #routingChipDetailModal .rd-entity-pill .rd-avatar {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        #routingChipDetailModal .rd-entity-pill .rd-avatar-fb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.12);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        #routingChipDetailModal .rd-arrow {
+            font-size: 16px;
+            opacity: 0.7;
+        }
+        #routingChipDetailModal .rd-mode-pill {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+        #routingChipDetailModal .rd-status-pill {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        #routingChipDetailModal .rd-status-sent { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.30); }
+        #routingChipDetailModal .rd-status-degraded { background: rgba(217,119,6,0.12); color: #fbbf24; border: 1px solid rgba(217,119,6,0.30); }
+        #routingChipDetailModal .rd-status-failed { background: rgba(220,38,38,0.12); color: #f87171; border: 1px solid rgba(220,38,38,0.30); }
+        #routingChipDetailModal .rd-status-unconfirmed { background: rgba(148,163,184,0.12); color: #cbd5e1; border: 1px solid rgba(148,163,184,0.30); }
+        #routingChipDetailModal .rd-tree {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        #routingChipDetailModal .rd-tree-node {
+            padding: 4px 0 4px 14px;
+            border-left: 2px solid rgba(255,255,255,0.08);
+            margin-left: 6px;
+        }
+        #routingChipDetailModal .rd-tree-node.rd-tree-root {
+            border-left: none;
+            padding-left: 0;
+            margin-left: 0;
+        }
+        #routingChipDetailModal .rd-tree-node.rd-tree-current > .rd-tree-row {
+            background: rgba(99,102,241,0.18);
+            border-radius: 8px;
+            padding: 4px 8px;
+            margin-left: -8px;
+        }
+        #routingChipDetailModal .rd-tree-node.rd-tree-from > .rd-tree-row {
+            background: rgba(45,212,191,0.15);
+            border-radius: 8px;
+            padding: 4px 8px;
+            margin-left: -8px;
+        }
+        #routingChipDetailModal .rd-tree-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+        }
+        #routingChipDetailModal .rd-tree-row .rd-lv {
+            font-size: 10px;
+            padding: 1px 5px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.06);
+        }
+        #routingChipDetailModal .rd-tree-row .rd-role {
+            font-size: 10px;
+            opacity: 0.7;
+            font-style: italic;
+        }
+        #routingChipDetailModal .rd-rules {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        #routingChipDetailModal .rd-rule {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.10);
+        }
+        #routingChipDetailModal .rd-rule.rd-rule-on { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.30); color: #4ade80; }
+        #routingChipDetailModal .rd-rule.rd-rule-off { opacity: 0.55; }
+        #routingChipDetailModal .rd-helpline {
+            margin-top: 10px;
+            padding: 8px 10px;
+            background: rgba(99,102,241,0.06);
+            border: 1px solid rgba(99,102,241,0.18);
+            border-radius: 8px;
+            font-size: 12px;
+            color: var(--text-secondary, #cbd5e1);
+        }
+        @media (max-width: 480px) {
+            #routingChipDetailModal .routing-detail-modal { max-width: none; }
+            #routingChipDetailModal .rd-route-line { gap: 4px; }
+            #routingChipDetailModal .rd-entity-pill { padding: 3px 6px; }
+        }
 
         /* ── 引用預覽卡 popover (Chip B) ── */
         .autolink-chip-popover {
@@ -3227,6 +3430,23 @@
             </div>
             <div class="entity-modal-body" id="entityModalBody">
                 <div class="entity-modal-loading">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Routing Chip Detail Modal (card_53c57504) — click routing chip → see
+         per-message route + org tree + rules + rule source. -->
+    <div class="modal-overlay" id="routingChipDetailModal" onclick="if(event.target===this)closeModal('routingChipDetailModal')">
+        <div class="modal-box routing-detail-modal" role="dialog" aria-modal="true" aria-labelledby="routingDetailTitle">
+            <div class="routing-detail-header">
+                <div>
+                    <div class="routing-detail-eyebrow" data-i18n="chat_routing_detail_eyebrow">Routing</div>
+                    <div class="routing-detail-title" id="routingDetailTitle" data-i18n="chat_routing_detail_title">Route detail</div>
+                </div>
+                <button class="routing-detail-close" aria-label="Close" data-i18n-aria-label="chat_routing_detail_close_label" onclick="closeModal('routingChipDetailModal')">&times;</button>
+            </div>
+            <div class="routing-detail-body" id="routingDetailBody">
+                <div class="routing-detail-loading" data-i18n="chat_routing_detail_loading">Loading…</div>
             </div>
         </div>
     </div>
@@ -5865,10 +6085,20 @@
             const tt = (k, fb) => (typeof i18n !== 'undefined' && i18n.t && i18n.t(k)) || fb;
             // Negative: a message that WAS routed (entity:..->.. / xdevice source)
             // but carries no routing_meta → "路由未確認".
+            // card_53c5: 'click chip → org-structure modal'. Every emitted chip
+            // carries a JSON-stringified routing payload + a click handler that
+            // hands it off to openRoutingChipDetail() (defined below). The
+            // payload is the routing_meta when present, else a synthetic stub
+            // so the modal can still show 'unconfirmed/degraded' context.
+            const chipClickAttrs = (kind, payload) => {
+                const json = escapeHtml(JSON.stringify(payload || {}));
+                return ` data-routing-kind="${kind}" data-routing-meta="${json}" role="button" tabindex="0" data-i18n-aria-label="chat_routing_chip_aria" aria-label="${escapeHtml(tt('chat_routing_chip_aria','Click to see routing rule + org structure'))}" onclick="openRoutingChipDetail(this);event.stopPropagation();" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openRoutingChipDetail(this);}" style="cursor:pointer"`;
+            };
             if (!rm || typeof rm !== 'object') {
                 const routed = parseEntitySource(msg && msg.source);
                 if (routed && (msg.is_from_bot || routed.crossDevice)) {
-                    return `<span class="routing-chip rc-unconfirmed" title="${escapeHtml(tt('chat_routing_unconfirmed','路由未確認'))}">⚑ ${escapeHtml(tt('chat_routing_unconfirmed','路由未確認'))}</span>`;
+                    const stub = { status: 'unconfirmed', mode: routed.crossDevice ? 'xdevice' : 'speakTo', from_entity_id: routed.fromEntityId || null, to_entity_id: (routed.targets && routed.targets[0]) || null };
+                    return `<span class="routing-chip rc-unconfirmed"${chipClickAttrs('unconfirmed', stub)} title="${escapeHtml(tt('chat_routing_unconfirmed','路由未確認'))}">⚑ ${escapeHtml(tt('chat_routing_unconfirmed','路由未確認'))}</span>`;
                 }
                 // card_1f8 fallback: source unparseable but row is a bot reply with a
                 // known sender — render a degraded sender-only chip so the user at
@@ -5876,7 +6106,8 @@
                 if (msg && msg.is_from_bot && msg.entity_id != null) {
                     const senderLabel = '#' + msg.entity_id;
                     const title = `${tt('chat_routing_label','路由')}: ${senderLabel} → ? · ${tt('chat_routing_client_derived','client-derived')}`;
-                    return `<span class="routing-chip rc-degraded" title="${escapeHtml(title)}"><span class="rc-route">${escapeHtml(senderLabel)} → ?</span></span>`;
+                    const stub = { status: 'degraded', from_entity_id: msg.entity_id, to_entity_id: null };
+                    return `<span class="routing-chip rc-degraded"${chipClickAttrs('degraded-client', stub)} title="${escapeHtml(title)}"><span class="rc-route">${escapeHtml(senderLabel)} → ?</span></span>`;
                 }
                 return '';
             }
@@ -5885,7 +6116,7 @@
                 const isFail = rm.status === 'failed';
                 const cls = isFail ? 'rc-failed' : 'rc-degraded';
                 const lbl = isFail ? tt('chat_routing_failed','路由失敗') : tt('chat_routing_degraded','路由降級');
-                return `<span class="routing-chip ${cls}" title="${escapeHtml(lbl)}">⚠ ${escapeHtml(lbl)}</span>`;
+                return `<span class="routing-chip ${cls}"${chipClickAttrs(isFail ? 'failed' : 'degraded', rm)} title="${escapeHtml(lbl)}">⚠ ${escapeHtml(lbl)}</span>`;
             }
             // Positive: from → to · LV{to_lv}, optional mode prefix.
             // Globe-user rule (card_29eed229d389e53bfae7d954): never render
@@ -5905,7 +6136,7 @@
             const lvHtml = hasLv ? `<span class="rc-lv">LV${lvNum}</span>` : '';
             const lvTitle = hasLv ? ` · LV${lvNum}` : '';
             const title = `${tt('chat_routing_label','路由')}: ${from} → ${to}${lvTitle}`;
-            return `<span class="routing-chip rc-lv-${seg}" title="${escapeHtml(title)}">${modeTag}<span class="rc-route">${escapeHtml(from)} → ${escapeHtml(to)}</span>${lvHtml}</span>`;
+            return `<span class="routing-chip rc-lv-${seg}"${chipClickAttrs('positive', rm)} title="${escapeHtml(title)}">${modeTag}<span class="rc-route">${escapeHtml(from)} → ${escapeHtml(to)}</span>${lvHtml}</span>`;
         }
 
         /** Cross-device message received from another device (not sent by this device's entities) */
@@ -8336,6 +8567,230 @@
             } catch (err) {
                 bodyEl.innerHTML = `<div class="entity-modal-error">Failed to load: ${escapeHtml(String(err.message || err))}</div>`;
             }
+        }
+
+        // ── card_53c57504: Routing-chip click → org-rule + hierarchy modal ──
+        // Handler is invoked from inline onclick on every routing chip emitted
+        // by renderRoutingChip(). Parses the JSON payload off the data-attr
+        // (which is the routing_meta, or a stub for unconfirmed/degraded),
+        // fetches /api/entity/routing-detail to enrich with org-tree + rules,
+        // then renders into #routingChipDetailModal. XSS: every interpolated
+        // user-or-bot-controlled string passes through escapeHtml; entity
+        // metadata is server-supplied via /api/entity/routing-detail summary.
+        let __routingDetailReqSeq = 0;
+        async function openRoutingChipDetail(triggerEl) {
+            const bodyEl = document.getElementById('routingDetailBody');
+            const tt = (k, fb) => (typeof i18n !== 'undefined' && i18n.t && i18n.t(k)) || fb;
+            // Parse payload off data-routing-meta. Defensive: bad JSON → empty stub.
+            let payload = {};
+            try { payload = JSON.parse(triggerEl.getAttribute('data-routing-meta') || '{}'); }
+            catch { payload = {}; }
+            const kind = triggerEl.getAttribute('data-routing-kind') || 'unknown';
+
+            bodyEl.innerHTML = `<div class="routing-detail-loading">${escapeHtml(tt('chat_routing_detail_loading','Loading…'))}</div>`;
+            openModal('routingChipDetailModal');
+            // Focus trap entry point: close button is the first focusable.
+            setTimeout(() => {
+                const closeBtn = document.querySelector('#routingChipDetailModal .routing-detail-close');
+                if (closeBtn) closeBtn.focus();
+            }, 16);
+            // ESC to close (one-shot listener tied to this modal session).
+            if (!window.__routingDetailEscBound) {
+                window.__routingDetailEscBound = true;
+                document.addEventListener('keydown', function routingDetailEsc(e) {
+                    if (e.key !== 'Escape') return;
+                    const m = document.getElementById('routingChipDetailModal');
+                    if (m && m.classList.contains('active')) {
+                        closeModal('routingChipDetailModal');
+                        // Return focus to the triggering chip if still around.
+                        try { triggerEl && typeof triggerEl.focus === 'function' && triggerEl.focus(); } catch {}
+                    }
+                });
+            }
+
+            // Race-protect rapid clicks across chips: only the latest fetch may
+            // mutate bodyEl. Otherwise a slow first fetch can overwrite a faster
+            // second one's render.
+            const mySeq = ++__routingDetailReqSeq;
+
+            let detail = null;
+            try {
+                if (currentUser && currentUser.deviceId && currentUser.deviceSecret) {
+                    const params = new URLSearchParams({
+                        deviceId: currentUser.deviceId,
+                        deviceSecret: currentUser.deviceSecret,
+                    });
+                    if (payload.to_entity_id != null) params.set('toEntityId', String(payload.to_entity_id));
+                    if (payload.from_entity_id != null) params.set('fromEntityId', String(payload.from_entity_id));
+                    if (payload.mode) params.set('mode', String(payload.mode));
+                    if (payload.to_public_code) params.set('publicCode', String(payload.to_public_code));
+                    detail = await apiCall('GET', `/api/entity/routing-detail?${params.toString()}`);
+                }
+            } catch (err) {
+                if (mySeq !== __routingDetailReqSeq) return; // stale
+                bodyEl.innerHTML = `<div class="routing-detail-error">${escapeHtml(tt('chat_routing_detail_load_failed','Failed to load routing detail'))}: ${escapeHtml(String((err && err.message) || err))}</div>`;
+                return;
+            }
+            if (mySeq !== __routingDetailReqSeq) return; // newer click won
+            renderRoutingChipDetailBody(bodyEl, payload, kind, detail || null);
+        }
+
+        function renderRoutingChipDetailBody(bodyEl, payload, kind, detail) {
+            const tt = (k, fb) => (typeof i18n !== 'undefined' && i18n.t && i18n.t(k)) || fb;
+            const esc = (v) => escapeHtml(v == null ? '' : String(v));
+
+            // Build entity lookup map from server response (preferred) so the
+            // tree can label nodes; falls back to local boundEntities.
+            const summariesById = new Map();
+            const detailEntities = (detail && Array.isArray(detail.entities)) ? detail.entities : [];
+            for (const e of detailEntities) summariesById.set(e.entityId, e);
+            const fromSum = (detail && detail.fromEntity) || (payload.from_entity_id != null ? summariesById.get(payload.from_entity_id) : null);
+            const toSum = (detail && detail.toEntity) || (payload.to_entity_id != null ? summariesById.get(payload.to_entity_id) : null);
+
+            const renderPill = (which, sum, fallbackId, fallbackName) => {
+                const label = (sum && (sum.name || sum.character)) || fallbackName || (fallbackId != null ? '#' + fallbackId : '?');
+                const code = sum && sum.publicCode ? '#' + sum.publicCode : '';
+                const lv = sum && sum.level != null ? `LV${sum.level}` : '';
+                const initials = String(label).slice(0, 2);
+                const avatar = sum && sum.avatar
+                    ? `<img class="rd-avatar" src="${esc(sum.avatar)}" alt="" onerror="this.outerHTML='<span class=\\'rd-avatar-fb\\'>${esc(initials)}</span>'">`
+                    : `<span class="rd-avatar-fb">${esc(initials)}</span>`;
+                return `<span class="rd-entity-pill rd-pill-${which}">${avatar}<span>${esc(label)}</span>${code ? `<span style="opacity:0.55;font-size:11px;">${esc(code)}</span>` : ''}${lv ? `<span class="rd-lv">${esc(lv)}</span>` : ''}</span>`;
+            };
+
+            const modeLabel = payload.mode === 'broadcast'
+                ? tt('chat_routing_broadcast', '廣播')
+                : payload.mode === 'xdevice'
+                    ? tt('chat_routing_xdevice', '跨裝置')
+                    : payload.mode === 'speakTo' || payload.mode === 'speakto'
+                        ? tt('chat_routing_speakto', 'speakTo')
+                        : null;
+            const statusKey = payload.status || (kind === 'unconfirmed' ? 'unconfirmed' : kind === 'failed' ? 'failed' : kind === 'degraded' ? 'degraded' : 'sent');
+            const statusLabel = ({
+                sent: tt('chat_routing_status_sent', 'Sent'),
+                failed: tt('chat_routing_failed', '路由失敗'),
+                degraded: tt('chat_routing_degraded', '路由降級'),
+                unconfirmed: tt('chat_routing_unconfirmed', '路由未確認'),
+            })[statusKey] || statusKey;
+            const ruleSourceKey = (detail && detail.ruleSource) || payload.mode || 'unknown';
+            const ruleSourceLabel = ({
+                speakTo: tt('chat_routing_rulesrc_speakto', 'speakTo direct'),
+                speakto: tt('chat_routing_rulesrc_speakto', 'speakTo direct'),
+                broadcast: tt('chat_routing_rulesrc_broadcast', '@-mention auto-router (broadcast)'),
+                xdevice: tt('chat_routing_rulesrc_xdevice', 'Cross-device publicCode resolve'),
+                unknown: tt('chat_routing_rulesrc_unknown', 'Unknown (no routing_meta)'),
+            })[ruleSourceKey] || ruleSourceKey;
+
+            // Section 1: route line
+            let html = '<div class="rd-section">';
+            html += `<div class="rd-section-title">${esc(tt('chat_routing_detail_section_route', 'This message route'))}</div>`;
+            html += '<div class="rd-route-line">';
+            html += renderPill('from', fromSum, payload.from_entity_id, payload.from_name);
+            html += '<span class="rd-arrow">→</span>';
+            html += renderPill('to', toSum, payload.to_entity_id, payload.to_name);
+            if (modeLabel) html += `<span class="rd-mode-pill">${esc(modeLabel)}</span>`;
+            html += `<span class="rd-status-pill rd-status-${esc(statusKey)}">${esc(statusLabel)}</span>`;
+            html += '</div>';
+            html += '</div>';
+
+            // Section 2: org tree (only when detail.hierarchy resolved)
+            if (detail && detail.hierarchy && Object.keys(detail.hierarchy).length > 0) {
+                html += '<div class="rd-section">';
+                html += `<div class="rd-section-title">${esc(tt('chat_routing_detail_section_org_tree', 'Org hierarchy'))}</div>`;
+                html += renderOrgTreeHtml(detail.hierarchy, summariesById, payload.to_entity_id, payload.from_entity_id, esc);
+                html += '</div>';
+            }
+
+            // Section 3: rule source + org rules
+            html += '<div class="rd-section">';
+            html += `<div class="rd-section-title">${esc(tt('chat_routing_detail_section_rule', 'Rule source'))}</div>`;
+            html += `<div>${esc(ruleSourceLabel)}</div>`;
+            if (detail && detail.orgRules) {
+                const r = detail.orgRules;
+                html += '<div class="rd-rules" style="margin-top:8px;">';
+                html += `<span class="rd-rule rd-rule-${r.kanbanReviewer ? 'on' : 'off'}">${esc(tt('chat_routing_rule_kanban_reviewer', 'kanbanReviewer'))}: ${r.kanbanReviewer ? 'on' : 'off'}</span>`;
+                html += `<span class="rd-rule rd-rule-${r.taskForward ? 'on' : 'off'}">${esc(tt('chat_routing_rule_task_forward', 'taskForward'))}: ${r.taskForward ? 'on' : 'off'}</span>`;
+                html += `<span class="rd-rule rd-rule-${r.allForward ? 'on' : 'off'}">${esc(tt('chat_routing_rule_all_forward', 'allForward'))}: ${r.allForward ? 'on' : 'off'}</span>`;
+                html += '</div>';
+            }
+            html += '</div>';
+
+            // Section 4: smart hierarchy chain (superior + peers)
+            if (detail && detail.chain) {
+                const c = detail.chain;
+                html += '<div class="rd-section">';
+                html += `<div class="rd-section-title">${esc(tt('chat_routing_detail_section_chain', 'Smart hierarchy chain'))}</div>`;
+                if (c.superior) {
+                    const sname = c.superior.kind === 'USER'
+                        ? tt('chat_routing_superior_user', 'USER (device owner)')
+                        : (c.superior.summary && (c.superior.summary.name || c.superior.summary.character)) || ('#' + c.superior.entityId);
+                    html += `<div>${esc(tt('chat_routing_chain_superior', 'Superior'))}: ${esc(sname)}</div>`;
+                }
+                if (Array.isArray(c.subordinates) && c.subordinates.length > 0) {
+                    const subNames = c.subordinates.map(s => (s.summary && (s.summary.name || s.summary.character)) || ('#' + s.entityId)).join(', ');
+                    html += `<div>${esc(tt('chat_routing_chain_subordinates', 'Subordinates'))}: ${esc(subNames)}</div>`;
+                }
+                if (Array.isArray(c.peers) && c.peers.length > 0) {
+                    const peerNames = c.peers.map(p => (p.summary && (p.summary.name || p.summary.character)) || ('#' + p.entityId)).join(', ');
+                    html += `<div>${esc(tt('chat_routing_chain_peers', 'Peers'))}: ${esc(peerNames)}</div>`;
+                }
+                html += '</div>';
+            }
+
+            // Help line (? icon UX equivalent: explain what to do next)
+            html += `<div class="rd-helpline">${esc(tt('chat_routing_detail_helpline', 'Why this matters: org-hierarchy + smart routing decides where every message lands. Edit your org chart from Settings → Org Chart to change defaults.'))}</div>`;
+
+            bodyEl.innerHTML = html;
+        }
+
+        // Render the org-chart hierarchy as a nested tree, highlighting the
+        // current to-entity (route target) and the from-entity (route sender).
+        function renderOrgTreeHtml(hierarchy, summariesById, currentToId, currentFromId, esc) {
+            // Defensive: hierarchy could be malformed. Walk only known keys.
+            if (!hierarchy || typeof hierarchy !== 'object') return '';
+            const labelFor = (id) => {
+                const s = summariesById.get(id);
+                if (!s) return '#' + id;
+                return (s.name || s.character || ('#' + id));
+            };
+            const roleFor = (id) => {
+                const s = summariesById.get(id);
+                return (s && s.role) || '';
+            };
+            const lvFor = (id) => {
+                const s = summariesById.get(id);
+                return s && s.level != null ? s.level : null;
+            };
+            const renderNode = (id, isRoot) => {
+                const isCurrent = id === currentToId;
+                const isFrom = id === currentFromId && currentFromId !== currentToId;
+                const cls = ['rd-tree-node'];
+                if (isRoot) cls.push('rd-tree-root');
+                if (isCurrent) cls.push('rd-tree-current');
+                else if (isFrom) cls.push('rd-tree-from');
+                const role = roleFor(id);
+                const lv = lvFor(id);
+                let label;
+                if (id === 'USER') {
+                    label = 'USER';
+                } else {
+                    label = labelFor(id);
+                }
+                const childrenIds = Array.isArray(hierarchy[String(id)]) ? hierarchy[String(id)] : [];
+                let html = `<li class="${cls.join(' ')}">`;
+                html += `<div class="rd-tree-row"><span>${esc(label)}</span>`;
+                if (lv != null) html += `<span class="rd-lv">LV${esc(lv)}</span>`;
+                if (role) html += `<span class="rd-role">${esc(role)}</span>`;
+                html += '</div>';
+                if (childrenIds.length > 0) {
+                    html += '<ul class="rd-tree">';
+                    for (const c of childrenIds) html += renderNode(c, false);
+                    html += '</ul>';
+                }
+                html += '</li>';
+                return html;
+            };
+            return '<ul class="rd-tree">' + renderNode('USER', true) + '</ul>';
         }
 
         async function fetchEntityKanbanTasks(publicCode, containerEl) {
