@@ -14,7 +14,13 @@ const DEFAULT_PREFS = {
     platform_command: true,
     delivery_alert: true,
     kanban_done: true,
-    kanban_done_auto: true
+    kanban_done_auto: true,
+    // user_mention: separate toggle for `@<user_display_name>` mentions
+    // (card_db71f4423cb1697f9935f460). Independent of speak_to so a user
+    // can mute generic chat traffic but keep direct @-pings, or vice
+    // versa. Default ON because being addressed by name is the highest-
+    // signal notification we send.
+    user_mention: true
 };
 
 let pool = null;

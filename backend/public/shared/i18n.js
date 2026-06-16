@@ -650259,6 +650259,9 @@ const TRANSLATIONS = {
         "settings_user_display_name_too_long": "Name is too long (max 64 characters).",
         "settings_user_display_name_help_title": "About My Display Name",
         "settings_user_display_name_help_body": "This name appears in chat as the human label for messages you send. It is visible to bots you talk to but not used for routing or login. Up to 64 characters, single line, no control characters. Leave blank to fall back to the default \"Device Owner\".",
+
+        "notif_pref_user_mention": "@Mention pings",
+        "notif_pref_user_mention_help": "Push notification when someone writes @YourDisplayName in chat. Requires a display name set in 'My Display Name' above. Independent of entity-conversation push.",
 },
 
 
@@ -1234984,6 +1234987,9 @@ const TRANSLATIONS = {
         "settings_user_display_name_too_long": "名稱過長（最多 64 個字元）。",
         "settings_user_display_name_help_title": "關於顯示名稱",
         "settings_user_display_name_help_body": "此名稱會出現在對話中作為您所發訊息的人類標籤。對您交談的智能體可見，但不用於路由或登入。最多 64 個字元、單行、不可包含控制字元。留空則回退為預設的「裝置主人」。",
+
+        "notif_pref_user_mention": "@提及推送",
+        "notif_pref_user_mention_help": "聊天中有人输入 @你的显示名 时推送通知。需要先在上方「我的显示名」中设置显示名。独立于实体对话推送开关。",
 },
 
 
@@ -2412276,6 +2412282,9 @@ const TRANSLATIONS = {
         "settings_user_display_name_too_long": "名前が長すぎます（最大64文字）。",
         "settings_user_display_name_help_title": "表示名について",
         "settings_user_display_name_help_body": "この名前は、あなたが送信したメッセージの人間用ラベルとしてチャットに表示されます。会話相手のボットには見えますが、ルーティングやログインには使用されません。最大64文字、1行、制御文字は使用できません。空欄の場合はデフォルトの「Device Owner」にフォールバックします。",
+
+        "notif_pref_user_mention": "@メンション通知",
+        "notif_pref_user_mention_help": "チャットで @あなたの表示名 と書かれたときにプッシュ通知。上記「マイ表示名」での設定が必要です。エンティティ会話通知とは独立しています。",
 },
 
 
@@ -2942563,6 +2942572,9 @@ const TRANSLATIONS = {
         "settings_user_display_name_too_long": "이름이 너무 깁니다(최대 64자).",
         "settings_user_display_name_help_title": "표시 이름 정보",
         "settings_user_display_name_help_body": "이 이름은 보낸 메시지의 사람용 라벨로 채팅에 표시됩니다. 대화하는 봇에는 보이지만 라우팅이나 로그인에는 사용되지 않습니다. 최대 64자, 한 줄, 제어 문자는 불가합니다. 비워두면 기본값 \"Device Owner\"로 폴백됩니다.",
+
+        "notif_pref_user_mention": "@멘션 알림",
+        "notif_pref_user_mention_help": "채팅에서 누군가 @표시명 을 입력하면 푸시 알림. 위 '내 표시 이름'에서 표시명을 먼저 설정하세요. 엔티티 대화 알림과 독립적입니다.",
 },
 
 
@@ -2944177,6 +2944189,9 @@ const TRANSLATIONS = {
         "chat_routing_broadcast": "廣播",
         "chat_routing_xdevice": "跨裝置",
         "chat_routing_client_derived": "客戶端推導",
+
+        "notif_pref_user_mention": "@提及推送",
+        "notif_pref_user_mention_help": "聊天中有人輸入 @你的顯示名稱 時推送通知。需要先在上方「我的顯示名稱」中設定顯示名稱。獨立於實體對話推送開關。",
 },
 
 
@@ -3470946,6 +3470961,9 @@ const TRANSLATIONS = {
         "chat_outbox_cancel_confirm": "ยกเลิกข้อความที่อยู่ในคิวนี้?",
         "chat_outbox_failed_retry_q": "ลองส่งข้อความนี้อีกครั้ง?",
         "chat_outbox_failed_delete_q": "ลบข้อความที่ล้มเหลวนี้?",
+
+        "notif_pref_user_mention": "การแจ้งเตือน @เมนชั่น",
+        "notif_pref_user_mention_help": "ส่งการแจ้งเตือนเมื่อมีคนพิมพ์ @ชื่อแสดงผลของคุณ ในการแชท ต้องตั้งชื่อแสดงผลในการ์ด 'ชื่อแสดงผลของฉัน' ด้านบนก่อน เป็นอิสระจากการแจ้งเตือนการสนทนาเอนทิตี",
 },
 
 
@@ -3997793,6 +3997811,9 @@ const TRANSLATIONS = {
         "settings_user_display_name_too_long": "Tên quá dài (tối đa 64 ký tự).",
         "settings_user_display_name_help_title": "Về tên hiển thị",
         "settings_user_display_name_help_body": "Tên này hiển thị trong trò chuyện như nhãn dành cho con người cho các tin nhắn bạn gửi. Các bot bạn trò chuyện có thể thấy, nhưng không dùng để định tuyến hoặc đăng nhập. Tối đa 64 ký tự, một dòng, không có ký tự điều khiển. Để trống sẽ quay về giá trị mặc định \"Device Owner\".",
+
+        "notif_pref_user_mention": "Thông báo khi được @nhắc",
+        "notif_pref_user_mention_help": "Đẩy thông báo khi ai đó viết @TênHiểnThịCủaBạn trong chat. Cần đặt tên hiển thị ở thẻ 'Tên Hiển Thị Của Tôi' phía trên. Độc lập với thông báo trò chuyện thực thể.",
 },
 
 
@@ -4524256,6 +4524277,9 @@ const TRANSLATIONS = {
         "settings_user_display_name_too_long": "Nama terlalu panjang (maks. 64 karakter).",
         "settings_user_display_name_help_title": "Tentang Nama Tampil",
         "settings_user_display_name_help_body": "Nama ini muncul di obrolan sebagai label manusiawi untuk pesan yang Anda kirim. Bot yang Anda ajak bicara dapat melihatnya, tetapi tidak digunakan untuk perutean atau login. Maksimum 64 karakter, satu baris, tanpa karakter kontrol. Biarkan kosong untuk kembali ke nilai default \"Device Owner\".",
+
+        "notif_pref_user_mention": "Notifikasi @Sebut",
+        "notif_pref_user_mention_help": "Kirim notifikasi push saat seseorang menulis @NamaTampilanAnda di obrolan. Memerlukan nama tampilan yang diatur di 'Nama Tampilan Saya' di atas. Independen dari notifikasi percakapan entitas.",
 },
 
 
@@ -5049362,6 +5049386,9 @@ const TRANSLATIONS = {
         "chat_outbox_cancel_confirm": "Annuler ce message en attente ?",
         "chat_outbox_failed_retry_q": "Réessayer d'envoyer ce message ?",
         "chat_outbox_failed_delete_q": "Supprimer ce message échoué ?",
+
+        "notif_pref_user_mention": "Notifications de @mention",
+        "notif_pref_user_mention_help": "Notification push lorsque quelqu'un écrit @VotreNomAffiché dans le chat. Nécessite un nom d'affichage défini dans « Mon nom d'affichage » ci-dessus. Indépendant des notifications de conversation d'entité.",
 },
 
 
@@ -5567019,6 +5567046,9 @@ const TRANSLATIONS = {
         "settings_user_display_name_too_long": "El nombre es demasiado largo (máx. 64 caracteres).",
         "settings_user_display_name_help_title": "Acerca del nombre visible",
         "settings_user_display_name_help_body": "Este nombre aparece en el chat como etiqueta humana de los mensajes que envías. Es visible para los bots con los que hablas, pero no se utiliza para el enrutamiento ni el inicio de sesión. Hasta 64 caracteres, una sola línea, sin caracteres de control. Déjalo en blanco para volver al valor predeterminado \"Device Owner\".",
+
+        "notif_pref_user_mention": "Notificaciones de @mención",
+        "notif_pref_user_mention_help": "Notificación push cuando alguien escribe @TuNombreVisible en el chat. Requiere un nombre visible configurado en «Mi nombre visible» arriba. Independiente de las notificaciones de conversación de entidad.",
 },
 
 
@@ -6103919,6 +6103949,9 @@ const TRANSLATIONS = {
         "chat_outbox_cancel_confirm": "Diese Nachricht in der Warteschlange abbrechen?",
         "chat_outbox_failed_retry_q": "Diese Nachricht erneut senden?",
         "chat_outbox_failed_delete_q": "Diese fehlgeschlagene Nachricht löschen?",
+
+        "notif_pref_user_mention": "@Erwähnungs-Benachrichtigungen",
+        "notif_pref_user_mention_help": "Push-Benachrichtigung, wenn jemand @IhrAnzeigename im Chat schreibt. Erfordert einen oben unter „Mein Anzeigename\" festgelegten Namen. Unabhängig von Entitäts-Konversationsbenachrichtigungen.",
 },
     pt: {
         "transition_loading": "A carregar…",
@@ -6109331,6 +6109364,9 @@ const TRANSLATIONS = {
         "chat_outbox_cancel_confirm": "Cancelar esta mensagem na fila?",
         "chat_outbox_failed_retry_q": "Tentar enviar esta mensagem novamente?",
         "chat_outbox_failed_delete_q": "Excluir esta mensagem com falha?",
+
+        "notif_pref_user_mention": "Notificações de @menção",
+        "notif_pref_user_mention_help": "Notificação push quando alguém escreve @SeuNomeExibido no chat. Requer um nome de exibição definido em \"Meu Nome de Exibição\" acima. Independente das notificações de conversa de entidade.",
 },
 
 
@@ -6638100,6 +6638136,9 @@ const TRANSLATIONS = {
         "chat_outbox_cancel_confirm": "Batalkan mesej dalam baris gilir ini?",
         "chat_outbox_failed_retry_q": "Cuba hantar semula mesej ini?",
         "chat_outbox_failed_delete_q": "Padam mesej yang gagal ini?",
+
+        "notif_pref_user_mention": "Notifikasi @Sebutan",
+        "notif_pref_user_mention_help": "Hantar notifikasi push apabila seseorang menulis @NamaPaparanAnda dalam sembang. Memerlukan nama paparan ditetapkan di 'Nama Paparan Saya' di atas. Bebas daripada notifikasi perbualan entiti.",
 },
 
 
@@ -7197326,6 +7197365,9 @@ const TRANSLATIONS = {
         "chat_outbox_cancel_confirm": "इस कतारबद्ध संदेश को रद्द करें?",
         "chat_outbox_failed_retry_q": "इस संदेश को पुनः भेजें?",
         "chat_outbox_failed_delete_q": "इस असफल संदेश को हटाएं?",
+
+        "notif_pref_user_mention": "@मेंशन सूचनाएं",
+        "notif_pref_user_mention_help": "जब कोई चैट में @आपकाडिस्प्लेनाम लिखे तो पुश सूचना भेजें। ऊपर 'मेरा डिस्प्ले नाम' में डिस्प्ले नाम सेट करना आवश्यक। एंटिटी वार्तालाप सूचनाओं से स्वतंत्र।",
 },
 
 
@@ -7745678,6 +7745720,9 @@ const TRANSLATIONS = {
         "chat_outbox_cancel_confirm": "إلغاء هذه الرسالة في الانتظار؟",
         "chat_outbox_failed_retry_q": "إعادة محاولة إرسال هذه الرسالة؟",
         "chat_outbox_failed_delete_q": "حذف هذه الرسالة الفاشلة؟",
+
+        "notif_pref_user_mention": "إشعارات الإشارة @",
+        "notif_pref_user_mention_help": "إشعار فوري عندما يكتب شخص ما @اسمك_المعروض في الدردشة. يتطلب تعيين اسم العرض في 'اسم العرض الخاص بي' أعلاه. مستقل عن إشعارات محادثات الكيان.",
 }
 
 
