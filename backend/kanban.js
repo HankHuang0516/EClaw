@@ -3867,6 +3867,25 @@ function createKanbanModule(devices, { awardEntityXP, serverLog, pushToEntity, p
             // (e.g. a bot reporting completion of task X while only task Y was
             // eligible for auto-close on its board would close Y by mistake).
             // See card_393752f8 / card_819d50f1 RCA for a real instance.
+            //
+            // Defensive inference: if the bot explicitly typed `card_<hex>` in the
+            // transform message and exactly one unique id is mentioned, treat it as
+            // an implicit aboutCardId. This is safer than the legacy fallback
+            // because the id comes from the bot's own text (so it's about THIS
+            // reply), not from a board scan that could match an unrelated card.
+            if (!aboutCardId && typeof transformMessage === 'string' && transformMessage.length > 0) {
+                const matches = transformMessage.match(/\bcard_[a-f0-9]{8,}\b/gi);
+                if (matches && matches.length > 0) {
+                    const unique = Array.from(new Set(matches.map(m => m.toLowerCase())));
+                    if (unique.length === 1) {
+                        aboutCardId = unique[0];
+                        console.log(`[Kanban] autoReviewOnTransform inferred aboutCardId=${aboutCardId} from entity ${entityId} message text`);
+                    } else {
+                        console.warn(`[Kanban] autoReviewOnTransform skipped: entity ${entityId} mentioned ${unique.length} distinct card_ids in message but no explicit aboutCardId — pass {aboutCardId:"card_..."} to disambiguate`);
+                        return;
+                    }
+                }
+            }
             if (!aboutCardId) {
                 console.warn(`[Kanban] autoReviewOnTransform skipped: no aboutCardId provided by entity ${entityId} — pass {aboutCardId:"card_..."} in transform body to auto-close a specific card`);
                 return;
