@@ -611,28 +611,81 @@
         // Returns { ok: bool, skipped?: bool, error?: string } so the Save dialog can
         // gate its close + show toast based on the server commit, not on the optimistic
         // localStorage write. Callers that don't care can ignore the return.
+        //
+        // Optimistic concurrency (card_946cfefe / PR #3422):
+        // - We keep `_lastKnownUpdatedAt` (server's updated_at on the last GET or POST)
+        // - POST sends it as `expectedUpdatedAt`; server returns 409 + currentVars if
+        //   another client wrote since our read.
+        // - On 409: merge server's keys (not in our local incoming) into our payload,
+        //   refresh _lastKnownUpdatedAt, retry POST ONCE. If second 409 → bail with
+        //   toast (extremely unlikely outside heavy concurrent writes).
+        // - This preserves both the user's pending edit AND the other client's
+        //   additions, instead of silently dropping either.
+        let _lastKnownUpdatedAt = null;
+
         async function syncVarsToServer() {
             if (!currentUser) return { ok: true, skipped: true };
             const locked = isLocked();
             const vars = loadLocalVars();
             if (Object.keys(vars).length === 0) return { ok: true, skipped: true };
-            try {
-                const result = await apiCall('POST', '/api/device-vars', {
+            const _doPost = async (payloadVars, expectedUpdatedAt, allowRetry) => {
+                const body = {
                     deviceId: currentUser.deviceId,
                     deviceSecret: currentUser.deviceSecret,
-                    vars,
+                    vars: payloadVars,
                     locked,
                     source: 'web'
-                });
-                // Sync back merged vars (includes keys from APP)
-                if (result && result.mergedVars) {
-                    localStorage.setItem(varsKey(), JSON.stringify(result.mergedVars));
-                    renderAll();
+                };
+                if (expectedUpdatedAt) body.expectedUpdatedAt = expectedUpdatedAt;
+                try {
+                    const result = await apiCall('POST', '/api/device-vars', body);
+                    if (result && result.updatedAt) _lastKnownUpdatedAt = result.updatedAt;
+                    // Sync back merged vars (includes keys from APP / OOB additions)
+                    if (result && result.mergedVars) {
+                        localStorage.setItem(varsKey(), JSON.stringify(result.mergedVars));
+                        renderAll();
+                    }
+                    return { ok: true };
+                } catch (e) {
+                    // apiCall throws a generic Error; sniff the message for our 409 marker.
+                    // Server response body on 409: { error: 'stale_write', currentVars, serverUpdatedAt, ... }
+                    // apiCall's error message includes the body — try to parse.
+                    const msg = (e && e.message) || '';
+                    const is409 = msg.indexOf('stale_write') !== -1 || msg.indexOf('"status":409') !== -1 || msg.indexOf(' 409 ') !== -1;
+                    if (is409 && allowRetry) {
+                        // Parse server's current state out of the error message if present.
+                        let serverVars = null;
+                        let serverUpdatedAt = null;
+                        const jsonStart = msg.indexOf('{');
+                        if (jsonStart !== -1) {
+                            try {
+                                const parsed = JSON.parse(msg.slice(jsonStart));
+                                serverVars = parsed.currentVars || null;
+                                serverUpdatedAt = parsed.serverUpdatedAt || null;
+                            } catch (_) { /* fall through to refetch */ }
+                        }
+                        if (!serverVars || !serverUpdatedAt) {
+                            await hydrateFromServer();
+                            serverVars = loadLocalVars();
+                            serverUpdatedAt = _lastKnownUpdatedAt;
+                        }
+                        // Merge: server keys not in local edit are preserved; local
+                        // edit wins on conflict (the user's intent on this device).
+                        const merged = Object.assign({}, serverVars || {}, payloadVars);
+                        localStorage.setItem(varsKey(), JSON.stringify(merged));
+                        renderAll();
+                        if (typeof showToast === 'function') {
+                            showToast('Vault changed on another device — merging your edit on top. Retrying…', 'info');
+                        }
+                        return await _doPost(merged, serverUpdatedAt, false);
+                    }
+                    if (is409 && typeof showToast === 'function') {
+                        showToast('Vault conflict persists — please reload and try again.', 'error');
+                    }
+                    return { ok: false, error: msg || 'sync_failed' };
                 }
-                return { ok: true };
-            } catch (e) {
-                return { ok: false, error: e.message || 'sync_failed' };
-            }
+            };
+            return await _doPost(vars, _lastKnownUpdatedAt, true);
         }
 
         // ── Bot curl hint ──
@@ -686,6 +739,12 @@
                 }
                 if (typeof result?.locked === 'boolean') {
                     localStorage.setItem(lockKey(), String(result.locked));
+                }
+                // card_946cfefe / PR #3422: pin the snapshot version so subsequent
+                // POSTs send expectedUpdatedAt — server 409s if another client
+                // wrote in between, instead of silently overwriting.
+                if (result && typeof result.updatedAt === 'string') {
+                    _lastKnownUpdatedAt = result.updatedAt;
                 }
             } catch (e) {
                 // Best-effort — offline or auth drift shouldn't crash the page.
