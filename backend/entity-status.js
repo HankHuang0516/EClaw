@@ -454,11 +454,16 @@ async function getAchievements(deviceId, entityId) {
                 count = Number(r.rows[0]?.c || 0);
                 lastEventAt = r.rows[0]?.ts || null;
             } else if (axis === 'notes_authored') {
+                // mission_notes has no entity_id column; per-entity attribution
+                // is via created_by = 'entity_<N>' (see mindmap-graph-projection.js
+                // parseNumericCreatedBy). Prior query referenced a non-existent
+                // column and was swallowed by the per-axis catch — visible in
+                // Railway prod log as `column "entity_id" does not exist` spam.
                 const r = await pool.query(
                     `SELECT COUNT(*)::int AS c, MAX(created_at) AS ts
                        FROM mission_notes
-                      WHERE device_id = $1 AND entity_id = $2`,
-                    [deviceId, eid]
+                      WHERE device_id = $1 AND created_by = $2`,
+                    [deviceId, `entity_${eid}`]
                 );
                 count = Number(r.rows[0]?.c || 0);
                 lastEventAt = r.rows[0]?.ts || null;
