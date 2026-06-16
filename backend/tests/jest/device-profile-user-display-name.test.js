@@ -242,12 +242,62 @@ describe('PUT /api/device/user-profile', () => {
         });
         expect(res.status).toBe(200);
         expect(res.body.profile.userDisplayName).toBe(evil);
-        // Confirm UPDATE was invoked via parameterized query with `$1`
+        // Confirm UPDATE was invoked via parameterized query, NOT string-
+        // interpolated. Three assertions stacked:
+        //   1. The SQL string uses placeholder $1 (proves parameterization).
+        //   2. The raw `evil` string never appears in the SQL itself.
+        //   3. The full evil payload was passed as the bound parameter.
         const updateCalls = db._mockPool.query.mock.calls.filter(c => /UPDATE devices/i.test(c[0]));
         expect(updateCalls.length).toBeGreaterThanOrEqual(1);
         const [sql, params] = updateCalls[updateCalls.length - 1];
         expect(sql).toMatch(/\$1/);
+        expect(sql).not.toContain('DROP TABLE');
+        expect(sql).not.toContain(evil);
         expect(params[0]).toBe(evil);
+    });
+
+    it('rejects names containing Unicode bidi-override (RTL/LRO) chars', async () => {
+        const devId = `ud-put-bidi-${Date.now()}`;
+        const secret = await registerDevice(devId);
+        // U+202E = RIGHT-TO-LEFT OVERRIDE — used in "Admin" spoofs
+        const res = await put('/api/device/user-profile').send({
+            deviceId: devId, deviceSecret: secret, userDisplayName: 'A‮nimdA',
+        });
+        expect(res.status).toBe(400);
+        expect(res.body.error).toMatch(/Invalid userDisplayName/i);
+    });
+
+    it('rejects names containing zero-width chars (ZWSP / ZWJ / ZWNJ)', async () => {
+        const devId = `ud-put-zwsp-${Date.now()}`;
+        const secret = await registerDevice(devId);
+        // U+200B = ZERO WIDTH SPACE
+        const res = await put('/api/device/user-profile').send({
+            deviceId: devId, deviceSecret: secret, userDisplayName: 'Hank​Fake',
+        });
+        expect(res.status).toBe(400);
+    });
+
+    it('rejects names with embedded BOM / zero-width no-break space (U+FEFF)', async () => {
+        const devId = `ud-put-bom-${Date.now()}`;
+        const secret = await registerDevice(devId);
+        // BOM in the middle (leading/trailing BOM is harmlessly stripped by trim())
+        const res = await put('/api/device/user-profile').send({
+            deviceId: devId, deviceSecret: secret, userDisplayName: 'Han﻿k',
+        });
+        expect(res.status).toBe(400);
+    });
+
+    it('rejects array and object payloads (only string accepted)', async () => {
+        const devId = `ud-put-arr-${Date.now()}`;
+        const secret = await registerDevice(devId);
+        const r1 = await put('/api/device/user-profile').send({
+            deviceId: devId, deviceSecret: secret, userDisplayName: ['Hank'],
+        });
+        expect(r1.status).toBe(400);
+        const r2 = await put('/api/device/user-profile').send({
+            deviceId: devId, deviceSecret: secret, userDisplayName: { name: 'Hank' },
+        });
+        expect(r2.status).toBe(400);
     });
 
     it('persists the value into the in-memory devices cache for next GET', async () => {

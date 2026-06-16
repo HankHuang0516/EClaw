@@ -19894,6 +19894,14 @@ function normalizeUserDisplayName(input) {
     // a single-line UI label, so newlines/NUL/etc. would render as gibberish
     // or break layout. UTF-8 multibyte chars and emoji pass through fine.
     if (/[\x00-\x1f\x7f]/.test(trimmed)) return undefined;
+    // Reject Unicode bidi-override + zero-width chars: they enable spoofing
+    // (RTL-override "Admin" lookalikes) and invisible layout breakage in a
+    // user-facing label. Block:
+    //   ​-‏ (zero-width space / joiner / non-joiner / LRM / RLM)
+    //   ‪-‮ (bidi embedding/override controls)
+    //   ⁦-⁩ (bidi isolate controls)
+    //   ﻿       (zero-width no-break space / BOM)
+    if (/[​-‏‪-‮⁦-⁩﻿]/.test(trimmed)) return undefined;
     return trimmed;
 }
 
@@ -19949,12 +19957,17 @@ app.put('/api/device/user-profile', async (req, res) => {
     }
     try {
         const pool = db._getPool && db._getPool();
-        if (pool) {
-            await pool.query(
-                `UPDATE devices SET user_display_name = $1, updated_at = $2 WHERE device_id = $3`,
-                [normalized, Date.now(), deviceId]
-            );
+        if (!pool) {
+            // No DB pool means we cannot persist. Return 500 instead of
+            // succeeding-into-RAM-only — silent loss on next process restart
+            // is worse than a visible error the client can retry.
+            console.error('[UserProfile] PUT failed: db pool unavailable');
+            return res.status(500).json({ success: false, error: 'Database unavailable' });
         }
+        await pool.query(
+            `UPDATE devices SET user_display_name = $1, updated_at = $2 WHERE device_id = $3`,
+            [normalized, Date.now(), deviceId]
+        );
         // Update in-memory cache so subsequent GET (and any downstream consumers
         // that read devices[deviceId]) see the new value without a restart.
         if (devices[deviceId]) {
