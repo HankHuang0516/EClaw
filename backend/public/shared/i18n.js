@@ -2944428,14 +2944428,6 @@ const TRANSLATIONS = {
         "notif_pref_rich_card_help": "當智能體在訊息中附上可點擊按鈕請你選擇選項時推播通知，就像 Claude Code 詢問權限那樣 — 智能體正在等你決定，所以會喚醒裝置。預設開啟；若聊天裡沒有智能體送出互動卡片，即使開啟也不會收到通知。",
         "notif_rich_card_question_title_suffix": "需要你的選擇",
 
-        "card_retest_label": "下次重測",
-        "card_retest_ready": "立即可重測",
-        "card_retest_tier_gray": "時間充裕",
-        "card_retest_tier_yellow": "即將到期",
-        "card_retest_tier_orange": "快到期",
-        "card_retest_tier_red": "緊急",
-        "card_retest_tier_green": "即將解鎖",
-        "card_retest_tier_ready": "可重測",
 },
 
 
