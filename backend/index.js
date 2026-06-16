@@ -11,6 +11,7 @@ const db = require('./db');
 const flickr = require('./flickr');
 const gatekeeper = require('./gatekeeper');
 const mentionParser = require('./mention-parser');
+const userMentionScanner = require('./user-mention-scanner');
 const pushContext = require('./push-context');
 const telemetry = require('./device-telemetry');
 const sitePageviews = require('./site-pageviews');
@@ -9333,6 +9334,43 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
                 speakTo = tParse.mentions.map(m => m.publicCode);
                 routingResolvedVia = 'mention';
             }
+        }
+    }
+
+    // ── user_display_name @-mention push (card_db71f4423cb1697f9935f460) ──
+    // Independent of entity routing: when an entity sends a message that
+    // contains `@<user_display_name>` (the device owner's free-text name
+    // from PR #3429), the owner of the matched device gets a "you were
+    // mentioned" push on top of any existing chat push. The scanner
+    // skips tokens already claimed by the entity-mention parser
+    // (@publicCode / @entityId / @all) so the two systems never collide.
+    // The notify_device pref `user_mention` (default ON) gates delivery
+    // via notifModule.isCategoryEnabled.
+    if (finalMessage && !isSuppressedMessage) {
+        try {
+            const userMentions = userMentionScanner.findUserMentions(finalMessage, {
+                senderDeviceId: deviceId,
+                devices
+            });
+            for (const um of userMentions) {
+                const fromLabel = entity.name || `Entity ${eId}`;
+                notifyDevice(um.deviceId, {
+                    type: 'chat',
+                    category: 'user_mention',
+                    title: `@${um.displayName}`,
+                    body: `${fromLabel}: ${(finalMessage || '').slice(0, 100)}`,
+                    link: 'chat.html',
+                    metadata: {
+                        fromDeviceId: deviceId,
+                        fromEntityId: eId,
+                        matchedKey: um.matchedKey
+                    }
+                }).catch(() => {});
+            }
+        } catch (err) {
+            // Scanner is pure + defensive; any throw here is unexpected and
+            // must NOT block the transform. Log and continue.
+            console.warn('[UserMention] scan failed:', err.message);
         }
     }
 

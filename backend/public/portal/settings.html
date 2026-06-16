@@ -2542,6 +2542,14 @@
             { key: 'bot_reply', i18n: 'notif_pref_bot_reply', label: 'Bot replies' },
             { key: 'broadcast', i18n: 'notif_pref_broadcast', label: 'Broadcasts' },
             { key: 'speak_to', i18n: 'notif_pref_speak_to', label: 'Entity conversations' },
+            // user_mention: card_db71f4423cb1697f9935f460 — push when an
+            // entity message contains @<your display name>. Independent
+            // of speak_to so you can mute generic chat noise but still
+            // get pinged when someone addresses you by name. The `helpI18n`
+            // field renders a ? icon next to the toggle label so users (and
+            // visiting agents) discover the prerequisite: set a display
+            // name in the "My Display Name" card above.
+            { key: 'user_mention', i18n: 'notif_pref_user_mention', label: '@Mention pings', helpI18n: 'notif_pref_user_mention_help' },
             { key: 'feedback_resolved', i18n: 'notif_pref_feedback', label: 'Feedback updates' },
             { key: 'feedback_reply', i18n: 'notif_pref_feedback', label: 'Feedback replies', hidden: true },
             { key: 'todo_done', i18n: 'notif_pref_todo', label: 'TODO completion' },
@@ -2565,11 +2573,21 @@
                     if (cat.hidden) continue;
                     const enabled = prefs[cat.key] !== false;
                     const t = typeof i18n !== 'undefined' ? i18n.t(cat.i18n) : cat.label;
+                    // Optional inline ? icon — explains the prerequisite /
+                    // empty-state ("set a display name first") inline so
+                    // every Globe-user (and visiting agent) understands
+                    // the setup without leaving the page.
+                    let helpHtml = '';
+                    if (cat.helpI18n) {
+                        const help = typeof i18n !== 'undefined' ? i18n.t(cat.helpI18n) : '';
+                        const safeHelp = (help || '').replace(/"/g, '&quot;');
+                        helpHtml = `<span class="help-icon-inline" role="button" tabindex="0" aria-label="Help" title="${safeHelp}" onclick="alert(this.getAttribute('title'))" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();alert(this.getAttribute('title'));}" style="cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;border:1px solid var(--card-border);font-size:10px;color:var(--text-secondary);margin-left:6px;user-select:none;vertical-align:middle;">?</span>`;
+                    }
 
                     const row = document.createElement('div');
                     row.className = 'setting-row';
                     row.innerHTML = `
-                        <span class="setting-row-label">${t}</span>
+                        <span class="setting-row-label">${t}${helpHtml}</span>
                         <label class="toggle-switch">
                             <input type="checkbox" ${enabled ? 'checked' : ''} onchange="toggleNotifPref('${cat.key}', this.checked)">
                             <span class="toggle-slider"></span>
