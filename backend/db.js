@@ -91,6 +91,23 @@ async function createTables() {
     try {
         const client = await pool.connect();
 
+        // pgcrypto provides gen_random_bytes(int) which is used as the DEFAULT for
+        // every id column in kanban / mission / rental / arena schemas (e.g.
+        // `card_' || encode(gen_random_bytes(12), 'hex')`). On some PG installs
+        // the extension is not enabled by default; bootstrap-time CREATE EXTENSION
+        // IF NOT EXISTS makes the missing-function error self-healing.
+        // Card source: card_c2612cb2 (Railway log monitor 06-16 17:35 TW fire —
+        // `[Kanban] Error: function gen_random_bytes(integer) does not exist`).
+        // Mirrors the pgvector pattern in chat-embedding.js: soft-fail since
+        // EXTENSION may be privileged-only on hosted PG; the row inserts that
+        // depend on it will then fail loudly with their own error rather than
+        // silently breaking the whole table create.
+        try {
+            await client.query('CREATE EXTENSION IF NOT EXISTS pgcrypto');
+        } catch (err) {
+            console.warn('[DB] pgcrypto CREATE EXTENSION failed (id DEFAULTs that use gen_random_bytes will fail until enabled by DB admin):', err.message);
+        }
+
         // Create devices table
         await client.query(`
             CREATE TABLE IF NOT EXISTS devices (
