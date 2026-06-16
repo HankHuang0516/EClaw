@@ -20865,6 +20865,19 @@ app.post('/api/device-vars', async (req, res) => {
     const _auditCtx = { ip: req.ip, ua: req.get('user-agent') };
     const _metaBefore = await db.getDeviceVarsMeta(deviceId);
     const _beforeCount = _metaBefore && Array.isArray(_metaBefore.var_keys) ? _metaBefore.var_keys.length : 0;
+    // Cache for db.getDeviceVars: strict-guard, etag-check, and downstream
+    // empty-wipe / merge branches all want the same row. Read once, reuse —
+    // (1) keeps tests using mockResolvedValueOnce passing (single getDeviceVars
+    // consumption per request), (2) shaves a redundant DB round-trip.
+    let cachedExistingRow = null;
+    let cachedExistingRowLoaded = false;
+    const loadExistingRowOnce = async () => {
+        if (!cachedExistingRowLoaded) {
+            cachedExistingRow = await db.getDeviceVars(deviceId);
+            cachedExistingRowLoaded = true;
+        }
+        return cachedExistingRow;
+    };
 
     // Optimistic concurrency (card_946cfefe): if client sent the snapshot it
     // based its edit on via `expectedUpdatedAt`, refuse the write when the
@@ -20890,7 +20903,7 @@ app.post('/api/device-vars', async (req, res) => {
     if (!expectedUpdatedAt) {
         const strictMode = (process.env.VAULT_STRICT_NO_ETAG || 'warn').toLowerCase();
         if (strictMode === 'warn' || strictMode === 'reject') {
-            const existingRow = await db.getDeviceVars(deviceId);
+            const existingRow = await loadExistingRowOnce();
             const existingKeyCount = existingRow && existingRow.var_keys && Array.isArray(existingRow.var_keys)
                 ? existingRow.var_keys.length
                 : 0;
@@ -20921,7 +20934,7 @@ app.post('/api/device-vars', async (req, res) => {
             }
         }
     } else {
-        const currentRow = await db.getDeviceVars(deviceId);
+        const currentRow = await loadExistingRowOnce();
         const currentUpdatedAt = currentRow && currentRow.updated_at
             ? new Date(currentRow.updated_at).toISOString()
             : null;
@@ -20974,7 +20987,7 @@ app.post('/api/device-vars', async (req, res) => {
 
         // If source is provided, do merge instead of replace
         if (src) {
-            const existing = await db.getDeviceVars(deviceId);
+            const existing = await loadExistingRowOnce();
             let existingVars = {};
             let existingSources = {};
 
@@ -21074,7 +21087,7 @@ app.post('/api/device-vars', async (req, res) => {
             // confirm flag for empty replacements on a non-empty vault so
             // accidental curls / buggy scripts can't silently zero it out.
             if (Object.keys(incoming).length === 0) {
-                const existing = await db.getDeviceVars(deviceId);
+                const existing = await loadExistingRowOnce();
                 const hadKeys = existing && Array.isArray(existing.var_keys) && existing.var_keys.length > 0;
                 if (hadKeys && confirm !== 'REPLACE_ALL_EMPTY') {
                     serverLog('warn', 'device_vars', `[Vars] refused legacy empty wipe for ${deviceId}: ${existing.var_keys.length} keys present, no confirm`, { deviceId, metadata: { existingKeyCount: existing.var_keys.length } });

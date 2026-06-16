@@ -39,8 +39,11 @@ describe('POST /api/device-vars — strict no-etag guard (card_908a34a9 / vault 
 
     test('guard does not fire when existing row is empty (existingKeyCount = 0)', () => {
         // First-time POST (no existing keys) must succeed — strict mode only protects
-        // against overwriting an existing non-empty vault with a stale snapshot
-        const block = indexSrc.match(/if\s*\(\s*!expectedUpdatedAt\s*\)\s*{[\s\S]*?else\s*{[\s\S]*?const currentRow = await db\.getDeviceVars/);
+        // against overwriting an existing non-empty vault with a stale snapshot.
+        // (Row loader was refactored to a cached helper to avoid double DB reads
+        // and keep mockResolvedValueOnce-style tests passing; accept either the
+        // direct `await db.getDeviceVars` form or the `await loadExistingRowOnce` form.)
+        const block = indexSrc.match(/if\s*\(\s*!expectedUpdatedAt\s*\)\s*{[\s\S]*?else\s*{[\s\S]*?const currentRow = await (?:db\.getDeviceVars|loadExistingRowOnce)/);
         expect(block).toBeTruthy();
         // The early-return path (400) is inside the existingKeyCount > 0 branch
         expect(block[0]).toMatch(/if\s*\(\s*existingKeyCount\s*>\s*0\s*\)\s*{[\s\S]*?return res\.status\(400\)/);
@@ -52,8 +55,9 @@ describe('POST /api/device-vars — strict no-etag guard (card_908a34a9 / vault 
 
     test('coexists with existing expectedUpdatedAt path (else branch preserved)', () => {
         // The original 409 stale_write logic (when expectedUpdatedAt is sent but mismatched)
-        // must remain intact in the else branch
-        expect(indexSrc).toMatch(/else\s*{[\s\S]*?const currentRow = await db\.getDeviceVars[\s\S]*?currentUpdatedAt !== expectedUpdatedAt[\s\S]*?error:\s*['"]stale_write['"]/);
+        // must remain intact in the else branch.
+        // (Row read may go through the cached loadExistingRowOnce helper — accept either form.)
+        expect(indexSrc).toMatch(/else\s*{[\s\S]*?const currentRow = await (?:db\.getDeviceVars|loadExistingRowOnce)[\s\S]*?currentUpdatedAt !== expectedUpdatedAt[\s\S]*?error:\s*['"]stale_write['"]/);
     });
 
     test('comment cites card_908a34a9 (follow-up) and card_946cfefe (origin)', () => {
