@@ -20846,7 +20846,7 @@ function logHandshakeFailure(opts) {
 // instead of replacing. Conflicting keys (same key, different value, different source)
 // are split into KEY_Web and KEY_APP to avoid data loss.
 app.post('/api/device-vars', async (req, res) => {
-    const { deviceId, deviceSecret, vars, locked, source, confirm } = req.body;
+    const { deviceId, deviceSecret, vars, locked, source, confirm, expectedUpdatedAt } = req.body;
     if (!deviceId || !deviceSecret) {
         return res.status(400).json({ success: false, error: 'deviceId and deviceSecret required' });
     }
@@ -20865,6 +20865,50 @@ app.post('/api/device-vars', async (req, res) => {
     const _auditCtx = { ip: req.ip, ua: req.get('user-agent') };
     const _metaBefore = await db.getDeviceVarsMeta(deviceId);
     const _beforeCount = _metaBefore && Array.isArray(_metaBefore.var_keys) ? _metaBefore.var_keys.length : 0;
+
+    // Optimistic concurrency (card_946cfefe): if client sent the snapshot it
+    // based its edit on via `expectedUpdatedAt`, refuse the write when the
+    // server-side row has moved past it. Returns 409 with the current vault
+    // so the client can re-merge its local edits against latest, then retry.
+    // Backward-compat: clients that don't send expectedUpdatedAt skip the
+    // check (legacy behavior). Same-source merge logic below still drops
+    // unknown-to-client keys without this check — that's the failure mode
+    // PR #3392 left unaddressed (web+app+other multi-device race).
+    if (expectedUpdatedAt) {
+        const currentRow = await db.getDeviceVars(deviceId);
+        const currentUpdatedAt = currentRow && currentRow.updated_at
+            ? new Date(currentRow.updated_at).toISOString()
+            : null;
+        if (currentUpdatedAt && currentUpdatedAt !== expectedUpdatedAt) {
+            const _srcLabel = (source === 'web' || source === 'app') ? source : 'legacy';
+            db.logDeviceVarsAudit({
+                deviceId,
+                action: 'refuse_stale_write',
+                source: _srcLabel,
+                callerIp: _auditCtx.ip,
+                callerUa: _auditCtx.ua,
+                beforeCount: _beforeCount,
+                afterCount: _beforeCount,
+            });
+            let currentVars = {};
+            try {
+                if (currentRow && currentRow.encrypted_vars) {
+                    currentVars = decryptVars(currentRow.encrypted_vars, currentRow.iv, currentRow.auth_tag);
+                }
+            } catch (e) {
+                console.warn(`[Vars] decrypt failed during 409 response: ${e.message}`);
+            }
+            return res.status(409).json({
+                success: false,
+                error: 'stale_write',
+                message: 'Vault was modified on another device since you loaded it. Refetch + merge your edits + retry with the new updatedAt.',
+                serverUpdatedAt: currentUpdatedAt,
+                expectedUpdatedAt,
+                currentVars,
+                currentSources: (currentRow && currentRow.var_sources) || {},
+            });
+        }
+    }
 
     // Sanitize: only string keys + string values
     const incoming = {};
@@ -21009,7 +21053,16 @@ app.post('/api/device-vars', async (req, res) => {
         // 'legacy' for whole-object replace. Value is NEVER recorded.
         db.logDeviceVarsAudit({ deviceId, action: src ? 'merge' : 'replace', source: src || 'legacy', callerIp: _auditCtx.ip, callerUa: _auditCtx.ua, beforeCount: _beforeCount, afterCount: varKeys.length });
 
-        const response = { success: true, count: varKeys.length };
+        // Re-read to surface the new updatedAt for optimistic-concurrency
+        // bookkeeping (card_946cfefe). Clients echo this back on their next
+        // POST as expectedUpdatedAt; mismatch → 409.
+        let newUpdatedAt = null;
+        try {
+            const postRow = await db.getDeviceVars(deviceId);
+            if (postRow && postRow.updated_at) newUpdatedAt = new Date(postRow.updated_at).toISOString();
+        } catch (e) { /* fall through; client can refetch via GET */ }
+
+        const response = { success: true, count: varKeys.length, updatedAt: newUpdatedAt };
 
         // Return merged vars so client can sync back
         if (src) {
@@ -21076,6 +21129,12 @@ app.get('/api/device-vars', async (req, res) => {
     try {
         const vars = decryptVars(row.encrypted_vars, row.iv, row.auth_tag);
         const out = { success: true, vars };
+        // updatedAt = server-side optimistic-concurrency token (card_946cfefe).
+        // Clients echo it back as `expectedUpdatedAt` on POST; server rejects
+        // 409 if it doesn't match the current row — prevents cross-device
+        // last-write-wins data loss when multiple web/app clients have stale
+        // vault snapshots.
+        out.updatedAt = row.updated_at ? new Date(row.updated_at).toISOString() : null;
         if (authMode === 'owner') {
             out.sources = row.var_sources || {};
             out.locked = !!row.is_locked;
