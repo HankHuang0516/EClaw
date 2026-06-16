@@ -54,6 +54,10 @@ window.AgentCardEditor = (function() {
         this.isOwner = opts.isOwner !== false;
         this.onSave = opts.onSave || function() {};
         this._tagData = { protocols: [], tags: [] };
+        // Cleanup handle for the 1-second arena retest countdown tick
+        // (card_959). Re-rendering replaces the DOM node, so we must
+        // explicitly stop the prior interval before each render.
+        this._stopRetestCountdown = null;
     }
 
     AgentCardEditor.prototype.render = function() {
@@ -94,6 +98,9 @@ window.AgentCardEditor = (function() {
                 ' <span style="font-size:10px;color:var(--text-secondary);font-weight:400;">(' +
                 t('dash_caps_arena_only', 'verified by Arena test — read-only') + ')</span></label>' +
                 '<div class="ace-caps" id="aceCaps' + uid + '"></div>' +
+                // Arena retest countdown chip (card_959). Hidden until
+                // _renderRetestCountdown() finds a lastInterviewAt.
+                '<div class="ace-retest-slot" id="aceRetest' + uid + '"></div>' +
                 (this.isOwner ? '<div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;">' +
                     '<button class="btn btn-sm" id="aceInterviewBtn' + uid + '" style="font-size:12px;background:#10b981;color:#fff;border:none;">🧪 ' + t('dash_run_interview', 'Run Interview') + '</button>' +
                     '<button class="btn btn-sm btn-outline" id="aceRentalBtn' + uid + '" style="font-size:12px;" title="' + t('dash_list_rental', 'List for Rental') + t('dash_list_rental_paid_suffix', ' (paid rental)') + '">💴 ' + t('dash_list_rental', 'List for Rental') + t('dash_list_rental_paid_suffix', ' (paid rental)') + '</button>' +
@@ -174,6 +181,80 @@ window.AgentCardEditor = (function() {
             if (rentalBtn) rentalBtn.onclick = function() { self._listForRental(); };
             var arenaBtn = document.getElementById('aceArenaBtn' + uid);
             if (arenaBtn) arenaBtn.onclick = function() { self._openArena(); };
+        }
+
+        // Stop any prior tick before render(), then render + attach the
+        // arena retest countdown.
+        if (typeof this._stopRetestCountdown === 'function') {
+            this._stopRetestCountdown();
+            this._stopRetestCountdown = null;
+        }
+        this._renderRetestCountdown();
+    };
+
+    /**
+     * Render the arena retest countdown chip below Capabilities.
+     *
+     * The ONLY source of truth for `last_interview_at` is the server —
+     * specifically the `bot_listings.last_interview_at` column, exposed via
+     * GET /api/rental/my-listings. We never trust `identity.lastInterviewAt`
+     * even if a caller passes it in: identity JSONB is owner-writable via
+     * PUT /api/entity/identity, so honoring it would let an owner reset
+     * their own Arena retest cooldown to "fresh" instantly. Card scope
+     * explicitly forbids client-side cooldown spoofing.
+     *
+     * The chip is also gated on `isOwner` — public viewers of an agent
+     * card don't need (and aren't entitled to) cooldown timing for someone
+     * else's bot, and skipping the fetch saves an unauthenticated 401 per
+     * card render on the marketplace browse path.
+     */
+    AgentCardEditor.prototype._renderRetestCountdown = function() {
+        var self = this;
+        var slot = document.getElementById('aceRetest' + this._uid);
+        if (!slot) return;
+        slot.innerHTML = '';
+
+        var helpers = (typeof window !== 'undefined' && window.EntityRetestCountdown) || null;
+        if (!helpers) return;
+
+        // Owner-only: see comment block above.
+        if (!this.isOwner) return;
+        if (typeof apiCall !== 'function') return;
+
+        function mount(deadlineMs) {
+            if (!Number.isFinite(deadlineMs)) return;
+            slot.innerHTML = helpers.renderRetestCountdownHtml(deadlineMs);
+            var node = slot.querySelector('.retest-countdown');
+            if (node) self._stopRetestCountdown = helpers.attachRetestCountdown(node);
+        }
+
+        // Server-authoritative source: /api/rental/my-listings returns
+        // `last_interview_at` from `bot_listings`, written ONLY by the
+        // Arena exam-complete handler (interview-arena.js:1533). The owner
+        // can't PUT this field. Skip silently on any error — the chip
+        // just stays hidden, which is the correct UX for "no listing yet."
+        apiCall('GET', '/api/rental/my-listings', null, { skip401Redirect: true })
+            .then(function(res) {
+                if (!res || !Array.isArray(res.listings)) return;
+                var match = res.listings.find(function(l) {
+                    return String(l.owner_entity_id) === String(self.entityId);
+                });
+                if (!match || !match.last_interview_at) return;
+                var dl = helpers.computeRetestDeadlineMs(match.last_interview_at);
+                if (Number.isFinite(dl)) mount(dl);
+            })
+            .catch(function() { /* hide chip on any error */ });
+    };
+
+    /**
+     * Stop the countdown interval. Pages that destroy the editor before the
+     * DOM node is removed should call this to prevent the tick from running
+     * against a detached node.
+     */
+    AgentCardEditor.prototype.destroy = function() {
+        if (typeof this._stopRetestCountdown === 'function') {
+            this._stopRetestCountdown();
+            this._stopRetestCountdown = null;
         }
     };
 

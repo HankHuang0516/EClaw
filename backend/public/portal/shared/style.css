@@ -1621,3 +1621,144 @@ a:hover { text-decoration: underline; }
     outline-offset: 2px;
 }
 .help-icon svg { width: 12px; height: 12px; }
+
+/* ──────────────────────────────────────────────────────────────────────
+ * Arena retest countdown chip — card_959b58d0351153bc94aea8da
+ *
+ * 5-tier severity palette (gray > yellow > orange > red > green) + a
+ * "ready" state (cooldown lifted). All colors picked to clear WCAG AA
+ * contrast (≥ 4.5:1) against the dark portal background. Color is never
+ * the only signal — every chip ships an explicit text label, an
+ * aria-label, and an SR-friendly tier name (see entity-utils.js).
+ *
+ * .ace-retest-slot is the editor container; .retest-countdown is the
+ * chip itself. We scope every selector under .retest-countdown so the
+ * styles can't leak into other chip-shaped components on the dashboard.
+ * ────────────────────────────────────────────────────────────────────── */
+.ace-retest-slot {
+    margin: 8px 0 4px;
+}
+.retest-countdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill, 20px);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    /* tabular-nums keeps the ticker from re-flowing every second as
+       digit widths change. Critical for visual stability of the chip. */
+    font-variant-numeric: tabular-nums;
+    border: 1px solid transparent;
+    /* Default palette = gray; per-tier modifier overrides below. */
+    background: rgba(160, 160, 175, 0.12);
+    color: #c8c8d6;
+    border-color: rgba(160, 160, 175, 0.25);
+    max-width: 100%;
+    box-sizing: border-box;
+}
+.retest-countdown__label {
+    opacity: 0.85;
+    font-weight: 500;
+    /* allow the label to wrap on narrow viewports without breaking the
+       fixed-width value. */
+    white-space: nowrap;
+}
+.retest-countdown__label::after { content: ':'; margin-right: 2px; }
+.retest-countdown__value {
+    font-weight: 700;
+    white-space: nowrap;
+    /* a tiny min-width keeps the chip from jittering when the formatted
+       string shrinks from "25d 03h" to "9d 23h" (one char shorter). */
+    min-width: 4ch;
+    text-align: right;
+}
+
+/* >14 days = gray (no urgency). Default already gray; named modifier
+   exists so the cascade is symmetric across tiers. */
+.retest-countdown--gray {
+    background: rgba(160, 160, 175, 0.12);
+    color: #c8c8d6;
+    border-color: rgba(160, 160, 175, 0.25);
+}
+/* 7-14 days = yellow (informational). */
+.retest-countdown--yellow {
+    background: rgba(255, 210, 63, 0.14);
+    color: #ffe27a;
+    border-color: rgba(255, 210, 63, 0.35);
+}
+/* 3-7 days = orange (warning). */
+.retest-countdown--orange {
+    background: rgba(255, 152, 0, 0.16);
+    color: #ffb74d;
+    border-color: rgba(255, 152, 0, 0.4);
+}
+/* 1-3 days = red (urgent). Subtle pulse on the border so the chip pulls
+   the eye on the dashboard without being a strobe.
+   Color #ffb4ab is Material 3 red-200 — measured ≥4.5:1 against the
+   #1a1a2e portal background per WCAG AA. The lighter shade keeps the
+   chip readable even at 11px on mobile. */
+.retest-countdown--red {
+    background: rgba(244, 67, 54, 0.18);
+    color: #ffb4ab;
+    border-color: rgba(244, 67, 54, 0.5);
+    animation: retestCountdownPulse 2s ease-in-out infinite;
+}
+/* <1 day = green (cooldown lifting within 24h). */
+.retest-countdown--green {
+    background: rgba(76, 175, 80, 0.18);
+    color: #81e08c;
+    border-color: rgba(76, 175, 80, 0.5);
+}
+/* >= 0 = ready (retest available now). Shares green palette but bolder
+   border + the value reads "立即可重測" instead of a duration. */
+.retest-countdown--ready {
+    background: rgba(76, 175, 80, 0.22);
+    color: #a5f0ac;
+    border-color: rgba(76, 175, 80, 0.7);
+    cursor: default;
+}
+
+@keyframes retestCountdownPulse {
+    0%, 100% {
+        border-color: rgba(244, 67, 54, 0.5);
+        box-shadow: 0 0 0 0 rgba(244, 67, 54, 0);
+    }
+    50% {
+        border-color: rgba(244, 67, 54, 0.9);
+        box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.15);
+    }
+}
+
+/* Motion-sensitive users — disable the pulse entirely. The red tier
+   still reads as red, but it no longer flashes. */
+@media (prefers-reduced-motion: reduce) {
+    .retest-countdown--red {
+        animation: none;
+    }
+}
+
+/* Focus ring for keyboard users only. We deliberately use :focus-visible
+   (not :focus) so the ring doesn't fire on mouse click, and we DROP the
+   :focus-within selector — chips are role="status" with no tabindex, so
+   they can't focus themselves, and :focus-within would double-ring with
+   the portal's global focus-visible system on any future nested control. */
+.retest-countdown:focus-visible {
+    outline: 2px solid var(--primary, #6c63ff);
+    outline-offset: 2px;
+}
+
+/* Mobile 390×844 — the chip should fit inside the agent card column
+   without forcing horizontal scroll. Shrink padding + font slightly so
+   "25d 03h" reads at a glance. */
+@media (max-width: 480px) {
+    .retest-countdown {
+        font-size: 11px;
+        padding: 3px 8px;
+        gap: 4px;
+    }
+    .retest-countdown__value {
+        min-width: 3.5ch;
+    }
+}

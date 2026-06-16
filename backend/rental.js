@@ -782,9 +782,14 @@ async function getListing(listingId) {
 
 async function listMyListings(ownerUserId) {
     assertString('owner_user_id', ownerUserId, { max: 64 });
+    // last_interview_at: surfaced for the agent-card retest countdown
+    // (card_959). The countdown shows N days remaining until the bot must
+    // be re-interviewed by Arena; clients call /api/rental/my-listings
+    // to resolve the deadline when it's not on opts.identity directly.
     const res = await pool.query(
         `SELECT id, owner_device_id, owner_entity_id, title, rate_mli_per_ktoken,
-                status, interview_passed, avg_rating, total_rentals,
+                status, interview_passed, last_interview_at,
+                avg_rating, total_rentals,
                 soft_pause_until, soft_pause_reason, created_at
          FROM bot_listings WHERE owner_user_id = $1
          ORDER BY created_at DESC`,
