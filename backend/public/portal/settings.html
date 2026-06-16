@@ -788,6 +788,47 @@
             </div>
         </div>
 
+        <!-- User Display Name Card (card_900db3bf) -->
+        <div class="card" id="userProfileCard">
+            <div class="card-title" style="display:flex;align-items:center;gap:6px;">
+                <span>🪪 <span data-i18n="settings_user_display_name_title">My Display Name</span></span>
+                <span class="help-icon-inline"
+                      title="Click for help"
+                      role="button"
+                      tabindex="0"
+                      aria-label="Help"
+                      onclick="showUserDisplayNameHelp()"
+                      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showUserDisplayNameHelp();}"
+                      style="cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;border:1px solid var(--card-border);font-size:11px;color:var(--text-secondary);user-select:none;">?</span>
+            </div>
+            <p class="section-desc" data-i18n="settings_user_display_name_desc">The name shown in chat headers in place of "Device Owner". Leave blank to use the default.</p>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;">
+                <input type="text"
+                       id="userDisplayNameInput"
+                       maxlength="64"
+                       data-i18n-placeholder="settings_user_display_name_placeholder"
+                       placeholder="e.g. Hank"
+                       style="flex:1;min-width:160px;padding:8px 10px;border:1px solid var(--card-border);border-radius:6px;background:var(--bg);color:var(--text);font-size:14px;">
+                <button class="btn btn-primary btn-sm"
+                        onclick="saveUserDisplayName()"
+                        id="userDisplayNameSaveBtn"
+                        data-i18n="common_save">Save</button>
+            </div>
+            <p id="userDisplayNameStatus" class="section-desc" style="margin:8px 0 0;min-height:18px;"></p>
+            <!-- Empty / disabled-state help dialog (hidden by default) -->
+            <div id="userDisplayNameHelpDialog"
+                 onclick="if(event.target===this)closeUserDisplayNameHelp()"
+                 style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+                <div style="background:var(--bg);color:var(--text);max-width:480px;width:100%;border-radius:10px;padding:18px 20px;border:1px solid var(--card-border);">
+                    <h3 style="margin:0 0 8px;font-size:16px;" data-i18n="settings_user_display_name_help_title">About My Display Name</h3>
+                    <p style="margin:0 0 8px;font-size:13px;line-height:1.5;" data-i18n="settings_user_display_name_help_body">This name appears in chat as the human label for messages you send. It is visible to bots you talk to but not used for routing or login. Up to 64 characters, single line, no control characters. Leave blank to fall back to the default "Device Owner".</p>
+                    <div style="display:flex;justify-content:flex-end;margin-top:12px;">
+                        <button class="btn btn-sm btn-outline" onclick="closeUserDisplayNameHelp()" data-i18n="common_close">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Channel API Card -->
         <div class="card" id="channelApiCard">
             <div class="card-title" style="display:flex;align-items:center;justify-content:space-between;">
@@ -1690,6 +1731,7 @@
             loadViewModePreference();
             loadNotifPreferences();
             loadDevicePreferences();
+            loadUserDisplayName();
             populateKanbanNudgeEntityPicker();
             loadOwnerRoster(user).catch(e => console.warn('[Roster] initial load failed:', e));
             loadPromptPolicy(user);
@@ -2550,6 +2592,68 @@
                 showToast(i18n.t('toast_preference_update_failed'), 'error');
             }
         }
+
+        // ============================================
+        // USER DISPLAY NAME (card_900db3bf)
+        // ============================================
+        async function loadUserDisplayName() {
+            const input = document.getElementById('userDisplayNameInput');
+            const status = document.getElementById('userDisplayNameStatus');
+            if (!input) return;
+            try {
+                const data = await apiCall('GET', '/api/device/user-profile');
+                const name = data && data.profile && data.profile.userDisplayName;
+                input.value = name || '';
+                if (status) status.textContent = '';
+            } catch (e) {
+                if (status) status.textContent = i18n.t('settings_user_display_name_load_failed') || 'Failed to load name';
+            }
+        }
+
+        async function saveUserDisplayName() {
+            const input = document.getElementById('userDisplayNameInput');
+            const status = document.getElementById('userDisplayNameStatus');
+            const btn = document.getElementById('userDisplayNameSaveBtn');
+            if (!input) return;
+            const raw = input.value || '';
+            // Client-side length cap (UI hint only — server is the gate).
+            const codePoints = Array.from(raw.trim());
+            if (codePoints.length > 64) {
+                if (status) status.textContent = i18n.t('settings_user_display_name_too_long') || 'Name is too long (max 64).';
+                return;
+            }
+            if (btn) btn.disabled = true;
+            try {
+                const data = await apiCall('PUT', '/api/device/user-profile', { userDisplayName: raw });
+                const name = data && data.profile && data.profile.userDisplayName;
+                input.value = name || '';
+                if (status) status.textContent = '';
+                if (typeof showToast === 'function') {
+                    showToast(i18n.t('settings_user_display_name_saved') || 'Display name saved', 'success');
+                }
+            } catch (e) {
+                if (status) status.textContent = (e && e.message) || i18n.t('settings_user_display_name_save_failed') || 'Save failed';
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        function showUserDisplayNameHelp() {
+            const dlg = document.getElementById('userDisplayNameHelpDialog');
+            if (dlg) dlg.style.display = 'flex';
+        }
+        function closeUserDisplayNameHelp() {
+            const dlg = document.getElementById('userDisplayNameHelpDialog');
+            if (dlg) dlg.style.display = 'none';
+        }
+
+        window.onSocketUserProfile = function(data) {
+            if (!data || !data.profile) return;
+            const input = document.getElementById('userDisplayNameInput');
+            if (input && document.activeElement !== input) {
+                input.value = data.profile.userDisplayName || '';
+            }
+        };
 
         // ============================================
         // DEVICE PREFERENCES (broadcast settings)

@@ -19869,6 +19869,127 @@ app.put('/api/device-preferences', async (req, res) => {
 });
 
 // ============================================
+// DEVICE USER PROFILE — user_display_name (card_900db3bf)
+// ============================================
+// Owner-set human name shown in chat / UI in place of "Device Owner".
+// Persisted in devices.user_display_name (added by db.js migration).
+// Auth: device owner only (deviceSecret OR JWT cookie via authDevice helper).
+//
+// Globe-user generalization: every device worldwide can set its own display
+// name; no allowlist, no per-tenant carveouts. Trimmed + length-capped at
+// write time so 1-byte and 60-byte UTF-8 inputs round-trip safely.
+
+const USER_DISPLAY_NAME_MAX_LEN = 64;
+
+function normalizeUserDisplayName(input) {
+    if (input === null || input === undefined) return null;
+    if (typeof input !== 'string') return undefined; // sentinel: invalid type
+    const trimmed = input.trim();
+    if (trimmed.length === 0) return null;          // empty → clear
+    // Length cap via Array.from to count Unicode code points, not UTF-16 units,
+    // so a single emoji counts as 1 char (matches user-visible length).
+    const codePoints = Array.from(trimmed);
+    if (codePoints.length > USER_DISPLAY_NAME_MAX_LEN) return undefined; // too long
+    // Reject ASCII control chars (\x00-\x1f and \x7f DEL): the field is
+    // a single-line UI label, so newlines/NUL/etc. would render as gibberish
+    // or break layout. UTF-8 multibyte chars and emoji pass through fine.
+    if (/[\x00-\x1f\x7f]/.test(trimmed)) return undefined;
+    // Reject Unicode bidi-override + zero-width chars: they enable spoofing
+    // (RTL-override "Admin" lookalikes) and invisible layout breakage in a
+    // user-facing label. Block:
+    //   ​-‏ (zero-width space / joiner / non-joiner / LRM / RLM)
+    //   ‪-‮ (bidi embedding/override controls)
+    //   ⁦-⁩ (bidi isolate controls)
+    //   ﻿       (zero-width no-break space / BOM)
+    if (/[​-‏‪-‮⁦-⁩﻿]/.test(trimmed)) return undefined;
+    return trimmed;
+}
+
+app.get('/api/device/user-profile', async (req, res) => {
+    const deviceId = authDevice(req);
+    if (!deviceId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    try {
+        // Prefer in-memory cache (loaded by loadAllDevices); fall back to DB read
+        // so the endpoint still works for devices created in this process before
+        // a restart hydrates the cache.
+        let userDisplayName = null;
+        const memDevice = devices[deviceId];
+        if (memDevice && Object.prototype.hasOwnProperty.call(memDevice, 'userDisplayName')) {
+            userDisplayName = memDevice.userDisplayName || null;
+        } else {
+            const pool = db._getPool && db._getPool();
+            if (pool) {
+                const result = await pool.query(
+                    'SELECT user_display_name FROM devices WHERE device_id = $1',
+                    [deviceId]
+                );
+                userDisplayName = result.rows[0]?.user_display_name || null;
+            }
+        }
+        return res.json({
+            success: true,
+            profile: {
+                userDisplayName,
+                maxLength: USER_DISPLAY_NAME_MAX_LEN
+            }
+        });
+    } catch (err) {
+        console.error('[UserProfile] GET failed:', err.message);
+        return res.status(500).json({ success: false, error: 'Internal error' });
+    }
+});
+
+app.put('/api/device/user-profile', async (req, res) => {
+    const deviceId = authDevice(req);
+    if (!deviceId) return res.status(401).json({ success: false, error: 'Unauthorized' });
+    const body = req.body || {};
+    // Only handle the field if the caller actually sent it — lets future fields
+    // be added without breaking partial PUTs.
+    if (!Object.prototype.hasOwnProperty.call(body, 'userDisplayName')) {
+        return res.status(400).json({ success: false, error: 'userDisplayName field required' });
+    }
+    const normalized = normalizeUserDisplayName(body.userDisplayName);
+    if (normalized === undefined) {
+        return res.status(400).json({
+            success: false,
+            error: `Invalid userDisplayName (must be string, ≤${USER_DISPLAY_NAME_MAX_LEN} chars, no control characters)`
+        });
+    }
+    try {
+        const pool = db._getPool && db._getPool();
+        if (!pool) {
+            // No DB pool means we cannot persist. Return 500 instead of
+            // succeeding-into-RAM-only — silent loss on next process restart
+            // is worse than a visible error the client can retry.
+            console.error('[UserProfile] PUT failed: db pool unavailable');
+            return res.status(500).json({ success: false, error: 'Database unavailable' });
+        }
+        await pool.query(
+            `UPDATE devices SET user_display_name = $1, updated_at = $2 WHERE device_id = $3`,
+            [normalized, Date.now(), deviceId]
+        );
+        // Update in-memory cache so subsequent GET (and any downstream consumers
+        // that read devices[deviceId]) see the new value without a restart.
+        if (devices[deviceId]) {
+            devices[deviceId].userDisplayName = normalized;
+        }
+        // Notify connected portal/app sockets in the device room so other open
+        // tabs reflect the change immediately.
+        try { io.to(deviceId).emit('device:user-profile', { deviceId, profile: { userDisplayName: normalized } }); } catch (e) {}
+        return res.json({
+            success: true,
+            profile: {
+                userDisplayName: normalized,
+                maxLength: USER_DISPLAY_NAME_MAX_LEN
+            }
+        });
+    } catch (err) {
+        console.error('[UserProfile] PUT failed:', err.message);
+        return res.status(500).json({ success: false, error: 'Internal error' });
+    }
+});
+
+// ============================================
 // ORGANIZATION HIERARCHY CHART
 // ============================================
 

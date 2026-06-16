@@ -650249,6 +650249,16 @@ const TRANSLATIONS = {
         "env_key_deleted": "Deleted \"{key}\"",
         "env_delete_failed": "Delete failed: {error}",
         "env_empty_setup_hint": "No keys yet. Click \"+ Add\" to store credentials your bots can read via the secrets API.",
+
+        "settings_user_display_name_title": "My Display Name",
+        "settings_user_display_name_desc": "The name shown in chat headers in place of \"Device Owner\". Leave blank to use the default.",
+        "settings_user_display_name_placeholder": "e.g. Hank",
+        "settings_user_display_name_saved": "Display name saved",
+        "settings_user_display_name_save_failed": "Save failed",
+        "settings_user_display_name_load_failed": "Failed to load name",
+        "settings_user_display_name_too_long": "Name is too long (max 64 characters).",
+        "settings_user_display_name_help_title": "About My Display Name",
+        "settings_user_display_name_help_body": "This name appears in chat as the human label for messages you send. It is visible to bots you talk to but not used for routing or login. Up to 64 characters, single line, no control characters. Leave blank to fall back to the default \"Device Owner\".",
 },
 
 
@@ -1234964,6 +1234974,16 @@ const TRANSLATIONS = {
         "env_key_deleted": "已刪除「{key}」",
         "env_delete_failed": "刪除失敗：{error}",
         "env_empty_setup_hint": "尚未設定金鑰。點擊「+ 新增」來儲存 Bot 可透過 secrets API 讀取的憑證。",
+
+        "settings_user_display_name_title": "我的顯示名稱",
+        "settings_user_display_name_desc": "在對話標題顯示的名稱，取代「裝置主人」。留空則使用預設值。",
+        "settings_user_display_name_placeholder": "例如：Hank",
+        "settings_user_display_name_saved": "已儲存顯示名稱",
+        "settings_user_display_name_save_failed": "儲存失敗",
+        "settings_user_display_name_load_failed": "載入名稱失敗",
+        "settings_user_display_name_too_long": "名稱過長（最多 64 個字元）。",
+        "settings_user_display_name_help_title": "關於顯示名稱",
+        "settings_user_display_name_help_body": "此名稱會出現在對話中作為您所發訊息的人類標籤。對您交談的智能體可見，但不用於路由或登入。最多 64 個字元、單行、不可包含控制字元。留空則回退為預設的「裝置主人」。",
 },
 
 
@@ -2412246,6 +2412266,16 @@ const TRANSLATIONS = {
         "petdx_switch_failed": "切り替えに失敗しました：{error}",
         "petdx_network_error": "ネットワークエラー：{error}",
         "petdx_favorite_failed": "お気に入りの保存に失敗しました：{error}",
+
+        "settings_user_display_name_title": "表示名",
+        "settings_user_display_name_desc": "「Device Owner」の代わりにチャットヘッダーに表示される名前です。空欄の場合はデフォルト値が使われます。",
+        "settings_user_display_name_placeholder": "例: Hank",
+        "settings_user_display_name_saved": "表示名を保存しました",
+        "settings_user_display_name_save_failed": "保存に失敗しました",
+        "settings_user_display_name_load_failed": "名前の読み込みに失敗しました",
+        "settings_user_display_name_too_long": "名前が長すぎます（最大64文字）。",
+        "settings_user_display_name_help_title": "表示名について",
+        "settings_user_display_name_help_body": "この名前は、あなたが送信したメッセージの人間用ラベルとしてチャットに表示されます。会話相手のボットには見えますが、ルーティングやログインには使用されません。最大64文字、1行、制御文字は使用できません。空欄の場合はデフォルトの「Device Owner」にフォールバックします。",
 },
 
 
@@ -2942523,6 +2942553,16 @@ const TRANSLATIONS = {
         "petdx_switch_failed": "전환 실패: {error}",
         "petdx_network_error": "네트워크 오류: {error}",
         "petdx_favorite_failed": "즐겨찾기 저장 실패: {error}",
+
+        "settings_user_display_name_title": "표시 이름",
+        "settings_user_display_name_desc": "채팅 헤더에서 \"Device Owner\" 대신 표시되는 이름입니다. 비워두면 기본값이 사용됩니다.",
+        "settings_user_display_name_placeholder": "예: Hank",
+        "settings_user_display_name_saved": "표시 이름이 저장되었습니다",
+        "settings_user_display_name_save_failed": "저장 실패",
+        "settings_user_display_name_load_failed": "이름 로드 실패",
+        "settings_user_display_name_too_long": "이름이 너무 깁니다(최대 64자).",
+        "settings_user_display_name_help_title": "표시 이름 정보",
+        "settings_user_display_name_help_body": "이 이름은 보낸 메시지의 사람용 라벨로 채팅에 표시됩니다. 대화하는 봇에는 보이지만 라우팅이나 로그인에는 사용되지 않습니다. 최대 64자, 한 줄, 제어 문자는 불가합니다. 비워두면 기본값 \"Device Owner\"로 폴백됩니다.",
 },
 
 
@@ -3997743,6 +3997783,16 @@ const TRANSLATIONS = {
         "petdx_switch_failed": "Chuyển đổi thất bại: {error}",
         "petdx_network_error": "Lỗi mạng: {error}",
         "petdx_favorite_failed": "Lưu vào yêu thích thất bại: {error}",
+
+        "settings_user_display_name_title": "Tên hiển thị của tôi",
+        "settings_user_display_name_desc": "Tên hiển thị trong tiêu đề trò chuyện thay cho \"Device Owner\". Để trống để dùng giá trị mặc định.",
+        "settings_user_display_name_placeholder": "ví dụ: Hank",
+        "settings_user_display_name_saved": "Đã lưu tên hiển thị",
+        "settings_user_display_name_save_failed": "Lưu thất bại",
+        "settings_user_display_name_load_failed": "Không tải được tên",
+        "settings_user_display_name_too_long": "Tên quá dài (tối đa 64 ký tự).",
+        "settings_user_display_name_help_title": "Về tên hiển thị",
+        "settings_user_display_name_help_body": "Tên này hiển thị trong trò chuyện như nhãn dành cho con người cho các tin nhắn bạn gửi. Các bot bạn trò chuyện có thể thấy, nhưng không dùng để định tuyến hoặc đăng nhập. Tối đa 64 ký tự, một dòng, không có ký tự điều khiển. Để trống sẽ quay về giá trị mặc định \"Device Owner\".",
 },
 
 
@@ -4524196,6 +4524246,16 @@ const TRANSLATIONS = {
         "petdx_switch_failed": "Pergantian gagal: {error}",
         "petdx_network_error": "Kesalahan jaringan: {error}",
         "petdx_favorite_failed": "Gagal menyimpan ke favorit: {error}",
+
+        "settings_user_display_name_title": "Nama Tampil Saya",
+        "settings_user_display_name_desc": "Nama yang ditampilkan di header obrolan menggantikan \"Device Owner\". Biarkan kosong untuk memakai nilai default.",
+        "settings_user_display_name_placeholder": "mis. Hank",
+        "settings_user_display_name_saved": "Nama tampil disimpan",
+        "settings_user_display_name_save_failed": "Gagal menyimpan",
+        "settings_user_display_name_load_failed": "Gagal memuat nama",
+        "settings_user_display_name_too_long": "Nama terlalu panjang (maks. 64 karakter).",
+        "settings_user_display_name_help_title": "Tentang Nama Tampil",
+        "settings_user_display_name_help_body": "Nama ini muncul di obrolan sebagai label manusiawi untuk pesan yang Anda kirim. Bot yang Anda ajak bicara dapat melihatnya, tetapi tidak digunakan untuk perutean atau login. Maksimum 64 karakter, satu baris, tanpa karakter kontrol. Biarkan kosong untuk kembali ke nilai default \"Device Owner\".",
 },
 
 
@@ -5566949,6 +5567009,16 @@ const TRANSLATIONS = {
         "petdx_switch_failed": "Cambio fallido: {error}",
         "petdx_network_error": "Error de red: {error}",
         "petdx_favorite_failed": "Error al guardar en favoritos: {error}",
+
+        "settings_user_display_name_title": "Mi nombre visible",
+        "settings_user_display_name_desc": "El nombre que aparece en los encabezados del chat en lugar de \"Device Owner\". Déjalo en blanco para usar el valor predeterminado.",
+        "settings_user_display_name_placeholder": "p. ej. Hank",
+        "settings_user_display_name_saved": "Nombre guardado",
+        "settings_user_display_name_save_failed": "Error al guardar",
+        "settings_user_display_name_load_failed": "Error al cargar el nombre",
+        "settings_user_display_name_too_long": "El nombre es demasiado largo (máx. 64 caracteres).",
+        "settings_user_display_name_help_title": "Acerca del nombre visible",
+        "settings_user_display_name_help_body": "Este nombre aparece en el chat como etiqueta humana de los mensajes que envías. Es visible para los bots con los que hablas, pero no se utiliza para el enrutamiento ni el inicio de sesión. Hasta 64 caracteres, una sola línea, sin caracteres de control. Déjalo en blanco para volver al valor predeterminado \"Device Owner\".",
 },
 
 
