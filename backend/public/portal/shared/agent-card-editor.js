@@ -69,7 +69,25 @@ window.AgentCardEditor = (function() {
             || ac.interviewCapabilities
             || (ac.capabilities && !Array.isArray(ac.capabilities) ? ac.capabilities : null);
 
+        // Arena verified-score binding (card_ad404375). interviewCapabilities
+        // here is the IDENTITY-level numeric score block written by the
+        // /api/arena/leaderboard POST entity-binding path — distinct from
+        // arenaCaps (which is the per-capability supported/unsupported map).
+        // Falls back to identity.lastInterviewAt when score is unset.
+        var arenaScore = (this.identity && this.identity.interviewCapabilities
+            && typeof this.identity.interviewCapabilities.score === 'number')
+            ? this.identity.interviewCapabilities
+            : null;
+
         container.innerHTML =
+            // ── Arena verified score (card_ad404375) ──
+            '<div class="ace-field" data-arena-score-section="1">' +
+                '<label>' + t('dash_arena_score', 'Arena Verified Score') +
+                ' <span class="ace-help-tip" data-arena-help="1" tabindex="0" role="button" aria-label="' +
+                    esc(t('dash_arena_score_help_aria', 'How to get a verified Arena score')) + '" ' +
+                    'style="cursor:help;font-size:11px;color:var(--text-secondary);border:1px solid var(--card-border);border-radius:50%;padding:0 5px;margin-left:4px;">?</span></label>' +
+                '<div class="ace-arena-score" id="aceArenaScore' + uid + '" aria-live="polite"></div>' +
+            '</div>' +
             // ── Capabilities (read-only Arena badges) ──
             '<div class="ace-field">' +
                 '<label>' + t('dash_capabilities', 'Capabilities') +
@@ -117,6 +135,21 @@ window.AgentCardEditor = (function() {
             '</div>';
 
         this._uid = uid;
+
+        // Render Arena verified score badge (card_ad404375)
+        this._renderArenaScore(arenaScore);
+
+        // Wire ? icon help tooltip — click/hover/focus reveals what + needs +
+        // concrete next step (Globe-user setup-conditions UX rule).
+        var helpTip = container.querySelector('.ace-help-tip[data-arena-help="1"]');
+        if (helpTip) {
+            var self2 = this;
+            var helpToggle = function() { self2._showArenaScoreHelp(helpTip); };
+            helpTip.addEventListener('click', helpToggle);
+            helpTip.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); helpToggle(); }
+            });
+        }
 
         // Render Arena capability badges
         this._renderCaps(arenaCaps);
@@ -168,6 +201,111 @@ window.AgentCardEditor = (function() {
             badge.textContent = (supported ? '✅ ' : '❌ ') + key + pctStr;
             container.appendChild(badge);
         });
+    };
+
+    /**
+     * Render the Arena verified numeric score on the namecard.
+     * Empty state shows a "尚未面試 / No interview yet" placeholder with
+     * a `?` icon explaining how to get a score (Globe-user setup UX rule).
+     */
+    AgentCardEditor.prototype._renderArenaScore = function(score) {
+        var container = document.getElementById('aceArenaScore' + this._uid);
+        if (!container) return;
+        container.innerHTML = '';
+        if (!score || typeof score.score !== 'number' || typeof score.maxScore !== 'number' || score.maxScore <= 0) {
+            // Empty state — no interview recorded yet.
+            var empty = document.createElement('div');
+            empty.style.cssText = 'font-size:12px;color:var(--text-secondary);padding:8px 0;';
+            empty.textContent = t('dash_arena_score_empty', '尚未面試 — 點擊「Run Interview」開始驗證 / No interview yet — click Run Interview to start');
+            container.appendChild(empty);
+            return;
+        }
+        var pct = (typeof score.normalized === 'number')
+            ? score.normalized
+            : Math.round((score.score / score.maxScore) * 100);
+        var passed = !!score.passed;
+        var badge = document.createElement('div');
+        badge.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:14px;font-size:13px;font-weight:600;' +
+            (passed
+                ? 'background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);'
+                : 'background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);');
+        // Use textContent to keep score data XSS-safe. Owner-controlled strings
+        // (model) are escaped via esc() before going into HTML; numeric fields
+        // come from server enrichment and are always Number-coerced upstream.
+        badge.setAttribute('aria-label',
+            (passed ? t('dash_arena_score_passed_aria', 'Arena verified: passed') : t('dash_arena_score_attempt_aria', 'Arena verified: attempt')) +
+            ' ' + score.score + ' / ' + score.maxScore + ' (' + pct + '%)');
+        badge.textContent = (passed ? '✓ ' : '• ') +
+            t('dash_arena_score_label', 'Arena') + ' ' +
+            score.score + '/' + score.maxScore + ' (' + pct + '%)';
+        container.appendChild(badge);
+
+        // Sub-line: model + completedAt
+        if (score.completedAt) {
+            var date = new Date(score.completedAt);
+            var sub = document.createElement('div');
+            sub.style.cssText = 'font-size:11px;color:var(--text-secondary);margin-top:4px;';
+            var dateStr;
+            try { dateStr = date.toISOString().slice(0, 10); } catch (e) { dateStr = ''; }
+            var modelPart = score.model ? (' • ' + esc(String(score.model).slice(0, 32))) : '';
+            sub.innerHTML = (passed
+                ? t('dash_arena_score_passed', 'Passed')
+                : t('dash_arena_score_attempt', 'Attempt')) +
+                ' ' + dateStr + modelPart;
+            container.appendChild(sub);
+        }
+    };
+
+    /**
+     * Show the ? icon help — fires inline popover or alert as fallback.
+     * Spec content: what (verified score) + needs (run an Arena exam) +
+     * concrete next step (click Run Interview). Globe-user copy.
+     */
+    AgentCardEditor.prototype._showArenaScoreHelp = function(anchor) {
+        var msg = t('dash_arena_score_help_body',
+            'The verified score is recorded after your bot completes an Arena interview.\n\nTo get a score:\n1. Click "Run Interview" above\n2. Your bot runs 12 challenges (≤3 min)\n3. Score binds to this namecard and appears on the plaza');
+        // Lightweight popover: append a tooltip div next to the anchor that
+        // auto-dismisses on outside click. Falls back to alert() if DOM is
+        // weird (e.g. anchor detached).
+        try {
+            var existing = document.querySelector('.ace-help-popover');
+            if (existing) existing.remove();
+            var pop = document.createElement('div');
+            pop.className = 'ace-help-popover';
+            pop.setAttribute('role', 'tooltip');
+            pop.style.cssText = 'position:absolute;z-index:9999;max-width:280px;background:var(--card-bg,#1e1e2e);color:var(--text-primary,#fff);border:1px solid var(--card-border,#333);padding:10px 12px;border-radius:8px;font-size:12px;line-height:1.5;white-space:pre-line;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+            pop.textContent = msg;
+            // Position relative to anchor
+            var r = anchor.getBoundingClientRect();
+            pop.style.left = (window.scrollX + r.left) + 'px';
+            pop.style.top = (window.scrollY + r.bottom + 6) + 'px';
+            document.body.appendChild(pop);
+            var cleanup = function() {
+                if (pop && pop.parentNode) pop.remove();
+                document.removeEventListener('click', dismiss, true);
+                document.removeEventListener('keydown', onKey, true);
+                // Restore focus to the trigger so keyboard users don't lose place.
+                try { if (anchor && typeof anchor.focus === 'function') anchor.focus(); } catch (_) {}
+            };
+            var dismiss = function(ev) {
+                if (ev && pop.contains(ev.target)) return;
+                cleanup();
+            };
+            // Escape-key dismiss for keyboard-only users (a11y).
+            var onKey = function(ev) {
+                if (ev.key === 'Escape' || ev.key === 'Esc') {
+                    ev.preventDefault();
+                    cleanup();
+                }
+            };
+            // Defer so the click that opened the tip doesn't close it
+            setTimeout(function() {
+                document.addEventListener('click', dismiss, true);
+                document.addEventListener('keydown', onKey, true);
+            }, 0);
+        } catch (e) {
+            alert(msg);
+        }
     };
 
     AgentCardEditor.prototype._renderTags = function(containerId, tags) {

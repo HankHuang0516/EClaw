@@ -3680,7 +3680,7 @@ if (process.env.NODE_ENV !== 'test') setTimeout(() => inviteModule.initInviteDat
 // ============================================
 // INTERVIEW ARENA — public bot capability testing
 // ============================================
-const arenaModule = require('./interview-arena')({ serverLog, io, devices });
+const arenaModule = require('./interview-arena')({ serverLog, io, devices, saveDeviceData: db.saveDeviceData });
 app.use('/api/arena', arenaModule.router);
 // Serve arena public pages (no-cache to prevent CDN stale versions)
 app.get(['/arena', '/arena/index.html'], (_req, res) => { res.set('Cache-Control', 'no-cache'); res.sendFile(path.join(__dirname, 'public/arena/index.html')); });
@@ -8014,6 +8014,11 @@ app.get('/api/entities', async (req, res) => {
                     isPublic: !!entity.isPublic,
                     rental_status: entity.rental_status || null,  // 'leased_in', 'leased_out', or null
                     rental_contract_id: entity.rental_contract_id || null,
+                    // Arena interview binding (card_ad404375) — owner can see
+                    // the verified score on their namecard editor. Identity-
+                    // scoped only; never includes other secrets.
+                    interviewCapabilities: (entity.identity && entity.identity.interviewCapabilities) || null,
+                    lastInterviewAt: (entity.identity && entity.identity.lastInterviewAt) || null,
                     messageQueue: (entity.messageQueue || []).map(m => ({
                         text: m.text,
                         from: m.from,
@@ -13068,10 +13073,10 @@ app.get('/api/community/publish', async (req, res) => {
  * Query: ?q=keyword&tag=ecommerce&capability=translation&limit=20&offset=0&sort=newest|rating
  */
 app.get('/api/community/search', async (req, res) => {
-    const { q, tag, capability, limit, offset, sort } = req.query;
+    const { q, tag, capability, minArenaScore, limit, offset, sort } = req.query;
 
     const results = await db.searchPublicCards({
-        q, tag, capability,
+        q, tag, capability, minArenaScore,
         limit: parseInt(limit) || 20,
         offset: parseInt(offset) || 0,
         sort: sort || 'newest'
@@ -13089,9 +13094,9 @@ app.get('/api/community/search', async (req, res) => {
  * No auth required. Same query contract as /search.
  */
 app.get('/api/community/list', async (req, res) => {
-    const { q, tag, capability, limit, offset, sort } = req.query;
+    const { q, tag, capability, minArenaScore, limit, offset, sort } = req.query;
     const results = await db.searchPublicCards({
-        q, tag, capability,
+        q, tag, capability, minArenaScore,
         limit: parseInt(limit) || 20,
         offset: parseInt(offset) || 0,
         sort: sort || 'newest'
