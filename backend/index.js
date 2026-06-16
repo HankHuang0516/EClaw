@@ -9350,7 +9350,12 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
         try {
             const userMentions = userMentionScanner.findUserMentions(finalMessage, {
                 senderDeviceId: deviceId,
-                devices
+                devices,
+                // Threading the live publicCodeIndex lets the scanner
+                // defer 6-char alnum tokens ONLY when they actually
+                // resolve as a publicCode; otherwise they fall through
+                // to display-name lookup (e.g. legit user 'alice1').
+                publicCodeIndex
             });
             for (const um of userMentions) {
                 const fromLabel = entity.name || `Entity ${eId}`;

@@ -147,10 +147,36 @@ describe('findUserMentions — non-matches / boundary safety', () => {
         expect(r).toEqual([]);
     });
 
-    test('bare 6-char alnum token is deferred to entity parser (publicCode)', () => {
-        // 'hank01' is 6 chars alnum → entity parser owns it; even though
-        // 'hank' would prefix-match, we skip the whole token.
+    test('bare 6-char alnum token is deferred to entity parser (publicCode) when no publicCodeIndex passed', () => {
+        // Conservative default: with no publicCodeIndex, ALL 6-char alnum
+        // tokens are deferred. 'hank01' has 'hank' as prefix but is
+        // skipped entirely.
         const r = ums.findUserMentions('ping @hank01 now', { senderDeviceId: 'other', devices: makeDevices() });
+        expect(r).toEqual([]);
+    });
+
+    test('6-char alnum token NOT in publicCodeIndex falls through to display-name lookup (review finding #6)', () => {
+        // 'alice1' is a 6-char alnum DISPLAY name (legit user). Without
+        // the fix, scanner would defer to entity parser → silently drop.
+        // With publicCodeIndex passed, scanner sees 'alice1' is not a
+        // known publicCode and falls through to display-name lookup.
+        const devices = {
+            'dev-alice1': { userDisplayName: 'alice1' }
+        };
+        const publicCodeIndex = { bbbbbb: { deviceId: 'other', entityId: 0 } };
+        const r = ums.findUserMentions('hey @alice1 ping', { senderDeviceId: 'other', devices, publicCodeIndex });
+        expect(r).toHaveLength(1);
+        expect(r[0].deviceId).toBe('dev-alice1');
+    });
+
+    test('6-char alnum token IS in publicCodeIndex is still deferred (no collision with entity parser)', () => {
+        // 'bbbbbb' resolves as a publicCode → scanner must skip it even
+        // if a display name 'bbbbbb' also happens to exist.
+        const devices = {
+            'dev-collide': { userDisplayName: 'bbbbbb' }
+        };
+        const publicCodeIndex = { bbbbbb: { deviceId: 'other-dev', entityId: 0 } };
+        const r = ums.findUserMentions('hey @bbbbbb hi', { senderDeviceId: 'other', devices, publicCodeIndex });
         expect(r).toEqual([]);
     });
 
@@ -240,6 +266,34 @@ describe('findUserMentions — ReDoS / pathological inputs', () => {
         const r = ums.findUserMentions(parts.join(' '), { senderDeviceId: 'other', devices: makeDevices() });
         expect(r).toHaveLength(1);
     });
+
+    test('per-message recipient cap enforced (review finding #1)', () => {
+        // Build N devices with distinct display names; mention all N.
+        // Scanner should return MAX_RECIPIENTS_PER_MESSAGE at most.
+        const devices = {};
+        const tokens = [];
+        for (let i = 0; i < 50; i++) {
+            const name = `user${i}_x`; // 7+ chars → not entity-parser shape
+            devices[`dev${i}`] = { userDisplayName: name };
+            tokens.push(`@${name}`);
+        }
+        const r = ums.findUserMentions(tokens.join(' '), { senderDeviceId: 'sender', devices });
+        expect(r.length).toBeLessThanOrEqual(ums.MAX_RECIPIENTS_PER_MESSAGE);
+        expect(r.length).toBe(ums.MAX_RECIPIENTS_PER_MESSAGE);
+    });
+
+    test('10MB message with unclosed quote returns fast (review prompt Q7)', () => {
+        // `@"` followed by 10MB of non-quote chars and no closing quote.
+        // readQuotedToken stops at MAX_TOKEN_SCAN_LEN + finds no closing
+        // quote → returns null → bare reader sees `"` (not a word char) →
+        // emits nothing. Must complete in <500ms.
+        const text = '@"' + 'a'.repeat(10_000_000);
+        const t0 = Date.now();
+        const r = ums.findUserMentions(text, { senderDeviceId: 'other', devices: makeDevices() });
+        const elapsed = Date.now() - t0;
+        expect(r).toEqual([]);
+        expect(elapsed).toBeLessThan(500);
+    });
 });
 
 describe('findUserMentions — quoted form edge cases', () => {
@@ -261,6 +315,39 @@ describe('findUserMentions — quoted form edge cases', () => {
 
     test('quoted form does not match an unknown name', () => {
         const r = ums.findUserMentions('@"Nobody Here"', { senderDeviceId: 'other', devices: makeDevices() });
+        expect(r).toEqual([]);
+    });
+});
+
+describe('findUserMentions — index + collision cases', () => {
+    test('empty index returns immediately (no devices have display names)', () => {
+        // Without an early-return, this would walk the text. Easy check:
+        // ensure no result + minimal work.
+        const devices = { a: {}, b: { userDisplayName: '' }, c: { userDisplayName: null } };
+        const t0 = Date.now();
+        const r = ums.findUserMentions('a long message with many @Hank and @ユキ and @"Alice Wong" mentions all of which find no match', { senderDeviceId: 'other', devices });
+        const elapsed = Date.now() - t0;
+        expect(r).toEqual([]);
+        expect(elapsed).toBeLessThan(50);
+    });
+
+    test('NFKC + lowercase collision puts both deviceIds in the Set (and pushes both)', () => {
+        // 'hank' and 'Ｈａｎｋ' (full-width) both normalize to 'hank'.
+        const devices = {
+            'dev-1': { userDisplayName: 'Hank' },
+            'dev-2': { userDisplayName: 'Ｈａｎｋ' }
+        };
+        const r = ums.findUserMentions('hi @Hank', { senderDeviceId: 'other', devices });
+        const deviceIds = r.map(x => x.deviceId).sort();
+        expect(deviceIds).toEqual(['dev-1', 'dev-2']);
+    });
+
+    test('display name "all" cannot be matched (deferred to entity parser @all)', () => {
+        // Sad case but acceptable: a user choosing "all" as their display
+        // name will never receive @-mention pushes. Documented as known
+        // limitation in scanner header.
+        const devices = { 'dev-all': { userDisplayName: 'all' } };
+        const r = ums.findUserMentions('hey @all please', { senderDeviceId: 'other', devices });
         expect(r).toEqual([]);
     });
 });

@@ -50,6 +50,13 @@
 // payload of `@@@@…` from O(n) walking the whole index per `@`.
 const MAX_TOKENS_PER_MESSAGE = 256;
 
+// Hard cap on the number of distinct recipients a single message can
+// trigger. Even if a malicious sender mentions 100 different users, we
+// fire at most this many `notifyDevice` calls. Picked at 8 because real
+// chat messages rarely address more than a handful of people (review
+// finding #1 — bot-spam fan-out protection).
+const MAX_RECIPIENTS_PER_MESSAGE = 8;
+
 // Maximum length of the token we even bother to compare to the index.
 // devices.user_display_name is capped at 64 codepoints upstream, so any
 // `@` token longer than 128 chars (allow some slack for combining marks)
@@ -91,18 +98,35 @@ function normalizeNameKey(name) {
  * Would this @-token already be claimed by mention-parser.js? If yes, skip
  * it here so the two systems never collide.
  *
- * @publicCode form: 6 lowercase alnum chars (then word-bounded).
+ * @publicCode form: 6 lowercase alnum chars (then word-bounded). The
+ *                   parser only claims these if the code actually exists
+ *                   in publicCodeIndex — so we mirror that gate. Without
+ *                   it, a legit display name like 'alice1' (6 alnum, no
+ *                   matching publicCode) would be silently dropped and
+ *                   alice1 would never get pushed (review finding #6).
  * @entityId form:   1-3 digits (`@123`, `@#123`).
  * @all literal:     case-insensitive 'all'.
+ *
+ * @param {string} token
+ * @param {object} [opts]
+ * @param {object} [opts.publicCodeIndex] — pass the live index so we only
+ *   defer 6-char alnum tokens that are actually entity publicCodes. Omit
+ *   to defer ALL 6-char alnum tokens (more conservative; used by tests
+ *   that don't care about resolver wiring).
  */
-function isClaimedByEntityParser(token) {
+function isClaimedByEntityParser(token, opts) {
     if (!token) return false;
     const lower = token.toLowerCase();
     if (lower === 'all') return true;
     // Bare entityId: 1-3 ASCII digits.
     if (ASCII_DIGIT_RE.test(token) && token.length <= 3) return true;
     // publicCode: exactly 6 lowercase alnum chars (the parser bare form).
-    if (token.length === 6 && ALPHANUM_LOWER_RE.test(lower)) return true;
+    // Only defer when the token actually resolves — otherwise legit display
+    // names that happen to match the shape get silently dropped.
+    if (token.length === 6 && ALPHANUM_LOWER_RE.test(lower)) {
+        if (!opts || !opts.publicCodeIndex) return true; // conservative default
+        return Object.prototype.hasOwnProperty.call(opts.publicCodeIndex, lower);
+    }
     return false;
 }
 
@@ -203,6 +227,11 @@ function findUserMentions(text, ctx) {
 
     const devices = ctx.devices || {};
     const senderDeviceId = ctx.senderDeviceId || null;
+    // publicCodeIndex (optional): when present, lets isClaimedByEntityParser
+    // only defer 6-char alnum tokens that ACTUALLY resolve as a publicCode.
+    // Without it, every display name shaped like `[a-z0-9]{6}` is silently
+    // dropped (review finding #6).
+    const publicCodeIndex = ctx.publicCodeIndex || null;
     let index, keysByLength;
     if (ctx.userDisplayNameIndex && ctx.userDisplayNameIndex.index) {
         // Caller passed a prebuilt index.
@@ -246,8 +275,10 @@ function findUserMentions(text, ctx) {
 
         // Defer entity-parser-claimed tokens. Quoted form is never an
         // entity-parser token (those don't accept quotes), so only check
-        // for the bare form.
-        if (!isQuoted && isClaimedByEntityParser(token)) continue;
+        // for the bare form. Pass publicCodeIndex so 6-char alnum tokens
+        // that DON'T resolve as a publicCode fall through to display-name
+        // lookup (review finding #6).
+        if (!isQuoted && isClaimedByEntityParser(token, { publicCodeIndex })) continue;
 
         const normalized = normalizeNameKey(token);
         if (!normalized) continue;
@@ -295,6 +326,10 @@ function findUserMentions(text, ctx) {
                 matchedAt: at,
                 isQuoted
             });
+            // Hard cap on distinct recipients per message — prevents a
+            // single bot post from pinging N users at once (review
+            // finding #1, anti-spam fan-out limit).
+            if (out.length >= MAX_RECIPIENTS_PER_MESSAGE) return out;
         }
     }
 
@@ -308,5 +343,6 @@ module.exports = {
     findUserMentions,
     // Exposed for tests:
     MAX_TOKENS_PER_MESSAGE,
-    MAX_TOKEN_SCAN_LEN
+    MAX_TOKEN_SCAN_LEN,
+    MAX_RECIPIENTS_PER_MESSAGE
 };
