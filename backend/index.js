@@ -21134,14 +21134,36 @@ app.get('/api/device-vars', async (req, res) => {
         // 409 if it doesn't match the current row — prevents cross-device
         // last-write-wins data loss when multiple web/app clients have stale
         // vault snapshots.
-        out.updatedAt = row.updated_at ? new Date(row.updated_at).toISOString() : null;
+        // Defensive: row.updated_at may be a Date, string, or unexpected shape
+        // depending on pg driver state. `new Date(invalidShape).toISOString()`
+        // throws RangeError "Invalid time value", which the outer catch then
+        // logged as "Decrypt failed" — a false 500 that masked perfectly healthy
+        // vault data (incident 2026-06-16 ~12:36 TW; clients kept rendering
+        // from var_keys metadata + localStorage cache while owner-auth GET
+        // 500'd for ~30min). Wrap defensively + fall back to null.
+        try {
+            if (row.updated_at) {
+                const d = new Date(row.updated_at);
+                if (!Number.isNaN(d.getTime())) {
+                    out.updatedAt = d.toISOString();
+                } else {
+                    out.updatedAt = null;
+                }
+            } else {
+                out.updatedAt = null;
+            }
+        } catch (_) {
+            out.updatedAt = null;
+        }
         if (authMode === 'owner') {
             out.sources = row.var_sources || {};
             out.locked = !!row.is_locked;
         }
         return res.json(out);
     } catch (err) {
-        console.error(`[Vars] Decrypt failed for ${deviceId}:`, err.message);
+        // Log the real exception type so future incidents don't get mis-labelled
+        // as "decryption" when it's actually a serialization bug.
+        console.error(`[Vars] GET handler failed for ${deviceId}: ${err && err.name}: ${err && err.message}`);
         return res.status(500).json({ success: false, error: 'Decryption failed' });
     }
 });
