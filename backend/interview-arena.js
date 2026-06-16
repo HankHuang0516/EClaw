@@ -217,6 +217,16 @@ let VISION_IMAGES = [
     { file: null, description: 'An electrical wiring diagram showing three parallel circuits: left circuit has a closed switch, a 10-ohm resistor, and a green LED; middle circuit has an open switch, a 47-ohm resistor, and a red LED (off); right circuit has a closed switch, a 22-ohm resistor, and a blue LED', keywords: ['wiring', 'three', 'parallel', 'switch', 'open', 'resistor', 'ohm', 'LED'] },
     { file: null, description: 'A permissions matrix table with five user roles (Admin, Editor, Viewer, Moderator, Guest) across the top and seven permissions down the side — checkmarks and X marks fill the grid; only Admin row shows all seven checkmarks', keywords: ['permissions', 'matrix', 'five', 'roles', 'admin', 'seven', 'checkmarks'] },
     { file: null, description: 'A UML sequence diagram showing three actors: Client, API Gateway, and Database — Client sends a POST /orders request, API Gateway validates the Authorization header (shown in a loop box labeled "retry up to 3 times"), makes two sequential SELECT queries to the Database, and returns a 201 Created response with an order ID', keywords: ['UML', 'sequence', 'three', 'actors', 'client', 'gateway', 'database', 'POST', '201'] },
+    // ── Daily pool update: added 2026-06-16 ──
+    // Easy tier
+    { file: null, description: 'A blue WiFi signal icon showing 3 of 4 bars filled, indicating strong but not maximum signal strength', keywords: ['wifi', 'signal', 'three', 'bars', 'blue'] },
+    // Medium tier
+    { file: null, description: 'A project kanban board with four columns: Backlog (12 cards), To Do (5 cards), In Progress (3 cards), Done (28 cards) — a countdown timer in the top-right shows 6 days remaining until the sprint ends', keywords: ['kanban', 'backlog', 'twelve', 'progress', 'three', 'done', 'six', 'sprint'] },
+    { file: null, description: 'A smartphone notification shade showing four notifications on a dark background at 9:41 AM: two WhatsApp messages from different contacts, one unread Gmail thread, and one system notification about a software update', keywords: ['notification', 'four', 'whatsapp', 'gmail', 'system', 'dark', '9:41'] },
+    { file: null, description: 'A video call interface with six participant tiles in a 2×3 grid — two participants have their cameras off showing a black panel with initials, one participant has a raised hand icon in the corner, and the bottom control bar shows the current user\'s microphone as muted', keywords: ['video', 'call', 'six', 'tiles', 'cameras', 'off', 'raised', 'hand', 'muted'] },
+    // Hard tier
+    { file: null, description: 'A Kubernetes deployment YAML snippet showing apiVersion: apps/v1 with spec.replicas: 3, container resource limits of 200m CPU and 256Mi memory, and a readinessProbe on path /health port 8080 — two red ❌ validation error markers appear beside the resources.limits block', keywords: ['kubernetes', 'deployment', 'three', 'replicas', '200m', '256Mi', 'readinessProbe', 'error'] },
+    { file: null, description: 'A 5×6 heatmap grid where cell color ranges from white (0) to dark red (100) — three cells stand out as darkest: row 2 col 4 shows 97, row 4 col 1 shows 94, row 5 col 6 shows 89; row 2\'s average is annotated as 42.3 on the right margin', keywords: ['heatmap', 'five', 'six', 'grid', 'row', 'col', '97', '94', 'average', '42.3'] },
 ];
 
 function generateVisionChallenge(weights) {
@@ -432,6 +442,19 @@ let CODING_PROBLEMS = [
       testCases: [{ input: '2, [[1,0]]', expected: 'true' },{ input: '2, [[1,0],[0,1]]', expected: 'false' },{ input: '3, [[1,0],[2,0]]', expected: 'true' },{ input: '1, []', expected: 'true' }] },
     { title: 'Balanced Binary Tree', description: 'Write `solve(nodes)` — given a binary tree as a level-order array (use null for missing nodes), return true if the tree is height-balanced (the heights of left and right subtrees of every node differ by at most 1).',
       testCases: [{ input: '[3,9,20,null,null,15,7]', expected: 'true' },{ input: '[1,2,2,3,3,null,null,4,4]', expected: 'false' },{ input: '[]', expected: 'true' },{ input: '[1]', expected: 'true' }] },
+    // ── Daily pool update: added 2026-06-16 ──
+    { title: 'Find Peak Element', description: 'Write `solve(nums)` — a peak element is strictly greater than its neighbors. Return any peak\'s index. (Assume nums[-1] = nums[n] = -Infinity)',
+      testCases: [{ input: '[1,2,3,1]', expected: '2' },{ input: '[1,2,1,3,5,6,4]', expected: '5' },{ input: '[1]', expected: '0' },{ input: '[1,2]', expected: '1' }] },
+    { title: 'Max Depth of Binary Tree', description: 'Write `solve(nodes)` — given a binary tree as a level-order array (null for missing nodes), return its maximum depth (number of nodes along the longest root-to-leaf path).',
+      testCases: [{ input: '[3,9,20,null,null,15,7]', expected: '3' },{ input: '[1,null,2]', expected: '2' },{ input: '[]', expected: '0' },{ input: '[1,2,3,4,5]', expected: '3' }] },
+    { title: 'House Robber', description: 'Write `solve(nums)` — you are a robber who cannot rob two adjacent houses. Given an array of non-negative integers representing the money at each house, return the maximum amount you can rob tonight.',
+      testCases: [{ input: '[1,2,3,1]', expected: '4' },{ input: '[2,7,9,3,1]', expected: '12' },{ input: '[0]', expected: '0' },{ input: '[2,1]', expected: '2' },{ input: '[5,1,1,5]', expected: '10' }] },
+    { title: 'Subsets', description: 'Write `solve(nums)` — given an array of distinct integers, return all possible subsets. Sort each subset, then sort all subsets lexicographically (empty set comes first).',
+      testCases: [{ input: '[1,2,3]', expected: '[[],[1],[1,2],[1,2,3],[1,3],[2],[2,3],[3]]' },{ input: '[0]', expected: '[[],[0]]' },{ input: '[1,2]', expected: '[[],[1],[1,2],[2]]' }] },
+    { title: 'Permutations', description: 'Write `solve(nums)` — given an array of distinct integers, return all permutations sorted lexicographically.',
+      testCases: [{ input: '[1,2,3]', expected: '[[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]' },{ input: '[1]', expected: '[[1]]' },{ input: '[1,2]', expected: '[[1,2],[2,1]]' }] },
+    { title: 'Regular Expression Matching', description: 'Write `solve(s, p)` — implement basic regex matching where "." matches any single character and "*" matches zero or more of the preceding element. Return true if the full string s matches pattern p.',
+      testCases: [{ input: '"aa", "a"', expected: 'false' },{ input: '"aa", "a*"', expected: 'true' },{ input: '"ab", ".*"', expected: 'true' },{ input: '"aab", "c*a*b"', expected: 'true' },{ input: '"mississippi", "mis*is*p*."', expected: 'false' }] },
 ];
 
 function generateCodingChallenge(weights) {
@@ -505,6 +528,17 @@ let RESPONSE_QUESTIONS = [
     { question: 'A car travels from city A to city B at 60 km/h and returns along the same route at 40 km/h. What is the average speed for the entire round trip in km/h?', expectedKeywords: ['48'] },
     { question: 'In a row of five differently-coloured houses, the red house is always immediately to the left of the white house. How many possible positions can the red house occupy?', expectedKeywords: ['4', 'four'] },
     { question: 'What is the value of 10 to the power of 0?', expectedKeywords: ['1', 'one'] },
+    // ── Daily pool update: added 2026-06-16 ──
+    // Easy tier
+    { question: 'How many days are in a leap year?', expectedKeywords: ['366'] },
+    { question: 'What is the square root of 169?', expectedKeywords: ['13'] },
+    // Medium tier
+    { question: 'Two trains start from opposite ends of a 600 km track at the same time, heading toward each other. Train A travels at 80 km/h and Train B at 70 km/h. After how many hours do they meet?', expectedKeywords: ['4', 'four'] },
+    { question: 'A shirt\'s price is reduced by 20% and it now costs $48. What was its original price?', expectedKeywords: ['60', '$60'] },
+    { question: 'How many diagonals does a regular octagon have?', expectedKeywords: ['20', 'twenty'] },
+    // Hard tier
+    { question: 'A pool has two inlet pipes (A fills in 10 h, B fills in 15 h) and one outlet pipe (drains in 30 h). If all three run simultaneously from empty, how many hours does it take to fill the pool?', expectedKeywords: ['7.5', '15/2'] },
+    { question: 'A staircase has 7 steps. You can climb 1, 2, or 3 steps at a time. How many distinct ways can you climb to the top?', expectedKeywords: ['44'] },
 ];
 function generateResponseTimeChallenge(weights) {
     const w = weights && weights['arena_response_time'] || {};
@@ -600,6 +634,16 @@ let TTS_PHRASES = [
     { text: 'Container vessel MSC Splendida ETA zero-six-hundred Zulu on the fourteenth carrying two thousand eight hundred forty-seven TEUs bound for Eurogate terminal berth seven', keywords: ['MSC', 'Splendida', 'zero-six-hundred', '2847', 'TEUs', 'Eurogate', 'seven'] },
     { text: 'Software release 3.14.2-beta.4 patches CVE-2024-1337 and improves rendering pipeline throughput by 18 percent', keywords: ['3.14.2', 'beta', 'CVE', '2024', '1337', 'rendering', '18'] },
     { text: 'The derivative of x cubed is 3x squared, and the integral of 2x with respect to x equals x squared plus C where C is the constant of integration', keywords: ['derivative', 'cubed', '3x', 'squared', 'integral', 'constant', 'integration'] },
+    // ── Daily pool update: added 2026-06-16 ──
+    // Easy tier
+    { text: 'The train will arrive at platform three in approximately five minutes', keywords: ['train', 'platform', 'three', 'five', 'minutes'] },
+    { text: 'Please turn off the lights when leaving the room', keywords: ['turn', 'off', 'lights', 'leaving', 'room'] },
+    // Medium tier
+    { text: 'Route 66 spans two thousand four hundred forty-eight miles from Chicago Illinois to Santa Monica California', keywords: ['Route', '66', '2448', 'Chicago', 'Illinois', 'Santa Monica', 'California'] },
+    { text: 'Your appointment with Dr Kim is confirmed for Thursday June nineteenth at 10 AM in Clinic B suite two-oh-four', keywords: ['appointment', 'Kim', 'thursday', 'june', 'nineteenth', '10', 'clinic', '204'] },
+    // Hard tier
+    { text: 'The S&P 500 closed at five thousand two hundred seventy-eight point five one — three hundred twenty-six issues advanced and one hundred sixty-seven declined giving a breadth ratio of 1.95 to 1', keywords: ['S&P', '5278', '326', 'advanced', '167', 'declined', 'breadth', '1.95'] },
+    { text: 'SWIFT code DEUTDEDB for Deutsche Bank Frankfurt sort code 20030000 account number 1234567890 for incoming SEPA credit transfers only', keywords: ['SWIFT', 'DEUTDEDB', 'Deutsche', 'Frankfurt', '20030000', '1234567890', 'SEPA'] },
 ];
 
 // ============================================
