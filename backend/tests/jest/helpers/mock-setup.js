@@ -166,12 +166,35 @@ jest.mock('../../../gatekeeper', () => ({
 
 jest.mock('../../../notifications', () => {
     const express = jest.requireActual('express');
+    // Pull through the rich-card-question helpers (pure functions, no DB) so
+    // index.js can wire its limiter at module-load without crashing — see
+    // card_a9edf960. The helpers are tested directly in
+    // tests/jest/rich-card-notification.test.js against the un-mocked module.
+    const actual = jest.requireActual('../../../notifications');
     return {
         init: jest.fn(),
         router: express.Router(),
         initNotificationTables: jest.fn().mockResolvedValue(undefined),
         savePushSubscription: jest.fn().mockResolvedValue(true),
         removePushSubscription: jest.fn().mockResolvedValue(true),
+        // Pref gates default to permissive in tests (existing behavior).
+        getPrefs: jest.fn().mockResolvedValue({ ...actual.DEFAULT_PREFS }),
+        isCategoryEnabled: actual.isCategoryEnabled,
+        DEFAULT_PREFS: actual.DEFAULT_PREFS,
+        // Rich-card helpers (card_a9e) — pure, safe to expose un-mocked.
+        truncateUtf8: actual.truncateUtf8,
+        isRichCardQuestion: actual.isRichCardQuestion,
+        buildRichCardNotification: actual.buildRichCardNotification,
+        createRichCardNotifLimiter: actual.createRichCardNotifLimiter,
+        // Save/save-misc no-ops so notifyDevice() doesn't blow up if reached.
+        saveNotification: jest.fn().mockResolvedValue(null),
+        getNotifications: jest.fn().mockResolvedValue([]),
+        getUnreadCount: jest.fn().mockResolvedValue(0),
+        markRead: jest.fn().mockResolvedValue(true),
+        markAllRead: jest.fn().mockResolvedValue(true),
+        pruneOldNotifications: jest.fn().mockResolvedValue(undefined),
+        updatePrefs: jest.fn().mockResolvedValue(true),
+        getPushSubscriptions: jest.fn().mockResolvedValue([]),
     };
 });
 

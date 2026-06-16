@@ -2555,7 +2555,15 @@
             { key: 'todo_done', i18n: 'notif_pref_todo', label: 'TODO completion' },
             { key: 'scheduled', i18n: 'notif_pref_scheduled', label: 'Scheduled messages' },
             { key: 'kanban_done', i18n: 'notif_pref_kanban_done', label: 'Kanban card done' },
-            { key: 'kanban_done_auto', i18n: 'notif_pref_kanban_done_auto', label: 'Kanban auto/cron card done' }
+            { key: 'kanban_done_auto', i18n: 'notif_pref_kanban_done_auto', label: 'Kanban auto/cron card done' },
+            // Rich-card "needs your input" pushes (card_a9edf960). Fires when
+            // an agent attaches interactive buttons asking the user to pick
+            // an option — same UX shape as Claude Code's permission prompts.
+            // Default ON; users can mute generic bot chatter but still hear
+            // about questions that need their action. The ? icon explains the
+            // empty-state: if no bot is sending rich cards, no notifications
+            // arrive even when ON.
+            { key: 'rich_card_question', i18n: 'notif_pref_rich_card', label: 'Rich-card questions', helpI18n: 'notif_pref_rich_card_help' }
         ];
 
         async function loadNotifPreferences() {

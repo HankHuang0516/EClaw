@@ -20,7 +20,15 @@ const DEFAULT_PREFS = {
     // can mute generic chat traffic but keep direct @-pings, or vice
     // versa. Default ON because being addressed by name is the highest-
     // signal notification we send.
-    user_mention: true
+    user_mention: true,
+    // rich_card_question: separate toggle for rich-card UX where an agent
+    // asks the user to pick an option (card_a9edf960). Hank's framing:
+    // "like Claude Code asking the user for permission" — these are
+    // blocking-style asks that demand a user action before the agent can
+    // proceed, so they need a higher-priority notification independent of
+    // generic bot replies / speak_to chatter. Default ON for the same
+    // reason as user_mention: the user is being explicitly addressed.
+    rich_card_question: true
 };
 
 let pool = null;
@@ -244,6 +252,158 @@ function isCategoryEnabled(prefs, category) {
 }
 
 // ============================================
+// Rich-card-question notification helpers
+// (card_a9edf960 — "Richard 跳出時觸發 APP + Web 通知")
+// ============================================
+
+/**
+ * Truncate a string to at most `maxBytes` UTF-8 bytes without splitting a
+ * multi-byte codepoint or a high/low surrogate pair. Notification bodies
+ * delivered to Web Push / FCM have hard payload limits and a half-truncated
+ * emoji renders as the replacement character on some platforms — we cut on
+ * a clean codepoint boundary so the body stays readable.
+ *
+ * @param {string} str
+ * @param {number} maxBytes
+ * @returns {string}
+ */
+function truncateUtf8(str, maxBytes) {
+    if (typeof str !== 'string') return '';
+    if (!Number.isFinite(maxBytes) || maxBytes <= 0) return '';
+    const buf = Buffer.from(str, 'utf8');
+    if (buf.length <= maxBytes) return str;
+    let end = maxBytes;
+    // Walk back to the first non-continuation byte (0x80..0xBF are continuation).
+    while (end > 0 && (buf[end] & 0xC0) === 0x80) end--;
+    let out = buf.slice(0, end).toString('utf8');
+    // Defensive: drop a trailing lone high surrogate that JS may have left
+    // dangling if the UTF-8 walk-back stopped right between surrogate halves.
+    if (out.length > 0) {
+        const lastCode = out.charCodeAt(out.length - 1);
+        if (lastCode >= 0xD800 && lastCode <= 0xDBFF) out = out.slice(0, -1);
+    }
+    return out;
+}
+
+/**
+ * Per-device rate limiter for rich-card-question notifications.
+ *
+ * An agent that fires 100 rich cards in a tight loop should NOT drum-roll
+ * the user's phone 100 times. We allow up to `max` pushes per `windowMs`
+ * per device; the underlying chat message rows + Socket.IO events still
+ * flow normally, only the *notification surface* (Web Push / FCM / DB row)
+ * is throttled.
+ *
+ * Factory returns { check(deviceId), _buckets, _stop() } so each call site
+ * (production: one shared instance; tests: fresh instances per test) has
+ * isolated state and we can clean up a setInterval handle in tests.
+ *
+ * @param {object} [opts]
+ * @param {number} [opts.windowMs=10000]
+ * @param {number} [opts.max=5]
+ * @returns {{ check: function, _buckets: Map, _stop: function }}
+ */
+function createRichCardNotifLimiter(opts = {}) {
+    const windowMs = Number.isFinite(opts.windowMs) ? opts.windowMs : 10_000;
+    const max = Number.isFinite(opts.max) ? opts.max : 5;
+    const buckets = new Map(); // deviceId -> { count, resetAt }
+
+    function check(deviceId) {
+        if (!deviceId) return false;
+        const now = Date.now();
+        const bucket = buckets.get(deviceId);
+        if (!bucket || bucket.resetAt <= now) {
+            buckets.set(deviceId, { count: 1, resetAt: now + windowMs });
+            return true;
+        }
+        if (bucket.count >= max) return false;
+        bucket.count++;
+        return true;
+    }
+
+    // Opportunistic cleanup so the Map doesn't grow forever in long-running
+    // processes. Tests pass `disablePrune: true` to skip the timer.
+    let pruneHandle = null;
+    if (!opts.disablePrune) {
+        pruneHandle = setInterval(() => {
+            const cutoff = Date.now() - 60_000;
+            for (const [k, v] of buckets) {
+                if (v.resetAt < cutoff) buckets.delete(k);
+            }
+        }, 5 * 60_000);
+        if (typeof pruneHandle.unref === 'function') pruneHandle.unref();
+    }
+
+    function _stop() {
+        if (pruneHandle) clearInterval(pruneHandle);
+        buckets.clear();
+    }
+
+    return { check, _buckets: buckets, _stop };
+}
+
+/**
+ * Decide whether a chat-message payload carries a rich-card question that
+ * needs the higher-priority notification.
+ *
+ * Returns true only when:
+ *  - card is a plain object (not null/array/string)
+ *  - card.ask_id is a non-empty string
+ *  - card.buttons is a non-empty array
+ *
+ * The caller is expected to have already validated/sanitized the card via
+ * the inbound /api/transform or /api/channel/message gate, so this is a
+ * cheap defensive check before firing the notification.
+ *
+ * @param {*} card
+ * @returns {boolean}
+ */
+function isRichCardQuestion(card) {
+    if (!card || typeof card !== 'object' || Array.isArray(card)) return false;
+    if (typeof card.ask_id !== 'string' || card.ask_id.length === 0) return false;
+    if (!Array.isArray(card.buttons) || card.buttons.length === 0) return false;
+    return true;
+}
+
+/**
+ * Build the notification payload (title/body/metadata) for a rich-card
+ * question. Pure — no side effects, no DB / WS / push. Callers handle the
+ * actual notifyDevice() dispatch so they can also handle rate-limiting and
+ * preference gates uniformly with the rest of the notification surface.
+ *
+ * @param {object} card - validated card { ask_id, buttons[] }
+ * @param {object} ctx
+ * @param {string} [ctx.questionText] - the message text the agent attached
+ *   the buttons to; truncated UTF-8-safe at 100 bytes for the notif body
+ * @param {string} [ctx.fromName] - display name of the sending agent
+ * @param {string} [ctx.titleSuffix='needs your input'] - locale-agnostic
+ *   suffix appended to the title (locale-specific suffixes live in i18n.js
+ *   for portal-side rendering of the in-app notification panel)
+ * @param {number|null} [ctx.fromEntityId]
+ * @param {number|null} [ctx.toEntityId]
+ * @returns {{type:string,category:string,title:string,body:string,link:string,metadata:object}}
+ */
+function buildRichCardNotification(card, ctx = {}) {
+    const fromName = String(ctx.fromName || 'Agent');
+    const titleSuffix = String(ctx.titleSuffix || 'needs your input');
+    const title = `${fromName} ${titleSuffix}`;
+    const body = truncateUtf8(String(ctx.questionText || ''), 100);
+    return {
+        type: 'chat',
+        category: 'rich_card_question',
+        title,
+        body,
+        link: 'chat.html',
+        metadata: {
+            ask_id: String(card.ask_id),
+            fromEntityId: ctx.fromEntityId ?? null,
+            toEntityId: ctx.toEntityId ?? null,
+            buttonCount: Array.isArray(card.buttons) ? card.buttons.length : 0
+        }
+    };
+}
+
+// ============================================
 // Push Subscriptions (Web Push)
 // ============================================
 
@@ -306,5 +466,10 @@ module.exports = {
     // Push subscriptions
     savePushSubscription,
     removePushSubscription,
-    getPushSubscriptions
+    getPushSubscriptions,
+    // Rich-card-question helpers (card_a9edf960)
+    truncateUtf8,
+    createRichCardNotifLimiter,
+    isRichCardQuestion,
+    buildRichCardNotification
 };

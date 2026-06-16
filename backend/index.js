@@ -9779,6 +9779,20 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
                             ));
 
                             console.log(`[Transform+Broadcast] Device ${deviceId} Entity ${eId} -> [${targetIds.join(',')}] on ${broadcastDeviceId}`);
+                            // Rich-card UX (card_a9e): if the broadcast carries
+                            // interactive buttons, the recipient device should get
+                            // a "needs your input" notification — broadcast routes
+                            // share one target device per loop iteration, so a
+                            // single notif covers all entities on that device
+                            // (the per-device rate-limiter further dedupes bursts).
+                            if (validatedCard) {
+                                notifyRichCardQuestion(broadcastDeviceId, validatedCard, {
+                                    questionText: deliveryText,
+                                    fromName: entity.name || entity.publicCode || `Entity ${eId}`,
+                                    fromEntityId: eId,
+                                    toEntityId: targetIds[0] ?? null
+                                });
+                            }
                             deliveryResults = { broadcast: true, sentCount: results.length, targets: results };
                         }
                     }
@@ -9884,6 +9898,20 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
                     link: 'chat.html',
                     metadata: { fromEntityId: eId, toEntityId: target.entityId }
                 }).catch(() => {});
+
+                // Rich-card UX (card_a9e): agent attached interactive buttons
+                // asking the user to pick an option — fire a higher-priority
+                // "needs your input" notification gated by the rich_card_question
+                // toggle. Same delivery surface (Socket+Web Push+FCM), separate
+                // category so users can mute generic speak_to but keep these.
+                if (validatedCard) {
+                    notifyRichCardQuestion(target.deviceId, validatedCard, {
+                        questionText: deliveryText,
+                        fromName: entity.name || entity.publicCode || `Entity ${eId}`,
+                        fromEntityId: eId,
+                        toEntityId: target.entityId
+                    });
+                }
 
                 console.log(`[Transform+SpeakTo] ${deviceId}:${eId} -> ${target.deviceId}:${target.entityId} (${code})`);
                 results.push({
@@ -19837,6 +19865,7 @@ const channelModule = require('./channel-api')(devices, {
     awardEntityXP,
     XP_AMOUNTS,
     notifyDevice,
+    notifyRichCardQuestion,
     deliverToEntity,
     gatekeeperCheckText,
     resolveSpeakToTarget,
@@ -19902,6 +19931,36 @@ app.patch('/api/github/issues/:number', async (req, res) => {
 // ============================================
 // NOTIFICATION SYSTEM - Central dispatcher
 // ============================================
+
+// Rich-card-question dispatch helpers (card_a9edf960). Logic lives in
+// notifications.js so it's unit-testable in isolation; index.js owns the
+// per-process limiter instance + the wiring into notifyDevice.
+const richCardLimiter = notifModule.createRichCardNotifLimiter();
+
+/**
+ * Fire a "rich-card-question" notification to the recipient device. Use at
+ * delivery sites that pass a `validatedCard` so the user gets a "Claude-
+ * Code-style permission ask" push regardless of which generic category
+ * (speak_to / bot_reply / cross_speak) the underlying message used.
+ *
+ * Rules:
+ *  - Only fires when `card` is well-formed (ask_id + non-empty buttons).
+ *  - Gated by the per-user `rich_card_question` toggle (default ON; the
+ *    actual check happens inside notifyDevice via isCategoryEnabled).
+ *  - Per-device rate-limited (5/10s) to defang misbehaving-agent spam.
+ *  - Body is the message text excerpt (UTF-8 safe truncation at 100 bytes).
+ *
+ * @param {string} targetDeviceId
+ * @param {object} card - validated card { ask_id, buttons[] }
+ * @param {object} ctx  - { questionText, fromName, fromEntityId, toEntityId }
+ */
+function notifyRichCardQuestion(targetDeviceId, card, ctx) {
+    if (!targetDeviceId) return;
+    if (!notifModule.isRichCardQuestion(card)) return;
+    if (!richCardLimiter.check(targetDeviceId)) return;
+    const payload = notifModule.buildRichCardNotification(card, ctx || {});
+    notifyDevice(targetDeviceId, payload).catch(() => {});
+}
 
 /**
  * Central notification dispatcher.

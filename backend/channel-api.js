@@ -106,7 +106,7 @@ function shouldSuppressA2A(reqBody, message) {
         || isOperationalChannelMessage(message);
 }
 
-function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecret, generatePublicCode, publicCodeIndex, saveChatMessage, io, saveData, createDefaultEntity, apiBase, awardEntityXP, XP_AMOUNTS, notifyDevice, deliverToEntity, gatekeeperCheckText, resolveSpeakToTarget, checkBotToBotRateLimit, checkCrossSpeakRateLimit, crossDeviceSettings, devicePrefs, recentBroadcasts: _recentBroadcasts, BOT2BOT_MAX_MESSAGES: _BOT2BOT_MAX_MESSAGES, db: dbRef, getMissionApiHints, buildIdentitySetupHint, buildBroadcastRecipientBlock, chatPool }) {
+function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecret, generatePublicCode, publicCodeIndex, saveChatMessage, io, saveData, createDefaultEntity, apiBase, awardEntityXP, XP_AMOUNTS, notifyDevice, notifyRichCardQuestion, deliverToEntity, gatekeeperCheckText, resolveSpeakToTarget, checkBotToBotRateLimit, checkCrossSpeakRateLimit, crossDeviceSettings, devicePrefs, recentBroadcasts: _recentBroadcasts, BOT2BOT_MAX_MESSAGES: _BOT2BOT_MAX_MESSAGES, db: dbRef, getMissionApiHints, buildIdentitySetupHint, buildBroadcastRecipientBlock, chatPool }) {
     const pushContextHelpers = { getMissionApiHints, buildIdentitySetupHint, buildBroadcastRecipientBlock };
     // Late-bound kanban auto-review hook (set after kanbanModule init)
     let kanbanAutoReview = null;
@@ -1015,6 +1015,18 @@ function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecre
                                     card: validatedCard
                                 })
                             ));
+                            // Rich-card UX (card_a9e): broadcast carrying an
+                            // interactive question fires a single per-device
+                            // "needs your input" push to the broadcast target
+                            // device (rate-limited inside the helper).
+                            if (validatedCard && typeof notifyRichCardQuestion === 'function') {
+                                notifyRichCardQuestion(broadcastDeviceId, validatedCard, {
+                                    questionText: deliveryText,
+                                    fromName: entity.name || entity.publicCode || `Entity ${eId}`,
+                                    fromEntityId: eId,
+                                    toEntityId: targetIds[0] ?? null
+                                });
+                            }
                             deliveryResults = { broadcast: true, sentCount: results.length, targets: results };
                         }
                     }
@@ -1047,6 +1059,18 @@ function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecre
                             text: deliveryText, expectsReply: true, isCrossDevice,
                             card: validatedCard
                         });
+                        // Rich-card UX (card_a9e): same shape as /api/transform
+                        // speakTo path — fire "needs your input" push to the
+                        // target device, gated by the rich_card_question
+                        // toggle and the in-process rate limiter.
+                        if (validatedCard && typeof notifyRichCardQuestion === 'function') {
+                            notifyRichCardQuestion(target.deviceId, validatedCard, {
+                                questionText: deliveryText,
+                                fromName: entity.name || entity.publicCode || `Entity ${eId}`,
+                                fromEntityId: eId,
+                                toEntityId: target.entityId
+                            });
+                        }
                         results.push({ publicCode: code, success: true, ...result });
                         deliverySaved = true;
                     }
