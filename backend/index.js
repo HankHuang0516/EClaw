@@ -38,6 +38,7 @@ const sanitizeHtml = require('sanitize-html');
 const compression = require('compression');
 
 const safeEqual = require('./safe-equal');
+const { safeUpdatedAtToISO } = require('./safe-date');
 const { createHermesHealthMonitor } = require('./hermes-health-check');
 const { createSettingsHelpInvariantCron } = require('./settings-help-invariant-cron');
 
@@ -20968,19 +20969,41 @@ process.on('uncaughtException', async (err) => {
     process.exit(1);
 });
 
-process.on('unhandledRejection', async (reason) => {
+// 2026-06-16 RCA change:
+// The original handler called process.exit(1) on every unhandled rejection.
+// PR #3422's unguarded `new Date(row.updated_at).toISOString()` threw
+// RangeError per-request → this handler crashed the server → Railway respawn
+// → next request crashed it again → 7 minute restart loop until hotfix
+// PR #3432 shipped. A single bad row or pathological request shouldn't take
+// down the whole server.
+//
+// New policy: log + audit to DB, but DO NOT exit. The catch sites that needed
+// the crash (genuine fatal data corruption) should call process.exit
+// themselves; everything else survives so other in-flight requests aren't
+// killed as collateral damage.
+process.on('unhandledRejection', async (reason, promise) => {
     const msg = reason instanceof Error ? reason.message : String(reason);
     const stack = reason instanceof Error ? reason.stack : undefined;
-    console.error('[FATAL] Unhandled rejection:', reason);
+    const name = reason instanceof Error ? reason.name : typeof reason;
+    console.error('[FATAL] Unhandled rejection survived (would have crashed pre-2026-06-16 incident):',
+        name, msg);
+    if (stack) console.error(stack);
     try {
         await chatPool.query(
             `INSERT INTO server_logs (level, category, message, metadata)
              VALUES ($1, $2, $3, $4)`,
-            ['error', 'crash', `Unhandled rejection: ${msg}`,
-             JSON.stringify({ stack: stack?.substring(0, 2000) })]
+            ['error', 'crash', `Unhandled rejection (survived): ${msg}`,
+             JSON.stringify({
+                 name,
+                 stack: stack?.substring(0, 2000),
+                 // Promise stringifies to "[object Promise]" but presence
+                 // confirms we got the rejection event vs. a synthesized call.
+                 hasPromise: !!promise,
+                 rcaRef: '2026-06-16-restart-loop',
+             })]
         );
-    } catch (_) { /* DB write failed, nothing we can do */ }
-    process.exit(1);
+    } catch (_) { /* DB write failed; console.error above is the durable record */ }
+    // Intentionally NO process.exit — survive the bad request, keep serving.
 });
 
 // Fire-and-forget handshake failure recorder
@@ -21072,17 +21095,12 @@ app.post('/api/device-vars', async (req, res) => {
                 ? existingRow.var_keys.length
                 : 0;
             // Defensive: row.updated_at may be Date, string, or unexpected shape
-            // depending on pg driver state. `new Date(invalidShape).toISOString()`
-            // throws RangeError "Invalid time value" → unhandled rejection → crash
-            // → restart loop (incident 2026-06-16 14:15:45Z; same pattern as PR #3424
-            // hotfixed in GET handler). Wrap defensively + fall back to null.
-            let existingUpdatedAt = null;
-            try {
-                if (existingRow && existingRow.updated_at) {
-                    const d = new Date(existingRow.updated_at);
-                    if (!Number.isNaN(d.getTime())) existingUpdatedAt = d.toISOString();
-                }
-            } catch (_) { existingUpdatedAt = null; }
+            // depending on pg driver state. Unguarded `new Date(x).toISOString()`
+            // threw RangeError "Invalid time value" → unhandled rejection → crash
+            // → restart loop (incident 2026-06-16 14:15:45Z, hotfix PR #3432).
+            // Permanent fix: centralized helper enforced by CI grep ban — see
+            // backend/safe-date.js.
+            const existingUpdatedAt = safeUpdatedAtToISO(existingRow);
             if (existingKeyCount > 0) {
                 const _srcLabel = (source === 'web' || source === 'app') ? source : 'legacy';
                 console.warn(`[Vars] POST without expectedUpdatedAt against non-empty row (deviceId=${deviceId} source=${_srcLabel} keys=${existingKeyCount} strictMode=${strictMode})`);
@@ -21108,14 +21126,9 @@ app.post('/api/device-vars', async (req, res) => {
         }
     } else {
         const currentRow = await loadExistingRowOnce();
-        // Defensive: see comment on existingUpdatedAt above (incident 2026-06-16 14:15:45Z).
-        let currentUpdatedAt = null;
-        try {
-            if (currentRow && currentRow.updated_at) {
-                const d = new Date(currentRow.updated_at);
-                if (!Number.isNaN(d.getTime())) currentUpdatedAt = d.toISOString();
-            }
-        } catch (_) { currentUpdatedAt = null; }
+        // Defensive: see comment on existingUpdatedAt above (incident 2026-06-16
+        // 14:15:45Z). Centralized helper — see backend/safe-date.js.
+        const currentUpdatedAt = safeUpdatedAtToISO(currentRow);
         if (currentUpdatedAt && currentUpdatedAt !== expectedUpdatedAt) {
             const _srcLabel = (source === 'web' || source === 'app') ? source : 'legacy';
             db.logDeviceVarsAudit({
@@ -21296,7 +21309,9 @@ app.post('/api/device-vars', async (req, res) => {
         let newUpdatedAt = null;
         try {
             const postRow = await db.getDeviceVars(deviceId);
-            if (postRow && postRow.updated_at) newUpdatedAt = new Date(postRow.updated_at).toISOString();
+            // Defensive: centralized helper guards against malformed updated_at
+            // shape from pg driver (06-16 incident class). See backend/safe-date.js.
+            newUpdatedAt = safeUpdatedAtToISO(postRow);
         } catch (e) { /* fall through; client can refetch via GET */ }
 
         const response = { success: true, count: varKeys.length, updatedAt: newUpdatedAt };
@@ -21372,26 +21387,12 @@ app.get('/api/device-vars', async (req, res) => {
         // last-write-wins data loss when multiple web/app clients have stale
         // vault snapshots.
         // Defensive: row.updated_at may be a Date, string, or unexpected shape
-        // depending on pg driver state. `new Date(invalidShape).toISOString()`
-        // throws RangeError "Invalid time value", which the outer catch then
-        // logged as "Decrypt failed" — a false 500 that masked perfectly healthy
-        // vault data (incident 2026-06-16 ~12:36 TW; clients kept rendering
-        // from var_keys metadata + localStorage cache while owner-auth GET
-        // 500'd for ~30min). Wrap defensively + fall back to null.
-        try {
-            if (row.updated_at) {
-                const d = new Date(row.updated_at);
-                if (!Number.isNaN(d.getTime())) {
-                    out.updatedAt = d.toISOString();
-                } else {
-                    out.updatedAt = null;
-                }
-            } else {
-                out.updatedAt = null;
-            }
-        } catch (_) {
-            out.updatedAt = null;
-        }
+        // depending on pg driver state. Unguarded `new Date(x).toISOString()`
+        // threw RangeError "Invalid time value" → false 500 "Decrypt failed"
+        // (incident 2026-06-16 ~12:36 TW, hotfix PR #3424).
+        // Permanent fix: centralized helper enforced by CI grep ban — see
+        // backend/safe-date.js.
+        out.updatedAt = safeUpdatedAtToISO(row);
         if (authMode === 'owner') {
             out.sources = row.var_sources || {};
             out.locked = !!row.is_locked;

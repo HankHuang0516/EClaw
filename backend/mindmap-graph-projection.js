@@ -22,6 +22,8 @@
 
 'use strict';
 
+const { safeUpdatedAtToISO } = require('./safe-date');
+
 const SCHEMA_VERSION = 2;
 const LABEL_MAX = 80;
 const TITLE_MAX = 200;
@@ -93,7 +95,7 @@ function buildTaskNode(card, commentCount, noteCount) {
         summary: clip((card.description || '').replace(/\s+/g, ' ').trim(), SUMMARY_MAX),
         commentCount: Number.isFinite(commentCount) ? commentCount : 0,
         noteCount: Number.isFinite(noteCount) ? noteCount : 0,
-        updatedAt: card.updated_at ? new Date(card.updated_at).toISOString() : null,
+        updatedAt: safeUpdatedAtToISO(card),
         url: `/portal/kanban.html?card=${encodeURIComponent(card.id)}`,
         colorKey: `status:${card.status || 'todo'}`,
         val: taskVal(card.priority, card.is_automation, card.status),
@@ -111,7 +113,7 @@ function buildNoteNode(note) {
         category: note.category || 'general',
         ownerEntityId,
         summary: clip((note.content || '').replace(/\s+/g, ' ').trim(), SUMMARY_MAX),
-        updatedAt: note.updated_at ? new Date(note.updated_at).toISOString() : null,
+        updatedAt: safeUpdatedAtToISO(note),
         url: `/portal/mission.html?note=${encodeURIComponent(note.id)}`,
         colorKey: `note:${note.category || 'general'}`,
         val: 4,
