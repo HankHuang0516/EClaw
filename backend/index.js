@@ -9784,6 +9784,20 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
                             ));
 
                             console.log(`[Transform+Broadcast] Device ${deviceId} Entity ${eId} -> [${targetIds.join(',')}] on ${broadcastDeviceId}`);
+                            // Rich-card UX (card_a9e): if the broadcast carries
+                            // interactive buttons, the recipient device should get
+                            // a "needs your input" notification — broadcast routes
+                            // share one target device per loop iteration, so a
+                            // single notif covers all entities on that device
+                            // (the per-device rate-limiter further dedupes bursts).
+                            if (validatedCard) {
+                                notifyRichCardQuestion(broadcastDeviceId, validatedCard, {
+                                    questionText: deliveryText,
+                                    fromName: entity.name || entity.publicCode || `Entity ${eId}`,
+                                    fromEntityId: eId,
+                                    toEntityId: targetIds[0] ?? null
+                                }).catch(() => {});
+                            }
                             deliveryResults = { broadcast: true, sentCount: results.length, targets: results };
                         }
                     }
@@ -9889,6 +9903,20 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
                     link: 'chat.html',
                     metadata: { fromEntityId: eId, toEntityId: target.entityId }
                 }).catch(() => {});
+
+                // Rich-card UX (card_a9e): agent attached interactive buttons
+                // asking the user to pick an option — fire a higher-priority
+                // "needs your input" notification gated by the rich_card_question
+                // toggle. Same delivery surface (Socket+Web Push+FCM), separate
+                // category so users can mute generic speak_to but keep these.
+                if (validatedCard) {
+                    notifyRichCardQuestion(target.deviceId, validatedCard, {
+                        questionText: deliveryText,
+                        fromName: entity.name || entity.publicCode || `Entity ${eId}`,
+                        fromEntityId: eId,
+                        toEntityId: target.entityId
+                    }).catch(() => {});
+                }
 
                 console.log(`[Transform+SpeakTo] ${deviceId}:${eId} -> ${target.deviceId}:${target.entityId} (${code})`);
                 results.push({
@@ -19842,6 +19870,7 @@ const channelModule = require('./channel-api')(devices, {
     awardEntityXP,
     XP_AMOUNTS,
     notifyDevice,
+    notifyRichCardQuestion,
     deliverToEntity,
     gatekeeperCheckText,
     resolveSpeakToTarget,
@@ -19907,6 +19936,50 @@ app.patch('/api/github/issues/:number', async (req, res) => {
 // ============================================
 // NOTIFICATION SYSTEM - Central dispatcher
 // ============================================
+
+// Rich-card-question dispatch helpers (card_a9edf960). Logic lives in
+// notifications.js so it's unit-testable in isolation; index.js owns the
+// per-process limiter instance + the wiring into notifyDevice.
+const richCardLimiter = notifModule.createRichCardNotifLimiter();
+
+/**
+ * Fire a "rich-card-question" notification to the recipient device. Use at
+ * delivery sites that pass a `validatedCard` so the user gets a "Claude-
+ * Code-style permission ask" push regardless of which generic category
+ * (speak_to / bot_reply / cross_speak) the underlying message used.
+ *
+ * Rules:
+ *  - Only fires when `card` is well-formed (ask_id + non-empty buttons).
+ *  - Checks the per-user `rich_card_question` toggle BEFORE the limiter so
+ *    a muted user doesn't burn their 5/10s budget — otherwise re-enabling
+ *    mid-burst would silently drop the next 5 legitimate cards.
+ *  - Per-device rate-limited (5/10s) to defang misbehaving-agent spam.
+ *  - Per-ask-id deduped (60s TTL) so a re-emit of the same card doesn't
+ *    burn a slot.
+ *  - Body is the message text excerpt (UTF-8 safe, 240 byte cap).
+ *
+ * @param {string} targetDeviceId
+ * @param {object} card - validated card { ask_id, buttons[] }
+ * @param {object} ctx  - { questionText, fromName, fromEntityId, toEntityId }
+ */
+async function notifyRichCardQuestion(targetDeviceId, card, ctx) {
+    if (!targetDeviceId) return;
+    if (!notifModule.isRichCardQuestion(card)) return;
+    // Pref-gate FIRST (HIGH-1 from card_a9e adversarial review): muted users
+    // must not consume rate-limit budget. notifyDevice() also re-checks
+    // isCategoryEnabled internally, but we short-circuit here so the bucket
+    // increment + DB write + WS emit are all skipped uniformly.
+    try {
+        const prefs = await notifModule.getPrefs(targetDeviceId);
+        if (!notifModule.isCategoryEnabled(prefs, 'rich_card_question')) return;
+    } catch (_) {
+        // Fail-open: a transient DB blip should not silently swallow a
+        // permission-style ask the user is waiting on. Continue.
+    }
+    if (!richCardLimiter.check(targetDeviceId, card.ask_id)) return;
+    const payload = notifModule.buildRichCardNotification(card, ctx || {});
+    notifyDevice(targetDeviceId, payload).catch(() => {});
+}
 
 /**
  * Central notification dispatcher.

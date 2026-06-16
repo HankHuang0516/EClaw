@@ -117,10 +117,17 @@ jest.mock('../../gatekeeper', () => ({
 
 jest.mock('../../notifications', () => {
     const express = jest.requireActual('express');
+    // card_a9edf960: pull through the pure rich-card-question helpers so index.js
+    // can wire its limiter at module-load without crashing.
+    const actual = jest.requireActual('../../notifications');
     return {
         init: jest.fn(),
         router: express.Router(),
         initNotificationTables: jest.fn().mockResolvedValue(undefined),
+        truncateUtf8: actual.truncateUtf8,
+        isRichCardQuestion: actual.isRichCardQuestion,
+        buildRichCardNotification: actual.buildRichCardNotification,
+        createRichCardNotifLimiter: actual.createRichCardNotifLimiter,
     };
 });
 

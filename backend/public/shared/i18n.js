@@ -650295,6 +650295,10 @@ const TRANSLATIONS = {
         "chat_routing_chain_superior": "Superior",
         "chat_routing_chain_subordinates": "Subordinates",
         "chat_routing_chain_peers": "Peers",
+
+        "notif_pref_rich_card": "Rich-card questions",
+        "notif_pref_rich_card_help": "Push notifications when an agent attaches interactive buttons asking you to pick an option. Like Claude Code asking for permission — wakes your device because the agent is blocked on your choice. Default ON; if no bot is sending rich cards in your chats, no notifications arrive even when enabled.",
+        "notif_rich_card_question_title_suffix": "needs your input",
 },
 
 
@@ -1235056,6 +1235060,10 @@ const TRANSLATIONS = {
         "chat_routing_chain_superior": "上級",
         "chat_routing_chain_subordinates": "下屬",
         "chat_routing_chain_peers": "同儕",
+
+        "notif_pref_rich_card": "互動卡片詢問",
+        "notif_pref_rich_card_help": "當智能體在訊息中附上可點擊按鈕請你選擇選項時推播通知，就像 Claude Code 詢問權限那樣 — 智能體正在等你決定，所以會喚醒裝置。預設開啟；若聊天裡沒有智能體送出互動卡片，即使開啟也不會收到通知。",
+        "notif_rich_card_question_title_suffix": "需要你的選擇",
 },
 
 
@@ -1849191,6 +1849199,10 @@ const TRANSLATIONS = {
         "chat_routing_chain_superior": "上级",
         "chat_routing_chain_subordinates": "下属",
         "chat_routing_chain_peers": "同侪",
+
+        "notif_pref_rich_card": "互动卡片询问",
+        "notif_pref_rich_card_help": "当智能体在消息中附上可点击按钮请你选择选项时推送通知，就像 Claude Code 询问权限那样 — 智能体正在等你决定，所以会唤醒设备。默认开启；若聊天里没有智能体发送互动卡片，即使开启也不会收到通知。",
+        "notif_rich_card_question_title_suffix": "需要你的选择",
 },
 
 
@@ -2412409,6 +2412421,10 @@ const TRANSLATIONS = {
         "chat_routing_chain_superior": "上司",
         "chat_routing_chain_subordinates": "部下",
         "chat_routing_chain_peers": "同僚",
+
+        "notif_pref_rich_card": "リッチカードの質問",
+        "notif_pref_rich_card_help": "エージェントがインタラクティブなボタンを添えて選択を求めるときに通知を送信します。Claude Code が許可を求めるのと同じ仕組み — エージェントがあなたの判断を待っているのでデバイスを起こします。デフォルトでオン。チャットでリッチカードを送信するボットがいない場合は、オンでも通知は届きません。",
+        "notif_rich_card_question_title_suffix": "の操作待ちです",
 },
 
 
@@ -2942732,6 +2942748,10 @@ const TRANSLATIONS = {
         "chat_routing_chain_superior": "상급자",
         "chat_routing_chain_subordinates": "부하 직원",
         "chat_routing_chain_peers": "동료",
+
+        "notif_pref_rich_card": "리치 카드 질문",
+        "notif_pref_rich_card_help": "에이전트가 옵션 선택을 요청하는 대화형 버튼을 첨부할 때 푸시 알림을 보냅니다. Claude Code의 권한 요청과 같은 방식 — 에이전트가 사용자의 결정을 기다리므로 기기를 깨웁니다. 기본 켜짐; 리치 카드를 보내는 봇이 없으면 켜져 있어도 알림이 오지 않습니다.",
+        "notif_rich_card_question_title_suffix": "입력 대기 중",
 },
 
 
@@ -2944358,6 +2944378,10 @@ const TRANSLATIONS = {
         "arena_avatar_stage_concerned": "失誤",
         "arena_avatar_stage_proud": "完成！",
 
+
+        "notif_pref_rich_card": "互動卡片詢問",
+        "notif_pref_rich_card_help": "當智能體在訊息中附上可點擊按鈕請你選擇選項時推播通知，就像 Claude Code 詢問權限那樣 — 智能體正在等你決定，所以會喚醒裝置。預設開啟；若聊天裡沒有智能體送出互動卡片，即使開啟也不會收到通知。",
+        "notif_rich_card_question_title_suffix": "需要你的選擇",
 },
 
 
@@ -3471163,6 +3471187,10 @@ const TRANSLATIONS = {
         "chat_routing_chain_superior": "ผู้บังคับบัญชา",
         "chat_routing_chain_subordinates": "ผู้ใต้บังคับบัญชา",
         "chat_routing_chain_peers": "เพื่อนร่วมระดับ",
+
+        "notif_pref_rich_card": "คำถามจากการ์ดแบบโต้ตอบ",
+        "notif_pref_rich_card_help": "แจ้งเตือนแบบพุชเมื่อเอเจนต์แนบปุ่มแบบโต้ตอบให้คุณเลือกตัวเลือก เหมือนกับที่ Claude Code ขออนุญาต — เอเจนต์กำลังรอการตัดสินใจของคุณ จึงปลุกอุปกรณ์ ค่าเริ่มต้นเปิด หากไม่มีบอทส่งการ์ดแบบโต้ตอบในแชต จะไม่มีการแจ้งเตือนแม้จะเปิดอยู่",
+        "notif_rich_card_question_title_suffix": "ต้องการคำตอบจากคุณ",
 },
 
 
@@ -3998046,6 +3998074,10 @@ const TRANSLATIONS = {
         "chat_routing_chain_superior": "Cấp trên",
         "chat_routing_chain_subordinates": "Cấp dưới",
         "chat_routing_chain_peers": "Đồng cấp",
+
+        "notif_pref_rich_card": "Câu hỏi thẻ tương tác",
+        "notif_pref_rich_card_help": "Thông báo đẩy khi tác nhân đính kèm các nút tương tác yêu cầu bạn chọn một tùy chọn. Giống như Claude Code yêu cầu cấp quyền — tác nhân đang chờ quyết định của bạn nên sẽ đánh thức thiết bị. Mặc định bật; nếu không có bot nào gửi thẻ tương tác trong các cuộc trò chuyện, sẽ không nhận được thông báo ngay cả khi đã bật.",
+        "notif_rich_card_question_title_suffix": "cần phản hồi của bạn",
 },
 
 
@@ -4524545,6 +4524577,10 @@ const TRANSLATIONS = {
         "chat_routing_chain_superior": "Atasan",
         "chat_routing_chain_subordinates": "Bawahan",
         "chat_routing_chain_peers": "Rekan",
+
+        "notif_pref_rich_card": "Pertanyaan kartu interaktif",
+        "notif_pref_rich_card_help": "Notifikasi push ketika agen melampirkan tombol interaktif yang meminta Anda memilih opsi. Seperti Claude Code yang meminta izin — agen sedang menunggu keputusan Anda, jadi akan membangunkan perangkat. Default aktif; jika tidak ada bot yang mengirim kartu interaktif di obrolan Anda, tidak ada notifikasi yang masuk meskipun diaktifkan.",
+        "notif_rich_card_question_title_suffix": "menunggu respons Anda",
 },
 
 
@@ -5049687,6 +5049723,10 @@ const TRANSLATIONS = {
         "chat_routing_chain_superior": "Supérieur",
         "chat_routing_chain_subordinates": "Subordonnés",
         "chat_routing_chain_peers": "Pairs",
+
+        "notif_pref_rich_card": "Questions de cartes interactives",
+        "notif_pref_rich_card_help": "Notifications push lorsqu'un agent joint des boutons interactifs vous demandant de choisir une option. Comme Claude Code demandant une autorisation — l'agent attend votre décision, donc cela réveille l'appareil. Activé par défaut ; si aucun bot n'envoie de cartes interactives dans vos discussions, aucune notification n'arrive même si l'option est activée.",
+        "notif_rich_card_question_title_suffix": "attend votre réponse",
 },
 
 
@@ -5567380,6 +5567420,10 @@ const TRANSLATIONS = {
         "chat_routing_chain_superior": "Superior",
         "chat_routing_chain_subordinates": "Subordinados",
         "chat_routing_chain_peers": "Pares",
+
+        "notif_pref_rich_card": "Preguntas de tarjetas interactivas",
+        "notif_pref_rich_card_help": "Notificaciones push cuando un agente adjunta botones interactivos pidiéndote elegir una opción. Como Claude Code pidiendo permiso — el agente está esperando tu decisión, por lo que despierta el dispositivo. Activado por defecto; si ningún bot envía tarjetas interactivas en tus chats, no llegan notificaciones aunque esté activado.",
+        "notif_rich_card_question_title_suffix": "espera tu respuesta",
 },
 
 
@@ -6104316,6 +6104360,10 @@ const TRANSLATIONS = {
         "chat_routing_chain_superior": "Vorgesetzter",
         "chat_routing_chain_subordinates": "Untergebene",
         "chat_routing_chain_peers": "Kollegen",
+
+        "notif_pref_rich_card": "Rich-Card-Fragen",
+        "notif_pref_rich_card_help": "Push-Benachrichtigungen, wenn ein Agent interaktive Schaltflächen anhängt und dich bittet, eine Option zu wählen. Wie Claude Code, das um Erlaubnis fragt — der Agent wartet auf deine Entscheidung und weckt daher das Gerät. Standardmäßig aktiviert; wenn kein Bot Rich-Cards in deinen Chats sendet, kommen keine Benachrichtigungen, auch wenn aktiviert.",
+        "notif_rich_card_question_title_suffix": "wartet auf deine Antwort",
 },
     pt: {
         "transition_loading": "A carregar…",
@@ -6109764,6 +6109812,10 @@ const TRANSLATIONS = {
         "chat_routing_chain_superior": "Superior",
         "chat_routing_chain_subordinates": "Subordinados",
         "chat_routing_chain_peers": "Pares",
+
+        "notif_pref_rich_card": "Perguntas de cartões interativos",
+        "notif_pref_rich_card_help": "Notificações push quando um agente anexa botões interativos pedindo para você escolher uma opção. Como o Claude Code pedindo permissão — o agente está esperando sua decisão, então acorda o dispositivo. Padrão ligado; se nenhum bot enviar cartões interativos em seus chats, nenhuma notificação chega mesmo que esteja ativado.",
+        "notif_rich_card_question_title_suffix": "aguarda sua resposta",
 },
 
 
@@ -6638569,6 +6638621,10 @@ const TRANSLATIONS = {
         "chat_routing_chain_superior": "Atasan",
         "chat_routing_chain_subordinates": "Bawahan",
         "chat_routing_chain_peers": "Rakan setaraf",
+
+        "notif_pref_rich_card": "Soalan kad interaktif",
+        "notif_pref_rich_card_help": "Pemberitahuan tolak apabila ejen melampirkan butang interaktif meminta anda memilih pilihan. Seperti Claude Code meminta kebenaran — ejen sedang menunggu keputusan anda, jadi ia mengejutkan peranti. Lalai HIDUP; jika tiada bot menghantar kad interaktif dalam sembang anda, tiada pemberitahuan tiba walaupun dihidupkan.",
+        "notif_rich_card_question_title_suffix": "menunggu maklum balas anda",
 },
 
 
@@ -7197831,6 +7197887,10 @@ const TRANSLATIONS = {
         "chat_routing_chain_superior": "वरिष्ठ",
         "chat_routing_chain_subordinates": "अधीनस्थ",
         "chat_routing_chain_peers": "सहयोगी",
+
+        "notif_pref_rich_card": "इंटरैक्टिव कार्ड प्रश्न",
+        "notif_pref_rich_card_help": "जब कोई एजेंट इंटरैक्टिव बटन संलग्न करके आपसे विकल्प चुनने के लिए कहता है तो पुश सूचनाएं भेजी जाती हैं। जैसे Claude Code अनुमति मांगता है — एजेंट आपके निर्णय की प्रतीक्षा कर रहा है, इसलिए डिवाइस को जगाता है। डिफ़ॉल्ट चालू; यदि आपकी चैट में कोई बॉट इंटरैक्टिव कार्ड नहीं भेज रहा है, तो चालू होने पर भी कोई सूचना नहीं आती।",
+        "notif_rich_card_question_title_suffix": "को आपके इनपुट की आवश्यकता है",
 },
 
 
@@ -7746219,6 +7746279,10 @@ const TRANSLATIONS = {
         "chat_routing_chain_superior": "المسؤول",
         "chat_routing_chain_subordinates": "المرؤوسون",
         "chat_routing_chain_peers": "الزملاء",
+
+        "notif_pref_rich_card": "أسئلة البطاقات التفاعلية",
+        "notif_pref_rich_card_help": "إشعارات فورية عندما يرفق وكيل أزرارًا تفاعلية يطلب منك اختيار خيار. مثل Claude Code عند طلب الإذن — الوكيل ينتظر قرارك، لذا يوقظ الجهاز. ممكّن افتراضيًا؛ إذا لم يرسل أي روبوت بطاقات تفاعلية في محادثاتك، فلن تصل إشعارات حتى لو كان مفعّلاً.",
+        "notif_rich_card_question_title_suffix": "ينتظر ردك",
 }
 
 
