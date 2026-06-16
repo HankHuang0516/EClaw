@@ -9791,7 +9791,7 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
                                     fromName: entity.name || entity.publicCode || `Entity ${eId}`,
                                     fromEntityId: eId,
                                     toEntityId: targetIds[0] ?? null
-                                });
+                                }).catch(() => {});
                             }
                             deliveryResults = { broadcast: true, sentCount: results.length, targets: results };
                         }
@@ -9910,7 +9910,7 @@ app.post('/api/transform', transformMaybeMultipart, idempotencyMiddleware, async
                         fromName: entity.name || entity.publicCode || `Entity ${eId}`,
                         fromEntityId: eId,
                         toEntityId: target.entityId
-                    });
+                    }).catch(() => {});
                 }
 
                 console.log(`[Transform+SpeakTo] ${deviceId}:${eId} -> ${target.deviceId}:${target.entityId} (${code})`);
@@ -19945,19 +19945,33 @@ const richCardLimiter = notifModule.createRichCardNotifLimiter();
  *
  * Rules:
  *  - Only fires when `card` is well-formed (ask_id + non-empty buttons).
- *  - Gated by the per-user `rich_card_question` toggle (default ON; the
- *    actual check happens inside notifyDevice via isCategoryEnabled).
+ *  - Checks the per-user `rich_card_question` toggle BEFORE the limiter so
+ *    a muted user doesn't burn their 5/10s budget — otherwise re-enabling
+ *    mid-burst would silently drop the next 5 legitimate cards.
  *  - Per-device rate-limited (5/10s) to defang misbehaving-agent spam.
- *  - Body is the message text excerpt (UTF-8 safe truncation at 100 bytes).
+ *  - Per-ask-id deduped (60s TTL) so a re-emit of the same card doesn't
+ *    burn a slot.
+ *  - Body is the message text excerpt (UTF-8 safe, 240 byte cap).
  *
  * @param {string} targetDeviceId
  * @param {object} card - validated card { ask_id, buttons[] }
  * @param {object} ctx  - { questionText, fromName, fromEntityId, toEntityId }
  */
-function notifyRichCardQuestion(targetDeviceId, card, ctx) {
+async function notifyRichCardQuestion(targetDeviceId, card, ctx) {
     if (!targetDeviceId) return;
     if (!notifModule.isRichCardQuestion(card)) return;
-    if (!richCardLimiter.check(targetDeviceId)) return;
+    // Pref-gate FIRST (HIGH-1 from card_a9e adversarial review): muted users
+    // must not consume rate-limit budget. notifyDevice() also re-checks
+    // isCategoryEnabled internally, but we short-circuit here so the bucket
+    // increment + DB write + WS emit are all skipped uniformly.
+    try {
+        const prefs = await notifModule.getPrefs(targetDeviceId);
+        if (!notifModule.isCategoryEnabled(prefs, 'rich_card_question')) return;
+    } catch (_) {
+        // Fail-open: a transient DB blip should not silently swallow a
+        // permission-style ask the user is waiting on. Continue.
+    }
+    if (!richCardLimiter.check(targetDeviceId, card.ask_id)) return;
     const payload = notifModule.buildRichCardNotification(card, ctx || {});
     notifyDevice(targetDeviceId, payload).catch(() => {});
 }

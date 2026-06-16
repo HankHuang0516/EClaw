@@ -168,11 +168,11 @@ describe('buildRichCardNotification (card_a9e)', () => {
         expect(notif.title).toBe('Agent needs your input');
     });
 
-    it('truncates body via truncateUtf8 (UTF-8 safe)', () => {
+    it('truncates body via truncateUtf8 (UTF-8 safe, 240-byte cap)', () => {
         const long = 'A'.repeat(500);
         const notif = buildRichCardNotification(card, { questionText: long });
-        expect(notif.body.length).toBeLessThanOrEqual(100);
-        expect(Buffer.byteLength(notif.body, 'utf8')).toBeLessThanOrEqual(100);
+        expect(notif.body.length).toBeLessThanOrEqual(240);
+        expect(Buffer.byteLength(notif.body, 'utf8')).toBeLessThanOrEqual(240);
     });
 
     it('does not throw on missing ctx', () => {
@@ -264,6 +264,55 @@ describe('createRichCardNotifLimiter (card_a9e)', () => {
         for (let i = 0; i < 200; i++) results.push(limiter.check('device-R'));
         const allowed = results.filter(Boolean).length;
         expect(allowed).toBe(100); // exactly `max` allowed in the window
+    });
+
+    it('dedupes by ask_id WITHOUT burning rate-limit budget (HIGH-2 review fix)', () => {
+        // A buggy agent that re-emits the same card 5× must not burn the
+        // user's 5/10s budget — real Claude-Code-permission UX dedupes by
+        // request id. The dedup must short-circuit *before* the bucket
+        // increments so 4 unrelated future cards still get through.
+        limiter = createRichCardNotifLimiter({ windowMs: 60_000, max: 5, askDedupTtlMs: 60_000, disablePrune: true });
+        // First emission of ask-A — allowed, bucket count = 1.
+        expect(limiter.check('device-D', 'ask-A')).toBe(true);
+        // Re-emissions of ask-A — blocked by dedup, bucket NOT incremented.
+        for (let i = 0; i < 10; i++) {
+            expect(limiter.check('device-D', 'ask-A')).toBe(false);
+        }
+        // Four unrelated asks should still pass (4 + 1 = 5).
+        expect(limiter.check('device-D', 'ask-B')).toBe(true);
+        expect(limiter.check('device-D', 'ask-C')).toBe(true);
+        expect(limiter.check('device-D', 'ask-D')).toBe(true);
+        expect(limiter.check('device-D', 'ask-E')).toBe(true);
+        // Sixth distinct ask — rate-limited.
+        expect(limiter.check('device-D', 'ask-F')).toBe(false);
+    });
+
+    it('ask_id dedup is per-device (no cross-device leak)', () => {
+        limiter = createRichCardNotifLimiter({ windowMs: 60_000, max: 5, askDedupTtlMs: 60_000, disablePrune: true });
+        expect(limiter.check('device-A', 'shared-ask')).toBe(true);
+        // device-B sees a fresh dedup state for the same ask_id.
+        expect(limiter.check('device-B', 'shared-ask')).toBe(true);
+        // Re-emit to A — deduped.
+        expect(limiter.check('device-A', 'shared-ask')).toBe(false);
+        // Re-emit to B — deduped.
+        expect(limiter.check('device-B', 'shared-ask')).toBe(false);
+    });
+
+    it('missing/undefined ask_id falls through to plain rate-limiting', () => {
+        limiter = createRichCardNotifLimiter({ windowMs: 60_000, max: 2, disablePrune: true });
+        // No ask_id = no dedup, just count.
+        expect(limiter.check('device-N')).toBe(true);
+        expect(limiter.check('device-N')).toBe(true);
+        expect(limiter.check('device-N')).toBe(false);
+    });
+
+    it('rejects windowMs:0 / max:0 (option-misuse guard, LOW review fix)', () => {
+        // A caller passing windowMs:0 or max:0 must not silently turn off
+        // rate-limiting. The factory falls back to safe defaults.
+        limiter = createRichCardNotifLimiter({ windowMs: 0, max: 0, disablePrune: true });
+        // With defaults (5 per 10s) the 6th call is blocked.
+        for (let i = 0; i < 5; i++) expect(limiter.check('device-Z')).toBe(true);
+        expect(limiter.check('device-Z')).toBe(false);
     });
 });
 

@@ -1025,7 +1025,7 @@ function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecre
                                     fromName: entity.name || entity.publicCode || `Entity ${eId}`,
                                     fromEntityId: eId,
                                     toEntityId: targetIds[0] ?? null
-                                });
+                                }).catch(() => {});
                             }
                             deliveryResults = { broadcast: true, sentCount: results.length, targets: results };
                         }
@@ -1069,7 +1069,7 @@ function channelApiModule(devices, { authMiddleware, serverLog, generateBotSecre
                                 fromName: entity.name || entity.publicCode || `Entity ${eId}`,
                                 fromEntityId: eId,
                                 toEntityId: target.entityId
-                            });
+                            }).catch(() => {});
                         }
                         results.push({ publicCode: code, success: true, ...result });
                         deliverySaved = true;

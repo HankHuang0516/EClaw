@@ -304,13 +304,45 @@ function truncateUtf8(str, maxBytes) {
  * @returns {{ check: function, _buckets: Map, _stop: function }}
  */
 function createRichCardNotifLimiter(opts = {}) {
-    const windowMs = Number.isFinite(opts.windowMs) ? opts.windowMs : 10_000;
-    const max = Number.isFinite(opts.max) ? opts.max : 5;
-    const buckets = new Map(); // deviceId -> { count, resetAt }
+    // Guard `>0` (not just `Number.isFinite`) so a caller passing windowMs:0
+    // or max:0 doesn't accidentally bypass rate-limiting entirely.
+    const windowMs = Number.isFinite(opts.windowMs) && opts.windowMs > 0 ? opts.windowMs : 10_000;
+    const max = Number.isFinite(opts.max) && opts.max > 0 ? opts.max : 5;
+    // Per-ask dedup TTL: a buggy agent that re-emits the same ask_id 5×
+    // (re-render, network retry) burns the whole bucket otherwise. Real
+    // Claude-Code-style permission asks dedupe by request id, so we keep
+    // a short LRU-ish window. Tests can override via opts.askDedupTtlMs.
+    const askDedupTtlMs = Number.isFinite(opts.askDedupTtlMs) && opts.askDedupTtlMs > 0 ? opts.askDedupTtlMs : 60_000;
 
-    function check(deviceId) {
+    const buckets = new Map(); // deviceId -> { count, resetAt }
+    const recentAsks = new Map(); // `${deviceId}|${askId}` -> expiresAt
+
+    /**
+     * Check whether a notification for (deviceId, askId?) should fire.
+     * Returns true → fire and bucket has been incremented.
+     * Returns false → either rate-limited or already-seen ask_id.
+     *
+     * The ask_id dedup short-circuits BEFORE the bucket increments so a
+     * re-emit of the same card doesn't burn the user's 5/10s budget.
+     */
+    function check(deviceId, askId) {
         if (!deviceId) return false;
         const now = Date.now();
+        // Per-ask dedup first — repeat of same card to same device is silent.
+        if (askId) {
+            const key = `${deviceId}|${askId}`;
+            const exp = recentAsks.get(key);
+            if (exp && exp > now) return false;
+            recentAsks.set(key, now + askDedupTtlMs);
+            // Opportunistic cleanup inline (cheap; map is small) so the dedup
+            // map can't grow unbounded between prune ticks under heavy load.
+            if (recentAsks.size > 5000) {
+                for (const [k, e] of recentAsks) {
+                    if (e <= now) recentAsks.delete(k);
+                    if (recentAsks.size <= 1000) break;
+                }
+            }
+        }
         const bucket = buckets.get(deviceId);
         if (!bucket || bucket.resetAt <= now) {
             buckets.set(deviceId, { count: 1, resetAt: now + windowMs });
@@ -321,14 +353,18 @@ function createRichCardNotifLimiter(opts = {}) {
         return true;
     }
 
-    // Opportunistic cleanup so the Map doesn't grow forever in long-running
+    // Opportunistic cleanup so the Maps don't grow forever in long-running
     // processes. Tests pass `disablePrune: true` to skip the timer.
     let pruneHandle = null;
     if (!opts.disablePrune) {
         pruneHandle = setInterval(() => {
-            const cutoff = Date.now() - 60_000;
+            const now = Date.now();
+            const cutoff = now - 60_000;
             for (const [k, v] of buckets) {
                 if (v.resetAt < cutoff) buckets.delete(k);
+            }
+            for (const [k, exp] of recentAsks) {
+                if (exp <= now) recentAsks.delete(k);
             }
         }, 5 * 60_000);
         if (typeof pruneHandle.unref === 'function') pruneHandle.unref();
@@ -337,9 +373,10 @@ function createRichCardNotifLimiter(opts = {}) {
     function _stop() {
         if (pruneHandle) clearInterval(pruneHandle);
         buckets.clear();
+        recentAsks.clear();
     }
 
-    return { check, _buckets: buckets, _stop };
+    return { check, _buckets: buckets, _recentAsks: recentAsks, _stop };
 }
 
 /**
@@ -374,7 +411,9 @@ function isRichCardQuestion(card) {
  * @param {object} card - validated card { ask_id, buttons[] }
  * @param {object} ctx
  * @param {string} [ctx.questionText] - the message text the agent attached
- *   the buttons to; truncated UTF-8-safe at 100 bytes for the notif body
+ *   the buttons to; truncated UTF-8-safe at 240 bytes for the notif body
+ *   (FCM/Web-Push payload-safe AND fits CJK/RTL where 100 bytes ≈ 33 Han or
+ *   25 Arabic chars — too tight for a real question)
  * @param {string} [ctx.fromName] - display name of the sending agent
  * @param {string} [ctx.titleSuffix='needs your input'] - locale-agnostic
  *   suffix appended to the title (locale-specific suffixes live in i18n.js
@@ -387,7 +426,10 @@ function buildRichCardNotification(card, ctx = {}) {
     const fromName = String(ctx.fromName || 'Agent');
     const titleSuffix = String(ctx.titleSuffix || 'needs your input');
     const title = `${fromName} ${titleSuffix}`;
-    const body = truncateUtf8(String(ctx.questionText || ''), 100);
+    // 240 bytes ≈ FCM/Web-Push payload-safe AND wide enough for ~80 Han or
+    // ~60 Arabic characters — 100 bytes (the legacy notif body cap) is too
+    // tight for localized questions.
+    const body = truncateUtf8(String(ctx.questionText || ''), 240);
     return {
         type: 'chat',
         category: 'rich_card_question',
