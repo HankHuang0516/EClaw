@@ -22686,7 +22686,12 @@ if (require.main === module) {
         // Start gRPC server on PORT+1
         try {
             const grpcModule = require('./grpc-server')(devices, { serverLog });
-            const grpcPort = parseInt(process.env.GRPC_PORT || (port + 1));
+            const fallbackPort = port + 1;
+            let grpcPort = parseInt(process.env.GRPC_PORT || fallbackPort, 10);
+            if (!Number.isInteger(grpcPort) || grpcPort < 0 || grpcPort >= 65536) {
+                console.warn(`[gRPC] Invalid GRPC_PORT="${process.env.GRPC_PORT}" (out of 0-65535) — falling back to PORT+1=${fallbackPort}`);
+                grpcPort = fallbackPort;
+            }
             grpcModule.startGrpcServer(grpcPort);
         } catch (err) {
             console.error('[gRPC] Failed to initialize:', err.message);
