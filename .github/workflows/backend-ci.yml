@@ -42,6 +42,31 @@ jobs:
         run: npm run lint
         working-directory: backend
 
+      - name: Ban unguarded new Date(row.updated_at).toISOString() (06-16 incident class)
+        # 2026-06-16 RCA: PR #3422 → PR #3424 hotfix → PR #3427 carry-forward →
+        # PR #3432 second hotfix. Three PRs, two prod incidents, same line of
+        # code. Permanent fix is centralized helper backend/safe-date.js + this
+        # gate so the unguarded pattern literally cannot be merged again.
+        # See: https://github.com/HankHuang0516/EClaw/pull/3424
+        # See: https://github.com/HankHuang0516/EClaw/pull/3432
+        run: |
+          set -e
+          HITS=$(grep -rn --include='*.js' --exclude-dir=node_modules \
+            -E 'new Date\([^)]*updated_at[^)]*\)\.toISOString' \
+            backend/ \
+            | grep -v 'safe-date.js' \
+            | grep -vE '^[^:]+:[0-9]+:[[:space:]]*(//|\*)' \
+            || true)
+          if [ -n "$HITS" ]; then
+            echo "::error::Unguarded new Date(row.updated_at).toISOString() detected."
+            echo "::error::Use the safeUpdatedAtToISO(row) helper from backend/safe-date.js instead."
+            echo "::error::Background: this pattern caused 2 prod incidents on 2026-06-16 (PRs #3422->#3424, #3427->#3432)."
+            echo ""
+            echo "$HITS"
+            exit 1
+          fi
+          echo "OK - no unguarded new Date(...updated_at...).toISOString() outside safe-date.js."
+
   # ── i18n validation (fast, no npm ci needed) ────────────────────────────────
   i18n:
     name: i18n syntax check
