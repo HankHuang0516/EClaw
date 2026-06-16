@@ -20986,6 +20986,19 @@ app.post('/api/device-vars', async (req, res) => {
     const _auditCtx = { ip: req.ip, ua: req.get('user-agent') };
     const _metaBefore = await db.getDeviceVarsMeta(deviceId);
     const _beforeCount = _metaBefore && Array.isArray(_metaBefore.var_keys) ? _metaBefore.var_keys.length : 0;
+    // Cache for db.getDeviceVars: strict-guard, etag-check, and downstream
+    // empty-wipe / merge branches all want the same row. Read once, reuse —
+    // (1) keeps tests using mockResolvedValueOnce passing (single getDeviceVars
+    // consumption per request), (2) shaves a redundant DB round-trip.
+    let cachedExistingRow = null;
+    let cachedExistingRowLoaded = false;
+    const loadExistingRowOnce = async () => {
+        if (!cachedExistingRowLoaded) {
+            cachedExistingRow = await db.getDeviceVars(deviceId);
+            cachedExistingRowLoaded = true;
+        }
+        return cachedExistingRow;
+    };
 
     // Optimistic concurrency (card_946cfefe): if client sent the snapshot it
     // based its edit on via `expectedUpdatedAt`, refuse the write when the
@@ -20995,8 +21008,54 @@ app.post('/api/device-vars', async (req, res) => {
     // check (legacy behavior). Same-source merge logic below still drops
     // unknown-to-client keys without this check — that's the failure mode
     // PR #3392 left unaddressed (web+app+other multi-device race).
-    if (expectedUpdatedAt) {
-        const currentRow = await db.getDeviceVars(deviceId);
+    // Strict-mode no-etag guard (card_908a34a9, follow-up to card_946cfefe):
+    // when expectedUpdatedAt is absent AND the server row exists with at least
+    // one key, the client is replaying an old snapshot it loaded before the
+    // expectedUpdatedAt protocol shipped (typical: Android app or stale tab
+    // that opened before PR #3422/3423). Without the etag we can't tell if
+    // they read latest, so the same multi-device last-write-wins race that
+    // PR #3422 was meant to fix can still happen — observed 06-16 17:35 TW
+    // when RAILWAY_ECLAE_0616 was zombified back to the pre-rotation value.
+    //
+    // VAULT_STRICT_NO_ETAG env (default "warn"): "warn" logs + lets through
+    // for a grace window so Android can ship its own etag-aware client; flip
+    // to "reject" via Railway env once mobile catches up. "off" disables the
+    // guard entirely (escape hatch).
+    if (!expectedUpdatedAt) {
+        const strictMode = (process.env.VAULT_STRICT_NO_ETAG || 'warn').toLowerCase();
+        if (strictMode === 'warn' || strictMode === 'reject') {
+            const existingRow = await loadExistingRowOnce();
+            const existingKeyCount = existingRow && existingRow.var_keys && Array.isArray(existingRow.var_keys)
+                ? existingRow.var_keys.length
+                : 0;
+            const existingUpdatedAt = existingRow && existingRow.updated_at
+                ? new Date(existingRow.updated_at).toISOString()
+                : null;
+            if (existingKeyCount > 0) {
+                const _srcLabel = (source === 'web' || source === 'app') ? source : 'legacy';
+                console.warn(`[Vars] POST without expectedUpdatedAt against non-empty row (deviceId=${deviceId} source=${_srcLabel} keys=${existingKeyCount} strictMode=${strictMode})`);
+                db.logDeviceVarsAudit({
+                    deviceId,
+                    action: strictMode === 'reject' ? 'refuse_no_etag' : 'warn_no_etag',
+                    source: _srcLabel,
+                    callerIp: _auditCtx.ip,
+                    callerUa: _auditCtx.ua,
+                    beforeCount: _beforeCount,
+                    afterCount: _beforeCount,
+                });
+                if (strictMode === 'reject') {
+                    return res.status(400).json({
+                        success: false,
+                        error: 'stale_write_no_etag',
+                        message: 'POST is missing expectedUpdatedAt and a server vault already exists. Refetch via GET to obtain updatedAt, then retry POST with it.',
+                        serverUpdatedAt: existingUpdatedAt,
+                    });
+                }
+                // strictMode === 'warn': fall through (grace window for Android catch-up)
+            }
+        }
+    } else {
+        const currentRow = await loadExistingRowOnce();
         const currentUpdatedAt = currentRow && currentRow.updated_at
             ? new Date(currentRow.updated_at).toISOString()
             : null;
@@ -21049,7 +21108,7 @@ app.post('/api/device-vars', async (req, res) => {
 
         // If source is provided, do merge instead of replace
         if (src) {
-            const existing = await db.getDeviceVars(deviceId);
+            const existing = await loadExistingRowOnce();
             let existingVars = {};
             let existingSources = {};
 
@@ -21149,7 +21208,7 @@ app.post('/api/device-vars', async (req, res) => {
             // confirm flag for empty replacements on a non-empty vault so
             // accidental curls / buggy scripts can't silently zero it out.
             if (Object.keys(incoming).length === 0) {
-                const existing = await db.getDeviceVars(deviceId);
+                const existing = await loadExistingRowOnce();
                 const hadKeys = existing && Array.isArray(existing.var_keys) && existing.var_keys.length > 0;
                 if (hadKeys && confirm !== 'REPLACE_ALL_EMPTY') {
                     serverLog('warn', 'device_vars', `[Vars] refused legacy empty wipe for ${deviceId}: ${existing.var_keys.length} keys present, no confirm`, { deviceId, metadata: { existingKeyCount: existing.var_keys.length } });
