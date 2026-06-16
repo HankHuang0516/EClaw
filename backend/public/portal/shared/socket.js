@@ -58,6 +58,10 @@ function initPortalSocket() {
         if (typeof onSocketDevicePreferences === 'function') onSocketDevicePreferences(data);
     });
 
+    portalSocket.on('device:user-profile', (data) => {
+        if (typeof onSocketUserProfile === 'function') onSocketUserProfile(data);
+    });
+
     portalSocket.on('disconnect', () => {
         console.log('[Socket] Disconnected');
     });

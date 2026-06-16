@@ -266,6 +266,14 @@ async function createTables() {
             ALTER TABLE devices ADD COLUMN IF NOT EXISTS prompt_policy JSONB
         `);
 
+        // User display name (card_900db3bf): owner-set human name shown in chat/UI
+        // headers in place of generic "Device Owner" / "裝置主人". Plain TEXT (nullable);
+        // backend caps length to 64 chars at write time (matches devicePrefs validation
+        // pattern). No backfill — existing devices stay NULL until owner sets a value.
+        await client.query(`
+            ALTER TABLE devices ADD COLUMN IF NOT EXISTS user_display_name TEXT
+        `);
+
         // Dynamic entity system: per-device counter for unique entity ID assignment
         await client.query(`
             ALTER TABLE devices ADD COLUMN IF NOT EXISTS next_entity_id INTEGER DEFAULT 1
@@ -853,6 +861,7 @@ async function loadAllDevices() {
                 promptPolicy: row.prompt_policy
                     ? (typeof row.prompt_policy === 'string' ? JSON.parse(row.prompt_policy) : row.prompt_policy)
                     : null,
+                userDisplayName: row.user_display_name || null,
                 fcmToken: row.fcm_token || null,
                 apnsToken: row.apns_token || null,
                 entities: {}
