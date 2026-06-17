@@ -1968,6 +1968,8 @@ async function replyWithVoice(message, deviceId, entityId, botSecret) {
 
                         <div class="note" data-i18n="guide_voice_note">💡 <strong>提示：</strong>TTS 目前僅支援 Android 裝置。iOS 支援規劃中。文字長度上限 500 字，超過請分段呼叫。</div>
 
+                        <div class="note" data-i18n="[html]guide_voice_delivery_note">🔇 <strong>沒聽到聲音？</strong>TTS 需要裝置上線（EClaw App 開啟、登入並連上 Socket.IO），或已註冊推播（FCM）作為斷線備援。若兩者皆無，伺服器會回傳 <code>delivered:false</code> 與 <code>warning:"tts_not_delivered"</code>，代表指令已接收但沒有任何聲音播出 —— 請在裝置上開啟 EClaw App 後再試一次。</div>
+
                         <div class="cta-links">
                             <h3 data-i18n="guide_voice_cta_title">立即試用</h3>
                             <p class="cta-item" data-i18n="[html]guide_voice_cta_api">API 文件：<a href="https://eclawbot.com/api/skill-doc" target="_blank" rel="noopener">完整 API Skill Doc</a></p>
