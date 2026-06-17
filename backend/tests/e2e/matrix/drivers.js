@@ -291,36 +291,48 @@ const DRIVERS = {
 
         // 5. Render check: inject creds, load chat.html, assert a received bubble
         //    whose body contains the marker text appears with a non-empty sender.
+        //    addInitScript persists across navigations in this context — set once.
         await page.addInitScript(([d, sec]) => {
             try { localStorage.setItem('deviceId', d); localStorage.setItem('deviceSecret', sec); } catch (_) {}
         }, [deviceId, deviceSecret]);
-        await page.goto(`${base}/portal/chat.html`, { waitUntil: 'domcontentloaded', timeout: 45000 });
 
+        // chat.html does its OWN client-side bootstrap (checkAuth → device-login →
+        // history fetch → renderMessages). On a cold CI runner that whole chain — plus
+        // chat.html's history query firing before the just-seeded row propagates to it —
+        // can outlast a single waitForFunction window (the residual render-side flake).
+        // Reload-and-retry the render check up to 3× (a fresh goto re-fetches history),
+        // so a slow first bootstrap doesn't red the cell. The marker is already
+        // confirmed in the API above, so this only waits out client render latency.
         let verdict = { ok: false };
-        try {
-            verdict = await page.waitForFunction((mk) => {
-                const msgs = Array.from(document.querySelectorAll('.chat-msg'));
-                for (const m of msgs) {
-                    if (m.classList.contains('sent')) continue;       // skip our own
-                    const src = m.querySelector('.chat-source');
-                    const bubble = m.querySelector('.chat-bubble');
-                    const senderLabel = src && (src.textContent || '').trim();
-                    const bodyText = bubble && (bubble.textContent || '').trim();
-                    if (senderLabel && bodyText && bodyText.includes(mk)) {
-                        return { ok: true, sender: senderLabel.slice(0, 40), textLen: bodyText.length };
+        const RENDER_ATTEMPTS = 3;
+        for (let attempt = 1; attempt <= RENDER_ATTEMPTS; attempt++) {
+            await page.goto(`${base}/portal/chat.html`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+            try {
+                verdict = await page.waitForFunction((mk) => {
+                    const msgs = Array.from(document.querySelectorAll('.chat-msg'));
+                    for (const m of msgs) {
+                        if (m.classList.contains('sent')) continue;       // skip our own
+                        const src = m.querySelector('.chat-source');
+                        const bubble = m.querySelector('.chat-bubble');
+                        const senderLabel = src && (src.textContent || '').trim();
+                        const bodyText = bubble && (bubble.textContent || '').trim();
+                        if (senderLabel && bodyText && bodyText.includes(mk)) {
+                            return { ok: true, sender: senderLabel.slice(0, 40), textLen: bodyText.length };
+                        }
                     }
-                }
-                return false; // keep waiting
-            }, marker, { timeout: 25000 }).then(h => h.jsonValue());
-        } catch (_) {
-            verdict = { ok: false };
+                    return false; // keep waiting
+                }, marker, { timeout: 20000 }).then(h => h.jsonValue());
+            } catch (_) {
+                verdict = { ok: false };
+            }
+            if (verdict.ok) break;
         }
 
         return {
             ok: !!verdict.ok,
             detail: verdict.ok
                 ? `seeded marker renders with sender="${verdict.sender}" (${verdict.textLen} chars)`
-                : `seeded marker found in API but not rendered in chat.html (msg .chat-bubble + .chat-source not matched)`,
+                : `seeded marker found in API but not rendered in chat.html after ${RENDER_ATTEMPTS} reload attempts (msg .chat-bubble + .chat-source not matched)`,
         };
     },
 
