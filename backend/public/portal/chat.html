@@ -6094,10 +6094,20 @@
                 const json = escapeHtml(JSON.stringify(payload || {}));
                 return ` data-routing-kind="${kind}" data-routing-meta="${json}" role="button" tabindex="0" data-i18n-aria-label="chat_routing_chip_aria" aria-label="${escapeHtml(tt('chat_routing_chip_aria','Click to see routing rule + org structure'))}" onclick="openRoutingChipDetail(this);event.stopPropagation();" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openRoutingChipDetail(this);}" style="cursor:pointer"`;
             };
+            // card_e53b09082f4d66b8125cccca: the SENDER of a chat row is ALWAYS
+            // knowable from the row's own entity_id — even when routing_meta is
+            // null/degraded. Resolve a sender floor (id + real display name) once
+            // here so EVERY stub/payload below carries it; the detail modal must
+            // never degrade the from-side to 「Unspecified」/undefined.
+            const senderFloorId = (msg && msg.entity_id != null && Number.isFinite(Number(msg.entity_id)))
+                ? Number(msg.entity_id) : null;
+            const senderFloorName = senderFloorId != null
+                ? (typeof getEntityDisplayName === 'function' ? getEntityDisplayName(senderFloorId) : null)
+                : null;
             if (!rm || typeof rm !== 'object') {
                 const routed = parseEntitySource(msg && msg.source);
                 if (routed && (msg.is_from_bot || routed.crossDevice)) {
-                    const stub = { status: 'unconfirmed', mode: routed.crossDevice ? 'xdevice' : 'speakTo', from_entity_id: routed.fromEntityId || null, to_entity_id: (routed.targets && routed.targets[0]) || null };
+                    const stub = { status: 'unconfirmed', mode: routed.crossDevice ? 'xdevice' : 'speakTo', from_entity_id: (routed.fromEntityId != null ? routed.fromEntityId : senderFloorId), from_name: senderFloorName, from_public_code: routed.crossDevice ? (routed.fromPublicCode || null) : null, to_entity_id: (routed.targets && routed.targets[0]) || null };
                     return `<span class="routing-chip rc-unconfirmed"${chipClickAttrs('unconfirmed', stub)} title="${escapeHtml(tt('chat_routing_unconfirmed','路由未確認'))}">⚑ ${escapeHtml(tt('chat_routing_unconfirmed','路由未確認'))}</span>`;
                 }
                 // card_1f8 fallback: source unparseable but row is a bot reply with a
@@ -6115,7 +6125,7 @@
                         ? ('#' + orgChartCommanderId)
                         : (tt('chat_routing_to_user', 'User'));
                     const title = `${tt('chat_routing_label','路由')}: ${senderLabel} → ${targetLabel} · ${tt('chat_routing_client_derived','client-derived')}`;
-                    const stub = { status: 'degraded', from_entity_id: msg.entity_id, to_entity_id: (orgChartCommanderId != null && orgChartCommanderId !== Number(msg.entity_id)) ? orgChartCommanderId : null, to_is_user: !(orgChartCommanderId != null && orgChartCommanderId !== Number(msg.entity_id)) };
+                    const stub = { status: 'degraded', from_entity_id: msg.entity_id, from_name: senderFloorName, to_entity_id: (orgChartCommanderId != null && orgChartCommanderId !== Number(msg.entity_id)) ? orgChartCommanderId : null, to_is_user: !(orgChartCommanderId != null && orgChartCommanderId !== Number(msg.entity_id)) };
                     return `<span class="routing-chip rc-degraded"${chipClickAttrs('degraded-client', stub)} title="${escapeHtml(title)}"><span class="rc-route">${escapeHtml(senderLabel)} → ${escapeHtml(targetLabel)}</span></span>`;
                 }
                 return '';
@@ -6125,7 +6135,14 @@
                 const isFail = rm.status === 'failed';
                 const cls = isFail ? 'rc-failed' : 'rc-degraded';
                 const lbl = isFail ? tt('chat_routing_failed','路由失敗') : tt('chat_routing_degraded','路由降級');
-                return `<span class="routing-chip ${cls}"${chipClickAttrs(isFail ? 'failed' : 'degraded', rm)} title="${escapeHtml(lbl)}">⚠ ${escapeHtml(lbl)}</span>`;
+                // card_e53b0908: a backend degraded/failed meta may omit the sender;
+                // floor it from the row's own entity_id so the detail modal resolves
+                // a real sender instead of 「Unspecified」.
+                const degradedPayload = Object.assign({}, rm, {
+                    from_entity_id: (rm.from_entity_id != null ? rm.from_entity_id : senderFloorId),
+                    from_name: (rm.from_name != null ? rm.from_name : senderFloorName),
+                });
+                return `<span class="routing-chip ${cls}"${chipClickAttrs(isFail ? 'failed' : 'degraded', degradedPayload)} title="${escapeHtml(lbl)}">⚠ ${escapeHtml(lbl)}</span>`;
             }
             // Positive: from → to · LV{to_lv}, optional mode prefix.
             // Globe-user rule (card_29eed229d389e53bfae7d954): never render
@@ -8690,12 +8707,30 @@
             const fromSum = (detail && detail.fromEntity) || (payload.from_entity_id != null ? summariesById.get(payload.from_entity_id) : null);
             const toSum = (detail && detail.toEntity) || (payload.to_entity_id != null ? summariesById.get(payload.to_entity_id) : null);
 
-            const renderPill = (which, sum, fallbackId, fallbackName) => {
+            // card_e53b0908: a chat row ALWAYS knows its sender (entity_id), so
+            // the from-pill must never degrade to 「Unspecified」/undefined. Build
+            // the from-side fallback chain from the payload's sender floor
+            // (id / name / publicCode), only landing on a neutral label as the
+            // last resort — and a sender-specific one ("Sender") so we never
+            // emit the same generic "Unspecified" on BOTH sides.
+            const renderPill = (which, sum, fallbackId, fallbackName, fallbackCode) => {
                 // card_ecda7243: never fall through to a bare '?'. When neither a
                 // summary nor an explicit name/id resolve, show a clearly-labeled
-                // "unspecified" state instead of a naked question mark.
-                const label = (sum && (sum.name || sum.character)) || fallbackName || (fallbackId != null ? '#' + fallbackId : tt('chat_routing_unspecified', 'Unspecified'));
-                const code = sum && sum.publicCode ? '#' + sum.publicCode : '';
+                // state instead of a naked question mark or a literal "undefined".
+                // Guard: a `undefined`/null fallbackName must NOT be stringified
+                // into the template — coalesce through the whole chain first.
+                const safeFallbackName = (fallbackName != null && String(fallbackName).trim() !== '' && String(fallbackName) !== 'undefined')
+                    ? fallbackName : null;
+                const neutral = which === 'from'
+                    ? tt('chat_routing_sender', 'Sender')
+                    : tt('chat_routing_unspecified', 'Unspecified');
+                const label = (sum && (sum.name || sum.character))
+                    || safeFallbackName
+                    || (fallbackId != null ? '#' + fallbackId : null)
+                    || (fallbackCode ? '#' + fallbackCode : null)
+                    || neutral;
+                const code = sum && sum.publicCode ? '#' + sum.publicCode
+                    : (!sum && fallbackCode ? '#' + fallbackCode : '');
                 const lv = sum && sum.level != null ? `LV${sum.level}` : '';
                 const initials = String(label).slice(0, 2);
                 const avatar = sum && sum.avatar
@@ -8733,11 +8768,11 @@
             let html = '<div class="rd-section">';
             html += `<div class="rd-section-title">${esc(tt('chat_routing_detail_section_route', 'This message route'))}</div>`;
             html += '<div class="rd-route-line">';
-            html += renderPill('from', fromSum, payload.from_entity_id, payload.from_name);
+            html += renderPill('from', fromSum, payload.from_entity_id, payload.from_name, payload.from_public_code);
             html += '<span class="rd-arrow">→</span>';
             // card_ecda7243: a self-reply to the device owner targets USER (to_is_user),
             // not an entity — show the localized "User" label instead of a bare '?'.
-            html += renderPill('to', toSum, payload.to_entity_id, payload.to_is_user ? tt('chat_routing_to_user', 'User') : payload.to_name);
+            html += renderPill('to', toSum, payload.to_entity_id, payload.to_is_user ? tt('chat_routing_to_user', 'User') : payload.to_name, payload.to_public_code);
             if (modeLabel) html += `<span class="rd-mode-pill">${esc(modeLabel)}</span>`;
             html += `<span class="rd-status-pill rd-status-${esc(statusKey)}">${esc(statusLabel)}</span>`;
             html += '</div>';

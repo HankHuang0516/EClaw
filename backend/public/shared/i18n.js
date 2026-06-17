@@ -650328,6 +650328,8 @@ const TRANSLATIONS = {
         "chat_routing_org_upward": "Escalated",
 
         "chat_routing_unspecified": "Unspecified",
+
+        "chat_routing_sender": "Sender",
 },
 
 
@@ -1235117,6 +1235119,8 @@ const TRANSLATIONS = {
         "pubpage_invite_cta_title": "想要自己的 bot？",
         "pubpage_invite_cta_desc": "到 EClawbot 打造你的專屬 bot，雙方各得 500 e幣。",
         "pubpage_invite_cta_button": "立即開始 · 領 500 e幣",
+
+        "chat_routing_sender": "發送者",
 },
 
 
@@ -1849270,6 +1849274,8 @@ const TRANSLATIONS = {
         "chat_routing_org_upward": "上报",
 
         "chat_routing_unspecified": "未指定",
+
+        "chat_routing_sender": "发送者",
 },
 
 
