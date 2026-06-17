@@ -583,6 +583,7 @@
     //   {kind:'card', cardId, label} → src://kanban/card/<bare> preview chip
     //   {kind:'chat', messageId, excerpt} → message-coord chip
     //   {kind:'note', noteId, label} → plain chip (no preview route for notes)
+    //   {kind:'pr', prNumber, url, excerpt} → external GitHub PR link chip
     function renderAchievementEvents(items) {
         if (!items || items.length === 0) {
             const empty = (function () {
@@ -616,6 +617,16 @@
                 chipHtml = `<span class="autolink-chip ${ROOT_CLASS}__chip" `
                     + `data-ref-type="message" data-ref-id="${escapeHtml(chip.messageId)}" `
                     + `title="${escapeHtml(chip.excerpt || chip.messageId)}">${escapeHtml(label)}</span>`;
+            } else if (chip.kind === 'pr' && chip.url) {
+                // PR chip (card_13405b3448d89931665c1670): clickable external link
+                // to the GitHub PR, reusing the autolink-chip styling. Opens in a
+                // new tab; rel guards against tab-nabbing.
+                const color = STATUS_COLOR.done;
+                const num = chip.prNumber != null ? String(chip.prNumber) : '?';
+                chipHtml = `<a class="autolink-chip ${ROOT_CLASS}__chip" `
+                    + `href="${escapeHtml(chip.url)}" target="_blank" rel="noopener noreferrer" `
+                    + `style="background:${color}22;border-color:${color};color:${color};text-decoration:none;" `
+                    + `title="${escapeHtml(chip.excerpt || chip.url)}">PR #${escapeHtml(num)}</a>`;
             } else {
                 const label = chip.label ? String(chip.label).slice(0, 26) : (chip.kind || 'event');
                 chipHtml = `<span class="${ROOT_CLASS}__chip" title="${escapeHtml(chip.label || '')}">${escapeHtml(label)}</span>`;

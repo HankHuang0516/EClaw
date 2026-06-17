@@ -104,10 +104,98 @@ describe('Achievements backend slice', () => {
         expect(items.find(x => x.axis === 'cards_reviewed').count).toBe(11);
     });
 
-    test('getAchievements prs_merged stays at 0 in this slice (v2 follow-up)', async () => {
+    // card_13405b3448d89931665c1670 — prs_merged is now derived from on-device
+    // GitHub PR URLs in kanban evidence comments (+ rework_pr_number union),
+    // replacing the hardcoded-0 stub.
+    test('getAchievements prs_merged is 0 when no PR URLs and no rework PRs', async () => {
         entityStatus.initTable(makePool([]));
         const items = await entityStatus.getAchievements(DEVICE, ENTITY);
         expect(items.find(x => x.axis === 'prs_merged').count).toBe(0);
+        expect(items.find(x => x.axis === 'prs_merged').lastEventAt).toBeNull();
+    });
+
+    test('getAchievements prs_merged counts DISTINCT PR URLs from this entity\'s comments', async () => {
+        const t1 = new Date('2026-06-10T08:00:00Z');
+        const t2 = new Date('2026-06-11T09:00:00Z');
+        const pool = makePool([
+            {
+                match: (s, p) => s.includes('FROM kanban_comments') && s.includes('from_entity_id = $2')
+                    && s.includes('github') && (expect(p[0]).toBe(DEVICE), expect(p[1]).toBe(ENTITY), true),
+                rows: () => [
+                    { text: 'merged https://github.com/HankHuang0516/EClaw/pull/3461 ✅', created_at: t2 },
+                    { text: 'PR https://github.com/HankHuang0516/EClaw/pull/3460 squash-merged', created_at: t1 },
+                    // duplicate of #3461 — must NOT double-count
+                    { text: 'follow-up on github.com/HankHuang0516/EClaw/pull/3461 merged', created_at: t1 },
+                ],
+            },
+        ]);
+        entityStatus.initTable(pool);
+        const items = await entityStatus.getAchievements(DEVICE, ENTITY);
+        const pr = items.find(x => x.axis === 'prs_merged');
+        expect(pr.count).toBe(2);
+        expect(pr.lastEventAt).toBe(t2.toISOString());
+    });
+
+    test('getAchievements prs_merged falls back to ALL referenced PRs when none signal merge (never 0 if PRs exist)', async () => {
+        const pool = makePool([
+            {
+                match: (s) => s.includes('FROM kanban_comments') && s.includes('github'),
+                rows: () => [
+                    { text: 'opened https://github.com/HankHuang0516/EClaw/pull/100', created_at: new Date('2026-06-01T00:00:00Z') },
+                    { text: 'see https://github.com/HankHuang0516/EClaw/pull/101 for the diff', created_at: new Date('2026-06-02T00:00:00Z') },
+                ],
+            },
+        ]);
+        entityStatus.initTable(pool);
+        const items = await entityStatus.getAchievements(DEVICE, ENTITY);
+        expect(items.find(x => x.axis === 'prs_merged').count).toBe(2);
+    });
+
+    test('getAchievements prs_merged UNIONs rework_pr_number on owned/reviewed cards (deduped across sources)', async () => {
+        const pool = makePool([
+            {
+                match: (s) => s.includes('FROM kanban_comments') && s.includes('github'),
+                rows: () => [
+                    { text: 'merged https://github.com/HankHuang0516/EClaw/pull/200', created_at: new Date('2026-06-05T00:00:00Z') },
+                ],
+            },
+            {
+                match: (s) => s.includes('FROM kanban_cards') && s.includes('rework_pr_number'),
+                rows: () => [
+                    { pr: 'https://github.com/HankHuang0516/EClaw/pull/200', updated_at: new Date('2026-06-06T00:00:00Z') }, // dup of comment PR
+                    { pr: '201', updated_at: new Date('2026-06-07T00:00:00Z') }, // bare number → new
+                ],
+            },
+        ]);
+        entityStatus.initTable(pool);
+        const items = await entityStatus.getAchievements(DEVICE, ENTITY);
+        expect(items.find(x => x.axis === 'prs_merged').count).toBe(2);
+    });
+
+    test('getAchievementEvents for prs_merged returns distinct PR chips newest-first', async () => {
+        const t1 = new Date('2026-06-10T08:00:00Z');
+        const t2 = new Date('2026-06-11T09:00:00Z');
+        const pool = makePool([
+            {
+                match: (s) => s.includes('FROM kanban_comments') && s.includes('github') && s.includes('ORDER BY created_at DESC'),
+                rows: () => [
+                    { text: 'merged https://github.com/HankHuang0516/EClaw/pull/3461', created_at: t2 },
+                    { text: 'merged https://github.com/HankHuang0516/EClaw/pull/3460 and dup of github.com/HankHuang0516/EClaw/pull/3461', created_at: t1 },
+                ],
+            },
+        ]);
+        entityStatus.initTable(pool);
+        const items = await entityStatus.getAchievementEvents(DEVICE, ENTITY, 'prs_merged', 10);
+        expect(items.length).toBe(2);
+        expect(items[0].chip).toEqual({
+            kind: 'pr',
+            prNumber: 3461,
+            url: 'https://github.com/HankHuang0516/EClaw/pull/3461',
+            excerpt: expect.any(String),
+        });
+        expect(items[1].chip.prNumber).toBe(3460);
+        // no duplicate 3461 chip from the second row
+        expect(items.filter(i => i.chip.prNumber === 3461)).toHaveLength(1);
     });
 
     test('getAchievementEvents for tasks_done returns card chips', async () => {
