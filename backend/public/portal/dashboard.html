@@ -3699,6 +3699,7 @@
                     var editor = new AgentCardEditor('aceEditor' + entityId, {
                         entityId: entityId,
                         deviceId: currentUser?.deviceId || currentUser?.device_id || '',
+                        deviceSecret: currentUser?.deviceSecret,
                         publicCode: thisEntity.publicCode || '',
                         identity: identity,
                         agentCard: pub,

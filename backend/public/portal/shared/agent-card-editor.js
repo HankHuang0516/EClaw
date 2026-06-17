@@ -10,7 +10,7 @@
  *
  * Usage:
  *   const editor = new AgentCardEditor(containerId, {
- *       entityId, deviceId, publicCode, identity, agentCard, isOwner
+ *       entityId, deviceId, deviceSecret, publicCode, identity, agentCard, isOwner
  *   });
  *   editor.render();
  *   editor.save();  // called by save button
@@ -38,6 +38,8 @@ window.AgentCardEditor = (function() {
      * @param {Object} opts
      * @param {number} opts.entityId
      * @param {string} opts.deviceId
+     * @param {string} opts.deviceSecret — owner auth for PUT /api/entity/agent-card
+     * @param {string} [opts.botSecret] — alternative auth (bot self-edit)
      * @param {string} opts.publicCode
      * @param {Object} opts.identity — full identity JSONB (may have interviewCapabilities)
      * @param {Object} opts.agentCard — identity.public or agentCard object
@@ -48,6 +50,8 @@ window.AgentCardEditor = (function() {
         this.containerId = containerId;
         this.entityId = opts.entityId;
         this.deviceId = opts.deviceId;
+        this.deviceSecret = opts.deviceSecret;
+        this.botSecret = opts.botSecret;
         this.publicCode = opts.publicCode;
         this.identity = opts.identity || {};
         this.ac = opts.agentCard || {};
@@ -441,11 +445,17 @@ window.AgentCardEditor = (function() {
     AgentCardEditor.prototype.save = async function() {
         var data = this.collect();
         try {
-            var res = await apiCall('PUT', '/api/entity/agent-card', {
+            var body = {
                 deviceId: this.deviceId,
                 entityId: this.entityId,
                 agentCard: data,
-            });
+            };
+            // Auth: backend requires deviceSecret (owner) or botSecret.
+            // Without one, PUT /api/entity/agent-card 400s with
+            // "deviceSecret or botSecret required" (name-card save bug).
+            if (this.deviceSecret) body.deviceSecret = this.deviceSecret;
+            if (this.botSecret) body.botSecret = this.botSecret;
+            var res = await apiCall('PUT', '/api/entity/agent-card', body);
             if (res && res.success) {
                 if (typeof showToast === 'function') showToast(t('dash_id_saved', 'Saved'), 'success');
                 this.onSave(data);
