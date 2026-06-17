@@ -8,7 +8,7 @@
 - **Production URL**: `https://eclawbot.com`
 - **Package name**: `realbot-backend` (historical name; brand is "EClaw")
 - **Current version**: 1.1185.x+ (via semantic-release; `package.json` stays 1.0.0 placeholder)
-- **Android app version**: 1.0.88 (versionCode 96); `LATEST_APP_VERSION` constant in `backend/index.js`
+- **Android app version**: 1.0.91 (versionCode 99); `LATEST_APP_VERSION` constant in `backend/index.js`
 - **Brand name**: "EClawbot" (rebranded from "EClaw" in v1.105.0; domain `eclawbot.com`)
 
 ---
@@ -18,7 +18,7 @@
 ```
 EClaw/
 ├── backend/                  # Node.js Express server (deployed to Railway)
-│   ├── index.js              # Main server (~22,357 lines) — all API routes
+│   ├── index.js              # Main server (~23,940 lines) — all API routes
 │   ├── db.js                 # PostgreSQL connection pool + schema creation
 │   ├── auth.js               # Auth module (JWT, OAuth, OIDC, RBAC)
 │   ├── mission.js            # Mission Control dashboard system
@@ -241,7 +241,7 @@ EClaw/
 
 ### Backend (Node.js/Express)
 
-- **Single-file server**: `backend/index.js` (~22,357 lines) contains all API routes
+- **Single-file server**: `backend/index.js` (~23,940 lines) contains all API routes
 - **Database**: PostgreSQL (Railway-managed), connection in `backend/db.js`
 - **Real-time**: Socket.IO for live updates to Web Portal and Android app
 - **Auth**: JWT tokens (cookie-based for web, header-based for API), social OAuth (Google, Facebook), OIDC
@@ -1170,12 +1170,34 @@ curl "https://eclawbot.com/api/device-telemetry?deviceId=ID&deviceSecret=SECRET&
 - **Dialog Key Capture Fix (v1.1186)**: Document-level key capture for showConfirm/showPrompt dialogs (#3296)
 - **Kanban Smart-Quote Chip-Ref (v1.1186)**: Smart-quote chip reference support in kanban card-comment composer (parity with chat.html) (#3294)
 - **i18n kb_quote/kb_reply + dialog keys (v1.1186)**: Added kanban quote/reply and dialog keys to all 8 locales (#3297)
+- **Optimistic UI + Undo Toast (v1.1187)**: Kanban move/archive + chat sending state with optimistic UI and undo toast — 情緒價值 #2 (#3307)
+- **Level-Up Celebration Overlay (v1.1187)**: Dashboard level-up celebration overlay animation — 情緒價值 #3 (#3309)
+- **Entity Status Achievements UI (v1.1187)**: Achievements section with drill-down chips and i18n on entity status panel (#3310)
+- **Kanban Detail Modal Maximize (v1.1187)**: Detail-modal maximize + draggable splitter + side prev/next navigation chips (#3313)
+- **Usage Timeline Chart Modal (v1.1187)**: Dashboard usage widget click opens 5h/weekly timeline chart modal (#3315)
+- **Unified Redirect System (v1.1188)**: 4-phase redirect system — Phase A `/r/` universal entry with route registry, mint, telemetry, return_to (#3322); Phase B Android App Links (assetlinks.json + autoVerify intent-filter) (#3326); Phase C iOS Universal Links AASA (#3328); Phase D mission.html chat hops → SmartRouter (#3339)
+- **SmartRouter v1 (v1.1188)**: 3-mode navigation (SPA hash / page redirect / Android deep-link) with files.html proof slice (#3330)
+- **E2E Matrix Test Drivers (v1.1188)**: Cross-surface matrix runner + redirect driver + CI (#3331); kanban_lifecycle matrix driver (#3333); agent_reply_visibility matrix driver (#3338)
+- **Weekly Compliance Audit System (v1.1188)**: `audit-rules.js` — 9 deterministic compliance rules + runner + tests (#3325)
+- **Chat Routing Visualization (v1.1189)**: `routing_meta` message payload for backend trace (#3342); per-message routing chip + LV palette (#3343)
+- **Kanban Auto-Inject Self-Improvement (v1.1189)**: Auto-inject Self-improvement section on POST /card (#3344)
+- **Passive Health-Check Subsystem (v1.1189)**: Passive health-check + auto self-repair subsystem (default OFF) (#3360); heartbeat_stale channel-push exclusion (#3361); partial settings PUT fix (#3362); 健檢中 health-checking animation + live state (#3364)
+- **Universal Self-Repair Directive (v1.1189)**: ECLAW_SELF_REPAIR directive for openclaw plugin + backend fallback (#3363)
+- **Channel Self-Repair API (v1.1189)**: Dashboard 重新綁定 wired to version-aware channel self-repair API (#3359)
+- **Rental Schema-Drift Sentinel (v1.1189)**: Schema-drift audit + sentinel test for id-column DEFAULTs (#3354-#3355); JS-side listing ID generation (#3352)
+- **Kanban JSONB Containment Fix (v1.1189)**: Workload/busy checks use jsonb containment instead of integer[] cast (#3485)
+- **Modal Scroll-Lock (v1.1188)**: Body scroll-lock while showConfirm/showPrompt open; position:fixed blocks programmatic scroll fix (#3334, #3336)
+- **Done-Gate Fix (v1.1188)**: Read latest complete evidence comment, not first (supports 後補 PR link) (#3332)
+- **Chat Quote-Receiver Auto-Select Fix (v1.1188)**: Exclusive quote-receiver auto-select — stop reply mis-route to #1 (#3340)
+- **First-Achievement Toast (v1.1187)**: Dashboard first-achievement toast — deferred 情緒價值 #3 slice (#3319)
+- **Plaza vs Rental Naming Clarity (v1.1189)**: AGENT_CARD_INCOMPLETE + Plaza vs Rental naming clarity (#3366)
+- **Interview Arena Mobile Layout Fix (v1.1189)**: Mobile 390x844 layout for Interview Arena leaderboard slide (#3365)
 
 ---
 
 ## Test Coverage Summary
 
-**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~3969 test cases across 285 Jest files + 79 integration tests).
+**~475 total API routes** across all modules (425 excluding Article Publisher), **~85% covered** by Jest + integration tests (~4729 test cases across 338 Jest files + 79 integration tests).
 
 | Module | Coverage | Notes |
 |--------|----------|-------|
