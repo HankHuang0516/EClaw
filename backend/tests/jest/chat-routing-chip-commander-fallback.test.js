@@ -30,9 +30,9 @@ const chatHtml = fs.readFileSync(
 const chipFn = chatHtml.match(/function\s+renderRoutingChip\s*\(\s*msg\s*\)\s*\{[\s\S]*?\n        \}/);
 const chipBody = chipFn ? chipFn[0] : '';
 
-// Out-of-scope by card spec: the `card_1f8 fallback` branch (degraded chip
-// for bot replies with unparseable source) intentionally retains "→ ?".
-// Scope the positive-branch invariants below to the post-"// Positive:" tail.
+// The positive-branch invariants below are scoped to the post-"// Positive:"
+// tail. (card_ecda7243 later extended the no-bare-'?' rule to the degraded
+// fallback branch too — that is locked in routing-meta-card-1f8.test.js.)
 const positiveBranch = chipBody.split('// Positive:').pop() || '';
 
 describe('routing chip — commander fallback (card_29eed229d389e53bfae7d954)', () => {
