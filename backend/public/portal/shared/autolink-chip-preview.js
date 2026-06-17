@@ -196,7 +196,7 @@
                 ${comments}
             </div>
             <div class="chip-popover-footer">
-                <a href="${escapeHtml(fullUrl)}" class="chip-popover-open">${escapeHtml(openFullLabel)}</a>
+                <a href="${escapeHtml(fullUrl)}" class="chip-popover-open" data-action="open-full" data-card-id="${escapeHtml(hashId)}">${escapeHtml(openFullLabel)}</a>
             </div>
         `;
     }
@@ -228,6 +228,20 @@
                 return;
             }
             if (action === 'requote') { insertRequoteToken(pop._data, pop._refType, pop._refId, pop._anchorEl || rootAnchor); closeAll(); return; }
+            if (action === 'open-full') {
+                // card_2d5fbe88 sibling: in split mode the "打開完整頁面 →" link
+                // must route into the EXISTING kanban pane, not navigate the
+                // current (chat) pane. SmartRouter posts split_navigate; the
+                // workspace host loads the card into the kanban pane.
+                const SR = window.SmartRouter;
+                const cardId = btn.getAttribute('data-card-id') || '';
+                if (SR && SR.mode === 'split' && typeof SR.navigate === 'function' && cardId) {
+                    e.preventDefault();
+                    if (SR.navigate('card', { cardId }) !== false) { closeAll(); return; }
+                }
+                // Single/app or no router: fall through to the native <a> navigation.
+                return;
+            }
         });
     }
 

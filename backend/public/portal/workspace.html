@@ -489,20 +489,115 @@
         }
     });
 
-    // Swap the requesting pane's src to the SmartRouter target. Acks first so the
-    // pane can cancel its 300ms degrade timer before its document unloads.
+    // SmartRouter target → workspace page-id of the pane that should own it.
+    // Cross-pane targets (a chat card → kanban) must land in the EXISTING
+    // sibling pane, NOT swap the requester's own pane (card_2d5fbe88: split
+    // "在看板中開啟" was spawning a 2nd task pane + redirecting chat).
+    const TARGET_PANE = { card: 'kanban', note: 'mission' };
+
+    // Drive an already-loaded pane to focus the target IN PLACE (no src reload,
+    // no flash) by replaying the native-navigate intent that kanban/mission both
+    // implement. Returns true if the pane accepted the intent.
+    function _focusPaneInPlace(pane, target, params) {
+        try {
+            const win = pane && pane.contentWindow;
+            const fn = win && win.eclawHandleNativeNavigateIntent;
+            if (typeof fn !== 'function') return false;
+            const pageId = TARGET_PANE[target];
+            const targetTab = pageId === 'kanban' || pageId === 'mission' ? 'mission' : pageId;
+            const intent = Object.assign({ targetTab: targetTab, target: target }, params || {});
+            const r = fn(intent);
+            // Handler may be async (returns a Promise) — treat a truthy/Promise
+            // return as accepted; only an explicit synchronous `false` is a reject.
+            return r !== false;
+        } catch (_) { return false; }
+    }
+
+    function _findPaneByPageId(pageId) {
+        const info = PAGES[pageId];
+        if (!info) return null;
+        return Array.from(document.querySelectorAll('iframe.workspace-pane'))
+            .find(f => f.src && f.src.includes(info.href)) || null;
+    }
+
+    // Route a SmartRouter split dispatch. Cross-pane targets go to the sibling
+    // pane (open it if absent); same-pane targets swap the requester in place.
+    // Acks the requester FIRST so its 300ms degrade timer is cancelled and it
+    // never falls back to a full-page navigate (which redirected the chat pane).
     function handleSplitNavigate(e) {
         const { requestId, target, params } = e.data;
-        const pane = Array.from(document.querySelectorAll('iframe.workspace-pane'))
+        const requester = Array.from(document.querySelectorAll('iframe.workspace-pane'))
             .find(f => f.contentWindow === e.source);
         const url = (window.EClawRouteRegistry && buildPaneUrl(target, params)) || null;
-        if (!pane || !url) return; // unknown target / orphan source → pane stays, its timer degrades it
-        // Ack to the exact requesting window before we swap it.
-        if (requestId && e.source) {
-            try { e.source.postMessage({ type: 'split_navigate_ack', requestId }, window.location.origin); } catch (_) {}
+        if (!requester || !url) return; // unknown target / orphan source → requester's timer degrades it
+
+        const ack = () => {
+            if (requestId && e.source) {
+                try { e.source.postMessage({ type: 'split_navigate_ack', requestId }, window.location.origin); } catch (_) {}
+            }
+        };
+
+        const destPageId = TARGET_PANE[target];
+        const requesterIsDest = destPageId && PAGES[destPageId] && requester.src
+            && requester.src.includes(PAGES[destPageId].href);
+
+        // Cross-pane: target belongs in a sibling pane (e.g. chat card → kanban).
+        if (destPageId && !requesterIsDest) {
+            ack(); // requester keeps its own page; cancel its degrade timer now.
+            let destPane = _findPaneByPageId(destPageId);
+            if (destPane) {
+                // Pane already open — focus the card in place (no reload, no flash).
+                if (_focusPaneInPlace(destPane, target, params)) {
+                    bustChatPaneCache();
+                    return;
+                }
+                // Handler unavailable (pane mid-load) → set src so its boot deep-links.
+                destPane.src = url;
+                bustChatPaneCache();
+                return;
+            }
+            // Sibling pane not open — add it, pre-pointed at the target URL.
+            _openPaneWithUrl(destPageId, url);
+            bustChatPaneCache();
+            return;
         }
+
+        // Same-pane (or non-cross-pane) target: swap the requester in place.
+        ack();
         bustChatPaneCache();
-        pane.src = url;
+        requester.src = url;
+    }
+
+    // Inject embed=1 into the QUERY (before any #hash) so panes boot in embed mode
+    // without corrupting a deep-link fragment like kanban.html?card=X#X.
+    function _withEmbed(url) {
+        const hashAt = url.indexOf('#');
+        const base = hashAt >= 0 ? url.slice(0, hashAt) : url;
+        const frag = hashAt >= 0 ? url.slice(hashAt) : '';
+        const sep = base.indexOf('?') >= 0 ? '&' : '?';
+        return base + sep + 'embed=1' + frag;
+    }
+
+    // Add a new pane for pageId and point its iframe at an explicit URL (carrying
+    // ?card=… deep-link), rather than the default PAGES[pageId].href.
+    function _openPaneWithUrl(pageId, url) {
+        if (!PAGES[pageId]) return;
+        if (panes.findIndex(p => p.id === pageId) >= 0) {
+            // Already a pane for this page (src mismatch) — re-point + focus it.
+            render();
+            const pane = _findPaneByPageId(pageId);
+            if (pane) pane.src = _withEmbed(url);
+            return;
+        }
+        panes.push({ id: pageId, width: 0 });
+        activePaneIdx = panes.length - 1;
+        normalizeWidths();
+        clampActivePaneIdx();
+        render();
+        // After render the iframe exists with the default href; re-point to the
+        // deep-link URL so the card opens on first boot.
+        const pane = _findPaneByPageId(pageId);
+        if (pane) pane.src = _withEmbed(url);
     }
 
     // Mirror SmartRouter.buildUrl's tolerant-degrade: strict registry URL, else bare path.

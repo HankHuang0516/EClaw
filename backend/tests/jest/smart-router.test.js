@@ -337,6 +337,51 @@ describe('split ack contract (spec §3)', () => {
         }, 360);
     });
 
+    // card_2d5fbe88: split "在看板中開啟" — chat pane must dispatch the card
+    // target to the host (which routes it into the existing kanban pane), NOT
+    // window.open a 2nd pane or full-page navigate (which redirected chat).
+    test('card target in split mode posts split_navigate with cardId (no full-page assign)', () => {
+        const post = jest.fn();
+        const assign = jest.fn();
+        const win = makeWin({ location: { origin: 'https://eclawbot.com', search: '?embed=1', assign } });
+        win.parent = { location: { origin: 'https://eclawbot.com' }, postMessage: post };
+        const SR = loadRouter(win);
+        expect(SR.mode).toBe('split');
+        SR.navigate('card', { cardId: 'card_2d5fbe88efdd98e90b0cae28' });
+        expect(post).toHaveBeenCalledWith(
+            expect.objectContaining({
+                type: 'split_navigate',
+                target: 'card',
+                params: { cardId: 'card_2d5fbe88efdd98e90b0cae28' },
+                requestId: expect.stringMatching(/^nav_[0-9a-f]{8}$/),
+            }),
+            'https://eclawbot.com'
+        );
+        // No synchronous full-page redirect — the host owns the pane swap.
+        expect(assign).not.toHaveBeenCalled();
+    });
+
+    test('card target ack from host cancels degrade — chat pane never full-page navigates', (done) => {
+        const post = jest.fn();
+        const assign = jest.fn();
+        const win = makeWin({ location: { origin: 'https://eclawbot.com', search: '?embed=1', assign } });
+        win.parent = { location: { origin: 'https://eclawbot.com' }, postMessage: post };
+        const SR = loadRouter(win);
+        SR.navigate('card', { cardId: 'card_2d5fbe88efdd98e90b0cae28' });
+        const requestId = post.mock.calls[0][0].requestId;
+        win._emit('message', { origin: 'https://eclawbot.com', data: { type: 'split_navigate_ack', requestId } });
+        setTimeout(() => {
+            expect(assign).not.toHaveBeenCalled();
+            done();
+        }, 360);
+    });
+
+    test('card target builds the kanban deep-link URL (host buildPaneUrl SoT)', () => {
+        const registry = require('../../shared/route-registry.js');
+        expect(registry.buildWebUrl('card', { cardId: 'card_2d5fbe88efdd98e90b0cae28' }))
+            .toBe('/portal/kanban.html?card=card_2d5fbe88efdd98e90b0cae28#card_2d5fbe88efdd98e90b0cae28');
+    });
+
     test('ack before timeout → no degrade (location.assign NOT called)', (done) => {
         const post = jest.fn();
         const assign = jest.fn();
