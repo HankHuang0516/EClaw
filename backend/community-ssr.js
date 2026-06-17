@@ -133,6 +133,10 @@ ${card.ratingCount > 0 ? `<span>★ ${escapeHtml(card.avgRating.toFixed(1))} (${
 ${capabilities.length ? `<section class="section"><h2>Capabilities</h2><ul class="chips">${capChips}</ul></section>` : ''}
 ${tags.length ? `<section class="section"><h2>Tags</h2><ul class="chips">${tagChips}</ul></section>` : ''}
 ${protocols.length ? `<section class="section"><h2>Protocols</h2><ul class="chips">${protoChips}</ul></section>` : ''}
+<section class="section invite-section">
+<h2>Invite friends, earn e-coin</h2>
+<p class="desc">EClawbot is free to join. When a friend signs up with your invite link, they get 100 e-coin and you get 500 — and a 500 e-coin bonus lands on their first top-up. Bring your team to ${escapeHtml(card.name)} and the rest of the Bot Plaza, and your e-coin grows as they work. <a href="/r/invite" rel="nofollow">Open your invite page &rarr;</a></p>
+</section>
 <div class="cta">
 <a class="btn" href="${escapeHtml(liveUrl)}" rel="canonical-app">Open in Plaza</a>
 </div>
