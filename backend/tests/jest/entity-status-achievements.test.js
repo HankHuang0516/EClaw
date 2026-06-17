@@ -104,6 +104,72 @@ describe('Achievements backend slice', () => {
         expect(items.find(x => x.axis === 'cards_reviewed').count).toBe(11);
     });
 
+    // card_c712d141e288fb1f9ebd38d3 — notes_authored was counting the legacy
+    // `mission_notes` table (never written to → always 0). Real notes live in
+    // mission_dashboard.notes JSONB, attributed per-entity via createdBy.
+    test('getAchievements notes_authored counts mission_dashboard.notes JSONB by createdBy = entity_<N>', async () => {
+        let captured = null;
+        const pool = makePool([
+            {
+                match: (s, p) => s.includes('FROM mission_dashboard')
+                    && s.includes('jsonb_array_elements')
+                    && s.includes("n->>'createdBy' = $2"),
+                rows: (p) => {
+                    captured = p;
+                    expect(p[0]).toBe(DEVICE);
+                    expect(p[1]).toBe('entity_2');
+                    // 251 notes authored by entity_2; latest createdAt as epoch-ms.
+                    return [{ c: 251, ts_ms: '1750000000000' }];
+                },
+            },
+        ]);
+        entityStatus.initTable(pool);
+        const items = await entityStatus.getAchievements(DEVICE, ENTITY);
+        const na = items.find(x => x.axis === 'notes_authored');
+        expect(na.count).toBe(251);
+        expect(na.lastEventAt).toBe(new Date(1750000000000).toISOString());
+        // Must NOT query the dead legacy table.
+        expect(captured).not.toBeNull();
+    });
+
+    test('getAchievements notes_authored is 0 when entity has no notes (empty JSONB)', async () => {
+        const pool = makePool([
+            {
+                match: (s) => s.includes('FROM mission_dashboard') && s.includes('jsonb_array_elements'),
+                rows: () => [{ c: 0, ts_ms: null }],
+            },
+        ]);
+        entityStatus.initTable(pool);
+        const items = await entityStatus.getAchievements(DEVICE, ENTITY);
+        const na = items.find(x => x.axis === 'notes_authored');
+        expect(na.count).toBe(0);
+        expect(na.lastEventAt).toBeNull();
+    });
+
+    test('getAchievementEvents for notes_authored returns note chips from JSONB newest-first', async () => {
+        const pool = makePool([
+            {
+                match: (s, p) => s.includes('FROM mission_dashboard')
+                    && s.includes('jsonb_array_elements')
+                    && s.includes("n->>'createdBy' = $2")
+                    && s.includes('ORDER BY'),
+                rows: (p) => {
+                    expect(p[1]).toBe('entity_2');
+                    return [
+                        { id: 'note_a', title: 'Roadmap', created_ms: '1750000200000' },
+                        { id: 'note_b', title: 'Spec notes', created_ms: '1750000100000' },
+                    ];
+                },
+            },
+        ]);
+        entityStatus.initTable(pool);
+        const items = await entityStatus.getAchievementEvents(DEVICE, ENTITY, 'notes_authored', 10);
+        expect(items).toHaveLength(2);
+        expect(items[0].chip).toEqual({ kind: 'note', noteId: 'note_a', label: 'Roadmap' });
+        expect(items[0].ts).toBe(new Date(1750000200000).toISOString());
+        expect(items[1].chip.noteId).toBe('note_b');
+    });
+
     // card_13405b3448d89931665c1670 — prs_merged is now derived from on-device
     // GitHub PR URLs in kanban evidence comments (+ rework_pr_number union),
     // replacing the hardcoded-0 stub.

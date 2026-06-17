@@ -631,19 +631,31 @@ async function getAchievements(deviceId, entityId) {
                 count = Number(r.rows[0]?.c || 0);
                 lastEventAt = r.rows[0]?.ts || null;
             } else if (axis === 'notes_authored') {
-                // mission_notes has no entity_id column; per-entity attribution
-                // is via created_by = 'entity_<N>' (see mindmap-graph-projection.js
-                // parseNumericCreatedBy). Prior query referenced a non-existent
-                // column and was swallowed by the per-axis catch — visible in
-                // Railway prod log as `column "entity_id" does not exist` spam.
+                // Notes do NOT live in the legacy `mission_notes` table — that
+                // table is never written to (no INSERT/UPDATE/CREATE anywhere in
+                // the backend). The real source is the `notes` JSONB column on
+                // mission_dashboard, where GET /api/mission/notes, /note/add and
+                // friends read/write. Per-entity attribution is the JSON field
+                // `createdBy = 'entity_<N>'` (set in mission.js note/add etc.).
+                // Prior queries (against mission_notes.entity_id then
+                // mission_notes.created_by) both hit a table with 0 rows and
+                // returned 0 — the disconnect Hank saw: GET /api/mission/notes
+                // shows the device's notes but achievements said 0.
+                // We expand the JSONB array and count this entity's notes.
+                // createdAt is a JS epoch-ms number in the JSON; convert for ts.
                 const r = await pool.query(
-                    `SELECT COUNT(*)::int AS c, MAX(created_at) AS ts
-                       FROM mission_notes
-                      WHERE device_id = $1 AND created_by = $2`,
+                    `SELECT COUNT(*)::int AS c,
+                            MAX((n->>'createdAt')::bigint) AS ts_ms
+                       FROM mission_dashboard md
+                       CROSS JOIN LATERAL jsonb_array_elements(
+                            COALESCE(md.notes, '[]'::jsonb)) AS n
+                      WHERE md.device_id = $1
+                        AND n->>'createdBy' = $2`,
                     [deviceId, `entity_${eid}`]
                 );
                 count = Number(r.rows[0]?.c || 0);
-                lastEventAt = r.rows[0]?.ts || null;
+                const tsMs = r.rows[0]?.ts_ms;
+                lastEventAt = tsMs != null ? new Date(Number(tsMs)) : null;
             } else if (axis === 'prs_merged') {
                 // v2 (card_13405b3448d89931665c1670): the only on-device PR
                 // signal is GitHub PR URLs that bots paste into kanban evidence
@@ -769,15 +781,23 @@ async function getAchievementEvents(deviceId, entityId, axis, limit) {
             }));
         }
         if (axis === 'notes_authored') {
+            // Mirror the count source: mission_dashboard.notes JSONB filtered by
+            // createdBy = 'entity_<N>'. createdAt is JS epoch-ms in the JSON.
             const r = await pool.query(
-                `SELECT id, title, created_at
-                   FROM mission_notes
-                  WHERE device_id = $1 AND entity_id = $2
-                  ORDER BY created_at DESC LIMIT $3`,
-                [deviceId, eid, lim]
+                `SELECT n->>'id'    AS id,
+                        n->>'title' AS title,
+                        (n->>'createdAt')::bigint AS created_ms
+                   FROM mission_dashboard md
+                   CROSS JOIN LATERAL jsonb_array_elements(
+                        COALESCE(md.notes, '[]'::jsonb)) AS n
+                  WHERE md.device_id = $1
+                    AND n->>'createdBy' = $2
+                  ORDER BY (n->>'createdAt')::bigint DESC NULLS LAST
+                  LIMIT $3`,
+                [deviceId, `entity_${eid}`, lim]
             );
             return r.rows.map(row => ({
-                ts: row.created_at ? row.created_at.toISOString() : null,
+                ts: row.created_ms != null ? new Date(Number(row.created_ms)).toISOString() : null,
                 chip: { kind: 'note', noteId: row.id, label: row.title },
             }));
         }
